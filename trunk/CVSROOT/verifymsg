@@ -1,3 +1,6 @@
+# BEGIN SOURCEFORGE SECTION - Do not remove these lines
+.*	python2 /opt/collabnet/teamforge//runtime/sourceforge_home/integration/VerifyMsg.py false exsy1001 %l
+# END SOURCEFORGE SECTION
 # The "verifymsg" file is used to allow verification of logging
 # information.  It works best when a template (as specified in the
 # rcsinfo file) is provided for the logging procedure.  Given a

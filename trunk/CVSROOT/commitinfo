@@ -1,3 +1,6 @@
+# BEGIN SOURCEFORGE SECTION - Do not remove these lines
+ALL	python2 /opt/collabnet/teamforge//runtime/sourceforge_home/integration/CommitInfo.py false exsy1001 %r/%p
+# END SOURCEFORGE SECTION
 # The "commitinfo" file is used to control pre-commit checks.
 # The filter on the right is invoked with the repository and a list 
 # of files to check.  A non-zero exit of the filter program will 

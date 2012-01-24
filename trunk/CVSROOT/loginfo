@@ -1,3 +1,6 @@
+# BEGIN SOURCEFORGE SECTION - Do not remove these lines
+ALL	python2 /opt/collabnet/teamforge//runtime/sourceforge_home/integration/LogInfo.py false exsy1001 %{sVv}
+# END SOURCEFORGE SECTION
 # The "loginfo" file controls where "cvs commit" log information
 # is sent.  The first entry on a line is a regular expression which must match
 # the directory that the change is being made to, relative to the
