@@ -51,7 +51,7 @@ using namespace std;
 #define SQR(x) ((x)*(x))
 
 // constructor
-EW::EW(const string& fileName): 
+EW::EW(const string& fileName, vector<Source*> & a_GlobalUniqueSources): 
   m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
@@ -190,7 +190,7 @@ EW::EW(const string& fileName):
    }
    
 // read the input file and setup the simulation object
-   if (parseInputFile())
+   if (parseInputFile( a_GlobalUniqueSources ))
      mParsingSuccessful = true;
 
 }
@@ -709,7 +709,7 @@ bool EW::point_in_proc(int a_i, int a_j, int a_g)
 }
 
 //-----------------------------------------------------------------------
-void EW::getGMTOutput()
+void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
 {
    if (!mWriteGMTOutput) return;
 
@@ -793,18 +793,18 @@ void EW::getGMTOutput()
       }
 #endif
       
-      if (mGlobalUniqueSources.size() > 0)
+      if (a_GlobalUniqueSources.size() > 0)
       {
          contents << "# Sources... " << endl
                   << "psxy -R$REGION -JM$SCALE -Sd0.1 -Gred -O -K <<EOF>> plot.ps" << endl;
          
-         for (int i=0; i < mGlobalUniqueSources.size(); ++i)
+         for (int i=0; i < a_GlobalUniqueSources.size(); ++i)
          {
            double latSource,lonSource;
 
-           computeGeographicCoord(mGlobalUniqueSources[i]->getX0(),
-                                  mGlobalUniqueSources[i]->getY0(),
-                                  mGlobalUniqueSources[i]->getZ0(),
+           computeGeographicCoord(a_GlobalUniqueSources[i]->getX0(),
+                                  a_GlobalUniqueSources[i]->getY0(),
+                                  a_GlobalUniqueSources[i]->getZ0(),
                                   latSource                       ,
                                   lonSource                       );
 // is this the correct syntax???

@@ -250,7 +250,7 @@ void filtfilt(double *b, double *a, double *u, int N)
 
 
 GridPointSource::GridPointSource(double amplitude, double frequency, double t0,
-				 int N, int M, int L,int G,
+				 int N, int M, int L, int G,
 				 double Fx, double Fy, double Fz,
 				 timeDep tDep,
 				 int ncyc ):
@@ -338,12 +338,6 @@ void GridPointSource::getFxyz( double t, double* fxyz ) const
   fxyz[0] = mForces[0]*afun;
   fxyz[1] = mForces[1]*afun;
   fxyz[2] = mForces[2]*afun;
-}
-
-void GridPointSource::limitFrequency(double max_freq)
-{
-  if (mFreq > max_freq)
-    mFreq=max_freq;
 }
 
 double GridPointSource::getTimeFunc(double t) const

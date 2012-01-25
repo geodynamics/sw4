@@ -40,7 +40,7 @@ public:
 
   bool gridPointSet() const;
 
-  int m_i0,m_j0,m_k0; //C.B: renaming mN,mM,mL
+  int m_i0, m_j0, m_k0; //C.B: renaming mN,mM,mL
   int m_grid;
 
   double getX0() const;
@@ -69,18 +69,19 @@ public:
   int ppw_to_resolve( double dt ) const;
 
   const std::string& getName() const { return mName; };
-  void set_grid_point_sources4( std::vector<GridPointSource*>& point_sources );
-  void set_grid_point_sources( std::vector<GridPointSource*>& point_sources );
   void correct_Z_level( );
-
   void limit_frequency( int ppw, double minvsoh );
   double compute_t0_increase( double t0_min );
   void adjust_t0( double dt0 );
 
-  void distribute_source_xyplane( std::vector<GridPointSource*>& point_sources, 
-                                 int g, int k, double wghz );
-  void distribute_source_xyplane_mom( std::vector<GridPointSource*>& point_sources,
-                                     int g, int k, double wghz, double dwghz );
+  void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources );
+  void set_grid_point_sources( EW *a_EW, std::vector<GridPointSource*>& point_sources );
+
+  void distribute_source_xyplane( EW *a_EW, std::vector<GridPointSource*>& point_sources, 
+				  int g, int k, double wghz );
+  void distribute_source_xyplane_mom( EW *a_EW, std::vector<GridPointSource*>& point_sources,
+				      int g, int k, double wghz, double dwghz );
+
   void set_z_is_relative_to_topography( bool tf ) { m_zRelativeToTopography = tf; };
   void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
 
@@ -111,7 +112,7 @@ public:
   double* mPar;
   int mNcyc;
   bool mIgnore;
-  EW * mEW;
+//  EW * mEW;
 };
 
 #endif

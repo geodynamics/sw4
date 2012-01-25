@@ -26,7 +26,7 @@ Source::Source(EW *a_wpp,
 	       timeDep tDep,
 	       char *name,
 	       int ncyc):
-  mEW(a_wpp),
+//  mEW(a_wpp),
   mAmp(amplitude),
   mIsMomentSource(true),
   mFreq(frequency),
@@ -59,7 +59,7 @@ Source::Source(EW *a_wpp,double amplitude, double frequency, double t0,
 	       double Fz,
 	       timeDep tDep,
 	       const char *name, int ncyc):
-  mEW(a_wpp),
+//  mEW(a_wpp),
   mAmp(amplitude),
   mIsMomentSource(false),
   mFreq(frequency),
@@ -320,22 +320,22 @@ void Source::getsourcedwgh( double ai, double wgh[6] )
 }
 
 //-----------------------------------------------------------------------
-void Source::set_grid_point_sources4( vector<GridPointSource*>& point_sources )
+void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources )
 {
    int i,j,k,g;
-   mEW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
+   a_EW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
    double q, r, s;
-   double h = mEW->mGridSize[g];
+   double h = a_EW->mGridSize[g];
    double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
 // Cartesian case
    q = mX0/h+1;
    r = mY0/h+1;
-   s = (mZ0-mEW->m_zmin[g])/h+1;
+   s = (mZ0-a_EW->m_zmin[g])/h+1;
 
-   int Ni = mEW->m_global_nx[g];
-   int Nj = mEW->m_global_ny[g];
-   int Nz = mEW->m_global_nz[g];
+   int Ni = a_EW->m_global_nx[g];
+   int Nj = a_EW->m_global_ny[g];
+   int Nz = a_EW->m_global_nz[g];
 
    int ic = static_cast<int>(floor(q));
    int jc = static_cast<int>(floor(r));
@@ -404,7 +404,7 @@ void Source::set_grid_point_sources4( vector<GridPointSource*>& point_sources )
 	    {
 	       double wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
 	       if( (wF*mAmp != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-		   && mEW->point_in_proc(i,j,g) )
+		   && a_EW->point_in_proc(i,j,g) )
 	       {
 		  wF /= h*h*h;
 		  {
@@ -425,7 +425,7 @@ void Source::set_grid_point_sources4( vector<GridPointSource*>& point_sources )
 	    for( int i=ic-2 ; i <= ic+3 ; i++ )
 	    {
 	       double wFx=0, wFy=0, wFz=0;
-	       if( mEW->point_in_proc(i,j,g) ) 
+	       if( a_EW->point_in_proc(i,j,g) ) 
 	       {
 		  wFx += dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 		  wFy +=  wghi[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2];
@@ -517,26 +517,26 @@ void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], double momex[3]
 }
 
 //-----------------------------------------------------------------------
-void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
+void Source::set_grid_point_sources( EW *a_EW, vector<GridPointSource*>& point_sources )
 {
    int i,j,k,g;
-   mEW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
+   a_EW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
    double q, r, s;
-   double h = mEW->mGridSize[g];
+   double h = a_EW->mGridSize[g];
    bool canBeInverted, curvilinear;
 
-   if( g == mEW->mNumberOfGrids-1 && mEW->topographyExists() )
+   if( g == a_EW->mNumberOfGrids-1 && a_EW->topographyExists() )
    {
 // Curvilinear
-      canBeInverted = mEW->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
+      canBeInverted = a_EW->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
 // if s < 0, the source is located above the grid and the call to
 // find_curvilinear_derivatives_at_point will fail
       if (canBeInverted && s<0.)
       {
 	double xTop, yTop, zTop;
-	mEW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
+	a_EW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
 	double lat, lon;
-	mEW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
+	a_EW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
 	printf("Found a source above the curvilinear grid! Lat=%e, Lon=%e, source Z-level = %e, grid boundary Z = %e\n", lat, lon, mZ0, zTop);
 		
 	MPI_Abort(MPI_COMM_WORLD,1);
@@ -549,17 +549,17 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 // Cartesian case
       q = mX0/h+1;
       r = mY0/h+1;
-      s = (mZ0-mEW->m_zmin[g])/h+1;
+      s = (mZ0-a_EW->m_zmin[g])/h+1;
       canBeInverted = true;
       curvilinear   = false;
    }
    if( canBeInverted )
    {
 
-      int Ni = mEW->m_global_nx[g];
-      int Nj = mEW->m_global_ny[g];
-      int Nz = mEW->m_global_nz[g];
-//      int Nz = mEW->m_kEnd[g]- mEW->m_ghost_points;
+      int Ni = a_EW->m_global_nx[g];
+      int Nj = a_EW->m_global_ny[g];
+      int Nz = a_EW->m_global_nz[g];
+//      int Nz = a_EW->m_kEnd[g]- a_EW->m_ghost_points;
 
       int ic3 = static_cast<int>(round(q));
       int jc3 = static_cast<int>(round(r));
@@ -592,11 +592,11 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
       }
 
    // ccbndry : source on Cartesian/Curvliniear boundary
-      bool ccbndry  =  (upperbndry && g == mEW->mNumberOfGrids-2 && mEW->topographyExists()) ||
-	 (lowerbndry && g == mEW->mNumberOfGrids-1 && mEW->topographyExists());
+      bool ccbndry  =  (upperbndry && g == a_EW->mNumberOfGrids-2 && a_EW->topographyExists()) ||
+	 (lowerbndry && g == a_EW->mNumberOfGrids-1 && a_EW->topographyExists());
 
    // refbndry : source on Cartesian/Cartesian grid refinement bndry
-      bool refbndry = (upperbndry && g < mEW->mNumberOfGrids-1 && !ccbndry) ||
+      bool refbndry = (upperbndry && g < a_EW->mNumberOfGrids-1 && !ccbndry) ||
 	 (lowerbndry && g>0 && !ccbndry );
    
       if( !refbndry && !ccbndry )
@@ -628,15 +628,15 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 	       wghk[1] = (1-ci*ci);
 	       wghk[2] = 0.5*(ci*ci+ci);
 	       for( int k= kc3-1 ; k<= kc3+1 ; k++ )
-		  distribute_source_xyplane( point_sources, g, k, wghk[k-kc3+1] );
+		 distribute_source_xyplane( a_EW, point_sources, g, k, wghk[k-kc3+1] );
 	       if( kc3 == 2 )
 	       {
-//		  int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
-		 int Nzp = mEW->m_global_nz[g+1];
-		 distribute_source_xyplane( point_sources, g+1, Nzp, wghk[0] );
+//		  int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
+		 int Nzp = a_EW->m_global_nz[g+1];
+		 distribute_source_xyplane( a_EW, point_sources, g+1, Nzp, wghk[0] );
 	       }
 	       if( kc3 == Nz-1 )
-		  distribute_source_xyplane( point_sources, g-1, 1, wghk[2] );
+		 distribute_source_xyplane( a_EW, point_sources, g-1, 1, wghk[2] );
 	    }
 	    else if( kc3 == 1 )
 	    {
@@ -644,11 +644,11 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 	       wghk[1] = (1+ci-2*ci*ci);
 	       wghk[2] = (ci*ci*4+ci*2)/6;
 	       for( int k= 1 ; k<= 2 ; k++ )
-		  distribute_source_xyplane( point_sources, g, k, wghk[k] );
-//	       int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
-	       int Nzp = mEW->m_global_nz[g+1];
+		 distribute_source_xyplane( a_EW, point_sources, g, k, wghk[k] );
+//	       int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
+	       int Nzp = a_EW->m_global_nz[g+1];
 	       for( int k= Nzp-1 ; k<= Nzp ; k++ )
-		  distribute_source_xyplane( point_sources, g+1, k, wghk[k-Nzp+1] );
+		 distribute_source_xyplane( a_EW, point_sources, g+1, k, wghk[k-Nzp+1] );
 	    }
 	    else if( kc3 == Nz )
 	    {
@@ -656,10 +656,10 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 	       wghk[1] = (1-0.5*ci*ci+0.5*ci);
 	       wghk[2] = (ci*ci+ci)/6;
 	       for( int k= Nz-1 ; k<= Nz ; k++ )
-		  distribute_source_xyplane( point_sources, g, k, wghk[k-Nz+1] );
+		 distribute_source_xyplane( a_EW, point_sources, g, k, wghk[k-Nz+1] );
 	       //	       wghk[1] = wghk[1]/2;
 	       for( int k= 1 ; k<= 2 ; k++ )
-		  distribute_source_xyplane( point_sources, g-1, k, wghk[k] );
+		 distribute_source_xyplane( a_EW, point_sources, g-1, k, wghk[k] );
 	    }
 	 }
 	 else
@@ -689,11 +689,11 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
                wgz = 0;
 	       dwgz = dwghk[3]*2;
-	       distribute_source_xyplane_mom( point_sources, g-1, 1, wgz, dwgz );
+	       distribute_source_xyplane_mom( a_EW, point_sources, g-1, 1, wgz, dwgz );
 	    }
             else if( kc3 == Nz-1 && kc4 == Nz-2 )
 	    {
@@ -712,11 +712,11 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
                wgz = wghk[2];
 	       dwgz = dwghk[3]*2;
-	       distribute_source_xyplane_mom( point_sources, g-1, 1, wgz, dwgz );
+	       distribute_source_xyplane_mom( a_EW, point_sources, g-1, 1, wgz, dwgz );
 	    }
             else if( kc3 == Nz-1 && kc4 == Nz-1 )
 	    {
@@ -735,14 +735,14 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
                wgz = wghk[2];               
 	       dwgz = dwghk[2]*2;
-	       distribute_source_xyplane_mom( point_sources, g-1, 1, wgz, dwgz );
+	       distribute_source_xyplane_mom( a_EW, point_sources, g-1, 1, wgz, dwgz );
                wgz = 0;
 	       dwgz = dwghk[3];
-	       distribute_source_xyplane_mom( point_sources, g-1, 2, wgz, dwgz );
+	       distribute_source_xyplane_mom( a_EW, point_sources, g-1, 2, wgz, dwgz );
 	    }
             else if( kc3 == Nz && kc4 == Nz-1 )
 	    {
@@ -761,14 +761,14 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
                wgz = wghk[1];               
 	       dwgz = dwghk[2]*2;
-	       distribute_source_xyplane_mom( point_sources, g-1, 1, wgz, dwgz );
+	       distribute_source_xyplane_mom( a_EW, point_sources, g-1, 1, wgz, dwgz );
                wgz = wghk[2];
 	       dwgz = dwghk[3];
-	       distribute_source_xyplane_mom( point_sources, g-1, 2, wgz, dwgz );
+	       distribute_source_xyplane_mom( a_EW, point_sources, g-1, 2, wgz, dwgz );
 
 	    }
             else if( kc3 == 1 && kc4 == 1 )
@@ -789,16 +789,16 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
-//	       int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
-	       int Nzp = mEW->m_global_nz[g+1];
+//	       int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
+	       int Nzp = a_EW->m_global_nz[g+1];
                wgz  = wghk[0];
 	       dwgz = dwghk[0];
-               distribute_source_xyplane_mom( point_sources, g+1, Nzp-1, wgz, dwgz );
+               distribute_source_xyplane_mom( a_EW, point_sources, g+1, Nzp-1, wgz, dwgz );
                wgz  = wghk[1];
 	       dwgz = dwghk[1]/2;
-               distribute_source_xyplane_mom( point_sources, g+1, Nzp, wgz, dwgz );
+               distribute_source_xyplane_mom( a_EW, point_sources, g+1, Nzp, wgz, dwgz );
 	    }
             else if( kc3 == 2 && kc4 == 1 )
 	    {
@@ -818,16 +818,16 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
-//	       int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
-	       int Nzp = mEW->m_global_nz[g+1];
+//	       int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
+	       int Nzp = a_EW->m_global_nz[g+1];
                wgz  = 0;
 	       dwgz = dwghk[0];
-               distribute_source_xyplane_mom( point_sources, g+1, Nzp-1, wgz, dwgz );
+               distribute_source_xyplane_mom( a_EW, point_sources, g+1, Nzp-1, wgz, dwgz );
                wgz  = wghk[0];
 	       dwgz = dwghk[1]/2;
-               distribute_source_xyplane_mom( point_sources, g+1, Nzp, wgz, dwgz );
+               distribute_source_xyplane_mom( a_EW, point_sources, g+1, Nzp, wgz, dwgz );
 	    }
             else if( kc3 == 2 && kc4 == 2 )
 	    {
@@ -846,13 +846,13 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
-//	       int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
-	       int Nzp = mEW->m_global_nz[g+1];
+//	       int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
+	       int Nzp = a_EW->m_global_nz[g+1];
                wgz  = wghk[0];
 	       dwgz = dwghk[0]/2;
-               distribute_source_xyplane_mom( point_sources, g+1, Nzp, wgz, dwgz );
+               distribute_source_xyplane_mom( a_EW, point_sources, g+1, Nzp, wgz, dwgz );
 
 	    }
             else if( kc3 == 3 && kc4 == 2 )
@@ -872,13 +872,13 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		  else
 		     wgz = 0;
 		  dwgz = dwghk[k-kc4+1];
-                  distribute_source_xyplane_mom( point_sources, g, k, wgz, dwgz );
+                  distribute_source_xyplane_mom( a_EW, point_sources, g, k, wgz, dwgz );
 	       }
-//	       int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
-	       int Nzp = mEW->m_global_nz[g+1];
+//	       int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
+	       int Nzp = a_EW->m_global_nz[g+1];
                wgz  = 0;
 	       dwgz = dwghk[0]/2;
-               distribute_source_xyplane_mom( point_sources, g+1, Nzp, wgz, dwgz );
+               distribute_source_xyplane_mom( a_EW, point_sources, g+1, Nzp, wgz, dwgz );
 	    }
 	    else
 	    {
@@ -921,10 +921,10 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 			double wF = wghi[i-ic3+1]*wghj[j-jc3+1]*wghk[k-kc3+1];
 
 			if( (wF*mAmp != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-			    && mEW->point_in_proc(i,j,g) )
+			    && a_EW->point_in_proc(i,j,g) )
 			{
 			   if( curvilinear )
-			      wF /= mEW->mJ(i,j,k);
+			      wF /= a_EW->mJ(i,j,k);
 			   else
 			      wF /= h*h*h;
 
@@ -939,8 +939,8 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 			   }
 			   if( k <= 1 && ccbndry && upperbndry )
 			   {
-			     int Nzp = mEW->m_global_nz[g+1];
-//			      int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
+			     int Nzp = a_EW->m_global_nz[g+1];
+//			      int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
 			      int kk = Nzp - 1 + k;
 			      GridPointSource* sourcePtr = new GridPointSource(
 							     mAmp*wF, mFreq, mT0,
@@ -984,7 +984,7 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 	    double qX0[3], rX0[3], sX0[3];// qX0[0] = dq/dx, qX0[1] = dq/dy, qX0[2] = dq/dz, etc
             if( curvilinear )
 	    {
-	       //	      if (!mEW->find_curvilinear_derivatives_at_point( q, r, s, qX0, rX0, sX0 ))
+	       //	      if (!a_EW->find_curvilinear_derivatives_at_point( q, r, s, qX0, rX0, sX0 ))
 	       //	      {
 	       //		 cout << "Unable to obtain derivatives of the curvilinear grid for source:" << endl << *this << endl;
 	       //		 MPI_Abort(MPI_COMM_WORLD,1);
@@ -1048,9 +1048,9 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		 for( int j=jc3-2; j <= jc3+2 ; j++ )
 		    for( int i=ic3-2; i <= ic3+2 ; i++ )
 		    {
-		       zq += d4cofi[i-(ic3-2)]*a4cofj[j-(jc3-2)]*a4cofk[k-(kc3p-2)]*mEW->mZ(i,j,k);
-		       zr += a4cofi[i-(ic3-2)]*d4cofj[j-(jc3-2)]*a4cofk[k-(kc3p-2)]*mEW->mZ(i,j,k);
-		       zs += a4cofi[i-(ic3-2)]*a4cofj[j-(jc3-2)]*d4cofk[k-(kc3p-2)]*mEW->mZ(i,j,k);
+		       zq += d4cofi[i-(ic3-2)]*a4cofj[j-(jc3-2)]*a4cofk[k-(kc3p-2)]*a_EW->mZ(i,j,k);
+		       zr += a4cofi[i-(ic3-2)]*d4cofj[j-(jc3-2)]*a4cofk[k-(kc3p-2)]*a_EW->mZ(i,j,k);
+		       zs += a4cofi[i-(ic3-2)]*a4cofj[j-(jc3-2)]*d4cofk[k-(kc3p-2)]*a_EW->mZ(i,j,k);
 		    }
 	      qX0[0] = 1/h;
 	      qX0[1] = 0;
@@ -1081,7 +1081,7 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 		     double wFx=0, wFy=0, wFz=0;
 // Note that point_in_proc can not happen sooner because a Moment source gets distributed over a 4x4x4 stencil, so some 
 // points might be on a neighboring processor
-		     if( mEW->point_in_proc(i,j,g) ) 
+		     if( a_EW->point_in_proc(i,j,g) ) 
 		     {
 			if( 0 <= j-jc3+1 && j-jc3+1 <= 2 && 0 <= k-kc3+1 && k-kc3+1 <= 2 )
 			{
@@ -1103,7 +1103,7 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 			}
 			double jaci;
 			if( curvilinear )
-			   jaci = 1.0/mEW->mJ(i,j,k);
+			   jaci = 1.0/a_EW->mJ(i,j,k);
 			else
 			   jaci = 1.0/(h*h*h);
 
@@ -1121,8 +1121,8 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 			   }
 			   if( k <= 1 && ccbndry && upperbndry )
 			   {
-			     int Nzp = mEW->m_global_nz[g+1];
-//			      int Nzp = mEW->m_kEnd[g+1]- mEW->m_ghost_points;
+			     int Nzp = a_EW->m_global_nz[g+1];
+//			      int Nzp = a_EW->m_kEnd[g+1]- a_EW->m_ghost_points;
 			      int kk = Nzp - 1 + k;
 			      GridPointSource* sourcePtr = new GridPointSource( mAmp, mFreq, mT0, i, j, kk, g+1, 
 							      fx, fy, fz, mTimeDependence, mNcyc );
@@ -1150,10 +1150,10 @@ void Source::set_grid_point_sources( vector<GridPointSource*>& point_sources )
 	 //            int k0= point_sources[s]->m_k0;
 	 //	    if( curvilinear )
 	 //	    {
-	 //	       jac = mEW->mJ(i0,j0,k0);
-	 //               x   = mEW->mX(i0,j0,k0);
-	 //               y   = mEW->mY(i0,j0,k0);
-	 //               z   = mEW->mZ(i0,j0,k0);
+	 //	       jac = a_EW->mJ(i0,j0,k0);
+	 //               x   = a_EW->mX(i0,j0,k0);
+	 //               y   = a_EW->mY(i0,j0,k0);
+	 //               z   = a_EW->mZ(i0,j0,k0);
 	 //	    }
 	 //	    else
 	 //	    {
@@ -1299,15 +1299,15 @@ double Source::find_min_exponent()
 }
 
 //-----------------------------------------------------------------------
-void Source::distribute_source_xyplane( vector<GridPointSource*>& point_sources, 
+void Source::distribute_source_xyplane( EW *a_EW, vector<GridPointSource*>& point_sources, 
 				        int g, int k, double wghz )
 {
-   int Ni = mEW->m_global_nx[g];
-   int Nj = mEW->m_global_ny[g];
-   int Nz = mEW->m_global_nz[g];
-//   int Nz = mEW->m_kEnd[g]- mEW->m_ghost_points;
+   int Ni = a_EW->m_global_nx[g];
+   int Nj = a_EW->m_global_ny[g];
+   int Nz = a_EW->m_global_nz[g];
+//   int Nz = a_EW->m_kEnd[g]- a_EW->m_ghost_points;
 
-   double h = mEW->mGridSize[g];
+   double h = a_EW->mGridSize[g];
    double q = mX0/h+1;
    double r = mY0/h+1;
 
@@ -1336,7 +1336,7 @@ void Source::distribute_source_xyplane( vector<GridPointSource*>& point_sources,
       {
 	 double wF = wghi[i-ic3+1]*wghj[j-jc3+1]*wghz;
 	 if( (wF*mAmp != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-	     && mEW->point_in_proc(i,j,g) )
+	     && a_EW->point_in_proc(i,j,g) )
 	 {
             wF /= h*h*h;
 	    if( 1 <= k && k <= Nz )
@@ -1353,15 +1353,15 @@ void Source::distribute_source_xyplane( vector<GridPointSource*>& point_sources,
 }       
 
 //-----------------------------------------------------------------------
-void Source::distribute_source_xyplane_mom( vector<GridPointSource*>& point_sources,
+void Source::distribute_source_xyplane_mom( EW *a_EW, vector<GridPointSource*>& point_sources,
 					    int g, int k, double wghz, double dwghz )
 {
-   int Ni = mEW->m_global_nx[g];
-   int Nj = mEW->m_global_ny[g];
-   int Nz = mEW->m_global_nz[g];
-//   int Nz = mEW->m_kEnd[g]- mEW->m_ghost_points;
+   int Ni = a_EW->m_global_nx[g];
+   int Nj = a_EW->m_global_ny[g];
+   int Nz = a_EW->m_global_nz[g];
+//   int Nz = a_EW->m_kEnd[g]- a_EW->m_ghost_points;
 
-   double h = mEW->mGridSize[g];
+   double h = a_EW->mGridSize[g];
    double q = mX0/h+1;
    double r = mY0/h+1;
 
@@ -1413,7 +1413,7 @@ void Source::distribute_source_xyplane_mom( vector<GridPointSource*>& point_sour
       for( int i=ic4-1 ; i <= ic4+2 ; i++ )
       {
 	 double wFx=0, wFy=0, wFz=0;
-	 if( mEW->point_in_proc(i,j,g) ) 
+	 if( a_EW->point_in_proc(i,j,g) ) 
 	 {
 	    if( 0 <= j-jc3+1 && j-jc3+1 <= 2  )
 	    {

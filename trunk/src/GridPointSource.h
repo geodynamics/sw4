@@ -8,15 +8,13 @@
 #include "TimeDep.h"
 #include "Source.h"
 
-class EW;
-
 class GridPointSource
 {
    friend std::ostream& operator<<(std::ostream& output, const GridPointSource& s);
 public:
 
   GridPointSource(double amplitude, double frequency, double t0,
-		  int N, int M, int L,int g,
+		  int i0, int j0, int k0, int g,
 		  double Fx, double Fy, double Fz,
 		  timeDep tDep, int ncyc );
 
@@ -26,8 +24,6 @@ public:
   int m_grid;
 
   void getFxyz( double t, double* fxyz ) const;
-
-  void limitFrequency(double max_freq);
 
   // evaluate time fcn: RENAME to evalTimeFunc
   double getTimeFunc(double t) const;

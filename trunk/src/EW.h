@@ -30,14 +30,14 @@ using namespace std;
 class EW 
 {
 public:
-EW(const string& name);
+EW(const string& name, vector<Source*> & a_GlobalUniqueSources);
 ~EW();
 bool wasParsingSuccessful();
 bool isInitialized();
 
 void set_output_options( bool output_load, bool output_detailed_timing );
 void setGMTOutput(string filename, string wppfilename);
-void getGMTOutput();
+void getGMTOutput( vector<Source*> & a_GlobalUniqueSources );
 void allocateCartesianSolverArrays(double a_global_zmax);
 void setGoalTime(double t);
 //double getCurrentTime(){return mTime;}
@@ -46,9 +46,9 @@ void setAttenuationParams(int numberOfMechanisms, double velocityOmega, int ppw,
 
 void setNumberSteps(int steps);
 int getNumberOfSteps() const;
-void setupRun();
-void solve();
-bool parseInputFile();
+void setupRun( vector<Source*> & a_GlobalUniqueSources );
+void solve( vector<Source*> & a_GlobalUniqueSources );
+bool parseInputFile( vector<Source*> & a_GlobalUniqueSources );
 // some (all?) of these functions are called from parseInputFile() and should be made private
 void badOption(string name, char* option) const;
 void processGrid(char* buffer);
@@ -60,7 +60,7 @@ void processTwilight(char* buffer);
 void processFileIO(char* buffer);
 void processImage(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
-void processSource(char* buffer);
+void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -159,8 +159,6 @@ double lookup_Vp(int materialID, double depth);
 // attenuation model
 double lookup_Qp(int materialID, double depth);
 double lookup_Qs(int materialID, double depth);
-
-void addGlobalSorceTerm(Source* termToAdd) { mGlobalUniqueSources.push_back(termToAdd); }
 
 void tune_supergrid_damping(double thickness);
 void tune_supergrid_thickness(double thickness);
@@ -602,12 +600,6 @@ int mPrintInterval;
 double mGeoAz;
 GeographicCoord mGeoCoord;
 double mMetersPerDegree;
-
-// all sources from the input file are stored in Source objects
-vector<Source*> mGlobalUniqueSources; 
-
-// the Source objects get discretized into GridPointSource objects
-vector<GridPointSource*> m_point_sources;
 
 // is this object ready for time-stepping?
 bool mParsingSuccessful, mIsInitialized;

@@ -25,7 +25,7 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun()
+void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 {
   double time_start = MPI_Wtime();
   if( mVerbose && proc_zero() )
@@ -341,8 +341,8 @@ void EW::setupRun()
     if (m_myRank == 0) cout << "Point sources not yet functional" << endl;
     return;
 // Correct source location for discrepancy between raw and smoothed topography
-    for( unsigned int i=0 ; i < mGlobalUniqueSources.size() ; i++ )
-      mGlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources which are above the topography
+    for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
+      a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources which are above the topography
 
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
      if (m_limit_source_freq)
@@ -350,16 +350,16 @@ void EW::setupRun()
        if (mVerbose && proc_zero() )
 	 printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
 
-       for( int s=0; s < mGlobalUniqueSources.size(); s++ ) 
-	 mGlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
+       for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	 a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
        
      } // end limit_source_freq
      
 // check how deep the sources go
      double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
-     for( int s=0; s < mGlobalUniqueSources.size(); s++ ) 
+     for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
      {
-       zSource = mGlobalUniqueSources[s]->getZ0( );
+       zSource = a_GlobalUniqueSources[s]->getZ0( );
        if (zSource > zMax)
 	 zMax = zSource;
        if (zSource < zMin)
@@ -379,9 +379,9 @@ void EW::setupRun()
 // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
        double dt0 = 0;
        double dt0loc, dt0max;
-       for( int s=0; s < mGlobalUniqueSources.size(); s++ ) 
+       for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
        {
-	 dt0loc = mGlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
+	 dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
 	 if( dt0loc > dt0 )
 	   dt0 = dt0loc;
        }
@@ -391,8 +391,8 @@ void EW::setupRun()
 // adjust t0
        if (dt0max > 0.)
        {
-	 for( int s=0; s < mGlobalUniqueSources.size(); s++ ) 
-	   mGlobalUniqueSources[s]->adjust_t0( dt0max );
+	 for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	   a_GlobalUniqueSources[s]->adjust_t0( dt0max );
 	 if ( proc_zero() )
 	   printf("*** Lowpass prefilter: t0 increased by %e in all source time functions\n", dt0max);
        }
@@ -404,42 +404,11 @@ void EW::setupRun()
        m_t0Shift = dt0max;
      }
 
-// Transfer source terms to each individual grid as point sources at grid points.
-     for( unsigned int i=0 ; i < mGlobalUniqueSources.size() ; i++ )
-       if (!mGlobalUniqueSources[i]->ignore())
-	 mGlobalUniqueSources[i]->set_grid_point_sources( m_point_sources );
-
-// can we do the prefiltering on the Source objects instead of the GridPointSource objects???       
-//      if (m_prefilter_sources)
-//      {
-// // 3. Replace the time function by a filtered one, represented by a (long) vector holding values at each time step   
-//        for( int s=0; s < m_point_sources.size(); s++ ) 
-// 	 m_point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt, mNumberOfTimeSteps, m_fc);
-
-// // tmp
-// //        if (proc_zero() && m_point_sources.size()>0)
-// //        {
-// // 	 printf("Saving one filtered discretized time function\n");
-	 
-// // 	 FILE *tf=fopen("g0.ext","w");
-// // 	 double t = mTstart;
-// // 	 double gt;
-// // 	 for (int i=beginCycle; i<=mNumberOfTimeSteps; i++)
-// // 	 {
-// // 	   gt = m_point_sources[0]->getTimeFunc(t);
-// // 	   fprintf(tf, "%e %.18e\n", t, gt);
-// // 	   t += mDt;
-// // 	 }
-// // 	 fclose(tf);
-// //        }
-       
-//      }
-
   } // end if m_forcing->use_input_sources(), i.e., not twilight
   
 
   if (proc_zero())
-    getGMTOutput();
+    getGMTOutput( a_GlobalUniqueSources );
 
 
 // // is the curvilinear grid ok?

@@ -115,7 +115,7 @@ void checked(const char* cmd)
 // should not be called after the initialization of the EW object is completed. 
 // Make all these functions private!
 //
-bool EW::parseInputFile()
+bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources )
 {
   char buffer[256];
   ifstream inputFile;
@@ -324,7 +324,7 @@ bool EW::parseInputFile()
        // else if (startswith("testlamb", buffer))
        //   processTestLamb(buffer);
     else if (startswith("source", buffer))
-      processSource(buffer);
+      processSource(buffer, a_GlobalUniqueSources);
 //    else if (startswith("block", buffer))
 //      processMaterialBlock(buffer);
 //    else if (startswith("efile", buffer))
@@ -3855,7 +3855,7 @@ void EW::processImage(char* buffer)
 // }
 
 
-void EW::processSource(char* buffer)
+void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 {
 
   Source* sourcePtr;
@@ -4231,7 +4231,8 @@ void EW::processSource(char* buffer)
 // relative depth?
       sourcePtr->set_z_is_relative_to_topography( topodepth );
       
-      addGlobalSorceTerm(sourcePtr);
+//      addGlobalSorceTerm(sourcePtr);
+      a_GlobalUniqueSources.push_back(sourcePtr);
     }
   else // point forcing
     {
@@ -4240,7 +4241,8 @@ void EW::processSource(char* buffer)
 // relative depth?
       sourcePtr->set_z_is_relative_to_topography( topodepth );
       //...and add it to the list of forcing terms
-      addGlobalSorceTerm(sourcePtr);
+//      addGlobalSorceTerm(sourcePtr);
+      a_GlobalUniqueSources.push_back(sourcePtr);
     }	  
 }
 

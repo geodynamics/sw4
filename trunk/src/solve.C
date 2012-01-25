@@ -35,7 +35,7 @@ void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, dou
 }
 
 //--------------------------------------------------------------------
-void EW::solve()
+void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 {
 // solution arrays
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
@@ -106,6 +106,14 @@ void EW::solve()
   }
 // done allocating solution arrays
    
+// the Source objects get discretized into GridPointSource objects
+  vector<GridPointSource*> point_sources;
+
+// Transfer source terms to each individual grid as point sources at grid points.
+     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
+       if (!a_GlobalUniqueSources[i]->ignore())
+	 a_GlobalUniqueSources[i]->set_grid_point_sources( this, point_sources );
+
   if( mVerbose && proc_zero() )
   {
     cout << endl << "***  Starting solve ***" << endl;
@@ -261,23 +269,23 @@ void EW::solve()
 //     if( m_forcing->use_input_sources() )
 //     {
 // // tmp
-// //      printf("There are %i point sources on proc # %i\n", m_point_sources.size(), m_myRank);
+// //      printf("There are %i point sources on proc # %i\n", point_sources.size(), m_myRank);
 
 // // assign interior forcing
 //         for( int g=0 ; g<mNumberOfGrids; g++ )
 //           F[g].set_to_zero();
 
-//        for( int s= 0 ; s < m_point_sources.size() ; s++ )
+//        for( int s= 0 ; s < point_sources.size() ; s++ )
 //        {
 // 	  //	  double rhoi = 1/mRho(sN,sM,sL);
 //           double fxyz[3];
-// 	  m_point_sources[s]->getFxyz(mTime,fxyz);
-//           int g = m_point_sources[s]->m_grid;
+// 	  point_sources[s]->getFxyz(mTime,fxyz);
+//           int g = point_sources[s]->m_grid;
 //           double rhoi = 1.0/(mRho[g].c_ptr()[ind[s]]);
 //           double* fp = F[g].c_ptr();
 // // tmp
 // //          printf("Source # %i proc # %i has index %i %i %i on grid %i, value = (%e, %e, %e)\n", s, m_myRank,
-// //                    m_point_sources[s]->m_i0, m_point_sources[s]->m_j0, m_point_sources[s]->m_k0, g,
+// //                    point_sources[s]->m_i0, point_sources[s]->m_j0, point_sources[s]->m_k0, g,
 // //                    fxyz[0]*rhoi, fxyz[1]*rhoi, fxyz[2]*rhoi );
 
 // // the treatment of rho used to be inconsistent between the Cartesian and curvilinear inner loop!

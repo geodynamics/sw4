@@ -95,8 +95,10 @@ main(int argc, char **argv)
 
   cout.precision(6);
   
+// Save the source description here
+  vector<Source*> GlobalSources; 
 // make a new simulation object by reading the input file 'fileName'
-  EW simulation(fileName);
+  EW simulation(fileName, GlobalSources);
 
   if (!simulation.wasParsingSuccessful())
   {
@@ -109,7 +111,7 @@ main(int argc, char **argv)
   else
   {
 // get the simulation object ready for time-stepping
-    simulation.setupRun();
+    simulation.setupRun( GlobalSources );
 
     if (!simulation.isInitialized())
     { 
@@ -128,7 +130,7 @@ main(int argc, char **argv)
 	     << simulation.getOutputPath() << endl;
       }
 // run the simulation
-      simulation.solve();
+      simulation.solve( GlobalSources );
 
       if( myRank == 0 )
       {
