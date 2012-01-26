@@ -461,6 +461,54 @@ string EW::bc_name( const boundaryConditionType bc ) const
 }
 
 //-----------------------------------------------------------------------
+bool EW::getDepth( double x, double y, double z, double & depth)
+{
+// get the depth below the free surface
+  bool success=false;
+  
+  if (!topographyExists())
+  {
+    depth = z;
+    success = true;
+  }
+  else
+  {
+// topography is not yet implemented
+//
+//     double zMinTilde;
+//     int gCurv = mNumberOfGrids - 1;
+//     double h = mGridSize[gCurv];
+//     double q = x/h + 1.0;
+//     double r = y/h + 1.0;
+
+// // define the depth for ghost points to equal the depth on the nearest boundary point
+//     double qMin = 1.0;
+//     double qMax = (double) m_global_nx[gCurv];
+//     double rMin = 1.0;
+//     double rMax = (double) m_global_ny[gCurv];
+
+//     if (q<qMin) q=qMin;
+//     if (q>qMax) q=qMax;
+//     if (r<rMin) r=rMin;
+//     if (r>rMax) r=rMax;
+
+// // evaluate elevation of topography on the grid (smoothed topo)
+//     success=true;
+//     if (!interpolate_topography(q, r, zMinTilde, true))
+    {
+      cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
+      // cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
+      // cerr << "Setting elevation of topography to ZERO" << endl;
+      success = false;
+//      zMinTilde = 0;
+      MPI_Abort(MPI_COMM_WORLD,1);
+    }
+//    depth = z-zMinTilde;
+  }
+  return success;
+}
+
+//-----------------------------------------------------------------------
 void EW::computeCartesianCoord(double &x, double &y, double &z,const GeographicCoord& g)
 {
    double lat = g.getLatitude();
@@ -707,6 +755,18 @@ bool EW::point_in_proc(int a_i, int a_j, int a_g)
 
    return retval; 
 }
+
+//-----------------------------------------------------------------------
+void EW::getGlobalBoundingBox(double bbox[6])
+{
+  bbox[0] = 0.;
+  bbox[1] = m_global_xmax;
+  bbox[2] = 0.;
+  bbox[3] = m_global_ymax;
+  bbox[4] = m_global_zmin;
+  bbox[5] = m_global_zmax;
+}
+
 
 //-----------------------------------------------------------------------
 void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )

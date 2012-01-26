@@ -30,11 +30,10 @@ else
 endif
 
 
-
 OBJ  = main.o EW.o Sarray.o GeographicCoord.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o
+       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o

@@ -28,6 +28,14 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 {
   double time_start = MPI_Wtime();
+
+// m_testing == true is one of the pointers to testing modes is assigned
+  m_testing = (m_twilight_forcing); // add other pointers to testing modes here
+
+// tmp
+  if (mVerbose && proc_zero() )
+    cout << " *** Testing = " << m_testing << endl;
+    
   if( mVerbose && proc_zero() )
   {
     cout << "  Using Bjorn's (fast) parallel" << " IO library" << endl;
@@ -60,17 +68,17 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   }
   
 
-// If no forcing case selected, use typical seismic set up.
-  if( !m_testing )
-  {
-    if (proc_zero())
-      cout << "ERROR: Only testing (twilight) is currently implemented" << endl;
-    return;
-//    m_source_forcing = new Forcing();
-  }
-  else
-  {
-  }
+// // If no forcing case selected, use typical seismic set up.
+//   if( !m_testing )
+//   {
+//     if (proc_zero())
+//       cout << "ERROR: Only testing (twilight) is currently implemented" << endl;
+//     return;
+// //    m_source_forcing = new Forcing();
+//   }
+//   else
+//   {
+//   }
   
 // Set boundary conditions, if not done in input file.
   if( !mbcsSet )
@@ -661,6 +669,12 @@ void EW::set_materials()
   } // end if !m_testing, i.e., not Twilight
   else if (m_twilight_forcing) 
   {
+// tmp
+    if (proc_zero())
+      cout << "******************************" << endl
+	   << " ASSIGNING TWILIGHT MATERIALS " << endl
+	   << "******************************" << endl;
+
 // For some forcings (such as twilight forcing) the material is set here.
       double xP, yP, zP;
       
@@ -693,18 +707,8 @@ void EW::set_materials()
 					    &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
 					    &amprho, &ampmu, &ampla, &h, &zmin );
 
-//           for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
-//             for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
-//               for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
-//                 {
-//                   xP = (i-1)*mGridSize[g];
-//                   yP = (j-1)*mGridSize[g];
-//                   zP = m_zmin[g] + (k-1)*mGridSize[g];
-                  
-// // what about Qp, Qs???
-//                   m_twilight_forcing->get_mtrl( xP, yP, zP, mRho[g](i,j,k), mMu[g](i,j,k), mLambda[g](i,j,k) );
-//                 }
-  // Need this for Energy testing, random material will not agree on processor boundaries.
+// Need to communicate across material boundaries
+// for Energy testing, random material will not agree on processor boundaries.
 	  communicate_array( mRho[g], g );
 	  communicate_array( mMu[g], g );
 	  communicate_array( mLambda[g], g );

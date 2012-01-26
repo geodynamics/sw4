@@ -36,46 +36,47 @@ void EW::check_materials()
   
   double mins[8],maxs[8];
 
-// confusing with variables and functions which have names which only differ in capitalization 
-  double localmin = localMin(mRho);
-  MPI_Allreduce(&localmin,&mins[0],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-  localmin = localMinVp();  
-  MPI_Allreduce(&localmin,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-  localmin = localMinVs();  
-  MPI_Allreduce(&localmin,&mins[2],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-  localmin = localMin(mMu);
-  MPI_Allreduce(&localmin,&mins[3],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-  localmin = localMin(mLambda);
-  MPI_Allreduce(&localmin,&mins[4],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+// confusing with variables and functions that have names which only differ in capitalization 
+  double lmin = localMin(mRho);
+  MPI_Allreduce(&lmin,&mins[0],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  lmin = localMinVp();  
+  MPI_Allreduce(&lmin,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  lmin = localMinVs();  
+  MPI_Allreduce(&lmin,&mins[2],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  lmin = localMin(mMu);
+  MPI_Allreduce(&lmin,&mins[3],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  lmin = localMin(mLambda);
+  MPI_Allreduce(&lmin,&mins[4],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
   
-  VERIFY2(mins[2] >= 0.0,
+  CHECK_INPUT(mins[2] >= 0.0,
           "Error: the material data has s velocities that are negative.");
-  localmin = localMinVpOverVs();  
-  MPI_Allreduce(&localmin,&mins[5],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
 
-  double localmax = localMax(mRho);
-  MPI_Allreduce(&localmax,&maxs[0],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-  localmax = localMaxVp();  
-  MPI_Allreduce(&localmax,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-  localmax = localMaxVs();  
-  MPI_Allreduce(&localmax,&maxs[2],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-  localmax = localMax(mMu);
-  MPI_Allreduce(&localmax,&maxs[3],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-  localmax = localMax(mLambda);
-  MPI_Allreduce(&localmax,&maxs[4],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-  localmax = localMaxVpOverVs();  
-  MPI_Allreduce(&localmax,&maxs[5],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  lmin = localMinVpOverVs();  
+  MPI_Allreduce(&lmin,&mins[5],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+
+  double lmax = localMax(mRho);
+  MPI_Allreduce(&lmax,&maxs[0],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  lmax = localMaxVp();  
+  MPI_Allreduce(&lmax,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  lmax = localMaxVs();  
+  MPI_Allreduce(&lmax,&maxs[2],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  lmax = localMax(mMu);
+  MPI_Allreduce(&lmax,&maxs[3],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  lmax = localMax(mLambda);
+  MPI_Allreduce(&lmax,&maxs[4],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  lmax = localMaxVpOverVs();  
+  MPI_Allreduce(&lmax,&maxs[5],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
 
   if( usingAttenuation() )
   {
-      localmin = localMin(mQs);
-      MPI_Allreduce(&localmin,&mins[6],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-      localmin = localMin(mQp);
-      MPI_Allreduce(&localmin,&mins[7],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-      localmax = localMax(mQs);
-      MPI_Allreduce(&localmax,&maxs[6],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-      localmax = localMax(mQp);
-      MPI_Allreduce(&localmax,&maxs[7],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+      lmin = localMin(mQs);
+      MPI_Allreduce(&lmin,&mins[6],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+      lmin = localMin(mQp);
+      MPI_Allreduce(&lmin,&mins[7],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+      lmax = localMax(mQs);
+      MPI_Allreduce(&lmax,&maxs[6],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+      lmax = localMax(mQp);
+      MPI_Allreduce(&lmax,&maxs[7],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
   }
   
   int myRank;
@@ -192,7 +193,7 @@ void EW::check_materials()
 //-----------------------------------------------------------------------
 double EW::localMin(std::vector<Sarray> & a_field) 
 {
-  double localmin = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
+  double lmin = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
@@ -202,22 +203,22 @@ double EW::localMin(std::vector<Sarray> & a_field)
             {      
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
-                  if (a_field[g](i,j,k) < localmin)
+                  if (a_field[g](i,j,k) < lmin)
                     {
-                      localmin = a_field[g](i,j,k);
+                      lmin = a_field[g](i,j,k);
                     }
                 }
             }
         }
     }
 
-  return localmin; 
+  return lmin; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMax(std::vector<Sarray> & a_field) 
 {
-  double localmax = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
+  double lmax = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
@@ -227,22 +228,22 @@ double EW::localMax(std::vector<Sarray> & a_field)
             {      
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
-                  if (a_field[g](i,j,k) > localmax)
+                  if (a_field[g](i,j,k) > lmax)
                     {
-                      localmax = a_field[g](i,j,k);
+                      lmax = a_field[g](i,j,k);
                     }
                 }
             }
         }
     }
 
-  return localmax; 
+  return lmax; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMinVp() 
 {
-  double localmin = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  double lmin = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
@@ -253,22 +254,22 @@ double EW::localMinVp()
             {      
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
-                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k)) < localmin)
+                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k)) < lmin)
                     {
-                      localmin = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k));
+                      lmin = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k));
                     }
                 }
             }
         }
     }
 
-  return localmin; 
+  return lmin; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMaxVp() 
 {
-  double localmax = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  double lmax = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
@@ -279,22 +280,22 @@ double EW::localMaxVp()
             {      
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
-                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k)) > localmax)
+                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k)) > lmax)
                     {
-                      localmax = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k));
+                      lmax = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k));
                     }
                 }
             }
         }
     }
 
-  return localmax; 
+  return lmax; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMinVs() 
 {
-  double localmin = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
+  double lmin = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
@@ -304,22 +305,22 @@ double EW::localMinVs()
             {      
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
-                  if (sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) < localmin)
+                  if (sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) < lmin)
                     {
-                      localmin = sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
+                      lmin = sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
                     }
                 }
             }
         }
     }
 
-  return localmin; 
+  return lmin; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMaxVs() 
 {
-  double localmax = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
+  double lmax = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
@@ -329,22 +330,22 @@ double EW::localMaxVs()
             {      
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
-                  if ( sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) > localmax)
+                  if ( sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) > lmax)
                     {
-                      localmax = sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
+                      lmax = sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
                     }
                 }
             }
         }
     }
 
-  return localmax; 
+  return lmax; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMinVpOverVs() 
 {
-  double localmin = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  double lmin = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]))/sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])
 									     /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
@@ -357,22 +358,22 @@ double EW::localMinVpOverVs()
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
 // Unneccessary to divided by rho in Vp and Vs because it cancels
-                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) < localmin)
+                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) < lmin)
                     {
-                      localmin = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
+                      lmin = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
                     }
                 }
             }
         }
     }
 
-  return localmin; 
+  return lmin; 
 }
 
 //-----------------------------------------------------------------------
 double EW::localMaxVpOverVs() 
 {
-  double localmax = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  double lmax = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]))/sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])
 									     /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
@@ -385,16 +386,16 @@ double EW::localMaxVpOverVs()
               for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
                 {
 // Unneccessary to divided by rho in Vp and Vs because it cancels
-                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) > localmax)
+                  if (sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k)) > lmax)
                     {
-                      localmax = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
+                      lmax = sqrt((2.*mMu[g](i,j,k)+mLambda[g](i,j,k))/mRho[g](i,j,k))/sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
                     }
                 }
             }
         }
     }
 
-  return localmax; 
+  return lmax; 
 }
 
 // the same routine is defined in EtreeFile.C, but in the class EtreeFile

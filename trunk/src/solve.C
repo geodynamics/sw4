@@ -168,10 +168,8 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 //     m_forcing->get_initial_data_Curvilinear( mX, mY, mZ, mTstart+mDt, Up[g] );
 //   }
   
-// // save any images for cycle = 0 (initial data) ?
-//   mTime += mDt; // need to increase time by dt to get the initial velocity computation right (uses Up and Um)
-//   update_images(beginCycle-1);
-//   mTime -= mDt; // reset mTime
+// save any images for cycle = 0 (initial data) ?
+    update_images( 0, t, U );
 
 // do some testing...
   // if ( proc_zero() )
@@ -359,8 +357,8 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 // periodically, print time stepping info to stdout
     printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
 
-// // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
-// // to compute a centered time derivative
+// Images have to be written before the solution arrays are cycled, because both Up and Um are needed
+// to compute a centered time derivative
     update_images( currentTimeStep, t, Up );
     
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.

@@ -7,6 +7,7 @@
 #include "nearlyEqual.h"
 #include "boundaryConditionTypes.h"
 #include "ForcingTwilight.h"
+#include "MaterialBlock.h"
 // #include "ForcingLamb.h"
 // #include "ForcingPointSource.h"
 // #include "ForcingEnergy.h"
@@ -119,6 +120,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources )
 {
   char buffer[256];
   ifstream inputFile;
+  int blockCount=0;
 
   MPI_Barrier(MPI_COMM_WORLD);
   double time_start = MPI_Wtime();
@@ -325,8 +327,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources )
        //   processTestLamb(buffer);
     else if (startswith("source", buffer))
       processSource(buffer, a_GlobalUniqueSources);
-//    else if (startswith("block", buffer))
-//      processMaterialBlock(buffer);
+    else if (startswith("block", buffer))
+      processMaterialBlock(buffer, blockCount);
 //    else if (startswith("efile", buffer))
 //    {
 // #ifndef ENABLE_ETREE
@@ -3711,11 +3713,12 @@ void EW::processImage(char* buffer)
 	mode = static_cast<Image::ImageMode>(atoi(token));
 	if (mode <= 0 || mode > 28)
 	{
-	  cerr << "Processing image command: " << "mode must be one of the following: " << endl << endl
-	       << "\t ux|uy|uz|rho|lambda|mu|p|s|div|curl|veldiv|velcurl " << endl
-	       << "\t lat|lon|hvelmax|vvelmax|topo|grid|uxerr|uyerr|uzerr " << endl
-	       << "\t fx|fy|fz|velmag|qs|qp|hvel " << endl << endl
-	       << "*not: " << token;
+	  cerr << "Processing image command: " << "mode must be one of the following: " << endl
+	       << "ux|uy|uz|rho|lambda|mu" << endl 
+//"|p|s|div|curl|veldiv|velcurl " << endl
+//	       << "lat|lon|hvelmax|vvelmax|topo|grid|uxerr|uyerr|uzerr " << endl
+//	       << "fx|fy|fz|velmag|qs|qp|hvel " << endl << endl
+	       << "*not: " << token << endl;
 	  
 	  MPI_Abort( MPI_COMM_WORLD, 1 );
 	}
@@ -3854,7 +3857,7 @@ void EW::processImage(char* buffer)
 //     return 1;
 // }
 
-
+//----------------------------------------------------------------------------
 void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 {
 
@@ -4246,3 +4249,219 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     }	  
 }
 
+//------------------------------------------------------------------------
+void EW::processMaterialBlock( char* buffer, int & blockCount )
+{
+  double vpgrad=0.0, vsgrad=0.0, rhograd=0.0;
+  bool x1set=false, x2set=false, y1set=false, y2set=false, 
+    z1set=false, z2set=false;
+
+  double x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
+  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
+  string name = "Block";
+
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("block", token) == 0,
+	      "ERROR: material block can be set by a block line, not: " << token);
+
+  string err = token;
+  err += " Error: ";
+
+  token = strtok(NULL, " \t");
+
+  double vp=-1, vs=-1, rho=-1, qp=-1, qs=-1, freq=1;
+  bool absDepth=false;
+
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+       if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+          break;
+       if (startswith("vp=", token) )
+      {
+         token += 3; // skip vp=
+         vp = atof(token);
+      }
+      else if (startswith("vs=", token) )
+      {
+         token += 3; // skip vs=
+         vs = atof(token);
+      }
+      else if (startswith("r=", token)) // superseded by rho=, but keep for backward compatibility
+      {
+         token += 2; // skip r=
+         rho = atof(token);
+      }
+      else if (startswith("rho=", token))
+      {
+         token += 4; // skip rho=
+         rho = atof(token);
+      }
+      else if (startswith("rhograd=", token))
+      {
+         token += 8; // skip rhograd=
+         rhograd = atof(token);
+      }
+      else if (startswith("vpgrad=", token))
+      {
+         token += 7; // skip vpgrad=
+         vpgrad = atof(token);
+      }
+      else if (startswith("vsgrad=", token))
+      {
+         token += 7; // skip vsgrad=
+         vsgrad = atof(token);
+      }
+      else if (startswith("Qs=", token) || startswith("qs=",token) )
+      {
+         token += 3; // skip qs=
+         qs = atof(token);
+      }
+      else if (startswith("Qp=", token) || startswith("qp=",token) )
+      {
+         token += 3; // skip qp=
+         qp = atof(token);
+      }
+//                         1234567890
+      else if (startswith("absdepth=", token) )
+      {
+	token += 9; // skip absdepth=
+	absDepth = (bool) atoi(token);
+      }
+      else if (startswith("x1=", token))
+      {
+         token += 3; // skip x1=
+         x1 = atof(token);
+         x1set = true;
+      }
+      else if (startswith("x2=", token))
+      {
+         token += 3; // skip x2=
+         x2 = atof(token);
+         x2set = true;
+      }
+      else if (startswith("y1=", token))
+      {
+         token += 3; // skip y1=
+         y1 = atof(token);
+         y1set = true;
+      }
+      else if (startswith("y2=", token))
+      {
+         token += 3; // skip y2=
+         y2 = atof(token);
+         y2set = true;
+      }
+      else if (startswith("z1=", token))
+      {
+         token += 3; // skip z1=
+         z1 = atof(token);
+         z1set = true;
+      }
+      else if (startswith("z2=", token))
+      {
+         token += 3; // skip z2=
+         z2 = atof(token);
+         z2set = true;
+      }
+      else
+      {
+         badOption("block", token);
+      }
+      token = strtok(NULL, " \t");
+    }
+  // End parsing...
+  
+  blockCount++;
+  stringstream blockname;
+  blockname << name << " " << blockCount;
+  name = blockname.str();
+
+  // Set up a block on wpp object.
+
+  if (x1set)
+  {
+     // CHECK_INPUT(x1 >= 0.,
+     // 	     err << "x1 is less than the minimum x, " 
+     // 	     << x1 << " < " << 0.);
+     CHECK_INPUT(x1 <= m_global_xmax,
+	     err << "x1 is greater than the maximum x, " 
+	     << x1 << " > " << m_global_xmax);
+  }
+  else
+    x1 = -m_global_xmax; //x1 = 0.;
+
+  if (x2set)
+  {
+     CHECK_INPUT(x2 >= 0.,
+             err << "x2 is less than the minimum x, " 
+             << x2 << " < " << 0.);
+     // CHECK_INPUT(x2 <= m_global_xmax,
+     //         err << "x2 is greater than the maximum x, " 
+     //         << x2 << " > " << m_global_xmax);
+  }
+  else
+    x2 = 2.*m_global_xmax;//x2 = m_global_xmax;
+
+  CHECK_INPUT( x2 >= x1, " (x1..x2), upper bound is smaller than lower bound");
+  
+  //--------------------------------------------------------
+  // Set j bounds, goes with Y in WPP
+  //--------------------------------------------------------
+  if (y1set)
+  {
+     // CHECK_INPUT(y1 >= 0.,
+     // 	     err << "y1 is less than the minimum y, " << y1 << " < " << 0.);
+
+     CHECK_INPUT(y1 <= m_global_ymax,
+		  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
+  }
+  else
+    y1 = -m_global_ymax;//y1 = 0.;
+      
+  if (y2set)
+  {
+     CHECK_INPUT(y2 >= 0.,
+	     err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
+  }
+  else
+    y2 = 2.*m_global_ymax;//y2 = m_global_ymax;
+
+  CHECK_INPUT( y2 >= y1, " (y1..y2), upper bound is smaller than lower bound");
+
+  if (z1set)
+  {
+    // CHECK_INPUT(topographyExists() || z1 >= 0.,
+    //         err << "z1 is less than the minimum z, " << z1 << " < " << 0.);
+    CHECK_INPUT(z1 <= m_global_zmax, 
+            err << "z1 is greater than the maximum z, " << z1 << " > " << m_global_zmax);
+  }
+  else
+    z1 = -m_global_zmax;//z1 = 0.;
+
+  if (z2set)
+  {
+    CHECK_INPUT(topographyExists() || z2 >= 0.,
+            err << "z2 is less than the minimum z, " << z2 << " < " << 0.);
+    // CHECK_INPUT(z2 <= m_global_zmax,
+    // 		err << "z2 is greater than the maximum z, " << z2 << " > " << m_global_zmax);
+  }
+  else
+    z2 = 2.*m_global_zmax;//z2 = m_global_zmax;
+
+  CHECK_INPUT( z2 >= z1, " (z1..z2), upper bound is smaller than lower bound");
+
+  if(getVerbosity() >=2 &&  m_myRank == 0 )
+     cout << name << " has bounds " << x1 << " " << x2 << " " << y1 << " "
+	  << y2 << " " << z1 << " " << z2 << endl;
+
+  CHECK_INPUT( vs > 0 && vp > 0 && rho > 0 , "Error in block " << name << " vp vs rho are   "
+	       << vs << " " << vp << " " << rho );
+
+  MaterialBlock* bl = new MaterialBlock( this ,rho, vs, vp, x1, x2, y1, y2, z1, z2, qs, qp, freq );
+  bl->set_gradients( rhograd, vsgrad, vpgrad );
+  bl->set_absoluteDepth( absDepth );
+  add_mtrl_block( bl );
+}

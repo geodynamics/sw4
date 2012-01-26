@@ -1,3 +1,4 @@
+//-*-c++-*-
 #ifndef MATERIALDATA_H
 #define MATERIALDATA_H
 

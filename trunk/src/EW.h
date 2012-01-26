@@ -61,6 +61,7 @@ void processFileIO(char* buffer);
 void processImage(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
+void processMaterialBlock( char* buffer, int & blockCount );
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -123,7 +124,7 @@ void create_output_directory();
 void initialize_image_files();
 void initialize_SAC_files();
 void addSAC(SAC s);
-//void addPointSource( Source* source );
+
 void update_SACs( int Nsteps );
 void update_images( int Nsteps, double time, vector<Sarray> & a_U );
 void print_execution_times( double times[7] );
@@ -136,7 +137,8 @@ const string& getOutputPath() { return mPath; };
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions
 
-void add_mtrl_block( MaterialData* md );
+void add_mtrl_block( MaterialData* md ){ m_mtrlblocks.push_back( md ); };
+
 
 void set_threshold_velocities(double vpmin, double vsmin);
 
@@ -345,7 +347,8 @@ double getGridAzimuth(){ return mGeoAz;};
 double getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
-    
+void getGlobalBoundingBox(double bbox[6]);
+
 //
 // VARIABLES BEYOND THIS POINT
 //
