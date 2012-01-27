@@ -389,12 +389,12 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
    {
       double errInf, errL2;
       //      cout << *mGlobalUniqueSources[0] << endl;
-      Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UX, Image::X, 1, true );
-      im->computeGridPtIndex();
-      im->allocatePlane();
-      im->computeImageQuantity(Up, 1);
-      string path=".";
-      im->writeImagePlane_2(1,path);
+      //      Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UX, Image::X, 1, true );
+      //      im->computeGridPtIndex();
+      //      im->allocatePlane();
+      //      im->computeImageQuantity(Up, 1);
+      //      string path=".";
+      //      im->writeImagePlane_2(1,path);
       
       normOfDifference( Up, U, errInf, errL2 );
       if ( proc_zero() )
