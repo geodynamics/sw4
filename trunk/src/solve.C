@@ -169,51 +169,54 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 //   }
   
 // save any images for cycle = 0 (initial data) ?
-    update_images( 0, t, U );
+  update_images( 0, t, U );
 
 // do some testing...
-  // if ( proc_zero() )
-  //   cout << "***Testing..." << endl;
-// tmp
-//   for(int g=0; g<mNumberOfGrids; g++)
-//   {
-//     printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
-//     for (int q=0; q<6; q++)
-//       printf(" os[%i]=%i", q, m_onesided[g][q]);
-//     printf("\n");
-//     printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
-//     for (int q=0; q<6; q++)
-//       printf(" bc[%i]=%i", q, m_bcType[g][q]);
-//     printf("\n");
-//   }
+  if (m_twilight_forcing)
+  {
+    if ( proc_zero() )
+      cout << "***Twilight Testing..." << endl;
+//      tmp
+    for(int g=0; g<mNumberOfGrids; g++)
+    {
+      printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
+      for (int q=0; q<6; q++)
+	printf(" os[%i]=%i", q, m_onesided[g][q]);
+      printf("\n");
+      printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
+      for (int q=0; q<6; q++)
+	printf(" bc[%i]=%i", q, m_bcType[g][q]);
+      printf("\n");
+    }
 
-// test accuracy of spatial approximation
-//   if ( proc_zero() )
-//     printf("\n Testing the accuracy of the spatial difference approximation\n");
-//   exactRhsTwilight(t, F);
-//   evalRHS( U, Up ); // save Lu in composite grid 'Up'
-// // evaluate and print errors
-//   double lowZ[3], interiorZ[3], highZ[3];
-//   bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
-//   if ( proc_zero() )
-//   {
-//     printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[0], lowZ[1], lowZ[2]);
-//     printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[0], interiorZ[1], interiorZ[2]);
-//     printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[0], highZ[1], highZ[2]);
-//   }
+//      test accuracy of spatial approximation
+    if ( proc_zero() )
+      printf("\n Testing the accuracy of the spatial difference approximation\n");
+    exactRhsTwilight(t, F);
+    evalRHS( U, Up ); // save Lu in composite grid 'Up'
+// evaluate and print errors
+    double lowZ[3], interiorZ[3], highZ[3];
+    bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
+    if ( proc_zero() )
+    {
+      printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[0], lowZ[1], lowZ[2]);
+      printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[0], interiorZ[1], interiorZ[2]);
+      printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[0], highZ[1], highZ[2]);
+    }
   
-// // c test accuracy of forcing
-//   evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
-//   exactForceTwilight( t, F );
-//   exactAccTwilight( t, Uacc ); // save Utt in Uacc
-//   test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
-//   if ( proc_zero() )
-//   {
-//     printf("Testing accuracy of rho*utt - L(u) = F\n");
-//     printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[0], lowZ[1], lowZ[2]);
-//     printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[0], interiorZ[1], interiorZ[2]);
-//     printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[0], highZ[1], highZ[2]);
-//   }
+// c test accuracy of forcing
+    evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
+    exactForceTwilight( t, F );
+    exactAccTwilight( t, Uacc ); // save Utt in Uacc
+    test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
+    if ( proc_zero() )
+    {
+      printf("Testing accuracy of rho*utt - L(u) = F\n");
+      printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[0], lowZ[1], lowZ[2]);
+      printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[0], interiorZ[1], interiorZ[2]);
+      printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[0], highZ[1], highZ[2]);
+    }
+  } // end m_twilight_forcing    
 
   if ( proc_zero() )
   {
