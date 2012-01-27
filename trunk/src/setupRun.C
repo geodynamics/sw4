@@ -66,19 +66,19 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     }
     cout << endl;
   }
-  
 
-// // If no forcing case selected, use typical seismic set up.
-//   if( !m_testing )
-//   {
-//     if (proc_zero())
-//       cout << "ERROR: Only testing (twilight) is currently implemented" << endl;
-//     return;
-// //    m_source_forcing = new Forcing();
-//   }
-//   else
-//   {
-//   }
+// If no forcing case selected, use typical seismic set up.
+  if( !m_twilight_forcing && !m_point_source_test )
+  {
+    if (proc_zero())
+      cout << "ERROR: Only testing (twilight) is currently implemented" << endl;
+    return;
+//    m_source_forcing = new Forcing();
+  }
+  else
+  {
+
+  }
   
 // Set boundary conditions, if not done in input file.
   if( !mbcsSet )
@@ -344,10 +344,27 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   if( mVerbose && proc_zero() )
     cout << "  Initialized Images" << endl;
 
-  if( !m_testing ) // i.e., not twilight or any other testing mode
+  if( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
   {
-    if (m_myRank == 0) cout << "Point sources not yet functional" << endl;
-    return;
+     if( m_point_source_test || m_lamb_test )
+	if( a_GlobalUniqueSources.size() != 1 && proc_zero() )
+	{
+	   cout << "Error: Point Source Test and Lamb Test must have one single source" << endl;
+	   cout << "       The number of defined sources is " << a_GlobalUniqueSources.size() << endl;
+	}
+     if( m_point_source_test )
+     {
+	if( proc_zero() && !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
+			     a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
+			     a_GlobalUniqueSources[0]->getName() == "Gaussian") )
+	{
+	   cout << "Error: Point Source Test can only have source types" <<
+	      " VerySmoothBump, SmoothWave, or Gaussian" << endl;
+	   cout << "  Input name is " << a_GlobalUniqueSources[0]->getName() << endl;
+
+	}
+     }
+         // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 // Correct source location for discrepancy between raw and smoothed topography
     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
       a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources which are above the topography
@@ -356,7 +373,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
      if (m_limit_source_freq)
      {
        if (mVerbose && proc_zero() )
-	 printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
+	  printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
 
        for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
 	 a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
@@ -377,13 +394,13 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
      MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
      MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
      if (mVerbose && proc_zero() )
-       printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
+	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
 
 // Modify the time functions if prefiltering is enabled
      if (m_prefilter_sources)
      {
-       if (mVerbose && proc_zero() )
-	 printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
+	if (mVerbose && proc_zero() )
+	   printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
 // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
        double dt0 = 0;
        double dt0loc, dt0max;
@@ -394,7 +411,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	   dt0 = dt0loc;
        }
 // compute global max over all processors
-       MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
 // adjust t0
        if (dt0max > 0.)
@@ -409,12 +426,14 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	 dt0max = 0.;
        }
 // need to remember the time shift so we can compensate for it when writing sac and image files
-       m_t0Shift = dt0max;
+	m_t0Shift = dt0max;
      }
 
-  } // end if m_forcing->use_input_sources(), i.e., not twilight
-  
-
+// Transfer source terms to each individual grid as point sources at grid points.
+//     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
+//       if (!a_GlobalUniqueSources[i]->ignore())
+//	 a_GlobalUniqueSources[i]->set_grid_point_sources4( m_point_sources );
+  }
   if (proc_zero())
     getGMTOutput( a_GlobalUniqueSources );
 
@@ -493,7 +512,7 @@ void EW::set_materials()
 {  
   int g;
   
-  if( !m_testing )
+  if( !m_twilight_forcing && !m_point_source_test )
   {
 // make sure all Nmat=m_number_material_surfaces material properties are defined
     
@@ -733,7 +752,15 @@ void EW::set_materials()
 //       }
       
   } // end material set by forcing mode (for testing)
-  
+  else if ( m_point_source_test )
+  {
+     for (g=0; g<mNumberOfCartesianGrids; g++)
+     {
+	mRho[g].set_value( m_point_source_test->m_rho );
+	mMu[g].set_value( m_point_source_test->m_mu );
+	mLambda[g].set_value( m_point_source_test->m_lambda );
+     }
+  }
   check_materials( );
 
 }

@@ -12,12 +12,17 @@
 #include "Sarray.h"
 #include "SAC.h"
 #include "Source.h"
+#include "GridPointSource.h"
 
 #include "Image.h"
 // #include "Image3D.h"
 
 #include "boundaryConditionTypes.h"
 #include "ForcingTwilight.h"
+#include "TestPointSource.h"
+#include "TestEnergy.h"
+#include "TestLamb.h"
+#include "TestRayleighWave.h"
 
 #include "MaterialData.h"
 // #include "EtreeFile.h"
@@ -60,6 +65,7 @@ void processTwilight(char* buffer);
 void processFileIO(char* buffer);
 void processImage(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
+void processTestPointSource(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
 
@@ -87,11 +93,12 @@ void default_bcs( boundaryConditionType bcs[6] );
 void set_twilight_forcing( ForcingTwilight* a_forcing );
 // perhaps these functions should be in the ForcingTwilight class? 
 // but how will they get access to the material properties and grid sizes?
-void exactSolTwilight(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE);
+void initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE);
+bool exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, Source& source );
 void exactRhsTwilight(double a_t, vector<Sarray> & a_F);
 void exactAccTwilight(double a_t, vector<Sarray> & a_Uacc);
-void exactForceTwilight(double a_t, vector<Sarray> & a_F);
-void exactForce_ttTwilight(double a_t, vector<Sarray> & a_F);
+void exactForce(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void exactForce_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
 
 void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
 void normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
@@ -116,8 +123,8 @@ void test_RhoUtt_Lu( vector<Sarray> & a_Uacc, vector<Sarray> & a_Lu, vector<Sarr
 
 void setRestartInfo(int fromCycle, int dumpInterval, const string& filePrefix);
 void computeDT();
-bool inTestSourceMode() { return mTestSource; }
-bool inTestLambMode() { return mTestLamb; }
+   //bool inTestSourceMode() { return mTestSource; }
+   //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
 int no_of_procs() const;
 void create_output_directory();
@@ -347,7 +354,24 @@ double getGridAzimuth(){ return mGeoAz;};
 double getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
+
+   // test point source
+void get_exact_point_source( Sarray& u, double t, int g, Source& source );
+double VerySmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
+double SmoothWave_x_T_Integral(double t, double R, double alpha, double beta);
+double Gaussian_x_T_Integral(double t, double R, double f, double alpha, double beta);
+double VSBTP(double Lim, double t);
+double SWTP(double Lim, double t);
+double d_VerySmoothBump_dt(double t, double R, double c);
+double d_SmoothWave_dt(double t, double R, double c);
+double d_Gaussian_dt(double t, double R, double c, double f);
+double VerySmoothBump(double t, double R, double c);
+double SmoothWave(double t, double R, double c);
+double Gaussian(double t, double R, double c,double f);
+
+
 void getGlobalBoundingBox(double bbox[6]);
+
 
 //
 // VARIABLES BEYOND THIS POINT
@@ -385,6 +409,11 @@ Sarray mJ; // Jacobian also needed by the Source class
 private:
 
 ForcingTwilight* m_twilight_forcing;
+TestPointSource* m_point_source_test;
+TestEnergy* m_energy_test;
+TestLamb* m_lamb_test;
+TestRayleighWave* m_rayleigh_wave_test;
+
 vector<MaterialData*> m_mtrlblocks;
 // index convention: [0]: low-x, [1]: high-x, [2]: low-y, [3]: high-y; [4]: low-z, [5]: high-z  
 boundaryConditionType mbcGlobalType[6]; // these are the boundary conditions for the global problem
@@ -538,9 +567,9 @@ int mNumberOfTimeSteps;
 // Test modes
 int m_update_boundary_function;
 
-bool mTestSource;
-bool mTestLamb;
-bool mTestingEnergy;
+   //bool mTestSource;
+   //bool mTestLamb;
+   //bool mTestingEnergy;
 int mOrder;
 double mCFL;
 

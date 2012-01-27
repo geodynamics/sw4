@@ -321,8 +321,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources )
        //   processEnergy(buffer);
        else if (startswith("twilight", buffer))
 	 processTwilight(buffer);
-       // else if (startswith("testpointsource", buffer))
-       //   processTestPointSource(buffer);
+       else if (startswith("testpointsource", buffer))
+	  processTestPointSource(buffer);
        // else if (startswith("testlamb", buffer))
        //   processTestLamb(buffer);
     else if (startswith("source", buffer))
@@ -1530,190 +1530,41 @@ void EW::processTwilight(char* buffer)
 //   mSimulation->setIO_method(use_mpiio, use_iotiming);
 // }
 
-// //-----------------------------------------------------------------------
-// void FileInput::processTestPointSource(char* buffer)
-// {
-//    char* token = strtok(buffer, " \t");
-//    CHECK_INPUT(strcmp("testpointsource", token) == 0, "ERROR: not a testpointsource line...: " << token);
-//    token = strtok(NULL, " \t");
+//-----------------------------------------------------------------------
+ void EW::processTestPointSource(char* buffer)
+ {
+    char* token = strtok(buffer, " \t");
+    CHECK_INPUT(strcmp("testpointsource", token) == 0, "ERROR: not a testpointsource line...: " << token);
+    token = strtok(NULL, " \t");
+    double cs = 1.0, rho=1.0, cp=sqrt(3.0);
+    while (token != NULL)
+    {
+       if (startswith("#", token) || startswith(" ", buffer))
+          break;
 
-//    double x0=0.0, y0=0.0, z0=0.0;
-//    double cs = 1.0, rho=1.0, cp=sqrt(3.0), fx=0.0, fy=0.0, fz=0.0; 
-//    double freq=1.0, f0=1.0, m0=1.0;
-//    double mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
-//    double t0 = 0.0;
-//    int isMomentType = -1;
-//    string name ="Ricker";
-//    string err = "TestPointSource error: ";
-//    string pointAndMomentErr = "Cannot set both a point source and moment tensor formulation";
-
-//    while (token != NULL)
-//    {
-//       if (startswith("#", token) || startswith(" ", buffer))
-//          break;
-
-//       if (startswith("m0=", token) )
-//       {
-// 	 token += 3; // skip m0=
-// 	 CHECK_INPUT(atof(token) >= 0.0, 
-// 		 err << "scalar moment term must be positive, not: " << token);
-// 	 m0 = atof(token);
-//       }
-//       else if (startswith("x=", token))
-//       {
-//          token += 2; // skip x=
-//          x0 = atof(token);
-//       }
-//       else if (startswith("y=", token))
-//       {
-//          token += 2; // skip y=
-//          y0 = atof(token);
-//       }
-//       else if (startswith("z=", token))
-//       {
-//          token += 2; // skip z=
-//          z0 = atof(token);
-//       }
-//       else if (startswith("cp=", token))
-//       {
-//          token += 3; 
-//          cp = atof(token);
-//       }
-//       else if (startswith("cs=", token))
-//       {
-//          token += 3; 
-//          cs = atof(token);
-//       }
-//       else if (startswith("rho=", token))
-//       {
-//          token += 4; 
-//          rho = atof(token);
-//       }
-//       else if (startswith("Mxx=", token) || startswith("mxx=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
-//          token += 4; // skip Mxx=
-//          mxx = atof(token);
-//          isMomentType = 1;
-//       }
-//       else if (startswith("Mxy=", token) || startswith("mxy=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
-//          token += 4; // skip Mxy=
-//          mxy = atof(token);
-// 	  isMomentType = 1;
-//       }
-//       else if (startswith("Mxz=", token) || startswith("mxz=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
-//          token += 4; // skip Mxz=
-//          mxz = atof(token);
-//          isMomentType = 1;
-//       }
-//       else if (startswith("Myy=", token) || startswith("myy=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
-//          token += 4; // skip Myy=
-//          myy = atof(token);
-//          isMomentType = 1;
-//       }
-//       else if (startswith("Myz=", token) || startswith("myz=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
-//          token += 4; // skip Myz=
-//          myz = atof(token);
-//          isMomentType = 1;
-//       }
-//       else if (startswith("Mzz=", token) || startswith("mzz=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
-//          token += 4; // skip Mzz=
-//          mzz = atof(token);
-//          isMomentType = 1;
-//       }
-//       else if (startswith("Fz=", token) || startswith("fz=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 1, err << pointAndMomentErr);
-//          token += 3; // skip Fz=
-//          fz = atof(token);
-//          isMomentType = 0;
-//       }
-//       else if (startswith("Fx=", token) || startswith("fx=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 1, err << pointAndMomentErr);
-//          token += 3; // skip Fx=
-//          fx = atof(token);
-//          isMomentType = 0;
-//       }
-//       else if (startswith("Fy=", token) || startswith("fy=", token))
-//       {
-//          CHECK_INPUT(isMomentType != 1, err << pointAndMomentErr);
-//          token += 3; // skip Fy=
-//          fy = atof(token);
-//          isMomentType = 0;
-//       }
-//       else if (startswith("t0=", token))
-//       {
-//          token += 3; // skip t0=
-//          t0 = atof(token);
-//       }
-//       else if (startswith("freq=", token))
-//       {
-//          token += 5; 
-//          freq = atof(token);
-//       }
-//       else if( startswith("f0=", token) )
-//       {
-//          CHECK_INPUT(isMomentType != 1,
-//                  err << "Cannot set force amplitude for moment tensor terms");
-//          token += 3;
-//          f0 = atof(token);
-//       }
-//       else if (startswith("type=", token))
-//       {
-//          token += 5;
-// 	 if( !strcmp(token,"SmoothWave") || !strcmp(token,"VerySmoothBump") || !strcmp(token,"Ricker") )
-// 	    name = token;
-//          else
-// 	    CHECK_INPUT( 0, "TestPointSource, only works with type=SmoothWave, VerySmoothBump, or Ricker, not " << token  );
-//       }
-//       else if( startswith("errorlog=",token) )
-//       {
-// 	 token += 9;
-// 	 bool errorlog = atoi(token)==1;
-// 	 if( errorlog )
-// 	    mSimulation->switch_on_error_log();
-//       }
-//       else
-//       {
-// 	 badOption("testpointsource", token);
-//       }
-//       token = strtok(NULL, " \t");
-//    }
-//    timeDep tdep;
-//    if( name == "VerySmoothBump" )
-//       tdep = iVerySmoothBump;
-//    else if( name == "SmoothWave" )
-//       tdep = iSmoothWave;
-//    else
-//       tdep = iRicker;
-   
-//    Source* source;
-//    int l = strlen(name.c_str());
-//    char* cname = new char[l+1];
-//    strcpy( cname, name.c_str() );
-//    if( isMomentType )
-//       source = new Source( mSimulation, m0, freq, t0, x0, y0, z0, 
-// 			   mxx, mxy, mxz, myy, myz, mzz,
-// 			   tdep, cname, 0 );
-//    else
-//       source = new Source( mSimulation, f0, freq, t0, x0, y0, z0, 
-// 			   fx, fy, fz,
-// 			   tdep, cname, 0 );
-//    delete[] cname;
-//    Forcing* pointsourceforcing = new ForcingPointSource( source, cp, cs, rho );
-//    mSimulation->set_forcing( pointsourceforcing );
-// }
+       if (startswith("cp=", token))
+       {
+          token += 3; 
+          cp = atof(token);
+       }
+       else if (startswith("cs=", token))
+       {
+          token += 3; 
+          cs = atof(token);
+       }
+       else if (startswith("rho=", token))
+       {
+          token += 4; 
+          rho = atof(token);
+       }
+       else
+       {
+ 	 badOption("testpointsource", token);
+       }
+       token = strtok(NULL, " \t");
+    }
+    m_point_source_test = new TestPointSource( rho, cs, cp );
+ }
 
 // //-----------------------------------------------------------------------
 // void FileInput::processTestLamb(char* buffer)

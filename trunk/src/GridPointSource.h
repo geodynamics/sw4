@@ -24,10 +24,11 @@ public:
   int m_grid;
 
   void getFxyz( double t, double* fxyz ) const;
+  void getFxyztt( double t, double* fxyz ) const;
 
   // evaluate time fcn: RENAME to evalTimeFunc
   double getTimeFunc(double t) const;
-
+  void limitFrequency(double max_freq);
   // discretize a time function at each time step and change the time function to be "Discrete()"
   void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, double fc);
 
@@ -42,6 +43,7 @@ public:
 
   timeDep mTimeDependence;
   double (*mTimeFunc)(double f, double t,double* par);
+  double (*mTimeFunc_tt)(double f, double t,double* par);
   double* mPar;
   int mNcyc;
   double m_min_exponent;

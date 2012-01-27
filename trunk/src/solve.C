@@ -132,26 +132,9 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
   int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
 
 // Assign initial data
-  int g; 
-  if (m_twilight_forcing)
-  {
-    exactSolTwilight(mTstart, U, AlphaVE);
-    exactSolTwilight(mTstart-mDt, Um, AlphaVEm);
-  }
-  else
-  {
-// homogeneous initial data is the default
-    for( g=0 ; g<mNumberOfGrids; g++ )
-    {
-      U[g].set_to_zero();
-      Um[g].set_to_zero();
-      for( int a=0 ; a < m_number_mechanisms ; a++ )
-      {
-	AlphaVEm[g][a].set_to_zero();
-	AlphaVE[g][a].set_to_zero();
-      }
-    }
-  }
+
+  initialData(mTstart, U, AlphaVE);
+  initialData(mTstart-mDt, Um, AlphaVEm );
   
   if ( mVerbose && proc_zero() )
     cout << "  Initial data has been assigned" << endl;
@@ -206,7 +189,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
   
 // c test accuracy of forcing
     evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
-    exactForceTwilight( t, F );
+    exactForce( t, F, point_sources );
     exactAccTwilight( t, Uacc ); // save Utt in Uacc
     test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
     if ( proc_zero() )
@@ -301,11 +284,9 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 //     {
 
 // twilight forcing...
-    if (m_twilight_forcing)
-    {
-      exactForceTwilight( t, F );
-    }
-    
+//    if (m_twilight_forcing)
+    exactForce( t, F, point_sources );
+      
 // evaluate right hand side
     evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
 
@@ -329,27 +310,24 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 // get 4th order in time
     if (mOrder == 4)
     {
-      if (m_twilight_forcing)
-      {
-	exactForce_ttTwilight( t, F );
-      }
+       exactForce_tt( t, F, point_sources );
       
-      evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
+       evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
       
-      evalRHS( Uacc, Lu );
+       evalRHS( Uacc, Lu );
 
-      evalCorrector( Up, Lu, F );
+       evalCorrector( Up, Lu, F );
       
-      time_measure[4] = MPI_Wtime();
+       time_measure[4] = MPI_Wtime();
 
 // also check out EW::update_all_boundaries 
 // communicate across processor boundaries
-      for(int g=0 ; g < mNumberOfGrids ; g++ )
-	communicate_array( Up[g], g );
+       for(int g=0 ; g < mNumberOfGrids ; g++ )
+	  communicate_array( Up[g], g );
 // calculate boundary forcing at time t+mDt
-      cartesian_bc_forcing( t+mDt, BCForcing );
+       cartesian_bc_forcing( t+mDt, BCForcing );
 // update ghost points in Up
-      enforceBC( Up, t+mDt, BCForcing );
+       enforceBC( Up, t+mDt, BCForcing );
     }
     
 // increment time
@@ -406,22 +384,27 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
    if( m_output_detailed_timing )
      print_execution_times( time_sum );
 
-   if (m_twilight_forcing)
-   {
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
-     exactSolTwilight( t, Up, AlphaVE);
-
-     double errInf, errL2;
-     normOfDifference( Up, U, errInf, errL2 );
-     if ( proc_zero() )
-       printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+   if( exactSol( t, Up, AlphaVE, *a_GlobalUniqueSources[0] ) )
+   {
+      double errInf, errL2;
+      //      cout << *mGlobalUniqueSources[0] << endl;
+      Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UX, Image::X, 1, true );
+      im->computeGridPtIndex();
+      im->allocatePlane();
+      im->computeImageQuantity(Up, 1);
+      string path=".";
+      im->writeImagePlane_2(1,path);
+      
+      normOfDifference( Up, U, errInf, errL2 );
+      if ( proc_zero() )
+	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
    }
-
-    finalizeIO();
-    cout.flush(); cerr.flush();
+   finalizeIO();
+   cout.flush(); cerr.flush();
 
 // why is this barrier needed???
-    MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(MPI_COMM_WORLD);
 
 //   if( m_forcing->knows_exact() )
 //      computeSolutionError(U, mTime, AlphaVE ); // note that final solution ends up in U after the call to cycleSolutionArrays()
@@ -786,17 +769,17 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 // no boundary forcing
 // we can do the same loop for all types of bc. For bParallel boundaries, numberOfBCPoints=0
       int q;
-      for (q=0; q<m_NumberOfBCPoints[g][0]; q++)
+      for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
 	bforce_side0_ptr[q] = 0.;
-      for (q=0; q<m_NumberOfBCPoints[g][1]; q++)
+      for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
 	bforce_side1_ptr[q] = 0.;
-      for (q=0; q<m_NumberOfBCPoints[g][2]; q++)
+      for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
 	bforce_side2_ptr[q] = 0.;
-      for (q=0; q<m_NumberOfBCPoints[g][3]; q++)
+      for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
 	bforce_side3_ptr[q] = 0.;
-      for (q=0; q<m_NumberOfBCPoints[g][4]; q++)
+      for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
 	bforce_side4_ptr[q] = 0.;
-      for (q=0; q<m_NumberOfBCPoints[g][5]; q++)
+      for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
 	bforce_side5_ptr[q] = 0.;
     }
   }

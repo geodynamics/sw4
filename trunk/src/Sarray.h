@@ -67,6 +67,7 @@ public:
    bool in_domain( int i, int j, int k );
    void set_to_zero();
    void set_to_minusOne();
+   void set_value( double scalar );
    void set_to_random( double llim =0.0, double ulim = 1.0 );
    int ncomp() const {return m_nc;}
    int npts() const  {return m_ni*m_nj*m_nk;}

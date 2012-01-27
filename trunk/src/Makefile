@@ -8,7 +8,7 @@ endif
 FC = gfortran
 CC = mpicc
 CXX = mpicxx
-linklibs = -llapack -lblas -framework vecLib
+linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
 
 # for atlas
 #FC = mpiifort
@@ -18,13 +18,13 @@ linklibs = -llapack -lblas -framework vecLib
 
 
 ifeq ($(optlevel),DEBUG)
-   FFLAGS    = -g -fno-underscoring
-#   FFLAGS    = -g
+#   FFLAGS    = -g -fno-underscoring
+   FFLAGS    = -g
    CXXFLAGS  = -g 
    CFLAGS = -g
 else
-   FFLAGS = -O3 -fno-underscoring
-#   FFLAGS = -O3
+#   FFLAGS = -O3 -fno-underscoring
+   FFLAGS = -O3
    CXXFLAGS = -O
    CFLAGS = -O
 endif

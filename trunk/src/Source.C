@@ -130,6 +130,41 @@ bool Source::isMomentSource() const
 }
 
 //-----------------------------------------------------------------------
+void Source::getForces( double& fx, double& fy, double& fz ) const
+{
+   if( !mIsMomentSource )
+   {
+      fx = mForces[0];
+      fy = mForces[1];
+      fz = mForces[2];
+   }
+   else
+      fx = fy = fz = 0;
+}
+
+//-----------------------------------------------------------------------
+void Source::getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const
+{
+   if( mIsMomentSource )
+   {
+      mxx = mForces[0];
+      mxy = mForces[1];
+      mxz = mForces[2];
+      myy = mForces[3];
+      myz = mForces[4];
+      mzz = mForces[5];
+   }
+   else
+      mxx = mxy = mxz = myy = myz = mzz = 0;
+}
+
+//-----------------------------------------------------------------------
+double Source::getAmplitude() const
+{
+   return mAmp;
+}
+
+//-----------------------------------------------------------------------
 ostream& operator<<( ostream& output, const Source& s )
 {
   output << s.mName << (s.isMomentSource()? " moment":" force") << " source term" << endl;

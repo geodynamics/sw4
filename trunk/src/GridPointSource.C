@@ -21,11 +21,32 @@ double VerySmoothBump(double freq, double t, double* par )
   return tmp;
 }
 
+double VerySmoothBump_tt(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = freq*freq*( - 1024*90*pow(t*freq,8) + 5120*72*pow(t*freq,7) - 10240*56*pow(t*freq,6) + 10240*42*pow(t*freq,5) - 5120*30*pow(t*freq,4) + 1024*20*pow(t*freq,3) );
+  return tmp;
+}
+
 double RickerWavelet(double freq, double t, double* par )
 {
   double factor = pow(M_PI*freq*t,2);
   if( -factor > par[0] )
     return (2*factor - 1)*exp(-factor);
+  else
+    return 0;
+}
+
+double RickerWavelet_tt(double freq, double t, double* par )
+{
+  double factor = pow(M_PI*freq*t,2);
+  if( -factor > par[0] )
+     return M_PI*M_PI*freq*freq*( 6-24*factor+8*factor*factor)*exp(-factor);
   else
     return 0;
 }
@@ -39,6 +60,15 @@ double RickerInt(double freq, double t, double* par )
     return 0;
 }
 
+double RickerInt_tt(double freq, double t, double* par )
+{
+  double factor = pow(M_PI*freq*t,2);
+  if( -factor > par[0] )
+     return M_PI*M_PI*freq*freq*t*(6-4*factor)*exp(-factor);
+  else
+    return 0;
+}
+
 double Gaussian(double freq, double t, double* par )
 {
   double factor=pow(t*freq,2) / 2;
@@ -48,9 +78,27 @@ double Gaussian(double freq, double t, double* par )
     return 0;
 }
 
+double Gaussian_tt(double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+     return freq / sqrt(2*M_PI)* freq*freq*(2*factor-1)*exp(-factor);
+  else
+    return 0;
+}
+
 double Erf( double freq, double t, double* par )
 {
   return 0.5*(1+erf( freq*t/sqrt(2.0)) );
+}
+
+double Erf_tt( double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+    return -freq / sqrt(2*M_PI)* freq*freq*t*exp(-factor);
+  else
+    return 0;
 }
 
 double Ramp(double freq, double t, double* par )
@@ -62,6 +110,19 @@ double Ramp(double freq, double t, double* par )
     tmp = 1.0;
   else
     tmp = 0.5*(1 - cos(M_PI*t*freq));
+  
+  return tmp;
+}
+
+double Ramp_tt(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+    tmp = 0.5*M_PI*M_PI*freq*freq*cos(M_PI*t*freq);
   
   return tmp;
 }
@@ -79,6 +140,21 @@ double Triangle(double freq, double t, double* par )
   return tmp; 
 }
 
+double Triangle_tt(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 2*freq*8./pow(M_PI,2)*(-M_PI*M_PI*freq*freq)*
+	( sin(M_PI*(t*freq)) - sin(3*M_PI*(t*freq)) + 
+          sin(5*M_PI*(t*freq)) - sin(7*M_PI*(t*freq)) );
+
+  return tmp; 
+}
+
 double Sawtooth(double freq, double t, double* par )
 {
   double tmp;
@@ -88,6 +164,21 @@ double Sawtooth(double freq, double t, double* par )
     tmp = 0.0;
   else
     tmp = 8./pow(M_PI,2)*(sin(M_PI*(2*t*freq)) - sin(3*M_PI*(2*t*freq))/9 + sin(5*M_PI*(2*t*freq))/25 - sin(7*M_PI*(2*t*freq))/49);
+
+  return tmp; 
+}
+
+double Sawtooth_tt(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 8./pow(M_PI,2)*(-M_PI*M_PI*2*2*freq*freq)*
+              (sin(M_PI*(2*t*freq)) - sin(3*M_PI*(2*t*freq)) +
+	       sin(5*M_PI*(2*t*freq)) - sin(7*M_PI*(2*t*freq)));
 
   return tmp; 
 }
@@ -106,6 +197,20 @@ double SmoothWave(double freq, double t, double* par )
   return tmp;
 }
 
+double SmoothWave_tt(double freq, double t, double* par )
+{
+  double c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = freq*freq*(c0*6*t*freq+c1*12*pow(t*freq,2)+c2*20*pow(t*freq,3)+c3*30*pow(t*freq,4)+c4*42*pow(t*freq,5));
+  
+  return tmp;
+}
+
 double Brune( double freq, double t, double* par )
 {
   const double tf = t*freq;
@@ -120,6 +225,20 @@ double Brune( double freq, double t, double* par )
     }
 }
 
+double Brune_tt( double freq, double t, double* par )
+{
+  const double tf = t*freq;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( -tf > par[0] )
+	 return freq*freq*(1-tf)*exp(-tf);
+      else
+	return 0;
+    }
+}
+
 double DBrune( double freq, double t, double* par )
 {
   const double tf = t*freq;
@@ -129,6 +248,20 @@ double DBrune( double freq, double t, double* par )
     {
       if( tf < -par[0] )
 	return tf*freq*exp(-tf);
+      else
+	return 0;
+    }
+}
+
+double DBrune_tt( double freq, double t, double* par )
+{
+  const double tf = t*freq;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( tf < -par[0] )
+	 return (tf-2)*freq*freq*freq*exp(-tf);
       else
 	return 0;
     }
@@ -153,6 +286,31 @@ double BruneSmoothed( double freq, double t, double* par )
     }
 }
 
+double BruneSmoothed_tt( double freq, double t, double* par )
+{
+  const double tf = t*freq;
+  const double h  = 2.31;
+  const double hi = 1/h;
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+  {
+     const double c3 = - 1.5*hi;
+     const double c4 = 1.5*hi*hi;
+     const double c5 = -0.5*hi*hi*hi;
+     return exp(-tf)*( freq*freq*( (1-6*c3)*tf+(-0.5+6*c3-12*c4)*tf*tf+(-c3+8*c4-20*c5)*tf*tf*tf+
+				   (-c4+10*c5)*tf*tf*tf*tf -c5*tf*tf*tf*tf*tf));
+				
+  }
+  else
+    {
+      if( -tf > par[0] )
+	return freq*freq*(1-tf)*exp(-tf);
+      else
+	return 0;
+    }
+}
+
 
 double GaussianWindow( double freq, double t, double* par )
 {
@@ -160,6 +318,17 @@ double GaussianWindow( double freq, double t, double* par )
   const double tf = t*freq;
   if( -0.5*tf*tf*incyc2  > par[0] )
     return sin(tf)*exp(-0.5*tf*tf*incyc2);
+  else
+    return 0;
+}
+
+double GaussianWindow_tt( double freq, double t, double* par )
+{
+  double incyc2 = 1/(par[1]*par[1]);
+  const double tf = t*freq;
+  if( -0.5*tf*tf*incyc2  > par[0] )
+     return ( (-freq*freq-freq*freq*incyc2+freq*freq*freq*freq*incyc2*incyc2)*sin(tf)-
+	      tf*2*freq*freq*incyc2*cos(tf) )*exp(-0.5*tf*tf*incyc2);
   else
     return 0;
 }
@@ -184,6 +353,29 @@ double Liu( double freq, double t, double* par )
 	 return cn*(1.0*t-0.3*tau1+1.2*tau1*ipi - 0.7*tau1*ipi*sin(M_PI*t/tau1)+0.3*tau2*ipi*sin(M_PI*(t-tau1)/tau2));
       else if( t <= tau )
 	 return cn*(0.3*t+1.1*tau1+1.2*tau1*ipi+0.3*tau2*ipi*sin(M_PI*(t-tau1)/tau2));
+   }
+   return 0.; // should never get here, but keeps compiler happy
+}
+
+double Liu_tt( double freq, double t, double* par )
+{
+   double tau = 2*M_PI/freq;
+   double tau1 = 0.13*tau;
+   double tau2 = tau-tau1;
+   if( t < 0 )
+      return 0;
+   else if( t >= tau )
+      return 0;
+   else
+   {
+      double ipi = 1.0/M_PI;
+      double cn = 1.0/(1.4*tau1+1.2*tau1*ipi + 0.3*tau2);
+      if( t <= tau1 )
+	 return cn*(0.7*M_PI*M_PI*ipi*sin(M_PI*t/tau1)+0.3*M_PI*M_PI*ipi*cos(0.5*M_PI*t/tau1))/tau1;
+      else if( t <= 2*tau1 )
+	 return cn*(0.7*M_PI*M_PI*ipi*sin(M_PI*t/tau1)/tau1-0.3*M_PI*M_PI*ipi*sin(M_PI*(t-tau1)/tau2)/tau2);
+      else if( t <= tau )
+	 return cn*(-0.3*M_PI*M_PI*ipi*sin(M_PI*(t-tau1)/tau2))/tau2;
    }
    return 0.; // should never get here, but keeps compiler happy
 }
@@ -283,52 +475,67 @@ void GridPointSource::initializeTimeFunction()
     {
     case iRicker :
       mTimeFunc = RickerWavelet;
+      mTimeFunc_tt = RickerWavelet_tt;
       break;
     case iGaussian :
       mTimeFunc = Gaussian;
+      mTimeFunc_tt = Gaussian_tt;
       break;
     case iRamp :
       mTimeFunc = Ramp;
+      mTimeFunc_tt = Ramp_tt;
       break;
     case iTriangle :
       mTimeFunc = Triangle;
+      mTimeFunc_tt = Triangle_tt;
       break;
     case iSawtooth :
       mTimeFunc = Sawtooth;
+      mTimeFunc_tt = Sawtooth_tt;
       break;
     case iSmoothWave :
       mTimeFunc = SmoothWave;
+      mTimeFunc_tt = SmoothWave_tt;
       break;
     case iErf :
       mTimeFunc = Erf;
+      mTimeFunc_tt = Erf_tt;
       break;
     case iVerySmoothBump :
       mTimeFunc = VerySmoothBump;
+      mTimeFunc_tt = VerySmoothBump_tt;
       break;
     case iRickerInt :
       mTimeFunc = RickerInt;
+      mTimeFunc_tt = RickerInt_tt;
       break;
     case iBrune :
       mTimeFunc = Brune;
+      mTimeFunc_tt = Brune_tt;
       break;
     case iBruneSmoothed :
       mTimeFunc = BruneSmoothed;
+      mTimeFunc_tt = BruneSmoothed_tt;
       break;
     case iDBrune :
       mTimeFunc = DBrune;
+      mTimeFunc_tt = DBrune_tt;
       break;
     case iGaussianWindow :
       //      if( mPar == NULL )
       //          mPar = new double[1];
       mPar[1] = mNcyc;
       mTimeFunc = GaussianWindow;
+      mTimeFunc_tt = GaussianWindow_tt;
       break;
     case iLiu :
        mTimeFunc = Liu;
+       mTimeFunc_tt = Liu_tt;
        break;
     default :
       std::cout << "erroneous argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
       mTimeFunc = RickerWavelet;
+      mTimeFunc_tt = RickerWavelet_tt;
     }
 }
 
@@ -338,6 +545,20 @@ void GridPointSource::getFxyz( double t, double* fxyz ) const
   fxyz[0] = mForces[0]*afun;
   fxyz[1] = mForces[1]*afun;
   fxyz[2] = mForces[2]*afun;
+}
+
+void GridPointSource::getFxyztt( double t, double* fxyz ) const
+{
+  double afun = mAmp*mTimeFunc_tt(mFreq,t-mT0,mPar);
+  fxyz[0] = mForces[0]*afun;
+  fxyz[1] = mForces[1]*afun;
+  fxyz[2] = mForces[2]*afun;
+}
+
+void GridPointSource::limitFrequency(double max_freq)
+{
+  if (mFreq > max_freq)
+    mFreq=max_freq;
 }
 
 double GridPointSource::getTimeFunc(double t) const

@@ -332,6 +332,13 @@ void Sarray::set_to_minusOne()
 }
 
 //-----------------------------------------------------------------------
+void Sarray::set_value( double scalar )
+{
+   for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
+      m_data[i] = scalar;
+}
+
+//-----------------------------------------------------------------------
 void Sarray::set_to_random( double llim, double ulim )
 {
    for( int i=0 ; i<m_nc*m_ni*m_nj*m_nk ; i++ )

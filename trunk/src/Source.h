@@ -84,6 +84,8 @@ public:
 
   void set_z_is_relative_to_topography( bool tf ) { m_zRelativeToTopography = tf; };
   void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
+  void getForces( double& fx, double& fy, double& fz ) const;
+  void getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const;
 
  private:
   Source();
