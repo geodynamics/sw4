@@ -1280,7 +1280,7 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 
 //---------------------------------------------------------------------------
 bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
-		  Source& source )
+		  vector<Source*>& sources )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *u_ptr, om, ph, cv, h, zmin;
@@ -1310,7 +1310,7 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
   else if( m_point_source_test )
   {
      for(int g=0 ; g < mNumberOfCartesianGrids; g++ )
-        get_exact_point_source( a_U[g], a_t, g, source );
+        get_exact_point_source( a_U[g], a_t, g, *sources[0] );
      retval = true;
   }
   else if( m_lamb_test )

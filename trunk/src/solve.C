@@ -385,7 +385,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
      print_execution_times( time_sum );
 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
-   if( exactSol( t, Up, AlphaVE, *a_GlobalUniqueSources[0] ) )
+   if( exactSol( t, Up, AlphaVE, a_GlobalUniqueSources ) )
    {
       double errInf, errL2;
       //      cout << *mGlobalUniqueSources[0] << endl;

@@ -94,7 +94,7 @@ void set_twilight_forcing( ForcingTwilight* a_forcing );
 // perhaps these functions should be in the ForcingTwilight class? 
 // but how will they get access to the material properties and grid sizes?
 void initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE);
-bool exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, Source& source );
+bool exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, vector<Source*>& source );
 void exactRhsTwilight(double a_t, vector<Sarray> & a_F);
 void exactAccTwilight(double a_t, vector<Sarray> & a_Uacc);
 void exactForce(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
