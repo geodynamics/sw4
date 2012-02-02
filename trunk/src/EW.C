@@ -39,7 +39,7 @@ void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, do
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
 void F77_FUNC(solerr3, SOLERR3)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
-				double *l2 );
+				double *, double* , double* , double* , double* , double* );
 void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
 				double *l2 );
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
@@ -78,6 +78,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalUniqueSources):
   mNumberOfTimeSteps(-1),
 
   m_testing(false),
+  m_moment_test(false),
   m_twilight_forcing(false),
   m_point_source_test(0),
   m_energy_test(0),
@@ -1096,10 +1097,12 @@ void EW::default_bcs( boundaryConditionType bcs[6] )
 }
 
 //---------------------------------------------------------------------------
-void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 )
+void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
+                           double &diffL2, vector<Source*>& a_globalUniqueSources )
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *uex_ptr, *u_ptr, h, linfLocal=0, l2Local=0, diffInfLocal=0, diffL2Local=0;
+  double radius =-1, x0, y0, z0;
 
 //tmp  
   if (proc_zero())
@@ -1124,10 +1127,19 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
 // 	   ifirst, ilast, jfirst, jlast, kfirst, klast);
 
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
-    
+
+    if( m_point_source_test )
+    {
+       radius = 4*h;
+       x0 = a_globalUniqueSources[0]->getX0();
+       y0 = a_globalUniqueSources[0]->getY0();
+       z0 = a_globalUniqueSources[0]->getZ0();
+    }
+
 // need to exclude parallel overlap from L2 calculation
     F77_FUNC(solerr3, SOLERR3)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
-				uex_ptr, u_ptr, &linfLocal, &l2Local);
+				uex_ptr, u_ptr, &linfLocal, &l2Local, &m_zmin[g], &x0,
+				&y0, &z0, &radius );
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     diffL2Local += l2Local;
   }
@@ -1527,11 +1539,13 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
    double x0    = source.getX0();
    double y0    = source.getY0();
    double z0    = source.getZ0();
+   double fr=source.getFrequency();
    double time = (t-source.getOffset()) * source.getFrequency();
-   double fr=1.0/source.getFrequency();
    if( tD == iGaussian )
+   {
+      fr = 1/fr;
       time = time*fr;
-
+   }
    bool ismomentsource = source.isMomentSource();
    double fx, fy, fz;
    double mxx, myy, mzz, mxy, mxz, myz, m0;
@@ -1547,6 +1561,7 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
    }
    double* up = u.c_ptr();
    double h   = mGridSize[g];
+   double eps = 1e-3*h;
    size_t ind = 0;
    // Note: Use of ind, assumes loop is over the domain over which u is defined.
    for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
@@ -1559,26 +1574,26 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 	    if( !ismomentsource )
 	    {
 	       double R = sqrt( (x - x0)*(x - x0) + (y - y0)*(y - y0) + (z - z0)*(z - z0) );
-	       if( R < 2*h )
+	       if( R < eps )
 		  up[3*ind] = up[3*ind+1] = up[3*ind+2] = 0;
 	       else
 	       {
 		  double A, B;
 		  if (tD == iSmoothWave)
 		  {
-		     A = ( 1/pow(alpha,2) * SmoothWave(time, R, alpha) - 1/pow(beta,2) * SmoothWave(time, R, beta) +
-			   3/pow(R,2) * SmoothWave_x_T_Integral(time, R, alpha, beta) ) / (4*M_PI*rho*R*R*R)  ;
+		     A = ( 1/pow(alpha,2) * SmoothWave(time, fr*R, alpha) - 1/pow(beta,2) * SmoothWave(time, fr*R, beta) +
+			   3/pow(fr*R,2) * SmoothWave_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R*R*R)  ;
 	  
-		     B = ( 1/pow(beta,2) * SmoothWave(time, R, beta) -
-			   1/pow(R,2) * SmoothWave_x_T_Integral(time, R, alpha, beta) ) / (4*M_PI*rho*R) ;
+		     B = ( 1/pow(beta,2) * SmoothWave(time, fr*R, beta) -
+			   1/pow(fr*R,2) * SmoothWave_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R) ;
 		  }
 		  else if (tD == iVerySmoothBump)
 		  {
-		     A = ( 1/pow(alpha,2) * VerySmoothBump(time, R, alpha) - 1/pow(beta,2) * VerySmoothBump(time, R, beta) +
-			   3/pow(R,2) * VerySmoothBump_x_T_Integral(time, R, alpha, beta) ) / (4*M_PI*rho*R*R*R)  ;
+		     A = ( 1/pow(alpha,2) * VerySmoothBump(time, fr*R, alpha) - 1/pow(beta,2) * VerySmoothBump(time, fr*R, beta) +
+			   3/pow(fr*R,2) * VerySmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R*R*R)  ;
 		     
-		     B = ( 1/pow(beta,2) * VerySmoothBump(time, R, beta) -
-			   1/pow(R,2) * VerySmoothBump_x_T_Integral(time, R, alpha, beta) ) / (4*M_PI*rho*R) ;
+		     B = ( 1/pow(beta,2) * VerySmoothBump(time, fr*R, beta) -
+			   1/pow(fr*R,2) * VerySmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R) ;
 		  }
                   else if( tD == iGaussian )
 		  {
@@ -1597,7 +1612,7 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 	    {
 	       // Here, ismomentsource == true
 	       double R = sqrt( (x - x0)*(x - x0) + (y - y0)*(y - y0) + (z - z0)*(z - z0) );
-	       if( R < 2*h )
+	       if( R < eps )
 	       {
 		  up[3*ind] = up[3*ind+1] = up[3*ind+2] = 0;
 	       }

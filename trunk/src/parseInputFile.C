@@ -1557,6 +1557,12 @@ void EW::processTwilight(char* buffer)
           token += 4; 
           rho = atof(token);
        }
+       else if (startswith("diractest=", token))
+       {
+          token += 10; 
+          if( strcmp(token,"1")==0 || strcmp(token,"true")==0 )
+	     m_moment_test = true;
+       }
        else
        {
  	 badOption("testpointsource", token);

@@ -25,6 +25,7 @@ public:
 
   void getFxyz( double t, double* fxyz ) const;
   void getFxyztt( double t, double* fxyz ) const;
+  void getFxyz_notime( double* fxyz ) const;
 
   // evaluate time fcn: RENAME to evalTimeFunc
   double getTimeFunc(double t) const;

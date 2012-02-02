@@ -75,6 +75,7 @@ public:
   void adjust_t0( double dt0 );
 
   void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources );
+  void set_grid_point_sources4b( EW *a_EW, std::vector<GridPointSource*>& point_sources );
   void set_grid_point_sources( EW *a_EW, std::vector<GridPointSource*>& point_sources );
 
   void distribute_source_xyplane( EW *a_EW, std::vector<GridPointSource*>& point_sources, 
@@ -89,6 +90,8 @@ public:
 
  private:
   Source();
+  void getsourcewgh7(double ai, double wgh[7] );
+  void getsourcedwgh7(double ai, double wgh[7] );
   void getsourcewgh(double ai, double wgh[6] );
   void getsourcedwgh(double ai, double wgh[6] );
   double dist_d_dx_dirac(double x);

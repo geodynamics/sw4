@@ -547,6 +547,14 @@ void GridPointSource::getFxyz( double t, double* fxyz ) const
   fxyz[2] = mForces[2]*afun;
 }
 
+void GridPointSource::getFxyz_notime( double* fxyz ) const
+{
+// For source spatial discretization testing
+  fxyz[0] = mForces[0]*mAmp;
+  fxyz[1] = mForces[1]*mAmp;
+  fxyz[2] = mForces[2]*mAmp;
+}
+
 void GridPointSource::getFxyztt( double t, double* fxyz ) const
 {
   double afun = mAmp*mTimeFunc_tt(mFreq,t-mT0,mPar);

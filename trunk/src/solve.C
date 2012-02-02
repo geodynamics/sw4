@@ -32,6 +32,9 @@ void F77_FUNC(twfrsurfz, TWFRSURFZ)(int * ifirst_p, int * ilast_p, int * jfirst_
 				  double* bforce_side5_ptr, double* mu_ptr, double* la_ptr );
 void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, double *om_p, double * cv_p, 
 				    double *ph_p,  double * bforce_side_ptr );
+void F77_FUNC( testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
+				   int* klast, int* nz, int* wind, double* m_zmin, double* h, int* kx, int* ky, int* kz,
+				   double* momgrid );
 }
 
 //--------------------------------------------------------------------
@@ -112,7 +115,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 // Transfer source terms to each individual grid as point sources at grid points.
      for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
        if (!a_GlobalUniqueSources[i]->ignore())
-	 a_GlobalUniqueSources[i]->set_grid_point_sources( this, point_sources );
+	 a_GlobalUniqueSources[i]->set_grid_point_sources4( this, point_sources );
 
   if( mVerbose && proc_zero() )
   {
@@ -238,6 +241,10 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
   // normOfDifferenceGhostPoints( Up, U, errInf, errL2 );
   // if ( proc_zero() )
   //   printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+
+  if( m_moment_test )
+     test_sources( point_sources, a_GlobalUniqueSources, F );
 
   if ( proc_zero() )
     cout << "  Begin time stepping..." << endl;
@@ -396,7 +403,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
       //      string path=".";
       //      im->writeImagePlane_2(1,path);
       
-      normOfDifference( Up, U, errInf, errL2 );
+      normOfDifference( Up, U, errInf, errL2, a_GlobalUniqueSources );
       if ( proc_zero() )
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
    }
@@ -1687,4 +1694,102 @@ void eval_curvilinear_bc_stress(Sarray & a_u, double ** bcForcing, Sarray & a_x,
   
 }
 
+//-----------------------------------------------------------------------
+void EW::test_sources( vector<GridPointSource*>& a_point_sources,
+		       vector<Source*>& a_global_unique_sources, vector<Sarray>& a_F )
+{
+// Check the source discretization
+  int kx[3] = {0,0,0};
+  int ky[3] = {0,0,0};
+  int kz[3] = {0,0,0};
+  double moments[3], momexact[3];
+  if( proc_zero() )
+  {
+     cout << "Source test " << endl;
+     cout << "source size = " << a_global_unique_sources.size() << endl;
+     cout << "grid point source size = " << a_point_sources.size() << endl;
+  }
+  for( int c=0; c <= 7 ; c++ )
+  {
+     kx[0] = c;
+     ky[1] = c;
+     kz[2] = c;
+     testSourceDiscretization( kx, ky, kz, moments, a_point_sources, a_F );
+     a_global_unique_sources[0]->exact_testmoments( kx, ky, kz, momexact );
+     if( proc_zero() )
+     {
+        for( int comp = 0 ; comp < 3 ; comp++ )
+           cout << kx[comp] << " " << ky[comp] << " " << kz[comp] << " computed " << moments[comp] <<
+              " exact " << momexact[comp] << " difference = " << moments[comp]-momexact[comp] << endl;
+     }
+  }  
+  kx[0] = 1;
+  ky[0] = 1;
+  kz[0] = 1;
+  kx[1] = 2;
+  ky[1] = 1;
+  kz[1] = 1;
+  kx[2] = 1;
+  ky[2] = 2;
+  kz[2] = 1;
+  testSourceDiscretization( kx, ky, kz, moments, a_point_sources, a_F );
+  a_global_unique_sources[0]->exact_testmoments( kx, ky, kz, momexact );
+  if( proc_zero() )
+  {
+     for( int comp = 0 ; comp < 3 ; comp++ )
+        cout << kx[comp] << " " << ky[comp] << " " << kz[comp] << " computed " << moments[comp] <<
+           " exact " << momexact[comp] << " difference = " << moments[comp]-momexact[comp] << endl;
+  }
+}
 
+//-----------------------------------------------------------------------
+void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
+				   double moments[3],
+				   vector<GridPointSource*>& point_sources,
+				   vector<Sarray>& F )
+{
+   // Evaluate sources at a large time (assume that the time function is=1 at t=infinity)
+   // Compute moments, integrals of the source times polynomials of degree (kx,ky,kz).
+  int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
+  double h;
+
+//tmp  
+  if (proc_zero())
+    printf("Inside testSourceDiscretization\n");
+  
+  // Impose source
+  for( int g=0 ; g<mNumberOfGrids; g++ )
+     F[g].set_to_zero();
+  for( int s= 0 ; s < point_sources.size() ; s++ ) 
+  {
+     double fxyz[3];
+     point_sources[s]->getFxyz_notime( fxyz );
+     int g = point_sources[s]->m_grid;
+     F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
+     F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
+     F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+  }
+  double momgrid[3]={0,0,0};
+  for(g=0 ; g<mNumberOfGrids; g++ )
+  {
+    ifirst = m_iStart[g];
+    ilast  = m_iEnd[g];
+    jfirst = m_jStart[g];
+    jlast  = m_jEnd[g];
+    kfirst = m_kStart[g];
+    klast  = m_kEnd[g];  
+    h      = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+    double* f_ptr = F[g].c_ptr();
+    int wind[6];
+    wind[0] = m_iStartInt[g];
+    wind[1] = m_iEndInt[g];
+    wind[2] = m_jStartInt[g];
+    wind[3] = m_jEndInt[g];
+    wind[4] = m_kStartInt[g];
+    wind[5] = m_kEndInt[g];
+    int nz = m_global_nz[g];
+    F77_FUNC( testsrc, TESTSRC )( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+				  &nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
+  }
+  MPI_Allreduce( momgrid, moments, 3, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+}
