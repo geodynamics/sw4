@@ -57,6 +57,9 @@ void setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_
 void solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 bool parseInputFile( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 
+void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int grid0, 
+		       vector<double> &uRec, vector<Sarray> &Um, vector<Sarray> &U, vector<Sarray> &Up);
+
 // some (all?) of these functions are called from parseInputFile() and should be made private
 void badOption(string name, char* option) const;
 void processGrid(char* buffer);
@@ -380,7 +383,6 @@ double Gaussian(double t, double R, double c,double f);
 void getGlobalBoundingBox(double bbox[6]);
 
 string getPath(){ return mPath; }
-
 
 //
 // VARIABLES BEYOND THIS POINT

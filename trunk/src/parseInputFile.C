@@ -4340,8 +4340,8 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   string date = "";
   string time = "";
 
-  int usgsformat = 0, sacformat=1;
-  TimeSeries::receiverMode mode=TimeSeries::Solution;
+  bool usgsformat = 0, sacformat=0; // default is now to not write any file: you have to specify a format
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
 //  int nsew=0, vel=0;
@@ -4455,7 +4455,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
        token += strlen("writeEvery=");
        writeEvery = atoi(token);
        CHECK_INPUT(writeEvery >= 0,
-	       err << "sac command: writeEvery must be set to a positive integer, not: " << token);
+	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
      }
      else if( startswith("usgsformat=", token) )
      {
@@ -4470,9 +4470,9 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      else if( startswith("variables=", token) )
      {
        token += strlen("variables=");
-       if( strcmp("solution",token)==0 )
+       if( strcmp("displacement",token)==0 )
        {
-	 mode = TimeSeries::Solution;
+	 mode = TimeSeries::Displacement;
        }
        else if( strcmp("div",token)==0 )
        {
@@ -4487,8 +4487,12 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 	 mode = TimeSeries::Strains;
        }
        else
-	 CHECK_INPUT( false,
-		      err << "receiver command: variables=" << token << " not understood" );
+       {
+	 if (proc_zero())
+	   cerr << "receiver command: variables=" << token << " not understood" << endl
+		<< "using default mode (displacement)" << endl << endl;
+       }
+       
      }
      else
      {

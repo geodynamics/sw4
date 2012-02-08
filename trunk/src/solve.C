@@ -228,20 +228,17 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 // enforce boundary condition
   enforceBC( Um, t-mDt, BCForcing );
 
-  if ( proc_zero() )
-  {
-    printf("About to call exactSolTwilight\n");
-  }
-
+  // if ( proc_zero() )
+  // {
+  //   printf("About to call exactSolTwilight\n");
+  // }
 // more testing
 // check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
   // exactSolTwilight( t, Up, AlphaVE);
-
   // double errInf, errL2;
   // normOfDifferenceGhostPoints( Up, U, errInf, errL2 );
   // if ( proc_zero() )
   //   printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-
 
   if( m_moment_test )
      test_sources( point_sources, a_GlobalUniqueSources, F );
@@ -250,7 +247,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
     cout << "  Begin time stepping..." << endl;
 
 // save initial data on receiver records
-  vector<double> uRec(3);
+  vector<double> uRec;
   for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
   {
     if (a_GlobalTimeSeries[ts]->myPoint())
@@ -259,10 +256,9 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
       int j0 = a_GlobalTimeSeries[ts]->m_j0;
       int k0 = a_GlobalTimeSeries[ts]->m_k0;
       int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
-      uRec[0] = U[grid0](1, i0, j0, k0);
-      uRec[1] = U[grid0](2, i0, j0, k0);
-      uRec[2] = U[grid0](3, i0, j0, k0);
-      
+
+      extractRecordData(a_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
+			uRec, Um, U, Up); // nothing reliable in Up at this point...
       a_GlobalTimeSeries[ts]->recordData(uRec);
     }
   }
@@ -331,14 +327,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 // to compute a centered time derivative
     update_images( currentTimeStep, t, Up );
     
-// // Energy evaluation, requires all three time levels present, do before cycle arrays.
-//      if( m_energy_log || m_energy_print )
-//         compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps );
-
-// cycle the solution arrays
-    cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
-
-// save the current solution on receiver records
+// save the current solution on receiver records (time-derivative requires all 3 time levels
     for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
     {
       if (a_GlobalTimeSeries[ts]->myPoint())
@@ -347,14 +336,21 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 	int j0 = a_GlobalTimeSeries[ts]->m_j0;
 	int k0 = a_GlobalTimeSeries[ts]->m_k0;
 	int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
-	uRec[0] = U[grid0](1, i0, j0, k0);
-	uRec[1] = U[grid0](2, i0, j0, k0);
-	uRec[2] = U[grid0](3, i0, j0, k0);
+
+	extractRecordData(a_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
+			  uRec, Um, U, Up);
 
 	a_GlobalTimeSeries[ts]->recordData(uRec);
 
       }
     }
+
+// // Energy evaluation, requires all three time levels present, do before cycle arrays.
+//      if( m_energy_log || m_energy_print )
+//         compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps );
+
+// cycle the solution arrays
+    cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
     time_measure[6] = MPI_Wtime();	  	
 	  
@@ -1797,3 +1793,304 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
   }
   MPI_Allreduce( momgrid, moments, 3, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 }
+
+//-----------------------------------------------------------------------
+void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
+			   vector<double> &uRec, vector<Sarray> &Um, vector<Sarray> &U, vector<Sarray> &Up)
+{
+  if (mode == TimeSeries::Displacement)
+  {
+    uRec.resize(3);
+    uRec[0] = U[g0](1, i0, j0, k0);
+    uRec[1] = U[g0](2, i0, j0, k0);
+    uRec[2] = U[g0](3, i0, j0, k0);
+  }
+  else if(mode == TimeSeries::Div)
+  {
+    uRec.resize(1);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+    {
+//      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      double factor = 1.0/(2*mGridSize[g0]);
+      uRec[0] = ((U[g0](1,i0+1, j0, k0) - U[g0](1,i0-1, j0, k0)+
+		  U[g0](2,i0, j0+1, k0) - U[g0](2,i0, j0-1, k0)+
+		  U[g0](3,i0, j0, k0+1) - U[g0](3,i0, j0, k0-1))*factor);
+    }
+    else // must be curvilinear
+    {
+//      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      double factor = 0.5;
+      uRec[0] = ( ( mQ(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		    mQ(2,i0,j0,k0)*(U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))+
+		    mQ(3,i0,j0,k0)*(U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))+
+		    mR(1,i0,j0,k0)*(U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))+
+		    mR(2,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		    mR(3,i0,j0,k0)*(U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))+
+		    mS(1,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
+		    mS(2,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
+		    mS(3,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
+    }
+  } // end div
+  else if(mode == TimeSeries::Curl)
+  {
+    uRec.resize(3);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+    {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      double factor = 1.0/(2*mGridSize[g0]);
+      double duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      double duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      double duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      double duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      double duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      double duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+//       if( m_xycomponent )
+//       {
+      uRec[0] = ( duzdy-duydz );
+      uRec[1] = ( duxdz-duzdx );
+      uRec[2] = ( duydx-duxdy );
+//       }
+//       else
+//       {
+// 	 double uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 double uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 mRecordedUX.push_back( uew );
+// 	 mRecordedUY.push_back( uns );
+// 	 mRecordedUZ.push_back( -(duydx-duxdy) );
+//       }
+    }
+    else // must be curvilinear
+    {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      double factor = 0.5;
+      double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      double duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      double duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      double duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      double duzdy = mQ(2,i0,j0,k0)*duzdq+mR(2,i0,j0,k0)*duzdr+mS(2,i0,j0,k0)*duzds;
+      double duydz = mQ(3,i0,j0,k0)*duydq+mR(3,i0,j0,k0)*duydr+mS(3,i0,j0,k0)*duyds;
+      double duxdz = mQ(3,i0,j0,k0)*duxdq+mR(3,i0,j0,k0)*duxdr+mS(3,i0,j0,k0)*duxds;
+      double duzdx = mQ(1,i0,j0,k0)*duzdq+mR(1,i0,j0,k0)*duzdr+mS(1,i0,j0,k0)*duzds;
+      double duydx = mQ(1,i0,j0,k0)*duydq+mR(1,i0,j0,k0)*duydr+mS(1,i0,j0,k0)*duyds;
+      double duxdy = mQ(2,i0,j0,k0)*duxdq+mR(2,i0,j0,k0)*duxdr+mS(2,i0,j0,k0)*duxds;
+//       if( m_xycomponent )
+//       {
+      uRec[0] = (duzdy-duydz)*factor;
+      uRec[1] = (duxdz-duzdx)*factor;
+      uRec[2] = (duydx-duxdy)*factor;
+//       }
+//       else
+//       {
+// 	 double uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 double uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 mRecordedUX.push_back( uew*factor );
+// 	 mRecordedUY.push_back( uns*factor );
+// 	 mRecordedUZ.push_back( -(duydx-duxdy)*factor );
+//       }
+    }
+  } // end Curl
+  else if(mode == TimeSeries::Strains)
+  {
+    uRec.resize(6);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+    {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      double factor = 1.0/(2*mGridSize[g0]);
+      double duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      double duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      double duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      double duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      double duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      double duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+      double duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+      double duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+      double duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+      uRec[0] = ( duxdx );
+      uRec[1] = ( duydy );
+      uRec[2] = ( duzdz );
+      uRec[3] = ( 0.5*(duydx+duxdy) );
+      uRec[4] = ( 0.5*(duzdx+duxdz) );
+      uRec[5] = ( 0.5*(duydz+duzdy) );
+   }
+    else // must be curvilinear
+   {
+//       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
+      double factor = 0.5;
+      double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      double duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      double duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      double duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      double duzdy = (mQ(2,i0,j0,k0)*duzdq+mR(2,i0,j0,k0)*duzdr+mS(2,i0,j0,k0)*duzds)*factor;
+      double duydz = (mQ(3,i0,j0,k0)*duydq+mR(3,i0,j0,k0)*duydr+mS(3,i0,j0,k0)*duyds)*factor;
+      double duxdz = (mQ(3,i0,j0,k0)*duxdq+mR(3,i0,j0,k0)*duxdr+mS(3,i0,j0,k0)*duxds)*factor;
+      double duzdx = (mQ(1,i0,j0,k0)*duzdq+mR(1,i0,j0,k0)*duzdr+mS(1,i0,j0,k0)*duzds)*factor;
+      double duydx = (mQ(1,i0,j0,k0)*duydq+mR(1,i0,j0,k0)*duydr+mS(1,i0,j0,k0)*duyds)*factor;
+      double duxdy = (mQ(2,i0,j0,k0)*duxdq+mR(2,i0,j0,k0)*duxdr+mS(2,i0,j0,k0)*duxds)*factor;
+      double duxdx = ( mQ(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mR(1,i0,j0,k0)*(U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))+
+		       mS(1,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+      double duydy = ( mQ(2,i0,j0,k0)*(U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))+
+		       mR(2,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mS(2,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+      double duzdz = ( mQ(3,i0,j0,k0)*(U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))+
+		       mR(3,i0,j0,k0)*(U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))+
+		       mS(3,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+      uRec[0] = ( duxdx );
+      uRec[1] = ( duydy );
+      uRec[2] = ( duzdz );
+      uRec[3] = ( 0.5*(duydx+duxdy) );
+      uRec[4] = ( 0.5*(duzdx+duxdz) );
+      uRec[5] = ( 0.5*(duydz+duzdy) );
+   }
+  } // end Strains
+  
+  return;
+}
+
+
+//
+// the following is from the old SAC class
+//
+//  bool curvilinear = a_ew->topographyExists() && m_grid0 == a_ew->mNumberOfGrids-1;
+//
+//     // Time to record data for sac file
+//    if( !m_div && !m_curl && !m_strains )
+//    {
+//       if( m_xycomponent )
+//       {
+// 	// Cartesian components
+// 	 mRecordedUX.push_back((float)(a_ew->mU)[m_grid0](1,m_i0,m_j0,m_k0));
+// 	 mRecordedUY.push_back((float)(a_ew->mU)[m_grid0](2,m_i0,m_j0,m_k0));
+// 	 mRecordedUZ.push_back((float)(a_ew->mU)[m_grid0](3,m_i0,m_j0,m_k0));
+//       }
+//       else
+//       {
+// 	// North-South, East-West, and Up components
+// 	 double ux  = (a_ew->mU)[m_grid0](1,m_i0,m_j0,m_k0);
+// 	 double uy  = (a_ew->mU)[m_grid0](2,m_i0,m_j0,m_k0);
+
+// 	 double uns = m_thynrm*ux-m_thxnrm*uy;
+// 	 double uew = m_salpha*ux+m_calpha*uy;
+	 
+// 	 mRecordedUX.push_back( (float)(uew) ); //E-W is stored in UX
+// 	 mRecordedUY.push_back( (float)(uns) ); //N-S is stored in UY
+// 	 mRecordedUZ.push_back(-(float)(a_ew->mU)[m_grid0](3,m_i0,m_j0,m_k0));
+//       }
+//    }
+//    // For curl and div, don't worry about one sided formulas at boundaries, because of ghost points.
+
+//    if( m_velocities )
+//    {
+//      int n = mRecordedUX.size();
+//      double vx, vy, vz;
+//      if( n == 1 )
+//      {
+// 	m_dmx = mRecordedUX[n-1];
+// 	m_dmy = mRecordedUY[n-1];
+// 	m_dmz = mRecordedUZ[n-1];
+//      }
+//      else if( n == 2 )
+//      {
+// 	m_d0x = mRecordedUX[n-1];
+// 	m_d0y = mRecordedUY[n-1];
+// 	m_d0z = mRecordedUZ[n-1];
+//      }
+//      else if( n == 3 )
+//      {
+// // one sided formula for v(1)
+//         vx = (-3*m_dmx+4*m_d0x-mRecordedUX[n-1] )*m_dthi; 
+//         mRecordedUX[n-3] = vx;
+//         vy = (-3*m_dmy+4*m_d0y-mRecordedUY[n-1] )*m_dthi; 
+//         mRecordedUY[n-3] = vy;
+//         vz = (-3*m_dmz+4*m_d0z-mRecordedUZ[n-1] )*m_dthi;
+//         mRecordedUZ[n-3] = vz;
+//      }
+//      if( n >= 3 )
+//      {
+// // Standard case;
+//         vx = (mRecordedUX[n-1]-m_dmx)*m_dthi;
+//         vy = (mRecordedUY[n-1]-m_dmy)*m_dthi;
+//         vz = (mRecordedUZ[n-1]-m_dmz)*m_dthi;
+//         mRecordedUX[n-2] = vx;
+//         mRecordedUY[n-2] = vy;
+//         mRecordedUZ[n-2] = vz;
+
+// // Need one sided forward, in case we are at the last point.
+// // Otherwise, this is overwritten in the next time step.
+//         vx = (m_dmx-4*m_d0x+3*mRecordedUX[n-1])*m_dthi;
+//         m_dmx = m_d0x;
+// 	m_d0x = mRecordedUX[n-1];
+// 	mRecordedUX[n-1] = vx;
+//         vy = (m_dmy-4*m_d0y+3*mRecordedUY[n-1])*m_dthi;
+//         m_dmy = m_d0y;
+// 	m_d0y = mRecordedUY[n-1];
+// 	mRecordedUY[n-1] = vy;
+//         vz = (m_dmz-4*m_d0z+3*mRecordedUZ[n-1])*m_dthi;
+//         m_dmz = m_d0z;
+// 	m_d0z = mRecordedUZ[n-1];
+// 	mRecordedUZ[n-1] = vz;
+//      }
+//    }
+//    if( m_velocities && m_strains )
+//    {
+//      int n = mRecordedUXY.size();
+//      double vx, vy, vz;
+//      if( n == 1 )
+//      {
+// 	m_dmxy = mRecordedUXY[n-1];
+// 	m_dmxz = mRecordedUXZ[n-1];
+// 	m_dmyz = mRecordedUYZ[n-1];
+//      }
+//      else if( n == 2 )
+//      {
+// 	m_d0xy = mRecordedUXY[n-1];
+// 	m_d0xz = mRecordedUXZ[n-1];
+// 	m_d0yz = mRecordedUYZ[n-1];
+//      }
+//      else if( n == 3 )
+//      {
+// // one sided formula for v(1)
+//         vx = (-3*m_dmxy+4*m_d0xy-mRecordedUXY[n-1] )*m_dthi; 
+//         mRecordedUXY[n-3] = vx;
+//         vy = (-3*m_dmxz+4*m_d0xz-mRecordedUXZ[n-1] )*m_dthi; 
+//         mRecordedUXZ[n-3] = vy;
+//         vz = (-3*m_dmyz+4*m_d0yz-mRecordedUYZ[n-1] )*m_dthi;
+//         mRecordedUYZ[n-3] = vz;
+//      }
+//      if( n >= 3 )
+//      {
+// // Standard case;
+//         vx = (mRecordedUXY[n-1]-m_dmxy)*m_dthi;
+//         vy = (mRecordedUXZ[n-1]-m_dmxz)*m_dthi;
+//         vz = (mRecordedUYZ[n-1]-m_dmyz)*m_dthi;
+//         mRecordedUXY[n-2] = vx;
+//         mRecordedUXZ[n-2] = vy;
+//         mRecordedUYZ[n-2] = vz;
+
+// // Need one sided forward, in case we are at the last point.
+// // Otherwise, this is overwritten in the next time step.
+//         vx = (m_dmxy-4*m_d0xy+3*mRecordedUXY[n-1])*m_dthi;
+//         m_dmxy = m_d0xy;
+// 	m_d0xy = mRecordedUXY[n-1];
+// 	mRecordedUXY[n-1] = vx;
+//         vy = (m_dmxz-4*m_d0xz+3*mRecordedUXZ[n-1])*m_dthi;
+//         m_dmxz = m_d0xz;
+// 	m_d0xz = mRecordedUXZ[n-1];
+// 	mRecordedUYZ[n-1] = vy;
+//         vz = (m_dmyz-4*m_d0yz+3*mRecordedUYZ[n-1])*m_dthi;
+//         m_dmyz = m_d0yz;
+// 	m_d0yz = mRecordedUYZ[n-1];
+// 	mRecordedUYZ[n-1] = vz;
+//      }
+//    }
+
