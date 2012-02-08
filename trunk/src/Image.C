@@ -712,7 +712,7 @@ void Image::evaluateLatLonImage(Sarray &a_X, Sarray &a_Y, Sarray &a_Z, int a_com
 	      zP = (kk-1)*mEW->mGridSize[g] + mEW->m_zmin[g];
 	    }
 // evaluate the mapping to (lon,lat)	    
-	    mEW->computeGeographicCoord(xP, yP, zP, latP, lonP);
+	    mEW->computeGeographicCoord(xP, yP, lonP, latP);
 	    if (a_component==1)
 	    {
 	      val = latP;

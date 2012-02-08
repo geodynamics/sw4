@@ -51,7 +51,8 @@ using namespace std;
 #define SQR(x) ((x)*(x))
 
 // constructor
-EW::EW(const string& fileName, vector<Source*> & a_GlobalUniqueSources): 
+EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
+       vector<TimeSeries*> & a_GlobalTimeSeries): 
   m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
@@ -151,9 +152,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalUniqueSources):
   m_ghost_points(2), // for 4th order stencils
   m_ppadding(2),
 
-//   mGeoCoord(0.0,0.0,0.0),
-  mGeoCoord(37.0,-118.0,0.0), // NTS
-  mGeoAz(135.0),
+  mLonOrigin(-118.0), // NTS
+  mLatOrigin(37.0), // NTS
+  mGeoAz(0.0), // x=North, y=East
   //  mDefaultLocation(true),
   mMetersPerDegree(111319.5),
 
@@ -195,7 +196,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalUniqueSources):
    }
    
 // read the input file and setup the simulation object
-   if (parseInputFile( a_GlobalUniqueSources ))
+   if (parseInputFile( a_GlobalSources, a_GlobalTimeSeries ))
      mParsingSuccessful = true;
 
 }
@@ -514,59 +515,37 @@ bool EW::getDepth( double x, double y, double z, double & depth)
 }
 
 //-----------------------------------------------------------------------
-void EW::computeCartesianCoord(double &x, double &y, double &z,const GeographicCoord& g)
+void EW::computeCartesianCoord(double &x, double &y, double lon, double lat)
 {
-   double lat = g.getLatitude();
-   double lon = g.getLongitude();
-   z = g.getDepth();
-
-//    REQUIRE2(lat >= -90.0 && lat <= 90.0,
-// 	    "latitude must be between -180 and 180 deg, not " << lat);
-//    REQUIRE2(lon >= -180.0 && lon <= 180.0,
-// 	    "longitude must be between -180 and 180 deg, not " << lon);
-//    REQUIRE2(z >= 0.0,
-// 	    "depth must be positive, not " << z);
   // -----------------------------------------------------------------
   // Compute the cartesian coordinate give the geographic coodinate
   // -----------------------------------------------------------------
   double deg2rad = M_PI/180.0;
 
-  // First figure out the grid offset
-  double gridLat = mGeoCoord.getLatitude();
-  double gridLon = mGeoCoord.getLongitude();
-
   double phi = mGeoAz * deg2rad;
 
   // compute x and y
-  x = mMetersPerDegree*(cos(phi)*(lat-gridLat) + cos(lat*deg2rad)*(lon-gridLon)*sin(phi));
-  y = mMetersPerDegree*(-sin(phi)*(lat-gridLat) + cos(lat*deg2rad)*(lon-gridLon)*cos(phi));
-
-//   REQUIRE2(x >= 0.0,
-// 	  "x must be positive, not: " << x);
-//   REQUIRE2(y >= 0.0,
-// 	  "y must be positive, not: " << y);
-//   REQUIRE2(z >= 0.0,
-// 	  "z must be positive, not: " << z);
+  x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
+  y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
 
 }
 
 
 //-----------------------------------------------------------------------
-void EW::computeGeographicCoord(double x, double y, double z, double & latitude, double & longitude)
+void EW::computeGeographicCoord(double x, double y, double & longitude, double & latitude)
 {
-  // Put the angle in radians
+  // conversion factor between degrees and radians
   double deg2rad = M_PI/180.0;
   double phi = mGeoAz * deg2rad;
 
   // Compute the latitude
- latitude = mGeoCoord.getLatitude() + 
+ latitude = mLatOrigin + 
     (x*cos(phi) - y*sin(phi))/mMetersPerDegree;
 
   // Compute the longitude
- longitude = mGeoCoord.getLongitude() + 
+ longitude = mLonOrigin + 
      (x*sin(phi) + y*cos(phi))/(mMetersPerDegree*cos(latitude*deg2rad));
 
-// what about the depth?
 }
 
 //-------------------------------------------------------
@@ -740,8 +719,8 @@ bool EW::interior_point_in_proc(int a_i, int a_j, int a_g)
 
    bool retval = false;
    if (a_g >=0 && a_g < mNumberOfGrids){
-     retval = (a_i >= (m_iStart[a_g]+m_paddingCells[0])) && (a_i <= (m_iEnd[a_g]-m_paddingCells[1])) &&   
-              (a_j >= (m_jStart[a_g]+m_paddingCells[2])) && (a_j <= (m_jEnd[a_g]-m_paddingCells[3]));
+     retval = (a_i >= m_iStartInt[a_g]) && (a_i <= m_iEndInt[a_g]) &&   
+       (a_j >= m_jStartInt[a_g]) && (a_j <= m_jEndInt[a_g]);
    }
    return retval; 
 }
@@ -776,6 +755,7 @@ void EW::getGlobalBoundingBox(double bbox[6])
 //-----------------------------------------------------------------------
 void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
 {
+// this routine needs to be updated
    if (!mWriteGMTOutput) return;
 
    if (proc_zero())
@@ -790,10 +770,10 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
                << endl;
       // grab these from grid
       double latNE,lonNE,latSW,lonSW,latSE,lonSE,latNW,lonNW;
-      computeGeographicCoord(0.0,0.0,0.0,latSW,lonSW);
-      computeGeographicCoord((m_global_nx[0]-1)*mGridSize[0],0.0,0.0,latSE,lonSE);
-      computeGeographicCoord((m_global_nx[0]-1)*mGridSize[0],(m_global_ny[0]-1)*mGridSize[0],0.0,latNE,lonNE);
-      computeGeographicCoord(0.0,(m_global_ny[0]-1)*mGridSize[0],0.0,latNW,lonNW);
+      computeGeographicCoord(0.0,           0.0,           lonSW, latSW);
+      computeGeographicCoord(m_global_xmax, 0.0,           lonSE, latSE);
+      computeGeographicCoord(m_global_xmax, m_global_ymax, lonNE, latNE);
+      computeGeographicCoord(0.0,           m_global_ymax, lonNW, latNW);
      
       // Round up/down
       int minx = static_cast<int>(min(lonSW-1,min(lonSE-1,min(lonNE-1,lonNW-1))));
@@ -801,12 +781,12 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
       int miny = static_cast<int>(min(latSW-1,min(latSE-1,min(latNE-1,latNW-1))));
       int maxy = static_cast<int>(max(latSW+1,max(latSE+1,max(latNE+1,latNW+1)))); 
 
-      GeographicCoord eNW, eNE, eSW, eSE;
+//      GeographicCoord eNW, eNE, eSW, eSE;
       
 #ifdef ENABLE_ETREE
       if (mEtreeFile != NULL)
       {
-        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
+//        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
         
         minx = static_cast<int>(min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
         maxx = static_cast<int>(max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
@@ -867,11 +847,8 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
          {
            double latSource,lonSource;
 
-           computeGeographicCoord(a_GlobalUniqueSources[i]->getX0(),
-                                  a_GlobalUniqueSources[i]->getY0(),
-                                  a_GlobalUniqueSources[i]->getZ0(),
-                                  latSource                       ,
-                                  lonSource                       );
+           computeGeographicCoord(a_GlobalUniqueSources[i]->getX0(), a_GlobalUniqueSources[i]->getY0(),
+                                  lonSource ,latSource);
 // is this the correct syntax???
 	   contents << latSource << " " << lonSource << endl;
          }
@@ -970,7 +947,7 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
 
                if (!geoCoordSet && cartCoordSet)
                {
-                 computeGeographicCoord(x, y, z,lat,lon);
+                 computeGeographicCoord(x, y, lon, lat);
                }
                
                // Now have location
@@ -1105,8 +1082,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
   double radius =-1, x0, y0, z0;
 
 //tmp  
-  if (proc_zero())
-    printf("Inside normOfDifference\n");
+  // if (proc_zero())
+  //   printf("Inside normOfDifference\n");
   
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -2668,13 +2645,6 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
   //   }
   // }
 } // end EW::update_images()
-
-//-----------------------------------------------------------------------
-void EW::addSAC(SAC s)
-{
-  mSACOutputFiles.push_back(s);
-}
-
 
 //-----------------------------------------------------------------------
 void EW::addImage(Image* i)

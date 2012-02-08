@@ -248,7 +248,7 @@ void SAC::initialize()
    mZ = zG;
    
 // do some misc pre computations
-   mWPP->computeGeographicCoord(mX, mY, mZ, m_lat, m_lon);
+   mWPP->computeGeographicCoord(mX, mY, m_lon, m_lat);
 
    m_calpha = cos(M_PI*mWPP->mGeoAz/180.0);
    m_salpha = sin(M_PI*mWPP->mGeoAz/180.0);
@@ -962,7 +962,7 @@ writeSACFile(int npts, char *ofile, float *y, float btime, float dt, char *var,
 
   // location of the receiver
 //   double lat, lon;
-//   mWPP->computeGeographicCoord(mX, mY, mZ, lat, lon); //(C.B: I think that this is the point we want)
+//   mWPP->computeGeographicCoord(mX, mY, lon, lat); //(C.B: I think that this is the point we want)
   setfhv((char *) nm[17].c_str(), m_lat, nerr);
   setfhv((char *) nm[18].c_str(), m_lon, nerr);
   // location of epicenter
@@ -1134,7 +1134,7 @@ void SAC::write_usgs_format( string fname )
    double lat, lon;
    double x, y, z;
    mWPP->coord_from_index( m_iSAC, m_jSAC, m_kSAC, m_gridSAC, x, y, z );
-   mWPP->computeGeographicCoord( x, y, z, lat, lon );
+   mWPP->computeGeographicCoord( x, y, lon, lat );
 
 // tmp
 //    cout << "write USGS format, SAC station: " << mHeaderName << " mX= " << mX << " mY= " << mY << " mZ= " << mZ << endl

@@ -97,8 +97,11 @@ main(int argc, char **argv)
   
 // Save the source description here
   vector<Source*> GlobalSources; 
+// Save the time series here
+  vector<TimeSeries*> GlobalTimeSeries;
+
 // make a new simulation object by reading the input file 'fileName'
-  EW simulation(fileName, GlobalSources);
+  EW simulation(fileName, GlobalSources, GlobalTimeSeries);
 
   if (!simulation.wasParsingSuccessful())
   {
@@ -111,7 +114,7 @@ main(int argc, char **argv)
   else
   {
 // get the simulation object ready for time-stepping
-    simulation.setupRun( GlobalSources );
+    simulation.setupRun( GlobalSources, GlobalTimeSeries );
 
     if (!simulation.isInitialized())
     { 
@@ -130,7 +133,14 @@ main(int argc, char **argv)
 	     << simulation.getOutputPath() << endl;
       }
 // run the simulation
-      simulation.solve( GlobalSources );
+      simulation.solve( GlobalSources, GlobalTimeSeries );
+
+// save all time series
+      
+      for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+      {
+	GlobalTimeSeries[ts]->writeFile();
+      }
 
       if( myRank == 0 )
       {

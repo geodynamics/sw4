@@ -8,7 +8,8 @@ endif
 FC = gfortran
 CC = mpicc
 CXX = mpicxx
-linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+linklibs = -framework vecLib -lgfortran
+#linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
 
 # for atlas
 #FC = mpiifort
@@ -18,22 +19,22 @@ linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
 
 
 ifeq ($(optlevel),DEBUG)
-#   FFLAGS    = -g -fno-underscoring
-   FFLAGS    = -g
+   FFLAGS    = -g -fno-underscoring
+#   FFLAGS    = -g
    CXXFLAGS  = -g 
    CFLAGS = -g
 else
-#   FFLAGS = -O3 -fno-underscoring
-   FFLAGS = -O3
+   FFLAGS = -O3 -fno-underscoring
+#   FFLAGS = -O3
    CXXFLAGS = -O
    CFLAGS = -O
 endif
 
-
-OBJ  = main.o EW.o Sarray.o GeographicCoord.o version.o parseInputFile.o ForcingTwilight.o \
+OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o
+       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
+       TimeSeries.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
@@ -60,4 +61,4 @@ test: $(OBJ2)
 	$(CXX) $(CFLAGS) -c $<
 
 clean:
-	/bin/rm -f ewave $(OBJ)
+	/bin/rm -f sbp4f $(OBJ)

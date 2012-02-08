@@ -8,6 +8,8 @@
 #include "boundaryConditionTypes.h"
 #include "ForcingTwilight.h"
 #include "MaterialBlock.h"
+#include "TimeSeries.h"
+
 // #include "ForcingLamb.h"
 // #include "ForcingPointSource.h"
 // #include "ForcingEnergy.h"
@@ -116,7 +118,8 @@ void checked(const char* cmd)
 // should not be called after the initialization of the EW object is completed. 
 // Make all these functions private!
 //
-bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources )
+bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
+			 vector<TimeSeries*> & a_GlobalTimeSeries )
 {
   char buffer[256];
   ifstream inputFile;
@@ -315,8 +318,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources )
 	 processTime(buffer);
        // else if (startswith("globalmaterial", buffer))
        //   processGlobalMaterial(buffer);
-       // else if (startswith("sac", buffer))
-       //   processSAC(buffer);
+       else if (startswith("receiver", buffer)) // was called "sac" in WPP
+	 processReceiver(buffer, a_GlobalTimeSeries);
        // else if (startswith("energy", buffer))
        //   processEnergy(buffer);
        else if (startswith("twilight", buffer))
@@ -606,14 +609,14 @@ void EW::processGrid(char* buffer)
 
   if (latSet && lonSet)
   {
-     GeographicCoord geoCoord(lat, lon, 0.0);
-     mGeoCoord = geoCoord;
+     mLatOrigin = lat;
+     mLonOrigin = lon;
   }
   else
   {
 // Default is NTS
-     GeographicCoord geoCoord(37.0, -118.0, 0.0);
-     mGeoCoord = geoCoord;
+     mLatOrigin = 37.0;
+     mLonOrigin = 118.0;
   }
 
   double cubelen, zcubelen;
@@ -665,9 +668,9 @@ void EW::processGrid(char* buffer)
 //            h = origin[2]/(k*n1);
 // 	}
 // 	// Geographic origin adjustment:
-//         double gridLat = mGeoCoord.getLatitude();
-// 	double gridLon = mGeoCoord.getLongitude();
-//         double metersPerDegree = 111319.5;
+//         double gridLat = mLatOrigin;
+// 	   double gridLon = mLonOrigin;
+//         double metersPerDegree = mMetersPerDegree;
 //         double deg2rad = M_PI/180;
 //         double phi = mGeoAz*deg2rad;
 // 	double x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
@@ -676,8 +679,8 @@ void EW::processGrid(char* buffer)
 //         y -= h*(y/h-round(y/h));
 //         gridLat = ibclat - (x*cos(phi) - y*sin(phi))/metersPerDegree;
 // 	gridLon = ibclon - (x*sin(phi) + y*cos(phi))/(metersPerDegree*cos(ibclat*deg2rad));
-// 	GeographicCoord geoCoord(gridLat, gridLon, 0.0);
-// 	mGeoCoord = geoCoord;
+     // mLatOrigin = gridLat;
+     // mLonOrigin = gridLon;
 //         origin[0] = x;
 // 	origin[1] = y;
 //      }     
@@ -4012,60 +4015,59 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   // i, j, k to valid values)
   // --------------------------------------------------------------------------- 
   if (geoCoordSet)
-    {
-      GeographicCoord geoCoord(lat, lon, depth)         ;  
-      computeCartesianCoord(x,y,z,geoCoord);
-      cartCoordSet = true                               ;
-    }
+  {
+    computeCartesianCoord(x, y, lon, lat);
+    cartCoordSet = true;
+  }
   if (cartCoordSet)
+  {
+    double xmin = 0.;
+    double ymin = 0.;
+    double zmin;
+
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
+    if (topographyExists()) // topography command must be read before the source command
+      zmin = m_global_zmin;
+    else
+      zmin = -m_global_zmax;
+
+    if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
     {
-      double xmin = 0.;
-      double ymin = 0.;
-      double zmin;
-
-// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too close or above the surface
-// in the call to mGlobalUniqueSources[i]->correct_Z_level()
-      if (topographyExists()) // topography command must be read before the source command
-	zmin = m_global_zmin;
-      else
-	zmin = -m_global_zmax;
-
-      if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
-      {
-	  stringstream sourceposerr;
-	  sourceposerr << endl
-		       << "***************************************************" << endl
-		       << " FATAL ERROR:  Source positioned outside grid!  " << endl
-		       << endl
-		       << " Source Type: " << formstring << endl
-		       << "              @ x=" << x 
-		       << " y=" << y << " z=" << z << endl 
-		       << endl;
+      stringstream sourceposerr;
+      sourceposerr << endl
+		   << "***************************************************" << endl
+		   << " FATAL ERROR:  Source positioned outside grid!  " << endl
+		   << endl
+		   << " Source Type: " << formstring << endl
+		   << "              @ x=" << x 
+		   << " y=" << y << " z=" << z << endl 
+		   << endl;
 	    
-	  if ( x < xmin )
-	    sourceposerr << " x is " << xmin - x << 
-	      " meters away from min x (" << xmin << ")" << endl;
-	  else if ( x > m_global_xmax)
-	    sourceposerr << " x is " << x - m_global_xmax << 
-		" meters away from max x (" << m_global_xmax << ")" << endl;
-	  if ( y < ymin )
-	    sourceposerr << " y is " << ymin - y << 
-	      " meters away from min y (" << ymin << ")" << endl;
-	  else if ( y > m_global_ymax)
-	    sourceposerr << " y is " << y - m_global_ymax << 
-		" meters away from max y (" << m_global_ymax << ")" << endl;
-	  if ( z < zmin )
-	    sourceposerr << " z is " << zmin - z << 
-	      " meters away from min z (" << zmin << ")" << endl;
-	  else if ( z > m_global_zmax)
-	    sourceposerr << " z is " << z - m_global_zmax << 
-	      " meters away from max z (" << m_global_zmax << ")" << endl;
-	  sourceposerr << "***************************************************" << endl;
-	  if (m_myRank == 0)
-	    cout << sourceposerr.str();
-	  MPI_Abort(MPI_COMM_WORLD, 1);
-	}
+      if ( x < xmin )
+	sourceposerr << " x is " << xmin - x << 
+	  " meters away from min x (" << xmin << ")" << endl;
+      else if ( x > m_global_xmax)
+	sourceposerr << " x is " << x - m_global_xmax << 
+	  " meters away from max x (" << m_global_xmax << ")" << endl;
+      if ( y < ymin )
+	sourceposerr << " y is " << ymin - y << 
+	  " meters away from min y (" << ymin << ")" << endl;
+      else if ( y > m_global_ymax)
+	sourceposerr << " y is " << y - m_global_ymax << 
+	  " meters away from max y (" << m_global_ymax << ")" << endl;
+      if ( z < zmin )
+	sourceposerr << " z is " << zmin - z << 
+	  " meters away from min z (" << zmin << ")" << endl;
+      else if ( z > m_global_zmax)
+	sourceposerr << " z is " << z - m_global_zmax << 
+	  " meters away from max z (" << m_global_zmax << ")" << endl;
+      sourceposerr << "***************************************************" << endl;
+      if (m_myRank == 0)
+	cout << sourceposerr.str();
+      MPI_Abort(MPI_COMM_WORLD, 1);
     }
+  }
 
   // if strike, dip and rake have been given we need to convert into M_{ij} form
   if ( strikeDipRake )
@@ -4322,3 +4324,227 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   bl->set_absoluteDepth( absDepth );
   add_mtrl_block( bl );
 }
+
+void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
+{
+  double x=0.0, y=0.0, z=0.0;
+  double lat = 0.0, lon = 0.0, depth = 0.0;
+  bool cartCoordSet = false, geoCoordSet = false;
+  string name = "rec";
+  int writeEvery = 1000;
+
+  bool dateSet = false;
+  bool timeSet = false;
+  bool topodepth = false;
+
+  string date = "";
+  string time = "";
+
+  int usgsformat = 0, sacformat=1;
+  TimeSeries::receiverMode mode=TimeSeries::Solution;
+
+  char* token = strtok(buffer, " \t");
+//  int nsew=0, vel=0;
+
+// tmp
+//  cerr << "******************** INSIDE process receiver *********************" << endl;
+
+  CHECK_INPUT(strcmp("receiver", token) == 0, "ERROR: not a receiver line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "RECEIVER Error: ";
+
+  //  cout << "start receiver " << m_myRank << " " << token <<"x"<<endl;
+  while (token != NULL)
+  {
+     // while there are tokens in the string still
+     //     cout << m_myRank << " token " << token <<"x"<<endl;
+
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("x=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip x=
+        cartCoordSet = true;
+        x = atof(token);
+        CHECK_INPUT(x >= 0.0,
+		    "receiver command: x must be greater than or equal to 0, not " << x);
+        CHECK_INPUT(x <= m_global_xmax,
+		    "receiver command: x must be less than or equal to xmax, not " << x);
+     }
+     else if (startswith("y=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip y=
+        cartCoordSet = true;
+        y = atof(token);
+        CHECK_INPUT(y >= 0.0,
+                "receiver command: y must be greater than or equal to 0, not " << y);
+        CHECK_INPUT(y <= m_global_ymax,
+		    "receiver command: y must be less than or equal to ymax, not " << y);
+     }
+     else if (startswith("lat=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lat=
+        lat = atof(token);
+        CHECK_INPUT(lat >= -90.0,
+                "receiver command: lat must be greater than or equal to -90 degrees, not " 
+                << lat);
+        CHECK_INPUT(lat <= 90.0,
+                "receiver command: lat must be less than or equal to 90 degrees, not "
+                << lat);
+        geoCoordSet = true;
+     }
+     else if (startswith("lon=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lon=
+        lon = atof(token);
+        CHECK_INPUT(lon >= -180.0,
+                "receiver command: lon must be greater or equal to -180 degrees, not " 
+                << lon);
+        CHECK_INPUT(lon <= 180.0,
+                "receiver command: lon must be less than or equal to 180 degrees, not "
+                << lon);
+        geoCoordSet = true;
+     }
+     else if (startswith("z=", token))
+     {
+       token += 2; // skip z=
+// depth is currently the same as z
+       depth = z = atof(token);
+       topodepth = false;
+       CHECK_INPUT(z <= m_global_zmax,
+		   "receiver command: z must be less than or equal to zmax, not " << z);
+     }
+     else if (startswith("depth=", token))
+     {
+        token += 6; // skip depth=
+       z = depth = atof(token);
+       topodepth = true;
+       CHECK_INPUT(depth >= 0.0,
+	       err << "receiver command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+// by depth we here mean depth below topography
+     }
+     else if(startswith("file=", token))
+     {
+        token += 5; // skip file=
+        name = token;
+     }
+     // else if( startswith("nsew=", token) )
+     // {
+     //    token += strlen("nsew=");
+     //    nsew = atoi(token);
+     // }
+     // else if( startswith("velocity=", token) )
+     // {
+     //    token += strlen("velocity=");
+     //    vel = atoi(token);
+     // }
+     else if (startswith("writeEvery=", token))
+     {
+       token += strlen("writeEvery=");
+       writeEvery = atoi(token);
+       CHECK_INPUT(writeEvery >= 0,
+	       err << "sac command: writeEvery must be set to a positive integer, not: " << token);
+     }
+     else if( startswith("usgsformat=", token) )
+     {
+        token += strlen("usgsformat=");
+        usgsformat = atoi(token);
+     }
+     else if( startswith("sacformat=", token) )
+     {
+        token += strlen("sacformat=");
+        sacformat = atoi(token);
+     }
+     else if( startswith("variables=", token) )
+     {
+       token += strlen("variables=");
+       if( strcmp("solution",token)==0 )
+       {
+	 mode = TimeSeries::Solution;
+       }
+       else if( strcmp("div",token)==0 )
+       {
+	 mode = TimeSeries::Div;
+       }
+       else if( strcmp("curl",token)==0 )
+       {
+	 mode = TimeSeries::Curl;
+       }
+       else if( strcmp("strains",token)==0 )
+       {
+	 mode = TimeSeries::Strains;
+       }
+       else
+	 CHECK_INPUT( false,
+		      err << "receiver command: variables=" << token << " not understood" );
+     }
+     else
+     {
+        badOption("receiver", token);
+     }
+     token = strtok(NULL, " \t");
+  }  
+  //  cout << "end receiver " << m_myRank << endl;
+
+  if (geoCoordSet)
+  {
+    computeCartesianCoord(x, y, lon, lat);
+// check if (x,y) is within the computational domain
+  }
+
+  bool inCurvilinear=false;
+// we are in or above the curvilinear grid 
+  if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
+  {
+    inCurvilinear = true;
+  }
+      
+// check if (x,y,z) is not in the global bounding box
+    if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
+    {
+// The location of this station was outside the domain, so don't include it in the global list
+    if (m_myRank == 0 && getVerbosity() > 0)
+    {
+      stringstream receivererr;
+  
+      receivererr << endl 
+	     << "***************************************************" << endl
+	     << " WARNING:  RECEIVER positioned outside grid!" << endl;
+      receivererr << " No RECEIVER file will be generated for file = " << name << endl;
+      if (geoCoordSet)
+      {
+	receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+      }
+      else
+      {
+	receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+      }
+      
+      receivererr << "***************************************************" << endl;
+      cerr << receivererr.str();
+      cerr.flush();
+    }
+  }
+  else
+  {
+    TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
+					topodepth, writeEvery);
+// include the receiver in the global list
+    a_GlobalTimeSeries.push_back(ts_ptr);
+    
+  }
+    
+}
+

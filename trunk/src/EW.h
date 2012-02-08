@@ -10,7 +10,7 @@
 #include <list>
 
 #include "Sarray.h"
-#include "SAC.h"
+#include "TimeSeries.h"
 #include "Source.h"
 #include "GridPointSource.h"
 
@@ -35,7 +35,8 @@ using namespace std;
 class EW 
 {
 public:
-EW(const string& name, vector<Source*> & a_GlobalUniqueSources);
+EW(const string& name, vector<Source*> & a_GlobalUniqueSources, 
+   vector<TimeSeries*> & a_GlobalTimeSeries);
 ~EW();
 bool wasParsingSuccessful();
 bool isInitialized();
@@ -49,11 +50,13 @@ void setGoalTime(double t);
 
 void setAttenuationParams(int numberOfMechanisms, double velocityOmega, int ppw, double maxfrequency );
 
-void setNumberSteps(int steps);
+void setNumberSteps(int steps); // remove???
 int getNumberOfSteps() const;
-void setupRun( vector<Source*> & a_GlobalUniqueSources );
-void solve( vector<Source*> & a_GlobalUniqueSources );
-bool parseInputFile( vector<Source*> & a_GlobalUniqueSources );
+
+void setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+void solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+bool parseInputFile( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+
 // some (all?) of these functions are called from parseInputFile() and should be made private
 void badOption(string name, char* option) const;
 void processGrid(char* buffer);
@@ -68,6 +71,7 @@ void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
+void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -135,11 +139,11 @@ bool proc_zero() const;
 int no_of_procs() const;
 void create_output_directory();
 void initialize_image_files();
-void initialize_SAC_files();
-void addSAC(SAC s);
-
-void update_SACs( int Nsteps );
 void update_images( int Nsteps, double time, vector<Sarray> & a_U );
+
+void initialize_SAC_files(); // going away
+void update_SACs( int Nsteps ); // going away
+
 void print_execution_times( double times[7] );
 void print_execution_time( double t1, double t2, string msg );
 void finalizeIO();
@@ -220,10 +224,8 @@ void buildGaussianHillTopography(double amp, double Lx, double Ly, double x0, do
 
 void extractSurfaceFromGridFile(string a_surfaceFileName);
 
-void computeCartesianCoord(double &x, double &y, double &z, const GeographicCoord& g);
-void computeGeographicCoord(double x, double y, double z, double & latitude, double & longitude);
-   //GeographicCoord& getGeographicCoord();
-
+void computeCartesianCoord(double &x, double &y, double lon, double lat);
+void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
 
 void initializeSystemTime();
 void set_epicenter_in_SAC(); 
@@ -355,7 +357,7 @@ int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
 int getNumberOfGrids(){return mNumberOfGrids;};
 int getNumberOfGhostPoints(){return m_ghost_points;};
 int getNumberOfParallelPaddingPoints(){return m_ppadding;};
-double getLatOrigin(){ return mGeoCoord.getLatitude();};
+double getLatOrigin(){ return mLatOrigin;};
 double getGridAzimuth(){ return mGeoAz;};
 double getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
@@ -375,8 +377,9 @@ double VerySmoothBump(double t, double R, double c);
 double SmoothWave(double t, double R, double c);
 double Gaussian(double t, double R, double c,double f);
 
-
 void getGlobalBoundingBox(double bbox[6]);
+
+string getPath(){ return mPath; }
 
 
 //
@@ -555,8 +558,7 @@ int mVerbose;
 bool mDebugIO;
 bool mHomogeneous;
 
-// SAC file info
-vector<SAC> mSACOutputFiles;
+// SAC file info (is this used anymore?)
 bool mCompareSACFiles;
 float mSACFileErrorTolerance;
 
@@ -637,7 +639,9 @@ EW& operator=(const EW&);
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as
 double mGeoAz;
-GeographicCoord mGeoCoord;
+double mLonOrigin, mLatOrigin;
+
+//GeographicCoord mGeoCoord;
 double mMetersPerDegree;
 
 // is this object ready for time-stepping?

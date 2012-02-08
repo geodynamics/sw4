@@ -38,7 +38,7 @@ void F77_FUNC( testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* 
 }
 
 //--------------------------------------------------------------------
-void EW::solve( vector<Source*> & a_GlobalUniqueSources )
+void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries )
 {
 // solution arrays
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
@@ -249,49 +249,31 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
   if ( proc_zero() )
     cout << "  Begin time stepping..." << endl;
 
-// // save initial data on sac files
-//   update_SACs( beginCycle-1 );
+// save initial data on receiver records
+  vector<double> uRec(3);
+  for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
+  {
+    if (a_GlobalTimeSeries[ts]->myPoint())
+    {
+      int i0 = a_GlobalTimeSeries[ts]->m_i0;
+      int j0 = a_GlobalTimeSeries[ts]->m_j0;
+      int k0 = a_GlobalTimeSeries[ts]->m_k0;
+      int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
+      uRec[0] = U[grid0](1, i0, j0, k0);
+      uRec[1] = U[grid0](2, i0, j0, k0);
+      uRec[2] = U[grid0](3, i0, j0, k0);
+      
+      a_GlobalTimeSeries[ts]->recordData(uRec);
+    }
+  }
+  
 
 // // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
 
-//     if( m_forcing->use_input_sources() )
-//     {
-// // tmp
-// //      printf("There are %i point sources on proc # %i\n", point_sources.size(), m_myRank);
-
-// // assign interior forcing
-//         for( int g=0 ; g<mNumberOfGrids; g++ )
-//           F[g].set_to_zero();
-
-//        for( int s= 0 ; s < point_sources.size() ; s++ )
-//        {
-// 	  //	  double rhoi = 1/mRho(sN,sM,sL);
-//           double fxyz[3];
-// 	  point_sources[s]->getFxyz(mTime,fxyz);
-//           int g = point_sources[s]->m_grid;
-//           double rhoi = 1.0/(mRho[g].c_ptr()[ind[s]]);
-//           double* fp = F[g].c_ptr();
-// // tmp
-// //          printf("Source # %i proc # %i has index %i %i %i on grid %i, value = (%e, %e, %e)\n", s, m_myRank,
-// //                    point_sources[s]->m_i0, point_sources[s]->m_j0, point_sources[s]->m_k0, g,
-// //                    fxyz[0]*rhoi, fxyz[1]*rhoi, fxyz[2]*rhoi );
-
-// // the treatment of rho used to be inconsistent between the Cartesian and curvilinear inner loop!
-// // in the cartesian inner loop, the forcing is not divided by rho, while 
-// // it is (was) divided by rho in the curvilinear inner loop
-//           fp[3*ind[s]  ] += fxyz[0]*rhoi;
-//           fp[3*ind[s]+1] += fxyz[1]*rhoi;
-//           fp[3*ind[s]+2] += fxyz[2]*rhoi;
-//        }
-//     }
-//     else
-//     {
-
-// twilight forcing...
-//    if (m_twilight_forcing)
+// all types of forcing...
     exactForce( t, F, point_sources );
       
 // evaluate right hand side
@@ -356,9 +338,23 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
-// // sac files save the value of U at certain grid points, so need to be called after the solution
-// // arrays have been cycled 
-//     update_SACs( currentTimeStep );
+// save the current solution on receiver records
+    for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
+    {
+      if (a_GlobalTimeSeries[ts]->myPoint())
+      {
+	int i0 = a_GlobalTimeSeries[ts]->m_i0;
+	int j0 = a_GlobalTimeSeries[ts]->m_j0;
+	int k0 = a_GlobalTimeSeries[ts]->m_k0;
+	int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
+	uRec[0] = U[grid0](1, i0, j0, k0);
+	uRec[1] = U[grid0](2, i0, j0, k0);
+	uRec[2] = U[grid0](3, i0, j0, k0);
+
+	a_GlobalTimeSeries[ts]->recordData(uRec);
+
+      }
+    }
 
     time_measure[6] = MPI_Wtime();	  	
 	  
@@ -391,6 +387,10 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
    if( m_output_detailed_timing )
      print_execution_times( time_sum );
 
+// tmp
+   // if ( proc_zero() )
+   //   printf("\nCalling exactSol\n");
+
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVE, a_GlobalUniqueSources ) )
    {
@@ -402,6 +402,10 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources )
       //      im->computeImageQuantity(Up, 1);
       //      string path=".";
       //      im->writeImagePlane_2(1,path);
+
+// tmp
+      // if ( proc_zero() )
+      // 	 printf("\nCalling normOfDifference\n");
       
       normOfDifference( Up, U, errInf, errL2, a_GlobalUniqueSources );
       if ( proc_zero() )

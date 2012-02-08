@@ -25,7 +25,7 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
+void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries )
 {
   double time_start = MPI_Wtime();
 
@@ -103,8 +103,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // the multi-D window, and allocate arrays to hold the boundary forcing
   int wind[6], npts;
 // with 2 ghost points, we need twice as many elements in the m_BCForcing arrays!!!
-// tmp
-  printf("************ TEST ************************\n");
+
   for (int g=0; g<mNumberOfGrids; g++ )
   {
 // tmp
@@ -114,14 +113,15 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     {
       if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
       {
-// extract the size from the solution array mU
 
 // modify the window for stress free bc to only hold one plane
 	if (m_bcType[g][side] == bStressFree)
 	{
 	  side_plane( g, side, wind, 1 );
 // when calling side_plane with nGhost=1, you get the outermost grid plane
-// add/subtract 
+// for Free surface conditions, we apply the forcing on the boundary itself, i.e., just 
+// inside the ghost points
+// add/subtract the ghost point offset
 	  if( side == 0 )
 	  {
 	    wind[0] += m_ghost_points;   wind[1] = wind[0];
@@ -165,14 +165,12 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
       } // end if
 
 // tmp
-      printf("proc=%i side=%i, bc=%i, npts=%i, m_BndryWindow[g][side]=[%i %i %i %i %i %i]\n", m_myRank, side, 
-	     m_bcType[g][side], m_NumberOfBCPoints[g][side],
-	     m_BndryWindow[g][0 + side*6], m_BndryWindow[g][1 + side*6], m_BndryWindow[g][2 + side*6], 
-	     m_BndryWindow[g][3 + side*6], m_BndryWindow[g][4 + side*6], m_BndryWindow[g][5 + side*6]);
+      // printf("proc=%i side=%i, bc=%i, npts=%i, m_BndryWindow[g][side]=[%i %i %i %i %i %i]\n", m_myRank, side, 
+      // 	     m_bcType[g][side], m_NumberOfBCPoints[g][side],
+      // 	     m_BndryWindow[g][0 + side*6], m_BndryWindow[g][1 + side*6], m_BndryWindow[g][2 + side*6], 
+      // 	     m_BndryWindow[g][3 + side*6], m_BndryWindow[g][4 + side*6], m_BndryWindow[g][5 + side*6]);
     } // end for side...
   } // end for grid...
-// tmp
-  printf("************ END TEST ************************\n");
   
 // communicate the metric across processor boundaries (one-sided differences were used in setup_metric())
   if (topographyExists())
@@ -207,7 +205,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   string cachePath = mPath;
    
 // tmp
-  if ( mVerbose )
+  if ( mVerbose >= 3 )
    {
      int top = mNumberOfCartesianGrids-1;
      printf("=================Processor #%i index bounds====================\n"
@@ -317,10 +315,10 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   if (proc_zero())
   {
     double lat[4],lon[4];
-    computeGeographicCoord(0.0,           0.0,           0.0, lat[0], lon[0]);
-    computeGeographicCoord(m_global_xmax, 0.0,           0.0, lat[1], lon[1]);
-    computeGeographicCoord(m_global_xmax, m_global_ymax, 0.0, lat[2], lon[2]);
-    computeGeographicCoord(0.0,           m_global_ymax, 0.0, lat[3], lon[3]);
+    computeGeographicCoord(0.0,           0.0,           lon[0], lat[0]);
+    computeGeographicCoord(m_global_xmax, 0.0,           lon[1], lat[1]);
+    computeGeographicCoord(m_global_xmax, m_global_ymax, lon[2], lat[2]);
+    computeGeographicCoord(0.0,           m_global_ymax, lon[3], lat[3]);
     printf("Geographic coordinates of the corners of the computational grid:\n");
     for (int q=0; q<4; q++)
       printf("%i: Lon= %e, Lat=%e\n", q, lon[q], lat[q]);
@@ -334,16 +332,21 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // prefilter is enabled
   computeDT( );
 
-// Initialize SAC files:set time, move SAC to finest grid, compute epicenter. (Epicenter might be wrong after the source time functions have been discretized?)
-//   initialize_SAC_files();
-//   if( mVerbose && proc_zero() )
-//     printf("  Initialized SAC files\n");
+// should we allocate receiver arrays and initialize all images after the prefilter time offset stuff?
+
+// Set the number of time steps and allocate the recording arrays in all receiver objects
+  for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
+    a_GlobalTimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps, mTstart, mDt);
+  
+  if( mVerbose && proc_zero() )
+    printf("***  Allocated all receiver time series\n");
 
 // Initialize image files: set time, tell images about grid hierarchy.
   initialize_image_files();
   if( mVerbose && proc_zero() )
-    cout << "  Initialized Images" << endl;
+    cout << "*** Initialized Images" << endl;
 
+// sanity checks for various testing modes
   if( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
   {
      if( m_point_source_test || m_lamb_test )
@@ -364,10 +367,10 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 	}
      }
-         // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
+// Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 // Correct source location for discrepancy between raw and smoothed topography
     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-      a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources which are above the topography
+      a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources that are above the topography
 
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
      if (m_limit_source_freq)

@@ -288,7 +288,7 @@ void Source::correct_Z_level( )
 // 		  mZ0, m_zRelativeToTopography, zSource, zMin, zMinTilde);
 // 	   if (! mEW->invert_curvilinear_grid_mapping( mX0, mY0, zSource, q, r, s ))
 // 	   {
-// 	     mEW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
+// 	     mEW->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	     cerr << "The corrected source location zSource = " << zSource << " could not be inverted" << endl
 // 		  << " Raw topography z = " << zMin << " Smoothed topography z = " << zMinTilde << endl
 // 		  << " Source at lat = " << lat << " lon = " << lon << " mZ0 = " << mZ0 << " zSource = " << zSource << endl;
@@ -297,7 +297,7 @@ void Source::correct_Z_level( )
 // 	   }
 // 	   else if (s<0.)
 // 	   {
-// 	     mEW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
+// 	     mEW->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	     cerr << "Inverting the corrected source location zSource = " << zSource << " gives s = " << s << endl 
 // 		  << " Raw topography z = " << zMin << " Smoothed topography z = " << zMinTilde << endl
 // 		  << " Source at lat = " << lat << " lon = " << lon << " mZ0 = " << mZ0 << " zSource = " << zSource << endl;
@@ -308,7 +308,7 @@ void Source::correct_Z_level( )
 // 	 else
 // 	 {
 // 	   mIgnore = true;
-// 	   mEW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
+// 	   mEW->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	   cerr << "Ignoring source at lat = " << lat << " lon = " << lon << " z-level = " << mZ0 
 // 		<< " Too close or above raw topography z = " << zMin << endl;
 // 	 }
@@ -316,7 +316,7 @@ void Source::correct_Z_level( )
 //        else
 //        {
 // 	 mIgnore = true;
-// 	 mEW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
+// 	 mEW->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	 cerr << "Ignoring source at lat = " << lat << " lon = " << lon << " z-level = " << mZ0 << endl
 // 	      << " Failed to evaluate smoothed and/or raw topography at q= " << q << ", r= " << r << endl;
 //        }
@@ -708,7 +708,7 @@ void Source::set_grid_point_sources( EW *a_EW, vector<GridPointSource*>& point_s
 	double xTop, yTop, zTop;
 	a_EW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
 	double lat, lon;
-	a_EW->computeGeographicCoord(mX0, mY0, mZ0, lat, lon);
+	a_EW->computeGeographicCoord(mX0, mY0, lon, lat);
 	printf("Found a source above the curvilinear grid! Lat=%e, Lon=%e, source Z-level = %e, grid boundary Z = %e\n", lat, lon, mZ0, zTop);
 		
 	MPI_Abort(MPI_COMM_WORLD,1);
