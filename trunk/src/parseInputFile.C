@@ -4474,6 +4474,10 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
        {
 	 mode = TimeSeries::Displacement;
        }
+       else if( strcmp("velocity",token)==0 )
+       {
+	 mode = TimeSeries::Velocity;
+       }
        else if( strcmp("div",token)==0 )
        {
 	 mode = TimeSeries::Div;
@@ -4491,6 +4495,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 	 if (proc_zero())
 	   cerr << "receiver command: variables=" << token << " not understood" << endl
 		<< "using default mode (displacement)" << endl << endl;
+	 mode = TimeSeries::Displacement;
        }
        
      }

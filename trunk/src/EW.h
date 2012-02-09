@@ -58,7 +58,7 @@ void solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_Glo
 bool parseInputFile( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 
 void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int grid0, 
-		       vector<double> &uRec, vector<Sarray> &Um, vector<Sarray> &U, vector<Sarray> &Up);
+		       vector<double> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
 
 // some (all?) of these functions are called from parseInputFile() and should be made private
 void badOption(string name, char* option) const;

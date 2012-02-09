@@ -250,7 +250,9 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
   vector<double> uRec;
   for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
   {
-    if (a_GlobalTimeSeries[ts]->myPoint())
+// can't compute a 2nd order accurate time derivative at this point
+// therefore, don't record anything related to velocities for the initial data
+    if (a_GlobalTimeSeries[ts]->getMode() != TimeSeries::Velocity && a_GlobalTimeSeries[ts]->myPoint())
     {
       int i0 = a_GlobalTimeSeries[ts]->m_i0;
       int j0 = a_GlobalTimeSeries[ts]->m_j0;
@@ -258,7 +260,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
       int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
 
       extractRecordData(a_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
-			uRec, Um, U, Up); // nothing reliable in Up at this point...
+			uRec, Um, U); 
       a_GlobalTimeSeries[ts]->recordData(uRec);
     }
   }
@@ -325,9 +327,13 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
+//
+// AP: Note to self: Any quantity related to velocities will be lagged by one time step
+//
     update_images( currentTimeStep, t, Up );
     
-// save the current solution on receiver records (time-derivative requires all 3 time levels
+// save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
+// approximation, so do this before cycling the arrays)
     for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
     {
       if (a_GlobalTimeSeries[ts]->myPoint())
@@ -337,11 +343,13 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 	int k0 = a_GlobalTimeSeries[ts]->m_k0;
 	int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
 
+// note that the solution on the new time step is in Up
+// also note that all quantities related to velocities lag by one time step; they are not
+// saved before the time stepping loop started
 	extractRecordData(a_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
-			  uRec, Um, U, Up);
+			  uRec, Um, Up);
 
 	a_GlobalTimeSeries[ts]->recordData(uRec);
-
       }
     }
 
@@ -1796,7 +1804,7 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
 
 //-----------------------------------------------------------------------
 void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
-			   vector<double> &uRec, vector<Sarray> &Um, vector<Sarray> &U, vector<Sarray> &Up)
+			   vector<double> &uRec, vector<Sarray> &Um2, vector<Sarray> &U)
 {
   if (mode == TimeSeries::Displacement)
   {
@@ -1804,6 +1812,13 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     uRec[0] = U[g0](1, i0, j0, k0);
     uRec[1] = U[g0](2, i0, j0, k0);
     uRec[2] = U[g0](3, i0, j0, k0);
+  }
+  else if (mode == TimeSeries::Velocity)
+  {
+    uRec.resize(3);
+    uRec[0] = (U[g0](1, i0, j0, k0) - Um2[g0](1, i0, j0, k0))/(2*mDt);
+    uRec[1] = (U[g0](2, i0, j0, k0) - Um2[g0](2, i0, j0, k0))/(2*mDt);
+    uRec[3] = (U[g0](3, i0, j0, k0) - Um2[g0](3, i0, j0, k0))/(2*mDt);
   }
   else if(mode == TimeSeries::Div)
   {

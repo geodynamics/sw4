@@ -188,7 +188,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
    }
 
 // get number of components from m_mode
-  if (m_mode == Displacement)
+  if (m_mode == Displacement || m_mode == Velocity)
     m_nComp=3;
   else if (m_mode == Div)
     m_nComp=1;
@@ -299,7 +299,7 @@ void TimeSeries::recordData(vector<double> & u)
 // better pass the right amount of data!
    if (u.size() != m_nComp)
    {
-     printf("Error: TimeSeries::recordData: passing a vector of size=%i but nComp=%i\n", u.size(), m_nComp);
+     printf("Error: TimeSeries::recordData: passing a vector of size=%i but nComp=%i\n", (int) u.size(), m_nComp);
      return;
    }
    
@@ -360,7 +360,7 @@ void TimeSeries::writeFile()
 
     stringstream msg;
     msg << "Writing " << mode << " SAC files, "
-	<< "up to time step " << mLastTimeStep << ": "
+	<< "of size " << mLastTimeStep+1 << ": "
 	<< filePrefix.str();
 
      string xfield, yfield, zfield, xyfield, xzfield, yzfield;
@@ -377,6 +377,19 @@ void TimeSeries::writeFile()
        azimy = m_x_azimuth+90.;
        updownang = 180;
        msg << "[x|y|z]" << endl;
+     }
+     else if( m_mode == Velocity )
+     {
+       xfield = "Vx";
+       yfield = "Vy";
+       zfield = "Vz";
+       ux << filePrefix.str() << "xv";
+       uy << filePrefix.str() << "yv";
+       uz << filePrefix.str() << "zv";
+       azimx = m_x_azimuth;
+       azimy = m_x_azimuth+90.;
+       updownang = 180;
+       msg << "[xv|yv|zv]" << endl;
      }
      else if( m_mode == Div )
      {
@@ -516,7 +529,7 @@ void TimeSeries::writeFile()
 
 // time to write the SAC files
      cout << msg.str();
-     if (m_mode == Displacement || m_mode == Curl) // 3 components
+     if (m_mode == Displacement || m_mode == Velocity || m_mode == Curl) // 3 components
      {
        write_sac_format(mLastTimeStep+1, 
 			const_cast<char*>(ux.str().c_str()), 
@@ -571,7 +584,7 @@ void TimeSeries::writeFile()
   {
     filePrefix << "txt";
     cout << "Writing ASCII USGS file, "
-    	 << "up to time step " << mLastTimeStep << ": "
+    	 << "of size " << mLastTimeStep+1 << ": "
 	 << filePrefix.str() << endl;
 
     write_usgs_format( filePrefix.str() );
@@ -662,7 +675,7 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
 
 void TimeSeries::write_usgs_format(string a_fileName)
 {
-   string mname[12] ={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+  string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
    FILE *fd=fopen(a_fileName.c_str(),"w");
    double lat, lon;
    double x, y, z;
@@ -692,6 +705,12 @@ void TimeSeries::write_usgs_format(string a_fileName)
      fprintf(fd, "# Column 2: X displacement (m)\n");
      fprintf(fd, "# Column 3: Y displacement (m)\n");
      fprintf(fd, "# Column 4: Z displacement (m)\n");
+   }
+   else if( m_mode == Velocity )
+   {
+     fprintf(fd, "# Column 2: X velocity (m/s)\n");
+     fprintf(fd, "# Column 3: Y velocity (m/s)\n");
+     fprintf(fd, "# Column 4: Z velocity (m/s)\n");
    }
    else if( m_mode == Div )
    {

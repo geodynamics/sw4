@@ -12,8 +12,8 @@ class TimeSeries{
 
 public:
 
-// support for the time derivtives are not yet implemented (mainly header info is missing)
-enum receiverMode{Displacement, Div, Curl, Strains /*, Velocity, DivVelo, CurlVelo, StrainsVelo */ };
+// support for derived quantities of the time derivative are not yet implemented
+enum receiverMode{Displacement, Div, Curl, Strains, Velocity /*, DivVelo, CurlVelo, StrainsVelo */ };
 
 TimeSeries( EW* a_ew, std::string name, receiverMode mode, bool sacFormat, bool usgsFormat, 
 	    double x, double y, double z, bool topoDepth, int writeEvery );
@@ -28,6 +28,7 @@ void writeFile( );
 double **getRecordingArray(){ return mRecordedSol; }
 
 bool myPoint(){ return m_myPoint; }
+
 receiverMode getMode(){ return m_mode; }
 
 // for simplicity, make the grid point location public
