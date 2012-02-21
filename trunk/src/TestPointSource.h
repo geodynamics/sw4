@@ -13,8 +13,6 @@ public:
    m_lambda = m_cp*m_cp*m_rho-2*m_mu;
 }
 
-bool knows_exact() const {return true;}
-
 double m_rho, m_cp, m_cs, m_lambda, m_mu;
 
 private:

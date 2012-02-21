@@ -110,9 +110,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_GaussianYc(0.0),
 
   m_use_supergrid(false),
-  m_sg_thickness_set(false),
-  m_supergrid_thickness(-1.0),
-  m_supergrid_damping_coefficient(0.15),
+  m_sg_gp_thickness(30),
+  m_sg_gp_transition(25),
+  m_supergrid_damping_coefficient(0.1),
 
   m_minJacobian(0.),
   m_maxJacobian(0.),
@@ -235,7 +235,7 @@ void EW::printPreamble() const
 
    if ( proc_zero())
    {
-      msg << "============================================================" << endl << endl 
+      msg << "============================================================" << endl
           << " Running program on " << m_nProcs << " MPI tasks" << " using the following data: " << endl << endl
           << " Start Time = " << mTstart-m_t0Shift << " Goal Time = ";
       
@@ -248,8 +248,8 @@ void EW::printPreamble() const
       
       if (mVerbose)
       {
-//	msg << " Forcing = " << m_forcing->name() << endl;
-
+	msg << endl;
+	msg << "============================================================" << endl;
 	msg << " Global boundary conditions " << endl;
 	const char* side_names[6]={"x=0   ","x=xMax","y=0   ","y=yMax","z=topo","z=zMax"};
 	for( int side = 0 ; side < 6 ; side++ )
@@ -1066,11 +1066,11 @@ void EW::finalizeIO()
 }
 
 //-----------------------------------------------------------------------
-void EW::default_bcs( boundaryConditionType bcs[6] )
+void EW::default_bcs( )
 {
    for( int side=0 ; side < 6 ; side++ )
-      bcs[side] = bDirichlet;
-   bcs[4] = bStressFree;
+      mbcGlobalType[side] = bDirichlet;
+   mbcGlobalType[4] = bStressFree;
 }
 
 //---------------------------------------------------------------------------
@@ -1167,6 +1167,35 @@ void EW::normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & 
 //   diffL2 = diffL2Local;
 //   diffInf = diffInfLocal;
     
+  diffL2 = sqrt(diffL2);
+}
+
+//---------------------------------------------------------------------------
+void EW::normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
+				  double &diffL2 )
+{
+  int g;
+  double absDiff;
+  double *uex_ptr, *u_ptr, h, diffInfLocal=0, diffL2Local=0;
+
+  g = mNumberOfCartesianGrids-1;
+  int k = 1;
+  
+  h = mGridSize[g];
+
+// only evaluate error on the surface, not including ghost or parallel overlap points
+  for (int j=m_jStartInt[g]; j<=m_jEndInt[g]; j++)
+    for (int i=m_iStartInt[g]; i<=m_iEndInt[g]; i++)
+    {
+      absDiff = fabs(a_Uex[g](3,i,j,k) - a_U[g](3,i,j,k));
+      if (absDiff > diffInfLocal) diffInfLocal = absDiff;
+      diffL2Local += h*h*absDiff*absDiff;
+    }
+
+// communicate local results for global errors
+  MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+
   diffL2 = sqrt(diffL2);
 }
 
@@ -1298,21 +1327,22 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
   }
   else if( m_point_source_test )
   {
-     for(int g=0 ; g < mNumberOfCartesianGrids; g++ )
+    for(int g=0 ; g < mNumberOfCartesianGrids; g++ ) // curvilinear case needs to be implemented
         get_exact_point_source( a_U[g], a_t, g, *sources[0] );
      retval = true;
   }
   else if( m_lamb_test )
   {
-     retval = false;
+    get_exact_lamb( a_U, a_t, *sources[0] );
+    retval = true;
   }
-  else if( m_rayleigh_wave_test )
+  else if( m_rayleigh_wave_test ) // not yet implemented
   {
      retval = false;
   }
-  else
+  else // In general, the exact solution is unknown (m_energy_test falls into this category)
   {
-     // Exact solution unknown
+     
      retval = false;
   }
   return retval;
@@ -2054,6 +2084,328 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 	 }
 }
 
+#include <cmath>
+#include <complex>
+
+//-----------------------------------------------------------------------
+complex<double> asin(complex<double> z)
+{
+  complex<double> I(0,1);
+  return -I*log(I*z + sqrt(1. - pow(z,2)));
+}
+ 
+//-----------------------------------------------------------------------
+complex<double> atan(complex<double> z)
+{
+  complex<double> I(0,1);
+  return I/2.*log((I + z)/(I - z));
+}
+ 
+//-----------------------------------------------------------------------
+complex<double> atan2(complex<double> z, complex<double> w)
+{
+  complex<double> I(0,1);
+ 
+  if (w == (0.0,0.0))
+    {
+      if (z.real() > 0)
+        return M_PI/2.;
+      else
+        return -M_PI/2.;
+    }
+  else
+    {
+      complex<double> retval = I/2.*log((I + z/w)/(I - z/w));
+      if( retval.real() < 0 && z.real() > 0 )
+         retval = retval + M_PI;
+      if( retval.real() > 0 && z.real() < 0 )
+         retval = retval - M_PI;
+      return retval;
+      //      return I/2.*log((I + z/w)/(I - z/w));
+    }
+}
+
+//-----------------------------------------------------------------------
+void EW::get_exact_lamb( vector<Sarray> & a_U, double a_t, Source& a_source )
+{
+  int g;
+  
+// initialize
+  for (g=0; g<mNumberOfGrids; g++)
+    a_U[g].set_to_zero();
+  
+  double x, y, z, uz, h, t=a_t;
+  
+  double tau ,r;
+  double gamma = sqrt(3. + sqrt(3.))/2.;
+
+  double alpha = m_lamb_test->m_cp;
+  double beta  = m_lamb_test->m_cs;
+  double mu    = m_lamb_test->m_mu;
+
+  double x0 = a_source.getX0();
+  double y0 = a_source.getY0();
+  double z0 = a_source.getZ0();
+  
+  double fx, fy, fz;
+  a_source.getForces( fx, fy, fz );
+     
+  // Function valid only on surface, i.e., z=0
+  if( fabs(z)>1e-2*h )
+    return;
+//      return false;
+   
+  double R;
+
+// Only the z-component of solution on the flat surface (z=0) is known by this routine
+  int k = 1; 
+  g = mNumberOfCartesianGrids - 1; // top Cartesian grid
+  h = mGridSize[g];
+   
+  z = 0.0;
+
+//loop over all points in the horizontal plane
+  for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+    {
+      x = (i-1)*h;
+      y = (j-1)*h;
+
+      R = sqrt( (x-x0)*(x-x0)+(y-y0)*(y-y0));
+      if( R < h )
+      {
+	uz = 0;
+      }
+      else
+      {
+	uz = 0;
+	if ( t <= R/alpha )
+	{
+	  uz = 0.0;
+	}
+	else
+	{
+	  tau = t*beta/R;
+	  r = R;
+	  if (tau > gamma)
+	  {
+	    uz += G4_Integral(min(max(0.0,tau - gamma),beta/r), tau, r, beta) - G4_Integral(0.0, tau, r, beta);
+	  }
+	  if (tau > 1 && tau < beta/r+gamma)
+	  {
+	    uz += G3_Integral(min(tau - 1,beta/r), tau, r, beta) - G3_Integral(max(0.0,tau - gamma), tau, r, beta);
+	  }
+	  if (tau > 1/sqrt(3.) && tau < beta/r+1)
+	  {
+	    uz += G2_Integral(min(tau - 1/sqrt(3.),beta/r), tau, r, beta) - G2_Integral(max(tau - 1,0.0), tau, r, beta);
+	  }
+	  uz *= -fz/(M_PI*M_PI*mu)*alpha*alpha/(beta*beta*beta);
+	}
+      } // end if R<h
+// assign Sarray
+      a_U[g](3,i,j,k) = uz;
+    } // end for i,j
+} // end get_exact_lamb()
+
+
+//-----------------------------------------------------------------------
+double EW::G4_Integral(double T, double t, double r, double beta)
+{
+  double c0 = 1024., c1 = -5120., c2 = 10240., c3 = -10240., c4 = 5120., c5 = -1024.;
+ 
+  return -(M_PI*(  (c5*pow(r,9)*pow(T,10))/pow(beta,9) 
+		 + (c4*pow(r,8)*pow(T,9))/pow(beta,8) 
+		 + (c3*pow(r,7)*pow(T,8))/pow(beta,7) 
+		 + (c2*pow(r,6)*pow(T,7))/pow(beta,6) 
+		 + (c1*pow(r,5)*pow(T,6))/pow(beta,5) 
+		 + (c0*pow(r,4)*pow(T,5))/pow(beta,4)
+	     ) ) /8.;
+}
+
+//-----------------------------------------------------------------------
+double EW::G3_Integral(double iT, double it, double ir, double ibeta)
+{
+  complex<double> T=iT, t=it, r=ir, beta=ibeta;
+  complex<double> c0 = 1024, c1 = -5120, c2 = 10240, c3 = -10240, c4 = 5120, c5 = -1024;
+  complex<double> gamma = sqrt(3. + sqrt(3.))/2.;
+  complex<double> tmp;
+ 
+  tmp = -(M_PI*((c5*pow(r,9)*pow(T,10))/pow(beta,9) + (c4*pow(r,8)*pow(T,9))/pow(beta,8) + (c3*pow(r,7)*pow(T,8))/pow(beta,7) +
+        (c2*pow(r,6)*pow(T,7))/pow(beta,6) + (c1*pow(r,5)*pow(T,6))/pow(beta,5) + (c0*pow(r,4)*pow(T,5))/pow(beta,4)))
+    /8.;
+ 
+  tmp += (sqrt(5. + 3.*sqrt(3.))*M_PI*pow(r,4)*(-(sqrt(-pow(t,2) + 2.*t*T - pow(T,2) + pow(gamma,2))*
+           (10.*c5*pow(r,5)*(114064.*pow(t,8) + 73744.*pow(t,7)*T + 8.*pow(t,6)*(6698.*pow(T,2) + 150373.*pow(gamma,2)) +
+                8.*pow(t,5)*(5018.*pow(T,3) + 68871.*T*pow(gamma,2)) +
+                2.*pow(t,4)*(15032.*pow(T,4) + 139272.*pow(T,2)*pow(gamma,2) + 961437.*pow(gamma,4)) +
+                2.*pow(t,3)*(11000.*pow(T,5) + 68536.*pow(T,3)*pow(gamma,2) + 284361.*T*pow(gamma,4)) +
+                pow(t,2)*(15280.*pow(T,6) + 61032.*pow(T,4)*pow(gamma,2) + 170190.*pow(T,2)*pow(gamma,4) +
+                   572519.*pow(gamma,6)) + t*(9520.*pow(T,7) + 22200.*pow(T,5)*pow(gamma,2) + 41574.*pow(T,3)*pow(gamma,4) +
+                   82841.*T*pow(gamma,6)) + 128.*(35.*pow(T,8) + 40.*pow(T,6)*pow(gamma,2) + 48.*pow(T,4)*pow(gamma,4) +
+                   64.*pow(T,2)*pow(gamma,6) + 128.*pow(gamma,8))) +
+             3.*beta*(9.*c4*pow(r,4)*(36528.*pow(t,7) + 23088.*pow(t,6)*T + 24.*pow(t,5)*(682.*pow(T,2) + 11989.*pow(gamma,2)) +
+                   8.*pow(t,4)*(1486.*pow(T,3) + 15333.*T*pow(gamma,2)) +
+                   pow(t,3)*(8528.*pow(T,4) + 56496.*pow(T,2)*pow(gamma,2) + 305934.*pow(gamma,4)) +
+                   pow(t,2)*(5840.*pow(T,5) + 24272.*pow(T,3)*pow(gamma,2) + 75798.*T*pow(gamma,4)) +
+                   t*(3600.*pow(T,6) + 8632.*pow(T,4)*pow(gamma,2) + 17226.*pow(T,2)*pow(gamma,4) + 45477.*pow(gamma,6)) +
+                   35.*(48.*pow(T,7) + 56.*pow(T,5)*pow(gamma,2) + 70.*pow(T,3)*pow(gamma,4) + 105.*T*pow(gamma,6)))
++
+                8.*beta*(8.*c3*pow(r,3)*(4356.*pow(t,6) + 2676.*pow(t,5)*T + 12.*pow(t,4)*(153.*pow(T,2) + 2033.*pow(gamma,2)) +
+                      4.*pow(t,3)*(319.*pow(T,3) + 2358.*T*pow(gamma,2)) +
+                      pow(t,2)*(856.*pow(T,4) + 3786.*pow(T,2)*pow(gamma,2) + 15525.*pow(gamma,4)) +
+                      t*(520.*pow(T,5) + 1298.*pow(T,3)*pow(gamma,2) + 2907.*T*pow(gamma,4)) +
+                      48.*(5.*pow(T,6) + 6.*pow(T,4)*pow(gamma,2) + 8.*pow(T,2)*pow(gamma,4) + 16.*pow(gamma,6))) +
+                   7.*beta*(2.*beta*(25.*c0*beta*(50.*pow(t,3) + 26.*pow(t,2)*T + 14.*t*pow(T,2) + 6.*pow(T,3) + 55.*t*pow(gamma,2) +
+                            9.*T*pow(gamma,2)) + 6.*c1*r*
+                          (274.*pow(t,4) + 154.*pow(t,3)*T + 94.*pow(t,2)*pow(T,2) + 54.*t*pow(T,3) + 24.*pow(T,4) +
+                            607.*pow(t,2)*pow(gamma,2) + 161.*t*T*pow(gamma,2) + 32.*pow(T,2)*pow(gamma,2) + 64.*pow(gamma,4))) +
+                      7.*c2*pow(r,2)*(588.*pow(t,5) + 348.*pow(t,4)*T + 40.*pow(T,5) + 50.*pow(T,3)*pow(gamma,2) +
+                         75.*T*pow(gamma,4) + 12.*pow(t,3)*(19.*pow(T,2) + 182.*pow(gamma,2)) +
+                         4.*pow(t,2)*(37.*pow(T,3) + 183.*T*pow(gamma,2)) +
+                         t*(88.*pow(T,4) + 234.*pow(T,2)*pow(gamma,2) + 693.*pow(gamma,4))))))))/40320. -
+       ((10.*c5*pow(r,5)*t*(128.*pow(t,8) + 2304.*pow(t,6)*pow(gamma,2) + 6048.*pow(t,4)*pow(gamma,4) +
+               3360.*pow(t,2)*pow(gamma,6) + 315.*pow(gamma,8)) +
+            beta*(9.*c4*pow(r,4)*(128.*pow(t,8) + 1792.*pow(t,6)*pow(gamma,2) + 3360.*pow(t,4)*pow(gamma,4) +
+                  1120.*pow(t,2)*pow(gamma,6) + 35.*pow(gamma,8)) +
+               8.*beta*(8.*c3*pow(r,3)*t*(16.*pow(t,6) + 168.*pow(t,4)*pow(gamma,2) + 210.*pow(t,2)*pow(gamma,4) +
+                     35.*pow(gamma,6)) + beta*(7.*c2*pow(r,2)*
+                      (16.*pow(t,6) + 120.*pow(t,4)*pow(gamma,2) + 90.*pow(t,2)*pow(gamma,4) + 5.*pow(gamma,6)) +
+                     2.*beta*(5.*c0*beta*(8.*pow(t,4) + 24.*pow(t,2)*pow(gamma,2) + 3.*pow(gamma,4)) +
+                        6.*c1*r*t*(8.*pow(t,4) + 40.*pow(t,2)*pow(gamma,2) + 15.*pow(gamma,4)))))))*
+          atan2((t - T),sqrt(-pow(t,2) + 2.*t*T - pow(T,2) + pow(gamma,2))))/128.))/(48.*pow(beta,9));
+ 
+  //  cout << "ArcTan(Arg) = " << atan((t - T)/sqrt(-pow(t,2) + 2.*t*T - pow(T,2) + pow(gamma,2))) << ". Arg = " << (t - T) << "/" << sqrt(-pow(t,2) + 2.*t*T - pow(T,2) + pow(gamma,2)) << endl;
+ 
+  return tmp.real();
+}
+
+//-----------------------------------------------------------------------
+double EW::G2_Integral(double iT, double it, double ir, double ibeta)
+{
+  complex<double> T=iT, t=it, r=ir, beta=ibeta;
+  complex<double> c0 = 1024, c1 = -5120, c2 = 10240, c3 = -10240, c4 = 5120, c5 = -1024;
+  complex<double> gamma = sqrt(3. + sqrt(3.))/2.;
+  complex<double> tmp;
+
+  tmp = (-(M_PI*((c5*pow(r,9)*pow(T,10))/pow(beta,9) + (c4*pow(r,8)*pow(T,9))/pow(beta,8) + (c3*pow(r,7)*pow(T,8))/pow(beta,7) + 
+        (c2*pow(r,6)*pow(T,7))/pow(beta,6) + (c1*pow(r,5)*pow(T,6))/pow(beta,5) + (c0*pow(r,4)*pow(T,5))/pow(beta,4)))
+    /8.)/2.;
+
+  tmp += ((sqrt(5. + 3.*sqrt(3.))*M_PI*pow(r,4)*(-(sqrt(-pow(t,2) + 2.*t*T - pow(T,2) + pow(gamma,2))*
+           (10.*c5*pow(r,5)*(114064.*pow(t,8) + 73744.*pow(t,7)*T + 8.*pow(t,6)*(6698.*pow(T,2) + 150373.*pow(gamma,2)) + 
+                8.*pow(t,5)*(5018.*pow(T,3) + 68871.*T*pow(gamma,2)) + 
+                2.*pow(t,4)*(15032.*pow(T,4) + 139272.*pow(T,2)*pow(gamma,2) + 961437.*pow(gamma,4)) + 
+                2.*pow(t,3)*(11000.*pow(T,5) + 68536.*pow(T,3)*pow(gamma,2) + 284361.*T*pow(gamma,4)) + 
+                pow(t,2)*(15280.*pow(T,6) + 61032.*pow(T,4)*pow(gamma,2) + 170190.*pow(T,2)*pow(gamma,4) + 
+                   572519.*pow(gamma,6)) + t*(9520.*pow(T,7) + 22200.*pow(T,5)*pow(gamma,2) + 41574.*pow(T,3)*pow(gamma,4) + 
+                   82841.*T*pow(gamma,6)) + 128.*(35.*pow(T,8) + 40.*pow(T,6)*pow(gamma,2) + 48.*pow(T,4)*pow(gamma,4) + 
+                   64.*pow(T,2)*pow(gamma,6) + 128.*pow(gamma,8))) + 
+             3.*beta*(9.*c4*pow(r,4)*(36528.*pow(t,7) + 23088.*pow(t,6)*T + 24.*pow(t,5)*(682.*pow(T,2) + 11989.*pow(gamma,2)) + 
+                   8.*pow(t,4)*(1486.*pow(T,3) + 15333.*T*pow(gamma,2)) + 
+                   pow(t,3)*(8528.*pow(T,4) + 56496.*pow(T,2)*pow(gamma,2) + 305934.*pow(gamma,4)) + 
+                   pow(t,2)*(5840.*pow(T,5) + 24272.*pow(T,3)*pow(gamma,2) + 75798.*T*pow(gamma,4)) + 
+                   t*(3600.*pow(T,6) + 8632.*pow(T,4)*pow(gamma,2) + 17226.*pow(T,2)*pow(gamma,4) + 45477.*pow(gamma,6)) + 
+                   35.*(48.*pow(T,7) + 56.*pow(T,5)*pow(gamma,2) + 70.*pow(T,3)*pow(gamma,4) + 105.*T*pow(gamma,6))) + 
+                8.*beta*(8.*c3*pow(r,3)*(4356.*pow(t,6) + 2676.*pow(t,5)*T + 12.*pow(t,4)*(153.*pow(T,2) + 2033.*pow(gamma,2)) + 
+                      4.*pow(t,3)*(319.*pow(T,3) + 2358.*T*pow(gamma,2)) + 
+                      pow(t,2)*(856.*pow(T,4) + 3786.*pow(T,2)*pow(gamma,2) + 15525.*pow(gamma,4)) + 
+                      t*(520.*pow(T,5) + 1298.*pow(T,3)*pow(gamma,2) + 2907.*T*pow(gamma,4)) + 
+                      48.*(5.*pow(T,6) + 6.*pow(T,4)*pow(gamma,2) + 8.*pow(T,2)*pow(gamma,4) + 16.*pow(gamma,6))) + 
+                   7.*beta*(2.*beta*(25.*c0*beta*(50.*pow(t,3) + 26.*pow(t,2)*T + 14.*t*pow(T,2) + 6.*pow(T,3) + 55.*t*pow(gamma,2) + 
+                            9.*T*pow(gamma,2)) + 6.*c1*r*
+                          (274.*pow(t,4) + 154.*pow(t,3)*T + 94.*pow(t,2)*pow(T,2) + 54.*t*pow(T,3) + 24.*pow(T,4) + 
+                            607.*pow(t,2)*pow(gamma,2) + 161.*t*T*pow(gamma,2) + 32.*pow(T,2)*pow(gamma,2) + 64.*pow(gamma,4))) + 
+                      7.*c2*pow(r,2)*(588.*pow(t,5) + 348.*pow(t,4)*T + 40.*pow(T,5) + 50.*pow(T,3)*pow(gamma,2) + 
+                         75.*T*pow(gamma,4) + 12.*pow(t,3)*(19.*pow(T,2) + 182.*pow(gamma,2)) + 
+                         4.*pow(t,2)*(37.*pow(T,3) + 183.*T*pow(gamma,2)) + 
+                         t*(88.*pow(T,4) + 234.*pow(T,2)*pow(gamma,2) + 693.*pow(gamma,4))))))))/40320. - 
+       ((10.*c5*pow(r,5)*t*(128.*pow(t,8) + 2304.*pow(t,6)*pow(gamma,2) + 6048.*pow(t,4)*pow(gamma,4) + 
+               3360.*pow(t,2)*pow(gamma,6) + 315.*pow(gamma,8)) + 
+            beta*(9.*c4*pow(r,4)*(128.*pow(t,8) + 1792.*pow(t,6)*pow(gamma,2) + 3360.*pow(t,4)*pow(gamma,4) + 
+                  1120.*pow(t,2)*pow(gamma,6) + 35.*pow(gamma,8)) + 
+               8.*beta*(8.*c3*pow(r,3)*t*(16.*pow(t,6) + 168.*pow(t,4)*pow(gamma,2) + 210.*pow(t,2)*pow(gamma,4) + 
+                     35.*pow(gamma,6)) + beta*(7.*c2*pow(r,2)*
+                      (16.*pow(t,6) + 120.*pow(t,4)*pow(gamma,2) + 90.*pow(t,2)*pow(gamma,4) + 5.*pow(gamma,6)) + 
+                     2.*beta*(5.*c0*beta*(8.*pow(t,4) + 24.*pow(t,2)*pow(gamma,2) + 3.*pow(gamma,4)) + 
+                        6.*c1*r*t*(8.*pow(t,4) + 40.*pow(t,2)*pow(gamma,2) + 15.*pow(gamma,4)))))))*
+          atan2((t - T),sqrt(-pow(t,2) + 2.*t*T - pow(T,2) + pow(gamma,2))))/128.))/(48.*pow(beta,9)))/2.;
+
+    
+    tmp += -(sqrt(-5. + 3.*sqrt(3.))*M_PI*pow(r,4)*(sqrt(-0.75 + sqrt(3.)/4. + pow(t - T,2))*
+         (640.*pow(-3. + sqrt(3.),4)*c5*pow(r,5) - 
+           (pow(-3. + sqrt(3.),3)*pow(r,3)*(10.*c5*pow(r,2)*(572519.*pow(t,2) + 82841.*t*T + 8192.*pow(T,2)) + 
+                9.*beta*(9.*c4*r*(15159.*t + 1225.*T) + 16384.*c3*beta)))/64. + 
+           (3.*pow(-3. + sqrt(3.),2)*r*(10.*c5*pow(r,4)*
+                 (320479.*pow(t,4) + 94787.*pow(t,3)*T + 28365.*pow(t,2)*pow(T,2) + 6929.*t*pow(T,3) + 1024.*pow(T,4))
+                 + 3.*beta*(3.*c4*pow(r,3)*(152967.*pow(t,3) + 37899.*pow(t,2)*T + 8613.*t*pow(T,2) + 1225.*pow(T,3)) + 
+                   4.*beta*(8.*c3*pow(r,2)*(5175.*pow(t,2) + 969.*t*T + 128.*pow(T,2)) + 7.*beta*(7.*c2*r*(231.*t + 25.*T) + 256.*c1*beta)))
+                ))/8. + 2.*(3. - sqrt(3.))*(10.*c5*pow(r,5)*
+               (150373.*pow(t,6) + 68871.*pow(t,5)*T + 34818.*pow(t,4)*pow(T,2) + 17134.*pow(t,3)*pow(T,3) + 
+                 7629.*pow(t,2)*pow(T,4) + 2775.*t*pow(T,5) + 640.*pow(T,6)) + 
+              3.*beta*(9.*c4*pow(r,4)*(35967.*pow(t,5) + 15333.*pow(t,4)*T + 7062.*pow(t,3)*pow(T,2) + 
+                    3034.*pow(t,2)*pow(T,3) + 1079.*t*pow(T,4) + 245.*pow(T,5)) + 
+                 2.*beta*(8.*c3*pow(r,3)*(12198.*pow(t,4) + 4716.*pow(t,3)*T + 1893.*pow(t,2)*pow(T,2) + 649.*t*pow(T,3) + 
+                       144.*pow(T,4)) + 7.*beta*(7.*c2*pow(r,2)*
+                        (1092.*pow(t,3) + 366.*pow(t,2)*T + 117.*t*pow(T,2) + 25.*pow(T,3)) + 
+                       beta*(6.*c1*r*(607.*pow(t,2) + 161.*t*T + 32.*pow(T,2)) + 25.*c0*(55.*t + 9.*T)*beta))))) + 
+           16.*(10.*c5*pow(r,5)*(7129.*pow(t,8) + 4609.*pow(t,7)*T + 3349.*pow(t,6)*pow(T,2) + 
+                 2509.*pow(t,5)*pow(T,3) + 1879.*pow(t,4)*pow(T,4) + 1375.*pow(t,3)*pow(T,5) + 
+                 955.*pow(t,2)*pow(T,6) + 595.*t*pow(T,7) + 280.*pow(T,8)) + 
+              3.*beta*(9.*c4*pow(r,4)*(2283.*pow(t,7) + 1443.*pow(t,6)*T + 1023.*pow(t,5)*pow(T,2) + 
+                    743.*pow(t,4)*pow(T,3) + 533.*pow(t,3)*pow(T,4) + 365.*pow(t,2)*pow(T,5) + 225.*t*pow(T,6) + 
+                    105.*pow(T,7)) + 2.*beta*(8.*c3*pow(r,3)*
+                     (1089.*pow(t,6) + 669.*pow(t,5)*T + 459.*pow(t,4)*pow(T,2) + 319.*pow(t,3)*pow(T,3) + 
+                       214.*pow(t,2)*pow(T,4) + 130.*t*pow(T,5) + 60.*pow(T,6)) + 
+                    7.*beta*(7.*c2*pow(r,2)*(147.*pow(t,5) + 87.*pow(t,4)*T + 57.*pow(t,3)*pow(T,2) + 
+                          37.*pow(t,2)*pow(T,3) + 22.*t*pow(T,4) + 10.*pow(T,5)) + 
+                       beta*(6.*c1*r*(137.*pow(t,4) + 77.*pow(t,3)*T + 47.*pow(t,2)*pow(T,2) + 27.*t*pow(T,3) + 
+                             12.*pow(T,4)) + 25.*c0*(25.*pow(t,3) + 13.*pow(t,2)*T + 7.*t*pow(T,2) + 3.*pow(T,3))*beta))))))
+         + 315.*((315.*pow(-3. + sqrt(3.),4)*pow(r,4)*(10.*c5*r*t + c4*beta))/256. - 
+           (35.*pow(-3. + sqrt(3.),3)*pow(r,2)*(120.*c5*pow(r,3)*pow(t,3) + 
+                beta*(36.*c4*pow(r,2)*pow(t,2) + beta*(8.*c3*r*t + c2*beta))))/8. - 
+           90.*(-2. + sqrt(3.))*(252.*c5*pow(r,5)*pow(t,5) + 
+              beta*(126.*c4*pow(r,4)*pow(t,4) + beta*(56.*c3*pow(r,3)*pow(t,3) + 21.*c2*pow(r,2)*pow(t,2)*beta + 
+                    6.*c1*r*t*pow(beta,2) + c0*pow(beta,3)))) + 
+           128.*pow(t,4)*(10.*c5*pow(r,5)*pow(t,5) + 
+              beta*(9.*c4*pow(r,4)*pow(t,4) + beta*(8.*c3*pow(r,3)*pow(t,3) + 7.*c2*pow(r,2)*pow(t,2)*beta + 
+                    6.*c1*r*t*pow(beta,2) + 5.*c0*pow(beta,3)))) - 
+           48.*(-3. + sqrt(3.))*pow(t,2)*(120.*c5*pow(r,5)*pow(t,5) + 
+              beta*(84.*c4*pow(r,4)*pow(t,4) + beta*(56.*c3*pow(r,3)*pow(t,3) + 35.*c2*pow(r,2)*pow(t,2)*beta + 
+                    20.*c1*r*t*pow(beta,2) + 10.*c0*pow(beta,3)))))*log(-t + sqrt(-0.75 + sqrt(3.)/4. + pow(t - T,2)) + T)))/
+   (3.87072e6*pow(beta,9));
+    
+
+    tmp += (M_PI*pow(r,4)*(4.*sqrt(-0.25 + pow(t - T,2))*(10.*c5*pow(r,5)*
+           (7300096.*pow(t,8) + 4719616.*pow(t,7)*T + 128.*pow(t,5)*T*(68871. + 20072.*pow(T,2)) + 
+             128.*pow(t,6)*(150373. + 26792.*pow(T,2)) + 8.*pow(t,3)*T*(284361. + 274144.*pow(T,2) + 176000.*pow(T,4)) + 
+             8.*pow(t,4)*(961437. + 557088.*pow(T,2) + 240512.*pow(T,4)) + 
+             t*T*(82841. + 166296.*pow(T,2) + 355200.*pow(T,4) + 609280.*pow(T,6)) + 
+             pow(t,2)*(572519. + 680760.*pow(T,2) + 976512.*pow(T,4) + 977920.*pow(T,6)) + 
+             4096.*(1. + 2.*pow(T,2) + 6.*pow(T,4) + 20.*pow(T,6) + 70.*pow(T,8))) + 
+          3.*beta*(9.*c4*pow(r,4)*(2337792.*pow(t,7) + 1477632.*pow(t,6)*T + 384.*pow(t,5)*(11989. + 2728.*pow(T,2)) + 
+                128.*pow(t,4)*T*(15333. + 5944.*pow(T,2)) + 8.*pow(t,2)*T*(37899. + 48544.*pow(T,2) + 46720.*pow(T,4)) + 
+                8.*pow(t,3)*(152967. + 112992.*pow(T,2) + 68224.*pow(T,4)) + 
+                35.*T*(105. + 280.*pow(T,2) + 896.*pow(T,4) + 3072.*pow(T,6)) + 
+                t*(45477. + 68904.*pow(T,2) + 138112.*pow(T,4) + 230400.*pow(T,6))) + 
+             32.*beta*(8.*c3*pow(r,3)*(69696.*pow(t,6) + 42816.*pow(t,5)*T + 48.*pow(t,4)*(2033. + 612.*pow(T,2)) + 
+                   32.*pow(t,3)*T*(1179. + 638.*pow(T,2)) + t*T*(2907. + 5192.*pow(T,2) + 8320.*pow(T,4)) + 
+                   pow(t,2)*(15525. + 15144.*pow(T,2) + 13696.*pow(T,4)) + 
+                   192.*(1. + 2.*pow(T,2) + 6.*pow(T,4) + 20.*pow(T,6))) + 
+                7.*beta*(7.*c2*pow(r,2)*(9408.*pow(t,5) + 5568.*pow(t,4)*T + 96.*pow(t,3)*(91. + 38.*pow(T,2)) + 
+                      16.*pow(t,2)*T*(183. + 148.*pow(T,2)) + 5.*T*(15. + 40.*pow(T,2) + 128.*pow(T,4)) + 
+                      t*(693. + 936.*pow(T,2) + 1408.*pow(T,4))) + 
+                   8.*beta*(6.*c1*r*(1096.*pow(t,4) + 616.*pow(t,3)*T + t*T*(161. + 216.*pow(T,2)) + 
+                         pow(t,2)*(607. + 376.*pow(T,2)) + 16.*(1. + 2.*pow(T,2) + 6.*pow(T,4))) + 
+                      25.*c0*(55.*t + 200.*pow(t,3) + 9.*T + 104.*pow(t,2)*T + 56.*t*pow(T,2) + 24.*pow(T,3))*beta))))) + 
+       315.*(10.*c5*pow(r,5)*t*(315. + 13440.*pow(t,2) + 96768.*pow(t,4) + 147456.*pow(t,6) + 32768.*pow(t,8)) + 
+          beta*(9.*c4*pow(r,4)*(35. + 4480.*pow(t,2) + 53760.*pow(t,4) + 114688.*pow(t,6) + 32768.*pow(t,8)) + 
+             32.*beta*(8.*c3*pow(r,3)*t*(35. + 840.*pow(t,2) + 2688.*pow(t,4) + 1024.*pow(t,6)) + 
+                beta*(7.*c2*pow(r,2)*(5. + 360.*pow(t,2) + 1920.*pow(t,4) + 1024.*pow(t,6)) + 
+                   8.*beta*(6.*c1*r*t*(15. + 160.*pow(t,2) + 128.*pow(t,4)) + 5.*c0*(3. + 96.*pow(t,2) + 128.*pow(t,4))*beta)))))*
+       log(-t + sqrt(-0.25 + pow(t - T,2)) + T)))/(3.3030144e8*sqrt(3.)*pow(beta,9));
+
+  return tmp.real();
+}
 
 //---------------------------------------------------------------------------
 void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
@@ -2129,7 +2481,7 @@ void EW::exactAccTwilight(double a_t, vector<Sarray> & a_Uacc)
 }
 
 //---------------------------------------------------------------------------
-void EW::exactForce(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources )
+void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -2191,7 +2543,7 @@ void EW::exactForce(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> p
 }
 
 //---------------------------------------------------------------------------
-void EW::exactForce_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources )
+void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -2673,3 +3025,38 @@ void EW::initialize_image_files( )
    //    mImage3DFiles[fIndex]->setup_images( );
    // }
 }
+
+//-----------------------------------------------------------------------
+void EW::set_sg_thickness(int gp_thickness)
+{
+  m_sg_gp_thickness = gp_thickness;
+  if (m_myRank==0)
+    cout << "Default Supergrid thickness has been tuned; thickness = " << m_sg_gp_thickness << " grid sizes" << endl;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_sg_transition(int gp_trans)
+{
+  m_sg_gp_transition = gp_trans;
+  if (m_myRank==0)
+    cout << "Default Supergrid transition width has been tuned; width = " << m_sg_gp_transition << " grid sizes" << endl;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_sg_damping(double damp_coeff)
+{
+  m_supergrid_damping_coefficient = damp_coeff;
+  if (m_myRank==0)
+    cout << "Default Supergrid damping coefficient has been tuned; damping coefficient = " << m_supergrid_damping_coefficient << endl;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_global_bcs(boundaryConditionType bct[6])
+{
+  for (int i=0; i<6; i++) 
+    mbcGlobalType[i] = bct[i]; 
+  mbcsSet = true; 
+
+  //  cout << "mbcGlobalType = " << mbcGlobalType[0] << "," << mbcGlobalType[1] << "," << mbcGlobalType[2] << "," << mbcGlobalType[3] << "," << mbcGlobalType[4] << "," << mbcGlobalType[5] << endl;
+}
+

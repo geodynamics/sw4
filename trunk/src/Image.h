@@ -34,7 +34,7 @@ Image(EW * a_ew,
       int cycle, 
       int cycleInterval,
       const std::string& filePrefix, 
-      int sample,
+      int sample, // what is this???
       ImageMode mode,
       ImageOrientation locationType, 
       float locationValue,

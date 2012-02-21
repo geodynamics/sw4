@@ -27,7 +27,7 @@
 #include "MaterialData.h"
 // #include "EtreeFile.h"
 
-// #include "SuperGrid.h"
+#include "SuperGrid.h"
 #include "MaterialProperty.h"
 
 using namespace std;
@@ -72,9 +72,11 @@ void processFileIO(char* buffer);
 void processImage(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
+void processTestLamb(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
+void processBoundaryConditions(char *buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -95,7 +97,7 @@ void set_cflnumber( double cfl );
 void set_testing_mode(bool a_testing){m_testing = a_testing;}
 bool get_testing_mode(){return m_testing;}
 
-void default_bcs( boundaryConditionType bcs[6] );
+void default_bcs( );
 
 void set_twilight_forcing( ForcingTwilight* a_forcing );
 // perhaps these functions should be in the ForcingTwilight class? 
@@ -104,12 +106,13 @@ void initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE);
 bool exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, vector<Source*>& source );
 void exactRhsTwilight(double a_t, vector<Sarray> & a_F);
 void exactAccTwilight(double a_t, vector<Sarray> & a_Uacc);
-void exactForce(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
-void exactForce_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
 
 void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2,
 		       vector<Source*>& a_globalUniqueSources );
 void normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
+void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
 void test_sources( vector<GridPointSource*>& a_point_sources, vector<Source*>& a_global_unique_sources,
 		   vector<Sarray>& F );
 void testSourceDiscretization( int kx[3], int ky[3], int kz[3],
@@ -182,10 +185,13 @@ double lookup_Vp(int materialID, double depth);
 double lookup_Qp(int materialID, double depth);
 double lookup_Qs(int materialID, double depth);
 
-void tune_supergrid_damping(double thickness);
-void tune_supergrid_thickness(double thickness);
+// super-grid functions
+void processSupergrid(char *buffer);
+void set_sg_damping(double coeff);
+void set_sg_thickness(int gp_thickness);
+void set_sg_transition(int gp_trans);
 bool usingSupergrid(){return m_use_supergrid;};
-void setup_supergrid( boundaryConditionType a_bc[6] );
+void setup_supergrid( );
 void supergrid_taper_material();
 void assign_supergrid_damping_arrays();
 
@@ -366,7 +372,7 @@ double getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
 
-   // test point source
+ // test point source
 void get_exact_point_source( Sarray& u, double t, int g, Source& source );
 double VerySmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
 double SmoothWave_x_T_Integral(double t, double R, double alpha, double beta);
@@ -379,6 +385,13 @@ double d_Gaussian_dt(double t, double R, double c, double f);
 double VerySmoothBump(double t, double R, double c);
 double SmoothWave(double t, double R, double c);
 double Gaussian(double t, double R, double c,double f);
+
+// Lamb's problem
+void get_exact_lamb( vector<Sarray> & a_U, double a_t, Source& a_source );
+double G4_Integral(double T, double t, double r, double beta);
+double G3_Integral(double iT, double it, double ir, double ibeta);
+double G2_Integral(double iT, double it, double ir, double ibeta);
+
 
 void getGlobalBoundingBox(double bbox[6]);
 
@@ -485,9 +498,10 @@ bool m_pfs;
 int m_nwriters;
 
 // supergrid
-bool m_use_supergrid, m_sg_thickness_set;
-double m_supergrid_thickness, m_supergrid_damping_coefficient;
-//SuperGrid m_supergrid_taper_x, m_supergrid_taper_y, m_supergrid_taper_z;
+bool m_use_supergrid;
+int m_sg_gp_thickness, m_sg_gp_transition;
+double m_supergrid_damping_coefficient;
+SuperGrid m_supergrid_taper_x, m_supergrid_taper_y, m_supergrid_taper_z;
 
 string mPath;
 

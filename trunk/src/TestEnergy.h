@@ -6,11 +6,10 @@ class TestEnergy
 {
 public:
 
-   TestEnergy( double seed ) : m_seed(seed)
+TestEnergy( double seed ) : m_seed(seed)
 {
 }
 
-bool knows_exact() const {return true;}
 
 double m_seed;
 

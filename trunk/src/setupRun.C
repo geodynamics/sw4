@@ -30,7 +30,8 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
   double time_start = MPI_Wtime();
 
 // m_testing == true is one of the pointers to testing modes is assigned
-  m_testing = (m_twilight_forcing); // add other pointers to testing modes here
+// add other pointers to the list of testing modes as they get implemented
+  m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test ); 
 
 // tmp
   if (mVerbose && proc_zero() )
@@ -67,33 +68,13 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
     cout << endl;
   }
 
-// If no forcing case selected, use typical seismic set up.
-  if( !m_twilight_forcing && !m_point_source_test )
-  {
-    if (proc_zero())
-      cout << "ERROR: Only testing (twilight) is currently implemented" << endl;
-    return;
-//    m_source_forcing = new Forcing();
-  }
-  else
-  {
-
-  }
-  
 // Set boundary conditions, if not done in input file.
   if( !mbcsSet )
-    default_bcs( mbcGlobalType );
+    default_bcs( );
 
-// default super grid thickness is 15*h, where h is the grid size in the top Cartesian grid
-  if (!m_sg_thickness_set)
-  {
-    m_supergrid_thickness = 15.*mGridSize[mNumberOfCartesianGrids-1];
-    if (mVerbose >= 1 && proc_zero())
-      cout << "Setting default supergrid thickness to 15*h= " << m_supergrid_thickness << endl;
-  }
 // check if there are any supergrid boundaries. If so, setup the supergrid tapering functions with
 // thickness 'm_supergrid_thickness'
-//  setup_supergrid( mbcGlobalType );
+  setup_supergrid( );
 
 // assign m_bcType and m_onesided based on the global boundary conditions and parallel overlap boundaries. 
   assign_local_bcs(); 
@@ -296,12 +277,10 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
 
   if (usingSupergrid())
   {
-    if (m_myRank == 0) cout << "Supergrid not yet functional" << endl;
-    return;
-// // taper mu, lambda to near zero while making rho large at outflow (Dirichlet) boundaries
-//     supergrid_taper_material();
-// // 1-D damping coefficients in the (x,y,z) directions
-//     assign_supergrid_damping_arrays();
+// taper mu, lambda to near zero while making rho large at outflow (Dirichlet) boundaries
+    supergrid_taper_material();
+// 1-D damping coefficients in the (x,y,z) directions
+    assign_supergrid_damping_arrays();
   }
 
 // convert Qp and Qs to muVE, lambdaVE, and compute unrelaxed lambda, mu
@@ -346,97 +325,138 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
   if( mVerbose && proc_zero() )
     cout << "*** Initialized Images" << endl;
 
-// sanity checks for various testing modes
+// setup when there are point moment tensor sources of point forces,
+// i.e., not twilight, energy conservation, or rayleigh surface wave test
   if( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
   {
-     if( m_point_source_test || m_lamb_test )
-	if( a_GlobalUniqueSources.size() != 1 && proc_zero() )
-	{
-	   cout << "Error: Point Source Test and Lamb Test must have one single source" << endl;
-	   cout << "       The number of defined sources is " << a_GlobalUniqueSources.size() << endl;
-	}
-     if( m_point_source_test )
-     {
-	if( proc_zero() && !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-			     a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
-			     a_GlobalUniqueSources[0]->getName() == "Gaussian") )
-	{
-	   cout << "Error: Point Source Test can only have source types" <<
-	      " VerySmoothBump, SmoothWave, or Gaussian" << endl;
-	   cout << "  Input name is " << a_GlobalUniqueSources[0]->getName() << endl;
+// sanity checks for various testing modes
+    if (m_testing)
+    {
+      bool sources_ok=true;
+      
+      if (mVerbose && proc_zero())
+	cout << "Sanity testing of the source" << endl;
 
+      if( (m_point_source_test || m_lamb_test) && a_GlobalUniqueSources.size() != 1 )
+      {
+	if (proc_zero())
+	  cout << "Error: Point Source Test and Lamb Test must have one single source" << endl
+	       << "       The number of defined sources is " << a_GlobalUniqueSources.size() << endl; 
+	sources_ok=false;
+      }
+
+      if( m_point_source_test && !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
+				   a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
+				   a_GlobalUniqueSources[0]->getName() == "Gaussian") )
+      {
+	if (proc_zero())
+	  cout << "Error: Point Source Test can only have source types" 
+	       << " VerySmoothBump, SmoothWave, or Gaussian" << endl
+	       << "  Input name is " << a_GlobalUniqueSources[0]->getName() << endl;
+	sources_ok=false;
+      }
+
+      if( m_lamb_test && a_GlobalUniqueSources[0]->isMomentSource() )
+      {
+	if (proc_zero())
+	  cout << "Error: Lamb's Test must have one point force" << endl
+	       << "       The defined source is a moment tensor" << endl;
+	sources_ok=false;
+      }
+
+      if( m_lamb_test )
+      {
+	double fx, fy, fz, z0, freq;
+	a_GlobalUniqueSources[0]->getForces( fx, fy, fz );
+	z0 = a_GlobalUniqueSources[0]->getZ0();
+	freq = a_GlobalUniqueSources[0]->getFrequency();
+	
+	if ( !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" &&
+	       freq == 1.0 && z0 == 0.0 && fx == 0.0 && fy == 0.0) )
+	{
+	  if (proc_zero())
+	    cout << "Error: Lamb Test assumes a 'VerySmoothBump' time function with freq=1" 
+		 << " on z=0 with fx=0 and fy=0" << endl
+		 << " The specified source has a '" << a_GlobalUniqueSources[0]->getName() 
+		 << "' time function with freq=" << freq 
+		 << " on z=" << z0 << " with fx=" << fx << " and fy=" << fy << endl;
+	  sources_ok=false;
 	}
-     }
+      } // end if m_lamb_test
+
+      if (!sources_ok) // can't use this setup
+      {
+	return; // not setting mIsInitialized to true should stop the calling program
+      }
+      
+    } // end if m_testing
+    
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 // Correct source location for discrepancy between raw and smoothed topography
     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
       a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources that are above the topography
 
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
-     if (m_limit_source_freq)
-     {
-       if (mVerbose && proc_zero() )
-	  printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
+    if (m_limit_source_freq)
+    {
+      if (mVerbose && proc_zero() )
+	printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
 
-       for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	 a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
+      for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
        
-     } // end limit_source_freq
+    } // end limit_source_freq
      
 // check how deep the sources go
-     double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
-     for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-     {
-       zSource = a_GlobalUniqueSources[s]->getZ0( );
-       if (zSource > zMax)
-	 zMax = zSource;
-       if (zSource < zMin)
-	 zMin = zSource;
-     }
+    double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
+    for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+    {
+      zSource = a_GlobalUniqueSources[s]->getZ0( );
+      if (zSource > zMax)
+	zMax = zSource;
+      if (zSource < zMin)
+	zMin = zSource;
+    }
 // compute global max over all processors
-     MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
-     MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-     if (mVerbose && proc_zero() )
-	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
+    MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+    MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+    if (mVerbose && proc_zero() )
+      printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
 
 // Modify the time functions if prefiltering is enabled
-     if (m_prefilter_sources)
-     {
-	if (mVerbose && proc_zero() )
-	   printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
+    if (m_prefilter_sources)
+    {
+      if (mVerbose && proc_zero() )
+	printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
 // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
-       double dt0 = 0;
-       double dt0loc, dt0max;
-       for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-       {
-	 dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
-	 if( dt0loc > dt0 )
-	   dt0 = dt0loc;
-       }
+      double dt0 = 0;
+      double dt0loc, dt0max;
+      for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+      {
+	dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
+	if( dt0loc > dt0 )
+	  dt0 = dt0loc;
+      }
 // compute global max over all processors
-	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+      MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
 // adjust t0
-       if (dt0max > 0.)
-       {
-	 for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	   a_GlobalUniqueSources[s]->adjust_t0( dt0max );
-	 if ( proc_zero() )
-	   printf("*** Lowpass prefilter: t0 increased by %e in all source time functions\n", dt0max);
-       }
-       else
-       {
-	 dt0max = 0.;
-       }
+      if (dt0max > 0.)
+      {
+	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	  a_GlobalUniqueSources[s]->adjust_t0( dt0max );
+	if ( proc_zero() )
+	  printf("*** Lowpass prefilter: t0 increased by %e in all source time functions\n", dt0max);
+      }
+      else
+      {
+	dt0max = 0.;
+      }
 // need to remember the time shift so we can compensate for it when writing sac and image files
-	m_t0Shift = dt0max;
-     }
-
-// Transfer source terms to each individual grid as point sources at grid points.
-//     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-//       if (!a_GlobalUniqueSources[i]->ignore())
-//	 a_GlobalUniqueSources[i]->set_grid_point_sources4( m_point_sources );
-  }
+      m_t0Shift = dt0max;
+    }
+  } // end if ( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
+   
   if (proc_zero())
     getGMTOutput( a_GlobalUniqueSources );
 
@@ -515,7 +535,7 @@ void EW::set_materials()
 {  
   int g;
   
-  if( !m_twilight_forcing && !m_point_source_test )
+  if( !m_testing )
   {
 // make sure all Nmat=m_number_material_surfaces material properties are defined
     
@@ -688,7 +708,7 @@ void EW::set_materials()
     convert_material_to_mulambda( );
 
 // do the viscoelastic materials later (after estimating the resolution)
-  } // end if !m_testing, i.e., not Twilight
+  } // end if !m_testing, i.e., not Twilight, point source or Lamb's test
   else if (m_twilight_forcing) 
   {
 // tmp
@@ -762,6 +782,15 @@ void EW::set_materials()
 	mRho[g].set_value( m_point_source_test->m_rho );
 	mMu[g].set_value( m_point_source_test->m_mu );
 	mLambda[g].set_value( m_point_source_test->m_lambda );
+     }
+  }
+  else if ( m_lamb_test )
+  {
+     for (g=0; g<mNumberOfCartesianGrids; g++)
+     {
+	mRho[g].set_value( m_lamb_test->m_rho );
+	mMu[g].set_value( m_lamb_test->m_mu );
+	mLambda[g].set_value( m_lamb_test->m_lambda );
      }
   }
   check_materials( );
@@ -1067,5 +1096,176 @@ int EW::mkdirs(const string& path)
       }
    }
    return 0;
+}
+
+//-----------------------------------------------------------------------
+void EW::setup_supergrid( )
+{
+  if (mVerbose && proc_zero())
+    cout << "*** Inside setup_supergrid ***" << endl;
+  
+// check to see if there are any supergrid boundary conditions
+  for (int b=0; b<6; b++)
+  {
+    if (mbcGlobalType[b] == bSuperGrid)
+    {
+      m_use_supergrid=true;
+    }
+  }
+
+  if (mVerbose && proc_zero() && m_use_supergrid)
+    cout << "Detected at least one boundary with supergrid conditions" << endl;
+  
+  int gTop = mNumberOfCartesianGrids-1;
+  int gBot = 0;
+
+  m_supergrid_taper_x.define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0, (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+				    m_sg_gp_thickness*mGridSize[gTop], m_sg_gp_transition*mGridSize[gTop] );
+  m_supergrid_taper_y.define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0, (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+				    m_sg_gp_thickness*mGridSize[gTop], m_sg_gp_transition*mGridSize[gTop] );
+
+// Note that we use the grid size on the bottom grid to define the transition width in the z-direction 
+  if (topographyExists()) // the taper function in z is currently not defined for a non-planar top surface
+    m_supergrid_taper_z.define_taper( false, 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
+				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
+  else
+    m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
+				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
+// tmp
+//  printf("z-direction ");
+//  m_supergrid_taper_z.print_parameters();
+}
+
+//-----------------------------------------------------------------------
+void EW::assign_supergrid_damping_arrays()
+{
+  int g, i, j, k, topCartesian;
+  double x, y, z;
+  
+// resize the vectors for the pointers
+  m_sg_dc_x.resize(mNumberOfGrids);
+  m_sg_dc_y.resize(mNumberOfGrids);
+  m_sg_dc_z.resize(mNumberOfGrids);
+  
+// allocate storage for 1-D damping coefficients on each grid
+  for( g=0 ; g<mNumberOfGrids; g++) 
+  {
+    m_sg_dc_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_dc_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_dc_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
+  }
+#define dcx(i,g) (m_sg_dc_x[g])[i-m_iStart[g]]
+#define dcy(j,g) (m_sg_dc_y[g])[j-m_jStart[g]]
+#define dcz(k,g) (m_sg_dc_z[g])[k-m_kStart[g]]
+  topCartesian = mNumberOfCartesianGrids-1;
+  for( g=0 ; g<mNumberOfGrids; g++)  
+  {
+    for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+    {
+      x = (i-1)*mGridSize[g];
+      dcx(i,g) = m_supergrid_taper_x.dampingCoeff(x-0.5*mGridSize[g]);
+    }
+    for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+    {
+      y = (j-1)*mGridSize[g];
+      dcy(j,g) = m_supergrid_taper_y.dampingCoeff(y-0.5*mGridSize[g]);
+    }
+    if (g > topCartesian) // must be the curvilinear grid
+    {
+// supergrid damping in the vertical (k-) direction on a curvilinear grid is not defined
+      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+      {
+	dcz(k,g) = 0.;
+      }
+    }
+    else
+    {
+      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+      {
+	z = m_zmin[g] + (k-1)*mGridSize[g];
+	dcz(k,g) = m_supergrid_taper_z.dampingCoeff(z-0.5*mGridSize[g]);
+      }
+    }
+    
+  } // end for g...
+  
+// tmp: save the damping coefficients in matlab format
+//   FILE *fp;
+//   char fName[80];
+ 
+//   for( g=0 ; g<mNumberOfGrids; g++)  
+//   {
+//     sprintf(fName,"dcxg%ip%i.ext", g, m_myRank);
+//     fp = fopen(fName,"w");
+//     for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+//     {
+//       fprintf(fp,"%i %e\n", i, dcx(i,g));
+//     }
+//     fclose(fp);
+
+//     sprintf(fName,"dcyg%ip%i.ext", g, m_myRank);
+//     fp = fopen(fName,"w");
+//     for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+//     {
+//       fprintf(fp,"%i %e\n", j, dcy(j,g));
+//     }
+//     fclose(fp);
+
+//     sprintf(fName,"dczg%ip%i.ext", g, m_myRank);
+//     fp = fopen(fName,"w");
+//     for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+//     {
+//	z = m_zmin[g] + (k-1)*mGridSize[g];
+//       fprintf(fp,"%e %e\n", z, dcz(k,g));
+//     }
+//     fclose(fp);
+//   }
+
+#undef dcx
+#undef dcy
+#undef dcz
+}
+
+//-----------------------------------------------------------------------
+void EW::supergrid_taper_material( )
+{
+  double x, y, z;
+  int g;
+  if (mVerbose >= 1 && proc_zero())
+    cout << "*** Inside supergrid_taper_material ***" << endl;
+  
+  for( g=0 ; g<mNumberOfCartesianGrids; g++) // do Cartesian grids first
+  {
+    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
+      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	{
+	  x = (i-1)*mGridSize[g];
+	  y = (j-1)*mGridSize[g];
+	  z = m_zmin[g] + (k-1)*mGridSize[g];
+	  
+	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
+	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
+	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
+	} // end for i,j,k
+  } // end for g
+
+  if (topographyExists())
+  {
+    g = mNumberOfGrids - 1;
+    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
+      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	{
+	  x = (i-1)*mGridSize[g];
+	  y = (j-1)*mGridSize[g];
+// NOTE: no tapering in z because there is (usually) a free surface boundary on top	  
+	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
+	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
+	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
+	  
+	} // end for i,j,k
+  } // end if topographyExists()
+  
 }
 

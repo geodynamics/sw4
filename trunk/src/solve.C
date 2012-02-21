@@ -38,7 +38,7 @@ void F77_FUNC( testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* 
 }
 
 //--------------------------------------------------------------------
-void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries )
+void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
 {
 // solution arrays
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
@@ -113,9 +113,9 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
   vector<GridPointSource*> point_sources;
 
 // Transfer source terms to each individual grid as point sources at grid points.
-     for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-       if (!a_GlobalUniqueSources[i]->ignore())
-	 a_GlobalUniqueSources[i]->set_grid_point_sources4( this, point_sources );
+  for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
+    if (!a_Sources[i]->ignore())
+      a_Sources[i]->set_grid_point_sources4( this, point_sources );
 
   if( mVerbose && proc_zero() )
   {
@@ -135,7 +135,6 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
   int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
 
 // Assign initial data
-
   initialData(mTstart, U, AlphaVE);
   initialData(mTstart-mDt, Um, AlphaVEm );
   
@@ -192,7 +191,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
   
 // c test accuracy of forcing
     evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
-    exactForce( t, F, point_sources );
+    Force( t, F, point_sources );
     exactAccTwilight( t, Uacc ); // save Utt in Uacc
     test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
     if ( proc_zero() )
@@ -204,7 +203,7 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
     }
   } // end m_twilight_forcing    
 
-  if ( proc_zero() )
+  if ( proc_zero() && getVerbosity() >= 2)
   {
     printf("About to call enforceBC on intial data\n");
   }
@@ -228,51 +227,53 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 // enforce boundary condition
   enforceBC( Um, t-mDt, BCForcing );
 
-  // if ( proc_zero() )
-  // {
-  //   printf("About to call exactSolTwilight\n");
-  // }
+  if (m_twilight_forcing)
+  {
 // more testing
+    if ( proc_zero() )
+    {
+      printf("About to call exactSolTwilight\n");
+    }
 // check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
-  // exactSolTwilight( t, Up, AlphaVE);
-  // double errInf, errL2;
-  // normOfDifferenceGhostPoints( Up, U, errInf, errL2 );
-  // if ( proc_zero() )
-  //   printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    exactSol( t, Up, AlphaVE, a_Sources );
+    double errInf, errL2;
+    normOfDifferenceGhostPoints( Up, U, errInf, errL2 );
+    if ( proc_zero() )
+      printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+  }
 
   if( m_moment_test )
-     test_sources( point_sources, a_GlobalUniqueSources, F );
+    test_sources( point_sources, a_Sources, F );
 
   if ( proc_zero() )
     cout << "  Begin time stepping..." << endl;
 
 // save initial data on receiver records
   vector<double> uRec;
-  for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
+  for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
 // can't compute a 2nd order accurate time derivative at this point
 // therefore, don't record anything related to velocities for the initial data
-    if (a_GlobalTimeSeries[ts]->getMode() != TimeSeries::Velocity && a_GlobalTimeSeries[ts]->myPoint())
+    if (a_TimeSeries[ts]->getMode() != TimeSeries::Velocity && a_TimeSeries[ts]->myPoint())
     {
-      int i0 = a_GlobalTimeSeries[ts]->m_i0;
-      int j0 = a_GlobalTimeSeries[ts]->m_j0;
-      int k0 = a_GlobalTimeSeries[ts]->m_k0;
-      int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
+      int i0 = a_TimeSeries[ts]->m_i0;
+      int j0 = a_TimeSeries[ts]->m_j0;
+      int k0 = a_TimeSeries[ts]->m_k0;
+      int grid0 = a_TimeSeries[ts]->m_grid0;
 
-      extractRecordData(a_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
+      extractRecordData(a_TimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
 			uRec, Um, U); 
-      a_GlobalTimeSeries[ts]->recordData(uRec);
+      a_TimeSeries[ts]->recordData(uRec);
     }
   }
   
-
 // // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
 
 // all types of forcing...
-    exactForce( t, F, point_sources );
+    Force( t, F, point_sources );
       
 // evaluate right hand side
     evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
@@ -291,13 +292,14 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
 // update ghost points in Up
     enforceBC( Up, t+mDt, BCForcing );
 
-//     //    check_consintp( Up[0], Up[1], AlphaVEp[0], AlphaVEp[1] );
+// interpolate across mesh refinement boundaries (?)
+ //    check_consintp( Up[0], Up[1], AlphaVEp[0], AlphaVEp[1] );
     time_measure[3] = time_measure[4] = MPI_Wtime();
 
 // get 4th order in time
     if (mOrder == 4)
     {
-       exactForce_tt( t, F, point_sources );
+       Force_tt( t, F, point_sources );
       
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
       
@@ -334,22 +336,22 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
     
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
-    for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
+    for (int ts=0; ts<a_TimeSeries.size(); ts++)
     {
-      if (a_GlobalTimeSeries[ts]->myPoint())
+      if (a_TimeSeries[ts]->myPoint())
       {
-	int i0 = a_GlobalTimeSeries[ts]->m_i0;
-	int j0 = a_GlobalTimeSeries[ts]->m_j0;
-	int k0 = a_GlobalTimeSeries[ts]->m_k0;
-	int grid0 = a_GlobalTimeSeries[ts]->m_grid0;
+	int i0 = a_TimeSeries[ts]->m_i0;
+	int j0 = a_TimeSeries[ts]->m_j0;
+	int k0 = a_TimeSeries[ts]->m_k0;
+	int grid0 = a_TimeSeries[ts]->m_grid0;
 
 // note that the solution on the new time step is in Up
 // also note that all quantities related to velocities lag by one time step; they are not
 // saved before the time stepping loop started
-	extractRecordData(a_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
+	extractRecordData(a_TimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
 			  uRec, Um, Up);
 
-	a_GlobalTimeSeries[ts]->recordData(uRec);
+	a_TimeSeries[ts]->recordData(uRec);
       }
     }
 
@@ -396,24 +398,41 @@ void EW::solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a
    //   printf("\nCalling exactSol\n");
 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
-   if( exactSol( t, Up, AlphaVE, a_GlobalUniqueSources ) )
+   if( exactSol( t, Up, AlphaVE, a_Sources ) )
    {
       double errInf, errL2;
-      //      cout << *mGlobalUniqueSources[0] << endl;
-      //      Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UX, Image::X, 1, true );
-      //      im->computeGridPtIndex();
-      //      im->allocatePlane();
-      //      im->computeImageQuantity(Up, 1);
-      //      string path=".";
-      //      im->writeImagePlane_2(1,path);
+
+// tmp: output exact sol for Lamb's prolem 
+//      cout << *mGlobalUniqueSources[0] << endl;
+      Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UZ, Image::Z, 0.0, true );
+      im->computeGridPtIndex();
+      im->allocatePlane();
+      im->computeImageQuantity(Up, 3); // z-component
+      string path=".";
+      im->writeImagePlane_2(1,path);
 
 // tmp
       // if ( proc_zero() )
       // 	 printf("\nCalling normOfDifference\n");
       
-      normOfDifference( Up, U, errInf, errL2, a_GlobalUniqueSources );
+// depending on the test case, we should compare in the interior, or only on the surface
+      if (m_lamb_test)
+	normOfSurfaceDifference( Up, U, errInf, errL2);
+      else
+	normOfDifference( Up, U, errInf, errL2, a_Sources );
+
       if ( proc_zero() )
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+// test
+      int g=mNumberOfCartesianGrids - 1;
+      Up[g].set_to_minusOne();
+      U[g].set_to_zero();
+      normOfSurfaceDifference( Up, U, errInf, errL2);
+      if ( proc_zero() )
+	 printf("\n Surface norm of 1: Inf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+      
+
    }
    finalizeIO();
    cout.flush(); cerr.flush();

@@ -6,13 +6,9 @@
 #include "Require.h"
 #include "nearlyEqual.h"
 #include "boundaryConditionTypes.h"
-#include "ForcingTwilight.h"
 #include "MaterialBlock.h"
 #include "TimeSeries.h"
 
-// #include "ForcingLamb.h"
-// #include "ForcingPointSource.h"
-// #include "ForcingEnergy.h"
 // #include "Image3D.h"
 
 #include <cstring>
@@ -325,13 +321,13 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        else if (startswith("twilight", buffer))
 	 processTwilight(buffer);
        else if (startswith("testpointsource", buffer))
-	  processTestPointSource(buffer);
-       // else if (startswith("testlamb", buffer))
-       //   processTestLamb(buffer);
-    else if (startswith("source", buffer))
-      processSource(buffer, a_GlobalUniqueSources);
-    else if (startswith("block", buffer))
-      processMaterialBlock(buffer, blockCount);
+	 processTestPointSource(buffer);
+       else if (startswith("testlamb", buffer))
+         processTestLamb(buffer);
+       else if (startswith("source", buffer))
+	 processSource(buffer, a_GlobalUniqueSources);
+       else if (startswith("block", buffer))
+	 processMaterialBlock(buffer, blockCount);
 //    else if (startswith("efile", buffer))
 //    {
 // #ifndef ENABLE_ETREE
@@ -353,8 +349,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        //   processImage3D(buffer);
 //    else if (startswith("restart", buffer))
 //       processRestart(buffer);
-       // else if (startswith("boundary_conditions", buffer))
-       //   processBoundaryConditions(buffer);
+       else if (startswith("boundary_conditions", buffer))
+         processBoundaryConditions(buffer);
        // else if (startswith("supergrid", buffer))
        //   processSupergrid(buffer);
        // else if (startswith("prefilter", buffer))
@@ -1575,68 +1571,66 @@ void EW::processTwilight(char* buffer)
     m_point_source_test = new TestPointSource( rho, cs, cp );
  }
 
-// //-----------------------------------------------------------------------
-// void FileInput::processTestLamb(char* buffer)
-// {
-//    char* token = strtok(buffer, " \t");
-//    CHECK_INPUT(strcmp("testlamb", token) == 0, "ERROR: not a testlamb line...: " << token);
-//    token = strtok(NULL, " \t");
+//-----------------------------------------------------------------------
+void EW::processTestLamb(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("testlamb", token) == 0, "ERROR: not a testlamb line...: " << token);
+   token = strtok(NULL, " \t");
 
-//    string err = "Testlamb Error: ";
-//    double x0=0.0, y0=0.0, z0=0.0;
-//    double cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
+   string err = "Testlamb Error: ";
+   double x0=0.0, y0=0.0, z0=0.0;
+   double cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
 
-//    while (token != NULL)
-//    {
-//       if (startswith("#", token) || startswith(" ", buffer))
-//          break;
+   while (token != NULL)
+   {
+      if (startswith("#", token) || startswith(" ", buffer))
+         break;
 
-//       if (startswith("x=", token))
-//       {
-//          token += 2; // skip x=
-//          x0 = atof(token);
-//       }
-//       else if (startswith("y=", token))
-//       {
-//          token += 2; // skip y=
-//          y0 = atof(token);
-//       }
-//       else if (startswith("cp=", token))
+      // if (startswith("x=", token))
+      // {
+      //    token += 2; // skip x=
+      //    x0 = atof(token);
+      // }
+      // else if (startswith("y=", token))
+      // {
+      //    token += 2; // skip y=
+      //    y0 = atof(token);
+      // }
+      if (startswith("cp=", token))
+      {
+         token += 3; 
+         cp = atof(token);
+      }
+// exact solution assumes cs=cp/sqrt(3), so we will hard-wire this ratio below
+//       else if (startswith("cs=", token))
 //       {
 //          token += 3; 
-//          cp = atof(token);
+//          cs = atof(token);
 //       }
-// // exact solution assumes cs=cp/sqrt(3), so we will hard-wire this ratio below
-// //       else if (startswith("cs=", token))
-// //       {
-// //          token += 3; 
-// //          cs = atof(token);
-// //       }
-//       else if (startswith("rho=", token))
-//       {
-//          token += 4; 
-//          rho = atof(token);
-//       }
-//       else if (startswith("fz=", token))
-//       {
-//          token += 3; 
-//          fz = atof(token);
-//       }
-//       else
-//       {
-// 	 badOption("testlamb", token);
-//       }
-//       token = strtok(NULL, " \t");
-//    }
-//    double fx=0, fy=0, t0=0;
-//    timeDep tdep = iVerySmoothBump;
-// // hard wire cp/cs = sqrt(3)
-//    cs = cp/sqrt(3.);
-//    Source* source = new Source( mSimulation, f0, freq, t0, x0, y0, z0, fx, fy, fz,
-// 				tdep, "lambsource", 0 );
-//    Forcing* lambforcing = new ForcingLamb( source, cp, cs, rho );
-//    mSimulation->set_forcing( lambforcing );
-// }
+      else if (startswith("rho=", token))
+      {
+         token += 4; 
+         rho = atof(token);
+      }
+      // else if (startswith("fz=", token))
+      // {
+      //    token += 3; 
+      //    fz = atof(token);
+      // }
+      else
+      {
+	 badOption("testlamb", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+// point forcing is now set with the source command
+   // double fx=0, fy=0, t0=0;
+   // timeDep tdep = iVerySmoothBump;
+   // Source* source = new Source( mSimulation, f0, freq, t0, x0, y0, z0, fx, fy, fz,
+   // 				tdep, "lambsource", 0 );
+   m_lamb_test = new TestLamb( rho, cp );
+}
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer)
@@ -1781,135 +1775,139 @@ void EW::processTime(char* buffer)
     setNumberSteps(steps);
 }
 
-// void FileInput::processBoundaryConditions(char *buffer)
-// {
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("boundary_conditions", token) == 0, "ERROR: not a boundary condition line...: " << token);
-//   token = strtok(NULL, " \t");
+void EW::processBoundaryConditions(char *buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("boundary_conditions", token) == 0, "ERROR: not a boundary condition line...: " << token);
+  token = strtok(NULL, " \t");
   
-//   boundaryConditionType bct[6];
-//   int type, side;
-//   while (token != NULL)
-//     {
-//      if (startswith("#", token) || startswith(" ", buffer))
-//         // Ignore commented lines and lines with just a space.
-//         break;
+  boundaryConditionType bct[6]={bDirichlet, bDirichlet, bDirichlet, bDirichlet, bStressFree, bDirichlet};
+  
+  int type, side;
+  while (token != NULL)
+  {
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
 
-//      // low x
-//      if (startswith("lx=", token))
-//      {
-//         side = 0;
-//         token += 3;
-//         type = atoi(token);
-//      }
-//      else if (startswith("hx=", token))
-//      {
-//         side = 1;
-//         token += 3;
-//         type = atoi(token);
-//      }
-//      else if (startswith("ly=", token))
-//      {
-//         side = 2;
-//         token += 3;
-//         type = atoi(token);
-//      }
-//      else if (startswith("hy=", token))
-//      {
-//         side = 3;
-//         token += 3;
-//         type = atoi(token);
-//      }
-//      else if (startswith("lz=", token))
-//      {
-//         side = 4;
-//         token += 3;
-//         type = atoi(token);
-//      }
-//      else if (startswith("hz=", token))
-//      {
-//         side = 5;
-//         token += 3;
-//         type = atoi(token);
-//      }
-//      else
-//      {
-//        badOption("boundary_conditions", token);
-//      }
+    // low x
+    if (startswith("lx=", token))
+    {
+      side = 0;
+      token += 3;
+      type = atoi(token);
+    }
+    else if (startswith("hx=", token))
+    {
+      side = 1;
+      token += 3;
+      type = atoi(token);
+    }
+    else if (startswith("ly=", token))
+    {
+      side = 2;
+      token += 3;
+      type = atoi(token);
+    }
+    else if (startswith("hy=", token))
+    {
+      side = 3;
+      token += 3;
+      type = atoi(token);
+    }
+    else if (startswith("lz=", token))
+    {
+      side = 4;
+      token += 3;
+      type = atoi(token);
+    }
+    else if (startswith("hz=", token))
+    {
+      side = 5;
+      token += 3;
+      type = atoi(token);
+    }
+    else
+    {
+      badOption("boundary_conditions", token);
+    }
      
-//      switch (type) {
-//      case 0:
-//         bct[side] = bClaytonEngquist;
-//         break;
-//      case 1:
-//         bct[side] = bEnergyAbs;
-//         break;
-//      case 2:
-//         bct[side] = bStressFree;
-//         break;
-//      case 3:
-//         bct[side] = bDirichlet;
-//         break;
-//      case 4:
-//         bct[side] = bNeumann;
-//         break;
-//      case 5:
-//         bct[side] = bSuperGrid;
-//         break;
-//      default:
-//        if (m_myRank==0)
-//        {
-// 	 printf("processBoundaryConditions:: Ignoring unknown boundary condition type = %i\n", type);
-//        }
-//      }
-//      token = strtok(NULL, " \t");
-//     } 
-//   mSimulation->set_global_bcs(bct);
-// }
+    switch (type) {
+    case 0:
+      bct[side] = bStressFree;
+      break;
+    case 1:
+      bct[side] = bDirichlet;
+      break;
+    case 2:
+      bct[side] = bSuperGrid;
+      break;
+    default:
+      if (m_myRank==0)
+      {
+	printf("processBoundaryConditions:: Ignoring unknown boundary condition type = %i\n", type);
+      }
+    }
+    token = strtok(NULL, " \t");
+  } 
+  set_global_bcs(bct);
+}
 
-// void FileInput::processSupergrid(char *buffer)
-// {
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("supergrid", token) == 0, "ERROR: not a supergrid line...: " << token);
-//   token = strtok(NULL, " \t");
-
-//   bool thicknessSet=false, dampingCoeffSet=false;
+void EW::processSupergrid(char *buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("supergrid", token) == 0, "ERROR: not a supergrid line...: " << token);
+  token = strtok(NULL, " \t");
+  int sg_thickness, sg_transition;
+  double sg_coeff;
+  bool thicknessSet=false, transitionSet=false, dampingCoeffSet=false;
   
-//   while (token != NULL)
-//   {
-//     if (startswith("#", token) || startswith(" ", buffer))
-//         // Ignore commented lines and lines with just a space.
-//       break;
+  while (token != NULL)
+  {
+    if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+      break;
 
-// //                  1234567890
-//     if (startswith("thickness=", token))
-//     {
-//       token += 10;
-//       m_sg_thickness = atof(token);
-//       CHECK_INPUT(m_sg_thickness>0., "The thickness of the supergrid damping layer must be positive, not: "<<m_sg_thickness);
-//       thicknessSet = true;
-//   }
-// //                       12345678901234567890
-//     else if (startswith("damping_coefficient=", token))
-//     {
-//       token += 20;
-//       m_sg_damp_coeff = atof(token);
-//       CHECK_INPUT(m_sg_damp_coeff>=0., "The supergrid damping coefficient must be non-negative, not: "<<m_sg_damp_coeff);
-//       dampingCoeffSet=true;
-//     }
-//     else
-//     {
-//       badOption("supergrid", token);
-//     }
-//     token = strtok(NULL, " \t");
-//   } // end while token
+//                  1234567890
+    if (startswith("thickness=", token)) // in number of grid sizes (different from WPP)
+    {
+      token += 10;
+      sg_thickness = atoi(token);
+      CHECK_INPUT(sg_thickness>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_thickness);
+      thicknessSet = true;
+    }
+//                  12345678901
+    if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
+    {
+      token += 11;
+      sg_transition = atoi(token);
+      CHECK_INPUT(sg_transition>0, "The number of grid points in the supergrid transition layer must be positive, not: "<< sg_transition);
+      transitionSet = true;
+  }
+//                       12345678901234567890
+    else if (startswith("damping_coefficient=", token))
+    {
+      token += 20;
+      sg_coeff = atof(token);
+      CHECK_INPUT(sg_coeff>=0., "The supergrid damping coefficient must be non-negative, not: "<<sg_coeff);
+      dampingCoeffSet=true;
+    }
+    else
+    {
+      badOption("supergrid", token);
+    }
+    token = strtok(NULL, " \t");
+  } // end while token
   
-//   if (thicknessSet)
-//     mSimulation->tune_supergrid_thickness(m_sg_thickness);
+  if (thicknessSet)
+    set_sg_thickness(sg_thickness);
 
-//   if (dampingCoeffSet)
-//     mSimulation->tune_supergrid_damping(m_sg_damp_coeff);
-// }
+  if (transitionSet)
+    set_sg_transition(sg_transition);
+
+  if (dampingCoeffSet)
+    set_sg_damping(sg_coeff);
+}
 
 // // void 
 // // FileInput::
