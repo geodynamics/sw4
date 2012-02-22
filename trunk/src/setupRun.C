@@ -72,16 +72,16 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
   if( !mbcsSet )
     default_bcs( );
 
-// check if there are any supergrid boundaries. If so, setup the supergrid tapering functions with
-// thickness 'm_supergrid_thickness'
+// check if there are any supergrid boundaries. If so, setup the supergrid tapering functions using
+// the parameters m_sg_thickness, m_sg_transition, m_supergrid_damping_coefficient
   setup_supergrid( );
 
 // assign m_bcType and m_onesided based on the global boundary conditions and parallel overlap boundaries. 
   assign_local_bcs(); 
   initializePaddingCells();
 
-// for all sides with dirichlet, free surface or supergrid boundary conditions, save the extent of the window of
-// the multi-D window, and allocate arrays to hold the boundary forcing
+// for all sides with dirichlet, free surface or supergrid boundary conditions, save the extent of
+// the multi-D boundary window, and allocate arrays to hold the boundary forcing
   int wind[6], npts;
 // with 2 ghost points, we need twice as many elements in the m_BCForcing arrays!!!
 
@@ -1132,8 +1132,10 @@ void EW::setup_supergrid( )
     m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
 				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
 // tmp
-//  printf("z-direction ");
-//  m_supergrid_taper_z.print_parameters();
+  printf("********** Super-grid parameters (x, y, z)-directions:\n");
+  m_supergrid_taper_x.print_parameters();
+  m_supergrid_taper_y.print_parameters();
+  m_supergrid_taper_z.print_parameters();
 }
 
 //-----------------------------------------------------------------------
@@ -1158,17 +1160,21 @@ void EW::assign_supergrid_damping_arrays()
 #define dcy(j,g) (m_sg_dc_y[g])[j-m_jStart[g]]
 #define dcz(k,g) (m_sg_dc_z[g])[k-m_kStart[g]]
   topCartesian = mNumberOfCartesianGrids-1;
+
+// Note: compared to WPP2, we don't need to center the damping coefficients on the half-point anymore,
+// because the damping term is now 4th order: D+D-( a(x) D+D- ut(x) )
+
   for( g=0 ; g<mNumberOfGrids; g++)  
   {
     for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
     {
       x = (i-1)*mGridSize[g];
-      dcx(i,g) = m_supergrid_taper_x.dampingCoeff(x-0.5*mGridSize[g]);
+      dcx(i,g) = m_supergrid_taper_x.dampingCoeff(x);
     }
     for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
     {
       y = (j-1)*mGridSize[g];
-      dcy(j,g) = m_supergrid_taper_y.dampingCoeff(y-0.5*mGridSize[g]);
+      dcy(j,g) = m_supergrid_taper_y.dampingCoeff(y);
     }
     if (g > topCartesian) // must be the curvilinear grid
     {
@@ -1183,43 +1189,44 @@ void EW::assign_supergrid_damping_arrays()
       for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
       {
 	z = m_zmin[g] + (k-1)*mGridSize[g];
-	dcz(k,g) = m_supergrid_taper_z.dampingCoeff(z-0.5*mGridSize[g]);
+	dcz(k,g) = m_supergrid_taper_z.dampingCoeff(z);
       }
     }
     
   } // end for g...
   
 // tmp: save the damping coefficients in matlab format
-//   FILE *fp;
-//   char fName[80];
+  // FILE *fp;
+  // char fName[80];
  
-//   for( g=0 ; g<mNumberOfGrids; g++)  
-//   {
-//     sprintf(fName,"dcxg%ip%i.ext", g, m_myRank);
-//     fp = fopen(fName,"w");
-//     for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-//     {
-//       fprintf(fp,"%i %e\n", i, dcx(i,g));
-//     }
-//     fclose(fp);
+  // g = 0;
+  
+  // sprintf(fName,"dcx-p%i.ext", m_myRank);
+  // fp = fopen(fName,"w");
+  // for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+  // {
+  //   x = (i-1)*mGridSize[g];
+  //   fprintf(fp,"%e %e\n", x, dcx(i,g));
+  // }
+  // fclose(fp);
 
-//     sprintf(fName,"dcyg%ip%i.ext", g, m_myRank);
-//     fp = fopen(fName,"w");
-//     for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-//     {
-//       fprintf(fp,"%i %e\n", j, dcy(j,g));
-//     }
-//     fclose(fp);
+  // sprintf(fName,"dcy-p%i.ext", m_myRank);
+  // fp = fopen(fName,"w");
+  // for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+  // {
+  //   y = (j-1)*mGridSize[g];
+  //   fprintf(fp,"%e %e\n", y, dcy(j,g));
+  // }
+  // fclose(fp);
 
-//     sprintf(fName,"dczg%ip%i.ext", g, m_myRank);
-//     fp = fopen(fName,"w");
-//     for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
-//     {
-//	z = m_zmin[g] + (k-1)*mGridSize[g];
-//       fprintf(fp,"%e %e\n", z, dcz(k,g));
-//     }
-//     fclose(fp);
-//   }
+  // sprintf(fName,"dcz-p%i.ext", m_myRank);
+  // fp = fopen(fName,"w");
+  // for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+  // {
+  //   z = m_zmin[g] + (k-1)*mGridSize[g];
+  //   fprintf(fp,"%e %e\n", z, dcz(k,g));
+  // }
+  // fclose(fp);
 
 #undef dcx
 #undef dcy

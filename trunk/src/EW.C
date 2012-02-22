@@ -518,7 +518,7 @@ bool EW::getDepth( double x, double y, double z, double & depth)
 void EW::computeCartesianCoord(double &x, double &y, double lon, double lat)
 {
   // -----------------------------------------------------------------
-  // Compute the cartesian coordinate give the geographic coodinate
+  // Compute the cartesian coordinate given the geographic coordinate
   // -----------------------------------------------------------------
   double deg2rad = M_PI/180.0;
 

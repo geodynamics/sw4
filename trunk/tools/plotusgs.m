@@ -10,15 +10,10 @@
 %              colorstring: string passed to plot, like 'r' for red lines
 %              erasefirst: 0 does a 'hold on' for the current plot, otherwise erases the current figure
 %               
-   function plotusgs( fname, colorstring, erase )
+function plotusgs( filename, colorstring, erase )
 
-fd=fopen(fname,'r');
-for i=1:12,fgetl(fd);end;
-q=fscanf(fd,'%f');
-t=q(1:4:end,1);
-ux=q(2:4:end,1);
-uy=q(3:4:end,1);
-uz=q(4:4:end,1);
+[t ux uy uz]=readusgs(filename);
+
 if (erase ~= 0)
   clf;
 end

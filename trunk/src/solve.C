@@ -35,6 +35,9 @@ void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, dou
 void F77_FUNC( testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
 				   int* klast, int* nz, int* wind, double* m_zmin, double* h, int* kx, int* ky, int* kz,
 				   double* momgrid );
+void F77_FUNC(addsgd,ADDSGD) (double* dt, double *h, double *a_U, double*a_Um, double*a_Up, 
+			      double *sg_dc_x, double* sg_dc_y, double* sg_dc_z,
+			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 }
 
 //--------------------------------------------------------------------
@@ -307,13 +310,19 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
        evalCorrector( Up, Lu, F );
       
+// add in super-grid damping terms
+       if (usingSupergrid())
+       {
+	 addSuperGridDamping( Up, U, Um );
+       }
+
        time_measure[4] = MPI_Wtime();
 
 // also check out EW::update_all_boundaries 
 // communicate across processor boundaries
        for(int g=0 ; g < mNumberOfGrids ; g++ )
 	  communicate_array( Up[g], g );
-// calculate boundary forcing at time t+mDt
+// calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing );
 // update ghost points in Up
        enforceBC( Up, t+mDt, BCForcing );
@@ -2127,4 +2136,32 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 // 	mRecordedUYZ[n-1] = vz;
 //      }
 //    }
+
+//---------------------------------------------------------------------------
+void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um )
+{
+  int ifirst, ilast, jfirst, jlast, kfirst, klast;
+  double *up_ptr, *u_ptr, *um_ptr, dt2i;
+  
+  int g;
+  
+  for(g=0 ; g<mNumberOfCartesianGrids; g++ )
+  {
+    up_ptr  = a_Up[g].c_ptr();
+    u_ptr   = a_U[g].c_ptr();
+    um_ptr  = a_Um[g].c_ptr();
+
+    ifirst = m_iStart[g];
+    ilast  = m_iEnd[g];
+    jfirst = m_jStart[g];
+    jlast  = m_jEnd[g];
+    kfirst = m_kStart[g];
+    klast  = m_kEnd[g];
+    
+    F77_FUNC(addsgd,ADDSGD) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, 
+			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+
+  }
+}
 

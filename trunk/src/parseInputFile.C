@@ -351,8 +351,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 //       processRestart(buffer);
        else if (startswith("boundary_conditions", buffer))
          processBoundaryConditions(buffer);
-       // else if (startswith("supergrid", buffer))
-       //   processSupergrid(buffer);
+       else if (startswith("supergrid", buffer))
+         processSupergrid(buffer);
        // else if (startswith("prefilter", buffer))
        //   processPrefilter(buffer);
 //    else if( startswith("checkfornan", buffer ) )
