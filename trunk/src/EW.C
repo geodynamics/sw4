@@ -2150,18 +2150,12 @@ void EW::get_exact_lamb( vector<Sarray> & a_U, double a_t, Source& a_source )
   double fx, fy, fz;
   a_source.getForces( fx, fy, fz );
      
-  // Function valid only on surface, i.e., z=0
-  if( fabs(z)>1e-2*h )
-    return;
-//      return false;
-   
-  double R;
-
 // Only the z-component of solution on the flat surface (z=0) is known by this routine
   int k = 1; 
+  double R;
+
   g = mNumberOfCartesianGrids - 1; // top Cartesian grid
   h = mGridSize[g];
-   
   z = 0.0;
 
 //loop over all points in the horizontal plane

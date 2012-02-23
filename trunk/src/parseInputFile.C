@@ -1884,10 +1884,10 @@ void EW::processSupergrid(char *buffer)
       CHECK_INPUT(sg_transition>0, "The number of grid points in the supergrid transition layer must be positive, not: "<< sg_transition);
       transitionSet = true;
   }
-//                       12345678901234567890
-    else if (startswith("damping_coefficient=", token))
+//                       123
+    else if (startswith("dc=", token))
     {
-      token += 20;
+      token += 3;
       sg_coeff = atof(token);
       CHECK_INPUT(sg_coeff>=0., "The supergrid damping coefficient must be non-negative, not: "<<sg_coeff);
       dampingCoeffSet=true;

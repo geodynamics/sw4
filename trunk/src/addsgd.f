@@ -16,18 +16,20 @@ c-----------------------------------------------------------------------
 	integer ifirst, ilast, jfirst, jlast, kfirst, klast
 	real*8 beta
 
-c time stepping stability gives the restriction
-c tilde{beta} * dt/h < 1/6 (without elastic terms)
+c time stepping stability condition on beta?
+
 c this routine uses un-divided differences in x and t
 	real*8 coeff
 
 	integer i, j, k, c;
 
 	if( beta .eq. 0d0 ) return;
-	coeff = beta*dt/h
+c	coeff = beta*dt/h
+	coeff = beta
 c beta is the supergrid damping coefficient as entered in the input file
 c
-c rho u_{tt} = h^3 rho*beta*( psi(x) u_{xxt} )_{xx} + (same in y and z) )
+c rho u_{tt} = h^3 rho*(h/dt)*beta*( psi(x) u_{xxt} )_{xx} + (same in y and z) )
+c Note: h/dt has the dimension of a velocity!
 c
 c add in the SG damping
 	do k=kfirst+2,klast-2

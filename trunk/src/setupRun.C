@@ -88,7 +88,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
   for (int g=0; g<mNumberOfGrids; g++ )
   {
 // tmp
-    printf("Allocating boundary forcing arrays for grid g=%i, # ghost points=%i\n", g, m_ghost_points);
+//    printf("Allocating boundary forcing arrays for grid g=%i, # ghost points=%i\n", g, m_ghost_points);
     
     for(int side=0; side<6 ; side++ )
     {
@@ -1132,10 +1132,14 @@ void EW::setup_supergrid( )
     m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
 				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
 // tmp
-  printf("********** Super-grid parameters (x, y, z)-directions:\n");
-  m_supergrid_taper_x.print_parameters();
-  m_supergrid_taper_y.print_parameters();
-  m_supergrid_taper_z.print_parameters();
+  if (proc_zero())
+  {
+    printf("********** Super-grid parameters (x, y, z)-directions:\n");
+    m_supergrid_taper_x.print_parameters();
+    m_supergrid_taper_y.print_parameters();
+    m_supergrid_taper_z.print_parameters();
+  }
+  
 }
 
 //-----------------------------------------------------------------------

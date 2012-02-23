@@ -64,7 +64,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
    m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
 
 // tmp
-   printf("TimeSeries constructor, rank=%i, myPoint=%i\n", a_ew->getRank(), m_myPoint);
+//   printf("TimeSeries constructor, rank=%i, myPoint=%i\n", a_ew->getRank(), m_myPoint);
 
 // The following is a safety check to make sure only one processor writes each time series.
 // We could remove this check if we were certain that interior_point_in_proc() never lies

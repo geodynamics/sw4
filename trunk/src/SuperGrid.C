@@ -53,9 +53,13 @@ double SuperGrid::velocityCoeff(double x)
 {
   double f=1.;
   if (m_left)
-    f*=phi0( (x - (m_x0 + m_const_width))/m_trans_width);
+// using trans_width here reduces the velocity in 0<= x <= m_trans_width < m_width
+//    f*=phi0( (x - (m_x0))/m_trans_width);
+    f*=phi0( (x - (m_x0+m_const_width))/m_trans_width); 
   if (m_right)
-    f*=phi0( ((m_x1 - m_const_width) - x)/m_trans_width);
+// using trans_width here reduces the velocity in m_x1 - m_trans_width <= x <= m_x1
+//    f*=phi0( ((m_x1) - x)/m_trans_width);
+    f*=phi0( ((m_x1-m_const_width) - x)/m_trans_width);
   return f;
 }
 
@@ -63,9 +67,13 @@ double SuperGrid::dampingCoeff(double x)
 {
   double f=1.;
   if (m_left)
-    f*=psi0( (x - (m_x0 + m_const_width))/m_trans_width);
+// the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
+// constant damping in 0 <= x <= const_width
+    f*=psi0( (x - (m_x0+m_const_width))/m_trans_width); 
   if (m_right)
-    f*=psi0( ((m_x1 - m_const_width) - x)/m_trans_width);
+// the following makes the damping transition in m_x1-m_width < x < m_x1 - const_width < m_x1
+// constant damping in m_x1 - const_width <= x <= m_x1
+    f*=psi0( ((m_x1-m_const_width) - x)/m_trans_width);
   return 1.-f;
 }
 
@@ -81,8 +89,8 @@ double SuperGrid::phi0(double xi)
   else
 //    f=xi*xi*xi*(10 - 15*xi + 6*xi*xi);
 //    f = fmin + (1.-fmin)*xi*xi*xi*(10 - 15*xi + 6*xi*xi);
-    f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
-      126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
+     f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
+       126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
   
 
   return f;
