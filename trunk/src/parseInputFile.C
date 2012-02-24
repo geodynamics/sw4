@@ -1877,7 +1877,7 @@ void EW::processSupergrid(char *buffer)
       thicknessSet = true;
     }
 //                  12345678901
-    if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
+    else if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
     {
       token += 11;
       sg_transition = atoi(token);

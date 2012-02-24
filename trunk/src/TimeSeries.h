@@ -3,7 +3,7 @@
 #define TIMESERIES_H
 
 #include <vector>
-
+#include <string>
 class EW;
 
 using namespace std;
@@ -55,6 +55,7 @@ bool m_zRelativeToTopography; // location is given relative to topography
 
 int mWriteEvery;
 bool m_usgsFormat, m_sacFormat;
+string m_path;
 
 // start time and time step 
 double m_t0, m_dt;

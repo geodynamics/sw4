@@ -21,6 +21,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
   m_nComp(0),
   m_myPoint(false),
   m_fileName(fileName),
+  m_path(a_ew->getOutputPath()),
   mX(x),
   mY(y),
   mZ(depth),
@@ -345,6 +346,8 @@ void TimeSeries::writeFile()
   stringstream filePrefix;
 
 //building the file name...
+  if( m_path != "." )
+    filePrefix << m_path;
   filePrefix << m_fileName << "." ;
   
   stringstream ux, uy, uz, uxy, uxz, uyz;
