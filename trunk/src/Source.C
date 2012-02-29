@@ -38,7 +38,6 @@ Source::Source(EW *a_wpp,
   mIgnore(false),
   mNcyc(ncyc)
 {
-  mPar = new double[2];
   mForces.resize(6);
   mForces[0] = Mxx;
   mForces[1] = Mxy;
@@ -46,8 +45,8 @@ Source::Source(EW *a_wpp,
   mForces[3] = Myy;
   mForces[4] = Myz;
   mForces[5] = Mzz;
+  mPar  = new double[2];
   mName = name;
-
   a_wpp->computeNearestGridPoint(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 }
 

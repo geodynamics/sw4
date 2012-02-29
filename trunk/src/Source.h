@@ -57,6 +57,7 @@ public:
 
   // Frequency
   double getFrequency() const;
+  timeDep getTfunc() const {return mTimeDependence;}
   void setMaxFrequency(double max_freq);
 
   // Type of source
@@ -87,6 +88,7 @@ public:
   void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
   void getForces( double& fx, double& fy, double& fz ) const;
   void getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const;
+   void printPointer(){std::cout << "Source pointer = "  << mPar << std::endl;}
 
  private:
   Source();
@@ -113,10 +115,11 @@ public:
   bool mGridPointSet;
   bool m_zRelativeToTopography;
   double mX0,mY0,mZ0;
-  timeDep mTimeDependence;
   double* mPar;
   int mNcyc;
   bool mIgnore;
+
+  timeDep mTimeDependence;
 //  EW * mEW;
 };
 

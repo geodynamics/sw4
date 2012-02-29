@@ -36,7 +36,7 @@ class EW
 {
 public:
 EW(const string& name, vector<Source*> & a_GlobalUniqueSources, 
-   vector<TimeSeries*> & a_GlobalTimeSeries);
+   vector<TimeSeries*> & a_GlobalTimeSeries, bool invproblem=false );
 ~EW();
 bool wasParsingSuccessful();
 bool isInitialized();
@@ -53,7 +53,7 @@ void setAttenuationParams(int numberOfMechanisms, double velocityOmega, int ppw,
 void setNumberSteps(int steps); // remove???
 int getNumberOfSteps() const;
 
-void setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+void setupRun( vector<Source*> & a_GlobalUniqueSources );
 void solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 bool parseInputFile( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 
@@ -76,6 +76,7 @@ void processTestLamb(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
+void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
@@ -398,6 +399,7 @@ void getGlobalBoundingBox(double bbox[6]);
 
 string getPath(){ return mPath; }
 
+void average_speeds( double& cp, double& cs );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -664,6 +666,9 @@ double mMetersPerDegree;
 // is this object ready for time-stepping?
 bool mParsingSuccessful, mIsInitialized;
 bool m_testing;
+
+   // Will we solve the inverse problem?
+bool m_inverse_problem;
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<double> mMinVsOverH;

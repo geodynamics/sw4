@@ -305,7 +305,7 @@ void TimeSeries::recordData(vector<double> & u)
    }
    
 // ---------------------------------------------------------------
-// This routine only knows how to push the 3 doubles on the array stack.
+// This routine only knows how to push the nComp doubles on the array stack.
 // The calling routine need to figure out what needs to be saved
 // and do any necessary pre-calculations
 // ---------------------------------------------------------------
@@ -675,10 +675,10 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
     bwsac(npts, ofile, y);
 }
 
-
+//-----------------------------------------------------------------------
 void TimeSeries::write_usgs_format(string a_fileName)
 {
-  string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+   string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
    FILE *fd=fopen(a_fileName.c_str(),"w");
    double lat, lon;
    double x, y, z;
@@ -747,5 +747,353 @@ void TimeSeries::write_usgs_format(string a_fileName)
    }
    
    fclose(fd);
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::readFile( )
+{
+//building the file name...
+   stringstream filePrefix;
+   filePrefix << m_fileName << ".txt" ;
+
+   if( m_myPoint && m_usgsFormat )
+   {
+      FILE *fd=fopen(filePrefix.str().c_str(),"r");
+      if( fd == NULL )
+	 cout << "ERROR: observed data file " << filePrefix.str() << " not found " << endl;
+      else
+      {
+	 int bufsize=1024;
+	 char* buf = new char[bufsize];
+
+      // Read header
+	 for( int line=0 ; line < 13 ; line++ )
+	    fgets(buf,bufsize,fd);
+         string bufstr(buf);
+         size_t found = bufstr.find("displacement");
+	 // Is this a displacement file
+         if( found != string::npos )
+	 //	 if( strcmp(&buf[15],"displacement") == 0 )
+	 {
+	    double tstart, dt, td, ux, uy, uz;
+	    int nlines = 0;
+	    if( fscanf(fd,"%le %le %le %le",&tstart,&ux,&uy,&uz) != EOF )
+	       nlines++;
+	    if( fscanf(fd,"%le %le %le %le",&dt,&ux,&uy,&uz) != EOF )
+	       nlines++;
+	    dt = dt-tstart;
+	    while( fscanf(fd,"%le %le %le %le",&td,&ux,&uy,&uz) != EOF )
+	       nlines++;
+
+	    fclose(fd);
+	    if( nlines > 2 )
+	       allocateRecordingArrays( nlines, tstart, dt );
+	    else
+	    {
+	       cout << "ERROR: observed data is too short" << endl;
+	       cout << "    File " << filePrefix.str() << " not read." << endl;
+	    }
+	    fd=fopen(filePrefix.str().c_str(),"r");	 
+	    if( fd == NULL )
+	       cout << "ERROR: observed data file " << filePrefix.str() << " could not be reopened" << endl;
+
+	 // Read past header
+	    for( int line=0 ; line < 13 ; line++ )
+	       fgets(buf,bufsize,fd);
+	 // Read the data on file	 
+            for( int line=0 ; line < nlines ; line++ )
+	    {
+	       int nr=fscanf(fd, "%lf %lf %lf %lf \n", &tstart,&ux,&uy,&uz);
+	       //               cout << "nr = " << nr << " tstart " << tstart << " ux " << ux << " uy " << uy << " uz " << uz << endl;
+               if( nr != 4 )
+	       {
+		  cout << "ERROR: could not read file " << endl;
+	       }
+	       mRecordedSol[0][line]=ux;
+	       mRecordedSol[1][line]=uy;
+	       mRecordedSol[2][line]=uz;
+	    }
+	    fclose(fd);
+            mLastTimeStep = nlines-1;
+	 }
+	 else
+	 {
+	    cout << "ERROR: observed data must contain displacements" << endl;
+	    cout << "    File " << filePrefix.str() << " not read " << endl;
+	 }
+	 delete[] buf;
+      }
+   }
+   else if( !m_usgsFormat )
+   {
+      cout << "ERROR: observed data must be an ASCII USGS file" << endl;
+      cout << "    File " << filePrefix.str() << " not read " << endl;
+   }
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::interpolate( TimeSeries& intpfrom )
+{
+// Interpolate data to the grid in this object
+   int order = 4;
+
+   double dtfr  = intpfrom.m_dt;
+   int nfrsteps = intpfrom.mLastTimeStep+1;
+   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+   {
+      double t  = i*m_dt;
+      double ir = t/dtfr;
+      int ie   = static_cast<int>(ir);
+      int mmin = ie-order/2+1;
+      int mmax = ie+order/2;
+      if( m_usgsFormat )
+	 mRecordedSol[0][i] = mRecordedSol[1][i] = mRecordedSol[2][i] = 0;
+      else
+	 mRecordedFloats[0][i] = mRecordedFloats[1][i] = mRecordedFloats[2][i] = 0;
+      if( mmax-mmin+1 > nfrsteps )
+      {
+         cout << "Error in TimeSeries::interpolate : Can not interpolate, " <<
+	    "because the grid is too coarse " << endl;
+	 return;
+      }
+
+// If too far past the end of intpfrom, extrapolate constant value
+      if( ie > nfrsteps + order/2 )
+      {
+	 if( m_usgsFormat )
+	 {
+	    mRecordedSol[0][i] = mRecordedSol[0][i-1];
+	    mRecordedSol[1][i] = mRecordedSol[1][i-1];
+	    mRecordedSol[2][i] = mRecordedSol[2][i-1];
+	 }
+	 else
+	 {
+	    mRecordedFloats[0][i] = mRecordedFloats[0][i-1];
+            mRecordedFloats[1][i] = mRecordedFloats[1][i-1];
+            mRecordedFloats[2][i] = mRecordedFloats[2][i-1];
+	 }
+      }
+      else
+      {
+         int off;
+	 if( mmin < 1 )
+	 {
+	    off = 1-mmin;
+	    mmin = mmin + off;
+	    mmax = mmax + off;
+	 }
+	 if( mmax > nfrsteps )
+	 {
+	    off = mmax - nfrsteps;
+	    mmin = mmin - off;
+	    mmax = mmax - off;
+	 }
+	 for( int m = mmin ; m <= mmax ; m++ )
+	 {
+	    double cof=1;
+	    for( int k = mmin ; k <= mmax ; k++ )
+	       if( k != m )
+		  cof *= (ir-k)/(m-k);
+
+	    if( m_usgsFormat && intpfrom.m_usgsFormat )
+	    {
+	       mRecordedSol[0][i] += cof*intpfrom.mRecordedSol[0][m];
+	       mRecordedSol[1][i] += cof*intpfrom.mRecordedSol[1][m];
+	       mRecordedSol[2][i] += cof*intpfrom.mRecordedSol[2][m];
+	    }
+	    else if( m_usgsFormat && !intpfrom.m_usgsFormat )
+	    {
+	       mRecordedSol[0][i] += cof*intpfrom.mRecordedFloats[0][m];
+	       mRecordedSol[1][i] += cof*intpfrom.mRecordedFloats[1][m];
+	       mRecordedSol[2][i] += cof*intpfrom.mRecordedFloats[2][m];
+	    }
+	    else if( !m_usgsFormat && intpfrom.m_usgsFormat )
+	    {
+	       mRecordedFloats[0][i] += cof*intpfrom.mRecordedSol[0][m];
+	       mRecordedFloats[1][i] += cof*intpfrom.mRecordedSol[1][m];
+	       mRecordedFloats[2][i] += cof*intpfrom.mRecordedSol[2][m];
+	    }
+	    else if( !m_usgsFormat && !intpfrom.m_usgsFormat )
+	    {
+	       mRecordedFloats[0][i] += cof*intpfrom.mRecordedFloats[0][m];
+	       mRecordedFloats[1][i] += cof*intpfrom.mRecordedFloats[1][m];
+	       mRecordedFloats[2][i] += cof*intpfrom.mRecordedFloats[2][m];
+	    }
+	 }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+double TimeSeries::misfit( TimeSeries& observed )
+{
+   if( !m_myPoint )
+      return 0;
+
+// Interpolate data to this object
+   int order = 4;
+   double misfit = 0;
+   double mf[3];
+   double dtfr  = observed.m_dt;
+   int nfrsteps = observed.mLastTimeStep+1;
+
+   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+   {
+      double t  = i*m_dt;
+      double ir = t/dtfr;
+      int ie   = static_cast<int>(ir);
+      int mmin = ie-order/2+1;
+      int mmax = ie+order/2;
+      if( mmax-mmin+1 > nfrsteps )
+      {
+         cout << "Error in TimeSeries::misfit : Can not interpolate, " <<
+	    "because the grid is too coarse " << endl;
+	 return 0.0;
+      }
+      mf[0] = mf[1] = mf[2] = 0;
+
+// If too far past the end of observed, set to zero.
+      if( ie > nfrsteps + order/2 )
+      {
+         mf[0] = mf[1] = mf[2] = 0;
+      }
+      else
+      {
+         int off;
+	 if( mmin < 1 )
+	 {
+	    off = 1-mmin;
+	    mmin = mmin + off;
+	    mmax = mmax + off;
+	 }
+	 if( mmax > nfrsteps )
+	 {
+	    off = mmax - nfrsteps;
+	    mmin = mmin - off;
+	    mmax = mmax - off;
+	 }
+	 for( int m = mmin ; m <= mmax ; m++ )
+	 {
+	    double cof=1;
+	    for( int k = mmin ; k <= mmax ; k++ )
+	       if( k != m )
+		  cof *= (ir-k)/(m-k);
+
+	    if( observed.m_usgsFormat )
+	    {
+	       mf[0] += cof*observed.mRecordedSol[0][m];
+	       mf[1] += cof*observed.mRecordedSol[1][m];
+	       mf[2] += cof*observed.mRecordedSol[2][m];
+	    }
+            else
+	    {
+	       mf[0] += cof*observed.mRecordedFloats[0][m];
+	       mf[1] += cof*observed.mRecordedFloats[1][m];
+	       mf[2] += cof*observed.mRecordedFloats[2][m];
+	    }
+	 }
+         if( m_usgsFormat )
+	 {
+	    misfit += (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i]) + 
+	       (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i]) + 
+	       (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i]);
+	 }
+	 else
+	 {
+	    misfit += (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
+	       (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
+	       (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]);
+	 }
+      }
+   }
+   return misfit;
+}
+
+//-----------------------------------------------------------------------
+TimeSeries* TimeSeries::copy( EW* a_ew, string filename )
+{
+   TimeSeries* retval = new TimeSeries( a_ew, filename, m_mode, m_sacFormat, m_usgsFormat,
+					 mX, mY, mZ, m_zRelativeToTopography, mWriteEvery );
+   retval->m_t0 = m_t0;
+   retval->m_dt = m_dt;
+   retval->mAllocatedSize = mAllocatedSize;
+   retval->mLastTimeStep  = mLastTimeStep;
+
+   if( m_sacFormat )
+   {
+      // Overwrite pointers, don't want to copy them.
+      retval->mRecordedFloats = new float*[m_nComp];
+      if( mAllocatedSize > 0 )
+      {
+         for( int q=0 ; q < m_nComp ; q++ )
+	    retval->mRecordedFloats[q] = new float[mAllocatedSize];
+         for( int q=0 ; q < m_nComp ; q++ )
+            for( int i=0 ; i < mAllocatedSize ; i++ )
+               retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
+      }
+      else
+      {
+         for( int q=0 ; q < m_nComp ; q++ )
+	    retval->mRecordedFloats[q] = NULL;
+      }
+   }
+   else
+   {
+      retval->mRecordedSol = new double*[m_nComp];
+      if( mAllocatedSize > 0 )
+      {
+         for( int q=0 ; q < m_nComp ; q++ )
+	    retval->mRecordedSol[q] = new double[mAllocatedSize];
+         for( int q=0 ; q < m_nComp ; q++ )
+            for( int i=0 ; i < mAllocatedSize ; i++ )
+               retval->mRecordedSol[q][i] = mRecordedSol[q][i];
+      }
+      else
+      {
+         for( int q=0 ; q < m_nComp ; q++ )
+	    retval->mRecordedSol[q] = NULL;
+      }
+   }
+   return retval;
+}
+
+//-----------------------------------------------------------------------
+double TimeSeries::arrival_time( double lod )
+{
+   double* maxes = new double[m_nComp];
+   for( int c=0 ; c < m_nComp ; c++ )
+      maxes[c] = 0;
    
+   int n;
+   if( m_usgsFormat )
+   {
+      for( int i=0 ; i <=mLastTimeStep ; i++ )
+	 for( int c=0 ; c < m_nComp ; c++ )
+	    if( fabs(mRecordedSol[c][i]) > maxes[c] )
+	       maxes[c] = fabs(mRecordedSol[c][i]);
+      // Assume three components
+      n=0;
+      cout << "max = " << maxes[0] << " " << maxes[1] << " " << maxes[2] << endl;
+      while( fabs(mRecordedSol[0][n])<maxes[0]*lod &&
+	     fabs(mRecordedSol[1][n])<maxes[1]*lod &&
+	     fabs(mRecordedSol[2][n])<maxes[2]*lod &&
+	     n < mLastTimeStep )
+	 n++;
+   }
+   else
+   {
+      for( int i=0 ; i <= mLastTimeStep ; i++ )
+	 for( int c=0 ; c < m_nComp ; c++ )
+	    if( fabs(mRecordedFloats[c][i]) > maxes[c] )
+	       maxes[c] = fabs(mRecordedFloats[c][i]);
+      n=0;
+      while( fabs(mRecordedFloats[0][n])<maxes[0]*lod &&
+	     fabs(mRecordedFloats[1][n])<maxes[1]*lod &&
+	     fabs(mRecordedFloats[2][n])<maxes[2]*lod &&
+	     n < mLastTimeStep )
+	 n++;
+   }
+
+   delete[] maxes;
+   return n*m_dt;
 }

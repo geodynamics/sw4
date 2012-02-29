@@ -44,6 +44,8 @@ void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, d
 				double *l2 );
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					  double*, double*, double* );
+void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+			      double*, double*, double*, double*, double*, double* );
 }
 
 using namespace std;
@@ -52,7 +54,7 @@ using namespace std;
 
 // constructor
 EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
-       vector<TimeSeries*> & a_GlobalTimeSeries): 
+       vector<TimeSeries*> & a_GlobalTimeSeries, bool a_invproblem ): 
   m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
@@ -184,7 +186,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_max_omega(-1.0),
 //  m_do_geodynbc(false),
   m_att_use_max_frequency(false),
-  m_att_ppw(15)
+  m_att_ppw(15),
+  m_inverse_problem(a_invproblem)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
@@ -194,11 +197,10 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    {
      mbcGlobalType[i] = bNone;
    }
-   
+
 // read the input file and setup the simulation object
    if (parseInputFile( a_GlobalSources, a_GlobalTimeSeries ))
      mParsingSuccessful = true;
-
 }
 
 // Destructor
@@ -3054,3 +3056,47 @@ void EW::set_global_bcs(boundaryConditionType bct[6])
   //  cout << "mbcGlobalType = " << mbcGlobalType[0] << "," << mbcGlobalType[1] << "," << mbcGlobalType[2] << "," << mbcGlobalType[3] << "," << mbcGlobalType[4] << "," << mbcGlobalType[5] << endl;
 }
 
+//-----------------------------------------------------------------------
+void EW::average_speeds( double& cp, double& cs )
+{
+   cp = 0;
+   cs = 0;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int istart = m_iStart[g];
+      int iend   = m_iEnd[g];
+      int jstart = m_jStart[g];
+      int jend   = m_jEnd[g];
+      int kstart = m_kStart[g];
+      int kend   = m_kEnd[g];
+      double cpgrid, csgrid, npts;
+      if( m_bcType[g][0] == bSuperGrid )
+	 istart = istart+m_sg_gp_thickness;
+      if( m_bcType[g][1] == bSuperGrid )
+	 iend = iend-m_sg_gp_thickness;
+      if( m_bcType[g][2] == bSuperGrid )
+	 jstart = jstart+m_sg_gp_thickness;
+      if( m_bcType[g][3] == bSuperGrid )
+	 jend = jend-m_sg_gp_thickness;
+      if( m_bcType[g][4] == bSuperGrid )
+	 kstart = kstart+m_sg_gp_thickness;
+      if( m_bcType[g][5] == bSuperGrid )
+	 kend = kend-m_sg_gp_thickness;
+      double* mu_ptr     = mMu[g].c_ptr();
+      double* lambda_ptr = mLambda[g].c_ptr();
+      double* rho_ptr    = mRho[g].c_ptr();
+      F77_FUNC(velsum,VELSUM)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+			      &istart, &iend, &jstart, &jend, &kstart, &kend, 
+			      mu_ptr, lambda_ptr, rho_ptr, &cpgrid, &csgrid, &npts );
+      double cpgridtmp = cpgrid;
+      double csgridtmp = csgrid;
+      double nptstmp   = npts;
+      MPI_Allreduce( &cpgridtmp, &cpgrid, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &csgridtmp, &csgrid, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &nptstmp, &npts, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      cp = cp + cpgrid/npts;
+      cs = cs + csgrid/npts;
+   }
+   cp = cp/mNumberOfGrids;
+   cs = cs/mNumberOfGrids;
+}

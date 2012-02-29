@@ -25,11 +25,27 @@ void recordData(vector<double> & u);
 
 void writeFile( );
 
+void readFile( );
+
 double **getRecordingArray(){ return mRecordedSol; }
+
+int getNsteps() const {return mLastTimeStep+1;}
 
 bool myPoint(){ return m_myPoint; }
 
 receiverMode getMode(){ return m_mode; }
+
+double getX() const {return mX;}
+double getY() const {return mY;}
+double getZ() const {return mZ;}
+
+double arrival_time( double lod );
+
+TimeSeries* copy( EW* a_ew, string filename );
+
+double misfit( TimeSeries& observed );
+
+void interpolate( TimeSeries& intpfrom );
 
 // for simplicity, make the grid point location public
 int m_i0;

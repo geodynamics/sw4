@@ -4,18 +4,26 @@ else
    optlevel = DEBUG
 endif
 
-# for mac
+
+FC = gfortran
+CC = mpicc
+CXX = mpicxx
+#linklibs = -lgfortran
+#linklibs = -framework vecLib -lgfortran
+linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+
 #FC = gfortran
 #CC = mpicc
 #CXX = mpicxx
 #linklibs = -framework vecLib -lgfortran
 #linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
 
+
 # for atlas
-FC = mpiifort
-CC = mpiicc
-CXX = mpiicpc
-linklibs = -llapack -lblas -lifcore
+#FC = mpiifort
+#CC = mpiicc
+#CXX = mpiicpc
+#linklibs = -llapack -lblas -lifcore
 
 
 ifeq ($(optlevel),DEBUG)
@@ -34,13 +42,22 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o 
+
+OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
+       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+       parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
+       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o 
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
 
 sbp4f: $(OBJ)
 	$(CXX) $(CFLAGS) -o $@ $(OBJ) $(linklibs)
+
+sbp4opt: $(OBJOPT)
+	$(CXX) $(CFLAGS) -o $@ $(OBJOPT) $(linklibs)
 
 version.o:version.C
 	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_BASEDIR=\"NotUsed\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
@@ -61,4 +78,4 @@ test: $(OBJ2)
 	$(CXX) $(CFLAGS) -c $<
 
 clean:
-	/bin/rm -f sbp4f $(OBJ)
+	/bin/rm -f sbp4f sbp4opt $(OBJ)

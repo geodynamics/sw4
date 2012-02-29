@@ -111,6 +111,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
   }
 // done allocating solution arrays
+
+  // Allocate time series arrays
+  for (int ts=0; ts<a_TimeSeries.size(); ts++)
+    a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps, mTstart, mDt);
+
+
    
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;

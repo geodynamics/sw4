@@ -25,7 +25,7 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries )
+void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 {
   double time_start = MPI_Wtime();
 
@@ -314,8 +314,6 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> 
 // should we allocate receiver arrays and initialize all images after the prefilter time offset stuff?
 
 // Set the number of time steps and allocate the recording arrays in all receiver objects
-  for (int ts=0; ts<a_GlobalTimeSeries.size(); ts++)
-    a_GlobalTimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps, mTstart, mDt);
   
   if( mVerbose && proc_zero() )
     printf("***  Allocated all receiver time series\n");

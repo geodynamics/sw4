@@ -314,8 +314,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processTime(buffer);
        // else if (startswith("globalmaterial", buffer))
        //   processGlobalMaterial(buffer);
-       else if (startswith("receiver", buffer)) // was called "sac" in WPP
+       else if (!m_inverse_problem && startswith("receiver", buffer)) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && startswith("observation", buffer)) // 
+	 processObservation(buffer, a_GlobalTimeSeries);
        // else if (startswith("energy", buffer))
        //   processEnergy(buffer);
        else if (startswith("twilight", buffer))
@@ -1883,9 +1885,15 @@ void EW::processSupergrid(char *buffer)
       sg_transition = atoi(token);
       CHECK_INPUT(sg_transition>0, "The number of grid points in the supergrid transition layer must be positive, not: "<< sg_transition);
       transitionSet = true;
+      //<<<<<<< parseInputFile.C
+      //    }
+      ////                       12345678901234567890
+      //    else if (startswith("damping_coefficient=", token))
+      //=======
   }
 //                       123
     else if (startswith("dc=", token))
+       //>>>>>>> 1.12
     {
       token += 3;
       sg_coeff = atof(token);
@@ -4553,5 +4561,171 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
     
   }
     
+}
+
+//-----------------------------------------------------------------------
+void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
+{
+  double x=0.0, y=0.0, z=0.0;
+  double lat = 0.0, lon = 0.0, depth = 0.0;
+  bool cartCoordSet = false, geoCoordSet = false;
+  string name = "rec";
+  int writeEvery = 0;
+
+  bool dateSet = false;
+  bool timeSet = false;
+  bool topodepth = false;
+
+  string date = "";
+  string time = "";
+
+  bool usgsformat = 1, sacformat=0;
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+
+  char* token = strtok(buffer, " \t");
+
+  CHECK_INPUT(strcmp("observation", token) == 0, "ERROR: not an observation line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "OBSERVATION Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("x=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip x=
+        cartCoordSet = true;
+        x = atof(token);
+        CHECK_INPUT(x >= 0.0,
+		    "observation command: x must be greater than or equal to 0, not " << x);
+        CHECK_INPUT(x <= m_global_xmax,
+		    "observation command: x must be less than or equal to xmax, not " << x);
+     }
+     else if (startswith("y=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip y=
+        cartCoordSet = true;
+        y = atof(token);
+        CHECK_INPUT(y >= 0.0,
+                "observation command: y must be greater than or equal to 0, not " << y);
+        CHECK_INPUT(y <= m_global_ymax,
+		    "observation command: y must be less than or equal to ymax, not " << y);
+     }
+     else if (startswith("lat=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lat=
+        lat = atof(token);
+        CHECK_INPUT(lat >= -90.0,
+                "observation command: lat must be greater than or equal to -90 degrees, not " 
+                << lat);
+        CHECK_INPUT(lat <= 90.0,
+                "observation command: lat must be less than or equal to 90 degrees, not "
+                << lat);
+        geoCoordSet = true;
+     }
+     else if (startswith("lon=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lon=
+        lon = atof(token);
+        CHECK_INPUT(lon >= -180.0,
+                "observation command: lon must be greater or equal to -180 degrees, not " 
+                << lon);
+        CHECK_INPUT(lon <= 180.0,
+                "observation command: lon must be less than or equal to 180 degrees, not "
+                << lon);
+        geoCoordSet = true;
+     }
+     else if (startswith("z=", token))
+     {
+       token += 2; // skip z=
+// depth is currently the same as z
+       depth = z = atof(token);
+       topodepth = false;
+       CHECK_INPUT(z <= m_global_zmax,
+		   "observation command: z must be less than or equal to zmax, not " << z);
+     }
+     else if (startswith("depth=", token))
+     {
+        token += 6; // skip depth=
+       z = depth = atof(token);
+       topodepth = true;
+       CHECK_INPUT(depth >= 0.0,
+	       err << "observation command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "observation command: depth must be less than or equal to zmax, not " << depth);
+// by depth we here mean depth below topography
+     }
+     else if(startswith("file=", token))
+     {
+        token += 5; // skip file=
+        name = token;
+     }
+     else
+     {
+        badOption("observation", token);
+     }
+     token = strtok(NULL, " \t");
+  }  
+  //  cout << "end observation " << m_myRank << endl;
+
+  if (geoCoordSet)
+  {
+    computeCartesianCoord(x, y, lon, lat);
+// check if (x,y) is within the computational domain
+  }
+
+  bool inCurvilinear=false;
+// we are in or above the curvilinear grid 
+  if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
+  {
+    inCurvilinear = true;
+  }
+      
+// check if (x,y,z) is not in the global bounding box
+    if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
+    {
+// The location of this station was outside the domain, so don't include it in the global list
+    if (m_myRank == 0 && getVerbosity() > 0)
+    {
+      stringstream observationerr;
+  
+      observationerr << endl 
+	     << "***************************************************" << endl
+	     << " WARNING:  OBSERVATION positioned outside grid!" << endl;
+      observationerr << " No OBSERVATION file will be generated for file = " << name << endl;
+      if (geoCoordSet)
+      {
+	observationerr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+      }
+      else
+      {
+	observationerr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+      }
+      
+      observationerr << "***************************************************" << endl;
+      cerr << observationerr.str();
+      cerr.flush();
+    }
+  }
+  else
+  {
+    TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
+					topodepth, writeEvery);
+    ts_ptr->readFile( );
+// include the observation in the global list
+    a_GlobalTimeSeries.push_back(ts_ptr);
+    
+  }
 }
 
