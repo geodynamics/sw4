@@ -3,6 +3,9 @@
 %
 %  Get some info about an image.
 %
+%       Syntax:
+%               [cvals,np,mx,mn]=imageinfo( fil, nc )
+%
 %       Input:  fil - Name of image file
 %               nc  - Number of countour levels (default=10).
 %       Output: cvals - Contour level vector to be used with function plotimage

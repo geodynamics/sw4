@@ -4,20 +4,14 @@ else
    optlevel = DEBUG
 endif
 
-
+# for mac
 FC = gfortran
 CC = mpicc
 CXX = mpicxx
-#linklibs = -lgfortran
-#linklibs = -framework vecLib -lgfortran
-linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+linklibs = -framework vecLib -lgfortran
 
-#FC = gfortran
-#CC = mpicc
-#CXX = mpicxx
-#linklibs = -framework vecLib -lgfortran
+# for linux
 #linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
-
 
 # for atlas
 #FC = mpiifort
@@ -25,15 +19,14 @@ linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
 #CXX = mpiicpc
 #linklibs = -llapack -lblas -lifcore
 
-
 ifeq ($(optlevel),DEBUG)
-#   FFLAGS    = -g -fno-underscoring
-   FFLAGS    = -g
+   FFLAGS    = -g -fno-underscoring
+#   FFLAGS    = -g
    CXXFLAGS  = -g 
    CFLAGS = -g
 else
-#   FFLAGS = -O3 -fno-underscoring
-   FFLAGS = -O3
+   FFLAGS = -O3 -fno-underscoring
+#   FFLAGS = -O3
    CXXFLAGS = -O
    CFLAGS = -O
 endif

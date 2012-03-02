@@ -527,7 +527,7 @@ void EW::setupSBPCoeff()
 
 //-----------------------------------------------------------------------
 void EW::set_materials()
- // Fill in material on all grids between llevel and ulevel.
+ // Fill in material properties on all grids
  // The material objects set velocities, need to convert after to (mu,lambda).
  // After materials are set, impose additional materials from forcing object.
 {  
