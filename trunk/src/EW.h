@@ -53,9 +53,10 @@ void setAttenuationParams(int numberOfMechanisms, double velocityOmega, int ppw,
 void setNumberSteps(int steps); // remove???
 int getNumberOfSteps() const;
 
-void setupRun( vector<Source*> & a_GlobalUniqueSources );
-void solve( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
-bool parseInputFile( vector<Source*> & a_GlobalUniqueSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+void setupRun( );
+void preprocessSources( vector<Source*> & a_GlobalSources );
+void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 
 void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int grid0, 
 		       vector<double> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
@@ -110,8 +111,8 @@ void exactAccTwilight(double a_t, vector<Sarray> & a_Uacc);
 void Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
 void Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
 
-void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2,
-		       vector<Source*>& a_globalUniqueSources );
+void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2, double &xInf,
+		       vector<Source*>& a_globalSources );
 void normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
 void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
 			      double &diffL2, double &solInf, double &solL2, vector<Source*> & a_globalSources);
@@ -666,7 +667,7 @@ double mLonOrigin, mLatOrigin;
 double mMetersPerDegree;
 
 // is this object ready for time-stepping?
-bool mParsingSuccessful, mIsInitialized;
+bool mParsingSuccessful, mIsInitialized, mSourcesOK;
 bool m_testing;
 
    // Will we solve the inverse problem?

@@ -1,6 +1,6 @@
 c------------------------------------------------------------
       subroutine solerr3(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     h, uex, u, li, l2, zmin, x0, y0, z0, radius,
+     +     h, uex, u, li, l2, xli, zmin, x0, y0, z0, radius,
      +     imin, imax, jmin, jmax, kmin, kmax)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
@@ -10,10 +10,12 @@ c------------------------------------------------------------
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
      
       integer c, k, j, i
-      real*8 li, l2, err(3)
+      real*8 li, l2, err(3), xli
 
       li = 0
       l2 = 0
+c max norm of exact solution
+      xli = 0
 c tmp
 c      write(*,*)'if=', ifirst, 'il=', ilast, 'jf=', jfirst, 'jl=',
 c     +     jlast, 'kf=', kfirst, 'kl=', klast
@@ -41,6 +43,9 @@ c exact solution in array 'uex'
                if( li.lt.max(err(1),err(2),err(3)) )then
                   li = max(err(1),err(2),err(3))
                endif
+               if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
+     +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
+
                l2 = l2 + 
      +              h*h*h* (err(1)**2 + err(2)**2 + err(3)**2)
             endif

@@ -25,7 +25,7 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
+void EW::setupRun( )
 {
   double time_start = MPI_Wtime();
 
@@ -241,40 +241,6 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   //   printf("\n");
   // }
   
-// optionally limit source frequencies
-//   if( m_limit_frequency && m_forcing->use_input_sources() )
-//   {
-//     double dt0 = 0;
-//     double dt0loc;
-// // all sources in mGlobalUniqueSources are on all processors so no communication is necessary
-//     for( unsigned int i=0 ; i < mGlobalUniqueSources.size() ; i++ )
-//     {
-//       mGlobalUniqueSources[i]->limit_frequency( m_ppw, minvsoh );
-//       dt0loc = mGlobalUniqueSources[i]->compute_t0_increase( 0.0 );
-//       if( dt0loc > dt0 )
-// 	dt0 = dt0loc;
-//     }
-//     for( unsigned int i=0 ; i < mGlobalUniqueSources.size() ; i++ )
-//       mGlobalUniqueSources[i]->adjust_t0( dt0 );
-//     if( proc_zero() ) // always print this info
-//     {
-//       cout << "\nMin (Vs/h) = " << minvsoh << endl 
-// 	   << "Prescribed number of grid points per wave length PPW = " << m_ppw << endl
-// 	   << "Input source frequencies limited to " << minvsoh/m_ppw << " Hz = " << 2*M_PI*minvsoh/m_ppw << " Rad/sec\n" << endl;
-//       if( dt0 > 0 )
-// 	cout << "        t0 increased by " << dt0 << " for all sources" << endl;
-//     }
-//     m_frequency_limit = minvsoh/m_ppw;
-//   }
-//   else if( m_limit_frequency )
-//   {
-//     double minvsoh;
-//     double dt0 = 0;
-//     compute_minvsoverh( minvsoh );
-//     m_forcing->limit_frequencies_and_t0( m_ppw, minvsoh );
-//     m_frequency_limit = minvsoh/m_ppw;
-//   }     
-
   if (usingSupergrid())
   {
 // taper mu, lambda to near zero while making rho large at outflow (Dirichlet) boundaries
@@ -311,22 +277,60 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // prefilter is enabled
   computeDT( );
 
-// should we allocate receiver arrays and initialize all images after the prefilter time offset stuff?
-
-// Set the number of time steps and allocate the recording arrays in all receiver objects
-  
-  if( mVerbose && proc_zero() )
-    printf("***  Allocated all receiver time series\n");
+// should we initialize all images after the prefilter time offset stuff?
 
 // Initialize image files: set time, tell images about grid hierarchy.
   initialize_image_files();
   if( mVerbose && proc_zero() )
     cout << "*** Initialized Images" << endl;
 
+// // is the curvilinear grid ok?
+//   if (topographyExists() && m_minJacobian <=0. && proc_zero()) // m_minJacobian is the global minimum and should be the same on all processes
+//   {
+//     printf("FATAL ERROR: min(Jacobian) = %e < 0 in the curvilinear grid.\n", m_minJacobian);
+//     printf("You can try to increase zmax or decrease order in the topography command\n");
+//     MPI_Abort(MPI_COMM_WORLD, 1);
+//   }
+
+// // Allocate work space for one sided operators in time stepping loop
+//   int wksize=0;
+//   for( int g=0; g < mNumberOfGrids ; g++ )
+//   {
+//      for( int side=0 ; side <= 1 ; side++ )
+// 	if( m_onesided[g][side] == 1 )
+// 	   wksize = wksize < mU[g].m_nj*mU[g].m_nk ? mU[g].m_nj*mU[g].m_nk : wksize; 
+//      for( int side=2 ; side <= 3 ; side++ )
+// 	if( m_onesided[g][side] == 1 )
+// 	   wksize = wksize < mU[g].m_ni*mU[g].m_nk ? mU[g].m_ni*mU[g].m_nk : wksize;
+//      for( int side=4 ; side <= 5 ; side++ )
+// 	if( m_onesided[g][side] == 1 )
+// 	   wksize = wksize < mU[g].m_nj*mU[g].m_ni ? mU[g].m_nj*mU[g].m_ni : wksize; 
+//   }
+//   double* wk = new double[4*wksize];
+
+// if we got this far, the object should be ready for time-stepping
+  mIsInitialized = true;
+
+  double time_start_solve = MPI_Wtime();
+  print_execution_time( time_start, time_start_solve, "start up phase" );
+}
+
+//-----------------------------------------------------------------------
+void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
+{
+// make sure that the material model is in plac
+  if (!mIsInitialized)
+  {
+    if (proc_zero())
+      printf("ERROR: Calling preprocessSources before the material model is initialized\n");
+    return;
+  }
+  
 // setup when there are point moment tensor sources of point forces,
 // i.e., not twilight, energy conservation, or rayleigh surface wave test
   if( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
   {
+
 // sanity checks for various testing modes
     if (m_testing)
     {
@@ -384,104 +388,79 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
       if (!sources_ok) // can't use this setup
       {
-	return; // not setting mIsInitialized to true should stop the calling program
+	return; // not setting mSourcesOK to true should stop the calling program
       }
       
     } // end if m_testing
-    
+    else
+    {
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 // Correct source location for discrepancy between raw and smoothed topography
-    for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-      a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources that are above the topography
+      for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
+	a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources that are above the topography
 
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
-    if (m_limit_source_freq)
-    {
-      if (mVerbose && proc_zero() )
-	printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
+      if (m_limit_source_freq)
+      {
+	if (mVerbose && proc_zero() )
+	  printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
 
-      for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
+	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	  a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
        
-    } // end limit_source_freq
+      } // end limit_source_freq
      
 // check how deep the sources go
-    double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
-    for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-    {
-      zSource = a_GlobalUniqueSources[s]->getZ0( );
-      if (zSource > zMax)
-	zMax = zSource;
-      if (zSource < zMin)
-	zMin = zSource;
-    }
-// compute global max over all processors
-    MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
-    MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-    if (mVerbose && proc_zero() )
-      printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
-
-// Modify the time functions if prefiltering is enabled
-    if (m_prefilter_sources)
-    {
-      if (mVerbose && proc_zero() )
-	printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
-// 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
-      double dt0 = 0;
-      double dt0loc, dt0max;
+      double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
       for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
       {
-	dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
-	if( dt0loc > dt0 )
-	  dt0 = dt0loc;
+	zSource = a_GlobalUniqueSources[s]->getZ0( );
+	if (zSource > zMax)
+	  zMax = zSource;
+	if (zSource < zMin)
+	  zMin = zSource;
       }
 // compute global max over all processors
-      MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+      MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+      MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+      if (mVerbose && proc_zero() )
+	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
+
+// Modify the time functions if prefiltering is enabled
+      if (m_prefilter_sources)
+      {
+	if (mVerbose && proc_zero() )
+	  printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
+// 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
+	double dt0 = 0;
+	double dt0loc, dt0max;
+	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	{
+	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
+	  if( dt0loc > dt0 )
+	    dt0 = dt0loc;
+	}
+// compute global max over all processors
+	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
 // adjust t0
-      if (dt0max > 0.)
-      {
-	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	  a_GlobalUniqueSources[s]->adjust_t0( dt0max );
-	if ( proc_zero() )
-	  printf("*** Lowpass prefilter: t0 increased by %e in all source time functions\n", dt0max);
-      }
-      else
-      {
-	dt0max = 0.;
-      }
+	if (dt0max > 0.)
+	{
+	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
+	  if ( proc_zero() )
+	    printf("*** Lowpass prefilter: t0 increased by %e in all source time functions\n", dt0max);
+	}
+	else
+	{
+	  dt0max = 0.;
+	}
 // need to remember the time shift so we can compensate for it when writing sac and image files
-      m_t0Shift = dt0max;
-    }
-  } // end if ( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
-   
-  if (proc_zero())
-    getGMTOutput( a_GlobalUniqueSources );
+	m_t0Shift = dt0max;
+      }
 
-
-// // is the curvilinear grid ok?
-//   if (topographyExists() && m_minJacobian <=0. && proc_zero()) // m_minJacobian is the global minimum and should be the same on all processes
-//   {
-//     printf("FATAL ERROR: min(Jacobian) = %e < 0 in the curvilinear grid.\n", m_minJacobian);
-//     printf("You can try to increase zmax or decrease order in the topography command\n");
-//     MPI_Abort(MPI_COMM_WORLD, 1);
-//   }
-
-// // Allocate work space for one sided operators in time stepping loop
-//   int wksize=0;
-//   for( int g=0; g < mNumberOfGrids ; g++ )
-//   {
-//      for( int side=0 ; side <= 1 ; side++ )
-// 	if( m_onesided[g][side] == 1 )
-// 	   wksize = wksize < mU[g].m_nj*mU[g].m_nk ? mU[g].m_nj*mU[g].m_nk : wksize; 
-//      for( int side=2 ; side <= 3 ; side++ )
-// 	if( m_onesided[g][side] == 1 )
-// 	   wksize = wksize < mU[g].m_ni*mU[g].m_nk ? mU[g].m_ni*mU[g].m_nk : wksize;
-//      for( int side=4 ; side <= 5 ; side++ )
-// 	if( m_onesided[g][side] == 1 )
-// 	   wksize = wksize < mU[g].m_nj*mU[g].m_ni ? mU[g].m_nj*mU[g].m_ni : wksize; 
-//   }
-//   double* wk = new double[4*wksize];
+      if (proc_zero())
+	getGMTOutput( a_GlobalUniqueSources );
 
 // // Precompute grid point index for point sources, for better efficiency
 //   int* ind=0;
@@ -498,12 +477,14 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 //     }
 //   }
 
-// if we got this far, the object should be ready for time-stepping
-  mIsInitialized = true;
+    } // end normal seismic setup
 
-  double time_start_solve = MPI_Wtime();
-  print_execution_time( time_start, time_start_solve, "start up phase" );
-}
+  } // end if ( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
+   
+  mSourcesOK = true;
+
+} // end preprocessSources
+
 
 //-----------------------------------------------------------------------
 void EW::setupSBPCoeff()

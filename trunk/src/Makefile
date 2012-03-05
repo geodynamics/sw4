@@ -4,32 +4,46 @@ else
    optlevel = DEBUG
 endif
 
-# for mac
-#FC = gfortran
-#CC = mpicc
-#CXX = mpicxx
-#linklibs = -framework vecLib -lgfortran
-
-# for linux
-#linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
-
-# for atlas
-FC = mpiifort
-CC = mpiicc
-CXX = mpiicpc
-linklibs = -llapack -lblas -lifcore
+UNAME := $(shell uname)
+HOSTNAME := $(shell hostname)
 
 ifeq ($(optlevel),DEBUG)
-#   FFLAGS    = -g -fno-underscoring
    FFLAGS    = -g
    CXXFLAGS  = -g 
    CFLAGS = -g
 else
-#   FFLAGS = -O3 -fno-underscoring
    FFLAGS = -O3
    CXXFLAGS = -O
    CFLAGS = -O
 endif
+
+# for mac
+ifeq ($(UNAME),Darwin)
+  FC = gfortran
+  CC = mpicc
+  CXX = mpicxx
+  linklibs = -framework vecLib -lgfortran
+
+  ifeq ($(optlevel),DEBUG)
+    FFLAGS = -g -fno-underscoring
+  else
+    FFLAGS = -O3 -fno-underscoring
+  endif
+endif
+
+# for linux
+ifeq ($(UNAME),Linux)
+  FC = mpiifort
+  CC = mpiicc
+  CXX = mpiicpc
+  linklibs = -llapack -lblas -lifcore
+
+# for Bjorn's tux box
+  ifeq ($(findstring tux,$(HOSTNAME)),tux)
+    linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+  endif
+endif
+
 
 OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \

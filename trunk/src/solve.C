@@ -112,10 +112,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
 // done allocating solution arrays
 
-// Allocate time series arrays
+// Set the number of time steps and allocate the recording arrays in all time series objects  
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps, mTstart, mDt);
 
+  if( mVerbose >=3 && proc_zero() )
+    printf("***  Allocated all receiver time series\n");
    
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
@@ -399,7 +401,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else if (m_point_source_test)
-	normOfDifference( Up, U, errInf, errL2, a_Sources );
+	normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
 
       if ( proc_zero() )
 // output time, Linf-err, Linf-sol-err
@@ -471,7 +473,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else
-	normOfDifference( Up, U, errInf, errL2, a_Sources );
+	normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
 
       if ( proc_zero() )
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);

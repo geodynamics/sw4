@@ -38,9 +38,9 @@ void F77_FUNC(rhs4th3fort,RHS4TH3FORT)(int*, int*, int*, int*, int*, int*, int*,
 void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
-void F77_FUNC(solerr3, SOLERR3)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
-				double *, double* , double* , double* , double* , double*,
-				int *, int*, int *, int *, int *, int *);
+void F77_FUNC(solerr3, SOLERR3)(int*, int*, int*, int*, int*, int*, double *h, double *uex, double *u, double *li,
+				double *l2, double *xli, double *zmin, double *x0, double *y0, double *z0, double *radius,
+				int *imin, int *imax, int *jmin, int *jmax, int *kmin, int *kmax);
 void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
 				double *l2 );
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
@@ -60,6 +60,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
   m_nx_base(0), m_ny_base(0), m_nz_base(0), m_h_base(0.0),
+  mSourcesOK(false),
   mIsInitialized(false),
   mParsingSuccessful(false),
   mNumberOfGrids(0),
@@ -213,7 +214,7 @@ EW::
 //-----------------------------------
 bool EW::isInitialized()
 {
-  return mIsInitialized;
+  return (mIsInitialized && mSourcesOK);
 }
   
 //-----------------------------------
@@ -1078,12 +1079,13 @@ void EW::default_bcs( )
 
 //---------------------------------------------------------------------------
 void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
-                           double &diffL2, vector<Source*>& a_globalUniqueSources )
+                           double &diffL2, double &xInf, vector<Source*>& a_globalSources )
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
   int imin, imax, jmin, jmax, kmin, kmax;
   
   double *uex_ptr, *u_ptr, h, linfLocal=0, l2Local=0, diffInfLocal=0, diffL2Local=0;
+  double xInfLocal=0, xInfGrid=0;
   double radius =-1, x0, y0, z0;
 
 //tmp  
@@ -1143,26 +1145,25 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     if( m_point_source_test )
     {
        radius = 4*h;
-       x0 = a_globalUniqueSources[0]->getX0();
-       y0 = a_globalUniqueSources[0]->getY0();
-       z0 = a_globalUniqueSources[0]->getZ0();
+       x0 = a_globalSources[0]->getX0();
+       y0 = a_globalSources[0]->getY0();
+       z0 = a_globalSources[0]->getZ0();
     }
 
 // need to exclude parallel overlap from L2 calculation
     F77_FUNC(solerr3, SOLERR3)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
-				uex_ptr, u_ptr, &linfLocal, &l2Local, &m_zmin[g], &x0,
+				uex_ptr, u_ptr, &linfLocal, &l2Local, &xInfGrid, &m_zmin[g], &x0,
 				&y0, &z0, &radius,
 				&imin, &imax, &jmin, &jmax, &kmin, &kmax );
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
+    if (xInfGrid > xInfLocal) xInfLocal = xInfGrid;
     diffL2Local += l2Local;
   }
 // communicate local results for global errors
   MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &xInfLocal, &xInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
   MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 
-//   diffL2 = diffL2Local;
-//   diffInf = diffInfLocal;
-    
   diffL2 = sqrt(diffL2);
 }
 
