@@ -113,7 +113,9 @@ void Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_s
 void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2,
 		       vector<Source*>& a_globalUniqueSources );
 void normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
-void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
+void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
+			      double &diffL2, double &solInf, double &solL2, vector<Source*> & a_globalSources);
+
 void test_sources( vector<GridPointSource*>& a_point_sources, vector<Source*>& a_global_unique_sources,
 		   vector<Sarray>& F );
 void testSourceDiscretization( int kx[3], int ky[3], int kz[3],

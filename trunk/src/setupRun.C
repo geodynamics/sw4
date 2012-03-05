@@ -1040,8 +1040,8 @@ int EW::mkdirs(const string& path)
  	{
 // this means that we need to call mkdir to create the directory
 	  if (mVerbose >=2) 
-	    cout << "Info: **stat returned: A component of the path does not exist, or the path " << endl
-		 << "      is an empty string: " << pathsofar.str() << endl;
+	    cout << "Info: **stat returned ENOENT (the path does not exist, or the path " << endl
+		 << "      is an empty string) " << pathsofar.str() << endl;
  	}
 	else
 	{

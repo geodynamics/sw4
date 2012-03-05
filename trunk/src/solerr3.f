@@ -1,8 +1,10 @@
 c------------------------------------------------------------
       subroutine solerr3(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     h, uex, u, li, l2, zmin, x0, y0, z0, radius )
+     +     h, uex, u, li, l2, zmin, x0, y0, z0, radius,
+     +     imin, imax, jmin, jmax, kmin, kmax)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer imin, imax, jmin, jmax, kmin, kmax
       real*8 h, zmin, x0, y0, z0, radius, sradius2, dist
       real*8 uex(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -24,9 +26,12 @@ c
       if( radius.lt.0 )then
          sradius2 = -sradius2
       endif
-      do k=kfirst+2,klast-2
-        do j=jfirst+2,jlast-2
-          do i=ifirst+2,ilast-2
+C       do k=kfirst+2,klast-2
+C         do j=jfirst+2,jlast-2
+C           do i=ifirst+2,ilast-2
+      do k=kmin,kmax
+        do j=jmin,jmax
+          do i=imin,imax
             dist = ((i-1)*h-x0)**2+((j-1)*h-y0)**2+((k-1)*h+zmin-z0)**2
             if( dist .gt. sradius2 )then
 c exact solution in array 'uex'

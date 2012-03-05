@@ -112,10 +112,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
 // done allocating solution arrays
 
-  // Allocate time series arrays
+// Allocate time series arrays
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps, mTstart, mDt);
-
 
    
 // the Source objects get discretized into GridPointSource objects
@@ -275,6 +274,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       a_TimeSeries[ts]->recordData(uRec);
     }
   }
+
+
+  FILE *lf=NULL;
+// open file for saving norm of error
+  if ( (m_lamb_test || m_point_source_test) && proc_zero() )
+  {
+    if (m_lamb_test)
+      lf = fopen("LambErr.txt","w");
+    else
+      lf = fopen("PointSourceErr.txt","w");
+
+  }
+    
+      
   
 // // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
@@ -377,6 +390,22 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
+// evaluate error for some test cases
+    if (m_lamb_test || m_point_source_test)
+    {
+      double errInf=0, errL2=0, solInf=0, solL2=0;
+      exactSol( t, Up, AlphaVE, a_Sources ); // store exact solution in Up
+
+      if (m_lamb_test)
+	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
+      else if (m_point_source_test)
+	normOfDifference( Up, U, errInf, errL2, a_Sources );
+
+      if ( proc_zero() )
+// output time, Linf-err, Linf-sol-err
+	fprintf(lf, "%e %15.7e %15.7e\n", t, errInf, solInf);
+    }
+
     time_measure[6] = MPI_Wtime();	  	
 	  
 // // See if it is time to write a restart file
@@ -402,6 +431,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //   if( ind != 0 )
 //      delete[] ind;
 
+// close error file for Lamb's test
+  if ((m_lamb_test || m_point_source_test) && proc_zero() )
+  {
+    fclose(lf);
+    printf("**** Closed file with solution errors for testing\n");
+  }
+  
+
    double time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
 
@@ -415,7 +452,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVE, a_Sources ) )
    {
-      double errInf, errL2;
+     double errInf, errL2, solInf, solL2;
 
 // tmp: output exact sol for Lamb's prolem 
 //      cout << *mGlobalUniqueSources[0] << endl;
@@ -432,7 +469,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       
 // depending on the test case, we should compare in the interior, or only on the surface
       if (m_lamb_test)
-	normOfSurfaceDifference( Up, U, errInf, errL2);
+	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else
 	normOfDifference( Up, U, errInf, errL2, a_Sources );
 
@@ -443,7 +480,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       int g=mNumberOfCartesianGrids - 1;
       Up[g].set_to_minusOne();
       U[g].set_to_zero();
-      normOfSurfaceDifference( Up, U, errInf, errL2);
+      normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       if ( proc_zero() )
 	 printf("\n Surface norm of 1: Inf = %15.7e, L2 = %15.7e\n", errInf, errL2);
       

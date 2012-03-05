@@ -39,7 +39,8 @@ void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, do
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
 void F77_FUNC(solerr3, SOLERR3)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
-				double *, double* , double* , double* , double* , double* );
+				double *, double* , double* , double* , double* , double*,
+				int *, int*, int *, int *, int *, int *);
 void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
 				double *l2 );
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
@@ -1080,6 +1081,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
                            double &diffL2, vector<Source*>& a_globalUniqueSources )
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
+  int imin, imax, jmin, jmax, kmin, kmax;
+  
   double *uex_ptr, *u_ptr, h, linfLocal=0, l2Local=0, diffInfLocal=0, diffL2Local=0;
   double radius =-1, x0, y0, z0;
 
@@ -1098,6 +1101,36 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     jlast  = m_jEnd[g];
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];  
+
+    if (mbcGlobalType[0] == bSuperGrid)
+      imin = max(m_iStartInt[g], m_sg_gp_thickness+1);
+    else
+      imin = m_iStartInt[g];
+  
+    if (mbcGlobalType[1] == bSuperGrid)
+      imax = min(m_iEndInt[g], m_global_nx[g] - m_sg_gp_thickness);
+    else
+      imax = m_iEndInt[g];
+
+    if (mbcGlobalType[2] == bSuperGrid)
+      jmin = max(m_jStartInt[g], m_sg_gp_thickness+1);
+    else
+      jmin = m_jStartInt[g];
+
+    if (mbcGlobalType[3] == bSuperGrid)
+      jmax = min(m_jEndInt[g], m_global_ny[g] - m_sg_gp_thickness);
+    else
+      jmax = m_jEndInt[g];
+
+    if (mbcGlobalType[2] == bSuperGrid)
+      kmin = max(m_kStartInt[g], m_sg_gp_thickness+1);
+    else
+      kmin = m_kStartInt[g];
+
+    if (mbcGlobalType[3] == bSuperGrid)
+      kmax = min(m_kEndInt[g], m_global_nz[g] - m_sg_gp_thickness);
+    else
+      kmax = m_jEndInt[g];
 
 // tmp
 //     printf("proc=%i, iS= %i, iE=%i, jS=%i, jE=%i, kS=%i, kE=%i\n", m_myRank, 
@@ -1118,7 +1151,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
 // need to exclude parallel overlap from L2 calculation
     F77_FUNC(solerr3, SOLERR3)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
 				uex_ptr, u_ptr, &linfLocal, &l2Local, &m_zmin[g], &x0,
-				&y0, &z0, &radius );
+				&y0, &z0, &radius,
+				&imin, &imax, &jmin, &jmax, &kmin, &kmax );
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     diffL2Local += l2Local;
   }
@@ -1174,11 +1208,11 @@ void EW::normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & 
 
 //---------------------------------------------------------------------------
 void EW::normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
-				  double &diffL2 )
+				  double &diffL2, double &solInf, double &solL2, vector<Source*> & a_globalSources)
 {
   int g;
-  double absDiff;
-  double *uex_ptr, *u_ptr, h, diffInfLocal=0, diffL2Local=0;
+  double absDiff, absSol;
+  double *uex_ptr, *u_ptr, h, diffInfLocal=0, diffL2Local=0, solInfLocal=0, solL2Local=0;
 
   g = mNumberOfCartesianGrids-1;
   int k = 1;
@@ -1186,19 +1220,77 @@ void EW::normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U,
   h = mGridSize[g];
 
 // only evaluate error on the surface, not including ghost or parallel overlap points
-  for (int j=m_jStartInt[g]; j<=m_jEndInt[g]; j++)
-    for (int i=m_iStartInt[g]; i<=m_iEndInt[g]; i++)
-    {
-      absDiff = fabs(a_Uex[g](3,i,j,k) - a_U[g](3,i,j,k));
-      if (absDiff > diffInfLocal) diffInfLocal = absDiff;
-      diffL2Local += h*h*absDiff*absDiff;
-    }
 
+// also exclude points in the super grid damping layer
+  int imin, imax, jmin, jmax;
+  
+  if (mbcGlobalType[0] == bSuperGrid)
+    imin = max(m_iStartInt[g], m_sg_gp_thickness+1);
+  else
+    imin = m_iStartInt[g];
+  
+  if (mbcGlobalType[1] == bSuperGrid)
+    imax = min(m_iEndInt[g], m_global_nx[g] - m_sg_gp_thickness);
+  else
+    imax = m_iEndInt[g];
+
+  if (mbcGlobalType[2] == bSuperGrid)
+    jmin = max(m_jStartInt[g], m_sg_gp_thickness+1);
+  else
+    jmin = m_jStartInt[g];
+
+  if (mbcGlobalType[3] == bSuperGrid)
+    jmax = min(m_jEndInt[g], m_global_ny[g] - m_sg_gp_thickness);
+  else
+    jmax = m_jEndInt[g];
+  
+// also need to exclude grid points near the point source
+  h = mGridSize[g];
+
+  double radius2, x0, y0, dist2;
+  
+  if( m_lamb_test )
+  {
+    radius2 = SQR(4*h);
+    x0 = a_globalSources[0]->getX0();
+    y0 = a_globalSources[0]->getY0();
+  }
+  else
+  {
+    radius2 = -1;
+    x0 = 0;
+    y0 = 0;
+  }
+  
+
+//   for (int j=m_jStartInt[g]; j<=m_jEndInt[g]; j++)
+//     for (int i=m_iStartInt[g]; i<=m_iEndInt[g]; i++)
+  for (int j=jmin; j<=jmax; j++)
+    for (int i=imin; i<=imax; i++)
+    {
+      dist2 = SQR((i-1)*h-x0)+ SQR((j-1)*h-y0);
+      
+      if( dist2 > radius2 )
+      {
+	absDiff = fabs(a_Uex[g](3,i,j,k) - a_U[g](3,i,j,k));
+	if (absDiff > diffInfLocal) diffInfLocal = absDiff;
+	diffL2Local += h*h*absDiff*absDiff;
+// exact sol norm
+	absSol = fabs(a_Uex[g](3,i,j,k));
+	if (absSol > solInfLocal) solInfLocal = absSol;
+	solL2Local += h*h*absSol*absSol;
+      }
+    }
+  
 // communicate local results for global errors
   MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
   MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 
+  MPI_Allreduce( &solInfLocal, &solInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &solL2Local,  &solL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+
   diffL2 = sqrt(diffL2);
+  solL2 = sqrt(solL2);
 }
 
 //---------------------------------------------------------------------------
