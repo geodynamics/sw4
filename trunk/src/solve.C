@@ -282,10 +282,18 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test) && proc_zero() )
   {
+    string path=getOutputPath();
+
+    stringstream fileName;
+    if( path != "." )
+      fileName << path;
+    
     if (m_lamb_test)
-      lf = fopen("LambErr.txt","w");
+      fileName << "LambErr.txt";
     else
-      lf = fopen("PointSourceErr.txt","w");
+      fileName << "PointSourceErr.txt";
+
+    lf = fopen(fileName.str().c_str(),"w");
 
   }
     
@@ -458,17 +466,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // tmp: output exact sol for Lamb's prolem 
 //      cout << *mGlobalUniqueSources[0] << endl;
-      Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UZ, Image::Z, 0.0, true );
-      im->computeGridPtIndex();
-      im->allocatePlane();
-      im->computeImageQuantity(Up, 3); // z-component
-      string path=".";
-      im->writeImagePlane_2(1,path);
+//       Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UZ, Image::Z, 0.0, true );
+//       im->computeGridPtIndex();
+//       im->allocatePlane();
+//       im->computeImageQuantity(Up, 3); // z-component
+//       string path=".";
+//       im->writeImagePlane_2(1,path);
 
-// tmp
-      // if ( proc_zero() )
-      // 	 printf("\nCalling normOfDifference\n");
-      
 // depending on the test case, we should compare in the interior, or only on the surface
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
