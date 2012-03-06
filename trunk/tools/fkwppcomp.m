@@ -11,17 +11,19 @@
 %     difference is output together with the vector L2 and max norms of the fk time series.
 %
 %  USAGE:
-%     [e2norm, emaxnorm, u2norm, umaxnorm]=fkwppcomp( fkbase, wppfile, plotit, loh3, sigma, strike )
+%     [e2norm, emaxnorm, u2norm, umaxnorm]=fkwppcomp( fkbase, wppfile, plotit, tshift, loh3, sigma, strike )
 %
 %  ARGUMENTS:
 %     Input:
 %          fkbase:  base name for sac files. The actual files must be named fkbase.[rtz]. NOT used when loh3=1
 %          wppfile: file name of wpp output file
 %          plotit:  Plot the three components of the fk solution as well as the error (fk-wpp)
+%          tshift:  Optional argument:
+%                    shift fk time series by this amount (default value tshift=0)
 %          loh3:    Optional argument:
 %                     0: (default), read output from fk. 1: read output from loh3exact(0.1)
-%          sigma:   Optional argument: spread in Gaussian time function sigma=1/freq, freq is WPP frequency parameter
-%                     default value: 0.1
+%          sigma:   Optional argument: only used for LOH3: spread in Gaussian time function sigma=1/freq, 
+%                     freq is WPP frequency parameter; default value: sigma=0.1
 %          strike:  Optional argument:
 %                   strike angle [degrees] for the reciever location. Default: 53.1301
 %     Output:
@@ -30,23 +32,28 @@
 %          u2norm:    Vector L2-norm of fk time series
 %          umaxnorm:  Vector max-norm of fk time series
 %
-function [e2norm, emaxnorm, u2norm, umaxnorm]=fkwppcomp( fkbase, wppfile, plotit, loh3, sigma, strike )
+function [e2norm, emaxnorm, u2norm, umaxnorm]=fkwppcomp( fkbase, wppfile, plotit, tshift, loh3, sigma, strike )
 
-if nargin < 6 % standard location of the reciever for the LOH1-3 test cases
+if nargin < 7 % standard location of the reciever for the LOH1-3 test cases
   strike = 53.1301;
 end
 
-if nargin < 5
+if nargin < 6
   sigma=0.1;
 end
 
-if nargin < 4
+if nargin < 5
   loh3 = 0;
+end
+
+if nargin < 4
+  tshift = 0;
 end
 
 if loh3==0
 % read fk files
   [tfk, radfk, tranfk, vertfk] = rtzfilter( fkbase, 0.01, 0 );
+  tfk = tfk - tshift;
 else
   [tfk, radfk, tranfk, vertfk] = loh3exact( sigma ); % sigma=0.1: change accordingly
 end
