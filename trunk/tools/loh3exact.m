@@ -35,7 +35,7 @@ ve=dt*conv(vert1,filter);
 ve=ve(1:nt);
 ra=ra(1:nt);
 tr=tr(1:nt);
-T=0.1;ts=4*sig;tau=t-ts;
+T=0.1;ts=6*sig;tau=t-ts;
 factor=1-(2*T/sig^2)*tau-((T/sig)^2)*(1-(tau./sig).^2);
 filter=(1/sqrt(2*pi)/sig)*factor.*exp(-0.5*(tau./sig).^2);
 ra=dt*conv(ra,filter);
