@@ -1264,8 +1264,6 @@ void EW::normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U,
   }
   
 
-//   for (int j=m_jStartInt[g]; j<=m_jEndInt[g]; j++)
-//     for (int i=m_iStartInt[g]; i<=m_iEndInt[g]; i++)
   for (int j=jmin; j<=jmax; j++)
     for (int i=imin; i<=imax; i++)
     {

@@ -413,7 +413,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
       if ( proc_zero() )
 // output time, Linf-err, Linf-sol-err
-	fprintf(lf, "%e %15.7e %15.7e\n", t, errInf, solInf);
+	fprintf(lf, "%e %15.7e %15.7e %15.7e\n", t, errInf, errL2, solInf);
     }
 
     time_measure[6] = MPI_Wtime();	  	
