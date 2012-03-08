@@ -37,9 +37,11 @@ ifeq ($(UNAME),Linux)
   CC = mpiicc
   CXX = mpiicpc
   linklibs = -llapack -lblas -lifcore
-
 # for Bjorn's tux box
   ifeq ($(findstring tux,$(HOSTNAME)),tux)
+     FC = gfortran
+     CC = mpicc
+     CXX = mpicxx
     linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
   endif
 endif
@@ -49,13 +51,13 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o 
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o solve-backward.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o 
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o

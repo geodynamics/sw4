@@ -55,7 +55,10 @@ int getNumberOfSteps() const;
 
 void setupRun( );
 void preprocessSources( vector<Source*> & a_GlobalSources );
+
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11] );
+
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 
 void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int grid0, 
@@ -136,6 +139,7 @@ void evalCorrector(vector<Sarray> & a_Up, vector<Sarray> & a_Lu, vector<Sarray> 
 void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um );
 void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
 			 vector<Sarray*> & a_AlphaVEm, vector<Sarray*> & a_AlphaVE, vector<Sarray*> & a_AlphaVEp);
+void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up ); 
 
 void bndryInteriorDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, 
 			      double lowZ[3], double interiorZ[3], double highZ[3] );

@@ -4,7 +4,9 @@
 
 #include <vector>
 #include <string>
+
 class EW;
+class Sarray;
 
 using namespace std;
 
@@ -43,9 +45,11 @@ double arrival_time( double lod );
 
 TimeSeries* copy( EW* a_ew, string filename );
 
-double misfit( TimeSeries& observed );
+double misfit( TimeSeries& observed, TimeSeries* diff );
 
 void interpolate( TimeSeries& intpfrom );
+
+   void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h );
 
 // for simplicity, make the grid point location public
 int m_i0;

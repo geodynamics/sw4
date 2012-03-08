@@ -331,35 +331,7 @@ void Source::correct_Z_level( )
 }
 
 //-----------------------------------------------------------------------
-void Source::getsourcewgh7( double ai, double wgh[7] )
-{
-   // Moments k=0,1,2,3,4,5 exact, two cont. derivatives wrt. position
-   double p6 = ai*ai*ai*ai*ai*ai*(407.0/960-7.0/24*ai*ai + 0.05*ai*ai*ai*ai );
-   wgh[0] =  -1.0/60*ai + 1.0/16*ai*ai + 1.0/48*ai*ai*ai - 47.0/192*ai*ai*ai*ai - 1.0/240*ai*ai*ai*ai*ai +   p6;
-   wgh[1] =   3.0/20*ai - 5.0/12*ai*ai -  1.0/6*ai*ai*ai + 145.0/96*ai*ai*ai*ai +  1.0/60*ai*ai*ai*ai*ai - 6*p6;
-   wgh[2] =    -0.75*ai +77.0/48*ai*ai +13.0/48*ai*ai*ai -737.0/192*ai*ai*ai*ai -  1.0/48*ai*ai*ai*ai*ai +15*p6;
-   wgh[3] =  1             - 2.5*ai*ai                   + 247.0/48*ai*ai*ai*ai                          -20*p6;
-   wgh[4] =     0.75*ai +77.0/48*ai*ai -13.0/48*ai*ai*ai -737.0/192*ai*ai*ai*ai  + 1.0/48*ai*ai*ai*ai*ai +15*p6;
-   wgh[5] =  -3.0/20*ai - 5.0/12*ai*ai +  1.0/6*ai*ai*ai + 145.0/96*ai*ai*ai*ai -  1.0/60*ai*ai*ai*ai*ai - 6*p6;
-   wgh[6] =   1.0/60*ai + 1.0/16*ai*ai - 1.0/48*ai*ai*ai - 47.0/192*ai*ai*ai*ai + 1.0/240*ai*ai*ai*ai*ai +   p6;
-}
-
-//-----------------------------------------------------------------------
-void Source::getsourcedwgh7( double ai, double wgh[7] )
-{
-   // Moments k=0,1,2,3,4,5 exact, two cont. derivatives wrt. position
-   double p6 = ai*ai*ai*ai*ai*(-289.0/320+23.0/24*ai*ai - 0.25*ai*ai*ai*ai );
-   wgh[0] =   1.0/60 -1.0/16*ai*(1+ai)             + 77.0/192*ai*ai*ai + 1.0/48*ai*ai*ai*ai +   p6;
-   wgh[1] =  -3.0/20 + 11.0/24*ai +     0.5*ai*ai  - 247.0/96*ai*ai*ai - 1.0/12*ai*ai*ai*ai - 6*p6;
-   wgh[2] =    0.75 - 109.0/48*ai - 13.0/16*ai*ai +1283.0/192*ai*ai*ai + 5.0/48*ai*ai*ai*ai +15*p6;
-   wgh[3] =               3.75*ai                  - 433.0/48*ai*ai*ai                      -20*p6;
-   wgh[4] =   -0.75 - 109.0/48*ai + 13.0/16*ai*ai +1283.0/192*ai*ai*ai - 5.0/48*ai*ai*ai*ai +15*p6;
-   wgh[5] =   3.0/20 + 11.0/24*ai -     0.5*ai*ai  - 247.0/96*ai*ai*ai + 1.0/12*ai*ai*ai*ai - 6*p6;
-   wgh[6] =  -1.0/60 -1.0/16*ai*(1-ai)             + 77.0/192*ai*ai*ai - 1.0/48*ai*ai*ai*ai +   p6;
-}
-
-//-----------------------------------------------------------------------
-void Source::getsourcewgh( double ai, double wgh[6] )
+void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6] )
 {
    // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
    double p5 = ai*ai*ai*ai*ai*(5.0/3-7.0/24*ai -17/12.0*ai*ai+1.125*ai*ai*ai-0.25*ai*ai*ai*ai);
@@ -369,10 +341,20 @@ void Source::getsourcewgh( double ai, double wgh[6] )
    wgh[3] = 1.0/6*( 4*ai+4*ai*ai-ai*ai*ai+49*ai*ai*ai*ai)-10*p5;
    wgh[4] = 1.0/24*(-2*ai-ai*ai+2*ai*ai*ai)-4.125*ai*ai*ai*ai+5*p5;
    wgh[5] = 5.0/6*ai*ai*ai*ai - p5;
+   // Derivatives of wgh wrt. ai:
+   p5 = 5*ai*ai*ai*ai*(5.0/3-7.0/24*ai -17/12.0*ai*ai+1.125*ai*ai*ai-0.25*ai*ai*ai*ai) +
+      ai*ai*ai*ai*ai*(-7.0/24 -17/6.0*ai+3*1.125*ai*ai-ai*ai*ai); 
+   dwghda[0] = 1.0/24*(2-2*ai-6*ai*ai-19*4*ai*ai*ai) + p5;
+   dwghda[1] = 1.0/6*(-4+8*ai+3*ai*ai)+ 16*ai*ai*ai - 5*p5;
+   dwghda[2] = -2.5*ai-97.0/3*ai*ai*ai + 10*p5;
+   dwghda[3] = 1.0/6*(4+8*ai-3*ai*ai+49*4*ai*ai*ai) - 10*p5;
+   dwghda[4] = 1.0/24*(-2-2*ai+6*ai*ai)-4.125*4*ai*ai*ai + 5*p5;
+   dwghda[5] = 20.0/6*ai*ai*ai - p5;
+      
 }
 
 //-----------------------------------------------------------------------
-void Source::getsourcedwgh( double ai, double wgh[6] )
+void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6] )
 {
    // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
    double p5 = ai*ai*ai*ai*(-25.0/12-0.75*ai + 59.0/12*ai*ai - 4*ai*ai*ai + ai*ai*ai*ai);
@@ -382,113 +364,17 @@ void Source::getsourcedwgh( double ai, double wgh[6] )
    wgh[3] = 2.0/3*(-1-2*ai)+0.5*ai*ai-23.0/3*ai*ai*ai-10*p5;
    wgh[4] = (1+ai)/12-0.25*ai*ai+4*ai*ai*ai + 5*p5;
    wgh[5] = -5.0/6*ai*ai*ai - p5;
+   // Derivatives of wgh wrt. ai:
+   p5 = 4*ai*ai*ai*(-25.0/12-0.75*ai + 59.0/12*ai*ai - 4*ai*ai*ai + ai*ai*ai*ai) +
+      ai*ai*ai*ai*(-0.75 + 59.0/6*ai - 12*ai*ai + 4*ai*ai*ai);
+   dwghda[0] = 1.0/12*(1+6*ai+24*ai*ai) + p5;
+   dwghda[1] = 2.0/3*(-2) - ai-3*3.5*ai*ai -5*p5;
+   dwghda[2] = 2.5 + 22.0*ai*ai + 10*p5;
+   dwghda[3] = 2.0/3*(-2)+ai-23.0*ai*ai-10*p5;
+   dwghda[4] = 1.0/12-0.5*ai+12*ai*ai + 5*p5;
+   dwghda[5] = -5.0/2*ai*ai - p5;
 }
 
-//-----------------------------------------------------------------------
-void Source::set_grid_point_sources4b( EW *a_EW, vector<GridPointSource*>& point_sources )
-{
-   int i,j,k,g;
-   a_EW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
-   double q, r, s;
-   double h = a_EW->mGridSize[g];
-   double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
-
-// Cartesian case
-   q = mX0/h+1;
-   r = mY0/h+1;
-   s = (mZ0-a_EW->m_zmin[g])/h+1;
-
-   int Ni = a_EW->m_global_nx[g];
-   int Nj = a_EW->m_global_ny[g];
-   int Nz = a_EW->m_global_nz[g];
-
-   int ic = static_cast<int>(round(q));
-   int jc = static_cast<int>(round(r));
-   int kc = static_cast<int>(round(s));
-
-// Bias stencil away from boundary, no source at ghost/padding points
-   if( ic <= 3 )    ic = 4;
-   if( ic >= Ni-2 ) ic = Ni-3;
-   if( jc <= 3 )    jc = 4;
-   if( jc >= Nj-2 ) jc = Nj-3;
-   if( kc <= 3 )    kc = 4;
-   if( kc >= Nz-2 ) kc = Nz-3;
-
-   double ai=q-ic, bi=r-jc, ci=s-kc;
-// Delta distribution
-   double wghi[7], wghj[7], wghk[7];
-   getsourcewgh7( ai, wghi );
-   getsourcewgh7( bi, wghj );
-   getsourcewgh7( ci, wghk );
-
-// Delta' distribution
-   double dwghi[7], dwghj[7], dwghk[7];
-   getsourcedwgh7( ai, dwghi );
-   getsourcedwgh7( bi, dwghj );
-   getsourcedwgh7( ci, dwghk );
-
-// Boundary correction
-   for( int k=kc-3; k <= kc+3 ; k++ )
-   {
-      if( ( 1 <= k) && ( k <= 4 ) )
-      {
-         wghk[k-kc+3]  /= normwgh[k-1];
-         dwghk[k-kc+3] /= normwgh[k-1];
-      }
-      if( ( Nz-3 <= k) && ( k <= Nz ) )
-      {
-         wghk[k-kc+3]  /= normwgh[Nz-k];
-         dwghk[k-kc+3] /= normwgh[Nz-k];
-      }
-   }
-   if( !mIsMomentSource )
-   {
-      for( int k=kc-3 ; k <= kc+3 ; k++ )
-	 for( int j=jc-3 ; j <= jc+3 ; j++ )
-	    for( int i=ic-3 ; i <= ic+3 ; i++ )
-	    {
-	       double wF = wghi[i-ic+3]*wghj[j-jc+3]*wghk[k-kc+3];
-	       if( (wF*mAmp != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-		   && a_EW->point_in_proc(i,j,g) )
-	       {
-		  wF /= h*h*h;
-		  {
-		     GridPointSource* sourcePtr = new GridPointSource(
-								      mAmp*wF, mFreq, mT0,
-								      i,j,k,g,
-								      mForces[0], mForces[1], mForces[2],
-								      mTimeDependence, mNcyc );
-		     point_sources.push_back(sourcePtr);
-		  }
-	       }
-	    }
-   }
-   else
-   {
-      for( int k=kc-3 ; k <= kc+3 ; k++ )
-	 for( int j=jc-3 ; j <= jc+3 ; j++ )
-	    for( int i=ic-3 ; i <= ic+3 ; i++ )
-	    {
-	       double wFx=0, wFy=0, wFz=0;
-	       if( a_EW->point_in_proc(i,j,g) ) 
-	       {
-		  wFx += dwghi[i-ic+3]* wghj[j-jc+3]* wghk[k-kc+3];
-		  wFy +=  wghi[i-ic+3]*dwghj[j-jc+3]* wghk[k-kc+3];
-		  wFz +=  wghi[i-ic+3]* wghj[j-jc+3]*dwghk[k-kc+3];
-		  double jaci = 1.0/(h*h*h*h);
-		  double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-		  double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-		  double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
-		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
-		  {
-		     GridPointSource* sourcePtr = new GridPointSource( mAmp, mFreq, mT0, i, j, k, g, 
-								       fx, fy, fz, mTimeDependence, mNcyc );
-		     point_sources.push_back(sourcePtr);
-		  }
-	       }
-	    }
-   }
-}
 
 //-----------------------------------------------------------------------
 void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources )
@@ -522,16 +408,16 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 
    double ai=q-ic, bi=r-jc, ci=s-kc;
 // Delta distribution
-   double wghi[6], wghj[6], wghk[6];
-   getsourcewgh( ai, wghi );
-   getsourcewgh( bi, wghj );
-   getsourcewgh( ci, wghk );
+   double wghi[6], wghj[6], wghk[6], wghix[6], wghjy[6], wghkz[6];
+   getsourcewgh( ai, wghi, wghix );
+   getsourcewgh( bi, wghj, wghjy );
+   getsourcewgh( ci, wghk, wghkz );
 
 // Delta' distribution
-   double dwghi[6], dwghj[6], dwghk[6];
-   getsourcedwgh( ai, dwghi );
-   getsourcedwgh( bi, dwghj );
-   getsourcedwgh( ci, dwghk );
+   double dwghi[6], dwghj[6], dwghk[6], dwghix[6], dwghjy[6], dwghkz[6];
+   getsourcedwgh( ai, dwghi, dwghix );
+   getsourcedwgh( bi, dwghj, dwghjy );
+   getsourcedwgh( ci, dwghk, dwghkz );
 
 // Boundary correction
    for( int k=0 ; k <= 5 ; k++ )
@@ -560,11 +446,15 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       {
          wghk[k]  /= normwgh[k+kc-3];
          dwghk[k] /= normwgh[k+kc-3];
+	 wghkz[k] /= normwgh[k+kc-3];
+	 dwghkz[k] /= normwgh[k+kc-3];
       }
       if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
       {
          wghk[k]  /= normwgh[Nz-k-kc+2];
          dwghk[k] /= normwgh[Nz-k-kc+2];
+         wghkz[k] /= normwgh[Nz-k-kc+2];
+         dwghkz[k] /= normwgh[Nz-k-kc+2];
       }
    }
    if( !mIsMomentSource )
@@ -595,20 +485,60 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 for( int j=jc-2 ; j <= jc+3 ; j++ )
 	    for( int i=ic-2 ; i <= ic+3 ; i++ )
 	    {
-	       double wFx=0, wFy=0, wFz=0;
+	       double wFx=0, wFy=0, wFz=0, dsdp[27];
 	       if( a_EW->point_in_proc(i,j,g) ) 
 	       {
 		  wFx += dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 		  wFy +=  wghi[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2];
 		  wFz +=  wghi[i-ic+2]* wghj[j-jc+2]*dwghk[k-kc+2];
+                  double hi=1.0/h;
+                  double wFxdx0 = dwghix[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]*hi;
+                  double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]* wghk[k-kc+2]*hi;
+                  double wFxdz0 = dwghi[i-ic+2]* wghj[j-jc+2]* wghkz[k-kc+2]*hi;
+                  double wFydx0 = wghix[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2]*hi;
+                  double wFydy0 = wghi[i-ic+2]* dwghjy[j-jc+2]* wghk[k-kc+2]*hi;
+                  double wFydz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi;
+                  double wFzdx0 = wghix[i-ic+2]* wghj[j-jc+2]* dwghk[k-kc+2]*hi;
+                  double wFzdy0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi;
+                  double wFzdz0 = wghi[i-ic+2]*  wghj[j-jc+2]*  dwghkz[k-kc+2]*hi;
 		  double jaci = 1.0/(h*h*h*h);
 		  double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
 		  double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
 		  double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+
+		  // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+                  dsdp[0] = -(mForces[0]*wFxdx0+mForces[1]*wFydx0 + mForces[2]*wFzdx0)*jaci;
+                  dsdp[1] = -(mForces[1]*wFxdx0+mForces[3]*wFydx0 + mForces[4]*wFzdx0)*jaci;
+                  dsdp[2] = -(mForces[2]*wFxdx0+mForces[4]*wFydx0 + mForces[5]*wFzdx0)*jaci;
+                  dsdp[3] = -(mForces[0]*wFxdy0+mForces[1]*wFydy0 + mForces[2]*wFzdy0)*jaci;
+                  dsdp[4] = -(mForces[1]*wFxdy0+mForces[3]*wFydy0 + mForces[4]*wFzdy0)*jaci;
+                  dsdp[5] = -(mForces[2]*wFxdy0+mForces[4]*wFydy0 + mForces[5]*wFzdy0)*jaci;
+                  dsdp[6] = -(mForces[0]*wFxdz0+mForces[1]*wFydz0 + mForces[2]*wFzdz0)*jaci;
+                  dsdp[7] = -(mForces[1]*wFxdz0+mForces[3]*wFydz0 + mForces[4]*wFzdz0)*jaci;
+                  dsdp[8] = -(mForces[2]*wFxdz0+mForces[4]*wFydz0 + mForces[5]*wFzdz0)*jaci;
+                  dsdp[9]  = -wFx*jaci;
+                  dsdp[10] = 0;
+		  dsdp[11] = 0;
+                  dsdp[12]  =-wFy*jaci;
+                  dsdp[13] = -wFx*jaci;
+		  dsdp[14] =  0;
+		  dsdp[15] = -wFz*jaci;
+		  dsdp[16] = 0;
+		  dsdp[17] = -wFx*jaci;
+		  dsdp[18] = 0;
+		  dsdp[19] = -wFy*jaci;
+		  dsdp[20] =  0;
+		  dsdp[21] = 0;
+		  dsdp[22] = -wFz*jaci;
+		  dsdp[23] = -wFz*jaci;
+		  dsdp[24] = 0;
+		  dsdp[25] = 0;
+		  dsdp[26] = wFz*jaci;
+
 		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
 		  {
 		     GridPointSource* sourcePtr = new GridPointSource( mAmp, mFreq, mT0, i, j, k, g, 
-								       fx, fy, fz, mTimeDependence, mNcyc );
+								       fx, fy, fz, mTimeDependence, mNcyc, dsdp );
 		     point_sources.push_back(sourcePtr);
 		  }
 	       }
@@ -1614,4 +1544,21 @@ void Source::distribute_source_xyplane_mom( EW *a_EW, vector<GridPointSource*>& 
 	    }
 	 }
       }
+}
+
+//-----------------------------------------------------------------------
+void Source::perturb( double h, int comp )
+{
+   if( comp == 0 )
+      mX0 += h;
+   else if( comp == 1 )
+      mY0 += h;
+   else if( comp == 2 )
+      mZ0 += h;
+   else if( comp >= 3 && comp <= 8 )
+      mForces[comp-3] += h;
+   else if( comp == 9 )
+      mT0 += h;
+   else
+      mFreq += h;
 }

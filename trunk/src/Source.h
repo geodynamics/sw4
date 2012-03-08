@@ -76,7 +76,7 @@ public:
   void adjust_t0( double dt0 );
 
   void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources );
-  void set_grid_point_sources4b( EW *a_EW, std::vector<GridPointSource*>& point_sources );
+   //  void set_grid_point_sources4b( EW *a_EW, std::vector<GridPointSource*>& point_sources );
   void set_grid_point_sources( EW *a_EW, std::vector<GridPointSource*>& point_sources );
 
   void distribute_source_xyplane( EW *a_EW, std::vector<GridPointSource*>& point_sources, 
@@ -88,14 +88,15 @@ public:
   void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
   void getForces( double& fx, double& fy, double& fz ) const;
   void getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const;
-   void printPointer(){std::cout << "Source pointer = "  << mPar << std::endl;}
+  void printPointer(){std::cout << "Source pointer = "  << mPar << std::endl;}
+  void perturb( double h, int comp );
 
  private:
   Source();
   void getsourcewgh7(double ai, double wgh[7] );
   void getsourcedwgh7(double ai, double wgh[7] );
-  void getsourcewgh(double ai, double wgh[6] );
-  void getsourcedwgh(double ai, double wgh[6] );
+  void getsourcewgh(double ai, double wgh[6], double dwghda[6] );
+  void getsourcedwgh(double ai, double wgh[6], double dwghda[6] );
   double dist_d_dx_dirac(double x);
   double distributedhat(double x);
   double hat(double x);
@@ -118,7 +119,7 @@ public:
   double* mPar;
   int mNcyc;
   bool mIgnore;
-
+  
   timeDep mTimeDependence;
 //  EW * mEW;
 };

@@ -925,88 +925,125 @@ void TimeSeries::interpolate( TimeSeries& intpfrom )
 }
 
 //-----------------------------------------------------------------------
-double TimeSeries::misfit( TimeSeries& observed )
+double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 {
-   if( !m_myPoint )
-      return 0;
-
-// Interpolate data to this object
-   int order = 4;
    double misfit = 0;
-   double mf[3];
-   double dtfr  = observed.m_dt;
-   int nfrsteps = observed.mLastTimeStep+1;
-
-   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+   if( m_myPoint )
    {
-      double t  = i*m_dt;
-      double ir = t/dtfr;
-      int ie   = static_cast<int>(ir);
-      int mmin = ie-order/2+1;
-      int mmax = ie+order/2;
-      if( mmax-mmin+1 > nfrsteps )
-      {
-         cout << "Error in TimeSeries::misfit : Can not interpolate, " <<
-	    "because the grid is too coarse " << endl;
-	 return 0.0;
-      }
-      mf[0] = mf[1] = mf[2] = 0;
+// Interpolate data to this object
+      int order = 4;
+      double mf[3];
+      double dtfr  = observed.m_dt;
+      int nfrsteps = observed.mLastTimeStep+1;
 
-// If too far past the end of observed, set to zero.
-      if( ie > nfrsteps + order/2 )
+      bool compute_difference = (diff!=NULL);
+      double** misfitsource;
+      if( compute_difference )
       {
-         mf[0] = mf[1] = mf[2] = 0;
+	 if( diff->mLastTimeStep < mLastTimeStep )
+	    diff->allocateRecordingArrays(mLastTimeStep,m_t0,m_dt);
+	 misfitsource = diff->getRecordingArray();
       }
-      else
-      {
-         int off;
-	 if( mmin < 1 )
-	 {
-	    off = 1-mmin;
-	    mmin = mmin + off;
-	    mmax = mmax + off;
-	 }
-	 if( mmax > nfrsteps )
-	 {
-	    off = mmax - nfrsteps;
-	    mmin = mmin - off;
-	    mmax = mmax - off;
-	 }
-	 for( int m = mmin ; m <= mmax ; m++ )
-	 {
-	    double cof=1;
-	    for( int k = mmin ; k <= mmax ; k++ )
-	       if( k != m )
-		  cof *= (ir-k)/(m-k);
 
-	    if( observed.m_usgsFormat )
-	    {
-	       mf[0] += cof*observed.mRecordedSol[0][m];
-	       mf[1] += cof*observed.mRecordedSol[1][m];
-	       mf[2] += cof*observed.mRecordedSol[2][m];
-	    }
-            else
-	    {
-	       mf[0] += cof*observed.mRecordedFloats[0][m];
-	       mf[1] += cof*observed.mRecordedFloats[1][m];
-	       mf[2] += cof*observed.mRecordedFloats[2][m];
-	    }
-	 }
-         if( m_usgsFormat )
+      // Weight to ramp down the end of misfit.
+      double wghv;
+      int p =20 ; // Number of points in ramp;
+      int istart = 1;
+      if( mLastTimeStep-p+1 > 1 )
+	 istart = mLastTimeStep-p+1;
+
+      for( int i= 0 ; i <= mLastTimeStep ; i++ )
+      {
+	 wghv = 1;
+	 if( i >= istart )
 	 {
-	    misfit += (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i]) + 
-	       (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i]) + 
-	       (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i]);
+	    double arg = (mLastTimeStep-i)/(p-1.0);
+	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+	 }
+
+	 double t  = i*m_dt;
+	 double ir = t/dtfr;
+	 int ie   = static_cast<int>(ir);
+	 int mmin = ie-order/2+1;
+	 int mmax = ie+order/2;
+	 if( mmax-mmin+1 > nfrsteps )
+	 {
+	    cout << "Error in TimeSeries::misfit : Can not interpolate, " <<
+	       "because the grid is too coarse " << endl;
+	    return 0.0;
+	 }
+	 mf[0] = mf[1] = mf[2] = 0;
+
+	 // If too far past the end of observed, set to zero.
+	 if( ie > nfrsteps + order/2 )
+	 {
+	    mf[0] = mf[1] = mf[2] = 0;
 	 }
 	 else
 	 {
-	    misfit += (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
-	       (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
-	       (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]);
+	    int off;
+	    if( mmin < 1 )
+	    {
+	       off = 1-mmin;
+	       mmin = mmin + off;
+	       mmax = mmax + off;
+	    }
+	    if( mmax > nfrsteps )
+	    {
+	       off = mmax - nfrsteps;
+	       mmin = mmin - off;
+	       mmax = mmax - off;
+	    }
+	    for( int m = mmin ; m <= mmax ; m++ )
+	    {
+	       double cof=1;
+	       for( int k = mmin ; k <= mmax ; k++ )
+		  if( k != m )
+		     cof *= (ir-k)/(m-k);
+
+	       if( observed.m_usgsFormat )
+	       {
+		  mf[0] += cof*observed.mRecordedSol[0][m];
+		  mf[1] += cof*observed.mRecordedSol[1][m];
+		  mf[2] += cof*observed.mRecordedSol[2][m];
+	       }
+	       else
+	       {
+		  mf[0] += cof*observed.mRecordedFloats[0][m];
+		  mf[1] += cof*observed.mRecordedFloats[1][m];
+		  mf[2] += cof*observed.mRecordedFloats[2][m];
+	       }
+	    }
+	    if( m_usgsFormat )
+	    {
+	       misfit += wghv*((mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i]) + 
+			       (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i]) + 
+			       (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i]));
+	       if( compute_difference )
+	       {
+		  misfitsource[0][i] = wghv*(mf[0]-mRecordedSol[0][i]);
+		  misfitsource[1][i] = wghv*(mf[1]-mRecordedSol[1][i]);
+		  misfitsource[2][i] = wghv*(mf[2]-mRecordedSol[2][i]);
+	       }
+	    }
+	    else
+	    {
+	       misfit += wghv*((mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
+			       (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
+			       (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]));
+	       if( compute_difference )
+	       {
+		  misfitsource[0][i] = wghv*(mf[0]-mRecordedFloats[0][i]);
+		  misfitsource[1][i] = wghv*(mf[1]-mRecordedFloats[1][i]);
+		  misfitsource[2][i] = wghv*(mf[2]-mRecordedFloats[2][i]);
+	       }
+	    }
 	 }
       }
    }
-   return misfit;
+   else
+      misfit = 0;
+   return 0.5*misfit;
 }
 
 //-----------------------------------------------------------------------
@@ -1096,4 +1133,22 @@ double TimeSeries::arrival_time( double lod )
 
    delete[] maxes;
    return n*m_dt;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h )
+{
+   if( m_myPoint )
+   {
+      double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
+      double ih3 = 1.0/(h[m_grid0]*h[m_grid0]*h[m_grid0]);
+      double iwgh = 1.0;
+      if( 1 <= m_k0 && m_k0 <= 4  )
+	 iwgh = 1.0/normwgh[m_k0-1];
+      ih3 *= iwgh;
+
+      f[m_grid0](1,m_i0,m_j0,m_k0) += mRecordedSol[0][n]*ih3;
+      f[m_grid0](2,m_i0,m_j0,m_k0) += mRecordedSol[1][n]*ih3;
+      f[m_grid0](3,m_i0,m_j0,m_k0) += mRecordedSol[2][n]*ih3;
+   }
 }

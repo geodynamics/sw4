@@ -129,82 +129,117 @@ main(int argc, char **argv)
      }
 
 // get the simulation object ready for time-stepping
-     simulation.setupRun( GlobalSources );
-
-    if (!simulation.isInitialized())
-    { 
-      if (myRank == 0)
-      {
-	cout << "Error: simulation object not ready for time stepping" << endl;
-      }
-      status=1;
-    }
-    else
-    {
-      if (myRank == 0)
-      {
-	cout << "Running sbp4opt on " <<  nProcs << " processors..." << endl
-	     << "Writing output to directory: " 
-	     << simulation.getOutputPath() << endl;
-      }
-
+     simulation.setupRun( );
+     simulation.preprocessSources( GlobalSources );
+     
+     if (!simulation.isInitialized())
+     { 
+	if (myRank == 0)
+	{
+	   cout << "Error: simulation object not ready for time stepping" << endl;
+	}
+	status=1;
+     }
+     else
+     {
+	if (myRank == 0)
+	{
+	   cout << "Running sbp4opt on " <<  nProcs << " processors..." << endl
+		<< "Writing output to directory: " 
+		<< simulation.getOutputPath() << endl;
+	}
+	
 // Source initial guess 
-      if( GlobalSources.size() != 1 )
-      {
-	 cout << "Source optmization only implemented for a single source" << endl;
-      }
-      else
-      {
-         double xv[11];
-	 guess_source( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, xv, myRank );
-         if( myRank == 0 )
-	 {
-	    cout << "Initial source guess : \n";
-	    cout << "   x0 = " << xv[0] << " y0 = " << xv[1] << " z0 = " << xv[2] <<endl;
-	    cout << "  mxx = " << xv[3] << " mxy= " << xv[4] << " mxz= " << xv[5] << endl;
-	    cout << "  myy = " << xv[6] << " myz= " << xv[7] << " mzz= " << xv[8] << endl;
-	    cout << "   t0 = " << xv[9] << " freq = " << xv[10] << endl;
-	 }
-      }
+	if( GlobalSources.size() != 1 )
+	{
+	   cout << "Source optmization only implemented for a single source" << endl;
+	}
+	else
+	{
+	   // temporary disable generated guess, will use input source instead.
+           int guess=0;
+	   double xv[11];
+           if( guess == 1 )
+	   {
+	      guess_source( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, xv, myRank );
+	      if( myRank == 0 )
+	      {
+		 cout << "Initial source guess : \n";
+		 cout << "   x0 = " << xv[0] << " y0 = " << xv[1] << " z0 = " << xv[2] <<endl;
+		 cout << "  mxx = " << xv[3] << " mxy= " << xv[4] << " mxz= " << xv[5] << endl;
+		 cout << "  myy = " << xv[6] << " myz= " << xv[7] << " mzz= " << xv[8] << endl;
+		 cout << "   t0 = " << xv[9] << " freq = " << xv[10] << endl;
+	      }
+	   }
+	}
 
 // Run forward problem with guessed source
-      simulation.setupRun( GlobalSources );
-      simulation.solve( GlobalSources, GlobalTimeSeries );
+	simulation.setupRun( );
+        simulation.preprocessSources( GlobalSources );
+	simulation.solve( GlobalSources, GlobalTimeSeries );
 
-// Compute misfit
-      double mf = 0;
-      for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-	 mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m] );
-      double mftmp=mf;
-      MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-      mf *= 0.5;
-      if( myRank == 0 )
-	 cout << "Misfit = " << mf << endl;
+// Compute misfit, 'diffs' will hold the source for the adjoint problem
+        vector<TimeSeries*> diffs;
+	for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	{
+	   TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
+	   diffs.push_back(elem);
+	}
+	
+	double mf = 0;
+	for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	   mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+
+	double mftmp=mf;
+	MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	if( myRank == 0 )
+	   cout << "Misfit = " << mf << endl;
 
 // For gradient, compute backwards problem:
+        double gradient[11];
+        simulation.solve_backward( GlobalSources, diffs, gradient );
+        if( myRank == 0 )
+	{
+	   cout << "Gradient, by adjoint equation = " << endl;
+	   for( int i = 0 ; i < 11 ; i++ )
+	      cout << "   " << gradient[i] << endl;
+	}
 
-// save all time series
+// Validation, compute numerical gradient:
+        double h = 0.001;
+	GlobalSources[0]->perturb(h,0);
+        simulation.preprocessSources( GlobalSources );
+	simulation.solve( GlobalSources, GlobalTimeSeries );
+	double mfp = 0;
+	for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	   mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL );
+	mftmp=mfp;
+	MPI_Allreduce(&mftmp,&mfp,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	if( myRank == 0 )
+           cout << "Numerical derivative = " << (mfp-mf)/h << endl;
 
-      for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
-      {
-	GlobalTimeSeries[ts]->writeFile();
-      }
+// Save all time series
 
-      if( myRank == 0 )
-      {
-	cout << "============================================================" << endl
-	     << " sbp4f ( Summation by parts 4th order forward wave propagator) finished! " << endl
-	     << "============================================================" << endl;
-      }
+	for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+	{
+	   GlobalTimeSeries[ts]->writeFile();
+	}
 
-      status = 0;
-    }
+	if( myRank == 0 )
+	{
+	   cout << "============================================================" << endl
+		<< " sbp4f ( Summation by parts 4th order forward wave propagator) finished! " << endl
+		<< "============================================================" << endl;
+	}
+
+	status = 0;
+     }
   }
   
   if( status == 1 )
-    cout  << "============================================================" << endl
-	  << "The execution on proc " << myRank << " was unsuccessful." << endl
-	  << "============================================================" << endl;
+     cout  << "============================================================" << endl
+	   << "The execution on proc " << myRank << " was unsuccessful." << endl
+	   << "============================================================" << endl;
 
 // Stop MPI
   MPI_Finalize();
@@ -347,37 +382,43 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       Source* onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
       vector<Source*> src(1);
       src[0] = onesrc;
-      simulation.setupRun( src );
+      simulation.setupRun( );
+      simulation.preprocessSources( src );
       simulation.solve( src, tsxx );
       delete onesrc;
 
       onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
       src[0] = onesrc;
-      //      simulation.setupRun( src );
+
+      simulation.preprocessSources( src );
       simulation.solve( src, tsxy );
       delete onesrc;
 
       onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
       src[0] = onesrc;
-      //      simulation.setupRun( src );
+
+      simulation.preprocessSources( src );
       simulation.solve( src, tsxz );
       delete onesrc;
 
       onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
       src[0] = onesrc;
-      //      simulation.setupRun( src );
+
+      simulation.preprocessSources( src );
       simulation.solve( src, tsyy );
       delete onesrc;
 
       onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
       src[0] = onesrc;
-      //      simulation.setupRun( src );
+
+      simulation.preprocessSources( src );
       simulation.solve( src, tsyz );
       delete onesrc;
 
       onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
       src[0] = onesrc;
-      //      simulation.setupRun( src );
+
+      simulation.preprocessSources( src );
       simulation.solve( src, tszz );
       delete onesrc;
 
