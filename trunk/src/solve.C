@@ -292,9 +292,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       fileName << "LambErr.txt";
     else
       fileName << "PointSourceErr.txt";
-
     lf = fopen(fileName.str().c_str(),"w");
-
   }
     
       

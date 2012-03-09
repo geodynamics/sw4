@@ -1136,7 +1136,8 @@ double TimeSeries::arrival_time( double lod )
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h )
+void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
+				 std::vector<double> & h, double dt )
 {
    if( m_myPoint )
    {
@@ -1146,9 +1147,10 @@ void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f, std::vector<doub
       if( 1 <= m_k0 && m_k0 <= 4  )
 	 iwgh = 1.0/normwgh[m_k0-1];
       ih3 *= iwgh;
-
-      f[m_grid0](1,m_i0,m_j0,m_k0) += mRecordedSol[0][n]*ih3;
-      f[m_grid0](2,m_i0,m_j0,m_k0) += mRecordedSol[1][n]*ih3;
-      f[m_grid0](3,m_i0,m_j0,m_k0) += mRecordedSol[2][n]*ih3;
+      // Compensate for  dt^4/12 factor in forward corrector step.
+      ih3 *= 12/(dt*dt);
+      f[m_grid0](1,m_i0,m_j0,m_k0) -= mRecordedSol[0][n]*ih3;
+      f[m_grid0](2,m_i0,m_j0,m_k0) -= mRecordedSol[1][n]*ih3;
+      f[m_grid0](3,m_i0,m_j0,m_k0) -= mRecordedSol[2][n]*ih3;
    }
 }

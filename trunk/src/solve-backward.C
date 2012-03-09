@@ -89,7 +89,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 
     // Corrector
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
-	 a_TimeSeries[s]->use_as_forcing( currentTimeStep, F, mGridSize );
+	 a_TimeSeries[s]->use_as_forcing( currentTimeStep, F, mGridSize, mDt );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, Lk );

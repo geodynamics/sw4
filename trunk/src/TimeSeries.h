@@ -49,7 +49,7 @@ double misfit( TimeSeries& observed, TimeSeries* diff );
 
 void interpolate( TimeSeries& intpfrom );
 
-   void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h );
+   void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, double dt );
 
 // for simplicity, make the grid point location public
 int m_i0;

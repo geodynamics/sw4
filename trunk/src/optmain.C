@@ -124,7 +124,11 @@ main(int argc, char **argv)
 //  and start time into GlobalTimeSeries.
      for( int m = 0; m < GlobalObservations.size(); m++ )
      {
-	TimeSeries *elem = GlobalObservations[m]->copy( &simulation, "tscopy" );
+        char str[10];
+        snprintf(str,10,"%i",m);
+	string newname = "tscopy";
+        newname.append(str);
+	TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname );
 	GlobalTimeSeries.push_back(elem);
      }
 
@@ -196,17 +200,17 @@ main(int argc, char **argv)
 	   cout << "Misfit = " << mf << endl;
 
 // For gradient, compute backwards problem:
-        double gradient[11];
-        simulation.solve_backward( GlobalSources, diffs, gradient );
-        if( myRank == 0 )
-	{
-	   cout << "Gradient, by adjoint equation = " << endl;
-	   for( int i = 0 ; i < 11 ; i++ )
-	      cout << "   " << gradient[i] << endl;
-	}
+//        double gradient[11];
+//        simulation.solve_backward( GlobalSources, diffs, gradient );
+//        if( myRank == 0 )
+//	{
+//	   cout << "Gradient, by adjoint equation = " << endl;
+//	   for( int i = 0 ; i < 11 ; i++ )
+//	      cout << "   " << gradient[i] << endl;
+//	}
 
 // Validation, compute numerical gradient:
-        double h = 0.001;
+        double h = 0.0;
 	GlobalSources[0]->perturb(h,0);
         simulation.preprocessSources( GlobalSources );
 	simulation.solve( GlobalSources, GlobalTimeSeries );
@@ -216,8 +220,11 @@ main(int argc, char **argv)
 	mftmp=mfp;
 	MPI_Allreduce(&mftmp,&mfp,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 	if( myRank == 0 )
+	{
+           cout << "Misfit of perturbed problem = " << mfp << endl;
+           cout << "Difference = " << mfp-mf << endl;
            cout << "Numerical derivative = " << (mfp-mf)/h << endl;
-
+	}
 // Save all time series
 
 	for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
