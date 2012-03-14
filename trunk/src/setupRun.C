@@ -31,7 +31,7 @@ void EW::setupRun( )
 
 // m_testing == true is one of the pointers to testing modes is assigned
 // add other pointers to the list of testing modes as they get implemented
-  m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test ); 
+  m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test || m_rayleigh_wave_test ); 
 
 // tmp
   if (mVerbose && proc_zero() )
@@ -80,8 +80,8 @@ void EW::setupRun( )
   assign_local_bcs(); 
   initializePaddingCells();
 
-// for all sides with dirichlet, free surface or supergrid boundary conditions, save the extent of
-// the multi-D boundary window, and allocate arrays to hold the boundary forcing
+// for all sides with dirichlet, free surface, supergrid, or periodic boundary conditions,
+// save the extent of the multi-D boundary window, and allocate arrays to hold the boundary forcing
   int wind[6], npts;
 // with 2 ghost points, we need twice as many elements in the m_BCForcing arrays!!!
 
@@ -92,7 +92,8 @@ void EW::setupRun( )
     
     for(int side=0; side<6 ; side++ )
     {
-      if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
+      if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || 
+	  m_bcType[g][side] == bSuperGrid  || m_bcType[g][side] == bPeriodic)
       {
 
 // modify the window for stress free bc to only hold one plane
@@ -130,7 +131,8 @@ void EW::setupRun( )
 	    wind[5] = wind[4];
 	  }
 	}
-	else // for Dirichlet or super grid conditions, we apply the forcing directly on the ghost points
+	else // for Dirichlet, super grid, and periodic conditions, we
+	     // apply the forcing directly on the ghost points
 	{
 	  side_plane( g, side, wind, m_ghost_points );
 	}
@@ -142,7 +144,12 @@ void EW::setupRun( )
 	for (int qq=0; qq<6; qq++)
 	  m_BndryWindow[g][qq+side*6]=wind[qq];
 	
-	m_NumberOfBCPoints[g][side] = npts;
+// periodic conditions don't need any bc forcing array
+	if (m_bcType[g][side] != bPeriodic)
+	  m_NumberOfBCPoints[g][side] = npts;
+	else
+	  m_NumberOfBCPoints[g][side] = 0;
+	
       } // end if
 
 // tmp
@@ -600,7 +607,7 @@ void EW::set_materials()
 // extrapolate material properties to mesh refinement boundaries (e.g. for doing the LOH cases more accurately)
     if (proc_zero() && mVerbose>=3)
     {
-      printf("WPP2::setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i\n", mMaterialExtrapolate, mNumberOfCartesianGrids);
+      printf("setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i\n", mMaterialExtrapolate, mNumberOfCartesianGrids);
     }
     
     if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1)
@@ -613,7 +620,7 @@ void EW::set_materials()
 	  kFrom = m_kStart[g]+mMaterialExtrapolate;
 
 	  if (proc_zero() && mVerbose>=3)
-	    printf("WPP2::setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
+	    printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
 
 	  for (int k = m_kStart[g]; k < kFrom; ++k)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -642,7 +649,7 @@ void EW::set_materials()
 	  kFrom = m_kEnd[g]-mMaterialExtrapolate;
 
 	  if (proc_zero() && mVerbose>=3)
-	    printf("WPP2::setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
+	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
 
 	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -770,6 +777,15 @@ void EW::set_materials()
 	mRho[g].set_value( m_lamb_test->m_rho );
 	mMu[g].set_value( m_lamb_test->m_mu );
 	mLambda[g].set_value( m_lamb_test->m_lambda );
+     }
+  }
+  else if ( m_rayleigh_wave_test )
+  {
+     for (g=0; g<mNumberOfCartesianGrids; g++)
+     {
+	mRho[g].set_value( m_rayleigh_wave_test->m_rho );
+	mMu[g].set_value( m_rayleigh_wave_test->m_mu );
+	mLambda[g].set_value( m_rayleigh_wave_test->m_lambda );
      }
   }
   check_materials( );

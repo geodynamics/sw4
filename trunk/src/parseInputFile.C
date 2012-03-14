@@ -166,7 +166,11 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
        processFileIO(buffer);
      }
-     
+// read testrayleigh here to setup periodic boundary conditions in the MPI communicator
+     else if (startswith("testrayleigh", buffer))
+     {
+       m_doubly_periodic = true;
+     }
      // else if (startswith("refinement", buffer))
      // {
      //   processRefinement(buffer);
@@ -202,7 +206,9 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   inputFile.clear();
   inputFile.seekg(0, ios::beg); // reset file pointer to the beginning of the input file
 
-// we only allocate solution arrays for the Cartesian grids and call a placeholder grid generator for the curvilinear grid
+// At this point we only allocate solution arrays for the Cartesian grids 
+// Need to read the topography information before we can decide on sizes for the
+// curvilinear grid.
   allocateCartesianSolverArrays(m_global_zmax); 
 
   if (m_use_attenuation)
@@ -326,6 +332,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processTestPointSource(buffer);
        else if (startswith("testlamb", buffer))
          processTestLamb(buffer);
+       else if (startswith("testrayleigh", buffer))
+         processTestRayleigh(buffer);
        else if (startswith("source", buffer))
 	 processSource(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
@@ -406,8 +414,6 @@ void EW::processGrid(char* buffer)
   int nx=0, ny=0, nz=0;
   double h = 0.0;
 
-  double spherex=0, spherey=0, spherez=0, spherer=1.0;
-  
   //-----------------------------------------------------------------
   // default geographical coordinates will be the 
   // nevada test site (see:  en.wikipedia.org/wiki/Nevada_Test_Site
@@ -417,15 +423,6 @@ void EW::processGrid(char* buffer)
 // default azimuth
   mGeoAz=0;
   
-  //------------------------------------------------------------------
-  // mesh refinement info
-  //------------------------------------------------------------------
-  int refineLevel = 0;
-  // used to help with load balance issues
-  int minBoxLength = 4;
-  int maxBoxLength = 50;
-  float psratio = 3.0;
-
   char* token = strtok(buffer, " \t");
 
   REQUIRE2(strcmp("grid", token) == 0, "ERROR: not a grid...: " << token);
@@ -742,6 +739,10 @@ void EW::processGrid(char* buffer)
 //      //     cout << "nx,ny,nz " << nxprime << " " << nyprime << " " << nzprime << endl;     
 //   } // end if m_geodynbc_found
 //   else
+
+  double xprime, yprime, zprime;
+  
+  if (!m_doubly_periodic)
   {
      if (nx > 0 && h == 0.0)
      {
@@ -755,16 +756,6 @@ void EW::processGrid(char* buffer)
 	nzprime = computeEndGridPoint(z, h);
 	nyprime = computeEndGridPoint(y, h);
      }
-     else if (nz > 0 && h == 0.0)
-     {
-    // set the number of grid points from z direction and nz
-	h = z/(nz-1);
-	if (m_myRank == 0)
-	   cout << "* Setting h to " << h << " from  z/(nz-1) (z=" << z << ", nz=" << nz << ")" << endl;
-	nzprime = nz;
-	nxprime = computeEndGridPoint(x, h);
-	nyprime = computeEndGridPoint(y, h);
-     }
      else if (ny > 0 && h == 0.0)
      {
     // set hte number of grid points from y direction and ny
@@ -774,6 +765,16 @@ void EW::processGrid(char* buffer)
 	nyprime = ny;
 	nxprime = computeEndGridPoint(x, h);
 	nzprime = computeEndGridPoint(z, h);
+     }
+     else if (nz > 0 && h == 0.0)
+     {
+    // set the number of grid points from z direction and nz
+	h = z/(nz-1);
+	if (m_myRank == 0)
+	   cout << "* Setting h to " << h << " from  z/(nz-1) (z=" << z << ", nz=" << nz << ")" << endl;
+	nzprime = nz;
+	nxprime = computeEndGridPoint(x, h);
+	nyprime = computeEndGridPoint(y, h);
      }
      else
      {
@@ -802,33 +803,73 @@ void EW::processGrid(char* buffer)
 	else
 	   CHECK_INPUT(0, gridSetupErr);
      }
+   
+    if (proc_zero() && mVerbose >=3)
+      printf("**** Setting up the grid for a non-periodic problem\n");
+    
+    if (nxprime != nx && m_myRank == 0)
+      cout << "* Setting nx to " << nxprime << " to be consistent with h=" << h << endl;
+    if (nyprime != ny && m_myRank == 0)
+      cout << "* Setting ny to " << nyprime << " to be consistent with h=" << h << endl;
+    if (nzprime != nz && m_myRank == 0)
+      cout << "* Setting nz to " << nzprime << " to be consistent with h=" << h << endl;
+
+    // -------------------------------------------------------------
+    // Now we adjust the geometry bounds based on the actual 
+    // number of grid points used in each dimension.
+    // -------------------------------------------------------------
+    xprime = (nxprime-1)*h;
+    zprime = (nzprime-1)*h;
+    yprime = (nyprime-1)*h;
+  
+    double eps = 1.e-9*sqrt(SQR(xprime)+SQR(yprime)+SQR(zprime));
+  
+    if (fabs(xprime-x) > eps && m_myRank == 0)
+      cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
+    if (fabs(zprime-z) > eps && m_myRank == 0)
+      cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
+    if (fabs(yprime-y) > eps && m_myRank == 0)
+      cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
+  }
+  else // special treatment of the doubly periodic case
+  {
+    if (proc_zero() && mVerbose >=3)
+      printf("**** Setting up the grid for a PERIODIC problem\n");
+
+// for the doubly periodic case, we only support the following style:
+// grid x=... y=... z=... nx=...    
+    CHECK_INPUT(nx > 0 && x>0. && y>0. && z>0., 
+		"Period case: Must specify grid using x, y, z, nx");
+
+    // we set the number grid points in the x direction
+    // so we'll compute the grid spacing from that.
+    h = x / nx;
+    if (m_myRank == 0)
+      cout << "* Setting h to " << h << " from  x/nx (x=" << x << ", nx=" << nx << ")" << endl;
+      
+    nxprime = nx;
+    nyprime = (int) (y/h + 0.5);
+    nzprime = computeEndGridPoint(z, h); // non-periodic in z
+
+    // -------------------------------------------------------------
+    // Now we adjust the geometry bounds based on the actual 
+    // number of grid points used in each dimension.
+    // -------------------------------------------------------------
+    xprime = nxprime*h;
+    yprime = nyprime*h;
+    zprime = (nzprime-1)*h; // non-periodic in z
+  
+    double eps = 1.e-9*sqrt(SQR(xprime)+SQR(yprime)+SQR(zprime));
+  
+    if (fabs(xprime-x) > eps && m_myRank == 0)
+      cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
+    if (fabs(yprime-y) > eps && m_myRank == 0)
+      cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
+    if (fabs(zprime-z) > eps && m_myRank == 0)
+      cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
   }
   
-  
-  if (nxprime != nx && m_myRank == 0)
-    cout << "* Setting nx to " << nxprime << " to be consistent with h=" << h << endl;
-  if (nyprime != ny && m_myRank == 0)
-    cout << "* Setting ny to " << nyprime << " to be consistent with h=" << h << endl;
-  if (nzprime != nz && m_myRank == 0)
-    cout << "* Setting nz to " << nzprime << " to be consistent with h=" << h << endl;
 
-  // -------------------------------------------------------------
-  // Now we adjust the geometry bounds based on the actual 
-  // number of grid points used in each dimension.
-  // -------------------------------------------------------------
-  double xprime, yprime, zprime;
-  xprime = (nxprime-1)*h;
-  zprime = (nzprime-1)*h;
-  yprime = (nyprime-1)*h;
-  
-  double eps = 1.e-9*sqrt(SQR(xprime)+SQR(yprime)+SQR(zprime));
-  
-  if (fabs(xprime-x) > eps && m_myRank == 0)
-    cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
-  if (fabs(zprime-z) > eps && m_myRank == 0)
-    cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
-  if (fabs(yprime-y) > eps && m_myRank == 0)
-    cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
 
   // if( m_geodynbc_found )
   // {
@@ -1403,6 +1444,10 @@ void EW::processTwilight(char* buffer)
   forcing = new ForcingTwilight( omega, c, phase, momega, mphase, amprho, ampmu, amplambda );
 
   set_twilight_forcing( forcing );
+
+  boundaryConditionType bct[6]={bDirichlet, bDirichlet, bDirichlet, bDirichlet, bStressFree, bDirichlet};
+  set_global_bcs(bct);
+  
 }
 
 // void FileInput::processDeveloper(char* buffer)
@@ -1532,46 +1577,117 @@ void EW::processTwilight(char* buffer)
 // }
 
 //-----------------------------------------------------------------------
- void EW::processTestPointSource(char* buffer)
- {
-    char* token = strtok(buffer, " \t");
-    CHECK_INPUT(strcmp("testpointsource", token) == 0, "ERROR: not a testpointsource line...: " << token);
-    token = strtok(NULL, " \t");
-    double cs = 1.0, rho=1.0, cp=sqrt(3.0);
-    while (token != NULL)
-    {
-       if (startswith("#", token) || startswith(" ", buffer))
-          break;
+void EW::processTestPointSource(char* buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("testpointsource", token) == 0, "ERROR: not a testpointsource line...: " << token);
+  token = strtok(NULL, " \t");
+  double cs = 1.0, rho=1.0, cp=sqrt(3.0);
+  while (token != NULL)
+  {
+    if (startswith("#", token) || startswith(" ", buffer))
+      break;
 
-       if (startswith("cp=", token))
-       {
-          token += 3; 
-          cp = atof(token);
-       }
-       else if (startswith("cs=", token))
-       {
-          token += 3; 
-          cs = atof(token);
-       }
-       else if (startswith("rho=", token))
-       {
-          token += 4; 
-          rho = atof(token);
-       }
-       else if (startswith("diractest=", token))
-       {
-          token += 10; 
-          if( strcmp(token,"1")==0 || strcmp(token,"true")==0 )
-	     m_moment_test = true;
-       }
-       else
-       {
- 	 badOption("testpointsource", token);
-       }
-       token = strtok(NULL, " \t");
+    if (startswith("cp=", token))
+    {
+      token += 3; 
+      cp = atof(token);
     }
-    m_point_source_test = new TestPointSource( rho, cs, cp );
- }
+    else if (startswith("cs=", token))
+    {
+      token += 3; 
+      cs = atof(token);
+    }
+    else if (startswith("rho=", token))
+    {
+      token += 4; 
+      rho = atof(token);
+    }
+    else if (startswith("diractest=", token))
+    {
+      token += 10; 
+      if( strcmp(token,"1")==0 || strcmp(token,"true")==0 )
+	m_moment_test = true;
+    }
+    else
+    {
+      badOption("testpointsource", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+  m_point_source_test = new TestPointSource( rho, cs, cp );
+
+  boundaryConditionType bct[6]={bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid};
+  set_global_bcs(bct);
+}
+
+//-----------------------------------------------------------------------
+void EW::processTestRayleigh(char* buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("testrayleigh", token) == 0, "ERROR: not a testrayleigh line...: " << token);
+  token = strtok(NULL, " \t");
+  double cs = 1.0, rho=1.0, cp=sqrt(3.0), alpha = 0.0;
+  int nxwl = 1;
+  
+  while (token != NULL)
+  {
+    if (startswith("#", token) || startswith(" ", buffer))
+      break;
+
+    if (startswith("cp=", token))
+    {
+      token += 3; 
+      cp = atof(token);
+    }
+    else if (startswith("cs=", token))
+    {
+      token += 3; 
+      cs = atof(token);
+    }
+    else if (startswith("rho=", token))
+    {
+      token += 4; 
+      rho = atof(token);
+    }
+//                       1234567890
+    else if (startswith("alpha=", token))
+    {
+      token += 6; 
+      alpha = atof(token);
+      CHECK_INPUT(alpha >= 0.0 && alpha <= 45.0 , 
+		  "Parameter alpha must be in the range 0 to 45, not: " << alpha);
+    }
+//                       1234567
+    else if (startswith("nxwl=", token))
+    {
+      token += 5; 
+      nxwl = atoi(token);
+      CHECK_INPUT(nxwl >= 1, 
+		  "Parameter nxwl must be >= 1, not: " << nxwl);
+    }
+    else
+    {
+      badOption("testrayleigh", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+// convert to radians
+  double alpha_rad = alpha*M_PI/180.;
+  
+  m_rayleigh_wave_test = new TestRayleighWave( rho, cs, cp, cos(alpha_rad), sin(alpha_rad));
+
+  boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
+  set_global_bcs(bct);
+  
+  if (proc_zero())
+  {
+    printf("TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, kx=%e, ky=%e\n", 
+	   m_rayleigh_wave_test->m_rho, m_rayleigh_wave_test->m_cp, m_rayleigh_wave_test->m_cs, 
+	   m_rayleigh_wave_test->m_cr, m_rayleigh_wave_test->m_kx, m_rayleigh_wave_test->m_ky);
+  }
+  
+}
 
 //-----------------------------------------------------------------------
 void EW::processTestLamb(char* buffer)
@@ -1632,6 +1748,9 @@ void EW::processTestLamb(char* buffer)
    // Source* source = new Source( mSimulation, f0, freq, t0, x0, y0, z0, fx, fy, fz,
    // 				tdep, "lambsource", 0 );
    m_lamb_test = new TestLamb( rho, cp );
+
+   boundaryConditionType bct[6]={bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid, bStressFree, bSuperGrid};
+   set_global_bcs(bct);
 }
 
 //-----------------------------------------------------------------------
@@ -1783,9 +1902,10 @@ void EW::processBoundaryConditions(char *buffer)
   CHECK_INPUT(strcmp("boundary_conditions", token) == 0, "ERROR: not a boundary condition line...: " << token);
   token = strtok(NULL, " \t");
   
-  boundaryConditionType bct[6]={bDirichlet, bDirichlet, bDirichlet, bDirichlet, bStressFree, bDirichlet};
+  boundaryConditionType bct[6]={bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid, bStressFree, bSuperGrid};
   
-  int type, side;
+  int type;
+  int side;
   while (token != NULL)
   {
     if (startswith("#", token) || startswith(" ", buffer))
@@ -1843,6 +1963,9 @@ void EW::processBoundaryConditions(char *buffer)
       break;
     case 2:
       bct[side] = bSuperGrid;
+      break;
+    case 3:
+      bct[side] = bPeriodic;
       break;
     default:
       if (m_myRank==0)
@@ -3128,18 +3251,29 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // this info is obtained by the contructor
 //   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
    proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
+
    int is_periodic[2]={0,0};
+
+// some test cases, such as testrayleigh uses periodic boundary conditions in the x and y directions
+   if (m_doubly_periodic)
+   {
+     is_periodic[0]=1;
+     is_periodic[1]=1;
+   }
+   
    MPI_Cart_create( MPI_COMM_WORLD, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
    int my_proc_coords[2];
    MPI_Cart_get( m_cartesian_communicator, 2, proc_max, is_periodic, my_proc_coords );
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
    MPI_Cart_shift( m_cartesian_communicator, 1, 1, m_neighbor+2, m_neighbor+3 );
-   //   if( proc_zero() )
-   //   {
-   //      cout << " Grid distributed on " << m_nProcs << " processors " << endl;
-   //      cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
-   //      cout << " Processor array     " << proc_max[0] << " x " << proc_max[1] << endl;
-   //   }
+
+   if( proc_zero() && mVerbose >= 3)
+   {
+     cout << " Grid distributed on " << m_nProcs << " processors " << endl;
+     cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
+     cout << " Processor array     " << proc_max[0] << " x " << proc_max[1] << endl;
+   }
+
    int ifirst, ilast, jfirst, jlast;
    decomp1d( nx_finest_w_ghost, my_proc_coords[0], proc_max[0], ifirst, ilast );
    decomp1d( ny_finest_w_ghost, my_proc_coords[1], proc_max[1], jfirst, jlast );
@@ -3158,12 +3292,6 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    if( m_topography_exists )
       mNumberOfGrids++;
 
-   // mU.resize(mNumberOfGrids);
-   // mUm.resize(mNumberOfGrids);
-   // mUp.resize(mNumberOfGrids);
-   // mUacc.resize(mNumberOfGrids);
-//   mLu.resize(mNumberOfGrids);
-//   mF.resize(mNumberOfGrids);
    mMu.resize(mNumberOfGrids);
    mLambda.resize(mNumberOfGrids);
    mRho.resize(mNumberOfGrids);
@@ -3179,10 +3307,6 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
    mMuVE.resize(mNumberOfGrids);
    mLambdaVE.resize(mNumberOfGrids);
-// // Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
-//    mAlphaVE.resize(mNumberOfGrids);
-//    mAlphaVEm.resize(mNumberOfGrids);
-//    mAlphaVEp.resize(mNumberOfGrids);
    if (m_use_attenuation)
    {
      mOmegaVE.resize(m_number_mechanisms); // global relaxation frequencies (1 per mechanism)
@@ -3192,9 +3316,6 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
      {
        mMuVE[g]     = new Sarray[m_number_mechanisms];
        mLambdaVE[g] = new Sarray[m_number_mechanisms];
-       // mAlphaVE[g]  = new Sarray[m_number_mechanisms];
-       // mAlphaVEp[g] = new Sarray[m_number_mechanisms];
-       // mAlphaVEm[g] = new Sarray[m_number_mechanisms];
      }
    }
    
@@ -3224,7 +3345,6 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    for( int g= 0 ;g < mNumberOfGrids ; g++ )
       m_bcType[g] = new boundaryConditionType[6];
 
-   // m_BCForcing.resize(mNumberOfGrids);
    m_NumberOfBCPoints.resize(mNumberOfGrids);
    m_BndryWindow.resize(mNumberOfGrids);
 
@@ -3233,12 +3353,10 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    for( int g= 0 ;g < mNumberOfGrids ; g++ )
    {
      m_NumberOfBCPoints[g] = new int[6];
-     // m_BCForcing[g] = new double *[6];
      m_BndryWindow[g] = new int [36]; // 6 by 6 array in Fortran
      for (int side=0; side < 6; side++)
      {
        m_NumberOfBCPoints[g][side]=0;
-       // m_BCForcing[g][side]=NULL;
        for (int qq=0; qq<6; qq+=2) // 0, 2, 4
 	 m_BndryWindow[g][qq + side*6]= 999;
        for (int qq=1; qq<6; qq+=2) // 1, 3, 5
@@ -3294,8 +3412,17 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    }
 
 // extent of computational grid (without ghost points)
-   m_global_xmax = mGridSize[nCartGrids-1]*(m_global_nx[nCartGrids-1] - 1);
-   m_global_ymax = mGridSize[nCartGrids-1]*(m_global_ny[nCartGrids-1] - 1);
+   if (!m_doubly_periodic)
+   {
+     m_global_xmax = mGridSize[nCartGrids-1]*(m_global_nx[nCartGrids-1] - 1);
+     m_global_ymax = mGridSize[nCartGrids-1]*(m_global_ny[nCartGrids-1] - 1);
+   }
+   else
+   {
+     m_global_xmax = mGridSize[nCartGrids-1]*(m_global_nx[nCartGrids-1]);
+     m_global_ymax = mGridSize[nCartGrids-1]*(m_global_ny[nCartGrids-1]);
+   }
+   
    m_global_zmax = m_zmin[0] + (nz[0]-1)*mGridSize[0];
    if (mVerbose >= 1 && proc_zero())
      cout << "Extent of the computational domain xmax=" << m_global_xmax << " ymax=" << m_global_ymax << " zmax=" << 

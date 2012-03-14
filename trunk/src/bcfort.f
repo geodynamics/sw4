@@ -25,8 +25,9 @@ c the boundary window 'wind' is now an input argument
 c loop over all sides of the 3-D domain
       do s=1,6
 *** dirichlet condition, bccnd=1
+*** supergrid condition, bccnd=2
 c now assigning the forcing arrays outside of this routine!
-        if( bccnd(s).eq.1 )then
+        if( bccnd(s).eq.1 .or. bccnd(s).eq.2)then
 
             qq=1
             if (s.eq.1) then
@@ -103,13 +104,77 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
               enddo
             endif
 
-        elseif( bccnd(s).eq.0 )then
+          elseif( bccnd(s).eq.3 )then
+*** Periodic condition, bccnd=3
+            if (s.eq.1) then
+              do k=wind(5,s),wind(6,s)
+                do j=wind(3,s),wind(4,s)
+                  do i=wind(1,s),wind(2,s)
+                    u(1,i,j,k) = u(1,i+nx,j,k)
+                    u(2,i,j,k) = u(2,i+nx,j,k)
+                    u(3,i,j,k) = u(3,i+nx,j,k)
+                  enddo
+                enddo
+              enddo
+            elseif (s.eq.2) then
+              do k=wind(5,s),wind(6,s)
+                do j=wind(3,s),wind(4,s)
+                  do i=wind(1,s),wind(2,s)
+                    u(1,i,j,k) = u(1,i-nx,j,k)
+                    u(2,i,j,k) = u(2,i-nx,j,k)
+                    u(3,i,j,k) = u(3,i-nx,j,k)
+                  enddo
+                enddo
+              enddo
+            elseif (s.eq.3) then
+              do k=wind(5,s),wind(6,s)
+                do j=wind(3,s),wind(4,s)
+                  do i=wind(1,s),wind(2,s)
+                    u(1,i,j,k) = u(1,i,j+ny,k)
+                    u(2,i,j,k) = u(2,i,j+ny,k)
+                    u(3,i,j,k) = u(3,i,j+ny,k)
+                  enddo
+                enddo
+              enddo
+            elseif (s.eq.4) then
+              do k=wind(5,s),wind(6,s)
+                do j=wind(3,s),wind(4,s)
+                  do i=wind(1,s),wind(2,s)
+                    u(1,i,j,k) = u(1,i,j-ny,k)
+                    u(2,i,j,k) = u(2,i,j-ny,k)
+                    u(3,i,j,k) = u(3,i,j-ny,k)
+                  enddo
+                enddo
+              enddo
+            elseif (s.eq.5) then
+              do k=wind(5,s),wind(6,s)
+                do j=wind(3,s),wind(4,s)
+                  do i=wind(1,s),wind(2,s)
+                    u(1,i,j,k) = u(1,i,j,k+nz)
+                    u(2,i,j,k) = u(2,i,j,k+nz)
+                    u(3,i,j,k) = u(3,i,j,k+nz)
+                  enddo
+                enddo
+              enddo
+            elseif (s.eq.6) then
+              do k=wind(5,s),wind(6,s)
+                do j=wind(3,s),wind(4,s)
+                  do i=wind(1,s),wind(2,s)
+                    u(1,i,j,k) = u(1,i,j,k-nz)
+                    u(2,i,j,k) = u(2,i,j,k-nz)
+                    u(3,i,j,k) = u(3,i,j,k-nz)
+                  enddo
+                enddo
+              enddo
+            endif
+          elseif( bccnd(s).eq.0 )then
 *** Free surface condition, bccnd=0
-          if( s.ne.5 .and. s.ne.6 )then
-            write(*,*) 
-     *      'ERROR: Free surface condition not implemented for side ', s
-            stop
-          endif
+            if( s.ne.5 .and. s.ne.6 )then
+              write(*,*) 
+     *             'ERROR: Free surface condition ',
+     +             'not implemented for side ', s
+              stop
+            endif
 
 c moved the assignment of bforce5/6 into its own routine
 

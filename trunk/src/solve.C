@@ -280,7 +280,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   FILE *lf=NULL;
 // open file for saving norm of error
-  if ( (m_lamb_test || m_point_source_test) && proc_zero() )
+  if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test ) && proc_zero() )
   {
     string path=getOutputPath();
 
@@ -290,14 +290,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     
     if (m_lamb_test)
       fileName << "LambErr.txt";
-    else
+    else if (m_point_source_test)
       fileName << "PointSourceErr.txt";
+    else
+      fileName << "RayleighErr.txt";
     lf = fopen(fileName.str().c_str(),"w");
   }
     
-      
-  
-// // Begin time stepping loop
+// Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
@@ -399,14 +399,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
 // evaluate error for some test cases
-    if (m_lamb_test || m_point_source_test)
+    if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
     {
       double errInf=0, errL2=0, solInf=0, solL2=0;
       exactSol( t, Up, AlphaVE, a_Sources ); // store exact solution in Up
 
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
-      else if (m_point_source_test)
+      else if (m_point_source_test || m_rayleigh_wave_test)
 	normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
 
       if ( proc_zero() )
@@ -440,7 +440,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //      delete[] ind;
 
 // close error file for Lamb's test
-  if ((m_lamb_test || m_point_source_test) && proc_zero() )
+  if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test) && proc_zero() )
   {
     fclose(lf);
     printf("**** Closed file with solution errors for testing\n");
@@ -454,12 +454,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      print_execution_times( time_sum );
 
 // tmp
-   // if ( proc_zero() )
-   //   printf("\nCalling exactSol\n");
+   if ( proc_zero() )
+     printf("\nAbout to call exactSol\n");
 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVE, a_Sources ) )
    {
+// tmp
+     if ( proc_zero() )
+       printf("\nAfter calling exactSol\n");
+
      double errInf, errL2, solInf, solL2;
 
 // tmp: output exact sol for Lamb's prolem 
@@ -548,11 +552,13 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
     nz = m_global_nz[g];
     
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
-    bcType_ptr = m_bcType[g]; // is this right???
+    bcType_ptr = m_bcType[g]; // get a pointer to the boundary conditions for grid 'g'
     
-    wind_ptr = m_BndryWindow[g];
+    wind_ptr = m_BndryWindow[g];// get a pointer to the boundary window array for grid 'g'
     
 // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
+// for periodic bc, a_BCForcing[g][s] == NULL, so you better not access the
+// theses arrays in that case
     bforce_side0_ptr = a_BCForcing[g][0]; // low-i bndry forcing array pointer
     bforce_side1_ptr = a_BCForcing[g][1]; // high-i bndry forcing array pointer
     bforce_side2_ptr = a_BCForcing[g][2]; // low-j bndry forcing array pointer
@@ -567,8 +573,6 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
 			      bforce_side2_ptr, bforce_side3_ptr, 
 			      bforce_side4_ptr, bforce_side5_ptr, 
 			      &om, &ph, &cv );
-    
-
       
   }
 }

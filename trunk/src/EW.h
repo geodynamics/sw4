@@ -76,6 +76,7 @@ void processFileIO(char* buffer);
 void processImage(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
+void processTestRayleigh(char* buffer);
 void processTestLamb(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
@@ -457,6 +458,7 @@ double mTstart;
 double mDt;
 //EtreeFile * mEtreeFile;
 
+bool m_doubly_periodic;
 MPI_Comm m_cartesian_communicator;
 
 bool mbcsSet;

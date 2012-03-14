@@ -45,6 +45,11 @@ void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, d
 				double *l2 );
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					  double*, double*, double* );
+//  subroutine rayleighfort( ifirst, ilast, jfirst, jlast, kfirst, klast,
+// +     u, t, lambda, mu, rho, cr, omega, h, zmin )
+void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int*jlast, int*kfirst, int*klast, 
+					  double*u, double*t, double*lambda, double*mu, 
+					  double*rho, double*cr, double*omega, double *h, double *zmin);
 void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			      double*, double*, double*, double*, double*, double* );
 }
@@ -104,6 +109,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   // mRestartFromCycle(0),
   // mRestartDumpInterval(0),
 
+  m_doubly_periodic(false),
   mbcsSet(false),
 
   m_analytical_topo(false),
@@ -116,7 +122,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
   m_sg_gp_transition(25),
-  m_supergrid_damping_coefficient(0.1),
+  m_supergrid_damping_coefficient(0.04),
 
   m_minJacobian(0.),
   m_maxJacobian(0.),
@@ -461,6 +467,8 @@ string EW::bc_name( const boundaryConditionType bc ) const
       retval = "dirichlet";
    else if( bc == bSuperGrid )
       retval = "supergrid";
+   else if( bc == bPeriodic )
+      retval = "periodic";
    else if( bc == bInterpolate )
       retval = "interpolation";
    else if( bc == bProcessor )
@@ -1073,8 +1081,8 @@ void EW::finalizeIO()
 void EW::default_bcs( )
 {
    for( int side=0 ; side < 6 ; side++ )
-      mbcGlobalType[side] = bDirichlet;
-   mbcGlobalType[4] = bStressFree;
+      mbcGlobalType[side] = bSuperGrid;
+   mbcGlobalType[4] = bStressFree; // low-z is normally free surface
 }
 
 //---------------------------------------------------------------------------
@@ -1377,7 +1385,26 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   }
   else if( m_rayleigh_wave_test )
   {
-     // NYI
+    double cr, lambda, mu, rho;
+    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
+    {
+      u_ptr    = a_U[g].c_ptr();
+      ifirst = m_iStart[g];
+      ilast  = m_iEnd[g];
+      jfirst = m_jStart[g];
+      jlast  = m_jEnd[g];
+      kfirst = m_kStart[g];
+      klast  = m_kEnd[g];
+      h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+      zmin = m_zmin[g];
+      om = m_rayleigh_wave_test->m_omega;
+      cr = m_rayleigh_wave_test->m_cr;
+      rho = m_rayleigh_wave_test->m_rho;
+      lambda = m_rayleigh_wave_test->m_lambda;
+      mu = m_rayleigh_wave_test->m_mu;
+      F77_FUNC(rayleighfort,RAYLEIGHFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &h, &zmin );
+    }
   }
   else
 // homogeneous initial data is the default
@@ -1399,7 +1426,7 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
   
   if (m_twilight_forcing)
   {
-     for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
+     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // curvilinear case needs to be implemented
      {
 	u_ptr    = a_U[g].c_ptr();
 	ifirst = m_iStart[g];
@@ -1429,9 +1456,30 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
     get_exact_lamb( a_U, a_t, *sources[0] );
     retval = true;
   }
-  else if( m_rayleigh_wave_test ) // not yet implemented
+  else if( m_rayleigh_wave_test ) 
   {
-     retval = false;
+    double cr, lambda, mu, rho;
+    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
+    {
+      u_ptr    = a_U[g].c_ptr();
+      ifirst = m_iStart[g];
+      ilast  = m_iEnd[g];
+      jfirst = m_jStart[g];
+      jlast  = m_jEnd[g];
+      kfirst = m_kStart[g];
+      klast  = m_kEnd[g];
+      h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+      zmin = m_zmin[g];
+      om = m_rayleigh_wave_test->m_omega;
+      cr = m_rayleigh_wave_test->m_cr;
+      rho = m_rayleigh_wave_test->m_rho;
+      lambda = m_rayleigh_wave_test->m_lambda;
+      mu = m_rayleigh_wave_test->m_mu;
+      F77_FUNC(rayleighfort,RAYLEIGHFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &h, &zmin );
+    }
+    
+    retval = true;
   }
   else // In general, the exact solution is unknown (m_energy_test falls into this category)
   {
@@ -2604,7 +2652,8 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
   }
   else if( m_rayleigh_wave_test )
   {
-     // NYI
+     for( int g =0 ; g < mNumberOfGrids ; g++ )
+	a_F[g].set_to_zero();
   }
   else if( m_energy_test )
   {
@@ -2670,7 +2719,8 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
   }
   else if( m_rayleigh_wave_test )
   {
-     // NYI
+     for( int g =0 ; g < mNumberOfGrids ; g++ )
+	a_F[g].set_to_zero();
   }
   else if( m_energy_test )
   {

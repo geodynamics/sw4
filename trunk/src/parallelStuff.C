@@ -19,9 +19,11 @@ bool EW::proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] )
         int p2 = nproc/p1;
         if( p1 <= p1max && p2 <= p2max )
         {
-           int w1 = p1==1?0:1;
-           int w2 = p2==1?0:1;
-           double f = w2*(double)(ni)/p1 + w1*(double)(nj)/p2;
+           // int w1 = p1==1?0:1;
+           // int w2 = p2==1?0:1;
+           // double f = w2*(double)(ni)/p1 + w1*(double)(nj)/p2;
+// try to make each subdomain as square as possible
+	  double f = fabs((double)(ni)/p1 - (double)(nj)/p2);
            if( f < fmin || first )
            {
               fmin = f;
