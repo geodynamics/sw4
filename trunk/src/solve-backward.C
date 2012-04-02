@@ -70,7 +70,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    int beginCycle = 1;
 
    double time_measure[8];
-   double time_sum[7]={0,0,0,0,0,0,0};
+   double time_sum[8]={0,0,0,0,0,0,0,0};
    double time_start_solve = MPI_Wtime();
 
    // Backward time stepping loop
