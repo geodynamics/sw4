@@ -1144,7 +1144,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     if (mbcGlobalType[3] == bSuperGrid)
       kmax = min(m_kEndInt[g], m_global_nz[g] - m_sg_gp_thickness);
     else
-      kmax = m_jEndInt[g];
+      kmax = m_kEndInt[g];
 
 // tmp
 //     printf("proc=%i, iS= %i, iE=%i, jS=%i, jE=%i, kS=%i, kE=%i\n", m_myRank, 
