@@ -57,6 +57,31 @@ double VerySmoothBump_tt(double freq, double t, double* par )
   return tmp;
 }
 
+double VerySmoothBump_tom(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 5120*pow(t*freq,4)*(-20*pow(t*freq,5) + 81*pow(t*freq,4) -
+			       128*pow(t*freq,3) + 98*pow(t*freq,2) - 36*t*freq + 5 );
+  return tmp;
+}
+
+double VerySmoothBump_omom(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = t*t*( - 1024*90*pow(t*freq,8) + 5120*72*pow(t*freq,7) - 10240*56*pow(t*freq,6) + 10240*42*pow(t*freq,5) - 5120*30*pow(t*freq,4) + 1024*20*pow(t*freq,3) );
+  return tmp;
+}
+
 double VerySmoothBump_ttt(double freq, double t, double* par )
 {
   double tmp;
@@ -81,6 +106,47 @@ double VerySmoothBump_omtt(double freq, double t, double* par )
 +2*freq*( - 1024*90*pow(t*freq,8) + 5120*72*pow(t*freq,7) - 10240*56*pow(t*freq,6) + 10240*42*pow(t*freq,5) - 5120*30*pow(t*freq,4) + 1024*20*pow(t*freq,3) );
   return tmp;
 }
+
+double VerySmoothBump_tttt(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = pow(freq,4)*122880*
+	(-42*pow(t*freq,6)+126*pow(t*freq,5)-140*pow(t*freq,4)+70*pow(t*freq,3)-15*pow(t*freq,2)+t*freq);
+  return tmp;
+}
+
+double VerySmoothBump_tttom(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = freq*freq*61440*
+	(-120*pow(t*freq,7)+378*pow(t*freq,6)-448*pow(t*freq,5)+245*pow(t*freq,4)-60*pow(t*freq,3)+5*t*freq*t*freq);
+  return tmp;
+}
+
+double VerySmoothBump_ttomom(double freq, double t, double* par )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = freq*freq*t*t*122880*
+	(-42*pow(t*freq,6)+126*pow(t*freq,5)-140*pow(t*freq,4)+70*pow(t*freq,3)-15*pow(t*freq,2)+t*freq) +
+20480*freq*freq*freq*t*t*t*(-153*pow(t*freq,5)+540*pow(t*freq,4)-728*pow(t*freq,3)+462*pow(t*freq,2)-135*t*freq+14);
+  return tmp;
+}
+
 
 double RickerWavelet(double freq, double t, double* par )
 {
@@ -227,6 +293,24 @@ double Gaussian_tt(double freq, double t, double* par )
     return 0;
 }
 
+double Gaussian_tom(double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+     return freq*freq*t / sqrt(2*M_PI)*(-3 + 2*factor)*exp(-factor);
+  else
+    return 0;
+}
+
+double Gaussian_omom(double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+     return freq*t*t / sqrt(2*M_PI)*(-3 + 2*factor)*exp(-factor);
+  else
+    return 0;
+}
+
 double Gaussian_ttt(double freq, double t, double* par )
 {
   double factor=pow(t*freq,2) / 2;
@@ -241,6 +325,33 @@ double Gaussian_omtt(double freq, double t, double* par )
   double factor=pow(t*freq,2) / 2;
   if( -factor > par[0] )
      return freq*freq*(12*factor-3-4*factor*factor)/sqrt(2*M_PI)*exp(-factor);
+  else
+    return 0;
+}
+
+double Gaussian_tttt(double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+     return freq*freq*freq*freq*freq / sqrt(2*M_PI)*(3-12*factor + 4*factor*factor)*exp(-factor);
+  else
+    return 0;
+}
+
+double Gaussian_tttom(double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+     return freq*freq*freq*freq*t / sqrt(2*M_PI)*(15-20*factor + 4*factor*factor)*exp(-factor);
+  else
+    return 0;
+}
+
+double Gaussian_ttomom(double freq, double t, double* par )
+{
+  double factor=pow(t*freq,2) / 2;
+  if( -factor > par[0] )
+     return freq / sqrt(2*M_PI)*(-6+54*factor-48*factor*factor+8*factor*factor*factor)*exp(-factor);
   else
     return 0;
 }
@@ -1203,7 +1314,8 @@ GridPointSource::GridPointSource(double amplitude, double frequency, double t0,
 				 int N, int M, int L, int G,
 				 double Fx, double Fy, double Fz,
 				 timeDep tDep,
-				 int ncyc, double* jacobian ):
+				 int ncyc, double* jacobian,
+				 double* dddp, double* hess1, double* hess2, double* hess3 ):
   mAmp(amplitude),
   mFreq(frequency),
   mT0(t0),
@@ -1217,9 +1329,25 @@ GridPointSource::GridPointSource(double amplitude, double frequency, double t0,
   mForces[1] = Fy;
   mForces[2] = Fz;
   initializeTimeFunction();
+  m_derivative = -1;
+
+  m_jacobian_known = jacobian != NULL;
   if( jacobian != NULL )
      for( int m=0 ; m < 27 ; m++ )
 	m_jacobian[m] = jacobian[m];
+
+  m_hessian_known = false;
+  if( dddp != NULL && hess1 != NULL && hess2 != NULL && hess3 != NULL )
+  {
+     for( int m=0 ; m < 9 ; m++ )
+     {
+	m_dddp[m] = dddp[m];
+        m_hesspos1[m] = hess1[m];
+        m_hesspos2[m] = hess2[m];
+        m_hesspos3[m] = hess3[m];
+     }
+     m_hessian_known = true;
+  }
 }
 
 GridPointSource::~GridPointSource()
@@ -1357,14 +1485,83 @@ void GridPointSource::initializeTimeFunction()
       mTimeFunc_om = RickerWavelet_om;
       mTimeFunc_omtt = RickerWavelet_omtt;
     }
+  // Treat fourth derivatives in special 'switch', because not (yet?) implemented for all time functions
+  switch( mTimeDependence )
+  {
+  case iVerySmoothBump :
+     mTimeFunc_tttt = VerySmoothBump_tttt;
+     mTimeFunc_tttom = VerySmoothBump_tttom;
+     mTimeFunc_ttomom = VerySmoothBump_ttomom;
+     mTimeFunc_tom = VerySmoothBump_tom;
+     mTimeFunc_omom = VerySmoothBump_omom;
+     break;
+  case iGaussian :
+     mTimeFunc_tttt = Gaussian_tttt;
+     mTimeFunc_tttom = Gaussian_tttom;
+     mTimeFunc_ttomom = Gaussian_ttomom;
+     mTimeFunc_tom = Gaussian_tom;
+     mTimeFunc_omom = Gaussian_omom;
+     break;
+  default: 
+      std::cout << "High derivatives not implemented for time fuction: default Gaussian used " << std::endl;
+     mTimeFunc_tttt = Gaussian_tttt;
+     mTimeFunc_tttom = Gaussian_tttom;
+     mTimeFunc_ttomom = Gaussian_ttomom;
+     mTimeFunc_tom = Gaussian_tom;
+     mTimeFunc_omom = Gaussian_omom;
+  }
 }
 
 void GridPointSource::getFxyz( double t, double* fxyz ) const
 {
   double afun = mAmp*mTimeFunc(mFreq,t-mT0,mPar);
-  fxyz[0] = mForces[0]*afun;
-  fxyz[1] = mForces[1]*afun;
-  fxyz[2] = mForces[2]*afun;
+  if( m_derivative==-1)
+  {
+     fxyz[0] = mForces[0]*afun;
+     fxyz[1] = mForces[1]*afun;
+     fxyz[2] = mForces[2]*afun;
+  }
+  else if( m_derivative >= 0 && m_derivative <= 8 )
+  {
+     fxyz[0] = m_jacobian[m_derivative*3]*afun;
+     fxyz[1] = m_jacobian[m_derivative*3+1]*afun;
+     fxyz[2] = m_jacobian[m_derivative*3+2]*afun;
+  }
+  else if( m_derivative == 9 )
+  {
+     afun = -mAmp*mTimeFunc_t(mFreq,t-mT0,mPar);
+     fxyz[0] = mForces[0]*afun;
+     fxyz[1] = mForces[1]*afun;
+     fxyz[2] = mForces[2]*afun;
+  }
+  else if( m_derivative == 10 )
+  {
+     afun = mAmp*mTimeFunc_om(mFreq,t-mT0,mPar);
+     fxyz[0] = mForces[0]*afun;
+     fxyz[1] = mForces[1]*afun;
+     fxyz[2] = mForces[2]*afun;
+  }
+  else if( m_derivative == 11 )
+  {
+     fxyz[0]= fxyz[1]=fxyz[2]=0;
+     int i;
+     for( i=0 ; i < 9; i++ )
+     {
+        fxyz[0] += afun*m_jacobian[i*3]*m_dir[i];
+        fxyz[1] += afun*m_jacobian[i*3+1]*m_dir[i];
+        fxyz[2] += afun*m_jacobian[i*3+2]*m_dir[i];
+     }
+     i = 9;
+     afun = -mAmp*mTimeFunc_t(mFreq,t-mT0,mPar);
+     fxyz[0] += afun*mForces[0]*m_dir[i];
+     fxyz[1] += afun*mForces[1]*m_dir[i];
+     fxyz[2] += afun*mForces[2]*m_dir[i];
+     i = 10;
+     afun =  mAmp*mTimeFunc_om(mFreq,t-mT0,mPar);
+     fxyz[0] += afun*mForces[0]*m_dir[i];
+     fxyz[1] += afun*mForces[1]*m_dir[i];
+     fxyz[2] += afun*mForces[2]*m_dir[i];
+  }
 }
 
 void GridPointSource::getFxyz_notime( double* fxyz ) const
@@ -1378,22 +1575,84 @@ void GridPointSource::getFxyz_notime( double* fxyz ) const
 void GridPointSource::getFxyztt( double t, double* fxyz ) const
 {
   double afun = mAmp*mTimeFunc_tt(mFreq,t-mT0,mPar);
-  fxyz[0] = mForces[0]*afun;
-  fxyz[1] = mForces[1]*afun;
-  fxyz[2] = mForces[2]*afun;
+  if( m_derivative==-1)
+  {
+     fxyz[0] = mForces[0]*afun;
+     fxyz[1] = mForces[1]*afun;
+     fxyz[2] = mForces[2]*afun;
+  }
+  else if( m_derivative >= 0 && m_derivative <= 8 )
+  {
+     fxyz[0] = m_jacobian[m_derivative*3]*afun;
+     fxyz[1] = m_jacobian[m_derivative*3+1]*afun;
+     fxyz[2] = m_jacobian[m_derivative*3+2]*afun;
+  }
+  else if( m_derivative == 9 )
+  {
+     afun = -mAmp*mTimeFunc_ttt(mFreq,t-mT0,mPar);
+     fxyz[0] = mForces[0]*afun;
+     fxyz[1] = mForces[1]*afun;
+     fxyz[2] = mForces[2]*afun;
+  }
+  else if( m_derivative == 10 )
+  {
+     afun = mAmp*mTimeFunc_omtt(mFreq,t-mT0,mPar);
+     fxyz[0] = mForces[0]*afun;
+     fxyz[1] = mForces[1]*afun;
+     fxyz[2] = mForces[2]*afun;
+  }
+  else if( m_derivative == 11 )
+  {
+     fxyz[0]= fxyz[1]=fxyz[2]=0;
+     int i;
+     for( i=0 ; i < 9; i++ )
+     {
+        fxyz[0] += afun*m_jacobian[i*3]*m_dir[i];
+        fxyz[1] += afun*m_jacobian[i*3+1]*m_dir[i];
+        fxyz[2] += afun*m_jacobian[i*3+2]*m_dir[i];
+     }
+     i = 9;
+     afun = -mAmp*mTimeFunc_ttt(mFreq,t-mT0,mPar);
+     fxyz[0] += afun*mForces[0]*m_dir[i];
+     fxyz[1] += afun*mForces[1]*m_dir[i];
+     fxyz[2] += afun*mForces[2]*m_dir[i];
+     i = 10;
+     afun =  mAmp*mTimeFunc_omtt(mFreq,t-mT0,mPar);
+     fxyz[0] += afun*mForces[0]*m_dir[i];
+     fxyz[1] += afun*mForces[1]*m_dir[i];
+     fxyz[2] += afun*mForces[2]*m_dir[i];
+  }
 }
 
+//-----------------------------------------------------------------------
+void GridPointSource::set_derivative( int der, double dir[11] )
+{
+   if( der >= 0 && der <= 11 )
+      m_derivative = der;
+   for( int i=0 ; i < 11 ; i++ )
+      m_dir[i] = dir[i];
+}
+
+//-----------------------------------------------------------------------
+void GridPointSource::set_noderivative( )
+{
+   m_derivative = -1;
+}
+
+//-----------------------------------------------------------------------
 void GridPointSource::limitFrequency(double max_freq)
 {
   if (mFreq > max_freq)
     mFreq=max_freq;
 }
 
+//-----------------------------------------------------------------------
 double GridPointSource::getTimeFunc(double t) const
 {
   return mTimeFunc(mFreq, t - mT0, mPar);
 }
 
+//-----------------------------------------------------------------------
 void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, double fc)
 {
 // allocate new parameter array of size(nSteps)
@@ -1450,37 +1709,148 @@ ostream& operator<<( ostream& output, const GridPointSource& s )
 void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
 				       double t, double dt, double gradient[11], std::vector<double> & h )
 {
-   double dt2o12 = dt*dt/12.0;
-   double g0= mTimeFunc( mFreq, t-mT0, mPar );
-   double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar);
-
-
-   // save some work by accessing array elements only once:
-   double kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
-   double kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
-   double kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
-   double eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
-   double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
-   double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
-   double h3 = h[m_grid]*h[m_grid]*h[m_grid];
-   // derivative wrt. position (m=0,1,2) and moment tensor components (m=3,..,8)
-   for( int m= 0 ; m < 9 ; m++ )
+   if( m_jacobian_known )
    {
-      gradient[m] -= g*mAmp*(  kap1*m_jacobian[3*m] + kap2*m_jacobian[3*m+1] +
-				kap3*m_jacobian[3*m+2]  )*h3;
-      gradient[m] -= dt2o12*g0*mAmp*( eta1*m_jacobian[3*m] + eta2*m_jacobian[3*m+1] +
-				eta3*m_jacobian[3*m+2]  )*h3;
+      double dt2o12 = dt*dt/12.0;
+      double g0= mTimeFunc( mFreq, t-mT0, mPar );
+      double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar);
+
+
+      // save some work by accessing array elements only once:
+      double kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
+      double kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
+      double kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
+      double eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
+      double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
+      double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
+      double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+
+      // derivative wrt. position (m=0,1,2) and moment tensor components (m=3,..,8)
+      for( int m= 0 ; m < 9 ; m++ )
+      {
+	 gradient[m] -= g*mAmp*(  kap1*m_jacobian[3*m] + kap2*m_jacobian[3*m+1] +
+				  kap3*m_jacobian[3*m+2]  )*h3;
+	 gradient[m] -= dt2o12*g0*mAmp*( eta1*m_jacobian[3*m] + eta2*m_jacobian[3*m+1] +
+					 eta3*m_jacobian[3*m+2]  )*h3;
+      }
+
+      // derivative wrt. (t0, freq)
+      double dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar);
+      double dgom =  mTimeFunc_om(mFreq,t-mT0,mPar);
+      gradient[9]   -= dt2o12*dgt0*mAmp*( eta1*mForces[0] + eta2*mForces[1] + eta3*mForces[2])*h3;
+      gradient[10]  -= dt2o12*dgom*mAmp*( eta1*mForces[0] + eta2*mForces[1] + eta3*mForces[2])*h3;
+
+      dgt0 = dgt0 - dt2o12*mTimeFunc_ttt(mFreq,t-mT0,mPar);
+      dgom = dgom + dt2o12*mTimeFunc_omtt(mFreq,t-mT0,mPar);
+      gradient[9]  -= dgt0*mAmp*( kap1*mForces[0] + kap2*mForces[1] + kap3*mForces[2])*h3;
+      gradient[10] -= dgom*mAmp*( kap1*mForces[0] + kap2*mForces[1] + kap3*mForces[2])*h3;
    }
+}
 
-   // derivative wrt. (t0, freq)
-   double dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar);
-   double dgom = mTimeFunc_om(mFreq,t-mT0,mPar);
-   gradient[9]   -= dgt0*mAmp*( eta1*mForces[0] + eta2*mForces[1] + eta3*mForces[2])*h3;
-   gradient[10]  -= dgom*mAmp*( eta1*mForces[0] + eta2*mForces[1] + eta3*mForces[2])*h3;
+//-----------------------------------------------------------------------
+void GridPointSource::add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
+				      double t, double dt, double hessian[121],
+				      std::vector<double> & h )
+// Add upper part of symmetric matrix
+{
+   if( m_hessian_known && m_jacobian_known )
+   {
+      double dt2o12 = dt*dt/12.0;
+      double g0= mTimeFunc( mFreq, t-mT0, mPar );
+      double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar);
 
-   dgt0 = dgt0 - dt2o12*mTimeFunc_ttt(mFreq,t-mT0,mPar);
-   dgom = dgom + dt2o12*mTimeFunc_omtt(mFreq,t-mT0,mPar);
-   gradient[9]  -= dgt0*mAmp*( kap1*mForces[0] + kap2*mForces[1] + kap3*mForces[2])*h3;
-   gradient[10] -= dgom*mAmp*( kap1*mForces[0] + kap2*mForces[1] + kap3*mForces[2])*h3;
-   
+      // save some work by accessing array elements only once:
+      double kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
+      double kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
+      double kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
+      double eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
+      double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
+      double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
+      double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+
+      double c1 = mAmp*g*h3;
+      double c2 = mAmp*g0*dt2o12*h3;
+
+      // (pos,pos)
+      for( int m=0 ; m < 3 ; m++ )
+	 for( int j=m ; j < 3 ; j++ )
+	 {
+	    hessian[m+11*j] -= (kap1*c1+eta1*c2)*m_hesspos1[m+3*j]+(kap2*c1+eta2*c2)*m_hesspos2[m+3*j]+
+	       (kap3*c1+eta3*c2)*m_hesspos3[m+3*j];
+	 }
+      // (pos,mij)
+      for( int m = 0; m < 3 ; m++ )
+      {
+	 int j=3;
+	 hessian[m+11*j] -= (c1*kap1+eta1*c2)*m_dddp[m];
+	 j = 4;
+	 hessian[m+11*j] -= (c1*kap1+eta1*c2)*m_dddp[m+3] + (c1*kap2+eta2*c2)*m_dddp[m];
+	 j = 5;
+	 hessian[m+11*j] -= (c1*kap1+eta1*c2)*m_dddp[m+6] + (c1*kap3+eta3*c2)*m_dddp[m];      
+	 j = 6;
+	 hessian[m+11*j] -= (c1*kap2+eta2*c2)*m_dddp[m+3];
+	 j = 7;
+	 hessian[m+11*j] -= (c1*kap2+eta2*c2)*m_dddp[m+6] + (c1*kap3+eta3*c2)*m_dddp[m+3];
+	 j = 8;
+	 hessian[m+11*j] -= (c1*kap3+eta3*c2)*m_dddp[m+6];
+      }
+      // (pos,t0)
+      double dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar);
+      double dgom =  mTimeFunc_om(mFreq,t-mT0,mPar);
+
+      double c2t0  = dgt0*mAmp*dt2o12;
+      double c2om0 = dgom*mAmp*dt2o12;
+
+      dgt0 = dgt0 - dt2o12*mTimeFunc_ttt(mFreq,t-mT0,mPar);
+      dgom = dgom + dt2o12*mTimeFunc_omtt(mFreq,t-mT0,mPar);
+      double c1t0  = dgt0*mAmp;
+      double c1om0 = dgom*mAmp;
+
+      //define c1t0,c2t0, c1om0, c2om0
+      for( int m=0 ; m < 9 ; m++ )
+      {
+	 int j = 9;
+	 hessian[m+11*j] -= ((c1t0*kap1+c2t0*eta1)*m_jacobian[3*m] + (c1t0*kap2+c2t0*eta2)*m_jacobian[3*m+1] +
+			     (c1t0*kap3+c2t0*eta3)*m_jacobian[3*m+2])*h3;
+	 j = 10;
+	 hessian[m+11*j] -= ((c1om0*kap1+c2om0*eta1)*m_jacobian[3*m] + (c1om0*kap2+c2om0*eta2)*m_jacobian[3*m+1] +
+			     (c1om0*kap3+c2om0*eta3)*m_jacobian[3*m+2])*h3;
+      }
+      double cmfact0 = mAmp*(kap1*mForces[0]+kap2*mForces[1]+kap3*mForces[2]);
+      double cmfact  = mAmp*((kap1*mForces[0]+kap2*mForces[1]+kap3*mForces[2])+
+		      dt2o12*(eta1*mForces[0]+eta2*mForces[1]+eta3*mForces[2]));
+      // Second derivatives of time function
+      double d2gdt02   =  mTimeFunc_tt(mFreq,t-mT0,mPar);
+      double d2gdt0dom = -mTimeFunc_tom(mFreq,t-mT0,mPar);
+      double d2gdomdom =  mTimeFunc_omom(mFreq,t-mT0,mPar);
+
+      double dgdttt0t0  =  dt2o12*mTimeFunc_tttt(mFreq,t-mT0,mPar);
+      double dgdttt0om  = -dt2o12*mTimeFunc_tttom(mFreq,t-mT0,mPar);
+      double dgdttomom  =  dt2o12*mTimeFunc_ttomom(mFreq,t-mT0,mPar);
+
+      int m = 9;
+      int j = 9;
+      hessian[m+11*j] -= (cmfact*d2gdt02 + cmfact0*dgdttt0t0)*h3;
+      j = 10;
+      hessian[m+11*j] -= (cmfact*d2gdt0dom + cmfact0*dgdttt0om)*h3;
+      m = 10;
+      j = 10;
+      hessian[m+11*j] -= (cmfact*d2gdomdom + cmfact0*dgdttomom)*h3;
+   }
+}
+
+//-----------------------------------------------------------------------
+void GridPointSource::print_info()
+{
+   cout << "-----------------------------------------------------------------------"<<endl;
+   cout << " position " << m_i0 << " " << m_j0 << " " << m_k0 << endl;
+   cout << "Forces = " << mForces[0] << " " << mForces[1] << " " << mForces[2] << endl;
+   cout << " jac = \n";
+   for( int c=0 ; c < 3 ; c++ )
+   {
+       for( int m=0 ; m < 9 ; m++ )
+	  cout << m_jacobian[c+3*m] << " " ;
+       cout << endl;
+   }
+   cout << "-----------------------------------------------------------------------"<<endl;
 }

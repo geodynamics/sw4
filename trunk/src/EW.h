@@ -57,7 +57,7 @@ void setupRun( );
 void preprocessSources( vector<Source*> & a_GlobalSources );
 
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
-void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11] );
+   void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
 
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 
@@ -407,7 +407,15 @@ void getGlobalBoundingBox(double bbox[6]);
 
 string getPath(){ return mPath; }
 
+   // For inverse problem
+void processCG(char* buffer );
+void processScaleFactors(char* buffer );
 void average_speeds( double& cp, double& cs );
+void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double hessian[121] );
+void get_scalefactors( double sf[11] ); 
+bool compute_sf();
+bool compute_guess();   
+void get_cgparameters( int& maxit, int& maxrestart, double& tolerance );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -676,8 +684,13 @@ double mMetersPerDegree;
 bool mParsingSuccessful, mIsInitialized, mSourcesOK;
 bool m_testing;
 
-   // Will we solve the inverse problem?
-bool m_inverse_problem;
+   // Parameters related to the inverse problem   
+bool m_inverse_problem; // Will we solve the inverse problem?
+bool m_compute_guess;
+bool m_compute_scalefactors;
+int m_maxit,m_maxrestart;
+double m_tolerance;
+double m_scalefactors[11];   
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<double> mMinVsOverH;

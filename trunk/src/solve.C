@@ -118,6 +118,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   if( mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
+
+  // Reset image time to zero, in case we are rerunning the solver
+  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+     mImageFiles[fIndex]->initializeTime();
    
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
@@ -296,6 +300,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       fileName << "RayleighErr.txt";
     lf = fopen(fileName.str().c_str(),"w");
   }
+  // DEBUG
+  //     for( int s = 0 ; s < point_sources.size() ; s++ )
+  //        point_sources[s]->print_info();
     
 // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)

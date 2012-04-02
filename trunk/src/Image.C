@@ -305,6 +305,7 @@ bool Image::plane_in_proc( int a_gridIndexCoarsest)
 void Image::initializeTime()
 {
   mNextTime = 0.; 
+  m_time_done = false;
 // with the option timeInterval=..., first time is always t=0
 // is this what we want when m_t0Shift >> 0?
 }
@@ -315,6 +316,7 @@ const std::string Image::fieldSuffix(ImageMode mode) const
   return mMode2Suffix[mode];
 }
 
+//-----------------------------------------------------------------------
 bool Image::timeToWrite(double time, int cycle, double dt )
 {
   // -----------------------------------------------

@@ -17,7 +17,8 @@ public:
   GridPointSource(double amplitude, double frequency, double t0,
 		  int i0, int j0, int k0, int g,
 		  double Fx, double Fy, double Fz,
-		  timeDep tDep, int ncyc, double* jacobian=NULL );
+		  timeDep tDep, int ncyc, double* jacobian=NULL,
+		  double* dddp=NULL, double* hess1=NULL, double* hess2=NULL, double* hess3=NULL );
 
  ~GridPointSource();
 
@@ -33,9 +34,13 @@ public:
   void limitFrequency(double max_freq);
   // discretize a time function at each time step and change the time function to be "Discrete()"
   void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, double fc);
-   void add_to_gradient( std::vector<Sarray>& kappa, std::vector<Sarray> & eta,
+  void add_to_gradient( std::vector<Sarray>& kappa, std::vector<Sarray> & eta,
 			 double t, double dt, double gradient[11], std::vector<double> & h );
-
+  void add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
+		       double t, double dt, double hessian[121], std::vector<double> & h );
+   void set_derivative( int der, double dir[11] );
+  void set_noderivative( );
+  void print_info();
  private:
 
   GridPointSource();
@@ -52,12 +57,21 @@ public:
   double (*mTimeFunc_ttt)(double f, double t,double* par);
   double (*mTimeFunc_om)(double f, double t,double* par);
   double (*mTimeFunc_omtt)(double f, double t,double* par);
+  double (*mTimeFunc_tttt)(double f, double t,double* par);
+  double (*mTimeFunc_tttom)(double f, double t,double* par);
+  double (*mTimeFunc_ttomom)(double f, double t,double* par);
+  double (*mTimeFunc_tom)(double f, double t,double* par);
+  double (*mTimeFunc_omom)(double f, double t,double* par);
 
   double* mPar;
   int mNcyc;
   double m_min_exponent;
+  int m_derivative;
   bool m_jacobian_known;
   double m_jacobian[27];
+  bool m_hessian_known;
+  double m_hesspos1[9], m_hesspos2[9], m_hesspos3[9], m_dddp[9]; 
+  double m_dir[11];
 };
 
 #endif

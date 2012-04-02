@@ -1021,9 +1021,9 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 			       (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i]));
 	       if( compute_difference )
 	       {
-		  misfitsource[0][i] = wghv*(mf[0]-mRecordedSol[0][i]);
-		  misfitsource[1][i] = wghv*(mf[1]-mRecordedSol[1][i]);
-		  misfitsource[2][i] = wghv*(mf[2]-mRecordedSol[2][i]);
+		  misfitsource[0][i] = wghv*(mRecordedSol[0][i]-mf[0]);
+		  misfitsource[1][i] = wghv*(mRecordedSol[1][i]-mf[1]);
+		  misfitsource[2][i] = wghv*(mRecordedSol[2][i]-mf[2]);
 	       }
 	    }
 	    else
@@ -1033,9 +1033,9 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 			       (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]));
 	       if( compute_difference )
 	       {
-		  misfitsource[0][i] = wghv*(mf[0]-mRecordedFloats[0][i]);
-		  misfitsource[1][i] = wghv*(mf[1]-mRecordedFloats[1][i]);
-		  misfitsource[2][i] = wghv*(mf[2]-mRecordedFloats[2][i]);
+		  misfitsource[0][i] = wghv*(mRecordedFloats[0][i]-mf[0]);
+		  misfitsource[1][i] = wghv*(mRecordedFloats[1][i]-mf[1]);
+		  misfitsource[2][i] = wghv*(mRecordedFloats[2][i]-mf[2]);
 	       }
 	    }
 	 }
@@ -1153,4 +1153,47 @@ void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
       f[m_grid0](2,m_i0,m_j0,m_k0) -= mRecordedSol[1][n]*ih3;
       f[m_grid0](3,m_i0,m_j0,m_k0) -= mRecordedSol[2][n]*ih3;
    }
+}
+
+//-----------------------------------------------------------------------
+double TimeSeries::product( TimeSeries& ts )
+{
+   // No weighting, use if one of the time series already has
+   // been multiplied by wgh, such as returned by the mistfit function
+   double prod = 0;
+   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+   {
+      prod += ts.mRecordedSol[0][i]*mRecordedSol[0][i] +
+	      ts.mRecordedSol[1][i]*mRecordedSol[1][i] + 
+              ts.mRecordedSol[2][i]*mRecordedSol[2][i];
+   }
+   return prod;
+}
+
+//-----------------------------------------------------------------------
+double TimeSeries::product_wgh( TimeSeries& ts )
+{
+   // Use weighting, for computing Hessian
+
+   // Weight to ramp down the end of misfit.
+   double wghv;
+   int p =20 ; // Number of points in ramp;
+   int istart = 1;
+   if( mLastTimeStep-p+1 > 1 )
+      istart = mLastTimeStep-p+1;
+
+   double prod = 0;
+   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+   {
+      wghv = 1;
+      if( i >= istart )
+      {
+	 double arg = (mLastTimeStep-i)/(p-1.0);
+	 wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+      }
+      prod += (ts.mRecordedSol[0][i]*mRecordedSol[0][i] +
+	       ts.mRecordedSol[1][i]*mRecordedSol[1][i] + 
+	       ts.mRecordedSol[2][i]*mRecordedSol[2][i] )*wghv;
+   }
+   return prod;
 }

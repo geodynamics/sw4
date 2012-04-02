@@ -24,7 +24,7 @@ Source::Source(EW *a_wpp,
 	       double Myz,
 	       double Mzz,
 	       timeDep tDep,
-	       char *name,
+	       const char *name,
 	       int ncyc):
 //  mEW(a_wpp),
   mAmp(amplitude),
@@ -36,7 +36,8 @@ Source::Source(EW *a_wpp,
   mGridPointSet(false),
   mTimeDependence(tDep),
   mIgnore(false),
-  mNcyc(ncyc)
+  mNcyc(ncyc),
+  m_derivative(-1)
 {
   mForces.resize(6);
   mForces[0] = Mxx;
@@ -47,6 +48,7 @@ Source::Source(EW *a_wpp,
   mForces[5] = Mzz;
   mPar  = new double[2];
   mName = name;
+
   a_wpp->computeNearestGridPoint(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 }
 
@@ -68,7 +70,8 @@ Source::Source(EW *a_wpp,double amplitude, double frequency, double t0,
   mGridPointSet(false),
   mTimeDependence(tDep),
   mIgnore(false),
-  mNcyc(ncyc)
+  mNcyc(ncyc),
+  m_derivative(-1)
 {
   mPar = new double[2];
   mForces.resize(3);
@@ -254,6 +257,71 @@ int Source::ppw_to_resolve( double dt ) const
 
 
 //-----------------------------------------------------------------------
+void Source::set_derivative( int der )
+{
+   if( der >= 0 && der <= 10 )
+      m_derivative = der;
+}
+
+//-----------------------------------------------------------------------
+void Source::set_noderivative( )
+{
+   m_derivative = -1;
+}
+
+//-----------------------------------------------------------------------
+void Source::set_dirderivative( double dir[11] )
+{
+   for( int i=0 ; i < 11 ; i++ )
+      m_dir[i] = dir[i];
+   m_derivative = 11;
+}
+
+//-----------------------------------------------------------------------
+void Source::set_parameters( double x[11] )
+{
+   if( mIsMomentSource )
+   {
+      mX0 = x[0];
+      mY0 = x[1];
+      mZ0 = x[2];
+      mForces[0] = x[3];
+      mForces[1] = x[4];
+      mForces[2] = x[5];
+      mForces[3] = x[6];
+      mForces[4] = x[7];
+      mForces[5] = x[8];
+      mT0 = x[9];
+      mFreq = x[10];
+   }
+   else
+      cout << "Error in Source::set_parameters(), " <<
+             "function only implemented for moment sources" << endl;
+}
+
+//-----------------------------------------------------------------------
+void Source::get_parameters( double x[11] )
+{
+   if( mIsMomentSource )
+   {
+      x[0] = mX0;
+      x[1] = mY0;
+      x[2] = mZ0;
+      x[3] = mForces[0];
+      x[4] = mForces[1];
+      x[5] = mForces[2];
+      x[6] = mForces[3];
+      x[7] = mForces[4];
+      x[8] = mForces[5];
+      x[9] = mT0;
+      x[10]= mFreq;
+   }
+   else
+      cout << "Error in Source::get_parameters(), " <<
+             "function only implemented for moment sources" << endl;
+}
+
+//-----------------------------------------------------------------------
 void Source::correct_Z_level( )
 {
 // not yet functional
@@ -331,7 +399,7 @@ void Source::correct_Z_level( )
 }
 
 //-----------------------------------------------------------------------
-void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6] )
+void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6], double ddwghda[6] )
 {
    // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
    double p5 = ai*ai*ai*ai*ai*(5.0/3-7.0/24*ai -17/12.0*ai*ai+1.125*ai*ai*ai-0.25*ai*ai*ai*ai);
@@ -341,6 +409,7 @@ void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6] )
    wgh[3] = 1.0/6*( 4*ai+4*ai*ai-ai*ai*ai+49*ai*ai*ai*ai)-10*p5;
    wgh[4] = 1.0/24*(-2*ai-ai*ai+2*ai*ai*ai)-4.125*ai*ai*ai*ai+5*p5;
    wgh[5] = 5.0/6*ai*ai*ai*ai - p5;
+
    // Derivatives of wgh wrt. ai:
    p5 = 5*ai*ai*ai*ai*(5.0/3-7.0/24*ai -17/12.0*ai*ai+1.125*ai*ai*ai-0.25*ai*ai*ai*ai) +
       ai*ai*ai*ai*ai*(-7.0/24 -17/6.0*ai+3*1.125*ai*ai-ai*ai*ai); 
@@ -350,11 +419,21 @@ void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6] )
    dwghda[3] = 1.0/6*(4+8*ai-3*ai*ai+49*4*ai*ai*ai) - 10*p5;
    dwghda[4] = 1.0/24*(-2-2*ai+6*ai*ai)-4.125*4*ai*ai*ai + 5*p5;
    dwghda[5] = 20.0/6*ai*ai*ai - p5;
+
+   // Second derivatives of wgh wrt. ai:
+   p5 = ai*ai*ai*(100.0/3-8.75*ai-59.5*ai*ai+63*ai*ai*ai-18*ai*ai*ai*ai);
+
+   ddwghda[0] = -1.0/12- 0.5*ai-9.5*ai*ai + p5;
+   ddwghda[1] =  4.0/3 + ai     + 48*ai*ai - 5*p5;
+   ddwghda[2] =  -2.5           - 97*ai*ai + 10*p5;
+   ddwghda[3] =   4.0/3 - ai      + 98*ai*ai- 10*p5;
+   ddwghda[4] =  -1.0/12 + 0.5*ai -49.5*ai*ai + 5*p5;
+   ddwghda[5] =                    10*ai*ai - p5;
       
 }
 
 //-----------------------------------------------------------------------
-void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6] )
+void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6], double ddwghda[6] )
 {
    // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
    double p5 = ai*ai*ai*ai*(-25.0/12-0.75*ai + 59.0/12*ai*ai - 4*ai*ai*ai + ai*ai*ai*ai);
@@ -364,6 +443,7 @@ void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6] )
    wgh[3] = 2.0/3*(-1-2*ai)+0.5*ai*ai-23.0/3*ai*ai*ai-10*p5;
    wgh[4] = (1+ai)/12-0.25*ai*ai+4*ai*ai*ai + 5*p5;
    wgh[5] = -5.0/6*ai*ai*ai - p5;
+
    // Derivatives of wgh wrt. ai:
    p5 = 4*ai*ai*ai*(-25.0/12-0.75*ai + 59.0/12*ai*ai - 4*ai*ai*ai + ai*ai*ai*ai) +
       ai*ai*ai*ai*(-0.75 + 59.0/6*ai - 12*ai*ai + 4*ai*ai*ai);
@@ -373,6 +453,17 @@ void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6] )
    dwghda[3] = 2.0/3*(-2)+ai-23.0*ai*ai-10*p5;
    dwghda[4] = 1.0/12-0.5*ai+12*ai*ai + 5*p5;
    dwghda[5] = -5.0/2*ai*ai - p5;
+
+   // Second derivatives of wgh wrt. ai:
+   p5 = ai*ai*(-25-15*ai+147.5*ai*ai-168*ai*ai*ai+56*ai*ai*ai*ai);
+
+   ddwghda[0] =  0.5 + 4*ai + p5;
+   ddwghda[1] =  -1  -21*ai -5*p5;
+   ddwghda[2] =       44*ai + 10*p5;
+   ddwghda[3] =  1   -46*ai            -10*p5;
+   ddwghda[4] =  -0.5 + 24*ai + 5*p5;
+   ddwghda[5] =        -5*ai    - p5;
+
 }
 
 
@@ -409,15 +500,17 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    double ai=q-ic, bi=r-jc, ci=s-kc;
 // Delta distribution
    double wghi[6], wghj[6], wghk[6], wghix[6], wghjy[6], wghkz[6];
-   getsourcewgh( ai, wghi, wghix );
-   getsourcewgh( bi, wghj, wghjy );
-   getsourcewgh( ci, wghk, wghkz );
+   double wghixx[6], wghjyy[6], wghkzz[6];
+   getsourcewgh( ai, wghi, wghix, wghixx );
+   getsourcewgh( bi, wghj, wghjy, wghjyy );
+   getsourcewgh( ci, wghk, wghkz, wghkzz );
 
 // Delta' distribution
    double dwghi[6], dwghj[6], dwghk[6], dwghix[6], dwghjy[6], dwghkz[6];
-   getsourcedwgh( ai, dwghi, dwghix );
-   getsourcedwgh( bi, dwghj, dwghjy );
-   getsourcedwgh( ci, dwghk, dwghkz );
+   double dwghixx[6], dwghjyy[6], dwghkzz[6];
+   getsourcedwgh( ai, dwghi, dwghix, dwghixx );
+   getsourcedwgh( bi, dwghj, dwghjy, dwghjyy );
+   getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
 
 // Boundary correction
    for( int k=0 ; k <= 5 ; k++ )
@@ -488,20 +581,45 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	       double wFx=0, wFy=0, wFz=0, dsdp[27];
 	       if( a_EW->point_in_proc(i,j,g) ) 
 	       {
-		  wFx += dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
-		  wFy +=  wghi[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2];
-		  wFz +=  wghi[i-ic+2]* wghj[j-jc+2]*dwghk[k-kc+2];
+		  wFx = dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
+		  wFy =  wghi[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2];
+		  wFz =  wghi[i-ic+2]* wghj[j-jc+2]*dwghk[k-kc+2];
                   double hi=1.0/h;
-                  double wFxdx0 = dwghix[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]*hi;
-                  double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]* wghk[k-kc+2]*hi;
-                  double wFxdz0 = dwghi[i-ic+2]* wghj[j-jc+2]* wghkz[k-kc+2]*hi;
-                  double wFydx0 = wghix[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2]*hi;
-                  double wFydy0 = wghi[i-ic+2]* dwghjy[j-jc+2]* wghk[k-kc+2]*hi;
-                  double wFydz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi;
-                  double wFzdx0 = wghix[i-ic+2]* wghj[j-jc+2]* dwghk[k-kc+2]*hi;
-                  double wFzdy0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi;
-                  double wFzdz0 = wghi[i-ic+2]*  wghj[j-jc+2]*  dwghkz[k-kc+2]*hi;
+                  double hi2=hi*hi;
+                  double wFxdx0 =dwghix[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi;
+                  double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghk[k-kc+2]*hi;
+                  double wFxdz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi;
+                  double wFydx0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi;
+                  double wFydy0 =  wghi[i-ic+2]*dwghjy[j-jc+2]*  wghk[k-kc+2]*hi;
+                  double wFydz0 =  wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi;
+                  double wFzdx0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi;
+                  double wFzdy0 =  wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi;
+                  double wFzdz0 =  wghi[i-ic+2]*  wghj[j-jc+2]*dwghkz[k-kc+2]*hi;
+
+		  // Second derivatives
+                  double wFxdx0dx0 = dwghixx[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi2;
+                  double wFxdx0dy0 = dwghix[i-ic+2]*  wghjy[j-jc+2]*  wghk[k-kc+2]*hi2;
+                  double wFxdx0dz0 = dwghix[i-ic+2]*  wghj[j-jc+2]*  wghkz[k-kc+2]*hi2;
+		  double wFxdy0dy0 = dwghi[i-ic+2]* wghjyy[j-jc+2]*  wghk[k-kc+2]*hi2;
+                  double wFxdy0dz0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghkz[k-kc+2]*hi2;
+		  double wFxdz0dz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkzz[k-kc+2]*hi2;
+
+                  double wFydx0dx0 = wghixx[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi2;
+                  double wFydx0dy0 = wghix[i-ic+2]* dwghjy[j-jc+2]*  wghk[k-kc+2]*hi2;
+                  double wFydx0dz0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghkz[k-kc+2]*hi2;
+                  double wFydy0dy0 = wghi[i-ic+2]*dwghjyy[j-jc+2]*  wghk[k-kc+2]*hi2;
+                  double wFydy0dz0 = wghi[i-ic+2]*dwghjy[j-jc+2]*  wghkz[k-kc+2]*hi2;
+                  double wFydz0dz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkzz[k-kc+2]*hi2;
+
+                  double wFzdx0dx0 = wghixx[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi2;
+                  double wFzdx0dy0 = wghix[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi2;
+                  double wFzdx0dz0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*hi2;
+                  double wFzdy0dy0 = wghi[i-ic+2]* wghjyy[j-jc+2]* dwghk[k-kc+2]*hi2;
+                  double wFzdy0dz0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghkz[k-kc+2]*hi2;
+                  double wFzdz0dz0 = wghi[i-ic+2]*  wghj[j-jc+2]*dwghkzz[k-kc+2]*hi2;
+
 		  double jaci = 1.0/(h*h*h*h);
+
 		  double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
 		  double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
 		  double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
@@ -517,28 +635,95 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   dsdp[7] = -(mForces[1]*wFxdz0+mForces[3]*wFydz0 + mForces[4]*wFzdz0)*jaci;
                   dsdp[8] = -(mForces[2]*wFxdz0+mForces[4]*wFydz0 + mForces[5]*wFzdz0)*jaci;
                   dsdp[9]  = -wFx*jaci;
-                  dsdp[10] = 0;
-		  dsdp[11] = 0;
+                  dsdp[10] =  0;
+		  dsdp[11] =  0;
                   dsdp[12]  =-wFy*jaci;
                   dsdp[13] = -wFx*jaci;
 		  dsdp[14] =  0;
 		  dsdp[15] = -wFz*jaci;
-		  dsdp[16] = 0;
+		  dsdp[16] =  0;
 		  dsdp[17] = -wFx*jaci;
-		  dsdp[18] = 0;
+		  dsdp[18] =  0;
 		  dsdp[19] = -wFy*jaci;
 		  dsdp[20] =  0;
-		  dsdp[21] = 0;
+		  dsdp[21] =  0;
 		  dsdp[22] = -wFz*jaci;
-		  dsdp[23] = -wFz*jaci;
-		  dsdp[24] = 0;
-		  dsdp[25] = 0;
-		  dsdp[26] = wFz*jaci;
+		  dsdp[23] = -wFy*jaci;
+		  dsdp[24] =  0;
+		  dsdp[25] =  0;
+		  dsdp[26] = -wFz*jaci;
 
-		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
+		  // Matrices needed for computing the Hessian wrt (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+                  double dddp[9], dh1[9], dh2[9], dh3[9];
+		  dddp[0]  =-wFxdx0*jaci;
+		  dddp[1]  =-wFxdy0*jaci;
+		  dddp[2]  =-wFxdz0*jaci;
+		  dddp[3]  =-wFydx0*jaci;
+		  dddp[4]  =-wFydy0*jaci;
+		  dddp[5]  =-wFydz0*jaci;
+		  dddp[6]  =-wFzdx0*jaci;
+		  dddp[7]  =-wFzdy0*jaci;
+		  dddp[8]  =-wFzdz0*jaci;
+
+
+		  // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
+		  dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
+		  dh1[1] = -(mForces[0]*wFxdx0dy0 + mForces[1]*wFydx0dy0+mForces[2]*wFzdx0dy0)*jaci;
+		  dh1[2] = -(mForces[0]*wFxdx0dz0 + mForces[1]*wFydx0dz0+mForces[2]*wFzdx0dz0)*jaci;
+
+                  dh1[3] = dh1[1];
+		  dh1[4] = -(mForces[0]*wFxdy0dy0 + mForces[1]*wFydy0dy0+mForces[2]*wFzdy0dy0)*jaci;
+		  dh1[5] = -(mForces[0]*wFxdy0dz0 + mForces[1]*wFydy0dz0+mForces[2]*wFzdy0dz0)*jaci;
+
+                  dh1[6] = dh1[2];
+		  dh1[7] = dh1[5];
+		  dh1[8] = -(mForces[0]*wFxdz0dz0 + mForces[1]*wFydz0dz0+mForces[2]*wFzdz0dz0)*jaci;
+
+		  // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
+		  dh2[0] = -(mForces[1]*wFxdx0dx0 + mForces[3]*wFydx0dx0+mForces[4]*wFzdx0dx0)*jaci;
+		  dh2[1] = -(mForces[1]*wFxdx0dy0 + mForces[3]*wFydx0dy0+mForces[4]*wFzdx0dy0)*jaci;
+		  dh2[2] = -(mForces[1]*wFxdx0dz0 + mForces[3]*wFydx0dz0+mForces[4]*wFzdx0dz0)*jaci;
+
+		  dh2[3] = dh2[1];
+		  dh2[4] = -(mForces[1]*wFxdy0dy0 + mForces[3]*wFydy0dy0+mForces[4]*wFzdy0dy0)*jaci;
+		  dh2[5] = -(mForces[1]*wFxdy0dz0 + mForces[3]*wFydy0dz0+mForces[4]*wFzdy0dz0)*jaci;
+
+		  dh2[6] = dh2[2];
+		  dh2[7] = dh2[5];
+		  dh2[8] = -(mForces[1]*wFxdz0dz0 + mForces[3]*wFydz0dz0+mForces[4]*wFzdz0dz0)*jaci;
+
+		  // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
+		  dh3[0] = -(mForces[2]*wFxdx0dx0 + mForces[4]*wFydx0dx0+mForces[5]*wFzdx0dx0)*jaci;
+		  dh3[1] = -(mForces[2]*wFxdx0dy0 + mForces[4]*wFydx0dy0+mForces[5]*wFzdx0dy0)*jaci;
+		  dh3[2] = -(mForces[2]*wFxdx0dz0 + mForces[4]*wFydx0dz0+mForces[5]*wFzdx0dz0)*jaci;
+
+		  dh3[3] = dh3[1];
+		  dh3[4] = -(mForces[2]*wFxdy0dy0 + mForces[4]*wFydy0dy0+mForces[5]*wFzdy0dy0)*jaci;
+		  dh3[5] = -(mForces[2]*wFxdy0dz0 + mForces[4]*wFydy0dz0+mForces[5]*wFzdy0dz0)*jaci;
+
+		  dh3[6] = dh3[2];
+		  dh3[7] = dh3[5];
+		  dh3[8] = -(mForces[2]*wFxdz0dz0 + mForces[4]*wFydz0dz0+mForces[5]*wFzdz0dz0)*jaci;
+
+		  //                  if( i==42 && j==55 && k==39 )
+		  //		  {
+		  //		     cout.precision(16);
+		  //                  cout << "-----------------------------------------------------------------------\n";
+		  //		  cout << "     " << i <<  " " << j << " " << k << endl;
+		  //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5] << "  " << dsdp[8] << endl;
+		  //                  cout << "dh  = " << dh3[0] << " " << dh3[1] << "  " << dh3[2] << endl;
+		  //                  cout << "      " << dh3[3] << " " << dh3[4] << "  " << dh3[5] << endl;
+		  //                  cout << "      " << dh3[6] << " " << dh3[7] << "  " << dh3[8] << endl;
+		  //                  cout << "-----------------------------------------------------------------------" << endl;
+		  //		  }
+
+		  //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
 		  {
 		     GridPointSource* sourcePtr = new GridPointSource( mAmp, mFreq, mT0, i, j, k, g, 
-								       fx, fy, fz, mTimeDependence, mNcyc, dsdp );
+								       fx, fy, fz, mTimeDependence, mNcyc,
+								       dsdp, dddp, dh1, dh2, dh3 );
+                     if( m_derivative >= 0 )
+			sourcePtr->set_derivative(m_derivative,m_dir);
 		     point_sources.push_back(sourcePtr);
 		  }
 	       }
@@ -1561,4 +1746,20 @@ void Source::perturb( double h, int comp )
       mT0 += h;
    else
       mFreq += h;
+}
+
+//-----------------------------------------------------------------------
+Source* Source::copy( EW* a_ew )
+{
+
+   Source* retval;
+   if( !mIsMomentSource )
+      retval = new Source( a_ew, mAmp, mFreq, mT0, mX0, mY0, mZ0, mForces[0],
+			   mForces[1], mForces[2], mTimeDependence, mName.c_str(), mNcyc );
+   else
+      retval = new Source( a_ew, mAmp, mFreq, mT0, mX0, mY0, mZ0, mForces[0],
+			   mForces[1], mForces[2], mForces[3], mForces[4], mForces[5],
+			   mTimeDependence, mName.c_str(), mNcyc );
+   retval->m_derivative = m_derivative;
+   return retval;
 }

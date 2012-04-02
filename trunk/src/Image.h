@@ -93,10 +93,11 @@ ImageOrientation getOrientation(){return mLocationType;};
 
 ImageMode mMode;
 std::string mFilePrefix;
+void initializeTime();
 
 protected:
 void define_pio();  
-void initializeTime();
+
 bool proc_write();
 
 double mTime;

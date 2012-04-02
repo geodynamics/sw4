@@ -1,6 +1,7 @@
 #include "EW.h"
 
-void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11] )
+void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11],
+			 double hessian[121] )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K;
@@ -42,9 +43,13 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    }
 
 
-   // will accumulate the gradient of the misfit in this array
+// will accumulate the gradient of the misfit in this array
    for( int s=0 ; s < 11 ; s++ )
       gradient[s] = 0;
+
+// will accumulate the Hessian of the misfit in this array
+   for( int s=0 ; s < 121 ; s++ )
+      hessian[s] = 0;
    
 // the Source objects get discretized into GridPointSource objects
    vector<GridPointSource*> point_sources;
@@ -89,7 +94,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 
     // Corrector
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
-	 a_TimeSeries[s]->use_as_forcing( currentTimeStep, F, mGridSize, mDt );
+	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, Lk );
@@ -110,8 +115,11 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       time_measure[5] = MPI_Wtime();
       // Accumulate the gradient
       for( int s=0 ; s < point_sources.size() ; s++ )
+      {
 	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradient, mGridSize );
-
+	 point_sources[s]->add_to_hessian( K, Kacc, t, mDt, hessian, mGridSize );
+      }
+      
       time_measure[6] = MPI_Wtime();
       t -= mDt;
       cycleSolutionArrays( Kp, K, Km );
@@ -132,6 +140,17 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    for( int s=0 ; s < 11 ; s++ )
       gradtmp[s] = gradient[s];
    MPI_Allreduce( gradtmp, gradient, 11, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+
+   // Sum Hessian contributions from all processors
+   double hesstmp[121];
+   for( int s=0 ; s < 121 ; s++ )
+      hesstmp[s] = hessian[s];
+   MPI_Allreduce( hesstmp, hessian, 121, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+
+   // Symmetry gives the lower half of matrix:
+   for( int m= 0 ; m < 11 ; m++ )
+      for( int j=0 ; j<m ; j++ )
+	 hessian[m+11*j] = hessian[j+11*m];
 }
 
 //------------------------------------------------------------------------

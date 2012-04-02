@@ -195,7 +195,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 //  m_do_geodynbc(false),
   m_att_use_max_frequency(false),
   m_att_ppw(15),
-  m_inverse_problem(a_invproblem)
+  m_inverse_problem(a_invproblem),
+  m_maxit(0),
+  m_maxrestart(0),
+  m_compute_guess(false),
+  m_compute_scalefactors(false)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
@@ -3240,4 +3244,65 @@ void EW::average_speeds( double& cp, double& cs )
    }
    cp = cp/mNumberOfGrids;
    cs = cs/mNumberOfGrids;
+}
+
+//-----------------------------------------------------------------------
+void EW::testsourcediff( vector<Source*> GlobalSources, double gradient[11],
+			 double hessian[121] )
+{
+   for( int m=0 ; m < 11 ; m++ )
+   {
+      gradient[m] = 0;
+      for( int j=0 ; j<11; j++ )
+	 hessian[m+11*j] = 0;
+   }
+   vector<GridPointSource*> gpsources;
+   GlobalSources[0]->set_grid_point_sources4( this, gpsources );
+
+   vector<Sarray> kappa, eta;
+   int ifirst, ilast, jfirst, jlast, kfirst, klast;
+   kappa.resize(mNumberOfGrids);
+   eta.resize(mNumberOfGrids);
+   for( int g = 0; g <mNumberOfGrids; g++ )
+   {
+      ifirst = m_iStart[g];
+      ilast  = m_iEnd[g];
+      jfirst = m_jStart[g];
+      jlast  = m_jEnd[g];
+      kfirst = m_kStart[g];
+      klast  = m_kEnd[g];
+
+      kappa[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      eta[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      kappa[g].set_value(1.0);
+      eta[g].set_value(1.0);
+   }
+   //   for( int m=0 ; m < gpsources.size() ; m++ )
+   //   cout << "size of sources " << gpsources.size() << endl;
+   for( int m = 0 ; m < gpsources.size()-1 ; m++ )
+   {
+      gpsources[m]->add_to_gradient( kappa, eta, 0.63, mDt, gradient, mGridSize );
+      gpsources[m]->add_to_hessian( kappa, eta, 0.63, mDt, hessian, mGridSize );
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::get_scalefactors( double sf[11] )
+{
+   for( int i=0 ; i < 11 ; i++ )
+      sf[i] = m_scalefactors[i];
+}
+
+//-----------------------------------------------------------------------
+bool EW::compute_sf(){return m_compute_scalefactors;}
+
+//-----------------------------------------------------------------------
+bool EW::compute_guess(){return m_compute_guess;}
+
+//-----------------------------------------------------------------------
+void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance )
+{
+   maxit = m_maxit;
+   maxrestart = m_maxrestart;
+   tolerance = m_tolerance;
 }

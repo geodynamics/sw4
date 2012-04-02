@@ -26,7 +26,7 @@ public:
 	 double Myz,
 	 double Mzz,
 	 timeDep tDep,
-	 char *name,int ncyc=1);
+	 const char *name,int ncyc=1);
 
   Source(EW * a_ew, double amplitude, double frequency, double t0,
          double x0, double y0, double z0,
@@ -90,13 +90,19 @@ public:
   void getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const;
   void printPointer(){std::cout << "Source pointer = "  << mPar << std::endl;}
   void perturb( double h, int comp );
+  void set_derivative( int der );
+  void set_noderivative( );
+  void set_dirderivative( double dir[11] );
+  Source* copy( EW* a_ew );
+  void set_parameters( double x[11] );
+  void get_parameters( double x[11] );
 
  private:
   Source();
-  void getsourcewgh7(double ai, double wgh[7] );
-  void getsourcedwgh7(double ai, double wgh[7] );
-  void getsourcewgh(double ai, double wgh[6], double dwghda[6] );
-  void getsourcedwgh(double ai, double wgh[6], double dwghda[6] );
+   //  void getsourcewgh7(double ai, double wgh[7] );
+   //  void getsourcedwgh7(double ai, double wgh[7] );
+  void getsourcewgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] );
+  void getsourcedwgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] );
   double dist_d_dx_dirac(double x);
   double distributedhat(double x);
   double hat(double x);
@@ -119,8 +125,9 @@ public:
   double* mPar;
   int mNcyc;
   bool mIgnore;
-  
+  int m_derivative;  
   timeDep mTimeDependence;
+  double m_dir[11];
 //  EW * mEW;
 };
 

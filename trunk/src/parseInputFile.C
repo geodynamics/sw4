@@ -323,7 +323,11 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        else if (!m_inverse_problem && startswith("receiver", buffer)) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("observation", buffer)) // 
-	 processObservation(buffer, a_GlobalTimeSeries);
+	  processObservation(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && startswith("scalefactors", buffer)) // 
+	  processScaleFactors(buffer);
+       else if (m_inverse_problem && startswith("cg", buffer)) // 
+	  processCG(buffer);
        // else if (startswith("energy", buffer))
        //   processEnergy(buffer);
        else if (startswith("twilight", buffer))
@@ -338,6 +342,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processSource(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
 	 processMaterialBlock(buffer, blockCount);
+       else if (startswith("scalefactors", buffer))
+	 processScaleFactors(buffer);
 //    else if (startswith("efile", buffer))
 //    {
 // #ifndef ENABLE_ETREE
@@ -4856,3 +4862,185 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   }
 }
 
+//-----------------------------------------------------------------------
+void EW::processScaleFactors( char* buffer )
+{
+  char* token = strtok(buffer, " \t");
+
+  CHECK_INPUT(strcmp("scalefactors", token) == 0, "ERROR: not a scalefactors line...: " << token);
+  token = strtok(NULL, " \t");
+  double x0=1, y0=1, z0=1, mxx=1, mxy=1, mxz=1, myy=1, myz=1, mzz=1, t0=1, freq=1; 
+
+  string err = "SCALEFACTORS Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("x0=", token))
+     {
+        token += 3;
+        x0 = atof(token);
+        CHECK_INPUT(x0 > 0.0,
+		    "scalefactors command: x0 must be greater than 0, not " << x0);
+     }
+     else if( startswith("y0=",token))
+     {
+        token += 3;
+        y0 = atof(token);
+        CHECK_INPUT(y0 > 0.0,
+		    "scalefactors command: y0 must be greater than 0, not " << y0);
+     }
+     else if( startswith("z0=",token))
+     {
+        token += 3;
+        z0 = atof(token);
+        CHECK_INPUT(z0 > 0.0,
+		    "scalefactors command: y0 must be greater than 0, not " << z0);
+     }
+     else if( startswith("Mxx=",token))
+     {
+        token += 4;
+        mxx = atof(token);
+        CHECK_INPUT(mxx > 0.0,
+		    "scalefactors command: Mxx must be greater than 0, not " << mxx);
+     }
+     else if( startswith("Mxy=",token))
+     {
+        token += 4;
+        mxy = atof(token);
+        CHECK_INPUT(mxy > 0.0,
+		    "scalefactors command: Mxy must be greater than 0, not " << mxy);
+     }
+     else if( startswith("Mxz=",token))
+     {
+        token += 4;
+        mxz = atof(token);
+        CHECK_INPUT(mxz > 0.0,
+		    "scalefactors command: Mxz must be greater than 0, not " << mxz);
+     }
+     else if( startswith("Myy=",token))
+     {
+        token += 4;
+        myy = atof(token);
+        CHECK_INPUT(myy > 0.0,
+		    "scalefactors command: Myy must be greater than 0, not " << myy);
+     }
+     else if( startswith("Myz=",token))
+     {
+        token += 4;
+        myz = atof(token);
+        CHECK_INPUT(myz > 0.0,
+		    "scalefactors command: Myz must be greater than 0, not " << myz);
+     }
+     else if( startswith("Mzz=",token))
+     {
+        token += 4;
+        mzz = atof(token);
+        CHECK_INPUT(mzz > 0.0,
+		    "scalefactors command: Mzz must be greater than 0, not " << mzz);
+     }
+     else if( startswith("t0=",token))
+     {
+        token += 3;
+        t0 = atof(token);
+        CHECK_INPUT(t0 > 0.0,
+		    "scalefactors command: t0  must be greater than 0, not " << t0 );
+     }
+     else if( startswith("freq=",token))
+     {
+        token += 5;
+        freq = atof(token);
+        CHECK_INPUT(freq > 0.0,
+		    "scalefactors command: freq  must be greater than 0, not " << freq );
+     }
+     else
+     {
+        badOption("scalefactors", token);
+     }
+     token = strtok(NULL, " \t");
+  }  
+  m_scalefactors[0] = x0;
+  m_scalefactors[1] = y0;
+  m_scalefactors[2] = z0;
+  m_scalefactors[3] = mxx;
+  m_scalefactors[4] = mxy;
+  m_scalefactors[5] = mxz;
+  m_scalefactors[6] = myy;
+  m_scalefactors[7] = myz;
+  m_scalefactors[8] = mzz;
+  m_scalefactors[9] = t0;
+  m_scalefactors[10]= freq;
+}
+
+//-----------------------------------------------------------------------
+void EW::processCG( char* buffer )
+{
+  char* token = strtok(buffer, " \t");
+
+  CHECK_INPUT(strcmp("cg", token) == 0, "ERROR: not a cg line...: " << token);
+  token = strtok(NULL, " \t");
+  m_maxit = 11;
+  m_maxrestart = 0;
+  m_tolerance = 1e-6;
+  m_compute_guess=false;
+  m_compute_scalefactors=false;
+
+  string err = "CG Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("maxit=", token))
+     {
+        token += 6;
+        m_maxit = atoi(token);
+        CHECK_INPUT(m_maxit >= 0,
+		    "cg command: maxit must be greater than or equal to 0, not " << m_maxit );
+     }
+     else if( startswith("maxrestart=",token) )
+     {
+        token += 11;
+        m_maxrestart = atoi(token);
+        CHECK_INPUT(m_maxrestart >= 0,
+		    "cg command: maxrestart must be greater than or equal to 0, not " << m_maxrestart );
+     }
+     else if( startswith("tolerance=",token) )
+     {
+        token += 10;
+        m_tolerance = atof(token);
+        CHECK_INPUT(m_tolerance >= 0,
+		    "cg command: tolerance must be greater than or equal to 0, not " << m_tolerance );
+     }
+     else if( startswith("initialguess=",token) )
+     {
+        token += 13;
+        if( strcmp(token,"usesource")==0 )
+	   m_compute_guess = false;
+	else if( strcmp(token,"estimate") == 0 )
+	   m_compute_guess = true;
+        else
+	   CHECK_INPUT( false,
+		     "cg command: initialguess value " << token << " not understood");
+     }
+     else if( startswith("scalefactors=",token) )
+     {
+        token += 13;
+        if( strcmp(token,"useinput")==0 )
+	   m_compute_scalefactors = false;
+	else if( strcmp(token,"estimate") == 0 )
+	   m_compute_scalefactors = true;
+        else
+	   CHECK_INPUT( false,
+		     "cg command: scalefactors value " << token << " not understood");
+     }
+     else
+     {
+        badOption("cg", token);
+     }
+     token = strtok(NULL, " \t");
+  }  
+}
