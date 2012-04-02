@@ -1680,17 +1680,17 @@ void EW::processTestRayleigh(char* buffer)
   }
 // convert to radians
   double alpha_rad = alpha*M_PI/180.;
-  
-  m_rayleigh_wave_test = new TestRayleighWave( rho, cs, cp, cos(alpha_rad), sin(alpha_rad));
+// alpha is the angle between the y-axis and the direction of propagation  
+  m_rayleigh_wave_test = new TestRayleighWave( rho, cs, cp, alpha_rad);
 
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
   set_global_bcs(bct);
   
   if (proc_zero())
   {
-    printf("TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, kx=%e, ky=%e\n", 
+    printf("TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, alpha=%e\n", 
 	   m_rayleigh_wave_test->m_rho, m_rayleigh_wave_test->m_cp, m_rayleigh_wave_test->m_cs, 
-	   m_rayleigh_wave_test->m_cr, m_rayleigh_wave_test->m_kx, m_rayleigh_wave_test->m_ky);
+	   m_rayleigh_wave_test->m_cr, m_rayleigh_wave_test->m_alpha);
   }
   
 }

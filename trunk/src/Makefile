@@ -62,7 +62,7 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
 
-sbp4f: $(OBJ)
+s4f: $(OBJ)
 	$(CXX) $(CFLAGS) -o $@ $(OBJ) $(linklibs)
 
 sbp4opt: $(OBJOPT)
@@ -87,4 +87,4 @@ test: $(OBJ2)
 	$(CXX) $(CFLAGS) -c $<
 
 clean:
-	/bin/rm -f sbp4f sbp4opt $(OBJ)
+	/bin/rm -f s4f sbp4opt $(OBJ)

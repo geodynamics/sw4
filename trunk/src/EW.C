@@ -46,10 +46,10 @@ void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, d
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					  double*, double*, double* );
 //  subroutine rayleighfort( ifirst, ilast, jfirst, jlast, kfirst, klast,
-// +     u, t, lambda, mu, rho, cr, omega, h, zmin )
+// +     u, t, lambda, mu, rho, cr, omega, alpha, h, zmin )
 void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int*jlast, int*kfirst, int*klast, 
 					  double*u, double*t, double*lambda, double*mu, 
-					  double*rho, double*cr, double*omega, double *h, double *zmin);
+					  double*rho, double*cr, double*omega, double *alpha, double *h, double *zmin);
 void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			      double*, double*, double*, double*, double*, double* );
 }
@@ -1389,7 +1389,7 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   }
   else if( m_rayleigh_wave_test )
   {
-    double cr, lambda, mu, rho;
+    double cr, lambda, mu, rho, alpha;
     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     {
       u_ptr    = a_U[g].c_ptr();
@@ -1406,8 +1406,9 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
       rho = m_rayleigh_wave_test->m_rho;
       lambda = m_rayleigh_wave_test->m_lambda;
       mu = m_rayleigh_wave_test->m_mu;
+      alpha = m_rayleigh_wave_test->m_alpha;
       F77_FUNC(rayleighfort,RAYLEIGHFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &h, &zmin );
+					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
     }
   }
   else
@@ -1462,7 +1463,7 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
   }
   else if( m_rayleigh_wave_test ) 
   {
-    double cr, lambda, mu, rho;
+    double cr, lambda, mu, rho, alpha;
     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     {
       u_ptr    = a_U[g].c_ptr();
@@ -1479,8 +1480,9 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
       rho = m_rayleigh_wave_test->m_rho;
       lambda = m_rayleigh_wave_test->m_lambda;
       mu = m_rayleigh_wave_test->m_mu;
+      alpha = m_rayleigh_wave_test->m_alpha;
       F77_FUNC(rayleighfort,RAYLEIGHFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &h, &zmin );
+					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
     }
     
     retval = true;

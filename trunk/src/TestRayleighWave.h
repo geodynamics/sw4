@@ -8,9 +8,8 @@ class TestRayleighWave
 {
 public:
 
-TestRayleighWave( double rho, double cs, double cp, 
-		  double kx, double ky ) : 
-  m_rho(rho),m_cs(cs),m_cp(cp),m_omega(2*M_PI/1000.0),m_kx(kx),m_ky(ky) 
+TestRayleighWave( double rho, double cs, double cp, double alpha_rad ) : 
+  m_rho(rho), m_cs(cs), m_cp(cp), m_omega(2*M_PI/1000.0), m_alpha(alpha_rad) 
 // m_omega must be assigned before the exact solution can be evaluated
   {
     m_mu = m_cs*m_cs*m_rho;
@@ -39,7 +38,7 @@ TestRayleighWave( double rho, double cs, double cp,
     }
   }
 
-double m_rho, m_cp, m_cs, m_cr, m_lambda, m_mu, m_omega, m_kx, m_ky;
+double m_rho, m_cp, m_cs, m_cr, m_lambda, m_mu, m_omega, m_alpha;
 
 private:
 TestRayleighWave(const TestRayleighWave&);

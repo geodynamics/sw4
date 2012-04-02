@@ -1,15 +1,14 @@
       subroutine rayleighfort( ifirst, ilast, jfirst, jlast, kfirst, 
-     +     klast, u, t, lambda, mu, rho, cr, omega, h, zmin )
+     +     klast, u, t, lambda, mu, rho, cr, omega, alpha, h, zmin )
       implicit none
-c      real*8 CSW, CSWP
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8 lambda, mu, rho, omega, h, t, zmin
-c      real*8 pr, cRel, xi, latilde, csw0, dxi, cr, xi2, amp1, amp2
+      real*8 lambda, mu, rho, omega, alpha, h, t, zmin
       real*8 xi, latilde, dxi, cr, xi2, amp1, amp2
-      real*8 x, y, z, phase, pi
+      real*8 x, y, z, phase, pi, vp, yp
       pi = 4*ATAN(1d0)
 c the limit mu->0 corresponds to Poisson ratio -> 0.5
+c We used to solve the characteristic eqn on every call to this routine
 c      pr = lambda/(2*(lambda+mu))
 c$$$      cRel = (0.87d0 + 1.12d0*pr)/(1+pr)
 c$$$      xi = cRel
@@ -24,10 +23,11 @@ c$$$c      write(*,101) 'csw = ',csw0, ' xi=',xi
 c$$$ 101  format(' Rayleigh', a, g12.5, a, g18.11 )
 c$$$      cRel = xi      
 c      cr  = cRel*sqrt(mu)
+      latilde = lambda/mu
       xi = cr/sqrt(mu/rho)
       xi2 = xi*xi
 c      write(*,*),'Rayleigh params:', cRel, mu, cr, xi
-      phase = pi/2
+      phase = 0
       amp1 = 1
       amp2 = -amp1*(2-xi2)/2
 c      write(*,*)'Rayleigh:', omega, amp1, amp2, xi2, c, t, phase
@@ -37,19 +37,20 @@ c      write(*,*)'Rayleigh:', omega, amp1, amp2, xi2, c, t, phase
           y = (j-1)*h
           do i=ifirst,ilast
             x = (i-1)*h
-            u(1,i,j,k) = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
+            yp = -x*sin(alpha) + y*cos(alpha)
+            vp = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
      *           omega/abs(omega) * sqrt(1-xi2) * 
-     +           sin(omega*(cr*t + x) + phase) +
+     +           sin(omega*(cr*t + yp) + phase) +
      *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) * 
      *           omega/abs(omega) / sqrt(1-xi2/(2+latilde)) * 
-     *           sin(omega*(cr*t + x) + phase)
+     *           sin(omega*(cr*t + yp) + phase)
 
-            u(2,i,j,k) = 0.
-
-            u(3,i,j,k) = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
-     *           cos(omega*(cr*t + x) + phase) +
+            u(1,i,j,k)= -vp * sin(alpha)
+            u(2,i,j,k)=  vp * cos(alpha)
+            u(3,i,j,k)= amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
+     *           cos(omega*(cr*t + yp) + phase) +
      *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) *
-     *           cos(omega*(cr*t + x) + phase)
+     *           cos(omega*(cr*t + yp) + phase)
 
           enddo
         enddo
