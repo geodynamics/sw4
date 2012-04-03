@@ -144,8 +144,22 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   // inputFile.clear();
   // inputFile.seekg(0, ios::beg);
   
+// process th testrayleigh command to enable a periodic domain in the (x,y)-directions
+// these commands can enter data directly the object (this->)
+  while (!inputFile.eof())
+  {    
+     inputFile.getline(buffer, 256);
+     if (startswith("testrayleigh", buffer))
+     {
+       m_doubly_periodic = true;
+     }
+  }
+
+  inputFile.clear();
+  inputFile.seekg(0, ios::beg); // reset file pointer to the beginning of the input file
+
 //---------------------------------------------------------------
-// First process the grid, refinement and topography commands so
+// Then process the grid, refinement and topography commands so
 // we know how big the solution arrays need to be.
 //
 // Also, if we are enabling attenuation turn it on now so it
@@ -165,11 +179,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      else if (startswith("fileio", buffer))
      {
        processFileIO(buffer);
-     }
-// read testrayleigh here to setup periodic boundary conditions in the MPI communicator
-     else if (startswith("testrayleigh", buffer))
-     {
-       m_doubly_periodic = true;
      }
      // else if (startswith("refinement", buffer))
      // {
@@ -1633,8 +1642,8 @@ void EW::processTestRayleigh(char* buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("testrayleigh", token) == 0, "ERROR: not a testrayleigh line...: " << token);
   token = strtok(NULL, " \t");
-  double cs = 1.0, rho=1.0, cp=sqrt(3.0), alpha = 0.0;
-  int nxwl = 1;
+  double cs = 1.0, rho=1.0, cp=sqrt(3.0);
+  int nwl = 1;
   
   while (token != NULL)
   {
@@ -1656,21 +1665,13 @@ void EW::processTestRayleigh(char* buffer)
       token += 4; 
       rho = atof(token);
     }
-//                       1234567890
-    else if (startswith("alpha=", token))
-    {
-      token += 6; 
-      alpha = atof(token);
-      CHECK_INPUT(alpha >= 0.0 && alpha <= 45.0 , 
-		  "Parameter alpha must be in the range 0 to 45, not: " << alpha);
-    }
 //                       1234567
-    else if (startswith("nxwl=", token))
+    else if (startswith("nwl=", token))
     {
-      token += 5; 
-      nxwl = atoi(token);
-      CHECK_INPUT(nxwl >= 1, 
-		  "Parameter nxwl must be >= 1, not: " << nxwl);
+      token += 4; 
+      nwl = atoi(token);
+      CHECK_INPUT(nwl >= 1, 
+		  "Parameter nwl must be >= 1, not: " << nwl);
     }
     else
     {
@@ -1678,10 +1679,8 @@ void EW::processTestRayleigh(char* buffer)
     }
     token = strtok(NULL, " \t");
   }
-// convert to radians
-  double alpha_rad = alpha*M_PI/180.;
-// alpha is the angle between the y-axis and the direction of propagation  
-  m_rayleigh_wave_test = new TestRayleighWave( rho, cs, cp, alpha_rad);
+// make a test object
+  m_rayleigh_wave_test = new TestRayleighWave( rho, cs, cp, nwl, m_global_xmax);
 
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
   set_global_bcs(bct);
@@ -3279,6 +3278,9 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
      cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
      cout << " Processor array     " << proc_max[0] << " x " << proc_max[1] << endl;
    }
+// save the cartesian processor decomposition
+   m_proc_array[0] = proc_max[0];
+   m_proc_array[1] = proc_max[1];
 
    int ifirst, ilast, jfirst, jlast;
    decomp1d( nx_finest_w_ghost, my_proc_coords[0], proc_max[0], ifirst, ilast );

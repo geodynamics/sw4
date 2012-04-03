@@ -9,7 +9,7 @@ class TestRayleighWave
 {
 public:
 
-TestRayleighWave( double rho, double cs, double cp, double alpha_rad );
+TestRayleighWave( double rho, double cs, double cp, int nwl, double xmax );
 
 double m_rho, m_cp, m_cs, m_cr, m_lambda, m_mu, m_omega, m_alpha;
 

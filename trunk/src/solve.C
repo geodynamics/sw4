@@ -222,11 +222,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
   } // end m_twilight_forcing    
 
-  if ( proc_zero() && getVerbosity() >= 2)
-  {
-    printf("About to call enforceBC on intial data\n");
-  }
-  
 // enforce bc on initial data
 // U
 // communicate across processor boundaries
@@ -465,17 +460,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    if( m_output_detailed_timing )
      print_execution_times( time_sum );
 
-// tmp
-   if ( proc_zero() )
-     printf("\nAbout to call exactSol\n");
-
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVE, a_Sources ) )
    {
-// tmp
-     if ( proc_zero() )
-       printf("\nAfter calling exactSol\n");
-
      double errInf, errL2, solInf, solL2;
 
 // tmp: output exact sol for Lamb's prolem 

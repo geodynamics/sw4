@@ -210,6 +210,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
      mbcGlobalType[i] = bNone;
    }
 
+   m_proc_array[0]=0;
+   m_proc_array[1]=0;
+
 // read the input file and setup the simulation object
    if (parseInputFile( a_GlobalSources, a_GlobalTimeSeries ))
      mParsingSuccessful = true;
@@ -364,8 +367,15 @@ void EW::assign_local_bcs( )
     }
     if (m_iEnd[top]-m_ghost_points < m_global_nx[top])
     {
-    m_bcType[g][1] = bProcessor;
+      m_bcType[g][1] = bProcessor;
     }
+
+// for a periodic domain, we need to change all bc to bProcessor if more than 1 process is used in that direction
+    if (m_doubly_periodic && m_proc_array[0] > 1)
+    {
+      m_bcType[g][0] = bProcessor;
+      m_bcType[g][1] = bProcessor;
+    }    
 
     if (m_jStart[top]+m_ghost_points > 1)
     {
@@ -375,6 +385,14 @@ void EW::assign_local_bcs( )
     {
       m_bcType[g][3] = bProcessor;
     }
+
+// for a periodic domain, we need to change all bc to bProcessor if more than 1 process is used in that direction
+    if (m_doubly_periodic && m_proc_array[1] > 1)
+    {
+      m_bcType[g][2] = bProcessor;
+      m_bcType[g][3] = bProcessor;
+    }
+
   }
   
 // vertical bc's are interpolating except at the bottom and the top, where they equal the global conditions

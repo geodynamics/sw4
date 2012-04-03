@@ -468,6 +468,7 @@ double mDt;
 
 bool m_doubly_periodic;
 MPI_Comm m_cartesian_communicator;
+int m_proc_array[2];
 
 bool mbcsSet;
 

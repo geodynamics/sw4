@@ -5,7 +5,7 @@
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lambda, mu, rho, omega, alpha, h, t, zmin
       real*8 xi, latilde, dxi, cr, xi2, amp1, amp2
-      real*8 x, y, z, phase, pi, vp, yp
+      real*8 x, y, z, phase, pi, up, xp
       pi = 4*ATAN(1d0)
 c the limit mu->0 corresponds to Poisson ratio -> 0.5
 c We used to solve the characteristic eqn on every call to this routine
@@ -37,20 +37,20 @@ c      write(*,*)'Rayleigh:', omega, amp1, amp2, xi2, c, t, phase
           y = (j-1)*h
           do i=ifirst,ilast
             x = (i-1)*h
-            yp = -x*sin(alpha) + y*cos(alpha)
-            vp = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
+            xp = x*cos(alpha) + y*sin(alpha)
+            up = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
      *           omega/abs(omega) * sqrt(1-xi2) * 
-     +           sin(omega*(cr*t + yp) + phase) +
+     +           sin(omega*(cr*t + xp) + phase) +
      *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) * 
      *           omega/abs(omega) / sqrt(1-xi2/(2+latilde)) * 
-     *           sin(omega*(cr*t + yp) + phase)
+     *           sin(omega*(cr*t + xp) + phase)
 
-            u(1,i,j,k)= -vp * sin(alpha)
-            u(2,i,j,k)=  vp * cos(alpha)
+            u(1,i,j,k)= up*cos(alpha)
+            u(2,i,j,k)= up*sin(alpha)
             u(3,i,j,k)= amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
-     *           cos(omega*(cr*t + yp) + phase) +
+     *           cos(omega*(cr*t + xp) + phase) +
      *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) *
-     *           cos(omega*(cr*t + yp) + phase)
+     *           cos(omega*(cr*t + xp) + phase)
 
           enddo
         enddo
@@ -64,7 +64,7 @@ c----------------------------------------------------------------------
       integer wind(6)
       real*8 bforce(3,*), h, t, lambda, mu, rho, cr, omega, zmin
       real*8 xi, latilde, xi2, amp1, amp2, alpha
-      real*8 x, y, z, phase, pi, vp, yp
+      real*8 x, y, z, phase, pi, up, xp
       integer i, j, k, qq
 c
 c NOTE: pass in the window for one side, i.e., wind(1,side) in the calling routine
@@ -86,21 +86,21 @@ c need to add zmin to work in a composite grid setting
           y = (j-1)*h
           do i=wind(1),wind(2)
             x = (i-1)*h
-
-            yp = -x*sin(alpha) + y*cos(alpha)
-            vp = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
+            xp = x*cos(alpha) + y*sin(alpha)
+            up = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
      *           omega/abs(omega) * sqrt(1-xi2) * 
-     +           sin(omega*(cr*t + yp) + phase) +
+     +           sin(omega*(cr*t + xp) + phase) +
      *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) * 
      *           omega/abs(omega) / sqrt(1-xi2/(2+latilde)) * 
-     *           sin(omega*(cr*t + yp) + phase)
+     *           sin(omega*(cr*t + xp) + phase)
 
-            bforce(1,qq)= -vp * sin(alpha)
-            bforce(2,qq)=  vp * cos(alpha)
+            bforce(1,qq)= up*cos(alpha)
+            bforce(2,qq)= up*sin(alpha)
             bforce(3,qq)= amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
-     *           cos(omega*(cr*t + yp) + phase) +
+     *           cos(omega*(cr*t + xp) + phase) +
      *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) *
-     *           cos(omega*(cr*t + yp) + phase)
+     *           cos(omega*(cr*t + xp) + phase)
+
             qq = qq+1
           enddo
         enddo
