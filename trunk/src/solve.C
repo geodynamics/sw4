@@ -32,13 +32,18 @@ void F77_FUNC(twfrsurfz, TWFRSURFZ)(int * ifirst_p, int * ilast_p, int * jfirst_
 				  double* bforce_side5_ptr, double* mu_ptr, double* la_ptr );
 void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, double *om_p, double * cv_p, 
 				    double *ph_p,  double * bforce_side_ptr );
-void F77_FUNC( testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
+void F77_FUNC(testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
 				   int* klast, int* nz, int* wind, double* m_zmin, double* h, int* kx, int* ky, int* kz,
 				   double* momgrid );
 void F77_FUNC(addsgd,ADDSGD) (double* dt, double *h, double *a_U, double*a_Um, double*a_Up, 
 			      double *sg_dc_x, double* sg_dc_y, double* sg_dc_z,
 			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+//  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
+// +     omega, alpha, h, zmin )
+void F77_FUNC(raydirbdry,RAYDIRBDRY)( double *bforce_side_ptr, int *wind_ptr, double *t, double *lambda, double *mu, double *rho,
+				      double *cr, double *omega, double *alpha, double *h, double *zmin );
 }
+
 
 //--------------------------------------------------------------------
 void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
@@ -773,7 +778,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
-  double *u_ptr, *mu_ptr, *la_ptr, h;
+  double *u_ptr, *mu_ptr, *la_ptr, h, zmin;
   boundaryConditionType *bcType_ptr;
   double *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
@@ -796,6 +801,8 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
     
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
     bcType_ptr = m_bcType[g]; // pointer to the local bc array
+    zmin = m_zmin[g];
+
     
     wind_ptr = m_BndryWindow[g];
     
@@ -864,6 +871,32 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 //               call TWFRSURFZ( ifirst, ilast, jfirst, jlast, kfirst, 
 //      +             klast, nx, ny, nz, h, k, t, om, cv, ph, bforce5, mu, 
 //      +             la )
+    }
+    else if (m_rayleigh_wave_test)
+    {
+      int q;
+      double lambda, mu, rho, cr, omega, alpha;
+      
+      lambda = m_rayleigh_wave_test->m_lambda;
+      mu = m_rayleigh_wave_test->m_mu;
+      rho = m_rayleigh_wave_test->m_rho;
+      cr = m_rayleigh_wave_test->m_cr;
+      omega = m_rayleigh_wave_test->m_omega;
+      alpha = m_rayleigh_wave_test->m_alpha;
+
+// homogneous free surface bc (low-z)
+      for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
+	bforce_side4_ptr[q] = 0.;
+
+// assign exact solution on bottom (high-z)
+      if (m_bcType[g][5] == bDirichlet)
+      {
+	F77_FUNC(raydirbdry,RAYDIRBDRY)( bforce_side5_ptr, &wind_ptr[6*5], &t, &lambda, &mu, &rho, &cr, 
+					 &omega, &alpha, &h, &zmin );
+      }
+
+     //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
+     // +     omega, alpha, h, zmin )
     }
     else
     {

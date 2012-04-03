@@ -56,3 +56,86 @@ c      write(*,*)'Rayleigh:', omega, amp1, amp2, xi2, c, t, phase
         enddo
       enddo
       end
+
+c----------------------------------------------------------------------
+      subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
+     +     omega, alpha, h, zmin )
+      implicit none
+      integer wind(6)
+      real*8 bforce(3,*), h, t, lambda, mu, rho, cr, omega, zmin
+      real*8 xi, latilde, xi2, amp1, amp2, alpha
+      real*8 x, y, z, phase, pi, vp, yp
+      integer i, j, k, qq
+c
+c NOTE: pass in the window for one side, i.e., wind(1,side) in the calling routine
+c
+      pi = 4*ATAN(1d0)
+      latilde = lambda/mu
+      xi = cr/sqrt(mu/rho)
+      xi2 = xi*xi
+c      write(*,*),'Rayleigh params:', cRel, mu, cr, xi
+      phase = 0
+      amp1 = 1
+      amp2 = -amp1*(2-xi2)/2
+*** Twilight forced rayleigh wave Dirichlet condition
+      qq = 1
+      do k=wind(5),wind(6)
+c need to add zmin to work in a composite grid setting
+        z = (k-1)*h + zmin
+        do j=wind(3),wind(4)
+          y = (j-1)*h
+          do i=wind(1),wind(2)
+            x = (i-1)*h
+
+            yp = -x*sin(alpha) + y*cos(alpha)
+            vp = amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
+     *           omega/abs(omega) * sqrt(1-xi2) * 
+     +           sin(omega*(cr*t + yp) + phase) +
+     *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) * 
+     *           omega/abs(omega) / sqrt(1-xi2/(2+latilde)) * 
+     *           sin(omega*(cr*t + yp) + phase)
+
+            bforce(1,qq)= -vp * sin(alpha)
+            bforce(2,qq)=  vp * cos(alpha)
+            bforce(3,qq)= amp1 * exp( -abs(omega)*z*sqrt(1-xi2) ) * 
+     *           cos(omega*(cr*t + yp) + phase) +
+     *           amp2 * exp( -abs(omega)*z*sqrt(1- xi2/(2+latilde)) ) *
+     *           cos(omega*(cr*t + yp) + phase)
+            qq = qq+1
+          enddo
+        enddo
+      enddo
+      end
+
+      function CSW( xi, latilde )
+      real*8 xi, latilde
+      CSW = sqrt(1-xi*xi)*sqrt(1-xi*xi/(2+latilde)) - (1-0.5d0*xi*xi)**2
+      end
+
+
+      function CSWP( xi, latilde )
+      real*8 xi, latilde
+      CSWP = -xi*sqrt(1-xi*xi/(2+latilde))/sqrt(1-xi*xi) -
+     *      xi*sqrt(1-xi*xi)/(2+latilde)/sqrt(1-xi*xi/(2+latilde))
+     *      + 2*xi*(1-0.5d0*xi*xi)
+      end
+
+c this routine computes the Rayleigh wave phase velocity, relative to the shear velocity
+      real*8 function RVEL( la, mu )
+      implicit none
+      real*8 la, mu
+      real*8 pr, cRel, xi, latilde, csw0, dxi
+      real*8 CSW, CSWP
+      integer iter
+      pr = la/(2*(la+mu))
+      cRel = (0.87d0 + 1.12d0*pr)/(1+pr)
+      xi = cRel
+      latilde = la/mu
+      csw0 = CSW(xi, latilde)
+      do iter=0,9
+        dxi = -csw0/CSWP(xi, latilde)
+        xi  = xi+dxi
+        csw0 = CSW(xi, latilde)
+      enddo
+      RVEL = xi      
+      end

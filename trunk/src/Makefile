@@ -51,7 +51,7 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o TestRayleighWave.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
