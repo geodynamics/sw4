@@ -1687,9 +1687,12 @@ void EW::processTestRayleigh(char* buffer)
   
   if (proc_zero())
   {
-    printf("TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, alpha=%e\n", 
+    double Lwave = 2*M_PI/m_rayleigh_wave_test->m_omega;
+    double Period = Lwave/m_rayleigh_wave_test->m_cr;
+    
+    printf("TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, Wave length=%e, Period=%e\n", 
 	   m_rayleigh_wave_test->m_rho, m_rayleigh_wave_test->m_cp, m_rayleigh_wave_test->m_cs, 
-	   m_rayleigh_wave_test->m_cr, m_rayleigh_wave_test->m_alpha);
+	   m_rayleigh_wave_test->m_cr, Lwave, Period );
   }
   
 }

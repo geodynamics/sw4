@@ -1096,7 +1096,7 @@ int EW::mkdirs(const string& path)
 //-----------------------------------------------------------------------
 void EW::setup_supergrid( )
 {
-  if (mVerbose && proc_zero())
+  if (mVerbose >= 3 && proc_zero())
     cout << "*** Inside setup_supergrid ***" << endl;
   
 // check to see if there are any supergrid boundary conditions
@@ -1127,13 +1127,13 @@ void EW::setup_supergrid( )
     m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
 				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
 // tmp
-  if (proc_zero())
-  {
-    printf("********** Super-grid parameters (x, y, z)-directions:\n");
-    m_supergrid_taper_x.print_parameters();
-    m_supergrid_taper_y.print_parameters();
-    m_supergrid_taper_z.print_parameters();
-  }
+//   if (mVerbose >= 2 && proc_zero())
+//   {
+//     printf("********** Super-grid parameters (x, y, z)-directions:\n");
+//     m_supergrid_taper_x.print_parameters();
+//     m_supergrid_taper_y.print_parameters();
+//     m_supergrid_taper_z.print_parameters();
+//   }
   
 }
 
@@ -1237,7 +1237,7 @@ void EW::supergrid_taper_material( )
 {
   double x, y, z;
   int g;
-  if (mVerbose >= 1 && proc_zero())
+  if (mVerbose >= 3 && proc_zero())
     cout << "*** Inside supergrid_taper_material ***" << endl;
   
   for( g=0 ; g<mNumberOfCartesianGrids; g++) // do Cartesian grids first

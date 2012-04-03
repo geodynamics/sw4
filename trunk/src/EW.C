@@ -100,7 +100,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   //  mTestSource(false),
   //  mTestLamb(false),
   mOrder(4),
-  mCFL(1.3), // 0.8 for 2nd order
+  mCFL(1.15), // 1.15 is necessary for the rayleigh wave test when Cp/Cs=10
   // m_d4coeff(0.0),
   // m_d4_cfl(0.2),
   // m_curlcoeff(0.0),
