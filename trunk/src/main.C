@@ -129,7 +129,7 @@ main(int argc, char **argv)
     {
       if (myRank == 0)
       {
-	cout << "Running sbp4f on " <<  nProcs << " processors..." << endl
+	cout << "Running s4f on " <<  nProcs << " processors..." << endl
 	     << "Writing output to directory: " 
 	     << simulation.getOutputPath() << endl;
       }
@@ -146,7 +146,7 @@ main(int argc, char **argv)
       if( myRank == 0 )
       {
 	cout << "============================================================" << endl
-	     << " sbp4f ( Summation by parts 4th order forward wave propagator) finished! " << endl
+	     << " s4f ( Summation by parts 4th order forward wave propagator) finished! " << endl
 	     << "============================================================" << endl;
       }
 
