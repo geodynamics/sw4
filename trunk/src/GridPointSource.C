@@ -1724,6 +1724,7 @@ void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<
       double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
       double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
       double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+      //      double h3 = 1.0;
 
       // derivative wrt. position (m=0,1,2) and moment tensor components (m=3,..,8)
       for( int m= 0 ; m < 9 ; m++ )

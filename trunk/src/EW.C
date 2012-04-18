@@ -52,6 +52,8 @@ void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int
 					  double*rho, double*cr, double*omega, double *alpha, double *h, double *zmin);
 void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			      double*, double*, double*, double*, double*, double* );
+void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, 
+                                   double*, double*, double*, double*, double*, double* );
 }
 
 using namespace std;
@@ -199,7 +201,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_maxit(0),
   m_maxrestart(0),
   m_compute_guess(false),
-  m_compute_scalefactors(false)
+  m_compute_scalefactors(false),
+  m_cgstepselection(0),
+  m_cgvarcase(0),
+  m_cgfletcherreeves(true),
+  m_do_linesearch(true)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
@@ -657,13 +663,13 @@ void EW::computeNearestGridPoint(int & a_i,
     {
       VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
               "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
-              << m_global_nx[a_g] << ")");
+              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
       VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
               "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
-              << m_global_ny[a_g] << ")");
+              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
       VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
               "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
-              << m_kEnd[a_g]-m_ghost_points << ")");
+              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
     }
 }
 
@@ -3320,9 +3326,42 @@ bool EW::compute_sf(){return m_compute_scalefactors;}
 bool EW::compute_guess(){return m_compute_guess;}
 
 //-----------------------------------------------------------------------
-void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance )
+void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance,
+			   bool& fletcherreeves, int& stepselection, bool& do_linesearch,
+			   int& varcase )
 {
    maxit = m_maxit;
    maxrestart = m_maxrestart;
    tolerance = m_tolerance;
+   fletcherreeves = m_cgfletcherreeves;
+   stepselection = m_cgstepselection;
+   varcase = m_cgvarcase;
+   do_linesearch = m_do_linesearch;
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
+			 vector<Sarray>& U, vector<Sarray>& Up )
+{
+// Compute energy
+   double energy = 0;
+   for( int g=0; g < mNumberOfGrids ; g++ )
+   {
+      double locenergy = 0;
+      int istart = m_iStart[g];
+      int iend   = m_iEnd[g];
+      int jstart = m_jStart[g];
+      int jend   = m_jEnd[g];
+      int kstart = m_kStart[g];
+      int kend   = m_kEnd[g];
+      double* up_ptr = Up[g].c_ptr(); 
+      double* u_ptr  = U[g].c_ptr();
+      double* um_ptr = Um[g].c_ptr();
+      double* rho_ptr = mRho[g].c_ptr();
+      
+      F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+			        &istart, &iend, &jstart, &jend, &kstart, &kend, 
+			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
+      locenergy /= (dt*dt);
+   }
 }

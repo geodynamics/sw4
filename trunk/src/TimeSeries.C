@@ -742,7 +742,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
    {
      fprintf(fd, "%e", m_t0 + i*m_dt);
      for (int q=0; q<m_nComp; q++)
-       fprintf(fd, " %e", mRecordedSol[q][i]);
+       fprintf(fd, " %20.12g", mRecordedSol[q][i]);
      fprintf(fd, "\n");
    }
    
@@ -754,6 +754,8 @@ void TimeSeries::readFile( )
 {
 //building the file name...
    stringstream filePrefix;
+   if( m_path != "." )
+      filePrefix << m_path;
    filePrefix << m_fileName << ".txt" ;
 
    if( m_myPoint && m_usgsFormat )
@@ -1143,6 +1145,7 @@ void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
    {
       double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
       double ih3 = 1.0/(h[m_grid0]*h[m_grid0]*h[m_grid0]);
+      //      double ih3 = 1.0;
       double iwgh = 1.0;
       if( 1 <= m_k0 && m_k0 <= 4  )
 	 iwgh = 1.0/normwgh[m_k0-1];

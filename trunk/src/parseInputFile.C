@@ -4231,6 +4231,14 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   
   if (isMomentType)
     {
+       // Remove amplitude variable
+       mxx *= m0;
+       mxy *= m0;
+       mxz *= m0;
+       myy *= m0;
+       myz *= m0;
+       mzz *= m0;
+       m0 = 1;
       // these have global location since they will be used by all processors
       sourcePtr = new Source(this, m0, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
                              tDep, formstring, ncyc);
@@ -4242,6 +4250,11 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     }
   else // point forcing
     {
+       // Remove amplitude variable
+       fx *= f0;
+       fy *= f0;
+       fz *= f0;
+       f0 = 1;
       // global version (gets real coordinates)
       sourcePtr = new Source(this, f0, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, ncyc);
 // relative depth?
@@ -4991,6 +5004,10 @@ void EW::processCG( char* buffer )
   m_tolerance = 1e-6;
   m_compute_guess=false;
   m_compute_scalefactors=false;
+  m_cgstepselection = 0;
+  m_cgvarcase = 0;
+  m_cgfletcherreeves = true;
+  m_do_linesearch = true;
 
   string err = "CG Error: ";
 
@@ -5041,6 +5058,52 @@ void EW::processCG( char* buffer )
         else
 	   CHECK_INPUT( false,
 		     "cg command: scalefactors value " << token << " not understood");
+     }
+     else if( startswith("linesearch=",token) )
+     {
+        token += 11;
+        if( strcmp(token,"on")==0 )
+	   m_do_linesearch = true;
+	else if( strcmp(token,"off") == 0 )
+	   m_do_linesearch = false;
+        else
+	   CHECK_INPUT( false,
+		     "cg command: linesearch value " << token << " not understood");
+     }
+     else if( startswith("steptype=",token) )
+     {
+        token += 9;
+        if( strcmp(token,"misfit")==0 )
+	   m_cgstepselection = 0;
+	else if( strcmp(token,"hessian") == 0 )
+	   m_cgstepselection = 1;
+        else
+	   CHECK_INPUT( false,
+		     "cg command: steptype value " << token << " not understood");
+     }
+     else if( startswith("cgtype=",token) )
+     {
+        token += 7;
+        if( strcmp(token,"fletcher-reeves")==0 )
+	   m_cgfletcherreeves = true;
+	else if( strcmp(token,"picola-ribiere") == 0 )
+	   m_cgfletcherreeves = false;
+        else
+	   CHECK_INPUT( false,
+		     "cg command: cgtype value " << token << " not understood");
+     }
+     else if( startswith("solvefor=" , token) )
+     {
+	token += 9;
+        if( strcmp(token,"posMt0freq")==0 )
+	   m_cgvarcase = 0;
+	else if( strcmp(token,"posMt0") == 0 )
+	   m_cgvarcase = 1;
+	else if( strcmp(token,"posM") == 0 )
+	   m_cgvarcase = 2;
+        else
+	   CHECK_INPUT( false,
+		     "cg command: solvefor value " << token << " not understood");
      }
      else
      {

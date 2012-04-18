@@ -496,6 +496,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    finalizeIO();
    cout.flush(); cerr.flush();
 
+   // Give back memory
+   for( int g = 0; g <mNumberOfGrids; g++ )
+   {
+      for(int side=0; side < 6; side++)
+	 if( BCForcing[g][side] != NULL )
+	    delete[] BCForcing[g][side];
+      delete[] BCForcing[g];
+   }
+
 // why is this barrier needed???
    MPI_Barrier(MPI_COMM_WORLD);
 

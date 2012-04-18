@@ -558,7 +558,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	    {
 	       double wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
 	       if( (wF*mAmp != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-		   && a_EW->point_in_proc(i,j,g) )
+		   && a_EW->interior_point_in_proc(i,j,g) )
 	       {
 		  wF /= h*h*h;
 		  {
@@ -579,7 +579,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	    for( int i=ic-2 ; i <= ic+3 ; i++ )
 	    {
 	       double wFx=0, wFy=0, wFz=0, dsdp[27];
-	       if( a_EW->point_in_proc(i,j,g) ) 
+	       if( a_EW->interior_point_in_proc(i,j,g) ) 
 	       {
 		  wFx = dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 		  wFy =  wghi[i-ic+2]*dwghj[j-jc+2]* wghk[k-kc+2];

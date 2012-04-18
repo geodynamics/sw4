@@ -73,6 +73,10 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    double time_sum[8]={0,0,0,0,0,0,0,0};
    double time_start_solve = MPI_Wtime();
 
+// Save all time series
+//	for (int ts=0; ts<a_TimeSeries.size(); ts++)
+//	   a_TimeSeries[ts]->writeFile();
+
    // Backward time stepping loop
    for( int currentTimeStep = mNumberOfTimeSteps ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
@@ -117,7 +121,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       for( int s=0 ; s < point_sources.size() ; s++ )
       {
 	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradient, mGridSize );
-	 point_sources[s]->add_to_hessian( K, Kacc, t, mDt, hessian, mGridSize );
+	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian, mGridSize );
       }
       
       time_measure[6] = MPI_Wtime();
@@ -151,6 +155,15 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    for( int m= 0 ; m < 11 ; m++ )
       for( int j=0 ; j<m ; j++ )
 	 hessian[m+11*j] = hessian[j+11*m];
+
+   // Give back memory
+   for( int g = 0; g <mNumberOfGrids; g++ )
+   {
+      for(int side=0; side < 6; side++)
+	 if( BCForcing[g][side] != NULL )
+	    delete[] BCForcing[g][side];
+      delete[] BCForcing[g];
+   }
 }
 
 //------------------------------------------------------------------------

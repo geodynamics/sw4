@@ -59,7 +59,7 @@ c$$$ 101  format(' ', a, 2(g15.7,tr2))
 
 c------------------------------------------------------------
       subroutine solerrgp(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     h, uex, u, li, l2)
+     +     h, uex, u, li, l2 )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       real*8 h

@@ -356,7 +356,8 @@ void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alpha
 
 void integrate_source( );
 
-void compute_energy( double dt, bool write_file );
+void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
+		     vector<Sarray>& U, vector<Sarray>& Up );
 
 //  void update_maxes_hVelMax();
 //  void update_maxes_vVelMax();
@@ -415,7 +416,8 @@ void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double 
 void get_scalefactors( double sf[11] ); 
 bool compute_sf();
 bool compute_guess();   
-void get_cgparameters( int& maxit, int& maxrestart, double& tolerance );
+void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
+		       int& stepselection, bool& do_linesearch, int& varcase );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -692,6 +694,8 @@ bool m_compute_scalefactors;
 int m_maxit,m_maxrestart;
 double m_tolerance;
 double m_scalefactors[11];   
+int m_cgstepselection, m_cgvarcase;
+bool m_cgfletcherreeves, m_do_linesearch;
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<double> mMinVsOverH;
