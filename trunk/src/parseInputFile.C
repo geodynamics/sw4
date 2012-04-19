@@ -149,7 +149,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   while (!inputFile.eof())
   {    
      inputFile.getline(buffer, 256);
-     if (startswith("testrayleigh", buffer))
+     if (startswith("testrayleigh", buffer) || startswith("testenergy",buffer) )
      {
        m_doubly_periodic = true;
      }
@@ -347,6 +347,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processTestLamb(buffer);
        else if (startswith("testrayleigh", buffer))
          processTestRayleigh(buffer);
+       else if (startswith("testenergy", buffer))
+         processTestEnergy(buffer);
        else if (startswith("source", buffer))
 	 processSource(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
@@ -1760,6 +1762,43 @@ void EW::processTestLamb(char* buffer)
    boundaryConditionType bct[6]={bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid, bStressFree, bSuperGrid};
    set_global_bcs(bct);
 }
+
+//-----------------------------------------------------------------------
+void EW::processTestEnergy(char* buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
+  token = strtok(NULL, " \t");
+  int seed=2934839;
+  double cpcsratio = sqrt(3.0);
+  
+  while (token != NULL)
+  {
+    if (startswith("#", token) || startswith(" ", buffer))
+      break;
+
+    if (startswith("cpcsratio=", token))
+    {
+      token += 10; 
+      cpcsratio = atof(token);
+    }
+    else if (startswith("seed=", token))
+    {
+      token += 5; 
+      seed = atoi(token);
+    }
+    else
+    {
+       badOption("testenergy", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+  m_energy_test = new TestEnergy( seed, cpcsratio );
+
+  boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
+  set_global_bcs(bct);
+}
+  
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer)

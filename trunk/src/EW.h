@@ -78,6 +78,7 @@ void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
 void processTestRayleigh(char* buffer);
 void processTestLamb(char* buffer);
+void processTestEnergy(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
@@ -356,7 +357,7 @@ void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alpha
 
 void integrate_source( );
 
-void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
+   void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
 		     vector<Sarray>& U, vector<Sarray>& Up );
 
 //  void update_maxes_hVelMax();

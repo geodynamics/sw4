@@ -2,16 +2,20 @@
 #ifndef TEST_ENERGY_H
 #define TEST_ENERGY_H
 
+#include <stdlib.h>
+
 class TestEnergy
 {
 public:
 
-TestEnergy( double seed ) : m_seed(seed)
+   TestEnergy( int seed, double cpcsratio ) : m_seed(seed), m_cpcsratio(cpcsratio)
 {
+   srand48( m_seed );
 }
 
 
-double m_seed;
+int m_seed;
+double m_cpcsratio;
 
 private:
 TestEnergy(const TestEnergy&);

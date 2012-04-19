@@ -103,6 +103,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   //  mTestLamb(false),
   mOrder(4),
   mCFL(1.15), // 1.15 is necessary for the rayleigh wave test when Cp/Cs=10
+  //  mCFL(1.3),
   // m_d4coeff(0.0),
   // m_d4_cfl(0.2),
   // m_curlcoeff(0.0),
@@ -1433,6 +1434,15 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
       alpha = m_rayleigh_wave_test->m_alpha;
       F77_FUNC(rayleighfort,RAYLEIGHFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					   u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
+    }
+  }
+  else if( m_energy_test )
+  {
+    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
+    {
+       u_ptr    = a_U[g].c_ptr();
+       for( int i=0 ; i < 3*(m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+	  u_ptr[i] = drand48();
     }
   }
   else
@@ -3344,24 +3354,31 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
 			 vector<Sarray>& U, vector<Sarray>& Up )
 {
 // Compute energy
-   double energy = 0;
+   double energy    = 0;
    for( int g=0; g < mNumberOfGrids ; g++ )
    {
-      double locenergy = 0;
-      int istart = m_iStart[g];
-      int iend   = m_iEnd[g];
-      int jstart = m_jStart[g];
-      int jend   = m_jEnd[g];
-      int kstart = m_kStart[g];
-      int kend   = m_kEnd[g];
+      int istart = m_iStartInt[g];
+      int iend   = m_iEndInt[g];
+      int jstart = m_jStartInt[g];
+      int jend   = m_jEndInt[g];
+      int kstart = m_kStartInt[g];
+      int kend   = m_kEndInt[g];
       double* up_ptr = Up[g].c_ptr(); 
       double* u_ptr  = U[g].c_ptr();
       double* um_ptr = Um[g].c_ptr();
       double* rho_ptr = mRho[g].c_ptr();
-      
+      double locenergy;      
       F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 			        &istart, &iend, &jstart, &jend, &kstart, &kend, 
 			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
-      locenergy /= (dt*dt);
+      energy += locenergy;
+   }
+   energy /= (dt*dt);
+   double energytmp = energy;
+   MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+   if( m_myRank == 0 )
+   {
+      cout << "energy = " << energy << endl;
+      //      fprintf(fd, "%20.12g", energy );
    }
 }

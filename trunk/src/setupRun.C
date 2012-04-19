@@ -736,7 +736,6 @@ void EW::set_materials()
 					    &amprho, &ampmu, &ampla, &h, &zmin );
 
 // Need to communicate across material boundaries
-// for Energy testing, random material will not agree on processor boundaries.
 	  communicate_array( mRho[g], g );
 	  communicate_array( mMu[g], g );
 	  communicate_array( mLambda[g], g );
@@ -786,6 +785,25 @@ void EW::set_materials()
 	mRho[g].set_value( m_rayleigh_wave_test->m_rho );
 	mMu[g].set_value( m_rayleigh_wave_test->m_mu );
 	mLambda[g].set_value( m_rayleigh_wave_test->m_lambda );
+     }
+  }
+  else if ( m_energy_test )
+  {
+     double cpocs = m_energy_test->m_cpcsratio;
+     for (g=0; g<mNumberOfCartesianGrids; g++)
+     {
+	double* rho_ptr    = mRho[g].c_ptr();
+	double* mu_ptr     = mMu[g].c_ptr();
+	double* lambda_ptr = mLambda[g].c_ptr();
+	for( int i=0 ; i < (m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+	{
+	   rho_ptr[i]    = drand48()+2;
+	   mu_ptr[i]     = drand48()+2;
+           lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+drand48();
+	}
+	communicate_array( mRho[g], g );
+	communicate_array( mMu[g], g );
+	communicate_array( mLambda[g], g );
      }
   }
   check_materials( );

@@ -1112,7 +1112,7 @@ double TimeSeries::arrival_time( double lod )
 	       maxes[c] = fabs(mRecordedSol[c][i]);
       // Assume three components
       n=0;
-      cout << "max = " << maxes[0] << " " << maxes[1] << " " << maxes[2] << endl;
+      //      cout << "max = " << maxes[0] << " " << maxes[1] << " " << maxes[2] << endl;
       while( fabs(mRecordedSol[0][n])<maxes[0]*lod &&
 	     fabs(mRecordedSol[1][n])<maxes[1]*lod &&
 	     fabs(mRecordedSol[2][n])<maxes[2]*lod &&

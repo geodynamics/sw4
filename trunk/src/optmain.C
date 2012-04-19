@@ -580,7 +580,7 @@ void compute_f( EW& simulation, double x[11], vector<Source*>& GlobalSources,
 void compute_fanddf( EW& simulation, double x[11], vector<Source*>& GlobalSources,
 		     vector<TimeSeries*>& GlobalTimeSeries,
 		     vector<TimeSeries*>& GlobalObservations, int varcase,
-		     double& f, double df[11] )
+		     double& f, double df[11], double ddf[121] )
 //-----------------------------------------------------------------------
 // Compute misfit and its gradient.
 //
@@ -596,6 +596,8 @@ void compute_fanddf( EW& simulation, double x[11], vector<Source*>& GlobalSource
 // Output: GlobalTimeSeries - The solution of the forward problem at the stations.
 //         f                - The misfit.
 //         df               - Gradient of misfit.
+//         ddf              - The part of the Hessian that is associated 
+//                            with the backward solve.
 //-----------------------------------------------------------------------
 {
    bool testing = false;
@@ -638,8 +640,8 @@ void compute_fanddf( EW& simulation, double x[11], vector<Source*>& GlobalSource
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
    // Get gradient by solving the adjoint problem:
-   double hess[121];
-   simulation.solve_backward( src, diffs, df, hess );
+   //   double hess[121];
+   simulation.solve_backward( src, diffs, df, ddf );
 
    if( varcase == 1 )
       df[10] = 0;
@@ -658,8 +660,30 @@ void compute_fanddf( EW& simulation, double x[11], vector<Source*>& GlobalSource
 void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSources,
 		     vector<TimeSeries*>& GlobalTimeSeries,
 		     vector<TimeSeries*>& GlobalObservations, double d[11],
-		     int varcase, double& dtHd, int myRank )
-   // Compute d'*H*d
+		     int varcase, double& dtHd, bool ddf_isdefined,
+		     double ddf[121], int myRank )
+//-----------------------------------------------------------------------
+// Compute d'*H*d, where H is the Hessian.
+//
+// Input: simulation - Simulation object
+//        x          - Vector of source parameters
+//        GlobalSources - The single source object
+//        GlobalTimeSeries   - TimeSeries objects, number of objects and
+//                    locations should agree with the GlobalObservations vector.
+//        GlobalObservations - The observed data at receivers.
+//        d          - Vector to multiply the Hessian from left and right.
+//        varcase  - 0 means 11 free parameters, 1 means assume fixed frequency
+//                   2 means assume frequency and t0 fixed.
+//        ddf_isdefined - 'true' means that the matrix ddf on input contains the part 
+//                        of the Hessian that is associated with the backward solve.
+//                        'false' means that ddf has not been computed. This routine
+//                        will compute it, increasing the computational cost.
+//
+// Output: GlobalTimeSeries - The solution of the forward problem with a gradient source.
+//         dtHd             - The product d'*H*d.
+//
+//-----------------------------------------------------------------------
+
 {
    bool testing = false;
    if( testing )
@@ -672,21 +696,33 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
 	    dtHd += d[i]*a[i+11*j]*d[j];
       return;
    }
+
    vector<Source*> src(1);
    src[0] = GlobalSources[0]->copy( &simulation );
    src[0]->set_parameters( x );
-
-   simulation.solve( src, GlobalTimeSeries );
+   if( !ddf_isdefined )
+   {
+      simulation.solve( src, GlobalTimeSeries );
 
 // Compute sources for the adjoint problem
-   vector<TimeSeries*> diffs;
-   for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-   {
-      TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
-      diffs.push_back(elem);
+      vector<TimeSeries*> diffs;
+      for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+      {
+	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
+	 diffs.push_back(elem);
+      }
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+   // Backward solve for second part of Hessian
+      double df[11];
+      src[0]->set_noderivative();
+      simulation.solve_backward( src, diffs, df, ddf );
+
+// diffs no longer needed, give back memory
+      for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 delete diffs[m];
+      diffs.clear();
    }
-   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
 
    // Forward solve for first part of Hessian
    src[0]->set_dirderivative( d );
@@ -697,23 +733,19 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
    double dtHdtmp = dtHd;
    MPI_Allreduce(&dtHdtmp,&dtHd,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
-   // Backward solve for second part of Hessian
-   double df[11], hess[121];
-   src[0]->set_noderivative();
-   simulation.solve_backward( src, diffs, df, hess );
    double d2h = 0;
    if( varcase == 1 )
       for( int i=0 ; i < 10 ; i++ )
 	 for( int j=0 ; j < 10 ; j++ )
-	    d2h += hess[i+11*j]*d[i]*d[j];
+	    d2h += ddf[i+11*j]*d[i]*d[j];
    else if( varcase == 2 )
       for( int i=0 ; i < 9 ; i++ )
 	 for( int j=0 ; j < 9 ; j++ )
-	    d2h += hess[i+11*j]*d[i]*d[j];
+	    d2h += ddf[i+11*j]*d[i]*d[j];
    else 
       for( int i=0 ; i < 11 ; i++ )
 	 for( int j=0 ; j < 11 ; j++ )
-	    d2h += hess[i+11*j]*d[i]*d[j];
+	    d2h += ddf[i+11*j]*d[i]*d[j];
 
    //   if( myRank == 0 )
    //   {
@@ -722,10 +754,6 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
    //   }
    dtHd += d2h;
 
-// diffs no longer needed, give back memory
-   for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      delete diffs[m];
-   diffs.clear();
 
    delete src[0];
 }
@@ -980,7 +1008,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
    else
       nvar = 11;
 
-   compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df );
+   compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f );
    // Output GlobalTimeSeries here
    if( myRank == 0 )
    {
@@ -1037,7 +1065,8 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
             double dtHd;
             if( myRank == 0 )
 	       cout << "Step length computation b) " << endl;
-	    compute_dtd2fd( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, d, varcase, dtHd, myRank );
+	    compute_dtd2fd( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, d, varcase, dtHd,
+			    true, d2f, myRank );
             if( myRank == 0 )
 	    {
 	       cout << "dtHd = " << dtHd << endl;
@@ -1085,7 +1114,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	    x[i]=xa[i];
 	 }
 
-	 compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp );
+	 compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f );
          rnorm = 0;
 	 for( int i=0 ; i < n ; i++ )
 	    if( fabs(dfp[i])*sf[i] > rnorm )
@@ -1407,7 +1436,8 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
    double* zr   = new double[n];
    double cp, cs;
    simulation.average_speeds(cp,cs);
-   cout << "average speeds " << cp << " " << cs << endl;
+   if( myRank == 0 )
+      cout << "average speeds " << cp << " " << cs << endl;
 
    for( int s= 0 ; s < observations.size() ; s++ )
       if( observations[s]->myPoint() )
@@ -1419,7 +1449,8 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       }
 
    // Least squares with initial guess from 'source' object
-   double d0 = cp*sources[0]->getOffset();
+   //   double d0 = cp*sources[0]->getOffset();
+   double d0 = 0;
    double x0 = sources[0]->getX0();
    double y0 = sources[0]->getY0();
    double z0 = sources[0]->getZ0();
@@ -1502,11 +1533,20 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
    if( myRank == 0 )
    {
       cout << "Guessed position of source " << x0 << " " << y0 << " " << z0 << endl;
-      cout << "Guessed time offset " << t0 << "..will not be used." << endl;
+      //      cout << "Guessed time offset " << t0 << "..will not be used." << endl;
    }
    // 2. Guess t0 and freq. Take from given source for now.
-   t0  = sources[0]->getOffset();
    double freq= sources[0]->getFrequency();
+   //   t0  = sources[0]->getOffset();
+   // Gaussian:
+   // t0 = t0 + sqrt(-2*log(sqrt(2*pi)*1e-6/freq))/freq;
+   // Approximate: 
+   t0 = 5/freq + t0;
+   if( myRank == 0 )
+   {
+      cout << "Guessed t0 and freq " << t0 << " and " << freq << endl;
+   }
+
    //   x0 = sources[0]->getX0();
    //   y0 = sources[0]->getY0();
    //   z0 = sources[0]->getZ0();
