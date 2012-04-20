@@ -1767,9 +1767,12 @@ void EW::processTestLamb(char* buffer)
 void EW::processTestEnergy(char* buffer)
 {
   char* token = strtok(buffer, " \t");
+  string err = "Testenergy Error: ";
   CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
   token = strtok(NULL, " \t");
-  int seed=2934839;
+  int seed=2934839, write_every=1000;
+  string filename("energy.log");
+
   double cpcsratio = sqrt(3.0);
   
   while (token != NULL)
@@ -1787,13 +1790,25 @@ void EW::processTestEnergy(char* buffer)
       token += 5; 
       seed = atoi(token);
     }
+     else if (startswith("writeEvery=", token))
+     {
+       token += strlen("writeEvery=");
+       write_every = atoi(token);
+       CHECK_INPUT(write_every >= 0,
+	       err << "testenergy command: writeEvery must be set to a non-negative integer, not: " << token);
+     }
+    else if (startswith("filename=", token))
+    {
+      token += 9; 
+      filename = token;
+    }
     else
     {
        badOption("testenergy", token);
     }
     token = strtok(NULL, " \t");
   }
-  m_energy_test = new TestEnergy( seed, cpcsratio );
+  m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename );
 
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
   set_global_bcs(bct);

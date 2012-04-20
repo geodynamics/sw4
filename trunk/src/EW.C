@@ -1441,7 +1441,7 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     {
        u_ptr    = a_U[g].c_ptr();
-       for( int i=0 ; i < 3*(m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+       for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
 	  u_ptr[i] = drand48();
     }
   }
@@ -3351,7 +3351,7 @@ void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance,
 
 //-----------------------------------------------------------------------
 void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
-			 vector<Sarray>& U, vector<Sarray>& Up )
+			 vector<Sarray>& U, vector<Sarray>& Up, int step )
 {
 // Compute energy
    double energy    = 0;
@@ -3367,7 +3367,7 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
       double* u_ptr  = U[g].c_ptr();
       double* um_ptr = Um[g].c_ptr();
       double* rho_ptr = mRho[g].c_ptr();
-      double locenergy;      
+      double locenergy;
       F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 			        &istart, &iend, &jstart, &jend, &kstart, &kend, 
 			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
@@ -3376,9 +3376,5 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
    energy /= (dt*dt);
    double energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
-   if( m_myRank == 0 )
-   {
-      cout << "energy = " << energy << endl;
-      //      fprintf(fd, "%20.12g", energy );
-   }
+   m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
 }

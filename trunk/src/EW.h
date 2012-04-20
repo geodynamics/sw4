@@ -358,7 +358,7 @@ void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alpha
 void integrate_source( );
 
    void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
-		     vector<Sarray>& U, vector<Sarray>& Up );
+			vector<Sarray>& U, vector<Sarray>& Up, int step );
 
 //  void update_maxes_hVelMax();
 //  void update_maxes_vVelMax();

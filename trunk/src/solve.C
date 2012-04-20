@@ -400,11 +400,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_energy_test )
-    {
-       //       if( m_energy_log || m_energy_print )
-       compute_energy( mDt, false, Um, U, Up );
+       compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps, Um, U, Up, currentTimeStep  );
 
-    }
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
