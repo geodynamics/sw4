@@ -60,6 +60,8 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
    void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
 
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
+		int& second, int& msecond, int& fail );
 
 void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int grid0, 
 		       vector<double> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
@@ -718,6 +720,10 @@ vector<MPI_Datatype> m_send_type_2dy3p;
 vector<MPI_Datatype> m_send_type_2dx1p;
 vector<MPI_Datatype> m_send_type_2dy1p;
 bool m_topography_exists;
+
+// UTC time corresponding to simulation time 0.
+bool m_utc0set, m_utc0isrefevent;
+int m_utc0[7];
 };
 
 #endif

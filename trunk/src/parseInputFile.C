@@ -1914,17 +1914,63 @@ void EW::processFileIO(char* buffer)
 
 // }
 
+//-----------------------------------------------------------------------
+void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
+		    int& second, int& msecond, int& fail )
+{
+	  // Format: 01/04/2012:17:34:45.2343
+   fail = 0;
+   int n = strlen(datestr);
+   int i = 0;
+   string buf="";
+   while( i<n )
+   {
+      if( datestr[i]=='/' || datestr[i]==':' || datestr[i] == '.' )
+	 buf += datestr[i];
+      i++;
+   }
+   if( buf == "//:::." && isdigit(datestr[0]) && isdigit(datestr[n-1]) )
+   {
+      float fsec;
+      sscanf(datestr,"%i/%i/%i:%i:%i:%f",&month,&day,&year,&hour,&minute,&fsec);
+      //      cout << " mon " << month << " day " << day << " year " << year << endl;
+      //      cout << " hour " << hour<< " minute " << minute << " fsec = " << fsec << endl;
+      if( year < 1000 || year > 3000 )
+	 fail = 2;
+      if( month < 1 || month > 12 )
+	 fail = 3;
+      if( day < 1 || day > 31 )
+	 fail = 4;
+      if( hour < 0 || hour > 24 )
+	 fail = 5;
+      if( minute < 0 || minute > 60 )
+	 fail = 6;
+      if( fsec < 0 )
+	 fail = 8;
+      second = static_cast<int>(trunc(fsec));
+      msecond = static_cast<int>( (fsec-second)*1000);
+      if( second < 0 || second > 60 )
+	 fail = 7;
+      //      cout << " second = " << second << " msecond = " << msecond <<endl;
+   }
+   else 
+      fail = 1;
+}
+
+//-----------------------------------------------------------------------
 void EW::processTime(char* buffer)
 {
   double t=0.0;
   int steps = -1;
+  int year, month, day, hour, minute, second, msecond, fail;
+  bool refdateset=false, refeventdateset=false;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0, "ERROR: not a time line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "Time Error: ";
 
- while (token != NULL)
+  while (token != NULL)
     {
       // while there are still tokens in the string
        if (startswith("#", token) || startswith(" ", buffer))
@@ -1943,6 +1989,25 @@ void EW::processTime(char* buffer)
           CHECK_INPUT(atoi(token) >= 0, err << "steps is not a non-negative integer: " << token);
           steps = atoi(token);
        }
+       else if( startswith("utcstart=",token) )
+       {
+          token += 9;
+	  // Format: 01/04/2012:17:34:45.2343
+          parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+          if( fail == 0 )
+	     refdateset = true;
+	  else
+	     CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
+       }
+       else if( startswith("utcrefevent=",token) )
+       {
+          token += 12;
+          parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+          if( fail == 0 )
+	     refeventdateset = true;
+	  else
+	     CHECK_INPUT(fail == 0 , "processTime: Error in utcrefevent format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
+       }
        else
        {
           badOption("time", token);
@@ -1956,6 +2021,20 @@ void EW::processTime(char* buffer)
     setGoalTime(t);
   else if (steps >= 0)
     setNumberSteps(steps);
+ 
+  if( refdateset || refeventdateset )
+  {
+     m_utc0[0] = year;
+     m_utc0[1] = month;
+     m_utc0[2] = day;
+     m_utc0[3] = hour;
+     m_utc0[4] = minute;
+     m_utc0[5] = second;
+     m_utc0[6] = msecond;
+ // If the event is used as reference, need to subtract some t0 distance later, when it is known.
+     m_utc0set   = true;
+     m_utc0isrefevent = refeventdateset;
+  }
 }
 
 void EW::processBoundaryConditions(char *buffer)
@@ -4216,6 +4295,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   {
     computeCartesianCoord(x, y, lon, lat);
     cartCoordSet = true;
+    z = depth;
   }
   if (cartCoordSet)
   {
@@ -4281,6 +4361,15 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
       mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
       myz = -1.0 * ( cos(D) * cos(R) * sin (S)   - cos(2*D) * sin(R) * cos(S) );
+      //      if( m_myRank == 0 )
+      //      {
+      //	 cout << "Mxx = " << mxx << endl;
+      //	 cout << "Myy = " << myy << endl;
+      //	 cout << "Mzz = " << mzz << endl;
+      //	 cout << "Mxy = " << mxy << endl;
+      //	 cout << "Mxz = " << mxz << endl;
+      //	 cout << "Myz = " << myz << endl;
+      //      }
     }
   
   if (isMomentType)
@@ -4293,6 +4382,21 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
        myz *= m0;
        mzz *= m0;
        m0 = 1;
+       //       if( m_myRank == 0 )
+       //       {
+       //	  cout << "m0 = " << m0 << endl;
+       //	  cout << "x  = " << x << endl;
+       //	  cout << "y  = " << y << endl;
+       //	  cout << "z  = " << z << endl;
+       //	  cout << "t0 = " << t0 << endl;
+       //	  cout << "freq=" << freq << endl;
+       //       	  cout << "Mxx = " << mxx << endl;
+       //      	  cout << "Myy = " << myy << endl;
+       //      	  cout << "Mzz = " << mzz << endl;
+       //      	  cout << "Mxy = " << mxy << endl;
+       //      	  cout << "Mxz = " << mxz << endl;
+       //      	  cout << "Myz = " << myz << endl;
+       //       }
       // these have global location since they will be used by all processors
       sourcePtr = new Source(this, m0, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
                              tDep, formstring, ncyc);
@@ -4555,7 +4659,8 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
-//  int nsew=0, vel=0;
+  bool nsew=false; 
+  //int vel=0;
 
 // tmp
 //  cerr << "******************** INSIDE process receiver *********************" << endl;
@@ -4651,11 +4756,11 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
         token += 5; // skip file=
         name = token;
      }
-     // else if( startswith("nsew=", token) )
-     // {
-     //    token += strlen("nsew=");
-     //    nsew = atoi(token);
-     // }
+     else if( startswith("nsew=", token) )
+     {
+        token += strlen("nsew=");
+        nsew = atoi(token) == 1;
+     }
      // else if( startswith("velocity=", token) )
      // {
      //    token += strlen("velocity=");
@@ -4760,12 +4865,10 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   else
   {
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery);
+					topodepth, writeEvery, nsew);
 // include the receiver in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
-    
   }
-    
 }
 
 //-----------------------------------------------------------------------

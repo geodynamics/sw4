@@ -1119,6 +1119,9 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	 for( int i=0 ; i < n ; i++ )
 	    if( fabs(dfp[i])*sf[i] > rnorm )
 	       rnorm = fabs(dfp[i])*sf[i];
+// Save the time series after each sub-iteration.
+         for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
+	    GlobalTimeSeries[ts]->writeFile();
 
          if( myRank == 0 )
 	 {
@@ -1396,12 +1399,12 @@ int main(int argc, char **argv)
 	   // run optimization
 	   cg( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
 	       GlobalObservations, myRank );
-	}
 // Save all time series
-//	for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
-//	{
-//	   GlobalTimeSeries[ts]->writeFile();
-//	}
+//	   for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+//	   {
+//	      GlobalTimeSeries[ts]->writeFile();
+//	   }
+	}
 
 	if( myRank == 0 )
 	{
@@ -1442,21 +1445,41 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
    for( int s= 0 ; s < observations.size() ; s++ )
       if( observations[s]->myPoint() )
       {
-	 dist[s] = cp*observations[s]->arrival_time( 1e-6 );
+	 dist[s] = cp*observations[s]->arrival_time( 1e-3 );
 	 xr[s] = observations[s]->getX();
 	 yr[s] = observations[s]->getY();
 	 zr[s] = observations[s]->getZ();
+//        cout << "s = " << s << " xr, yr, zr, dist = " << xr[s] << " " << yr[s] << " " << zr[s] << " " << dist[s] << endl;
       }
 
    // Least squares with initial guess from 'source' object
    //   double d0 = cp*sources[0]->getOffset();
-   double d0 = 0;
    double x0 = sources[0]->getX0();
    double y0 = sources[0]->getY0();
    double z0 = sources[0]->getZ0();
+   // Initial guess for d0:
+
+   double d0 =0 ;
+   //   double sdsq=0,ressq=0, dsum=0;
+   //   for( int s= 0 ; s < observations.size() ; s++ )
+   //      if( observations[s]->myPoint() )
+   //      {
+   //         dsum  += dist[s];
+   //         sdsq  += dist[s]*dist[s];
+   //	 ressq += (x0-xr[s])*(x0-xr[s])+(y0-yr[s])*(y0-yr[s])+(z0-zr[s])*(z0-zr[s]);
+   //      }
+   //   double dsumtmp=dsum, sdsqtmp=sdsq, ressqtmp=ressq;
+   //   MPI_Allreduce( &dsumtmp, &dsum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   //   MPI_Allreduce( &sdsqtmp, &sdsq, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   //   MPI_Allreduce( &ressqtmp, &ressq,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   //   int nobs = observations.size();
+   //   d0 = dsum/nobs + sqrt((dsum/nobs)*(dsum/nobs)-sdsq/nobs+ressq/nobs);
+   if( myRank == 0 )
+      cout << "initial guess x0, y0, z0, d0 " << x0 << " " << y0 << " " << z0 << " " << d0 << endl;
+
    double a[16], b[4], dx[4];
    int it=0, maxit=20;
-   double err0=1, tol=1e-12, err=1;
+   double err0=1, tol=1e-8, err=1;
    while( err > tol && it < maxit )
    {
       for( int i=0 ; i<16 ;i++ )
@@ -1513,7 +1536,11 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       if( it == 0 )
 	 err0 = err;
       err /= err0;
-      //      cout <<  "Gauss-Newton iteration " << it << " " << err << endl;
+      //      if( myRank == 0 )
+      //      {
+      //	 cout <<  "Gauss-Newton iteration " << it << " " << err << endl;
+      //         cout << "x0 y0 z0 d0 " << x0 << " " << y0 << " " << z0 << " " << d0 << endl;
+      //      }
       x0 -= dx[0];
       y0 -= dx[1];
       z0 -= dx[2];

@@ -22,7 +22,8 @@ subplot(3,1,1)
 if (erase == 0)
   hold on;
 end
-plot(t,ux,colorstring);
+h=plot(t,ux,colorstring);
+set(h,'LineWidth',1.2)
 axis tight;
 
 % north component
@@ -30,7 +31,8 @@ subplot(3,1,2)
 if (erase == 0)
   hold on;
 end
-plot(t,uy,colorstring);
+h=plot(t,uy,colorstring);
+set(h,'LineWidth',1.2)
 axis tight;
 
 % up component
@@ -38,5 +40,6 @@ subplot(3,1,3)
 if (erase == 0)
   hold on;
 end
-plot(t,uz,colorstring);
+h=plot(t,uz,colorstring);
+set(h,'LineWidth',1.2)
 axis tight;

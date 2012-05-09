@@ -18,7 +18,7 @@ public:
 enum receiverMode{Displacement, Div, Curl, Strains, Velocity /*, DivVelo, CurlVelo, StrainsVelo */ };
 
 TimeSeries( EW* a_ew, std::string name, receiverMode mode, bool sacFormat, bool usgsFormat, 
-	    double x, double y, double z, bool topoDepth, int writeEvery );
+	    double x, double y, double z, bool topoDepth, int writeEvery, bool xyzcomponent=true );
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, double startTime, double timeStep );
@@ -53,6 +53,12 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, dou
 
 double product( TimeSeries& ts );
 double product_wgh( TimeSeries& ts );
+
+void set_station_utc( int utc[7] );
+void offset_ref_utc( int utc[7] );
+double utc_distance( int utc1[7], int utc2[7] );
+void dayinc( int date[7] );
+int lastofmonth( int year, int month );
 
 // for simplicity, make the grid point location public
 int m_i0;
@@ -104,9 +110,15 @@ double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_x_azimuth;
 // sac ascii or binary?
 bool mBinaryMode;
 
-// what are all these numbers used for? SAC header?
-// bool m_xycomponent, m_velocities;
-// double m_calpha, m_salpha, m_thxnrm, m_thynrm, m_dthi;
+// UTC time for start of seismogram, (m_t0 in simulation time is m_utc - utc reference time )
+bool m_utc_set;
+int m_utc[7];
+
+// Variables for rotating the output displacement or velocity components when Nort-East-Down is 
+// selected (m_xyzcomponent=false) instead of Cartesian components (m_xyzcomponent=true).
+   bool m_xyzcomponent;
+   double m_calpha, m_salpha, m_thxnrm, m_thynrm;
+//  double m_dthi, m_velocities;
 // double m_dmx, m_dmy, m_dmz, m_d0x, m_d0y, m_d0z;
 // double m_dmxy, m_dmxz, m_dmyz, m_d0xy, m_d0xz, m_d0yz;
 };

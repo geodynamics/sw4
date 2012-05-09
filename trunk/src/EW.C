@@ -206,7 +206,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_cgstepselection(0),
   m_cgvarcase(0),
   m_cgfletcherreeves(true),
-  m_do_linesearch(true)
+  m_do_linesearch(true),
+  m_utc0set(false),
+  m_utc0isrefevent(false)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
