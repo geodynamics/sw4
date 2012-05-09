@@ -22,7 +22,7 @@
 %                    shift fk time series by this amount (default value tshift=0)
 %          loh:    Optional argument:
 %                     0: (default), read output from fk. 
-%                     1: read output from PlotAnalyticalLOH1(0.1)
+%                     1: read output from loh1exact
 %                     3: read output from loh3exact
 %          sigma:   Optional argument: only used for LOH3: spread in Gaussian time function sigma=1/freq, 
 %                     freq is WPP frequency parameter; default value: sigma=0.1
