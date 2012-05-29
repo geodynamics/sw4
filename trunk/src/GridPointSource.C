@@ -1477,7 +1477,7 @@ void GridPointSource::initializeTimeFunction()
        mTimeFunc_omtt = Liu_omtt;
        break;
     default :
-      std::cout << "erroneous argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
+      std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
       mTimeFunc = RickerWavelet;
       mTimeFunc_t = RickerWavelet_t;
       mTimeFunc_tt = RickerWavelet_tt;
@@ -1503,7 +1503,8 @@ void GridPointSource::initializeTimeFunction()
      mTimeFunc_omom = Gaussian_omom;
      break;
   default: 
-      std::cout << "High derivatives not implemented for time fuction: default Gaussian used " << std::endl;
+    std::cout << "High derivatives not implemented for time fuction:" << mTimeDependence <<
+      " default Gaussian used for tttt, ttt-omega derivatives, etc " << std::endl;
      mTimeFunc_tttt = Gaussian_tttt;
      mTimeFunc_tttom = Gaussian_tttom;
      mTimeFunc_ttomom = Gaussian_ttomom;

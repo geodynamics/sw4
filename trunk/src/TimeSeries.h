@@ -116,7 +116,7 @@ bool mBinaryMode;
 bool m_utc_set;
 int m_utc[7];
 
-// Variables for rotating the output displacement or velocity components when Nort-East-Down is 
+// Variables for rotating the output displacement or velocity components when Nort-East-UP is 
 // selected (m_xyzcomponent=false) instead of Cartesian components (m_xyzcomponent=true).
    bool m_xyzcomponent;
    double m_calpha, m_salpha, m_thxnrm, m_thynrm;

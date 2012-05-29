@@ -326,22 +326,23 @@ void TimeSeries::recordData(vector<double> & u)
 	    for (int q=0; q<m_nComp; q++)
 	       mRecordedFloats[q][mLastTimeStep] = (float) u[q];
 	 }
+// AP: The transformation to east-north-up components is now done just before the file is written
+//      }
+	 //      else
+	 //      {
+	 //// Transform to North-South, East-West, and Up components
+	 //	 double uns = m_thynrm*u[0]-m_thxnrm*u[1];
+	 //	 double uew = m_salpha*u[0]+m_calpha*u[1];
+	 //         mRecordedSol[0][mLastTimeStep] = uew;
+	 //         mRecordedSol[1][mLastTimeStep] = uns;
+	 //         mRecordedSol[2][mLastTimeStep] =-u[2];
+	 //	 if( m_sacFormat )
+	 //	 {
+	 //	    mRecordedFloats[0][mLastTimeStep] = static_cast<float>(uew);
+	 //	    mRecordedFloats[1][mLastTimeStep] = static_cast<float>(uns);
+	 //	    mRecordedFloats[2][mLastTimeStep] =-static_cast<float>(u[2]);
+	 //	 }
 	 //      }
-      //      else
-      //      {
-      //// Transform to North-South, East-West, and Up components
-      //	 double uns = m_thynrm*u[0]-m_thxnrm*u[1];
-      //	 double uew = m_salpha*u[0]+m_calpha*u[1];
-      //         mRecordedSol[0][mLastTimeStep] = uew;
-      //         mRecordedSol[1][mLastTimeStep] = uns;
-      //         mRecordedSol[2][mLastTimeStep] =-u[2];
-      //	 if( m_sacFormat )
-      //	 {
-      //	    mRecordedFloats[0][mLastTimeStep] = static_cast<float>(uew);
-      //	    mRecordedFloats[1][mLastTimeStep] = static_cast<float>(uns);
-      //	    mRecordedFloats[2][mLastTimeStep] =-static_cast<float>(u[2]);
-      //	 }
-      //      }
    }
    else
    {

@@ -4296,6 +4296,11 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     computeCartesianCoord(x, y, lon, lat);
     cartCoordSet = true;
     z = depth;
+    if( mVerbose >= 1 && proc_zero() )
+    {
+      printf("Cartesian coordinates of source at (lon, lat)=(%e, %e) is (x,y)=(%g, %g)\n", 
+	     lon, lat, x, y);
+    }
   }
   if (cartCoordSet)
   {
@@ -4866,7 +4871,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   else
   {
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery, nsew);
+					topodepth, writeEvery, !nsew);
 // include the receiver in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
   }
