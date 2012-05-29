@@ -24,17 +24,26 @@
   evlat = 0;
   evlon = 0;
   evdepth = 0;
-  npts = length(u)
-  fdum = -12345;
+% required fields in the header
+  npts = length(u);
+  nvhdr = 6;
+  b=t0;
+  e=t0+npts*dt;
+  iftype = 1;
+  leven = 1;
+  delta = dt;
+% dummy values
+  fdum = -12345.0;
   idum = -12345;
-  cdum='blah';
+  cdum='-12345..';
   iftype=1;
   fid = fopen(fname,'wb',format);
   if fid < 0 
     disp( ['Error: could not open file ' fname] );
   else
 % records 1-70 are float32
-% delta
+%
+% DELTA (offset 0)
      fwrite( fid,dt,'float32');    
 
 %     fseek(fid,4*4,0);
@@ -42,19 +51,19 @@
        fwrite(fid,fdum,'float32');
      end
 
-% start time B
+% B (5)
      fwrite( fid,t0,'float32');    
-% end time E
-     fwrite( fid,t0+npts*dt,'float32');    
+% E (6)
+     fwrite( fid,t0+(npts-1)*dt,'float32');    
 
 %     fseek(fid,25*4,0);
      for i=1:24
        fwrite(fid,fdum,'float32');
      end
 
-% station lat (32)
+% station lat (31)
      fwrite(fid,lat,'float32');
-% station lon (33)
+% station lon (32)
      fwrite(fid,lon,'float32');
 
 %     fseek(fid,2*4,0);
@@ -62,28 +71,33 @@
        fwrite(fid,fdum,'float32');
      end
 
-% event lat (36)
+% event lat (35)
      fwrite(fid,evlat,'float32');
-% event lat (37)
+% event lat (36)
      fwrite(fid,evlon,'float32');
 
 %     fseek(fid,4,0);
      fwrite(fid,fdum,'float32');
 
-% event depth (39)
+% event depth (38)
      fwrite(fid,evdepth,'float32');
 
 %     fseek(fid,4*40,0);
      for i=1:31
        fwrite(fid,fdum,'float32');
      end
-
+% (70)
 % records 71-110 are int32
-     for i=1:9
+     for i=1:6
        fwrite(fid,idum,'int32');
      end
-
-% npts (80)
+% nvhdr (76)
+     fwrite(fid,nvhdr,'int32');
+% (77)
+     fwrite(fid,idum,'int32');
+% (78)
+     fwrite(fid,idum,'int32');
+% npts (79)
      fwrite(fid,npts,'int32');
 
 %     fseek(fid,78*4,0);
@@ -92,20 +106,29 @@
        fwrite(fid,idum,'int32');
      end
 
-% iftype (86)
+% iftype (85)
      fwrite(fid,iftype,'int32');
-
-
-     for i=1:24
+% (86)
+     for i=1:19
        fwrite(fid,idum,'int32');
      end
-
-% records 111-158 are characters
-     for i=1:48
-       fwrite(fid,cdum,'uchar');
+% LEVEN (105)
+     fwrite(fid,leven,'int32');
+% (106)
+     for i=1:4
+       fwrite(fid,idum,'int32');
      end
+% (110)
+% offset 110-157 are characters
+% the size of 'uchar' is machine dependent, but we must have 32 bit records
+     for i=1:48
+       fwrite(fid,cdum,'int32');
+     end
+%     for i=1:48
+%       fwrite(fid,idum,'int32');
+%     end
 
-% time series
+% time series (158)
      nu = fwrite(fid,u,'float32')
 
      fclose(fid);

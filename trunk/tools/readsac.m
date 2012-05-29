@@ -26,7 +26,8 @@
      dt = fread( fid,1,'float32');    
      fseek(fid,4*4,0);
      t0 = fread( fid,1,'float32');    
-     fseek(fid,25*4,0);
+     t1 = fread( fid,1,'float32');    
+     fseek(fid,24*4,0);
      lat = fread(fid,1,'float32');
      lon = fread(fid,1,'float32');
      fseek(fid,2*4,0);
@@ -34,10 +35,16 @@
      evlon = fread(fid,1,'float32');
      fseek(fid,4,0);
      evdepth = fread(fid,1,'float32');
-     disp(['Begin time (t0) = ' num2str(t0) ' Event lat lon = ' num2str(evlat) ' ' num2str(evlon) ' and depth ' num2str(evdepth) ' km']);
-     fseek(fid,4*40,0);
-     npts=fread(fid,1,'int');
+     fseek(fid,4*31,0);
+% integers from offset 70
+     fseek(fid,4*6,0);
+     nvhdr = fread(fid,1,'int32');
+     fseek(fid,4*2,0);
+     npts=fread(fid,1,'int32');
      fseek(fid,78*4,0);
+% output required header data
+disp(['Begin time (B) = ' num2str(t0) ' End time (E) = ' num2str(t1) ' Station lat lon = ' num2str(lat) ' ' num2str(lon) ' nvhdr = ' num2str(nvhdr) ' npts = ' num2str(npts)]);
+% read time series
      u=fread(fid,npts,'float32');
      fclose(fid);
 %    dt=fread(fid,1,'float32')

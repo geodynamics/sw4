@@ -38,7 +38,7 @@ public:
 			 double t, double dt, double gradient[11], std::vector<double> & h );
   void add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
 		       double t, double dt, double hessian[121], std::vector<double> & h );
-   void set_derivative( int der, double dir[11] );
+  void set_derivative( int der, double dir[11] );
   void set_noderivative( );
   void print_info();
  private:
