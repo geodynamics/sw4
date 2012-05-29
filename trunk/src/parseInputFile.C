@@ -4640,6 +4640,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   add_mtrl_block( bl );
 }
 
+//-----------------------------------------------------------------------
 void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 {
   double x=0.0, y=0.0, z=0.0;
@@ -5159,7 +5160,9 @@ void EW::processCG( char* buffer )
   m_maxit = 11;
   m_maxrestart = 0;
   m_tolerance = 1e-6;
-  m_compute_guess=false;
+  m_iniguess_pos = false;
+  m_iniguess_t0fr = false;
+  m_iniguess_mom = false;
   m_compute_scalefactors=false;
   m_cgstepselection = 0;
   m_cgvarcase = 0;
@@ -5198,12 +5201,42 @@ void EW::processCG( char* buffer )
      {
         token += 13;
         if( strcmp(token,"usesource")==0 )
-	   m_compute_guess = false;
+   	   m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = false;
 	else if( strcmp(token,"estimate") == 0 )
-	   m_compute_guess = true;
+	   m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = true;
+        else if( strcmp(token,"estimatePos")==0 )
+	{
+           m_iniguess_pos  = true;
+	   m_iniguess_t0fr = false;
+	   m_iniguess_mom  = false;
+	}
+        else if( strcmp(token,"estimateT0Pos")==0 )
+	{
+           m_iniguess_pos  = true;
+	   m_iniguess_t0fr = true;
+	   m_iniguess_mom  = false;
+	}
+        else if( strcmp(token,"estimateM")==0 )
+	{
+           m_iniguess_pos  = false;
+	   m_iniguess_t0fr = false;
+	   m_iniguess_mom  = true;
+	}
         else
 	   CHECK_INPUT( false,
 		     "cg command: initialguess value " << token << " not understood");
+     }
+     else if( startswith("write_initial_ts=",token) )
+     {
+        token += 17;
+        int val=atoi(token);
+	if( val == 1 )
+	   m_output_initial_seismograms = true;
+	else if( val == 0 )
+	   m_output_initial_seismograms = false;
+        CHECK_INPUT( (val == 1) || (val== 0) ,
+		    "cg command: write_initial_ts must be equal to 0 or 1, not " << val );
+
      }
      else if( startswith("scalefactors=",token) )
      {

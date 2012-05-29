@@ -418,7 +418,7 @@ void average_speeds( double& cp, double& cs );
 void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double hessian[121] );
 void get_scalefactors( double sf[11] ); 
 bool compute_sf();
-bool compute_guess();   
+void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& output_seismograms );
 void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
 		       int& stepselection, bool& do_linesearch, int& varcase );
 //
@@ -692,7 +692,8 @@ bool m_testing;
 
    // Parameters related to the inverse problem   
 bool m_inverse_problem; // Will we solve the inverse problem?
-bool m_compute_guess;
+bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom;// Estimate initial guess ?
+bool m_output_initial_seismograms;
 bool m_compute_scalefactors;
 int m_maxit,m_maxrestart;
 double m_tolerance;

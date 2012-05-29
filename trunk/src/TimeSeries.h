@@ -43,7 +43,7 @@ double getZ() const {return mZ;}
 
 double arrival_time( double lod );
 
-TimeSeries* copy( EW* a_ew, string filename );
+TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
 double misfit( TimeSeries& observed, TimeSeries* diff );
 
@@ -110,7 +110,9 @@ double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_x_azimuth;
 // sac ascii or binary?
 bool mBinaryMode;
 
-// UTC time for start of seismogram, (m_t0 in simulation time is m_utc - utc reference time )
+// UTC time for start of seismogram, 
+//     m_t0 is start of seismogram in simulation time =  m_utc - utc reference time,
+//           where utc reference time corresponds to simulation time zero.
 bool m_utc_set;
 int m_utc[7];
 

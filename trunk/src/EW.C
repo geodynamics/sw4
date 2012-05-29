@@ -201,7 +201,10 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_inverse_problem(a_invproblem),
   m_maxit(0),
   m_maxrestart(0),
-  m_compute_guess(false),
+  m_iniguess_pos(false),
+  m_iniguess_t0fr(false),
+  m_iniguess_mom(false),
+  m_output_initial_seismograms(false),
   m_compute_scalefactors(false),
   m_cgstepselection(0),
   m_cgvarcase(0),
@@ -3335,7 +3338,14 @@ void EW::get_scalefactors( double sf[11] )
 bool EW::compute_sf(){return m_compute_scalefactors;}
 
 //-----------------------------------------------------------------------
-bool EW::compute_guess(){return m_compute_guess;}
+void EW::compute_guess(bool& guesspos, bool& guesst0fr, bool& guessmom,
+		       bool& output_seismograms )
+{
+   guesspos = m_iniguess_pos;
+   guesst0fr = m_iniguess_t0fr;
+   guessmom = m_iniguess_mom;
+   output_seismograms = m_output_initial_seismograms;
+}
 
 //-----------------------------------------------------------------------
 void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance,

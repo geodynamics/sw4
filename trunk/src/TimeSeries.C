@@ -317,8 +317,8 @@ void TimeSeries::recordData(vector<double> & u)
    mLastTimeStep++;
    if (mLastTimeStep < mAllocatedSize)
    {
-      if( m_xyzcomponent || (m_nComp != 3) )
-      {
+      //      if( m_xyzcomponent || (m_nComp != 3) )
+      //      {
 	 for (int q=0; q<m_nComp; q++)
 	    mRecordedSol[q][mLastTimeStep] = u[q];
 	 if (m_sacFormat)
@@ -326,22 +326,22 @@ void TimeSeries::recordData(vector<double> & u)
 	    for (int q=0; q<m_nComp; q++)
 	       mRecordedFloats[q][mLastTimeStep] = (float) u[q];
 	 }
-      }
-      else
-      {
-// Transform to North-South, East-West, and Up components
-	 double uns = m_thynrm*u[0]-m_thxnrm*u[1];
-	 double uew = m_salpha*u[0]+m_calpha*u[1];
-         mRecordedSol[0][mLastTimeStep] = uew;
-         mRecordedSol[1][mLastTimeStep] = uns;
-         mRecordedSol[2][mLastTimeStep] =-u[2];
-	 if( m_sacFormat )
-	 {
-	    mRecordedFloats[0][mLastTimeStep] = static_cast<float>(uew);
-	    mRecordedFloats[1][mLastTimeStep] = static_cast<float>(uns);
-	    mRecordedFloats[2][mLastTimeStep] =-static_cast<float>(u[2]);
-	 }
-      }
+	 //      }
+      //      else
+      //      {
+      //// Transform to North-South, East-West, and Up components
+      //	 double uns = m_thynrm*u[0]-m_thxnrm*u[1];
+      //	 double uew = m_salpha*u[0]+m_calpha*u[1];
+      //         mRecordedSol[0][mLastTimeStep] = uew;
+      //         mRecordedSol[1][mLastTimeStep] = uns;
+      //         mRecordedSol[2][mLastTimeStep] =-u[2];
+      //	 if( m_sacFormat )
+      //	 {
+      //	    mRecordedFloats[0][mLastTimeStep] = static_cast<float>(uew);
+      //	    mRecordedFloats[1][mLastTimeStep] = static_cast<float>(uns);
+      //	    mRecordedFloats[2][mLastTimeStep] =-static_cast<float>(u[2]);
+      //	 }
+      //      }
    }
    else
    {
@@ -392,29 +392,62 @@ void TimeSeries::writeFile()
      float azimx, azimy, updownang;
      if( m_mode == Displacement )
      {
-       xfield = "X";
-       yfield = "Y";
-       zfield = "Z";
-       ux << filePrefix.str() << "x";
-       uy << filePrefix.str() << "y";
-       uz << filePrefix.str() << "z";
-       azimx = m_x_azimuth;
-       azimy = m_x_azimuth+90.;
-       updownang = 180;
-       msg << "[x|y|z]" << endl;
+	if( m_xyzcomponent )
+	{
+	   xfield = "X";
+	   yfield = "Y";
+	   zfield = "Z";
+	   ux << filePrefix.str() << "x";
+	   uy << filePrefix.str() << "y";
+	   uz << filePrefix.str() << "z";
+	   azimx = m_x_azimuth;
+	   azimy = m_x_azimuth+90.;
+	   updownang = 180;
+	   msg << "[x|y|z]" << endl;
+	}
+	else
+	{
+ 	   xfield = "EW";
+ 	   yfield = "NS";
+ 	   zfield = "UP";
+ 	   ux << filePrefix.str() << "e";
+ 	   uy << filePrefix.str() << "n";
+ 	   uz << filePrefix.str() << "u";
+ 	   azimx = 90.;// UX is east if !m_xycomponent
+ 	   azimy = 0.; // UY is north if !m_xycomponent
+ 	   updownang = 0;
+ 	   msg << "[e|n|u]" << endl;
+
+	}
      }
      else if( m_mode == Velocity )
      {
-       xfield = "Vx";
-       yfield = "Vy";
-       zfield = "Vz";
-       ux << filePrefix.str() << "xv";
-       uy << filePrefix.str() << "yv";
-       uz << filePrefix.str() << "zv";
-       azimx = m_x_azimuth;
-       azimy = m_x_azimuth+90.;
-       updownang = 180;
-       msg << "[xv|yv|zv]" << endl;
+        if( m_xyzcomponent )
+	{
+	   xfield = "Vx";
+	   yfield = "Vy";
+	   zfield = "Vz";
+	   ux << filePrefix.str() << "xv";
+	   uy << filePrefix.str() << "yv";
+	   uz << filePrefix.str() << "zv";
+	   azimx = m_x_azimuth;
+	   azimy = m_x_azimuth+90.;
+	   updownang = 180;
+	   msg << "[xv|yv|zv]" << endl;
+	}
+	else
+	{
+ 	   xfield = "Vew";
+ 	   yfield = "Vns";
+ 	   zfield = "Vup";
+ 	   ux << filePrefix.str() << "ev";
+ 	   uy << filePrefix.str() << "nv";
+ 	   uz << filePrefix.str() << "uv";
+ 	   azimx = 90.;// UX is east if !m_xycomponent
+ 	   azimy = 0.; // UY is north if !m_xycomponent
+ 	   updownang = 0;
+ 	   msg << "[ev|nv|uv]" << endl;
+	}
      }
      else if( m_mode == Div )
      {
@@ -556,18 +589,51 @@ void TimeSeries::writeFile()
      cout << msg.str();
      if (m_mode == Displacement || m_mode == Velocity || m_mode == Curl) // 3 components
      {
-       write_sac_format(mLastTimeStep+1, 
+	if( m_xyzcomponent )
+	{
+	   write_sac_format(mLastTimeStep+1, 
 			const_cast<char*>(ux.str().c_str()), 
 			mRecordedFloats[0], (float) m_t0, (float) m_dt,
 			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
-       write_sac_format(mLastTimeStep+1, 
+	   write_sac_format(mLastTimeStep+1, 
 			const_cast<char*>(uy.str().c_str()), 
 			mRecordedFloats[1], (float) m_t0, (float) m_dt,
 			const_cast<char*>(yfield.c_str()), 90.0, azimy); 
-       write_sac_format(mLastTimeStep+1, 
+	   write_sac_format(mLastTimeStep+1, 
 			const_cast<char*>(uz.str().c_str()), 
 			mRecordedFloats[2], (float) m_t0, (float) m_dt,
-			const_cast<char*>(zfield.c_str()), updownang, 0.0); 
+			const_cast<char*>(zfield.c_str()), updownang, 0.0);
+	}
+	else
+	{
+           float** geographic = new float*[3];
+	   geographic[0] = new float[mLastTimeStep+1];
+	   geographic[1] = new float[mLastTimeStep+1];
+	   geographic[2] = new float[mLastTimeStep+1];
+	   for( int i=0 ; i <= mLastTimeStep ; i++ )
+	   {
+	      geographic[1][i] = m_thynrm*mRecordedFloats[0][i]-m_thxnrm*mRecordedFloats[1][i]; //ns
+	      geographic[0][i] = m_salpha*mRecordedFloats[0][i]+m_calpha*mRecordedFloats[1][i]; //ew
+	      geographic[2][i] = -mRecordedFloats[2][i];
+
+	   }
+	   write_sac_format(mLastTimeStep+1, 
+			const_cast<char*>(ux.str().c_str()), 
+			geographic[0], (float) m_t0, (float) m_dt,
+			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
+	   write_sac_format(mLastTimeStep+1, 
+			const_cast<char*>(uy.str().c_str()), 
+			geographic[1], (float) m_t0, (float) m_dt,
+			const_cast<char*>(yfield.c_str()), 90.0, azimy); 
+	   write_sac_format(mLastTimeStep+1, 
+			const_cast<char*>(uz.str().c_str()), 
+			geographic[2], (float) m_t0, (float) m_dt,
+			const_cast<char*>(zfield.c_str()), updownang, 0.0);
+           delete[] geographic[0];
+           delete[] geographic[1];
+           delete[] geographic[2];
+	   delete[] geographic;
+	}
      }
      else if (m_mode == Div) // 1 component
      {
@@ -725,17 +791,29 @@ void TimeSeries::write_usgs_format(string a_fileName)
    fprintf(fd, "# nColumns: %i\n", m_nComp+1);
    
    fprintf(fd, "# Column 1: Time (s)\n");
-   if (m_mode == Displacement)
+   if (m_mode == Displacement && m_xyzcomponent )
    {
      fprintf(fd, "# Column 2: X displacement (m)\n");
      fprintf(fd, "# Column 3: Y displacement (m)\n");
      fprintf(fd, "# Column 4: Z displacement (m)\n");
    }
-   else if( m_mode == Velocity )
+   else if (m_mode == Displacement && !m_xyzcomponent )
+   {
+     fprintf(fd, "# Column 2: East-west displacement (m)\n");
+     fprintf(fd, "# Column 3: North-sourth displacement (m)\n");
+     fprintf(fd, "# Column 4: Up-down displacement (m)\n");
+   }
+   else if( m_mode == Velocity && m_xyzcomponent )
    {
      fprintf(fd, "# Column 2: X velocity (m/s)\n");
      fprintf(fd, "# Column 3: Y velocity (m/s)\n");
      fprintf(fd, "# Column 4: Z velocity (m/s)\n");
+   }
+   else if( m_mode == Velocity && !m_xyzcomponent )
+   {
+     fprintf(fd, "# Column 2: East-west velocity (m/s)\n");
+     fprintf(fd, "# Column 3: Nort-south velocity (m/s)\n");
+     fprintf(fd, "# Column 4: Up-down velocity (m/s)\n");
    }
    else if( m_mode == Div )
    {
@@ -760,14 +838,38 @@ void TimeSeries::write_usgs_format(string a_fileName)
 
 // write the data
 
-   for( int i = 0 ; i <= mLastTimeStep ; i++ )
+   if( m_xyzcomponent || (!m_xyzcomponent && m_mode == Div) )
    {
-     fprintf(fd, "%e", m_t0 + i*m_dt);
-     for (int q=0; q<m_nComp; q++)
-       fprintf(fd, " %20.12g", mRecordedSol[q][i]);
-     fprintf(fd, "\n");
+      for( int i = 0 ; i <= mLastTimeStep ; i++ )
+      {
+	 fprintf(fd, "%e", m_t0 + i*m_dt);
+	 for (int q=0; q<m_nComp; q++)
+	    fprintf(fd, " %20.12g", mRecordedSol[q][i]);
+	 fprintf(fd, "\n");
+      }
    }
-   
+   else if( m_mode == Displacement || m_mode == Velocity )
+   {
+      for( int i = 0 ; i <= mLastTimeStep ; i++ )
+      {
+	 fprintf(fd, "%e", m_t0 + i*m_dt);
+	 double uns = m_thynrm*mRecordedSol[0][i]-m_thxnrm*mRecordedSol[1][i];
+	 double uew = m_salpha*mRecordedSol[0][i]+m_calpha*mRecordedSol[1][i];
+	 fprintf(fd, " %20.12g", uew );
+	 fprintf(fd, " %20.12g", uns );
+	 fprintf(fd, " %20.12g", -mRecordedSol[2][i] );
+	 fprintf(fd, "\n");
+      }
+   }
+   else
+   {
+      printf("TimeSeries::write_usgs_format, Can not write ");
+      if( m_mode == Strains )
+	 printf("strains");
+      else if( m_mode == Curl )
+	 printf("curl");
+      printf(" in geographic coordinates\n" );
+   }
    fclose(fd);
 }
 
@@ -803,17 +905,17 @@ void TimeSeries::readFile( )
             bool cartesian = (bufstr.find("Z") != string::npos);
 	    
             m_xyzcomponent = cartesian;
-	    //            cout << "Found ";
-	    //	    if( foundd )
-	    //	       cout << "displacement ";
-	    //	    else
-	    //	       cout << "velocity ";
-	    //	    cout << "file with ";
-	    //	    if( cartesian )
-	    //	       cout << "Cartesian ";
-	    //	    else
-	    //	       cout << "geographic ";
-	    //	    cout << "components " << endl;
+//            cout << "Found ";
+//	    if( foundd )
+//	       cout << "displacement ";
+//	    else
+//	       cout << "velocity ";
+//	    cout << "file with ";
+//	    if( cartesian )
+//	       cout << "Cartesian ";
+//	    else
+//             cout << "geographic ";
+//          cout << "components " << endl;
 	       
 	    double tstart, dt, td, ux, uy, uz;
 	    int nlines = 0;
@@ -1132,60 +1234,68 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 }
 
 //-----------------------------------------------------------------------
-TimeSeries* TimeSeries::copy( EW* a_ew, string filename )
+TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
 {
+   if( addname )
+      filename = m_fileName + filename;
+
    TimeSeries* retval = new TimeSeries( a_ew, filename, m_mode, m_sacFormat, m_usgsFormat,
-					 mX, mY, mZ, m_zRelativeToTopography, mWriteEvery );
+					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent );
    retval->m_t0 = m_t0;
    retval->m_dt = m_dt;
    retval->mAllocatedSize = mAllocatedSize;
    retval->mLastTimeStep  = mLastTimeStep;
+   //   if( m_myPoint )
+   //      cout << "In copy, xyz = " << m_xyzcomponent << endl;
 
 // Component rotation:
    retval->m_calpha = m_calpha;
    retval->m_salpha = m_salpha;
    retval->m_thxnrm = m_thxnrm;
    retval->m_thynrm = m_thynrm;
-   retval->m_xyzcomponent = m_xyzcomponent;
+//   retval->m_xyzcomponent = m_xyzcomponent;
 
 // UTC time reference point:
    retval->m_utc_set = m_utc_set;
    for( int c=0; c < 7; c++ )
       retval->m_utc[c] = m_utc[c];
 	 
-   if( m_sacFormat )
+   if( m_myPoint )
    {
-      // Overwrite pointers, don't want to copy them.
-      retval->mRecordedFloats = new float*[m_nComp];
-      if( mAllocatedSize > 0 )
+      if( m_sacFormat )
       {
-         for( int q=0 ; q < m_nComp ; q++ )
-	    retval->mRecordedFloats[q] = new float[mAllocatedSize];
-         for( int q=0 ; q < m_nComp ; q++ )
-            for( int i=0 ; i < mAllocatedSize ; i++ )
-               retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
+	 // Overwrite pointers, don't want to copy them.
+	 retval->mRecordedFloats = new float*[m_nComp];
+	 if( mAllocatedSize > 0 )
+	 {
+	    for( int q=0 ; q < m_nComp ; q++ )
+	       retval->mRecordedFloats[q] = new float[mAllocatedSize];
+	    for( int q=0 ; q < m_nComp ; q++ )
+	       for( int i=0 ; i < mAllocatedSize ; i++ )
+		  retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
+	 }
+	 else
+	 {
+	    for( int q=0 ; q < m_nComp ; q++ )
+	       retval->mRecordedFloats[q] = NULL;
+	 }
       }
       else
       {
-         for( int q=0 ; q < m_nComp ; q++ )
-	    retval->mRecordedFloats[q] = NULL;
-      }
-   }
-   else
-   {
-      retval->mRecordedSol = new double*[m_nComp];
-      if( mAllocatedSize > 0 )
-      {
-         for( int q=0 ; q < m_nComp ; q++ )
-	    retval->mRecordedSol[q] = new double[mAllocatedSize];
-         for( int q=0 ; q < m_nComp ; q++ )
-            for( int i=0 ; i < mAllocatedSize ; i++ )
-               retval->mRecordedSol[q][i] = mRecordedSol[q][i];
-      }
-      else
-      {
-         for( int q=0 ; q < m_nComp ; q++ )
-	    retval->mRecordedSol[q] = NULL;
+	 retval->mRecordedSol = new double*[m_nComp];
+	 if( mAllocatedSize > 0 )
+	 {
+	    for( int q=0 ; q < m_nComp ; q++ )
+	       retval->mRecordedSol[q] = new double[mAllocatedSize];
+	    for( int q=0 ; q < m_nComp ; q++ )
+	       for( int i=0 ; i < mAllocatedSize ; i++ )
+		  retval->mRecordedSol[q][i] = mRecordedSol[q][i];
+	 }
+	 else
+	 {
+	    for( int q=0 ; q < m_nComp ; q++ )
+	       retval->mRecordedSol[q] = NULL;
+	 }
       }
    }
    return retval;
