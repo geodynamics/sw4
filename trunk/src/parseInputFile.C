@@ -7,6 +7,7 @@
 #include "nearlyEqual.h"
 #include "boundaryConditionTypes.h"
 #include "MaterialBlock.h"
+#include "MaterialPfile.h"
 #include "TimeSeries.h"
 
 // #include "Image3D.h"
@@ -353,6 +354,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processSource(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
 	 processMaterialBlock(buffer, blockCount);
+       else if (startswith("pfile", buffer))
+	 processMaterialPfile( buffer );
        else if (startswith("scalefactors", buffer))
 	 processScaleFactors(buffer);
 //    else if (startswith("efile", buffer))
@@ -5306,4 +5309,124 @@ void EW::processCG( char* buffer )
      }
      token = strtok(NULL, " \t");
   }  
+}
+
+//-----------------------------------------------------------------------
+void EW::processMaterialPfile(char* buffer)
+{
+  string name = "pfile";
+
+  // Used for pfiles
+  string filename = "NONE";
+  string directory = "NONE";
+  double a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+  string cflatten = "NONE";
+  bool flatten = false;
+  bool coords_geographic = true;
+  int nstenc = 5;
+
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("pfile", token) == 0,
+	      "ERROR: material data can only be set by an pfile line, not: " << token);
+
+  string err = token;
+  err += " Error: ";
+  token = strtok(NULL, " \t");
+
+
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+       if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+          break;
+       //      else if (startswith("a=", token))
+       //      {
+       //         token += 2; // skip a=
+       //         a_ppm = atof(token);
+       //      }
+       else if( startswith("smoothingsize=",token) )
+       {
+          token += 14;
+	  nstenc = atoi(token);
+          VERIFY2( nstenc >= 1 ,
+		   "processMaterialPfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
+       }
+       else if (startswith("vpmin=", token))
+      {
+         token += 6; // skip vpmin=
+         vpmin_ppm = atof(token);
+      }
+      else if (startswith("vsmin=", token))
+      {
+         token += 6; // skip vsmin=
+         vsmin_ppm = atof(token);
+      }
+      else if (startswith("rhomin=", token))
+      {
+         token += 7; // skip rhomin=
+         rhomin_ppm = atof(token);
+      }
+      else if (startswith("flatten=", token))
+      {
+         token += 8; // skip flatten=
+         cflatten = token;
+	 VERIFY2( (int)cflatten.find('T')>=0 || (int)cflatten.find('t')>=0 ||
+		  (int)cflatten.find('F')>=0 || (int)cflatten.find('f')>=0,
+		  "processMaterialPfile Error: value of flatten unclear\n" );
+         if ((int)cflatten.find('T')>=0||(int)cflatten.find('t')>=0)
+	    flatten=true;
+         else if ((int)cflatten.find('F')>=0||(int)cflatten.find('f')>=0)
+	   flatten=false;
+	 else
+	   flatten=false;
+	 
+      }
+      else if (startswith("filename=", token))
+      {
+         token += 9; // skip filename=
+         filename = token;
+      }
+      else if (startswith("directory=", token))
+      {
+         token += 10; // skip directory=
+         directory = token;
+      }
+      else if (startswith("style=", token))
+      {
+         token += 6; // skip style=
+         if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
+	    coords_geographic = true;
+	 else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
+	    coords_geographic = false;
+	 else
+	    CHECK_INPUT( false, "processMaterialPfile Error: style= " << token << " not recognized\n" );
+      }
+      else
+      {
+          cout << token << " is not a pfile option " << endl;
+      }
+      token = strtok(NULL, " \t");
+    }
+  // End parsing...
+
+  //----------------------------------------------------------------
+  // Check parameters
+  //----------------------------------------------------------------
+  if (strcmp(directory.c_str(),"NONE")==0)
+  {
+      directory = string("./");
+  }
+
+  if (m_myRank == 0)
+  {
+     cout << "*** Reading data from Pfile " << filename << " in directory " << directory << endl;
+  }
+
+  MaterialPfile* pf = new MaterialPfile( this,
+					filename, directory,nstenc,vpmin_ppm,vsmin_ppm,rhomin_ppm,flatten,
+					coords_geographic );
+
+  add_mtrl_block( pf  );
+     
 }

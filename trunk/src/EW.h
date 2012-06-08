@@ -83,6 +83,7 @@ void processTestLamb(char* buffer);
 void processTestEnergy(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
+void processMaterialPfile(char* buffer);
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);

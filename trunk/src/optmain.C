@@ -1505,7 +1505,7 @@ void guess_source_position( EW &  simulation, vector<Source*>& sources,
    for( int s= 0 ; s < observations.size() ; s++ )
       if( observations[s]->myPoint() )
       {
-	 dist[s] = cp*observations[s]->arrival_time( 1e-3 );
+	 dist[s] = cp*observations[s]->arrival_time( 1e-6 );
 	 xr[s] = observations[s]->getX();
 	 yr[s] = observations[s]->getY();
 	 zr[s] = observations[s]->getZ();
