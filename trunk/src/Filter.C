@@ -1,6 +1,7 @@
 // -*-c++-*-
 #include <iostream>
 #include <sstream>
+#include <cstdio>
 #include <cstdlib>
 #include <complex>
 
