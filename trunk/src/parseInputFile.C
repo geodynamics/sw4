@@ -9,6 +9,7 @@
 #include "MaterialBlock.h"
 #include "MaterialPfile.h"
 #include "TimeSeries.h"
+#include "Filter.h"
 
 // #include "Image3D.h"
 
@@ -383,8 +384,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processBoundaryConditions(buffer);
        else if (startswith("supergrid", buffer))
          processSupergrid(buffer);
-       // else if (startswith("prefilter", buffer))
-       //   processPrefilter(buffer);
+       else if (startswith("prefilter", buffer))
+	 processPrefilter(buffer);
 //    else if( startswith("checkfornan", buffer ) )
 //       processCheckfornan(buffer);
        // else if( startswith("developer", buffer ) )
@@ -2415,45 +2416,75 @@ void EW::badOption(string name, char* option) const
 //    mSimulation->set_resolution( ppw );
 // }
 
-// //-----------------------------------------------------------------------
-// void FileInput::processPrefilter(char* buffer)
-// {
-//    char* token = strtok(buffer, " \t");
-//    CHECK_INPUT(strcmp("prefilter", token) == 0, "ERROR: not a prefilter line...: " << token);
-//    token = strtok(NULL, " \t");
+//-----------------------------------------------------------------------
+void EW::processPrefilter(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("prefilter", token) == 0, "ERROR: not a prefilter line...: " << token);
+   token = strtok(NULL, " \t");
 
-//    string err = "prefilter Error: ";
-//    string commandName = token;
-//    double corner_freq = 1.0, max_freq=1.0;
-//    bool limit_source_freq=false, enable_prefilter=false;
-//    while (token != NULL)
-//    {
-//       if (startswith("#", token) || startswith(" ", buffer))
-//          break;
+   string err = "prefilter Error: ";
+   string commandName = token;
+   double fc1=0.1, fc2 = 1.0; // only fc2 is used for low-pass
+   FilterType passband = bandPass; // 
+   int passes=2; // forwards and backwards gives a zero-phase filter
+   int order=2;
+   
+   while (token != NULL)
+   {
+      if (startswith("#", token) || startswith(" ", buffer))
+         break;
 
-//       if (startswith("fc=", token))
-//       {
-//         token += 3;
-//         corner_freq = atof(token);
-//         CHECK_INPUT(corner_freq>0.,"corner frequency must be positive, not " << corner_freq );
-// 	enable_prefilter=true;
-//       }
-// //                         1234567890
-//       else if (startswith("maxfreq=", token))
-//       {
-//         token += 8;
-//         max_freq = atof(token);
-//         CHECK_INPUT(max_freq>0.,"max source freq parameter must be positive, not " << max_freq );
-// 	limit_source_freq=true;	
-//       }
-//       else
-//       {
-//          badOption(commandName, token);
-//       }
-//       token = strtok(NULL, " \t");
-//    }
-//    mSimulation->set_prefilter( enable_prefilter, corner_freq, limit_source_freq, max_freq );
-// }
+//                    1234567890
+      if (startswith("fc1=", token))
+      {
+        token += 4;
+        fc1 = atof(token);
+        CHECK_INPUT(fc1>0.,"corner frequency 1 must be positive, not " << fc1 );
+      }
+//                         1234567890
+      else if (startswith("fc2=", token))
+      {
+        token += 4;
+        fc2 = atof(token);
+        CHECK_INPUT(fc2>0.,"corner frequency 2 must be positive, not " << fc2 );
+      }
+//                         1234567890
+      else if (startswith("type=", token))
+      {
+        token += 5;
+	if( strcmp(token,"lowpass") == 0 )
+	  passband = lowPass;
+	else if( strcmp(token,"bandpass") == 0 )
+	  passband = bandPass;
+	else
+	  CHECK_INPUT( false, "processPrefilter: Error: type= " << token << 
+		       " Only lowpass or bandpass are recognized\n" );
+      }
+//                         1234567890
+      else if (startswith("passes=", token))
+      {
+        token += 7;
+        passes = atoi(token);
+	CHECK_INPUT( passes == 1 || passes == 2, "processPrefilter: Error: passes must be 1 or 2, not = " 
+		     << token );
+      }
+//                         1234567890
+      else if (startswith("order=", token))
+      {
+        token += 6;
+        order = atoi(token);
+	CHECK_INPUT( order > 0 && order <= 10, "processPrefilter: Error: order = " 
+		     << token << " out of bounds\n" );
+      }
+      else
+      {
+         badOption(commandName, token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   set_prefilter( passband, order, passes, fc1, fc2 );
+}
 
 // //-----------------------------------------------------------------------
 // void FileInput::processGeodynbc(char* buf)

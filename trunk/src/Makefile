@@ -52,7 +52,7 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
-       MaterialPfile.o
+       MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
@@ -63,11 +63,11 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
-
-s4f: $(OBJ)
+OBJ4 = filterTest.o Filter.o SecondOrderSection.o Polynomial.o
+sw4: $(OBJ)
 	$(CXX) $(CFLAGS) -o $@ $(OBJ) $(linklibs)
 
-sbp4opt: $(OBJOPT)
+sw4opt: $(OBJOPT)
 	$(CXX) $(CFLAGS) -o $@ $(OBJOPT) $(linklibs)
 
 version.o:version.C
@@ -78,6 +78,9 @@ test3: $(OBJ3)
 
 test: $(OBJ2)
 	gfortran -O3 -Wall -o $@ $(OBJ2)
+
+filter: $(OBJ4)
+	$(CXX) $(CFLAGS) -o $@ $(OBJ4)
 
 %.o:%.f
 	$(FC) $(FFLAGS) -c $<

@@ -1249,13 +1249,61 @@ double Liu_omtt( double freq, double t, double* par )
    return 0.; // should never get here, but keeps compiler happy
 }
 
+double NullFunc( double freq, double t, double* par )
+{
+// this function should never be called
+  CHECK_INPUT(false,"The NullFunc time function was called!");
+  return 0.;  
+}
+
 double Discrete( double freq, double t, double* par )
 {
 // note that 
 // t holds EW::mTime - tStart
 // freq holds 1/dt
+// number of time steps:
+  int nSteps = (int) par[0];
+  
   int k = (int) (t*freq + 0.5);
-  return par[k];
+  if (k>=0 && k<=nSteps)
+    return par[k+1]; // offset by 1 since par[0] holds the number of time steps
+  else
+    return 0;
+  
+}
+
+double Discrete_tt( double freq, double t, double* par )
+{
+// note that 
+// t holds EW::mTime - tStart
+// freq holds 1/dt
+// number of time steps:
+  int nSteps = (int) par[0];
+
+  int kt = (int) (t*freq + 0.5);
+  int k = kt+1; // offset by 1 since we save nSteps in par[0]
+  
+//
+// centered differences in time
+//
+  double d2t=0;
+  if (kt>0 && kt<nSteps)
+  {
+// freq=1/dt
+    d2t = (par[k-1] - 2*par[k] + par[k+1])*freq*freq; // 2nd order for now
+  }
+  else if (kt<=0)
+  {
+    k = 2;
+    d2t = (par[k-1] - 2*par[k] + par[k+1])*freq*freq; // 1st order for now
+  }
+  else
+  {
+    k = nSteps;
+    d2t = (par[k-1] - 2*par[k] + par[k+1])*freq*freq; // 1st order for now
+  }
+
+  return d2t;
 }
 
 void butter2(double *b, double *a, double Wn)
@@ -1272,13 +1320,15 @@ void butter2(double *b, double *a, double Wn)
   a[2] = (1. - sqrt(2.)*omegac + omegac*omegac)/c;
 }
 
+// this routine will be replaced by a general direct form II algorithm
+// (in the Filter class)
 void filtfilt(double *b, double *a, double *u, int N)
 {
 // note this routine overwrites the input signal 'u'
   double op;
   int i;
   
-// forwards
+// forwards 
   double x1=u[0];
   double x2=u[0];
   double y1=u[0];
@@ -1503,8 +1553,9 @@ void GridPointSource::initializeTimeFunction()
      mTimeFunc_omom = Gaussian_omom;
      break;
   default: 
-    std::cout << "High derivatives not implemented for time fuction:" << mTimeDependence <<
-      " default Gaussian used for tttt, ttt-omega derivatives, etc " << std::endl;
+// tmp
+// std::cout << "High derivatives not implemented for time fuction:" << mTimeDependence <<
+//   " default Gaussian used for tttt, ttt-omega derivatives, etc " << std::endl;
      mTimeFunc_tttt = Gaussian_tttt;
      mTimeFunc_tttom = Gaussian_tttom;
      mTimeFunc_ttomom = Gaussian_ttomom;
@@ -1654,17 +1705,24 @@ double GridPointSource::getTimeFunc(double t) const
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, double fc)
+void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, Filter *filter_ptr)
 {
-// allocate new parameter array of size(nSteps)
-  double *new_par= new double[nSteps];
+// allocate new parameter array of size(nSteps+1)
+  double *new_par= new double[nSteps+2];
 
-// evaluate current time function at t_k = tStart + k*dt for k=0,1,2,...,nSteps-1
+// save the number of time steps 
+  new_par[0] = (double) nSteps+0.5; // add the 0.5 here so we don't have to worry 
+                                    // about round-off when casting it back to an int
+  
+// tmp
+  // int ipar0 = (int) new_par[0];
+  // printf("discretizeTimeFunc: test: (int) new_par[0] = %i, nSteps=%i\n", ipar0, nSteps);
+
+// evaluate current time function at t_k = tStart + k*dt for k=0,1,2,...,nSteps
   double t=tStart;
-  for (int k=0; k< nSteps; k++)
+  for (int k=0; k<=nSteps; k++)
   {
-    new_par[k] = getTimeFunc(t);
-    t += dt;
+    new_par[k+1] = getTimeFunc(tStart+k*dt);
   }
   
 // free current parameter array
@@ -1681,18 +1739,33 @@ void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int 
   
 // update the fcn pointer and type
   mTimeFunc = Discrete;
+  mTimeFunc_tt = Discrete_tt;
+// the following are not (yet) defined
+  mTimeFunc_t = NullFunc;   // not defined
+  mTimeFunc_ttt = NullFunc; // not defined
+  mTimeFunc_om = NullFunc;  // not defined
+  mTimeFunc_omtt = NullFunc;// not defined
+       
   mTimeDependence = iDiscrete;
 
+//
+// the following will be replaced by a Filter object that defines more general low-pass and band-pass filters
+//
+//  double fc = filter_ptr->get_corner_freq2();
 // calculate coefficients in the butterworthfilter
-  double a[3], b[3];
-  butter2(b,a,2*dt*fc);
+//  double a[3], b[3];
+//  butter2(b,a,2*dt*fc);
 // tmp
 //   printf("Butterworth coeff for dt=%.18e, fc=%e\n", dt, fc);
 //   printf("a[0]=%e, a[1]=%e, a[2]=%e\n", a[0], a[1], a[2]);
 //   printf("b[0]=%e, b[1]=%e, b[2]=%e\n", b[0], b[1], b[2]);
   
 // now filter (forwards + backwards) the time series with a lowpass butterworth filter of order 2
-  filtfilt(b, a, mPar, nSteps);
+//  filtfilt(b, a, &mPar[1], nSteps+1);
+
+// this call corresponds to passes=2
+  filter_ptr->zerophase(nSteps+1, &mPar[1], &mPar[1]);
+  
 }
 
 //-----------------------------------------------------------------------

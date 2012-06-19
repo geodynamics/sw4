@@ -124,7 +124,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
 
-  // Reset image time to zero, in case we are rerunning the solver
+// Reset image time to zero, in case we are rerunning the solver
   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
      mImageFiles[fIndex]->initializeTime();
    
@@ -135,6 +135,56 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
     if (!a_Sources[i]->ignore())
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
+
+// modify the time functions if prefiltering is enabled
+  if (!m_testing && m_prefilter_sources)
+  {
+    if (proc_zero() )
+	  printf(" %spass filtering all source time functions to corner frequencies fc1=%e and fc2=%e\n", 
+		 (m_filter_ptr->get_type()==lowPass)? "Low":"Band", m_filter_ptr->get_corner_freq1(), 
+		 m_filter_ptr->get_corner_freq2());
+       
+// tmp
+    if (proc_zero() && point_sources.size()>0)
+    {
+      printf("Saving one un-filtered original time function\n");
+	 
+      FILE *tf=fopen("g0.dat","w");
+      double t;
+      double gt;
+      for (int i=0; i<=mNumberOfTimeSteps; i++)
+      {
+	t = mTstart + i*mDt;
+	gt = point_sources[0]->getTimeFunc(t);
+	fprintf(tf, "%e %.18e\n", t, gt);
+      }
+      fclose(tf);
+    }
+
+// 3. Replace the time function by a filtered one, represented by a (long) vector holding values at each time step   
+    for( int s=0; s < point_sources.size(); s++ ) 
+      point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt, mNumberOfTimeSteps, m_filter_ptr);
+
+// tmp
+    if (proc_zero() && point_sources.size()>0)
+    {
+      printf("Saving one filtered discretized time function\n");
+	 
+      FILE *tf=fopen("g1.dat","w");
+      double t;
+      double gt;
+      for (int i=0; i<=mNumberOfTimeSteps; i++)
+      {
+	t = mTstart + i*mDt;
+	gt = point_sources[0]->getTimeFunc(t);
+	fprintf(tf, "%e %.18e\n", t, gt);
+      }
+      fclose(tf);
+    }
+       
+  } // end if prefiltering
+  
+  
 
   if( mVerbose && proc_zero() )
   {

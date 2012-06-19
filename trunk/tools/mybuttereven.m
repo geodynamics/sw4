@@ -22,7 +22,7 @@
 %
 function [b1,a1,b2,a2] = mybuttereven(f1,f2,dt,alpha)
 if (alpha >= pi || alpha <= pi/2)
-  printf("pole angle alpha=%e out of range\n");
+  printf("pole angle alpha=%e out of range\n",alpha);
   return
 end
 % imaginary unit
@@ -31,6 +31,8 @@ iu = 1i;
 %pre-warp the corner frequencies
 om1 = tan(pi*dt*f1);
 om2 = tan(pi*dt*f2);
+
+printf("Input corner frequencies f1=%e, f2=%e, pre-warped om1=%e, om2=%e\n", f1, f2, om1, om2)
 
 b = om2 - om1;
 p = om1*om2;
@@ -57,6 +59,8 @@ s4 = (conj(q)*b - sqrt(conj(q)^2*b^2 - 4*p))/2;
 % if Re(s1) >= 0 or Re(s2)>= the filter is unstable
 if (real(s1) >= 0 || real(s2) >= 0)
   printf("WARNING: the analog filter has poles in the positive half-plane. s1=%e%+ei, s2=%e%+ei\n", real(s1), imag(s1), real(s2), imag(s2));
+else
+  printf("decay rate estimate exp(Re(s)*2*t/dt), Re(s1)*2/dt=%e, Re(s2)*2/dt=%e\n", real(s1)*2/dt, real(s2)*2/dt)
 end
  
 % check the algebra

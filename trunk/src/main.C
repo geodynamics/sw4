@@ -129,7 +129,7 @@ main(int argc, char **argv)
     {
       if (myRank == 0)
       {
-	cout << "Running s4f on " <<  nProcs << " processors..." << endl
+	cout << "Running sw4 on " <<  nProcs << " processors..." << endl
 	     << "Writing output to directory: " 
 	     << simulation.getOutputPath() << endl;
       }

@@ -13,6 +13,7 @@
 #include "TimeSeries.h"
 #include "Source.h"
 #include "GridPointSource.h"
+#include "Filter.h"
 
 #include "Image.h"
 // #include "Image3D.h"
@@ -87,6 +88,7 @@ void processMaterialPfile(char* buffer);
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
+void processPrefilter(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -336,7 +338,7 @@ void compute_minvsoverh( double& minvsoh );
 
 void set_resolution( int ppw );
 
-void set_prefilter( bool enable_prefilter, double fc, bool limit_source_freq, double max_freq );
+void set_prefilter( FilterType passband, int order, int passes, double fc1, double fc2 );
 
 void set_scenario(const string& scenario );
 
@@ -515,8 +517,9 @@ bool m_limit_frequency;
 int m_ppw;
 
 // command prefilter
-bool m_prefilter_sources, m_limit_source_freq;
-double m_fc, m_source_freq_max;
+bool m_prefilter_sources;
+// filter setup
+Filter *m_filter_ptr;
 
 double m_t0Shift;
 

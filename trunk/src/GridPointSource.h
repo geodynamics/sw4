@@ -8,6 +8,7 @@
 #include "TimeDep.h"
 #include "Source.h"
 #include "Sarray.h"
+#include "Filter.h"
 
 class GridPointSource
 {
@@ -32,8 +33,7 @@ public:
   // evaluate time fcn: RENAME to evalTimeFunc
   double getTimeFunc(double t) const;
   void limitFrequency(double max_freq);
-  // discretize a time function at each time step and change the time function to be "Discrete()"
-  void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, double fc);
+
   void add_to_gradient( std::vector<Sarray>& kappa, std::vector<Sarray> & eta,
 			 double t, double dt, double gradient[11], std::vector<double> & h );
   void add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
@@ -41,6 +41,10 @@ public:
   void set_derivative( int der, double dir[11] );
   void set_noderivative( );
   void print_info();
+
+// discretize a time function at each time step and change the time function to be "Discrete()"
+  void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, Filter *filter_ptr);
+
  private:
 
   GridPointSource();

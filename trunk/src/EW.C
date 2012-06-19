@@ -178,9 +178,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
 // command prefilter
   m_prefilter_sources(false), 
-  m_fc(1.0),
-  m_limit_source_freq(false),
-  m_source_freq_max(1.0),
+  m_filter_ptr(0),
 
   mPrintInterval(100),
   m_t0Shift(0.0),
@@ -3240,6 +3238,14 @@ void EW::set_global_bcs(boundaryConditionType bct[6])
   mbcsSet = true; 
 
   //  cout << "mbcGlobalType = " << mbcGlobalType[0] << "," << mbcGlobalType[1] << "," << mbcGlobalType[2] << "," << mbcGlobalType[3] << "," << mbcGlobalType[4] << "," << mbcGlobalType[5] << endl;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_prefilter( FilterType passband, int order, int passes, double fc1, double fc2 )
+{
+  m_prefilter_sources = true;
+// we could build the filter object right here...
+  m_filter_ptr = new Filter( passband, order, passes, fc1, fc2);
 }
 
 //-----------------------------------------------------------------------

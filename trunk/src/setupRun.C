@@ -325,7 +325,7 @@ void EW::setupRun( )
 //-----------------------------------------------------------------------
 void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 {
-// make sure that the material model is in plac
+// make sure that the material model is in place
   if (!mIsInitialized)
   {
     if (proc_zero())
@@ -407,15 +407,15 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources that are above the topography
 
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
-      if (m_limit_source_freq)
-      {
-	if (mVerbose && proc_zero() )
-	  printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
+      // if (m_limit_source_freq)
+      // {
+      // 	if (mVerbose && proc_zero() )
+      // 	  printf(" Limiting the freq parameter in all source time functions to the max value %e\n", m_source_freq_max);
 
-	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	  a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
+      // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+      // 	  a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max );
        
-      } // end limit_source_freq
+      // } // end limit_source_freq
      
 // check how deep the sources go
       double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
@@ -436,14 +436,22 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // Modify the time functions if prefiltering is enabled
       if (m_prefilter_sources)
       {
+// tell the filter about the time step and compute the second order sections
+	m_filter_ptr->computeSOS( mDt );
 	if (mVerbose && proc_zero() )
-	  printf(" Lowpass filtering all source time functions to corner frequency %e\n", m_fc);
+	  cout << *m_filter_ptr;
+	
 // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
 	double dt0 = 0;
-	double dt0loc, dt0max;
+	double dt0loc, dt0max, t0_min;
+	t0_min = m_filter_ptr->estimatePrecursor();
+// old estimate for 2-pole low-pass Butterworth
+//	t0_min = 4./m_filter_ptr->get_corner_freq2();
+	
 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
 	{
-	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( 4./m_fc );
+	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( t0_min );
+	  
 	  if( dt0loc > dt0 )
 	    dt0 = dt0loc;
 	}
