@@ -438,7 +438,9 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       {
 // tell the filter about the time step and compute the second order sections
 	m_filter_ptr->computeSOS( mDt );
-	if (mVerbose && proc_zero() )
+
+// output details about the filter
+	if (mVerbose>=3 && proc_zero() )
 	  cout << *m_filter_ptr;
 	
 // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
@@ -464,7 +466,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
 	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
 	  if ( proc_zero() )
-	    printf("*** Lowpass prefilter: t0 increased by %e in all source time functions\n", dt0max);
+	    printf("*** Prefilter zero-phase precursor: t0 increased by %e in all source time functions\n", dt0max);
 	}
 	else
 	{

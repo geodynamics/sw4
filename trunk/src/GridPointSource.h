@@ -32,6 +32,8 @@ public:
 
   // evaluate time fcn: RENAME to evalTimeFunc
   double getTimeFunc(double t) const;
+  double evalTimeFunc_t(double t) const;
+  double evalTimeFunc_tt(double t) const;
   void limitFrequency(double max_freq);
 
   void add_to_gradient( std::vector<Sarray>& kappa, std::vector<Sarray> & eta,

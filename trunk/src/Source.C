@@ -10,6 +10,8 @@
 
 using namespace std;
 
+#define SQR(x) ((x)*(x))
+
 Source::Source(EW *a_wpp, 
 	       double amplitude, 
 	       double frequency, 
@@ -163,7 +165,23 @@ void Source::getMoments( double& mxx, double& myy, double& mzz, double& mxy, dou
 //-----------------------------------------------------------------------
 double Source::getAmplitude() const
 {
-   return mAmp;
+  double amplitude=0;
+  if (mIsMomentSource)
+  {
+    double msqr=0;
+    for (int q=0; q<6; q++)
+      msqr += SQR(mForces[q]);
+    amplitude = mAmp*sqrt(msqr/2.);
+  }
+  else
+  {
+    double fsqr=0;
+    for (int q=0; q<3; q++)
+      fsqr += SQR(mForces[q]);
+    amplitude = mAmp*sqrt(fsqr);
+  }
+  
+  return amplitude;
 }
 
 //-----------------------------------------------------------------------

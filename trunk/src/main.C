@@ -16,8 +16,8 @@ using namespace std;
 void usage(string thereason)
 {
   cout << endl
-       << "sbp4f - Summation by parts 4th order forward seismic wave propagator"  << endl << endl
-       << "Usage: sbp4f [-v] file.in" << endl
+       << "sw4 - Summation by parts 4th order forward seismic wave propagator"  << endl << endl
+       << "Usage: sw4 [-v] file.in" << endl
        << "\t -v:      prints out the version info" << endl
        << "\t file.in: an input file" << endl << endl
        << "Reason for message: " << thereason << endl;
@@ -146,7 +146,7 @@ main(int argc, char **argv)
       if( myRank == 0 )
       {
 	cout << "============================================================" << endl
-	     << " s4f ( Summation by parts 4th order forward wave propagator) finished! " << endl
+	     << " program sw4 finished! " << endl
 	     << "============================================================" << endl;
       }
 

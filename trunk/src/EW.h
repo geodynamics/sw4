@@ -100,7 +100,7 @@ void setDebugIO(bool onoff) { mDebugIO = onoff; }
 //void setDampingCFL(double d4_cfl) { m_d4_cfl = d4_cfl; }
 
 void printTime(int cycle, double t, bool force=false ) const;
-void printPreamble() const;
+void printPreamble(vector<Source*> & a_Sources) const;
 void switch_on_checkfornan();
 void switch_on_error_log();
 void set_energylog( string logfile, bool print, bool elog );

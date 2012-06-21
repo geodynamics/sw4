@@ -172,12 +172,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	 
       FILE *tf=fopen("g1.dat","w");
       double t;
-      double gt;
+      double gt, gt1, gt2;
       for (int i=0; i<=mNumberOfTimeSteps; i++)
       {
 	t = mTstart + i*mDt;
 	gt = point_sources[0]->getTimeFunc(t);
-	fprintf(tf, "%e %.18e\n", t, gt);
+	gt1 = point_sources[0]->evalTimeFunc_t(t);
+	gt2 = point_sources[0]->evalTimeFunc_tt(t);
+	fprintf(tf, "%e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
       }
       fclose(tf);
     }
@@ -190,7 +192,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   {
     cout << endl << "***  Starting solve ***" << endl;
   }
-  printPreamble();
+  printPreamble(a_Sources);
 
 // this is the time level
   double t=mTstart;

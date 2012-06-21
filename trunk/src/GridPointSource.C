@@ -1272,17 +1272,57 @@ double Discrete( double freq, double t, double* par )
   
 }
 
+double Discrete_t( double freq, double t, double* par )
+{
+// note that 
+// t holds EW::mTime - tStart
+// freq holds 1/dt
+// number of time steps in par[0]
+  int nSteps = (int) par[0];
+
+// nearest discrete time level
+  int kt = (int) (t*freq + 0.5);
+  int k = kt+1; // index h is offset by 1 since we save nSteps in par[0]
+  
+//
+// array par[q] holds discrete time function for 1<=q<=nSteps+1
+//
+// centered differences in time
+//
+  double d1t=0;
+  if (kt>0 && kt<nSteps)
+  {
+// freq=1/dt
+    d1t = (par[k+1] - par[k-1])*0.5*freq; // 2nd order for now
+  }
+  else if (kt<=0)
+  {
+    k = 1;
+    d1t = (par[k+1] - par[k])*freq; // 1st order for now
+  }
+  else
+  {
+    k = nSteps+1;
+    d1t = (par[k] - par[k-1])*freq; // 1st order for now
+  }
+
+  return d1t;
+}
+
 double Discrete_tt( double freq, double t, double* par )
 {
 // note that 
 // t holds EW::mTime - tStart
 // freq holds 1/dt
-// number of time steps:
+// number of time steps in par[0]
   int nSteps = (int) par[0];
 
   int kt = (int) (t*freq + 0.5);
   int k = kt+1; // offset by 1 since we save nSteps in par[0]
   
+//
+// array par[q] holds discrete time function for 1<=q<=nSteps+1
+//
 //
 // centered differences in time
 //
@@ -1705,6 +1745,18 @@ double GridPointSource::getTimeFunc(double t) const
 }
 
 //-----------------------------------------------------------------------
+double GridPointSource::evalTimeFunc_t(double t) const
+{
+  return mTimeFunc_t(mFreq, t - mT0, mPar);
+}
+
+//-----------------------------------------------------------------------
+double GridPointSource::evalTimeFunc_tt(double t) const
+{
+  return mTimeFunc_tt(mFreq, t - mT0, mPar);
+}
+
+//-----------------------------------------------------------------------
 void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, Filter *filter_ptr)
 {
 // allocate new parameter array of size(nSteps+1)
@@ -1738,12 +1790,12 @@ void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int 
   mT0 = tStart;
   
 // update the fcn pointer and type
-  mTimeFunc = Discrete;
+  mTimeFunc    = Discrete;
+  mTimeFunc_t  = Discrete_t;
   mTimeFunc_tt = Discrete_tt;
 // the following are not (yet) defined
-  mTimeFunc_t = NullFunc;   // not defined
-  mTimeFunc_ttt = NullFunc; // not defined
-  mTimeFunc_om = NullFunc;  // not defined
+  mTimeFunc_ttt  = NullFunc; // not defined
+  mTimeFunc_om   = NullFunc;  // not defined
   mTimeFunc_omtt = NullFunc;// not defined
        
   mTimeDependence = iDiscrete;
@@ -1765,6 +1817,24 @@ void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int 
 
 // this call corresponds to passes=2
   filter_ptr->zerophase(nSteps+1, &mPar[1], &mPar[1]);
+
+// give the source time function a smooth start
+  double wghv, xi;
+  int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+
+  for( int i=1 ; i<=p0-1 ; i++ )
+  {
+    mPar[i] = 0;
+  }
+  
+  for( int i=p0 ; i<=p0+p ; i++ )
+  {
+    wghv = 0;
+    xi = (i-p0)/((double) p);
+// polynomial P(xi), P(0) = 0, P(1)=1
+    wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+    mPar[i] *=wghv;
+  }
   
 }
 

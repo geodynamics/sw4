@@ -256,7 +256,7 @@ void EW::printTime( int cycle, double t, bool force ) const
       printf("Time step %7i  t = %15.7e\n", cycle, t-m_t0Shift);
 }
 //-----------------------------------------------------------------------
-void EW::printPreamble() const 
+void EW::printPreamble(vector<Source*> & a_Sources) const 
 {
    stringstream msg;
 
@@ -302,47 +302,36 @@ void EW::printPreamble() const
    }
    MPI_Barrier(MPI_COMM_WORLD);
 
-   if( mVerbose >= 4 )
-   {
-// print out source info
-// Note: Point sources are stored on the process that owns the grid point
-     // for( int i=0 ; i < m_point_sources.size() ; i++ )
-     // {
-     //   cout << *m_point_sources[i];
-     // }
-   }
-
    cout.flush(); cerr.flush();
-   MPI_Barrier(MPI_COMM_WORLD);
       
    // m0 values in each source command gets added up. This number is called the "Total seismic moment" 
-   // and should be printed to stdout with the unit Nm (Newton-meter). If that number is M0, you should 
+   // and should be printed to stdout with the unit Nm (Newton-meter). If that number is >0, you should 
    // also print Mw = 2/3 *(log10(M0) - 9.1). That is the moment magnitude (dimensionless). 
       
    if( proc_zero() )
    {
       double myM0Sum = 0;
       int numsrc = 0, ignoredSources=0;
-//       for (unsigned int i=0; i < mGlobalUniqueSources.size(); ++i)
-//       {
-//          if (mGlobalUniqueSources[i]->isMomentSource())
-// 	 {
-// // Note that proc 0 doen't know of all sources which need to be ignored
-// 	   if (!mGlobalUniqueSources[i]->ignore() ) 
-// 	   {
-// 	     numsrc++;
-//              myM0Sum += mGlobalUniqueSources[i]->getAmplitude();
-// 	   }
-// 	   else
-// 	     ignoredSources++;
-// 	 }
+      for (unsigned int i=0; i < a_Sources.size(); ++i)
+      {
+         if (a_Sources[i]->isMomentSource())
+	 {
+// Note that proc 0 doen't know of all sources that need to be ignored
+	   if (!a_Sources[i]->ignore() ) 
+	   {
+	     numsrc++;
+             myM0Sum += a_Sources[i]->getAmplitude();
+	   }
+	   else
+	     ignoredSources++;
+	 }
 	 
-//       }
+      }
       stringstream msg2;
       msg2 << endl
            << "-----------------------------------------------------------------------" << endl
            << "  Total seismic moment (M0): " << myM0Sum << " Nm " << endl;
-      if (myM0Sum != 0)
+      if (myM0Sum > 0)
          msg2 <<  "  Moment magnitude     (Mw): " << (2./3.)*(log10(myM0Sum) - 9.1)  << endl;
       msg2 << "  Number of sources " << numsrc << endl;
       msg2 << "-----------------------------------------------------------------------" << endl;

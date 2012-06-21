@@ -294,7 +294,7 @@ double Filter::estimatePrecursor()
   double timeScale=1e6;
 
   if (m_pole_min_re > 0.)
-    timeScale = 5./m_pole_min_re;
+    timeScale = 12./m_pole_min_re;
   
   return timeScale;
 }
