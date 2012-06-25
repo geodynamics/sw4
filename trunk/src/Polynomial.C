@@ -32,4 +32,5 @@ double Polynomial::coeff(unsigned int q)
 ostream& operator<<( ostream& output, const Polynomial& s )
 {
   output << "s^0: " << s.m_c[0] << ", s^1: " << s.m_c[1] << ", s^2: " << s.m_c[2];
+  return output;
 }

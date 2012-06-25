@@ -120,6 +120,8 @@ ostream& operator<<( ostream& output, const Filter& s )
     output << "Denominator coefficients: " << sos_ptr->m_d << endl;
   }
   output << "Estimated decay rate of filter exp(-alpha*t), alpha = " << s.m_pole_min_re << endl;
+
+  return output;
 }
 
 
