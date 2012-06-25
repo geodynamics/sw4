@@ -447,6 +447,11 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	double dt0 = 0;
 	double dt0loc, dt0max, t0_min;
 	t0_min = m_filter_ptr->estimatePrecursor();
+// tmp
+	if ( proc_zero() )
+	  printf("Filter precursor = %e\n", t0_min);
+	
+
 // old estimate for 2-pole low-pass Butterworth
 //	t0_min = 4./m_filter_ptr->get_corner_freq2();
 	

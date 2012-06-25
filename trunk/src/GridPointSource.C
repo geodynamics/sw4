@@ -1801,7 +1801,7 @@ void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int 
   mTimeDependence = iDiscrete;
 
 //
-// the following will be replaced by a Filter object that defines more general low-pass and band-pass filters
+// old 2nd order 2-pass Butterworth low-pass filter
 //
 //  double fc = filter_ptr->get_corner_freq2();
 // calculate coefficients in the butterworthfilter
@@ -1815,25 +1815,28 @@ void GridPointSource::discretizeTimeFuncAndFilter(double tStart, double dt, int 
 // now filter (forwards + backwards) the time series with a lowpass butterworth filter of order 2
 //  filtfilt(b, a, &mPar[1], nSteps+1);
 
-// this call corresponds to passes=2
-  filter_ptr->zerophase(nSteps+1, &mPar[1], &mPar[1]);
+// this call does both forward and backwards (for passes=2)
+  filter_ptr->evaluate(nSteps+1, &mPar[1], &mPar[1]);
 
-// give the source time function a smooth start
-  double wghv, xi;
-  int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+// give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter
+  if (filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass)
+  {    
+    double wghv, xi;
+    int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
 
-  for( int i=1 ; i<=p0-1 ; i++ )
-  {
-    mPar[i] = 0;
-  }
+    for( int i=1 ; i<=p0-1 ; i++ )
+    {
+      mPar[i] = 0;
+    }
   
-  for( int i=p0 ; i<=p0+p ; i++ )
-  {
-    wghv = 0;
-    xi = (i-p0)/((double) p);
+    for( int i=p0 ; i<=p0+p ; i++ )
+    {
+      wghv = 0;
+      xi = (i-p0)/((double) p);
 // polynomial P(xi), P(0) = 0, P(1)=1
-    wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
-    mPar[i] *=wghv;
+      wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+      mPar[i] *=wghv;
+    }
   }
   
 }

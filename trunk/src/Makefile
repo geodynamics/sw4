@@ -79,7 +79,7 @@ test3: $(OBJ3)
 test: $(OBJ2)
 	gfortran -O3 -Wall -o $@ $(OBJ2)
 
-filter: $(OBJ4)
+filterTest: $(OBJ4)
 	$(CXX) $(CFLAGS) -o $@ $(OBJ4)
 
 %.o:%.f

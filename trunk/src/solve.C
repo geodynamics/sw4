@@ -119,7 +119,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // Set the number of time steps and allocate the recording arrays in all time series objects  
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
-    a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps, mTstart, mDt);
+    a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
 
   if( mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
@@ -140,26 +140,31 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if (!m_testing && m_prefilter_sources)
   {
     if (proc_zero() )
-	  printf(" %spass filtering all source time functions to corner frequencies fc1=%e and fc2=%e\n", 
-		 (m_filter_ptr->get_type()==lowPass)? "Low":"Band", m_filter_ptr->get_corner_freq1(), 
-		 m_filter_ptr->get_corner_freq2());
-       
-// tmp
-    if (proc_zero() && point_sources.size()>0)
     {
-      printf("Saving one un-filtered original time function\n");
-	 
-      FILE *tf=fopen("g0.dat","w");
-      double t;
-      double gt;
-      for (int i=0; i<=mNumberOfTimeSteps; i++)
-      {
-	t = mTstart + i*mDt;
-	gt = point_sources[0]->getTimeFunc(t);
-	fprintf(tf, "%e %.18e\n", t, gt);
-      }
-      fclose(tf);
+      if (m_filter_ptr->get_type()==lowPass)
+	printf("Lowpass filtering all source time functions to corner frequency fc2=%e\n", 
+	       m_filter_ptr->get_corner_freq2());
+      else if (m_filter_ptr->get_type()==bandPass)
+	printf("Bandpass filtering all source time functions to corner frequencies fc1=%e and fc2=%e\n", 
+	       m_filter_ptr->get_corner_freq1(), m_filter_ptr->get_corner_freq2());
     }
+    
+// tmp
+    // if (proc_zero() && point_sources.size()>0)
+    // {
+    //   printf("Saving one un-filtered original time function\n");
+	 
+    //   FILE *tf=fopen("g0.dat","w");
+    //   double t;
+    //   double gt;
+    //   for (int i=0; i<=mNumberOfTimeSteps; i++)
+    //   {
+    // 	t = mTstart + i*mDt;
+    // 	gt = point_sources[0]->getTimeFunc(t);
+    // 	fprintf(tf, "%e %.18e\n", t, gt);
+    //   }
+    //   fclose(tf);
+    // }
 
 // 3. Replace the time function by a filtered one, represented by a (long) vector holding values at each time step   
     for( int s=0; s < point_sources.size(); s++ ) 
@@ -175,11 +180,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       double gt, gt1, gt2;
       for (int i=0; i<=mNumberOfTimeSteps; i++)
       {
-	t = mTstart + i*mDt;
-	gt = point_sources[0]->getTimeFunc(t);
-	gt1 = point_sources[0]->evalTimeFunc_t(t);
-	gt2 = point_sources[0]->evalTimeFunc_tt(t);
-	fprintf(tf, "%e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
+    	t = mTstart + i*mDt;
+    	gt = point_sources[0]->getTimeFunc(t);
+    	gt1 = point_sources[0]->evalTimeFunc_t(t);
+    	gt2 = point_sources[0]->evalTimeFunc_tt(t);
+    	fprintf(tf, "%e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
       }
       fclose(tf);
     }

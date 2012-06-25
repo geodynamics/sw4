@@ -16,7 +16,7 @@ friend std::ostream& operator<<(std::ostream& output, const Filter& s);
 public:
 Filter(FilterType type, unsigned int numberOfPoles, unsigned int numberOfPasses, double f1, double f2);
 ~Filter();
-void zerophase(int N, double *u, double *mf);
+void evaluate(int N, double *u, double *mf);
 void computeSOS(double dt);
 double estimatePrecursor();
 
@@ -31,6 +31,8 @@ Filter();
 double realPoleBP(double f1, double f2, double dt, SecondOrderSection *&sos_ptr);
 double complexConjugatedPolesBP(double f1, double f2, double dt, double alpha, 
 			      SecondOrderSection *&sos1_ptr, SecondOrderSection *&sos2_ptr);
+double realPoleLP(double fc, double dt, SecondOrderSection *&sos_ptr);
+double complexConjugatedPolesLP(double fc, double dt, double alpha, SecondOrderSection *&sos_ptr);
 void a2d(double n[3], double d[3], Polynomial &b, Polynomial &a);
 
 FilterType m_type;
