@@ -186,4 +186,28 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
   } // end if topographyExists
 } // end MaterialBlock::set_material_properties
 
-
+//-----------------------------------------------------------------------
+int MaterialBlock::set_material_pt( double x, double y, double z,
+				    double& rho, double& cs, double& cp,
+				    double& qs, double& qp )
+{
+   int retval = 0;
+   if(inside_block(x,y,z))
+   {
+      double depth = z;
+      double zsurf = 0;
+      if( m_rho != -1 )
+	 rho = m_rho + m_rhograd*(depth-zsurf);
+      if( m_vs != -1 )
+	 cs  = m_vs + m_vsgrad*(depth-zsurf);
+      if( m_vp != -1 )
+	 cp  = m_vp + m_vpgrad*(depth-zsurf);
+      if( m_qp != -1 )
+	 qp = m_qp;
+      if( m_qs != -1 )
+	 qs = m_qs;
+   }
+   else
+      retval = -1;
+   return retval;
+}

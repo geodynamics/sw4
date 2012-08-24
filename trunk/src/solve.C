@@ -133,8 +133,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // Transfer source terms to each individual grid as point sources at grid points.
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
-    if (!a_Sources[i]->ignore())
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
+
+  // Debug
+  //  for( int i=0 ; i < point_sources.size() ; i++ )
+  //     cout << *point_sources[i] << endl;
 
 // modify the time functions if prefiltering is enabled
   if (!m_testing && m_prefilter_sources)
@@ -167,10 +170,29 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     // }
 
 // 3. Replace the time function by a filtered one, represented by a (long) vector holding values at each time step   
-    for( int s=0; s < point_sources.size(); s++ ) 
-      point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt, mNumberOfTimeSteps, m_filter_ptr);
+//    for( int s=0; s < point_sources.size(); s++ ) 
+//      point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt, mNumberOfTimeSteps, m_filter_ptr);
 
 // tmp
+//    if (proc_zero() && point_sources.size()>0)
+//    {
+//      printf("Saving one filtered discretized time function\n");
+//	 
+//      FILE *tf=fopen("g1.dat","w");
+//      double t;
+//      double gt, gt1, gt2;
+//      for (int i=0; i<=mNumberOfTimeSteps; i++)
+//      {
+//    	t = mTstart + i*mDt;
+//    	gt = point_sources[0]->getTimeFunc(t);
+//    	gt1 = point_sources[0]->evalTimeFunc_t(t);
+//    	gt2 = point_sources[0]->evalTimeFunc_tt(t);
+//    	fprintf(tf, "%e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
+//      }
+//      fclose(tf);
+//    }
+       
+  } // end if prefiltering
     if (proc_zero() && point_sources.size()>0)
     {
       printf("Saving one filtered discretized time function\n");
@@ -184,12 +206,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     	gt = point_sources[0]->getTimeFunc(t);
     	gt1 = point_sources[0]->evalTimeFunc_t(t);
     	gt2 = point_sources[0]->evalTimeFunc_tt(t);
-    	fprintf(tf, "%e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
+    	fprintf(tf, "%.18e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
       }
       fclose(tf);
     }
-       
-  } // end if prefiltering
   
   
 

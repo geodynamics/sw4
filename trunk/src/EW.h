@@ -418,6 +418,7 @@ string getPath(){ return mPath; }
 void processCG(char* buffer );
 void processScaleFactors(char* buffer );
 void average_speeds( double& cp, double& cs );
+void layered_speeds( vector<double>& cp, vector<double>& z );
 void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double hessian[121] );
 void get_scalefactors( double sf[11] ); 
 bool compute_sf();

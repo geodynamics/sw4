@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include <algorithm>
 
-
 #include "startEnd.h"
 #include "version.h"
 #include "F77_FUNC.h"
@@ -311,19 +310,19 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
    if( proc_zero() )
    {
       double myM0Sum = 0;
-      int numsrc = 0, ignoredSources=0;
+      int numsrc = 0; //, ignoredSources=0;
       for (unsigned int i=0; i < a_Sources.size(); ++i)
       {
          if (a_Sources[i]->isMomentSource())
 	 {
 // Note that proc 0 doen't know of all sources that need to be ignored
-	   if (!a_Sources[i]->ignore() ) 
+//	   if (!a_Sources[i]->ignore() ) 
 	   {
 	     numsrc++;
              myM0Sum += a_Sources[i]->getAmplitude();
 	   }
-	   else
-	     ignoredSources++;
+	   //	   else
+	   //	     ignoredSources++;
 	 }
 	 
       }
@@ -3280,6 +3279,43 @@ void EW::average_speeds( double& cp, double& cs )
    }
    cp = cp/mNumberOfGrids;
    cs = cs/mNumberOfGrids;
+}
+
+//-----------------------------------------------------------------------
+void EW::layered_speeds( vector<double>& cp, vector<double>& z )
+{
+   // Sample material on a uniform grid in the z direction with N points:
+   int N=200;
+   double* zv = new double[N+1];
+   double* cpv = new double[N+1];
+   double h = (m_global_zmax-m_global_zmin)/N;
+   for( int i=0 ; i <= N ; i++ )
+      zv[i] = m_global_zmin + i*h;
+   double x0 = (m_global_xmax)/2;
+   double y0 = (m_global_ymax)/2;
+   double rho, cs, qs, qp;
+   for( int b=0 ; b < m_mtrlblocks.size() ; b++ )
+   {
+      for( int i=0 ; i <= N ; i++ )
+	 m_mtrlblocks[b]->set_material_pt( x0, y0, zv[i], rho, cs, cpv[i], qs, qp );
+   }
+   cp.push_back(cpv[0]);
+   int j = 1;
+   int l = 0;
+   double tol = 1e-4;
+   while( j < N )
+   {
+      while( fabs(cp[l]-cpv[j])<tol*cp[l] && (j<N) )
+	 j++;
+      if( j < N )
+      {
+         cp.push_back(cpv[j]);
+	 z.push_back((zv[j]+zv[j-1])/2);
+	 l++;
+      }
+   }
+   delete[] cpv;   
+   delete[] zv;   
 }
 
 //-----------------------------------------------------------------------

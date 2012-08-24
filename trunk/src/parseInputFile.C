@@ -4050,12 +4050,15 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   bool cartCoordSet = false;
   bool geoCoordSet = false;
   bool strikeDipRake = false;
+  bool dfileset=false;
 
   int ncyc = 0;
   bool ncyc_set = false;
 
   timeDep tDep = iRickerInt;
   char formstring[100];
+  char dfile[100];
+
   strcpy(formstring, "Ricker");
 
   char* token = strtok(buffer, " \t");
@@ -4265,7 +4268,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       else if (startswith("type=",token))
       {
          token += 5;
-         strcpy(formstring, token);
+         strncpy(formstring, token,100);
          if (!strcmp("Ricker",formstring))
             tDep = iRicker;
          else if (!strcmp("Gaussian",formstring))
@@ -4294,6 +4297,8 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	    tDep = iGaussianWindow;
          else if (!strcmp("Liu",formstring) )
 	    tDep = iLiu;
+         else if (!strcmp("Dirac",formstring) )
+	    tDep = iDirac;
 	 else
             if (m_myRank == 0)
 	      cout << "unknown time function: " << formstring << endl << " using default RickerInt function." << endl;
@@ -4305,6 +4310,12 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
          CHECK_INPUT(ncyc > 0,
                  err << "source command: Number of cycles must be > 0");
          ncyc_set = true;
+      }
+      else if (startswith("dfile=",token))
+      {
+         token += 6;
+         strncpy(dfile, token,100);
+	 dfileset = true;
       }
       else
       {
@@ -4320,6 +4331,34 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   if( tDep == iGaussianWindow )
       CHECK_INPUT( ncyc_set, err << "source command: ncyc must be set for Gaussian Window function");
 
+  // Discrete source time function
+  double* par=NULL;
+  int* ipar=NULL;
+  int npar=0, nipar=0;
+  if( dfileset )
+  {
+     tDep = iDiscrete;
+     //  g(t) defined by spline points on a uniform grid, read from file.
+     //  Format: t0, dt, npts
+     //          g_1
+     //          g_2
+     //         ....
+     FILE* fd=fopen(dfile, "r" );
+     double t0, dt;
+     int npts;
+     fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
+     par = new double[npts+1];
+     par[0]  = t0;
+     freq    = 1/dt;
+     ipar    = new int[1];
+     ipar[0] = npts;
+     for( int i=0 ; i < npts ; i++ )
+	fscanf(fd,"%lg", &par[i+1] );
+     npar = npts+1;
+     nipar = 1;
+     //     cout << "Read disc source: t0=" << t0 << " dt="  << dt << " npts= " << npts << endl;
+     fclose(fd);
+  }
   // --------------------------------------------------------------------------- 
   // However the location for the source was specified, we are going to
   // find the grid points associated with the location. (i.e., assign
@@ -4420,7 +4459,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
        myy *= m0;
        myz *= m0;
        mzz *= m0;
-       m0 = 1;
+       //       m0 = 1;
        //       if( m_myRank == 0 )
        //       {
        //	  cout << "m0 = " << m0 << endl;
@@ -4437,8 +4476,8 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
        //      	  cout << "Myz = " << myz << endl;
        //       }
       // these have global location since they will be used by all processors
-      sourcePtr = new Source(this, m0, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-                             tDep, formstring, ncyc);
+      sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
+                             tDep, formstring, ncyc, par, npar, ipar, nipar );
 // relative depth?
       sourcePtr->set_z_is_relative_to_topography( topodepth );
       
@@ -4451,9 +4490,10 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
        fx *= f0;
        fy *= f0;
        fz *= f0;
-       f0 = 1;
+       //       f0 = 1;
       // global version (gets real coordinates)
-      sourcePtr = new Source(this, f0, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, ncyc);
+       sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, ncyc,
+                              par, npar, ipar, nipar );
 // relative depth?
       sourcePtr->set_z_is_relative_to_topography( topodepth );
       //...and add it to the list of forcing terms

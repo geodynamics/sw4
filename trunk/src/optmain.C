@@ -2,6 +2,8 @@
 
 #include "EW.h"
 
+#include <fcntl.h>
+
 #include <cstring>
 #include <string>
 #include <sstream>
@@ -11,6 +13,7 @@
 #include <mpi.h>
 #include "version.h"
 
+#include "F77_FUNC.h"
 
 using namespace std;
 
@@ -27,6 +30,10 @@ void usage(string thereason)
 void guess_source( EW & simulation, vector<Source*>& sources, vector<TimeSeries*>& timeseries,
 		   vector<TimeSeries*>& observations, double* xv, int myRank );
 
+void guess_source_position_layer( EW & simulation, vector<Source*>& sources, 
+			    vector<TimeSeries*>& observations,
+			    double& x0, double& y0, double& z0, double& t0, int myRank );
+
 void guess_source_position( EW & simulation, vector<Source*>& sources, 
 			    vector<TimeSeries*>& timeseries, vector<TimeSeries*>& observations,
 			    double& x0, double& y0, double& z0, double& t0, int myRank );
@@ -40,7 +47,10 @@ void guess_source_moments( EW & simulation, vector<Source*>& sources, vector<Tim
 			   vector<TimeSeries*>& observations, double* xv, int myRank );
 
 
-extern "C" { void linsolvelu_( int*, double*, double*, double* ); }
+extern "C" { void F77_FUNC(linsolvelu,LINSOLVEU)( int*, double*, double*, double* );
+             void F77_FUNC(dgesv,DGESV)( int*, int*, double*, int*, int*, double*, int*, int*);
+             void F77_FUNC(dgels,DGELS)( char*, int*, int*, int*, double*, int*, double*, int*,
+					 double*, int*, int*); }
 
 
 //-----------------------------------------------------------------------
@@ -58,7 +68,7 @@ void testsourced2( EW & simulation, vector<Source*>& GlobalSources )
    for( int testcomp = 0 ; testcomp < 11 ; testcomp++ )
    {
       double h = 0.00001;
-      persrc[0] = GlobalSources[0]->copy( &simulation );
+      persrc[0] = GlobalSources[0]->copy( " " );
       persrc[0]->perturb( h, testcomp );
       double gradp[11], hessp[121];
       simulation.testsourcediff( persrc, gradp, hessp );
@@ -126,9 +136,10 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       GlobalSources[0]->set_noderivative();         
 
 // Validation, compute numerical gradient:
-      double h = 0.00001;
+      double h = 0.0001;
+      //      double h = 0.00;
       vector<Source*> persrc(1);
-      persrc[0] = GlobalSources[0]->copy( &simulation );
+      persrc[0] = GlobalSources[0]->copy( " " );
       persrc[0]->perturb( h, testcomp );
 	 //		 GlobalSources[0]->perturb(h,testcomp);
 	 //		 simulation.preprocessSources( GlobalSources );
@@ -184,7 +195,8 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
    {
       for( int comp = 0 ; comp < 11 ; comp++ )
       {
-	 cout << "Solving forward problem no. " << comp+1 << endl;
+         if( myRank == 0 )
+	    cout << "Solving forward problem no. " << comp+1 << endl;
 	 for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
 	 {
 	    TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "dudpsrc" );
@@ -234,7 +246,7 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
    GlobalSources[0]->set_noderivative();
    for( int testcomp = 0 ; testcomp < 11 ; testcomp++ )
    {
-      persrc[0] = GlobalSources[0]->copy( &simulation );
+      persrc[0] = GlobalSources[0]->copy( " " );
       persrc[0]->perturb( h, testcomp );
 
 // Run forward problem with perturbed source
@@ -258,7 +270,6 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	 cout << "Hessian, col. no " << testcomp+1 << " , by numerical derivative = " << endl;
 	 for( int i = 0 ; i < 11 ; i++ )
 	    cout << "   " << (gradp[i]-gradient[i])/h << endl;
-	 
       }
       delete persrc[0];
    }
@@ -350,7 +361,10 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
          cout << " scaling factors will use only the first part of the Hessian" << endl;
       }
       for( int comp= 0 ; comp < 11 ; comp++ )
-	 sf[comp]=1/sqrt(hess1[comp+11*comp]);
+         if( hess1[comp+11*comp] != 0 )
+   	    sf[comp]=1/sqrt(hess1[comp+11*comp]);
+         else
+	    sf[comp]=1;
    }
    else
    {
@@ -575,7 +589,7 @@ void compute_f( EW& simulation, double x[11], vector<Source*>& GlobalSources,
       return;
    }
    vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy( &simulation );
+   src[0] = GlobalSources[0]->copy( " " );
    src[0]->set_parameters( x );
 
 // Run forward problem with guessed source
@@ -634,7 +648,7 @@ void compute_fanddf( EW& simulation, double x[11], vector<Source*>& GlobalSource
       return;
    }
    vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy( &simulation );
+   src[0] = GlobalSources[0]->copy( " " );
    src[0]->set_parameters( x );
 
 // Run forward problem with guessed source
@@ -711,7 +725,7 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
    }
 
    vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy( &simulation );
+   src[0] = GlobalSources[0]->copy( " ");
    src[0]->set_parameters( x );
    if( !ddf_isdefined )
    {
@@ -776,7 +790,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
 		 double x[11], double f, double df[11], double p[11],
 		 double cgstep, double maxstep, double steptol, double xnew[11],
-		 double& fnew, double sf[11], int myRank, int& retcode )
+		 double& fnew, double sf[11], int myRank, int& retcode, double zlimit )
 
 //-----------------------------------------------------------------------
 // Line seach by backtracking for CG.
@@ -887,6 +901,14 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
       {
 	 for( int i=0; i < n ; i++ )
 	    xnew[i] = x[i] + lambda*p[i];
+
+	 // prevent z from becoming negative
+         if( xnew[2] < 0 )
+	 {
+            lambda = -x[2]/p[2];
+	    for( int i=0; i < n ; i++ )
+	       xnew[i] = x[i] + lambda*p[i];
+	 }	 
 	 compute_f( simulation, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew );
          lambdasave.push_back(lambda);
          fcnsave.push_back(fnew);
@@ -932,7 +954,14 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	    // Take a full step
 	    for( int i=0 ; i < n ; i++ )
 	       xnew[i] = x[i] + p[i];
+
 	    // Compute return value for fnew
+            if( xnew[2] < 0 )
+	    {
+               lambda = -x[2]/p[2];
+	       for( int i=0 ; i < n ; i++ )
+		  xnew[i] = x[i] + lambda*p[i];
+	    }
 	    compute_f( simulation, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew );
 	    return;
 	 }
@@ -997,6 +1026,9 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
    bool dolinesearch = true;
    int maxit, maxrestart, varcase=0, stepselection=0;
    bool fletcher_reeves=true;
+
+   // Do not allow source to rise closer than this to the surface:
+   double zlimit = 10;
    double tolerance;
    double f, df[11], d[11], d2f[121], da[11], xa[11], dfp[11], rnorm, errnorm;
    //   cout << "Enter CG " << endl;
@@ -1108,13 +1140,21 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
             if( myRank == 0 )
 	       cout << "Line search.. " << endl;
 	    linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
-			x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode );
+			x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode, zlimit );
             if( myRank == 0 )
 	       cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
 	 }
          else
+	 {
 	    for( int i=0 ; i < n ; i++ )
 	       xa[i] = x[i] + alpha*d[i];
+	    if( xa[2] < 0 )
+	    {
+	       alpha= -x[2]/d[2];
+	       for( int i=0 ; i < n ; i++ )
+		  xa[i] = x[i] + alpha*d[i];
+	    }
+	 }         
 
 	 // xa is now the new iterate
 	 double dxnorm = 0;
@@ -1347,7 +1387,7 @@ int main(int argc, char **argv)
 	}
 	
 // Variables needed:
-	int testcase  = 5; // job to do
+	int testcase  = 6; // job to do
 	//	int scale_factor = 1; // Method for computing scale factors, could be from input file
 	//        int maxit, maxrestarts;
 	//	double tolerance;
@@ -1363,7 +1403,9 @@ int main(int argc, char **argv)
 	{
 	   // Guess source position, and perhaps t0
 	   double tstart;
-	   guess_source_position( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+	   //	   guess_source_position( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+	   //				  xv[0], xv[1], xv[2], tstart, myRank );
+	   guess_source_position_layer( simulation, GlobalSources, GlobalObservations,
 				  xv[0], xv[1], xv[2], tstart, myRank );
 	   if( guesst0fr )
 	      // Guess t0
@@ -1454,6 +1496,47 @@ int main(int argc, char **argv)
 		 //		 cout << mzz << " " << f << endl;
 		 cout << la << " " << f << endl;
 	   }
+        else if( testcase == 5 )
+	{
+	   // Function surface
+           int ni = 50, nj=50;
+	   // Standard
+           xv[0] = 15000;
+	   xv[1] = 15000;
+           xv[2] = 2000;
+	   // Offset
+	   //	   xv[0] = 13000;
+	   //	   xv[1] = 13000;
+	   //	   xv[2] =  2000;
+	   xv[3] = 0;
+           xv[4] = 1e18;
+	   xv[5] = xv[6] = xv[7] = xv[8] = 0;
+	   xv[9] = 1.45;
+	   xv[10] = 6.0;
+           double xmin = 10000, ymin=10000, xmax=20000, ymax=20000;
+           double zmin = 200, zmax=8200;
+	   double* fsurf = new double[ni*nj];
+           for( int j= 0 ; j < nj ; j++ )
+	      for( int i= 0 ; i < ni ; i++ )
+	      {
+                 xv[0] = xmin + i*(xmax-xmin)/(ni-1);
+                 xv[1] = ymin + j*(ymax-ymin)/(nj-1);
+		 //                 xv[2] = zmin + j*(zmax-zmin)/(nj-1);
+		 compute_f( simulation, xv, GlobalSources, GlobalTimeSeries, GlobalObservations, fsurf[i+ni*j] );
+	      }
+           if( myRank == 0 )
+	   {
+              int fd=open("funcsurf.bin", O_CREAT | O_TRUNC | O_WRONLY , 0660 );
+	      int nr = write(fd,&ni,sizeof(int));
+	      write(fd,&nj,sizeof(int));
+              write(fd,&xmin,sizeof(double));
+              write(fd,&ymin,sizeof(double));
+              write(fd,&xmax,sizeof(double));
+              write(fd,&ymax,sizeof(double));
+	      write(fd,fsurf,sizeof(double)*ni*nj);
+	      close(fd);
+	   }
+	}
 	else
 	{
 	   // run optimization
@@ -1488,6 +1571,357 @@ int main(int argc, char **argv)
 } // end of main
 
 //-----------------------------------------------------------------------
+void exact_guess_source_position( double xr[4], double yr[4], double dist[4],
+				  double& x0, double& y0, double& z0, double& d0, int& fail )
+//
+// Assumes that zr=0 at all stations
+//
+{
+   double mat[9], x[3], rhs[3];
+   int j;
+   for( int i=0 ; i<3 ; i++ )
+   {
+      j = 0;
+      mat[i+3*j] = xr[0]-xr[i+1];
+      j = 1;
+      mat[i+3*j] = yr[0]-yr[i+1];
+      j = 2;
+      mat[i+3*j] = -(dist[0]-dist[i+1]);
+      rhs[i] = 0.5*(xr[0]*xr[0]+yr[0]*yr[0]-dist[0]*dist[0]-(x[i+1]*x[i+1]+yr[i+1]*yr[i+1]-dist[i+1]*dist[i+1]));
+   }
+   int three=3, one=1, ipiv[3], info;
+   F77_FUNC(dgesv,DGESV)( &three, &one, mat, &three, ipiv, rhs, &three, &info );
+   if( info != 0 )
+   {
+      fail = info;
+      return;
+   }
+   x0 = rhs[0];
+   y0 = rhs[1];
+   d0 = rhs[2];
+   z0 = - (x0-xr[0])*(x0-xr[0]) - (y0-yr[0])*(y0-yr[0]) + (d0-dist[0])*(d0-dist[0]);
+   if( z0 < 0 )
+   {
+      fail = 4;
+      //      z0   = 0;
+   }
+   else
+   {
+      fail = 0;
+      z0   = sqrt(z0);
+   }
+}
+
+//-----------------------------------------------------------------------
+void one_ray( double xr, double yr, double zr, double xsrc, double ysrc,
+	      double zsrc, vector<double>& cpv, vector<double>& zv,
+	      int& n, double& t, int ifail[2], int myRank )
+{
+   ifail[0] = 0;
+   ifail[1] = 0;
+   if( zsrc < zv[0] )
+   {
+      // Homogeneous material
+      t = sqrt( (xr-xsrc)*(xr-xsrc)+(yr-ysrc)*(yr-ysrc)+(zr-zsrc)*(zr-zsrc))/cpv[0];
+      n = 1;
+   }
+   else
+   {
+      // find layer of source
+      n = zv.size();
+      while( zsrc < zv[n-1] && (n>0) )
+	 n--;
+      double* xpts = new double[n+1];
+      double* ypts = new double[n+1];
+      // initial guess
+      //      cout << "n= " << n << endl;
+      for( int i=1 ; i <= n ; i++ )
+      {
+	 xpts[i] = xr + i*(xsrc-xr)/(n+1);
+	 ypts[i] = yr + i*(ysrc-yr)/(n+1);
+      }
+      //            if( myRank == 0 )
+      //            {
+      //	       cout << " zsrc= " << zsrc << endl;
+      //      	 cout << "guess in ray n= " << n << endl; 
+      //               for( int i=0 ; i < n ; i++ )
+      //		  cout << " cp = " << cpv[i] << " z=" << zv[i] << endl;
+      //               for( int i=1 ; i <= n ; i++ )
+      //            cout << " x,y= " << xpts[i] << " " << ypts[i] << endl;
+      //            }
+      // Fixed point iteration
+      int maxit = 200, it=0;
+      double tol=1e-10, er=1;
+      double *b = new double[n];
+      double *c = new double[n];
+      double *rhs = new double[2*n];
+      double *a = new double[(n)*(n)];
+      double *x = new double[n];
+      double *y = new double[n];
+      double *d = new double[n+1];
+      int* ipiv = new int[n];
+
+      while( (er > tol) && (it<maxit) )
+      {
+	 for( int i=0 ; i < n ; i++ )
+	    b[i]=c[i]=x[i]=y[i]=0;
+	 for( int i=0 ; i < 2*n ; i++ )
+	    rhs[i]=0;
+	 for( int i=0 ; i < n*n ; i++ )
+	    a[i]=0;
+	 d[0] = cpv[0]*sqrt( (xpts[1]-xr)*(xpts[1]-xr) + (ypts[1]-yr)*(ypts[1]-yr)+(zv[0]-zr)*(zv[0]-zr));
+         for( int i=2 ; i <= n ; i++ )
+	    d[i-1] = cpv[i-1]*sqrt( (xpts[i]-xpts[i-1])*(xpts[i]-xpts[i-1])+
+			     (ypts[i]-ypts[i-1])*(ypts[i]-ypts[i-1])+ (zv[i-1]-zv[i-2])*(zv[i-1]-zv[i-2]));
+	 d[n]= cpv[n]*sqrt( (xsrc-xpts[n])*(xsrc-xpts[n])+(ysrc-ypts[n])*(ysrc-ypts[n])+
+			 (zsrc-zv[n-1])*(zsrc-zv[n-1]));
+	 if( n > 1 )
+	 {
+	    //            b[0]   = xr/d[0];
+	    //	    b[n-1] = xsrc/d[n];
+	    //            c[0]   = yr/d[0];
+	    //	    c[n-1] = ysrc/d[n];
+            rhs[0  +n*0] =  xr/d[0];
+	    rhs[n-1+n*0] = xsrc/d[n];
+	    rhs[0  +n*1] = yr/d[0];
+	    rhs[n-1+n*1] = ysrc/d[n];
+	 }
+         else
+	 {
+	    //            b[0] = xr/d[0] + xsrc/d[n];
+	    //            c[0] = yr/d[0] + ysrc/d[n];
+	    rhs[0] = xr/d[0]+xsrc/d[n];
+	    rhs[1] = yr/d[0]+ysrc/d[n];
+	 }
+	 for( int i=1 ; i <= n-1 ; i++ )
+	 {
+            a[i-1+n*(i-1)] = 1/d[i-1]+1/d[i];
+            a[i-1+n*i]     = -1/d[i];
+	    a[i+n*(i-1)]   = -1/d[i];
+	 }
+	 a[n-1+n*(n-1)] = 1/d[n-1]+1/d[n];
+         int two=2, info;
+         F77_FUNC(dgesv,DGESV)( &n, &two, a, &n, ipiv, rhs, &n, &info );
+	 //	 F77_FUNC(linsolvelu,LINSOLVEU)( &n, a, b, x );
+	 //	 F77_FUNC(linsolvelu,LINSOLVEU)( &n, a, c, y );
+         if( info != 0 )
+	 {
+	    cout <<"Error solving system in one_ray. info= " << info << endl;
+            ifail[0] = 1;
+	    ifail[1] = info;
+	    return;
+	 }
+         for( int i=0 ; i < n ; i++ )
+	 {
+            x[i] = rhs[i+n*0];
+	    y[i] = rhs[i+n*1];
+	 }
+	 er = 0;
+	 for( int i=1 ; i <= n ; i++ )
+	 {
+            if( er < fabs(xpts[i]-x[i-1]) )
+	       er = fabs(xpts[i]-x[i-1]);
+	    if( er < fabs(ypts[i]-y[i-1]) )
+	       er = fabs(ypts[i]-y[i-1]);
+            xpts[i] = x[i-1];
+	    ypts[i] = y[i-1];
+	 }
+	 //         if( myRank == 0 )
+	 //         cout << "ray err = " << er << endl;
+         it++;
+      }
+      if( er > tol )
+      {
+	 ifail[0] = 2;
+         if( myRank == 0 )
+	    cout << "WARNING: no convergence in one_ray err= "<< er << " tol= " << tol << endl;
+      }
+      //      if( myRank == 0 )
+      //	 for( int i=1; i <= n ; i++ )
+      //	    cout << " x1 = " << xpts[i]  << " y1 = "  << ypts[i] << endl;
+      t = 0;
+      for( int i=0 ; i <= n ;i++ )
+	 t += d[i]/(cpv[i]*cpv[i]);
+      delete[] a, b, c, d, x, y, xpts, ypts, ipiv, rhs;
+   }
+}
+
+//-----------------------------------------------------------------------
+void guess_source_position_layer( EW& simulation, vector<Source*>& sources, 
+				  vector<TimeSeries*>& observations,
+				  double& x0, double& y0, double& z0, double& t0, int myRank )
+{
+
+   int no = observations.size();
+   double* trl = new double[no];
+   double* xrl = new double[no];
+   double* yrl = new double[no];
+   double* zrl = new double[no];
+
+   vector<double> cpv;
+   vector<double> zv;
+   simulation.layered_speeds(cpv,zv);
+   //   // LOH1
+   //   cpv.push_back(4000);
+   //   cpv.push_back(6000);
+   //   zv.push_back(1000);
+   for( int s= 0 ; s < observations.size() ; s++ )
+      if( observations[s]->myPoint() )
+      {
+	 trl[s] = observations[s]->arrival_time( 1e-6 );
+	 xrl[s] = observations[s]->getX();
+	 yrl[s] = observations[s]->getY();
+	 zrl[s] = observations[s]->getZ();
+      }
+      else
+	 trl[s] = xrl[s] = yrl[s] = zrl[s] = 0;
+
+
+// Collect station info across the machine:
+   double* tr = new double[no];
+   double* xr = new double[no];
+   double* yr = new double[no];
+   double* zr = new double[no];
+
+   MPI_Allreduce( trl, tr, no, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( xrl, xr, no, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( yrl, yr, no, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( zrl, zr, no, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+
+   delete[] trl, xrl, yrl, zrl;
+
+   double x, y, t, h;
+   int n;
+
+   // Initial guess for t0, manually determined arrivals (for geyser's eq.):
+   t0 = 14.1;
+   tr[0] = 34;
+   tr[1] = 33;
+   tr[2] = 24;
+   tr[3] = 32.3;
+   tr[4] = 21;
+   tr[5] = 27;
+   tr[6] = 35.5;
+
+   // Initial guess for position
+   x0 = sources[0]->getX0();
+   y0 = sources[0]->getY0();
+   z0 = sources[0]->getZ0();
+
+// Gauss-Newton to solve for the source position
+   h  = 1e-6*sqrt(x0*x0+y0*y0+z0*z0);
+   int maxit = 500, it=0;
+   double tol=1e-6, er=1;
+   
+   double* jac = new double[4*no];
+   double* b   = new double[no];
+
+   char job='N';
+   int four=4, one=1, lwork=16, info, fail[2];   
+   double diagelement=1e-8;
+   double* work = new double[lwork];
+
+   double* jactjac=new double[16];
+   double* jactb = new double[4];
+   int* ipiv=new int[4];
+
+   if( myRank == 0 )
+   {
+      cout << "stations " << endl;
+      for( int s=0 ; s < no ; s++ )
+	 cout << " x = " << xr[s] << " y= " << yr[s] << " z= " << zr[s] << " t= " << tr[s] << endl;
+   }
+   while( (er > tol ) && (it < maxit) )
+   {
+      for( int r=0 ; r < no ; r++ )
+      {
+         one_ray( xr[r], yr[r], zr[r], x0, y0, z0, cpv, zv, n, t, fail, myRank );
+	 b[r] = t + t0 - tr[r];
+         double tl = t;
+	 one_ray( xr[r], yr[r], zr[r], x0+h, y0, z0, cpv, zv, n, t, fail, myRank );
+	 jac[r+no*0] = (t-tl)/h;
+	 one_ray( xr[r], yr[r], zr[r], x0, y0+h, z0, cpv, zv, n, t, fail, myRank );
+	 jac[r+no*1] = (t-tl)/h;
+	 one_ray( xr[r], yr[r], zr[r], x0, y0, z0+h, cpv, zv, n, t, fail, myRank );
+	 jac[r+no*2] = (t-tl)/h;
+         jac[r+no*3] = 1;
+      }
+// Solve in least squares sense
+//      if(myRank==0 )
+//      {
+//         cout << "matrix and rhs " << endl;
+//	 for( int r=0 ; r < no ; r++ )
+//	    cout << jac[r+no*0] << " " << jac[r+no*1] << " " << jac[r+no*2] << " " << jac[r+no*3] << " rhs=" << b[r] << endl;// 
+//      }
+      // Solve QR directly
+      //      F77_FUNC(dgels,DGELS)( &job, &no, &four, &one, jac, &no, b, &no, work, &lwork, &info );
+      //      if( info != 0 )
+      //      {
+      //	 cout <<"Error solving system in guess_source_position_layer. info= " << info << endl;
+      //	 return;
+      //      }
+
+//  Form the normal equations, and add diagonal stabilizing element
+      // 1. Form Jac'*Jac
+      for( int j=0 ; j < 4 ; j++ )
+	 for( int i=0 ; i < 4 ; i++ )
+	 {
+            jactjac[i+4*j] = 0;
+	    for( int k=0 ; k < no ; k++ )
+	       jactjac[i+4*j] += jac[k+no*j]*jac[k+no*i];
+	 }
+      // 2. Add diagonal stabilizer, and form Jac'*b
+      for( int i= 0 ; i < 4 ; i++ )
+      {
+         jactjac[i+4*i] += diagelement;
+         jactb[i] = 0;
+	 for( int k=0 ; k < no ; k++ )
+	    jactb[i] += jac[k+no*i]*b[k];
+      }
+      int four=4,one=1;
+
+      //      if(myRank==0 )
+      //      {
+      //         cout << "normal eq matrix and rhs " << endl;
+      //	 for( int r=0 ; r < 4 ; r++ )
+      //	    cout << jactjac[r+4*0] << " " << jactjac[r+4*1] << " " << jactjac[r+4*2] << " " << jactjac[r+4*3] << " rhs=" << jactb[r] << endl; 
+      //      }
+
+      F77_FUNC(dgesv,DGESV)( &four, &one, jactjac, &four, ipiv, jactb, &four, &info );      
+      if( info != 0 )
+      {
+	 cout <<"Error solving system in guess_source_position_layer. info= " << info << endl;
+	 return;
+      }
+      for( int k=0 ; k < 4 ;k++ )
+	 b[k] = jactb[k];
+
+      er = 0;
+      for( int i= 0 ; i<4 ; i++ )
+	 if( er < fabs(b[i]) )
+	    er = fabs(b[i]);
+
+      if( myRank == 0 )
+      {
+	 cout << "err = " << er << " x0=" << x0 << " y0=" << y0 << " z0=" << z0 << " t0=" << t0 << endl;
+         cout << "      dx0 = " << b[0] << " dy0 = " << b[1] << " dz0 = " << b[2] << " dt0 = " << b[3] << endl;
+      }
+      x0 = x0 - b[0];
+      y0 = y0 - b[1];
+      z0 = z0 - b[2];
+      t0 = t0 - b[3];
+      it++;
+   }
+   delete[] jac, b, work, xr, yr, zr, tr;
+   delete[] jactjac, jactb, ipiv;
+   if( myRank == 0 )
+   {
+      cout << "Guessed position of source " << x0 << " " << y0 << " " << z0 << endl;
+      cout << "Guessed time offset " << t0 << endl;
+   }
+}
+
+//-----------------------------------------------------------------------
 void guess_source_position( EW &  simulation, vector<Source*>& sources, 
 			    vector<TimeSeries*>& timeseries, vector<TimeSeries*>& observations,
 			    double& x0, double& y0, double& z0, double& t0, int myRank )
@@ -1499,27 +1933,83 @@ void guess_source_position( EW &  simulation, vector<Source*>& sources,
    double* zr   = new double[n];
    double cp, cs;
    simulation.average_speeds(cp,cs);
+
+   //   if( myRank == 0 )
+   //   {
+   //
+   //      for( int i=0 ; i < zv.size() ; i++ )
+   //         cout << " c" << i+1 << " = " << cpv[i] << " z" << i+1 << " = " << zv[i] << endl;
+   //      cout << " c" << zv.size()+1 << " = " << cpv[cpv.size()-1] << endl;
+
+   //      double xr=2.0, yr=0.0, zr=0.0;
+   //      double xsrc=-0.5, ysrc=1.4, zsrc=5.0;
+   //      double tt;
+   //      int nn, ifail[2];
+   //      vector<double> zs(3), cps(4);
+   //      zs[0] = 1;
+   //      zs[1] = 2;
+   //      zs[2] = 4;
+   //      cps[0] = 0.2;
+   //      cps[1] = 2;
+   //      cps[2] = 8;
+   //      cps[3] = 10;
+   //      one_ray( xr, yr, zr, xsrc, ysrc, zsrc, cps, zs, nn, tt, ifail );
+   //      cout << " tmin = "  << tt << " n= " << nn << endl;
+   //   }
+   //   cp = 6000;
+   //   cs = 3464;
    if( myRank == 0 )
       cout << "average speeds " << cp << " " << cs << endl;
 
    for( int s= 0 ; s < observations.size() ; s++ )
       if( observations[s]->myPoint() )
       {
-	 dist[s] = cp*observations[s]->arrival_time( 1e-6 );
+	 dist[s] = cp*observations[s]->arrival_time( 1e-3 );
 	 xr[s] = observations[s]->getX();
 	 yr[s] = observations[s]->getY();
 	 zr[s] = observations[s]->getZ();
 //        cout << "s = " << s << " xr, yr, zr, dist = " << xr[s] << " " << yr[s] << " " << zr[s] << " " << dist[s] << endl;
       }
+      else
+	 dist[s] = xr[s] = yr[s] = zr[s] = 0;
+// Compute initial guess for the non-linear problem by solving the problem with four stations exactly.
+//
+// Start with the four first stations. Collect them across the machine:
+   double xrg[4],yrg[4],drg[4];
+   for( int s=0 ; s < 4 ; s++ )
+   {
+      MPI_Allreduce( &xr[s],   &xrg[s], 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &yr[s],   &yrg[s], 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &dist[s], &drg[s], 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   }
+   int fail;
+   double d0;
+   exact_guess_source_position( xrg, yrg, drg, x0, y0, z0, d0, fail );
 
-   // Least squares with initial guess from 'source' object
-   //   double d0 = cp*sources[0]->getOffset();
-   x0 = sources[0]->getX0();
-   y0 = sources[0]->getY0();
-   z0 = sources[0]->getZ0();
-   // Initial guess for d0:
+   if( fail != 0 )
+   {
+      if( myRank == 0 )
+      {
+         cout << "fail in initial guess. Fail =  " << fail << endl;
+	 for( int s=0 ; s < 4 ; s++ )
+	    cout << " xr= " << xrg[s] << " yr= " << yrg[s] << " dr= " << drg[s] << endl;
+         if( fail == 4 )
+	    cout << " z0^2 = " << z0 << endl;
+      }
+      x0 = sources[0]->getX0();
+      y0 = sources[0]->getY0();
+      z0 = sources[0]->getZ0();
+      d0 = 0;
+   }      
 
-   double d0 = 0;
+   
+   //   // Least squares with initial guess from 'source' object
+   //   x0 = sources[0]->getX0();
+   //   y0 = sources[0]->getY0();
+   //   z0 = sources[0]->getZ0();
+   //   // Initial guess for d0:
+   //   double d0 = 0;
+
    //   double sdsq=0,ressq=0, dsum=0;
    //   for( int s= 0 ; s < observations.size() ; s++ )
    //      if( observations[s]->myPoint() )
@@ -1594,7 +2084,7 @@ void guess_source_position( EW &  simulation, vector<Source*>& sources,
       a[13] = a[7];
       a[14] = a[11];
       int four=4;
-      linsolvelu_( &four, a, b, dx );
+      F77_FUNC(linsolvelu,LINSOLVEU)( &four, a, b, dx );
       err = 0;
       for( int i=0 ; i < 4 ; i++ )
 	 err = err > abs(dx[i]) ? err : abs(dx[i]);
@@ -1656,13 +2146,17 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
 			   vector<TimeSeries*>& observations, double* xv, int myRank )
 {
    timeDep tfunc = sources[0]->getTfunc();
-   double amp    = sources[0]->getAmplitude();
+   //   double amp    = sources[0]->getAmplitude();
 
+   double amp=1;
    double x0 = sources[0]->getX0();
    double y0 = sources[0]->getY0();
    double z0 = sources[0]->getZ0();
    double t0 = sources[0]->getOffset();
    double freq= sources[0]->getFrequency();
+
+   //   if( myRank == 0 )
+   //      cout << "initial amp = " << amp << endl;
 
    double mxx, mxy, mxz, myy, myz, mzz;
    if( sources[0]->isMomentSource() )
@@ -1679,7 +2173,10 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
          tszz[s] = timeseries[s]->copy(&simulation, "tszzcopy" );
       }
 
-      Source* onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
+      //      Source* onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
+      Source* onesrc = sources[0]->copy("xx");
+      onesrc->setMoments(1,0,0,0,0,0);
+
       vector<Source*> src(1);
       src[0] = onesrc;
       simulation.setupRun( );
@@ -1687,35 +2184,45 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsxx );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
+      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
+      onesrc = sources[0]->copy("xy");
+      onesrc->setMoments(0,1,0,0,0,0);
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsxy );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
+      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
+      onesrc = sources[0]->copy("xz");
+      onesrc->setMoments(0,0,1,0,0,0);
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsxz );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
+      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
+      onesrc = sources[0]->copy("yy");
+      onesrc->setMoments(0,0,0,1,0,0);
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsyy );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
+      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
+      onesrc = sources[0]->copy("yz");
+      onesrc->setMoments(0,0,0,0,1,0);
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsyz );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
+      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
+      onesrc = sources[0]->copy("zz");
+      onesrc->setMoments(0,0,0,0,0,1);
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
@@ -1814,7 +2321,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       //	    cout << " " << b[i-1] << endl;
       //	 cout << " ... amplitude = " << amp << endl;
       //      }
-      linsolvelu_( &six, a, b, x );
+      F77_FUNC(linsolvelu,LINSOLVEU)( &six, a, b, x );
       mxx = x[0]/amp;
       mxy = x[1]/amp;
       mxz = x[2]/amp;
@@ -1842,8 +2349,12 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       cout << "Initial guess for point sources not implemented \n";
    }
    // Construct guessed source object and return in sources vector, instead of initial source
-   Source *sguess = new Source( &simulation, amp, freq, t0, x0, y0, z0,
-			       mxx, mxy, mxz, myy, myz, mzz, tfunc, "srcguess");
+
+   Source* sguess = sources[0]->copy("srcguess");
+   sguess->setMoments(mxx,mxy,mxz,myy,myz,mzz);
+
+   //   Source *sguess = new Source( &simulation, freq, t0, x0, y0, z0,
+   //			       mxx, mxy, mxz, myy, myz, mzz, tfunc, "srcguess");
    xv[3] = mxx;
    xv[4] = mxy;
    xv[5] = mxz;
@@ -1963,7 +2474,7 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       a[13] = a[7];
       a[14] = a[11];
       int four=4;
-      linsolvelu_( &four, a, b, dx );
+      F77_FUNC(linsolvelu,LINSOLVEU)( &four, a, b, dx );
       err = 0;
       for( int i=0 ; i < 4 ; i++ )
 	 err = err > abs(dx[i]) ? err : abs(dx[i]);
@@ -2034,7 +2545,7 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
          tszz[s] = timeseries[s]->copy(&simulation, "tszzcopy" );
       }
 
-      Source* onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
+      Source* onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
       vector<Source*> src(1);
       src[0] = onesrc;
       simulation.setupRun( );
@@ -2042,35 +2553,35 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       simulation.solve( src, tsxx );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
+      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsxy );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
+      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsxz );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
+      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsyy );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
+      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
       simulation.solve( src, tsyz );
       delete onesrc;
 
-      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
+      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
       src[0] = onesrc;
 
       simulation.preprocessSources( src );
@@ -2169,7 +2680,7 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       //	    cout << " " << b[i-1] << endl;
       //	 cout << " ... amplitude = " << amp << endl;
       //      }
-      linsolvelu_( &six, a, b, x );
+      F77_FUNC(linsolvelu,LINSOLVEU)( &six, a, b, x );
       mxx = x[0]/amp;
       mxy = x[1]/amp;
       mxz = x[2]/amp;
@@ -2198,7 +2709,7 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
    }
 
    // Construct guessed source object and return in sources vector, instead of initial source
-   Source *sguess = new Source( &simulation, amp, freq, t0, x0, y0, z0,
+   Source *sguess = new Source( &simulation, freq, t0, x0, y0, z0,
 			       mxx, mxy, mxz, myy, myz, mzz, tfunc, "srcguess");
    
    delete sources[0];

@@ -56,9 +56,14 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 
 // Transfer source terms to each individual grid as point sources at grid points.
    for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
-      if (!a_Sources[i]->ignore())
 	 a_Sources[i]->set_grid_point_sources4( this, point_sources );
 
+   //   if (!m_testing && m_prefilter_sources)
+   //   {
+   ////  Replace the time function by a filtered one, represented by a (long) vector holding values at each time step   
+   //      for( int s=0; s < point_sources.size(); s++ ) 
+   //	 point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt, mNumberOfTimeSteps, m_filter_ptr);
+   //   } 
 
    // Initial data
    for(int g=0 ; g < mNumberOfGrids ; g++ )

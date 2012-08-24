@@ -27,6 +27,9 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 //----------------------------------------------
 void EW::setupRun( )
 {
+   if( mIsInitialized && proc_zero() )
+      cout << " WARNING, calling setupRun twice " << endl;
+
   double time_start = MPI_Wtime();
 
 // m_testing == true is one of the pointers to testing modes is assigned
@@ -433,6 +436,11 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       if (mVerbose && proc_zero() )
 	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
 
+// Need to set the frequency to 1/dt for Dirac source
+      for( int s=0 ; s  < a_GlobalUniqueSources.size(); s++ )
+	 if( a_GlobalUniqueSources[s]->getTfunc() == iDirac )
+	    a_GlobalUniqueSources[s]->setFrequency( 1.0/mDt );
+
 // Modify the time functions if prefiltering is enabled
       if (m_prefilter_sources)
       {
@@ -479,8 +487,11 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	}
 // need to remember the time shift so we can compensate for it when writing sac and image files
 	m_t0Shift = dt0max;
-      }
 
+// Do the filtering
+	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+           a_GlobalUniqueSources[s]->filter_timefunc( m_filter_ptr, mTstart, mDt, mNumberOfTimeSteps );
+      }
       if (proc_zero())
 	getGMTOutput( a_GlobalUniqueSources );
 
@@ -901,7 +912,8 @@ void EW::computeDT()
             loceig /= mRho[g](i,j,k);
 	    //	   loceig = (factor*mMu[g](i,j,k) + mLambda[g](i,j,k) )/mRho[g](i,j,k);
 	   dtGP = mCFL*mGridSize[g]/sqrt( loceig );
-	   dtloc = min(dtloc,dtGP);
+	   //	   dtloc = min(dtloc,dtGP);
+	   dtloc = dtloc < dtGP ? dtloc : dtGP;
 	 }
    }
 

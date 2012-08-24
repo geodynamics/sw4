@@ -15,11 +15,12 @@ class GridPointSource
    friend std::ostream& operator<<(std::ostream& output, const GridPointSource& s);
 public:
 
-  GridPointSource(double amplitude, double frequency, double t0,
+  GridPointSource(double frequency, double t0,
 		  int i0, int j0, int k0, int g,
 		  double Fx, double Fy, double Fz,
-		  timeDep tDep, int ncyc, double* jacobian=NULL,
-		  double* dddp=NULL, double* hess1=NULL, double* hess2=NULL, double* hess3=NULL );
+		  timeDep tDep, int ncyc, double* pars, int npar, int* ipars, int nipar,
+		  double* jacobian=NULL, double* dddp=NULL, double* hess1=NULL,
+		  double* hess2=NULL, double* hess3=NULL );
 
  ~GridPointSource();
 
@@ -34,18 +35,21 @@ public:
   double getTimeFunc(double t) const;
   double evalTimeFunc_t(double t) const;
   double evalTimeFunc_tt(double t) const;
+  double evalTimeFunc_ttt(double t) const;
+  double evalTimeFunc_tttt(double t) const;
+
   void limitFrequency(double max_freq);
 
   void add_to_gradient( std::vector<Sarray>& kappa, std::vector<Sarray> & eta,
 			 double t, double dt, double gradient[11], std::vector<double> & h );
   void add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
 		       double t, double dt, double hessian[121], std::vector<double> & h );
-  void set_derivative( int der, double dir[11] );
+  void set_derivative( int der, const double dir[11] );
   void set_noderivative( );
-  void print_info();
+  void print_info() const;
 
-// discretize a time function at each time step and change the time function to be "Discrete()"
-  void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, Filter *filter_ptr);
+   //// discretize a time function at each time step and change the time function to be "Discrete()"
+   //  void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, Filter *filter_ptr);
 
  private:
 
@@ -53,25 +57,28 @@ public:
 
   void initializeTimeFunction();
   double mForces[3];
-  double mAmp;
+   //  double mAmp;
   double mFreq, mT0;
 
   timeDep mTimeDependence;
-  double (*mTimeFunc)(double f, double t,double* par);
-  double (*mTimeFunc_t)(double f, double t,double* par);
-  double (*mTimeFunc_tt)(double f, double t,double* par);
-  double (*mTimeFunc_ttt)(double f, double t,double* par);
-  double (*mTimeFunc_om)(double f, double t,double* par);
-  double (*mTimeFunc_omtt)(double f, double t,double* par);
-  double (*mTimeFunc_tttt)(double f, double t,double* par);
-  double (*mTimeFunc_tttom)(double f, double t,double* par);
-  double (*mTimeFunc_ttomom)(double f, double t,double* par);
-  double (*mTimeFunc_tom)(double f, double t,double* par);
-  double (*mTimeFunc_omom)(double f, double t,double* par);
+   double (*mTimeFunc)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_t)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_tt)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_ttt)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_om)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_omtt)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_tttt)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_tttom)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_ttomom)(double f, double t,double* par, int npar, int* ipar, int nipar );
+  double (*mTimeFunc_tom)(double f, double t,double* par, int npar, int* ipar, int nipar );
+   double (*mTimeFunc_omom)(double f, double t,double* par, int npar, int* ipar, int nipar );
 
   double* mPar;
+  int* mIpar; 
+  int  mNpar, mNipar;
+
   int mNcyc;
-  double m_min_exponent;
+   //  double m_min_exponent;
   int m_derivative;
   bool m_jacobian_known;
   double m_jacobian[27];
