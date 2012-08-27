@@ -193,25 +193,39 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //    }
        
   } // end if prefiltering
-    if (proc_zero() && point_sources.size()>0)
-    {
-      printf("Saving one filtered discretized time function\n");
-	 
-      FILE *tf=fopen("g1.dat","w");
-      double t;
-      double gt, gt1, gt2;
-      for (int i=0; i<=mNumberOfTimeSteps; i++)
-      {
-    	t = mTstart + i*mDt;
-    	gt = point_sources[0]->getTimeFunc(t);
-    	gt1 = point_sources[0]->evalTimeFunc_t(t);
-    	gt2 = point_sources[0]->evalTimeFunc_tt(t);
-    	fprintf(tf, "%.18e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
-      }
-      fclose(tf);
-    }
-  
-  
+  bool output_timefunc = true;
+  if( output_timefunc )
+  {
+     int has_source_id=-1, has_source_max;
+     if( point_sources.size() > 0 )
+	has_source_id = m_myRank;
+
+     MPI_Allreduce( &has_source_id, &has_source_max, 1, MPI_INT, MPI_MAX, m_cartesian_communicator );
+     if( m_myRank == has_source_max )
+     {
+	printf("Saving one filtered discretized time function\n");
+
+//building the file name...
+        string filename;
+	if( mPath != "." )
+	   filename += mPath;
+        filename += "g1.dat";	 
+
+	FILE *tf=fopen(filename.c_str(),"w");
+	double t;
+	double gt, gt1, gt2;
+	for (int i=0; i<=mNumberOfTimeSteps; i++)
+	{
+	   t = mTstart + i*mDt;
+	   gt = point_sources[0]->getTimeFunc(t);
+	   gt1 = point_sources[0]->evalTimeFunc_t(t);
+	   gt2 = point_sources[0]->evalTimeFunc_tt(t);
+	   fprintf(tf, "%.18e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
+	}
+	fclose(tf);
+     }
+  }
+
 
   if( mVerbose && proc_zero() )
   {
