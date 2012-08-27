@@ -368,8 +368,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // #endif
 //      processMaterialEtree(buffer);
 //    }
-       // else if (startswith("pfile", buffer))
-       //   processMaterialPfile(buffer);
        // else if (startswith("ifile", buffer))
        //   processMaterialIfile(buffer);
        // else if (startswith("material", buffer))

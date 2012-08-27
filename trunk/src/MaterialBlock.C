@@ -187,7 +187,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 } // end MaterialBlock::set_material_properties
 
 //-----------------------------------------------------------------------
-int MaterialBlock::set_material_pt( double x, double y, double z,
+int MaterialBlock::get_material_pt( double x, double y, double z,
 				    double& rho, double& cs, double& cp,
 				    double& qs, double& qp )
 {

@@ -541,9 +541,11 @@ void EW::setupSBPCoeff()
 
 //-----------------------------------------------------------------------
 void EW::set_materials()
- // Fill in material properties on all grids
- // The material objects set velocities, need to convert after to (mu,lambda).
- // After materials are set, impose additional materials from forcing object.
+// Fill in material properties on all grids
+// The material objects set velocities and stored Vs in mMu, Vp in mLambda. 
+// Converted to (mu,lambda) by the call to convert_material_to_mulambda().
+//
+// After materials are set, call check_materials to make sure (mu,lambda,rho) values make sense
 {  
   int g;
   
@@ -551,7 +553,7 @@ void EW::set_materials()
   {
 // make sure all Nmat=m_number_material_surfaces material properties are defined
     
-    if (m_number_material_surfaces > 0)
+    if (m_number_material_surfaces > 0) // ifile stuff
     {
       if (m_materials.size() < m_number_material_surfaces)
       {

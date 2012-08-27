@@ -16,7 +16,7 @@ virtual void set_material_properties(std::vector<Sarray> & rho, std::vector<Sarr
 
 bool coversAllPoints(){return mCoversAllPoints;};
 
-virtual int set_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
+virtual int get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
 			     double& qs, double& qp )=0;
 
 protected:

@@ -31,8 +31,8 @@ class MaterialPfile : public MaterialData
 			       std::vector<Sarray> & xis, 
 			       std::vector<Sarray> & xip);
 
-  int set_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
-		       double& qs, double& qp ){return -1;}
+  int get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
+		       double& qs, double& qp );
 
   //  void getMinMaxBoundsZ(double& zmin, double& zmax);
    

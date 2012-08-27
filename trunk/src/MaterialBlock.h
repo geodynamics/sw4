@@ -16,7 +16,7 @@ class MaterialBlock : public MaterialData
 					 std::vector<Sarray> &cp,
 					 std::vector<Sarray>& xis, std::vector<Sarray>& xip);
 
-   int set_material_pt( double x, double y, double z,
+   int get_material_pt( double x, double y, double z,
 			double& rho, double& cs, double& cp,
 			double& qs, double& qp );
 

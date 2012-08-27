@@ -95,19 +95,19 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
   double vp,vs,density,qup,qus,zsed,zmoho;
   bool foundcrust;
   
-  //  int g, topLevel = mWPP->mNumberOfGrids-1;
+  int g, topLevel = mEW->mNumberOfGrids-1;
 // first deal with the Cartesian grids
-  int g;
   for (g = 0; g < mEW->mNumberOfCartesianGrids; g++)
   {
-     //    int kLow = mEW->m_kStart[g];
-     //    if (g == topLevel) // no topography, so k=1 is at the top surface
-     //    {
-     //      kLow = 1;
-     //    }
+    int kLow=mEW->m_kStart[g];
+    if (g == topLevel) // no topography, so k=1 is at the top surface
+    {
+      kLow = 1;
+    }
     if( m_coords_geographic )
     {
-       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k)
+//       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k)
+       for (int k = kLow; k <= mEW->m_kEnd[g]; ++k)
 	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
 	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
 	     {
@@ -140,7 +140,19 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   material++;
 		}
 		else
-		   outside++;
+		{
+		  if (mEW->getVerbosity() > 2)
+		  {
+		    printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+			   "with (x,y,z)=(%e,%e,%e) and lat=%e, lon=%e, elev=%e\n"
+			   "is outside the pfile domain: %e<= lat <= %e, %e <= lon <= %e, %e <= elev <= %e\n", 
+			   i, j, k, g, 
+			   x, y, z, lat, lon, -depth, 
+			   m_latmin, m_latmax, m_lonmin, m_lonmax, m_elevmin, m_elevmax);
+		  }
+		  outside++;
+		}
+		
 	     } // end for i, j, k
     }
     else
@@ -230,7 +242,19 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   material++;
 		}
 		else
+		{
+		  if (mEW->getVerbosity() > 2)
+		  {
+		    printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+			   "with (x,y,z)=(%e,%e,%e) and lat=%e, lon=%e, elev=%e\n"
+			   "is outside the pfile domain: %e<= lat <= %e, %e <= lon <= %e, %e <= elev <= %e\n", 
+			   i, j, k, g, 
+			   x, y, z, lat, lon, -depth, 
+			   m_latmin, m_latmax, m_lonmin, m_lonmax, m_elevmin, m_elevmax);
+		  }
 		   outside++;
+		}
+		
 	     } // end for i,j,k
     }
     else
@@ -309,7 +333,10 @@ void MaterialPfile::read_pfile( )
 
    // Line 1
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 1 in pfile header not found\n");
-   m_model_name = strtok( buf, " \t" );
+   string tok0 = strtok( buf, " \t" );
+// strip off any white space
+   size_t nWhite = tok0.find_first_of(" \t\n");
+   m_model_name = tok0.substr(0,nWhite);
 
    // Line 2
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 2 in pfile header not found\n");
@@ -373,7 +400,14 @@ void MaterialPfile::read_pfile( )
    CHECK_INPUT( tok != NULL, "Error on line 7 in pfile header, no Q-available flag\n");      
    tok = strtok(buf," \t");
    CHECK_INPUT( tok != NULL, "Error on line 7 in pfile header, no Q-available flag\n");
-   string cqf = tok;
+   string cqf0 = tok;
+// strip off any white space
+   nWhite = cqf0.find_first_of(" \t\n");
+   string cqf = cqf0.substr(0,nWhite);
+   
+// test
+//   printf("Q-flag string '%s'\n", cqf.c_str());
+   
    m_qf = ( cqf == "T") || (cqf == "t") || (cqf == ".TRUE.") || (cqf == ".true.");
 
    double km = 1000;
@@ -673,6 +707,50 @@ void MaterialPfile::read_pfile( )
    }
    delete[] buf;
 }
+
+//---------------------------------------------------------------------------------------
+int MaterialPfile::get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
+				    double& qs, double& qp )
+  {
+   int retval = 0;
+   double zsed, zmoho;
+   bool foundcrust;
+   
+   if( m_coords_geographic )
+   {
+     double lon, lat, depth;
+     
+     mEW->computeGeographicCoord( x, y, lon, lat );
+     if( m_absoluteDepth )
+       depth = z;
+     else
+       mEW->getDepth(x,y,z,depth);
+
+     if( inside( lat, lon, depth )  )
+     {
+       //---------------------------------------------------------
+       // Query the location...
+       //---------------------------------------------------------
+       sample_latlon( lat, lon, depth, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
+     }
+     else
+       retval = -1;
+   }
+   else
+   {
+     if( inside_cart( x, y, z )  ) // elev = -depth
+     {
+       //---------------------------------------------------------
+       // Query the location...
+       //---------------------------------------------------------
+       sample_cart( x, y, z, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
+     }
+     else
+       retval = -1;
+   }
+   return retval;
+  }
+
 
 //-----------------------------------------------------------------------
 void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp, 

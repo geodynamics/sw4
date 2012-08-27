@@ -3297,7 +3297,7 @@ void EW::layered_speeds( vector<double>& cp, vector<double>& z )
    for( int b=0 ; b < m_mtrlblocks.size() ; b++ )
    {
       for( int i=0 ; i <= N ; i++ )
-	 m_mtrlblocks[b]->set_material_pt( x0, y0, zv[i], rho, cs, cpv[i], qs, qp );
+	 m_mtrlblocks[b]->get_material_pt( x0, y0, zv[i], rho, cs, cpv[i], qs, qp );
    }
    cp.push_back(cpv[0]);
    int j = 1;
