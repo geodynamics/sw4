@@ -283,8 +283,9 @@ void EW::setupRun( )
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
 
-// compute time-step and number of time steps. Note that simulation will end at mTmax-m_t0Shift when
-// prefilter is enabled
+// compute time-step and number of time steps. 
+// Note: SW4 always ends the simulation at mTmax, whether prefilter is enabled or not.
+// This behavior is different from WPP
   computeDT( );
 
 // should we initialize all images after the prefilter time offset stuff?
@@ -459,7 +460,6 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	if ( proc_zero() )
 	  printf("Filter precursor = %e\n", t0_min);
 	
-
 // old estimate for 2-pole low-pass Butterworth
 //	t0_min = 4./m_filter_ptr->get_corner_freq2();
 	
@@ -473,25 +473,31 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // compute global max over all processors
 	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
-// adjust t0
+// dt0max is the maxima over all dt0loc in all processors. 
+// If it is positive, the t0 field in all source commands should be incremented 
+// by at least this amount. Otherwise, there might be significant artifacts from 
+// a sudden start of some source.
 	if (dt0max > 0.)
 	{
-	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
+// Don't mess with t0.
+// Instead, warn the user of potential transients due to unsmooth start
+//	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+//	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
 	  if ( proc_zero() )
-	    printf("*** Prefilter zero-phase precursor: t0 increased by %e in all source time functions\n", dt0max);
-	}
-	else
-	{
-	  dt0max = 0.;
+	    printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
+		   "*** To avoid artifacts due to sudden startup, increase t0 in all source commands by at least %e\n\n",
+		   t0_min, dt0max);
 	}
 // need to remember the time shift so we can compensate for it when writing sac and image files
-	m_t0Shift = dt0max;
+//	m_t0Shift = dt0max;
 
 // Do the filtering
 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
            a_GlobalUniqueSources[s]->filter_timefunc( m_filter_ptr, mTstart, mDt, mNumberOfTimeSteps );
       }
+
+// TODO: check that t0 is large enough even when prefilter is NOT used
+
       if (proc_zero())
 	getGMTOutput( a_GlobalUniqueSources );
 

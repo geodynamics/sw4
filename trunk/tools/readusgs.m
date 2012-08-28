@@ -40,8 +40,6 @@ for i=1:7
 end;
 % read actual loction 
 loc = sscanf(lin(53:end),"%e %e",2);
-reclon= loc(1)
-reclat= loc(2)
 
 lin = fgetl(fd);
 lin = fgetl(fd);
@@ -59,6 +57,8 @@ fclose(fd);
 
 % rotate?
 if (rotate)
+  reclon= loc(1)
+  reclat= loc(2)
   [azdeg az] = heading(evtlon, evtlat, reclon, reclat);
   azdeg
   ur = u1.*cos(az) + u2.*sin(az);
