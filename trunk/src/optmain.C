@@ -1381,7 +1381,7 @@ int main(int argc, char **argv)
 
 	if (myRank == 0)
 	{
-	   cout << "Running sbp4opt on " <<  nProcs << " processors..." << endl
+	   cout << "Running sw4opt on " <<  nProcs << " processors..." << endl
 		<< "Writing output to directory: " 
 		<< simulation.getOutputPath() << endl;
 	}
@@ -1397,7 +1397,7 @@ int main(int argc, char **argv)
         bool output_initial_seismograms = false;
 //   Default guess, the input source, stored in GlobalSources[0]
         bool guesspos, guesst0fr, guessmom;
-        simulation.compute_guess( guesspos, guesst0fr, guessmom,output_initial_seismograms);
+        simulation.compute_guess( guesspos, guesst0fr, guessmom, output_initial_seismograms );
 	GlobalSources[0]->get_parameters(xv);
 	if( guesspos )
 	{

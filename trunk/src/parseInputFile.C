@@ -2001,15 +2001,15 @@ void EW::processTime(char* buffer)
 	  else
 	     CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
        }
-       else if( startswith("utcrefevent=",token) )
-       {
-          token += 12;
-          parsedate( token, year, month, day, hour, minute, second, msecond, fail );
-          if( fail == 0 )
-	     refeventdateset = true;
-	  else
-	     CHECK_INPUT(fail == 0 , "processTime: Error in utcrefevent format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
-       }
+       //       else if( startswith("utcrefevent=",token) )
+       //       {
+       //          token += 12;
+       //          parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+       //          if( fail == 0 )
+       //	     refeventdateset = true;
+       //	  else
+       //	     CHECK_INPUT(fail == 0 , "processTime: Error in utcrefevent format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
+       //       }
        else
        {
           badOption("time", token);
@@ -4954,6 +4954,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 {
   double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
+  double t0 = 0;
   bool cartCoordSet = false, geoCoordSet = false;
   string name = "rec";
   int writeEvery = 0;
@@ -4961,6 +4962,9 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   bool dateSet = false;
   bool timeSet = false;
   bool topodepth = false;
+
+  int utc[7];
+  bool utcset = false;
 
   string date = "";
   string time = "";
@@ -5057,6 +5061,29 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         token += 5; // skip file=
         name = token;
      }
+     else if(startswith("shift=", token))
+     {
+        token += 6; // skip shift=
+        t0 = atoi(token);
+     }
+     else if( startswith("utc=",token))
+     {
+	int year,month,day,hour,minute,second,msecond, fail;
+        parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+	if( fail == 0 )
+	{
+	   utcset = true;
+	   utc[0] = year;
+	   utc[1] = month;
+	   utc[2] = day;
+	   utc[3] = hour;
+	   utc[4] = minute;
+	   utc[5] = second;
+	   utc[6] = msecond;
+	}
+	else
+	   CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
+     }
      else
      {
         badOption("observation", token);
@@ -5107,8 +5134,12 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   else
   {
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery);
-    ts_ptr->readFile( );
+					topodepth, writeEvery );
+    // Read in file to begin at time=t0.
+    ts_ptr->readFile( t0 );
+    if( utcset )
+       ts_ptr->set_station_utc( utc );
+
 // include the observation in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
     

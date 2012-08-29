@@ -27,7 +27,7 @@ void recordData(vector<double> & u);
 
 void writeFile( );
 
-void readFile( );
+void readFile( double startTime=0 );
 
 double **getRecordingArray(){ return mRecordedSol; }
 
@@ -113,7 +113,7 @@ bool mBinaryMode;
 // UTC time for start of seismogram, 
 //     m_t0 is start of seismogram in simulation time =  m_utc - utc reference time,
 //           where utc reference time corresponds to simulation time zero.
-bool m_utc_set;
+bool m_utc_set, m_utc_offset_computed;
 int m_utc[7];
 
 // Variables for rotating the output displacement or velocity components when Nort-East-UP is 

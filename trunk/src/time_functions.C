@@ -1,5 +1,6 @@
 #include <cmath>
 #include "Require.h"
+#include <iostream>
 
 double VerySmoothBump(double freq, double t, double* par, int npar, int* ipar, int nipar )
 {
@@ -1264,9 +1265,11 @@ double Dirac( double freq, double t, double* par, int npar, int* ipar, int nipar
    // freq holds 1/dt
    // Stencil from -s to p
    // k0 is center of pulse on grid given by t + k*dt
+
    double kc = -t*freq;
    // stencil point of t in [-2,..,2] interval
    int k0 = (int)floor(kc+0.5);
+   //   std::cout << "t="<< t << " kc=" << kc << " k0= " << k0 << std::endl;
    if( k0 < -2 || k0 > 2 )
       return 0;
    else
@@ -1286,6 +1289,7 @@ double Dirac( double freq, double t, double* par, int npar, int* ipar, int nipar
          wgh = o6*alpha*(4-alpha2)+a2*alpha2-4*pol;
       else if( k0 == -2 )
          wgh = o12*alpha*(-1+alpha2)-a1*alpha2+pol;
+      //      std::cout << "wgh = " << wgh << std::endl;
       return freq*wgh;
    }
 }
@@ -1470,7 +1474,9 @@ double Discrete( double freq, double t, double* par, int npar, int* ipar, int ni
 // freq holds 1/dt
    double tstart = par[0];
    int npts = ipar[0];
+
    int k = static_cast<int>(floor((t-tstart)*freq));
+
    if( k < 0 )
    {
       k = 0;
@@ -1481,7 +1487,9 @@ double Discrete( double freq, double t, double* par, int npar, int* ipar, int ni
       k = npts-2;
       t = tstart+(npts-1)/freq;
    }
+
    double arg=(t-tstart)*freq-k; // (t-(tstart+k*dt))/dt
+//std::cout <<  "t= " << t << " npts " << npts << " k= " << k << "arg = " << arg <<  std::endl;
    return par[6*k+1] + par[2+6*k]*arg + par[3+6*k]*arg*arg + par[4+6*k]*arg*arg*arg +
        par[5+6*k]*arg*arg*arg*arg + par[6+6*k]*arg*arg*arg*arg*arg; 
 }

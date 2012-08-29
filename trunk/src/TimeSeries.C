@@ -875,7 +875,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::readFile( )
+void TimeSeries::readFile( double startTime )
 {
 //building the file name...
    stringstream filePrefix;
@@ -929,9 +929,8 @@ void TimeSeries::readFile( )
 	       nlines++;
 
 	    fclose(fd);
-            tstart = 0;
 	    if( nlines > 2 )
-	       allocateRecordingArrays( nlines, tstart, dt );
+	       allocateRecordingArrays( nlines, startTime, dt );
 	    else
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
@@ -1109,6 +1108,10 @@ void TimeSeries::interpolate( TimeSeries& intpfrom )
 //-----------------------------------------------------------------------
 double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 {
+   // Computes  diff := this - observed
+   //       where 'diff' has the same grid points as 'this'. 'observed' is
+   //       interpolated to this grid, and is set to zero outside its interval
+   //       of definition.
    double misfit = 0;
    if( m_myPoint )
    {
@@ -1354,6 +1357,7 @@ double TimeSeries::arrival_time( double lod )
 void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
 				 std::vector<double> & h, double dt )
 {
+   // Use at grid point, n, in the grid of this object.
    if( m_myPoint )
    {
       double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
@@ -1440,15 +1444,19 @@ void TimeSeries::set_station_utc( int utc[7] )
 //-----------------------------------------------------------------------
 void TimeSeries::offset_ref_utc( int utcref[7] )
 {
- // Reference UTC for the computation, corresponding to t=0 simulation time.
-   if( m_utc_set )
+ // Evaluate distance to the reference UTC for the computation.
+ // (The reference UTC corresponds to t=0 simulation time)
+   if( m_utc_set && !m_utc_offset_computed )
+   {
       m_t0 = utc_distance(m_utc,utcref) + m_t0;
+      m_utc_offset_computed = true;
+   }
 }   
 
 //-----------------------------------------------------------------------
 double TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
-   // Compute time in seconds between to [y,M,d,m,s,ms] times
+   // Compute time in seconds between two [y,M,d,m,s,ms] times
    // returns utc2-utc1 in seconds.
    int start[7], finish[7];
    int c=0;
@@ -1514,14 +1522,14 @@ void TimeSeries::dayinc( int date[7] )
 //-----------------------------------------------------------------------
 int TimeSeries::lastofmonth( int year, int month )
 {
-  int days;
-  int leapyear=0;
-  leapyear =  (year % 400 == 0) || ((year % 4 == 0) && !(year % 100 == 0));
-  if( month == 2 )
-    days = 28 + leapyear;
-  else if( month==4 || month==6 || month==9 || month==11 )
-    days = 30;
-  else
-    days = 31;
-  return days;
+   int days;
+   int leapyear=0;
+   leapyear = ( year % 400 == 0 ) || ( (year % 4 == 0) && !(year % 100 == 0) );
+   if( month == 2 )
+      days = 28 + leapyear;
+   else if( month==4 || month==6 || month==9 || month==11 )
+      days = 30;
+   else
+      days = 31;
+   return days;
 }
