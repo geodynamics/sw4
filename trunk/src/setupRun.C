@@ -499,7 +499,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // TODO: check that t0 is large enough even when prefilter is NOT used
 
       if (proc_zero())
-	getGMTOutput( a_GlobalUniqueSources );
+	saveGMTFile( a_GlobalUniqueSources );
 
 // // Precompute grid point index for point sources, for better efficiency
 //   int* ind=0;

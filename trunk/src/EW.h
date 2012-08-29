@@ -44,7 +44,7 @@ bool isInitialized();
 
 void set_output_options( bool output_load, bool output_detailed_timing );
 void setGMTOutput(string filename, string wppfilename);
-void getGMTOutput( vector<Source*> & a_GlobalUniqueSources );
+void saveGMTFile( vector<Source*> & a_GlobalUniqueSources );
 void allocateCartesianSolverArrays(double a_global_zmax);
 void setGoalTime(double t);
 //double getCurrentTime(){return mTime;}
@@ -89,6 +89,7 @@ void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 void processPrefilter(char* buffer);
+void processGMT(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -594,7 +595,7 @@ double m_topo_zmax;
 int m_myRank, m_nProcs;
 
 string mName;
-string mWPPFileName;
+//string mWPPFileName;
 string mGMTFileName;
 
 

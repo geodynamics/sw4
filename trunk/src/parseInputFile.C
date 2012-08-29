@@ -325,8 +325,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 // Ignore commented lines, newlines,
 	 // grid, refinement, fileio, topography, and attenuation since we already processed those commands.
        }
-       // else if (startswith("gmt", buffer))
-       //   processGMT(buffer);
+       else if (startswith("gmt", buffer))
+         processGMT(buffer);
        else if (startswith("time", buffer))
 	 processTime(buffer);
        // else if (startswith("globalmaterial", buffer))
@@ -1883,38 +1883,34 @@ void EW::processFileIO(char* buffer)
   setParallel_IO(pfs, nwriters);
 }
 
-// void
-// FileInput::
-// processGMT(char* buffer)
-// {
-//   string filename = "wpp.gmt.csh";
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("gmt", token) == 0, "ERROR: not a gmt line...: " << token);
-//   token = strtok(NULL, " \t");
+void EW::processGMT(char* buffer)
+{
+  string filename = "sw4.gmt.csh";
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("gmt", token) == 0, "ERROR: not a gmt line...: " << token);
+  token = strtok(NULL, " \t");
 
-//   string err = "GMT Error: ";
+  string err = "GMT Error: ";
 
-//   while (token != NULL)
-//     {
-//       // while there are tokens in the string still
-//       if (startswith("#", token) || startswith(" ", buffer))
-// 	// Ignore commented lines and lines with just a space.
-// 	break;
-//       if (startswith("file=", token))
-// 	{
-//           token += 5; // skip file=
-//           filename = token;
-//        }
-//       else
-// 	{
-//           badOption("gmt", token);
-//        }
-//       token = strtok(NULL, " \t");
-//     }
-
-//   mSimulation->setGMTOutput(filename, mFileName);
-
-// }
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	break;
+      if (startswith("file=", token))
+	{
+          token += 5; // skip file=
+          filename = token;
+       }
+      else
+	{
+          badOption("gmt", token);
+       }
+      token = strtok(NULL, " \t");
+    }
+  setGMTOutput(filename, mName); // mName holds the name of the sw4 input file
+}
 
 //-----------------------------------------------------------------------
 void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,

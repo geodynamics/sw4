@@ -783,9 +783,17 @@ void EW::getGlobalBoundingBox(double bbox[6])
   bbox[5] = m_global_zmax;
 }
 
+//-----------------------------------------------------------------------
+void EW::setGMTOutput(string filename, string wppfilename)
+{
+  mGMTFileName = filename;
+  mWriteGMTOutput = true;
+
+//  mWPPFileName = wppfilename;
+}
 
 //-----------------------------------------------------------------------
-void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
+void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 {
 // this routine needs to be updated
    if (!mWriteGMTOutput) return;
@@ -808,10 +816,14 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
       computeGeographicCoord(0.0,           m_global_ymax, lonNW, latNW);
      
       // Round up/down
-      int minx = static_cast<int>(min(lonSW-1,min(lonSE-1,min(lonNE-1,lonNW-1))));
-      int maxx = static_cast<int>(max(lonSW+1,max(lonSE+1,max(lonNE+1,lonNW+1))));
-      int miny = static_cast<int>(min(latSW-1,min(latSE-1,min(latNE-1,latNW-1))));
-      int maxy = static_cast<int>(max(latSW+1,max(latSE+1,max(latNE+1,latNW+1)))); 
+      double minx = min(lonSW, min(lonSE, min(lonNE, lonNW)));
+      double maxx = max(lonSW, max(lonSE, max(lonNE, lonNW)));
+      double miny = min(latSW, min(latSE, min(latNE, latNW)));
+      double maxy = max(latSW, max(latSE, max(latNE, latNW))); 
+      double margin = 0.1*fabs(maxy-miny);
+      
+// tmp
+   printf("margin = %e\n", margin);
 
 //      GeographicCoord eNW, eNE, eSW, eSE;
       
@@ -819,16 +831,16 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
       if (mEtreeFile != NULL)
       {
 //        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-        
-        minx = static_cast<int>(min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
-        maxx = static_cast<int>(max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
-        miny = static_cast<int>(min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
-        maxy = static_cast<int>(max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1)))); 
+// correct these as above (remove +/- 1        
+        minx = (min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
+        maxx = (max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
+        miny = (min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
+        maxy = (max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1)))); 
       }
 #endif
       
       contents << "# Region will need to be adjusted based on etree/grid values" << endl
-               << "set REGION = " << minx << "/" << maxx << "/" << miny << "/" << maxy << endl
+               << "set REGION = " << minx-margin << "/" << maxx+margin << "/" << miny-margin << "/" << maxy+margin << endl
                << endl
                << "set SCALE = 6.0" << endl
                << endl
@@ -841,8 +853,8 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
                << "#grd2cpt wpp_topo.grd -Ctopo -Z >! wpptopo.cpt" << endl
                << "#grdimage wpp_topo.grd -R$REGION -JM$SCALE -Cwpptopo.cpt -Iwpp_topo_shade.grd -P -K >! plot.ps" << endl
                <<" #######################################################" << endl
-               << "pscoast -R$REGION -JM$SCALE -Ba1 -Dhigh -S200,200,255 -A2000 -W3 -N1t3 -N2t2a -K >! plot.ps" << endl << endl
-               << "# WPP grid region..." << endl;
+               << "pscoast -R$REGION -JM$SCALE -Bf0.025a0.05 -Dfull -S100,200,255 -A2000 -W3 -N1t3 -N2t2a -K >! plot.ps" << endl << endl
+               << "# computational grid region..." << endl;
       
       // Write out gridlines
       contents << "psxy -R$REGION -JM$SCALE -W10/255/255/0ta -O -K <<EOF>> plot.ps" << endl
@@ -873,7 +885,7 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
       if (a_GlobalUniqueSources.size() > 0)
       {
          contents << "# Sources... " << endl
-                  << "psxy -R$REGION -JM$SCALE -Sd0.1 -Gred -O -K <<EOF>> plot.ps" << endl;
+	          << "cat << EOF >! event.d" << endl;
          
          for (int i=0; i < a_GlobalUniqueSources.size(); ++i)
          {
@@ -881,10 +893,13 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
 
            computeGeographicCoord(a_GlobalUniqueSources[i]->getX0(), a_GlobalUniqueSources[i]->getY0(),
                                   lonSource ,latSource);
-// is this the correct syntax???
-	   contents << latSource << " " << lonSource << endl;
+//  should name the event better
+	   contents << lonSource << " " << latSource << " EVENT-NAME  CB" << endl;
          }
-         contents << "EOF" << endl << endl;
+         contents << "EOF" << endl;
+	 contents << "psxy -R -J -O -K -Sc0.1 -Gred -W0.25p event.d >> plot.ps" << endl;
+         contents << "awk '{print $1, $2, 12, 1, 9, $4, $3}' event.d | pstext -R -J -O -D0.2/0.2v -Gred -N -K >> plot.ps" 
+	   << endl << endl;
       }
       
       int numStations = 0;
@@ -893,16 +908,16 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
       stationstr << "cat << EOF >! stations.d " << endl;
       // Write stations by rereading the WPP input file, since some might
       // live outside the grid...
-      ifstream wppfile(mWPPFileName.c_str());
-      if (!wppfile.is_open())
-         contents << "# Error opening wpp input file, skipping stations" << endl;
+      ifstream sw4InputFile(mName.c_str());
+      if (!sw4InputFile.is_open())
+         contents << "# Error re-opening input file, skipping stations" << endl;
       else
       {
          char buffer[256];
-         while (!wppfile.eof())
+         while (!sw4InputFile.eof())
          { 
-            wppfile.getline(buffer, 256);
-            if (startswith("sac", buffer))
+            sw4InputFile.getline(buffer, 256);
+            if (startswith("receiver", buffer))
             {
                numStations += 1;
                bool cartCoordSet = false;
@@ -997,7 +1012,7 @@ void EW::getGMTOutput( vector<Source*> & a_GlobalUniqueSources )
       // Only write station info if there are stations.
       if (numStations > 0) contents << stationstr.str() << endl;
 
-      contents << "/bin/mv plot.ps " << mWPPFileName << ".ps" << endl;
+      contents << "/bin/mv plot.ps " << mName << ".ps" << endl;
 
       stringstream filename;
       filename << mPath << mGMTFileName;
