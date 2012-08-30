@@ -523,8 +523,6 @@ bool m_prefilter_sources;
 // filter setup
 Filter *m_filter_ptr;
 
-double m_t0Shift;
-
 // parallel io stuff
 bool m_pfs;
 int m_nwriters;

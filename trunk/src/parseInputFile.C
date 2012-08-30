@@ -1916,7 +1916,7 @@ void EW::processGMT(char* buffer)
 void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
 		    int& second, int& msecond, int& fail )
 {
-	  // Format: 01/04/2012:17:34:45.2343
+	  // Format: 01/04/2012:17:34:45.2343 (Month/Day/Year:Hour:Min:Sec.fraction)
    fail = 0;
    int n = strlen(datestr);
    int i = 0;
@@ -1990,7 +1990,7 @@ void EW::processTime(char* buffer)
        else if( startswith("utcstart=",token) )
        {
           token += 9;
-	  // Format: 01/04/2012:17:34:45.2343
+	  // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
           parsedate( token, year, month, day, hour, minute, second, msecond, fail );
           if( fail == 0 )
 	     refdateset = true;
@@ -5065,6 +5065,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
      else if( startswith("utc=",token))
      {
 	int year,month,day,hour,minute,second,msecond, fail;
+// Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
         parsedate( token, year, month, day, hour, minute, second, msecond, fail );
 	if( fail == 0 )
 	{

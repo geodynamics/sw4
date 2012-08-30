@@ -307,7 +307,6 @@ void Image::initializeTime()
   mNextTime = 0.; 
   m_time_done = false;
 // with the option timeInterval=..., first time is always t=0
-// is this what we want when m_t0Shift >> 0?
 }
 
 const std::string Image::fieldSuffix(ImageMode mode) const

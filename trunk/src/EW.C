@@ -180,7 +180,6 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_filter_ptr(0),
 
   mPrintInterval(100),
-  m_t0Shift(0.0),
   m_matrices_decomposed(false),
   m_citol(1e-3),
   m_cimaxiter(20),
@@ -252,7 +251,7 @@ void EW::printTime( int cycle, double t, bool force ) const
 			(cycle % mPrintInterval) == 1 ||
 			cycle == 1) )
 // string big enough for >1 million time steps 
-      printf("Time step %7i  t = %15.7e\n", cycle, t-m_t0Shift);
+      printf("Time step %7i  t = %15.7e\n", cycle, t);
 }
 //-----------------------------------------------------------------------
 void EW::printPreamble(vector<Source*> & a_Sources) const 
@@ -263,12 +262,12 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
    {
       msg << "============================================================" << endl
           << " Running program on " << m_nProcs << " MPI tasks" << " using the following data: " << endl << endl
-          << " Start Time = " << mTstart-m_t0Shift << " Goal Time = ";
+          << " Start Time = " << mTstart << " Goal Time = ";
       
       if (mTimeIsSet)
-         msg << mTmax-m_t0Shift << endl;
+         msg << mTmax << endl;
       else
-         msg << mNumberOfTimeSteps*mDt-m_t0Shift << endl;
+         msg << mNumberOfTimeSteps*mDt << endl;
       
       msg << " Number of time steps = " << mNumberOfTimeSteps << " dt: " << mDt << endl;
       
@@ -2968,7 +2967,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
     // if( img->mMode == Image::VVELMAX)
     //   img->update_maxes_vVelMax();
 
-    if (img->timeToWrite(time - m_t0Shift, currentTimeStep, mDt )) // subtract m_t0Shift from time to get actual time
+    if (img->timeToWrite(time , currentTimeStep, mDt )) 
     {
       if(img->mMode == Image::UX ) 
       {
@@ -3036,7 +3035,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
 //         {
 //           maxerr = img->computeImageErrorDebug(0);
 //           if (proc_zero())
-//             printf("maxErr DIV %f @ %fs\n",maxerr,time - m_t0Shift);
+//             printf("maxErr DIV %f @ %fs\n",maxerr,time );
 //         }
 //       }
 //       else if(img->mMode == Image::CURL )
@@ -3046,7 +3045,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
 //         {
 //           maxerr = img->computeImageErrorDebug(2);
 //           if (proc_zero())
-//             printf("maxErr CURL %f @ %f s\n",maxerr,time - m_t0Shift);
+//             printf("maxErr CURL %f @ %f s\n",maxerr,time );
 //         }
 //       }
 //       else if(img->mMode == Image::VELDIV )
@@ -3056,7 +3055,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
 //         {
 //           maxerr = img->computeImageErrorDebug(1);
 //           if (proc_zero())
-//             printf("maxErr VELDIV %f @ %f s\n",maxerr,time - m_t0Shift);
+//             printf("maxErr VELDIV %f @ %f s\n",maxerr,time );
 //         }
 //       }
 //       else if(img->mMode == Image::VELCURL )
@@ -3066,7 +3065,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
 //         {
 //           maxerr = img->computeImageErrorDebug(3);
 //           if (proc_zero())
-//             printf("maxErr VELCURL %f @ %f s\n",maxerr,time - m_t0Shift);
+//             printf("maxErr VELCURL %f @ %f s\n",maxerr,time );
 //         }
 //       }
 //       else if(img->mMode == Image::VELMAG )
@@ -3173,7 +3172,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
   // for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
   // {
   //   Image3D* img = mImage3DFiles[fIndex];
-  //   if(img->timeToWrite(time - m_t0Shift, currentTimeStep, mDt ) ) // subtract m_t0Shift from time to get actual time
+  //   if(img->timeToWrite(time, currentTimeStep, mDt ) ) 
   //   {
   //     img->compute_image( );
   //     img->write_images( currentTimeStep, mPath );

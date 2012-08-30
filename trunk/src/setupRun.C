@@ -488,8 +488,6 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 		   "*** To avoid artifacts due to sudden startup, increase t0 in all source commands by at least %e\n\n",
 		   t0_min, dt0max);
 	}
-// need to remember the time shift so we can compensate for it when writing sac and image files
-//	m_t0Shift = dt0max;
 
 // Do the filtering
 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
