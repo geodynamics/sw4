@@ -1364,10 +1364,11 @@ int main(int argc, char **argv)
   else
   {
      // Make observations aware of the utc reference time, if set.
+     // Filter observed data if required
      for( int m = 0; m < GlobalObservations.size(); m++ )
      {
 	simulation.set_utcref( *GlobalObservations[m] );
-        if( simulation.m_prefilter_sources )
+        if( simulation.m_prefilter_sources && simulation.m_filter_observations )
            GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
      }
 //  First copy observations to GlobalTimeSeries, and 

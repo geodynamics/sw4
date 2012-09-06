@@ -463,7 +463,7 @@ Sarray mX, mY, mZ; // needed by the Source class, so must be public
 Sarray mJ; // Jacobian also needed by the Source class
 
 // command prefilter
-bool m_prefilter_sources;
+bool m_prefilter_sources, m_filter_observations;
 // filter setup
 // Filter for time function
 Filter *m_filter_ptr;

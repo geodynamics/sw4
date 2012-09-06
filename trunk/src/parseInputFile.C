@@ -4972,6 +4972,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
+  m_filter_observations = true;
 
   CHECK_INPUT(strcmp("observation", token) == 0, "ERROR: not an observation line...: " << token);
   token = strtok(NULL, " \t");
@@ -5085,6 +5086,12 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 	else
 	   CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
      }
+     else if(startswith("filter=", token))
+     {
+        token += 7; // skip shift=
+        if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
+	   m_filter_observations = false;
+     }
      else
      {
         badOption("observation", token);
@@ -5137,6 +5144,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
     // Read in file to begin at time=t0.
+
     ts_ptr->readFile( this, t0 );
     if( utcset )
        ts_ptr->set_station_utc( utc );

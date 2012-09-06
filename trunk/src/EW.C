@@ -177,6 +177,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
 // command prefilter
   m_prefilter_sources(false), 
+  m_filter_observations(false), 
   m_filter_ptr(0),
   m_filterobs_ptr(0),
 
