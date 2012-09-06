@@ -449,10 +449,10 @@ void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<
 {
    if( m_jacobian_known )
    {
+      double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
       double dt2o12 = dt*dt/12.0;
       double g0= mTimeFunc( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar );
       double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar);
-
 
       // save some work by accessing array elements only once:
       double kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
@@ -463,6 +463,8 @@ void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<
       double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
       double h3   = h[m_grid]*h[m_grid]*h[m_grid];
       //      double h3 = 1.0;
+      if( 1 <= m_k0 && m_k0 <= 4 )
+	 h3 *= normwgh[m_k0-1];
 
       // derivative wrt. position (m=0,1,2) and moment tensor components (m=3,..,8)
       for( int m= 0 ; m < 9 ; m++ )
@@ -494,6 +496,7 @@ void GridPointSource::add_to_hessian( std::vector<Sarray> & kappa, std::vector<S
 {
    if( m_hessian_known && m_jacobian_known )
    {
+      double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
       double dt2o12 = dt*dt/12.0;
       double g0= mTimeFunc( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar );
       double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar);
@@ -506,6 +509,9 @@ void GridPointSource::add_to_hessian( std::vector<Sarray> & kappa, std::vector<S
       double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
       double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
       double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+
+      if( 1 <= m_k0 && m_k0 <= 4 )
+	 h3 *= normwgh[m_k0-1];
 
       double c1 = g*h3;
       double c2 = g0*dt2o12*h3;

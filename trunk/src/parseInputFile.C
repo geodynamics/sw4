@@ -1927,7 +1927,8 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
 	 buf += datestr[i];
       i++;
    }
-   if( buf == "//:::." && isdigit(datestr[0]) && isdigit(datestr[n-1]) )
+   //   if( buf == "//:::." && isdigit(datestr[ifirst]) && isdigit(datestr[n-1]) )
+   if( buf == "//:::." )
    {
       float fsec;
       sscanf(datestr,"%i/%i/%i:%i:%i:%f",&month,&day,&year,&hour,&minute,&fsec);
@@ -1997,6 +1998,7 @@ void EW::processTime(char* buffer)
 	  else
 	     CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
        }
+       // Disable this for now, too complicated.
        //       else if( startswith("utcrefevent=",token) )
        //       {
        //          token += 12;
@@ -4338,6 +4340,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
      //          g_2
      //         ....
      FILE* fd=fopen(dfile, "r" );
+     CHECK_INPUT( fd !=NULL , err << "Source time function file " << dfile << " not found" );
      double t0, dt;
      int npts;
      fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
@@ -5060,10 +5063,11 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
      else if(startswith("shift=", token))
      {
         token += 6; // skip shift=
-        t0 = atoi(token);
+        t0 = atof(token);
      }
      else if( startswith("utc=",token))
      {
+        token += 4;
 	int year,month,day,hour,minute,second,msecond, fail;
 // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
         parsedate( token, year, month, day, hour, minute, second, msecond, fail );
@@ -5133,13 +5137,12 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
     // Read in file to begin at time=t0.
-    ts_ptr->readFile( t0 );
+    ts_ptr->readFile( this, t0 );
     if( utcset )
        ts_ptr->set_station_utc( utc );
 
 // include the observation in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
-    
   }
 }
 

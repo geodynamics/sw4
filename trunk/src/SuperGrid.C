@@ -31,9 +31,11 @@ void SuperGrid::define_taper(bool left, double leftStart, bool right, double rig
 // sanity checks
   if (m_left || m_right)
   {
-    CHECK_INPUT(m_width > 0., "The supergrid taper width must be positive, not = " << m_width);
-    CHECK_INPUT(m_trans_width > 0., "The supergrid taper transition width must be positive, not = " << m_trans_width);
-    CHECK_INPUT(m_const_width >= 0., "The supergrid const_width = width - trans_width must be non-negative, not = " << m_const_width);
+     double dlen = m_x1-m_x0;
+     CHECK_INPUT(m_width > 0., "The supergrid taper width must be positive, not = " << m_width);
+     CHECK_INPUT(m_width < dlen, "The supergrid taper width must be smaller than the domain, not = " << m_width);
+     CHECK_INPUT(m_trans_width > 0., "The supergrid taper transition width must be positive, not = " << m_trans_width);
+     CHECK_INPUT(m_const_width >= 0., "The supergrid const_width = width - trans_width must be non-negative, not = " << m_const_width);
   }
   
   if (m_left && m_right)

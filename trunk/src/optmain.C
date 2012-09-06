@@ -121,6 +121,16 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       for( int i = 0 ; i < 11 ; i++ )
 	 cout << "   " << gradient[i] << endl;
    }
+
+   // Find parameter sizes, used for approximate gradient by difference quotients.
+   double xv[11];
+   GlobalSources[0]->get_parameters(xv);
+   double lscale = sqrt((xv[0]*xv[0]+xv[1]*xv[1]+xv[2]*xv[2])/3.0);
+   double mscale = sqrt((xv[3]*xv[3]+xv[4]*xv[4]+xv[5]*xv[5]+xv[6]*xv[6]+xv[7]*xv[7]+xv[8]*xv[8])/6.0);
+   double tscale = abs(xv[9])+1;
+   double fscale = abs(xv[10])+1;
+   double sizes[11]={lscale,lscale,lscale,mscale,mscale,mscale,mscale,mscale,mscale,tscale,fscale};
+
    for( int testcomp = 0 ; testcomp < 11 ; testcomp++ )
    {
 // Validation, compute derivative by forward solve
@@ -136,7 +146,7 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       GlobalSources[0]->set_noderivative();         
 
 // Validation, compute numerical gradient:
-      double h = 0.0001;
+      double h = 1e-6*sizes[testcomp];
       //      double h = 0.00;
       vector<Source*> persrc(1);
       persrc[0] = GlobalSources[0]->copy( " " );
@@ -240,12 +250,22 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	 }
       }
    }
+   // Find parameter sizes, used for approximate hessian by difference quotients.
+   double xv[11];
+   GlobalSources[0]->get_parameters(xv);
+   double lscale = sqrt((xv[0]*xv[0]+xv[1]*xv[1]+xv[2]*xv[2])/3.0);
+   double mscale = sqrt((xv[3]*xv[3]+xv[4]*xv[4]+xv[5]*xv[5]+xv[6]*xv[6]+xv[7]*xv[7]+xv[8]*xv[8])/6.0);
+   double tscale = abs(xv[9])+1;
+   double fscale = abs(xv[10])+1;
+   double sizes[11]={lscale,lscale,lscale,mscale,mscale,mscale,mscale,mscale,mscale,tscale,fscale};
+
    // Validate by numerical differentiation
-   double h = 0.0001;
+
    vector<Source*> persrc(1);
    GlobalSources[0]->set_noderivative();
    for( int testcomp = 0 ; testcomp < 11 ; testcomp++ )
    {
+      double h = 1e-6*sizes[testcomp];
       persrc[0] = GlobalSources[0]->copy( " " );
       persrc[0]->perturb( h, testcomp );
 
@@ -1343,10 +1363,17 @@ int main(int argc, char **argv)
   }
   else
   {
-
+     // Make observations aware of the utc reference time, if set.
+     for( int m = 0; m < GlobalObservations.size(); m++ )
+     {
+	simulation.set_utcref( *GlobalObservations[m] );
+        if( simulation.m_prefilter_sources )
+           GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
+     }
 //  First copy observations to GlobalTimeSeries, and 
 //  then setupRun will insert the simulation time step
 //  and start time into GlobalTimeSeries.
+
      for( int m = 0; m < GlobalObservations.size(); m++ )
      {
 	//        char str[10];
@@ -1356,6 +1383,7 @@ int main(int argc, char **argv)
 	string newname = "_out";
 	TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
 	GlobalTimeSeries.push_back(elem);
+        elem->writeFile();
      }
 
 // get the simulation object ready for time-stepping
@@ -1432,6 +1460,7 @@ int main(int argc, char **argv)
 	{
 	   simulation.setupRun( );
 	   simulation.preprocessSources( GlobalSources );
+           simulation.print_utc();
            vector<TimeSeries*> localTimeSeries;
 	   for( int m = 0; m < GlobalObservations.size(); m++ )
 	   {
@@ -1442,12 +1471,15 @@ int main(int argc, char **argv)
 	      string newname = "_ini";
 	      TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
 	      localTimeSeries.push_back(elem);
+	      //              elem->writeFile();
+              GlobalObservations[m]->print_timeinfo();
 	   }
-
+	   //           exit(2);
 	   simulation.solve( GlobalSources, localTimeSeries );
 	   for (int ts=0; ts<localTimeSeries.size(); ts++)
 	   {
 	      localTimeSeries[ts]->writeFile();
+              localTimeSeries[ts]->print_timeinfo();
 	   }
            for( int ts=0 ; ts<localTimeSeries.size();ts++)
 	      delete localTimeSeries[ts];

@@ -9,11 +9,14 @@
 #include "csstime.h"
 
 #include "Require.h"
-
+#include "Filter.h"
 
 #include "EW.h"
 
 using namespace std;
+
+void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
+		int& second, int& msecond, int& fail );
 
 TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool sacFormat, bool usgsFormat, 
 			double x, double y, double depth, bool topoDepth, int writeEvery, bool xyzcomponent ):
@@ -58,7 +61,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
   m_epi_time_offset(0.0),
   m_x_azimuth(0.0),
   mBinaryMode(true),
-  m_utc_set(false)
+  m_utc_set(false),
+  m_utc_offset_computed(false)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
@@ -728,12 +732,29 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   setlhv( nm[9], 1, nerr);
 
   // setup time info
-  setnhv( nm[10], mEventYear, nerr);
-  setnhv( nm[11], mEventDay, nerr);
-  setnhv( nm[12], mEventHour, nerr);
-  setnhv( nm[13], mEventMinute, nerr);
-  setnhv( nm[14], static_cast<int>(mEventSecond), nerr);
-  setnhv( nm[15], 0, nerr);
+  if( m_utc_set )
+  {
+     int days = 0;
+     for( int m=1 ; m<m_utc[1]; m++ )
+	days += lastofmonth(m_utc[0],m);
+     days += m_utc[2];
+
+     setnhv( nm[10], m_utc[0], nerr);
+     setnhv( nm[11], days, nerr);
+     setnhv( nm[12], m_utc[3], nerr);
+     setnhv( nm[13], m_utc[4], nerr);
+     setnhv( nm[14], m_utc[5], nerr);
+     setnhv( nm[15], m_utc[6], nerr);
+  }
+  else
+  {
+     setnhv( nm[10], mEventYear, nerr);
+     setnhv( nm[11], mEventDay, nerr);
+     setnhv( nm[12], mEventHour, nerr);
+     setnhv( nm[13], mEventMinute, nerr);
+     setnhv( nm[14], static_cast<int>(mEventSecond), nerr);
+     setnhv( nm[15], 0, nerr);
+  }
 
   // field we're writing
   setkhv( nm[16], var, nerr);
@@ -782,7 +803,12 @@ void TimeSeries::write_usgs_format(string a_fileName)
 // write the header
    fprintf(fd, "# Author: SBP4W\n");
    fprintf(fd, "# Scenario: %s\n", "test"/*a_ew->m_scenario.c_str()*/);
-   fprintf(fd, "# Date: %i-%s-%i\n", mEventDay, mname[mEventMonth].c_str(), mEventYear);
+   if( m_utc_set )
+      fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+	                                      m_utc[4], m_utc[5], m_utc[6] );
+   else
+      fprintf(fd, "# Date: %i-%s-%i\n", mEventDay, mname[mEventMonth].c_str(), mEventYear);
+
    fprintf(fd, "# Bandwith (Hz): %e\n", 1.234 /*freq_limit*/);
    fprintf(fd, "# Station: %s\n", m_fileName.c_str() /*mStationName.c_str()*/ );
    fprintf(fd, "# Target location (WGS84 longitude, latitude) (deg): %e %e\n", m_rec_lon, m_rec_lat);
@@ -875,7 +901,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::readFile( double startTime )
+void TimeSeries::readFile( EW *ew, double startTime )
 {
 //building the file name...
    stringstream filePrefix;
@@ -885,6 +911,7 @@ void TimeSeries::readFile( double startTime )
 
    if( m_myPoint && m_usgsFormat )
    {
+      bool debug = false;
       FILE *fd=fopen(filePrefix.str().c_str(),"r");
       if( fd == NULL )
 	 cout << "ERROR: observed data file " << filePrefix.str() << " not found " << endl;
@@ -895,7 +922,38 @@ void TimeSeries::readFile( double startTime )
 
       // Read header
 	 for( int line=0 ; line < 13 ; line++ )
+	 {
 	    fgets(buf,bufsize,fd);
+            if( line == 2 )
+	    {
+	       // set UTC time, if defined in file
+	       string timestr(buf);
+	       size_t utcind = timestr.find("UTC");
+               if( utcind != string::npos  )
+	       {
+                  int fail;
+                  char *utcstr=new char[1024];
+		  // Skip characters 'UTC'
+		  utcind += 3;
+
+		  timestr.copy(utcstr, timestr.size()-utcind , utcind );
+		  ew->parsedate( utcstr, m_utc[0], m_utc[1], m_utc[2], m_utc[3],
+			     m_utc[4], m_utc[5], m_utc[6], fail );
+                  if( fail == 0 )
+		     m_utc_set = true;
+                  else
+		     cout << "ERROR reading observation " << m_fileName << " , UTC parse failure no. " << fail << endl;
+                  delete[] utcstr;
+                  if( debug )
+		  {
+		     cout << "found observation utc time " ;
+                     for( int u=0 ; u < 7 ; u++ )
+			cout << m_utc[u] << " ";
+		     cout << endl;
+		  }
+	       }
+	    }
+	 }
          string bufstr(buf);
          bool foundd = (bufstr.find("displacement") != string::npos);
          bool foundv = (bufstr.find("velocity") != string::npos);
@@ -906,18 +964,21 @@ void TimeSeries::readFile( double startTime )
             bool cartesian = (bufstr.find("Z") != string::npos);
 	    
             m_xyzcomponent = cartesian;
-//            cout << "Found ";
-//	    if( foundd )
-//	       cout << "displacement ";
-//	    else
-//	       cout << "velocity ";
-//	    cout << "file with ";
-//	    if( cartesian )
-//	       cout << "Cartesian ";
-//	    else
-//             cout << "geographic ";
-//          cout << "components " << endl;
-	       
+
+            if( debug )
+	    {
+	       cout << "Found observed ";
+	       if( foundd )
+		  cout << "displacement ";
+	       else
+		  cout << "velocity ";
+	       cout << "file with ";
+	       if( cartesian )
+		  cout << "Cartesian ";
+	       else
+		  cout << "geographic ";
+	       cout << "components " << endl;
+	    }
 	    double tstart, dt, td, ux, uy, uz;
 	    int nlines = 0;
 	    if( fscanf(fd,"%le %le %le %le",&tstart,&ux,&uy,&uz) != EOF )
@@ -950,6 +1011,8 @@ void TimeSeries::readFile( double startTime )
             double a21 =-m_salpha*deti;
 	    double a22 = m_thynrm*deti;
 	 // Read the data on file	 
+            if( debug )
+	       cout << "Found " << nlines << " lines of observation data " << endl;
             for( int line=0 ; line < nlines ; line++ )
 	    {
 	       int nr=fscanf(fd, "%lf %lf %lf %lf \n", &tstart,&ux,&uy,&uz);
@@ -1156,6 +1219,9 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 	 {
 	    cout << "Error in TimeSeries::misfit : Can not interpolate, " <<
 	       "because the grid is too coarse " << endl;
+            cout << "mmin = " << mmin << endl;
+            cout << "mmax = " << mmax << endl;
+	    cout << "nfrsteps = " << nfrsteps << endl;
 	    return 0.0;
 	 }
 	 mf[0] = mf[1] = mf[2] = 0;
@@ -1439,7 +1505,7 @@ void TimeSeries::set_station_utc( int utc[7] )
    for( int k=0; k < 7 ; k++ )
       m_utc[k] = utc[k];
    m_utc_set = true;
-}   
+}
 
 //-----------------------------------------------------------------------
 void TimeSeries::offset_ref_utc( int utcref[7] )
@@ -1448,7 +1514,7 @@ void TimeSeries::offset_ref_utc( int utcref[7] )
  // (The reference UTC corresponds to t=0 simulation time)
    if( m_utc_set && !m_utc_offset_computed )
    {
-      m_t0 = utc_distance(m_utc,utcref) + m_t0;
+      m_t0 = utc_distance(utcref,m_utc) + m_t0;
       m_utc_offset_computed = true;
    }
 }   
@@ -1458,6 +1524,9 @@ double TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
    // Compute time in seconds between two [y,M,d,m,s,ms] times
    // returns utc2-utc1 in seconds.
+   // Discovered afterwards: UTC occasionally adds a leap second, so this 
+   // function is not always completely accurate.
+
    int start[7], finish[7];
    int c=0;
    while( utc1[c] == utc2[c] && c <= 6 )
@@ -1498,8 +1567,9 @@ double TimeSeries::utc_distance( int utc1[7], int utc2[7] )
       double sg = 1;
       if( !onesmallest )
          sg = -1;
+      int ls = leap_second_correction(start,finish);
       return sg*(86400.0*d + (finish[3]-start[3])*3600.0 + (finish[4]-start[4])*60.0 +
-		 (finish[5]-start[5]) +(finish[6]-start[6])*1e-3);
+		 (finish[5]-start[5]) +(finish[6]-start[6])*1e-3 + ls);
    }
 }
 
@@ -1532,4 +1602,196 @@ int TimeSeries::lastofmonth( int year, int month )
    else
       days = 31;
    return days;
+}
+
+//-----------------------------------------------------------------------
+int TimeSeries::utccompare( int utc1[7], int utc2[7] )
+{
+   int c = 0;
+   int retval;
+   while( utc1[c] == utc2[c] && c <= 6 )
+      c++;
+   if( c == 7 )
+      retval=0;
+   else
+   {
+      if( utc1[c] < utc2[c] )
+	 retval=-1;
+      else
+	 retval=1;
+   }
+   return retval;
+}   
+
+//-----------------------------------------------------------------------
+int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
+// Count the number of leap seconds between two utc times.
+{
+   int* leap_sec_y, *leap_sec_m;
+   int nls = 25;
+   leap_sec_y = new int[nls];
+   leap_sec_m = new int[nls];
+   // Table of UTC leap seconds, added at the end of june (6) or december (12) 
+   leap_sec_y[0] = 1972;
+   leap_sec_m[0] = 6;
+   leap_sec_y[1] = 1972;
+   leap_sec_m[1] = 12;
+   leap_sec_y[2] = 1973;
+   leap_sec_m[2] = 12;
+   leap_sec_y[3] = 1974;
+   leap_sec_m[3] = 12;
+   leap_sec_y[4] = 1975;
+   leap_sec_m[4] = 12;
+   leap_sec_y[5] = 1976;
+   leap_sec_m[5] = 12;
+   leap_sec_y[6] = 1977;
+   leap_sec_m[6] = 12;
+   leap_sec_y[7] = 1978;
+   leap_sec_m[7] = 12;
+   leap_sec_y[8] = 1979;
+   leap_sec_m[8] = 12;
+   leap_sec_y[9] = 1981;
+   leap_sec_m[9] = 6;
+   leap_sec_y[10] = 1982;
+   leap_sec_m[10] = 6;
+   leap_sec_y[11] = 1983;
+   leap_sec_m[11] = 6;
+   leap_sec_y[12] = 1985;
+   leap_sec_m[12] = 6;
+   leap_sec_y[13] = 1987;
+   leap_sec_m[13] = 12;
+   leap_sec_y[14] = 1989;
+   leap_sec_m[14] = 12;
+   leap_sec_y[15] = 1990;
+   leap_sec_m[15] = 12;
+   leap_sec_y[16] = 1992;
+   leap_sec_m[16] = 6;
+   leap_sec_y[17] = 1993;
+   leap_sec_m[17] = 6;
+   leap_sec_y[18] = 1994;
+   leap_sec_m[18] = 6;
+   leap_sec_y[19] = 1995;
+   leap_sec_m[19] = 12;
+   leap_sec_y[20] = 1997;
+   leap_sec_m[20] = 6;
+   leap_sec_y[21] = 1998;
+   leap_sec_m[21] = 12;
+   leap_sec_y[22] = 2005;
+   leap_sec_m[22] = 12;
+   leap_sec_y[23] = 2008;
+   leap_sec_m[23] = 12;
+   leap_sec_y[24] = 2012;
+   leap_sec_m[24] = 6;
+   int leaps[7];
+   leaps[2] = 30;
+   leaps[3] = 23;
+   leaps[4] = 59;
+   leaps[5] = 60;
+   leaps[6] = 00;
+   int start[7], end[7];
+   if( utccompare(utc1,utc2) <= 0 )
+      for( int c=0 ; c < 7 ;c++ )
+      {
+	 start[c] = utc1[c];
+         end[c]   = utc2[c];
+      }
+   else
+      for( int c=0 ; c < 7 ;c++ )
+      {
+	 start[c] = utc2[c];
+         end[c]   = utc1[c];
+      }
+
+   int l, lstart, lend;
+   l = 0;
+   leaps[0] = leap_sec_y[l];
+   leaps[1] = leap_sec_m[l];
+   leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
+   while( l <= nls-1 && utccompare(start,leaps) >= 0 )
+   {
+      l++;
+      if( l <= nls-1 )
+      {
+	 leaps[0] = leap_sec_y[l];
+	 leaps[1] = leap_sec_m[l];
+	 leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
+      }
+   }
+   lstart = l;
+   //   cout << "lstart = " << lstart << endl;
+   l = nls-1;
+   leaps[0] = leap_sec_y[l];
+   leaps[1] = leap_sec_m[l];
+   leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
+   while( l >= 0 && utccompare(end,leaps) <= 0 )
+   {
+      l--;
+      if( l >= 0 )
+      {
+	 leaps[0] = leap_sec_y[l];
+	 leaps[1] = leap_sec_m[l];
+	 leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
+      }
+   }
+   lend = l;
+   //   cout << "lend = " << lend << endl;
+   int corr = lend-lstart+1;
+   delete[] leap_sec_y, leap_sec_m;
+   return corr;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::filter_data( Filter* filter_ptr )
+{
+   if( m_myPoint )
+   {
+      filter_ptr->computeSOS( m_dt );
+
+      filter_ptr->evaluate( mLastTimeStep+1, &mRecordedSol[0][0], &mRecordedSol[0][0] );
+      filter_ptr->evaluate( mLastTimeStep+1, &mRecordedSol[1][0], &mRecordedSol[1][0] );
+      filter_ptr->evaluate( mLastTimeStep+1, &mRecordedSol[2][0], &mRecordedSol[2][0] );
+
+// Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter
+      if( filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass )
+      {    
+	 double wghv, xi;
+	 int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+
+	 for( int i=1 ; i<=p0-1 ; i++ )
+	 {
+	    mRecordedSol[0][i-1] = 0;
+	    mRecordedSol[1][i-1] = 0;
+	    mRecordedSol[2][i-1] = 0;
+	 }
+	 for( int i=p0 ; i<=p0+p ; i++ )
+	 {
+	    wghv = 0;
+	    xi = (i-p0)/((double) p);
+	 // polynomial P(xi), P(0) = 0, P(1)=1
+	    wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+	    mRecordedSol[0][i-1] *= wghv;
+	    mRecordedSol[1][i-1] *= wghv;
+	    mRecordedSol[2][i-1] *= wghv;
+	 }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::print_timeinfo() const
+{
+   if( m_myPoint )
+   {
+      cout << "Observation/TimeSeries at grid point " << m_i0 << " " << m_j0 << " " << m_k0 << endl;
+      cout << "   t0 = " << m_t0 << " dt= " << m_dt << endl;
+      cout << "   Observation interval  [ " << m_t0 << " , " << m_t0 + m_dt*mLastTimeStep << " ] simulation time " << endl;
+      if( m_utc_set )
+      {
+        printf("   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+	       m_utc[4], m_utc[5], m_utc[6] );
+
+     }
+      else
+	 cout << "   Observation UTC reference time not defined" << endl;
+   }
 }

@@ -117,10 +117,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
 // done allocating solution arrays
 
-// Set the number of time steps and allocate the recording arrays in all time series objects  
+// Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
-    a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
-
+  {
+     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
+     // In forward solve, the output receivers are always starting at t=0, i.e., same UTC as the
+     // global reference utc0, therefore,  set station utc equal reference utc.
+     if( m_utc0set )
+	a_TimeSeries[ts]->set_station_utc( m_utc0 );
+  }
   if( mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
 
@@ -193,6 +198,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //    }
        
   } // end if prefiltering
+
   bool output_timefunc = true;
   if( output_timefunc )
   {
@@ -216,11 +222,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	double gt, gt1, gt2;
 	for (int i=0; i<=mNumberOfTimeSteps; i++)
 	{
-	   t = mTstart + i*mDt;
+	   //           for( int sb=0 ; sb < 10 ; sb++ )
+	   //	   {
+	   //	      t = mTstart + i*mDt + 0.1*sb*mDt;
+  	   t = mTstart + i*mDt;
 	   gt = point_sources[0]->getTimeFunc(t);
 	   gt1 = point_sources[0]->evalTimeFunc_t(t);
 	   gt2 = point_sources[0]->evalTimeFunc_tt(t);
 	   fprintf(tf, "%.18e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
+	      //	   }
 	}
 	fclose(tf);
      }

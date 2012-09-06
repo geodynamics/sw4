@@ -662,14 +662,19 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
          dwghk[k] /= normwgh[k+kc-3];
 	 wghkz[k] /= normwgh[k+kc-3];
 	 dwghkz[k] /= normwgh[k+kc-3];
+	 wghkzz[k] /= normwgh[k+kc-3];
+	 dwghkzz[k] /= normwgh[k+kc-3];
       }
-      if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
-      {
-         wghk[k]  /= normwgh[Nz-k-kc+2];
-         dwghk[k] /= normwgh[Nz-k-kc+2];
-         wghkz[k] /= normwgh[Nz-k-kc+2];
-         dwghkz[k] /= normwgh[Nz-k-kc+2];
-      }
+      // No source at bottom
+      //      if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
+      //      {
+      //         wghk[k]  /= normwgh[Nz-k-kc+2];
+      //         dwghk[k] /= normwgh[Nz-k-kc+2];
+      //         wghkz[k] /= normwgh[Nz-k-kc+2];
+      //         dwghkz[k] /= normwgh[Nz-k-kc+2];
+      //         wghkzz[k] /= normwgh[Nz-k-kc+2];
+      //         dwghkzz[k] /= normwgh[Nz-k-kc+2];
+      //      }
    }
    if( !mIsMomentSource )
    {

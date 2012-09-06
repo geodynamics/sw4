@@ -7,6 +7,7 @@
 
 class EW;
 class Sarray;
+class Filter;
 
 using namespace std;
 
@@ -27,7 +28,7 @@ void recordData(vector<double> & u);
 
 void writeFile( );
 
-void readFile( double startTime=0 );
+void readFile( EW* ew, double startTime=0 );
 
 double **getRecordingArray(){ return mRecordedSol; }
 
@@ -56,10 +57,8 @@ double product_wgh( TimeSeries& ts );
 
 void set_station_utc( int utc[7] );
 void offset_ref_utc( int utc[7] );
-double utc_distance( int utc1[7], int utc2[7] );
-void dayinc( int date[7] );
-int lastofmonth( int year, int month );
-
+void filter_data( Filter* filter_ptr );
+void print_timeinfo() const;
 // for simplicity, make the grid point location public
 int m_i0;
 int m_j0;
@@ -71,6 +70,11 @@ TimeSeries();
 void write_usgs_format( string a_fileName);
 void write_sac_format( int npts, char *ofile, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz);
+double utc_distance( int utc1[7], int utc2[7] );
+void dayinc( int date[7] );
+int lastofmonth( int year, int month );
+int utccompare( int utc1[7], int utc2[7] );
+int leap_second_correction( int utc1[7], int utc2[7] );
 
 receiverMode m_mode;
 int m_nComp;
@@ -113,6 +117,8 @@ bool mBinaryMode;
 // UTC time for start of seismogram, 
 //     m_t0 is start of seismogram in simulation time =  m_utc - utc reference time,
 //           where utc reference time corresponds to simulation time zero.
+//     the time series values are thus given by t_k = m_t0 + k*m_dt, k=0,1,..,mLastTimeStep
+//    NOTE: m_t0 can be updated by an additional shift when dealing with observations.
 bool m_utc_set, m_utc_offset_computed;
 int m_utc[7];
 

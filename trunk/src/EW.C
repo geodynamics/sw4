@@ -178,6 +178,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 // command prefilter
   m_prefilter_sources(false), 
   m_filter_ptr(0),
+  m_filterobs_ptr(0),
 
   mPrintInterval(100),
   m_matrices_decomposed(false),
@@ -263,7 +264,7 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
       msg << "============================================================" << endl
           << " Running program on " << m_nProcs << " MPI tasks" << " using the following data: " << endl << endl
           << " Start Time = " << mTstart << " Goal Time = ";
-      
+
       if (mTimeIsSet)
          msg << mTmax << endl;
       else
@@ -3247,7 +3248,8 @@ void EW::set_prefilter( FilterType passband, int order, int passes, double fc1, 
 {
   m_prefilter_sources = true;
 // we could build the filter object right here...
-  m_filter_ptr = new Filter( passband, order, passes, fc1, fc2);
+  m_filter_ptr    = new Filter( passband, order, passes, fc1, fc2);
+  m_filterobs_ptr = new Filter( passband, order, passes, fc1, fc2);
 }
 
 //-----------------------------------------------------------------------
@@ -3434,4 +3436,24 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
    double energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
+}
+
+//-----------------------------------------------------------------------
+void EW::set_utcref( TimeSeries& ts )
+{
+   if( m_utc0set )
+      ts.offset_ref_utc( m_utc0 );
+}
+
+//-----------------------------------------------------------------------
+void EW::print_utc()
+{
+   if( proc_zero() )
+   {
+      if( m_utc0set )
+	 printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[1], m_utc0[2], m_utc0[0], m_utc0[3],
+		m_utc0[4], m_utc0[5], m_utc0[6] );
+      else
+	 printf("EW reference UTC is not defined\n");
+   }
 }

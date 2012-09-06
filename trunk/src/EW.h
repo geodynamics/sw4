@@ -414,6 +414,8 @@ double G2_Integral(double iT, double it, double ir, double ibeta);
 void getGlobalBoundingBox(double bbox[6]);
 
 string getPath(){ return mPath; }
+void set_utcref( TimeSeries& ts );
+void print_utc();
 
    // For inverse problem
 void processCG(char* buffer );
@@ -426,6 +428,7 @@ bool compute_sf();
 void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& output_seismograms );
 void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
 		       int& stepselection, bool& do_linesearch, int& varcase );
+
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -458,6 +461,14 @@ vector<double> m_zmin; // needed by the Source and Image classes
 // for the curvilinear grid, we also store the cartesian coordinates of the grid points
 Sarray mX, mY, mZ; // needed by the Source class, so must be public
 Sarray mJ; // Jacobian also needed by the Source class
+
+// command prefilter
+bool m_prefilter_sources;
+// filter setup
+// Filter for time function
+Filter *m_filter_ptr;
+// Filter for observations
+Filter *m_filterobs_ptr;
 
 private:
 
@@ -518,10 +529,6 @@ double m_frequency_limit;
 bool m_limit_frequency;
 int m_ppw;
 
-// command prefilter
-bool m_prefilter_sources;
-// filter setup
-Filter *m_filter_ptr;
 
 // parallel io stuff
 bool m_pfs;
