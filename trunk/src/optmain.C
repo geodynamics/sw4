@@ -196,7 +196,7 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 
 // Get Hessian by solving the backwards problem:
    bool skipthis = false;
-   double gradient[11], hess[121];
+   double gradient[11], hess[121], hnum[121];
    simulation.solve_backward( GlobalSources, diffs, gradient, hess );
 
 // Assemble the first part of hessian matrix
@@ -248,18 +248,29 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	       cout << "   " << hess[i+11*j] ;
 	    cout << endl;
 	 }
+	 FILE *fd = fopen("hessian-adj.txt","w");
+	 for( int i= 0 ; i < 11 ; i++ )
+	 {
+	    for( int j= 0 ; j < 11 ; j++ )
+	       fprintf( fd, " %12.5g ", hess[i+11*j] );
+	    fprintf( fd, "\n" );
+	 }
+	 fclose(fd);
+	 fd = fopen("hessian-adj.bin","w");
+	 fwrite(hess,sizeof(double),121,fd);
+	 fclose(fd);
       }
    }
    // Find parameter sizes, used for approximate hessian by difference quotients.
-   double xv[11];
-   GlobalSources[0]->get_parameters(xv);
-   double lscale = sqrt((xv[0]*xv[0]+xv[1]*xv[1]+xv[2]*xv[2])/3.0);
-   double mscale = sqrt((xv[3]*xv[3]+xv[4]*xv[4]+xv[5]*xv[5]+xv[6]*xv[6]+xv[7]*xv[7]+xv[8]*xv[8])/6.0);
-   double tscale = abs(xv[9])+1;
-   double fscale = abs(xv[10])+1;
+   double lscale = sqrt((gradient[0]*gradient[0]+gradient[1]*gradient[1]+gradient[2]*gradient[2])/3.0);
+   double mscale = sqrt((gradient[3]*gradient[3]+gradient[4]*gradient[4]+gradient[5]*gradient[5]+
+			 gradient[6]*gradient[6]+gradient[7]*gradient[7]+gradient[8]*gradient[8])/6.0);
+   double tscale = abs(gradient[9])+1;
+   double fscale = abs(gradient[10])+1;
    double sizes[11]={lscale,lscale,lscale,mscale,mscale,mscale,mscale,mscale,mscale,tscale,fscale};
 
    // Validate by numerical differentiation
+
 
    vector<Source*> persrc(1);
    GlobalSources[0]->set_noderivative();
@@ -289,9 +300,26 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
       {
 	 cout << "Hessian, col. no " << testcomp+1 << " , by numerical derivative = " << endl;
 	 for( int i = 0 ; i < 11 ; i++ )
+	 {
 	    cout << "   " << (gradp[i]-gradient[i])/h << endl;
+            hnum[i+11*testcomp] = (gradp[i]-gradient[i])/h;
+	 }
       }
       delete persrc[0];
+   }
+   if( myRank == 0 )
+   {
+      FILE *fd = fopen("hessian-num.txt","w");
+      for( int i= 0 ; i < 11 ; i++ )
+      {
+	 for( int j= 0 ; j < 11 ; j++ )
+	    fprintf( fd, " %12.5g ", hnum[i+11*j] );
+	 fprintf( fd, "\n" );
+      }
+      fclose(fd);
+      fd = fopen("hessian-num.bin","w");
+      fwrite(hnum,sizeof(double),121,fd);
+      fclose(fd);
    }
 }
 
@@ -1363,34 +1391,10 @@ int main(int argc, char **argv)
   }
   else
   {
-     // Make observations aware of the utc reference time, if set.
-     // Filter observed data if required
-     for( int m = 0; m < GlobalObservations.size(); m++ )
-     {
-	simulation.set_utcref( *GlobalObservations[m] );
-        if( simulation.m_prefilter_sources && simulation.m_filter_observations )
-           GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
-     }
-//  First copy observations to GlobalTimeSeries, and 
-//  then setupRun will insert the simulation time step
-//  and start time into GlobalTimeSeries.
-
-     for( int m = 0; m < GlobalObservations.size(); m++ )
-     {
-	//        char str[10];
-	//        snprintf(str,10,"%i",m);
-	//	string newname = "tscopy";
-	//        newname.append(str);
-	string newname = "_out";
-	TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
-	GlobalTimeSeries.push_back(elem);
-        elem->writeFile();
-     }
 
 // get the simulation object ready for time-stepping
      simulation.setupRun( );
      simulation.preprocessSources( GlobalSources );
-     
      if (!simulation.isInitialized())
      { 
 	if (myRank == 0)
@@ -1407,6 +1411,27 @@ int main(int argc, char **argv)
      else
      {
 // Successful initialization
+
+     // Make observations aware of the utc reference time, if set.
+     // Filter observed data if required
+	for( int m = 0; m < GlobalObservations.size(); m++ )
+	{
+	   simulation.set_utcref( *GlobalObservations[m] );
+	   if( simulation.m_prefilter_sources && simulation.m_filter_observations )
+	   {
+	      GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
+	      GlobalObservations[m]->writeFile( "_fi" );
+	   }
+	}
+
+//  First copy observations to GlobalTimeSeries, later, solve will insert 
+//  the simulation time step and start time into GlobalTimeSeries.
+	for( int m = 0; m < GlobalObservations.size(); m++ )
+	{
+	   string newname = "_out";
+	   TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
+	   GlobalTimeSeries.push_back(elem);
+	}
 
 	if (myRank == 0)
 	{
@@ -1459,7 +1484,7 @@ int main(int argc, char **argv)
 
         if( output_initial_seismograms )
 	{
-	   simulation.setupRun( );
+	   //	   simulation.setupRun( );
 	   simulation.preprocessSources( GlobalSources );
            simulation.print_utc();
            vector<TimeSeries*> localTimeSeries;
@@ -2212,7 +2237,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
 
       vector<Source*> src(1);
       src[0] = onesrc;
-      simulation.setupRun( );
+      //      simulation.setupRun( );
       simulation.preprocessSources( src );
       simulation.solve( src, tsxx );
       delete onesrc;
@@ -2581,7 +2606,7 @@ void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries
       Source* onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
       vector<Source*> src(1);
       src[0] = onesrc;
-      simulation.setupRun( );
+      //      simulation.setupRun( );
       simulation.preprocessSources( src );
       simulation.solve( src, tsxx );
       delete onesrc;

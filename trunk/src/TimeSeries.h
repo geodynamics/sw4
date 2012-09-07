@@ -26,7 +26,7 @@ void allocateRecordingArrays( int numberOfTimeSteps, double startTime, double ti
   
 void recordData(vector<double> & u);
 
-void writeFile( );
+void writeFile( string suffix="" );
 
 void readFile( EW* ew, double startTime=0 );
 

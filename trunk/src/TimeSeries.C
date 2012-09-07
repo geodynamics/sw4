@@ -361,7 +361,7 @@ void TimeSeries::recordData(vector<double> & u)
 
    
 //----------------------------------------------------------------------
-void TimeSeries::writeFile()
+void TimeSeries::writeFile( string suffix )
 {
   if (!m_myPoint) return;
 
@@ -375,7 +375,10 @@ void TimeSeries::writeFile()
 //building the file name...
   if( m_path != "." )
     filePrefix << m_path;
-  filePrefix << m_fileName << "." ;
+  if( suffix == "" )
+     filePrefix << m_fileName << "." ;
+  else
+     filePrefix << m_fileName << suffix.c_str() << "." ;
   
   stringstream ux, uy, uz, uxy, uxz, uyz;
   
@@ -793,6 +796,11 @@ void TimeSeries::write_usgs_format(string a_fileName)
    double lat, lon;
    double x, y, z;
 
+   if( fd == NULL )
+      cout << "ERROR: opening USGS file " << a_fileName << " for writing" <<  endl;
+   else
+   {
+
 // frequency resolution
 //    double freq_limit=-999;
 //    if (a_ew->m_prefilter_sources)
@@ -898,6 +906,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
       printf(" in geographic coordinates\n" );
    }
    fclose(fd);
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -905,8 +914,8 @@ void TimeSeries::readFile( EW *ew, double startTime )
 {
 //building the file name...
    stringstream filePrefix;
-   if( m_path != "." )
-      filePrefix << m_path;
+   if( ew->getObservationPath() != "./" )
+      filePrefix << ew->getObservationPath();
    filePrefix << m_fileName << ".txt" ;
 
    if( m_myPoint && m_usgsFormat )

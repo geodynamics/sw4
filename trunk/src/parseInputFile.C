@@ -1839,9 +1839,15 @@ void EW::processFileIO(char* buffer)
     {
        if (startswith("#", token) || startswith(" ", buffer))
           break;
-       if(startswith("path=", token)){
+       if(startswith("path=", token)) {
           token += 5; // skip path=
           path = token;
+       }
+       else if (startswith("obspath=", token))
+       {
+          token += 8; // skip obspath=
+          mObsPath = token;
+	  mObsPath += '/';
        }
 //                          123456789
        else if (startswith("verbose=", token))

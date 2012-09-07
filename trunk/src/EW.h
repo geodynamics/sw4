@@ -174,6 +174,7 @@ string bc_name( const boundaryConditionType bc ) const;
 int mkdirs(const string& path);
 void setOutputPath(const string& path);
 const string& getOutputPath() { return mPath; };
+const string& getObservationPath() { return mObsPath; };
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions
 
@@ -540,7 +541,7 @@ int m_sg_gp_thickness, m_sg_gp_transition;
 double m_supergrid_damping_coefficient;
 SuperGrid m_supergrid_taper_x, m_supergrid_taper_y, m_supergrid_taper_z;
 
-string mPath;
+string mPath, mObsPath;
 
 // number of boundary points on each side
 vector<int *> m_NumberOfBCPoints;
