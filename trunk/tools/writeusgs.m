@@ -7,19 +7,29 @@
 %             writeusgs( filename, stname, ux, uy, uz, dt, t0, enz )
 %
 %       Input: filename - write to this file
+%              stname   - Station name, (to be saved in the header of the file)
 %              ux - First component of time series data
 %              uy - Second component
 %              uz - Third component
 %              dt - Time step used for time series data
 %              lat, lon - Latitude and longitude of event
 %              t0 - time offset to some reference time
-%              
+%              utc - Reference time coordinate, 7 integers, [year,month,day,hour,minute,second,millisecond]
 %              enz - 1  [ux,uy,uz] is [East-West,North-South,Up]
 %                    0  [ux,uy,uz] is [X, Y, Z ]
 %
-function []= writeusgs( filename, stname, ux, uy, uz, dt, t0,  enz, vel )
+ function []= writeusgs( filename, stname, ux, uy, uz, dt, t0, enz, vel, utc )
 %
 % Default to xyz-velocities
+if nargin < 9
+   utc(1) = 2011;
+   utc(2)=10;
+   utc(3)=25;
+   utc(4)=19;
+   utc(5)=00;
+   utc(6)=00;
+   utc(7)=11;
+end;
 if nargin < 8
   vel = 1;
 end;
@@ -30,8 +40,10 @@ end;
 fd=fopen(filename,'w');
 fprintf(fd,'# Author: Matlab/Octave\n');
 fprintf(fd,'# Scenario: test\n');
-fprintf(fd,['# Date: ' date '\n']);
-fprintf(fd,['# Bandwidth: x Hz\n']);
+%fprintf(fd,['# Date: ' date '\n']);
+%fprintf(fd,'# Date: UTC 10/25/2011:19:00:00.011\n');
+fprintf(fd,'# Date: UTC %02d/%02d/%04d:%02d:%02d:%02d.%03d\n',utc(2),utc(3),utc(1),utc(4),utc(5),utc(6),utc(7));
+fprintf(fd,'# Bandwidth: x Hz\n');
 fprintf(fd,['# Station: ' stname '\n']);
 fprintf(fd, '# Target location (WGS84 longitude, latitude) (deg): xx yy\n');
 fprintf(fd, '# Actual location (WGS84 longitude, latitude) (deg): xx yy\n');
@@ -62,3 +74,4 @@ for i = 1:n
    t = t+ dt;
 end;
 fclose(fd);
+

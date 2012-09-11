@@ -10,7 +10,11 @@
 %              colorstring: string passed to plot, like 'r' for red lines
 %              erasefirst: 0 does a 'hold on' for the current plot, otherwise erases the current figure
 %               
-function plotusgs( filename, colorstring, erase )
+function plotusgs( filename, colorstring, erase, tshift )
+
+if nargin < 4
+   tshift = 0;
+end;
 
 [t ux uy uz]=readusgs(filename);
 
@@ -22,8 +26,9 @@ subplot(3,1,1)
 if (erase == 0)
   hold on;
 end
-h=plot(t,ux,colorstring);
+h=plot(t+tshift,ux,colorstring);
 set(h,'LineWidth',1.2)
+set(gca,'FontSize',20)
 axis tight;
 
 % north component
@@ -31,8 +36,9 @@ subplot(3,1,2)
 if (erase == 0)
   hold on;
 end
-h=plot(t,uy,colorstring);
+h=plot(t+tshift,uy,colorstring);
 set(h,'LineWidth',1.2)
+set(gca,'FontSize',20)
 axis tight;
 
 % up component
@@ -40,6 +46,7 @@ subplot(3,1,3)
 if (erase == 0)
   hold on;
 end
-h=plot(t,uz,colorstring);
+h=plot(t+tshift,uz,colorstring);
 set(h,'LineWidth',1.2)
+set(gca,'FontSize',20)
 axis tight;
