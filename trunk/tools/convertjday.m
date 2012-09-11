@@ -18,7 +18,7 @@ if jday > 0 & jday < 367
    mon = 1;
    lastofmonth=[31 28 31 30 31 30 31 31 30 31 30 31];
 % leapyear correction
-   if ( mod(year,400) == 0 ) | ( (mod(year,4) == 0) & ~(mod(year,100) == 0) )
+   if ( mod(year,400) == 0 ) || ( (mod(year,4) == 0) && ~(mod(year,100) == 0) )
       lastofmonth(2) = 29;
    end;
    while jd < jday 

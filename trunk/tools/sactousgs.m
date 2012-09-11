@@ -28,51 +28,51 @@ convfactor=pi/180;
 
 % Verify that origins of files agree
 eflag = 0;
-if (stnm1 ~= stnm2) | (stnm1 ~= stnm3) | (stnm2 ~= stnm3)
+if (stnm1 ~= stnm2) || (stnm1 ~= stnm3) || (stnm2 ~= stnm3)
    disp(['Error sac stations names do not agree ' stnm1 ' ' stnm2 ' ' stnm3]);
    eflag = 1;
 end;
-if (lat1 ~= lat2) | (lat1 ~= lat3) | (lat2 ~= lat3)
+if (lat1 ~= lat2) || (lat1 ~= lat3) || (lat2 ~= lat3)
    disp(['Error sac stations latitudes do not agree ' num2str(lat1) ' ' num2str(lat2) ' ' num2str(lat3)]);
    eflag = 1;
 end;
-if (lon1 ~= lon2) | (lon1 ~= lon3) | (lon2 ~= lon3)
+if (lon1 ~= lon2) || (lon1 ~= lon3) || (lon2 ~= lon3)
    disp(['Error sac stations longitudes do not agree ' num2str(lon1) ' ' num2str(lon2) ' ' num2str(lon3)]);
    eflag = 1;
 end;
-if (dt1 ~= dt2) | (dt1~=dt3) | (dt2 ~= dt3)
+if (dt1 ~= dt2) || (dt1~=dt3) || (dt2 ~= dt3)
    disp(['Error sac stations time steps do not agree ' num2str(dt1) ' ' num2str(dt2) ' ' num2str(dt3)]);
    eflag = 1;
 end;			
-if (npts1 ~= npts2) | (npts1~=npts3) | (npts2 ~= npts3)
+if (npts1 ~= npts2) || (npts1~=npts3) || (npts2 ~= npts3)
    disp(['Error sac stations number of points do not agree ' num2str(npts1) ' ' num2str(npts2) ' ' num2str(npts3)]);
    eflag = 1;
 end;			
-if (b1 ~= b2) | (b1~=b3) | (b2 ~= b3)
+if (b1 ~= b2) || (b1~=b3) || (b2 ~= b3)
    disp(['Error sac stations time offsets do not agree ' num2str(b1) ' ' num2str(b2) ' ' num2str(b3)]);
    eflag = 1;
 end;			
-if (year1 ~= year2) | (year1~=year3) | (year2 ~= year3)
+if (year1 ~= year2) || (year1~=year3) || (year2 ~= year3)
    disp(['Error sac stations years do not agree ' num2str(year1) ' ' num2str(year2) ' ' num2str(year3)]);
    eflag = 1;
 end;			
-if (jday1 ~= jday2) | (jday1~=jday3) | (jday2 ~= jday3)
+if (jday1 ~= jday2) || (jday1~=jday3) || (jday2 ~= jday3)
    disp(['Error sac stations jdays do not agree ' num2str(jday1) ' ' num2str(jday2) ' ' num2str(jday3)]);
    eflag = 1;
 end;			
-if (hour1 ~= hour2) | (hour1~=hour3) | (hour2 ~= hour3)
+if (hour1 ~= hour2) || (hour1~=hour3) || (hour2 ~= hour3)
    disp(['Error sac stations hours do not agree ' num2str(hour1) ' ' num2str(hour2) ' ' num2str(hour3)]);
    eflag = 1;
 end;			
-if (min1 ~= min2) | (min1~=min3) | (min2 ~= min3)
+if (min1 ~= min2) || (min1~=min3) || (min2 ~= min3)
    disp(['Error sac stations minutes do not agree ' num2str(min1) ' ' num2str(min2) ' ' num2str(min3)]);
    eflag = 1;
 end;			
-if (sec1 ~= sec2) | (sec1~= sec3) | (sec2 ~= sec3)
+if (sec1 ~= sec2) || (sec1~= sec3) || (sec2 ~= sec3)
    disp(['Error sac stations seconds do not agree ' num2str(sec1) ' ' num2str(sec2) ' ' num2str(sec3)]);
    eflag = 1;
 end;			
-if (msec1 ~= msec2) | (msec1~=msec3) | (msec2 ~= msec3)
+if (msec1 ~= msec2) || (msec1~=msec3) || (msec2 ~= msec3)
    disp(['Error sac station time offsets do not agree ' num2str(msec1) ' ' num2str(msec2) ' ' num2str(msec3)]);
    eflag = 1;
 end;			
