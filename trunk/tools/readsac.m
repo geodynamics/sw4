@@ -68,7 +68,7 @@
      fseek(fid,23*4,0);
      stnam = fread(fid,8,'char');
      stnam = stnam';
-     fseek(fid,37*4,0);
+     fseek(fid,46*4,0);
 % output reference time stamp
 disp(['Year = ' num2str(year) ' Julian Day = ' num2str(jday) ' Hour = ' num2str(hour) ' Min = ' num2str(min) ' Sec = ' num2str(sec) ' Micro Sec = ' num2str(msec) ]);
 % output required header data

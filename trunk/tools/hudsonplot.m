@@ -35,7 +35,7 @@ if tau*k < 0
 % 2nd or 4th quadrant:
   u=tau;
   v=k;
-elseif tau >=0 & k >=0 
+elseif tau >=0 && k >=0 
 % 1st quadrant:
    if tau < 4*k
       u = tau/(1-tau*0.5);
@@ -61,16 +61,16 @@ end;
 bndcol='k';
 diagcol='b';
 set(gca,'FontSize',25);
-h=plot([-1 0 1],[0 1 0],bndcol);
+h=plot([-4/3 0 4/3],[-1/3 1 1/3],bndcol);
 set(h,'LineWidth',1.0);
 hold on;
-h=plot([-1 0 1],[0 -1 0],bndcol);
+h=plot([-4/3 0 4/3],[-1/3 -1 1/3],bndcol);
 set(h,'LineWidth',1.0);
 % diagonal separating regions A and B
-h=plot([-0.8 0.8],[-0.2 0.2],diagcol);
+h=plot([-4/3 4/3],[-1/3 1/3],diagcol);
 set(h,'LineWidth',1.0);
 % Coordinate axis
-h=plot([-1.1 1.1],[0 0],'k');
+h=plot([-1.3 1.3],[0 0],'k');
 set(h,'LineWidth',0.5);
 h=plot([0 0],[-1.1 1.1],'k');
 set(h,'LineWidth',0.5);
@@ -80,6 +80,6 @@ h=plot([u],[v],'or');
 xlabel('u');
 ylabel('v');
 axis('equal');
-axis([-1.2 1.2 -1.2 1.2]);
+axis([-1.4 1.4 -1.2 1.2]);
 hold off;
 
