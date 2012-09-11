@@ -56,7 +56,6 @@ double product( TimeSeries& ts );
 double product_wgh( TimeSeries& ts );
 
 void set_station_utc( int utc[7] );
-void offset_ref_utc( int utc[7] );
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
 // for simplicity, make the grid point location public

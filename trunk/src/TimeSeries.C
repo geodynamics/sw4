@@ -274,7 +274,7 @@ TimeSeries::~TimeSeries()
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, double startTime, double timeStep )
 {
   if (!m_myPoint) return; // only one processor saves each time series
-
+  //  cout << "Time series allocaterecarr " <<  numberOfTimeSteps << " " << startTime << " " << timeStep << endl;
   if (numberOfTimeSteps > 0)
   {
     mAllocatedSize = numberOfTimeSteps+1;
@@ -910,9 +910,10 @@ void TimeSeries::write_usgs_format(string a_fileName)
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::readFile( EW *ew, double startTime )
+void TimeSeries::readFile( EW *ew, double timeshift )
 {
 //building the file name...
+// 
    stringstream filePrefix;
    if( ew->getObservationPath() != "./" )
       filePrefix << ew->getObservationPath();
@@ -999,8 +1000,9 @@ void TimeSeries::readFile( EW *ew, double startTime )
 	       nlines++;
 
 	    fclose(fd);
+	    // Use offset in time column, and add a possible timeshift.
 	    if( nlines > 2 )
-	       allocateRecordingArrays( nlines, startTime, dt );
+		  allocateRecordingArrays( nlines, tstart+timeshift, dt );
 	    else
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
@@ -1025,7 +1027,7 @@ void TimeSeries::readFile( EW *ew, double startTime )
             for( int line=0 ; line < nlines ; line++ )
 	    {
 	       int nr=fscanf(fd, "%lf %lf %lf %lf \n", &tstart,&ux,&uy,&uz);
-	       //               cout << "nr = " << nr << " tstart " << tstart << " ux " << ux << " uy " << uy << " uz " << uz << endl;
+       //               cout << "nr = " << nr << " tstart " << tstart << " ux " << ux << " uy " << uy << " uz " << uz << endl;
                if( nr != 4 )
 	       {
 		  cout << "ERROR: could not read observed data file " << endl;
@@ -1510,28 +1512,40 @@ double TimeSeries::product_wgh( TimeSeries& ts )
 //-----------------------------------------------------------------------
 void TimeSeries::set_station_utc( int utc[7] )
 {
- // Reference UTC for the station.
+   if( m_utc_set )
+      m_t0 = utc_distance(utc,m_utc) + m_t0;
    for( int k=0; k < 7 ; k++ )
       m_utc[k] = utc[k];
    m_utc_set = true;
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::offset_ref_utc( int utcref[7] )
-{
+//void TimeSeries::set_station_utc( int utc[7] )
+//{
+// // Reference UTC for the station
+//   for( int k=0; k < 7 ; k++ )
+//      m_utc[k] = utc[k];
+//   m_utc_set = true;
+//}
+
+//-----------------------------------------------------------------------
+//void TimeSeries::offset_ref_utc( int utcref[7] )
+//{
  // Evaluate distance to the reference UTC for the computation.
  // (The reference UTC corresponds to t=0 simulation time)
-   if( m_utc_set && !m_utc_offset_computed )
-   {
-      m_t0 = utc_distance(utcref,m_utc) + m_t0;
-      m_utc_offset_computed = true;
-   }
-}   
+//   if( m_utc_set && !m_utc_offset_computed )
+//   {
+//      m_t0 = utc_distance(utcref,m_utc) + m_t0;
+//      m_utc_offset_computed = true;
+//      for( int c=0 ; c < 7 ; c++ )
+//	 m_utc[c] = utcref[c];
+//   }
+//}   
 
 //-----------------------------------------------------------------------
 double TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
-   // Compute time in seconds between two [y,M,d,m,s,ms] times
+   // Compute time in seconds between two [y,M,d,h,m,s,ms] times
    // returns utc2-utc1 in seconds.
    // Discovered afterwards: UTC occasionally adds a leap second, so this 
    // function is not always completely accurate.
@@ -1796,7 +1810,7 @@ void TimeSeries::print_timeinfo() const
       cout << "   Observation interval  [ " << m_t0 << " , " << m_t0 + m_dt*mLastTimeStep << " ] simulation time " << endl;
       if( m_utc_set )
       {
-        printf("   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+        printf("   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
 	       m_utc[4], m_utc[5], m_utc[6] );
 
      }

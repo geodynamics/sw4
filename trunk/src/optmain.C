@@ -81,10 +81,14 @@ void testsourced2( EW & simulation, vector<Source*>& GlobalSources )
 //-----------------------------------------------------------------------
 void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
 		    vector<TimeSeries*>& GlobalTimeSeries,
-		    vector<TimeSeries*> & GlobalObservations, int myRank )
+		    vector<TimeSeries*> & GlobalObservations, int myRank,
+		    double sf[11] )
 {
 // Run forward problem with guessed source
    simulation.solve( GlobalSources, GlobalTimeSeries );
+   //      for( int m=0 ; m < GlobalTimeSeries.size(); m++ )
+   //         GlobalTimeSeries[m]->writeFile( "_1" );
+
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
    vector<TimeSeries*> diffs;
 
@@ -120,16 +124,29 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       cout << "Gradient, by adjoint equation = " << endl;
       for( int i = 0 ; i < 11 ; i++ )
 	 cout << "   " << gradient[i] << endl;
+
+      FILE *fd = fopen("gradient-adj.txt","w");
+      for( int i= 0 ; i < 11 ; i++ )
+      {
+	 fprintf( fd, " %12.5g ", gradient[i] );
+	 fprintf( fd, "\n" );
+      }
+      fclose(fd);
+      fd = fopen("gradient-adj.bin","w");
+      fwrite(gradient,sizeof(double),11,fd);
+      fclose(fd);
    }
 
    // Find parameter sizes, used for approximate gradient by difference quotients.
-   double xv[11];
+   double xv[11], gnum[11];
    GlobalSources[0]->get_parameters(xv);
    double lscale = sqrt((xv[0]*xv[0]+xv[1]*xv[1]+xv[2]*xv[2])/3.0);
    double mscale = sqrt((xv[3]*xv[3]+xv[4]*xv[4]+xv[5]*xv[5]+xv[6]*xv[6]+xv[7]*xv[7]+xv[8]*xv[8])/6.0);
    double tscale = abs(xv[9])+1;
    double fscale = abs(xv[10])+1;
    double sizes[11]={lscale,lscale,lscale,mscale,mscale,mscale,mscale,mscale,mscale,tscale,fscale};
+   //   for( int c=0; c < 11 ; c++ )
+   //      cout << "size" << c << "= " << sizes[c] << endl;
 
    for( int testcomp = 0 ; testcomp < 11 ; testcomp++ )
    {
@@ -146,14 +163,21 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       GlobalSources[0]->set_noderivative();         
 
 // Validation, compute numerical gradient:
-      double h = 1e-6*sizes[testcomp];
-      //      double h = 0.00;
+//      double h = 1e-8*sizes[testcomp];
+      double h = 2.98e-8*sqrt(mf)*sf[testcomp];
+      //      cout << "h = " << h << endl;
+//      double h = 0.00;
       vector<Source*> persrc(1);
       persrc[0] = GlobalSources[0]->copy( " " );
+      //      cout << "unper " << *GlobalSources[0] << endl;
       persrc[0]->perturb( h, testcomp );
 	 //		 GlobalSources[0]->perturb(h,testcomp);
-	 //		 simulation.preprocessSources( GlobalSources );
+      //		 simulation.preprocessSources( persrc );
+      //      cout << " per " << *persrc[0] << endl;
       simulation.solve( persrc, GlobalTimeSeries );
+      //      for( int m=0 ; m < GlobalTimeSeries.size(); m++ )
+      //         GlobalTimeSeries[m]->writeFile( "_2" );
+
       double mfp = 0;
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
 	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL );
@@ -164,15 +188,30 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
 	 cout << "Misfit of perturbed problem = " << mfp << endl;
 	 cout << "Difference = " << mfp-mf << endl;
 	 cout << "Component " << testcomp+1 << " Numerical derivative = " << (mfp-mf)/h << endl;
+         gnum[testcomp] = (mfp-mf)/h;
       }
       delete persrc[0];
+   }
+   if( myRank == 0 )
+   {
+      FILE *fd = fopen("gradient-num.txt","w");
+      for( int i= 0 ; i < 11 ; i++ )
+      {
+	 fprintf( fd, " %12.5g ", gnum[i] );
+	 fprintf( fd, "\n" );
+      }
+      fclose(fd);
+      fd = fopen("gradient-num.bin","w");
+      fwrite(gnum,sizeof(double),11,fd);
+      fclose(fd);
    }
 }
 
 //-----------------------------------------------------------------------
 void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 		    vector<TimeSeries*>& GlobalTimeSeries,
-		    vector<TimeSeries*> & GlobalObservations, int myRank )
+		    vector<TimeSeries*> & GlobalObservations, int myRank,
+                    double sf[11] )
 {
    // Test Hessian computation
    // Run forward problem with guessed source
@@ -184,7 +223,6 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
       TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
       diffs.push_back(elem);
    }
-
    double mf = 0;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
       mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
@@ -193,10 +231,12 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
    if( myRank == 0 )
       cout << "Misfit = " << mf << endl;
 
+   //   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+   //      diffs[m]->writeFile("_1");
 
 // Get Hessian by solving the backwards problem:
    bool skipthis = false;
-   double gradient[11], hess[121], hnum[121];
+   double gradient[11], hess[121], hnum[121], gnum[11];
    simulation.solve_backward( GlobalSources, diffs, gradient, hess );
 
 // Assemble the first part of hessian matrix
@@ -248,6 +288,7 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	       cout << "   " << hess[i+11*j] ;
 	    cout << endl;
 	 }
+
 	 FILE *fd = fopen("hessian-adj.txt","w");
 	 for( int i= 0 ; i < 11 ; i++ )
 	 {
@@ -259,29 +300,48 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	 fd = fopen("hessian-adj.bin","w");
 	 fwrite(hess,sizeof(double),121,fd);
 	 fclose(fd);
+
+	 fd = fopen("gradient-adj.txt","w");
+	 for( int i= 0 ; i < 11 ; i++ )
+	 {
+	    fprintf( fd, " %12.5g ", gradient[i] );
+	    fprintf( fd, "\n" );
+	 }
+	 fclose(fd);
+	 fd = fopen("gradient-adj.bin","w");
+	 fwrite(gradient,sizeof(double),11,fd);
+	 fclose(fd);
       }
    }
    // Find parameter sizes, used for approximate hessian by difference quotients.
-   double lscale = sqrt((gradient[0]*gradient[0]+gradient[1]*gradient[1]+gradient[2]*gradient[2])/3.0);
-   double mscale = sqrt((gradient[3]*gradient[3]+gradient[4]*gradient[4]+gradient[5]*gradient[5]+
-			 gradient[6]*gradient[6]+gradient[7]*gradient[7]+gradient[8]*gradient[8])/6.0);
-   double tscale = abs(gradient[9])+1;
-   double fscale = abs(gradient[10])+1;
+   //   double lscale = sqrt((gradient[0]*gradient[0]+gradient[1]*gradient[1]+gradient[2]*gradient[2])/3.0);
+   //   double mscale = sqrt((gradient[3]*gradient[3]+gradient[4]*gradient[4]+gradient[5]*gradient[5]+
+   //			 gradient[6]*gradient[6]+gradient[7]*gradient[7]+gradient[8]*gradient[8])/6.0);
+   //   double tscale = abs(gradient[9])+1;
+   //   double fscale = abs(gradient[10])+1;
+
+   double xv[11];
+   GlobalSources[0]->get_parameters(xv);
+   double lscale = sqrt((xv[0]*xv[0]+xv[1]*xv[1]+xv[2]*xv[2])/3.0);
+   double mscale = sqrt((xv[3]*xv[3]+xv[4]*xv[4]+xv[5]*xv[5]+xv[6]*xv[6]+xv[7]*xv[7]+xv[8]*xv[8])/6.0);
+   double tscale = abs(xv[9])+1;
+   double fscale = abs(xv[10])+1;
    double sizes[11]={lscale,lscale,lscale,mscale,mscale,mscale,mscale,mscale,mscale,tscale,fscale};
 
    // Validate by numerical differentiation
-
-
    vector<Source*> persrc(1);
    GlobalSources[0]->set_noderivative();
    for( int testcomp = 0 ; testcomp < 11 ; testcomp++ )
    {
-      double h = 1e-6*sizes[testcomp];
+      //      double h = 1e-6*sizes[testcomp];
+      double h = 2.98e-8*sqrt(mf)*sf[testcomp];
+      //            double h=0;
       persrc[0] = GlobalSources[0]->copy( " " );
       persrc[0]->perturb( h, testcomp );
 
 // Run forward problem with perturbed source
       simulation.solve( persrc, GlobalTimeSeries );
+
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
       diffs.clear();
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
@@ -289,11 +349,16 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
 	 diffs.push_back(elem);
       }
+      double mfp = 0;
       for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-	 GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+      double mftmp = mfp;
+      MPI_Allreduce( &mftmp, &mfp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-		 //		 GlobalSources[0]->perturb(h,testcomp);
-		 //		 simulation.preprocessSources( GlobalSources );
+      //      cout << "testcomp = " << testcomp << " misfit p " << mfp << " h= " << h << endl;
+      //      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+      //	 diffs[m]->writeFile("_2");
+
       double gradp[11];
       simulation.solve_backward( persrc, diffs, gradp, hess );
       if( myRank == 0 )
@@ -304,6 +369,7 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	    cout << "   " << (gradp[i]-gradient[i])/h << endl;
             hnum[i+11*testcomp] = (gradp[i]-gradient[i])/h;
 	 }
+         gnum[testcomp] = (mfp-mf)/h;
       }
       delete persrc[0];
    }
@@ -319,6 +385,17 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
       fclose(fd);
       fd = fopen("hessian-num.bin","w");
       fwrite(hnum,sizeof(double),121,fd);
+      fclose(fd);
+
+      fd = fopen("gradient-num.txt","w");
+      for( int i= 0 ; i < 11 ; i++ )
+      {
+	 fprintf( fd, " %12.5g ", gnum[i] );
+	 fprintf( fd, "\n" );
+      }
+      fclose(fd);
+      fd = fopen("gradient-num.bin","w");
+      fwrite(gnum,sizeof(double),11,fd);
       fclose(fd);
    }
 }
@@ -951,7 +1028,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	    xnew[i] = x[i] + lambda*p[i];
 
 	 // prevent z from becoming negative
-         if( xnew[2] < 0 )
+         if( xnew[2] < 0 && p[2] != 0 )
 	 {
             lambda = -x[2]/p[2];
 	    for( int i=0; i < n ; i++ )
@@ -1004,7 +1081,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	       xnew[i] = x[i] + p[i];
 
 	    // Compute return value for fnew
-            if( xnew[2] < 0 )
+            if( xnew[2] < 0 && p[2] != 0 )
 	    {
                lambda = -x[2]/p[2];
 	       for( int i=0 ; i < n ; i++ )
@@ -1196,7 +1273,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	 {
 	    for( int i=0 ; i < n ; i++ )
 	       xa[i] = x[i] + alpha*d[i];
-	    if( xa[2] < 0 )
+	    if( xa[2] < 0 && d[2] != 0 )
 	    {
 	       alpha= -x[2]/d[2];
 	       for( int i=0 ; i < n ; i++ )
@@ -1441,7 +1518,7 @@ int main(int argc, char **argv)
 	}
 	
 // Variables needed:
-	int testcase  = 6; // job to do
+//	int testcase  = 6; // job to do
 	//	int scale_factor = 1; // Method for computing scale factors, could be from input file
 	//        int maxit, maxrestarts;
 	//	double tolerance;
@@ -1529,16 +1606,16 @@ int main(int argc, char **argv)
 		<< " Mxy=" << sf[4] << " Mxz=" << sf[5] << " Myy=" << sf[6]  << " Myz=" << sf[7]
 		<< " Mzz=" << sf[8] << " t0=" << sf[9] << " freq=" << sf[10] << endl;
 	}
-
-        if( testcase == 1 )
+        if( simulation.m_opttest == 1 )
 	   testsourced2( simulation, GlobalSources );
-        else if( testcase == 2 )
-	   test_gradient( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank );
-	else if( testcase == 3 )
-	   test_hessian( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank );
-        else if( testcase == 4 )
+        else if( simulation.m_opttest == 2 )
+	   test_gradient( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, sf );
+	else if( simulation.m_opttest == 3 )
+	   test_hessian( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, sf );
+        else if( simulation.m_opttest == 4 )
            for( int i=1 ; i < 16 ;  i++ )
 	   {
+	      // Function to minimize, plotted along one direction.
 	      //	      double mzz= (-1+2.0*i/30.0)*1e18;
 	      //              double la = 0.0066*(-1+2.0*i/15);
               double la = -i/1500000.0;
@@ -1554,7 +1631,7 @@ int main(int argc, char **argv)
 		 //		 cout << mzz << " " << f << endl;
 		 cout << la << " " << f << endl;
 	   }
-        else if( testcase == 5 )
+        else if( simulation.m_opttest == 5 )
 	{
 	   // Function surface
            int ni = 50, nj=50;

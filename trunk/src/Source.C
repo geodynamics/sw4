@@ -76,8 +76,10 @@ Source::Source(EW *a_ew,
 	 mPar[i] = pars[i];
    }
    else
+   {
+      mNpar = 2;
       mPar = new double[2];
-
+   }
    mNipar = nipar;
    if( mNipar > 0 )
    {
@@ -86,7 +88,10 @@ Source::Source(EW *a_ew,
          mIpar[i] = ipars[i];
    }
    else
+   {
+      mNipar = 1;
       mIpar  = new int[1];
+   }
 
    if( mTimeDependence == iDiscrete )
       spline_interpolation();
@@ -132,7 +137,11 @@ Source::Source(EW *a_ew, double frequency, double t0,
 	mPar[i] = pars[i];
   }
   else
+  {
+     mNpar = 2;
      mPar = new double[2];
+  }
+
   mNipar = nipar;
   if( mNipar > 0 )
   {
@@ -141,8 +150,10 @@ Source::Source(EW *a_ew, double frequency, double t0,
         mIpar[i] = ipars[i];
   }
   else
+  {
+     mNipar = 1;
      mIpar  = new int[1];
-
+  }
   if( mTimeDependence == iDiscrete )
      spline_interpolation();
   else
@@ -287,6 +298,7 @@ ostream& operator<<( ostream& output, const Source& s )
   output << s.mName << (s.isMomentSource()? " moment":" force") << " source term" << endl;
    output << "   Location (X,Y,Z) = " << s.mX0 << "," << s.mY0 << "," << s.mZ0 << " in grid no " << s.m_grid << endl;
    output << "   Strength " << s.getAmplitude();
+   output << "   t0 = " << s.mT0 << " freq = " << s.mFreq << endl;
    if( s.mIsMomentSource )
    {
       output << " Mxx Mxy Myy Mxz Myz Mzz = " << s.mForces[0] << " " << s.mForces[1] << " " << s.mForces[3] <<
@@ -1145,6 +1157,6 @@ Source* Source::copy( std::string a_name )
 //-----------------------------------------------------------------------
 double Source::find_min_exponent() const
 {
-   // smallest number x, such that exp(-x) does not cause underflow
+   // smallest number x, such that exp(x) does not cause underflow
   return -700.0;
 }

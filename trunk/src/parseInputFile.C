@@ -386,8 +386,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processPrefilter(buffer);
 //    else if( startswith("checkfornan", buffer ) )
 //       processCheckfornan(buffer);
-       // else if( startswith("developer", buffer ) )
-       //   processDeveloper(buffer);
+       else if( startswith("developer", buffer ) )
+          processDeveloper(buffer);
        // else if( startswith("geodynbc", buffer ) )
        //   processGeodynbc(buffer);
        else if (!inputFile.eof() && m_myRank == 0)
@@ -1469,8 +1469,8 @@ void EW::processTwilight(char* buffer)
   
 }
 
-// void FileInput::processDeveloper(char* buffer)
-// {
+void EW::processDeveloper(char* buffer)
+{
 //    //   if (m_myRank == 0)
 //    //      cout << "Entering developer mode..." << endl;
 
@@ -1490,27 +1490,37 @@ void EW::processTwilight(char* buffer)
 //   bool cons = true;
 //   double ctol = 1e-3;
 //   int cmaxit = 20;
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("developer", token) == 0, "ERROR: not a developer line...: " << token);
-//   token = strtok(NULL, " \t");
-//   while (token != NULL)
-//   {
-//     // while there are tokens in the string still
-//     if (startswith("#", token) || startswith(" ", buffer))
-//       // Ignore commented lines and lines with just a space.
-//       break;
-// //     if (startswith("inner_loop=", token))
-// //     {
-// //       token += 11; // skip name=
-// //       ilno = atoi(token);
-// //     }
-//     if (startswith("cfl_number=", token))
-//     {
-//       token += 11; // skip name=
-//       cfl = atof(token);
-//       CHECK_INPUT( cfl > 0, "Error negative CFL number");
-//       cflset = true;
-//     }
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("developer", token) == 0, "ERROR: not a developer line...: " << token);
+   token = strtok(NULL, " \t");
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+     if (startswith("#", token) || startswith(" ", buffer))
+       // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("opttest=", token))
+     {
+        token += 8; // skip opttest=
+        if( strcmp(token,"source")==0 )
+	   m_opttest = 1;
+        else if( strcmp(token,"gradient")== 0 )
+	   m_opttest = 2;
+	else if( strcmp(token,"hessian") == 0 )
+	   m_opttest = 3;
+	else if( strcmp(token,"func1d") == 0 )
+	   m_opttest = 4;
+	else if( strcmp(token,"funcsurf") == 0 )
+	   m_opttest = 5;
+        else
+	   CHECK_INPUT( false, "ERROR: opttest=" << token << " not understood");
+     }
+     else if( startswith("cfl=",token) )
+     {
+         double cfl = atof(token);
+         CHECK_INPUT( cfl > 0, "Error negative CFL number");
+         set_cflnumber( cfl );
+     }
 // //     if (startswith("update_processor_boundary=", token))
 // //     {
 // //       token += 26;
@@ -1576,12 +1586,12 @@ void EW::processTwilight(char* buffer)
 // //       token += 14;
 // //       use_alltoallv = (atoi(token) == 1);
 // //     }
-//     else
-//     {
-//       badOption("developer", token);
-//     }
-//     token = strtok(NULL, " \t");
-//   }
+     else
+     {
+       badOption("developer", token);
+     }
+     token = strtok(NULL, " \t");
+   }
 // //   if( ilno != 5 )
 // //     mSimulation->set_inner_loop( ilno );
 //   if( cflset )
@@ -1593,7 +1603,7 @@ void EW::processTwilight(char* buffer)
 //    if( logenergy || printenergy )
 //       mSimulation->set_energylog( energyfile, printenergy, logenergy );
 //   mSimulation->setIO_method(use_mpiio, use_iotiming);
-// }
+}
 
 //-----------------------------------------------------------------------
 void EW::processTestPointSource(char* buffer)
@@ -1889,6 +1899,7 @@ void EW::processFileIO(char* buffer)
   setParallel_IO(pfs, nwriters);
 }
 
+//-----------------------------------------------------------------------
 void EW::processGMT(char* buffer)
 {
   string filename = "sw4.gmt.csh";
@@ -2043,6 +2054,7 @@ void EW::processTime(char* buffer)
   }
 }
 
+//-----------------------------------------------------------------------
 void EW::processBoundaryConditions(char *buffer)
 {
   char* token = strtok(buffer, " \t");

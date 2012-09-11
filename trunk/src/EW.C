@@ -210,7 +210,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_cgfletcherreeves(true),
   m_do_linesearch(true),
   m_utc0set(false),
-  m_utc0isrefevent(false)
+  m_utc0isrefevent(false),
+  m_opttest(0)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
@@ -3444,7 +3445,7 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
 void EW::set_utcref( TimeSeries& ts )
 {
    if( m_utc0set )
-      ts.offset_ref_utc( m_utc0 );
+      ts.set_station_utc( m_utc0 );
 }
 
 //-----------------------------------------------------------------------

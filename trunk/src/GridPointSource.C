@@ -597,5 +597,7 @@ void GridPointSource::print_info() const
 	  cout << m_jacobian[c+3*m] << " " ;
        cout << endl;
    }
+   cout << "Time dep " << mTimeDependence << endl;
    cout << "-----------------------------------------------------------------------"<<endl;
+
 }

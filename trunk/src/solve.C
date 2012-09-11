@@ -121,8 +121,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
-     // In forward solve, the output receivers are always starting at t=0, i.e., same UTC as the
-     // global reference utc0, therefore,  set station utc equal reference utc.
+     // In forward solve, the output receivers will use the same UTC as the
+     // global reference utc0, therefore, set station utc equal reference utc.
      if( m_utc0set )
 	a_TimeSeries[ts]->set_station_utc( m_utc0 );
   }
@@ -140,9 +140,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
 
-  // Debug
-  //  for( int i=0 ; i < point_sources.size() ; i++ )
-  //     cout << *point_sources[i] << endl;
+
+ // Debug
+  //    for( int i=0 ; i < point_sources.size() ; i++ )
+  //       cout << *point_sources[i] << endl;
 
 // modify the time functions if prefiltering is enabled
   if (!m_testing && m_prefilter_sources)
@@ -209,7 +210,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      MPI_Allreduce( &has_source_id, &has_source_max, 1, MPI_INT, MPI_MAX, m_cartesian_communicator );
      if( m_myRank == has_source_max )
      {
-	printf("Saving one filtered discretized time function\n");
+	printf("Saving one discretized time function\n");
 
 //building the file name...
         string filename;

@@ -90,6 +90,7 @@ void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 void processPrefilter(char* buffer);
 void processGMT(char* buffer);
+void processDeveloper(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -470,6 +471,8 @@ bool m_prefilter_sources, m_filter_observations;
 Filter *m_filter_ptr;
 // Filter for observations
 Filter *m_filterobs_ptr;
+  // Test cases for optimizer, validate gradient, hessian, output function surface, etc...
+int m_opttest;
 
 private:
 
