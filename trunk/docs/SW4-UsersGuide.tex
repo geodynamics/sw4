@@ -85,22 +85,22 @@ $$
  f({\bf x},t) =  g(t,t_0,\omega_0)M\nabla\delta({\bf x}-{\bf x}^*)
 $$
 where, ${\bf x}^*$ is the location of the source, $M$ is the symmetric 3$\times$3 moment tensor, and the time
-function $g$ contains two parameters, the frequency, $\omgea_0$, and time shift, $t_0$. Currently, the only
+function $g$ contains two parameters, the frequency, $\omega_0$, and time shift, $t_0$. Currently, the only
 implemented time functions for source inversion are the Gaussian and the VerySmoothBump.
 \par
 The source is computed by minimizing the misfit between the computed time series ${\bf u}^n_{{\bf i}_r}$ and measured 
-data ${\bf d}^n_{{\bf i}_r}}$,
+data ${\bf d}^n_{{\bf i}_r}$,
 $$
- \chi = \frac{1}{2}\sum_{n=0}^N \sum_{r=1}^R |{\bf u}^n_{{\bf i}_r}-{\bf d}^n_{{\bf i}_r}}|^2,
+ \chi = \frac{1}{2}\sum_{n=0}^N \sum_{r=1}^R |{\bf u}^n_{{\bf i}_r}-{\bf d}^n_{{\bf i}_r}|^2,
 $$
-with respect to the eleven parameters describing the source, ${\bf x}^*, M, \omeaga_0$, and $t_0$.
+with respect to the eleven parameters describing the source, ${\bf x}^*, M, \omega_0$, and $t_0$.
 The measured data are given at stations ${\bf x}_{{\bf i}_r}$, $r=1,\ldots,R$.
 The {\tt observation} keyword is used to specify the input seismograms (${\bf d}^n_{{\bf i}_r}$ above). 
 For example, the command
 %
 \begin{verbatim}
 observation x=11200 y=6300 z=0.0 file=cartstation
-\end{varbatim}
+\end{verbatim}
 %
 will read a file named {\tt cartstation.txt} from the directory specified by the {\tt path} parameter to the {\tt fileio}
 command. If the {\tt path} is not set, the file will be searched for in the current directory. Currently, only files on
@@ -112,7 +112,7 @@ location in geographic coordinates instead. For example,
 %
 \begin{verbatim}
 observation lon=-122.523 lat=38.0496 depth=0.0 file=nhf 
-\end{varbatim}
+\end{verbatim}
 %
 will read a file named {\tt nhf.txt}, that represents data obtained at latitude 38.049 and longitude -122.523 on 
 the surface of the earth.
@@ -123,7 +123,7 @@ The file read by the observation command will be assumed to start at time = 0, e
 in the file is different from zero, i.e., the read seismograms will be shifted in time to always start at the first
 time step of the simulation.
 \par
-\begin{narrow}
+%\begin{narrow}
 {\emph Not Yet Implemented:}
 Plan for reading sac files:
 \begin{verbatim}
@@ -131,14 +131,14 @@ observation sfile1=filename.x sfile2=filename.y sfile3=filename.z
 \end{verbatim}
 will read the three components of a time history at a point from three SAC files. Information about type of
 components and location of the station is taken from the header of the SAC file.
-\end{narrow}
+%\end{narrow}
 \par
 The stations specified by the observation command, will also act as recievers of time series during the 
 forward solve phase. After each iteration in the optimization algorithm, the time histories obtained at the stations 
 (${\bf u}^n_{{\bf i}_r}$ above) will be output with on files with a {\tt \_out} appended to their names. For example,
 if time history is input on the file {\tt nhf.txt}, the corresponding seismograms computed by the forward problem
-using the most recent approximation of the source are written on a file named {\tt nhf_out.txt}. These files are thus
-overwitten after each optimization iteration. Furthermore, if the option output_initial_seismograms is set to
+using the most recent approximation of the source are written on a file named {\tt nhf\_out.txt}. These files are thus
+overwitten after each optimization iteration. Furthermore, if the option {\tt output\_initial\_seismograms} is set to
 one, the time series obtained with the initial guess source will be output on files with a {\tt \_ini} appended.
 \par
 The {\tt receiver} command, defined for \emph{S4W}, can not be used with \emph{S4Wopt}.  Currently, it is not possible to
@@ -210,3 +210,138 @@ modes, the material must be specifed by at least one of these commands and at le
 be specified.
 
 
+\section{Basic commands}
+
+\section{Commands for source inversion}
+
+\subsection{observation [required]}
+\index{command!observation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+observation+ command is used to read an observed time history at a fixed
+location in space. 
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+observation x=... y=... z=... lat=... lon=... depth=... file=... shift=... utc=... windowL=... windowR=... exclude=... filter=... sacfile1=... sacfile2=... sacfile3=... 
+\\
+{\bf Required parameters:}\\
+\rm Location of the observation in Cartesian or geographical coordinates, and data file name(s).
+The input data must be given, either as one usgs formated data file or as three SAC formated data files.
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf observation command parameters (part 1)}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+x & x position of the observation & float & m & none \\ \hline
+y & y position of the observation & float & m & none \\ \hline
+z & z position of the observation & float & m & none \\ \hline
+\hline
+lat & latitude geographical coordinate of the observation & float & degrees & none \\ \hline
+lon & longitude geographical coordinate of the observation & float & degrees & none \\ \hline
+depth & depth of the observation (below topography) & float & m & none \\ \hline
+\hline
+file & file name, usgs formated data  & string & none & none \\ \hline
+\hline
+sacfile1 & file name, SAC formated data & string & none & none \\ \hline
+sacfile2 & file name, SAC formated data & string & none & none \\ \hline
+sacfile3 & file name, SAC formated data & string & none & none \\ \hline
+\end{tabular}
+\end{center}
+\index{observation parameters!location - x, y, z, lat, lon, depth, file, sacfile1, sacfile2, sacfile3 } 
+
+
+{\bf Optional parameters:}\\
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf observation command parameters (part 2)}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+shift & additonal data offset & float & s  & 0 \\ \hline
+utc & Reference UTC time coordinate for station & string & none & read from file \\ \hline
+windowL & Left limit of window in misfit & float & s & $-\infty$  \\ \hline
+windowR & Right limit of window in misfit & float & s & $\infty$  \\ \hline
+exclude & Components to exclude from misfit & string & none & none  \\ \hline
+filter & filter data, when a filter is given & string & none & yes \\ \hline
+\end{tabular}
+\end{center}
+The value of the \verb+exclude+ option is a string combining components 'x','y','z' or 'n','e','u'.
+
+\subsection{scalefactors}
+\index{command!scalefactors}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+scalefactors+ command is used to define scale factors for improved conditioning of the
+minimization problem.
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+scalefactors x0=... y0=... z0=... Mxx=... Mxy=... Mxz=... Myy=... Myz=... Mzz=... t0=... freq=... 
+\\
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf scalefactors command parameters }\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+x0 & scale of x position of source & float & m & 1 \\ \hline
+y0 & scale of y position of source & float & m & 1 \\ \hline
+z0 & scale of z position of source & float & m & 1 \\ \hline
+Mxx & scale of xx moment tensor component & float & N m  & 1 \\ \hline
+Mxy & scale of xy moment tensor component & float & N m  & 1 \\ \hline
+Mxz & scale of xz moment tensor component & float & N m  & 1 \\ \hline
+Myy & scale of yy moment tensor component & float & N m  & 1 \\ \hline
+Myz & scale of yz moment tensor component & float & N m  & 1 \\ \hline
+Mzz & scale of zz moment tensor component & float & N m  & 1 \\ \hline
+t0 & scale of source time function shift & float & s & 1 \\ \hline
+freq & scale of source time function frequency & float & s$^{-1}$ & 1 \\ \hline
+\end{tabular}
+\end{center}
+
+
+\subsection{cg [required]}
+\index{command!cg}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+cg+ command defines parameters governing the conjugate gradient method
+to solve the minimization problem.
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+cg maxit=... maxrestart=... tolerance=... initialguess=... write\_initial\_ts=... scalefactors=... linesearch=... steptype=... cgtype=... solvefor=...
+\\
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf cg command parameters }\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+maxit & maximum number of cg-iterations between restarts & int & none & 11 \\ \hline
+maxrestart & maximum number of cg-restarts & int & none & 0 \\ \hline
+tolerance & termination criterion on the scaled gradient & float & none & $10^{-6}$ \\ \hline
+initialguess & method for determining the initial guess & string & none & usesource \\ \hline
+write\_initial\_ts & output initial guess seismograms & boolean & none & 0 \\ \hline
+scalefactors & method for determining scale factors & string & none & useinput \\ \hline
+linesearch & switch on or off line search in cg minimization & string & none & on \\ \hline
+steptype & method for computing initial step length for linesearch & string & none & misfit \\ \hline
+cgtype & select variant of non-linear cg & string & none & fletcher-reeves \\ \hline
+solvefor & solve for a subset of the 11 source parameters & string & none & posMt0freq \\ \hline
+\end{tabular}
+\end{center}
+
+Possible values for some of the string valued options in the {\tt cg} command.
+\begin{center}
+\begin{tabular}{|l|p{8cm}|} \hline
+\multicolumn{2}{|c|}{\bf cg command parameters }\\ \hline
+\bf{Option} & \bf{Possible values}  \\ \hline \hline
+initialguess & usesource, estimate, estimatePos, estimateT0Pos, estimateM \\ \hline
+scalefactors & useinput, estimate  \\ \hline
+steptype & misfit, hessian  \\ \hline
+cgtype & fletcher-reeves, picola-ribiere \\ \hline
+solvefor & posMt0freq, posMt0, posM \\ \hline
+\end{tabular}
+\end{center}
+
+
+\end{document}
