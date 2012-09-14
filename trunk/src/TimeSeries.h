@@ -52,12 +52,16 @@ void interpolate( TimeSeries& intpfrom );
 
 void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, double dt );
 
-double product( TimeSeries& ts );
-double product_wgh( TimeSeries& ts );
+double product( TimeSeries& ts ) const;
+double product_wgh( TimeSeries& ts ) const;
 
 void set_station_utc( int utc[7] );
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
+void set_window( double winl, double winr );
+void exclude_component( bool usex, bool usey, bool usez );
+void readSACfiles( EW* ew, double shift, const char* sac1, const char* sac2, const char* sac3 );
+
 // for simplicity, make the grid point location public
 int m_i0;
 int m_j0;
@@ -74,6 +78,11 @@ void dayinc( int date[7] );
 int lastofmonth( int year, int month );
 int utccompare( int utc1[7], int utc2[7] );
 int leap_second_correction( int utc1[7], int utc2[7] );
+
+void readSACheader( const char* fname, double& dt, double& t0, double& lat,
+		    double& lon, double& cmpaz, double& cmpinc, int utc[7], int& npts);
+void readSACdata( const char* fname, int npts, double* u );		    
+void convertjday( int jday, int year, int& day, int& month );   
 
 receiverMode m_mode;
 int m_nComp;
@@ -128,6 +137,10 @@ int m_utc[7];
 //  double m_dthi, m_velocities;
 // double m_dmx, m_dmy, m_dmz, m_d0x, m_d0y, m_d0z;
 // double m_dmxy, m_dmxz, m_dmyz, m_d0xy, m_d0xz, m_d0yz;
+
+// Window for optimization
+   double m_winL, m_winR;
+   bool m_use_win, m_use_x, m_use_y, m_use_z;
 };
 
 

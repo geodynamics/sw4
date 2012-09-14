@@ -2389,36 +2389,64 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
 	    double** tsobsp = tsobs->getRecordingArray();
 	    
 #define amat(i,j) a[i-1+6*(j-1)]
-	    for( int i=0 ; i < nsteps ; i++ )
-	    {
-	       amat(1,1) += (tsxxp[0][i]*tsxxp[0][i]+tsxxp[1][i]*tsxxp[1][i]+tsxxp[2][i]*tsxxp[2][i]);
-	       amat(2,2) += (tsxyp[0][i]*tsxyp[0][i]+tsxyp[1][i]*tsxyp[1][i]+tsxyp[2][i]*tsxyp[2][i]);
-	       amat(3,3) += (tsxzp[0][i]*tsxzp[0][i]+tsxzp[1][i]*tsxzp[1][i]+tsxzp[2][i]*tsxzp[2][i]);
-	       amat(4,4) += (tsyyp[0][i]*tsyyp[0][i]+tsyyp[1][i]*tsyyp[1][i]+tsyyp[2][i]*tsyyp[2][i]);
-	       amat(5,5) += (tsyzp[0][i]*tsyzp[0][i]+tsyzp[1][i]*tsyzp[1][i]+tsyzp[2][i]*tsyzp[2][i]);
-	       amat(6,6) += (tszzp[0][i]*tszzp[0][i]+tszzp[1][i]*tszzp[1][i]+tszzp[2][i]*tszzp[2][i]);
-	       amat(1,2) += (tsxxp[0][i]*tsxyp[0][i]+tsxxp[1][i]*tsxyp[1][i]+tsxxp[2][i]*tsxyp[2][i]);
-	       amat(1,3) += (tsxxp[0][i]*tsxzp[0][i]+tsxxp[1][i]*tsxzp[1][i]+tsxxp[2][i]*tsxzp[2][i]);
-	       amat(1,4) += (tsxxp[0][i]*tsyyp[0][i]+tsxxp[1][i]*tsyyp[1][i]+tsxxp[2][i]*tsyyp[2][i]);
-	       amat(1,5) += (tsxxp[0][i]*tsyzp[0][i]+tsxxp[1][i]*tsyzp[1][i]+tsxxp[2][i]*tsyzp[2][i]);
-	       amat(1,6) += (tsxxp[0][i]*tszzp[0][i]+tsxxp[1][i]*tszzp[1][i]+tsxxp[2][i]*tszzp[2][i]);
-	       amat(2,3) += (tsxyp[0][i]*tsxzp[0][i]+tsxyp[1][i]*tsxzp[1][i]+tsxyp[2][i]*tsxzp[2][i]);
-	       amat(2,4) += (tsxyp[0][i]*tsyyp[0][i]+tsxyp[1][i]*tsyyp[1][i]+tsxyp[2][i]*tsyyp[2][i]);
-	       amat(2,5) += (tsxyp[0][i]*tsyzp[0][i]+tsxyp[1][i]*tsyzp[1][i]+tsxyp[2][i]*tsyzp[2][i]);
-	       amat(2,6) += (tsxyp[0][i]*tszzp[0][i]+tsxyp[1][i]*tszzp[1][i]+tsxyp[2][i]*tszzp[2][i]);
-	       amat(3,4) += (tsxzp[0][i]*tsyyp[0][i]+tsxzp[1][i]*tsyyp[1][i]+tsxzp[2][i]*tsyyp[2][i]);
-	       amat(3,5) += (tsxzp[0][i]*tsyzp[0][i]+tsxzp[1][i]*tsyzp[1][i]+tsxzp[2][i]*tsyzp[2][i]);
-	       amat(3,6) += (tsxzp[0][i]*tszzp[0][i]+tsxzp[1][i]*tszzp[1][i]+tsxzp[2][i]*tszzp[2][i]);
-	       amat(4,5) += (tsyyp[0][i]*tsyzp[0][i]+tsyyp[1][i]*tsyzp[1][i]+tsyyp[2][i]*tsyzp[2][i]);
-	       amat(4,6) += (tsyyp[0][i]*tszzp[0][i]+tsyyp[1][i]*tszzp[1][i]+tsyyp[2][i]*tszzp[2][i]);
-	       amat(5,6) += (tsyzp[0][i]*tszzp[0][i]+tsyzp[1][i]*tszzp[1][i]+tsyzp[2][i]*tszzp[2][i]);
-	       b[0] += tsxxp[0][i]*tsobsp[0][i]+tsxxp[1][i]*tsobsp[1][i]+tsxxp[2][i]*tsobsp[2][i];
-	       b[1] += tsxyp[0][i]*tsobsp[0][i]+tsxyp[1][i]*tsobsp[1][i]+tsxyp[2][i]*tsobsp[2][i];
-	       b[2] += tsxzp[0][i]*tsobsp[0][i]+tsxzp[1][i]*tsobsp[1][i]+tsxzp[2][i]*tsobsp[2][i];
-	       b[3] += tsyyp[0][i]*tsobsp[0][i]+tsyyp[1][i]*tsobsp[1][i]+tsyyp[2][i]*tsobsp[2][i];
-	       b[4] += tsyzp[0][i]*tsobsp[0][i]+tsyzp[1][i]*tsobsp[1][i]+tsyzp[2][i]*tsobsp[2][i];
-	       b[5] += tszzp[0][i]*tsobsp[0][i]+tszzp[1][i]*tsobsp[1][i]+tszzp[2][i]*tsobsp[2][i];
-	    }
+            amat(1,1) += tsxx[s]->product_wgh( *tsxx[s] );
+            amat(2,2) += tsxy[s]->product_wgh( *tsxy[s] );
+            amat(3,3) += tsxz[s]->product_wgh( *tsxz[s] );
+            amat(4,4) += tsyy[s]->product_wgh( *tsyy[s] );
+            amat(5,5) += tsyz[s]->product_wgh( *tsyz[s] );
+            amat(6,6) += tszz[s]->product_wgh( *tszz[s] );
+            amat(1,2) += tsxx[s]->product_wgh( *tsxy[s] );
+	    amat(1,3) += tsxx[s]->product_wgh( *tsxz[s] );
+	    amat(1,4) += tsxx[s]->product_wgh( *tsyy[s] );
+	    amat(1,5) += tsxx[s]->product_wgh( *tsyz[s] );
+	    amat(1,6) += tsxx[s]->product_wgh( *tszz[s] );
+	    amat(2,3) += tsxy[s]->product_wgh( *tsxz[s] );
+	    amat(2,4) += tsxy[s]->product_wgh( *tsyy[s] );
+	    amat(2,5) += tsxy[s]->product_wgh( *tsyz[s] );
+	    amat(2,6) += tsxy[s]->product_wgh( *tszz[s] );
+	    amat(3,4) += tsxz[s]->product_wgh( *tsyy[s] );
+	    amat(3,5) += tsxz[s]->product_wgh( *tsyz[s] );
+	    amat(3,6) += tsxz[s]->product_wgh( *tszz[s] );
+	    amat(4,5) += tsyy[s]->product_wgh( *tsyz[s] );
+	    amat(4,6) += tsyy[s]->product_wgh( *tszz[s] );
+	    amat(5,6) += tsyz[s]->product_wgh( *tszz[s] );
+            b[0] += tsxx[s]->product_wgh( *tsobs );
+            b[1] += tsxy[s]->product_wgh( *tsobs );
+            b[2] += tsxz[s]->product_wgh( *tsobs );
+            b[3] += tsyy[s]->product_wgh( *tsobs );
+            b[4] += tsyz[s]->product_wgh( *tsobs );
+            b[5] += tszz[s]->product_wgh( *tsobs );
+
+	    //	    for( int i=0 ; i < nsteps ; i++ )
+	    //	    {
+	    //	       amat(1,1) += (tsxxp[0][i]*tsxxp[0][i]+tsxxp[1][i]*tsxxp[1][i]+tsxxp[2][i]*tsxxp[2][i]);
+	    //	       amat(2,2) += (tsxyp[0][i]*tsxyp[0][i]+tsxyp[1][i]*tsxyp[1][i]+tsxyp[2][i]*tsxyp[2][i]);
+	    //	       amat(3,3) += (tsxzp[0][i]*tsxzp[0][i]+tsxzp[1][i]*tsxzp[1][i]+tsxzp[2][i]*tsxzp[2][i]);
+	    //	       amat(4,4) += (tsyyp[0][i]*tsyyp[0][i]+tsyyp[1][i]*tsyyp[1][i]+tsyyp[2][i]*tsyyp[2][i]);
+	    //	       amat(5,5) += (tsyzp[0][i]*tsyzp[0][i]+tsyzp[1][i]*tsyzp[1][i]+tsyzp[2][i]*tsyzp[2][i]);
+	    //	       amat(6,6) += (tszzp[0][i]*tszzp[0][i]+tszzp[1][i]*tszzp[1][i]+tszzp[2][i]*tszzp[2][i]);
+	    //	       amat(1,2) += (tsxxp[0][i]*tsxyp[0][i]+tsxxp[1][i]*tsxyp[1][i]+tsxxp[2][i]*tsxyp[2][i]);
+	    //	       amat(1,3) += (tsxxp[0][i]*tsxzp[0][i]+tsxxp[1][i]*tsxzp[1][i]+tsxxp[2][i]*tsxzp[2][i]);
+	    //	       amat(1,4) += (tsxxp[0][i]*tsyyp[0][i]+tsxxp[1][i]*tsyyp[1][i]+tsxxp[2][i]*tsyyp[2][i]);
+	    //	       amat(1,5) += (tsxxp[0][i]*tsyzp[0][i]+tsxxp[1][i]*tsyzp[1][i]+tsxxp[2][i]*tsyzp[2][i]);
+	    //	       amat(1,6) += (tsxxp[0][i]*tszzp[0][i]+tsxxp[1][i]*tszzp[1][i]+tsxxp[2][i]*tszzp[2][i]);
+	    //	       amat(2,3) += (tsxyp[0][i]*tsxzp[0][i]+tsxyp[1][i]*tsxzp[1][i]+tsxyp[2][i]*tsxzp[2][i]);
+	    //	       amat(2,4) += (tsxyp[0][i]*tsyyp[0][i]+tsxyp[1][i]*tsyyp[1][i]+tsxyp[2][i]*tsyyp[2][i]);
+	    //	       amat(2,5) += (tsxyp[0][i]*tsyzp[0][i]+tsxyp[1][i]*tsyzp[1][i]+tsxyp[2][i]*tsyzp[2][i]);
+	    //	       amat(2,6) += (tsxyp[0][i]*tszzp[0][i]+tsxyp[1][i]*tszzp[1][i]+tsxyp[2][i]*tszzp[2][i]);
+	    //	       amat(3,4) += (tsxzp[0][i]*tsyyp[0][i]+tsxzp[1][i]*tsyyp[1][i]+tsxzp[2][i]*tsyyp[2][i]);
+	    //	       amat(3,5) += (tsxzp[0][i]*tsyzp[0][i]+tsxzp[1][i]*tsyzp[1][i]+tsxzp[2][i]*tsyzp[2][i]);
+	    //	       amat(3,6) += (tsxzp[0][i]*tszzp[0][i]+tsxzp[1][i]*tszzp[1][i]+tsxzp[2][i]*tszzp[2][i]);
+	    //	       amat(4,5) += (tsyyp[0][i]*tsyzp[0][i]+tsyyp[1][i]*tsyzp[1][i]+tsyyp[2][i]*tsyzp[2][i]);
+	    //	       amat(4,6) += (tsyyp[0][i]*tszzp[0][i]+tsyyp[1][i]*tszzp[1][i]+tsyyp[2][i]*tszzp[2][i]);
+	    //	       amat(5,6) += (tsyzp[0][i]*tszzp[0][i]+tsyzp[1][i]*tszzp[1][i]+tsyzp[2][i]*tszzp[2][i]);
+	    //	       b[0] += tsxxp[0][i]*tsobsp[0][i]+tsxxp[1][i]*tsobsp[1][i]+tsxxp[2][i]*tsobsp[2][i];
+	    //	       b[1] += tsxyp[0][i]*tsobsp[0][i]+tsxyp[1][i]*tsobsp[1][i]+tsxyp[2][i]*tsobsp[2][i];
+	    //	       b[2] += tsxzp[0][i]*tsobsp[0][i]+tsxzp[1][i]*tsobsp[1][i]+tsxzp[2][i]*tsobsp[2][i];
+	    //	       b[3] += tsyyp[0][i]*tsobsp[0][i]+tsyyp[1][i]*tsobsp[1][i]+tsyyp[2][i]*tsobsp[2][i];
+	    //	       b[4] += tsyzp[0][i]*tsobsp[0][i]+tsyzp[1][i]*tsobsp[1][i]+tsyzp[2][i]*tsobsp[2][i];
+	    //	       b[5] += tszzp[0][i]*tsobsp[0][i]+tszzp[1][i]*tsobsp[1][i]+tszzp[2][i]*tsobsp[2][i];
+	    //	    }
 	 }	    
          delete tsobs;
       }

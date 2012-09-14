@@ -1514,6 +1514,8 @@ void EW::processDeveloper(char* buffer)
 	   m_opttest = 5;
         else
 	   CHECK_INPUT( false, "ERROR: opttest=" << token << " not understood");
+        if( !m_inverse_problem )
+	   CHECK_INPUT( false, "WARNING: developer opttest option does not apply to forward solver");
      }
      else if( startswith("cfl=",token) )
      {
@@ -4985,9 +4987,15 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 
   string date = "";
   string time = "";
+  string sacfile1, sacfile2, sacfile3;
 
   bool usgsformat = 1, sacformat=0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  double winl, winr;
+  bool winlset=false, winrset=false;
+  char exclstr[4]={'\0','\0','\0','\0'};
+  bool usex=true, usey=true, usez=true;
+  bool usgsfileset=false, sf1set=false, sf2set=false, sf3set=false;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
@@ -5078,6 +5086,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
      {
         token += 5; // skip file=
         name = token;
+        usgsfileset = true;
      }
      else if(startswith("shift=", token))
      {
@@ -5104,11 +5113,58 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 	else
 	   CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
      }
+     else if( startswith("windowL=",token))
+     {
+        token += 8;
+        winl = atof(token);
+        winlset = true;
+     }
+     else if( startswith("windowR=",token))
+     {
+        token += 8;
+        winr = atof(token);
+        winrset = true;
+     }
+     else if( startswith("exclude=",token) )
+     {
+        token += 8;
+	strncpy(exclstr,token,4);
+
+	int c=0;
+	while( c < 3 && exclstr[c] != '\0' )
+	{
+	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
+	      usex=false;
+	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
+	      usey=false;
+	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
+	      usez=false;
+	   c++;
+	}
+     }
      else if(startswith("filter=", token))
      {
-        token += 7; // skip shift=
+        token += 7; // skip filter=
         if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
 	   m_filter_observations = false;
+     }
+     else if( startswith("sacfile1=",token) )
+     {
+        token += 9;
+        sacfile1 += token;
+	sf1set = true;
+     }
+     else if( startswith("sacfile2=",token) )
+     {
+        token += 9;
+        sacfile2 += token;
+	sf2set = true;
+     }
+     else if( startswith("sacfile3=",token) )
+     {
+        token += 9;
+        sacfile3 += token;
+	sf3set = true;
      }
      else
      {
@@ -5124,6 +5180,15 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 // check if (x,y) is within the computational domain
   }
 
+  // Make sure either one usgsfile or three sac files are input.
+  if( usgsfileset )
+  {
+     CHECK_INPUT( !sf1set && !sf2set && !sf3set, "processObservation, Error: can not give both usgs file and sacfiles" );
+  }
+  else
+  {
+     CHECK_INPUT( sf1set && sf2set && sf3set, "processObservation, Error: must give at least three sac files" );
+  }
   bool inCurvilinear=false;
 // we are in or above the curvilinear grid 
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
@@ -5162,10 +5227,24 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
     // Read in file to begin at time=t0.
+    if( usgsfileset )
+       ts_ptr->readFile( this, t0 );
+    else
+       ts_ptr->readSACfiles( this, t0, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str() );
 
-    ts_ptr->readFile( this, t0 );
     if( utcset )
        ts_ptr->set_station_utc( utc );
+
+    if( winlset || winrset )
+    {
+       if( winlset && !winrset )
+	  winr = 1e38;
+       if( !winlset && winrset )
+	  winl = -1;
+       ts_ptr->set_window( winl, winr );
+    }
+    if( !usex || !usey || !usez )
+       ts_ptr->exclude_component( usex, usey, usez );
 
 // include the observation in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);

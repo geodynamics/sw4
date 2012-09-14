@@ -62,7 +62,11 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
   m_x_azimuth(0.0),
   mBinaryMode(true),
   m_utc_set(false),
-  m_utc_offset_computed(false)
+  m_utc_offset_computed(false),
+  m_use_win(false),
+  m_use_x(true),
+  m_use_y(true),
+  m_use_z(true)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
@@ -1212,6 +1216,21 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
       if( mLastTimeStep-p+1 > 1 )
 	 istart = mLastTimeStep-p+1;
 
+      //      cout << "in misfit, " ;
+      //      if( m_use_win )
+      //	 cout << "using window= " << m_winL << " to " << m_winR << endl;
+      //      else
+      //	 cout << "not using window " << endl;
+
+      //      if( m_use_x && m_use_y && m_use_z )
+      //	 cout << "not excluding any component " << endl;
+      //      if( !m_use_x )
+      //	 cout << "excluding component x" << endl;
+      //      if( !m_use_y )
+      //	 cout << "excluding component y" << endl;
+      //      if( !m_use_z )
+      //	 cout << "excluding component z" << endl;
+
       for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
 	 wghv = 1;
@@ -1220,6 +1239,7 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 	    double arg = (mLastTimeStep-i)/(p-1.0);
 	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
 	 }
+
 
 	 double t  = m_t0 + i*m_dt;
 	 double ir = (t-t0fr)/dtfr;
@@ -1235,6 +1255,19 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 	    cout << "nfrsteps = " << nfrsteps << endl;
 	    return 0.0;
 	 }
+
+// Windowing and component selection
+         double wghx, wghy, wghz;
+	 wghx = wghy = wghz = wghv;
+         if( m_use_win && (t < m_winL || t > m_winR) )
+	    wghx = wghy = wghz = 0;
+         if( !m_use_x )
+	    wghx = 0;
+         if( !m_use_y )
+	    wghy = 0;
+         if( !m_use_z )
+	    wghz = 0;
+
 	 mf[0] = mf[1] = mf[2] = 0;
 
 	 // If too far past the end of observed, set to zero.
@@ -1282,28 +1315,29 @@ double TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff )
 		  mf[2] += cof*observed.mRecordedFloats[2][m];
 	       }
 	    }
+
 	    if( m_usgsFormat )
 	    {
-	       misfit += wghv*((mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i]) + 
-			       (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i]) + 
-			       (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i]));
+	       misfit += ( (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx + 
+			   (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy + 
+			   (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i])*wghz    );
 	       if( compute_difference )
 	       {
-		  misfitsource[0][i] = wghv*(mRecordedSol[0][i]-mf[0]);
-		  misfitsource[1][i] = wghv*(mRecordedSol[1][i]-mf[1]);
-		  misfitsource[2][i] = wghv*(mRecordedSol[2][i]-mf[2]);
+		  misfitsource[0][i] = wghx*(mRecordedSol[0][i]-mf[0]);
+		  misfitsource[1][i] = wghy*(mRecordedSol[1][i]-mf[1]);
+		  misfitsource[2][i] = wghz*(mRecordedSol[2][i]-mf[2]);
 	       }
 	    }
 	    else
 	    {
-	       misfit += wghv*((mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
-			       (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
-			       (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]));
+	       misfit += ( (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i])*wghx + 
+			   (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i])*wghy + 
+			   (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i])*wghz );
 	       if( compute_difference )
 	       {
-		  misfitsource[0][i] = wghv*(mRecordedFloats[0][i]-mf[0]);
-		  misfitsource[1][i] = wghv*(mRecordedFloats[1][i]-mf[1]);
-		  misfitsource[2][i] = wghv*(mRecordedFloats[2][i]-mf[2]);
+		  misfitsource[0][i] = (mRecordedFloats[0][i]-mf[0])*wghx;
+		  misfitsource[1][i] = (mRecordedFloats[1][i]-mf[1])*wghy;
+		  misfitsource[2][i] = (mRecordedFloats[2][i]-mf[2])*wghz;
 	       }
 	    }
 	 }
@@ -1341,6 +1375,13 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    for( int c=0; c < 7; c++ )
       retval->m_utc[c] = m_utc[c];
 	 
+// windows and exclusions
+   retval->m_use_win = m_use_win;
+   retval->m_winL = m_winL;
+   retval->m_winR = m_winR;
+   retval->m_use_x = m_use_x;
+   retval->m_use_y = m_use_y;
+   retval->m_use_z = m_use_z;
    if( m_myPoint )
    {
       if( m_sacFormat )
@@ -1457,7 +1498,7 @@ void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
 }
 
 //-----------------------------------------------------------------------
-double TimeSeries::product( TimeSeries& ts )
+double TimeSeries::product( TimeSeries& ts ) const
 {
    // No weighting, use if one of the time series already has
    // been multiplied by wgh, such as returned by the mistfit function
@@ -1477,7 +1518,7 @@ double TimeSeries::product( TimeSeries& ts )
 }
 
 //-----------------------------------------------------------------------
-double TimeSeries::product_wgh( TimeSeries& ts )
+double TimeSeries::product_wgh( TimeSeries& ts ) const
 {
    // Product which uses weighting, for computing Hessian
    double prod = 0;
@@ -1499,9 +1540,23 @@ double TimeSeries::product_wgh( TimeSeries& ts )
 	    double arg = (mLastTimeStep-i)/(p-1.0);
 	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
 	 }
-	 prod += (ts.mRecordedSol[0][i]*mRecordedSol[0][i] +
-	       ts.mRecordedSol[1][i]*mRecordedSol[1][i] + 
-	       ts.mRecordedSol[2][i]*mRecordedSol[2][i] )*wghv;
+
+// Windowing and component selection
+         double wghx, wghy, wghz;
+	 wghx = wghy = wghz = wghv;
+         double t = m_t0 + i*m_dt;
+         if( m_use_win && (t < m_winL || t > m_winR) )
+	    wghx = wghy = wghz = 0;
+         if( !m_use_x )
+	    wghx = 0;
+         if( !m_use_y )
+	    wghy = 0;
+         if( !m_use_z )
+	    wghz = 0;
+
+	 prod += (ts.mRecordedSol[0][i]*mRecordedSol[0][i]*wghx +
+  	          ts.mRecordedSol[1][i]*mRecordedSol[1][i]*wghy + 
+	          ts.mRecordedSol[2][i]*mRecordedSol[2][i]*wghz );
       }
    }
    else
@@ -1817,4 +1872,276 @@ void TimeSeries::print_timeinfo() const
       else
 	 cout << "   Observation UTC reference time not defined" << endl;
    }
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::set_window( double winl, double winr )
+{
+   m_use_win = true;
+   m_winL = winl;
+   m_winR = winr;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::exclude_component( bool usex, bool usey, bool usez )
+{
+   m_use_x = usex;
+   m_use_y = usey;
+   m_use_z = usez;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::readSACfiles( EW *ew, double timeshift, const char* sac1,
+			       const char* sac2, const char* sac3 )
+{
+   string file1, file2, file3;
+   if( ew->getObservationPath() != "./" )
+   {
+      file1 += ew->getObservationPath();
+      file2 += ew->getObservationPath();
+      file3 += ew->getObservationPath();
+   }
+   file1 += sac1;
+   file2 += sac2;
+   file3 += sac3;
+
+   if( m_myPoint )
+   {
+      bool debug = false;
+      double dt1, dt2, dt3, t01, t02, t03, lat1, lat2, lat3, lon1, lon2, lon3;
+      double cmpaz1, cmpaz2, cmpaz3, cmpinc1, cmpinc2, cmpinc3;
+      int utc1[7], utc2[7], utc3[7], npts1, npts2, npts3;
+
+// Read header information
+      readSACheader( file1.c_str(), dt1, t01, lat1, lon1, cmpaz1, cmpinc1, utc1, npts1 );
+      readSACheader( file2.c_str(), dt2, t02, lat2, lon2, cmpaz2, cmpinc2, utc2, npts2 );
+      readSACheader( file3.c_str(), dt3, t03, lat3, lon3, cmpaz3, cmpinc3, utc3, npts3 );
+
+// Check that files are consistent with each other
+      int eflag = 0;
+      if( dt1 != dt2 || dt1 != dt3 || dt2 != dt3 )
+         eflag = 1;
+      if( t01 != t02 || t01 != t03 || t02 != t03 )
+         eflag = 1;
+      if( lat1 != lat2 || lat1 != lat3 || lat2 != lat3 )
+         eflag = 1;
+      if( lon1 != lon2 || lon1 != lon3 || lon2 != lon3 )
+         eflag = 1;
+      if( npts1 != npts2 || npts1 != npts3 || npts2 != npts3 )
+         eflag = 1;
+
+      bool utcequal=true;
+      for( int c=0 ; c < 7 ; c++ )
+	 if( utc1[c] != utc2[c] )
+	    utcequal = false;
+      for( int c=0 ; c < 7 ; c++ )
+	 if( utc1[c] != utc3[c] )
+	    utcequal = false;
+      for( int c=0 ; c < 7 ; c++ )
+	 if( utc2[c] != utc3[c] )
+	    utcequal = false;
+      if( !utcequal )
+	 eflag = 1;
+      
+      if( eflag == 0 )
+// Headers are ok, get the data
+      {
+	 double* u1 = new double[npts1];
+	 double* u2 = new double[npts1];
+	 double* u3 = new double[npts1];
+	 readSACdata( file1.c_str(), npts1, u1 );
+	 readSACdata( file2.c_str(), npts1, u2 );
+	 readSACdata( file3.c_str(), npts1, u3 );
+
+	 allocateRecordingArrays( npts1, t01+timeshift, dt1 );
+
+	 m_utc_set = true;
+	 for( int c=0 ; c < 7 ; c++ )
+	    m_utc[c] = utc1[c];
+
+         if( debug )
+	 {
+            cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
+	    cout << "UTC = " << utc1[1] << "/" << utc1[2] << "/" << utc1[0] << ":" << utc1[3]
+		 << ":" << utc1[4] << ":" << utc1[5] << "." << utc1[6] << endl;
+	    cout << " lat = " << lat1 << " lon = " << lon1 << endl;
+	    cout << " dt = " << dt1 << " t0= " << t01  << " npts = " << npts1 << endl;
+            cout << " az1 = " << cmpaz1 << " inc1 = " << cmpinc1 << endl;
+            cout << " az2 = " << cmpaz2 << " inc2 = " << cmpinc2 << endl;
+            cout << " az3 = " << cmpaz3 << " inc3 = " << cmpinc3 << endl;
+	 }
+// Assume that we are using geographic coordinates, transform to (east,north,up) components.
+         const double convfactor = M_PI/180.0;
+         cmpaz1  *= convfactor;
+         cmpaz2  *= convfactor;
+         cmpaz3  *= convfactor;
+         cmpinc1 *= convfactor;
+         cmpinc2 *= convfactor;
+         cmpinc3 *= convfactor;
+
+         double tmat[9];
+         tmat[0] = sin(cmpinc1)*cos(cmpaz1);
+	 tmat[1] = sin(cmpinc2)*cos(cmpaz2);
+	 tmat[2] = sin(cmpinc3)*cos(cmpaz3);
+         tmat[3] = sin(cmpinc1)*sin(cmpaz1);
+	 tmat[4] = sin(cmpinc2)*sin(cmpaz2);
+	 tmat[5] = sin(cmpinc3)*sin(cmpaz3);
+	 tmat[6] = cos(cmpinc1);
+	 tmat[7] = cos(cmpinc2);
+	 tmat[8] = cos(cmpinc3);
+         m_xyzcomponent = false;
+	 for( int i=0 ; i < npts1 ; i++ )
+	 {
+	    mRecordedSol[0][i] = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+	    mRecordedSol[1][i] = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+	    mRecordedSol[2][i] = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+	 }
+      }
+      else
+      {
+         cout << "readSACfile, ERROR: found inconsistent meta data for files " << file1 << ", "
+	      << file2 << ", " << file3 << endl;
+	 cout << "  station not read " << endl;
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::readSACheader( const char* fname, double& dt, double& t0,
+				double& lat, double& lon, double& cmpaz,
+				double& cmpinc, int utc[7], int& npts )
+{
+
+   float float70[70];
+   int int35[35], logical[5];
+   char kvalues[192];
+
+   if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
+   {
+      cout << "readSACheader: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
+	   << fname << endl;
+      return;
+   }
+
+// Open SAC file
+   FILE* fd=fopen(fname,"r");
+   if( fd == NULL )
+   {
+      cout << "readSACheader: ERROR, observed data file " << fname << " could not be opened" << endl;
+      return;
+   }
+
+// Read header data blocks
+   size_t nr = fread(float70, sizeof(float), 70, fd );
+   if( nr != 70*sizeof(float) )
+   {
+      cout << "readSACheader: ERROR, could not read float part of header of " << fname << endl;
+      fclose(fd);
+      return;
+   }
+   nr = fread(int35, sizeof(int), 35, fd );
+   if( nr != 35*sizeof(int) )
+   {
+      cout << "readSACheader: ERROR, could not read int part of header of " << fname << endl;
+      fclose(fd);
+      return;
+   }
+   nr = fread(logical, sizeof(int), 5, fd );   
+   if( nr != 5*sizeof(int) )
+   {
+      cout << "readSACheader: ERROR, could not read bool part of header of " << fname << endl;
+      fclose(fd);
+      return;
+   }
+   nr = fread(kvalues, sizeof(char), 192, fd );   
+   if( nr != 192*sizeof(char) )
+   {
+      cout << "readSACheader: ERROR, could not read character part of header of " << fname << endl;
+      fclose(fd);
+      return;
+   }
+
+// Take out wanted information
+   dt     = float70[0];
+   t0     = float70[5];
+   lat    = float70[31];
+   lon    = float70[32];
+   cmpaz  = float70[57];
+   cmpinc = float70[58];
+   utc[0] = int35[0];
+   int jday=int35[1];
+   convertjday( jday, utc[0], utc[2], utc[1] );
+   utc[3] = int35[2];
+   utc[4] = int35[3];
+   utc[5] = int35[4];
+   utc[6] = int35[5];
+   npts   = int35[9];
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::readSACdata( const char* fname, int npts, double* u )
+{
+   if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
+   {
+      cout << "readSACdata: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
+	   << fname << endl;
+      return;
+   }
+
+// Open SAC file
+   FILE* fd=fopen(fname,"r");
+   if( fd == NULL )
+   {
+      cout << "readSACdata: ERROR, observed data file " << fname << " could not be opened" << endl;
+      return;
+   }
+
+// Skip header
+   int retcode = fseek(fd,158*4,SEEK_SET);
+   if( retcode != 0 )
+   {
+      cout << "readSACdata: ERROR, could not skip header in file " << fname << endl;
+      fclose(fd);
+      return;
+   }
+
+// Read data
+   float* uf = new float[npts];
+   size_t nr = fread( uf, sizeof(float), npts, fd );
+   if( nr != npts*sizeof(float) )
+   {
+      cout << "readSACdata: ERROR, could not read float array of " << fname << endl;
+      delete[] uf;
+      fclose(fd);
+      return;
+   }
+
+// Return floats as doubles
+   for( int i=0 ; i < npts ; i++ )
+      u[i] = static_cast<double>(uf[i]);
+   delete[] uf;
+   fclose(fd);
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::convertjday( int jday, int year, int& day, int& month )
+{
+   if( jday > 0 && jday < 367 )
+   {
+      int day = 1;
+      int jd  = 1;
+      int month = 1;
+      while( jd < jday )
+      {
+	 jd++;
+         day++;
+	 if( day > lastofmonth(year,month) )
+	 {
+	    day = 1;
+	    month++;
+	 }
+      }
+   }
+   else
+      cout << "convertjday: ERROR, jday is outside range " << endl;
 }
