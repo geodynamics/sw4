@@ -93,4 +93,4 @@ filterTest: $(OBJ4)
 	$(CXX) $(CFLAGS) -c $<
 
 clean:
-	/bin/rm -f s4f sbp4opt $(OBJ)
+	/bin/rm -f sw4 sw4opt $(OBJ) $(OBJOPT)
