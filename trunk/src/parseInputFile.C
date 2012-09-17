@@ -5188,6 +5188,11 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   else
   {
      CHECK_INPUT( sf1set && sf2set && sf3set, "processObservation, Error: must give at least three sac files" );
+     int l = sacfile1.length();
+     if( sacfile1.substr(l-4,4) == ".sac" )
+        name = sacfile1.substr(0,l-4);
+     else
+	name = sacfile1;
   }
   bool inCurvilinear=false;
 // we are in or above the curvilinear grid 
@@ -5224,6 +5229,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   }
   else
   {
+     cout << "Creating time series " << name << endl;
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
     // Read in file to begin at time=t0.

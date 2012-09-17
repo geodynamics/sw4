@@ -1996,12 +1996,30 @@ void TimeSeries::readSACfiles( EW *ew, double timeshift, const char* sac1,
 	    mRecordedSol[1][i] = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
 	    mRecordedSol[2][i] = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
 	 }
+	 mLastTimeStep = npts1-1;
       }
       else
       {
          cout << "readSACfile, ERROR: found inconsistent meta data for files " << file1 << ", "
 	      << file2 << ", " << file3 << endl;
 	 cout << "  station not read " << endl;
+         cout << "dt = " << dt1 << " " << dt2 << " " << dt3 << endl;
+         cout << "t0 = " << t01 << " " << t02 << " " << t03 << endl;
+         cout << "lat= " << lat1 << " " << lat2 << " " << lat3 << endl;
+         cout << "lon= " << lon1 << " " << lon2 << " " << lon3 << endl;
+         cout << "npt= " << npts1 << " " << npts2 << " " << npts3 << endl;
+	 cout << "utc1 = " ;
+	 for( int c=0 ; c < 7 ; c++ )
+	    cout << utc1[c] << " ";
+	 cout << endl;
+	 cout << "utc2 = " ;
+	 for( int c=0 ; c < 7 ; c++ )
+	    cout << utc2[c] << " ";
+	 cout << endl;
+	 cout << "utc3 = " ;
+	 for( int c=0 ; c < 7 ; c++ )
+	    cout << utc3[c] << " ";
+	 cout << endl;
       }
    }
 }
@@ -2033,28 +2051,28 @@ void TimeSeries::readSACheader( const char* fname, double& dt, double& t0,
 
 // Read header data blocks
    size_t nr = fread(float70, sizeof(float), 70, fd );
-   if( nr != 70*sizeof(float) )
+   if( nr != 70 )
    {
       cout << "readSACheader: ERROR, could not read float part of header of " << fname << endl;
       fclose(fd);
       return;
    }
    nr = fread(int35, sizeof(int), 35, fd );
-   if( nr != 35*sizeof(int) )
+   if( nr != 35 )
    {
       cout << "readSACheader: ERROR, could not read int part of header of " << fname << endl;
       fclose(fd);
       return;
    }
    nr = fread(logical, sizeof(int), 5, fd );   
-   if( nr != 5*sizeof(int) )
+   if( nr != 5 )
    {
       cout << "readSACheader: ERROR, could not read bool part of header of " << fname << endl;
       fclose(fd);
       return;
    }
    nr = fread(kvalues, sizeof(char), 192, fd );   
-   if( nr != 192*sizeof(char) )
+   if( nr != 192 )
    {
       cout << "readSACheader: ERROR, could not read character part of header of " << fname << endl;
       fclose(fd);
@@ -2108,7 +2126,7 @@ void TimeSeries::readSACdata( const char* fname, int npts, double* u )
 // Read data
    float* uf = new float[npts];
    size_t nr = fread( uf, sizeof(float), npts, fd );
-   if( nr != npts*sizeof(float) )
+   if( nr != npts )
    {
       cout << "readSACdata: ERROR, could not read float array of " << fname << endl;
       delete[] uf;
@@ -2128,9 +2146,9 @@ void TimeSeries::convertjday( int jday, int year, int& day, int& month )
 {
    if( jday > 0 && jday < 367 )
    {
-      int day = 1;
+      day = 1;
       int jd  = 1;
-      int month = 1;
+      month = 1;
       while( jd < jday )
       {
 	 jd++;
