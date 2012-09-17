@@ -233,7 +233,7 @@ void Source::getForces( double& fx, double& fy, double& fz ) const
 }
 
 //-----------------------------------------------------------------------
-void Source::getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const
+void Source::getMoments( double& mxx, double& mxy, double& mxz, double& myy, double& myz, double& mzz ) const
 {
    if( mIsMomentSource )
    {
@@ -249,7 +249,7 @@ void Source::getMoments( double& mxx, double& myy, double& mzz, double& mxy, dou
 }
 
 //-----------------------------------------------------------------------
-void Source::setMoments( double mxx, double myy, double mzz, double mxy, double mxz, double myz )
+void Source::setMoments( double mxx, double mxy, double mxz, double myy, double myz, double mzz )
 {
    if( mIsMomentSource )
    {

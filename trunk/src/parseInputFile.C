@@ -5229,7 +5229,6 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   }
   else
   {
-     cout << "Creating time series " << name << endl;
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
     // Read in file to begin at time=t0.

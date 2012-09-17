@@ -39,8 +39,6 @@ void guess_source_position( EW & simulation, vector<Source*>& sources,
 			    double& x0, double& y0, double& z0, double& t0, int myRank );
 
 void guess_source_t0freq( EW & simulation, vector<Source*>& sources,
-			  vector<TimeSeries*>& timeseries,
-			  vector<TimeSeries*>& observations,
 			  double tstart, double& t0, double& freq, int myRank );
 
 void guess_source_moments( EW & simulation, vector<Source*>& sources, vector<TimeSeries*>& timeseries,
@@ -1540,7 +1538,7 @@ int main(int argc, char **argv)
 				  xv[0], xv[1], xv[2], tstart, myRank );
 	   if( guesst0fr )
 	      // Guess t0
-	      guess_source_t0freq( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+	      guess_source_t0freq( simulation, GlobalSources,
 				   tstart, xv[9], xv[10], myRank );
 	   // Update source with guess(es)
 	   GlobalSources[0]->set_parameters( xv );
@@ -2259,16 +2257,27 @@ void guess_source_position( EW &  simulation, vector<Source*>& sources,
 
 //-----------------------------------------------------------------------
 void guess_source_t0freq( EW &  simulation, vector<Source*>& sources,
-			  vector<TimeSeries*>& timeseries,
-			  vector<TimeSeries*>& observations,
 			  double tstart, double& t0, double& freq, int myRank )
 {
-   // 2. Guess t0 and freq. Take from given source for now.
-   freq= sources[0]->getFrequency();
-   //   t0  = sources[0]->getOffset();
-   // Gaussian:
+   //-----------------------------------------------------------------------
+   // Guess t0 and freq in the source. Frequency is taken from the input source,
+   // need to come up with a method for estimating it. t0 is the sum of the 
+   // event time and the rise time, should be modified to be different for
+   // different source functions, e.g., for a Gaussian:
    // t0 = t0 + sqrt(-2*log(sqrt(2*pi)*1e-6/freq))/freq;
-   // Approximate, assume input t0 is start time of earthquake. 
+   //
+   // 
+   // Input: simulation  - Simulation object
+   //        sources     - Initial guess source.
+   //        tstart      - Estimated start time of event
+   //        myRank      - This processor's ID in the MPI communicator.
+   // Output: t0   - Estimated t0.
+   //         freq - Estimated frequency
+   //-----------------------------------------------------------------------
+
+   freq= sources[0]->getFrequency();
+
+   // Add Approximate rise time to start of event.
    t0 = 5/freq + tstart;
    if( myRank == 0 )
    {
@@ -2280,20 +2289,29 @@ void guess_source_t0freq( EW &  simulation, vector<Source*>& sources,
 void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<TimeSeries*>& timeseries,
 			   vector<TimeSeries*>& observations, double* xv, int myRank )
 {
-   timeDep tfunc = sources[0]->getTfunc();
-   //   double amp    = sources[0]->getAmplitude();
+   //-----------------------------------------------------------------------
+   // Compute moment components by least square minimization of the full waveform misfit.
+   // The solution of this quadratic minimization problem, is found by direct solution
+   // of the normal equations.
+   // 
+   // Input: simulation  - Simulation object
+   //        sources     - Initial guess source, everything except the moment components will be used.
+   //        timeseries  - Used as template for creating simulation output time series.
+   //        observations- Observed data.
+   //        myRank      - This processor's ID in the MPI communicator.
+   // Output: sources    - The computed moment components will be returned in the input source.
+   //         xv         - The computed moment components will also be inserted into the parameter vector, xv.
+   //-----------------------------------------------------------------------
 
-   double amp=1;
+   bool debug=false;
+   timeDep tfunc = sources[0]->getTfunc();
    double x0 = sources[0]->getX0();
    double y0 = sources[0]->getY0();
    double z0 = sources[0]->getZ0();
    double t0 = sources[0]->getOffset();
    double freq= sources[0]->getFrequency();
-
-   //   if( myRank == 0 )
-   //      cout << "initial amp = " << amp << endl;
-
    double mxx, mxy, mxz, myy, myz, mzz;
+
    if( sources[0]->isMomentSource() )
    {
       int n = observations.size();
@@ -2308,18 +2326,16 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
          tszz[s] = timeseries[s]->copy(&simulation, "tszzcopy" );
       }
 
-      //      Source* onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
       Source* onesrc = sources[0]->copy("xx");
       onesrc->setMoments(1,0,0,0,0,0);
 
       vector<Source*> src(1);
       src[0] = onesrc;
-      //      simulation.setupRun( );
+
       simulation.preprocessSources( src );
       simulation.solve( src, tsxx );
       delete onesrc;
 
-      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
       onesrc = sources[0]->copy("xy");
       onesrc->setMoments(0,1,0,0,0,0);
       src[0] = onesrc;
@@ -2328,7 +2344,6 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsxy );
       delete onesrc;
 
-      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
       onesrc = sources[0]->copy("xz");
       onesrc->setMoments(0,0,1,0,0,0);
       src[0] = onesrc;
@@ -2337,7 +2352,6 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsxz );
       delete onesrc;
 
-      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
       onesrc = sources[0]->copy("yy");
       onesrc->setMoments(0,0,0,1,0,0);
       src[0] = onesrc;
@@ -2346,7 +2360,6 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsyy );
       delete onesrc;
 
-      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
       onesrc = sources[0]->copy("yz");
       onesrc->setMoments(0,0,0,0,1,0);
       src[0] = onesrc;
@@ -2355,7 +2368,6 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsyz );
       delete onesrc;
 
-      //      onesrc = new Source(&simulation, amp, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
       onesrc = sources[0]->copy("zz");
       onesrc->setMoments(0,0,0,0,0,1);
       src[0] = onesrc;
@@ -2364,7 +2376,6 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tszz );
       delete onesrc;
 
-      // Solve linear least squares problem for the moment components
       double a[36], b[6], x[6];
       for( int i=0 ; i < 36 ; i++ )
 	 a[i] = 0;
@@ -2376,18 +2387,9 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
 	 TimeSeries* tsobs = tsxx[s]->copy(&simulation, "tsobscopy");
 	 tsobs->interpolate( *observations[s] );
 
-	 // assemble the matrix
+ // Assemble the matrix
 	 if( tsxx[s]->myPoint() )
 	 {
-	    int nsteps = tsobs->getNsteps();
-	    double** tsxxp = tsxx[s]->getRecordingArray();
-	    double** tsxyp = tsxy[s]->getRecordingArray();
-	    double** tsxzp = tsxz[s]->getRecordingArray();
-	    double** tsyyp = tsyy[s]->getRecordingArray();
-	    double** tsyzp = tsyz[s]->getRecordingArray();
-	    double** tszzp = tszz[s]->getRecordingArray();
-	    double** tsobsp = tsobs->getRecordingArray();
-	    
 #define amat(i,j) a[i-1+6*(j-1)]
             amat(1,1) += tsxx[s]->product_wgh( *tsxx[s] );
             amat(2,2) += tsxy[s]->product_wgh( *tsxy[s] );
@@ -2416,37 +2418,6 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
             b[3] += tsyy[s]->product_wgh( *tsobs );
             b[4] += tsyz[s]->product_wgh( *tsobs );
             b[5] += tszz[s]->product_wgh( *tsobs );
-
-	    //	    for( int i=0 ; i < nsteps ; i++ )
-	    //	    {
-	    //	       amat(1,1) += (tsxxp[0][i]*tsxxp[0][i]+tsxxp[1][i]*tsxxp[1][i]+tsxxp[2][i]*tsxxp[2][i]);
-	    //	       amat(2,2) += (tsxyp[0][i]*tsxyp[0][i]+tsxyp[1][i]*tsxyp[1][i]+tsxyp[2][i]*tsxyp[2][i]);
-	    //	       amat(3,3) += (tsxzp[0][i]*tsxzp[0][i]+tsxzp[1][i]*tsxzp[1][i]+tsxzp[2][i]*tsxzp[2][i]);
-	    //	       amat(4,4) += (tsyyp[0][i]*tsyyp[0][i]+tsyyp[1][i]*tsyyp[1][i]+tsyyp[2][i]*tsyyp[2][i]);
-	    //	       amat(5,5) += (tsyzp[0][i]*tsyzp[0][i]+tsyzp[1][i]*tsyzp[1][i]+tsyzp[2][i]*tsyzp[2][i]);
-	    //	       amat(6,6) += (tszzp[0][i]*tszzp[0][i]+tszzp[1][i]*tszzp[1][i]+tszzp[2][i]*tszzp[2][i]);
-	    //	       amat(1,2) += (tsxxp[0][i]*tsxyp[0][i]+tsxxp[1][i]*tsxyp[1][i]+tsxxp[2][i]*tsxyp[2][i]);
-	    //	       amat(1,3) += (tsxxp[0][i]*tsxzp[0][i]+tsxxp[1][i]*tsxzp[1][i]+tsxxp[2][i]*tsxzp[2][i]);
-	    //	       amat(1,4) += (tsxxp[0][i]*tsyyp[0][i]+tsxxp[1][i]*tsyyp[1][i]+tsxxp[2][i]*tsyyp[2][i]);
-	    //	       amat(1,5) += (tsxxp[0][i]*tsyzp[0][i]+tsxxp[1][i]*tsyzp[1][i]+tsxxp[2][i]*tsyzp[2][i]);
-	    //	       amat(1,6) += (tsxxp[0][i]*tszzp[0][i]+tsxxp[1][i]*tszzp[1][i]+tsxxp[2][i]*tszzp[2][i]);
-	    //	       amat(2,3) += (tsxyp[0][i]*tsxzp[0][i]+tsxyp[1][i]*tsxzp[1][i]+tsxyp[2][i]*tsxzp[2][i]);
-	    //	       amat(2,4) += (tsxyp[0][i]*tsyyp[0][i]+tsxyp[1][i]*tsyyp[1][i]+tsxyp[2][i]*tsyyp[2][i]);
-	    //	       amat(2,5) += (tsxyp[0][i]*tsyzp[0][i]+tsxyp[1][i]*tsyzp[1][i]+tsxyp[2][i]*tsyzp[2][i]);
-	    //	       amat(2,6) += (tsxyp[0][i]*tszzp[0][i]+tsxyp[1][i]*tszzp[1][i]+tsxyp[2][i]*tszzp[2][i]);
-	    //	       amat(3,4) += (tsxzp[0][i]*tsyyp[0][i]+tsxzp[1][i]*tsyyp[1][i]+tsxzp[2][i]*tsyyp[2][i]);
-	    //	       amat(3,5) += (tsxzp[0][i]*tsyzp[0][i]+tsxzp[1][i]*tsyzp[1][i]+tsxzp[2][i]*tsyzp[2][i]);
-	    //	       amat(3,6) += (tsxzp[0][i]*tszzp[0][i]+tsxzp[1][i]*tszzp[1][i]+tsxzp[2][i]*tszzp[2][i]);
-	    //	       amat(4,5) += (tsyyp[0][i]*tsyzp[0][i]+tsyyp[1][i]*tsyzp[1][i]+tsyyp[2][i]*tsyzp[2][i]);
-	    //	       amat(4,6) += (tsyyp[0][i]*tszzp[0][i]+tsyyp[1][i]*tszzp[1][i]+tsyyp[2][i]*tszzp[2][i]);
-	    //	       amat(5,6) += (tsyzp[0][i]*tszzp[0][i]+tsyzp[1][i]*tszzp[1][i]+tsyzp[2][i]*tszzp[2][i]);
-	    //	       b[0] += tsxxp[0][i]*tsobsp[0][i]+tsxxp[1][i]*tsobsp[1][i]+tsxxp[2][i]*tsobsp[2][i];
-	    //	       b[1] += tsxyp[0][i]*tsobsp[0][i]+tsxyp[1][i]*tsobsp[1][i]+tsxyp[2][i]*tsobsp[2][i];
-	    //	       b[2] += tsxzp[0][i]*tsobsp[0][i]+tsxzp[1][i]*tsobsp[1][i]+tsxzp[2][i]*tsobsp[2][i];
-	    //	       b[3] += tsyyp[0][i]*tsobsp[0][i]+tsyyp[1][i]*tsobsp[1][i]+tsyyp[2][i]*tsobsp[2][i];
-	    //	       b[4] += tsyzp[0][i]*tsobsp[0][i]+tsyzp[1][i]*tsobsp[1][i]+tsyzp[2][i]*tsobsp[2][i];
-	    //	       b[5] += tszzp[0][i]*tsobsp[0][i]+tszzp[1][i]*tsobsp[1][i]+tszzp[2][i]*tsobsp[2][i];
-	    //	    }
 	 }	    
          delete tsobs;
       }
@@ -2457,6 +2428,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
 	 bin[i] = b[i];
       MPI_Allreduce( ain, a, 36, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
       MPI_Allreduce( bin, b,  6, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+
       // symmetric matrix
       amat(2,1) = amat(1,2);
       amat(3,1) = amat(1,3);
@@ -2473,30 +2445,33 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       amat(5,4) = amat(4,5);
       amat(6,4) = amat(4,6);
       amat(6,5) = amat(5,6);
+
+      if( myRank == 0 && debug )
+      {
+	 cout << "Tensor system matrix : " << endl;
+	 for( int i=1 ; i <= 6 ; i++ )
+	    cout << " " << amat(i,1)<<" " << amat(i,2) <<" " << amat(i,3) <<" " << amat(i,4) <<
+	                     " " << amat(i,5) <<" " << amat(i,6) << endl;
+	 cout << " ... and right hand side : " << endl;
+	 for( int i=1 ; i <= 6 ; i++ )
+	    cout << " " << b[i-1] << endl;
+      }
       int six=6;
-      //      if( myRank == 0 )
-      //      {
-      //	 cout << "Tensor system matrix : " << endl;
-      //	 for( int i=1 ; i <= 6 ; i++ )
-      //	    cout << " " << amat(i,1)<<" " << amat(i,2) <<" " << amat(i,3) <<" " << amat(i,4) <<" " << amat(i,5) <<" " << amat(i,6) << endl;
-      //	 cout << " ... and right hand side : " << endl;
-      //	 for( int i=1 ; i <= 6 ; i++ )
-      //	    cout << " " << b[i-1] << endl;
-      //	 cout << " ... amplitude = " << amp << endl;
-      //      }
       F77_FUNC(linsolvelu,LINSOLVEU)( &six, a, b, x );
-      mxx = x[0]/amp;
-      mxy = x[1]/amp;
-      mxz = x[2]/amp;
-      myy = x[3]/amp;
-      myz = x[4]/amp;
-      mzz = x[5]/amp;
+      mxx = x[0];
+      mxy = x[1];
+      mxz = x[2];
+      myy = x[3];
+      myz = x[4];
+      mzz = x[5];
 #undef amat      
+
       if( myRank == 0 )
       {
 	 cout << "Moment tensor guess: mxx = " << mxx << " mxy= " << mxy << " mxz= " << mxz <<endl;
 	 cout << "                     myy = " << myy << " myz= " << myz << " mzz= " << mzz <<endl;
       }
+
       for( int s=0 ; s < timeseries.size() ; s++ )
       {
          delete tsxx[s];
@@ -2511,13 +2486,10 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
    {
       cout << "Initial guess for point sources not implemented \n";
    }
-   // Construct guessed source object and return in sources vector, instead of initial source
 
+   // Construct guessed source object and return in sources vector, instead of initial source
    Source* sguess = sources[0]->copy("srcguess");
    sguess->setMoments(mxx,mxy,mxz,myy,myz,mzz);
-
-   //   Source *sguess = new Source( &simulation, freq, t0, x0, y0, z0,
-   //			       mxx, mxy, mxz, myy, myz, mzz, tfunc, "srcguess");
    xv[3] = mxx;
    xv[4] = mxy;
    xv[5] = mxz;
@@ -2529,364 +2501,3 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
    sources[0] = sguess;
 }
 
-//-----------------------------------------------------------------------
-void guess_source( EW &  simulation, vector<Source*>& sources, vector<TimeSeries*>& timeseries,
-		   vector<TimeSeries*>& observations, double* xv, int myRank )
-{
-   // 1. Guess position and time offset
-   
-   int n = observations.size();
-   double* dist = new double[n];
-   double* xr   = new double[n];
-   double* yr   = new double[n];
-   double* zr   = new double[n];
-   double cp, cs;
-   simulation.average_speeds(cp,cs);
-   if( myRank == 0 )
-      cout << "average speeds " << cp << " " << cs << endl;
-
-   for( int s= 0 ; s < observations.size() ; s++ )
-      if( observations[s]->myPoint() )
-      {
-	 dist[s] = cp*observations[s]->arrival_time( 1e-3 );
-	 xr[s] = observations[s]->getX();
-	 yr[s] = observations[s]->getY();
-	 zr[s] = observations[s]->getZ();
-//        cout << "s = " << s << " xr, yr, zr, dist = " << xr[s] << " " << yr[s] << " " << zr[s] << " " << dist[s] << endl;
-      }
-
-   // Least squares with initial guess from 'source' object
-   //   double d0 = cp*sources[0]->getOffset();
-   double x0 = sources[0]->getX0();
-   double y0 = sources[0]->getY0();
-   double z0 = sources[0]->getZ0();
-   // Initial guess for d0:
-
-   double d0 = 0;
-   //   double sdsq=0,ressq=0, dsum=0;
-   //   for( int s= 0 ; s < observations.size() ; s++ )
-   //      if( observations[s]->myPoint() )
-   //      {
-   //         dsum  += dist[s];
-   //         sdsq  += dist[s]*dist[s];
-   //	 ressq += (x0-xr[s])*(x0-xr[s])+(y0-yr[s])*(y0-yr[s])+(z0-zr[s])*(z0-zr[s]);
-   //      }
-   //   double dsumtmp=dsum, sdsqtmp=sdsq, ressqtmp=ressq;
-   //   MPI_Allreduce( &dsumtmp, &dsum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-   //   MPI_Allreduce( &sdsqtmp, &sdsq, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-   //   MPI_Allreduce( &ressqtmp, &ressq,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-   //   int nobs = observations.size();
-   //   d0 = dsum/nobs + sqrt((dsum/nobs)*(dsum/nobs)-sdsq/nobs+ressq/nobs);
-   if( myRank == 0 )
-      cout << "initial guess x0, y0, z0, d0 " << x0 << " " << y0 << " " << z0 << " " << d0 << endl;
-
-   double a[16], b[4], dx[4];
-   int it=0, maxit=20;
-   double err0=1, tol=1e-8, err=1;
-   while( err > tol && it < maxit )
-   {
-      double res = 0;
-      for( int i=0 ; i<16 ;i++ )
-	 a[i] = 0;
-      b[0]=b[1]=b[2]=b[3]=0;
-      for( int s = 0 ; s < n ; s++ )
-      {
-         if( observations[s]->myPoint() )
-	 {
-	    double nrm=(x0-xr[s])*(x0-xr[s])+(y0-yr[s])*(y0-yr[s])+
-	       (z0-zr[s])*(z0-zr[s])-(d0-dist[s])*(d0-dist[s]);
-	    //            double nrm = 0;
-
-	    a[0] += 4*(x0-xr[s])*(x0-xr[s]) + 2*nrm;
-	    a[1] += 4*(x0-xr[s])*(y0-yr[s]);
-	    a[2] += 4*(x0-xr[s])*(z0-zr[s]);
-	    a[3] -= 4*(x0-xr[s])*(d0-dist[s]);
-
-	    a[5] += 4*(y0-yr[s])*(y0-yr[s]) + 2*nrm;
-	    a[6] += 4*(y0-yr[s])*(z0-zr[s]);
-	    a[7] -= 4*(y0-yr[s])*(d0-dist[s]);
-
-	    a[10] += 4*(z0-zr[s])*(z0-zr[s]) + 2*nrm;
-	    a[11] -= 4*(z0-zr[s])*(d0-dist[s]);
-
-	    a[15] += 4*(d0-dist[s])*(d0-dist[s]) -2*nrm;
-
-	    //	    nrm=(x0-xr[s])*(x0-xr[s])+(y0-yr[s])*(y0-yr[s])+
-	    //	       (z0-zr[s])*(z0-zr[s])-(d0-dist[s])*(d0-dist[s]);
-	    b[0]  += 2*(x0-xr[s])*nrm;
-	    b[1]  += 2*(y0-yr[s])*nrm;
-	    b[2]  += 2*(z0-zr[s])*nrm;
-	    b[3]  -= 2*(d0-dist[s])*nrm;
-	 }
-      }
- // Assemble matrix from all processors
-      double ain[16], bin[4];
-      for( int i = 0 ; i < 16 ; i++ )
-	 ain[i] = a[i];
-      for( int i = 0 ; i < 4 ; i++ )
-	 bin[i] = b[i];
-
-      MPI_Allreduce( ain, a, 16, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      MPI_Allreduce( bin, b,  4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      
-      // symmetric matrix
-      a[4]  = a[1];
-      a[8]  = a[2];
-      a[12] = a[3];
-      a[9]  = a[6];
-      a[13] = a[7];
-      a[14] = a[11];
-      int four=4;
-      F77_FUNC(linsolvelu,LINSOLVEU)( &four, a, b, dx );
-      err = 0;
-      for( int i=0 ; i < 4 ; i++ )
-	 err = err > abs(dx[i]) ? err : abs(dx[i]);
-      if( it == 0 )
-	 err0 = err;
-      err /= err0;
-      if( myRank == 0 )
-      {
-	 cout <<  "Newton iteration " << it << " " << err << endl;
-         cout << "x0 y0 z0 d0 " << x0 << " " << y0 << " " << z0 << " " << d0 << endl;
-      }
-      x0 -= dx[0];
-      y0 -= dx[1];
-      z0 -= dx[2];
-      d0 -= dx[3];
-      it++;
-   }
-   delete[] dist;
-   delete[] xr;
-   delete[] yr;
-   delete[] zr;
-   if( err > tol )
-   {
-      if( myRank == 0 )
-	 cout << "Error: No convergence in Newton iteration for initial guess\n";
-   }
-   // Both z0 and -z0 can be roots, since all stations have z=0.
-   if( z0 < 0 )
-      z0 = -z0;
-   double t0 = d0/cp;
-   if( myRank == 0 )
-   {
-      cout << "Guessed position of source " << x0 << " " << y0 << " " << z0 << endl;
-      //      cout << "Guessed time offset " << t0 << "..will not be used." << endl;
-   }
-
-
-   // 2. Guess t0 and freq. Take from given source for now.
-   double freq= sources[0]->getFrequency();
-   //   t0  = sources[0]->getOffset();
-   // Gaussian:
-   // t0 = t0 + sqrt(-2*log(sqrt(2*pi)*1e-6/freq))/freq;
-   // Approximate: 
-   t0 = 5/freq + t0;
-   if( myRank == 0 )
-   {
-      cout << "Guessed t0 and freq " << t0 << " and " << freq << endl;
-   }
-
-   //   x0 = sources[0]->getX0();
-   //   y0 = sources[0]->getY0();
-   //   z0 = sources[0]->getZ0();
-
-   // 3. Tensor components guess, assume moment tensor source
-   timeDep tfunc = sources[0]->getTfunc();
-   double amp    = sources[0]->getAmplitude();
-   double mxx, mxy, mxz, myy, myz, mzz;
-   if( sources[0]->isMomentSource() )
-   {
-      vector<TimeSeries*> tsxx(n), tsxy(n), tsxz(n), tsyy(n), tsyz(n), tszz(n);
-      for( int s=0 ; s < n ; s++ )
-      {
-         tsxx[s] = timeseries[s]->copy(&simulation, "tsxxcopy" );
-         tsxy[s] = timeseries[s]->copy(&simulation, "tsxycopy" );
-         tsxz[s] = timeseries[s]->copy(&simulation, "tsxzcopy" );
-         tsyy[s] = timeseries[s]->copy(&simulation, "tsyycopy" );
-         tsyz[s] = timeseries[s]->copy(&simulation, "tsyzcopy" );
-         tszz[s] = timeseries[s]->copy(&simulation, "tszzcopy" );
-      }
-
-      Source* onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 1, 0, 0, 0, 0, 0, tfunc, "xx");
-      vector<Source*> src(1);
-      src[0] = onesrc;
-      //      simulation.setupRun( );
-      simulation.preprocessSources( src );
-      simulation.solve( src, tsxx );
-      delete onesrc;
-
-      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 1, 0, 0, 0, 0, tfunc, "xy");
-      src[0] = onesrc;
-
-      simulation.preprocessSources( src );
-      simulation.solve( src, tsxy );
-      delete onesrc;
-
-      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 1, 0, 0, 0, tfunc, "xz");
-      src[0] = onesrc;
-
-      simulation.preprocessSources( src );
-      simulation.solve( src, tsxz );
-      delete onesrc;
-
-      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 0, 1, 0, 0, tfunc, "yy");
-      src[0] = onesrc;
-
-      simulation.preprocessSources( src );
-      simulation.solve( src, tsyy );
-      delete onesrc;
-
-      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 0, 0, 1, 0, tfunc, "yz");
-      src[0] = onesrc;
-
-      simulation.preprocessSources( src );
-      simulation.solve( src, tsyz );
-      delete onesrc;
-
-      onesrc = new Source(&simulation, freq, t0, x0, y0, z0, 0, 0, 0, 0, 0, 1, tfunc, "zz");
-      src[0] = onesrc;
-
-      simulation.preprocessSources( src );
-      simulation.solve( src, tszz );
-      delete onesrc;
-
-      // Solve linear least squares problem for the moment components
-      double a[36], b[6], x[6];
-      for( int i=0 ; i < 36 ; i++ )
-	 a[i] = 0;
-      for( int i=0 ; i < 6 ; i++ )
-	 b[i] = 0;
-
-      for( int s=0 ; s < n ; s++ )
-      {
-	 TimeSeries* tsobs = tsxx[s]->copy(&simulation, "tsobscopy");
-	 tsobs->interpolate( *observations[s] );
-
-	 // assemble the matrix
-	 if( tsxx[s]->myPoint() )
-	 {
-	    int nsteps = tsobs->getNsteps();
-	    double** tsxxp = tsxx[s]->getRecordingArray();
-	    double** tsxyp = tsxy[s]->getRecordingArray();
-	    double** tsxzp = tsxz[s]->getRecordingArray();
-	    double** tsyyp = tsyy[s]->getRecordingArray();
-	    double** tsyzp = tsyz[s]->getRecordingArray();
-	    double** tszzp = tszz[s]->getRecordingArray();
-	    double** tsobsp = tsobs->getRecordingArray();
-	    
-#define amat(i,j) a[i-1+6*(j-1)]
-	    for( int i=0 ; i < nsteps ; i++ )
-	    {
-	       amat(1,1) += (tsxxp[0][i]*tsxxp[0][i]+tsxxp[1][i]*tsxxp[1][i]+tsxxp[2][i]*tsxxp[2][i]);
-	       amat(2,2) += (tsxyp[0][i]*tsxyp[0][i]+tsxyp[1][i]*tsxyp[1][i]+tsxyp[2][i]*tsxyp[2][i]);
-	       amat(3,3) += (tsxzp[0][i]*tsxzp[0][i]+tsxzp[1][i]*tsxzp[1][i]+tsxzp[2][i]*tsxzp[2][i]);
-	       amat(4,4) += (tsyyp[0][i]*tsyyp[0][i]+tsyyp[1][i]*tsyyp[1][i]+tsyyp[2][i]*tsyyp[2][i]);
-	       amat(5,5) += (tsyzp[0][i]*tsyzp[0][i]+tsyzp[1][i]*tsyzp[1][i]+tsyzp[2][i]*tsyzp[2][i]);
-	       amat(6,6) += (tszzp[0][i]*tszzp[0][i]+tszzp[1][i]*tszzp[1][i]+tszzp[2][i]*tszzp[2][i]);
-	       amat(1,2) += (tsxxp[0][i]*tsxyp[0][i]+tsxxp[1][i]*tsxyp[1][i]+tsxxp[2][i]*tsxyp[2][i]);
-	       amat(1,3) += (tsxxp[0][i]*tsxzp[0][i]+tsxxp[1][i]*tsxzp[1][i]+tsxxp[2][i]*tsxzp[2][i]);
-	       amat(1,4) += (tsxxp[0][i]*tsyyp[0][i]+tsxxp[1][i]*tsyyp[1][i]+tsxxp[2][i]*tsyyp[2][i]);
-	       amat(1,5) += (tsxxp[0][i]*tsyzp[0][i]+tsxxp[1][i]*tsyzp[1][i]+tsxxp[2][i]*tsyzp[2][i]);
-	       amat(1,6) += (tsxxp[0][i]*tszzp[0][i]+tsxxp[1][i]*tszzp[1][i]+tsxxp[2][i]*tszzp[2][i]);
-	       amat(2,3) += (tsxyp[0][i]*tsxzp[0][i]+tsxyp[1][i]*tsxzp[1][i]+tsxyp[2][i]*tsxzp[2][i]);
-	       amat(2,4) += (tsxyp[0][i]*tsyyp[0][i]+tsxyp[1][i]*tsyyp[1][i]+tsxyp[2][i]*tsyyp[2][i]);
-	       amat(2,5) += (tsxyp[0][i]*tsyzp[0][i]+tsxyp[1][i]*tsyzp[1][i]+tsxyp[2][i]*tsyzp[2][i]);
-	       amat(2,6) += (tsxyp[0][i]*tszzp[0][i]+tsxyp[1][i]*tszzp[1][i]+tsxyp[2][i]*tszzp[2][i]);
-	       amat(3,4) += (tsxzp[0][i]*tsyyp[0][i]+tsxzp[1][i]*tsyyp[1][i]+tsxzp[2][i]*tsyyp[2][i]);
-	       amat(3,5) += (tsxzp[0][i]*tsyzp[0][i]+tsxzp[1][i]*tsyzp[1][i]+tsxzp[2][i]*tsyzp[2][i]);
-	       amat(3,6) += (tsxzp[0][i]*tszzp[0][i]+tsxzp[1][i]*tszzp[1][i]+tsxzp[2][i]*tszzp[2][i]);
-	       amat(4,5) += (tsyyp[0][i]*tsyzp[0][i]+tsyyp[1][i]*tsyzp[1][i]+tsyyp[2][i]*tsyzp[2][i]);
-	       amat(4,6) += (tsyyp[0][i]*tszzp[0][i]+tsyyp[1][i]*tszzp[1][i]+tsyyp[2][i]*tszzp[2][i]);
-	       amat(5,6) += (tsyzp[0][i]*tszzp[0][i]+tsyzp[1][i]*tszzp[1][i]+tsyzp[2][i]*tszzp[2][i]);
-	       b[0] += tsxxp[0][i]*tsobsp[0][i]+tsxxp[1][i]*tsobsp[1][i]+tsxxp[2][i]*tsobsp[2][i];
-	       b[1] += tsxyp[0][i]*tsobsp[0][i]+tsxyp[1][i]*tsobsp[1][i]+tsxyp[2][i]*tsobsp[2][i];
-	       b[2] += tsxzp[0][i]*tsobsp[0][i]+tsxzp[1][i]*tsobsp[1][i]+tsxzp[2][i]*tsobsp[2][i];
-	       b[3] += tsyyp[0][i]*tsobsp[0][i]+tsyyp[1][i]*tsobsp[1][i]+tsyyp[2][i]*tsobsp[2][i];
-	       b[4] += tsyzp[0][i]*tsobsp[0][i]+tsyzp[1][i]*tsobsp[1][i]+tsyzp[2][i]*tsobsp[2][i];
-	       b[5] += tszzp[0][i]*tsobsp[0][i]+tszzp[1][i]*tsobsp[1][i]+tszzp[2][i]*tsobsp[2][i];
-	    }
-	 }	    
-         delete tsobs;
-      }
-      double ain[36], bin[6];
-      for( int i = 0 ; i < 36 ; i++ )
-	 ain[i] = a[i];
-      for( int i = 0 ; i < 6 ; i++ )
-	 bin[i] = b[i];
-      MPI_Allreduce( ain, a, 36, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      MPI_Allreduce( bin, b,  6, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      // symmetric matrix
-      amat(2,1) = amat(1,2);
-      amat(3,1) = amat(1,3);
-      amat(4,1) = amat(1,4);
-      amat(5,1) = amat(1,5);
-      amat(6,1) = amat(1,6);
-      amat(3,2) = amat(2,3);
-      amat(4,2) = amat(2,4);
-      amat(5,2) = amat(2,5);
-      amat(6,2) = amat(2,6);
-      amat(4,3) = amat(3,4);
-      amat(5,3) = amat(3,5);
-      amat(6,3) = amat(3,6);
-      amat(5,4) = amat(4,5);
-      amat(6,4) = amat(4,6);
-      amat(6,5) = amat(5,6);
-      int six=6;
-      //      if( myRank == 0 )
-      //      {
-      //	 cout << "Tensor system matrix : " << endl;
-      //	 for( int i=1 ; i <= 6 ; i++ )
-      //	    cout << " " << amat(i,1)<<" " << amat(i,2) <<" " << amat(i,3) <<" " << amat(i,4) <<" " << amat(i,5) <<" " << amat(i,6) << endl;
-      //	 cout << " ... and right hand side : " << endl;
-      //	 for( int i=1 ; i <= 6 ; i++ )
-      //	    cout << " " << b[i-1] << endl;
-      //	 cout << " ... amplitude = " << amp << endl;
-      //      }
-      F77_FUNC(linsolvelu,LINSOLVEU)( &six, a, b, x );
-      mxx = x[0]/amp;
-      mxy = x[1]/amp;
-      mxz = x[2]/amp;
-      myy = x[3]/amp;
-      myz = x[4]/amp;
-      mzz = x[5]/amp;
-#undef amat      
-      if( myRank == 0 )
-      {
-	 cout << "Moment tensor guess: mxx = " << mxx << " mxy= " << mxy << " mxz= " << mxz <<endl;
-	 cout << "                     myy = " << myy << " myz= " << myz << " mzz= " << mzz <<endl;
-      }
-      for( int s=0 ; s < timeseries.size() ; s++ )
-      {
-         delete tsxx[s];
-	 delete tsxy[s];
-	 delete tsxz[s];
-	 delete tsyy[s];
-	 delete tsyz[s];
-	 delete tszz[s];
-      }
-   }
-   else
-   {
-      cout << "Initial guess for point sources not implemented \n";
-   }
-
-   // Construct guessed source object and return in sources vector, instead of initial source
-   Source *sguess = new Source( &simulation, freq, t0, x0, y0, z0,
-			       mxx, mxy, mxz, myy, myz, mzz, tfunc, "srcguess");
-   
-   delete sources[0];
-   sources[0] = sguess;
-   // Store in array for future use in CG iteration
-   xv[0] = x0;
-   xv[1] = y0;
-   xv[2] = z0;
-   xv[3] = mxx;
-   xv[4] = mxy;
-   xv[5] = mxz;
-   xv[6] = myy;
-   xv[7] = myz;
-   xv[8] = mzz;
-   xv[9] = t0;
-   xv[10] = freq;
-}

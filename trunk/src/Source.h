@@ -83,8 +83,8 @@ public:
   void set_z_is_relative_to_topography( bool tf ) { m_zRelativeToTopography = tf; };
   void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
   void getForces( double& fx, double& fy, double& fz ) const;
-  void getMoments( double& mxx, double& myy, double& mzz, double& mxy, double& mxz, double& myz ) const;
-  void setMoments( double mxx, double myy, double mzz, double mxy, double mxz, double myz );
+  void getMoments( double& mxx, double& mxy, double& mxz, double& myy, double& myz, double& mzz ) const;
+  void setMoments( double mxx, double mxy, double mxz, double myy, double myz, double mzz );
   void printPointer(){std::cout << "Source pointer = "  << mPar << std::endl;}
   void perturb( double h, int comp );
   void set_derivative( int der );

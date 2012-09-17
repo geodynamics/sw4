@@ -1753,7 +1753,7 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
    }
    else
    {
-      source.getMoments( mxx, myy, mzz, mxy, mxz, myz );
+      source.getMoments( mxx, mxy, mxz, myy, myz, mzz );
       m0  = source.getAmplitude();
    }
    double* up = u.c_ptr();
