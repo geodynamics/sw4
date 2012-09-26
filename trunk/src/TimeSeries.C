@@ -1979,6 +1979,7 @@ void TimeSeries::readSACfiles( EW *ew, double timeshift, const char* sac1,
          cmpinc2 *= convfactor;
          cmpinc3 *= convfactor;
 
+// Convert from station azimut to (e,n,u) components
          double tmat[9];
          tmat[0] = sin(cmpinc1)*cos(cmpaz1);
 	 tmat[1] = sin(cmpinc2)*cos(cmpaz2);
@@ -1989,12 +1990,24 @@ void TimeSeries::readSACfiles( EW *ew, double timeshift, const char* sac1,
 	 tmat[6] = cos(cmpinc1);
 	 tmat[7] = cos(cmpinc2);
 	 tmat[8] = cos(cmpinc3);
-         m_xyzcomponent = false;
+
+         m_xyzcomponent = false; //note this is format on output file, 
+ 	                         //internally, we always use (x,y,z) during computation.
+
+// Convert (e,n,u) to (x,y,z) components.
+	 double deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+	 double a11 = m_calpha*deti;
+	 double a12 = m_thxnrm*deti;
+	 double a21 =-m_salpha*deti;
+	 double a22 = m_thynrm*deti;
 	 for( int i=0 ; i < npts1 ; i++ )
 	 {
-	    mRecordedSol[0][i] = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-	    mRecordedSol[1][i] = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-	    mRecordedSol[2][i] = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+            double ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+	    double ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+	    double ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+	    mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+	    mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+	    mRecordedSol[2][i] = -ucomp;
 	 }
 	 mLastTimeStep = npts1-1;
       }

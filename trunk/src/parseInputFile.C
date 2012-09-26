@@ -5172,13 +5172,6 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
      }
      token = strtok(NULL, " \t");
   }  
-  //  cout << "end observation " << m_myRank << endl;
-
-  if (geoCoordSet)
-  {
-    computeCartesianCoord(x, y, lon, lat);
-// check if (x,y) is within the computational domain
-  }
 
   // Make sure either one usgsfile or three sac files are input.
   if( usgsfileset )
@@ -5188,12 +5181,53 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   else
   {
      CHECK_INPUT( sf1set && sf2set && sf3set, "processObservation, Error: must give at least three sac files" );
+
+// Find a name for the SAC station
      int l = sacfile1.length();
      if( sacfile1.substr(l-4,4) == ".sac" )
         name = sacfile1.substr(0,l-4);
      else
 	name = sacfile1;
+
+// Read sac header to figure out the position
+// Use only one of the files, more thorough checking later, in TimeSeries.readSACfile.
+     double latlon[2];
+     if( m_myRank == 0 )
+     {
+        string fname= mObsPath;
+	fname += sacfile1;
+	FILE* fd=fopen(fname.c_str(),"r");
+	CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
+        float float70[70];
+	size_t nr = fread(float70, sizeof(float), 70, fd );
+	if( nr != 70 )
+	{
+	   cout << "processObservation: ERROR, could not read float part of header of " << sacfile1 << endl;
+	   fclose(fd);
+	}
+        latlon[0] = float70[31];
+        latlon[1] = float70[32];
+	fclose(fd);
+     }
+     MPI_Bcast( latlon, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+     if( geoCoordSet && ( fabs(lat-latlon[0])<1e-10 && fabs(lon-latlon[1])<1e-10 ))
+     {
+        if( m_myRank == 0 )
+	   cout << "processObservation: WARNING station (lat,lon) on sac file do not match input (lat,lon)" << endl;
+     }
+     if( !geoCoordSet )
+     {
+	geoCoordSet = true;
+	lat = latlon[0];
+	lon = latlon[1];
+     }
   }
+  if (geoCoordSet)
+  {
+    computeCartesianCoord(x, y, lon, lat);
+// check if (x,y) is within the computational domain
+  }
+
   bool inCurvilinear=false;
 // we are in or above the curvilinear grid 
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
