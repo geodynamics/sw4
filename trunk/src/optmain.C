@@ -1165,12 +1165,12 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
    FILE *fdx=fopen("parameters.log","w");
    
 
-   if( maxit > n )
-      maxit = n;
-   if( varcase == 1 && maxit > 10 )
-      maxit = 10;
-   if( varcase == 2 && maxit > 9 )
-      maxit = 9;
+   //   if( maxit > n )
+   //      maxit = n;
+   //   if( varcase == 1 && maxit > 10 )
+   //      maxit = 10;
+   //   if( varcase == 2 && maxit > 9 )
+   //      maxit = 9;
 
    if( varcase == 1 )
       nvar = 10;
@@ -1179,6 +1179,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
    else
       nvar = 11;
 
+   maxit = nvar;
    compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f );
    // Output GlobalTimeSeries here
    if( myRank == 0 )

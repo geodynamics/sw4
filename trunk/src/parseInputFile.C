@@ -5428,19 +5428,20 @@ void EW::processCG( char* buffer )
      if (startswith("#", token) || startswith(" ", buffer))
         // Ignore commented lines and lines with just a space.
         break;
-     if (startswith("maxit=", token))
-     {
-        token += 6;
-        m_maxit = atoi(token);
-        CHECK_INPUT(m_maxit >= 0,
-		    "cg command: maxit must be greater than or equal to 0, not " << m_maxit );
-     }
-     else if( startswith("maxrestart=",token) )
+     //     if (startswith("maxit=", token))
+     //     {
+     //        token += 6;
+     //        m_maxit = atoi(token);
+     //        CHECK_INPUT(m_maxit >= 0,
+     //		    "cg command: maxit must be greater than or equal to 0, not " << m_maxit );
+     //     }
+     //     else if( startswith("maxouterit=",token) )
+     if( startswith("maxouterit=",token) )
      {
         token += 11;
         m_maxrestart = atoi(token);
         CHECK_INPUT(m_maxrestart >= 0,
-		    "cg command: maxrestart must be greater than or equal to 0, not " << m_maxrestart );
+		    "cg command: maxouterit must be greater than or equal to 0, not " << m_maxrestart );
      }
      else if( startswith("tolerance=",token) )
      {
