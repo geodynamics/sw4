@@ -1603,3 +1603,145 @@ double Discrete_ttomom( double freq, double t, double* par, int npar, int* ipar,
    return 0;
 }
 
+double C6SmoothBump(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+    tmp = 16384*pow(t*freq*(1-t*freq),7);
+  return tmp;
+}
+
+double C6SmoothBump_t(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*freq*7*(1-2*t*freq)*pow(t*freq*(1-t*freq),6);
+  return tmp;
+}
+
+double C6SmoothBump_om(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*t*7*(1-2*t*freq)*pow(t*freq*(1-t*freq),6);
+  return tmp;
+}
+
+double C6SmoothBump_tt(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*freq*freq*7*( 6*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),5) - 2*pow(t*freq*(1-t*freq),6));
+  return tmp;
+}
+
+double C6SmoothBump_tom(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*(7*(1-2*t*freq)*pow(t*freq*(1-t*freq),6)+
+	          t*freq*7*( 6*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),5) - 2*pow(t*freq*(1-t*freq),6) ));
+  return tmp;
+}
+
+double C6SmoothBump_omom(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*t*t*7*( 6*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),5) - 2*pow(t*freq*(1-t*freq),6));
+  return tmp;
+}
+
+double C6SmoothBump_ttt(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*freq*freq*freq*42*(1-2*t*freq)*( -6*pow(t*freq*(1-t*freq),5)+
+					    5*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),4));
+  return tmp;
+}
+
+double C6SmoothBump_omtt(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*(2*freq*(7*( 6*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),5) - 2*pow(t*freq*(1-t*freq),6)) ) 
+            + freq*freq*t*(42*(1-2*t*freq)*( -6*pow(t*freq*(1-t*freq),5)+
+					     5*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),4)) ) );
+  return tmp;
+}
+
+double C6SmoothBump_tttt(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*freq*freq*freq*freq*(12*42*(pow(t*freq*(1-t*freq),5)-5*(1-2*freq*t)*(1-2*freq*t)*pow(t*freq*(1-t*freq),4))+840*pow((1-2*t*freq)*t*freq*(1-t*freq),4) );
+  return tmp;
+}
+
+double C6SmoothBump_tttom(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*freq*freq*(3*(42*(1-2*t*freq)*( -6*pow(t*freq*(1-t*freq),5)+
+		 5*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),4))) +
+	    freq*t*(12*42*(pow(t*freq*(1-t*freq),5)-5*(1-2*freq*t)*(1-2*freq*t)*pow(t*freq*(1-t*freq),4))+
+                    840*pow((1-2*t*freq)*t*freq*(1-t*freq),4) ) );
+  return tmp;
+}
+
+double C6SmoothBump_ttomom(double freq, double t, double* par, int npar, int* ipar, int nipar )
+{
+  double tmp;
+  if (t*freq < 0)
+    tmp = 0.0;
+  else if (t*freq > 1)
+    tmp = 0.0;
+  else
+     tmp = 16384*( 2*(7*( 6*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),5) - 2*pow(t*freq*(1-t*freq),6)))+
+		   4*freq*t*( 42*(1-2*t*freq)*( -6*pow(t*freq*(1-t*freq),5)+
+				5*(1-2*t*freq)*(1-2*t*freq)*pow(t*freq*(1-t*freq),4))) +
+	   freq*freq*t*t*( (12*42*(pow(t*freq*(1-t*freq),5)-
+	   5*(1-2*freq*t)*(1-2*freq*t)*pow(t*freq*(1-t*freq),4))+840*pow((1-2*t*freq)*t*freq*(1-t*freq),4) )));
+  return tmp;
+}

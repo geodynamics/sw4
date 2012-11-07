@@ -36,7 +36,7 @@ ifeq ($(UNAME),Linux)
   FC = mpiifort
   CC = mpiicc
   CXX = mpiicpc
-  linklibs = -llapack -lblas -lifcore
+  linklibs =  -llapack -lblas -lifcore
 # for Bjorn's tux box
   ifeq ($(findstring tux,$(HOSTNAME)),tux)
      FC = gfortran
@@ -46,13 +46,18 @@ ifeq ($(UNAME),Linux)
   endif
 endif
 
+QUADPACK = dqags.o dqagse.o  dqaws.o  dqawse.o  dqc25s.o \
+           dqcheb.o  dqelg.o  dqk15w.o  dqk21.o  dqmomo.o \
+           dqpsrt.o  dqwgts.o  qaws.o  qawse.o  qc25s.o \
+           qcheb.o  qk15w.o  qmomo.o  qpsrt.o  qwgts.o xerror.o d1mach.o r1mach.o
 
 OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
-       MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o 
+       MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
+       lamb_exact_numquad.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
@@ -60,13 +65,14 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
        rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
-       Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o
+       Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
+       lamb_exact.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
 OBJ4 = filterTest.o Filter.o SecondOrderSection.o Polynomial.o
-sw4: $(OBJ)
-	$(CXX) $(CFLAGS) -o $@ $(OBJ) $(linklibs)
+sw4: $(OBJ) $(QUADPACK)
+	$(CXX) $(CFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 
 sw4opt: $(OBJOPT)
 	$(CXX) $(CFLAGS) -o $@ $(OBJOPT) $(linklibs)
@@ -91,6 +97,9 @@ filterTest: $(OBJ4)
 
 %.o:%.C
 	$(CXX) $(CFLAGS) -c $<
+
+%.o:quadpack/%.f
+	$(FC) $(FFLAGS) -c $<
 
 clean:
 	/bin/rm -f sw4 sw4opt $(OBJ) $(OBJOPT)

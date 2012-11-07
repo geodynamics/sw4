@@ -91,10 +91,12 @@ double SuperGrid::phi0(double xi)
   else
 //    f=xi*xi*xi*(10 - 15*xi + 6*xi*xi);
 //    f = fmin + (1.-fmin)*xi*xi*xi*(10 - 15*xi + 6*xi*xi);
-     f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
-       126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
-  
-
+// C4 function
+//     f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
+//       126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
+// C5 function  
+     f = fmin + (1-fmin)*xi*xi*xi*xi*xi*xi*(
+    462-1980*xi+3465*xi*xi-3080*xi*xi*xi+1386*xi*xi*xi*xi-252*xi*xi*xi*xi*xi);
   return f;
 }
 
@@ -109,8 +111,12 @@ double SuperGrid::psi0(double xi)
   else
 //    f=xi*xi*xi*(10 - 15*xi + 6*xi*xi);
 //    f = fmin + (1.-fmin)*xi*xi*xi*(10 - 15*xi + 6*xi*xi);
-    f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
-      126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
+// C4 function
+//    f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
+//      126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
+// C5 function
+     f = fmin + (1-fmin)*xi*xi*xi*xi*xi*xi*(
+    462-1980*xi+3465*xi*xi-3080*xi*xi*xi+1386*xi*xi*xi*xi-252*xi*xi*xi*xi*xi);
   return f;
 }
 

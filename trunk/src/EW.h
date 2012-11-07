@@ -163,7 +163,7 @@ bool proc_zero() const;
 int no_of_procs() const;
 void create_output_directory();
 void initialize_image_files();
-void update_images( int Nsteps, double time, vector<Sarray> & a_U );
+void update_images( int Nsteps, double time, vector<Sarray> & a_U, vector<Source*> & a_sources );
 
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
@@ -408,6 +408,7 @@ double Gaussian(double t, double R, double c,double f);
 
 // Lamb's problem
 void get_exact_lamb( vector<Sarray> & a_U, double a_t, Source& a_source );
+void get_exact_lamb2( vector<Sarray> & a_U, double a_t, Source& a_source );
 double G4_Integral(double T, double t, double r, double beta);
 double G3_Integral(double iT, double it, double ir, double ibeta);
 double G2_Integral(double iT, double it, double ir, double ibeta);

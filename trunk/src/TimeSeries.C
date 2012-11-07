@@ -1946,70 +1946,91 @@ void TimeSeries::readSACfiles( EW *ew, double timeshift, const char* sac1,
       if( eflag == 0 )
 // Headers are ok, get the data
       {
-	 double* u1 = new double[npts1];
-	 double* u2 = new double[npts1];
-	 double* u3 = new double[npts1];
-	 readSACdata( file1.c_str(), npts1, u1 );
-	 readSACdata( file2.c_str(), npts1, u2 );
-	 readSACdata( file3.c_str(), npts1, u3 );
+	 // Check that all data are available
+         
+         bool azfail = false, incfail = false;
+         if( cmpaz1 == -12345 || cmpaz2 == -12345 || cmpaz3 == -12345 )
+            azfail = true;
+         if( cmpinc1 == -12345 || cmpinc2 == -12345 || cmpinc3 == -12345 )
+            incfail = true;
 
-	 allocateRecordingArrays( npts1, t01+timeshift, dt1 );
-
-	 m_utc_set = true;
-	 for( int c=0 ; c < 7 ; c++ )
-	    m_utc[c] = utc1[c];
-
-         if( debug )
+         if( !azfail && !incfail )
 	 {
-            cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
-	    cout << "UTC = " << utc1[1] << "/" << utc1[2] << "/" << utc1[0] << ":" << utc1[3]
-		 << ":" << utc1[4] << ":" << utc1[5] << "." << utc1[6] << endl;
-	    cout << " lat = " << lat1 << " lon = " << lon1 << endl;
-	    cout << " dt = " << dt1 << " t0= " << t01  << " npts = " << npts1 << endl;
-            cout << " az1 = " << cmpaz1 << " inc1 = " << cmpinc1 << endl;
-            cout << " az2 = " << cmpaz2 << " inc2 = " << cmpinc2 << endl;
-            cout << " az3 = " << cmpaz3 << " inc3 = " << cmpinc3 << endl;
-	 }
+	    double* u1 = new double[npts1];
+	    double* u2 = new double[npts1];
+	    double* u3 = new double[npts1];
+	    readSACdata( file1.c_str(), npts1, u1 );
+	    readSACdata( file2.c_str(), npts1, u2 );
+	    readSACdata( file3.c_str(), npts1, u3 );
+
+	    allocateRecordingArrays( npts1, t01+timeshift, dt1 );
+
+	    m_utc_set = true;
+	    for( int c=0 ; c < 7 ; c++ )
+	       m_utc[c] = utc1[c];
+
+	    if( debug )
+	    {
+	       cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
+	       cout << "UTC = " << utc1[1] << "/" << utc1[2] << "/" << utc1[0] << ":" << utc1[3]
+		    << ":" << utc1[4] << ":" << utc1[5] << "." << utc1[6] << endl;
+	       cout << " lat = " << lat1 << " lon = " << lon1 << endl;
+	       cout << " dt = " << dt1 << " t0= " << t01  << " npts = " << npts1 << endl;
+	       cout << " az1 = " << cmpaz1 << " inc1 = " << cmpinc1 << endl;
+	       cout << " az2 = " << cmpaz2 << " inc2 = " << cmpinc2 << endl;
+	       cout << " az3 = " << cmpaz3 << " inc3 = " << cmpinc3 << endl;
+	    }
 // Assume that we are using geographic coordinates, transform to (east,north,up) components.
-         const double convfactor = M_PI/180.0;
-         cmpaz1  *= convfactor;
-         cmpaz2  *= convfactor;
-         cmpaz3  *= convfactor;
-         cmpinc1 *= convfactor;
-         cmpinc2 *= convfactor;
-         cmpinc3 *= convfactor;
+	    const double convfactor = M_PI/180.0;
+	    cmpaz1  *= convfactor;
+	    cmpaz2  *= convfactor;
+	    cmpaz3  *= convfactor;
+	    cmpinc1 *= convfactor;
+	    cmpinc2 *= convfactor;
+	    cmpinc3 *= convfactor;
 
 // Convert from station azimut to (e,n,u) components
-         double tmat[9];
-         tmat[0] = sin(cmpinc1)*cos(cmpaz1);
-	 tmat[1] = sin(cmpinc2)*cos(cmpaz2);
-	 tmat[2] = sin(cmpinc3)*cos(cmpaz3);
-         tmat[3] = sin(cmpinc1)*sin(cmpaz1);
-	 tmat[4] = sin(cmpinc2)*sin(cmpaz2);
-	 tmat[5] = sin(cmpinc3)*sin(cmpaz3);
-	 tmat[6] = cos(cmpinc1);
-	 tmat[7] = cos(cmpinc2);
-	 tmat[8] = cos(cmpinc3);
+	    double tmat[9];
+	    tmat[0] = sin(cmpinc1)*cos(cmpaz1);
+	    tmat[1] = sin(cmpinc2)*cos(cmpaz2);
+	    tmat[2] = sin(cmpinc3)*cos(cmpaz3);
+	    tmat[3] = sin(cmpinc1)*sin(cmpaz1);
+	    tmat[4] = sin(cmpinc2)*sin(cmpaz2);
+	    tmat[5] = sin(cmpinc3)*sin(cmpaz3);
+	    tmat[6] = cos(cmpinc1);
+	    tmat[7] = cos(cmpinc2);
+	    tmat[8] = cos(cmpinc3);
 
-         m_xyzcomponent = false; //note this is format on output file, 
+	    m_xyzcomponent = false; //note this is format on output file, 
  	                         //internally, we always use (x,y,z) during computation.
 
 // Convert (e,n,u) to (x,y,z) components.
-	 double deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-	 double a11 = m_calpha*deti;
-	 double a12 = m_thxnrm*deti;
-	 double a21 =-m_salpha*deti;
-	 double a22 = m_thynrm*deti;
-	 for( int i=0 ; i < npts1 ; i++ )
-	 {
-            double ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-	    double ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-	    double ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-	    mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-	    mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-	    mRecordedSol[2][i] = -ucomp;
+	    double deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+	    double a11 = m_calpha*deti;
+	    double a12 = m_thxnrm*deti;
+	    double a21 =-m_salpha*deti;
+	    double a22 = m_thynrm*deti;
+	    for( int i=0 ; i < npts1 ; i++ )
+	    {
+	       double ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+	       double ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+	       double ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+	       mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+	       mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+	       mRecordedSol[2][i] = -ucomp;
+	    }
+	    mLastTimeStep = npts1-1;
 	 }
-	 mLastTimeStep = npts1-1;
+	 else
+	 {
+	    cout << "readSACfile, ERROR: no information about ";
+            if( azfail )
+	       cout << "component azimut ";
+	    if( incfail )
+	       cout << "component inclination ";
+	    cout << " found on sac file" << endl;
+  	    cout << "  station not read " << endl;
+	 }
       }
       else
       {

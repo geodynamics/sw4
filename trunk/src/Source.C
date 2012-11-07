@@ -279,6 +279,7 @@ double Source::getAmplitude() const
     for (int q=0; q<6; q++)
       msqr += SQR(mForces[q]);
     //    amplitude = mAmp*sqrt(msqr/2.);
+    msqr += SQR(mForces[1])+SQR(mForces[2])+SQR(mForces[4]);
     amplitude = sqrt(0.5*msqr);
   }
   else
@@ -319,7 +320,7 @@ void Source::limit_frequency( int ppw, double minvsoh )
    if( mTimeDependence == iBrune     || mTimeDependence == iBruneSmoothed || mTimeDependence == iDBrune ||
        mTimeDependence == iGaussian  || mTimeDependence == iErf || 
        mTimeDependence == iVerySmoothBump || mTimeDependence == iSmoothWave || 
-       mTimeDependence == iLiu )
+       mTimeDependence == iLiu || mTimeDependence == iC6SmoothBump )
    {
       if( mFreq > 2*M_PI*freqlim )
 	 mFreq = 2*M_PI*freqlim;
@@ -531,6 +532,7 @@ void Source::correct_Z_level( )
    
 }
 
+
 //-----------------------------------------------------------------------
 void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
 {
@@ -599,6 +601,66 @@ void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6], double d
 
 }
 
+//-----------------------------------------------------------------------
+void Source::getsourcewghlow( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
+{
+   // Lower component stencil, to use at lower boundaries
+   // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
+
+   wgh[0] = (2*ai-ai*ai-2*ai*ai*ai+ai*ai*ai*ai)/24;
+   wgh[1] = (-4*ai+4*ai*ai+ai*ai*ai-ai*ai*ai*ai)/6;
+   wgh[2] = 1-1.25*ai*ai+0.25*ai*ai*ai*ai;
+   wgh[3] = (4*ai+4*ai*ai-ai*ai*ai-ai*ai*ai*ai)/6;
+   wgh[4] = (-2*ai-ai*ai+2*ai*ai*ai+ai*ai*ai*ai)/24;
+   wgh[5] = 0;
+
+   // Derivatives of wgh wrt. ai:
+   dwghda[0] = ( 1 - ai - 3*ai*ai+2*ai*ai*ai)/12;
+   dwghda[1] = (-2+4*ai+1.5*ai*ai-2*ai*ai*ai)/3;
+   dwghda[2] = -2.5*ai+ai*ai*ai;
+   dwghda[3] = ( 2+4*ai-1.5*ai*ai-2*ai*ai*ai)/3;
+   dwghda[4] = (-1 - ai + 3*ai*ai+2*ai*ai*ai)/12;
+   dwghda[5] = 0;
+
+   // Second derivatives of wgh wrt. ai:
+   ddwghda[0] = -1.0/12 - 0.5*ai + 0.5*ai*ai;
+   ddwghda[1] =  4.0/3 + ai - 2*ai*ai;
+   ddwghda[2] = -2.5 + 3*ai*ai;
+   ddwghda[3] =  4.0/3 - ai - 2*ai*ai;
+   ddwghda[4] = -1.0/12 + 0.5*ai + 0.5*ai*ai;
+   ddwghda[5] = 0;
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcedwghlow( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
+{
+   // Lower component stencil, to use at lower boundaries, dirac derivative weights.
+   // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
+
+   // same as derivatives of dirac weights.
+   wgh[0] = (-1 + ai + 3*ai*ai- 2*ai*ai*ai)/12;
+   wgh[1] = ( 2 - 4*ai - 1.5*ai*ai + 2*ai*ai*ai)/3;
+   wgh[2] = 2.5*ai-ai*ai*ai;
+   wgh[3] = (-2 - 4*ai + 1.5*ai*ai + 2*ai*ai*ai)/3;
+   wgh[4] = ( 1 + ai - 3*ai*ai- 2*ai*ai*ai)/12;
+   wgh[5] = 0;
+
+   // Derivatives of wgh wrt. ai:
+   dwghda[0] =  1.0/12 + 0.5*ai - 0.5*ai*ai;
+   dwghda[1] = -4.0/3 - ai + 2*ai*ai;
+   dwghda[2] =   2.5 - 3*ai*ai;
+   dwghda[3] = -4.0/3 + ai + 2*ai*ai;
+   dwghda[4] =  1.0/12 - 0.5*ai - 0.5*ai*ai;
+   dwghda[5] = 0;
+
+   // Second derivatives of wgh wrt. ai:
+   ddwghda[0] = 0.5 - ai;
+   ddwghda[1] = -1 + 4*ai;
+   ddwghda[2] =    -6*ai;
+   ddwghda[3] =  1 + 4*ai;
+   ddwghda[4] =  -0.5 - ai;
+   ddwghda[5] = 0;
+}
 
 //-----------------------------------------------------------------------
 void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources ) const
@@ -631,6 +693,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    if( kc >= Nz-2 ) kc = Nz-3;
 
    double ai=q-ic, bi=r-jc, ci=s-kc;
+
 // Delta distribution
    double wghi[6], wghj[6], wghk[6], wghix[6], wghjy[6], wghkz[6];
    double wghixx[6], wghjyy[6], wghkzz[6];
@@ -644,6 +707,14 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    getsourcedwgh( ai, dwghi, dwghix, dwghixx );
    getsourcedwgh( bi, dwghj, dwghjy, dwghjyy );
    getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
+
+   // Special boundary stencil at free surface
+   if( kc == 3 && ci <= 0 )
+   {
+      getsourcewghlow( ci, wghk, wghkz, wghkzz );
+      getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
+   }
+
 
 // Boundary correction
    for( int k=0 ; k <= 5 ; k++ )
@@ -670,11 +741,11 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       //      }
       if( ( 1 <= k+kc-2) && ( k+kc-2 <= 4 ) )
       {
-         wghk[k]  /= normwgh[k+kc-3];
-         dwghk[k] /= normwgh[k+kc-3];
-	 wghkz[k] /= normwgh[k+kc-3];
-	 dwghkz[k] /= normwgh[k+kc-3];
-	 wghkzz[k] /= normwgh[k+kc-3];
+         wghk[k]    /= normwgh[k+kc-3];
+         dwghk[k]   /= normwgh[k+kc-3];
+	 wghkz[k]   /= normwgh[k+kc-3];
+	 dwghkz[k]  /= normwgh[k+kc-3];
+	 wghkzz[k]  /= normwgh[k+kc-3];
 	 dwghkzz[k] /= normwgh[k+kc-3];
       }
       // No source at bottom
@@ -690,13 +761,15 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    }
    if( !mIsMomentSource )
    {
+      //	 cout << "kc = " << kc << " ci= " << ci << endl;
+      //         cout << "wgh = " << wghk[0] << " " << wghk[1] << " " << wghk[2] << " " << wghk[3] << " " << wghk[4] << " " << wghk[5] << endl;
       for( int k=kc-2 ; k <= kc+3 ; k++ )
 	 for( int j=jc-2 ; j <= jc+3 ; j++ )
 	    for( int i=ic-2 ; i <= ic+3 ; i++ )
 	    {
 	       double wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
 	       if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-		   && a_EW->interior_point_in_proc(i,j,g) )
+		   && a_EW->interior_point_in_proc(i,j,g) && (k >= 1) )
 	       {
 		  wF /= h*h*h;
 		  {
@@ -877,7 +950,7 @@ void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], double momex[3]
    if( !mIsMomentSource )
    {
       double x1, y1, z1;
-      for( int c = 0; c <= 3 ; c++ )
+      for( int c = 0; c < 3 ; c++ )
       {
 	 if( kx[c] == 0 )
 	    x1 = 1;
@@ -897,7 +970,7 @@ void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], double momex[3]
    else
    {
       double x1, y1, z1, xp1, yp1, zp1;
-      for( int c = 0; c <= 3 ; c++ )
+      for( int c = 0; c < 3 ; c++ )
       {
 	 if( kx[c] == 0 )
 	    x1 = 1;
@@ -992,6 +1065,9 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
 	 break;
       case iVerySmoothBump :
 	 timeFunc = VerySmoothBump;
+	 break;
+      case iC6SmoothBump :
+	 timeFunc = C6SmoothBump;
 	 break;
       case iRickerInt :
 	 timeFunc = RickerInt;

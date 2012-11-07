@@ -275,7 +275,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //   }
   
 // save any images for cycle = 0 (initial data) ?
-  update_images( 0, t, U );
+  update_images( 0, t, U, a_Sources );
 
 // do some testing...
   if (m_twilight_forcing)
@@ -477,7 +477,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
-    update_images( currentTimeStep, t, Up );
+    update_images( currentTimeStep, t, Up, a_Sources );
     
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
@@ -1928,11 +1928,15 @@ void EW::test_sources( vector<GridPointSource*>& a_point_sources,
   int ky[3] = {0,0,0};
   int kz[3] = {0,0,0};
   double moments[3], momexact[3];
+  int nsourcesloc = a_point_sources.size();
+  int nsources;
+  MPI_Allreduce( &nsourcesloc, &nsources, 1, MPI_INT, MPI_SUM, m_cartesian_communicator );
+
   if( proc_zero() )
   {
      cout << "Source test " << endl;
      cout << "source size = " << a_global_unique_sources.size() << endl;
-     cout << "grid point source size = " << a_point_sources.size() << endl;
+     cout << "grid point source size = " << nsources << endl;
   }
   for( int c=0; c <= 7 ; c++ )
   {
@@ -1957,6 +1961,40 @@ void EW::test_sources( vector<GridPointSource*>& a_point_sources,
   kx[2] = 1;
   ky[2] = 2;
   kz[2] = 1;
+  testSourceDiscretization( kx, ky, kz, moments, a_point_sources, a_F );
+  a_global_unique_sources[0]->exact_testmoments( kx, ky, kz, momexact );
+  if( proc_zero() )
+  {
+     for( int comp = 0 ; comp < 3 ; comp++ )
+        cout << kx[comp] << " " << ky[comp] << " " << kz[comp] << " computed " << moments[comp] <<
+           " exact " << momexact[comp] << " difference = " << moments[comp]-momexact[comp] << endl;
+  }
+  kx[0] = 3;
+  ky[0] = 2;
+  kz[0] = 2;
+  kx[1] = 2;
+  ky[1] = 3;
+  kz[1] = 2;
+  kx[2] = 2;
+  ky[2] = 2;
+  kz[2] = 3;
+  testSourceDiscretization( kx, ky, kz, moments, a_point_sources, a_F );
+  a_global_unique_sources[0]->exact_testmoments( kx, ky, kz, momexact );
+  if( proc_zero() )
+  {
+     for( int comp = 0 ; comp < 3 ; comp++ )
+        cout << kx[comp] << " " << ky[comp] << " " << kz[comp] << " computed " << moments[comp] <<
+           " exact " << momexact[comp] << " difference = " << moments[comp]-momexact[comp] << endl;
+  }
+  kx[0] = 4;
+  ky[0] = 3;
+  kz[0] = 3;
+  kx[1] = 3;
+  ky[1] = 4;
+  kz[1] = 3;
+  kx[2] = 3;
+  ky[2] = 3;
+  kz[2] = 4;
   testSourceDiscretization( kx, ky, kz, moments, a_point_sources, a_F );
   a_global_unique_sources[0]->exact_testmoments( kx, ky, kz, momexact );
   if( proc_zero() )

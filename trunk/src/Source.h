@@ -102,6 +102,8 @@ public:
   int spline_interpolation( );
   void getsourcewgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcedwgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
+  void getsourcewghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
+  void getsourcedwghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
 
   double find_min_exponent() const;
   std::string mName;

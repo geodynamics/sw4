@@ -32,6 +32,31 @@ c rho u_{tt} = h^3 rho*(h/dt)*beta*( psi(x) u_{xxt} )_{xx} + (same in y and z) )
 c Note: h/dt has the dimension of a velocity!
 c
 c add in the SG damping
+c
+c Operator is applied at the free surface boundary k=kfirst+1
+        k = kfirst+1
+	do j=jfirst+2,jlast-2
+	   do i=ifirst+2, ilast-2
+	      do c=1,3
+		 up(c,i,j,k) = up(c,i,j,k) - coeff*(
+c x-differences
+     +  dcx(i+1) * ( u(c,i+2,j,k) -2*u(c,i+1,j,k)+ u(c,i,  j,k))
+     + -2*dcx(i) * ( u(c,i+1,j,k) -2*u(c,i,  j,k)+ u(c,i-1,j,k))
+     + +dcx(i-1) * ( u(c,i,  j,k) -2*u(c,i-1,j,k)+ u(c,i-2,j,k)) 
+     + -dcx(i+1) * (um(c,i+2,j,k)-2*um(c,i+1,j,k)+um(c,i,  j,k)) 
+     + +2*dcx(i) * (um(c,i+1,j,k)-2*um(c,i,  j,k)+um(c,i-1,j,k)) 
+     + -dcx(i-1) * (um(c,i,  j,k)-2*um(c,i-1,j,k)+um(c,i-2,j,k)) 
+c y-differences
+     + +dcy(j+1) * ( u(c,i,j+2,k) -2*u(c,i,j+1,k)+ u(c,i,j,  k)) 
+     + -2*dcy(j) * ( u(c,i,j+1,k) -2*u(c,i,j,  k)+ u(c,i,j-1,k))
+     + +dcy(j-1) * ( u(c,i,j,  k) -2*u(c,i,j-1,k)+ u(c,i,j-2,k)) 
+     + -dcy(j+1) * (um(c,i,j+2,k)-2*um(c,i,j+1,k)+um(c,i,j,  k)) 
+     + +2*dcy(j) * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
+     + -dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )
+	      enddo
+	   enddo
+	enddo
+c Interior
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2
 	    do i=ifirst+2, ilast-2
@@ -52,12 +77,12 @@ c y-differences
      + +2*dcy(j) * (um(c,i,j+1,k)-2*um(c,i,j,k)+um(c,i,j-1,k)) 
      + -dcy(j-1) * (um(c,i,j,k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) 
 c z-differences
-     + +dcz(k+1) * (u(c,i,j,k+2)-2*u(c,i,j,k+1)+u(c,i,j,k)) 
-     + -2*dcz(k) * (u(c,i,j,k+1)-2*u(c,i,j,k)+u(c,i,j,k-1))
-     + +dcz(k-1) * (u(c,i,j,k)-2*u(c,i,j,k-1)+u(c,i,j,k-2)) 
-     + -dcz(k+1) * (um(c,i,j,k+2)-2*um(c,i,j,k+1)+um(c,i,j,k)) 
-     + +2*dcz(k) * (um(c,i,j,k+1)-2*um(c,i,j,k)+um(c,i,j,k-1)) 
-     + -dcz(k-1) * (um(c,i,j,k)-2*um(c,i,j,k-1)+um(c,i,j,k-2)) 
+     + +dcz(k+1) * ( u(c,i,j,k+2) -2*u(c,i,j,k+1)+ u(c,i,j,k  )) 
+     + -2*dcz(k) * ( u(c,i,j,k+1) -2*u(c,i,j,k  )+ u(c,i,j,k-1))
+     + +dcz(k-1) * ( u(c,i,j,k  ) -2*u(c,i,j,k-1)+ u(c,i,j,k-2)) 
+     + -dcz(k+1) * (um(c,i,j,k+2)-2*um(c,i,j,k+1)+um(c,i,j,k  )) 
+     + +2*dcz(k) * (um(c,i,j,k+1)-2*um(c,i,j,k  )+um(c,i,j,k-1)) 
+     + -dcz(k-1) * (um(c,i,j,k  )-2*um(c,i,j,k-1)+um(c,i,j,k-2)) 
      + )
 	      enddo
 	    enddo

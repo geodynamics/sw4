@@ -53,6 +53,7 @@ void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, in
 			      double*, double*, double*, double*, double*, double* );
 void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, 
                                    double*, double*, double*, double*, double*, double* );
+   void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*, double*, double*, double*, int* );
 }
 
 using namespace std;
@@ -1501,7 +1502,7 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
   }
   else if( m_lamb_test )
   {
-    get_exact_lamb( a_U, a_t, *sources[0] );
+    get_exact_lamb2( a_U, a_t, *sources[0] );
     retval = true;
   }
   else if( m_rayleigh_wave_test ) 
@@ -2316,6 +2317,38 @@ complex<double> atan2(complex<double> z, complex<double> w)
 }
 
 //-----------------------------------------------------------------------
+void EW::get_exact_lamb2( vector<Sarray> & a_U, double a_t, Source& a_source )
+{
+  int g;
+// initialize
+  for (g=0; g<mNumberOfGrids; g++)
+    a_U[g].set_to_zero();
+  double x0 = a_source.getX0();
+  double y0 = a_source.getY0();
+  double z0 = a_source.getZ0();
+  
+  double fx, fy, fz;
+  a_source.getForces( fx, fy, fz );
+  double cs  = m_lamb_test->m_cs;
+  double mu  = m_lamb_test->m_mu;
+  g = mNumberOfCartesianGrids - 1; // top Cartesian grid
+  double h = mGridSize[g];
+  int ifirst = m_iStart[g];
+  int ilast  = m_iEnd[g];
+  int jfirst = m_jStart[g];
+  int jlast  = m_jEnd[g];
+  int kfirst = m_kStart[g];
+  int klast  = m_kEnd[g];
+  int tfun = 0;
+  if( a_source.getTfunc() == iVerySmoothBump )
+     tfun = 1;
+  else if( a_source.getTfunc() == iC6SmoothBump )
+     tfun = 2;
+  F77_FUNC(lambexact,LAMBEXACT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+				 a_U[g].c_ptr(), &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
+}
+
+//-----------------------------------------------------------------------
 void EW::get_exact_lamb( vector<Sarray> & a_U, double a_t, Source& a_source )
 {
   int g;
@@ -2959,7 +2992,8 @@ void EW::side_plane( int g, int side, int wind[6], int nGhost )
 }
 
 //-----------------------------------------------------------------------
-void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
+void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp,
+			vector<Source*> & a_sources )
 {
   double maxerr;
   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
@@ -3034,6 +3068,25 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp )
 //       }
 //       else if(img->mMode == Image::DIV )
 //       {
+      else if( img->mMode == Image::UZEXACT || img->mMode == Image::UXEXACT ||
+	       img->mMode == Image::UYEXACT )
+      {
+         vector<Sarray> Uex(mNumberOfGrids);
+         vector<Sarray*> alpha; //dummy, the array is not used in routine exactSol.
+
+	 for( int g=0 ; g < mNumberOfGrids ; g++ )
+            Uex[g].define(3,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         exactSol( time, Uex, alpha, a_sources );
+         int comp;
+         if( img->mMode == Image::UZEXACT )
+	    comp = 3;
+         else if( img->mMode == Image::UXEXACT )
+	    comp = 1;
+         if( img->mMode == Image::UYEXACT )
+	    comp = 2;
+	 img->computeImageQuantity(Uex, comp);
+         Uex.clear();
+      }
 // 	img->computeDivergence();
 // 	if (m_forcing->knows_exact())
 //         {

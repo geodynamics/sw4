@@ -384,7 +384,8 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	z0 = a_GlobalUniqueSources[0]->getZ0();
 	freq = a_GlobalUniqueSources[0]->getFrequency();
 	
-	if ( !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" &&
+	if ( !( (a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
+		 a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ) &&
 	       freq == 1.0 && z0 == 0.0 && fx == 0.0 && fy == 0.0) )
 	{
 	  if (proc_zero())

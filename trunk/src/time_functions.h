@@ -135,4 +135,11 @@ double Discrete_omtt( double freq, double t, double* par, int npar, int* ipar, i
 double Discrete_tttom( double freq, double t, double* par, int npar, int* ipar, int nipar );
 double Discrete_ttomom( double freq, double t, double* par, int npar, int* ipar, int nipar );
 
+double C6SmoothBump(double freq, double t, double* par, int npar, int* ipar, int nipar );
+double C6SmoothBump_t(double freq, double t, double* par, int npar, int* ipar, int nipar );
+double C6SmoothBump_om(double freq, double t, double* par, int npar, int* ipar, int nipar );
+double C6SmoothBump_tt(double freq, double t, double* par, int npar, int* ipar, int nipar );
+double C6SmoothBump_ttt(double freq, double t, double* par, int npar, int* ipar, int nipar );
+double C6SmoothBump_omtt(double freq, double t, double* par, int npar, int* ipar, int nipar );
+
 #endif

@@ -204,6 +204,14 @@ void GridPointSource::initializeTimeFunction()
        mTimeFunc_om = Discrete_om;
        mTimeFunc_omtt = Discrete_omtt;
        break;
+    case iC6SmoothBump :
+      mTimeFunc = C6SmoothBump;
+      mTimeFunc_t = C6SmoothBump_t;
+      mTimeFunc_tt = C6SmoothBump_tt;
+      mTimeFunc_ttt = C6SmoothBump_ttt;
+      mTimeFunc_om = C6SmoothBump_om;
+      mTimeFunc_omtt = C6SmoothBump_omtt;
+      break;
     default :
       std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
       mTimeFunc = RickerWavelet;

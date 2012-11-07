@@ -12,7 +12,7 @@
 int Image::mPreceedZeros=0;
 
 //int Image::MODES=29;
-int Image::MODES=7;
+int Image::MODES=10;
 
 using namespace std;
 
@@ -56,6 +56,9 @@ Image::Image(EW * a_ew,
   mMode2Suffix[RHO] = "rho";
   mMode2Suffix[LAMBDA] = "lambda";
   mMode2Suffix[MU] = "mu";
+  mMode2Suffix[UXEXACT] = "uxexact";
+  mMode2Suffix[UYEXACT] = "uyexact";
+  mMode2Suffix[UZEXACT] = "uzexact";
   // mMode2Suffix[P] = "p";
   // mMode2Suffix[S] = "s";
   // mMode2Suffix[DIV] = "div";
@@ -744,9 +747,10 @@ void Image::evaluateLatLonImage(Sarray &a_X, Sarray &a_Y, Sarray &a_Z, int a_com
 } // end Image::evaluateLatLonImage()
 
 //-----------------------------------------------------------------------
-// void Image::computeImageError(std::vector<Sarray> &mu, int nComp)
-// {
+//void Image::computeImageError(std::vector<Sarray> &mu, int nComp)
+//{
 //   ASSERT(m_isDefinedMPIWriters);
+
 //   if (!mEW->m_forcing->knows_exact())
 //   {
 //     if (proc_write())
@@ -755,7 +759,7 @@ void Image::evaluateLatLonImage(Sarray &a_X, Sarray &a_Y, Sarray &a_Z, int a_com
 //   }
 
 
-// // plane_in_proc returns true for z=const lpanes, because all processors have a part in these planes
+// plane_in_proc returns true for z=const lpanes, because all processors have a part in these planes
 //   bool iwrite   = plane_in_proc(m_gridPtIndex[0]);
 
 //   if (iwrite)
@@ -768,17 +772,6 @@ void Image::evaluateLatLonImage(Sarray &a_X, Sarray &a_Y, Sarray &a_Z, int a_com
 //       double err, x, y, z, t=mEW->getCurrentTime();
 //       double uExact[3];
       
-// // tmp
-// //       if (proc_write())
-// //       {
-// // 	printf("computing image error for image '%s' of mode '%s' time=%e...(msg from proc #%i)\n", mFilePrefix.c_str(), 
-// // 	       const_cast<char*>(mMode2Suffix[mMode].c_str()), t, m_rankWriter); 
-// //       }
-
-// // tmp
-// //      double maxerr=0.;
-      
-// // write the data...
 //       int g;
       
 //       for (g = 0; g < mEW->mNumberOfCartesianGrids; g++)
@@ -798,10 +791,10 @@ void Image::evaluateLatLonImage(Sarray &a_X, Sarray &a_Y, Sarray &a_Z, int a_com
 // 	      y = (jj - 1)*mEW->mGridSize[g];
 // 	      z = (kk - 1)*mEW->mGridSize[g] + mEW->m_zmin[g];
 // 	      mEW->m_forcing->get_exact(x, y, z, t, uExact, mEW->mGridSize[g]);
-		  
+//		  
 // 	      err = ( mu[g](nComp,ii,jj,kk) - uExact[nComp-1] );
 // //	      maxerr = (fabs(err) > maxerr ? fabs(err) : maxerr);
-
+//
 // 	      if( m_double )
 // 	      {
 // 		m_doubleField[g][iField] = err;
@@ -810,7 +803,6 @@ void Image::evaluateLatLonImage(Sarray &a_X, Sarray &a_Y, Sarray &a_Z, int a_com
 // 	      {
 // 		m_floatField[g][iField] = (float) err;
 // 	      }
-		  
 // 	      iField++;      
 // 	    }
 // 	  }

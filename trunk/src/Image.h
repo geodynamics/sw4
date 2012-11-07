@@ -22,7 +22,7 @@ public:
 // 		 FX, FY, FZ, VELMAG, QS, QP, HVEL }; // NONE + 28 modes = 29 are currently defined
 
 // start with the most basic modes
-enum ImageMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU}; // NONE + 6 modes = 7 are currently defined
+   enum ImageMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, UXEXACT, UYEXACT, UZEXACT}; // NONE + 9 modes = 10 are currently defined
 static int MODES;
    
 

@@ -3872,6 +3872,9 @@ void EW::processImage(char* buffer)
       else if (strcmp(token, "rho") == 0)   mode = Image::RHO;
       else if (strcmp(token, "lambda") == 0)   mode = Image::LAMBDA;
       else if (strcmp(token, "mu") == 0)   mode = Image::MU;
+      else if (strcmp(token, "uxexact") == 0)   mode = Image::UXEXACT;
+      else if (strcmp(token, "uyexact") == 0)   mode = Image::UYEXACT;
+      else if (strcmp(token, "uzexact") == 0)   mode = Image::UZEXACT;
       // else if (strcmp(token, "p") == 0)   mode = Image::P;
       // else if (strcmp(token, "s") == 0)   mode = Image::S;
       // else if (strcmp(token, "div") == 0)   mode = Image::DIV;
@@ -4315,6 +4318,8 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	    tDep = iLiu;
          else if (!strcmp("Dirac",formstring) )
 	    tDep = iDirac;
+         else if (!strcmp("C6SmoothBump",formstring) )
+	    tDep = iC6SmoothBump;
 	 else
             if (m_myRank == 0)
 	      cout << "unknown time function: " << formstring << endl << " using default RickerInt function." << endl;
@@ -5200,13 +5205,11 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 	CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
         float float70[70];
 	size_t nr = fread(float70, sizeof(float), 70, fd );
-	if( nr != 70 )
-	{
-	   cout << "processObservation: ERROR, could not read float part of header of " << sacfile1 << endl;
-	   fclose(fd);
-	}
+        CHECK_INPUT( nr == 70, "processObservation: ERROR, could not read float part of header of " << sacfile1 );;
         latlon[0] = float70[31];
         latlon[1] = float70[32];
+        CHECK_INPUT( latlon[0] != -12345 && latlon[1] != -12345, 
+                       "processObservation: ERROR, sac file does not contain station coordinates " << sacfile1);
 	fclose(fd);
      }
      MPI_Bcast( latlon, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD );

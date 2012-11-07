@@ -20,7 +20,7 @@
                if( k.le.4 )then
                   normfact = normfact*wgh(k)
                endif
-               if( k.ge.nk-3 )then
+               if( k.ge.nk-3 .and. k.le.nk )then
                   normfact = normfact*wgh(nk-k+1)
                endif
                if( kx(1).eq.0 )then
