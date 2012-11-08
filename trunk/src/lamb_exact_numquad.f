@@ -45,8 +45,8 @@
       tim = t
       limit = 100
       lenw = 4*limit
-      epsabs = 1d-14
-      epsrel = 1d-14
+      epsabs = 1d-12
+      epsrel = 1d-12
       allocate( iwork(limit+10), work(lenw+10))      
       k = 1
 
@@ -167,7 +167,8 @@ c-----------------------------------------------------------------------
       real*8 function INTFCN3S( a, b )
       implicit none
       real*8 cof
-      parameter( cof = 16384d0 )
+c      parameter( cof = 16384d0 )
+      parameter( cof = 51480d0 )
       real*8 a, b
       INTFCN3S = cof*(b**7*(1-b)**7-a**7*(1-a)**7)
       end
@@ -205,7 +206,8 @@ c-----------------------------------------------------------------------
       implicit none
       real*8 x
       real*8 cof
-      parameter( cof = 16384d0 )
+c      parameter( cof = 16384d0 )
+      parameter( cof = 51480d0 )
       real*8 c11, c12, c21, c22, gamma, gammac
       parameter( gamma=1.08766387358054d0 )
       parameter( gammac=0.563016250305247d0 )
@@ -259,7 +261,8 @@ c-----------------------------------------------------------------------
       implicit none
       real*8 x
       real*8 cof
-      parameter( cof = 16384d0 )
+c      parameter( cof = 16384d0 )
+      parameter( cof = 51480d0 )
       real*8 c11, c12, c21, c22, gamma, gammac
       parameter( gamma=1.08766387358054d0 )
       parameter( gammac=0.563016250305247d0 )
@@ -310,7 +313,8 @@ c-----------------------------------------------------------------------
       implicit none
       real*8 x
       real*8 cof
-      parameter( cof = 16384d0 )
+c      parameter( cof = 16384d0 )
+      parameter( cof = 51480d0 )
       real*8 c11, c12, c21, c22, gamma, gammac
       parameter( gamma=1.08766387358054d0 )
       parameter( gammac=0.563016250305247d0 )

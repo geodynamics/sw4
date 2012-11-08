@@ -1136,8 +1136,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
   double radius =-1, x0, y0, z0;
 
 //tmp  
-  // if (proc_zero())
-  //   printf("Inside normOfDifference\n");
+//   if (proc_zero())
+//     printf("Inside normOfDifference\n");
   
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -1171,12 +1171,12 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     else
       jmax = m_jEndInt[g];
 
-    if (mbcGlobalType[2] == bSuperGrid)
+    if (mbcGlobalType[4] == bSuperGrid)
       kmin = max(m_kStartInt[g], m_sg_gp_thickness+1);
     else
       kmin = m_kStartInt[g];
 
-    if (mbcGlobalType[3] == bSuperGrid)
+    if (mbcGlobalType[5] == bSuperGrid)
       kmax = min(m_kEndInt[g], m_global_nz[g] - m_sg_gp_thickness);
     else
       kmax = m_kEndInt[g];
@@ -1570,6 +1570,16 @@ double EW::VerySmoothBump(double t, double R, double c)
 }
 
 //-----------------------------------------------------------------------
+// C6 smooth bump for time dependence for further testing of point force 
+double EW::C6SmoothBump(double t, double R, double c)
+{
+  double retval = 0;
+  if( (t-R/c) > 0 && (t-R/c) < 1 )
+     retval = 51480.0*pow( (t-R/c)*(1-t+R/c), 7 );
+  return retval;
+}
+
+//-----------------------------------------------------------------------
 // derivative of smooth wave 
 double EW::d_SmoothWave_dt(double t, double R, double c)
 {
@@ -1598,6 +1608,17 @@ double EW::d_VerySmoothBump_dt(double t, double R, double c)
      temp = 0;
   return temp;
 }
+
+//-----------------------------------------------------------------------
+// C6 smooth bump for time dependence to further testing of point force 
+double EW::d_C6SmoothBump_dt(double t, double R, double c)
+{
+  double retval=0;
+  if( (t-R/c) > 0 && (t-R/c) < 1 )
+     retval = 51480.0*7*(1-2*(t-R/c))*pow((t-R/c)*(1-t+R/c),6);
+  return retval;
+}
+
 //-----------------------------------------------------------------------
 // Primitive function (for T) of SmoothWave(t-T)*T
 double EW::SWTP(double Lim, double t)
@@ -1626,9 +1647,18 @@ double EW::VSBTP(double Lim, double t)
   temp = (pow(Lim,11)*(-25200*k*t-2520*j)+2310*k*pow(Lim,12)+(124740*k*pow(t,2)
 							  +24948*j*t+2772*i)*pow(Lim,10)+(-369600*k*pow(t,3)-110880*j*pow(t,2)-24640*i*t-3080*h)*pow(Lim,9)+(727650*k*pow(t,4)+291060*j*pow(t,3)+97020*i*pow(t,2)+24255*h*t+3465*g)*pow(Lim,8)+(-997920*k*pow(t,5)-498960*j*pow(t,4)-221760*i*pow(t,3)-83160*h*pow(t,2)-23760*g*t-3960*f)*pow(Lim,7)+(970200*k*pow(t,6)+582120*j*pow(t,5)+323400*i*pow(t,4)+161700*h*pow(t,3)+69300*g*pow(t,2)+23100*f*t)*pow(Lim,6)+(-665280*k*pow(t,7)-465696*j*pow(t,6)-310464*i*pow(t,5)-194040*h*pow(t,4)-110880*g*pow(t,3)-55440*f*pow(t,2))*pow(Lim,5)+
 	  (311850*k*pow(t,8)+249480*j*pow(t,7)+194040*i*pow(t,6)+145530*h*pow(t,5)+103950*g*pow(t,4)+69300*f*pow(t,3))*pow(Lim,4)+(-92400*
-																 k*pow(t,9)-83160*j*pow(t,8)-73920*i*pow(t,7)-64680*h*pow(t,6)-55440*g*pow(t,5)-46200*f*pow(t,4))*pow(Lim,3)+(13860*k*pow(t,10)+13860*j*pow(t,9)+13860*i*pow(t,8)+13860*h*pow(t,7)+13860*g*pow(t,6)+13860*f*pow(t,5))*pow(Lim,2))/27720.0;
+																   k*pow(t,9)-83160*j*pow(t,8)-73920*i*pow(t,7)-64680*h*pow(t,6)-55440*g*pow(t,5)-46200*f*pow(t,4))*pow(Lim,3)+(13860*k*pow(t,10)+13860*j*pow(t,9)+13860*i*pow(t,8)+13860*h*pow(t,7)+13860*g*pow(t,6)+13860*f*pow(t,5))*pow(Lim,2))/27720.0;
 
   return temp;
+}
+//-----------------------------------------------------------------------
+// Primitive function (for T) of C6SmoothBump(t-T)*T
+double EW::C6SBTP(double Lim, double t)
+{
+  double x = t-Lim;
+  return pow(x,8)*(-3217.5*pow(x,8)+3432.0*(7+t)*pow(x,7)-25740.0*(3+t)*pow(x,6)
+		   +27720.0*(5+3*t)*pow(x,5)-150150.0*(t+1)*x*x*x*x +
+		   32760.0*(3+5*t)*x*x*x-36036.0*(1+3*t)*x*x+5720.0*(1+7*t)*x-6435.0*t);
 }
 
 //-----------------------------------------------------------------------
@@ -1685,6 +1715,32 @@ double EW::VerySmoothBump_x_T_Integral(double t, double R, double alpha, double 
 }
 
 //-----------------------------------------------------------------------
+// Integral of H(t-T)*H(1-t+T)*C6SmoothBump(t-T)*T from R/alpha to R/beta
+double EW::C6SmoothBump_x_T_Integral(double t, double R, double alpha, double beta)
+{
+  double temp = R;
+
+  double lowL, hiL;
+  
+  //  lowL = where(R / alpha > t - 1, R/alpha, t - 1); hiL = where(R / beta < t, R / beta, t);
+  if( R / alpha > t - 1 )
+     lowL = R/alpha;
+  else
+     lowL = t-1;
+  if( R / beta < t )
+     hiL = R/beta;
+  else
+     hiL = t;
+
+  //  temp = where (lowL < t && hiL > t - 1, VSBTP(hiL, t) - VSBTP(lowL, t), 0.0);
+  if( lowL < t && hiL > t - 1 )
+     temp = C6SBTP(hiL, t) - C6SBTP(lowL, t);
+  else
+     temp = 0;
+  return temp;
+}
+
+//-----------------------------------------------------------------------
 double EW::Gaussian(double t, double R, double c, double f )
 {
   double temp = R;
@@ -1716,9 +1772,10 @@ double EW::Gaussian_x_T_Integral(double t, double R, double f, double alpha, dou
 void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 {
    timeDep tD;
-   if(!( source.getName() == "SmoothWave" || source.getName() == "VerySmoothBump" || source.getName()== "Gaussian") )
+   if(!( source.getName() == "SmoothWave" || source.getName() == "VerySmoothBump" ||
+	 source.getName() == "C6SmoothBump" || source.getName()== "Gaussian") )
    {
-      cout << "EW::get_exact_point_source: Error, time dependency must be SmoothWave, VerySmoothBump, or Gaussian, not "
+      cout << "EW::get_exact_point_source: Error, time dependency must be SmoothWave, VerySmoothBump, C6SmoothBump, or Gaussian, not "
 	   << source.getName() << endl;
       return;
    }
@@ -1726,6 +1783,8 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
       tD = iSmoothWave;
    else if( source.getName() == "VerySmoothBump" )
       tD = iVerySmoothBump;
+   else if( source.getName() == "C6SmoothBump" )
+      tD = iC6SmoothBump;
    else
       tD = iGaussian;
 
@@ -1755,7 +1814,8 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
    else
    {
       source.getMoments( mxx, mxy, mxz, myy, myz, mzz );
-      m0  = source.getAmplitude();
+      //      m0  = source.getAmplitude();
+      m0 = 1;
    }
    double* up = u.c_ptr();
    double h   = mGridSize[g];
@@ -1792,6 +1852,14 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 		     
 		     B = ( 1/pow(beta,2) * VerySmoothBump(time, fr*R, beta) -
 			   1/pow(fr*R,2) * VerySmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R) ;
+		  }
+		  else if (tD == iC6SmoothBump)
+		  {
+		     A = ( 1/pow(alpha,2) * C6SmoothBump(time, fr*R, alpha) - 1/pow(beta,2) * C6SmoothBump(time, fr*R, beta) +
+			   3/pow(fr*R,2) * C6SmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R*R*R)  ;
+		     
+		     B = ( 1/pow(beta,2) * C6SmoothBump(time, fr*R, beta) -
+			   1/pow(fr*R,2) * C6SmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R) ;
 		  }
                   else if( tD == iGaussian )
 		  {
@@ -1832,6 +1900,14 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 		     C = VerySmoothBump_x_T_Integral(time, R, alpha, beta);
 		     D = d_VerySmoothBump_dt(time, R, alpha) / pow(alpha,3) / R;
 		     E = d_VerySmoothBump_dt(time, R, beta) / pow(beta,3) / R;
+		  }
+		  else if (tD == iC6SmoothBump)
+		  {
+		     A = C6SmoothBump(time, R, alpha);
+		     B = C6SmoothBump(time, R, beta);
+		     C = C6SmoothBump_x_T_Integral(time, R, alpha, beta);
+		     D = d_C6SmoothBump_dt(time, R, alpha) / pow(alpha,3) / R;
+		     E = d_C6SmoothBump_dt(time, R, beta) / pow(beta,3) / R;
 		  }
 		  else if (tD == iGaussian)
 		  {

@@ -395,14 +395,18 @@ int getNumberOfWritersPFS(){ return m_nwriters;};
  // test point source
 void get_exact_point_source( Sarray& u, double t, int g, Source& source );
 double VerySmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
+double C6SmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
 double SmoothWave_x_T_Integral(double t, double R, double alpha, double beta);
 double Gaussian_x_T_Integral(double t, double R, double f, double alpha, double beta);
 double VSBTP(double Lim, double t);
+double C6SBTP(double Lim, double t);
 double SWTP(double Lim, double t);
 double d_VerySmoothBump_dt(double t, double R, double c);
+double d_C6SmoothBump_dt(double t, double R, double c);
 double d_SmoothWave_dt(double t, double R, double c);
 double d_Gaussian_dt(double t, double R, double c, double f);
 double VerySmoothBump(double t, double R, double c);
+double C6SmoothBump(double t, double R, double c);
 double SmoothWave(double t, double R, double c);
 double Gaussian(double t, double R, double c,double f);
 

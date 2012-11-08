@@ -359,6 +359,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       }
 
       if( m_point_source_test && !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
+				   a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ||
 				   a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
 				   a_GlobalUniqueSources[0]->getName() == "Gaussian") )
       {
