@@ -275,7 +275,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //   }
   
 // save any images for cycle = 0 (initial data) ?
-  update_images( 0, t, U, a_Sources );
+  update_images( 0, t, U, Um, Up, a_Sources, 1 );
 
 // do some testing...
   if (m_twilight_forcing)
@@ -477,7 +477,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
-    update_images( currentTimeStep, t, Up, a_Sources );
+    update_images( currentTimeStep, t, Up, U, Um, a_Sources, currentTimeStep == mNumberOfTimeSteps );
     
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)

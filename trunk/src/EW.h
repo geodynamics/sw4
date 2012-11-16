@@ -163,7 +163,8 @@ bool proc_zero() const;
 int no_of_procs() const;
 void create_output_directory();
 void initialize_image_files();
-void update_images( int Nsteps, double time, vector<Sarray> & a_U, vector<Source*> & a_sources );
+void update_images( int Nsteps, double time, vector<Sarray> & a_Up, vector<Sarray>& a_U, 
+		    vector<Sarray>& a_Um, vector<Source*> & a_sources, int dminus );
 
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
@@ -478,6 +479,7 @@ Filter *m_filter_ptr;
 Filter *m_filterobs_ptr;
   // Test cases for optimizer, validate gradient, hessian, output function surface, etc...
 int m_opttest;
+
 
 private:
 

@@ -1519,9 +1519,10 @@ void EW::processDeveloper(char* buffer)
      }
      else if( startswith("cfl=",token) )
      {
-         double cfl = atof(token);
-         CHECK_INPUT( cfl > 0, "Error negative CFL number");
-         set_cflnumber( cfl );
+	token += 4;
+	double cfl = atof(token);
+	CHECK_INPUT( cfl > 0, "Error negative CFL number");
+	set_cflnumber( cfl );
      }
 // //     if (startswith("update_processor_boundary=", token))
 // //     {
@@ -3775,12 +3776,13 @@ void EW::deprecatedImageMode(int value, const char* name) const
 	 << value << " should be mode=" << name << " instead." << endl;
 }
 
+//-----------------------------------------------------------------------
 void EW::processImage(char* buffer)
 {
-   int cycle=-1, cycleInterval=0, sample=0;
+   int cycle=-1, cycleInterval=0;
 //   int pfs = 0, nwriters=1;
    Image::ImageMode mode=Image::RHO;
-   float time=0.0, timeInterval=0.0;
+   double time=0.0, timeInterval=0.0;
    bool timingSet = false;
    string filePrefix="image";
 
@@ -3792,10 +3794,11 @@ void EW::processImage(char* buffer)
    // It is an error to select more than one.
    // -----------------------------------------------------
   Image::ImageOrientation locationType=Image::UNDEFINED;
-  float coordValue;
+  double coordValue;
   int gridPointValue;
   bool coordWasSet = false;
   bool use_double = false;
+  bool mode_is_grid = false;
   
   char* token = strtok(buffer, " \t");
   if ( strcmp("image", token) != 0 )
@@ -3875,71 +3878,52 @@ void EW::processImage(char* buffer)
       else if (strcmp(token, "uxexact") == 0)   mode = Image::UXEXACT;
       else if (strcmp(token, "uyexact") == 0)   mode = Image::UYEXACT;
       else if (strcmp(token, "uzexact") == 0)   mode = Image::UZEXACT;
-      // else if (strcmp(token, "p") == 0)   mode = Image::P;
-      // else if (strcmp(token, "s") == 0)   mode = Image::S;
-      // else if (strcmp(token, "div") == 0)   mode = Image::DIV;
-      // else if (strcmp(token, "curl") == 0)   mode = Image::CURL;
-      // else if (strcmp(token, "veldiv") == 0)   mode = Image::VELDIV;
-      // else if (strcmp(token, "velcurl") == 0)   mode = Image::VELCURL;
-      // else if (strcmp(token, "lat") == 0)   mode = Image::LAT;
-      // else if (strcmp(token, "lon") == 0)   mode = Image::LON;
-      // else if (strcmp(token, "hvelmax") == 0) mode = Image::HVELMAX;
-      // else if (strcmp(token, "vvelmax") == 0) mode = Image::VVELMAX;
-      // else if (strcmp(token, "topo") == 0) mode = Image::TOPO;
-      // else if (strcmp(token, "grid") == 0) mode = Image::GRID;
-      // else if (strcmp(token, "uxerr") == 0)   mode = Image::UXERR;
-      // else if (strcmp(token, "uyerr") == 0)   mode = Image::UYERR;
-      // else if (strcmp(token, "uzerr") == 0)   mode = Image::UZERR;
+      else if (strcmp(token, "p") == 0)   mode = Image::P;
+      else if (strcmp(token, "s") == 0)   mode = Image::S;
+      else if (strcmp(token, "div") == 0)   mode = Image::DIV;
+      else if (strcmp(token, "curl") == 0)   mode = Image::CURLMAG;
+      else if (strcmp(token, "curlmag") == 0)   mode = Image::CURLMAG;
+      else if (strcmp(token, "veldiv") == 0)   mode = Image::DIVDT;
+      else if (strcmp(token, "divdt") == 0)   mode = Image::DIVDT;
+      else if (strcmp(token, "velcurl") == 0)   mode = Image::CURLMAGDT;
+      else if (strcmp(token, "curlmagdt") == 0)   mode = Image::CURLMAGDT;
+      else if (strcmp(token, "lat") == 0)   mode = Image::LAT;
+      else if (strcmp(token, "lon") == 0)   mode = Image::LON;
+      else if (strcmp(token, "hvelmax") == 0) mode = Image::HMAXDUDT;
+      else if (strcmp(token, "hmaxdudt") == 0) mode = Image::HMAXDUDT;
+      else if (strcmp(token, "hmax") == 0) mode = Image::HMAX;
+      else if (strcmp(token, "vvelmax") == 0) mode = Image::VMAXDUDT;
+      else if (strcmp(token, "vmaxdudt") == 0) mode = Image::VMAXDUDT;
+      else if (strcmp(token, "vmax") == 0) mode = Image::VMAX;
+      else if (strcmp(token, "topo") == 0) mode = Image::TOPO;
+      else if (strcmp(token, "grid") == 0) mode_is_grid=true;
+      else if (strcmp(token, "gridx") == 0) mode = Image::GRIDX;
+      else if (strcmp(token, "gridy") == 0) mode = Image::GRIDY;
+      else if (strcmp(token, "gridz") == 0) mode = Image::GRIDZ;
+      else if (strcmp(token, "uxerr") == 0)   mode = Image::UXERR;
+      else if (strcmp(token, "uyerr") == 0)   mode = Image::UYERR;
+      else if (strcmp(token, "uzerr") == 0)   mode = Image::UZERR;
       // else if (strcmp(token, "fx") == 0)   mode = Image::FX;
       // else if (strcmp(token, "fy") == 0)   mode = Image::FY;
       // else if (strcmp(token, "fz") == 0)   mode = Image::FZ;
-      // else if (strcmp(token, "velmag") == 0)   mode = Image::VELMAG;
+      else if (strcmp(token, "velmag") == 0)   mode = Image::MAGDUDT;
+      else if (strcmp(token, "magdudt") == 0)   mode = Image::MAGDUDT;
+      else if (strcmp(token, "mag") == 0)   mode = Image::MAG;
+      else if (strcmp(token, "hvelmag") == 0)   mode = Image::HMAGDUDT;
+      else if (strcmp(token, "hmagdudt") == 0)   mode = Image::HMAGDUDT;
+      else if (strcmp(token, "hmag") == 0)   mode = Image::HMAG;
       // else if (strcmp(token, "qs") == 0) mode = Image::QS;
       // else if (strcmp(token, "qp") == 0) mode = Image::QP;
-      // else if (strcmp(token, "hvel") == 0) mode = Image::HVEL;
+      //      else if (strcmp(token, "hvel") == 0) mode = Image::HVEL;
       else
       {
-// deprecated, but still possible to alternatively give a numeric value for mode
-	mode = static_cast<Image::ImageMode>(atoi(token));
-	if (mode <= 0 || mode > 28)
-	{
 	  cerr << "Processing image command: " << "mode must be one of the following: " << endl
 	       << "ux|uy|uz|rho|lambda|mu" << endl 
-//"|p|s|div|curl|veldiv|velcurl " << endl
-//	       << "lat|lon|hvelmax|vvelmax|topo|grid|uxerr|uyerr|uzerr " << endl
-//	       << "fx|fy|fz|velmag|qs|qp|hvel " << endl << endl
+               <<  "|p|s|div|curlmag|divdt|curlmagdt " << endl
+	       << "|lat|lon|hvelmax|vvelmax|topo|grid|uxerr|uyerr|uzerr " << endl
+	       << "|uxexact|uyexact|uzexact|magdudt|hmagdudt|hmaxdudt|vmaxdudt|mag|hmag|hmax|vmax" << endl
 	       << "*not: " << token << endl;
-	  
 	  MPI_Abort( MPI_COMM_WORLD, 1 );
-	}
-// what is the purpose of the following if statement?           
-	if (mode == Image::UX) deprecatedImageMode(mode, "ux"); 
-	else if (mode == Image::UY) deprecatedImageMode(mode, "uy"); 
-	else if (mode == Image::UZ) deprecatedImageMode(mode, "uz");
-	else if (mode == Image::RHO) deprecatedImageMode(mode, "rho");
-	else if (mode == Image::LAMBDA) deprecatedImageMode(mode, "lambda");
-	else if (mode == Image::MU) deprecatedImageMode(mode, "mu");
-	// else if (mode == Image::P) deprecatedImageMode(mode, "p");
-	// else if (mode == Image::S) deprecatedImageMode(mode, "s");
-	// else if (mode == Image::DIV) deprecatedImageMode(mode, "div");
-	// else if (mode == Image::CURL) deprecatedImageMode(mode, "curl");
-	// else if (mode == Image::VELDIV) deprecatedImageMode(mode, "veldiv");
-	// else if (mode == Image::VELCURL) deprecatedImageMode(mode, "velcurl");
-	// else if (mode == Image::LAT)deprecatedImageMode(mode, "lat");
-	// else if (mode == Image::LON)deprecatedImageMode(mode, "lon");
-	// else if (mode == Image::HVELMAX)deprecatedImageMode(mode, "hvelmax");
-	// else if (mode == Image::VVELMAX)deprecatedImageMode(mode, "vvelmax");
-	// else if (mode == Image::TOPO)deprecatedImageMode(mode, "topo");
-	// else if (mode == Image::GRID)deprecatedImageMode(mode, "grid");
-	// else if (mode == Image::UXERR)deprecatedImageMode(mode, "uxerr");
-	// else if (mode == Image::UYERR)deprecatedImageMode(mode, "uyerr");
-	// else if (mode == Image::UZERR)deprecatedImageMode(mode, "uzerr");
-	// else if (mode == Image::FX)deprecatedImageMode(mode, "fx");
-	// else if (mode == Image::FY)deprecatedImageMode(mode, "fy");
-	// else if (mode == Image::FZ)deprecatedImageMode(mode, "fz");
-	// else if (mode == Image::VELMAG)deprecatedImageMode(mode, "velmag");
-	// else if (mode == Image::QS)deprecatedImageMode(mode, "qs");
-	// else if (mode == Image::QP)deprecatedImageMode(mode, "qp");
       }
     }
     else if( startswith("precision=",token) )
@@ -4028,9 +4012,42 @@ void EW::processImage(char* buffer)
   // Set up the image object
   if (coordWasSet)
   {
-    i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-                  filePrefix, sample, mode, locationType, coordValue, use_double);
-    addImage(i);    
+     if( mode_is_grid )
+     {
+	if( locationType == Image::X )
+	{
+	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			 filePrefix, Image::GRIDY, locationType, coordValue, use_double);
+	   addImage(i);
+	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double);
+	   addImage(i);
+	}
+	else if( locationType == Image::Y )
+	{
+	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			 filePrefix, Image::GRIDX, locationType, coordValue, use_double);
+	   addImage(i);
+	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double);
+	   addImage(i);
+	}
+	else if( locationType == Image::Z )
+	{
+	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			 filePrefix, Image::GRIDX, locationType, coordValue, use_double);
+	   addImage(i);
+	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			 filePrefix, Image::GRIDY, locationType, coordValue, use_double);
+	   addImage(i);
+	}
+     }
+     else
+     {
+	i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+		      filePrefix, mode, locationType, coordValue, use_double);
+	addImage(i);
+     }
   }
   else 
   {

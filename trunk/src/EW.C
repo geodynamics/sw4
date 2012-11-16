@@ -3068,101 +3068,136 @@ void EW::side_plane( int g, int side, int wind[6], int nGhost )
 }
 
 //-----------------------------------------------------------------------
-void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp,
-			vector<Source*> & a_sources )
+void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
+			vector<Sarray>& a_U, vector<Sarray>& a_Um,
+			vector<Source*> & a_sources, int dminus )
 {
-  double maxerr;
-  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
-  {
-    Image* img = mImageFiles[fIndex];
-    
-    // if( img->mMode == Image::HVELMAX)
-    //   img->update_maxes_hVelMax();
-    // if( img->mMode == Image::VVELMAX)
-    //   img->update_maxes_vVelMax();
+   double maxerr;
+   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+   {
+      Image* img = mImageFiles[fIndex];
 
-    if (img->timeToWrite(time , currentTimeStep, mDt )) 
-    {
-      if(img->mMode == Image::UX ) 
+      if( img->mMode == Image::HMAXDUDT)
       {
-	img->computeImageQuantity(mUp, 1);
+	 if( dminus )
+	    img->update_maxes_hVelMax( a_Up, a_U, mDt );
+	 else
+	    img->update_maxes_hVelMax( a_Up, a_Um, 2*mDt );
       }
-      else if(img->mMode == Image::UY )
-      { 
-	img->computeImageQuantity(mUp, 2);
-      }
-      else if(img->mMode == Image::UZ )
-      {
-	img->computeImageQuantity(mUp, 3);
-      }
-      // else if(img->mMode == Image::FX ) 
-      // {
-      // 	img->computeImageQuantity(mF, 1);
-      // }
-      // else if(img->mMode == Image::FY )
-      // { 
-      // 	img->computeImageQuantity(mF, 2);
-      // }
-      // else if(img->mMode == Image::FZ )
-      // {
-      // 	img->computeImageQuantity(mF, 3);
-      // }
-      else if(img->mMode == Image::RHO )
-      {
-	img->computeImageQuantity(mRho, 1);
-      }
-      else if(img->mMode == Image::MU )
-      {
-	img->computeImageQuantity(mMu, 1);
-      }
-      else if(img->mMode == Image::LAMBDA )
-      {
-	img->computeImageQuantity(mLambda, 1);
-      }
-//       else if(img->mMode == Image::QS )
-//       { 
-// 	if (usingAttenuation())
-// 	  img->computeImageQuantity(mQs, 2);
-//       }
-//       else if(img->mMode == Image::QP )
-//       { 
-// 	if (usingAttenuation())
-// 	  img->computeImageQuantity(mQp, 2);
-//       }
-// // the next 3 use Image::computeImageError to fill in values, which calls the forcing to get the exact solution
-//       else if(img->mMode == Image::UXERR ) 
-//       {
-// 	img->computeImageError(mUp, 1);
-//       }
-//       else if(img->mMode == Image::UYERR )
-//       { 
-// 	img->computeImageError(mUp, 2);
-//       }
-//       else if(img->mMode == Image::UZERR )
-//       {
-// 	img->computeImageError(mUp, 3);
-//       }
-//       else if(img->mMode == Image::DIV )
-//       {
-      else if( img->mMode == Image::UZEXACT || img->mMode == Image::UXEXACT ||
-	       img->mMode == Image::UYEXACT )
-      {
-         vector<Sarray> Uex(mNumberOfGrids);
-         vector<Sarray*> alpha; //dummy, the array is not used in routine exactSol.
+      if( img->mMode == Image::HMAX )
+	    img->update_maxes_hMax( a_Up );
 
-	 for( int g=0 ; g < mNumberOfGrids ; g++ )
-            Uex[g].define(3,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
-         exactSol( time, Uex, alpha, a_sources );
-         int comp;
-         if( img->mMode == Image::UZEXACT )
-	    comp = 3;
-         else if( img->mMode == Image::UXEXACT )
-	    comp = 1;
-         if( img->mMode == Image::UYEXACT )
-	    comp = 2;
-	 img->computeImageQuantity(Uex, comp);
-         Uex.clear();
+      if( img->mMode == Image::VMAXDUDT)
+      {
+	 if( dminus )
+	    img->update_maxes_vVelMax( a_Up, a_U, mDt );
+	 else
+	    img->update_maxes_vVelMax( a_Up, a_Um, 2*mDt );
       }
+      if( img->mMode == Image::VMAX )
+	 img->update_maxes_vMax( a_Up );
+
+      // Center time derivatives around t-dt, i.e., (up-um)/(2*dt), except when dminus
+      // is set. Use (up-u)/dt assumed centered at t, when dminus is true.
+      int td = 0;
+      if( !dminus )
+	 td = img->is_time_derivative();
+
+      if (img->timeToWrite(time-td*mDt , currentTimeStep-td, mDt )) 
+      {
+	 if(img->mMode == Image::UX ) 
+	    img->computeImageQuantity(a_Up, 1);
+	 else if(img->mMode == Image::UY )
+	    img->computeImageQuantity(a_Up, 2);
+	 else if(img->mMode == Image::UZ )
+	    img->computeImageQuantity(a_Up, 3);
+	 //         else if(img->mMode == Image::FX ) 
+	 //            img->computeImageQuantity(mF, 1);
+	 //         else if(img->mMode == Image::FY )
+	 //            img->computeImageQuantity(mF, 2);
+	 //         else if(img->mMode == Image::FZ )
+	 //            img->computeImageQuantity(mF, 3);
+	 else if(img->mMode == Image::RHO )
+	    img->computeImageQuantity(mRho, 1);
+	 else if(img->mMode == Image::MU )
+	    img->computeImageQuantity(mMu, 1);
+	 else if(img->mMode == Image::LAMBDA )
+	    img->computeImageQuantity(mLambda, 1);
+	 else if(img->mMode == Image::P )
+	    img->computeImagePvel(mMu, mLambda, mRho);
+	 else if(img->mMode == Image::S )
+	    img->computeImageSvel(mMu, mRho);
+	 else if(img->mMode == Image::DIV || img->mMode == Image::DIVDT 
+		 || img->mMode == Image::CURLMAG || img->mMode == Image::CURLMAGDT )
+	    img->computeImageDivCurl( a_Up, a_U, a_Um, mDt, dminus );
+	 else if(img->mMode == Image::LAT || img->mMode == Image::LON )
+	    img->computeImageLatLon( mX, mY, mZ );
+	 else if(img->mMode == Image::TOPO )
+	 {
+	    if (topographyExists())
+	       img->copy2DArrayToImage(mTopo); // save the raw topography; the smoothed is saved by the mode=grid with z=0
+	 }
+	 else if( img->mMode == Image::UZEXACT || img->mMode == Image::UXEXACT ||
+		  img->mMode == Image::UYEXACT || img->mMode == Image::UXERR   ||
+		  img->mMode == Image::UYERR   || img->mMode == Image::UZERR   )
+	 {
+	    // Note: this is inefficient, the exact solution is computed everywhere, and once for each
+	    //   EXACT or ERR image mode.
+	    vector<Sarray> Uex(mNumberOfGrids);
+	    vector<Sarray*> alpha; //dummy, the array is not used in routine exactSol.
+	    for( int g=0 ; g < mNumberOfGrids ; g++ )
+	       Uex[g].define(3,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+	    exactSol( time, Uex, alpha, a_sources );
+            if( img->mMode == Image::UXERR || img->mMode == Image::UYERR || img->mMode == Image::UZERR )
+	    {
+	       for( int g=0 ; g < mNumberOfGrids ; g++ )
+	       {
+		  size_t n=static_cast<size_t>(Uex[g].npts());
+                  int nc  = Uex[g].ncomp();
+                  double* uxp = Uex[g].c_ptr();
+		  double* up  = a_Up[g].c_ptr();
+		  for( size_t i=0 ; i < n*nc ; i++ )
+		     uxp[i] = up[i]-uxp[i];
+	       }
+	    }
+	    if( img->mMode == Image::UXEXACT || img->mMode == Image::UXERR )
+	       img->computeImageQuantity(Uex,1);
+	    else if( img->mMode == Image::UYEXACT || img->mMode == Image::UYERR )
+	       img->computeImageQuantity(Uex,2);
+	    else if( img->mMode == Image::UZEXACT || img->mMode == Image::UZERR )
+	       img->computeImageQuantity(Uex,3);
+	    Uex.clear();
+	 }
+         else if( img->mMode == Image::GRIDX || img->mMode == Image::GRIDY || img->mMode == Image::GRIDZ )
+	    img->computeImageGrid(mX, mY, mZ );
+         else if(img->mMode == Image::MAGDUDT )
+	 {
+            if( dminus )
+	       img->computeImageMagdt( a_Up, a_U, mDt );
+	    else
+	       img->computeImageMagdt( a_Up, a_Um, 2*mDt );
+	 }
+	 else if(img->mMode == Image::HMAGDUDT )
+	 {
+            if( dminus )
+	       img->computeImageHmagdt( a_Up, a_U, mDt );
+	    else
+	       img->computeImageHmagdt( a_Up, a_Um, 2*mDt );
+	 }
+         else if(img->mMode == Image::MAG )
+	    img->computeImageMag( a_Up );
+         else if(img->mMode == Image::HMAG )
+	    img->computeImageHmag( a_Up );
+	 //         else if(img->mMode == Image::QS )
+	 //	 { 
+	 //	    if (usingAttenuation())
+	 //	       img->computeImageQuantity(mQs, 1);
+	 //       }
+	 //       else if(img->mMode == Image::QP )
+	 //       { 
+	 // 	if (usingAttenuation())
+	 // 	  img->computeImageQuantity(mQp, 2);
+	 //       }
 // 	img->computeDivergence();
 // 	if (m_forcing->knows_exact())
 //         {
@@ -3210,10 +3245,6 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp,
 //         img->computeHorizontalVelocityMagnitude();
 //       }
 // // the following two modes converts mu,lambda,rho into vp and vs
-//       else if(img->mMode == Image::P )
-//       {
-// 	img->computeImageP(mMu, mLambda, mRho);
-//       }
 //       else if(img->mMode == Image::S )
 //       {
 // 	img->computeImageS(mMu, mLambda, mRho);
@@ -3260,8 +3291,9 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp,
 // // the file is saved below
 
 //       }
-      else
-//      else if (!img->mMode==Image::HVELMAX||!img->mMode==Image::VVELMAX)
+//      else
+      else if (!img->mMode == Image::HMAXDUDT || !img->mMode == Image::VMAXDUDT
+	      || !img->mMode == Image::HMAX   || !img->mMode == Image::VMAX )
       {
 	if (proc_zero())
 	{
@@ -3276,7 +3308,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & mUp,
       double t[3];
       t[0] = t[1] = t[2] = MPI_Wtime();
 
-      img->writeImagePlane_2(currentTimeStep, mPath );
+      img->writeImagePlane_2( currentTimeStep-td, mPath, time-td*mDt );
       t[2] = MPI_Wtime();
       
 // output timing info?
