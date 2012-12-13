@@ -102,8 +102,8 @@ std::string mFilePrefix;
 void initializeTime();
 
 protected:
-void define_pio();  
 
+void define_pio();  
 bool proc_write();
 
 double mTime;
@@ -122,12 +122,12 @@ static int mPreceedZeros; // number of digits for unique time step in file names
 bool m_gridPtValueInitialized;
   
 private:
+
 Image(); // make it impossible to call default constructor
 Image(const Image &im); // hide copy constructor 
 
 void computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a_div );
 void computeCurl( std::vector<Sarray> &a_U, std::vector<double*>& a_curl );
-
 
 bool mWriting;
 bool mReadyToWrite;

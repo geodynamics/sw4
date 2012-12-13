@@ -25,15 +25,23 @@ void F77_FUNC(rhouttlumf, RHOUTTLUMF)(int*, int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfort,FORCINGFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double* );
+void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+					       double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(exactaccfort,EXACTACCFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double* );
 void F77_FUNC(rhserrfort, RHSERRFORT)(int*, int*, int*, int*, int*, int*, int*, double*,
 				      double*, double*, double*, double*, double*);
 void F77_FUNC(rhs4th3fort,RHS4TH3FORT)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
 				       double*, double*, double*, double*, double*, double* );
+void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
+						 double*, double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
@@ -165,6 +173,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_global_zmin(0.),
   m_ghost_points(2), // for 4th order stencils
   m_ppadding(2),
+  //  m_ghost_points(3), // for 6th order stencils
+  //  m_ppadding(3),
 
   mLonOrigin(-118.0), // NTS
   mLatOrigin(37.0), // NTS
@@ -1133,7 +1143,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
   
   double *uex_ptr, *u_ptr, h, linfLocal=0, l2Local=0, diffInfLocal=0, diffL2Local=0;
   double xInfLocal=0, xInfGrid=0;
-  double radius =-1, x0, y0, z0;
+  double radius =-1, x0=0, y0=0, z0=0;
 
 //tmp  
 //   if (proc_zero())
@@ -2803,9 +2813,19 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
 	amprho = m_twilight_forcing->m_amprho;
 	ampmu = m_twilight_forcing->m_ampmu;
 	ampla = m_twilight_forcing->m_amplambda;
-	F77_FUNC(forcingfort,FORCINGFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-					   &h, &zmin );
+        if( usingSupergrid() )
+	{
+	   double omstrx = m_supergrid_taper_x.get_tw_omega();
+	   double omstry = m_supergrid_taper_y.get_tw_omega();
+	   double omstrz = m_supergrid_taper_z.get_tw_omega();
+	   F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+						  &h, &zmin, &omstrx, &omstry, &omstrz );
+	}
+        else
+	   F77_FUNC(forcingfort,FORCINGFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+					      &h, &zmin );
      }
   }
   else if( m_rayleigh_wave_test )
@@ -2871,9 +2891,19 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
      //  subroutine forcingfort( ifirst, ilast, jfirst, jlast, kfirst, 
      // +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
      // +     h, zmin)
-     F77_FUNC(forcingttfort,FORCINGTTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					    &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-					    &amprho, &ampmu, &ampla, &h, &zmin );
+        if( usingSupergrid() )
+	{
+	   double omstrx = m_supergrid_taper_x.get_tw_omega();
+	   double omstry = m_supergrid_taper_y.get_tw_omega();
+	   double omstrz = m_supergrid_taper_z.get_tw_omega();
+	   F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+				      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+			  	      &h, &zmin, &omstrx, &omstry, &omstrz );
+	}
+	else
+	   F77_FUNC(forcingttfort,FORCINGTTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+						  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+						  &amprho, &ampmu, &ampla, &h, &zmin );
   }
   else if( m_rayleigh_wave_test )
   {
@@ -2931,7 +2961,13 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Uacc )
     nz = m_global_nz[g];
     onesided_ptr = m_onesided[g];
     
-    F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+    if( usingSupergrid() )
+       F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+  			          &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				   uacc_ptr, u_ptr, mu_ptr, la_ptr, rho_ptr, &h,
+				   m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g] );
+    else
+       F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
 				      uacc_ptr, u_ptr, mu_ptr, la_ptr, rho_ptr, &h );    
 

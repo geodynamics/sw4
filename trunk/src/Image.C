@@ -114,7 +114,6 @@ Image::Image(EW * a_ew,
   }
   m_gridimage1 = Image::nil;
   m_gridimage2 = Image::nil;
-
 }
 
 //-----------------------------------------------------------------------
@@ -170,14 +169,13 @@ void Image::setSteps(int a_steps)
   mPreceedZeros = snprintf( buffer, 50, "%d", a_steps );
 }
 
-//-------------------------------------
-
+//-----------------------------------------------------------------------
+void Image::computeGridPtIndex()
+{
+// the purpose of this routine is to assign the vector<int> m_gridPtIndex
 /* Here, we compute the index --in the local grid-- of the coordinate value at which we have to plot. 
    For x, y, the local grid is the same as the global grid, but for z, k resets at each refinement boundary. */
 
-// the purpose of this routine is to assign the vector<int> m_gridPtIndex
-void Image::computeGridPtIndex()
-{
 //   ASSERT(m_isInitializedGridSize);
 //   ASSERT(m_isInitializedZMin)    ;
 
@@ -1915,7 +1913,7 @@ void Image::computeImageHmagdt(vector<Sarray> &a_Up, vector<Sarray> &a_Um,
 } 
 
 //-----------------------------------------------------------------------
-void Image::computeImageHmag(vector<Sarray> &a_U )
+void Image::computeImageHmag( vector<Sarray> &a_U )
 {
    // dt is distance between Up and Um.
    ASSERT(m_isDefinedMPIWriters);

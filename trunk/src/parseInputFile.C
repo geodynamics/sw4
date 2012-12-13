@@ -565,6 +565,14 @@ void EW::processGrid(char* buffer)
                 << extrapolate);
 	mMaterialExtrapolate = extrapolate;
      }
+     else if( startswith("ghostpts=",token))
+     {
+	token += 9;
+        int ghost = atoi(token);
+	CHECK_INPUT( ghost == 2 || ghost == 3, err << "Number of ghost points must be 2 or 3, not " << ghost );
+	m_ghost_points = ghost;
+        m_ppadding = ghost;
+     }
      else
      {
         badOption("grid", token);
@@ -1392,6 +1400,10 @@ void EW::processTwilight(char* buffer)
   double amprho = 1;
   double ampmu  = 1;
   double amplambda = 1;
+  double omstrx=1.1, omstry=0.8, omstrz=0.9;
+
+  int sgstretch = 0;
+  int frsurfu=1, frsurfl=0;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("twilight", token) == 0, "ERROR: not a twilight line...: " << token);
@@ -1411,6 +1423,30 @@ void EW::processTwilight(char* buffer)
 	  bool errorlog = atoi(token)==1;
 	  if( errorlog )
 	     switch_on_error_log();
+       }
+       else if( startswith("sgstretching=",token) )
+       {
+          token += 13;
+          if( strcmp(token,"1") == 0 || strcmp(token,"yes") == 0 || strcmp(token,"true") == 0 )
+	     sgstretch = 1;
+	  else
+	     sgstretch = 0;
+       }
+       else if( startswith("freeupper=",token) )
+       {
+          token += 10;
+          if( strcmp(token,"1") == 0 || strcmp(token,"yes") == 0 || strcmp(token,"true") == 0 )
+	     frsurfu = 1;
+	  else
+	     frsurfu = 0;
+       }
+       else if( startswith("freelower=",token) )
+       {
+          token += 10;
+          if( strcmp(token,"1") == 0 || strcmp(token,"yes") == 0 || strcmp(token,"true") == 0 )
+	     frsurfl = 1;
+	  else
+	     frsurfl = 0;
        }
        else if( startswith("omega=",token) )
        {
@@ -1452,6 +1488,21 @@ void EW::processTwilight(char* buffer)
           token += 10;
 	  amplambda = atof(token);
        }
+       else if( startswith("omstrx=",token) )
+       {
+          token += 7;
+	  omstrx = atof(token);
+       }
+       else if( startswith("omstry=",token) )
+       {
+          token += 7;
+	  omstry = atof(token);
+       }
+       else if( startswith("omstrz=",token) )
+       {
+          token += 7;
+	  omstrz = atof(token);
+       }
        else
        {
           badOption("twilight", token);
@@ -1464,9 +1515,37 @@ void EW::processTwilight(char* buffer)
 
   set_twilight_forcing( forcing );
 
-  boundaryConditionType bct[6]={bDirichlet, bDirichlet, bDirichlet, bDirichlet, bStressFree, bDirichlet};
+  // Default to Dirichlet conditions on all sides
+  boundaryConditionType bct[6]={bDirichlet, bDirichlet, bDirichlet, bDirichlet, bDirichlet, bDirichlet};
+
+  // Free surface conditions upper side,
+  if( frsurfu == 1 )
+     bct[4] = bStressFree;
+
+  // Free surface conditions lower side,
+  if( frsurfl == 1 )
+     bct[5] = bStressFree;
+
+  // Use supergrid stretching
+  if( sgstretch == 1 )
+  {
+     for( int side=0 ; side < 6 ; side++ )
+	if( bct[side] == bDirichlet )
+	   bct[side] = bSuperGrid;
+     if( bct[0] == bSuperGrid || bct[1] == bSuperGrid )
+	m_supergrid_taper_x.set_twilight(omstrx);
+     if( bct[2] == bSuperGrid || bct[3] == bSuperGrid )
+	m_supergrid_taper_y.set_twilight(omstry);
+
+     CHECK_INPUT( (bct[4] == bSuperGrid && bct[5] == bSuperGrid) || (bct[4] == bStressFree && bct[5] == bStressFree),
+	   "Error: Twilight testing with supergrid stretching must have the same b.c. (stress free or supergrid) on the z=low and z=high boundaries" );
+	
+     if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
+	m_supergrid_taper_z.set_twilight(omstrz);
+     else
+	m_supergrid_taper_z.set_twilight( 0.0 );
+  }
   set_global_bcs(bct);
-  
 }
 
 void EW::processDeveloper(char* buffer)
@@ -3400,6 +3479,7 @@ void EW::set_twilight_forcing( ForcingTwilight* a_forcing )
 {
    m_twilight_forcing = a_forcing;
    set_testing_mode(true);
+   
 }
 
 //-----------------------------------------------------------------------

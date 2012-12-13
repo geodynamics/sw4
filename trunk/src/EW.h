@@ -212,7 +212,7 @@ void set_sg_thickness(int gp_thickness);
 void set_sg_transition(int gp_trans);
 bool usingSupergrid(){return m_use_supergrid;};
 void setup_supergrid( );
-void supergrid_taper_material();
+   //void supergrid_taper_material();
 void assign_supergrid_damping_arrays();
 
 void assign_local_bcs( );
@@ -651,6 +651,7 @@ double m_curlcoeff, m_d4coeff, m_d4_cfl; // these should go away
 
 // storage for the 1-D damping coefficients
 vector<double*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;
+vector<double*> m_sg_str_x, m_sg_str_y, m_sg_str_z;
 
 //-------------------------------------------
 // restart data

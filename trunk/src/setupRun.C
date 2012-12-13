@@ -254,7 +254,7 @@ void EW::setupRun( )
   if (usingSupergrid())
   {
 // taper mu, lambda to near zero while making rho large at outflow (Dirichlet) boundaries
-    supergrid_taper_material();
+//    supergrid_taper_material();
 // 1-D damping coefficients in the (x,y,z) directions
     assign_supergrid_damping_arrays();
   }
@@ -1200,52 +1200,107 @@ void EW::assign_supergrid_damping_arrays()
   m_sg_dc_x.resize(mNumberOfGrids);
   m_sg_dc_y.resize(mNumberOfGrids);
   m_sg_dc_z.resize(mNumberOfGrids);
+
+  m_sg_str_x.resize(mNumberOfGrids);
+  m_sg_str_y.resize(mNumberOfGrids);
+  m_sg_str_z.resize(mNumberOfGrids);
   
 // allocate storage for 1-D damping coefficients on each grid
   for( g=0 ; g<mNumberOfGrids; g++) 
   {
-    m_sg_dc_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
-    m_sg_dc_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
-    m_sg_dc_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
+    m_sg_dc_x[g]  = new double[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_dc_y[g]  = new double[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_dc_z[g]  = new double[m_kEnd[g]-m_kStart[g]+1];
+
+    m_sg_str_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_str_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_str_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
   }
 #define dcx(i,g) (m_sg_dc_x[g])[i-m_iStart[g]]
 #define dcy(j,g) (m_sg_dc_y[g])[j-m_jStart[g]]
 #define dcz(k,g) (m_sg_dc_z[g])[k-m_kStart[g]]
+#define strx(i,g) (m_sg_str_x[g])[i-m_iStart[g]]
+#define stry(j,g) (m_sg_str_y[g])[j-m_jStart[g]]
+#define strz(k,g) (m_sg_str_z[g])[k-m_kStart[g]]
+
   topCartesian = mNumberOfCartesianGrids-1;
 
 // Note: compared to WPP2, we don't need to center the damping coefficients on the half-point anymore,
 // because the damping term is now 4th order: D+D-( a(x) D+D- ut(x) )
 
-  for( g=0 ; g<mNumberOfGrids; g++)  
+  if( m_twilight_forcing )
   {
-    for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-    {
-      x = (i-1)*mGridSize[g];
-      dcx(i,g) = m_supergrid_taper_x.dampingCoeff(x);
-    }
-    for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-    {
-      y = (j-1)*mGridSize[g];
-      dcy(j,g) = m_supergrid_taper_y.dampingCoeff(y);
-    }
-    if (g > topCartesian) // must be the curvilinear grid
-    {
+     for( g=0 ; g<mNumberOfGrids; g++)  
+     {
+	for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	{
+	   x = (i-1)*mGridSize[g];
+	   dcx(i,g)  = 0;
+	   strx(i,g) = m_supergrid_taper_x.tw_stretching(x);
+	}
+	for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	{
+	   y = (j-1)*mGridSize[g];
+	   dcy(j,g)  = 0;
+	   stry(j,g) = m_supergrid_taper_y.tw_stretching(y);
+	}
+	if (g > topCartesian) // must be the curvilinear grid
+	{
 // supergrid damping in the vertical (k-) direction on a curvilinear grid is not defined
-      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
-      {
-	dcz(k,g) = 0.;
-      }
-    }
-    else
-    {
-      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
-      {
-	z = m_zmin[g] + (k-1)*mGridSize[g];
-	dcz(k,g) = m_supergrid_taper_z.dampingCoeff(z);
-      }
-    }
+	   for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	   {
+	      dcz(k,g)  = 0.;
+	      strz(k,g) = 1;
+	   }
+	}
+	else
+	{
+	   for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	   {
+	      z = m_zmin[g] + (k-1)*mGridSize[g];
+	      dcz(k,g)  = 0;
+	      strz(k,g) = m_supergrid_taper_z.tw_stretching(z);
+	   }
+	}
+     }
+  }
+  else
+  {
+     for( g=0 ; g<mNumberOfGrids; g++)  
+     {
+	for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	{
+	   x = (i-1)*mGridSize[g];
+	   dcx(i,g)  = m_supergrid_taper_x.dampingCoeff(x);
+	   strx(i,g) = m_supergrid_taper_x.stretching(x);
+	}
+	for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	{
+	   y = (j-1)*mGridSize[g];
+	   dcy(j,g)  = m_supergrid_taper_y.dampingCoeff(y);
+	   stry(j,g) = m_supergrid_taper_y.stretching(y);
+	}
+	if (g > topCartesian) // must be the curvilinear grid
+	{
+// supergrid damping in the vertical (k-) direction on a curvilinear grid is not defined
+	   for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	   {
+	      dcz(k,g) = 0.;
+	      strz(k,g) = 1;
+	   }
+	}
+	else
+	{
+	   for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	   {
+	      z = m_zmin[g] + (k-1)*mGridSize[g];
+	      dcz(k,g)  = m_supergrid_taper_z.dampingCoeff(z);
+	      strz(k,g) = m_supergrid_taper_z.stretching(z);
+	   }
+	}
     
-  } // end for g...
+     } // end for g...
+  }
   
 // tmp: save the damping coefficients in matlab format
   // FILE *fp;
@@ -1283,48 +1338,51 @@ void EW::assign_supergrid_damping_arrays()
 #undef dcx
 #undef dcy
 #undef dcz
+#undef strx
+#undef stry
+#undef strz
 }
 
-//-----------------------------------------------------------------------
-void EW::supergrid_taper_material( )
-{
-  double x, y, z;
-  int g;
-  if (mVerbose >= 3 && proc_zero())
-    cout << "*** Inside supergrid_taper_material ***" << endl;
-  
-  for( g=0 ; g<mNumberOfCartesianGrids; g++) // do Cartesian grids first
-  {
-    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
-      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	{
-	  x = (i-1)*mGridSize[g];
-	  y = (j-1)*mGridSize[g];
-	  z = m_zmin[g] + (k-1)*mGridSize[g];
-	  
-	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
-	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
-	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
-	} // end for i,j,k
-  } // end for g
-
-  if (topographyExists())
-  {
-    g = mNumberOfGrids - 1;
-    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
-      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	{
-	  x = (i-1)*mGridSize[g];
-	  y = (j-1)*mGridSize[g];
-// NOTE: no tapering in z because there is (usually) a free surface boundary on top	  
-	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
-	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
-	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
-	  
-	} // end for i,j,k
-  } // end if topographyExists()
-  
-}
+////-----------------------------------------------------------------------
+//void EW::supergrid_taper_material( )
+//{
+//  double x, y, z;
+//  int g;
+//  if (mVerbose >= 3 && proc_zero())
+//    cout << "*** Inside supergrid_taper_material ***" << endl;
+//  
+//  for( g=0 ; g<mNumberOfCartesianGrids; g++) // do Cartesian grids first
+//  {
+//    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
+//      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+//	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+//	{
+//	  x = (i-1)*mGridSize[g];
+//	  y = (j-1)*mGridSize[g];
+//	  z = m_zmin[g] + (k-1)*mGridSize[g];
+//	  
+//	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
+//	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
+//	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
+//	} // end for i,j,k
+//  } // end for g
+//
+//  if (topographyExists())
+//  {
+//    g = mNumberOfGrids - 1;
+//    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
+//      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+//	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+//	{
+//	  x = (i-1)*mGridSize[g];
+//	  y = (j-1)*mGridSize[g];
+//// NOTE: no tapering in z because there is (usually) a free surface boundary on top	  
+//	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
+//	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
+//	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
+//	  
+//	} // end for i,j,k
+//  } // end if topographyExists()
+//  
+//}
 

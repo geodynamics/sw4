@@ -214,9 +214,9 @@ C
 *	exit(1); return 0; /* else complaint of missing return value */
 *}
       END
-c      SUBROUTINE I1MCRA(A, A1, B, C, D)
-c**** SPECIAL COMPUTATION FOR CRAY MACHINES ****
-c      INTEGER A, A1, B, C, D
-c      A1 = 16777216*B + C
-c      A = 16777216*A1 + D
-c      END
+      SUBROUTINE I1MCRA(A, A1, B, C, D)
+**** SPECIAL COMPUTATION FOR CRAY MACHINES ****
+      INTEGER A, A1, B, C, D
+      A1 = 16777216*B + C
+      A = 16777216*A1 + D
+      END
