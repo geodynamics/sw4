@@ -48,6 +48,7 @@ EtreeFile::~EtreeFile()
 {
    delete[] mPayload;
 }
+
 //-----------------------------------------------------------------------
 void EtreeFile::initialize(const string& model)
 {
