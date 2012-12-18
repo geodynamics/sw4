@@ -709,47 +709,47 @@ void MaterialPfile::read_pfile( )
 }
 
 //---------------------------------------------------------------------------------------
-int MaterialPfile::get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
-				    double& qs, double& qp )
-  {
-   int retval = 0;
-   double zsed, zmoho;
-   bool foundcrust;
+//int MaterialPfile::get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
+//				    double& qs, double& qp )
+//  {
+//   int retval = 0;
+//   double zsed, zmoho;
+//   bool foundcrust;
    
-   if( m_coords_geographic )
-   {
-     double lon, lat, depth;
+//   if( m_coords_geographic )
+//   {
+//     double lon, lat, depth;
      
-     mEW->computeGeographicCoord( x, y, lon, lat );
-     if( m_absoluteDepth )
-       depth = z;
-     else
-       mEW->getDepth(x,y,z,depth);
+//     mEW->computeGeographicCoord( x, y, lon, lat );
+//     if( m_absoluteDepth )
+//       depth = z;
+//     else
+//       mEW->getDepth(x,y,z,depth);
 
-     if( inside( lat, lon, depth )  )
-     {
+//     if( inside( lat, lon, depth )  )
+//     {
        //---------------------------------------------------------
        // Query the location...
        //---------------------------------------------------------
-       sample_latlon( lat, lon, depth, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
-     }
-     else
-       retval = -1;
-   }
-   else
-   {
-     if( inside_cart( x, y, z )  ) // elev = -depth
-     {
+//       sample_latlon( lat, lon, depth, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
+//     }
+//     else
+//       retval = -1;
+//   }
+//   else
+//   {
+//     if( inside_cart( x, y, z )  ) // elev = -depth
+//     {
        //---------------------------------------------------------
        // Query the location...
        //---------------------------------------------------------
-       sample_cart( x, y, z, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
-     }
-     else
-       retval = -1;
-   }
-   return retval;
-  }
+//       sample_cart( x, y, z, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
+//     }
+//     else
+//       retval = -1;
+//   }
+//   return retval;
+//  }
 
 
 //-----------------------------------------------------------------------

@@ -222,7 +222,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_do_linesearch(true),
   m_utc0set(false),
   m_utc0isrefevent(false),
-  m_opttest(0)
+  m_opttest(0),
+  mEtreeFile(NULL)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
@@ -844,12 +845,17 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 #ifdef ENABLE_ETREE
       if (mEtreeFile != NULL)
       {
-//        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
+	 //        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
 // correct these as above (remove +/- 1        
-        minx = (min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
-        maxx = (max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
-        miny = (min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
-        maxy = (max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1)))); 
+//        minx = (min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
+//        maxx = (max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
+//        miny = (min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
+//        maxy = (max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1)))); 
+         mEtreeFile->getbox( miny, maxy, minx, maxx );
+	 minx -= 1;
+	 maxx += 1;
+	 miny -= 1;
+	 maxy += 1;
       }
 #endif
       
@@ -883,16 +889,26 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
       if (mEtreeFile != NULL)
       {
 // Consider Etree bounds also
-//          GeographicCoord eNW, eNE, eSW, eSE;
-//          mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
+//         GeographicCoord eNW, eNE, eSW, eSE;
+//         mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
+         double elatSE, elonSE, elatSW, elonSW, elatNE, elonNE, elatNW, elonNW;
+         mEtreeFile->getcorners( elatSE, elonSE, elatSW, elonSW, elatNE, elonNE, elatNW, elonNW );
          contents << "# Etree region: " << mEtreeFile->getFileName() << endl
                   << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K <<EOF>> plot.ps" << endl
-                  << eNW.getLongitude() << " " << eNW.getLatitude() << endl
-                  << eNE.getLongitude() << " " << eNE.getLatitude() << endl
-                  << eSE.getLongitude() << " " << eSE.getLatitude() << endl
-                  << eSW.getLongitude() << " " << eSW.getLatitude() << endl
-                  << eNW.getLongitude() << " " << eNW.getLatitude() << endl
+                  << elonNW << " " << elatNW << endl
+                  << elonNE << " " << elatNE << endl
+                  << elonSE << " " << elatSE << endl
+                  << elonSW << " " << elatSW << endl
+                  << elonNW << " " << elatNW << endl
                   << "EOF" << endl << endl;
+	 //         contents << "# Etree region: " << mEtreeFile->getFileName() << endl
+	 //                  << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K <<EOF>> plot.ps" << endl
+	 //                  << eNW.getLongitude() << " " << eNW.getLatitude() << endl
+	 //                  << eNE.getLongitude() << " " << eNE.getLatitude() << endl
+	 //                  << eSE.getLongitude() << " " << eSE.getLatitude() << endl
+	 //                  << eSW.getLongitude() << " " << eSW.getLatitude() << endl
+	 //	             << eNW.getLongitude() << " " << eNW.getLatitude() << endl
+	 //                  << "EOF" << endl << endl;
       }
 #endif
       
@@ -3453,6 +3469,14 @@ void EW::set_prefilter( FilterType passband, int order, int passes, double fc1, 
 }
 
 //-----------------------------------------------------------------------
+void EW::set_threshold_velocities( double vpmin, double vsmin )
+{
+   m_useVelocityThresholds = true;
+   m_vpMin = vpmin;
+   m_vsMin = vsmin;
+}
+
+//-----------------------------------------------------------------------
 void EW::average_speeds( double& cp, double& cs )
 {
    cp = 0;
@@ -3507,14 +3531,20 @@ void EW::layered_speeds( vector<double>& cp, vector<double>& z )
    double h = (m_global_zmax-m_global_zmin)/N;
    for( int i=0 ; i <= N ; i++ )
       zv[i] = m_global_zmin + i*h;
-   double x0 = (m_global_xmax)/2;
-   double y0 = (m_global_ymax)/2;
-   double rho, cs, qs, qp;
-   for( int b=0 ; b < m_mtrlblocks.size() ; b++ )
+   double x0 = 0.5*((m_iStart[0]-1)*mGridSize[0] + (m_iEnd[0]-1)*mGridSize[0]);
+   double y0 = 0.5*((m_jStart[0]-1)*mGridSize[0] + (m_jEnd[0]-1)*mGridSize[0]);
+   int i0, j0, k0, g0;
+
+   for( int i=0; i <= N ; i++ )
    {
-      for( int i=0 ; i <= N ; i++ )
-	 m_mtrlblocks[b]->get_material_pt( x0, y0, zv[i], rho, cs, cpv[i], qs, qp );
+      computeNearestGridPoint( i0, j0, k0, g0, x0, y0, zv[i] );
+      cpv[i] = sqrt( (2*mMu[g0](i0,j0,k0)+mLambda[g0](i0,j0,k0))/mRho[g0](i0,j0,k0));
    }
+   //   for( int b=0 ; b < m_mtrlblocks.size() ; b++ )
+   //   {
+   //      for( int i=0 ; i <= N ; i++ )
+   //	 m_mtrlblocks[b]->get_material_pt( x0, y0, zv[i], rho, cs, cpv[i], qs, qp );
+   //   }
    cp.push_back(cpv[0]);
    int j = 1;
    int l = 0;

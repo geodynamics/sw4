@@ -26,7 +26,7 @@
 #include "TestRayleighWave.h"
 
 #include "MaterialData.h"
-// #include "EtreeFile.h"
+#include "EtreeFile.h"
 
 #include "SuperGrid.h"
 #include "MaterialProperty.h"
@@ -85,12 +85,14 @@ void processTestEnergy(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterialBlock( char* buffer, int & blockCount );
 void processMaterialPfile(char* buffer);
+void processMaterialEtree(char* buffer);
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 void processPrefilter(char* buffer);
 void processGMT(char* buffer);
 void processDeveloper(char* buffer);
+void processGlobalMaterial(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -244,7 +246,7 @@ void setParallel_IO(bool pfs, int nwriters);
 void extractTopographyFromGridFile(string a_topoFileName);
 void extractTopographyFromCartesianFile(string a_topoFileName);
 
-//void setEtreeFile(EtreeFile* efile); 
+void setEtreeFile(EtreeFile* efile); 
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
                                 double a_EFileResolution);
 void smoothTopography(int maxIter);
@@ -480,6 +482,11 @@ Filter *m_filterobs_ptr;
   // Test cases for optimizer, validate gradient, hessian, output function surface, etc...
 int m_opttest;
 
+// 2-D arrays with elevation-values (=-z) as function of horizontal indices
+// mTopo holds the raw topography (according to the "elevation" field in the etree)
+// mTopoMat holds the highest elevation where the etree returns solid material properties
+// mTopoGrid holds the smoothed topography which follows the top surface of the curvilinear grid
+Sarray mTopo, mTopoMat, mTopoGrid;
 
 private:
 
@@ -496,7 +503,7 @@ boundaryConditionType mbcGlobalType[6]; // these are the boundary conditions for
 vector<boundaryConditionType*> m_bcType;  // these are the boundary conditions for each grid on the local processor, with bProcessor conditions
 double mTstart;
 double mDt;
-//EtreeFile * mEtreeFile;
+EtreeFile * mEtreeFile;
 
 bool m_doubly_periodic;
 MPI_Comm m_cartesian_communicator;
@@ -504,11 +511,6 @@ int m_proc_array[2];
 
 bool mbcsSet;
 
-// 2-D arrays with elevation-values (=-z) as function of horizontal indices
-// mTopo holds the raw topography (according to the "elevation" field in the etree)
-// mTopoMat holds the highest elevation where the etree returns solid material properties
-// mTopoGrid holds the smoothed topography which follows the top surface of the curvilinear grid
-Sarray mTopo, mTopoMat, mTopoGrid;
 
 // for some simple topographies (e.g. Gaussian hill) there is an analytical expression for the top elevation
 bool m_analytical_topo;

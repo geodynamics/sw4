@@ -8,6 +8,7 @@
 #include "boundaryConditionTypes.h"
 #include "MaterialBlock.h"
 #include "MaterialPfile.h"
+#include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
 
@@ -359,15 +360,15 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processMaterialPfile( buffer );
        else if (startswith("scalefactors", buffer))
 	 processScaleFactors(buffer);
-//    else if (startswith("efile", buffer))
-//    {
-// #ifndef ENABLE_ETREE
-//      if (m_myRank==0) 
-//        cout << "Error: WPP was not built with Etree (efile) support" << endl;
-//      return false;
-// #endif
-//      processMaterialEtree(buffer);
-//    }
+       else if (startswith("efile", buffer))
+       {
+#ifndef ENABLE_ETREE
+          if (m_myRank==0) 
+             cout << "Error: SW4 was not built with Etree (efile) support" << endl;
+          return false;
+#endif
+	  processMaterialEtree(buffer);
+       }
        // else if (startswith("ifile", buffer))
        //   processMaterialIfile(buffer);
        // else if (startswith("material", buffer))
@@ -2349,39 +2350,38 @@ void EW::badOption(string name, char* option) const
 // // }
 
 
-// //-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+void EW::processGlobalMaterial(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("globalmaterial", token) == 0, "ERROR: not an globalmaterial line...: " << token);
+   token = strtok(NULL, " \t");
 
-// void FileInput::processGlobalMaterial(char* buffer)
-// {
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("globalmaterial", token) == 0, "ERROR: not an globalmaterial line...: " << token);
-//   token = strtok(NULL, " \t");
-
-//   string err = "globalmaterial error: ";
-//   int modelnr = 0;
-//   double frequency = 1;
-//   bool useAttenuation = false;
-//   double vpmin=0, vsmin=0;
+   string err = "globalmaterial error: ";
+   int modelnr = 0;
+   double frequency = 1;
+   bool useAttenuation = false;
+   double vpmin=0, vsmin=0;
   
-//   while (token != NULL)
-//   {
-//      if ( startswith("vpmin=", token) )
-//      {
-// 	token += 6;
-// 	vpmin = atof(token);
-//      }
-//      else if ( startswith("vsmin=", token) )
-//      {
-// 	token += 6;
-// 	vsmin = atof(token);
-//      }
-//      else
-// 	badOption("globalmaterial", token);
-//      token = strtok(NULL, " \t");
-//   }
+   while (token != NULL)
+   {
+      if ( startswith("vpmin=", token) )
+      {
+ 	token += 6;
+ 	vpmin = atof(token);
+      }
+      else if ( startswith("vsmin=", token) )
+      {
+ 	token += 6;
+ 	vsmin = atof(token);
+      }
+      else
+ 	badOption("globalmaterial", token);
+      token = strtok(NULL, " \t");
+   }
 
-//   mSimulation->set_threshold_velocities(vpmin, vsmin);
-// }
+   set_threshold_velocities(vpmin, vsmin);
+}
 
 // void FileInput::getEfileInfo(char* buffer)
 // {
@@ -5775,3 +5775,196 @@ void EW::processMaterialPfile(char* buffer)
   add_mtrl_block( pf  );
      
 }
+
+//-----------------------------------------------------------------------
+void EW::processMaterialEtree(char* buffer)
+{
+#ifdef ENABLE_ETREE
+  string name = "Efile";
+
+  // Used only for efiles
+  string model = "SF";
+  string etreefile = "NONE";
+  string xetreefile = "NONE";
+  string etreelogfile = "NONE";
+  const char* queryStyle = "MAXRES";
+
+  double eFileResolution = -1;
+  //  if (!mCheckMode)
+  //    resolution = mGridSize[0];
+
+  //  float vpmin = 0.0;
+  //  bool vpMinSet = false;
+  //  float vsmin = 0.0;
+  //  bool vsMinSet = false;
+  string accessmode = "parallel";
+  cencalvm::storage::Geometry* efileGeom = 0;
+
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("efile", token) == 0,
+           "ERROR: material data can only be set by an efile line, not: " << token);
+  string materialCommandType = token;
+
+  string err = token;
+  err += " Error: ";
+
+  token = strtok(NULL, " \t");
+
+//  InitialConditionBlock* b = new InitialConditionBlock;
+
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+       if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+          break;
+//       else if (startswith("model=", token))
+//       {
+//          token += 6; // skip model=
+//          model = token;
+//       }
+      else if (startswith("etree=", token))
+      {
+         token += 6; // skip etree=
+         etreefile = token;
+      }
+      else if (startswith("xetree=", token))
+      {
+         token += 7; // skip xetree=
+         xetreefile = token;
+      }
+      else if (startswith("logfile=", token))
+      {
+         token += 8; // skip logfile=
+         etreelogfile = token;
+      }
+      else if (startswith("query=", token))
+      {
+         token += strlen("query=");
+         queryStyle = token;
+         CHECK_INPUT(strcmp(queryStyle, "FIXEDRES") == 0 || 
+                 strcmp(queryStyle, "MAXRES") == 0,
+                 err << "query can only be set to FIXEDRES or MAXRES, not: " << queryStyle);
+      }
+       //      else if (startswith("vsmin=", token))
+       //      {
+       //         token += strlen("vsmin=");
+       //         vsmin = atof(token);
+       //         vsMinSet = true;
+       //      }
+       //      else if (startswith("vpmin=", token))
+       //      {
+       //         token += strlen("vpmin=");
+       //         vpmin = atof(token);
+       //vpMinSet = true;
+       //      }
+     else if( startswith("resolution=", token ) )
+     {
+       token += 11;
+       eFileResolution = atof(token);
+       CHECK_INPUT(eFileResolution>0.,"Resolution must be positive, not " << eFileResolution);
+     }
+      else if (startswith("access=", token))
+      {
+         token += strlen("access=");
+         CHECK_INPUT(strcmp(token, "parallel") == 0 ||
+                 strcmp(token, "serial") == 0,
+                 err << "access attribute can only be set to serial, or parallel, not: " << token);
+         accessmode = token;
+      }
+      else
+      {
+         badOption(materialCommandType, token);
+      }
+      token = strtok(NULL, " \t");
+    }
+  // End parsing...
+  
+  CHECK_INPUT(model != "",
+          err << "the model attribute must be set");
+
+
+  //----------------------------------------------------------------
+  // Check parameters
+  //----------------------------------------------------------------
+  if (m_myRank == 0)
+  {
+     cout << "\t Efile " << model << " Model specified..." << endl;
+     cout << "\t Looking for etree model: " << etreefile << endl;
+     if (xetreefile != "NONE")
+     {
+        cout << "\t Looking for xetree model: " << xetreefile << endl;
+     }
+  }
+  //  if (mCheckMode) 
+  //  {
+  //     if (access(etreefile.c_str(), R_OK) != 0)
+  //        cout << "***ERROR: No read permission on etree file: " << etreefile << endl;
+  //     if (xetreefile != "NONE")
+  //     {
+  //        if (access(xetreefile.c_str(), R_OK) != 0)
+  //           cout << "***ERROR: No read permission on xefile: " << xetreefile << endl;
+  //     }
+  //     return;
+  //  }
+  
+  // checkmode does the copy from above, if needed, nothing else
+  //  if (mCheckMode) return;
+
+  name = model + " " + materialCommandType;
+
+  std::vector<int> temp3D;
+  std::vector<int> temp2D;
+
+  if (eFileResolution < 0.)
+     eFileResolution = mGridSize[mNumberOfGrids - 1];
+
+  EtreeFile* ef = new EtreeFile( this,
+                                accessmode, etreefile, xetreefile, model,
+                                etreelogfile, queryStyle, eFileResolution);
+  
+  double latse, lonse, latsw, lonsw, latne, lonne, latnw, lonnw;
+  ef->getcorners( latse, lonse, latsw, lonsw, latne, lonne, latnw, lonnw );
+  //  ef->getGeoBox()->getBounds(NW, NE, SW, SE);
+  double nwxyz[3];
+  double nexyz[3];
+  double swxyz[3];
+  double sexyz[3];
+  //  computeCartesianCoord(nwxyz[0],nwxyz[1],nwxyz[2],NW);
+  //  computeCartesianCoord(nexyz[0],nexyz[1],nexyz[2],NE);
+  //  computeCartesianCoord(swxyz[0],swxyz[1],swxyz[2],SW);
+  //  computeCartesianCoord(sexyz[0],sexyz[1],sexyz[2],SE);
+
+  computeCartesianCoord(sexyz[0],sexyz[1],lonse,latse);
+  computeCartesianCoord(swxyz[0],swxyz[1],lonsw,latsw);
+  computeCartesianCoord(nexyz[0],nexyz[1],lonne,latne);
+  computeCartesianCoord(nwxyz[0],nwxyz[1],lonnw,latnw);
+
+  // constrain on x domain
+  double etreeXmin = min(min(min(nexyz[0], nwxyz[0]), sexyz[0]), swxyz[0]);
+  double etreeXmax = max(max(max(nexyz[0], nwxyz[0]), sexyz[0]), swxyz[0]);
+  double etreeYmin = min(min(min(nexyz[1], nwxyz[1]), sexyz[1]), swxyz[1]);
+  double etreeYmax = max(max(max(nexyz[1], nwxyz[1]), sexyz[1]), swxyz[1]);
+  double etreeZmin = min(min(min(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
+  double etreeZmax = max(max(max(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
+  
+  if( getVerbosity() >=2 && m_myRank == 0 )
+    cout << name << " has bounds " << etreeXmin << " " << etreeXmax << " " << etreeYmin << " "
+         << etreeYmax << " " << etreeZmin << " " << etreeZmax << endl;
+
+  //  mEFileFound = true;
+  
+  //  if (vsMinSet) ef->thresholdVs(vsmin);
+  //  if (vpMinSet) ef->thresholdVp(vpmin);
+
+//   // needed to write topographic image slices
+  mEtreeFile = ef;
+
+  //  setEtreeFile( ef );
+  add_mtrl_block( ef  );  
+     
+#else
+  CHECK_INPUT(0, "Error: Etree support not compiled into SW4 (-DENABLE_ETREE)");
+#endif
+}
+

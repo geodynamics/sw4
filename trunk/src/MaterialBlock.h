@@ -16,10 +16,6 @@ class MaterialBlock : public MaterialData
 					 std::vector<Sarray> &cp,
 					 std::vector<Sarray>& xis, std::vector<Sarray>& xip);
 
-   int get_material_pt( double x, double y, double z,
-			double& rho, double& cs, double& cp,
-			double& qs, double& qp );
-
    void set_gradients( double rhograd, double vsgrad, double vpgrad );
    void set_absoluteDepth( bool absDepth );
 
