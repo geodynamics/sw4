@@ -157,11 +157,6 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_error_print(true),
   m_inner_loop(9),
   m_topography_exists(false),
-  m_number_material_surfaces(0),
-  m_Nlon(0),
-  m_Nlat(0),
-  m_materialLon(NULL),
-  m_materialLat(NULL),
   m_useVelocityThresholds(false),
   m_vpMin(0.),
   m_vsMin(0.),
@@ -1030,7 +1025,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                // Now have location
                stationstr << lon << " " << lat << " " << name << " CB" << endl; 
             } // token on sac line
-         } // line in wpp file
+         } // line in ew file
       }
       
       stationstr << "EOF" << endl << endl;
@@ -3687,3 +3682,520 @@ void EW::print_utc()
 	 printf("EW reference UTC is not defined\n");
    }
 }
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromGridFile(string a_topoFileName)
+{
+   if (proc_zero())
+      cout << "***inside extractTopographyFromGridFile***"<< endl;
+
+//----------------------------------------------
+// Check user specified file name. Abort if they are not there or not readable
+//----------------------------------------------
+   CHECK_INPUT(access(a_topoFileName.c_str(), R_OK) == 0,
+	      "No read permission on topography grid file: " << a_topoFileName);
+
+   int topLevel = mNumberOfGrids-1;
+  
+   double x, y;
+   double lat, lon, elev;
+
+// 1. read the grid file
+   int Nlon, Nlat, i, j, dum;
+   Sarray gridElev;
+   double *latv, *lonv;
+  
+   FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
+  
+   fscanf(gridfile, "%i %i", &Nlon, &Nlat);
+   gridElev.define(1,1,Nlon,1,Nlat,1,1);
+   latv = new double[Nlat+1];
+   lonv = new double[Nlon+1];
+
+   for (j=1; j<=Nlat; j++)
+      for (i=1; i<=Nlon; i++)
+      {
+//       fscanf(gridfile, "%le %le %le %i %i", &lonv[i], &latv[j], &gridElev(1,i,j,1), 
+//              &dum, &dum);
+	 fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
+      }
+   fclose(gridfile);
+  
+   if (proc_zero())
+      printf("Nlon=%i Nlat=%i\n", Nlon, Nlat);
+
+   double lonMax=-180.0, lonMin=180.0, latMax=-90.0, latMin=90.0, elevMax=-1e10, elevMin=1e10;
+   for (i=1; i<=Nlon; i++)
+   {
+      if (lonv[i] < lonMin) lonMin=lonv[i];
+      if (lonv[i] > lonMax) lonMax=lonv[i];
+   }
+   for (i=1; i<=Nlat; i++)
+   {
+      if (latv[i] < latMin) latMin=latv[i];
+      if (latv[i] > latMax) latMax=latv[i];
+   }
+  
+   for (i=1; i<=Nlon; i++)
+      for (j=1; j<=Nlat; j++)
+      {
+	 if (gridElev(1,i,j,1) < elevMin) elevMin=gridElev(1,i,j,1);
+	 if (gridElev(1,i,j,1) > elevMax) elevMax=gridElev(1,i,j,1);
+      }
+   if (proc_zero())
+      printf("lonMin=%e, lonMax=%e\nlatMin=%e, latMax=%e\nelevMin=%e, evalMax=%e\n", 
+	     lonMin, lonMax, latMin, latMax, elevMin, elevMax);
+  
+// If the lat vector is not in increasing order, we need to reorder it
+   if (latv[1] > latv[Nlat])
+   {
+// tmp
+      if (proc_zero()) printf("Reordering the latitude vector...\n");
+
+      for (j=1; j<=Nlat/2; j++)
+      {
+	 lat=latv[Nlat+1-j];
+	 latv[Nlat+1-j] = latv[j];
+	 latv[j] = lat;
+      
+	 for (i=1; i<=Nlon; i++)
+	 {
+	    elev = gridElev(1,i,Nlat+1-j,1);
+	    gridElev(1,i,Nlat+1-j,1) = gridElev(1,i,j,1);
+	    gridElev(1,i,j,1) = elev;
+	 }
+      }// end for j    
+   } // end if latv[1] > latv[Nlat]
+  
+// If the lon vector is not in increasing order, we need to reorder it
+   if (lonv[1] > lonv[Nlon])
+   {
+// tmp
+      if (proc_zero()) printf("Reordering the longitude vector...\n");
+
+      for (i=1; i<=Nlon/2; i++)
+      {
+	 lon=lonv[Nlon+1-i];
+	 lonv[Nlon+1-i] = lonv[i];
+	 lonv[i] = lon;
+      
+	 for (j=1; j<=Nlat; j++)
+	 {
+	    elev = gridElev(1,Nlon+1-i,j,1);
+	    gridElev(1,Nlon+1-i,j,1) = gridElev(1,i,j,1);
+	    gridElev(1,i,j,1) = elev;
+	 }
+      }// end for i    
+   } // end if lonv[1] > lonv[Nlon]
+  
+
+// 2. interpolate in the grid file to get elevations on the computational grid
+   double deltaLat = (latMax-latMin)/Nlat;
+   double deltaLon = (lonMax-lonMin)/Nlon;
+   double eInterp, xi, eta;
+
+   int i0, j0;
+  
+   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+   {
+      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+      {
+	 x = (i-1)*mGridSize[topLevel];
+	 y = (j-1)*mGridSize[topLevel];
+        
+	 computeGeographicCoord( x, y, lon, lat ); // the grid command defines the parameters in this mapping
+      
+	 if (lat > latMax || lat < latMin || lon > lonMax || lon < lonMin)
+	 {
+	    printf("ERROR: x=%e, y=%e corresponds to lon=%e, lat=%e which are outside the topography grid\n", 
+		   x, y, lon, lat);
+	    MPI_Abort(MPI_COMM_WORLD, 1);
+	 }
+	 i0 = 1+(int)((lon-lonMin)/deltaLon);
+	 j0 = 1+(int)((lat-latMin)/deltaLat);
+
+	 while ( lon < lonv[i0] || lonv[i0+1] < lon ) // should stop loop if i0 is out of bounds
+	 {
+	    if (lon<lonv[i0]) 
+	       i0--;
+	    else if (lon>lonv[i0+1])
+	       i0++;
+	 }
+
+	 while (  lat < latv[j0] || latv[j0+1] < lat ) // should stop loop if j0 is out of bounds
+	 {
+	    if (lat<latv[j0]) 
+	       j0--;
+	    else if (lat>latv[j0+1])
+	       j0++;
+	 }
+      
+	 if (i0 > Nlon-1) i0 = Nlon-1;
+
+	 if (j0 > Nlat-1) j0 = Nlat-1;
+      
+// test that we are inside the interval
+	 if (!(lonv[i0] <= lon && lon < lonv[i0+1]))
+	 {
+	    printf("EW::extractTopographyFromGridFile: Fatal error: Unable to interpolate topography for lon=%e\n"
+	       "because it is outside the cell (lonv[%i]=%e, lonv[%i]=%e)\n", lon, i0, lonv[i0], i0+1, lonv[i0+1]);
+	    MPI_Abort(MPI_COMM_WORLD,1);
+	 }
+      
+      
+	 if (!(latv[j0] <= lat && lat < latv[j0+1]))
+	 {
+	    printf("EW::extractTopographyFromGridFile: Fatal error: Unable to interpolate topography for lat=%e\n"
+	       "because it is outside the cell (latv[%i]=%e, latv[%i]=%e)\n", lat, j0, latv[j0], j0+1, latv[j0+1]);
+	    MPI_Abort(MPI_COMM_WORLD,1);
+	 }
+      
+// bi-cubic interpolation should make the surface smoother
+// shift the stencil if it is too close to the boundaries
+	 if (i0 < 2) i0 = 2;
+	 if (i0 > Nlon-2) i0 = Nlon-2;
+
+	 if (j0 < 2) j0 = 2;
+	 if (j0 > Nlat-2) j0 = Nlat-2;
+
+// local step sizes
+	 double q = i0 + (lon - lonv[i0])/(lonv[i0+1]-lonv[i0]);
+	 double r = j0 + (lat - latv[j0])/(latv[j0+1]-latv[j0]);
+      
+	 double Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+	 Qim1 = (q-i0)*(q-i0-1)*(q-i0-2)/(-6.);
+	 Qi   = (q-i0+1)*(q-i0-1)*(q-i0-2)/(2.);
+	 Qip1 = (q-i0+1)*(q-i0)*(q-i0-2)/(-2.);
+	 Qip2 = (q-i0+1)*(q-i0)*(q-i0-1)/(6.);
+
+	 Rjm1 = (r-j0)*(r-j0-1)*(r-j0-2)/(-6.);
+	 Rj   = (r-j0+1)*(r-j0-1)*(r-j0-2)/(2.);
+	 Rjp1 = (r-j0+1)*(r-j0)*(r-j0-2)/(-2.);
+	 Rjp2 = (r-j0+1)*(r-j0)*(r-j0-1)/(6.);
+
+	 tjm1 = Qim1*gridElev(i0-1,j0-1,1) + Qi*gridElev(i0,j0-1,1) +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+	 tj   = Qim1*gridElev(i0-1,j0,1) + Qi*gridElev(i0,j0,1) +  Qip1*gridElev(i0+1,j0,1) +  Qip2*gridElev(i0+2,j0,1);
+	 tjp1 = Qim1*gridElev(i0-1,j0+1,1) + Qi*gridElev(i0,j0+1,1) +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
+	 tjp2 = Qim1*gridElev(i0-1,j0+2,1) + Qi*gridElev(i0,j0+2,1) +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
+
+	 mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+
+// bi-linear interpolation
+// // local step sizes
+//       xi = (lon - lonv[i0])/(lonv[i0+1]-lonv[i0]);
+//       eta = (lat - latv[j0])/(latv[j0+1]-latv[j0]);
+//       mTopo(i,j,1) = (1.0-eta)*( (1.0-xi)*gridElev(1,i0,j0,1) + xi*gridElev(1,i0+1,j0,1) ) +
+// 	eta*( (1.0-xi)*gridElev(1,i0,j0+1,1) + xi*gridElev(1,i0+1,j0+1,1) );
+      
+      }
+   }
+   delete[] latv;
+   delete[] lonv;
+}
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromCartesianFile(string a_topoFileName)
+{
+   if (proc_zero())
+      cout << "***inside extractTopographyFromCartesianFile***"<< endl;
+
+//----------------------------------------------
+// Check user specified file name. Abort if they are not there or not readable
+//----------------------------------------------
+   VERIFY2(access(a_topoFileName.c_str(), R_OK) == 0,
+	       "No read permission on topography grid file: " << a_topoFileName);
+
+// 1. read the grid file
+   int Nx, Ny, i, j;
+   Sarray gridElev;
+   double *yv, *xv;
+  
+   FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
+  
+   fscanf(gridfile, "%i %i", &Nx, &Ny);
+   gridElev.define(1,1,Nx,1,Ny,1,1);
+   yv = new double[Ny+1];
+   xv = new double[Nx+1];
+
+   for (j=1; j<=Ny; j++)
+      for (i=1; i<=Nx; i++)
+	 fscanf(gridfile, "%le %le %le", &xv[i], &yv[j], &gridElev(1,i,j,1));
+   fclose(gridfile);
+  
+   if (proc_zero())
+      printf("Nx=%i Ny=%i\n", Nx, Ny);
+
+   double xMax=-999e10, xMin=999e10, yMax=-999e10, yMin=999e10, elevMax=-1e10, elevMin=1e10;
+   for (i=1; i<=Nx; i++)
+   {
+      if (xv[i] < xMin) xMin=xv[i];
+      if (xv[i] > xMax) xMax=xv[i];
+   }
+   for (i=1; i<=Ny; i++)
+   {
+      if (yv[i] < yMin) yMin=yv[i];
+      if (yv[i] > yMax) yMax=yv[i];
+   }
+// make sure that the topography grid covers the whole computational domain
+   if (xMin > 0 || yMin > 0 || xMax < m_global_xmax || yMax < m_global_ymax)
+   {
+      if (proc_zero()) printf("ERROR: Cartesian topography grid with %e<=x<=%e and %e<=y<=%e\n"
+			      "does not cover the computational domain: 0<=x<=%e, 0<=y<=%e\n", 
+			    xMin, xMax, yMin, yMax, m_global_xmax, m_global_ymax);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+   }
+
+   for (i=1; i<=Nx; i++)
+      for (j=1; j<=Ny; j++)
+      {
+	 if (gridElev(1,i,j,1) < elevMin) elevMin=gridElev(1,i,j,1);
+	 if (gridElev(1,i,j,1) > elevMax) elevMax=gridElev(1,i,j,1);
+      }
+   if (proc_zero())
+      printf("xMin=%e, xMax=%e\nyMin=%e, yMax=%e\nelevMin=%e, evalMax=%e\n", 
+	     xMin, xMax, yMin, yMax, elevMin, elevMax);
+  
+   double xP, yP, elev;
+// If the yv vector is not in increasing order, we need to reorder it
+   if (yv[1] > yv[Ny])
+   {
+// tmp
+      if (proc_zero()) printf("Reordering the yv vector...\n");
+      for (j=1; j<=Ny/2; j++)
+      {
+	 yP=yv[Ny+1-j];
+	 yv[Ny+1-j] = yv[j];
+	 yv[j] = yP;
+      
+	 for (i=1; i<=Nx; i++)
+	 {
+	    elev = gridElev(1,i,Ny+1-j,1);
+	    gridElev(1,i,Ny+1-j,1) = gridElev(1,i,j,1);
+	    gridElev(1,i,j,1) = elev;
+	 }
+      }
+   }
+  
+// If the xv vector is not in increasing order, we need to reorder it
+   if (xv[1] > xv[Nx])
+   {
+// tmp
+      if (proc_zero()) printf("Reordering the xv vector...\n");
+      for (i=1; i<=Nx/2; i++)
+      {
+	 xP=xv[Nx+1-i];
+	 xv[Nx+1-i] = xv[i];
+	 xv[i] = xP;
+      
+	 for (j=1; j<=Ny; j++)
+	 {
+	    elev = gridElev(1,Nx+1-i,j,1);
+	    gridElev(1,Nx+1-i,j,1) = gridElev(1,i,j,1);
+	    gridElev(1,i,j,1) = elev;
+	 }
+      }
+   }
+
+// 2. interpolate in the grid file to get elevations on the computational grid
+   double deltaY = (yMax-yMin)/Ny;
+   double deltaX = (xMax-xMin)/Nx;
+
+   int i0, j0;
+   int topLevel = mNumberOfGrids-1;
+   double hp = 1.01*mGridSize[topLevel];
+   bool xGhost, yGhost;
+  
+   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+   {
+      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+      {
+	 xP = (i-1)*mGridSize[topLevel];
+	 yP = (j-1)*mGridSize[topLevel];
+	 xGhost=true;
+	 yGhost=true;
+	 if (yP > yMax+hp || yP < yMin-hp || xP > xMax+hp || xP < xMin-hp)
+	 {
+	    printf("ERROR: xP=%e, yP=%e is outside the topography grid by more than a grid step\n", 
+	       xP, yP);
+	    MPI_Abort(MPI_COMM_WORLD, 1);
+	 }
+// Compute i0
+	 if (xP < xMin)
+	    i0=1;
+	 else if (xP > xMax)
+	    i0=Nx-1;
+	 else
+	 {
+	    xGhost=false;
+	    i0 = 1+(int)((xP-xMin)/deltaX);
+	    if (i0 < 1)
+	       i0 = 1;
+	    if (i0 > Nx-1)
+	       i0 = Nx-1;
+// should stop loop if i0 is out of bounds
+	    while ( i0>=1 && i0 <= Nx-1 && ( xP < xv[i0] || xv[i0+1] < xP ) ) 
+	    {
+	       if(xP<xv[i0]) 
+		  i0--;
+	       else if (xP>xv[i0+1])
+		  i0++;
+	    }
+	 }
+      
+// Compute j0
+	 if (yP < yMin)
+	    j0=1;
+	 else if (yP > yMax)
+	    j0=Ny-1;
+	 else
+	 {
+	    yGhost=false;
+	    j0 = 1+(int)((yP-yMin)/deltaY);
+	    if (j0 < 1)
+	       j0 = 1;
+	    if (j0 > Ny-1)
+	       j0 = Ny-1;
+ // should stop loop if j0 is out of bounds
+	    while ( j0>=1 && j0 <= Ny-1 && ( yP < yv[j0] || yv[j0+1] < yP ) )
+	    {
+	       if (yP<yv[j0]) 
+		  j0--;
+	       else if (yP>yv[j0+1])
+		  j0++;
+	    }
+	 }
+      
+// enforce bounds again
+	 if (i0 < 1) i0 = 1;
+	 if (i0 > Nx-1) i0 = Nx-1;
+	 if (j0 < 1) j0 = 1;
+	 if (j0 > Ny-1) j0 = Ny-1;
+      
+// test that we are inside the interval
+	 if (!xGhost && !(xv[i0] <= xP && xP <= xv[i0+1]))
+	 {
+	    printf("EW::extractTopographyFromCartesianFile: Fatal error: Unable to interpolate topography for xP=%e\n"
+	       "because it is outside the cell (xv[%i]=%e, xv[%i]=%e)\n", xP, i0, xv[i0], i0+1, xv[i0+1]);
+	    MPI_Abort(MPI_COMM_WORLD,1);
+	 }
+      
+      
+	 if (!yGhost && !(yv[j0] <= yP && yP <= yv[j0+1]))
+	 {
+	    printf("EW::extractTopographyFromCartesianFile: Fatal error: Unable to interpolate topography for yP=%e\n"
+	       "because it is outside the cell (yv[%i]=%e, yv[%i]=%e)\n", yP, j0, yv[j0], j0+1, yv[j0+1]);
+	    MPI_Abort(MPI_COMM_WORLD,1);
+	 }
+      
+// bi-cubic interpolation should make the surface smoother
+// shift the stencil if it is too close to the boundaries
+	 if (i0 < 2) i0 = 2;
+	 if (i0 > Nx-2) i0 = Nx-2;
+
+	 if (j0 < 2) j0 = 2;
+	 if (j0 > Ny-2) j0 = Ny-2;
+
+// local step sizes
+	 double q = i0 + (xP - xv[i0])/(xv[i0+1]-xv[i0]);
+	 double r = j0 + (yP - yv[j0])/(yv[j0+1]-yv[j0]);
+      
+	 double Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+	 Qim1 = (q-i0)*(q-i0-1)*(q-i0-2)/(-6.);
+	 Qi   = (q-i0+1)*(q-i0-1)*(q-i0-2)/(2.);
+	 Qip1 = (q-i0+1)*(q-i0)*(q-i0-2)/(-2.);
+	 Qip2 = (q-i0+1)*(q-i0)*(q-i0-1)/(6.);
+
+	 Rjm1 = (r-j0)*(r-j0-1)*(r-j0-2)/(-6.);
+	 Rj   = (r-j0+1)*(r-j0-1)*(r-j0-2)/(2.);
+	 Rjp1 = (r-j0+1)*(r-j0)*(r-j0-2)/(-2.);
+	 Rjp2 = (r-j0+1)*(r-j0)*(r-j0-1)/(6.);
+
+	 tjm1 = Qim1*gridElev(i0-1,j0-1,1) + Qi*gridElev(i0,j0-1,1)
+	    +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+	 tj   = Qim1*gridElev(i0-1,j0,1) + Qi*gridElev(i0,j0,1)
+	    +  Qip1*gridElev(i0+1,j0,1) +  Qip2*gridElev(i0+2,j0,1);
+	 tjp1 = Qim1*gridElev(i0-1,j0+1,1)  + Qi*gridElev(i0,j0+1,1)
+	     +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
+	 tjp2 = Qim1*gridElev(i0-1,j0+2,1)  + Qi*gridElev(i0,j0+2,1)
+	     +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
+
+	 mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+      }
+   }
+   delete[] yv;
+   delete[] xv;  
+}
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_topoExtFileName,
+				    std::string a_QueryType, double a_EFileResolution )
+{
+#ifdef ENABLE_ETREE
+   if (proc_zero())
+      cout << endl <<
+	 "*** extracting TOPOGRAPHY from efile ***"<< endl << endl;
+   cencalvm::query::VMQuery query;
+   cencalvm::storage::ErrorHandler* pErrHandler = query.errorHandler();
+
+// Check user specified file names. Abort if they are not there or not readable
+   VERIFY2( access(a_topoFileName.c_str(), R_OK) == 0,
+	    "No read permission on etree file: " << a_topoFileName);
+   query.filename(a_topoFileName.c_str());
+
+   if (a_topoExtFileName != "NONE")
+   {
+      // User specified, if it is not there, abort
+      VERIFY2(access(a_topoExtFileName.c_str(), R_OK) == 0,
+	      "No read permission on xefile: " << a_topoExtFileName);
+      query.filenameExt(a_topoExtFileName.c_str());
+   }
+   int topLevel = mNumberOfGrids-1;
+   if (a_QueryType == "MAXRES")
+      query.queryType(cencalvm::query::VMQuery::MAXRES);
+   else if (a_QueryType == "FIXEDRES")
+   {
+      query.queryType(cencalvm::query::VMQuery::FIXEDRES);
+      if (a_EFileResolution < 0.)
+	 a_EFileResolution = mGridSize[topLevel];
+      if (proc_zero())
+	 printf("Fixedres resolution = %e\n", a_EFileResolution);
+      query.queryRes(a_EFileResolution);
+   }
+
+   const char* queryKeys[] = {"elevation", "Vp", "Vs"};
+   int payloadSize = 3;
+   query.queryVals(queryKeys, payloadSize);
+
+   double x, y;
+   double lat, lon, elev, elevDelta=25.;
+
+   query.open();
+   double *pVals=new double[payloadSize];
+
+   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+      {
+	 x = (i-1)*mGridSize[topLevel];
+	 y = (j-1)*mGridSize[topLevel];
+	 computeGeographicCoord( x, y, lon, lat ); 
+// initial query for elevation just below sealevel
+	 elev = -25.0;
+	 query.query(&pVals, payloadSize, lon, lat, elev);
+// Make sure the query didn't generated a warning or error
+	 if (pErrHandler->status() != cencalvm::storage::ErrorHandler::OK) 
+	 {
+// If query generated an error, then bail out, otherwise reset status
+	    pErrHandler->resetStatus();
+	    cout << "WARNING: Etree query failed for initial elevation of topography at grid point (i,j)= ("
+		 << i << ", " << j << ") in curvilinear grid g = " << topLevel << endl
+		 << " lat= " << lat << " lon= " << lon << " query elevation= " << elev << endl;
+	    mTopo(i,j,1) = 0.;
+	    continue;
+	 } 
+// save the actual topography which will be the starting point for computing smoother the grid topography
+	 mTopo(i,j,1) = pVals[0];
+      } 
+   query.close();
+#endif
+}
+

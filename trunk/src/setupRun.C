@@ -554,51 +554,40 @@ void EW::set_materials()
 // After materials are set, call check_materials to make sure (mu,lambda,rho) values make sense
 {  
   int g;
-  
   if( !m_testing )
   {
-// make sure all Nmat=m_number_material_surfaces material properties are defined
-    
-    if (m_number_material_surfaces > 0) // ifile stuff
-    {
-      if (m_materials.size() < m_number_material_surfaces)
-      {
-	cerr << "set_materials: ERROR: There are "<< m_number_material_surfaces << " material surfaces but only "
-	     << m_materials.size() << " defined materials" << endl;
-	MPI_Abort(MPI_COMM_WORLD, 1);
-      }
-// sort the m_materials vector in increasing id order...
-      if (m_materials.size() > 1) // make sure there is more than 1 element
-      {
-	MaterialProperty *mp;
-	for (int iStart=0; iStart < m_materials.size()-1; iStart++)
+// If material surfaces (Ifiles) are defined, sort them wrt their IDs
+     if(m_materials.size() > 0)
+     {
+// Sort the m_materials vector in increasing id order...but only if there are more than one element.
+	if (m_materials.size() > 1) 
 	{
-	  int idmin=m_materials[iStart]->m_materialID;
-	  for (int q=iStart+1; q<m_materials.size(); q++)
-	  {
-	    if (m_materials[q]->m_materialID < idmin)
-	    {
+	   MaterialProperty *mp;
+	   for (int iStart=0; iStart < m_materials.size()-1; iStart++)
+	   {
+	      int idmin=m_materials[iStart]->m_materialID;
+	      for (int q=iStart+1; q<m_materials.size(); q++)
+	      {
+		 if (m_materials[q]->m_materialID < idmin)
+		 {
 // record new min value and swap elements q and iStart i m_materials vector
-	      idmin = m_materials[q]->m_materialID;
-	      mp = m_materials[q];
-	      m_materials[q] = m_materials[iStart];
-	      m_materials[iStart] = mp;
-	    } // end if
-	  } // end for q
-	} // end for iStart
-	       
-      } // end if size > 1
+		    idmin = m_materials[q]->m_materialID;
+		    mp = m_materials[q];
+		    m_materials[q] = m_materials[iStart];
+		    m_materials[iStart] = mp;
+		 } // end if
+	      } // end for q
+	   } // end for iStart
+	} // end if size > 1
 
 // output a list of material id's
-      if (proc_zero() && mVerbose>=3)
-      {
-	cout << "**** Material ID's: ********" << endl;
-	for (int q=0; q<m_materials.size(); q++)
-	  cout << "Material[" << q << "]->ID=" << m_materials[q]->m_materialID << endl;
-      }
-      
-    }
-    
+	if (proc_zero() && mVerbose>=3)
+	{
+	   cout << "**** Material ID's: ********" << endl;
+	   for (int q=0; q<m_materials.size(); q++)
+	      cout << "Material[" << q << "]->ID=" << m_materials[q]->m_materialID << endl;
+	}
+     }
 
 // figure out if we may ignore some blocks (i.e. an efile command which is followed 
 // by a block command covering all grid points). 
@@ -620,17 +609,16 @@ void EW::set_materials()
     for( unsigned int b = lastAllCoveringBlock ; b < m_mtrlblocks.size() ; b++ )
     {
       m_mtrlblocks[b]->set_material_properties(mRho, mMu, mLambda, mQs, mQp); // this is where all the assignments are done
-
-    } // end for
+    }
    
 // extrapolate to define material properties above the free surface (topography)
    g = mNumberOfGrids-1;
    
    bool linearExtrapolation=false;
 // note that material thresholding for vs and vp happens further down in this procedure
-   extrapolateInZ(mRho[g], false, 0., linearExtrapolation); 
-   extrapolateInZ(mLambda[g], false, 0., linearExtrapolation); 
-   extrapolateInZ(mMu[g], false, 0., linearExtrapolation);
+   extrapolateInZ( mRho[g],    false, 0., linearExtrapolation ); 
+   extrapolateInZ( mLambda[g], false, 0., linearExtrapolation ); 
+   extrapolateInZ( mMu[g],     false, 0., linearExtrapolation );
 
    if( m_use_attenuation )
    {
@@ -660,8 +648,8 @@ void EW::set_materials()
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
 	      {
-		mRho[g](i,j,k) = mRho[g](i,j,kFrom);
-		mMu[g](i,j,k)  = mMu[g](i,j,kFrom);
+		mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		mMu[g](i,j,k)     = mMu[g](i,j,kFrom);
 		mLambda[g](i,j,k) = mLambda[g](i,j,kFrom);
 	      }
 
@@ -689,8 +677,8 @@ void EW::set_materials()
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
 	      {
-		mRho[g](i,j,k) = mRho[g](i,j,kFrom);
-		mMu[g](i,j,k)  = mMu[g](i,j,kFrom);
+		mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		mMu[g](i,j,k)     = mMu[g](i,j,kFrom);
 		mLambda[g](i,j,k) = mLambda[g](i,j,kFrom);
 	      }
 

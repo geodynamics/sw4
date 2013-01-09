@@ -263,6 +263,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	 y = (j-1)*mEw->mGridSize[topLevel];
 	 mEw->computeGeographicCoord( x, y, lon, lat); 
 	   
+
 // initial query for elevation just below sealevel
 	 elev = -25.0;
 
@@ -273,9 +274,12 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	 {
 // If query generated an error, then bail out, otherwise reset status
 	    mQuery.errorHandler()->resetStatus();
+            if( inside(lat,lon,elev) )
+	       {
 	    cout << "WARNING: Etree query failed for initial elevation of topography at grid point (i,j)= (" << i << ", " << j 
 	     << ") in grid g = " << topLevel << endl
 	     << " lat= " << lat << " lon= " << lon << " query elevation= " << elev << endl;
+	       }
 	    mEw->mTopoMat(i,j,1) = 0.;
 	    continue;
 	 } // if

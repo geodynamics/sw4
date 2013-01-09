@@ -8,6 +8,7 @@
 #include "boundaryConditionTypes.h"
 #include "MaterialBlock.h"
 #include "MaterialPfile.h"
+#include "MaterialIfile.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
@@ -330,8 +331,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processGMT(buffer);
        else if (startswith("time", buffer))
 	 processTime(buffer);
-       // else if (startswith("globalmaterial", buffer))
-       //   processGlobalMaterial(buffer);
+       else if (startswith("globalmaterial", buffer))
+         processGlobalMaterial(buffer);
        else if (!m_inverse_problem && startswith("receiver", buffer)) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("observation", buffer)) // 
@@ -369,10 +370,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 #endif
 	  processMaterialEtree(buffer);
        }
-       // else if (startswith("ifile", buffer))
-       //   processMaterialIfile(buffer);
-       // else if (startswith("material", buffer))
-       //   processMaterial(buffer);
+       else if (startswith("ifile", buffer))
+          processMaterialIfile(buffer);
+       else if (startswith("material", buffer))
+          processMaterial(buffer);
        else if (startswith("image", buffer))
          processImage(buffer);
        // else if (startswith("volimage", buffer))
@@ -3006,149 +3007,150 @@ void EW::processPrefilter(char* buffer)
 //       zcubelen = (nz-1)*h;
 // }
 
-// void FileInput::processMaterial( char* buffer )
-// {
-//   string name = "Material";
+//-----------------------------------------------------------------------
+void EW::processMaterial( char* buffer )
+{
+   string name = "Material";
 
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("material", token) == 0,
-// 	      "ERROR: material properties can be set by a material line, not: " << token);
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("material", token) == 0,
+ 	      "ERROR: material properties can be set by a material line, not: " << token);
 
-//   string err = token;
-//   err += " Error: ";
+   string err = token;
+   err += " Error: ";
 
-//   token = strtok(NULL, " \t");
+   token = strtok(NULL, " \t");
 
-//   int materialID=-1;
-//   double vp0=-1, vs0=-1, rho0=-1, qp=-1, qs=-1;
-//   double vp1=0, vs1=0, rho1=0;
-//   double vp2=0, vs2=0, rho2=0;
-//   double vp1o2=0, vs1o2=0, rho1o2=0;
+   int materialID=-1;
+   double vp0=-1, vs0=-1, rho0=-1, qp=-1, qs=-1;
+   double vp1=0, vs1=0, rho1=0;
+   double vp2=0, vs2=0, rho2=0;
+   double vp1o2=0, vs1o2=0, rho1o2=0;
 
-//   bool gotID = false;
+   bool gotID = false;
   
-//   while (token != NULL)
-//   {
-//     // while there are tokens in the string still
-//     if (startswith("#", token) || startswith(" ", buffer))
-//       // Ignore commented lines and lines with just a space.
-//       break;
-// //                  1234567890
-//     if (startswith("id=", token) )
-//     {
-//       token += 3; // skip id=
-//       materialID = atoi(token);
-//       gotID=true;
-//     }
-//     else if (startswith("vp=", token) )
-//     {
-//       token += 3; // skip vp=
-//       vp0 = atof(token);
-//     }
-//     else if (startswith("vs=", token) )
-//     {
-//       token += 3; // skip vs=
-//       vs0 = atof(token);
-//     }
-//     else if (startswith("rho=", token))
-//     {
-//       token += 4; // skip rho=
-//       rho0 = atof(token);
-//     }
-// // linear variation
-//     else if (startswith("rhograd=", token))
-//     {
-//       token += 8; // skip rhograd=
-//       rho1 = atof(token);
-//     }
-//     else if (startswith("vpgrad=", token))
-//     {
-//       token += 7; // skip vpgrad=
-//       vp1 = atof(token);
-//     }
-//     else if (startswith("vsgrad=", token))
-//     {
-//       token += 7; // skip vsgrad=
-//       vs1 = atof(token);
-//     }
-// // quadratic variation
-//     else if (startswith("rho2=", token))
-//     {
-//       token += 5; // skip rho2=
-//       rho2 = atof(token);
-//     }
-//     else if (startswith("vp2=", token))
-//     {
-//       token += 4; // skip vp2=
-//       vp2 = atof(token);
-//     }
-//     else if (startswith("vs2=", token))
-//     {
-//       token += 4; // skip vs2=
-//       vs2 = atof(token);
-//     }
-// // sqrt variation
-//     else if (startswith("rhosqrt=", token))
-//     {
-//       token += 8; // skip rhosqrt=
-//       rho1o2 = atof(token);
-//     }
-//     else if (startswith("vpsqrt=", token))
-//     {
-//       token += 7; // skip vpsqrt=
-//       vp1o2 = atof(token);
-//     }
-//     else if (startswith("vssqrt=", token))
-//     {
-//       token += 7; // skip vssqrt=
-//       vs1o2 = atof(token);
-//     }
-// // attenuation variables
-//     else if (startswith("Qp=", token) || startswith("qp=", token))
-//     {
-//       token += 3; // skip qp=
-//       qp = atof(token);
-//     }
-//     else if (startswith("Qs=", token) || startswith("qs=", token))
-//     {
-//       token += 3; // skip qs=
-//       qs = atof(token);
-//     }
-//     else
-//     {
-//       badOption("material", token);
-//     }
-//     token = strtok(NULL, " \t");
-//   }
-//   // End parsing...
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+       // Ignore commented lines and lines with just a space.
+	 break;
+ //                  1234567890
+      if (startswith("id=", token) )
+      {
+	 token += 3; // skip id=
+	 materialID = atoi(token);
+	 gotID=true;
+      }
+      else if (startswith("vp=", token) )
+      {
+	 token += 3; // skip vp=
+         vp0 = atof(token);
+      }
+      else if (startswith("vs=", token) )
+      {
+         token += 3; // skip vs=
+         vs0 = atof(token);
+      }
+      else if (startswith("rho=", token))
+      {
+         token += 4; // skip rho=
+         rho0 = atof(token);
+      }
+// linear variation
+      else if (startswith("rhograd=", token))
+      {
+	 token += 8; // skip rhograd=
+	 rho1 = atof(token);
+      }
+      else if (startswith("vpgrad=", token))
+      {
+	 token += 7; // skip vpgrad=
+	 vp1 = atof(token);
+      }
+      else if (startswith("vsgrad=", token))
+      {
+	 token += 7; // skip vsgrad=
+	 vs1 = atof(token);
+      }
+// quadratic variation
+      else if (startswith("rho2=", token))
+      {
+	 token += 5; // skip rho2=
+	 rho2 = atof(token);
+      }
+      else if (startswith("vp2=", token))
+      {
+	 token += 4; // skip vp2=
+	 vp2 = atof(token);
+      }
+      else if (startswith("vs2=", token))
+      {
+	 token += 4; // skip vs2=
+	 vs2 = atof(token);
+      }
+// sqrt variation
+      else if (startswith("rhosqrt=", token))
+      {
+	 token += 8; // skip rhosqrt=
+	 rho1o2 = atof(token);
+      }
+      else if (startswith("vpsqrt=", token))
+      {
+	 token += 7; // skip vpsqrt=
+	 vp1o2 = atof(token);
+      }
+      else if (startswith("vssqrt=", token))
+      {
+	 token += 7; // skip vssqrt=
+	 vs1o2 = atof(token);
+      }
+// attenuation variables
+      else if (startswith("Qp=", token) || startswith("qp=", token))
+      {
+	 token += 3; // skip qp=
+	 qp = atof(token);
+      }
+      else if (startswith("Qs=", token) || startswith("qs=", token))
+      {
+	 token += 3; // skip qs=
+	 qs = atof(token);
+      }
+      else
+      {
+	 badOption("material", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+ // End parsing...
   
-//   CHECK_INPUT( gotID, "No id specified in material command");
+   CHECK_INPUT( gotID, "No id specified in material command");
   
 
-//   CHECK_INPUT( (vs0 > 0 || vs1 != 0 || vs2 != 0) , 
-// 	       "Error in material command: vs0, vs1, vs2 are " << vs0 << " " << vs1 << " " << vs2 );
+   CHECK_INPUT( (vs0 > 0 || vs1 != 0 || vs2 != 0) , 
+ 	       "Error in material command: vs0, vs1, vs2 are " << vs0 << " " << vs1 << " " << vs2 );
 
-//   CHECK_INPUT( (vp0 > 0 || vp1 != 0 || vp2 != 0) , 
-// 	       "Error in material command: vp0, vp1, vp2 are " << vp0 << " " << vp1 << " " << vp2 );
+   CHECK_INPUT( (vp0 > 0 || vp1 != 0 || vp2 != 0) , 
+ 	       "Error in material command: vp0, vp1, vp2 are " << vp0 << " " << vp1 << " " << vp2 );
 
-//   CHECK_INPUT( (rho0 > 0 || rho1 != 0 || rho2 != 0) , 
-// 	       "Error in material command: rho0, rho1, rho2 are " << rho0 << " " << rho1 << " " << rho2 );
+   CHECK_INPUT( (rho0 > 0 || rho1 != 0 || rho2 != 0) , 
+ 	       "Error in material command: rho0, rho1, rho2 are " << rho0 << " " << rho1 << " " << rho2 );
 
-//   if(mSimulation->getVerbosity() >=2 &&  m_myRank == 0 )
-//   {
-//     cout << "**** Material parameters: *****" << endl;
-//     cout << "materialID=" << materialID << endl;
-//     cout << "vp=" << vp0 <<  " vpgrad=" << vp1 << " vp2=" << vp2 << " vpsqrt=" << vp1o2 << endl;
-//     cout << "vs=" << vs0 <<  " vsgrad=" << vs1 << " vs2=" << vs2 << " vssqrt=" << vs1o2 << endl;
-//     cout << "rho=" << rho0 <<  " rhograd=" << rho1 << " rho2=" << rho2 << " rhosqrt=" << rho1o2 <<endl;
-//     cout << "qp=" << qp <<  " qs=" << qs << endl;
-//   }
+   if( mVerbose >= 2 &&  m_myRank == 0 )
+   {
+     cout << "**** Material parameters: *****" << endl;
+     cout << "materialID=" << materialID << endl;
+     cout << "vp=" << vp0 <<  " vpgrad=" << vp1 << " vp2=" << vp2 << " vpsqrt=" << vp1o2 << endl;
+     cout << "vs=" << vs0 <<  " vsgrad=" << vs1 << " vs2=" << vs2 << " vssqrt=" << vs1o2 << endl;
+     cout << "rho=" << rho0 <<  " rhograd=" << rho1 << " rho2=" << rho2 << " rhosqrt=" << rho1o2 <<endl;
+     cout << "qp=" << qp <<  " qs=" << qs << endl;
+   }
 
-// // add material to WPP2 object
-//   MaterialProperty *mat=new MaterialProperty(materialID, vp0, vp1, vp2, vs0, vs1, vs2, rho0, rho1, rho2, qp, qs);
-//   mat->setSqrtCoefficients( vp1o2, vs1o2, rho1o2 );
-//   mSimulation->addMaterialProperty(mat);
-// }
+ // add material to EW object
+   MaterialProperty *mat=new MaterialProperty(materialID, vp0, vp1, vp2, vs0, vs1, vs2, rho0, rho1, rho2, qp, qs);
+   mat->setSqrtCoefficients( vp1o2, vs1o2, rho1o2 );
+   addMaterialProperty( mat );
+}
 
 // //-----------------------------------------------------------------------
 // void FileInput::processImage3D( char* buffer )
@@ -5968,3 +5970,83 @@ void EW::processMaterialEtree(char* buffer)
 #endif
 }
 
+void EW::processMaterialIfile( char* buffer )
+{
+  bool x1set=false, x2set=false, y1set=false, y2set=false, 
+    z1set=false, z2set=false;
+
+  double x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
+  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
+  string name = "Ifile";
+
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("ifile", token) == 0,
+	      "ERROR: material ifile can be set by a ifile line, not: " << token);
+
+  string err = token, filename="NONE";
+  bool CartesianFormat=false;
+  
+  err += " Error: ";
+
+  token = strtok(NULL, " \t");
+
+  double vp=-1, vs=-1, rho=-1, ps=-1, materialID=-1, freq=1;
+  double vpgrad=0, vsgrad=0, rhograd=0;
+  double vp2=0, vs2=0, rho2=0;
+  
+  bool gotFileName=false;
+  
+  while (token != NULL)
+  {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+//                  1234567890
+    if (startswith("filename=", token) )
+    {
+      token += 9; // skip filename=
+      filename = token;
+      gotFileName = true;
+    }
+// Cartesian or (lon,lat) format?
+//                       1234567890
+    else if (startswith("input=", token))
+    {
+      token += 6; // skip input=
+      if (strcmp("cartesian", token) == 0)
+      {
+	CartesianFormat=true;
+      }
+      else if (strcmp("grid", token) == 0) // better name would be geographic, but grid is used with topography
+      {
+	CartesianFormat=false;
+      }
+      else
+      {
+	badOption("ifile> input", token);
+      }
+
+    }
+    else
+    {
+      badOption("ifile", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+  // End parsing...
+  
+  CHECK_INPUT(gotFileName, "ERROR: no filename specified in ifile command. ");
+
+  if(mVerbose >=2 &&  m_myRank == 0 )
+  {
+    cout << "**** Ifile parameters: *****" << endl;
+    cout << "filename=" << filename << endl;
+    cout << "CartesianFormat=" << CartesianFormat << endl;
+  }
+
+// add this material specificaiton to the global model
+  MaterialIfile* bl = new MaterialIfile( this, filename, CartesianFormat );
+  add_mtrl_block( bl );
+}

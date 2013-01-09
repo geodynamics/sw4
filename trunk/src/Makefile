@@ -66,7 +66,7 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o
+       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
@@ -75,7 +75,7 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
        rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
        Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact.o twilightsgfort.o EtreeFile.o
+       lamb_exact.o twilightsgfort.o EtreeFile.o MaterialIfile.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
@@ -83,8 +83,8 @@ OBJ4 = filterTest.o Filter.o SecondOrderSection.o Polynomial.o
 sw4: $(OBJ) $(QUADPACK)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 
-sw4opt: $(OBJOPT)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(linklibs)
+sw4opt: $(OBJOPT) $(QUADPACK)
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(QUADPACK) $(linklibs)
 
 version.o:version.C
 	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_BASEDIR=\"NotUsed\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<

@@ -83,6 +83,8 @@ void processTestRayleigh(char* buffer);
 void processTestLamb(char* buffer);
 void processTestEnergy(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
+void processMaterial( char* buffer );
+void processMaterialIfile( char* buffer );
 void processMaterialBlock( char* buffer, int & blockCount );
 void processMaterialPfile(char* buffer);
 void processMaterialEtree(char* buffer);
@@ -188,24 +190,23 @@ void add_mtrl_block( MaterialData* md ){ m_mtrlblocks.push_back( md ); };
 void set_threshold_velocities(double vpmin, double vsmin);
 
 // material properties by id
-inline bool inside_material_surfaces( double lat, double lon )
-    {
-      return (lat <= m_materialLatMax && lat >= m_materialLatMin && 
-	      lon <= m_materialLonMax && lon >= m_materialLonMin);
-    }
+//inline bool inside_material_surfaces( double lat, double lon )
+//    {
+//      return (lat <= m_materialLatMax && lat >= m_materialLatMin && 
+//	      lon <= m_materialLonMax && lon >= m_materialLonMin);
+//    }
 
 void addMaterialProperty(MaterialProperty* mat){m_materials.push_back(mat);}
 
+   //void getMaterialID(double lat, double lon, double depth, int &materialID);
+   //bool knownMaterial(int materialID);
+   //double lookup_Rho(int materialID, double depth);
+   //double lookup_Vs(int materialID, double depth);
+   //double lookup_Vp(int materialID, double depth);
 
-void getMaterialID(double lat, double lon, double depth, int &materialID);
-bool knownMaterial(int materialID);
-double lookup_Rho(int materialID, double depth);
-double lookup_Vs(int materialID, double depth);
-double lookup_Vp(int materialID, double depth);
-
-// attenuation model
-double lookup_Qp(int materialID, double depth);
-double lookup_Qs(int materialID, double depth);
+//// attenuation model
+//double lookup_Qp(int materialID, double depth);
+//double lookup_Qs(int materialID, double depth);
 
 // super-grid functions
 void processSupergrid(char *buffer);
@@ -249,11 +250,13 @@ void extractTopographyFromCartesianFile(string a_topoFileName);
 void setEtreeFile(EtreeFile* efile); 
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
                                 double a_EFileResolution);
+
 void smoothTopography(int maxIter);
 
 void buildGaussianHillTopography(double amp, double Lx, double Ly, double x0, double y0);
 
 void extractSurfaceFromGridFile(string a_surfaceFileName);
+void extractSurfaceFromCartesianFile(string a_surfaceFileName);
 
 void computeCartesianCoord(double &x, double &y, double lon, double lat);
 void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
@@ -488,6 +491,10 @@ int m_opttest;
 // mTopoGrid holds the smoothed topography which follows the top surface of the curvilinear grid
 Sarray mTopo, mTopoMat, mTopoGrid;
 
+// material description used with material surfaces and the ifile command
+vector<MaterialProperty*> m_materials;
+MPI_Comm m_cartesian_communicator;
+
 private:
 
 ForcingTwilight* m_twilight_forcing;
@@ -506,7 +513,7 @@ double mDt;
 EtreeFile * mEtreeFile;
 
 bool m_doubly_periodic;
-MPI_Comm m_cartesian_communicator;
+
 int m_proc_array[2];
 
 bool mbcsSet;
@@ -517,17 +524,15 @@ bool m_analytical_topo;
 double m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
 
 // interface surfaces in the material model
-int m_number_material_surfaces, m_Nlon, m_Nlat;
-double m_materialLonMax, m_materialLonMin, m_materialLatMax, m_materialLatMin;
-Sarray m_materialDepth;
-double *m_materialLon, *m_materialLat;
+//int m_number_material_surfaces, m_Nlon, m_Nlat;
+//double m_materialLonMax, m_materialLonMin, m_materialLatMax, m_materialLatMin;
+//Sarray m_materialDepth;
+//double *m_materialLon, *m_materialLat;
 
 // global material thresholds
 bool m_useVelocityThresholds;
 double m_vpMin, m_vsMin;
 
-// material description used with material surfaces and the ifile command
-vector<MaterialProperty*> m_materials;
 
 // order of polynomial mapping in algebraic grid genenerator
 int m_grid_interpolation_order;
