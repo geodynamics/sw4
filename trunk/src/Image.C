@@ -120,7 +120,7 @@ Image::Image(EW * a_ew,
 void Image::associate_gridfiles( vector<Image*> imgs )
 {
    // Only if a curvilinear grid is needed
-   if( mEW->topographyExists() && (mMode == Image::X || mMode == Image::Y) &&
+   if( mEW->topographyExists() && (mLocationType == Image::X || mLocationType == Image::Y) &&
        !(mMode == Image::GRIDX || mMode == Image::GRIDY || mMode == Image::GRIDZ) )
    {
    // if my location type is X, find Gridy and Gridz with equal x-coord.

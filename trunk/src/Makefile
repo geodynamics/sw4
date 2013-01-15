@@ -22,10 +22,10 @@ endif
 
 # for mac
 ifeq ($(UNAME),Darwin)
-  FC = gfortran
-  CC = mpicc
-  CXX = mpicxx
-  linklibs = -framework vecLib -lgfortran
+  FC = openmpif77
+  CC = openmpicc
+  CXX = openmpicxx
+  linklibs = -framework vecLib -L/opt/local/lib/gcc45 -lgfortran
 
   ifeq ($(optlevel),DEBUG)
     FFLAGS = -g -fno-underscoring
@@ -90,10 +90,10 @@ version.o:version.C
 	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_BASEDIR=\"NotUsed\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
 
 test3: $(OBJ3)
-	gfortran -O3 -Wall -o $@ $(OBJ3)
+	$(FC) -O3 -Wall -o $@ $(OBJ3)
 
 test: $(OBJ2)
-	gfortran -O3 -Wall -o $@ $(OBJ2)
+	$(FC) -O3 -Wall -o $@ $(OBJ2)
 
 filterTest: $(OBJ4)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ4)
@@ -111,4 +111,4 @@ filterTest: $(OBJ4)
 	$(FC) $(FFLAGS) -c $<
 
 clean:
-	/bin/rm -f sw4 sw4opt $(OBJ) $(OBJOPT)
+	/bin/rm -f sw4 sw4opt $(OBJ) $(OBJOPT) $(QUADPACK)

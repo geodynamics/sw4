@@ -4,7 +4,7 @@
 %  Write time series data in format specified by USGS for the Hayward
 %  fault earthquake scenarios.
 %
-%             writeusgs( filename, stname, ux, uy, uz, dt, t0, enz )
+%             writeusgs( filename, stname, ux, uy, uz, dt, t0, enz, vel, utc )
 %
 %       Input: filename - write to this file
 %              stname   - Station name, (to be saved in the header of the file)
@@ -17,8 +17,11 @@
 %              utc - Reference time coordinate, 7 integers, [year,month,day,hour,minute,second,millisecond]
 %              enz - 1  [ux,uy,uz] is [East-West,North-South,Up]
 %                    0  [ux,uy,uz] is [X, Y, Z ]
+%              vel - Defaults to 1
+%                    0 Displacements
+%                    1 Velocities
 %
- function []= writeusgs( filename, stname, ux, uy, uz, dt, t0, enz, vel, utc )
+function []= writeusgs( filename, stname, ux, uy, uz, dt, t0, enz, vel, utc )
 %
 % Default to xyz-velocities
 if nargin < 9
@@ -33,7 +36,7 @@ end;
 if nargin < 8
   vel = 1;
 end;
-if nargin < 7
+if nargin < 8
   enz = 0;
 end;
 %

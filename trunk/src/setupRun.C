@@ -64,7 +64,7 @@ void EW::setupRun( )
     {
       cout << "Info: Grid #" << g <<" min z-coordinate: " << m_zmin[g] << endl;
     }
-    for( mNumberOfGrids-1; g>=0; g-- )
+    for( g=mNumberOfGrids-1; g>=0; g-- )
     {
       cout << "Info: mGridSize[" << g << "]=" << mGridSize[g] << endl;
     }

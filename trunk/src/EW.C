@@ -100,7 +100,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
   m_testing(false),
   m_moment_test(false),
-  m_twilight_forcing(false),
+  m_twilight_forcing(NULL),
   m_point_source_test(0),
   m_energy_test(0),
   m_lamb_test(0),
@@ -2393,8 +2393,9 @@ complex<double> atan(complex<double> z)
 complex<double> atan2(complex<double> z, complex<double> w)
 {
   complex<double> I(0,1);
- 
-  if (w == (0.0,0.0))
+  complex<double> Zero(0,0);
+  
+  if (w == Zero)
     {
       if (z.real() > 0)
         return M_PI/2.;

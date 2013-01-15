@@ -322,7 +322,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("topography", buffer) || 
 	   startswith("attenuation", buffer) || 
 	   startswith("fileio", buffer) ||
-	   startswith("\n", buffer) || buffer == "\r" || buffer == "\0")
+	   startswith("\n", buffer) || startswith("\r", buffer) )
+// || startswith("\r", buffer) || startswith("\0", buffer))
        {
 	 // Ignore commented lines, newlines,
 	 // grid, refinement, fileio, topography, and attenuation since we already processed those commands.

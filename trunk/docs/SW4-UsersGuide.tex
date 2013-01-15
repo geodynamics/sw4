@@ -46,17 +46,17 @@
 
 \begin{document}
 
-\title{\Huge User's guide to S4W and S4Wopt version 0.0.1} 
+\title{\LARGE User's guide to SW4 and SW4Opt version 0.0.1} 
 
 \author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
      Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This is
-     contribution LLNL-SM-487431.}}
+     contribution LLNL-SM-XXXYYY.}}
 \date{\today} 
 \maketitle
 \pagestyle{myheadings}
 
 %\thispagestyle{plain}
-\markboth{}{N.A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO S4W/S4WOPT-0.0.1}
+\markboth{}{N.A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4/SW4OPT-0.0.1}
 
 \pagebreak
 \paragraph {Disclaimer} 
@@ -102,27 +102,29 @@ For example, the command
 observation x=11200 y=6300 z=0.0 file=cartstation
 \end{verbatim}
 %
-will read a file named {\tt cartstation.txt} from the directory specified by the {\tt path} parameter to the {\tt fileio}
-command. If the {\tt path} is not set, the file will be searched for in the current directory. Currently, only files on
-the USGS ascii format can be read by the observation command. The USGS file do not contain information about the
-location of the station where the data were obtained. It is thus necessary to specify the location directly
-in the {\tt observation} command. In the example above, the data on the file represent measurements at a 
-station located at the position ${\bf x} =  (11200,6300,0)$ in the Cartesian grid. It is possible to specify the
-location in geographic coordinates instead. For example,
+will read a file named {\tt cartstation.txt} from the directory specified by the {\tt path}
+parameter to the {\tt fileio} command. If the {\tt path} is not set, the file will be searched for
+in the current directory. Currently, only files on the USGS ascii format can be read by the
+observation command. The USGS file do not contain information about the location of the station
+where the data were obtained. It is thus necessary to specify the location directly in the {\tt
+  observation} command. In the example above, the data on the file represent measurements at a
+station located at the position ${\bf x} = (11200,6300,0)$ in the Cartesian grid. It is possible to
+specify the location in geographic coordinates instead. For example,
 %
 \begin{verbatim}
 observation lon=-122.523 lat=38.0496 depth=0.0 file=nhf 
 \end{verbatim}
 %
-will read a file named {\tt nhf.txt}, that represents data obtained at latitude 38.049 and longitude -122.523 on 
-the surface of the earth.
-\emph{S4Wopt} will interpret the components of read file as Cartesian components, or as components pointing in the 
-east, north, and up directions, depending on information in the header of the file.
-\par
-The file read by the observation command will be assumed to start at time = 0, even if the starting time recorded 
-in the file is different from zero, i.e., the read seismograms will be shifted in time to always start at the first
-time step of the simulation.
-\par
+will read a file named {\tt nhf.txt}, that represents data obtained at latitude 38.049 and longitude
+-122.523 on the surface of the earth.  \emph{S4Wopt} will interpret the components of read file as
+Cartesian components, or as components pointing in the east, north, and up directions, depending on
+information in the header of the file.  
+
+The file read by the observation command will be
+assumed to start at time = 0, even if the starting time recorded in the file is different from zero,
+i.e., the read seismograms will be shifted in time to always start at the first time step of the
+simulation.
+
 %\begin{narrow}
 {\emph Not Yet Implemented:}
 Plan for reading sac files:
@@ -132,17 +134,19 @@ observation sfile1=filename.x sfile2=filename.y sfile3=filename.z
 will read the three components of a time history at a point from three SAC files. Information about type of
 components and location of the station is taken from the header of the SAC file.
 %\end{narrow}
-\par
-The stations specified by the observation command, will also act as recievers of time series during the 
-forward solve phase. After each iteration in the optimization algorithm, the time histories obtained at the stations 
-(${\bf u}^n_{{\bf i}_r}$ above) will be output with on files with a {\tt \_out} appended to their names. For example,
-if time history is input on the file {\tt nhf.txt}, the corresponding seismograms computed by the forward problem
-using the most recent approximation of the source are written on a file named {\tt nhf\_out.txt}. These files are thus
-overwitten after each optimization iteration. Furthermore, if the option {\tt output\_initial\_seismograms} is set to
-one, the time series obtained with the initial guess source will be output on files with a {\tt \_ini} appended.
-\par
-The {\tt receiver} command, defined for \emph{S4W}, can not be used with \emph{S4Wopt}.  Currently, it is not possible to
-specify a receiver that is not also an observation.
+
+The stations specified by the observation command, will also act as recievers of time series during
+the forward solve phase. After each iteration in the optimization algorithm, the time histories
+obtained at the stations (${\bf u}^n_{{\bf i}_r}$ above) will be output with on files with a {\tt
+  \_out} appended to their names. For example, if time history is input on the file {\tt nhf.txt},
+the corresponding seismograms computed by the forward problem using the most recent approximation of
+the source are written on a file named {\tt nhf\_out.txt}. These files are thus overwitten after each
+optimization iteration. Furthermore, if the option output\_initial\_seismograms is set to one, the
+time series obtained with the initial guess source will be output on files with a {\tt \_ini}
+appended.  
+
+The {\tt receiver} command, defined for \emph{S4W}, can not be used with
+\emph{S4Wopt}. Currently, it is not possible to specify a receiver that is not also an observation.
 
 %\chapter{Introduction}
 %\chapter{Getting started}
@@ -163,7 +167,7 @@ time step $\Delta t$ depends on the input material. $\Delta t$ is determined aut
 The simulation start time can be related to a UTC time. The option {\tt utcstart} sets the UTC time that
 corresponds to the simulation time $t=0$, for example,
 \begin{verbatim}
-time t=1.6 utcstart=01/04/2012:17:34:12.233
+time t=1.6 utcstart=01/31/2012:17:34:12.233
 \end{verbatim}
 The format of the UTC time is ``month/day/year:hour:minute:second.milisecond''. When the UTC time is set,
 output receiver data files are time stamped with the UTC reference time. Furthermore, the UTC start time
@@ -208,7 +212,6 @@ that. Other commands, such as those specifying the material model can be given b
 different commands (block, pfile, efile, or ifile). Unless \emph{S4W} is run in one of its test
 modes, the material must be specifed by at least one of these commands and at least one source must
 be specified.
-
 
 \section{Basic commands}
 

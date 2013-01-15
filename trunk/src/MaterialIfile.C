@@ -67,7 +67,9 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
 // (lon,lat) or (x,y) coordinates ?
 	       if ( m_mat_Cartesian)
 	       {
-		  if ( inside_cartesian_material_surfaces(x, y) )
+//		  if ( inside_cartesian_material_surfaces(x, y) )
+// allow evaluation outside the surfaces (for ghost point values)
+		  if ( true )
 		  {
 // interpolate material surfaces to find which material is at the specified depth 
 		     materialID = getCartesianMaterialID(x, y, depth );
@@ -623,12 +625,13 @@ int MaterialIfile::getCartesianMaterialID(double xP, double yP, double depth )
 // interpolate the materialDepth surfaces to find which material is at the specified depth 
   
 // Interpolate in the grid file to get elevations on the computational grid
-   if (yP > m_mat_Ymax || yP < m_mat_Ymin || xP > m_mat_Xmax || xP < m_mat_Xmin)
-   {
-      printf("Warning: MaterialIfile::getCartesianMaterialID xP=%e, yP=%e is outside the material surface grid\n", xP, yP);
-      //      MPI_Abort(MPI_COMM_WORLD,1);
-      return -1;
-   }
+// allow extrapolation (for ghost points)
+   // if (yP > m_mat_Ymax || yP < m_mat_Ymin || xP > m_mat_Xmax || xP < m_mat_Xmin)
+   // {
+   //    printf("Warning: MaterialIfile::getCartesianMaterialID xP=%e, yP=%e is outside the material surface grid\n", xP, yP);
+   //    //      MPI_Abort(MPI_COMM_WORLD,1);
+   //    return -1;
+   // }
    double deltaY = (m_mat_Ymax-m_mat_Ymin)/m_mat_Ny;
    double deltaX = (m_mat_Xmax-m_mat_Xmin)/m_mat_Nx;
    int i0 = 1+(int)((xP-m_mat_Xmin)/deltaX);
@@ -661,20 +664,22 @@ int MaterialIfile::getCartesianMaterialID(double xP, double yP, double depth )
    if (i0 > m_mat_Nx-1) i0 = m_mat_Nx-1;
    if (j0 < 1) j0 = 1;
    if (j0 > m_mat_Ny-1) j0 = m_mat_Ny-1;
+
+// remove this test to allow extrapolation to ghost points
 // test that we are inside the interval
-   if (!(m_mat_Xvec[i0] <= xP && xP <= m_mat_Xvec[i0+1]))
-   {
-      printf("xP=%e outside (m_mat_Xvec[%i]=%e, m_mat_Xvec[%i]=%e)\n",
-	     xP, i0, m_mat_Xvec[i0], i0+1, m_mat_Xvec[i0+1]);
-      return -1;
-   }
+   // if (!(m_mat_Xvec[i0] <= xP && xP <= m_mat_Xvec[i0+1]))
+   // {
+   //    printf("xP=%e outside (m_mat_Xvec[%i]=%e, m_mat_Xvec[%i]=%e)\n",
+   // 	     xP, i0, m_mat_Xvec[i0], i0+1, m_mat_Xvec[i0+1]);
+   //    return -1;
+   // }
   
-   if (!(m_mat_Yvec[j0] <= yP && yP <= m_mat_Yvec[j0+1]))
-   {
-      printf("yP=%e outside (m_mat_Yvec[%i]=%e, m_mat_Yvec[%i]=%e)\n",
-	     yP, j0, m_mat_Yvec[j0], j0+1, m_mat_Yvec[j0+1]);
-      return -1;
-   }
+   // if (!(m_mat_Yvec[j0] <= yP && yP <= m_mat_Yvec[j0+1]))
+   // {
+   //    printf("yP=%e outside (m_mat_Yvec[%i]=%e, m_mat_Yvec[%i]=%e)\n",
+   // 	     yP, j0, m_mat_Yvec[j0], j0+1, m_mat_Yvec[j0+1]);
+   //    return -1;
+   // }
   
 // local step sizes
    double xi, eta;

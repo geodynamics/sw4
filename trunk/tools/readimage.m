@@ -4,7 +4,7 @@
 %    Read image produced by sw4 on format with the *.sw4img extension.
 %    This script will not read the older WPP image format.
 %
-%         [im,x,y,z,t]=readimage( imfile, pnr, verbose )
+%         [im,x,y,z,t,timestring]=readimage( imfile, pnr, verbose )
 %
 %                Input: imfile  - Image file name
 %                       pnr     - Patch number, if more than one grid is used.
@@ -12,7 +12,8 @@
 %                Output: im      - The image, as a 2D array.
 %                        x, y, z - The spatial coordinates of the image, one of these is a scalar.
 %                        t       - Simulation time at which the image was output.
-function [im,x,y,z,t]=readimage( imfile, pnr, verbose )
+%                        timestring - String holding creation date
+function [im,x,y,z,t,timestring]=readimage( imfile, pnr, verbose )
 if nargin < 3
    verbose= 0;
 end;
@@ -31,6 +32,7 @@ if fd ~= -1
    mode    =fread(fd,1,'int');
    gridinfo=fread(fd,1,'int');
    timecreated=fread(fd,[1 25],'uchar');
+   timestring=num2str(timecreated,'%c');
    mstr=getimagemodestr(mode);
   % Display header
    if verbose == 1
@@ -56,10 +58,12 @@ if fd ~= -1
 	fseek(fd,(ni(p)-ib(p)+1)*(nj(p)-jb(p)+1)*prec,'cof');
      end;
      if prec == 4
-        im = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'float');
+        im0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'float');
      else
-        im = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'double');
+        im0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'double');
      end;
+% transpose im0 and return result in im
+     im = im0';
      fclose(fd);
      if plane == 0 
         x = coord;

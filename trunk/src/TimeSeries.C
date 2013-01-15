@@ -1814,7 +1814,8 @@ int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
    lend = l;
    //   cout << "lend = " << lend << endl;
    int corr = lend-lstart+1;
-   delete[] leap_sec_y, leap_sec_m;
+   delete[] leap_sec_y;
+   delete[] leap_sec_m;
    return corr;
 }
 
