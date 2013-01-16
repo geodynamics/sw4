@@ -558,6 +558,25 @@ void EW::processGrid(char* buffer)
                 << lon);
         lonSet = true;
      }
+//                        1234567890
+     else if (startswith("mlon=", token))
+     {
+        token += 5;
+        mMetersPerLongitude = atof(token);
+        CHECK_INPUT(mMetersPerLongitude > 0.0,
+                err << "mMetersPerLongitude must be greater than 0, not " 
+                << mMetersPerLongitude);
+        mConstMetersPerLongitude = true;
+     }
+//                        1234567890
+     else if (startswith("mlat=", token))
+     {
+        token += 5;
+        mMetersPerDegree = atof(token);
+        CHECK_INPUT(mMetersPerDegree > 0.0,
+                err << "mMetersPerDegree must be greater than 0, not " 
+                << mMetersPerDegree);
+     }
 //                        1234567890123456  
      else if (startswith("extrapolate=", token))
      {

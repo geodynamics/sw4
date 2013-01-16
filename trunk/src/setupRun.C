@@ -1291,37 +1291,42 @@ void EW::assign_supergrid_damping_arrays()
   }
   
 // tmp: save the damping coefficients in matlab format
-  // FILE *fp;
-  // char fName[80];
+  // if (mVerbose >= 2){
+  //   FILE *fp;
+  //   char fName[80];
  
-  // g = 0;
+  //   g = 0;
   
-  // sprintf(fName,"dcx-p%i.ext", m_myRank);
-  // fp = fopen(fName,"w");
-  // for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-  // {
-  //   x = (i-1)*mGridSize[g];
-  //   fprintf(fp,"%e %e\n", x, dcx(i,g));
-  // }
-  // fclose(fp);
+  //   printf("Saving damping profiles on proc 0\n");
+  //   m_supergrid_taper_x.print_parameters();
+  //   printf("xmin=%e, xmax=%e\n", (m_iStart[g]-1)*mGridSize[g], (m_iEnd[g]-1)*mGridSize[g]);
+  //   sprintf(fName,"dcx-p%i.ext", m_myRank);
+  //   fp = fopen(fName,"w");
+  //   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+  //   {
+  //     x = (i-1)*mGridSize[g];
+  //     fprintf(fp,"%e %e\n", x, dcx(i,g));
+  //   }
+  //   fclose(fp);
 
-  // sprintf(fName,"dcy-p%i.ext", m_myRank);
-  // fp = fopen(fName,"w");
-  // for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-  // {
-  //   y = (j-1)*mGridSize[g];
-  //   fprintf(fp,"%e %e\n", y, dcy(j,g));
-  // }
-  // fclose(fp);
+  //   sprintf(fName,"dcy-p%i.ext", m_myRank);
+  //   fp = fopen(fName,"w");
+  //   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+  //   {
+  //     y = (j-1)*mGridSize[g];
+  //     fprintf(fp,"%e %e\n", y, dcy(j,g));
+  //   }
+  //   fclose(fp);
 
-  // sprintf(fName,"dcz-p%i.ext", m_myRank);
-  // fp = fopen(fName,"w");
-  // for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
-  // {
-  //   z = m_zmin[g] + (k-1)*mGridSize[g];
-  //   fprintf(fp,"%e %e\n", z, dcz(k,g));
+  //   sprintf(fName,"dcz-p%i.ext", m_myRank);
+  //   fp = fopen(fName,"w");
+  //   for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+  //   {
+  //     z = m_zmin[g] + (k-1)*mGridSize[g];
+  //     fprintf(fp,"%e %e\n", z, dcz(k,g));
+  //   }
+  //   fclose(fp);
   // }
-  // fclose(fp);
 
 #undef dcx
 #undef dcy

@@ -714,7 +714,8 @@ double mGeoAz;
 double mLonOrigin, mLatOrigin;
 
 //GeographicCoord mGeoCoord;
-double mMetersPerDegree;
+double mMetersPerDegree, mMetersPerLongitude;
+bool mConstMetersPerLongitude;
 
 // is this object ready for time-stepping?
 bool mParsingSuccessful, mIsInitialized, mSourcesOK;

@@ -174,7 +174,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
      zG = a_ew->mZ(m_i0, m_j0, m_k0);
    }
    
-   if (a_ew->getVerbosity()>=1)
+   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
    {
      cout << "recevier info for station " << m_fileName << ":" << 
        " initial location (x,y,z) = " << mX << " " << mY << " " << mZ << 

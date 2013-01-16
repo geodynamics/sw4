@@ -75,7 +75,7 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
        rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
        Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact.o twilightsgfort.o EtreeFile.o MaterialIfile.o
+       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o

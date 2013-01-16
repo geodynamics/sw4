@@ -3,13 +3,14 @@ c Adds 4th order artificial disssipation for super-grid damping layers
 c
 c-----------------------------------------------------------------------
 
-	subroutine addsgd( dt, h, up, u, um, dcx, dcy,
+	subroutine addsgd( dt, h, up, u, um, rho, dcx, dcy,
      +    dcz, ifirst, ilast, jfirst, jlast, kfirst, klast, beta)
 	implicit none
 	real*8 dt, h
 	real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+	real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 dcx(ifirst:ilast)
 	real*8 dcy(jfirst:jlast)
 	real*8 dcz(kfirst:klast)
@@ -24,12 +25,15 @@ c this routine uses un-divided differences in x and t
 	integer i, j, k, c;
 
 	if( beta .eq. 0d0 ) return;
-c	coeff = beta*dt/h
-	coeff = beta
+c this scaling is used in the 1D test code
+	coeff = beta*dt/h
+c	coeff = beta
 c beta is the supergrid damping coefficient as entered in the input file
 c
-c rho u_{tt} = h^3 rho*(h/dt)*beta*( psi(x) u_{xxt} )_{xx} + (same in y and z) )
+c
+c rho u_{tt} = h^3 *(h/dt)*beta*( psi(x) u_{xxt} )_{xx} + (same in y and z) )
 c Note: h/dt has the dimension of a velocity!
+c Note need to divide by \tilde{rho} = rho/phi
 c
 c add in the SG damping
 c
@@ -53,7 +57,8 @@ c y-differences
      + +dcy(j-1) * ( u(c,i,j,  k) -2*u(c,i,j-1,k)+ u(c,i,j-2,k)) 
      + -dcy(j+1) * (um(c,i,j+2,k)-2*um(c,i,j+1,k)+um(c,i,j,  k)) 
      + +2*dcy(j) * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
-     + -dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )
+     + -dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) 
+     +		     )/rho(i,j,k)
 	      enddo
 	   enddo
 	enddo
@@ -84,7 +89,7 @@ c z-differences
      + -dcz(k+1) * (um(c,i,j,k+2)-2*um(c,i,j,k+1)+um(c,i,j,k  )) 
      + +2*dcz(k) * (um(c,i,j,k+1)-2*um(c,i,j,k  )+um(c,i,j,k-1)) 
      + -dcz(k-1) * (um(c,i,j,k  )-2*um(c,i,j,k-1)+um(c,i,j,k-2)) 
-     + )
+     + ) / rho(i,j,k)
 	      enddo
 	    enddo
 	  enddo

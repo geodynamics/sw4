@@ -435,7 +435,7 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
    for( int comp = 0 ; comp < 11 ; comp++ )
    {
       if( myRank == 0 )
-	 cout << "Solving forward problem no. " << comp+1 << endl;
+	cout << endl << "**** Solving forward problem no. " << comp+1 << endl;
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
       {
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "dudpsrc" );

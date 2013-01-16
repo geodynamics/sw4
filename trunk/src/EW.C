@@ -175,7 +175,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   mLatOrigin(37.0), // NTS
   mGeoAz(0.0), // x=North, y=East
   //  mDefaultLocation(true),
-  mMetersPerDegree(111319.5),
+  mMetersPerDegree(111319.5), // per degree in Latitude...
+  mMetersPerLongitude(87721.0), // approximate for Lat=38 degrees
+  mConstMetersPerLongitude(false),
 
 // command limitfrequency
   m_limit_frequency(false), 
@@ -567,9 +569,17 @@ void EW::computeCartesianCoord(double &x, double &y, double lon, double lat)
   double phi = mGeoAz * deg2rad;
 
   // compute x and y
-  x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
-  y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
-
+  if (mConstMetersPerLongitude)
+  {
+    x = mMetersPerDegree*cos(phi)*(lat-mLatOrigin)    + mMetersPerLongitude*(lon-mLonOrigin)*sin(phi);
+    y = mMetersPerDegree*(-sin(phi))*(lat-mLatOrigin) + mMetersPerLongitude*(lon-mLonOrigin)*cos(phi);
+  }
+  else
+  {
+    x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
+    y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
+  }
+  
 }
 
 
@@ -585,9 +595,17 @@ void EW::computeGeographicCoord(double x, double y, double & longitude, double &
     (x*cos(phi) - y*sin(phi))/mMetersPerDegree;
 
   // Compute the longitude
- longitude = mLonOrigin + 
+ if (mConstMetersPerLongitude)
+ {
+   longitude = mLonOrigin + 
+     (x*sin(phi) + y*cos(phi))/(mMetersPerLongitude);
+ }
+ else
+ {
+   longitude = mLonOrigin + 
      (x*sin(phi) + y*cos(phi))/(mMetersPerDegree*cos(latitude*deg2rad));
-
+ }
+ 
 }
 
 //-------------------------------------------------------
