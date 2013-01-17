@@ -30,6 +30,7 @@
 
 #include "SuperGrid.h"
 #include "MaterialProperty.h"
+#include "GeographicProjection.h"
 
 using namespace std;
 
@@ -95,6 +96,8 @@ void processPrefilter(char* buffer);
 void processGMT(char* buffer);
 void processDeveloper(char* buffer);
 void processGlobalMaterial(char* buffer);
+void processTopography(char* buffer);
+void getEfileInfo(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
@@ -239,6 +242,7 @@ void communicate_array_2d_asym( Sarray& u, int g, int k );
 void set_materials();
 void setup_viscoelastic(double minvsoh );
 void extrapolateInZ(Sarray& field, bool useThreshold, double thresHoldValue, bool linear);
+void extrapolateInXY( vector<Sarray>& field );
 
 void addImage(Image* i);
 //void addImage3D(Image3D* i);
@@ -498,6 +502,10 @@ MPI_Comm m_cartesian_communicator;
 
 private:
 
+   //PJ *m_projection;
+   //double m_xoffset, m_yoffset;
+GeographicProjection* m_geoproj;
+
 ForcingTwilight* m_twilight_forcing;
 TestPointSource* m_point_source_test;
 bool m_moment_test;
@@ -609,9 +617,11 @@ int m_nx_base, m_ny_base, m_nz_base;
 double m_h_base;
 vector<double> m_refinementBoundaries;
 InputMode m_topoInputStyle;
-string m_topoFileName;
+string m_topoFileName, m_topoExtFileName, m_QueryType;
 bool mTopoImageFound;
 double m_topo_zmax;
+int m_maxIter;
+double m_EFileResolution;
 
 //-------------------------------------------
 // IO data

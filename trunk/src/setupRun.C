@@ -700,6 +700,11 @@ void EW::set_materials()
     
 // tmp
 //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n", m_useVelocityThresholds, m_vpMin, m_vsMin);
+// Extrapolate to ghost points in x and y, if they were not set by the previous routines.
+    extrapolateInXY( mRho );
+    extrapolateInXY( mMu );
+    extrapolateInXY( mLambda );
+
 // threshold material velocities
     if (m_useVelocityThresholds)
     {
@@ -757,10 +762,10 @@ void EW::set_materials()
 					    &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
 					    &amprho, &ampmu, &ampla, &h, &zmin );
 
-// Need to communicate across material boundaries
-	  communicate_array( mRho[g], g );
-	  communicate_array( mMu[g], g );
-	  communicate_array( mLambda[g], g );
+// Need to communicate across material boundaries, why ?
+//	  communicate_array( mRho[g], g );
+//	  communicate_array( mMu[g], g );
+//	  communicate_array( mLambda[g], g );
       }
 //       if (topographyExists())
 //       {
@@ -823,6 +828,9 @@ void EW::set_materials()
 	   mu_ptr[i]     = drand48()+2;
            lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+drand48();
 	}
+	// Communication needed here. Because of random material data,
+	// processor overlap points will otherwise have different values
+	// in different processors.
 	communicate_array( mRho[g], g );
 	communicate_array( mMu[g], g );
 	communicate_array( mLambda[g], g );

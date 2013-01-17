@@ -98,7 +98,6 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   mTstart(0.0),
   mDt(0.0),
   mNumberOfTimeSteps(-1),
-
   m_testing(false),
   m_moment_test(false),
   m_twilight_forcing(NULL),
@@ -107,7 +106,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_lamb_test(0),
   m_rayleigh_wave_test(0),
   m_update_boundary_function(0),
-
+  m_EFileResolution(-1.0),
+  m_maxIter(10),
+  m_topoFileName("NONE"),
+  m_topoExtFileName("NONE"),
+  m_QueryType("MAXRES"),
   //  mTestingEnergy(false),
   //  mTestSource(false),
   //  mTestLamb(false),
@@ -568,48 +571,73 @@ void EW::computeCartesianCoord(double &x, double &y, double lon, double lat)
   // -----------------------------------------------------------------
   // Compute the cartesian coordinate given the geographic coordinate
   // -----------------------------------------------------------------
-  double deg2rad = M_PI/180.0;
-
-  double phi = mGeoAz * deg2rad;
-
-  // compute x and y
-  if (mConstMetersPerLongitude)
+  if( m_geoproj == 0 )
+   //  // compute x and y
   {
-    x = mMetersPerDegree*cos(phi)*(lat-mLatOrigin)    + mMetersPerLongitude*(lon-mLonOrigin)*sin(phi);
-    y = mMetersPerDegree*(-sin(phi))*(lat-mLatOrigin) + mMetersPerLongitude*(lon-mLonOrigin)*cos(phi);
+     double deg2rad = M_PI/180.0;
+     double phi = mGeoAz * deg2rad;
+     //     x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
+     //     y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
+     if (mConstMetersPerLongitude)
+     {
+	x = mMetersPerDegree*cos(phi)*(lat-mLatOrigin)    + mMetersPerLongitude*(lon-mLonOrigin)*sin(phi);
+	y = mMetersPerDegree*(-sin(phi))*(lat-mLatOrigin) + mMetersPerLongitude*(lon-mLonOrigin)*cos(phi);
+     }
+     else
+     {
+	x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
+	y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
+     }
   }
   else
-  {
-    x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
-    y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
-  }
-  
+     m_geoproj->computeCartesianCoord(x,y,lon,lat);
+   // Test with proj4
+  //  projUV lonlat, xy;
+  //  lonlat.u = lon*deg2rad;
+  //  lonlat.v = lat*deg2rad;
+  //  xy = pj_fwd( lonlat, m_projection );
+  //  if( xy.u == HUGE_VAL )
+  //     cout << "ERROR: computeCartesianCoord pj_fwd failed with message " << pj_strerrno(pj_errno) << endl;
+  //  xy.u -= m_xoffset;
+  //  xy.v -= m_yoffset;
+  //  x =  xy.u*sin(phi) + cos(phi)*xy.v;
+  //  y =  xy.u*cos(phi) - sin(phi)*xy.v;
 }
-
 
 //-----------------------------------------------------------------------
 void EW::computeGeographicCoord(double x, double y, double & longitude, double & latitude)
 {
   // conversion factor between degrees and radians
-  double deg2rad = M_PI/180.0;
-  double phi = mGeoAz * deg2rad;
-
-  // Compute the latitude
- latitude = mLatOrigin + 
-    (x*cos(phi) - y*sin(phi))/mMetersPerDegree;
-
-  // Compute the longitude
- if (mConstMetersPerLongitude)
- {
-   longitude = mLonOrigin + 
-     (x*sin(phi) + y*cos(phi))/(mMetersPerLongitude);
- }
- else
- {
-   longitude = mLonOrigin + 
-     (x*sin(phi) + y*cos(phi))/(mMetersPerDegree*cos(latitude*deg2rad));
- }
- 
+   if( m_geoproj == 0 )
+   {
+      double deg2rad = M_PI/180.0;
+      double phi = mGeoAz * deg2rad;
+      // Compute the latitude
+      latitude = mLatOrigin + 
+	 (x*cos(phi) - y*sin(phi))/mMetersPerDegree;
+      // Compute the longitude
+      if (mConstMetersPerLongitude)
+      {
+	 longitude = mLonOrigin + 
+	    (x*sin(phi) + y*cos(phi))/(mMetersPerLongitude);
+      }
+      else
+      {
+	 longitude = mLonOrigin + 
+	    (x*sin(phi) + y*cos(phi))/(mMetersPerDegree*cos(latitude*deg2rad));
+      }
+   }
+   else
+      m_geoproj->computeGeographicCoord( x, y, longitude, latitude );
+  // Test with proj4
+   // projUV lonlat, xy;
+   // xy.u = x*sin(phi) + y*cos(phi) + m_xoffset;
+   // xy.v = x*cos(phi) - y*sin(phi) + m_yoffset;
+   // lonlat = pj_inv( xy, m_projection );
+   //  if( lonlat.u == HUGE_VAL )
+   //     cout << "ERROR: computeGeographicCoord, pj_inv failed with message " << pj_strerrno(pj_errno) << endl;
+   // longitude = lonlat.u/deg2rad;
+   // latitude  = lonlat.v/deg2rad;
 }
 
 //-------------------------------------------------------
@@ -3707,7 +3735,7 @@ void EW::print_utc()
 }
 
 //-----------------------------------------------------------------------
-void EW::extractTopographyFromGridFile(string a_topoFileName)
+void EW::extractTopographyFromGridFile( string a_topoFileName )
 {
    if (proc_zero())
       cout << "***inside extractTopographyFromGridFile***"<< endl;
@@ -3737,11 +3765,7 @@ void EW::extractTopographyFromGridFile(string a_topoFileName)
 
    for (j=1; j<=Nlat; j++)
       for (i=1; i<=Nlon; i++)
-      {
-//       fscanf(gridfile, "%le %le %le %i %i", &lonv[i], &latv[j], &gridElev(1,i,j,1), 
-//              &dum, &dum);
 	 fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
-      }
    fclose(gridfile);
   
    if (proc_zero())

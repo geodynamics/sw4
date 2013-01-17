@@ -13,6 +13,7 @@
 #include "TimeSeries.h"
 #include "Filter.h"
 
+
 // #include "Image3D.h"
 
 #include <cstring>
@@ -188,18 +189,18 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      // {
      //   processRefinement(buffer);
      // }
-     // else if (startswith("topography", buffer))
-     // {
-     //   processTopography(buffer);
-     // }
+     else if (startswith("topography", buffer))
+     {
+        processTopography(buffer);
+     }
      // else if (startswith("attenuation", buffer))
      // {
      //   processAttenuation(buffer);
      // }
-     // else if (startswith("efile", buffer))
-     // {
-     //   getEfileInfo(buffer); // read efile name, etc for setting up topography from the efile
-     // }
+     else if (startswith("efile", buffer))
+     {
+        getEfileInfo(buffer); // read efile name, etc for setting up topography from the efile
+     }
   }
 
 // make sure there was a grid command
@@ -233,47 +234,44 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // deal with topography
   if (m_topography_exists)
   {
-    if (m_myRank == 0)
-      cout << endl << 
-	"*** ERROR: Topography not yet implemented ***" << endl << endl;
-    return false;
-
-// // 1. read topography from efile 
-//       if (m_topoInputStyle == FileInput::Efile)
-//       {
-// 	extractTopographyFromEfile(m_topoFileName, m_topoExtFileName, m_QueryType,
-//                                                 m_EFileResolution);
-// // 2. smooth the topo
-// 	smoothTopography(m_maxIter);
-//       }
-//       else if (m_topoInputStyle == FileInput::GridFile)
-//       {
-// // 1. read topography from grid file
-// 	extractTopographyFromGridFile(m_topoFileName);
-// // 2. smooth the topo
-// 	smoothTopography(m_maxIter);
-//       }
-//       else if (m_topoInputStyle == FileInput::CartesianGrid)
-//       {
-// // 1. read topography from Cartesian grid file
-// 	extractTopographyFromCartesianFile(m_topoFileName);
-// // 2. smooth the topo
-// 	smoothTopography(m_maxIter);
-//       }
-//       else if (m_topoInputStyle == FileInput::GaussianHill)
-//       {
-// 	buildGaussianHillTopography(m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc);
-//       }
-      
+     if (m_myRank == 0)
+	cout << endl << 
+	   "*** ERROR: Topography not yet implemented ***" << endl << endl;
+     return false;
+// 1. read topography from efile 
+     if (m_topoInputStyle == EW::Efile)
+     {
+ 	extractTopographyFromEfile(m_topoFileName, m_topoExtFileName, m_QueryType,
+				   m_EFileResolution);
+// 2. smooth the topo
+ 	smoothTopography(m_maxIter);
+     }
+     else if (m_topoInputStyle == EW::GridFile)
+     {
+// 1. read topography from grid file
+ 	extractTopographyFromGridFile(m_topoFileName);
+// 2. smooth the topo
+ 	smoothTopography(m_maxIter);
+     }
+     else if (m_topoInputStyle == EW::CartesianGrid)
+     {
+// 1. read topography from Cartesian grid file
+ 	extractTopographyFromCartesianFile(m_topoFileName);
+// 2. smooth the topo
+ 	smoothTopography( m_maxIter );
+     }
+     else if (m_topoInputStyle == EW::GaussianHill)
+     {
+ 	buildGaussianHillTopography(m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc);
+     }      
 // // 3. Figure out the number of grid points in the vertical direction and allocate solution arrays on the curvilinear grid
-//       allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
-
+     allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
   }
   else
   {
-    if (m_myRank == 0)
-      cout << endl << 
-	"*** No topography command found in input file. Using z=0 as free surface boundary ***" << endl << endl;
+     if (m_myRank == 0)
+	cout << endl << 
+	   "*** No topography command found in input file. Using z=0 as free surface boundary ***" << endl << endl;
   }
     
 // setup communicators for 3D solutions on all grids
@@ -442,6 +440,11 @@ void EW::processGrid(char* buffer)
   //-----------------------------------------------------------------
   double lat, lon;
   bool latSet = false, lonSet = false;
+  bool use_geoprojection=false;
+  string projection="proj=utm";
+  string ellipse="ellps=WGS84";
+
+
 // default azimuth
   mGeoAz=0;
   
@@ -594,6 +597,16 @@ void EW::processGrid(char* buffer)
 	CHECK_INPUT( ghost == 2 || ghost == 3, err << "Number of ghost points must be 2 or 3, not " << ghost );
 	m_ghost_points = ghost;
         m_ppadding = ghost;
+     }
+     else if( startswith("proj=",token))
+     {
+        projection = token;
+	use_geoprojection = true;
+     }
+     else if( startswith("ellps=",token))
+     {
+        ellipse = token;
+	use_geoprojection = true;
      }
      else
      {
@@ -956,6 +969,40 @@ void EW::processGrid(char* buffer)
   m_global_ymax = yprime;
   m_global_zmax = zprime;
 
+#ifndef ENABLE_ETREE
+  CHECK_INPUT( !use_geoprojection, "ERROR: need to enable Etree to use projections from the Proj4 library");
+#endif
+  if( use_geoprojection )
+     m_geoproj = new GeographicProjection( mLonOrigin, mLatOrigin, projection, ellipse, mGeoAz );
+  else
+     m_geoproj = static_cast<GeographicProjection*>(0);
+
+  //  int nprojpars = 6;
+  //  char** projpars = new char*[nprojpars];
+  //  for( int n=0 ; n < nprojpars ; n++ )
+  //     projpars[n] = new char[35];
+  //  strncpy(projpars[0],"proj=utm",35);
+  //  strncpy(projpars[1],"ellps=WGS84",35);
+  //  snprintf(projpars[2],35,"lon_0=%25.17g",mLonOrigin);
+  //  snprintf(projpars[3],35,"lat_0=%25.17g",mLatOrigin);
+  //  strncpy(projpars[4],"units=m",35);
+  //  strncpy(projpars[5],"no_defs",35);
+
+  //  m_projection = pj_init( nprojpars, projpars );
+  //  CHECK_INPUT( m_projection != 0, "ERRROR: first call to pj_init failed with message: " << pj_strerrno(pj_errno) );
+     
+  //  double deg2rad = M_PI/180;
+  //  projUV xy, lonlat;
+  //  lonlat.u = mLonOrigin*deg2rad;
+  //  lonlat.v = mLatOrigin*deg2rad;
+  //  xy = pj_fwd( lonlat, m_projection );
+  //  CHECK_INPUT( xy.u != HUGE_VAL, "ERROR: first call to pj_fwd failed with message " << pj_strerrno(pj_errno) );
+  //  m_xoffset = xy.u;
+  //  m_yoffset = xy.v;
+  //
+  //  for( int n=0 ; n < nprojpars ; n++ )
+  //     delete[] projpars[n];
+  //  delete[] projpars;
 }
 
 //----------------------------------------------------------
@@ -1159,144 +1206,149 @@ void EW::cleanUpRefinementLevels()
 //     printf("* Processing the attenuation command: m_nmech=%i, m_velo_omega=%e\n", m_nmech, m_velo_omega);
 // }
 
-// void FileInput::processTopography(char* buffer)
-// {
-//    char* token = strtok(buffer, " \t");
-//    CHECK_INPUT(strcmp("topography", token) == 0, 
-// 	    "ERROR: not a topography line...: " << token);
-//    string topoFile="surf.tp", style, fileName;
-//    bool needFileName=false, gotFileName=false;
+//-----------------------------------------------------------------------
+void EW::processTopography(char* buffer)
+{
+   //
+   // Note, m_topoFileName, m_topoExtFileName, m_maxIter, m_EFileResolution, m_QueryTyp could
+   // have been declared local variables in EW::parseInputFile, and transfered as
+   // procedure parameters to smoothTopography and getEfileInfo
+   //
+    char* token = strtok(buffer, " \t");
+    CHECK_INPUT(strcmp("topography", token) == 0, 
+ 	    "ERROR: not a topography line...: " << token);
+    string topoFile="surf.tp", style, fileName;
+    bool needFileName=false, gotFileName=false;
 
-//    token = strtok(NULL, " \t");
+    token = strtok(NULL, " \t");
 
-//    while (token != NULL)
-//    {
-//      // while there are still tokens in the string 
-//      if (startswith("#", token) || startswith(" ", buffer))
-//        // Ignore commented lines and lines with just a space.
-//        break;
-//      if (startswith("zmax=", token))
-//      {
-//        token += 5; // skip logfile=
-//        m_topo_zmax = atof(token);
+    while (token != NULL)
+    {
+      // while there are still tokens in the string 
+       if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+	  break;
+       if (startswith("zmax=", token))
+       {
+	  token += 5; // skip logfile=
+	  m_topo_zmax = atof(token);
 // //        if (m_myRank==0)
 // // 	 cout << "Setting topo zmax="<<m_topo_zmax<<endl;
-//      }
+       }
 // //                       1234567890
-//      else if (startswith("order=", token))
-//      {
-//        token += 6; // skip logfile=
-//        m_grid_interpolation_order = atoi(token);
-//        if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 4)
-//        {
-// 	 if (m_myRank == 0)
-// 	   cout << "order needs to be 2,3, or 4, not: " << m_grid_interpolation_order << endl;
-// 	 MPI_Abort(MPI_COMM_WORLD, 1);
-//        }
+       else if (startswith("order=", token))
+       {
+	  token += 6; // skip logfile=
+	  m_grid_interpolation_order = atoi(token);
+	  if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 4)
+	  {
+	     if (m_myRank == 0)
+		cout << "order needs to be 2,3, or 4, not: " << m_grid_interpolation_order << endl;
+	     MPI_Abort(MPI_COMM_WORLD, 1);
+	  }
        
-// //        if (m_myRank==0)
-// // 	 cout << "Setting interpolation order to=" << m_grid_interpolation_order << endl;
-//      }
-// //                        123456789
-//      else if (startswith("smooth=", token))
-//      {
-//        token += 7; // skip smooth=
-//        m_maxIter = atoi(token);
-//        if (m_maxIter < 0 || m_maxIter > 1000)
-//        {
-// 	 if (m_myRank == 0)
-// 	   cout << "Number of smoothing iterations needs to be >=0 and <=1000, not: "<< m_maxIter << endl;
-// 	 MPI_Abort(MPI_COMM_WORLD, 1);
-//        }
-//      }
-//      else if( startswith("input=", token ) )
-//      {
-//        token += 6;
-//        style = token;
-//        if (strcmp("grid", token) == 0)
-//        {
-// 	 m_topoInputStyle=GridFile;
-// 	 m_topography_exists=true;
-// 	 needFileName=true;
-//        }
-//        else if (strcmp("cartesian", token) == 0)
-//        {
-// 	 m_topoInputStyle=CartesianGrid;
-// 	 m_topography_exists=true;
-// 	 needFileName=true;
-//        }
-//        else if (strcmp("efile", token) == 0)
-//        {
-// 	 m_topoInputStyle=Efile;
-// 	 m_topography_exists=true;
-//        }
-//        else if (strcmp("gaussian", token) == 0)
-//        {
-// 	 m_topoInputStyle=GaussianHill;
-// 	 m_topography_exists=true;
-//        }
-//        else
-//        {
-// 	 badOption("topography> input", token);
-//        }
-//      }
-//      else if( startswith("file=", token ) )
-//      {
-//        token += 5;
-//        m_topoFileName = token;
-//        gotFileName=true;
-// //        if (m_myRank==0)
-// // 	 cout << "read topo file name=" << m_topoFileName <<endl;
-//      }
-// //                        12345678901
-//      else if( startswith("resolution=", token ) )
-//      {
-//        token += 11;
-//        m_EFileResolution = atof(token);
-//        CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
-//      }
+//        if (m_myRank==0)
+// 	 cout << "Setting interpolation order to=" << m_grid_interpolation_order << endl;
+       }
+//                        123456789
+       else if (startswith("smooth=", token))
+       {
+	  token += 7; // skip smooth=
+	  m_maxIter = atoi(token);
+	  if (m_maxIter < 0 || m_maxIter > 1000)
+	  {
+	     if (m_myRank == 0)
+		cout << "Number of smoothing iterations needs to be >=0 and <=1000, not: "<< m_maxIter << endl;
+	     MPI_Abort(MPI_COMM_WORLD, 1);
+	  }
+       }
+       else if( startswith("input=", token ) )
+       {
+	  token += 6;
+	  style = token;
+	  if (strcmp("grid", token) == 0)
+	  {
+	     m_topoInputStyle=GridFile;
+	     m_topography_exists=true;
+	     needFileName=true;
+	  }
+	  else if (strcmp("cartesian", token) == 0)
+	  {
+	     m_topoInputStyle=CartesianGrid;
+	     m_topography_exists=true;
+	     needFileName=true;
+	  }
+	  else if (strcmp("efile", token) == 0)
+	  {
+	     m_topoInputStyle=Efile;
+	     m_topography_exists=true;
+	  }
+	  else if (strcmp("gaussian", token) == 0)
+	  {
+	     m_topoInputStyle=GaussianHill;
+	     m_topography_exists=true;
+	  }
+	  else
+	  {
+	     badOption("topography> input", token);
+	  }
+       }
+       else if( startswith("file=", token ) )
+       {
+	  token += 5;
+	  m_topoFileName = token;
+	  gotFileName=true;
+	//        if (m_myRank==0)
+	// 	 cout << "read topo file name=" << m_topoFileName <<endl;
+       }
+//                        12345678901
+       else if( startswith("resolution=", token ) )
+       {
+	  token += 11;
+	  m_EFileResolution = atof(token);
+	  CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
+       }
+//                        123456789012
+       else if( startswith("gaussianAmp=", token ) )
+       {
+	  token += 12;
+	  m_GaussianAmp = atof(token);
+       }
+//                        123456789012
+       else if( startswith("gaussianXc=", token ) )
+       {
+	  token += 11;
+	  m_GaussianXc = atof(token);
+       }
+//                        123456789012
+       else if( startswith("gaussianYc=", token ) )
+       {
+	  token += 11;
+	  m_GaussianYc = atof(token);
+       }
 // //                        123456789012
-//      else if( startswith("gaussianAmp=", token ) )
-//      {
-//        token += 12;
-//        m_GaussianAmp = atof(token);
-//      }
-// //                        123456789012
-//      else if( startswith("gaussianXc=", token ) )
-//      {
-//        token += 11;
-//        m_GaussianXc = atof(token);
-//      }
-// //                        123456789012
-//      else if( startswith("gaussianYc=", token ) )
-//      {
-//        token += 11;
-//        m_GaussianYc = atof(token);
-//      }
-// //                        123456789012
-//      else if( startswith("gaussianLx=", token ) )
-//      {
-//        token += 11;
-//        m_GaussianLx = atof(token);
-//      }
-// //                        123456789012
-//      else if( startswith("gaussianLy=", token ) )
-//      {
-//        token += 11;
-//        m_GaussianLy = atof(token);
-//      }
+       else if( startswith("gaussianLx=", token ) )
+       {
+	  token += 11;
+	  m_GaussianLx = atof(token);
+       }
+//                        123456789012
+       else if( startswith("gaussianLy=", token ) )
+       {
+	  token += 11;
+	  m_GaussianLy = atof(token);
+       }
+       else
+       {
+	  badOption("topography", token);
+       }
+       token = strtok(NULL, " \t");
+    }
+    if (needFileName)
+       CHECK_INPUT(gotFileName, 
+		   "ERROR: no topography file name specified...: " << token);
 
-//      else
-//      {
-//        badOption("topography", token);
-//      }
-//      token = strtok(NULL, " \t");
-//    }
-//    if (needFileName)
-//      CHECK_INPUT(gotFileName, 
-// 	      "ERROR: no topography file name specified...: " << token);
-
-// }
+}
 
 // void FileInput::processDamping(char* buffer)
 // {
@@ -2404,104 +2456,91 @@ void EW::processGlobalMaterial(char* buffer)
    set_threshold_velocities(vpmin, vsmin);
 }
 
-// void FileInput::getEfileInfo(char* buffer)
-// {
-// #ifdef ENABLE_ETREE
-//   // Used only for efiles
-//   string accessmode = "parallel";
+//-----------------------------------------------------------------------
+void EW::getEfileInfo(char* buffer)
+{
+#ifdef ENABLE_ETREE
+  // Used only for efiles
+   string accessmode = "parallel";
 
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("efile", token) == 0,
-//            "ERROR: efile info can only be obtained from an efile line, not: " << token);
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("efile", token) == 0,
+	       "ERROR: efile info can only be obtained from an efile line, not: " << token);
 
-//   string commandName = token;
+   string commandName = token;
 
-//   string err = token;
-//   err += " Error: ";
+   string err = token;
+   err += " Error: ";
 
-//   token = strtok(NULL, " \t");
+   token = strtok(NULL, " \t");
 
-//   while (token != NULL)
-//     {
-//       // while there are tokens in the string still
-//        if (startswith("#", token) || startswith(" ", buffer))
-//           // Ignore commented lines and lines with just a space.
-//           break;
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	 // Ignore commented lines and lines with just a space.
+	 break;
 // //       else if (startswith("model=", token))
 // //       {
 // //          token += 6; // skip model=
 // //         model = token;
 // //       }
-//       else if (startswith("etree=", token))
-//       {
-//          token += 6; // skip etree=
-//          m_topoFileName = token;
-//       }
-//       else if (startswith("xetree=", token))
-//       {
-//          token += 7; // skip xetree=
-//          m_topoExtFileName = token;
-//       }
-//       else if (startswith("logfile=", token))
-//       {
-//          token += 8; // skip logfile=
-//       }
-//       else if (startswith("query=", token))
-//       {
-//          token += strlen("query=");
-// 	 m_QueryType = token;
-//          CHECK_INPUT(strcmp(token, "FIXEDRES") == 0 || 
-//                  strcmp(token, "MAXRES") == 0,
-//                  err << "query can only be set to FIXEDRES or MAXRES, not: " << m_QueryType);
-//       }
-//       else if (startswith("vsmin=", token))
-//       {
-//          token += strlen("vsmin=");
-//       }
-//       else if (startswith("vpmin=", token))
-//       {
-//          token += strlen("vpmin=");
-//       }
-// //      else if (startswith("water=", token))
-// //      {
-// //         token += strlen("water=");
-// //          CHECK_INPUT(strcmp(token, "poisson") == 0 ||
-// //                  strcmp(token, "noshear") == 0 ||
-// //                  strcmp(token, "seafloor") == 0,
-// //                  err << "water attribute can only be set to poisson,noshear or seafloor, not: " << token);
-// //          if (strcmp(token, "noshear") == 0)
-// //             waterMode = EtreeFile::NOSHEAR;
-// //          else if (strcmp(token, "seafloor") == 0)
-// //             waterMode = EtreeFile::SEAFLOOR;
-// //          else if (strcmp(token, "poisson") == 0)
-// //             waterMode = EtreeFile::POISSON;
-// //      }
-//       else if (startswith("access=", token))
-//       {
-//          token += strlen("access=");
-//          CHECK_INPUT(strcmp(token, "parallel") == 0 ||
-// 		     strcmp(token, "serial") == 0,
-// 		     err << "access attribute can only be set to serial, or parallel, not: " << token);
-//          accessmode = token;
-//       }
-//       else if( startswith("resolution=", token ) )
-//       {
-//         token += 11;
-//         m_EFileResolution = atof(token);
-//         CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
-//       }
-//       else
-//       {
-//          badOption(commandName, token);
-//       }
-//       token = strtok(NULL, " \t");
-//     }
-//   // End parsing...
-  
-// #else
-//   CHECK_INPUT(0, "Error: Etree support not compiled into WPP (-DENABLE_ETREE)");
-// #endif
-// }
+      else if (startswith("etree=", token))
+      {
+	 token += 6; // skip etree=
+	 m_topoFileName = token;
+      }
+      else if (startswith("xetree=", token))
+      {
+	 token += 7; // skip xetree=
+	 m_topoExtFileName = token;
+      }
+      else if (startswith("logfile=", token))
+      {
+	 token += 8; // skip logfile=
+      }
+      else if (startswith("query=", token))
+      {
+	 token += strlen("query=");
+ 	 m_QueryType = token;
+	 CHECK_INPUT(strcmp(token, "FIXEDRES") == 0 || 
+		     strcmp(token, "MAXRES") == 0,
+		     err << "query can only be set to FIXEDRES or MAXRES, not: " << m_QueryType);
+      }
+      else if (startswith("vsmin=", token))
+      {
+	 token += strlen("vsmin=");
+      }
+      else if (startswith("vpmin=", token))
+      {
+	 token += strlen("vpmin=");
+      }
+      else if (startswith("access=", token))
+      {
+	 token += strlen("access=");
+	 CHECK_INPUT(strcmp(token, "parallel") == 0 ||
+ 		     strcmp(token, "serial") == 0,
+ 		     err << "access attribute can only be set to serial, or parallel, not: " << token);
+	 accessmode = token;
+      }
+      else if( startswith("resolution=", token ) )
+      {
+         token += 11;
+         m_EFileResolution = atof(token);
+         CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
+      }
+      else
+      {
+	 badOption(commandName, token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   // End parsing...
+ 
+#else
+   CHECK_INPUT(0, "Error: Etree support not compiled into EW (-DENABLE_ETREE)");
+#endif
+}
 
 // //-----------------------------------------------------------------------
 // void FileInput::processLimitfrequency(char* buffer)

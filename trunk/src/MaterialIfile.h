@@ -28,13 +28,11 @@ protected:
       return (lat <= m_materialLatMax && lat >= m_materialLatMin && 
 	      lon <= m_materialLonMax && lon >= m_materialLonMin);
    }
-
    inline bool inside_cartesian_material_surfaces( double xP, double yP )
    {
       return (yP <= m_mat_Ymax && yP >= m_mat_Ymin && 
 	      xP <= m_mat_Xmax && xP >= m_mat_Xmin);
    }
-
    inline double lookup_Rho( MaterialProperty* prop, double depth )
    {
       return prop->m_rho0 + prop->m_rho1*depth + prop->m_rho2*depth*depth +
@@ -62,8 +60,6 @@ protected:
    bool m_mat_Cartesian;
    int m_number_material_surfaces;
    Sarray m_materialDepth;
-
-   double m_tol;
    EW *mEw;
 
    // Variables for geographic coords

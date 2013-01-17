@@ -12,8 +12,7 @@ using namespace std;
 //-----------------------------------------------------------------------
 MaterialIfile::MaterialIfile( EW * a_ew, std::string fileName, bool CartesianFormat )
 {
-   m_tol = 1e-5;
-   mEw = a_ew;
+   mEw   = a_ew;
 
 // In general an ifile command only specifies properties down to a certain depth
    mCoversAllPoints = false;
