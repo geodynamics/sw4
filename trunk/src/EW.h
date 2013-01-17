@@ -58,7 +58,7 @@ void setupRun( );
 void preprocessSources( vector<Source*> & a_GlobalSources );
 
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
-   void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
+void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
 
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
@@ -99,6 +99,7 @@ void processGlobalMaterial(char* buffer);
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
 void setVerbosity(int level) { mVerbose = level; };
+void setQuiet(bool stealth) { mQuiet = stealth; };
 int  getVerbosity() {return mVerbose; };
 int  getRank() {return m_myRank; };
 void setDebugIO(bool onoff) { mDebugIO = onoff; }
@@ -626,6 +627,8 @@ bool mWriteGMTOutput;
 int mPlotFrequency;
 int mNumFiles;
 int mVerbose;
+bool mQuiet;
+
 bool mDebugIO;
 bool mHomogeneous;
 

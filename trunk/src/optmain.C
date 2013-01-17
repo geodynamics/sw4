@@ -402,12 +402,15 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 			    vector<TimeSeries*>& GlobalTimeSeries,
 			    vector<TimeSeries*> & GlobalObservations, int myRank,
-			    double sf[11] )
+			    double sf[11], int nvar )
 {
    // Compute Hessian for input source:
 
    bool write_hessian = true;
    // Run forward problem 
+   if(myRank == 0 )
+     cout << endl << "*** Computing scale factors..." << endl << 
+       "Solving forward problem for evaluating misfit" << endl;
    simulation.solve( GlobalSources, GlobalTimeSeries );
    // Compute misfit, 'diffs' will hold the source for the adjoint problem
    vector<TimeSeries*> diffs;
@@ -425,17 +428,20 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
    //   if( myRank == 0 )
    //      cout << "Misfit = " << mf << endl;
 
-
 // Get second part of Hessian by solving the backwards problem:
    double gradient[11], hess[121];
+   if( myRank == 0 )
+     cout << "Solving one backwards problem to calculate H2..." << endl;
    simulation.solve_backward( GlobalSources, diffs, gradient, hess );
 
 // Assemble the first part of hessian matrix by solving 11 forward problems
    vector<vector<TimeSeries*> > dudp(11);
-   for( int comp = 0 ; comp < 11 ; comp++ )
+   if( myRank == 0 )
+     cout << "**** Starting the calculation of H1..." << endl;
+   for( int comp = 0 ; comp < nvar ; comp++ )
    {
       if( myRank == 0 )
-	cout << endl << "**** Solving forward problem no. " << comp+1 << endl;
+	cout << "Solving forward problem no. " << comp+1 << endl;
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
       {
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "dudpsrc" );
@@ -450,8 +456,8 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
       hess1[m] = 0;
    for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
    {
-      for( int comp = 0 ; comp < 11 ; comp++ )
-	 for(int comp1 = comp; comp1 < 11 ; comp1++ )
+      for( int comp = 0 ; comp < nvar ; comp++ )
+	 for(int comp1 = comp; comp1 < nvar ; comp1++ )
 	    hess1[comp+11*comp1] += dudp[comp][m]->product_wgh(*dudp[comp1][m]);
    }
    double hess1tmp[121];
@@ -460,19 +466,19 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
    MPI_Allreduce(hess1tmp,hess1,121,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
    // Fill in symmetric part
-   for( int comp = 0 ; comp < 11 ; comp++ )
+   for( int comp = 0 ; comp < nvar ; comp++ )
       for(int comp1 = 0 ; comp1 < comp; comp1++ )
 	 hess1[comp+11*comp1] = hess1[comp1+11*comp];
 
    // Add to second part of Hessian
-   for( int comp = 0 ; comp < 11 ; comp++ )
-      for(int comp1 = 0 ; comp1 < 11; comp1++ )
+   for( int comp = 0 ; comp < nvar ; comp++ )
+      for(int comp1 = 0 ; comp1 < nvar; comp1++ )
 	 hess[comp+11*comp1] += hess1[comp+11*comp1];
 
 
    // Check if diagonal elements are positive
    bool diagpositive = true;
-   for( int comp = 0 ; comp < 11 ; comp++ )
+   for( int comp = 0 ; comp < nvar ; comp++ )
       if( hess[comp+11*comp] <= 0 )
 	 diagpositive = false;
 
@@ -480,10 +486,10 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
    {
       if( myRank == 0 )
       {
-	 cout << "Hessian have negative diagonal elements, " << endl;
-         cout << " scaling factors will use only the first part of the Hessian" << endl;
+	 cout << "*** The full Hessian has negative diagonal elements, " << endl;
+         cout << "*** scaling factors will use only part H1 of the Hessian" << endl;
       }
-      for( int comp= 0 ; comp < 11 ; comp++ )
+      for( int comp= 0 ; comp < nvar ; comp++ )
          if( hess1[comp+11*comp] != 0 )
    	    sf[comp]=1/sqrt(hess1[comp+11*comp]);
          else
@@ -491,9 +497,14 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
    }
    else
    {
-      for( int comp= 0 ; comp < 11 ; comp++ )
+      for( int comp= 0 ; comp < nvar ; comp++ )
 	 sf[comp]=1/sqrt(hess[comp+11*comp]);
    }
+
+// define sf for the remaining elements of sf[11]
+   for( int comp = nvar; comp < 11; comp++ )
+     sf[comp]=1;
+
    if( myRank == 0 && write_hessian )
    {
       FILE *fd = fopen("hessian0.txt","w");
@@ -515,7 +526,7 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
    diffs.clear();
    
 // dudp no longer needed, give back memory
-   for( unsigned int comp = 0 ; comp < 11 ; comp++ )
+   for( unsigned int comp = 0 ; comp < nvar ; comp++ )
    {
       for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
 	 delete dudp[comp][m];
@@ -727,7 +738,7 @@ void compute_f( EW& simulation, double x[11], vector<Source*>& GlobalSources,
 }
 
 //-----------------------------------------------------------------------
-void compute_fanddf( EW& simulation, double x[11], vector<Source*>& GlobalSources,
+void compute_f_and_df( EW& simulation, double x[11], vector<Source*>& GlobalSources,
 		     vector<TimeSeries*>& GlobalTimeSeries,
 		     vector<TimeSeries*>& GlobalObservations, int varcase,
 		     double& f, double df[11], double ddf[121] )
@@ -1180,11 +1191,13 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
       nvar = 11;
 
    maxit = nvar;
-   compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f );
+   if( myRank == 0 )
+     cout << "Begin CG iteration by evaluating initial misfit and gradient..." << endl;
+   compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f );
    // Output GlobalTimeSeries here
    if( myRank == 0 )
    {
-      cout << "Begin iteration misfit= "  << f << endl;
+      cout << "Initial misfit= "  << f << endl;
       rnorm = 0;
       cout << " scaled gradient = " ;
       for( int i=0 ; i < nvar ; i++ )
@@ -1294,7 +1307,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	    x[i]=xa[i];
 	 }
 
-	 compute_fanddf( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f );
+	 compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f );
          rnorm = 0;
 	 for( int i=0 ; i < n ; i++ )
 	    if( fabs(dfp[i])*sf[i] > rnorm )
@@ -1488,6 +1501,9 @@ int main(int argc, char **argv)
      {
 // Successful initialization
 
+// run the forward solver in stealth mode
+       simulation.setQuiet(true);
+       
      // Make observations aware of the utc reference time, if set.
      // Filter observed data if required
 	for( int m = 0; m < GlobalObservations.size(); m++ )
@@ -1574,23 +1590,45 @@ int main(int argc, char **argv)
 	      TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
 	      localTimeSeries.push_back(elem);
 	      //              elem->writeFile();
-              GlobalObservations[m]->print_timeinfo();
+	      if (simulation.getVerbosity()>=2)
+		GlobalObservations[m]->print_timeinfo();
 	   }
 	   //           exit(2);
+	   
+	   if (myRank == 0)
+	   {
+	     cout << "Solving a forward problem to compute initial seismograms..." << endl;
+	   }
 	   simulation.solve( GlobalSources, localTimeSeries );
 	   for (int ts=0; ts<localTimeSeries.size(); ts++)
 	   {
 	      localTimeSeries[ts]->writeFile();
-              localTimeSeries[ts]->print_timeinfo();
+	      if (simulation.getVerbosity()>=2)
+		localTimeSeries[ts]->print_timeinfo();
 	   }
            for( int ts=0 ; ts<localTimeSeries.size();ts++)
 	      delete localTimeSeries[ts];
 	}
 
-	if( simulation.compute_sf() )
-           compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, sf );
+// figure out how many parameters we need
+	int maxit, maxrestart, varcase=0, stepselection=0;
+	bool dolinesearch, fletcher_reeves=true;
+
+	double tolerance;
+	simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
+				     dolinesearch, varcase );
+	int nvar=0;
+	if( varcase == 1 )
+	  nvar = 10;
+	else if( varcase == 2 )
+	  nvar = 9;
 	else
-           simulation.get_scalefactors(sf);
+	  nvar = 11;
+
+	if( simulation.compute_sf() )
+	  compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, sf, nvar );
+	else
+	  simulation.get_scalefactors(sf);
 	      
 
 	if( myRank == 0 )
@@ -1686,7 +1724,7 @@ int main(int argc, char **argv)
 	if( myRank == 0 )
 	{
 	   cout << "============================================================" << endl
-		<< " sbp4f ( Summation by parts 4th order inverse wave solver) finished! " << endl
+		<< " sw4opt ( Source estimation solver) finished! " << endl
 		<< "============================================================" << endl;
 	}
 
@@ -2327,6 +2365,8 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
          tszz[s] = timeseries[s]->copy(&simulation, "tszzcopy" );
       }
 
+      if( myRank == 0 )
+	cout << endl << "*** Estimating the moment tensor..." << endl << "Solving forward problem for Mxx=1" << endl;
       Source* onesrc = sources[0]->copy("xx");
       onesrc->setMoments(1,0,0,0,0,0);
 
@@ -2337,6 +2377,8 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsxx );
       delete onesrc;
 
+      if( myRank == 0 )
+	cout << "Solving forward problem for Mxy=1" << endl;
       onesrc = sources[0]->copy("xy");
       onesrc->setMoments(0,1,0,0,0,0);
       src[0] = onesrc;
@@ -2345,6 +2387,8 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsxy );
       delete onesrc;
 
+      if( myRank == 0 )
+	cout << "Solving forward problem for Mxz=1" << endl;
       onesrc = sources[0]->copy("xz");
       onesrc->setMoments(0,0,1,0,0,0);
       src[0] = onesrc;
@@ -2353,6 +2397,8 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsxz );
       delete onesrc;
 
+      if( myRank == 0 )
+	cout << "Solving forward problem for Myy=1" << endl;
       onesrc = sources[0]->copy("yy");
       onesrc->setMoments(0,0,0,1,0,0);
       src[0] = onesrc;
@@ -2361,6 +2407,8 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsyy );
       delete onesrc;
 
+      if( myRank == 0 )
+	cout << "Solving forward problem for Myz=1" << endl;
       onesrc = sources[0]->copy("yz");
       onesrc->setMoments(0,0,0,0,1,0);
       src[0] = onesrc;
@@ -2369,6 +2417,8 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       simulation.solve( src, tsyz );
       delete onesrc;
 
+      if( myRank == 0 )
+	cout << "Solving forward problem for Mzz=1" << endl;
       onesrc = sources[0]->copy("zz");
       onesrc->setMoments(0,0,0,0,0,1);
       src[0] = onesrc;

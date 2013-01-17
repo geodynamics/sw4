@@ -436,7 +436,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // compute global max over all processors
       MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
       MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-      if (mVerbose && proc_zero() )
+      if (!mQuiet && mVerbose >= 1 && proc_zero() )
 	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
 
 // Need to set the frequency to 1/dt for Dirac source
@@ -459,7 +459,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	double dt0loc, dt0max, t0_min;
 	t0_min = m_filter_ptr->estimatePrecursor();
 // tmp
-	if ( proc_zero() )
+	if (!mQuiet && proc_zero() )
 	  printf("Filter precursor = %e\n", t0_min);
 	
 // old estimate for 2-pole low-pass Butterworth
@@ -485,7 +485,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // Instead, warn the user of potential transients due to unsmooth start
 //	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
 //	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
-	  if ( proc_zero() )
+	  if ( !mQuiet && proc_zero() )
 	    printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
 		   "*** To avoid artifacts due to sudden startup, increase t0 in all source commands by at least %e\n\n",
 		   t0_min, dt0max);
@@ -627,7 +627,7 @@ void EW::set_materials()
    }
 
 // extrapolate material properties to mesh refinement boundaries (e.g. for doing the LOH cases more accurately)
-    if (proc_zero() && mVerbose>=3)
+    if (!mQuiet && proc_zero() && mVerbose>=3)
     {
       printf("setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i\n", mMaterialExtrapolate, mNumberOfCartesianGrids);
     }
@@ -641,7 +641,7 @@ void EW::set_materials()
 	{
 	  kFrom = m_kStart[g]+mMaterialExtrapolate;
 
-	  if (proc_zero() && mVerbose>=3)
+	  if (!mQuiet && proc_zero() && mVerbose>=3)
 	    printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
 
 	  for (int k = m_kStart[g]; k < kFrom; ++k)
@@ -670,7 +670,7 @@ void EW::set_materials()
 	{
 	  kFrom = m_kEnd[g]-mMaterialExtrapolate;
 
-	  if (proc_zero() && mVerbose>=3)
+	  if (!mQuiet && proc_zero() && mVerbose>=3)
 	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
 
 	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
@@ -881,7 +881,7 @@ void EW::create_output_directory( )
 //-----------------------------------------------------------------------
 void EW::computeDT()
 {
-  if (mVerbose >= 1 && proc_zero())
+  if (!mQuiet && mVerbose >= 1 && proc_zero())
   {
     printf("*** computing the time step ***\n");
   }
@@ -994,13 +994,13 @@ void EW::computeDT()
     {
       double dtCurvGlobal;
       MPI_Allreduce( &dtCurv, &dtCurvGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-      if (mVerbose >= 1 && proc_zero())
+      if (!mQuiet && mVerbose >= 1 && proc_zero())
       {
 	printf("INFO: Smallest stable time step for curvilinear grid only: %e\n", dtCurvGlobal);
       }
     }
 
-    if (mVerbose >= 1 && proc_zero())
+    if (!mQuiet && mVerbose >= 1 && proc_zero())
     {
       cout << "order of accuracy=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }

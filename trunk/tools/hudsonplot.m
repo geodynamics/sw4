@@ -62,21 +62,21 @@ bndcol='k';
 diagcol='b';
 set(gca,'FontSize',25);
 h=plot([-4/3 0 4/3],[-1/3 1 1/3],bndcol);
-set(h,'LineWidth',1.0);
+set(h,'LineWidth',2.0);
 hold on;
 h=plot([-4/3 0 4/3],[-1/3 -1 1/3],bndcol);
-set(h,'LineWidth',1.0);
+set(h,'LineWidth',2.0);
 % diagonal separating regions A and B
 h=plot([-4/3 4/3],[-1/3 1/3],diagcol);
-set(h,'LineWidth',1.0);
+set(h,'LineWidth',2.0);
 % Coordinate axis
 h=plot([-1.3 1.3],[0 0],'k');
-set(h,'LineWidth',0.5);
+set(h,'LineWidth',1.0);
 h=plot([0 0],[-1.1 1.1],'k');
-set(h,'LineWidth',0.5);
+set(h,'LineWidth',1.0);
 % plot source
-h=plot([u],[v],'*r');
-h=plot([u],[v],'or');
+h=plot([u],[v],'*r','markersize',10);
+h=plot([u],[v],'or','markersize',10);
 xlabel('u');
 ylabel('v');
 axis('equal');

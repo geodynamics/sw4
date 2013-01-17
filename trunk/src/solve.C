@@ -144,7 +144,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      if( m_utc0set )
 	a_TimeSeries[ts]->set_station_utc( m_utc0 );
   }
-  if( mVerbose >=3 && proc_zero() )
+  if( !mQuiet && mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
 
 // Reset image time to zero, in case we are rerunning the solver
@@ -166,7 +166,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // modify the time functions if prefiltering is enabled
   if (!m_testing && m_prefilter_sources)
   {
-    if (proc_zero() )
+    if (!mQuiet && proc_zero() )
     {
       if (m_filter_ptr->get_type()==lowPass)
 	printf("Lowpass filtering all source time functions to corner frequency fc2=%e\n", 
@@ -228,35 +228,36 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      MPI_Allreduce( &has_source_id, &has_source_max, 1, MPI_INT, MPI_MAX, m_cartesian_communicator );
      if( m_myRank == has_source_max )
      {
-	printf("Saving one discretized time function\n");
+       if (!mQuiet)
+	 printf("Saving one discretized time function\n");
 
 //building the file name...
-        string filename;
-	if( mPath != "." )
-	   filename += mPath;
-        filename += "g1.dat";	 
+       string filename;
+       if( mPath != "." )
+	 filename += mPath;
+       filename += "g1.dat";	 
 
-	FILE *tf=fopen(filename.c_str(),"w");
-	double t;
-	double gt, gt1, gt2;
-	for (int i=0; i<=mNumberOfTimeSteps; i++)
-	{
-	   //           for( int sb=0 ; sb < 10 ; sb++ )
-	   //	   {
-	   //	      t = mTstart + i*mDt + 0.1*sb*mDt;
-  	   t = mTstart + i*mDt;
-	   gt = point_sources[0]->getTimeFunc(t);
-	   gt1 = point_sources[0]->evalTimeFunc_t(t);
-	   gt2 = point_sources[0]->evalTimeFunc_tt(t);
-	   fprintf(tf, "%.18e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
-	      //	   }
-	}
-	fclose(tf);
+       FILE *tf=fopen(filename.c_str(),"w");
+       double t;
+       double gt, gt1, gt2;
+       for (int i=0; i<=mNumberOfTimeSteps; i++)
+       {
+	 //           for( int sb=0 ; sb < 10 ; sb++ )
+	 //	   {
+	 //	      t = mTstart + i*mDt + 0.1*sb*mDt;
+	 t = mTstart + i*mDt;
+	 gt = point_sources[0]->getTimeFunc(t);
+	 gt1 = point_sources[0]->evalTimeFunc_t(t);
+	 gt2 = point_sources[0]->evalTimeFunc_tt(t);
+	 fprintf(tf, "%.18e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
+	 //	   }
+       }
+       fclose(tf);
      }
   }
 
 
-  if( mVerbose && proc_zero() )
+  if( !mQuiet && mVerbose && proc_zero() )
   {
     cout << endl << "***  Starting solve ***" << endl;
   }
@@ -277,7 +278,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   initialData(mTstart, U, AlphaVE);
   initialData(mTstart-mDt, Um, AlphaVEm );
   
-  if ( mVerbose && proc_zero() )
+  if ( !mQuiet && mVerbose && proc_zero() )
     cout << "  Initial data has been assigned" << endl;
 
 // // Assign Up to make it possible to output velDiv and velCurl images of the initial data
@@ -298,7 +299,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // do some testing...
   if (m_twilight_forcing)
   {
-    if ( proc_zero() )
+    if ( !mQuiet && proc_zero() )
       cout << "***Twilight Testing..." << endl;
 //      tmp
     for(int g=0; g<mNumberOfGrids; g++)
@@ -379,7 +380,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( m_moment_test )
     test_sources( point_sources, a_Sources, F );
 
-  if ( proc_zero() )
+  if ( !mQuiet && proc_zero() )
     cout << "  Begin time stepping..." << endl;
 
 // save initial data on receiver records
@@ -558,7 +559,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   } // end time stepping loop
 
-  if ( proc_zero() )
+  if ( !mQuiet && proc_zero() )
     cout << "  Time stepping finished..." << endl;
 
 //   delete[] wk;

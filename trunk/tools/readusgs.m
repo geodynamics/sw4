@@ -32,14 +32,14 @@ if nargin < 4
   rotate = 0;
   evtlat = 0;
   evtlon = 0;
-endif
+end
 
 fd=fopen(fname,'r');
 for i=1:7
    lin = fgetl(fd);
 end;
 % read actual loction 
-loc = sscanf(lin(53:end),"%e %e",2);
+loc = sscanf(lin(53:end),'%e %e',2);
 
 lin = fgetl(fd);
 lin = fgetl(fd);
@@ -65,4 +65,4 @@ if (rotate)
   ut = u1.*sin(az) - u2.*cos(az);
   u1 = ur;
   u2 = ut;
-endif
+end

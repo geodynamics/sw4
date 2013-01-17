@@ -87,6 +87,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   mPlotFrequency(80),
   mNumFiles(0),
   mVerbose(0),
+  mQuiet(false),
   mDebugIO(false),
   mHomogeneous(false),
   m_iotiming(false),
@@ -260,7 +261,7 @@ bool EW::wasParsingSuccessful()
 //-----------------------------------------------------------------------
 void EW::printTime( int cycle, double t, bool force ) const 
 {
-   if ( proc_zero() && (force || mPrintInterval == 1 ||
+   if (!mQuiet && proc_zero() && (force || mPrintInterval == 1 ||
 			(cycle % mPrintInterval) == 1 ||
 			cycle == 1) )
 // string big enough for >1 million time steps 
@@ -271,7 +272,7 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
 {
    stringstream msg;
 
-   if ( proc_zero())
+   if (!mQuiet && proc_zero())
    {
       msg << "============================================================" << endl
           << " Running program on " << m_nProcs << " MPI tasks" << " using the following data: " << endl << endl
@@ -338,15 +339,18 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
 	 }
 	 
       }
-      stringstream msg2;
-      msg2 << endl
-           << "-----------------------------------------------------------------------" << endl
-           << "  Total seismic moment (M0): " << myM0Sum << " Nm " << endl;
-      if (myM0Sum > 0)
-         msg2 <<  "  Moment magnitude     (Mw): " << (2./3.)*(log10(myM0Sum) - 9.1)  << endl;
-      msg2 << "  Number of sources " << numsrc << endl;
-      msg2 << "-----------------------------------------------------------------------" << endl;
-      cout << msg2.str();
+      if (!mQuiet)
+      {
+	stringstream msg2;
+	msg2 << endl
+	     << "-----------------------------------------------------------------------" << endl
+	     << "  Total seismic moment (M0): " << myM0Sum << " Nm " << endl;
+	if (myM0Sum > 0)
+	  msg2 <<  "  Moment magnitude     (Mw): " << (2./3.)*(log10(myM0Sum) - 9.1)  << endl;
+	msg2 << "  Number of sources " << numsrc << endl;
+	msg2 << "-----------------------------------------------------------------------" << endl;
+	cout << msg2.str();
+      }
   }
 }
 
@@ -1077,7 +1081,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 //-----------------------------------------------------------------------
 void EW::print_execution_time( double t1, double t2, string msg )
 {
-   if( proc_zero() )
+   if( !mQuiet && proc_zero() )
    {
       double s = t2 - t1;
       int h = static_cast<int>(s/3600.0);
@@ -1107,7 +1111,7 @@ void EW::print_execution_times( double times[7] )
 {
    double* time_sums =new double[7*no_of_procs()];
    MPI_Gather( times, 7, MPI_DOUBLE, time_sums, 7, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-   if( proc_zero() )
+   if( !mQuiet && proc_zero() )
    {
       cout << "\n----------------------------------------" << endl;
       cout << "          Execution time summary " << endl;
