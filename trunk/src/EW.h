@@ -120,6 +120,7 @@ void set_testing_mode(bool a_testing){m_testing = a_testing;}
 bool get_testing_mode(){return m_testing;}
 
 void default_bcs( );
+void update_curvilinear_cartesian_interface( vector<Sarray>& a_U );
 
 void set_twilight_forcing( ForcingTwilight* a_forcing );
 // perhaps these functions should be in the ForcingTwilight class? 
@@ -479,6 +480,8 @@ vector<double> m_zmin; // needed by the Source and Image classes
 // for the curvilinear grid, we also store the cartesian coordinates of the grid points
 Sarray mX, mY, mZ; // needed by the Source class, so must be public
 Sarray mJ; // Jacobian also needed by the Source class
+// and the metric derivatives as well as the jacobian
+Sarray mMetric;
 
 // command prefilter
 bool m_prefilter_sources, m_filter_observations;
@@ -590,8 +593,6 @@ vector<Sarray*> mMuVE, mLambdaVE;
 // relaxation frequencies
 vector<double> mOmegaVE;
 
-// and the metric derivatives as well as the jacobian
-Sarray mQ, mR, mS;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes

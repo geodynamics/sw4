@@ -234,10 +234,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // deal with topography
   if (m_topography_exists)
   {
-     if (m_myRank == 0)
-	cout << endl << 
-	   "*** ERROR: Topography not yet implemented ***" << endl << endl;
-     return false;
+     //     if (m_myRank == 0)
+     //	cout << endl << 
+     //	   "*** ERROR: Topography not yet implemented ***" << endl << endl;
+     //     return false;
 // 1. read topography from efile 
      if (m_topoInputStyle == EW::Efile)
      {
@@ -1240,10 +1240,10 @@ void EW::processTopography(char* buffer)
        {
 	  token += 6; // skip logfile=
 	  m_grid_interpolation_order = atoi(token);
-	  if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 4)
+	  if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 6)
 	  {
 	     if (m_myRank == 0)
-		cout << "order needs to be 2,3, or 4, not: " << m_grid_interpolation_order << endl;
+		cout << "order needs to be 2,3,4,5,or 6, not: " << m_grid_interpolation_order << endl;
 	     MPI_Abort(MPI_COMM_WORLD, 1);
 	  }
        
@@ -3910,6 +3910,167 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 
 }
 
+//-----------------------------------------------------------------------
+void EW::allocateCurvilinearArrays()
+{
+   // This routine should define sizes and allocate arrays on the curvilinear grid
+   if (!m_topography_exists ) return;
+
+   if (mVerbose >= 1 && proc_zero())
+      cout << "***inside allocateCurvilinearArrays***"<< endl;
+
+// get the size from the top Cartesian grid
+   int g = mNumberOfCartesianGrids-1;
+   int ifirst = m_iStart[g];
+   int ilast  = m_iEnd[g];
+   int jfirst = m_jStart[g];
+   int jlast  = m_jEnd[g];
+   double h = mGridSize[g]; // grid size must agree with top cartesian grid
+   double zMaxCart = m_zmin[g]; // bottom z-level for curvilinear grid
+// decide on the number of grid point in the k-direction (evaluate mTopoGrid...)
+   double zMinLocal, zMinGlobal, zMaxLocal, zMaxGlobal;
+   int i=m_iStart[g], j=m_jEnd[g];
+// note that the z-coordinate points downwards, so positive topography (above sea level)
+// gets negative z-values
+   zMaxLocal = zMinLocal = -mTopoGrid(i,j,1);
+// tmp
+//   int i_min_loc=i, i_max_loc=i;
+//   int j_min_loc=j, j_max_loc=j;
+// end tmp
+   for (i=m_iStart[g]; i<=m_iEnd[g]; i++)
+      for (j=m_jStart[g]; j<=m_jEnd[g]; j++)
+      {
+	 if (-mTopoGrid(i,j,1) > zMaxLocal)
+	 {
+	    zMaxLocal = -mTopoGrid(i,j,1);
+// 	i_max_loc = i;
+// 	j_max_loc = j;
+	 }
+      
+	 if (-mTopoGrid(i,j,1) < zMinLocal)
+	 {
+	    zMinLocal = -mTopoGrid(i,j,1);
+// 	i_min_loc = i;
+// 	j_min_loc = j;
+	 }
+      }
+// tmp
+//   printf("Proc #%i: zMaxLocal = %e at (%i %i), zMinLocal = %e at (%i %i)\n", m_myRank, zMaxLocal, i_max_loc, j_max_loc,
+// 	 zMinLocal, i_min_loc, j_min_loc);
+// end tmp
+
+  MPI_Allreduce( &zMinLocal, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+  MPI_Allreduce( &zMaxLocal, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+
+  double maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
+// grid size h
+  for (i=m_iStart[g]+1; i<=m_iEnd[g]-1; i++)
+     for (j=m_jStart[g]+1; j<=m_jEnd[g]-1; j++)
+     {
+	d2h = sqrt( SQR((mTopoGrid(i-1,j,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i+1,j,1))/1.) + 
+		    SQR((mTopoGrid(i,j-1,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i,j+1,1))/1.) + 
+		    SQR((mTopoGrid(i+1,j+1,1) - mTopoGrid(i+1,j,1) - mTopoGrid(i,j+1,1) + mTopoGrid(i,j,1))/1.) );
+	if (d2h > maxd2zh) maxd2zh = d2h;
+     }
+// 3rd differences
+  for (i=m_iStart[g]+1; i<=m_iEnd[g]-2; i++)
+     for (j=m_jStart[g]+1; j<=m_jEnd[g]-2; j++)
+     {
+	d3h = sqrt( SQR((mTopoGrid(i-1,j,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i+1,j,1) - mTopoGrid(i+2,j,1))/1.) + 
+		    SQR((mTopoGrid(i,j-1,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i,j+1,1) - mTopoGrid(i,j+2,1))/1.) + 
+		    SQR((mTopoGrid(i+2,j+1,1) - mTopoGrid(i+2,j,1) - 2*mTopoGrid(i+1,j+1,1) + 2*mTopoGrid(i+1,j,1) + 
+			 mTopoGrid(i,j+1,1) - mTopoGrid(i,j,1))/1.) +
+		    SQR((mTopoGrid(i+1,j+2,1) - 2*mTopoGrid(i+1,j+1,1) - mTopoGrid(i,j+2,1) + 2*mTopoGrid(i,j+1,1) + 
+			 mTopoGrid(i+1,j,1) - mTopoGrid(i,j,1))/1.) );
+
+	if (d3h > maxd3zh) maxd3zh = d3h;
+     }
+// grid size 2h
+  for (i=m_iStart[g]+2; i<=m_iEnd[g]-2; i+=2)
+     for (j=m_jStart[g]+2; j<=m_jEnd[g]-2; j+=2)
+     {
+	d2h = sqrt( SQR((mTopoGrid(i-2,j,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i+2,j,1))/1.) + 
+		    SQR((mTopoGrid(i,j-2,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i,j+2,1))/1.) + 
+		    SQR((mTopoGrid(i+2,j+2,1) - mTopoGrid(i+2,j,1) - mTopoGrid(i,j+2,1) + mTopoGrid(i,j,1))/1.) );
+	if (d2h > maxd2z2h) maxd2z2h = d2h;
+     }
+// 3rd differences
+  for (i=m_iStart[g]+2; i<=m_iEnd[g]-4; i+=2)
+     for (j=m_jStart[g]+2; j<=m_jEnd[g]-4; j+=2)
+     {
+	d3h = sqrt( SQR((mTopoGrid(i-2,j,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i+2,j,1) - mTopoGrid(i+4,j,1))/1.) + 
+		    SQR((mTopoGrid(i,j-2,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i,j+2,1) - mTopoGrid(i,j+4,1))/1.) + 
+		    SQR((mTopoGrid(i+4,j+2,1) - mTopoGrid(i+4,j,1) - 2*mTopoGrid(i+2,j+2,1) + 2*mTopoGrid(i+2,j,1) + 
+			 mTopoGrid(i,j+2,1) - mTopoGrid(i,j,1))/1.) +
+		    SQR((mTopoGrid(i+2,j+4,1) - 2*mTopoGrid(i+2,j+2,1) - mTopoGrid(i,j+4,1) + 2*mTopoGrid(i,j+2,1) + 
+			 mTopoGrid(i+2,j,1) - mTopoGrid(i,j,1))/1.) );
+	if (d3h > maxd3z2h) maxd3z2h = d3h;
+     }
+  double d2zh_global=0, d2z2h_global=0, d3zh_global=0, d3z2h_global=0;
+  MPI_Allreduce( &maxd2zh,  &d2zh_global,  1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+  MPI_Allreduce( &maxd2z2h, &d2z2h_global, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+  MPI_Allreduce( &maxd3zh,  &d3zh_global,  1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+  MPI_Allreduce( &maxd3z2h, &d3z2h_global, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+  if(proc_zero() )
+  {
+     printf("\n");
+     printf("***Topography grid: min z = %e, max z = %e, top Cartesian z = %e\n", zMinGlobal, zMaxGlobal, zMaxCart);
+     if (mVerbose >= 1)
+     {
+	printf("***Un-divided differences of grid surface (ratio h*D2/D3 should be close to the same for h and 2h):\n"
+	     "h*max D2z(h)   = %e, max D3z(h)  = %e, Ratio: h*max D2z(h) / max D3z(h)    = %e\n"
+	     "2h*max D2z(2h) = %e, max D3z(2h) = %e, Ratio: 2h*max D2z(2h) / max D3z(2h) = %e\n", 
+	       h*d2zh_global, d3zh_global, h*d2zh_global/d3zh_global, 2*h*d2z2h_global, d3z2h_global,
+	       2*h*d2z2h_global/d3z2h_global);
+	printf("\n");
+     }
+  }
+// remember the global zmin
+  m_global_zmin = zMinGlobal;
+  CHECK_INPUT(zMaxCart>zMaxGlobal,"allocateCurvilinearArrays: Negative thickness of curvilinear grid.\n"
+	      "Increase topography zmax to exceed zMaxGlobal = "<< zMaxGlobal <<", preferrably by at least "
+	      << zMaxGlobal-zMinGlobal);
+  int gTop = mNumberOfGrids-1;
+  int Nz = 1+ (int) ((zMaxCart - 0.5*(zMaxGlobal+zMinGlobal))/mGridSize[gTop]); // on average the same gridsize in z
+  m_kStart[gTop] = 1 - m_ghost_points;
+  m_kEnd[gTop]   = Nz + m_ghost_points;
+  m_global_nz[gTop]=Nz;
+  if(mVerbose && proc_zero() )
+     printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
+	    Nz, m_kStart[gTop], m_kEnd[gTop]);
+// allocate mX, mY, and mZ arrays
+  mX.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
+  mY.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
+  mZ.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
+// Allocate array for the metric
+  mMetric.define(4,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+// and the Jacobian of the transformation
+  mJ.define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+// and material properties, initialize to -1
+  mMu[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mMu[gTop].set_to_minusOne();
+  mRho[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mLambda[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mLambda[gTop].set_to_minusOne();
+// viscoelastic material coefficients
+  if (m_use_attenuation)
+  {
+// initialize the viscoelastic material coefficients to -1
+     mQs[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+     mQs[gTop].set_to_minusOne();
+     mQp[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+     mQp[gTop].set_to_minusOne();
+     for (int a=0; a<m_number_mechanisms; a++)
+     {
+	mMuVE[gTop][a].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+	mMuVE[gTop][a].set_to_minusOne();
+	mLambdaVE[gTop][a].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+	mLambdaVE[gTop][a].set_to_minusOne();
+     }
+  }
+}
+
+//-----------------------------------------------------------------------
 void EW::deprecatedImageMode(int value, const char* name) const
 {
   if (m_myRank == 0)

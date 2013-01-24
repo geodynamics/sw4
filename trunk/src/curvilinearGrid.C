@@ -1,95 +1,42 @@
 #include "mpi.h"
 
 #include "EW.h"
+
+#include "F77_FUNC.h"
+extern "C" {
+   void F77_FUNC(metric,METRIC)( int*, int*, int*, int*, int*, int*,
+				 double*, double*, double*, double*, double* );
+   void F77_FUNC(gridinfo,GRIDINFO)( int*, int*, int*, int*, int*, int*,
+				     double*, double*, double*, double* );
+}
+
 #define SQR(x) ((x)*(x))
 //---------------------------------------------------------
 void EW::setup_metric()
 {
-  if (!m_topography_exists ) return;
-  
-  if (mVerbose >= 1 && proc_zero())
-    cout << "***inside setup_metric***"<< endl;
-
-  int g=mNumberOfGrids-1;
-  
-  int Bx=m_iStart[g];
-  int By=m_jStart[g];
-  int Bz=m_kStart[g];
-
-  int Nx=m_iEnd[g];
-  int Ny=m_jEnd[g];
-  int Nz=m_kEnd[g];
-  
-  double xq,xr,xs,yq,yr,ys,zq,zr,zs;
-  double minJ, maxJ;
-  maxJ=0.;
-  minJ=1.e18;
-  for(int k=Bz; k<=Nz; k++)
-    for(int j=By; j<=Ny; j++)
-      for(int i=Bx; i<=Nx; i++)
-      {
-	if (i==Bx){
-	  xq = -0.5*(3.*mX(Bx,j,k)-4.*mX(Bx+1,j,k)+mX(Bx+2,j,k));
-	  yq = -0.5*(3.*mY(Bx,j,k)-4.*mY(Bx+1,j,k)+mY(Bx+2,j,k));
-	  zq = -0.5*(3.*mZ(Bx,j,k)-4.*mZ(Bx+1,j,k)+mZ(Bx+2,j,k));
-	} else if (i==Nx){
-	  xq=0.5*(3.*mX(Nx,j,k)-4.*mX(Nx-1,j,k)+mX(Nx-2,j,k));
-	  yq=0.5*(3.*mY(Nx,j,k)-4.*mY(Nx-1,j,k)+mY(Nx-2,j,k));
-	  zq=0.5*(3.*mZ(Nx,j,k)-4.*mZ(Nx-1,j,k)+mZ(Nx-2,j,k));
-	} else {
-	  xq=0.5*(mX(i+1,j,k)-mX(i-1,j,k));
-	  yq=0.5*(mY(i+1,j,k)-mY(i-1,j,k));
-	  zq=0.5*(mZ(i+1,j,k)-mZ(i-1,j,k));
-	}
-	if (j==By){
-	  xr = -0.5*(3.*mX(i,By,k)-4.*mX(i,By+1,k)+mX(i,By+2,k));
-	  yr = -0.5*(3.*mY(i,By,k)-4.*mY(i,By+1,k)+mY(i,By+2,k));
-	  zr = -0.5*(3.*mZ(i,By,k)-4.*mZ(i,By+1,k)+mZ(i,By+2,k));
-	} else if (j==Ny){
-	  xr=0.5*(3.*mX(i,Ny,k)-4.*mX(i,Ny-1,k)+mX(i,Ny-2,k));
-	  yr=0.5*(3.*mY(i,Ny,k)-4.*mY(i,Ny-1,k)+mY(i,Ny-2,k));
-	  zr=0.5*(3.*mZ(i,Ny,k)-4.*mZ(i,Ny-1,k)+mZ(i,Ny-2,k));
-	} else {
-	  xr=0.5*(mX(i,j+1,k)-mX(i,j-1,k));
-	  yr=0.5*(mY(i,j+1,k)-mY(i,j-1,k));
-	  zr=0.5*(mZ(i,j+1,k)-mZ(i,j-1,k));
-	}
-	if (k==Bz){
-	  xs = -0.5*(3.*mX(i,j,Bz)-4.*mX(i,j,Bz+1)+mX(i,j,Bz+2));
-	  ys = -0.5*(3.*mY(i,j,Bz)-4.*mY(i,j,Bz+1)+mY(i,j,Bz+2));
-	  zs = -0.5*(3.*mZ(i,j,Bz)-4.*mZ(i,j,Bz+1)+mZ(i,j,Bz+2));
-	} else if (k==Nz){
-	  xs=0.5*(3.*mX(i,j,Nz)-4.*mX(i,j,Nz-1)+mX(i,j,Nz-2));
-	  ys=0.5*(3.*mY(i,j,Nz)-4.*mY(i,j,Nz-1)+mY(i,j,Nz-2));
-	  zs=0.5*(3.*mZ(i,j,Nz)-4.*mZ(i,j,Nz-1)+mZ(i,j,Nz-2));
-	} else {
-	  xs=0.5*(mX(i,j,k+1)-mX(i,j,k-1));
-	  ys=0.5*(mY(i,j,k+1)-mY(i,j,k-1));
-	  zs=0.5*(mZ(i,j,k+1)-mZ(i,j,k-1));
-	}
-	mJ(i,j,k) = xq*yr*zs+yq*zr*xs+zq*xr*ys-xq*zr*ys-yq*xr*zs-zq*yr*xs;
-	mQ(1,i,j,k)= (1.0/mJ(i,j,k))*(yr*zs-zr*ys);
-	mQ(2,i,j,k)= (1.0/mJ(i,j,k))*(zr*xs-xr*zs);
-	mQ(3,i,j,k)= (1.0/mJ(i,j,k))*(xr*ys-yr*xs);
-	mR(1,i,j,k)= (1.0/mJ(i,j,k))*(zq*ys-yq*zs);
-	mR(2,i,j,k)= (1.0/mJ(i,j,k))*(xq*zs-zq*xs);
-	mR(3,i,j,k)= (1.0/mJ(i,j,k))*(yq*xs-ys*xq);
-	mS(1,i,j,k)= (1.0/mJ(i,j,k))*(yq*zr-zq*yr);
-	mS(2,i,j,k)= (1.0/mJ(i,j,k))*(zq*xr-xq*zr);
-	mS(3,i,j,k)= (1.0/mJ(i,j,k))*(xq*yr-xr*yq);
-//
-	if (mJ(i,j,k) < minJ) minJ=mJ(i,j,k);
-	if (mJ(i,j,k) > maxJ) maxJ=mJ(i,j,k);
-      } // end for i,j,k  
-  double minJglobal, maxJglobal;
-  MPI_Allreduce( &minJ, &minJglobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  MPI_Allreduce( &maxJ, &maxJglobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
-  if (mVerbose>3 && proc_zero())
-    printf("*** Jacobian of metric: minJ = %e maxJ = %e\n", minJglobal, maxJglobal);
-
+   if (!m_topography_exists ) return;
+   if (mVerbose >= 1 && proc_zero())
+      cout << "***inside setup_metric***"<< endl;
+   int g=mNumberOfGrids-1;
+   int Bx=m_iStart[g];
+   int By=m_jStart[g];
+   int Bz=m_kStart[g];
+   int Nx=m_iEnd[g];
+   int Ny=m_jEnd[g];
+   int Nz=m_kEnd[g];
+   F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+   communicate_array( mMetric, mNumberOfGrids-1 );
+   communicate_array( mJ, mNumberOfGrids-1 );
+   double minJ, maxJ;
+   F77_FUNC(gridinfo,GRIDINFO)(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
+   double minJglobal, maxJglobal;
+   MPI_Allreduce( &minJ, &minJglobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &maxJ, &maxJglobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+   if (mVerbose>3 && proc_zero())
+      printf("*** Jacobian of metric: minJ = %e maxJ = %e\n", minJglobal, maxJglobal);
 // just save the results for now... do the sanity check later
-  m_minJacobian= minJglobal;
-  m_maxJacobian= maxJglobal;
+   m_minJacobian= minJglobal;
+   m_maxJacobian= maxJglobal;
 }
 
 //-----------------------------------------------------------------------
@@ -98,7 +45,6 @@ void EW::generate_grid()
    // Generate grid on domain: topography <= z <= zmax, 
    // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
    // spacing h. 
-
   if (!m_topography_exists ) return;
   
 //  m_grid_interpolation_order = a_order;
@@ -399,7 +345,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
   double zetaBreak = 0.95; // zeta  > zetaBreak gives constant grid size = h
   double sBreak = 1. + zetaBreak*(Nz-1);
 
-  double zeta, c1=0., c2=0., c3=0., zMax;
+  double zeta, c1=0., c2=0., c3=0., c4=0.0, c5=0.0, zMax;
   zMax = zMaxCart - (Nz - sBreak)*h;
 
 // quadratic term to make variation in grid size small at bottom boundary
@@ -416,12 +362,24 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
   else
     c3 = 0.;
 
+// Added continuity of the 4th and 5th derivatives
+  if( m_grid_interpolation_order >=5 )
+     c4 = c3;
+  else
+     c4 = 0;
+  if( m_grid_interpolation_order >=6 )
+     c5 = c4;
+  else
+     c5 = 0;
+	
+
 // the forward mapping is ...
   if (s <= (double) sBreak)
   {
     zeta = (s-1)/(sBreak-1.);
     Z0 = (1.-zeta)*(-tau) 
-      + zeta*(zMax + c1*(1.-zeta) + c2*SQR(1.-zeta) + c3*(1.-zeta)*SQR(1.-zeta));
+       + zeta*(zMax + c1*(1.-zeta) + c2*SQR(1.-zeta) + c3*(1.-zeta)*SQR(1.-zeta) + 
+	       (c4+c5*(1-zeta))*SQR(1-zeta)*SQR(1-zeta) );
   }
   else
   {
@@ -565,7 +523,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
   double zetaBreak = 0.95; // zeta  > zetaBreak gives constant grid size = h
   double sBreak = 1. + zetaBreak*(Nz-1);
 
-  double zeta, c1=0., c2=0., c3=0., zMax;
+  double zeta, c1=0., c2=0., c3=0., c4=0, c5=0, zMax;
   zMax = zMaxCart - (Nz - sBreak)*h;
 
 // quadratic term to make variation in grid size small at bottom boundary
@@ -581,6 +539,17 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
     c3 = c2;
   else
     c3 = 0.;
+
+// Added continuity of the 4th and 5th derivatives
+  if( m_grid_interpolation_order >=5 )
+     c4 = c3;
+  else
+     c4 = 0;
+  if( m_grid_interpolation_order >=6 )
+     c5 = c4;
+  else
+     c5 = 0;
+	
 
 // the forward mapping is ...
 //  if (s <= (double) sBreak)
@@ -609,10 +578,13 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 //      cout << "invert_curvilinear_grid_mapping: initial guess zeta0= " << zeta0 << endl;
       for (int iter=0; iter<maxIter; iter++)
       {
-        F0  = (1.-zeta0)*(-tau) + zeta0*(zMax + c1*(1.-zeta0) + c2*SQR(1.-zeta0) + c3*(1.-zeta0)*SQR(1.-zeta0)) - Z0;
+	 F0  = (1.-zeta0)*(-tau) + zeta0*(zMax + c1*(1.-zeta0) + c2*SQR(1.-zeta0) + c3*(1.-zeta0)*SQR(1.-zeta0)
+					  +(c4+(1-zeta0)*c5)*SQR(1-zeta0)*SQR(1-zeta0)) - Z0;
         Fp0 = tau 
              + zMax + c1*(1.-zeta0) + c2*SQR(1.-zeta0) + c3*(1.-zeta0)*SQR(1.-zeta0)
-             + zeta0*(-c1 - 2.*c2*(1.-zeta0) - 3.*c3*SQR(1.-zeta0));
+                         +(c4+(1-zeta0)*c5)*SQR(1-zeta0)*SQR(1-zeta0)
+	   + zeta0*(-c1 - 2.*c2*(1.-zeta0) - 3.*c3*SQR(1.-zeta0)
+                         -4*c4*(1-zeta0)*SQR(1-zeta0) - 5*c5*SQR(1-zeta0)*SQR(1-zeta0));
 // tmp
 //        cout << "invert_curvilinear_grid_mapping: iter= " << iter << " zeta= " << zeta0 <<  " F0= " << F0 << " Fp0= " << Fp0 << endl;
         zeta0 -= F0/Fp0;
@@ -637,103 +609,124 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 }
 
 //-----------------------------------------------------------------------
-bool EW::find_curvilinear_derivatives_at_point( double q, double r, double s,
-						double qX[], double rX[], double sX[] )
+void EW::smoothTopography(int maxIter)
 {
-   // return metric derivatives at parameter value (q,r,s), note 1 <= q <= Nq, 1 <= r <= Nr, 1 <= s <= Ns
-   // Input: (q,r,s)
-   // Output: (qx0,..,sz0)
+//   int myRank;
+//   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-// NOTE:
-// The parameters are normalized such that 1 <= q <= Nx is the full domain (without ghost points),
-//  1 <= r <= Ny, 1 <= s <= Nz.
-
-  int gCurv = mNumberOfGrids - 1;
-  double h = mGridSize[gCurv];
-// check global parameter space
-  double qMin = (double) (1- m_ghost_points);
-  double qMax = (double) (m_global_nx[gCurv] + m_ghost_points);
-  double rMin = (double) (1- m_ghost_points);
-  double rMax = (double) (m_global_ny[gCurv] + m_ghost_points);
-  double sMin = (double) m_kStart[gCurv];
-  double sMax = (double) m_kEnd[gCurv];
-
-  if (! (q >= qMin && q <= qMax && r >= rMin && r <= rMax && s >= sMin && s <= sMax))
-  {
-    cout << "find_curvilinear_derivatives_at_point: input parameters out of bounds (q,r,s) = " << q << ", " << r << ", " << s << endl;
-    return false;
-  }
-
-  double X0 = (q-1.0)*h;
-  double Y0 = (r-1.0)*h;
-
-  if (!topographyExists())
-    return false;
-
-// bottom z-level for curvilinear grid = top z-level for highest Cartesian grid
-  double zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
+// tmp
+//   if (proc_zero())
+//   {
+//     cout << "***inside smoothTopography***  maxIter= " << maxIter << endl;
+//   }
   
-// ************************
-// compute index interval based on (q,r)
-  int iNear, jNear, kNear, g, i, j, k;
-
-  double Z0 = zMaxCart - h; // to make computeNearestGridPoint think we are in the curvilinear grid
-  computeNearestGridPoint(iNear, jNear, kNear, g, X0, Y0, Z0);
-
-  double xPt = (iNear-1)*h;
-  double yPt = (jNear-1)*h;
-
-// first check if we are very close to a grid point
-  bool smackOnTop = (fabs((xPt-X0)/h) < 1.e-9 && fabs((yPt-Y0)/h) < 1.e-9);
-
-  k = (int) floor(s);
+  double rf=0.2; // rf<0.25 for stability
+  int topLevel = mNumberOfGrids-1;
+  int i, j, iter;
   
-  double Wi, Wip1, Wj, Wjp1, Wk, Wkp1;
-  Wk = (k+1-s);
-  Wkp1 = (s-k);
-  
-  if (smackOnTop)
-  {
-    if (!point_in_proc(iNear,jNear,gCurv))
-      return false;
-    for (int p=1; p<=3; p++)
+// temporary storage
+  Sarray tmp;
+  tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],1,1);
+
+// copy raw topography
+  for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+    for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
     {
-      qX[p-1] = Wk*mQ(p, iNear, jNear, k) + Wkp1*mQ(p, iNear, jNear, k+1);
-      rX[p-1] = Wk*mR(p, iNear, jNear, k) + Wkp1*mR(p, iNear, jNear, k+1);
-      sX[p-1] = Wk*mS(p, iNear, jNear, k) + Wkp1*mS(p, iNear, jNear, k+1);
+      mTopoGrid(i,j,1) = mTopo(i,j,1);
     }
-  }
-  else
+
+// Laplacian filter
+  for (iter=0; iter < maxIter; iter++)
   {
-    computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
-    if ( !( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
-            point_in_proc(i+1,j+1,gCurv) ) )
-      return false;
+    for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
+      for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
+      {
+	tmp(i,j,1) = mTopoGrid(i,j,1) + rf*(mTopoGrid(i+1,j,1) + mTopoGrid(i-1,j,1) + mTopoGrid(i,j+1,1) + mTopoGrid(i,j-1,1) - 4.*mTopoGrid(i,j,1));
+      }
 
-// linear interpolation to define topography between grid points
-    Wi = (i+1 - q);
-    Wip1 = (q - i);
-    Wj = (j+1 - r);
-    Wjp1 = (r - j);
-
-    for (int p=1; p<=3; p++)
+// Neumann boundary conditions
+    for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
     {
-      qX[p-1] = 
-	Wj*Wi*    (Wk*mQ(p, i, j, k)     + Wkp1*mQ(p, i, j, k+1)) + 
-	Wjp1*Wi*  (Wk*mQ(p, i, j+1, k)   + Wkp1*mQ(p, i, j+1, k+1)) + 
-	Wj*Wip1*  (Wk*mQ(p, i+1, j, k)   + Wkp1*mQ(p, i+1, j, k+1)) + 
-	Wjp1*Wip1*(Wk*mQ(p, i+1, j+1, k) + Wkp1*mQ(p, i+1, j+1, k+1));
-      rX[p-1] = 
-	Wj*Wi*    (Wk*mR(p, i, j, k)     + Wkp1*mR(p, i, j, k+1)) + 
-	Wjp1*Wi*  (Wk*mR(p, i, j+1, k)   + Wkp1*mR(p, i, j+1, k+1)) + 
-	Wj*Wip1*  (Wk*mR(p, i+1, j, k)   + Wkp1*mR(p, i+1, j, k+1)) + 
-	Wjp1*Wip1*(Wk*mR(p, i+1, j+1, k) + Wkp1*mR(p, i+1, j+1, k+1));
-      sX[p-1] = 
-	Wj*Wi*    (Wk*mS(p, i, j, k)     + Wkp1*mS(p, i, j, k+1)) + 
-	Wjp1*Wi*  (Wk*mS(p, i, j+1, k)   + Wkp1*mS(p, i, j+1, k+1)) + 
-	Wj*Wip1*  (Wk*mS(p, i+1, j, k)   + Wkp1*mS(p, i+1, j, k+1)) + 
-	Wjp1*Wip1*(Wk*mS(p, i+1, j+1, k) + Wkp1*mS(p, i+1, j+1, k+1));
+      i = m_iStart[topLevel];
+      tmp(i,j,1) = tmp(i+1,j,1);
+      i = m_iEnd[topLevel];
+      tmp(i,j,1) = tmp(i-1,j,1);
     }
-  } // !smackOnTop
-  return true;
+
+    for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
+    {
+      j = m_jStart[topLevel];
+      tmp(i,j,1) = tmp(i,j+1,1);
+      j = m_jEnd[topLevel];
+      tmp(i,j,1) = tmp(i,j-1,1);
+    }
+// Corners
+    i = m_iStart[topLevel];
+    j = m_jStart[topLevel];
+    tmp(i,j,1) = tmp(i+1,j+1,1);
+
+    i = m_iEnd[topLevel];
+    j = m_jStart[topLevel];
+    tmp(i,j,1) = tmp(i-1,j+1,1);
+
+    i = m_iStart[topLevel];
+    j = m_jEnd[topLevel];
+    tmp(i,j,1) = tmp(i+1,j-1,1);
+    
+    i = m_iEnd[topLevel];
+    j = m_jEnd[topLevel];
+    tmp(i,j,1) = tmp(i-1,j-1,1);
+      
+//     i = 50; j = 251;
+//     if (i >= m_iStart[topLevel] && i <= m_iEnd[topLevel] && j >= m_jStart[topLevel] && j <= m_jEnd[topLevel] )
+//       cout << "p#" << myRank << "debug: " << tmp(i,j,1) << endl;
+    
+// communicate parallel ghost points
+    communicate_array_2dfinest( tmp );
+
+//     if (i >= m_iStart[topLevel] && i <= m_iEnd[topLevel] && j >= m_jStart[topLevel] && j <= m_jEnd[topLevel] )
+//       cout << "p#" << myRank << "debug2: " << tmp(i,j,1) << endl;
+
+// update solution
+    for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+      for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+      {
+	mTopoGrid(i,j,1) = tmp(i,j,1);
+      }
+
+  }// end for iter
+}
+
+//-----------------------------------------------------------------------
+void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0, double y0)
+{
+  if (mVerbose >= 1 && proc_zero())
+    cout << "***inside buildGaussianHillTopography***"<< endl;
+
+  int topLevel = mNumberOfGrids-1;
+
+  double x, y;
+
+// copy data
+  m_analytical_topo = true;
+//  m_analytical_topo = false;
+  m_GaussianAmp = amp;
+  m_GaussianLx = Lx;
+  m_GaussianLy = Ly;
+  m_GaussianXc = x0;
+  m_GaussianYc = y0;
+
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+  {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+    {
+      x = (i-1)*mGridSize[topLevel];
+      y = (j-1)*mGridSize[topLevel];
+        
+// positive topography  is up (negative z)
+      mTopo(i,j,1) = mTopoMat(i,j,1) = mTopoGrid(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
+                                                             -SQR((y-m_GaussianYc)/m_GaussianLy)); 
+    }
+  } // end for for
+  
 }

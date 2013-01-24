@@ -13,6 +13,8 @@
 extern "C" {
 void F77_FUNC(exactmatfort,EXACTMATFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double*, double*);
+   void F77_FUNC(exactmatfortc,EXACTMATFORTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
+                                            double*, double*, double*, double*, double*, double*, double*, double*); 
 void F77_FUNC(wavepropbop_4, WAVEPROPBOP_4)(double *, double *, double *, double *, double *, double *, double *);
 void F77_FUNC(varcoeffs4,VARCOEFFS4)(double *, double *);
 void F77_FUNC(bopext4th,BOPEXT4TH)(double *, double *);
@@ -164,12 +166,13 @@ void EW::setupRun( )
   } // end for grid...
   
 // communicate the metric across processor boundaries (one-sided differences were used in setup_metric())
-  if (topographyExists())
-  {
-    communicate_array( mJ, mNumberOfGrids-1 );
-    communicate_array( mQ, mNumberOfGrids-1 );
-    communicate_array( mR, mNumberOfGrids-1 );
-    communicate_array( mS, mNumberOfGrids-1 );
+//  if (topographyExists())
+//  {
+//    communicate_array( mJ, mNumberOfGrids-1 );
+//    communicate_array( mMetric, mNumberOfGrids-1 );
+    //    communicate_array( mQ, mNumberOfGrids-1 );
+    //    communicate_array( mR, mNumberOfGrids-1 );
+    //    communicate_array( mS, mNumberOfGrids-1 );
 
 // test interpolation of metric
 //     double dist=0., X0, Y0, Z0, q0, r0, s0, qX[3], rX[3], sX[3];
@@ -189,7 +192,7 @@ void EW::setupRun( )
 //     if (m_mxyRank == 0)
 //       printf("L2-error in metric of curvilinear mapping = %e\n", sqrt(totalDist));
 
-  }
+//  }
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -198,7 +201,7 @@ void EW::setupRun( )
 // tmp
   if ( mVerbose >= 3 )
    {
-     int top = mNumberOfCartesianGrids-1;
+     int top = mNumberOfGrids-1;
      printf("=================Processor #%i index bounds====================\n"
 	    "m_iStart=%i, m_iEnd=%i, m_global_nx=%i, m_jStart=%i, m_jEnd=%i, m_global_ny=%i\n",
 	    m_myRank, 
@@ -761,30 +764,39 @@ void EW::set_materials()
 	F77_FUNC(exactmatfort,EXACTMATFORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					    &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
 					    &amprho, &ampmu, &ampla, &h, &zmin );
-
 // Need to communicate across material boundaries, why ?
 //	  communicate_array( mRho[g], g );
 //	  communicate_array( mMu[g], g );
 //	  communicate_array( mLambda[g], g );
       }
-//       if (topographyExists())
-//       {
-// 	g = mNumberOfGrids-1;
-// 	for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
-// 	  for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
-// 	    for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
-// 	    {
-// 	      xP = mX(i,j,k);
-// 	      yP = mY(i,j,k);
-// 	      zP = mZ(i,j,k);
-// // what about Qp, Qs???
-// 	      m_twilight_forcing->get_mtrl( xP, yP, zP, mRho[g](i,j,k), mMu[g](i,j,k), mLambda[g](i,j,k) );
-// 	    }
+      if( topographyExists() )
+      {
+ 	  g = mNumberOfGrids-1;
+	  rho_ptr = mRho[g].c_ptr();
+	  mu_ptr  = mMu[g].c_ptr();
+	  la_ptr  = mLambda[g].c_ptr();
+	  ifirst = m_iStart[g];
+	  ilast  = m_iEnd[g];
+	  jfirst = m_jStart[g];
+	  jlast  = m_jEnd[g];
+	  kfirst = m_kStart[g];
+	  klast  = m_kEnd[g];
+          double* x_ptr = mX.c_ptr();
+          double* y_ptr = mY.c_ptr();
+          double* z_ptr = mZ.c_ptr();
+	  omm = m_twilight_forcing->m_momega;
+	  phm = m_twilight_forcing->m_mphase;
+	  amprho = m_twilight_forcing->m_amprho;
+	  ampmu = m_twilight_forcing->m_ampmu;
+	  ampla = m_twilight_forcing->m_amplambda;
+	  F77_FUNC(exactmatfortc,EXACTMATFORTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					      &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+					&amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
 //   // Need this for Energy testing, random material will not agree on processor boundaries.
 // 	  communicate_array( mRho[g], g );
 // 	  communicate_array( mMu[g], g );
 // 	  communicate_array( mLambda[g], g );
-//       }
+      }
       
   } // end material set by forcing mode (for testing)
   else if ( m_point_source_test )
@@ -925,9 +937,6 @@ void EW::computeDT()
    double dtCurv=1.e18, dtCurvGP;
    if (topographyExists())
    {
-// tmp
-//     FILE *fp=fopen("eigen.ext", "w");
-     
      g = mNumberOfGrids-1;
      double Amat[6], la, mu, la2mu;
      int N=3, LDZ=1, INFO;
@@ -946,31 +955,39 @@ void EW::computeDT()
               mu += mMuVE[g][a](i,j,k);
 	   }
 	   la2mu = la + 2.*mu;
-	   
+           double jinv = 1/mJ(i,j,k);
 // A11
-	   Amat[0] = -4.*(SQR(mQ(1,i,j,k))*la2mu + SQR(mQ(2,i,j,k))*mu + SQR(mQ(3,i,j,k))*mu 
-			  + SQR(mR(1,i,j,k))*la2mu + SQR(mR(2,i,j,k))*mu + SQR(mR(3,i,j,k))*mu
-			  + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu + SQR(mS(3,i,j,k))*mu);
+//	   Amat[0] = -4.*(SQR(mQ(1,i,j,k))*la2mu + SQR(mQ(2,i,j,k))*mu + SQR(mQ(3,i,j,k))*mu 
+//		        + SQR(mR(1,i,j,k))*la2mu + SQR(mR(2,i,j,k))*mu + SQR(mR(3,i,j,k))*mu
+//			 + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu + SQR(mS(3,i,j,k))*mu);
+           Amat[0] = -4*(SQR(mMetric(1,i,j,k))*la2mu + SQR(mMetric(1,i,j,k))*mu + 
+			 SQR(mMetric(2,i,j,k))*la2mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*mu)*jinv;
 // A21 = A12
-	   Amat[1] = -4.*(mQ(1,i,j,k)*mQ(2,i,j,k) + mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
+//	   Amat[1] = -4.*(mQ(1,i,j,k)*mQ(2,i,j,k) + mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
+	   Amat[1] = -4.*mMetric(2,i,j,k)*mMetric(3,i,j,k)*(mu+la)*jinv;
 // A31 = A13	   
-	   Amat[2] = -4.*(mQ(1,i,j,k)*mQ(3,i,j,k) + mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
+//	   Amat[2] = -4.*(mQ(1,i,j,k)*mQ(3,i,j,k) + mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
+	   Amat[2] = -4.*mMetric(2,i,j,k)*mMetric(4,i,j,k)*(mu+la)*jinv;
 // A22	   
-	   Amat[3] = -4.*(SQR(mQ(1,i,j,k))*mu + SQR(mQ(2,i,j,k))*la2mu + SQR(mQ(3,i,j,k))*mu 
-			  + SQR(mR(1,i,j,k))*mu + SQR(mR(2,i,j,k))*la2mu + SQR(mR(3,i,j,k))*mu
-			  + SQR(mS(1,i,j,k))*mu + SQR(mS(2,i,j,k))*la2mu + SQR(mS(3,i,j,k))*mu);
+	   Amat[3] = -4.*(SQR(mMetric(1,i,j,k))*mu + SQR(mMetric(1,i,j,k))*la2mu +
+		        + SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*la2mu + SQR(mMetric(4,i,j,k))*mu)*jinv;
 // A32 = A23
-	   Amat[4] = -4.*(mQ(2,i,j,k)*mQ(3,i,j,k) + mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
+//	   Amat[4] = -4.*(mQ(2,i,j,k)*mQ(3,i,j,k) + mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
+	   Amat[4] = -4.*mMetric(3,i,j,k)*mMetric(4,i,j,k)*(mu+la)*jinv;
 // A33
-	   Amat[5] = -4.*(SQR(mQ(1,i,j,k))*mu + SQR(mQ(2,i,j,k))*mu + SQR(mQ(3,i,j,k))*la2mu 
-			  + SQR(mR(1,i,j,k))*mu + SQR(mR(2,i,j,k))*mu + SQR(mR(3,i,j,k))*la2mu
-			  + SQR(mS(1,i,j,k))*mu + SQR(mS(2,i,j,k))*mu + SQR(mS(3,i,j,k))*la2mu);
+	   Amat[5] = -4.*(SQR(mMetric(1,i,j,k))*mu + SQR(mMetric(1,i,j,k))*mu
+			+ SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*la2mu)*jinv;
 // calculate eigenvalues of symmetric matrix
 	   F77_FUNC(dspev,DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
 	   if (INFO != 0)
 	   {
 	     printf("ERROR: computeDT: dspev returned INFO = %i for grid point (%i, %i, %i)\n", INFO, i, j, k);
 	     printf("lambda = %e, mu = %e\n", la, mu);
+             printf("Jacobian = %15.7g \n",mJ(i,j,k));
+	     printf("Matrix = \n");
+	     printf(" %15.7g  %15.7g %15.7g \n",Amat[0],Amat[1],Amat[2]);
+	     printf(" %15.7g  %15.7g %15.7g \n",Amat[1],Amat[3],Amat[4]);
+	     printf(" %15.7g  %15.7g %15.7g \n",Amat[2],Amat[4],Amat[5]);
 	     MPI_Abort(MPI_COMM_WORLD, 1);
 	   }
 	   

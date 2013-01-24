@@ -25,7 +25,9 @@ void F77_FUNC(bcfort, BCFORT)( int*, int*, int*, int*, int*, int*,
 			       double* bf0_p, double* bf1_p, 
 			       double* bf2_p, double*bf3_p, 
 			       double*bf4_p, double*bf5_p, 
-			       double*, double*, double* );
+			       double*, double*, double*, int* );
+void F77_FUNC(freesurfcurvi,FREESURFCURVI)(int*, int*, int*, int*, int*, int*, int*, int*,
+					  double*, double*, double*, double*, double*, double* );
 void F77_FUNC(bcfortsg, BCFORTSG)( int*, int*, int*, int*, int*, int*, 
 			       int *, int*, int*, int*,
 			       double*, double*, boundaryConditionType*, double *, double*, double*, double*,
@@ -43,7 +45,10 @@ void F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)(int * ifirst_p, int * ilast_p, int
 					      double* omstrx_p, double* omstry_p,
 				  double* bforce_side5_ptr, double* mu_ptr, double* la_ptr );
 void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, double *om_p, double * cv_p, 
-				    double *ph_p,  double * bforce_side_ptr );
+				    double *ph_p,  double * bforce_side_ptr, double* zmin );
+   void F77_FUNC(twdirbdryc,TWDIRBDRYC)( int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, int* klast,
+                                         int *wind_ptr, double *t_p, double *om_p, double * cv_p, 
+				      double *ph_p,  double * bforce_side_ptr, double* x, double* y, double* z );
 void F77_FUNC(testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
 				   int* klast, int* nz, int* wind, double* m_zmin, double* h, int* kx, int* ky, int* kz,
 				   double* momgrid );
@@ -58,8 +63,15 @@ void F77_FUNC(addsgd26,ADDSGD26) (double* dt, double *h, double *a_U, double*a_U
 			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
 // +     omega, alpha, h, zmin )
-void F77_FUNC(raydirbdry,RAYDIRBDRY)( double *bforce_side_ptr, int *wind_ptr, double *t, double *lambda, double *mu, double *rho,
-				      double *cr, double *omega, double *alpha, double *h, double *zmin );
+   void F77_FUNC(raydirbdry,RAYDIRBDRY)( double *bforce_side_ptr, int *wind_ptr, double *t, double *lambda,
+					 double *mu, double *rho,
+				         double *cr, double *omega, double *alpha, double *h, double *zmin );
+   void F77_FUNC(twstensor,TWSTENSOR)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
+				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
+				       double* tau, double* mu, double* lambda );
+   void F77_FUNC(getsurfforcing,GETSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
+						 int* k, double* met, double* jac, double* tau, double* forcing );
+				    
 }
 
 
@@ -299,48 +311,88 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // do some testing...
   if (m_twilight_forcing)
   {
-    if ( !mQuiet && proc_zero() )
-      cout << "***Twilight Testing..." << endl;
+     if ( !mQuiet && proc_zero() )
+	cout << "***Twilight Testing..." << endl;
 //      tmp
-    for(int g=0; g<mNumberOfGrids; g++)
-    {
-      printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
-      for (int q=0; q<6; q++)
-	printf(" os[%i]=%i", q, m_onesided[g][q]);
-      printf("\n");
-      printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
-      for (int q=0; q<6; q++)
-	printf(" bc[%i]=%i", q, m_bcType[g][q]);
-      printf("\n");
-    }
+     for(int g=0; g<mNumberOfGrids; g++)
+     {
+	printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
+	for (int q=0; q<6; q++)
+	   printf(" os[%i]=%i", q, m_onesided[g][q]);
+	printf("\n");
+	printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
+	for (int q=0; q<6; q++)
+	   printf(" bc[%i]=%i", q, m_bcType[g][q]);
+	printf("\n");
+     }
 
-//      test accuracy of spatial approximation
-    if ( proc_zero() )
-      printf("\n Testing the accuracy of the spatial difference approximation\n");
-    exactRhsTwilight(t, F);
-    evalRHS( U, Up ); // save Lu in composite grid 'Up'
+// test accuracy of spatial approximation
+     if ( proc_zero() )
+	printf("\n Testing the accuracy of the spatial difference approximation\n");
+     exactRhsTwilight(t, F);
+     evalRHS( U, Up ); // save Lu in composite grid 'Up'
+
 // evaluate and print errors
-    double lowZ[3], interiorZ[3], highZ[3];
-    bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
-    if ( proc_zero() )
-    {
-      printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[0], lowZ[1], lowZ[2]);
-      printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[0], interiorZ[1], interiorZ[2]);
-      printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[0], highZ[1], highZ[2]);
-    }
+     double * lowZ = new double[3*mNumberOfGrids];
+     double * interiorZ = new double[3*mNumberOfGrids];
+     double * highZ = new double[3*mNumberOfGrids];
+    //    double lowZ[3], interiorZ[3], highZ[3];
+     bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
+
+     double* tmp= new double[3*mNumberOfGrids];
+     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	tmp[i] = lowZ[i];
+     MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	tmp[i] = interiorZ[i];
+     MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	tmp[i] = highZ[i];
+     MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+
+
+     if ( proc_zero() )
+     {
+	for( int g=0 ; g < mNumberOfGrids ; g++ )
+	{
+	   printf("Grid nr: %3i \n", g );
+	   printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[3*g], lowZ[3*g+1], lowZ[3*g+2]);
+	   printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[3*g], interiorZ[3*g+1], interiorZ[3*g+2]);
+	   printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[3*g], highZ[3*g+1], highZ[3*g+2]);
+	}
+     }
   
 // c test accuracy of forcing
-    evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
-    Force( t, F, point_sources );
-    exactAccTwilight( t, Uacc ); // save Utt in Uacc
-    test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
-    if ( proc_zero() )
-    {
-      printf("Testing accuracy of rho*utt - L(u) = F\n");
-      printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[0], lowZ[1], lowZ[2]);
-      printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[0], interiorZ[1], interiorZ[2]);
-      printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[0], highZ[1], highZ[2]);
-    }
+     evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
+     Force( t, F, point_sources );
+     exactAccTwilight( t, Uacc ); // save Utt in Uacc
+     test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
+
+     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	tmp[i] = lowZ[i];
+     MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	tmp[i] = interiorZ[i];
+     MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	tmp[i] = highZ[i];
+     MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+
+     if ( proc_zero() )
+     {
+	printf("Testing accuracy of rho*utt - L(u) = F\n");
+	for( int g=0 ; g < mNumberOfGrids ; g++ )
+	{
+	   printf("Grid nr: %3i \n", g );
+	   printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",lowZ[3*g],lowZ[3*g+1],lowZ[3*g+2]);
+	   printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",interiorZ[3*g],interiorZ[3*g+1],interiorZ[3*g+2]);
+	   printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",highZ[3*g],highZ[3*g+1],highZ[3*g+2]);
+	}
+     }
+     delete[] tmp;
+     delete[] lowZ;
+     delete[] interiorZ;
+     delete[] highZ;
   } // end m_twilight_forcing    
 
 // enforce bc on initial data
@@ -605,14 +657,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
 
 // test
-      int g=mNumberOfCartesianGrids - 1;
-      Up[g].set_to_minusOne();
-      U[g].set_to_zero();
-      normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
-      if ( proc_zero() )
-	 printf("\n Surface norm of 1: Inf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-      
-
+//      int g=mNumberOfCartesianGrids - 1;
+//      Up[g].set_to_minusOne();
+//      U[g].set_to_zero();
+//      normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
+//      if ( proc_zero() )
+//	 printf("\n Surface norm of 1: Inf = %15.7e, L2 = %15.7e\n", errInf, errL2);
    }
    finalizeIO();
    cout.flush(); cerr.flush();
@@ -684,6 +734,11 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
     bcType_ptr = m_bcType[g]; // get a pointer to the boundary conditions for grid 'g'
     
     wind_ptr = m_BndryWindow[g];// get a pointer to the boundary window array for grid 'g'
+    //    cout << "Grid: " << g << endl;
+    //    for( int s=0 ; s < 6 ; s++ )
+    //       cout << " side " << s << " wind = " << wind_ptr[6*s] << " " << wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " " 
+    //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " << wind_ptr[6*s+5] << endl;
+    int topo=topographyExists() && g == mNumberOfGrids-1;
     
 // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
 // for periodic bc, a_BCForcing[g][s] == NULL, so you better not access the
@@ -704,17 +759,94 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
 				     bforce_side4_ptr, bforce_side5_ptr, 
 				     &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
     else
+    {
        F77_FUNC(bcfort, BCFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 				 wind_ptr, &nx, &ny, &nz,
 				 u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
 				 bforce_side0_ptr, bforce_side1_ptr, 
 				 bforce_side2_ptr, bforce_side3_ptr, 
 				 bforce_side4_ptr, bforce_side5_ptr, 
-				 &om, &ph, &cv );
-      
+				 &om, &ph, &cv, &topo );
+       int side;
+       if( topo == 1 && m_bcType[g][4] == bStressFree )
+       {
+	  side = 5;
+          F77_FUNC(freesurfcurvi,FREESURFCURVI)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+			       &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
+       }
+       if( topo == 1 && m_bcType[g][5] == bStressFree )
+       {
+	  side = 6;
+          F77_FUNC(freesurfcurvi,FREESURFCURVI)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+			       &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
+       }
+    }
   }
+// interface between curvilinear and top Cartesian grid
+   if (topographyExists())
+   {
+      int nc = 3;
+      int g = mNumberOfCartesianGrids-1;
+      int gc = mNumberOfGrids-1;
+
+      //      double nrm[3]={0,0,0};
+      int q, i, j;
+// inject solution values between lower boundary of gc and upper boundary of g
+      for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	 for( i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+	 {
+// assign ghost points in the Cartesian grid
+	    for (q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	    {
+	       for( int c = 1; c <= nc ; c++ )
+		  a_U[g](c,i,j,m_kStart[g] + q) = a_U[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+	    }
+// assign ghost points in the Curvilinear grid
+	    for (q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	    {
+	       for( int c = 1; c <= nc ; c++ )
+		  a_U[gc](c,i,j,m_kEnd[gc]-q) = a_U[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
+	    }
+	    //	    // Verify that the grid lines are the same
+	    //            if( i>= 1 && i <= m_global_nx[g] && j >= 1 && j <= m_global_ny[g] )
+	    //            for( int c=1; c <= nc ; c++ )
+	    //	    {
+	    //	       double ndiff=fabs(a_U[gc](c,i,j,m_kEnd[gc]-m_ghost_points)-a_U[g](c,i,j,m_kStart[g]+m_ghost_points));
+	    //	       if( ndiff > nrm[c-1] )
+	    //		  nrm[c-1] = ndiff;
+	    //	    }
+	 }
+      //      cout << "Difference of curvilinear and cartesian common grid line = "<< nrm[0] << " " << nrm[1] << " " << nrm[2] << endl;
+   }
 }
 
+//-----------------------------------------------------------------------
+void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
+{
+   if (topographyExists())
+   {
+      int g  = mNumberOfCartesianGrids-1;
+      int gc = mNumberOfGrids-1;
+      int q, i, j;
+// inject solution values between lower boundary of gc and upper boundary of g
+      for( j = m_jStart[g] ; j <= m_jEnd[g+1]; j++ )
+	 for( i = m_iStart[g+1]; i <= m_iEnd[g+1]; i++ )
+	 {
+// assign ghost points in the Cartesian grid
+	    for (q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	    {
+	       for( int c = 1; c <= 3 ; c++ )
+		  a_U[g](c,i,j,m_kStart[g] + q) = a_U[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+	    }
+// assign ghost points in the Curvilinear grid
+	    for (q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	    {
+	       for( int c = 1; c <= 3 ; c++ )
+		  a_U[gc](c,i,j,m_kEnd[gc]-q) = a_U[g](c,i,j,m_kStart[gc]+2*m_ghost_points - q);
+	    }
+	 }
+   }
+}
 //-----------------------------------------------------------------------
 // void EW::update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, double t, vector<Sarray*> &AlphaVE )
 // {
@@ -928,7 +1060,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
     bcType_ptr = m_bcType[g]; // pointer to the local bc array
     zmin = m_zmin[g];
-
+    int curvilinear = topographyExists() && g == mNumberOfGrids-1;
     
     wind_ptr = m_BndryWindow[g];
     
@@ -951,28 +1083,52 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
       int k = 1;
       if (m_bcType[g][0] == bDirichlet || m_bcType[g][0] == bSuperGrid )
       {
-	F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr );
-//              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
+         if( !curvilinear )
+	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr, &m_zmin[g] );
+	 else
+	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                                             &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
+					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
       }
 
       if (m_bcType[g][1] == bDirichlet || m_bcType[g][1] == bSuperGrid )
       {
-	F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr );
+         if( !curvilinear )
+	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr, &m_zmin[g] );
+	 else
+	    F77_FUNC(twdirbdryc,TWDIRBDRYC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					    &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
+					    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
       }
 
       if (m_bcType[g][2] == bDirichlet || m_bcType[g][2] == bSuperGrid)
       {
-	F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr );
+	 if( !curvilinear )
+	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr, &m_zmin[g] );
+         else
+	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					     &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
+					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
       }
 
       if (m_bcType[g][3] == bDirichlet || m_bcType[g][3] == bSuperGrid)
       {
-	F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr );
+         if( !curvilinear )
+	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr, &m_zmin[g] );
+         else
+	    F77_FUNC(twdirbdryc,TWDIRBDRYC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					    &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
+					    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
       }
 
       if (m_bcType[g][4] == bDirichlet || m_bcType[g][4] == bSuperGrid)
       {
-	F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr );
+	 if( !curvilinear )
+	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr, &m_zmin[g] );
+         else
+	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					     &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
+					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
       }
       else if (m_bcType[g][4] == bStressFree)
       {
@@ -985,7 +1141,20 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 						      &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
 						      bforce_side4_ptr, mu_ptr, la_ptr );
 	 }
-	 else
+         else if( curvilinear )
+	 {
+	    // Stress tensor on boundary
+            Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+	    // Get twilight stress tensor, tau.
+            F77_FUNC(twstensor,TWSTENSOR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					   &k, &t, &om, &cv, &ph,
+					   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+	    // Compute boundary forcing for given stress tensor, tau.
+	    F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+						     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+						     tau.c_ptr(), bforce_side4_ptr );
+	 }
+	 else 
 	    F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					    &klast, &nx, &ny, &nz, &h, &k, &t, &om, &cv, &ph,
 					    bforce_side4_ptr, mu_ptr, la_ptr );
@@ -993,7 +1162,12 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 
       if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid)
       {
-	F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr );
+	 if( !curvilinear )
+	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr, &m_zmin[g] );
+	 else
+	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					     &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
+					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
       }
       else if (m_bcType[g][5] == bStressFree)
       {
@@ -2135,16 +2309,12 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
     {
 //      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      double factor = 0.5;
-      uRec[0] = ( ( mQ(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
-		    mQ(2,i0,j0,k0)*(U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))+
-		    mQ(3,i0,j0,k0)*(U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))+
-		    mR(1,i0,j0,k0)*(U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))+
-		    mR(2,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
-		    mR(3,i0,j0,k0)*(U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))+
-		    mS(1,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
-		    mS(2,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
-		    mS(3,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
+       double factor = 0.5/sqrt(mJ(i0,j0,k0));
+       uRec[0] = ( ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		     mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		     mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
+		     mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
+		     mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
     }
   } // end div
   else if(mode == TimeSeries::Curl)
@@ -2178,7 +2348,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
     {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      double factor = 0.5;
+      double factor = 0.5/sqrt(mJ(i0,j0,k0));
       double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
       double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
       double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
@@ -2188,12 +2358,12 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
       double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
       double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
       double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-      double duzdy = mQ(2,i0,j0,k0)*duzdq+mR(2,i0,j0,k0)*duzdr+mS(2,i0,j0,k0)*duzds;
-      double duydz = mQ(3,i0,j0,k0)*duydq+mR(3,i0,j0,k0)*duydr+mS(3,i0,j0,k0)*duyds;
-      double duxdz = mQ(3,i0,j0,k0)*duxdq+mR(3,i0,j0,k0)*duxdr+mS(3,i0,j0,k0)*duxds;
-      double duzdx = mQ(1,i0,j0,k0)*duzdq+mR(1,i0,j0,k0)*duzdr+mS(1,i0,j0,k0)*duzds;
-      double duydx = mQ(1,i0,j0,k0)*duydq+mR(1,i0,j0,k0)*duydr+mS(1,i0,j0,k0)*duyds;
-      double duxdy = mQ(2,i0,j0,k0)*duxdq+mR(2,i0,j0,k0)*duxdr+mS(2,i0,j0,k0)*duxds;
+      double duzdy = mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds;
+      double duydz = mMetric(4,i0,j0,k0)*duyds;
+      double duxdz = mMetric(4,i0,j0,k0)*duxds;
+      double duzdx = mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds;
+      double duydx = mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds;
+      double duxdy = mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds;
 //       if( m_xycomponent )
 //       {
       uRec[0] = (duzdy-duydz)*factor;
@@ -2236,7 +2406,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
    {
 //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-      double factor = 0.5;
+      double factor = 0.5/sqrt(mJ(i0,j0,k0));
       double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
       double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
       double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
@@ -2246,21 +2416,17 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
       double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
       double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
       double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-      double duzdy = (mQ(2,i0,j0,k0)*duzdq+mR(2,i0,j0,k0)*duzdr+mS(2,i0,j0,k0)*duzds)*factor;
-      double duydz = (mQ(3,i0,j0,k0)*duydq+mR(3,i0,j0,k0)*duydr+mS(3,i0,j0,k0)*duyds)*factor;
-      double duxdz = (mQ(3,i0,j0,k0)*duxdq+mR(3,i0,j0,k0)*duxdr+mS(3,i0,j0,k0)*duxds)*factor;
-      double duzdx = (mQ(1,i0,j0,k0)*duzdq+mR(1,i0,j0,k0)*duzdr+mS(1,i0,j0,k0)*duzds)*factor;
-      double duydx = (mQ(1,i0,j0,k0)*duydq+mR(1,i0,j0,k0)*duydr+mS(1,i0,j0,k0)*duyds)*factor;
-      double duxdy = (mQ(2,i0,j0,k0)*duxdq+mR(2,i0,j0,k0)*duxdr+mS(2,i0,j0,k0)*duxds)*factor;
-      double duxdx = ( mQ(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
-		       mR(1,i0,j0,k0)*(U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))+
-		       mS(1,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
-      double duydy = ( mQ(2,i0,j0,k0)*(U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))+
-		       mR(2,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
-		       mS(2,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
-      double duzdz = ( mQ(3,i0,j0,k0)*(U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))+
-		       mR(3,i0,j0,k0)*(U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))+
-		       mS(3,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+      double duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
+      double duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
+      double duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
+      double duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
+      double duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
+      double duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
+      double duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+      double duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+      double duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
       uRec[0] = ( duxdx );
       uRec[1] = ( duydy );
       uRec[2] = ( duzdz );

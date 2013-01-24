@@ -1612,7 +1612,101 @@ void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a
        // curvilinear grid
       if ( mEW->topographyExists() && dotop )
       {
-	  // Not Yet Implemented
+          int g = mEW->mNumberOfGrids - 1;
+          double factor = 1.0/2.0; 
+          size_t iField = 0;
+          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+            for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+              for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
+                {
+                  double val = 0.;
+                  if (i == 1)
+		  {
+		     val  = mEW->mMetric(1,i,j,k)*(
+                               -2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i+1,j,k)-d3*a_U[g](1,i+2,j,k)+
+			       3*a_U[g](1,i+3,j,k)-(1+ot)*a_U[g](1,i+4,j,k) +os*a_U[g](1,i+5,j,k) );
+		  }
+                  else if( i== 2 )
+		  {
+		     val  = mEW->mMetric(1,i,j,k)*(
+				 -os*a_U[g](1,i-1,j,k) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i+1,j,k)
+				- ft*a_U[g](1,i+2,j,k) + 0.5*a_U[g](1,i+3,j,k) - ot*a_U[g](1,i+4,j,k) );
+		  }
+                  else if (i == mEW->m_global_nx[g]-1)
+		  {
+		     val  = mEW->mMetric(1,i,j,k)*(os*a_U[g](1,i+1,j,k) +1.25*a_U[g](1,i,j,k)-(1+ft)*a_U[g](1,i-1,j,k) +
+						   ft*a_U[g](1,i-2,j,k) - 0.5*a_U[g](1,i-3,j,k) + ot*a_U[g](1,i-4,j,k));
+		  }
+                  else if (i == mEW->m_global_nx[g])
+		  {
+		     val  = mEW->mMetric(1,i,j,k)*(2.25*a_U[g](1,i,j,k)-(4+fs)*a_U[g](1,i-1,j,k)+d3*a_U[g](1,i-2,j,k)-
+						   3*a_U[g](1,i-3,j,k)+(1+ot)*a_U[g](1,i-4,j,k) -os*a_U[g](1,i-5,j,k) );
+		  }
+                  else
+		  {
+		       val  = mEW->mMetric(1,i,j,k)*(c1*(a_U[g](1,i+1,j,k) - a_U[g](1,i-1,j,k)) +
+						     c2*(a_U[g](1,i+2,j,k) - a_U[g](1,i-2,j,k) )  );
+		  }
+                  if (j == 1)
+                    {
+		       val  += mEW->mMetric(1,i,j,k)*(-2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i,j+1,k)-d3*a_U[g](2,i,j+2,k)+
+						      3*a_U[g](2,i,j+3,k)-(1+ot)*a_U[g](2,i,j+4,k) +os*a_U[g](2,i,j+5,k));
+                    }
+		  else if( j== 2 )
+                    {
+		       val  += mEW->mMetric(1,i,j,k)*(-os*a_U[g](2,i,j-1,k) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i,j+1,k)
+						      - ft*a_U[g](2,i,j+2,k) + 0.5*a_U[g](2,i,j+3,k) - ot*a_U[g](2,i,j+4,k));
+                    }
+                  else if (j == mEW->m_global_ny[g]-1)
+                    {
+		       val  += mEW->mMetric(1,i,j,k)*( os*a_U[g](2,i,j+1,k) +1.25*a_U[g](2,i,j,k)-(1+ft)*a_U[g](2,i,j-1,k) +
+		        ft*a_U[g](2,i,j-2,k) - 0.5*a_U[g](2,i,j-3,k) + ot*a_U[g](2,i,j-4,k));
+                    }
+                  else if (j == mEW->m_global_ny[g])
+                    {
+		       val  += mEW->mMetric(1,i,j,k)*(2.25*a_U[g](2,i,j,k)-(4+fs)*a_U[g](2,i,j-1,k)+d3*a_U[g](2,i,j-2,k)-
+						      3*a_U[g](2,i,j-3,k)+(1+ot)*a_U[g](2,i,j-4,k) -os*a_U[g](2,i,j-5,k) );
+                    }
+                  else
+                    {
+		       val  += mEW->mMetric(1,i,j,k)*(c1*(a_U[g](2,i,j+1,k) - a_U[g](2,i,j-1,k)) +
+						      c2*(a_U[g](2,i,j+2,k) - a_U[g](2,i,j-2,k) ));
+                    }
+                  
+                  if (k == 1)
+                    {
+		       val  += mEW->mMetric(2,i,j,k)*(-2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i,j,k+1)-d3*a_U[g](1,i,j,k+2)+
+		       3*a_U[g](1,i,j,k+3)-(1+ot)*a_U[g](1,i,j,k+4) +os*a_U[g](1,i,j,k+5))
+			      +mEW->mMetric(3,i,j,k)*(-2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i,j,k+1)-d3*a_U[g](2,i,j,k+2)+
+		       3*a_U[g](2,i,j,k+3)-(1+ot)*a_U[g](2,i,j,k+4) +os*a_U[g](2,i,j,k+5))
+			      +mEW->mMetric(4,i,j,k)*(-2.25*a_U[g](3,i,j,k)+(4+fs)*a_U[g](3,i,j,k+1)-d3*a_U[g](3,i,j,k+2)+
+							3*a_U[g](3,i,j,k+3)-(1+ot)*a_U[g](3,i,j,k+4) +os*a_U[g](3,i,j,k+5));
+                    }
+                  if (k == 2)
+                    {
+                      val  += mEW->mMetric(2,i,j,k)*(-os*a_U[g](1,i,j,k-1) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i,j,k+1)
+		       - ft*a_U[g](1,i,j,k+2) + 0.5*a_U[g](1,i,j,k+3) - ot*a_U[g](1,i,j,k+4))
+                              +mEW->mMetric(3,i,j,k)*(-os*a_U[g](2,i,j,k-1) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i,j,k+1)
+		       - ft*a_U[g](2,i,j,k+2) + 0.5*a_U[g](2,i,j,k+3) - ot*a_U[g](2,i,j,k+4))
+                              +mEW->mMetric(4,i,j,k)*(-os*a_U[g](3,i,j,k-1) -1.25*a_U[g](3,i,j,k)+(1+ft)*a_U[g](3,i,j,k+1)
+		       - ft*a_U[g](3,i,j,k+2) + 0.5*a_U[g](3,i,j,k+3) - ot*a_U[g](3,i,j,k+4));
+                    }
+                  else // no k=N because we are in the curvilinear grid
+                    {
+		       val  += mEW->mMetric(2,i,j,k)*(c1*(a_U[g](1,i,j,k+1) - a_U[g](1,i,j,k-1)) +
+						      c2*(a_U[g](1,i,j,k+2) - a_U[g](1,i,j,k-2)) )
+			      +mEW->mMetric(3,i,j,k)*(c1*(a_U[g](2,i,j,k+1) - a_U[g](2,i,j,k-1)) +
+						      c2*(a_U[g](2,i,j,k+2) - a_U[g](2,i,j,k-2)) )
+			      +mEW->mMetric(4,i,j,k)*(c1*(a_U[g](3,i,j,k+1) - a_U[g](3,i,j,k-1)) + 
+						      c2*(a_U[g](3,i,j,k+2) - a_U[g](3,i,j,k-2))   );
+                    }
+                  val *= factor/sqrt(mEW->mJ(i,j,k));
+                  if( m_double )
+                      m_doubleField[g][iField] = val;
+                  else
+                      m_floatField[g][iField] = (float)val;  
+                  iField++;  
+                }   
       }
    }
 }
@@ -1786,12 +1880,141 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl 
        // curvilinear grid
       if ( mEW->topographyExists() && dotop )
       {
-	  // Not Yet Implemented
+          int g = mEW->mNumberOfGrids - 1;
+          int iField = 0;
+          double factor = 1.0/(2);
+          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+	     for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+		for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
+                {
+		   double duxdq = 0., duydq=0.0, duzdq=0.0;
+		   double duxdr = 0., duydr=0.0, duzdr=0.0;
+		   double duxds = 0., duyds=0.0, duzds=0.0;
+		   if (i == 1)
+		   {      
+                      duxdq = -2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i+1,j,k)-d3*a_U[g](1,i+2,j,k)+
+		       3*a_U[g](1,i+3,j,k)-(1+ot)*a_U[g](1,i+4,j,k) +os*a_U[g](1,i+5,j,k);
+                      duydq = -2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i+1,j,k)-d3*a_U[g](2,i+2,j,k)+
+		       3*a_U[g](2,i+3,j,k)-(1+ot)*a_U[g](2,i+4,j,k) +os*a_U[g](2,i+5,j,k);
+                      duzdq = -2.25*a_U[g](3,i,j,k)+(4+fs)*a_U[g](3,i+1,j,k)-d3*a_U[g](3,i+2,j,k)+
+		       3*a_U[g](3,i+3,j,k)-(1+ot)*a_U[g](3,i+4,j,k) +os*a_U[g](3,i+5,j,k);
+		   }
+		   if (i == 2)
+		   {      
+		      duxdq  = -os*a_U[g](1,i-1,j,k) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i+1,j,k)
+		       - ft*a_U[g](1,i+2,j,k) + 0.5*a_U[g](1,i+3,j,k) - ot*a_U[g](1,i+4,j,k);
+		      duydq  = -os*a_U[g](2,i-1,j,k) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i+1,j,k)
+		       - ft*a_U[g](2,i+2,j,k) + 0.5*a_U[g](2,i+3,j,k) - ot*a_U[g](2,i+4,j,k);
+		      duzdq  = -os*a_U[g](3,i-1,j,k) -1.25*a_U[g](3,i,j,k)+(1+ft)*a_U[g](3,i+1,j,k)
+		       - ft*a_U[g](3,i+2,j,k) + 0.5*a_U[g](3,i+3,j,k) - ot*a_U[g](3,i+4,j,k);
+		   }
+		   else if (i == mEW->m_global_nx[g]-1)
+		   { 
+		      duxdq  = os*a_U[g](1,i+1,j,k) +1.25*a_U[g](1,i,j,k)-(1+ft)*a_U[g](1,i-1,j,k) +
+		        ft*a_U[g](1,i-2,j,k) - 0.5*a_U[g](1,i-3,j,k) + ot*a_U[g](1,i-4,j,k);
+		      duydq  = os*a_U[g](2,i+1,j,k) +1.25*a_U[g](2,i,j,k)-(1+ft)*a_U[g](2,i-1,j,k) +
+		        ft*a_U[g](2,i-2,j,k) - 0.5*a_U[g](2,i-3,j,k) + ot*a_U[g](2,i-4,j,k);
+		      duzdq  = os*a_U[g](3,i+1,j,k) +1.25*a_U[g](3,i,j,k)-(1+ft)*a_U[g](3,i-1,j,k) +
+		        ft*a_U[g](3,i-2,j,k) - 0.5*a_U[g](3,i-3,j,k) + ot*a_U[g](3,i-4,j,k);
+		   }
+		   else if (i == mEW->m_global_nx[g])
+		   { 
+		      duxdq = 2.25*a_U[g](1,i,j,k)-(4+fs)*a_U[g](1,i-1,j,k)+d3*a_U[g](1,i-2,j,k)-
+		       3*a_U[g](1,i-3,j,k)+(1+ot)*a_U[g](1,i-4,j,k) -os*a_U[g](1,i-5,j,k);
+		      duydq = 2.25*a_U[g](2,i,j,k)-(4+fs)*a_U[g](2,i-1,j,k)+d3*a_U[g](2,i-2,j,k)-
+		       3*a_U[g](2,i-3,j,k)+(1+ot)*a_U[g](2,i-4,j,k) -os*a_U[g](2,i-5,j,k);
+		      duzdq = 2.25*a_U[g](3,i,j,k)-(4+fs)*a_U[g](3,i-1,j,k)+d3*a_U[g](3,i-2,j,k)-
+		       3*a_U[g](3,i-3,j,k)+(1+ot)*a_U[g](3,i-4,j,k) -os*a_U[g](3,i-5,j,k);
+		   }
+		   else
+		   { 
+                      duxdq = c1*(a_U[g](1,i+1,j,k) - a_U[g](1,i-1,j,k))+c2*(a_U[g](1,i+2,j,k) - a_U[g](1,i-2,j,k));
+                      duydq = c1*(a_U[g](2,i+1,j,k) - a_U[g](2,i-1,j,k))+c2*(a_U[g](2,i+2,j,k) - a_U[g](2,i-2,j,k));
+                      duzdq = c1*(a_U[g](3,i+1,j,k) - a_U[g](3,i-1,j,k))+c2*(a_U[g](3,i+2,j,k) - a_U[g](3,i-2,j,k));
+		   }
+
+		   if (j == 1)
+		   {   
+		      duxdr =-2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i,j+1,k)-d3*a_U[g](1,i,j+2,k)+
+		       3*a_U[g](1,i,j+3,k)-(1+ot)*a_U[g](1,i,j+4,k) +os*a_U[g](1,i,j+5,k);
+		      duydr =-2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i,j+1,k)-d3*a_U[g](2,i,j+2,k)+
+		       3*a_U[g](2,i,j+3,k)-(1+ot)*a_U[g](2,i,j+4,k) +os*a_U[g](2,i,j+5,k);
+		      duzdr =-2.25*a_U[g](3,i,j,k)+(4+fs)*a_U[g](3,i,j+1,k)-d3*a_U[g](3,i,j+2,k)+
+		       3*a_U[g](3,i,j+3,k)-(1+ot)*a_U[g](3,i,j+4,k) +os*a_U[g](3,i,j+5,k);
+		   }
+		   if (j == 2)
+		   {   
+		      duxdr = -os*a_U[g](1,i,j-1,k) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i,j+1,k)
+		       - ft*a_U[g](1,i,j+2,k) + 0.5*a_U[g](1,i,j+3,k) - ot*a_U[g](1,i,j+4,k);
+		      duydr = -os*a_U[g](2,i,j-1,k) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i,j+1,k)
+		       - ft*a_U[g](2,i,j+2,k) + 0.5*a_U[g](2,i,j+3,k) - ot*a_U[g](2,i,j+4,k);
+		      duzdr = -os*a_U[g](3,i,j-1,k) -1.25*a_U[g](3,i,j,k)+(1+ft)*a_U[g](3,i,j+1,k)
+		       - ft*a_U[g](3,i,j+2,k) + 0.5*a_U[g](3,i,j+3,k) - ot*a_U[g](3,i,j+4,k);
+		   }
+		   else if (j == mEW->m_global_ny[g]-1)
+		   { 
+		      duxdr = os*a_U[g](1,i,j+1,k) +1.25*a_U[g](1,i,j,k)-(1+ft)*a_U[g](1,i,j-1,k) +
+		        ft*a_U[g](1,i,j-2,k) - 0.5*a_U[g](1,i,j-3,k) + ot*a_U[g](1,i,j-4,k);
+		      duydr = os*a_U[g](2,i,j+1,k) +1.25*a_U[g](2,i,j,k)-(1+ft)*a_U[g](2,i,j-1,k) +
+		        ft*a_U[g](2,i,j-2,k) - 0.5*a_U[g](2,i,j-3,k) + ot*a_U[g](2,i,j-4,k);
+		      duzdr = os*a_U[g](3,i,j+1,k) +1.25*a_U[g](3,i,j,k)-(1+ft)*a_U[g](3,i,j-1,k) +
+		        ft*a_U[g](3,i,j-2,k) - 0.5*a_U[g](3,i,j-3,k) + ot*a_U[g](3,i,j-4,k);
+		   }
+		   else if (j == mEW->m_global_ny[g])
+		   { 
+		      duxdr = 2.25*a_U[g](1,i,j,k)-(4+fs)*a_U[g](1,i,j-1,k)+d3*a_U[g](1,i,j-2,k)-
+		       3*a_U[g](1,i,j-3,k)+(1+ot)*a_U[g](1,i,j-4,k) -os*a_U[g](1,i,j-5,k);
+		      duydr = 2.25*a_U[g](2,i,j,k)-(4+fs)*a_U[g](2,i,j-1,k)+d3*a_U[g](2,i,j-2,k)-
+		       3*a_U[g](2,i,j-3,k)+(1+ot)*a_U[g](2,i,j-4,k) -os*a_U[g](2,i,j-5,k);
+		      duzdr = 2.25*a_U[g](3,i,j,k)-(4+fs)*a_U[g](3,i,j-1,k)+d3*a_U[g](3,i,j-2,k)-
+		       3*a_U[g](3,i,j-3,k)+(1+ot)*a_U[g](3,i,j-4,k) -os*a_U[g](3,i,j-5,k);
+		   }
+		   else
+		   {
+                      duxdr = c1*(a_U[g](1,i,j+1,k) - a_U[g](1,i,j-1,k))+c2*(a_U[g](1,i,j+2,k) - a_U[g](1,i,j-2,k));
+                      duydr = c1*(a_U[g](2,i,j+1,k) - a_U[g](2,i,j-1,k))+c2*(a_U[g](2,i,j+2,k) - a_U[g](2,i,j-2,k));
+                      duzdr = c1*(a_U[g](3,i,j+1,k) - a_U[g](3,i,j-1,k))+c2*(a_U[g](3,i,j+2,k) - a_U[g](3,i,j-2,k));
+		   }
+
+		   if (k == 1)
+		   {
+		      duxds =-2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i,j,k+1)-d3*a_U[g](1,i,j,k+2)+
+		       3*a_U[g](1,i,j,k+3)-(1+ot)*a_U[g](1,i,j,k+4) +os*a_U[g](1,i,j,k+5);
+		      duyds =-2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i,j,k+1)-d3*a_U[g](2,i,j,k+2)+
+		       3*a_U[g](2,i,j,k+3)-(1+ot)*a_U[g](2,i,j,k+4) +os*a_U[g](2,i,j,k+5);
+		      duzds =-2.25*a_U[g](3,i,j,k)+(4+fs)*a_U[g](3,i,j,k+1)-d3*a_U[g](3,i,j,k+2)+
+		       3*a_U[g](3,i,j,k+3)-(1+ot)*a_U[g](3,i,j,k+4) +os*a_U[g](3,i,j,k+5);
+		   }
+		   if (k == 2)
+		   {
+		      duxds = -os*a_U[g](1,i,j,k-1) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i,j,k+1)
+		       - ft*a_U[g](1,i,j,k+2) + 0.5*a_U[g](1,i,j,k+3) - ot*a_U[g](1,i,j,k+4);
+		      duyds = -os*a_U[g](2,i,j,k-1) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i,j,k+1)
+		       - ft*a_U[g](2,i,j,k+2) + 0.5*a_U[g](2,i,j,k+3) - ot*a_U[g](2,i,j,k+4);
+		      duzds = -os*a_U[g](3,i,j,k-1) -1.25*a_U[g](3,i,j,k)+(1+ft)*a_U[g](3,i,j,k+1)
+		       - ft*a_U[g](3,i,j,k+2) + 0.5*a_U[g](3,i,j,k+3) - ot*a_U[g](3,i,j,k+4);
+		   }
+		   else // no k=N because we are in the curvilinear grid
+		   {
+                      duxds = c1*(a_U[g](1,i,j,k+1) - a_U[g](1,i,j,k-1))+c2*(a_U[g](1,i,j,k+2) - a_U[g](1,i,j,k-2));
+                      duyds = c1*(a_U[g](2,i,j,k+1) - a_U[g](2,i,j,k-1))+c2*(a_U[g](2,i,j,k+2) - a_U[g](2,i,j,k-2));
+                      duzds = c1*(a_U[g](3,i,j,k+1) - a_U[g](3,i,j,k-1))+c2*(a_U[g](3,i,j,k+2) - a_U[g](3,i,j,k-2));
+		   }
+		   double duzdy = mEW->mMetric(1,i,j,k)*duzdr+mEW->mMetric(3,i,j,k)*duzds;
+		   double duydz = mEW->mMetric(4,i,j,k)*duyds;
+		   double duxdz = mEW->mMetric(4,i,j,k)*duxds;
+		   double duzdx = mEW->mMetric(1,i,j,k)*duzdq+mEW->mMetric(2,i,j,k)*duzds;
+		   double duydx = mEW->mMetric(1,i,j,k)*duydq+mEW->mMetric(2,i,j,k)*duyds;
+		   double duxdy = mEW->mMetric(1,i,j,k)*duxdr+mEW->mMetric(3,i,j,k)*duxds;
+		   factor = 1.0/sqrt(mEW->mJ(i,j,k));
+		   a_curl[g][3*iField]   = factor*(duzdy-duydz); 
+		   a_curl[g][3*iField+1] = factor*(duxdz-duzdx);
+		   a_curl[g][3*iField+2] = factor*(duydx-duxdy);
+                   iField++; 
+                }
       }
    }
 }
-
-
 
 //-----------------------------------------------------------------------
 void Image::computeImageMagdt( vector<Sarray> &a_Up, vector<Sarray> &a_Um,

@@ -3,12 +3,12 @@ c-----------------------------------------------------------------------
      +     wind, nx, ny, nz,
      +     u, h, bccnd, sbop, mu, la, t,
      *     bforce1, bforce2, bforce3, bforce4, bforce5, bforce6, 
-     +     om, ph, cv )
+     +     om, ph, cv, curvilinear )
       implicit none
       real*8 d4a, d4b
       parameter( d4a=2d0/3, d4b=-1d0/12 )
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz
-      integer s, wind(6,6), i, j, k, bccnd(6), w, kl, qq
+      integer s, wind(6,6), i, j, k, bccnd(6), w, kl, qq, curvilinear
       real*8 x, y, z, h, sbop(0:4)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -167,7 +167,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                 enddo
               enddo
             endif
-          elseif( bccnd(s).eq.0 )then
+         elseif( bccnd(s).eq.0 )then
 *** Free surface condition, bccnd=0
             if( s.ne.5 .and. s.ne.6 )then
               write(*,*) 
@@ -179,92 +179,89 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
 c moved the assignment of bforce5/6 into its own routine
 
 **** Do the free surface condition (kl is the direction)
-          if( s.eq.5 )then
-            k = 1
-            kl= 1
-
-            do j=jfirst+2,jlast-2
-              do i=ifirst+2,ilast-2
+          if( s.eq.5 .and. curvilinear.eq.0 )then
+             k = 1
+             kl= 1
+             do j=jfirst+2,jlast-2
+                do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
-                qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
+                   qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
 *** Compute wx, wy, ux, vy by centered differences along boundary
-                wx = 
-     *               d4a*(u(3,i+1,j,k)-u(3,i-1,j,k))+
-     *               d4b*(u(3,i+2,j,k)-u(3,i-2,j,k)) 
-                ux = 
-     *               d4a*(u(1,i+1,j,k)-u(1,i-1,j,k))+
-     *               d4b*(u(1,i+2,j,k)-u(1,i-2,j,k)) 
+                   wx = 
+     *                  d4a*(u(3,i+1,j,k)-u(3,i-1,j,k))+
+     *                  d4b*(u(3,i+2,j,k)-u(3,i-2,j,k)) 
+                   ux = 
+     *                  d4a*(u(1,i+1,j,k)-u(1,i-1,j,k))+
+     *                  d4b*(u(1,i+2,j,k)-u(1,i-2,j,k)) 
 
-                wy = 
-     *               d4a*(u(3,i,j+1,k)-u(3,i,j-1,k))+
-     *               d4b*(u(3,i,j+2,k)-u(3,i,j-2,k)) 
-                vy = 
-     *               d4a*(u(2,i,j+1,k)-u(2,i,j-1,k))+
-     *               d4b*(u(2,i,j+2,k)-u(2,i,j-2,k)) 
+                   wy = 
+     *                  d4a*(u(3,i,j+1,k)-u(3,i,j-1,k))+
+     *                  d4b*(u(3,i,j+2,k)-u(3,i,j-2,k)) 
+                   vy = 
+     *                  d4a*(u(2,i,j+1,k)-u(2,i,j-1,k))+
+     *                  d4b*(u(2,i,j+2,k)-u(2,i,j-2,k)) 
 
-                uz = 0
-                vz = 0
-                wz = 0
+                   uz = 0
+                   vz = 0
+                   wz = 0
 c interior contribution to uz, vz, wz (kl is the direction)
-                do w=1,4
-                  uz = uz + sbop(w)*u(1,i,j,k+kl*(w-1))
-                  vz = vz + sbop(w)*u(2,i,j,k+kl*(w-1))
-                  wz = wz + sbop(w)*u(3,i,j,k+kl*(w-1))
+                   do w=1,4
+                      uz = uz + sbop(w)*u(1,i,j,k+kl*(w-1))
+                      vz = vz + sbop(w)*u(2,i,j,k+kl*(w-1))
+                      wz = wz + sbop(w)*u(3,i,j,k+kl*(w-1))
+                   enddo
+                   u(1,i,j,k-kl)=(-uz-kl*wx+
+     *                    kl*h*bforce5(1,qq)/mu(i,j,k))/sbop(0)
+                   u(2,i,j,k-kl)=(-vz-kl*wy+
+     *                    kl*h*bforce5(2,qq)/mu(i,j,k))/sbop(0)
+                   u(3,i,j,k-kl)=(-wz+(-kl*la(i,j,k)*(ux+vy)+
+     *                    kl*h*bforce5(3,qq))/(2*mu(i,j,k)+la(i,j,k)))
+     *                    /sbop(0)
                 enddo
-                u(1,i,j,k-kl)=(-uz-kl*wx+kl*h*bforce5(1,qq)/mu(i,j,k))
-     *               /sbop(0)
-                u(2,i,j,k-kl)=(-vz-kl*wy+kl*h*bforce5(2,qq)/mu(i,j,k))
-     *               /sbop(0)
-                u(3,i,j,k-kl)=(-wz+(-kl*la(i,j,k)*(ux+vy)+
-     *               kl*h*bforce5(3,qq))/(2*mu(i,j,k)+la(i,j,k)))
-     *               /sbop(0)
-              enddo
-            enddo
-          else
+             enddo
+          elseif( s.eq.6 .and. curvilinear.eq.0 )then
 c s=6
-            k = nz
-            kl= -1
-
-            do j=jfirst+2,jlast-2
-              do i=ifirst+2,ilast-2
+             k = nz
+             kl= -1
+             do j=jfirst+2,jlast-2
+                do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
-                qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
+                   qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
 *** Compute wx, wy, ux, vy by centered differences along boundary
-                wx = 
-     *               d4a*(u(3,i+1,j,k)-u(3,i-1,j,k))+
-     *               d4b*(u(3,i+2,j,k)-u(3,i-2,j,k)) 
-                ux = 
-     *               d4a*(u(1,i+1,j,k)-u(1,i-1,j,k))+
-     *               d4b*(u(1,i+2,j,k)-u(1,i-2,j,k)) 
+                   wx = 
+     *                  d4a*(u(3,i+1,j,k)-u(3,i-1,j,k))+
+     *                  d4b*(u(3,i+2,j,k)-u(3,i-2,j,k)) 
+                   ux = 
+     *                  d4a*(u(1,i+1,j,k)-u(1,i-1,j,k))+
+     *                  d4b*(u(1,i+2,j,k)-u(1,i-2,j,k)) 
 
-                wy = 
-     *               d4a*(u(3,i,j+1,k)-u(3,i,j-1,k))+
-     *               d4b*(u(3,i,j+2,k)-u(3,i,j-2,k)) 
-                vy =
-     *               d4a*(u(2,i,j+1,k)-u(2,i,j-1,k))+
-     *               d4b*(u(2,i,j+2,k)-u(2,i,j-2,k)) 
+                   wy = 
+     *                  d4a*(u(3,i,j+1,k)-u(3,i,j-1,k))+
+     *                  d4b*(u(3,i,j+2,k)-u(3,i,j-2,k)) 
+                   vy =
+     *                  d4a*(u(2,i,j+1,k)-u(2,i,j-1,k))+
+     *                  d4b*(u(2,i,j+2,k)-u(2,i,j-2,k)) 
 
-                uz = 0
-                vz = 0
-                wz = 0
+                   uz = 0
+                   vz = 0
+                   wz = 0
 c interior contribution to uz, vz, wz (kl is the direction)
-                do w=1,4
-                  uz = uz + sbop(w)*u(1,i,j,k+kl*(w-1))
-                  vz = vz + sbop(w)*u(2,i,j,k+kl*(w-1))
-                  wz = wz + sbop(w)*u(3,i,j,k+kl*(w-1))
+                   do w=1,4
+                      uz = uz + sbop(w)*u(1,i,j,k+kl*(w-1))
+                      vz = vz + sbop(w)*u(2,i,j,k+kl*(w-1))
+                      wz = wz + sbop(w)*u(3,i,j,k+kl*(w-1))
+                   enddo
+                   u(1,i,j,k-kl)=(-uz-kl*wx+
+     *                  kl*h*bforce6(1,qq)/mu(i,j,k))/sbop(0)
+                   u(2,i,j,k-kl)=(-vz-kl*wy+
+     *                  kl*h*bforce6(2,qq)/mu(i,j,k))/sbop(0)
+                   u(3,i,j,k-kl)=(-wz+(-kl*la(i,j,k)*(ux+vy)+
+     *                  kl*h*bforce6(3,qq))/(2*mu(i,j,k)+la(i,j,k)))
+     *                  /sbop(0)
                 enddo
-                u(1,i,j,k-kl)=(-uz-kl*wx+kl*h*bforce6(1,qq)/mu(i,j,k))
-     *               /sbop(0)
-                u(2,i,j,k-kl)=(-vz-kl*wy+kl*h*bforce6(2,qq)/mu(i,j,k))
-     *               /sbop(0)
-                u(3,i,j,k-kl)=(-wz+(-kl*la(i,j,k)*(ux+vy)+
-     *               kl*h*bforce6(3,qq))/(2*mu(i,j,k)+la(i,j,k)))
-     *               /sbop(0)
-              enddo
-            enddo
+             enddo
           endif
-
-        endif
+       endif
       enddo
       end
 
@@ -542,10 +539,10 @@ c interior contribution to uz, vz, wz (kl is the direction)
 
 
 c----------------------------------------------------------------------
-      subroutine TWDIRBDRY( wind, h, t, om, cv, ph, bforce )
+      subroutine TWDIRBDRY( wind, h, t, om, cv, ph, bforce, zmin )
       implicit none
-      integer ifirst, ilast, jfirst, jlast, kfirst, klast, wind(6)
-      real*8 bforce(3,*), h, t, om, cv, ph, x, y, z
+      integer wind(6)
+      real*8 bforce(3,*), h, t, om, cv, ph, x, y, z, zmin
       integer i, j, k, qq
 c
 c NOTE: pass in the window for one side, i.e., wind(1,side) in the calling routine
@@ -554,7 +551,7 @@ c
       qq = 1
       do k=wind(5),wind(6)
 c need to add zmin to work in a composite grid setting
-        z = (k-1)*h
+        z = (k-1)*h + zmin
         do j=wind(3),wind(4)
           y = (j-1)*h
           do i=wind(1),wind(2)
@@ -562,6 +559,37 @@ c need to add zmin to work in a composite grid setting
             bforce(1,qq) = sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph)
             bforce(2,qq) = sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph)
             bforce(3,qq) = sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t))
+            qq = qq+1
+          enddo
+        enddo
+      enddo
+      end
+
+c----------------------------------------------------------------------
+      subroutine TWDIRBDRYC(ifirst, ilast, jfirst, jlast, kfirst, klast, 
+     *                      wind, t, om, cv, ph, bforce, x, y, z )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, wind(6)
+      real*8 bforce(3,*), t, om, cv, ph
+      real*8 x(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      integer i, j, k, qq
+c
+c NOTE: pass in the window for one side, i.e., wind(1,side) in the calling routine
+c
+*** Twilight forced dirichlet condition
+      qq = 1
+      do k=wind(5),wind(6)
+        do j=wind(3),wind(4)
+          do i=wind(1),wind(2)
+
+            bforce(1,qq) = sin(om*(x(i,j,k)-cv*t))*sin(om*y(i,j,k)+ph)
+     *                                              *sin(om*z(i,j,k)+ph)
+            bforce(2,qq) = sin(om*x(i,j,k)+ph)*sin(om*(y(i,j,k)-cv*t))
+     *                                              *sin(om*z(i,j,k)+ph)
+            bforce(3,qq) = sin(om*x(i,j,k)+ph)*sin(om*y(i,j,k)+ph)
+     *                                          *sin(om*(z(i,j,k)-cv*t))
             qq = qq+1
           enddo
         enddo
@@ -759,3 +787,88 @@ c-----------------------------------------------------------------------
       return
       end
 
+c-----------------------------------------------------------------------
+      subroutine TWSTENSOR( ifirst, ilast, jfirst, jlast, kfirst, 
+     *                  klast, kz, t, om, c, ph, xx, yy, zz,
+     *                  tau, mu, lambda )
+***********************************************************************
+***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
+***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
+***
+***********************************************************************
+
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      integer i, j, kz
+      real*8 muu, lambdaa, x, y, z, t, om, c, ph
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision t1
+      doubleprecision t11
+      doubleprecision t12
+      doubleprecision t20
+      doubleprecision t21
+      doubleprecision t23
+      doubleprecision t24
+      doubleprecision t26
+      doubleprecision t3
+      doubleprecision t30
+      doubleprecision t31
+      doubleprecision t35
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t4
+      doubleprecision t41
+      doubleprecision t42
+      doubleprecision t46
+      doubleprecision t50
+      doubleprecision t51
+      doubleprecision t54
+      doubleprecision t7
+      doubleprecision t8
+
+      do j=jfirst,jlast
+         do i=ifirst,ilast
+            x = xx(i,j,kz)
+            y = yy(i,j,kz)
+            z = zz(i,j,kz)
+            muu = mu(i,j,kz)
+            lambdaa = lambda(i,j,kz)
+            t1 = c*t
+            t3 = om*(x-t1)
+            t4 = cos(t3)
+            t7 = om*y+ph
+            t8 = sin(t7)
+            t11 = om*z+ph
+            t12 = sin(t11)
+            t20 = om*x+ph
+            t21 = sin(t20)
+            t23 = om*(y-t1)
+            t24 = cos(t23)
+            t26 = om*t12
+            t30 = om*(z-t1)
+            t31 = cos(t30)
+            t35 = lambdaa*(t4*om*t8*t12+t21*t24*t26+t21*t8*t31*om)
+            tau(1,i,j) = 2*muu*t4*om*t8*t12+t35
+            t36 = cos(t20)
+            t37 = t36*om
+            t38 = sin(t23)
+            t41 = sin(t3)
+            t42 = cos(t7)
+            tau(2,i,j) = muu*(t37*t38*t12+t41*t42*t26)
+            t46 = sin(t30)
+            t50 = cos(t11)
+            t51 = t50*om
+            tau(3,i,j) = muu*(t37*t8*t46+t41*t8*t51)
+            t54 = muu*t21
+            tau(4,i,j) = 2*t54*t24*om*t12+t35
+            tau(5,i,j) = muu*(t21*t42*om*t46+t21*t38*t51)
+            tau(6,i,j) = 2*t54*t8*t31*om+t35
+         enddo
+      enddo
+      end

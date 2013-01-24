@@ -109,3 +109,65 @@ c$$$ 101  format(' ', a, 2(g15.7,tr2))
       return
       end
 
+c-----------------------------------------------------------------------
+      subroutine solerr3c(ifirst, ilast, jfirst, jlast, kfirst, klast,
+     +     uex, u, x, y, z, jac, li, l2, xli, x0, y0, z0, radius,
+     +     imin, imax, jmin, jmax, kmin, kmax)
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer imin, imax, jmin, jmax, kmin, kmax
+      real*8 x0, y0, z0, radius, sradius2, dist
+      real*8 uex(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 x(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
+     
+      integer c, k, j, i
+      real*8 li, l2, err(3), xli
+
+      li = 0
+      l2 = 0
+c max norm of exact solution
+      xli = 0
+c tmp
+c      write(*,*)'if=', ifirst, 'il=', ilast, 'jf=', jfirst, 'jl=',
+c     +     jlast, 'kf=', kfirst, 'kl=', klast
+c this test includes interior points (the arrays include an extra ghost point in k)
+c
+c Possibility to exclude all points within the distance 'radius' from the
+c point '(x0,y0,z0)', set radius to a negative value to include all points.
+c
+      sradius2 = radius*radius
+      if( radius.lt.0 )then
+         sradius2 = -sradius2
+      endif
+C       do k=kfirst+2,klast-2
+C         do j=jfirst+2,jlast-2
+C           do i=ifirst+2,ilast-2
+      do k=kmin,kmax
+        do j=jmin,jmax
+          do i=imin,imax
+            dist = (x(i,j,k)-x0)**2+(y(i,j,k)-y0)**2+(z(i,j,k)-z0)**2
+            if( dist .gt. sradius2 )then
+c exact solution in array 'uex'
+               do c=1,3
+                  err(c) = ABS( u(c,i,j,k) - uex(c,i,j,k) )
+               enddo
+               if( li.lt.max(err(1),err(2),err(3)) )then
+                  li = max(err(1),err(2),err(3))
+               endif
+               if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
+     +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
+
+               l2 = l2 + 
+     +              jac(i,j,k)*(err(1)**2 + err(2)**2 + err(3)**2)
+            endif
+          enddo
+        enddo
+      enddo
+c$$$      write(*,101) 'Solution errors in max- and L2-norm: ', li, l2
+c$$$ 101  format(' ', a, 2(g15.7,tr2))
+      return
+      end
