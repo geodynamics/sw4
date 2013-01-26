@@ -600,11 +600,13 @@ void EW::processGrid(char* buffer)
      }
      else if( startswith("proj=",token))
      {
+// Note that the whole string (including token) is assigned to the 'projection' variable
         projection = token;
 	use_geoprojection = true;
      }
      else if( startswith("ellps=",token))
      {
+// Note that the whole string (including token) is assigned to the 'ellipse' variable
         ellipse = token;
 	use_geoprojection = true;
      }
@@ -954,9 +956,9 @@ void EW::processGrid(char* buffer)
       msg << " \n* Improper grid location specification, must specify both lat and lon variables " << endl
 	  << " * Missing... ";
       if (!latSet)
-	msg << " lat= keyword ";
+	msg << " lat=keyword ";
       if (!lonSet)
-	msg << " lon= keyword ";
+	msg << " lon=keyword ";
     }
     CHECK_INPUT(0, msg.str());
   }

@@ -185,7 +185,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_vpMin(0.),
   m_vsMin(0.),
 
-  m_grid_interpolation_order(0),
+  m_grid_interpolation_order(6),
   m_global_xmax(0.),
   m_global_ymax(0.),
   m_global_zmax(0.),
