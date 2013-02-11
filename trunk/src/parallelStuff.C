@@ -108,6 +108,16 @@ void EW::setup2D_MPICommunications()
    MPI_Type_commit( &m_send_type_2dfinest[0] );
    MPI_Type_commit( &m_send_type_2dfinest[1] );
 
+// Extended number of padding points
+   ni = ni + 2*m_ext_ghost_points;
+   nj = nj + 2*m_ext_ghost_points;
+   int extpadding = m_ppadding + m_ext_ghost_points;
+   MPI_Type_vector( nj, extpadding,    ni,    MPI_DOUBLE, &m_send_type_2dfinest_ext[0] );
+   MPI_Type_vector( 1,  extpadding*ni, ni*nj, MPI_DOUBLE, &m_send_type_2dfinest_ext[1] );
+   MPI_Type_commit( &m_send_type_2dfinest_ext[0] );
+   MPI_Type_commit( &m_send_type_2dfinest_ext[1] );
+
+// Coarser grids
    m_send_type_2dx.resize(mNumberOfCartesianGrids);
    m_send_type_2dy.resize(mNumberOfCartesianGrids);
    m_send_type_2dx1p.resize(mNumberOfCartesianGrids);
@@ -308,6 +318,38 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 		 m_cartesian_communicator, &status );
    MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
 		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
+		 m_cartesian_communicator, &status );
+}
+
+//-----------------------------------------------------------------------
+void EW::communicate_array_2d_ext( Sarray& u )
+{
+   REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for three-component arrays" );
+   int g = mNumberOfGrids-1;
+   int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
+   int je = m_jEnd[g]+m_ext_ghost_points, jb=m_jStart[g]-m_ext_ghost_points;
+
+   MPI_Status status;
+   int xtag1 = 345;
+   int xtag2 = 346;
+   int ytag1 = 347;
+   int ytag2 = 348;
+   int k=1;
+   int extpadding = m_ppadding+m_ext_ghost_points;
+      // X-direction communication
+   MPI_Sendrecv( &u(1,ie-(2*extpadding-1),jb,k), 1, m_send_type_2dfinest_ext[0], m_neighbor[1], xtag1,
+		 &u(1,ib,jb,k), 1, m_send_type_2dfinest_ext[0], m_neighbor[0], xtag1,
+		 m_cartesian_communicator, &status );
+   MPI_Sendrecv( &u(1,ib+extpadding,jb,k), 1, m_send_type_2dfinest_ext[0], m_neighbor[0], xtag2,
+		 &u(1,ie-(extpadding-1),jb,k), 1, m_send_type_2dfinest_ext[0], m_neighbor[1], xtag2,
+		 m_cartesian_communicator, &status );
+
+      // Y-direction communication
+   MPI_Sendrecv( &u(1,ib,je-(2*extpadding-1),k), 1, m_send_type_2dfinest_ext[1], m_neighbor[3], ytag1,
+		 &u(1,ib,jb,k), 1, m_send_type_2dfinest_ext[1], m_neighbor[2], ytag1,
+		 m_cartesian_communicator, &status );
+   MPI_Sendrecv( &u(1,ib,jb+extpadding,k), 1, m_send_type_2dfinest_ext[1], m_neighbor[2], ytag2,
+		 &u(1,ib,je-(extpadding-1),k), 1, m_send_type_2dfinest_ext[1], m_neighbor[3], ytag2,
 		 m_cartesian_communicator, &status );
 }
 

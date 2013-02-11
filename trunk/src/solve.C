@@ -28,6 +28,9 @@ void F77_FUNC(bcfort, BCFORT)( int*, int*, int*, int*, int*, int*,
 			       double*, double*, double*, int* );
 void F77_FUNC(freesurfcurvi,FREESURFCURVI)(int*, int*, int*, int*, int*, int*, int*, int*,
 					  double*, double*, double*, double*, double*, double* );
+void F77_FUNC(freesurfcurvisg,FREESURFCURVISG)(int*, int*, int*, int*, int*, int*, int*, int*,
+					       double*, double*, double*, double*, double*,
+					       double*, double*, double* );
 void F77_FUNC(bcfortsg, BCFORTSG)( int*, int*, int*, int*, int*, int*, 
 			       int *, int*, int*, int*,
 			       double*, double*, boundaryConditionType*, double *, double*, double*, double*,
@@ -38,12 +41,12 @@ void F77_FUNC(bcfortsg, BCFORTSG)( int*, int*, int*, int*, int*, int*,
 void F77_FUNC(twfrsurfz, TWFRSURFZ)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
 				  int * klast_p, int * nx_p, int * ny_p, int * nz_p, double* h_p, int * k_p,
 				  double* t_p, double* om_p, double* cv_p, double* ph_p,
-				  double* bforce_side5_ptr, double* mu_ptr, double* la_ptr );
+				    double* bforce_side5_ptr, double* mu_ptr, double* la_ptr, double* zmin );
 void F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
 				  int * klast_p, double* h_p, int * k_p,
 				  double* t_p, double* om_p, double* cv_p, double* ph_p,
 					      double* omstrx_p, double* omstry_p,
-				  double* bforce_side5_ptr, double* mu_ptr, double* la_ptr );
+					      double* bforce_side5_ptr, double* mu_ptr, double* la_ptr, double* zmin );
 void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, double *om_p, double * cv_p, 
 				    double *ph_p,  double * bforce_side_ptr, double* zmin );
    void F77_FUNC(twdirbdryc,TWDIRBDRYC)( int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, int* klast,
@@ -55,11 +58,17 @@ void F77_FUNC(testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* j
 void F77_FUNC(addsgd,ADDSGD) (double* dt, double *h, double *a_U, double*a_Um, double*a_Up, 
 			      double *sg_dc_x, double* sg_dc_y, double* sg_dc_z,
 			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
-void F77_FUNC(addsgd2,ADDSGD2) (double* dt, double *h, double *a_U, double*a_Um, double*a_Up, double* Rho,
+void F77_FUNC(addsgd4,ADDSGD4) (double* dt, double *h, double *a_Up, double*a_U, double*a_Um, double* Rho,
 				double *sg_dc_x, double* sg_dc_y, double* sg_dc_z, double* sg_str_x, double* sg_str_y, double* sg_str_z,
 			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
-void F77_FUNC(addsgd26,ADDSGD26) (double* dt, double *h, double *a_U, double*a_Um, double*a_Up, double* Rho,
+void F77_FUNC(addsgd6,ADDSGD6) (double* dt, double *h, double *a_Up, double*a_U, double*a_Um, double* Rho,
 				double *sg_dc_x, double* sg_dc_y, double* sg_dc_z, double* sg_str_x, double* sg_str_y, double* sg_str_z,
+			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+void F77_FUNC(addsgd4c,ADDSGD4C) (double* dt, double *a_Up, double*a_U, double*a_Um, double* Rho,
+				double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
+			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a_Um, double* Rho,
+				double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
 			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
 // +     omega, alpha, h, zmin )
@@ -69,9 +78,14 @@ void F77_FUNC(addsgd26,ADDSGD26) (double* dt, double *h, double *a_U, double*a_U
    void F77_FUNC(twstensor,TWSTENSOR)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
 				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
 				       double* tau, double* mu, double* lambda );
+   void F77_FUNC(twstensorsg,TWSTENSORSG)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
+				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
+					   double* tau, double* mu, double* lambda, double* omstrx, double* omstry );
    void F77_FUNC(getsurfforcing,GETSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
 						 int* k, double* met, double* jac, double* tau, double* forcing );
-				    
+  void F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( 
+	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
+           double* met, double* jac, double* tau, double* strx, double* stry, double* forcing );
 }
 
 
@@ -401,7 +415,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for(int g=0 ; g < mNumberOfGrids ; g++ )
     communicate_array( U[g], g );
 // boundary forcing
-  cartesian_bc_forcing( t, BCForcing );
+  cartesian_bc_forcing( t, BCForcing, a_Sources );
 // enforce boundary condition
   enforceBC( U, t, BCForcing );   
 
@@ -410,7 +424,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for(int g=0 ; g < mNumberOfGrids ; g++ )
     communicate_array( Um[g], g );
 // boundary forcing
-  cartesian_bc_forcing( t-mDt, BCForcing );
+  cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
 // enforce boundary condition
   enforceBC( Um, t-mDt, BCForcing );
 
@@ -498,7 +512,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     for(int g=0 ; g < mNumberOfGrids ; g++ )
       communicate_array( Up[g], g );
 // calculate boundary forcing at time t+mDt
-    cartesian_bc_forcing( t+mDt, BCForcing );
+    cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 // update ghost points in Up
     enforceBC( Up, t+mDt, BCForcing );
 
@@ -530,7 +544,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        for(int g=0 ; g < mNumberOfGrids ; g++ )
 	  communicate_array( Up[g], g );
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
-       cartesian_bc_forcing( t+mDt, BCForcing );
+       cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 // update ghost points in Up
        enforceBC( Up, t+mDt, BCForcing );
     }
@@ -751,6 +765,7 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
     bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
     
     if( usingSupergrid() )
+    {
        F77_FUNC(bcfortsg, BCFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 				     wind_ptr, &nx, &ny, &nz,
 				     u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
@@ -758,6 +773,16 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
 				     bforce_side2_ptr, bforce_side3_ptr, 
 				     bforce_side4_ptr, bforce_side5_ptr, 
 				     &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
+       int side;
+       if( topo == 1 && m_bcType[g][4] == bStressFree )
+       {
+	  side = 5;
+          F77_FUNC(freesurfcurvisg,FREESURFCURVISG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+						    &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+						    m_sbop, bforce_side4_ptr, m_sg_str_x[g],
+						    m_sg_str_y[g] );
+       }
+    }
     else
     {
        F77_FUNC(bcfort, BCFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
@@ -1032,7 +1057,8 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 // }
 
 //------------------------------------------------------------------------------
-void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
+void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
+			      vector<Source*>& a_sources )
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
@@ -1133,15 +1159,15 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
       else if (m_bcType[g][4] == bStressFree)
       {
 	 k = 1;
-         if( usingSupergrid() )
+         if( usingSupergrid() && !curvilinear )
 	 {
             double omstrx = m_supergrid_taper_x.get_tw_omega();
             double omstry = m_supergrid_taper_y.get_tw_omega();
 	    F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						      &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-						      bforce_side4_ptr, mu_ptr, la_ptr );
+						      bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
 	 }
-         else if( curvilinear )
+         else if( !usingSupergrid() && curvilinear )
 	 {
 	    // Stress tensor on boundary
             Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
@@ -1154,10 +1180,27 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 						     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
 						     tau.c_ptr(), bforce_side4_ptr );
 	 }
-	 else 
+	 else if( !usingSupergrid() && !curvilinear )
 	    F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					    &klast, &nx, &ny, &nz, &h, &k, &t, &om, &cv, &ph,
-					    bforce_side4_ptr, mu_ptr, la_ptr );
+					    bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+	 else if( usingSupergrid() && curvilinear )
+	 {
+            double omstrx = m_supergrid_taper_x.get_tw_omega();
+            double omstry = m_supergrid_taper_y.get_tw_omega();
+
+	    // Stress tensor on boundary
+            Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+	    // Get twilight stress tensor, tau.
+            F77_FUNC(twstensorsg,TWSTENSORSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					   &k, &t, &om, &cv, &ph,
+					   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+					       mu_ptr, la_ptr, &omstrx, &omstry );
+	    // Compute boundary forcing for given stress tensor, tau.
+	    F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+			         &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				 tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+	 }
       }
 
       if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid)
@@ -1178,17 +1221,13 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
             double omstry = m_supergrid_taper_y.get_tw_omega();
 	    F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						      &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-						      bforce_side5_ptr, mu_ptr, la_ptr );
+						      bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
 	 }
 	 else
 	    F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 				       &klast, &nx, &ny, &nz, &h, &k, &t, &om, &cv, &ph,
-				       bforce_side5_ptr, mu_ptr, la_ptr );
+					    bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
       }
-      
-//               call TWFRSURFZ( ifirst, ilast, jfirst, jlast, kfirst, 
-//      +             klast, nx, ny, nz, h, k, t, om, cv, ph, bforce5, mu, 
-//      +             la )
     }
     else if (m_rayleigh_wave_test)
     {
@@ -1215,6 +1254,16 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing )
 
      //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
      // +     omega, alpha, h, zmin )
+    }
+    else if( m_point_source_test )
+    {
+       for( int side=0 ; side < 6 ; side++ )
+	  if( m_bcType[g][side] == bDirichlet )
+	     get_exact_point_source( a_BCForcing[g][side], t, g, *a_sources[0], &wind_ptr[6*side] );
+	  else
+	     for (int q=0; q<3*m_NumberOfBCPoints[g][side]; q++)
+		a_BCForcing[g][side][q] = 0.;
+
     }
     else
     {
@@ -2584,7 +2633,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector
   
   int g;
   
-  for(g=0 ; g<mNumberOfCartesianGrids; g++ )
+  for(g=0 ; g<mNumberOfGrids; g++ )
   {
     up_ptr  = a_Up[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
@@ -2601,13 +2650,27 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector
     //			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
     //			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
     if( m_ghost_points == 2 )
-       F77_FUNC(addsgd2,ADDSGD2) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
+    {
+       if( topographyExists() && g == mNumberOfGrids-1 )
+	  F77_FUNC(addsgd4c,ADDSGD4C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
+					m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
+			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       else
+	  F77_FUNC(addsgd4,ADDSGD4) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
 			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+    }
     else if(  m_ghost_points == 3 )
-       F77_FUNC(addsgd26,ADDSGD26) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
+    {
+       if( topographyExists() && g == mNumberOfGrids-1 )
+	  F77_FUNC(addsgd6c,ADDSGD6C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
+					m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
+			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       else
+	  F77_FUNC(addsgd6,ADDSGD6) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
 			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+    }
   }
 }
 

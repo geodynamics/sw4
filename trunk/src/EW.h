@@ -147,7 +147,7 @@ void setupSBPCoeff( );
 
 // time stepping routines
 void enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForcing );
-void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing );
+void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing, vector<Source*>& a_Source );
 void evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Lu );
 void evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		   vector<Sarray> & a_Lu, vector<Sarray> & a_F );
@@ -239,6 +239,7 @@ void communicate_arrays( vector<Sarray>& u );
 void communicate_array_2dfinest( Sarray& u );
 void communicate_array_2d( Sarray& u, int g, int k );
 void communicate_array_2d_asym( Sarray& u, int g, int k );
+void communicate_array_2d_ext( Sarray& u );
 
 void set_materials();
 void setup_viscoelastic(double minvsoh );
@@ -333,6 +334,8 @@ double localMaxVpOverVs();
 bool topographyExists(){return m_topography_exists;};
 bool usingAttenuation(){return m_use_attenuation;};
 
+bool is_onesided( int g, int side ) const;
+
 void interpolate_between_grids( vector<Sarray>& u, vector<Sarray>& um, double t, 
   			        vector<Sarray*> &AlphaVE );
 
@@ -377,8 +380,10 @@ void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alpha
 
 void integrate_source( );
 
-   void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
-			vector<Sarray>& U, vector<Sarray>& Up, int step );
+void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
+		     vector<Sarray>& U, vector<Sarray>& Up, int step );
+
+void get_gridgen_info( int& order, double& zetaBreak ) const;
 
 //  void update_maxes_hVelMax();
 //  void update_maxes_vVelMax();
@@ -405,7 +410,7 @@ bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
 
  // test point source
-void get_exact_point_source( Sarray& u, double t, int g, Source& source );
+void get_exact_point_source( double* u, double t, int g, Source& source, int* wind=0 );
 double VerySmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
 double C6SmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
 double SmoothWave_x_T_Integral(double t, double R, double alpha, double beta);
@@ -497,11 +502,12 @@ int m_opttest;
 // mTopo holds the raw topography (according to the "elevation" field in the etree)
 // mTopoMat holds the highest elevation where the etree returns solid material properties
 // mTopoGrid holds the smoothed topography which follows the top surface of the curvilinear grid
-Sarray mTopo, mTopoMat, mTopoGrid;
+   Sarray mTopo, mTopoMat, mTopoGrid, mTopoGridExt;
 
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;
 MPI_Comm m_cartesian_communicator;
+
 
 private:
 
@@ -548,6 +554,7 @@ double m_vpMin, m_vsMin;
 
 // order of polynomial mapping in algebraic grid genenerator
 int m_grid_interpolation_order;
+double m_zetaBreak;
 
 // metric of the curvilinear grid
 double m_minJacobian, m_maxJacobian;
@@ -667,6 +674,7 @@ int m_update_boundary_function;
 int mOrder;
 double mCFL;
 
+// info on SBP boundary operators, or not.
 vector<int*> m_onesided; 
 double m_curlcoeff, m_d4coeff, m_d4_cfl; // these should go away
 
@@ -748,6 +756,8 @@ bool m_cgfletcherreeves, m_do_linesearch;
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<double> mMinVsOverH;
+
+int m_ext_ghost_points;
 int m_ghost_points;
 int m_ppadding;
 
@@ -759,6 +769,7 @@ int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;
 MPI_Datatype m_send_type_2dfinest[2];
+MPI_Datatype m_send_type_2dfinest_ext[2];
 vector<MPI_Datatype> m_send_type_2dx;
 vector<MPI_Datatype> m_send_type_2dy;
 vector<MPI_Datatype> m_send_type_2dx3p;

@@ -111,9 +111,15 @@ void EW::generate_grid()
   if (mVerbose >= 1 && proc_zero() && maxIter>0)
     cout << "***smoothing the grid with " << maxIter << " Jacobi iterations and relaxation factor " << rf << " ***"<< endl;
 
+  // Save topography with an extended number of ghost points, for use when
+  // approximating the metric derivatives in the Source discretization.
+  for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+     for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+	mTopoGridExt(i,j,1) =-mZ(i,j,1);
+  communicate_array_2d_ext( mTopoGridExt );
+
   int topLevel = mNumberOfGrids-1;
   int iter;
-  
 // temporary storage: How can I use mJ for temporary storage?
   Sarray tmp;
   tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],m_kStart[topLevel],m_kEnd[topLevel]);
@@ -342,10 +348,11 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 
 // setup parameters for grid mapping
   int Nz = m_kEnd[gCurv] - m_ghost_points;
-  double zetaBreak = 0.95; // zeta  > zetaBreak gives constant grid size = h
-  double sBreak = 1. + zetaBreak*(Nz-1);
 
-  double zeta, c1=0., c2=0., c3=0., c4=0.0, c5=0.0, zMax;
+// zeta  > zetaBreak gives constant grid size = h
+  double sBreak = 1. + m_zetaBreak*(Nz-1);
+
+  double zeta, c1=0., c2=0., c3=0., c4=0.0, c5=0.0, c6=0.0, zMax;
   zMax = zMaxCart - (Nz - sBreak)*h;
 
 // quadratic term to make variation in grid size small at bottom boundary
@@ -371,6 +378,10 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
      c5 = c4;
   else
      c5 = 0;
+  if( m_grid_interpolation_order >=7 )
+     c6 = c5;
+  else
+     c6 = 0;
 	
 
 // the forward mapping is ...
@@ -379,7 +390,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
     zeta = (s-1)/(sBreak-1.);
     Z0 = (1.-zeta)*(-tau) 
        + zeta*(zMax + c1*(1.-zeta) + c2*SQR(1.-zeta) + c3*(1.-zeta)*SQR(1.-zeta) + 
-	       (c4+c5*(1-zeta))*SQR(1-zeta)*SQR(1-zeta) );
+	       (c4+c5*(1-zeta))*SQR(1-zeta)*SQR(1-zeta)+c6*SQR(1-zeta)*SQR(1-zeta)*SQR(1-zeta) );
   }
   else
   {
@@ -520,10 +531,10 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 
 // setup parameters for grid mapping (same as curvilinear_grid_mapping)
   int Nz = m_kEnd[gCurv] - m_ghost_points;
-  double zetaBreak = 0.95; // zeta  > zetaBreak gives constant grid size = h
-  double sBreak = 1. + zetaBreak*(Nz-1);
+   // zeta  > zetaBreak gives constant grid size = h
+  double sBreak = 1. + m_zetaBreak*(Nz-1);
 
-  double zeta, c1=0., c2=0., c3=0., c4=0, c5=0, zMax;
+  double zeta, c1=0., c2=0., c3=0., c4=0, c5=0, c6=0, zMax;
   zMax = zMaxCart - (Nz - sBreak)*h;
 
 // quadratic term to make variation in grid size small at bottom boundary
@@ -549,6 +560,10 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
      c5 = c4;
   else
      c5 = 0;
+  if( m_grid_interpolation_order >=7 )
+     c6 = c5;
+  else
+     c6 = 0;
 	
 
 // the forward mapping is ...
@@ -579,18 +594,18 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
       for (int iter=0; iter<maxIter; iter++)
       {
 	 F0  = (1.-zeta0)*(-tau) + zeta0*(zMax + c1*(1.-zeta0) + c2*SQR(1.-zeta0) + c3*(1.-zeta0)*SQR(1.-zeta0)
-					  +(c4+(1-zeta0)*c5)*SQR(1-zeta0)*SQR(1-zeta0)) - Z0;
+					  +(c4+c5*(1-zeta0)+c6*SQR(1-zeta0) )*SQR(1-zeta0)*SQR(1-zeta0) ) - Z0;
         Fp0 = tau 
              + zMax + c1*(1.-zeta0) + c2*SQR(1.-zeta0) + c3*(1.-zeta0)*SQR(1.-zeta0)
-                         +(c4+(1-zeta0)*c5)*SQR(1-zeta0)*SQR(1-zeta0)
+	   +(c4+(1-zeta0)*c5+c6*SQR(1-zeta0) )*SQR(1-zeta0)*SQR(1-zeta0)
 	   + zeta0*(-c1 - 2.*c2*(1.-zeta0) - 3.*c3*SQR(1.-zeta0)
-                         -4*c4*(1-zeta0)*SQR(1-zeta0) - 5*c5*SQR(1-zeta0)*SQR(1-zeta0));
+		    -4*c4*(1-zeta0)*SQR(1-zeta0) - 5*c5*SQR(1-zeta0)*SQR(1-zeta0) -6*c6*(1-zeta0)*SQR(1-zeta0)*SQR(1-zeta0));
 // tmp
 //        cout << "invert_curvilinear_grid_mapping: iter= " << iter << " zeta= " << zeta0 <<  " F0= " << F0 << " Fp0= " << Fp0 << endl;
         zeta0 -= F0/Fp0;
       }
 // check convergence
-      if (fabs(F0) > 1.e-7)
+      if (fabs(F0) > 1.e-9)
       {
         cout << "invert_curvilinear_grid_mapping: poor convergence for X0, Y0, Z0 = " << X0 << ", " << Y0 << ", " << Z0 << endl;
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -729,4 +744,120 @@ void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0
     }
   } // end for for
   
+}
+
+//-----------------------------------------------------------------------
+bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
+{
+// Interpolate the smoothed or raw topography
+//
+// if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
+// Return true and assign Z0 corresponding to (q,r)
+
+// Returns false if 
+// 1) (q,r) is outside the global parameter domain (expanded by ghost points)
+// 2) There is no curvilinear grid.
+// 3) (q,r) is not on this processor
+
+// NOTE:
+// The parameters are normalized such that 1 <= q <= Nx is the full domain (without ghost points),
+//  1 <= r <= Ny.
+
+  int gCurv = mNumberOfGrids - 1;
+  double h = mGridSize[gCurv];
+// check global parameter space
+  
+  double qMin = (double) (1- m_ghost_points);
+  double qMax = (double) (m_global_nx[gCurv] + m_ghost_points);
+  double rMin = (double) (1- m_ghost_points);
+  double rMax = (double) (m_global_ny[gCurv] + m_ghost_points);
+
+// with mesh refinement, ghost points on coarser levels are further away
+//  int padding = m_ghost_points*((int) pow(2.0, mNumberOfCartesianGrids-1));
+
+  double sMin = (double) m_kStart[gCurv];
+  double sMax = (double) m_kEnd[gCurv];
+
+//  bool inside_extended_domain = (q >= qMin0 && q <= qMax0 && r >= rMin0 && r <= rMax0);
+  bool inside_domain = (q >= qMin && q <= qMax && r >= rMin && r <= rMax);
+  
+  if (! inside_domain)
+  {
+    cout << "interpolate_topography: input parameters out of bounds (q,r) = " << q << ", " << r << endl;
+    return false;
+  }
+  
+  double X0 = (q-1.0)*h;
+  double Y0 = (r-1.0)*h;
+
+  if (!topographyExists())
+    return false;
+
+  double zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
+  
+// ************************
+// compute index interval based on (q,r)
+  int iNear, jNear, kNear, g, i, j, k;
+
+  Z0 = zMaxCart - h; // to make computeNearestGridPoint think we are in the curvilinear grid
+  computeNearestGridPoint(iNear, jNear, kNear, g, X0, Y0, Z0);
+
+  if (g != gCurv)
+    return false;
+
+  double tau; // holds the elevation at (q,r). Recall that elevation=-z
+  if (m_analytical_topo)
+  {
+    tau = m_GaussianAmp*exp(-SQR((X0-m_GaussianXc)/m_GaussianLx) 
+                            -SQR((Y0-m_GaussianYc)/m_GaussianLy)); 
+  }
+  else // general case: interpolate mTopoGrid array
+  {
+// if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only need that grid point on this proc,
+// otherwise we need the 2x2 area [i,i+1] by [j,j+1]
+
+    double xPt = (iNear-1)*h;
+    double yPt = (jNear-1)*h;
+
+// first check if we are very close to a grid point
+    bool smackOnTop = (fabs((xPt-X0)/h) < 1.e-9 && fabs((yPt-Y0)/h) < 1.e-9);
+
+// Note: Need to check point_in_proc, because with mesh refinement, (iNear, jNear) 
+// can be right on top of a grid point outside the arrays on the curvilinear grid
+    if (smackOnTop && point_in_proc(iNear,jNear,gCurv)) 
+    {
+//       if (!point_in_proc(iNear,jNear,gCurv))
+//         return false;
+
+      if (smoothed)
+	tau = mTopoGrid(iNear,jNear,1);
+      else
+	tau = mTopo(iNear,jNear,1);
+    }
+    else
+    {
+      computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
+      
+      if ( !( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
+              point_in_proc(i+1,j+1,gCurv) ) )
+        return false;
+
+// linear interpolation to define topography between grid points
+      double Qi, Qip1, Rj, Rjp1;
+      Qi = (i+1 - q);
+      Qip1 = (q - i);
+      Rj = (j+1 - r);
+      Rjp1 = (r - j);
+      if (smoothed)
+	tau = mTopoGrid(i,j,1)*Rj*Qi + mTopoGrid(i,j+1,1)*Rjp1*Qi + mTopoGrid(i+1,j,1)*Rj*Qip1 + 
+	  mTopoGrid(i+1,j+1,1)*Rjp1*Qip1;
+      else
+	tau = mTopo(i,j,1)*Rj*Qi + mTopo(i,j+1,1)*Rjp1*Qi + mTopo(i+1,j,1)*Rj*Qip1 + 
+	  mTopo(i+1,j+1,1)*Rjp1*Qip1;
+    }
+  }// end general case: interpolating mTopoGrid array  
+
+  Z0 = -tau;
+  
+  return true;
 }

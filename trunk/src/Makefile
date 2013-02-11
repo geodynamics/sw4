@@ -66,7 +66,8 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o rhs4curvilinear.o
+       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       rhs4curvilinear.o rhs4curvilinearsg.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
@@ -75,7 +76,8 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
        rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
        Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o rhs4curvilinear.o
+       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       rhs4curvilinear.o rhs4curvilinearsg.o
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o

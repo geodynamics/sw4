@@ -31,6 +31,9 @@ void F77_FUNC(forcingfortc,FORCINGFORTC)(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
    	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
 void F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
@@ -40,6 +43,9 @@ void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingttfortc,FORCINGTTFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					     double*, double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
 void F77_FUNC(exactaccfort,EXACTACCFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double* );
 void F77_FUNC(exactaccfortc,EXACTACCFORTC)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
@@ -56,6 +62,14 @@ void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, do
 void F77_FUNC(exactrhsfortc,EXACTRHSFORTC)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					    double*, double*, double* );
+void F77_FUNC(exactrhsfortsg,EXACTRHSFORTSG)( int*, int*, int*, int*, int*, int*, double*, double*,
+					      double*, double*, double*, double*, double*,
+					      double*, double*, double*, double*, double*,
+					      double*, double*, double* );
+void F77_FUNC(exactrhsfortsgc,EXACTRHSFORTSGC)( int*, int*, int*, int*, int*, int*, double*, double*,
+						double*, double*, double*, double*, double*,
+						double*, double*, double*, double*, double*,
+						double*, double*, double*, double* );
 void F77_FUNC(solerr3, SOLERR3)(int*, int*, int*, int*, int*, int*, double *h, double *uex, double *u, double *li,
 				double *l2, double *xli, double *zmin, double *x0, double *y0, double *z0, double *radius,
 				int *imin, int *imax, int *jmin, int *jmax, int *kmin, int *kmax);
@@ -81,6 +95,8 @@ void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*,
 void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*, double*, double*, double*, int* );
 void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 					double*, int*, double*, double*, double* );
+void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
+					      double*, int*, double*, double*, double*, double*, double* );
 
 }
 
@@ -184,14 +200,16 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_useVelocityThresholds(false),
   m_vpMin(0.),
   m_vsMin(0.),
-
-  m_grid_interpolation_order(6),
+  m_grid_interpolation_order(0),
+  m_zetaBreak(0.95),
   m_global_xmax(0.),
   m_global_ymax(0.),
   m_global_zmax(0.),
   m_global_zmin(0.),
   m_ghost_points(2), // for 4th order stencils
   m_ppadding(2),
+  m_ext_ghost_points(0), // extra width for 6th order 
+                         // discretization of metric at a source 
   //  m_ghost_points(3), // for 6th order stencils
   //  m_ppadding(3),
 
@@ -552,26 +570,26 @@ bool EW::getDepth( double x, double y, double z, double & depth)
   {
 // topography is not yet implemented
 //
-//     double zMinTilde;
-//     int gCurv = mNumberOfGrids - 1;
-//     double h = mGridSize[gCurv];
-//     double q = x/h + 1.0;
-//     double r = y/h + 1.0;
+     double zMinTilde;
+     int gCurv = mNumberOfGrids - 1;
+     double h = mGridSize[gCurv];
+     double q = x/h + 1.0;
+     double r = y/h + 1.0;
 
-// // define the depth for ghost points to equal the depth on the nearest boundary point
-//     double qMin = 1.0;
-//     double qMax = (double) m_global_nx[gCurv];
-//     double rMin = 1.0;
-//     double rMax = (double) m_global_ny[gCurv];
+// define the depth for ghost points to equal the depth on the nearest boundary point
+     double qMin = 1.0;
+     double qMax = (double) m_global_nx[gCurv];
+     double rMin = 1.0;
+     double rMax = (double) m_global_ny[gCurv];
 
-//     if (q<qMin) q=qMin;
-//     if (q>qMax) q=qMax;
-//     if (r<rMin) r=rMin;
-//     if (r>rMax) r=rMax;
+     if (q<qMin) q=qMin;
+     if (q>qMax) q=qMax;
+     if (r<rMin) r=rMin;
+     if (r>rMax) r=rMax;
 
 // // evaluate elevation of topography on the grid (smoothed topo)
-//     success=true;
-//     if (!interpolate_topography(q, r, zMinTilde, true))
+    success=true;
+    if (!interpolate_topography(q, r, zMinTilde, true))
     {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
       // cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
@@ -580,7 +598,7 @@ bool EW::getDepth( double x, double y, double z, double & depth)
 //      zMinTilde = 0;
       MPI_Abort(MPI_COMM_WORLD,1);
     }
-//    depth = z-zMinTilde;
+    depth = z-zMinTilde;
   }
   return success;
 }
@@ -1305,7 +1323,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
   }
 // communicate local results for global errors
   MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-  MPI_Allreduce( &xInfLocal, &xInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &xInfLocal,    &xInf,    1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
   MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 
   diffL2 = sqrt(diffL2);
@@ -1628,8 +1646,8 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
   }
   else if( m_point_source_test )
   {
-    for(int g=0 ; g < mNumberOfCartesianGrids; g++ ) // curvilinear case needs to be implemented
-        get_exact_point_source( a_U[g], a_t, g, *sources[0] );
+    for(int g=0 ; g < mNumberOfGrids; g++ ) 
+       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
      retval = true;
   }
   else if( m_lamb_test )
@@ -1901,7 +1919,8 @@ double EW::Gaussian_x_T_Integral(double t, double R, double f, double alpha, dou
 }
 
 //-----------------------------------------------------------------------
-void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
+//void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
+void EW::get_exact_point_source( double* up, double t, int g, Source& source, int* wind )
 {
    timeDep tD;
    if(!( source.getName() == "SmoothWave" || source.getName() == "VerySmoothBump" ||
@@ -1920,7 +1939,7 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
    else
       tD = iGaussian;
 
-   u.set_to_zero();
+   //   u.set_to_zero();
    double alpha = m_point_source_test->m_cp;
    double beta  = m_point_source_test->m_cs;
    double rho   = m_point_source_test->m_rho;
@@ -1949,18 +1968,51 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
       //      m0  = source.getAmplitude();
       m0 = 1;
    }
-   double* up = u.c_ptr();
+   bool curvilinear = topographyExists() && g == mNumberOfGrids-1;
+   //   double* up = u.c_ptr();
    double h   = mGridSize[g];
    double eps = 1e-3*h;
    size_t ind = 0;
+   int imax, imin, jmax, jmin, kmax, kmin;
+   if( wind == 0 )
+   {
+      imin = m_iStart[g];
+      imax = m_iEnd[g];
+      jmin = m_jStart[g];
+      jmax = m_jEnd[g];
+      kmin = m_kStart[g];
+      kmax = m_kEnd[g];
+   }
+   else
+   {
+      imin = wind[0];
+      imax = wind[1];
+      jmin = wind[2];
+      jmax = wind[3];
+      kmin = wind[4];
+      kmax = wind[5];
+   }
    // Note: Use of ind, assumes loop is over the domain over which u is defined.
-   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
-      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+   //   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+   //      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+   //	 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+   for( int k=kmin ; k <= kmax ; k++ )
+      for( int j=jmin ; j <= jmax ; j++ )
+	 for( int i=imin ; i <= imax ; i++ )
 	 {
-	    double x = (i-1)*h;
-	    double y = (j-1)*h;
-	    double z = (k-1)*h + m_zmin[g];
+            double x,y,z;
+	    if( curvilinear )
+	    {
+               x = mX(i,j,k);
+	       y = mY(i,j,k);
+	       z = mZ(i,j,k);
+	    }
+	    else
+	    {
+	       x = (i-1)*h;
+	       y = (j-1)*h;
+	       z = (k-1)*h + m_zmin[g];
+	    }
 	    if( !ismomentsource )
 	    {
 	       double R = sqrt( (x - x0)*(x - x0) + (y - y0)*(y - y0) + (z - z0)*(z - z0) );
@@ -2008,6 +2060,7 @@ void EW::get_exact_point_source( Sarray& u, double t, int g, Source& source )
 	    }
 	    else 
 	    {
+	       up[3*ind] = up[3*ind+1] = up[3*ind+2] = 0;
 	       // Here, ismomentsource == true
 	       double R = sqrt( (x - x0)*(x - x0) + (y - y0)*(y - y0) + (z - z0)*(z - z0) );
 	       if( R < eps )
@@ -2863,14 +2916,25 @@ void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
       ampmu = m_twilight_forcing->m_ampmu;
       ampla = m_twilight_forcing->m_amplambda;
     }
-    F77_FUNC(exactrhsfort,EXACTRHSFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-					 &h, &zmin );
+    if( usingSupergrid() )
+    {
+       double omstrx = m_supergrid_taper_x.get_tw_omega();
+       double omstry = m_supergrid_taper_y.get_tw_omega();
+       double omstrz = m_supergrid_taper_z.get_tw_omega();
+       F77_FUNC(exactrhsfortsg,EXACTRHSFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+						&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+						&amprho, &ampmu, &ampla, &h, &zmin,
+						&omstrx, &omstry, &omstrz );
+    }
+    else
+       F77_FUNC(exactrhsfort,EXACTRHSFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					    &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, 
+					    &amprho, &ampmu, &ampla, &h, &zmin );
   }
   if( topographyExists() )
   {
      g = mNumberOfGrids-1;
-     f_ptr    = a_F[g].c_ptr();
+     f_ptr  = a_F[g].c_ptr();
      ifirst = m_iStart[g];
      ilast  = m_iEnd[g];
      jfirst = m_jStart[g];
@@ -2890,9 +2954,22 @@ void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
      }
      //  subroutine exactaccfort( ifirst, ilast, jfirst, jlast, kfirst, 
      // +     klast, utt, t, om, c, ph, h, zmin )
-    F77_FUNC(exactrhsfortc,EXACTRHSFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-					 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+     if( usingSupergrid() )
+     {
+	double omstrx = m_supergrid_taper_x.get_tw_omega();
+	double omstry = m_supergrid_taper_y.get_tw_omega();
+	double omstrz = m_supergrid_taper_z.get_tw_omega();
+	F77_FUNC(exactrhsfortsgc,EXACTRHSFORTSGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+						   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+						   &amprho, &ampmu, &ampla, 
+						   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), 
+						   &omstrx, &omstry, &omstrz );
+     }
+     else
+	F77_FUNC(exactrhsfortc,EXACTRHSFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					       &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+					       &amprho, &ampmu, &ampla,
+					       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
   }
 }
 
@@ -3016,15 +3093,14 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
 	ampla = m_twilight_forcing->m_amplambda;
         if( usingSupergrid() )
 	{
-	   //	   double omstrx = m_supergrid_taper_x.get_tw_omega();
-	   //	   double omstry = m_supergrid_taper_y.get_tw_omega();
-	   //	   double omstrz = m_supergrid_taper_z.get_tw_omega();
-	   //	   F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-	   //					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-	   //						  &h, &zmin, &omstrx, &omstry, &omstrz );
-           if( proc_zero() )
-	      cout << "Error: Twilight forcing not implemented with supergrid and topography";
-	   REQUIRE2(false,"exit");	   
+	   double omstrx = m_supergrid_taper_x.get_tw_omega();
+	   double omstry = m_supergrid_taper_y.get_tw_omega();
+	   double omstrz = m_supergrid_taper_z.get_tw_omega();
+	   F77_FUNC(forcingfortcsg,FORCINGFORTCSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+						    &amprho, &ampmu, &ampla,
+						    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+						    &omstrx, &omstry, &omstrz );
 	}
         else
 	   F77_FUNC(forcingfortc,FORCINGFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -3091,9 +3167,6 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	amprho = m_twilight_forcing->m_amprho;
 	ampmu = m_twilight_forcing->m_ampmu;
 	ampla = m_twilight_forcing->m_amplambda;
-     //  subroutine forcingfort( ifirst, ilast, jfirst, jlast, kfirst, 
-     // +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     // +     h, zmin)
         if( usingSupergrid() )
 	{
 	   double omstrx = m_supergrid_taper_x.get_tw_omega();
@@ -3126,20 +3199,16 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	amprho = m_twilight_forcing->m_amprho;
 	ampmu = m_twilight_forcing->m_ampmu;
 	ampla = m_twilight_forcing->m_amplambda;
-     //  subroutine forcingfort( ifirst, ilast, jfirst, jlast, kfirst, 
-     // +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     // +     h, zmin)
         if( usingSupergrid() )
 	{
-	   //	   double omstrx = m_supergrid_taper_x.get_tw_omega();
-	   //	   double omstry = m_supergrid_taper_y.get_tw_omega();
-	   //	   double omstrz = m_supergrid_taper_z.get_tw_omega();
-	   //	   F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-	   //				      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-	   //                                 &h, &zmin, &omstrx, &omstry, &omstrz );
-           if( proc_zero() )
-	      cout << "Error: Twilight forcing not implemented with supergrid and topography";
-	   REQUIRE2(false,"exit");	   
+	   double omstrx = m_supergrid_taper_x.get_tw_omega();
+	   double omstry = m_supergrid_taper_y.get_tw_omega();
+	   double omstrz = m_supergrid_taper_z.get_tw_omega();
+	   F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+							&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+							&amprho, &ampmu, &ampla,
+							mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+							&omstrx, &omstry, &omstrz );
 	}
 	else
 	   F77_FUNC(forcingttfortc,FORCINGTTFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -3230,12 +3299,16 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Uacc )
      kfirst   = m_kStart[g];
      klast    = m_kEnd[g];
      onesided_ptr = m_onesided[g];
-     if( !usingSupergrid() )
+     if( usingSupergrid() )
+	F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
+					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+                                            m_sg_str_x[g], m_sg_str_y[g] );
+     else
 	F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
 					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof );
-     else
-	VERIFY2(0,"Error, supergrid b.c. not yet implemented with topography");
+
   }
 
 }
@@ -4451,3 +4524,15 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
 #endif
 }
 
+//-----------------------------------------------------------------------
+bool EW::is_onesided( int g, int side ) const
+{
+   return m_onesided[g][side] == 1;
+}
+
+//-----------------------------------------------------------------------
+void EW::get_gridgen_info( int& order, double& zetaBreak ) const
+{
+   order = m_grid_interpolation_order;
+   zetaBreak = m_zetaBreak;
+}

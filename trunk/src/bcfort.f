@@ -599,7 +599,7 @@ c
 c-----------------------------------------------------------------------
       subroutine TWFRSURFZ( ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     ni, nj, nk, h, kz, t, omega, c, phase, bforce,
-     *                      mu, lambda )
+     *                      mu, lambda, zmin )
 c     *        momega,   mphase, ampmu, amplambda, fo )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
@@ -609,7 +609,7 @@ c     *        momega,   mphase, ampmu, amplambda, fo )
       doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
       doubleprecision x
       doubleprecision y
-      doubleprecision z
+      doubleprecision z, zmin
       doubleprecision t
       doubleprecision omega
       doubleprecision c
@@ -649,7 +649,7 @@ c      doubleprecision t6
       doubleprecision t65
 c      doubleprecision t9
 
-      z = (kz-1)*h
+      z = (kz-1)*h + zmin
 c the do loops should span jfirst,jlast and ifirst,ilast
 c      do j=1,nj
       do j=jfirst,jlast
@@ -700,7 +700,7 @@ c        t56 = cos(t9)
 c-----------------------------------------------------------------------
       subroutine TWFRSURFZSGSTR( ifirst, ilast, jfirst, jlast, kfirst, 
      *                  klast, h, kz, t, om, c, ph, omstrx, omstry,
-     *                  bforce, mu, lambda )
+     *                  bforce, mu, lambda, zmin )
 
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
@@ -710,7 +710,7 @@ c-----------------------------------------------------------------------
       doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
       doubleprecision x
       doubleprecision y
-      doubleprecision z
+      doubleprecision z, zmin
       doubleprecision t
       doubleprecision om
       doubleprecision c
@@ -745,7 +745,7 @@ c-----------------------------------------------------------------------
       doubleprecision t6
       doubleprecision t7
 
-      z = (kz-1)*h
+      z = (kz-1)*h + zmin
       do j=jfirst,jlast
          y = (j-1)*h
          do i=ifirst,ilast
@@ -869,6 +869,109 @@ c-----------------------------------------------------------------------
             tau(4,i,j) = 2*t54*t24*om*t12+t35
             tau(5,i,j) = muu*(t21*t42*om*t46+t21*t38*t51)
             tau(6,i,j) = 2*t54*t8*t31*om+t35
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine TWSTENSORSG( ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast, kz, t, om, c, ph, xx, yy, zz,
+     *     tau, mu, lambda, omstrx, omstry )
+
+***********************************************************************
+***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
+***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
+***
+***********************************************************************
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      integer i, j, kz
+      real*8 muu, lambdaa, x, y, z, t, om, c, ph
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)      doubleprecision x
+      doubleprecision omstrx
+      doubleprecision omstry
+
+      doubleprecision t12
+      doubleprecision t13
+      doubleprecision t14
+      doubleprecision t16
+      doubleprecision t17
+      doubleprecision t18
+      doubleprecision t2
+      doubleprecision t24
+      doubleprecision t26
+      doubleprecision t28
+      doubleprecision t29
+      doubleprecision t30
+      doubleprecision t32
+      doubleprecision t33
+      doubleprecision t35
+      doubleprecision t39
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t44
+      doubleprecision t45
+      doubleprecision t46
+      doubleprecision t47
+      doubleprecision t51
+      doubleprecision t53
+      doubleprecision t54
+      doubleprecision t59
+      doubleprecision t6
+      doubleprecision t60
+      doubleprecision t62
+      doubleprecision t8
+      doubleprecision t9
+
+      do j=jfirst,jlast
+         do i=ifirst,ilast
+            x = xx(i,j,kz)
+            y = yy(i,j,kz)
+            z = zz(i,j,kz)
+            muu = mu(i,j,kz)
+            lambdaa = lambda(i,j,kz)
+            t2 = sin(omstrx*x)
+            t4 = 1+t2/2
+            t6 = c*t
+            t8 = om*(x-t6)
+            t9 = cos(t8)
+            t12 = om*y+ph
+            t13 = sin(t12)
+            t14 = om*t13
+            t16 = om*z+ph
+            t17 = sin(t16)
+            t18 = t14*t17
+            t24 = sin(omstry*y)
+            t26 = 1+t24/2
+            t28 = om*x+ph
+            t29 = sin(t28)
+            t30 = t26*t29
+            t32 = om*(y-t6)
+            t33 = cos(t32)
+            t35 = t33*om*t17
+            t39 = om*(z-t6)
+            t40 = cos(t39)
+            t44 = lambdaa*(t4*t9*t18+t30*t35+t29*t13*t40*om)
+            tau(1,i,j) = 2*muu*t4*t9*t18+t44
+            t45 = cos(t28)
+            t46 = t4*t45
+            t47 = sin(t32)
+            t51 = sin(t8)
+            t53 = cos(t12)
+            t54 = t53*om
+            tau(2,i,j) = muu*(t46*om*t47*t17+t26*t51*t54*t17)
+            t59 = cos(t16)
+            t60 = t59*om
+            t62 = sin(t39)
+            tau(3,i,j) = muu*(t51*t13*t60+t46*t14*t62)
+            tau(4,i,j) = 2*muu*t26*t29*t35+t44
+            tau(5,i,j) = muu*(t29*t47*t60+t30*t54*t62)
+            tau(6,i,j) = 2*muu*t29*t13*t40*om+t44
          enddo
       enddo
       end

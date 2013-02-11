@@ -104,6 +104,10 @@ public:
   void getsourcedwgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcewghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcedwghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
+  void getmetwgh( double alph, double wgh[8] ) const;
+  void getmetdwgh( double alph, double wgh[8] ) const;
+  void getmetwgh7( double ai, double wgh[7] ) const;
+  void getmetdwgh7( double ai, double wgh[7] ) const;
 
   double find_min_exponent() const;
   std::string mName;

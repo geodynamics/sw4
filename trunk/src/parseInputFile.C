@@ -1222,6 +1222,9 @@ void EW::processTopography(char* buffer)
     string topoFile="surf.tp", style, fileName;
     bool needFileName=false, gotFileName=false;
 
+    m_zetaBreak=0.95;
+    m_grid_interpolation_order = 4;
+
     token = strtok(NULL, " \t");
 
     while (token != NULL)
@@ -1242,17 +1245,23 @@ void EW::processTopography(char* buffer)
        {
 	  token += 6; // skip logfile=
 	  m_grid_interpolation_order = atoi(token);
-	  if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 6)
+	  if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 7)
 	  {
 	     if (m_myRank == 0)
-		cout << "order needs to be 2,3,4,5,or 6, not: " << m_grid_interpolation_order << endl;
+		cout << "order needs to be 2,3,4,5,6,or 7 not: " << m_grid_interpolation_order << endl;
 	     MPI_Abort(MPI_COMM_WORLD, 1);
 	  }
        
 //        if (m_myRank==0)
 // 	 cout << "Setting interpolation order to=" << m_grid_interpolation_order << endl;
        }
-//                        123456789
+//                          123456789
+       else if( startswith("zetabreak=", token) )
+       {
+	  token += 10;
+	  m_zetaBreak = atof(token);
+	  CHECK_INPUT( m_zetaBreak > 0 && m_zetaBreak <= 1, "Error: zetabreak must be in [0,1], not " << m_zetaBreak);
+       }
        else if (startswith("smooth=", token))
        {
 	  token += 7; // skip smooth=
@@ -1615,6 +1624,8 @@ void EW::processTwilight(char* buffer)
 
      CHECK_INPUT( (bct[4] == bSuperGrid && bct[5] == bSuperGrid) || (bct[4] == bStressFree && bct[5] == bStressFree),
 	   "Error: Twilight testing with supergrid stretching must have the same b.c. (stress free or supergrid) on the z=low and z=high boundaries" );
+     if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
+	CHECK_INPUT( !topographyExists(), "Error: Twilight testing, supergrid stretching can not be used in the z-direction when topography is present");
 	
      if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
 	m_supergrid_taper_z.set_twilight(omstrz);
@@ -3891,6 +3902,11 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // 3 versions of the topography:
       mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
       mTopoGrid.define(ifirst,ilast,jfirst,jlast,1,1); // smoothed version of true topography
+      m_ext_ghost_points = 2;
+         // smoothed version of true topography, with an extended number (4 instead of 2 ) ghost points.
+      mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
+			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+
 // At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
 // the arrays mX, mY, mZ must be allocated by the grid generator
    }
@@ -4823,8 +4839,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
                              tDep, formstring, ncyc, par, npar, ipar, nipar );
 // relative depth?
       sourcePtr->set_z_is_relative_to_topography( topodepth );
-      
-//      addGlobalSorceTerm(sourcePtr);
+
       a_GlobalUniqueSources.push_back(sourcePtr);
     }
   else // point forcing
@@ -4840,7 +4855,6 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 // relative depth?
       sourcePtr->set_z_is_relative_to_topography( topodepth );
       //...and add it to the list of forcing terms
-//      addGlobalSorceTerm(sourcePtr);
       a_GlobalUniqueSources.push_back(sourcePtr);
     }	  
 }

@@ -1480,3 +1480,511 @@ c-----------------------------------------------------------------------
       enddo
       return
       end
+
+c-----------------------------------------------------------------------
+      subroutine EXACTRHSFORTSG( ifirst, ilast, jfirst, jlast, kfirst, 
+     *         klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, ampla,
+     *	       h, zmin, omstrx, omstry, omstrz )
+      
+      implicit none
+      integer i, j, k, ifirst, ilast, jfirst, jlast, kfirst, klast
+      doubleprecision zmin
+      real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast), h
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z
+      doubleprecision t
+      doubleprecision om
+      doubleprecision c
+      doubleprecision ph
+      doubleprecision omm
+      doubleprecision phm
+      doubleprecision amprho
+      doubleprecision ampmu
+      doubleprecision ampla
+      doubleprecision omstrx
+      doubleprecision omstry
+      doubleprecision omstrz
+
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t10
+      doubleprecision t103
+      doubleprecision t104
+      doubleprecision t105
+      doubleprecision t106
+      doubleprecision t107
+      doubleprecision t108
+      doubleprecision t11
+      doubleprecision t110
+      doubleprecision t112
+      doubleprecision t113
+      doubleprecision t114
+      doubleprecision t115
+      doubleprecision t117
+      doubleprecision t12
+      doubleprecision t120
+      doubleprecision t123
+      doubleprecision t124
+      doubleprecision t133
+      doubleprecision t134
+      doubleprecision t135
+      doubleprecision t136
+      doubleprecision t138
+      doubleprecision t139
+      doubleprecision t14
+      doubleprecision t141
+      doubleprecision t143
+      doubleprecision t148
+      doubleprecision t149
+      doubleprecision t15
+      doubleprecision t158
+      doubleprecision t159
+      doubleprecision t16
+      doubleprecision t163
+      doubleprecision t166
+      doubleprecision t168
+      doubleprecision t171
+      doubleprecision t172
+      doubleprecision t178
+      doubleprecision t182
+      doubleprecision t19
+      doubleprecision t2
+      doubleprecision t201
+      doubleprecision t202
+      doubleprecision t207
+      doubleprecision t21
+      doubleprecision t213
+      doubleprecision t216
+      doubleprecision t218
+      doubleprecision t22
+      doubleprecision t23
+      doubleprecision t234
+      doubleprecision t237
+      doubleprecision t249
+      doubleprecision t26
+      doubleprecision t28
+      doubleprecision t29
+      doubleprecision t32
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t4
+      doubleprecision t43
+      doubleprecision t48
+      doubleprecision t49
+      doubleprecision t50
+      doubleprecision t59
+      doubleprecision t6
+      doubleprecision t61
+      doubleprecision t62
+      doubleprecision t63
+      doubleprecision t65
+      doubleprecision t66
+      doubleprecision t68
+      doubleprecision t7
+      doubleprecision t70
+      doubleprecision t71
+      doubleprecision t72
+      doubleprecision t74
+      doubleprecision t75
+      doubleprecision t77
+      doubleprecision t78
+      doubleprecision t8
+      doubleprecision t81
+      doubleprecision t82
+      doubleprecision t86
+      doubleprecision t87
+      doubleprecision t89
+      doubleprecision t90
+      doubleprecision t92
+      doubleprecision t93
+      doubleprecision t94
+      doubleprecision t95
+      doubleprecision t96
+
+      do k=kfirst,klast
+         z = (k-1)*h + zmin
+         do j=jfirst,jlast
+           y = (j-1)*h
+           do i=ifirst,ilast
+             x = (i-1)*h
+
+
+        t1 = omstrx*x
+        t2 = sin(t1)
+        t4 = 1+t2/2
+        t6 = omm*x+phm
+        t7 = sin(t6)
+        t8 = ampmu*t7
+        t10 = omm*y+phm
+        t11 = sin(t10)
+        t12 = omm*t11
+        t14 = omm*z+phm
+        t15 = sin(t14)
+        t16 = t12*t15
+        t19 = cos(t6)
+        t21 = cos(t14)
+        t22 = t12*t21
+        t23 = ampla*t19*t22
+        t26 = c*t
+        t28 = om*(x-t26)
+        t29 = cos(t28)
+        t32 = om*y+ph
+        t33 = sin(t32)
+        t34 = om*t33
+        t36 = om*z+ph
+        t37 = sin(t36)
+        t38 = t34*t37
+        t43 = ampmu*(3+t19*t11*t15)
+        t48 = ampla*(2+t7*t11*t21)
+        t49 = 2*t43+t48
+        t50 = cos(t1)
+        t59 = sin(t28)
+        t61 = om**2
+        t62 = t61*t33
+        t63 = t62*t37
+        t65 = omstry*y
+        t66 = sin(t65)
+        t68 = 1+t66/2
+        t70 = om*x+ph
+        t71 = sin(t70)
+        t72 = t68*t71
+        t74 = om*(y-t26)
+        t75 = cos(t74)
+        t77 = t75*om*t37
+        t78 = t72*t77
+        t81 = cos(t70)
+        t82 = t81*t61
+        t86 = omstrz*z
+        t87 = sin(t86)
+        t89 = 1+t87/2
+        t90 = t89*t71
+        t92 = om*(z-t26)
+        t93 = cos(t92)
+        t94 = t33*t93
+        t95 = t94*om
+        t96 = t90*t95
+        t103 = ampmu*t19
+        t104 = cos(t10)
+        t105 = t103*t104
+        t106 = omm*t15
+        t107 = t4*t81
+        t108 = sin(t74)
+        t110 = om*t108*t37
+        t112 = t68*t59
+        t113 = cos(t32)
+        t114 = t113*om
+        t115 = t114*t37
+        t117 = t107*t110+t112*t115
+        t120 = t61*t75
+        t123 = cos(t65)
+        t124 = t123*omstry
+        t133 = t103*omm
+        t134 = t11*t21
+        t135 = sin(t92)
+        t136 = t34*t135
+        t138 = t89*t59
+        t139 = cos(t36)
+        t141 = t33*t139*om
+        t143 = t107*t136+t138*t141
+        t148 = cos(t86)
+        t149 = t148*omstrz
+        forces(1) = t4*((-2*t8*t16+t23)*t4*t29*t38+t49*t50*omstrx*t29*om
+     #*t33*t37/2-t49*t4*t59*t63+t23*t78+t48*t68*t82*t75*t37+t23*t96+t48*
+     #t89*t82*t94)+t68*(t105*t106*t117+t43*(t107*t120*t37+t124*t59*t115/
+     #2-t112*t63))+t89*(t133*t134*t143+t43*(t107*t62*t93+t149*t59*t141/2
+     #-t138*t63))
+        t158 = t8*omm
+        t159 = t11*t15
+        t163 = t50*omstrx*t81
+        t166 = t4*t71
+        t168 = t61*t108*t37
+        t171 = t61*t113
+        t172 = t171*t37
+        t178 = t104*omm
+        t182 = ampla*t7
+        t201 = t4*t29
+        t202 = t201*t38
+        t207 = t171*t93
+        t213 = t114*t135
+        t216 = t108*t139*om
+        t218 = t72*t213+t90*t216
+        forces(2) = t4*(-t158*t159*t117+t43*(t163*t110/2-t166*t168+t68*t
+     #29*t172))+t68*((2*t103*t178*t15+t182*t178*t21)*t68*t71*t77+t49*t12
+     #3*omstry*t71*t75*om*t37/2-t49*t68*t71*t168+t182*t104*omm*t21*(t202
+     #+t96)+t48*(t201*t172+t90*t207))+t89*(t133*t134*t218+t43*(t72*t207+
+     #t149*t71*t216/2-t90*t168))
+        t234 = t62*t135
+        t237 = t62*t139
+        t249 = t120*t139
+        forces(3) = t4*(-t158*t159*t143+t43*(t163*t136/2-t166*t234+t89*t
+     #29*t237))+t68*(t105*t106*t218+t43*(t124*t71*t213/2-t72*t234+t90*t2
+     #49))+t89*((2*t103*t22-t182*t16)*t89*t71*t95+t49*t148*omstrz*t71*t3
+     #3*t93*om/2-t49*t89*t71*t234-t182*omm*t159*(t202+t78)+t48*(t201*t23
+     #7+t72*t249))
+        fo(1,i,j,k) = forces(1)
+        fo(2,i,j,k) = forces(2)
+        fo(3,i,j,k) = forces(3)
+        enddo
+        enddo
+        enddo
+        return
+      end
+
+c-----------------------------------------------------------------------
+      subroutine EXACTRHSFORTSGC( ifirst, ilast, jfirst, jlast, kfirst, 
+     *         klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, ampla,
+     *	       xx, yy, zz, omstrx, omstry, omstrz )
+      
+      implicit none
+      integer i, j, k, ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z
+      doubleprecision t
+      doubleprecision om
+      doubleprecision c
+      doubleprecision ph
+      doubleprecision omm
+      doubleprecision phm
+      doubleprecision amprho
+      doubleprecision ampmu
+      doubleprecision ampla
+      doubleprecision omstrx
+      doubleprecision omstry
+      doubleprecision omstrz
+
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t10
+      doubleprecision t103
+      doubleprecision t104
+      doubleprecision t105
+      doubleprecision t106
+      doubleprecision t107
+      doubleprecision t108
+      doubleprecision t11
+      doubleprecision t110
+      doubleprecision t112
+      doubleprecision t113
+      doubleprecision t114
+      doubleprecision t115
+      doubleprecision t117
+      doubleprecision t12
+      doubleprecision t120
+      doubleprecision t123
+      doubleprecision t124
+      doubleprecision t133
+      doubleprecision t134
+      doubleprecision t135
+      doubleprecision t136
+      doubleprecision t138
+      doubleprecision t139
+      doubleprecision t14
+      doubleprecision t141
+      doubleprecision t143
+      doubleprecision t148
+      doubleprecision t149
+      doubleprecision t15
+      doubleprecision t158
+      doubleprecision t159
+      doubleprecision t16
+      doubleprecision t163
+      doubleprecision t166
+      doubleprecision t168
+      doubleprecision t171
+      doubleprecision t172
+      doubleprecision t178
+      doubleprecision t182
+      doubleprecision t19
+      doubleprecision t2
+      doubleprecision t201
+      doubleprecision t202
+      doubleprecision t207
+      doubleprecision t21
+      doubleprecision t213
+      doubleprecision t216
+      doubleprecision t218
+      doubleprecision t22
+      doubleprecision t23
+      doubleprecision t234
+      doubleprecision t237
+      doubleprecision t249
+      doubleprecision t26
+      doubleprecision t28
+      doubleprecision t29
+      doubleprecision t32
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t4
+      doubleprecision t43
+      doubleprecision t48
+      doubleprecision t49
+      doubleprecision t50
+      doubleprecision t59
+      doubleprecision t6
+      doubleprecision t61
+      doubleprecision t62
+      doubleprecision t63
+      doubleprecision t65
+      doubleprecision t66
+      doubleprecision t68
+      doubleprecision t7
+      doubleprecision t70
+      doubleprecision t71
+      doubleprecision t72
+      doubleprecision t74
+      doubleprecision t75
+      doubleprecision t77
+      doubleprecision t78
+      doubleprecision t8
+      doubleprecision t81
+      doubleprecision t82
+      doubleprecision t86
+      doubleprecision t87
+      doubleprecision t89
+      doubleprecision t90
+      doubleprecision t92
+      doubleprecision t93
+      doubleprecision t94
+      doubleprecision t95
+      doubleprecision t96
+
+      do k=kfirst,klast
+         do j=jfirst,jlast
+           do i=ifirst,ilast
+             x = xx(i,j,k)
+             y = yy(i,j,k)
+             z = zz(i,j,k)
+
+
+        t1 = omstrx*x
+        t2 = sin(t1)
+        t4 = 1+t2/2
+        t6 = omm*x+phm
+        t7 = sin(t6)
+        t8 = ampmu*t7
+        t10 = omm*y+phm
+        t11 = sin(t10)
+        t12 = omm*t11
+        t14 = omm*z+phm
+        t15 = sin(t14)
+        t16 = t12*t15
+        t19 = cos(t6)
+        t21 = cos(t14)
+        t22 = t12*t21
+        t23 = ampla*t19*t22
+        t26 = c*t
+        t28 = om*(x-t26)
+        t29 = cos(t28)
+        t32 = om*y+ph
+        t33 = sin(t32)
+        t34 = om*t33
+        t36 = om*z+ph
+        t37 = sin(t36)
+        t38 = t34*t37
+        t43 = ampmu*(3+t19*t11*t15)
+        t48 = ampla*(2+t7*t11*t21)
+        t49 = 2*t43+t48
+        t50 = cos(t1)
+        t59 = sin(t28)
+        t61 = om**2
+        t62 = t61*t33
+        t63 = t62*t37
+        t65 = omstry*y
+        t66 = sin(t65)
+        t68 = 1+t66/2
+        t70 = om*x+ph
+        t71 = sin(t70)
+        t72 = t68*t71
+        t74 = om*(y-t26)
+        t75 = cos(t74)
+        t77 = t75*om*t37
+        t78 = t72*t77
+        t81 = cos(t70)
+        t82 = t81*t61
+        t86 = omstrz*z
+        t87 = sin(t86)
+        t89 = 1+t87/2
+        t90 = t89*t71
+        t92 = om*(z-t26)
+        t93 = cos(t92)
+        t94 = t33*t93
+        t95 = t94*om
+        t96 = t90*t95
+        t103 = ampmu*t19
+        t104 = cos(t10)
+        t105 = t103*t104
+        t106 = omm*t15
+        t107 = t4*t81
+        t108 = sin(t74)
+        t110 = om*t108*t37
+        t112 = t68*t59
+        t113 = cos(t32)
+        t114 = t113*om
+        t115 = t114*t37
+        t117 = t107*t110+t112*t115
+        t120 = t61*t75
+        t123 = cos(t65)
+        t124 = t123*omstry
+        t133 = t103*omm
+        t134 = t11*t21
+        t135 = sin(t92)
+        t136 = t34*t135
+        t138 = t89*t59
+        t139 = cos(t36)
+        t141 = t33*t139*om
+        t143 = t107*t136+t138*t141
+        t148 = cos(t86)
+        t149 = t148*omstrz
+        forces(1) = t4*((-2*t8*t16+t23)*t4*t29*t38+t49*t50*omstrx*t29*om
+     #*t33*t37/2-t49*t4*t59*t63+t23*t78+t48*t68*t82*t75*t37+t23*t96+t48*
+     #t89*t82*t94)+t68*(t105*t106*t117+t43*(t107*t120*t37+t124*t59*t115/
+     #2-t112*t63))+t89*(t133*t134*t143+t43*(t107*t62*t93+t149*t59*t141/2
+     #-t138*t63))
+        t158 = t8*omm
+        t159 = t11*t15
+        t163 = t50*omstrx*t81
+        t166 = t4*t71
+        t168 = t61*t108*t37
+        t171 = t61*t113
+        t172 = t171*t37
+        t178 = t104*omm
+        t182 = ampla*t7
+        t201 = t4*t29
+        t202 = t201*t38
+        t207 = t171*t93
+        t213 = t114*t135
+        t216 = t108*t139*om
+        t218 = t72*t213+t90*t216
+        forces(2) = t4*(-t158*t159*t117+t43*(t163*t110/2-t166*t168+t68*t
+     #29*t172))+t68*((2*t103*t178*t15+t182*t178*t21)*t68*t71*t77+t49*t12
+     #3*omstry*t71*t75*om*t37/2-t49*t68*t71*t168+t182*t104*omm*t21*(t202
+     #+t96)+t48*(t201*t172+t90*t207))+t89*(t133*t134*t218+t43*(t72*t207+
+     #t149*t71*t216/2-t90*t168))
+        t234 = t62*t135
+        t237 = t62*t139
+        t249 = t120*t139
+        forces(3) = t4*(-t158*t159*t143+t43*(t163*t136/2-t166*t234+t89*t
+     #29*t237))+t68*(t105*t106*t218+t43*(t124*t71*t213/2-t72*t234+t90*t2
+     #49))+t89*((2*t103*t22-t182*t16)*t89*t71*t95+t49*t148*omstrz*t71*t3
+     #3*t93*om/2-t49*t89*t71*t234-t182*omm*t159*(t202+t78)+t48*(t201*t23
+     #7+t72*t249))
+        fo(1,i,j,k) = forces(1)
+        fo(2,i,j,k) = forces(2)
+        fo(3,i,j,k) = forces(3)
+        enddo
+        enddo
+        enddo
+        return
+      end

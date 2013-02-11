@@ -801,7 +801,7 @@ void EW::set_materials()
   } // end material set by forcing mode (for testing)
   else if ( m_point_source_test )
   {
-     for (g=0; g<mNumberOfCartesianGrids; g++)
+     for (g=0; g<mNumberOfGrids; g++)
      {
 	mRho[g].set_value( m_point_source_test->m_rho );
 	mMu[g].set_value( m_point_source_test->m_mu );
@@ -810,7 +810,7 @@ void EW::set_materials()
   }
   else if ( m_lamb_test )
   {
-     for (g=0; g<mNumberOfCartesianGrids; g++)
+     for (g=0; g<mNumberOfGrids; g++)
      {
 	mRho[g].set_value( m_lamb_test->m_rho );
 	mMu[g].set_value( m_lamb_test->m_mu );
@@ -819,7 +819,7 @@ void EW::set_materials()
   }
   else if ( m_rayleigh_wave_test )
   {
-     for (g=0; g<mNumberOfCartesianGrids; g++)
+     for (g=0; g<mNumberOfGrids; g++)
      {
 	mRho[g].set_value( m_rayleigh_wave_test->m_rho );
 	mMu[g].set_value( m_rayleigh_wave_test->m_mu );
@@ -829,7 +829,7 @@ void EW::set_materials()
   else if ( m_energy_test )
   {
      double cpocs = m_energy_test->m_cpcsratio;
-     for (g=0; g<mNumberOfCartesianGrids; g++)
+     for (g=0; g<mNumberOfGrids; g++)
      {
 	double* rho_ptr    = mRho[g].c_ptr();
 	double* mu_ptr     = mMu[g].c_ptr();
@@ -1360,47 +1360,4 @@ void EW::assign_supergrid_damping_arrays()
 #undef stry
 #undef strz
 }
-
-////-----------------------------------------------------------------------
-//void EW::supergrid_taper_material( )
-//{
-//  double x, y, z;
-//  int g;
-//  if (mVerbose >= 3 && proc_zero())
-//    cout << "*** Inside supergrid_taper_material ***" << endl;
-//  
-//  for( g=0 ; g<mNumberOfCartesianGrids; g++) // do Cartesian grids first
-//  {
-//    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
-//      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-//	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-//	{
-//	  x = (i-1)*mGridSize[g];
-//	  y = (j-1)*mGridSize[g];
-//	  z = m_zmin[g] + (k-1)*mGridSize[g];
-//	  
-//	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
-//	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
-//	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y) * m_supergrid_taper_z.velocityCoeff(z);
-//	} // end for i,j,k
-//  } // end for g
-//
-//  if (topographyExists())
-//  {
-//    g = mNumberOfGrids - 1;
-//    for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
-//      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-//	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-//	{
-//	  x = (i-1)*mGridSize[g];
-//	  y = (j-1)*mGridSize[g];
-//// NOTE: no tapering in z because there is (usually) a free surface boundary on top	  
-//	  mMu[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
-//	  mLambda[g](i,j,k) *= m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
-//	  mRho[g](i,j,k) /=  m_supergrid_taper_x.velocityCoeff(x) * m_supergrid_taper_y.velocityCoeff(y);
-//	  
-//	} // end for i,j,k
-//  } // end if topographyExists()
-//  
-//}
 
