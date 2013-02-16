@@ -31,6 +31,7 @@
 #include "SuperGrid.h"
 #include "MaterialProperty.h"
 #include "GeographicProjection.h"
+#include "DataPatches.h"
 
 using namespace std;
 
@@ -60,6 +61,16 @@ void preprocessSources( vector<Source*> & a_GlobalSources );
 
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
+void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
+		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
+		    vector<DataPatches*>& Ucorr_saved_sides );
+
+void solve_backward_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
+		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
+			     vector<DataPatches*>& Ucorr_saved_sides, double gradients[11], int nmpar,
+			     double* gradientm );
 
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
@@ -146,15 +157,18 @@ void testSourceDiscretization( int kx[3], int ky[3], int kz[3],
 void setupSBPCoeff( );
 
 // time stepping routines
-void enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForcing );
+void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		double t, vector<double **> & a_BCForcing );
 void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing, vector<Source*>& a_Source );
-void evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Lu );
+void evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray> & a_Lu );
+
 void evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-		   vector<Sarray> & a_Lu, vector<Sarray> & a_F );
+		   vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
 void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		    vector<Sarray> & a_Uacc );
-void evalCorrector(vector<Sarray> & a_Up, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
-void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um );
+void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
+void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um, vector<Sarray>& a_Rho );
+
 void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
 			 vector<Sarray*> & a_AlphaVEm, vector<Sarray*> & a_AlphaVE, vector<Sarray*> & a_AlphaVEp);
 void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up ); 
@@ -172,8 +186,9 @@ bool proc_zero() const;
 int no_of_procs() const;
 void create_output_directory();
 void initialize_image_files();
-void update_images( int Nsteps, double time, vector<Sarray> & a_Up, vector<Sarray>& a_U, 
-		    vector<Sarray>& a_Um, vector<Source*> & a_sources, int dminus );
+void update_images( int Nsteps, double time, vector<Sarray> & a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
+		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		    vector<Source*> & a_sources, int dminus );
 
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
@@ -452,6 +467,12 @@ bool compute_sf();
 void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& output_seismograms );
 void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
 		       int& stepselection, bool& do_linesearch, int& varcase );
+void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
+			     vector<Sarray>& mu, vector<Sarray>& lambda );
+void get_material_parameter( int nmpar, double* xm );
+
+void get_nr_of_material_parameters( int& nmvar );
+
 
 //
 // VARIABLES BEYOND THIS POINT
@@ -468,6 +489,7 @@ vector<double> mGridSize;
 
 // part of global array on each processor, including ghost points = all points
 vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd; 
+vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct, m_kEndAct; 
 
 // global number of grid points on each refinement level, without ghost points
 vector<int> m_global_nx, m_global_ny, m_global_nz; 

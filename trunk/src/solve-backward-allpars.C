@@ -1,10 +1,13 @@
 #include "EW.h"
 
-void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11],
-			 double hessian[121] )
+void EW::solve_backward_allpars( vector<Source*> & a_Sources,
+				 vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
+				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
+				 double gradients[11], int nmpar, double* gradientm )
 {
 // solution arrays
-   vector<Sarray> F, Lk, Kacc, Kp, Km, K;
+   vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um;
    vector<double **> BCForcing;
  
    F.resize(mNumberOfGrids);
@@ -13,6 +16,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    Kp.resize(mNumberOfGrids);
    Km.resize(mNumberOfGrids);
    K.resize(mNumberOfGrids);
+   Um.resize(mNumberOfGrids);
    BCForcing.resize(mNumberOfGrids);
 
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
@@ -22,7 +26,8 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       for(int side=0; side < 6; side++)
       {
 	 BCForcing[g][side]=NULL;
-         if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
+         if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet ||
+	     m_bcType[g][side] == bSuperGrid)
          {
     	    BCForcing[g][side] = new double[3*m_NumberOfBCPoints[g][side]];
          }
@@ -40,16 +45,19 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       Kp[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Km[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       K[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
    }
 
 
-// will accumulate the gradient of the misfit in this array
+// will accumulate the gradient of the misfit in these arrays
    for( int s=0 ; s < 11 ; s++ )
-      gradient[s] = 0;
+      gradients[s] = 0;
+   for( int s=0 ; s < nmpar ; s++ )
+      gradientm[s] = 0;
 
 // will accumulate the Hessian of the misfit in this array
-   for( int s=0 ; s < 121 ; s++ )
-      hessian[s] = 0;
+//   for( int s=0 ; s < 121 ; s++ )
+//      hessian[s] = 0;
    
 // the Source objects get discretized into GridPointSource objects
    vector<GridPointSource*> point_sources;
@@ -86,10 +94,10 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    for( int currentTimeStep = mNumberOfTimeSteps ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
       time_measure[0] = MPI_Wtime();
-      evalRHS( K, mMu, mLambda, Lk );
+      evalRHS( K, a_Mu, a_Lambda, Lk );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          F[g].set_to_zero();
-      evalPredictor( Km, K, Kp, mRho, Lk, F );
+      evalPredictor( Km, K, Kp, a_Rho, Lk, F );
 
       time_measure[1] = MPI_Wtime();
 
@@ -97,7 +105,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Km, mMu, mLambda, t-mDt, BCForcing );
+      enforceBC( Km, a_Mu, a_Lambda, t-mDt, BCForcing );
 
       time_measure[2] = MPI_Wtime();
 
@@ -106,32 +114,66 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
-      evalRHS( Kacc, mMu, mLambda, Lk );
-      evalCorrector( Km, mRho, Lk, F );
+      evalRHS( Kacc, a_Mu, a_Lambda, Lk );
+      evalCorrector( Km, a_Rho, Lk, F );
 
       time_measure[3] = MPI_Wtime();
+
     // Add in super-grid damping terms
       if (usingSupergrid())
 	 addSuperGridDamping( Km, K, Kp, mRho );
 
       time_measure[4] = MPI_Wtime();
+
      // Boundary conditions on corrector
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
-      enforceBC( Km, mMu, mLambda, t-mDt, BCForcing );
+      enforceBC( Km, a_Mu, a_Lambda, t-mDt, BCForcing );
+
+
+      // U-backward solution, predictor
+      evalRHS( U, a_Mu, a_Lambda, Lk );
+      Force( t, F, point_sources );
+      evalPredictor( Um, U, Up, a_Rho, Lk, F );
+      for(int g=0 ; g < mNumberOfGrids ; g++ )
+         communicate_array( Um[g], g );
+      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
+      enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+      
+     // U-backward solution, corrector
+      evalDpDmInTime( Up, U, Um, Kacc ); 
+
+      // set boundary data on Kacc, from forward solver
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+	 Upred_saved[g]->pop( Kacc[g], currentTimeStep );
+      enforceBC( Kacc, a_Mu, a_Lambda, t, BCForcing );
+
+      evalRHS( Kacc, a_Mu, a_Lambda, Lk );
+      Force_tt( t, F, point_sources );
+      evalCorrector( Um, a_Rho, Lk, F );
+
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+	 Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
+
+      // set boundary data on U
+      for(int g=0 ; g < mNumberOfGrids ; g++ )
+         communicate_array( Um[g], g );
+      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
+      enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
 
       time_measure[5] = MPI_Wtime();
       // Accumulate the gradient
       for( int s=0 ; s < point_sources.size() ; s++ )
       {
-	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradient, mGridSize );
-	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian, mGridSize );
+	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradients, mGridSize );
+	 //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,  mGridSize );
       }
       
       time_measure[6] = MPI_Wtime();
       t -= mDt;
       cycleSolutionArrays( Kp, K, Km );
+      cycleSolutionArrays( Up, U, Um );
       time_measure[7] = MPI_Wtime();
       time_sum[0] += time_measure[1]-time_measure[0]; // Predictor
       time_sum[1] += time_measure[2]-time_measure[1]; // Predictor, bc
@@ -142,24 +184,53 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       time_sum[6] += time_measure[7]-time_measure[6]; // Cycle arrays
    }
    time_sum[7] = MPI_Wtime() - time_start_solve; // Total solver time
+   cout << "Final t = " << t << endl;
 
+   double upmx[3]={0,0,0}, umx[3]={0,0,0}, tmp[3];
+   for( int k=m_kStartAct[0] ; k <= m_kEndAct[0] ; k++ )
+      for( int j=m_jStartAct[0] ; j <= m_jEndAct[0] ; j++ )
+	 for( int i=m_iStartAct[0] ; i <= m_iEndAct[0] ; i++ )
+	    for( int c=0 ; c < 3 ; c++ )
+	    {
+               if( fabs(Up[0](c+1,i,j,k))>upmx[c] )
+		  upmx[c] = fabs(Up[0](c+1,i,j,k));
+               if( fabs(U[0](c+1,i,j,k))>umx[c] )
+		  umx[c] = fabs(U[0](c+1,i,j,k));
+	    }
+
+   tmp[0] = upmx[0];
+   tmp[1] = upmx[1];
+   tmp[2] = upmx[2];
+   MPI_Allreduce( tmp, upmx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+   tmp[0] = umx[0];
+   tmp[1] = umx[1];
+   tmp[2] = umx[2];
+   MPI_Allreduce( tmp, umx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+   if( m_myRank == 0 )
+   {
+      cout << "Max norm of backed out U  = " << upmx[0] <<  " " << upmx[1] <<  " " << upmx[2] << endl;
+      cout << "Max norm of backed out Um = " << umx[0] <<   " " << umx[1] <<  " " << umx[2] << endl;
+   }
+
+   //   Up[0].save_to_disk("ubackedout.bin");
+   //   U[0].save_to_disk("umbackedout.bin");
    // 
    // Sum gradient contributions from all processors
    double gradtmp[11];
    for( int s=0 ; s < 11 ; s++ )
-      gradtmp[s] = gradient[s];
-   MPI_Allreduce( gradtmp, gradient, 11, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+      gradtmp[s] = gradients[s];
+   MPI_Allreduce( gradtmp, gradients, 11, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 
-   // Sum Hessian contributions from all processors
-   double hesstmp[121];
-   for( int s=0 ; s < 121 ; s++ )
-      hesstmp[s] = hessian[s];
-   MPI_Allreduce( hesstmp, hessian, 121, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+   //   // Sum Hessian contributions from all processors
+   //   double hesstmp[121];
+   //   for( int s=0 ; s < 121 ; s++ )
+   //      hesstmp[s] = hessian[s];
+   //   MPI_Allreduce( hesstmp, hessian, 121, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 
-   // Symmetry gives the lower half of matrix:
-   for( int m= 0 ; m < 11 ; m++ )
-      for( int j=0 ; j<m ; j++ )
-	 hessian[m+11*j] = hessian[j+11*m];
+   //   // Symmetry gives the lower half of matrix:
+   //   for( int m= 0 ; m < 11 ; m++ )
+   //      for( int j=0 ; j<m ; j++ )
+   //	 hessian[m+11*j] = hessian[j+11*m];
 
    // Give back memory
    for( int g = 0; g <mNumberOfGrids; g++ )
@@ -171,14 +242,3 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    }
 }
 
-//------------------------------------------------------------------------
-void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up ) 
-{
-  for (int g=0; g<mNumberOfGrids; g++)
-  {
-    double *tmp = a_Um[g].c_ptr();
-    a_Um[g].reference(a_U[g].c_ptr());
-    a_U[g].reference(a_Up[g].c_ptr());
-    a_Up[g].reference(tmp);
-  }
-}

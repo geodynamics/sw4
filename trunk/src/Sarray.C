@@ -1,15 +1,9 @@
 #include "Sarray.h"
 
+#include <iostream>
 #include <cstdlib>
-
-//#include <iostream>
-//-----------------------------------------------------------------------
-// Sarray::Sarray( CartesianProcessGrid* cartcomm, int nc )
-// {
-//    m_data = NULL;
-//    m_mpi_datatype_initialized = false;
-//    define(cartcomm,nc);
-// }
+#include <fcntl.h>
+#include <unistd.h>
 
 //-----------------------------------------------------------------------
 Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
@@ -372,6 +366,57 @@ double Sarray::minimum( int c )
    return mn;
 }
 
+//-----------------------------------------------------------------------
+void Sarray::copy( const Sarray& u )
+{
+   if( m_data != NULL )
+      delete[] m_data;
+
+   m_nc = u.m_nc;
+   m_ib = u.m_ib;
+   m_ie = u.m_ie;
+   m_jb = u.m_jb;
+   m_je = u.m_je;
+   m_kb = u.m_kb;
+   m_ke = u.m_ke;
+   m_ni = m_ie-m_ib+1;
+   m_nj = m_je-m_jb+1;
+   m_nk = m_ke-m_kb+1;
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+   {
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
+	 m_data[i] = u.m_data[i];
+   }
+   else
+      m_data = NULL;
+
+}
+
+//-----------------------------------------------------------------------
+void Sarray::save_to_disk( const char* fname )
+{
+   int fd = open(fname, O_CREAT | O_TRUNC | O_WRONLY, 0660 );
+   if( fd == -1 )
+      std::cout << "ERROR opening file" << fname << " for writing " << std::endl;
+   size_t nr = write(fd,&m_nc,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error saving nc to " << fname << std::endl;
+   nr = write(fd,&m_ni,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error saving ni to " << fname << std::endl;
+   nr = write(fd,&m_nj,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error saving nj to " << fname << std::endl;
+   nr = write(fd,&m_nk,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error saving nk to " << fname << std::endl;
+   size_t npts = m_nc*( (size_t)m_ni)*m_nj*( (size_t)m_nk);
+   nr = write(fd,m_data,sizeof(double)*npts);
+   if( nr != sizeof(double)*npts )
+      std::cout << "Error saving data array to " << fname << std::endl;
+   close(fd);
+}
 //-----------------------------------------------------------------------
 // void Sarray::write( char* filename, CartesianProcessGrid* cartcomm,
 // 		    std::vector<double> pars )

@@ -14,10 +14,10 @@ c-----------------------------------------------------------------------
 
 	implicit none
 	real*8 dt, h
-	real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+	real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-	real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
+	real*8  rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 dcx(ifirst:ilast), strx(ifirst:ilast)
 	real*8 dcy(jfirst:jlast), stry(jfirst:jlast)
 	real*8 dcz(kfirst:klast), strz(kfirst:klast)
@@ -78,6 +78,11 @@ c$$$     *              (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) ) )
 c$$$	      enddo
 c$$$	   enddo
 c$$$	enddo
+c        write(*,*) 'dims ',ifirst,ilast,jfirst,jlast,kfirst,klast
+c        do j=jfirst,jlast
+c	   write(*,*) j,dcy(j)
+c	enddo
+
 c Interior
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2

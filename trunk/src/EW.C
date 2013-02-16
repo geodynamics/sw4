@@ -53,9 +53,9 @@ void F77_FUNC(exactaccfortc,EXACTACCFORTC)(int*, int*, int*, int*, int*, int*, d
 void F77_FUNC(rhserrfort, RHSERRFORT)(int*, int*, int*, int*, int*, int*, int*, double*,
 				      double*, double*, double*, double*, double*);
 void F77_FUNC(rhs4th3fort,RHS4TH3FORT)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
-				       double*, double*, double*, double*, double*, double* );
+				       double*, double*, double*, double*, double* );
 void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
-						 double*, double*, double*, double*, double*, double*,double*,double*,double* );
+						 double*, double*, double*, double*, double*, double*,double*,double* );
 void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
@@ -90,13 +90,16 @@ void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int
 					  double*rho, double*cr, double*omega, double *alpha, double *h, double *zmin);
 void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			      double*, double*, double*, double*, double*, double* );
-void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, 
+void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
                                    double*, double*, double*, double*, double*, double* );
-void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*, double*, double*, double*, int* );
+void F77_FUNC(energy4c,ENERGY4C)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
+                                   double*, double*, double*, double*, double*, double* );
+void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
+				    double*, double*, double*, int* );
 void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 					double*, int*, double*, double*, double* );
-void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
-					      double*, int*, double*, double*, double*, double*, double* );
+void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
+					      double*, double*, int*, double*, double*, double*, double*, double* );
 
 }
 
@@ -1581,6 +1584,7 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   }
   else if( m_energy_test )
   {
+     //    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     {
        u_ptr    = a_U[g].c_ptr();
@@ -3247,10 +3251,11 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 
 //---------------------------------------------------------------------------
 // perhaps a better name would be evalLu ??
-void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Uacc )
+void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		 vector<Sarray> & a_Uacc )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
-  double *uacc_ptr, *u_ptr, *mu_ptr, *la_ptr, *rho_ptr, h;
+  double *uacc_ptr, *u_ptr, *mu_ptr, *la_ptr, h;
   
   int *onesided_ptr;
   
@@ -3260,9 +3265,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Uacc )
   {
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
-    mu_ptr  = mMu[g].c_ptr();
-    la_ptr  = mLambda[g].c_ptr();
-    rho_ptr = mRho[g].c_ptr();
+    mu_ptr  = a_Mu[g].c_ptr();
+    la_ptr  = a_Lambda[g].c_ptr();
+    //    rho_ptr = mRho[g].c_ptr();
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
     jfirst = m_jStart[g];
@@ -3276,20 +3281,20 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Uacc )
     if( usingSupergrid() )
        F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
   			          &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
-				   uacc_ptr, u_ptr, mu_ptr, la_ptr, rho_ptr, &h,
+				   uacc_ptr, u_ptr, mu_ptr, la_ptr, &h,
 				   m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g] );
     else
        F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
 				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
-				      uacc_ptr, u_ptr, mu_ptr, la_ptr, rho_ptr, &h );
+				      uacc_ptr, u_ptr, mu_ptr, la_ptr, &h );
   }
   if( topographyExists() )
   {
      g = mNumberOfGrids-1;
      uacc_ptr = a_Uacc[g].c_ptr();
      u_ptr    = a_U[g].c_ptr();
-     mu_ptr   = mMu[g].c_ptr();
-     la_ptr   = mLambda[g].c_ptr();
+     mu_ptr   = a_Mu[g].c_ptr();
+     la_ptr   = a_Lambda[g].c_ptr();
      double* met_ptr = mMetric.c_ptr();
      double* jac_ptr = mJ.c_ptr();
      ifirst   = m_iStart[g];
@@ -3310,12 +3315,11 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray> & a_Uacc )
 					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof );
 
   }
-
 }
 
 //---------------------------------------------------------------------------
 void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-		       vector<Sarray> & a_Lu, vector<Sarray> & a_F )
+		       vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *up_ptr, *u_ptr, *um_ptr, *lu_ptr, *fo_ptr, *rho_ptr, dt2;
@@ -3331,7 +3335,7 @@ void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarra
     um_ptr  = a_Um[g].c_ptr();
     lu_ptr  = a_Lu[g].c_ptr();
     fo_ptr  = a_F[g].c_ptr();
-    rho_ptr = mRho[g].c_ptr();
+    rho_ptr = a_Rho[g].c_ptr();
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
     jfirst = m_jStart[g];
@@ -3350,7 +3354,8 @@ void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarra
 }
 
 //---------------------------------------------------------------------------
-void EW::evalCorrector(vector<Sarray> & a_Up, vector<Sarray> & a_Lu, vector<Sarray> & a_F )
+void EW::evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
+		       vector<Sarray> & a_Lu, vector<Sarray> & a_F )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *up_ptr, *lu_ptr, *fo_ptr, *rho_ptr, dt4;
@@ -3362,7 +3367,7 @@ void EW::evalCorrector(vector<Sarray> & a_Up, vector<Sarray> & a_Lu, vector<Sarr
     up_ptr  = a_Up[g].c_ptr();
     lu_ptr  = a_Lu[g].c_ptr();
     fo_ptr  = a_F[g].c_ptr();
-    rho_ptr = mRho[g].c_ptr();
+    rho_ptr = a_Rho[g].c_ptr();
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
     jfirst = m_jStart[g];
@@ -3446,6 +3451,7 @@ void EW::side_plane( int g, int side, int wind[6], int nGhost )
 //-----------------------------------------------------------------------
 void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 			vector<Sarray>& a_U, vector<Sarray>& a_Um,
+			vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			vector<Source*> & a_sources, int dminus )
 {
    double maxerr;
@@ -3494,15 +3500,15 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 	 //         else if(img->mMode == Image::FZ )
 	 //            img->computeImageQuantity(mF, 3);
 	 else if(img->mMode == Image::RHO )
-	    img->computeImageQuantity(mRho, 1);
+	    img->computeImageQuantity(a_Rho, 1);
 	 else if(img->mMode == Image::MU )
-	    img->computeImageQuantity(mMu, 1);
+	    img->computeImageQuantity(a_Mu, 1);
 	 else if(img->mMode == Image::LAMBDA )
-	    img->computeImageQuantity(mLambda, 1);
+	    img->computeImageQuantity(a_Lambda, 1);
 	 else if(img->mMode == Image::P )
-	    img->computeImagePvel(mMu, mLambda, mRho);
+	    img->computeImagePvel(a_Mu, a_Lambda, a_Rho);
 	 else if(img->mMode == Image::S )
-	    img->computeImageSvel(mMu, mRho);
+	    img->computeImageSvel(a_Mu, a_Rho);
 	 else if(img->mMode == Image::DIV || img->mMode == Image::DIVDT 
 		 || img->mMode == Image::CURLMAG || img->mMode == Image::CURLMAGDT )
 	    img->computeImageDivCurl( a_Up, a_U, a_Um, mDt, dminus );
@@ -3981,8 +3987,14 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
       double* um_ptr = Um[g].c_ptr();
       double* rho_ptr = mRho[g].c_ptr();
       double locenergy;
-      F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-			        &istart, &iend, &jstart, &jend, &kstart, &kend, 
+      int* onesided_ptr = m_onesided[g];
+      if( topographyExists() && g == mNumberOfGrids-1 )
+	 F77_FUNC(energy4c,ENERGY4C)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
+			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
+      else
+	 F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
 			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
       energy += locenergy;
    }
@@ -4535,4 +4547,95 @@ void EW::get_gridgen_info( int& order, double& zetaBreak ) const
 {
    order = m_grid_interpolation_order;
    zetaBreak = m_zetaBreak;
+}
+
+//-----------------------------------------------------------------------
+void EW::get_nr_of_material_parameters( int& nmvar )
+{
+   nmvar = 0;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int sgpts = m_sg_gp_thickness+1;
+      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
+      int kmax=m_global_nz[g]-sgpts;
+      int kb = m_kStart[g];
+      int ke = kmax-1 < m_kEnd[g] ? kmax-1:m_kEnd[g];
+      int jb = jmin+1 > m_jStart[g] ? jmin+1 : m_jStart[g];
+      int je = jmax-1 < m_jEnd[g] ? jmax-1 : m_jEnd[g];
+      int ib = imin+1 > m_iStart[g] ? imin+1 : m_iStart[g];
+      int ie = imax-1 < m_iEnd[g] ? imax-1 : m_iEnd[g];
+      //      cout << imin << " " << imax << " " << jmin << " " << jmax << " " << kmax << endl;
+      //      cout << ib << " " << ie << " " << jb << " " << je << " " << kb << " " << ke << endl;
+      nmvar += (ie-ib+1)*(je-jb+1)*(ke-kb+1)*3;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
+				 vector<Sarray>& mu, vector<Sarray>& lambda )
+{
+   int gp, ind;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      rho[g].copy( mRho[g] );
+      mu[g].copy( mMu[g] );
+      lambda[g].copy( mLambda[g] );
+      int sgpts = m_sg_gp_thickness+1;
+      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
+      int kmax=m_global_nz[g]-sgpts;
+      if( g == 0 )
+	 gp = 0;
+      else
+	 gp = gp + 3*ind;
+
+      int kb = m_kStart[g];
+      int ke = kmax-1 < m_kEnd[g] ? kmax-1:m_kEnd[g];
+      int jb = jmin+1 > m_jStart[g] ? jmin+1 : m_jStart[g];
+      int je = jmax-1 < m_jEnd[g] ? jmax-1 : m_jEnd[g];
+      int ib = imin+1 > m_iStart[g] ? imin+1 : m_iStart[g];
+      int ie = imax-1 < m_iEnd[g] ? imax-1 : m_iEnd[g];
+      ind =0;
+      for( int k=kb; k <= ke; k++ )
+	 for( int j=jb; j <= je; j++ )
+	    for( int i=ib; i <= ie; i++ )
+	    {
+	       rho[g](i,j,k)    = xm[gp+ind*3];
+	       mu[g](i,j,k)     = xm[gp+ind*3+1];
+	       lambda[g](i,j,k) = xm[gp+ind*3+2];
+	       ind++;
+	    }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::get_material_parameter( int nmpar, double* xm )
+{
+   int gp, ind;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int sgpts = m_sg_gp_thickness+1;
+      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
+      int kmax=m_global_nz[g]-sgpts;
+      if( g == 0 )
+	 gp = 0;
+      else
+	 gp = gp + 3*ind;
+
+      int kb = m_kStart[g];
+      int ke = kmax-1 < m_kEnd[g] ? kmax-1:m_kEnd[g];
+      int jb = jmin+1 > m_jStart[g] ? jmin+1 : m_jStart[g];
+      int je = jmax-1 < m_jEnd[g] ? jmax-1 : m_jEnd[g];
+      int ib = imin+1 > m_iStart[g] ? imin+1 : m_iStart[g];
+      int ie = imax-1 < m_iEnd[g] ? imax-1 : m_iEnd[g];
+      ind =0;
+      for( int k=kb; k <= ke; k++ )
+	 for( int j=jb; j <= je; j++ )
+	    for( int i=ib; i <= ie; i++ )
+	    {
+	       xm[gp+ind*3]   = mRho[g](i,j,k);
+	       xm[gp+ind*3+1] = mMu[g](i,j,k);
+	       xm[gp+ind*3+2] = mLambda[g](i,j,k);
+	       ind++;
+	    }
+   }
 }

@@ -69,8 +69,10 @@ public:
    void set_to_minusOne();
    void set_value( double scalar );
    void set_to_random( double llim =0.0, double ulim = 1.0 );
+   void save_to_disk( const char* fname );
    int ncomp() const {return m_nc;}
    int npts() const  {return m_ni*m_nj*m_nk;}
+   void copy( const Sarray& u );
    double maximum( int c=1 );
    double minimum( int c=1 );
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );

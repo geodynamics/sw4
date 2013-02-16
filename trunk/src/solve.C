@@ -320,7 +320,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //   }
   
 // save any images for cycle = 0 (initial data) ?
-  update_images( 0, t, U, Um, Up, a_Sources, 1 );
+  update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
 
 // do some testing...
   if (m_twilight_forcing)
@@ -344,7 +344,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      if ( proc_zero() )
 	printf("\n Testing the accuracy of the spatial difference approximation\n");
      exactRhsTwilight(t, F);
-     evalRHS( U, Up ); // save Lu in composite grid 'Up'
+     evalRHS( U, mMu, mLambda, Up ); // save Lu in composite grid 'Up'
 
 // evaluate and print errors
      double * lowZ = new double[3*mNumberOfGrids];
@@ -377,7 +377,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      }
   
 // c test accuracy of forcing
-     evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
+     evalRHS( U, mMu, mLambda, Lu ); // save Lu in composite grid 'Lu'
      Force( t, F, point_sources );
      exactAccTwilight( t, Uacc ); // save Utt in Uacc
      test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
@@ -417,7 +417,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // boundary forcing
   cartesian_bc_forcing( t, BCForcing, a_Sources );
 // enforce boundary condition
-  enforceBC( U, t, BCForcing );   
+  enforceBC( U, mMu, mLambda, t, BCForcing );   
 
 // Um
 // communicate across processor boundaries
@@ -426,7 +426,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // boundary forcing
   cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
 // enforce boundary condition
-  enforceBC( Um, t-mDt, BCForcing );
+  enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
 
   if (m_twilight_forcing)
   {
@@ -500,10 +500,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     Force( t, F, point_sources );
       
 // evaluate right hand side
-    evalRHS( U, Lu ); // save Lu in composite grid 'Lu'
+    evalRHS( U, mMu, mLambda, Lu ); // save Lu in composite grid 'Lu'
 
 // take predictor step, store in Up
-    evalPredictor(Up, U, Um, Lu, F );    
+    evalPredictor(Up, U, Um, mRho, Lu, F );    
 
     time_measure[1] = MPI_Wtime();
     time_measure[2] = MPI_Wtime();
@@ -514,7 +514,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // calculate boundary forcing at time t+mDt
     cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 // update ghost points in Up
-    enforceBC( Up, t+mDt, BCForcing );
+    enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
 // interpolate across mesh refinement boundaries (?)
  //    check_consintp( Up[0], Up[1], AlphaVEp[0], AlphaVEp[1] );
@@ -527,14 +527,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
       
-       evalRHS( Uacc, Lu );
+       evalRHS( Uacc, mMu, mLambda, Lu );
 
-       evalCorrector( Up, Lu, F );
+       evalCorrector( Up, mRho, Lu, F );
       
 // add in super-grid damping terms
        if (usingSupergrid())
        {
-	 addSuperGridDamping( Up, U, Um );
+	  addSuperGridDamping( Up, U, Um, mRho );
        }
 
        time_measure[4] = MPI_Wtime();
@@ -546,7 +546,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 // update ghost points in Up
-       enforceBC( Up, t+mDt, BCForcing );
+       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
     }
     
 // increment time
@@ -562,7 +562,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
-    update_images( currentTimeStep, t, Up, U, Um, a_Sources, currentTimeStep == mNumberOfTimeSteps );
+    update_images( currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps );
     
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
@@ -701,7 +701,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //------------------------------------------------------------------------
 void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
 			     vector<Sarray*> & a_AlphaVEm, vector<Sarray*> & a_AlphaVE, vector<Sarray*> & a_AlphaVEp)
-{
+ {
   for (int g=0; g<mNumberOfGrids; g++)
   {
     double *tmp = a_Um[g].c_ptr();
@@ -719,7 +719,8 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 }
 
 //---------------------------------------------------------------------------
-void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForcing )
+void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		    double t, vector<double **> & a_BCForcing )
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   double *u_ptr, *mu_ptr, *la_ptr, h;
@@ -731,8 +732,8 @@ void EW::enforceBC( vector<Sarray> & a_U, double t, vector<double **> & a_BCForc
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
     u_ptr    = a_U[g].c_ptr();
-    mu_ptr    = mMu[g].c_ptr();
-    la_ptr    = mLambda[g].c_ptr();
+    mu_ptr    = a_Mu[g].c_ptr();
+    la_ptr    = a_Lambda[g].c_ptr();
 
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
@@ -2626,7 +2627,8 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 //    }
 
 //---------------------------------------------------------------------------
-void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um )
+void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
+			     vector<Sarray> & a_Um, vector<Sarray> & a_Rho )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *up_ptr, *u_ptr, *um_ptr, dt2i;
@@ -2638,7 +2640,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector
     up_ptr  = a_Up[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
     um_ptr  = a_Um[g].c_ptr();
-    double* rho_ptr = mRho[g].c_ptr();
+    double* rho_ptr = a_Rho[g].c_ptr();
 
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
@@ -2659,6 +2661,8 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector
 	  F77_FUNC(addsgd4,ADDSGD4) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
 			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       //       for( int i=jfirst; i <= jlast ; i++ )
+       //	  cout << "sgd " << i << " = " << m_sg_dc_y[g][i-jfirst] << endl;
     }
     else if(  m_ghost_points == 3 )
     {

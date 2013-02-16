@@ -1,7 +1,7 @@
 c-----------------------------------------------------------------------
       subroutine rhs4th3fort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, rho, h )
+     +     uacc, u, mu, la, h )
 
 *** in the interior: centered approximation of the spatial operator in the elastic wave equation
 *** near physical boundaries: one-sided approximation of the spatial operator in the elastic wave equation
@@ -18,7 +18,7 @@ c-----------------------------------------------------------------------
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
+c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4
       real*8 muz1, muz2, muz3, muz4
       real*8 mucof(8), mu1zz, mu2zz, lau2yz
@@ -755,7 +755,7 @@ c No centered cross terms in r3
 c-----------------------------------------------------------------------
       subroutine rhs4th3fortsgstr( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, rho, h, strx, stry, strz )
+     +     uacc, u, mu, la, h, strx, stry, strz )
 
 *** Routine with supergrid stretchings, strx, stry, and strz.
 ***
@@ -774,7 +774,7 @@ c-----------------------------------------------------------------------
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
+c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4
       real*8 muz1, muz2, muz3, muz4
       real*8 mucof(8), mu1zz, mu2zz, lau2yz
