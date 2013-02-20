@@ -94,6 +94,7 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
 //   for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
 //      GlobalTimeSeries[ts]->writeFile();
 
+// Create and initialize 'diffs'
    char str[10];
    for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
    {
@@ -105,6 +106,7 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       diffs.push_back(elem);
    }
 
+// Assign misfit time series to 'diffs'
    double mf = 0;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
       mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );

@@ -7,16 +7,22 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 double gradients[11], int nmpar, double* gradientm )
 {
 // solution arrays
-   vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um;
+   vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
+   vector<Sarray> gRho, gMu, gLambda;
    vector<double **> BCForcing;
  
    F.resize(mNumberOfGrids);
    Lk.resize(mNumberOfGrids);
    Kacc.resize(mNumberOfGrids);
+   Uacc.resize(mNumberOfGrids);
    Kp.resize(mNumberOfGrids);
    Km.resize(mNumberOfGrids);
    K.resize(mNumberOfGrids);
    Um.resize(mNumberOfGrids);
+   gRho.resize(mNumberOfGrids);
+   gMu.resize(mNumberOfGrids);
+   gLambda.resize(mNumberOfGrids);
+
    BCForcing.resize(mNumberOfGrids);
 
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
@@ -46,6 +52,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       Km[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       K[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+
+      gRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+      gMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+      gLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+      gRho[g].set_to_zero();
+      gMu[g].set_to_zero();
+      gLambda[g].set_to_zero();
    }
 
 
@@ -131,7 +145,6 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //      cartesian_bc_forcing( t-mDt, BCForcing );
       enforceBC( Km, a_Mu, a_Lambda, t-mDt, BCForcing );
 
-
       // U-backward solution, predictor
       evalRHS( U, a_Mu, a_Lambda, Lk );
       Force( t, F, point_sources );
@@ -142,14 +155,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
       
      // U-backward solution, corrector
-      evalDpDmInTime( Up, U, Um, Kacc ); 
+      evalDpDmInTime( Up, U, Um, Uacc ); 
 
-      // set boundary data on Kacc, from forward solver
+      // set boundary data on Uacc, from forward solver
       for( int g=0 ; g < mNumberOfGrids ; g++ )
-	 Upred_saved[g]->pop( Kacc[g], currentTimeStep );
-      enforceBC( Kacc, a_Mu, a_Lambda, t, BCForcing );
+	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
+      enforceBC( Uacc, a_Mu, a_Lambda, t, BCForcing );
 
-      evalRHS( Kacc, a_Mu, a_Lambda, Lk );
+      evalRHS( Uacc, a_Mu, a_Lambda, Lk );
       Force_tt( t, F, point_sources );
       evalCorrector( Um, a_Rho, Lk, F );
 
@@ -163,13 +176,15 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
 
       time_measure[5] = MPI_Wtime();
+
       // Accumulate the gradient
       for( int s=0 ; s < point_sources.size() ; s++ )
       {
 	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradients, mGridSize );
 	 //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,  mGridSize );
       }
-      
+      add_to_gradrho( K, Kacc, Up, U, Um, Uacc, gRho );      
+
       time_measure[6] = MPI_Wtime();
       t -= mDt;
       cycleSolutionArrays( Kp, K, Km );
@@ -184,34 +199,37 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_sum[6] += time_measure[7]-time_measure[6]; // Cycle arrays
    }
    time_sum[7] = MPI_Wtime() - time_start_solve; // Total solver time
-   cout << "Final t = " << t << endl;
+   //   cout << "Final t = " << t << endl;
 
-   double upmx[3]={0,0,0}, umx[3]={0,0,0}, tmp[3];
-   for( int k=m_kStartAct[0] ; k <= m_kEndAct[0] ; k++ )
-      for( int j=m_jStartAct[0] ; j <= m_jEndAct[0] ; j++ )
-	 for( int i=m_iStartAct[0] ; i <= m_iEndAct[0] ; i++ )
-	    for( int c=0 ; c < 3 ; c++ )
-	    {
-               if( fabs(Up[0](c+1,i,j,k))>upmx[c] )
-		  upmx[c] = fabs(Up[0](c+1,i,j,k));
-               if( fabs(U[0](c+1,i,j,k))>umx[c] )
-		  umx[c] = fabs(U[0](c+1,i,j,k));
-	    }
-
-   tmp[0] = upmx[0];
-   tmp[1] = upmx[1];
-   tmp[2] = upmx[2];
-   MPI_Allreduce( tmp, upmx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-   tmp[0] = umx[0];
-   tmp[1] = umx[1];
-   tmp[2] = umx[2];
-   MPI_Allreduce( tmp, umx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-   if( m_myRank == 0 )
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      cout << "Max norm of backed out U  = " << upmx[0] <<  " " << upmx[1] <<  " " << upmx[2] << endl;
-      cout << "Max norm of backed out Um = " << umx[0] <<   " " << umx[1] <<  " " << umx[2] << endl;
+      double upmx[3]={0,0,0}, umx[3]={0,0,0}, tmp[3];
+      for( int k=m_kStartAct[g] ; k <= m_kEndAct[g] ; k++ )
+	 for( int j=m_jStartAct[g] ; j <= m_jEndAct[g] ; j++ )
+	    for( int i=m_iStartAct[g] ; i <= m_iEndAct[g] ; i++ )
+	       for( int c=0 ; c < 3 ; c++ )
+	       {
+		  if( fabs(Up[g](c+1,i,j,k))>upmx[c] )
+		     upmx[c] = fabs(Up[g](c+1,i,j,k));
+		  if( fabs(U[g](c+1,i,j,k))>umx[c] )
+		     umx[c] = fabs(U[g](c+1,i,j,k));
+	       }
+      tmp[0] = upmx[0];
+      tmp[1] = upmx[1];
+      tmp[2] = upmx[2];
+      MPI_Allreduce( tmp, upmx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+      tmp[0] = umx[0];
+      tmp[1] = umx[1];
+      tmp[2] = umx[2];
+      MPI_Allreduce( tmp, umx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+      if( m_myRank == 0 )
+      {
+         cout << "Grid nr. " << g << ": " << endl;
+	 cout << "   Max norm of backed out U  = " << upmx[0] <<  " " << upmx[1] <<  " " << upmx[2] << endl;
+	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
+      }
    }
-
+   gRho[0].save_to_disk("grho.bin");
    //   Up[0].save_to_disk("ubackedout.bin");
    //   U[0].save_to_disk("umbackedout.bin");
    // 

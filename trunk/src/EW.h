@@ -472,8 +472,11 @@ void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 void get_material_parameter( int nmpar, double* xm );
 
 void get_nr_of_material_parameters( int& nmvar );
+void add_to_gradrho( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
+			 vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
+		     vector<Sarray>& gRho );
 
-
+void perturb_mtrl();
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -775,6 +778,9 @@ double m_tolerance;
 double m_scalefactors[11];   
 int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
+   // perturbations for testing
+double m_perturb;
+int m_iperturb, m_jperturb, m_kperturb;
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<double> mMinVsOverH;

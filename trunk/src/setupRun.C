@@ -1192,6 +1192,37 @@ void EW::setup_supergrid( )
   else
     m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
 				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
+
+  for( int g=0 ; g < mNumberOfGrids ; g++ )
+  {
+   // Add one to thickness to allow two layers of internal ghost points
+     int sgpts = m_sg_gp_thickness;
+     int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
+     int kmax=m_global_nz[g]-sgpts;
+
+     // Bottom patch only at grid = 0, nz+100 always has empty intersection with the domain.
+     if( g > 0 )
+	kmax = m_global_nz[g] + 100;
+
+     //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
+     //	  << " " << 1+1 << " " << kmax-1 << endl;
+
+     m_iStartAct[g] = imin+1;
+     m_iEndAct[g]   = imax-1;
+     m_jStartAct[g] = jmin+1;
+     m_jEndAct[g]   = jmax-1;
+     m_kStartAct[g] = 1;
+     m_kEndAct[g]   = kmax-1;
+
+     if( m_iStartAct[g] < m_iStart[g] )
+	m_iStartAct[g] = m_iStart[g];
+     if( m_jStartAct[g] < m_jStart[g] )
+	m_jStartAct[g] = m_jStart[g];
+     if( m_iEndAct[g] > m_iEnd[g] )
+	m_iEndAct[g] = m_iEnd[g];
+     if( m_jEndAct[g] > m_jEnd[g] )
+	m_jEndAct[g] = m_jEnd[g];
+  }
 // tmp
 //   if (mVerbose >= 2 && proc_zero())
 //   {

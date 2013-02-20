@@ -78,41 +78,19 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
     }
   }
 // done allocating solution arrays
+
 // Allocate boundary sides
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
-   // Add one to thickness to allow two layers of internal ghost points
-     int sgpts = m_sg_gp_thickness;
-     int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-     int kmax=m_global_nz[g]-sgpts;
-
-     // Bottom patch only at grid = 0, nz+100 always has empty intersection with the domain.
-     if( g > 0 )
-	kmax = m_global_nz[g] + 100;
-
-     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
-	  << " " << 1+1 << " " << kmax-1 << endl;
-
-     m_iStartAct[g] = imin+1;
-     m_iEndAct[g]   = imax-1;
-     m_jStartAct[g] = jmin+1;
-     m_jEndAct[g]   = jmax-1;
-     m_kStartAct[g] = 1;
-     m_kEndAct[g]   = kmax-1;
-
-     if( m_iStartAct[g] < m_iStart[g] )
-	m_iStartAct[g] = m_iStart[g];
-     if( m_jStartAct[g] < m_jStart[g] )
-	m_jStartAct[g] = m_jStart[g];
-     if( m_iEndAct[g] > m_iEnd[g] )
-	m_iEndAct[g] = m_iEnd[g];
-     if( m_jEndAct[g] > m_jEnd[g] )
-	m_jEndAct[g] = m_jEnd[g];
-
      stringstream procno;
-     procno << m_myRank; 
+     procno << m_myRank << "." << g ; 
      string upred_name = "upred" + procno.str() + ".bin";
      string ucorr_name = "ucorr" + procno.str() + ".bin";
+     int imin = m_iStartAct[g]-1;
+     int imax = m_iEndAct[g]+1;
+     int jmin = m_jStartAct[g]-1;
+     int jmax = m_jEndAct[g]+1;
+     int kmax = m_kEndAct[g]+1;
      Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
      Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
   }

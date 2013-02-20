@@ -131,10 +131,15 @@ DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin,
 //-----------------------------------------------------------------------
 DataPatches::~DataPatches()
 {
-   delete[] m_steps;
-   for( int i=0 ; i < m_data.size() ; i++ )
-      delete[] m_data[i];
-   delete[] m_dataptr;   
+   if( m_isnonempty )
+   {
+      delete[] m_steps;
+      for( int i=0 ; i < m_data.size() ; i++ )
+	 delete[] m_data[i];
+      delete[] m_dataptr;
+      unlink(m_filename.c_str());
+   // unlink deletes the file
+   }
 }
 //-----------------------------------------------------------------------
 void DataPatches::add_patch( int wind[6] )

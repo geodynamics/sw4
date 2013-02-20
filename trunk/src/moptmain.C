@@ -17,7 +17,7 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
 		       vector<Source*>& GlobalSources,
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, int varcase,
-		       double& f, double dfs[11], double* dfm )
+		       double& f, double dfs[11], double* dfm, int myrank )
 
 //-----------------------------------------------------------------------
 // Compute misfit and its gradient.
@@ -67,9 +67,12 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
       f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-
-   // Get gradient by solving the adjoint problem:
-   //   double hess[121];
+   if( myrank == 0 )
+   {
+      cout.precision(16);  
+      cout << " Misfit is = " << f << endl;
+   }
+// Get gradient by solving the adjoint problem:
    simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfs, nmpar, dfm );
 
    if( varcase == 1 )
@@ -82,6 +85,7 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
       delete diffs[m];
    diffs.clear();
 
+// Give back memory
    for( unsigned int g=0 ; g < ng ; g++ )
    {
       delete upred_saved[g];
@@ -163,6 +167,7 @@ int main(int argc, char **argv)
 // Save the time series here
      vector<TimeSeries*> GlobalTimeSeries;
      vector<TimeSeries*> GlobalObservations;
+
 // make a new simulation object by reading the input file 'fileName'
      EW simulation(fileName, GlobalSources, GlobalObservations, true );
 
@@ -193,8 +198,8 @@ int main(int argc, char **argv)
 // Successful initialization
 
 	   simulation.setQuiet(true);
-     // Make observations aware of the utc reference time, if set.
-     // Filter observed data if required
+// Make observations aware of the utc reference time, if set.
+// Filter observed data if required
 	   for( int m = 0; m < GlobalObservations.size(); m++ )
 	   {
 	      simulation.set_utcref( *GlobalObservations[m] );
@@ -225,6 +230,8 @@ int main(int argc, char **argv)
 	   double xs[11];
 	   GlobalSources[0]->get_parameters(xs);
 
+// Perturb material if gradient testing
+           simulation.perturb_mtrl();
 // Default initial guess material = the material given in the input file
            int nmpar;
 	   double* xm=NULL;
@@ -261,7 +268,7 @@ int main(int argc, char **argv)
            double f, dfs[11];
 	   double* dfm = new double[nmpar];
 	   compute_f_and_df( simulation, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
-			     GlobalObservations, varcase, f, dfs, dfm );
+			     GlobalObservations, varcase, f, dfs, dfm, myRank );
 
 	   if( myRank == 0 )
 	   {

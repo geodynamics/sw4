@@ -1690,6 +1690,27 @@ void EW::processDeveloper(char* buffer)
 	CHECK_INPUT( cfl > 0, "Error negative CFL number");
 	set_cflnumber( cfl );
      }
+     else if( startswith("perturb=",token) )
+     {
+        token += 8;
+	m_perturb = atof(token);
+     }
+     else if( startswith("peri=",token) )
+     {
+        token += 5;
+	m_iperturb = atoi(token);
+     }
+     else if( startswith("perj=",token) )
+     {
+        token += 5;
+	m_jperturb = atoi(token);
+     }
+     else if( startswith("perk=",token) )
+     {
+        token += 5;
+	m_kperturb = atof(token);
+     }
+
 // //     if (startswith("update_processor_boundary=", token))
 // //     {
 // //       token += 26;

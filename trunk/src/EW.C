@@ -101,6 +101,12 @@ void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, do
 void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
 					      double*, double*, int*, double*, double*, double*, double*, double* );
 
+void F77_FUNC(addgradrho,ADDGRADRHO)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+				       double*, double*, double*, double*, double*, double*, double*,
+				       double*, double*, int* );
+void F77_FUNC(addgradrhoc,ADDGRADRHOC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+				       double*, double*, double*, double*, double*, double*, double*,
+				       double*, double*, int* );
 }
 
 using namespace std;
@@ -265,7 +271,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_utc0set(false),
   m_utc0isrefevent(false),
   m_opttest(0),
-  mEtreeFile(NULL)
+  mEtreeFile(NULL),
+  m_perturb(0),
+  m_iperturb(1),
+  m_jperturb(1),
+  m_kperturb(1)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
@@ -3991,7 +4001,7 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
       if( topographyExists() && g == mNumberOfGrids-1 )
 	 F77_FUNC(energy4c,ENERGY4C)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
-			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
+				     um_ptr, u_ptr, up_ptr, rho_ptr, mJ.c_ptr(), &locenergy );
       else
 	 F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
@@ -4555,18 +4565,7 @@ void EW::get_nr_of_material_parameters( int& nmvar )
    nmvar = 0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      int sgpts = m_sg_gp_thickness+1;
-      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-      int kmax=m_global_nz[g]-sgpts;
-      int kb = m_kStart[g];
-      int ke = kmax-1 < m_kEnd[g] ? kmax-1:m_kEnd[g];
-      int jb = jmin+1 > m_jStart[g] ? jmin+1 : m_jStart[g];
-      int je = jmax-1 < m_jEnd[g] ? jmax-1 : m_jEnd[g];
-      int ib = imin+1 > m_iStart[g] ? imin+1 : m_iStart[g];
-      int ie = imax-1 < m_iEnd[g] ? imax-1 : m_iEnd[g];
-      //      cout << imin << " " << imax << " " << jmin << " " << jmax << " " << kmax << endl;
-      //      cout << ib << " " << ie << " " << jb << " " << je << " " << kb << " " << ke << endl;
-      nmvar += (ie-ib+1)*(je-jb+1)*(ke-kb+1)*3;
+      nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*(m_kEndAct[g]-m_kStartAct[g]+1)*3;
    }
 }
 
@@ -4580,24 +4579,14 @@ void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
       rho[g].copy( mRho[g] );
       mu[g].copy( mMu[g] );
       lambda[g].copy( mLambda[g] );
-      int sgpts = m_sg_gp_thickness+1;
-      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-      int kmax=m_global_nz[g]-sgpts;
       if( g == 0 )
 	 gp = 0;
       else
 	 gp = gp + 3*ind;
-
-      int kb = m_kStart[g];
-      int ke = kmax-1 < m_kEnd[g] ? kmax-1:m_kEnd[g];
-      int jb = jmin+1 > m_jStart[g] ? jmin+1 : m_jStart[g];
-      int je = jmax-1 < m_jEnd[g] ? jmax-1 : m_jEnd[g];
-      int ib = imin+1 > m_iStart[g] ? imin+1 : m_iStart[g];
-      int ie = imax-1 < m_iEnd[g] ? imax-1 : m_iEnd[g];
       ind =0;
-      for( int k=kb; k <= ke; k++ )
-	 for( int j=jb; j <= je; j++ )
-	    for( int i=ib; i <= ie; i++ )
+      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
 	    {
 	       rho[g](i,j,k)    = xm[gp+ind*3];
 	       mu[g](i,j,k)     = xm[gp+ind*3+1];
@@ -4613,29 +4602,77 @@ void EW::get_material_parameter( int nmpar, double* xm )
    int gp, ind;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      int sgpts = m_sg_gp_thickness+1;
-      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-      int kmax=m_global_nz[g]-sgpts;
       if( g == 0 )
 	 gp = 0;
       else
 	 gp = gp + 3*ind;
-
-      int kb = m_kStart[g];
-      int ke = kmax-1 < m_kEnd[g] ? kmax-1:m_kEnd[g];
-      int jb = jmin+1 > m_jStart[g] ? jmin+1 : m_jStart[g];
-      int je = jmax-1 < m_jEnd[g] ? jmax-1 : m_jEnd[g];
-      int ib = imin+1 > m_iStart[g] ? imin+1 : m_iStart[g];
-      int ie = imax-1 < m_iEnd[g] ? imax-1 : m_iEnd[g];
       ind =0;
-      for( int k=kb; k <= ke; k++ )
-	 for( int j=jb; j <= je; j++ )
-	    for( int i=ib; i <= ie; i++ )
+      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
 	    {
 	       xm[gp+ind*3]   = mRho[g](i,j,k);
 	       xm[gp+ind*3+1] = mMu[g](i,j,k);
 	       xm[gp+ind*3+2] = mLambda[g](i,j,k);
 	       ind++;
 	    }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::add_to_gradrho( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
+			 vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
+			 vector<Sarray>& gRho )
+{
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      int ifirstact = m_iStartAct[g];
+      int ilastact  = m_iEndAct[g];
+      int jfirstact = m_jStartAct[g];
+      int jlastact  = m_jEndAct[g];
+      int kfirstact = m_kStartAct[g];
+      int klastact  = m_kEndAct[g];
+      double* k_ptr = K[g].c_ptr();
+      double* ka_ptr = Kacc[g].c_ptr();
+      double* um_ptr = Um[g].c_ptr();
+      double* u_ptr = U[g].c_ptr();
+      double* up_ptr = Up[g].c_ptr();
+      double* ua_ptr = Uacc[g].c_ptr();
+      double* grho_ptr = gRho[g].c_ptr();
+      double h = mGridSize[g];
+      int* onesided_ptr = m_onesided[g];
+      if( topographyExists() && g == mNumberOfGrids-1 )
+	 F77_FUNC(addgradrhoc,ADDGRADRHOC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
+					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+					     &mDt, mJ.c_ptr(), onesided_ptr );
+      else
+	 F77_FUNC(addgradrho,ADDGRADRHO)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                         &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
+					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+					&mDt, &h, onesided_ptr );
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::perturb_mtrl()
+{
+   int g=0;
+   if( m_perturb != 0 && point_in_proc(m_iperturb,m_jperturb,g) )
+   {
+      cout << "per = " << m_perturb << " " << m_iperturb << " " << m_jperturb << " " << m_kperturb << endl;
+      if( m_iperturb < m_iStartAct[g] || m_iperturb > m_iEndAct[g] )
+	 cout << "warning i-index outside active domain " << endl;
+      if( m_jperturb < m_jStartAct[g] || m_jperturb > m_jEndAct[g] )
+	 cout << "warning j-index outside active domain " << endl;
+      if( m_kperturb < m_kStartAct[g] || m_kperturb > m_kEndAct[g] )
+	 cout << "warning k-index outside active domain " << endl;
+      mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
    }
 }
