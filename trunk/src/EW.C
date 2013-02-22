@@ -182,7 +182,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
-  m_sg_gp_transition(25),
+  m_sg_gp_transition(30),
   m_supergrid_damping_coefficient(0.04),
 
   m_minJacobian(0.),

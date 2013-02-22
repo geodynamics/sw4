@@ -24,7 +24,7 @@
 function []= writeusgs( filename, stname, ux, uy, uz, dt, t0, enz, vel, utc )
 %
 % Default to xyz-velocities
-if nargin < 9
+if nargin < 10
    utc(1) = 2011;
    utc(2)=10;
    utc(3)=25;
@@ -33,7 +33,7 @@ if nargin < 9
    utc(6)=00;
    utc(7)=11;
 end;
-if nargin < 8
+if nargin < 9
   vel = 1;
 end;
 if nargin < 8

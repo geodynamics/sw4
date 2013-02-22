@@ -12,7 +12,7 @@ namespace ewversion
    const char* optimization = EW_OPT_LEVEL;
    const char* compiler = EW_COMPILER;
    const char* basedir = EW_BASEDIR;
-   const char* version = "0.5";
+   const char* version = "1.0";
    
    std::string getVersionInfo()
    {

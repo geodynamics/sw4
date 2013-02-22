@@ -81,38 +81,38 @@ National Laboratory under contract DE-AC52-07NA27344.
 \chapter{Introduction}
 
 
-\emph{SW4} is a computer program for simulating seismic wave propagation on parallel machines. It
+\emph{SW4} is a computer program for simulating seismic wave propagation on parallel computers. It
 shares many features with our previous seismic wave propagation code~\emph{WPP}~\cite{WPP2}. Both
 \emph{WPP} and \emph{SW4} solve the seismic wave equations in second order formulation using a
 node-based finite difference approach, and uses numerical methods that satisfy the principle of
-summation by parts, which guarentees stability in an energy norm. The major difference between the
-codes is that \emph{SW4} implements a fourth order accurate spatial discretization, complemented by
-a fourth order explicit time integrator~\cite{SjoPet-12}. The \emph{SW4} code is therefore
-significantly more efficient than \emph{WPP}, which is second order accurate. We have tested both
-codes on problems where the exact solution is known. Compared to \emph{WPP}, \emph{SW4} gives
-similar accuarcy with significantly fewer grid points per wave length. This means that waves with
-the same frequency can be resolved on a grid that is coarser both in space and time. The advantages
-of a higher order method are more pronounced when the solution needs to be more accurate, or when it
-needs to remain accurate for longer times. For the elastic wave equation, the advantages of a higher
-order method are also more pronounced for elastic materials with a large ratio between the
-compressional and shear wave speeds, $C_p/C_s$~\cite{KrePet-12}. As an example, for materials with $C_p/C_s\approx 2$
-and an accuracy of about 10 percent, the \emph{SW4} code calculates the solution about eight times
-faster, using about one eighth of the memory, compared to \emph{WPP}. An alternative way of saying
-this is that, using the same grid size, \emph{SW4} can capture waves with twice the frequency as~\emph{WPP}.
+summation by parts, which guarentees energy stability of the numerical solution. The major
+difference between the codes is that \emph{SW4} implements a fourth order accurate spatial
+discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. The
+\emph{SW4} code is therefore significantly more efficient than \emph{WPP}, which is second order
+accurate. We have tested both codes on problems where the exact solution is known. Compared to
+\emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid points per wave
+length. This means that waves with the same frequency can be resolved on a grid that is coarser both
+in space and time. The advantages of a higher order method are more pronounced when the solution
+needs to be more accurate, or when it needs to remain accurate for longer times. For the elastic
+wave equation, the advantages of a higher order method are also more pronounced for elastic
+materials with a large ratio between the compressional and shear wave speeds,
+$C_p/C_s$~\cite{KrePet-12}. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
+percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
+about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
+with approximately twice as high frequency.
 
 \emph{SW4} implements substantial capabilities for 3-D seismic modeling, with a free surface
 condition on the top boundary, absorbing super-grid~\cite{PetSjo-13} far-field conditions on the
 remaining boundaries, and an arbitrary number of point force and/or point moment tensor source terms
 with many predefined time dependencies. It supports a fully 3-D heterogeneous material model that
-can be specified in several formats, and allows the free surface boundary condition to be imposed on
-a curved topography. For this purpose a curvilinear mesh is used near the free surface. A
-curvilinear mesh generator is built into \emph{SW4} and the curvilinear mesh is automatically
-generated from the description of the topography. Below the curvilinear grid, the seismic wave
-equations are discretized on a Cartesian mesh, which leads to a more computationally efficient
-algorithm. \emph{SW4} specifies the computational domain in a Cartesian coordinate system and is
-therefore appropriate for local and regional problems (up to a few 100 km). Locations can be
+can be specified in several formats. \emph{SW4} uses a curvilinear mesh near the free surface to
+honor the free surface boundary condition on a realistic topography. The curvilinear mesh is
+automatically generated from the description of the topography. Below the curvilinear grid, the
+seismic wave equations are discretized on a Cartesian mesh, which leads to a more computationally
+efficient algorithm. \emph{SW4} specifies the computational domain in a Cartesian coordinate system
+and is therefore appropriate for local and regional problems (up to a few 100 km). Locations can be
 specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
-coordinates. \emph{SW4} can be built to use the proj.4 library~\cite{Proj4} for calculating the
+coordinates. \emph{SW4} can be built to use the Proj.4 library~\cite{Proj4} for calculating the
 mapping between geographic and Cartesian coordinates, or use an approximate spheroidal
 mapping. \emph{SW4} can output synthetic seismograms in an ASCII text format, or in the
 popular~\emph{SAC}~\cite{Goldstein-et-al} format. It can also present simulation information as
@@ -121,7 +121,7 @@ popular~\emph{SAC}~\cite{Goldstein-et-al} format. It can also present simulation
 
 Version 1.0 of \emph{SW4} supports most of the functionality currently implemented in \emph{WPP}
 (version 2.1.7). However, we have not yet implemented visco-elastic attenuation or mesh
-refinement. These features will be added in the future, as time permits.
+refinement. These features will be added in the future.
 
 %In version 2.1 of \emph{SW4}, Cartesian local mesh refinement can be used to make the computational
 %mesh finer near the free surface, where more resolution often is needed to resolve short wave
@@ -141,14 +141,15 @@ refinement. These features will be added in the future, as time permits.
 %% properties of the material model. The underlying numerical method for solving the visco-elastic wave
 %% equation is described in~\cite{PetSjo-10b}.
 
-Most of \emph{SW4} is written in C++, but most number-crunching is done in Fortran-77. \emph{SW4}
-uses a distributed memory programming model, implemented with the C-bindings of the MPI
-library. Compatible versions of the C++ and Fortran-77 compilers as well as the MPI library must
-therefore be available to build the code. We have built and tested \emph{SW4} on a variety of
-machines, ranging from single processor laptops to large supercomputers with ${\cal O}(10,000)$
-cores. We believe it will run well on even larger machines.
+Most of \emph{SW4} code is written in C++, but for efficiency reasons most of the numerical
+calculations are implemented in Fortan-77. \emph{SW4} uses a distributed memory programming model,
+implemented with the C-bindings of the MPI library. Compatible versions of the C++ and Fortran-77
+compilers as well as the MPI library must therefore be available to build the code. We have built
+and tested \emph{SW4} on a variety of machines, ranging from single processor laptops to large
+supercomputers with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even larger
+machines.
 
-To make the transition from \emph{WPP} to \emph{SW4} easier, we have made an effort to minimize
+To simplify the transition from \emph{WPP} to \emph{SW4}, we have made an effort to minimize
 changes to the syntax of the input and output files. However, we have taken the opportunity to
 improve some commands and some file formats. See Chapters~\ref{chap:keywords} and~\ref{chap:formats}
 for details.
@@ -158,13 +159,89 @@ validation tests. Many Matlab/octave scripts are provided in the {\tt tools} dir
 
 \section*{Acknowledgments} 
 We are grateful for financial support from Lawrence Livermore National Laboratory. We also thank
-the Office of Science at the U.S.~Department of Energy, who partially supported the development of our
-previous seismic wave propagation code,~\emph{WPP}~\cite{WPP2}.
+the Office of Science at the U.S.~Department of Energy, who partially supported the development of
+the underlying numerical method.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Getting started}
+\index{srun}\index{parallel execution}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Running \emph{SW4}}
+This section assumes that \emph{SW4} already has been installed on your system. For instructions on
+how to build \emph{SW4} from the source code distribution, see Chapter~\ref{cha:installing-sw4}.
+
+\emph{SW4} can be executed from the command prompt or from a script. The simulation is specified by
+the input file, and the name of the input file is given on the command line. The input file is an
+ASCII text file that contains a number of commands specifying the properties of the simulation, such
+as the dimensions of the computational domain, grid spacing, the duration of the simulation, the
+material properties, the source model, as well as the desired output. To improve readability of this
+document we have used the continuation character ``$\backslash$" to extend long commands to the
+subsequent line. There is however no support for continuation characters in \emph{SW4}, so each
+command must be given on one (sometimes long) line in the input file.
+
+Since \emph{SW4} is a parallel code, it is required to be run under a parallel execution environment
+such as mpiexec, mpirun, openmpirun, or srun. The srun command is currently always used on the
+parallel machines at Livermore computing. On other machines, it is important to start \emph{SW4}
+with the correct parallel execution tool. For example, if you build \emph{SW4} with the openmpi
+comilers, you should use the openmpirun environment. Also note that some systems require you to
+start an \verb+mpd+ daemon before running any parallel programs. See mpich2-doc-user.pdf for more
+info. We also recommend that you check with your local system administrator on how to run parallel
+programs your system.
+
+Throughout this document we use the convention that input files have the file suffix {\tt
+  .in}. However, \emph{SW4} will read an input file regardless of its extension.
+
+If your system is setup for using \verb+mpiexec+, the command
+\begin{verbatim}
+	shell> mpiexec -np 2 sw4 test.in
+\end{verbatim}
+runs \emph{SW4} on 2 processes, and tells it to read input from a file named {\tt test.in}.  If you
+are using \verb+mpirun+, you would instead use the command
+\begin{verbatim}
+	shell> mpirun -np 2 sw4 test.in
+\end{verbatim}
+{\bf Remark: }
+If \emph{SW4} produces strange looking outputs where the same text is repeated several times (e.g. once
+per processor), you are probably running \emph{SW4} under the wrong parallel execution environment.
+%
+
+\paragraph{Running on the Livermore Computing parallel linux clusters}
+%
+The srun command is currently used to run parallel jobs on LC machines. For example, the command
+\begin{verbatim}
+	shell> srun -ppdebug -n 32 sw4 xxx.in
+\end{verbatim}
+runs \emph{SW4} on 32 processors on the debug parition using xxx.in as the input file. Note that the
+pdebug partition is intended for shorter jobs. It is subject to both a CPU time limit and a limit on
+the number of processors per job. Jobs requiring more computer resources must be submitted through
+the batch system, currently using the msub command. Refer to the Livermore Computing web pages for
+detailed information (https://computing.llnl.gov).
+
+\paragraph{Version information (-v)}
+\index{command line options!-v version info}
+
+Version information for the \emph{SW4} executable can be obtained through {\tt -v} flag:
+\begin{verbatim}
+[yorkville:~/src/sw4/src] petersson1% openmpirun -np 2 ./sw4 -v
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Fri Feb 22 08:31:41 PST 2013
+  By user:     petersson1
+  Machine:     yorkville.llnl.gov
+  Compiler:    /opt/local/bin/openmpicxx
+  3rd party software base directory: NotUsed
+----------------------------------------------------------------
+\end{verbatim}
+Note that the same information is by default printed to standard out (your screen, or log file when
+running in batch mode) at the beginning of every run.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Chapter: Coordinate system, units and the grid
 \chapter{Coordinate system, units and the grid}
 \index{coordinate system}\index{units}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,7 +256,7 @@ downwards into the medium, see figure~\ref{fig:coordsys}.
   \label{fig:coordsys}
 \end{centering}
 \end{figure}
-\emph{SW4} employs MKS (meters-kilograms-seconds) units; all distances (e.g.,~grid dimensions,
+\emph{SW4} employs MKS (meters-kilograms-seconds) units. All distances (e.g.,~grid dimensions,
 spacing, and displacements) are in meters (m), time is in seconds (s), seismic P- and S-wave
 velocities are in meters per second (m/s), densities are in kilogram per cubic meter (kg/m$^3$),
 forces are in Newton (N), and seismic moment (torque) is in Newton-meters (Nm). All angles
@@ -195,7 +272,7 @@ The topography surface
 z=\tau(x,y),
 \]
 defines the shape of the top surface in the vertical direction. \emph{SW4} can also be run without
-topography, in which case $\tau(x,y)=0$. The computational domain is given by
+topography. In that case, $\tau(x,y)=0$. The computational domain is given by
 \begin{equation}\label{eq:domain}
 0\leq x\leq x_{max},\quad 0\leq y\leq y_{max},\quad \tau(x,y) \leq z \leq z_{max}.
 \end{equation}
@@ -247,8 +324,8 @@ value of $h$, ny and nz are computed using formulas corresponding to
 the extents in the $y$ and $z$-directions are adjusted corresponding to (\ref{eq:x-calculation}). The syntax
 for the grid command is given in Section~\ref{keyword:grid}.
 
-The computation takes place over a time interval, $0\leq t \leq T$, where $T$ is a user specified end time.
-The starting point of the simulation time is always $t=0$. The {\tt time} command specifies the end time, for example
+The simulation always starts at $t=0$ and runs until $t=T$, where $T$ is the user specified end
+time.  The {\tt time} command specifies the end time. For example,
 \begin{verbatim}
 time t=1.6
 \end{verbatim}
@@ -257,16 +334,16 @@ a number of time steps, as in the example
 \begin{verbatim}
 time steps=1200
 \end{verbatim}
-which sets the number of time steps to 1200. The end time will in this case be $T=1200\Delta t$, where the
+Here the number of time steps is set to 1200. The end time will in this case be $T=1200\Delta t$, where the
 time step $\Delta t$ depends on the input material. $\Delta t$ is determined automatically by \emph{SW4}.
 The simulation start time can be related to a UTC time. The option {\tt utcstart} sets the UTC time that
 corresponds to the simulation time $t=0$, for example,
 \begin{verbatim}
 time t=1.6 utcstart=01/31/2012:17:34:12.233
 \end{verbatim}
-The format of the UTC time is ``month/day/year:hour:minute:second.millisecond''. When the UTC time is set,
-output receiver data files are time stamped with the UTC reference time. Furthermore, the UTC start time
-is essential to correctly align observed data when solving the inverse problem with \emph{SW4opt}.
+The format of the UTC time is ``month/day/year:hour:minute:second.millisecond''. When the UTC time
+is set, it is saved in the header of all output receiver data files. Note that the UTC start time
+is essential for correctly aligning observed data when solving the inverse problem with \emph{SW4opt}.
 
 \section{Geographical coordinates and projections}
 \index{geographical coordinates}
@@ -280,21 +357,21 @@ is essential to correctly align observed data when solving the inverse problem w
 \end{figure}
 \emph{SW4} supports geographical coordinates as an alternative way of specifying spatial locations,
 see Figure~\ref{fig:geocoord}. The geographic location of the origin of the Cartesian coordinte
-system (lat0, lon0) is specified in the grid command, and if no location is given it defaults to
-lat0 = 37 degrees (North), lon0 = -118 degrees (West), with a 135 degree azimuthal angle between
-North and the $x$-axis. The vertical coordinate is zero ($z=0$) at mean sea level. The latitude (lat)
-and longitude (lon) are calculated using the approximative formulae (where lat, lon, az, lat0, and
-lon0 are in degrees)
+system (lat$_0$, lon$_0$) is specified in the grid command, and if no location is given it defaults
+to lat$_0$ = 37 degrees (North), lon$_0$ = -118 degrees (West), with a 135 degree azimuthal angle
+between North and the $x$-axis. The vertical coordinate is zero ($z=0$) at mean sea level. By
+default, the latitude (lat) and longitude (lon) are calculated using a spheroidal mapping,
 \begin{alignat}{2}
-\mbox{lat} &= \mbox{lat0} + \frac{x\cos(\alpha) - y\sin(\alpha)}{M},\quad \alpha =
+\mbox{lat} &= \mbox{lat$_0$} + \frac{x\cos(\alpha) - y\sin(\alpha)}{M},\quad \alpha =
 \mbox{az}\frac{\pi}{180}, \label{eq:lat}\\
-\mbox{lon} &= \mbox{lon0} + \frac{x\sin(\alpha ) + y\cos(\alpha)}{M\cos(\phi \pi/180)}.\label{eq:lon}
+\mbox{lon} &= \mbox{lon$_0$} + \frac{x\sin(\alpha ) + y\cos(\alpha)}{M\cos(\phi \pi/180)}.\label{eq:lon}
 \end{alignat}
-By default, $M = 111,319.5$ meters\footnote{Note that $M/60 = 1,855.325$ meters, which corresponds
-  to one minute of arc of longitude along the Equator on the WGS84 ellipsoid. This distance is also
-  known as a geographical mile and is approximately equal to a Nautical mile (1,852 meters).}.  You
-can change the location and orientation of the grid by specifying the latitude and longitude of the
-grid origin, as well as the azimuthal angle between North and the $x$-axis. For example:
+In this formula, lat, lon, az, lat$_0$, and lon$_0$ are all in degrees, and $M = 111,319.5$
+meters\footnote{Note that $M/60 = 1,855.325$ meters corresponds to one minute of arc of
+  longitude along the Equator on the WGS84 ellipsoid. This distance is also known as a geographical
+  mile and is approximately equal to a Nautical mile (1,852 meters).}.  You can change the location
+and orientation of the grid by specifying the latitude and longitude of the grid origin, as well as
+the azimuthal angle between North and the $x$-axis. For example:
 \begin{verbatim}
 grid h=500 x=30000 y=20000 z=10000 lat=39 lon=-117 az=150
 \end{verbatim}
@@ -303,20 +380,67 @@ sets the origin of the grid to latitude 39 degrees (North), longitude -117 degre
 
 The default projection is spheriodal as described by equations \eqref{eq:lat}-\eqref{eq:lon}. You
 can change the parameter $M$ with the {\bf mlat} keyword in the {\bf grid} command. By using the
-{\bf mlon} keyword, you modify the projection by replacing $M\cos(\phi\pi/180)$ in \eqref{eq:lon} by
-the constant $M_{lon}$. This approach is only recommended if the computational domain is small and
-accurate values of both {\bf mlon} and {\bf mlat} are available.
+{\bf mlon} keyword, you can also modify the projection by replacing $M\cos(\phi\pi/180)$ in
+\eqref{eq:lon} by the constant value $M_{lon}$. Using the {\bf mlon} keyword is only recommended if
+the computational domain is small and accurate values of both {\bf mlon} and {\bf mlat} are
+available.
 
 More accurate projections are available through the Proj4 library (if
 \emph{SW4} was built with Proj4 support). These projections are enabled by using the {\bf proj}
-and/or {\bf ellps} keywords in the {\bf grid} command. For example:
+and/or {\bf ellps} keywords in the {\bf grid} command. For example,
 \begin{verbatim}
 grid h=300 x=40e3 y=43e3 z=40e3 lat=45.01 lon=5.52 az=0 proj=utm ellps=WGS84
 \end{verbatim}
-sets the origin of the grid to latitude 45.01 degrees (North), longitude 5.52 degrees
-(East), and azimuthal angle 0. Here we use the UTM projection based on the WGS84 ellipse.
-See the Proj4 documentation~\cite{Proj4} for further details.
+sets the origin of the grid to latitude 45.01 degrees (North), longitude 5.52 degrees (East), and
+azimuthal angle 0. Here we use the UTM projection based on the WGS84 ellipse. Note that the strings
+``proj=utm'' and ``ellps=WGS84'' are passed directly to the Proj4 library to initialize the
+projection. Many other options are available. See the Proj4 documentation~\cite{Proj4} for further
+details.
 
+\section{Super-grid damping layers}
+
+\emph{SW4} implements a super-grid modeling technique to avoid artificial reflections from the
+far-field boundaries~\cite{AppCol-09, PetSjo-13}. In this method, a coordinate mapping (stretching
+function) is used to map the computational domain to a much larger physical domain. A high order
+artificial dissipation operator is added in the super-grid layers to damp out waves that become
+poorly resolved because of the coordinate mapping. The idea is to damp out poorly resolved waves
+before they arrive at the outer edge of the layer, where the computational domain is truncated. Note
+that the dissipative term is only added in the layers.
+
+The coordinate stretching compresses the solution inside the layers. This corresponds to a slowing
+down of all traveling waves in the direction normal to each far-field boundary. As a result, the
+isotropic elastic wave equation becomes anisotropic in the super-grid layers. It is possible to
+prove by energy estimates that the super-grid modeling leads to a stable numerical method with
+decreasing energy. This estimate is valid for heterogeneous material properties and free surface
+boundary conditions on one or more sides of the domain. See the paper by Petersson and
+Sjogreen~\cite{PetSjo-13} for more details.
+
+Super-grid layers are included on all sides of the computational domain, except along the
+free surface, see Figure~\ref{fig:layout}.
+\begin{figure}[th]
+\begin{center}
+\includegraphics[width=0.65\linewidth]{layout.eps}
+%\includegraphics[width=0.65\linewidth]{layout.png}
+\caption{\em A vertical cross-section through the computational domain with a free surface boundary
+  along the top edge. The original seismic wave equation is solved the white region. The wave speed
+  is reduced in the normal direction of the surrounding super-grid layers, where also a high order
+  damping term is added.}\label{fig:layout}
+\end{center}
+\end{figure}
+The default thickness of the layers (currently) equals 30 grid sizes. The thickness of the
+super-grid layers can be changed with the {\tt supergrid} command, see Section~\ref{sec:supergrid}.
+
+For practical reasons, the super-grid layers are part of the computational domain as specified by
+the grid command. If, for example, the super-grid layers are 30 grid points wide, the solution
+should be considered artificial in the first and last 30 points in each horizontal direction, and
+the bottom 30 points in the vertical direction. Note that the numerical solution within the layers
+do {\em not} approximate the solution of the seismic wave equation. For this reason, it is important
+to make the computational domain sufficiently large. If the super grid layers are 30 grid points
+wide, the computational grid must be at least 60 grid points wide in the $x$ and $y$-directions, and
+30 points wide in the Cartesian part of the $z$-direction. Additional grid points must be added in
+the interior of the computational domain for the actual seismic modeling. Note that sources and
+receivers should only be placed in the interior of the computational domain, i.e., away from the
+super-grid layers.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Sources, time-functions and grid sizes}
@@ -327,7 +451,7 @@ See the Proj4 documentation~\cite{Proj4} for further details.
 The source time function can be selected from a set of predefined functions described below. All
 functions start from zero ($\lim_{t\to -\infty} g(t,t_0,\omega) = 0$) and tend to a constant terminal
 value, $\lim_{t\to \infty} g(t,t_0,\omega) = g_\infty$. In seismic applications, $g_\infty\ne 0$
-always corresponds to solving for the displacements of the motion, because the solution will tend to
+usually corresponds to solving for the displacements of the motion, because the solution will tend to
 a non-zero steady state solution for large times. This solution corresponds to the final
 displacements due to a seismic event. When $g_\infty = 0$, the solution will always tend to zero for
 large times, as is expected from the velocities or accelerations of the motion due to a seismic event.
@@ -351,9 +475,8 @@ $t_0$ such that $g(0,t_0,\omega) \leq 10^{-8}$ for these functions.
   \] 
 Note that the spread of the Gaussian function (often denoted $\sigma$) is related to $\omega$ by
 $\sigma = 1 / \omega$. A plot of the Gaussian time-function is shown in Figure~\ref{fig:gaussians}.
+
 \subsection{GaussianInt (or Erf)}\label{gaussianint}
-The GaussianInt function is often used in earthquake modeling since it leads to a permanent
-displacement.
 \[
 g(t,t_0,\omega) = \dfrac{\omega}{\sqrt{2 \pi}} \int_{-\infty}^t e^{-\omega^2 (\tau - t_0)^2/2}\,d\tau.
 \] 
@@ -378,9 +501,9 @@ A plot of the Ricker time-function is shown in Figure~\ref{fig:rickers}.
   g(t,t_0,\omega) = (t - t_0) e^{- \pi^2 \omega^2 (t - t_0)^2}.
   \]
 RickerInt is the time integral of the Ricker function, and is proportional to the time-derivative of
-the Gaussian function. The RickerInt function is sometimes used in seismic exploration
-simulations. Since the RickerInt function tends to zero for large times, it does not lead to any
-permanent displacements. A plot of the RickerInt time-function is shown in Figure~\ref{fig:rickers}.
+the Gaussian function. Since the RickerInt function tends to zero for large times, it does not lead
+to any permanent displacements. A plot of the RickerInt time-function is shown in
+Figure~\ref{fig:rickers}.
 \begin{figure}
 \begin{centering}
   \includegraphics[width=0.4\linewidth]{f3-ricker.ps}
@@ -392,8 +515,6 @@ permanent displacements. A plot of the RickerInt time-function is shown in Figur
 %
 \subsection{Brune} 
  \label{brune}
-The Brune function has one continuous derivative but its second derivative is discontinuous at
-$t=t_0$,
 \[
  g(t,t_0,\omega) = \left\{
 \begin{array}{ll} 
@@ -402,25 +523,28 @@ $t=t_0$,
 \end{array}
 \right.
 \]
-The Brune function is often used in earthquake modeling.
+Note that the Brune function only has one continuous derivative. Because its second derivative is discontinuous at
+$t=t_0$, this function can generate noisy numerical solutions. We recommend filtering all computed time
+series, or using the {\bf prefilter} command to remove any unresolved motions.
+
 \subsection{BruneSmoothed}
-The BruneSmoothed function has three continuous derivatives at
-$t=t_0$, but is otherwise close to the Brune function:
+The BruneSmoothed function has three continuous derivatives at $t=t_0$, but is otherwise similar to
+the Brune function,
 \[
  g(t,t_0,\omega) = \left\{
 \begin{array}{ll} 
 0, & t < t_0, \\ 
 1 - e^{-\omega(t-t_0)}\left[ 1+\omega(t-t_0) + \dfrac{1}{2}(\omega(t-t_0))^2\right. & \\
-\quad \left.-\,\dfrac{3}{2x_0}( \omega(t-t_0))^3  + \dfrac{3}{2x_0^2}( \omega(t-t_0))^4 -
- \dfrac{1}{2x_0^3}( \omega(t-t_0))^5 \right], & 0< \omega (t-t_0) < x_0,\\
-1 - e^{-\omega(t-t_0)}( 1+\omega(t-t_0) ), & \omega (t-t_0) > x_0.
+\quad \left.-\,\dfrac{3}{2\tau_0}( \omega(t-t_0))^3  + \dfrac{3}{2\tau_0^2}( \omega(t-t_0))^4 -
+ \dfrac{1}{2\tau_0^3}( \omega(t-t_0))^5 \right], & 0< \omega (t-t_0) < \tau_0,\\
+1 - e^{-\omega(t-t_0)}( 1+\omega(t-t_0) ), & \omega (t-t_0) > \tau_0.
 \end{array}
 \right.
 \]
-The parameter is fixed to $x_0 = 2.31$. Plots of the Brune and BruneSmoothed time-functions are
-shown in Figure~\ref{fig:brunes}. Since the BruneSmoothed function has three continuous derivatives,
-it generates less high frequency noise. Compared to the Brune function, the BruneSmoothed function
-gives better accuracy at a given grid resolution
+The parameter $\tau_0$ in the above formula is fixed to the value $2.31$. Plots of the Brune and
+BruneSmoothed time-functions are shown in Figure~\ref{fig:brunes}. Since the BruneSmoothed function
+has three continuous derivatives, it generates less high frequency noise than the Brune function and
+gives better accuracy for a given grid resolution.
 \begin{figure}
 \begin{centering}
   \includegraphics[width=0.4\linewidth]{f9-brune.ps}
@@ -432,7 +556,7 @@ gives better accuracy at a given grid resolution
 
 \subsection{Liu}
 \renewcommand{\arraystretch}{1.5}
-This function was given in a paper by Liu et al., \cite{liuetal_2006}. 
+This function was given in the paper by Liu et al., \cite{liuetal_2006}. 
 It is defined by 
 \[
 g(t,t_0,\omega) = \left\{ 
@@ -530,15 +654,13 @@ Figure~\ref{fig:rampandsmoothwave}.
 \[
 g(t,t_0,\omega) = \left\{ 
 \begin{array}{ll} 
-0, & t <
-t_0,\\ 
--1024(\omega(t-t_0))^{10}+5120(\omega(t-t_0))^9-10240(\omega(t-t_0))^8\\ 
-\hphantom{-}+\,10240(\omega(t-t_0))^7-5120(\omega(t-t_0))^6+1024(\omega(t-t_0))^5,& t_0 \leq t \leq
-t_0+1/\omega,\\ 
+0, & t < t_0,\\ 
+1024\,\omega^5(t-t_0)^5 (1 - \omega(t-t_0))^5,& t_0 \leq t \leq t_0+1/\omega,\\ 
 0, & t > t_0 + 1/\omega.
 \end{array}
 \right.
 \]
+The VerySmoothBump function satisfies $0\leq g\leq 1$. It has four continuous derivatives.
 A plot of the VerySmoothBump time-function is shown in Figure~\ref{fig:verysmoothbump}.
 \begin{figure}
 \begin{centering}
@@ -549,6 +671,24 @@ A plot of the VerySmoothBump time-function is shown in Figure~\ref{fig:verysmoot
 \end{figure}  
 %
 \subsection{C6SmoothBump} 
+\[
+g(t,t_0,\omega) = \left\{ 
+\begin{array}{ll} 
+0, & t < t_0,\\ 
+51480\, \omega^7 (t-t_0)^7 (1- \omega(t-t_0))^7, & t_0 \leq t \leq t_0 + 1/\omega,\\ 
+0, & t > t_0 + 1/\omega.
+\end{array}
+\right.
+\]
+The C6SmoothBump function has six continuous derivatives and integrates to one.
+A plot of the C6SmoothBump time-function is shown in Figure~\ref{fig:c6smoothbump}.
+\begin{figure}
+\begin{centering}
+  \includegraphics[width=0.9\linewidth]{f12-c6smoothbump.eps}
+  \caption{C6SmoothBump with $\omega=2$ and $t_0=0$.}
+  \label{fig:c6smoothbump}
+\end{centering}
+\end{figure}  
 %
 \subsection{GuassianWindow}
 \[
@@ -572,36 +712,156 @@ function, then
 \begin{equation}\label{eq:dirac}
 \int f(t)\delta(t-\tau)\, dt = f(\tau).
 \end{equation}
-We discretize the Dirac distribution on a grid with constant time step $\Delta_t>0$, $t_n =
-n\Delta_t$. We obtain the discrete time series $d_n$, $n=0,1,2,\ldots$ by imposing moment conditions
-such that \eqref{eq:dirac} is satisfied for all polynomial functions $f(t)=t^q$, $q=0,1,\ldots,Q$,
-in the sense
+We discretize the Dirac distribution on a grid $t_n = n\Delta_t$, where $\Delta_t>0$ is the constant
+time step used by the solver of the elastic wave equation. We obtain the discrete time series $d_n$,
+$n=0,1,2,\ldots$ by imposing moment conditions such that \eqref{eq:dirac} is satisfied for all
+polynomial functions $f(t)=t^q$, $q=0,1,\ldots,Q$, in the sense
 \[
 \Delta_t \sum_{n=0}^\infty d_n t_n^q = \tau^q,\quad q=0,1,\ldots,Q. 
 \]
-This leads to $Q+1$ moment conditions. We make the specification of the discrete grid function unique
+This leads to $Q+1$ conditions for the coefficients $d_n$. The specification of $d_n$ is made unique
 by enforcing $d_n=0$ except at $Q+1$ consecutive grid points surrounding $t=\tau$. This procedure is
-similar to our spatial discretization of point force and moment tensor sources.
+similar to our spatial discretization of point force and moment tensor sources, see~\cite{PetSjo-10}
+for details.
 
 The discretized Dirac distribution triggers all frequencies on the mesh, including completely
-unphysical, unresolved, motions. The numerical solution is therefore meaningless unless it is filtered
-to remove the unresolved motions. The filtering can either be done after the simulation is completed,
-or by using the {\bf prefilter} command.
+unresolved and unphysical motions. The numerical solution is therefore meaningless unless it is
+filtered to remove the unresolved motions. The filtering can either be done after the simulation is
+completed, or by using the {\bf prefilter} command.
 
 \section{Discrete time function}
 Instead of using one of the pre-defined time functions, you can alternatively specify an arbitrary
-time dependence as a discrete time series. The format of the file is decribed in...
+time dependence as a discrete time series. The format of the file is decribed
+in~\ref{sec:discrete-time-function-format}. 
+
+The discrete time function constructs a quintic (5th order) spline function that interpolates the
+given function values $g_j = g(\tau_j)$, for $j=0,1,\ldots, N_s-1$, where $N_s\geq 7$. The function
+values must be specified on an equidistant grid, $\tau_j = t_0 + j \delta_t$, where
+$\delta_t>0$. Note that the time step can be chosen independently of the time step in the solver of
+the elastic wave equation. The start time, $t_0$, can also have an arbitrary value. This procedure
+results in six polynomial coefficients for each interval $\tau_j\leq t <\tau_{j+1}$. The
+coefficients are chosen such that g(t) becomes four times continuously differentiable.
+
+Because the elastic wave equation is solved for $0\leq t\leq T$, it is necessary to evaluate the
+discrete time function in this interval. If $\tau_0>0$, the discrete time function uses the polynomial
+coefficients corresponding to the first interval $[\tau_0,\tau_1]$ for all $t<\tau_0$. Similarily,
+if $\tau_{N_s-1}<T$, the coefficients for the last interval are used for $t>\tau_{N_s-1}$. To avoid
+unexpected results due to extrapolation, we recommend specifying the discrete time function for all
+$t\in[0,T]$. To also avoid incompatibilities between the forcing and the homogeneous initial conditions,
+we recommend setting $g_j=0$ for all $\tau_j\leq 0$.
+
+\section{How fine does the grid need to be?}\label{sec:grid-size}
+\index{grid size}
+
+When preparing the input file, the most difficult parameter to choose is probably the grid size
+$h$. It is extremely important to use a grid size which is sufficiently small, because you must resolve
+the waves that are generated by the source. On the other hand you don't want to use an
+unnecessarily small grid size, because both the execution time and the memory requirements
+increase with decreasing grid size, see Section~\ref{sec:performance}.
+
+The number of grid points per shortest wavelength, $P$, is a normalized measure of how well a
+solution is resolved on the computational grid. Since the shear waves have the lowest velocities and
+a shorter wave length than the compressional waves, the shortest wave length $L_{min}$ can be
+estimated by
+\[
+ L_{min} = \dfrac{\min V_s}{f_{max}},
+\]
+where $V_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
+in the time function $g(t)$. Hence the number of grid points per wave length equals $L_{min}/h$,
+which is given by
+%
+\begin{equation}\label{eq:resolutionformula}
+  P = \dfrac{\min V_s}{h\,f_{max}}. 
+\end{equation}
+Note that $h$ needs to be made smaller to maintain the same value of $P$ if either $V_s$ is
+decreased or if the frequency is increased. In formula (\ref{eq:resolutionformula}), $\min V_s$ is
+found from the material properties and $h$ is determined by the input grid specification.  The
+frequency spectrum of the solution is determined by the frequency spectrum of the time
+function(s) in the source term(s).
+
+Figure~\ref{fig:fouriers} displays the absolute values of the Fourier transforms of the
+functions Gaussian, RickerInt, Ricker, and the time derivative of the Brune
+function. Inspection of the mathematical definitions of the Gaussian and Brune functions
+shows that the {\tt freq} parameter specifies the angular frequency for these
+functions. The relation between the fundamental frequency $f_0$ and the {\tt freq} parameter is
+given by
+\begin{equation}\label{eq:angular-scaling}
+f_0 = \left\{ \begin{array}{ll}
+ {\tt freq},& \mbox{for Ricker, RickerInt, and VerySmoothBump},\\
+ \dfrac{\tt freq}{2\pi},& \mbox{for Liu, Brune, BruneSmoothed, Gaussian, GaussianInt, and GaussianWindow}.
+\end{array}\right.
+\end{equation}
+The plots in Figure~\ref{fig:fouriers} were made with frequency parameter {\tt freq}=0.25 for the
+Ricker and RickerInt functions and frequency parameter {\tt freq}=1.5 for the Gaussian and
+$d/dt$(Brune) functions. Hence, $f_0\approx 0.25$ for all functions in
+Figure~\ref{fig:fouriers}. Note that the Fourier
+transform of the Brune function decays much slower than the other functions for high
+frequencies. This is due to its lack of smoothness at $t=t_0$.
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figfouriers.ps}
+\caption{ Magnitude of the Fourier transform of the derivative of the Brune (dark
+  blue), the Gaussian (green), the RickerInt (red), and the Ricker (light blue)
+  time-functions. Here {\tt freq}=1.5 for the Gaussian and the derivative of the Brune
+  function, and {\tt freq}=0.25 for Ricker and RickerInt.}
+\label{fig:fouriers}
+\end{center}
+\end{figure}
+
+It is the upper power (highest significant) frequency in the time function that shall be used in
+(\ref{eq:resolutionformula}) to estimate the number of grid points per wave length. For practical
+purposes $f_{max}$ can be defined as the frequency where the amplitude of the Fourier
+transform falls below 5 \% of its max value. We have
+\begin{equation}\label{eq:upper-power-freq}
+f_{max} \approx \begin{cases}2.5 f_0,&\mbox{Ricker, RickerInt, Gaussian time functions},\\
+  4 f_0,&\quad\mbox{Brune time function}.
+\end{cases}
+\end{equation}
+In other words, simulations using the Brune function are harder to resolve on the grid and need much
+more grid points to give reliable results.
+
+Our experience is that \emph{SW4} gives accurate results for 
+\[
+P \geq ??,
+\]
+but the exact number depends on the distance between the source and the reciever. Note that the
+relation between the fundamental frequency $f_0$ and the upper power frequency $f_{max}$ in
+(\ref{eq:upper-power-freq}) is very important. For other time functions, $f_{max}$ can be estimated
+using the matlab/octave scripts fcnplot and ftfcnplot in the {\tt tools} directory. A lower number
+for $P$ can be used in some practical situations. The best way of checking the accuracy in
+a numerical solution is to repeat the calculation on a finer mesh, even though this approach
+can become computationally expensive. 
+
+We finally remark that the ratio between the compressional and shear velocity, $V_P/V_S$, can have a
+significant influence on the accuracy of surface waves, see the paper by Kreiss and
+Petersson~\cite{KrePet-12} for details.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{The material model}
-\chapter{Topography} \label{sec:topography}
+\chapter{The material model (not documented)} \label{sec:material}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Topography (not documented)} \label{sec:topography}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\chapter{Mesh refinement} \label{sec:mesh-ref}
-%\chapter{Attenuation}\label{sec:attenuation}
-\chapter{Output options}
-\chapter{Examples} \label{sec:examples}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Keywords in the input file}\label{chap:keywords}
+%\chapter{Attenuation}\label{sec:attenuation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Output options (not documented)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Examples (not documented)} \label{sec:examples}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Keywords in the input file (in progress)}\label{chap:keywords}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The syntax of the input file is
 \begin{verbatim}
@@ -612,32 +872,35 @@ command2 parameter1=value1 parameter2=value2 ... parameterN=valueN
 \end{verbatim}
 Each command starts at the beginning of the line and ends at the end of the same line. Blank and
 comment lines are disregarded. A comment is a line starting with a \# character. The order of the
-parameters within each command is arbitrary. The material commands (block, ifile, pfile, and efile)
+parameters within each command makes no difference. The material commands (block, ifile, pfile, and efile)
 are applied in the order they appear. The ordering of all other commands is inconsequential. Note
 that the entire input file is read before the simulation starts.
 
-Parameter values are either integers (-2,0,5,...), floating point numbers (20.5, -0.05, 3.4e4), or strings
+Parameter values are either integers (-2,0,5,...), real numbers (20.5, -0.05, 3.4e4), or strings
 (earthquake, my-favorite-simulation). Note that there must be no spaces around the = signs and
 strings are given without quotation marks and must not contain spaces. Depending on the specific
 command, some parameter values are required to fall within specified ranges.
 
 A breif description of all commands is given in the following sections. The commands marked as
 [required] must be present in all \emph{SW4} input files, while those marked as [optional] are just
-that. Other commands, such as those specifying the material model can be given by (a combination of)
+that. Other commands, such as those specifying the material model can be given by a combination of
 different commands (block, pfile, efile, or ifile). Note that some required commands must occur
 exactly once (grid, time). Some optional commands should not occur more than once (topography,
 fileio, prefilter, globalmaterial, gmt, developer). Any number of output commands can
 be given (receiver, image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight,
 testlamb, testpointsource), at least one source must be specified, and the material must be specifed
 by at least one of the (block, pfile, ifile, efile) commands. Also note that the test modes are
-mutually exclusive. Not all these rules are currently enforced by the parser, so be prepared for the
-unexpected if they are violated by the command file you are using.
+mutually exclusive. Not all of these rules are currently enforced by the parser, so be prepared for the
+unexpected if they are violated.
 
 Note that the same command parser is used for \emph{SW4} and its companion code \emph{SW4opt}, which
-calculates source parameters from observations. Here we only document the commands and options
+calculates source parameters from seismic observations. Here we only document the commands and options
 that are relevant for \emph{SW4}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Basic commands}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{fileio [optional]}
 \index{command!fileio}
@@ -700,11 +963,11 @@ of the computational domain. For example, when {\bf h=...} is given, you can not
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf grid command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default}\\ \hline \hline
-x & physical dimension of grid in the x-direction & float & m & none\\ \hline
-y & physical dimension of grid in the y-direction & float & m & none\\ \hline
-z & physical dimension of grid in the z-direction & float & m & none\\ \hline
+x & physical dimension of grid in the x-direction & real & m & none\\ \hline
+y & physical dimension of grid in the y-direction & real & m & none\\ \hline
+z & physical dimension of grid in the z-direction & real & m & none\\ \hline
 \hline
-h & grid spacing & float & m & none\\ \hline
+h & grid spacing & real & m & none\\ \hline
 \hline
 nx & number of grid points in the x-direction & int & none & none\\ \hline
 ny & number of grid points in the y-direction & int & none & none\\ \hline	
@@ -723,11 +986,11 @@ keywords. See the Proj4 documentation for details.
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf grid command parameters (geographical coordinates and projection)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default}\\ \hline \hline
-az & clockwise angle from North to the x-axis & float & degrees & 135.0 \\ \hline
-lat & latitude geographical coordinate of the origin & float & degrees & 37.0 \\ \hline
-lon & longitude geographical coordinate of the origin & float & degrees & -118.0 \\ \hline
-mlat & meters per degree of latitude (spheroidal projection) & float & meters & 111,319.5 \\ \hline
-mlon & meters per degree of longitude (spheroidal projection) & float & meters & None \\ \hline
+az & clockwise angle from North to the x-axis & real & degrees & 135.0 \\ \hline
+lat & latitude geographical coordinate of the origin & real & degrees & 37.0 \\ \hline
+lon & longitude geographical coordinate of the origin & real & degrees & -118.0 \\ \hline
+mlat & meters per degree of latitude (spheroidal projection) & real & meters & 111,319.5 \\ \hline
+mlon & meters per degree of longitude (spheroidal projection) & real & meters & None \\ \hline
 proj & name of  projection (see proj4 documentation) & string & None & utm \\ \hline
 ellps & name of ellipse (see proj4 documentation) & string & None & WGS84 \\ \hline
 \end{tabular}
@@ -759,13 +1022,13 @@ time stamped with that datum. The UTC time stamp is essential for correctly alig
 observed data when solving the inverse problem with \emph{SW4opt}.
 
 Note that the \verb+prefilter+ command does {\it not} modify the start time. This is a change from
-\emph{WPP}. See \S\ref{keyword:prefilter} for a discussion.
+\emph{SW4}. See \S\ref{keyword:prefilter} for a discussion.
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf time command parameters}\\ \hline
 {\bf Option} & {\bf Description} & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline \hline
-t & duration of simulation & float & s	& none \\ \hline
+t & duration of simulation & real & s	& none \\ \hline
 steps & number of cycles (time-steps) to advance & int & none & none\\ \hline
 utcstart & month/day/year:hour:minute:second.millisecond & string & datum & none\\ \hline
 \end{tabular}
@@ -818,17 +1081,17 @@ force or a point moment tensor source and should follow the following rules:
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf source command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-x & x position of the source $(\geq 0)$ & float & m & none \\ \hline
-y & y position of the source $(\geq 0)$ & float & m & none \\ \hline
-z & z position of the source $(\geq 0)$ & float & m & none \\ \hline
+x & x position of the source $(\geq 0)$ & real & m & none \\ \hline
+y & y position of the source $(\geq 0)$ & real & m & none \\ \hline
+z & z position of the source $(\geq 0)$ & real & m & none \\ \hline
 \hline
-depth & depth of the source (relative to z=0) & float & m & none \\ \hline
-topodepth & depth of the source (below free surface) $(\geq 0)$ & float & m & none \\ \hline
-lat & latitude geographical coordinate of the source & float & degrees & none \\ \hline
-lon & longitude geographical coordinate of the source & float & degrees & none \\ \hline
+depth & depth of the source (relative to z=0) & real & m & none \\ \hline
+topodepth & depth of the source (below free surface) $(\geq 0)$ & real & m & none \\ \hline
+lat & latitude geographical coordinate of the source & real & degrees & none \\ \hline
+lon & longitude geographical coordinate of the source & real & degrees & none \\ \hline
 \hline
-t0 & offset in time $(\geq 0)$ & float & s & 0.0 \\ \hline
-freq & frequency $(>0)$ (not used for Dirac)& float & Hz or rad/s & 1.0 \\ \hline
+t0 & offset in time $(\geq 0)$ & real & s & 0.0 \\ \hline
+freq & frequency $(>0)$ (not used for Dirac)& real & Hz or rad/s & 1.0 \\ \hline
 type & Name of time function & string & none & RickerInt \\ \hline
 ncyc & Number of cycles (must be specified for the GaussianWindow function) & int & none & 0
 \\ \hline
@@ -846,17 +1109,17 @@ functions are described in \S~\ref{sec:predefined}.  \index{source time dependen
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf source command parameters (point moment tensor)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-m0 & moment amplitude & float & Nm & 1.0 \\ \hline
-mxx & xx-component of the moment tensor & float & Nm & 0.0 \\ \hline
-myy & yy-component of the moment tensor & float & Nm & 0.0 \\ \hline
-mzz & zz-component of the moment tensor & float & Nm & 0.0 \\ \hline
-mxy & xy-component of the moment tensor & float & Nm & 0.0 \\ \hline
-mxz & xz-component of the moment tensor & float & Nm & 0.0 \\ \hline
-myz & yz-component of the moment tensor & float & Nm & 0.0 \\ \hline
+m0 & moment amplitude & real & Nm & 1.0 \\ \hline
+mxx & xx-component of the moment tensor & real & Nm & 0.0 \\ \hline
+myy & yy-component of the moment tensor & real & Nm & 0.0 \\ \hline
+mzz & zz-component of the moment tensor & real & Nm & 0.0 \\ \hline
+mxy & xy-component of the moment tensor & real & Nm & 0.0 \\ \hline
+mxz & xz-component of the moment tensor & real & Nm & 0.0 \\ \hline
+myz & yz-component of the moment tensor & real & Nm & 0.0 \\ \hline
 \hline
-strike & Aki and Richards strike angle & float & degrees & none \\ \hline
-dip & Aki and Richards dip angle & float & degrees & none \\ \hline
-rake & Aki and Richards rake angle & float & degrees & none \\ \hline
+strike & Aki and Richards strike angle & real & degrees & none \\ \hline
+dip & Aki and Richards dip angle & real & degrees & none \\ \hline
+rake & Aki and Richards rake angle & real & degrees & none \\ \hline
 \end{tabular}
 \end{center}
 \index{source parameters!moment - m0, mxx, myy, mzz, mxy, mxz, myz}
@@ -865,10 +1128,10 @@ rake & Aki and Richards rake angle & float & degrees & none \\ \hline
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf source command parameters (point force)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-f0 & point force amplitude & float & N & 1.0 \\ \hline
-fx & forcing function in the x direction & float & N & 0.0 \\ \hline
-fy & forcing function in the y direction & float & N & 0.0 \\ \hline
-fz & forcing function in the z direction & float & N & 0.0 \\ \hline
+f0 & point force amplitude & real & N & 1.0 \\ \hline
+fx & forcing function in the x direction & real & N & 0.0 \\ \hline
+fy & forcing function in the y direction & real & N & 0.0 \\ \hline
+fz & forcing function in the z direction & real & N & 0.0 \\ \hline
 \end{tabular}
 \end{center}
 \index{source parameters!point force - f0, fx, fy, fz}
@@ -905,8 +1168,8 @@ warning message is printed to stdout if the time shift ({\bf t0}) in the source 
 \multicolumn{5}{|c|}{\bf prefilter command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ 
 \hline \hline
-fc1 & first (low) corner frequency in the filter $(>0)$   & float  & Hz & 0.1 \\ \hline
-fc2 & second (high) corner frequency in the filter $(>0)$ & float  & Hz & 1.0 \\ \hline
+fc1 & first (low) corner frequency in the filter $(>0)$   & real  & Hz & 0.1 \\ \hline
+fc2 & second (high) corner frequency in the filter $(>0)$ & real  & Hz & 1.0 \\ \hline
 type & lowpass or bandpass                                & string & None & bandpass \\ \hline
 passes & number of passes (1 or 2) & int & None & 2 \\ \hline
 order  & order of filter (1-10) & int & None & 2 \\ \hline
@@ -955,11 +1218,11 @@ material commands.
 %% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 %% \multicolumn{5}{|c|}{\bf attenuation command parameters}\\ \hline
 %% \bf{Option} & \bf{Description} & \bf{Type} & \bf{Unit} & \bf{Default} \\ \hline \hline
-%% phasefreq & The frequency ($>0$) at which $V_S$ and $V_P$ are specified & float & Hz & 1.0\\ \hline
+%% phasefreq & The frequency ($>0$) at which $V_S$ and $V_P$ are specified & real & Hz & 1.0\\ \hline
 %% nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (between 1 and 8) & int & None & 3\\ \hline
-%% maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & float & Hz & 2.0 \\ \hline
+%% maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & real & Hz & 2.0 \\ \hline
 %% minppw    & Calculate the upper frequency limit based on this number of grid points per shortest
-%% wave length ($>0$)& float & None & None \\ \hline
+%% wave length ($>0$)& real & None & None \\ \hline
 %% \end{tabular}
 %% \end{center}
 %% If you specify the \verb+minppw+ option, the upper frequency limit is calculated based on the
@@ -1006,24 +1269,24 @@ different from {\bf vp} when $z_1\, {\bf vpgrad}$ is large.
 \multicolumn{5}{|c|}{\bf block command parameters}\\ \hline
 {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
 \hline
-vp          & P-wave velocity           & float     & m/s      & none \\ \hline
-vs          & S-wave velocity           & float     & m/s      & none \\ \hline
-rho         & density                   & float     & kg/m$^3$ & none \\ \hline
-qp or Qp    & P-wave quality factor     & float     & none     & none \\ \hline
-qs or Qs    & S-wave quality factor     & float     & none     & none \\ \hline
-vpgrad      & vertical gradient for vp  & float     & s$^{-1}$  & none \\ \hline
-vsgrad      & vertical gradient for vs  & float     & s$^{-1}$  & none \\ \hline
-rhograd     & vertical gradient for rho & float     & kg/m$^4$  & none \\ \hline
-%qp          & P-wave quality factor     & float     & none \\ \hline
-%qs          & S-wave quality factor     & float     & none \\ \hline
-x1          & minimum x-dim for the box shaped sub-region & float & m & -max x \\ \hline
-x2          & maximum x-dim for the box shaped sub-region & float & m & 2 max x \\ \hline
+vp          & P-wave velocity           & real     & m/s      & none \\ \hline
+vs          & S-wave velocity           & real     & m/s      & none \\ \hline
+rho         & density                   & real     & kg/m$^3$ & none \\ \hline
+qp or Qp    & P-wave quality factor     & real     & none     & none \\ \hline
+qs or Qs    & S-wave quality factor     & real     & none     & none \\ \hline
+vpgrad      & vertical gradient for vp  & real     & s$^{-1}$  & none \\ \hline
+vsgrad      & vertical gradient for vs  & real     & s$^{-1}$  & none \\ \hline
+rhograd     & vertical gradient for rho & real     & kg/m$^4$  & none \\ \hline
+%qp          & P-wave quality factor     & real     & none \\ \hline
+%qs          & S-wave quality factor     & real     & none \\ \hline
+x1          & minimum x-dim for the box shaped sub-region & real & m & -max x \\ \hline
+x2          & maximum x-dim for the box shaped sub-region & real & m & 2 max x \\ \hline
 \hline
-y1          & minimum y-dim for the box shaped sub-region & float & m & -max y \\ \hline
-y2          & maximum y-dim for the box shaped sub-region & float & m & 2 max y \\ \hline
+y1          & minimum y-dim for the box shaped sub-region & real & m & -max y \\ \hline
+y2          & maximum y-dim for the box shaped sub-region & real & m & 2 max y \\ \hline
 \hline
-z1          & minimum z-dim for the box shaped sub-region & float & m & -max z \\ \hline
-z2          & maximum z-dim for the box shaped sub-region & float & m & 2 max z \\ \hline
+z1          & minimum z-dim for the box shaped sub-region & real & m & -max z \\ \hline
+z2          & maximum z-dim for the box shaped sub-region & real & m & 2 max z \\ \hline
 \hline
 absdepth    & {\tt z1} and {\tt z2} relative to topography (0), or absolute $z$-coordinate (1) & int
 & none & 0 \\ \hline 
@@ -1063,11 +1326,11 @@ logfile    & name of log file                                     & string   & n
 \multicolumn{5}{|c|}{\bf efile command parameters (part 2)}\\ \hline
 \bf{Option} & \bf{Description}                                & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
 \hline
-vsmin   & minimum shear speed $V_S$         & float    & m/s    & 0 \\ \hline
-vpmin   & minimum compresisonal speed $V_P$ & float    & m/s    & 0 \\ \hline 
+vsmin   & minimum shear speed $V_S$         & real    & m/s    & 0 \\ \hline
+vpmin   & minimum compresisonal speed $V_P$ & real    & m/s    & 0 \\ \hline 
 \hline
 query      & type of query to perform                         & string  & none   & MAXRES \\ \hline
-resolution & average properties over this distance (for query=FIXEDRES) & float  & m      & $h$ \\ \hline
+resolution & average properties over this distance (for query=FIXEDRES) & real  & m      & $h$ \\ \hline
 access     & can be set to parallel or serial                 & string  & none   &  parallel \\ \hline
 \end{tabular}
 \end{center}
@@ -1115,9 +1378,9 @@ pfile filename=... directory=... smoothingsize=... vpmin=... vsmin=... rhomin=..
 filename      & name of input pfile                     & string  & none & none \\ \hline
 directory     & name of directory for the input pfile   & string  & none & . \\ \hline
 smoothingsize & smooth data over stencil of this width  & int     & none & 5 \\ \hline
-vpmin         & minimum threshold value for $V_P$       & float   & m/s  & 0  \\ \hline
-vsmin         & minimum threshold value for $V_S$       & float   & m/s  & 0  \\ \hline
-rhomin        & minimum threshold value for density     & float   & m/s  & 0  \\ \hline
+vpmin         & minimum threshold value for $V_P$       & real   & m/s  & 0  \\ \hline
+vsmin         & minimum threshold value for $V_S$       & real   & m/s  & 0  \\ \hline
+rhomin        & minimum threshold value for density     & real   & m/s  & 0  \\ \hline
 flatten       & Flatten the earth model (T or F)        & string  & none & F  \\ \hline
 style         & Lat-long or Cartesian grid data         & string  & none & geographic \\ \hline
 \end{tabular}
@@ -1165,9 +1428,9 @@ command, see Section~\ref{sec:grenoble} for an example.
 \multicolumn{4}{|c|}{\bf material command parameters (constants)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
 id & material ID number $>0$         & int & None  \\ \hline
-vp & P-wave velocity & float & None \\ \hline
-vs & S-wave velocity & float & None \\ \hline
-rho & Density & float & None \\ \hline
+vp & P-wave velocity & real & None \\ \hline
+vs & S-wave velocity & real & None \\ \hline
+rho & Density & real & None \\ \hline
 qp or Qp & P-wave quality factor & None & None \\ \hline
 qs or Qs & S-wave quality factor & None & None \\ \hline
 \end{tabular}
@@ -1177,9 +1440,9 @@ qs or Qs & S-wave quality factor & None & None \\ \hline
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf material command parameters (gradients)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-vpgrad & P-velocity gradient & float & 0.0 \\ \hline
-vsgrad & S-velocity gradient & float & 0.0 \\ \hline
-rhograd & Density gradient   & float & 0.0 \\ \hline
+vpgrad & P-velocity gradient & real & 0.0 \\ \hline
+vsgrad & S-velocity gradient & real & 0.0 \\ \hline
+rhograd & Density gradient   & real & 0.0 \\ \hline
 \end{tabular}
 \end{center}
 \index{material parameters!vpgrad, vsgrad, rhograd}
@@ -1187,12 +1450,12 @@ rhograd & Density gradient   & float & 0.0 \\ \hline
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf material command parameters (higher order)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-vp2 & P-velocity quadratic coefficient & float & 0.0 \\ \hline
-vs2 & S-velocity quadratic coefficient & float & 0.0 \\ \hline
-rho2 & Density quadratic coefficient   & float & 0.0 \\ \hline
-vpsqrt & P-velocity $\sqrt{z}$ coefficient & float & 0.0 \\ \hline
-vssqrt & S-velocity $\sqrt{z}$ coefficient & float & 0.0 \\ \hline
-rhosqrt & Density $\sqrt{z}$ coefficient    & float & 0.0 \\ \hline
+vp2 & P-velocity quadratic coefficient & real & 0.0 \\ \hline
+vs2 & S-velocity quadratic coefficient & real & 0.0 \\ \hline
+rho2 & Density quadratic coefficient   & real & 0.0 \\ \hline
+vpsqrt & P-velocity $\sqrt{z}$ coefficient & real & 0.0 \\ \hline
+vssqrt & S-velocity $\sqrt{z}$ coefficient & real & 0.0 \\ \hline
+rhosqrt & Density $\sqrt{z}$ coefficient    & real & 0.0 \\ \hline
 \end{tabular}
 \end{center}
 \index{material parameters!vp2, vs2, rho2, vpsqrt, vssqrt, rhosqrt}
@@ -1214,8 +1477,8 @@ to all grid points.
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf globalmaterial command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-vpmin & Minimum P-wave velocity $(>0)$ & float & None \\ \hline
-vsmin & Minimum S-wave velocity $(>0)$ & float & None \\ \hline
+vpmin & Minimum P-wave velocity $(>0)$ & real & None \\ \hline
+vsmin & Minimum S-wave velocity $(>0)$ & real & None \\ \hline
 \end{tabular}
 \end{center}
 \index{globalmaterial parameters!vpmin, vsmin}
@@ -1275,9 +1538,9 @@ input & Type of input: grid, cartesian, efile or gaussian & string & none & none
 %
 file & File name if input=grid or input=cartesian & string & none & none\\ \hline
 %
-resolution & Resolution for querying the efile if input-efile & float & meters & none \\ \hline
+resolution & Resolution for querying the efile if input-efile & real & meters & none \\ \hline
 %
-zmax & z coordinate of the interface between  Cartesian and curvilinear grid& float &  m & 0\\ \hline
+zmax & z coordinate of the interface between  Cartesian and curvilinear grid& real &  m & 0\\ \hline
 %
 order & Interpolation order (2-6) & int & none & 6\\ \hline
 %
@@ -1290,11 +1553,11 @@ smooth & Number of smoothing iterations of topography grid surface & int & none 
 \multicolumn{5}{|c|}{\bf topography command parameters (Gaussian Hill)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default}\\ \hline \hline
 %
-gaussianAmp & Amplitude for a Gaussian hill topography & float & meters & 0.05\\ \hline	
-gaussianXc & x-coordinate of center for a Gaussian Hill & float & meters & 0.5\\ \hline	
-gaussianYc & y-coordinate of center for a Gaussian Hill & float & meters & 0.5 \\ \hline
-gaussianLx & Width of the Gaussian hill in the x-direction & float & meters & 0.15 \\ \hline
-gaussianLy & Width of the Gaussian hill in the y-direction & float & meters & 0.15 \\ \hline
+gaussianAmp & Amplitude for a Gaussian hill topography & real & meters & 0.05\\ \hline	
+gaussianXc & x-coordinate of center for a Gaussian Hill & real & meters & 0.5\\ \hline	
+gaussianYc & y-coordinate of center for a Gaussian Hill & real & meters & 0.5 \\ \hline
+gaussianLx & Width of the Gaussian hill in the x-direction & real & meters & 0.15 \\ \hline
+gaussianLy & Width of the Gaussian hill in the y-direction & real & meters & 0.15 \\ \hline
 \end{tabular}
 \end{center}
 \index{topography parameters!gaussianAmp, gaussianXc, gaussian Yc, gaussianLx, gaussianLy}
@@ -1319,7 +1582,7 @@ gaussianLy & Width of the Gaussian hill in the y-direction & float & meters & 0.
 %% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 %% \multicolumn{5}{|c|}{\bf refinement command parameters}\\ \hline
 %% \bf{Option} & \bf{Description} & \bf{Type} & \bf{Unit} & \bf{Default} \\ \hline \hline
-%% zmax & maximum z-coordinate for the refinement region & float & m & None\\ \hline
+%% zmax & maximum z-coordinate for the refinement region & real & m & None\\ \hline
 %% \end{tabular}
 %% \end{center}
 %% \index{refinement parameters!zmax}
@@ -1340,18 +1603,19 @@ plug-in. The {\bf gmt} command outputs a shell script file containing the locati
 stations and the epicenter, i.e. the location of the first {\bf source} command. This shell script
 file can be used for further postprocessing by the GMT program~\cite{WesselSmithGMT}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{reciever (or sac) [optional]}
-\index{command!reciever}
+\subsection{receiver [optional]}
+\index{command!receiver}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The \verb+reciever+ command is used to save the time history of the solution at a fixed
-location in space. For backwards compatibility with \emph{WPP} this command can also be called
+The \verb+receiver+ command is used to save the time history of the solution at a fixed
+location in space. 
+For backwards compatibility with \emph{WPP} this command can also be called
 \verb+sac+.
 % The \verb+sac+ command is described in \S~\ref{sec:sac}.
 \begin{flushleft}
 \bf
 Syntax:\\
 \tt
-reciever x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... type=... writeEvery=... eventDate=... eventTime=... nsew=... velocity=... usgsformat=... sacformat=... variables=...
+receiver x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... type=... writeEvery=... eventDate=... eventTime=... nsew=... velocity=... usgsformat=... sacformat=... variables=...
 \\
 \bf Required parameters:\\
 \rm Location of the receiver in Cartesian or geographical coordinates.
@@ -1363,14 +1627,14 @@ The file format is described in Section~\ref{sec:sac-format}.
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf sac command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-x & x position of the receiver & float & m & none \\ \hline
-y & y position of the receiver & float & m & none \\ \hline
-z & z position of the receiver & float & m & none \\ \hline
+x & x position of the receiver & real & m & none \\ \hline
+y & y position of the receiver & real & m & none \\ \hline
+z & z position of the receiver & real & m & none \\ \hline
 \hline
-lat & latitude geographical coordinate of the receiver & float & degrees & none \\ \hline
-lon & longitude geographical coordinate of the receiver & float & degrees & none \\ \hline
-depth & depth of the receiver (below topography) & float & m & none \\ \hline
-topodepth & depth of the receiver (same as depth) & float & m & none \\ \hline
+lat & latitude geographical coordinate of the receiver & real & degrees & none \\ \hline
+lon & longitude geographical coordinate of the receiver & real & degrees & none \\ \hline
+depth & depth of the receiver (below topography) & real & m & none \\ \hline
+topodepth & depth of the receiver (same as depth) & real & m & none \\ \hline
 \end{tabular}
 \end{center}
 \index{sac parameters!location - x, y, z, lat, lon, depth, topodepth} 
@@ -1420,9 +1684,9 @@ The image file format is described in Section~\ref{sec:image-format}.
 \multicolumn{5}{|c|}{\bf image command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description}                             & \bf{Type} & \bf{Units} & \bf{Default} \\ 
 \hline \hline
-x          & x location of image plane  $(\geq 0)$    & float    & m        & none \\ \hline
-y          & y location of image plane  $(\geq 0)$    & float    & m        & none \\ \hline
-z          & z location of image plane  $(\geq 0)$    & float    & m        & none \\ \hline
+x          & x location of image plane  $(\geq 0)$    & real    & m        & none \\ \hline
+y          & y location of image plane  $(\geq 0)$    & real    & m        & none \\ \hline
+z          & z location of image plane  $(\geq 0)$    & real    & m        & none \\ \hline
 \end{tabular}
 \end{center}
 \index{image parameters!location - x, y, z}%, i, j, k}
@@ -1431,8 +1695,8 @@ z          & z location of image plane  $(\geq 0)$    & float    & m        & no
 \multicolumn{5}{|c|}{\bf image command parameters (part 2)}\\ \hline
 \bf{Option} & \bf{Description}                             & \bf{Type} & \bf{Units} & \bf{Default} \\ 
 \hline \hline
-time          & Time-level for outputting image (closest time step) $(\geq 0)$ & float  & s    & none \\ \hline
-timeInterval  & Time-level interval for outputting a series of images $(> 0)$  & float  & s    & none \\ \hline
+time          & Time-level for outputting image (closest time step) $(\geq 0)$ & real  & s    & none \\ \hline
+timeInterval  & Time-level interval for outputting a series of images $(> 0)$  & real  & s    & none \\ \hline
 cycle         & Time-step cycle to output image $(\geq 0)$                     & int    & none & none \\ \hline
 cycleInterval & Time-step cycle interval to output a series of images $(\geq 1)$ & int    & none & none \\ \hline\hline
 file          & File name header of image                                   & string & none & image \\ \hline
@@ -1462,11 +1726,11 @@ grid    & grid coordinates in the plane of visualization (\emph{e.g.} y-z plane 
 \multicolumn{2}{|c|}{\bf mode options (material)}\\ \hline
 \bf{Value} & \bf{Description} \\ 
 \hline  \hline
-rho     & density \\ \hline
-lambda  & lambda \\ \hline
-mu      & mu \\ \hline
-p       & p velocity \\ \hline
-s       & s velocity \\ \hline
+rho     & Density \\ \hline
+lambda  & 1st Lam\'e parameter \\ \hline
+mu      & 2nd Lam\'e parameter (shear modulus) \\ \hline
+p       & Compressional wave speed \\ \hline
+s       & Shear wave speed \\ \hline
 qp      & $Q_P$ quality factor \\ \hline
 qs      & $Q_S$ quality factor \\ \hline
 \end{tabular}
@@ -1563,18 +1827,18 @@ fz      & Forcing in the z-direction\\ \hline
 %% \multicolumn{5}{|c|}{\bf volimage command options (part 2)}\\ \hline
 %% {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
 %% \hline
-%% time          & simulation time to output image, will be closest depending on dt taken & float  & s    & none \\ \hline
-%% timeInterval  & simulation time interval to output series of images                    & float  & s    & none \\ \hline
+%% time          & simulation time to output image, will be closest depending on dt taken & real  & s    & none \\ \hline
+%% timeInterval  & simulation time interval to output series of images                    & real  & s    & none \\ \hline
 %% cycle         & time-step cycle to output image                                        & int    & none & none \\ \hline
 %% cycleInterval & time-step cycle interval to output a series of images                  & int    & none & none \\ \hline
 %% startTime     & only output data after this time level (only used with {\bf cycleInterval} or {\bf
-%%   timeInterval}) & float & s & -999.9 \\ \hline 
-%% x1          & minimum x-dim for the box shaped sub-region & float & m & 0 \\ \hline
-%% x2          & maximum x-dim for the box shaped sub-region & float & m & max x \\ \hline
-%% y1          & minimum y-dim for the box shaped sub-region & float & m & 0 \\ \hline
-%% y2          & maximum y-dim for the box shaped sub-region & float & m &  max y \\ \hline
-%% z1          & minimum z-dim for the box shaped sub-region & float & m & topography \\ \hline
-%% z2          & maximum z-dim for the box shaped sub-region & float & m & max z \\ \hline
+%%   timeInterval}) & real & s & -999.9 \\ \hline 
+%% x1          & minimum x-dim for the box shaped sub-region & real & m & 0 \\ \hline
+%% x2          & maximum x-dim for the box shaped sub-region & real & m & max x \\ \hline
+%% y1          & minimum y-dim for the box shaped sub-region & real & m & 0 \\ \hline
+%% y2          & maximum y-dim for the box shaped sub-region & real & m &  max y \\ \hline
+%% z1          & minimum z-dim for the box shaped sub-region & real & m & topography \\ \hline
+%% z2          & maximum z-dim for the box shaped sub-region & real & m & max z \\ \hline
 %% \end{tabular}
 %% \end{center}
 %% \index{volimage options!cycle, cycleInterval, time, timeInterval, startTime, x1, x2, y1, y2, z1, z2}
@@ -1673,14 +1937,14 @@ None
 \multicolumn{4}{|c|}{\bf twilight command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
 errorlog & Outputs error log in file twilight\_errors.dat & int & 0 \\ \hline
-omega & Wave number in exact solution                           & float & 1.0 \\ \hline
-c & Phase speed in exact solution                         & float & 1.3 \\ \hline
-phase & Solution phase coefficient                        & float & 0.0 \\ \hline
-momega & Wave number in material                          & float & 1.0 \\ \hline
-mphase & Material phase coefficient                       & float & 0.4 \\ \hline
-amprho & Density amplitude                                & float & 1.0 \\ \hline
-ampmu & Material $\mu$ amplitude                          & float & 1.0 \\ \hline
-amplambda & Material $\lambda$ amplitude                  & float & 1.0 \\ \hline
+omega & Wave number in exact solution                           & real & 1.0 \\ \hline
+c & Phase speed in exact solution                         & real & 1.3 \\ \hline
+phase & Solution phase coefficient                        & real & 0.0 \\ \hline
+momega & Wave number in material                          & real & 1.0 \\ \hline
+mphase & Material phase coefficient                       & real & 0.4 \\ \hline
+amprho & Density amplitude                                & real & 1.0 \\ \hline
+ampmu & Material $\mu$ amplitude                          & real & 1.0 \\ \hline
+amplambda & Material $\lambda$ amplitude                  & real & 1.0 \\ \hline
 \end{tabular}
 \end{center}
 \index{twilight parameters!errorlog, omega, c, phase, momega, mphase, amprho, ampmu, amplambda}
@@ -1706,11 +1970,11 @@ testlamb x=... y=... cp=... rho=... fz=...
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf testlamb command  parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-x    & x-coordinate of point source & float & 0.0 \\ \hline
-y    & y-coordinate of point source & float & 0.0 \\ \hline
-cp   & P-wave velocity              & float & 1.0 \\ \hline
-rho  & Density                      & float & 1.0 \\ \hline
-fz   & Magnitude of the forcing     & float & 1.0 \\ \hline
+x    & x-coordinate of point source & real & 0.0 \\ \hline
+y    & y-coordinate of point source & real & 0.0 \\ \hline
+cp   & P-wave velocity              & real & 1.0 \\ \hline
+rho  & Density                      & real & 1.0 \\ \hline
+fz   & Magnitude of the forcing     & real & 1.0 \\ \hline
 \end{tabular}
 \end{center}
 \index{testlamb parameters!x, y, cp, rho, fz}
@@ -1739,17 +2003,17 @@ None
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf testpointsource command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-x    & x-coordinate of point source & float & 0 \\ \hline
-y    & y-coordinate of point source & float & 0 \\ \hline
-z    & z-coordinate of point source & float & 0 \\ \hline
+x    & x-coordinate of point source & real & 0 \\ \hline
+y    & y-coordinate of point source & real & 0 \\ \hline
+z    & z-coordinate of point source & real & 0 \\ \hline
 \hline
-freq & Frequency of the forcing & float & 1 \\ \hline
-t0   & Offset in time & float & 1 \\ \hline
+freq & Frequency of the forcing & real & 1 \\ \hline
+t0   & Offset in time & real & 1 \\ \hline
 type & Type of the source: SmoothWave, VerySmoothBump,Ricker & string & Ricker \\ \hline
 \hline
-cp   & P-wave velocity & float & $\sqrt{3}$ \\ \hline
-cs   & S-wave velocity & float & 1 \\ \hline
-rho  & Density & float & 1 \\ \hline
+cp   & P-wave velocity & real & $\sqrt{3}$ \\ \hline
+cs   & S-wave velocity & real & 1 \\ \hline
+rho  & Density & real & 1 \\ \hline
 \end{tabular}
 \end{center}
 \index{testpointsource parameters!x, y, z, cp, cs, rho, freq, t0, type}
@@ -1757,18 +2021,18 @@ rho  & Density & float & 1 \\ \hline
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf testpointsource command parameters (point source type)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-m0   & Moment amplitude & float & 1 \\ \hline
-mxx  & xx-component of moment tensor & float & 0 \\ \hline
-mxy  & xy-component of moment tensor & float & 0 \\ \hline
-mxz  & xz-component of moment tensor & float & 0 \\ \hline
-myy  & yy-component of moment tensor & float & 0 \\ \hline
-myz  & yz-component of moment tensor & float & 0 \\ \hline
-mzz  & zz-component of moment tensor & float & 0 \\ \hline
+m0   & Moment amplitude & real & 1 \\ \hline
+mxx  & xx-component of moment tensor & real & 0 \\ \hline
+mxy  & xy-component of moment tensor & real & 0 \\ \hline
+mxz  & xz-component of moment tensor & real & 0 \\ \hline
+myy  & yy-component of moment tensor & real & 0 \\ \hline
+myz  & yz-component of moment tensor & real & 0 \\ \hline
+mzz  & zz-component of moment tensor & real & 0 \\ \hline
 \hline
-f0   & Point force amplitude                       & float & 1\\ \hline 
-fx   & Magnitude of the forcing in the x-direction & float & 1 \\ \hline
-fy   & Magnitude of the forcing in the y-direction & float & 1 \\ \hline
-fz   & Magnitude of the forcing in the z-direction & float & 1 \\ \hline
+f0   & Point force amplitude                       & real & 1\\ \hline 
+fx   & Magnitude of the forcing in the x-direction & real & 1 \\ \hline
+fy   & Magnitude of the forcing in the y-direction & real & 1 \\ \hline
+fz   & Magnitude of the forcing in the z-direction & real & 1 \\ \hline
 \end{tabular}
 \end{center}
 \index{testpointsource parameters!m0, mxx, mxy, mxz, myy, myz, mzz, f0, fx, fy, fz}
@@ -1781,14 +2045,14 @@ WARNING! The commands in this section are only intended for advanced users who a
 familiar with the inner workings of \emph{SW4}. These commands might lead to unexpected side
 effects. Only the source code gives a complete description of what these commands really do.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{supergrid [optional]}
+\subsection{supergrid [optional]} \label{sec:supergrid}
 \index{command!supergrid}
 \label{keyword:supergrid}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{flushleft}\bf
 Syntax:\\
 \tt
-supergrid thickness=... damping\_coefficient=...
+supergrid thickness=... transition=... dc=...
 \\
 \bf Required parameters:\\
 \rm
@@ -1800,9 +2064,11 @@ None
 \multicolumn{4}{|c|}{\bf supergrid command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
 %
-thickness &  Thickness of the supergrid region & float &  15 h\\ \hline
+thickness &  Thickness of the supergrid layer & int & 30\\ \hline
 %
-damping\_coefficient & Damping coefficient in supergrid region & float & 0.15 \\ \hline
+transition &  Thickness of the transition region & int & 25\\ \hline
+%
+dc & Damping coefficient in supergrid region & real & 0.04 \\ \hline
 \end{tabular}
 \end{center}
 \index{supergrid parameters!thickness, damping}
@@ -1872,10 +2138,10 @@ None
 \begin{tabular}{|l|p{10cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf developer parameters (part 1)}\\ \hline
 \bf{Option}   & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-cfl\_number   & CFL number $(>0)$ & float &  0.8\\ \hline
+cfl\_number   & CFL number $(>0)$ & real &  0.8\\ \hline
 interpolation & Interpolation type at grid refinement boundaries (conservative or non-conserative) &
 string & conservative \\ \hline 
-ctol          & Relative tolerance for iterative solution of conservative grid refinement $(>0)$ & float & 1e-3
+ctol          & Relative tolerance for iterative solution of conservative grid refinement $(>0)$ & real & 1e-3
 \\ \hline
 cmaxit        & Max number of interations for solving conservative grid refinement equations $(>0)$ & int & 20
 \\ \hline
@@ -1896,8 +2162,15 @@ iotiming      & output timing info after each image is written to disk. (0 or 1)
 \end{center}
 \index{developer parameters!output\_load, output\_timing, log\_energy, print\_energy, mpiio, iotiming}
 
-\chapter{File formats (IN PROGRESS)}\label{chap:formats}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{File formats (in progress)}\label{chap:formats}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \index{fileformats}
+
+
+\section{discrete time function (not done)}\label{sec:discrete-time-function-format}
+\index{fileformats!discrete time function} 
+
 \section{topography}\label{sec:topo-file-format}
 \index{fileformats!topography}
 
@@ -2306,9 +2579,13 @@ Note that the above matlab function reads one image patch from an image file int
 %% data file using the \verb+volimage+ format, which should be available from the file format pull-down
 %% menu.
 
-\chapter{Installing \emph{SW4}}\label{cha:installing-sw4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Installing \emph{SW4} (not documented)}\label{cha:installing-sw4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Testing the \emph{SW4} installation}\label{cha:testing-sw4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Testing the \emph{SW4} installation (not documented)}\label{cha:testing-sw4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \bibliographystyle{plain}
 

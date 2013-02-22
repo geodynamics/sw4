@@ -6,9 +6,9 @@
 %          [t,g]=fcnplot( fcn, freq, tmin, tmax, t0, col, doplot, dt )
 %
 %        Input:  fcn    - Name of source function (string), same name as
-%                         used in WPP. Also some additional functions
-%                         not in WPP, see code below.
-%                freq   - Frequency parameter, scaling as in WPP.
+%                         used in SW4. Also some additional functions
+%                         not in SW4, see code below.
+%                freq   - Frequency parameter, scaling as in SW4.
 %                tmin, tmax - Time interval 
 %                t0     - Time shift, i.e., get and plot g(t-t0)
 %                col    - Plotting color.
@@ -173,6 +173,19 @@ elseif strcmp( fcn, 'VerySmoothBump' ) == 1
    end;
    yl=-0.1;
    yh =1.1;
+elseif strcmp( fcn, 'C6SmoothBump' ) == 1
+   for i=1:n+1
+      ta = omega*(t(i)-t0);
+      if ta<0
+         g(i) = 0;
+      elseif ta>1 
+         g(i) = 0;
+      else
+        g(i) = 51480*ta.^7*(1-ta).^7;
+      end;
+   end;
+   yl=-0.1;
+   yh =3.5;
 elseif strcmp( fcn, 'GaussianWindow' ) == 1
    ncyc = 5;
    g = sin(omega*t).*exp(-0.5*(omega*(t-t0)./ncyc).^2);

@@ -4747,7 +4747,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
      fclose(fd);
   }
   // --------------------------------------------------------------------------- 
-  // However the location for the source was specified, we are going to
+  // Regardless of how the location for the source was specified, we are going to
   // find the grid points associated with the location. (i.e., assign
   // i, j, k to valid values)
   // --------------------------------------------------------------------------- 
