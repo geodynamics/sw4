@@ -174,19 +174,19 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
      zG = a_ew->mZ(m_i0, m_j0, m_k0);
    }
    
-   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
-   {
-     cout << "recevier info for station " << m_fileName << ":" << 
-       " initial location (x,y,z) = " << mX << " " << mY << " " << mZ << 
-       " moved to nearest grid point (x,y,z) = " << xG << " " << yG << " " << zG << 
-       " h= " << a_ew->mGridSize[m_grid0] <<
-       " with indices (i,j,k)= " << m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 << endl;
-   }
-
 // remember corrected location
    mGPX = xG;
    mGPY = yG;
    mGPZ = zG;
+
+   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
+   {
+     cout << "receiver info for station " << m_fileName << ":" << 
+       " initial location (x,y,z) = " << mX << " " << mY << " " << mZ << 
+       " moved to nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << 
+       " h= " << a_ew->mGridSize[m_grid0] <<
+       " with indices (i,j,k)= " << m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 << endl;
+   }
 
 // remember file prefix
    if (a_ew->getPath() != ".")
@@ -238,6 +238,9 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
 
   double metersperdegree = a_ew->getMetersPerDegree();
 
+//
+// NOTE: this calculation assumes a spheroidal mapping
+//
   m_thxnrm = m_salpha + (mX*m_salpha+mY*m_calpha)/cphi/metersperdegree * (M_PI/180.0) * sphi * m_calpha;
   m_thynrm = m_calpha - (mX*m_salpha+mY*m_calpha)/cphi/metersperdegree * (M_PI/180.0) * sphi * m_salpha;
   double nrm = sqrt( m_thxnrm*m_thxnrm + m_thynrm*m_thynrm );
@@ -813,7 +816,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
 //      freq_limit = a_ew->m_frequency_limit;
 
 // write the header
-   fprintf(fd, "# Author: SBP4W\n");
+   fprintf(fd, "# Author: SW4\n");
    fprintf(fd, "# Scenario: %s\n", "test"/*a_ew->m_scenario.c_str()*/);
    if( m_utc_set )
       fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],

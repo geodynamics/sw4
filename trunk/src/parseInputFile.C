@@ -164,7 +164,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   inputFile.seekg(0, ios::beg); // reset file pointer to the beginning of the input file
 
 //---------------------------------------------------------------
-// Then process the grid, refinement and topography commands so
+// Then process the grid, fileio, and topography commands so
 // we know how big the solution arrays need to be.
 //
 // Also, if we are enabling attenuation turn it on now so it
@@ -316,15 +316,15 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
        if (startswith("#", buffer) || 
 	   startswith("grid", buffer) ||
-	   startswith("refinement", buffer) || 
+//	   startswith("refinement", buffer) || 
 	   startswith("topography", buffer) || 
-	   startswith("attenuation", buffer) || 
+//	   startswith("attenuation", buffer) || 
 	   startswith("fileio", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
        {
-	 // Ignore commented lines, newlines,
-	 // grid, refinement, fileio, topography, and attenuation since we already processed those commands.
+// Ignore commented lines, newlines,
+// grid, fileio, and topography, since we have already processed those commands.
        }
        else if (startswith("gmt", buffer))
          processGMT(buffer);
@@ -332,9 +332,9 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processTime(buffer);
        else if (startswith("globalmaterial", buffer))
          processGlobalMaterial(buffer);
-       else if (!m_inverse_problem && startswith("receiver", buffer)) // was called "sac" in WPP
+       else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
-       else if (m_inverse_problem && startswith("observation", buffer)) // 
+       else if (m_inverse_problem && startswith("obs", buffer)) // 
 	  processObservation(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("scalefactors", buffer)) // 
 	  processScaleFactors(buffer);
@@ -358,8 +358,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processMaterialBlock(buffer, blockCount);
        else if (startswith("pfile", buffer))
 	 processMaterialPfile( buffer );
-       else if (startswith("scalefactors", buffer))
-	 processScaleFactors(buffer);
        else if (startswith("efile", buffer))
        {
 #ifndef ENABLE_ETREE
@@ -377,16 +375,12 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processImage(buffer);
        // else if (startswith("volimage", buffer))
        //   processImage3D(buffer);
-//    else if (startswith("restart", buffer))
-//       processRestart(buffer);
        else if (startswith("boundary_conditions", buffer))
          processBoundaryConditions(buffer);
        else if (startswith("supergrid", buffer))
          processSupergrid(buffer);
        else if (startswith("prefilter", buffer))
 	 processPrefilter(buffer);
-//    else if( startswith("checkfornan", buffer ) )
-//       processCheckfornan(buffer);
        else if( startswith("developer", buffer ) )
           processDeveloper(buffer);
        // else if( startswith("geodynbc", buffer ) )
@@ -5120,7 +5114,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   string date = "";
   string time = "";
 
-  bool usgsformat = 0, sacformat=0; // default is now to not write any file: you have to specify a format
+  bool usgsformat = 0, sacformat=1; // default is to write sac files
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
@@ -5130,7 +5124,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 // tmp
 //  cerr << "******************** INSIDE process receiver *********************" << endl;
 
-  CHECK_INPUT(strcmp("receiver", token) == 0, "ERROR: not a receiver line...: " << token);
+  CHECK_INPUT(strcmp("rec", token) == 0 || strcmp("sac", token) == 0, "ERROR: not a rec line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "RECEIVER Error: ";
