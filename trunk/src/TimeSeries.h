@@ -95,6 +95,7 @@ double mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 bool m_zRelativeToTopography; // location is given relative to topography
 
 int mWriteEvery;
+
 bool m_usgsFormat, m_sacFormat;
 string m_path;
 
@@ -141,6 +142,10 @@ int m_utc[7];
 // Window for optimization
    double m_winL, m_winR;
    bool m_use_win, m_use_x, m_use_y, m_use_z;
+
+// quite mode?
+   bool mQuietMode;
+
 };
 
 

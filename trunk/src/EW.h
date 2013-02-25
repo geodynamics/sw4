@@ -114,6 +114,7 @@ void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }
 void setVerbosity(int level) { mVerbose = level; };
 void setQuiet(bool stealth) { mQuiet = stealth; };
+bool getQuiet() {return mQuiet; };
 int  getVerbosity() {return mVerbose; };
 int  getRank() {return m_myRank; };
 void setDebugIO(bool onoff) { mDebugIO = onoff; }

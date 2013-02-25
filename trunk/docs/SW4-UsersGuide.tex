@@ -888,7 +888,7 @@ that. Other commands, such as those specifying the material model can be given b
 different commands (block, pfile, efile, or ifile). Note that some required commands must occur
 exactly once (grid, time). Some optional commands should not occur more than once (topography,
 fileio, prefilter, globalmaterial, gmt, developer). Any number of output commands can
-be given (receiver, image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight,
+be given (rec, image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight,
 testlamb, testpointsource), at least one source must be specified, and the material must be specifed
 by at least one of the (block, pfile, ifile, efile) commands. Also note that the test modes are
 mutually exclusive. Not all of these rules are currently enforced by the parser, so be prepared for the
@@ -1018,7 +1018,7 @@ The optional {\bf utcstart} keyword is used to assign the Universal Time Coordin
 corresponding to simulation time $t=0$. The format of the UTC time is a string (without quotation)
 ``month/day/year:hour:minute:second.millisecond''. For example, the 17th hour, 34th minute, 12th
 second and 233th millisecond of January 31, year 2012, is encoded as {\bf
-  utcstart=01/31/2012:17:34:12.233}. When the UTC time is set, all {\bf receiver} data files are
+  utcstart=01/31/2012:17:34:12.233}. When the UTC time is set, all {\bf rec} data files are
 time stamped with that datum. The UTC time stamp is essential for correctly aligning
 observed data when solving the inverse problem with \emph{SW4opt}.
 
@@ -1604,10 +1604,10 @@ plug-in. The {\bf gmt} command outputs a shell script file containing the locati
 stations and the epicenter, i.e. the location of the first {\bf source} command. This shell script
 file can be used for further postprocessing by the GMT program~\cite{WesselSmithGMT}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{receiver [optional]}
-\index{command!receiver}
+\subsection{rec [optional]}
+\index{command!rec}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The \verb+receiver+ command is used to save the time history of the solution at a fixed
+The \verb+rec+ command is used to save the time history of the solution at a fixed
 location in space. 
 For backwards compatibility with \emph{WPP} this command can also be called
 \verb+sac+.
@@ -1616,7 +1616,7 @@ For backwards compatibility with \emph{WPP} this command can also be called
 \bf
 Syntax:\\
 \tt
-receiver x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... type=... writeEvery=... eventDate=... eventTime=... nsew=... velocity=... usgsformat=... sacformat=... variables=...
+rec x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... type=... writeEvery=... eventDate=... eventTime=... nsew=... velocity=... usgsformat=... sacformat=... variables=...
 \\
 \bf Required parameters:\\
 \rm Location of the receiver in Cartesian or geographical coordinates.

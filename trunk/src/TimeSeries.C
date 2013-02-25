@@ -66,11 +66,15 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
   m_use_win(false),
   m_use_x(true),
   m_use_y(true),
-  m_use_z(true)
+  m_use_z(true),
+  mQuietMode(false)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
 
+// quiet mode?
+   mQuietMode = a_ew->getQuiet();
+   
 // does this processor write this station?
    m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
 
@@ -689,9 +693,10 @@ void TimeSeries::writeFile( string suffix )
   if( m_usgsFormat )
   {
     filePrefix << "txt";
-    cout << "Writing ASCII USGS file, "
-    	 << "of size " << mLastTimeStep+1 << ": "
-	 << filePrefix.str() << endl;
+    if (!mQuietMode)
+      cout << "Writing ASCII USGS file, "
+	   << "of size " << mLastTimeStep+1 << ": "
+	   << filePrefix.str() << endl;
 
     write_usgs_format( filePrefix.str() );
   }
