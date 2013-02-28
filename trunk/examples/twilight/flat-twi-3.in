@@ -1,0 +1,6 @@
+# Twilight testing with generalized forcing functions
+grid nx=121 x=5.0 y=5.0 z=5.0
+time t=4.8
+twilight omega=3 momega=3.2 phase=0.2 mphase=0.8 amprho=2 ampmu=3 amplambda=1
+
+

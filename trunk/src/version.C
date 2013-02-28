@@ -11,7 +11,9 @@ namespace ewversion
    const char* hostname = EW_HOSTNAME;
    const char* optimization = EW_OPT_LEVEL;
    const char* compiler = EW_COMPILER;
-   const char* basedir = EW_BASEDIR;
+//   const char* basedir = EW_BASEDIR;
+   const char* libdir = EW_LIBDIR;
+   const char* incdir = EW_INCDIR;
    const char* version = "1.0";
    
    std::string getVersionInfo()
@@ -29,7 +31,8 @@ namespace ewversion
                   << "  By user:     " << madeby << std::endl
                   << "  Machine:     " << hostname << std::endl
                   << "  Compiler:    " << compiler << std::endl
-                  << "  3rd party software base directory: " << basedir << std::endl
+                  << "  3rd party software include directory: " << incdir << std::endl
+                  << "  3rd party software library directory: " << libdir << std::endl
                   << "----------------------------------------------------------------" << std::endl;
       return versioninfo.str();
    }

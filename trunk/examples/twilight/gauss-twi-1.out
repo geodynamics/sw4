@@ -1,0 +1,116 @@
+[yorkville:sw4/examples/twilight] petersson1% openmpirun -np 2 ../../src/sw4 gauss-twi-1.in
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Feb 25 13:19:42 PST 2013
+  By user:     petersson1
+  Machine:     yorkville.llnl.gov
+  Compiler:    /opt/local/bin/openmpicxx
+  3rd party software include directory: /Users/petersson1/include
+  3rd party software library directory: /Users/petersson1/lib
+----------------------------------------------------------------
+
+Input file: gauss-twi-1.in
+
+* Processing the grid command...
+* Setting h to 0.0333333 from  x/(nx-1) (x=1, nx=31)
+* Setting ny to 31 to be consistent with h=0.0333333
+* Setting nz to 31 to be consistent with h=0.0333333
+
+***Topography grid: min z = -0.000000e+00, max z = -0.000000e+00, top Cartesian z = 2.500000e-01
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0 0.0333333        31        31        24        23064
+   1 0.0333333        31        31         8         7688
+Total number of grid points (without ghost points): 30752
+
+
+   Execution time, reading input file 0.0503669 seconds 
+----------------------------------------------------
+ Making Output Directory: gauss_31/
+		
+... Done!
+----------------------------------------------------
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00386 kg/m^3 <=  Density <= 2.99611 kg/m^3
+       1.63433 m/s    <=  Vp      <= 2.8225 m/s
+       1.0009 m/s    <=  Vs      <= 1.72827 m/s
+       1.52841        <=  Vp/Vs   <= 1.73171
+       2.00386 Pa     <=  mu      <= 3.99611 Pa
+       1.01051 Pa     <=  lambda  <= 2.98962 Pa
+       ------------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
+
+   Execution time, start up phase 0.132819 seconds 
+Running sw4 on 2 processors...
+Writing output to directory: gauss_31/
+============================================================
+ Running program on 2 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.8
+ Number of time steps = 78 dt: 0.0102564
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of sources 0
+-----------------------------------------------------------------------
+writing image plane on file gauss_31/gaussian.cycle=00.z=0.topo.sw4img (msg from proc # 0)
+writing image plane on file gauss_31/gaussian.cycle=00.x=0.5.gridy.sw4img (msg from proc # 0)
+writing image plane on file gauss_31/gaussian.cycle=00.x=0.5.gridz.sw4img (msg from proc # 0)
+***Twilight Testing...
+proc=0, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=0 os[5]=0
+proc=0, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=4 bc[5]=1
+proc=0, Onesided[grid=1]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
+proc=0, bcType[grid=1]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=0 bc[5]=4
+
+ Testing the accuracy of the spatial difference approximation
+proc=1, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=0 os[5]=0
+proc=1, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=4 bc[5]=1
+proc=1, Onesided[grid=1]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
+proc=1, bcType[grid=1]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=0 bc[5]=4
+Grid nr:   0 
+Max errors low-k boundary RHS:    1.0140511e-01    6.3885414e-02    1.4963677e-01
+Max errors interior RHS:          1.7376335e-01    1.5959709e-01    1.5832129e-01
+Max errors high-k boundary RHS:   1.1856004e-01    1.2430167e-01    1.1927679e-01
+Grid nr:   1 
+Max errors low-k boundary RHS:    6.2463847e+00    4.7229998e+00    1.0527862e+01
+Max errors interior RHS:          0.0000000e+00    0.0000000e+00    0.0000000e+00
+Max errors high-k boundary RHS:   7.7688284e-01    6.6009747e-01    1.3518876e+00
+Testing accuracy of rho*utt - L(u) = F
+Grid nr:   0 
+Max errors low-k boundary RHS:    1.0140511e-01    6.3885414e-02    1.4963677e-01
+Max errors interior RHS:          1.7376335e-01    1.5959709e-01    1.5832129e-01
+Max errors high-k boundary RHS:   1.1856004e-01    1.2430167e-01    1.1927679e-01
+Grid nr:   1 
+Max errors low-k boundary RHS:    6.2463847e+00    4.7229998e+00    1.0527862e+01
+Max errors interior RHS:          0.0000000e+00    0.0000000e+00    0.0000000e+00
+Max errors high-k boundary RHS:   7.7688284e-01    6.6009747e-01    1.3518876e+00
+About to call exactSolTwilight
+Inside normOfDifferenceGhostPoints
+
+ Ghost point errors: Linf =   1.1192063e-03, L2 =   1.3761443e-04
+  Begin time stepping...
+Time step       1  t =   1.0256410e-02
+Time step      78  t =   8.0000000e-01
+writing image plane on file gauss_31/gaussian.cycle=78.x=0.5.ux.sw4img (msg from proc # 0)
+writing image plane on file gauss_31/gaussian.cycle=78.x=0.5.uxerr.sw4img (msg from proc # 0)
+  Time stepping finished...
+   Execution time, solver phase 3.8303 seconds 
+
+ Final solution errors: Linf =   4.1234422e-03, L2 =   6.0379930e-04
+============================================================
+ program sw4 finished! 
+============================================================

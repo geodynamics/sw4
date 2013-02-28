@@ -1,0 +1,103 @@
+[yorkville:sw4/examples/twilight] petersson1% openmpirun -np 2 ../../src/sw4 flat-twi-3.in
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Feb 25 13:19:42 PST 2013
+  By user:     petersson1
+  Machine:     yorkville.llnl.gov
+  Compiler:    /opt/local/bin/openmpicxx
+  3rd party software include directory: /Users/petersson1/include
+  3rd party software library directory: /Users/petersson1/lib
+----------------------------------------------------------------
+
+Input file: flat-twi-3.in
+
+* Processing the grid command...
+* Setting h to 0.0416667 from  x/(nx-1) (x=5, nx=121)
+* Setting ny to 121 to be consistent with h=0.0416667
+* Setting nz to 121 to be consistent with h=0.0416667
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0 0.0416667       121       121       121      1771561
+Total number of grid points (without ghost points): 1.77156e+06
+
+
+   Execution time, reading input file 0.0328012 seconds 
+----------------------------------------------------
+ Making Output Directory: ./
+		
+... Done!
+----------------------------------------------------
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       2.00067 kg/m^3 <=  Density <= 5.9997 kg/m^3
+       1.82577 m/s    <=  Vp      <= 3.16178 m/s
+       1.22475 m/s    <=  Vs      <= 2.121 m/s
+       1.45298        <=  Vp/Vs   <= 1.52752
+       6.00101 Pa     <=  mu      <= 11.9995 Pa
+       1.00034 Pa     <=  lambda  <= 2.99985 Pa
+       ------------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700004e+01
+2: Lon= 1.180001e+02, Lat=3.700004e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+   Execution time, start up phase 0.295549 seconds 
+Running sw4 on 2 processors...
+Writing output to directory: ./
+============================================================
+ Running program on 2 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 4.8
+ Number of time steps = 437 dt: 0.010984
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of sources 0
+-----------------------------------------------------------------------
+proc=1, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
+proc=1, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=0 bc[5]=1
+***Twilight Testing...
+proc=0, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
+proc=0, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=0 bc[5]=1
+
+ Testing the accuracy of the spatial difference approximation
+Grid nr:   0 
+Max errors low-k boundary RHS:    1.0734025e+00    1.2947224e+00    1.0147139e+00
+Max errors interior RHS:          1.1953295e-02    1.2156888e-02    1.1154764e-02
+Max errors high-k boundary RHS:   7.7904445e-03    7.0654181e-03    1.1916612e-02
+Testing accuracy of rho*utt - L(u) = F
+Grid nr:   0 
+Max errors low-k boundary RHS:    1.0734025e+00    1.2947224e+00    1.0147139e+00
+Max errors interior RHS:          1.1953295e-02    1.2156888e-02    1.1154764e-02
+Max errors high-k boundary RHS:   7.7904445e-03    7.0654181e-03    1.1916612e-02
+About to call exactSolTwilight
+Inside normOfDifferenceGhostPoints
+
+ Ghost point errors: Linf =   6.0332334e-06, L2 =   5.4138621e-06
+  Begin time stepping...
+Time step       1  t =   1.0983982e-02
+Time step     101  t =   1.1093822e+00
+Time step     201  t =   2.2077803e+00
+Time step     301  t =   3.3061785e+00
+Time step     401  t =   4.4045767e+00
+Time step     437  t =   4.8000000e+00
+  Time stepping finished...
+   Execution time, solver phase 10 minutes 25.7588 seconds 
+
+ Final solution errors: Linf =   1.0460697e-04, L2 =   1.5133619e-04
+============================================================
+ program sw4 finished! 
+============================================================

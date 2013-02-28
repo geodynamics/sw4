@@ -1,0 +1,100 @@
+[yorkville:sw4/examples/twilight] petersson1% openmpirun -np 2 ../../src/sw4 flat-twi-1.in
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Feb 25 13:19:42 PST 2013
+  By user:     petersson1
+  Machine:     yorkville.llnl.gov
+  Compiler:    /opt/local/bin/openmpicxx
+  3rd party software include directory: /Users/petersson1/include
+  3rd party software library directory: /Users/petersson1/lib
+----------------------------------------------------------------
+
+Input file: flat-twi-1.in
+
+* Processing the grid command...
+* Setting h to 0.166667 from  x/(nx-1) (x=5, nx=31)
+* Setting ny to 31 to be consistent with h=0.166667
+* Setting nz to 31 to be consistent with h=0.166667
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0  0.166667        31        31        31        29791
+Total number of grid points (without ghost points): 29791
+
+
+   Execution time, reading input file 0.00143886 seconds 
+----------------------------------------------------
+ Making Output Directory: ./
+		
+... Done!
+----------------------------------------------------
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       2.00067 kg/m^3 <=  Density <= 5.99888 kg/m^3
+       1.82587 m/s    <=  Vp      <= 3.16169 m/s
+       1.22483 m/s    <=  Vs      <= 2.12093 m/s
+       1.45298        <=  Vp/Vs   <= 1.52751
+       6.00101 Pa     <=  mu      <= 11.9983 Pa
+       1.00034 Pa     <=  lambda  <= 2.99944 Pa
+       ------------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700004e+01
+2: Lon= 1.180001e+02, Lat=3.700004e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+   Execution time, start up phase 0.00764394 seconds 
+Running sw4 on 2 processors...
+Writing output to directory: ./
+============================================================
+ Running program on 2 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 4.8
+ Number of time steps = 109 dt: 0.0440367
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of sources 0
+-----------------------------------------------------------------------
+***Twilight Testing...
+proc=0, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
+proc=0, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=0 bc[5]=1
+
+ Testing the accuracy of the spatial difference approximation
+proc=1, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
+proc=1, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=0 bc[5]=1
+Grid nr:   0 
+Max errors low-k boundary RHS:    1.9260379e+01    2.0977658e+01    1.2534780e+01
+Max errors interior RHS:          2.6620951e+00    2.5671253e+00    2.3837900e+00
+Max errors high-k boundary RHS:   2.1610090e+00    2.1161492e+00    2.4722424e+00
+Testing accuracy of rho*utt - L(u) = F
+Grid nr:   0 
+Max errors low-k boundary RHS:    1.9260379e+01    2.0977658e+01    1.2534780e+01
+Max errors interior RHS:          2.6620951e+00    2.5671253e+00    2.3837900e+00
+Max errors high-k boundary RHS:   2.1610090e+00    2.1161492e+00    2.4722424e+00
+About to call exactSolTwilight
+Inside normOfDifferenceGhostPoints
+
+ Ghost point errors: Linf =   5.4991025e-03, L2 =   9.4939088e-03
+  Begin time stepping...
+Time step       1  t =   4.4036697e-02
+Time step     101  t =   4.4477064e+00
+Time step     109  t =   4.8000000e+00
+  Time stepping finished...
+   Execution time, solver phase 3.36315 seconds 
+
+ Final solution errors: Linf =   2.3845137e-02, L2 =   4.9961506e-02
+============================================================
+ program sw4 finished! 
+============================================================

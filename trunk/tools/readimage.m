@@ -23,7 +23,7 @@ end;
 
 fd=fopen(imfile,'r');
 if fd ~= -1 
-  % Read header
+% Read header
    prec    =fread(fd,1,'int');
    npatches=fread(fd,1,'int');
    t       =fread(fd,1,'double');
@@ -68,11 +68,11 @@ if fd ~= -1
      if plane == 0 
         x = coord;
         y = h(pnr)*((ib(pnr):ni(pnr))-1);
-        z = h(pnr)*((jb(pnr):nj(pnr))-1);
+        z = zmin(p) + h(pnr)*((jb(pnr):nj(pnr))-1);
      elseif plane == 1 
         x = h(pnr)*((ib(pnr):ni(pnr))-1);
         y = coord;
-        z = h(pnr)*((jb(pnr):nj(pnr))-1);
+        z = zmin(p) + h(pnr)*((jb(pnr):nj(pnr))-1);
      elseif plane == 2
         x = h(pnr)*((ib(pnr):ni(pnr))-1);
         y = h(pnr)*((jb(pnr):nj(pnr))-1);
@@ -84,3 +84,4 @@ if fd ~= -1
 else
    disp(['Error: could not open file ' imfile ]);
 end;
+% this script does not read z-coordinates of the curvilinear grid

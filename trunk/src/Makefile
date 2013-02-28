@@ -32,6 +32,13 @@ ifeq ($(UNAME),Darwin)
   else
     FFLAGS = -O3 -fno-underscoring
   endif
+
+  ifeq ($(etree),yes)
+     CXXFLAGS += -DENABLE_ETREE
+     CXXFLAGS += -I$(SW4INC)
+     linklibs += -L$(SW4LIB) -lcencalvm -lproj
+  endif
+
 endif
 
 # for linux
@@ -47,12 +54,12 @@ ifeq ($(UNAME),Linux)
      CXX = mpicxx
     linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
   endif
-endif
+  ifeq ($(etree),yes)
+     CXXFLAGS += -DENABLE_ETREE
+     CXXFLAGS += -I$(SW4INC)
+     linklibs += -Wl,-rpath=$(SW4LIB) -L$(SW4LIB) -lcencalvm -lproj
+  endif
 
-ifeq ($(etree),yes)
-   CXXFLAGS += -DENABLE_ETREE
-   CXXFLAGS += -I$(SW4INC)
-   linklibs += -Wl,-rpath=$(SW4LIB) -L$(SW4LIB) -lcencalvm -lproj
 endif
 
 QUADPACK = dqags.o dqagse.o  dqaws.o  dqawse.o  dqc25s.o \
@@ -103,7 +110,7 @@ sw4mopt: $(MOBJOPT) $(QUADPACK)
 	$(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(QUADPACK) $(linklibs)
 
 version.o:version.C
-	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_BASEDIR=\"NotUsed\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
+	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
 
 test3: $(OBJ3)
 	$(FC) -O3 -Wall -o $@ $(OBJ3)

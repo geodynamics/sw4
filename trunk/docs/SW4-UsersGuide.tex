@@ -89,24 +89,27 @@ summation by parts, which guarentees energy stability of the numerical solution.
 difference between the codes is that \emph{SW4} implements a fourth order accurate spatial
 discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. The
 \emph{SW4} code is therefore significantly more efficient than \emph{WPP}, which is second order
-accurate. The advantages of a higher order accurate method are more pronounced when the solution
-needs to be more accurate, because the error diminishes faster as the grid size is reduced. Higher
-order methods are also more efficient when the solution needs to remain accurate for longer times,
-because the phase error is smaller. For the elastic wave equation, the advantages of a higher order
-method are also more pronounced for elastic materials with a large ratio between the compressional
-and shear wave speeds, $C_p/C_s$~\cite{KrePet-12}.
+accurate. Compared to a second order method, the advantages of a fourth order method are more
+pronounced when the solution needs to be more accurate, because the error diminishes faster as the
+grid size is reduced. A fourth order method is also more efficient when the solution needs to remain
+accurate for longer times, because the phase error is smaller. The fourth order method is also
+significantly more accurate at calculating surface waves, in particular when the ratio between the
+compressional and shear wave speeds is large, i.e.~$C_p/C_s\gg 1$~\cite{KrePet-12}.
 
 \emph{SW4} implements substantial capabilities for 3-D seismic modeling, with a free surface
 condition on the top boundary, absorbing super-grid~\cite{PetSjo-13} far-field conditions on the
-remaining boundaries, and an arbitrary number of point force and/or point moment tensor source terms
-with many predefined time dependencies. It supports a fully 3-D heterogeneous material model that
-can be specified in several formats. \emph{SW4} uses a curvilinear mesh near the free surface to
-honor the free surface boundary condition on a realistic topography. The curvilinear mesh is
-automatically generated from the description of the topography. Below the curvilinear grid, the
+remaining boundaries, and an arbitrary number of point force and/or point moment tensor source
+terms. The source time function can have one of many predefined analytical time dependencies, or
+interpolate a user defined discrete time series. \emph{SW4} supports a fully 3-D heterogeneous
+material model that can be specified in several formats. It uses a curvilinear mesh near the free
+surface to honor the free surface boundary condition on a realistic topography. The curvilinear mesh
+is automatically generated from the description of the topography. Below the curvilinear grid, the
 seismic wave equations are discretized on a Cartesian mesh, which leads to a more computationally
-efficient algorithm. \emph{SW4} specifies the computational domain in a Cartesian coordinate system
-and is therefore appropriate for local and regional problems (up to a few 100 km). Locations can be
-specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
+efficient algorithm. 
+
+\emph{SW4} solves the seismic wave equations in Cartesian formulation is therefore appropriate for
+local and regional problems, where the curvature of the earth can be neglected. Locations can
+be specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
 coordinates. \emph{SW4} can be built to use the Proj.4 library~\cite{Proj4} for calculating the
 mapping between geographic and Cartesian coordinates, or use an approximate spheroidal
 mapping. \emph{SW4} can output synthetic seismograms in an ASCII text format, or in the
@@ -132,20 +135,20 @@ popular~\emph{SAC}~\cite{Goldstein-et-al} format. It can also present simulation
 %% properties of the material model. The underlying numerical method for solving the visco-elastic wave
 %% equation is described in~\cite{PetSjo-10b}.
 
-Most of \emph{SW4} code is written in C++, but for efficiency reasons most of the numerical
-calculations are implemented in Fortan-77. \emph{SW4} uses a distributed memory programming model,
-implemented with the C-bindings of the MPI library. Compatible versions of the C++ and Fortran-77
-compilers as well as the MPI library must therefore be available to build the code. We have built
-and tested \emph{SW4} on a variety of machines, ranging from single processor laptops to large
-supercomputers with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even larger
-machines.
+Most of the \emph{SW4} code is written in C++, but most of the numerical calculations are (for
+efficiency reasons) implemented in Fortan-77. \emph{SW4} uses a distributed memory programming
+model, implemented with the C-bindings of the MPI library. Compatible versions of the C++ and
+Fortran-77 compilers as well as the MPI library must therefore be available to build the code. We
+have built and tested \emph{SW4} on a variety of machines, ranging from single processor laptops to
+large super-computers with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even
+larger machines.
 
-To simplify the transition from \emph{WPP} to \emph{SW4}, we have made an effort to minimize
-changes to the syntax of the input and output files. However, we have taken the opportunity to
-improve some commands and some file formats. See Chapters~\ref{chap:keywords} and~\ref{chap:formats}
-for details. Version 1.0 of \emph{SW4} supports most of the functionality of \emph{WPP} (version 2.1.7). However,
-we have not yet implemented visco-elastic attenuation or mesh refinement. These features will be
-added in the future.
+We have made an effort to preserve the syntax of the command file between \emph{SW4} and \emph{WPP},
+see Chapter~\ref{chap:keywords}. Most of the input and output files also use the same
+formats, but we have taken the opportunity to improve the image file format. See Chapter
+and~\ref{chap:formats} for details. With the exception of visco-elastic attenuation and mesh
+refinement, version 1.0 of \emph{SW4} supports most of the functionality of \emph{WPP} (version
+2.1.7). Attenuation and mesh refinement will be added in the future.
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
 validation tests. Many Matlab/octave scripts are provided in the {\tt tools} directory.
@@ -162,7 +165,7 @@ the underlying numerical methods.
 
 \section{Running \emph{SW4}}
 This section assumes that \emph{SW4} already has been installed on your system. For instructions on
-how to build \emph{SW4} from the source code distribution, see Chapter~\ref{cha:installing-sw4}.
+how to build \emph{SW4} from the source code distribution, see Appendix~\ref{cha:installing-sw4}.
 
 \emph{SW4} can be executed from the command prompt or from a script. The simulation is specified by
 the input file, and the name of the input file is given on the command line. The input file is an
@@ -228,8 +231,9 @@ Version information for the \emph{SW4} executable can be obtained through {\tt -
   By user:     petersson1
   Machine:     yorkville.llnl.gov
   Compiler:    /opt/local/bin/openmpicxx
-  3rd party software base directory: NotUsed
-----------------------------------------------------------------
+  3rd party software include directory: /Users/petersson1/include
+  3rd party software library directory: /Users/petersson1/lib
+y----------------------------------------------------------------
 \end{verbatim}
 Note that the same information is by default printed to standard out (your screen, or log file when
 running in batch mode) at the beginning of every run.
@@ -352,8 +356,10 @@ is essential for correctly aligning observed data when solving the inverse probl
 see Figure~\ref{fig:geocoord}. The geographic location of the origin of the Cartesian coordinte
 system (lat$_0$, lon$_0$) is specified in the grid command, and if no location is given it defaults
 to lat$_0$ = 37 degrees (North), lon$_0$ = -118 degrees (West), with a 135 degree azimuthal angle
-between North and the $x$-axis. The vertical coordinate is zero ($z=0$) at mean sea level. By
-default, the latitude (lat) and longitude (lon) are calculated using a spheroidal mapping,
+between North and the $x$-axis. The vertical coordinate is zero ($z=0$) at mean sea level. 
+
+\subsection{Spheroidal mapping}
+By default, the latitude (lat) and longitude (lon) are calculated using a spheroidal mapping,
 \begin{alignat}{2}
 \mbox{lat} &= \mbox{lat$_0$} + \frac{x\cos(\alpha) - y\sin(\alpha)}{M},\quad \alpha =
 \mbox{az}\frac{\pi}{180}, \label{eq:lat}\\
@@ -378,6 +384,7 @@ can change the parameter $M$ with the {\bf mlat} keyword in the {\bf grid} comma
 the computational domain is small and accurate values of both {\bf mlon} and {\bf mlat} are
 available.
 
+\subsection{The Proj.4 library}
 More accurate projections are available through the Proj4 library (if
 \emph{SW4} was built with Proj4 support). These projections are enabled by using the {\bf proj}
 and/or {\bf ellps} keywords in the {\bf grid} command. For example,
@@ -392,13 +399,13 @@ details.
 
 \section{Super-grid damping layers}
 
-\emph{SW4} implements a super-grid modeling technique to avoid artificial reflections from the
+\emph{SW4} implements a super-grid modeling technique to reduce artificial reflections from the
 far-field boundaries~\cite{AppCol-09, PetSjo-13}. In this method, a coordinate mapping (stretching
 function) is used to map the computational domain to a much larger physical domain. A high order
-artificial dissipation operator is added in the super-grid layers to damp out waves that become
-poorly resolved because of the coordinate mapping. The idea is to damp out poorly resolved waves
-before they arrive at the outer edge of the layer, where the computational domain is truncated. Note
-that the dissipative term is only added in the layers.
+artificial dissipation operator is added in the super-grid layers. The ideas behind the super-grid
+technique are to slow down the waves as they propagate through the layer, and to damp them out
+before they arrive at the outer boundary of the computational domain. Note that the dissipative term
+is only added in the layers, and should not affect the accuracy in the interior of the domain.
 
 The coordinate stretching compresses the solution inside the layers. This corresponds to a slowing
 down of all traveling waves in the direction normal to each far-field boundary. As a result, the
@@ -424,7 +431,7 @@ The default thickness of the layers (currently) equals 30 grid sizes. The thickn
 super-grid layers can be changed with the {\tt supergrid} command, see Section~\ref{sec:supergrid}.
 
 For practical reasons, the super-grid layers are part of the computational domain as specified by
-the grid command. If, for example, the super-grid layers are 30 grid points wide, the solution
+the grid command. If, for example, each super-grid layer is 30 grid points wide, the solution
 should be considered artificial in the first and last 30 points in each horizontal direction, and
 the bottom 30 points in the vertical direction. Note that the numerical solution within the layers
 do {\em not} approximate the solution of the seismic wave equation. For this reason, it is important
@@ -439,10 +446,13 @@ super-grid layers.
 \chapter{Sources, time-functions and grid sizes}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+The source time function can be selected from a set of predefined functions, or by spline
+interpolation of a user defined discrete time-series. Each point force or point moment tensor source
+can have a different time function. 
+
 \section{Predefined time functions}\label{sec:predefined}
 
-The source time function can be selected from a set of predefined functions described below. All
-functions start from zero ($\lim_{t\to -\infty} g(t,t_0,\omega) = 0$) and tend to a constant terminal
+All pre-defined source time functions start from zero ($\lim_{t\to -\infty} g(t,t_0,\omega) = 0$) and tend to a constant terminal
 value, $\lim_{t\to \infty} g(t,t_0,\omega) = g_\infty$. In seismic applications, $g_\infty\ne 0$
 usually corresponds to solving for the displacements of the motion, because the solution will tend to
 a non-zero steady state solution for large times. This solution corresponds to the final
@@ -723,25 +733,25 @@ filtered to remove the unresolved motions. The filtering can either be done afte
 completed, or by using the {\bf prefilter} command.
 
 \section{Discrete time function}
-Instead of using one of the pre-defined time functions, you can alternatively specify an arbitrary
-time dependence as a discrete time series. The format of the file is decribed
-in~\ref{sec:discrete-time-function-format}. 
 
 The discrete time function constructs a quintic (5th order) spline function that interpolates the
-given function values $g_j = g(\tau_j)$, for $j=0,1,\ldots, N_s-1$, where $N_s\geq 7$. The function
-values must be specified on an equidistant grid, $\tau_j = t_0 + j \delta_t$, where
+given function values $g_j = g(\tau_j)$, for $j=1,2,\ldots, N_s$, where $N_s\geq 7$. The function
+values are specified on an equidistant grid, $\tau_j = t_0 + (j-1) \delta_t$, where
 $\delta_t>0$. Note that the time step can be chosen independently of the time step in the solver of
-the elastic wave equation. The start time, $t_0$, can also have an arbitrary value. This procedure
-results in six polynomial coefficients for each interval $\tau_j\leq t <\tau_{j+1}$. The
-coefficients are chosen such that g(t) becomes four times continuously differentiable.
+the elastic wave equation. The start time, $t_0$, can also have an arbitrary value. The
+interpolation procedure results in six polynomial coefficients for each interval $\tau_j\leq t
+<\tau_{j+1}$. The coefficients are chosen such that g(t) becomes four times continuously
+differentiable.
 
 Because the elastic wave equation is solved for $0\leq t\leq T$, it is necessary to evaluate the
-discrete time function in this interval. If $\tau_0>0$, the discrete time function uses the polynomial
-coefficients corresponding to the first interval $[\tau_0,\tau_1]$ for all $t<\tau_0$. Similarily,
-if $\tau_{N_s-1}<T$, the coefficients for the last interval are used for $t>\tau_{N_s-1}$. To avoid
+discrete time function in this interval. If $t_0>0$, the discrete time function uses the polynomial
+coefficients corresponding to the first interval $[\tau_1,\tau_2]$ for all $t<t_0$. Similarily,
+if $\tau_{N_s}<T$, the coefficients for the last interval are used for $t>\tau_{N_s}$. To avoid
 unexpected results due to extrapolation, we recommend specifying the discrete time function for all
 $t\in[0,T]$. To also avoid incompatibilities between the forcing and the homogeneous initial conditions,
 we recommend setting $g_j=0$ for all $\tau_j\leq 0$.
+
+The file format for discrete time functions is decribed in~\ref{sec:discrete-time-function-format}.
 
 \section{How fine does the grid need to be?}\label{sec:grid-size}
 \index{grid size}
@@ -1485,7 +1495,7 @@ vsmin & Minimum S-wave velocity $(>0)$ & real & None \\ \hline
 \index{globalmaterial parameters!vpmin, vsmin}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Topography [optional] NOT COMPLETELY FUNCTIONAL, NOT TESTED}
+\section{Topography [optional] (in progress)}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2164,15 +2174,33 @@ iotiming      & output timing info after each image is written to disk. (0 or 1)
 \index{developer parameters!output\_load, output\_timing, log\_energy, print\_energy, mpiio, iotiming}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{File formats (in progress)}\label{chap:formats}
+\chapter{File formats}\label{chap:formats}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \index{fileformats}
 
 
-\section{discrete time function (not done)}\label{sec:discrete-time-function-format}
+\section{Discrete time function}\label{sec:discrete-time-function-format}
 \index{fileformats!discrete time function} 
 
-\section{topography}\label{sec:topo-file-format}
+The discrete time function interpolates values on a uniform grid in time, $\tau_j = t_0 +
+(j-1)\delta_t$, $j=1,2,\ldots,N_d$. The file is formatted. The first line of the file contains the
+refenece time $(t_0)$, time step $(\delta_t)$, and number of data points $(N_d)$. The subsequent
+$N_d$ lines in the file should contain the function values $g_j = g(\tau_j)$. The file should follow
+the following format:
+\begin{center}
+\begin{tabular}{llll}\hline
+Line & Column 1& Column 2& Column 3\\ \hline
+1 & $t_0$ (real) & $\delta_t$ (real) & $N_d$ (integer) \\ \hline
+2 & $g_1$ (real) & & \\ \hline
+3 & $g_2$ (real) & & \\ \hline
+\vdots & \vdots & & \\ \hline
+$N_d + 1$ & $g_{N_d}$ (real) & & \\ \hline
+\end{tabular}
+\end{center}
+The time step must be positive, $\delta_t>0$, and at least seven data points must be given, $N_d\geq
+7$.
+
+\section{Topography}\label{sec:topo-file-format}
 \index{fileformats!topography}
 
 Topography is specified as elevation above mean sea level on a regular lattice in the horizontal
@@ -2182,7 +2210,7 @@ plane. Alternatively, the lattice can be specified in Cartesian coordinates. In 
 for elevation is meters and the topography file must cover the entire horizontal extent of the
 computational domain.
 
-\subsection{topography on a geographic lattice}
+\subsection{Topography on a geographic lattice}
 Latitude and longitude should be given in degrees. Let the elevation be known at longitudes
 \[
 \phi_i,\quad i=1,2,\ldots,N_{lon},
@@ -2220,7 +2248,7 @@ On subsequent lines, longitude, latitude and elevation values are given in colum
 \end{array}
 \]
 
-\subsection{topography on a Cartesian lattice}
+\subsection{Topography on a Cartesian lattice}
 Cartesian coordinates should be given in meters ([{\tt m}]). Let the elevation be known at $x$-coordinates
 \[
 x_i,\quad i=1,2,\ldots,Nx,
@@ -2348,7 +2376,7 @@ Line & Column 1& Column 2& Column 3& Column 4\\ \hline
 5 & $N_{dep}$ (integer) & $d_{min}$ [m] (real) & $d_{max}$ [m] (real) & \\ \hline
 6 & $I_{sed}$ (integer) & $I_{MoHo}$ (integer) & $I_{410}$ (integer) & $I_{660}$ (integer) \\ \hline
 7 & $Q$-available? (logical) \\ \hline
-\end{tabular}.
+\end{tabular}
 \end{center}
 This is the same header as for the geographic coordinate format, with the only difference that information on
 lines 2, 3, and 4 is different. The spacing, $h$, of the grid of depth profiles is given on line 2.
@@ -2412,117 +2440,173 @@ It is required that $d_{q,i,j} \leq d_{q+1,i,j}$.
 
 SAC files hold the time history of one component of the solution at a fixed point in space.  A
 detailed description of the SAC format can be found at {\tt
-http://www.iris.edu/manuals/sac/manual.html}. In the {\tt tools} directory, we provide a simplified
-Matlab reader of SAC files called {\tt readsac.m}. Note that only some of the header information is
-parsed by this reader:
-\begin{verbatim}
-% READSAC
-%
-%   Read SAC receiever data.
-%
-%     [u,dt,lat,lon,t0] = readsac( fname, format )
-%
-%          Input: fname  - Name of SAC file
-%                 format - Little endian ('l') or big endian ('b')
-%                          byte order for binary data. Default is 'l'.
-%
-%          Output: u        - The data component on SAC file
-%                  dt       - Uniform time step for u
-%                  lat, lon - Lat and Lon of the SAC station.
-%                  t0       - Start time for time-series
-%
-function [u,dt,lat,lon,t0] = readsac( fname, format )
-if nargin < 2 
-   format = 'l';
-end;
+http://www.iris.edu/manuals/sac/manual.html}, and we refer to that web page for a detailed
+description of the file format.
 
-fid = fopen(fname,'r',format);
-if fid < 0 
-  disp( ['Error: could not open file ' fname] );
-else
-  dt = fread( fid,1,'float32');    
-  fseek(fid,4*4,0);
-  t0 = fread( fid,1,'float32');    
-  fseek(fid,25*4,0);
-  lat = fread(fid,1,'float32');
-  lon = fread(fid,1,'float32');
-  fseek(fid,2*4,0);
-  evlat = fread(fid,1,'float32');
-  evlon = fread(fid,1,'float32');
-  fseek(fid,4,0);
-  evdepth = fread(fid,1,'float32');
-  disp(['Begin time (t0) = ' num2str(t0)]);
-  disp(['Event lat lon = ' num2str(evlat) ' ' num2str(evlon) ]);
-  disp(['Event depth ' num2str(evdepth) ' km']);
-  fseek(fid,4*40,0);
-  npts=fread(fid,1,'int');
-  fseek(fid,78*4,0);
-  u=fread(fid,npts,'float32');
-  fclose(fid);
-end
-\end{verbatim}
+We provide a simplified Matlab/octave reader of SAC files called {\tt readsac.m} in the {\tt tools}
+directory. Note that only some of the header information is parsed by this reader.
 
 \section{image}\label{sec:image-format}
 \index{fileformats!image}
 
-Images files hold two-dimensional data on a composite grid and are written in a binary format. The
-header of the file starts with two integers: the precision (4 for single precision, 8 for double
-precision), and the number of patches. After that follows header info for each patch, consisting of
-the grid size $h$ (a double precision floating point number) and four integers holding the starting
-and ending indices for each patch. The header is followed by the two-dimensional data on each patch,
-consisting of one single or double precision floating point number for each grid point, stored in
-column-first order. 
+\paragraph{Important note:} The image formats used by \emph{SW4} and \emph{WPP} are different. To emphasize
+the change in format, all \emph{SW4} image files have extension {\tt .sw4img}. A reader for image
+files is provided in the matlab/octave function 'tools/readimage.m'.
 
-The exact format follows from the Matlab function tools/readimagepatch.m which is provided in the
-source distribution of \emph{SW4}:
-\begin{verbatim}
-% Returns image patch nr. 'inr' on file 'fil' in 'im', 
-% corresponding grid returned in 'x' and 'y'
-function [im,x,y]=readimagepatch( fil, inr )
+Images files hold cross-sectional data on a composite grid and are written in a binary format. The
+image file starts with a header followed by a data section, which contains a two-dimensional grid
+function for each grid patch in the composite grid. The header has two parts. The first part
+contains 4 integers (4 bytes each), 2 doubles (8 bytes each) and a character array with 25 elements
+(1 byte each), i.e., 57 bytes of data:
+\begin{center}
+\begin{tabular}{llll}\hline
+Offset (bytes) & Name & Type & Bytes \\ \hline
+0 & prec & integer & 4 \\ \hline
+4 & $N_p$ & integer & 4 \\ \hline
+8 & $t$ & double & 8 \\ \hline
+16 & plane & int & 4 \\ \hline
+20 & $\xi$ & double & 8 \\ \hline
+28 & mode & int & 4 \\ \hline
+32 & grdinfo & int & 4 \\ \hline
+36 & creation-time & char[25] & 25 \\ \hline
+\end{tabular}
+\end{center}
+Here, {\tt prec} is the number of bytes per data value, i.e., 4 for single precision and 8 for
+double precision. The positive number of patches is stored in $N_p$, and $t\geq 0$ is the simulation
+time at which the image was saved. The {\tt plane} variable indicates the orientation of the
+plane. It is 0 for a constant $x$-plane, 1 for a constant $y$-plane, and 2 for a constant
+$z$-plane. The coordinate value is stored in $\xi$. For example, if {\tt plane}=0, the data is saved
+along $x=\xi$. The type of data is saved in {\tt mode}. The following 32 different types of data can
+be saved on an image file,
+\begin{flushleft}
+\begin{tabular}{l||l|l|l|l|l|l|l|l|l|l|l|l|l}\hline
+{\tt mode} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13\\ \hline
+Data & $u^{(x)}$ & $u^{(y)}$ & $u^{(z)}$ & $\rho$ & $\lambda$ & $\mu$ & $C_p$ & $C_s$ & $u_{ex}^{(x)}$
+& $u_{ex}^{(y)}$ & $u_{ez}^{(z)}$ & div$(\ub)$ & $|\mbox{curl($\ub$)}|$ \\ \hline
+\end{tabular}\\
+\medskip
+\begin{tabular}{l||l|l|l|l|l|l|l|l|l|l|l}\hline
+{\tt mode}  & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23 & 24 \\ \hline\hline
+Data & div$(\ub_t)$ & $|\mbox{curl($\ub_t$)}|$ & lat & lon &
+topo & $x$ & $y$ & $z$ & $u^{(x)} - u_{ex}^{(x)}$ & $u_e^{(y)} - u_{ex}^{(y)}$ & $u_e^{(z)} -
+u_{ex}^{(z)}$  \\ \hline
+\end{tabular}\\
+\medskip
+\begin{tabular}{l||l|l|l|lllllll}\hline
+{\tt mode} & 25 & 26 & 27 & 28 \\ \hline
+Data & $|\ub_t|$ & $\sqrt{(u_t^{(x)})^2+(u_t^{(y)})^2}$ & $\max_t\sqrt{(u_t^{(x)})^2+(u_t^{(y)})^2}$
+& $\max_t \left| u^{(z)}_t \right|$ 
+\\ \hline
+\end{tabular}\\
+\medskip
+\begin{tabular}{l||l|l|l|lllll}\hline
+{\tt mode} & 29 & 30 & 31 & 32 \\ \hline
+Data & $|\ub|$ & $\sqrt{(u^{(x)})^2+(u^{(y)})^2}$ & $\max_t\sqrt{(u^{(x)})^2+(u^{(y)})^2}$ & $\max_t
+\left| u^{(z)} \right|$ \\ \hline 
+\end{tabular}
+\end{flushleft}
+Here, $|\bf a|$ denotes the magnitude of the vector ${\bf a}\in\Re^3$ and $\ub_{ex}$ denotes the exact
+solution. The latter is only available when the exact solution is known, i.e., when \emph{SW4} is
+run in one of its test modes. Hence, modes 9, 10, 11, 22, 23, and 24, are not normally
+available. Also note that modes 19-21 store the coordinates of the grid in the data section of the
+image file. They are only necessary to
+save when a curvilinear grid is used, i.e., together with the {\tt topography} command.
 
-fd=fopen(fil,'r');
+The {\tt grdinfo} variable can have values 0, 1, and 2. No grid information is saved on the image
+file when all grid patches are Cartesian, because the grid can be recreated from the information in
+the header of the image file (see below). This situation is indicated by {\tt grdinfo}=0. When one
+of the grid patches is curvilinear and the image corresponds to a constant $x$-, or $y$-plane ({\tt
+  plane}=0 or 1), additional information about the grid is saved on the image file. When {\tt
+  grdinfo}=1, the $z$-coordinate of the curvilinear grid is saved after the data section. When {\tt
+  grdinfo}=2, the coordinates of the grid are saved on a separate image file. In this case, only the name of
+that file is saved after the data section. The final field in the first part of the header is a
+character array with 25 elements. It holds the creation time of the image file, as obtained from the
+C++ function {\tt localtime()}. On a Mac running OSX, the time has the format ``Wed Feb 27 13:51:14
+PST 2013''. Only the first 25 characters of this string are saved.
 
-% Precision of image data (4-float, 8-double)
-pr=fread(fd,1,'int');
+The second part of the header contains grid size information (32 bytes)
+for each of the $N_p$ grid patches. The information is save in the following format:
+{\samepage
+\begin{flushleft}
+{\tt for ($p=1$; $p\leq N_p$; $p$++) \{}\nopagebreak \\ 
+\hspace{5mm}
+\begin{tabular}{llll}\hline
+Offset (bytes) & Name & Type & Bytes \\ \hline
+57 + $32(p - 1)$ & $h_{p}$ & double & 8 \\ \hline
+65 + $32(p - 1)$ & $zmin_{p}$ & double & 8 \\ \hline
+73 + $32(p - 1)$ & $ib_{p}$ & int & 4 \\ \hline
+77 + $32(p - 1)$ & $ni_{p}$ & int & 4 \\ \hline
+81 + $32(p - 1)$ & $jb_{p}$ & int & 4 \\ \hline
+85 + $32(p - 1)$ & $nj_{p}$ & int & 4 \\ \hline
+\end{tabular}\\
+\}
+\end{flushleft}
+}
+Here $h_p$ is the grid size and $zmin_p$ is the starting value of the $z$-coordinate in patch
+$p$. There are $ni_p$ by $nj_p$ data points on patch $p$ with starting indices $ib_p$ and
+$jb_p$. Currently, $ib_p=1$ and $jb_p=1$. The Cartesian grid patches can be constructed from the
+grid size information,
+\[
+\mbox{{\tt plane}=0:}\ \begin{cases}
+x^{(p)}_{i,j} = \xi,\\
+y^{(p)}_{i,j} = h_p(i-1),& ib_p\leq i\leq ib_p+ni_p-1,\\
+z^{(p)}_{i,j} = zmin_p + h_p(j-1),& jb_p\leq j\leq jb_p+nj_p-1,
+\end{cases}
+\]
+\[
+\mbox{{\tt plane}=1:}\ \begin{cases}
+x^{(p)}_{i,j} = h_p(i-1),& ib_p\leq i\leq ib_p+ni_p-1,\\
+y^{(p)}_{i,j} = \xi,\\
+z^{(p)}_{i,j} = zmin_p + h_p(j-1),& jb_p\leq j\leq jb_p+nj_p-1,
+\end{cases}
+\]
+\[
+\mbox{{\tt plane}=2:}\ \begin{cases}
+x^{(p)}_{i,j} = h_p(i-1),& \qquad \qquad ib_p\leq i\leq ib_p+ni_p-1, \\
+y^{(p)}_{i,j} = h_p(j-1),& \qquad \qquad jb_p\leq j\leq jb_p+nj_p-1, \\
+z^{(p)}_{i,j} = \xi.
+\end{cases}
+\]
 
-% Number of image patches on file
-ni=fread(fd,1,'int');
-if inr > ni
-   disp( 'Error image nr too large');
-else
-% For each patch read grid spacing and index bounds. 
-% For patch nr. p:  ib(p) <= i <= ie(p) and jb(p) <= j <= je(p)
-   for i=1:ni
-      h(i)  = fread(fd,1,'double');
-      ib(i) = fread(fd,1,'int');
-      ie(i) = fread(fd,1,'int');
-      jb(i) = fread(fd,1,'int');
-      je(i) = fread(fd,1,'int');
-   end;
-% Want patch nr. inr, skip the first inr-1 image patches.
-   for i=1:inr-1
-      fseek(fd,(ie(i)-ib(i)+1)*(je(i)-jb(i)+1)*pr,0);
-   end;
-% Read wanted image patch, single or double precision.
-   if pr == 4 
-      im = fread(fd,[ie(inr)-ib(inr)+1 je(inr)-jb(inr)+1],'float');
-   else
-      im = fread(fd,[ie(inr)-ib(inr)+1 je(inr)-jb(inr)+1],'double');
-   end;
-% Corresponding Cartesian grid 
-   x  = ((ib(inr):ie(inr))-1)*h(inr);
-   y  = ((jb(inr):je(inr))-1)*h(inr);
-   fclose(fd);
-% transpose im and return result
-   im = im';
-end;
-\end{verbatim}
-In this implementation, {\tt fd} is a file descriptor variable. The Matlab functions {\tt fopen} and
-{\tt fread} perform binary I/O similarly to the C functions with the same names.
+The header is followed by grid function data on each of the $N_p$ patches. The data is saved as
+floats ({\tt prec}=4), or doubles ({\tt prec}=8). Each patch of the data is stored as in a
+two-dimensional array, $u^{(p)}(i,j)$, where $ib_p\leq i \leq ib_p+ni_p-1$ and $jb_p\leq j \leq
+jb_p+nj_p-1$. The data can be read as outlined by the following pseudo code:
+\begin{flushleft}
+{\tt for ($p=1$; $p\leq N_p$; $p$++)\{\\
+\hspace{5mm}for ($j=1$; $j\leq nj_p$; $j$++)\{\\
+\hspace{10mm}for ($i=1$; $i\leq ni_p$; $i$++)\{\\
+\hspace{15mm}read $u^{(p)}(i-1+ib_p, j-1+jb_p)$\\
+\hspace{10mm}\}\\
+\hspace{5mm}\}\\
+\}}
+\end{flushleft}
+If {\tt grdinfo}=0, there is no additional information on the image file.
 
-Note that the above matlab function reads one image patch from an image file into the Matlab matrix
-{\tt im}. The corresponding Cartesian coordinates are returned in the Matlab vectors {\tt x} and
-{\tt y}.
+If {\tt grdinfo}=1, the $z$-coordinates of the curvilinear grid are also saved on the image file
+(as floats of doubles depending on that value of {\tt prec}). Note that the curvilinear grid always
+corresponds to the last patch, $p=N_p$. The grid coordinates can be read using the pseudo code:
+\begin{flushleft}
+{\tt $p=N_p$;\\
+for ($j=1$; $j\leq nj_p$; $j$++)\{\\
+\hspace{5mm}for ($i=1$; $i\leq ni_p$; $i$++)\{\\
+\hspace{10mm}read $z^{(p)}(i-1+ib_p, j-1+jb_p)$\\
+\hspace{5mm}\}\\
+\}}
+\end{flushleft}
+The same ordering is used for the coordinates as the data, as determined by the {\tt plane} variable.
+
+If {\tt grdinfo}=2, the coordinates of the curvilinear grid are saved on a separate image
+file. In this case, only the name of the file is saved as a character array {\tt gname} of length
+$n_s$, and the last $4+n_s$ bytes of the image file follow the format:
+\begin{center}
+\begin{tabular}{llll}\hline
+Name & Type & Bytes \\ \hline
+$n_s$ & integer & 4 \\ \hline
+{\tt gname} & char[$n_s$] & $n_s$ \\ \hline
+\end{tabular}
+\end{center}
+
 
 %% \section{volimage (NOT YET IMPLEMENTED)}\label{sec:volimage-format}
 %% \index{fileformats!volimage}
@@ -2580,13 +2664,549 @@ Note that the above matlab function reads one image patch from an image file int
 %% data file using the \verb+volimage+ format, which should be available from the file format pull-down
 %% menu.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Installing \emph{SW4} (not documented)}\label{cha:installing-sw4}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+\chapter{Installing \emph{SW4} (not updated)}\label{cha:installing-sw4}
+\index{installation}
+
+The \emph{SW4} source code is released under the GNU general public license and can be downloaded from:
+\begin{verbatim}
+https://computation.llnl.gov/casc/serpentine/software.html
+\end{verbatim}
+Version 1.0 of \emph{SW4} is built using \verb+make+. We recommend using GNU make, sometimes called
+\verb+gmake+. You can check the version of make on you system with the command
+\begin{verbatim}
+shell> make -v
+\end{verbatim}
+If you don't have GNU make installed, you can obtain it from www.gnu.org.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Supported platforms and compilers}
+\index{installation!platforms}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+UPDATE! We have built \emph{SW4} and its supporting libraries on Intel based desktops and laptops running
+LINUX and OSX. It has also been built on various supercomputers such as the large Linux clusters at
+LLNL (currently zeus, atlas and sierra), as well as on IBM BG/L and BG/P systems. We have built \emph{SW4} using
+Gnu, Intel, or IBM compilers. Our experience is that \emph{SW4} is likely to build if the
+underlying third party libraries can be built. Currently, we are using the following compiler
+versions:
+\begin{verbatim}
+Gnu:   g++/gcc/gfortran   versions 4.3 to 4.7
+Intel: icpc/icc/ifort     versions 9.1 to 11.1
+IBM:                      version info currently unavailable
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{MPI and other third party libraries}
+\index{installation!tools}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+UPDATE! Before you can build \emph{SW4}, you must install the third party libraries. All libraries need to be
+installed in the same directory, such that each library installs its files in the lib and include
+subdirectories. To avoid incompatibility issues and linking problems, it is advisable to use the
+same compiler for building the third party libraries as for building \emph{SW4}.
+
+For a basic installation of SW4, you need:
+\begin{enumerate}
+\item the lapack and blas libraries, which provide basic linear algebra functionality. On many machines
+these libraries are preinstalled,
+\item an MPI-2 library, which provides support for message passing on parallel machines. An example
+  is the mpich2 library. Note that you need the MPI-2 library even when installing SW4 on a single
+  core system.
+\end{enumerate}
+Note that the MPI-2 library often include wrappers for compiling, linking, and executing MPI
+programs. For example, the mpich2 package includes the mpicxx and mpif77 compilers, as well as the
+mpirun script. These wrappers simplify the compilation and linking process and we highly recommend
+using them.
+
+For a complete installation that supports the efile command for reading e-tree material data bases,
+you need to install the following additional libraries (see Section~\ref{sec:cencalvm-install} for details):
+\begin{itemize}
+\item The Etree library
+\item The Proj library
+\item The cencalvm library
+\end{itemize}
+
+
+\subsection{Mac computers}
+
+UPDATE! We recommend using the MacPorts package manager for installing the required compilers and
+libraries. Simply go to www.macports.org, and install macports on your system. With that in place,
+you can use the \verb+port+ command as follows
+\begin{verbatim}
+shell> port install gcc44
+shell> port install mpich2 +gcc44
+\end{verbatim}
+Here, gcc44 refers to version 4.4 of the Gnu compiler suite. Compiler versions are bound to change
+ with time. Before starting, make sure you install a version of gcc that is compatible with the
+ mpich2 package. By adding the \verb+gcc44+ variant, you also get a compatible Fortran compiler.
+
+The lapack and blas libraries are preinstalled on recent Macs and can be accessed using the
+``-framework vecLib'' link option. If that does not work on your machine, you can download those
+libraries from www.netlib.org.
+
+\subsection{Linux machines}
+
+UPDATE! We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core 14
+Linux. Other Linux variants use similar commands for installing software packages.
+
+You need to have root privileges to install precompiled packages. Start by opening an xterm as root
+using the command
+\begin{verbatim}
+su -
+\end{verbatim}
+Install the compilers by issuing the commands
+\begin{verbatim}
+yum install gcc
+yum install gcc-c++
+yum install gcc-gfortran
+\end{verbatim}
+You install the \verb+mpich2+ library and include files with the command
+\begin{verbatim}
+yum install mpich2-devel
+\end{verbatim}
+The \verb+blas+ and \verb+lapack+ libraries are installed with
+\begin{verbatim}
+yum install blas
+yum install lapack
+\end{verbatim}
+On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and
+\verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these
+files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore
+add the links explicitly. If the libraries were installed elsewhere on your system, but you don't know
+where, this is how to find them: Give the commands:
+\begin{verbatim}
+cd /
+find . -name "*blas*" -print
+\end{verbatim}
+After locating the libraries, we add links to the libraries by issuing the commands (you need to
+be \verb+root+ for this to work) 
+\begin{verbatim}
+cd /usr/lib64
+ln -s libblas.so.3 libblas.so
+ln -s liblapack.so.3 liblapack.so
+\end{verbatim}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Directory structure}
+\index{installation!directories}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+UPDATE! To unpack the \emph{SW4} source code, you place the file \verb+sw4-version-1.0.tar.gz+ in the
+desired location and issue the following commands:
+\begin{verbatim}
+shell> gunzip sw4-version-1.0.tar.gz
+shell> tar xvf sw4-version-1.0.tar 
+\end{verbatim}
+Afterwards, you will find a new directory named \verb+sw4-version-1.0+, which contains several files
+and subdirectories:
+%
+\begin{itemize}
+\item \verb+LICENSE.txt+ License information.
+\item \verb+INSTALL.txt+ Information about how to build \emph{SW4} (short version).
+\item \verb+KNOWN-BUGS.txt+ List of known problems, porting issues, or bugs.
+\item \verb+README.txt+ General information about \emph{SW4}.
+\item \verb+configs+ Directory containing \verb+make+ configuration files.
+\item \verb+src+ C++ and Fortran source code of \emph{SW4}.
+\item \verb+tools+ Matlab scripts for post processing and analysis.
+\item \verb+examples+ Sample input files.
+\item \verb+Makefile+ Main makefile (don't change this file!).
+\item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
+\end{itemize}
+
+\section{Compiling and linking \emph{SW4} (without the cencalvm library)}\label{sec:basic-install}
+\index{installation!basic} 
+
+UPDATE! The best way of getting started is to first build \emph{SW4} without the cencalvm library. This
+process should be very straight forward and the resulting \emph{SW4} executable supports all
+commands except the {\tt efile} command. If you need to use the {\tt efile} command, you can later
+install the cencalvm and supporting libraries, see \S~\ref{sec:cencalvm-install}, and then recompile
+\emph{SW4}. 
+
+UPDATE!!!
+Start by familiarizing yourself with the sw4 source code by listing the main sw4 directory,
+\begin{verbatim}
+shell> cd /enter/your/path/sw4-version-1.0
+shell> ls
+\end{verbatim}
+Go into the configs directory:
+\begin{verbatim}
+shell> cd configs
+\end{verbatim}
+You should set the environment variable SW4MAKE to point to a configuration file for the main
+"Makefile". Examples for some common operating systems are given in the configs directory (make.amac
+for Mac's; make.tux, make.fc14, and make.sierra for Linux machines). For
+example, to use the configs/make.amac setup, you can use the csh-command
+\begin{verbatim}
+setenv SW4MAKE /enter/your/path/sw4-version-1.0/configs/make.amac
+\end{verbatim}
+If you are using a Bourne, bash, or related shell, you should instead use the command
+\begin{verbatim}
+export SW4MAKE=/enter/your/path/sw4-version-1.0/configs/make.amac
+\end{verbatim}
+It is a good idea to include this command in your setup file (\verb+.cshrc+ for c-shell).
+
+You build SW4 with the "make" command from the main directory.
+\begin{verbatim}
+shell> cd /enter/your/path/sw4-version-1.0
+shell> make
+\end{verbatim}
+If you for some reason wish to remove all object files and the sw4 executable, you can do
+\begin{verbatim}
+shell> cd /enter/your/path/sw4-version-1.0
+shell> make clean
+\end{verbatim}
+
+By default, the \emph{SW4} executable is located in 
+\begin{verbatim}
+/my/installation/dir/sw4-version-1.0/src/sw4
+\end{verbatim}
+It can be convenient to add this directory to your \verb+PATH+ environment variable (i.e., modify
+your \verb+.cshrc+ file).
+
+You can also build a debug version of \emph{SW4} by adding the \verb+debug=1+ option to \verb+make+,
+\begin{verbatim}
+shell> cd /my/installation/dir/sw4-version-1.0
+shell> make debug=1
+\end{verbatim}
+That executable will be located in
+\begin{verbatim}
+/my/installation/dir/sw4-version-1.0/debug_v2.1/sw4
+\end{verbatim}
+
+\subsection{How do I setup the make.inc file?}
+UPDATE!!!
+The main input file for make is
+\begin{verbatim}
+sw4-version-1.0/Makefile
+\end{verbatim}
+Do {\em not} change the \verb+Makefile+. It should only be necessary to edit your configuration file
+(the file name should be given in the \verb+SW4MAKE+ environment variable), for example
+\begin{verbatim}
+/my/path/sw4-version-1.0/configs/make.inc
+\end{verbatim}
+This file holds all information that is particular for your system, such as the name of the
+compilers, the location of the third party libraries, and any extra arguments that should be passed
+to the compiler or linker. This file also instructs \verb+make+ whether or not the
+cencalvm library should be linked to \emph{SW4}. 
+
+The following file incudes all configurable options:
+\begin{verbatim}
+etree = no
+
+CXX = mpicxx
+CC  = mpicc
+FC  = mpif77
+
+SW4ROOT = /Users/petersson1
+
+EXTRA_CXX_FLAGS = -DUSING_MPI
+EXTRA_FORT_FLAGS = -fno-underscoring
+EXTRA_LINK_FLAGS = -framework vecLib
+\end{verbatim}
+The \verb+etree+ variable should be set to \verb+yes+ or \verb+no+, and indicates whether the
+cencalvm and related libraries are available. The \verb+CXX+, \verb+CC+, and \verb+FC+ variables
+should be set to the names of the C++, C, and Fortran compilers, respectively. The \verb+SW4ROOT+
+variable should be set to the path of the third party libraries, such that the directories
+\verb+SW4ROOT+/lib and \verb+SW4ROOT+/include contain the libraries and include files,
+respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
+\verb+EXTRA_LINK_FLAGS+ variables can optionally be set to any additional argument that needs to be
+passed to the C++ compiler, Fortran compiler, or linker, on your system.
+
+
+\section{Installing the cencalvm, proj.4, and euclid libraries}\label{sec:cencalvm-install}
+\index{installation!cencalvm}
+\index{installation!efile}
+
+UPDATE! The cencalvm library was developed by Brad Aagaard at USGS. Both the cencalvm library and the Etree
+data base files, holding the material model of Northern California, can currently be downloaded from
+\begin{verbatim}
+earthquake.usgs.gov/regional/nca/3Dgeologic/cencalvm_doc
+\end{verbatim}
+The installation process, which is outlined below, is described in detail on the above web page.
+Note that three libraries need to be installed: euclid (etree), proj4, and cencalvm.  In order for
+\emph{SW4} to use them, they should all be installed in the same base directory and you should
+assign that directory to the SW4ROOT environment variable. When these pagages are installed, the include files
+should be in \$\{SW4ROOT\}/include and the library files in \$\{SW4ROOT\}/lib.
+
+Note that the euclid library must be installed manually by explicitly copying all include files to
+the include directory and all libraries to the lib directory,
+\begin{verbatim}
+shell> cd euclid3-1.2/libsrc
+shell> make
+shell> cp *.h ${SW4ROOT}/include
+shell> cp libetree.* ${SW4ROOT}/lib
+\end{verbatim}
+The proj4 library should be configured to be installed in SW4ROOT. This is accomplished by
+\begin{verbatim}
+shell> cd proj-4.7.0
+shell> configure --prefix=${SW4ROOT}
+shell> make
+shell> make install
+\end{verbatim}
+The cencalvm library should also be configured to be installed in SW4ROOT. You also have to help
+the configure script finding the include and library files for the proj4 and etree libraries,
+\begin{verbatim}
+shell> cd cencalvm-0.6.5
+shell> configure --prefix=${SW4ROOT} CPPFLAGS="-I${SW4ROOT}/include" \
+                 LDFLAGS="-L${SW4ROOT}/lib"
+shell> make
+shell> make install
+\end{verbatim}
+
+
+To verify that the libraries have been installed properly, you should go to the SW4ROOT directory
+and list the lib subdirectory (\verb+cd ${SW4ROOT}; ls lib+). You should see the following files (on
+Mac OSX machines, the .so extension is replaced by .dylib ):
+\begin{verbatim}
+shell> cd ${SW4ROOT}
+shell> ls lib
+libetree.so libetree.a 
+libproj.so libproj.a libproj.la 
+libcencalvm.a libcencalvm.la libcencalvm.so 
+\end{verbatim}
+Furthermore, if you list the include subdirectory, you should see include files such as 
+\begin{verbatim}
+shell> cd ${SW4ROOT}
+shell> ls include
+btree.h etree.h etree_inttypes.h
+nad_list.h projects.h proj_api.h
+cencalvm
+\end{verbatim}
+Note that the include files for cencalvm are in a subdirectory with the same name.
+
+Once you have successfully installed all three libraries, it is easy to re-configure \emph{SW4} to
+use them. Simply edit the make configuration file (\verb+make.inc+) according to
+\begin{verbatim}
+etree = yes
+...
+\end{verbatim}
+You then need to re-compile \emph{SW4}. Go to the sw4 main directory, remove the previous executable
+and object files, and re-run make:
+\begin{verbatim}
+shell> cd /my/installation/dir/sw4-version-1.0
+shell> make clean
+shell> make
+\end{verbatim}
+As before, if all goes well, the ``SW4 lives'' banner is shown after the make command is completed:
+\begin{verbatim}
+\end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Testing the \emph{SW4} installation (not documented)}\label{cha:testing-sw4}
+\chapter{Testing the \emph{SW4} installation (in progress)}\label{cha:testing-sw4}
+\index{testing}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Once \emph{SW4} has been installed, it is a good idea to verify that the code works properly. For
+this purpose, we provide test scripts in the \verb+examples+ directory. With each input file
+\verb+xyz.in+, there is a corresponding output file named \verb+xyz.out+. Note that when \emph{SW4}
+runs in parallel, some of the output can appear in a different order. The most important aspect of
+these tests is to verify the reported errors in the numerical solutions. This information is written
+near the end of the output files. These numbers should be independent of the number of MPI processes
+on a given machine, but due to roundoff errors, the errors can vary slightly from one type of hardware to
+another. Note that some of the tests use a significant number of grid points and will only fit in
+memory on larger machines.
+
+On some systems, it is necessary to start an MPI daemon before any parallel programs can be
+executed. This is often done by issuing the command
+\begin{verbatim}
+mpd &
+\end{verbatim}
+Refer to your local system administrator if you have problems running \verb+sw4+ in parallel.
+
+\section{Method of manufactured solutions}\label{sec:twilight}
+\index{testing!twilight}
+
+The method of manufactured solutions (also know as twilight zone testing) provides a general way of
+testing the accuracy of numerical solutions of partial differential equations, including effects of
+heterogeneous material properties and various boundary conditions on complex geometries. The test
+scripts can be found in the directory
+\begin{verbatim}
+.../sw4-version-1.0/examples/twilight
+\end{verbatim}
+In the twilight zone testing module of \emph{SW4}, we take the material properties to be
+\begin{alignat*}{2}
+\rho(x,y,z) &= A_\rho \left( 2 + \sin(\omega_m x + \theta_m) \cos(\omega_m y + \theta_m)
+\sin(\omega_m z + \theta_m) \right),\\ 
+\mu(x,y,z) &=  A_\mu \left( 3 + \cos(\omega_m x + \theta_m) \sin(\omega_m y + \theta_m)
+\sin(\omega_m z + \theta_m) \right),\\ 
+\lambda(x,y,z) &=  A_\lambda \left( 2 + \sin(\omega_m x + \theta_m) \sin(\omega_m y + \theta_m)
+\cos(\omega_m z + \theta_m) \right).
+\end{alignat*}
+The internal forcing, boundary forcing and initial conditions are chosen such that the exact
+(manufactured) solution becomes
+\begin{alignat*}{2}
+u_e(x,y,z,t) &= \sin(\omega(x-c_e t)) \sin(\omega y + \theta) \sin(\omega z + \theta), \\
+v_e(x,y,z,t) &= \sin(\omega x + \theta) \sin(\omega( y - c_e t)) \sin(\omega z + \theta), \\
+w_e(x,y,z,t) &= \sin(\omega x + \theta) \sin(\omega y + \theta) \sin(\omega( z - c_e t)). 
+\end{alignat*}
+The values of the material parameters ($\omega_m$, $\theta_m$, $A_\rho$, $A_\lambda$, $A_\mu$) and
+the solution parameters ($\omega$, $\theta$, $c_e$), can be modified in the input script. Since the
+exact solution is know, it is possible to evaluate the error in the numerical solution. By repeating
+the same test on several grid sizes, it is possible to establish the convergence order of the
+numerical method.
+
+The basic twilight tests use a single grid, a flat topography, and cover the computational domain
+$(x,y,z)\in[0,5]^3$. These cases are provided in the three scripts:
+\begin{verbatim}
+flat-twi-1.in  flat-twi-2.in  flat-twi-3.in
+\end{verbatim}
+The numerical solution is simulated up to time $t=4.8$ on a grid with $31^3$,
+$61^3$, and $121^3$ grid points, respectively. The corresponding results are given in the three
+output files
+\begin{verbatim}
+flat-twi-1.out  flat-twi-2.out  flat-twi-3.out
+\end{verbatim}
+Assuming \verb+mpiexec+ is used to execute parallel programs, you run the first of these cases on 4
+processes with the command
+\begin{verbatim}
+cd examples/twilight
+mpiexec -n 4 ../../optimize-1.0/sw4 flat-twi-1.in
+\end{verbatim}
+The errors in max and $L_2$ norm in the numerical solution is reported at the bottom of these files
+and some of these numers are summarized in Table~\ref{tab:twi-err}.
+\begin{table}
+\begin{center}
+\begin{tabular}{| c | c | c | c  | c | }
+\hline
+$N_x$ & $h$ & $\| \ub - \ub_{ex}\|_\infty$ & ratio$_\infty$ & rate$_\infty$ \\ \hline
+$31$  & $1.667\cdot 10^{-1}$  & $2.38\cdot 10^{-2}$ & --   & --   \\ \hline
+$61$  & $8.333\cdot 10^{-2}$  & $1.70\cdot 10^{-3}$ & 14.0 & 3.81 \\ \hline
+$121$ & $4.167\cdot 10^{-2}$  & $1.05\cdot 10^{-4}$ & 16.2 & 4.02 \\ \hline
+\end{tabular}
+\caption{Twilight test: Max norm errors in the displacement at time $t=4.8$.}
+\label{tab:twi-err}
+\end{center}
+\end{table}
+
+Non-planar free surfaces are tested by the scripts
+\begin{verbatim}
+gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in
+\end{verbatim}
+In this case, the free surface is a Gaussian hill and the numerical solution is simulated up to time
+$t=0.8$ on a grid with $31^3$, $61^3$, and $121^3$ grid points, respectively. The curvilinear grid
+covers the domain between the free surface and $z=0.25$, and a single Cartesian grid covers the
+remainder of the computational domain ($0.25\leq z\leq 1$). The corresponding results are given in the three output files
+\begin{verbatim}
+gauss-twi-1.out  gauss-twi-2.out  gauss-twi-3.out
+\end{verbatim}
+Note that some image files are generated by these scripts and placed in the sub-directories \verb+gauss_31+,
+\verb+gauss_61+, and \verb+gauss_121+, respectively. We encourage the user to look at these image
+files, for example by reading them into matlab/octave using the script \verb+tools/readimagepatch.m+.
+
+\section{Lamb's problem}\label{sec:lamb}
+\index{testing!lambs}
+
+The \emph{SW4} installation can be tested further by solving Lamb's problem, i.e., the motion due to
+a vertical point force applied on the free surface. The material is assumed homogeneous and the
+ratio between the compressional and shear velocities is $\sqrt{3}$, i.e., $\lambda=\mu$. Hence the
+shear velocity is $C_s = C_p/\sqrt{3}$. The time function is a {\tt verySmoothBump} with {\bf
+  freq}=1 and {\bf t0}=0. Note that only the vertical component of the exact solution is available,
+and it is only calculated along the free surface ($z=0$). Images of the error can be saved with
+the {\tt image} command using the options {\tt type=uzerr z=0}. The errors in the solution, measured
+in max and $L_2$ norms, are reported at the end of the run. This problem tests the implementation of
+a point force and (to some extent) the supergrid far field boundary condition. The input files can
+be found in the directory
+\begin{verbatim}
+shell> cd sw4-version-1.0/examples/lambtest
+shell> ls
+Lambtest1.in  Lambtest2.in  Lambtest3.in  Lambtest4.in
+\end{verbatim}
+Here we provide input files with four different grid sizes, with $116^2\times 59$, $231^2 \times
+116$, $461^2\times 231$, and $921^2\times 461$ grid points, respectively. Be aware that the finest
+grid uses about 391 Million grid points and can only be run on a sufficiently large machine. The
+corresponding output files are given in
+\begin{verbatim}
+Lambtest1.out  Lambtest2.out  Lambtest3.out  Lambtest4.out
+\end{verbatim}
+Note that the most important information is near the end of these files, where the error in the numerical
+solution is reported. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Run time and memory requirements}\label{sec:performance}
+\index{performance}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Run time}
+UPDATE!
+The execution times shown in Table \ref{tab:cputime-usage} were obtained by running \emph{SW4} on a problem
+with 5e5 to 1e6 grid points per processor. Timings were measured on 16 processors of the sierra
+machine at LLNL, in July of 2011. The \emph{SW4} executable was compiled with Intel compilers at
+optimization level -O. While the absolute numbers in Table \ref{tab:cputime-usage} are machine
+dependent and destined to change in the (near) future, the relative cost of various solver
+configurations is likely to stay more or less constant. Note that the visco-elastic cases used 3
+mechanisms. For the case with topography, about 82\% of the grid points were in the curvilinear
+grid.
+
+We note that 1): solving the visco-elastic wave equations with m=3, requires a factor 3.7 more CPU
+time than the purely elastic case. 2): Satisfying the interface conditions for grid refinement is
+relatively expensive. With one refinement and the elastic solver, those conditions required
+approximately 60\% of the total computation time.  For the visco-elastic case, more calculations per
+grid point are performed in the interior of the domain, and the relative cost for enforcing the
+interface conditions goes down to about 35\% of the total time. 3): The strong scaling properties
+are not perfect. Hence, the performance might be degraded when the number of processors is increased
+while keeping the number of grid points fixed. More experimentation is needed to better evaluate the strong
+scaling properties of \emph{SW4}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|r|r|}\hline
+Configuration              & Solver        & Execution time [s] & Relative factor \\ \hline\hline
+Cartesian, single grid     & elastic       & $6.90\cdot 10^{-9}$ & 1 \\ \hline
+Cartesian, one refinement  & elastic       & $1.64\cdot 10^{-8}$ & 2.4 \\ \hline
+Cartesian, two refinements & elastic       & $1.77\cdot 10^{-8}$ & 2.7 \\ \hline
+Topography                 & elastic       & $3.48\cdot 10^{-8}$ & 5.0 \\ \hline
+%Cartesian, single grid     & visco-elastic & $2.57\cdot 10^{-8}$ & 3.7\\ \hline
+%Cartesian, one refinement  & visco-elastic & $3.49\cdot 10^{-8}$ & 5.1\\ \hline
+%Topography                 & visco-elastic & $1.27\cdot 10^{-7}$ & 18.0\\ \hline
+\end{tabular}
+\end{center}
+\caption{Execution time per time step and grid point for different grid configurations, both for
+  solving the elastic and the visco-elastic wave equations. The relative factor is the execution time
+  relative to the Cartesian single grid case, for the elastic wave equation.}\label{tab:cputime-usage}
+\end{table}
+
+\section{Memory usage}
+
+UPDATE! The memory usage in Table~\ref{tab:mem-usage} was obtained by running \emph{SW4} on a single processor
+using 1-2 M grid points. By inspection of the source code, we found the following number of 3-D
+arrays holding double precision (8 bytes) floating point variables: 15 for Cartesian grids, another
+13 for topography (coordinates and metric coefficients in the curvilinear grid), and an additional
+5+11*m for a m-mechanism visco-elastic material. These numbers correspond to the asymptotic memory
+requirements presented in the right column of Table \ref{tab:mem-usage}, which agree well with the
+observed memory usage. The observed numbers tend to the theoretical asymptotic numbers as the
+problem size increases.
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|r|r|}\hline
+Configuration   &  solver       & Memory [bytes/grid point]  & Asymp. usage [bytes/grid point] \\ \hline\hline
+Cartesian grid  & elastic       & 135 & 120 \\ \hline
+Topography      & elastic       & 228 & 205 \\ \hline 
+%Cartesian grid  & visco-elastic & 440 & 424 \\ \hline 
+%Topography      & visco-elastic & 530 & 509 \\ \hline 
+\end{tabular}
+\end{center}
+\caption{Memory usage for different grid and solver configurations. The visco-elastic case has 3
+  mechanisms and the case with topography has 82\% of the grid point in the curvilinear
+  grid.}\label{tab:mem-usage}
+\end{table}
+
+As expected, the observed memory usage closely follows the linear relation
+\[
+ M=k*N+m, 
+\]
+where M is memory usage and N is the number of grid points. For parallel runs, the memory per
+grid point will be somewhat higher, because of duplicated ghost points at the processor
+boundaries. Here we only report the memory usage for a single processor run. Note that the
+volimage command saves a copy of the image variable over the full 3D volume. This adds (at single
+precision, and full resolution) 4 bytes per grid point and per volume image command. It is possible
+to reduce this size by only saving every n:th grid point in each coordinate direction. For example,
+only saving every 2nd point reduces the size of the data by a factor 8.
+
+\printindex
 
 \bibliographystyle{plain}
 
