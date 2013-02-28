@@ -20,14 +20,16 @@ void SuperGrid::print_parameters() const
    printf("SuperGrid parameters left=%i, right=%i, x0=%e, x1=%e, width=%e, transition=%e epsL=%e\n", m_left, m_right, m_x0, m_x1, m_width, m_trans_width,m_epsL);
 }
 
-void SuperGrid::define_taper(bool left, double leftStart, bool right, double rightEnd, double width, double transWidth)
+void SuperGrid::define_taper(bool left, double leftStart, bool right, double rightEnd, double width)
 {
   m_left = left;
   m_x0 = leftStart;
   m_right = right;
   m_x1 = rightEnd;
   m_width = width;
-  m_trans_width = transWidth;
+// always use the full width for the transition, making m_const_width=0
+  m_trans_width = width;
+//  m_trans_width = transWidth;
   m_const_width = m_width - m_trans_width;
   
 // sanity checks

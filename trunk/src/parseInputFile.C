@@ -2326,9 +2326,9 @@ void EW::processSupergrid(char *buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("supergrid", token) == 0, "ERROR: not a supergrid line...: " << token);
   token = strtok(NULL, " \t");
-  int sg_thickness, sg_transition;
+  int sg_thickness; // sg_transition;
   double sg_coeff;
-  bool thicknessSet=false, transitionSet=false, dampingCoeffSet=false;
+  bool thicknessSet=false, dampingCoeffSet=false; // , transitionSet=false
   
   while (token != NULL)
   {
@@ -2345,21 +2345,14 @@ void EW::processSupergrid(char *buffer)
       thicknessSet = true;
     }
 //                  12345678901
-    else if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
-    {
-      token += 11;
-      sg_transition = atoi(token);
-      CHECK_INPUT(sg_transition>0, "The number of grid points in the supergrid transition layer must be positive, not: "<< sg_transition);
-      transitionSet = true;
-      //<<<<<<< parseInputFile.C
-      //    }
-      ////                       12345678901234567890
-      //    else if (startswith("damping_coefficient=", token))
-      //=======
-  }
-//                       123
+    // else if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
+    // {
+    //   token += 11;
+    //   sg_transition = atoi(token);
+    //   CHECK_INPUT(sg_transition>0, "The number of grid points in the supergrid transition layer must be positive, not: "<< sg_transition);
+    //   transitionSet = true;
+    // }
     else if (startswith("dc=", token))
-       //>>>>>>> 1.12
     {
       token += 3;
       sg_coeff = atof(token);
@@ -2376,8 +2369,8 @@ void EW::processSupergrid(char *buffer)
   if (thicknessSet)
     set_sg_thickness(sg_thickness);
 
-  if (transitionSet)
-    set_sg_transition(sg_transition);
+  // if (transitionSet)
+  //   set_sg_transition(sg_transition);
 
   if (dampingCoeffSet)
     set_sg_damping(sg_coeff);

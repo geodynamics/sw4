@@ -174,15 +174,15 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   mbcsSet(false),
 
   m_analytical_topo(false),
-  m_GaussianAmp(0.),
-  m_GaussianLx(1.0),
-  m_GaussianLy(1.0),
-  m_GaussianXc(0.0),
-  m_GaussianYc(0.0),
+  m_GaussianAmp(0.05),
+  m_GaussianLx(0.15),
+  m_GaussianLy(0.15),
+  m_GaussianXc(0.5),
+  m_GaussianYc(0.5),
 
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
-  m_sg_gp_transition(30),
+//  m_sg_gp_transition(30), // always the same as the thickness
   m_supergrid_damping_coefficient(0.04),
 
   m_minJacobian(0.),
@@ -376,36 +376,54 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
       
    if( proc_zero() )
    {
-      double myM0Sum = 0;
-      int numsrc = 0; //, ignoredSources=0;
-      for (unsigned int i=0; i < a_Sources.size(); ++i)
-      {
+     if (m_twilight_forcing)
+     {
+       cout << "-----------------------------------------------------------" << endl;
+       cout << "Twilight zone testing (aka method of manufactured solution)" << endl;
+       cout << "Parameters:" << endl;
+       cout << "  omega = " << m_twilight_forcing->m_omega << endl;
+       cout << "  c = " << m_twilight_forcing->m_c << endl;
+       cout << "  phase = " << m_twilight_forcing->m_phase << endl;
+       cout << "  momega = " << m_twilight_forcing->m_momega << endl;
+       cout << "  mphase = " << m_twilight_forcing->m_mphase << endl;
+       cout << "  amprho = " << m_twilight_forcing->m_amprho << endl;
+       cout << "  amplambda = " << m_twilight_forcing->m_amplambda << endl;
+       cout << "-----------------------------------------------------------" << endl;
+     }
+     else
+     {
+       double myM0Sum = 0;
+       int numsrc = 0; //, ignoredSources=0;
+       for (unsigned int i=0; i < a_Sources.size(); ++i)
+       {
          if (a_Sources[i]->isMomentSource())
 	 {
 // Note that proc 0 doen't know of all sources that need to be ignored
 //	   if (!a_Sources[i]->ignore() ) 
-	   {
-	     numsrc++;
-             myM0Sum += a_Sources[i]->getAmplitude();
-	   }
-	   //	   else
-	   //	     ignoredSources++;
+	 {
+	   numsrc++;
+	   myM0Sum += a_Sources[i]->getAmplitude();
+	 }
+	 //	   else
+	 //	     ignoredSources++;
 	 }
 	 
-      }
-      if (!mQuiet)
-      {
-	stringstream msg2;
-	msg2 << endl
-	     << "-----------------------------------------------------------------------" << endl
-	     << "  Total seismic moment (M0): " << myM0Sum << " Nm " << endl;
-	if (myM0Sum > 0)
-	  msg2 <<  "  Moment magnitude     (Mw): " << (2./3.)*(log10(myM0Sum) - 9.1)  << endl;
-	msg2 << "  Number of sources " << numsrc << endl;
-	msg2 << "-----------------------------------------------------------------------" << endl;
-	cout << msg2.str();
-      }
-  }
+       }
+       if (!mQuiet)
+       {
+	 stringstream msg2;
+	 msg2 << endl
+	      << "-----------------------------------------------------------------------" << endl
+	      << "  Total seismic moment (M0): " << myM0Sum << " Nm " << endl;
+	 if (myM0Sum > 0)
+	   msg2 <<  "  Moment magnitude     (Mw): " << (2./3.)*(log10(myM0Sum) - 9.1)  << endl;
+	 msg2 << "  Number of sources " << numsrc << endl;
+	 msg2 << "-----------------------------------------------------------------------" << endl;
+	 cout << msg2.str();
+       }
+     } // standard run
+   } // end if proc_zero()
+   
 }
 
 //-----------------------------------------------------------------------
@@ -3774,12 +3792,12 @@ void EW::set_sg_thickness(int gp_thickness)
 }
 
 //-----------------------------------------------------------------------
-void EW::set_sg_transition(int gp_trans)
-{
-  m_sg_gp_transition = gp_trans;
-  if (m_myRank==0)
-    cout << "Default Supergrid transition width has been tuned; width = " << m_sg_gp_transition << " grid sizes" << endl;
-}
+// void EW::set_sg_transition(int gp_trans)
+// {
+//   m_sg_gp_transition = gp_trans;
+//   if (m_myRank==0)
+//     cout << "Default Supergrid transition width has been tuned; width = " << m_sg_gp_transition << " grid sizes" << endl;
+// }
 
 //-----------------------------------------------------------------------
 void EW::set_sg_damping(double damp_coeff)

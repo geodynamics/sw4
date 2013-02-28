@@ -1,4 +1,3 @@
-[yorkville:sw4/examples/twilight] petersson1% openmpirun -np 2 ../../src/sw4 flat-twi-1.in
 ----------------------------------------------------------------
             sw4 version 1.0
 
@@ -6,12 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Mon Feb 25 13:19:42 PST 2013
+  Compiled on: Thu Feb 28 13:45:57 PST 2013
   By user:     petersson1
   Machine:     yorkville.llnl.gov
   Compiler:    /opt/local/bin/openmpicxx
-  3rd party software include directory: /Users/petersson1/include
-  3rd party software library directory: /Users/petersson1/lib
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
 ----------------------------------------------------------------
 
 Input file: flat-twi-1.in
@@ -30,7 +28,7 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 29791
 
 
-   Execution time, reading input file 0.00143886 seconds 
+   Execution time, reading input file 0.0011642 seconds 
 ----------------------------------------------------
  Making Output Directory: ./
 		
@@ -54,7 +52,7 @@ Geographic coordinates of the corners of the computational grid:
 2: Lon= 1.180001e+02, Lat=3.700004e+01
 3: Lon= 1.180001e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.00764394 seconds 
+   Execution time, start up phase 0.00726008 seconds 
 Running sw4 on 2 processors...
 Writing output to directory: ./
 ============================================================
@@ -62,37 +60,23 @@ Writing output to directory: ./
 
  Start Time = 0 Goal Time = 4.8
  Number of time steps = 109 dt: 0.0440367
-
------------------------------------------------------------------------
-  Total seismic moment (M0): 0 Nm 
-  Number of sources 0
------------------------------------------------------------------------
-***Twilight Testing...
-proc=0, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
-proc=0, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=0 bc[5]=1
-
- Testing the accuracy of the spatial difference approximation
-proc=1, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
-proc=1, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=0 bc[5]=1
-Grid nr:   0 
-Max errors low-k boundary RHS:    1.9260379e+01    2.0977658e+01    1.2534780e+01
-Max errors interior RHS:          2.6620951e+00    2.5671253e+00    2.3837900e+00
-Max errors high-k boundary RHS:   2.1610090e+00    2.1161492e+00    2.4722424e+00
-Testing accuracy of rho*utt - L(u) = F
-Grid nr:   0 
-Max errors low-k boundary RHS:    1.9260379e+01    2.0977658e+01    1.2534780e+01
-Max errors interior RHS:          2.6620951e+00    2.5671253e+00    2.3837900e+00
-Max errors high-k boundary RHS:   2.1610090e+00    2.1161492e+00    2.4722424e+00
-About to call exactSolTwilight
-Inside normOfDifferenceGhostPoints
-
- Ghost point errors: Linf =   5.4991025e-03, L2 =   9.4939088e-03
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 3
+  c = 1.3
+  phase = 0.2
+  momega = 3.2
+  mphase = 0.8
+  amprho = 2
+  amplambda = 1
+-----------------------------------------------------------
   Begin time stepping...
 Time step       1  t =   4.4036697e-02
 Time step     101  t =   4.4477064e+00
 Time step     109  t =   4.8000000e+00
   Time stepping finished...
-   Execution time, solver phase 3.36315 seconds 
+   Execution time, solver phase 3.30579 seconds 
 
  Final solution errors: Linf =   2.3845137e-02, L2 =   4.9961506e-02
 ============================================================

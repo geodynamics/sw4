@@ -233,7 +233,7 @@ void addMaterialProperty(MaterialProperty* mat){m_materials.push_back(mat);}
 void processSupergrid(char *buffer);
 void set_sg_damping(double coeff);
 void set_sg_thickness(int gp_thickness);
-void set_sg_transition(int gp_trans);
+//void set_sg_transition(int gp_trans);
 bool usingSupergrid(){return m_use_supergrid;};
 void setup_supergrid( );
    //void supergrid_taper_material();
@@ -599,7 +599,7 @@ int m_nwriters;
 
 // supergrid
 bool m_use_supergrid;
-int m_sg_gp_thickness, m_sg_gp_transition;
+int m_sg_gp_thickness; //, m_sg_gp_transition;
 double m_supergrid_damping_coefficient;
 SuperGrid m_supergrid_taper_x, m_supergrid_taper_y, m_supergrid_taper_z;
 

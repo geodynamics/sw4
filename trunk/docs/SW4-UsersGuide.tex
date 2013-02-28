@@ -1618,8 +1618,7 @@ file can be used for further postprocessing by the GMT program~\cite{WesselSmith
 \index{command!rec}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The \verb+rec+ command is used to save the time history of the solution at a fixed
-location in space. 
-For backwards compatibility with \emph{WPP} this command can also be called
+location in space. For backwards compatibility with \emph{WPP}, this command can also be called
 \verb+sac+.
 % The \verb+sac+ command is described in \S~\ref{sec:sac}.
 \begin{flushleft}
@@ -2063,7 +2062,7 @@ effects. Only the source code gives a complete description of what these command
 \begin{flushleft}\bf
 Syntax:\\
 \tt
-supergrid thickness=... transition=... dc=...
+supergrid thickness=... dc=...
 \\
 \bf Required parameters:\\
 \rm
@@ -2075,9 +2074,7 @@ None
 \multicolumn{4}{|c|}{\bf supergrid command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
 %
-thickness &  Thickness of the supergrid layer & int & 30\\ \hline
-%
-transition &  Thickness of the transition region & int & 25\\ \hline
+thickness &  Number of grid points in the supergrid layer & int & 30\\ \hline
 %
 dc & Damping coefficient in supergrid region & real & 0.04 \\ \hline
 \end{tabular}
@@ -2098,35 +2095,32 @@ boundary\_conditions lx=... hx=... ly=... hy=... lz=... hz=...
 \rm
 None
 \end{flushleft}
-
+Note that the boundary condition values are different in \emph{SW4} and \emph{WPP}.
 \begin{center}
 \begin{tabular}{|l|p{10cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf Boundary conditions parameters}\\ \hline
-\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-lx & Boundary condition at $x=0     $ & int 0-5 & 5 \\ \hline
-hx & Boundary condition at $x=x_{max}$ & int 0-5 & 5 \\ \hline 
-ly & Boundary condition at $y=0     $ & int 0-5 & 5 \\ \hline
-hy & Boundary condition at $y=y_{max}$ & int 0-5 & 5 \\ \hline 
-lz & Boundary condition at $depth=0 $ & int 0-5 & 2 \\ \hline 
-hz & Boundary condition at $z=z_{max}$ & int 0-5 & 5 \\ \hline
+\bf{Option} & \bf{Description} & \bf{Value} & \bf{Default} \\ \hline \hline
+lx & Boundary condition at $x=0$      & int 0-3 & 2 \\ \hline
+hx & Boundary condition at $x=x_{max}$ & int 0-3 & 2 \\ \hline 
+ly & Boundary condition at $y=0$      & int 0-3 & 2 \\ \hline
+hy & Boundary condition at $y=y_{max}$ & int 0-3 & 2 \\ \hline 
+lz & Boundary condition at $depth=0 $ & int 0-3 & 0 \\ \hline 
+hz & Boundary condition at $z=z_{max}$ & int 0-3 & 2 \\ \hline
 \end{tabular}
 \end{center}
 \index{boundary\_conditions parameters!lx, hx, ly, hy, lz, hz}
 
 \begin{center}
 \begin{tabular}{|l|p{10cm}|} \hline
-\multicolumn{2}{|c|}{\bf boundary condition Type values }\\ \hline
+\multicolumn{2}{|c|}{\bf boundary condition values }\\ \hline
 \bf{Value} & \bf{Type} \\ \hline \hline
-0 & Clayton-Enquist boundary   \\ \hline
-1 & Energy absorbing boundary  \\ \hline
-2 & Stress-free boundary       \\ \hline
-3 & Dirichlet boundary         \\ \hline
-4 & Neumann boundary           \\ \hline
-5 & Supergrid boundary         \\ \hline
+0 & Stress-free boundary   \\ \hline
+1 & Dirichlet boundary  \\ \hline
+2 & Supergrid boundary         \\ \hline
+3 & Periodic boundary         \\ \hline
 \end{tabular}
 \end{center}
-\index{boundary\_conditions values!clayton-engquist, energy-absorbing, stress-free, dirichlet,
-  neumann, supergrid}
+\index{boundary\_conditions values! stress-free, dirichlet, supergrid, periodic}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{developer [optional]}
@@ -2518,11 +2512,11 @@ the header of the image file (see below). This situation is indicated by {\tt gr
 of the grid patches is curvilinear and the image corresponds to a constant $x$-, or $y$-plane ({\tt
   plane}=0 or 1), additional information about the grid is saved on the image file. When {\tt
   grdinfo}=1, the $z$-coordinate of the curvilinear grid is saved after the data section. When {\tt
-  grdinfo}=2, the coordinates of the grid are saved on a separate image file. In this case, only the name of
-that file is saved after the data section. The final field in the first part of the header is a
-character array with 25 elements. It holds the creation time of the image file, as obtained from the
-C++ function {\tt localtime()}. On a Mac running OSX, the time has the format ``Wed Feb 27 13:51:14
-PST 2013''. Only the first 25 characters of this string are saved.
+  grdinfo}=2, the coordinates of the grid are saved on a separate image file. In this case, only the
+name of that file is saved after the data section. The final field in the first part of the header
+is a character array with 25 elements. It holds the creation time of the image file, as obtained
+from the C++ function {\tt localtime()}. On a Mac running OSX, the time has the format ``Thu Feb 28
+14:24:07 2013''. Exactly 25 characters are saved and the string is truncated if it is longer than that.
 
 The second part of the header contains grid size information (32 bytes)
 for each of the $N_p$ grid patches. The information is save in the following format:
@@ -2666,334 +2660,334 @@ $n_s$ & integer & 4 \\ \hline
 
 
 \appendix
-\chapter{Installing \emph{SW4} (not updated)}\label{cha:installing-sw4}
+\chapter{Installing \emph{SW4} (not documented)}\label{cha:installing-sw4}
 \index{installation}
 
-The \emph{SW4} source code is released under the GNU general public license and can be downloaded from:
-\begin{verbatim}
-https://computation.llnl.gov/casc/serpentine/software.html
-\end{verbatim}
-Version 1.0 of \emph{SW4} is built using \verb+make+. We recommend using GNU make, sometimes called
-\verb+gmake+. You can check the version of make on you system with the command
-\begin{verbatim}
-shell> make -v
-\end{verbatim}
-If you don't have GNU make installed, you can obtain it from www.gnu.org.
+%% The \emph{SW4} source code is released under the GNU general public license and can be downloaded from:
+%% \begin{verbatim}
+%% https://computation.llnl.gov/casc/serpentine/software.html
+%% \end{verbatim}
+%% Version 1.0 of \emph{SW4} is built using \verb+make+. We recommend using GNU make, sometimes called
+%% \verb+gmake+. You can check the version of make on you system with the command
+%% \begin{verbatim}
+%% shell> make -v
+%% \end{verbatim}
+%% If you don't have GNU make installed, you can obtain it from www.gnu.org.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Supported platforms and compilers}
-\index{installation!platforms}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \section{Supported platforms and compilers}
+%% \index{installation!platforms}
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-UPDATE! We have built \emph{SW4} and its supporting libraries on Intel based desktops and laptops running
-LINUX and OSX. It has also been built on various supercomputers such as the large Linux clusters at
-LLNL (currently zeus, atlas and sierra), as well as on IBM BG/L and BG/P systems. We have built \emph{SW4} using
-Gnu, Intel, or IBM compilers. Our experience is that \emph{SW4} is likely to build if the
-underlying third party libraries can be built. Currently, we are using the following compiler
-versions:
-\begin{verbatim}
-Gnu:   g++/gcc/gfortran   versions 4.3 to 4.7
-Intel: icpc/icc/ifort     versions 9.1 to 11.1
-IBM:                      version info currently unavailable
-\end{verbatim}
+%% UPDATE! We have built \emph{SW4} and its supporting libraries on Intel based desktops and laptops running
+%% LINUX and OSX. It has also been built on various supercomputers such as the large Linux clusters at
+%% LLNL (currently zeus, atlas and sierra), as well as on IBM BG/L and BG/P systems. We have built \emph{SW4} using
+%% Gnu, Intel, or IBM compilers. Our experience is that \emph{SW4} is likely to build if the
+%% underlying third party libraries can be built. Currently, we are using the following compiler
+%% versions:
+%% \begin{verbatim}
+%% Gnu:   g++/gcc/gfortran   versions 4.3 to 4.7
+%% Intel: icpc/icc/ifort     versions 9.1 to 11.1
+%% IBM:                      version info currently unavailable
+%% \end{verbatim}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{MPI and other third party libraries}
-\index{installation!tools}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \section{MPI and other third party libraries}
+%% \index{installation!tools}
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-UPDATE! Before you can build \emph{SW4}, you must install the third party libraries. All libraries need to be
-installed in the same directory, such that each library installs its files in the lib and include
-subdirectories. To avoid incompatibility issues and linking problems, it is advisable to use the
-same compiler for building the third party libraries as for building \emph{SW4}.
+%% UPDATE! Before you can build \emph{SW4}, you must install the third party libraries. All libraries need to be
+%% installed in the same directory, such that each library installs its files in the lib and include
+%% subdirectories. To avoid incompatibility issues and linking problems, it is advisable to use the
+%% same compiler for building the third party libraries as for building \emph{SW4}.
 
-For a basic installation of SW4, you need:
-\begin{enumerate}
-\item the lapack and blas libraries, which provide basic linear algebra functionality. On many machines
-these libraries are preinstalled,
-\item an MPI-2 library, which provides support for message passing on parallel machines. An example
-  is the mpich2 library. Note that you need the MPI-2 library even when installing SW4 on a single
-  core system.
-\end{enumerate}
-Note that the MPI-2 library often include wrappers for compiling, linking, and executing MPI
-programs. For example, the mpich2 package includes the mpicxx and mpif77 compilers, as well as the
-mpirun script. These wrappers simplify the compilation and linking process and we highly recommend
-using them.
+%% For a basic installation of SW4, you need:
+%% \begin{enumerate}
+%% \item the lapack and blas libraries, which provide basic linear algebra functionality. On many machines
+%% these libraries are preinstalled,
+%% \item an MPI-2 library, which provides support for message passing on parallel machines. An example
+%%   is the mpich2 library. Note that you need the MPI-2 library even when installing SW4 on a single
+%%   core system.
+%% \end{enumerate}
+%% Note that the MPI-2 library often include wrappers for compiling, linking, and executing MPI
+%% programs. For example, the mpich2 package includes the mpicxx and mpif77 compilers, as well as the
+%% mpirun script. These wrappers simplify the compilation and linking process and we highly recommend
+%% using them.
 
-For a complete installation that supports the efile command for reading e-tree material data bases,
-you need to install the following additional libraries (see Section~\ref{sec:cencalvm-install} for details):
-\begin{itemize}
-\item The Etree library
-\item The Proj library
-\item The cencalvm library
-\end{itemize}
-
-
-\subsection{Mac computers}
-
-UPDATE! We recommend using the MacPorts package manager for installing the required compilers and
-libraries. Simply go to www.macports.org, and install macports on your system. With that in place,
-you can use the \verb+port+ command as follows
-\begin{verbatim}
-shell> port install gcc44
-shell> port install mpich2 +gcc44
-\end{verbatim}
-Here, gcc44 refers to version 4.4 of the Gnu compiler suite. Compiler versions are bound to change
- with time. Before starting, make sure you install a version of gcc that is compatible with the
- mpich2 package. By adding the \verb+gcc44+ variant, you also get a compatible Fortran compiler.
-
-The lapack and blas libraries are preinstalled on recent Macs and can be accessed using the
-``-framework vecLib'' link option. If that does not work on your machine, you can download those
-libraries from www.netlib.org.
-
-\subsection{Linux machines}
-
-UPDATE! We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core 14
-Linux. Other Linux variants use similar commands for installing software packages.
-
-You need to have root privileges to install precompiled packages. Start by opening an xterm as root
-using the command
-\begin{verbatim}
-su -
-\end{verbatim}
-Install the compilers by issuing the commands
-\begin{verbatim}
-yum install gcc
-yum install gcc-c++
-yum install gcc-gfortran
-\end{verbatim}
-You install the \verb+mpich2+ library and include files with the command
-\begin{verbatim}
-yum install mpich2-devel
-\end{verbatim}
-The \verb+blas+ and \verb+lapack+ libraries are installed with
-\begin{verbatim}
-yum install blas
-yum install lapack
-\end{verbatim}
-On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and
-\verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these
-files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore
-add the links explicitly. If the libraries were installed elsewhere on your system, but you don't know
-where, this is how to find them: Give the commands:
-\begin{verbatim}
-cd /
-find . -name "*blas*" -print
-\end{verbatim}
-After locating the libraries, we add links to the libraries by issuing the commands (you need to
-be \verb+root+ for this to work) 
-\begin{verbatim}
-cd /usr/lib64
-ln -s libblas.so.3 libblas.so
-ln -s liblapack.so.3 liblapack.so
-\end{verbatim}
+%% For a complete installation that supports the efile command for reading e-tree material data bases,
+%% you need to install the following additional libraries (see Section~\ref{sec:cencalvm-install} for details):
+%% \begin{itemize}
+%% \item The Etree library
+%% \item The Proj library
+%% \item The cencalvm library
+%% \end{itemize}
 
 
+%% \subsection{Mac computers}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Directory structure}
-\index{installation!directories}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% UPDATE! We recommend using the MacPorts package manager for installing the required compilers and
+%% libraries. Simply go to www.macports.org, and install macports on your system. With that in place,
+%% you can use the \verb+port+ command as follows
+%% \begin{verbatim}
+%% shell> port install gcc44
+%% shell> port install mpich2 +gcc44
+%% \end{verbatim}
+%% Here, gcc44 refers to version 4.4 of the Gnu compiler suite. Compiler versions are bound to change
+%%  with time. Before starting, make sure you install a version of gcc that is compatible with the
+%%  mpich2 package. By adding the \verb+gcc44+ variant, you also get a compatible Fortran compiler.
 
-UPDATE! To unpack the \emph{SW4} source code, you place the file \verb+sw4-version-1.0.tar.gz+ in the
-desired location and issue the following commands:
-\begin{verbatim}
-shell> gunzip sw4-version-1.0.tar.gz
-shell> tar xvf sw4-version-1.0.tar 
-\end{verbatim}
-Afterwards, you will find a new directory named \verb+sw4-version-1.0+, which contains several files
-and subdirectories:
-%
-\begin{itemize}
-\item \verb+LICENSE.txt+ License information.
-\item \verb+INSTALL.txt+ Information about how to build \emph{SW4} (short version).
-\item \verb+KNOWN-BUGS.txt+ List of known problems, porting issues, or bugs.
-\item \verb+README.txt+ General information about \emph{SW4}.
-\item \verb+configs+ Directory containing \verb+make+ configuration files.
-\item \verb+src+ C++ and Fortran source code of \emph{SW4}.
-\item \verb+tools+ Matlab scripts for post processing and analysis.
-\item \verb+examples+ Sample input files.
-\item \verb+Makefile+ Main makefile (don't change this file!).
-\item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
-\end{itemize}
+%% The lapack and blas libraries are preinstalled on recent Macs and can be accessed using the
+%% ``-framework vecLib'' link option. If that does not work on your machine, you can download those
+%% libraries from www.netlib.org.
 
-\section{Compiling and linking \emph{SW4} (without the cencalvm library)}\label{sec:basic-install}
-\index{installation!basic} 
+%% \subsection{Linux machines}
 
-UPDATE! The best way of getting started is to first build \emph{SW4} without the cencalvm library. This
-process should be very straight forward and the resulting \emph{SW4} executable supports all
-commands except the {\tt efile} command. If you need to use the {\tt efile} command, you can later
-install the cencalvm and supporting libraries, see \S~\ref{sec:cencalvm-install}, and then recompile
-\emph{SW4}. 
+%% UPDATE! We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core 14
+%% Linux. Other Linux variants use similar commands for installing software packages.
 
-UPDATE!!!
-Start by familiarizing yourself with the sw4 source code by listing the main sw4 directory,
-\begin{verbatim}
-shell> cd /enter/your/path/sw4-version-1.0
-shell> ls
-\end{verbatim}
-Go into the configs directory:
-\begin{verbatim}
-shell> cd configs
-\end{verbatim}
-You should set the environment variable SW4MAKE to point to a configuration file for the main
-"Makefile". Examples for some common operating systems are given in the configs directory (make.amac
-for Mac's; make.tux, make.fc14, and make.sierra for Linux machines). For
-example, to use the configs/make.amac setup, you can use the csh-command
-\begin{verbatim}
-setenv SW4MAKE /enter/your/path/sw4-version-1.0/configs/make.amac
-\end{verbatim}
-If you are using a Bourne, bash, or related shell, you should instead use the command
-\begin{verbatim}
-export SW4MAKE=/enter/your/path/sw4-version-1.0/configs/make.amac
-\end{verbatim}
-It is a good idea to include this command in your setup file (\verb+.cshrc+ for c-shell).
-
-You build SW4 with the "make" command from the main directory.
-\begin{verbatim}
-shell> cd /enter/your/path/sw4-version-1.0
-shell> make
-\end{verbatim}
-If you for some reason wish to remove all object files and the sw4 executable, you can do
-\begin{verbatim}
-shell> cd /enter/your/path/sw4-version-1.0
-shell> make clean
-\end{verbatim}
-
-By default, the \emph{SW4} executable is located in 
-\begin{verbatim}
-/my/installation/dir/sw4-version-1.0/src/sw4
-\end{verbatim}
-It can be convenient to add this directory to your \verb+PATH+ environment variable (i.e., modify
-your \verb+.cshrc+ file).
-
-You can also build a debug version of \emph{SW4} by adding the \verb+debug=1+ option to \verb+make+,
-\begin{verbatim}
-shell> cd /my/installation/dir/sw4-version-1.0
-shell> make debug=1
-\end{verbatim}
-That executable will be located in
-\begin{verbatim}
-/my/installation/dir/sw4-version-1.0/debug_v2.1/sw4
-\end{verbatim}
-
-\subsection{How do I setup the make.inc file?}
-UPDATE!!!
-The main input file for make is
-\begin{verbatim}
-sw4-version-1.0/Makefile
-\end{verbatim}
-Do {\em not} change the \verb+Makefile+. It should only be necessary to edit your configuration file
-(the file name should be given in the \verb+SW4MAKE+ environment variable), for example
-\begin{verbatim}
-/my/path/sw4-version-1.0/configs/make.inc
-\end{verbatim}
-This file holds all information that is particular for your system, such as the name of the
-compilers, the location of the third party libraries, and any extra arguments that should be passed
-to the compiler or linker. This file also instructs \verb+make+ whether or not the
-cencalvm library should be linked to \emph{SW4}. 
-
-The following file incudes all configurable options:
-\begin{verbatim}
-etree = no
-
-CXX = mpicxx
-CC  = mpicc
-FC  = mpif77
-
-SW4ROOT = /Users/petersson1
-
-EXTRA_CXX_FLAGS = -DUSING_MPI
-EXTRA_FORT_FLAGS = -fno-underscoring
-EXTRA_LINK_FLAGS = -framework vecLib
-\end{verbatim}
-The \verb+etree+ variable should be set to \verb+yes+ or \verb+no+, and indicates whether the
-cencalvm and related libraries are available. The \verb+CXX+, \verb+CC+, and \verb+FC+ variables
-should be set to the names of the C++, C, and Fortran compilers, respectively. The \verb+SW4ROOT+
-variable should be set to the path of the third party libraries, such that the directories
-\verb+SW4ROOT+/lib and \verb+SW4ROOT+/include contain the libraries and include files,
-respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
-\verb+EXTRA_LINK_FLAGS+ variables can optionally be set to any additional argument that needs to be
-passed to the C++ compiler, Fortran compiler, or linker, on your system.
+%% You need to have root privileges to install precompiled packages. Start by opening an xterm as root
+%% using the command
+%% \begin{verbatim}
+%% su -
+%% \end{verbatim}
+%% Install the compilers by issuing the commands
+%% \begin{verbatim}
+%% yum install gcc
+%% yum install gcc-c++
+%% yum install gcc-gfortran
+%% \end{verbatim}
+%% You install the \verb+mpich2+ library and include files with the command
+%% \begin{verbatim}
+%% yum install mpich2-devel
+%% \end{verbatim}
+%% The \verb+blas+ and \verb+lapack+ libraries are installed with
+%% \begin{verbatim}
+%% yum install blas
+%% yum install lapack
+%% \end{verbatim}
+%% On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and
+%% \verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these
+%% files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore
+%% add the links explicitly. If the libraries were installed elsewhere on your system, but you don't know
+%% where, this is how to find them: Give the commands:
+%% \begin{verbatim}
+%% cd /
+%% find . -name "*blas*" -print
+%% \end{verbatim}
+%% After locating the libraries, we add links to the libraries by issuing the commands (you need to
+%% be \verb+root+ for this to work) 
+%% \begin{verbatim}
+%% cd /usr/lib64
+%% ln -s libblas.so.3 libblas.so
+%% ln -s liblapack.so.3 liblapack.so
+%% \end{verbatim}
 
 
-\section{Installing the cencalvm, proj.4, and euclid libraries}\label{sec:cencalvm-install}
-\index{installation!cencalvm}
-\index{installation!efile}
 
-UPDATE! The cencalvm library was developed by Brad Aagaard at USGS. Both the cencalvm library and the Etree
-data base files, holding the material model of Northern California, can currently be downloaded from
-\begin{verbatim}
-earthquake.usgs.gov/regional/nca/3Dgeologic/cencalvm_doc
-\end{verbatim}
-The installation process, which is outlined below, is described in detail on the above web page.
-Note that three libraries need to be installed: euclid (etree), proj4, and cencalvm.  In order for
-\emph{SW4} to use them, they should all be installed in the same base directory and you should
-assign that directory to the SW4ROOT environment variable. When these pagages are installed, the include files
-should be in \$\{SW4ROOT\}/include and the library files in \$\{SW4ROOT\}/lib.
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \section{Directory structure}
+%% \index{installation!directories}
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Note that the euclid library must be installed manually by explicitly copying all include files to
-the include directory and all libraries to the lib directory,
-\begin{verbatim}
-shell> cd euclid3-1.2/libsrc
-shell> make
-shell> cp *.h ${SW4ROOT}/include
-shell> cp libetree.* ${SW4ROOT}/lib
-\end{verbatim}
-The proj4 library should be configured to be installed in SW4ROOT. This is accomplished by
-\begin{verbatim}
-shell> cd proj-4.7.0
-shell> configure --prefix=${SW4ROOT}
-shell> make
-shell> make install
-\end{verbatim}
-The cencalvm library should also be configured to be installed in SW4ROOT. You also have to help
-the configure script finding the include and library files for the proj4 and etree libraries,
-\begin{verbatim}
-shell> cd cencalvm-0.6.5
-shell> configure --prefix=${SW4ROOT} CPPFLAGS="-I${SW4ROOT}/include" \
-                 LDFLAGS="-L${SW4ROOT}/lib"
-shell> make
-shell> make install
-\end{verbatim}
+%% UPDATE! To unpack the \emph{SW4} source code, you place the file \verb+sw4-version-1.0.tar.gz+ in the
+%% desired location and issue the following commands:
+%% \begin{verbatim}
+%% shell> gunzip sw4-version-1.0.tar.gz
+%% shell> tar xvf sw4-version-1.0.tar 
+%% \end{verbatim}
+%% Afterwards, you will find a new directory named \verb+sw4-version-1.0+, which contains several files
+%% and subdirectories:
+%% %
+%% \begin{itemize}
+%% \item \verb+LICENSE.txt+ License information.
+%% \item \verb+INSTALL.txt+ Information about how to build \emph{SW4} (short version).
+%% \item \verb+KNOWN-BUGS.txt+ List of known problems, porting issues, or bugs.
+%% \item \verb+README.txt+ General information about \emph{SW4}.
+%% \item \verb+configs+ Directory containing \verb+make+ configuration files.
+%% \item \verb+src+ C++ and Fortran source code of \emph{SW4}.
+%% \item \verb+tools+ Matlab scripts for post processing and analysis.
+%% \item \verb+examples+ Sample input files.
+%% \item \verb+Makefile+ Main makefile (don't change this file!).
+%% \item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
+%% \end{itemize}
+
+%% \section{Compiling and linking \emph{SW4} (without the cencalvm library)}\label{sec:basic-install}
+%% \index{installation!basic} 
+
+%% UPDATE! The best way of getting started is to first build \emph{SW4} without the cencalvm library. This
+%% process should be very straight forward and the resulting \emph{SW4} executable supports all
+%% commands except the {\tt efile} command. If you need to use the {\tt efile} command, you can later
+%% install the cencalvm and supporting libraries, see \S~\ref{sec:cencalvm-install}, and then recompile
+%% \emph{SW4}. 
+
+%% UPDATE!!!
+%% Start by familiarizing yourself with the sw4 source code by listing the main sw4 directory,
+%% \begin{verbatim}
+%% shell> cd /enter/your/path/sw4-version-1.0
+%% shell> ls
+%% \end{verbatim}
+%% Go into the configs directory:
+%% \begin{verbatim}
+%% shell> cd configs
+%% \end{verbatim}
+%% You should set the environment variable SW4MAKE to point to a configuration file for the main
+%% "Makefile". Examples for some common operating systems are given in the configs directory (make.amac
+%% for Mac's; make.tux, make.fc14, and make.sierra for Linux machines). For
+%% example, to use the configs/make.amac setup, you can use the csh-command
+%% \begin{verbatim}
+%% setenv SW4MAKE /enter/your/path/sw4-version-1.0/configs/make.amac
+%% \end{verbatim}
+%% If you are using a Bourne, bash, or related shell, you should instead use the command
+%% \begin{verbatim}
+%% export SW4MAKE=/enter/your/path/sw4-version-1.0/configs/make.amac
+%% \end{verbatim}
+%% It is a good idea to include this command in your setup file (\verb+.cshrc+ for c-shell).
+
+%% You build SW4 with the "make" command from the main directory.
+%% \begin{verbatim}
+%% shell> cd /enter/your/path/sw4-version-1.0
+%% shell> make
+%% \end{verbatim}
+%% If you for some reason wish to remove all object files and the sw4 executable, you can do
+%% \begin{verbatim}
+%% shell> cd /enter/your/path/sw4-version-1.0
+%% shell> make clean
+%% \end{verbatim}
+
+%% By default, the \emph{SW4} executable is located in 
+%% \begin{verbatim}
+%% /my/installation/dir/sw4-version-1.0/src/sw4
+%% \end{verbatim}
+%% It can be convenient to add this directory to your \verb+PATH+ environment variable (i.e., modify
+%% your \verb+.cshrc+ file).
+
+%% You can also build a debug version of \emph{SW4} by adding the \verb+debug=1+ option to \verb+make+,
+%% \begin{verbatim}
+%% shell> cd /my/installation/dir/sw4-version-1.0
+%% shell> make debug=1
+%% \end{verbatim}
+%% That executable will be located in
+%% \begin{verbatim}
+%% /my/installation/dir/sw4-version-1.0/debug_v2.1/sw4
+%% \end{verbatim}
+
+%% \subsection{How do I setup the make.inc file?}
+%% UPDATE!!!
+%% The main input file for make is
+%% \begin{verbatim}
+%% sw4-version-1.0/Makefile
+%% \end{verbatim}
+%% Do {\em not} change the \verb+Makefile+. It should only be necessary to edit your configuration file
+%% (the file name should be given in the \verb+SW4MAKE+ environment variable), for example
+%% \begin{verbatim}
+%% /my/path/sw4-version-1.0/configs/make.inc
+%% \end{verbatim}
+%% This file holds all information that is particular for your system, such as the name of the
+%% compilers, the location of the third party libraries, and any extra arguments that should be passed
+%% to the compiler or linker. This file also instructs \verb+make+ whether or not the
+%% cencalvm library should be linked to \emph{SW4}. 
+
+%% The following file incudes all configurable options:
+%% \begin{verbatim}
+%% etree = no
+
+%% CXX = mpicxx
+%% CC  = mpicc
+%% FC  = mpif77
+
+%% SW4ROOT = /Users/petersson1
+
+%% EXTRA_CXX_FLAGS = -DUSING_MPI
+%% EXTRA_FORT_FLAGS = -fno-underscoring
+%% EXTRA_LINK_FLAGS = -framework vecLib
+%% \end{verbatim}
+%% The \verb+etree+ variable should be set to \verb+yes+ or \verb+no+, and indicates whether the
+%% cencalvm and related libraries are available. The \verb+CXX+, \verb+CC+, and \verb+FC+ variables
+%% should be set to the names of the C++, C, and Fortran compilers, respectively. The \verb+SW4ROOT+
+%% variable should be set to the path of the third party libraries, such that the directories
+%% \verb+SW4ROOT+/lib and \verb+SW4ROOT+/include contain the libraries and include files,
+%% respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
+%% \verb+EXTRA_LINK_FLAGS+ variables can optionally be set to any additional argument that needs to be
+%% passed to the C++ compiler, Fortran compiler, or linker, on your system.
 
 
-To verify that the libraries have been installed properly, you should go to the SW4ROOT directory
-and list the lib subdirectory (\verb+cd ${SW4ROOT}; ls lib+). You should see the following files (on
-Mac OSX machines, the .so extension is replaced by .dylib ):
-\begin{verbatim}
-shell> cd ${SW4ROOT}
-shell> ls lib
-libetree.so libetree.a 
-libproj.so libproj.a libproj.la 
-libcencalvm.a libcencalvm.la libcencalvm.so 
-\end{verbatim}
-Furthermore, if you list the include subdirectory, you should see include files such as 
-\begin{verbatim}
-shell> cd ${SW4ROOT}
-shell> ls include
-btree.h etree.h etree_inttypes.h
-nad_list.h projects.h proj_api.h
-cencalvm
-\end{verbatim}
-Note that the include files for cencalvm are in a subdirectory with the same name.
+%% \section{Installing the cencalvm, proj.4, and euclid libraries}\label{sec:cencalvm-install}
+%% \index{installation!cencalvm}
+%% \index{installation!efile}
 
-Once you have successfully installed all three libraries, it is easy to re-configure \emph{SW4} to
-use them. Simply edit the make configuration file (\verb+make.inc+) according to
-\begin{verbatim}
-etree = yes
-...
-\end{verbatim}
-You then need to re-compile \emph{SW4}. Go to the sw4 main directory, remove the previous executable
-and object files, and re-run make:
-\begin{verbatim}
-shell> cd /my/installation/dir/sw4-version-1.0
-shell> make clean
-shell> make
-\end{verbatim}
-As before, if all goes well, the ``SW4 lives'' banner is shown after the make command is completed:
-\begin{verbatim}
-\end{verbatim}
+%% UPDATE! The cencalvm library was developed by Brad Aagaard at USGS. Both the cencalvm library and the Etree
+%% data base files, holding the material model of Northern California, can currently be downloaded from
+%% \begin{verbatim}
+%% earthquake.usgs.gov/regional/nca/3Dgeologic/cencalvm_doc
+%% \end{verbatim}
+%% The installation process, which is outlined below, is described in detail on the above web page.
+%% Note that three libraries need to be installed: euclid (etree), proj4, and cencalvm.  In order for
+%% \emph{SW4} to use them, they should all be installed in the same base directory and you should
+%% assign that directory to the SW4ROOT environment variable. When these pagages are installed, the include files
+%% should be in \$\{SW4ROOT\}/include and the library files in \$\{SW4ROOT\}/lib.
+
+%% Note that the euclid library must be installed manually by explicitly copying all include files to
+%% the include directory and all libraries to the lib directory,
+%% \begin{verbatim}
+%% shell> cd euclid3-1.2/libsrc
+%% shell> make
+%% shell> cp *.h ${SW4ROOT}/include
+%% shell> cp libetree.* ${SW4ROOT}/lib
+%% \end{verbatim}
+%% The proj4 library should be configured to be installed in SW4ROOT. This is accomplished by
+%% \begin{verbatim}
+%% shell> cd proj-4.7.0
+%% shell> configure --prefix=${SW4ROOT}
+%% shell> make
+%% shell> make install
+%% \end{verbatim}
+%% The cencalvm library should also be configured to be installed in SW4ROOT. You also have to help
+%% the configure script finding the include and library files for the proj4 and etree libraries,
+%% \begin{verbatim}
+%% shell> cd cencalvm-0.6.5
+%% shell> configure --prefix=${SW4ROOT} CPPFLAGS="-I${SW4ROOT}/include" \
+%%                  LDFLAGS="-L${SW4ROOT}/lib"
+%% shell> make
+%% shell> make install
+%% \end{verbatim}
+
+
+%% To verify that the libraries have been installed properly, you should go to the SW4ROOT directory
+%% and list the lib subdirectory (\verb+cd ${SW4ROOT}; ls lib+). You should see the following files (on
+%% Mac OSX machines, the .so extension is replaced by .dylib ):
+%% \begin{verbatim}
+%% shell> cd ${SW4ROOT}
+%% shell> ls lib
+%% libetree.so libetree.a 
+%% libproj.so libproj.a libproj.la 
+%% libcencalvm.a libcencalvm.la libcencalvm.so 
+%% \end{verbatim}
+%% Furthermore, if you list the include subdirectory, you should see include files such as 
+%% \begin{verbatim}
+%% shell> cd ${SW4ROOT}
+%% shell> ls include
+%% btree.h etree.h etree_inttypes.h
+%% nad_list.h projects.h proj_api.h
+%% cencalvm
+%% \end{verbatim}
+%% Note that the include files for cencalvm are in a subdirectory with the same name.
+
+%% Once you have successfully installed all three libraries, it is easy to re-configure \emph{SW4} to
+%% use them. Simply edit the make configuration file (\verb+make.inc+) according to
+%% \begin{verbatim}
+%% etree = yes
+%% ...
+%% \end{verbatim}
+%% You then need to re-compile \emph{SW4}. Go to the sw4 main directory, remove the previous executable
+%% and object files, and re-run make:
+%% \begin{verbatim}
+%% shell> cd /my/installation/dir/sw4-version-1.0
+%% shell> make clean
+%% shell> make
+%% \end{verbatim}
+%% As before, if all goes well, the ``SW4 lives'' banner is shown after the make command is completed:
+%% \begin{verbatim}
+%% \end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Testing the \emph{SW4} installation (in progress)}\label{cha:testing-sw4}
@@ -3025,7 +3019,7 @@ testing the accuracy of numerical solutions of partial differential equations, i
 heterogeneous material properties and various boundary conditions on complex geometries. The test
 scripts can be found in the directory
 \begin{verbatim}
-.../sw4-version-1.0/examples/twilight
+.../sw4/examples/twilight
 \end{verbatim}
 In the twilight zone testing module of \emph{SW4}, we take the material properties to be
 \begin{alignat*}{2}
@@ -3050,24 +3044,23 @@ the same test on several grid sizes, it is possible to establish the convergence
 numerical method.
 
 The basic twilight tests use a single grid, a flat topography, and cover the computational domain
-$(x,y,z)\in[0,5]^3$. These cases are provided in the three scripts:
+$(x,y,z)\in[0,5]^3$. The numerical solution is simulated up to time $t=4.8$ on a grid with $31^3$,
+$61^3$, and $121^3$ grid points, respectively. These cases are provided in the three input scripts:
 \begin{verbatim}
 flat-twi-1.in  flat-twi-2.in  flat-twi-3.in
 \end{verbatim}
-The numerical solution is simulated up to time $t=4.8$ on a grid with $31^3$,
-$61^3$, and $121^3$ grid points, respectively. The corresponding results are given in the three
-output files
-\begin{verbatim}
-flat-twi-1.out  flat-twi-2.out  flat-twi-3.out
-\end{verbatim}
-Assuming \verb+mpiexec+ is used to execute parallel programs, you run the first of these cases on 4
+Assuming \verb+openmpirun+ is used to execute parallel programs, you run the first of these cases on 2
 processes with the command
 \begin{verbatim}
 cd examples/twilight
-mpiexec -n 4 ../../optimize-1.0/sw4 flat-twi-1.in
+openmpirun -np 2 ../../optimize_v1.0/sw4 flat-twi-1.in
 \end{verbatim}
-The errors in max and $L_2$ norm in the numerical solution is reported at the bottom of these files
-and some of these numers are summarized in Table~\ref{tab:twi-err}.
+The results for the three cases are given in the output files
+\begin{verbatim}
+flat-twi-1.out  flat-twi-2.out  flat-twi-3.out
+\end{verbatim}
+The errors in max and $L_2$ norm in the numerical solution are reported near bottom of the
+output. Some of these numbers are summarized in Table~\ref{tab:twi-err}.
 \begin{table}
 \begin{center}
 \begin{tabular}{| c | c | c | c  | c | }
@@ -3077,27 +3070,45 @@ $31$  & $1.667\cdot 10^{-1}$  & $2.38\cdot 10^{-2}$ & --   & --   \\ \hline
 $61$  & $8.333\cdot 10^{-2}$  & $1.70\cdot 10^{-3}$ & 14.0 & 3.81 \\ \hline
 $121$ & $4.167\cdot 10^{-2}$  & $1.05\cdot 10^{-4}$ & 16.2 & 4.02 \\ \hline
 \end{tabular}
-\caption{Twilight test: Max norm errors in the displacement at time $t=4.8$.}
+\caption{Max norm errors in the displacement at time $t=4.8$, without (flat) topography.}
 \label{tab:twi-err}
 \end{center}
 \end{table}
 
-Non-planar free surfaces are tested by the scripts
+The case of a non-planar free surface is tested by the scripts
 \begin{verbatim}
 gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in
 \end{verbatim}
-In this case, the free surface is a Gaussian hill and the numerical solution is simulated up to time
-$t=0.8$ on a grid with $31^3$, $61^3$, and $121^3$ grid points, respectively. The curvilinear grid
-covers the domain between the free surface and $z=0.25$, and a single Cartesian grid covers the
-remainder of the computational domain ($0.25\leq z\leq 1$). The corresponding results are given in the three output files
+In this case, the computational domain is basically a cube with side 1, but the top surface is a
+Gaussian hill with amplitude 0.25. Let the shape of the top surface satisfy $z=\tau(x,y)$. In
+this case $-0.05\leq \tau\leq 0$ and the curvilinear grid covers the domain between the top surface
+and $z=0.25$. A Cartesian grid is used below the curvilinear grid, i.e., for $0.25\leq z\leq 1$. The numerical
+solution is simulated up to time $t=0.8$ on grids with grid size $h=1/30$, $1/60$, and $1/120$,
+respectively. The results of the simulations are given in the three output files
 \begin{verbatim}
 gauss-twi-1.out  gauss-twi-2.out  gauss-twi-3.out
 \end{verbatim}
-Note that some image files are generated by these scripts and placed in the sub-directories \verb+gauss_31+,
-\verb+gauss_61+, and \verb+gauss_121+, respectively. We encourage the user to look at these image
-files, for example by reading them into matlab/octave using the script \verb+tools/readimagepatch.m+.
+The errors in max norm are summarized in Table~\ref{tab:twi-gauss-err}.
+\begin{table}
+\begin{center}
+\begin{tabular}{| c | c | c | c  | c | }
+\hline
+$N_x$ & $h$ & $\| \ub - \ub_{ex}\|_\infty$ & ratio$_\infty$ & rate$_\infty$ \\ \hline
+$31$  & $3.333\cdot 10^{-2}$  & $7.06\cdot 10^{-3}$ & --   & --   \\ \hline
+$61$  & $1.667\cdot 10^{-2}$  & $7.33\cdot 10^{-4}$ & 9.63 & 3.27 \\ \hline
+$121$ & $8.333\cdot 10^{-3}$  & $x.yz\cdot 10^{-5}$ & xxx & xxx \\ \hline
+\end{tabular}
+\caption{Max norm errors in the displacement at time $t=0.8$, with a Gaussian hill topography. The
+  number of grid points and the grid size are in the Cartesian grid.}
+\label{tab:twi-gauss-err}
+\end{center}
+\end{table}
 
-\section{Lamb's problem}\label{sec:lamb}
+Note that some image files are generated by these scripts. They are placed in the sub-directories \verb+gauss_31+,
+\verb+gauss_61+, and \verb+gauss_121+, respectively. We encourage the user to look at these image
+files, for example by reading them into matlab/octave using the script \verb+tools/readimage.m+.
+
+\section{Lamb's problem (not done)}\label{sec:lamb}
 \index{testing!lambs}
 
 The \emph{SW4} installation can be tested further by solving Lamb's problem, i.e., the motion due to

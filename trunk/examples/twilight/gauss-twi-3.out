@@ -1,4 +1,3 @@
-[yorkville:sw4/examples/twilight] petersson1% openmpirun -np 2 ../../src/sw4 gauss-twi-3.in
 ----------------------------------------------------------------
             sw4 version 1.0
 
@@ -6,12 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Mon Feb 25 13:19:42 PST 2013
+  Compiled on: Thu Feb 28 13:45:57 PST 2013
   By user:     petersson1
   Machine:     yorkville.llnl.gov
   Compiler:    /opt/local/bin/openmpicxx
-  3rd party software include directory: /Users/petersson1/include
-  3rd party software library directory: /Users/petersson1/lib
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
 ----------------------------------------------------------------
 
 Input file: gauss-twi-3.in
@@ -21,16 +19,16 @@ Input file: gauss-twi-3.in
 * Setting ny to 121 to be consistent with h=0.00833333
 * Setting nz to 121 to be consistent with h=0.00833333
 
-***Topography grid: min z = -0.000000e+00, max z = -0.000000e+00, top Cartesian z = 2.500000e-01
+***Topography grid: min z = -5.000000e-02, max z = -2.476618e-12, top Cartesian z = 2.500000e-01
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
    0 0.00833333       121       121        91      1332331
-   1 0.00833333       121       121        31       453871
-Total number of grid points (without ghost points): 1.7862e+06
+   1 0.00833333       121       121        34       497794
+Total number of grid points (without ghost points): 1.83012e+06
 
 
-   Execution time, reading input file 0.104995 seconds 
+   Execution time, reading input file 0.140144 seconds 
 ----------------------------------------------------
  Making Output Directory: gauss_121/
 		
@@ -41,11 +39,11 @@ Total number of grid points (without ghost points): 1.7862e+06
 ******************************
 
        ----------- Material properties ranges ---------------
-       1.00058 kg/m^3 <=  Density <= 2.99938 kg/m^3
-       1.63303 m/s    <=  Vp      <= 2.82781 m/s
+       1.00058 kg/m^3 <=  Density <= 2.99939 kg/m^3
+       1.63303 m/s    <=  Vp      <= 2.82782 m/s
        1.00003 m/s    <=  Vs      <= 1.73166 m/s
        1.52757        <=  Vp/Vs   <= 1.73203
-       2.00058 Pa     <=  mu      <= 3.99938 Pa
+       2.00058 Pa     <=  mu      <= 3.99939 Pa
        1.00058 Pa     <=  lambda  <= 2.99938 Pa
        ------------------------------------------------------
 Geographic coordinates of the corners of the computational grid:
@@ -54,66 +52,27 @@ Geographic coordinates of the corners of the computational grid:
 2: Lon= 1.180000e+02, Lat=3.700001e+01
 3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.413651 seconds 
+   Execution time, start up phase 0.651292 seconds 
 Running sw4 on 2 processors...
 Writing output to directory: gauss_121/
 ============================================================
  Running program on 2 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
- Number of time steps = 312 dt: 0.0025641
-
------------------------------------------------------------------------
-  Total seismic moment (M0): 0 Nm 
-  Number of sources 0
------------------------------------------------------------------------
+ Number of time steps = 378 dt: 0.0021164
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 6.28
+  c = 1.3
+  phase = 0.8
+  momega = 6.28
+  mphase = 0.4
+  amprho = 1
+  amplambda = 1
+-----------------------------------------------------------
 writing image plane on file gauss_121/gaussian.cycle=000.z=0.topo.sw4img (msg from proc # 0)
 writing image plane on file gauss_121/gaussian.cycle=000.x=0.5.gridy.sw4img (msg from proc # 0)
 writing image plane on file gauss_121/gaussian.cycle=000.x=0.5.gridz.sw4img (msg from proc # 0)
-proc=1, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=0 os[5]=0
-proc=1, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=4 bc[5]=1
-proc=1, Onesided[grid=1]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
-proc=1, bcType[grid=1]: bc[0]=1 bc[1]=1 bc[2]=5 bc[3]=1 bc[4]=0 bc[5]=4
-***Twilight Testing...
-proc=0, Onesided[grid=0]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=0 os[5]=0
-proc=0, bcType[grid=0]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=4 bc[5]=1
-proc=0, Onesided[grid=1]: os[0]=0 os[1]=0 os[2]=0 os[3]=0 os[4]=1 os[5]=0
-proc=0, bcType[grid=1]: bc[0]=1 bc[1]=1 bc[2]=1 bc[3]=5 bc[4]=0 bc[5]=4
-
- Testing the accuracy of the spatial difference approximation
-Grid nr:   0 
-Max errors low-k boundary RHS:    3.1924054e-04    2.4543790e-04    5.9618893e-04
-Max errors interior RHS:          6.9885155e-04    6.3846397e-04    6.2803579e-04
-Max errors high-k boundary RHS:   4.2650762e-04    4.5029186e-04    4.3587147e-04
-Grid nr:   1 
-Max errors low-k boundary RHS:    3.2864441e-01    3.2084661e-01    3.7288295e-01
-Max errors interior RHS:          6.9887548e-04    6.3841862e-04    6.2154334e-04
-Max errors high-k boundary RHS:   5.2174794e-04    4.1701110e-04    6.2805006e-04
-Testing accuracy of rho*utt - L(u) = F
-Grid nr:   0 
-Max errors low-k boundary RHS:    3.1924054e-04    2.4543790e-04    5.9618893e-04
-Max errors interior RHS:          6.9885155e-04    6.3846397e-04    6.2803579e-04
-Max errors high-k boundary RHS:   4.2650762e-04    4.5029186e-04    4.3587147e-04
-Grid nr:   1 
-Max errors low-k boundary RHS:    3.2864441e-01    3.2084661e-01    3.7288295e-01
-Max errors interior RHS:          6.9887548e-04    6.3841862e-04    6.2154334e-04
-Max errors high-k boundary RHS:   5.2174794e-04    4.1701110e-04    6.2805006e-04
-About to call exactSolTwilight
-Inside normOfDifferenceGhostPoints
-
- Ghost point errors: Linf =   6.9568386e-08, L2 =   4.5390690e-09
   Begin time stepping...
-Time step       1  t =   2.5641026e-03
-Time step     101  t =   2.5897436e-01
-Time step     201  t =   5.1538462e-01
-Time step     301  t =   7.7179487e-01
-Time step     312  t =   8.0000000e-01
-writing image plane on file gauss_121/gaussian.cycle=312.x=0.5.ux.sw4img (msg from proc # 0)
-writing image plane on file gauss_121/gaussian.cycle=312.x=0.5.uxerr.sw4img (msg from proc # 0)
-  Time stepping finished...
-   Execution time, solver phase 9 minutes 40.6142 seconds 
-
- Final solution errors: Linf =   1.3808450e-05, L2 =   6.5172621e-07
-============================================================
- program sw4 finished! 
-============================================================
+Time step       1  t =   2.1164021e-03

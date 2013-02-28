@@ -1181,17 +1181,17 @@ void EW::setup_supergrid( )
   int gBot = 0;
 
   m_supergrid_taper_x.define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0, (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-				    m_sg_gp_thickness*mGridSize[gTop], m_sg_gp_transition*mGridSize[gTop] );
+				    m_sg_gp_thickness*mGridSize[gTop] );
   m_supergrid_taper_y.define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0, (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-				    m_sg_gp_thickness*mGridSize[gTop], m_sg_gp_transition*mGridSize[gTop] );
+				    m_sg_gp_thickness*mGridSize[gTop] );
 
 // Note that we use the grid size on the bottom grid to define the transition width in the z-direction 
   if (topographyExists()) // the taper function in z is currently not defined for a non-planar top surface
     m_supergrid_taper_z.define_taper( false, 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
-				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
+				      m_sg_gp_thickness*mGridSize[gBot] );
   else
     m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
-				      m_sg_gp_thickness*mGridSize[gBot], m_sg_gp_transition*mGridSize[gBot] );
+				      m_sg_gp_thickness*mGridSize[gBot] );
 
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {

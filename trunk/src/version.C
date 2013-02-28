@@ -31,8 +31,7 @@ namespace ewversion
                   << "  By user:     " << madeby << std::endl
                   << "  Machine:     " << hostname << std::endl
                   << "  Compiler:    " << compiler << std::endl
-                  << "  3rd party software include directory: " << incdir << std::endl
-                  << "  3rd party software library directory: " << libdir << std::endl
+                  << "  3rd party include dir: " << incdir << ", and library dir: " << libdir << std::endl
                   << "----------------------------------------------------------------" << std::endl;
       return versioninfo.str();
    }
