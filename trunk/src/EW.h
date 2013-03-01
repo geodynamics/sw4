@@ -473,9 +473,9 @@ void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 void get_material_parameter( int nmpar, double* xm );
 
 void get_nr_of_material_parameters( int& nmvar );
-void add_to_gradrho( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
-			 vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
-		     vector<Sarray>& gRho );
+void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
+		  vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
+		  vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
 
 void perturb_mtrl();
 //
@@ -797,6 +797,7 @@ double m_bope[48], m_ghcof[6], m_hnorm[4];
 int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;
+vector<MPI_Datatype> m_send_type4; // metric
 MPI_Datatype m_send_type_2dfinest[2];
 MPI_Datatype m_send_type_2dfinest_ext[2];
 vector<MPI_Datatype> m_send_type_2dx;

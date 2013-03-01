@@ -107,6 +107,9 @@ void F77_FUNC(addgradrho,ADDGRADRHO)( int*, int*, int*, int*, int*, int*, int*, 
 void F77_FUNC(addgradrhoc,ADDGRADRHOC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 				       double*, double*, double*, double*, double*, double*, double*,
 				       double*, double*, int* );
+void F77_FUNC(addgradmula,ADDGRADMULA)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+				       double*, double*, double*, double*, double*, double*, double*,
+					double*, double*, double*, int*, int*, int*, double* );
 }
 
 using namespace std;
@@ -3782,6 +3785,10 @@ void EW::initialize_image_files( )
    // {
    //    mImage3DFiles[fIndex]->setup_images( );
    // }
+   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+   {
+      mImageFiles[fIndex]->associate_gridfiles( mImageFiles );
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -4639,9 +4646,9 @@ void EW::get_material_parameter( int nmpar, double* xm )
 }
 
 //-----------------------------------------------------------------------
-void EW::add_to_gradrho( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
-			 vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
-			 vector<Sarray>& gRho )
+void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
+		      vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
+		      vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda )
 {
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
@@ -4664,18 +4671,30 @@ void EW::add_to_gradrho( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>
       double* up_ptr = Up[g].c_ptr();
       double* ua_ptr = Uacc[g].c_ptr();
       double* grho_ptr = gRho[g].c_ptr();
+      double* gmu_ptr = gMu[g].c_ptr();
+      double* glambda_ptr = gLambda[g].c_ptr();
       double h = mGridSize[g];
       int* onesided_ptr = m_onesided[g];
       if( topographyExists() && g == mNumberOfGrids-1 )
+      {
 	 F77_FUNC(addgradrhoc,ADDGRADRHOC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 					     &mDt, mJ.c_ptr(), onesided_ptr );
+
+      }
       else
+      {
 	 F77_FUNC(addgradrho,ADDGRADRHO)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 					&mDt, &h, onesided_ptr );
+         int nb = 4, wb=6;
+	 F77_FUNC(addgradmula,ADDGRADMULA)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                         &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
+					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, gmu_ptr,
+				    glambda_ptr, &mDt, &h, onesided_ptr, &nb, &wb, m_bop );
+      }
    }
 }
 
@@ -4692,6 +4711,7 @@ void EW::perturb_mtrl()
 	 cout << "warning j-index outside active domain " << endl;
       if( m_kperturb < m_kStartAct[g] || m_kperturb > m_kEndAct[g] )
 	 cout << "warning k-index outside active domain " << endl;
-      mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
+      mMu[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
+      //      mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
    }
 }

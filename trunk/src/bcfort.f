@@ -539,6 +539,53 @@ c interior contribution to uz, vz, wz (kl is the direction)
 
 
 c----------------------------------------------------------------------
+      subroutine HDIRICHLET5( ifirst, ilast, jfirst, jlast, kfirst,
+     *  klast, iafirst, ialast, jafirst, jalast, kafirst, kalast, u )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer iafirst, ialast, jafirst, jalast, kafirst, kalast
+      integer i, j, k
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      do k=kalast+1,klast
+         do j=jfirst,jlast
+            do i=ifirst,ilast
+               u(1,i,j,k) = 0
+               u(2,i,j,k) = 0
+               u(3,i,j,k) = 0
+            enddo
+         enddo
+      enddo
+      do k=kfirst,klast
+         do j=jfirst,jafirst-1
+            do i=ifirst,ilast
+               u(1,i,j,k) = 0
+               u(2,i,j,k) = 0
+               u(3,i,j,k) = 0
+            enddo
+         enddo
+         do j=jalast+1,jlast
+            do i=ifirst,ilast
+               u(1,i,j,k) = 0
+               u(2,i,j,k) = 0
+               u(3,i,j,k) = 0
+            enddo
+         enddo
+         do j=jfirst,jlast
+            do i=ifirst,iafirst-1
+               u(1,i,j,k) = 0
+               u(2,i,j,k) = 0
+               u(3,i,j,k) = 0
+            enddo
+            do i=ialast+1,ilast
+               u(1,i,j,k) = 0
+               u(2,i,j,k) = 0
+               u(3,i,j,k) = 0
+            enddo
+         enddo
+      enddo
+      end
+
+c----------------------------------------------------------------------
       subroutine TWDIRBDRY( wind, h, t, om, cv, ph, bforce, zmin )
       implicit none
       integer wind(6)

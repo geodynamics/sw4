@@ -1,4 +1,8 @@
 #include "EW.h"
+extern "C" {
+   void F77_FUNC(hdirichlet5,HDIRICHLET5)( int*, int*, int*, int*, int*, int*, int*, int*,
+					   int*, int*, int*, int*, double* );
+}
 
 void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -116,6 +120,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_measure[1] = MPI_Wtime();
 
      // Boundary conditions on predictor
+      encforceDirichlet5( Km );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
@@ -140,6 +145,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_measure[4] = MPI_Wtime();
 
      // Boundary conditions on corrector
+      encforceDirichlet5( Km );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
@@ -183,7 +189,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradients, mGridSize );
 	 //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,  mGridSize );
       }
-      add_to_gradrho( K, Kacc, Up, U, Um, Uacc, gRho );      
+      add_to_grad( K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda );      
 
       time_measure[6] = MPI_Wtime();
       t -= mDt;
@@ -209,9 +215,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	    for( int i=m_iStartAct[g] ; i <= m_iEndAct[g] ; i++ )
 	       for( int c=0 ; c < 3 ; c++ )
 	       {
-		  if( fabs(Up[g](c+1,i,j,k))>upmx[c] )
+		  if( fabs(Up[g](c+1,i,j,k) )>upmx[c] )
 		     upmx[c] = fabs(Up[g](c+1,i,j,k));
-		  if( fabs(U[g](c+1,i,j,k))>umx[c] )
+		  if( fabs( U[g](c+1,i,j,k) )>umx[c] )
 		     umx[c] = fabs(U[g](c+1,i,j,k));
 	       }
       tmp[0] = upmx[0];
@@ -229,7 +235,13 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
       }
    }
+   communicate_arrays( gRho );
+   communicate_arrays( gMu );
+   communicate_arrays( gLambda );
+   
    gRho[0].save_to_disk("grho.bin");
+   gMu[0].save_to_disk("gmu.bin");
+   gLambda[0].save_to_disk("glambda.bin");
    //   Up[0].save_to_disk("ubackedout.bin");
    //   U[0].save_to_disk("umbackedout.bin");
    // 
@@ -260,3 +272,30 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    }
 }
 
+//-----------------------------------------------------------------------
+void EW::enforceDirichlet5( vector<Sarray> & a_U )
+{
+  for(int g=0 ; g<mNumberOfGrids; g++ )
+  {
+    double u_ptr = a_U[g].c_ptr();
+    int ifirst, ilast, jfirst, jlast, kfirst, klast;
+    ifirst = m_iStart[g];
+    ilast  = m_iEnd[g];
+    jfirst = m_jStart[g];
+    jlast  = m_jEnd[g];
+    kfirst = m_kStart[g];
+    klast  = m_kEnd[g];
+
+    int iafirst, ialast, jafirst, jalast, kafirst, kalast;
+    iafirst = m_iStartAct[g];
+    ialast  = m_iEndAct[g];
+    jafirst = m_jStartAct[g];
+    jalast  = m_jEndAct[g];
+    kafirst = m_kStartAct[g];
+    kalast  = m_kEndAct[g];
+
+    F77_FUNC(hdirichlet5,HDIRICHLET5)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+				       &klast, &iafirst, &ialast, &jafirst, &jalast,
+				       &kafirst, &kalast, u_ptr );
+  }
+}

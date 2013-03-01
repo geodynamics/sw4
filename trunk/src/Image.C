@@ -28,7 +28,8 @@ Image::Image(EW * a_ew,
              ImageMode mode,
 	     ImageOrientation locationType, 
              double locationValue,
-	     bool doubleMode ):
+	     bool doubleMode,
+	     bool userCreated ):
   mTime(time),
   mEW(a_ew),
   m_time_done(false),
@@ -47,7 +48,9 @@ Image::Image(EW * a_ew,
   m_isDefinedMPIWriters(false),
   m_double(doubleMode),
   mGridinfo(-1),
-  mStoreGrid(false)
+  mStoreGrid(true),
+  m_gridimage(Image::nil),
+  m_user_created(userCreated)
 {
   mMode2Suffix.resize(MODES);
   mMode2Suffix[NONE] = "unknown";
@@ -112,37 +115,36 @@ Image::Image(EW * a_ew,
   {
     m_floatField.resize(mEW->mNumberOfGrids);
   }
-  m_gridimage1 = Image::nil;
-  m_gridimage2 = Image::nil;
 }
 
 //-----------------------------------------------------------------------
-void Image::associate_gridfiles( vector<Image*> imgs )
+void Image::associate_gridfiles( vector<Image*>& imgs )
 {
    // Only if a curvilinear grid is needed
    if( mEW->topographyExists() && (mLocationType == Image::X || mLocationType == Image::Y) &&
        !(mMode == Image::GRIDX || mMode == Image::GRIDY || mMode == Image::GRIDZ) )
    {
-   // if my location type is X, find Gridy and Gridz with equal x-coord.
-   //                        Y       Gridx     Gridz            y-coord.
-   //                        Z           x         y            z-coord.
+   // if my location type is X find Gridz with equal x-coord.
+   //                        Y find Gridz with equal y-coord.
    // Require same precision for now, simplifies file format.
       for( int i = 0 ; i < imgs.size() ; i++ )
       {
-	 if( mLocationType == Image::X && imgs[i]->mMode == Image::GRIDY && imgs[i]->mLocationType == Image::X &&
+         if( mLocationType == Image::X && imgs[i]->mMode == Image::GRIDZ && imgs[i]->mLocationType == Image::X &&
 				       fabs(mCoordValue-imgs[i]->mCoordValue) < 1e-3 && m_double == imgs[i]->m_double )
-	    m_gridimage1 = imgs[i];
-	 if( mLocationType == Image::X && imgs[i]->mMode == Image::GRIDZ && imgs[i]->mLocationType == Image::X &&
-				       fabs(mCoordValue-imgs[i]->mCoordValue) < 1e-3 && m_double == imgs[i]->m_double )
-	    m_gridimage2 = imgs[i];
-	 if( mLocationType == Image::Y && imgs[i]->mMode == Image::GRIDX && imgs[i]->mLocationType == Image::Y &&
-				       fabs(mCoordValue-imgs[i]->mCoordValue) < 1e-3 && m_double == imgs[i]->m_double )
-	    m_gridimage1 = imgs[i];
+	    m_gridimage = imgs[i];
 	 if( mLocationType == Image::Y && imgs[i]->mMode == Image::GRIDZ && imgs[i]->mLocationType == Image::Y &&
 	     fabs(mCoordValue-imgs[i]->mCoordValue) < 1e-3 && m_double == imgs[i]->m_double )
-	    m_gridimage2 = imgs[i];
+	    m_gridimage = imgs[i];
       }
-      if( m_gridimage1 == Image::nil || m_gridimage2 == Image::nil )
+      if( m_gridimage == Image::nil )
+      {
+         m_gridimage = new Image( mEW, 0.0, 0.0, 0, 0, mFilePrefix, Image::GRIDZ, mLocationType, mCoordValue,
+				  m_double, false );
+	 m_gridimage->computeGridPtIndex();
+	 m_gridimage->allocatePlane();
+         imgs.push_back(m_gridimage);
+      }
+      if( m_gridimage == Image::nil )
       {
 	 mGridinfo = -1; // Failed to find grid
          cout << "WARNING: Image::associate_gridfiles did not find compatible grid images" << endl;
@@ -927,6 +929,9 @@ void Image::copy2DArrayToImage(Sarray &u2)
 //-----------------------------------------------------------------------
 void Image::writeImagePlane_2(int cycle, std::string &path, double t )
 {
+   if( !m_user_created )
+      return;
+   
    ASSERT(m_isDefinedMPIWriters);
 
 // plane_in_proc returns true for z=const lpanes, because all processors have a part in these planes
@@ -1164,25 +1169,13 @@ void Image::add_grid_to_file( const char* fname, bool iwrite, size_t offset )
       if( m_double )
       {
 	 char dblStr[]="double";	  
-	 m_pio[g]->write_array( &fid, 1, m_gridimage1->m_doubleField[g], offset, dblStr );
-	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
-
-	 if( !mEW->usingParallelFS() )
-	    MPI_Barrier( m_mpiComm_writers );
-
-	 m_pio[g]->write_array( &fid, 1, m_gridimage2->m_doubleField[g], offset, dblStr );
+	 m_pio[g]->write_array( &fid, 1, m_gridimage->m_doubleField[g], offset, dblStr );
 	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
       }
       else
       {
 	 char fltStr[]="float";
-	 m_pio[g]->write_array( &fid, 1, m_gridimage1->m_floatField[g], offset, fltStr );
-	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
-
-	 if( !mEW->usingParallelFS() )
-	    MPI_Barrier( m_mpiComm_writers );
-
-	 m_pio[g]->write_array( &fid, 1, m_gridimage2->m_floatField[g], offset, fltStr );
+	 m_pio[g]->write_array( &fid, 1, m_gridimage->m_floatField[g], offset, fltStr );
 	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
       }
       close(fid);
@@ -1195,7 +1188,7 @@ void Image::add_grid_filenames_to_file( const char* fname )
    if( m_pio[0]->proc_zero() )
    {
       stringstream str1;
-      m_gridimage1->compute_file_suffix( str1, 0 );
+      m_gridimage->compute_file_suffix( str1, 0 );
       string img1str = str1.str();
       int fid = open( fname, O_WRONLY, 0660 ); 
       if (fid == -1 )
@@ -1209,16 +1202,6 @@ void Image::add_grid_filenames_to_file( const char* fname )
       nr = write(fid,str1.str().c_str(),sizeof(char)*n);
       if( nr != n*sizeof(char) )
 	 cout << "ERROR: Image::add_grid_filenames_to file, could not write name1 " << endl;
-
-      m_gridimage2->compute_file_suffix( str1, 0 );
-      img1str = str1.str();
-      n = img1str.length();
-      nr = write(fid,&n,sizeof(int) );
-      if( nr != sizeof(int) )
-	 cout << "ERROR: Image::add_grid_filenames_to file, could not write n2 " << endl;
-      nr = write(fid,str1.str().c_str(),sizeof(char)*n);
-      if( nr != n*sizeof(char) )
-	 cout << "ERROR: Image::add_grid_filenames_to file, could not write name2 " << endl;
       close(fid);
    }
 }

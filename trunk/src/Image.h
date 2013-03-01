@@ -40,7 +40,7 @@ Image(EW * a_ew,
       ImageMode mode,
       ImageOrientation locationType, 
       double locationValue,
-      bool doubleMode );
+      bool doubleMode, bool userCreated=true );
 
 static  void setSteps(int a_steps);
 
@@ -74,7 +74,7 @@ void copy2DArrayToImage(Sarray &twoDimensionalArray);
 
 bool is_time_derivative() const;
 
-void associate_gridfiles( vector<Image*> imgs );
+void associate_gridfiles( vector<Image*>& imgs );
    
 void writeImagePlane_2(int cycle, std::string &a_path, double time );
 void add_grid_filenames_to_file( const char* fname );
@@ -143,8 +143,8 @@ int mNonempty;
 
 int mGridinfo;   // -1 = undefined, 0=Cartesian patches, 1=Curvilinear grid appended, 2=grid file names appended.
 bool mStoreGrid; // true=append curvilinear grid to image, false=append grid file names to image.
-Image* m_gridimage1; // Curvilinear grid coordinate 1
-Image* m_gridimage2;  // Curvilinear grid coordinate 2
+Image* m_gridimage; // Curvilinear grid z-coordinate 
+bool m_user_created; // true --> This image was created from the input file
 
 int m_rankWriter;
 bool m_isDefined;

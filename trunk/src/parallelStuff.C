@@ -150,23 +150,31 @@ void EW::setupMPICommunications()
 // Define MPI datatypes for communication across processor boundaries
    m_send_type1.resize(2*mNumberOfGrids);
    m_send_type3.resize(2*mNumberOfGrids);
+   m_send_type4.resize(2*mNumberOfGrids);
    for( int g= 0 ; g < mNumberOfGrids ; g++ )
    {
 //      int ni = mU[g].m_ni, nj=mU[g].m_nj, nk=mU[g].m_nk;
-     int ni = m_iEnd[g] - m_iStart[g] + 1;
-     int nj = m_jEnd[g] - m_jStart[g] + 1;
-     int nk = m_kEnd[g] - m_kStart[g] + 1;
-     MPI_Type_vector( nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type1[2*g] );
-     MPI_Type_vector( nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type1[2*g+1] );
+      int ni = m_iEnd[g] - m_iStart[g] + 1;
+      int nj = m_jEnd[g] - m_jStart[g] + 1;
+      int nk = m_kEnd[g] - m_kStart[g] + 1;
+
+      MPI_Type_vector( nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type1[2*g] );
+      MPI_Type_vector( nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type1[2*g+1] );
 
       MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, MPI_DOUBLE, &m_send_type3[2*g] );
       MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
+
+      MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, MPI_DOUBLE, &m_send_type4[2*g] );
+      MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, MPI_DOUBLE, &m_send_type4[2*g+1] );
 
       MPI_Type_commit( &m_send_type1[2*g] ); 
       MPI_Type_commit( &m_send_type1[2*g+1] ); 
 
       MPI_Type_commit( &m_send_type3[2*g] ); 
       MPI_Type_commit( &m_send_type3[2*g+1] ); 
+
+      MPI_Type_commit( &m_send_type4[2*g] ); 
+      MPI_Type_commit( &m_send_type4[2*g+1] ); 
    }
 
 // test call
@@ -233,10 +241,11 @@ void EW::setupMPICommunications()
 //-----------------------------------------------------------------------
 void EW::communicate_array( Sarray& u, int grid )
 {
-// AP: I don't understand why the number of grids in the vector of Sarray 'mU' is tested here????
-  // REQUIRE2( 0 <= grid && grid <= mU.size() , // shouldn' the test be grid < mU.size() ???
+  // REQUIRE2( 0 <= grid && grid < mU.size() , 
   // 	    " Error in communicate_array, grid = " << grid );
    
+   REQUIRE2( u.m_nc == 4 || u.m_nc == 3 || u.m_nc == 1, "Communicate array, only implemented for one- and three-component arrays"
+	     << " nc = " << u.m_nc );
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, ke=u.m_ke, kb=u.m_kb;
    MPI_Status status;
    if( u.m_nc == 1 )
@@ -279,6 +288,27 @@ void EW::communicate_array( Sarray& u, int grid )
 		    m_cartesian_communicator, &status );
       MPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, m_send_type3[2*grid+1], m_neighbor[2], ytag2,
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type3[2*grid+1], m_neighbor[3], ytag2,
+		    m_cartesian_communicator, &status );
+   }
+   else if( u.m_nc == 4 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, m_send_type4[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, m_send_type4[2*grid], m_neighbor[0], xtag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, m_send_type4[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, m_send_type4[2*grid], m_neighbor[1], xtag2,
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, m_send_type4[2*grid+1], m_neighbor[2], ytag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, m_send_type4[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag2,
 		    m_cartesian_communicator, &status );
    }
 }
