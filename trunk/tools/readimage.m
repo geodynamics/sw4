@@ -53,6 +53,7 @@ if fd ~= -1
       end;
    end;
   % Read data
+  readz = 0;
   if pnr <= npatches
      for p=1:pnr-1
 	fseek(fd,(ni(p)-ib(p)+1)*(nj(p)-jb(p)+1)*prec,'cof');
@@ -62,17 +63,29 @@ if fd ~= -1
      else
         im0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'double');
      end;
+     if (pnr == npatches) && (gridinfo == 1 )
+        if prec == 4
+           z = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'float');
+        else
+           z = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'double');
+        end;
+        readz = 1;
+     end;
 % transpose im0 and return result in im
      im = im0';
      fclose(fd);
      if plane == 0 
         x = coord;
         y = h(pnr)*((ib(pnr):ni(pnr))-1);
-        z = zmin(p) + h(pnr)*((jb(pnr):nj(pnr))-1);
+        if readz == 0 
+           z = zmin(pnr) + h(pnr)*((jb(pnr):nj(pnr))-1);
+        end;
      elseif plane == 1 
         x = h(pnr)*((ib(pnr):ni(pnr))-1);
         y = coord;
-        z = zmin(p) + h(pnr)*((jb(pnr):nj(pnr))-1);
+        if readz == 0 
+           z = zmin(pnr) + h(pnr)*((jb(pnr):nj(pnr))-1);
+        end;
      elseif plane == 2
         x = h(pnr)*((ib(pnr):ni(pnr))-1);
         y = h(pnr)*((jb(pnr):nj(pnr))-1);
@@ -84,4 +97,3 @@ if fd ~= -1
 else
    disp(['Error: could not open file ' imfile ]);
 end;
-% this script does not read z-coordinates of the curvilinear grid
