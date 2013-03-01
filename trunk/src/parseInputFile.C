@@ -2337,9 +2337,9 @@ void EW::processSupergrid(char *buffer)
       break;
 
 //                  1234567890
-    if (startswith("thickness=", token)) // in number of grid sizes (different from WPP)
+    if (startswith("gp=", token)) // in number of grid sizes (different from WPP)
     {
-      token += 10;
+      token += 3;
       sg_thickness = atoi(token);
       CHECK_INPUT(sg_thickness>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_thickness);
       thicknessSet = true;
