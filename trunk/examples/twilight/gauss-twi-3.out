@@ -76,3 +76,16 @@ writing image plane on file gauss_121/gaussian.cycle=000.x=0.5.gridy.sw4img (msg
 writing image plane on file gauss_121/gaussian.cycle=000.x=0.5.gridz.sw4img (msg from proc # 0)
   Begin time stepping...
 Time step       1  t =   2.1164021e-03
+Time step     101  t =   2.1375661e-01
+Time step     201  t =   4.2539683e-01
+Time step     301  t =   6.3703704e-01
+Time step     378  t =   8.0000000e-01
+writing image plane on file gauss_121/gaussian.cycle=378.x=0.5.ux.sw4img (msg from proc # 0)
+writing image plane on file gauss_121/gaussian.cycle=378.x=0.5.uxerr.sw4img (msg from proc # 0)
+  Time stepping finished...
+   Execution time, solver phase 12 minutes 4.99048 seconds 
+
+ Final solution errors: Linf =   5.6149704e-05, L2 =   1.1035559e-06
+============================================================
+ program sw4 finished! 
+============================================================
