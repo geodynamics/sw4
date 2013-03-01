@@ -384,10 +384,11 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
        cout << "  omega = " << m_twilight_forcing->m_omega << endl;
        cout << "  c = " << m_twilight_forcing->m_c << endl;
        cout << "  phase = " << m_twilight_forcing->m_phase << endl;
-       cout << "  momega = " << m_twilight_forcing->m_momega << endl;
-       cout << "  mphase = " << m_twilight_forcing->m_mphase << endl;
+       cout << "  mat-omega = " << m_twilight_forcing->m_momega << endl;
+       cout << "  mat-phase = " << m_twilight_forcing->m_mphase << endl;
        cout << "  amprho = " << m_twilight_forcing->m_amprho << endl;
        cout << "  amplambda = " << m_twilight_forcing->m_amplambda << endl;
+       cout << "  ampmu = " << m_twilight_forcing->m_ampmu << endl;
        cout << "-----------------------------------------------------------" << endl;
      }
      else
