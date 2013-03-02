@@ -1,4 +1,4 @@
--*-LaTeX-*-
+%-*-LaTeX-*-
 \documentclass[11pt]{report}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Use the approved methods for setting lengths
@@ -42,6 +42,9 @@
 \renewcommand{\div}{{\rm div}}
 \renewcommand{\arraystretch}{1.3}
 
+\markboth{}{N.A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0
+(DRAFT)}
+
 \begin{document}
 
 \title{\LARGE User's guide to SW4 version 1.0 (DRAFT)} 
@@ -51,13 +54,10 @@
      contribution LLNL-SM-XXXYYY.}}
 \date{\today} 
 \maketitle
-\pagestyle{myheadings}
 
 %\thispagestyle{plain}
-\markboth{}{N.A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0
-(DRAFT)}
 
-\pagebreak
+%\pagebreak
 \paragraph {Disclaimer} 
 This document was prepared as an account of work sponsored by an agency of the United States
 government. Neither the United States government nor Lawrence Livermore National Security, LLC, nor
@@ -3124,26 +3124,43 @@ script \verb+tools/readimage.m+. An example is given in Figure~\ref{fig:ux}.
 \end{figure}
 
 
-\section{Lamb's problem (not done)}\label{sec:lamb}
+\section{Lamb's problem (in progress)}\label{sec:lamb}
 \index{testing!lambs}
 
-The \emph{SW4} installation can be tested further by solving Lamb's problem, i.e., the motion due to
+The implementation of a point force and the reflection properties of the super-grid far field
+boundary condition can be tested by solving Lamb's problem. This problem simulates the motion due to
 a vertical point force applied on the free surface. The material is assumed homogeneous and the
-ratio between the compressional and shear velocities is $\sqrt{3}$, i.e., $\lambda=\mu$. Hence the
-shear velocity is always $C_s = C_p/\sqrt{3}$. Note that only the vertical component of the exact
-solution is available, and we have only implemented the formulas for evaluating it along the free
-surface ($z=0$).
+ratio between the compressional and shear velocities satisfies $C_p/C_s = \sqrt{3}$, i.e.,
+$\lambda=\mu$. Note that we have only implemented the formulas for evaluating the vertical component
+of the exact solution along the free surface ($z=0$).
 %% UPDATE! The time function is a {\tt verySmoothBump} with {\bf
 %%   freq}=1 and {\bf t0}=0.  Images of the error can be saved with
-%% the {\tt image} command using the options {\tt type=uzerr z=0}. The errors in the solution, measured
-%% in max and $L_2$ norms, are reported at the end of the run. This problem tests the implementation of
-%% a point force and (to some extent) the supergrid far field boundary condition. The input files can
-%% be found in the directory
-%% \begin{verbatim}
-%% shell> cd sw4-version-1.0/examples/lambtest
-%% shell> ls
-%% Lambtest1.in  Lambtest2.in  Lambtest3.in  Lambtest4.in
-%% \end{verbatim}
+%% the {\tt image} command using the options {\tt type=uzerr z=0}. 
+The input files can be found in the directory
+\begin{verbatim}
+shell> cd .../sw4/examples/lamb
+shell> ls
+lamb-1.in  lamb-2.in
+\end{verbatim}
+The errors in the solution, measured in max and $L_2$ norms, are reported at the end of the run. The
+error is also reported as function of time in the file LambErr.txt. Each line of this file holds
+four numbers: time, max error, $L_2$ error, and max norm of solution. In Figure~\ref{fig:lamb-err}
+we plot the max error as function of time for grid sizes $h=0.04$ and $h=0.02$. Here, the physical
+width of the supergrid layer is $\ell=2$ for both grid sizes, and the error is evaluated in the
+interior of the computational domain, i.e., $2\leq (x,y) \leq 10$. Since the surface waves propagate
+with speed $C_r\approx 0.92$ and the source time function is zero after $t=1$, the exact solution
+becomes identically zero along the surface after time $t\approx 1 + \sqrt{2}4/0.92 \approx
+7.15$. After this time, the error in the numerical solution is due to artificial reflections from
+the super-grid layers. Note that the error converges to zero as ${\cal O}(h^4)$ for all times.
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.7\textwidth]{lamb-err.eps}
+\caption{The max norm of the error in the solution of Lamb's problem, as function of time. The blue
+and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
+\label{fig:lamb-err}
+\end{center}
+\end{figure}
+
 %% Here we provide input files with four different grid sizes, with $116^2\times 59$, $231^2 \times
 %% 116$, $461^2\times 231$, and $921^2\times 461$ grid points, respectively. Be aware that the finest
 %% grid uses about 391 Million grid points and can only be run on a sufficiently large machine. The
