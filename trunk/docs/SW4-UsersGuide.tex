@@ -3136,30 +3136,38 @@ of the exact solution along the free surface ($z=0$).
 %% UPDATE! The time function is a {\tt verySmoothBump} with {\bf
 %%   freq}=1 and {\bf t0}=0.  Images of the error can be saved with
 %% the {\tt image} command using the options {\tt type=uzerr z=0}. 
-The input files can be found in the directory
+The input and output files can be found in the directory
 \begin{verbatim}
 shell> cd .../sw4/examples/lamb
-shell> ls
+shell> ls *.in
 lamb-1.in  lamb-2.in
+shell> ls *.out
+lamb-1.out  lamb-2.out
 \end{verbatim}
-The errors in the solution, measured in max and $L_2$ norms, are reported at the end of the run. The
-error is also reported as function of time in the file LambErr.txt. Each line of this file holds
-four numbers: time, max error, $L_2$ error, and max norm of solution. In Figure~\ref{fig:lamb-err}
-we plot the max error as function of time for grid sizes $h=0.04$ and $h=0.02$. Here, the physical
-width of the supergrid layer is $\ell=2$ for both grid sizes, and the error is evaluated in the
-interior of the computational domain, i.e., $2\leq (x,y) \leq 10$. Since the surface waves propagate
-with speed $C_r\approx 0.92$ and the source time function is zero after $t=1$, the exact solution
-becomes identically zero along the surface after time $t\approx 1 + \sqrt{2}4/0.92 \approx
-7.15$. After this time, the error in the numerical solution is due to artificial reflections from
-the super-grid layers. Note that the error converges to zero as ${\cal O}(h^4)$ for all times.
-\begin{figure}
+The final errors in the solution, measured in max and $L_2$ norms, are reported at the end of the
+output files. The error is also reported as function of time in the file {\tt LambErr.txt}, which is
+written in the directory specified by the {\tt fileio} command. In this file, each line holds four
+numbers: time, max error, $L_2$ error, and max norm of solution.
+
+The physical width of the supergrid layer is set to $\ell=2$ for both grid sizes, and the error is
+evaluated in the interior of the computational domain, i.e., $2\leq (x,y) \leq 10$. Since the
+surface waves propagate with speed $C_r\approx 0.92$ and the source time function is zero after
+$t=1$, the exact solution becomes identically zero along the surface after time $t\approx 1 +
+4\sqrt{2}/0.92 \approx 7.15$. After this time, the error in the numerical solution is due to
+artificial reflections from the super-grid layers. In Figure~\ref{fig:lamb-err} we plot the max
+error as function of time for grid sizes $h=0.04$ and $h=0.02$. Note that the error converges to
+zero as ${\cal O}(h^4)$ for $t>1$, i.e., after the singular point force has stopped acting.
+\begin{figure}[ht]
 \begin{center}
-\includegraphics[width=0.7\textwidth]{lamb-err.eps}
+\includegraphics[width=0.5\textwidth]{lamb-err.eps}
 \caption{The max norm of the error in the solution of Lamb's problem, as function of time. The blue
 and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 \label{fig:lamb-err}
 \end{center}
 \end{figure}
+
+These cases use about 14 and 109 million grid points, respectively. We ran them on 64 and 128 cores
+on a cluster of Linux machines.
 
 %% Here we provide input files with four different grid sizes, with $116^2\times 59$, $231^2 \times
 %% 116$, $461^2\times 231$, and $921^2\times 461$ grid points, respectively. Be aware that the finest
