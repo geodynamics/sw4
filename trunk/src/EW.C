@@ -394,6 +394,30 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
        cout << "  ampmu = " << m_twilight_forcing->m_ampmu << endl;
        cout << "-----------------------------------------------------------" << endl;
      }
+     else if (m_lamb_test)
+     {
+       double fx, fy, fz, xs, ys, zs;
+       a_Sources[0]->getForces( fx, fy, fz );
+       xs = a_Sources[0]->getX0( );
+       ys = a_Sources[0]->getY0( );
+       zs = a_Sources[0]->getZ0( );
+       string tfun;
+       if( a_Sources[0]->getTfunc() == iVerySmoothBump )
+	 tfun = "VerySmoothBump";
+       else if( a_Sources[0]->getTfunc() == iC6SmoothBump )
+	 tfun = "C6SmoothBump";
+
+       cout << "-----------------------------------------------------------" << endl;
+       cout << "Lamb's problem testing" << endl;
+       cout << "Parameters:" << endl;
+       cout << "  Cp = " << m_lamb_test->m_cp << endl;
+       cout << "  Cs = " << m_lamb_test->m_cs << endl;
+       cout << "  Rho = " << m_lamb_test->m_rho << endl;       
+       cout << "  (xs, ys, zs) = " << xs << ", " << ys << ", " << zs << endl;       
+       cout << "  (fx, fy, fz) = " << fx << ", " << fy << ", " << fz << endl;       
+       cout << "  Source time fcn = " << tfun << endl;       
+       cout << "-----------------------------------------------------------" << endl;
+     }
      else
      {
        double myM0Sum = 0;

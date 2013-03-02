@@ -1,0 +1,90 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Fri Mar 1 14:46:20 PST 2013
+  By user:     andersp
+  Machine:     cab668
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: lamb-1.in
+
+* Processing the grid command...
+* Setting nx to 301 to be consistent with h=0.04
+* Setting ny to 301 to be consistent with h=0.04
+* Setting nz to 151 to be consistent with h=0.04
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0      0.04       301       301       151     13680751
+Total number of grid points (without ghost points): 1.36808e+07
+
+Default Supergrid thickness has been tuned; thickness = 50 grid sizes
+
+   Execution time, reading input file 0.020147 seconds 
+----------------------------------------------------
+ Making Output Directory: lamb-h0p04/
+		
+... Done!
+----------------------------------------------------
+
+       ----------- Material properties ranges ---------------
+       1 kg/m^3 <=  Density <= 1 kg/m^3
+       1.73205 m/s    <=  Vp      <= 1.73205 m/s
+       1 m/s    <=  Vs      <= 1 m/s
+       1.73205        <=  Vp/Vs   <= 1.73205
+       1 Pa     <=  mu      <= 1 Pa
+       1 Pa     <=  lambda  <= 1 Pa
+       ------------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700011e+01
+2: Lon= 1.180001e+02, Lat=3.700011e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+   Execution time, start up phase 0.037728 seconds 
+Running sw4 on 64 processors...
+Writing output to directory: lamb-h0p04/
+Saving one discretized time function
+============================================================
+ Running program on 64 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 11
+ Number of time steps = 535 dt: 0.0205607
+-----------------------------------------------------------
+Lamb's problem testing
+Parameters:
+  Cp = 1.73205
+  Cs = 1
+  Rho = 1
+  (xs, ys, zs) = 6, 6, 0
+  (fx, fy, fz) = 0, 0, 1
+  Source time fcn = C6SmoothBump
+-----------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   2.0560748e-02
+Time step     101  t =   2.0766355e+00
+Time step     201  t =   4.1327103e+00
+writing image plane on file lamb-h0p04/lamb.cycle=243.z=0.uz.sw4img (msg from proc # 0)
+writing image plane on file lamb-h0p04/lamb.cycle=243.z=0.uzerr.sw4img (msg from proc # 0)
+Time step     301  t =   6.1887850e+00
+Time step     401  t =   8.2448598e+00
+Time step     501  t =   1.0300935e+01
+Time step     535  t =   1.1000000e+01
+  Time stepping finished...
+**** Closed file with solution errors for testing
+   Execution time, solver phase 53.3704 seconds 
+
+ Final solution errors: Linf =   3.7941059e-03, L2 =   1.2827529e-02
+============================================================
+ program sw4 finished! 
+============================================================
+Writing ASCII USGS file, of size 536: lamb-h0p04/lamb.txt
