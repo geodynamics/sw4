@@ -4901,30 +4901,11 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   while (token != NULL)
     {
       // while there are tokens in the string still
-       if (startswith("#", token) || startswith(" ", buffer))
+      if (startswith("#", token) || startswith(" ", buffer))
           // Ignore commented lines and lines with just a space.
-          break;
-       if (startswith("vp=", token) )
-      {
-         token += 3; // skip vp=
-         vp = atof(token);
-      }
-      else if (startswith("vs=", token) )
-      {
-         token += 3; // skip vs=
-         vs = atof(token);
-      }
-      else if (startswith("r=", token)) // superseded by rho=, but keep for backward compatibility
-      {
-         token += 2; // skip r=
-         rho = atof(token);
-      }
-      else if (startswith("rho=", token))
-      {
-         token += 4; // skip rho=
-         rho = atof(token);
-      }
-      else if (startswith("rhograd=", token))
+	break;
+// the xygrad keywords must occur before the corresponding xy keywords
+      if (startswith("rhograd=", token))
       {
          token += 8; // skip rhograd=
          rhograd = atof(token);
@@ -4938,6 +4919,26 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
       {
          token += 7; // skip vsgrad=
          vsgrad = atof(token);
+      }
+      else if (startswith("vp=", token) )
+      {
+         token += 3; // skip vp=
+         vp = atof(token);
+      }
+      else if (startswith("vs=", token) )
+      {
+         token += 3; // skip vs=
+         vs = atof(token);
+      }
+      // else if (startswith("r=", token)) // superseded by rho=, but keep for backward compatibility
+      // {
+      //    token += 2; // skip r=
+      //    rho = atof(token);
+      // }
+      else if (startswith("rho=", token))
+      {
+         token += 4; // skip rho=
+         rho = atof(token);
       }
       else if (startswith("Qs=", token) || startswith("qs=",token) )
       {
