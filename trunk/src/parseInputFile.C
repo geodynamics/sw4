@@ -3122,21 +3122,6 @@ void EW::processMaterial( char* buffer )
 	 materialID = atoi(token);
 	 gotID=true;
       }
-      else if (startswith("vp=", token) )
-      {
-	 token += 3; // skip vp=
-         vp0 = atof(token);
-      }
-      else if (startswith("vs=", token) )
-      {
-         token += 3; // skip vs=
-         vs0 = atof(token);
-      }
-      else if (startswith("rho=", token))
-      {
-         token += 4; // skip rho=
-         rho0 = atof(token);
-      }
 // linear variation
       else if (startswith("rhograd=", token))
       {
@@ -3184,6 +3169,22 @@ void EW::processMaterial( char* buffer )
       {
 	 token += 7; // skip vssqrt=
 	 vs1o2 = atof(token);
+      }
+// plain vp, vs, rho come last because they start with the same letters as those above...
+      else if (startswith("vp=", token) )
+      {
+	 token += 3; // skip vp=
+         vp0 = atof(token);
+      }
+      else if (startswith("vs=", token) )
+      {
+         token += 3; // skip vs=
+         vs0 = atof(token);
+      }
+      else if (startswith("rho=", token))
+      {
+         token += 4; // skip rho=
+         rho0 = atof(token);
       }
 // attenuation variables
       else if (startswith("Qp=", token) || startswith("qp=", token))
@@ -5936,74 +5937,74 @@ void EW::processMaterialPfile(char* buffer)
   while (token != NULL)
     {
       // while there are tokens in the string still
-       if (startswith("#", token) || startswith(" ", buffer))
-          // Ignore commented lines and lines with just a space.
-          break;
-       //      else if (startswith("a=", token))
-       //      {
-       //         token += 2; // skip a=
-       //         a_ppm = atof(token);
-       //      }
-       else if( startswith("smoothingsize=",token) )
-       {
-          token += 14;
-	  nstenc = atoi(token);
-          VERIFY2( nstenc >= 1 ,
-		   "processMaterialPfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
-       }
-       else if (startswith("vpmin=", token))
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	break;
+      //      else if (startswith("a=", token))
+      //      {
+      //         token += 2; // skip a=
+      //         a_ppm = atof(token);
+      //      }
+      else if( startswith("smoothingsize=",token) )
       {
-         token += 6; // skip vpmin=
-         vpmin_ppm = atof(token);
+	token += 14;
+	nstenc = atoi(token);
+	VERIFY2( nstenc >= 1 ,
+		 "processMaterialPfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
+      }
+      else if (startswith("vpmin=", token))
+      {
+	token += 6; // skip vpmin=
+	vpmin_ppm = atof(token);
       }
       else if (startswith("vsmin=", token))
       {
-         token += 6; // skip vsmin=
-         vsmin_ppm = atof(token);
+	token += 6; // skip vsmin=
+	vsmin_ppm = atof(token);
       }
       else if (startswith("rhomin=", token))
       {
-         token += 7; // skip rhomin=
-         rhomin_ppm = atof(token);
+	token += 7; // skip rhomin=
+	rhomin_ppm = atof(token);
       }
       else if (startswith("flatten=", token))
       {
-         token += 8; // skip flatten=
-         cflatten = token;
-	 VERIFY2( (int)cflatten.find('T')>=0 || (int)cflatten.find('t')>=0 ||
-		  (int)cflatten.find('F')>=0 || (int)cflatten.find('f')>=0,
-		  "processMaterialPfile Error: value of flatten unclear\n" );
-         if ((int)cflatten.find('T')>=0||(int)cflatten.find('t')>=0)
-	    flatten=true;
-         else if ((int)cflatten.find('F')>=0||(int)cflatten.find('f')>=0)
-	   flatten=false;
-	 else
-	   flatten=false;
+	token += 8; // skip flatten=
+	cflatten = token;
+	VERIFY2( (int)cflatten.find('T')>=0 || (int)cflatten.find('t')>=0 ||
+		 (int)cflatten.find('F')>=0 || (int)cflatten.find('f')>=0,
+		 "processMaterialPfile Error: value of flatten unclear\n" );
+	if ((int)cflatten.find('T')>=0||(int)cflatten.find('t')>=0)
+	  flatten=true;
+	else if ((int)cflatten.find('F')>=0||(int)cflatten.find('f')>=0)
+	  flatten=false;
+	else
+	  flatten=false;
 	 
       }
       else if (startswith("filename=", token))
       {
-         token += 9; // skip filename=
-         filename = token;
+	token += 9; // skip filename=
+	filename = token;
       }
       else if (startswith("directory=", token))
       {
-         token += 10; // skip directory=
-         directory = token;
+	token += 10; // skip directory=
+	directory = token;
       }
       else if (startswith("style=", token))
       {
-         token += 6; // skip style=
-         if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
-	    coords_geographic = true;
-	 else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
-	    coords_geographic = false;
-	 else
-	    CHECK_INPUT( false, "processMaterialPfile Error: style= " << token << " not recognized\n" );
+	token += 6; // skip style=
+	if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
+	  coords_geographic = true;
+	else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
+	  coords_geographic = false;
+	else
+	  CHECK_INPUT( false, "processMaterialPfile Error: style= " << token << " not recognized\n" );
       }
       else
       {
-          cout << token << " is not a pfile option " << endl;
+	cout << token << " is not a pfile option " << endl;
       }
       token = strtok(NULL, " \t");
     }
@@ -6271,7 +6272,7 @@ void EW::processMaterialIfile( char* buffer )
       {
 	CartesianFormat=true;
       }
-      else if (strcmp("grid", token) == 0) // better name would be geographic, but grid is used with topography
+      else if (strcmp("geographic", token) == 0) // better name would be geographic, but grid is used with topography
       {
 	CartesianFormat=false;
       }
