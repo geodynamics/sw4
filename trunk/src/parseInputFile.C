@@ -1250,7 +1250,7 @@ void EW::processTopography(char* buffer)
 // 	 cout << "Setting interpolation order to=" << m_grid_interpolation_order << endl;
        }
 //                          123456789
-       else if( startswith("zetabreak=", token) )
+       else if( startswith("zetabreak=", token) ) // developer option: not documented in user's guide
        {
 	  token += 10;
 	  m_zetaBreak = atof(token);
@@ -1271,7 +1271,8 @@ void EW::processTopography(char* buffer)
        {
 	  token += 6;
 	  style = token;
-	  if (strcmp("grid", token) == 0)
+// new keyword: geographic, but keeping grid for backwards compatibility with WPP
+	  if (strcmp("grid", token) == 0 || strcmp("geographic", token) == 0)
 	  {
 	     m_topoInputStyle=GridFile;
 	     m_topography_exists=true;
@@ -4218,11 +4219,11 @@ void EW::processImage(char* buffer)
       else if (strcmp(token, "s") == 0)   mode = Image::S;
       else if (strcmp(token, "div") == 0)   mode = Image::DIV;
       else if (strcmp(token, "curl") == 0)   mode = Image::CURLMAG;
-      else if (strcmp(token, "curlmag") == 0)   mode = Image::CURLMAG;
+//      else if (strcmp(token, "curlmag") == 0)   mode = Image::CURLMAG; // strange name, remove ??
       else if (strcmp(token, "veldiv") == 0)   mode = Image::DIVDT;
-      else if (strcmp(token, "divdt") == 0)   mode = Image::DIVDT;
+      else if (strcmp(token, "divdudt") == 0)   mode = Image::DIVDT;
       else if (strcmp(token, "velcurl") == 0)   mode = Image::CURLMAGDT;
-      else if (strcmp(token, "curlmagdt") == 0)   mode = Image::CURLMAGDT;
+      else if (strcmp(token, "curldudt") == 0)   mode = Image::CURLMAGDT;
       else if (strcmp(token, "lat") == 0)   mode = Image::LAT;
       else if (strcmp(token, "lon") == 0)   mode = Image::LON;
       else if (strcmp(token, "hvelmax") == 0) mode = Image::HMAXDUDT;
@@ -4255,9 +4256,10 @@ void EW::processImage(char* buffer)
       {
 	  cerr << "Processing image command: " << "mode must be one of the following: " << endl
 	       << "ux|uy|uz|rho|lambda|mu" << endl 
-               <<  "|p|s|div|curlmag|divdt|curlmagdt " << endl
-	       << "|lat|lon|hvelmax|vvelmax|topo|grid|uxerr|uyerr|uzerr " << endl
-	       << "|uxexact|uyexact|uzexact|magdudt|hmagdudt|hmaxdudt|vmaxdudt|mag|hmag|hmax|vmax" << endl
+               << "|p|s|div|curl|veldiv|divdudt|velcurl|curldudt " << endl
+	       << "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|grid|gridx|gridy|gridz " << endl
+	       << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
+	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr" << endl
 	       << "*not: " << token << endl;
 	  MPI_Abort( MPI_COMM_WORLD, 1 );
       }
@@ -6272,7 +6274,8 @@ void EW::processMaterialIfile( char* buffer )
       {
 	CartesianFormat=true;
       }
-      else if (strcmp("geographic", token) == 0) // better name would be geographic, but grid is used with topography
+// change option to geographic, but keeping grid for backwards compatibility
+      else if (strcmp("geographic", token) == 0 || strcmp("grid", token) == 0)
       {
 	CartesianFormat=false;
       }

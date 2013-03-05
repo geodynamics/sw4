@@ -87,14 +87,15 @@ shares many features with our previous seismic wave propagation code~\emph{WPP}~
 node-based finite difference approach, and uses numerical methods that satisfy the principle of
 summation by parts, which guarentees energy stability of the numerical solution. The major
 difference between the codes is that \emph{SW4} implements a fourth order accurate spatial
-discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. The
-\emph{SW4} code is therefore significantly more efficient than \emph{WPP}, which is second order
-accurate. Compared to a second order method, the advantages of a fourth order method are more
-pronounced when the solution needs to be more accurate, because the error diminishes faster as the
-grid size is reduced. A fourth order method is also more efficient when the solution needs to remain
-accurate for longer times, because the phase error is smaller. The fourth order method is also
-significantly more accurate at calculating surface waves, in particular when the ratio between the
-compressional and shear wave speeds is large, i.e.~$C_p/C_s\gg 1$~\cite{KrePet-12}.
+discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. \emph{SW4}
+is therefore significantly more efficient than the second order accurate \emph{WPP} code. Compared
+to a second order method, the advantages of a fourth order method are more pronounced when the
+solution needs to be more accurate, because the error diminishes faster as the grid size is
+reduced. A fourth order method is also more efficient when the solution needs to remain accurate for
+longer times, because the phase error grows as $t^{1/p}$ in a $p$th order accurate numerical
+method~\cite{Gustafsson-Kreiss-Oliger}. The fourth order method is also significantly more accurate
+for calculating surface waves, in particular when the ratio between the compressional and shear wave
+speeds is large, i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
 
 \emph{SW4} implements substantial capabilities for 3-D seismic modeling, with a free surface
 condition on the top boundary, absorbing super-grid~\cite{PetSjo-13} far-field conditions on the
@@ -247,7 +248,7 @@ running in batch mode) at the beginning of every run.
 downwards into the medium, see figure~\ref{fig:coordsys}. 
 \begin{figure}[th]
 \begin{centering}
- \includegraphics[height=0.2\linewidth]{rightHandedCoord.ps}
+ \includegraphics[width=0.6\linewidth]{coords.eps}
   \caption{\emph{SW4} uses a right handed coordinate system with the z-axis pointing
   downwards.}
   \label{fig:coordsys}
@@ -401,10 +402,10 @@ details.
 
 \emph{SW4} implements a super-grid modeling technique to reduce artificial reflections from the
 far-field boundaries~\cite{AppCol-09, PetSjo-13}. In this method, a coordinate mapping (stretching
-function) is used to map the computational domain to a much larger physical domain. A high order
-artificial dissipation operator is added in the super-grid layers. The ideas behind the super-grid
-technique are to slow down the waves as they propagate through the layer, and to damp them out
-before they arrive at the outer boundary of the computational domain. Note that the dissipative term
+function) is used to map the computational domain onto a much larger physical domain, so that it
+takes a very long time for the waves to arrive at the outer boundary. The streching is combined with
+a high order artificial dissipation operator that added in the super-grid layers. It damps out waves
+that become poorly resolved on the grid, because of the stretching. Note that the dissipative term
 is only added in the layers, and should not affect the accuracy in the interior of the domain.
 
 The coordinate stretching compresses the solution inside the layers. This corresponds to a slowing
@@ -427,8 +428,10 @@ free surface, see Figure~\ref{fig:layout}.
   damping term is added.}\label{fig:layout}
 \end{center}
 \end{figure}
-The default thickness of the layers (currently) equals 30 grid sizes. The thickness of the
-super-grid layers can be changed with the {\tt supergrid} command, see Section~\ref{sec:supergrid}.
+The default thickness of the layers (currently) equals 30 grid sizes, but the thickness of the
+super-grid layers can be changed with the {\tt supergrid} command, see
+Section~\ref{sec:supergrid}. Note that it is reflections of the longest waves that are the hardest
+to suppress with the super-grid layers.
 
 For practical reasons, the super-grid layers are part of the computational domain as specified by
 the grid command. If, for example, each super-grid layer is 30 grid points wide, the solution
@@ -439,8 +442,8 @@ to make the computational domain sufficiently large. If the super grid layers ar
 wide, the computational grid must be at least 60 grid points wide in the $x$ and $y$-directions, and
 30 points wide in the Cartesian part of the $z$-direction. Additional grid points must be added in
 the interior of the computational domain for the actual seismic modeling. Note that sources and
-receivers should only be placed in the interior of the computational domain, i.e., away from the
-super-grid layers.
+receivers should only be placed in the interior of the computational domain, i.e., the white region
+of Figure~\ref{fig:layout}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Sources, time-functions and grid sizes}
@@ -452,12 +455,13 @@ can have a different time function.
 
 \section{Predefined time functions}\label{sec:predefined}
 
-All pre-defined source time functions start from zero ($\lim_{t\to -\infty} g(t,t_0,\omega) = 0$) and tend to a constant terminal
-value, $\lim_{t\to \infty} g(t,t_0,\omega) = g_\infty$. In seismic applications, $g_\infty\ne 0$
-usually corresponds to solving for the displacements of the motion, because the solution will tend to
-a non-zero steady state solution for large times. This solution corresponds to the final
-displacements due to a seismic event. When $g_\infty = 0$, the solution will always tend to zero for
-large times, as is expected from the velocities or accelerations of the motion due to a seismic event.
+All pre-defined source time functions start from zero ($\lim_{t\to -\infty} g(t,t_0,\omega) = 0$)
+and tend to a constant terminal value, $\lim_{t\to \infty} g(t,t_0,\omega) = g_\infty$. In seismic
+applications, time function that tend to a non-zero value ($g_\infty\ne 0$) usually corresponds to
+solving for the displacements of the motion. In this case, the solution will tend to a non-zero
+steady state solution for large times, which corresponds to the steady-state displacements due to a
+seismic event. When $g_\infty = 0$, the solution will always tend to zero for large times, which is
+expected from the velocities or accelerations of the motion due to a seismic event.
 
 The Gaussian, Dirac, and Triangle functions integrate to one ($\int_{-\infty}^{\infty}
 g(t,t_0,\omega) \, dt = 1$), while the Sawtooth, Smoothwave, and Ricker functions integrate to zero
@@ -465,12 +469,16 @@ and have maximum amplitude one. The RickerInt function is the time-integral of t
 and integrates to zero. The GaussianInt, Brune, BruneSmoothed, and Liu functions tend to one
 ($\lim_{t\to\infty} g(t,t_0,\omega) = 1$).
 
-The Triangle, Sawtooth, Ramp, Smoothwave, Brune, BruneSmoothed, Liu and VerySmoothBump functions are
-identically zero for $t<t_0$, so they will give reasonable simulation results if $t_0\geq
-0$. However, the Gaussian, GaussianInt, Ricker, and RickerInt functions are centered around $t=t_0$
-with exponentially decaying tails for $t<t_0$. Hence $t_0$ must be positive and of the order ${\cal
-  O}(1/\omega)$ to avoid incompatibilty problems with the initial conditions. We recommend choosing
-$t_0$ such that $g(0,t_0,\omega) \leq 10^{-8}$ for these functions.
+The initial conditions are homogeneous when \emph{SW4} is used to calculate the motion due to point
+force and moment tensor sources. In other words, the initial displacement and velocity are zero. To
+avoid incompatibilities, the source time functions must also start smoothly. Since the Triangle,
+Sawtooth, Ramp, Smoothwave, Brune, BruneSmoothed, Liu and VerySmoothBump functions are identically
+zero for $t<t_0$, these time functions must have $t_0\geq 0$. More care is required for the
+Gaussian, GaussianInt, Ricker, and RickerInt functions, because they are centered around $t=t_0$,
+with exponentially decaying tails for $t<t_0$. For these functions, incompatibilty problems can only
+be avoided if $t_0$ is positive and of the order ${\cal O}(1/\omega)$, where $\omega$ equals the
+{\tt freq} parameter. We recommend choosing $t_0$ such that $g(0,t_0,\omega) \leq 10^{-8}$ for these
+functions.
 
 \subsection{Gaussian}\label{gaussian}
   \[
@@ -710,7 +718,7 @@ must be given when this time function is used in the \verb+source+ command.
 
 \subsection{Dirac}
 The Dirac distribution $\delta(t-t_0)$ is not a regular function because it is zero everywhere,
-except at $t=t_0$ where it is undefined. The integral of $\delta(t)$ is one. If $f(t)$ is a smooth
+except at $t=t_0$, where it is undefined. The integral of $\delta(t)$ is one. If $f(t)$ is a smooth
 function, then
 \begin{equation}\label{eq:dirac}
 \int f(t)\delta(t-\tau)\, dt = f(\tau).
@@ -730,7 +738,8 @@ for details.
 The discretized Dirac distribution triggers all frequencies on the mesh, including completely
 unresolved and unphysical motions. The numerical solution is therefore meaningless unless it is
 filtered to remove the unresolved motions. The filtering can either be done after the simulation is
-completed, or by using the {\bf prefilter} command.
+completed, or by using the {\bf prefilter} command. The Dirac time function can also be useful for
+calculating ``numerical'' Green's functions.
 
 \section{Discrete time function}
 
@@ -743,13 +752,13 @@ interpolation procedure results in six polynomial coefficients for each interval
 <\tau_{j+1}$. The coefficients are chosen such that g(t) becomes four times continuously
 differentiable.
 
-Because the elastic wave equation is solved for $0\leq t\leq T$, it is necessary to evaluate the
-discrete time function in this interval. If $t_0>0$, the discrete time function uses the polynomial
-coefficients corresponding to the first interval $[\tau_1,\tau_2]$ for all $t<t_0$. Similarily,
-if $\tau_{N_s}<T$, the coefficients for the last interval are used for $t>\tau_{N_s}$. To avoid
-unexpected results due to extrapolation, we recommend specifying the discrete time function for all
-$t\in[0,T]$. To also avoid incompatibilities between the forcing and the homogeneous initial conditions,
-we recommend setting $g_j=0$ for all $\tau_j\leq 0$.
+It is necessary to evaluate the discrete time function throughout the simulation of the elastic wave
+equation, i.e., for $0\leq t\leq T$. If $t_0>0$, the discrete time function is evaluated using the
+polynomial coefficients corresponding to the first interval $[\tau_1,\tau_2]$ for all
+$t<t_0$. Similarily, if $\tau_{N_s}<T$, the coefficients for the last interval are used for
+$t>\tau_{N_s}$. To avoid unexpected results due to extrapolation, we recommend specifying the
+discrete time function for all $t\in[0,T]$. To also avoid incompatibilities between the forcing and
+the homogeneous initial conditions, we recommend setting $g_j=0$ for all $\tau_j\leq 0$.
 
 The file format for discrete time functions is decribed in~\ref{sec:discrete-time-function-format}.
 
@@ -760,32 +769,32 @@ When preparing the input file, the most difficult parameter to choose is probabl
 $h$. It is extremely important to use a grid size which is sufficiently small, because you must resolve
 the waves that are generated by the source. On the other hand you don't want to use an
 unnecessarily small grid size, because both the execution time and the memory requirements
-increase with decreasing grid size, see Section~\ref{sec:performance}.
+increase with decreasing grid size.%, see Section~\ref{sec:performance}.
 
-WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
-is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
-points per wave length. This means that waves with the same frequency can be resolved on a grid that
-is coarser both in space and time. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
-percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
-about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
-with approximately twice as high frequency.
+%% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
+%% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
+%% points per wave length. This means that waves with the same frequency can be resolved on a grid that
+%% is coarser both in space and time. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
+%% percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
+%% about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
+%% with approximately twice as high frequency.
 
 The number of grid points per shortest wavelength, $P$, is a normalized measure of how well a
 solution is resolved on the computational grid. Since the shear waves have the lowest velocities and
 a shorter wave length than the compressional waves, the shortest wave length $L_{min}$ can be
 estimated by
 \[
- L_{min} = \dfrac{\min V_s}{f_{max}},
+ L_{min} = \dfrac{\min C_s}{f_{max}},
 \]
-where $V_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
+where $C_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
 in the time function $g(t)$. Hence the number of grid points per wave length equals $L_{min}/h$,
 which is given by
 %
 \begin{equation}\label{eq:resolutionformula}
-  P = \dfrac{\min V_s}{h\,f_{max}}. 
+  P = \dfrac{\min C_s}{h\,f_{max}}. 
 \end{equation}
-Note that $h$ needs to be made smaller to maintain the same value of $P$ if either $V_s$ is
-decreased or if the frequency is increased. In formula (\ref{eq:resolutionformula}), $\min V_s$ is
+Note that $h$ needs to be made smaller to maintain the same value of $P$ if either $C_s$ is
+decreased or if the frequency is increased. In formula (\ref{eq:resolutionformula}), $\min C_s$ is
 found from the material properties and $h$ is determined by the input grid specification.  The
 frequency spectrum of the solution is determined by the frequency spectrum of the time
 function(s) in the source term(s).
@@ -843,7 +852,7 @@ for $P$ can be used in some practical situations. The best way of checking the a
 a numerical solution is to repeat the calculation on a finer mesh, even though this approach
 can become computationally expensive. 
 
-We finally remark that the ratio between the compressional and shear velocity, $V_P/V_S$, can have a
+We finally remark that the ratio between the compressional and shear velocity, $C_p/C_s$, can have a
 significant influence on the accuracy of surface waves, see the paper by Kreiss and
 Petersson~\cite{KrePet-12} for details.
 
@@ -878,7 +887,7 @@ The syntax of the input file is
 \begin{verbatim}
 command1 parameter1=value1 parameter2=value2 ... parameterN=valueN
 # comments are disregarded
-command2 parameter1=value1 parameter2=value2 ... parameterN=valueN
+command2 parameter1=value1 parameter2=value2 ... parameterM=valueM
 ...
 \end{verbatim}
 Each command starts at the beginning of the line and ends at the end of the same line. Blank and
@@ -901,8 +910,8 @@ fileio, prefilter, globalmaterial, gmt, developer). Any number of output command
 be given (rec, image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight,
 testlamb, testpointsource), at least one source must be specified, and the material must be specifed
 by at least one of the (block, pfile, ifile, efile) commands. Also note that the test modes are
-mutually exclusive. Not all of these rules are currently enforced by the parser, so be prepared for the
-unexpected if they are violated.
+mutually exclusive. Not all of these rules are currently enforced by the parser, but \emph{SW4} can
+give unexpected behavior if they are violated.
 
 Note that the same command parser is used for \emph{SW4} and its companion code \emph{SW4opt}, which
 calculates source parameters from seismic observations. Here we only document the commands and options
@@ -929,11 +938,10 @@ Syntax:\\ \tt fileio path=... verbose=... printcycle=... pfs=... nwriters=... \\
 \multicolumn{4}{|c|}{\bf fileio command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
 path        & path to a directory where all output will be written & string & . \\ \hline
-verbose	    & sets the level of diagnostic messages written to standard out & int & 0  \\ \hline
+verbose	    & sets the level of diagnostic messages written to standard out ($\geq 0$) & int & 0  \\ \hline
 printcycle  & sets the interval for printing the cycle, time, dt info & int & 100 \\ \hline
-pfs         & assume a parallel (1) or serial (0) file system when writing image or volimage files (several
-processes can simultaneously write the same file on a parallel file
-system) & int & 0 \\ \hline
+pfs         & assume a parallel (1) or serial (0) file system when writing files (several
+processes can simultaneously write the same file on a parallel file system) & int & 0 \\ \hline
 nwriters    & set the number of processes that write an image or volimage file & int & 8 \\ \hline
 \end{tabular}
 \end{center}
@@ -1028,12 +1036,12 @@ The optional {\bf utcstart} keyword is used to assign the Universal Time Coordin
 corresponding to simulation time $t=0$. The format of the UTC time is a string (without quotation)
 ``month/day/year:hour:minute:second.millisecond''. For example, the 17th hour, 34th minute, 12th
 second and 233th millisecond of January 31, year 2012, is encoded as {\bf
-  utcstart=01/31/2012:17:34:12.233}. When the UTC time is set, all {\bf rec} data files are
-time stamped with that datum. The UTC time stamp is essential for correctly aligning
-observed data when solving the inverse problem with \emph{SW4opt}.
+  utcstart=01/31/2012:17:34:12.233}. When the UTC time is set, all time-series (saved with the {\tt
+  rec} command) are time stamped with that datum. The UTC time stamp is essential for correctly
+aligning observed data when solving the inverse problem with \emph{SW4opt}.
 
 Note that the \verb+prefilter+ command does {\it not} modify the start time. This is a change from
-\emph{SW4}. See \S\ref{keyword:prefilter} for a discussion.
+\emph{WPP}. See \S\ref{keyword:prefilter} for a discussion.
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
@@ -1076,17 +1084,17 @@ force or a point moment tensor source and should follow the following rules:
   \item A point moment tensor source can be specified in one of two ways:
     \begin{enumerate}
     \item Seismic moment {\bf m0}, and double couple focal mechanism, {\bf strike/dip/rake} angles
-      (see~\cite{Aki-Richards-02}). 
+      (as defined in Aki and Richards~\cite{Aki-Richards-02}). 
     \item At least one component of the moment tensor ({\bf mxx}, {\bf mxy}, etc.) and optionally a
       scaling factor {\bf m0}. 
     \end{enumerate}
   \end{itemize}
 \item Specify a pre-defined source time function (with the {\bf type} keyword), or give the file
-  name for a discrete time function (using the {\bf dfile} keyword). Note that all pre-defined time
-  functions use the {\bf t0} keyword, and all except {\bf Dirac} also use the {\bf freq}
-  keyword. The only pre-defined time function that uses the {\bf ncyc} keyword is {\bf
-    GaussianWindow}.
+  name for a discrete time function (using the {\bf dfile} keyword).
 \end{itemize}
+Note that all pre-defined time functions use the {\bf t0} keyword, and all functions except {\bf
+  Dirac} also use the {\bf freq} keyword. The only pre-defined time function that uses the {\bf
+  ncyc} keyword is {\bf GaussianWindow}.
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
@@ -1103,19 +1111,19 @@ lon & longitude geographical coordinate of the source & real & degrees & none \\
 \hline
 t0 & offset in time $(\geq 0)$ & real & s & 0.0 \\ \hline
 freq & frequency $(>0)$ (not used for Dirac)& real & Hz or rad/s & 1.0 \\ \hline
-type & Name of time function & string & none & RickerInt \\ \hline
+type & Name of source time function & string & none & RickerInt \\ \hline
 ncyc & Number of cycles (must be specified for the GaussianWindow function) & int & none & 0
 \\ \hline
 dfile & File name for discrete time function & string & none & none \\ \hline
 \end{tabular}
 \end{center}
 \index{source parameters!location - x, y, z, depth, topodepth, lat, lon} \index{source
-  parameters!t0, freq, type} Options for pre-defined time functions ({\bf type}) are: {\tt
-  GaussianInt, Erf, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth, Smoothwave,
-  VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac}, and {\tt C6SmoothBump}. The
-functions are described in \S~\ref{sec:predefined}.  \index{source time dependence!GaussianInt,
-  Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth, Smoothwave, VerySmoothBump, Brune,
-  BruneSmoothed, GaussianWindow, Liu, Dirac, C6SmoothBump}
+  parameters!t0, freq, type} The {\bf type} keyword specifies the source time function. It can have
+the following values: {\tt GaussianInt, Erf, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth,
+  Smoothwave, VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac}, and {\tt
+  C6SmoothBump}. The functions are described in \S~\ref{sec:predefined}.  
+\index{source time function!GaussianInt, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth, Smoothwave,
+  VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac, C6SmoothBump}
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf source command parameters (point moment tensor)}\\ \hline
@@ -1128,9 +1136,9 @@ mxy & xy-component of the moment tensor & real & Nm & 0.0 \\ \hline
 mxz & xz-component of the moment tensor & real & Nm & 0.0 \\ \hline
 myz & yz-component of the moment tensor & real & Nm & 0.0 \\ \hline
 \hline
-strike & Aki and Richards strike angle & real & degrees & none \\ \hline
-dip & Aki and Richards dip angle & real & degrees & none \\ \hline
-rake & Aki and Richards rake angle & real & degrees & none \\ \hline
+strike & strike angle (see Aki and Richards) & real & degrees & none \\ \hline
+dip    & dip angle    & real & degrees & none \\ \hline
+rake   & rake angle   & real & degrees & none \\ \hline
 \end{tabular}
 \end{center}
 \index{source parameters!moment - m0, mxx, myy, mzz, mxy, mxz, myz}
@@ -1161,19 +1169,20 @@ Required parameters:\\
 None
 \end{flushleft}
 The \verb+prefilter+ command is used to filter all source time functions before the simulation
-starts. This approach ensures that the solution is well resolved on the computational grid when the
-source time functions have high frequency content. The \verb+prefilter+ command is particularly
-useful in combination with the {\bf Dirac} source time function. The \verb+prefilter+ option is also
-useful for removing unphysical modes from image files, e.g. max velocities or displacements.  The
+starts. This approach gives the same result as filtering all time-series after the simulation is
+completed. Hence, the \verb+prefilter+ command can be used to reduce the amount of post
+processing. The command is particularly useful in combination with the {\bf Dirac} source time
+function, which triggers all frequencies on the grid. The \verb+prefilter+ option is also useful for
+removing unphysical modes from image files, e.g. max velocities or displacements.  The
 \verb+prefilter+ command modifies the time functions in all source commands using a discrete
-Butterworth filter.  Lowpass and bandpass filters are supported, with orders between 1 and 10. Only
+Butterworth filter. Lowpass and bandpass filters are supported, with orders between 1 and 10. Only
 the {\bf fc2} frequency is used for lowpass filters, while it is assumed that {\bf fc1}$<${\bf fc2}
 for bandpass filters. The filtering is either forwards in time ({\bf passes=1}), or forwards and
 backwards ({\bf passes=2}). For {\bf passes=1}, the filter is causual but gives the filtered signal
 a phase shift. When {\bf passes=2} the filter has zero phase shift, but is acausual. In this case,
 the filtered signal is only exponentially small as $t\to-\infty$. In order to avoid unphysical
-oscillations due to an abrupt start, an estimate of the length of this tail is calculated. A
-warning message is printed to stdout if the time shift ({\bf t0}) in the source  is smaller than this value.
+oscillations due to an abrupt start, an estimate of the length of this tail is calculated. A warning
+message is printed to stdout if the time shift ({\bf t0}) in the source is smaller than this value.
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf prefilter command parameters}\\ \hline
@@ -1190,17 +1199,18 @@ order  & order of filter (1-10) & int & None & 2 \\ \hline
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The material model [required] (TO BE UPDATED)} 
+\section{The material model [required]} 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-It is required to define the material model in the entire computational domain, padded by one layer
-of ghost cells. However, no material properties need to be given above the topography. The
-\verb+attenuation+ command may be located anywhere in the command file. The material commands
-\verb+block+, \verb+ifile+, \verb+efile+, and \verb+pfile+, are applied in the same order as they
-are given. Hence, it is possible to overwrite the properties specified by a material command given
-earlier in the file. This can be particularily useful when using the \verb+block+ command. Finally,
-the properties of the optional \verb+globalmaterial+ command are enforced after reading all other
-material commands.
+It is required that the material model is defined in the entire computational domain.
+%, padded by one layer of ghost cells. However, no material properties need to be given above the
+%topography. 
+%The \verb+attenuation+ command may be located anywhere in the command file. 
+The material commands \verb+block+, \verb+ifile+, \verb+efile+, and \verb+pfile+, are applied in the
+same order as they are given. Hence, it is possible to overwrite the properties specified by a
+material command given earlier in the file. This can be particularily useful when using the
+\verb+block+ command. Finally, the properties of the optional \verb+globalmaterial+ command are
+enforced after all other material commands have been applied.
 
 %% \subsection{attenuation [optional]}
 %% \index{command!attenuation}
@@ -1229,7 +1239,7 @@ material commands.
 %% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 %% \multicolumn{5}{|c|}{\bf attenuation command parameters}\\ \hline
 %% \bf{Option} & \bf{Description} & \bf{Type} & \bf{Unit} & \bf{Default} \\ \hline \hline
-%% phasefreq & The frequency ($>0$) at which $V_S$ and $V_P$ are specified & real & Hz & 1.0\\ \hline
+%% phasefreq & The frequency ($>0$) at which $C_S$ and $C_P$ are specified & real & Hz & 1.0\\ \hline
 %% nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (between 1 and 8) & int & None & 3\\ \hline
 %% maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & real & Hz & 2.0 \\ \hline
 %% minppw    & Calculate the upper frequency limit based on this number of grid points per shortest
@@ -1237,9 +1247,9 @@ material commands.
 %% \end{tabular}
 %% \end{center}
 %% If you specify the \verb+minppw+ option, the upper frequency limit is calculated based on the
-%% relation $P=\min V_s/(h f)$, i.e.,
+%% relation $P=\min C_s/(h f)$, i.e.,
 %% \[
-%% f_{max} = \frac{1}{P_{min}}\min \frac{V_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
+%% f_{max} = \frac{1}{P_{min}}\min \frac{C_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
 %% \]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1250,11 +1260,12 @@ material commands.
 \begin{flushleft}\bf
 Syntax:\\
 \tt block
-vp=... vs=... rho=... qp=... qs=... vpgrad=... vsgrad=... rhograd=... absdepth=... x1=... x2=... y1=... y2=... z1=... z2=...\\
+vp=... vs=... rho=... vpgrad=... vsgrad=... rhograd=... absdepth=... x1=... x2=... y1=... y2=... z1=... z2=...\\
 \bf
 Required parameters:\\
 \tt
-vp, vs, rho  (qp and qs with attenuation)
+vp, vs, rho
+%vp, vs, rho  (qp and qs with attenuation)
 \end{flushleft}
 %
 The block command specifies material properties that are constant or vary linearly with depth. By
@@ -1270,26 +1281,35 @@ $z$-direction (downward). The units for {\bf vpgrad} and {\bf vsgrad} are 1/seco
 can be interpreted as m/s per m, or km/s per km. The linear variation is relative to the properties at
 the free surface ($z=0$ or depth=0 with topography), e.g.,
 \[
-V_p(z) = {\bf vp} + z \, {\bf vpgrad}.
+C_p(z) = {\bf vp} + z \, {\bf vpgrad}.
 \]
-Note that when {\bf vpgrad} is specified together with ${\bf z1}=z_1$, $V_p(z_1) = {\bf vp} + z_1\,
+Note that when {\bf vpgrad} is specified together with ${\bf z1}=z_1$, $C_p(z_1) = {\bf vp} + z_1\,
 {\bf vpgrad}$. Hence, the material properties at the top of the block ($z=z_1$) can be very
 different from {\bf vp} when $z_1\, {\bf vpgrad}$ is large.
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf block command parameters}\\ \hline
+\multicolumn{5}{|c|}{\bf block command parameters (part 1)}\\ \hline
 {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
 \hline
 vp          & P-wave velocity           & real     & m/s      & none \\ \hline
 vs          & S-wave velocity           & real     & m/s      & none \\ \hline
 rho         & density                   & real     & kg/m$^3$ & none \\ \hline
-qp or Qp    & P-wave quality factor     & real     & none     & none \\ \hline
-qs or Qs    & S-wave quality factor     & real     & none     & none \\ \hline
+%qp or Qp    & P-wave quality factor     & real     & none     & none \\ \hline
+%qs or Qs    & S-wave quality factor     & real     & none     & none \\ \hline
 vpgrad      & vertical gradient for vp  & real     & s$^{-1}$  & none \\ \hline
 vsgrad      & vertical gradient for vs  & real     & s$^{-1}$  & none \\ \hline
 rhograd     & vertical gradient for rho & real     & kg/m$^4$  & none \\ \hline
 %qp          & P-wave quality factor     & real     & none \\ \hline
 %qs          & S-wave quality factor     & real     & none \\ \hline
+\end{tabular}
+\end{center}
+\index{block parameters!vp, vs, rho, vpgrad, vsgrad, rhograd}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf block command parameters (part 2)}\\ \hline
+{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
+\hline
 x1          & minimum x-dim for the box shaped sub-region & real & m & -max x \\ \hline
 x2          & maximum x-dim for the box shaped sub-region & real & m & 2 max x \\ \hline
 \hline
@@ -1303,7 +1323,7 @@ absdepth    & {\tt z1} and {\tt z2} relative to topography (0), or absolute $z$-
 & none & 0 \\ \hline 
 \end{tabular}
 \end{center}
-\index{block parameters!vp, vs, rho, qp, qs, vpgrad, vsgrad, rhograd, x1, x2, y1, y2, z1, z2, absdepth}
+\index{block parameters!x1, x2, y1, y2, z1, z2, absdepth}
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1317,7 +1337,7 @@ absdepth    & {\tt z1} and {\tt z2} relative to topography (0), or absolute $z$-
 \bf
 Syntax:\\
 \tt
-efile etree=... xetree=... logfile=... query=... vsmin=... vpmin=... access=... resolution=...\\
+efile etree=... xetree=... logfile=... query=... access=... resolution=...\\
 \bf 
 Required parameters:\\
 \tt etree
@@ -1327,8 +1347,8 @@ Required parameters:\\
 \multicolumn{5}{|c|}{\bf efile command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description}                                    & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
 \hline
-etree      & full path to the etree database file                 & string   & none       & none \\ \hline
-xetree     & full path to the extended etree database file        & string   & none       & none \\ \hline
+etree      & full path to the etree database file                 & string   & none   & none \\ \hline
+xetree     & full path to the extended etree database file        & string   & none   & none \\ \hline
 logfile    & name of log file                                     & string   & none   & none \\ \hline
 \end{tabular}
 \end{center}
@@ -1337,21 +1357,18 @@ logfile    & name of log file                                     & string   & n
 \multicolumn{5}{|c|}{\bf efile command parameters (part 2)}\\ \hline
 \bf{Option} & \bf{Description}                                & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
 \hline
-vsmin   & minimum shear speed $V_S$         & real    & m/s    & 0 \\ \hline
-vpmin   & minimum compresisonal speed $V_P$ & real    & m/s    & 0 \\ \hline 
-\hline
 query      & type of query to perform                         & string  & none   & MAXRES \\ \hline
 resolution & average properties over this distance (for query=FIXEDRES) & real  & m      & $h$ \\ \hline
 access     & can be set to parallel or serial                 & string  & none   &  parallel \\ \hline
 \end{tabular}
 \end{center}
-\index{efile parameters!logfile, vsmin, vpmin, query, resolution, access, etree, xetree}
+\index{efile parameters!logfile, query, resolution, access, etree, xetree}
 %
 The query option can be set to one of the following:
 %
 \begin{center}
 \begin{tabular}{lp{12cm}} \hline
-\bf{Query Option} & \bf{Description} 
+\bf{query option} & \bf{Description} 
 \\ \hline 
 MAXRES & Sample the data at the maximum available
 resolution in the database. This is the default query type. 
@@ -1388,12 +1405,12 @@ pfile filename=... directory=... smoothingsize=... vpmin=... vsmin=... rhomin=..
 \hline
 filename      & name of input pfile                     & string  & none & none \\ \hline
 directory     & name of directory for the input pfile   & string  & none & . \\ \hline
-smoothingsize & smooth data over stencil of this width  & int     & none & 5 \\ \hline
-vpmin         & minimum threshold value for $V_P$       & real   & m/s  & 0  \\ \hline
-vsmin         & minimum threshold value for $V_S$       & real   & m/s  & 0  \\ \hline
-rhomin        & minimum threshold value for density     & real   & m/s  & 0  \\ \hline
+smoothingsize & smooth data over stencil of this width ($\geq 1$) & int & none & 5 \\ \hline
+vpmin         & minimum threshold value for $C_p$       & real    & m/s  & 0  \\ \hline
+vsmin         & minimum threshold value for $C_s$       & real    & m/s  & 0  \\ \hline
+rhomin        & minimum threshold value for density     & real    & m/s  & 0  \\ \hline
 flatten       & Flatten the earth model (T or F)        & string  & none & F  \\ \hline
-style         & Lat-long or Cartesian grid data         & string  & none & geographic \\ \hline
+style         & type of grid data: {\tt geographic} or {\tt cartesian} & string  & none & geographic \\ \hline
 \end{tabular}
 \end{center}
 
@@ -1405,22 +1422,25 @@ style         & Lat-long or Cartesian grid data         & string  & none & geogr
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{flushleft}\bf
 Syntax:\\
-\tt ifile filename=...\\
+\tt ifile filename=... input=...\\
 \bf Required parameters:\\
 \tt filename
 \end{flushleft}
 The ifile command specifies the depth of material surfaces as function of longitude and latitude,
-and must be used in conjunction with the {\bf material} command. The format for this file is
-described in Section~\ref{sec:ifile-format}, and an example is given in Section~\ref{sec:grenoble}.
+and must be used in conjunction with the {\bf material} command. The file format is
+described in Section~\ref{sec:ifile-format}.
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf ifile command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
 filename & name of input file holding material surfaces & string & None  \\ \hline
+input & {\tt cartesian} or {\tt geographic} & string & None  \\ \hline
 \end{tabular}
 \end{center}
 \index{ifile parameters!filename}
-
+If {\tt input=cartesian}, the file is assumed to give the material surfaces as function of the $x$-
+and $y$-coordinates. If {\tt input=geographic}, they are functions of latitude and longitude. See
+Section~\ref{sec:ifile-format} for details.
 \subsection{material}
 \index{command!material}
 \label{keyword:material}
@@ -1428,12 +1448,12 @@ filename & name of input file holding material surfaces & string & None  \\ \hli
 \begin{flushleft}\bf
 Syntax:\\
 \tt material
-id=... vp=... vs=... qp=... qs=... rho=... vpgrad=... vsgrad=... rhograd=... vp2=... vs2=... rho2=... vpsqrt=... vssqrt=... rhosqrt=...\\ 
+id=... vp=... vs=... rho=... vpgrad=... vsgrad=... rhograd=... vp2=... vs2=... rho2=... vpsqrt=... vssqrt=... rhosqrt=...\\ 
 \bf Required parameters:\\
-\tt id, vp, vs, rho (qp and qs with attenuation)
+\tt id, vp, vs, rho
 \end{flushleft}
 The {\bf material} command is used to define material properties together with the {\bf ifile}
-command, see Section~\ref{sec:grenoble} for an example.
+command, see Section~\ref{sec:ifile-format} for the file format.
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf material command parameters (constants)}\\ \hline
@@ -1442,8 +1462,8 @@ id & material ID number $>0$         & int & None  \\ \hline
 vp & P-wave velocity & real & None \\ \hline
 vs & S-wave velocity & real & None \\ \hline
 rho & Density & real & None \\ \hline
-qp or Qp & P-wave quality factor & None & None \\ \hline
-qs or Qs & S-wave quality factor & None & None \\ \hline
+%qp or Qp & P-wave quality factor & None & None \\ \hline
+%qs or Qs & S-wave quality factor & None & None \\ \hline
 \end{tabular}
 \end{center}
 \index{material parameters!id, vp, vs, rho, qp, qs}
@@ -1495,7 +1515,7 @@ vsmin & Minimum S-wave velocity $(>0)$ & real & None \\ \hline
 \index{globalmaterial parameters!vpmin, vsmin}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Topography [optional] (in progress)}
+\section{Topography command [optional]}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1514,19 +1534,18 @@ Required parameters:\\
 input, zmax\\
 \rm Also see discussion below.
 \end{flushleft}
-The topography command specifies the shape of the free surface boundary, i.e., the vertical extent
-of the curvilinear grid below the free surface, and optionally the polynomical order of the grid
-mapping. The topography is given as elevation (in meters) relative to mean sea level, i.e., positive
-above sea level and negative below sea level. The curvilinear grid is located between the topography
-and $z=z_{max}$ (recall that $z$ is directed downwards). If the elevation '$e$' of the topography
-ranges between $e_{min}\leq e \leq e_{max}$, we recommend using $z_{max} \geq -e_{min} + 2|e_{max} -
-e_{min}|$.
+The topography command specifies the shape of the free surface boundary, and optionally allows the
+polynomical order of the grid mapping to be adjusted. The topography is given as elevation (in
+meters) relative to mean sea level, i.e., positive above sea level and negative below sea level. The
+curvilinear grid is located between the topography and $z=z_{max}$ (recall that $z$ is directed
+downwards). If the elevation '$e$' of the topography ranges between $e_{min}\leq e \leq e_{max}$, we
+recommend using $z_{max} \geq -e_{min} + 2|e_{max} - e_{min}|$.
 
 There are four ways of specifying the topography:
 \begin{itemize}
-\item {\bf input=grid} Read the topography as function of geographic coordinates (latitude and
-  longitude). The file name must be specified by the {\bf file=...} parameter. The format for this
-  file is described in Section~\ref{sec:topo-file-format}.
+\item {\bf input=geographic} Read the topography from a file, where the coordinates are given as as
+  function of geographic coordinates (latitude and longitude). The file name must be specified by
+  the {\bf file=...} parameter. The format for this file is described in Section~\ref{sec:topo-file-format}.
 \item {\bf input=cartesian} Read the topography as function of Cartesian coordinates. The file name
    must be specified by the {\bf file=...} parameter. The format for this file is described in
    Section~\ref{sec:topo-file-format}.
@@ -1553,7 +1572,7 @@ resolution & Resolution for querying the efile if input-efile & real & meters & 
 %
 zmax & z coordinate of the interface between  Cartesian and curvilinear grid& real &  m & 0\\ \hline
 %
-order & Interpolation order (2-6) & int & none & 6\\ \hline
+order & Interpolation order (2-6) & int & none & 4\\ \hline
 %
 smooth & Number of smoothing iterations of topography grid surface & int & none & 10 \\ \hline
 \end{tabular}
@@ -1721,13 +1740,16 @@ mode          & The field to be saved                                       & st
 %
 \begin{center}
 \begin{tabular}{|c|l|} \hline
-\multicolumn{2}{|c|}{\bf mode options (grid \& geography)}\\ \hline
+\multicolumn{2}{|c|}{\bf mode options (grid, location \& topography)}\\ \hline
 \bf{Value} & \bf{Description} \\ 
 \hline  \hline
 lat     & latitude (in degrees)  \\ \hline
 lon     & longitude (in degrees) \\ \hline
 topo    & elevation of topography [\emph{only available with topography}]\\ \hline
 grid    & grid coordinates in the plane of visualization (\emph{e.g.} y-z plane if x=const) \\ \hline
+gridx   & grid $x$-coordinates in the plane of visualization \\ \hline
+gridy   & grid $y$-coordinates in the plane of visualization \\ \hline
+gridz   & grid $z$-coordinates in the plane of visualization \\ \hline
 \end{tabular}
 \end{center}
 \index{image mode options!lat, lon, topo, grid}
@@ -1741,11 +1763,11 @@ lambda  & 1st Lam\'e parameter \\ \hline
 mu      & 2nd Lam\'e parameter (shear modulus) \\ \hline
 p       & Compressional wave speed \\ \hline
 s       & Shear wave speed \\ \hline
-qp      & $Q_P$ quality factor \\ \hline
-qs      & $Q_S$ quality factor \\ \hline
+%qp      & $Q_P$ quality factor \\ \hline
+%qs      & $Q_S$ quality factor \\ \hline
 \end{tabular}
 \end{center}
-\index{image mode options!rho, lambda, mu, p, s, qp, qs}
+\index{image mode options!rho, lambda, mu, p, s}
 \begin{center}
 \begin{tabular}{|c|l|} \hline
 \multicolumn{2}{|c|}{\bf mode options (solution)}\\ \hline
@@ -1753,21 +1775,33 @@ qs      & $Q_S$ quality factor \\ \hline
 \hline  \hline
 ux      & displacement in the x-direction \\ \hline
 uy      & displacement in the y-direction \\ \hline
-uz      & displacement in the z-direction \\ \hline
-div     & divergence (div) of the displacement \\ \hline
-curl    & magnitude of the rotation (curl) of the displacement \\ \hline 
-veldiv  & divergence (div) of the velocity \\ \hline
-velcurl & magnitude of the rotation (curl) of the velocity \\ \hline
-velmag  & magnitude of the velocity \\ \hline
-hvel    & magnitude of the horizontal velocity (North-East components) \\ \hline
-hvelmax & maximum in time of the horizontal velocity (North-East components) \\ \hline
-vvelmax & maximum in time of the vertical velocity \\ \hline
-uxerr   & $x$-component of error (difference between computed and exact solutions)\\ \hline
-uyerr   & $y$-component of error (difference between computed and exact solutions)\\ \hline
-uzerr   & $z$-component of error (difference between computed and exact solutions)\\ \hline
-fx      & Forcing in the x-direction\\ \hline
-fy      & Forcing in the y-direction\\ \hline
-fz      & Forcing in the z-direction\\ \hline
+uz      & displacement in the z-direction \\ \hline\hline
+div     & divergence of $\ub$ (displacement) \\ \hline
+curl    & magnitude of the rotation of $\ub$ \\ \hline 
+mag     & magnitude of $\ub$ \\ \hline
+hmag    & magnitude of $(u^{(x)}, u^{(y)})$ (horizontal components) \\ \hline
+hmax & maximum in time of magnitude of $(u^{(x)}, u^{(y)})$ \\ \hline
+vmax & maximum in time of $|u^{(z)}|$ (vertical component) \\ \hline\hline
+%
+divdudt (veldiv) & divergence of $\ub_t$ (velocity)\\ \hline
+curldudt (velcurl) & magnitude of the rotation of $\ub_t$ \\ \hline
+magdudt (velmag) & magnitude of the $\ub_t$ \\ \hline
+hmagdudt (hvelmag)& magnitude of ($u^{(x)}_t, u^{(y)}_t)$ \\ \hline
+hmaxdudt (hvelmax) & maximum in time of magnitude of $(u^{(x)}, u^{(y)})$ \\ \hline
+vmaxdudt (vvelmax) & maximum in time of $|u^{(z)}_t|$    \\ \hline
+\end{tabular}
+\end{center}
+\begin{center}
+\begin{tabular}{|c|l|} \hline
+\multicolumn{2}{|c|}{\bf mode options (testing)}\\ \hline
+\bf{Value} & \bf{Description} \\ 
+\hline  \hline
+uxexact & $x$-component of exact solution\\ \hline
+uyexact & $y$-component of exact solution\\ \hline
+uzexact & $z$-component of exact solution\\ \hline
+uxerr   & $x$-component of error (difference between computed and exact solution)\\ \hline
+uyerr   & $y$-component of error (difference between computed and exact solution)\\ \hline
+uzerr   & $z$-component of error (difference between computed and exact solution)\\ \hline
 \end{tabular}
 \end{center}
 \index{image mode options!ux, uy, uz, div, curl, veldiv, velcurl,
@@ -2350,12 +2384,12 @@ for latitude 33.108, longitude -115.66, with $N_{dep}=19$ points in the depth di
 The subsequent $N_{dep}$ lines have the following format:
 \begin{center}
 \begin{tabular}{lllllll}\hline
-Index (int)& depth [km] & $V_p$ [km/s] &  $V_s$ [km/s] & $\rho$ [g/cm$^3$] & $Q_P$ & $Q_S$ \\ \hline
+Index (int)& depth [km] & $C_p$ [km/s] &  $C_s$ [km/s] & $\rho$ [g/cm$^3$] & $Q_P$ & $Q_S$ \\ \hline
 \end{tabular}
 \end{center}
 Note that $Q_P$ and $Q_S$ should only be present when indicated so by the $Q$-availability flag on
 line 7 of the header. Also note that the units are different than in other parts of \emph{SW4}. In
-particular, $V_P$ and $V_S$ should be given in km/s$=$ 1000 m/s, and density ($\rho$) should be
+particular, $C_P$ and $C_S$ should be given in km/s$=$ 1000 m/s, and density ($\rho$) should be
 given in g/cm$^3=$ 1000 kg/m$^3$.
 
 \subsection{pfile on a Cartesian lattice}
@@ -2396,7 +2430,7 @@ for $x=100.4\,m$ and $y=30.6\,m$, with $N_{dep}=19$ points in the depth directio
 The subsequent $N_{dep}$ lines have the following format:
 \begin{center}
 \begin{tabular}{lllllll}\hline
-Index (int)& depth [m] & $V_p$ [m/s] &  $V_s$ [m/s] & $\rho$ [kg/m$^3$] & $Q_P$ & $Q_S$ \\ \hline
+Index (int)& depth [m] & $C_p$ [m/s] &  $C_s$ [m/s] & $\rho$ [kg/m$^3$] & $Q_P$ & $Q_S$ \\ \hline
 \end{tabular}
 \end{center}
 $Q_P$ and $Q_S$ can be left out when indicated not present by the $Q$-availability flag on line 7 of
