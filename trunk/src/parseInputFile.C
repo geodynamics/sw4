@@ -1218,6 +1218,7 @@ void EW::processTopography(char* buffer)
 
     m_zetaBreak=0.95;
     m_grid_interpolation_order = 4;
+    m_use_analytical_metric = false;
 
     token = strtok(NULL, " \t");
 
@@ -1344,6 +1345,12 @@ void EW::processTopography(char* buffer)
 	  token += 11;
 	  m_GaussianLy = atof(token);
        }
+       else if( startswith("analyticalMetric=", token ) )
+       {
+	  token += 17;
+	  m_use_analytical_metric = strcmp(token,"1")==0 ||
+	     strcmp(token,"true")==0 || strcmp(token,"yes")==0;
+       }
        else
        {
 	  badOption("topography", token);
@@ -1354,6 +1361,13 @@ void EW::processTopography(char* buffer)
        CHECK_INPUT(gotFileName, 
 		   "ERROR: no topography file name specified...: " << token);
 
+    if( m_topoInputStyle != GaussianHill && m_use_analytical_metric )
+    {
+       m_use_analytical_metric = false;
+       if( m_myRank == 0 )
+	  cout << "Analytical metric only defined for Gaussian Hill topography" <<
+	     " topography analyticalMetric option will be ignored " << endl;
+    }
 }
 
 // void FileInput::processDamping(char* buffer)
@@ -2006,7 +2020,6 @@ void EW::processTestEnergy(char* buffer)
     token = strtok(NULL, " \t");
   }
   m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename );
-
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
   set_global_bcs(bct);
 }
@@ -5777,6 +5790,8 @@ void EW::processCG( char* buffer )
   m_cgvarcase = 0;
   m_cgfletcherreeves = true;
   m_do_linesearch = true;
+  m_lbfgs = false;
+  m_lbfgs_m = 4;
 
   string err = "CG Error: ";
 
@@ -5886,11 +5901,20 @@ void EW::processCG( char* buffer )
         token += 7;
         if( strcmp(token,"fletcher-reeves")==0 )
 	   m_cgfletcherreeves = true;
-	else if( strcmp(token,"picola-ribiere") == 0 )
+	else if( strcmp(token,"polak-ribiere") == 0 )
 	   m_cgfletcherreeves = false;
+        else if( strcmp(token,"lBFGS") == 0 )
+	   m_lbfgs = true;
         else
 	   CHECK_INPUT( false,
 		     "cg command: cgtype value " << token << " not understood");
+     }
+     else if( startswith("lbfgsvectors=",token) )
+     {
+        token += 13;
+	m_lbfgs_m = atoi(token);
+	CHECK_INPUT( m_lbfgs_m > 0 && m_lbfgs_m <= 11,
+		     "Number of l-BFGS vectors must be between 1 and 11. Input value = " << m_lbfgs_m );
      }
      else if( startswith("solvefor=" , token) )
      {

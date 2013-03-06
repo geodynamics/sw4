@@ -8,8 +8,14 @@ extern "C" {
 				 double*, double*, double*, double*, double* );
    void F77_FUNC(gridinfo,GRIDINFO)( int*, int*, int*, int*, int*, int*,
 				     double*, double*, double*, double* );
+   void F77_FUNC(metricexgh,METRICEXGH)( int*, int*, int*, int*, int*, int*, int*, int*, int*,
+					 double*, double*, double*, double*, double*,
+					 int*, double*, double*, double*, double*,
+					 double*, double*, double* );
+   void F77_FUNC(meterr4c,METERR4C)( int*, int*, int*, int*, int*, int*,
+				     double*, double*, double*, double*, double*, double*,
+				     int*, int*, int*, int*, int*, int*, double* );
 }
-
 #define SQR(x) ((x)*(x))
 //---------------------------------------------------------
 void EW::setup_metric()
@@ -24,9 +30,29 @@ void EW::setup_metric()
    int Nx=m_iEnd[g];
    int Ny=m_jEnd[g];
    int Nz=m_kEnd[g];
-   F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+
+   if( m_analytical_topo && m_use_analytical_metric )
+   {
+      // Gaussina hill topography, analytical expressions for metric derivatives.
+      int nxg = m_global_nx[g];
+      int nyg = m_global_ny[g];
+      int nzg = m_global_nz[g];
+      double h= mGridSize[g];   
+      double zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
+      F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				       mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+   }
+   else
+      F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+
    communicate_array( mMetric, mNumberOfGrids-1 );
    communicate_array( mJ, mNumberOfGrids-1 );
+
+   if( m_analytical_topo && !m_use_analytical_metric && mVerbose > 3 )
+      // Test metric derivatives if available
+      metric_derivatives_test( );
+
    double minJ, maxJ;
    F77_FUNC(gridinfo,GRIDINFO)(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
    double minJglobal, maxJglobal;
@@ -860,4 +886,61 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
   Z0 = -tau;
   
   return true;
+}
+
+//-----------------------------------------------------------------------
+void EW::metric_derivatives_test()
+{
+   // Assumes mMetric and mJ have been computed by numerical differentiation
+   // This function computes corresponding expressions by analytical differentiation
+
+   Sarray metex(mMetric), jacex(mJ);
+
+   int g=mNumberOfGrids-1;
+   int Bx=m_iStart[g];
+   int By=m_jStart[g];
+   int Bz=m_kStart[g];
+   int Nx=m_iEnd[g];
+   int Ny=m_jEnd[g];
+   int Nz=m_kEnd[g];
+
+   int nxg = m_global_nx[g];
+   int nyg = m_global_ny[g];
+   int nzg = m_global_nz[g];
+   double h= mGridSize[g];   
+   double zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
+
+   F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+   communicate_array( metex, mNumberOfGrids-1 );
+   communicate_array( jacex, mNumberOfGrids-1 );
+
+   double li[5], l2[5];
+   int imin = m_iStartInt[g];
+   int imax = m_iEndInt[g];
+   int jmin = m_jStartInt[g];
+   int jmax = m_jEndInt[g];
+   int kmin = m_kStartInt[g];
+   int kmax = m_kEndInt[g];
+
+   F77_FUNC(meterr4c,METERR4C)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
+				jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
+   double tmp[5];
+   for( int c=0 ; c < 5 ;c++ )
+      tmp[c] =li[c];
+   MPI_Allreduce( tmp, li, 5, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+   for( int c=0 ; c < 5 ;c++ )
+      tmp[c] =l2[c];
+   MPI_Allreduce( tmp, l2, 5, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator);
+   for( int c=0 ; c < 5 ;c++ )
+      l2[c] = sqrt(l2[c]);
+   if( proc_zero() )
+   {
+      cout << "Errors in metric, max norm and L2 norm \n";
+      for( int c=0 ; c < 4 ; c++ )
+	 cout << " " << li[c] << " " << l2[c] << endl;
+      cout << "Error in Jacobian, max norm and L2 norm \n";
+      cout << " " << li[4] << " " << l2[4] << endl;
+   }
 }

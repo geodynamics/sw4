@@ -477,7 +477,13 @@ void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um,
 		  vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
 		  vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
 
+void get_bfgsparameters( bool& bfgs, int& bfgs_m );
+
 void perturb_mtrl();
+
+void metric_derivatives_test();
+
+void material_ic( vector<Sarray>& a_mtrl );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -564,7 +570,7 @@ bool mbcsSet;
 
 
 // for some simple topographies (e.g. Gaussian hill) there is an analytical expression for the top elevation
-bool m_analytical_topo;
+bool m_analytical_topo, m_use_analytical_metric;
 double m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
 
 // interface surfaces in the material model
@@ -779,6 +785,8 @@ double m_tolerance;
 double m_scalefactors[11];   
 int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
+bool m_lbfgs;
+int m_lbfgs_m;
    // perturbations for testing
 double m_perturb;
 int m_iperturb, m_jperturb, m_kperturb;

@@ -36,7 +36,7 @@ void EW::setupRun( )
 
 // m_testing == true is one of the pointers to testing modes is assigned
 // add other pointers to the list of testing modes as they get implemented
-  m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test || m_rayleigh_wave_test ); 
+  m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test || m_rayleigh_wave_test || m_energy_test ); 
 
 // tmp
   if (mVerbose && proc_zero() )
@@ -843,6 +843,9 @@ void EW::set_materials()
 	// Communication needed here. Because of random material data,
 	// processor overlap points will otherwise have different values
 	// in different processors.
+        material_ic( mRho );
+        material_ic( mMu );
+	material_ic( mLambda );
 	communicate_array( mRho[g], g );
 	communicate_array( mMu[g], g );
 	communicate_array( mLambda[g], g );
@@ -1392,3 +1395,32 @@ void EW::assign_supergrid_damping_arrays()
 #undef strz
 }
 
+//-----------------------------------------------------------------------
+void EW::material_ic( vector<Sarray>& a_mtrl )
+{
+// interface between curvilinear and top Cartesian grid
+   if (topographyExists())
+   {
+      int nc=1;
+      int g  = mNumberOfCartesianGrids-1;
+      int gc = mNumberOfGrids-1;
+      int q, i, j;
+// inject values between lower boundary of gc and upper boundary of g
+      for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	 for( i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+	 {
+// assign ghost points in the Cartesian grid
+	    for (q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	    {
+	       for( int c = 1; c <= nc ; c++ )
+		  a_mtrl[g](c,i,j,m_kStart[g] + q) = a_mtrl[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+	    }
+// assign ghost points in the Curvilinear grid
+	    for (q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	    {
+	       for( int c = 1; c <= nc ; c++ )
+		  a_mtrl[gc](c,i,j,m_kEnd[gc]-q) = a_mtrl[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
+	    }
+	 }
+   }
+}

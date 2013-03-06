@@ -26,8 +26,8 @@
                if( k.le.4 .and. onesided(5).eq.1 )then
                   normfact = normwgh(k)
                endif
-               if( k.ge.ke-3 .and. onesided(6).eq.1 )then
-                  normfact = normwgh(ke-k+1)
+               if( k.ge.k2-3 .and. onesided(6).eq.1 )then
+                  normfact = normwgh(k2-k+1)
                endif
                energy = energy + normfact*h*h*h*term
             enddo
@@ -64,8 +64,8 @@ c-----------------------------------------------------------------------
                if( k.le.4 .and. onesided(5).eq.1 )then
                   normfact = normwgh(k)
                endif
-               if( k.ge.ke-3 .and. onesided(6).eq.1 )then
-                  normfact = normwgh(ke-k+1)
+               if( k.ge.k2-3 .and. onesided(6).eq.1 )then
+                  normfact = normwgh(k2-k+1)
                endif
                energy = energy + normfact*term
             enddo

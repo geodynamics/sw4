@@ -1389,6 +1389,245 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
    fclose(fd);
 }
 
+//-----------------------------------------------------------------------
+void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSources,
+	    vector<TimeSeries*>& GlobalTimeSeries,
+	    vector<TimeSeries*> & GlobalObservations,
+	    int m, int myRank )
+//-----------------------------------------------------------------------
+// l-BFGS minimization of misfit function.
+// 
+// Input: simulation - simulation object
+//        x          - Parameter vector, used as initial guess.
+//        sf         - Scaling factors.
+//        GlobalSource - Object representing the unique source.
+//        GlobalTimeSeries   - TimeSeries objects, number of objects and
+//                    locations should agree with the GlobalObservations vector.
+//        GlobalObservations - The observed data at receivers.
+//        m           - Number of previous vectors to save.
+//        myRank      - ID of this processor.
+//
+// Output: x - The minimum is returned.
+//
+// Note: Configuration of the algorithm is done by a call 
+//       to get_cgparameters of the simulation object.
+//
+//-----------------------------------------------------------------------
+{
+   const int n = 11;
+   int nvar, j, k;
+   bool done = false;
+   bool dolinesearch = true;
+   bool fletcher_reeves=true;
+   int maxit, maxrestart, varcase=0, stepselection=0;
+
+   // Do not allow source to rise closer than this to the surface:
+   double zlimit = 10;
+   double tolerance;
+   double f, df[11], d[11], d2f[121], da[11], xa[11], dfp[11], dx[11], rnorm, errnorm;
+
+   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
+				dolinesearch, varcase );
+   if( maxrestart == 0 )
+      return;
+   
+   FILE *fd=fopen("convergence.log","w");
+   FILE *fdx=fopen("parameters.log","w");
+   
+   if( varcase == 1 )
+      nvar = 10;
+   else if( varcase == 2 )
+      nvar = 9;
+   else
+      nvar = 11;
+
+   maxit = nvar;
+   if( myRank == 0 )
+     cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
+   compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f );
+
+   if( myRank == 0 )
+   {
+      cout << "Initial misfit= "  << f << endl;
+      rnorm = 0;
+      cout << " scaled gradient = " ;
+      for( int i=0 ; i < nvar ; i++ )
+      {
+	 cout << df[i]*sf[i] << " ";
+	 if( i==5 )
+	    cout << endl << "      " ;
+         rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
+      }
+      cout << endl;
+      fprintf(fd, "%i %i %15.7g %15.7g %15.7g\n", 0,0, rnorm, 0.0, f );
+      fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
+	      0,0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
+   }
+   int it = 1;
+   // s and y stores the m vectors
+   double* s = new double[m*n]; 
+   double* y = new double[m*n]; 
+   double* rho = new double[m];
+   double* al = new double[m];
+
+   // kf points to the first vector
+   int kf = 0;
+
+   while( it <= maxrestart && !done )
+   {
+
+      // perform the two-loop recursion (Alg 7.4) to compute search direction d=-H*df
+      int nv = it-1 < m ? it-1 : m ;
+      if( nv == 0 )
+	 for( int i=0 ; i < n ; i++ )
+	    d[i] = -sf[i]*df[i];
+      else
+      {
+         int vi = kf+nv-1;
+	 if( vi > m-1 )
+	    vi = vi-m;
+	 for( int i=nv ; i >= 1 ; i-- )
+	 {
+            double scprod1 = 0, scprod2=0;
+	    for( int j=0 ; j < n ; j++ )
+	    {
+	       scprod1 += s[j+n*vi]*y[j+n*vi];
+	       scprod2 += s[j+n*vi]*df[j];
+	    }
+	    rho[vi] = 1/scprod1;
+	    al[vi] = scprod2*rho[vi];
+	    vi--;
+	    if( vi == -1 )
+	       vi = nv-1;
+	 }
+	 // H0*df, use scale factors for diagonal H0
+	 for( int  i=0 ; i < n ; i++ )
+	    d[i] = sf[i]*df[i];
+         vi = kf;
+	 for( int i=1 ; i <= nv ; i++ )
+	 {
+            double scprod1 = 0;
+	    for( int j=0 ; j < n ; j++ )
+	       scprod1 += y[j+n*vi]*d[j];
+	    for( int j=0 ; j < n ; j++ )
+	       d[j] += (al[vi]-rho[vi]*scprod1)*s[j+n*vi];
+            vi++;
+	    if( vi > nv-1 )
+	       vi = 0;
+	 }
+	 for( int i=0 ; i < m ; i++ )
+	    d[i] = -d[i];
+      }
+   // Done with two-loop recursion (Alg 7.4) 
+
+   // Next do line search, or update with constant step length
+
+      double alpha = 1.0;
+      if( dolinesearch )
+      {
+	 for( int i=0 ; i < n ; i++ )
+	    da[i] = d[i];
+	 int retcode;
+         double fp;
+	 if( myRank == 0 )
+	    cout << "Line search.. " << endl;
+	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		     x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode, zlimit );
+	 if( myRank == 0 )
+	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
+      }
+      else
+	 for( int i=0 ; i < n ; i++ )
+	    xa[i] = x[i] + alpha*d[i];
+      
+   // xa is now the new iterate
+      double dxnorm = 0;
+      for( int i=0 ; i < n ; i++ )
+      {
+	 double locnorm = fabs(x[i]-xa[i]);
+	 if( fabs(xa[i])> sf[i] )
+	    locnorm /= fabs(xa[i]);
+	 else
+	    locnorm /= sf[i];
+	 if( locnorm > dxnorm )
+	    dxnorm = locnorm;
+	 dx[i] = xa[i] - x[i];
+	 x[i]  = xa[i];
+      }
+
+      compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f );
+      rnorm = 0;
+      for( int i=0 ; i < n ; i++ )
+	 if( fabs(dfp[i])*sf[i] > rnorm )
+	    rnorm = fabs(dfp[i])*sf[i];
+
+// Save the time series after each sub-iteration.
+      for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
+	 GlobalTimeSeries[ts]->writeFile();
+
+      if( myRank == 0 )
+      {
+	 cout << "-----------------------------------------------------------------------" << endl;
+	 cout << " it=" << j << "," << k << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
+	 cout << " new x = " ;
+	 //	    for( int i=0 ; i < nvar ; i++ )
+	 for( int i=0 ; i < n ; i++ )
+	 {
+	    cout << x[i] << " ";
+	    if( i==5 )
+	       cout << endl << "      " ;
+	 }
+	 cout << endl;
+	 cout << " Misfit= "  << f << endl;
+	 cout << " scaled gradient = " ;
+	    //	    for( int i=0 ; i < nvar ; i++ )
+	 for( int i=0 ; i < n ; i++ )
+	 {
+	    cout << dfp[i]*sf[i] << " ";
+	    if( i==5 )
+	       cout << endl << "      " ;
+	 }
+	 cout << endl;
+	 fprintf(fd, "%i %i %15.7g %15.7g %15.7g\n", j,k, rnorm, dxnorm, f );
+	 fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
+		 j,k, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
+	 fflush(fd);
+	 fflush(fdx);
+      }
+      errnorm = rnorm;
+      done = rnorm < tolerance;
+
+      // Update s and y vectors
+      if( it > m )
+      {
+	 for( int i=0 ; i < n ; i++ )
+	 {
+	    s[i+n*kf] = dx[i];
+	    y[i+n*kf] = dfp[i]-df[i];
+	 }
+	 kf++;
+	 if( kf > m-1 )
+	    kf = 0;
+      }
+      else
+      {
+	 for( int i=0 ; i < n ; i++ )
+	 {
+	    s[i+n*(it-1)] = dx[i];
+	    y[i+n*(it-1)] = dfp[i]-df[i];
+	 }
+      }
+
+    // Advance one iteration
+      it++;
+      for( int i=0 ; i < n ; i++ )
+	 df[i] = dfp[i];
+   }
+   delete[] s;
+   delete[] y;
+   delete[] al;
+   delete[] rho;
+}
 
 
 //-----------------------------------------------------------------------
@@ -1714,8 +1953,15 @@ int main(int argc, char **argv)
 	else
 	{
 	   // run optimization
-	   cg( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
-	       GlobalObservations, myRank );
+           bool bfgs;
+	   int bfgs_m;
+	   simulation.get_bfgsparameters( bfgs, bfgs_m );
+           if( bfgs )
+	      lbfgs( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
+		     GlobalObservations, bfgs_m, myRank );
+	   else
+	      cg( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
+		  GlobalObservations, myRank );
 // Save all time series
 //	   for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
 //	   {

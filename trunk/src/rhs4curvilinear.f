@@ -135,18 +135,92 @@ c     *       +3*z(ilast-2,j,k)-  ft*z(ilast-3,j,k)+0.25d0*z(ilast-4,j,k)
  101              format(' ', a, g12.5, a, 3(tr1,i3) )
                   stop
                endif
+c               if(i.eq.(ifirst+ilast)/2.and.j.eq.(jfirst+jlast)/2 )then
+c                  write(*,102) k, zr, z(i,j,k)
+c 102              format(' ', i3, tr2, 2(g15.7,tr2))
+c               endif
+
                sqzr = sqrt(zr)
                jac(i,j,k) = h*h*zr
                met(1,i,j,k) = sqzr
-c               met(2,i,j,k) = met(1,i,j,k)
                met(2,i,j,k) = -zp/sqzr
                met(3,i,j,k) = -zq/sqzr
                met(4,i,j,k) = h/sqzr
-c               if( jac(i,j,k) .le. 0 )then
-c                  write(*,101) 'Error, jacobian = ', jac(i,j,k), 
-c     *                                 'at', i, j, k
-c                  stop
+            enddo
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine METRICEXGH( ifirst, ilast, jfirst, jlast, kfirst, 
+     *                       klast, nx, ny, nz, x, y, z, met, jac,
+     *                       order, sb, zmax, amp, xc, yc, xl, yl )
+*** Exact metric derivatives for the Gaussian hill topography
+
+      implicit none
+      real*8 c1, c2
+      parameter( c1=2d0/3, c2=-1d0/12 )
+      real*8 fs, ot, ft, os, d3
+      parameter( fs= 5d0/6, ot=1d0/12, ft=4d0/3, os=1d0/6, d3=14d0/3 )
+
+      integer ni, nj, nk, i, j, k, ifirst, ilast, jfirst, jlast
+      integer kfirst, klast, nx, ny, nz, order, l
+      real*8 x(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zmax, amp, xc, yc, xl, yl, ixl2, iyl2, zz
+      real*8 h, zr, zp, zq, sqzr, s, tau, taup, tauq, sb, sdb, p1, p2
+      h = x(ifirst+1,jfirst,kfirst)-x(ifirst,jfirst,kfirst)
+      ixl2 = 1/(xl*xl)
+      iyl2 = 1/(yl*yl)
+      do k=kfirst,klast
+         do j=jfirst,jlast
+            do i=ifirst,ilast
+               s = (k-1d0)/(nz-1)
+               if( s.lt.sb )then
+                  sdb = s/sb
+                  tau  = amp*EXP( - (x(i,j,1)-xc)**2*ixl2 -
+     *                 (y(i,j,1)-yc)**2*iyl2 )
+                  taup = -2*(x(i,j,1)-xc)*ixl2*tau
+                  tauq = -2*(y(i,j,1)-yc)*iyl2*tau
+                  p1 = 1-sdb
+                  p2 = 1
+                  do l=2,order-1
+                     p1 = p1 + (1-sdb)**l
+                     p2 = p2 + l*(1-sdb)**(l-1)
+                  enddo
+                  zp = taup*( -(1-sdb)+sdb*p1 )
+                  zq = tauq*( -(1-sdb)+sdb*p1)
+                  zr = (tau+zmax+(zmax+tau-h*sb*(nz-1))*p1 -
+     *                       sdb*(zmax+tau-h*sb*(nz-1))*p2 )/sb
+                  zz = (1-sdb)*(-tau) + 
+     *                     sdb*(zmax+(zmax+tau-h*sb*(nz-1))*p1)
+               else
+                  zp = 0
+                  zq = 0
+                  zr = h*(nz-1)
+                  zz = zmax + (s-sb)*h*(nz-1)
+               endif
+
+c               if(i.eq.(ifirst+ilast)/2.and.j.eq.(jfirst+jlast)/2 )then
+c                  write(*,101) k, zr, zr/(nz-1), z(i,j,k), zz
+c 101              format(' ', i3, tr2, 4( g15.7,tr2 ) )
 c               endif
+
+*** Convert to 'undivided differences'
+               zp = zp*h
+               zq = zq*h
+               zr = zr/(nz-1)
+                  
+*** Formulas from metric evaluation numerically
+               sqzr = sqrt(zr)
+               jac(i,j,k)   = h*h*zr
+               met(1,i,j,k) = sqzr
+               met(2,i,j,k) = -zp/sqzr
+               met(3,i,j,k) = -zq/sqzr
+               met(4,i,j,k) = h/sqzr
             enddo
          enddo
       enddo
@@ -288,6 +362,46 @@ c-----------------------------------------------------------------------
      *         met(3,i,j,k)*tau(4,i,j)+met(4,i,j,k)*tau(5,i,j) )
             forcing(3,i,j) =  sqjac*( met(2,i,j,k)*tau(3,i,j)+
      *         met(3,i,j,k)*tau(5,i,j)+met(4,i,j,k)*tau(6,i,j) )
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine GETSURFFORCINGGH( ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast, k, h, tau, forcing, amp, xc, yc, xl, yl )
+***********************************************************************
+***
+*** Given tau, Cartesian stress tensor on boundary, compute the stress
+*** normal to the k=1 boundary of a curvilinear grid.
+*** Use analytical normal, as given by the Gaussian Hill test case
+***
+*** tau is ordered as:
+***    tau(1) = t_{xx}, tau(2) = t_{xy} tau(3) = t_{xz} 
+***    tau(4) = t_{yy}, tau(5) = t_{yz} tau(6) = t_{zz}
+***
+***********************************************************************
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer i, j, k
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 forcing(3,ifirst:ilast,jfirst:jlast)
+      real*8 amp, xc, yc, xl, yl, ixl2, iyl2, efact
+      real*8 zp, zq, x, y, h
+      ixl2 = 1/(xl*xl)
+      iyl2 = 1/(yl*yl)
+      do j=jfirst,jlast
+         y = (j-1)*h
+         do i=ifirst,ilast
+            x = (i-1)*h
+            efact = amp*EXP( - (x-xc)**2*ixl2 - (y-yc)**2*iyl2 )
+            zp = 2*(x-xc)*ixl2*efact
+            zq = 2*(y-yc)*iyl2*efact
+            forcing(1,i,j) =  h*h*( -zp*tau(1,i,j)
+     *                              -zq*tau(2,i,j)+tau(3,i,j) )
+            forcing(2,i,j) =  h*h*( -zp*tau(2,i,j)
+     *                              -zq*tau(4,i,j)+tau(5,i,j) )
+            forcing(3,i,j) =  h*h*( -zp*tau(3,i,j)
+     *                              -zq*tau(5,i,j)+tau(6,i,j) )
          enddo
       enddo
       end

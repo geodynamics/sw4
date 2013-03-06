@@ -171,3 +171,42 @@ c$$$      write(*,101) 'Solution errors in max- and L2-norm: ', li, l2
 c$$$ 101  format(' ', a, 2(g15.7,tr2))
       return
       end
+
+c-----------------------------------------------------------------------
+      subroutine meterr4c(ifirst, ilast, jfirst, jlast, kfirst, klast,
+     +     met, metex, jac, jacex, li, l2, 
+     +     imin, imax, jmin, jmax, kmin, kmax, h )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer imin, imax, jmin, jmax, kmin, kmax
+      real*8 metex(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 jacex(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 h
+
+      integer c, k, j, i
+      real*8 li(5), l2(5), err(5)
+
+      do c=1,5
+         li(c) = 0
+         l2(c) = 0
+      enddo
+      do k=kmin,kmax
+        do j=jmin,jmax
+          do i=imin,imax
+             do c=1,4
+                err(c) = ABS( met(c,i,j,k) - metex(c,i,j,k) )/sqrt(h)
+             enddo
+             err(5) = ABS( jac(i,j,k)-jacex(i,j,k))/(h*h*h)
+             do c=1,5
+                if( li(c).lt.err(c) )then
+                   li(c) = err(c)
+                endif
+                l2(c) = l2(c) + jacex(i,j,k)*(err(c)**2)
+             enddo
+          enddo
+       enddo
+      enddo
+      return
+      end

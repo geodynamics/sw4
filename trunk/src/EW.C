@@ -177,6 +177,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   mbcsSet(false),
 
   m_analytical_topo(false),
+  m_use_analytical_metric(false),
   m_GaussianAmp(0.05),
   m_GaussianLx(0.15),
   m_GaussianLy(0.15),
@@ -1641,7 +1642,7 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   else if( m_energy_test )
   {
      //    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
-    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
+    for(int g=0 ; g<mNumberOfGrids; g++ ) // This case does not make sense with topography
     {
        u_ptr    = a_U[g].c_ptr();
        for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
@@ -4042,9 +4043,9 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
       int jend   = m_jEndInt[g];
       int kstart = m_kStartInt[g];
       int kend   = m_kEndInt[g];
-      double* up_ptr = Up[g].c_ptr(); 
-      double* u_ptr  = U[g].c_ptr();
-      double* um_ptr = Um[g].c_ptr();
+      double* up_ptr  = Up[g].c_ptr(); 
+      double* u_ptr   = U[g].c_ptr();
+      double* um_ptr  = Um[g].c_ptr();
       double* rho_ptr = mRho[g].c_ptr();
       double locenergy;
       int* onesided_ptr = m_onesided[g];
@@ -4738,4 +4739,11 @@ void EW::perturb_mtrl()
       mMu[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
       //      mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::get_bfgsparameters( bool& bfgs, int& bfgs_m )
+{
+   bfgs = m_lbfgs;
+   bfgs_m = m_lbfgs_m;
 }

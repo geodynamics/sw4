@@ -83,6 +83,9 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
 					   double* tau, double* mu, double* lambda, double* omstrx, double* omstry );
    void F77_FUNC(getsurfforcing,GETSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
 						 int* k, double* met, double* jac, double* tau, double* forcing );
+  void F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
+						    int* k, double* h, double* tau, double* forcing, double* amp, double* xc,
+						    double* yc, double* xl, double* yl );
   void F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( 
 	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
            double* met, double* jac, double* tau, double* strx, double* stry, double* forcing );
@@ -1174,9 +1177,14 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 					   &k, &t, &om, &cv, &ph,
 					   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
 	    // Compute boundary forcing for given stress tensor, tau.
+
 	    F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
 						     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
 						     tau.c_ptr(), bforce_side4_ptr );
+	    //	    F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+	    //							 &klast, &k, &h, tau.c_ptr(), bforce_side4_ptr,
+	    //							 &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc,
+	    //							 &m_GaussianLx, &m_GaussianLy );
 	 }
 	 else if( !usingSupergrid() && !curvilinear )
 	    F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
