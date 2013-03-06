@@ -1,0 +1,90 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Mar 4 16:30:27 PST 2013
+  By user:     andersp
+  Machine:     cab670
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: flat-twi-4.in
+
+* Processing the grid command...
+* Setting h to 0.00416667 from  x/(nx-1) (x=1, nx=241)
+* Setting ny to 241 to be consistent with h=0.00416667
+* Setting nz to 241 to be consistent with h=0.00416667
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0 0.00416667       241       241       241     13997521
+Total number of grid points (without ghost points): 1.39975e+07
+
+
+   Execution time, reading input file 0.017338 seconds 
+----------------------------------------------------
+ Making Output Directory: ./
+		
+... Done!
+----------------------------------------------------
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00004 kg/m^3 <=  Density <= 2.99996 kg/m^3
+       1.633 m/s    <=  Vp      <= 2.82838 m/s
+       1 m/s    <=  Vs      <= 1.73202 m/s
+       1.52753        <=  Vp/Vs   <= 1.73205
+       2.00004 Pa     <=  mu      <= 3.99996 Pa
+       1.00004 Pa     <=  lambda  <= 2.99996 Pa
+       ------------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
+
+   Execution time, start up phase 0.204167 seconds 
+Running sw4 on 16 processors...
+Writing output to directory: ./
+============================================================
+ Running program on 16 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.8
+ Number of time steps = 625 dt: 0.00128
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 6.28
+  c = 1.3
+  phase = 0.8
+  mat-omega = 6.28
+  mat-phase = 0.4
+  amprho = 1
+  amplambda = 1
+  ampmu = 1
+-----------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   1.2800000e-03
+Time step     101  t =   1.2928000e-01
+Time step     201  t =   2.5728000e-01
+Time step     301  t =   3.8528000e-01
+Time step     401  t =   5.1328000e-01
+Time step     501  t =   6.4128000e-01
+Time step     601  t =   7.6928000e-01
+Time step     625  t =   8.0000000e-01
+  Time stepping finished...
+   Execution time, solver phase 4 minutes 7.84241 seconds 
+
+ Final solution errors: Linf =   1.3720205e-07, L2 =   2.7393030e-08
+============================================================
+ program sw4 finished! 
+============================================================
