@@ -5,11 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Thu Feb 28 16:22:00 PST 2013
-  By user:     andersp
-  Machine:     cab670
+  Compiled on: Wed Mar 6 10:20:44 PST 2013
+  By user:     bjorn
+  Machine:     cab667
   Compiler:    /usr/local/bin/mpiicpc
-  3rd party include dir: /include, and library dir: /lib
+  3rd party include dir: /usr/apps/wpp//include, and library dir: /usr/apps/wpp//lib
 ----------------------------------------------------------------
 
 Input file: gauss-twi-4.in
@@ -28,10 +28,10 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 1.44041e+07
 
 
-   Execution time, reading input file 0.033681 seconds 
+   Execution time, reading input file 0.045535 seconds 
 ----------------------------------------------------
  Making Output Directory: gauss_241/
-		
+
 ... Done!
 ----------------------------------------------------
 ******************************
@@ -52,7 +52,7 @@ Geographic coordinates of the corners of the computational grid:
 2: Lon= 1.180000e+02, Lat=3.700001e+01
 3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.135112 seconds 
+   Execution time, start up phase 0.132744 seconds 
 Running sw4 on 64 processors...
 Writing output to directory: gauss_241/
 ============================================================
@@ -66,14 +66,13 @@ Parameters:
   omega = 6.28
   c = 1.3
   phase = 0.8
-  momega = 6.28
-  mphase = 0.4
+  mat-omega = 6.28
+  mat-phase = 0.4
   amprho = 1
   amplambda = 1
+  ampmu = 1
 -----------------------------------------------------------
 writing image plane on file gauss_241/gaussian.cycle=000.z=0.topo.sw4img (msg from proc # 0)
-writing image plane on file gauss_241/gaussian.cycle=000.x=0.5.gridy.sw4img (msg from proc # 24)
-writing image plane on file gauss_241/gaussian.cycle=000.x=0.5.gridz.sw4img (msg from proc # 24)
   Begin time stepping...
 Time step       1  t =   1.1126565e-03
 Time step     101  t =   1.1237830e-01
@@ -86,10 +85,12 @@ Time step     701  t =   7.7997218e-01
 Time step     719  t =   8.0000000e-01
 writing image plane on file gauss_241/gaussian.cycle=719.x=0.5.ux.sw4img (msg from proc # 24)
   Time stepping finished...
-   Execution time, solver phase 2 minutes 1.05856 seconds 
+   Execution time, solver phase 2 minutes 1.7104 seconds 
+writing image plane on file gauss_241/gaussian.cycle=719.y=0.5.ux.sw4img (msg from proc # 3)
 writing image plane on file gauss_241/gaussian.cycle=719.x=0.5.uxerr.sw4img (msg from proc # 24)
 
- Final solution errors: Linf =   4.4178209e-06, L2 =   5.2823022e-08
+ Final solution errors: Linf =   4.4114884e-06, L2 =   5.2795969e-08
 ============================================================
  program sw4 finished! 
 ============================================================
+

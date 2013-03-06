@@ -5,11 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Thu Feb 28 13:45:57 PST 2013
-  By user:     petersson1
-  Machine:     yorkville.llnl.gov
-  Compiler:    /opt/local/bin/openmpicxx
-  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+  Compiled on: Wed Mar 6 10:20:44 PST 2013
+  By user:     bjorn
+  Machine:     cab667
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp//include, and library dir: /usr/apps/wpp//lib
 ----------------------------------------------------------------
 
 Input file: gauss-twi-1.in
@@ -28,10 +28,10 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 31713
 
 
-   Execution time, reading input file 0.00373507 seconds 
+   Execution time, reading input file 0.01199 seconds 
 ----------------------------------------------------
  Making Output Directory: gauss_31/
-		
+
 ... Done!
 ----------------------------------------------------
 ******************************
@@ -52,11 +52,11 @@ Geographic coordinates of the corners of the computational grid:
 2: Lon= 1.180000e+02, Lat=3.700001e+01
 3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.0180168 seconds 
-Running sw4 on 2 processors...
+   Execution time, start up phase 0.022104 seconds 
+Running sw4 on 1 processors...
 Writing output to directory: gauss_31/
 ============================================================
- Running program on 2 MPI tasks using the following data: 
+ Running program on 1 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
  Number of time steps = 102 dt: 0.00784314
@@ -66,24 +66,24 @@ Parameters:
   omega = 6.28
   c = 1.3
   phase = 0.8
-  momega = 6.28
-  mphase = 0.4
+  mat-omega = 6.28
+  mat-phase = 0.4
   amprho = 1
   amplambda = 1
+  ampmu = 1
 -----------------------------------------------------------
 writing image plane on file gauss_31/gaussian.cycle=000.z=0.topo.sw4img (msg from proc # 0)
-writing image plane on file gauss_31/gaussian.cycle=000.x=0.5.gridy.sw4img (msg from proc # 0)
-writing image plane on file gauss_31/gaussian.cycle=000.x=0.5.gridz.sw4img (msg from proc # 0)
   Begin time stepping...
 Time step       1  t =   7.8431373e-03
 Time step     101  t =   7.9215686e-01
 Time step     102  t =   8.0000000e-01
 writing image plane on file gauss_31/gaussian.cycle=102.x=0.5.ux.sw4img (msg from proc # 0)
 writing image plane on file gauss_31/gaussian.cycle=102.x=0.5.uxerr.sw4img (msg from proc # 0)
+writing image plane on file gauss_31/gaussian.cycle=102.y=0.5.ux.sw4img (msg from proc # 0)
   Time stepping finished...
-   Execution time, solver phase 5.97946 seconds 
+   Execution time, solver phase 2.73715 seconds 
 
- Final solution errors: Linf =   7.0565181e-03, L2 =   3.8791607e-04
+ Final solution errors: Linf =   6.9771344e-03, L2 =   3.7382653e-04
 ============================================================
  program sw4 finished! 
 ============================================================

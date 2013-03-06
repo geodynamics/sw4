@@ -1,0 +1,111 @@
+Job started Tue Mar  5 17:14:45 PST 2013 
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Fri Mar 1 10:13:12 PST 2013
+  By user:     bjorn
+  Machine:     cab667
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp//include, and library dir: /usr/apps/wpp//lib
+----------------------------------------------------------------
+
+Input file: gauss-twi-5.in
+
+* Processing the grid command...
+* Setting h to 0.00208333 from  x/(nx-1) (x=1, nx=481)
+* Setting ny to 481 to be consistent with h=0.00208333
+* Setting nz to 481 to be consistent with h=0.00208333
+
+***Topography grid: min z = -5.000000e-02, max z = -7.699482e-12, top Cartesian z = 2.500000e-01
+Errors in metric, max norm and L2 norm 
+ 7.7532e-15 2.27363e-16
+ 1.24808e-08 1.12554e-10
+ 1.24808e-08 1.12554e-10
+ 1.277e-14 3.57803e-16
+Error in Jacobian, max norm and L2 norm 
+ 1.64663e-14 3.6701e-16
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0 0.00208333       481       481       361     83521321
+   1 0.00208333       481       481       133     30771013
+Total number of grid points (without ghost points): 1.14292e+08
+
+
+   Execution time, reading input file 0.113235 seconds 
+----------------------------------------------------
+ Making Output Directory: gauss_481o4/
+		
+... Done!
+----------------------------------------------------
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00004 kg/m^3 <=  Density <= 2.99996 kg/m^3
+       1.633 m/s    <=  Vp      <= 2.82838 m/s
+       1 m/s    <=  Vs      <= 1.73202 m/s
+       1.52753        <=  Vp/Vs   <= 1.73205
+       2.00004 Pa     <=  mu      <= 3.99996 Pa
+       1.00004 Pa     <=  lambda  <= 2.99996 Pa
+       ------------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
+
+   Execution time, start up phase 0.400118 seconds 
+Running sw4 on 512 processors...
+Writing output to directory: gauss_481o4/
+============================================================
+ Running program on 512 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.8
+ Number of time steps = 1407 dt: 0.000568586
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 6.28
+  c = 1.3
+  phase = 0.8
+  mat-omega = 6.28
+  mat-phase = 0.4
+  amprho = 1
+  amplambda = 1
+  ampmu = 1
+-----------------------------------------------------------
+writing image plane on file gauss_481o4/gaussian.cycle=0000.z=0.topo.sw4img (msg from proc # 0)
+  Begin time stepping...
+Time step       1  t =   5.6858564e-04
+Time step     101  t =   5.7427150e-02
+Time step     201  t =   1.1428571e-01
+Time step     301  t =   1.7114428e-01
+Time step     401  t =   2.2800284e-01
+Time step     501  t =   2.8486141e-01
+Time step     601  t =   3.4171997e-01
+Time step     701  t =   3.9857854e-01
+Time step     801  t =   4.5543710e-01
+Time step     901  t =   5.1229566e-01
+Time step    1001  t =   5.6915423e-01
+Time step    1101  t =   6.2601279e-01
+Time step    1201  t =   6.8287136e-01
+Time step    1301  t =   7.3972992e-01
+Time step    1401  t =   7.9658849e-01
+writing image plane on file gauss_481o4/gaussian.cycle=1407.x=0.5.ux.sw4img (msg from proc # 224)
+Time step    1407  t =   8.0000000e-01
+  Time stepping finished...
+   Execution time, solver phase 4 minutes 13.8186 seconds 
+writing image plane on file gauss_481o4/gaussian.cycle=1407.x=0.5.uxerr.sw4img (msg from proc # 224)
+writing image plane on file gauss_481o4/gaussian.cycle=1407.y=0.5.ux.sw4img (msg from proc # 15)
+
+ Final solution errors: Linf =   2.6436257e-07, L2 =   2.5324429e-09
+============================================================
+ program sw4 finished! 
+============================================================
+Job finished Tue Mar  5 17:20:05 PST 2013 
