@@ -5,7 +5,7 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Thu Feb 28 13:45:57 PST 2013
+  Compiled on: Wed Mar  6 11:09:43 PST 2013
   By user:     petersson1
   Machine:     yorkville.llnl.gov
   Compiler:    /opt/local/bin/openmpicxx
@@ -15,20 +15,20 @@
 Input file: flat-twi-1.in
 
 * Processing the grid command...
-* Setting h to 0.166667 from  x/(nx-1) (x=5, nx=31)
-* Setting ny to 31 to be consistent with h=0.166667
-* Setting nz to 31 to be consistent with h=0.166667
+* Setting h to 0.0333333 from  x/(nx-1) (x=1, nx=31)
+* Setting ny to 31 to be consistent with h=0.0333333
+* Setting nz to 31 to be consistent with h=0.0333333
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
-   0  0.166667        31        31        31        29791
+   0 0.0333333        31        31        31        29791
 Total number of grid points (without ghost points): 29791
 
 
-   Execution time, reading input file 0.0011642 seconds 
+   Execution time, reading input file 0.00236392 seconds 
 ----------------------------------------------------
  Making Output Directory: ./
 		
@@ -39,46 +39,46 @@ Total number of grid points (without ghost points): 29791
 ******************************
 
        ----------- Material properties ranges ---------------
-       2.00067 kg/m^3 <=  Density <= 5.99888 kg/m^3
-       1.82587 m/s    <=  Vp      <= 3.16169 m/s
-       1.22483 m/s    <=  Vs      <= 2.12093 m/s
-       1.45298        <=  Vp/Vs   <= 1.52751
-       6.00101 Pa     <=  mu      <= 11.9983 Pa
-       1.00034 Pa     <=  lambda  <= 2.99944 Pa
+       1.00718 kg/m^3 <=  Density <= 2.99285 kg/m^3
+       1.63487 m/s    <=  Vp      <= 2.81744 m/s
+       1.00145 m/s    <=  Vs      <= 1.72538 m/s
+       1.52837        <=  Vp/Vs   <= 1.73121
+       2.00718 Pa     <=  mu      <= 3.99285 Pa
+       1.00718 Pa     <=  lambda  <= 2.99285 Pa
        ------------------------------------------------------
 Geographic coordinates of the corners of the computational grid:
 0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700004e+01
-2: Lon= 1.180001e+02, Lat=3.700004e+01
-3: Lon= 1.180001e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.00726008 seconds 
+   Execution time, start up phase 0.00806284 seconds 
 Running sw4 on 2 processors...
 Writing output to directory: ./
 ============================================================
  Running program on 2 MPI tasks using the following data: 
 
- Start Time = 0 Goal Time = 4.8
- Number of time steps = 109 dt: 0.0440367
+ Start Time = 0 Goal Time = 0.8
+ Number of time steps = 78 dt: 0.0102564
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
-  omega = 3
+  omega = 6.28
   c = 1.3
-  phase = 0.2
-  momega = 3.2
-  mphase = 0.8
-  amprho = 2
+  phase = 0.8
+  mat-omega = 6.28
+  mat-phase = 0.4
+  amprho = 1
   amplambda = 1
+  ampmu = 1
 -----------------------------------------------------------
   Begin time stepping...
-Time step       1  t =   4.4036697e-02
-Time step     101  t =   4.4477064e+00
-Time step     109  t =   4.8000000e+00
+Time step       1  t =   1.0256410e-02
+Time step      78  t =   8.0000000e-01
   Time stepping finished...
-   Execution time, solver phase 3.30579 seconds 
+   Execution time, solver phase 2.2465 seconds 
 
- Final solution errors: Linf =   2.3845137e-02, L2 =   4.9961506e-02
+ Final solution errors: Linf =   6.8365057e-04, L2 =   1.4554749e-04
 ============================================================
  program sw4 finished! 
 ============================================================
