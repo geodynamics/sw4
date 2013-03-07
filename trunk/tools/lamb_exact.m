@@ -1,13 +1,23 @@
-function [U, T]=lamb_exact(dt)
-%% this function plots the exact solution to Lamb's problem
-%% for Poisson material ( mu = lambda ) 
-%% at a distance r for a pointsource in 0,0 with time dependence
-%% F(t) 
-%% The solution is obtained by convolution of the 
-%% kernel g(t) and f(t)=d/dt F(t).
+function [U, T]=lamb_exact(dt, r)
+%% This function evaluates the exact solution to Lamb's problem, i.e., the motion due to a vertical point
+%% force acting downwards on the free surface of a Poisson material ( mu = lambda ).
+%%
+%% The shear speed is Vs=1000 m/s, the compresional speed, Vp = 1000*sqrt(3), and density rho=1500 kg/m^3.
+%%
+%% The vertical component of the motion is calculated on the surface (z=0), at a distance r in 
+%% the horizontal plane.
+%% The solution is obtained by convoluting the Green's function G(t) and f(t)=d/dt F(t).
+%% The fime function is hard-coded into this routine.
+%
+% Syntax:
+% [U T] = lamb_exact(dt, r)
 %
 % Input:
-%  dt: time step in T and U
+%   dt: time step in T and U
+%   r: distance between source and receiver (in horizontal plane)
+% Output:
+%   T: vector of time values
+%   U: vector of vertical displacement values
 % 
 
 tmax=5;
