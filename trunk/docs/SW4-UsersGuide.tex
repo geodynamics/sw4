@@ -203,19 +203,7 @@ If \emph{SW4} produces strange looking outputs where the same text is repeated s
 per processor), you are probably running \emph{SW4} under the wrong parallel execution environment.
 %
 
-\paragraph{Running on the Livermore Computing parallel linux clusters}
-%
-The srun command is currently used to run parallel jobs on LC machines. For example, the command
-\begin{verbatim}
-	shell> srun -ppdebug -n 32 sw4 xxx.in
-\end{verbatim}
-runs \emph{SW4} on 32 processors on the debug parition using xxx.in as the input file. Note that the
-pdebug partition is intended for shorter jobs. It is subject to both a CPU time limit and a limit on
-the number of processors per job. Jobs requiring more computer resources must be submitted through
-the batch system, currently using the msub command. Refer to the Livermore Computing web pages for
-detailed information (https://computing.llnl.gov).
-
-\paragraph{Version information (-v)}
+\subsection{Version information (-v)}
 \index{command line options!-v version info}
 
 Version information for the \emph{SW4} executable can be obtained through {\tt -v} flag:
@@ -238,6 +226,22 @@ y----------------------------------------------------------------
 \end{verbatim}
 Note that the same information is by default printed to standard out (your screen, or log file when
 running in batch mode) at the beginning of every run.
+
+\subsection{Running on the Livermore Computing parallel linux clusters}
+%
+The srun command is currently used to run parallel jobs on LC machines. For example, the command
+\begin{verbatim}
+	shell> srun -ppdebug -n 32 sw4 xxx.in
+\end{verbatim}
+runs \emph{SW4} on 32 processors on the debug parition using xxx.in as the input file. Note that the
+pdebug partition is intended for shorter jobs. It is subject to both a CPU time limit and a limit on
+the number of processors per job. Jobs requiring more computer resources must be submitted through
+the batch system, currently using the msub command. Refer to the Livermore Computing web pages for
+detailed information (https://computing.llnl.gov).
+
+\section{Warning and error messages}
+
+Warning and error messages are stored in separate log files...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Coordinate system, units and the grid}
@@ -2687,6 +2691,35 @@ The same ordering is used for the coordinates as the data, as determined by the 
 %% data file using the \verb+volimage+ format, which should be available from the file format pull-down
 %% menu.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Scripts for analyzing the solution}\label{chap:scripts}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\index{scripts}
+
+We have developed some matlab/octave scripts for analyzing the output from \emph{SW4}. These scripts
+can be used to read, plot, and manipulate data. The scripts that read data also implicitly document
+the file formats, and can be helpful when writing readers for other systems.
+
+\section{Time series}
+\subsection{readsac}
+\subsection{readusgs}
+\subsection{plotusgs}
+\subsection{writesac}
+\subsection{writeusgs}
+
+\section{Images}
+\subsection{readimage}
+\subsection{imageinfo}
+
+\section{Test problems}
+\subsection{lamb\_exact}
+\subsection{LOH1exact}
+\subsection{LOH3exact}
+
+\section{Analysis}
+\subsection{fcnplot}
+\subsection{ftfcnplot}
+\subsection{hudsonplot}
 
 \appendix
 \chapter{Installing \emph{SW4} (not documented)}\label{cha:installing-sw4}
@@ -3074,41 +3107,45 @@ the same test on several grid sizes, it is possible to establish the convergence
 numerical method.
 
 The basic twilight tests use a single grid, a flat topography, and cover the computational domain
-$(x,y,z)\in[0,5]^3$. The numerical solution is simulated up to time $t=4.8$ on a grid with $31^3$,
-$61^3$, and $121^3$ grid points, respectively. These cases are provided in the three input scripts:
+$(x,y,z)\in[0,1]^3$. The numerical solution is simulated up to time $t=0.8$ on a grid with $31^3$,
+$61^3$, $121^3$, and $241^3$ grid points, respectively. These cases are provided in the four input
+scripts:
 \begin{verbatim}
-flat-twi-1.in  flat-twi-2.in  flat-twi-3.in
+flat-twi-1.in  flat-twi-2.in  flat-twi-3.in  flat-twi-4.in
 \end{verbatim}
-All three cases are small enough to be run on a single or dual core laptop computer. Assuming
-\verb+openmpirun+ is used to execute parallel programs, you run the first of these cases on 2
-processes with the command
+The first three cases are small enough to be run on a single or dual core laptop computer. The
+fourth case uses about 14 million grid points and needs to be executed on a slightly larger
+machine. Assuming \verb+openmpirun+ is used to execute parallel programs, you run the first of these
+cases on 2 processes with the command
 \begin{verbatim}
 cd examples/twilight
 openmpirun -np 2 ../../optimize_v1.0/sw4 flat-twi-1.in
 \end{verbatim}
-The results for the three cases are given in the output files
+The results for the four cases are given in the output files
 \begin{verbatim}
-flat-twi-1.out  flat-twi-2.out  flat-twi-3.out
+flat-twi-1.out  flat-twi-2.out  flat-twi-3.out  flat-twi-4.out
 \end{verbatim}
 The errors in max and $L_2$ norm in the numerical solution are reported near the bottom of the
 output files. Some of these numbers are summarized in Table~\ref{tab:twi-err}.
 \begin{table}
 \begin{center}
-\begin{tabular}{| c | c | c | c  | c | }
+\begin{tabular}{| c | c | c | c | c  | c | }
 \hline
-$N_x$ & $h$ & $\| \ub - \ub_{ex}\|_\infty$ & ratio$_\infty$ & rate$_\infty$ \\ \hline
-$31$  & $1.667\cdot 10^{-1}$  & $2.38\cdot 10^{-2}$ & --   & --   \\ \hline
-$61$  & $8.333\cdot 10^{-2}$  & $1.70\cdot 10^{-3}$ & 14.0 & 3.81 \\ \hline
-$121$ & $4.167\cdot 10^{-2}$  & $1.05\cdot 10^{-4}$ & 16.2 & 4.02 \\ \hline
+input file & $N_x$ & $h$ & $e_h=\| \ub - \ub_{ex}\|_\infty$ & ratio$_\infty$ & rate$_\infty$ \\ \hline
+flat-twi-1.in & $31$  & $3.333\cdot 10^{-2}$  & $6.83\cdot 10^{-4}$ & --   & --   \\ \hline
+flat-twi-2.in & $61$  & $1.667\cdot 10^{-2}$  & $3.97\cdot 10^{-5}$ & 17.20 & 4.10 \\ \hline
+flat-twi-3.in & $121$ & $8.333\cdot 10^{-3}$  & $2.01\cdot 10^{-6}$ & 19.75 & 4.30 \\ \hline
+flat-twi-4.in & $241$ & $4.167\cdot 10^{-3}$  & $1.37\cdot 10^{-7}$ & 14.67 & 3.87 \\ \hline
 \end{tabular}
-\caption{Max norm errors in the displacement at time $t=4.8$, without (flat) topography.}
+\caption{Max norm errors in the displacement at time $t=0.8$, when the free
+  surface is flat. The convergence rate is calculated as $\log_2(e_{2h}/e_h)$.}
 \label{tab:twi-err}
 \end{center}
 \end{table}
 
 The case of a non-planar free surface is tested by the scripts
 \begin{verbatim}
-gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in
+gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in  gauss-twi-4.in  gauss-twi-5.in
 \end{verbatim}
 Here, the computational domain is basically a cube with side 1, where the top surface is shaped as a
 Gaussian hill. Let the shape of the top surface be described by $z=\tau(x,y)$. Because the $z$-axis
@@ -3116,36 +3153,39 @@ is directed downwards, and the Gaussian hill has amplitude 0.05, the function $\
 $-0.05\leq \tau\leq 0$. The keyword {\tt zmax=0.25} in the {\tt topography} command specifies that
 the curvilinear grid should cover the domain between the top surface and $z=0.25$. A Cartesian grid
 is used to cover the rest of the computational domain, i.e., for $0.25\leq z\leq 1$. The numerical
-solution is calculated up to time $t=0.8$ on grids with grid size $h=1/30$, $1/60$, and $1/120$,
-respectively. All three cases are relatively small and can be run on a single or dual core
-laptop computer. 
+solution is calculated up to time $t=0.8$ on grids with grid size $h=1/30$, $1/60$, $1/120$,
+$1/240$, and $1/480$, respectively. The three first cases are relatively small and can be run on a single
+or dual core laptop computer. The number of grid point is increased by a factor of eight between each
+grid refinement.
 %However, the fourth case has a grid with about 14 million grid points and should be
 %run on a machine with at least 8-16 cores.
-The results of the simulations are given in the four output files
+The results of the simulations are given in the five output files
 \begin{verbatim}
-gauss-twi-1.out  gauss-twi-2.out  gauss-twi-3.out
+gauss-twi-1.out gauss-twi-2.out gauss-twi-3.out gauss-twi-4.out gauss-twi-5.out
 \end{verbatim}
 The errors in max norm are summarized in Table~\ref{tab:twi-gauss-err}.
 \begin{table}
 \begin{center}
-\begin{tabular}{| c | c | c | c | c  | c | }
+\begin{tabular}{| c | c | c | c | c | c  | c | }
 \hline
-$N_x$ & $h$ & $\| \ub - \ub_{ex}\|_\infty$ & $\| \ub - \ub_{ex}\|_2$ & ratio$_\infty$ & ratio$_2$ \\ \hline
-$31$  & $3.333\cdot 10^{-2}$  & $6.98\cdot 10^{-3}$ & $3.74\cdot 10^{-4}$ & --   & --   \\ \hline
-$61$  & $1.667\cdot 10^{-2}$  & $7.29\cdot 10^{-4}$ & $2.30\cdot 10^{-5}$ & 9.57 & 16.26 \\ \hline
-$121$ & $8.333\cdot 10^{-3}$  & $5.62\cdot 10^{-5}$ & $1.10\cdot 10^{-6}$ & 12.97 & 20.91 \\ \hline
-%$241$ & $4.167\cdot 10^{-3}$  & $4.42\cdot 10^{-6}$ & xxx & 12.69 & 3.67 \\ \hline
+input file & $N_x$ & $h$ & $e_h=\| \ub - \ub_{ex}\|_\infty$  & ratio$_\infty$ & rate$_\infty$ \\ \hline
+gauss-twi-1.in & $31$  & $3.333\cdot 10^{-2}$  & $6.98\cdot 10^{-3}$ & --   & --   \\ \hline
+gauss-twi-2.in & $61$  & $1.667\cdot 10^{-2}$  & $7.29\cdot 10^{-4}$ & 9.57 & 3.26 \\ \hline
+gauss-twi-3.in & $121$ & $8.333\cdot 10^{-3}$  & $5.62\cdot 10^{-5}$ & 12.97 & 3.70 \\ \hline
+gauss-twi-4.in & $241$ & $4.167\cdot 10^{-3}$  & $4.41\cdot 10^{-6}$ & 12.74 & 3.67 \\ \hline
+gauss-twi-5.in & $481$ & $2.083\cdot 10^{-3}$  & $2.64\cdot 10^{-7}$ & 16.70 & 4.06 \\ \hline
 \end{tabular}
 \caption{Max norm errors in the displacement at time $t=0.8$, with a Gaussian hill topography. The
-  number of grid points and the grid size refer to the Cartesian grid.}
+  number of grid points and the grid size refer to the Cartesian grid. The convergence rate is
+  calculated as $\log_2(e_{2h}/e_h)$. }
 \label{tab:twi-gauss-err}
 \end{center}
 \end{table}
 
 Note that some image files are generated by these scripts. They are placed in the sub-directories
-\verb+gauss_31+, \verb+gauss_61+, and \verb+gauss_121+, respectively. We encourage
-the user to look at these image files, for example by reading them into matlab/octave using the
-script \verb+tools/readimage.m+. An example is given in Figure~\ref{fig:ux}.
+\verb+gauss_31+, \verb+gauss_61+, etc. We encourage the reader to look at these image files, for
+example by reading them into matlab/octave using the script \verb+tools/readimage.m+. An example is
+given in Figure~\ref{fig:ux}.
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.65\textwidth]{ux.eps}
@@ -3158,18 +3198,24 @@ script \verb+tools/readimage.m+. An example is given in Figure~\ref{fig:ux}.
 \end{figure}
 
 
-\section{Lamb's problem (in progress)}\label{sec:lamb}
+\section{Lamb's problem}\label{sec:lamb}
 \index{testing!lambs}
 
 The implementation of a point force and the reflection properties of the super-grid far field
 boundary condition can be tested by solving Lamb's problem. This problem simulates the motion due to
 a vertical point force applied on the free surface. The material is assumed homogeneous and the
 ratio between the compressional and shear velocities satisfies $C_p/C_s = \sqrt{3}$, i.e.,
-$\lambda=\mu$. Note that we have only implemented the formulas for evaluating the vertical component
-of the exact solution along the free surface ($z=0$).
-%% UPDATE! The time function is a {\tt verySmoothBump} with {\bf
-%%   freq}=1 and {\bf t0}=0.  Images of the error can be saved with
-%% the {\tt image} command using the options {\tt type=uzerr z=0}. 
+$\lambda=\mu$. 
+
+We have implemented Mooney's formulas~\cite{Mooney_1974} for solving Lamb's problem. These formulas
+give an analytical expression for the Green's function of the vertical component along the free
+surface, $z=0$. This Green's function is convolved with the source time function to give the
+displacement as function of time. We use a {\tt C6SmoothBump} time function and the convolution is
+performed by numerical quadrature using the Quadpack library. This approach allows the displacement
+to be evaluated to within $\approx 12$ decimal places. Lamb's problem is then solved numerically
+using \emph{SW4} and the error in the vertical component is evaluated along the free surface. See
+Petersson and Sjogreen~\cite{PetSjo-13} for further details about this test.
+
 The input and output files can be found in the directory
 \begin{verbatim}
 shell> cd .../sw4/examples/lamb
@@ -3178,30 +3224,30 @@ lamb-1.in  lamb-2.in
 shell> ls *.out
 lamb-1.out  lamb-2.out
 \end{verbatim}
-The final errors in the solution, measured in max and $L_2$ norms, are reported at the end of the
-output files. The error is also reported as function of time in the file {\tt LambErr.txt}, which is
-written in the directory specified by the {\tt fileio} command. In this file, each line holds four
-numbers: time, max error, $L_2$ error, and max norm of solution.
+The input files use about 14 and 109 million grid points, respectively. We ran them on 64 and 128
+cores on a cluster of Linux machines. The final errors in the solution, measured in max and $L_2$
+norms, are reported at the end of the output files. The error is also reported as function of time
+in the file {\tt LambErr.txt}, which is written in the directory specified by the {\tt fileio}
+command. In this file, each line holds four numbers: time, max error, $L_2$ error, and max norm of
+solution.
 
-The physical width of the supergrid layer is set to $\ell=2$ for both grid sizes, and the error is
-evaluated in the interior of the computational domain, i.e., $2\leq (x,y) \leq 10$. Since the
-surface waves propagate with speed $C_r\approx 0.92$ and the source time function is zero after
-$t=1$, the exact solution becomes identically zero along the surface after time $t\approx 1 +
-4\sqrt{2}/0.92 \approx 7.15$. After this time, the error in the numerical solution is due to
-artificial reflections from the super-grid layers. In Figure~\ref{fig:lamb-err} we plot the max
-error as function of time for grid sizes $h=0.04$ and $h=0.02$. Note that the error converges to
-zero as ${\cal O}(h^4)$ for $t>1$, i.e., after the singular point force has stopped acting.
+The physical width of the supergrid layer is set to $\ell=2$ for both grid sizes, corresponding to
+50 and 100 grid points, respectively. The error is evaluated in the interior of the computational
+domain, i.e., $2\leq (x,y) \leq 10$. Since the surface waves propagate with speed $C_r\approx 0.92$
+and the source time function is zero after $t=1$, the exact solution becomes identically zero along
+the surface after time $t\approx 1 + 4\sqrt{2}/0.92 \approx 7.15$. After this time, the error in the
+numerical solution is due to artificial reflections from the super-grid layers. In
+Figure~\ref{fig:lamb-err} we plot the max error as function of time for grid sizes $h=0.04$ and
+$h=0.02$. Note that the error converges to zero as ${\cal O}(h^4)$ for $t>1$, i.e., after the
+singular point force has stopped acting.
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[width=0.5\textwidth]{lamb-err.eps}
+\includegraphics[width=0.7\textwidth]{lamb-err.eps}
 \caption{The max norm of the error in the solution of Lamb's problem, as function of time. The blue
 and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 \label{fig:lamb-err}
 \end{center}
 \end{figure}
-
-These cases use about 14 and 109 million grid points, respectively. We ran them on 64 and 128 cores
-on a cluster of Linux machines.
 
 %% Here we provide input files with four different grid sizes, with $116^2\times 59$, $231^2 \times
 %% 116$, $461^2\times 231$, and $921^2\times 461$ grid points, respectively. Be aware that the finest
@@ -3212,6 +3258,9 @@ on a cluster of Linux machines.
 %% \end{verbatim}
 %% Note that the most important information is near the end of these files, where the error in the numerical
 %% solution is reported. 
+
+\section{Point moment tensor test (not done)}\label{sec:testpointsource}
+\index{testing!pointsource}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Run time and memory requirements (not done)}\label{sec:performance}

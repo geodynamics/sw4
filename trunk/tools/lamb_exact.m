@@ -1,29 +1,33 @@
 function [U, T]=lamb_exact(dt, r)
-%% This function evaluates the exact solution to Lamb's problem, i.e., the motion due to a vertical point
-%% force acting downwards on the free surface of a Poisson material ( mu = lambda ).
-%%
-%% The shear speed is Vs=1000 m/s, the compresional speed, Vp = 1000*sqrt(3), and density rho=1500 kg/m^3.
-%%
-%% The vertical component of the motion is calculated on the surface (z=0), at a distance r in 
-%% the horizontal plane.
-%% The solution is obtained by convoluting the Green's function G(t) and f(t)=d/dt F(t).
-%% The fime function is hard-coded into this routine.
+% This function evaluates the exact solution of Lamb's problem, i.e., the motion due to a vertical point
+% force acting downwards on the free surface of a Poisson material ( mu = lambda ).
+% The amplitude of the force is 10^13 N(ewton).
+%
+% The shear speed is Vs=1000 m/s, the compresional speed, Vp = 1000*sqrt(3), and density rho=1500 kg/m^3.
+%
+% The vertical component of the motion is calculated on the surface (z=0), at a distance r in 
+% the horizontal plane.
+% The solution is obtained by convoluting the Green's function G(t) and f(t)=d/dt F(t).
+%
+% The fime function is hard-coded into this routine, currently F(t) = RickerInt(freq=1,t0=2).
 %
 % Syntax:
 % [U T] = lamb_exact(dt, r)
 %
 % Input:
 %   dt: time step in T and U
-%   r: distance between source and receiver (in horizontal plane)
+%   r: distance between source and receiver (in horizontal plane) [optional, default: r=1000]
 % Output:
 %   T: vector of time values
 %   U: vector of vertical displacement values
 % 
 
-tmax=5;
+tmax=10;
 
 t3 = 0:dt:tmax+0.5*dt;
-r=1000;
+if (nargin < 2)
+  r=1000;
+end
 U=[];
 T=[];
 for t=t3
