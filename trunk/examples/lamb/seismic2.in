@@ -1,0 +1,19 @@
+#
+# This file sets up Lambs problem 
+# with a point source aligned with the z - axis  
+#
+grid nx=151 x=10e3 y=20e3 z=5e3
+time t=10.0
+
+# supergrid thickness for h = 10000/150 = 1000/15, 30*h = 2000
+supergrid gp=30
+
+block vp=1.7320508076e+03 vs=1000 rho=1500
+source type=RickerInt x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=2
+
+# Time history of solution along a vertical line aligned with the source
+rec x=5e3 y=15e3 z=0 file=v10 sacformat=0 usgsformat=1
+
+
+
+

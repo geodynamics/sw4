@@ -265,31 +265,35 @@ forces are in Newton (N), and seismic moment (torque) is in Newton-meters (Nm). 
 (e.g. latitude, longitude, azimuth, strike, dip and rake) are in degrees. 
 %The quality factors $Q_P$ and $Q_S$ are dimensionless.
 
-In \emph{SW4} the computational domain is rectangular in the horizontal plane,
-\[
-0\leq x\leq x_{max},\quad 0\leq y\leq y_{max}.
-\]
-The topography surface
+In \emph{SW4} the computational domain is rectangular in the horizontal plane and the vertical extent
+is defined by the topography surface
 \[
 z=\tau(x,y),
 \]
-defines the shape of the top surface in the vertical direction. \emph{SW4} can also be run without
-topography. In that case, $\tau(x,y)=0$. The computational domain is given by
+which defines the shape of the free surface. \emph{SW4} can also be run without
+topography, in which case $\tau(x,y)=0$. In general, the computational domain is given by
 \begin{equation}\label{eq:domain}
 0\leq x\leq x_{max},\quad 0\leq y\leq y_{max},\quad \tau(x,y) \leq z \leq z_{max}.
 \end{equation}
+
 The grid command in the input file specifies the extent of the computational domain and the grid
-size $h$. When mesh refinement is enabled, this is the grid size in the coarsest grid. The most
-obvious way of specifying the grid is by providing the number of grid points in each direction as
-well as the grid size,
+size $h$. When topography is enabled, the grid size in the curvilinear grid equals $h$ in the
+horizontal directions, but varies in the vertical direction to allow the curvilinear grid to follow
+the shape of the free surface. In this case, the number of grid points in the vertical direction is
+chosen such that the average of the vertical grid size approximately equals $h$.
+%When mesh refinement is enabled, this is the grid size in the
+%coarsest grid. 
+
+The most obvious way of specifying the grid is by providing the number of grid points in each
+direction as well as the grid size,
 %
 \begin{verbatim}
 	grid nx=301 ny=201 nz=101 h=500.0 
 \end{verbatim}
 %
-This line gives a grid with grid size 500 meters, which extends 150 km in $x$, 100 km in $y$ and 50 km in the
-$z$-direction. Alternatively, the grid can be specified by giving the spatial range in each of the three
-dimensions and explicitly specifying the grid spacing. For example,
+This command gives a grid with grid size 500 meters, which extends 150 km in $x$, 100 km in $y$ and
+50 km in the $z$-direction. Alternatively, the grid can be specified by giving the spatial range in
+each of the three dimensions and explicitly specifying the grid spacing. For example, the command
 %
 \begin{verbatim}
 	grid x=30e3 y=20e3 z=10e3 h=500.0 
@@ -326,8 +330,8 @@ value of $h$, ny and nz are computed using formulas corresponding to
 the extents in the $y$ and $z$-directions are adjusted corresponding to (\ref{eq:x-calculation}). The syntax
 for the grid command is given in Section~\ref{keyword:grid}.
 
-The simulation always starts at $t=0$ and runs until $t=T$, where $T$ is the user specified end
-time.  The {\tt time} command specifies the end time. For example,
+The simulation always starts at $t=0$ and runs until $t=T$, where the user must specify $T$ with the
+{\tt time} command. For example,
 \begin{verbatim}
 time t=1.6
 \end{verbatim}
@@ -336,16 +340,20 @@ a number of time steps, as in the example
 \begin{verbatim}
 time steps=1200
 \end{verbatim}
-Here the number of time steps is set to 1200. The end time will in this case be $T=1200\Delta t$, where the
-time step $\Delta t$ depends on the input material. $\Delta t$ is determined automatically by \emph{SW4}.
-The simulation start time can be related to a UTC time. The option {\tt utcstart} sets the UTC time that
-corresponds to the simulation time $t=0$, for example,
+Here the number of time steps is set to 1200. The end time will in this case be $T=1200\Delta t$,
+where the time step $\Delta t$ is determined automatically by \emph{SW4} to satisfy the CFL time
+step restriction. This calculation is based on the ratio between the grid size and the largest
+characteristic wave speed, which depends on both the compressional and shear wave speeds. 
+
+The simulation start time can be related to a UTC time. The option {\tt utcstart} sets the UTC time
+that corresponds to the simulation time $t=0$, for example,
 \begin{verbatim}
 time t=1.6 utcstart=01/31/2012:17:34:12.233
 \end{verbatim}
 The format of the UTC time is ``month/day/year:hour:minute:second.millisecond''. When the UTC time
-is set, it is saved in the header of all output receiver data files. Note that the UTC start time
-is essential for correctly aligning observed data when solving the inverse problem with \emph{SW4opt}.
+is set, it is saved in the header of all time series files (see the {\tt rec} command). Note that
+the UTC start time can be very useful for aligning simulated and observed time series.
+%is also used the inverse problem with \emph{SW4opt}.
 
 \section{Geographical coordinates and projections}
 \index{geographical coordinates}
@@ -766,14 +774,8 @@ the homogeneous initial conditions, we recommend setting $g_j=0$ for all $\tau_j
 
 The file format for discrete time functions is decribed in~\ref{sec:discrete-time-function-format}.
 
-\section{How fine does the grid need to be?}\label{sec:grid-size}
-\index{grid size}
-
-When preparing the input file, the most difficult parameter to choose is probably the grid size
-$h$. It is extremely important to use a grid size which is sufficiently small, because you must resolve
-the waves that are generated by the source. On the other hand you don't want to use an
-unnecessarily small grid size, because both the execution time and the memory requirements
-increase with decreasing grid size.%, see Section~\ref{sec:performance}.
+\section{What is the frequency content in my time function?}\label{sec:freq}
+\index{frequency content}
 
 %% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
 %% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
@@ -782,26 +784,6 @@ increase with decreasing grid size.%, see Section~\ref{sec:performance}.
 %% percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
 %% about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
 %% with approximately twice as high frequency.
-
-The number of grid points per shortest wavelength, $P$, is a normalized measure of how well a
-solution is resolved on the computational grid. Since the shear waves have the lowest velocities and
-a shorter wave length than the compressional waves, the shortest wave length $L_{min}$ can be
-estimated by
-\[
- L_{min} = \dfrac{\min C_s}{f_{max}},
-\]
-where $C_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
-in the time function $g(t)$. Hence the number of grid points per wave length equals $L_{min}/h$,
-which is given by
-%
-\begin{equation}\label{eq:resolutionformula}
-  P = \dfrac{\min C_s}{h\,f_{max}}. 
-\end{equation}
-Note that $h$ needs to be made smaller to maintain the same value of $P$ if either $C_s$ is
-decreased or if the frequency is increased. In formula (\ref{eq:resolutionformula}), $\min C_s$ is
-found from the material properties and $h$ is determined by the input grid specification.  The
-frequency spectrum of the solution is determined by the frequency spectrum of the time
-function(s) in the source term(s).
 
 Figure~\ref{fig:fouriers} displays the absolute values of the Fourier transforms of the
 functions Gaussian, RickerInt, Ricker, and the time derivative of the Brune
@@ -832,18 +814,136 @@ frequencies. This is due to its lack of smoothness at $t=t_0$.
 \end{center}
 \end{figure}
 
-It is the upper power (highest significant) frequency in the time function that shall be used in
-(\ref{eq:resolutionformula}) to estimate the number of grid points per wave length. For practical
-purposes $f_{max}$ can be defined as the frequency where the amplitude of the Fourier
-transform falls below 5 \% of its max value. We have
+It is the upper power (highest significant) frequency, $f_{max}$, that generates the shortest waves
+and therefore determines how fine the computational grid must be. For practical purposes $f_{max}$
+can be defined as the frequency where the amplitude of the Fourier transform falls below 5 \% of its
+max value. We have
 \begin{equation}\label{eq:upper-power-freq}
 f_{max} \approx \begin{cases}2.5 f_0,&\mbox{Ricker, RickerInt, Gaussian time functions},\\
   4 f_0,&\quad\mbox{Brune time function}.
 \end{cases}
 \end{equation}
 In other words, simulations using the Brune function are harder to resolve on the grid and need much
-more grid points to give reliable results.
+more grid points to give reliable results. We remark that the Fourier transform test only makes
+sense for time functions that tend to zero for large times. Functions such as {\tt GaussianInt},
+{\tt Liu}, {\tt Brune}, and {\tt BruneSmoothed} tend towards unity for large times. Their zero
+frequency (DC) component is therefore unbounded. These functions need to be differentiated before
+applying the above test.
 
+
+\section{How fine does the grid need to be?}\label{sec:grid-size}
+\index{grid size}
+
+When preparing the input file, the most difficult parameter to choose is probably the grid size
+$h$. It is extremely important to use a grid size that is sufficiently small, because you must resolve
+the waves that are generated by the source. On the other hand you don't want to use an
+unnecessarily small grid size, because both the execution time and the memory requirements
+increase with decreasing grid size.%, see Section~\ref{sec:performance}.
+
+The number of grid points per shortest wavelength, $P$, is a normalized measure of how well a
+solution is resolved on the computational grid. Since the shear waves have the lowest velocities and
+a shorter wave length than the compressional waves, the shortest wave length $L_{min}$ can be
+estimated by
+\[
+ L_{min} = \dfrac{\min C_s}{f_{max}},
+\]
+where $C_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
+in the time function $g(t)$. Hence the number of grid points per wave length equals $L_{min}/h$,
+which is given by
+%
+\begin{equation}\label{eq:resolutionformula}
+  P = \frac{L_{min}}{h} = \dfrac{\min C_s}{h\,f_{max}}. 
+\end{equation}
+Note that $h$ needs to be made smaller to maintain the same value of $P$ if either $C_s$ is
+decreased or if the frequency is increased. In formula (\ref{eq:resolutionformula}), $\min C_s$ is
+found from the material properties and $h$ is determined by the input grid specification.  The
+frequency spectrum of the solution is determined by the frequency spectrum of the time
+function(s) in the source term(s).
+
+To investigate how fine the grid needs to be to obtain an accurate solution, we consider Lamb's
+problem~\cite{Lamb_1904}. Here, the displacement is driven by a vertical point force acting
+downwards on the surface of a homogeneous half-space. To evaluate the accuracy of the numerical
+solution, we compare it to the analytical solution from Mooney~\cite{Mooney_1974} for the case of a
+Poisson material, i.e., $\mu=\lambda$, or $C_p/C_s=\sqrt{3}$.
+
+In the following example, the elastic half-space consists of a homogeneous material with shear wave
+velocity $C_s=1000$ m/s, compressional wave velocity $C_p=1000\cdot\sqrt{3}$ m/s, and density $\rho=1500$
+kg/m$^3$. The elastic half-space is truncated to the computational domain
+\[
+(x,y,z) \in [0,10000] \times [0,10000]\times[0,5000].
+\]
+The source is placed on the free surface in the center point of the horizontal plane:
+$(5000,5000,0)$. The time dependency of the forcing is a ``RickerInt'' (see Figure
+\ref{fig:rickers}) with $\omega=1$ Hz, $t_0=2$ s and magnitude $10^{13}$ N. The above setup is
+created with the input file shown below, which can be found in {\tt examples/lamb/seismic1.in}
+\begin{verbatim}
+grid nx=151 x=10e3 y=10e3 z=5e3
+time t=5.0
+block vp=1.7320508076e+03 vs=1000 rho=1500
+source type=RickerInt x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=2
+rec x=5e3 y=6e3 z=0 file=v1 sacformat=0 usgsformat=1
+\end{verbatim}
+
+The vertical displacement and error at a reciever at ($x=5000$, $y=6000$, $z=0$) is shown in
+Figure~\ref{fig:lambSAC}.
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{lamb-err-p6.eps}
+    \caption{Lamb's problem: Vertical displacement at the reciever $x=5000$, $y=6000$, $z=0$, i.e.,
+      1000 meters from the source. The blue
+      line shows the exact solution and the green line shows the error in the numerical solutions
+      with $h=10000/150$, corresponding to $P=6$ grid points per shortest wave length.}
+    \label{fig:lambSAC}
+  \end{center}
+\end{figure}
+
+The waveform is smooth and the problem appears to be well resolved. We present the max-norm of the
+errors in the vertical displacement in Table~\ref{tab:lamb-err}. The center frequency in the RickerInt
+time function is $f_0=1$ Hz. Following (\ref{eq:upper-power-freq}), we estimate the highest
+significant frequency to be $f_{max}=2.5$ Hz. In this case the formula for the number of grid points
+per wave length (\ref{eq:resolutionformula}) becomes 
+\[
+P=\frac{1000}{2.5 h} = \frac{nx-1}{25}.
+\]
+\begin{table}
+\begin{center}
+\begin{tabular}{| c | c | c | c | }
+\hline
+$N_x$ & $h$   & $P$ & $\| u_z - U_z\|_\infty$ \\ \hline
+$101$ & 100   & 4   & $1.792\cdot 10^{-2}$    \\ \hline
+$151$ & 66.67 & 6   & $6.523\cdot 10^{-3}$    \\ \hline
+$201$ & 50    & 8   & $2.609\cdot 10^{-3}$    \\ \hline
+$301$ & 33.33 & 12  & $6.188\cdot 10^{-4}$    \\ \hline
+$401$ & 25    & 16  & $2.047\cdot 10^{-4}$    \\ \hline
+\end{tabular}
+\caption{Max norm errors in the vertical displacement at $x=5000$, $y=6000$, $z=0$.}
+\label{tab:lamb-err}
+\end{center}
+\end{table}
+Since the max norm (amplitude) of the exact solution is $0.1675$, the relative max-norm error for
+$P=6$ is about 3.9 percent, when the receiver is 1000 meters from the source. Since the center
+frequency is $f_0=1$ Hz and $C_s=1000$ m/s, the dominant wave length in the solution is about 1000
+meters.
+
+In Figure~\ref{fig:ppw-err} we plot the max error as function of the number of points per wave
+length.  The ratio between errors for grid size $2h$ and $h$ approaches 16 for the finest grid,
+indicating that the numerical method and the discretization of the point force are fourth order
+accurate.
+\begin{figure}[th]
+\begin{centering}
+ \includegraphics[width=0.8\linewidth]{ppw-err.eps}
+  \caption{Error in max norm as function of the number of points per wave length. The black line
+    indicates the asymptotic decay of the error in a fourth order accurate method.}
+  \label{fig:ppw-err}
+\end{centering}
+\end{figure}
+
+It is well known that the error in numerical solutions of wave propagation problems is dominated by
+phase errors~\cite{Gustafsson-Kreiss-Oliger}. To investigate how the accuracy in the numerical
+solution depends on the distance between the source and receiver, we move the receiver in the above
+experiment to $y=15,000$, i.e., 10 times further away from the source.
+
+UPDATE...
 Our experience is that \emph{SW4} gives accurate results for 
 \[
 P \geq ??,
