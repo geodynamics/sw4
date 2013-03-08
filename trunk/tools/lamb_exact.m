@@ -22,7 +22,7 @@ function [U, T]=lamb_exact(dt, r)
 %   U: vector of vertical displacement values
 % 
 
-tmax=10;
+tmax=5;
 
 t3 = 0:dt:tmax+0.5*dt;
 if (nargin < 2)
