@@ -100,6 +100,8 @@ MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o
 OBJ4 = filterTest.o Filter.o SecondOrderSection.o Polynomial.o
+OBJ5 = lamb_one_point.o
+
 sw4: $(OBJ) $(QUADPACK)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 
@@ -117,6 +119,9 @@ test3: $(OBJ3)
 
 test: $(OBJ2)
 	$(FC) -O3 -Wall -o $@ $(OBJ2)
+
+lamb1: $(OBJ5) $(QUADPACK)
+	$(FC) -O3 -o $@ $(OBJ5) $(QUADPACK)
 
 filterTest: $(OBJ4)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ4)
