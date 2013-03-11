@@ -4018,7 +4018,7 @@ void EW::compute_guess(bool& guesspos, bool& guesst0fr, bool& guessmom,
 //-----------------------------------------------------------------------
 void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance,
 			   bool& fletcherreeves, int& stepselection, bool& do_linesearch,
-			   int& varcase )
+			   int& varcase, bool& testing )
 {
    maxit = m_maxit;
    maxrestart = m_maxrestart;
@@ -4027,6 +4027,7 @@ void EW::get_cgparameters( int& maxit, int& maxrestart, double& tolerance,
    stepselection = m_cgstepselection;
    varcase = m_cgvarcase;
    do_linesearch = m_do_linesearch;
+   testing = m_opt_testing;
 }
 
 //-----------------------------------------------------------------------
@@ -4742,8 +4743,8 @@ void EW::perturb_mtrl()
 }
 
 //-----------------------------------------------------------------------
-void EW::get_bfgsparameters( bool& bfgs, int& bfgs_m )
+void EW::get_optmethod( int& method, int& bfgs_m )
 {
-   bfgs = m_lbfgs;
+   method = m_opt_method;
    bfgs_m = m_lbfgs_m;
 }

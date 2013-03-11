@@ -54,6 +54,13 @@ ifeq ($(UNAME),Linux)
      CXX = mpicxx
     linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
   endif
+# For Edison at NERSC
+  ifeq ($(findstring edison,$(HOSTNAME)),edison)
+    FC  = ftn
+    CC  = cc
+    CXX = CC
+    linklibs = -L/global/u2/b/bjorns/local/lapack-3.4.0 -llapack -lrefblas -lifcore
+  endif
   ifeq ($(etree),yes)
      CXXFLAGS += -DENABLE_ETREE
      CXXFLAGS += -I$(SW4INC)

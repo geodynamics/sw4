@@ -467,7 +467,7 @@ void get_scalefactors( double sf[11] );
 bool compute_sf();
 void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& output_seismograms );
 void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
-		       int& stepselection, bool& do_linesearch, int& varcase );
+		       int& stepselection, bool& do_linesearch, int& varcase, bool& testing );
 void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
 void get_material_parameter( int nmpar, double* xm );
@@ -477,7 +477,7 @@ void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um,
 		  vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
 		  vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
 
-void get_bfgsparameters( bool& bfgs, int& bfgs_m );
+void get_optmethod( int& method, int& bfgs_m );
 
 void perturb_mtrl();
 
@@ -785,8 +785,8 @@ double m_tolerance;
 double m_scalefactors[11];   
 int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
-bool m_lbfgs;
-int m_lbfgs_m;
+bool m_opt_testing;
+int m_opt_method, m_lbfgs_m;
    // perturbations for testing
 double m_perturb;
 int m_iperturb, m_jperturb, m_kperturb;

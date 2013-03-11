@@ -5790,8 +5790,9 @@ void EW::processCG( char* buffer )
   m_cgvarcase = 0;
   m_cgfletcherreeves = true;
   m_do_linesearch = true;
-  m_lbfgs = false;
+  m_opt_method = 1;
   m_lbfgs_m = 4;
+  m_opt_testing = false;
 
   string err = "CG Error: ";
 
@@ -5896,18 +5897,28 @@ void EW::processCG( char* buffer )
 	   CHECK_INPUT( false,
 		     "cg command: steptype value " << token << " not understood");
      }
-     else if( startswith("cgtype=",token) )
+     else if( startswith("optmethod=",token) )
      {
-        token += 7;
+        token += 10;
         if( strcmp(token,"fletcher-reeves")==0 )
+	{
+           m_opt_method = 1;
 	   m_cgfletcherreeves = true;
+	}
 	else if( strcmp(token,"polak-ribiere") == 0 )
+	{
+           m_opt_method = 1;
 	   m_cgfletcherreeves = false;
-        else if( strcmp(token,"lBFGS") == 0 )
-	   m_lbfgs = true;
+	}
+        else if( strcmp(token,"l-BFGS") == 0 )
+	   m_opt_method = 2;
+        else if( strcmp(token,"BFGS") == 0 )
+	   m_opt_method = 3;
+        else if( strcmp(token,"steepest-descent") == 0 )
+	   m_opt_method = 4;
         else
 	   CHECK_INPUT( false,
-		     "cg command: cgtype value " << token << " not understood");
+		     "cg command: optmethod value " << token << " not understood");
      }
      else if( startswith("lbfgsvectors=",token) )
      {
@@ -5928,6 +5939,11 @@ void EW::processCG( char* buffer )
         else
 	   CHECK_INPUT( false,
 		     "cg command: solvefor value " << token << " not understood");
+     }
+     else if( startswith("opttest=",token) )
+     {
+        token += 8;
+	m_opt_testing =  strcmp(token,"yes")== 0 || strcmp(token,"1")==0;
      }
      else
      {
