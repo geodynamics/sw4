@@ -9,7 +9,7 @@ time t=5.0
 supergrid gp=30
 
 block vp=1.7320508076e+03 vs=1000 rho=1500
-source type=RickerInt x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=2
+source type=C6SmoothBump x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=0
 
 # Time history of solution along a vertical line aligned with the source
 rec x=5e3 y=6e3 z=0 file=v1 sacformat=0 usgsformat=1
