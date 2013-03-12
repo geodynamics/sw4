@@ -252,7 +252,7 @@ Warning and error messages are stored in separate log files...
 downwards into the medium, see figure~\ref{fig:coordsys}. 
 \begin{figure}[th]
 \begin{centering}
- \includegraphics[width=0.6\linewidth]{coords.eps}
+ \includegraphics[width=0.6\linewidth]{coords.png}
   \caption{\emph{SW4} uses a right handed coordinate system with the z-axis pointing
   downwards.}
   \label{fig:coordsys}
@@ -359,7 +359,7 @@ the UTC start time can be very useful for aligning simulated and observed time s
 \index{geographical coordinates}
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.6\linewidth]{LatLonAz.ps}
+  \includegraphics[width=0.6\linewidth]{LatLonAz.png}
 %  \includegraphics{LatLonAz.ps}
   \caption{Geographical coordinates in \emph{SW4}.}
   \label{fig:geocoord}
@@ -432,8 +432,8 @@ Super-grid layers are included on all sides of the computational domain, except 
 free surface, see Figure~\ref{fig:layout}.
 \begin{figure}[th]
 \begin{center}
-\includegraphics[width=0.65\linewidth]{layout.eps}
-%\includegraphics[width=0.65\linewidth]{layout.png}
+%\includegraphics[width=0.65\linewidth]{layout.eps}
+\includegraphics[width=0.65\linewidth]{layout.png}
 \caption{\em A vertical cross-section through the computational domain with a free surface boundary
   along the top edge. The original seismic wave equation is solved the white region. The wave speed
   is reduced in the normal direction of the surrounding super-grid layers, where also a high order
@@ -507,8 +507,8 @@ GaussianInt is the time-integral of the Gaussian. A plot of the
 GaussianInt time-function is shown in Figure~\ref{fig:gaussians}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f1-gaussian.ps}
-  \includegraphics[width=0.4\linewidth]{f2-gaussianint.ps}
+  \includegraphics[width=0.4\linewidth]{f1-gaussian.png}
+  \includegraphics[width=0.4\linewidth]{f2-gaussianint.png}
   \caption{Gaussian (left) and GaussianInt (right) with $\omega=\pi$ and $t_0=0$.}
   \label{fig:gaussians}
 \end{centering}
@@ -529,8 +529,8 @@ to any permanent displacements. A plot of the RickerInt time-function is shown i
 Figure~\ref{fig:rickers}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f3-ricker.ps}
-  \includegraphics[width=0.4\linewidth]{f4-rickerint.ps}
+  \includegraphics[width=0.4\linewidth]{f3-ricker.png}
+  \includegraphics[width=0.4\linewidth]{f4-rickerint.png}
   \caption{Ricker (left) and RickerInt (right) with $\omega=1$ and $t_0=0$.}
   \label{fig:rickers}
 \end{centering}
@@ -570,8 +570,8 @@ has three continuous derivatives, it generates less high frequency noise than th
 gives better accuracy for a given grid resolution.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f9-brune.ps}
-  \includegraphics[width=0.4\linewidth]{f10-brunesmoothed.ps}
+  \includegraphics[width=0.4\linewidth]{f9-brune.png}
+  \includegraphics[width=0.4\linewidth]{f10-brunesmoothed.png}
   \caption{Brune (left) and BruneSmoothed (right) with $\omega=2$ and $t_0=-1$.}
   \label{fig:brunes}
 \end{centering}
@@ -608,7 +608,7 @@ and $C=\pi/(1.4\tau_1\pi+1.2\tau_1+0.3\tau_2\pi)$.  The Liu function resembles t
 but the rise is somewhat steeper for small $t-t_0$, see Figure~\ref{fig:liu}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f12-liu.ps}
+  \includegraphics[width=0.4\linewidth]{f12-liu.png}
   \caption{Liu time function with $\omega=2$ and $t_0=0$.}
   \label{fig:liu}
 \end{centering}
@@ -636,8 +636,8 @@ with $g(t,t_0,\omega) = 0$ elsewhere.  A plot of the Sawtooth time-function is s
 Figure~\ref{fig:triandsaw}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f5-triangle.ps}
-  \includegraphics[width=0.4\linewidth]{f6-sawtooth.ps}
+  \includegraphics[width=0.4\linewidth]{f5-triangle.png}
+  \includegraphics[width=0.4\linewidth]{f6-sawtooth.png}
   \caption{Triangle (left) and Sawtooth (right) with $\omega=1$ and $t_0=0$.}
   \label{fig:triandsaw}
 \end{centering}
@@ -666,8 +666,8 @@ with $g(t,t_0,\omega) = 0$ elsewhere. A plot of the Smoothwave time-function is 
 Figure~\ref{fig:rampandsmoothwave}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f7-ramp.ps}
-  \includegraphics[width=0.4\linewidth]{f8-smoothwave.ps}
+  \includegraphics[width=0.4\linewidth]{f7-ramp.png}
+  \includegraphics[width=0.4\linewidth]{f8-smoothwave.png}
   \caption{Ramp (left) and Smoothwave (right) with $\omega=1$ and $t_0=0$.}
   \label{fig:rampandsmoothwave}
 \end{centering}
@@ -687,9 +687,11 @@ The VerySmoothBump function satisfies $0\leq g\leq 1$. It has four continuous de
 A plot of the VerySmoothBump time-function is shown in Figure~\ref{fig:verysmoothbump}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f11-verysmoothbump.ps}
-  \caption{VerySmoothBump with $\omega=0.5$ and $t_0=0$.}
-  \label{fig:verysmoothbump}
+  \includegraphics[width=0.4\linewidth]{f11-verysmoothbump.png}
+  \includegraphics[width=0.4\linewidth]{f12-c6smoothbump.png}
+  \caption{VerySmoothBump (left) with $\omega=0.5$ and
+    $t_0=0$. C6SmoothBump (right) with $\omega=2$ and $t_0=0$.}
+  \label{fig:verysmoothbump}  \label{fig:c6smoothbump}
 \end{centering}
 \end{figure}  
 %
@@ -705,13 +707,13 @@ g(t,t_0,\omega) = \left\{
 \]
 The C6SmoothBump function has six continuous derivatives and integrates to one.
 A plot of the C6SmoothBump time-function is shown in Figure~\ref{fig:c6smoothbump}.
-\begin{figure}
-\begin{centering}
-  \includegraphics[width=0.9\linewidth]{f12-c6smoothbump.eps}
-  \caption{C6SmoothBump with $\omega=2$ and $t_0=0$.}
-  \label{fig:c6smoothbump}
-\end{centering}
-\end{figure}  
+%% \begin{figure}
+%% \begin{centering}
+%%   \includegraphics[width=0.5\linewidth]{f12-c6smoothbump.png}
+%%   \caption{C6SmoothBump with $\omega=2$ and $t_0=0$.}
+%%   \label{fig:c6smoothbump}
+%% \end{centering}
+%% \end{figure}  
 %
 \subsection{GuassianWindow}
 \[
@@ -722,7 +724,7 @@ Figure~\ref{fig:gaussianwindow}. Note that $N_c$ is specified with the \verb+ncy
 must be given when this time function is used in the \verb+source+ command.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.6\linewidth]{GW.eps}
+  \includegraphics[width=0.6\linewidth]{GW.png}
   \caption{GaussianWindow with $\omega=3.14$, $t_0=0$, and $N_c=5$.}
   \label{fig:gaussianwindow}
 \end{centering}
@@ -774,16 +776,9 @@ the homogeneous initial conditions, we recommend setting $g_j=0$ for all $\tau_j
 
 The file format for discrete time functions is decribed in~\ref{sec:discrete-time-function-format}.
 
-\section{What is the frequency content in my time function?}\label{sec:freq}
-\index{frequency content}
 
-%% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
-%% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
-%% points per wave length. This means that waves with the same frequency can be resolved on a grid that
-%% is coarser both in space and time. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
-%% percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
-%% about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
-%% with approximately twice as high frequency.
+\section{What is the frequency content in the time function?}\label{sec:freq}
+\index{frequency content}
 
 Figure~\ref{fig:fouriers} displays the absolute values of the Fourier transforms of the
 functions Gaussian, RickerInt, Ricker, and the time derivative of the Brune
@@ -793,7 +788,7 @@ functions. The relation between the fundamental frequency $f_0$ and the {\tt fre
 given by
 \begin{equation}\label{eq:angular-scaling}
 f_0 = \left\{ \begin{array}{ll}
- {\tt freq},& \mbox{for Ricker, RickerInt, and VerySmoothBump},\\
+ {\tt freq},& \mbox{for Ricker, RickerInt, VerySmoothBump, C6SmoothBump},\\
  \dfrac{\tt freq}{2\pi},& \mbox{for Liu, Brune, BruneSmoothed, Gaussian, GaussianInt, and GaussianWindow}.
 \end{array}\right.
 \end{equation}
@@ -805,7 +800,7 @@ transform of the Brune function decays much slower than the other functions for 
 frequencies. This is due to its lack of smoothness at $t=t_0$.
 \begin{figure}
 \begin{center}
-\includegraphics[width=0.6\textwidth]{figfouriers.ps}
+\includegraphics[width=0.6\textwidth]{figfouriers.png}
 \caption{ Magnitude of the Fourier transform of the derivative of the Brune (dark
   blue), the Gaussian (green), the RickerInt (red), and the Ricker (light blue)
   time-functions. Here {\tt freq}=1.5 for the Gaussian and the derivative of the Brune
@@ -819,13 +814,15 @@ and therefore determines how fine the computational grid must be. For practical 
 can be defined as the frequency where the amplitude of the Fourier transform falls below 5 \% of its
 max value. We have
 \begin{equation}\label{eq:upper-power-freq}
-f_{max} \approx \begin{cases}2.5 f_0,&\mbox{Ricker, RickerInt, Gaussian time functions},\\
-  4 f_0,&\quad\mbox{Brune time function}.
+f_{max} \approx \begin{cases}
+2.5 f_0,&\mbox{Ricker, RickerInt, Gaussian time functions},\\
+3.0 f_0,&\mbox{C6SmoothBump time function},\\
+4.0 f_0,&\mbox{Brune time function}.
 \end{cases}
 \end{equation}
 In other words, simulations using the Brune function are harder to resolve on the grid and need much
 more grid points to give reliable results. We remark that the Fourier transform test only makes
-sense for time functions that tend to zero for large times. Functions such as {\tt GaussianInt},
+sense for functions that tend to zero for large times. Functions such as {\tt GaussianInt},
 {\tt Liu}, {\tt Brune}, and {\tt BruneSmoothed} tend towards unity for large times. Their zero
 frequency (DC) component is therefore unbounded. These functions need to be differentiated before
 applying the above test.
@@ -841,13 +838,13 @@ unnecessarily small grid size, because both the execution time and the memory re
 increase with decreasing grid size.%, see Section~\ref{sec:performance}.
 
 The number of grid points per shortest wavelength, $P$, is a normalized measure of how well a
-solution is resolved on the computational grid. Since the shear waves have the lowest velocities and
-a shorter wave length than the compressional waves, the shortest wave length $L_{min}$ can be
-estimated by
+solution is resolved on the computational grid. Since the shear waves and surface waves have
+approximately the same wave length and propagate at approximately the same speed, we can estimate
+the shortest wave length by
 \[
- L_{min} = \dfrac{\min C_s}{f_{max}},
+ L_{min} = \dfrac{\min C_s}{f_{max}}.
 \]
-where $C_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
+Here $C_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
 in the time function $g(t)$. Hence the number of grid points per wave length equals $L_{min}/h$,
 which is given by
 %
@@ -862,7 +859,7 @@ function(s) in the source term(s).
 
 To investigate how fine the grid needs to be to obtain an accurate solution, we consider Lamb's
 problem~\cite{Lamb_1904}. Here, the displacement is driven by a vertical point force acting
-downwards on the surface of a homogeneous half-space. To evaluate the accuracy of the numerical
+downwards on the free surface of a homogeneous half-space. To evaluate the accuracy of the numerical
 solution, we compare it to the analytical solution from Mooney~\cite{Mooney_1974} for the case of a
 Poisson material, i.e., $\mu=\lambda$, or $C_p/C_s=\sqrt{3}$.
 
@@ -873,93 +870,105 @@ kg/m$^3$. The elastic half-space is truncated to the computational domain
 (x,y,z) \in [0,10000] \times [0,10000]\times[0,5000].
 \]
 The source is placed on the free surface in the center point of the horizontal plane:
-$(5000,5000,0)$. The time dependency of the forcing is a ``RickerInt'' (see Figure
-\ref{fig:rickers}) with $\omega=1$ Hz, $t_0=2$ s and magnitude $10^{13}$ N. The above setup is
+$(5000,5000,0)$. The time dependency of the forcing is a ``C6SmoothBump'' (see Figure
+\ref{fig:c6smoothbump}) with $\omega=1$ Hz, $t_0=0$ s and magnitude $10^{13}$ N. The above setup is
 created with the input file shown below, which can be found in {\tt examples/lamb/seismic1.in}
 \begin{verbatim}
 grid nx=151 x=10e3 y=10e3 z=5e3
 time t=5.0
 block vp=1.7320508076e+03 vs=1000 rho=1500
-source type=RickerInt x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=2
+source type=C6SmoothBump x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=0
 rec x=5e3 y=6e3 z=0 file=v1 sacformat=0 usgsformat=1
 \end{verbatim}
+Because the center frequency of the time function is $f_0=1$ Hz and $C_s=1000$ m/s, the dominant
+wave length in the solution is about 1,000 meters. Hence the receiver is located approximately one
+wave length from the source.
 
-The vertical displacement and error at a reciever at ($x=5000$, $y=6000$, $z=0$) is shown in
-Figure~\ref{fig:lambSAC}.
+It is well known that the error in numerical solutions of wave propagation problems is dominated by
+phase errors~\cite{Gustafsson-Kreiss-Oliger}. It is therefore interesting to investigate how the
+accuracy in the numerical solution depends on the distance between the source and receiver. For this
+reason, we expand the above calculation to include a second receiver at distance 10,000 meters from
+the source. This input file is given in {\tt examples/lamb/seismic2.in}. The vertical displacements
+and errors are shown in Figure~\ref{fig:lambSAC}.
 \begin{figure}[ht]
   \begin{center}
-    \includegraphics[width=0.8\textwidth]{lamb-err-p6.eps}
-    \caption{Lamb's problem: Vertical displacement at the reciever $x=5000$, $y=6000$, $z=0$, i.e.,
-      1000 meters from the source. The blue
-      line shows the exact solution and the green line shows the error in the numerical solutions
-      with $h=10000/150$, corresponding to $P=6$ grid points per shortest wave length.}
+    \includegraphics[width=0.9\textwidth]{lamb-err-h66.png}
+    \caption{Lamb's problem: Vertical displacement at 1,000 (blue) and 10,000 (red) meters from the
+      source. The green and light blue lines show the corresponding errors in the
+      numerical solution with $h=200/3$, corresponding to $P=5$ grid points per shortest wave
+      length. The displacement is offset by 1 for the second recording.}
     \label{fig:lambSAC}
   \end{center}
 \end{figure}
+The waveforms are smooth and the problem appears to be well resolved. As expected, the amplitude of
+the exact solution decreases with the distance from the source, and the error in the numerical
+solution increases. This is expected, because the numerical solution accumulates a phase error as it
+propagates through the computational grid.
 
-The waveform is smooth and the problem appears to be well resolved. We present the max-norm of the
-errors in the vertical displacement in Table~\ref{tab:lamb-err}. The center frequency in the RickerInt
-time function is $f_0=1$ Hz. Following (\ref{eq:upper-power-freq}), we estimate the highest
-significant frequency to be $f_{max}=2.5$ Hz. In this case the formula for the number of grid points
-per wave length (\ref{eq:resolutionformula}) becomes 
+We show the errors in the vertical displacement in Table~\ref{tab:lamb-err}. The errors are
+presented in max norm, normalized by the max norm of the exact solution. The
+center frequency in the {\tt C6SmoothBump} time function is $f_0=1$ Hz. Following
+(\ref{eq:upper-power-freq}), we estimate the highest significant frequency to be $f_{max}=3.0$
+Hz. In this case the formula for the number of grid points per wave length
+(\ref{eq:resolutionformula}) becomes
 \[
-P=\frac{1000}{2.5 h} = \frac{nx-1}{25}.
+P=\frac{1000}{3 h}.
 \]
 \begin{table}
 \begin{center}
-\begin{tabular}{| c | c | c | c | }
+\begin{tabular}{| c | c | c | c | c |}
 \hline
-$N_x$ & $h$   & $P$ & $\| u_z - U_z\|_\infty$ \\ \hline
-$101$ & 100   & 4   & $1.792\cdot 10^{-2}$    \\ \hline
-$151$ & 66.67 & 6   & $6.523\cdot 10^{-3}$    \\ \hline
-$201$ & 50    & 8   & $2.609\cdot 10^{-3}$    \\ \hline
-$301$ & 33.33 & 12  & $6.188\cdot 10^{-4}$    \\ \hline
-$401$ & 25    & 16  & $2.047\cdot 10^{-4}$    \\ \hline
+$h$ & $P$  & $\| e_1^{(z)}\|_\infty / \|U_1^{(z)}\|_\infty$  & $\| e_{10}^{(z)}\|_\infty /
+\|U_{10}^{(z)}\|_\infty$ & $N_{GP}$ \\ \hline
+ 200/3 & 5   & $7.17\cdot 10^{-2}$  & $4.31\cdot 10^{-1}$ & $3.0\cdot 10^7$ \\ \hline
+ 50    & 6.7 & $3.44\cdot 10^{-2}$  & $2.43\cdot 10^{-1}$ & $7.3\cdot 10^7$ \\ \hline
+ 100/3 & 10  & $9.31\cdot 10^{-3}$  & $6.99\cdot 10^{-2}$ & $2.4\cdot 10^8$ \\ \hline
+ 25    & 13.3 & $3.25\cdot 10^{-3}$ & $2.42\cdot 10^{-2}$ & $5.8\cdot 10^8$ \\ \hline
 \end{tabular}
-\caption{Max norm errors in the vertical displacement at $x=5000$, $y=6000$, $z=0$.}
+\caption{Relative max norm errors in the vertical displacement at $1,000$ and $10,000$ meters from
+  the source. Note how quickly the number of grid points ($N_{GP}$) increases when the grid is refined.}
 \label{tab:lamb-err}
 \end{center}
 \end{table}
-Since the max norm (amplitude) of the exact solution is $0.1675$, the relative max-norm error for
-$P=6$ is about 3.9 percent, when the receiver is 1000 meters from the source. Since the center
-frequency is $f_0=1$ Hz and $C_s=1000$ m/s, the dominant wave length in the solution is about 1000
-meters.
-
-In Figure~\ref{fig:ppw-err} we plot the max error as function of the number of points per wave
-length.  The ratio between errors for grid size $2h$ and $h$ approaches 16 for the finest grid,
-indicating that the numerical method and the discretization of the point force are fourth order
-accurate.
-\begin{figure}[th]
+The errors are also plotted in Figure~\ref{fig:ppw-err}.  The ratio between the errors for grid sizes
+$2h$ and $h$ approaches 16 for the finest grid, indicating that the numerical method and the
+discretization of the point force are fourth order accurate.
+\begin{figure}[htp]
 \begin{centering}
- \includegraphics[width=0.8\linewidth]{ppw-err.eps}
-  \caption{Error in max norm as function of the number of points per wave length. The black line
-    indicates the asymptotic decay of the error in a fourth order accurate method.}
+  \includegraphics[width=0.8\linewidth]{ppw-err.png}
+  \caption{Error in max norm as function of the number of points per wave length at distance 1,000
+    meters from the source (blue) and 10,000 meters from the source (green). The red and light blue lines
+    indicate the asymptotic decay of the error in a fourth order accurate method.}
   \label{fig:ppw-err}
 \end{centering}
 \end{figure}
-
-It is well known that the error in numerical solutions of wave propagation problems is dominated by
-phase errors~\cite{Gustafsson-Kreiss-Oliger}. To investigate how the accuracy in the numerical
-solution depends on the distance between the source and receiver, we move the receiver in the above
-experiment to $y=15,000$, i.e., 10 times further away from the source.
-
-UPDATE...
-Our experience is that \emph{SW4} gives accurate results for 
+Note that the error is about 7.5 times larger at 10 km, compared to 1 km from the source. From this
+experiment we conclude that the accuracy in \emph{SW4} is acceptable for most seimic purposes when 
 \[
-P \geq ??,
+P \geq 7.
 \]
-but the exact number depends on the distance between the source and the reciever. Note that the
-relation between the fundamental frequency $f_0$ and the upper power frequency $f_{max}$ in
-(\ref{eq:upper-power-freq}) is very important. For other time functions, $f_{max}$ can be estimated
-using the matlab/octave scripts fcnplot and ftfcnplot in the {\tt tools} directory. A lower number
-for $P$ can be used in some practical situations. The best way of checking the accuracy in
-a numerical solution is to repeat the calculation on a finer mesh, even though this approach
-can become computationally expensive. 
+The exact number depends on the distance between the source and the reciever and the required
+accuracy. We remark that the best way of checking the accuracy in a numerical simulation is to
+repeat the calculation on a finer mesh and compare the results. Unfortunately, this approach is
+often too computationally expensive for realistic simulations.
+
+The relation between the fundamental frequency $f_0$ and the upper power
+frequency $f_{max}$ in (\ref{eq:upper-power-freq}) is very important. For the time functions that
+not are listed in that formula, it is possible to estimate
+$f_{max}$ with the help of the matlab/octave scripts fcnplot and ftfcnplot in the {\tt tools}
+directory. 
 
 We finally remark that the ratio between the compressional and shear velocity, $C_p/C_s$, can have a
 significant influence on the accuracy of surface waves, see the paper by Kreiss and
 Petersson~\cite{KrePet-12} for details.
 
+%% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
+%% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
+%% points per wave length. This means that waves with the same frequency can be resolved on a grid that
+%% is coarser both in space and time. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
+%% percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
+%% about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
+%% with approximately twice as high frequency.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{The material model (not documented)} \label{sec:material}
@@ -3288,7 +3297,7 @@ example by reading them into matlab/octave using the script \verb+tools/readimag
 given in Figure~\ref{fig:ux}.
 \begin{figure}
 \begin{center}
-\includegraphics[width=0.65\textwidth]{ux.eps}
+%\includegraphics[width=0.65\textwidth]{ux.eps}
 \caption{Contour plot of the $u^{(x)}$ component of the solution along the plane $x=0.5$. The image
   file was written with the script {\tt gauss-twi-3.in}. The solid black line shows the shape of the
   top surface. The dashed black line indicates the interface between the curvilinear and Cartesian
@@ -3342,7 +3351,7 @@ $h=0.02$. Note that the error converges to zero as ${\cal O}(h^4)$ for $t>1$, i.
 singular point force has stopped acting.
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[width=0.7\textwidth]{lamb-err.eps}
+%\includegraphics[width=0.7\textwidth]{lamb-err.eps}
 \caption{The max norm of the error in the solution of Lamb's problem, as function of time. The blue
 and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 \label{fig:lamb-err}
