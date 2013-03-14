@@ -1,4 +1,4 @@
-function [U, T]=lamb_exact(dt, r)
+function [U, T]=lamb_exact(dt, r, tmax)
 % This function evaluates the exact solution of Lamb's problem, i.e., the motion due to a vertical point
 % force acting downwards on the free surface of a Poisson material ( mu = lambda ).
 % The amplitude of the force is 10^13 N(ewton).
@@ -12,17 +12,21 @@ function [U, T]=lamb_exact(dt, r)
 % The fime function is hard-coded into this routine, currently F(t) = RickerInt(freq=1,t0=2).
 %
 % Syntax:
-% [U T] = lamb_exact(dt, r)
+% [U T] = lamb_exact(dt, r, tmax)
 %
 % Input:
 %   dt: time step in T and U
 %   r: distance between source and receiver (in horizontal plane) [optional, default: r=1000]
+%   tmax: solve up to this time [optional, default: tmax=5]
 % Output:
+
 %   T: vector of time values
 %   U: vector of vertical displacement values
 % 
 
-tmax=5;
+if (nargin < 3)
+  tmax=5;
+end
 
 t3 = 0:dt:tmax+0.5*dt;
 if (nargin < 2)

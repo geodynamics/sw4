@@ -296,12 +296,19 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 // read the input file and setup the simulation object
    if (parseInputFile( a_GlobalSources, a_GlobalTimeSeries ))
      mParsingSuccessful = true;
+
+// AP: need to figure out a better way of handling these error log files
+   // char fname[100];
+   // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
+   // msgStream.open(fname);
+   
 }
 
 // Destructor
 EW::
 ~EW()
 {
+//  msgStream.close();
 }
 
 //-----------------------------------
@@ -628,15 +635,14 @@ bool EW::getDepth( double x, double y, double z, double & depth)
   }
   else
   {
-// topography is not yet implemented
-//
+// topography 
      double zMinTilde;
      int gCurv = mNumberOfGrids - 1;
      double h = mGridSize[gCurv];
      double q = x/h + 1.0;
      double r = y/h + 1.0;
 
-// define the depth for ghost points to equal the depth on the nearest boundary point
+// define the depth for ghost points (in x or y) to equal the depth on the nearest boundary point
      double qMin = 1.0;
      double qMax = (double) m_global_nx[gCurv];
      double rMin = 1.0;

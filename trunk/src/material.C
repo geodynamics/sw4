@@ -115,7 +115,7 @@ void EW::check_materials()
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	  {
 	    CHECK_INPUT( mRho[g](i,j,k) > 0., "Density= " << mRho[g](i,j,k)<< " in grid g= " << g << " at point " 
-			 << " (" << i <<","<<j<<","<<k<<") ");
+			  << " (" << i <<","<<j<<","<<k<<") ");
 	  }
   }
    
@@ -127,7 +127,7 @@ void EW::check_materials()
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	  {
 	    CHECK_INPUT( mMu[g](i,j,k) >= 0., "mu= " << mMu[g](i,j,k)<< " in grid g= " << g << " at point " 
-			 << " (" << i <<","<<j<<","<<k<<") ");
+			  << " (" << i <<","<<j<<","<<k<<") ");
 	  }
   }
   if( mins[4] <= 0.0 )
@@ -143,7 +143,7 @@ void EW::check_materials()
   }
 
    CHECK_INPUT(mins[0] > 0.0,
-           "Error: the material data has density values less than or equal to zero.");
+		"Error: the material data has density values less than or equal to zero.");
    CHECK_INPUT(mins[1] > 0.0,
            "Error: the material data has p velocities that are less than or equal to zero.");
    CHECK_INPUT(mins[3] >= 0.0,
@@ -414,13 +414,19 @@ void EW::extrapolateInZ(Sarray& field, bool useThreshold, double thresHoldValue,
 
   int i, j, k;
   double extField;
+
+// tmp
+  if (proc_zero())
+  {
+    printf("extrapolateInZ: m_kb=%i, m_ghost_points=%i\n", field.m_kb, m_ghost_points);
+  }
   
 // only extrapolate on the "low-k" side  
   for( j = field.m_jb; j <= field.m_je; j++ )
     for( i = field.m_ib; i <= field.m_ie ; i++ )
       for( k = field.m_kb + m_ghost_points-1 ; k >= field.m_kb; k-- )
       {
-	if (linear && 2.*field(i,j,k+1) > field(i,j,k+2)) // check if extrapolation will lead to a negative value
+	if (linear && 2.*field(i,j,k+1) > field(i,j,k+2)) // check if linear extrapolation will lead to a positive value
 	{
 	  extField = 2.*field(i,j,k+1)-field(i,j,k+2);
 	}
@@ -467,6 +473,9 @@ void EW::extrapolateInXY( vector<Sarray>& field )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 		  if( field[g](i,j,k) == -1 )
 		     field[g](i,j,k) = field[g](i,m_jEndInt[g],k);
+
+// corners not necessary to treat explicitly???
+      
    }
 }
 

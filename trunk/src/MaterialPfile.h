@@ -37,17 +37,16 @@ class MaterialPfile : public MaterialData
   //  void getMinMaxBoundsZ(double& zmin, double& zmax);
    
  protected:
-  inline bool inside( double lat, double lon, double z )
+  inline bool inside( double lat, double lon, double depth )
   {
     return m_latmin <= lat && lat <= m_latmax && m_lonmin <= lon && lon <= m_lonmax 
-      && m_zmin <= z && z <= m_zmax;
-       //      && m_elevmin <= elev && elev <= m_elevmax;
+      && m_depthmin <= depth && depth <= m_depthmax;
   }
-  inline bool inside_cart( double x, double y, double z )
+
+  inline bool inside_cart( double x, double y, double depth )
   {
     return m_xmin <= x && x <= m_xmax && m_ymin <= y && y <= m_ymax 
-      && m_zmin <= z && z <= m_zmax;
-    //      && m_elevmin <= elev && elev <= m_elevmax;
+      && m_depthmin <= depth && depth <= m_depthmax;
   }
 
    void read_pfile( );
@@ -71,8 +70,8 @@ class MaterialPfile : public MaterialData
    bool m_qf;
    bool m_flatten;
 
-   double m_latmin, m_latmax, m_lonmin, m_lonmax, m_elevmin, m_elevmax;
-   double m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax;
-   bool m_coords_geographic, m_absoluteDepth;
+   double m_latmin, m_latmax, m_lonmin, m_lonmax, m_depthmin, m_depthmax;
+   double m_xmin, m_xmax, m_ymin, m_ymax;
+   bool m_coords_geographic;
 };
 #endif

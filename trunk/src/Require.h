@@ -31,6 +31,10 @@
 #undef CHECK_INPUT
 #endif
 
+#ifdef CHECK_INPUT2
+#undef CHECK_INPUT2
+#endif
+
 // This macro is used both for optimized and non-optimized code
 #define CHECK_INPUT(x, msg) \
 if (!(x)) { \
@@ -38,6 +42,11 @@ if (!(x)) { \
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank); \
   std::cout << "Fatal input error: " << msg << std::endl;	\
   MPI_Abort( MPI_COMM_WORLD, 1 );\
+}
+
+#define CHECK_INPUT2(x, msg, fp)			\
+if (!(x)) { \
+  fp << "Fatal input error: " << msg << std::endl;	\
 }
 
 // these macros are also used both for optimized and non-optimized code

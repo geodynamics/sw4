@@ -33,12 +33,9 @@ MaterialPfile::MaterialPfile( EW * a_ew,
    m_vsmin(vsmin),
    m_rhomin(rhomin),
    m_flatten(flatten),
-   m_absoluteDepth(false),
    m_coords_geographic(coords_geographic)
 {
    read_pfile();
-   m_elevmin = -m_zmax;
-   m_elevmax = -m_zmin;
 
    mCoversAllPoints = false;
    if( m_coords_geographic )
@@ -56,8 +53,8 @@ MaterialPfile::MaterialPfile( EW * a_ew,
    double bbox[6];
    mEW->getGlobalBoundingBox( bbox );
 
-   if (m_xmin > bbox[0] || m_ymin > bbox[2] || m_zmin > bbox[4] ||
-       m_xmax < bbox[1] || m_ymax < bbox[3] || m_zmax < bbox[5])
+   if (m_xmin > bbox[0] || m_ymin > bbox[2] || m_depthmin > bbox[4] ||
+       m_xmax < bbox[1] || m_ymax < bbox[3] || m_depthmax < bbox[5])
    {
       mCoversAllPoints = false;
 //      cout << "This block does NOT cover all grid points" << endl;
@@ -95,11 +92,11 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
   double vp,vs,density,qup,qus,zsed,zmoho;
   bool foundcrust;
   
-  int g, topLevel = mEW->mNumberOfGrids-1;
+  int g, kLow, topLevel = mEW->mNumberOfGrids-1;
 // first deal with the Cartesian grids
   for (g = 0; g < mEW->mNumberOfCartesianGrids; g++)
   {
-    int kLow=mEW->m_kStart[g];
+    kLow=mEW->m_kStart[g];
     if (g == topLevel) // no topography, so k=1 is at the top surface
     {
       kLow = 1;
@@ -116,10 +113,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
                   
 		mEW->computeGeographicCoord( x, y, lon, lat );
-                if( m_absoluteDepth )
-		   depth = z;
-		else
-		   mEW->getDepth(x,y,z,depth);
+		mEW->getDepth(x,y,z,depth);
 
 		if( inside( lat, lon, depth )  )
 		{
@@ -144,11 +138,11 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		  if (mEW->getVerbosity() > 2)
 		  {
 		    printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
-			   "with (x,y,z)=(%e,%e,%e) and lat=%e, lon=%e, elev=%e\n"
-			   "is outside the pfile domain: %e<= lat <= %e, %e <= lon <= %e, %e <= elev <= %e\n", 
+			   "with (x,y,z)=(%e,%e,%e) and lat=%e, lon=%e, depth=%e\n"
+			   "is outside the pfile domain: %e<= lat <= %e, %e <= lon <= %e, %e <= depth <= %e\n", 
 			   i, j, k, g, 
-			   x, y, z, lat, lon, -depth, 
-			   m_latmin, m_latmax, m_lonmin, m_lonmax, m_elevmin, m_elevmax);
+			   x, y, z, lat, lon, depth, 
+			   m_latmin, m_latmax, m_lonmin, m_lonmax, m_depthmin, m_depthmax);
 		  }
 		  outside++;
 		}
@@ -158,14 +152,17 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
     else
     {
        // Cartesian p-file
-       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k)
+       for (int k = kLow; k <= mEW->m_kEnd[g]; ++k)
 	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
 	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
 	     {
 		x = (i-1)*mEW->mGridSize[g];
 		y = (j-1)*mEW->mGridSize[g];
 		z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
-		if( inside_cart( x, y, z )  )
+
+		mEW->getDepth(x,y,z,depth);
+
+		if( inside_cart( x, y, depth )  )
 		{
 		   //---------------------------------------------------------
 		   // Query the location...
@@ -206,9 +203,13 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
   {
     g = mEW->mNumberOfGrids-1;
 
+// the curvilinear grid is always on top
+    kLow = 1;
+
     if( m_coords_geographic )
     {
-       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
+//       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) 
+       for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
 	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
 	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
 	     {
@@ -217,13 +218,9 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		z = mEW->mZ(i,j,k);
 
 		mEW->computeGeographicCoord( x, y, lon, lat );
-                if( m_absoluteDepth )
-		   depth = z;
-		else
-		   mEW->getDepth(x,y,z,depth);
+		depth = z - mEW->mZ(i,j,1);
 
-
-		if( inside( lat, lon, depth )  ) // elev = -depth
+		if( inside( lat, lon, depth )  )
 		{
 		   //---------------------------------------------------------
 		   // Query the location...
@@ -246,11 +243,11 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		  if (mEW->getVerbosity() > 2)
 		  {
 		    printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
-			   "with (x,y,z)=(%e,%e,%e) and lat=%e, lon=%e, elev=%e\n"
-			   "is outside the pfile domain: %e<= lat <= %e, %e <= lon <= %e, %e <= elev <= %e\n", 
+			   "with (x,y,z)=(%e,%e,%e) and lat=%e, lon=%e, depth=%e\n"
+			   "is outside the pfile domain: %e<= lat <= %e, %e <= lon <= %e, %e <= depth <= %e\n", 
 			   i, j, k, g, 
-			   x, y, z, lat, lon, -depth, 
-			   m_latmin, m_latmax, m_lonmin, m_lonmax, m_elevmin, m_elevmax);
+			   x, y, z, lat, lon, depth, 
+			   m_latmin, m_latmax, m_lonmin, m_lonmax, m_depthmin, m_depthmax);
 		  }
 		   outside++;
 		}
@@ -259,14 +256,16 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
     }
     else
     {
-       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
+//       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
+       for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
 	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
 	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
 	     {
 		x = mEW->mX(i,j,k);
 		y = mEW->mY(i,j,k);
 		z = mEW->mZ(i,j,k);
-		if( inside_cart( x, y, z )  ) // elev = -depth
+		depth = z - mEW->mZ(i,j,1);
+		if( inside_cart( x, y, depth )  ) 
 		{
 		   //---------------------------------------------------------
 		   // Query the location...
@@ -375,10 +374,10 @@ void MaterialPfile::read_pfile( )
    m_nmaxdepth = atoi(tok);
    tok = strtok(NULL," \t");
    CHECK_INPUT( tok != NULL, "Error on line 5 in pfile header, no min value\n");
-   m_zmin = atof(tok);
+   m_depthmin = atof(tok);
    tok = strtok(NULL," \t");
    CHECK_INPUT( tok != NULL, "Error on line 5 in pfile header, no max value\n");
-   m_zmax = atof(tok);
+   m_depthmax = atof(tok);
 
    // Line 6
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 6 in pfile header not found\n");
@@ -413,8 +412,8 @@ void MaterialPfile::read_pfile( )
    double km = 1000;
    if( m_coords_geographic )
    {
-      m_zmin = m_zmin*km;
-      m_zmax = m_zmax*km;
+      m_depthmin = m_depthmin*km;
+      m_depthmax = m_depthmax*km;
    }
    else
    {
@@ -447,7 +446,7 @@ void MaterialPfile::read_pfile( )
 	cout << "Min Lon: " << m_lonmin << " Max Lon: " << m_lonmax << endl;
      }
      cout << "Number of depth points: " << m_nmaxdepth << endl;
-     cout << "Min depth: " << m_zmin << " Max depth: " << m_zmax << endl;
+     cout << "Min depth: " << m_depthmin << " Max depth: " << m_depthmax << endl;
      cout << "Optional indices: Sediment: " << m_ksed << " MoHo: " << m_kmoho << " 410: " << m_k410 << " 660: " << m_k660 << endl;
      cout << "Attenuation Q-factors available: " << (m_qf? "yes":"no") << endl;
    }
@@ -721,10 +720,7 @@ void MaterialPfile::read_pfile( )
 //     double lon, lat, depth;
      
 //     mEW->computeGeographicCoord( x, y, lon, lat );
-//     if( m_absoluteDepth )
-//       depth = z;
-//     else
-//       mEW->getDepth(x,y,z,depth);
+//     mEW->getDepth(x,y,z,depth);
 
 //     if( inside( lat, lon, depth )  )
 //     {

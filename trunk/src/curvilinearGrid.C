@@ -448,8 +448,13 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
   s = 0.;
 
   if (!topographyExists())
+  {
+    if (mVerbose >= 3)
+      printf("invert_curvilinear_mapping returning false because there is no curvilinear mapping!\n");
+    
     return false;
-
+  }
+  
 // compute index interval based on (q,r)
   int iNear, jNear, kNear, g, i, j, k;
 
@@ -488,7 +493,13 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
     if (smackOnTop)
     {
       if (!point_in_proc(iNear,jNear,gCurv))
+      {
+	if (mVerbose >= 3)
+	  printf("invert_curvilinear_mapping returning false because iNear=%i, jNear=%i does not live on this proc!\n", iNear, jNear);
+	
         return false;
+      }
+      
       tau = mTopoGrid(iNear,jNear,1);
     }
     else
@@ -546,6 +557,9 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
       }
       else
       {
+	if (mVerbose >= 3)
+	  printf("invert_curvilinear_mapping returning false from bi-lin interpolation\n"
+		 "not all points around i=%i and j=%i are on this proc!\n", i, j);
 	return false;
       }
       

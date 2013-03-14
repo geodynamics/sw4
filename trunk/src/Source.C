@@ -746,6 +746,7 @@ void Source::getmetdwgh7( double ai, double wgh[7] ) const
 //-----------------------------------------------------------------------
 void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources ) const
 {
+// note that this routine is called from all processors, for each input source 
    int i,j,k,g;
    a_EW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
    double q, r, s;
@@ -756,6 +757,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    if( g == a_EW->mNumberOfGrids-1 && a_EW->topographyExists() )
    {
 // Curvilinear
+// Problem when the curvilinear mapping is NOT analytic:
+// This routine can only compute the 's' coordinate if (mX0, mY0) is owned by this processor
       canBeInverted = a_EW->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
 // if s < 0, the source is located above the grid and the call to
 // find_curvilinear_derivatives_at_point will fail
@@ -780,6 +783,9 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       canBeInverted = true;
       curvilinear   = false;
    }
+
+// canBeInverted=false if this point is in the curvilinear grid, but not on this processor!
+// The following verify statement is not used in WPP (see wpp/src/Source.C)
    VERIFY2( canBeInverted, "ERROR: set_gridpoint_sources4, could not invert curvilinear mapping"   )
 
    int Ni = a_EW->m_global_nx[g];
@@ -903,7 +909,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	    {
 	       double wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
 	       if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-		   && a_EW->interior_point_in_proc(i,j,g) )
+		   && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
 	       {
                   if( curvilinear )
 		     wF /= a_EW->mJ(i,j,k);
@@ -945,7 +951,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 		  }
 	       }
 	    }
-   }
+   } // end if !momentTensorSource, i.e., point force   
    else
    {
       double qX0[3], rX0[3], sX0[3];
@@ -954,7 +960,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 //  1.Find out which processor owns the source location. Only that processor can compute
 	 //    the metric at the source. 
          int owner = -1;
-	 if( a_EW->interior_point_in_proc( ic, jc, g ) )
+	 if( a_EW->interior_point_in_proc( ic, jc, g ) ) // this test should have been done above
 	    MPI_Comm_rank(MPI_COMM_WORLD, &owner );
          int owntmp = owner;
          MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
@@ -964,11 +970,11 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 // Derivative of metric wrt. source position. Not yet fully implemented.
 	 double zqdx0,zqdy0,zqsz0,zrdx0,zrdy0,zrdz0;
 
-	 if( a_EW->interior_point_in_proc( ic, jc, g ) )
+	 if( a_EW->interior_point_in_proc( ic, jc, g ) ) // checking if (ic, jc) is interior to this processor
 	 {
 	    // 2. Recompute metric to sixth order accuracy. Increased accuracy needed because
 	    //    of the multiplication with a singular (Dirac) function.
-	    //    compute only in owning processor
+	    //    compute only in the processor where the point is interior
 
             bool eightptstencil = true;
 	 // redefine ai,bi,ci, old def not needed below

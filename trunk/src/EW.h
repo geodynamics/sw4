@@ -540,6 +540,7 @@ int m_opttest;
 vector<MaterialProperty*> m_materials;
 MPI_Comm m_cartesian_communicator;
 
+ofstream msgStream;
 
 private:
 
