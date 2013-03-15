@@ -974,7 +974,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 zr = zder[1];
 	 zs = zder[2];
 	 
-	 cout << "zq = " << zq << " zr = " << zr << " zs = " << zs << endl;
+	 //	 cout << "zq = " << zq << " zr = " << zr << " zs = " << zs << endl;
 	 //	 if( owntmp != -1 )
 	 //	    cout << " *" ;
 	 //	 cout << endl;
@@ -1686,6 +1686,7 @@ void Source::compute_metric_at_source( EW* a_EW, double q, double r, double s, i
       //		  zr += a6cofi[i-(ic-3)]*d6cofj[j-(jc-3)]*a6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
       //		zs += a6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*d6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
       //		  }
-      cout << " zpar at source = " << (s-1)/(zetaBreak*(Nz-1)) << endl;
+
+      //      cout << " zpar at source = " << (s-1)/(zetaBreak*(Nz-1)) << endl;
    }
 }
