@@ -266,6 +266,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      }      
 // // 3. Figure out the number of grid points in the vertical direction and allocate solution arrays on the curvilinear grid
      allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
+     extend_topogrid();
   }
   else
   {

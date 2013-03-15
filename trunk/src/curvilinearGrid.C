@@ -314,9 +314,9 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 
     if (smackOnTop)
     {
-      if (!point_in_proc(iNear,jNear,gCurv))
+      if (!point_in_proc_ext(iNear,jNear,gCurv))
         return false;
-      tau = mTopoGrid(iNear,jNear,1);
+      tau = mTopoGridExt(iNear,jNear,1);
     }
     else
     {
@@ -350,8 +350,8 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 //       }
 //      else if ( ( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
 //	     point_in_proc(i+1,j+1,gCurv) ) )
-      if ( ( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
-	     point_in_proc(i+1,j+1,gCurv) ) )
+      if ( ( point_in_proc_ext(i,j,gCurv)   && point_in_proc_ext(i+1,j,gCurv) && 
+	     point_in_proc_ext(i,j+1,gCurv) && point_in_proc_ext(i+1,j+1,gCurv) ) )
       {
 // linear interpolation to define topography between grid points
 	double Qi, Qip1, Rj, Rjp1;
@@ -359,8 +359,8 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 	Qip1 = (q - i);
 	Rj = (j+1 - r);
 	Rjp1 = (r - j);
-	tau = mTopoGrid(i,j,1)*Rj*Qi + mTopoGrid(i,j+1,1)*Rjp1*Qi + mTopoGrid(i+1,j,1)*Rj*Qip1 + 
-	  mTopoGrid(i+1,j+1,1)*Rjp1*Qip1;  
+	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi + mTopoGridExt(i+1,j,1)*Rj*Qip1 + 
+	  mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;  
       }
       else
       {
@@ -492,15 +492,14 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 
     if (smackOnTop)
     {
-      if (!point_in_proc(iNear,jNear,gCurv))
+      if (!point_in_proc_ext(iNear,jNear,gCurv))
       {
 	if (mVerbose >= 3)
 	  printf("invert_curvilinear_mapping returning false because iNear=%i, jNear=%i does not live on this proc!\n", iNear, jNear);
 	
         return false;
       }
-      
-      tau = mTopoGrid(iNear,jNear,1);
+      tau = mTopoGridExt(iNear,jNear,1);
     }
     else
     {
@@ -542,16 +541,16 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 //       }
 //      else if ( ( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
 //		  point_in_proc(i+1,j+1,gCurv) ) )
-      if ( ( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
-	     point_in_proc(i+1,j+1,gCurv) ) )
+      if ( ( point_in_proc_ext(i,j,gCurv)   && point_in_proc_ext(i+1,j,gCurv) && 
+	     point_in_proc_ext(i,j+1,gCurv) && point_in_proc_ext(i+1,j+1,gCurv) ) )
       {	
 // use linear interpolation if there are not enough points for the bi-cubic formula
 	Qi = (i+1 - q);
 	Qip1 = (q - i);
 	Rj = (j+1 - r);
 	Rjp1 = (r - j);
-	tau = mTopoGrid(i,j,1)*Rj*Qi + mTopoGrid(i,j+1,1)*Rjp1*Qi + mTopoGrid(i+1,j,1)*Rj*Qip1 + 
-	  mTopoGrid(i+1,j+1,1)*Rjp1*Qip1;  
+	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi + mTopoGridExt(i+1,j,1)*Rj*Qip1 + 
+	  mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;  
 // tmp
 //	printf("invert_curvilinear_mapping: q=%e, r=%e, Linear tau=%e\n", q, r, tau);
       }
@@ -956,5 +955,18 @@ void EW::metric_derivatives_test()
 	 cout << " " << li[c] << " " << l2[c] << endl;
       cout << "Error in Jacobian, max norm and L2 norm \n";
       cout << " " << li[4] << " " << l2[4] << endl;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::extend_topogrid()
+{
+   if( topographyExists() )
+   {
+      int gTop = mNumberOfGrids-1;
+      for (int j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+	 for (int i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+	    mTopoGridExt(i,j,1) = mTopoGrid(i,j,1);
+      communicate_array_2d_ext( mTopoGridExt );
    }
 }

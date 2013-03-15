@@ -99,6 +99,8 @@ public:
  private:
   Source();
 
+  void compute_metric_at_source( EW* a_EW, double q, double r, double s, int ic, int jc, int kc,
+				 int g, double& zq, double& zr, double& zs ) const;
   int spline_interpolation( );
   void getsourcewgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcedwgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;

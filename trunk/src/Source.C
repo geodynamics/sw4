@@ -784,124 +784,107 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       curvilinear   = false;
    }
 
-// canBeInverted=false if this point is in the curvilinear grid, but not on this processor!
-// The following verify statement is not used in WPP (see wpp/src/Source.C)
-   VERIFY2( canBeInverted, "ERROR: set_gridpoint_sources4, could not invert curvilinear mapping"   )
-
    int Ni = a_EW->m_global_nx[g];
    int Nj = a_EW->m_global_ny[g];
    int Nz = a_EW->m_global_nz[g];
 
-   int ic = static_cast<int>(floor(q));
-   int jc = static_cast<int>(floor(r));
-   int kc = static_cast<int>(floor(s));
+   int ic, jc, kc;
+   bool upperbndry, lowerbndry, ccbndry;
+   double ai, bi, ci;
+
+// Delta distribution
+   double wghi[6], wghj[6], wghk[6], wghix[6], wghjy[6], wghkz[6];
+   double wghixx[6], wghjyy[6], wghkzz[6];
+// Delta' distribution
+   double dwghi[6], dwghj[6], dwghk[6], dwghix[6], dwghjy[6], dwghkz[6];
+   double dwghixx[6], dwghjyy[6], dwghkzz[6];
+
+
+   if( canBeInverted )
+   {
+ // Compute source location and weights in source discretization
+      ic = static_cast<int>(floor(q));
+      jc = static_cast<int>(floor(r));
+      kc = static_cast<int>(floor(s));
 
 // Bias stencil away from boundary, no source at ghost/padding points
-   if( ic <= 2 )    ic = 3;
-   if( ic >= Ni-2 ) ic = Ni-3;
-   if( jc <= 2 )    jc = 3;
-   if( jc >= Nj-2 ) jc = Nj-3;
+      if( ic <= 2 )    ic = 3;
+      if( ic >= Ni-2 ) ic = Ni-3;
+      if( jc <= 2 )    jc = 3;
+      if( jc >= Nj-2 ) jc = Nj-3;
 
 // Six point stencil, with points, kc-2,..kc+3, Interior in domain
 // if kc-2>=1, kc+3 <= Nz --> kc >= 3 and kc <= Nz-3
 // Can evaluate with two ghost points if kc-2>=-1 and kc+3 <= Nz+2
 //  --->  kc >=1 and kc <= Nz-1
 //
-   if( kc >= Nz )
-      kc = Nz-1;
-   if( kc < 1 )
-      kc = 1;
+      if( kc >= Nz )
+	 kc = Nz-1;
+      if( kc < 1 )
+	 kc = 1;
 
 // upper(surface) and lower boundaries , when the six point stencil kc-2,..kc+3
 // make use of the first (k=1) or the last (k=Nz) interior point.
-   bool upperbndry = (kc == 1    || kc == 2    || kc == 3  );
-   bool lowerbndry = (kc == Nz-1 || kc == Nz-2 || kc == Nz-3 );
+      upperbndry = (kc == 1    || kc == 2    || kc == 3  );
+      lowerbndry = (kc == Nz-1 || kc == Nz-2 || kc == Nz-3 );
 
 // ccbndry=true if at the interface between the curvilinear grid and the cartesian grid. 
 // Defined as the six point stencil uses values from both grids.
-   bool ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
-						 (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
+      ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
+					       (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
 // If not at the interface between curvilinear and Cartesian grids, bias stencil away 
 // from the boundary.
-   if( !ccbndry )
-   {
-      if( kc <= 2 )    kc = 3;
-      if( kc >= Nz-2 ) kc = Nz-3;
-   }
-   double ai=q-ic, bi=r-jc, ci=s-kc;
+      if( !ccbndry )
+      {
+	 if( kc <= 2 )    kc = 3;
+	 if( kc >= Nz-2 ) kc = Nz-3;
+      }
+      ai=q-ic, bi=r-jc, ci=s-kc;
 
-// Delta distribution
-   double wghi[6], wghj[6], wghk[6], wghix[6], wghjy[6], wghkz[6];
-   double wghixx[6], wghjyy[6], wghkzz[6];
-   getsourcewgh( ai, wghi, wghix, wghixx );
-   getsourcewgh( bi, wghj, wghjy, wghjyy );
-   getsourcewgh( ci, wghk, wghkz, wghkzz );
+   // Delta distribution
+      getsourcewgh( ai, wghi, wghix, wghixx );
+      getsourcewgh( bi, wghj, wghjy, wghjyy );
+      getsourcewgh( ci, wghk, wghkz, wghkzz );
 
 // Delta' distribution
-   double dwghi[6], dwghj[6], dwghk[6], dwghix[6], dwghjy[6], dwghkz[6];
-   double dwghixx[6], dwghjyy[6], dwghkzz[6];
-   getsourcedwgh( ai, dwghi, dwghix, dwghixx );
-   getsourcedwgh( bi, dwghj, dwghjy, dwghjyy );
-   getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
+      getsourcedwgh( ai, dwghi, dwghix, dwghixx );
+      getsourcedwgh( bi, dwghj, dwghjy, dwghjyy );
+      getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
 
    // Special boundary stencil at free surface
-   if( !ccbndry && (kc == 3 && ci <= 0) )
-   {
-      getsourcewghlow( ci, wghk, wghkz, wghkzz );
-      getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
-   }
+      if( !ccbndry && (kc == 3 && ci <= 0) )
+      {
+	 getsourcewghlow( ci, wghk, wghkz, wghkzz );
+	 getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
+      }
 
 // Boundary correction, at upper boundary, but only if SBP operators are used there
-   if( (g == a_EW->mNumberOfGrids-1) && a_EW->is_onesided(g,4)  )
-   {
-      for( int k=0 ; k <= 5 ; k++ )
+      if( (g == a_EW->mNumberOfGrids-1) && a_EW->is_onesided(g,4)  )
       {
-      //      if( ( 1 <= k+ic-2) && ( k+ic-2 <= 4 ) )
-      //      {
-      //         wghi[k]  /= normwgh[k+ic-3];
-      //         dwghi[k] /= normwgh[k+ic-3];
-      //      }
-      //      if( ( Ni-3 <= k+ic-2) && ( k+ic-2 <= Ni ) )
-      //      {
-      //         wghi[k]  /= normwgh[Ni-k-ic+2];
-      //         dwghi[k] /= normwgh[Ni-k-ic+2];
-      //      }
-      //      if( ( 1 <= k+jc-2) && ( k+jc-2 <= 4 ) )
-      //      {
-      //         wghj[k]  /= normwgh[k+jc-3];
-      //         dwghj[k] /= normwgh[k+jc-3];
-      //      }
-      //      if( ( Nj-3 <= k+jc-2) && ( k+jc-2 <= Nj ) )
-      //      {
-      //         wghj[k]  /= normwgh[Nj-k-jc+2];
-      //         dwghj[k] /= normwgh[Nj-k-jc+2];
-      //      }
-
-	 // tmp
-	 if( ( 1 <= k+kc-2) && ( k+kc-2 <= 4 ) )
+	 for( int k=0 ; k <= 5 ; k++ )
 	 {
-	    wghk[k]    /= normwgh[k+kc-3];
-	    dwghk[k]   /= normwgh[k+kc-3];
-	    wghkz[k]   /= normwgh[k+kc-3];
-	    dwghkz[k]  /= normwgh[k+kc-3];
-	    wghkzz[k]  /= normwgh[k+kc-3];
-	    dwghkzz[k] /= normwgh[k+kc-3];
+	    if( ( 1 <= k+kc-2) && ( k+kc-2 <= 4 ) )
+	    {
+	       wghk[k]    /= normwgh[k+kc-3];
+	       dwghk[k]   /= normwgh[k+kc-3];
+	       wghkz[k]   /= normwgh[k+kc-3];
+	       dwghkz[k]  /= normwgh[k+kc-3];
+	       wghkzz[k]  /= normwgh[k+kc-3];
+	       dwghkzz[k] /= normwgh[k+kc-3];
+	    }
 	 }
-
-
-      // No source at bottom
-      //      if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
-      //      {
-      //         wghk[k]  /= normwgh[Nz-k-kc+2];
-      //         dwghk[k] /= normwgh[Nz-k-kc+2];
-      //         wghkz[k] /= normwgh[Nz-k-kc+2];
-      //         dwghkz[k] /= normwgh[Nz-k-kc+2];
-      //         wghkzz[k] /= normwgh[Nz-k-kc+2];
-      //         dwghkzz[k] /= normwgh[Nz-k-kc+2];
-      //      }
       }
    }
-   if( !mIsMomentSource )
+   //   int myid;
+   //   MPI_Comm_rank(MPI_COMM_WORLD, &myid );
+   //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
+   //   if( canBeInverted )
+   //      cout << " can be inverted";
+   //   else
+   //      cout << " can not be inverted";
+
+   // Point source. NOTE: Derivatives needed for source inversion not implemented for this case.
+   if( !mIsMomentSource && canBeInverted )
    {
       for( int k=kc-2 ; k <= kc+3 ; k++ )
 	 for( int j=jc-2 ; j <= jc+3 ; j++ )
@@ -911,7 +894,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	       if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
 		   && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
 	       {
-                  if( curvilinear )
+		  if( curvilinear )
 		     wF /= a_EW->mJ(i,j,k);
 		  else
 		     wF /= h*h*h;
@@ -925,7 +908,6 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 								      mPar, mNpar, mIpar, mNipar );
 		     point_sources.push_back(sourcePtr);
 		  }
-
 		  if( k <= 1 && ccbndry && upperbndry )
 		  {
 		     int Nzp =a_EW->m_global_nz[g+1];
@@ -938,187 +920,64 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 								      mPar, mNpar, mIpar, mNipar );
 		     point_sources.push_back(sourcePtr);
 		  }
-
 		  if( k >= Nz && ccbndry && lowerbndry )
 		  {
 		     int kk = k-Nz + 1;
 		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
-								      i,j,kk,g-1,
-								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
-								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
+									  i,j,kk,g-1,
+									  wF*mForces[0], wF*mForces[1], wF*mForces[2],
+									  mTimeDependence, mNcyc, 
+									  mPar, mNpar, mIpar, mNipar );
 		     point_sources.push_back(sourcePtr);
 		  }
 	       }
 	    }
-   } // end if !momentTensorSource, i.e., point force   
-   else
+   } 
+   // Moment source.
+   else if( mIsMomentSource )
    {
       double qX0[3], rX0[3], sX0[3];
-      if( curvilinear && kc <= Nz-3 ) 
+      if( !curvilinear )
       {
-	 //  1.Find out which processor owns the source location. Only that processor can compute
-	 //    the metric at the source. 
-         int owner = -1;
-	 if( a_EW->interior_point_in_proc( ic, jc, g ) ) // this test should have been done above
-	    MPI_Comm_rank(MPI_COMM_WORLD, &owner );
-         int owntmp = owner;
-         MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-
-         double zder[3], zq, zr, zs;
-
-	 // Derivative of metric wrt. source position. Not yet fully implemented.
-	 double zqdx0,zqdy0,zqsz0,zrdx0,zrdy0,zrdz0;
-
-	 if( a_EW->interior_point_in_proc( ic, jc, g ) ) // checking if (ic, jc) is interior to this processor
+	 // Cartesian case, constant metric
+	 qX0[0] = 1/h;qX0[1]=0;  qX0[2]=0;
+	 rX0[0] = 0;  rX0[1]=1/h;rX0[2]=0;
+	 sX0[0] = 0;  sX0[1]=0;  sX0[2]=1/h;
+      }	 
+      else
+      {
+	 // Compute the curvilinear metric in the processor that owns the source.
+	 //   (ic, jc are undefined if canBeInverted is false.)
+	 double zdertmp[3]={0,0,0}, zq, zr, zs;
+	 if( a_EW->interior_point_in_proc(ic,jc,g) && canBeInverted )
 	 {
-	    // 2. Recompute metric to sixth order accuracy. Increased accuracy needed because
-	    //    of the multiplication with a singular (Dirac) function.
-	    //    compute only in the processor where the point is interior
-
-            bool eightptstencil = true;
-	 // redefine ai,bi,ci, old def not needed below
-	    ai=q-ic;
-	    bi=r-jc;
-	    ci=s-kc;
-
-	    double d6cofi[8], d6cofj[8], d6cofk[8];
-            if( eightptstencil )
-	    {
-	       // Eight point stencil, smooth wrt. source position, 
-	       // needed for source optimization
-   	       getmetdwgh( ai, d6cofi );
-	       getmetdwgh( bi, d6cofj );
-	       if( kc <= 3 && ci < 0 )
-	       {
-		  getmetdwgh7( ci, d6cofk );
-		  d6cofk[7] = 0;
-	       }
-	       else
-		  getmetdwgh( ci, d6cofk );
-	    }
-	    else
-	    {
-	    // Seven point stencil, ok for forward solver.
-	       getmetdwgh7( ai, d6cofi );
-	       d6cofi[7] = 0;
-	       getmetdwgh7( bi, d6cofj );
-	       d6cofj[7] = 0;
-	       getmetdwgh7( ci, d6cofk );
-	       d6cofk[7] = 0;
-	    }
-
-	    double a6cofi[8], a6cofj[8], a6cofk[8];
-            if( eightptstencil )
-	    {
-	       getmetwgh( ai, a6cofi );
-	       getmetwgh( bi, a6cofj );
-	       if( kc <= 3 && ci < 0 )
-	       {
-		  getmetwgh7( ci, a6cofk );
-		  a6cofk[7] = 0;
-	       }
-	       else
-		  getmetwgh( ci, a6cofk );
-	    }
-	    else
-	    {
-	       getmetwgh7( ai, a6cofi );
-	       a6cofi[7] = 0;
-	       getmetwgh7( bi, a6cofj );
-	       a6cofj[7] = 0;
-	       getmetwgh7( ci, a6cofk );
-	       a6cofk[7] = 0;
-	    }
-
-	    // Assume grid uniform in x and y, compute metric with z=z(q,r,s)
-	    zq = zr = zs = 0;
-            int order;
-	    double zetaBreak;
-            a_EW->get_gridgen_info( order, zetaBreak );
-	    double zpar = (s-1)/(zetaBreak*(Nz-1));
-            double kBreak = 1 + zetaBreak*(Nz-1);
-	    if( zpar >= 1 )
-	    {
-	       zq = 0;
-	       zr = 0;
-	       //	       zqdx0 = 0;
-	       //	       zqdy0 = 0;
-	       //	       zrdx0 = 0;
-	       //	       zrdy0 = 0;
-	       //               zqdz0 = 1/h;
-	       //	       zrdz0 = 1/h;
-	    }
-	    else 
-	    {
-	       double tauq=0, taur=0;
-               double tauqdx0=0, tauqdy0=0, taurdx0=0, taurdy0=0;
-	       for( int j=jc-3; j <= jc+4 ; j++ )
-		  for( int i=ic-3; i <= ic+4 ; i++ )
-		  {
-		     tauq += d6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-		     taur += a6cofi[i-(ic-3)]*d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-		     //                  tauqdx0 += dd6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-		     //                  tauqdy0 +=  d6cofi[i-(ic-3)]*da6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-		     //                  taurdx0 += da6cofi[i-(ic-3)]* d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-		     //                  taurdy0 +=  a6cofi[i-(ic-3)]*dd6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-		  }
-               double powo = pow(1-zpar,order);
-	       zq = (-tauq)*powo;
-	       zr = (-taur)*powo;
-	       //               zqdx0 = (-tauqdx0)*powo;
-	       //               zqdy0 = (-tauqdy0)*powo;
-	       //               zrdx0 = (-taurdx0)*powo;
-	       //               zrdy0 = (-taurdy0)*powo;
-	    }
-            double tauavg = 0;
-	    for( int j=jc-3; j <= jc+4 ; j++ )
-	       for( int i=ic-3; i <= ic+4 ; i++ )
-		  tauavg += a6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-
-	    // Compute dz/ds directly from the grid mapping, the explicit expression here
-	    // should be the same as in EW::curvilinear_grid_mapping
-            double zMax = a_EW->m_zmin[a_EW->mNumberOfCartesianGrids-1] - (Nz-kBreak)*h;
-            double c1 = zMax + tauavg - h*(kBreak-1);
-            double z1d;
-	    for( int k=kc-3 ; k <= kc+ 4; k++ ) 
-	    {
-               zpar = (k-1)/(zetaBreak*(Nz-1));
-               if( zpar >= 1 )
-		  z1d = zMax + (k-kBreak)*h;
-	       else
-	       {
-                  z1d = (1-zpar)*(-tauavg) + zpar*(zMax + c1*(1-zpar));
-                  for( int o=2 ; o < order ; o++ )
-		     z1d += zpar*c1*pow(1-zpar,o);
-	       }
-	       zs += d6cofk[k-(kc-3)]*z1d;
-	    }
-	    //	    for( int k=kc-3; k <= kc+3 ; k++ )
-	    //	       for( int j=jc-3; j <= jc+3 ; j++ )
-	    //		  for( int i=ic-3; i <= ic+3 ; i++ )
-	    //		  {
-		  //		  zq += d6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*a6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
-		  //		  zr += a6cofi[i-(ic-3)]*d6cofj[j-(jc-3)]*a6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
-	    //		     zs += a6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*d6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
-	    //		  }
-            zder[0] = zq;
-	    zder[1] = zr;
-	    zder[2] = zs;
-	    cout << " zpar at source = " << (s-1)/(zetaBreak*(Nz-1)) << endl;
-
+	    compute_metric_at_source( a_EW, q, r, s, ic, jc, kc, g, zq, zr, zs );
+	    zdertmp[0] = zq;
+	    zdertmp[1] = zr;
+	    zdertmp[2] = zs;
 	 }
-// 3. Broadcast the computed metric to all processors
-	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
+
+	 //	 // Broadcast the computed metric to all processors. 
+	 //	 // First find out the ID of the processor that computed the metric...
+	 //	 int owner = -1;
+	 //	 if( a_EW->interior_point_in_proc( ic, jc, g ) && canBeInverted )
+	 //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
+	 //	 int owntmp = owner;
+	 //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+	 //	 // ...then broadcast the derivatives
+	 //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
+
+         // Simpler solution
+         double zder[3];
+	 MPI_Allreduce( zdertmp, zder, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	 zq = zder[0];
 	 zr = zder[1];
 	 zs = zder[2];
 	 
-	 cout << "zq = " << zq << " zr = " << zr << " zs = " << zs ;
-         if( owntmp != -1 )
-	    cout << " *" ;
-	 cout << endl;
-
+	 cout << "zq = " << zq << " zr = " << zr << " zs = " << zs << endl;
+	 //	 if( owntmp != -1 )
+	 //	    cout << " *" ;
+	 //	 cout << endl;
 	 qX0[0] = 1/h;
 	 qX0[1] = 0;
 	 qX0[2] = 0;
@@ -1128,49 +987,79 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 sX0[0] = -zq/(h*zs);
 	 sX0[1] = -zr/(h*zs);
 	 sX0[2] =   1/zs;
-	 //         cout << "Recomputed metric at pt " << qX0[0] << " " << sX0[0] << " " << sX0[1] << " " << sX0[2] << endl;
-	 // Gradient of sX0, in order dsX0[0]/dX0, dsX0[0]/dY0, dsX0[0]/dZ0, dsX0[1]/dX0, ...
-
-	 //         dsX0dX0[0] = 
-      } // end if curvilinear
-      else
-      {
-	 // If Cartesian or at the last two grid lines of curvilinear
-	 qX0[0] = 1/h;qX0[1]=0;  qX0[2]=0;
-	 rX0[0] = 0;  rX0[1]=1/h;rX0[2]=0;
-	 sX0[0] = 0;  sX0[1]=0;  sX0[2]=1/h;
       }
 
-      for( int k=kc-2 ; k <= kc+3 ; k++ )
-	 for( int j=jc-2 ; j <= jc+3 ; j++ )
-	    for( int i=ic-2 ; i <= ic+3 ; i++ )
-	    {
-	       double wFx=0, wFy=0, wFz=0, dsdp[27];
-	       if( a_EW->interior_point_in_proc(i,j,g) ) 
+   //         cout << "Recomputed metric at pt " << qX0[0] << " " << sX0[0] << " " << sX0[1] << " " << sX0[2] << endl;
+
+	    // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
+	    // NYI
+      //            double dsX0[3], dsY0[3], dsZ0[3], d2sX0[6], d2sY0[6], d2sZ0[6];
+      //	    dsX0[0] = 0;
+      //	    dsX0[1] = 0;
+      //	    dsX0[2] = 0;
+
+      //	    dsY0[0] = 0; 
+      //	    dsY0[1] = 0;
+      //	    dsY0[2] = 0;
+
+      //	    dsZ0[0] = 0;
+      //	    dsZ0[1] = 0;
+      //	    dsZ0[2] = 0;
+	    // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order qq,qr,qs,rr,rs,ss
+      //	    d2sX0[0] = 0;
+      //	    d2sX0[1] =0;
+      //	    d2sX0[2] =0;
+      //	    d2sX0[3] =0;
+      //	    d2sX0[4] =0;
+      //	    d2sX0[5] =0;
+
+      //	    d2sY0[0] =0;
+      //	    d2sY0[1] =0;
+      //	    d2sY0[2] =0;
+      //	    d2sY0[3] =0;
+      //	    d2sY0[4] =0;
+      //	    d2sY0[5] =0;
+
+      //	    d2sZ0[0] =0;
+      //	    d2sZ0[1] =0;
+      //	    d2sZ0[2] =0;
+      //	    d2sZ0[3] =0;
+      //	    d2sZ0[4] =0;
+      //	    d2sZ0[5] =0;
+
+      if( canBeInverted )
+      {
+	 for( int k=kc-2 ; k <= kc+3 ; k++ )
+	    for( int j=jc-2 ; j <= jc+3 ; j++ )
+	       for( int i=ic-2 ; i <= ic+3 ; i++ )
 	       {
-		  wFx += qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
+		  double wFx=0, wFy=0, wFz=0, dsdp[27];
+		  if( a_EW->interior_point_in_proc(i,j,g) ) 
+		  {
+		     wFx += qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 		  //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]; 
 		  //		  wFz += qX0[2]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 
 		  //		  wFx +=  wghi[i-ic+2]*rX0[0]*dwghj[j-jc+2]* wghk[k-kc+2];
-		  wFy +=  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
+		     wFy +=  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
 		  //		  wFz +=  wghi[i-ic+2]*rX0[2]*dwghj[j-jc+2]* wghk[k-kc+2];
 
-		  wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
-		  wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
-		  wFz +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[2]*dwghk[k-kc+2];
-
-                  double hi=1.0/h;
-                  double hi2=hi*hi;
-                  double wFxdx0 =dwghix[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi;
-                  double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghk[k-kc+2]*hi;
-                  double wFxdz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi;
-                  double wFydx0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi;
-                  double wFydy0 =  wghi[i-ic+2]*dwghjy[j-jc+2]*  wghk[k-kc+2]*hi;
-                  double wFydz0 =  wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi;
-                  double wFzdx0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi;
-                  double wFzdy0 =  wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi;
-                  double wFzdz0 =  wghi[i-ic+2]*  wghj[j-jc+2]*dwghkz[k-kc+2]*hi;
+		     wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
+		     wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
+		     wFz +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[2]*dwghk[k-kc+2];
+		  // NOTE:  Source derivatives wrt. (x0,y0,z0) currently not implemented 
+		  // for curvilinear grids.
+		     double hi=1.0/h;
+		     double hi2=hi*hi;
+		     double wFxdx0 =dwghix[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi*qX0[0];
+		     double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghk[k-kc+2]*hi*rX0[1];
+		     double wFxdz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[2];
+		     double wFydx0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi*qX0[0];
+		     double wFydy0 =  wghi[i-ic+2]*dwghjy[j-jc+2]*  wghk[k-kc+2]*hi*rX0[1];
+		     double wFydz0 =  wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[2];
+		     double wFzdx0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi*qX0[0];
+		     double wFzdy0 =  wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi*rX0[1];
+		     double wFzdz0 =  wghi[i-ic+2]*  wghj[j-jc+2]*dwghkz[k-kc+2]*hi*sX0[2];
 		  //                  if( curvilinear && kc <= Nz-3 )
 		  //		  {
 		     // dsx0dx0[i+3*j] = d(sX0[j])/dxi
@@ -1187,170 +1076,171 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 
 		  // Second derivatives
 
-                  double wFxdx0dx0 = dwghixx[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi2;
-                  double wFxdx0dy0 = dwghix[i-ic+2]*  wghjy[j-jc+2]*  wghk[k-kc+2]*hi2;
-                  double wFxdx0dz0 = dwghix[i-ic+2]*  wghj[j-jc+2]*  wghkz[k-kc+2]*hi2;
-		  double wFxdy0dy0 = dwghi[i-ic+2]* wghjyy[j-jc+2]*  wghk[k-kc+2]*hi2;
-                  double wFxdy0dz0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghkz[k-kc+2]*hi2;
-		  double wFxdz0dz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkzz[k-kc+2]*hi2;
+		     double wFxdx0dx0 = dwghixx[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+		     double wFxdx0dy0 = dwghix[i-ic+2]*  wghjy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+		     double wFxdx0dz0 = dwghix[i-ic+2]*  wghj[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+		     double wFxdy0dy0 = dwghi[i-ic+2]* wghjyy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+		     double wFxdy0dz0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+		     double wFxdz0dz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkzz[k-kc+2]*hi2*hi;
 
-                  double wFydx0dx0 = wghixx[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi2;
-                  double wFydx0dy0 = wghix[i-ic+2]* dwghjy[j-jc+2]*  wghk[k-kc+2]*hi2;
-                  double wFydx0dz0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghkz[k-kc+2]*hi2;
-                  double wFydy0dy0 = wghi[i-ic+2]*dwghjyy[j-jc+2]*  wghk[k-kc+2]*hi2;
-                  double wFydy0dz0 = wghi[i-ic+2]*dwghjy[j-jc+2]*  wghkz[k-kc+2]*hi2;
-                  double wFydz0dz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkzz[k-kc+2]*hi2;
+		     double wFydx0dx0 = wghixx[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+		     double wFydx0dy0 = wghix[i-ic+2]* dwghjy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+		     double wFydx0dz0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+		     double wFydy0dy0 = wghi[i-ic+2]*dwghjyy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+		     double wFydy0dz0 = wghi[i-ic+2]*dwghjy[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+		     double wFydz0dz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkzz[k-kc+2]*hi2*hi;
 
-                  double wFzdx0dx0 = wghixx[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi2;
-                  double wFzdx0dy0 = wghix[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi2;
-                  double wFzdx0dz0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*hi2;
-                  double wFzdy0dy0 = wghi[i-ic+2]* wghjyy[j-jc+2]* dwghk[k-kc+2]*hi2;
-                  double wFzdy0dz0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghkz[k-kc+2]*hi2;
-                  double wFzdz0dz0 = wghi[i-ic+2]*  wghj[j-jc+2]*dwghkzz[k-kc+2]*hi2;
-		  //                  if( curvilinear && kc <= Nz-3 )
-		  //		  {
+		     double wFzdx0dx0 = wghixx[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
+		     double wFzdx0dy0 = wghix[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
+		     double wFzdx0dz0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*hi2*hi;
+		     double wFzdy0dy0 = wghi[i-ic+2]* wghjyy[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
+		     double wFzdy0dz0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghkz[k-kc+2]*hi2*hi;
+		     double wFzdz0dz0 = wghi[i-ic+2]*  wghj[j-jc+2]*dwghkzz[k-kc+2]*hi2*hi;
+		     //                  if( curvilinear && kc <= Nz-3 )
+		     //		  {
 
-		  //		  }
+		     //		  }
                
-                  double jaci;
-                  if( curvilinear )
-		     jaci = 1/a_EW->mJ(i,j,k);
-		  else
-		     jaci = 1.0/(h*h*h);
+		     double jaci;
+		     if( curvilinear )
+			jaci = 1/a_EW->mJ(i,j,k);
+		     else
+			jaci = 1.0/(h*h*h);
 
-		  double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-		  double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-		  double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+		     double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+		     double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
+		     double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
 
-		  // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
-                  dsdp[0] = -(mForces[0]*wFxdx0+mForces[1]*wFydx0 + mForces[2]*wFzdx0)*jaci;
-                  dsdp[1] = -(mForces[1]*wFxdx0+mForces[3]*wFydx0 + mForces[4]*wFzdx0)*jaci;
-                  dsdp[2] = -(mForces[2]*wFxdx0+mForces[4]*wFydx0 + mForces[5]*wFzdx0)*jaci;
-                  dsdp[3] = -(mForces[0]*wFxdy0+mForces[1]*wFydy0 + mForces[2]*wFzdy0)*jaci;
-                  dsdp[4] = -(mForces[1]*wFxdy0+mForces[3]*wFydy0 + mForces[4]*wFzdy0)*jaci;
-                  dsdp[5] = -(mForces[2]*wFxdy0+mForces[4]*wFydy0 + mForces[5]*wFzdy0)*jaci;
-                  dsdp[6] = -(mForces[0]*wFxdz0+mForces[1]*wFydz0 + mForces[2]*wFzdz0)*jaci;
-                  dsdp[7] = -(mForces[1]*wFxdz0+mForces[3]*wFydz0 + mForces[4]*wFzdz0)*jaci;
-                  dsdp[8] = -(mForces[2]*wFxdz0+mForces[4]*wFydz0 + mForces[5]*wFzdz0)*jaci;
-                  dsdp[9]  = -wFx*jaci;
-                  dsdp[10] =  0;
-		  dsdp[11] =  0;
-                  dsdp[12]  =-wFy*jaci;
-                  dsdp[13] = -wFx*jaci;
-		  dsdp[14] =  0;
-		  dsdp[15] = -wFz*jaci;
-		  dsdp[16] =  0;
-		  dsdp[17] = -wFx*jaci;
-		  dsdp[18] =  0;
-		  dsdp[19] = -wFy*jaci;
-		  dsdp[20] =  0;
-		  dsdp[21] =  0;
-		  dsdp[22] = -wFz*jaci;
-		  dsdp[23] = -wFy*jaci;
-		  dsdp[24] =  0;
-		  dsdp[25] =  0;
-		  dsdp[26] = -wFz*jaci;
+		     // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+		     dsdp[0] = -(mForces[0]*wFxdx0+mForces[1]*wFydx0 + mForces[2]*wFzdx0)*jaci;
+		     dsdp[1] = -(mForces[1]*wFxdx0+mForces[3]*wFydx0 + mForces[4]*wFzdx0)*jaci;
+		     dsdp[2] = -(mForces[2]*wFxdx0+mForces[4]*wFydx0 + mForces[5]*wFzdx0)*jaci;
+		     dsdp[3] = -(mForces[0]*wFxdy0+mForces[1]*wFydy0 + mForces[2]*wFzdy0)*jaci;
+		     dsdp[4] = -(mForces[1]*wFxdy0+mForces[3]*wFydy0 + mForces[4]*wFzdy0)*jaci;
+		     dsdp[5] = -(mForces[2]*wFxdy0+mForces[4]*wFydy0 + mForces[5]*wFzdy0)*jaci;
+		     dsdp[6] = -(mForces[0]*wFxdz0+mForces[1]*wFydz0 + mForces[2]*wFzdz0)*jaci;
+		     dsdp[7] = -(mForces[1]*wFxdz0+mForces[3]*wFydz0 + mForces[4]*wFzdz0)*jaci;
+		     dsdp[8] = -(mForces[2]*wFxdz0+mForces[4]*wFydz0 + mForces[5]*wFzdz0)*jaci;
+		     dsdp[9]  = -wFx*jaci;
+		     dsdp[10] =  0;
+		     dsdp[11] =  0;
+		     dsdp[12]  =-wFy*jaci;
+		     dsdp[13] = -wFx*jaci;
+		     dsdp[14] =  0;
+		     dsdp[15] = -wFz*jaci;
+		     dsdp[16] =  0;
+		     dsdp[17] = -wFx*jaci;
+		     dsdp[18] =  0;
+		     dsdp[19] = -wFy*jaci;
+		     dsdp[20] =  0;
+		     dsdp[21] =  0;
+		     dsdp[22] = -wFz*jaci;
+		     dsdp[23] = -wFy*jaci;
+		     dsdp[24] =  0;
+		     dsdp[25] =  0;
+		     dsdp[26] = -wFz*jaci;
 
-		  // Matrices needed for computing the Hessian wrt (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
-                  double dddp[9], dh1[9], dh2[9], dh3[9];
-		  dddp[0]  =-wFxdx0*jaci;
-		  dddp[1]  =-wFxdy0*jaci;
-		  dddp[2]  =-wFxdz0*jaci;
-		  dddp[3]  =-wFydx0*jaci;
-		  dddp[4]  =-wFydy0*jaci;
-		  dddp[5]  =-wFydz0*jaci;
-		  dddp[6]  =-wFzdx0*jaci;
-		  dddp[7]  =-wFzdy0*jaci;
-		  dddp[8]  =-wFzdz0*jaci;
+		     // Matrices needed for computing the Hessian wrt (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+		     double dddp[9], dh1[9], dh2[9], dh3[9];
+		     dddp[0]  =-wFxdx0*jaci;
+		     dddp[1]  =-wFxdy0*jaci;
+		     dddp[2]  =-wFxdz0*jaci;
+		     dddp[3]  =-wFydx0*jaci;
+		     dddp[4]  =-wFydy0*jaci;
+		     dddp[5]  =-wFydz0*jaci;
+		     dddp[6]  =-wFzdx0*jaci;
+		     dddp[7]  =-wFzdy0*jaci;
+		     dddp[8]  =-wFzdz0*jaci;
 
 
-		  // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
-		  dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
-		  dh1[1] = -(mForces[0]*wFxdx0dy0 + mForces[1]*wFydx0dy0+mForces[2]*wFzdx0dy0)*jaci;
-		  dh1[2] = -(mForces[0]*wFxdx0dz0 + mForces[1]*wFydx0dz0+mForces[2]*wFzdx0dz0)*jaci;
+		     // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
+		     dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
+		     dh1[1] = -(mForces[0]*wFxdx0dy0 + mForces[1]*wFydx0dy0+mForces[2]*wFzdx0dy0)*jaci;
+		     dh1[2] = -(mForces[0]*wFxdx0dz0 + mForces[1]*wFydx0dz0+mForces[2]*wFzdx0dz0)*jaci;
 
-                  dh1[3] = dh1[1];
-		  dh1[4] = -(mForces[0]*wFxdy0dy0 + mForces[1]*wFydy0dy0+mForces[2]*wFzdy0dy0)*jaci;
-		  dh1[5] = -(mForces[0]*wFxdy0dz0 + mForces[1]*wFydy0dz0+mForces[2]*wFzdy0dz0)*jaci;
+		     dh1[3] = dh1[1];
+		     dh1[4] = -(mForces[0]*wFxdy0dy0 + mForces[1]*wFydy0dy0+mForces[2]*wFzdy0dy0)*jaci;
+		     dh1[5] = -(mForces[0]*wFxdy0dz0 + mForces[1]*wFydy0dz0+mForces[2]*wFzdy0dz0)*jaci;
 
-                  dh1[6] = dh1[2];
-		  dh1[7] = dh1[5];
-		  dh1[8] = -(mForces[0]*wFxdz0dz0 + mForces[1]*wFydz0dz0+mForces[2]*wFzdz0dz0)*jaci;
+		     dh1[6] = dh1[2];
+		     dh1[7] = dh1[5];
+		     dh1[8] = -(mForces[0]*wFxdz0dz0 + mForces[1]*wFydz0dz0+mForces[2]*wFzdz0dz0)*jaci;
 
-		  // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
-		  dh2[0] = -(mForces[1]*wFxdx0dx0 + mForces[3]*wFydx0dx0+mForces[4]*wFzdx0dx0)*jaci;
-		  dh2[1] = -(mForces[1]*wFxdx0dy0 + mForces[3]*wFydx0dy0+mForces[4]*wFzdx0dy0)*jaci;
-		  dh2[2] = -(mForces[1]*wFxdx0dz0 + mForces[3]*wFydx0dz0+mForces[4]*wFzdx0dz0)*jaci;
+		     // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
+		     dh2[0] = -(mForces[1]*wFxdx0dx0 + mForces[3]*wFydx0dx0+mForces[4]*wFzdx0dx0)*jaci;
+		     dh2[1] = -(mForces[1]*wFxdx0dy0 + mForces[3]*wFydx0dy0+mForces[4]*wFzdx0dy0)*jaci;
+		     dh2[2] = -(mForces[1]*wFxdx0dz0 + mForces[3]*wFydx0dz0+mForces[4]*wFzdx0dz0)*jaci;
 
-		  dh2[3] = dh2[1];
-		  dh2[4] = -(mForces[1]*wFxdy0dy0 + mForces[3]*wFydy0dy0+mForces[4]*wFzdy0dy0)*jaci;
-		  dh2[5] = -(mForces[1]*wFxdy0dz0 + mForces[3]*wFydy0dz0+mForces[4]*wFzdy0dz0)*jaci;
+		     dh2[3] = dh2[1];
+		     dh2[4] = -(mForces[1]*wFxdy0dy0 + mForces[3]*wFydy0dy0+mForces[4]*wFzdy0dy0)*jaci;
+		     dh2[5] = -(mForces[1]*wFxdy0dz0 + mForces[3]*wFydy0dz0+mForces[4]*wFzdy0dz0)*jaci;
 
-		  dh2[6] = dh2[2];
-		  dh2[7] = dh2[5];
-		  dh2[8] = -(mForces[1]*wFxdz0dz0 + mForces[3]*wFydz0dz0+mForces[4]*wFzdz0dz0)*jaci;
+		     dh2[6] = dh2[2];
+		     dh2[7] = dh2[5];
+		     dh2[8] = -(mForces[1]*wFxdz0dz0 + mForces[3]*wFydz0dz0+mForces[4]*wFzdz0dz0)*jaci;
 
-		  // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
-		  dh3[0] = -(mForces[2]*wFxdx0dx0 + mForces[4]*wFydx0dx0+mForces[5]*wFzdx0dx0)*jaci;
-		  dh3[1] = -(mForces[2]*wFxdx0dy0 + mForces[4]*wFydx0dy0+mForces[5]*wFzdx0dy0)*jaci;
-		  dh3[2] = -(mForces[2]*wFxdx0dz0 + mForces[4]*wFydx0dz0+mForces[5]*wFzdx0dz0)*jaci;
+		     // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
+		     dh3[0] = -(mForces[2]*wFxdx0dx0 + mForces[4]*wFydx0dx0+mForces[5]*wFzdx0dx0)*jaci;
+		     dh3[1] = -(mForces[2]*wFxdx0dy0 + mForces[4]*wFydx0dy0+mForces[5]*wFzdx0dy0)*jaci;
+		     dh3[2] = -(mForces[2]*wFxdx0dz0 + mForces[4]*wFydx0dz0+mForces[5]*wFzdx0dz0)*jaci;
 
-		  dh3[3] = dh3[1];
-		  dh3[4] = -(mForces[2]*wFxdy0dy0 + mForces[4]*wFydy0dy0+mForces[5]*wFzdy0dy0)*jaci;
-		  dh3[5] = -(mForces[2]*wFxdy0dz0 + mForces[4]*wFydy0dz0+mForces[5]*wFzdy0dz0)*jaci;
+		     dh3[3] = dh3[1];
+		     dh3[4] = -(mForces[2]*wFxdy0dy0 + mForces[4]*wFydy0dy0+mForces[5]*wFzdy0dy0)*jaci;
+		     dh3[5] = -(mForces[2]*wFxdy0dz0 + mForces[4]*wFydy0dz0+mForces[5]*wFzdy0dz0)*jaci;
 
-		  dh3[6] = dh3[2];
-		  dh3[7] = dh3[5];
-		  dh3[8] = -(mForces[2]*wFxdz0dz0 + mForces[4]*wFydz0dz0+mForces[5]*wFzdz0dz0)*jaci;
+		     dh3[6] = dh3[2];
+		     dh3[7] = dh3[5];
+		     dh3[8] = -(mForces[2]*wFxdz0dz0 + mForces[4]*wFydz0dz0+mForces[5]*wFzdz0dz0)*jaci;
 
-		  //                  if( i==42 && j==55 && k==39 )
-		  //		  {
-		  //		     cout.precision(16);
-		  //                  cout << "-----------------------------------------------------------------------\n";
-		  //		  cout << "     " << i <<  " " << j << " " << k << endl;
-		  //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5] << "  " << dsdp[8] << endl;
-		  //                  cout << "dh  = " << dh3[0] << " " << dh3[1] << "  " << dh3[2] << endl;
-		  //                  cout << "      " << dh3[3] << " " << dh3[4] << "  " << dh3[5] << endl;
-		  //                  cout << "      " << dh3[6] << " " << dh3[7] << "  " << dh3[8] << endl;
-		  //                  cout << "-----------------------------------------------------------------------" << endl;
-		  //		  }
+		     //                  if( i==42 && j==55 && k==39 )
+		     //		  {
+		     //		     cout.precision(16);
+		     //                  cout << "-----------------------------------------------------------------------\n";
+		     //		  cout << "     " << i <<  " " << j << " " << k << endl;
+		     //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5] << "  " << dsdp[8] << endl;
+		     //                  cout << "dh  = " << dh3[0] << " " << dh3[1] << "  " << dh3[2] << endl;
+		     //                  cout << "      " << dh3[3] << " " << dh3[4] << "  " << dh3[5] << endl;
+		     //                  cout << "      " << dh3[6] << " " << dh3[7] << "  " << dh3[8] << endl;
+		     //                  cout << "-----------------------------------------------------------------------" << endl;
+		     //		  }
 
-		  //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
-		  if( 1 <= k && k <= Nz )
-		  {
-		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, g, 
-								       fx, fy, fz, mTimeDependence, mNcyc,
-                                                                       mPar, mNpar, mIpar, mNipar,
-								       dsdp, dddp, dh1, dh2, dh3 );
-		     if( m_derivative >= 0 )
-			sourcePtr->set_derivative(m_derivative,m_dir);
-		     point_sources.push_back(sourcePtr);
+		     //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
+		     if( 1 <= k && k <= Nz )
+		     {
+			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, g, 
+									  fx, fy, fz, mTimeDependence, mNcyc,
+									  mPar, mNpar, mIpar, mNipar,
+									  dsdp, dddp, dh1, dh2, dh3 );
+			if( m_derivative >= 0 )
+			   sourcePtr->set_derivative(m_derivative,m_dir);
+			point_sources.push_back(sourcePtr);
+		     }
+		     if( k <= 1 && ccbndry && upperbndry )
+		     {
+			int Nzp =a_EW->m_global_nz[g+1];
+			int kk = Nzp - 1 + k;
+			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
+									  fx, fy, fz, mTimeDependence, mNcyc,
+									  mPar, mNpar, mIpar, mNipar,
+									  dsdp, dddp, dh1, dh2, dh3 );
+			if( m_derivative >= 0 )
+			   sourcePtr->set_derivative(m_derivative,m_dir);
+			point_sources.push_back(sourcePtr);
+		     }
+		     if( k >= Nz && ccbndry && lowerbndry )
+		     {
+			int kk = k-Nz + 1;
+			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
+									  fx, fy, fz, mTimeDependence, mNcyc,
+									  mPar, mNpar, mIpar, mNipar,
+									  dsdp, dddp, dh1, dh2, dh3 );
+			if( m_derivative >= 0 )
+			   sourcePtr->set_derivative(m_derivative,m_dir);
+			point_sources.push_back(sourcePtr);
+		     }
 		  }
-		  if( k <= 1 && ccbndry && upperbndry )
-		  {
-		     int Nzp =a_EW->m_global_nz[g+1];
-		     int kk = Nzp - 1 + k;
-		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
-								       fx, fy, fz, mTimeDependence, mNcyc,
-                                                                       mPar, mNpar, mIpar, mNipar,
-								       dsdp, dddp, dh1, dh2, dh3 );
-		     if( m_derivative >= 0 )
-			sourcePtr->set_derivative(m_derivative,m_dir);
-		     point_sources.push_back(sourcePtr);
-		  }
-		  if( k >= Nz && ccbndry && lowerbndry )
-		  {
-		     int kk = k-Nz + 1;
-		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
-								       fx, fy, fz, mTimeDependence, mNcyc,
-                                                                       mPar, mNpar, mIpar, mNipar,
-								       dsdp, dddp, dh1, dh2, dh3 );
-		     if( m_derivative >= 0 )
-			sourcePtr->set_derivative(m_derivative,m_dir);
-		     point_sources.push_back(sourcePtr);
-		  }
-	       }
 	    }
+      }
    }
 }
 
@@ -1646,4 +1536,156 @@ double Source::find_min_exponent() const
 {
    // smallest number x, such that exp(x) does not cause underflow
   return -700.0;
+}
+
+
+//-----------------------------------------------------------------------
+void Source::compute_metric_at_source( EW* a_EW, double q, double r, double s, int ic,
+				       int jc, int kc, int g, double& zq, double& zr,
+				       double& zs ) const
+{
+   int Nz = a_EW->m_global_nz[g];
+   double h = a_EW->mGridSize[g];
+   if( kc > Nz-3 )
+   {
+      // Treat downmost grid lines as cartesian
+      zq = zr = 0;
+      zs = h;
+   }
+   else
+   {
+      // Derivative of metric wrt. source position. Not yet fully implemented.
+      double zqdx0, zqdy0, zqsz0, zrdx0, zrdy0, zrdz0;
+	       
+      // 3. Recompute metric to sixth order accuracy. Increased accuracy needed because
+      //    of the multiplication with a singular (Dirac) function.
+      //    compute only in the processor where the point is interior
+
+      bool eightptstencil = true;
+      double ai=q-ic;
+      double bi=r-jc;
+      double ci=s-kc;
+
+      double d6cofi[8], d6cofj[8], d6cofk[8];
+      if( eightptstencil )
+      {
+	 // Eight point stencil, smooth wrt. source position, 
+	 // needed for source optimization
+	 getmetdwgh( ai, d6cofi );
+	 getmetdwgh( bi, d6cofj );
+	 if( kc <= 3 && ci < 0 )
+	 {
+	    getmetdwgh7( ci, d6cofk );
+	    d6cofk[7] = 0;
+	 }
+	 else
+	    getmetdwgh( ci, d6cofk );
+      }
+      else
+      {
+	 // Seven point stencil, ok for forward solver.
+	 getmetdwgh7( ai, d6cofi );
+	 d6cofi[7] = 0;
+	 getmetdwgh7( bi, d6cofj );
+	 d6cofj[7] = 0;
+	 getmetdwgh7( ci, d6cofk );
+	 d6cofk[7] = 0;
+      }
+
+      double a6cofi[8], a6cofj[8], a6cofk[8];
+      if( eightptstencil )
+      {
+	 getmetwgh( ai, a6cofi );
+	 getmetwgh( bi, a6cofj );
+	 if( kc <= 3 && ci < 0 )
+	 {
+	    getmetwgh7( ci, a6cofk );
+	    a6cofk[7] = 0;
+	 }
+	 else
+	    getmetwgh( ci, a6cofk );
+      }
+      else
+      {
+	 getmetwgh7( ai, a6cofi );
+	 a6cofi[7] = 0;
+	 getmetwgh7( bi, a6cofj );
+	 a6cofj[7] = 0;
+	 getmetwgh7( ci, a6cofk );
+	 a6cofk[7] = 0;
+      }
+
+      // Assume grid uniform in x and y, compute metric with z=z(q,r,s)
+      zq = zr = zs = 0;
+      int order;
+      double zetaBreak;
+      a_EW->get_gridgen_info( order, zetaBreak );
+      double zpar = (s-1)/(zetaBreak*(Nz-1));
+      double kBreak = 1 + zetaBreak*(Nz-1);
+      if( zpar >= 1 )
+      {
+	 zq = 0;
+	 zr = 0;
+	 //	       zqdx0 = 0;
+	 //	       zqdy0 = 0;
+	 //	       zrdx0 = 0;
+	 //	       zrdy0 = 0;
+	 //               zqdz0 = 1/h;
+	 //	       zrdz0 = 1/h;
+      }
+      else 
+      {
+	 double tauq=0, taur=0;
+	 double tauqdx0=0, tauqdy0=0, taurdx0=0, taurdy0=0;
+	 for( int j=jc-3; j <= jc+4 ; j++ )
+	    for( int i=ic-3; i <= ic+4 ; i++ )
+	    {
+	       tauq += d6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+	       taur += a6cofi[i-(ic-3)]*d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+	       //                  tauqdx0 += dd6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+	       //                  tauqdy0 +=  d6cofi[i-(ic-3)]*da6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+	       //                  taurdx0 += da6cofi[i-(ic-3)]* d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+	       //                  taurdy0 +=  a6cofi[i-(ic-3)]*dd6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+	    }
+	 double powo = pow(1-zpar,order);
+	 zq = (-tauq)*powo;
+	 zr = (-taur)*powo;
+	 //               zqdx0 = (-tauqdx0)*powo;
+	 //               zqdy0 = (-tauqdy0)*powo;
+	 //               zrdx0 = (-taurdx0)*powo;
+	 //               zrdy0 = (-taurdy0)*powo;
+      }
+      double tauavg = 0;
+      for( int j=jc-3; j <= jc+4 ; j++ )
+	 for( int i=ic-3; i <= ic+4 ; i++ )
+	    tauavg += a6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+
+      // Compute dz/ds directly from the grid mapping, the explicit expression here
+      // should be the same as in EW::curvilinear_grid_mapping
+      double zMax = a_EW->m_zmin[a_EW->mNumberOfCartesianGrids-1] - (Nz-kBreak)*h;
+      double c1 = zMax + tauavg - h*(kBreak-1);
+      double z1d;
+      for( int k=kc-3 ; k <= kc+ 4; k++ ) 
+      {
+	 zpar = (k-1)/(zetaBreak*(Nz-1));
+	 if( zpar >= 1 )
+	    z1d = zMax + (k-kBreak)*h;
+	 else
+	 {
+	    z1d = (1-zpar)*(-tauavg) + zpar*(zMax + c1*(1-zpar));
+	    for( int o=2 ; o < order ; o++ )
+	       z1d += zpar*c1*pow(1-zpar,o);
+	 }
+	 zs += d6cofk[k-(kc-3)]*z1d;
+      }
+      //	    for( int k=kc-3; k <= kc+3 ; k++ )
+      //	       for( int j=jc-3; j <= jc+3 ; j++ )
+      //		  for( int i=ic-3; i <= ic+3 ; i++ )
+      //		  {
+      //		  zq += d6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*a6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
+      //		  zr += a6cofi[i-(ic-3)]*d6cofj[j-(jc-3)]*a6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
+      //		zs += a6cofi[i-(ic-3)]*a6cofj[j-(jc-3)]*d6cofk[k-(kc-3)]*a_EW->mZ(i,j,k);
+      //		  }
+      cout << " zpar at source = " << (s-1)/(zetaBreak*(Nz-1)) << endl;
+   }
 }

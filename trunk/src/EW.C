@@ -937,6 +937,20 @@ bool EW::point_in_proc(int a_i, int a_j, int a_g)
 }
 
 //-----------------------------------------------------------------------
+bool EW::point_in_proc_ext(int a_i, int a_j, int a_g)
+{
+// TAKING PARALLEL GHOST POINTS+EXTRA GHOST POINTS INTO ACCOUNT!
+// Determine if grid point with index (a_i, a_j) on grid a_g is a grid point on this processor 
+
+   bool retval = false;
+   if (a_g >=0 && a_g < mNumberOfGrids){
+     retval = (a_i >= m_iStart[a_g]-m_ext_ghost_points && a_i <= m_iEnd[a_g]+m_ext_ghost_points &&   
+               a_j >= m_jStart[a_g]-m_ext_ghost_points && a_j <= m_jEnd[a_g]+m_ext_ghost_points );
+   }
+   return retval; 
+}
+
+//-----------------------------------------------------------------------
 void EW::getGlobalBoundingBox(double bbox[6])
 {
   bbox[0] = 0.;

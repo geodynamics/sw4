@@ -1439,7 +1439,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
             if( myRank == 0 )
 	       cout << "Line search.. " << endl;
 	    linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
-			x, f, df, da, fabs(alpha), 1000.0, tolerance*0.01, xa, fp, sf, myRank, retcode, zlimit, testing );
+			x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode, zlimit, testing );
             if( myRank == 0 )
 	       cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
 	 }

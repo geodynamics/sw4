@@ -329,6 +329,7 @@ void computeNearestLowGridPoint(int & a_i,
   
 bool interior_point_in_proc(int a_i, int a_j, int a_g); // only takes interior points into account
 bool point_in_proc(int a_i, int a_j, int a_g);          // both interior and parallel ghost points
+bool point_in_proc_ext(int a_i, int a_j, int a_g);      // both interior and parallel ghost points+extra ghost points
   
 void initializePaddingCells();
 
@@ -356,6 +357,8 @@ void interpolate_between_grids( vector<Sarray>& u, vector<Sarray>& um, double t,
   			        vector<Sarray*> &AlphaVE );
 
 bool interpolate_topography( double q, double r, double & Z0, bool smoothed);
+
+void extend_topogrid();
 
 bool getDepth( double x, double y, double z, double & depth);
 
