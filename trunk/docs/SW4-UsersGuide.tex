@@ -108,13 +108,13 @@ is automatically generated from the description of the topography. Below the cur
 seismic wave equations are discretized on a Cartesian mesh, which leads to a more computationally
 efficient algorithm. 
 
-\emph{SW4} solves the seismic wave equations in Cartesian formulation is therefore appropriate for
-local and regional problems, where the curvature of the earth can be neglected. Locations can
-be specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
+\emph{SW4} solves the seismic wave equations in Cartesian coordinates. It is therefore appropriate
+for regional simulations, where the curvature of the earth can be neglected. Locations can be
+specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
 coordinates. \emph{SW4} can be built to use the Proj.4 library~\cite{Proj4} for calculating the
 mapping between geographic and Cartesian coordinates, or use an approximate spheroidal
-mapping. \emph{SW4} can output synthetic seismograms in an ASCII text format, or in the
-popular~\emph{SAC}~\cite{Goldstein-et-al} format. It can also present simulation information as
+mapping. \emph{SW4} can output synthetic seismograms in an ASCII text format, or in the \emph{SAC}
+format~\cite{Goldstein-et-al}. It can also present simulation information as
 \emph{GMT}~\cite{WesselSmithGMT} scripts, which can be used to create annotated maps. Furthermore,
 \emph{SW4} can output the solution as well as the material model along 2-D grid planes.
 
@@ -136,23 +136,23 @@ popular~\emph{SAC}~\cite{Goldstein-et-al} format. It can also present simulation
 %% properties of the material model. The underlying numerical method for solving the visco-elastic wave
 %% equation is described in~\cite{PetSjo-10b}.
 
-Most of the \emph{SW4} code is written in C++, but most of the numerical calculations are (for
-efficiency reasons) implemented in Fortan-77. \emph{SW4} uses a distributed memory programming
+Most of the \emph{SW4} code is written in C++, but most of the numerical calculations are for
+efficiency reasons implemented in Fortan-77. \emph{SW4} uses a distributed memory programming
 model, implemented with the C-bindings of the MPI library. Compatible versions of the C++ and
 Fortran-77 compilers as well as the MPI library must therefore be available to build the code. We
 have built and tested \emph{SW4} on a variety of machines, ranging from single processor laptops to
 large super-computers with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even
 larger machines.
 
-We have made an effort to preserve the syntax of the command file between \emph{SW4} and \emph{WPP},
-see Chapter~\ref{chap:keywords}. Most of the input and output files also use the same
-formats, but we have taken the opportunity to improve the image file format. See Chapter
-and~\ref{chap:formats} for details. With the exception of visco-elastic attenuation and mesh
-refinement, version 1.0 of \emph{SW4} supports most of the functionality of \emph{WPP} (version
-2.1.7). Attenuation and mesh refinement will be added in the future.
+With the exception of some minor details, the syntax of the \emph{SW4} command file is the same as
+in \emph{WPP}. Most of the input and output files also use the same formats, but we have taken the
+opportunity to improve the image file format. See Chapter~\ref{chap:formats} for details. With the
+exception of visco-elastic attenuation and mesh refinement, version 1.0 of \emph{SW4} supports most
+of the functionality of \emph{WPP} (version 2.1.5). These features will be added in the future.
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
-validation tests. Many Matlab/octave scripts are provided in the {\tt tools} directory.
+validation tests that are used in this document. Many Matlab/octave scripts are described in
+Chapter~\ref{chap:scripts}. They are provided in the {\tt tools} directory.
 
 \section*{Acknowledgments} 
 We are grateful for financial support from Lawrence Livermore National Laboratory. We also thank
@@ -244,10 +244,29 @@ detailed information (https://computing.llnl.gov).
 Warning and error messages are stored in separate log files...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Coordinate system, units and the grid}
+\chapter{Governing equations, coordinate system, and units}
 \index{coordinate system}\index{units}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+\emph{SW4} simulates the motion due to a seismic event by solving the elastic 
+%(or visco-elastic) 
+wave equation in second order formulation. By default, the motion starts from rest and is driven by
+a forcing function,
+\begin{alignat}{3}
+\rho {\bf u}_{tt} &= \nabla\cdot{\cal T} + {\bf F}({\bf x},t),&\quad\mbox{${\bf x}$ in
+  $\Omega$},\ t\geq 0,\label{eq:elastic-we}\\ 
+{\bf u}({\bf x},0)&=0,\quad {\bf u}_t({\bf x},0) = 0, &\quad\mbox{${\bf x}$ in $\Omega$}.
+\end{alignat}
+Here, $\rho$ is the density, ${\bf u}({\bf x},t)$ is the displacement vector, and ${\cal T}$ is the
+stress tensor. The computational domain $\Omega$ is a box shaped region where one side optionally
+follows the shape of the topography. By default, a free surface (zero traction) boundary condition
+is enforced along the top boundary,
+\[
+{\cal T} \cdot \nb = 0,\quad z=\tau(x,y),\ t\geq 0,
+\]
+where $\nb$ is the unit normal of the $z=\tau(x,y)$ surface. A super-grid damping layer surrounds
+the computational domain on all other sides of the computational domain.
+
 \emph{SW4} uses a right-handed Cartesian coordinate system with the z-direction pointing
 downwards into the medium, see figure~\ref{fig:coordsys}. 
 \begin{figure}[th]
@@ -359,7 +378,7 @@ the UTC start time can be very useful for aligning simulated and observed time s
 \index{geographical coordinates}
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.6\linewidth]{LatLonAz.png}
+  \includegraphics[width=0.6\linewidth]{latlon.png}
 %  \includegraphics{LatLonAz.ps}
   \caption{Geographical coordinates in \emph{SW4}.}
   \label{fig:geocoord}
@@ -458,12 +477,89 @@ receivers should only be placed in the interior of the computational domain, i.e
 of Figure~\ref{fig:layout}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Sources, time-functions and grid sizes}
+\chapter{Sources and time-functions}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The source time function can be selected from a set of predefined functions, or by spline
-interpolation of a user defined discrete time-series. Each point force or point moment tensor source
-can have a different time function. 
+%The source time function can be selected from a set of predefined functions, or by spline
+%interpolation of a user defined discrete time-series. Each point force or point moment tensor source
+%can have a different time function. 
+
+\section{Point force and moment tensor sources in \emph{SW4}}\label{sec:time-functions}
+The forcing term ${\bf F}$ in equation \eqref{eq:elastic-we} consists of a sum of point forces and
+point moment tensor source terms. For a point forcing we have
+\[
+{\bf F}({\bf x},t) = g(t,t_0,\omega) F_0 \left(\begin{array}{c}
+  F_x\\ F_y\\ F_z\end{array}\right) \delta ({\bf x} - {\bf x_0}),
+\]
+where ${\bf x}_0=(x_0,y_0,z_0)$ is the location of the point force in space, and $g(t,t_0,\omega)$
+is the time function, with offset time $t_0$ and frequency parameter $\omega$. The source time
+function can be selected from a set of predefined functions, or by spline interpolation of a user
+defined discrete time-series. The $(F_x,F_y,F_z)^T$ vector holds the Cartesian components of the force
+vector, which is scaled by the force amplitude $F_0$. 
+
+For a moment tensor source we have
+\[
+{\bf F}({\bf x},t) = g(t,t_0,\omega) M_0 \, {\cal  M} \cdot \nabla \delta ({\bf x} - {\bf
+  x_0}), \quad 
+{\cal M} = \left(\begin{array}{ccc}
+M_{xx} & M_{xy} & M_{xz}\\
+M_{xy} & M_{yy} & M_{yz}\\
+M_{xz} & M_{yz} & M_{zz}
+\end{array}
+\right).
+\]
+In this case the seismic moment of the moment tensor is $M_0$, otherwise the notation is the same as
+for a point force. Note that the moment tensor always is symmetric. A convenient way of specifying
+moment sources is by using the dip, strike, and rake angles (see Section~\ref{keyword:source} for
+syntax) defined in Aki and Richards~\cite{Aki-Richards-02}. In this case, the total seismic moment $\sum
+M_0$ [Nm] is related to the moment magnitude by the formula UPDATE!
+\[
+M_W = \frac{2}{3}\left[\log_{10}\left(\sum M_0\right) - 9.1\right].
+\]
+After parsing all source commands in an input file, \emph{SW4} outputs the moment magnitude using
+this formula. This information is given right before the time-stepping is started and looks like this:
+\begin{verbatim}
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.7162e+17 Nm 
+  Moment magnitude     (Mw): 5.42305
+  Number of sources 542
+-----------------------------------------------------------------------
+\end{verbatim}
+Note that the calculation of the seismic moment and magnitude assume that all sources are specified
+in terms of dip, strike, and rake angles. This guarentees that the matrix $\cal M$ is properly
+normalized.
+
+For moment tensor sources, the function $g(t)$ is called the moment history time function, while its
+time derivative $g'(t)$ is known as the moment rate time function. \emph{SW4} calculates the
+displacements of the motion corresponding to the moment history time function $g(t)$. However, since
+the material properties are independent of time, the equations solved by {\emph SW4} also govern the
+velocities when the time function is replaced by $g'(t)$, i.e., the corresponding moment rate time
+function. For example, if the solution calculated with the {\tt GaussianInt} time function
+represents the displacements of the motion, the solution calculated with the {\tt Gaussian} time
+function corresponds to the velocities of the same motion. Hence, if you are primarily interested in
+calculating velocities, you can reduce the amount of post processing by using the corresponding
+moment rate time function in the source term(s). 
+
+Note that most first order formulation codes (such as \emph{E3D}) are based on the velocity-stress
+formulation of the elastic wave equation. These codes use the moment rate time function (i.e., the
+{\tt Gaussian} time function in the above example) and solve for the velocities of the motion.
+
+In \emph{SW4} the forcing is specified in the input file using the {\tt source} command. There needs
+to be at least one source command in the input file in order for anything to happen during the
+simulation. Complicated source mechanisms can be described by having many source commands in the
+input file. An example with one source command is:
+\begin{verbatim}
+source x=5000 y=4000 z=600 m0=1e15 mxx=1 myy=1 mzz=1 \
+       type=RickerInt t0=1 freq=5
+\end{verbatim}
+which specifies an isotropic source (explosion) at the point ${\bf r}_0=(5000,4000,600)$ with
+amplitude $10^{15}$ Nm, using the RickerInt time function with offset time $t_0=1$ s and frequency
+parameter $\omega=5$ Hz.  This command sets the off-diagonal moment tensor elements ($M_{xy}$,
+$M_{xz}$ and $M_{yz}$) to zero (which is the default value).
+
+Note that it is not necessary to place the sources exactly on grid points. The discretization of the
+ source terms is fourth order accurate for any location within the computational domain.
+
 
 \section{Predefined time functions}\label{sec:predefined}
 
@@ -715,7 +811,7 @@ A plot of the C6SmoothBump time-function is shown in Figure~\ref{fig:c6smoothbum
 %% \end{centering}
 %% \end{figure}  
 %
-\subsection{GuassianWindow}
+\subsection{GaussianWindow}
 \[
 g(t,t_0,\omega) = \sin(\omega t) e^{-(\omega(t-t_0)/N_c)^2/2}
 \]
@@ -827,8 +923,9 @@ sense for functions that tend to zero for large times. Functions such as {\tt Ga
 frequency (DC) component is therefore unbounded. These functions need to be differentiated before
 applying the above test.
 
-
-\section{How fine does the grid need to be?}\label{sec:grid-size}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{How to choose the grid size} \label{sec:grid}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \index{grid size}
 
 When preparing the input file, the most difficult parameter to choose is probably the grid size
@@ -857,6 +954,7 @@ found from the material properties and $h$ is determined by the input grid speci
 frequency spectrum of the solution is determined by the frequency spectrum of the time
 function(s) in the source term(s).
 
+\section{Lamb's problem}
 To investigate how fine the grid needs to be to obtain an accurate solution, we consider Lamb's
 problem~\cite{Lamb_1904}. Here, the displacement is driven by a vertical point force acting
 downwards on the free surface of a homogeneous half-space. To evaluate the accuracy of the numerical
@@ -880,9 +978,9 @@ block vp=1.7320508076e+03 vs=1000 rho=1500
 source type=C6SmoothBump x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=0
 rec x=5e3 y=6e3 z=0 file=v1 sacformat=0 usgsformat=1
 \end{verbatim}
-Because the center frequency of the time function is $f_0=1$ Hz and $C_s=1000$ m/s, the dominant
-wave length in the solution is about 1,000 meters. Hence the receiver is located approximately one
-wave length from the source.
+Because the frequency parameter of the {\tt C6SmoothBump} time function is $f_0=1$ Hz and $C_s=1000$
+m/s, the dominant wave length in the solution is about 1,000 meters. Hence the receiver is located
+approximately one wave length from the source.
 
 It is well known that the error in numerical solutions of wave propagation problems is dominated by
 phase errors~\cite{Gustafsson-Kreiss-Oliger}. It is therefore interesting to investigate how the
@@ -900,20 +998,24 @@ and errors are shown in Figure~\ref{fig:lambSAC}.
     \label{fig:lambSAC}
   \end{center}
 \end{figure}
-The waveforms are smooth and the problem appears to be well resolved. As expected, the amplitude of
-the exact solution decreases with the distance from the source, and the error in the numerical
-solution increases. This is expected, because the numerical solution accumulates a phase error as it
-propagates through the computational grid.
+The waveforms are smooth and the problem appears to be well resolved. Because of geometric
+spreading, the amplitude of the exact solution decreases with the distance from the source. At the
+same time, the amplitude of the error increases. This is because the numerical solution accumulates
+discretization errors as it propagates through the computational grid.
 
 We show the errors in the vertical displacement in Table~\ref{tab:lamb-err}. The errors are
 presented in max norm, normalized by the max norm of the exact solution. The
-center frequency in the {\tt C6SmoothBump} time function is $f_0=1$ Hz. Following
+frequency parameter in the {\tt C6SmoothBump} time function is $f_0=1$ Hz. Following
 (\ref{eq:upper-power-freq}), we estimate the highest significant frequency to be $f_{max}=3.0$
 Hz. In this case the formula for the number of grid points per wave length
 (\ref{eq:resolutionformula}) becomes
 \[
 P=\frac{1000}{3 h}.
 \]
+Also note how quickly the total number of grid points ($N_{GP}$) increases when the grid is
+refined. 
+
+The errors are also plotted in Figure~\ref{fig:ppw-err}.
 \begin{table}
 \begin{center}
 \begin{tabular}{| c | c | c | c | c |}
@@ -925,32 +1027,41 @@ $h$ & $P$  & $\| e_1^{(z)}\|_\infty / \|U_1^{(z)}\|_\infty$  & $\| e_{10}^{(z)}\
  100/3 & 10  & $9.31\cdot 10^{-3}$  & $6.99\cdot 10^{-2}$ & $2.4\cdot 10^8$ \\ \hline
  25    & 13.3 & $3.25\cdot 10^{-3}$ & $2.42\cdot 10^{-2}$ & $5.8\cdot 10^8$ \\ \hline
 \end{tabular}
-\caption{Relative max norm errors in the vertical displacement at $1,000$ and $10,000$ meters from
-  the source. Note how quickly the number of grid points ($N_{GP}$) increases when the grid is refined.}
+\caption{Lamb's problem: Relative max norm errors in the vertical displacement at $1,000$ and
+  $10,000$ meters from the source. Here, $h$ is the grid size, corresponding to $P$ grid points per
+  shortest wave length. Also, $N_{GP}$ is the total number of grid points in the 3-D grid.}
 \label{tab:lamb-err}
 \end{center}
 \end{table}
-The errors are also plotted in Figure~\ref{fig:ppw-err}.  The ratio between the errors for grid sizes
-$2h$ and $h$ approaches 16 for the finest grid, indicating that the numerical method and the
-discretization of the point force are fourth order accurate.
+The error decreases at a rate approaching ${\cal O}(h^4)$ for the finest grid, indicating that the
+numerical method and the discretization of the point force are fourth order accurate.
 \begin{figure}[htp]
 \begin{centering}
   \includegraphics[width=0.8\linewidth]{ppw-err.png}
-  \caption{Error in max norm as function of the number of points per wave length at distance 1,000
-    meters from the source (blue) and 10,000 meters from the source (green). The red and light blue lines
-    indicate the asymptotic decay of the error in a fourth order accurate method.}
+  \caption{Lamb's problem: Error in max norm as function of the number of points per wave length at
+    1,000 meters (blue) and 10,000 meters (green) from the source. The
+    dotted lines indicate the asymptotic decay of the error in a fourth order accurate method.}
   \label{fig:ppw-err}
 \end{centering}
 \end{figure}
-Note that the error is about 7.5 times larger at 10 km, compared to 1 km from the source. From this
-experiment we conclude that the accuracy in \emph{SW4} is acceptable for most seimic purposes when 
+For the same grid size, note that the error is about 7.5 times larger at 10 km from the source,
+compared to 1 km. To get the same accuracy at 10 km from the source, the grid size must be reduced
+by a factor of $(7.5)^{1/4}\approx 1.65$, i.e., the number of grid points per wave length must be
+increased by the same factor.
+
+From this experiment we conclude that the accuracy in \emph{SW4} depends on the distance between the
+source and the reciever, which can be normalized by the dominant wave length in the solution. For
+most practical purposes the accuracy is acceptable when
 \[
-P \geq 7.
+P \geq 7-12,
 \]
-The exact number depends on the distance between the source and the reciever and the required
-accuracy. We remark that the best way of checking the accuracy in a numerical simulation is to
-repeat the calculation on a finer mesh and compare the results. Unfortunately, this approach is
-often too computationally expensive for realistic simulations.
+but the exact number depends on the required accuracy. The ratio between the compressional and shear
+velocity, $C_p/C_s$, can also have a significant influence on the accuracy of the solution, and the
+number of grid points per wave length must be increased for materials with large
+$C_p/C_s$~\cite{KrePet-12}. We finally remark that the best way of checking the accuracy in a
+numerical simulation is to repeat the calculation on a finer mesh and compare the
+results. Unfortunately, this approach is often too computationally expensive in many realistic
+situations.
 
 The relation between the fundamental frequency $f_0$ and the upper power
 frequency $f_{max}$ in (\ref{eq:upper-power-freq}) is very important. For the time functions that
@@ -958,9 +1069,7 @@ not are listed in that formula, it is possible to estimate
 $f_{max}$ with the help of the matlab/octave scripts fcnplot and ftfcnplot in the {\tt tools}
 directory. 
 
-We finally remark that the ratio between the compressional and shear velocity, $C_p/C_s$, can have a
-significant influence on the accuracy of surface waves, see the paper by Kreiss and
-Petersson~\cite{KrePet-12} for details.
+\section{The Layer over half-space problem LOH.1}
 
 %% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
 %% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
@@ -971,10 +1080,11 @@ Petersson~\cite{KrePet-12} for details.
 %% with approximately twice as high frequency.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{The material model (not documented)} \label{sec:material}
+\chapter{The material model (in progress)} \label{sec:material}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Topography (not documented)} \label{sec:topography}
+\chapter{Topography (in progress)} \label{sec:topography}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -990,8 +1100,9 @@ Petersson~\cite{KrePet-12} for details.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Examples (not documented)} \label{sec:examples}
+\chapter{Examples (in progress)} \label{sec:examples}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Keywords in the input file (in progress)}\label{chap:keywords}
