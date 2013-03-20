@@ -358,7 +358,7 @@ void interpolate_between_grids( vector<Sarray>& u, vector<Sarray>& um, double t,
 
 bool interpolate_topography( double q, double r, double & Z0, bool smoothed);
 
-void extend_topogrid();
+void copy_topo_to_topogridext();
 
 bool getDepth( double x, double y, double z, double & depth);
 
@@ -487,6 +487,10 @@ void perturb_mtrl();
 void metric_derivatives_test();
 
 void material_ic( vector<Sarray>& a_mtrl );
+
+void gettopowgh( double ai, double wgh[8] ) const;
+
+void smooth_grid( int maxIter );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -536,8 +540,8 @@ int m_opttest;
 // 2-D arrays with elevation-values (=-z) as function of horizontal indices
 // mTopo holds the raw topography (according to the "elevation" field in the etree)
 // mTopoMat holds the highest elevation where the etree returns solid material properties
-// mTopoGrid holds the smoothed topography which follows the top surface of the curvilinear grid
-   Sarray mTopo, mTopoMat, mTopoGrid, mTopoGridExt;
+// mTopoGridExt holds the smoothed topography which follows the top surface of the curvilinear grid
+   Sarray mTopo, mTopoMat, mTopoGridExt;
 
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;

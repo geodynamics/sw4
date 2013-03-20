@@ -760,9 +760,26 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 // Problem when the curvilinear mapping is NOT analytic:
 // This routine can only compute the 's' coordinate if (mX0, mY0) is owned by this processor
       canBeInverted = a_EW->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
+
+      // Broadcast the computed s to all processors. 
+      // First find out the ID of a processor that defines s ...
+      int s_owner = -1;
+      if( canBeInverted )
+         MPI_Comm_rank(MPI_COMM_WORLD, &s_owner );
+      int s_owner_tmp = s_owner;
+      MPI_Allreduce( &s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+      // ...then broadcast s
+      if( s_owner > -1 )
+	 MPI_Bcast( &s, 1, MPI_DOUBLE, s_owner, MPI_COMM_WORLD );
+      else
+      {
+	 printf("ERROR in Source::set_grid_point_sources4, no processor could invert the grid mapping \n");
+	 MPI_Abort(MPI_COMM_WORLD,1);
+      }
+
 // if s < 0, the source is located above the grid and the call to
 // find_curvilinear_derivatives_at_point will fail
-      if (canBeInverted && s<0.)
+      if (s<0.)
       {
 	 double xTop, yTop, zTop;
 	 a_EW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
@@ -773,6 +790,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 MPI_Abort(MPI_COMM_WORLD,1);
       }
       curvilinear   = true;
+      canBeInverted = true;
    }
    else
    {
@@ -875,8 +893,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 }
       }
    }
-   //   int myid;
-   //   MPI_Comm_rank(MPI_COMM_WORLD, &myid );
+   int myid;
+   MPI_Comm_rank(MPI_COMM_WORLD, &myid );
    //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
    //   if( canBeInverted )
    //      cout << " can be inverted";
@@ -956,7 +974,6 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	    zdertmp[1] = zr;
 	    zdertmp[2] = zs;
 	 }
-
 	 //	 // Broadcast the computed metric to all processors. 
 	 //	 // First find out the ID of the processor that computed the metric...
 	 //	 int owner = -1;
@@ -973,9 +990,9 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	 zq = zder[0];
 	 zr = zder[1];
 	 zs = zder[2];
-	 
-	 //	 cout << "zq = " << zq << " zr = " << zr << " zs = " << zs << endl;
-	 //	 if( owntmp != -1 )
+
+	 //		 	 cout << "zq = " << zq << " zr = " << zr << " zs = " << zs << endl;
+		 //	 if( owntmp != -1 )
 	 //	    cout << " *" ;
 	 //	 cout << endl;
 	 qX0[0] = 1/h;
@@ -1036,6 +1053,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 		  double wFx=0, wFy=0, wFz=0, dsdp[27];
 		  if( a_EW->interior_point_in_proc(i,j,g) ) 
 		  {
+		     //                     cout << " src at " << i << " " << j << " " << k << endl;
 		     wFx += qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 		  //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]; 
 		  //		  wFz += qX0[2]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
@@ -1662,9 +1680,16 @@ void Source::compute_metric_at_source( EW* a_EW, double q, double r, double s, i
 
       // Compute dz/ds directly from the grid mapping, the explicit expression here
       // should be the same as in EW::curvilinear_grid_mapping
+      //      cout << "tauavg = " << tauavg << endl;
+
+
       double zMax = a_EW->m_zmin[a_EW->mNumberOfCartesianGrids-1] - (Nz-kBreak)*h;
       double c1 = zMax + tauavg - h*(kBreak-1);
       double z1d;
+      //      cout << "c1 = " << c1 << endl;
+      //      cout << "zMax = " << zMax << endl;
+      //      cout << "zetaBreak = " << zetaBreak << endl;
+
       for( int k=kc-3 ; k <= kc+ 4; k++ ) 
       {
 	 zpar = (k-1)/(zetaBreak*(Nz-1));

@@ -4529,13 +4529,13 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 	 Rjp1 = (r-j0+1)*(r-j0)*(r-j0-2)/(-2.);
 	 Rjp2 = (r-j0+1)*(r-j0)*(r-j0-1)/(6.);
 
-	 tjm1 = Qim1*gridElev(i0-1,j0-1,1) + Qi*gridElev(i0,j0-1,1)
-	    +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
-	 tj   = Qim1*gridElev(i0-1,j0,1) + Qi*gridElev(i0,j0,1)
-	    +  Qip1*gridElev(i0+1,j0,1) +  Qip2*gridElev(i0+2,j0,1);
-	 tjp1 = Qim1*gridElev(i0-1,j0+1,1)  + Qi*gridElev(i0,j0+1,1)
+	 tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
+	     +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+	 tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
+	     +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
+	 tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
 	     +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
-	 tjp2 = Qim1*gridElev(i0-1,j0+2,1)  + Qi*gridElev(i0,j0+2,1)
+	 tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
 	     +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
 
 	 mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;

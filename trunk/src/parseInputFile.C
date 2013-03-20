@@ -266,7 +266,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      }      
 // // 3. Figure out the number of grid points in the vertical direction and allocate solution arrays on the curvilinear grid
      allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
-     extend_topogrid();
   }
   else
   {
@@ -3932,7 +3931,7 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 
 // 3 versions of the topography:
       mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
-      mTopoGrid.define(ifirst,ilast,jfirst,jlast,1,1); // smoothed version of true topography
+      //      mTopoGrid.define(ifirst,ilast,jfirst,jlast,1,1); // smoothed version of true topography
       m_ext_ghost_points = 2;
          // smoothed version of true topography, with an extended number (4 instead of 2 ) ghost points.
       mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
@@ -3981,26 +3980,30 @@ void EW::allocateCurvilinearArrays()
    int i=m_iStart[g], j=m_jEnd[g];
 // note that the z-coordinate points downwards, so positive topography (above sea level)
 // gets negative z-values
-   zMaxLocal = zMinLocal = -mTopoGrid(i,j,1);
+   zMaxLocal = zMinLocal = -mTopoGridExt(i,j,1);
 // tmp
-//   int i_min_loc=i, i_max_loc=i;
-//   int j_min_loc=j, j_max_loc=j;
+   int i_min_loc=i, i_max_loc=i;
+   int j_min_loc=j, j_max_loc=j;
 // end tmp
-   for (i=m_iStart[g]; i<=m_iEnd[g]; i++)
-      for (j=m_jStart[g]; j<=m_jEnd[g]; j++)
+   int imin = mTopoGridExt.m_ib;
+   int imax = mTopoGridExt.m_ie;
+   int jmin = mTopoGridExt.m_jb;
+   int jmax = mTopoGridExt.m_je;
+   for (i= imin ; i<=imax ; i++)
+      for (j=jmin; j<=jmax ; j++)
       {
-	 if (-mTopoGrid(i,j,1) > zMaxLocal)
+	 if (-mTopoGridExt(i,j,1) > zMaxLocal)
 	 {
-	    zMaxLocal = -mTopoGrid(i,j,1);
-// 	i_max_loc = i;
-// 	j_max_loc = j;
+	    zMaxLocal = -mTopoGridExt(i,j,1);
+ 	i_max_loc = i;
+ 	j_max_loc = j;
 	 }
       
-	 if (-mTopoGrid(i,j,1) < zMinLocal)
+	 if (-mTopoGridExt(i,j,1) < zMinLocal)
 	 {
-	    zMinLocal = -mTopoGrid(i,j,1);
-// 	i_min_loc = i;
-// 	j_min_loc = j;
+	    zMinLocal = -mTopoGridExt(i,j,1);
+ 	i_min_loc = i;
+ 	j_min_loc = j;
 	 }
       }
 // tmp
@@ -4013,46 +4016,46 @@ void EW::allocateCurvilinearArrays()
 
   double maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
 // grid size h
-  for (i=m_iStart[g]+1; i<=m_iEnd[g]-1; i++)
-     for (j=m_jStart[g]+1; j<=m_jEnd[g]-1; j++)
+  for (i=imin+1; i<=imax-1; i++)
+     for (j=jmin+1; j<=jmax-1; j++)
      {
-	d2h = sqrt( SQR((mTopoGrid(i-1,j,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i+1,j,1))/1.) + 
-		    SQR((mTopoGrid(i,j-1,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i,j+1,1))/1.) + 
-		    SQR((mTopoGrid(i+1,j+1,1) - mTopoGrid(i+1,j,1) - mTopoGrid(i,j+1,1) + mTopoGrid(i,j,1))/1.) );
+	d2h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+1,j,1))/1.) + 
+		    SQR((mTopoGridExt(i,j-1,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+1,1))/1.) + 
+		    SQR((mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j+1,1) + mTopoGridExt(i,j,1))/1.) );
 	if (d2h > maxd2zh) maxd2zh = d2h;
      }
 // 3rd differences
-  for (i=m_iStart[g]+1; i<=m_iEnd[g]-2; i++)
-     for (j=m_jStart[g]+1; j<=m_jEnd[g]-2; j++)
+  for (i=imin+1; i<=imax-2; i++)
+     for (j=jmin+1; j<=jmax-2; j++)
      {
-	d3h = sqrt( SQR((mTopoGrid(i-1,j,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i+1,j,1) - mTopoGrid(i+2,j,1))/1.) + 
-		    SQR((mTopoGrid(i,j-1,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i,j+1,1) - mTopoGrid(i,j+2,1))/1.) + 
-		    SQR((mTopoGrid(i+2,j+1,1) - mTopoGrid(i+2,j,1) - 2*mTopoGrid(i+1,j+1,1) + 2*mTopoGrid(i+1,j,1) + 
-			 mTopoGrid(i,j+1,1) - mTopoGrid(i,j,1))/1.) +
-		    SQR((mTopoGrid(i+1,j+2,1) - 2*mTopoGrid(i+1,j+1,1) - mTopoGrid(i,j+2,1) + 2*mTopoGrid(i,j+1,1) + 
-			 mTopoGrid(i+1,j,1) - mTopoGrid(i,j,1))/1.) );
+	d3h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+1,j,1) - mTopoGridExt(i+2,j,1))/1.) + 
+		    SQR((mTopoGridExt(i,j-1,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j+2,1))/1.) + 
+		    SQR((mTopoGridExt(i+2,j+1,1) - mTopoGridExt(i+2,j,1) - 2*mTopoGridExt(i+1,j+1,1) + 2*mTopoGridExt(i+1,j,1) + 
+			 mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j,1))/1.) +
+		    SQR((mTopoGridExt(i+1,j+2,1) - 2*mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i,j+2,1) + 2*mTopoGridExt(i,j+1,1) + 
+			 mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j,1))/1.) );
 
 	if (d3h > maxd3zh) maxd3zh = d3h;
      }
 // grid size 2h
-  for (i=m_iStart[g]+2; i<=m_iEnd[g]-2; i+=2)
-     for (j=m_jStart[g]+2; j<=m_jEnd[g]-2; j+=2)
+  for (i=imin+2; i<=imax-2; i+=2)
+     for (j=jmin+2; j<=jmax-2; j+=2)
      {
-	d2h = sqrt( SQR((mTopoGrid(i-2,j,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i+2,j,1))/1.) + 
-		    SQR((mTopoGrid(i,j-2,1) - 2*mTopoGrid(i,j,1) + mTopoGrid(i,j+2,1))/1.) + 
-		    SQR((mTopoGrid(i+2,j+2,1) - mTopoGrid(i+2,j,1) - mTopoGrid(i,j+2,1) + mTopoGrid(i,j,1))/1.) );
+	d2h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+2,j,1))/1.) + 
+		    SQR((mTopoGridExt(i,j-2,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+2,1))/1.) + 
+		    SQR((mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j+2,1) + mTopoGridExt(i,j,1))/1.) );
 	if (d2h > maxd2z2h) maxd2z2h = d2h;
      }
 // 3rd differences
-  for (i=m_iStart[g]+2; i<=m_iEnd[g]-4; i+=2)
-     for (j=m_jStart[g]+2; j<=m_jEnd[g]-4; j+=2)
+  for (i=imin+2; i<=imax-4; i+=2)
+     for (j=jmin+2; j<=jmax-4; j+=2)
      {
-	d3h = sqrt( SQR((mTopoGrid(i-2,j,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i+2,j,1) - mTopoGrid(i+4,j,1))/1.) + 
-		    SQR((mTopoGrid(i,j-2,1) - 3*mTopoGrid(i,j,1) + 3*mTopoGrid(i,j+2,1) - mTopoGrid(i,j+4,1))/1.) + 
-		    SQR((mTopoGrid(i+4,j+2,1) - mTopoGrid(i+4,j,1) - 2*mTopoGrid(i+2,j+2,1) + 2*mTopoGrid(i+2,j,1) + 
-			 mTopoGrid(i,j+2,1) - mTopoGrid(i,j,1))/1.) +
-		    SQR((mTopoGrid(i+2,j+4,1) - 2*mTopoGrid(i+2,j+2,1) - mTopoGrid(i,j+4,1) + 2*mTopoGrid(i,j+2,1) + 
-			 mTopoGrid(i+2,j,1) - mTopoGrid(i,j,1))/1.) );
+	d3h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+2,j,1) - mTopoGridExt(i+4,j,1))/1.) + 
+		    SQR((mTopoGridExt(i,j-2,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j+4,1))/1.) + 
+		    SQR((mTopoGridExt(i+4,j+2,1) - mTopoGridExt(i+4,j,1) - 2*mTopoGridExt(i+2,j+2,1) + 2*mTopoGridExt(i+2,j,1) + 
+			 mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j,1))/1.) +
+		    SQR((mTopoGridExt(i+2,j+4,1) - 2*mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i,j+4,1) + 2*mTopoGridExt(i,j+2,1) + 
+			 mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j,1))/1.) );
 	if (d3h > maxd3z2h) maxd3z2h = d3h;
      }
   double d2zh_global=0, d2z2h_global=0, d3zh_global=0, d3z2h_global=0;

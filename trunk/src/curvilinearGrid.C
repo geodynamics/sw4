@@ -128,108 +128,18 @@ void EW::generate_grid()
 // end test
 
 // make sure all processors have made their grid before we continue
-   MPI_Barrier(m_cartesian_communicator);
-
-// Smooth the grid (only the Z component for now)
-// NOTE: the current smoothing algorithm makes the error larger rather than smaller!
-  int maxIter=0; // number of iterations
-  double rf=0.05; // rf<1/6 for stability
-  if (mVerbose >= 1 && proc_zero() && maxIter>0)
-    cout << "***smoothing the grid with " << maxIter << " Jacobi iterations and relaxation factor " << rf << " ***"<< endl;
-
-  // Save topography with an extended number of ghost points, for use when
-  // approximating the metric derivatives in the Source discretization.
-  for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
-     for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
-	mTopoGridExt(i,j,1) =-mZ(i,j,1);
-  communicate_array_2d_ext( mTopoGridExt );
-
-  int topLevel = mNumberOfGrids-1;
-  int iter;
-// temporary storage: How can I use mJ for temporary storage?
-  Sarray tmp;
-  tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],m_kStart[topLevel],m_kEnd[topLevel]);
-
-// initialize to make the Dirichlet boundary conditions work
-    for (k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
-      for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-	for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-	{
-	  tmp(i,j,k) = mZ(i,j,k);
-	}
-
-// Laplacian filter
-  for (iter=0; iter < maxIter; iter++)
-  {
-// loop over all interior points
-    for (k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
-      for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; j++)
-	for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; i++)
-	{
-	  tmp(i,j,k) = mZ(i,j,k) + rf*(mZ(i+1,j,k) + mZ(i-1,j,k) + mZ(i,j+1,k) + mZ(i,j-1,k) + mZ(i,j,k+1) + mZ(i,j,k-1) - 6.*mZ(i,j,k));
-	}
-
-// impose Neumann bc on the i and j sides
-    for (k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
-    {
-      for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
-      {
-	i = m_iStart[topLevel];
-	tmp(i,j,k) = tmp(i+1,j,k);
-	i = m_iEnd[topLevel];
-	tmp(i,j,k) = tmp(i-1,j,k);
-      }
-
-      for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
-      {
-	j = m_jStart[topLevel];
-	tmp(i,j,k) = tmp(i,j+1,k);
-	j = m_jEnd[topLevel];
-	tmp(i,j,k) = tmp(i,j-1,k);
-      }
-// Corners
-      i = m_iStart[topLevel];
-      j = m_jStart[topLevel];
-      tmp(i,j,k) = tmp(i+1,j+1,k);
-
-      i = m_iEnd[topLevel];
-      j = m_jStart[topLevel];
-      tmp(i,j,k) = tmp(i-1,j+1,k);
-
-      i = m_iStart[topLevel];
-      j = m_jEnd[topLevel];
-      tmp(i,j,k) = tmp(i+1,j-1,k);
-    
-      i = m_iEnd[topLevel];
-      j = m_jEnd[topLevel];
-      tmp(i,j,k) = tmp(i-1,j-1,k);
-    } // end Neumann loop
-
-// communicate parallel ghost points
-    communicate_array( tmp, topLevel );
-
-// update solution (Dirichlet are imposed implicitly by never changing the tmp array along the top or bottom boundary)
-    for (k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
-      for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-	for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-	{
-	  mZ(i,j,k) = tmp(i,j,k);
-	}
-
-  }// end for iter (grid smoother)
+  communicate_array( mZ, gTop );
   
 // tmp
 // calculate min and max((mZ(i,j,k)-mZ(i,j,k-1))/h) for k=Nz
   k = Nz;
   double hRatio;
 // tmp
-  double mZmin, mZmax;
-  mZmin = 1.e9;
-  mZmax = 0.;
+  double mZmin = 1.0e9, mZmax=0;
   for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
     for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
     {
-      hRatio = (mZ(i,j,k)-mZ(i,j,k-1))/mGridSize[gTop];
+       hRatio = (mZ(i,j,k)-mZ(i,j,k-1))/mGridSize[gTop];
 	if (hRatio < mZmin) mZmin = hRatio;
 	if (hRatio > mZmax) mZmax = hRatio;
     }
@@ -350,17 +260,27 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 //       }
 //      else if ( ( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
 //	     point_in_proc(i+1,j+1,gCurv) ) )
-      if ( ( point_in_proc_ext(i,j,gCurv)   && point_in_proc_ext(i+1,j,gCurv) && 
-	     point_in_proc_ext(i,j+1,gCurv) && point_in_proc_ext(i+1,j+1,gCurv) ) )
+//      if ( ( point_in_proc_ext(i,j,gCurv)   && point_in_proc_ext(i+1,j,gCurv) && 
+//	     point_in_proc_ext(i,j+1,gCurv) && point_in_proc_ext(i+1,j+1,gCurv) ) )
+//      {
+//// linear interpolation to define topography between grid points
+//	double Qi, Qip1, Rj, Rjp1;
+//	Qi = (i+1 - q);
+//	Qip1 = (q - i);
+//	Rj = (j+1 - r);
+//	Rjp1 = (r - j);
+//	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi + mTopoGridExt(i+1,j,1)*Rj*Qip1 + 
+//	  mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;  
+//      }
+      if( point_in_proc_ext(i-3,j-3,gCurv) && point_in_proc_ext(i+4,j+4,gCurv) )
       {
-// linear interpolation to define topography between grid points
-	double Qi, Qip1, Rj, Rjp1;
-	Qi = (i+1 - q);
-	Qip1 = (q - i);
-	Rj = (j+1 - r);
-	Rjp1 = (r - j);
-	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi + mTopoGridExt(i+1,j,1)*Rj*Qip1 + 
-	  mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;  
+	 double a6cofi[8], a6cofj[8];
+	 gettopowgh( q-i, a6cofi );
+	 gettopowgh( r-j, a6cofj );
+         tau = 0;
+         for( int l=j-3 ; l <= j+4 ; l++ )
+	    for( int k=i-3 ; k <= i+4 ; k++ )
+	       tau += a6cofi[k-i+3]*a6cofj[l-j+3]*mTopoGridExt(k,l,1);
       }
       else
       {
@@ -541,18 +461,28 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 //       }
 //      else if ( ( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
 //		  point_in_proc(i+1,j+1,gCurv) ) )
-      if ( ( point_in_proc_ext(i,j,gCurv)   && point_in_proc_ext(i+1,j,gCurv) && 
-	     point_in_proc_ext(i,j+1,gCurv) && point_in_proc_ext(i+1,j+1,gCurv) ) )
-      {	
+//      if ( ( point_in_proc_ext(i,j,gCurv)   && point_in_proc_ext(i+1,j,gCurv) && 
+//	     point_in_proc_ext(i,j+1,gCurv) && point_in_proc_ext(i+1,j+1,gCurv) ) )
+//      {	
 // use linear interpolation if there are not enough points for the bi-cubic formula
-	Qi = (i+1 - q);
-	Qip1 = (q - i);
-	Rj = (j+1 - r);
-	Rjp1 = (r - j);
-	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi + mTopoGridExt(i+1,j,1)*Rj*Qip1 + 
-	  mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;  
+//	Qi = (i+1 - q);
+//	Qip1 = (q - i);
+//	Rj = (j+1 - r);
+//	Rjp1 = (r - j);
+//	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi + mTopoGridExt(i+1,j,1)*Rj*Qip1 + 
+//	  mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;  
 // tmp
 //	printf("invert_curvilinear_mapping: q=%e, r=%e, Linear tau=%e\n", q, r, tau);
+//      }
+      if( point_in_proc_ext(i-3,j-3,gCurv) && point_in_proc_ext(i+4,j+4,gCurv) )
+      {
+	 double a6cofi[8], a6cofj[8];
+	 gettopowgh( q-i, a6cofi );
+	 gettopowgh( r-j, a6cofj );
+         tau = 0;
+         for( int l=j-3 ; l <= j+4 ; l++ )
+	    for( int k=i-3 ; k <= i+4 ; k++ )
+	       tau += a6cofi[k-i+3]*a6cofj[l-j+3]*mTopoGridExt(k,l,1);
       }
       else
       {
@@ -675,79 +605,68 @@ void EW::smoothTopography(int maxIter)
 //   }
   
   double rf=0.2; // rf<0.25 for stability
-  int topLevel = mNumberOfGrids-1;
+  //  int topLevel = mNumberOfGrids-1;
   int i, j, iter;
+
+  copy_topo_to_topogridext();
+
+  int imin = mTopoGridExt.m_ib;
+  int imax = mTopoGridExt.m_ie;
+  int jmin = mTopoGridExt.m_jb;
+  int jmax = mTopoGridExt.m_je;
   
 // temporary storage
   Sarray tmp;
-  tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],1,1);
-
-// copy raw topography
-  for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-    for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-    {
-      mTopoGrid(i,j,1) = mTopo(i,j,1);
-    }
+  tmp.define(imin,imax,jmin,jmax,1,1);
 
 // Laplacian filter
   for (iter=0; iter < maxIter; iter++)
   {
-    for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
-      for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
+    for (i = imin+1; i <= imax-1; ++i)
+      for (j = jmin+1; j <= jmax-1; ++j)
       {
-	tmp(i,j,1) = mTopoGrid(i,j,1) + rf*(mTopoGrid(i+1,j,1) + mTopoGrid(i-1,j,1) + mTopoGrid(i,j+1,1) + mTopoGrid(i,j-1,1) - 4.*mTopoGrid(i,j,1));
+	tmp(i,j,1) = mTopoGridExt(i,j,1) + rf*(mTopoGridExt(i+1,j,1) + mTopoGridExt(i-1,j,1) + mTopoGridExt(i,j+1,1) + mTopoGridExt(i,j-1,1) - 4.*mTopoGridExt(i,j,1));
       }
 
 // Neumann boundary conditions
-    for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
+    for (j = jmin+1; j <= jmax-1; ++j)
     {
-      i = m_iStart[topLevel];
+       i = imin;
       tmp(i,j,1) = tmp(i+1,j,1);
-      i = m_iEnd[topLevel];
+      i = imax;
       tmp(i,j,1) = tmp(i-1,j,1);
     }
 
-    for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
+    for (i = imin+1; i <= imax-1; ++i)
     {
-      j = m_jStart[topLevel];
+       j = jmin;
       tmp(i,j,1) = tmp(i,j+1,1);
-      j = m_jEnd[topLevel];
+      j = jmax;
       tmp(i,j,1) = tmp(i,j-1,1);
     }
 // Corners
-    i = m_iStart[topLevel];
-    j = m_jStart[topLevel];
+    i = imin;
+    j = jmin;
     tmp(i,j,1) = tmp(i+1,j+1,1);
 
-    i = m_iEnd[topLevel];
-    j = m_jStart[topLevel];
+    i = imax;
+    j = jmin;
     tmp(i,j,1) = tmp(i-1,j+1,1);
 
-    i = m_iStart[topLevel];
-    j = m_jEnd[topLevel];
+    i = imin;
+    j = jmax;
     tmp(i,j,1) = tmp(i+1,j-1,1);
     
-    i = m_iEnd[topLevel];
-    j = m_jEnd[topLevel];
+    i = imax;
+    j = jmax;
     tmp(i,j,1) = tmp(i-1,j-1,1);
-      
-//     i = 50; j = 251;
-//     if (i >= m_iStart[topLevel] && i <= m_iEnd[topLevel] && j >= m_jStart[topLevel] && j <= m_jEnd[topLevel] )
-//       cout << "p#" << myRank << "debug: " << tmp(i,j,1) << endl;
-    
-// communicate parallel ghost points
-    communicate_array_2dfinest( tmp );
 
-//     if (i >= m_iStart[topLevel] && i <= m_iEnd[topLevel] && j >= m_jStart[topLevel] && j <= m_jEnd[topLevel] )
-//       cout << "p#" << myRank << "debug2: " << tmp(i,j,1) << endl;
+    communicate_array_2d_ext( tmp );
 
 // update solution
-    for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-      for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-      {
-	mTopoGrid(i,j,1) = tmp(i,j,1);
-      }
-
+    for (i = imin; i <= imax ; ++i)
+      for (j = jmin; j <= jmax ; ++j)
+	 mTopoGridExt(i,j,1) = tmp(i,j,1);
   }// end for iter
 }
 
@@ -771,19 +690,26 @@ void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0
   m_GaussianYc = y0;
 
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-  {
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
     {
       x = (i-1)*mGridSize[topLevel];
       y = (j-1)*mGridSize[topLevel];
-        
 // positive topography  is up (negative z)
-      mTopo(i,j,1) = mTopoMat(i,j,1) = mTopoGrid(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
-                                                             -SQR((y-m_GaussianYc)/m_GaussianLy)); 
+      mTopo(i,j,1) = mTopoMat(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
+									       -SQR((y-m_GaussianYc)/m_GaussianLy)); 
     }
-  } // end for for
-  
+
+  for (int i = mTopoGridExt.m_ib ; i <= mTopoGridExt.m_ie ; ++i)
+     for (int j = mTopoGridExt.m_jb ; j <= mTopoGridExt.m_je; ++j)
+     {
+	x = (i-1)*mGridSize[topLevel];
+	y = (j-1)*mGridSize[topLevel];
+// positive topography  is up (negative z)
+	mTopoGridExt(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
+						-SQR((y-m_GaussianYc)/m_GaussianLy)); 
+     }
 }
+
 
 //-----------------------------------------------------------------------
 bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
@@ -869,7 +795,7 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
 //         return false;
 
       if (smoothed)
-	tau = mTopoGrid(iNear,jNear,1);
+	tau = mTopoGridExt(iNear,jNear,1);
       else
 	tau = mTopo(iNear,jNear,1);
     }
@@ -877,22 +803,35 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
     {
       computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
       
-      if ( !( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
-              point_in_proc(i+1,j+1,gCurv) ) )
-        return false;
+      //      if ( !( point_in_proc(i,j,gCurv) && point_in_proc(i+1,j,gCurv) && point_in_proc(i,j+1,gCurv) && 
+      //              point_in_proc(i+1,j+1,gCurv) ) )
+      //        return false;
 
 // linear interpolation to define topography between grid points
-      double Qi, Qip1, Rj, Rjp1;
-      Qi = (i+1 - q);
-      Qip1 = (q - i);
-      Rj = (j+1 - r);
-      Rjp1 = (r - j);
-      if (smoothed)
-	tau = mTopoGrid(i,j,1)*Rj*Qi + mTopoGrid(i,j+1,1)*Rjp1*Qi + mTopoGrid(i+1,j,1)*Rj*Qip1 + 
-	  mTopoGrid(i+1,j+1,1)*Rjp1*Qip1;
-      else
-	tau = mTopo(i,j,1)*Rj*Qi + mTopo(i,j+1,1)*Rjp1*Qi + mTopo(i+1,j,1)*Rj*Qip1 + 
-	  mTopo(i+1,j+1,1)*Rjp1*Qip1;
+//      double Qi, Qip1, Rj, Rjp1;
+//      Qi = (i+1 - q);
+//      Qip1 = (q - i);
+//      Rj = (j+1 - r);
+//      Rjp1 = (r - j);
+//      if (smoothed)
+//	tau = mTopoGrid(i,j,1)*Rj*Qi + mTopoGrid(i,j+1,1)*Rjp1*Qi + mTopoGrid(i+1,j,1)*Rj*Qip1 + 
+//	  mTopoGrid(i+1,j+1,1)*Rjp1*Qip1;
+//      else
+//	tau = mTopo(i,j,1)*Rj*Qi + mTopo(i,j+1,1)*Rjp1*Qi + mTopo(i+1,j,1)*Rj*Qip1 + 
+//	  mTopo(i+1,j+1,1)*Rjp1*Qip1;
+//    }
+    if( point_in_proc_ext(i-3,j-3,gCurv) && point_in_proc_ext(i+4,j+4,gCurv) )
+    {
+       double a6cofi[8], a6cofj[8];
+       gettopowgh( q-i, a6cofi );
+       gettopowgh( r-j, a6cofj );
+       tau = 0;
+       for( int l=j-3 ; l <= j+4 ; l++ )
+	  for( int k=i-3 ; k <= i+4 ; k++ )
+	     tau += a6cofi[k-i+3]*a6cofj[l-j+3]*mTopoGridExt(k,l,1);
+    }
+    else
+       return false;
     }
   }// end general case: interpolating mTopoGrid array  
 
@@ -959,14 +898,141 @@ void EW::metric_derivatives_test()
 }
 
 //-----------------------------------------------------------------------
-void EW::extend_topogrid()
+void EW::copy_topo_to_topogridext()
 {
    if( topographyExists() )
    {
       int gTop = mNumberOfGrids-1;
-      for (int j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
-	 for (int i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
-	    mTopoGridExt(i,j,1) = mTopoGrid(i,j,1);
+// copy raw topography
+      for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; ++i)
+	 for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; ++j)
+	    mTopoGridExt(i,j,1) = mTopo(i,j,1);
+
+      int imin = mTopoGridExt.m_ib;
+      int imax = mTopoGridExt.m_ie;
+      int jmin = mTopoGridExt.m_jb;
+      int jmax = mTopoGridExt.m_je;
+// Number of extra ghost points = m_ext_ghost_points
+      int egh = m_iStart[gTop]-imin;
+
+// Update extra ghost points. Do not worry about processor boundaries,
+// they will be overwritten with correct values in the communication update afterward.
+      for( int i=imin+egh ; i <= imax-egh ; i++ )
+	 for( int q = 0 ; q < egh ; q++ )
+	 {
+	    mTopoGridExt(i,jmin+q,1)   = mTopoGridExt(i,jmin+egh,1);
+	    mTopoGridExt(i,jmax-q,1)   = mTopoGridExt(i,jmax-egh,1);
+	 }
+      for( int j=jmin ; j <= jmax ; j++ )
+	 for( int q = 0 ; q < egh ; q++ )
+	 {
+	    mTopoGridExt(imin+q,j,1) = mTopoGridExt(imin+egh,j,1);
+	    mTopoGridExt(imax-q,j,1) = mTopoGridExt(imax-egh,j,1);
+	 }
       communicate_array_2d_ext( mTopoGridExt );
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::gettopowgh( double ai, double wgh[8] ) const
+{
+   double pol = ai*ai*ai*ai*ai*ai*ai*(-251+135*ai+25*ai*ai-
+                                      33*ai*ai*ai+6*ai*ai*ai*ai)/720;
+   wgh[0] = -1.0/60*ai + 1.0/180*ai*ai + 1.0/48*ai*ai*ai + 23.0/144*ai*ai*ai*ai 
+      - (17.0*ai + 223.0)*ai*ai*ai*ai*ai/720 - pol;
+   wgh[1] = 3.0/20*ai -3.0/40*ai*ai -1.0/6*ai*ai*ai - 13.0/12*ai*ai*ai*ai + 
+      97.0/45*ai*ai*ai*ai*ai + 1.0/6*ai*ai*ai*ai*ai*ai + 7*pol;
+   wgh[2] = -0.75*ai +0.75*ai*ai+(13.0+155*ai)*ai*ai*ai/48 -103.0/16*ai*ai*ai*ai*ai
+      - 121.0/240*ai*ai*ai*ai*ai*ai - 21*pol;
+   wgh[3] = 1 - 49.0/36*ai*ai - 49.0/9*ai*ai*ai*ai+385.0/36*ai*ai*ai*ai*ai +
+      61.0/72*ai*ai*ai*ai*ai*ai + 35*pol;
+   wgh[4] = 0.75*ai + 0.75*ai*ai - 13.0/48*ai*ai*ai + 89.0/16*ai*ai*ai*ai - 
+         1537.0/144*ai*ai*ai*ai*ai - 41.0/48*ai*ai*ai*ai*ai*ai - 35*pol;
+   wgh[5] = -3.0/20*ai - 3.0/40*ai*ai + 1.0/6*ai*ai*ai - 41.0/12*ai*ai*ai*ai
+      + 6.4*ai*ai*ai*ai*ai + 31.0/60*ai*ai*ai*ai*ai*ai + 21*pol;
+   wgh[6] = 1.0/60*ai + 1.0/180*ai*ai - 1.0/48*ai*ai*ai + 167.0/144*ai*ai*ai*ai -
+      1537.0/720*ai*ai*ai*ai*ai- 25.0/144*ai*ai*ai*ai*ai*ai - 7*pol;
+   wgh[7] = -1.0/6*ai*ai*ai*ai + 11.0/36*ai*ai*ai*ai*ai + 1.0/40*ai*ai*ai*ai*ai*ai + pol;
+}
+
+//-----------------------------------------------------------------------
+void EW::smooth_grid( int maxIter )
+{
+// Smooth the grid (only the Z component for now)
+// NOTE: the current smoothing algorithm makes the error larger rather than smaller!
+   double rf=0.05; // rf<1/6 for stability
+   if (mVerbose >= 1 && proc_zero() && maxIter>0)
+      cout << "***smoothing the grid with " << maxIter << " Jacobi iterations and relaxation factor " << rf << " ***"<< endl;
+
+   int topLevel = mNumberOfGrids-1;
+   int i, j, k, iter;
+// temporary storage: How can I use mJ for temporary storage?
+   Sarray tmp;
+   tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],m_kStart[topLevel],m_kEnd[topLevel]);
+
+// initialize to make the Dirichlet boundary conditions work
+   for (k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
+      for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	 for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+	 {
+	    tmp(i,j,k) = mZ(i,j,k);
+	 }
+
+// Laplacian filter
+   for (iter=0; iter < maxIter; iter++)
+   {
+// loop over all interior points
+      for (k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
+	 for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; j++)
+	    for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; i++)
+	    {
+	       tmp(i,j,k) = mZ(i,j,k) + rf*(mZ(i+1,j,k) + mZ(i-1,j,k) + mZ(i,j+1,k) + mZ(i,j-1,k) + mZ(i,j,k+1) + mZ(i,j,k-1) - 6.*mZ(i,j,k));
+	    }
+
+// impose Neumann bc on the i and j sides
+      for (k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
+      {
+	 for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
+	 {
+	    i = m_iStart[topLevel];
+	    tmp(i,j,k) = tmp(i+1,j,k);
+	    i = m_iEnd[topLevel];
+	    tmp(i,j,k) = tmp(i-1,j,k);
+	 }
+
+	 for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
+	 {
+	    j = m_jStart[topLevel];
+	    tmp(i,j,k) = tmp(i,j+1,k);
+	    j = m_jEnd[topLevel];
+	    tmp(i,j,k) = tmp(i,j-1,k);
+	 }
+// Corners
+	 i = m_iStart[topLevel];
+	 j = m_jStart[topLevel];
+	 tmp(i,j,k) = tmp(i+1,j+1,k);
+
+	 i = m_iEnd[topLevel];
+	 j = m_jStart[topLevel];
+	 tmp(i,j,k) = tmp(i-1,j+1,k);
+
+	 i = m_iStart[topLevel];
+	 j = m_jEnd[topLevel];
+	 tmp(i,j,k) = tmp(i+1,j-1,k);
+    
+	 i = m_iEnd[topLevel];
+	 j = m_jEnd[topLevel];
+	 tmp(i,j,k) = tmp(i-1,j-1,k);
+      } // end Neumann loop
+
+// communicate parallel ghost points
+      communicate_array( tmp, topLevel );
+
+// update solution (Dirichlet are imposed implicitly by never changing the tmp array along the top or bottom boundary)
+      for (k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
+	 for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	    for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+	       mZ(i,j,k) = tmp(i,j,k);
+
+   }// end for iter (grid smoother)
 }
