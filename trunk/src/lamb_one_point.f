@@ -3,20 +3,27 @@
       real*8 t, r, uex3, mu, cs, fz, rho, tmax, dt
       integer tfun, k, nt
 
+c VerySmoothBump with tfun=1
 c C6SmoothBump with tfun=2
-      tfun = 2
+      tfun = 1
       cs = 1000
       fz = 1e13
       rho = 1500
       mu = cs*cs*rho
 
+c max time and number of time step
       tmax=15
-      nt = 876
-      dt = tmax/(nt-1)
+      nt = 2516
 
+c source to receiver distance
       r=1d3
 
+c name of file
       open(10,file='uz1e.dat',status='unknown')
+
+c should not need to change anything beyond this point
+      dt = tmax/(nt-1)
+
       do k=1,nt
         t = dt*(k-1)
         call LAMBONEPOINT(t,r,uex3, mu, cs, fz, tfun)

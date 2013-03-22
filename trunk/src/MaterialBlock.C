@@ -81,6 +81,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
   int pc[4];
 // compute the number of parallel overlap points
 //  mEW->interiorPaddingCells( pc );
+  int material=0, outside=0;
 
   for( int g = 0 ; g < mEW->mNumberOfCartesianGrids; g++) // Cartesian grids
   {
@@ -121,7 +122,22 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	      qp[g](i,j,k) = m_qp;
 	    if( m_qs != -1 && qs[g].is_defined())
 	      qs[g](i,j,k) = m_qs;
+	    material++;
 	  }
+	  else
+	  {
+	    outside++;
+	    if (mEW->getVerbosity() > 2)
+	    {
+	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
+		     "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
+		     i, j, k, g, 
+		     x, y, z, depth,
+		     m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
+	    }
+	  }
+	  
 	}
       }
     }
@@ -164,7 +180,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	  }
 	  else
 	  {
-	    mEW->getDepth(x, y, z, depth);
+	    depth = z - mEW->mZ(i,j,1);
 	  }	  
 
 	  if(inside_block(x,y,depth))
@@ -179,10 +195,31 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	      qp[g](i,j,k) = m_qp;
 	    if( m_qs != -1 && qs[g].is_defined())
 	      qs[g](i,j,k) = m_qs;
+	    material++;
+	  }
+	  else
+	  {
+	    if (mEW->getVerbosity() > 2)
+	    {
+	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
+		     "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
+		     i, j, k, g, 
+		     x, y, z, depth,
+		     m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
+	    }
+	    outside++;
 	  }
 	}
       }
     }
   } // end if topographyExists
+  int outsideSum, materialSum;
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+
+  if (mEW->proc_zero()) 
+    cout << "block command: outside = " << outsideSum << ", " << "material = " << materialSum << endl;
+
 } // end MaterialBlock::set_material_properties
 

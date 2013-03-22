@@ -5085,7 +5085,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
             err << "z1 is greater than the maximum z, " << z1 << " > " << m_global_zmax);
   }
   else
-    z1 = -m_global_zmax;//z1 = 0.;
+    z1 = m_global_zmin - (m_global_zmax-m_global_zmin);
 
   if (z2set)
   {
@@ -5095,7 +5095,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
     // 		err << "z2 is greater than the maximum z, " << z2 << " > " << m_global_zmax);
   }
   else
-    z2 = 2.*m_global_zmax;//z2 = m_global_zmax;
+    z2 = m_global_zmax + (m_global_zmax-m_global_zmin);
 
   CHECK_INPUT( z2 >= z1, " (z1..z2), upper bound is smaller than lower bound");
 
