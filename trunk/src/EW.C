@@ -3531,7 +3531,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 			vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			vector<Source*> & a_sources, int dminus )
 {
-   double maxerr;
+   //   double maxerr;
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
    {
       Image* img = mImageFiles[fIndex];
@@ -3788,7 +3788,7 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 	} // end if proc_zero
       } // end if iotiming      
 	 
-    } // end if time to write
+      } // end if time to write
   } // end for all images
 
 
@@ -3831,9 +3831,13 @@ void EW::initialize_image_files( )
    //    mImage3DFiles[fIndex]->setup_images( );
    // }
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
-   {
       mImageFiles[fIndex]->associate_gridfiles( mImageFiles );
-   }
+
+   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+      if( mImageFiles[fIndex]->mMode == Image::GRIDX
+       || mImageFiles[fIndex]->mMode == Image::GRIDY
+       || mImageFiles[fIndex]->mMode == Image::GRIDZ )
+	 mImageFiles[fIndex]->computeImageGrid(mX, mY, mZ );
 }
 
 //-----------------------------------------------------------------------
