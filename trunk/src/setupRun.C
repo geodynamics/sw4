@@ -410,6 +410,9 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
     } // end if m_testing
     else
     {
+// get the epicenter
+      compute_epicenter( a_GlobalUniqueSources );
+      
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 // Correct source location for discrepancy between raw and smoothed topography
       for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
@@ -446,6 +449,8 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       for( int s=0 ; s  < a_GlobalUniqueSources.size(); s++ )
 	 if( a_GlobalUniqueSources[s]->getTfunc() == iDirac )
 	    a_GlobalUniqueSources[s]->setFrequency( 1.0/mDt );
+
+// find the epicenter, i.e., the location of the source with the lowest value of t0
 
 // Modify the time functions if prefiltering is enabled
       if (m_prefilter_sources)
@@ -525,8 +530,43 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
    
   mSourcesOK = true;
 
+
 } // end preprocessSources
 
+//-----------------------------------------------------------------------
+void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources ) 
+{
+  // To find out which event goes first, we need to query all sources
+  double earliestTime=0.;
+  double epiLat = 0.0, epiLon = 0.0, epiDepth = 0.0;
+      
+  if (a_GlobalUniqueSources.size() == 0)
+  {
+    // Put a location for a source at the origin
+    computeGeographicCoord(0., 0., epiLat, epiLon);
+  }
+  else
+  {
+    // Find the source with the earliest time...
+    const Source* firstSource = a_GlobalUniqueSources[0];
+    earliestTime = firstSource->getOffset();
+      
+    for (unsigned int i = 1; i < a_GlobalUniqueSources.size(); ++i)
+    {
+      if (a_GlobalUniqueSources[i]->getOffset() < earliestTime)
+      {
+	firstSource = a_GlobalUniqueSources[i];
+	earliestTime = firstSource->getOffset();
+      }
+    }
+    
+    computeGeographicCoord(firstSource->getX0(), firstSource->getY0(), epiLon, epiLat );
+    epiDepth = firstSource->getZ0(); // correct for topography?
+  }
+
+  set_epicenter(epiLat, epiLon, epiDepth, earliestTime);
+  
+}
 
 //-----------------------------------------------------------------------
 void EW::setupSBPCoeff()

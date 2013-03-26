@@ -20,6 +20,7 @@ void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& 
 
 TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool sacFormat, bool usgsFormat, 
 			double x, double y, double depth, bool topoDepth, int writeEvery, bool xyzcomponent ):
+  m_ew(a_ew),
   m_mode(mode),
   m_nComp(0),
   m_myPoint(false),
@@ -390,6 +391,9 @@ void TimeSeries::writeFile( string suffix )
      filePrefix << m_fileName << "." ;
   else
      filePrefix << m_fileName << suffix.c_str() << "." ;
+  
+// get the epicenter from EW object (note that the epicenter is not always known when this object is created)
+  m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset );
   
   stringstream ux, uy, uz, uxy, uxz, uyz;
   

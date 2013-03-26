@@ -143,8 +143,11 @@ int m_utc[7];
    double m_winL, m_winR;
    bool m_use_win, m_use_x, m_use_y, m_use_z;
 
-// quite mode?
+// quiet mode?
    bool mQuietMode;
+
+// pointer to EW object
+EW * m_ew;
 
 };
 

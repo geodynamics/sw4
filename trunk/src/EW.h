@@ -285,7 +285,9 @@ void computeCartesianCoord(double &x, double &y, double lon, double lat);
 void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
 
 void initializeSystemTime();
-void set_epicenter_in_SAC(); 
+void compute_epicenter( vector<Source*> & a_GlobalUniqueSources );
+void set_epicenter(double epiLat, double epiLon, double epiDepth, double earliestTime); 
+void get_epicenter(double &epiLat, double &epiLon, double &epiDepth, double &earliestTime); 
    
 // void update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, double t,
 // 			   vector<Sarray*> &AlphaVE );
@@ -550,6 +552,9 @@ MPI_Comm m_cartesian_communicator;
 ofstream msgStream;
 
 private:
+
+// epicenter
+double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
 
    //PJ *m_projection;
    //double m_xoffset, m_yoffset;

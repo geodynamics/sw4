@@ -119,6 +119,7 @@ using namespace std;
 // constructor
 EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
        vector<TimeSeries*> & a_GlobalTimeSeries, bool a_invproblem ): 
+  m_epi_lat(0.0), m_epi_lon(0.0), m_epi_depth(0.0), m_epi_t0(0.0),
   m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
@@ -1261,7 +1262,7 @@ void EW::print_execution_times( double times[7] )
    {
       cout << "\n----------------------------------------" << endl;
       cout << "          Execution time summary " << endl;
-      cout << "Processor  Total      BC total   Step       Image&Sac  Comm.ref   Comm.bndry BC impose  "
+      cout << "Processor  Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  "
 	   <<endl;
       cout.setf(ios::left);
       cout.precision(3);
@@ -4771,4 +4772,22 @@ void EW::get_optmethod( int& method, int& bfgs_m )
 {
    method = m_opt_method;
    bfgs_m = m_lbfgs_m;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_epicenter(double epiLat, double epiLon, double epiDepth, double earliestTime)
+{
+  m_epi_lat = epiLat;
+  m_epi_lon = epiLon;
+  m_epi_depth = epiDepth;
+  m_epi_t0 = earliestTime;
+}
+
+//-----------------------------------------------------------------------
+void EW::get_epicenter(double &epiLat, double &epiLon, double &epiDepth, double &earliestTime)
+{
+  epiLat = m_epi_lat;
+  epiLon = m_epi_lon;
+  epiDepth = m_epi_depth;
+  earliestTime = m_epi_t0;
 }
