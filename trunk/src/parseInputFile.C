@@ -4525,13 +4525,14 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
                  << lon);
          geoCoordSet = true;
       }
-      else if (startswith("depth=", token))
+      else if (startswith("depth=", token)) // this is the same as topodepth: different from WPP
       {
          CHECK_INPUT(!cartCoordSet, err << cartAndGeoErr);
          token += 6; // skip depth=
          depth = atof(token);
-	 topodepth = false;
-// by depth we mean depth below mean sea level, i.e., z-coordinate. With topography, some sources can have negative z-coordinate
+	 topodepth = true;
+         CHECK_INPUT(depth >= 0.0,
+		     err << "source command: Depth below topography must be greater than or equal to zero");
          geoCoordSet = true;
       }
 //                         1234567890

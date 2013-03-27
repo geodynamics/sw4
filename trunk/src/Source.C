@@ -463,25 +463,29 @@ void Source::correct_Z_level( EW *a_ew )
 // this routine 
 // 1. calculates the z-coordinate of the topography right above the source and saves it in m_zTopo
 // 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
-// 3. checks if the source is inside the computational domain. If not, set 
+// 3. checks if the source is inside the computational domain. If not, set mIgnore=true
    int i,j,k,g;
 // preliminary determination of the nearest grid point
    a_ew->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
 
 // tmp
-   printf("Entering correct_Z_level()\n");
+//   printf("Entering correct_Z_level()\n");
    
-   if( !a_ew->topographyExists() )
+   if( !a_ew->topographyExists() ) // this is the easy case w/o topography
    {
      m_zTopo = 0.;
-     return;
+// make sure the station is below or on the topography (z is positive downwards)
+     if ( mZ0 < m_zTopo-1e-9)
+     {
+       mIgnore = true;
+       printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
+	      mX0,  mY0, mZ0, m_zTopo);
+     }
+     return; // done with the flat case
    }
    
 // does this processor write this station?
    bool myPoint = a_ew->interior_point_in_proc(i, j, g);
-
-// tmp
-//   printf("TimeSeries constructor, rank=%i, myPoint=%i\n", a_ew->getRank(), myPoint);
 
 // The following is a safety check to make sure only one processor considers this (i,j) to be interior
 // We could remove this check if we were certain that interior_point_in_proc() never lies
@@ -499,75 +503,48 @@ void Source::correct_Z_level( EW *a_ew )
   REQUIRE2(counter == 1,"Source error: the nearest grid point should only be interior to one proc, but counter = " << counter <<
 	   " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
 
+  double zTopoLoc;
+  if (myPoint)
+  {    
+// evaluate z-coordinate of topography
+// NOTE: we already tested for topography above
+    double q, r, s;
+    int gCurv = a_ew->mNumberOfGrids - 1;
+    double h = a_ew->mGridSize[gCurv];
+    q = mX0/h + 1.0;
+    r = mY0/h + 1.0;
+// evaluate elevation of topography on the grid
+    if (!a_ew->interpolate_topography(q, r, zTopoLoc, true)) // used the smoothed topography
+    {
+      cerr << "Unable to evaluate topography for source at X= " << mX0 << " Y= " << mY0 << " Z= " << mZ0 << endl;
+      cerr << "Setting topography to ZERO" << endl;
+      zTopoLoc = 0;
+    }
+  }
+  else
+  {
+    zTopoLoc = -1e38;
+  }
+  MPI_Allreduce( &zTopoLoc, &m_zTopo, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+  
+  // printf("Proc #%i: z-coordinate of topo = %e, relative-z = %i\n", a_ew->getRank(), m_zTopo, 
+  // 	 (int) m_zRelativeToTopography);
 
-// OLD STUFF
-//    double q, r, s, minDepth=0; // this is a hack...
-//    double lat, lon;
+// if location was specified with topodepth, correct z-level  
+  if (m_zRelativeToTopography)
+  {
+    mZ0 += m_zTopo;
+    m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
+  }
 
-//    if( g == a_ew->mNumberOfGrids-1 && a_ew->topographyExists() )
-//    {
-// // Curvilinear
-//      bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
-//      if (canBeInverted) // the source location lives on this processor and needs to be corrected
-//      {
-//        double zMinTilde, zMin, zMax, zSource;
-// // evaluate smoothed && raw topography
-//        if (a_ew->interpolate_topography(q, r, zMinTilde, true) && a_ew->interpolate_topography(q, r, zMin, false))
-//        {
-// // if the topodepth source specification was used, we need to add the z-level of the raw topography to mZ0
-// 	 if (m_zRelativeToTopography)
-// 	 {
-// 	   mZ0 += zMin;
-// 	 }
-	 
-// 	 if (mZ0 > zMin + minDepth) // should be + minDepth because z is down
-// 	 {
-// 	   zMax = a_ew->m_zmin[a_ew->mNumberOfCartesianGrids-1];
-// 	   zSource = zMinTilde + (mZ0 - zMin) * (zMax - zMinTilde)/(zMax - zMin);
-// 	   if (a_ew->getVerbosity()>=1)
-// 	     printf("Correcting source z-level from %e (relative=%i) to %e. Raw topo z-level = %e, smoothed topo z-level = %e\n", 
-// 		  mZ0, m_zRelativeToTopography, zSource, zMin, zMinTilde);
-// 	   if (! a_ew->invert_curvilinear_grid_mapping( mX0, mY0, zSource, q, r, s ))
-// 	   {
-// 	     a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
-// 	     cerr << "The corrected source location zSource = " << zSource << " could not be inverted" << endl
-// 		  << " Raw topography z = " << zMin << " Smoothed topography z = " << zMinTilde << endl
-// 		  << " Source at lat = " << lat << " lon = " << lon << " mZ0 = " << mZ0 << " zSource = " << zSource << endl;
-	     
-// 	     mIgnore = true;
-// 	   }
-// 	   else if (s<0.)
-// 	   {
-// 	     a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
-// 	     cerr << "Inverting the corrected source location zSource = " << zSource << " gives s = " << s << endl 
-// 		  << " Raw topography z = " << zMin << " Smoothed topography z = " << zMinTilde << endl
-// 		  << " Source at lat = " << lat << " lon = " << lon << " mZ0 = " << mZ0 << " zSource = " << zSource << endl;
-// 	     mIgnore = true;
-// 	   }
-// 	   mZ0 = zSource;
-// 	 }
-// 	 else
-// 	 {
-// 	   mIgnore = true;
-// 	   a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
-// 	   cerr << "Ignoring source at lat = " << lat << " lon = " << lon << " z-level = " << mZ0 
-// 		<< " Too close or above raw topography z = " << zMin << endl;
-// 	 }
-//        }
-//        else
-//        {
-// 	 mIgnore = true;
-// 	 a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
-// 	 cerr << "Ignoring source at lat = " << lat << " lon = " << lon << " z-level = " << mZ0 << endl
-// 	      << " Failed to evaluate smoothed and/or raw topography at q= " << q << ", r= " << r << endl;
-//        }
-//      }
-// // ignoring sources not on this proc destroys the calculation of the moment magnitude, which is done from proc 0
-// //      else // if the location can not be inverted, the source is not on this processor
-// //      {
-// //        mIgnore = true;
-// //      }    
-//    } // if in top grid which is curvilinear  
+// make sure the station is below or on the topography (z is positive downwards)
+  if ( mZ0 < m_zTopo - 1.e-9)// allow for a little roundoff
+  {
+    mIgnore = true;
+    printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
+	   mX0,  mY0, mZ0, m_zTopo);
+  }
+
 }
 
 //-----------------------------------------------------------------------
