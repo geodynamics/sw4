@@ -73,7 +73,7 @@ public:
   int ppw_to_resolve( double dt ) const;
 
   const std::string& getName() const { return mName; };
-  void correct_Z_level( );
+  void correct_Z_level( EW *a_ew );
   void limit_frequency( int ppw, double minvsoh );
   double compute_t0_increase( double t0_min ) const;
   void adjust_t0( double dt0 );
@@ -128,6 +128,10 @@ public:
   timeDep mTimeDependence;
   double m_dir[11];
   bool m_is_filtered;
+
+  double m_zTopo;
+bool mIgnore;
+
 };
 
 #endif

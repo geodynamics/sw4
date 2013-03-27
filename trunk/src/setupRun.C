@@ -416,7 +416,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 // Correct source location for discrepancy between raw and smoothed topography
       for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-	a_GlobalUniqueSources[i]->correct_Z_level(); // also sets the ignore flag for sources that are above the topography
+	a_GlobalUniqueSources[i]->correct_Z_level( this ); // also sets the ignore flag for sources that are above the topography
 
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
       // if (m_limit_source_freq)

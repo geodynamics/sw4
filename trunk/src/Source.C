@@ -50,7 +50,8 @@ Source::Source(EW *a_ew,
   mFreq(frequency),
   mT0(t0),
   m_zRelativeToTopography(false),
-  mX0(x0), mY0(y0), mZ0(z0),
+  mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
+  mIgnore(false),
   mGridPointSet(false),
   mTimeDependence(tDep),
   mNcyc(ncyc),
@@ -114,7 +115,8 @@ Source::Source(EW *a_ew, double frequency, double t0,
   mFreq(frequency),
   mT0(t0),
   m_zRelativeToTopography(false),
-  mX0(x0), mY0(y0), mZ0(z0),
+  mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
+  mIgnore(false),
   mGridPointSet(false),
   mTimeDependence(tDep),
   mNcyc(ncyc),
@@ -456,23 +458,61 @@ void Source::setFrequency( double freq )
 }
 
 //-----------------------------------------------------------------------
-void Source::correct_Z_level( )
+void Source::correct_Z_level( EW *a_ew )
 {
-// not yet functional
-//    int i,j,k,g;
-//    mEW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
+// this routine 
+// 1. calculates the z-coordinate of the topography right above the source and saves it in m_zTopo
+// 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
+// 3. checks if the source is inside the computational domain. If not, set 
+   int i,j,k,g;
+// preliminary determination of the nearest grid point
+   a_ew->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
+
+// tmp
+   printf("Entering correct_Z_level()\n");
+   
+   if( !a_ew->topographyExists() )
+   {
+     m_zTopo = 0.;
+     return;
+   }
+   
+// does this processor write this station?
+   bool myPoint = a_ew->interior_point_in_proc(i, j, g);
+
+// tmp
+//   printf("TimeSeries constructor, rank=%i, myPoint=%i\n", a_ew->getRank(), myPoint);
+
+// The following is a safety check to make sure only one processor considers this (i,j) to be interior
+// We could remove this check if we were certain that interior_point_in_proc() never lies
+  int iwrite = myPoint ? 1 : 0;
+  int size;
+  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  std::vector<int> whoIsOne(size);
+  int counter = 0;
+  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,MPI_COMM_WORLD);
+  for (unsigned int i = 0; i < whoIsOne.size(); ++i)
+    if (whoIsOne[i] == 1)
+      {
+        counter++;
+      }
+  REQUIRE2(counter == 1,"Source error: the nearest grid point should only be interior to one proc, but counter = " << counter <<
+	   " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
+
+
+// OLD STUFF
 //    double q, r, s, minDepth=0; // this is a hack...
 //    double lat, lon;
-      
-//    if( g == mEW->mNumberOfGrids-1 && mEW->topographyExists() )
+
+//    if( g == a_ew->mNumberOfGrids-1 && a_ew->topographyExists() )
 //    {
 // // Curvilinear
-//      bool canBeInverted = mEW->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
+//      bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX0, mY0, mZ0, q, r, s );
 //      if (canBeInverted) // the source location lives on this processor and needs to be corrected
 //      {
 //        double zMinTilde, zMin, zMax, zSource;
 // // evaluate smoothed && raw topography
-//        if (mEW->interpolate_topography(q, r, zMinTilde, true) && mEW->interpolate_topography(q, r, zMin, false))
+//        if (a_ew->interpolate_topography(q, r, zMinTilde, true) && a_ew->interpolate_topography(q, r, zMin, false))
 //        {
 // // if the topodepth source specification was used, we need to add the z-level of the raw topography to mZ0
 // 	 if (m_zRelativeToTopography)
@@ -482,14 +522,14 @@ void Source::correct_Z_level( )
 	 
 // 	 if (mZ0 > zMin + minDepth) // should be + minDepth because z is down
 // 	 {
-// 	   zMax = mEW->m_zmin[mEW->mNumberOfCartesianGrids-1];
+// 	   zMax = a_ew->m_zmin[a_ew->mNumberOfCartesianGrids-1];
 // 	   zSource = zMinTilde + (mZ0 - zMin) * (zMax - zMinTilde)/(zMax - zMin);
-// 	   if (mEW->getVerbosity()>=1)
+// 	   if (a_ew->getVerbosity()>=1)
 // 	     printf("Correcting source z-level from %e (relative=%i) to %e. Raw topo z-level = %e, smoothed topo z-level = %e\n", 
 // 		  mZ0, m_zRelativeToTopography, zSource, zMin, zMinTilde);
-// 	   if (! mEW->invert_curvilinear_grid_mapping( mX0, mY0, zSource, q, r, s ))
+// 	   if (! a_ew->invert_curvilinear_grid_mapping( mX0, mY0, zSource, q, r, s ))
 // 	   {
-// 	     mEW->computeGeographicCoord(mX0, mY0, lon, lat);
+// 	     a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	     cerr << "The corrected source location zSource = " << zSource << " could not be inverted" << endl
 // 		  << " Raw topography z = " << zMin << " Smoothed topography z = " << zMinTilde << endl
 // 		  << " Source at lat = " << lat << " lon = " << lon << " mZ0 = " << mZ0 << " zSource = " << zSource << endl;
@@ -498,7 +538,7 @@ void Source::correct_Z_level( )
 // 	   }
 // 	   else if (s<0.)
 // 	   {
-// 	     mEW->computeGeographicCoord(mX0, mY0, lon, lat);
+// 	     a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	     cerr << "Inverting the corrected source location zSource = " << zSource << " gives s = " << s << endl 
 // 		  << " Raw topography z = " << zMin << " Smoothed topography z = " << zMinTilde << endl
 // 		  << " Source at lat = " << lat << " lon = " << lon << " mZ0 = " << mZ0 << " zSource = " << zSource << endl;
@@ -509,7 +549,7 @@ void Source::correct_Z_level( )
 // 	 else
 // 	 {
 // 	   mIgnore = true;
-// 	   mEW->computeGeographicCoord(mX0, mY0, lon, lat);
+// 	   a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	   cerr << "Ignoring source at lat = " << lat << " lon = " << lon << " z-level = " << mZ0 
 // 		<< " Too close or above raw topography z = " << zMin << endl;
 // 	 }
@@ -517,7 +557,7 @@ void Source::correct_Z_level( )
 //        else
 //        {
 // 	 mIgnore = true;
-// 	 mEW->computeGeographicCoord(mX0, mY0, lon, lat);
+// 	 a_ew->computeGeographicCoord(mX0, mY0, lon, lat);
 // 	 cerr << "Ignoring source at lat = " << lat << " lon = " << lon << " z-level = " << mZ0 << endl
 // 	      << " Failed to evaluate smoothed and/or raw topography at q= " << q << ", r= " << r << endl;
 //        }
@@ -526,12 +566,9 @@ void Source::correct_Z_level( )
 // //      else // if the location can not be inverted, the source is not on this processor
 // //      {
 // //        mIgnore = true;
-// //      }
-     
-//    } // if in top grid which is curvilinear
-   
+// //      }    
+//    } // if in top grid which is curvilinear  
 }
-
 
 //-----------------------------------------------------------------------
 void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const

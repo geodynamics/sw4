@@ -5466,11 +5466,11 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         name = token;
         usgsfileset = true;
      }
-     else if(startswith("shift=", token))
-     {
-        token += 6; // skip shift=
-        t0 = atof(token);
-     }
+     // else if(startswith("shift=", token))
+     // {
+     //    token += 6; // skip shift=
+     //    t0 = atof(token);
+     // }
      else if( startswith("utc=",token))
      {
         token += 4;
