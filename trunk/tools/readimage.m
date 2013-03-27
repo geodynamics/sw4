@@ -65,6 +65,7 @@ if fd ~= -1
      end;
 % read grid z-coordinates
      if (pnr == npatches) && (gridinfo == 1 )
+%        disp(['Reading z-coordinates...']);   
         if prec == 4
            z0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'float');
         else
@@ -79,6 +80,7 @@ if fd ~= -1
      fclose(fd);
      if plane == 0 
         x = coord;
+%        disp(['Making the grid: plane  = ' num2str(plane) ' readz = ' num2str(readz)]);   
         if readz == 0 
            y = h(pnr)*((ib(pnr):ni(pnr))-1);
            z = zmin(pnr) + h(pnr)*((jb(pnr):nj(pnr))-1);

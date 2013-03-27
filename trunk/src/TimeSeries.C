@@ -33,6 +33,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
   mGPY(0.0),
   mGPZ(0.0),
   m_zRelativeToTopography(topoDepth),
+  m_zTopo(0.0),
   mWriteEvery(writeEvery),
   m_usgsFormat(usgsFormat),
   m_sacFormat(sacFormat),
@@ -102,41 +103,43 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
 
 // from here on this processor writes this sac station and knows about its topography
 
-  double zMinTilde, q, r, s;
+  double zTopo, q, r, s;
   if (a_ew->topographyExists())
   {
-// NOT FULLY IMPLEMENTED
     int gCurv = a_ew->mNumberOfGrids - 1;
     double h = a_ew->mGridSize[gCurv];
     q = mX/h + 1.0;
     r = mY/h + 1.0;
 // evaluate elevation of topography on the grid
-    // if (!a_ew->interpolate_topography(q, r, zMinTilde, true))
-    // {
-    //   cerr << "Unable to evaluate topography for SAC station" << m_fileName << " mX= " << mX << " mY= " << mY << endl;
-    //   cerr << "Setting topography to ZERO" << endl;
-    //   zMinTilde = 0;
-    // }
+    if (!a_ew->interpolate_topography(q, r, zTopo, true))
+    {
+      cerr << "Unable to evaluate topography for receiver station" << m_fileName << " mX= " << mX << " mY= " << mY << endl;
+      cerr << "Setting topography to ZERO" << endl;
+      zTopo = 0;
+    }
   }
   else
   {
-    zMinTilde = 0; // no topography
+    zTopo = 0; // no topography
   }
+
+// remember topography z-ccordinate
+  m_zTopo = zTopo;
 
 // if location was specified with topodepth, correct z-level  
    if (m_zRelativeToTopography)
    {
-     mZ += zMinTilde;
+     mZ += zTopo;
    }
    
-   double zMin = zMinTilde - 1.e-9; // allow for a little roundoff
+   double zMin = zTopo - 1.e-9; // allow for a little roundoff
    
 // make sure the station is below the topography (z is positive downwards)
    if ( mZ < zMin)
    {
      mIgnore = true;
      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
-     m_fileName.c_str(),  mX,  mY, mZ, zMinTilde);
+     m_fileName.c_str(),  mX,  mY, mZ, zTopo);
 // don't write this station
      m_myPoint=false;
      return;
@@ -184,12 +187,12 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
    mGPY = yG;
    mGPZ = zG;
 
-   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
+//   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
+   if (a_ew->getVerbosity()>=2 )
    {
-     cout << "receiver info for station " << m_fileName << ":" << 
-       " initial location (x,y,z) = " << mX << " " << mY << " " << mZ << 
-       " moved to nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << 
-       " h= " << a_ew->mGridSize[m_grid0] <<
+     cout << "Receiver INFO for station " << m_fileName << ":" << endl <<
+       "     initial location (x,y,z) = " << mX << " " << mY << " " << mZ << " zTopo= " << m_zTopo << endl <<
+       "     nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << " h= " << a_ew->mGridSize[m_grid0] << 
        " with indices (i,j,k)= " << m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 << endl;
    }
 

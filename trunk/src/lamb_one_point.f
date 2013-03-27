@@ -7,7 +7,6 @@ c VerySmoothBump with tfun=1
 c C6SmoothBump with tfun=2
       tfun = 1
       cs = 1000
-      fz = 1e13
       rho = 1500
       mu = cs*cs*rho
 

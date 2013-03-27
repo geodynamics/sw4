@@ -27,7 +27,7 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,ux,colorstring);
-set(h,'LineWidth',2.0)
+%set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
 axis tight;
 
@@ -37,7 +37,7 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,uy,colorstring);
-set(h,'LineWidth',2.0)
+%set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
 axis tight;
 
@@ -47,6 +47,6 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,uz,colorstring);
-set(h,'LineWidth',2.0)
+%set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
 axis tight;

@@ -82,7 +82,7 @@ u=(2*tmp-1).*exp(-tmp);
 %u=w0/sqrt(2*pi)*exp(-tmp);
 
 function gg=g(tt,delta,gamma);
-%% The kernal from Mooney BSSA Vol 64 N0 2 pp. 437-491 
+%% The kernel from Mooney BSSA Vol 64 N0 2 pp. 437-491 
 gg=0*tt;
 gt=0;
 for i=1:length(tt)

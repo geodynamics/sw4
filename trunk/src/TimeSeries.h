@@ -92,6 +92,8 @@ bool m_myPoint; // set to true if this processor writes to the arrays
 std::string m_fileName, m_filePrefix;
 
 double mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
+double m_zTopo;
+
 bool m_zRelativeToTopography; // location is given relative to topography
 
 int mWriteEvery;
