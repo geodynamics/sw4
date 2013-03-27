@@ -103,7 +103,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
 
 // from here on this processor writes this sac station and knows about its topography
 
-  double zTopo, q, r, s;
+// evaluate z-coordinate of topography
+  double q, r, s;
   if (a_ew->topographyExists())
   {
     int gCurv = a_ew->mNumberOfGrids - 1;
@@ -111,100 +112,98 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
     q = mX/h + 1.0;
     r = mY/h + 1.0;
 // evaluate elevation of topography on the grid
-    if (!a_ew->interpolate_topography(q, r, zTopo, true))
+    if (!a_ew->interpolate_topography(q, r, m_zTopo, true))
     {
       cerr << "Unable to evaluate topography for receiver station" << m_fileName << " mX= " << mX << " mY= " << mY << endl;
       cerr << "Setting topography to ZERO" << endl;
-      zTopo = 0;
+      m_zTopo = 0;
     }
   }
   else
   {
-    zTopo = 0; // no topography
+    m_zTopo = 0; // no topography
   }
 
-// remember topography z-ccordinate
-  m_zTopo = zTopo;
-
 // if location was specified with topodepth, correct z-level  
-   if (m_zRelativeToTopography)
-   {
-     mZ += zTopo;
-   }
+  if (m_zRelativeToTopography)
+  {
+    mZ += m_zTopo;
+    m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
+  }
    
-   double zMin = zTopo - 1.e-9; // allow for a little roundoff
+  double zMin = m_zTopo - 1.e-9; // allow for a little roundoff
    
 // make sure the station is below the topography (z is positive downwards)
-   if ( mZ < zMin)
-   {
-     mIgnore = true;
-     printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
-     m_fileName.c_str(),  mX,  mY, mZ, zTopo);
+  if ( mZ < zMin)
+  {
+    mIgnore = true;
+    printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
+	   m_fileName.c_str(),  mX,  mY, mZ, m_zTopo);
 // don't write this station
-     m_myPoint=false;
-     return;
-   }
+    m_myPoint=false;
+    return;
+  }
      
 // now we can find the closest grid point  
-   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
+  a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
 
-   if( m_grid0 == a_ew->mNumberOfGrids-1 && a_ew->topographyExists() )
-   {
+  if( m_grid0 == a_ew->mNumberOfGrids-1 && a_ew->topographyExists() )
+  {
 // Curvilinear
-     bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
-     if (a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s )) // the inversion was successful
-     {
-       m_k0 = (int)floor(s);
-       if (s-(m_k0+0.5) > 0.) m_k0++;
-       m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
-       int Nz = a_ew->m_kEndInt[m_grid0];
-       m_k0 = min(Nz, m_k0);
-     }
-     else
-     {
-       cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= " 
-	    << mY << " mZ= " << mZ << endl;
-       cerr << "Placing the station on the surface (depth=0)." << endl;
-       m_k0 = 1;
-     }
-   }
+    bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
+    if (a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s )) // the inversion was successful
+    {
+      m_k0 = (int)floor(s);
+      if (s-(m_k0+0.5) > 0.) m_k0++;
+      m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
+      int Nz = a_ew->m_kEndInt[m_grid0];
+      m_k0 = min(Nz, m_k0);
+    }
+    else
+    {
+      cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= " 
+	   << mY << " mZ= " << mZ << endl;
+      cerr << "Placing the station on the surface (depth=0)." << endl;
+      m_k0 = 1;
+    }
+  }
    
 // actual location of station (nearest grid point)
-   double xG, yG, zG;
-   xG = (m_i0-1)*a_ew->mGridSize[m_grid0];
-   yG = (m_j0-1)*a_ew->mGridSize[m_grid0];
-   if (m_grid0 < a_ew->mNumberOfCartesianGrids)
-   {
-     zG = a_ew->m_zmin[m_grid0] + (m_k0-1)*a_ew->mGridSize[m_grid0];
-   }
-   else
-   {
-     zG = a_ew->mZ(m_i0, m_j0, m_k0);
-   }
+  double xG, yG, zG;
+  xG = (m_i0-1)*a_ew->mGridSize[m_grid0];
+  yG = (m_j0-1)*a_ew->mGridSize[m_grid0];
+  if (m_grid0 < a_ew->mNumberOfCartesianGrids)
+  {
+    zG = a_ew->m_zmin[m_grid0] + (m_k0-1)*a_ew->mGridSize[m_grid0];
+  }
+  else
+  {
+    zG = a_ew->mZ(m_i0, m_j0, m_k0);
+  }
    
 // remember corrected location
-   mGPX = xG;
-   mGPY = yG;
-   mGPZ = zG;
+  mGPX = xG;
+  mGPY = yG;
+  mGPZ = zG;
 
 //   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
-   if (a_ew->getVerbosity()>=2 )
-   {
-     cout << "Receiver INFO for station " << m_fileName << ":" << endl <<
-       "     initial location (x,y,z) = " << mX << " " << mY << " " << mZ << " zTopo= " << m_zTopo << endl <<
-       "     nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << " h= " << a_ew->mGridSize[m_grid0] << 
-       " with indices (i,j,k)= " << m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 << endl;
-   }
+  if (a_ew->getVerbosity()>=2 )
+  {
+    cout << "Receiver INFO for station " << m_fileName << ":" << endl <<
+      "     initial location (x,y,z) = " << mX << " " << mY << " " << mZ << " zTopo= " << m_zTopo << endl <<
+      "     nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << " h= " << a_ew->mGridSize[m_grid0] << 
+      " with indices (i,j,k)= " << m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 << endl;
+  }
 
 // remember file prefix
-   if (a_ew->getPath() != ".")
-   {
-     m_filePrefix = a_ew->getPath();
-   }
-   else
-   {
-     m_filePrefix = "";
-   }
+  if (a_ew->getPath() != ".")
+  {
+    m_filePrefix = a_ew->getPath();
+  }
+  else
+  {
+    m_filePrefix = "";
+  }
 
 // get number of components from m_mode
   if (m_mode == Displacement || m_mode == Velocity)
