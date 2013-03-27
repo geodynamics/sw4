@@ -4086,7 +4086,9 @@ void EW::allocateCurvilinearArrays()
   int Nz = 1+ (int) ((zMaxCart - 0.5*(zMaxGlobal+zMinGlobal))/mGridSize[gTop]); // on average the same gridsize in z
   m_kStart[gTop] = 1 - m_ghost_points;
   m_kEnd[gTop]   = Nz + m_ghost_points;
-  m_global_nz[gTop]=Nz;
+  m_global_nz[gTop] = Nz;
+  m_kStartInt[gTop] = 1;
+  m_kEndInt[gTop]   = Nz;
   if(mVerbose && proc_zero() )
      printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
 	    Nz, m_kStart[gTop], m_kEnd[gTop]);
