@@ -5467,11 +5467,13 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         name = token;
         usgsfileset = true;
      }
-     // else if(startswith("shift=", token))
-     // {
-     //    token += 6; // skip shift=
-     //    t0 = atof(token);
-     // }
+// (small) shifts of the observation in time can be used to compensate for incorrect velocites
+// in the material model
+     else if(startswith("shift=", token))
+     {
+        token += 6; // skip shift=
+        t0 = atof(token);
+     }
      else if( startswith("utc=",token))
      {
         token += 4;

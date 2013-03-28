@@ -187,7 +187,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
   mGPZ = zG;
 
 //   if (a_ew->getVerbosity()>=2 && fabs(mX-xG)+fabs(mY-yG)+fabs(mZ-zG) > 0.001*a_ew->mGridSize[m_grid0] )
-  if (a_ew->getVerbosity()>=2 )
+  if (!mQuietMode && a_ew->getVerbosity()>=2 )
   {
     cout << "Receiver INFO for station " << m_fileName << ":" << endl <<
       "     initial location (x,y,z) = " << mX << " " << mY << " " << mZ << " zTopo= " << m_zTopo << endl <<
