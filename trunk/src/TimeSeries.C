@@ -1487,13 +1487,17 @@ double TimeSeries::arrival_time( double lod )
 
 //-----------------------------------------------------------------------
 void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
-				 std::vector<double> & h, double dt )
+				 std::vector<double> & h, double dt,
+				 Sarray& Jac, bool topography_exists )
 {
    // Use at grid point, n, in the grid of this object.
    if( m_myPoint )
    {
       double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
       double ih3 = 1.0/(h[m_grid0]*h[m_grid0]*h[m_grid0]);
+      if( topography_exists && m_grid0 == h.size()-1 )
+	 ih3 = 1.0/Jac(m_i0,m_j0,m_k0);
+
       //      double ih3 = 1.0;
       double iwgh = 1.0;
       if( 1 <= m_k0 && m_k0 <= 4  )

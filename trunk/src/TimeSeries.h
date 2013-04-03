@@ -50,7 +50,8 @@ double misfit( TimeSeries& observed, TimeSeries* diff );
 
 void interpolate( TimeSeries& intpfrom );
 
-void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, double dt );
+void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, double dt,
+		     Sarray& Jac, bool topography_exists );
 
 double product( TimeSeries& ts ) const;
 double product_wgh( TimeSeries& ts ) const;

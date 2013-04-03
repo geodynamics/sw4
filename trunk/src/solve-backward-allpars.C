@@ -130,7 +130,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
     // Corrector
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
-	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt );
+	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, a_Mu, a_Lambda, Lk );

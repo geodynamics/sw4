@@ -453,7 +453,8 @@ ostream& operator<<( ostream& output, const GridPointSource& s )
 
 //-----------------------------------------------------------------------
 void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
-				       double t, double dt, double gradient[11], std::vector<double> & h )
+				       double t, double dt, double gradient[11], std::vector<double> & h,
+				       Sarray& Jac, bool topography_exists )
 {
    if( m_jacobian_known )
    {
@@ -470,6 +471,8 @@ void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<
       double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
       double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
       double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+      if( topography_exists && m_grid == h.size()-1 )
+	 h3 = Jac(m_i0,m_j0,m_k0);
       //      double h3 = 1.0;
       if( 1 <= m_k0 && m_k0 <= 4 )
 	 h3 *= normwgh[m_k0-1];

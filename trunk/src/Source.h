@@ -100,13 +100,14 @@ public:
   Source();
 
   void compute_metric_at_source( EW* a_EW, double q, double r, double s, int ic, int jc, int kc,
-				 int g, double& zq, double& zr, double& zs ) const;
+				 int g, double& zq, double& zr, double& zs, double& zqq, double& zqr,
+				 double& zqs, double& zrr, double& zrs, double& zss ) const;
   int spline_interpolation( );
   void getsourcewgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcedwgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcewghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
   void getsourcedwghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
-  void getmetwgh( double alph, double wgh[8] ) const;
+  void getmetwgh( double alph, double wgh[8], double dwgh[8], double ddwgh[8], double dddwgh[8] ) const;
   void getmetdwgh( double alph, double wgh[8] ) const;
   void getmetwgh7( double ai, double wgh[7] ) const;
   void getmetdwgh7( double ai, double wgh[7] ) const;

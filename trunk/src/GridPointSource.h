@@ -41,7 +41,8 @@ public:
   void limitFrequency(double max_freq);
 
   void add_to_gradient( std::vector<Sarray>& kappa, std::vector<Sarray> & eta,
-			 double t, double dt, double gradient[11], std::vector<double> & h );
+			double t, double dt, double gradient[11], std::vector<double> & h,
+			Sarray& Jac, bool topography_exists );
   void add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
 		       double t, double dt, double hessian[121], std::vector<double> & h );
   void set_derivative( int der, const double dir[11] );

@@ -103,7 +103,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 
     // Corrector
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
-	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt );
+	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, mMu, mLambda, Lk );
@@ -125,7 +125,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
       // Accumulate the gradient
       for( int s=0 ; s < point_sources.size() ; s++ )
       {
-	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradient, mGridSize );
+	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradient, mGridSize, mJ, topographyExists() );
 	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian, mGridSize );
       }
       
