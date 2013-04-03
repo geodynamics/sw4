@@ -45,9 +45,27 @@ lin = fgetl(fd);
 lin = fgetl(fd);
 % read the number of components
 nc = str2num(lin(12:end));
-for i=1:nc
-   lin = fgetl(fd);
+% comment line 1
+lin = fgetl(fd);
+% comment line 2 includes "East" if the files holds East-North components
+lin = fgetl(fd);
+% tmp
+%disp(['Comment line 2: ', lin])
+east = strfind(lin, "East");
+if (isnull(east))
+  xycomp=1;
+else
+  xycomp=0;
 end;
+%disp(['xy-components: ', num2str(xycomp)])
+% read past remaining comment lines
+for i=1:nc-2
+  lin = fgetl(fd);
+end;
+% old code
+%for i=1:nc
+%   lin = fgetl(fd);
+%end;
 q=fscanf(fd,'%f');
 t=q(1:nc:end,1);
 for c=2:nc
@@ -60,9 +78,15 @@ if (rotate)
   reclon= loc(1)
   reclat= loc(2)
   [azdeg az] = heading(evtlon, evtlat, reclon, reclat);
-  azdeg
-  ur = u1.*cos(az) + u2.*sin(az);
-  ut = u1.*sin(az) - u2.*cos(az);
+  disp(['Azimuth (deg): ', num2str(azdeg), ' xy-components: ', num2str(xycomp)])
+  if (xycomp)
+    ur = u1.*cos(az) + u2.*sin(az);
+    ut = u1.*sin(az) - u2.*cos(az);
+  else
+% u1 is east, u2 north
+    ur = u2.*cos(az) + u1.*sin(az);
+    ut =-u2.*sin(az) + u1.*cos(az);
+  end;
   u1 = ur;
   u2 = ut;
 end
