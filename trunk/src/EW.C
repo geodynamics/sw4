@@ -164,8 +164,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   //  mTestSource(false),
   //  mTestLamb(false),
   mOrder(4),
-  mCFL(1.15), // 1.15 is necessary for the rayleigh wave test when Cp/Cs=10
-  //  mCFL(1.3),
+//  mCFL(1.15), // 1.15 is necessary for the rayleigh wave test when Cp/Cs=10
+  mCFL(1.3),
   // m_d4coeff(0.0),
   // m_d4_cfl(0.2),
   // m_curlcoeff(0.0),
@@ -1228,7 +1228,8 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 //-----------------------------------------------------------------------
 void EW::print_execution_time( double t1, double t2, string msg )
 {
-   if( !mQuiet && proc_zero() )
+//   if( !mQuiet && proc_zero() )
+   if( proc_zero() )
    {
       double s = t2 - t1;
       int h = static_cast<int>(s/3600.0);

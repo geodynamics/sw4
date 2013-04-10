@@ -484,7 +484,7 @@ void Source::correct_Z_level( EW *a_ew )
      return; // done with the flat case
    }
    
-// does this processor write this station?
+// does this processor know about topography at this location?
    bool myPoint = a_ew->interior_point_in_proc(i, j, g);
 
 // The following is a safety check to make sure only one processor considers this (i,j) to be interior

@@ -5608,6 +5608,9 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   }
 
   bool inCurvilinear=false;
+//
+// AP: This test is incorrect because we don't know the elevation of the observation
+//
 // we are in or above the curvilinear grid 
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
   {
