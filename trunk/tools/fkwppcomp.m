@@ -25,7 +25,7 @@
 %                     1: read output from loh1exact
 %                     3: read output from loh3exact
 %          sigma:   Optional argument: only used for LOH3: spread in Gaussian time function sigma=1/freq, 
-%                     freq is WPP frequency parameter; default value: sigma=0.1
+%                     freq is WPP frequency parameter; default value: sigma=0.06
 %          sac:     Optional argument: (default value sac=0)
 %                     0: read wpp results from 1 usgs formatted file with name 'wppfile'
 %                     1: read wpp results from 3 sac files with base name 'wppfile'
@@ -48,7 +48,7 @@ if nargin < 7
 end
 
 if nargin < 6
-  sigma=0.1;
+  sigma=0.06;
 end
 
 if nargin < 5
@@ -147,20 +147,23 @@ umaxnorm = max([urmax, utmax, uvmax]);
 if plotit == 1
   subplot(3,1,1);
 %  plot(tw,radi,'k',tw,urw,'r',tw,radi-urw,'b');
-plot(tw(1:nt),radi(1:nt),'k',tw(1:nt),urw(1:nt),'r',tw(1:nt),radi(1:nt)-urw(1:nt),'g');
-  legend('Radial fk','WPP','Difference');
-%  legend('Radial fk','WPP');
+h=plot(tw(1:nt),radi(1:nt),'k',tw(1:nt),urw(1:nt),'r',tw(1:nt),radi(1:nt)-urw(1:nt),'b');
+  legend('Radial fk','FD','Difference');
+  set(h,"Linewidth",2)
+  set(gca,"Fontsize",16);
 
   subplot(3,1,2);
 %  plot(tw,trani,'k',tw,utw,'r',tw,trani-utw,'b');
-  plot(tw(1:nt),trani(1:nt),'k',tw(1:nt),utw(1:nt),'r',tw(1:nt),trani(1:nt)-utw(1:nt),'g');
-  legend('Transverse fk','WPP','Difference');
-%  legend('Transverse fk','WPP');
+h=plot(tw(1:nt),trani(1:nt),'k',tw(1:nt),utw(1:nt),'r',tw(1:nt),trani(1:nt)-utw(1:nt),'b');
+  legend('Transverse fk','FD','Difference');
+  set(h,"Linewidth",2)
+  set(gca,"Fontsize",16);
 
   subplot(3,1,3);
 %  plot(tw,upi,'k',tw,uvw,'r',tw,upi-uvw,'b');
-  plot(tw(1:nt),upi(1:nt),'k',tw(1:nt),uvw(1:nt),'r', tw(1:nt), upi(1:nt)-uvw(1:nt),'g');
-  legend('Vertical fk','WPP','Difference');
-%  legend('Vertical fk','WPP');
+h=plot(tw(1:nt),upi(1:nt),'k',tw(1:nt),uvw(1:nt),'r', tw(1:nt), upi(1:nt)-uvw(1:nt),'b');
+  legend('Vertical fk','FD','Difference');
+  set(h,"Linewidth",2)
+  set(gca,"Fontsize",16);
 
 end

@@ -29,8 +29,8 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,ux,colorstring);
-%set(h,'LineWidth',2.0)
-set(gca,'FontSize',20)
+set(h,'LineWidth',2.0)
+set(gca,'FontSize',16)
 title("Radial(top), transverse(middle), vertical(bottom)");
 umax = max(ux);
 umin = min(ux);
@@ -43,8 +43,8 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,uy,colorstring);
-%set(h,'LineWidth',2.0)
-set(gca,'FontSize',20)
+set(h,'LineWidth',2.0)
+set(gca,'FontSize',16)
 umax = max(uy);
 umin = min(uy);
 axis([tmin tmax umin umax]);
@@ -56,8 +56,8 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,uz,colorstring);
-%set(h,'LineWidth',2.0)
-set(gca,'FontSize',20)
+set(h,'LineWidth',2.0)
+set(gca,'FontSize',16)
 umax = max(uz);
 umin = min(uz);
 axis([tmin tmax umin umax]);
