@@ -108,8 +108,11 @@ void F77_FUNC(addgradrhoc,ADDGRADRHOC)( int*, int*, int*, int*, int*, int*, int*
 				       double*, double*, double*, double*, double*, double*, double*,
 				       double*, double*, int* );
 void F77_FUNC(addgradmula,ADDGRADMULA)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-				       double*, double*, double*, double*, double*, double*, double*,
+				       double*, double*, double*, double*, double*,
 					double*, double*, double*, int*, int*, int*, double* );
+void F77_FUNC(addgradmulac,ADDGRADMULAC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+				        double*, double*, double*, double*, double*,
+					  double*, double*, double*, double*, double*, int*, int*, int*, double* );
 }
 
 using namespace std;
@@ -164,7 +167,6 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   //  mTestSource(false),
   //  mTestLamb(false),
   mOrder(4),
-//  mCFL(1.15), // 1.15 is necessary for the rayleigh wave test when Cp/Cs=10
   mCFL(1.3),
   // m_d4coeff(0.0),
   // m_d4_cfl(0.2),
@@ -214,7 +216,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_useVelocityThresholds(false),
   m_vpMin(0.),
   m_vsMin(0.),
-  m_grid_interpolation_order(0),
+  m_grid_interpolation_order(3),
   m_zetaBreak(0.95),
   m_global_xmax(0.),
   m_global_ymax(0.),
@@ -280,11 +282,12 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_perturb(0),
   m_iperturb(1),
   m_jperturb(1),
-  m_kperturb(1)
+  m_kperturb(1),
+  m_pervar(1)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
-
+   //   m_error_checking = new ErrorChecking();
 // initialize the boundary condition array
    for (int i=0; i<6; i++)
    {
@@ -1673,12 +1676,14 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   }
   else
 // homogeneous initial data is the default
+  {
     for(int g=0 ; g<mNumberOfGrids; g++ )
     {
       a_U[g].set_to_zero();
       for( int a=0 ; a < m_number_mechanisms ; a++ )
 	a_AlphaVE[g][a].set_to_zero();
     }
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -3753,8 +3758,12 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 
 //       }
 //      else
-      else if (!img->mMode == Image::HMAXDUDT || !img->mMode == Image::VMAXDUDT
-	      || !img->mMode == Image::HMAX   || !img->mMode == Image::VMAX )
+//      else if (!img->mMode == Image::HMAXDUDT || !img->mMode == Image::VMAXDUDT
+//	      || !img->mMode == Image::HMAX   || !img->mMode == Image::VMAX )
+	 else if( !(   img->mMode == Image::HMAXDUDT || img->mMode == Image::VMAXDUDT
+		|| img->mMode == Image::HMAX   || img->mMode == Image::VMAX
+		|| img->mMode == Image::GRADRHO || img->mMode == Image::GRADMU || img->mMode == Image::GRADLAMBDA
+		       || img->mMode == Image::GRADP || img->mMode == Image::GRADS ) )
       {
 	if (proc_zero())
 	{
@@ -3813,25 +3822,22 @@ void EW::addImage(Image* i)
 }
 
 //-----------------------------------------------------------------------
-// void EW::addImage3D(Image3D* i)
-// {
-//   mImage3DFiles.push_back(i);
-// }
+void EW::addImage3D(Image3D* i)
+{
+   mImage3DFiles.push_back(i);
+}
 
 //-----------------------------------------------------------------------
 void EW::initialize_image_files( )
 {
+   // Image planes
    Image::setSteps(mNumberOfTimeSteps);
-//   Image3D::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
    {
      mImageFiles[fIndex]->computeGridPtIndex();
      mImageFiles[fIndex]->allocatePlane();
    }
-   // for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
-   // {
-   //    mImage3DFiles[fIndex]->setup_images( );
-   // }
+
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
       mImageFiles[fIndex]->associate_gridfiles( mImageFiles );
 
@@ -3840,6 +3846,11 @@ void EW::initialize_image_files( )
        || mImageFiles[fIndex]->mMode == Image::GRIDY
        || mImageFiles[fIndex]->mMode == Image::GRIDZ )
 	 mImageFiles[fIndex]->computeImageGrid(mX, mY, mZ );
+
+   // Volume images
+   Image3D::setSteps(mNumberOfTimeSteps);
+   for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
+      mImage3DFiles[fIndex]->setup_images( );
 }
 
 //-----------------------------------------------------------------------
@@ -4643,7 +4654,10 @@ void EW::get_nr_of_material_parameters( int& nmvar )
    nmvar = 0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*(m_kEndAct[g]-m_kStartAct[g]+1)*3;
+      if( m_iEndAct[g]-m_iStartAct[g]+1 > 0 && m_jEndAct[g]-m_jStartAct[g]+1 >0
+	  && m_kEndAct[g]-m_kStartAct[g]+1 > 0 )
+	 nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*
+	    (m_kEndAct[g]-m_kStartAct[g]+1)*3;
    }
 }
 
@@ -4651,7 +4665,7 @@ void EW::get_nr_of_material_parameters( int& nmvar )
 void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 				 vector<Sarray>& mu, vector<Sarray>& lambda )
 {
-   int gp, ind;
+   size_t gp, ind;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       rho[g].copy( mRho[g] );
@@ -4677,7 +4691,7 @@ void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 //-----------------------------------------------------------------------
 void EW::get_material_parameter( int nmpar, double* xm )
 {
-   int gp, ind;
+   size_t gp, ind;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       if( g == 0 )
@@ -4727,13 +4741,17 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
       double* glambda_ptr = gLambda[g].c_ptr();
       double h = mGridSize[g];
       int* onesided_ptr = m_onesided[g];
+      int nb = 4, wb=6;
       if( topographyExists() && g == mNumberOfGrids-1 )
       {
 	 F77_FUNC(addgradrhoc,ADDGRADRHOC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 					     &mDt, mJ.c_ptr(), onesided_ptr );
-
+	 F77_FUNC(addgradmulac,ADDGRADMULAC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                         &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
+					k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
+	      glambda_ptr, &mDt, &h, mMetric.c_ptr(), mJ.c_ptr(), onesided_ptr, &nb, &wb, m_bop );
       }
       else
       {
@@ -4741,10 +4759,9 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
                          &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 					&mDt, &h, onesided_ptr );
-         int nb = 4, wb=6;
 	 F77_FUNC(addgradmula,ADDGRADMULA)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
-					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, gmu_ptr,
+					k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
 				    glambda_ptr, &mDt, &h, onesided_ptr, &nb, &wb, m_bop );
       }
    }
@@ -4753,7 +4770,7 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
 //-----------------------------------------------------------------------
 void EW::perturb_mtrl()
 {
-   int g=0;
+   int g=mNumberOfGrids-1;
    if( m_perturb != 0 && point_in_proc(m_iperturb,m_jperturb,g) )
    {
       cout << "per = " << m_perturb << " " << m_iperturb << " " << m_jperturb << " " << m_kperturb << endl;
@@ -4763,8 +4780,12 @@ void EW::perturb_mtrl()
 	 cout << "warning j-index outside active domain " << endl;
       if( m_kperturb < m_kStartAct[g] || m_kperturb > m_kEndAct[g] )
 	 cout << "warning k-index outside active domain " << endl;
-      mMu[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
-      //      mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
+      if( m_pervar == 1 )
+	 mMu[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
+      else if( m_pervar == 2 )
+         mLambda[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
+      else if( m_pervar == 3 )
+         mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
    }
 }
 
@@ -4791,4 +4812,45 @@ void EW::get_epicenter(double &epiLat, double &epiLon, double &epiDepth, double 
   epiLon = m_epi_lon;
   epiDepth = m_epi_depth;
   earliestTime = m_epi_t0;
+}
+
+//-----------------------------------------------------------------------
+bool EW::check_for_nan( vector<Sarray>& a_U, int verbose, string name )
+{
+   bool retval = false;
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      size_t nn=a_U[g].count_nans();
+      retval = retval || nn > 0;
+      if( nn > 0 && verbose == 1 )
+      {
+	 int cnan, inan, jnan, knan;
+	 a_U[g].count_nans(cnan,inan,jnan,knan);
+	 cout << "grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+      }
+   }
+   return retval;
+}
+
+//-----------------------------------------------------------------------
+void EW::check_min_max_int( vector<Sarray>& a_U )
+{
+   for( int g=0 ; g < a_U.size() ; g++ )
+   {
+      double mx[4]={-1e30,-1e30,-1e30,-1e30};
+      double mn[4]={1e30,1e30,1e30,1e30};
+      int nc = a_U[g].m_nc;   
+      for( int k=m_kStartInt[g] ; k <= m_kEndInt[g] ; k++ )
+	 for( int j=m_jStartInt[g] ; j <= m_jEndInt[g] ; j++ )
+	    for( int i=m_iStartInt[g] ; i <= m_iEndInt[g] ; i++ )
+               for( int c= 1 ; c <= nc ; c++ )
+	       {
+                  if( mx[c-1] < a_U[g](c,i,j,k) )
+		     mx[c-1] = a_U[g](c,i,j,k);
+		  if( mn[c-1] > a_U[g](c,i,j,k) )
+		     mn[c-1] = a_U[g](c,i,j,k);
+	       }
+      cout << g << " " << mn[0] << " " << mx[0] << endl;
+   }
 }

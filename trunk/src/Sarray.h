@@ -75,6 +75,10 @@ public:
    void copy( const Sarray& u );
    double maximum( int c=1 );
    double minimum( int c=1 );
+   size_t count_nans();
+   size_t count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst );
+   void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
+   void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:
@@ -82,6 +86,7 @@ private:
    double* m_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
+
 //   void init_mpi_datatype( CartesianProcessGrid* cartcomm );
 //    bool m_mpi_datatype_initialized;
 //    MPI_Datatype m_local_block_type;

@@ -367,6 +367,43 @@ double Sarray::minimum( int c )
 }
 
 //-----------------------------------------------------------------------
+size_t Sarray::count_nans()
+{
+   size_t retval = 0;
+   size_t npts = m_nc*m_ni*static_cast<size_t>(m_nj)*m_nk;
+   for( size_t ind = 0; ind < npts ; ind++)
+      if( std::isnan(m_data[ind]) )
+	 retval++;
+   return retval;
+}
+
+//-----------------------------------------------------------------------
+size_t Sarray::count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst )
+{
+   cfirst = ifirst = jfirst = kfirst = 0;
+   size_t retval = 0, ind=0;
+   for( int k=m_kb ; k<=m_ke ; k++ )
+      for( int j=m_jb ; j<=m_je ; j++ )
+	 for( int i=m_ib ; i <= m_ie ; i++ )
+	    for( int c=1 ; c <= m_nc ; c++ )
+	    {
+	       if( std::isnan(m_data[ind]) )
+	       {
+		  if( retval == 0 )
+		  {
+		     ifirst = i;
+		     jfirst = j;
+		     kfirst = k;
+		     cfirst = c;
+		  }
+		  retval++;
+	       }
+	       ind++;
+	    }
+   return retval;
+}
+
+//-----------------------------------------------------------------------
 void Sarray::copy( const Sarray& u )
 {
    if( m_data != NULL )
@@ -391,6 +428,46 @@ void Sarray::copy( const Sarray& u )
    else
       m_data = NULL;
 
+}
+
+//-----------------------------------------------------------------------
+void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
+			      int ke, double* ar )
+{
+   // Assuming nc is the same for m_data and subarray ar.
+   int nis = ie-ib+1;
+   int njs = je-jb+1;
+   int nks = ke-kb+1;
+   size_t sind=0, ind=0;
+   for( int k=kb ; k<=ke ; k++ )
+      for( int j=jb ; j<=je ; j++ )
+	 for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind*m_nc+c-1] = ar[sind*m_nc+c-1];
+	    }
+}
+
+//-----------------------------------------------------------------------
+void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
+			      int ke, float* ar )
+{
+   // Assuming nc is the same for m_data and subarray ar.
+   int nis = ie-ib+1;
+   int njs = je-jb+1;
+   int nks = ke-kb+1;
+   size_t sind=0, ind=0;
+   for( int k=kb ; k<=ke ; k++ )
+      for( int j=jb ; j<=je ; j++ )
+	 for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (i-ib) + nis*(j-jb) + nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind*m_nc+c-1] = (double)ar[sind*m_nc+c-1];
+	    }
 }
 
 //-----------------------------------------------------------------------

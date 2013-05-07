@@ -16,7 +16,7 @@
 #include "Filter.h"
 
 #include "Image.h"
-// #include "Image3D.h"
+#include "Image3D.h"
 
 #include "boundaryConditionTypes.h"
 #include "ForcingTwilight.h"
@@ -32,6 +32,7 @@
 #include "MaterialProperty.h"
 #include "GeographicProjection.h"
 #include "DataPatches.h"
+//#include "ErrorChecking.h"
 
 using namespace std;
 
@@ -89,6 +90,7 @@ void processTime(char* buffer);
 void processTwilight(char* buffer);
 void processFileIO(char* buffer);
 void processImage(char* buffer);
+void processImage3D(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
 void processTestRayleigh(char* buffer);
@@ -100,6 +102,7 @@ void processMaterialIfile( char* buffer );
 void processMaterialBlock( char* buffer, int & blockCount );
 void processMaterialPfile(char* buffer);
 void processMaterialEtree(char* buffer);
+void processMaterialVimaterial(char* buffer);
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
@@ -247,6 +250,7 @@ void coarsen1d( int& n, int& ifirst, int& ilast );
 void allocateCurvilinearArrays();
 void generate_grid();
 void setup_metric();
+void check_min_max_int( vector<Sarray>& a_U );
 
 void setupMPICommunications();
 void setup2D_MPICommunications();
@@ -259,11 +263,11 @@ void communicate_array_2d_ext( Sarray& u );
 
 void set_materials();
 void setup_viscoelastic(double minvsoh );
-void extrapolateInZ(Sarray& field, bool useThreshold, double thresHoldValue, bool linear);
+void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk );
 void extrapolateInXY( vector<Sarray>& field );
 
 void addImage(Image* i);
-//void addImage3D(Image3D* i);
+void addImage3D(Image3D* i);
 void setIO_timing(bool iotiming);
 void setParallel_IO(bool pfs, int nwriters);
 
@@ -493,6 +497,13 @@ void material_ic( vector<Sarray>& a_mtrl );
 void gettopowgh( double ai, double wgh[8] ) const;
 
 void smooth_grid( int maxIter );
+void enforceDirichlet5( vector<Sarray> & a_U );
+
+bool check_for_nan( vector<Sarray>& a_U, int verbose, string name );
+
+void define_parallel_io( vector<Parallel_IO*>& parallel_io );
+
+void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -701,7 +712,7 @@ float mSACFileErrorTolerance;
 
 // Image file info
 vector<Image*> mImageFiles;
-//vector<Image3D*> mImage3DFiles;
+vector<Image3D*> mImage3DFiles;
 bool m_iotiming;
 
 // time data
@@ -802,7 +813,7 @@ bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
    // perturbations for testing
 double m_perturb;
-int m_iperturb, m_jperturb, m_kperturb;
+int m_iperturb, m_jperturb, m_kperturb, m_pervar;
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<double> mMinVsOverH;
@@ -832,6 +843,9 @@ bool m_topography_exists;
 // UTC time corresponding to simulation time 0.
 bool m_utc0set, m_utc0isrefevent;
 int m_utc0[7];
+
+// Error handling facility
+//ErrorChecking* m_error_checking;
 };
 
 #endif

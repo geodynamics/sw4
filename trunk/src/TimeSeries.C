@@ -218,20 +218,21 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool 
     m_nComp=6;
 
 // allocate handles to solution array pointers
-  mRecordedSol = new double* [m_nComp];
+  mRecordedSol = new double*[m_nComp];
   
   for (int q=0; q<m_nComp; q++)
-    mRecordedSol[q] = NULL;
+    mRecordedSol[q] = static_cast<double*>(0);
 
 // keep a copy for saving on a sac file
   if (m_sacFormat)
   {
-    mRecordedFloats = new float* [m_nComp];
+    mRecordedFloats = new float*[m_nComp];
   
     for (int q=0; q<m_nComp; q++)
-      mRecordedFloats[q] = NULL;
+       mRecordedFloats[q] = static_cast<float*>(0);
   }
-  
+  else
+     mRecordedFloats = static_cast<float**>(0);
   
 // do some misc pre computations
   m_x_azimuth = a_ew->getGridAzimuth(); // degrees

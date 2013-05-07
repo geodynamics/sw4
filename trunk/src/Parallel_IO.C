@@ -11,6 +11,54 @@ using namespace std;
 Comminfo::Comminfo()
 {
    m_has_values = false;
+   m_steps = 0;
+   // Initialize pointers to nil
+   m_ncomm = NULL;
+   m_comm_id = NULL;
+   for( int p=0 ; p < 6 ; p++ )
+      m_comm_index[p] = NULL;
+   m_ilow = NULL;
+   m_jlow = NULL;
+   m_klow = NULL;
+   m_niblock = NULL;
+   m_njblock = NULL;
+   m_nkblock = NULL;
+}
+
+//-----------------------------------------------------------------------
+Comminfo::~Comminfo()
+{
+   if( m_ncomm != NULL )
+      delete[] m_ncomm;
+   if( m_ilow != NULL )
+      delete[] m_ilow;
+   if( m_jlow != NULL )
+      delete[] m_jlow;
+   if( m_klow != NULL )
+      delete[] m_klow;
+   if( m_niblock != NULL )
+      delete[] m_niblock;
+   if( m_njblock != NULL )
+      delete[] m_njblock;
+   if( m_nkblock != NULL )
+      delete[] m_nkblock;
+   if( m_comm_id != NULL )
+   {
+      for( int p=0 ; p < m_steps ; p++ )
+	 if( m_comm_id[p] != NULL )
+	    delete[] m_comm_id[p];
+      delete[] m_comm_id;
+   }   
+   for( int p= 0 ; p < 6 ; p++ )
+   {
+      if( m_comm_index[p] != NULL )
+      {
+	 for( int s=0 ; s < m_steps ; s++ )
+	    if( m_comm_index[p][s] != NULL )
+	       delete[] m_comm_index[p][s];
+	 delete[] m_comm_index[p];
+      }
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -54,6 +102,9 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
       ihave_array = 0;
    init_pio( iwrite, pfs, ihave_array );
+   //   cout << "gsizes " << globalsizes[0] <<  " " << globalsizes[1] << " " << globalsizes[2] << endl;
+   //   cout << "lsizes " << localsizes[0] <<  " " << localsizes[1] << " " << localsizes[2] << endl;
+   //   cout << "ssizes " << starts[0] <<  " " << starts[1] << " " << starts[2] << endl;
    init_array( globalsizes, localsizes, starts, nptsbuf, padding );
    //   m_irecv.print(1);
 }
@@ -159,11 +210,12 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 //        nptsbuf     - Number of grid points in temporary buffer
 //        padding     - If there is overlap between processors, setting
 //                      padding avoids writing these twice.
-   int blsize, nblocks, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
+   int blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
    int ibl, iel, jbl, jel, kbl, kel, nsend;
    int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag, tag2, myid;
    int maxpts, npts;
    int* nrecvs;
+   size_t nblocks;
 
    MPI_Status status;
 
@@ -192,7 +244,7 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    // nkg > 1 --> split k
    // nkg = 1 --> split j
 
-   nblocks = static_cast<int>((1.0*nig*njg*nkg)/nptsbuf);
+   nblocks = static_cast<size_t>((1.0*nig*((size_t)njg)*nkg)/nptsbuf);
    if( (((off_t)nig)*njg*nkg % ((off_t)nptsbuf) ) != 0 )
       nblocks++;
 
@@ -210,10 +262,9 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    blocks_in_writer = nblocks/m_nwriters;
    r = nblocks % m_nwriters;
 
-   /*   cout << "myid  " << myid << " nblocks = "<<nblocks << "ni,nj,nk " << ni << " " << nj << " " << nk << endl;*/
-   /*   cout << "blsize = " << blsize << " s " << s << endl;*/
-
-   /* b= number of blocks written by each writer if s=0 */
+   //      cout << "myid  " << myid << " nblocks = "<<nblocks << "ni,nj,nk " << ni << " " << nj << " " << nk << endl;
+   //      cout << "blsize = " << blsize << " s " << s << endl;
+      /** b= number of blocks written by each writer if s=0 */
    /* if s <> 0, then some writers write b+1 blocks. */
 
    /* m_csteps is maximum number of writes */
@@ -234,6 +285,13 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    m_isend.m_comm_id = new int*[m_csteps];
    for( p = 0 ; p < 6 ; p++ )
       m_isend.m_comm_index[p] = new int*[m_csteps];
+      // Initialize pointers to nil
+   for( int p1=0 ; p1 < m_csteps ; p1++ )
+   {
+      m_isend.m_comm_id[p1] = NULL;
+      for( int p2= 0 ; p2 < 6 ; p2++ )
+	 m_isend.m_comm_index[p2][p1] = NULL;
+   }
 
    int nglast=nkg, nlast=nk, olast=ok; 
    if( nkg == 1 )
@@ -393,13 +451,19 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
       m_irecv.m_comm_id = new int*[m_csteps];
       for( p= 0 ; p < 6 ; p++ )
 	 m_irecv.m_comm_index[p] = new int*[m_csteps];
-
       m_irecv.m_ilow    = new int[m_csteps];
       m_irecv.m_jlow    = new int[m_csteps];
       m_irecv.m_klow    = new int[m_csteps];
       m_irecv.m_niblock = new int[m_csteps];
       m_irecv.m_njblock = new int[m_csteps];
       m_irecv.m_nkblock = new int[m_csteps];
+      // Initialize pointers to nil
+      for( int p1=0 ; p1 < m_csteps ; p1++ )
+      {
+	 m_irecv.m_comm_id[p1] = NULL;
+         for( int p2= 0 ; p2 < 6 ; p2++ )
+	    m_irecv.m_comm_index[p2][p1] = NULL;
+      }
    }
    maxpts = 0;
 
@@ -505,8 +569,9 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 
 //-----------------------------------------------------------------------
 void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
-			   char* typ )
+			       char* typ )
 {
+//
 //  Write array previously set up by constructing object.
 // Input: fid - File descriptor, obtained by calling open.
 //        nc  - Number of components per grid point of array.
@@ -795,6 +860,224 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 	    delete[] ribuff;
 	 }
 	 delete[] req;
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
+			      char* typ )
+{
+//  Read array previously set up by constructing object.
+// Input: fid - File descriptor, obtained by calling open.
+//        nc  - Number of components per grid point of array.
+//        array - The data array, local in the processor
+//        pos0  - Start reading the array at this byte position in file.
+//        typ   - Declared type of 'array', possible values are "float" or "double".
+//
+   int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
+   int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
+   int il, jl, kl, tag, myid;
+   size_t ind, ptr, sizew;
+   MPI_Status status;
+   MPI_Request* req;
+
+   if( m_data_comm != MPI_COMM_NULL )
+   {
+      double* rbuf, *ribuf;
+      float* rfbuf;
+      double* sbuf;
+      int flt, typsize;
+      if( strcmp(typ,"float") == 0 )
+      {
+	 flt = 1;
+         typsize = sizeof(float);
+      }
+      else if( strcmp(typ,"double")==0 )
+      {
+         flt = 0;
+         typsize = sizeof(double);
+      }
+      else
+      {
+	 // error return
+      }
+      sbuf  = new double[m_isend.m_maxbuf*nc];
+      bool really_reading=false;
+      if( m_iwrite == 1 )
+      {
+         really_reading = false;
+         for( b=0 ; b < m_csteps ; b++ )
+	    if( m_irecv.m_ncomm[b] > 0 )
+	       really_reading = true;
+      }
+      MPI_Comm_rank( m_data_comm, &myid );
+
+      if( m_iwrite == 1 && really_reading )
+      {
+	 if( flt == 1 )
+	    rfbuf  = new float[m_irecv.m_maxbuf*nc];
+	 else
+	    rbuf  = new double[m_irecv.m_maxbuf*nc];
+	 ribuf = new double[m_irecv.m_maxbuf*nc];
+	 mxsize = 0;
+	 for( b= 0; b < m_csteps ; b++ )
+	    if( mxsize < m_irecv.m_ncomm[b] )
+	       mxsize = m_irecv.m_ncomm[b];
+	 req = new MPI_Request[mxsize];
+
+	 il = m_irecv.m_ilow[0];
+	 jl = m_irecv.m_jlow[0];
+	 kl = m_irecv.m_klow[0];
+	 ind = il-1+((off_t)nig)*(jl-1)+((off_t)nig)*njg*(kl-1);
+	 sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET );
+	 if( sizew == -1 )
+	 {
+	    int eno = errno;
+	    cout << "Error in read_array: could not go to read start position" << endl;
+	    if( eno == EBADF )
+	       cout << "errno = EBADF" << endl;
+	    if( eno == EINVAL )
+	       cout << "errno = EINVAL" << endl;
+	    if( eno == EOVERFLOW )
+	       cout << "errno = EOVERFLOW" << endl;
+	    if( eno == ESPIPE )
+	       cout << "errno = ESPIPE" << endl;
+	    cout << "errno = " << eno << endl;
+            cout << "Requested offset = " << pos0+nc*ind*typsize << endl;
+            cout << "pos0 = " << pos0 << endl;
+	    cout << "nc = " << nc << endl;
+	    cout << "ind = " << ind << endl;
+	    cout << "typsize = " << typsize << endl;
+            cout << "m_csteps = " << m_csteps << endl;
+	    cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
+	    cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
+	    cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
+	    cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
+            cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
+	    //	    MPI_Abort(MPI_COMM_WORLD,1);
+	 }
+      }
+
+      tag = 334;
+      for( b = 0; b < m_csteps ; b++ )
+      {
+	 if( m_iwrite == 1 && m_irecv.m_ncomm[b] > 0 )
+	 {
+	    ptr = 0;
+	    il = m_irecv.m_ilow[b];
+	    jl = m_irecv.m_jlow[b];
+	    kl = m_irecv.m_klow[b];
+	    niblock = m_irecv.m_niblock[b];
+	    njblock = m_irecv.m_njblock[b];
+      	    nkblock = m_irecv.m_nkblock[b];
+
+// Read from disk
+	    begin_sequential( m_write_comm );
+	    if( flt == 0 )
+	    {
+	       sizew = read( *fid, rbuf, sizeof(double)*nc*((size_t)niblock)*njblock*nkblock );
+	       if( sizew != sizeof(double)*nc*((size_t)niblock)*njblock*nkblock )
+	       {
+                  cout << "Error in read_array: could not read requested array size";
+		  cout << "  requested "<< sizeof(double)*((off_t)nc)*niblock*njblock*nkblock << " bytes\n";
+		  cout << "  read "<< sizew << " bytes\n";
+	       }
+	    }
+	    else
+	    {
+	       sizew = read( *fid, rfbuf, sizeof(float)*nc*((size_t)niblock)*njblock*nkblock );
+	       if( sizew != sizeof(float)*nc*((size_t)niblock)*njblock*nkblock )
+	       {
+                  cout << "Error in read_array: could not read requested array size";
+		  cout << "  requested "<< sizeof(double)*((off_t)nc)*niblock*njblock*nkblock << " bytes\n";
+		  cout << "  read "<< sizew << " bytes\n";
+	       }
+	    }
+	    end_sequential( m_write_comm );
+
+// Hand out to other processors
+//	    if( m_iwrite == 1 && m_irecv.m_ncomm[b] > 0 )
+//	    {
+	    for( i = 0  ; i < m_irecv.m_ncomm[b] ; i++ )
+	    {
+	       i1 = m_irecv.m_comm_index[0][b][i];
+	       i2 = m_irecv.m_comm_index[1][b][i];
+	       j1 = m_irecv.m_comm_index[2][b][i];
+	       j2 = m_irecv.m_comm_index[3][b][i];
+	       k1 = m_irecv.m_comm_index[4][b][i];
+	       k2 = m_irecv.m_comm_index[5][b][i];
+	       nri = i2-i1+1;
+	       nrj = j2-j1+1;
+	       nrk = k2-k1+1;
+	       double* recbuf = ribuf+ptr;
+	       if( flt == 0 )
+	       {
+		  for( kk=k1 ; kk <= k2 ; kk++ )
+		     for( jj=j1 ; jj <= j2 ; jj++ )
+			for( ii=i1 ; ii <= i2 ; ii++ )
+			   for( c=0 ; c < nc ; c++ )
+			   {
+			      recbuf[c+nc*(ii-i1)+nri*nc*(jj-j1)+nri*nrj*nc*(kk-k1)]=
+				 rbuf[c+nc*(ii-il)+nc*niblock*(jj-jl)+nc*niblock*njblock*(kk-kl)];
+			   }
+	       }
+	       else
+	       {
+		  for( kk=k1 ; kk <= k2 ; kk++ )
+		     for( jj=j1 ; jj <= j2 ; jj++ )
+			for( ii=i1 ; ii <= i2 ; ii++ )
+			   for( c=0 ; c < nc ; c++ )
+			   {
+			      recbuf[c+nc*(ii-i1)+nri*nc*(jj-j1)+nri*nrj*nc*(kk-k1)] =
+				 rfbuf[c+nc*(ii-il)+nc*niblock*(jj-jl)+nc*niblock*njblock*(kk-kl)];
+			   }
+	       }
+	    //            printf("%d sending %d step %d to %d, size %d %d %d\n",myid,i,b,m_irecv[fd].m_comm_id[b][i],nri,nrj,nrk);
+	       MPI_Isend( recbuf, nri*nrj*nrk*nc, MPI_DOUBLE, m_irecv.m_comm_id[b][i],
+			  tag, m_data_comm, &req[i] );
+	       ptr += nri*((size_t)nrj)*nrk*nc;
+	    }
+	 }
+      // Do actual receive
+	 for( i = 0 ; i < m_isend.m_ncomm[b] ; i++ )
+	 {
+	    i1 = m_isend.m_comm_index[0][b][i];
+	    i2 = m_isend.m_comm_index[1][b][i];
+	    j1 = m_isend.m_comm_index[2][b][i];
+	    j2 = m_isend.m_comm_index[3][b][i];
+	    k1 = m_isend.m_comm_index[4][b][i];
+	    k2 = m_isend.m_comm_index[5][b][i];
+	    nsi = i2-i1+1;
+	    nsj = j2-j1+1;
+	    nsk = k2-k1+1;
+	    //	    ni = m_dims[fd].ni;
+	    //	    nj = m_dims[fd].nj;
+	    MPI_Recv( sbuf, nsi*nsj*nsk*nc, MPI_DOUBLE,
+		      m_isend.m_comm_id[b][i], tag, m_data_comm, &status );
+	    for( kk=k1 ; kk <= k2 ; kk++ )
+	       for( jj=j1 ; jj <= j2 ; jj++ )
+		  for( ii=i1 ; ii <= i2 ; ii++ )
+		     for( c=0 ; c < nc ; c++ )
+		     {
+			array[c+nc*(ii-1-oi)+ni*nc*(jj-1-oj)+ni*nj*nc*(kk-1-ok)] =
+	                       sbuf[c+nc*(ii-i1)+nc*nsi*(jj-j1)+nc*nsi*nsj*(kk-k1)];
+		     }
+	 }
+	 if( m_iwrite == 1 )
+	    for( i = 0 ; i < m_irecv.m_ncomm[b] ; i++ )
+	       MPI_Wait( &req[i], &status );
+      }
+      delete[] sbuf;
+
+      if( m_iwrite == 1 && really_reading )
+      {
+	 delete[] req;
+	 delete[] ribuf;
+	 if( flt == 0 )
+	    delete[] rbuf;
+	 else
+	    delete[] rfbuf;
       }
    }
 }

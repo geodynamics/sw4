@@ -16,15 +16,10 @@ class Image
 {
 public:
 
-// WPP modes:
-// enum ImageMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, P, S,
-// 		 DIV, CURL, VELDIV, VELCURL, LAT, LON,
-// 		 HVELMAX, VVELMAX, TOPO, GRID, UXERR, UYERR, UZERR, 
-// 		 FX, FY, FZ, VELMAG, QS, QP, HVEL }; // NONE + 28 modes = 29 are currently defined
-
-enum ImageMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, P, S, UXEXACT, UYEXACT, UZEXACT, DIV, CURLMAG,
-                 DIVDT, CURLMAGDT, LAT, LON, TOPO, GRIDX, GRIDY, GRIDZ, UXERR, UYERR, UZERR, 
-                 MAGDUDT, HMAGDUDT, HMAXDUDT, VMAXDUDT, MAG, HMAG, HMAX, VMAX }; 
+   enum ImageMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, P, S, UXEXACT, UYEXACT, UZEXACT, DIV, CURLMAG,
+		    DIVDT, CURLMAGDT, LAT, LON, TOPO, GRIDX, GRIDY, GRIDZ, UXERR, UYERR, UZERR, 
+		    MAGDUDT, HMAGDUDT, HMAXDUDT, VMAXDUDT, MAG, HMAG, HMAX, VMAX,
+		    GRADRHO, GRADMU, GRADLAMBDA, GRADP, GRADS }; 
 
 static int MODES;
 static Image* nil;
@@ -68,6 +63,26 @@ void computeImageMagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, do
 void computeImageMag( std::vector<Sarray> &a_U );
 void computeImageHmagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, double dt );
 void computeImageHmag( std::vector<Sarray> &a_U );
+void compute_image_gradp( vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
+			  vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho );
+void compute_image_grads( vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda, 
+			  vector<Sarray>& a_Mu, vector<Sarray>& a_Rho );
+
+void computeImageQuantityDiff( vector<Sarray>& a_U, vector<Sarray>& a_Uex,
+			       int comp );
+
+void output_image( int a_cycle, double a_time, double a_dt,
+		   vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
+		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+		   vector<Source*>& a_sources, int a_dminus );
+
+void update_image( int a_cycle, double a_time, double a_dt,
+		   vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
+		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+		   vector<Source*>& a_sources, int a_dminus );
+
 //void computeImageError(std::vector<Sarray> &a_mu, int a_nComp);
 
 void copy2DArrayToImage(Sarray &twoDimensionalArray);
@@ -100,11 +115,12 @@ ImageOrientation getOrientation() const {return mLocationType;};
 ImageMode mMode;
 std::string mFilePrefix;
 void initializeTime();
+bool needs_mgrad() const;
 
 protected:
 
 void define_pio();  
-bool proc_write();
+   //bool proc_write();
 
 double mTime;
 bool m_time_done;
@@ -112,14 +128,14 @@ double mTimeInterval;
 double mNextTime;
 int mWritingCycle;
 int mCycleInterval;
-std::string mFileName;
+//std::string mFileName;
   
 std::vector<std::string> mMode2Suffix;
 std::vector<std::string> mOrientationString;
   
 static int mPreceedZeros; // number of digits for unique time step in file names
 
-bool m_gridPtValueInitialized;
+   //bool m_gridPtValueInitialized;
   
 private:
 
@@ -129,8 +145,8 @@ Image(const Image &im); // hide copy constructor
 void computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a_div );
 void computeCurl( std::vector<Sarray> &a_U, std::vector<double*>& a_curl );
 
-bool mWriting;
-bool mReadyToWrite;
+   //bool mWriting;
+   //bool mReadyToWrite;
 
 ImageOrientation mLocationType;
 double mCoordValue;
@@ -139,14 +155,14 @@ std::vector<int> m_gridPtIndex;
 MPI_Comm m_mpiComm_writers;
 bool m_isDefinedMPIWriters;
 
-int mNonempty;
+   //int mNonempty;
 
 int mGridinfo;   // -1 = undefined, 0=Cartesian patches, 1=Curvilinear grid appended, 2=grid file names appended.
 bool mStoreGrid; // true=append curvilinear grid to image, false=append grid file names to image.
 Image* m_gridimage; // Curvilinear grid z-coordinate 
 bool m_user_created; // true --> This image was created from the input file
 
-int m_rankWriter;
+   //int m_rankWriter;
 bool m_isDefined;
 bool m_double;
 EW* mEW;

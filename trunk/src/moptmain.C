@@ -40,7 +40,7 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
 //-----------------------------------------------------------------------
 {
    vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy( " " );
+   src[0] = GlobalSources[0]->copy(" ");
    src[0]->set_parameters( xs );
 
 // Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
@@ -65,6 +65,7 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
    f = 0;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
       f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    if( myrank == 0 )
@@ -74,7 +75,6 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
    }
 // Get gradient by solving the adjoint problem:
    simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfs, nmpar, dfm );
-
    if( varcase == 1 )
       dfs[10] = 0;
    else if( varcase == 2 )
@@ -160,6 +160,7 @@ int main(int argc, char **argv)
   string fileName;
   int myRank, nProcs;
   int status = start_minv( argc, argv, fileName, myRank, nProcs );
+  
   if( status == 0 )
   {
 // Save the source description here
@@ -197,7 +198,8 @@ int main(int argc, char **argv)
 	{
 // Successful initialization
 
-	   simulation.setQuiet(true);
+//	   simulation.setQuiet(true);
+	   simulation.setQuiet(false);
 // Make observations aware of the utc reference time, if set.
 // Filter observed data if required
 	   for( int m = 0; m < GlobalObservations.size(); m++ )
@@ -237,11 +239,11 @@ int main(int argc, char **argv)
 	   double* xm=NULL;
 	   simulation.get_nr_of_material_parameters( nmpar );
 	   //           cout << "nmpar " << nmpar << endl;
-	   //	   exit(2);
            if( nmpar > 0 )           
+	   {
 	      xm = new double[nmpar];
-
-	   simulation.get_material_parameter( nmpar, xm );
+	      simulation.get_material_parameter( nmpar, xm );
+	   }
 
 	   if( myRank == 0 )
 	   {
@@ -266,7 +268,10 @@ int main(int argc, char **argv)
 	      nvar = 9;
 
            double f, dfs[11];
-	   double* dfm = new double[nmpar];
+	   double* dfm = NULL;
+           if( nmpar > 0 )
+	      dfm = new double[nmpar];
+
 	   compute_f_and_df( simulation, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
 			     GlobalObservations, varcase, f, dfs, dfm, myRank );
 
@@ -287,7 +292,8 @@ int main(int argc, char **argv)
      status = 0;
 // Stop MPI
   MPI_Finalize();
-  return status;
+  return 0;
+  //  return status;
 } 
 
 //-----------------------------------------------------------------------

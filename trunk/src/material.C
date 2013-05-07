@@ -400,46 +400,46 @@ double EW::localMaxVpOverVs()
 
 // the same routine is defined in EtreeFile.C, but in the class EtreeFile
 //-----------------------------------------------------------------------
-void EW::extrapolateInZ(Sarray& field, bool useThreshold, double thresHoldValue, bool linear) 
-{
-  // -------------------------------------------------------------
-  // We use linear extrapolation to update boundary points
-  //
-  // field(n+1) = 2*field(n) - field(n-1)
-  //
-  // Unless, 2*field(n) <= field(n-1), then we just set it to
-  // field(n).
-  // -------------------------------------------------------------
-   //  int numGhostPoints = getExternalGhostPointsPerBoundaryPoint();
-
-  int i, j, k;
-  double extField;
+//void EW::extrapolateInZ(Sarray& field, bool useThreshold, double thresHoldValue, bool linear) 
+//{
+//  // -------------------------------------------------------------
+//  // We use linear extrapolation to update boundary points
+//  //
+//  // field(n+1) = 2*field(n) - field(n-1)
+//  //
+//  // Unless, 2*field(n) <= field(n-1), then we just set it to
+//  // field(n).
+//  // -------------------------------------------------------------
+//   //  int numGhostPoints = getExternalGhostPointsPerBoundaryPoint();
+//
+//  int i, j, k;
+//  double extField;
 
 // tmp
-  if (proc_zero())
-  {
-    printf("extrapolateInZ: m_kb=%i, m_ghost_points=%i\n", field.m_kb, m_ghost_points);
-  }
+//  if (proc_zero())
+//  {
+//    printf("extrapolateInZ: m_kb=%i, m_ghost_points=%i\n", field.m_kb, m_ghost_points);
+//  }
   
 // only extrapolate on the "low-k" side  
-  for( j = field.m_jb; j <= field.m_je; j++ )
-    for( i = field.m_ib; i <= field.m_ie ; i++ )
-      for( k = field.m_kb + m_ghost_points-1 ; k >= field.m_kb; k-- )
-      {
-	if (linear && 2.*field(i,j,k+1) > field(i,j,k+2)) // check if linear extrapolation will lead to a positive value
-	{
-	  extField = 2.*field(i,j,k+1)-field(i,j,k+2);
-	}
-	else // constant extrapolation
-	{
-	  extField = field(i,j,k+1);
-	}
-	if (useThreshold && extField<thresHoldValue)
-	  extField = thresHoldValue;
-	
-	field(i,j,k) = extField;
-      } // end for k...
-} // end extrapolateInZ
+//  for( j = field.m_jb; j <= field.m_je; j++ )
+//    for( i = field.m_ib; i <= field.m_ie ; i++ )
+//      for( k = field.m_kb + m_ghost_points-1 ; k >= field.m_kb; k-- )
+//      {
+//	if (linear && 2.*field(i,j,k+1) > field(i,j,k+2)) // check if linear extrapolation will lead to a positive value
+//	{
+//	  extField = 2.*field(i,j,k+1)-field(i,j,k+2);
+//	}
+//	else // constant extrapolation
+//	{
+//	  extField = field(i,j,k+1);
+//	}
+//	if (useThreshold && extField<thresHoldValue)
+//	  extField = thresHoldValue;
+//	
+//	field(i,j,k) = extField;
+//      } // end for k...
+//} // end extrapolateInZ
 
 //-----------------------------------------------------------------------
 void EW::extrapolateInXY( vector<Sarray>& field )
@@ -477,5 +477,22 @@ void EW::extrapolateInXY( vector<Sarray>& field )
 // corners not necessary to treat explicitly???
       
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::extrapolateInZ( int g, Sarray& field, bool lowk, bool highk )
+{
+   if( lowk )
+      for( int k=m_kStart[g] ; k < 1 ; k++ )
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       if( field(i,j,k) == -1 )
+		  field(i,j,k) = field(i,j,1);
+   if( highk )
+      for( int k=m_kEndInt[g]+1 ; k <= m_kEnd[g] ; k++ )
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       if( field(i,j,k) == -1 )
+		  field(i,j,k) = field(i,j,m_kEndInt[g]);
 }
 

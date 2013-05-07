@@ -1,4 +1,6 @@
 #include "EW.h"
+#include "F77_FUNC.h"
+
 extern "C" {
    void F77_FUNC(hdirichlet5,HDIRICHLET5)( int*, int*, int*, int*, int*, int*, int*, int*,
 					   int*, int*, int*, int*, double* );
@@ -120,7 +122,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_measure[1] = MPI_Wtime();
 
      // Boundary conditions on predictor
-      encforceDirichlet5( Km );
+      //      enforceDirichlet5( Km );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
@@ -140,12 +142,12 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
     // Add in super-grid damping terms
       if (usingSupergrid())
-	 addSuperGridDamping( Km, K, Kp, mRho );
+	 addSuperGridDamping( Km, K, Kp, a_Rho );
 
       time_measure[4] = MPI_Wtime();
 
      // Boundary conditions on corrector
-      encforceDirichlet5( Km );
+      //      enforceDirichlet5( Km );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
@@ -186,7 +188,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // Accumulate the gradient
       for( int s=0 ; s < point_sources.size() ; s++ )
       {
-	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradients, mGridSize );
+	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradients, mGridSize, mJ, topographyExists() );
 	 //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,  mGridSize );
       }
       add_to_grad( K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda );      
@@ -239,9 +241,19 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    communicate_arrays( gMu );
    communicate_arrays( gLambda );
    
-   gRho[0].save_to_disk("grho.bin");
-   gMu[0].save_to_disk("gmu.bin");
-   gLambda[0].save_to_disk("glambda.bin");
+
+   //   gRho[0].save_to_disk("grho.bin");
+   //   gMu[0].save_to_disk("gmu.bin");
+   //   gLambda[0].save_to_disk("glambda.bin");
+
+    for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
+       mImage3DFiles[i3]->force_write_image( t, 0, Up, mRho, mMu, mLambda, gRho, gMu, gLambda, mPath, mZ );
+
+    for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
+    {
+       if( mImageFiles[i2]->needs_mgrad() )
+	  mImageFiles[i2]->output_image( 0, t, mDt, Up, U, Um, mRho, mMu, mLambda, gRho, gMu, gLambda, a_Sources, 0 );
+    }
    //   Up[0].save_to_disk("ubackedout.bin");
    //   U[0].save_to_disk("umbackedout.bin");
    // 
@@ -270,6 +282,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	    delete[] BCForcing[g][side];
       delete[] BCForcing[g];
    }
+   for( int s=0 ; s < point_sources.size() ; s++ )
+      delete point_sources[s];
 }
 
 //-----------------------------------------------------------------------
@@ -277,7 +291,7 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
 {
   for(int g=0 ; g<mNumberOfGrids; g++ )
   {
-    double u_ptr = a_U[g].c_ptr();
+    double* u_ptr = a_U[g].c_ptr();
     int ifirst, ilast, jfirst, jlast, kfirst, klast;
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];

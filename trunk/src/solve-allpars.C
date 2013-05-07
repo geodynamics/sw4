@@ -93,8 +93,8 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
      int kmax = m_kEndAct[g]+1;
      Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
      Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
+     //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
   }
-
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
@@ -191,9 +191,11 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
   int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
 
 // Assign initial data
+//  cout << getRank() << "before initial data" << endl;
   initialData(mTstart, U, AlphaVE);
+  //  cout << getRank() << "U given initial data" << endl;
   initialData(mTstart-mDt, Um, AlphaVEm );
-  
+  //  cout << getRank() << "Um given initial data" << endl;
   //  U[0].save_to_disk("ustart.bin");
 
   if ( !mQuiet && mVerbose && proc_zero() )
@@ -202,15 +204,20 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 // save any images for cycle = 0 (initial data) ?
   update_images( 0, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
 
+  //  cout << getRank() << "images updated" << endl;
+
 // enforce bc on initial data
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
      communicate_array( U[g], g );
+  //  cout << getRank() << "done communicate array" << endl;
 // boundary forcing
   cartesian_bc_forcing( t, BCForcing, a_Sources );
+  //  cout << getRank() << "done bc_forcing" << endl;
 // enforce boundary condition
   enforceBC( U, a_Mu, a_Lambda, t, BCForcing );   
 
+  //  cout << getRank() << "done bc U" << endl;
 // Um
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
@@ -219,6 +226,8 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
   cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
 // enforce boundary condition
   enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+
+  //  cout << getRank() << "Done bc Um" << endl;
 
   if (m_twilight_forcing)
   {
@@ -259,7 +268,7 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
       a_TimeSeries[ts]->recordData(uRec);
     }
   }
-
+  //  cout << getRank() << "Done receiver save" << endl;
 
   FILE *lf=NULL;
 // open file for saving norm of error
@@ -282,7 +291,8 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
   //  // DEBUG
   //     for( int s = 0 ; s < point_sources.size() ; s++ )
   //        point_sources[s]->print_info();
-    
+  //  cout << getRank() << "pushing initial data " << endl;    
+
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
      Upred_saved_sides[g]->push( Um[g], -1 );
@@ -293,11 +303,18 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
+     //     cout << getRank() << "Starting time step " << currentTimeStep << endl;
     time_measure[0] = MPI_Wtime();
 
 // all types of forcing...
     Force( t, F, point_sources );
       
+    if( m_checkfornan )
+    {
+       check_for_nan( F, 1, "F" );
+       check_for_nan( U, 1, "U" );
+    }
+
 // evaluate right hand side
     evalRHS( U, a_Mu, a_Lambda, Lu ); // save Lu in composite grid 'Lu'
 
@@ -351,6 +368,9 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 	  Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
     }
     
+    if( m_checkfornan )
+       check_for_nan( F, 1, "Up" );
+
 // increment time
     t += mDt;
 
@@ -456,6 +476,9 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 	    delete[] BCForcing[g][side];
       delete[] BCForcing[g];
    }
+   for( int s = 0 ; s < point_sources.size(); s++ )
+      delete point_sources[s];
+
 // why is this barrier needed???
    MPI_Barrier(MPI_COMM_WORLD);
 } // end EW::solve2()

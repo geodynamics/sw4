@@ -151,7 +151,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
     Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
     U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-
     if (m_use_attenuation)
     {
       for (int a=0; a<m_number_mechanisms; a++)
@@ -322,6 +321,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   
 // save any images for cycle = 0 (initial data) ?
   update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
+  for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
+     mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mPath, mZ );
 
 // do some testing...
   if (m_twilight_forcing && getVerbosity() >= 3) // only do these tests if verbose>=3
@@ -499,6 +500,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // all types of forcing...
     Force( t, F, point_sources );
       
+    if( m_checkfornan )
+    {
+       check_for_nan( F, 1, "F" );
+       check_for_nan( U, 1, "U" );
+    }
+
 // evaluate right hand side
     evalRHS( U, mMu, mLambda, Lu ); // save Lu in composite grid 'Lu'
 
@@ -549,6 +556,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
     }
     
+    if( m_checkfornan )
+       check_for_nan( Up, 1, "Up" );
+
 // increment time
     t += mDt;
 
@@ -563,6 +573,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
     update_images( currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps );
+    for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
+       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, mPath, mZ );
     
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
@@ -689,6 +701,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	    delete[] BCForcing[g][side];
       delete[] BCForcing[g];
    }
+   for( int s = 0 ; s < point_sources.size(); s++ )
+      delete point_sources[s];
 
 // why is this barrier needed???
    MPI_Barrier(MPI_COMM_WORLD);
@@ -854,21 +868,22 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
       int g  = mNumberOfCartesianGrids-1;
       int gc = mNumberOfGrids-1;
       int q, i, j;
+      int nc = a_U[0].m_nc;
 // inject solution values between lower boundary of gc and upper boundary of g
-      for( j = m_jStart[g] ; j <= m_jEnd[g+1]; j++ )
-	 for( i = m_iStart[g+1]; i <= m_iEnd[g+1]; i++ )
+      for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	 for( i = m_iStart[g]; i <= m_iEnd[g]; i++ )
 	 {
 // assign ghost points in the Cartesian grid
-	    for (q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	    for (q = 0; q < m_ghost_points; q++) 
 	    {
-	       for( int c = 1; c <= 3 ; c++ )
+	       for( int c = 1; c <= nc ; c++ )
 		  a_U[g](c,i,j,m_kStart[g] + q) = a_U[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
 	    }
 // assign ghost points in the Curvilinear grid
-	    for (q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	    for (q = 0; q <= m_ghost_points; q++) // (overwrites solution on the common grid line)
 	    {
-	       for( int c = 1; c <= 3 ; c++ )
-		  a_U[gc](c,i,j,m_kEnd[gc]-q) = a_U[g](c,i,j,m_kStart[gc]+2*m_ghost_points - q);
+	       for( int c = 1; c <= nc ; c++ )
+		  a_U[gc](c,i,j,m_kEnd[gc]-q) = a_U[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
 	    }
 	 }
    }

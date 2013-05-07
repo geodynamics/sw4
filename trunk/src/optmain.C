@@ -509,7 +509,9 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 
    if( myRank == 0 && write_hessian )
    {
-      FILE *fd = fopen("hessian0.txt","w");
+      const string hfiletxt = simulation.getOutputPath() + "hessian0.txt";
+      FILE *fd = fopen(hfiletxt.c_str(),"w");
+      //      FILE *fd = fopen("hessian0.txt","w");
       for( int i= 0 ; i < 11 ; i++ )
       {
 	 for( int j= 0 ; j < 11 ; j++ )
@@ -517,7 +519,9 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 	 fprintf( fd, "\n" );
       }
       fclose(fd);
-      fd = fopen("hessian0.bin","w");
+      const string hfilebin = simulation.getOutputPath() + "hessian0.bin";
+      fd = fopen(hfilebin.c_str(),"w");
+      //      fd = fopen("hessian0.bin","w");
       fwrite(hess,sizeof(double),121,fd);
       fclose(fd);
    }
@@ -1186,12 +1190,12 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	    xnew[i] = x[i] + lambda*p[i];
 
 	 // prevent z from becoming negative
-         if( !testing && (xnew[2] < 0 && p[2] != 0) )
-	 {
-            lambda = -x[2]/p[2];
-	    for( int i=0; i < n ; i++ )
-	       xnew[i] = x[i] + lambda*p[i];
-	 }	 
+	 //         if( !testing && (xnew[2] < 0 && p[2] != 0) )
+	 //	 {
+	 //            lambda = -x[2]/p[2];
+	 //	    for( int i=0; i < n ; i++ )
+	 //	       xnew[i] = x[i] + lambda*p[i];
+	 //	 }	 
 	 compute_f( simulation, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew, testing );
          lambdasave.push_back(lambda);
          fcnsave.push_back(fnew);
@@ -1239,12 +1243,12 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	       xnew[i] = x[i] + p[i];
 
 	    // Compute return value for fnew
-            if( !testing && (xnew[2] < 0 && p[2] != 0) )
-	    {
-               lambda = -x[2]/p[2];
-	       for( int i=0 ; i < n ; i++ )
-		  xnew[i] = x[i] + lambda*p[i];
-	    }
+	    //            if( !testing && (xnew[2] < 0 && p[2] != 0) )
+	    //	    {
+	    //               lambda = -x[2]/p[2];
+	    //	       for( int i=0 ; i < n ; i++ )
+	    //		  xnew[i] = x[i] + lambda*p[i];
+	    //	    }
 	    compute_f( simulation, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew, testing );
 	    return;
 	 }
@@ -1332,8 +1336,12 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
    {
       if( stepfileio )
       {
-	 fd =fopen("convergence.log","w");
-	 fdx=fopen("parameters.log","w");
+	 const string convfile = simulation.getOutputPath() + "convergence.log";
+	 fd = fopen(convfile.c_str(),"w");
+	 const string parafile = simulation.getOutputPath() + "parameters.log";
+	 fdx=fopen(parafile.c_str(),"w");
+      //	 fd =fopen("convergence.log","w");
+      //	 fdx=fopen("parameters.log","w");
       }
       else
       {
@@ -1479,12 +1487,12 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	 {
 	    for( int i=0 ; i < n ; i++ )
 	       xa[i] = x[i] + alpha*d[i];
-	    if( !testing && (xa[2] < 0 && d[2] != 0) )
-	    {
-	       alpha= -x[2]/d[2];
-	       for( int i=0 ; i < n ; i++ )
-		  xa[i] = x[i] + alpha*d[i];
-	    }
+	    //	    if( !testing && (xa[2] < 0 && d[2] != 0) )
+	    //	    {
+	    //	       alpha= -x[2]/d[2];
+	    //	       for( int i=0 ; i < n ; i++ )
+	    //		  xa[i] = x[i] + alpha*d[i];
+	    //	    }
 	 }         
 
 	 // xa is now the new iterate
@@ -1604,8 +1612,12 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
       }
       else
       {
-	 fd =fopen("convergence.log","w");
-	 fdx=fopen("parameters.log","w");
+	 const string convfile = simulation.getOutputPath() + "convergence.log";
+	 fd = fopen(convfile.c_str(),"w");
+	 const string parafile = simulation.getOutputPath() + "parameters.log";
+	 fdx=fopen(parafile.c_str(),"w");
+	 //	 fd =fopen("convergence.log","w");
+	 //	 fdx=fopen("parameters.log","w");
          for( int i= 0 ; i < ind ; i ++ )
 	 {
 	    fprintf(fd, "%i %i %15.7g %15.7g %15.7g %i \n", iconvdata[3*i],iconvdata[3*i+1], convdata[3*i],
@@ -1671,8 +1683,12 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
    FILE *fdx;
    if( myRank == 0 )
    {
-      fd = fopen("convergence.log","w");   
-      fdx= fopen("parameters.log","w");
+      const string convfile = simulation.getOutputPath() + "convergence.log";
+      fd = fopen(convfile.c_str(),"w");
+      const string parafile = simulation.getOutputPath() + "parameters.log";
+      fdx=fopen(parafile.c_str(),"w");
+      //      fd = fopen("convergence.log","w");   
+      //      fdx= fopen("parameters.log","w");
    }
 
    if( varcase == 1 )
@@ -1958,8 +1974,12 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
    FILE *fdx;
    if( myRank == 0 )
    {
-      fd =fopen("convergence.log","w");
-      fdx=fopen("parameters.log","w");
+      const string convfile = simulation.getOutputPath() + "convergence.log";
+      fd = fopen(convfile.c_str(),"w");
+      const string parafile = simulation.getOutputPath() + "parameters.log";
+      fdx=fopen(parafile.c_str(),"w");
+      //      fd =fopen("convergence.log","w");
+      //      fdx=fopen("parameters.log","w");
    }
 
    //   if( maxit > n )
@@ -2044,12 +2064,12 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
       {
 	 for( int i=0 ; i < n ; i++ )
 	    xa[i] = x[i] + alpha*d[i];
-	 if( !testing && (xa[2] < 0 && d[2] != 0) )
-	 {
-	    alpha= -x[2]/d[2];
-	    for( int i=0 ; i < n ; i++ )
-	       xa[i] = x[i] + alpha*d[i];
-	 }
+	 //	 if( !testing && (xa[2] < 0 && d[2] != 0) )
+	 //	 {
+	 //	    alpha= -x[2]/d[2];
+	 //	    for( int i=0 ; i < n ; i++ )
+	 //	       xa[i] = x[i] + alpha*d[i];
+	 //	 }
       }         
 
 // xa is now the new iterate, 
@@ -2186,8 +2206,12 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
    FILE *fdx;
    if( myRank == 0 )
    {
-      fd =fopen("convergence.log","w");
-      fdx=fopen("parameters.log","w");
+      const string convfile = simulation.getOutputPath() + "convergence.log";
+      fd = fopen(convfile.c_str(),"w");
+      const string parafile = simulation.getOutputPath() + "parameters.log";
+      fdx=fopen(parafile.c_str(),"w");
+      //      fd =fopen("convergence.log","w");
+      //      fdx=fopen("parameters.log","w");
    }
 
    //   if( maxit > n )
@@ -2302,12 +2326,12 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
       {
 	 for( int i=0 ; i < n ; i++ )
 	    xa[i] = x[i] + alpha*d[i];
-	 if( !testing && (xa[2] < 0 && d[2] != 0) )
-	 {
-	    alpha= -x[2]/d[2];
-	    for( int i=0 ; i < n ; i++ )
-	       xa[i] = x[i] + alpha*d[i];
-	 }
+	 //	 if( !testing && (xa[2] < 0 && d[2] != 0) )
+	 //	 {
+	 //	    alpha= -x[2]/d[2];
+	 //	    for( int i=0 ; i < n ; i++ )
+	 //	       xa[i] = x[i] + alpha*d[i];
+	 //	 }
       }         
 
 	 // xa is now the new iterate
@@ -2717,6 +2741,11 @@ int main(int argc, char **argv)
 //	   {
 //	      GlobalTimeSeries[ts]->writeFile();
 //	   }
+// Done, remove memory
+	   for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+	      delete GlobalTimeSeries[ts];
+	   for (int ts=0; ts<GlobalObservations.size(); ts++)
+	      delete GlobalObservations[ts];
 	}
 
 	if( myRank == 0 )

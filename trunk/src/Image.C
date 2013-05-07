@@ -13,7 +13,7 @@
 // initializing static member
 int Image::mPreceedZeros=0;
 
-int Image::MODES=33;
+int Image::MODES=38;
 
 Image* Image::nil=static_cast<Image*>(0);
 
@@ -38,13 +38,13 @@ Image::Image(EW * a_ew,
   mCycleInterval(cycleInterval),
   mFilePrefix(filePrefix),
   mMode(mode),
-  mFileName(""),
-  m_gridPtValueInitialized(false),
-  mWriting(false),
-  mReadyToWrite(false),
+  //  mFileName(""),
+  //  m_gridPtValueInitialized(false),
+  //  mWriting(false),
+  //  mReadyToWrite(false),
   mLocationType(locationType),
   mCoordValue(locationValue),
-  m_isDefined(false),
+  //  m_isDefined(false),
   m_isDefinedMPIWriters(false),
   m_double(doubleMode),
   mGridinfo(-1),
@@ -86,6 +86,11 @@ Image::Image(EW * a_ew,
   mMode2Suffix[HMAG] = "hmag";
   mMode2Suffix[HMAX] = "hmax";
   mMode2Suffix[VMAX] = "vmax";
+  mMode2Suffix[GRADRHO] = "gradrho";
+  mMode2Suffix[GRADMU] = "gradmu";
+  mMode2Suffix[GRADLAMBDA] = "gradlambda";
+  mMode2Suffix[GRADP] = "gradp";
+  mMode2Suffix[GRADS] = "grads";
 
   mOrientationString.resize(4);
   mOrientationString[UNDEFINED] = "undefined";
@@ -157,12 +162,12 @@ void Image::associate_gridfiles( vector<Image*>& imgs )
 }
 
 //-----------------------------------------------------------------------
-bool Image::proc_write()
-{
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  return (myRank == m_rankWriter);
-}
+//bool Image::proc_write()
+//{
+//  int myRank;
+//  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+//  return (myRank == m_rankWriter);
+//}
 
 //-------------------------------------
 void Image::setSteps(int a_steps)
@@ -297,7 +302,7 @@ void Image::computeGridPtIndex()
   ASSERT2(fileWriterIDs.size() > 0,
           "ImageSlice write error, no processors in communicator")          ;
 
-  m_rankWriter = fileWriterIDs[0];
+  //  m_rankWriter = fileWriterIDs[0];
 
   MPI_Group_incl(origGroup,fileWriterIDs.size(),&fileWriterIDs[0],&newGroup);
   MPI_Comm_create(MPI_COMM_WORLD,newGroup,&m_mpiComm_writers)               ;
@@ -314,7 +319,7 @@ void Image::computeGridPtIndex()
 //  ASSERT(m_mpiComm_writers != MPI_COMM_NULL);
   
   m_isDefinedMPIWriters = true;
-  m_gridPtValueInitialized = true;
+  //  m_gridPtValueInitialized = true;
 }
 
 
@@ -990,7 +995,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
 	 VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening file " << s << " for writing header");
       }  
 
-      cout << "writing image plane on file " << s.str() << " (msg from proc # " << m_rankWriter << ")" << endl;
+      cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
 
       prec = m_double ? 8 : 4;
       size_t ret=write(fid,&prec,sizeof(int));
@@ -2153,3 +2158,286 @@ void Image::computeImageHmag( vector<Sarray> &a_U )
       }
    }
 } 
+
+//-----------------------------------------------------------------------
+void Image::compute_image_gradp( vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
+				 vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho )
+{
+   ASSERT(m_isDefinedMPIWriters);
+
+// plane_in_proc returns true for z=const planes, because all processors have a part in these planes
+   bool iwrite   = plane_in_proc(m_gridPtIndex[0]);
+   if (iwrite)
+   {
+      int gmin, gmax;
+      if( mLocationType == Image::Z )
+	 gmin = gmax = m_gridPtIndex[1];
+      else
+      {
+         gmin = 0;
+	 gmax = mEW->mNumberOfGrids-1;
+      }
+      double gradp;
+      for (int g = gmin; g <= gmax; g++)
+      {
+         size_t iField = 0;
+         for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
+	       {
+		  gradp = a_gLambda[g](i,j,k)*2*sqrt( (2*a_Mu[g](i,j,k)+a_Lambda[g](i,j,k))*a_Rho[g](i,j,k) );
+		  if (m_double)
+		     m_doubleField[g][iField] = gradp;
+		  else
+		     m_floatField[g][iField] = (float) gradp;
+		  iField++; 
+	       }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void Image::compute_image_grads( vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda, 
+				 vector<Sarray>& a_Mu, vector<Sarray>& a_Rho )
+{
+   ASSERT(m_isDefinedMPIWriters);
+
+// plane_in_proc returns true for z=const planes, because all processors have a part in these planes
+   bool iwrite   = plane_in_proc(m_gridPtIndex[0]);
+   if (iwrite)
+   {
+      int gmin, gmax;
+      if( mLocationType == Image::Z )
+	 gmin = gmax = m_gridPtIndex[1];
+      else
+      {
+         gmin = 0;
+	 gmax = mEW->mNumberOfGrids-1;
+      }
+      double grads;
+      for (int g = gmin; g <= gmax; g++)
+      {
+         size_t iField = 0;
+         for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
+	       {
+		  grads = (2*a_gMu[g](i,j,k)-4*a_gLambda[g](i,j,k))*2*sqrt( a_Mu[g](i,j,k)*a_Rho[g](i,j,k));
+		  if (m_double)
+		     m_doubleField[g][iField] = grads;
+		  else
+		     m_floatField[g][iField] = (float) grads;
+		  iField++; 
+	       }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void Image::update_image( int a_cycle, double a_time, double a_dt,
+			  vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
+			  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+			  vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+                          vector<Source*>& a_sources, int a_dminus )
+{
+   if( mMode == HMAXDUDT)
+   {
+      if( a_dminus )
+	 update_maxes_hVelMax( a_Up, a_U, a_dt );
+      else
+	 update_maxes_hVelMax( a_Up, a_Um, 2*a_dt );
+   }
+   if( mMode == HMAX )
+      update_maxes_hMax( a_Up );
+
+   if( mMode == VMAXDUDT)
+   {
+      if( a_dminus )
+	 update_maxes_vVelMax( a_Up, a_U, a_dt );
+      else
+	 update_maxes_vVelMax( a_Up, a_Um, 2*a_dt );
+   }
+   if( mMode == VMAX )
+      update_maxes_vMax( a_Up );
+
+      // Center time derivatives around t-dt, i.e., (up-um)/(2*dt), except when dminus
+      // is set. Use (up-u)/dt assumed centered at t, when dminus is true.
+   int td = 0;
+   if( !a_dminus )
+      td = is_time_derivative();
+
+   if( timeToWrite( a_time-td*a_dt , a_cycle-td, a_dt ) )
+      output_image( a_cycle, a_time, a_dt, a_Up, a_U, a_Um, a_Rho, a_Mu, a_Lambda,
+		    a_gRho, a_gMu, a_gLambda, a_sources, a_dminus );
+}
+
+//-----------------------------------------------------------------------
+void Image::output_image( int a_cycle, double a_time, double a_dt,
+			  vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
+			  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+			  vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+                          vector<Source*>& a_sources, int a_dminus )
+{
+
+
+   int td = 0;
+   if( !a_dminus )
+      td = is_time_derivative();
+
+   if(mMode == UX ) 
+      computeImageQuantity(a_Up, 1);
+   else if(mMode == UY )
+      computeImageQuantity(a_Up, 2);
+   else if(mMode == UZ )
+      computeImageQuantity(a_Up, 3);
+   else if(mMode == RHO )
+      computeImageQuantity(a_Rho, 1);
+   else if(mMode == MU )
+      computeImageQuantity(a_Mu, 1);
+   else if(mMode == LAMBDA )
+      computeImageQuantity(a_Lambda, 1);
+   else if(mMode == P )
+      computeImagePvel(a_Mu, a_Lambda, a_Rho);
+   else if(mMode == S )
+      computeImageSvel(a_Mu, a_Rho);
+   else if(mMode == DIV || mMode == DIVDT 
+	   || mMode == CURLMAG || mMode == CURLMAGDT )
+      computeImageDivCurl( a_Up, a_U, a_Um, a_dt, a_dminus );
+   else if(mMode == LAT || mMode == LON )
+      computeImageLatLon( mEW->mX, mEW->mY, mEW->mZ );
+   else if(mMode == TOPO )
+   {
+      if (mEW->topographyExists())
+	 copy2DArrayToImage(mEW->mTopo); // save the raw topography; the smoothed is saved by the mode=grid with z=0
+   }
+   if( mMode == UXEXACT || mMode == UYEXACT || mMode == UZEXACT ||
+       mMode == UXERR || mMode == UYERR || mMode == UZERR )
+   {
+      vector<Sarray> Uex(mEW->mNumberOfGrids);
+      vector<Sarray*> alpha; //dummy, the array is not used in routine exactSol.
+      for( int g=0 ; g < mEW->mNumberOfGrids ; g++ )
+	 Uex[g].define(3,mEW->m_iStart[g],mEW->m_iEnd[g],mEW->m_jStart[g],mEW->m_jEnd[g],mEW->m_kStart[g],mEW->m_kEnd[g]);
+      mEW->exactSol( a_time, Uex, alpha, a_sources );
+      if( mMode == UXERR )
+	 computeImageQuantityDiff(a_Up,Uex,1);
+      else if( mMode == UYERR )
+	 computeImageQuantityDiff(a_Up,Uex,2);
+      else if( mMode == UZERR ) 
+	 computeImageQuantityDiff(a_Up,Uex,3);
+      else if( mMode == UXEXACT )
+	 computeImageQuantity(Uex,1);
+      else if( mMode == UYEXACT )
+	 computeImageQuantity(Uex,2);
+      else if( mMode == UZEXACT )
+	 computeImageQuantity(Uex,3);
+      Uex.clear();
+   }
+   else if( mMode == GRIDX || mMode == GRIDY || mMode == GRIDZ )
+      computeImageGrid(mEW->mX, mEW->mY, mEW->mZ );
+   else if(mMode == MAGDUDT )
+   {
+      if( a_dminus )
+	 computeImageMagdt( a_Up, a_U, a_dt );
+      else
+	 computeImageMagdt( a_Up, a_Um, 2*a_dt );
+   }
+   else if(mMode == HMAGDUDT )
+   {
+      if( a_dminus )
+	 computeImageHmagdt( a_Up, a_U, a_dt );
+      else
+	 computeImageHmagdt( a_Up, a_Um, 2*a_dt );
+   }
+   else if(mMode == MAG )
+      computeImageMag( a_Up );
+   else if(mMode == HMAG )
+      computeImageHmag( a_Up );
+   else if(mMode == GRADRHO )
+      computeImageQuantity( a_gRho, 1 );
+   else if(mMode == GRADMU )
+      computeImageQuantity( a_gMu, 1 );
+   else if(mMode == GRADLAMBDA )
+      computeImageQuantity( a_gLambda, 1 );
+   else if(mMode == GRADP )
+      compute_image_gradp( a_gLambda, a_Mu, a_Lambda, a_Rho );
+   else if(mMode == GRADS )
+      compute_image_grads( a_gMu, a_gLambda, a_Mu, a_Rho );
+   else if (!mMode == HMAXDUDT || !mMode == VMAXDUDT
+	    || !mMode == HMAX   || !mMode == VMAX )
+   {
+      if (mEW->proc_zero())
+      {
+	    //	  printf("Can only write ux, uy, uz, mu, rho, lambda, uxerr, uyerr, uzerr- remove once completely implemented\n");
+	 printf("Can only write ux, uy, uz, mu, rho, lambda: - remove once completely implemented\n");
+	 printf("I can not print data of type %i\n", mMode );
+      }
+      MPI_Abort(MPI_COMM_WORLD,1);
+   }
+
+// write the image plane on file    
+   double t[2];
+   t[0] = t[1] = MPI_Wtime();
+   string path = mEW->getPath();
+   writeImagePlane_2( a_cycle-td, path, a_time-td*a_dt );
+   t[1] = MPI_Wtime();
+      
+// output timing info?
+   bool iotiming=false;
+   if( iotiming )
+   {
+      t[0] = t[1]-t[0];
+      double tmp[2];
+      tmp[0] = t[0];
+      tmp[1] = t[1];
+      MPI_Reduce( tmp, t, 2, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+      if( mEW->proc_zero() )
+      {
+	 cout << "Maximum write time:";
+	 cout << " (using Bjorn's I/O library) " << t[1] << " seconds. (<=" << m_pio[0]->n_writers() << " procs writing)";
+	 cout << endl;
+      } // end if proc_zero
+   } // end if iotiming      
+}
+
+
+//-----------------------------------------------------------------------
+void Image::computeImageQuantityDiff( vector<Sarray>& a_U, vector<Sarray>& a_Uex,
+				      int comp )
+{
+   ASSERT(m_isDefinedMPIWriters);
+
+// plane_in_proc returns true for z=const planes, because all processors have a part in these planes
+   bool iwrite   = plane_in_proc(m_gridPtIndex[0]);
+   if (iwrite)
+   {
+      int gmin, gmax;
+      if( mLocationType == Image::Z )
+	 gmin = gmax = m_gridPtIndex[1];
+      else
+      {
+         gmin = 0;
+	 gmax = mEW->mNumberOfGrids-1;
+      }
+      for (int g = gmin; g <= gmax; g++)
+      {
+         size_t iField = 0;
+         for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
+	       {
+		  if (m_double)
+		     m_doubleField[g][iField] = a_U[g](comp,i,j,k)-a_Uex[g](comp,i,j,k);
+		  else
+		     m_floatField[g][iField] = (float) a_U[g](comp,i,j,k)-a_Uex[g](comp,i,j,k);
+		  iField++; 
+	       }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+bool Image::needs_mgrad() const
+{
+   return mMode==GRADRHO || mMode==GRADMU || mMode==GRADLAMBDA || 
+      mMode==GRADP || mMode==GRADS;
+}

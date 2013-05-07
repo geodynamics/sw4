@@ -653,21 +653,40 @@ void EW::set_materials()
     {
       m_mtrlblocks[b]->set_material_properties(mRho, mMu, mLambda, mQs, mQp); // this is where all the assignments are done
     }
-   
+
+//   bool linearExtrapolation=false;
+// note that material thresholding for vs and vp happens further down in this procedure
+//   extrapolateInZ( mRho[g],    false, 0., linearExtrapolation ); 
+//   extrapolateInZ( mLambda[g], false, 0., linearExtrapolation ); 
+//   extrapolateInZ( mMu[g],     false, 0., linearExtrapolation );
+//   if( m_use_attenuation )
+//   {
+//     extrapolateInZ(mQs[g], false, 0., linearExtrapolation); 
+//     extrapolateInZ(mQp[g], false, 0., linearExtrapolation); 
+//   }
+
 // extrapolate to define material properties above the free surface (topography)
    g = mNumberOfGrids-1;
-   
-   bool linearExtrapolation=false;
-// note that material thresholding for vs and vp happens further down in this procedure
-   extrapolateInZ( mRho[g],    false, 0., linearExtrapolation ); 
-   extrapolateInZ( mLambda[g], false, 0., linearExtrapolation ); 
-   extrapolateInZ( mMu[g],     false, 0., linearExtrapolation );
-
+   extrapolateInZ( g, mRho[g],    true, false ); 
+   extrapolateInZ( g, mLambda[g], true, false ); 
+   extrapolateInZ( g, mMu[g],     true, false );
    if( m_use_attenuation )
    {
-     extrapolateInZ(mQs[g], false, 0., linearExtrapolation); 
-     extrapolateInZ(mQp[g], false, 0., linearExtrapolation); 
+      extrapolateInZ(g, mQs[g], true, false );
+      extrapolateInZ(g, mQp[g], true, false );
    }
+
+// Extrapolate to ghost points at bottom of domain, if necessary
+   g = 0;
+   extrapolateInZ( g, mRho[g],    false, true ); 
+   extrapolateInZ( g, mLambda[g], false, true ); 
+   extrapolateInZ( g, mMu[g],     false, true );
+   if( m_use_attenuation )
+   {
+      extrapolateInZ(g, mQs[g], false, true );
+      extrapolateInZ(g, mQp[g], false, true );
+   }
+
 
 // extrapolate material properties to mesh refinement boundaries (e.g. for doing the LOH cases more accurately)
     if (!mQuiet && proc_zero() && mVerbose>=3)
@@ -1057,6 +1076,9 @@ void EW::computeDT()
 // compute the global minima
     MPI_Allreduce( &dtloc, &mDt, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
 
+    //   cout << "cfl = " << mCFL << endl;
+    //   cout << "dtloc = " << mDt << endl;
+
 // global minima for curvilinear grid
     if (topographyExists())
     {
@@ -1243,9 +1265,9 @@ void EW::setup_supergrid( )
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
      int kmax=m_global_nz[g]-sgpts;
 
-     // Bottom patch only at grid = 0, nz+100 always has empty intersection with the domain.
+     // Only grid 0 has super grid boundary at the bottom
      if( g > 0 )
-	kmax = m_global_nz[g] + 100;
+	kmax = m_global_nz[g];
 
      //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
      //	  << " " << 1+1 << " " << kmax-1 << endl;
@@ -1265,6 +1287,14 @@ void EW::setup_supergrid( )
 	m_iEndAct[g] = m_iEnd[g];
      if( m_jEndAct[g] > m_jEnd[g] )
 	m_jEndAct[g] = m_jEnd[g];
+
+     // If empty, set dimensions so that imax-imin+1=0, to avoid negative element count.
+     if( m_iStartAct[g] > m_iEndAct[g] )
+	m_iStartAct[g] = m_iEndAct[g]+1;
+     if( m_jStartAct[g] > m_jEndAct[g] )
+	m_jStartAct[g] = m_jEndAct[g]+1;
+     if( m_kStartAct[g] > m_kEndAct[g] )
+	m_kStartAct[g] = m_kEndAct[g]+1;
   }
 // tmp
 //   if (mVerbose >= 2 && proc_zero())

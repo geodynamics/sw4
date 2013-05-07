@@ -9,12 +9,13 @@
 #include "MaterialBlock.h"
 #include "MaterialPfile.h"
 #include "MaterialIfile.h"
+#include "MaterialVolimagefile.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
 
 
-// #include "Image3D.h"
+#include "Image3D.h"
 
 #include <cstring>
 #include <iostream>
@@ -358,6 +359,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processMaterialBlock(buffer, blockCount);
        else if (startswith("pfile", buffer))
 	 processMaterialPfile( buffer );
+       else if (startswith("vimaterial", buffer))
+	 processMaterialVimaterial( buffer );
        else if (startswith("efile", buffer))
        {
 #ifndef ENABLE_ETREE
@@ -373,8 +376,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
           processMaterial(buffer);
        else if (startswith("image", buffer))
          processImage(buffer);
-       // else if (startswith("volimage", buffer))
-       //   processImage3D(buffer);
+       else if (startswith("volimage", buffer))
+          processImage3D(buffer);
        else if (startswith("boundary_conditions", buffer))
          processBoundaryConditions(buffer);
        else if (startswith("supergrid", buffer))
@@ -1718,6 +1721,23 @@ void EW::processDeveloper(char* buffer)
      {
         token += 5;
 	m_kperturb = atof(token);
+     }
+     else if( startswith("pervar=",token) )
+     {
+        token += 7;
+        if( strcmp(token,"mu")==0 )
+	   m_pervar = 1;
+	else if( strcmp(token,"lambda")==0 )
+	   m_pervar = 2;
+	else if( strcmp(token,"rho")==0 )
+	   m_pervar = 3;
+	else
+	   CHECK_INPUT(false," pervar must be , mu, lambda, or rho, not " << token << endl);
+     }
+     else if( startswith("checkfornan=",token) )
+     {
+	token += 12;
+	m_checkfornan = strcmp(token,"1")==0 || strcmp(token,"on")==0 || strcmp(token,"yes")==0;
      }
 
 // //     if (startswith("update_processor_boundary=", token))
@@ -3247,265 +3267,118 @@ void EW::processMaterial( char* buffer )
    addMaterialProperty( mat );
 }
 
-// //-----------------------------------------------------------------------
-// void FileInput::processImage3D( char* buffer )
-// {
-//    int cycle=-1, cycleInterval=0, sample=1;
-//    Image3D::Image3DMode mode=Image3D::RHO;
-//    float time=0.0, timeInterval=0.0;
-//    bool timingSet = false;
-//    bool showsponge = false;
-//    bool startTimeSet = false;
-//    double tStart = 0;
-//    string filePrefix="volimage";
-
-//    bool boxset=false;
-//    double x1=0, x2=m_xmax, y1=0, y2=m_ymax, z1=0, z2=m_zmax;
+//-----------------------------------------------------------------------
+void EW::processImage3D( char* buffer )
+{
+   int cycle=-1, cycleInterval=0;
+   Image3D::Image3DMode mode=Image3D::RHO;
+   double time=0.0, timeInterval=0.0;
+   bool timingSet = false;
+   double tStart = -999.99;
+   string filePrefix="volimage";
+   bool use_double = false;
   
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("volimage", token) == 0, "ERROR: Not a volimage line...: " << token );
 
-//   bool use_double = false;
-  
-//   char* token = strtok(buffer, " \t");
-//   if ( strcmp("volimage", token) != 0 )
-//   {
-//     cerr << "Processing volimage command: " << "ERROR: not a volimage line...: " << token;
-//     MPI_Abort( MPI_COMM_WORLD, 1 );
-//   }
-  
-//   token = strtok(NULL, " \t");
-
-//   string err = "volimage Error: ";
-
-//   while (token != NULL)
-//   {
-//     // while there are tokens in the string still
-//     if (startswith("#", token) || startswith(" ", buffer))
-//       // Ignore commented lines and lines with just a space.
-//       break;
-//     if (startswith("time=", token) )
-//     {
-//       token += 5; // skip time=
-//       if (atof(token) < 0.)	      
-//       {
-// 	cerr << "Processing volimage command: " << "time must be a non-negative number, not: " << token;
-// 	MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//       time = atof(token);
-//       timingSet = true;
-//     }
-// //                       1234567890123
-//     else if (startswith("timeInterval=", token) )
-//     {
-//       token += 13; // skip timeInterval=
-//       if (atof(token) <= 0.)	      
-//       {
-// 	cerr << "Processing volimage command: " << "timeInterval must be a positive number, not: " << token;
-// 	MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//       timeInterval = atof(token);
-//       timingSet = true;
-//     }
-// //                       1234567890
-//     else if (startswith("startTime=", token) )
-//     {
-//       token += 10; // skip startTime=
-//       tStart = atof(token);
-//       startTimeSet = true;
-//     }
-//     else if (startswith("cycle=", token) )
-//     {
-//       token += 6; // skip cycle=
-//       if (atoi(token) < 0)	      
-//       {
-// 	cerr << "Processing volimage command: " << "cycle must be a non-negative integer, not: " << token;
-// 	MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//       cycle = atoi(token);
-//       timingSet = true;
-//     }
-//     else if (startswith("cycleInterval=", token) )
-//     {
-//       token += 14; // skip cycleInterval=
-//       if (atoi(token) <= 0)	      
-//       {
-// 	cerr << "Processing volimage command: " << "cycleInterval must be a positive integer, not: " << token;
-// 	MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//       cycleInterval = atoi(token);
-//       timingSet = true;
-//     }
-//     else if (startswith("file=", token))
-//     {
-//       token += 5; // skip file=
-//       filePrefix = token;
-//     }
-//     else if (startswith("mode=", token))
-//     {
-//       token += 5; // skip mode=
-//       if (strcmp(token, "ux") == 0)        mode = Image3D::UX;
-//       else if (strcmp(token, "uy") == 0)   mode = Image3D::UY;
-//       else if (strcmp(token, "uz") == 0)   mode = Image3D::UZ;
-//       else if (strcmp(token, "rho") == 0)   mode = Image3D::RHO;
-//       else if (strcmp(token, "p") == 0)   mode = Image3D::P;
-//       else if (strcmp(token, "s") == 0)   mode = Image3D::S;
-//       else if (strcmp(token, "div") == 0)   mode = Image3D::DIV;
-//       else if (strcmp(token, "curl") == 0)   mode = Image3D::CURL;
-//       else if (strcmp(token, "mag") == 0)   mode = Image3D::MAG;
-//       else if (strcmp(token, "veldiv") == 0)   mode = Image3D::VELDIV;
-//       else if (strcmp(token, "velcurl") == 0)   mode = Image3D::VELCURL;
-//       else if (strcmp(token, "velmag") == 0)   mode = Image3D::VELMAG;
-// //      else if (strcmp(token, "z") == 0)   mode = Image3D::ZCOORD; // AP: this mode can not be written explicitly
-//       else
-//       {
-// 	mode = static_cast<Image3D::Image3DMode>(atoi(token));
-// 	  cerr << "Processing image command: " << "mode must be one of the following: " << endl << endl
-// 	       << "\t ux|uy|uz|rho|p|s|div|curl|mag|veldiv|velcurl|velmag" << endl
-// 	       << "*not: " << token;
-// 	  MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//     }
-//     else if( startswith("precision=",token) )
-//     {
-//       token += 10;
-// //      if ( !(strcmp(token,"double")==0 || strcmp(token,"float")==0) )
-//       if ( !(startswith("double",token) || startswith("float",token)) )
-//       {
-// 	cerr << "Processing volimage command: " << " precision must be float or double, not '" << token << "'" << endl;
-// 	MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//       use_double =  startswith("double",token)==0;
-//     }
-//     else if( startswith("sample=",token) )
-//     {
-//       token += 7;
-//       sample = atoi(token);
-//       if( sample < 1 )
-//       {
-// 	cerr << "Processing volimage command: Sample must be greater than one, not " << sample << endl;
-// 	MPI_Abort( MPI_COMM_WORLD, 1 );
-//       }
-//     }
-//     else if( startswith("savelayer=",token) )
-//     {
-//        token += 10;
-//        if( strcmp(token,"yes")==0 || strcmp(token,"on")==0 )
-// 	  showsponge = true;
-//     }
-//     else if (startswith("x1=", token))
-//     {
-//        token += 3; // skip x1=
-//        x1 = atof(token);
-//        boxset = true;
-//     }
-//     else if (startswith("x2=", token))
-//     {
-//        token += 3; // skip x2=
-//        x2 = atof(token);
-//        boxset = true;
-//     }
-//     else if (startswith("y1=", token))
-//     {
-//        token += 3; // skip y1=
-//        y1 = atof(token);
-//        boxset = true;
-//     }
-//     else if (startswith("y2=", token))
-//     {
-//        token += 3; // skip y2=
-//        y2 = atof(token);
-//        boxset = true;
-//     }
-//     else if (startswith("z1=", token))
-//     {
-//        token += 3; // skip z1=
-//        z1 = atof(token);
-//        boxset = true;
-//     }
-//     else if (startswith("z2=", token))
-//     {
-//        token += 3; // skip z2=
-//        z2 = atof(token);
-//        boxset = true;
-//     }
-    
-//     else
-//     {
-//       badOption("volimage", token);
-//     }
-//     token = strtok(NULL, " \t");
-//   }
-  
-//   if ( !timingSet )
-//   {
-//     cerr << "Processing volimage command: " << "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval" << endl;
-//     MPI_Abort( MPI_COMM_WORLD, 1 );
-//   }
-//   CHECK_INPUT(x1 >= 0.,
-// 	      err << "x1 is less than the minimum x, " 
-// 	      << x1 << " < " << 0.);
-//   CHECK_INPUT(x1 <= m_xmax,
-// 	      err << "x1 is greater than the maximum x, " 
-// 	      << x1 << " > " << m_xmax);
-//   CHECK_INPUT(x2 >= 0.,
-// 	      err << "x2 is less than the minimum x, " 
-// 	      << x2 << " < " << 0.);
-//   CHECK_INPUT(x2 <= m_xmax,
-// 	      err << "x2 is greater than the maximum x, " 
-// 	      << x2 << " > " << m_xmax);
-//   CHECK_INPUT(x2 > x1,
-// 	      err << "x2 is smaller than x1 "
-// 	      << x2 << " < " << x1 );
-//   CHECK_INPUT(y1 >= 0.,
-// 	     err << "y1 is less than the minimum y, " << y1 << " < " << 0.);
-//   CHECK_INPUT(y1 <= m_ymax,
-// 	      err << "y1 is greater than the maximum y, " << y1 << " > " << m_ymax);
-//   CHECK_INPUT(y2 >= 0.,
-// 	      err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
-//   CHECK_INPUT(y2 <= m_ymax,
-// 	      err << "y2 is greater than the maximum y, " << y2 << " > " << m_ymax);
-//   CHECK_INPUT(y2 > y1,
-// 	      err << "y2 is smaller than y1 "
-// 	      << y2 << " < " << y1 );
-//   CHECK_INPUT(mSimulation->topographyExists() || z1 >= 0.,
-// 	      err << "z1 is less than the minimum z, " << z1 << " < " << 0.);
-//   CHECK_INPUT(z1 <= m_zmax, 
-// 	      err << "z1 is greater than the maximum z, " << z1 << " > " << m_zmax);
-//   CHECK_INPUT(z2 >= 0.,
-// 	      err << "z2 is less than the minimum z, " << z2 << " < " << 0.);
-//   CHECK_INPUT(z2 <= m_zmax,
-// 	      err << "z2 is greater than the maximum z, " << z2 << " > " << m_zmax);
-
-// // add gridfile name to constructor (only with topography)
-//   Image3D* im3 = new Image3D( mSimulation, time, timeInterval, cycle, cycleInterval, 
-// 			      filePrefix, sample, mode, use_double, mSimulation->topographyExists() );
-//   if( boxset )
-//     im3->set_boundingbox( x1, x2, y1, y2, z1, z2 );
-//   if( showsponge )
-//     im3->show_spongelayer();
-//   if ( startTimeSet )
-//     im3->set_start_time( tStart );
-  
-//   mSimulation->addImage3D( im3 );
-
-//   if (mSimulation->topographyExists())
-//   {
-// // make a 3D grid file holding the z-coordinates. This file will only be saved once (before the timestepping starts)
-//     cycle=0;
-//     cycleInterval=0;
-//     time=0.0;
-//     timeInterval=0.0;
-//     mode=Image3D::ZCOORD;
-  
-//     Image3D* grid_im3 = new Image3D( mSimulation, time, timeInterval, cycle, cycleInterval, 
-// 				     filePrefix, sample, mode, use_double, false );
-//     if( boxset )
-//       grid_im3->set_boundingbox( x1, x2, y1, y2, z1, z2 );
-//     if( showsponge )
-//       grid_im3->show_spongelayer();
-//     mSimulation->addImage3D( grid_im3 );
-//   }
-
-// }
+   token = strtok(NULL, " \t");
+   string err = "volimage Error: ";
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	 // Ignore commented lines and lines with just a space.
+	 break;
+      if (startswith("time=", token) )
+      {
+	 token += 5; // skip time=
+	 CHECK_INPUT( atof(token) >= 0.,"Processing volimage command: time must be a non-negative number, not: " << token);
+	 time = atof(token);
+	 timingSet = true;
+      }
+      else if (startswith("timeInterval=", token) )
+      {
+	 token += 13; // skip timeInterval=
+	 CHECK_INPUT( atof(token) >= 0.,"Processing volimage command: timeInterval must be a non-negative number, not: " << token);
+	 timeInterval = atof(token);
+	 timingSet = true;
+      }
+      else if (startswith("startTime=", token) )
+      {
+	 token += 10; // skip startTime=
+	 tStart = atof(token);
+      }
+      else if (startswith("cycle=", token) )
+      {
+	 token += 6; // skip cycle=
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing volimage command: cycle must be a non-negative integer, not: " << token);
+	 cycle = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("cycleInterval=", token) )
+      {
+	 token += 14; // skip cycleInterval=
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing volimage command: cycleInterval must be a non-negative integer, not: " << token);
+	 cycleInterval = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("file=", token))
+      {
+	 token += 5; // skip file=
+	 filePrefix = token;
+      }
+      else if (startswith("mode=", token))
+      {
+	 token += 5; // skip mode=
+	 if (strcmp(token, "ux") == 0)        mode = Image3D::UX;
+	 else if (strcmp(token, "uy") == 0)   mode = Image3D::UY;
+	 else if (strcmp(token, "uz") == 0)   mode = Image3D::UZ;
+	 else if (strcmp(token, "rho") == 0)   mode = Image3D::RHO;
+	 else if (strcmp(token, "p") == 0)   mode = Image3D::P;
+	 else if (strcmp(token, "s") == 0)   mode = Image3D::S;
+	 else if (strcmp(token, "mu") == 0)   mode = Image3D::MU;
+	 else if (strcmp(token, "lambda") == 0)   mode = Image3D::LAMBDA;
+	 else if (strcmp(token, "gradrho") == 0)   mode = Image3D::GRADRHO;
+	 else if (strcmp(token, "gradp") == 0)   mode = Image3D::GRADP;
+	 else if (strcmp(token, "grads") == 0)   mode = Image3D::GRADS;
+	 else if (strcmp(token, "gradmu") == 0)   mode = Image3D::GRADMU;
+	 else if (strcmp(token, "gradlambda") == 0)   mode = Image3D::GRADLAMBDA;
+	 else
+	 {
+	    //	    mode = static_cast<Image3D::Image3DMode>(atoi(token));
+	    CHECK_INPUT(0,"Processing image command: " << "mode must be one of the following: " << endl <<
+			"\t ux|uy|uz|rho|p|s|mu|lambda|gradrho|gradp|grads|gradmu|gradlambda *not: "<< token );
+	 }
+      }
+      else if( startswith("precision=",token) )
+      {
+	 token += 10;
+	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
+		      "Processing volimage command: precision must be float or double, not '" << token );
+	 use_double =  startswith("double",token);
+      }
+      else
+      {
+	 badOption("volimage", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   bool forwardgrad = !m_inverse_problem && (mode == Image3D::GRADRHO ||mode == Image3D::GRADMU ||mode == Image3D::GRADLAMBDA ||
+					     mode == Image3D::GRADP   ||mode == Image3D::GRADS);
+   if( forwardgrad && proc_zero() )
+   {
+      cout << "WARNING: volume images of material gradients can not be computed by the forward solver" << endl;
+      cout << "   volimage will not be created " << endl;
+   }
+   if( !forwardgrad )
+   {
+      CHECK_INPUT( timingSet, "Processing volimage command: " << 
+		   "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl );
+      Image3D* im3 = new Image3D( this, time, timeInterval, cycle, cycleInterval, 
+ 			       tStart, filePrefix, mode, use_double );
+      addImage3D( im3 );
+   }
+}
   
 //-----------------------------------------------------------------------
 void EW::setOutputPath(const string& path) 
@@ -4104,6 +3977,7 @@ void EW::allocateCurvilinearArrays()
   mMu[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
   mMu[gTop].set_to_minusOne();
   mRho[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mRho[gTop].set_to_minusOne();
   mLambda[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
   mLambda[gTop].set_to_minusOne();
 // viscoelastic material coefficients
@@ -4268,6 +4142,11 @@ void EW::processImage(char* buffer)
       else if (strcmp(token, "hvelmag") == 0)   mode = Image::HMAGDUDT;
       else if (strcmp(token, "hmagdudt") == 0)   mode = Image::HMAGDUDT;
       else if (strcmp(token, "hmag") == 0)   mode = Image::HMAG;
+      else if (strcmp(token, "gradrho") == 0)   mode = Image::GRADRHO;
+      else if (strcmp(token, "gradmu") == 0)   mode = Image::GRADMU;
+      else if (strcmp(token, "gradlambda") == 0)   mode = Image::GRADLAMBDA;
+      else if (strcmp(token, "gradp") == 0)   mode = Image::GRADP;
+      else if (strcmp(token, "grads") == 0)   mode = Image::GRADS;
       // else if (strcmp(token, "qs") == 0) mode = Image::QS;
       // else if (strcmp(token, "qp") == 0) mode = Image::QP;
       //      else if (strcmp(token, "hvel") == 0) mode = Image::HVEL;
@@ -4278,7 +4157,7 @@ void EW::processImage(char* buffer)
                << "|p|s|div|curl|veldiv|divdudt|velcurl|curldudt " << endl
 	       << "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|grid|gridx|gridy|gridz " << endl
 	       << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
-	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr" << endl
+	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|gradlambda|gradp|grads" << endl
 	       << "*not: " << token << endl;
 	  MPI_Abort( MPI_COMM_WORLD, 1 );
       }
@@ -4364,53 +4243,64 @@ void EW::processImage(char* buffer)
   //   mTopoImageFound = true;
   // }
 
-  Image* i;
 
+
+   bool forwardgrad = !m_inverse_problem && (mode == Image::GRADRHO ||mode == Image::GRADMU ||mode == Image::GRADLAMBDA ||
+					     mode == Image::GRADP   ||mode == Image::GRADS);
+   if( forwardgrad && proc_zero() )
+   {
+      cout << "WARNING: images of material gradients can not be computed by the forward solver" << endl;
+      cout << "   image will not be created " << endl;
+   }
+   if( !forwardgrad )
+   {
   // Set up the image object
-  if (coordWasSet)
-  {
-     if( mode_is_grid )
-     {
-	if( locationType == Image::X )
-	{
-	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+      Image* i;
+      if (coordWasSet)
+      {
+	 if( mode_is_grid )
+	 {
+	    if( locationType == Image::X )
+	    {
+	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
 			 filePrefix, Image::GRIDY, locationType, coordValue, use_double);
-	   addImage(i);
-	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+	       addImage(i);
+	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
 			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double);
-	   addImage(i);
-	}
-	else if( locationType == Image::Y )
-	{
-	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+	       addImage(i);
+	    }
+	    else if( locationType == Image::Y )
+	    {
+	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
 			 filePrefix, Image::GRIDX, locationType, coordValue, use_double);
-	   addImage(i);
-	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+	       addImage(i);
+	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
 			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double);
-	   addImage(i);
-	}
-	else if( locationType == Image::Z )
-	{
-	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+	       addImage(i);
+	    }
+	    else if( locationType == Image::Z )
+	    {
+	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
 			 filePrefix, Image::GRIDX, locationType, coordValue, use_double);
-	   addImage(i);
-	   i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDY, locationType, coordValue, use_double);
-	   addImage(i);
-	}
-     }
-     else
-     {
-	i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-		      filePrefix, mode, locationType, coordValue, use_double);
-	addImage(i);
-     }
-  }
-  else 
-  {
-    cerr << "Processing image command: " << "one of the coordinate (x,y,z) option must be set to determine the image's 2D plane" << endl;
-    MPI_Abort( MPI_COMM_WORLD, 1 );
-  }
+	       addImage(i);
+	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			     filePrefix, Image::GRIDY, locationType, coordValue, use_double);
+	       addImage(i);
+	    }
+	 }
+	 else
+	 {
+	    i = new Image(this, time, timeInterval, cycle, cycleInterval, 
+			  filePrefix, mode, locationType, coordValue, use_double);
+	    addImage(i);
+	 }
+      }
+      else 
+      {
+	 cerr << "Processing image command: " << "one of the coordinate (x,y,z) option must be set to determine the image's 2D plane" << endl;
+	 MPI_Abort( MPI_COMM_WORLD, 1 );
+      }
+   }
 }
 
 // int sgn(double arg)
@@ -6357,4 +6247,92 @@ void EW::processMaterialIfile( char* buffer )
 // add this material specificaiton to the global model
   MaterialIfile* bl = new MaterialIfile( this, filename, CartesianFormat );
   add_mtrl_block( bl );
+}
+
+//-----------------------------------------------------------------------
+void EW::processMaterialVimaterial(char* buffer)
+{
+   string name = "vimtrl";
+   string path=".";
+   string rho, mu, lambda, qp, qs;
+   bool cpset=false, csset=false, rhoset=false, muset=false, lambdaset=false;
+   bool rhomula;
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("vimaterial", token) == 0,
+	       "ERROR: not a vimaterial line: " << token);
+   string err = token;
+   err += " Error: ";
+   token = strtok(NULL, " \t");
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      //      else if (startswith("a=", token))
+      //      {
+      //         token += 2; // skip a=
+      //         a_ppm = atof(token);
+      //      }
+      else if( startswith("path=",token) )
+      {
+	 token += 5;
+	 path = token;
+      }
+      else if( startswith("rho=",token) )
+      {
+	 token += 4;
+	 rho = token;
+	 rhoset = true;
+      }
+      else if( startswith("mu=",token) )
+      {
+	 token += 3;
+	 mu = token;
+	 muset = true;
+      }
+      else if( startswith("lambda=",token) )
+      {
+	 token += 7;
+	 lambda = token;
+	 lambdaset = true;
+      }
+      else if( startswith("vs=",token) )
+      {
+	 token += 3;
+	 mu = token;
+	 csset = true;
+      }
+      else if( startswith("vp=",token) )
+      {
+	 token += 3;
+	 lambda = token;
+	 cpset = true;
+      }
+      else if( startswith("qs=",token) )
+      {
+	 token += 3;
+	 qs = token;
+      }
+      else if( startswith("qp=",token) )
+      {
+	 token += 3;
+	 qp = token;
+      }
+      else
+      {
+	 badOption("vimaterial", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   if( rhoset && muset && lambdaset )
+      rhomula = true;
+   else if( rhoset && csset && cpset )
+      rhomula = false;
+   else
+   {
+      CHECK_INPUT( 0, "Error parsing vimaterial, must set (rho,mu,lambda) or (rho,vs,vp) ");
+   }
+   MaterialData *mdata = new MaterialVolimagefile( this, rhomula, path, rho, mu, lambda, qp, qs );
+   add_mtrl_block(mdata);
 }
