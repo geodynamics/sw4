@@ -487,6 +487,7 @@ void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um,
 		  vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
 
 void get_optmethod( int& method, int& bfgs_m );
+void get_utc( int utc[7] ) const;
 
 void perturb_mtrl();
 
@@ -633,7 +634,7 @@ int m_sg_gp_thickness; //, m_sg_gp_transition;
 double m_supergrid_damping_coefficient;
 SuperGrid m_supergrid_taper_x, m_supergrid_taper_y, m_supergrid_taper_z;
 
-string mPath, mObsPath;
+string mPath, mObsPath, mTempPath;
 
 // number of boundary points on each side
 vector<int *> m_NumberOfBCPoints;
@@ -841,7 +842,7 @@ vector<MPI_Datatype> m_send_type_2dy1p;
 bool m_topography_exists;
 
 // UTC time corresponding to simulation time 0.
-bool m_utc0set, m_utc0isrefevent;
+//bool m_utc0set, m_utc0isrefevent;
 int m_utc0[7];
 
 // Error handling facility

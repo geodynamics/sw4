@@ -8,14 +8,15 @@
 using namespace std;
 
 #include "DataPatches.h"
+#include <errno.h>
 
 //-----------------------------------------------------------------------
 DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin, int jmax,
 			  int kmax, int layers, int ntsteps, double dt )
 {
+   m_filename = fname;
    // Find the patches residing in this processor
 
-   m_filename = fname;
  // My block
    int ib=u.m_ib;
    int ie=u.m_ie;
@@ -75,6 +76,7 @@ DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin,
       if( fd == -1 )
       {
 	 printf("ERROR DataPatches: file %s could not be created \n",m_filename.c_str());
+         print_openerr( errno );
 	 m_error = true;
       }
       else
@@ -142,6 +144,15 @@ DataPatches::~DataPatches()
    }
 }
 //-----------------------------------------------------------------------
+size_t DataPatches::get_noofpoints() const
+{
+   if( m_isnonempty )
+      return m_dataptr[m_npatches];
+   else
+      return 0;
+}
+
+//-----------------------------------------------------------------------
 void DataPatches::add_patch( int wind[6] )
 {
    if( wind[1]>=wind[0] && wind[3]>=wind[2] && wind[5]>=wind[4] )
@@ -201,6 +212,7 @@ void DataPatches::save_to_file( )
       if( fd == -1 )
       {
 	 printf("ERROR DataPatches::save_to_file : file %s could not be opened \n",m_filename.c_str());
+         print_openerr( errno );
          return;
       }
       
@@ -282,6 +294,7 @@ void DataPatches::save_to_file( )
 	    nrwritten += nwri;
 	 }
       }
+      close(fd);
    }
 }
 
@@ -336,6 +349,7 @@ void DataPatches::read_from_file( int n )
       if( fd == -1 )
       {
 	 printf("ERROR DataPatches::read_from_file : file %s could not be opened \n",m_filename.c_str());
+         print_openerr( errno );
          return;
       }
       int nstart = n-m_nsteps+1;
@@ -372,5 +386,36 @@ void DataPatches::read_from_file( int n )
 	    nrread += nread;
 	 }
       }
+      close(fd);
    }
+}
+
+//-----------------------------------------------------------------------
+void DataPatches::print_openerr( int ecode ) const
+{
+   string emsg;
+   switch( ecode )
+   {
+   case EACCES: emsg = "EACCESS";break;
+   case EEXIST: emsg = "EEXIST";break;
+   case EFAULT: emsg = "EFAULT";break;
+   case EISDIR: emsg = "EISDIR";break;
+   case ELOOP: emsg = "ELOOP";break;
+   case EMFILE: emsg = "EMFILE";break;
+   case ENAMETOOLONG: emsg = "ENAMETOOLONG";break;
+   case ENFILE: emsg = "ENFILE";break;
+   case ENODEV: emsg = "ENODEV";break;
+   case ENOENT: emsg = "ENOENT";break;
+   case ENOMEM: emsg = "ENOMEM";break;
+   case ENOSPC: emsg = "ENOSPC";break;
+   case ENOTDIR: emsg = "ENOTDIR";break;
+   case ENXIO: emsg = "ENOXIO";break;
+   case EOVERFLOW: emsg = "EOVERFLOW";break;
+   case EPERM: emsg = "EPERM";break;
+   case EROFS: emsg = "EROFS";break;
+   case ETXTBSY: emsg = "ETXTBSY";break;
+   case EWOULDBLOCK:emsg = "EWOULDBLOCK";break;
+   default : emsg = "unknown";
+   }
+   cout << "open failed with error code " << emsg << endl;
 }

@@ -169,8 +169,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
      // In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
-     if( m_utc0set )
-	a_TimeSeries[ts]->set_station_utc( m_utc0 );
+     //     if( m_utc0set )
+     //	a_TimeSeries[ts]->set_station_utc( m_utc0 );
   }
   if( !mQuiet && mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");

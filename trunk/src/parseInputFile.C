@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>
+#include <time.h>
 
 using namespace std;
 
@@ -202,6 +203,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
         getEfileInfo(buffer); // read efile name, etc for setting up topography from the efile
      }
+     else if (startswith("time", buffer))
+     {
+        processTime(buffer); // process time command to set reference UTC before reading stations.
+     }
   }
 
 // make sure there was a grid command
@@ -321,6 +326,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("topography", buffer) || 
 //	   startswith("attenuation", buffer) || 
 	   startswith("fileio", buffer) ||
+	   startswith("time", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
        {
@@ -329,8 +335,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        }
        else if (startswith("gmt", buffer))
          processGMT(buffer);
-       else if (startswith("time", buffer))
-	 processTime(buffer);
+       //       else if (startswith("time", buffer))
+       //	 processTime(buffer);
        else if (startswith("globalmaterial", buffer))
          processGlobalMaterial(buffer);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
@@ -2104,6 +2110,12 @@ void EW::processFileIO(char* buffer)
 	         err << "nwriters must be positive, not: " << token);
           nwriters = atoi(token);
        }
+       else if (startswith("temppath=", token))
+       {
+          token += 9; // skip obspath=
+          mTempPath = token;
+	  mTempPath += '/';
+       }
        else
        {
           badOption("fileio", token);
@@ -2154,6 +2166,8 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
 	  // Format: 01/04/2012:17:34:45.2343 (Month/Day/Year:Hour:Min:Sec.fraction)
    fail = 0;
    int n = strlen(datestr);
+   //      cout << "x" << datestr << "x" << endl;
+   //   cout << "strlen = " << n << endl;
    int i = 0;
    string buf="";
    while( i<n )
@@ -2163,10 +2177,15 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
       i++;
    }
    //   if( buf == "//:::." && isdigit(datestr[ifirst]) && isdigit(datestr[n-1]) )
+   //   cout << "buf = x" << buf << "x" << endl;
+   //   i = 0;
+   //   while( !isdigit(datestr[i]) && i < n )
+   //      i++;
    if( buf == "//:::." )
    {
       float fsec;
-      sscanf(datestr,"%i/%i/%i:%i:%i:%f",&month,&day,&year,&hour,&minute,&fsec);
+      //      cout << "x" << datestr << "x" << endl;
+      sscanf(datestr,"%d/%d/%d:%d:%d:%f",&month,&day,&year,&hour,&minute,&fsec);
       //      cout << " mon " << month << " day " << day << " year " << year << endl;
       //      cout << " hour " << hour<< " minute " << minute << " fsec = " << fsec << endl;
       if( year < 1000 || year > 3000 )
@@ -2182,7 +2201,7 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
       if( fsec < 0 )
 	 fail = 8;
       second = static_cast<int>(trunc(fsec));
-      msecond = static_cast<int>( (fsec-second)*1000);
+      msecond = static_cast<int>( round((fsec-second)*1000));
       if( second < 0 || second > 60 )
 	 fail = 7;
       //      cout << " second = " << second << " msecond = " << msecond <<endl;
@@ -2231,18 +2250,8 @@ void EW::processTime(char* buffer)
           if( fail == 0 )
 	     refdateset = true;
 	  else
-	     CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
+	     CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms, not  " << token );
        }
-       // Disable this for now, too complicated.
-       //       else if( startswith("utcrefevent=",token) )
-       //       {
-       //          token += 12;
-       //          parsedate( token, year, month, day, hour, minute, second, msecond, fail );
-       //          if( fail == 0 )
-       //	     refeventdateset = true;
-       //	  else
-       //	     CHECK_INPUT(fail == 0 , "processTime: Error in utcrefevent format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
-       //       }
        else
        {
           badOption("time", token);
@@ -2257,7 +2266,7 @@ void EW::processTime(char* buffer)
   else if (steps >= 0)
     setNumberSteps(steps);
  
-  if( refdateset || refeventdateset )
+  if( refdateset )
   {
      m_utc0[0] = year;
      m_utc0[1] = month;
@@ -2266,9 +2275,20 @@ void EW::processTime(char* buffer)
      m_utc0[4] = minute;
      m_utc0[5] = second;
      m_utc0[6] = msecond;
- // If the event is used as reference, need to subtract some t0 distance later, when it is known.
-     m_utc0set   = true;
-     m_utc0isrefevent = refeventdateset;
+  }
+  else
+  {
+     // Set UTC as current date
+     time_t tsec;
+     time( &tsec );
+     struct tm *utctime = gmtime( &tsec );
+     m_utc0[0] = utctime->tm_year+1900;
+     m_utc0[1] = utctime->tm_mon+1;
+     m_utc0[2] = utctime->tm_mday;
+     m_utc0[3] = utctime->tm_hour;
+     m_utc0[4] = utctime->tm_min;
+     m_utc0[5] = utctime->tm_sec;
+     m_utc0[6] = 0; //milliseconds not given by 'time', not needed here.
   }
 }
 
@@ -5250,6 +5270,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   bool dateSet = false;
   bool timeSet = false;
   bool topodepth = false;
+  bool ignore_utc = false;
 
   int utc[7];
   bool utcset = false;
@@ -5364,25 +5385,31 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         token += 6; // skip shift=
         t0 = atof(token);
      }
-     else if( startswith("utc=",token))
+     else if( startswith("utc=",token) )
      {
-        token += 4;
-	int year,month,day,hour,minute,second,msecond, fail;
-// Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
-        parsedate( token, year, month, day, hour, minute, second, msecond, fail );
-	if( fail == 0 )
-	{
-	   utcset = true;
-	   utc[0] = year;
-	   utc[1] = month;
-	   utc[2] = day;
-	   utc[3] = hour;
-	   utc[4] = minute;
-	   utc[5] = second;
-	   utc[6] = msecond;
-	}
+	token += 4;
+        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
+	   ignore_utc = true;
 	else
-	   CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms " );
+	{
+	   int year,month,day,hour,minute,second,msecond, fail;
+	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
+	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+	   if( fail == 0 )
+	   {
+              utcset = true;
+	      utc[0] = year;
+	      utc[1] = month;
+	      utc[2] = day;
+	      utc[3] = hour;
+	      utc[4] = minute;
+	      utc[5] = second;
+	      utc[6] = msecond;
+	   }
+	   else
+	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
+			  << " or use utc=ignore" );
+	}
      }
      else if( startswith("windowL=",token))
      {
@@ -5471,7 +5498,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 	CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
         float float70[70];
 	size_t nr = fread(float70, sizeof(float), 70, fd );
-        CHECK_INPUT( nr == 70, "processObservation: ERROR, could not read float part of header of " << sacfile1 );;
+        CHECK_INPUT( nr == 70, "processObservation: ERROR, could not read float part of header of " << sacfile1 );
         latlon[0] = float70[31];
         latlon[1] = float70[32];
         CHECK_INPUT( latlon[0] != -12345 && latlon[1] != -12345, 
@@ -5484,7 +5511,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         if( m_myRank == 0 )
 	   cout << "processObservation: WARNING station (lat,lon) on sac file do not match input (lat,lon)" << endl;
      }
-     if( !geoCoordSet )
+     if( !cartCoordSet && !geoCoordSet )
      {
 	geoCoordSet = true;
 	lat = latlon[0];
@@ -5537,15 +5564,15 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   {
     TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
-    // Read in file to begin at time=t0.
+    // Read in file. 
+    // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
+    //        This is useful for synthetic data.
     if( usgsfileset )
-       ts_ptr->readFile( this, t0 );
+       ts_ptr->readFile( this, ignore_utc );
     else
-       ts_ptr->readSACfiles( this, t0, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str() );
+       ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), ignore_utc );
 
-    if( utcset )
-       ts_ptr->set_station_utc( utc );
-
+// Set window, in simulation time
     if( winlset || winrset )
     {
        if( winlset && !winrset )
@@ -5554,8 +5581,18 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 	  winl = -1;
        ts_ptr->set_window( winl, winr );
     }
+
+// Exclude some components
     if( !usex || !usey || !usez )
        ts_ptr->exclude_component( usex, usey, usez );
+
+// UTC on command line overrides utc in file, use with care.
+    if( utcset )
+       ts_ptr->reset_utc( utc );
+
+// Add extra shift from command line, use with care.
+    if( t0 != 0 )
+       ts_ptr->add_shift( t0 );
 
 // include the observation in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
@@ -5838,6 +5875,8 @@ void EW::processCG( char* buffer )
 	   m_cgvarcase = 1;
 	else if( strcmp(token,"posM") == 0 )
 	   m_cgvarcase = 2;
+	else if( strcmp(token,"posMobs") == 0 )
+	   m_cgvarcase = 3;
         else
 	   CHECK_INPUT( false,
 		     "cg command: solvefor value " << token << " not understood");

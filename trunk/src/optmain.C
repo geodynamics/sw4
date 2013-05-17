@@ -1,6 +1,7 @@
 #include "mpi.h"
 
 #include "EW.h"
+#include "ConvParOutput.h"
 
 #include <fcntl.h>
 
@@ -108,12 +109,29 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
 
 // Assign misfit time series to 'diffs'
    double mf = 0;
+   double* dshiftloc  = new double[GlobalObservations.size()];
+   double* ddshiftloc = new double[GlobalObservations.size()];
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+   {
+      double dd1shift;
+      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshiftloc[m], ddshiftloc[m], dd1shift );
+   }
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    if( myRank == 0 )
       cout << "Misfit = " << mf << endl;
+   double *dshift = new double[GlobalObservations.size()];
+   double *ddshift = new double[GlobalObservations.size()];
+   MPI_Allreduce(dshiftloc,dshift,GlobalObservations.size(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(ddshiftloc,ddshift,GlobalObservations.size(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   delete[] dshiftloc;
+   delete[] ddshiftloc;
+   if( myRank == 0 )
+   {
+      cout << "Observation gradient = " << endl;
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 cout << " " << dshift[m] << endl;
+   }
 
    // Test Gradient computation
    // Get gradient by computing the backwards problem:
@@ -135,6 +153,25 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       fd = fopen("gradient-adj.bin","w");
       fwrite(gradient,sizeof(double),11,fd);
       fclose(fd);
+   }
+
+   // Validate shift derivatives by comparing numerical gradient
+   for( int testcomp = 0 ; testcomp < GlobalTimeSeries.size() ; testcomp++ )
+   {
+      double h = 2.98e-8*sqrt(mf);
+      GlobalObservations[testcomp]->add_shift( h );
+      double mfp = 0, dshift, ddshift, dd1shift;
+      for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL, dshift, ddshift, dd1shift );
+      mftmp=mfp;
+      MPI_Allreduce(&mftmp,&mfp,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      if( myRank == 0 )
+      {
+	 cout << "Misfit of perturbed problem = " << mfp << endl;
+	 cout << "Difference = " << mfp-mf << endl;
+	 cout << "Observation " << testcomp+1 << " Numerical derivative = " << (mfp-mf)/h << endl;
+      }
+      GlobalObservations[testcomp]->add_shift( -h );
    }
 
    // Find parameter sizes, used for approximate gradient by difference quotients.
@@ -178,9 +215,9 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       //      for( int m=0 ; m < GlobalTimeSeries.size(); m++ )
       //         GlobalTimeSeries[m]->writeFile( "_2" );
 
-      double mfp = 0;
+      double mfp = 0, dshift, ddshift, dd1shift;
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL );
+	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL, dshift, ddshift, dd1shift );
       mftmp=mfp;
       MPI_Allreduce(&mftmp,&mfp,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       if( myRank == 0 )
@@ -192,6 +229,7 @@ void test_gradient( EW& simulation, vector<Source*>& GlobalSources,
       }
       delete persrc[0];
    }
+
    if( myRank == 0 )
    {
       FILE *fd = fopen("gradient-num.txt","w");
@@ -223,9 +261,9 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
       TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
       diffs.push_back(elem);
    }
-   double mf = 0;
+   double mf = 0, dshift, ddshift, dd1shift;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift, dd1shift );
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    if( myRank == 0 )
@@ -349,9 +387,9 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
 	 diffs.push_back(elem);
       }
-      double mfp = 0;
+      double mfp = 0, dshift, ddshift, dd1shift;
       for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+	 mfp += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift, dd1shift );
       double mftmp = mfp;
       MPI_Allreduce( &mftmp, &mfp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
@@ -404,141 +442,177 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 			    vector<TimeSeries*>& GlobalTimeSeries,
 			    vector<TimeSeries*> & GlobalObservations, int myRank,
-			    double sf[11], int nvar )
+			    int varcase, int nvar, double* sf )
 {
    // Compute Hessian for input source:
-
    bool write_hessian = true;
+   if( !simulation.compute_sf() )
+      simulation.get_scalefactors(sf);
+   if( simulation.compute_sf() || varcase == 3 )
+   {
    // Run forward problem 
-   if(myRank == 0 )
-     cout << endl << "*** Computing scale factors..." << endl << 
-       "Solving forward problem for evaluating misfit" << endl;
-   simulation.solve( GlobalSources, GlobalTimeSeries );
+      if(myRank == 0 )
+	 cout << endl << "*** Computing scale factors..." << endl << 
+	    "Solving forward problem for evaluating misfit" << endl;
+      simulation.solve( GlobalSources, GlobalTimeSeries );
    // Compute misfit, 'diffs' will hold the source for the adjoint problem
-   vector<TimeSeries*> diffs;
-   for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-   {
-      TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
-      diffs.push_back(elem);
-   }
-
-   double mf = 0;
-   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
-   //   double mftmp = mf;
-   //   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-   //   if( myRank == 0 )
-   //      cout << "Misfit = " << mf << endl;
-
-// Get second part of Hessian by solving the backwards problem:
-   double gradient[11], hess[121];
-   if( myRank == 0 )
-     cout << "Solving one backwards problem to calculate H2..." << endl;
-   simulation.solve_backward( GlobalSources, diffs, gradient, hess );
-
-// Assemble the first part of hessian matrix by solving 11 forward problems
-   vector<vector<TimeSeries*> > dudp(11);
-   if( myRank == 0 )
-     cout << "**** Starting the calculation of H1..." << endl;
-   for( int comp = 0 ; comp < nvar ; comp++ )
-   {
-      if( myRank == 0 )
-	cout << "Solving forward problem no. " << comp+1 << endl;
+      vector<TimeSeries*> diffs;
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
       {
-	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "dudpsrc" );
-	 dudp[comp].push_back(elem);
+	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
+	 diffs.push_back(elem);
       }
-      GlobalSources[0]->set_derivative(comp);
-      simulation.solve( GlobalSources, dudp[comp] );
-   }
-   GlobalSources[0]->set_noderivative();
-   double hess1[121];
-   for( int m= 0 ; m < 121 ; m++ )
-      hess1[m] = 0;
-   for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-   {
-      for( int comp = 0 ; comp < nvar ; comp++ )
-	 for(int comp1 = comp; comp1 < nvar ; comp1++ )
-	    hess1[comp+11*comp1] += dudp[comp][m]->product_wgh(*dudp[comp1][m]);
-   }
-   double hess1tmp[121];
-   for( int m=0 ; m < 121 ; m++ )
-      hess1tmp[m] = hess1[m];
-   MPI_Allreduce(hess1tmp,hess1,121,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
-   // Fill in symmetric part
-   for( int comp = 0 ; comp < nvar ; comp++ )
-      for(int comp1 = 0 ; comp1 < comp; comp1++ )
-	 hess1[comp+11*comp1] = hess1[comp1+11*comp];
+      double mf = 0;
+      double* dshiftloc  = new double[GlobalTimeSeries.size()];
+      double* ddshiftloc = new double[GlobalTimeSeries.size()];
+      double* dd1shiftloc = new double[GlobalTimeSeries.size()];
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshiftloc[m], ddshiftloc[m], dd1shiftloc[m] );
+
+      if( varcase == 3 )
+      {
+	 double* dshift  = new double[GlobalTimeSeries.size()];
+	 double* ddshift = new double[GlobalTimeSeries.size()];
+	 double* dd1shift = new double[GlobalTimeSeries.size()];
+	 MPI_Allreduce( dshiftloc, dshift, GlobalTimeSeries.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( ddshiftloc, ddshift, GlobalTimeSeries.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( dd1shiftloc, dd1shift, GlobalTimeSeries.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 //         if( myRank == 0 )
+	 //	    for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	 //	    {
+	 //	       cout << "scale factors " << m << " : dshift= " << dshift[m] << " ddshift= " << ddshift[m] << " dd1shift= " << dd1shift[m] << endl;
+	 //	    }
+	 for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	    if( ddshift[m] > 0 )
+	       sf[11+m] = 1/sqrt(ddshift[m]);
+	    else
+	       sf[11+m] = 1/sqrt(dd1shift[m]);
+	 //         sf[11] = 0.0127969;
+	 //	 sf[12] =  0.00759026;
+	 //         sf[13] = 0.00510912;
+	 //         sf[14] =0.0103381;
+	 //	 sf[15] = 0.0122798;
+	 delete[] dshift;
+	 delete[] ddshift;
+	 delete[] dd1shift;
+      }
+      delete[] dshiftloc;
+      delete[] ddshiftloc;
+      delete[] dd1shiftloc;
+
+      if( simulation.compute_sf() )
+      {
+// Get second part of Hessian by solving the backwards problem:
+	 double gradient[11], hess[121];
+	 if( myRank == 0 )
+	    cout << "Solving one backwards problem to calculate H2..." << endl;
+	 simulation.solve_backward( GlobalSources, diffs, gradient, hess );
+
+// Assemble the first part of hessian matrix by solving 11 forward problems
+	 vector<vector<TimeSeries*> > dudp(11);
+	 if( myRank == 0 )
+	    cout << "**** Starting the calculation of H1..." << endl;
+	 for( int comp = 0 ; comp < nvar ; comp++ )
+	 {
+	    if( myRank == 0 )
+	       cout << "Solving forward problem no. " << comp+1 << endl;
+	    for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	    {
+	       TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "dudpsrc" );
+	       dudp[comp].push_back(elem);
+	    }
+	    GlobalSources[0]->set_derivative(comp);
+	    simulation.solve( GlobalSources, dudp[comp] );
+	 }
+	 GlobalSources[0]->set_noderivative();
+	 double hess1[121];
+	 for( int m= 0 ; m < 121 ; m++ )
+	    hess1[m] = 0;
+	 for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	 {
+	    for( int comp = 0 ; comp < nvar ; comp++ )
+	       for(int comp1 = comp; comp1 < nvar ; comp1++ )
+		  hess1[comp+11*comp1] += dudp[comp][m]->product_wgh(*dudp[comp1][m]);
+	 }
+	 double hess1tmp[121];
+	 for( int m=0 ; m < 121 ; m++ )
+	    hess1tmp[m] = hess1[m];
+	 MPI_Allreduce(hess1tmp,hess1,121,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+	 // Fill in symmetric part
+	 for( int comp = 0 ; comp < nvar ; comp++ )
+	    for(int comp1 = 0 ; comp1 < comp; comp1++ )
+	       hess1[comp+11*comp1] = hess1[comp1+11*comp];
 
    // Add to second part of Hessian
-   for( int comp = 0 ; comp < nvar ; comp++ )
-      for(int comp1 = 0 ; comp1 < nvar; comp1++ )
-	 hess[comp+11*comp1] += hess1[comp+11*comp1];
+	 for( int comp = 0 ; comp < nvar ; comp++ )
+	    for(int comp1 = 0 ; comp1 < nvar; comp1++ )
+	       hess[comp+11*comp1] += hess1[comp+11*comp1];
 
 
    // Check if diagonal elements are positive
-   bool diagpositive = true;
-   for( int comp = 0 ; comp < nvar ; comp++ )
-      if( hess[comp+11*comp] <= 0 )
-	 diagpositive = false;
+	 bool diagpositive = true;
+	 for( int comp = 0 ; comp < nvar ; comp++ )
+	    if( hess[comp+11*comp] <= 0 )
+	       diagpositive = false;
 
-   if( !diagpositive )
-   {
-      if( myRank == 0 )
-      {
-	 cout << "*** The full Hessian has negative diagonal elements, " << endl;
-         cout << "*** scaling factors will use only part H1 of the Hessian" << endl;
-      }
-      for( int comp= 0 ; comp < nvar ; comp++ )
-         if( hess1[comp+11*comp] != 0 )
-   	    sf[comp]=1/sqrt(hess1[comp+11*comp]);
-         else
-	    sf[comp]=1;
-   }
-   else
-   {
-      for( int comp= 0 ; comp < nvar ; comp++ )
-	 sf[comp]=1/sqrt(hess[comp+11*comp]);
-   }
+	 if( !diagpositive )
+	 {
+	    if( myRank == 0 )
+	    {
+	       cout << "*** The full Hessian has negative diagonal elements, " << endl;
+	       cout << "*** scaling factors will use only part H1 of the Hessian" << endl;
+	    }
+	    for( int comp= 0 ; comp < nvar ; comp++ )
+	       if( hess1[comp+11*comp] != 0 )
+		  sf[comp]=1/sqrt(hess1[comp+11*comp]);
+	       else
+		  sf[comp]=1;
+	 }
+	 else
+	 {
+	    for( int comp= 0 ; comp < nvar ; comp++ )
+	       sf[comp]=1/sqrt(hess[comp+11*comp]);
+	 }
 
 // define sf for the remaining elements of sf[11]
-   for( int comp = nvar; comp < 11; comp++ )
-     sf[comp]=1;
+	 for( int comp = nvar; comp < 11; comp++ )
+	    sf[comp]=1;
 
-   if( myRank == 0 && write_hessian )
-   {
-      const string hfiletxt = simulation.getOutputPath() + "hessian0.txt";
-      FILE *fd = fopen(hfiletxt.c_str(),"w");
+	 if( myRank == 0 && write_hessian )
+	 {
+	    const string hfiletxt = simulation.getOutputPath() + "hessian0.txt";
+	    FILE *fd = fopen(hfiletxt.c_str(),"w");
       //      FILE *fd = fopen("hessian0.txt","w");
-      for( int i= 0 ; i < 11 ; i++ )
-      {
-	 for( int j= 0 ; j < 11 ; j++ )
-	    fprintf( fd, " %12.5g ", hess[i+11*j] );
-	 fprintf( fd, "\n" );
-      }
-      fclose(fd);
-      const string hfilebin = simulation.getOutputPath() + "hessian0.bin";
-      fd = fopen(hfilebin.c_str(),"w");
-      //      fd = fopen("hessian0.bin","w");
-      fwrite(hess,sizeof(double),121,fd);
-      fclose(fd);
-   }
+	    for( int i= 0 ; i < 11 ; i++ )
+	    {
+	       for( int j= 0 ; j < 11 ; j++ )
+		  fprintf( fd, " %12.5g ", hess[i+11*j] );
+	       fprintf( fd, "\n" );
+	    }
+	    fclose(fd);
+	    const string hfilebin = simulation.getOutputPath() + "hessian0.bin";
+	    fd = fopen(hfilebin.c_str(),"w");
+	 //      fd = fopen("hessian0.bin","w");
+	    fwrite(hess,sizeof(double),121,fd);
+	    fclose(fd);
+	 }
 
-// diffs no longer needed, give back memory
-   for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      delete diffs[m];
-   diffs.clear();
-   
 // dudp no longer needed, give back memory
-   for( unsigned int comp = 0 ; comp < nvar ; comp++ )
-   {
+	 for( unsigned int comp = 0 ; comp < nvar ; comp++ )
+	 {
+	    for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	       delete dudp[comp][m];
+	    dudp[comp].clear();
+	 }
+	 dudp.clear();
+      }
+// diffs no longer needed, give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-	 delete dudp[comp][m];
-      dudp[comp].clear();
+	 delete diffs[m];
+      diffs.clear();
    }
-   dudp.clear();
 }
 
 //-----------------------------------------------------------------------
@@ -837,7 +911,7 @@ a[120]= 256.91;
 }
 
 //-----------------------------------------------------------------------
-void compute_f( EW& simulation, double x[11], vector<Source*>& GlobalSources,
+void compute_f( EW& simulation, int n, double x[n], vector<Source*>& GlobalSources,
 		vector<TimeSeries*>& GlobalTimeSeries,
 		vector<TimeSeries*>& GlobalObservations, double& mf, bool testing=false )
 //-----------------------------------------------------------------------
@@ -877,20 +951,29 @@ void compute_f( EW& simulation, double x[11], vector<Source*>& GlobalSources,
 
 // Run forward problem with guessed source
    simulation.solve( src, GlobalTimeSeries );
+
 // Compute misfit,
    mf = 0;
+   double dshift, ddshift, dd1shift;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL );
+   {
+      if( 11+m<n )
+	 GlobalObservations[m]->add_shift(  x[11+m] );
+      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL, dshift, ddshift, dd1shift );
+      if( 11+m<n )
+	 GlobalObservations[m]->add_shift( -x[11+m] );
+   }
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    delete src[0];
 }
 
 //-----------------------------------------------------------------------
-void compute_f_and_df( EW& simulation, double x[11], vector<Source*>& GlobalSources,
-		     vector<TimeSeries*>& GlobalTimeSeries,
-		     vector<TimeSeries*>& GlobalObservations, int varcase,
-		       double& f, double df[11], double ddf[121], bool testing=false )
+void compute_f_and_df( EW& simulation, int n, double x[n],
+		       vector<Source*>& GlobalSources,
+		       vector<TimeSeries*>& GlobalTimeSeries,
+		       vector<TimeSeries*>& GlobalObservations, int varcase,
+		       double& f, double df[n], double ddf[121], bool testing=false )
 //-----------------------------------------------------------------------
 // Compute misfit and its gradient.
 //
@@ -946,33 +1029,54 @@ void compute_f_and_df( EW& simulation, double x[11], vector<Source*>& GlobalSour
       TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
       diffs.push_back(elem);
    }
-   f = 0;
-   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+   if( varcase == 3 )
+   {
+      f = 0;
+      double* dshiftloc  = new double[GlobalObservations.size()];
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 dshiftloc[m] = 0;
+
+      double ddshift, dd1shift;
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+      {
+	 if( m+11 < n )
+	    GlobalObservations[m]->add_shift( x[11+m] );
+	 f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshiftloc[m], ddshift, dd1shift );
+	 if( m+11 < n )
+	    GlobalObservations[m]->add_shift( -x[11+m] );
+      }
+      MPI_Allreduce(dshiftloc,&df[11],GlobalObservations.size(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      delete[] dshiftloc;
+   }
+   else
+   {
+      f = 0;
+      double dshift, ddshift, dd1shift;
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift, dd1shift );
+   }
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
    // Get gradient by solving the adjoint problem:
-   //   double hess[121];
    simulation.solve_backward( src, diffs, df, ddf );
 
    if( varcase == 1 )
       df[10] = 0;
-   else if( varcase == 2 )
+   else if( varcase == 2 || varcase == 3 )
       df[10] = df[9] = 0;
-   
+
 // diffs no longer needed, give back memory
    for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
       delete diffs[m];
    diffs.clear();
-
    delete src[0];
 }
 
 //-----------------------------------------------------------------------
-void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSources,
+void compute_dtd2fd( EW& simulation, int n, double x[n], vector<Source*>& GlobalSources,
 		     vector<TimeSeries*>& GlobalTimeSeries,
-		     vector<TimeSeries*>& GlobalObservations, double d[11],
+		     vector<TimeSeries*>& GlobalObservations, double d[n],
 		     int varcase, double& dtHd, bool ddf_isdefined,
 		     double ddf[121], int myRank, bool testing=false )
 //-----------------------------------------------------------------------
@@ -985,8 +1089,10 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
 //                    locations should agree with the GlobalObservations vector.
 //        GlobalObservations - The observed data at receivers.
 //        d          - Vector to multiply the Hessian from left and right.
-//        varcase  - 0 means 11 free parameters, 1 means assume fixed frequency
+//        varcase  - 0 means 11 free parameters, 
+//                   1 means assume fixed frequency
 //                   2 means assume frequency and t0 fixed.
+//                   3 means frequency and t0 fixed, + extra shift parameters
 //        ddf_isdefined - 'true' means that the matrix ddf on input contains the part 
 //                        of the Hessian that is associated with the backward solve.
 //                        'false' means that ddf has not been computed. This routine
@@ -1024,9 +1130,11 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
 	 diffs.push_back(elem);
       }
+      double dshift, ddshift, dd1shift;
       for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-	 GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
-   // Backward solve for second part of Hessian
+	 GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift, dd1shift );
+
+// Backward solve for second part of Hessian
       double df[11];
       src[0]->set_noderivative();
       simulation.solve_backward( src, diffs, df, ddf );
@@ -1035,6 +1143,30 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
       for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
 	 delete diffs[m];
       diffs.clear();
+   }
+
+   double dtHdshift = 0;
+   if( varcase == 3 )
+   {
+      // Here GlobalTimeSeries contains the current solution
+      double* ddshiftloc  = new double[GlobalObservations.size()];
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 ddshiftloc[m] = 0;
+      double dshift, dd1shift;
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+      {
+	 if( m+11 < n )
+	    GlobalObservations[m]->add_shift( x[11+m] );
+	 GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL, dshift, ddshiftloc[m], dd1shift );
+	 if( m+11 < n )
+	    GlobalObservations[m]->add_shift( -x[11+m] );
+      }
+      double *ddshift = new double[GlobalObservations.size()];
+      MPI_Allreduce(ddshiftloc,ddshift,GlobalObservations.size(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      delete[] ddshiftloc;
+      for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	 dtHdshift += d[11+m]*ddshift[m]*d[11+m];
+      delete[] ddshift;
    }
 
    // Forward solve for first part of Hessian
@@ -1051,7 +1183,7 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
       for( int i=0 ; i < 10 ; i++ )
 	 for( int j=0 ; j < 10 ; j++ )
 	    d2h += ddf[i+11*j]*d[i]*d[j];
-   else if( varcase == 2 )
+   else if( varcase == 2 || varcase == 3 )
       for( int i=0 ; i < 9 ; i++ )
 	 for( int j=0 ; j < 9 ; j++ )
 	    d2h += ddf[i+11*j]*d[i]*d[j];
@@ -1066,7 +1198,7 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
    //      cout << "Hessian second part= " << d2h << endl;
    //   }
    dtHd += d2h;
-
+   dtHd += dtHdshift;
 
    delete src[0];
 }
@@ -1074,9 +1206,9 @@ void compute_dtd2fd( EW& simulation, double x[11], vector<Source*>& GlobalSource
 //-----------------------------------------------------------------------
 void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
-		 double x[11], double f, double df[11], double p[11],
-		 double cgstep, double maxstep, double steptol, double xnew[11],
-		 double& fnew, double sf[11], int myRank, int& retcode, int& nstep_reductions, bool testing )
+		 int nvar, int n, double x[n], double f, double df[n], double p[n],
+		 double cgstep, double maxstep, double steptol, double xnew[n],
+		 double& fnew, double sf[n], int myRank, int& retcode, int& nstep_reductions, bool testing )
 
 //-----------------------------------------------------------------------
 // Line seach by backtracking for CG.
@@ -1123,11 +1255,10 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 //-----------------------------------------------------------------------
 {
    bool maxtaken = false;
-   const int n=11;
    double alpha = 1e-6, cglen=0, ang=0;
    vector<double> lambdasave, fcnsave;
 
-   for( int i=0 ; i < 11 ; i++ )
+   for( int i=0 ; i < n ; i++ )
       xnew[i] = x[i];
 
    retcode = 2;
@@ -1169,10 +1300,23 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
       // minlambda is scaled such that x^{k+1}-x^k = lambda*p^k with lambda=minlambda implies
       //            || x^{k+1}-x^k ||_\infty < minlambda (termination criterium)
       double initslope = 0;
-      double rellength = 0;
       for( int i=0; i < n ; i++ )
+         initslope += df[i]*p[i];
+
+      double rellength = 0;
+
+      for( int i=0; i < nvar ; i++ )
       {
-         initslope = initslope + df[i]*p[i];
+         double rlocal;
+         if( fabs(x[i]) > sf[i] )
+	    rlocal = fabs(p[i])/fabs(x[i]);
+	 else
+	    rlocal = fabs(p[i])/sf[i];
+	 if( rlocal > rellength )
+	    rellength = rlocal;
+      }
+      for( int i=11; i < n ; i++ )
+      {
          double rlocal;
          if( fabs(x[i]) > sf[i] )
 	    rlocal = fabs(p[i])/fabs(x[i]);
@@ -1196,7 +1340,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	 //	    for( int i=0; i < n ; i++ )
 	 //	       xnew[i] = x[i] + lambda*p[i];
 	 //	 }	 
-	 compute_f( simulation, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew, testing );
+	 compute_f( simulation, n, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew, testing );
          lambdasave.push_back(lambda);
          fcnsave.push_back(fnew);
          if( fnew < f + alpha*lambda*initslope )
@@ -1249,7 +1393,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	    //	       for( int i=0 ; i < n ; i++ )
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
-	    compute_f( simulation, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew, testing );
+	    compute_f( simulation, n, xnew, GlobalSources, GlobalTimeSeries, GlobalObservations, fnew, testing );
 	    return;
 	 }
 	 else
@@ -1285,7 +1429,8 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 }
 
 //-----------------------------------------------------------------------
-void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSources,
+void cg( EW& simulation, int n, double x[n], double sf[n],
+	 vector<Source*>& GlobalSources,
 	 vector<TimeSeries*>& GlobalTimeSeries,
 	 vector<TimeSeries*> & GlobalObservations,
 	 int myRank )
@@ -1308,7 +1453,6 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 //
 //-----------------------------------------------------------------------
 {
-   const int n = 11;
    int nvar, j, k;
    bool done = false;
    bool dolinesearch = true;
@@ -1317,112 +1461,80 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 
    // Do not allow source to rise closer than this to the surface:
    double tolerance;
-   double f, df[11], d[11], d2f[121], da[11], xa[11], dfp[11], rnorm;
+   double f, d2f[121], rnorm;
+   double* df, *d, *da, *xa, *dfp;
    bool testing=false, stepfileio=true;
    int verbose=3, ind=0, nreductions=0;
    int* iconvdata;
    double* convdata, *paradata;
 
+
    simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
 				dolinesearch, varcase, testing );
-
    if( maxrestart == 0 )
       return;
-   
-   FILE *fd;
-   FILE *fdx;
 
-   if( myRank == 0 )
+   df  = new double[n];
+   d   = new double[n];
+   da  = new double[n];
+   xa  = new double[n];
+   dfp = new double[n];
+
+   if( varcase == 0 )
    {
-      if( stepfileio )
-      {
-	 const string convfile = simulation.getOutputPath() + "convergence.log";
-	 fd = fopen(convfile.c_str(),"w");
-	 const string parafile = simulation.getOutputPath() + "parameters.log";
-	 fdx=fopen(parafile.c_str(),"w");
-      //	 fd =fopen("convergence.log","w");
-      //	 fdx=fopen("parameters.log","w");
-      }
-      else
-      {
-         iconvdata = new int[maxrestart*3*n];
-         convdata = new double[maxrestart*3*n];
-	 paradata = new double[maxrestart*12*n];
-      }
+      nvar  = 11;
+      maxit = 11;
+   }
+   if( varcase == 1 )
+   {
+      nvar = 10;
+      maxit= 10;
+   }
+   else if( varcase == 2 )
+   {
+      nvar = 9;
+      maxit= 9;
+   }
+   else if( varcase == 3 )
+   {
+      nvar  = 9;
+      maxit = 9 + GlobalObservations.size();
    }
 
-   //   if( maxit > n )
-   //      maxit = n;
-   //   if( varcase == 1 && maxit > 10 )
-   //      maxit = 10;
-   //   if( varcase == 2 && maxit > 9 )
-   //      maxit = 9;
-
-   if( varcase == 1 )
-      nvar = 10;
-   else if( varcase == 2 )
-      nvar = 9;
-   else
-      nvar = 11;
-
-   // Initial guess for testing
    if( testing )
    {
-      nvar = 11;
-      //      for( int i=0 ; i < 11 ;i++ )
-      //	 x[i] = 1;
+      nvar  = 11;
+      maxit = 11;
    }
 
-   maxit = nvar;
+   ConvParOutput outinfo( simulation, n, nvar, myRank, verbose, true );
+
    if( myRank == 0 && verbose > 0 )
-     cout << "Begin CG iteration by evaluating initial misfit and gradient..." << endl;
-   compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f, testing );
-   // Output GlobalTimeSeries here
-   if( myRank == 0  )
-   {
-      if( verbose > 2 )
-      {
-	 cout << "Initial misfit= "  << f << endl;
-	 rnorm = 0;
-	 cout << " scaled gradient = " ;
-	 for( int i=0 ; i < nvar ; i++ )
-	 {
-	    cout << df[i]*sf[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	    rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
-	 }
-	 cout << endl;
-      }
-      if( stepfileio )
-      {
-	 fprintf(fd, "%i %i %15.7g %15.7g %15.7g %i \n", 0,0, rnorm, 0.0, f, 0 );
-	 fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-	      0,0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-      }
-      else
-      {
-	 iconvdata[3*ind] = 0;
-	 iconvdata[3*ind+1]=0;
-	 iconvdata[3*ind+2]=0;
-	 convdata[3*ind] = rnorm;
-	 convdata[3*ind+1] = 0.0;
-	 convdata[3*ind+2] = f;
-	 for( int i = 0 ; i < n ; i++ )
-	    paradata[n*ind+i] = x[i];
-	 ind++;
-      }
-   }
+      cout << "Begin CG iteration by evaluating initial misfit and gradient..." << endl;
+
+  // Compute gradient and misfit
+   compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		     varcase, f, df, d2f, testing );
+
+ // Compute norm of gradient
+   rnorm = 0;
+   for( int i=0 ; i < n ; i++ )
+      rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
+
+   outinfo.print_dfmsg(f,df,sf);
+   outinfo.save_step(f,df,sf,x,rnorm,0.0,0,0,0);
 
    j = 1;
    while( j <= maxrestart && !done )
    {
       for( int i=0 ; i < n ; i++ )
          d[i] = -df[i]*sf[i]*sf[i];
-      rnorm = 0;
-      for( int i=0 ; i < n ; i++ )
-	 rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
-      //      errnorm = rnorm;
+
+      // Compute norm of gradient
+      //      rnorm = 0;
+      //      for( int i=0 ; i < n ; i++ )
+      //	 rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
+
       int k = 1;
       while( k <= maxit && rnorm > tolerance )
       {  
@@ -1436,6 +1548,12 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	       dnrm += d[i]*d[i];
 	       xnrm += x[i]*x[i];
 	    }
+	    for( int i= 11 ; i < n ; i++ )
+	    {
+	       den  += d[i]*df[i];
+	       dnrm += d[i]*d[i];
+	       xnrm += x[i]*x[i];
+	    }
             double stlim = 0.1*sqrt(xnrm/dnrm);
             double h=-2*f/den;
             if( h > stlim )
@@ -1444,7 +1562,7 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	       xa[i] = x[i] + h*d[i];
             if( myRank == 0 && verbose > 2 )
 	       cout << "Step length computation a) " << endl;
-            compute_f( simulation, xa, GlobalSources, GlobalTimeSeries, GlobalObservations, fp, testing );
+            compute_f( simulation, n, xa, GlobalSources, GlobalTimeSeries, GlobalObservations, fp, testing );
 	    alpha = h*f/(fp+f);
 	 }
 	 else
@@ -1452,20 +1570,12 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
             double dtHd;
             if( myRank == 0 && verbose > 2 )
 	       cout << "Step length computation b) " << endl;
-	    compute_dtd2fd( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, d, varcase, dtHd,
+
+	    compute_dtd2fd( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations, d, varcase, dtHd,
 			    true, d2f, myRank, testing );
-            if( myRank == 0 && verbose > 3 )
-	    {
-	       cout << "dtHd = " << dtHd << endl;
-               cout << "d = " ;
-	       for( int i=0 ; i < n ; i++ )
-	       {
-		  cout << d[i] << " ";
-		  if( i==5 )
-		     cout << endl << "      " ;
-	       }
-	       cout << endl;
-	    }
+            outinfo.print_scalar( dtHd, "dtHd= " ,3 );
+            outinfo.print_vector( d, "d= " ,3 );
+
             alpha = 0;
             for( int i=0; i<n ; i++ )
 	       alpha += df[i]*d[i];
@@ -1478,8 +1588,9 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
             int retcode;
             if( myRank == 0 && verbose > 2 )
 	       cout << "Line search.. " << endl;
-	    linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
-			x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode, nreductions, testing );
+	    linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nvar, n,
+			x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode,
+			nreductions, testing );
             if( myRank == 0 && verbose > 2 )
 	       cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
 	 }
@@ -1487,17 +1598,11 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	 {
 	    for( int i=0 ; i < n ; i++ )
 	       xa[i] = x[i] + alpha*d[i];
-	    //	    if( !testing && (xa[2] < 0 && d[2] != 0) )
-	    //	    {
-	    //	       alpha= -x[2]/d[2];
-	    //	       for( int i=0 ; i < n ; i++ )
-	    //		  xa[i] = x[i] + alpha*d[i];
-	    //	    }
 	 }         
 
 	 // xa is now the new iterate
 	 double dxnorm = 0;
-	 for( int i=0 ; i < n ; i++ )
+	 for( int i=0 ; i < nvar ; i++ )
 	 {
             double locnorm = fabs(x[i]-xa[i]);
 	    if( fabs(xa[i])> sf[i] )
@@ -1508,65 +1613,37 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
 	       dxnorm = locnorm;
 	    x[i] = xa[i];
 	 }
+	 for( int i=11 ; i < n ; i++ )
+	 {
+            double locnorm = fabs(x[i]-xa[i]);
+	    if( fabs(xa[i])> sf[i] )
+	       locnorm /= fabs(xa[i]);
+	    else
+	       locnorm /= sf[i];
+            if( locnorm > dxnorm )
+	       dxnorm = locnorm;
+	    x[i] = xa[i];
+	 }
+	 compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp,
+			   d2f, testing );
 
-	 compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f, testing );
+// Compute norm of new gradient
          rnorm = 0;
 	 for( int i=0 ; i < n ; i++ )
 	    if( fabs(dfp[i])*sf[i] > rnorm )
 	       rnorm = fabs(dfp[i])*sf[i];
+
 // Save the time series after each sub-iteration.
          for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
 	    GlobalTimeSeries[ts]->writeFile();
 
-         if( myRank == 0 )
-	 {
-            if( verbose > 2 )
-	    {
-	       cout << "-----------------------------------------------------------------------" << endl;
-	       cout << " it=" << j << "," << k << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
-	       cout << " new x = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	       for( int i=0 ; i < n ; i++ )
-	       {
-		  cout << x[i] << " ";
-		  if( i==5 )
-		     cout << endl << "      " ;
-	       }
-	       cout << endl;
-	       cout << " Misfit= "  << f << endl;
-	       cout << " scaled gradient = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	       for( int i=0 ; i < n ; i++ )
-	       {
-		  cout << dfp[i]*sf[i] << " ";
-		  if( i==5 )
-		     cout << endl << "      " ;
-	       }
-	       cout << endl;
-	    }
-	    if( stepfileio )
-	    {
-	       fprintf(fd, "%i %i %15.7g %15.7g %15.7g %i\n", j,k, rnorm, dxnorm, f, nreductions );
-	       fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-		    j,k, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-	       fflush(fd);
-	       fflush(fdx);
-	    }
-	    else
-	    {
-	       iconvdata[3*ind] = j;
-	       iconvdata[3*ind+1]=k;
-	       iconvdata[3*ind+2]=nreductions;
-	       convdata[3*ind] = rnorm;
-	       convdata[3*ind+1] = dxnorm;
-	       convdata[3*ind+2] = f;
-               for( int i = 0 ; i < n ; i++ )
-		  paradata[n*ind+i] = x[i];
-               ind++;
-	    }
-	 }
+// Print some information on standard output
+         outinfo.print_xmsg(x,rnorm,dxnorm,j,k);
+         outinfo.print_dfmsg(f,dfp,sf);
 
-	 //	 errnorm = rnorm;
+// Save convergence and parameters to file
+         outinfo.save_step(f,dfp,sf,x,rnorm,dxnorm,nreductions,j,k);
+
          double beta;
          if( k < maxit )
 	 {
@@ -1603,41 +1680,17 @@ void cg( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSou
       j++;
       done = rnorm < tolerance;
    }
-   if( myRank == 0 )
-   {
-      if( stepfileio )
-      {
-	 fclose(fd);
-	 fclose(fdx);
-      }
-      else
-      {
-	 const string convfile = simulation.getOutputPath() + "convergence.log";
-	 fd = fopen(convfile.c_str(),"w");
-	 const string parafile = simulation.getOutputPath() + "parameters.log";
-	 fdx=fopen(parafile.c_str(),"w");
-	 //	 fd =fopen("convergence.log","w");
-	 //	 fdx=fopen("parameters.log","w");
-         for( int i= 0 ; i < ind ; i ++ )
-	 {
-	    fprintf(fd, "%i %i %15.7g %15.7g %15.7g %i \n", iconvdata[3*i],iconvdata[3*i+1], convdata[3*i],
-		    convdata[3*i+1], convdata[3*i+2], iconvdata[3*i+2] );
-	    fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-		    iconvdata[3*i],iconvdata[3*i+1], paradata[n*i], paradata[n*i+1], paradata[n*i+2], paradata[n*i+3],
-		    paradata[n*i+4], paradata[n*i+5],  paradata[n*i+6], paradata[n*i+7], paradata[n*i+8],
-                    paradata[n*i+9], paradata[n*i+10], paradata[n*i+11] );
-	 }
-	 fclose(fd);
-	 fclose(fdx);
-         delete[] iconvdata;
-         delete[] convdata;
-	 delete[] paradata;
-      }
-   }
+   outinfo.finish();
+
+   delete[] df;
+   delete[] d;
+   delete[] da;
+   delete[] xa;
+   delete[] dfp;
 }
 
 //-----------------------------------------------------------------------
-void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSources,
+void lbfgs( EW& simulation, int n, double x[n], double sf[n], vector<Source*>& GlobalSources,
 	    vector<TimeSeries*>& GlobalTimeSeries,
 	    vector<TimeSeries*> & GlobalObservations,
 	    int m, int myRank )
@@ -1661,16 +1714,16 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
 //
 //-----------------------------------------------------------------------
 {
-   const int n = 11;
    int nvar, j, k;
    bool done = false;
    bool dolinesearch = true;
    bool fletcher_reeves=true;
-   int maxit, maxrestart, varcase=0, stepselection=0;
+   int maxit, maxrestart, varcase=0, stepselection=0, verbose=2;
 
    // Do not allow source to rise closer than this to the surface:
    double tolerance;
-   double f, df[11], d[11], d2f[121], da[11], xa[11], dfp[11], dx[11], rnorm, errnorm;
+   double f,  d2f[121], rnorm;
+   double* df, *d, *da, *xa, *dfp, *dx;
    bool testing=false, hscale=true;
    int nreductions = 0;
    
@@ -1678,56 +1731,41 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
 				dolinesearch, varcase, testing );
    if( maxrestart == 0 )
       return;
-   
-   FILE *fd;
-   FILE *fdx;
-   if( myRank == 0 )
-   {
-      const string convfile = simulation.getOutputPath() + "convergence.log";
-      fd = fopen(convfile.c_str(),"w");
-      const string parafile = simulation.getOutputPath() + "parameters.log";
-      fdx=fopen(parafile.c_str(),"w");
-      //      fd = fopen("convergence.log","w");   
-      //      fdx= fopen("parameters.log","w");
-   }
 
+   df  = new double[n];
+   d   = new double[n];
+   da  = new double[n];
+   xa  = new double[n];
+   dfp = new double[n];
+   dx  = new double[n];
+
+   if( varcase == 0 )
+      nvar = 11;
    if( varcase == 1 )
       nvar = 10;
    else if( varcase == 2 )
       nvar = 9;
-   else
-      nvar = 11;
+   else if( varcase == 3 )
+      nvar = 9;
 
    // Initial guess for testing
    if( testing )
-   {
-      nvar = 11;
-      //      for( int i=0 ; i < 11 ;i++ )
-      //	 x[i] = 1;
-   }
+      nvar  = 11;
 
-   maxit = nvar;
-   if( myRank == 0 )
-     cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
-   compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f, testing );
+   ConvParOutput outinfo( simulation, n, nvar, myRank, verbose, false );
 
    if( myRank == 0 )
-   {
-      cout << "Initial misfit= "  << f << endl;
-      rnorm = 0;
-      cout << " scaled gradient = " ;
-      for( int i=0 ; i < nvar ; i++ )
-      {
-	 cout << df[i]*sf[i] << " ";
-	 if( i==5 )
-	    cout << endl << "      " ;
-         rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
-      }
-      cout << endl;
-      fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
-      fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-	      0,0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-   }
+      cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
+
+   compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		     varcase, f, df, d2f, testing );
+   rnorm = 0;
+   for( int i = 0 ; i < n ; i++ )
+      rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
+
+   outinfo.print_dfmsg(f,df,sf);
+   outinfo.save_step(f,df,sf,x,rnorm,0.0,0,0);
+
    int it = 1;
    // s and y stores the m vectors
    double* s = new double[m*n]; 
@@ -1820,11 +1858,11 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
 	    da[i] = d[i];
 	 int retcode;
          double fp;
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << "Line search.. " << endl;
-	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nvar, n,
 		     x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode, nreductions, testing );
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
       }
       else
@@ -1833,7 +1871,21 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
       
    // xa is now the new iterate
       double dxnorm = 0;
-      for( int i=0 ; i < n ; i++ )
+      for( int i=0 ; i < nvar ; i++ )
+      {
+	 double locnorm = fabs(x[i]-xa[i]);
+	 if( fabs(xa[i])> sf[i] )
+	    locnorm /= fabs(xa[i]);
+	 else
+	    locnorm /= sf[i];
+	 if( locnorm > dxnorm )
+	    dxnorm = locnorm;
+	 dx[i] = xa[i] - x[i];
+	 x[i]  = xa[i];
+      }
+      for( int i=nvar ; i < 11 ; i++ )
+	 dx[i] = 0;
+      for( int i=11 ; i < n ; i++ )
       {
 	 double locnorm = fabs(x[i]-xa[i]);
 	 if( fabs(xa[i])> sf[i] )
@@ -1846,7 +1898,8 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
 	 x[i]  = xa[i];
       }
 
-      compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f, testing );
+      compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase,
+			f, dfp, d2f, testing );
       rnorm = 0;
       for( int i=0 ; i < n ; i++ )
 	 if( fabs(dfp[i])*sf[i] > rnorm )
@@ -1856,39 +1909,14 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
       for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
 	 GlobalTimeSeries[ts]->writeFile();
 
-      if( myRank == 0 )
-      {
-	 cout << "-----------------------------------------------------------------------" << endl;
-	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
-	 cout << " new x = " ;
-	 //	    for( int i=0 ; i < nvar ; i++ )
-	 for( int i=0 ; i < n ; i++ )
-	 {
-	    cout << x[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	 }
-	 cout << endl;
-	 cout << " Misfit= "  << f << endl;
-	 cout << " scaled gradient = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	 for( int i=0 ; i < n ; i++ )
-	 {
-	    cout << dfp[i]*sf[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	 }
-	 cout << endl;
-	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
-	 fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-		 it, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-	 fflush(fd);
-	 fflush(fdx);
-      }
-      errnorm = rnorm;
-      done = rnorm < tolerance;
+// Print some information on standard output
+      outinfo.print_xmsg( x, rnorm, dxnorm, it );
+      outinfo.print_dfmsg( f, dfp, sf );
 
-      // Update s and y vectors
+// Save convergence and parameters to file
+      outinfo.save_step( f, dfp, sf, x, rnorm, dxnorm, nreductions, it );
+
+   // Update s and y vectors
       if( it > m )
       {
 	 for( int i=0 ; i < n ; i++ )
@@ -1909,25 +1937,29 @@ void lbfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& Global
 	 }
       }
 
-    // Advance one iteration
+   // Advance one iteration
       it++;
+      done = rnorm < tolerance;
       for( int i=0 ; i < n ; i++ )
 	 df[i] = dfp[i];
    }
-   if( myRank == 0 )
-   {
-      fclose(fd);
-      fclose(fdx);
-   }
+   outinfo.finish();
    delete[] s;
    delete[] y;
    delete[] dftemp;
    delete[] al;
    delete[] rho;
+   delete[] df;
+   delete[] d;
+   delete[] da;
+   delete[] xa;
+   delete[] dfp;
+   delete[] dx;
 }
 
 //-----------------------------------------------------------------------
-void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalSources,
+void bfgs( EW& simulation, int n, double x[n], double sf[n],
+	   vector<Source*>& GlobalSources,
 	   vector<TimeSeries*>& GlobalTimeSeries,
 	   vector<TimeSeries*> & GlobalObservations,
 	   int myRank )
@@ -1951,17 +1983,16 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
 //
 //-----------------------------------------------------------------------
 {
-   const int n = 11;
    int nvar;
    bool done = false;
    bool dolinesearch = true;
-   int maxit, maxrestart, varcase=0, stepselection=0;
+   int maxit, maxrestart, varcase=0, stepselection=0, verbose=2;
    bool fletcher_reeves=true;
 
    // Do not allow source to rise closer than this to the surface:
    double tolerance;
-   double f, df[11], d[11], d2f[121], hinv[121], da[11], xa[11], dfp[11], rnorm;
-   double y[11], z[11];
+   double f, d2f[121], rnorm;
+   double* df, *d, *hinv, *da, *xa, *dfp, *y, *z;
    bool testing=false;
    int nreductions=0;
 
@@ -1969,68 +2000,46 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
 				dolinesearch, varcase, testing );
    if( maxrestart == 0 )
       return;
-   
-   FILE *fd;
-   FILE *fdx;
-   if( myRank == 0 )
-   {
-      const string convfile = simulation.getOutputPath() + "convergence.log";
-      fd = fopen(convfile.c_str(),"w");
-      const string parafile = simulation.getOutputPath() + "parameters.log";
-      fdx=fopen(parafile.c_str(),"w");
-      //      fd =fopen("convergence.log","w");
-      //      fdx=fopen("parameters.log","w");
-   }
 
-   //   if( maxit > n )
-   //      maxit = n;
-   //   if( varcase == 1 && maxit > 10 )
-   //      maxit = 10;
-   //   if( varcase == 2 && maxit > 9 )
-   //      maxit = 9;
-
-   if( varcase == 1 )
+   if( varcase == 0 )
+      nvar = 11;
+   else if( varcase == 1 )
       nvar = 10;
    else if( varcase == 2 )
       nvar = 9;
-   else
-      nvar = 11;
+   else if( varcase == 3 )
+      nvar = 9;
 
-   // Initial guess for testing
    if( testing )
-   {
       nvar = 11;
-      //      for( int i=0 ; i < 11 ;i++ )
-      //	 x[i] = 1;
-   }
 
-   maxit = nvar;
+   df  = new double[n];
+   d   = new double[n];
+   da  = new double[n];
+   xa  = new double[n];
+   dfp = new double[n];
+   y   = new double[n];
+   z   = new double[n];
+   hinv= new double[n*n];
+
+   ConvParOutput outinfo( simulation, n, nvar, myRank, verbose, false );
+
    if( myRank == 0 )
       cout << "Begin BFGS iteration by evaluating initial misfit and gradient..." << endl;
-   compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f, testing );
-   // Output GlobalTimeSeries here
-   if( myRank == 0 )
-   {
-      cout << "Initial misfit= "  << f << endl;
-      rnorm = 0;
-      cout << " scaled gradient = " ;
-      for( int i=0 ; i < nvar ; i++ )
-      {
-	 cout << df[i]*sf[i] << " ";
-	 if( i==5 )
-	    cout << endl << "      " ;
-         rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
-      }
-      cout << endl;
-      fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
-      fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-	      0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-   }
+   compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		     varcase, f, df, d2f, testing );
+
+   rnorm = 0;
+   for( int i = 0 ; i < n ; i++ )
+      rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
+
+   outinfo.print_dfmsg(f,df,sf);
+   outinfo.save_step(f,df,sf,x,rnorm,0.0,0,0);
 
    // Initial guess inverse Hessian, diagonal
-   for( int i=0 ; i < 121; i++ )
+   for( int i=0 ; i < n*n; i++ )
       hinv[i] = 0;
-   for( int i=0 ; i < 11 ; i++ )
+   for( int i=0 ; i < n ; i++ )
       hinv[i+n*i] = sf[i]*sf[i];
    
    int it = 1;
@@ -2039,7 +2048,6 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
       // Compute step direction
       for( int i=0 ; i < n ; i++ )
       {
-	 // d = -inv(H)*df
          d[i] = 0;
          for( int j=0 ; j<n ; j++ )
 	    d[i] -= hinv[i+n*j]*df[j];
@@ -2052,29 +2060,22 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
 	 for( int i=0 ; i < n ; i++ )
 	    da[i] = d[i];
 	 int retcode;
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << "Line search.. " << endl;
          double fp;
-	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nvar, n,
 		     x, f, df, da, fabs(alpha), 10.0, tolerance*0.01, xa, fp, sf, myRank, retcode, nreductions, testing );
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
       }
       else
       {
 	 for( int i=0 ; i < n ; i++ )
 	    xa[i] = x[i] + alpha*d[i];
-	 //	 if( !testing && (xa[2] < 0 && d[2] != 0) )
-	 //	 {
-	 //	    alpha= -x[2]/d[2];
-	 //	    for( int i=0 ; i < n ; i++ )
-	 //	       xa[i] = x[i] + alpha*d[i];
-	 //	 }
       }         
 
-// xa is now the new iterate, 
       double dxnorm = 0;
-      for( int i=0 ; i < n ; i++ )
+      for( int i=0 ; i < nvar ; i++ )
       {
 	 double locnorm = fabs(x[i]-xa[i]);
 	 if( fabs(xa[i])> sf[i] )
@@ -2086,8 +2087,20 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
          d[i] = xa[i]-x[i];
 	 x[i] = xa[i];
       }
-      compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, dfp, d2f, testing );
-
+      for( int i=11 ; i < n ; i++ )
+      {
+	 double locnorm = fabs(x[i]-xa[i]);
+	 if( fabs(xa[i])> sf[i] )
+	    locnorm /= fabs(xa[i]);
+	 else
+	    locnorm /= sf[i];
+	 if( locnorm > dxnorm )
+	    dxnorm = locnorm;
+         d[i] = xa[i]-x[i];
+	 x[i] = xa[i];
+      }
+      compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase,
+			f, dfp, d2f, testing );
       rnorm = 0;
       for( int i=0 ; i < n ; i++ )
       {
@@ -2099,38 +2112,15 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
       // Save the time series after each sub-iteration.
       for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
 	 GlobalTimeSeries[ts]->writeFile();
+ 
+// Print some information on standard output
+      outinfo.print_xmsg( x, rnorm, dxnorm, it );
+      outinfo.print_dfmsg( f, dfp, sf );
 
+// Save convergence and parameters to file
+      outinfo.save_step( f, dfp, sf, x, rnorm, dxnorm, nreductions, it );
 
-      if( myRank == 0 )
-      {
-	 cout << "-----------------------------------------------------------------------" << endl;
-	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
-	 cout << " new x = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	 for( int i=0 ; i < n ; i++ )
-	 {
-	    cout << x[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	 }
-	 cout << endl;
-	 cout << " Misfit= "  << f << endl;
-	 cout << " scaled gradient = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	 for( int i=0 ; i < n ; i++ )
-	 {
-	    cout << dfp[i]*sf[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	 }
-	 cout << endl;
-	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
-	 fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-		 it, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-	 fflush(fd);
-	 fflush(fdx);
-      }
-      // Update inverse Hessian
+  // Update inverse Hessian
       // z = G*y, sc1=y'*s, sc2=y'*z
       double sc1=0, sc2=0;
       for( int i=0 ; i < n ; i++ )
@@ -2147,18 +2137,25 @@ void bfgs( EW& simulation, double x[11], double sf[11], vector<Source*>& GlobalS
       for( int j=0 ; j < n ; j++ )
 	 for( int i=0 ; i < n ; i++ )
 	    hinv[i+n*j] += -a1*(d[i]*z[j]+z[i]*d[j])+a2*d[i]*d[j];
+
+      // Move on to the next iteration
       it++;
       done = rnorm < tolerance;
    }
-   if( myRank == 0 )
-   {
-      fclose(fd);
-      fclose(fdx);
-   }
+   outinfo.finish();
+
+   delete[] df;
+   delete[] d;
+   delete[] da;
+   delete[] xa;
+   delete[] dfp;
+   delete[] y;
+   delete[] z;
+   delete[] hinv;
 }
 
 //-----------------------------------------------------------------------
-void steepest_descent( EW& simulation, double x[11], double sf[11],
+void steepest_descent( EW& simulation, int n, double x[n], double sf[n],
 		       vector<Source*>& GlobalSources,
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*> & GlobalObservations,
@@ -2183,18 +2180,16 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
 //
 //-----------------------------------------------------------------------
 {
-   const int n = 11;
    int nvar;
    bool done = false;
    bool dolinesearch = true;
-   int maxit, maxrestart, varcase=0, stepselection=0;
+   int maxit, maxrestart, varcase=0, stepselection=0,verbose=2;
    bool fletcher_reeves=true;
 
-   // Do not allow source to rise closer than this to the surface:
    double tolerance;
-   double f, df[11], d[11], d2f[121], da[11], xa[11], rnorm;
+   double f, d2f[121], rnorm;
+   double* df, *d, *da, *xa;
    bool testing=false;
-   //   cout << "Enter CG " << endl;
    int nreductions=0;
 
    simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
@@ -2202,63 +2197,38 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
    if( maxrestart == 0 )
       return;
    
-   FILE *fd;
-   FILE *fdx;
-   if( myRank == 0 )
-   {
-      const string convfile = simulation.getOutputPath() + "convergence.log";
-      fd = fopen(convfile.c_str(),"w");
-      const string parafile = simulation.getOutputPath() + "parameters.log";
-      fdx=fopen(parafile.c_str(),"w");
-      //      fd =fopen("convergence.log","w");
-      //      fdx=fopen("parameters.log","w");
-   }
+   df  = new double[n];
+   d   = new double[n];
+   da  = new double[n];
+   xa  = new double[n];
 
-   //   if( maxit > n )
-   //      maxit = n;
-   //   if( varcase == 1 && maxit > 10 )
-   //      maxit = 10;
-   //   if( varcase == 2 && maxit > 9 )
-   //      maxit = 9;
-
-   if( varcase == 1 )
+   if( varcase == 0 )
+      nvar = 11;
+   else if( varcase == 1 )
       nvar = 10;
    else if( varcase == 2 )
       nvar = 9;
-   else
-      nvar = 11;
+   else if( varcase == 3 )
+      nvar = 9;
 
-   // Initial guess for testing
+// Initial guess for testing
    if( testing )
-   {
       nvar = 11;
-      //      for( int i=0 ; i < 11 ;i++ )
-      //	 x[i] = 1;
-   }
 
-   maxit = nvar;
-   if( myRank == 0 )
-     cout << "Begin steepest descent iteration by evaluating initial misfit and gradient..." << endl;
-   compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f, testing );
-   // Output GlobalTimeSeries here
+   ConvParOutput outinfo( simulation, n, nvar, myRank, verbose, false );
 
-   if( myRank == 0 )
-   {
-      cout << "Initial misfit= "  << f << endl;
-      rnorm = 0;
-      cout << " scaled gradient = " ;
-      for( int i=0 ; i < nvar ; i++ )
-      {
-	 cout << df[i]*sf[i] << " ";
-	 if( i==5 )
-	    cout << endl << "      " ;
-         rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
-      }
-      cout << endl;
-      fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
-      fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-	      0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-   }
+   if( myRank == 0 && verbose > 0 )
+      cout << "Begin steepest descent iteration by evaluating initial misfit and gradient..." << endl;
+   compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		     varcase, f, df, d2f, testing );
+
+// Compute norm of gradient
+   rnorm = 0;
+   for( int i=0 ; i < n ; i++ )
+      rnorm = rnorm > fabs(df[i])*sf[i] ? rnorm : fabs(df[i])*sf[i];
+
+   outinfo.print_dfmsg(f,df,sf);
+   outinfo.save_step(f,df,sf,x,rnorm,0.0,0,0);
 
    int it = 0;
    while( it <= maxrestart && !done )
@@ -2266,6 +2236,8 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
       for( int i=0 ; i < n ; i++ )
          d[i] = -df[i]*sf[i]*sf[i];
       double alpha, fp;
+
+// Compute initial step length
       if( stepselection == 0 )
       {
          double den = 0, dnrm=0, xnrm=0;
@@ -2281,62 +2253,48 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
 	    h = stlim;
 	 for( int i=0; i<n ; i++ )
 	    xa[i] = x[i] + h*d[i];
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	       cout << "Step length computation a) " << endl;
-	 compute_f( simulation, xa, GlobalSources, GlobalTimeSeries, GlobalObservations, fp, testing );
+	 compute_f( simulation, n, xa, GlobalSources, GlobalTimeSeries, GlobalObservations, fp, testing );
 	 alpha = h*f/(fp+f);
       }
       else
       {
 	 double dtHd;
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << "Step length computation b) " << endl;
-	 compute_dtd2fd( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, d, varcase, dtHd,
+	 compute_dtd2fd( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations, d, varcase, dtHd,
 			    true, d2f, myRank, testing );
-	 if( myRank == 0 )
-	 {
-	    cout << "dtHd = " << dtHd << endl;
-	    cout << "d = " ;
-	    for( int i=0 ; i < n ; i++ )
-	    {
-	       cout << d[i] << " ";
-	       if( i==5 )
-		  cout << endl << "      " ;
-	    }
-	    cout << endl;
-	 }
+	 outinfo.print_scalar( dtHd, "dtHd= " ,3 );
+	 outinfo.print_vector( d, "d= " ,3 );
 	 alpha = 0;
 	 for( int i=0; i<n ; i++ )
 	    alpha += df[i]*d[i];
 	 alpha = -alpha/dtHd;
       }
+
+// Determine step length and update x.  xa is the new iterate.
       if( dolinesearch )
       {
 	 for( int i=0 ; i < n ; i++ )
 	    da[i] = d[i];
 	 int retcode;
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << "Line search.. " << endl;
-	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
+	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nvar, n,
 		     x, f, df, da, fabs(alpha), 100.0, tolerance*0.01, xa, fp, sf, myRank, retcode, nreductions, testing );
-	 if( myRank == 0 )
+	 if( myRank == 0 && verbose > 2 )
 	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
       }
       else
       {
 	 for( int i=0 ; i < n ; i++ )
 	    xa[i] = x[i] + alpha*d[i];
-	 //	 if( !testing && (xa[2] < 0 && d[2] != 0) )
-	 //	 {
-	 //	    alpha= -x[2]/d[2];
-	 //	    for( int i=0 ; i < n ; i++ )
-	 //	       xa[i] = x[i] + alpha*d[i];
-	 //	 }
       }         
 
-	 // xa is now the new iterate
+ // Compute the norm of x_k-x_{k+1}, and update x := xa
       double dxnorm = 0;
-      for( int i=0 ; i < n ; i++ )
+      for( int i=0 ; i < nvar ; i++ )
       {
 	 double locnorm = fabs(x[i]-xa[i]);
 	 if( fabs(xa[i])> sf[i] )
@@ -2347,55 +2305,46 @@ void steepest_descent( EW& simulation, double x[11], double sf[11],
 	    dxnorm = locnorm;
 	 x[i]=xa[i];
       }
+      for( int i=11 ; i < n ; i++ )
+      {
+	 double locnorm = fabs(x[i]-xa[i]);
+	 if( fabs(xa[i])> sf[i] )
+	    locnorm /= fabs(xa[i]);
+	 else
+	    locnorm /= sf[i];
+	 if( locnorm > dxnorm )
+	    dxnorm = locnorm;
+	 x[i]=xa[i];
+      }
+      compute_f_and_df( simulation, n, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f,
+			testing );
 
-      compute_f_and_df( simulation, x, GlobalSources, GlobalTimeSeries, GlobalObservations, varcase, f, df, d2f, testing );
+// Compute the norm of the gradient
       rnorm = 0;
       for( int i=0 ; i < n ; i++ )
 	 if( fabs(df[i])*sf[i] > rnorm )
 	    rnorm = fabs(df[i])*sf[i];
 
-// Save the time series after each sub-iteration.
+// Save the time series after each iteration.
       for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
 	 GlobalTimeSeries[ts]->writeFile();
 
-      if( myRank == 0 )
-      {
-	 cout << "-----------------------------------------------------------------------" << endl;
-	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
-	 cout << " new x = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	 for( int i=0 ; i < n ; i++ )
-	 {
-	    cout << x[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	 }
-	 cout << endl;
-	 cout << " Misfit= "  << f << endl;
-	 cout << " scaled gradient = " ;
-	    //	    for( int i=0 ; i < nvar ; i++ )
-	 for( int i=0 ; i < n ; i++ )
-	 {
-	    cout << df[i]*sf[i] << " ";
-	    if( i==5 )
-	       cout << endl << "      " ;
-	 }
-	 cout << endl;
-	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
-	 fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-		    it, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-	 fflush(fd);
-	 fflush(fdx);
-      }
+// Print some information on standard output
+      outinfo.print_xmsg(x,rnorm,dxnorm,it);
+      outinfo.print_dfmsg(f,df,sf);
+
+// Save convergence and parameters to file
+      outinfo.save_step(f,df,sf,x,rnorm,dxnorm,nreductions,it);
+
+// Move on to the next iteration
       it++;
       done = rnorm < tolerance;
    }
-
-   if( myRank == 0 )
-   {
-      fclose(fd);
-      fclose(fdx);
-   }
+   outinfo.finish();
+   delete[] df;
+   delete[] d;
+   delete[] da;
+   delete[] xa;
 }
 
 //-----------------------------------------------------------------------
@@ -2512,12 +2461,10 @@ int main(int argc, char **argv)
 
 // run the forward solver in stealth mode
        simulation.setQuiet(true);
-       
-     // Make observations aware of the utc reference time, if set.
+
      // Filter observed data if required
 	for( int m = 0; m < GlobalObservations.size(); m++ )
 	{
-	   simulation.set_utcref( *GlobalObservations[m] );
 	   if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 	   {
 	      GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
@@ -2531,6 +2478,9 @@ int main(int argc, char **argv)
 	{
 	   string newname = "_out";
 	   TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
+	   // Reset station utc reference point to simulation utc reference point,
+	   // reasonable since GlobalTimeSeries will be used with the forward solver.
+           elem->set_utc_to_simulation_utc();
 	   GlobalTimeSeries.push_back(elem);
 	}
 
@@ -2542,18 +2492,39 @@ int main(int argc, char **argv)
 	}
 	
 // Variables needed:
-//	int testcase  = 6; // job to do
-	//	int scale_factor = 1; // Method for computing scale factors, could be from input file
-	//        int maxit, maxrestarts;
-	//	double tolerance;
-	double xv[11], sf[11];
-
+	int maxit, maxrestart, varcase=0, stepselection=0;
+	bool dolinesearch, fletcher_reeves=true, testing=false;
+	double tolerance;
+	simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
+				     dolinesearch, varcase, testing );
+	double* xv, *sf;
+        int n;
+	if( varcase != 3 )
+	{
+	   xv = new double[11];
+           sf = new double[11];
+           n  = 11;
+	}
+	else
+	{
+	   sf = new double[11+GlobalObservations.size()];
+	   xv = new double[11+GlobalObservations.size()];
+           n  = 11+GlobalObservations.size();
+	}
+     
 // Initial guess
         bool output_initial_seismograms = false;
+
 //   Default guess, the input source, stored in GlobalSources[0]
         bool guesspos, guesst0fr, guessmom;
         simulation.compute_guess( guesspos, guesst0fr, guessmom, output_initial_seismograms );
 	GlobalSources[0]->get_parameters(xv);
+
+//  Shifts, guess they are zero.
+	if( varcase == 3 )
+	   for( int i=11 ; i < n ; i++ )
+	      xv[i] = 0;
+	   
 	if( guesspos )
 	{
 	   // Guess source position, and perhaps t0
@@ -2619,38 +2590,27 @@ int main(int argc, char **argv)
 	      delete localTimeSeries[ts];
 	}
 
-// figure out how many parameters we need
-	int maxit, maxrestart, varcase=0, stepselection=0;
-	bool dolinesearch, fletcher_reeves=true, testing=false;
-
-	double tolerance;
-	simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
-				     dolinesearch, varcase, testing );
-	int nvar=0;
-	if( varcase == 1 )
-	  nvar = 10;
+	// nvar is number of source parameters
+	int nvar;
+        if( varcase == 0 )
+	   nvar = 11;
+	else if( varcase == 1 )
+	   nvar = 10;
 	else if( varcase == 2 )
-	  nvar = 9;
-	else
-	  nvar = 11;
+	   nvar = 9;
+	else if( varcase == 3 )
+	   nvar = 9;
 
-	if( simulation.compute_sf() )
-	  compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, sf, nvar );
-	else
-	  simulation.get_scalefactors(sf);
-	      
+	compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, varcase, nvar, sf );
 
 	if( myRank == 0 )
 	{
-	   //	   cout << " Scaling factors : " << endl;
-	   //	   for( int comp = 0 ; comp < 11 ; comp++ )
-	   //	   {
-	   //	      cout << " sf" << comp+1 << " = " << sf[comp] ;
-	   //	      cout << endl;
-	   //	   }
            cout << "scalefactors x0=" << sf[0] << " y0=" << sf[1] << " z0=" << sf[2] << " Mxx=" << sf[3]
 		<< " Mxy=" << sf[4] << " Mxz=" << sf[5] << " Myy=" << sf[6]  << " Myz=" << sf[7]
 		<< " Mzz=" << sf[8] << " t0=" << sf[9] << " freq=" << sf[10] << endl;
+           if( varcase == 3 )
+	      for( int m= 0 ; m < GlobalTimeSeries.size() ; m++ )
+		 cout << "sfobs" << m << "= " << sf[11+m]<<endl;
 	}
         if( simulation.m_opttest == 1 )
 	   testsourced2( simulation, GlobalSources );
@@ -2672,7 +2632,7 @@ int main(int argc, char **argv)
               double yv[11];
 	      for( int j=0; j < 11 ; j++ )
 		 yv[j] = xv[j] + la*p[j];
-              compute_f( simulation, yv, GlobalSources, GlobalTimeSeries, GlobalObservations, f );
+              compute_f( simulation, 11, yv, GlobalSources, GlobalTimeSeries, GlobalObservations, f );
               if( myRank == 0 )
 		 //		 cout << mzz << " " << f << endl;
 		 cout << la << " " << f << endl;
@@ -2703,7 +2663,7 @@ int main(int argc, char **argv)
                  xv[0] = xmin + i*(xmax-xmin)/(ni-1);
                  xv[1] = ymin + j*(ymax-ymin)/(nj-1);
 		 //                 xv[2] = zmin + j*(zmax-zmin)/(nj-1);
-		 compute_f( simulation, xv, GlobalSources, GlobalTimeSeries, GlobalObservations, fsurf[i+ni*j] );
+		 compute_f( simulation, 11, xv, GlobalSources, GlobalTimeSeries, GlobalObservations, fsurf[i+ni*j] );
 	      }
            if( myRank == 0 )
 	   {
@@ -2725,16 +2685,16 @@ int main(int argc, char **argv)
 	   int bfgs_m;
 	   simulation.get_optmethod( method, bfgs_m );
 	   if( method == 1 )
-	      cg( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
+	      cg( simulation, n, xv, sf, GlobalSources, GlobalTimeSeries,
 		  GlobalObservations, myRank );
            else if( method == 2 )
-	      lbfgs( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
+	      lbfgs( simulation, n, xv, sf, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, bfgs_m, myRank );
 	   else if( method == 3 )
-	      bfgs( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
+	      bfgs( simulation, n, xv, sf, GlobalSources, GlobalTimeSeries,
 		    GlobalObservations, myRank );
 	   else if( method == 4 )
-	      steepest_descent( simulation, xv, sf, GlobalSources, GlobalTimeSeries,
+	      steepest_descent( simulation, n, xv, sf, GlobalSources, GlobalTimeSeries,
 				GlobalObservations, myRank );
 // Save all time series
 //	   for (int ts=0; ts<GlobalTimeSeries.size(); ts++)

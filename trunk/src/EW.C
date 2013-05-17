@@ -135,6 +135,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_scenario(" "),
   mPath("./"),
   mObsPath("./"),
+  mTempPath("./"),
   mWriteGMTOutput(false),
   mPlotFrequency(80),
   mNumFiles(0),
@@ -275,8 +276,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_cgvarcase(0),
   m_cgfletcherreeves(true),
   m_do_linesearch(true),
-  m_utc0set(false),
-  m_utc0isrefevent(false),
+  //  m_utc0set(false),
+  //  m_utc0isrefevent(false),
   m_opttest(0),
   mEtreeFile(NULL),
   m_perturb(0),
@@ -291,8 +292,12 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 // initialize the boundary condition array
    for (int i=0; i<6; i++)
    {
-     mbcGlobalType[i] = bNone;
+      mbcGlobalType[i] = bNone;
    }
+
+// No scaling is default
+   for( int i=0 ; i < 11 ; i++ )
+      m_scalefactors[i] = 1;
 
    m_proc_array[0]=0;
    m_proc_array[1]=0;
@@ -305,7 +310,6 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    // char fname[100];
    // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
    // msgStream.open(fname);
-   
 }
 
 // Destructor
@@ -4104,10 +4108,10 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
 }
 
 //-----------------------------------------------------------------------
-void EW::set_utcref( TimeSeries& ts )
+void EW::get_utc( int utc[7] ) const
 {
-   if( m_utc0set )
-      ts.set_station_utc( m_utc0 );
+   for( int c=0 ; c < 7 ; c++ )
+      utc[c] = m_utc0[c];
 }
 
 //-----------------------------------------------------------------------
@@ -4115,11 +4119,8 @@ void EW::print_utc()
 {
    if( proc_zero() )
    {
-      if( m_utc0set )
-	 printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[1], m_utc0[2], m_utc0[0], m_utc0[3],
-		m_utc0[4], m_utc0[5], m_utc0[6] );
-      else
-	 printf("EW reference UTC is not defined\n");
+      printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[1], m_utc0[2], m_utc0[0], m_utc0[3],
+	     m_utc0[4], m_utc0[5], m_utc0[6] );
    }
 }
 
@@ -4632,6 +4633,7 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
 	 mTopo(i,j,1) = pVals[0];
       } 
    query.close();
+   delete[] pVals;
 #endif
 }
 

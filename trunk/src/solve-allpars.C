@@ -84,16 +84,53 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
   {
      stringstream procno;
      procno << m_myRank << "." << g ; 
-     string upred_name = "upred" + procno.str() + ".bin";
-     string ucorr_name = "ucorr" + procno.str() + ".bin";
-     int imin = m_iStartAct[g]-1;
-     int imax = m_iEndAct[g]+1;
-     int jmin = m_jStartAct[g]-1;
-     int jmax = m_jEndAct[g]+1;
-     int kmax = m_kEndAct[g]+1;
+     //     string logname(getlogin());
+
+// Local disks on LC seem to be setup with directory /tmp/username when user username starts a job
+     string upred_name = mTempPath + "upred" + procno.str() + ".bin";
+     string ucorr_name = mTempPath + "ucorr" + procno.str() + ".bin";
+      //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
+      //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
+     int imin, imax, jmin, jmax, kmax;
+     if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
+     {
+	imin = m_iStartAct[g]-1;
+	imax = m_iEndAct[g]+1;
+	jmin = m_jStartAct[g]-1;
+	jmax = m_jEndAct[g]+1;
+	kmax = m_kEndAct[g]+1;
+     }
+     else
+     {
+	// empty active domain
+        imin =  0;
+	imax = -1;
+	jmin =  0;
+	jmax = -1;
+	kmax = -1;
+     }
      Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
      Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
+     size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
+     size_t maxsize;
+     int mpisizelong, mpisizelonglong, mpisizeint;
+     MPI_Type_size(MPI_LONG,&mpisizelong );
+     MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
+     MPI_Type_size(MPI_INT,&mpisizeint );
+     if( sizeof(size_t) == mpisizelong )
+	MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
+     else if( sizeof(size_t) == mpisizelonglong )
+	MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
+     else if( sizeof(size_t) == mpisizeint )
+	MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+
+     if( proc_zero() )
+	cout << "Maximum temporary file size on grid " << g << " is " << maxsize << " doubles for each time step "<<endl;
+
+     if( !mQuiet && mVerbose >= 5 && proc_zero() )
+	cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
+	   Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
   }
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -101,8 +138,8 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
      // In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
-     if( m_utc0set )
-	a_TimeSeries[ts]->set_station_utc( m_utc0 );
+     //     if( m_utc0set )
+     //	a_TimeSeries[ts]->set_station_utc( m_utc0 );
   }
   if( !mQuiet && mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");

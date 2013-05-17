@@ -28,7 +28,7 @@ void recordData(vector<double> & u);
 
 void writeFile( string suffix="" );
 
-void readFile( EW* ew, double startTime=0 );
+void readFile( EW* ew, bool ignore_utc );
 
 double **getRecordingArray(){ return mRecordedSol; }
 
@@ -46,7 +46,7 @@ double arrival_time( double lod );
 
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
-double misfit( TimeSeries& observed, TimeSeries* diff );
+double misfit( TimeSeries& observed, TimeSeries* diff, double& dshift, double& ddshift, double& dd1shift );
 
 void interpolate( TimeSeries& intpfrom );
 
@@ -56,12 +56,16 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, dou
 double product( TimeSeries& ts ) const;
 double product_wgh( TimeSeries& ts ) const;
 
-void set_station_utc( int utc[7] );
+void reset_utc( int utc[7] );
+void set_utc_to_simulation_utc();
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
 void set_window( double winl, double winr );
 void exclude_component( bool usex, bool usey, bool usez );
-void readSACfiles( EW* ew, double shift, const char* sac1, const char* sac2, const char* sac3 );
+void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
+void set_shift( double shift );
+double get_shift() const;
+void add_shift( double shift );
 
 // for simplicity, make the grid point location public
 int m_i0;
@@ -84,13 +88,15 @@ void readSACheader( const char* fname, double& dt, double& t0, double& lat,
 		    double& lon, double& cmpaz, double& cmpinc, int utc[7], int& npts);
 void readSACdata( const char* fname, int npts, double* u );		    
 void convertjday( int jday, int year, int& day, int& month );   
+void getwgh( double ai, double wgh[6], double dwgh[6], double ddwgh[6] );
+void getwgh5( double ai, double wgh[6], double dwgh[6], double ddwgh[6] );
 
 receiverMode m_mode;
 int m_nComp;
 
 bool m_myPoint; // set to true if this processor writes to the arrays
 
-std::string m_fileName, m_filePrefix;
+std::string m_fileName; //, m_filePrefix;
 
 double mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 double m_zTopo;
@@ -102,8 +108,8 @@ int mWriteEvery;
 bool m_usgsFormat, m_sacFormat;
 string m_path;
 
-// start time and time step 
-double m_t0, m_dt;
+// start time, shift, and time step 
+double m_t0, m_shift, m_dt;
 
 // size of recording arrays
 int mAllocatedSize;
@@ -113,10 +119,10 @@ int mLastTimeStep;
 
 // recording arrays
 double** mRecordedSol;
-float** mRecordedFloats;
+float**  mRecordedFloats;
 
 // ignore this station if it is above the topography or outside the computational domain
-bool mIgnore;
+//bool mIgnore;
 
 // sac header data
 int mEventYear, mEventMonth, mEventDay, mEventHour, mEventMinute;
@@ -127,30 +133,31 @@ double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_x_azimuth;
 bool mBinaryMode;
 
 // UTC time for start of seismogram, 
-//     m_t0 is start of seismogram in simulation time =  m_utc - utc reference time,
-//           where utc reference time corresponds to simulation time zero.
+//     m_t0 is start of seismogram in simulation time =  m_utc - 'utc reference time',
+//           where 'utc reference time' corresponds to simulation time zero.
 //     the time series values are thus given by t_k = m_t0 + k*m_dt, k=0,1,..,mLastTimeStep
 //    NOTE: m_t0 can be updated by an additional shift when dealing with observations.
-bool m_utc_set, m_utc_offset_computed;
+//bool m_utc_set;//, m_utc_offset_computed;
 int m_utc[7];
 
 // Variables for rotating the output displacement or velocity components when Nort-East-UP is 
 // selected (m_xyzcomponent=false) instead of Cartesian components (m_xyzcomponent=true).
-   bool m_xyzcomponent;
-   double m_calpha, m_salpha, m_thxnrm, m_thynrm;
+bool m_xyzcomponent;
+double m_calpha, m_salpha, m_thxnrm, m_thynrm;
+
 //  double m_dthi, m_velocities;
 // double m_dmx, m_dmy, m_dmz, m_d0x, m_d0y, m_d0z;
 // double m_dmxy, m_dmxz, m_dmyz, m_d0xy, m_d0xz, m_d0yz;
 
-// Window for optimization
+// Window for optimization, m_winL, m_winR given relative simulation time zero.
    double m_winL, m_winR;
-   bool m_use_win, m_use_x, m_use_y, m_use_z;
+   bool   m_use_win, m_use_x, m_use_y, m_use_z;
 
 // quiet mode?
    bool mQuietMode;
 
 // pointer to EW object
-EW * m_ew;
+   EW * m_ew;
 
 };
 

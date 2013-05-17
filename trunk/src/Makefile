@@ -91,7 +91,7 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
        Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o rhs4curvilinearsg.o gradients.o Image3D.o MaterialVolimagefile.o
+       rhs4curvilinear.o rhs4curvilinearsg.o gradients.o Image3D.o MaterialVolimagefile.o ConvParOutput.o
 
 MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \

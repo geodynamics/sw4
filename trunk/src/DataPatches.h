@@ -53,12 +53,14 @@ class DataPatches
    void save_to_file( );
    void read_from_file( int n );
    void add_patch( int wind[6] );
+   void print_openerr( int ecode ) const;
 public:
    DataPatches( std::string fname, Sarray& u, int imin, int imax, int jmin, int jmax, int kmax,
 		int nlayers, int ntsteps, double dt );
    ~DataPatches();
    void push( Sarray& u, int n );
    void pop( Sarray& u, int n );
+   size_t get_noofpoints() const;
 };
 
 #endif

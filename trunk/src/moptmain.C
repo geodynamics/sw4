@@ -63,8 +63,9 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
       diffs.push_back(elem);
    }
    f = 0;
+   double dshift, ddshift;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m] );
+      f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift );
 
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -204,7 +205,7 @@ int main(int argc, char **argv)
 // Filter observed data if required
 	   for( int m = 0; m < GlobalObservations.size(); m++ )
 	   {
-	      simulation.set_utcref( *GlobalObservations[m] );
+	      //	      simulation.set_utcref( *GlobalObservations[m] );
 	      if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 	      {
 		 GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
@@ -293,6 +294,7 @@ int main(int argc, char **argv)
 // Stop MPI
   MPI_Finalize();
   return 0;
+  // Note: Always return 0, to avoid having one error message per process from LC slurmd.
   //  return status;
 } 
 
