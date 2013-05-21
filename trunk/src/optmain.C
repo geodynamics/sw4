@@ -45,6 +45,8 @@ void guess_source_t0freq( EW & simulation, vector<Source*>& sources,
 void guess_source_moments( EW & simulation, vector<Source*>& sources, vector<TimeSeries*>& timeseries,
 			   vector<TimeSeries*>& observations, double* xv, int myRank );
 
+void guess_shift( int n, double xs[n], vector<TimeSeries*>& timeseries,
+		  vector<TimeSeries*>& observations, double dt );
 
 extern "C" { void F77_FUNC(linsolvelu,LINSOLVEU)( int*, double*, double*, double* );
              void F77_FUNC(dgesv,DGESV)( int*, int*, double*, int*, int*, double*, int*, int*);
@@ -2440,8 +2442,8 @@ int main(int argc, char **argv)
   {
 
 // get the simulation object ready for time-stepping
-     simulation.setupRun( );
-     simulation.preprocessSources( GlobalSources );  // AP: preprocessSources called for GlobalSources
+     simulation.setupRun( GlobalSources );
+     //     simulation.preprocessSources( GlobalSources );  // AP: preprocessSources called for GlobalSources
      if (!simulation.isInitialized())
      { 
 	if (myRank == 0)
@@ -2497,6 +2499,12 @@ int main(int argc, char **argv)
 	double tolerance;
 	simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
 				     dolinesearch, varcase, testing );
+	// varcase: 0-solve for 11 source parameters
+	//          1-solve for 10 source parameters (no frequency),
+	//          2-solve for 9 source parameters, (no t0, no frequency)
+	//          3-solve for 9 source parameters + one shift parameter for each observation
+	// The scalefactor array (sf) and the parameter array (xv) are allocated to always
+	// have 11 source parameters. 
 	double* xv, *sf;
         int n;
 	if( varcase != 3 )
@@ -2516,8 +2524,8 @@ int main(int argc, char **argv)
         bool output_initial_seismograms = false;
 
 //   Default guess, the input source, stored in GlobalSources[0]
-        bool guesspos, guesst0fr, guessmom;
-        simulation.compute_guess( guesspos, guesst0fr, guessmom, output_initial_seismograms );
+        bool guesspos, guesst0fr, guessmom, guessshifts;
+        simulation.compute_guess( guesspos, guesst0fr, guessmom, guessshifts, output_initial_seismograms );
 	GlobalSources[0]->get_parameters(xv);
 
 //  Shifts, guess they are zero.
@@ -2554,10 +2562,10 @@ int main(int argc, char **argv)
 	   cout << "   t0 = " << xv[9] << " freq = " << xv[10] << endl;
 	}
 
-        if( output_initial_seismograms )
+        if( output_initial_seismograms || (varcase==3 && guessshifts) )
 	{
 	   //	   simulation.setupRun( );
-	  simulation.preprocessSources( GlobalSources ); // AP: preprocessSources has already been called for GlobalSources
+	   //	  simulation.preprocessSources( GlobalSources ); // AP: preprocessSources has already been called for GlobalSources
            simulation.print_utc();
            vector<TimeSeries*> localTimeSeries;
 	   for( int m = 0; m < GlobalObservations.size(); m++ )
@@ -2580,13 +2588,27 @@ int main(int argc, char **argv)
 	     cout << "Solving a forward problem to compute initial seismograms..." << endl;
 	   }
 	   simulation.solve( GlobalSources, localTimeSeries );
-	   for (int ts=0; ts<localTimeSeries.size(); ts++)
+           if( output_initial_seismograms )
 	   {
-	      localTimeSeries[ts]->writeFile();
-	      if (simulation.getVerbosity()>=2)
-		localTimeSeries[ts]->print_timeinfo();
+	      for (int ts=0; ts<localTimeSeries.size(); ts++)
+	      {
+		 localTimeSeries[ts]->writeFile();
+		 if (simulation.getVerbosity()>=2)
+		    localTimeSeries[ts]->print_timeinfo();
+	      }
 	   }
-           for( int ts=0 ; ts<localTimeSeries.size();ts++)
+	   if( varcase == 3 && guessshifts )
+	   {
+              double dt = simulation.getTimeStep();
+              guess_shift( n, xv, localTimeSeries, GlobalObservations, dt );
+		 if( myRank == 0 )
+		 {
+		    cout  << "Computed initial guess shifts "<<endl;
+		    for (int ts=0; ts<localTimeSeries.size(); ts++)
+		       cout << "obs " << ts << " = " << xv[11+ts] << endl;
+		 }
+	   }
+	   for( int ts=0 ; ts<localTimeSeries.size();ts++)
 	      delete localTimeSeries[ts];
 	}
 
@@ -3360,7 +3382,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       vector<Source*> src(1);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );  // AP: preprocessSources has already been called for sources[0]
+      //      simulation.preprocessSources( src );  // AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsxx );
       delete onesrc;
 
@@ -3370,7 +3392,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,1,0,0,0,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
+      //      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsxy );
       delete onesrc;
 
@@ -3380,7 +3402,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,1,0,0,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
+      //      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsxz );
       delete onesrc;
 
@@ -3390,7 +3412,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,0,1,0,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
+      //      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsyy );
       delete onesrc;
 
@@ -3400,7 +3422,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,0,0,1,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
+      //      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsyz );
       delete onesrc;
 
@@ -3410,7 +3432,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,0,0,0,1);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
+      //      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tszz );
       delete onesrc;
 
@@ -3539,3 +3561,43 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
    sources[0] = sguess;
 }
 
+//-----------------------------------------------------------------------
+void guess_shift( int n, double xs[n], vector<TimeSeries*>& timeseries,
+		  vector<TimeSeries*>& observations, double dt )
+{
+   bool l2misfit = false;
+   for( int m = 0 ; m < observations.size() ; m++ )
+   {
+      int nst = 0;
+      nst = timeseries[m]->getNsteps();
+      int nsttmp = nst;
+      MPI_Allreduce( &nsttmp, &nst, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+      int smin, smax;
+      if( nst % 2 == 0 )
+	 smin = -nst/2;
+      else
+	 smin = -(nst+1)/2;
+      smax = smin+nst-1;
+      double mfmin=1e38;      
+      double shift = 0;
+      for( int s=smin ; s <= smax ; s++ )
+      {
+	 observations[m]->add_shift(s*dt);
+	 double dshift, ddshift, dd1shift;
+	 double mf=0;
+         if( l2misfit )
+	    mf = timeseries[m]->misfit( *observations[m], NULL, dshift, ddshift, dd1shift );
+	 else
+	    mf = timeseries[m]->misfit2( *observations[m] );
+         double mftmp = mf;
+	 MPI_Allreduce( &mftmp, &mf, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 if( mf < mfmin )
+	 {
+	    mfmin = mf;
+	    shift = s*dt;
+	 }
+	 observations[m]->add_shift(-s*dt);
+      }
+      xs[11+m] = shift;
+   }
+}

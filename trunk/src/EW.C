@@ -270,6 +270,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_iniguess_pos(false),
   m_iniguess_t0fr(false),
   m_iniguess_mom(false),
+  m_iniguess_shifts(false),
   m_output_initial_seismograms(false),
   m_compute_scalefactors(false),
   m_cgstepselection(0),
@@ -4048,11 +4049,12 @@ bool EW::compute_sf(){return m_compute_scalefactors;}
 
 //-----------------------------------------------------------------------
 void EW::compute_guess(bool& guesspos, bool& guesst0fr, bool& guessmom,
-		       bool& output_seismograms )
+		       bool& guessshifts, bool& output_seismograms )
 {
    guesspos = m_iniguess_pos;
    guesst0fr = m_iniguess_t0fr;
    guessmom = m_iniguess_mom;
+   guessshifts = m_iniguess_shifts;
    output_seismograms = m_output_initial_seismograms;
 }
 

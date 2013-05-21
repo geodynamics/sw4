@@ -47,6 +47,7 @@ double arrival_time( double lod );
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
 double misfit( TimeSeries& observed, TimeSeries* diff, double& dshift, double& ddshift, double& dd1shift );
+double misfit2( TimeSeries& observed );
 
 void interpolate( TimeSeries& intpfrom );
 

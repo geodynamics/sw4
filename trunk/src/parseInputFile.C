@@ -6159,6 +6159,11 @@ void EW::processCG( char* buffer )
 	   CHECK_INPUT( false,
 		     "cg command: initialguess value " << token << " not understood");
      }
+     else if( startswith("estimateshifts=",token) )
+     {
+        token += 15;
+	m_iniguess_shifts = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0;
+     }
      else if( startswith("write_initial_ts=",token) )
      {
         token += 17;

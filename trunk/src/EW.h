@@ -433,6 +433,7 @@ double getGridAzimuth(){ return mGeoAz;};
 double getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
+double getTimeStep() const {return mDt;};
 
  // test point source
 void get_exact_point_source( double* u, double t, int g, Source& source, int* wind=0 );
@@ -474,7 +475,7 @@ void layered_speeds( vector<double>& cp, vector<double>& z );
 void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double hessian[121] );
 void get_scalefactors( double sf[11] ); 
 bool compute_sf();
-void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& output_seismograms );
+   void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& guessshifts, bool& output_seismograms );
 void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
 		       int& stepselection, bool& do_linesearch, int& varcase, bool& testing );
 void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
@@ -803,7 +804,7 @@ bool m_testing;
 
    // Parameters related to the inverse problem   
 bool m_inverse_problem; // Will we solve the inverse problem?
-bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom;// Estimate initial guess ?
+bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom, m_iniguess_shifts;// Estimate initial guess ?
 bool m_output_initial_seismograms;
 bool m_compute_scalefactors;
 int m_maxit,m_maxrestart;

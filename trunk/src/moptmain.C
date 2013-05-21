@@ -13,10 +13,64 @@ void usage(string thereason)
        << "Reason for message: " << thereason << endl;
 }
 
-void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
+//-----------------------------------------------------------------------
+void compute_f( EW& simulation, int ns, double xs[11], int nm, double* xm,
+		vector<Source*>& GlobalSources,
+		vector<TimeSeries*>& GlobalTimeSeries,
+		vector<TimeSeries*>& GlobalObservations,
+		double& mf )
+//-----------------------------------------------------------------------
+// Compute misfit.
+//
+// Input: simulation - Simulation object
+//        x          - Vector of source parameters
+//        GlobalSources - The single source object
+//        GlobalTimeSeries   - TimeSeries objects, number of objects and
+//                    locations should agree with the GlobalObservations vector.
+//        GlobalObservations - The observed data at receivers.
+//
+// Output: GlobalTimeSeries - The solution of the forward problem at the stations.
+//         mf               - The misfit.
+//-----------------------------------------------------------------------
+{
+   vector<Source*> src(1);
+   src[0] = GlobalSources[0]->copy( " " );
+   src[0]->set_parameters( xs );
+
+// Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
+   int ng = simulation.mNumberOfGrids;
+   vector<Sarray> rho(ng), mu(ng), lambda(ng);
+   simulation.parameters_to_material( nm, xm, rho, mu, lambda );
+
+// Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
+// inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
+// when reconstructing U backwards.
+   vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
+   vector<Sarray> U(ng), Um(ng);
+   simulation.solve_allpars( src, rho, mu, lambda, GlobalTimeSeries, U, Um, upred_saved, ucorr_saved );
+
+// Compute misfit,
+   mf = 0;
+   double dshift, ddshift, dd1shift;
+   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL, dshift, ddshift, dd1shift );
+   double mftmp = mf;
+   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+// Give back memory
+   for( unsigned int g=0 ; g < ng ; g++ )
+   {
+      delete upred_saved[g];
+      delete ucorr_saved[g];
+   }
+   delete src[0];
+}
+
+//-----------------------------------------------------------------------
+void compute_f_and_df( EW& simulation, int ns, double xs[11], int nmpar, double* xm,
 		       vector<Source*>& GlobalSources,
 		       vector<TimeSeries*>& GlobalTimeSeries,
-		       vector<TimeSeries*>& GlobalObservations, int varcase,
+		       vector<TimeSeries*>& GlobalObservations, 
 		       double& f, double dfs[11], double* dfm, int myrank )
 
 //-----------------------------------------------------------------------
@@ -30,8 +84,6 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
 //        GlobalTimeSeries   - TimeSeries objects, number of objects and
 //                    locations should agree with the GlobalObservations vector.
 //        GlobalObservations - The observed data at receivers.
-//        varcase  - 0 means 11 free parameters, 1 means assume fixed frequency
-//                   2 means assume frequency and t0 fixed.
 //
 // Output: GlobalTimeSeries - The solution of the forward problem at the stations.
 //         f                - The misfit.
@@ -63,9 +115,9 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
       diffs.push_back(elem);
    }
    f = 0;
-   double dshift, ddshift;
+   double dshift, ddshift, dd1shift;
    for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift );
+      f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift, dd1shift );
 
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -76,10 +128,8 @@ void compute_f_and_df( EW& simulation, double xs[11], int nmpar, double* xm,
    }
 // Get gradient by solving the adjoint problem:
    simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfs, nmpar, dfm );
-   if( varcase == 1 )
-      dfs[10] = 0;
-   else if( varcase == 2 )
-      dfs[10] = dfs[9] = 0;
+   for( int i=ns ; i < 11 ; i++ )
+      dfs[i] = 0;
    
 // diffs no longer needed, give back memory
    for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
@@ -182,8 +232,7 @@ int main(int argc, char **argv)
      else
      {
 // get the simulation object ready for time-stepping
-	simulation.setupRun( );
-	simulation.preprocessSources( GlobalSources );
+	simulation.setupRun( GlobalSources );
 	if (!simulation.isInitialized())
 	{ 
 	   if (myRank == 0)
@@ -273,8 +322,8 @@ int main(int argc, char **argv)
            if( nmpar > 0 )
 	      dfm = new double[nmpar];
 
-	   compute_f_and_df( simulation, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
-			     GlobalObservations, varcase, f, dfs, dfm, myRank );
+	   compute_f_and_df( simulation, nvar, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
+			     GlobalObservations, f, dfs, dfm, myRank );
 
 	   if( myRank == 0 )
 	   {
