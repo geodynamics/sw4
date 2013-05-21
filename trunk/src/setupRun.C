@@ -434,8 +434,19 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 
 // if the sources were defined by a rupture file, we need to multiply the Mij coefficients by mu (shear modulus)
       bool need_mu_corr=false;
+      
       for( int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-	need_mu_corr = need_mu_corr || a_GlobalUniqueSources[i]->get_CorrectForMu( );
+	need_mu_corr = (need_mu_corr || a_GlobalUniqueSources[i]->get_CorrectForMu( ));
+
+// must communicate need_mu_corr
+      int mu_corr_global=0, mu_corr_loc= need_mu_corr? 1:0;
+      
+// take max over all procs to communicate 
+      MPI_Allreduce( &mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX, m_cartesian_communicator);
+      need_mu_corr=(bool) mu_corr_global;
+
+// tmp
+//      printf(" Proc #%i, sources needs correction for shear modulus: %s\n", getRank(), need_mu_corr? "TRUE":"FALSE");
 
       if (!mQuiet && mVerbose >= 3 && proc_zero() )
 	printf(" Some sources needs correction for shear modulus: %s\n", need_mu_corr? "TRUE":"FALSE");
@@ -452,8 +463,11 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // initialize
 	int s;
 	for (s=0; s<nSources; s++)
+	{
 	  mu_source_loc[s]=-1.0;
 	  mu_source_global[s]=-1.0;
+	}
+	
 // fill in the values that are known to this processor
 	for (s=0; s<nSources; s++)
 	  if (a_GlobalUniqueSources[s]->myPoint())
@@ -464,12 +478,14 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	    int gs=a_GlobalUniqueSources[s]->m_grid;
 	    
 // tmp
-	    // mu_source_loc[s] = mMu[gs](is,js,ks); 
-	    // printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n", getRank(), s, is, js, ks, gs, mu_source_loc[s]);
+	    mu_source_loc[s] = mMu[gs](is,js,ks); 
+// printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n", getRank(), s, is, js, ks, gs, mu_source_loc[s]);
 	  }
 // take max over all procs: communicate 
 	MPI_Allreduce( mu_source_loc, mu_source_global, nSources, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
+	if (!mQuiet && mVerbose >= 3 && proc_zero() )
+	  printf(" Done communicating shear modulus to all procs\n");
 // tmp
 	// for (s=0; s<nSources; s++)
 	//   printf("Proc #%i, source#%i, mu=%e\n", getRank(), s, mu_source_global[s]);
