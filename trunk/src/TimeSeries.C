@@ -827,9 +827,10 @@ void TimeSeries::write_usgs_format(string a_fileName)
 // write the header
    fprintf(fd, "# Author: SW4\n");
    fprintf(fd, "# Scenario: %s\n", "test"/*a_ew->m_scenario.c_str()*/);
-   //   if( m_utc_set )
-   fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
-	                                      m_utc[4], m_utc[5], m_utc[6] );
+//   if( m_utc_set )
+// AP: micro-second field is padded from left with 0, i.e., 1 micro sec gets written as 001
+   fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%i.%.3i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+	   m_utc[4], m_utc[5], m_utc[6] );
       //   else
       //      fprintf(fd, "# Date: %i-%s-%i\n", mEventDay, mname[mEventMonth].c_str(), mEventYear);
 

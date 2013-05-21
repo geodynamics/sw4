@@ -2441,7 +2441,7 @@ int main(int argc, char **argv)
 
 // get the simulation object ready for time-stepping
      simulation.setupRun( );
-     simulation.preprocessSources( GlobalSources );
+     simulation.preprocessSources( GlobalSources );  // AP: preprocessSources called for GlobalSources
      if (!simulation.isInitialized())
      { 
 	if (myRank == 0)
@@ -2557,7 +2557,7 @@ int main(int argc, char **argv)
         if( output_initial_seismograms )
 	{
 	   //	   simulation.setupRun( );
-	   simulation.preprocessSources( GlobalSources );
+	  simulation.preprocessSources( GlobalSources ); // AP: preprocessSources has already been called for GlobalSources
            simulation.print_utc();
            vector<TimeSeries*> localTimeSeries;
 	   for( int m = 0; m < GlobalObservations.size(); m++ )
@@ -3360,7 +3360,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       vector<Source*> src(1);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );
+      simulation.preprocessSources( src );  // AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsxx );
       delete onesrc;
 
@@ -3370,7 +3370,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,1,0,0,0,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );
+      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsxy );
       delete onesrc;
 
@@ -3380,7 +3380,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,1,0,0,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );
+      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsxz );
       delete onesrc;
 
@@ -3390,7 +3390,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,0,1,0,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );
+      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsyy );
       delete onesrc;
 
@@ -3400,7 +3400,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,0,0,1,0);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );
+      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tsyz );
       delete onesrc;
 
@@ -3410,7 +3410,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
       onesrc->setMoments(0,0,0,0,0,1);
       src[0] = onesrc;
 
-      simulation.preprocessSources( src );
+      simulation.preprocessSources( src );// AP: preprocessSources has already been called for sources[0]
       simulation.solve( src, tszz );
       delete onesrc;
 

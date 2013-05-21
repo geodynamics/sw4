@@ -81,16 +81,16 @@ National Laboratory under contract DE-AC52-07NA27344.
 \chapter{Introduction}
 
 
-\emph{SW4} is a program for simulating seismic wave propagation on parallel computers. It
-shares many features with our previous seismic wave propagation code~\emph{WPP}~\cite{WPP2}. Both
+\emph{SW4} is a program for simulating seismic wave propagation on parallel computers. It shares
+many features with our previous seismic wave propagation code~\emph{WPP}~\cite{WPP2}. Both
 \emph{WPP} and \emph{SW4} solve the seismic wave equations in second order formulation using a
 node-based finite difference approach. The underlying numerical method satisfies the principle of
 summation by parts, which guarentees energy stability of the numerical solution. The major
-difference between the codes is that \emph{SW4} implements a fourth order accurate spatial
+difference between \emph{WPP} and \emph{SW4} is that the latter implements a fourth order accurate spatial
 discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. \emph{SW4}
 is therefore significantly more efficient than the second order accurate \emph{WPP} code. Compared
-to a second order method, the advantages of a fourth order method are more pronounced when the
-solution needs to be more accurate, because the error diminishes faster as the grid size is
+to a second order accurate method, the advantages of a fourth order method are more pronounced when
+the solution needs to be more accurate, because the error diminishes faster as the grid size is
 reduced. A fourth order method is also more efficient when the solution needs to remain accurate for
 longer times, because the phase error grows as $t^{1/p}$ in a $p$th order accurate numerical
 method~\cite{Gustafsson-Kreiss-Oliger}. The fourth order method is also significantly more accurate
@@ -98,15 +98,15 @@ for calculating surface waves, in particular when the ratio between the compress
 speeds is large, i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
 
 \emph{SW4} implements substantial capabilities for 3-D seismic modeling, with a free surface
-condition on the top boundary, absorbing super-grid~\cite{PetSjo-13} far-field conditions on the
-remaining boundaries, and an arbitrary number of point force and/or point moment tensor source
-terms. The source time function can have one of many predefined analytical time dependencies, or
-interpolate a user defined discrete time series. \emph{SW4} supports a fully 3-D heterogeneous
+condition on the top boundary, absorbing super-grid conditions on the far-field
+boundaries~\cite{PetSjo-13}, and an arbitrary number of point force and/or point moment tensor
+source terms. Each source time function can have one of many predefined analytical time dependencies,
+or interpolate a user defined discrete time series. \emph{SW4} supports a fully 3-D heterogeneous
 material model that can be specified in several formats. It uses a curvilinear mesh near the free
 surface to honor the free surface boundary condition on a realistic topography. The curvilinear mesh
 is automatically generated from the description of the topography. Below the curvilinear grid, the
 seismic wave equations are discretized on a Cartesian mesh, which leads to a more computationally
-efficient algorithm. 
+efficient algorithm.
 
 \emph{SW4} solves the seismic wave equations in Cartesian coordinates. It is therefore appropriate
 for regional simulations, where the curvature of the earth can be neglected. Locations can be
@@ -136,28 +136,29 @@ format~\cite{Goldstein-et-al}. It can also present simulation information as
 %% properties of the material model. The underlying numerical method for solving the visco-elastic wave
 %% equation is described in~\cite{PetSjo-10b}.
 
-Most of the \emph{SW4} code is written in C++, but most of the numerical calculations are for
-efficiency reasons implemented in Fortan-77. \emph{SW4} uses a distributed memory programming
-model, implemented with the C-bindings of the MPI library. Compatible versions of the C++ and
-Fortran-77 compilers as well as the MPI library must therefore be available to build the code. We
-have built and tested \emph{SW4} on a variety of machines, ranging from single processor laptops to
-large super-computers with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even
-larger machines.
+While most of the \emph{SW4} code is written in C++, almost all numerical computations are
+implemented in Fortan-77. \emph{SW4} uses a distributed memory programming model, implemented with
+the C-bindings of the MPI library. Compatible versions of the C++ and Fortran-77 compilers as well
+as the MPI library must therefore be available to build the code. We have built and tested
+\emph{SW4} on a variety of machines, ranging from single processor laptops to large super-computers
+with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even larger machines.
 
 With the exception of some minor details, the syntax of the \emph{SW4} command file is the same as
 in \emph{WPP}. Most of the input and output files also use the same formats, but we have taken the
-opportunity to improve the image file format. See Chapter~\ref{chap:formats} for details. With the
+opportunity to improve the image file format (see Chapter~\ref{chap:formats} for details). With the
 exception of visco-elastic attenuation and mesh refinement, version 1.0 of \emph{SW4} supports most
-of the functionality of \emph{WPP} (version 2.1.5). These features will be added in the future.
+of the functionality of \emph{WPP} (version 2.2). The remaining features will be added in the future.
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
-validation tests that are used in this document. Many Matlab/octave scripts are described in
-Chapter~\ref{chap:scripts}. They are provided in the {\tt tools} directory.
+validation tests that are used in this document. Many Matlab/octave scripts are are provided in the
+{\tt tools} directory and described in
+Chapter~\ref{chap:scripts}.
 
 \section*{Acknowledgments} 
-We are grateful for financial support from Lawrence Livermore National Laboratory. We also thank
-the Office of Science at the U.S.~Department of Energy, who partially supported the development of
-the underlying numerical methods.
+The \emph{SW4} code was developed under financial support from Lawrence Livermore National
+Laboratory. The underlying numerical methods were developed under partial support from
+the Office of Science at the U.S.~Department of Energy.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Getting started}
@@ -165,7 +166,7 @@ the underlying numerical methods.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Running \emph{SW4}}
-This section assumes that \emph{SW4} already has been installed on your system. For instructions on
+This section assumes that \emph{SW4} has already been installed on your system. For instructions on
 how to build \emph{SW4} from the source code distribution, see Appendix~\ref{cha:installing-sw4}.
 
 \emph{SW4} can be executed from the command prompt or from a script. The simulation is specified by
@@ -181,10 +182,11 @@ Since \emph{SW4} is a parallel code, it is required to be run under a parallel e
 such as mpiexec, mpirun, openmpirun, or srun. The srun command is currently always used on the
 parallel machines at Livermore computing. On other machines, it is important to start \emph{SW4}
 with the correct parallel execution tool. For example, if you build \emph{SW4} with the openmpi
-comilers, you should use the openmpirun environment. Also note that some systems require you to
-start an \verb+mpd+ daemon before running any parallel programs. See mpich2-doc-user.pdf for more
-info. We also recommend that you check with your local system administrator on how to run parallel
-programs your system.
+compilers, you should use the openmpirun environment. Also note that some systems require you to
+start an \verb+mpd+ daemon before running any parallel programs. Chances are high that somebody else
+has already figured out some of these details for your system. You might therefore save yourself a
+lot of time by talking to your local system administrator about how to run parallel programs your
+system.
 
 Throughout this document we use the convention that input files have the file suffix {\tt
   .in}. However, \emph{SW4} will read an input file regardless of its extension.
@@ -593,14 +595,18 @@ functions.
   g(t,t_0,\omega) = \dfrac{\omega}{\sqrt{2 \pi}} e^{-\omega^2 (t - t_0)^2 /2}.
   \] 
 Note that the spread of the Gaussian function (often denoted $\sigma$) is related to $\omega$ by
-$\sigma = 1 / \omega$. A plot of the Gaussian time-function is shown in Figure~\ref{fig:gaussians}.
-
+$\sigma = 1 / \omega$. A plot of the Gaussian time-function is shown
+in Figure~\ref{fig:gaussians}.
+\paragraph{Important:} To avoid artifacts from a sudden startup, use
+$t_0 \geq 6/\omega$.
 \subsection{GaussianInt (or Erf)}\label{gaussianint}
 \[
 g(t,t_0,\omega) = \dfrac{\omega}{\sqrt{2 \pi}} \int_{-\infty}^t e^{-\omega^2 (\tau - t_0)^2/2}\,d\tau.
 \] 
 GaussianInt is the time-integral of the Gaussian. A plot of the
 GaussianInt time-function is shown in Figure~\ref{fig:gaussians}.
+\paragraph{Important:} To avoid artifacts from a sudden startup, use
+$t_0 \geq 6/\omega$.
 \begin{figure}
 \begin{centering}
   \includegraphics[width=0.4\linewidth]{f1-gaussian.png}
@@ -615,6 +621,10 @@ GaussianInt time-function is shown in Figure~\ref{fig:gaussians}.
   g(t,t_0,\omega) = \left(2 \pi^2 \omega^2 (t - t_0)^2 - 1\right) e^{- \pi^2 \omega^2 (t - t_0)^2}.
   \]
 A plot of the Ricker time-function is shown in Figure~\ref{fig:rickers}.
+
+\paragraph{Important:} To avoid artifacts from a sudden startup, use
+$t_0 \geq 1.35/\omega$.
+
 \subsection{RickerInt}\label{rickerint}
   \[
   g(t,t_0,\omega) = (t - t_0) e^{- \pi^2 \omega^2 (t - t_0)^2}.
@@ -623,6 +633,8 @@ RickerInt is the time integral of the Ricker function, and is proportional to th
 the Gaussian function. Since the RickerInt function tends to zero for large times, it does not lead
 to any permanent displacements. A plot of the RickerInt time-function is shown in
 Figure~\ref{fig:rickers}.
+\paragraph{Important:} To avoid artifacts from a sudden startup, use
+$t_0 \geq 1.35/\omega$.
 \begin{figure}
 \begin{centering}
   \includegraphics[width=0.4\linewidth]{f3-ricker.png}
@@ -1299,10 +1311,10 @@ force or a point moment tensor source and should follow the following rules:
 \begin{itemize}
 \item The location of the source must be specified by either Cartesian ({\bf x, y, z}) or
   geographical ({\bf lat, lon, depth} or {\bf topodepth}) coordinates. The depth below mean sealevel
-  ($z=0$) is specified with {\bf depth}, while {\bf topodepth} specifies the depth below the
+  ($z=0$) is specified with {\bf z}, while {\bf depth} or {\bf topodepth} specifies the depth below the
   topography.
 \item Select a point force or a point moment tensor source:
-  \begin{itemize}	
+  \begin{itemize}
   \item Point force: give at least one component of the force vector ({\bf fx, fy, fz}) and
     optionally the amplitude {\bf f0}.
   \item A point moment tensor source can be specified in one of two ways:
@@ -1324,12 +1336,12 @@ Note that all pre-defined time functions use the {\bf t0} keyword, and all funct
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf source command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-x & x position of the source $(\geq 0)$ & real & m & none \\ \hline
-y & y position of the source $(\geq 0)$ & real & m & none \\ \hline
-z & z position of the source $(\geq 0)$ & real & m & none \\ \hline
+x & x position of the source (within domain) & real & m & none \\ \hline
+y & y position of the source (within domain) & real & m & none \\ \hline
+z & z position of the source (within domain) & real & m & none \\ \hline
 \hline
-depth & depth of the source (relative to z=0) & real & m & none \\ \hline
-topodepth & depth of the source (below free surface) $(\geq 0)$ & real & m & none \\ \hline
+depth & depth of the source $(\geq 0)$ & real & m & none \\ \hline
+topodepth & (same as depth) & real & m & none \\ \hline
 lat & latitude geographical coordinate of the source & real & degrees & none \\ \hline
 lon & longitude geographical coordinate of the source & real & degrees & none \\ \hline
 \hline

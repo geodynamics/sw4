@@ -361,6 +361,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processTestEnergy(buffer);
        else if (startswith("source", buffer))
 	 processSource(buffer, a_GlobalUniqueSources);
+       else if (startswith("rupture", buffer))
+	 processRupture(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
 	 processMaterialBlock(buffer, blockCount);
        else if (startswith("pfile", buffer))
@@ -4758,54 +4760,420 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     }
   
   if (isMomentType)
-    {
-       // Remove amplitude variable
-       mxx *= m0;
-       mxy *= m0;
-       mxz *= m0;
-       myy *= m0;
-       myz *= m0;
-       mzz *= m0;
-       //       m0 = 1;
-       //       if( m_myRank == 0 )
-       //       {
-       //	  cout << "m0 = " << m0 << endl;
-       //	  cout << "x  = " << x << endl;
-       //	  cout << "y  = " << y << endl;
-       //	  cout << "z  = " << z << endl;
-       //	  cout << "t0 = " << t0 << endl;
-       //	  cout << "freq=" << freq << endl;
-       //       	  cout << "Mxx = " << mxx << endl;
-       //      	  cout << "Myy = " << myy << endl;
-       //      	  cout << "Mzz = " << mzz << endl;
-       //      	  cout << "Mxy = " << mxy << endl;
-       //      	  cout << "Mxz = " << mxz << endl;
-       //      	  cout << "Myz = " << myz << endl;
-       //       }
-      // these have global location since they will be used by all processors
-      sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-                             tDep, formstring, ncyc, par, npar, ipar, nipar );
-// relative depth?
-      sourcePtr->set_z_is_relative_to_topography( topodepth );
+  {
+    // Remove amplitude variable
+    mxx *= m0;
+    mxy *= m0;
+    mxz *= m0;
+    myy *= m0;
+    myz *= m0;
+    mzz *= m0;
+    //       m0 = 1;
+    //       if( m_myRank == 0 )
+    //       {
+    //	  cout << "m0 = " << m0 << endl;
+    //	  cout << "x  = " << x << endl;
+    //	  cout << "y  = " << y << endl;
+    //	  cout << "z  = " << z << endl;
+    //	  cout << "t0 = " << t0 << endl;
+    //	  cout << "freq=" << freq << endl;
+    //       	  cout << "Mxx = " << mxx << endl;
+    //      	  cout << "Myy = " << myy << endl;
+    //      	  cout << "Mzz = " << mzz << endl;
+    //      	  cout << "Mxy = " << mxy << endl;
+    //      	  cout << "Mxz = " << mxz << endl;
+    //      	  cout << "Myz = " << myz << endl;
+    //       }
+    // these have global location since they will be used by all processors
+    sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
+			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false ); // false is correctStrengthForMu
 
+    if (sourcePtr->ignore())
+    {
+      delete sourcePtr;
+    }
+    else
+    {
       a_GlobalUniqueSources.push_back(sourcePtr);
     }
+      
+  }
   else // point forcing
+  {
+    // Remove amplitude variable
+    fx *= f0;
+    fy *= f0;
+    fz *= f0;
+    //       f0 = 1;
+    // global version (gets real coordinates)
+    sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, topodepth, ncyc,
+			   par, npar, ipar, nipar, false ); // false is correctStrengthForMu
+
+    //...and add it to the list of forcing terms
+    if (sourcePtr->ignore())
     {
-       // Remove amplitude variable
-       fx *= f0;
-       fy *= f0;
-       fz *= f0;
-       //       f0 = 1;
-      // global version (gets real coordinates)
-       sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, ncyc,
-                              par, npar, ipar, nipar );
-// relative depth?
-      sourcePtr->set_z_is_relative_to_topography( topodepth );
-      //...and add it to the list of forcing terms
+      delete sourcePtr;
+    }
+    else
+    {
       a_GlobalUniqueSources.push_back(sourcePtr);
-    }	  
+    }
+  }	  
 }
+
+//----------------------------------------------------------------------------
+void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
+{
+// the rupture command reads a file with
+// point moment tensor sources in the strike, dip, rake format
+// for each source, the slip velocity time function is defined by a discrete time function
+  Source* sourcePtr;
+  
+  double m0 = 1.0;
+  double t0=0.0, f0=1.0, freq=1.0;
+  // Should be center of the grid
+  double x = 0.0, y = 0.0, z = 0.0;
+  int i = 0, j = 0, k = 0;
+  double mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
+  double strike=0.0, dip=0.0, rake=0.0;
+  double fx=0.0, fy=0.0, fz=0.0;
+  int isMomentType = -1;
+  
+  double lat = 0.0, lon = 0.0;
+  bool topodepth = true;
+  
+  bool rfileset=false;
+
+  timeDep tDep = iDiscrete;
+  char formstring[100];
+  strcpy(formstring, "Discrete");
+  char rfile[100];
+
+// bounding box
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
+  double xmin = 0.;
+  double ymin = 0.;
+  double zmin;
+  if (topographyExists()) // topography command must be read before the source command
+    zmin = m_global_zmin;
+  else
+    zmin = -m_global_zmax;
+
+  string err = "Rupture Error: ";
+
+  char* token = strtok(buffer, " \t");
+  REQUIRE2(strcmp("rupture", token) == 0, "ERROR: not a rupture line...: " << token);
+  token = strtok(NULL, " \t");
+
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+          break;
+      if (startswith("file=",token))
+      {
+	token += 5; // read past 'file='
+         strncpy(rfile, token,100);
+	 rfileset = true;
+      }
+      else
+      {
+         badOption("rupture", token);
+      }
+      token = strtok(NULL, " \t");
+    }
+
+  double rVersion;
+
+  const int bufsize=1024;
+  char buf[bufsize];
+  
+// Discrete source time function
+  double* par=NULL;
+  int* ipar=NULL;
+  int npar=0, nipar=0, ncyc=0;
+  if( rfileset )
+  {
+     //  g(t) defined by spline points on a uniform grid, read from file.
+     //  Format: t0, dt, npts
+     //          g_1
+     //          g_2
+     //         ....
+
+    FILE* fd=fopen(rfile, "r" );
+    CHECK_INPUT( fd !=NULL , err << "Rupture file " << rfile << " not found" );
+    if (proc_zero())
+      printf("Opened rupture file '%s'\n", rfile);
+// read 1st line
+    fgets(buf,bufsize,fd);
+    sscanf(buf," %lg", &rVersion );
+    if (proc_zero())
+      printf("Version = %.1f\n", rVersion);
+// read 2nd line, starting header block
+    fgets(buf,bufsize,fd);
+    char* token = strtok(buf, " \t");
+//    printf("token: '%s'\n", token);
+    REQUIRE2(strcmp("PLANE", token) == 0, "ERROR: not a HEADER BLOCK line...: " << token);
+// read the number of planes
+    int nseg;
+    token = strtok(NULL, " \t");
+    nseg = atoi(token);
+    if (proc_zero())
+      printf("Number of segments in header block: %i\n", nseg);
+// read each header block
+    for (int seg=0; seg<nseg; seg++)
+    {
+      double elon, elat, len, wid, stk, dip, dtop, shyp, dhyp;
+      int nstk, ndip;
+      fgets(buf,bufsize,fd);
+      sscanf(buf,"%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len, &wid);
+      fgets(buf,bufsize,fd);
+      sscanf(buf,"%lg %lg %lg %lg %lg", &stk, &dip, &dtop, &shyp, &dhyp);
+      if (proc_zero())
+      {
+	printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n", 
+	       seg+1, elon, elat, nstk, ndip, len, wid);
+	printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n", stk, dip, dtop, shyp, dhyp);
+      }
+      
+    }
+// read header for data block
+    fgets(buf,bufsize,fd);
+    token = strtok(buf, " \t");
+//    printf("token: '%s'\n", token);
+    REQUIRE2(strcmp("POINTS", token) == 0, "ERROR: not a DATA BLOCK line...: " << token);
+// read the number of points
+    int npts;
+    token = strtok(NULL, " \t");
+    npts = atoi(token);
+    if (proc_zero())
+      printf("Number of point sources in data block: %i\n", npts);
+
+// read all point sources
+    int nSources=0, nu1=0, nu2=0, nu3=0;
+    for (int pts=0; pts<npts; pts++) 
+    {
+      double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
+      int nt1, nt2, nt3;
+      fgets(buf,bufsize,fd);
+      sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area, 
+	     &tinit, &dt);
+      fgets(buf,bufsize,fd);
+      sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
+// nothing to do if nt1=nt2=nt3=0
+      if (nt1<=0 && nt2<=0 && nt3<=0) continue;
+      if (proc_zero() && mVerbose >= 3)
+      {
+	printf("point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n", 
+	       pts+1, lon, lat, dep, stk, dip, area, tinit, dt);
+	printf("          rake=%g, slip1=%g, nt1=%i, slip2=%g, nt2=%i, slip3=%g, nt3=%i\n", 
+	       rake, slip1, nt1, slip2, nt2, slip3, nt3);
+      }
+      
+// read discrete time series for u1
+      if (nt1>0)
+      {
+	nu1++;
+// note that the first data point is always zero, but the last is not
+// for this reason we always pad the time zeries with a '0' 
+// also note that we need at least 7 data points, i.e. nt1>=6
+	int nt1dim = max(6,nt1);
+	par = new double[nt1dim+2];
+	par[0]  = tinit;
+	t0      = tinit;
+	freq    = 1/dt;
+	ipar    = new int[1];
+	ipar[0] = nt1dim+1; // add an extra point 
+	fgets(buf,bufsize,fd);
+	token = strtok(buf, " \t");
+//	printf("buf='%s'\n", buf);
+	for( int i=0 ; i < nt1 ; i++ )
+	{
+// read another line if there are no more tokens
+	  if (token == NULL)
+	  {
+	    fgets(buf,bufsize,fd);
+	    token = strtok(buf, " \t");
+	  }
+//	  printf("token='%s'\n", token);
+	  sscanf(token,"%lg", &par[i+1] );
+// read next token
+	  token = strtok(NULL, " \t");
+	}
+// pad with 0
+	if (nt1 < 6)
+	{
+	  for (int j=nt1; j<6; j++)
+	    par[j+1]=0.;
+	}
+	
+// last 0
+	par[nt1dim+1]= 0.0;
+
+// scale cm/s to m/s
+	for (int i=1; i<=nt1dim+1; i++)
+	{
+	  par[i] *= 1e-2;
+	}
+	
+	npar = nt1dim+2;
+	nipar = 1;
+
+        // printf("Read discrete time series: tinit=%g, dt=%g, nt1=%i\n", tinit, dt, nt1);
+	// for (int i=0; i<nt1+1; i++)
+	//   printf("Sv1[%i]=%g\n", i+1, par[i+1]);
+
+// convert lat, lon, depth to (x,y,z)
+	computeCartesianCoord(x, y, lon, lat);
+// convert depth in [km] to [m]
+	z = dep * 1e3;
+
+// convert strike, dip, rake to Mij
+	double radconv = M_PI / 180.;
+	double S, D, R;
+	stk -= mGeoAz; // subtract off the grid azimuth
+	S = stk*radconv; D = dip*radconv; R = rake*radconv;
+      
+	mxx = -1.0 * ( sin(D) * cos(R) * sin (2*S) + sin(2*D) * sin(R) * sin(S)*sin(S) );
+	myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
+	mzz = -1.0 * ( mxx + myy );	
+	mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
+	mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
+	myz = -1.0 * ( cos(D) * cos(R) * sin (S)   - cos(2*D) * sin(R) * cos(S) );
+
+// scale (note that the shear modulus is not yet available. Also note that we convert [cm] to [m])
+	m0 = area*1e-4 * slip1*1e-2;
+      
+	mxx *= m0;
+	mxy *= m0;
+	mxz *= m0;
+	myy *= m0;
+	myz *= m0;
+	mzz *= m0;
+
+// before creating the source, make sure (x,y,z) is inside the computational domain
+
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
+
+	if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
+	{
+	  stringstream sourceposerr;
+	  sourceposerr << endl
+		       << "***************************************************" << endl
+		       << " ERROR:  Source positioned outside grid!  " << endl
+		       << endl
+		       << " Source from rupture file @" << endl
+		       << "  x=" << x << " y=" << y << " z=" << z << endl 
+		       << "  lat=" << lat << " lon=" << lon << " dep=" << dep << endl 
+		       << endl;
+	    
+	  if ( x < xmin )
+	    sourceposerr << " x is " << xmin - x << 
+	      " meters away from min x (" << xmin << ")" << endl;
+	  else if ( x > m_global_xmax)
+	    sourceposerr << " x is " << x - m_global_xmax << 
+	      " meters away from max x (" << m_global_xmax << ")" << endl;
+	  if ( y < ymin )
+	    sourceposerr << " y is " << ymin - y << 
+	      " meters away from min y (" << ymin << ")" << endl;
+	  else if ( y > m_global_ymax)
+	    sourceposerr << " y is " << y - m_global_ymax << 
+	      " meters away from max y (" << m_global_ymax << ")" << endl;
+	  if ( z < zmin )
+	    sourceposerr << " z is " << zmin - z << 
+	      " meters away from min z (" << zmin << ")" << endl;
+	  else if ( z > m_global_zmax)
+	    sourceposerr << " z is " << z - m_global_zmax << 
+	      " meters away from max z (" << m_global_zmax << ")" << endl;
+	  sourceposerr << "***************************************************" << endl;
+	  if (m_myRank == 0)
+	    cout << sourceposerr.str();
+	}
+	else
+	{
+	  sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
+				 tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true ); // true is correctStrengthForMu
+
+	  if (sourcePtr->ignore())
+	  {
+	    delete sourcePtr;
+	  }
+	  else
+	  {
+	    a_GlobalUniqueSources.push_back(sourcePtr);
+	    nSources++;
+	  }
+	}
+	
+
+// deallocate temporary arrays...
+	delete[] par;
+	delete[] ipar;
+
+      } // end if nt1 >0
+
+// read past discrete time series for u2
+      if (nt2>0)
+      {
+	nu2++;
+	double dum;
+	if (proc_zero())
+	  printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
+	fgets(buf,bufsize,fd);
+	token = strtok(buf, " \t");
+//	printf("buf='%s'\n", buf);
+	for( int i=0 ; i < nt2 ; i++ )
+	{
+// read another line if there are no more tokens
+	  if (token == NULL)
+	  {
+	    fgets(buf,bufsize,fd);
+	    token = strtok(buf, " \t");
+	  }
+//	  printf("token='%s'\n", token);
+	  sscanf(token,"%lg", &dum );
+// read next token
+	  token = strtok(NULL, " \t");
+	}
+      } // end if nt2 > 0
+
+// read past discrete time series for u3
+      if (nt3>0)
+      {
+	nu3++;
+	double dum;
+	if (proc_zero())
+	  printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
+	fgets(buf,bufsize,fd);
+	token = strtok(buf, " \t");
+//	printf("buf='%s'\n", buf);
+	for( int i=0 ; i < nt3 ; i++ )
+	{
+// read another line if there are no more tokens
+	  if (token == NULL)
+	  {
+	    fgets(buf,bufsize,fd);
+	    token = strtok(buf, " \t");
+	  }
+//	  printf("token='%s'\n", token);
+	  sscanf(token,"%lg", &dum );
+// read next token
+	  token = strtok(NULL, " \t");
+	}
+      } // end if nt3 > 0
+      
+    } // end for all sources
+    if (proc_zero())
+      printf("Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n", 
+	     npts, nSources, nu1, nu2, nu3);
+    
+    fclose(fd);
+  }
+} // end processRupture()
+
 
 //------------------------------------------------------------------------
 void EW::processMaterialBlock( char* buffer, int & blockCount )
@@ -4863,14 +5231,14 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
          token += 3; // skip vs=
          vs = atof(token);
       }
-      // else if (startswith("r=", token)) // superseded by rho=, but keep for backward compatibility
-      // {
-      //    token += 2; // skip r=
-      //    rho = atof(token);
-      // }
       else if (startswith("rho=", token))
       {
          token += 4; // skip rho=
+         rho = atof(token);
+      }
+      else if (startswith("r=", token)) // superseded by rho=, but keep for backward compatibility
+      {
+         token += 2; // skip r=
          rho = atof(token);
       }
       else if (startswith("Qs=", token) || startswith("qs=",token) )

@@ -57,8 +57,7 @@ void setAttenuationParams(int numberOfMechanisms, double velocityOmega, int ppw,
 void setNumberSteps(int steps); // remove???
 int getNumberOfSteps() const;
 
-void setupRun( );
-void preprocessSources( vector<Source*> & a_GlobalSources );
+void setupRun( vector<Source*> & a_GlobalUniqueSources );
 
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
@@ -97,6 +96,7 @@ void processTestRayleigh(char* buffer);
 void processTestLamb(char* buffer);
 void processTestEnergy(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
+void processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterial( char* buffer );
 void processMaterialIfile( char* buffer );
 void processMaterialBlock( char* buffer, int & blockCount );
@@ -564,6 +564,7 @@ MPI_Comm m_cartesian_communicator;
 ofstream msgStream;
 
 private:
+void preprocessSources( vector<Source*> & a_GlobalSources );
 
 // epicenter
 double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;

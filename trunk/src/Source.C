@@ -45,18 +45,22 @@ Source::Source(EW *a_ew,
 	       double Mzz,
 	       timeDep tDep,
 	       const char *name,
-	       int ncyc, double* pars, int npar, int* ipars, int nipar ):
+	       bool topodepth, 
+	       int ncyc, 
+	       double* pars, int npar, int* ipars, int nipar, bool correctForMu):
   mIsMomentSource(true),
   mFreq(frequency),
   mT0(t0),
-  m_zRelativeToTopography(false),
   mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
   mIgnore(false),
-  mGridPointSet(false),
+//  mGridPointSet(false),
   mTimeDependence(tDep),
   mNcyc(ncyc),
+  m_zRelativeToTopography(topodepth),
+  mShearModulusFactor(correctForMu),
   m_derivative(-1),
-  m_is_filtered(false)
+  m_is_filtered(false),
+  m_myPoint(false)
 {
    mForces.resize(6);
    mForces[0] = Mxx;
@@ -66,8 +70,6 @@ Source::Source(EW *a_ew,
    mForces[4] = Myz;
    mForces[5] = Mzz;
    mName = name;
-
-   a_ew->computeNearestGridPoint(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
    mNpar = npar;
    if( mNpar > 0 )
@@ -101,6 +103,12 @@ Source::Source(EW *a_ew,
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
    }
+
+   a_ew->computeNearestGridPoint(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
+
+// Correct source location for discrepancy between raw and smoothed topography
+   correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
+
 }
 
 //-----------------------------------------------------------------------
@@ -110,26 +118,29 @@ Source::Source(EW *a_ew, double frequency, double t0,
 	       double Fy,
 	       double Fz,
 	       timeDep tDep,
-	       const char *name, int ncyc, double* pars, int npar, int* ipars, int nipar ):
+	       const char *name, 
+	       bool topodepth,
+	       int ncyc, 
+	       double* pars, int npar, int* ipars, int nipar, bool correctForMu ):
   mIsMomentSource(false),
   mFreq(frequency),
   mT0(t0),
-  m_zRelativeToTopography(false),
   mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
   mIgnore(false),
-  mGridPointSet(false),
+//  mGridPointSet(false),
   mTimeDependence(tDep),
   mNcyc(ncyc),
+  m_zRelativeToTopography(topodepth),
   m_derivative(-1),
-  m_is_filtered(false)
+  m_is_filtered(false),
+  mShearModulusFactor(correctForMu),
+  m_myPoint(false)
 {
   mForces.resize(3);
   mForces[0] = Fx;
   mForces[1] = Fy;
   mForces[2] = Fz;
   mName = name;
-
-  a_ew->computeNearestGridPoint(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
   mNpar = npar;
   if( mNpar > 0 )
@@ -163,6 +174,12 @@ Source::Source(EW *a_ew, double frequency, double t0,
      mPar[0] = find_min_exponent();
      mPar[1] = mNcyc;
   }
+
+  a_ew->computeNearestGridPoint(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
+
+// Correct source location for discrepancy between raw and smoothed topography
+  correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
+
 }
 
 //-----------------------------------------------------------------------
@@ -464,32 +481,33 @@ void Source::correct_Z_level( EW *a_ew )
 // 1. calculates the z-coordinate of the topography right above the source and saves it in m_zTopo
 // 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
 // 3. checks if the source is inside the computational domain. If not, set mIgnore=true
-   int i,j,k,g;
-// preliminary determination of the nearest grid point
-   a_ew->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
 
 // tmp
 //   printf("Entering correct_Z_level()\n");
-   
-   if( !a_ew->topographyExists() ) // this is the easy case w/o topography
-   {
-     m_zTopo = 0.;
-// make sure the station is below or on the topography (z is positive downwards)
-     if ( mZ0 < m_zTopo-1e-9)
-     {
-       mIgnore = true;
-       printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
-	      mX0,  mY0, mZ0, m_zTopo);
-     }
-     return; // done with the flat case
-   }
-   
-// does this processor know about topography at this location?
-   bool myPoint = a_ew->interior_point_in_proc(i, j, g);
 
+  int i,j,k,g;
+// preliminary determination of the nearest grid point (already did this in the constructor)
+  a_ew->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
+
+// does this processor know about topography at this location?
+  m_myPoint = a_ew->interior_point_in_proc(i, j, g);
+   
+  if( !a_ew->topographyExists() ) // this is the easy case w/o topography
+  {
+    m_zTopo = 0.;
+// make sure the station is below or on the topography (z is positive downwards)
+    if ( mZ0 < m_zTopo-1e-9)
+    {
+      mIgnore = true;
+      printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
+	     mX0,  mY0, mZ0, m_zTopo);
+    }
+    return; // done with the flat case
+  }
+   
 // The following is a safety check to make sure only one processor considers this (i,j) to be interior
 // We could remove this check if we were certain that interior_point_in_proc() never lies
-  int iwrite = myPoint ? 1 : 0;
+  int iwrite = m_myPoint ? 1 : 0;
   int size;
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   std::vector<int> whoIsOne(size);
@@ -504,7 +522,7 @@ void Source::correct_Z_level( EW *a_ew )
 	   " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
 
   double zTopoLoc;
-  if (myPoint)
+  if (m_myPoint)
   {    
 // evaluate z-coordinate of topography
 // NOTE: we already tested for topography above
@@ -537,6 +555,32 @@ void Source::correct_Z_level( EW *a_ew )
     m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
   }
 
+// if we are in the curvilinear grid, calculate k-index for source location
+  if (g == a_ew->mNumberOfGrids - 1)
+  {
+    int k0Loc;
+    if (m_myPoint)
+    {    
+// NOTE: we already tested for topography above
+      double q0, r0, s0;
+// find the k-index for the closest grid point
+      if (!a_ew->invert_curvilinear_grid_mapping(mX0, mY0, mZ0, q0, r0, s0))
+      {
+	cerr << "Unable to invert curvilinear mapping for source at X= " << mX0 << " Y= " << mY0 << " Z= " << mZ0 << endl;
+	cerr << "Setting s-parameter to 0" << endl;
+	s0 = 0.;
+      }
+      k0Loc = (int) s0+0.5; // round to nearest grid point
+    }
+    else
+    {
+      k0Loc = -99999;
+    }
+    MPI_Allreduce( &k0Loc, &m_k0, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+// tmp
+    printf("Proc #%i: k-point for source = %i\n", a_ew->getRank(), m_k0);  
+  }
+  
 // make sure the station is below or on the topography (z is positive downwards)
   if ( mZ0 < m_zTopo - 1.e-9)// allow for a little roundoff
   {
@@ -545,6 +589,7 @@ void Source::correct_Z_level( EW *a_ew )
 	   mX0,  mY0, mZ0, m_zTopo);
   }
 
+// calculate the closest grid point
 }
 
 //-----------------------------------------------------------------------
@@ -1657,7 +1702,8 @@ Source* Source::copy( std::string a_name )
    }
    retval->mFreq = mFreq;
    retval->mT0 = mT0;
-   retval->mGridPointSet = mGridPointSet;
+//   retval->mGridPointSet = mGridPointSet;
+   retval->m_myPoint = m_myPoint;
    retval->m_zRelativeToTopography = m_zRelativeToTopography;
    retval->mX0 = mX0;
    retval->mY0 = mY0;
@@ -1679,6 +1725,11 @@ Source* Source::copy( std::string a_name )
    for( int i=0 ; i < 11 ; i++ )
       retval->m_dir[i] = m_dir[i];
    retval->m_is_filtered = m_is_filtered;
+
+   retval->m_zTopo = m_zTopo;
+   retval->mIgnore = mIgnore;
+   retval->mShearModulusFactor = mShearModulusFactor;
+
    return retval;
 }
 

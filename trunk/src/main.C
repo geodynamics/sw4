@@ -114,8 +114,7 @@ main(int argc, char **argv)
   else
   {
 // get the simulation object ready for time-stepping
-    simulation.setupRun( );
-    simulation.preprocessSources( GlobalSources );
+    simulation.setupRun( GlobalSources );
 
     if (!simulation.isInitialized())
     { 

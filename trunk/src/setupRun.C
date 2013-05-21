@@ -27,7 +27,7 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun( )
+void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 {
    if( mIsInitialized && proc_zero() )
       cout << " WARNING, calling setupRun twice " << endl;
@@ -325,6 +325,9 @@ void EW::setupRun( )
 // if we got this far, the object should be ready for time-stepping
   mIsInitialized = true;
 
+// do source specific initialization such as prefiltering, scaling by mu, compute epicenter, etc (see below)
+  preprocessSources( a_GlobalUniqueSources );
+  
   double time_start_solve = MPI_Wtime();
   print_execution_time( time_start, time_start_solve, "start up phase" );
 }
@@ -332,6 +335,16 @@ void EW::setupRun( )
 //-----------------------------------------------------------------------
 void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 {
+// This routine should be called once, after setupRun (can we include it in setupRun?)
+
+// For non-testing modes, this routine performs the following tasks:
+// 1: computes the epicenter, i.e. the location of the source with the earliest start time
+// 2: if any source returns get_ShearModulusFactor() == true, it multiplies Mij by the shear modulus
+// 3: evaluate the min and max z-coordinate of all sources
+// 4: sets freq=1/dt in all sources with iDirac time-function
+// 5: modifies the time function if pre-filtering is enabled
+// 6: saves a GMT file if requested
+
 // make sure that the material model is in place
   if (!mIsInitialized)
   {
@@ -410,14 +423,75 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
     } // end if m_testing
     else
     {
+// normal source case starts here...
+
+// find the epicenter, i.e., the location of the source with the lowest value of t0
+
 // get the epicenter
       compute_epicenter( a_GlobalUniqueSources );
       
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
-// Correct source location for discrepancy between raw and smoothed topography
-      for( unsigned int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-	a_GlobalUniqueSources[i]->correct_Z_level( this ); // also sets the ignore flag for sources that are above the topography
 
+// if the sources were defined by a rupture file, we need to multiply the Mij coefficients by mu (shear modulus)
+      bool need_mu_corr=false;
+      for( int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
+	need_mu_corr = need_mu_corr || a_GlobalUniqueSources[i]->get_CorrectForMu( );
+
+      if (!mQuiet && mVerbose >= 3 && proc_zero() )
+	printf(" Some sources needs correction for shear modulus: %s\n", need_mu_corr? "TRUE":"FALSE");
+
+      if (need_mu_corr)
+      {
+	int nSources=a_GlobalUniqueSources.size();
+	// if (proc_zero())
+	//   printf("Number of sources: %i\n", nSources);
+
+// allocate a temp array for the mu value at all source locations
+	double *mu_source_loc = new double[nSources];
+	double *mu_source_global = new double[nSources];
+// initialize
+	int s;
+	for (s=0; s<nSources; s++)
+	  mu_source_loc[s]=-1.0;
+	  mu_source_global[s]=-1.0;
+// fill in the values that are known to this processor
+	for (s=0; s<nSources; s++)
+	  if (a_GlobalUniqueSources[s]->myPoint())
+	  {
+	    int is=a_GlobalUniqueSources[s]->m_i0;
+	    int js=a_GlobalUniqueSources[s]->m_j0;
+	    int ks=a_GlobalUniqueSources[s]->m_k0;
+	    int gs=a_GlobalUniqueSources[s]->m_grid;
+	    
+// tmp
+	    // mu_source_loc[s] = mMu[gs](is,js,ks); 
+	    // printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n", getRank(), s, is, js, ks, gs, mu_source_loc[s]);
+	  }
+// take max over all procs: communicate 
+	MPI_Allreduce( mu_source_loc, mu_source_global, nSources, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+
+// tmp
+	// for (s=0; s<nSources; s++)
+	//   printf("Proc #%i, source#%i, mu=%e\n", getRank(), s, mu_source_global[s]);
+
+// scale all moments components
+	double mu, mxx, mxy, mxz, myy, myz, mzz;
+	for (s=0; s<nSources; s++)
+	  if (a_GlobalUniqueSources[s]->get_CorrectForMu())
+	  {
+	    mu = mu_source_global[s];
+	    a_GlobalUniqueSources[s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
+	    a_GlobalUniqueSources[s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
+// lower the flag
+	    a_GlobalUniqueSources[s]->set_CorrectForMu(false);
+	  }
+	
+// cleanup
+	delete[] mu_source_loc;
+	delete[] mu_source_global;
+      } // end if need_mu_corr
+      
+      
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
       // if (m_limit_source_freq)
       // {
@@ -449,8 +523,6 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       for( int s=0 ; s  < a_GlobalUniqueSources.size(); s++ )
 	 if( a_GlobalUniqueSources[s]->getTfunc() == iDirac )
 	    a_GlobalUniqueSources[s]->setFrequency( 1.0/mDt );
-
-// find the epicenter, i.e., the location of the source with the lowest value of t0
 
 // Modify the time functions if prefiltering is enabled
       if (m_prefilter_sources)
@@ -508,21 +580,6 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 
       if (proc_zero())
 	saveGMTFile( a_GlobalUniqueSources );
-
-// // Precompute grid point index for point sources, for better efficiency
-//   int* ind=0;
-//   if( m_forcing->use_input_sources() && m_point_sources.size() > 0 )
-//   {
-//     ind = new int[m_point_sources.size()];
-//     for( int s= 0 ; s < m_point_sources.size() ; s++ ) 
-//     {
-// // tmp
-// //      cout << *m_point_sources[s] << endl;
-      
-//       int g = m_point_sources[s]->m_grid;
-//       ind[s] = mF[g].index(m_point_sources[s]->m_i0,m_point_sources[s]->m_j0,m_point_sources[s]->m_k0);
-//     }
-//   }
 
     } // end normal seismic setup
 
