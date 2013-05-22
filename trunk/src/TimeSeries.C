@@ -18,13 +18,14 @@ using namespace std;
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
 		int& second, int& msecond, int& fail );
 
-TimeSeries::TimeSeries( EW* a_ew, std::string fileName, receiverMode mode, bool sacFormat, bool usgsFormat, 
+TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
 			double x, double y, double depth, bool topoDepth, int writeEvery, bool xyzcomponent ):
   m_ew(a_ew),
   m_mode(mode),
   m_nComp(0),
   m_myPoint(false),
   m_fileName(fileName),
+  m_staName(staName),
   m_path(a_ew->getOutputPath()),
   mX(x),
   mY(y),
@@ -795,7 +796,7 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   setfhv( nm[24], cmpaz, nerr);
 
   // set the station name
-  setkhv( nm[25], const_cast<char*>(m_fileName.c_str()), nerr);
+  setkhv( nm[25], const_cast<char*>(m_staName.c_str()), nerr);
 
 
   if (!mBinaryMode)
@@ -1576,7 +1577,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    if( addname )
       filename = m_fileName + filename;
 
-   TimeSeries* retval = new TimeSeries( a_ew, filename, m_mode, m_sacFormat, m_usgsFormat,
+   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat,
 					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;

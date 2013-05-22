@@ -32,22 +32,31 @@ MaterialBlock::MaterialBlock( EW * a_ew, double rho, double vs, double vp, doubl
    double bbox[6];
    mEW->getGlobalBoundingBox( bbox );
   
+// THE FOLLOWING ONLY WORKS IF m_absoluteDepth == true, or in the absence of topography
+   if (!mEW->topographyExists())
+   {
 // does this block cover all points?
 // note that the global_zmin can be non-zero when topography is present
 // global zmin is 0 in the absense of topography, and is assigned by the grid generator when there is topography
-   if (xmin > bbox[0] || ymin > bbox[2] || zmin > bbox[4] ||
-       xmax < bbox[1] || ymax < bbox[3] || zmax < bbox[5] )
-   {
-     mCoversAllPoints = false;
+     if (xmin > bbox[0] || ymin > bbox[2] || zmin > bbox[4] ||
+	 xmax < bbox[1] || ymax < bbox[3] || zmax < bbox[5] )
+     {
+       mCoversAllPoints = false;
 // tmp
 //     cout << "This block does NOT cover all grid points" << endl;
-   }
-   else
-   {
-     mCoversAllPoints=true;
+     }
+     else
+     {
+       mCoversAllPoints=true;
 // tmp
 //     cout << "This block COVERS all grid points" << endl;
+     }
    }
+   else // AP: with topography and m_absoluteDpeth == false, it is hard to say if this block covers all points
+   {
+     mCoversAllPoints=false;
+   }
+   
 }
 
 //-----------------------------------------------------------------------

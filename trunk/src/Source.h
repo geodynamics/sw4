@@ -51,6 +51,7 @@ public:
   double getX0() const;
   double getY0() const;
   double getZ0() const;
+  double getDepth() const;
   bool ignore() const {return mIgnore;}
   bool myPoint(){ return m_myPoint; }
 

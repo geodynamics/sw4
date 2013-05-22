@@ -213,6 +213,13 @@ double Source::getZ0() const
   return mZ0;
 }
 
+
+//-----------------------------------------------------------------------
+double Source::getDepth() const
+{
+  return mZ0-m_zTopo;
+}
+
 //-----------------------------------------------------------------------
 double Source::getOffset() const
 {

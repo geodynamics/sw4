@@ -634,7 +634,7 @@ void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources )
     }
     
     computeGeographicCoord(firstSource->getX0(), firstSource->getY0(), epiLon, epiLat );
-    epiDepth = firstSource->getZ0(); // correct for topography?
+    epiDepth = firstSource->getDepth(); // corrected for topography!
   }
 
   set_epicenter(epiLat, epiLon, epiDepth, earliestTime);

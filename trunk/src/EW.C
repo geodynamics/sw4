@@ -443,14 +443,8 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
        {
          if (a_Sources[i]->isMomentSource())
 	 {
-// Note that proc 0 doen't know of all sources that need to be ignored
-//	   if (!a_Sources[i]->ignore() ) 
-	 {
 	   numsrc++;
 	   myM0Sum += a_Sources[i]->getAmplitude();
-	 }
-	 //	   else
-	 //	     ignoredSources++;
 	 }
 	 
        }

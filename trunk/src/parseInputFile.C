@@ -4350,7 +4350,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   int isMomentType = -1;
   
   double lat = 0.0, lon = 0.0, depth = 0.0;
-  bool topodepth = false;
+  bool topodepth = false, depthSet=false, zSet=false;
   
   bool cartCoordSet = false;
   bool geoCoordSet = false;
@@ -4372,7 +4372,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 
   string err = "Source Error: ";
 
-  string cartAndGeoErr = "source command: Cannot set both a geographical (lat,lon,depth) and cartesian coordinate (x,y,z)";
+  string cartAndGeoErr = "source command: Cannot set both a geographical (lat,lon) and cartesian coordinate (x,y)";
   string pointAndMomentErr = "source command: Cannot set both a point source and moment tensor formulation";
 
   while (token != NULL)
@@ -4404,12 +4404,12 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       }
       else if (startswith("z=", token))
       {
-         CHECK_INPUT(!geoCoordSet, err << cartAndGeoErr);
          token += 2; // skip z=
-         CHECK_INPUT(atoi(token) >= 0.0, 
-                 err << "source command: z coord must be zero or positive, not: " << token);
+// with topography, the z-coordinate can have both signs!
          z = atof(token);
-         cartCoordSet = true;
+	 topodepth=false; // this is absolute depth
+	 
+         zSet = true;
       }
       else if (startswith("lat=", token))
       {
@@ -4439,25 +4439,23 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       }
       else if (startswith("depth=", token)) // this is the same as topodepth: different from WPP
       {
-         CHECK_INPUT(!cartCoordSet, err << cartAndGeoErr);
          token += 6; // skip depth=
          depth = atof(token);
 	 topodepth = true;
          CHECK_INPUT(depth >= 0.0,
 		     err << "source command: Depth below topography must be greater than or equal to zero");
-         geoCoordSet = true;
+	 depthSet=true;
       }
 //                         1234567890
       else if (startswith("topodepth=", token))
       {
-         CHECK_INPUT(!cartCoordSet, err << cartAndGeoErr);
          token += 10; // skip depth=
          depth = atof(token);
 	 topodepth = true;
          CHECK_INPUT(depth >= 0.0,
                  err << "source command: Depth below topography must be greater than or equal to zero");
 // by depth we here mean depth below topography
-         geoCoordSet = true;
+	 depthSet=true;
       }
       else if (startswith("Mxx=", token) || startswith("mxx=", token))
       {
@@ -4636,6 +4634,9 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   CHECK_INPUT(cartCoordSet || geoCoordSet,
 	  err << "source command: cartesian or geographic coordinate must be specified");
 
+  CHECK_INPUT(depthSet || zSet,
+	  err << "source command: depth, topodepth or z-coordinate must be specified");
+
   if( tDep == iGaussianWindow )
       CHECK_INPUT( ncyc_set, err << "source command: ncyc must be set for Gaussian Window function");
 
@@ -4677,13 +4678,18 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   {
     computeCartesianCoord(x, y, lon, lat);
     cartCoordSet = true;
-    z = depth;
     if( mVerbose >= 1 && proc_zero() )
     {
       printf("Cartesian coordinates of source at (lon, lat)=(%e, %e) is (x,y)=(%g, %g)\n", 
 	     lon, lat, x, y);
     }
   }
+
+  if (depthSet)
+  {
+    z = depth;
+  }
+  
   if (cartCoordSet)
   {
     double xmin = 0.;
@@ -5399,7 +5405,10 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool cartCoordSet = false, geoCoordSet = false;
-  string name = "rec";
+  string fileName = "station";
+  string staName = "station";
+  bool staNameGiven=false;
+  
   int writeEvery = 1000;
 
   bool dateSet = false;
@@ -5508,7 +5517,13 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      else if(startswith("file=", token))
      {
         token += 5; // skip file=
-        name = token;
+        fileName = token;
+     }
+     else if (startswith("sta=", token))
+     {
+        token += strlen("sta=");
+        staName = token;
+	staNameGiven=true;
      }
      else if( startswith("nsew=", token) )
      {
@@ -5583,6 +5598,9 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 // check if (x,y) is within the computational domain
   }
 
+  if (!staNameGiven)
+    staName = fileName;
+
   bool inCurvilinear=false;
 // we are in or above the curvilinear grid 
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
@@ -5591,17 +5609,17 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   }
       
 // check if (x,y,z) is not in the global bounding box
-    if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
-    {
+  if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
+  {
 // The location of this station was outside the domain, so don't include it in the global list
     if (m_myRank == 0 && getVerbosity() > 0)
     {
       stringstream receivererr;
   
       receivererr << endl 
-	     << "***************************************************" << endl
-	     << " WARNING:  RECEIVER positioned outside grid!" << endl;
-      receivererr << " No RECEIVER file will be generated for file = " << name << endl;
+		  << "***************************************************" << endl
+		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+      receivererr << " No RECEIVER file will be generated for file = " << fileName << endl;
       if (geoCoordSet)
       {
 	receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
@@ -5618,7 +5636,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery, !nsew);
 // include the receiver in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
@@ -5632,7 +5650,10 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   double lat = 0.0, lon = 0.0, depth = 0.0;
   double t0 = 0;
   bool cartCoordSet = false, geoCoordSet = false;
-  string name = "rec";
+  string fileName = "rec";
+  string staName = "station";
+  bool staNameGiven=false;
+  
   int writeEvery = 0;
 
   bool dateSet = false;
@@ -5743,8 +5764,14 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
      else if(startswith("file=", token))
      {
         token += 5; // skip file=
-        name = token;
+        fileName = token;
         usgsfileset = true;
+     }
+     else if (startswith("sta=", token))
+     {
+        token += strlen("sta=");
+        staName = token;
+	staNameGiven=true;
      }
 // (small) shifts of the observation in time can be used to compensate for incorrect velocites
 // in the material model
@@ -5851,9 +5878,9 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 // Find a name for the SAC station
      int l = sacfile1.length();
      if( sacfile1.substr(l-4,4) == ".sac" )
-        name = sacfile1.substr(0,l-4);
+        fileName = sacfile1.substr(0,l-4);
      else
-	name = sacfile1;
+	fileName = sacfile1;
 
 // Read sac header to figure out the position
 // Use only one of the files, more thorough checking later, in TimeSeries.readSACfile.
@@ -5892,6 +5919,9 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
 // check if (x,y) is within the computational domain
   }
 
+  if (!staNameGiven)
+    staName = fileName;
+
   bool inCurvilinear=false;
 //
 // AP: This test is incorrect because we don't know the elevation of the observation
@@ -5903,17 +5933,17 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   }
       
 // check if (x,y,z) is not in the global bounding box
-    if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
-    {
+  if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
+  {
 // The location of this station was outside the domain, so don't include it in the global list
     if (m_myRank == 0 && getVerbosity() > 0)
     {
       stringstream observationerr;
   
       observationerr << endl 
-	     << "***************************************************" << endl
-	     << " WARNING:  OBSERVATION positioned outside grid!" << endl;
-      observationerr << " No OBSERVATION file will be generated for file = " << name << endl;
+		     << "***************************************************" << endl
+		     << " WARNING:  OBSERVATION positioned outside grid!" << endl;
+      observationerr << " No OBSERVATION file will be generated for file = " << fileName << endl;
       if (geoCoordSet)
       {
 	observationerr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
@@ -5930,7 +5960,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, name, mode, sacformat, usgsformat, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
 					topodepth, writeEvery );
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.

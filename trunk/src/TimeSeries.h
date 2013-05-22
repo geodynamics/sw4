@@ -18,7 +18,7 @@ public:
 // support for derived quantities of the time derivative are not yet implemented
 enum receiverMode{Displacement, Div, Curl, Strains, Velocity /*, DivVelo, CurlVelo, StrainsVelo */ };
 
-TimeSeries( EW* a_ew, std::string name, receiverMode mode, bool sacFormat, bool usgsFormat, 
+TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
 	    double x, double y, double z, bool topoDepth, int writeEvery, bool xyzcomponent=true );
 ~TimeSeries();
 
@@ -97,7 +97,7 @@ int m_nComp;
 
 bool m_myPoint; // set to true if this processor writes to the arrays
 
-std::string m_fileName; //, m_filePrefix;
+std::string m_fileName, m_staName;
 
 double mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 double m_zTopo;
