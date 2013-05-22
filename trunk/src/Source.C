@@ -585,7 +585,7 @@ void Source::correct_Z_level( EW *a_ew )
     }
     MPI_Allreduce( &k0Loc, &m_k0, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
 // tmp
-    printf("Proc #%i: k-point for source = %i\n", a_ew->getRank(), m_k0);  
+//    printf("Proc #%i: k-point for source = %i\n", a_ew->getRank(), m_k0);  
   }
   
 // make sure the station is below or on the topography (z is positive downwards)
