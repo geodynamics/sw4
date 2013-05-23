@@ -2556,7 +2556,7 @@ int main(int argc, char **argv)
 	if( myRank == 0 )
 	{
 	   cout << "Initial source guess : \n";
-	   cout << "   x0 = " << xv[0] << " y0 = " << xv[1] << " depth = " << xv[2] <<endl;
+	   cout << "   x0 = " << xv[0] << " y0 = " << xv[1] << " z0 = " << xv[2] <<endl;
 	   cout << "  mxx = " << xv[3] << " mxy= " << xv[4] << " mxz= " << xv[5] << endl;
 	   cout << "  myy = " << xv[6] << " myz= " << xv[7] << " mzz= " << xv[8] << endl;
 	   cout << "   t0 = " << xv[9] << " freq = " << xv[10] << endl;

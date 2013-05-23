@@ -51,8 +51,8 @@ lin = fgetl(fd);
 lin = fgetl(fd);
 % tmp
 %disp(['Comment line 2: ', lin])
-east = strfind(lin, "East");
-if (isnull(east))
+east = strfind(lin, 'East');
+if (east == [])
   xycomp=1;
 else
   xycomp=0;

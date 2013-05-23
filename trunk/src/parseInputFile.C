@@ -3962,7 +3962,7 @@ void EW::allocateCurvilinearArrays()
   {
      printf("\n");
      printf("***Topography grid: min z = %e, max z = %e, top Cartesian z = %e\n", zMinGlobal, zMaxGlobal, zMaxCart);
-     if (mVerbose >= 1)
+     if (mVerbose >= 3)
      {
 	printf("***Un-divided differences of grid surface (ratio h*D2/D3 should be close to the same for h and 2h):\n"
 	     "h*max D2z(h)   = %e, max D3z(h)  = %e, Ratio: h*max D2z(h) / max D3z(h)    = %e\n"
