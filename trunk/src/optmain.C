@@ -2424,8 +2424,8 @@ int main(int argc, char **argv)
 // Save the source description here
   vector<Source*> GlobalSources; 
 // Save the time series here
-  vector<TimeSeries*> GlobalTimeSeries;
-  vector<TimeSeries*> GlobalObservations;
+  vector<TimeSeries*> GlobalTimeSeries; // GlobalTimeSeries holds the synthetic motions
+  vector<TimeSeries*> GlobalObservations; // GlobalObservations holds the observed motions
 
 // make a new simulation object by reading the input file 'fileName'
   EW simulation(fileName, GlobalSources, GlobalObservations, true );
@@ -2470,7 +2470,7 @@ int main(int argc, char **argv)
 	   if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 	   {
 	      GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
-	      GlobalObservations[m]->writeFile( "_fi" );
+	      GlobalObservations[m]->writeFile( "_fd" ); // AP changed the extension to _fd = filtered data
 	   }
 	}
 
@@ -2603,14 +2603,15 @@ int main(int argc, char **argv)
               guess_shift( n, xv, localTimeSeries, GlobalObservations, dt );
 		 if( myRank == 0 )
 		 {
-		    cout  << "Computed initial guess shifts "<<endl;
+		    cout  << "Computed initial time shifts... "<<endl;
 		    for (int ts=0; ts<localTimeSeries.size(); ts++)
-		       cout << "obs " << ts << " = " << xv[11+ts] << endl;
+		      cout << "station '" << localTimeSeries[ts]->getStationName() << "' t-shift = " << xv[11+ts] << endl;
 		 }
 	   }
 	   for( int ts=0 ; ts<localTimeSeries.size();ts++)
 	      delete localTimeSeries[ts];
-	}
+	} // end if( output_initial_seismograms || (varcase==3 && guessshifts) )
+	
 
 	// nvar is number of source parameters
 	int nvar;

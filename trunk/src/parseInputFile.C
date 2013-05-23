@@ -6163,11 +6163,11 @@ void EW::processCG( char* buffer )
      else if( startswith("initialguess=",token) )
      {
         token += 13;
-        if( strcmp(token,"usesource")==0 )
+        if( strcmp(token,"useSource")==0 || strcmp(token,"usesource")==0 )
    	   m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = false;
 	else if( strcmp(token,"estimate") == 0 )
 	   m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = true;
-        else if( strcmp(token,"estimatePos")==0 )
+        else if( strcmp(token,"estimatePos")==0 || strcmp(token,"estimatepos")==0 )
 	{
            m_iniguess_pos  = true;
 	   m_iniguess_t0fr = false;

@@ -2056,10 +2056,11 @@ void TimeSeries::print_timeinfo() const
 {
    if( m_myPoint )
    {
-      cout << "Observation/TimeSeries at grid point " << m_i0 << " " << m_j0 << " " << m_k0 << endl;
+     cout << "Observation/TimeSeries from station '" << m_staName << "' at grid point " << 
+       m_i0 << " " << m_j0 << " " << m_k0 << endl;
       cout << "   t0 = " << m_t0 << " dt= " << m_dt << endl;
       cout << "   Observation interval  [ " << m_t0 << " , " << m_t0 + m_dt*mLastTimeStep << " ] simulation time " << endl;
-      printf("   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+      printf( "   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
 	     m_utc[4], m_utc[5], m_utc[6] );
    }
 }

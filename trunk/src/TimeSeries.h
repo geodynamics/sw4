@@ -67,6 +67,7 @@ void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3,
 void set_shift( double shift );
 double get_shift() const;
 void add_shift( double shift );
+std::string getStationName(){return m_staName;}
 
 // for simplicity, make the grid point location public
 int m_i0;
