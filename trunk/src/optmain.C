@@ -464,6 +464,8 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
 	 diffs.push_back(elem);
       }
+      if( myRank == 0 )
+	 cout << "Starting to evaluate shift scale factors" << endl;
 
       double mf = 0;
       double* dshiftloc  = new double[GlobalTimeSeries.size()];
@@ -471,9 +473,9 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
       double* dd1shiftloc = new double[GlobalTimeSeries.size()];
       for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
 	 mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshiftloc[m], ddshiftloc[m], dd1shiftloc[m] );
-
       if( varcase == 3 )
       {
+
 	 double* dshift  = new double[GlobalTimeSeries.size()];
 	 double* ddshift = new double[GlobalTimeSeries.size()];
 	 double* dd1shift = new double[GlobalTimeSeries.size()];
@@ -498,7 +500,11 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 	 delete[] dshift;
 	 delete[] ddshift;
 	 delete[] dd1shift;
+
       }
+      if( myRank == 0 )
+	 cout << "Done evaluating shift scale factors" << endl;
+
       delete[] dshiftloc;
       delete[] ddshiftloc;
       delete[] dd1shiftloc;
