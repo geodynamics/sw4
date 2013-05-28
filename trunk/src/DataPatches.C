@@ -381,6 +381,7 @@ void DataPatches::read_from_file( int n )
 	    {
 	       printf("ERROR DataPatches::read_from_file : Could not read data\n");
 	       printf("    Attempt to read %ld bytes, only read %ld \n",nread*sizeof(double),nr );
+               printf("   file name = %s \n",m_filename.c_str() );
 	       return;
 	    }
 	    nrread += nread;

@@ -4683,6 +4683,35 @@ void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 	       lambda[g](i,j,k) = xm[gp+ind*3+2];
 	       ind++;
 	    }
+ // update stored material
+      mRho[g].copy( rho[g] );
+      mMu[g].copy( mu[g] );
+      mLambda[g].copy( lambda[g] );
+
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
+				 vector<Sarray>& mu, vector<Sarray>& lambda )
+{
+   size_t gp, ind;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      if( g == 0 )
+	 gp = 0;
+      else
+	 gp = gp + 3*ind;
+      ind =0;
+      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
+	    {
+	       xm[gp+ind*3] = rho[g](i,j,k);
+	       xm[gp+ind*3+1]= mu[g](i,j,k);
+	       xm[gp+ind*3+2] = lambda[g](i,j,k);
+	       ind++;
+	    }
    }
 }
 
@@ -4851,4 +4880,11 @@ void EW::check_min_max_int( vector<Sarray>& a_U )
 	       }
       cout << g << " " << mn[0] << " " << mx[0] << endl;
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::material_correction( int nmpar, double* xm )
+// routine to enforce material speed limits and positive density
+{
+
 }

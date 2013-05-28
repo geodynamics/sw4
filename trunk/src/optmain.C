@@ -2467,10 +2467,11 @@ int main(int argc, char **argv)
      // Filter observed data if required
 	for( int m = 0; m < GlobalObservations.size(); m++ )
 	{
+	   GlobalObservations[m]->set_utc_to_simulation_utc();
 	   if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 	   {
 	      GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
-	      GlobalObservations[m]->writeFile( "_fd" ); // AP changed the extension to _fd = filtered data
+     //	      GlobalObservations[m]->writeFile( "_fd" ); // AP changed the extension to _fd = filtered data
 	   }
 	}
 
@@ -2528,11 +2529,62 @@ int main(int argc, char **argv)
         simulation.compute_guess( guesspos, guesst0fr, guessmom, guessshifts, output_initial_seismograms );
 	GlobalSources[0]->get_parameters(xv);
 
-//  Shifts, guess they are zero.
-	if( varcase == 3 )
+	// Compute one forward solve, and guess shift. Use input source parameters for the synthetics.
+        if( output_initial_seismograms || (varcase==3 && guessshifts) )
+	{
+           simulation.print_utc();
+           vector<TimeSeries*> localTimeSeries;
+	   for( int m = 0; m < GlobalObservations.size(); m++ )
+	   {
+	      string newname = "_ini";
+	      TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
+	      elem->set_utc_to_simulation_utc();
+	      localTimeSeries.push_back(elem);
+	      if (simulation.getVerbosity()>=2)
+		 GlobalObservations[m]->print_timeinfo();
+	   }
+	   if (myRank == 0)
+	   {
+	     cout << "Solving a forward problem to compute initial seismograms..." << endl;
+	   }
+	   simulation.solve( GlobalSources, localTimeSeries );
+           if( output_initial_seismograms )
+	   {
+	      for (int ts=0; ts<localTimeSeries.size(); ts++)
+	      {
+		 localTimeSeries[ts]->writeFile();
+		 if (simulation.getVerbosity()>=2)
+		    localTimeSeries[ts]->print_timeinfo();
+	      }
+	   }
+	   if( varcase == 3 && guessshifts )
+	   {
+              double dt = simulation.getTimeStep();
+              guess_shift( n, xv, localTimeSeries, GlobalObservations, dt );
+		 if( myRank == 0 )
+		 {
+		    cout  << "Computed initial time shifts... "<<endl;
+		    for (int ts=0; ts<localTimeSeries.size(); ts++)
+		      cout << "station '" << localTimeSeries[ts]->getStationName() << "' t-shift = " << xv[11+ts] << endl;
+		 }
+	   }
+	   for( int ts=0 ; ts<localTimeSeries.size();ts++)
+	      delete localTimeSeries[ts];
+	} // end if( output_initial_seismograms || (varcase==3 && guessshifts) )
+
+//  Set initial shifts to zero if not estimated.
+        if( varcase == 3 && !guessshifts )
 	   for( int i=11 ; i < n ; i++ )
 	      xv[i] = 0;
-	   
+
+// Output shifted observation data
+        for( int m=0 ; m < GlobalObservations.size() ; m++ )
+	{
+           if( varcase == 3 )
+	      GlobalObservations[m]->add_shift( xv[11+m]);
+           GlobalObservations[m]->writeFile( "_fd" ); 
+	}
+ 	   
 	if( guesspos )
 	{
 	   // Guess source position, and perhaps t0
@@ -2562,57 +2614,6 @@ int main(int argc, char **argv)
 	   cout << "   t0 = " << xv[9] << " freq = " << xv[10] << endl;
 	}
 
-        if( output_initial_seismograms || (varcase==3 && guessshifts) )
-	{
-	   //	   simulation.setupRun( );
-	   //	  simulation.preprocessSources( GlobalSources ); // AP: preprocessSources has already been called for GlobalSources
-           simulation.print_utc();
-           vector<TimeSeries*> localTimeSeries;
-	   for( int m = 0; m < GlobalObservations.size(); m++ )
-	   {
-	//        char str[10];
-	//        snprintf(str,10,"%i",m);
-	//	string newname = "tscopy";
-	//        newname.append(str);
-	      string newname = "_ini";
-	      TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
-	      localTimeSeries.push_back(elem);
-	      //              elem->writeFile();
-	      if (simulation.getVerbosity()>=2)
-		GlobalObservations[m]->print_timeinfo();
-	   }
-	   //           exit(2);
-	   
-	   if (myRank == 0)
-	   {
-	     cout << "Solving a forward problem to compute initial seismograms..." << endl;
-	   }
-	   simulation.solve( GlobalSources, localTimeSeries );
-           if( output_initial_seismograms )
-	   {
-	      for (int ts=0; ts<localTimeSeries.size(); ts++)
-	      {
-		 localTimeSeries[ts]->writeFile();
-		 if (simulation.getVerbosity()>=2)
-		    localTimeSeries[ts]->print_timeinfo();
-	      }
-	   }
-	   if( varcase == 3 && guessshifts )
-	   {
-              double dt = simulation.getTimeStep();
-              guess_shift( n, xv, localTimeSeries, GlobalObservations, dt );
-		 if( myRank == 0 )
-		 {
-		    cout  << "Computed initial time shifts... "<<endl;
-		    for (int ts=0; ts<localTimeSeries.size(); ts++)
-		      cout << "station '" << localTimeSeries[ts]->getStationName() << "' t-shift = " << xv[11+ts] << endl;
-		 }
-	   }
-	   for( int ts=0 ; ts<localTimeSeries.size();ts++)
-	      delete localTimeSeries[ts];
-	} // end if( output_initial_seismograms || (varcase==3 && guessshifts) )
-	
-
 	// nvar is number of source parameters
 	int nvar;
         if( varcase == 0 )
@@ -2624,8 +2625,8 @@ int main(int argc, char **argv)
 	else if( varcase == 3 )
 	   nvar = 9;
 
-	compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, varcase, nvar, sf );
-
+	compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank,
+			      varcase, nvar, sf );
 	if( myRank == 0 )
 	{
            cout << "scalefactors x0=" << sf[0] << " y0=" << sf[1] << " z0=" << sf[2] << " Mxx=" << sf[3]
@@ -2633,8 +2634,14 @@ int main(int argc, char **argv)
 		<< " Mzz=" << sf[8] << " t0=" << sf[9] << " freq=" << sf[10] << endl;
            if( varcase == 3 )
 	      for( int m= 0 ; m < GlobalTimeSeries.size() ; m++ )
-		 cout << "sfobs" << m << "= " << sf[11+m]<<endl;
+		 cout << "sf-obs" << m << "= " << sf[11+m]<<endl;
 	}
+
+	// Shift back, the optimization code assumes that GlobalObservations are unshifted.
+        if( varcase == 3 )
+	   for( int m=0 ; m < GlobalObservations.size() ; m++ )
+	      GlobalObservations[m]->add_shift(-xv[11+m]);
+
         if( simulation.m_opttest == 1 )
 	   testsourced2( simulation, GlobalSources );
         else if( simulation.m_opttest == 2 )

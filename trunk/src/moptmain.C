@@ -3,6 +3,14 @@
 #include <cstring>
 #include "version.h"
 
+void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
+	    double* xm, double* sfm,
+	    vector<Source*>& GlobalSources,
+	    vector<TimeSeries*>& GlobalTimeSeries,
+	    vector<TimeSeries*> & GlobalObservations,
+	    int m, int myRank );
+
+
 void usage(string thereason)
 {
   cout << endl
@@ -34,7 +42,7 @@ void compute_f( EW& simulation, int ns, double xs[11], int nm, double* xm,
 //-----------------------------------------------------------------------
 {
    vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy( " " );
+   src[0] = GlobalSources[0]->copy(" ");
    src[0]->set_parameters( xs );
 
 // Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
@@ -284,6 +292,7 @@ int main(int argc, char **argv)
 
 // Perturb material if gradient testing
            simulation.perturb_mtrl();
+
 // Default initial guess material = the material given in the input file
            int nmpar;
 	   double* xm=NULL;
@@ -294,7 +303,6 @@ int main(int argc, char **argv)
 	      xm = new double[nmpar];
 	      simulation.get_material_parameter( nmpar, xm );
 	   }
-
 	   if( myRank == 0 )
 	   {
 	      cout << "Initial source guess : \n";
@@ -306,24 +314,49 @@ int main(int argc, char **argv)
 
 // figure out how many parameters we need
 	   int maxit, maxrestart, varcase=0, stepselection=0;
-	   bool dolinesearch, fletcher_reeves=true;
+	   bool dolinesearch, fletcher_reeves=true, testing;
 	   double tolerance;
-	   //	   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
-	   //				     dolinesearch, varcase );
-           varcase = 0;
+	   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
+					dolinesearch, varcase, testing );
+           varcase = 4;
 	   int nvar=11;
-	   if( varcase == 1 )
+           if( varcase == 0 )
+	      nvar = 11;
+	   else if( varcase == 1 )
 	      nvar = 10;
 	   else if( varcase == 2 )
 	      nvar = 9;
-
-           double f, dfs[11];
+           else if( varcase == 4 )
+	      nvar = 0;
+	   else
+	      if( myRank == 0 )
+		 cout << "Error: varcase = " << varcase << " not defined for sw4mopt" << endl;
+	   
+           double f, dfs[11], sf[11];
 	   double* dfm = NULL;
-           if( nmpar > 0 )
-	      dfm = new double[nmpar];
+           double* sfm = NULL;
 
-	   compute_f_and_df( simulation, nvar, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
-			     GlobalObservations, f, dfs, dfm, myRank );
+	   // Will not use source inversion, for the first tests, scale to 1.
+           for( int i=0 ; i<11 ;i++)
+	      sf[i]=1;
+	   
+           if( nmpar > 0 )
+	   {
+	      dfm = new double[nmpar];
+              sfm = new double[nmpar];
+	   }
+
+	   // Try nondimensional units for first tests.
+           for( int i=0 ; i<nmpar ;i++)
+	      sfm[i]=1;
+
+	   //	   compute_f_and_df( simulation, nvar, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
+	   //			     GlobalObservations, f, dfs, dfm, myRank );
+           int method, bfgs_m;
+	   simulation.get_optmethod( method, bfgs_m );
+	   
+           lbfgs( simulation, nvar, xs, sf, nmpar, xm, sfm, GlobalSources, GlobalTimeSeries,
+		  GlobalObservations, bfgs_m, myRank );
 
 	   if( myRank == 0 )
 	   {

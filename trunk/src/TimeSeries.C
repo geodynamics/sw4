@@ -1595,7 +1595,6 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
 //   retval->m_xyzcomponent = m_xyzcomponent;
 
 // UTC time reference point:
-//   retval->m_utc_set = m_utc_set;
    for( int c=0; c < 7; c++ )
       retval->m_utc[c] = m_utc[c];
 	 

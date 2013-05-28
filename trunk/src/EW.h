@@ -103,6 +103,7 @@ void processMaterialBlock( char* buffer, int & blockCount );
 void processMaterialPfile(char* buffer);
 void processMaterialEtree(char* buffer);
 void processMaterialVimaterial(char* buffer);
+void processMaterialInvtest(char* buffer);
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
@@ -480,7 +481,11 @@ void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fle
 		       int& stepselection, bool& do_linesearch, int& varcase, bool& testing );
 void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
+void material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
+			     vector<Sarray>& mu, vector<Sarray>& lambda );
 void get_material_parameter( int nmpar, double* xm );
+
+void material_correction( int nmpar, double* xm );
 
 void get_nr_of_material_parameters( int& nmvar );
 void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 

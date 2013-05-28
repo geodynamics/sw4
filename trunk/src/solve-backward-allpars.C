@@ -257,6 +257,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   Up[0].save_to_disk("ubackedout.bin");
    //   U[0].save_to_disk("umbackedout.bin");
    // 
+    material_to_parameters( nmpar, gradientm, gRho, gMu, gLambda );
+
    // Sum gradient contributions from all processors
    double gradtmp[11];
    for( int s=0 ; s < 11 ; s++ )

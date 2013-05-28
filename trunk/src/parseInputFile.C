@@ -10,6 +10,7 @@
 #include "MaterialPfile.h"
 #include "MaterialIfile.h"
 #include "MaterialVolimagefile.h"
+#include "MaterialInvtest.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
@@ -369,6 +370,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processMaterialPfile( buffer );
        else if (startswith("vimaterial", buffer))
 	 processMaterialVimaterial( buffer );
+       else if (startswith("invtestmaterial", buffer))
+	  processMaterialInvtest(buffer);
        else if (startswith("efile", buffer))
        {
 #ifndef ENABLE_ETREE
@@ -6776,5 +6779,39 @@ void EW::processMaterialVimaterial(char* buffer)
       CHECK_INPUT( 0, "Error parsing vimaterial, must set (rho,mu,lambda) or (rho,vs,vp) ");
    }
    MaterialData *mdata = new MaterialVolimagefile( this, rhomula, path, rho, mu, lambda, qp, qs );
+   add_mtrl_block(mdata);
+}
+
+//-----------------------------------------------------------------------
+void EW::processMaterialInvtest(char* buffer)
+{
+   int nr=1;
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("invtestmaterial", token) == 0,
+	       "ERROR: not an invtestmaterial line: " << token);
+   token = strtok(NULL, " \t");
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else if( startswith("type=",token) )
+      {
+	 token += 5;
+         if( strcmp(token,"sineperturbation")==0 )
+	    nr = 1;
+	 else if( strcmp(token,"box")==0 )
+	    nr = 2;
+         else
+	    CHECK_INPUT( 0, "Error invtestmaterial, type = " << token << " not recognized" );
+      }
+      else
+      {
+	 badOption("invtestmaterial", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   MaterialData *mdata = new MaterialInvtest( this, nr );
    add_mtrl_block(mdata);
 }
