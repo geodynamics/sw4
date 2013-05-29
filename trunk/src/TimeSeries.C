@@ -71,7 +71,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
-  mQuietMode(false)
+  mQuietMode(false),
+  m_compute_scalefactor(true)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
@@ -100,8 +101,11 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 
    REQUIRE2(counter == 1,"Exactly one processor must be writing each SAC, but counter = " << counter <<
 	    " for receiver station " << m_fileName );
-   if (!m_myPoint) return;
-   
+   if (!m_myPoint)
+   {
+      m_compute_scalefactor = false;
+      return;
+   }
 // from here on this processor writes this sac station and knows about its topography
 
 // evaluate z-coordinate of topography
@@ -818,6 +822,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
    else
    {
 
+      //      cout << "IN write_usgs " << " mt0 = " << m_t0 << " mshift = " << m_shift << endl;
 // frequency resolution
 //    double freq_limit=-999;
 //    if (a_ew->m_prefilter_sources)
@@ -1586,6 +1591,8 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    retval->mLastTimeStep  = mLastTimeStep;
    //   if( m_myPoint )
    //      cout << "In copy, xyz = " << m_xyzcomponent << endl;
+   retval->m_scalefactor = m_scalefactor;
+   retval->m_compute_scalefactor = m_compute_scalefactor;
 
 // Component rotation:
    retval->m_calpha = m_calpha;
@@ -2057,8 +2064,8 @@ void TimeSeries::print_timeinfo() const
    {
      cout << "Observation/TimeSeries from station '" << m_staName << "' at grid point " << 
        m_i0 << " " << m_j0 << " " << m_k0 << endl;
-      cout << "   t0 = " << m_t0 << " dt= " << m_dt << endl;
-      cout << "   Observation interval  [ " << m_t0 << " , " << m_t0 + m_dt*mLastTimeStep << " ] simulation time " << endl;
+      cout << "   t0 = " << m_t0 << " shift= " << m_shift << " dt= " << m_dt << endl;
+      cout << "   Observation interval  [ " << m_t0+m_shift << " , " << m_t0 + m_shift + m_dt*mLastTimeStep << " ] simulation time " << endl;
       printf( "   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
 	     m_utc[4], m_utc[5], m_utc[6] );
    }
@@ -2165,6 +2172,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 
 	    allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
 
+
 	    if( debug )
 	    {
 	       cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
@@ -2227,6 +2235,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    cout << " found on sac file" << endl;
   	    cout << "  station not read " << endl;
 	 }
+            cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       }
       else
       {
@@ -2310,7 +2319,7 @@ void TimeSeries::readSACheader( const char* fname, double& dt, double& t0,
    }
 
 // Take out wanted information
-   dt     = float70[0];
+   dt     = float70[0]; 
    t0     = float70[5];
    lat    = float70[31];
    lon    = float70[32];
@@ -2394,20 +2403,21 @@ void TimeSeries::convertjday( int jday, int year, int& day, int& month )
       cout << "convertjday: ERROR, jday is outside range " << endl;
 }
 
-//-----------------------------------------------------------------------
-void TimeSeries::reset_utc( int utc[7] )
-{
-   for( int c=0 ; c < 7 ; c++ )
-      m_utc[c] = utc[c];
-   int utcrefsim[7];
-   m_ew->get_utc(utcrefsim);
-   m_t0 = utc_distance( utcrefsim, m_utc );
-}
+////-----------------------------------------------------------------------
+//void TimeSeries::reset_utc( int utc[7] )
+//{
+//   for( int c=0 ; c < 7 ; c++ )
+//      m_utc[c] = utc[c];
+//   int utcrefsim[7];
+//   m_ew->get_utc(utcrefsim);
+//   m_t0 = utc_distance( utcrefsim, m_utc );
+//}
 
 //-----------------------------------------------------------------------
 void TimeSeries::set_utc_to_simulation_utc()
 {
    m_ew->get_utc(m_utc);
+   m_shift += m_t0;
    m_t0 = 0;
 }
 
@@ -2480,4 +2490,24 @@ void TimeSeries::getwgh5( double ai, double wgh[6], double dwgh[6], double ddwgh
    ddwgh[3] = 4.0/3 - 2*ai*ai - ai;
    ddwgh[4] = (-1+6*ai+6*ai*ai)/12;
    ddwgh[5] = 0;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::set_scalefactor( double value )
+{
+   m_scalefactor = value;
+   m_compute_scalefactor = false;
+}
+
+
+//-----------------------------------------------------------------------
+bool TimeSeries::get_compute_scalefactor() const
+{
+   return m_compute_scalefactor;
+}
+
+//-----------------------------------------------------------------------
+double TimeSeries::get_scalefactor() const
+{
+   return m_scalefactor;
 }

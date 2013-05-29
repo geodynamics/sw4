@@ -57,7 +57,7 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<double> & h, dou
 double product( TimeSeries& ts ) const;
 double product_wgh( TimeSeries& ts ) const;
 
-void reset_utc( int utc[7] );
+   //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
@@ -68,6 +68,10 @@ void set_shift( double shift );
 double get_shift() const;
 void add_shift( double shift );
 std::string getStationName(){return m_staName;}
+
+void set_scalefactor( double value );
+bool get_compute_scalefactor() const;
+double get_scalefactor() const;
 
 // for simplicity, make the grid point location public
 int m_i0;
@@ -135,17 +139,18 @@ double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_x_azimuth;
 bool mBinaryMode;
 
 // UTC time for start of seismogram, 
-//     m_t0 is start of seismogram in simulation time =  m_utc - 'utc reference time',
+//     m_t0  =  m_utc - 'utc reference time',
 //           where 'utc reference time' corresponds to simulation time zero.
-//     the time series values are thus given by t_k = m_t0 + k*m_dt, k=0,1,..,mLastTimeStep
-//    NOTE: m_t0 can be updated by an additional shift when dealing with observations.
-//bool m_utc_set;//, m_utc_offset_computed;
+//     the time series values are thus given by simulation times t_k = m_t0 + m_shift + k*m_dt, k=0,1,..,mLastTimeStep
 int m_utc[7];
 
 // Variables for rotating the output displacement or velocity components when Nort-East-UP is 
 // selected (m_xyzcomponent=false) instead of Cartesian components (m_xyzcomponent=true).
 bool m_xyzcomponent;
 double m_calpha, m_salpha, m_thxnrm, m_thynrm;
+
+bool m_compute_scalefactor;
+double m_scalefactor;
 
 //  double m_dthi, m_velocities;
 // double m_dmx, m_dmy, m_dmz, m_d0x, m_d0y, m_d0z;

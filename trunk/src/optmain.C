@@ -444,19 +444,34 @@ void test_hessian(  EW& simulation, vector<Source*>& GlobalSources,
 void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 			    vector<TimeSeries*>& GlobalTimeSeries,
 			    vector<TimeSeries*> & GlobalObservations, int myRank,
-			    int varcase, int nvar, double* sf )
+			    int varcase, int nvar, double* sf, bool can_reuse_globaltimeseries )
 {
    // Compute Hessian for input source:
    bool write_hessian = true;
    if( !simulation.compute_sf() )
       simulation.get_scalefactors(sf);
-   if( simulation.compute_sf() || varcase == 3 )
+
+   bool compute_shift_scalefactor=false;
+   if( varcase == 3 )
+   {      
+      for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
+	 if( GlobalTimeSeries[m]->get_compute_scalefactor() )
+	    compute_shift_scalefactor = true;
+	 else
+	    sf[m+11] = GlobalTimeSeries[m]->get_scalefactor();
+   }
+
+   if( simulation.compute_sf() || compute_shift_scalefactor )
    {
+
    // Run forward problem 
-      if(myRank == 0 )
-	 cout << endl << "*** Computing scale factors..." << endl << 
-	    "Solving forward problem for evaluating misfit" << endl;
-      simulation.solve( GlobalSources, GlobalTimeSeries );
+      if( !can_reuse_globaltimeseries )
+      {
+	 if(myRank == 0 )
+	    cout << endl << "*** Computing scale factors..." << endl << 
+	       "Solving forward problem for evaluating misfit" << endl;
+	 simulation.solve( GlobalSources, GlobalTimeSeries );
+      }
    // Compute misfit, 'diffs' will hold the source for the adjoint problem
       vector<TimeSeries*> diffs;
       for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
@@ -464,9 +479,6 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 	 TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
 	 diffs.push_back(elem);
       }
-      if( myRank == 0 )
-	 cout << "Starting to evaluate shift scale factors" << endl;
-
       double mf = 0;
       double* dshiftloc  = new double[GlobalTimeSeries.size()];
       double* ddshiftloc = new double[GlobalTimeSeries.size()];
@@ -488,10 +500,15 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 	 //	       cout << "scale factors " << m << " : dshift= " << dshift[m] << " ddshift= " << ddshift[m] << " dd1shift= " << dd1shift[m] << endl;
 	 //	    }
 	 for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-	    if( ddshift[m] > 0 )
-	       sf[11+m] = 1/sqrt(ddshift[m]);
-	    else
-	       sf[11+m] = 1/sqrt(dd1shift[m]);
+	 {
+            if( GlobalTimeSeries[m]->get_compute_scalefactor() )
+	    {
+	       if( ddshift[m] > 0 )
+		  sf[11+m] = 1/sqrt(ddshift[m]);
+	       else
+		  sf[11+m] = 1/sqrt(dd1shift[m]);
+	    }
+	 }
 	 //         sf[11] = 0.0127969;
 	 //	 sf[12] =  0.00759026;
 	 //         sf[13] = 0.00510912;
@@ -502,9 +519,6 @@ void compute_scalefactors(  EW& simulation, vector<Source*>& GlobalSources,
 	 delete[] dd1shift;
 
       }
-      if( myRank == 0 )
-	 cout << "Done evaluating shift scale factors" << endl;
-
       delete[] dshiftloc;
       delete[] ddshiftloc;
       delete[] dd1shiftloc;
@@ -2470,26 +2484,19 @@ int main(int argc, char **argv)
 // run the forward solver in stealth mode
        simulation.setQuiet(true);
 
-     // Filter observed data if required
+// 1. Filter observed data if required
 	for( int m = 0; m < GlobalObservations.size(); m++ )
 	{
-	   GlobalObservations[m]->set_utc_to_simulation_utc();
 	   if( simulation.m_prefilter_sources && simulation.m_filter_observations )
-	   {
 	      GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
-     //	      GlobalObservations[m]->writeFile( "_fd" ); // AP changed the extension to _fd = filtered data
-	   }
 	}
 
-//  First copy observations to GlobalTimeSeries, later, solve will insert 
-//  the simulation time step and start time into GlobalTimeSeries.
+// 2.First copy observations to GlobalTimeSeries, later, solve will insert 
+//   the simulation time step and start time into GlobalTimeSeries.
 	for( int m = 0; m < GlobalObservations.size(); m++ )
 	{
 	   string newname = "_out";
 	   TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
-	   // Reset station utc reference point to simulation utc reference point,
-	   // reasonable since GlobalTimeSeries will be used with the forward solver.
-           elem->set_utc_to_simulation_utc();
 	   GlobalTimeSeries.push_back(elem);
 	}
 
@@ -2498,9 +2505,10 @@ int main(int argc, char **argv)
 	   cout << "Running sw4opt on " <<  nProcs << " processors..." << endl
 		<< "Writing output to directory: " 
 		<< simulation.getOutputPath() << endl;
+           simulation.print_utc();
 	}
 	
-// Variables needed:
+// 3.Variables needed:
 	int maxit, maxrestart, varcase=0, stepselection=0;
 	bool dolinesearch, fletcher_reeves=true, testing=false;
 	double tolerance;
@@ -2527,70 +2535,48 @@ int main(int argc, char **argv)
            n  = 11+GlobalObservations.size();
 	}
      
-// Initial guess
         bool output_initial_seismograms = false;
-
-//   Default guess, the input source, stored in GlobalSources[0]
+// 4. Get some parameters, default guess, the input source, stored in GlobalSources[0]
         bool guesspos, guesst0fr, guessmom, guessshifts;
+        bool can_reuse_globaltimeseries = false;
         simulation.compute_guess( guesspos, guesst0fr, guessmom, guessshifts, output_initial_seismograms );
 	GlobalSources[0]->get_parameters(xv);
 
-	// Compute one forward solve, and guess shift. Use input source parameters for the synthetics.
-        if( output_initial_seismograms || (varcase==3 && guessshifts) )
+// 5. Initial guess for shifts, based on the input source, or set to zero.
+        if( varcase==3 )
 	{
-           simulation.print_utc();
-           vector<TimeSeries*> localTimeSeries;
-	   for( int m = 0; m < GlobalObservations.size(); m++ )
+	   if( guessshifts )
 	   {
-	      string newname = "_ini";
-	      TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
-	      elem->set_utc_to_simulation_utc();
-	      localTimeSeries.push_back(elem);
-	      if (simulation.getVerbosity()>=2)
-		 GlobalObservations[m]->print_timeinfo();
-	   }
-	   if (myRank == 0)
-	   {
-	     cout << "Solving a forward problem to compute initial seismograms..." << endl;
-	   }
-	   simulation.solve( GlobalSources, localTimeSeries );
-           if( output_initial_seismograms )
-	   {
-	      for (int ts=0; ts<localTimeSeries.size(); ts++)
+	      if (myRank == 0)
+		 cout << "Solving a forward problem to compute initial guess for shifts..." << endl;
+
+	      simulation.solve( GlobalSources, GlobalTimeSeries );
+	      double dt = simulation.getTimeStep();
+	      guess_shift( n, xv, GlobalTimeSeries, GlobalObservations, dt );
+	      if( myRank == 0 )
 	      {
-		 localTimeSeries[ts]->writeFile();
-		 if (simulation.getVerbosity()>=2)
-		    localTimeSeries[ts]->print_timeinfo();
+		 cout  << "Computed initial time shifts... "<<endl;
+		 for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+		    cout << "station '" << GlobalTimeSeries[ts]->getStationName() << "' t-shift = " << xv[11+ts] << endl;
 	      }
+	      // can reuse the forward simulation if the initially guessed source will not be different.
+              can_reuse_globaltimeseries = !guesspos && !guessmom;
 	   }
-	   if( varcase == 3 && guessshifts )
-	   {
-              double dt = simulation.getTimeStep();
-              guess_shift( n, xv, localTimeSeries, GlobalObservations, dt );
-		 if( myRank == 0 )
-		 {
-		    cout  << "Computed initial time shifts... "<<endl;
-		    for (int ts=0; ts<localTimeSeries.size(); ts++)
-		      cout << "station '" << localTimeSeries[ts]->getStationName() << "' t-shift = " << xv[11+ts] << endl;
-		 }
-	   }
-	   for( int ts=0 ; ts<localTimeSeries.size();ts++)
-	      delete localTimeSeries[ts];
-	} // end if( output_initial_seismograms || (varcase==3 && guessshifts) )
+	   else
+	      for( int i=11 ; i < n ; i++ )
+		 xv[i] = 0;
 
-//  Set initial shifts to zero if not estimated.
-        if( varcase == 3 && !guessshifts )
-	   for( int i=11 ; i < n ; i++ )
-	      xv[i] = 0;
-
-// Output shifted observation data
+	}
+	
+// 6.Output observation data, possibly shifted
         for( int m=0 ; m < GlobalObservations.size() ; m++ )
 	{
            if( varcase == 3 )
-	      GlobalObservations[m]->add_shift( xv[11+m]);
+	      GlobalObservations[m]->add_shift( xv[11+m] );
            GlobalObservations[m]->writeFile( "_fd" ); 
 	}
- 	   
+
+// 7.Compute initial guess source, using the shifted observations
 	if( guesspos )
 	{
 	   // Guess source position, and perhaps t0
@@ -2611,6 +2597,7 @@ int main(int argc, char **argv)
 	   guess_source_moments( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 				 xv, myRank );
 
+// 8. Initial guess is now done, output the result
 	if( myRank == 0 )
 	{
 	   cout << "Initial source guess : \n";
@@ -2618,6 +2605,17 @@ int main(int argc, char **argv)
 	   cout << "  mxx = " << xv[3] << " mxy= " << xv[4] << " mxz= " << xv[5] << endl;
 	   cout << "  myy = " << xv[6] << " myz= " << xv[7] << " mzz= " << xv[8] << endl;
 	   cout << "   t0 = " << xv[9] << " freq = " << xv[10] << endl;
+           if( varcase == 3 )
+	   {
+	      cout << "Initial shifts: \n";
+              for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
+	      {
+	         cout << " shift" << m+1 << " = " << xv[11+m] << " " ;
+                 if( (m+1)%5 == 0 )
+		    cout << endl;
+	      }
+	      cout << endl;
+	   }
 	}
 
 	// nvar is number of source parameters
@@ -2631,8 +2629,40 @@ int main(int argc, char **argv)
 	else if( varcase == 3 )
 	   nvar = 9;
 
+// 9. Output the initial synthetic seismograms, if wanted.
+        if( output_initial_seismograms )
+	{
+	   // Do we need to recompute the time series ?
+           if( !can_reuse_globaltimeseries )
+	   {
+	      if (myRank == 0)
+		 cout << "Solving a forward problem to compute initial seismograms..." << endl;
+	      simulation.solve( GlobalSources, GlobalTimeSeries );
+              can_reuse_globaltimeseries = true;
+	   }
+	   // Copy into time series with a different name
+           vector<TimeSeries*> localTimeSeries;
+	   for( int m = 0; m < GlobalObservations.size(); m++ )
+	   {
+	      string newname = "_ini";
+	      TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, newname, true );
+	      localTimeSeries.push_back(elem);
+	   }
+	   // Output the time series
+	   for (int ts=0; ts<localTimeSeries.size(); ts++)
+	   {
+	      localTimeSeries[ts]->writeFile();
+	      if (simulation.getVerbosity()>=2)
+		 localTimeSeries[ts]->print_timeinfo();
+	   }
+	   // Remove the temporary variable
+	   for( int ts=0 ; ts<localTimeSeries.size();ts++)
+	      delete localTimeSeries[ts];
+	}
+
+// 9. Compute scale factors, reuse GlobalTimeSeries if possible
 	compute_scalefactors( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank,
-			      varcase, nvar, sf );
+			      varcase, nvar, sf, can_reuse_globaltimeseries );
 	if( myRank == 0 )
 	{
            cout << "scalefactors x0=" << sf[0] << " y0=" << sf[1] << " z0=" << sf[2] << " Mxx=" << sf[3]
@@ -2643,11 +2673,12 @@ int main(int argc, char **argv)
 		 cout << "sf-obs" << m << "= " << sf[11+m]<<endl;
 	}
 
-	// Shift back, the optimization code assumes that GlobalObservations are unshifted.
+// 10. Shift back, the optimization code assumes that GlobalObservations are unshifted.
         if( varcase == 3 )
 	   for( int m=0 ; m < GlobalObservations.size() ; m++ )
 	      GlobalObservations[m]->add_shift(-xv[11+m]);
 
+// 11. Initialization is now done. Next choose a task to perform....
         if( simulation.m_opttest == 1 )
 	   testsourced2( simulation, GlobalSources );
         else if( simulation.m_opttest == 2 )

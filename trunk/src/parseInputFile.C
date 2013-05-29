@@ -5652,6 +5652,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
   double t0 = 0;
+  double scalefactor=1;
   bool cartCoordSet = false, geoCoordSet = false;
   string fileName = "rec";
   string staName = "station";
@@ -5662,10 +5663,9 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   bool dateSet = false;
   bool timeSet = false;
   bool topodepth = false;
-  bool ignore_utc = false;
 
-  int utc[7];
-  bool utcset = false;
+  //  int utc[7];
+  //  bool utcset = false;
 
   string date = "";
   string time = "";
@@ -5678,6 +5678,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   char exclstr[4]={'\0','\0','\0','\0'};
   bool usex=true, usey=true, usez=true;
   bool usgsfileset=false, sf1set=false, sf2set=false, sf3set=false;
+  bool scalefactor_set=false;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
@@ -5783,32 +5784,32 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         token += 6; // skip shift=
         t0 = atof(token);
      }
-     else if( startswith("utc=",token) )
-     {
-	token += 4;
-        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
-	   ignore_utc = true;
-	else
-	{
-	   int year,month,day,hour,minute,second,msecond, fail;
-	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
-	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
-	   if( fail == 0 )
-	   {
-              utcset = true;
-	      utc[0] = year;
-	      utc[1] = month;
-	      utc[2] = day;
-	      utc[3] = hour;
-	      utc[4] = minute;
-	      utc[5] = second;
-	      utc[6] = msecond;
-	   }
-	   else
-	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
-			  << " or use utc=ignore" );
-	}
-     }
+     //     else if( startswith("utc=",token) )
+     //     {
+     //	token += 4;
+     //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
+     //	   ignore_utc = true;
+     //	else
+     //	{
+     //	   int year,month,day,hour,minute,second,msecond, fail;
+     //	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
+     //	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+     //	   if( fail == 0 )
+     //	   {
+     //              utcset = true;
+     //	      utc[0] = year;
+     //	      utc[1] = month;
+     //	      utc[2] = day;
+     //	      utc[3] = hour;
+     //	      utc[4] = minute;
+     //	      utc[5] = second;
+     //	      utc[6] = msecond;
+     //	   }
+     //	   else
+     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
+     //			  << " or use utc=ignore" );
+     //	}
+     //     }
      else if( startswith("windowL=",token))
      {
         token += 8;
@@ -5861,6 +5862,12 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         token += 9;
         sacfile3 += token;
 	sf3set = true;
+     }
+     else if( startswith("scalefactor=",token) )
+     {
+	token += 12;
+	scalefactor = atof(token);
+	scalefactor_set = true;
      }
      else
      {
@@ -5968,10 +5975,14 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
     //        This is useful for synthetic data.
+
     if( usgsfileset )
-       ts_ptr->readFile( this, ignore_utc );
+       ts_ptr->readFile( this, false );
     else
-       ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), ignore_utc );
+       ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), false );
+
+// Set reference UTC to simulation UTC, for easier plotting.
+    ts_ptr->set_utc_to_simulation_utc();
 
 // Set window, in simulation time
     if( winlset || winrset )
@@ -5987,13 +5998,13 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
     if( !usex || !usey || !usez )
        ts_ptr->exclude_component( usex, usey, usez );
 
-// UTC on command line overrides utc in file, use with care.
-    if( utcset )
-       ts_ptr->reset_utc( utc );
-
 // Add extra shift from command line, use with care.
     if( t0 != 0 )
        ts_ptr->add_shift( t0 );
+
+// Set scale factor if given
+    if( scalefactor_set )
+       ts_ptr->set_scalefactor( scalefactor );
 
 // include the observation in the global list
     a_GlobalTimeSeries.push_back(ts_ptr);
