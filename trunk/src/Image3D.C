@@ -538,8 +538,9 @@ void Image3D::compute_file_suffix( int cycle, std::stringstream& fileSuffix )
       fileSuffix << "0";
       temp /= 10;
    }
-   fileSuffix << cycle << ".3D";
-   fileSuffix << "." << m_modestring << ".sw4img";
+// AP changed the suffix to 3Dimg
+   fileSuffix << cycle << ".3Dimg";
+// AP   fileSuffix << "." << m_modestring << ".sw4img";
 }
 
 //-----------------------------------------------------------------------

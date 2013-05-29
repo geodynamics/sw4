@@ -200,10 +200,11 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      // {
      //   processAttenuation(buffer);
      // }
-     else if (startswith("efile", buffer))
-     {
-        getEfileInfo(buffer); // read efile name, etc for setting up topography from the efile
-     }
+// we now get the efile info for topography on that command line
+     // else if (startswith("efile", buffer))
+     // {
+     //    getEfileInfo(buffer); // read efile name, etc for setting up topography from the efile
+     // }
      else if (startswith("time", buffer))
      {
         processTime(buffer); // process time command to set reference UTC before reading stations.
@@ -1303,6 +1304,7 @@ void EW::processTopography(char* buffer)
 	  {
 	     m_topoInputStyle=Efile;
 	     m_topography_exists=true;
+	     needFileName=true; // we now require the file name to be given on the topography command line
 	  }
 	  else if (strcmp("gaussian", token) == 0)
 	  {
@@ -1322,6 +1324,21 @@ void EW::processTopography(char* buffer)
 	//        if (m_myRank==0)
 	// 	 cout << "read topo file name=" << m_topoFileName <<endl;
        }
+#ifdef ENABLE_ETREE
+       else if( startswith("etree=", token ) )
+       {
+	  token += 6;
+	  m_topoFileName = token;
+	  m_topoInputStyle=Efile;
+	  m_topography_exists=true;
+	  gotFileName=true;
+       }
+      else if (startswith("xetree=", token))
+      {
+	 token += 7; // skip xetree=
+	 m_topoExtFileName = token;
+      }
+#endif
 //                        12345678901
        else if( startswith("resolution=", token ) )
        {
@@ -2537,90 +2554,90 @@ void EW::processGlobalMaterial(char* buffer)
 }
 
 //-----------------------------------------------------------------------
-void EW::getEfileInfo(char* buffer)
-{
-#ifdef ENABLE_ETREE
-  // Used only for efiles
-   string accessmode = "parallel";
+// void EW::getEfileInfo(char* buffer)
+// {
+// #ifdef ENABLE_ETREE
+//   // Used only for efiles
+//    string accessmode = "parallel";
 
-   char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("efile", token) == 0,
-	       "ERROR: efile info can only be obtained from an efile line, not: " << token);
+//    char* token = strtok(buffer, " \t");
+//    CHECK_INPUT(strcmp("efile", token) == 0,
+// 	       "ERROR: efile info can only be obtained from an efile line, not: " << token);
 
-   string commandName = token;
+//    string commandName = token;
 
-   string err = token;
-   err += " Error: ";
+//    string err = token;
+//    err += " Error: ";
 
-   token = strtok(NULL, " \t");
+//    token = strtok(NULL, " \t");
 
-   while (token != NULL)
-   {
-      // while there are tokens in the string still
-      if (startswith("#", token) || startswith(" ", buffer))
-	 // Ignore commented lines and lines with just a space.
-	 break;
-// //       else if (startswith("model=", token))
-// //       {
-// //          token += 6; // skip model=
-// //         model = token;
-// //       }
-      else if (startswith("etree=", token))
-      {
-	 token += 6; // skip etree=
-	 m_topoFileName = token;
-      }
-      else if (startswith("xetree=", token))
-      {
-	 token += 7; // skip xetree=
-	 m_topoExtFileName = token;
-      }
-      else if (startswith("logfile=", token))
-      {
-	 token += 8; // skip logfile=
-      }
-      else if (startswith("query=", token))
-      {
-	 token += strlen("query=");
- 	 m_QueryType = token;
-	 CHECK_INPUT(strcmp(token, "FIXEDRES") == 0 || 
-		     strcmp(token, "MAXRES") == 0,
-		     err << "query can only be set to FIXEDRES or MAXRES, not: " << m_QueryType);
-      }
-      else if (startswith("vsmin=", token))
-      {
-	 token += strlen("vsmin=");
-      }
-      else if (startswith("vpmin=", token))
-      {
-	 token += strlen("vpmin=");
-      }
-      else if (startswith("access=", token))
-      {
-	 token += strlen("access=");
-	 CHECK_INPUT(strcmp(token, "parallel") == 0 ||
- 		     strcmp(token, "serial") == 0,
- 		     err << "access attribute can only be set to serial, or parallel, not: " << token);
-	 accessmode = token;
-      }
-      else if( startswith("resolution=", token ) )
-      {
-         token += 11;
-         m_EFileResolution = atof(token);
-         CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
-      }
-      else
-      {
-	 badOption(commandName, token);
-      }
-      token = strtok(NULL, " \t");
-   }
-   // End parsing...
+//    while (token != NULL)
+//    {
+//       // while there are tokens in the string still
+//       if (startswith("#", token) || startswith(" ", buffer))
+// 	 // Ignore commented lines and lines with just a space.
+// 	 break;
+// // //       else if (startswith("model=", token))
+// // //       {
+// // //          token += 6; // skip model=
+// // //         model = token;
+// // //       }
+//       else if (startswith("etree=", token))
+//       {
+// 	 token += 6; // skip etree=
+// 	 m_topoFileName = token;
+//       }
+//       else if (startswith("xetree=", token))
+//       {
+// 	 token += 7; // skip xetree=
+// 	 m_topoExtFileName = token;
+//       }
+//       else if (startswith("logfile=", token))
+//       {
+// 	 token += 8; // skip logfile=
+//       }
+//       else if (startswith("query=", token))
+//       {
+// 	 token += strlen("query=");
+//  	 m_QueryType = token;
+// 	 CHECK_INPUT(strcmp(token, "FIXEDRES") == 0 || 
+// 		     strcmp(token, "MAXRES") == 0,
+// 		     err << "query can only be set to FIXEDRES or MAXRES, not: " << m_QueryType);
+//       }
+//       else if (startswith("vsmin=", token))
+//       {
+// 	 token += strlen("vsmin=");
+//       }
+//       else if (startswith("vpmin=", token))
+//       {
+// 	 token += strlen("vpmin=");
+//       }
+//       else if (startswith("access=", token))
+//       {
+// 	 token += strlen("access=");
+// 	 CHECK_INPUT(strcmp(token, "parallel") == 0 ||
+//  		     strcmp(token, "serial") == 0,
+//  		     err << "access attribute can only be set to serial, or parallel, not: " << token);
+// 	 accessmode = token;
+//       }
+//       else if( startswith("resolution=", token ) )
+//       {
+//          token += 11;
+//          m_EFileResolution = atof(token);
+//          CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
+//       }
+//       else
+//       {
+// 	 badOption(commandName, token);
+//       }
+//       token = strtok(NULL, " \t");
+//    }
+//    // End parsing...
  
-#else
-   CHECK_INPUT(0, "Error: Etree support not compiled into EW (-DENABLE_ETREE)");
-#endif
-}
+// #else
+//    CHECK_INPUT(0, "Error: Etree support not compiled into EW (-DENABLE_ETREE)");
+// #endif
+// }
 
 // //-----------------------------------------------------------------------
 // void FileInput::processLimitfrequency(char* buffer)
@@ -6604,22 +6621,15 @@ void EW::processMaterialEtree(char* buffer)
   double etreeZmax = max(max(max(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
   
   if( getVerbosity() >=2 && m_myRank == 0 )
-    cout << name << " has bounds " << etreeXmin << " " << etreeXmax << " " << etreeYmin << " "
-         << etreeYmax << " " << etreeZmin << " " << etreeZmax << endl;
-
-  //  mEFileFound = true;
+    printf("Horizontal extent of etree %s xmin=%e, xmax=%e, ymin=%e, ymax=%e\n", name.c_str(), etreeXmin, etreeXmax, etreeYmin, etreeYmax);
   
-  //  if (vsMinSet) ef->thresholdVs(vsmin);
-  //  if (vpMinSet) ef->thresholdVp(vpmin);
-
 //   // needed to write topographic image slices
   mEtreeFile = ef;
 
-  //  setEtreeFile( ef );
   add_mtrl_block( ef  );  
      
 #else
-  CHECK_INPUT(0, "Error: Etree support not compiled into SW4 (-DENABLE_ETREE)");
+  CHECK_INPUT(0, "Error: Etree support not compiled into SW4 (use -DENABLE_ETREE)");
 #endif
 }
 

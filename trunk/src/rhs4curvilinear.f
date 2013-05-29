@@ -30,14 +30,14 @@
 
 c-----------------------------------------------------------------------
       subroutine METRIC( ifirst, ilast, jfirst, jlast, kfirst, klast,
-     *                   x, y, z, met, jac )
+     *                   x, y, z, met, jac, ierr )
       implicit none
       real*8 c1, c2
       parameter( c1=2d0/3, c2=-1d0/12 )
       real*8 fs, ot, ft, os, d3
       parameter( fs= 5d0/6, ot=1d0/12, ft=4d0/3, os=1d0/6, d3=14d0/3 )
 
-      integer ni, nj, nk, i, j, k, ifirst, ilast, jfirst, jlast
+      integer ni, nj, nk, i, j, k, ifirst, ilast, jfirst, jlast, ierr
       integer kfirst, klast
       real*8 x(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -46,6 +46,7 @@ c-----------------------------------------------------------------------
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 h, zr, zp, zq, sqzr
 
+      ierr=0
       h = x(ifirst+1,jfirst,kfirst)-x(ifirst,jfirst,kfirst)
       do k=kfirst,klast
          do j=jfirst,jlast
@@ -133,7 +134,9 @@ c     *       +3*z(ilast-2,j,k)-  ft*z(ilast-3,j,k)+0.25d0*z(ilast-4,j,k)
                if( zr.le.0 )then
                   write(*,101) 'Error, zr = ' , zr, ' at ', i, j, k
  101              format(' ', a, g12.5, a, 3(tr1,i3) )
-                  stop
+c are you kidding me?                  stop
+                  ierr=-1
+                  return
                endif
 c               if(i.eq.(ifirst+ilast)/2.and.j.eq.(jfirst+jlast)/2 )then
 c                  write(*,102) k, zr, z(i,j,k)

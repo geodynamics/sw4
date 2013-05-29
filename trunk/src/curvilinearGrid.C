@@ -5,7 +5,7 @@
 #include "F77_FUNC.h"
 extern "C" {
    void F77_FUNC(metric,METRIC)( int*, int*, int*, int*, int*, int*,
-				 double*, double*, double*, double*, double* );
+				 double*, double*, double*, double*, double*, int * );
    void F77_FUNC(gridinfo,GRIDINFO)( int*, int*, int*, int*, int*, int*,
 				     double*, double*, double*, double* );
    void F77_FUNC(metricexgh,METRICEXGH)( int*, int*, int*, int*, int*, int*, int*, int*, int*,
@@ -44,7 +44,12 @@ void EW::setup_metric()
 				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    }
    else
-      F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+   {
+     int ierr=0;
+     F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+     CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
+   }
+   
 
    communicate_array( mMetric, mNumberOfGrids-1 );
    communicate_array( mJ, mNumberOfGrids-1 );

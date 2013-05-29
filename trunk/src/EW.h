@@ -112,7 +112,7 @@ void processGMT(char* buffer);
 void processDeveloper(char* buffer);
 void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
-void getEfileInfo(char* buffer);
+//void getEfileInfo(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
 void setPrintCycle(int cycle) { mPrintInterval = cycle; }

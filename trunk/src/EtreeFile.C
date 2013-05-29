@@ -276,9 +276,8 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	    mQuery.errorHandler()->resetStatus();
             if( inside(lat,lon,elev) )
 	       {
-	    cout << "WARNING: Etree query failed for initial elevation of topography at grid point (i,j)= (" << i << ", " << j 
-	     << ") in grid g = " << topLevel << endl
-	     << " lat= " << lat << " lon= " << lon << " query elevation= " << elev << endl;
+		 printf("WARNING: Etree query failed for topoMat elevation at grid point (i,j)= (%i,%i) at (x,y)=(%e,%e) in grid g=%i\n"
+			" lat=%e, lon=%e query elevation=%e\n", i, j, x, y, topLevel, lat, lon, elev);
 	       }
 	    mEw->mTopoMat(i,j,1) = 0.;
 	    continue;

@@ -834,8 +834,8 @@ void TimeSeries::write_usgs_format(string a_fileName)
    fprintf(fd, "# Author: SW4\n");
    fprintf(fd, "# Scenario: %s\n", "test"/*a_ew->m_scenario.c_str()*/);
 //   if( m_utc_set )
-// AP: micro-second field is padded from left with 0, i.e., 1 micro sec gets written as 001
-   fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%i.%.3i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+// AP: micro-second field is padded from left with 0, i.e., 1 micro sec gets written as 001, second is also padded by a zero, if needed
+   fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%02i.%.3i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
 	   m_utc[4], m_utc[5], m_utc[6] );
       //   else
       //      fprintf(fd, "# Date: %i-%s-%i\n", mEventDay, mname[mEventMonth].c_str(), mEventYear);
@@ -2064,9 +2064,9 @@ void TimeSeries::print_timeinfo() const
    {
      cout << "Observation/TimeSeries from station '" << m_staName << "' at grid point " << 
        m_i0 << " " << m_j0 << " " << m_k0 << endl;
-      cout << "   t0 = " << m_t0 << " shift= " << m_shift << " dt= " << m_dt << endl;
-      cout << "   Observation interval  [ " << m_t0+m_shift << " , " << m_t0 + m_shift + m_dt*mLastTimeStep << " ] simulation time " << endl;
-      printf( "   Observation reference UTC  %02i/%02i/%i:%i:%i:%i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+     cout << "   t0 = " << m_t0 << " shift= " << m_shift << " dt= " << m_dt << endl;
+     cout << "   Observation interval  [ " << m_t0+m_shift << " , " << m_t0 + m_shift + m_dt*mLastTimeStep << " ] simulation time " << endl;
+     printf( "   Observation reference UTC  %02i/%02i/%i:%i:%i:%02i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
 	     m_utc[4], m_utc[5], m_utc[6] );
    }
 }
