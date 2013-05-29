@@ -161,13 +161,14 @@ void Image3D::setup_images( )
    // If there is a glitch, avoid it by adding an extra point to the z-direction
    m_extraz.resize( mEW->mNumberOfGrids );
    m_extraz[0] = 0;
-   for( int g=1 ; g < mEW->mNumberOfGrids ; g++ )
-   {
-      m_extraz[g] = 0;
-      if( mEW->m_zmin[g] + (mWindow[g][5]-1)*mEW->mGridSize[g] <
-          mEW->m_zmin[g-1] + (mWindow[g-1][4]-1)*mEW->mGridSize[g-1] )
-	 m_extraz[g] = 1;
-   }
+   // Feature disabled
+   //   for( int g=1 ; g < mEW->mNumberOfGrids ; g++ )
+   //   {
+   //      m_extraz[g] = 0;
+   //      if( mEW->m_zmin[g] + (mWindow[g][5]-1)*mEW->mGridSize[g] <
+   //          mEW->m_zmin[g-1] + (mWindow[g-1][4]-1)*mEW->mGridSize[g-1] )
+   //	 m_extraz[g] = 1;
+   //   }
 
    if( m_double )
    {

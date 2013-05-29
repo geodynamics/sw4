@@ -1114,6 +1114,7 @@ void EW::computeDT()
 			+ SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*la2mu)*jinv;
 // calculate eigenvalues of symmetric matrix
 	   F77_FUNC(dspev,DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
+
 	   if (INFO != 0)
 	   {
 	     printf("ERROR: computeDT: dspev returned INFO = %i for grid point (%i, %i, %i)\n", INFO, i, j, k);
@@ -1125,7 +1126,6 @@ void EW::computeDT()
 	     printf(" %15.7g  %15.7g %15.7g \n",Amat[2],Amat[4],Amat[5]);
 	     MPI_Abort(MPI_COMM_WORLD, 1);
 	   }
-	   
 // tmp
 //	   fprintf(fp,"%i %i %i %e %e %e\n", i, j, k, W[0], W[1], W[2]);
 
@@ -1136,6 +1136,14 @@ void EW::computeDT()
 	     MPI_Abort(MPI_COMM_WORLD, 1);
 	   }
 // local time step
+//           double asym = SQR(mMetric(2,i,j,k))+SQR(mMetric(3,i,j,k))+SQR(mMetric(4,i,j,k));
+//           double m1 = SQR(mMetric(1,i,j,k));
+//           double eg1 = m1*(3*mu+la)+mu*asym;
+//	   double eg2 = (mu+la)*(0.5*(m1+asym) +0.5*sqrt( (m1+asym)*(m1+asym)-4*SQR(mMetric(4,i,j,k))*m1)) + mu*(2*m1+asym);
+//           eg1 = eg1*4*jinv;
+//           eg2 = eg2*4*jinv;
+//           cout << "eig solver " << W[0] << " analytic values " << eg1 << " and " << eg2 << endl;
+
 	   dtCurvGP = dtGP = mCFL*sqrt(4.*mRho[g](i,j,k)/(-W[0]));
 	   dtloc = min(dtloc, dtGP);
 	   dtCurv = min(dtCurv, dtCurvGP);
