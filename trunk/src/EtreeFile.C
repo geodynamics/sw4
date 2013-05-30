@@ -274,11 +274,11 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	 {
 // If query generated an error, then bail out, otherwise reset status
 	    mQuery.errorHandler()->resetStatus();
-            if( inside(lat,lon,elev) )
-	       {
+//            if( inside(lat,lon,elev) )
+//	       {
 		 printf("WARNING: Etree query failed for topoMat elevation at grid point (i,j)= (%i,%i) at (x,y)=(%e,%e) in grid g=%i\n"
 			" lat=%e, lon=%e query elevation=%e\n", i, j, x, y, topLevel, lat, lon, elev);
-	       }
+//	       }
 	    mEw->mTopoMat(i,j,1) = 0.;
 	    continue;
 	 } // if
@@ -324,8 +324,8 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	       z = mEw->mZ(i,j,k) + ( mEw->mTopoGridExt(i,j,1) - mEw->mTopoMat(i,j,1) )*zeta;
 	       mEw->computeGeographicCoord(x, y, lon, lat);
 	       elev = -z;
-	       if( inside( lat, lon, elev )  )
-	       {
+	       // if( inside( lat, lon, elev )  )
+	       // {
 //---------------------------------------------------------
 // Query the location...
 //---------------------------------------------------------
@@ -337,6 +337,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 		     outside++; 
 		     continue;
 		  }
+// if we got here, we are inside...
                    
 		  density    = mPayload[0];
 		  vp         = mPayload[1];
@@ -400,17 +401,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 		     qs[g](i,j,k) = qus;
 		     qp[g](i,j,k) = qup;
 		  }
-		  //		  if (mThresholdVP && cp[g](i,j,k) < mMinVP)
-		  //		  {
-		  //		     cp[g](i,j,k) = mMinVP;
-		  //		     thresholdedVp++;
-		  //		  }
-		  //		  if (mThresholdVS && cs[g](i,j,k) < mMinVS)
-		  //		  {
-		  //		     cs[g](i,j,k) = mMinVS;
-		  //		     thresholdedVs++;
-		  //		  }
-	       } // end if inside
+	       // } // end if inside
 	       
 	    } // end for k...
 	 } // end for i...
@@ -448,8 +439,8 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	       mEw->computeGeographicCoord(x, y, lon, lat);
 	       elev = -z;
 
-	       if( inside( lat, lon, elev )  )
-	       {
+	       // if( inside( lat, lon, elev )  )
+	       // {
 	    //---------------------------------------------------------
 	    // Query the location...
 	    //---------------------------------------------------------
@@ -460,6 +451,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 		     outside++; 
 		     continue;
 		  }
+// if we got this far, we should be inside...
 		  density   = mPayload[0];
 		  vp        = mPayload[1];
 		  vs        = mPayload[2];
@@ -520,17 +512,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 		     qs[g](i,j,k) = qus;
 		     qp[g](i,j,k) = qup;
 		  }
-		  //		  if (mThresholdVP && cp[g](i,j,k) < mMinVP)
-		  //		  {
-		  //		     cp[g](i,j,k) = mMinVP;
-		  //		     thresholdedVp++;
-		  //		  }
-		  //		  if (mThresholdVS && cs[g](i,j,k) < mMinVS)
-		  //		  {
-		  //		     cs[g](i,j,k) = mMinVS;
-		  //		     thresholdedVs++;
-		  //		  }
-	       } // end if inside
+//	       } // end if inside
 	    } // end for k...
 	 } // end for i...
    } // end for g...
@@ -538,7 +520,8 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
    if (myRank ==0)
      cout << "Done reading etree properties..." << endl;
    mQuery.close();
-}
+} // end readEFile
+
 
 //-----------------------------------------------------------------------
 void EtreeFile::set_material_properties(std::vector<Sarray> & rho, 
