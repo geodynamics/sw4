@@ -200,11 +200,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      // {
      //   processAttenuation(buffer);
      // }
-// we now get the efile info for topography on that command line
-     // else if (startswith("efile", buffer))
-     // {
-     //    getEfileInfo(buffer); // read efile name, etc for setting up topography from the efile
-     // }
      else if (startswith("time", buffer))
      {
         processTime(buffer); // process time command to set reference UTC before reading stations.
@@ -251,27 +246,35 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
  	extractTopographyFromEfile(m_topoFileName, m_topoExtFileName, m_QueryType,
 				   m_EFileResolution);
-// 2. smooth the topo
- 	smoothTopography(m_maxIter);
      }
      else if (m_topoInputStyle == EW::GridFile)
      {
-// 1. read topography from grid file
  	extractTopographyFromGridFile(m_topoFileName);
-// 2. smooth the topo
- 	smoothTopography(m_maxIter);
      }
      else if (m_topoInputStyle == EW::CartesianGrid)
      {
-// 1. read topography from Cartesian grid file
  	extractTopographyFromCartesianFile(m_topoFileName);
-// 2. smooth the topo
- 	smoothTopography( m_maxIter );
      }
-     else if (m_topoInputStyle == EW::GaussianHill)
+     else if (m_topoInputStyle == EW::TopoImage)
+     {
+ 	extractTopographyFromImageFile(m_topoFileName);
+     }
+     else if (m_topoInputStyle == EW::GaussianHill) // assumed to populate all grid points
      {
  	buildGaussianHillTopography(m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc);
      }      
+
+// preprocess the mTopo array
+     if (m_topoInputStyle != EW::GaussianHill) // no smoothing or extrapolation for a gaussian hill
+     {
+// 1. fill in any undefined ghost point values by extrapolation
+	extrapolateTopo(mTopo);
+// 2. check that all values are defined...
+	checkTopo(mTopo);
+// 3. smooth the topo
+ 	smoothTopography(m_maxIter);
+     }
+     
 // // 3. Figure out the number of grid points in the vertical direction and allocate solution arrays on the curvilinear grid
      allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
   }
@@ -1304,7 +1307,13 @@ void EW::processTopography(char* buffer)
 	  {
 	     m_topoInputStyle=Efile;
 	     m_topography_exists=true;
-	     needFileName=true; // we now require the file name to be given on the topography command line
+	     needFileName=true; // we require the file name to be given on the topography command line
+	  }
+	  else if (strcmp("image", token) == 0)
+	  {
+	     m_topoInputStyle=TopoImage;
+	     m_topography_exists=true;
+	     needFileName=true; // we require the file name to be given on the topography command line
 	  }
 	  else if (strcmp("gaussian", token) == 0)
 	  {
@@ -3855,11 +3864,6 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
 // the arrays mX, mY, mZ must be allocated by the grid generator
    }
-// the topoMat array is needed for "squishing" the material properties near the free surface when a
-// Cartesian grid is used on top
-   mTopoMat.define(m_iStart[mNumberOfGrids-1], m_iEnd[mNumberOfGrids-1], 
-		   m_jStart[mNumberOfGrids-1], m_jEnd[mNumberOfGrids-1], 1, 1); 
-// mTopoMat holds the highest elevation where the etree returns solid material properties
 
 // tmp
 //   int myRank;

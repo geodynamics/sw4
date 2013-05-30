@@ -266,6 +266,8 @@ void set_materials();
 void setup_viscoelastic(double minvsoh );
 void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk );
 void extrapolateInXY( vector<Sarray>& field );
+void extrapolateTopo(Sarray& field);
+void checkTopo(Sarray& field);
 
 void addImage(Image* i);
 void addImage3D(Image3D* i);
@@ -273,6 +275,7 @@ void setIO_timing(bool iotiming);
 void setParallel_IO(bool pfs, int nwriters);
 
 void extractTopographyFromGridFile(string a_topoFileName);
+void extractTopographyFromImageFile(string a_topoFileName);
 void extractTopographyFromCartesianFile(string a_topoFileName);
 
 void setEtreeFile(EtreeFile* efile); 
@@ -422,7 +425,7 @@ void get_gridgen_info( int& order, double& zetaBreak ) const;
 // functions from the old FileInput class
 void cleanUpRefinementLevels();
 
-enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid};
+enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage};
 
 // access functions needed by the Image (and perhaps other) classes
 int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
@@ -514,6 +517,7 @@ void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data 
 //
 // VARIABLES BEYOND THIS POINT
 //
+static const double NO_TOPO=1e38;
 
 // ------------------------------------------
 // Grid 
@@ -559,9 +563,9 @@ int m_opttest;
 
 // 2-D arrays with elevation-values (=-z) as function of horizontal indices
 // mTopo holds the raw topography (according to the "elevation" field in the etree)
-// mTopoMat holds the highest elevation where the etree returns solid material properties
+// topoMat holds the highest elevation where the etree returns solid material properties (now local to EtreeFile::readEFile() )
 // mTopoGridExt holds the smoothed topography which follows the top surface of the curvilinear grid
-   Sarray mTopo, mTopoMat, mTopoGridExt;
+   Sarray mTopo, mTopoGridExt;
 
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;

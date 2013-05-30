@@ -4435,7 +4435,7 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 
    int i0, j0;
    int topLevel = mNumberOfGrids-1;
-   double hp = 1.01*mGridSize[topLevel];
+   double hp = 1.01*mGridSize[topLevel]; // change this to 2 grid sizes because there are double ghost points?
    bool xGhost, yGhost;
   
    for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
@@ -4560,6 +4560,144 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 }
 
 //-----------------------------------------------------------------------
+void EW::extractTopographyFromImageFile(string a_topoFileName)
+{
+// plan:
+// 1: read entire array from image file
+// 2: copy the relevant part to the mTopo array
+
+// Check user specified file names. Abort if they are not there or not readable
+   VERIFY2( access(a_topoFileName.c_str(), R_OK) == 0,
+	    "No read permission on topo image file: " << a_topoFileName);
+   FILE *fd=fopen(a_topoFileName.c_str(),"rb"); // perhaps the "b" is redundant
+
+// % Read header
+//    prec    =fread(fd,1,'int');
+//    npatches=fread(fd,1,'int');
+//    t       =fread(fd,1,'double');
+//    plane   =fread(fd,1,'int');
+//    coord   =fread(fd,1,'double');
+//    mode    =fread(fd,1,'int');
+//    gridinfo=fread(fd,1,'int');
+//    timecreated=fread(fd,[1 25],'uchar');
+//    timestring=num2str(timecreated,'%c');
+//    mstr=getimagemodestr(mode);
+   int prec, npatches, plane, mode, gridinfo;
+   double time, coord;
+   char timecreated[25];
+   size_t nread;
+   nread = fread(&prec,sizeof(int),1,fd);
+   nread = fread(&npatches,sizeof(int),1,fd);
+   nread = fread(&time,sizeof(double),1,fd);
+   nread = fread(&plane,sizeof(int),1,fd);
+   nread = fread(&coord,sizeof(double),1,fd);
+   nread = fread(&mode,sizeof(int),1,fd);
+   nread = fread(&gridinfo,sizeof(int),1,fd);
+   nread = fread(timecreated,sizeof(char),25,fd);
+   
+// % Display header
+//    if verbose == 1
+   if (proc_zero())
+   {
+     printf("TopoImage header: prec=%i, npatches=%i, time=%e, plane=%i, coord=%e, mode=%i, gridinfo=%i\n",
+	    prec, npatches, time, plane, coord, mode, gridinfo);
+     printf("                  timecreated=%s\n", timecreated);
+   }
+   
+// rudimentary checks
+   if ((prec==4 || prec==8) && npatches==1 && plane==2 && mode==Image::TOPO)
+   {
+     if (proc_zero())
+       printf("Header seems ok...\n");
+   }
+   else
+   {
+     if (proc_zero())
+       printf("Header for topo image is weird: prec=%i, npatches=%i, plane=%i, mode=%i\n", prec, npatches, plane, mode);
+   }
+// header for each patch (should only be one patch in these files)
+      // h(p) = fread(fd,1,'double');
+      // zmin(p) = fread(fd,1,'double');
+      // ib(p) = fread(fd,1,'int');
+      // ni(p) = fread(fd,1,'int');
+      // jb(p) = fread(fd,1,'int');
+      // nj(p) = fread(fd,1,'int');
+      // disp(['    patch nr ' num2str(p) ' has h = ' num2str(h(p)) ' zmin = ' num2str(zmin(p))]);
+   double h, zmin;
+   int ib, ni, jb, nj;
+   nread = fread(&h,sizeof(double),1,fd);
+   nread = fread(&zmin,sizeof(double),1,fd);
+   nread = fread(&ib,sizeof(int),1,fd);
+   nread = fread(&ni,sizeof(int),1,fd);
+   nread = fread(&jb,sizeof(int),1,fd);
+   nread = fread(&nj,sizeof(int),1,fd);
+   if (proc_zero())
+     printf("Patch info: h=%e, zmin=%e, ib=%i, ni=%i, jb=%i, nj=%i\n", h, zmin, ib, ni, jb, nj);
+  // % Read data
+  // readz = 0;
+  // if pnr <= npatches
+  //    for p=1:pnr-1
+  // 	fseek(fd,(ni(p)-ib(p)+1)*(nj(p)-jb(p)+1)*prec,'cof');
+  //    end;
+  //    if prec == 4
+  //       im0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'float');
+  //    else
+  //       im0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'double');
+  //    end;
+// since there is only one patch, we don't need any fseek
+   int npts = (ni-ib+1)*(nj-jb+1);
+   int topLevel = mNumberOfGrids-1;
+   if (prec==4) // float
+   {
+     float *data_flt=new float[npts];
+     nread = fread(data_flt,sizeof(float),npts,fd);
+     CHECK_INPUT(npts == nread, "Number of image floats read: " << nread << ", is different from header npts: " << npts);
+// copy data to local mTopo array
+     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+       for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+       {
+	 if (i>=ib && i<=ib+ni-1 && j>=jb && j<=jb+nj-1)
+	 {
+	   mTopo(i,j,1) = (double) data_flt[i-ib + (j-jb)*ni];
+	 }
+	 else
+	 {
+	   mTopo(i,j,1) = NO_TOPO;
+	 }
+       }
+     
+// cleanup local storage     
+     delete[] data_flt;
+   }
+   else if (prec==8) // double
+   {
+     double *data_dbl=new double[npts];
+     nread = fread(data_dbl,sizeof(double),npts,fd);
+     CHECK_INPUT(npts == nread, "Number of image double read: " << nread << ", is different from header npts: " << npts);
+// copy data to local mTopo array
+     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+       for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+       {
+	 if (i>=ib && i<=ib+ni-1 && j>=jb && j<=jb+nj-1)
+	 {
+	   mTopo(i,j,1) = data_dbl[i-ib + (j-jb)*ni];
+	 }
+	 else
+	 {
+	   mTopo(i,j,1) = NO_TOPO;
+	 }
+       }
+     
+// cleanup local storage     
+     delete[] data_dbl;
+   }
+
+   fclose(fd);
+   if (proc_zero())
+     printf("Topo image read ok\n");
+}
+
+//-----------------------------------------------------------------------
 void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_topoExtFileName,
 				    std::string a_QueryType, double a_EFileResolution )
 {
@@ -4604,6 +4742,7 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
 
    query.open();
    double *pVals=new double[payloadSize];
+   bool verbose = (mVerbose >= 3);
 
    for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
       for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
@@ -4619,10 +4758,11 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
 	 {
 // If query generated an error, then bail out, otherwise reset status
 	    pErrHandler->resetStatus();
-	    cout << "WARNING: Etree query failed for initial elevation of topography at grid point (i,j)= ("
-		 << i << ", " << j << ") in curvilinear grid g = " << topLevel << endl
-		 << " lat= " << lat << " lon= " << lon << " query elevation= " << elev << endl;
-	    mTopo(i,j,1) = 0.;
+	    if (verbose)
+	      cout << "WARNING: Etree query failed for initial elevation of topography at grid point (i,j)= ("
+		   << i << ", " << j << ") in curvilinear grid g = " << topLevel << endl
+		   << " lat= " << lat << " lon= " << lon << " query elevation= " << elev << endl;
+	    mTopo(i,j,1) = NO_TOPO;
 	    continue;
 	 } 
 // save the actual topography which will be the starting point for computing smoother the grid topography
@@ -4887,4 +5027,84 @@ void EW::material_correction( int nmpar, double* xm )
 // routine to enforce material speed limits and positive density
 {
 
+}
+
+//-----------------------------------------------------------------------
+void EW::extrapolateTopo(Sarray& field)
+{
+  int k=1; // field is assumed to be a 2-D array
+  int g= mNumberOfGrids-1; // top grid
+  int nExtrap = 0;
+  
+  if( m_iStartInt[g] == 1 )
+  {
+    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+      for( int i=m_iStart[g] ; i < 1 ; i++ )
+	if( field(i,j,k) == NO_TOPO )
+	{
+	  field(i,j,k) = field(1,j,k);
+	  nExtrap += 1;
+	}
+    
+  }
+  
+  if( m_iEndInt[g] == m_global_nx[g] )
+  {
+    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+      for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
+	if( field(i,j,k) == NO_TOPO )
+	{
+	  field(i,j,k) = field(m_iEndInt[g],j,k);
+	  nExtrap += 1;
+	}
+  }
+  
+  if( m_jStartInt[g] == 1 )
+  {
+    for( int j=m_jStart[g] ; j < 1 ; j++ )
+      for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	if( field(i,j,k) == NO_TOPO )
+	{
+	  field(i,j,k) = field(i,1,k);
+	  nExtrap += 1;
+	}
+  }
+  
+  if( m_jEndInt[g] == m_global_ny[g] )
+  {
+    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
+      for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	if( field(i,j,k) == NO_TOPO)
+	{
+	  field(i,j,k) = field(i,m_jEndInt[g],k);
+	  nExtrap += 1;
+	}
+  }
+  int nExtrapGlobal=0;
+  MPI_Allreduce( &nExtrap, &nExtrapGlobal, 1, MPI_INT, MPI_SUM, m_cartesian_communicator );
+  
+  if ( nExtrapGlobal > 0 && proc_zero())
+    printf("*** extrapolated topography to %i ghost points\n", nExtrapGlobal);
+  
+}
+
+//-----------------------------------------------------------------------
+void EW::checkTopo(Sarray& field)
+{
+  bool topo_ok=true;
+  int k=1; // field is a 2-D array
+  int g= mNumberOfGrids-1; // top grid
+
+  for( int j=m_jStart[g];   j <= m_jEnd[g]; j++ )
+    for( int i=m_iStart[g]; i <= m_iEnd[g]; i++ )
+    {
+      if (field(i,j,k) == NO_TOPO)
+      {
+// print some msg is verbose is high enough?
+	topo_ok = false;
+      }
+      
+    }
+  
+  CHECK_INPUT(topo_ok,"There are undefined values in the topography array")
 }

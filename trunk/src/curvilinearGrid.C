@@ -700,7 +700,7 @@ void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0
       x = (i-1)*mGridSize[topLevel];
       y = (j-1)*mGridSize[topLevel];
 // positive topography  is up (negative z)
-      mTopo(i,j,1) = mTopoMat(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
+      mTopo(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
 									       -SQR((y-m_GaussianYc)/m_GaussianLy)); 
     }
 

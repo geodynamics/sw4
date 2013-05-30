@@ -254,7 +254,14 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
    double x, y, z, lon, lat, elev, density, vp, vs, elevation, qup, qus, faultBlock;
    double zeta, elevDelta=25.0;
    int g, k, topLevel = mEw->mNumberOfGrids-1;
-
+   Sarray topoMat;
+   bool verbose = (mEw->getVerbosity() >= 3);
+   
+// the topoMat array is needed for "squishing" the material properties near the free surface when a
+// Cartesian grid is used on top
+   topoMat.define(mEw->m_iStart[topLevel], mEw->m_iEnd[topLevel], 
+		  mEw->m_jStart[topLevel], mEw->m_jEnd[topLevel], 1, 1); 
+// topoMat holds the highest elevation where the etree returns solid material properties
 // start by figuring out the max elevation where the etree returns solid material
    for (int j = mEw->m_jStart[topLevel]; j <= mEw->m_jEnd[topLevel]; ++j)
       for (int i = mEw->m_iStart[topLevel]; i <= mEw->m_iEnd[topLevel]; ++i)
@@ -274,12 +281,10 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	 {
 // If query generated an error, then bail out, otherwise reset status
 	    mQuery.errorHandler()->resetStatus();
-//            if( inside(lat,lon,elev) )
-//	       {
-		 printf("WARNING: Etree query failed for topoMat elevation at grid point (i,j)= (%i,%i) at (x,y)=(%e,%e) in grid g=%i\n"
-			" lat=%e, lon=%e query elevation=%e\n", i, j, x, y, topLevel, lat, lon, elev);
-//	       }
-	    mEw->mTopoMat(i,j,1) = 0.;
+	    if (verbose)
+	      printf("WARNING: Etree query failed for topoMat elevation at grid point (i,j)= (%i,%i) at (x,y)=(%e,%e) in grid g=%i\n"
+		     " lat=%e, lon=%e query elevation=%e\n", i, j, x, y, topLevel, lat, lon, elev);
+	    topoMat(i,j,1) = EW::NO_TOPO;
 	    continue;
 	 } // if
 
@@ -304,10 +309,17 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 		   << " lat= " << lat << " lon= " << lon << " query elevation= " << elev 
 		   << " topo/bathy elevation= " << mPayload[3] << " Vp= " << mPayload[1] << " Vs= " << mPayload[2]);
       
-	 mEw->mTopoMat(i,j,1) = elev;
+	 topoMat(i,j,1) = elev;
       } // end for i
-// end filling in mTopoMat
+// end filling in topoMat
 
+// extrapolate topoMat
+   mEw->extrapolateTopo(topoMat);
+
+// check topoMat
+   mEw->checkTopo(topoMat);
+   
+// read the material properties
    if(mEw->topographyExists())
    {
       g= mEw->mNumberOfGrids-1;
@@ -321,7 +333,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 // zeta is a linear function of k which should be zeta=1 for k=1 and zeta=0 for k=m_kEnd - m_ghost_points
 	       zeta = ((double) (mEw->m_kEnd[g] - ghost_points - k))/(mEw->m_kEnd[g] - ghost_points - 1.);
 // modify the z coordinate to account for the difference between raw and smoothed topography. 
-	       z = mEw->mZ(i,j,k) + ( mEw->mTopoGridExt(i,j,1) - mEw->mTopoMat(i,j,1) )*zeta;
+	       z = mEw->mZ(i,j,k) + ( mEw->mTopoGridExt(i,j,1) - topoMat(i,j,1) )*zeta;
 	       mEw->computeGeographicCoord(x, y, lon, lat);
 	       elev = -z;
 	       // if( inside( lat, lon, elev )  )
@@ -366,7 +378,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 			 << " Topo Elevation=" << mPayload[3] << " Qp=" << mPayload[4] << " Qs=" << mPayload[5]
 			 << " Faultblock= " << mPayload[6] 
 			 << " mZ(i,j,k)= " << mEw->mZ(i,j,k) << " topoGrid= " <<  mEw->mTopoGridExt(i,j,1) 
-			 << " topoMat= " << mEw->mTopoMat(i,j,1) );
+			 << " topoMat= " << topoMat(i,j,1) );
 		   
 			CHECK_INPUT (density != NODATAVAL, "Density undefined for grid point (i,j,k)= (" 
 			 << i << ", " << j << ", " << k << ") in curvilinear grid g = " << g << endl
@@ -430,7 +442,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 		  zeta = ((double) (mEw->m_kEnd[g] - ghost_points - k))/(mEw->m_kEnd[g] - ghost_points - 1.);
 // modify the z coordinate to account for the difference between the z=0 flat grid and the top elevation where material data
 // is available
-		  z = mEw->m_zmin[g]+(k-1)*mEw->mGridSize[g]+ ( 0.0 - mEw->mTopoMat(i,j,1) )*zeta;
+		  z = mEw->m_zmin[g]+(k-1)*mEw->mGridSize[g]+ ( 0.0 - topoMat(i,j,1) )*zeta;
 	       }
 	       else
 	       {
@@ -478,7 +490,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 			 << " Topo Elevation=" << mPayload[3] << " Qp=" << mPayload[4] << " Qs=" << mPayload[5]
 			 << " Faultblock= " << mPayload[6] 
 			 << " mZ(i,j,k)= " << mEw->mZ(i,j,k) << " topoGrid= " <<  mEw->mTopoGridExt(i,j,1) 
-			 << " topoMat= " << mEw->mTopoMat(i,j,1) );
+			 << " topoMat= " << topoMat(i,j,1) );
 		   
 			CHECK_INPUT (density != NODATAVAL, "Density undefined for grid point (i,j,k)= (" 
 			 << i << ", " << j << ", " << k << ") in Cartesian grid g = " << g << endl
