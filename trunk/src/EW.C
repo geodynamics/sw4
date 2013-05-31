@@ -113,6 +113,12 @@ void F77_FUNC(addgradmula,ADDGRADMULA)( int*, int*, int*, int*, int*, int*, int*
 void F77_FUNC(addgradmulac,ADDGRADMULAC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 				        double*, double*, double*, double*, double*,
 					  double*, double*, double*, double*, double*, int*, int*, int*, double* );
+void F77_FUNC(projectmtrlc,PROJECTMTRLC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+                                          double*, double*, double*, double*, double*, double*,
+					  double*, double*, double*, double*, double*, int* );
+void F77_FUNC(projectmtrl,PROJECTMTRL)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+					double*, double*, double*, double*, double*, double*,
+					double*, double*, double*, double*, int* );
 }
 
 using namespace std;
@@ -169,6 +175,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   //  mTestLamb(false),
   mOrder(4),
   mCFL(1.3),
+  mCFLmax(1.3),
   // m_d4coeff(0.0),
   // m_d4_cfl(0.2),
   // m_curlcoeff(0.0),
@@ -5028,7 +5035,52 @@ void EW::check_min_max_int( vector<Sarray>& a_U )
 void EW::material_correction( int nmpar, double* xm )
 // routine to enforce material speed limits and positive density
 {
+   double vsmin = -1;
+   if( m_useVelocityThresholds )
+      vsmin = m_vsMin;
+   double rhoscale=1, muscale=1, lascale=1;
 
+   parameters_to_material( nmpar, xm, mRho, mMu, mLambda );
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int info;
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      int ifirstact = m_iStartAct[g];
+      int ilastact  = m_iEndAct[g];
+      int jfirstact = m_jStartAct[g];
+      int jlastact  = m_jEndAct[g];
+      int kfirstact = m_kStartAct[g];
+      int klastact  = m_kEndAct[g];
+
+      double* rhop = mRho[g].c_ptr();
+      double* mup = mMu[g].c_ptr();
+      double* lap = mLambda[g].c_ptr();
+
+      if( topographyExists() && g == mNumberOfGrids-1 )
+      {
+	 // Curvilinear 
+	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(), mJ.c_ptr(),
+					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &info );
+      }
+      else
+      {
+	 // Cartesian
+	 F77_FUNC(projectmtrl,PROJECTMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+					    &klastact, rhop, mup, lap, &mDt, &mGridSize[g], &mCFLmax,
+					    &vsmin, &rhoscale, &muscale, &lascale, &info );
+      }
+      if( info != 0 )
+	 cout << "Grid " << g << " info = " << info << " from projectmtrl" << endl;
+   }   
+   material_to_parameters( nmpar, xm, mRho, mMu, mLambda );
 }
 
 //-----------------------------------------------------------------------

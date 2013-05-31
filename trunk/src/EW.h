@@ -740,7 +740,10 @@ int m_update_boundary_function;
    //bool mTestLamb;
    //bool mTestingEnergy;
 int mOrder;
-double mCFL;
+   // mCFL actual cfl. Used to determine time step in forward solver.
+   // mCFLmax, maximum possible cfl. Used for limiting 
+   //          wave speeds during material inversion
+double mCFL, mCFLmax;
 
 // info on SBP boundary operators, or not.
 vector<int*> m_onesided; 
