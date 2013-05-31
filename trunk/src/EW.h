@@ -517,7 +517,7 @@ void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data 
 //
 // VARIABLES BEYOND THIS POINT
 //
-static const double NO_TOPO=1e38;
+const double NO_TOPO;
 
 // ------------------------------------------
 // Grid 

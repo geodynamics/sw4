@@ -285,8 +285,10 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_iperturb(1),
   m_jperturb(1),
   m_kperturb(1),
-  m_pervar(1)
+  m_pervar(1),
+  NO_TOPO(1e38)
 {
+  
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
    //   m_error_checking = new ErrorChecking();

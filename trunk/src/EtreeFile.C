@@ -284,7 +284,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	    if (verbose)
 	      printf("WARNING: Etree query failed for topoMat elevation at grid point (i,j)= (%i,%i) at (x,y)=(%e,%e) in grid g=%i\n"
 		     " lat=%e, lon=%e query elevation=%e\n", i, j, x, y, topLevel, lat, lon, elev);
-	    topoMat(i,j,1) = EW::NO_TOPO;
+	    topoMat(i,j,1) = mEw->NO_TOPO;
 	    continue;
 	 } // if
 
