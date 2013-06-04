@@ -840,6 +840,11 @@ void EW::set_materials()
     extrapolateInXY( mRho );
     extrapolateInXY( mMu );
     extrapolateInXY( mLambda );
+    if( m_use_attenuation )
+    {
+      extrapolateInXY(mQs);
+      extrapolateInXY(mQp);
+    }
 
 // threshold material velocities
     if (m_useVelocityThresholds)
