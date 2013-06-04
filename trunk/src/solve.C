@@ -4,6 +4,10 @@
 #include "F77_FUNC.h"
 
 extern "C" {
+void F77_FUNC(satt,SATT)(double *up, double *qs, double *dt, double *cfreq, int *ifirst, int *ilast, 
+			 int *jfirst, int *jlast, int *kfirst, int *klast);
+
+
 void F77_FUNC(dgesv,DGESV)(int & N1, int & N2, double *A, int & LDA, int *IPIV, double * B, int &N3, int &INFO);
 void F77_FUNC(factorizeinterfacematrices,FACTORIZEINTERFACEMATRICES)( int*, int*, int*, int*, int*,
 								      double*, double*, double*,
@@ -112,7 +116,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   AlphaVE.resize(mNumberOfGrids);
   AlphaVEm.resize(mNumberOfGrids);
   AlphaVEp.resize(mNumberOfGrids);
-  if (m_use_attenuation)
+  if (m_use_attenuation && m_number_mechanisms > 0)
   {
     for( int g = 0; g <mNumberOfGrids; g++ )
     {
@@ -151,7 +155,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
     Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
     U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    if (m_use_attenuation)
+    if (m_use_attenuation && m_number_mechanisms > 0)
     {
       for (int a=0; a<m_number_mechanisms; a++)
       {
@@ -544,6 +548,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  addSuperGridDamping( Up, U, Um, mRho );
        }
 
+// Arben's simplified attenuation
+       if (m_use_attenuation && m_number_mechanisms == 0)
+       {
+	 simpleAttenuation( Up );
+       }
+       
        time_measure[4] = MPI_Wtime();
 
 // also check out EW::update_all_boundaries 
@@ -574,7 +584,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //
     update_images( currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, mPath, mZ );
+      mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, mPath, mZ );// mRho*2
     
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
@@ -2695,6 +2705,35 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
     }
+  }
+}
+
+//---------------------------------------------------------------------------
+void EW::simpleAttenuation( vector<Sarray> & a_Up )
+{
+  int ifirst, ilast, jfirst, jlast, kfirst, klast;
+  double *up_ptr, cfreq, dt;
+// Qs is saved in the EW object as mQs
+// center frequency is called m_att_max_frecuency
+// time step is called mDt  
+  dt = mDt;
+  cfreq = m_att_max_frequency;
+  
+  int g;
+  
+  for(g=0 ; g<mNumberOfGrids; g++ )
+  {
+    up_ptr  = a_Up[g].c_ptr();
+    double* qs_ptr =mQs[g].c_ptr();
+
+    ifirst = m_iStart[g];
+    ilast  = m_iEnd[g];
+    jfirst = m_jStart[g];
+    jlast  = m_jEnd[g];
+    kfirst = m_kStart[g];
+    klast  = m_kEnd[g];
+    F77_FUNC(satt,SATT) ( up_ptr, qs_ptr, &dt, &cfreq,
+			  &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast );
   }
 }
 

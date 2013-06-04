@@ -112,6 +112,8 @@ void processGMT(char* buffer);
 void processDeveloper(char* buffer);
 void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
+void processAttenuation(char* buffer);
+
 //void getEfileInfo(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
@@ -162,6 +164,7 @@ void testSourceDiscretization( int kx[3], int ky[3], int kz[3],
 void setupSBPCoeff( );
 
 // time stepping routines
+void simpleAttenuation( vector<Sarray> & a_Up );
 void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		double t, vector<double **> & a_BCForcing );
 void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing, vector<Source*>& a_Source );
@@ -660,8 +663,8 @@ vector<Sarray> mRho;
 
 // attenuation variables (only allocated if attenuation is enabled)
 bool m_use_attenuation, m_att_use_max_frequency;
-int m_number_mechanisms, m_att_ppw;
-double m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency;
+int m_number_mechanisms;
+double m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency, m_att_ppw;
 
 vector<Sarray> mQp, mQs;
 vector<Sarray*> mMuVE, mLambdaVE;

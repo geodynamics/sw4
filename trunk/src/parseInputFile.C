@@ -170,8 +170,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // Then process the grid, fileio, and topography commands so
 // we know how big the solution arrays need to be.
 //
-// Also, if we are enabling attenuation turn it on now so it
-// can be read in as the material command blocks are initialized
+// Also, if we are using attenuation, enable it on now so it
+// can be read in with the other material properties
 //---------------------------------------------------------------
 
 // these commands can enter data directly the object (this->)
@@ -196,10 +196,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
         processTopography(buffer);
      }
-     // else if (startswith("attenuation", buffer))
-     // {
-     //   processAttenuation(buffer);
-     // }
+     else if (startswith("attenuation", buffer))
+     {
+       processAttenuation(buffer);
+     }
      else if (startswith("time", buffer))
      {
         processTime(buffer); // process time command to set reference UTC before reading stations.
@@ -329,7 +329,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("grid", buffer) ||
 //	   startswith("refinement", buffer) || 
 	   startswith("topography", buffer) || 
-//	   startswith("attenuation", buffer) || 
+	   startswith("attenuation", buffer) || 
 	   startswith("fileio", buffer) ||
 	   startswith("time", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
@@ -1147,78 +1147,83 @@ void EW::cleanUpRefinementLevels()
 
 // }
 
-// //-----------------------------------------------------------------------
-// void FileInput::processAttenuation(char* buffer)
-// {
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("attenuation", token) == 0, 
-// 	      "ERROR: not a attenuation line...: " << token);
-//   token = strtok(NULL, " \t");
+//-----------------------------------------------------------------------
+void EW::processAttenuation(char* buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("attenuation", token) == 0, 
+	      "ERROR: not a attenuation line...: " << token);
+  token = strtok(NULL, " \t");
 
-//   string err = "Attenuation error ";
-//   int nmech=3;
-//   double velofreq=1;
-//   bool foundppw = false, foundfreq=false;
-// // Default is max frequency 2 Hz, 
-//   m_att_ppw = -1;
-//   m_att_max_frequency = 2.0;
+  string err = "Attenuation error ";
+  int nmech=-1; // currently, we have only implemented a very simple model, based on multiplying the displacement field by a 
+// factor after each time step
+  double velofreq=1;
+  bool foundppw = false, foundfreq=false;
+// Default is max frequency 2 Hz, 
+  m_att_ppw = -1;
+  m_att_max_frequency = 2.0;
   
-//   while (token != NULL)
-//   {
-//     // while there are tokens in the string still
-//     if (startswith("#", token) || startswith(" ", buffer))
-//       // Ignore commented lines and lines with just a space.
-//       break;
-// //                       123456
-//     else if( startswith("nmech=", token) )
-//     {
-//       token += 6; // skip nmech=
-//       nmech = atoi(token);
-//       CHECK_INPUT(nmech > 0 && nmech <= 8, "ERROR: Number of attenuation mechanisms must be > 0 and <= 8, not " << nmech);
-//     }
-// //                       1234567890123
-//     else if( startswith("phasefreq=", token) )
-//     {
-//       token += 10; // skip phasefreq=
-//       velofreq = atof(token);
-//       CHECK_INPUT(velofreq >= 0 && velofreq <= 1000, "ERROR: Velocity frequency must be >= 0 and <= 1000 [Hz], not " << velofreq);
-//     }
-//     else if( startswith("maxfreq=",token) )
-//     {
-//        token += 8;
-//        m_att_ppw = -1;
-//        m_att_max_frequency = atof( token );
-//        foundfreq = true;
-//        CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
-//     }
-//     else if( startswith("minppw=",token) )
-//     {
-//        token += 7;
-//        m_att_ppw = atoi( token );
-//        foundppw = true;
-//        CHECK_INPUT(m_att_ppw >= 0, "ERROR: minimum ppw must be >= 0, not " << m_att_ppw);
-//     }
-//     else
-//     {
-//       badOption("attenuation", token);
-//     }
-//     token = strtok(NULL, " \t");
-//   }
-//   if( foundppw && foundfreq )
-//   {
-//      if (m_myRank == 0)
-// 	cout << "ERROR: Can not give both minppw and maxfreq for attenuation " << endl;
-//      MPI_Abort(MPI_COMM_WORLD, 1);
-//   }
+  while (token != NULL)
+  {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+//                       123456
+    else if( startswith("nmech=", token) )
+    {
+      token += 6; // skip nmech=
+      nmech = atoi(token);
+//      CHECK_INPUT(nmech > 0 && nmech <= 8, "ERROR: Number of attenuation mechanisms must be > 0 and <= 8, not " << nmech);
+    }
+//                       1234567890123
+    // else if( startswith("phasefreq=", token) )
+    // {
+    //   token += 10; // skip phasefreq=
+    //   velofreq = atof(token);
+    //   CHECK_INPUT(velofreq >= 0 && velofreq <= 1000, "ERROR: Velocity frequency must be >= 0 and <= 1000 [Hz], not " << velofreq);
+    // }
+//                       12345678901234567890
+    else if( startswith("centerfreq=",token) )
+    {
+       token += 11;
+       m_att_ppw = -1;
+       m_att_max_frequency = atof( token );
+       foundfreq = true;
+       CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
+    }
+    // else if( startswith("minppw=",token) )
+    // {
+    //    token += 7;
+    //    m_att_ppw = atoi( token );
+    //    foundppw = true;
+    //    CHECK_INPUT(m_att_ppw >= 0, "ERROR: minimum ppw must be >= 0, not " << m_att_ppw);
+    // }
+    else
+    {
+      badOption("attenuation", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+  if( foundppw && foundfreq )
+  {
+     if (m_myRank == 0)
+	cout << "ERROR: Can not give both minppw and maxfreq for attenuation " << endl;
+     MPI_Abort(MPI_COMM_WORLD, 1);
+  }
 
-//   m_nmech = nmech;
-//   m_velo_omega = velofreq*2*M_PI;
-//   m_use_attenuation=true;
+  CHECK_INPUT(nmech == 0, "ERROR: Number of attenuation mechanisms must currently be 0, not " << nmech);
+
+  m_number_mechanisms = nmech;
+  m_velo_omega = velofreq*2*M_PI;
+  m_use_attenuation=true;
   
-// // tmp
-//   if (m_myRank==0)
-//     printf("* Processing the attenuation command: m_nmech=%i, m_velo_omega=%e\n", m_nmech, m_velo_omega);
-// }
+// tmp
+  if (m_myRank==0)
+    printf("* Processing the attenuation command: m_nmech=%i, center freq=%e\n", m_number_mechanisms, 
+	   m_att_max_frequency);
+}
 
 //-----------------------------------------------------------------------
 void EW::processTopography(char* buffer)
@@ -2539,7 +2544,7 @@ void EW::processGlobalMaterial(char* buffer)
    string err = "globalmaterial error: ";
    int modelnr = 0;
    double frequency = 1;
-   bool useAttenuation = false;
+//   bool useAttenuation = false; // AP: what is this?
    double vpmin=0, vsmin=0;
   
    while (token != NULL)
@@ -3536,7 +3541,7 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 
 // is there an attenuation command in the file?
    if (!m_use_attenuation)
-      m_number_mechanisms = 0;
+     m_number_mechanisms = 0;
 
    int nx_finest_w_ghost = refFact*(m_nx_base-1)+1+2*m_ghost_points;
    int ny_finest_w_ghost = refFact*(m_ny_base-1)+1+2*m_ghost_points;
@@ -3603,7 +3608,7 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
    mMuVE.resize(mNumberOfGrids);
    mLambdaVE.resize(mNumberOfGrids);
-   if (m_use_attenuation)
+   if (m_use_attenuation && m_number_mechanisms > 0) // the simplest model only uses Q, not MuVe, LambdaVE, or OmegaVE
    {
      mOmegaVE.resize(m_number_mechanisms); // global relaxation frequencies (1 per mechanism)
      
@@ -3774,7 +3779,7 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       {
 	mQs[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 	mQp[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	for (int a=0; a<m_number_mechanisms; a++)
+	for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model only uses Q, not MuVE or LambdaVE
 	{
 	  mMuVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 	  mLambdaVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
@@ -3853,11 +3858,10 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       m_jStartInt[mNumberOfGrids-1] = m_jStartInt[nCartGrids-1];
       m_jEndInt[mNumberOfGrids-1]   = m_jEndInt[nCartGrids-1];
 
-// 3 versions of the topography:
+// 2 versions of the topography:
       mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
-      //      mTopoGrid.define(ifirst,ilast,jfirst,jlast,1,1); // smoothed version of true topography
       m_ext_ghost_points = 2;
-         // smoothed version of true topography, with an extended number (4 instead of 2 ) ghost points.
+// smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
       mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
 			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
 
@@ -4034,7 +4038,7 @@ void EW::allocateCurvilinearArrays()
      mQs[gTop].set_to_minusOne();
      mQp[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
      mQp[gTop].set_to_minusOne();
-     for (int a=0; a<m_number_mechanisms; a++)
+     for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model has m_number_mechanisms = 0
      {
 	mMuVE[gTop][a].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
 	mMuVE[gTop][a].set_to_minusOne();
@@ -5336,7 +5340,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   blockname << name << " " << blockCount;
   name = blockname.str();
 
-  // Set up a block on wpp object.
+  // Set up a block on the EW object.
 
   if (x1set)
   {
@@ -5521,9 +5525,8 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      else if (startswith("z=", token))
      {
        token += 2; // skip z=
-// depth is currently the same as z
        depth = z = atof(token);
-       topodepth = false;
+       topodepth = false; // absolute depth (below mean sea level)
        CHECK_INPUT(z <= m_global_zmax,
 		   "receiver command: z must be less than or equal to zmax, not " << z);
      }
@@ -5531,12 +5534,22 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      {
         token += 6; // skip depth=
        z = depth = atof(token);
-       topodepth = true;
+       topodepth = true; // by depth we here mean depth below topography
        CHECK_INPUT(depth >= 0.0,
 	       err << "receiver command: depth must be greater than or equal to zero");
        CHECK_INPUT(depth <= m_global_zmax,
 		   "receiver command: depth must be less than or equal to zmax, not " << depth);
-// by depth we here mean depth below topography
+     }
+//                        1234567890
+     else if (startswith("topodepth=", token))
+     {
+        token += 10; // skip topodepth=
+       z = depth = atof(token);
+       topodepth = true; // by depth we here mean depth below topography
+       CHECK_INPUT(depth >= 0.0,
+	       err << "receiver command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "receiver command: depth must be less than or equal to zmax, not " << depth);
      }
      else if(startswith("file=", token))
      {

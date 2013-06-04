@@ -52,7 +52,7 @@ lin = fgetl(fd);
 % tmp
 %disp(['Comment line 2: ', lin])
 east = strfind(lin, 'East');
-if (east == [])
+if (length(east) == 0)
   xycomp=1;
 else
   xycomp=0;

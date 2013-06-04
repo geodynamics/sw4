@@ -265,8 +265,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // convert Qp and Qs to muVE, lambdaVE, and compute unrelaxed lambda, mu
   if (usingAttenuation())
   {
-    if (m_myRank == 0) cout << "Viscoelastic not yet functional" << endl;
-    return;
+    // if (m_myRank == 0) cout << "Viscoelastic not yet functional" << endl;
+    // return;
+// for the simplest model with nmech = 0, only Qs is used and muVE, lambdaVE, etc, are not needed
 //     setup_viscoelastic( minvsoh );
   }
   

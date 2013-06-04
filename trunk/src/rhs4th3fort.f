@@ -1787,3 +1787,31 @@ c evaluate 2nd divided time difference D+D-(u)
       enddo
       return
       end
+
+c-----------------------------------------------------------------------
+      subroutine satt(up, qs, dt, cfreq, 
+     +     ifirst, ilast, jfirst, jlast, kfirst, klast)
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
+      real*8 dt, cfreq, pi, fact
+      real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 qs(ifirst:ilast,jfirst:jlast,kfirst:klast)
+c simple attenuation model
+      pi = 4*atan(1.d0)
+      do k=kfirst,klast
+        do j=jfirst,jlast
+          do i=ifirst,ilast
+            fact = exp(-pi*cfreq*dt/qs(i,j,k))
+c tmp
+c$$$            if (i.eq.ifirst .and. j.eq.jfirst .and. k.eq.kfirst) then
+c$$$              write(*,*) "dt = ", dt, " qs = ", qs(i,j,k), 
+c$$$     +             " cfreq = ", cfreq, " fact = ", fact
+c$$$            endif
+            do c=1,3
+              up(c,i,j,k) = fact*up(c,i,j,k)
+            enddo
+          enddo
+        enddo
+      enddo
+      return
+      end
