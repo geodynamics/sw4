@@ -228,9 +228,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // curvilinear grid.
   allocateCartesianSolverArrays(m_global_zmax); 
 
-  if (m_use_attenuation)
-    setAttenuationParams(m_number_mechanisms, m_velo_omega, m_att_ppw, m_att_max_frequency );
-
 // setup 2D communicators on the finest grid so that we can smooth the topography
   setup2D_MPICommunications();
 
@@ -1217,6 +1214,8 @@ void EW::processAttenuation(char* buffer)
 
   m_number_mechanisms = nmech;
   m_velo_omega = velofreq*2*M_PI;
+  m_att_use_max_frequency = (m_att_ppw <= 0.);
+  
   m_use_attenuation=true;
   
 // tmp
@@ -3399,11 +3398,13 @@ void EW::processImage3D( char* buffer )
 	 else if (strcmp(token, "grads") == 0)   mode = Image3D::GRADS;
 	 else if (strcmp(token, "gradmu") == 0)   mode = Image3D::GRADMU;
 	 else if (strcmp(token, "gradlambda") == 0)   mode = Image3D::GRADLAMBDA;
+	 else if (strcmp(token, "qs") == 0)   mode = Image3D::QS;
+	 else if (strcmp(token, "qp") == 0)   mode = Image3D::QP;
 	 else
 	 {
 	    //	    mode = static_cast<Image3D::Image3DMode>(atoi(token));
-	    CHECK_INPUT(0,"Processing image command: " << "mode must be one of the following: " << endl <<
-			"\t ux|uy|uz|rho|p|s|mu|lambda|gradrho|gradp|grads|gradmu|gradlambda *not: "<< token );
+	    CHECK_INPUT(0,"Processing image3D command: " << "mode must be one of the following: " << endl <<
+			"\t ux|uy|uz|rho|p|s|mu|lambda|gradrho|gradp|grads|gradmu|gradlambda|qs|qp *not: "<< token );
 	 }
       }
       else if( startswith("precision=",token) )
@@ -3426,6 +3427,16 @@ void EW::processImage3D( char* buffer )
       cout << "WARNING: volume images of material gradients can not be computed by the forward solver" << endl;
       cout << "   volimage will not be created " << endl;
    }
+
+   bool attenuation = (mode == Image3D::QS || mode == Image3D::QP );
+  
+   if (attenuation && !m_use_attenuation && proc_zero() )
+   {
+     cout << "ERROR: volume images of Qs or Qp can only be generated when attenuation is enabled" << endl;
+     MPI_Abort( MPI_COMM_WORLD, 1 );
+   }
+   
+
    if( !forwardgrad )
    {
       CHECK_INPUT( timingSet, "Processing volimage command: " << 
@@ -3507,18 +3518,6 @@ void EW::set_twilight_forcing( ForcingTwilight* a_forcing )
    set_testing_mode(true);
    
 }
-
-//-----------------------------------------------------------------------
-void EW::setAttenuationParams(int numberOfMechanisms, double velocityOmega, 
-			      int ppw, double maxfrequency )
-{
-  m_number_mechanisms = numberOfMechanisms;
-  m_velo_omega = velocityOmega;
-  m_att_use_max_frequency = (ppw <= 0);
-  m_att_ppw = ppw;
-  m_att_max_frequency = maxfrequency;
-}
-
 
 //-----------------------------------------------------------------------
 void EW::allocateCartesianSolverArrays(double a_global_zmax)
@@ -4052,7 +4051,7 @@ void EW::allocateCurvilinearArrays()
 void EW::deprecatedImageMode(int value, const char* name) const
 {
   if (m_myRank == 0)
-    cout << "***Warning image mode using integers is deprecated, mode="
+    cout << "***Warning specifying the mode using integers is deprecated, mode="
 	 << value << " should be mode=" << name << " instead." << endl;
 }
 

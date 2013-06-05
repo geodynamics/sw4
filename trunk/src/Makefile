@@ -120,8 +120,12 @@ sw4opt: $(OBJOPT) $(QUADPACK)
 sw4mopt: $(MOBJOPT) $(QUADPACK)
 	$(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(QUADPACK) $(linklibs)
 
-version.o:version.C
+version.o:version.C .FORCE
 	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
+
+
+# having version.o depend on .FORCE has the effect of always building version.o
+.FORCE:
 
 test3: $(OBJ3)
 	$(FC) -O3 -Wall -o $@ $(OBJ3)

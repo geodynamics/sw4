@@ -45,7 +45,7 @@ Image3D::Image3D( EW* a_ew,
 	     mode == RHO || mode == P || mode == S  ||
 	     mode == MU || mode == LAMBDA || mode == GRADRHO  ||
 	     mode == GRADMU || mode == GRADLAMBDA || mode == GRADP ||
-	     mode == GRADS 
+	     mode == GRADS || mode == QP || mode == QS
 	     ,"Image3D: mode=" << mode << " not supported" );
 // the zcoord mode can only be save by an explicit call to the Image3D constructor, 
 // and NOT from a volimage line in the command file
@@ -75,6 +75,10 @@ Image3D::Image3D( EW* a_ew,
       m_modestring = "gradp";
    else if( mode == GRADS )
       m_modestring = "grads";
+   else if( mode == QP )
+      m_modestring = "qp";
+   else if( mode == QS )
+      m_modestring = "qs";
    
 }
 
@@ -308,11 +312,12 @@ bool Image3D::timeToWrite( double time, int cycle, double dt )
 void Image3D::update_image( int a_cycle, double a_time, double a_dt, vector<Sarray>& a_U, 
 			    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
 			    std::string a_path, Sarray& a_Z )
 {
    if( timeToWrite( a_time, a_cycle, a_dt ) )
    {
-      compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda );
+      compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
       write_image( a_cycle, a_path, a_time, a_Z );
    }
 }
@@ -321,9 +326,10 @@ void Image3D::update_image( int a_cycle, double a_time, double a_dt, vector<Sarr
 void Image3D::force_write_image( double a_time, int a_cycle, vector<Sarray>& a_U, 
 			    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
 			    std::string a_path, Sarray& a_Z )
 {
-   compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda );
+  compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
    write_image( a_cycle, a_path, a_time, a_Z );
 }
                             
@@ -331,7 +337,8 @@ void Image3D::force_write_image( double a_time, int a_cycle, vector<Sarray>& a_U
 void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 			     vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			     vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
-			     vector<Sarray>& a_gLambda )
+			     vector<Sarray>& a_gLambda,
+  			     vector<Sarray>& a_Qp, vector<Sarray>& a_Qs )
 {
 // Introduce 'st' to simplify the variable name
    int st = mImageSamplingFactor;
@@ -359,6 +366,10 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 	 up = a_gMu[g].c_ptr();
       else if( mMode == GRADLAMBDA )
 	 up = a_gLambda[g].c_ptr();
+      else if( mMode == QP )
+	 up = a_Qp[g].c_ptr();
+      else if( mMode == QS )
+	 up = a_Qs[g].c_ptr();
 
       size_t ind = 0;
       if( mMode == UX || mMode == UY || mMode == UZ )
@@ -384,7 +395,8 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
 	 }
       }
-      else if( mMode == RHO || mMode == MU || mMode == LAMBDA || mMode == GRADRHO || mMode == GRADMU || mMode == GRADLAMBDA )
+      else if( mMode == RHO || mMode == MU || mMode == LAMBDA || mMode == GRADRHO || mMode == GRADMU || mMode == GRADLAMBDA 
+	       || mMode == QP || mMode == QS ) // these modes just copy the values straight from the up array
       {
 	 if( m_double )
 	 {

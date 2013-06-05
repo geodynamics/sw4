@@ -14,7 +14,8 @@ class EW;
 class Image3D
 {
 public:
-   enum Image3DMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, P, S, GRADRHO, GRADMU, GRADLAMBDA, GRADP, GRADS };
+  enum Image3DMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, P, S, GRADRHO, GRADMU, GRADLAMBDA, GRADP, GRADS, QP, QS };
+// 15 modes are currently defined
 
    static Image3D* nil;
 
@@ -38,11 +39,13 @@ public:
    void update_image( int a_cycle, double a_time, double a_dt, std::vector<Sarray>& a_U, 
 		      std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
 		      std::vector<Sarray>& a_gRho, std::vector<Sarray>& a_gMu, std::vector<Sarray>& a_gLambda,
+		      std::vector<Sarray>& a_Qp, std::vector<Sarray>& a_Qs,
 		      std::string a_path, Sarray& a_Z );
 
    void force_write_image( double a_time, int a_cycle, vector<Sarray>& a_U, 
 			   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+			   vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
 			   std::string a_path, Sarray& a_Z );
 
    //   void set_start_time(double tStart);
@@ -53,7 +56,8 @@ protected:
    void compute_image( std::vector<Sarray>& a_U, std::vector<Sarray>& a_Rho,
 		       std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
 		       std::vector<Sarray>& a_gRho, std::vector<Sarray>& a_gMu,
-		       std::vector<Sarray>& a_gLambda );
+		       std::vector<Sarray>& a_gLambda,
+     		       std::vector<Sarray>& a_Qp, std::vector<Sarray>& a_Qs );
 
    void write_image( int cycle, std::string &path, double t, Sarray& a_Z );
 

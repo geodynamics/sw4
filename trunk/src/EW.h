@@ -52,8 +52,6 @@ void allocateCartesianSolverArrays(double a_global_zmax);
 void setGoalTime(double t);
 //double getCurrentTime(){return mTime;}
 
-void setAttenuationParams(int numberOfMechanisms, double velocityOmega, int ppw, double maxfrequency );
-
 void setNumberSteps(int steps); // remove???
 int getNumberOfSteps() const;
 

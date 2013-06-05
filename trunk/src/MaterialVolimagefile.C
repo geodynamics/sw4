@@ -38,7 +38,17 @@ void MaterialVolimagefile::set_material_properties( std::vector<Sarray> & rho, s
       mEW->read_volimage( m_path, m_qs, xis );
       mEW->communicate_arrays( xis );
       mEW->update_curvilinear_cartesian_interface( xis );
+// tmp
+      // if (mEW->proc_zero())
+      // 	cout << "qs[0] array is defined in MatVolimgfile()" << endl;
    }
+//    else
+//    {
+// // tmp
+//       if (mEW->proc_zero())
+// 	cout << "qs[0] array is NOT defined in MatVolimgfile()" << endl;
+//    }
+   
    if( xip[0].is_defined() )
    {
       mEW->read_volimage( m_path, m_qp, xip );
