@@ -4457,9 +4457,11 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 	 yGhost=true;
 	 if (yP > yMax+hp || yP < yMin-hp || xP > xMax+hp || xP < xMin-hp)
 	 {
-	    printf("ERROR: xP=%e, yP=%e is outside the topography grid by more than a grid step\n", 
-	       xP, yP);
-	    MPI_Abort(MPI_COMM_WORLD, 1);
+	   mTopo(i,j,1) = NO_TOPO;
+	   continue;
+	   // printf("ERROR: xP=%e, yP=%e is outside the topography grid by more than a grid step\n", 
+	   // 	  xP, yP);
+	   //  MPI_Abort(MPI_COMM_WORLD, 1);
 	 }
 // Compute i0
 	 if (xP < xMin)
