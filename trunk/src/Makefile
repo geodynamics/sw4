@@ -48,11 +48,15 @@ ifeq ($(UNAME),Linux)
   CXX = mpiicpc
   linklibs =  -llapack -lblas -lifcore
 # for Bjorn's tux box
-  ifeq ($(findstring tux,$(HOSTNAME)),tux)
-     FC = gfortran
-     CC = mpicc
-     CXX = mpicxx
+  ifeq ($(findstring tux270,$(HOSTNAME)),tux270)
     linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+  endif
+# for Anders' tux box
+  ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
+    linklibs = -L/home/andersp/lib -llapack -lblas -lgfortran
+    FC = gfortran
+    CC = mpicc
+    CXX = mpicxx
   endif
 # For Edison at NERSC
   ifeq ($(findstring edison,$(HOSTNAME)),edison)

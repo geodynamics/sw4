@@ -486,7 +486,7 @@ void MaterialPfile::read_pfile( )
    int m=0, kk, ndepth, line=7;
 
    
-   if( !m_coords_geographic )
+   if( !m_coords_geographic ) // cartesian
    {
       for(int j=0; j < m_ny; j++ )
 	 for(int i=0; i < m_nx; i++ )
@@ -595,7 +595,7 @@ void MaterialPfile::read_pfile( )
 	    }
 	 }
    }
-   else
+   else // geographic coordinates
    {
       for(int j=0; j < m_nlat; j++ )
 	 for(int i=0; i< m_nlon; i++ )
@@ -616,7 +616,7 @@ void MaterialPfile::read_pfile( )
 
 	    line++;
 
-// sanity check
+// sanity check (have to relax this to allow for different step sizes in lat and lon)
 	    double lat_j = m_latmin + j*m_h;
 	    double lon_i = m_lonmin + i*m_h;
 	    if (fabs(lat_j - m_lat[j]) + fabs(lon_i - m_lon[i]) > 0.1*m_h)
