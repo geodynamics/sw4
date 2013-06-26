@@ -233,6 +233,19 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // Initialize IO
   create_output_directory( );
 
+  if (proc_zero())
+  {
+    double lat[4],lon[4];
+    computeGeographicCoord(0.0,           0.0,           lon[0], lat[0]);
+    computeGeographicCoord(m_global_xmax, 0.0,           lon[1], lat[1]);
+    computeGeographicCoord(m_global_xmax, m_global_ymax, lon[2], lat[2]);
+    computeGeographicCoord(0.0,           m_global_ymax, lon[3], lat[3]);
+    printf("Geographic coordinates of the corners of the computational grid:\n");
+    for (int q=0; q<4; q++)
+      printf("%i: Lon= %e, Lat=%e\n", q, lon[q], lat[q]);
+    printf("\n");
+  }
+  
 // set material properties
   set_materials();
 
@@ -269,19 +282,6 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     // return;
 // for the simplest model with nmech = 0, only Qs is used and muVE, lambdaVE, etc, are not needed
 //     setup_viscoelastic( minvsoh );
-  }
-  
-  if (proc_zero())
-  {
-    double lat[4],lon[4];
-    computeGeographicCoord(0.0,           0.0,           lon[0], lat[0]);
-    computeGeographicCoord(m_global_xmax, 0.0,           lon[1], lat[1]);
-    computeGeographicCoord(m_global_xmax, m_global_ymax, lon[2], lat[2]);
-    computeGeographicCoord(0.0,           m_global_ymax, lon[3], lat[3]);
-    printf("Geographic coordinates of the corners of the computational grid:\n");
-    for (int q=0; q<4; q++)
-      printf("%i: Lon= %e, Lat=%e\n", q, lon[q], lat[q]);
-    printf("\n");
   }
   
   if( mVerbose && proc_zero() )

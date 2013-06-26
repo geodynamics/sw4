@@ -32,7 +32,6 @@ MaterialPfile::MaterialPfile( EW * a_ew,
    m_vpmin(vpmin),
    m_vsmin(vsmin),
    m_rhomin(rhomin),
-   m_flatten(flatten),
    m_coords_geographic(coords_geographic)
 {
    read_pfile();
@@ -120,18 +119,21 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-                   sample_latlon( lat, lon, depth, vp, vs, density, qup, qus, zsed, zmoho, foundcrust );
-		   rho[g](i,j,k) = density;
-		   cp[g](i,j,k) = vp;
-		   cs[g](i,j,k) = vs;
-		   if (m_qf) 
-		   {
-		      if (qp[g].is_defined())
-			 qp[g](i,j,k) = qup;
-		      if (qs[g].is_defined())
-			 qs[g](i,j,k) = qus;
-		   }
-		   material++;
+// tmp
+//		  bool debug = (i==15 && j==15 && k==1);
+
+		  sample_latlon( lat, lon, depth, vp, vs, density, qup, qus, false);
+		  rho[g](i,j,k) = density;
+		  cp[g](i,j,k) = vp;
+		  cs[g](i,j,k) = vs;
+		  if (m_qf) 
+		  {
+		    if (qp[g].is_defined())
+		      qp[g](i,j,k) = qup;
+		    if (qs[g].is_defined())
+		      qs[g](i,j,k) = qus;
+		  }
+		  material++;
 		}
 		else
 		{
@@ -167,7 +169,10 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-		   sample_cart( x, y, z, vp, vs, density, qup, qus, zsed, zmoho, foundcrust );
+// tmp
+//		  bool debug = (i==15 && j==15 && k==1);
+
+		  sample_cart( x, y, z, vp, vs, density, qup, qus, false );
 
 		   rho[g](i,j,k) = density;
 		   cp[g](i,j,k) = vp;
@@ -225,18 +230,19 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-		   sample_latlon( lat, lon, depth, vp, vs, density, qup, qus, zsed, zmoho, foundcrust );
-		   rho[g](i,j,k) = density;
-		   cp[g](i,j,k) = vp;
-		   cs[g](i,j,k) = vs;
-		   if (m_qf) 
-		   {
-		      if (qp[g].is_defined())
-			 qp[g](i,j,k) = qup;
-		      if (qs[g].is_defined())
-			 qs[g](i,j,k) = qus;
-		   }
-		   material++;
+		  
+		  sample_latlon( lat, lon, depth, vp, vs, density, qup, qus, false );
+		  rho[g](i,j,k) = density;
+		  cp[g](i,j,k) = vp;
+		  cs[g](i,j,k) = vs;
+		  if (m_qf) 
+		  {
+		    if (qp[g].is_defined())
+		      qp[g](i,j,k) = qup;
+		    if (qs[g].is_defined())
+		      qs[g](i,j,k) = qus;
+		  }
+		  material++;
 		}
 		else
 		{
@@ -270,7 +276,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-		   sample_cart( x, y, z, vp, vs, density, qup, qus, zsed, zmoho, foundcrust );
+		  sample_cart( x, y, z, vp, vs, density, qup, qus, false );
 		   rho[g](i,j,k) = density;
 		   cp[g](i,j,k) = vp;
 		   cs[g](i,j,k) = vs;
@@ -409,11 +415,24 @@ void MaterialPfile::read_pfile( )
    
    m_qf = ( cqf == "T") || (cqf == "t") || (cqf == ".TRUE.") || (cqf == ".true.");
 
+// done reading the header
+
+// make sure the stencil width does not exceed the number of grid points
+   if (m_nstenc > m_nlat || m_nstenc > m_nlon)
+   {
+     m_nstenc = min(m_nlat, m_nlon);
+     if (mEW->proc_zero())
+       printf("Warning: pfile: stencil width reduced to %i\n", m_nstenc);
+   }
+   
+
    double km = 1000;
    if( m_coords_geographic )
    {
       m_depthmin = m_depthmin*km;
       m_depthmax = m_depthmax*km;
+      m_dlat = (m_latmax - m_latmin)/(m_nlat-1);
+      m_dlon = (m_lonmax - m_lonmin)/(m_nlon-1);
    }
    else
    {
@@ -439,7 +458,7 @@ void MaterialPfile::read_pfile( )
      }
      else
      {
-	cout << "Step size in lat and lon: " << m_h << endl;
+	cout << "Grid length scale (Delta): " << m_h << endl;
 	cout << "Number of latitude points: " << m_nlat << endl;
 	cout << "Min Lat: " << m_latmin << " Max Lat: " << m_latmax << endl;
 	cout << "Number of longitude points: " << m_nlon << endl;
@@ -464,59 +483,71 @@ void MaterialPfile::read_pfile( )
       m_y = new double[m_ny];
    }
 
-   m_z   = new double[m_nlon*m_nlat*m_nmaxdepth];
-   m_vp  = new double[m_nlon*m_nlat*m_nmaxdepth];
-   m_vs  = new double[m_nlon*m_nlat*m_nmaxdepth];
-   m_rho = new double[m_nlon*m_nlat*m_nmaxdepth];
+// old 1-D arrays
+   // m_z   = new double[m_nlon*m_nlat*m_nmaxdepth];
+   // m_vp  = new double[m_nlon*m_nlat*m_nmaxdepth];
+   // m_vs  = new double[m_nlon*m_nlat*m_nmaxdepth];
+   // m_rho = new double[m_nlon*m_nlat*m_nmaxdepth];
+
+// new 3-D Sarrays
+   mZ.define(m_nlon, m_nlat, m_nmaxdepth);
+   mVp.define(m_nlon, m_nlat, m_nmaxdepth);
+   mVs.define(m_nlon, m_nlat, m_nmaxdepth);
+   mRho.define(m_nlon, m_nlat, m_nmaxdepth);
+   
 
    if(m_qf)
    {
-      m_qp = new double[m_nlon*m_nlat*m_nmaxdepth];
-      m_qs = new double[m_nlon*m_nlat*m_nmaxdepth];
+      // m_qp = new double[m_nlon*m_nlat*m_nmaxdepth];
+      // m_qs = new double[m_nlon*m_nlat*m_nmaxdepth];
+
+// new 3-D Sarrays
+      mQp.define(m_nlon, m_nlat, m_nmaxdepth);
+      mQs.define(m_nlon, m_nlat, m_nmaxdepth);
    }
    else
    {
      if (myRank == 0) printf("ppmod: NOT allocating arrays for Qp and Qs\n");
    }
    
-   m_st = new double[m_nlon*m_nlat];
-   m_ct = new double[m_nlon*m_nlat];
-
+   // m_st = new double[m_nlon*m_nlat];
+   // m_ct = new double[m_nlon*m_nlat];
 
    int m=0, kk, ndepth, line=7;
 
    
    if( !m_coords_geographic ) // cartesian
    {
-      for(int j=0; j < m_ny; j++ )
-	 for(int i=0; i < m_nx; i++ )
-	 {
+// note: nx = nlat, ny = nlon
+     for(int jy=0; jy < m_ny; jy++ )
+       for(int ix=0; ix < m_nx; ix++ )
+       {
             CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error in pfile profile header at coordinate " 
-			                              << i << " " << j << "\n" );
+			                              << ix << " " << jy << "\n" );
 	    tok = strtok(buf," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no x variable at " << i << " " << j << "\n");
-            m_x[i] = atof(tok);
+	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no x variable at " << ix << " " << jy << "\n");
+            m_x[ix] = atof(tok);
 
 	    tok = strtok(NULL," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no y variable at " << i << " " << j << "\n");
-	    m_y[j] = atof(tok);
+	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no y variable at " << ix << " " << jy << "\n");
+	    m_y[jy] = atof(tok);
 
 	    tok = strtok(NULL," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no ndepth  at " << i << " " << j << "\n");
+	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no ndepth  at " << ix << " " << jy << "\n");
 	    ndepth = atoi(tok);
 
 	    line++;
 
 // sanity check
-	    double y = m_ymin + j*m_h;
-	    double x = m_xmin + i*m_h;
-	    if (fabs(y - m_y[j]) + fabs(x - m_x[i]) > 0.1*m_h)
+	    double y = m_ymin + jy*m_h;
+	    double x = m_xmin + ix*m_h;
+	    if (fabs(y - m_y[jy]) + fabs(x - m_x[ix]) > 0.1*m_h)
 	    {
 	       if (myRank == 0)
 	       {
 		  cerr << "pfile reader error, ppmod file line=" << line << endl;
-		  cerr << "read x[" << i << "]=" << m_x[i] << " but expected x=" << x << endl;
-		  cerr << "read y[" << j << "]=" << m_y[j] << " but expected y=" << y << endl;
+		  cerr << "read x[" << ix << "]=" << m_x[ix] << " but expected x=" << x << endl;
+		  cerr << "read y[" << jy << "]=" << m_y[jy] << " but expected y=" << y << endl;
 		  cerr << "CHECK THE PPMOD FILE." << endl;
 		  cerr << "DEPTH PROFILES SHOULD BE ORDERED SUCH THAT X VARIES THE FASTEST" << endl;
 	       }
@@ -539,56 +570,52 @@ void MaterialPfile::read_pfile( )
 	    for(int k=0; k < m_nmaxdepth; k++ )
 	    {
 	       CHECK_INPUT( fgets( buf, bufsize, fd ) != NULL, "Error in pfile profile at coordinate " 
-			    << i << " " << j << " " << k << "\n" );
+			    << ix << " " << jy << " " << k << "\n" );
 
 	       tok = strtok(buf," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading kk at " << i << " " << j << " " << k << "\n" );
+	       CHECK_INPUT( tok != NULL, "Error in pfile reading kk at " << ix << " " << jy << " " << k << "\n" );
 	       kk = atoi( tok );
 
 	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading z at " << i << " " << j << " " << k << "\n" );
-	       m_z[m] = atof( tok );
+	       CHECK_INPUT( tok != NULL, "Error in pfile reading z at " << ix << " " << jy << " " << k << "\n" );
+	       mZ(ix+1,jy+1,k+1) = atof( tok );
 
 	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading vp at " << i << " " << j << " " << k << "\n" );
-	       m_vp[m] = atof( tok );
+	       CHECK_INPUT( tok != NULL, "Error in pfile reading vp at " << ix << " " << jy << " " << k << "\n" );
+	       mVp(ix+1,jy+1,k+1) = atof( tok );
 
 	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading vs at " << i << " " << j << " " << k << "\n" );
-	       m_vs[m] = atof( tok );
+	       CHECK_INPUT( tok != NULL, "Error in pfile reading vs at " << ix << " " << jy << " " << k << "\n" );
+	       mVs(ix+1,jy+1,k+1) = atof( tok );
 
 	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading rho at " << i << " " << j << " " << k << "\n" );
-	       m_rho[m] = atof( tok );
+	       CHECK_INPUT( tok != NULL, "Error in pfile reading rho at " << ix << " " << jy << " " << k << "\n" );
+	       mRho(ix+1,jy+1,k+1) = atof( tok );
 
 	       if( m_qf )
 	       {
 		  tok = strtok(NULL," \t");
-		  CHECK_INPUT( tok != NULL, "Error in pfile reading qp at " << i << " " << j << " " << k << "\n" );
-		  m_qp[m] = atof( tok );
+		  CHECK_INPUT( tok != NULL, "Error in pfile reading qp at " << ix << " " << jy << " " << k << "\n" );
+		  mQp(ix+1,jy+1,k+1) = atof( tok );
 
 		  tok = strtok(NULL," \t");
-		  CHECK_INPUT( tok != NULL, "Error in pfile reading qs at " << i << " " << j << " " << k << "\n" );
-		  m_qs[m] = atof( tok );
+		  CHECK_INPUT( tok != NULL, "Error in pfile reading qs at " << ix << " " << jy << " " << k << "\n" );
+		  mQs(ix+1,jy+1,k+1) = atof( tok );
 	       }
 	       line++;
-	       m_vp[m] = max(m_vp[m], m_vpmin );
-	       m_vs[m] = max(m_vs[m], m_vsmin );
-	       m_rho[m]= max(m_rho[m],m_rhomin);
 
-	       if ( k == m_ksed-1 ) 
-		  m_st[i+j*m_nx] = m_z[m];
-
-	       if ( k == m_kmoho-1 ) 
-		  m_ct[i+j*m_nx] = m_z[m];
+// do we need to cap the values here?
+	       // m_vp[m] = max(m_vp[m], m_vpmin );
+	       // m_vs[m] = max(m_vs[m], m_vsmin );
+	       // m_rho[m]= max(m_rho[m],m_rhomin);
 
 // fundamental sanity checks
-	       if (!(m_y[j] <= m_ymax && m_y[j] >= m_ymin && 
-		     m_x[i] <= m_xmax && m_x[i] >= m_xmin) )
+	       if (!(m_y[jy] <= m_ymax && m_y[jy] >= m_ymin && 
+		     m_x[ix] <= m_xmax && m_x[ix] >= m_xmin) )
 	       {
 		  printf("Error reading pfile: x profile #%i, y profile #%i: x=%e or y=%e out of bounds!"
-			 " min(x)=%e, max(x)=%e, min(y)=%e, max(y)=%e\n", i+1, j+1,
-			 m_x[i], m_y[j], m_xmin, m_xmax, m_ymin, m_ymax );
+			 " min(x)=%e, max(x)=%e, min(y)=%e, max(y)=%e\n", ix+1, jy+1,
+			 m_x[ix], m_y[jy], m_xmin, m_xmax, m_ymin, m_ymax );
 		  MPI_Abort(MPI_COMM_WORLD, 1);
 	       }
 	       m++;
@@ -597,6 +624,7 @@ void MaterialPfile::read_pfile( )
    }
    else // geographic coordinates
    {
+     
       for(int j=0; j < m_nlat; j++ )
 	 for(int i=0; i< m_nlon; i++ )
 	 {
@@ -616,10 +644,10 @@ void MaterialPfile::read_pfile( )
 
 	    line++;
 
-// sanity check (have to relax this to allow for different step sizes in lat and lon)
-	    double lat_j = m_latmin + j*m_h;
-	    double lon_i = m_lonmin + i*m_h;
-	    if (fabs(lat_j - m_lat[j]) + fabs(lon_i - m_lon[i]) > 0.1*m_h)
+// sanity check (now allowing for different step sizes in lat and lon)
+	    double lat_j = m_latmin + j*m_dlat;
+	    double lon_i = m_lonmin + i*m_dlon;
+	    if (fabs(lat_j - m_lat[j]) > 0.05*m_dlat || fabs(lon_i - m_lon[i]) > 0.05*m_dlon)
 	    {
 	       if (myRank == 0)
 	       {
@@ -656,40 +684,37 @@ void MaterialPfile::read_pfile( )
 
 	       tok = strtok(NULL," \t");
 	       CHECK_INPUT( tok != NULL, "Error in pfile reading z at " << i << " " << j << " " << k << "\n" );
-	       m_z[m] = km*atof( tok );
+
+// i,j,k are base 0
+	       mZ(i+1,j+1,k+1) = km*atof( tok );
 
 	       tok = strtok(NULL," \t");
 	       CHECK_INPUT( tok != NULL, "Error in pfile reading vp at " << i << " " << j << " " << k << "\n" );
-	       m_vp[m] = km*atof( tok );
+	       mVp(i+1,j+1,k+1) = km*atof( tok );
 
 	       tok = strtok(NULL," \t");
 	       CHECK_INPUT( tok != NULL, "Error in pfile reading vs at " << i << " " << j << " " << k << "\n" );
-	       m_vs[m] = km*atof( tok );
+	       mVs(i+1,j+1,k+1) = km*atof( tok );
 
 	       tok = strtok(NULL," \t");
 	       CHECK_INPUT( tok != NULL, "Error in pfile reading rho at " << i << " " << j << " " << k << "\n" );
-	       m_rho[m] = km*atof( tok );
+	       mRho(i+1,j+1,k+1) = km*atof( tok );
 
 	       if( m_qf )
 	       {
 		  tok = strtok(NULL," \t");
 		  CHECK_INPUT( tok != NULL, "Error in pfile reading qp at " << i << " " << j << " " << k << "\n" );
-		  m_qp[m] = atof( tok );
+		  mQp(i+1,j+1,k+1) = atof( tok );
 
 		  tok = strtok(NULL," \t");
 		  CHECK_INPUT( tok != NULL, "Error in pfile reading qs at " << i << " " << j << " " << k << "\n" );
-		  m_qs[m] = atof( tok );
+		  mQs(i+1,j+1,k+1) = atof( tok );
 	       }
 	       line++;
-	       m_vp[m] = max(m_vp[m], m_vpmin );
-	       m_vs[m] = max(m_vs[m], m_vsmin );
-	       m_rho[m]= max(m_rho[m],m_rhomin);
-
-	       if ( k == m_ksed-1 ) 
-		  m_st[i+j*m_nlon] = m_z[m];
-
-	       if ( k == m_kmoho-1 ) 
-		  m_ct[i+j*m_nlon] = m_z[m];
+// are these needed anymore???
+	       // m_vp[m] = max(m_vp[m], m_vpmin );
+	       // m_vs[m] = max(m_vs[m], m_vsmin );
+	       // m_rho[m]= max(m_rho[m],m_rhomin);
 
 // fundamental sanity checks
 	       if (!(m_lat[j] <= m_latmax && m_lat[j] >= m_latmin && 
@@ -727,7 +752,7 @@ void MaterialPfile::read_pfile( )
        //---------------------------------------------------------
        // Query the location...
        //---------------------------------------------------------
-//       sample_latlon( lat, lon, depth, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
+//       sample_latlon( lat, lon, depth, cp, cs, rho, qp, qs, false );
 //     }
 //     else
 //       retval = -1;
@@ -739,7 +764,7 @@ void MaterialPfile::read_pfile( )
        //---------------------------------------------------------
        // Query the location...
        //---------------------------------------------------------
-//       sample_cart( x, y, z, cp, cs, rho, qp, qs, zsed, zmoho, foundcrust );
+//       sample_cart( x, y, z, cp, cs, rho, qp, qs );
 //     }
 //     else
 //       retval = -1;
@@ -750,25 +775,15 @@ void MaterialPfile::read_pfile( )
 
 //-----------------------------------------------------------------------
 void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp, 
-				    double &vs,double &rho, double &qp, double &qs,
-				    double &zsed, double &zmoho, bool& foundcrust )
+				   double &vs,double &rho, double &qp, double &qs,
+				   bool debug )
 //--------------------------------------------------------------------------
 // return material properties (vp, vs, rho) at point (lats, lons, zs)
 //--------------------------------------------------------------------------
 {
-   //   double w;
-   //   int i, j, k;
-   //   int kk;
-   //   int i1, j1, k1;
-   //   int i1max, j1max;
-   //   double  factor;
-   //   double wt;
-   //   int m;
-
-   foundcrust=false;
-
 // tmp
-//   printf("ppmod::sample: lats=%e, lons=%e, zs=%e\n", lats, lons, zs);
+  // if (debug) printf("DEBUG::sample_latlon: lats=%e, lons=%e, zs=%e, dlon=%e, dlat=%e, m_h=%e\n", lats, lons, zs, 
+  // 		    m_dlon, m_dlat, m_h);
 
    //  Check if lats and lons are out of range
    if ( lats < m_latmin )
@@ -798,24 +813,26 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
    if( m_nstenc % 2 == 1 )
    {
       // odd number of points in stencil
-      int s = (m_nstenc-1)/2;
-      ii  = static_cast<int>( floor( (lons-m_lonmin+0.5*m_h)/m_h ) )-s;
-      jj  = static_cast<int>( floor( (lats-m_latmin+0.5*m_h)/m_h ) )-s;
+     int s = (m_nstenc-1)/2; // half stencil width
+      ii  = static_cast<int>( floor( (lons-m_lonmin)/m_dlon + 0.5 ) )-s; // updated to use different step lengths in lat and lon
+      jj  = static_cast<int>( floor( (lats-m_latmin)/m_dlat + 0.5 ) )-s;
    }
    else
    {
       // even number of points in stencil
       int s = m_nstenc/2;
-      ii  = static_cast<int>( floor( (lons-m_lonmin)/m_h ) )-s+1;
-      jj  = static_cast<int>( floor( (lats-m_latmin)/m_h ) )-s+1;
+      ii  = static_cast<int>( floor( (lons-m_lonmin)/m_dlon ) )-s+1; // updated to use different step lengths in lat and lon
+      jj  = static_cast<int>( floor( (lats-m_latmin)/m_dlat ) )-s+1;
    }
 
 // make sure we stay within array boundaries
+// min indices
    if( ii < 0 )
       ii = 0;
    if( jj < 0 )
       jj = 0;
 
+// max indices
    int ii2 = ii + m_nstenc-1;
    int jj2 = jj + m_nstenc-1;
 
@@ -830,52 +847,61 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
      jj2 = m_nlat-1;
      jj = jj2 - (m_nstenc-1);
    }
+
+   // if (debug)
+   // {
+   //   printf("pfile: lon array:\n");
+   //   for (int q=ii; q<=ii2; q++)
+   //     printf("lon[%i]=%e\n", q, m_lon[q]);
+
+   //   printf("pfile: lat array:\n");
+   //   for (int q=jj; q<=jj2; q++)
+   //     printf("lat[%i]=%e\n", q, m_lat[q]);     
+   // }
    
-   double re=6371;
-   if( m_flatten ) 
-      zs = re*(1.0 - exp(-zs/re));
-
-
    double w=0;
-   zsed=zmoho=vp=vs=rho=qp=qs=0; 
+   vp=vs=rho=qp=qs=0; 
    double appm  = 0.5*m_nstenc*m_h/sqrt(-log(1e-6));
    double appmi2 = 1.0/(appm*appm);
 
-   for( int j1 = 0 ; j1 < jj2-jj+1 ; j1++ )
-      for( int i1 = 0 ; i1 < ii2-ii+1 ; i1++ )
+   for( int j1 = jj ; j1 <= jj2; j1++ )
+      for( int i1 = ii ; i1 <= ii2; i1++ )
       {
-	  double wgh = exp(-( (lons-m_lon[ii+i1])*(lons-m_lon[ii+i1])
-			     +(lats-m_lat[jj+j1])*(lats-m_lat[jj+j1]) )*appmi2 );
+	  double wgh = exp(-( (lons-m_lon[i1])*(lons-m_lon[i1])
+			     +(lats-m_lat[j1])*(lats-m_lat[j1]) )*appmi2 );
 	  w += wgh;
 
-	  int m = (ii+i1)*m_nmaxdepth + (jj+j1)*m_nmaxdepth*m_nlon;
-
+// depth index
           int kk;
-	  for( kk=0; kk < m_nmaxdepth; kk++ )
+	  for( kk=1; kk <= m_nmaxdepth; kk++ )
 	  {
-	     if (m_z[m+kk] > zs) break;
+	    if (mZ(i1+1, j1+1, kk) > zs) break;
 	  }
-
-	  if (kk+1 >= m_kmoho)
-	     foundcrust = true;
+// at this point we should have mZ(kk-1) <= zs < mZ(kk)
 
 	  int k1 = kk-1;
-	  double factor = (zs-m_z[m+k1])/(m_z[m+k1+1]-m_z[m+k1]);
+// now we should have mZ(k1) <= zs < mZ(k1+1)
 
-	  zsed  += m_z[m+m_ksed-1]*wgh;
-	  zmoho += m_z[m+m_kmoho-1]*wgh;
-	  vp    += (m_vp[m+k1]  + factor*(m_vp[m+k1+1]-m_vp[m+k1])  )*wgh;
-	  vs    += (m_vs[m+k1]  + factor*(m_vs[m+k1+1]-m_vs[m+k1])  )*wgh;
-	  rho   += (m_rho[m+k1] + factor*(m_rho[m+k1+1]-m_rho[m+k1]))*wgh;
+// linear interpolation factor ( what happens if two mZ values are identical? )
+	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
+
+	  vp    += (mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)) )*wgh;
+	  vs    += (mVs(i1+1,j1+1,k1) + factor*(mVs(i1+1,j1+1,k1+1)-mVs(i1+1,j1+1,k1)) )*wgh;
+	  rho    += (mRho(i1+1,j1+1,k1) + factor*(mRho(i1+1,j1+1,k1+1)-mRho(i1+1,j1+1,k1)) )*wgh;
+// tmp
+	  // if (debug) printf("DEBUG: i1+1=%i, j1+1=%i, k1=%i, vp=%e, wgh=%e\n", i1+1, j1+1, k1,
+	  // 		    mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)), wgh);
+
 	  if( m_qf )
 	  {
-	     qp += (m_qp[m+k1] + factor*(m_qp[m+k1+1]-m_qp[m+k1]))*wgh;
-	     qs += (m_qs[m+k1] + factor*(m_qs[m+k1+1]-m_qs[m+k1]))*wgh;
+	    qp += (mQp(i1+1,j1+1,k1) + factor*(mQp(i1+1,j1+1,k1+1)-mQp(i1+1,j1+1,k1)) )*wgh;
+	    qs += (mQs(i1+1,j1+1,k1) + factor*(mQs(i1+1,j1+1,k1+1)-mQs(i1+1,j1+1,k1)) )*wgh;
 	  }
-      }
-
+      } // end for j1, i1
+   
    // Now compute average properties by distance-weighted Gaussian average
    double iw;
+// at this point, w holds the sum of the weigths
    if (w != 0.)
      iw = 1.0/w;
    else
@@ -891,8 +917,6 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
      MPI_Abort(MPI_COMM_WORLD, 1);
    }
    
-   zsed  *= iw;
-   zmoho *= iw;
    vp  *= iw;
    vs  *= iw;
    rho *= iw;
@@ -901,24 +925,19 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
       qp *= iw;
       qs *= iw;
    }
-   if( m_flatten )
-   {
-      zs  = re*log(re/(re-zs));
-      vp  = vp*(re/(re-zs));
-      vs  = vs*(re/(re-zs));
-      rho = rho*pow(re/(re-zs),5.0);
-   }
+
 }
 
 //-----------------------------------------------------------------------
-void MaterialPfile::sample_cart( double xs,double ys,double zs, double &vp, 
-				  double &vs,double &rho, double &qp, double &qs,
-				  double &zsed, double &zmoho, bool& foundcrust )
+void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp, 
+				 double &vs, double &rho, double &qp, double &qs, bool debug )
 //--------------------------------------------------------------------------
 // return material properties (vp, vs, rho) at point (xs, ys, zs)
 //--------------------------------------------------------------------------
 {
-   foundcrust=false;
+// tmp
+//  if (debug) printf("DEBUG::sample_cart: xs=%e, ys=%e, zs=%e, m_h=%e\n", xs, ys, zs, m_h);
+
    //  Check if xs and ys are out of range
    if ( xs < m_xmin )
    {
@@ -946,8 +965,8 @@ void MaterialPfile::sample_cart( double xs,double ys,double zs, double &vp,
    {
       // odd number of points in stencil
       int s = (m_nstenc-1)/2;
-      ii  = static_cast<int>( floor( (xs-m_xmin+0.5*m_h)/m_h ) )-s;
-      jj  = static_cast<int>( floor( (ys-m_ymin+0.5*m_h)/m_h ) )-s;
+      ii  = static_cast<int>( floor( (xs-m_xmin)/m_h +0.5) )-s;
+      jj  = static_cast<int>( floor( (ys-m_ymin)/m_h +0.5) )-s;
    }
    else
    {
@@ -980,47 +999,50 @@ void MaterialPfile::sample_cart( double xs,double ys,double zs, double &vp,
      jj = jj2 - (m_nstenc-1);
    }
    
-   double re=6371e3;
-   if( m_flatten ) 
-      zs = re*(1.0 - exp(-zs/re));
-
-
    double w=0;
-   zsed=zmoho=vp=vs=rho=qp=qs=0; 
+   vp=vs=rho=qp=qs=0; 
    double appm  = 0.5*m_nstenc*m_h/sqrt(-log(1e-6));
    double appmi2 = 1.0/(appm*appm);
 
-   for( int j1 = 0 ; j1 < jj2-jj+1 ; j1++ )
-      for( int i1 = 0 ; i1 < ii2-ii+1 ; i1++ )
+   for( int j1 = jj; j1 <= jj2; j1++ )
+      for( int i1 = ii; i1 <= ii2; i1++ )
       {
-	  double wgh = exp(-( (xs-m_x[ii+i1])*(xs-m_x[ii+i1])
-			     +(ys-m_y[jj+j1])*(ys-m_y[jj+j1]) )*appmi2 );
+	  double wgh = exp(-( (xs-m_x[i1])*(xs-m_x[i1])
+			     +(ys-m_y[j1])*(ys-m_y[j1]) )*appmi2 );
 	  w += wgh;
-	  int m = (ii+i1)*m_nmaxdepth + (jj+j1)*m_nmaxdepth*m_nx;
-          int kk;
-	  for( kk=0; kk < m_nmaxdepth; kk++ )
-	  {
-	     if (m_z[m+kk] > zs) break;
-	  }
 
-	  if (kk+1 >= m_kmoho)
-	     foundcrust = true;
+// depth index
+          int kk;
+	  for( kk=1; kk <= m_nmaxdepth; kk++ )
+	  {
+	    if (mZ(i1+1,j1+1,kk) > zs) break;
+	  }
+// at this point we should have mZ(kk-1) <= zs < mZ(kk)
 
 	  int k1 = kk-1;
-	  double factor = (zs-m_z[m+k1])/(m_z[m+k1+1]-m_z[m+k1]);
-	  zsed  += m_z[m+m_ksed-1]*wgh;
-	  zmoho += m_z[m+m_kmoho-1]*wgh;
-	  vp    += (m_vp[m+k1]  + factor*(m_vp[m+k1+1]-m_vp[m+k1])  )*wgh;
-	  vs    += (m_vs[m+k1]  + factor*(m_vs[m+k1+1]-m_vs[m+k1])  )*wgh;
-	  rho   += (m_rho[m+k1] + factor*(m_rho[m+k1+1]-m_rho[m+k1]))*wgh;
+// now we should have mZ(k1) <= zs < mZ(k1+1)
+
+// linear interpolation factor
+	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
+
+// new style
+	  vp    += (mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)) )*wgh;
+	  vs    += (mVs(i1+1,j1+1,k1) + factor*(mVs(i1+1,j1+1,k1+1)-mVs(i1+1,j1+1,k1)) )*wgh;
+	  rho    += (mRho(i1+1,j1+1,k1) + factor*(mRho(i1+1,j1+1,k1+1)-mRho(i1+1,j1+1,k1)) )*wgh;
+// tmp
+	  // if (debug) printf("DEBUG: i1+1=%i, j1+1=%i, k1=%i, vp=%e, wgh=%e\n", i1+1, j1+1, k1,
+	  // 		    mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)), wgh);
+
 	  if( m_qf )
 	  {
-	     qp += (m_qp[m+k1] + factor*(m_qp[m+k1+1]-m_qp[m+k1]))*wgh;
-	     qs += (m_qs[m+k1] + factor*(m_qs[m+k1+1]-m_qs[m+k1]))*wgh;
+	     // qp += (m_qp[m+k1] + factor*(m_qp[m+k1+1]-m_qp[m+k1]))*wgh;
+	     // qs += (m_qs[m+k1] + factor*(m_qs[m+k1+1]-m_qs[m+k1]))*wgh;
+	    qp += (mQp(i1+1,j1+1,k1) + factor*(mQp(i1+1,j1+1,k1+1)-mQp(i1+1,j1+1,k1)) )*wgh;
+	    qs += (mQs(i1+1,j1+1,k1) + factor*(mQs(i1+1,j1+1,k1+1)-mQs(i1+1,j1+1,k1)) )*wgh;
 	  }
       }
 
-   // Now compute average properties by distance-weighted Gaussian average
+// Normalize
    double iw;
    if (w != 0.)
      iw = 1.0/w;
@@ -1036,8 +1058,6 @@ void MaterialPfile::sample_cart( double xs,double ys,double zs, double &vp,
      MPI_Abort(MPI_COMM_WORLD, 1);
    }
    
-   zsed  *= iw;
-   zmoho *= iw;
    vp  *= iw;
    vs  *= iw;
    rho *= iw;
@@ -1046,29 +1066,20 @@ void MaterialPfile::sample_cart( double xs,double ys,double zs, double &vp,
       qp *= iw;
       qs *= iw;
    }
-   if( m_flatten )
-   {
-      zs  = re*log(re/(re-zs));
-      vp  = vp*(re/(re-zs));
-      vs  = vs*(re/(re-zs));
-      rho = rho*pow(re/(re-zs),5.0);
-   }
 }
 
 //-----------------------------------------------------------------------
 MaterialPfile::~MaterialPfile()
 {
-   delete[] m_vp;
-   delete[] m_vs;
-   delete[] m_rho;
-   delete[] m_z;
-   delete[] m_st;
-   delete[] m_ct;
-   if( m_qf )
-   {
-      delete[] m_qp;
-      delete[] m_qs;
-   }
+   // delete[] m_vp;
+   // delete[] m_vs;
+   // delete[] m_rho;
+   // delete[] m_z;
+   // if( m_qf )
+   // {
+   //    delete[] m_qp;
+   //    delete[] m_qs;
+   // }
    if( m_coords_geographic )
    {
       delete[] m_lat;

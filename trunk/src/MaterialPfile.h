@@ -51,24 +51,25 @@ class MaterialPfile : public MaterialData
 
    void read_pfile( );
 
-   void sample_cart(double,double,double,double&,double&,double&,double&,double&,
-	       double&,double&,bool&) ;
+   void sample_cart(double xs, double ys, double zs, double &vp, 
+		    double &vs, double &rho, double &qp, double &qs, bool debug );
 
-   void sample_latlon(double,double,double,double&,double&,double&,double&,double&,
-	       double&,double&,bool&) ;
+   void sample_latlon(double lats, double lons, double zs, double &vp, 
+		      double &vs, double &rho, double &qp, double &qs,
+		      bool debug );
 
    EW* mEW;
    int m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
    int m_nstenc;
-   double m_h;
+   double m_h, m_dlon, m_dlat;
    int     m_ksed, m_kmoho, m_k410, m_k660;
    double *m_lon, *m_lat, *m_x, *m_y;
-   double *m_z, *m_vp, *m_vs, *m_rho, *m_qp, *m_qs;
+// new 3-dimensional Sarrays
+   Sarray mZ, mVp, mVs, mRho, mQp, mQs;
+   
    double  m_vpmin, m_vsmin, m_rhomin;
-   double *m_st, *m_ct;
    string m_model_file, m_model_dir, m_model_name;
    bool m_qf;
-   bool m_flatten;
 
    double m_latmin, m_latmax, m_lonmin, m_lonmax, m_depthmin, m_depthmax;
    double m_xmin, m_xmax, m_ymin, m_ymax;

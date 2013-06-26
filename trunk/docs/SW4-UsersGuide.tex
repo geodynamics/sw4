@@ -1095,6 +1095,82 @@ directory.
 \chapter{The material model (in progress)} \label{sec:material}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The pfile command}\label{sec:pfile}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The pfile command can be used to assign material properties based on depth profiles. A pfile
+contains the values of the model features (P-velocity, S-velocity, density, and optionally the
+attenuation factors $Q_P$ and $Q_S$) as function of depth at points on a regular lattice covering
+the horizontal extent of the computational domain. The points on the lattice are either defined by
+their latitude and longitude coordinates, or by the $x$ and $y$-coordinates. The number of grid
+points in the depth direction needs to be the same for all profiles, but the grid spacing does not
+need to be uniform and can also be different for each profile. Material discontinuities can be
+represented by two material values for the same depth value. Material layers, which only occur in a
+subset of the profiles, can be tapered to have zero thickness in the remaining profiles. This is
+handled by introducing multiple data points with the same depth and material values in a profile.
+
+The lattice of the pfile does not need to have any relation to the computational mesh used in
+\emph{SW4} and is often much coarser. The material properties in the computational mesh are assigned
+values using Gaussian averaging between the nearest $N_G\times N_G$ profiles in the
+latitude-longitude plane and linear interpolation in the depth direction. Let the grid point have
+longitude $\theta$, latitude $\phi$ and depth $d$. Material properties are first linearly
+interpolated in the depth direction along each profile and then averaged in the latitude-longitude
+plane. The number of points in the Gaussian averaging, $N_G$, is assigned by the user in the
+\verb+pfile+ command. For example, the following line in the input file makes \emph{SW4} read a
+pfile named \verb+material.ppmod+:
+\begin{verbatim}
+pfile filename=material.ppmod vsmin=1000 vpmin=1732 smoothingsize=4
+\end{verbatim}
+The optional \verb+vsmin+ and \verb+vpmin+ keywords are used to assign minimum threshold values for
+the $P$- and $S$-velocities, respectively. Here, {\tt smoothingsize=4} means that $N_G=4$ in the
+Gaussian averaging. A larger value of $N_G$ ($\geq 5$) is particularily useful to avoid staircasing
+imprints when the computational grid is much finer than the pfile lattice, see
+Figure~\ref{fig:pfile-smoothing}. The {\tt smoothingsize} keyword can be assigned any number greater
+than or equal to one.
+\begin{figure}
+\begin{centering}
+  \includegraphics[width=0.48\textwidth]{p-velo-ss1.png}\hfill\includegraphics[width=0.48\textwidth]{p-velo-ss3.png}\\
+  \includegraphics[width=0.48\textwidth]{p-velo-ss5.png} 
+  \caption{The {\tt smoothingsize} parameter can be used to average out imprinting from the
+    horizontal lattice in a coarse pfile material model. Here we show $V_P$ in the plane $y=5,000$
+    as function of $x$ and $-z$. In this case, {\tt smoothingsize}$=1$ in the top, {\tt
+    smoothingsize}$=3$ in the middle, and {\tt smoothingsize}$=5$ in the bottom plot.}
+  \label{fig:pfile-smoothing}
+\end{centering}
+\end{figure}
+
+When $N_G$ is odd, the Gaussian averaging starts by finding the closest grid point on the latitude-longitude
+lattice, $(\phi_i,\theta_j)$. The material property $c$ ($\rho$, $V_p$, $V_s$, etc.) is assigned by the formula
+\begin{equation}\label{eq:gaussian-average}
+c(\phi,\theta) = \dfrac{ \sum_{m=i-Q}^{i+Q} \sum_{n=j-Q}^{j+Q} c_{m,n} \omega_{m,n} }
+{ \sum_{m=i-Q}^{i+Q} \sum_{n=j-Q}^{j+Q} \omega_{m,n} },\quad Q = \frac{N_G-1}{2},
+\end{equation}
+where the weights are given by
+\[
+\omega_{m,n} = e^{-[(\phi_m-\phi)^2 + (\theta_n-\theta)^2]/\alpha^2},\quad \alpha = \frac{N_G \Delta}{2
+  \sqrt{-\log 10^{-6}}},
+\]
+where the parameter $\Delta$ is given in the header of the pfile. It should approximately equal the
+grid size in latitude and longitude (which do {\em not} have to be equal). This choice of $\alpha$ makes
+the weights $\omega_{m,n}<10^{-6}$ for points that are further from $(\phi_m, \theta_n)$ than $N_G
+\Delta/2$, which justifies the truncation of the series in (\ref{eq:gaussian-average}). A
+similar procedure is used for even values of $N_G$, but in this case the averaging formula
+(\ref{eq:gaussian-average}) is centered around the nearest cell center on the latitude-longitude
+lattice.
+
+By default the pfile data are assumed to be given in latitude-longitude coordinates. It is also
+possible to read pfiles where the data is given on a Cartesian ($x$-$y$ grid). Use the option {\tt
+  style}, as in the example
+\begin{verbatim}
+pfile filename=materialxy.ppmod vsmin=1000 vpmin=1732 smoothingsize=4 \\
+      style=cartesian
+\end{verbatim}
+to indicate that the given pfile contains data on a grid of Cartesian coordinates.
+
+Data files for the pfile command are written in an ASCII text format. See
+Section~\ref{sec:pfile-format} for a description of both the latitude-longitude pfile and the
+Cartesian pfile grid formats.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Topography (in progress)} \label{sec:topography}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2578,8 +2654,10 @@ Line & Column 1& Column 2& Column 3& Column 4\\ \hline
 7 & $Q$-available? (logical) \\ \hline
 \end{tabular}
 \end{center}
+The first line holds the optional name of the material model. Line 2 contains the parameter
+$\Delta$, which is used to average the material properties according to equation \eqref{eq:gaussian-average}.
 Lines 3 and 4 contain the number of lattice points as well as the starting and ending angles in the
-latitude and longitude direction, respectively, . Line 5 contains the number of depth values in each
+latitude and longitude direction, respectively. Line 5 contains the number of depth values in each
 profile, followed by the minimum and maximum depth measured in km. Line 6 supplies optional
 information about the index of some material discontinuities in each depth profile. Give -99 if not
 known. Note that the index for each discontinuity (sediment, MoHo, 410, 660) indicates the row
@@ -2604,12 +2682,14 @@ Caucasus
 The header is directly followed by $N_{lat}\times N_{lon}$ depth profiles, ordered such that the longitude
 varies the fastest, that is, according to the pseudo-code:
 \begin{flushleft}
-\hspace{10mm}  for ($Lat_i= Lat_{min}$; $Lat_i <= Lat_{max}$; $Lat_i += \Delta$)\\
-\hspace{20mm}    for ($Lon_j= Lon_{min}$; $Lon_j <= Lon_{max}$; $Lon_j += \Delta$)\\
+\hspace{10mm}  for ($Lat_i= Lat_{min}$; $Lat_i <= Lat_{max}$; $Lat_i += \Delta_{lat}$)\\
+\hspace{20mm}    for ($Lon_j= Lon_{min}$; $Lon_j <= Lon_{max}$; $Lon_j += \Delta_{lon}$)\\
 \hspace{30mm}      (save depth profile for $Lat_i$, $Lon_j$)\\
 \hspace{20mm}    end\\
 \hspace{10mm}  end
 \end{flushleft}
+Here, $\Delta_{lat} = (Lat_{max} - Lat_{min})/(N_{lat}-1)$ and  $\Delta_{lon} = (Lon_{max} -
+Lon_{min})/(N_{lon}-1)$. In general, $\Delta_{lat}\ne \Delta_{lon}\ne\Delta$.
 
 The first line of each depth profile holds the latitude and longitude (in degrees as real
 numbers), and the number of depth values, which must equal $N_{dep}$. For example a depth profile
