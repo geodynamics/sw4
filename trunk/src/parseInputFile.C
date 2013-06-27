@@ -4738,9 +4738,11 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     if (topographyExists()) // topography command must be read before the source command
       zmin = m_global_zmin;
     else
-      zmin = -m_global_zmax;
+      zmin = 0;
 
-    if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
+    if ( (topographyExists() && (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax )) ||
+	 (!topographyExists() && (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || 
+				  z < zmin || z > m_global_zmax)) )
     {
       stringstream sourceposerr;
       sourceposerr << endl

@@ -777,7 +777,7 @@ void EW::computeNearestGridPoint(int & a_i,
           a_j = (int)floor(a_y/mGridSize[g])+1;
           if (a_y-((a_j-0.5)*mGridSize[g]) > 0.) (a_j)++;
           
-          a_k    = (int)floor((a_z-m_zmin[g])/mGridSize[g])+1;  //Note: this component will be garbage for g=curvilinear grid
+          a_k = (int)floor((a_z-m_zmin[g])/mGridSize[g])+1;  //Note: this component will be garbage for g=curvilinear grid
           if (a_z-(m_zmin[g]+(a_k-0.5)*mGridSize[g]) > 0.)   (a_k)++;
           
           a_g = g                                        ;
@@ -826,6 +826,13 @@ void EW::computeNearestGridPoint(int & a_i,
 // tmp
 //      printf("EW/computeNearestGridPt: You are in the curvilinear part of the grid, but we do compute the gridpt index using only the Cartesian grid\n");
 //    }
+
+// if z > zmax in grid 0 because the coordinate has not yet been corrected for topography, we simply set a_k to m_kEnd
+  if (m_topography_exists && a_z >= m_global_zmax)
+  {
+    a_k = m_kEnd[0];
+    a_g = 0;
+  }
 
   if (!m_topography_exists || (m_topography_exists && a_g < mNumberOfCartesianGrids))
     {

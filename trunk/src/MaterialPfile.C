@@ -657,12 +657,12 @@ void MaterialPfile::read_pfile( )
 // closing the pfile
    fclose(fd);
    
-//   if (myRank == 0)
-   // {
-   //   cout << "******* Done reading Pfile **********" << endl << endl;
-   // }
+  if (myRank == 0)
+   {
+     cout << "******* Done reading Pfile **********" << endl << endl;
+   }
 // tmp
-   cout << "******* Done reading Pfile, proc=" << myRank << endl;
+//   cout << "******* Done reading Pfile, proc=" << myRank << endl;
    
    delete[] buf;
 }
