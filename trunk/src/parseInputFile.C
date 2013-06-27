@@ -143,7 +143,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   bool foundGrid = false;
 
 // tmp (the fileio command has not yet been parsed, so we don't know mVerbose
-  cout << "********Reading the input file, proc=" << m_myRank << endl;
+//  cout << "********Reading the input file, proc=" << m_myRank << endl;
 
 // First process Geodyn input for restrictions of allowable grid sizes.
   // while (!inputFile.eof())
@@ -237,10 +237,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // deal with topography
   if (m_topography_exists)
   {
-     //     if (m_myRank == 0)
-     //	cout << endl << 
-     //	   "*** ERROR: Topography not yet implemented ***" << endl << endl;
-     //     return false;
 // 1. read topography from efile 
      if (m_topoInputStyle == EW::Efile)
      {
@@ -418,10 +414,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 
   inputFile.close();
 
-  // if (mVerbose >=3 && proc_zero())
-  //   cout << "********Done reading the input file*********" << endl;
-  if (mVerbose >=3)
-    cout << "********Done reading the input file, proc=" << m_myRank << endl;
+  if (mVerbose >=3 && proc_zero())
+    cout << "********Done reading the input file*********" << endl;
+  // if (mVerbose >=3)
+  //   cout << "********Done reading the input file, proc=" << m_myRank << endl;
 
 // wait until all processes have read the input file
   MPI_Barrier(MPI_COMM_WORLD);
@@ -4097,7 +4093,7 @@ void EW::processImage(char* buffer)
 
   string err = "Image Error: ";
 
-  if (mVerbose >=3 && proc_zero())
+  if (mVerbose >=4 && proc_zero())
     cout << "********Parsing image command*********" << endl;
   while (token != NULL)
   {
@@ -4360,7 +4356,7 @@ void EW::processImage(char* buffer)
       }
    }
 
-  if (mVerbose >=3 && proc_zero())
+  if (mVerbose >=4 && proc_zero())
     cout << "********Done parsing image command*********" << endl;
 }
 
@@ -4414,7 +4410,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   string cartAndGeoErr = "source command: Cannot set both a geographical (lat,lon) and cartesian coordinate (x,y)";
   string pointAndMomentErr = "source command: Cannot set both a point source and moment tensor formulation";
 
-  if (mVerbose >=3 && proc_zero())
+  if (mVerbose >=4 && proc_zero())
     cout << "********Parsing source command*********" << endl;
   while (token != NULL)
     {
@@ -4866,7 +4862,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       a_GlobalUniqueSources.push_back(sourcePtr);
     }
   }	  
-  if (mVerbose >=3 && proc_zero())
+  if (mVerbose >=4 && proc_zero())
     cout << "********Done parsing source command*********" << endl;
 }
 
