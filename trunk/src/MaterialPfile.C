@@ -332,6 +332,7 @@ void MaterialPfile::read_pfile( )
      MPI_Abort(MPI_COMM_WORLD, 1);
    }
    int bufsize = 1024;
+   int nread;
    char* buf = new char[bufsize];
    
    // Read pfile header
@@ -345,65 +346,32 @@ void MaterialPfile::read_pfile( )
 
    // Line 2
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 2 in pfile header not found\n");
-   char* tok=strtok(buf," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 2 in pfile header, no grid spacing\n");
-   m_h = atof(tok);
+   nread = sscanf(buf,"%le", &m_h);
+   CHECK_INPUT(nread==1, "Error reading 2nd line of header, nread= " << nread << " but expected 1\n" );
 
    // Line 3
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 3 in pfile header not found\n");
-   tok = strtok(buf," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 3 in pfile header, no grid spacing\n");
-   m_nlat = atoi(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 3 in pfile header, no min value\n");
-   m_latmin = atof(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 3 in pfile header, no max value\n");
-   m_latmax = atof(tok);
+   nread = sscanf(buf,"%i %le %le", &m_nlat, &m_latmin, &m_latmax);
+   CHECK_INPUT(nread==3, "Error reading 3rd line of header, nread= " << nread << " but expected 3\n" );
 
    // Line 4
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 4 in pfile header not found\n");
-   tok = strtok(buf," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 4 in pfile header, no grid spacing\n");
-   m_nlon = atoi(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 4 in pfile header, no min value\n");
-   m_lonmin = atof(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 4 in pfile header, no max value\n");
-   m_lonmax = atof(tok);
+   nread = sscanf(buf,"%i %le %le", &m_nlon, &m_lonmin, &m_lonmax);
+   CHECK_INPUT(nread==3, "Error reading 4th line of header, nread= " << nread << " but expected 3\n" );
 
    // Line 5
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 5 in pfile header not found\n");
-   tok = strtok(buf," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 5 in pfile header, no grid spacing\n");
-   m_nmaxdepth = atoi(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 5 in pfile header, no min value\n");
-   m_depthmin = atof(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 5 in pfile header, no max value\n");
-   m_depthmax = atof(tok);
+   nread = sscanf(buf,"%i %le %le", &m_nmaxdepth, &m_depthmin, &m_depthmax);
+   CHECK_INPUT(nread==3, "Error reading 5th line of header, nread= " << nread << " but expected 3\n" );
 
    // Line 6
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 6 in pfile header not found\n");
-   tok = strtok(buf," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 6 in pfile header, no ksed\n");
-   m_ksed = atoi(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 6 in pfile header, no kmoho\n");
-   m_kmoho = atoi(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 6 in pfile header, no k410\n");
-   m_k410 = atoi(tok);
-   tok = strtok(NULL," \t");
-   CHECK_INPUT( tok != NULL, "Error on line 6 in pfile header, no k660\n");
-   m_k660 = atoi(tok);
+   nread = sscanf(buf,"%i %i %i %i", &m_ksed, &m_kmoho, &m_k410, &m_k660);
+   CHECK_INPUT(nread==4, "Error reading 6th line of header, nread= " << nread << " but expected 4\n" );
 
    // Line 7
    CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error line 7 in pfile header not found\n");
-   CHECK_INPUT( tok != NULL, "Error on line 7 in pfile header, no Q-available flag\n");      
-   tok = strtok(buf," \t");
+   char* tok = strtok(buf," \t");
    CHECK_INPUT( tok != NULL, "Error on line 7 in pfile header, no Q-available flag\n");
    string cqf0 = tok;
 // strip off any white space
@@ -483,24 +451,14 @@ void MaterialPfile::read_pfile( )
       m_y = new double[m_ny];
    }
 
-// old 1-D arrays
-   // m_z   = new double[m_nlon*m_nlat*m_nmaxdepth];
-   // m_vp  = new double[m_nlon*m_nlat*m_nmaxdepth];
-   // m_vs  = new double[m_nlon*m_nlat*m_nmaxdepth];
-   // m_rho = new double[m_nlon*m_nlat*m_nmaxdepth];
-
 // new 3-D Sarrays
    mZ.define(m_nlon, m_nlat, m_nmaxdepth);
    mVp.define(m_nlon, m_nlat, m_nmaxdepth);
    mVs.define(m_nlon, m_nlat, m_nmaxdepth);
    mRho.define(m_nlon, m_nlat, m_nmaxdepth);
-   
 
    if(m_qf)
    {
-      // m_qp = new double[m_nlon*m_nlat*m_nmaxdepth];
-      // m_qs = new double[m_nlon*m_nlat*m_nmaxdepth];
-
 // new 3-D Sarrays
       mQp.define(m_nlon, m_nlat, m_nmaxdepth);
       mQs.define(m_nlon, m_nlat, m_nmaxdepth);
@@ -510,12 +468,10 @@ void MaterialPfile::read_pfile( )
      if (myRank == 0) printf("ppmod: NOT allocating arrays for Qp and Qs\n");
    }
    
-   // m_st = new double[m_nlon*m_nlat];
-   // m_ct = new double[m_nlon*m_nlat];
+   int kk, ndepth, line=7;
 
-   int m=0, kk, ndepth, line=7;
-
-   
+   double zc, vp, vs, rho, qp, qs;
+	          
    if( !m_coords_geographic ) // cartesian
    {
 // note: nx = nlat, ny = nlon
@@ -524,21 +480,34 @@ void MaterialPfile::read_pfile( )
        {
             CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error in pfile profile header at coordinate " 
 			                              << ix << " " << jy << "\n" );
-	    tok = strtok(buf," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no x variable at " << ix << " " << jy << "\n");
-            m_x[ix] = atof(tok);
-
-	    tok = strtok(NULL," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no y variable at " << ix << " " << jy << "\n");
-	    m_y[jy] = atof(tok);
-
-	    tok = strtok(NULL," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no ndepth  at " << ix << " " << jy << "\n");
-	    ndepth = atoi(tok);
-
+	    nread = sscanf(buf,"%le %le %i", &m_x[ix], &m_y[jy], &ndepth);
+	    CHECK_INPUT(nread==3, "Error reading 1st line of profile at " << ix << " " << jy 
+			<< " nread= " << nread << " but expected 3\n" );
 	    line++;
+	 
+// fundamental sanity checks
+	    if (!(m_y[jy] <= m_ymax && m_y[jy] >= m_ymin && 
+		  m_x[ix] <= m_xmax && m_x[ix] >= m_xmin) )
+	    {
+	      printf("Error reading pfile: x profile #%i, y profile #%i: x=%e or y=%e out of bounds!"
+		     " min(x)=%e, max(x)=%e, min(y)=%e, max(y)=%e\n", ix+1, jy+1,
+		     m_x[ix], m_y[jy], m_xmin, m_xmax, m_ymin, m_ymax );
+	      MPI_Abort(MPI_COMM_WORLD, 1);
+	    }
 
-// sanity check
+// sanity check 2
+	    if (ndepth != m_nmaxdepth )
+	    {
+	       if (myRank == 0)
+	       {
+		  cerr << "pfile reader error, ppmod file line=" << line << endl;
+		  cerr << "read ndepth=" << ndepth << " which is different from header nmaxdepth="
+		       << m_nmaxdepth << endl;
+	       }
+	       MPI_Abort(MPI_COMM_WORLD, 1);
+	    }
+
+// check the range
 	    double y = m_ymin + jy*m_h;
 	    double x = m_xmin + ix*m_h;
 	    if (fabs(y - m_y[jy]) + fabs(x - m_x[ix]) > 0.1*m_h)
@@ -553,7 +522,71 @@ void MaterialPfile::read_pfile( )
 	       }
 	       MPI_Abort(MPI_COMM_WORLD, 1);
 	    }
-	 
+
+// Read depth profile       
+	    for(int k=0; k < m_nmaxdepth; k++ )
+	    {
+	       CHECK_INPUT( fgets( buf, bufsize, fd ) != NULL, "Error in pfile profile at coordinate " 
+			    << ix << " " << jy << " " << k << "\n" );
+
+	       if (m_qf)
+	       {
+		 nread=sscanf(buf, "%i %le %le %le %le %le %le", &kk, &zc, &vp, &vs, &rho, &qp, &qs);
+		 CHECK_INPUT(nread==7, "Error reading pfile at " << ix << " " << jy << " " << k 
+			     << " nread= " << nread << " but expected 7\n" );
+	       }
+	       else
+	       {
+		 nread=sscanf(buf, "%i %le %le %le %le", &kk, &zc, &vp, &vs, &rho);
+		 CHECK_INPUT(nread==5, "Error reading pfile at " << ix << " " << jy << " " << k 
+			     << " nread= " << nread << " but expected 5\n" );
+	       }
+	       
+ 	       mZ(ix+1,jy+1,k+1) = zc;
+ 	       mVp(ix+1,jy+1,k+1) = vp;
+ 	       mVs(ix+1,jy+1,k+1) = vs;
+ 	       mRho(ix+1,jy+1,k+1) = rho;
+
+	       if (m_qf)
+	       {
+		 mQp(ix+1,jy+1,k+1) = qp;
+		 mQs(ix+1,jy+1,k+1) = qs;
+	       }
+	       
+	       line++;
+
+// do we need to cap the values here?
+	       // m_vp[m] = max(m_vp[m], m_vpmin );
+	       // m_vs[m] = max(m_vs[m], m_vsmin );
+	       // m_rho[m]= max(m_rho[m],m_rhomin);
+	    } // end for k	    
+	 }
+   }
+   else // geographic coordinates
+   {
+     
+      for(int j=0; j < m_nlat; j++ )
+	 for(int i=0; i< m_nlon; i++ )
+	 {
+            CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error in pfile profile header at coordinate " 
+			                              << i << " " << j << "\n" );
+
+	    nread = sscanf(buf,"%le %le %i", &m_lat[j], &m_lon[i], &ndepth);
+	    CHECK_INPUT(nread==3, "Error reading 1st line of profile at " << i << " " << j 
+			<< " nread= " << nread << " but expected 3\n" );
+	    
+	    line++;
+
+// fundamental sanity checks
+	    if (!(m_lat[j] <= m_latmax && m_lat[j] >= m_latmin && 
+		  m_lon[i] <= m_lonmax && m_lon[i] >= m_lonmin) )
+	    {
+	      printf("Error reading pfile: lat profile #%i, lon profile #%i: lat=%e or lon=%e out of bounds!"
+		     " min(lat)=%e, max(lat)=%e, min(lon)=%e, max(lon)=%e\n", j+1, i+1,
+		     m_lat[j], m_lon[i], m_latmin, m_latmax, m_lonmin, m_lonmax );
+	      MPI_Abort(MPI_COMM_WORLD, 1);
+	    }
+
 // sanity check 2
 	    if (ndepth != m_nmaxdepth )
 	    {
@@ -566,85 +599,7 @@ void MaterialPfile::read_pfile( )
 	       MPI_Abort(MPI_COMM_WORLD, 1);
 	    }
 
-	    // Read depth profile       
-	    for(int k=0; k < m_nmaxdepth; k++ )
-	    {
-	       CHECK_INPUT( fgets( buf, bufsize, fd ) != NULL, "Error in pfile profile at coordinate " 
-			    << ix << " " << jy << " " << k << "\n" );
-
-	       tok = strtok(buf," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading kk at " << ix << " " << jy << " " << k << "\n" );
-	       kk = atoi( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading z at " << ix << " " << jy << " " << k << "\n" );
-	       mZ(ix+1,jy+1,k+1) = atof( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading vp at " << ix << " " << jy << " " << k << "\n" );
-	       mVp(ix+1,jy+1,k+1) = atof( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading vs at " << ix << " " << jy << " " << k << "\n" );
-	       mVs(ix+1,jy+1,k+1) = atof( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading rho at " << ix << " " << jy << " " << k << "\n" );
-	       mRho(ix+1,jy+1,k+1) = atof( tok );
-
-	       if( m_qf )
-	       {
-		  tok = strtok(NULL," \t");
-		  CHECK_INPUT( tok != NULL, "Error in pfile reading qp at " << ix << " " << jy << " " << k << "\n" );
-		  mQp(ix+1,jy+1,k+1) = atof( tok );
-
-		  tok = strtok(NULL," \t");
-		  CHECK_INPUT( tok != NULL, "Error in pfile reading qs at " << ix << " " << jy << " " << k << "\n" );
-		  mQs(ix+1,jy+1,k+1) = atof( tok );
-	       }
-	       line++;
-
-// do we need to cap the values here?
-	       // m_vp[m] = max(m_vp[m], m_vpmin );
-	       // m_vs[m] = max(m_vs[m], m_vsmin );
-	       // m_rho[m]= max(m_rho[m],m_rhomin);
-
-// fundamental sanity checks
-	       if (!(m_y[jy] <= m_ymax && m_y[jy] >= m_ymin && 
-		     m_x[ix] <= m_xmax && m_x[ix] >= m_xmin) )
-	       {
-		  printf("Error reading pfile: x profile #%i, y profile #%i: x=%e or y=%e out of bounds!"
-			 " min(x)=%e, max(x)=%e, min(y)=%e, max(y)=%e\n", ix+1, jy+1,
-			 m_x[ix], m_y[jy], m_xmin, m_xmax, m_ymin, m_ymax );
-		  MPI_Abort(MPI_COMM_WORLD, 1);
-	       }
-	       m++;
-	    }
-	 }
-   }
-   else // geographic coordinates
-   {
-     
-      for(int j=0; j < m_nlat; j++ )
-	 for(int i=0; i< m_nlon; i++ )
-	 {
-            CHECK_INPUT( fgets(buf,bufsize,fd) != NULL, "Error in pfile profile header at coordinate " 
-			                              << i << " " << j << "\n" );
-	    tok = strtok(buf," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no lat. variable at " << i << " " << j << "\n");
-            m_lat[j] = atof(tok);
-
-	    tok = strtok(NULL," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no lon. variable at " << i << " " << j << "\n");
-	    m_lon[i] = atof(tok);
-
-	    tok = strtok(NULL," \t");
-	    CHECK_INPUT( tok != NULL, "Error in pfile profile header, no ndepth  at " << i << " " << j << "\n");
-	    ndepth = atoi(tok);
-
-	    line++;
-
-// sanity check (now allowing for different step sizes in lat and lon)
+// check the coordinate (now allowing for different step sizes in lat and lon)
 	    double lat_j = m_latmin + j*m_dlat;
 	    double lon_i = m_lonmin + i*m_dlon;
 	    if (fabs(lat_j - m_lat[j]) > 0.05*m_dlat || fabs(lon_i - m_lon[i]) > 0.05*m_dlon)
@@ -660,75 +615,55 @@ void MaterialPfile::read_pfile( )
 	       MPI_Abort(MPI_COMM_WORLD, 1);
 	    }
 	 
-// sanity check 2
-	    if (ndepth != m_nmaxdepth )
-	    {
-	       if (myRank == 0)
-	       {
-		  cerr << "pfile reader error, ppmod file line=" << line << endl;
-		  cerr << "read ndepth=" << ndepth << " which is different from header nmaxdepth="
-		       << m_nmaxdepth << endl;
-	       }
-	       MPI_Abort(MPI_COMM_WORLD, 1);
-	    }
-
-	    // Read depth profile       
+// Read depth profile       
 	    for(int k=0; k < m_nmaxdepth; k++ )
 	    {
-	       CHECK_INPUT( fgets( buf, bufsize, fd ) != NULL, "Error in pfile profile at coordinate " 
+	       CHECK_INPUT( fgets( buf, bufsize, fd ) != NULL, "Error reading pfile buffer at " 
 			    << i << " " << j << " " << k << "\n" );
 
-	       tok = strtok(buf," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading kk at " << i << " " << j << " " << k << "\n" );
-	       kk = atoi( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading z at " << i << " " << j << " " << k << "\n" );
-
-// i,j,k are base 0
-	       mZ(i+1,j+1,k+1) = km*atof( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading vp at " << i << " " << j << " " << k << "\n" );
-	       mVp(i+1,j+1,k+1) = km*atof( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading vs at " << i << " " << j << " " << k << "\n" );
-	       mVs(i+1,j+1,k+1) = km*atof( tok );
-
-	       tok = strtok(NULL," \t");
-	       CHECK_INPUT( tok != NULL, "Error in pfile reading rho at " << i << " " << j << " " << k << "\n" );
-	       mRho(i+1,j+1,k+1) = km*atof( tok );
-
-	       if( m_qf )
+	       if (m_qf)
 	       {
-		  tok = strtok(NULL," \t");
-		  CHECK_INPUT( tok != NULL, "Error in pfile reading qp at " << i << " " << j << " " << k << "\n" );
-		  mQp(i+1,j+1,k+1) = atof( tok );
-
-		  tok = strtok(NULL," \t");
-		  CHECK_INPUT( tok != NULL, "Error in pfile reading qs at " << i << " " << j << " " << k << "\n" );
-		  mQs(i+1,j+1,k+1) = atof( tok );
+		 nread=sscanf(buf, "%i %le %le %le %le %le %le", &kk, &zc, &vp, &vs, &rho, &qp, &qs);
+		 CHECK_INPUT(nread==7, "Error reading pfile at " << i << " " << j << " " << k 
+			     << " nread= " << nread << " but expected 7\n" );
 	       }
+	       else
+	       {
+		 nread=sscanf(buf, "%i %le %le %le %le", &kk, &zc, &vp, &vs, &rho);
+		 CHECK_INPUT(nread==5, "Error reading pfile at " << i << " " << j << " " << k 
+			     << " nread= " << nread << " but expected 5\n" );
+	       }
+	       
+ 	       mZ(i+1,j+1,k+1) = km*zc;
+ 	       mVp(i+1,j+1,k+1) = km*vp;
+ 	       mVs(i+1,j+1,k+1) = km*vs;
+ 	       mRho(i+1,j+1,k+1) = km*rho;
+
+	       if (m_qf)
+	       {
+		 mQp(i+1,j+1,k+1) = qp;
+		 mQs(i+1,j+1,k+1) = qs;
+	       }
+	       
 	       line++;
 // are these needed anymore???
 	       // m_vp[m] = max(m_vp[m], m_vpmin );
 	       // m_vs[m] = max(m_vs[m], m_vsmin );
 	       // m_rho[m]= max(m_rho[m],m_rhomin);
-
-// fundamental sanity checks
-	       if (!(m_lat[j] <= m_latmax && m_lat[j] >= m_latmin && 
-		     m_lon[i] <= m_lonmax && m_lon[i] >= m_lonmin) )
-	       {
-		  printf("Error reading pfile: lat profile #%i, lon profile #%i: lat=%e or lon=%e out of bounds!"
-			 " min(lat)=%e, max(lat)=%e, min(lon)=%e, max(lon)=%e\n", j+1, i+1,
-			 m_lat[j], m_lon[i], m_latmin, m_latmax, m_lonmin, m_lonmax );
-		  MPI_Abort(MPI_COMM_WORLD, 1);
-	       }
-	       m++;
-	    }
+	    } // end for k
+	    
 	 }
    }
+// closing the pfile
+   fclose(fd);
+   
+//   if (myRank == 0)
+   // {
+   //   cout << "******* Done reading Pfile **********" << endl << endl;
+   // }
+// tmp
+   cout << "******* Done reading Pfile, proc=" << myRank << endl;
+   
    delete[] buf;
 }
 
