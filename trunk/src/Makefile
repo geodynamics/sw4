@@ -116,13 +116,31 @@ OBJ4 = filterTest.o Filter.o SecondOrderSection.o Polynomial.o
 OBJ5 = lamb_one_point.o
 
 sw4: $(OBJ) $(QUADPACK)
+ifeq ($(optlevel),DEBUG) 
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
+	cp $@ ../debug_v1.0;
+else
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
+	cp $@ ../optimize_v1.0;
+endif
 
 sw4opt: $(OBJOPT) $(QUADPACK)
+ifeq ($(optlevel),DEBUG) 
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(QUADPACK) $(linklibs)
+	cp $@ ../debug_v1.0;
+else
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(QUADPACK) $(linklibs)
+	cp $@ ../optimize_v1.0;
+endif
 
 sw4mopt: $(MOBJOPT) $(QUADPACK)
+ifeq ($(optlevel),DEBUG) 
 	$(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(QUADPACK) $(linklibs)
+	cp $@ ../debug_v1.0;
+else
+	$(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(QUADPACK) $(linklibs)
+	cp $@ ../optimize_v1.0;
+endif
 
 version.o:version.C .FORCE
 	$(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<

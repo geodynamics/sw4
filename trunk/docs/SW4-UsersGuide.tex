@@ -141,13 +141,13 @@ implemented in Fortan-77. \emph{SW4} uses a distributed memory programming model
 the C-bindings of the MPI library. Compatible versions of the C++ and Fortran-77 compilers as well
 as the MPI library must therefore be available to build the code. We have built and tested
 \emph{SW4} on a variety of machines, ranging from single processor laptops to large super-computers
-with ${\cal O}(10,000)$ cores. We believe (hope) it will run well on even larger machines.
+with ${\cal O}(10,000)$ cores.
 
 With the exception of some minor details, the syntax of the \emph{SW4} command file is the same as
 in \emph{WPP}. Most of the input and output files also use the same formats, but we have taken the
 opportunity to improve the image file format (see Chapter~\ref{chap:formats} for details). With the
-exception of visco-elastic attenuation and mesh refinement, version 1.0 of \emph{SW4} supports most
-of the functionality of \emph{WPP} (version 2.2). The remaining features will be added in the future.
+exception of mesh refinement, version 1.0 of \emph{SW4} supports most of the functionality of
+\emph{WPP} (version 2.2). We hope to add the remaining features in the future.
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
 validation tests that are used in this document. Many Matlab/octave scripts are are provided in the
@@ -156,7 +156,7 @@ Chapter~\ref{chap:scripts}.
 
 \section*{Acknowledgments} 
 The \emph{SW4} code was developed under financial support from Lawrence Livermore National
-Laboratory. The underlying numerical methods were developed under partial support from
+Laboratory. The underlying numerical method was developed under financial support from
 the Office of Science at the U.S.~Department of Energy.
 
 
@@ -184,12 +184,11 @@ parallel machines at Livermore computing. On other machines, it is important to 
 with the correct parallel execution tool. For example, if you build \emph{SW4} with the openmpi
 compilers, you should use the openmpirun environment. Also note that some systems require you to
 start an \verb+mpd+ daemon before running any parallel programs. Chances are high that somebody else
-has already figured out some of these details for your system. You might therefore save yourself a
-lot of time by talking to your local system administrator about how to run parallel programs your
-system.
+has already figured out how to run parallel programs on your system, and we recommend talking to
+your local system administrator, or somebody else with experience running MPI programs on your system.
 
 Throughout this document we use the convention that input files have the file suffix {\tt
-  .in}. However, \emph{SW4} will read an input file regardless of its extension.
+  .in}. However, \emph{SW4} will attempt to read any input file, regardless of its extension.
 
 If your system is setup for using \verb+mpiexec+, the command
 \begin{verbatim}
@@ -201,8 +200,10 @@ are using \verb+mpirun+, you would instead use the command
 	shell> mpirun -np 2 sw4 test.in
 \end{verbatim}
 {\bf Remark: }
-If \emph{SW4} produces strange looking outputs where the same text is repeated several times (e.g. once
-per processor), you are probably running \emph{SW4} under the wrong parallel execution environment.
+If \emph{SW4} produces strange looking outputs, for example where the same text is repeated several times (e.g. once
+per processor), you are probably running \emph{SW4} under the wrong parallel execution
+environment. Make sure you are running \emph{SW4} under an environment which is compatible with the
+compiler that was used to build \emph{SW4}.
 %
 
 \subsection{Version information (-v)}
@@ -224,7 +225,7 @@ Version information for the \emph{SW4} executable can be obtained through {\tt -
   Compiler:    /opt/local/bin/openmpicxx
   3rd party software include directory: /Users/petersson1/include
   3rd party software library directory: /Users/petersson1/lib
-y----------------------------------------------------------------
+-----------------------------------------------------------------
 \end{verbatim}
 Note that the same information is by default printed to standard out (your screen, or log file when
 running in batch mode) at the beginning of every run.
@@ -241,33 +242,33 @@ the number of processors per job. Jobs requiring more computer resources must be
 the batch system, currently using the msub command. Refer to the Livermore Computing web pages for
 detailed information (https://computing.llnl.gov).
 
-\section{Warning and error messages}
+%\section{Warning and error messages}
 
-Warning and error messages are stored in separate log files...
+%Warning and error messages are stored in separate log files...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Governing equations, coordinate system, and units}
 \index{coordinate system}\index{units}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\emph{SW4} simulates the motion due to a seismic event by solving the elastic 
-%(or visco-elastic) 
-wave equation in second order formulation. By default, the motion starts from rest and is driven by
-a forcing function,
+\emph{SW4} simulates the motion due to a seismic event by solving the elastic (or visco-elastic) 
+wave equation in second order formulation. The equations are solved in the spatial domain 
+${\bf x}\in\Omega$ during the time interval $0\leq t\leq T$. By default, the motion starts from rest and is driven by
+a forcing function ${\bf F}({\bf x},t)$,
 \begin{alignat}{3}
 \rho {\bf u}_{tt} &= \nabla\cdot{\cal T} + {\bf F}({\bf x},t),&\quad\mbox{${\bf x}$ in
-  $\Omega$},\ t\geq 0,\label{eq:elastic-we}\\ 
+  $\Omega$},\ 0\leq t\leq T,\label{eq:elastic-we}\\ 
 {\bf u}({\bf x},0)&=0,\quad {\bf u}_t({\bf x},0) = 0, &\quad\mbox{${\bf x}$ in $\Omega$}.
 \end{alignat}
 Here, $\rho$ is the density, ${\bf u}({\bf x},t)$ is the displacement vector, and ${\cal T}$ is the
 stress tensor. The computational domain $\Omega$ is a box shaped region where one side optionally
-follows the shape of the topography. By default, a free surface (zero traction) boundary condition
-is enforced along the top boundary,
+follows the shape of the topography. By default, a free surface (zero traction, or normal stress)
+boundary condition is enforced along the top boundary,
 \[
-{\cal T} \cdot \nb = 0,\quad z=\tau(x,y),\ t\geq 0,
+{\cal T} \cdot \nb = 0,\quad z=\tau(x,y),\ t\geq 0.
 \]
-where $\nb$ is the unit normal of the $z=\tau(x,y)$ surface. A super-grid damping layer surrounds
-the computational domain on all other sides of the computational domain.
+Here $\nb$ is the unit normal of the $z=\tau(x,y)$ surface. By default, a super-grid damping layer
+surrounds the computational domain on all other sides of the computational domain.
 
 \emph{SW4} uses a right-handed Cartesian coordinate system with the z-direction pointing
 downwards into the medium, see figure~\ref{fig:coordsys}. 
@@ -291,8 +292,9 @@ is defined by the topography surface
 \[
 z=\tau(x,y),
 \]
-which defines the shape of the free surface. \emph{SW4} can also be run without
-topography, in which case $\tau(x,y)=0$. In general, the computational domain is given by
+which defines the shape of the free surface. \emph{SW4} can also be run with flat topography, in
+which case $\tau(x,y)=0$ and the $z$-coordinate is the depth below the free surface. In the general
+case, the computational domain is given by
 \begin{equation}\label{eq:domain}
 0\leq x\leq x_{max},\quad 0\leq y\leq y_{max},\quad \tau(x,y) \leq z \leq z_{max}.
 \end{equation}
@@ -366,31 +368,34 @@ where the time step $\Delta t$ is determined automatically by \emph{SW4} to sati
 step restriction. This calculation is based on the ratio between the grid size and the largest
 characteristic wave speed, which depends on both the compressional and shear wave speeds. 
 
-The simulation start time can be related to a UTC time. The option {\tt utcstart} sets the UTC time
-that corresponds to the simulation time $t=0$, for example,
+The simulation start time can be related to a universal time coordinate (UTC). The option {\tt
+  utcstart} sets the UTC that corresponds to simulation time $t=0$, for example,
 \begin{verbatim}
 time t=1.6 utcstart=01/31/2012:17:34:12.233
 \end{verbatim}
-The format of the UTC time is ``month/day/year:hour:minute:second.millisecond''. When the UTC time
+The format of the UTC is ``month/day/year:hour:minute:second.millisecond''. When the UTC time
 is set, it is saved in the header of all time series files (see the {\tt rec} command). Note that
-the UTC start time can be very useful for aligning simulated and observed time series.
+the UTC can be very useful for aligning simulated and observed time series.
 %is also used the inverse problem with \emph{SW4opt}.
 
 \section{Geographical coordinates and projections}
 \index{geographical coordinates}
+\emph{SW4} supports geographical coordinates as an alternative way of specifying spatial
+locations. The geographic location of the origin of the Cartesian coordinte system (lat$_0$,
+lon$_0$), see Figure~\ref{fig:geocoord}, is specified in the grid command. 
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.6\linewidth]{latlon.png}
+  \includegraphics[width=0.5\linewidth]{latlon.png}
 %  \includegraphics{LatLonAz.ps}
   \caption{Geographical coordinates in \emph{SW4}.}
   \label{fig:geocoord}
 \end{centering}
 \end{figure}
-\emph{SW4} supports geographical coordinates as an alternative way of specifying spatial locations,
-see Figure~\ref{fig:geocoord}. The geographic location of the origin of the Cartesian coordinte
-system (lat$_0$, lon$_0$) is specified in the grid command, and if no location is given it defaults
-to lat$_0$ = 37 degrees (North), lon$_0$ = -118 degrees (West), with a 135 degree azimuthal angle
-between North and the $x$-axis. The vertical coordinate is zero ($z=0$) at mean sea level. 
+If no location is given, the default location is lat$_0$ = 37 degrees (North), lon$_0$ = -118
+degrees (West), and the azimuthal angle of the $x$-axis is 135 degrees from North. The vertical
+coordinate increases downwards. For the case of general topography, $z=0$ corresponds to mean sea
+level. When the topography is flat (no {\tt topography} command in the input file), $z=0$
+corresponds to the free surface.
 
 \subsection{Spheroidal mapping}
 By default, the latitude (lat) and longitude (lon) are calculated using a spheroidal mapping,
@@ -463,8 +468,8 @@ free surface, see Figure~\ref{fig:layout}.
 \end{figure}
 The default thickness of the layers (currently) equals 30 grid sizes, but the thickness of the
 super-grid layers can be changed with the {\tt supergrid} command, see
-Section~\ref{sec:supergrid}. Note that it is reflections of the longest waves that are the hardest
-to suppress with the super-grid layers.
+Section~\ref{sec:supergrid}. Note that long waves are harder to suppress than short waves. This is
+one reason why a thicker super-grid layer leads to smaller artificial reflections.
 
 For practical reasons, the super-grid layers are part of the computational domain as specified by
 the grid command. If, for example, each super-grid layer is 30 grid points wide, the solution
@@ -501,7 +506,7 @@ vector, which is scaled by the force amplitude $F_0$.
 
 For a moment tensor source we have
 \[
-{\bf F}({\bf x},t) = g(t,t_0,\omega) M_0 \, {\cal  M} \cdot \nabla \delta ({\bf x} - {\bf
+{\bf F}({\bf x},t) = g(t,t_0,\omega)\, {\cal  M} \cdot \nabla \delta ({\bf x} - {\bf
   x_0}), \quad 
 {\cal M} = \left(\begin{array}{ccc}
 M_{xx} & M_{xy} & M_{xz}\\
@@ -510,11 +515,15 @@ M_{xz} & M_{yz} & M_{zz}
 \end{array}
 \right).
 \]
-In this case the seismic moment of the moment tensor is $M_0$, otherwise the notation is the same as
-for a point force. Note that the moment tensor always is symmetric. A convenient way of specifying
-moment sources is by using the dip, strike, and rake angles (see Section~\ref{keyword:source} for
-syntax) defined in Aki and Richards~\cite{Aki-Richards-02}. In this case, the total seismic moment $\sum
-M_0$ [Nm] is related to the moment magnitude by the formula UPDATE!
+The seismic moment of a moment tensor source is defined by 
+\[
+M_0 = (M_{xx}+M_{yy}+M_{zz}) + 2 (M_{xy} + M_{xz} + M_{yz}).
+\]
+Note that the moment tensor is always symmetric. A moment source term can alternatively be specified
+by using $M_0$ and the dip, strike, and rake angles, as defined by Aki and
+Richards~\cite{Aki-Richards-02}. The syntax is described in Section~\ref{keyword:source}.
+
+The total seismic moment $\sum M_0$ [Nm] is related to the moment magnitude by the formula
 \[
 M_W = \frac{2}{3}\left[\log_{10}\left(\sum M_0\right) - 9.1\right].
 \]
@@ -542,35 +551,37 @@ function corresponds to the velocities of the same motion. Hence, if you are pri
 calculating velocities, you can reduce the amount of post processing by using the corresponding
 moment rate time function in the source term(s). 
 
-Note that most first order formulation codes (such as \emph{E3D}) are based on the velocity-stress
-formulation of the elastic wave equation. These codes use the moment rate time function (i.e., the
-{\tt Gaussian} time function in the above example) and solve for the velocities of the motion.
+If you are interested in comparing results from the \emph{SW4} program with some other code, keep in
+mind that many other seismic wave propagation codes are based on the first order velocity-stress
+formulation of the elastic wave equation. Such codes solve directly for the velocities of the
+motion. They use the moment rate time function for moment tensor sources, but the moment history
+time function for point forces.
 
 In \emph{SW4} the forcing is specified in the input file using the {\tt source} command. There needs
 to be at least one source command in the input file in order for anything to happen during the
 simulation. Complicated source mechanisms can be described by having many source commands in the
 input file. An example with one source command is:
 \begin{verbatim}
-source x=5000 y=4000 z=600 m0=1e15 mxx=1 myy=1 mzz=1 \
+source x=5000 y=4000 z=600 mxx=1e15 myy=1e15 mzz=1e15 \
        type=RickerInt t0=1 freq=5
 \end{verbatim}
-which specifies an isotropic source (explosion) at the point ${\bf r}_0=(5000,4000,600)$ with
+which specifies an isotropic source (explosion) at the location ${\bf x}_0=(5000,4000,600)$ with
 amplitude $10^{15}$ Nm, using the RickerInt time function with offset time $t_0=1$ s and frequency
 parameter $\omega=5$ Hz.  This command sets the off-diagonal moment tensor elements ($M_{xy}$,
 $M_{xz}$ and $M_{yz}$) to zero (which is the default value).
 
 Note that it is not necessary to place the sources exactly on grid points. The discretization of the
- source terms is fourth order accurate for any location within the computational domain.
+source terms is fourth order accurate for any location within the computational domain, including
+the free surface.
 
 
 \section{Predefined time functions}\label{sec:predefined}
 
 All pre-defined source time functions start from zero ($\lim_{t\to -\infty} g(t,t_0,\omega) = 0$)
 and tend to a constant terminal value, $\lim_{t\to \infty} g(t,t_0,\omega) = g_\infty$. In seismic
-applications, time function that tend to a non-zero value ($g_\infty\ne 0$) usually corresponds to
-solving for the displacements of the motion. In this case, the solution will tend to a non-zero
-steady state solution for large times, which corresponds to the steady-state displacements due to a
-seismic event. When $g_\infty = 0$, the solution will always tend to zero for large times, which is
+applications, time function that have a non-zero terminal value ($g_\infty\ne 0$) lead to a non-zero
+steady-state solution after long times. Such time functions are used to solve for the displacement
+of the motion. When $g_\infty = 0$, the solution tends to zero for large times. This is
 expected from the velocities or accelerations of the motion due to a seismic event.
 
 The Gaussian, Dirac, and Triangle functions integrate to one ($\int_{-\infty}^{\infty}
@@ -795,8 +806,9 @@ The VerySmoothBump function satisfies $0\leq g\leq 1$. It has four continuous de
 A plot of the VerySmoothBump time-function is shown in Figure~\ref{fig:verysmoothbump}.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.4\linewidth]{f11-verysmoothbump.png}
-  \includegraphics[width=0.4\linewidth]{f12-c6smoothbump.png}
+  \includegraphics[height=0.4\linewidth]{f11-verysmoothbump.png}
+\hspace{10mm}
+  \includegraphics[height=0.4\linewidth]{f12-c6smoothbump.png}
   \caption{VerySmoothBump (left) with $\omega=0.5$ and
     $t_0=0$. C6SmoothBump (right) with $\omega=2$ and $t_0=0$.}
   \label{fig:verysmoothbump}  \label{fig:c6smoothbump}
@@ -839,23 +851,23 @@ must be given when this time function is used in the \verb+source+ command.
 \end{figure}  
 
 \subsection{Dirac}
-The Dirac distribution $\delta(t-t_0)$ is not a regular function because it is zero everywhere,
-except at $t=t_0$, where it is undefined. The integral of $\delta(t)$ is one. If $f(t)$ is a smooth
-function, then
+The Dirac distribution $\delta(t-\tau_0)$ is not a regular time function because it is zero everywhere,
+except at $t=\tau_0$, where it is unbounded. The integral of $\delta(t)$ is one, and if $f(t)$ is a
+continuous function, then
 \begin{equation}\label{eq:dirac}
-\int f(t)\delta(t-\tau)\, dt = f(\tau).
+\int f(t)\delta(t-\tau_0)\, dt = f(\tau_0).
 \end{equation}
-We discretize the Dirac distribution on a grid $t_n = n\Delta_t$, where $\Delta_t>0$ is the constant
-time step used by the solver of the elastic wave equation. We obtain the discrete time series $d_n$,
-$n=0,1,2,\ldots$ by imposing moment conditions such that \eqref{eq:dirac} is satisfied for all
+We discretize the Dirac distribution on a grid $t_n = n\Delta_t$, where $\Delta_t>0$ is the same
+time step that is used to solve the elastic wave equation. We obtain the discrete time series $d_n$,
+$n=0,1,2,\ldots$ by imposing moment conditions such that \eqref{eq:dirac} is satisfied for the
 polynomial functions $f(t)=t^q$, $q=0,1,\ldots,Q$, in the sense
 \[
-\Delta_t \sum_{n=0}^\infty d_n t_n^q = \tau^q,\quad q=0,1,\ldots,Q. 
+\Delta_t \sum_{n=0}^\infty t_n^q d_n = \tau_0^q,\quad q=0,1,\ldots,Q. 
 \]
-This leads to $Q+1$ conditions for the coefficients $d_n$. The specification of $d_n$ is made unique
-by enforcing $d_n=0$ except at $Q+1$ consecutive grid points surrounding $t=\tau$. This procedure is
-similar to our spatial discretization of point force and moment tensor sources, see~\cite{PetSjo-10}
-for details.
+This leads to $Q+1$ conditions for the coefficients $d_n$. The specification of the grid function is
+made unique by enforcing $d_n=0$ except at $Q+1$ consecutive grid points surrounding $t=\tau_0$. Note
+that $\tau_0$ is {\em not} required to coincide with a time step. This procedure is similar to the
+spatial discretization of point force and moment tensor sources, see~\cite{PetSjo-10} for details.
 
 The discretized Dirac distribution triggers all frequencies on the mesh, including completely
 unresolved and unphysical motions. The numerical solution is therefore meaningless unless it is
@@ -865,20 +877,19 @@ calculating ``numerical'' Green's functions.
 
 \section{Discrete time function}
 
-The discrete time function constructs a quintic (5th order) spline function that interpolates the
-given function values $g_j = g(\tau_j)$, for $j=1,2,\ldots, N_s$, where $N_s\geq 7$. The function
-values are specified on an equidistant grid, $\tau_j = t_0 + (j-1) \delta_t$, where
-$\delta_t>0$. Note that the time step can be chosen independently of the time step in the solver of
-the elastic wave equation. The start time, $t_0$, can also have an arbitrary value. The
-interpolation procedure results in six polynomial coefficients for each interval $\tau_j\leq t
-<\tau_{j+1}$. The coefficients are chosen such that g(t) becomes four times continuously
-differentiable.
+The discrete time function uses a quintic (5th order) spline function to interpolate the discrete
+function values $g_j = g(\tau_j)$, for $j=1,2,\ldots, N_s$, where $N_s\geq 7$. The function values
+are specified on an equidistant grid, $\tau_j = t_0 + (j-1) \delta_t$. The step size,
+$\delta_t>0$, can be chosen independently of the time step in the numerical solution of the elastic wave
+equation. The start time, $t_0$, can also have an arbitrary value. The interpolation procedure
+results in six polynomial coefficients for each interval $\tau_j\leq t <\tau_{j+1}$. The
+coefficients are chosen such that g(t) becomes four times continuously differentiable.
 
 It is necessary to evaluate the discrete time function throughout the simulation of the elastic wave
-equation, i.e., for $0\leq t\leq T$. If $t_0>0$, the discrete time function is evaluated using the
+equation, i.e., for $0\leq t\leq T$. If $\tau_1>0$, the discrete time function is evaluated using the
 polynomial coefficients corresponding to the first interval $[\tau_1,\tau_2]$ for all
-$t<t_0$. Similarily, if $\tau_{N_s}<T$, the coefficients for the last interval are used for
-$t>\tau_{N_s}$. To avoid unexpected results due to extrapolation, we recommend specifying the
+$0\leq t<\tau_1$. Similarily, if $\tau_{N_s}<T$, the coefficients for the last interval are used for
+$\tau_{N_s}<t\leq T$. To avoid unexpected results due to extrapolation, we recommend specifying the
 discrete time function for all $t\in[0,T]$. To also avoid incompatibilities between the forcing and
 the homogeneous initial conditions, we recommend setting $g_j=0$ for all $\tau_j\leq 0$.
 
@@ -1184,8 +1195,265 @@ Cartesian pfile grid formats.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Output options (not documented)}
+\chapter{Output options}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Setting the output directory}\label{sec:output-dir}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The fileio command can be used to specify the directory where \emph{SW4} writes its output files.  If
+the directory does not exist, \emph{SW4} attempts to create it for you.  The fileio command may also
+be used to set the level of diagnostic messages (verbose) and how often the time step information is
+printed. For example,
+\begin{verbatim}
+	fileio path=sw4_dir verbose=1 printcycle=10
+\end{verbatim}
+causes all output files to be written to the directory "./sw4\_dir", turns on some extra diagnostic
+messages (a higher value gives more details), and prints the time step information every 10 time steps.
+
+\paragraph{Serial and Parallel file systems}
+
+Some parallel machines have a dedicated parallel file system that allows many processors to
+simultaneously write to the same file. These file systems are often mounted on a special
+directory. By default, \emph{SW4} assumes a serial file system and will only allow one processor write
+to the same file at the same time. If you have access to a parallel file system, the I/O performance
+of \emph{SW4} can sometimes be improved by allowing several processors to simultaneously
+write a file. You enable this feature by using the {\tt pfs=1} option,
+\begin{verbatim}
+	fileio pfs=1 path=/p/lscratcha/my_output_directory
+\end{verbatim}
+Note that many parallel file systems are only accessible from dedicated directories. Enabling {\tt
+pfs=1} without re-directing the output to a parallel file system can cause \emph{SW4} to either
+crash or hang.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Time-history at a reciever station: the sac command}\label{sec:sac}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\emph{SW4} can save the time-history of the solution at a receiver station located anywhere in the computational
+domain. The basic command looks like this:
+\begin{verbatim}
+	sac x=100e3 y=50e3 z=0 file=sta1
+\end{verbatim}
+Here, \emph{SW4} saves the three components of the solution at the grid point that is closest to the
+specified $(x,y,z)$ location. By default, \emph{SW4} saves the data using the binary Seismic
+Analysis Code (SAC)~\cite{Goldstein-et-al} format. In the above case, the {\tt sac} command results
+in three files:
+\begin{verbatim}
+sta1.x  sta1.y  sta1.z
+\end{verbatim}
+The x,y,z files hold the solution time-history in the corresponding coordinate direction.
+Note that a positive $z$-component corresponds to a downward motion.
+
+The location of the reciever station can alternatively be given in geographical (latitude,
+longitude, depth) coordinates. Information about the event date, time, and station name is saved in
+the header of a SAC file. By default the date and time are set to the date and time at the start of
+the simulation; the default station name is the name of the file. The default values of these fields
+can be changed by using the {\tt eventData}, {\tt eventTime}, and {\tt sta} options,
+%
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 \
+    eventDate=2003/11/22 eventTime=16:17:00 sta=EKM
+\end{verbatim}
+%%
+Note that {\tt depth} specifies the depth of the reciever below the topography. To place a reciever
+at elevation $e$ relative to mean sea level ($e$ is negative below sea level) you use the option {\tt z=}$-e$.
+
+By default, SAC files are written to disk every 1000 time steps, and at the end of the
+simulation. We can change this frequency by using the {\tt writeEvery} option. For example, to
+write the SAC file every 100 time steps, you would say
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 writeEvery=100
+\end{verbatim}
+
+By default, \emph{SW4} outputs the three components of the solution
+$\ub(\xb_r,t)=(u_x,u_y,u_z)^T$. By using the {\tt velocity=1} option, \emph{SW4} instead outputs the
+three components of the time-derivative of the solution, i.e., the velocity if \emph{SW4} is setup
+to solve for displacements. The {\tt nsew=1} option can also be used to tell \emph{SW4} to rotate
+the solution components to the East, North, and vertical (positive up) directions,
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 velocity=1 nsew=1
+\end{verbatim}
+The angle between North and the $x$-axis is determined by the azimuth ({\tt az=...}) angle in the grid command:
+\begin{verbatim}
+grid x=100e3 y=50e3 z=30e3 lat=37.5 lon=-122.0 az=135
+\end{verbatim}
+To remind the user of what quantities are saved in a sac file, we modify the file name extensions according to the
+following table:
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+   & \verb+velocity=0+  & \verb+velocity=1+ \\ \hline
+\verb+nsew=0+ & .x, .y, .z & .xv, .yv, .zv \\ \hline
+\verb+nsew=1+ & .e, .n, .u & .ev, .nv, .uv \\ \hline
+\end{tabular}
+\end{center}
+\par
+\emph{SW4} can output the time history of the divergence or the curl of the
+solution at the reciever station, instead of the solution itself. The {\tt variables} option governs this 
+behavior. For example,
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 variables=div
+\end{verbatim}
+will output a single file named {\tt sta1.div} containing the divergence of the solution. Similarly
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 variables=curl
+\end{verbatim}
+will output the three files {\tt sta1.curlx}, {\tt sta1.curly}, and {\tt sta1.curlz}. 
+The {\tt velocity} and
+{\tt nsew} options also work together with divergence and curl. Setting {\tt velocity=1} will output
+the time derivative of any quantity selected by the {\tt variables} option. The {\tt nsew} option has no
+effect on the scalar divergence field, but {\tt nsew=1} will make \emph{SW4} output a representation of
+the curl vector in the East, North, and vertical components.
+The file name extensions for the div and curl variables are described in the following table:
+\par
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|} \hline
+   & \multicolumn{2}{|c|}{\tt variables=div} & \multicolumn{2}{|c|}{\tt variables=curl} \\ \hline
+   & \verb+velocity=0+  & \verb+velocity=1+ & \verb+velocity=0+  & \verb+velocity=1+  \\ \hline
+\verb+nsew=0+ & .div & .vdiv & .curlx, .curly, .curlz & .vcurlx, .vcurly, .vcurlz \\ \hline
+\verb+nsew=1+ & .div & .vdiv & .curle, .curln, .curlu & .vcurle, .vcurln, .vcurlu \\ \hline
+\end{tabular}
+\end{center}
+\par
+\emph{SW4} can output the time history of the strain components of the
+solution at the reciever station. The {\tt variables} option governs this 
+behavior. For example,
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 variables=strains
+\end{verbatim}
+will output the six files {\tt sta1.xx}, {\tt sta1.yy}, {\tt sta1.zz}, {\tt sta1.xy}, {\tt sta1.xz}, and
+{\tt sta1.yz} in sac format containing the six Cartesian components of the symmetric strain tensor. 
+When {\tt velocity=1}, the strains of the time derivative of the solution are output on files 
+named {\tt sta1.vxx}, {\tt sta1.vyy}, etc.
+There is currently no support for outputting the strains in East, North, and vertical coordinates.
+
+\emph{SW4} can also output reciever time-histories in an ASCII text format,
+\begin{verbatim}
+sac lat=38.25 lon=-122.20 depth=0 file=sta1 sacformat=0 usgsformat=1
+\end{verbatim}
+The ASCII text file holds all three components (or six when using {\tt variables=strains} ) in a single 
+file named {\tt sta1.txt}. When the
+\verb+usgsformat=1+ option is used, the file gets extension .txt independently of the \verb+nsew+
+and \verb+velocity+ options. Instead the header inside the file is modified to reflect its contents.
+Note that you must give the {\tt sacformat=0} option unless you want the solution to be output in
+both formats.
+
+\paragraph{Notes on the sac command:}
+\begin{itemize}
+\item SAC files are treated in the same way on parallel and serial file systems, because the data for each SAC
+file originates from one processor and is always written by that processor only.
+\item The binary SAC format is described in Section~\ref{sec:sac-format}.
+\item The ASCII text format is outlined in the header of those files.
+\item The binary SAC files can be read by the SAC program. We also provide a matlab/octave script in
+  {\tt tools/readsac.m}.
+\item The ASCII text file format can be read by the Matlab/Octave script in {\tt tools/readusgs.m}.
+The ASCII text format was slightly modified with the addition of the strain output option. 
+The Matlab/Octave script {\tt tools/readusgsold.m} can be used to read
+the older version of ASCII text files.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{2-D cross-sectional data: the image command}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The image command saves two-dimensional horizontal or vertical cross-sectional data at a specified
+time level. It can be used for visualizing the solution, making the images for a movie, or checking
+material properties. Each image file contains a scalar field as function of the spatial coordinates
+in the cross-sectional plane. The scalar field can be either a component of the solution, a derived
+quantity of the solution, a material property, or a grid coordinate, All in all, \emph{SW4} can
+output twenty-five different types of images, see Section~\ref{keyword:image} for details.
+
+The cross-sectional plane is specified by a Cartesian coordinate ($x$, $y$, or $z$). The image can
+be written at a specific time step or at a specified time. Images can also be output at a fixed
+frequency, either specified by a time step interval or a time interval.
+
+For example, the command
+\begin{verbatim}
+image mode=ux y=500 file=picturefile cycle=1
+\end{verbatim}
+tells \emph{SW4} to output the $x$-displacement component of the solution along the vertical $y=500$
+plane.  The data is written to a file named {\tt picturefile.cycle=1.y=500.ux} after the first time
+step ({\tt cycle=1}). The example
+\begin{verbatim}
+image mode=div x=1000 file=picturefile cycleInterval=100
+\end{verbatim}
+outputs the divergence of the solution field in the $yz$-plane at the grid surface closest to
+$x=1000$. The data is written to the files
+\begin{verbatim} 
+picturefile.cycle=100.x=1000.div
+picturefile.cycle=200.x=1000.div
+...
+\end{verbatim}
+With this setup, one image file is output every 100 time steps.
+
+Note that the divergence of the solution field does not contain shear (S) waves and the
+rotation (curl) of the solution field does not contain compressional (P) waves. These
+options can therefore be used to distinguish between P- and S-waves in the solution.
+
+The hvelmax and vvelmax modes store the maximum in time of the horizontal and vertical velocity
+components, respectively. As these names indicate, it is assumed that the sources in \emph{SW4} are
+set up for calculating displacements. The horizontal velocity is defined as $\max(|u^N_t|,|u^E_t|)$,
+where $u^N$ and $u^E$ are the displacement components in the North and East directions,
+respectively. The vertical velocity is $|w_t|$, where $w$ is the displacement component in the
+$z$-direction. For these modes, the cycleInterval or timeInterval options only determine how often
+the maxima are written to disk; the actual accumulation of the maximuma is performed after each time
+step.
+
+When \emph{SW4} is run in parallel, the data that gets saved on an {\tt image} file originates from
+all processors that are intersected by the image plane. For horizontal image planes, this means all
+processors. To improve the I/O performance, image data is first communicated to a number of
+dedicated image writing processors. By default, 8 processors write each image file to disk (or all
+processors if \emph{SW4} is run on fewer than 8). This number can be changed using the {\tt fileio}
+command,
+\begin{verbatim}
+fileio nwriters=4
+\end{verbatim}
+The above command tells \emph{SW4} to use 4 processors to write each image file. For simulations
+which use very large number of grid points and many processors, care must be taken to make sure that enough
+memory is available to buffer the image data before it is written to disk.
+
+\paragraph{Notes on the image command:}
+\begin{itemize}
+\item By default, single precision data is saved. Double precision data can be saved by
+  using the {\tt precision=double} option.
+\item When topography is used, an image plane along the free surface is specified by the {\tt z=0} option.
+\item A {\tt mode=topo z=0} image holds the elevation (negative $z$-coordinate) of the raw
+  topography. It can only be written when topography is used.
+\item A {\tt mode=grid z=0} image holds the $z$-coordinate (negative elevation) of the grid along
+  the free surface, which is the actual shape of the upper surface of the computational domain.
+\item When topography or mesh refinement is used, vertical image planes intersect all component
+grids in the composite grid. In this case, cross-sectional data from all component grids are stored
+on the image file.
+\item The images files are written in a binary format, see Section~\ref{sec:image-format} for
+  details.
+\item We provide matlab/octave scripts for reading image files in the {\tt tools} directory. The
+  basic function is called {\tt readimagepatch.m}. A higher level interface is provided by the {\tt
+    imageinfo.m} and {\tt plotimage.m} scripts.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generating a bird's eye view of the problem domain: the gmt command}\label{sec:gmt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The Generic Mapping Toolkit (\emph{GMT})~\cite{WesselSmithGMT} is a set of postscript image
+generation programs for geophysical applications, which can be used to make plots like
+Figure~\ref{fig:topography-gmt}. In the example shown here, topography information is included as
+well as information on the general setup of the simulation. Note that the \verb+gmt+ command causes
+an ASCII text file to be outputted from \emph{SW4}. This file contains a UNIX C-shell script with
+commands for the \verb+gmt+ program, holding general information about the run such as
+geometric coordinates of the computational domain as well as locations of sources and
+recievers. This information often needs to be fine-tuned to suit the needs of a particular
+application. To have \emph{SW4} write a \emph{GMT} file, you give the command
+\begin{verbatim}
+gmt file=bolinas.gmt
+\end{verbatim}
+%
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.7\textwidth]{topography-gmt-small.png} 
+\caption{Location of the source and stations for the Barnwell simulation. This figure was
+  generated using the GMT command, see Section~\protect\ref{keyword:gmt} for details.}
+\label{fig:topography-gmt}
+\end{center}
+\end{figure}
+%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Examples (in progress)} \label{sec:examples}
@@ -1945,7 +2213,7 @@ plug-in. The {\bf gmt} command outputs a shell script file containing the locati
 stations and the epicenter, i.e. the location of the first {\bf source} command. This shell script
 file can be used for further postprocessing by the GMT program~\cite{WesselSmithGMT}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{rec [optional]}
+\subsection{rec (or sac) [optional]}
 \index{command!rec}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The \verb+rec+ command is used to save the time history of the solution at a fixed
