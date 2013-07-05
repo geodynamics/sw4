@@ -1,0 +1,40 @@
+# This is a SW4 input file describing problem LOH.3 from the SCEC test suite, see
+# "Steven Day et al., Tests of 3D Elastodynamic Codes:
+# Final report for lifelines project 1A01, Pacific Eartquake
+# Engineering Center, 2001".
+
+# 
+#grid h=100 x=40000 y=40000 z=20000
+grid h=50 x=40000 y=40000 z=20000
+
+time t=10
+
+# wave speeds at 2.5 Hz, 3 viscoelastic mechanisms by default
+attenuation phasefreq=2.5 nmech=3 maxfreq=15
+
+#increase width of super grid damping layer
+supergrid gp=30
+
+fileio path=loh3-h50
+
+# material properties in the half-space
+block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
+# material properties in the top layer
+block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+#
+# Interface (harmonic (mu,la)-averages, arithmetic rho,Q
+block vs=2437.6 vp=4630.8 r=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001
+
+# Gaussian time function gives velocities directly
+source x=20000 y=20000 z=2000 Mxy=1 m0=1e18 t0=0.2 freq=20 type=Gaussian
+#
+sac x=20600 y=20800 z=0 usgsformat=1 sacformat=0 file=sac_01
+sac x=21200 y=21600 z=0 usgsformat=1 sacformat=0 file=sac_02
+sac x=21800 y=22400 z=0 usgsformat=1 sacformat=0 file=sac_03
+sac x=22400 y=23200 z=0 usgsformat=1 sacformat=0 file=sac_04
+sac x=23000 y=24000 z=0 usgsformat=1 sacformat=0 file=sac_05
+sac x=23600 y=24800 z=0 usgsformat=1 sacformat=0 file=sac_06
+sac x=24200 y=25600 z=0 usgsformat=1 sacformat=0 file=sac_07
+sac x=24800 y=26400 z=0 usgsformat=1 sacformat=0 file=sac_08
+sac x=25400 y=27200 z=0 usgsformat=1 sacformat=0 file=sac_09
+sac x=26000 y=28000 z=0 usgsformat=1 sacformat=0 file=sac_10
