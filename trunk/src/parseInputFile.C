@@ -201,7 +201,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      }
      else if (startswith("attenuation", buffer))
      {
-       processAttenuation(buffer);
+        processAttenuation(buffer);
      }
      else if (startswith("time", buffer))
      {
@@ -1155,76 +1155,82 @@ void EW::processAttenuation(char* buffer)
 	      "ERROR: not a attenuation line...: " << token);
   token = strtok(NULL, " \t");
 
-  string err = "Attenuation error ";
-  int nmech=-1; // currently, we have only implemented a very simple model, based on multiplying the displacement field by a 
-// factor after each time step
-  double velofreq=1;
-  bool foundppw = false, foundfreq=false;
+   string err = "Attenuation error ";
+   int nmech=3;
+//   int nmech=-1;
+   double velofreq=1;
+   bool foundppw = false, foundfreq=false;
+
 // Default is max frequency 2 Hz, 
-  m_att_ppw = -1;
-  m_att_max_frequency = 2.0;
+   m_att_ppw = -1;
+   m_att_max_frequency = 2.0;
   
-  while (token != NULL)
-  {
+   while (token != NULL)
+   {
     // while there are tokens in the string still
-    if (startswith("#", token) || startswith(" ", buffer))
-      // Ignore commented lines and lines with just a space.
-      break;
-//                       123456
-    else if( startswith("nmech=", token) )
-    {
-      token += 6; // skip nmech=
-      nmech = atoi(token);
-//      CHECK_INPUT(nmech > 0 && nmech <= 8, "ERROR: Number of attenuation mechanisms must be > 0 and <= 8, not " << nmech);
-    }
-//                       1234567890123
-    // else if( startswith("phasefreq=", token) )
-    // {
-    //   token += 10; // skip phasefreq=
-    //   velofreq = atof(token);
-    //   CHECK_INPUT(velofreq >= 0 && velofreq <= 1000, "ERROR: Velocity frequency must be >= 0 and <= 1000 [Hz], not " << velofreq);
-    // }
-//                       12345678901234567890
-    else if( startswith("centerfreq=",token) )
-    {
-       token += 11;
-       m_att_ppw = -1;
-       m_att_max_frequency = atof( token );
-       foundfreq = true;
-       CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
-    }
-    // else if( startswith("minppw=",token) )
-    // {
-    //    token += 7;
-    //    m_att_ppw = atoi( token );
-    //    foundppw = true;
-    //    CHECK_INPUT(m_att_ppw >= 0, "ERROR: minimum ppw must be >= 0, not " << m_att_ppw);
-    // }
-    else
-    {
-      badOption("attenuation", token);
-    }
-    token = strtok(NULL, " \t");
-  }
-  if( foundppw && foundfreq )
-  {
-     if (m_myRank == 0)
-	cout << "ERROR: Can not give both minppw and maxfreq for attenuation " << endl;
-     MPI_Abort(MPI_COMM_WORLD, 1);
-  }
+     if (startswith("#", token) || startswith(" ", buffer))
+       // Ignore commented lines and lines with just a space.
+       break;
+ //                       123456
+     else if( startswith("nmech=", token) )
+     {
+       token += 6; // skip nmech=
+       nmech = atoi(token);
+       CHECK_INPUT(nmech >= 0 && nmech <= 8, "ERROR: Number of attenuation mechanisms must be >= 0 and <= 8, not " << nmech);
+     }
+ //                       1234567890123
+     else if( startswith("phasefreq=", token) )
+     {
+       token += 10; // skip phasefreq=
+       velofreq = atof(token);
+       CHECK_INPUT(velofreq >= 0 && velofreq <= 1000, "ERROR: Velocity frequency must be >= 0 and <= 1000 [Hz], not " << velofreq);
+     }
+     else if( startswith("maxfreq=",token) )
+     {
+        token += 8;
+        m_att_ppw = -1;
+        m_att_max_frequency = atof( token );
+        CHECK_INPUT( !foundfreq, "ERROR: can not give both centerfreq and maxfreq");
+        CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
+        foundfreq = true;
+     }
+     else if( startswith("centerfreq=",token) )
+     {
+        token += 11;
+        m_att_ppw = -1;
+        m_att_max_frequency = atof( token );
+        CHECK_INPUT( !foundfreq, "ERROR: can not give both centerfreq and maxfreq");
+        CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
+        foundfreq = true;
+     }
+     else if( startswith("minppw=",token) )
+     {
+        token += 7;
+        m_att_ppw = atoi( token );
+        foundppw = true;
+        CHECK_INPUT(m_att_ppw >= 0, "ERROR: minimum ppw must be >= 0, not " << m_att_ppw);
+     }
+     else
+     {
+       badOption("attenuation", token);
+     }
+     token = strtok(NULL, " \t");
+   }
+   if( foundppw && foundfreq )
+   {
+      if (m_myRank == 0)
+ 	cout << "ERROR: Can not give both minppw and maxfreq for attenuation " << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+   }
 
-  CHECK_INPUT(nmech == 0, "ERROR: Number of attenuation mechanisms must currently be 0, not " << nmech);
-
-  m_number_mechanisms = nmech;
-  m_velo_omega = velofreq*2*M_PI;
-  m_att_use_max_frequency = (m_att_ppw <= 0.);
+   m_number_mechanisms = nmech;
+   m_velo_omega = velofreq*2*M_PI;
+   m_use_attenuation=true;
+   m_att_use_max_frequency = (m_att_ppw <= 0);
   
-  m_use_attenuation=true;
-  
-// tmp
-  if (m_myRank==0)
-    printf("* Processing the attenuation command: m_nmech=%i, center freq=%e\n", m_number_mechanisms, 
-	   m_att_max_frequency);
+ // tmp
+   //   if (m_myRank==0)
+   //     printf("* Processing the attenuation command: m_nmech=%i, m_velo_omega=%e\n", m_nmech, m_velo_omega);
 }
 
 //-----------------------------------------------------------------------
@@ -2546,7 +2552,6 @@ void EW::processGlobalMaterial(char* buffer)
    string err = "globalmaterial error: ";
    int modelnr = 0;
    double frequency = 1;
-//   bool useAttenuation = false; // AP: what is this?
    double vpmin=0, vsmin=0;
   
    while (token != NULL)

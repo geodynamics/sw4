@@ -1,7 +1,7 @@
 c-----------------------------------------------------------------------
       subroutine rhs4th3fort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, h )
+     +     uacc, u, mu, la, h, op )
 
 *** in the interior: centered approximation of the spatial operator in the elastic wave equation
 *** near physical boundaries: one-sided approximation of the spatial operator in the elastic wave equation
@@ -27,10 +27,21 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lau3zy, u3zjm2, u3zjm1, u3zjp1, u3zjp2
       real*8 mu1zx, u1zim2, u1zim1, u1zip1, u1zip2
       real*8 mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2
-      real*8 r1, r2, r3, h, cof, d4a, d4b
+      real*8 r1, r2, r3, h, cof, d4a, d4b, a1
+      character*1 op
       parameter( d4a=2d0/3, d4b=-1d0/12 )
 
       cof = 1d0/(h*h)
+
+      if( op .eq.'=' )then
+         a1  = 0
+      elseif( op.eq.'+' )then
+         a1 = 1
+      elseif( op.eq.'-' )then
+         a1 = 1
+         cof = -cof
+      endif
+
 
       k1 = kfirst+2
       if (onesided(5).eq.1) k1 = 7;
@@ -221,9 +232,9 @@ c note that we could have introduced intermediate variables for the average of l
      *                   la(i,j,k+2)*(u(2,i,j-2,k+2)-u(2,i,j+2,k+2)+
      *                        8*(-u(2,i,j-1,k+2)+u(2,i,j+1,k+2))) )) 
 
-            uacc(1,i,j,k) = cof*r1
-            uacc(2,i,j,k) = cof*r2
-            uacc(3,i,j,k) = cof*r3
+            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
 
             enddo
          enddo
@@ -472,9 +483,9 @@ c No centered cross terms in r3
             enddo
             r3 = r3 + lau2yz
 
-            uacc(1,i,j,k) = cof*r1
-            uacc(2,i,j,k) = cof*r2
-            uacc(3,i,j,k) = cof*r3
+            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
 
             enddo
          enddo
@@ -741,9 +752,9 @@ c No centered cross terms in r3
             enddo
             r3 = r3 + lau2yz
 
-            uacc(1,i,j,k) = cof*r1
-            uacc(2,i,j,k) = cof*r2
-            uacc(3,i,j,k) = cof*r3
+            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
 
             enddo
          enddo
@@ -755,7 +766,7 @@ c No centered cross terms in r3
 c-----------------------------------------------------------------------
       subroutine rhs4th3fortsgstr( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, h, strx, stry, strz )
+     +     uacc, u, mu, la, h, strx, stry, strz, op )
 
 *** Routine with supergrid stretchings, strx, stry, and strz.
 ***
@@ -783,11 +794,20 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lau3zy, u3zjm2, u3zjm1, u3zjp1, u3zjp2
       real*8 mu1zx, u1zim2, u1zim1, u1zip1, u1zip2
       real*8 mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2
-      real*8 r1, r2, r3, h, cof, d4a, d4b
+      real*8 r1, r2, r3, h, cof, d4a, d4b, a1
       real*8 strx(ifirst:ilast), stry(jfirst:jlast), strz(kfirst:klast)
+      character*1 op
       parameter( d4a=2d0/3, d4b=-1d0/12 )
 
       cof = 1d0/(h*h)
+      if( op.eq.'=' )then
+         a1 = 0
+      elseif( op.eq.'+')then
+         a1 = 1
+      elseif( op.eq.'-')then
+         a1 = 1
+         cof = -cof
+      endif
 
       k1 = kfirst+2
       if (onesided(5).eq.1) k1 = 7;
@@ -1014,9 +1034,9 @@ c note that we could have introduced intermediate variables for the average of l
      *                   la(i,j,k+2)*(u(2,i,j-2,k+2)-u(2,i,j+2,k+2)+
      *                        8*(-u(2,i,j-1,k+2)+u(2,i,j+1,k+2))) )) 
 
-            uacc(1,i,j,k) = cof*r1
-            uacc(2,i,j,k) = cof*r2
-            uacc(3,i,j,k) = cof*r3
+            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
 
             enddo
          enddo
@@ -1285,9 +1305,9 @@ c No centered cross terms in r3
             enddo
             r3 = r3 + stry(j)*lau2yz
 
-            uacc(1,i,j,k) = cof*r1
-            uacc(2,i,j,k) = cof*r2
-            uacc(3,i,j,k) = cof*r3
+            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
 
             enddo
          enddo
@@ -1574,9 +1594,9 @@ c No centered cross terms in r3
             enddo
             r3 = r3 + stry(j)*lau2yz
 
-            uacc(1,i,j,k) = cof*r1
-            uacc(2,i,j,k) = cof*r2
-            uacc(3,i,j,k) = cof*r3
+            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
 
             enddo
          enddo
@@ -1789,6 +1809,80 @@ c evaluate 2nd divided time difference D+D-(u)
       end
 
 c-----------------------------------------------------------------------
+      subroutine updatememvar( ifirst, ilast, jfirst, jlast, kfirst,
+     * klast, alp, alm, up, u, um, omega, dt, domain )
+
+***********************************************************************
+*** 
+*** domain = 0 --> Entire domain
+*** domain = 1 --> Only upper (k=1) boundary ghost points + boundary point
+*** domain = 2 --> Only lower (k=N) boundary ghost points + boundary point
+***
+***********************************************************************      
+
+      implicit none
+      real*8 i6
+      parameter( i6=1d0/6 )
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
+      integer domain, k1, k2
+      real*8 omega, dt, dto, icp, cm, cof3
+      real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 alp(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 alm(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      dto = dt*omega
+      icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
+      cm  =     1d0/2 - 1/(2*dto) - dto/4 + dto*dto/12 
+      if( domain.eq.0 )then
+         k1 = kfirst
+         k2 = klast
+      elseif( domain.eq.1 )then
+         k1 = kfirst
+         k2 = kfirst+2
+      elseif( domain.eq.2 )then
+         k1 = klast-2
+         k2 = klast
+      endif
+      do k=k1,k2
+         do j=jfirst,jlast
+            do i=ifirst,ilast
+               do c=1,3
+                  alp(c,i,j,k) = icp*(-cm*alm(c,i,j,k) + u(c,i,j,k) +
+     *         i6*( dto*dto*u(c,i,j,k) + dto*(up(c,i,j,k)-um(c,i,j,k)) +
+     *              (up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k))  )  
+     *                                                  )
+               enddo
+            enddo
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine dpdmtfortatt(ifirst, ilast, jfirst, jlast, kfirst, 
+     +    klast, up, u, um, dt2i)
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
+      real*8 dt2i
+      real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+c evaluate 2nd divided time difference D+D-(u), and return in um
+      do k=kfirst,klast
+        do j=jfirst,jlast
+          do i=ifirst,ilast
+            do c=1,3
+              um(c,i,j,k) = dt2i*
+     +             (up(c,i,j,k) - 2*u(c,i,j,k) + um(c,i,j,k))
+            enddo
+          enddo
+        enddo
+      enddo
+      return
+      end
+
+c-----------------------------------------------------------------------
       subroutine satt(up, qs, dt, cfreq, 
      +     ifirst, ilast, jfirst, jlast, kfirst, klast)
       implicit none
@@ -1815,3 +1909,4 @@ c$$$            endif
       enddo
       return
       end
+

@@ -165,14 +165,30 @@ void setupSBPCoeff( );
 void simpleAttenuation( vector<Sarray> & a_Up );
 void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		double t, vector<double **> & a_BCForcing );
+void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
+			   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+			   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+		       vector<double **>& a_BCForcing, double bop[5], double a_t );
+void addAttToFreeBcForcing( vector<Sarray*>& AlphaVEp, vector<double**>& BCForcing, double bop[5] );
+
 void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing, vector<Source*>& a_Source );
-void evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray> & a_Lu );
+void evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray> & a_Lu,
+	     vector<Sarray*>& a_Alpha );
 
 void evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		   vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
 void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		    vector<Sarray> & a_Uacc );
 void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
+void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
+			    vector<Sarray*>& a_AlphaVEm,
+			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+void updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
+			    vector<Sarray*>& a_AlphaVEm,
+			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
+void evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
+                            vector<Sarray*>& a_AlphaVEm );
+
 void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um, vector<Sarray>& a_Rho );
 
 void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
@@ -264,7 +280,10 @@ void communicate_array_2d_asym( Sarray& u, int g, int k );
 void communicate_array_2d_ext( Sarray& u );
 
 void set_materials();
-void setup_viscoelastic(double minvsoh );
+void setup_attenuation_relaxation(double minvsoh );
+void setup_viscoelastic();
+void setup_viscoelastic_tw();
+
 void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk );
 void extrapolateInXY( vector<Sarray>& field );
 void extrapolateTopo(Sarray& field);

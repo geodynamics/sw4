@@ -645,13 +645,11 @@ c
 
 c-----------------------------------------------------------------------
       subroutine TWFRSURFZ( ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     ni, nj, nk, h, kz, t, omega, c, phase, bforce,
-     *                      mu, lambda, zmin )
-c     *        momega,   mphase, ampmu, amplambda, fo )
+     +     h, kz, t, omega, c, phase, bforce, mu, lambda, zmin )
       implicit none
-      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, attenuation
       real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
-      integer ni, nj, nk, i, j, kz
+      integer i, j, kz
       doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
       doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
       doubleprecision x
@@ -661,25 +659,18 @@ c     *        momega,   mphase, ampmu, amplambda, fo )
       doubleprecision omega
       doubleprecision c
       doubleprecision phase
-c      doubleprecision momega
-c      doubleprecision mphase
-c      doubleprecision ampmu
-c      doubleprecision amplambda
 
       doubleprecision forces(3)
-c      doubleprecision t10
       doubleprecision t13
       doubleprecision t15
       doubleprecision t16
       doubleprecision t19
-c      doubleprecision t2
       doubleprecision t20
       doubleprecision t21
       doubleprecision t23
       doubleprecision t24
       doubleprecision t28
       doubleprecision t29
-c      doubleprecision t3
       doubleprecision t32
       doubleprecision t33
       doubleprecision t34
@@ -688,27 +679,16 @@ c      doubleprecision t3
       doubleprecision t43
       doubleprecision t44
       doubleprecision t49
-c      doubleprecision t54
-c      doubleprecision t56
-c      doubleprecision t6
       doubleprecision t60
       doubleprecision t62
       doubleprecision t65
-c      doubleprecision t9
 
       z = (kz-1)*h + zmin
 c the do loops should span jfirst,jlast and ifirst,ilast
-c      do j=1,nj
       do j=jfirst,jlast
          y = (j-1)*h
-c         do i=1,ni
          do i=ifirst,ilast
             x=(i-1)*h
-c        t2 = momega*x+mphase
-c        t3 = cos(t2)
-c        t6 = sin(momega*y+mphase)
-c        t9 = momega*z+mphase
-c        t10 = sin(t9)
         t13 = mu(i,j,kz)
         t15 = omega*x+phase
         t16 = cos(t15)
@@ -729,8 +709,6 @@ c        t10 = sin(t9)
         t44 = sin(t43)
         forces(2) = t13*(t37*t38*omega*t24+t37*t44*t34)
         t49 = cos(t23)
-c        t54 = sin(t2)
-c        t56 = cos(t9)
         t60 = cos(t28)
         t62 = sin(t32)
         t65 = cos(t43)
@@ -743,6 +721,65 @@ c        t56 = cos(t9)
       enddo
       end
 
+c-----------------------------------------------------------------------
+      subroutine TWFRSURFZATT( ifirst, ilast, jfirst, jlast, kfirst,
+     +   klast, h, kz, t, omega, c, phase, bforce, mua, lambdaa, zmin )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
+      integer i, j, kz
+      doubleprecision mua(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambdaa(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z, zmin
+      doubleprecision t
+      doubleprecision omega
+      doubleprecision c
+      doubleprecision phase
+      doubleprecision t2, t3, t6, t7, t8, t11, t12, t17, t18, t27, t30
+      doubleprecision t20, t31, t35, t40, t45, t50, t52, t54
+      doubleprecision t16, t23, t24, t34
+      doubleprecision forces(3)
+
+      z = (kz-1)*h + zmin
+      do j=jfirst,jlast
+         y = (j-1)*h
+         do i=ifirst,ilast
+            x=(i-1)*h
+           t2 = omega*x+phase
+           t3 = sin(t2)
+           t6 = omega*y+phase
+           t7 = cos(t6)
+           t8 = c*t
+           t11 = -omega*(z-t8)-phase
+           t12 = sin(t11)
+           t16 = omega*(x-t8)
+           t17 = -t16-phase
+           t18 = cos(t17)
+           t20 = t12*omega
+           forces(1) = mua(i,j,kz)*(t3*omega*t7*t12+t18*t3*t20)
+           t23 = cos(t2)
+           t24 = sin(t6)
+           t27 = sin(t16)
+           t30 = -omega*(y-t8)-phase
+           t31 = cos(t30)
+           t34 = omega*z+phase
+           t35 = sin(t34)
+           forces(2) = mua(i,j,kz)*(t23*t24*t20-t27*t31*t35*omega)
+           t40 = cos(t11)
+           t45 = sin(t17)
+           t50 = t40*omega
+           t52 = sin(t30)
+           t54 = cos(t34)
+           forces(3) = 2d0*mua(i,j,kz)*t23*t7*t40*omega+lambdaa(i,j,kz)*
+     *     (t45*omega*t3*t40+t18*t23*t50+t27*t52*omega*t54+t23*t7*t50)
+           bforce(1,i,j) = bforce(1,i,j) - forces(1)
+           bforce(2,i,j) = bforce(2,i,j) - forces(2)
+           bforce(3,i,j) = bforce(3,i,j) - forces(3)
+        enddo
+      enddo
+      end
 
 c-----------------------------------------------------------------------
       subroutine TWFRSURFZSGSTR( ifirst, ilast, jfirst, jlast, kfirst, 
@@ -832,6 +869,72 @@ c-----------------------------------------------------------------------
          enddo
       enddo
       return
+      end
+
+c-----------------------------------------------------------------------
+      subroutine TWFRSURFZSGSTRATT( ifirst, ilast, jfirst, jlast, 
+     *       kfirst, klast, h, kz, t, omega, c, phase, omstrx, omstry,
+     *       bforce, mua, lambdaa, zmin )
+
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
+      integer i, j, kz
+      doubleprecision mua(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambdaa(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z, zmin
+      doubleprecision t
+      doubleprecision omega
+      doubleprecision c
+      doubleprecision phase
+      doubleprecision omstrx
+      doubleprecision omstry
+     
+      doubleprecision forces(3)
+      doubleprecision t2, t3, t6, t7, t8, t11, t12, t16, t17, t18, t20
+      doubleprecision t23, t24, t27, t30, t31, t34, t35, t40, t45, t50
+      doubleprecision t52, t54
+      z = (kz-1)*h + zmin
+      do j=jfirst,jlast
+         y = (j-1)*h
+         do i=ifirst,ilast
+            x=(i-1)*h
+
+            t2 = omega*x+phase
+            t3 = sin(t2)
+            t6 = omega*y+phase
+            t7 = cos(t6)
+            t8 = c*t
+            t11 = -omega*(z-t8)-phase
+            t12 = sin(t11)
+            t16 = omega*(x-t8)
+            t17 = -t16-phase
+            t18 = cos(t17)
+            t20 = t12*omega
+            forces(1) = mua(i,j,kz)*(t3*omega*t7*t12+t18*t3*t20)
+            t23 = cos(t2)
+            t24 = sin(t6)
+            t27 = sin(t16)
+            t30 = -omega*(y-t8)-phase
+            t31 = cos(t30)
+            t34 = omega*z+phase
+            t35 = sin(t34)
+            forces(2) = mua(i,j,kz)*(t23*t24*t20-t27*t31*t35*omega)
+            t40 = cos(t11)
+            t45 = sin(t17)
+            t50 = t40*omega
+            t52 = sin(t30)
+            t54 = cos(t34)
+            forces(3) = 2d0*mua(i,j,kz)*t23*t7*t40*omega+
+     *        lambdaa(i,j,kz)*(t45*omega*t3*t40+t18*t23*t50+
+     *         t27*t52*omega*t54+t23*t7*t50)
+            bforce(1,i,j) = bforce(1,i,j) - forces(1)
+            bforce(2,i,j) = bforce(2,i,j) - forces(2)
+            bforce(3,i,j) = bforce(3,i,j) - forces(3)
+         enddo
+      enddo
       end
 
 c-----------------------------------------------------------------------
@@ -1022,3 +1125,4 @@ c-----------------------------------------------------------------------
          enddo
       enddo
       end
+         

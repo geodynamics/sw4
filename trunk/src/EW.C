@@ -25,10 +25,16 @@ void F77_FUNC(rhouttlumf, RHOUTTLUMF)(int*, int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfort,FORCINGFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double* );
+void F77_FUNC(forcingfortatt,FORCINGFORTATT)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+				       double*, double*, double*, double*, double* );
 void F77_FUNC(forcingfortc,FORCINGFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double* );
 void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
    	 			       double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*, 
@@ -37,7 +43,13 @@ void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+					       double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+				       double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttattfort,FORCINGTTATTFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfortc,FORCINGTTFORTC)(int*, int*, int*, int*, int*, 
@@ -46,6 +58,8 @@ void F77_FUNC(forcingttfortc,FORCINGTTFORTC)(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
+void F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( int*, int*, int*, int*, int*, int*, double*, double*, double*, 
+						     double*, double*, double*, double*, double*, double* );
 void F77_FUNC(exactaccfort,EXACTACCFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double* );
 void F77_FUNC(exactaccfortc,EXACTACCFORTC)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
@@ -53,9 +67,9 @@ void F77_FUNC(exactaccfortc,EXACTACCFORTC)(int*, int*, int*, int*, int*, int*, d
 void F77_FUNC(rhserrfort, RHSERRFORT)(int*, int*, int*, int*, int*, int*, int*, double*,
 				      double*, double*, double*, double*, double*);
 void F77_FUNC(rhs4th3fort,RHS4TH3FORT)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
-				       double*, double*, double*, double*, double* );
+				       double*, double*, double*, double*, double*, char* );
 void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
-						 double*, double*, double*, double*, double*, double*,double*,double* );
+						 double*, double*, double*, double*, double*, double*,double*,double*, char* );
 void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
@@ -83,6 +97,10 @@ void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, do
 					  double*, double*, double* );
 void F77_FUNC(twilightfortc,TWILIGHTFORTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					    double*, double*, double*, double* );
+void F77_FUNC(twilightfortatt,TWILIGHTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
+						   double*, double*, double*, double* );
+void F77_FUNC(twilightfortattc,TWILIGHTFORTATTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
+						  double*, double*, double*, double*, double* );
 //  subroutine rayleighfort( ifirst, ilast, jfirst, jlast, kfirst, klast,
 // +     u, t, lambda, mu, rho, cr, omega, alpha, h, zmin )
 void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int*jlast, int*kfirst, int*klast, 
@@ -119,6 +137,17 @@ void F77_FUNC(projectmtrlc,PROJECTMTRLC)( int*, int*, int*, int*, int*, int*, in
 void F77_FUNC(projectmtrl,PROJECTMTRL)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 					double*, double*, double*, double*, double*, double*,
 					double*, double*, double*, double*, int* );
+void F77_FUNC(exactmatfortatt,EXACTMATFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
+					 double*, double*, double*, double*, double* );
+void F77_FUNC(exactmatfortattc,EXACTMATFORTATTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
+						  double*, double*, double*, double*, double*, double* );
+void F77_FUNC(updatememvar,UPDATEMEMVAR)(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
+					 double*, double*, double*, double*, int* );
+
+void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
+
+void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
+			   int & LWORK, int & INFO);
 }
 
 using namespace std;
@@ -1636,6 +1665,13 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 	cv = m_twilight_forcing->m_c;
 	F77_FUNC(twilightfort,TWILIGHTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					     &klast, u_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+        if( m_use_attenuation )
+	{
+	   // one mechanism is assumed
+	   double* alpha_ptr = a_AlphaVE[g][0].c_ptr();
+	   F77_FUNC(twilightfortatt,TWILIGHTFORTATT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					     &klast, alpha_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+	}
      }
      if( topographyExists() )
      {
@@ -1653,6 +1689,14 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 	F77_FUNC(twilightfortc,TWILIGHTFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					       &klast, u_ptr, &a_t, &om, &cv, &ph,
 					       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+        if( m_use_attenuation )
+	{
+	   // one mechanism is assumed
+	   double* alpha_ptr = a_AlphaVE[g][0].c_ptr();
+	   F77_FUNC(twilightfortattc,TWILIGHTFORTATTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					     &klast, alpha_ptr, &a_t, &om, &cv, &ph,
+						     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	}
      }
   }
   else if( m_rayleigh_wave_test )
@@ -1727,6 +1771,13 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
 	cv = m_twilight_forcing->m_c;
 	F77_FUNC(twilightfort,TWILIGHTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					     &klast, u_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+        if( m_use_attenuation )
+	{
+	   // one mechanism is assumed
+	   double* alpha_ptr = a_AlphaVE[g][0].c_ptr();
+	   F77_FUNC(twilightfortatt,TWILIGHTFORTATT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					     &klast, alpha_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+	}
      }
      if( topographyExists() )
      {
@@ -1744,6 +1795,14 @@ bool EW::exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
 	F77_FUNC(twilightfortc,TWILIGHTFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					       &klast, u_ptr, &a_t, &om, &cv, &ph, 
 					       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+        if( m_use_attenuation )
+	{
+	   // one mechanism is assumed
+	   double* alpha_ptr = a_AlphaVE[g][0].c_ptr();
+	   F77_FUNC(twilightfortattc,TWILIGHTFORTATTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					     &klast, alpha_ptr, &a_t, &om, &cv, &ph,
+						     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	}
      }
      retval = true;
   }
@@ -3170,11 +3229,21 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
 	   F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
 						  &h, &zmin, &omstrx, &omstry, &omstrz );
+           if( m_use_attenuation )
+	      F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+						  &h, &zmin, &omstrx, &omstry, &omstrz );
 	}
         else
+	{
 	   F77_FUNC(forcingfort,FORCINGFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
 					      &h, &zmin );
+           if( m_use_attenuation )
+	      F77_FUNC(forcingfortatt,FORCINGFORTATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+					      &h, &zmin );
+	}
      }
      if( topographyExists() )
      {
@@ -3278,11 +3347,21 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	   F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 				      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
 			  	      &h, &zmin, &omstrx, &omstry, &omstrz );
+           if( m_use_attenuation )
+	      F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+				      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+			  	      &h, &zmin, &omstrx, &omstry, &omstrz );
 	}
 	else
+	{
 	   F77_FUNC(forcingttfort,FORCINGTTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
 						  &amprho, &ampmu, &ampla, &h, &zmin );
+	   if( m_use_attenuation )
+	      F77_FUNC(forcingttattfort,FORCINGTTATTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+							   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+							   &amprho, &ampmu, &ampla, &h, &zmin );
+	}
      }
      if( topographyExists() )
      {
@@ -3351,7 +3430,7 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 //---------------------------------------------------------------------------
 // perhaps a better name would be evalLu ??
 void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		 vector<Sarray> & a_Uacc )
+		 vector<Sarray> & a_Uacc, vector<Sarray*>& a_AlphaVE )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   double *uacc_ptr, *u_ptr, *mu_ptr, *la_ptr, h;
@@ -3376,16 +3455,35 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
     nz = m_global_nz[g];
     onesided_ptr = m_onesided[g];
-    
+    char op = '=';    // Assign Uacc := L(u)
     if( usingSupergrid() )
        F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
   			          &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
 				   uacc_ptr, u_ptr, mu_ptr, la_ptr, &h,
-				   m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g] );
+  			          m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
     else
        F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
 				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
-				      uacc_ptr, u_ptr, mu_ptr, la_ptr, &h );
+					 uacc_ptr, u_ptr, mu_ptr, la_ptr, &h, &op );
+    if( m_use_attenuation && m_number_mechanisms > 0 )
+    {
+       op = '-'; // Subtract Uacc := Uacc - L_a(alpha)
+       for( int a=0 ; a < m_number_mechanisms ; a++ )
+       {
+          double* alpha_ptr = a_AlphaVE[g][a].c_ptr();
+          double* mua_ptr = mMuVE[g][a].c_ptr();
+          double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
+          if(  usingSupergrid() )
+	     F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+				   &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				   uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h,
+  			          m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
+	  else
+	     F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				    uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op );
+       }
+    }
   }
   if( topographyExists() )
   {
@@ -3518,6 +3616,106 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 }
 
 //-----------------------------------------------------------------------
+void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
+				vector<Sarray*>& a_AlphaVEm,
+				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
+				double a_t )
+{
+   int domain = 0;
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      double* up_ptr  = a_Up[g].c_ptr();
+      double* u_ptr   = a_U[g].c_ptr();
+      double* um_ptr  = a_Um[g].c_ptr();
+
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+	 F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+					     &mOmegaVE[a], &mDt, &domain );
+      }
+      if( m_twilight_forcing )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+	 double om = m_twilight_forcing->m_omega;
+	 double ph = m_twilight_forcing->m_phase;
+	 double cv = m_twilight_forcing->m_c;
+
+         F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+						      &mGridSize[g], &m_zmin[g] );
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
+				     vector<Sarray*>& a_AlphaVEm,
+				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
+{
+   int domainlow = 2, domainup=1;
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      double* up_ptr  = a_Up[g].c_ptr();
+      double* u_ptr   = a_U[g].c_ptr();
+      double* um_ptr  = a_Um[g].c_ptr();
+
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+	 if( m_bcType[g][4] != bProcessor )
+	    F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+					     &mOmegaVE[a], &mDt, &domainup );
+	 if( m_bcType[g][5] != bProcessor )
+	    F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+						&mOmegaVE[a], &mDt, &domainlow );
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
+                            vector<Sarray*>& a_AlphaVEm )
+// store AlphaVEacc in AlphaVEm
+{
+   double dt2i = 1/(mDt*mDt);
+   for(int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+         double* alphap_ptr = a_AlphaVEp[g][a].c_ptr();
+         double* alpha_ptr  = a_AlphaVE[g][a].c_ptr();
+         double* alpham_ptr = a_AlphaVEm[g][a].c_ptr();
+	 F77_FUNC(dpdmtfortatt,DPDMTFORTATT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+					     alphap_ptr, alpha_ptr, alpham_ptr, &dt2i );
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
 // side_plane returns the index of the ghost points along side =0,1,2,3,4,5 (low-i, high-i, low-j, high-j, low-k, high-k)
 void EW::side_plane( int g, int side, int wind[6], int nGhost )
 {
@@ -3625,9 +3823,18 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 	    // Note: this is inefficient, the exact solution is computed everywhere, and once for each
 	    //   EXACT or ERR image mode.
 	    vector<Sarray> Uex(mNumberOfGrids);
-	    vector<Sarray*> alpha; //dummy, the array is not used in routine exactSol.
+	    vector<Sarray*> alpha(mNumberOfGrids);
+	    
 	    for( int g=0 ; g < mNumberOfGrids ; g++ )
+	    {
 	       Uex[g].define(3,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+               if( m_use_attenuation )
+	       {
+		  alpha[g] = new Sarray[m_number_mechanisms];
+                  for( int a = 0 ; a < m_number_mechanisms ; a++ )
+		     alpha[g][a].define(3,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+	       }
+	    }
 	    exactSol( time, Uex, alpha, a_sources );
             if( img->mMode == Image::UXERR || img->mMode == Image::UYERR || img->mMode == Image::UZERR )
 	    {
@@ -3648,6 +3855,11 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 	    else if( img->mMode == Image::UZEXACT || img->mMode == Image::UZERR )
 	       img->computeImageQuantity(Uex,3);
 	    Uex.clear();
+            if( m_use_attenuation )
+	    {
+	       for( int g=0 ; g < mNumberOfGrids ; g++ )
+		  delete[] alpha[g];
+	    }
 	 }
          else if( img->mMode == Image::GRIDX || img->mMode == Image::GRIDY || img->mMode == Image::GRIDZ )
 	    img->computeImageGrid(mX, mY, mZ );
@@ -5170,4 +5382,318 @@ void EW::checkTopo(Sarray& field)
     }
   
   CHECK_INPUT(topo_ok,"There are undefined values in the topography array")
+}
+
+//-----------------------------------------------------------------------
+void EW::setup_attenuation_relaxation( double minvsoh )
+{
+// using minvsoh, estimate highest resolved frequency on the mesh. Use this to assign omega_max for attenuation
+// use the number of mechanisms to determine bandwidth of attenuation model. Use this to assign omega_min
+
+    if( m_att_use_max_frequency )
+       m_max_omega = 2*M_PI*m_att_max_frequency;
+    else
+       m_max_omega = 2.*M_PI*minvsoh/m_att_ppw;
+
+// the band width is set to get approximately constant Q throughout the frequency band
+//     if (n <= 2)
+//     {
+//       m_min_omega = m_max_omega/10.; // decent accuracy for 2 mechanisms
+//     }
+//     else if (n == 3)
+//     {
+//       m_min_omega = m_max_omega/80.; // decent accuracy for 3 mechanisms
+//     }
+//     else if (n == 4)
+//     {
+//       m_min_omega = m_max_omega/150.; // decent accuracy for 4 mechanisms
+//     }
+//     else if (n >= 5)
+//     {
+//       m_min_omega = m_max_omega/2000.; // decent accuracy for 5 mechanisms
+//     }
+    
+// always use a frequency band that is 2 decades wide
+    m_min_omega=m_max_omega/100.;
+
+    if (proc_zero())
+    {
+      printf("\n*** Attenuation parameters calculated for %i mechanisms,\n"
+	     "      max freq=%e [Hz], min_freq=%e [Hz], velo_freq=%e [Hz]\n\n",
+	     m_number_mechanisms, m_max_omega/2/M_PI, m_min_omega/2/M_PI, m_velo_omega/2/M_PI);
+    }
+    int n = m_number_mechanisms;
+    if( n == 1 )
+    {
+       mOmegaVE[0] = m_max_omega;
+    }
+    else if( n > 1 )
+    {
+       double r = pow( m_max_omega/m_min_omega, 1.0/(n-1) );
+       mOmegaVE[0] = m_min_omega;
+       mOmegaVE[n-1] = m_max_omega;
+       for (int k=1; k<=n-2; k++)
+	  mOmegaVE[k] = m_min_omega*pow(r,k);
+    }
+}
+
+//-----------------------------------------------------------------------
+void EW::setup_viscoelastic( )
+{
+    int nu, q, i, j, k, g;
+
+// number of collocation points
+    int n = m_number_mechanisms;
+    int nc = 2*n-1;
+
+    if( n > 0 )
+    {
+// collocation frequencies
+       vector<double> omc(nc);
+       if( n > 1 )
+       {
+	  double r = pow( m_max_omega/m_min_omega, 1.0/(n-1) );
+	  omc[0] = mOmegaVE[0];
+	  for (int k=0; k<=2*n-2; k++)
+	     omc[k] = m_min_omega*pow(r,0.5*k);
+       }
+       else
+	  omc[0] = mOmegaVE[0];
+
+// tmp: print omega and omc
+       if (proc_zero() && mVerbose>=1)
+       {
+	  for (k=0; k<n; k++)
+	     printf("omega[%i]=%e ", k, mOmegaVE[k]);
+	  printf("\n");
+	  for (k=0; k<nc; k++)
+	     printf("omc[%i]=%e ", k, omc[k]);
+	  printf("\n\n");
+       }
+
+// setup least squares problem (matrix and rhs depends on Qs & Qp)
+       double *a_=new double[n*nc];
+       double *beta=new double[nc];
+       double *gamma=new double[nc];
+       int lwork = 3*n;
+       double *work=new double[lwork];
+       char trans='N';
+       int info=0, nrhs=1, lda=nc, ldb=nc;
+
+// test for q=80
+       double q0=80.0, qs, qp, mu_tmp, lambda_tmp, kappa_tmp, mu_0, lambda_0, kappa_0, imm, rem, mmag, bsum;
+    
+// use base 0 indexing of matrix
+#define a(i,j) a_[i+j*nc]
+
+// loop over all grid points in all grids
+       for( g = 0 ; g < mNumberOfGrids; g++ )
+	  for(k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+	     for(j=m_jStart[g]; j<= m_jEnd[g]; j++ )
+		for(i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+		{
+		   mu_tmp = mMu[g](i,j,k);
+		   lambda_tmp = mLambda[g](i,j,k);
+		   kappa_tmp = lambda_tmp + 2*mu_tmp;
+		   qs = mQs[g](i,j,k);
+		   qp = mQp[g](i,j,k);
+	    
+//
+// qs gives beta coefficients
+//
+		   for (q=0; q<nc; q++)
+		   {
+		      beta[q] = 1./qs;
+		      for (nu=0; nu<n; nu++)
+		      {
+			 a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qs)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
+		      }
+		   }
+    
+// solve the system in least squares sense
+		   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
+		   if (info!= 0)
+		   {
+		      printf("setup_viscoelastic:: solving for qs=%e, processor=%i, dgels returned error code = %i\n", qs, m_myRank, info);
+		      MPI_Abort(MPI_COMM_WORLD, 1);
+		   }
+// check that sum(beta) < 1
+		   bsum=0.;
+		   for (nu=0; nu<n; nu++)
+		      bsum += beta[nu];
+		   if (bsum>=1.)
+		   {
+		      printf("setup_viscoelastic:: sum(beta)=%e >= 1 for g=%i, i=%i, j=%i, k=%i\n", bsum, g, i, j, k);
+		      MPI_Abort(MPI_COMM_WORLD, 1);
+		   }
+
+// calculate unrelaxed mu_0
+		   rem = 0., imm = 0.;
+		   for (nu=0; nu<n; nu++)
+		   {
+		      rem += beta[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+		      imm += beta[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+		   }
+		   rem = 1 - rem;
+		   mmag = sqrt(SQR(rem)+SQR(imm));
+// should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
+		   mu_0 = mu_tmp/mmag; 
+// calculate viscoelastic mu:
+		   for (nu=0; nu<n; nu++)
+		   {
+		      mMuVE[g][nu](i,j,k) = mu_0 * beta[nu];
+		   }
+// save the unrelaxed value
+		   mMu[g](i,j,k) = mu_0;
+
+//
+// qp gives gamma coefficients
+//
+		   for (q=0; q<nc; q++)
+		   {
+		      gamma[q] = 1./qp;
+		      for (nu=0; nu<n; nu++)
+		      {
+			 a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qp)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
+		      }
+		   }
+    
+// solve the system in least squares sense
+		   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, gamma, ldb, work, lwork, info);
+		   if (info!= 0)
+		   {
+		      printf("setup_viscoelastic:: solving for qp=%e, processor=%i, dgels returned error code = %i\n", qp, m_myRank, info);
+		      MPI_Abort(MPI_COMM_WORLD, 1);
+		   }
+// check that sum(gamma) < 1
+		   bsum=0.;
+		   for (nu=0; nu<n; nu++)
+		      bsum += gamma[nu];
+		   if (bsum>=1.)
+		   {
+		      printf("setup_viscoelastic:: sum(gamma)=%e >= 1 for g=%i, i=%i, j=%i, k=%i\n", bsum, g, i, j, k);
+		      MPI_Abort(MPI_COMM_WORLD, 1);
+		   }
+
+// calculate unrelaxed kappa_0
+		   rem = 0., imm = 0.;
+		   for (nu=0; nu<n; nu++)
+		   {
+		      rem += gamma[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+		      imm += gamma[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+		   }
+		   rem = 1 - rem;
+		   mmag = sqrt(SQR(rem)+SQR(imm));
+// should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
+		   kappa_0 = kappa_tmp/mmag; 
+// calculate viscoelastic lambdaVE = kappaVE - 2*muVE:
+		   for (nu=0; nu<n; nu++)
+		   {
+		      kappa_tmp = kappa_0 * gamma[nu];
+		      mLambdaVE[g][nu](i,j,k) = kappa_tmp - 2*mMuVE[g][nu](i,j,k);
+		   }
+// save the unrelaxed value
+		   mLambda[g](i,j,k) = kappa_0 - 2*mu_0;
+	    //            if( g==1 && k==m_kEnd[g] && m_myRank == 0 )
+	    //	       cout << i << " " << j << "mlambdave 0 " << mLambdaVE[g][0](i,j,k) << "Qs = " << mQs[g](i,j,k) << endl;
+// tmp
+//     printf("Q=%e\n", q0);
+//     for (q=0; q<n; q++)
+//       printf("beta[%i]=%e ", q, b[q]);
+//     printf("\n");
+
+		} // end for g,k,j,i
+#undef a
+       delete[] a_;
+       delete[] beta;
+       delete[] gamma;
+       delete[] work;
+    }
+}
+
+//-----------------------------------------------------------------------
+void EW::setup_viscoelastic_tw()
+{
+   // Set twilight testing values for the attenuation material (mu,lambda).
+   if( m_number_mechanisms != 1 )
+   {
+      printf("setup_viscoelastic_tw:: Number of mechanisms must be %i for twilight testing, input value = %i \n",
+	     1, m_number_mechanisms );
+      MPI_Abort(MPI_COMM_WORLD, 1);
+   }
+   double* mu_ptr, *la_ptr;
+   int ifirst, ilast, jfirst, jlast, kfirst, klast, g;
+   double h, zmin, omm, phm, ampmu, ampla;
+   for (g=0; g<mNumberOfCartesianGrids; g++)
+   {
+	mu_ptr  = mMuVE[g][0].c_ptr();
+	la_ptr  = mLambdaVE[g][0].c_ptr();
+	ifirst = m_iStart[g];
+	ilast  = m_iEnd[g];
+	jfirst = m_jStart[g];
+	jlast  = m_jEnd[g];
+	kfirst = m_kStart[g];
+	klast  = m_kEnd[g];
+	h = mGridSize[g];
+	zmin = m_zmin[g];
+	omm = m_twilight_forcing->m_momega;
+	phm = m_twilight_forcing->m_mphase;
+	ampmu = m_twilight_forcing->m_ampmu;
+	ampla = m_twilight_forcing->m_amplambda;
+	F77_FUNC(exactmatfortatt,EXACTMATFORTATT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					    &klast, mu_ptr, la_ptr, &omm, &phm, 
+					    &ampmu, &ampla, &h, &zmin );
+   }
+   if (topographyExists())
+   {
+      g = mNumberOfGrids-1;
+      mu_ptr  = mMuVE[g][0].c_ptr();
+      la_ptr  = mLambdaVE[g][0].c_ptr();
+      ifirst = m_iStart[g];
+      ilast  = m_iEnd[g];
+      jfirst = m_jStart[g];
+      jlast  = m_jEnd[g];
+      kfirst = m_kStart[g];
+      klast  = m_kEnd[g];
+      omm = m_twilight_forcing->m_momega;
+      phm = m_twilight_forcing->m_mphase;
+      ampmu = m_twilight_forcing->m_ampmu;
+      ampla = m_twilight_forcing->m_amplambda;
+      double* x_ptr= mX.c_ptr();
+      double* y_ptr= mY.c_ptr();
+      double* z_ptr= mZ.c_ptr();
+      F77_FUNC(exactmatfortattc,EXACTMATFORTATTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+						  &klast, mu_ptr, la_ptr, &omm, &phm, 
+						  &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_minvsoverh( double& minvsoh )
+{
+   double minvsohloc=1.e27; // what is a good 'large' value to initialize with
+// treat all grids the same, i.e. ignore the effects of variations in the curvilinear grid size
+   for( int g= 0 ; g < mNumberOfGrids ; g++ )
+   {
+      double* mu  = mMu[g].c_ptr();
+      double* rho = mRho[g].c_ptr();
+      double npts = mMu[g].npts();
+      double minvs = mu[0]/rho[0];
+      for( int i=0 ; i < npts ; i++ )
+      {
+	 if( mu[i] < minvs*rho[i] )
+	    minvs = mu[i]/rho[i];
+      }
+      minvs = sqrt(minvs);
+      minvsohloc = minvs/mGridSize[g];
+// get the global min for this grid
+      MPI_Allreduce( &minvsohloc, &mMinVsOverH[g], 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   } // end for all grids
+// min mMinVsOverH is saved in minvsoh
+   minvsoh=mMinVsOverH[0];
+   for (int g=1; g<mNumberOfGrids; g++)
+   {
+     if (mMinVsOverH[g] < minvsoh) minvsoh = mMinVsOverH[g];
+   }
+   
 }

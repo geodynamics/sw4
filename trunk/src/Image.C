@@ -1045,8 +1045,8 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
       string strtime;
       strtime += asctime(localtime(&realtime));
       char strtimec[25];
-
       strncpy(strtimec,strtime.c_str(),25);
+      strtimec[24] ='\0';
       ret = write(fid,strtimec,25*sizeof(char));
       if( ret != 25*sizeof(char) )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write strtimec" << endl;

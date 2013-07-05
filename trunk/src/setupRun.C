@@ -250,19 +250,19 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   set_materials();
 
 // evaluate resolution
-  // double minvsoh;
-  // compute_minvsoverh( minvsoh );
-  // if (proc_zero())
-  // {
-  //   printf("\n***** PPW = minVs/h/maxFrequency ********\n");
-  //   for (int g=0; g<mNumberOfCartesianGrids; g++)
-  //   {
-  //     printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
-  //   }
-  //   if (topographyExists())
-  //   {
-  //     int g = mNumberOfGrids-1;
-  //     printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
+  double minvsoh;
+  compute_minvsoverh( minvsoh );
+  //  if (proc_zero())
+  //  {
+  //     printf("\n***** PPW = minVs/h/maxFrequency ********\n");
+  //     for (int g=0; g<mNumberOfCartesianGrids; g++)
+  //     {
+  //       printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
+  //     }
+  //     if (topographyExists())
+  //     {
+  //       int g = mNumberOfGrids-1;
+  //       printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
   //   }
   //   printf("\n");
   // }
@@ -276,12 +276,13 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   }
 
 // convert Qp and Qs to muVE, lambdaVE, and compute unrelaxed lambda, mu
-  if (usingAttenuation())
+  if( m_use_attenuation )
   {
-    // if (m_myRank == 0) cout << "Viscoelastic not yet functional" << endl;
-    // return;
-// for the simplest model with nmech = 0, only Qs is used and muVE, lambdaVE, etc, are not needed
-//     setup_viscoelastic( minvsoh );
+     setup_attenuation_relaxation( minvsoh );
+     if(  m_twilight_forcing )
+	setup_viscoelastic_tw();
+     else
+	setup_viscoelastic();
   }
   
   if( mVerbose && proc_zero() )

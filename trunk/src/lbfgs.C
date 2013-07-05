@@ -319,6 +319,7 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
    bool testing=false, hscale=false;
    int nreductions = 0;
    
+   // used variables: maxrestart, tolerance, dolinesearch
    simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
 				dolinesearch, varcase, testing );
 
@@ -333,11 +334,11 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       fd = fopen(convfile.c_str(),"w");
       const string parafile = simulation.getOutputPath() + "parameters.log";
       fdx=fopen(parafile.c_str(),"w");
-      //      fd = fopen("convergence.log","w");   
-      //      fdx= fopen("parameters.log","w");
    }
 
-   dfm = new double[nmpar];
+   if( nmpar > 0 )
+      dfm = new double[nmpar];
+   
    if( myRank == 0 )
       cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
    compute_f_and_df( simulation, ns, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
@@ -701,6 +702,7 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
    }
    if( nmpar > 0 )
    {
+      delete[] dfm;
       delete[] sm;
       delete[] ym;
       delete[] dfmtemp;
