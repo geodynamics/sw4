@@ -2922,6 +2922,109 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	       }
 	    }
       }
+      if( m_bcType[g][5] == bStressFree && !topo )
+      {
+         int nk=m_global_nz[g];
+	 // Note: Only one memforce, because twilight assumes nmech=1.
+	 Sarray memforce(3,ifirst,ilast,jfirst,jlast,1,1);
+	 if( m_twilight_forcing )
+	 {
+            double om = m_twilight_forcing->m_omega;
+	    double cv = m_twilight_forcing->m_c;
+	    double ph = m_twilight_forcing->m_phase;
+	    double* mf = memforce.c_ptr();
+            int k=nk+1; // Ghost point
+	    F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
+						      &cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
+	 }
+	 else
+	    memforce.set_value(0.0);
+
+	 double g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
+	 const double i6  = 1.0/6;
+	 const double d4a = 2.0/3;
+	 const double d4b =-1.0/12;
+	 double* forcing = a_BCForcing[g][5];
+	 int ni = (ilast-ifirst+1);
+	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	    {
+	       int ind = i-ifirst + ni*(j-jfirst);
+	       a4ci = a4cj = d4a;
+	       b4ci = b4cj = d4b;
+	       if( sg == 1 )
+	       {
+		  a4ci = d4a*m_sg_str_x[g][i-ifirst];
+		  b4ci = d4b*m_sg_str_x[g][i-ifirst];
+		  a4cj = d4a*m_sg_str_y[g][j-jfirst];
+		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
+	       }
+	       g1 = -a_Mu[g](i,j,nk)*(-bop[1]*a_Up[g](1,i,j,nk) - bop[2]*a_Up[g](1,i,j,nk-1) 
+				     -bop[3]*a_Up[g](1,i,j,nk-2) - bop[4]*a_Up[g](1,i,j,nk-3) +
+				     a4ci*(a_Up[g](3,i+1,j,nk)-a_Up[g](3,i-1,j,nk))
+			           + b4ci*(a_Up[g](3,i+2,j,nk)-a_Up[g](3,i-2,j,nk)) ) + h*forcing[3*ind];
+
+	       g2 = -a_Mu[g](i,j,nk)*(-bop[1]*a_Up[g](2,i,j,nk) - bop[2]*a_Up[g](2,i,j,nk-1) -
+				      bop[3]*a_Up[g](2,i,j,nk-2) - bop[4]*a_Up[g](2,i,j,nk-3) +
+                                       a4cj*(a_Up[g](3,i,j+1,nk)-a_Up[g](3,i,j-1,nk))
+				     + b4cj*(a_Up[g](3,i,j+2,nk)-a_Up[g](3,i,j-2,nk)) ) + h*forcing[3*ind+1];
+
+	       g3 = -(2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk))*(
+                                     -bop[1]*a_Up[g](3,i,j,nk) - bop[2]*a_Up[g](3,i,j,nk-1) 
+				     -bop[3]*a_Up[g](3,i,j,nk-2) - bop[4]*a_Up[g](3,i,j,nk-3) ) -
+		  a_Lambda[g](i,j,nk)*( a4ci*(a_Up[g](1,i+1,j,nk)-a_Up[g](1,i-1,j,nk))
+				     + b4ci*(a_Up[g](1,i+2,j,nk)-a_Up[g](1,i-2,j,nk)) 
+				     + a4cj*(a_Up[g](2,i,j+1,nk)-a_Up[g](2,i,j-1,nk))
+			             + b4cj*(a_Up[g](2,i,j+2,nk)-a_Up[g](2,i,j-2,nk)) ) + h*forcing[3*ind+2];
+	       acof = a_Mu[g](i,j,nk);
+	       bcof = 2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk);
+	       for( int a=0 ; a < m_number_mechanisms ; a++ )
+	       {
+		  double omdt = mOmegaVE[a]*mDt;
+		  double cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
+		  double cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
+
+		  cof[a]= (omdt+1)/(6*cp);
+		  r1[a] = (-cm*a_AlphaVEm[g][a](1,i,j,nk+1)+(4+omdt*omdt)*i6*a_U[g](1,i,j,nk+1)+i6*(1-omdt)*a_Um[g](1,i,j,nk+1)+
+			   memforce(1,i,j,1))/cp;
+		  r2[a] = (-cm*a_AlphaVEm[g][a](2,i,j,nk+1)+(4+omdt*omdt)*i6*a_U[g](2,i,j,nk+1)+i6*(1-omdt)*a_Um[g](2,i,j,nk+1)+
+			   memforce(2,i,j,1))/cp;
+		  r3[a] = (-cm*a_AlphaVEm[g][a](3,i,j,nk+1)+(4+omdt*omdt)*i6*a_U[g](3,i,j,nk+1)+i6*(1-omdt)*a_Um[g](3,i,j,nk+1)+
+			   memforce(3,i,j,1))/cp;
+
+		  g1 = g1 + mMuVE[g][a](i,j,nk)*( -bop[1]*a_AlphaVEp[g][a](1,i,j,nk)-bop[2]*a_AlphaVEp[g][a](1,i,j,nk-1)-
+						   bop[3]*a_AlphaVEp[g][a](1,i,j,nk-2)-bop[4]*a_AlphaVEp[g][a](1,i,j,nk-3)+
+							    a4ci*(a_AlphaVEp[g][a](3,i+1,j,nk)-a_AlphaVEp[g][a](3,i-1,j,nk))
+							  + b4ci*(a_AlphaVEp[g][a](3,i+2,j,nk)-a_AlphaVEp[g][a](3,i-2,j,nk)) 
+							   - bop[0]*r1[a] );
+		  g2 = g2 + mMuVE[g][a](i,j,nk)*( -bop[1]*a_AlphaVEp[g][a](2,i,j,nk)-bop[2]*a_AlphaVEp[g][a](2,i,j,nk-1)-
+						   bop[3]*a_AlphaVEp[g][a](2,i,j,nk-2)-bop[4]*a_AlphaVEp[g][a](2,i,j,nk-3)+
+							    a4cj*(a_AlphaVEp[g][a](3,i,j+1,nk)-a_AlphaVEp[g][a](3,i,j-1,nk))
+							  + b4cj*(a_AlphaVEp[g][a](3,i,j+2,nk)-a_AlphaVEp[g][a](3,i,j-2,nk)) -
+							    bop[0]*r2[a] );
+		  g3 = g3 + (2*mMuVE[g][a](i,j,nk)+mLambdaVE[g][a](i,j,nk))*(
+				   -bop[1]*a_AlphaVEp[g][a](3,i,j,nk)-bop[2]*a_AlphaVEp[g][a](3,i,j,nk-1)
+				   -bop[3]*a_AlphaVEp[g][a](3,i,j,nk-2)-bop[4]*a_AlphaVEp[g][a](3,i,j,nk-3)-
+				    bop[0]*r3[a]) +
+				    mLambdaVE[g][a](i,j,nk)*(
+					  a4ci*(a_AlphaVEp[g][a](1,i+1,j,nk)-a_AlphaVEp[g][a](1,i-1,j,nk))
+					+ b4ci*(a_AlphaVEp[g][a](1,i+2,j,nk)-a_AlphaVEp[g][a](1,i-2,j,nk)) 
+					+ a4cj*(a_AlphaVEp[g][a](2,i,j+1,nk)-a_AlphaVEp[g][a](2,i,j-1,nk))
+				        + b4cj*(a_AlphaVEp[g][a](2,i,j+2,nk)-a_AlphaVEp[g][a](2,i,j-2,nk)) );
+		  acof -=    mMuVE[g][a](i,j,nk)*cof[a];
+		  bcof -= (2*mMuVE[g][a](i,j,nk)+mLambdaVE[g][a](i,j,nk))*cof[a];
+	       }
+	       a_Up[g](1,i,j,nk+1) = g1/(-bop[0]*acof);
+	       a_Up[g](2,i,j,nk+1) = g2/(-bop[0]*acof);
+	       a_Up[g](3,i,j,nk+1) = g3/(-bop[0]*bcof);
+	       for( int a=0 ; a < m_number_mechanisms ; a++ )
+	       {
+		  a_AlphaVEp[g][a](1,i,j,nk+1) = cof[a]*a_Up[g](1,i,j,nk+1)+ r1[a];
+		  a_AlphaVEp[g][a](2,i,j,nk+1) = cof[a]*a_Up[g](2,i,j,nk+1)+ r2[a];
+		  a_AlphaVEp[g][a](3,i,j,nk+1) = cof[a]*a_Up[g](3,i,j,nk+1)+ r3[a];
+	       }
+	    }
+      }
    }
 }
 
@@ -2987,6 +3090,56 @@ void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
 					+ b4ci*(a_AlphaVEp[g][a](1,i+2,j,1)-a_AlphaVEp[g][a](1,i-2,j,1)) 
 					+ a4cj*(a_AlphaVEp[g][a](2,i,j+1,1)-a_AlphaVEp[g][a](2,i,j-1,1))
 					+ b4cj*(a_AlphaVEp[g][a](2,i,j+2,1)-a_AlphaVEp[g][a](2,i,j-2,1)) );
+	       }
+	    }
+      }
+      if( m_bcType[g][5] == bStressFree && !topo )
+      {
+	 double a4ci, b4ci, a4cj, b4cj;
+	 //	 const double i6  = 1.0/6;
+	 const double d4a = 2.0/3;
+	 const double d4b =-1.0/12;
+	 double* forcing = a_BCForcing[g][5];
+	 int ni = (ilast-ifirst+1);
+	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	    {
+	       int ind = i-ifirst + ni*(j-jfirst);
+	       a4ci = a4cj = d4a;
+	       b4ci = b4cj = d4b;
+	       if( sg == 1 )
+	       {
+		  a4ci = d4a*m_sg_str_x[g][i-ifirst];
+		  b4ci = d4b*m_sg_str_x[g][i-ifirst];
+		  a4cj = d4a*m_sg_str_y[g][j-jfirst];
+		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
+	       }
+               int nk=m_global_nz[g];
+               for( int a=0 ; a < m_number_mechanisms ; a++ )
+	       {
+		  forcing[3*ind] +=  ih*mMuVE[g][a](i,j,nk)*(
+ 		          -(  bop[0]*a_AlphaVEp[g][a](1,i,j,nk+1)+bop[1]*a_AlphaVEp[g][a](1,i,j,nk)+
+			      bop[2]*a_AlphaVEp[g][a](1,i,j,nk-1)+bop[3]*a_AlphaVEp[g][a](1,i,j,nk-2)+
+			      bop[4]*a_AlphaVEp[g][a](1,i,j,nk-3) ) +
+ 			        a4ci*(a_AlphaVEp[g][a](3,i+1,j,nk)-a_AlphaVEp[g][a](3,i-1,j,nk))
+			      + b4ci*(a_AlphaVEp[g][a](3,i+2,j,nk)-a_AlphaVEp[g][a](3,i-2,j,nk)) );
+
+		  forcing[3*ind+1] += ih*mMuVE[g][a](i,j,nk)*(
+		          -( bop[0]*a_AlphaVEp[g][a](2,i,j,nk+1)+bop[1]*a_AlphaVEp[g][a](2,i,j,nk)+
+			     bop[2]*a_AlphaVEp[g][a](2,i,j,nk-1)+bop[3]*a_AlphaVEp[g][a](2,i,j,nk-2)+
+			     bop[4]*a_AlphaVEp[g][a](2,i,j,nk-3) ) +
+ 				      a4cj*(a_AlphaVEp[g][a](3,i,j+1,nk)-a_AlphaVEp[g][a](3,i,j-1,nk))
+				    + b4cj*(a_AlphaVEp[g][a](3,i,j+2,nk)-a_AlphaVEp[g][a](3,i,j-2,nk)) );
+
+		  forcing[3*ind+2] += ih*(2*mMuVE[g][a](i,j,nk)+mLambdaVE[g][a](i,j,nk))*(
+			  -( bop[0]*a_AlphaVEp[g][a](3,i,j,nk+1)+bop[1]*a_AlphaVEp[g][a](3,i,j,nk)+
+			     bop[2]*a_AlphaVEp[g][a](3,i,j,nk-1)+bop[3]*a_AlphaVEp[g][a](3,i,j,nk-2)+
+			     bop[4]*a_AlphaVEp[g][a](3,i,j,nk-3)) ) +
+				    ih*mLambdaVE[g][a](i,j,nk)*(
+					  a4ci*(a_AlphaVEp[g][a](1,i+1,j,nk)-a_AlphaVEp[g][a](1,i-1,j,nk))
+					+ b4ci*(a_AlphaVEp[g][a](1,i+2,j,nk)-a_AlphaVEp[g][a](1,i-2,j,nk)) 
+					+ a4cj*(a_AlphaVEp[g][a](2,i,j+1,nk)-a_AlphaVEp[g][a](2,i,j-1,nk))
+					+ b4cj*(a_AlphaVEp[g][a](2,i,j+2,nk)-a_AlphaVEp[g][a](2,i,j-2,nk)) );
 	       }
 	    }
       }
