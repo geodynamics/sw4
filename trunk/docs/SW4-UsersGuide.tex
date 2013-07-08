@@ -1543,22 +1543,57 @@ Bi-linear interpolation in longitude and latitude is used to define the material
 the data points. Note that only constant values are supported for the quality factors
 ($Q_P$ and $Q_S$) within each material. 
 
-An example that uses an ifile material description is discussed in Section~\ref{sec:grenoble}. The
-\verb+ifile+ file format is described in Section~\ref{sec:ifile-format}.
+%An example that uses an ifile material description is discussed in Section~\ref{sec:grenoble}. 
+The \verb+ifile+ file format is described in Section~\ref{sec:ifile-format}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The vimaterial command}\label{sec:vimat}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \verb+vimaterial+ command is intended to speed up the reading of the material model for cases
-when many simulations use the same computational grid. In order for this command to work, the \verb+grid+
-and \verb+topography+ commands must be identical between runs. An initial run must set up the
-material model using the commands described in the previous sections (block, efile, pfile,
-ifile). The initial run must also save the material model using the \verb+volimage+ command. Each of
-these commands saves one scalar property per file, so three files must be saved for an elastic
-material. In subsequent simulations the \verb+vimaterial+ command can replace the initial material
-model. This approach works the best on machines with a fast (parallel) file system. Also note that
-the files can be very large, because the material properties are saved at each grid point.
+The \verb+vimaterial+ command is intended to speed up the reading of large material models for cases
+when many simulations use the same computational grid. In order for this command to work, the
+\verb+grid+ and \verb+topography+ commands must be identical between runs. An initial run must
+construct the material model using the commands described in the previous sections (block, efile,
+pfile, ifile). The initial run must also save the material model using the \verb+volimage+
+command. Each of these commands saves one scalar property per file, so three files must be saved for
+an elastic material. In subsequent simulations the \verb+vimaterial+ command can replace the initial
+material model. This approach works the best on machines with a fast (parallel) file system. Also
+note that the \verb+volimage+ files can easily become very large, because the material properties
+are saved at each grid point.
+
+For example, if the material model and the topography are given in the etree format, the initial run
+reads this information and saves it on 5 separate \verb+volimage+ files,
+\begin{verbatim}
+fileio pfs=1 path=MaterialModel
+grid x=275e3 y=120e3 z=40e3 h=400 lon=-122.688 lat=39.009 az=142.25
+topography input=efile file=efile/USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
+attenuation nmech=3 phasefreq=1 maxfreq=10
+
+efile query=MAXRES etree=efile/USGSBayAreaVM-08.3.0.etree 
+
+volimage mode=rho file=Lp cycle=0 precision=double
+volimage mode=mu file=Lp cycle=0 precision=double
+volimage mode=lambda file=Lp cycle=0 precision=double
+volimage mode=qp file=Lp cycle=0 precision=double
+volimage mode=qs file=Lp cycle=0 precision=double
+\end{verbatim}
+The \verb+volimage+ files are written in the \verb+MaterialModel+ subdirectory, as specified by the
+\verb+path+ option in the \verb+fileio+ command.
+
+Subsequent runs, that use identical grid and topography commands, can read the material
+model directly from the \verb+volimage+ files,
+\begin{verbatim}
+fileio pfs=1 path=OtherRun
+grid x=275e3 y=120e3 z=40e3 h=400 lon=-122.688 lat=39.009 az=142.25
+topography input=efile file=efile/USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
+attenuation nmech=3 phasefreq=1 maxfreq=10
+
+vimaterial path=MaterialModel rho=Lp.cycle=0.rho.3Dimg mu=Lp.cycle=0.mu.3Dimg \
+           lambda=Lp.cycle=0.lambda.3Dimg qs=Lp.cycle=0.qs.3Dimg \
+           qp=Lp.cycle=0.qp.3Dimg
+\end{verbatim}
+Note that a path can be specified in the \verb+vimaterial+ command, and that the \verb+fileio+
+command now writes the results to a different directory.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\chapter{Mesh refinement} \label{sec:mesh-ref}
