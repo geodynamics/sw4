@@ -42,7 +42,7 @@
 \renewcommand{\div}{{\rm div}}
 \renewcommand{\arraystretch}{1.3}
 
-\markboth{}{N.A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0
+\markboth{}{N. A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0
 (DRAFT)}
 
 \begin{document}
@@ -97,6 +97,14 @@ method~\cite{Gustafsson-Kreiss-Oliger}. The fourth order method is also signific
 for calculating surface waves, in particular when the ratio between the compressional and shear wave
 speeds is large, i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
 
+%% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
+%% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
+%% points per wave length. This means that waves with the same frequency can be resolved on a grid that
+%% is coarser both in space and time. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
+%% percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
+%% about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
+%% with approximately twice as high frequency.
+
 \emph{SW4} implements substantial capabilities for 3-D seismic modeling, with a free surface
 condition on the top boundary, absorbing super-grid conditions on the far-field
 boundaries~\cite{PetSjo-13}, and an arbitrary number of point force and/or point moment tensor
@@ -127,14 +135,14 @@ format~\cite{Goldstein-et-al}. It can also present simulation information as
 %mesh refinement coupling method described in~\cite{PetSjo-10} is used to handle the
 %hanging nodes along the refinement interface.
 
-%% Visco-elastic behavior can be important when modeling the dissipative nature of realistic materials,
-%% especially for higher frequencies. Version 2.1 of \emph{SW4} uses the rheological model of
-%% standard linear solid (SLS) elements, coupled in parallel. The coefficients in each SLS are
-%% determined such that the resulting quality factors $Q_p$ and $Q_s$, for the attenuation of P- and
-%% S-waves, become approximately constant as function of frequency. These quality factors can vary from
-%% grid point to grid point over the computational domain and are read in the same way as the elastic
-%% properties of the material model. The underlying numerical method for solving the visco-elastic wave
-%% equation is described in~\cite{PetSjo-10b}.
+Visco-elastic behavior can be important when modeling the dissipative nature of realistic materials,
+especially for higher frequencies. \emph{SW4} uses the rheological model of standard linear solid
+(SLS) elements, coupled in parallel. The coefficients in each SLS are determined such that the
+resulting quality factors $Q_p$ and $Q_s$, for the attenuation of P- and S-waves, become
+approximately constant as function of frequency. These quality factors can vary from grid point to
+grid point over the computational domain and are read in the same way as the elastic properties of
+the material model. The numerical method for solving the visco-elastic wave equation is
+based on the technique described in~\cite{PetSjo-10b}.
 
 While most of the \emph{SW4} code is written in C++, almost all numerical computations are
 implemented in Fortan-77. \emph{SW4} uses a distributed memory programming model, implemented with
@@ -484,7 +492,7 @@ receivers should only be placed in the interior of the computational domain, i.e
 of Figure~\ref{fig:layout}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Sources and time-functions}
+\chapter{Sources, time-functions, and grid size}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %The source time function can be selected from a set of predefined functions, or by spline
@@ -517,7 +525,7 @@ M_{xz} & M_{yz} & M_{zz}
 \]
 The seismic moment of a moment tensor source is defined by 
 \[
-M_0 = (M_{xx}+M_{yy}+M_{zz}) + 2 (M_{xy} + M_{xz} + M_{yz}).
+M_0 = \sqrt{{\cal M}:{\cal M}} = \left[ (M_{xx}^2 + M_{yy}^2 + M_{zz}^2 ) + 2 (M_{xy}^2 + M_{xz}^2 + M_{yz}^2) \right]^{1/2}.
 \]
 Note that the moment tensor is always symmetric. A moment source term can alternatively be specified
 by using $M_0$ and the dip, strike, and rake angles, as defined by Aki and
@@ -536,13 +544,12 @@ this formula. This information is given right before the time-stepping is starte
   Number of sources 542
 -----------------------------------------------------------------------
 \end{verbatim}
-Note that the calculation of the seismic moment and magnitude assume that all sources are specified
-in terms of dip, strike, and rake angles. This guarentees that the matrix $\cal M$ is properly
-normalized.
+Note that the calculation of the total seismic moment and magnitude only take the moment tensor sources into
+account, i.e., ignores all point forces.
 
 For moment tensor sources, the function $g(t)$ is called the moment history time function, while its
 time derivative $g'(t)$ is known as the moment rate time function. \emph{SW4} calculates the
-displacements of the motion corresponding to the moment history time function $g(t)$. However, since
+displacements of the motion corresponding to the moment history time function $g(t)$. Because
 the material properties are independent of time, the equations solved by {\emph SW4} also govern the
 velocities when the time function is replaced by $g'(t)$, i.e., the corresponding moment rate time
 function. For example, if the solution calculated with the {\tt GaussianInt} time function
@@ -551,28 +558,31 @@ function corresponds to the velocities of the same motion. Hence, if you are pri
 calculating velocities, you can reduce the amount of post processing by using the corresponding
 moment rate time function in the source term(s). 
 
-If you are interested in comparing results from the \emph{SW4} program with some other code, keep in
-mind that many other seismic wave propagation codes are based on the first order velocity-stress
-formulation of the elastic wave equation. Such codes solve directly for the velocities of the
-motion. They use the moment rate time function for moment tensor sources, but the moment history
-time function for point forces.
+If you are interested in comparing results from \emph{SW4} with some other code, keep in mind that
+many other seismic wave propagation codes are based on the first order velocity-stress formulation
+of the elastic wave equation. Such codes solve for the velocities of the motion. They use the moment
+rate time function ($g'(t)$) for moment tensor sources, but the regular time function ($g(t)$) for
+point forces.
 
-In \emph{SW4} the forcing is specified in the input file using the {\tt source} command. There needs
-to be at least one source command in the input file in order for anything to happen during the
-simulation. Complicated source mechanisms can be described by having many source commands in the
-input file. An example with one source command is:
+The forcing function in \emph{SW4} is specified in the input file using at least one {\tt source} or
+{\tt rupture} command. These options can be combined. The {\tt rupture} command allows complicated source
+mechanisms to be described in a separate file. It is equivalent to at least one (but often many)
+{\tt source} command(s). There needs to be at least one source command in the input file in order for
+anything to happen during the simulation. Complicated source mechanisms can be described by having
+many source commands in the input file. An example with one source command is:
 \begin{verbatim}
 source x=5000 y=4000 z=600 mxx=1e15 myy=1e15 mzz=1e15 \
        type=RickerInt t0=1 freq=5
 \end{verbatim}
-which specifies an isotropic source (explosion) at the location ${\bf x}_0=(5000,4000,600)$ with
-amplitude $10^{15}$ Nm, using the RickerInt time function with offset time $t_0=1$ s and frequency
-parameter $\omega=5$ Hz.  This command sets the off-diagonal moment tensor elements ($M_{xy}$,
-$M_{xz}$ and $M_{yz}$) to zero (which is the default value).
+The above command specifies an isotropic source (explosion) at the location ${\bf
+  x}_0=(5000,4000,600)$ with amplitude $10^{15}$ Nm, using the {\tt RickerInt} time function with
+offset time $t_0=1$ s and frequency parameter $\omega=5$ Hz. The off-diagonal moment tensor elements
+($M_{xy}$, $M_{xz}$ and $M_{yz}$) are implicitly set to zero (which is the default value).
 
 Note that it is not necessary to place the sources exactly on grid points. The discretization of the
 source terms is fourth order accurate for any location within the computational domain, including
-the free surface.
+the free surface. However, unexpected results may be obtained if the sources are located in the
+super-grid far-field layers.
 
 
 \section{Predefined time functions}\label{sec:predefined}
@@ -879,8 +889,8 @@ calculating ``numerical'' Green's functions.
 
 The discrete time function uses a quintic (5th order) spline function to interpolate the discrete
 function values $g_j = g(\tau_j)$, for $j=1,2,\ldots, N_s$, where $N_s\geq 7$. The function values
-are specified on an equidistant grid, $\tau_j = t_0 + (j-1) \delta_t$. The step size,
-$\delta_t>0$, can be chosen independently of the time step in the numerical solution of the elastic wave
+are specified on an equidistant grid in time, $\tau_j = t_0 + (j-1) \delta_t$. The step size,
+$\delta_t>0$, can be chosen independently of the time step that is used to solve the elastic wave
 equation. The start time, $t_0$, can also have an arbitrary value. The interpolation procedure
 results in six polynomial coefficients for each interval $\tau_j\leq t <\tau_{j+1}$. The
 coefficients are chosen such that g(t) becomes four times continuously differentiable.
@@ -928,7 +938,7 @@ frequencies. This is due to its lack of smoothness at $t=t_0$.
 \end{center}
 \end{figure}
 
-It is the upper power (highest significant) frequency, $f_{max}$, that generates the shortest waves
+It is the highest significant frequency, $f_{max}$, that generates the shortest waves
 and therefore determines how fine the computational grid must be. For practical purposes $f_{max}$
 can be defined as the frequency where the amplitude of the Fourier transform falls below 5 \% of its
 max value. We have
@@ -939,23 +949,26 @@ f_{max} \approx \begin{cases}
 4.0 f_0,&\mbox{Brune time function}.
 \end{cases}
 \end{equation}
-In other words, simulations using the Brune function are harder to resolve on the grid and need much
+In other words, simulations using the Brune function are the hardest to resolve on the grid and need much
 more grid points to give reliable results. We remark that the Fourier transform test only makes
-sense for functions that tend to zero for large times. Functions such as {\tt GaussianInt},
-{\tt Liu}, {\tt Brune}, and {\tt BruneSmoothed} tend towards unity for large times. Their zero
-frequency (DC) component is therefore unbounded. These functions need to be differentiated before
-applying the above test.
+sense for functions that tend to zero for large times. Functions such as {\tt GaussianInt}, {\tt
+  Liu}, {\tt Brune}, and {\tt BruneSmoothed} tend towards unity for large times. Their zero
+frequency (DC) component therefore grows linearly with the length of the time interval, $T$. These
+functions need to be differentiated before applying the above test.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{How to choose the grid size} \label{sec:grid}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The relation between the fundamental frequency $f_0$ and the highest significant frequency $f_{max}$
+in (\ref{eq:upper-power-freq}) is very important. For the time functions that not are listed in that
+formula, it is possible to estimate $f_{max}$ with the help of the matlab/octave scripts {\tt
+  fcnplot.m} and {\tt ftfcnplot.m} in the {\tt tools} directory.
+
+\section{How to choose the grid size} \label{sec:grid-size}
 \index{grid size}
 
-When preparing the input file, the most difficult parameter to choose is probably the grid size
+The most difficult parameter to choose when preparing the input file is probably the grid size,
 $h$. It is extremely important to use a grid size that is sufficiently small, because you must resolve
 the waves that are generated by the source. On the other hand you don't want to use an
 unnecessarily small grid size, because both the execution time and the memory requirements
-increase with decreasing grid size.%, see Section~\ref{sec:performance}.
+increase rapidly when the mesh is refined.
 
 The number of grid points per shortest wavelength, $P$, is a normalized measure of how well a
 solution is resolved on the computational grid. Since the shear waves and surface waves have
@@ -965,8 +978,8 @@ the shortest wave length by
  L_{min} = \dfrac{\min C_s}{f_{max}}.
 \]
 Here $C_s$ is the shear velocity of the material and $f_{max}$ is the largest significant frequency
-in the time function $g(t)$. Hence the number of grid points per wave length equals $L_{min}/h$,
-which is given by
+in the time function $g(t)$, as discussed above. Hence the number of grid points per wave length
+equals $L_{min}/h$, which is given by
 %
 \begin{equation}\label{eq:resolutionformula}
   P = \frac{L_{min}}{h} = \dfrac{\min C_s}{h\,f_{max}}. 
@@ -975,17 +988,29 @@ Note that $h$ needs to be made smaller to maintain the same value of $P$ if eith
 decreased or if the frequency is increased. In formula (\ref{eq:resolutionformula}), $\min C_s$ is
 found from the material properties and $h$ is determined by the input grid specification.  The
 frequency spectrum of the solution is determined by the frequency spectrum of the time
-function(s) in the source term(s).
+function and $f_{max}$ can be estimated from equation \eqref{eq:upper-power-freq}.
 
-\section{Lamb's problem}
-To investigate how fine the grid needs to be to obtain an accurate solution, we consider Lamb's
-problem~\cite{Lamb_1904}. Here, the displacement is driven by a vertical point force acting
-downwards on the free surface of a homogeneous half-space. To evaluate the accuracy of the numerical
-solution, we compare it to the analytical solution from Mooney~\cite{Mooney_1974} for the case of a
-Poisson material, i.e., $\mu=\lambda$, or $C_p/C_s=\sqrt{3}$.
+\subsection{Lamb's problem}
+\label{sec:lamb}
 
-In the following example, the elastic half-space consists of a homogeneous material with shear wave
-velocity $C_s=1000$ m/s, compressional wave velocity $C_p=1000\cdot\sqrt{3}$ m/s, and density $\rho=1500$
+The accuracy of the numerical solution, including the implementation of a point force and the
+reflection properties of the super-grid far field boundary condition, can be tested by solving
+Lamb's problem~\cite{Lamb_1904}. This problem simulates the motion due to a vertical point force
+applied on the free surface of a homogeneous elastic half-space.
+
+We have implemented Mooney's formulas~\cite{Mooney_1974} for solving Lamb's problem. These formulas
+give an analytical expression for the Green's function of the vertical component along the free
+surface, $z=0$. This Green's function is convolved with the source time function to give the
+displacement as function of time. We use a {\tt C6SmoothBump} time function and the convolution is
+performed by numerical quadrature using the Quadpack library. This approach allows the displacement
+to be evaluated to within $12$ decimal places. Lamb's problem is then solved numerically using
+\emph{SW4} and the error in the vertical component is evaluated along the free surface. To evaluate
+how fine the grid needs to be, we repeat the test for different grid sizes. See Petersson and
+Sjogreen~\cite{PetSjo-13} for further details.
+
+% 2nd example
+In this example, the elastic half-space consists of a homogeneous material with shear wave
+velocity $C_s=1000$ m/s, compressional wave velocity $C_p=1000\sqrt{3}$ m/s, and density $\rho=1500$
 kg/m$^3$. The elastic half-space is truncated to the computational domain
 \[
 (x,y,z) \in [0,10000] \times [0,10000]\times[0,5000].
@@ -997,6 +1022,7 @@ created with the input file shown below, which can be found in {\tt examples/lam
 \begin{verbatim}
 grid nx=151 x=10e3 y=10e3 z=5e3
 time t=5.0
+supergrid gp=60
 block vp=1.7320508076e+03 vs=1000 rho=1500
 source type=C6SmoothBump x=5e3 y=5e3 z=0 fz=1e13 freq=1 t0=0
 rec x=5e3 y=6e3 z=0 file=v1 sacformat=0 usgsformat=1
@@ -1009,8 +1035,9 @@ It is well known that the error in numerical solutions of wave propagation probl
 phase errors~\cite{Gustafsson-Kreiss-Oliger}. It is therefore interesting to investigate how the
 accuracy in the numerical solution depends on the distance between the source and receiver. For this
 reason, we expand the above calculation to include a second receiver at distance 10,000 meters from
-the source. This input file is given in {\tt examples/lamb/seismic2.in}. The vertical displacements
-and errors are shown in Figure~\ref{fig:lambSAC}.
+the source. This input file is given in {\tt examples/lamb/seismic2.in}. In this case, we evaluate
+the solution of Lamb's problem using the Fortran program {\tt src/lamb\_one\_point.f}. The vertical
+displacements and errors are shown in Figure~\ref{fig:lambSAC}.
 \begin{figure}[ht]
   \begin{center}
     \includegraphics[width=0.9\textwidth]{lamb-err-h66.png}
@@ -1076,35 +1103,319 @@ From this experiment we conclude that the accuracy in \emph{SW4} depends on the 
 source and the reciever, which can be normalized by the dominant wave length in the solution. For
 most practical purposes the accuracy is acceptable when
 \[
-P \geq 7-12,
+6 \leq P \leq 12,
 \]
 but the exact number depends on the required accuracy. The ratio between the compressional and shear
 velocity, $C_p/C_s$, can also have a significant influence on the accuracy of the solution, and the
 number of grid points per wave length must be increased for materials with large
-$C_p/C_s$~\cite{KrePet-12}. We finally remark that the best way of checking the accuracy in a
-numerical simulation is to repeat the calculation on a finer mesh and compare the
-results. Unfortunately, this approach is often too computationally expensive in many realistic
-situations.
+$C_p/C_s$, see~\cite{KrePet-12}. 
 
-The relation between the fundamental frequency $f_0$ and the upper power
-frequency $f_{max}$ in (\ref{eq:upper-power-freq}) is very important. For the time functions that
-not are listed in that formula, it is possible to estimate
-$f_{max}$ with the help of the matlab/octave scripts fcnplot and ftfcnplot in the {\tt tools}
-directory. 
-
-\section{The Layer over half-space problem LOH.1}
-
-%% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
-%% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
-%% points per wave length. This means that waves with the same frequency can be resolved on a grid that
-%% is coarser both in space and time. For materials with $C_p/C_s\approx 2$ and an accuracy of about 10
-%% percent, the \emph{SW4} code calculates the solution about eight times faster than \emph{WPP}, using
-%% about one eighth of the memory. When both codes use the same grid size, \emph{SW4} can capture waves
-%% with approximately twice as high frequency.
+We finally remark that the best way of checking the accuracy in a numerical simulation is to repeat
+the calculation on a finer mesh and compare the results. Unfortunately, this approach is seldomly
+used in realistic situations because the computational cost increases too rapidly as the mesh is refined.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{The material model (in progress)} \label{sec:material}
+\chapter{Topography} \label{sec:topography}
+\index{topography}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The topography command in \emph{SW4} is used to specify the shape of the top surface of the
+computational domain,
+\[
+z=\tau(x,y).
+\]
+Three different topography descriptions are currently implemented in \emph{SW4}: a Gaussian hill
+(\S~\ref{sec:topo-gauss-hill}), a latitude-longitude grid file (\S~\ref{sec:topo-gridfile}), or
+topography from an Etree database (\S~\ref{sec:topo-efile}).
+
+A curvilinear grid is automatically constructed between the topography surface and a user specified depth
+$z=$\verb+zmax+. If no topography command is present in the input file, the top surface is taken to
+be the plane $z=0$, and no curvilinear grid is constructed. If the topography surface $z=\tau(x,y)$ varies between
+$\tau_{min}\leq z\leq \tau_{max}$ ($z$ is positive downwards), the grid generation usually works well if
+\begin{equation}\label{zmax-limit}
+\mbox{\tt zmax} \geq \tau_{max} + 2(\tau_{max}-\tau_{min}),
+\end{equation}
+After reading the topography, \emph{SW4} prints out the min and max $z$-coordinates, as well as the
+specified value of \verb+zmax+,
+\begin{verbatim}
+***Topography grid: min z = -1.1443e+03, max z = 1.0929e+03, \
+   top Cartesian z = 6.000000e+03
+\end{verbatim}
+This case corresponds to the topography shown in Figure~\ref{fig:efile-topo},
+\[
+\tau_{min} = -1144.3, \quad \tau_{max} = 1092.9,
+\]
+and \verb+zmax=+ 6000.  We have $\tau_{max} + 2(\tau_{max}-\tau_{min})=5567.3$, which satisfies \eqref{zmax-limit}.
+%
+\begin{figure}[htp]
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{efile-topo.png}
+    \caption{Topography and bathymetry in the
+      vicinity of San Jose, south of San Francisco. The coastline is outlined by a thicker black
+      line. Note the deep water in the Monterey Canyon, near the bottom corner of the computational domain. }
+    \label{fig:efile-topo}
+  \end{center}
+\end{figure}
+%
+
+Except for the Gaussian hill topography, the topography surface is smoothed by a Jacobi iteration
+before the curvilinear grid is generated,. The purpose of the smoothing is to ensure that the
+variations in topography can be resolved on the computational grid. By default, 10 iterations are
+performed and this gives a satisfactory result in many cases. It is possible to change the number of
+iteration by using the \verb+smooth+ option in the topography command. You can inspect the result of
+the smoothing by saving the top grid surface in an image file,
+\begin{verbatim}
+image mode=grid z=0 cycle=0 file=test
+\end{verbatim}
+Note that the $z$ coordinate (positive downwards) is saved on a grid image file, while the elevation
+(positive upwards) of the raw (before smoothing) topography is saved on a topo image file.
+
+\section{Gaussian hill topography}\label{sec:topo-gauss-hill}
+The simplest type of topography is a Gaussian hill, allowing the user to place one Gaussian hill at
+a specified location in the $(x,y)$-plane. The user can adjust the amplitude of the hill as well as
+its spread in the $x$ and $y$-directions. The Gaussian hill topography command has the following
+syntax:
+\begin{verbatim}
+topography input=gaussian zmax=7.5 gaussianAmp=2.4 \
+           gaussianXc=3.6 gaussianYc=2.4 \
+           gaussianLx=0.25 gaussianLy=0.3
+\end{verbatim}
+Note the \verb+zmax+ option, which tells \emph{SW4} to extend the curvilinear grid to $z=7.5$.
+The most common use of the Gaussian hill topography is for testing, see for example the input
+scripts in \verb+examples/twilight+:
+\begin{verbatim}
+gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in 
+\end{verbatim}
+
+\section{Topography grid file}\label{sec:topo-gridfile}
+The topography can be given on a regular lattice in geographical (lat, lon), or Cartesian $(x, y)$
+coordinates. This approach works well together with the \verb+block+, \verb+pfile+, and \verb+ifile+
+material commands. It can also be used together with the \verb+efile+ command, but in that case it is important
+that the topography is consistent with the etree database, see Section~\ref{sec:topo-efile}.
+
+To setup the topography, you can give the command
+% for the Grenoble basin test case described in
+% Section~\ref{sec:grenoble}, you 
+\begin{verbatim}
+topography input=grid file=grenobleCoarse.topo zmax=3000 order=2
+\end{verbatim}
+The file \verb+grenobleCoarse.topo+ holds the elevation (in meters) relative to mean sea level and
+must conform to the simple ASCII text format described in Section~\ref{sec:ifile-format}. In the
+above case, a curvilinear grid is constructed between the topography surface and $z=3000$, and the
+\verb+order=2+ option specifies a second order polynomial stretching in the curvilinear mapping
+function. The topography is shown in Figure~\ref{fig:grenoble-topo}.
+%
+\begin{figure}[htp]
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{grenoble-topo.png}
+    \caption{Topography in the vicinity of Grenoble, France.}
+    \label{fig:grenoble-topo}
+  \end{center}
+\end{figure}
+
+\section{Etree topography}\label{sec:topo-efile}
+
+The Etree databases for the San Francisco bay area and Northern California contain topographic
+information. You can setup the computational grid to follow this topography by using the commands
+\begin{verbatim}
+topography input=efile zmax=6e3 order=2
+efile query=MAXRES \
+      etree=/Users/petersson1/src/sw4/tests/USGSBayAreaVM-08.3.0.etree 
+\end{verbatim}
+Here, the topography command tells \emph{SW4} to read the topography from the Etree specified by the
+\verb+efile+ command. Hence, the topography command must be accompanied by an efile command. The
+\verb+order=2+ option specifies the type of stretching to use when making the curvilinear grid. A higher
+value makes the curvilinear grid smoother near the bottom, but can cause a larger variation in grid
+size near the top. The \verb+zmax=6e3+ option tells \emph{SW4} to extend the curvilinear grid down
+to $z=6000$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{The material model} \label{sec:material}
+\index{material}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The elastic material model in \emph{SW4} is defined by the grid point values of the density
+($\rho$), the compressional velocity ($V_p$), and the shear velocity ($V_s$). The material
+properties can be specified by the \verb+block+ command (\S~\ref{sec:block}), the \verb+efile+ command
+(\S~\ref{sec:efile}), the \verb+pfile+ command (\S~\ref{sec:pfile}), the \verb+ifile+ command
+(\S~\ref{sec:ifile}), or by a combination of them. If the same computational grid is used for
+several simulations, the material model can also be obtained through the \verb+vimaterial+ command,
+assuming that it was initially saved using the \verb+volimage+ command. See \S~\ref{sec:vimat} for
+details.
+
+This chapter only discusses elastic materials. See chapter~\ref{sec:attenuation} for visco-elastic
+material models.
+
+
+Note that \emph{SW4} uses two layers of ghost points outside the computational domain (as defined by
+the grid command). The material properties must therefore be defined for the computational domain
+padded by two layers of ghost points (one layer above the free surface boundary). If the material
+model is not defined in these ghost points, it will be extrapolated from the nearest boundary. Note
+that this behavior is different \emph{WPP}, which required the user to also define the material in
+the ghost points.
+
+The order within the material commands (block, pfile, efile, and ifile) {\em does} matter (unlike
+all other commands) in that the priority of the material command increases towards the end of the
+input file. Hence, a material command in the input file can be completely or partially overridden by
+subsequent material commands.
+
+In the block, pfile, and ifile commands, material properties are assigned based on the depth below
+the free surface. This means that the internal material model depends on the topography, but the
+material properties along the free surface will always be the same, independent of the topographic
+model. For the efile command, material properties are defined as functions of elevation relative to
+mean sea level ($z=0$). In this case the topography information is embedded in the material
+description. If you combine the efile command with a planar topography, a linear mapping is
+constructed before the material properties are assigned. In the Cartesian grid, the
+properties at the free surface are thus mapped to the top grid surface ($z=0$), and the bottom grid
+surface (with $z=z_N$) is assigned material properties for elevation $-z_N$. Elevation values at
+intermediate grid points follow from the linear mapping. 
+%The material properties in the coarser Cartesian grids are not effected
+%by this mapping procedure.
+
+After reading all material commands in the input file and assigning material properties to the
+computational grid, \emph{SW4} outputs general information about the ranges in the material
+model. For a purely elastic material, the output looks like
+\begin{verbatim}
+       ----------- Material properties ranges ---------------
+       1590 kg/m^3 <=  Density <= 3300 kg/m^3
+       768 m/s    <=  Vp      <= 7790 m/s
+       500 m/s    <=  Vs      <= 4420 m/s
+       1.536        <=  Vp/Vs   <= 4.48
+       3.975e+08 Pa     <=  mu      <= 6.44701e+10 Pa
+       1.4282e+08 Pa     <=  lambda  <= 7.13863e+10 Pa
+       ------------------------------------------------------
+\end{verbatim}
+It is always a good idea to check that these numbers are reasonable before proceeding with the
+simulation. In addition, we always recommend inspecting the material model along a few \verb+image+ planes.
+
+Before the simulation is started, \emph{SW4} checks that density, $V_p$, and $V_s$ are
+positive at all grid points. In addition, it is verified that the first Lam\'e parameter satisfies
+$\lambda>0$, that is $V_p/V_s > \sqrt{2}$. If either of these conditions is violated, the program
+stops with an error message. You can obtain more detailed diagnostics by setting \verb+verbose=3+
+(or higher) in the \verb+fileio+ command.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The block command}\label{sec:block}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The block command can be used to specify material properties in rectangular volumes of the
+computational domain, either with constant values or linear vertical gradients. By combining the
+block command with the sub-region options we can define a material model composed of three layers:
+\begin{verbatim}
+block vp=4000 vs=2500 rho=2000 
+block vp=6000 vs=3500 rho=2700 z1=15000
+block vp=8000 vs=4500 rho=3300 z1=35000 z2=100000
+\end{verbatim}
+In this case the top layer has a thickness of 15 km, the middle layer 20 km and the lower layer 65 km. Because
+these block commands do not specify horizontal coordinates, the values extend to the grid boundaries in
+both horizontal directions.  To add a box shaped inclusion of a new material we could add the following line
+\begin{verbatim}
+block vp=3000 vs=2000 rho=1000 \ 
+      x1=4000 x2=8000 y1=3000 y2=7000 z1=10000 z2=70000
+\end{verbatim}
+\begin{figure}[ht]
+\begin{centering}
+  \includegraphics[width=0.45\linewidth]{blockVpimage.png}
+  \includegraphics[width=0.45\linewidth]{flag.png}
+  \caption{Examples of material models specified with the block command.}
+  \label{fig:blockpics}
+\end{centering}
+\end{figure}
+An image of $V_p$ in the plane $x=50,000$ is shown in Figure~\ref{fig:blockpics} (left).
+
+Several block commands can be combined to generate more complicated material models, for example
+\begin{verbatim}
+block vp=8000 vs=4500 rho=3300 vpgrad=-0.01
+block vp=3000 vs=2000 rho=1000 \
+      x1=1e4 x2=9e4 y1=1e4 y2=9e4 z1=1e4 z2=9e4 vpgrad=0.02
+block vp=4000 vs=2500 rho=2000 \
+      x1=15e3 x2=85e3 y1=15e3 y2=85e3 z1=15e3 z2=85e3
+block vp=6000 vs=3500 rho=2700 \
+      x1=15e3 x2=85e3 y1=15e3 y2=85e3 z1=45e3 z2=55e3
+block vp=6000 vs=3500 rho=2700 \
+      x1=15e3 x2=85e3 z1=15e3 z2=85e3 y1=38e3 y2=45e3
+\end{verbatim}
+This material is displayed on the right side of Figure~\ref{fig:blockpics}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The efile command} \label{sec:efile}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}
+\begin{centering}
+  \includegraphics[width=0.49\textwidth]{velmodelbb_roads.png} \hfil
+  \caption{The geographical extent of the etree models for Northern California and the San Francisco
+  bay area.}
+  \label{fig:sfmodel}
+\end{centering}
+\end{figure}
+The efile command is used to obtain material properties from an etree database file. Etree data
+bases use an oct-tree data structure, which allows material properties to be represented with finer
+spatial resolution near the surface. Topography and bathymetry information is included in the data
+base. Note that the same etree database file can be used independently of the grid size. We
+currently have access to an etree database file for Northern California and the extended San
+Francisco bay area. The geographical extent of the etree model is given in Table~\ref{tab:sfdata},
+which also is shown on a map in Figure~\ref{fig:sfmodel}. This model was developed by the USGS and
+can currently be downloaded from {\tt http://earthquake.usgs.gov/regional/nca/3Dgeologic}. Be aware
+that the files are large (8 + 6 Gbyte) and can take a very long time to download.
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|l|} \hline
+\multicolumn{3}{|c|}{\bf Detailed Model} \\ \hline
+Corner & Longitude & Latitude \\ \hline
+SE & -120.64040 & 37.04718 \\ \hline
+SW & -121.91833 & 36.31746 \\ \hline
+NW & -123.85736 & 38.42426 \\ \hline
+NE & -122.56127 & 39.17461 \\ \hline
+\end{tabular} \hspace{5 mm}
+\begin{tabular}{|l|l|l|} \hline
+\multicolumn{3}{|c|}{\bf Regional Model} \\ \hline
+Corner & Longitude & Latitude \\ \hline
+SE & -118.944514 & 36.702176 \\ \hline
+SW & -121.930857 & 35.009018 \\ \hline
+NW & -126.353173 & 39.680558 \\ \hline
+NE & -123.273199 & 41.48486\\ \hline
+\end{tabular}
+\caption{Geographical extent (NAD27 projection) for the central California velocity models. Both
+  models are defined down to 45 km depth.}\label{tab:sfdata}
+\end{center}
+\end{table}%
+
+In the etree database, material properties are stored as functions of geographical coordinates
+(latitude, longitude, elevation), and \emph{SW4} must determine the geographical coordinates before it
+obtains the material properties from the database. Depending on the options of the \verb+grid+
+command, \emph{SW4} either uses formulas (\ref{eq:lat})-(\ref{eq:lon}), or the \verb+proj.4+
+library, to compute the mapping. Internally to \emph{SW4}, the \emph{cencalvm} software library is
+used to query the etree database, which in turn relies on additional libraries. The description in
+this section assumes that \emph{SW4} has been configured to use the \verb+efile+ command, see
+Section~\ref{cha:installing-sw4} for details.
+
+It is important to note the bounds of the geographical region in the database. Assuming the
+computational domain is contained within the bounds of the database, it is easy to set up the
+material model in the input file:
+\begin{verbatim}
+grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=144 h=1000
+efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
+\end{verbatim}
+To verify that the computational domain is inside the etree database, we recommend checking the
+geographical coordinates on a map during the construction of the input file. We often use the Google Earth
+program for this purpose.
+%
+In the case when the computational domain is larger than the region covered by the efile, a block
+command can be used to assign material properties to grid points outside of the efile region:
+\begin{verbatim}
+grid x=300000 y=300000 z=60000 lat=38 lon=-121.5 az=135 nx=100
+block vp=8000 vs=4000 rho=1000 rhograd=0.5
+efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
+\end{verbatim}
+However, sharp jumps in material properties can lead to significant scattering of seismic waves. In
+some cases, better results can be obtained by reducing the size of the computational domain to match
+the extent of the etree region.
+
+To enable use of the extended SF model, the extended etree file must also be downloaded and
+then added to the efile command line (file names have been shortened for improved readability):
+\begin{verbatim}
+efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree
+\end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The pfile command}\label{sec:pfile}
@@ -1140,21 +1451,22 @@ Figure~\ref{fig:pfile-smoothing}. The {\tt smoothingsize} keyword can be assigne
 than or equal to one.
 \begin{figure}
 \begin{centering}
-  \includegraphics[width=0.48\textwidth]{p-velo-ss1.png}\hfill\includegraphics[width=0.48\textwidth]{p-velo-ss3.png}\\
-  \includegraphics[width=0.48\textwidth]{p-velo-ss5.png} 
+  \includegraphics[width=0.48\textwidth]{ps1.png}\hfill\includegraphics[width=0.48\textwidth]{ps3.png}\\
+  \includegraphics[width=0.48\textwidth]{ps5.png} 
   \caption{The {\tt smoothingsize} parameter can be used to average out imprinting from the
     horizontal lattice in a coarse pfile material model. Here we show $V_P$ in the plane $y=5,000$
-    as function of $x$ and $-z$. In this case, {\tt smoothingsize}$=1$ in the top, {\tt
-    smoothingsize}$=3$ in the middle, and {\tt smoothingsize}$=5$ in the bottom plot.}
+    as function of $x$ and $-z$. In this case, {\tt smoothingsize}$=1$ in the top left, {\tt
+    smoothingsize}$=3$ in the top right, and {\tt smoothingsize}$=5$ in the bottom plot.}
   \label{fig:pfile-smoothing}
 \end{centering}
 \end{figure}
 
-When $N_G$ is odd, the Gaussian averaging starts by finding the closest grid point on the latitude-longitude
-lattice, $(\phi_i,\theta_j)$. The material property $c$ ($\rho$, $V_p$, $V_s$, etc.) is assigned by the formula
+When $N_G$ is odd, the Gaussian averaging starts by finding the closest grid point on the
+latitude-longitude lattice, $(\phi_i,\theta_j)$. The material property $c$ ($\rho$, $V_p$, $V_s$,
+$Q_s$, or $Q_p$) is assigned by the formula
 \begin{equation}\label{eq:gaussian-average}
-c(\phi,\theta) = \dfrac{ \sum_{m=i-Q}^{i+Q} \sum_{n=j-Q}^{j+Q} c_{m,n} \omega_{m,n} }
-{ \sum_{m=i-Q}^{i+Q} \sum_{n=j-Q}^{j+Q} \omega_{m,n} },\quad Q = \frac{N_G-1}{2},
+c(\phi,\theta) = \dfrac{ \sum_{m=i-W}^{i+W} \sum_{n=j-W}^{j+W} c_{m,n} \omega_{m,n} }
+{ \sum_{m=i-W}^{i+W} \sum_{n=j-W}^{j+W} \omega_{m,n} },\quad W = \frac{N_G-1}{2},
 \end{equation}
 where the weights are given by
 \[
@@ -1170,28 +1482,194 @@ similar procedure is used for even values of $N_G$, but in this case the averagi
 lattice.
 
 By default the pfile data are assumed to be given in latitude-longitude coordinates. It is also
-possible to read pfiles where the data is given on a Cartesian ($x$-$y$ grid). Use the option {\tt
-  style}, as in the example
+possible to read pfiles where the data is given on a Cartesian grid in $(x, y)$-coordinates. To
+indicate that the pfile contains data on a  Cartesian grid, use the {\tt style}
+option as in the following example:
 \begin{verbatim}
 pfile filename=materialxy.ppmod vsmin=1000 vpmin=1732 smoothingsize=4 \\
       style=cartesian
 \end{verbatim}
-to indicate that the given pfile contains data on a grid of Cartesian coordinates.
 
 Data files for the pfile command are written in an ASCII text format. See
 Section~\ref{sec:pfile-format} for a description of both the latitude-longitude pfile and the
 Cartesian pfile grid formats.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Topography (in progress)} \label{sec:topography}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The ifile command}\label{sec:ifile}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The {\bf ifile} command reads a file holding the depth to material interface surfaces. The material
+properties between each pair of material surfaces must be defined by the {\bf material} command. The
+depth must be non-negative. Zero depth corresponds to the topography. Material surfaces are
+specified on a regular lattice in gegraphic coordinates. The unit for depth is meters, while
+latitude and longitude are in degrees. The {\bf ifile} command may be combined with other material
+specifications and it is {\em not} necessary that the lattice in geographical coordinates covers the
+horizontal extent of the computational domain.
+
+Let $N_{mat}\geq 1$ material surfaces be known at longitudes
+\[
+\phi_i,\quad i=1,2,\ldots,N_{lon},
+\]
+and latitudes
+\[
+\theta_j,\quad j=1,2,\ldots,N_{lat},
+\]
+Note that the latitudes and the longitudes must either be strictly increasing or strictly
+decreasing, but the step size may vary. Also note that the lattice points are independent of those
+in the {\bf topography} command.
+
+The material surfaces should be given on the regular lattice
+\[
+d_{q,i,j} = \mbox{depth to surface number $q$ at longitude $\phi_i$, latitude $\theta_j$.}
+\]
+The material surfaces correspond to material properties in the following way. At longitude $\phi_i$,
+latitude $\theta_j$ material number 1 (as defined by the {\bf material} command) occupies depths
+$0\leq d \leq d_{1,i,j}$. Material number 2 occupies depths $d_{1,i,j} \leq d \leq d_{2,i,j}$, and
+so on. If $d_{1,i,j}=0$, material number 1 is not used. Similarily, material number $k>1$ is not
+used if $d_{k-1,i,j} = d_{k,i,j}$. Material properties are only defined for depths down to the last
+surface, i.e.,
+\[
+0\leq d \leq d_{Nmat,i,j}.
+\]
+If the computational domain extends below the last material surface, it is necessary to use other
+commands to define the material properties in those regions.
+
+The material properties can have a constant, linear, quadratic, and square root dependence of
+depth. For example, the most general dependence for density is
+\[
+\rho(d) = \rho_{k,0} + \rho_{k,1} d + \rho_{k,2} d^2 + \rho_{k,1/2} \sqrt{d},\quad d_{k-1,i,j} \leq d < d_{k,i,j}.
+\]
+Bi-linear interpolation in longitude and latitude is used to define the material surfaces in between
+the data points. Note that only constant values are supported for the quality factors
+($Q_P$ and $Q_S$) within each material. 
+
+An example that uses an ifile material description is discussed in Section~\ref{sec:grenoble}. The
+\verb+ifile+ file format is described in Section~\ref{sec:ifile-format}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The vimaterial command}\label{sec:vimat}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \verb+vimaterial+ command is intended to speed up the reading of the material model for cases
+when many simulations use the same computational grid. In order for this command to work, the \verb+grid+
+and \verb+topography+ commands must be identical between runs. An initial run must set up the
+material model using the commands described in the previous sections (block, efile, pfile,
+ifile). The initial run must also save the material model using the \verb+volimage+ command. Each of
+these commands saves one scalar property per file, so three files must be saved for an elastic
+material. In subsequent simulations the \verb+vimaterial+ command can replace the initial material
+model. This approach works the best on machines with a fast (parallel) file system. Also note that
+the files can be very large, because the material properties are saved at each grid point.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\chapter{Mesh refinement} \label{sec:mesh-ref}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\chapter{Attenuation}\label{sec:attenuation}
+\chapter{Attenuation}\label{sec:attenuation}
+\index{attenuation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Viscoelastic modeling}\label{sec:ve-model}
+
+\emph{SW4} implements a linear viscoelastic material model by superimposing $n$ standard
+linear solid (SLS) mechanisms, leading to the governing equations
+\begin{equation}\label{eq:ve-wave-eqn}
+{\displaystyle \rho\dfrac{\p^2\ub}{\p t^2} = \Lb(\lambda_0,\mu_0)\ub - \sum_{\nu=1}^n
+\Lb(\lambda_{\nu},\mu_\nu)\bar{\ub}^{(\nu)} + \Fb,\quad \xb\in\Omega,\ t\geq 0},
+\end{equation}
+where the spatial operator is
+\begin{equation}\label{eq:spatial-op}
+\Lb(\lambda,\mu)\ub =: \nabla(\lambda(\nabla\cdot\ub)) + \nabla\cdot \left(2\mu {\cal
+  D}(\ub)\right),\quad {\cal D}(\ub) = \frac{1}{2}\left(\nabla \ub + \nabla\ub^T\right).
+\end{equation}
+The memory variables, $\bar{\ub}^{(\nu)}$, in \eqref{eq:ve-wave-eqn} are governed by the
+differential equations
+\begin{equation}\label{eq:ve-ode}
+\displaystyle \frac{1}{\omega_\nu}\frac{\p \bar{\ub}^{(\nu)}}{\p t} + \bar{\ub}^{(\nu)} = \ub,\quad
+\xb\in\Omega,\ t\geq 0,
+\end{equation}
+for $\nu=1,2,\ldots,n$, where $\omega_\nu>0$ are the relaxation frequencies. For more details on
+visco-elastic modeling and the numerical method used by \emph{SW4}, we refer to the paper by
+Petersson and Sjogreen~\cite{PetSjo-10b} and the references therein.
+
+There are three components in each of the vector variables $\ub$ and $\bar{\ub}^{(\nu)}$,
+$\nu=1,2,\ldots,n$, resulting in $3+3n$ differential equations for as many dependent
+variables. Hence, visco-elastic modeling will require more memory and more CPU-time, compared to the
+purely elastic case.
+
+The material parameters $\mu_\nu$ and $\lambda_{\nu}$, as well as the relaxation frequencies
+$\omega_\nu$ are determined by Emmerich and Korn's~\cite{Emm-Korn-87} least-squares procedure. In
+this approach, the material parameters are selected such that the quality factors $Q_S$ and $Q_P$ become close to constant
+over a frequency range
+\[
+\omega_{min}\leq \omega \leq \omega_{max}.
+\]
+Because the computational cost of viscoelastic modeling increases with the number of mechanisms,
+$n$, it is desirable to use the smallest value of $n$ that gives acceptable accuracy in the
+approximation of $Q(\omega)$. In Figure~\ref{fig:q2-5}, we present $Q(\omega)$ when the material
+coefficients are chosen to approximate $Q=100$ in the frequency band $\omega\in[1,100]$. Clearly,
+$n=2$ provides inadequate modeling of a constant $Q$ over two decades in frequency, but $n= 3$ gives
+a much better approximation. Increasing $n$ further only leads to small improvements. It is
+interesting to note that in all models, $Q(\omega)$ grows rapidly for $\omega>\omega_{max}$. Hence
+the viscoelastic model does {\em not} provide significant damping of higher (poorly resolved)
+frequencies in the numerical solution, and does {\em not} act as an artificial dissipation.
+%-------------------------Figure -------------------------------------
+\begin{figure}
+\begin{centering}
+\includegraphics[width=0.7\textwidth]{q2-5.png}
+\caption{Actual quality factor $Q(\omega)$ approximating $Q_0=100$ in the frequency band
+  $\tilde\omega\in[1,100]$, for different numbers of viscoelastic mechanisms.}
+\label{fig:q2-5}
+\end{centering}
+\end{figure}
+
+Wave propagation in visco-elastic materials is dispersive, i.e., the phase velocity of a wave depends on
+its frequency. Figure~\ref{fig:phase-velo} illustrates that the frequency dependence on the phase
+velocity becomes more pronounced when $Q$ gets smaller. Also note that the phase velocity grows
+approximately linearly on a logarithmic scale in $\omega$, throughout the frequency band
+$[\omega_{min},\omega_{max}]$. Outside this band, the phase velocity tends to constant values.
+%-------------------------Figure -------------------------------------
+\begin{figure}
+\begin{centering}
+\includegraphics[width=0.7\textwidth]{phase-velo2.png}
+\caption{Relative phase velocity over the frequency band
+  $\omega\in[1,100]$. Here, $n=3$, and the different colors correspond to different values of $Q$.}
+\label{fig:phase-velo}
+\end{centering}
+\end{figure}
+Due to the dispersive nature of visco-elastic materials, it is necessary to specify the reference
+frequency, $\omega_r$, at which the phase velocities are specified.
+
+In \emph{SW4}, visco-elastic modeling is enabled by the {\tt attenuation} command. For example, the command
+\begin{verbatim}
+attenuation nmech=3 phasefreq=2.5 maxfreq=10
+\end{verbatim}
+enables visco-elastic modeling with three SLS mechanisms, tuned for the max frequency
+$f_{max}=10$~Hz, such that the phase velocities are valid at the reference frequency
+$f_r=2.5$~Hz. For simplicity, the lower frequency in the modeling is always two orders of
+magnitude smaller than the max frequency,
+\[
+f_{min}=\frac{f_{max}}{100}.
+\]
+
+Instead of using \verb+maxfreq+, the upper frequency limit can alternatively be specified through the
+\verb+minppw+ option. In this case the material model is first evaluated to find $\min V_S/h$. The
+upper frequency limit is then calculated through the relation $P=\min V_s/(h
+f)$, i.e.,
+\[
+f_{max} = \frac{1}{P_{min}}\min \frac{V_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
+\]
+The syntax for using \verb+minppw+ is given by
+\begin{verbatim}
+attenuation nmech=3 phasefreq=2.5 minppw=5
+\end{verbatim}
+
+After the input file has been parsed, \emph{SW4} outputs basic information about the attenuation
+modeling:
+\begin{verbatim}
+*** Attenuation parameters calculated for 3 mechanisms, 
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], \
+      velo_freq=1.000000e+00 [Hz]
+\end{verbatim}
+Note that \verb+max_freq+ = $\omega_{max}/(2\pi)$, etc.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1432,15 +1910,17 @@ on the image file.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Generating a bird's eye view of the problem domain: the gmt command}\label{sec:gmt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The Generic Mapping Toolkit (\emph{GMT})~\cite{WesselSmithGMT} is a set of postscript image
-generation programs for geophysical applications, which can be used to make plots like
+The Generic Mapping Toolkit (\emph{GMT})~\cite{WesselSmithGMT} is a suite of image generation
+programs for geophysical applications. These programs can be used to make postscript plots like
 Figure~\ref{fig:topography-gmt}. In the example shown here, topography information is included as
-well as information on the general setup of the simulation. Note that the \verb+gmt+ command causes
-an ASCII text file to be outputted from \emph{SW4}. This file contains a UNIX C-shell script with
-commands for the \verb+gmt+ program, holding general information about the run such as
-geometric coordinates of the computational domain as well as locations of sources and
-recievers. This information often needs to be fine-tuned to suit the needs of a particular
-application. To have \emph{SW4} write a \emph{GMT} file, you give the command
+well as information on the general setup of the simulation. Note that the {\tt gmt} command in
+\emph{SW4} causes an ASCII text file to be generated. This file contains a UNIX C-shell script with
+commands for the \verb+gmt+ programs, holding general information about the run such as geometric
+coordinates of the computational domain as well as locations of sources and recievers. There are
+many options for these programs, and they might need to be fine-tuned to suit the needs of a particular
+application, see the \emph{GMT} documentation for details. 
+
+To have \emph{SW4} generate a \emph{GMT} shell script file, you give the command
 \begin{verbatim}
 gmt file=bolinas.gmt
 \end{verbatim}
@@ -1458,6 +1938,84 @@ gmt file=bolinas.gmt
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Examples (in progress)} \label{sec:examples}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The elastic layer over half-space problem: LOH.1}
+The LOH.1 problem, defined in the input script \verb+examples/scec/LOH.1-h50.in+, has a layered
+material model where the top 1000 meters ($z\in [0, 1000m]$) has different properties than the rest of the
+domain. The computational domain is taken to be $(x,y,z) \in [0,30000]^2\times [0,17000]$. The
+grid size is choosen to be $h=50\,m$ and the material properties in the
+different layers are described by
+\begin{verbatim}
+grid h=50 x=30000 y=30000 z=17000
+block vp=4000 vs=2000 rho=2600 
+block vp=6000 vs=3464 rho=2700 z1=1000
+\end{verbatim}
+The problem is driven by a single point moment source, positioned in the lower half-space. The time
+function in this problem is a Gaussian (if setup as in the input file, the Gaussian source is
+equivalent to using a Brune time function followed by a post processing deconvolution step, as is
+described in~\cite{Day-2001}). The advantage of using the Gaussian is that no post processing is
+necessary before comparing to the results in~\cite{Day-2001}, and the Gaussian function produces
+less high wave number waves which are poorly resolved on the computational mesh. Note that
+\verb+freq=16.6667+ corresponds to the spread $\sigma=0.06$ in the Gaussian time function. The lines
+to setup the source and the time duration of the simulation are:
+\begin{verbatim}
+time t=9
+source x=15000 y=15000 z=2000 Mxy=1 m0=1e18 t0=0.36 freq=16.6667 \ 
+       type=Gaussian
+\end{verbatim}
+
+The solution is recorded in an array of receivers: 
+\begin{verbatim}
+rec x=15600 y=15800 z=0 file=sta01
+rec x=16200 y=16600 z=0 file=sta02
+rec x=16800 y=17400 z=0 file=sta03
+rec x=17400 y=18200 z=0 file=sta04
+rec x=18000 y=19000 z=0 file=sta05
+rec x=18600 y=19800 z=0 file=sta06
+rec x=19200 y=20600 z=0 file=sta07
+rec x=19800 y=21400 z=0 file=sta08
+rec x=20400 y=22200 z=0 file=sta09
+rec x=21000 y=23000 z=0 file=sta10
+\end{verbatim}
+The velocity time histories for station 10 are shown in Figure~\ref{fig:LOH1} together with a
+semi-analytical solution.  We conclude that most features in the solution are very well captured on
+the grid with $h=50$, but the solution becomes almost identical with the semi-analytical solution
+when the grid is refined to $h=25$. As is customary in seismology, the velocity components have been
+rotated to polar componenets, with the origin at the source. The {\tt rec} command outputs the
+$u_x$, $u_y$ and $u_z$-components of the velocity. These components are rotated to radial and
+transverse components using the transformations,
+\[
+u_{rad} = 0.6 u_x + 0.8 u_y,\quad u_{tran} = -0.8 u_x + 0.6 u_y.
+\]
+The vertical component is given by $u_z$ (positive downwards).
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=0.90\textwidth]{radial-loh1c.png}\\
+    \includegraphics[width=0.90\textwidth]{transverse-loh1c.png}\\
+    \includegraphics[width=0.90\textwidth]{vertical-loh1c.png}
+    \caption{LOH.1: The radial (top), transverse (middle) and vertical (bottom) velocities for
+      receiver number 10. Here the numerical solutions are plotted in red ($h=25$) and blue
+      ($h=50$), while the semi-analytical solution is plotted in black (almost indistinguishable
+      from the red curve).}
+    \label{fig:LOH1}
+  \end{center}
+\end{figure}
+
+By using formulas (\ref{eq:resolutionformula})-(\ref{eq:upper-power-freq}), we can
+calculate the number of points per wave length for this simulation. Since we are using a
+Gaussian time-function, the center frequency is $f_0=1/(2\pi\sigma)\approx 2.6526$ and we estimate
+the highest significant frequency to be $f_{max}\approx 2.5 f_0 = 6.6315$ Hz. The material model has $\min V_s =
+2000$ m/s. The coarser grid has size $h=50$ m, which results in
+\[
+P = \dfrac{2000}{50\cdot 6.6315} \approx 6.03.
+\]
+From our previous discussion (see Section~\ref{sec:grid-size}), 6 points per wave length is on the low side,
+but visual inspection of Figure~\ref{fig:LOH1} indicates very good agreement of the wave forms. The
+finer grid with $h=25$ gives $P\approx 12.1$. For the purpose of most practical calculations, we
+suggest using in between $P=6$ and $P=12$ grid points per shortest wave length.
+
+\section{The visco-elastic layer over half-space problem: LOH.3}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1634,10 +2192,82 @@ utcstart & month/day/year:hour:minute:second.millisecond & string & datum & none
 \end{center}
 \index{time parameters!t, steps}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{supergrid [optional]} \label{sec:supergrid}
+\index{command!supergrid}
+\label{keyword:supergrid}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}\bf
+Syntax:\\
+\tt
+supergrid gp=... dc=...
+\\
+\bf Required parameters:\\
+\rm
+None
+\end{flushleft}
+Note that the keywords are different from \emph{WPP}. Also note that
+increasing {\tt dc} may lead to instabilities.
+\begin{center}
+\begin{tabular}{|l|p{10cm}|l|l|} \hline
+\multicolumn{4}{|c|}{\bf supergrid command parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
+%
+gp &  Number of grid points in the supergrid layer & int & 30\\ \hline
+%
+dc & Damping coefficient in supergrid region & real & 0.04 \\ \hline
+\end{tabular}
+\end{center}
+\index{supergrid parameters!thickness, damping}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{prefilter [optional]}\label{keyword:prefilter}
+\index{command!prefilter}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt prefilter fc1=... fc2=... type=... passes=... order=...\\
+\bf 
+Required parameters:\\
+\rm 
+None
+\end{flushleft}
+The \verb+prefilter+ command is used to filter all source time functions before the simulation
+starts. This approach gives the same result as filtering all time-series after the simulation is
+completed. Hence, the \verb+prefilter+ command can be used to reduce the amount of post
+processing. The command is particularly useful in combination with the {\bf Dirac} source time
+function, which triggers all frequencies on the grid. The \verb+prefilter+ option is also useful for
+removing unphysical modes from image files, e.g. max velocities or displacements.  The
+\verb+prefilter+ command modifies the time functions in all source commands using a discrete
+Butterworth filter. Lowpass and bandpass filters are supported, with orders between 1 and 10. Only
+the {\bf fc2} frequency is used for lowpass filters, while it is assumed that {\bf fc1}$<${\bf fc2}
+for bandpass filters. The filtering is either forwards in time ({\bf passes=1}), or forwards and
+backwards ({\bf passes=2}). For {\bf passes=1}, the filter is causual but gives the filtered signal
+a phase shift. When {\bf passes=2} the filter has zero phase shift, but is acausual. In this case,
+the filtered signal is only exponentially small as $t\to-\infty$. In order to avoid unphysical
+oscillations due to an abrupt start, an estimate of the length of this tail is calculated. A warning
+message is printed to stdout if the time shift ({\bf t0}) in the source is smaller than this value.
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf prefilter command parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ 
+\hline \hline
+fc1 & first (low) corner frequency in the filter $(>0)$   & real  & Hz & 0.1 \\ \hline
+fc2 & second (high) corner frequency in the filter $(>0)$ & real  & Hz & 1.0 \\ \hline
+type & lowpass or bandpass                                & string & None & bandpass \\ \hline
+passes & number of passes (1 or 2) & int & None & 2 \\ \hline
+order  & order of filter (1-10) & int & None & 2 \\ \hline
+\end{tabular}
+\end{center}
+\index{prefilter parameters!fc1, maxfreq}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Sources
+\section{Sources [required]}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{source [required]}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{source}
 \index{command!source}
 \label{keyword:source}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1735,102 +2365,64 @@ fz & forcing function in the z direction & real & N & 0.0 \\ \hline
 \end{center}
 \index{source parameters!point force - f0, fx, fy, fz}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{prefilter [optional]}\label{keyword:prefilter}
-\index{command!prefilter}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{flushleft}
-\bf
-Syntax:\\
-\tt prefilter fc1=... fc2=... type=... passes=... order=...\\
-\bf 
-Required parameters:\\
-\rm 
-None
-\end{flushleft}
-The \verb+prefilter+ command is used to filter all source time functions before the simulation
-starts. This approach gives the same result as filtering all time-series after the simulation is
-completed. Hence, the \verb+prefilter+ command can be used to reduce the amount of post
-processing. The command is particularly useful in combination with the {\bf Dirac} source time
-function, which triggers all frequencies on the grid. The \verb+prefilter+ option is also useful for
-removing unphysical modes from image files, e.g. max velocities or displacements.  The
-\verb+prefilter+ command modifies the time functions in all source commands using a discrete
-Butterworth filter. Lowpass and bandpass filters are supported, with orders between 1 and 10. Only
-the {\bf fc2} frequency is used for lowpass filters, while it is assumed that {\bf fc1}$<${\bf fc2}
-for bandpass filters. The filtering is either forwards in time ({\bf passes=1}), or forwards and
-backwards ({\bf passes=2}). For {\bf passes=1}, the filter is causual but gives the filtered signal
-a phase shift. When {\bf passes=2} the filter has zero phase shift, but is acausual. In this case,
-the filtered signal is only exponentially small as $t\to-\infty$. In order to avoid unphysical
-oscillations due to an abrupt start, an estimate of the length of this tail is calculated. A warning
-message is printed to stdout if the time shift ({\bf t0}) in the source is smaller than this value.
-\begin{center}
-\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf prefilter command parameters}\\ \hline
-\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ 
-\hline \hline
-fc1 & first (low) corner frequency in the filter $(>0)$   & real  & Hz & 0.1 \\ \hline
-fc2 & second (high) corner frequency in the filter $(>0)$ & real  & Hz & 1.0 \\ \hline
-type & lowpass or bandpass                                & string & None & bandpass \\ \hline
-passes & number of passes (1 or 2) & int & None & 2 \\ \hline
-order  & order of filter (1-10) & int & None & 2 \\ \hline
-\end{tabular}
-\end{center}
-\index{prefilter parameters!fc1, maxfreq}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{rupture}
+\index{command!rupture}
+\label{keyword:rupture}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The material model [required]} 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-It is required that the material model is defined in the entire computational domain.
-%, padded by one layer of ghost cells. However, no material properties need to be given above the
-%topography. 
-%The \verb+attenuation+ command may be located anywhere in the command file. 
-The material commands \verb+block+, \verb+ifile+, \verb+efile+, and \verb+pfile+, are applied in the
-same order as they are given. Hence, it is possible to overwrite the properties specified by a
-material command given earlier in the file. This can be particularily useful when using the
-\verb+block+ command. Finally, the properties of the optional \verb+globalmaterial+ command are
-enforced after all other material commands have been applied.
+It is required that the material model is defined in the entire computational domain. The material
+properies are extrapolated to the ghost points if they are not covered by the material model (this
+is a change from \emph{WPP}. Also note that the \verb+attenuation+ command may be located anywhere
+in the command file. The material commands \verb+block+, \verb+ifile+, \verb+efile+, and
+\verb+pfile+, are applied in the same order as they are given. Hence, it is possible to overwrite
+the properties specified by a material command given earlier in the file. This can be particularily
+useful when using the \verb+block+ command. Finally, the properties of the optional
+\verb+globalmaterial+ command are enforced after all other material commands have been applied.
 
-%% \subsection{attenuation [optional]}
-%% \index{command!attenuation}
-%% \label{keyword:attenuation}
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{attenuation [optional]}
+\index{command!attenuation}
+\label{keyword:attenuation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% The \verb+attenuation+ command is used to enable visco-elastic modeling as described in
-%% Section~\ref{sec:attenuation}. The parser scans for the \verb+attenuation+ command before reading
-%% any of the other material commands, so this command may be located anywhere in the input file. The
-%% visco-elastic model uses the quality factors $Q_p$ and $Q_s$, which may vary from point to point
-%% through the computational domain. If visco-elastic modeling is enabled, the $Q_P$ and $Q_S$ factors
-%% must be specified as part of every material command described below. When visco-elastic modeling
-%% is {\em not} enabled, the $Q_P$ and $Q_S$ factors are not required in the material commands, and are
-%% ignored if present.
-%% \begin{flushleft}\bf
-%% Syntax:\\
-%% \tt
-%% attenuation phasefreq=... nmech=... maxfreq=... minppw=...
-%% \\
-%% \bf Required parameters:\\
-%% \rm None \\
-%% \bf Note: \rm you may not specify both \verb+maxfreq+ and \verb+minppw+.
-%% \end{flushleft}
-%% %
-%% \begin{center}
-%% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-%% \multicolumn{5}{|c|}{\bf attenuation command parameters}\\ \hline
-%% \bf{Option} & \bf{Description} & \bf{Type} & \bf{Unit} & \bf{Default} \\ \hline \hline
-%% phasefreq & The frequency ($>0$) at which $C_S$ and $C_P$ are specified & real & Hz & 1.0\\ \hline
-%% nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (between 1 and 8) & int & None & 3\\ \hline
-%% maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & real & Hz & 2.0 \\ \hline
-%% minppw    & Calculate the upper frequency limit based on this number of grid points per shortest
-%% wave length ($>0$)& real & None & None \\ \hline
-%% \end{tabular}
-%% \end{center}
-%% If you specify the \verb+minppw+ option, the upper frequency limit is calculated based on the
-%% relation $P=\min C_s/(h f)$, i.e.,
-%% \[
-%% f_{max} = \frac{1}{P_{min}}\min \frac{C_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
-%% \]
+The \verb+attenuation+ command is used to enable visco-elastic modeling as described in
+Section~\ref{sec:attenuation}. The parser scans for the \verb+attenuation+ command before reading
+any of the other material commands, so this command may be located anywhere in the input file. The
+visco-elastic model uses the quality factors $Q_p$ and $Q_s$, which may vary from point to point
+through the computational domain. If visco-elastic modeling is enabled, the $Q_P$ and $Q_S$ factors
+must be specified as part of every material command described below. When visco-elastic modeling
+is {\em not} enabled, the $Q_P$ and $Q_S$ factors are not required in the material commands, and are
+ignored if present.
+\begin{flushleft}\bf
+Syntax:\\
+\tt
+attenuation phasefreq=... nmech=... maxfreq=... minppw=...
+\\
+\bf Required parameters:\\
+\rm None \\
+\bf Note: \rm you may not specify both \verb+maxfreq+ and \verb+minppw+.
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf attenuation command parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Unit} & \bf{Default} \\ \hline \hline
+phasefreq & The frequency ($>0$) at which $C_S$ and $C_P$ are specified & real & Hz & 1.0\\ \hline
+nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (between 1 and 8) & int & None & 3\\ \hline
+maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & real & Hz & 2.0 \\ \hline
+minppw    & Calculate the upper frequency limit based on this number of grid points per shortest
+wave length ($>0$)& real & None & None \\ \hline
+\end{tabular}
+\end{center}
+If you specify the \verb+minppw+ option, the upper frequency limit is calculated based on the
+relation $P=\min C_s/(h f)$, i.e.,
+\[
+f_{max} = \frac{1}{P_{min}}\min \frac{C_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
+\]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{block}
@@ -1840,12 +2432,12 @@ enforced after all other material commands have been applied.
 \begin{flushleft}\bf
 Syntax:\\
 \tt block
-vp=... vs=... rho=... vpgrad=... vsgrad=... rhograd=... absdepth=... x1=... x2=... y1=... y2=... z1=... z2=...\\
+vp=... vs=... rho=... qp=... qs=... vpgrad=... vsgrad=... rhograd=... absdepth=... x1=... x2=... y1=... y2=... z1=... z2=...\\
 \bf
 Required parameters:\\
 \tt
-vp, vs, rho
-%vp, vs, rho  (qp and qs with attenuation)
+%vp, vs, rho
+vp, vs, rho  (qp and qs with attenuation)
 \end{flushleft}
 %
 The block command specifies material properties that are constant or vary linearly with depth. By
@@ -2129,9 +2721,9 @@ There are four ways of specifying the topography:
 \item {\bf input=cartesian} Read the topography as function of Cartesian coordinates. The file name
    must be specified by the {\bf file=...} parameter. The format for this file is described in
    Section~\ref{sec:topo-file-format}.
-\item {\bf input=efile} Read the topography from the Etree data base. The Etree data base must be
+\item {\bf input=efile} Read the topography from the Etree database. The Etree database must be
   specified by an {\bf efile} command (see below). The spatial resolution for querying the Etree
-  data base can be specified by the {\bf resolution=...} parameter.
+  database can be specified by the {\bf resolution=...} parameter.
 \item {\bf input=gaussian} Build an analytical topography in the shape of a Gaussian hill. The
   amplitude is specified by {\bf gaussianAmp=...}, the hill is centered at {\bf gaussianXc=...},
   {\bf gaussianYc=...}, and the half width of the hill in the $x$ and $y$-directions are specified by 
@@ -2669,32 +3261,6 @@ WARNING! The commands in this section are only intended for advanced users who a
 familiar with the inner workings of \emph{SW4}. These commands might lead to unexpected side
 effects. Only the source code gives a complete description of what these commands really do.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{supergrid [optional]} \label{sec:supergrid}
-\index{command!supergrid}
-\label{keyword:supergrid}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{flushleft}\bf
-Syntax:\\
-\tt
-supergrid gp=... dc=...
-\\
-\bf Required parameters:\\
-\rm
-None
-\end{flushleft}
-Note that the keywords are different from \emph{WPP}.
-\begin{center}
-\begin{tabular}{|l|p{10cm}|l|l|} \hline
-\multicolumn{4}{|c|}{\bf supergrid command parameters}\\ \hline
-\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-%
-gp &  Number of grid points in the supergrid layer & int & 30\\ \hline
-%
-dc & Damping coefficient in supergrid region & real & 0.04 \\ \hline
-\end{tabular}
-\end{center}
-\index{supergrid parameters!thickness, damping}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{boundary\_conditions [optional]}
 \index{command!boundary\_conditions}
@@ -3100,7 +3666,7 @@ Data & $u^{(x)}$ & $u^{(y)}$ & $u^{(z)}$ & $\rho$ & $\lambda$ & $\mu$ & $C_p$ & 
 \begin{tabular}{l||l|l|l|l|l|l|l|l|l|l|l}\hline
 {\tt mode}  & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23 & 24 \\ \hline\hline
 Data & div$(\ub_t)$ & $|\mbox{curl($\ub_t$)}|$ & lat & lon &
-topo & $x$ & $y$ & $z$ & $u^{(x)} - u_{ex}^{(x)}$ & $u_e^{(y)} - u_{ex}^{(y)}$ & $u_e^{(z)} -
+topo & $x$ & $y$ & $z$ & $u^{(x)} - u_{ex}^{(x)}$ & $u^{(y)} - u_{ex}^{(y)}$ & $u^{(z)} -
 u_{ex}^{(z)}$  \\ \hline
 \end{tabular}\\
 \medskip
@@ -3132,7 +3698,7 @@ function {\tt localtime()}. On a Mac running OSX, the time has the format ``Thu 
 2013''. Exactly 25 characters are saved and the string is truncated if it is longer than that.
 
 The second part of the header contains grid size information (32 bytes)
-for each of the $N_p$ grid patches. The information is save in the following format:
+for each of the $N_p$ grid patches. The information is saved in the following format:
 {\samepage
 \begin{flushleft}
 {\tt for ($p=1$; $p\leq N_p$; $p$++) \{}\nopagebreak \\ 
@@ -3356,7 +3922,7 @@ the file formats, and can be helpful when writing readers for other systems.
 %% mpirun script. These wrappers simplify the compilation and linking process and we highly recommend
 %% using them.
 
-%% For a complete installation that supports the efile command for reading e-tree material data bases,
+%% For a complete installation that supports the efile command for reading e-tree material databases,
 %% you need to install the following additional libraries (see Section~\ref{sec:cencalvm-install} for details):
 %% \begin{itemize}
 %% \item The Etree library
@@ -3558,7 +4124,7 @@ the file formats, and can be helpful when writing readers for other systems.
 %% \index{installation!efile}
 
 %% UPDATE! The cencalvm library was developed by Brad Aagaard at USGS. Both the cencalvm library and the Etree
-%% data base files, holding the material model of Northern California, can currently be downloaded from
+%% database files, holding the material model of Northern California, can currently be downloaded from
 %% \begin{verbatim}
 %% earthquake.usgs.gov/regional/nca/3Dgeologic/cencalvm_doc
 %% \end{verbatim}
@@ -3768,7 +4334,7 @@ example by reading them into matlab/octave using the script \verb+tools/readimag
 given in Figure~\ref{fig:ux}.
 \begin{figure}
 \begin{center}
-\includegraphics[width=0.75\textwidth]{ux.png}
+\includegraphics[width=0.6\textwidth]{ux.png}
 \caption{Contour plot of the $u^{(x)}$ component of the solution along the plane $x=0.5$. The image
   file was written with the script {\tt gauss-twi-3.in}. The solid black line shows the shape of the
   top surface. The dashed black line indicates the interface between the curvilinear and Cartesian
@@ -3778,48 +4344,34 @@ given in Figure~\ref{fig:ux}.
 \end{figure}
 
 
-\section{Lamb's problem}\label{sec:lamb}
+\section{Lamb's problem}\label{sec:testlamb}
 \index{testing!lambs}
 
-The implementation of a point force and the reflection properties of the super-grid far field
-boundary condition can be tested by solving Lamb's problem. This problem simulates the motion due to
-a vertical point force applied on the free surface. The material is assumed homogeneous and the
-ratio between the compressional and shear velocities satisfies $C_p/C_s = \sqrt{3}$, i.e.,
-$\lambda=\mu$. 
+In this section, we use the {\tt testlamb} command to evaluate the accuracy of the numerical
+solution. See Section~\ref{sec:lamb} for an introduction to Lamb's problem.
 
-We have implemented Mooney's formulas~\cite{Mooney_1974} for solving Lamb's problem. These formulas
-give an analytical expression for the Green's function of the vertical component along the free
-surface, $z=0$. This Green's function is convolved with the source time function to give the
-displacement as function of time. We use a {\tt C6SmoothBump} time function and the convolution is
-performed by numerical quadrature using the Quadpack library. This approach allows the displacement
-to be evaluated to within $\approx 12$ decimal places. Lamb's problem is then solved numerically
-using \emph{SW4} and the error in the vertical component is evaluated along the free surface. See
-Petersson and Sjogreen~\cite{PetSjo-13} for further details about this test.
-
-The input and output files can be found in the directory
+% 1st example
+We consider the elastic half-space has shear speed $C_s=1$ m/s, compressional speed
+$C_p=\sqrt{3}$ m/s and density $\rho=1$ kg/m$^3$. The setup can be found in {\tt
+  examples/lamb/lamb-1.in}
 \begin{verbatim}
-shell> cd .../sw4/examples/lamb
-shell> ls *.in
-lamb-1.in  lamb-2.in
-shell> ls *.out
-lamb-1.out  lamb-2.out
+fileio path=lamb-h0p04
+grid x=12 y=12 z=6 h=0.04
+time t=11.0
+supergrid gp=50
+testlamb rho=1 cp=1.732050807568877
+source x=6 y=6 z=0 fx=0 fy=0 fz=1 t0=0 freq=1 type=C6SmoothBump
+rec x=7.0 y=6.0 z=0 file=lamb usgsformat=1 sacformat=0
 \end{verbatim}
-The input files use about 14 and 109 million grid points, respectively. We ran them on 64 and 128
-cores on a cluster of Linux machines. The final errors in the solution, measured in max and $L_2$
-norms, are reported at the end of the output files. The error is also reported as function of time
-in the file {\tt LambErr.txt}, which is written in the directory specified by the {\tt fileio}
-command. In this file, each line holds four numbers: time, max error, $L_2$ error, and max norm of
-solution.
-
-The physical width of the supergrid layer is set to $\ell=2$ for both grid sizes, corresponding to
-50 and 100 grid points, respectively. The error is evaluated in the interior of the computational
-domain, i.e., $2\leq (x,y) \leq 10$. Since the surface waves propagate with speed $C_r\approx 0.92$
-and the source time function is zero after $t=1$, the exact solution becomes identically zero along
-the surface after time $t\approx 1 + 4\sqrt{2}/0.92 \approx 7.15$. After this time, the error in the
-numerical solution is due to artificial reflections from the super-grid layers. In
-Figure~\ref{fig:lamb-err} we plot the max error as function of time for grid sizes $h=0.04$ and
-$h=0.02$. Note that the error converges to zero as ${\cal O}(h^4)$ for $t>1$, i.e., after the
-singular point force has stopped acting.
+The super-grid far-field layer is 50 grid points wide, corresponding to the width $\ell=2$.
+The error is evaluated in the interior of the computational domain, i.e., $2\leq (x,y) \leq 10$. Since the
+surface waves propagate with speed $C_r\approx 0.92$ and the source time function is zero after
+$t=1$, the exact solution becomes identically zero along the surface after time $t\approx 1 +
+4\sqrt{2}/0.92 \approx 7.15$. After this time, the error in the numerical solution is due to
+artificial reflections from the super-grid layers. In Figure~\ref{fig:lamb-err} we plot the max
+error as function of time for grid sizes $h=0.04$ and $h=0.02$. Here, the case with grid size
+$h=0.02$ can be found in {\tt examples/lamb/lamb-2.in}. Note that the error converges to
+zero as ${\cal O}(h^4)$ for $t>1$, i.e., after the singular point force has stopped acting.
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{lamb-err.png}
@@ -3828,6 +4380,7 @@ and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 \label{fig:lamb-err}
 \end{center}
 \end{figure}
+
 
 %% Here we provide input files with four different grid sizes, with $116^2\times 59$, $231^2 \times
 %% 116$, $461^2\times 231$, and $921^2\times 461$ grid points, respectively. Be aware that the finest
