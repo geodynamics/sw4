@@ -1206,7 +1206,7 @@ void EW::processAttenuation(char* buffer)
      else if( startswith("minppw=",token) )
      {
         token += 7;
-        m_att_ppw = atoi( token );
+        m_att_ppw = atof( token ); // AP: changed from atoi
         foundppw = true;
         CHECK_INPUT(m_att_ppw >= 0, "ERROR: minimum ppw must be >= 0, not " << m_att_ppw);
      }
