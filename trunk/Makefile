@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=0/1] [etree=yes/no]
+# make sw4 [debug=yes/no] [etree=yes/no]
 #
 # This Makefile asumes that the following environmental variables have been assigned:
 # CXX = C++ compiler
@@ -24,11 +24,10 @@
 # Do not make changes below this line (don't blame us if you do!)
 #-----------------------------------------------------------------------
 
-# change this to yes/no
-ifndef debug
-   optlevel = OPTIMIZE
-else
+ifeq ($(debug),yes)
    optlevel = DEBUG
+else
+   optlevel = OPTIMIZE
 endif
 
 ifeq ($(optlevel),DEBUG)
@@ -54,6 +53,7 @@ emptystring := ""
 foundincfile := $(emptystring)
 
 # how can we check if the file configs/make.inc exists?
+
 ifeq ($(UNAME),Darwin)
   include configs/make.osx
   foundincfile := "configs/make.osx"
@@ -100,7 +100,7 @@ endif
 
 ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -I$(SW4INC)
-   linklibs += -lcencalvm -lproj
+   linklibs += -L$(SW4LIB) -lcencalvm -lproj
 endif
 
 ifdef EXTRA_LINK_FLAGS
@@ -163,4 +163,4 @@ $(builddir)/%.o:src/%.C
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 $(OBJ); cd ../$(debugdir); /bin/rm -f sw4 $(OBJ)
+	cd $(optdir); /bin/rm -f sw4 sw4opt $(OBJ) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 sw4opt $(OBJ) $(QUADPACK)
