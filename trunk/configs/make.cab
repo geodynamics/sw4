@@ -1,0 +1,4 @@
+  FC = mpiifort
+  CC = mpiicc
+  CXX = mpiicpc
+  EXTRA_LINK_FLAGS =  -Wl,-rpath=$(SW4ROOT)/lib -llapack -lblas -lifcore

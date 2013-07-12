@@ -61,10 +61,11 @@ endif
 
 # put the variables in the configs/make.xyz file
 ifeq ($(UNAME),Linux)
-  FC = mpiifort
-  CC = mpiicc
-  CXX = mpiicpc
-  linklibs =  -llapack -lblas -lifcore
+# For Cab at LC
+  ifeq ($(findstring cab,$(HOSTNAME)),cab)
+    include configs/make.cab
+    foundincfile := "configs/make.cab"
+  endif
 # for Bjorn's tux box
   ifeq ($(findstring tux270,$(HOSTNAME)),tux270)
     linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
@@ -83,11 +84,11 @@ ifeq ($(UNAME),Linux)
     CXX = CC
     linklibs = -L/global/u2/b/bjorns/local/lapack-3.4.0 -llapack -lrefblas -lifcore
   endif
-  ifeq ($(etree),yes)
-     CXXFLAGS += -DENABLE_ETREE
-     CXXFLAGS += -I$(SW4INC)
-     linklibs += -Wl,-rpath=$(SW4LIB) -L$(SW4LIB) -lcencalvm -lproj
-  endif
+#  ifeq ($(etree),yes)
+#     CXXFLAGS += -DENABLE_ETREE
+#     CXXFLAGS += -I$(SW4INC)
+#     linklibs += -Wl,-rpath=$(SW4LIB) -L$(SW4LIB) -lcencalvm -lproj
+#  endif
 endif
 
 ifdef EXTRA_CXX_FLAGS
@@ -131,16 +132,17 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
-ifeq ($(foundincfile), $(emptystring))
-sw4:: $(FOBJ) $(builddir)
-	@echo "ERROR: configuarion file not found"
-else
+#ifeq ($(foundincfile), $(emptystring))
+#sw4:: $(FOBJ) $(builddir)
+#	@echo "ERROR: configuration file not found"
+#	@echo "foundincfile=" $(foundincfile)
+#else
 sw4: $(FOBJ) $(builddir)
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Configuration file: " $(foundincfile) "***"
 	@echo "*** Build directory: " $(builddir) " ***"
-endif
+#endif
 
 $(builddir):
 	/bin/mkdir -p $(builddir)
