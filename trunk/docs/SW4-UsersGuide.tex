@@ -1216,18 +1216,25 @@ function. The topography is shown in Figure~\ref{fig:grenoble-topo}.
 \section{Etree topography}\label{sec:topo-efile}
 
 The Etree databases for the San Francisco bay area and Northern California contain topographic
-information. You can setup the computational grid to follow this topography by using the commands
+information. You can setup the computational grid to follow this topography by using the following command,
 \begin{verbatim}
-topography input=efile zmax=6e3 order=2
-efile query=MAXRES \
-      etree=/Users/petersson1/src/sw4/tests/USGSBayAreaVM-08.3.0.etree 
+topography input=efile etree=USGSBayAreaVM-08.3.0.etree zmax=6e3 order=3
 \end{verbatim}
-Here, the topography command tells \emph{SW4} to read the topography from the Etree specified by the
-\verb+efile+ command. Hence, the topography command must be accompanied by an efile command. The
-\verb+order=2+ option specifies the type of stretching to use when making the curvilinear grid. A higher
-value makes the curvilinear grid smoother near the bottom, but can cause a larger variation in grid
-size near the top. The \verb+zmax=6e3+ option tells \emph{SW4} to extend the curvilinear grid down
-to $z=6000$.
+Note that the syntax has been changed from \emph{WPP}. Here, the topography command tells \emph{SW4}
+to read the topography from the specified Etree file. The \verb+etree+ keyword can also be called
+\verb+file+. The \verb+order=3+ option specifies the type of stretching to use when making the
+curvilinear grid. A higher value makes the curvilinear grid smoother near the bottom, but can cause
+a larger variation in grid size near the top. The \verb+zmax=6e3+ option tells \emph{SW4} to put the
+bottom boundary of the curvilinear grid at $z=6000$.
+
+When the computational domain is larger, it is possible to combine the topographic information from
+the detailed and regional databases, using the following syntax:
+\begin{verbatim}
+topography input=efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree \
+           zmax=6e3 order=3
+\end{verbatim}
+Here the filenames have been abbreviated to improve readability.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{The material model} \label{sec:material}
@@ -1251,7 +1258,7 @@ Note that \emph{SW4} uses two layers of ghost points outside the computational d
 the grid command). The material properties must therefore be defined for the computational domain
 padded by two layers of ghost points (one layer above the free surface boundary). If the material
 model is not defined in these ghost points, it will be extrapolated from the nearest boundary. Note
-that this behavior is different \emph{WPP}, which required the user to also define the material in
+that this behavior is different from \emph{WPP}, which requires the user to also define the material in
 the ghost points.
 
 The order within the material commands (block, pfile, efile, and ifile) {\em does} matter (unlike
@@ -1265,10 +1272,10 @@ material properties along the free surface will always be the same, independent 
 model. For the efile command, material properties are defined as functions of elevation relative to
 mean sea level ($z=0$). In this case the topography information is embedded in the material
 description. If you combine the efile command with a planar topography, a linear mapping is
-constructed before the material properties are assigned. In the Cartesian grid, the
-properties at the free surface are thus mapped to the top grid surface ($z=0$), and the bottom grid
-surface (with $z=z_N$) is assigned material properties for elevation $-z_N$. Elevation values at
-intermediate grid points follow from the linear mapping. 
+constructed before the material properties are assigned. The properties at the free surface are thus
+mapped to the top grid surface ($z=0$), and the bottom grid surface (with $z=z_N$) is assigned
+material properties for elevation $-z_N$. Elevation values at intermediate grid points follow from
+the linear mapping.
 %The material properties in the coarser Cartesian grids are not effected
 %by this mapping procedure.
 
@@ -1286,7 +1293,7 @@ model. For a purely elastic material, the output looks like
        ------------------------------------------------------
 \end{verbatim}
 It is always a good idea to check that these numbers are reasonable before proceeding with the
-simulation. In addition, we always recommend inspecting the material model along a few \verb+image+ planes.
+simulation. In addition, we recommend inspecting the material model along a few \verb+image+ planes.
 
 Before the simulation is started, \emph{SW4} checks that density, $V_p$, and $V_s$ are
 positive at all grid points. In addition, it is verified that the first Lam\'e parameter satisfies
@@ -1713,156 +1720,190 @@ Note that \verb+max_freq+ = $\omega_{max}/(2\pi)$, etc.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Setting the output directory}\label{sec:output-dir}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The fileio command can be used to specify the directory where \emph{SW4} writes its output files.  If
-the directory does not exist, \emph{SW4} attempts to create it for you.  The fileio command may also
-be used to set the level of diagnostic messages (verbose) and how often the time step information is
-printed. For example,
+The fileio command is used to specify by which method and in which directory \emph{SW4} should write
+its output files.  If the specified directory does not exist, \emph{SW4} attempts to create it for you. The
+fileio command may also be used to set the level of diagnostic messages (verbose) and how often the
+time step information is printed. For example, the command
 \begin{verbatim}
 	fileio path=sw4_dir verbose=1 printcycle=10
 \end{verbatim}
-causes all output files to be written to the directory "./sw4\_dir", turns on some extra diagnostic
-messages (a higher value gives more details), and prints the time step information every 10 time steps.
+causes all output files to be written to the directory "./sw4\_dir". The path may be absolute or
+relative to the working directory. The \verb+verbose=1+ option enables some extra diagnostic
+messages to be printed to standard output. The default value is 0. A higher value gives more
+details, but values exceeding 2 give a lot of information and are mostly intended for debugging
+purposes. The \verb+printcycle=10+ instructs \emph{SW4} to output time step information every 10
+time steps, instead of the default, which is every 1000 time steps.
 
 \paragraph{Serial and Parallel file systems}
 
 Some parallel machines have a dedicated parallel file system that allows many processors to
-simultaneously write to the same file. These file systems are often mounted on a special
-directory. By default, \emph{SW4} assumes a serial file system and will only allow one processor write
-to the same file at the same time. If you have access to a parallel file system, the I/O performance
-of \emph{SW4} can sometimes be improved by allowing several processors to simultaneously
-write a file. You enable this feature by using the {\tt pfs=1} option,
+simultaneously write to the same file. These file systems are often mounted under a particular
+sub-directory. By default, \emph{SW4} assumes that the file system is serial, which means that only
+one processor is allowed to write to the same file at the same time. If you have access to a
+parallel file system, the I/O performance of \emph{SW4} can sometimes be significantly improved by allowing
+several processors to simultaneously write to the same file. You enable this feature by using the {\tt pfs=1}
+option,
 \begin{verbatim}
-	fileio pfs=1 path=/p/lscratcha/my_output_directory
+	fileio pfs=1 nwriters=16 path=/p/lscratcha/my_output_directory
 \end{verbatim}
-Note that many parallel file systems are only accessible from dedicated directories. Enabling {\tt
-pfs=1} without re-directing the output to a parallel file system can cause \emph{SW4} to either
-crash or hang.
-
+The number of processes (cores) that write to disk can be changed with the \verb+nwriters+
+option. By default, \verb+nwriters=8+. The data is buffered on these cores before it is saved to
+disk. Increasing \verb+nwriters+ therefore allows larger files to be written using the same amount
+or memory. On the other hand, making \verb+nwriters+ smaller usually speeds up the reading or
+writing of large files. Note that the parallel file systems is often only accessible from certain
+directories. Setting \verb+pfs=1+ without re-directing the output to such a directory may cause
+\emph{SW4} to either crash or hang.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Time-history at a reciever station: the sac command}\label{sec:sac}
+\section{Time-history at a reciever station: the rec (or sac) command}\label{sec:rec}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\emph{SW4} can save the time-history of the solution at a receiver station located anywhere in the computational
-domain. The basic command looks like this:
+\emph{SW4} can save the time-history of the solution at a receiver station that is located anywhere
+in the computational domain. The basic command looks like this:
 \begin{verbatim}
-	sac x=100e3 y=50e3 z=0 file=sta1
+rec x=100e3 y=50e3 z=0 file=sta1
 \end{verbatim}
-Here, \emph{SW4} saves the three components of the solution at the grid point that is closest to the
-specified $(x,y,z)$ location. By default, \emph{SW4} saves the data using the binary Seismic
-Analysis Code (SAC)~\cite{Goldstein-et-al} format. In the above case, the {\tt sac} command results
-in three files:
+For backwards compatibility with \emph{WPP}, the \verb+rec+ command can also be called \verb+sac+.
+The above command makes \emph{SW4} save the three components of the solution at the grid point. The
+solution is saved at the grid point which is the closest to the specified $(x,y,z)$ location. 
+
+By default, \emph{SW4} saves the data using the binary Seismic Analysis Code (SAC) format,
+see~\cite{Goldstein-et-al}. Since each SAC file contains one component of the solution, the default
+\verb+rec+ command results in three files:
 \begin{verbatim}
 sta1.x  sta1.y  sta1.z
 \end{verbatim}
-The x,y,z files hold the solution time-history in the corresponding coordinate direction.
-Note that a positive $z$-component corresponds to a downward motion.
+The x,y,z files hold the corresponding solution component. Note that the orientation of the
+$z$-component is positive downwards.
 
 The location of the reciever station can alternatively be given in geographical (latitude,
-longitude, depth) coordinates. Information about the event date, time, and station name is saved in
-the header of a SAC file. By default the date and time are set to the date and time at the start of
-the simulation; the default station name is the name of the file. The default values of these fields
-can be changed by using the {\tt eventData}, {\tt eventTime}, and {\tt sta} options,
+longitude, depth) coordinates. Information about the event location, date, time, and station name is
+saved in the header of the SAC file. The event location is taken as the hypocenter, i.e., the
+location of the source with the earliest initiation time. The \verb+file+ name is used as the
+default station name, but can be modified with the \verb+sta+ option. The date and time are by
+default set to be the starting time of the simulation. That datum can be changed by using the
+\verb+utcstart+ option in the \verb+time+ command,
 %
 \begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 \
-    eventDate=2003/11/22 eventTime=16:17:00 sta=EKM
+time t=10 utcstart=01/04/2012:17:34:45.2343
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 sta=EKM
 \end{verbatim}
 %%
-Note that {\tt depth} specifies the depth of the reciever below the topography. To place a reciever
-at elevation $e$ relative to mean sea level ($e$ is negative below sea level) you use the option {\tt z=}$-e$.
+Note that the \verb+depth+ option specifies the depth of the reciever relative to the topography. To
+place a reciever at elevation $e$ relative to mean sea level ($e$ is negative below sea level) you
+use the option {\tt z=}$-e$. Station that are placed above the topography will be ignored and do not
+generate any data.
 
 By default, SAC files are written to disk every 1000 time steps, and at the end of the
 simulation. We can change this frequency by using the {\tt writeEvery} option. For example, to
 write the SAC file every 100 time steps, you would say
 \begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 writeEvery=100
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 writeEvery=100
 \end{verbatim}
 
-By default, \emph{SW4} outputs the three components of the solution
-$\ub(\xb_r,t)=(u_x,u_y,u_z)^T$. By using the {\tt velocity=1} option, \emph{SW4} instead outputs the
-three components of the time-derivative of the solution, i.e., the velocity if \emph{SW4} is setup
-to solve for displacements. The {\tt nsew=1} option can also be used to tell \emph{SW4} to rotate
-the solution components to the East, North, and vertical (positive up) directions,
+% {\tt velocity=1} option, \emph{SW4} instead outputs the
+%three components of the time-derivative of the solution, i.e., the velocity if \emph{SW4} is setup
+%to solve for displacements. The
+
+By default, \emph{SW4} outputs the three components of the solution $\ub(\xb_r,t)=(u_x,u_y,u_z)^T$
+at each time step. Here, this quantity is called the displacement. However, it is
+important to note that physical meaning of the solution depends on the source time function. For
+example, if the displacement corresponds to a \verb+GaussianInt+ source time function, the solution
+would hold the corresponding velocity if the time function was changed to a \verb+Gaussian+.
+
+The components that are saved by the \verb+rec+ command can be rotated to the East, North, and vertical
+(positive up) directions by using the \verb+nsew+ option,
 \begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 velocity=1 nsew=1
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 nsew=1
 \end{verbatim}
-The angle between North and the $x$-axis is determined by the azimuth ({\tt az=...}) angle in the grid command:
+Here, the angle between North and the $x$-axis is determined by the azimuth ({\tt az=...}) option in
+the grid command:
 \begin{verbatim}
 grid x=100e3 y=50e3 z=30e3 lat=37.5 lon=-122.0 az=135
 \end{verbatim}
-To remind the user of what quantities are saved in a sac file, we modify the file name extensions according to the
+By default, the \verb+rec+ command outputs the three components of the solution (the displacement). The
+\verb+rec+ command can also output the time derivative of the solution (the velocity),
+\begin{verbatim}
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 variables=velocity nsew=1
+\end{verbatim}
+As indicated here, the \verb+variables+ option can be combined with \verb+nsew+.  To remind the user
+of what quantities are saved in a SAC file, we modify the file name extensions according to the
 following table:
 \begin{center}
+%\begin{tabular}{|c|c|c|} \hline
+%   & \verb+velocity=0+  & \verb+velocity=1+ \\ \hline
 \begin{tabular}{|c|c|c|} \hline
-   & \verb+velocity=0+  & \verb+velocity=1+ \\ \hline
-\verb+nsew=0+ & .x, .y, .z & .xv, .yv, .zv \\ \hline
-\verb+nsew=1+ & .e, .n, .u & .ev, .nv, .uv \\ \hline
+\verb+variables+  & \verb+nsew=0+ & \verb+nsew=1+ \\ \hline\hline
+displacement & .x, .y, .z    & .e, .n, .u  \\ \hline
+velocity     & .xv, .yv, .zv & .ev, .nv, .uv  \\ \hline
 \end{tabular}
 \end{center}
-\par
-\emph{SW4} can output the time history of the divergence or the curl of the
-solution at the reciever station, instead of the solution itself. The {\tt variables} option governs this 
-behavior. For example,
-\begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 variables=div
-\end{verbatim}
-will output a single file named {\tt sta1.div} containing the divergence of the solution. Similarly
-\begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 variables=curl
-\end{verbatim}
-will output the three files {\tt sta1.curlx}, {\tt sta1.curly}, and {\tt sta1.curlz}. 
-The {\tt velocity} and
-{\tt nsew} options also work together with divergence and curl. Setting {\tt velocity=1} will output
-the time derivative of any quantity selected by the {\tt variables} option. The {\tt nsew} option has no
-effect on the scalar divergence field, but {\tt nsew=1} will make \emph{SW4} output a representation of
-the curl vector in the East, North, and vertical components.
-The file name extensions for the div and curl variables are described in the following table:
-\par
-\begin{center}
-\begin{tabular}{|c|c|c|c|c|} \hline
-   & \multicolumn{2}{|c|}{\tt variables=div} & \multicolumn{2}{|c|}{\tt variables=curl} \\ \hline
-   & \verb+velocity=0+  & \verb+velocity=1+ & \verb+velocity=0+  & \verb+velocity=1+  \\ \hline
-\verb+nsew=0+ & .div & .vdiv & .curlx, .curly, .curlz & .vcurlx, .vcurly, .vcurlz \\ \hline
-\verb+nsew=1+ & .div & .vdiv & .curle, .curln, .curlu & .vcurle, .vcurln, .vcurlu \\ \hline
-\end{tabular}
-\end{center}
-\par
-\emph{SW4} can output the time history of the strain components of the
-solution at the reciever station. The {\tt variables} option governs this 
-behavior. For example,
-\begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 variables=strains
-\end{verbatim}
-will output the six files {\tt sta1.xx}, {\tt sta1.yy}, {\tt sta1.zz}, {\tt sta1.xy}, {\tt sta1.xz}, and
-{\tt sta1.yz} in sac format containing the six Cartesian components of the symmetric strain tensor. 
-When {\tt velocity=1}, the strains of the time derivative of the solution are output on files 
-named {\tt sta1.vxx}, {\tt sta1.vyy}, etc.
-There is currently no support for outputting the strains in East, North, and vertical coordinates.
 
-\emph{SW4} can also output reciever time-histories in an ASCII text format,
+It is also possible to save the divergence, curl, or strain of the solution. The {\tt variables}
+option governs this behavior. For example,
 \begin{verbatim}
-sac lat=38.25 lon=-122.20 depth=0 file=sta1 sacformat=0 usgsformat=1
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 variables=div
 \end{verbatim}
-The ASCII text file holds all three components (or six when using {\tt variables=strains} ) in a single 
-file named {\tt sta1.txt}. When the
-\verb+usgsformat=1+ option is used, the file gets extension .txt independently of the \verb+nsew+
-and \verb+velocity+ options. Instead the header inside the file is modified to reflect its contents.
-Note that you must give the {\tt sacformat=0} option unless you want the solution to be output in
-both formats.
+outputs a single file named {\tt sta1.div} containing the divergence of the solution, which is
+independent of the orientation of the components. Similarly,
+\begin{verbatim}
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 variables=curl
+\end{verbatim}
+outputs the Cartesian components of the curl in the files {\tt sta1.curlx}, {\tt sta1.curly}, and
+{\tt sta1.curlz}. Furthermore, \emph{SW4} can output the components of the symmetric strain tensor,
+\begin{verbatim}
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 variables=strains
+\end{verbatim}
+In this case, six files are generated: {\tt sta1.xx}, {\tt sta1.yy}, {\tt sta1.zz}, {\tt sta1.xy},
+{\tt sta1.xz}, and {\tt sta1.yz}.
 
-\paragraph{Notes on the sac command:}
+For the curl and the strain, only \verb+nsew=0+ has been implemented. That is, we always output the
+Cartesian components of the curl and strain.
+
+%% The {\tt velocity} and {\tt nsew} options also work together with divergence and curl. Setting {\tt
+%%   velocity=1} will output the time derivative of any quantity selected by the {\tt variables}
+%% option. The {\tt nsew} option has no effect on the scalar divergence field, but {\tt nsew=1} will
+%% make \emph{SW4} output a representation of the curl vector in the East, North, and vertical
+%% components.  
+%% The file name extensions for the div and curl variables are described in the following
+%% table:
+%% \begin{center}
+%% \begin{tabular}{|c|c|c|c|c|} \hline
+%%    & \multicolumn{2}{|c|}{\tt variables=div} & \multicolumn{2}{|c|}{\tt variables=curl} \\ \hline
+%%    & \verb+velocity=0+  & \verb+velocity=1+ & \verb+velocity=0+  & \verb+velocity=1+  \\ \hline
+%% \verb+nsew=0+ & .div & .vdiv & .curlx, .curly, .curlz & .vcurlx, .vcurly, .vcurlz \\ \hline
+%% \verb+nsew=1+ & .div & .vdiv & .curle, .curln, .curlu & .vcurle, .vcurln, .vcurlu \\ \hline
+%% \end{tabular}
+%% \end{center}
+
+%% When {\tt velocity=1}, the strains of the time derivative of the solution are output on files 
+%% named {\tt sta1.vxx}, {\tt sta1.vyy}, etc.
+%% There is currently no support for outputting the strains in East, North, and vertical coordinates.
+
+\subsection{The ASCII text format}
+\emph{SW4} can also output reciever time-histories on an ASCII text format,
+\begin{verbatim}
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 sacformat=0 usgsformat=1
+\end{verbatim}
+The ASCII text file holds all components (usually three, but only one when {\tt
+  variables=div}, and six when {\tt variables=strains} ) in a single file named {\tt sta1.txt}. When
+the \verb+usgsformat=1+ option is used, the file gets extension .txt independently of the
+\verb+nsew+ and \verb+variables+ options.  Instead, the header of the file is modified to reflect
+its content. Note that you need to give the \verb+sacformat=0+ option unless you want the solution
+to be output in both formats.
+
+\subsection{Notes on the {\tt rec} command}
 \begin{itemize}
-\item SAC files are treated in the same way on parallel and serial file systems, because the data for each SAC
-file originates from one processor and is always written by that processor only.
+\item The files are treated in the same way on parallel and serial file systems, because the data
+  for each recording station originates from one processor (core) and is always written by that processor only.
 \item The binary SAC format is described in Section~\ref{sec:sac-format}.
-\item The ASCII text format is outlined in the header of those files.
+\item The ASCII text format is very simple and is outlined in its header.
 \item The binary SAC files can be read by the SAC program. We also provide a matlab/octave script in
   {\tt tools/readsac.m}.
 \item The ASCII text file format can be read by the Matlab/Octave script in {\tt tools/readusgs.m}.
-The ASCII text format was slightly modified with the addition of the strain output option. 
-The Matlab/Octave script {\tt tools/readusgsold.m} can be used to read
-the older version of ASCII text files.
+%The ASCII text format was slightly modified with the addition of the strain output option. 
+%The Matlab/Octave script {\tt tools/readusgsold.m} can be used to read
+%the older version of ASCII text files.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1944,7 +1985,7 @@ on the image file.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Generating a bird's eye view of the problem domain: the gmt command}\label{sec:gmt}
+\section{Creating a GMT script with the gmt command}\label{sec:gmt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The Generic Mapping Toolkit (\emph{GMT})~\cite{WesselSmithGMT} is a suite of image generation
 programs for geophysical applications. These programs can be used to make postscript plots like
@@ -2739,7 +2780,7 @@ topography input=... file=... resolution=... zmax=... order=... smooth=... gauss
 \bf 
 Required parameters:\\
 \tt 
-input, zmax\\
+input, zmax, file (except when input=gaussian)\\
 \rm Also see discussion below.
 \end{flushleft}
 The topography command specifies the shape of the free surface boundary, and optionally allows the
@@ -2757,9 +2798,9 @@ There are four ways of specifying the topography:
 \item {\bf input=cartesian} Read the topography as function of Cartesian coordinates. The file name
    must be specified by the {\bf file=...} parameter. The format for this file is described in
    Section~\ref{sec:topo-file-format}.
-\item {\bf input=efile} Read the topography from the Etree database. The Etree database must be
-  specified by an {\bf efile} command (see below). The spatial resolution for querying the Etree
-  database can be specified by the {\bf resolution=...} parameter.
+\item {\bf input=efile} Read the topography from the Etree database. The database file name
+   must be specified by the {\bf file=...} parameter. The spatial resolution for querying the Etree
+  database may be specified by the {\bf resolution=...} parameter.
 \item {\bf input=gaussian} Build an analytical topography in the shape of a Gaussian hill. The
   amplitude is specified by {\bf gaussianAmp=...}, the hill is centered at {\bf gaussianXc=...},
   {\bf gaussianYc=...}, and the half width of the hill in the $x$ and $y$-directions are specified by 
@@ -2772,9 +2813,13 @@ There are four ways of specifying the topography:
 \multicolumn{5}{|c|}{\bf topography command parameters (basic)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default}\\ \hline \hline
 %
-input & Type of input: grid, cartesian, efile or gaussian & string & none & none\\ \hline
+input & Type of input: geographic (or grid), cartesian, efile or gaussian & string & none & none\\ \hline
 %
-file & File name if input=grid or input=cartesian & string & none & none\\ \hline
+file & File name if input=geographic or input=cartesian & string & none & none\\ \hline
+%
+etree & File name of detailed database if input=efile (same as file) & string & none & none\\ \hline
+%
+xetree & File name of extended etree database if input=efile & string & none & none\\ \hline
 %
 resolution & Resolution for querying the efile if input-efile & real & meters & none \\ \hline
 %
@@ -2829,7 +2874,7 @@ gaussianLy & Width of the Gaussian hill in the y-direction & real & meters & 0.1
 \section{Output commands [optional]}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The output commands enables data to be saved from the simulation. The {\bf sac} command saves a time
+The output commands enables data to be saved from the simulation. The {\bf rec} command saves a time
 series of the solution at a recording station, which can be read by the SAC
 program~\cite{Goldstein-et-al} or the readsac.m Matlab script in the {\tt tools} directory. The {\bf
   image} command is used to save a two-dimensional cross-section of the solution, the material
@@ -2837,22 +2882,23 @@ properties, or the grid. The image files can be read by the readimagepatch.m Mat
 {\tt tools} directory. The {\bf volimage} command is used to save three-dimensional volumetric data
 of the solution, derived quantities of the solution, or the material model. These files are written
 to a binary format, which can be read by the VisIt post processor, using the {\bf volimage}
-plug-in. The {\bf gmt} command outputs a shell script file containing the location of all {\bf sac}
-stations and the epicenter, i.e. the location of the first {\bf source} command. This shell script
-file can be used for further postprocessing by the GMT program~\cite{WesselSmithGMT}.
+plug-in. The {\bf gmt} command outputs a shell script file containing the location of all {\bf rec}
+stations and the epicenter, i.e. the location of the {\bf source} command with the earliest start
+time. This shell script file can be used for further postprocessing by programs in the GMT
+suite~\cite{WesselSmithGMT}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{rec (or sac) [optional]}
 \index{command!rec}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The \verb+rec+ command is used to save the time history of the solution at a fixed
-location in space. For backwards compatibility with \emph{WPP}, this command can also be called
-\verb+sac+.
-% The \verb+sac+ command is described in \S~\ref{sec:sac}.
+The \verb+rec+ command is used to save the time history of the solution at a fixed location in
+space, see \S~\ref{sec:rec} for examples. For backwards compatibility with \emph{WPP}, this command
+can also be called \verb+sac+. However, some options of the \verb+sac+ command in \emph{WPP} have
+changed names and others are no longer supported.
 \begin{flushleft}
 \bf
 Syntax:\\
 \tt
-rec x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... type=... writeEvery=... eventDate=... eventTime=... nsew=... velocity=... usgsformat=... sacformat=... variables=...
+rec x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... writeEvery=... nsew=... usgsformat=... sacformat=... variables=...
 \\
 \bf Required parameters:\\
 \rm Location of the receiver in Cartesian or geographical coordinates.
@@ -2864,9 +2910,9 @@ The file format is described in Section~\ref{sec:sac-format}.
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf sac command parameters (part 1)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-x & x position of the receiver & real & m & none \\ \hline
-y & y position of the receiver & real & m & none \\ \hline
-z & z position of the receiver & real & m & none \\ \hline
+x & x position of the receiver & real & m & 0.0 \\ \hline
+y & y position of the receiver & real & m & 0.0 \\ \hline
+z & z position of the receiver & real & m & 0.0 \\ \hline
 \hline
 lat & latitude geographical coordinate of the receiver & real & degrees & none \\ \hline
 lon & longitude geographical coordinate of the receiver & real & degrees & none \\ \hline
@@ -2879,20 +2925,15 @@ topodepth & depth of the receiver (same as depth) & real & m & none \\ \hline
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf sac command parameters (part 2)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
-sta & name of the station & string & none & file \\ \hline
-file & file name  & string & none & sac \\ \hline
-writeEvery & cycle interval to write out the SAC file to disk & int & none & 1000 \\ \hline
-\hline
-eventDate & date the event occured: YYYY/MM/DD & int/int/int & none & date of run \\ \hline
-eventTime & time the event occured: hours:minutes:seconds & int:int:int & none & time of run \\ \hline
+file & file name  & string & none & station \\ \hline
+sta & name of the station & string & none & (same as file) \\ \hline
+writeEvery & cycle interval to write the file to disk & int & none & 1000 \\ \hline
 %
 usgsformat & output all components in an ASCII text file & int & none & 0 \\ \hline
 sacformat & output each component in a SAC file & int & none & 1 \\ \hline 
-type & binary or ascii (for SAC format) & string & none & binary \\ \hline
 \hline
 nsew & output (x,y,z)-components (0) or East, North, and vertical ($-z$) components (1)& int & none & 0 \\ \hline
-velocity & output time derivative of solution & int & none & 0 \\ \hline
-variables & solution, curl, divergence, or strains & string & none & solution \\ \hline
+variables & displacement, velocity, div, curl, or strains & string & none & displacement \\ \hline
 \end{tabular}
 \end{center}
 \index{sac parameters!sta, file, type, writeEvery, eventDate, eventTime, nsew, velocity, usgsformat, sacformat}
@@ -2971,8 +3012,8 @@ lambda  & 1st Lam\'e parameter \\ \hline
 mu      & 2nd Lam\'e parameter (shear modulus) \\ \hline
 p       & Compressional wave speed \\ \hline
 s       & Shear wave speed \\ \hline
-%qp      & $Q_P$ quality factor \\ \hline
-%qs      & $Q_S$ quality factor \\ \hline
+qp      & $Q_P$ quality factor \\ \hline
+qs      & $Q_S$ quality factor \\ \hline
 \end{tabular}
 \end{center}
 \index{image mode options!rho, lambda, mu, p, s}
@@ -3016,108 +3057,108 @@ uzerr   & $z$-component of error (difference between computed and exact solution
   velmag, hvel, hvelmax, vvelmax, uxerr, uyerr, uzerr, fx, fy, fz}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% images
+% 3D images
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% \subsection{volimage [optional]}
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% \index{command!volimage}
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% \label{keyword:volimage}
-%% \begin{flushleft}
-%% \bf Syntax:\\ \tt volimage file=... mode=... sample=... precision=... savelayer=...
-%%          cycle=... cycleInterval=... time=... timeInterval=... startTime=...
-%%          x1=... x2=... y1=... y2=... z1=... z2=... \\
-%% \bf Required parameter:\\
-%% \rm Time for output: (time, timeInterval, cycle, or cycleInterval).
-%% \end{flushleft}
-%% %
-%% The \verb+volimage+ command in \emph{SW4} allows you to save 3D volumetric data on file. These files
-%% can be read by the \emph{VisIt} post processor by using a special plug-in, which also is called
-%% \verb+volimage+. Be aware that these files can be {\em very} large. The output occurs at certain
-%% time levels during the simulation. The time levels are controlled by the parameters {\bf time=...},
-%% {\bf timeInterval=...}, {\bf cycle=...}, or {\bf cycleInterval=...}, which have the same meaning as
-%% in the image command. In addition, the {\bf startTime=...} option can be used in conjunction with
-%% {\bf cycleInterval} or {\bf timeInterval} to only output data after a specified time level in the
-%% simulation. The options {\bf file=...}, {\bf mode=...}, and {\bf precision=...} have the same
-%% meaning as the corresponding parameters in the image command. The set of possible modes, which is
-%% different from the image command, is given in the table below. Volimage produces files that are
-%% named in the same way as image files, but with an added extension {\tt .3D.} before the mode
-%% extension, for example, {\tt volimage.cycle=183.3D.curl}. When topography is present, i.e., the top
-%% grid is curvilinear, each {\bf volimage} command produces an additional file with the
-%% $z$-coordinates of the grid. In the above case, this file would be named {\tt volimage.3D.z}. This
-%% file is only saved once and is the same for all modes, but depends on the value of {\bf sample},
-%% {\bf savelayer} and {\bf x1, x2}, etc. The name of this file is included in the internal header of
-%% the corresponding \verb+volimage+ solution file. The grid file is needed by \emph{VisIt} to
-%% correctly visualize the solution. Note that the grid file is only saved when the input file contains
-%% a \verb+topography+ command.
+\subsection{volimage [optional]}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\index{command!volimage}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{keyword:volimage}
+\begin{flushleft}
+\bf Syntax:\\ \tt volimage file=... mode=... sample=... precision=... savelayer=...
+         cycle=... cycleInterval=... time=... timeInterval=... startTime=...
+         x1=... x2=... y1=... y2=... z1=... z2=... \\
+\bf Required parameter:\\
+\rm Time for output: (time, timeInterval, cycle, or cycleInterval).
+\end{flushleft}
+%
+The \verb+volimage+ command in \emph{SW4} allows you to save 3D volumetric data on file. These files
+can be read by the \emph{VisIt} post processor by using a special plug-in, which also is called
+\verb+volimage+. Be aware that these files can be {\em very} large. The output occurs at certain
+time levels during the simulation. The time levels are controlled by the parameters {\bf time=...},
+{\bf timeInterval=...}, {\bf cycle=...}, or {\bf cycleInterval=...}, which have the same meaning as
+in the image command. In addition, the {\bf startTime=...} option can be used in conjunction with
+{\bf cycleInterval} or {\bf timeInterval} to only output data after a specified time level in the
+simulation. The options {\bf file=...}, {\bf mode=...}, and {\bf precision=...} have the same
+meaning as the corresponding parameters in the image command. The set of possible modes, which is
+different from the image command, is given in the table below. Volimage produces files that are
+named in the same way as image files, but with an added extension {\tt .3D.} before the mode
+extension, for example, {\tt volimage.cycle=183.3D.curl}. When topography is present, i.e., the top
+grid is curvilinear, each {\bf volimage} command produces an additional file with the
+$z$-coordinates of the grid. In the above case, this file would be named {\tt volimage.3D.z}. This
+file is only saved once and is the same for all modes, but depends on the value of {\bf sample},
+{\bf savelayer} and {\bf x1, x2}, etc. The name of this file is included in the internal header of
+the corresponding \verb+volimage+ solution file. The grid file is needed by \emph{VisIt} to
+correctly visualize the solution. Note that the grid file is only saved when the input file contains
+a \verb+topography+ command.
 
-%% By default, when using supergrid far field boundary conditions, the sponge layer is removed from the
-%% volimage data set. The parameter option {\bf savelayer=yes} forces SW4 to save the complete field,
-%% including the sponge layers.  By default, the solution is saved at every grid point. The size of the
-%% data file can be significantly reduced by using the {\bf sample} option. For example, {\bf sample=2}
-%% only saves the solution at every other grid point, {\bf sample=3} at every third point, etc. The
-%% coarsening of the grid is the same in all three space dimensions.  The size of the file can also be
-%% reduced by using the optional parameters {\bf x1=...}, {\bf x2=...}, etc.. In this case, only the
-%% specified sub-domain is saved to file.
-%% %
-%% \begin{center}
-%% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-%% \multicolumn{5}{|c|}{\bf volimage command options (part 1)}\\ \hline
-%% {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
-%% \hline
-%% file        & file name header of image                                              & string & none & volimage \\ \hline
-%% mode        & specifies which field is written to the image file                     & string & none & rho \\  \hline
-%% sample      & save only every sample:th grid point                &  int   & none & 1 \\ \hline
-%% precision   & precision of image data on file (float/double) & string & none & float \\ \hline
-%% savelayer   & Include sponge layer at far field boundaries in saved data (yes/no) & string & none & no \\ \hline
-%% \end{tabular}
-%% \end{center}
-%% \index{volimage options!file, mode, sample, precision}
-%% %
-%% \begin{center}
-%% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-%% \multicolumn{5}{|c|}{\bf volimage command options (part 2)}\\ \hline
-%% {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
-%% \hline
-%% time          & simulation time to output image, will be closest depending on dt taken & real  & s    & none \\ \hline
-%% timeInterval  & simulation time interval to output series of images                    & real  & s    & none \\ \hline
-%% cycle         & time-step cycle to output image                                        & int    & none & none \\ \hline
-%% cycleInterval & time-step cycle interval to output a series of images                  & int    & none & none \\ \hline
-%% startTime     & only output data after this time level (only used with {\bf cycleInterval} or {\bf
-%%   timeInterval}) & real & s & -999.9 \\ \hline 
-%% x1          & minimum x-dim for the box shaped sub-region & real & m & 0 \\ \hline
-%% x2          & maximum x-dim for the box shaped sub-region & real & m & max x \\ \hline
-%% y1          & minimum y-dim for the box shaped sub-region & real & m & 0 \\ \hline
-%% y2          & maximum y-dim for the box shaped sub-region & real & m &  max y \\ \hline
-%% z1          & minimum z-dim for the box shaped sub-region & real & m & topography \\ \hline
-%% z2          & maximum z-dim for the box shaped sub-region & real & m & max z \\ \hline
-%% \end{tabular}
-%% \end{center}
-%% \index{volimage options!cycle, cycleInterval, time, timeInterval, startTime, x1, x2, y1, y2, z1, z2}
-%% %
-%% Options for mode include:
-%% %
-%% \begin{center}
-%% \begin{tabular}{|c|l|} \hline
-%% \multicolumn{2}{|c|}{\bf volimage mode sub-options}\\ \hline
-%% \bf{Value} & \bf{Description} \\ \hline  \hline
-%% ux      & displacement in the x-direction \\ \hline
-%% uy      & displacement in the y-direction \\ \hline
-%% uz      & displacement in the z-direction \\ \hline
-%% rho     & density \\ \hline
-%% p       & p velocity \\ \hline
-%% s       & s velocity \\ \hline
-%% div     & divergence (div) of the displacement \\ \hline
-%% curl    & magnitude of the rotation (curl) of the displacement \\ \hline 
-%% veldiv  & divergence (div) of the velocity \\ \hline
-%% velcurl & magnitude of the rotation (curl) of the velocity \\ \hline
-%% mag     & magnitude of the displacement \\ \hline
-%% velmag  & magnitude of the velocity \\ \hline
-%% \end{tabular}
-%% \end{center}
-%% Note that a supplemental \verb+volimage+ file (with extensions \verb+.z+) is created when topography
-%% is used. This file, which contains the $z$-coordinates of the grid, is automatically read
-%% by the \verb+volimage+ plug-in for \emph{VisIt} and allows it to construct the computational grid.
+By default, when using supergrid far field boundary conditions, the sponge layer is removed from the
+volimage data set. The parameter option {\bf savelayer=yes} forces SW4 to save the complete field,
+including the sponge layers.  By default, the solution is saved at every grid point. The size of the
+data file can be significantly reduced by using the {\bf sample} option. For example, {\bf sample=2}
+only saves the solution at every other grid point, {\bf sample=3} at every third point, etc. The
+coarsening of the grid is the same in all three space dimensions.  The size of the file can also be
+reduced by using the optional parameters {\bf x1=...}, {\bf x2=...}, etc.. In this case, only the
+specified sub-domain is saved to file.
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf volimage command options (part 1)}\\ \hline
+{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
+\hline
+file        & file name header of image                                              & string & none & volimage \\ \hline
+mode        & specifies which field is written to the image file                     & string & none & rho \\  \hline
+sample      & save only every sample:th grid point                &  int   & none & 1 \\ \hline
+precision   & precision of image data on file (float/double) & string & none & float \\ \hline
+savelayer   & Include sponge layer at far field boundaries in saved data (yes/no) & string & none & no \\ \hline
+\end{tabular}
+\end{center}
+\index{volimage options!file, mode, sample, precision}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf volimage command options (part 2)}\\ \hline
+{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
+\hline
+time          & simulation time to output image, will be closest depending on dt taken & real  & s    & none \\ \hline
+timeInterval  & simulation time interval to output series of images                    & real  & s    & none \\ \hline
+cycle         & time-step cycle to output image                                        & int    & none & none \\ \hline
+cycleInterval & time-step cycle interval to output a series of images                  & int    & none & none \\ \hline
+startTime     & only output data after this time level (only used with {\bf cycleInterval} or {\bf
+  timeInterval}) & real & s & -999.9 \\ \hline 
+x1          & minimum x-dim for the box shaped sub-region & real & m & 0 \\ \hline
+x2          & maximum x-dim for the box shaped sub-region & real & m & max x \\ \hline
+y1          & minimum y-dim for the box shaped sub-region & real & m & 0 \\ \hline
+y2          & maximum y-dim for the box shaped sub-region & real & m &  max y \\ \hline
+z1          & minimum z-dim for the box shaped sub-region & real & m & topography \\ \hline
+z2          & maximum z-dim for the box shaped sub-region & real & m & max z \\ \hline
+\end{tabular}
+\end{center}
+\index{volimage options!cycle, cycleInterval, time, timeInterval, startTime, x1, x2, y1, y2, z1, z2}
+%
+Options for mode include:
+%
+\begin{center}
+\begin{tabular}{|c|l|} \hline
+\multicolumn{2}{|c|}{\bf volimage mode sub-options}\\ \hline
+\bf{Value} & \bf{Description} \\ \hline  \hline
+ux      & displacement in the x-direction \\ \hline
+uy      & displacement in the y-direction \\ \hline
+uz      & displacement in the z-direction \\ \hline
+rho     & density \\ \hline
+p       & p velocity \\ \hline
+s       & s velocity \\ \hline
+div     & divergence (div) of the displacement \\ \hline
+curl    & magnitude of the rotation (curl) of the displacement \\ \hline 
+veldiv  & divergence (div) of the velocity \\ \hline
+velcurl & magnitude of the rotation (curl) of the velocity \\ \hline
+mag     & magnitude of the displacement \\ \hline
+velmag  & magnitude of the velocity \\ \hline
+\end{tabular}
+\end{center}
+Note that a supplemental \verb+volimage+ file (with extensions \verb+.z+) is created when topography
+is used. This file, which contains the $z$-coordinates of the grid, is automatically read
+by the \verb+volimage+ plug-in for \emph{VisIt} and allows it to construct the computational grid.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3136,7 +3177,7 @@ Syntax:\\
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf gmt command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-file & name of output file for gmt c-shell commands & string & wpp.gmt.csh  \\ \hline
+file & name of output file for gmt c-shell commands & string & sw4.gmt.csh  \\ \hline
 \end{tabular}
 \end{center}
 \index{gmt parameters!file}
@@ -3207,7 +3248,7 @@ amplambda & Material $\lambda$ amplitude                  & real & 1.0 \\ \hline
 \label{keyword:testlamb}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The {\bf testlamb} command solves Lamb's problem, i.e., the displacement due to a vertical point
-forcing on a flat free surface, see Appendix~\ref{sec:lamb} for details. 
+forcing on a flat free surface, see Appendix~\ref{sec:testlamb} for details. 
 \begin{flushleft}
 \bf
 Syntax:\\

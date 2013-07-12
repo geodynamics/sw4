@@ -1,0 +1,5 @@
+FC = openmpif77
+CC = openmpicc
+CXX = openmpicxx
+EXTRA_FORT_FLAGS = -fno-underscoring
+EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc45 -lgfortran

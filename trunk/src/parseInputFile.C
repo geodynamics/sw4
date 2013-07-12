@@ -5457,12 +5457,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   
   int writeEvery = 1000;
 
-  bool dateSet = false;
-  bool timeSet = false;
   bool topodepth = false;
-
-  string date = "";
-  string time = "";
 
   bool usgsformat = 0, sacformat=1; // default is to write sac files
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
