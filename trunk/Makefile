@@ -68,27 +68,19 @@ ifeq ($(UNAME),Linux)
   endif
 # for Bjorn's tux box
   ifeq ($(findstring tux270,$(HOSTNAME)),tux270)
-    linklibs = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+    include configs/make.tux270
+    foundincfile := "configs/make.tux270"
   endif
 # for Anders' tux box
   ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
-    linklibs = -L/home/andersp/lib -llapack -lblas -lgfortran
-    FC = gfortran
-    CC = mpicc
-    CXX = mpicxx
+    include configs/make.tux355
+    foundincfile := "configs/make.tux355"
   endif
 # For Edison at NERSC
   ifeq ($(findstring edison,$(HOSTNAME)),edison)
-    FC  = ftn
-    CC  = cc
-    CXX = CC
-    linklibs = -L/global/u2/b/bjorns/local/lapack-3.4.0 -llapack -lrefblas -lifcore
+    include configs/make.edison
+    foundincfile := "configs/make.edison"
   endif
-#  ifeq ($(etree),yes)
-#     CXXFLAGS += -DENABLE_ETREE
-#     CXXFLAGS += -I$(SW4INC)
-#     linklibs += -Wl,-rpath=$(SW4LIB) -L$(SW4LIB) -lcencalvm -lproj
-#  endif
 endif
 
 ifdef EXTRA_CXX_FLAGS
@@ -132,34 +124,36 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
+# this ifeq does not work on cab
 #ifeq ($(foundincfile), $(emptystring))
 #sw4:: $(FOBJ) $(builddir)
 #	@echo "ERROR: configuration file not found"
 #	@echo "foundincfile=" $(foundincfile)
 #else
-sw4: $(FOBJ) $(builddir)
+sw4: $(FOBJ)
+	@echo "*** Configuration file: " $(foundincfile) "***"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Configuration file: " $(foundincfile) "***"
 	@echo "*** Build directory: " $(builddir) " ***"
 #endif
 
-$(builddir):
-	/bin/mkdir -p $(builddir)
-
-$(builddir)/version.o:src/version.C $(builddir) .FORCE
+$(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<
 
 # having version.o depend on .FORCE has the effect of always building version.o
 .FORCE:
 
 $(builddir)/%.o:src/%.f
+	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/quadpack/%.f
+	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.C
+	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
 
 clean:

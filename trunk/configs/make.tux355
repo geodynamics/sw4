@@ -1,0 +1,5 @@
+SW4ROOT = ""
+FC = gfortran
+CC = mpicc
+CXX = mpicxx
+EXTRA_LINK_FLAGS = -L/home/andersp/lib -llapack -lblas -lgfortran
