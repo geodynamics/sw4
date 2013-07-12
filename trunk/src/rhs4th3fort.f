@@ -1851,7 +1851,7 @@ c-----------------------------------------------------------------------
                do c=1,3
                   alp(c,i,j,k) = icp*(-cm*alm(c,i,j,k) + u(c,i,j,k) +
      *         i6*( dto*dto*u(c,i,j,k) + dto*(up(c,i,j,k)-um(c,i,j,k)) +
-     *              (up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k))  )  
+     *              (up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k))  )
      *                                                  )
                enddo
             enddo
@@ -1910,3 +1910,227 @@ c$$$            endif
       return
       end
 
+c-----------------------------------------------------------------------
+      subroutine SOLVEATTFREEAC( ifirst, ilast, jfirst, jlast, kfirst, 
+     *                           klast, alpha, cof, up )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+      real*8 alpha(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 cof
+      k = 0
+      do j=jfirst+2,jlast-2
+         do i=ifirst+2,ilast-2
+            alpha(1,i,j,k) = alpha(1,i,j,k) + cof*up(1,i,j,k)
+            alpha(2,i,j,k) = alpha(2,i,j,k) + cof*up(2,i,j,k)
+            alpha(3,i,j,k) = alpha(3,i,j,k) + cof*up(3,i,j,k)
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine SOLVEATTFREEC( ifirst, ilast, jfirst, jlast, kfirst, 
+     *       klast, u, mu, la, muve, lambdave, bforcerhs, met, s, 
+     *       usesg, sgstrx, sgstry )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, kl
+      integer usesg
+      real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 bforcerhs(3,ifirst:ilast,jfirst:jlast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 muve(ifirst:ilast,jfirst:jlast), s(0:4)
+      real*8 lambdave(ifirst:ilast,jfirst:jlast)
+      real*8 mupt, lapt, ac, bc, cc, dc, s0i
+      real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
+      real*8 sgx, sgy, isgx, isgy, m2sg, m3sg, m4sg
+*** Hardcoded for the k=1 surface
+      k  = 1
+      kl = 1
+      sgx = 1
+      sgy = 1
+      isgx = 1
+      isgy = 1
+      s0i= 1/s(0)
+      do j=jfirst+2,jlast-2
+         do i=ifirst+2,ilast-2
+            mupt = mu(i,j,k)-muve(i,j)
+            lapt = la(i,j,k)-lambdave(i,j)
+            if( usesg.eq.1 )then
+               sgx = sgstrx(i)
+               sgy = sgstry(j)
+               isgy = 1/sgy
+               isgx = 1/sgx
+            endif
+            m2sg = SQRT(sgx*isgy)
+            m3sg = 1/m2sg
+            m4sg = isgx*m2sg
+
+            ac = sgx*isgy*met(2,i,j,k)**2+isgx*sgy*met(3,i,j,k)**2+
+     *                                     isgx*isgy*met(4,i,j,k)**2
+            bc = 1/(mupt*ac)
+            cc = (mupt+lapt)/(2*mupt+lapt)*bc/ac
+            dc = cc*(  m2sg*met(2,i,j,k)*bforcerhs(1,i,j)  
+     *               + m3sg*met(3,i,j,k)*bforcerhs(2,i,j)  
+     *               + m4sg*met(4,i,j,k)*bforcerhs(3,i,j) )
+            u(1,i,j,k-kl) = s0i*(    
+     *                bc*bforcerhs(1,i,j) - dc*met(2,i,j,k)*m2sg )
+            u(2,i,j,k-kl) = s0i*(
+     *                bc*bforcerhs(2,i,j) - dc*met(3,i,j,k)*m3sg )
+            u(3,i,j,k-kl) = s0i*( 
+     *                bc*bforcerhs(3,i,j) - dc*met(4,i,j,k)*m4sg )
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine ADDBSTRESSWRESC( ifirst, ilast, jfirst, jlast, kfirst,
+     *      klast, nz, alphap, alpham, muve, lave, bforcerhs, 
+     *      u, um, met, side, dt, omegave, memforce, muvebnd,
+     *      lambdavebnd, s, cof, usesg, sgstrx, sgstry )
+      implicit none
+      real*8 i6, c1, c2
+      parameter( i6=1d0/6, c1=2d0/3, c2=-1d0/12 )
+
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, kl
+      integer nz, side, usesg
+      real*8 alphap(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 alpham(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 muve(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 lave(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 muvebnd(ifirst:ilast,jfirst:jlast)
+      real*8 lambdavebnd(ifirst:ilast,jfirst:jlast)
+      real*8 bforcerhs(3,ifirst:ilast,jfirst:jlast)
+      real*8 memforce(3,ifirst:ilast,jfirst:jlast)
+      real*8 dt, omegave, s(0:4), cof, omdt, cp, cm, r1, r2, r3
+      real*8 rhs1, rhs2, rhs3, un1, vn1, wn1, rtu, ac
+      real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
+      real*8 sgx, sgy, isgx, isgy, m2sg, m3sg, m4sg
+      if( side.eq.5 )then
+         k  = 1
+         kl = 1
+      elseif( side.eq.6 )then
+         k  = nz
+         kl = -1
+      endif
+      omdt = omegave*dt
+      cp = 0.5d0 + 1/(2*omdt) + omdt/4 + omdt*omdt/12
+      cm = 0.5d0 - 1/(2*omdt) - omdt/4 + omdt*omdt/12
+      cof = (omdt+1)/(6*cp)
+      sgx = 1
+      sgy = 1
+      isgx = 1
+      isgy = 1
+      do j=jfirst+2,jlast-2
+         do i=ifirst+2,ilast-2
+            r1 = (-cm*alpham(1,i,j,k-kl)+(4+omdt*omdt)*i6*u(1,i,j,k-kl)+
+     *                i6*(1-omdt)*um(1,i,j,k-kl)+ memforce(1,i,j) )/cp
+            r2 = (-cm*alpham(2,i,j,k-kl)+(4+omdt*omdt)*i6*u(2,i,j,k-kl)+
+     *                i6*(1-omdt)*um(2,i,j,k-kl)+ memforce(2,i,j) )/cp
+            r3 = (-cm*alpham(3,i,j,k-kl)+(4+omdt*omdt)*i6*u(3,i,j,k-kl)+
+     *                i6*(1-omdt)*um(3,i,j,k-kl)+ memforce(3,i,j) )/cp
+            alphap(1,i,j,k-kl) = r1
+            alphap(2,i,j,k-kl) = r2
+            alphap(3,i,j,k-kl) = r3
+            muvebnd(i,j)     = muvebnd(i,j)     + cof*muve(i,j,k)
+            lambdavebnd(i,j) = lambdavebnd(i,j) + cof*lave(i,j,k)
+
+            if( usesg.eq.1 )then
+               sgx = sgstrx(i)
+               sgy = sgstry(j)
+               isgy = 1/sgy
+               isgx = 1/sgx
+            endif
+
+***   tangential derivatives
+            rhs1 = 
+*** pr
+     *   (2*muve(i,j,k)+lave(i,j,k))*met(2,i,j,k)*met(1,i,j,k)*(
+     *          c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+     *          c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   )*sgx*isgy 
+     *  + muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i+2,j,k)-alphap(2,i-2,j,k)) +
+     *        c1*(alphap(2,i+1,j,k)-alphap(2,i-1,j,k))  ) 
+     *  + muve(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i+2,j,k)-alphap(3,i-2,j,k)) +
+     *        c1*(alphap(3,i+1,j,k)-alphap(3,i-1,j,k))  )*isgy   
+*** qr
+     *  +  muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i,j+2,k)-alphap(1,i,j-2,k)) +
+     *        c1*(alphap(1,i,j+1,k)-alphap(1,i,j-1,k))   )*isgx*sgy
+     *  + lave(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+     *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )  
+
+*** (v-eq)
+            rhs2 = 
+*** pr
+     *     lave(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+     *        c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   ) 
+     *  + muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i+2,j,k)-alphap(2,i-2,j,k)) +
+     *        c1*(alphap(2,i+1,j,k)-alphap(2,i-1,j,k))  )*sgx*isgy
+*** qr
+     *  +    muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i,j+2,k)-alphap(1,i,j-2,k)) +
+     *        c1*(alphap(1,i,j+1,k)-alphap(1,i,j-1,k))   ) 
+     * + (2*muve(i,j,k)+lave(i,j,k))*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+     *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*sgy*isgx 
+     *  + muve(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i,j+2,k)-alphap(3,i,j-2,k)) +
+     *        c1*(alphap(3,i,j+1,k)-alphap(3,i,j-1,k))   )*isgx 
+
+*** (w-eq)
+            rhs3 = 
+*** pr
+     *      lave(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+     *        c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   )*isgy
+     *  + muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i+2,j,k)-alphap(3,i-2,j,k)) +
+     *        c1*(alphap(3,i+1,j,k)-alphap(3,i-1,j,k))  )*sgx*isgy
+*** qr 
+     *  +   muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i,j+2,k)-alphap(3,i,j-2,k)) +
+     *        c1*(alphap(3,i,j+1,k)-alphap(3,i,j-1,k))   )*sgy*isgx
+     *  + lave(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+     *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*isgx  
+      
+*** normal derivatives
+           un1 = s(1)*alphap(1,i,j,k)+s(2)*alphap(1,i,j,k+kl)
+     *          +s(3)*alphap(1,i,j,k+2*kl)
+     *          +s(4)*alphap(1,i,j,k+3*kl) + s(0)*r1
+           vn1 = s(1)*alphap(2,i,j,k)+s(2)*alphap(2,i,j,k+kl)
+     *          +s(3)*alphap(2,i,j,k+2*kl)
+     *          +s(4)*alphap(2,i,j,k+3*kl) + s(0)*r2
+           wn1 = s(1)*alphap(3,i,j,k)+s(2)*alphap(3,i,j,k+kl)
+     *          +s(3)*alphap(3,i,j,k+2*kl)
+     *          +s(4)*alphap(3,i,j,k+3*kl) + s(0)*r3
+
+           m2sg = SQRT(sgx*isgy)
+           m3sg = 1/m2sg
+           m4sg = isgx*m2sg
+
+           rtu = un1*m2sg*met(2,i,j,k)+vn1*m3sg*met(3,i,j,k)+
+     *           wn1*m4sg*met(4,i,j,k)
+           ac  = sgx*isgy*met(2,i,j,k)**2+sgy*isgx*met(3,i,j,k)**2+
+     *           isgx*isgy*met(4,i,j,k)**2
+           rhs1 = rhs1 +(muve(i,j,k)+lave(i,j,k))*rtu*m2sg*met(2,i,j,k)+
+     *                                            muve(i,j,k)*ac*un1
+           rhs2 = rhs2 +(muve(i,j,k)+lave(i,j,k))*rtu*m3sg*met(3,i,j,k)+
+     *                                            muve(i,j,k)*ac*vn1
+           rhs3 = rhs3 +(muve(i,j,k)+lave(i,j,k))*rtu*m4sg*met(4,i,j,k)+
+     *                                            muve(i,j,k)*ac*wn1
+           bforcerhs(1,i,j) = bforcerhs(1,i,j) + rhs1
+           bforcerhs(2,i,j) = bforcerhs(2,i,j) + rhs2
+           bforcerhs(3,i,j) = bforcerhs(3,i,j) + rhs3
+         enddo
+      enddo
+      end      

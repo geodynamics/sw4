@@ -79,6 +79,7 @@ public:
    size_t count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
+   void assign( const double* ar );
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

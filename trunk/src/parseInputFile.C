@@ -1676,15 +1676,20 @@ void EW::processTwilight(char* buffer)
   // Use supergrid stretching
   if( sgstretch == 1 )
   {
-     for( int side=0 ; side < 6 ; side++ )
+     for( int side=0 ; side < 4 ; side++ )
 	if( bct[side] == bDirichlet )
 	   bct[side] = bSuperGrid;
+
+     for( int side=4 ; side < 5 ; side++ )
+	if( bct[side] == bDirichlet && !topographyExists() )
+	   bct[side] = bSuperGrid;
+     
      if( bct[0] == bSuperGrid || bct[1] == bSuperGrid )
 	m_supergrid_taper_x.set_twilight(omstrx);
      if( bct[2] == bSuperGrid || bct[3] == bSuperGrid )
 	m_supergrid_taper_y.set_twilight(omstry);
 
-     CHECK_INPUT( (bct[4] == bSuperGrid && bct[5] == bSuperGrid) || (bct[4] == bStressFree && bct[5] == bStressFree),
+     CHECK_INPUT( (bct[4] == bSuperGrid && bct[5] == bSuperGrid) || (bct[4] == bStressFree && bct[5] == bStressFree) || (bct[4]==bDirichlet || bct[5] == bDirichlet),
 	   "Error: Twilight testing with supergrid stretching must have the same b.c. (stress free or supergrid) on the z=low and z=high boundaries" );
      if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
 	CHECK_INPUT( !topographyExists(), "Error: Twilight testing, supergrid stretching can not be used in the z-direction when topography is present");

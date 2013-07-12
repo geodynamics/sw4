@@ -25,41 +25,55 @@ void F77_FUNC(rhouttlumf, RHOUTTLUMF)(int*, int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfort,FORCINGFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double* );
-void F77_FUNC(forcingfortatt,FORCINGFORTATT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-				       double*, double*, double*, double*, double* );
 void F77_FUNC(forcingfortc,FORCINGFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
+void F77_FUNC(forcingfortatt,FORCINGFORTATT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
-   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
-void F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)(int*, int*, int*, int*, int*, 
+				       double*, double*, double*, double*, double* );
+void F77_FUNC(forcingfortattc,FORCINGFORTATTC)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+					       double*, double*, double*, double*, double*, double* );
+void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
    	 			       double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
+void F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void F77_FUNC(forcingfortsgattc,FORCINGFORTSGATTC)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+				   double*, double*, double*, double*, double*,double*,double*,double*, double* );
 void F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
 void F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*, 
+void F77_FUNC(forcingttattfortsgc,FORCINGTTATTFORTSGC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
-				       double*, double*, double*, double*, double* );
-void F77_FUNC(forcingttattfort,FORCINGTTATTFORT)(int*, int*, int*, int*, int*, 
+				       double*, double*, double*, double*, double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfortc,FORCINGTTFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					     double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)(int*, int*, int*, int*, int*, 
+void F77_FUNC(forcingttattfort,FORCINGTTATTFORT)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
-			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
+				       double*, double*, double*, double*, double* );
+void F77_FUNC(forcingttattfortc,FORCINGTTATTFORTC)(int*, int*, int*, int*, int*, 
+				       int*, double*, double*, double*, double*, double*, double*, double*, 
+						   double*, double*, double*, double*, double*, double* );
 void F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 						     double*, double*, double*, double*, double*, double* );
+void F77_FUNC(addmemvarforcingc,ADDMEMVARFORCINGC)( int*, int*, int*, int*, int*, int*, double*, double*, double*, 
+						    double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(exactaccfort,EXACTACCFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double* );
 void F77_FUNC(exactaccfortc,EXACTACCFORTC)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
@@ -90,7 +104,8 @@ void F77_FUNC(solerr3, SOLERR3)(int*, int*, int*, int*, int*, int*, double *h, d
    void F77_FUNC(solerr3c, SOLERR3c)(int*, int*, int*, int*, int*, int*, double *uex, double *u, double* x, double* y,
                                      double* z, double* jac, double *li, double *l2, double *xli, 
 				     double *x0, double *y0, double *z0, double *radius,
-				     int *imin, int *imax, int *jmin, int *jmax, int *kmin, int *kmax);
+				     int *imin, int *imax, int *jmin, int *jmax, int *kmin, int *kmax,
+				     int* usesg, double* strx, double* stry );
 void F77_FUNC(solerrgp, SOLERRGP)(int*, int*, int*, int*, int*, int*, double*, double*, double*, double *li,
 				double *l2 );
 void F77_FUNC(twilightfort,TWILIGHTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
@@ -115,9 +130,9 @@ void F77_FUNC(energy4c,ENERGY4C)( int*, int*, int*, int*, int*, int*,  int*, int
 void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 				    double*, double*, double*, int* );
 void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
-					double*, int*, double*, double*, double* );
+					  double*, int*, double*, double*, double*, char* );
 void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
-					      double*, double*, int*, double*, double*, double*, double*, double* );
+					      double*, double*, int*, double*, double*, double*, double*, double*, char* );
 
 void F77_FUNC(addgradrho,ADDGRADRHO)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 				       double*, double*, double*, double*, double*, double*, double*,
@@ -1436,11 +1451,13 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     }
 
 // need to exclude parallel overlap from L2 calculation
+    int usesg = usingSupergrid();
     if( topographyExists() && g == mNumberOfGrids-1 )
        F77_FUNC(solerr3c, SOLERR3C)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 				     uex_ptr, u_ptr, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mJ.c_ptr(),
 				     &linfLocal, &l2Local, &xInfGrid, &x0, &y0, &z0, &radius,
-				   &imin, &imax, &jmin, &jmax, &kmin, &kmax );
+				     &imin, &imax, &jmin, &jmax, &kmin, &kmax,
+				     &usesg, m_sg_str_x[g], m_sg_str_y[g] );
     else
        F77_FUNC(solerr3, SOLERR3)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
 				   uex_ptr, u_ptr, &linfLocal, &l2Local, &xInfGrid, &m_zmin[g], &x0,
@@ -3273,12 +3290,27 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
 						    &amprho, &ampmu, &ampla,
 						    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
 						    &omstrx, &omstry, &omstrz );
+           if( m_use_attenuation )
+	   {
+	      F77_FUNC(forcingfortsgattc,FORCINGFORTSGATTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+							     &klast, f_ptr, &a_t, &om, &cv, &ph, &omm,
+							     &phm, &amprho, &ampmu, &ampla,
+							     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+							     &omstrx, &omstry, &omstrz );
+	   }
 	}
         else
+	{
 	   F77_FUNC(forcingfortc,FORCINGFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, 
 						&phm, &amprho, &ampmu, &ampla,
 						mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+           if( m_use_attenuation )
+	      F77_FUNC(forcingfortattc,FORCINGFORTATTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+							 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+							 &amprho, &ampmu, &ampla,
+							 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	}
      }
   }
   else if( m_rayleigh_wave_test )
@@ -3391,12 +3423,23 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 							&amprho, &ampmu, &ampla,
 							mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
 							&omstrx, &omstry, &omstrz );
+           if( m_use_attenuation )
+	      F77_FUNC(forcingttattfortsgc,FORCINGTTATTFORTSGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+				      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+							       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+							       &omstrx, &omstry, &omstrz );
 	}
 	else
+	{
 	   F77_FUNC(forcingttfortc,FORCINGTTFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						    &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
 						    &amprho, &ampmu, &ampla,
 						    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	   if( m_use_attenuation )
+	      F77_FUNC(forcingttattfortc,FORCINGTTATTFORTC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+							   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+							   &amprho, &ampmu, &ampla, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	}
      }
   }
   else if( m_rayleigh_wave_test )
@@ -3501,16 +3544,35 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      kfirst   = m_kStart[g];
      klast    = m_kEnd[g];
      onesided_ptr = m_onesided[g];
+     char op = '='; // assign Uacc := L_u(u)
      if( usingSupergrid() )
 	F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
 					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-                                            m_sg_str_x[g], m_sg_str_y[g] );
+						m_sg_str_x[g], m_sg_str_y[g], &op );
      else
 	F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof );
-
+					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+    if( m_use_attenuation && m_number_mechanisms > 0 )
+    {
+       op = '-'; // Subtract Uacc := Uacc - L_a(alpha)
+       for( int a=0 ; a < m_number_mechanisms ; a++ )
+       {
+          double* alpha_ptr   = a_AlphaVE[g][a].c_ptr();
+          double* mua_ptr     = mMuVE[g][a].c_ptr();
+          double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
+          if(  usingSupergrid() )
+	     F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+					    alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+						m_sg_str_x[g], m_sg_str_y[g], &op );
+	  else
+	     F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+					    alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+       }
+    }
   }
 }
 
@@ -3540,13 +3602,8 @@ void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarra
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
     dt2 = mDt*mDt;
-    
-     //  subroutine predfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     // +     up, u, um, lu, fo, rho, dt2 )
-
     F77_FUNC(predfort,PREDFORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 				up_ptr, u_ptr, um_ptr, lu_ptr, fo_ptr, rho_ptr, &dt2 );    
-
   }
 }
 
@@ -3616,8 +3673,7 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 }
 
 //-----------------------------------------------------------------------
-void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
-				vector<Sarray*>& a_AlphaVEm,
+void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
 				double a_t )
 {
@@ -3648,10 +3704,14 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
 	 double om = m_twilight_forcing->m_omega;
 	 double ph = m_twilight_forcing->m_phase;
 	 double cv = m_twilight_forcing->m_c;
-
-         F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+         if( topographyExists() && g == mNumberOfGrids-1 )
+	    F77_FUNC(addmemvarforcingc,ADDMEMVARFORCINGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
 						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-						      &mGridSize[g], &m_zmin[g] );
+							   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 else
+	    F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+							 &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+							 &mGridSize[g], &m_zmin[g] );
       }
    }
 }

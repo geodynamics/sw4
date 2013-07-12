@@ -266,7 +266,7 @@ c	coeff = beta*dt/h
 c beta is the supergrid damping coefficient as entered in the input file
 c
 c add in the SG damping
-c
+c    
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2
 	    do i=ifirst+2, ilast-2

@@ -494,6 +494,14 @@ void Sarray::save_to_disk( const char* fname )
       std::cout << "Error saving data array to " << fname << std::endl;
    close(fd);
 }
+
+//-----------------------------------------------------------------------
+void Sarray::assign( const double* ar )
+{
+   for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
+      m_data[i] = ar[i];
+}
+
 //-----------------------------------------------------------------------
 // void Sarray::write( char* filename, CartesianProcessGrid* cartcomm,
 // 		    std::vector<double> pars )

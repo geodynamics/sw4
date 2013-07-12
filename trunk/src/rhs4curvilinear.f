@@ -410,9 +410,51 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine SUBSURFFORCING( ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast, k, met, jac, tau, forcing )
+***********************************************************************
+***
+*** Given tau, Cartesian stress tensor on boundary, compute the stress
+*** normal to the k=1 boundary of a curvilinear grid.
+***
+*** tau is ordered as:
+***    tau(1) = t_{xx}, tau(2) = t_{xy} tau(3) = t_{xz} 
+***    tau(4) = t_{yy}, tau(5) = t_{yz} tau(6) = t_{zz}
+***
+***********************************************************************
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer i, j, k
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 forcing(3,ifirst:ilast,jfirst:jlast)
+      real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 sqjac
+      do j=jfirst,jlast
+         do i=ifirst,ilast
+            sqjac = SQRT(jac(i,j,k))
+c            if( i.eq.23 .and. j.eq.18 )then
+c               write(*,*) 'twf ',sqjac*( met(2,i,j,k)*tau(1,i,j)+
+c     *                                met(3,i,j,k)*tau(2,i,j)+
+c     *                          met(4,i,j,k)*tau(3,i,j) )
+c            endif
+            forcing(1,i,j) =  forcing(1,i,j) - 
+     *         sqjac*( met(2,i,j,k)*tau(1,i,j)+ 
+     *         met(3,i,j,k)*tau(2,i,j)+met(4,i,j,k)*tau(3,i,j) ) 
+            forcing(2,i,j) =  forcing(2,i,j) - 
+     *         sqjac*( met(2,i,j,k)*tau(2,i,j)+
+     *         met(3,i,j,k)*tau(4,i,j)+met(4,i,j,k)*tau(5,i,j) )
+            forcing(3,i,j) =  forcing(3,i,j) - 
+     *          sqjac*( met(2,i,j,k)*tau(3,i,j)+
+     *         met(3,i,j,k)*tau(5,i,j)+met(4,i,j,k)*tau(6,i,j) )
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
       subroutine CURVILINEAR4( ifirst, ilast, jfirst, jlast, kfirst,
      *                         klast, u, mu, la, met, jac, lu, 
-     *                         onesided, acof, bope, ghcof )
+     *                         onesided, acof, bope, ghcof, op )
 
       implicit none
       real*8 c1, c2, tf, i6, i144
@@ -428,17 +470,30 @@ c-----------------------------------------------------------------------
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 cof1, cof2, cof3, cof4, cof5, r1, r2, r3, ijac
-      real*8 mux1, mux2, mux3, mux4
+      real*8 mux1, mux2, mux3, mux4, sgn, a1
       real*8 mucofu2, mucofuv, mucofuw, mucofv2, mucofvw, mucofw2
       real*8 ghcof(6), acof(6,8,8), bope(6,8)
       real*8 dudrp2, dudrp1, dudrm1, dudrm2
       real*8 dvdrp2, dvdrp1, dvdrm1, dvdrm2
       real*8 dwdrp2, dwdrp1, dwdrm1, dwdrm2
+      character*1 op
 
 *** met(1) is sqrt(J)*px = sqrt(J)*qy
 *** met(2) is sqrt(J)*rx
 *** met(3) is sqrt(J)*ry
 *** met(4) is sqrt(J)*rz
+
+      
+      if( op.eq.'=' )then
+         a1 = 0
+         sgn= 1
+      elseif( op.eq.'+')then
+         a1 = 1
+         sgn= 1
+      elseif( op.eq.'-')then
+         a1 = 1
+         sgn=-1
+      endif
 
       kstart = kfirst+2
       if( onesided(5).eq.1 )then
@@ -880,9 +935,9 @@ c-----------------------------------------------------------------------
      *        c1*(u(2,i,j+1,q)-u(2,i,j-1,q))  ) )
 
       enddo
-          lu(1,i,j,k) = r1*ijac
-          lu(2,i,j,k) = r2*ijac
-          lu(3,i,j,k) = r3*ijac
+          lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac
+          lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r2*ijac
+          lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac
                enddo
             enddo
          enddo
@@ -1153,7 +1208,8 @@ c-----------------------------------------------------------------------
      *        c1*(u(2,i,j-1,k+1)-u(2,i,j-1,k-1)) ) ) )
 
 c          lu(1,i,j,k) = r1/jac(i,j,k)
-          lu(1,i,j,k) = r1*ijac
+c          lu(1,i,j,k) = r1*ijac
+          lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac
 *** v-equation
 
           r1 = 0
@@ -1417,7 +1473,8 @@ c          lu(1,i,j,k) = r1/jac(i,j,k)
      *        c1*(u(3,i,j-1,k+1)-u(3,i,j-1,k-1)) )  ) )
 
 c          lu(2,i,j,k) = r1/jac(i,j,k)
-          lu(2,i,j,k) = r1*ijac
+c          lu(2,i,j,k) = r1*ijac
+          lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r1*ijac
 *** w-equation
 
           r1 = 0
@@ -1635,12 +1692,155 @@ c      r1 = r1
 
 
 c          lu(3,i,j,k) = r1/jac(i,j,k)
-          lu(3,i,j,k) = r1*ijac
+c          lu(3,i,j,k) = r1*ijac
+          lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r1*ijac
 
       enddo
       enddo
       enddo
       end
 
+c-----------------------------------------------------------------------
+      subroutine ADDBSTRESSC( ifirst, ilast, jfirst, jlast, kfirst, 
+     *              klast, nz, u, mu, la, bs, met, side, s, op, ghterm,
+     *              usesg, sgstrx, sgstry )
+      implicit none
+      real*8 c1, c2
+      parameter( c1=2d0/3, c2=-1d0/12 )
 
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer i, j, k, kl, nz, side, a1, a2, ghterm, usesg
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 bs(3,ifirst:ilast,jfirst:jlast)
+      real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast), sgx, sgy
+      real*8 s(0:4), rhs1, rhs2, rhs3, ac, rtu, un1, vn1, wn1
+      real*8 m2sg, m3sg, m4sg, isgx, isgy, sf
+      character*1 op
 
+      if( side.eq.5 )then
+         k = 1
+         kl= 1
+      elseif( side.eq.6 )then
+         k = nz
+         kl= -1
+      endif
+      if( op.eq.'=' )then
+         a1 = 0
+         a2 = 1
+      elseif( op.eq.'+' )then
+         a1 = 1
+         a2 = 1
+      elseif( op.eq.'-')then
+         a1 = 1
+         a2 =-1
+      endif
+      sgx = 1
+      sgy = 1
+      isgx = 1
+      isgy = 1
+      sf = 1
+
+      do j=jfirst+2,jlast-2
+         do i=ifirst+2,ilast-2
+            if( usesg.eq.1 )then
+               sgx = sgstrx(i)
+               sgy = sgstry(j)
+               isgy = 1/sgy
+               isgx = 1/sgx
+            endif
+
+*** First, tangential derivatives
+            rhs1 = 
+*** pr
+     *      (2*mu(i,j,k)+la(i,j,k))*met(2,i,j,k)*met(1,i,j,k)*(
+     *          c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+     *          c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   )*sgx*isgy 
+     *  + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i+2,j,k)-u(2,i-2,j,k)) +
+     *        c1*(u(2,i+1,j,k)-u(2,i-1,j,k))  ) 
+     *  + mu(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i+2,j,k)-u(3,i-2,j,k)) +
+     *        c1*(u(3,i+1,j,k)-u(3,i-1,j,k))  )*isgy   
+*** qr
+     *  +    mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i,j+2,k)-u(1,i,j-2,k)) +
+     *        c1*(u(1,i,j+1,k)-u(1,i,j-1,k))   )*isgx*sgy 
+     *  + la(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+     *        c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )  
+c     *               - forcing(1,i,j)
+
+*** (v-eq)
+            rhs2 = 
+*** pr
+     *     la(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+     *        c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   ) 
+     *  + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i+2,j,k)-u(2,i-2,j,k)) +
+     *        c1*(u(2,i+1,j,k)-u(2,i-1,j,k))  )*sgx*isgy 
+*** qr
+     *  +    mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i,j+2,k)-u(1,i,j-2,k)) +
+     *        c1*(u(1,i,j+1,k)-u(1,i,j-1,k))   )
+     * + (2*mu(i,j,k)+la(i,j,k))*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+     *        c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )*sgy*isgx 
+     *  + mu(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i,j+2,k)-u(3,i,j-2,k)) +
+     *        c1*(u(3,i,j+1,k)-u(3,i,j-1,k))   )*isgx 
+c     *               - forcing(2,i,j)
+
+*** (w-eq)
+            rhs3 = 
+*** pr
+     *      la(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+     *        c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   )*isgy 
+     *  + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i+2,j,k)-u(3,i-2,j,k)) +
+     *        c1*(u(3,i+1,j,k)-u(3,i-1,j,k))  )*sgx*isgy 
+*** qr 
+     *  +    mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i,j+2,k)-u(3,i,j-2,k)) +
+     *        c1*(u(3,i,j+1,k)-u(3,i,j-1,k))   )*sgy*isgx 
+     *  + la(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+     *        c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )*isgx
+c     *                - forcing(3,i,j)
+      
+*** then, normal derivatives
+           un1 = s(1)*u(1,i,j,k)+s(2)*u(1,i,j,k+kl)+s(3)*u(1,i,j,k+2*kl)
+     *          +s(4)*u(1,i,j,k+3*kl)
+           vn1 = s(1)*u(2,i,j,k)+s(2)*u(2,i,j,k+kl)+s(3)*u(2,i,j,k+2*kl)
+     *          +s(4)*u(2,i,j,k+3*kl)
+           wn1 = s(1)*u(3,i,j,k)+s(2)*u(3,i,j,k+kl)+s(3)*u(3,i,j,k+2*kl)
+     *          +s(4)*u(3,i,j,k+3*kl)
+           if( ghterm .eq. 1 )then
+              un1 = un1 + s(0)*u(1,i,j,k-kl)
+              vn1 = vn1 + s(0)*u(2,i,j,k-kl)
+              wn1 = wn1 + s(0)*u(3,i,j,k-kl)
+           endif
+           m2sg = SQRT(sgx*isgy)
+           m3sg = 1/m2sg
+           m4sg = isgx*m2sg
+
+           rtu = un1*m2sg*met(2,i,j,k) + vn1*m3sg*met(3,i,j,k) +
+     *           wn1*m4sg*met(4,i,j,k)
+           ac  = sgx*isgy*met(2,i,j,k)**2 + sgy*isgx*met(3,i,j,k)**2 
+     *                                   + isgx*isgy*met(4,i,j,k)**2
+           rhs1 = rhs1 + (mu(i,j,k)+la(i,j,k))*rtu*m2sg*met(2,i,j,k) +
+     *                                            mu(i,j,k)*ac*un1
+           rhs2 = rhs2 + (mu(i,j,k)+la(i,j,k))*rtu*m3sg*met(3,i,j,k) +
+     *                                            mu(i,j,k)*ac*vn1
+           rhs3 = rhs3 + (mu(i,j,k)+la(i,j,k))*rtu*m4sg*met(4,i,j,k) +
+     *                                            mu(i,j,k)*ac*wn1
+           bs(1,i,j) = a1*bs(1,i,j) + a2*rhs1
+           bs(2,i,j) = a1*bs(2,i,j) + a2*rhs2
+           bs(3,i,j) = a1*bs(3,i,j) + a2*rhs3
+        enddo
+      enddo
+      end

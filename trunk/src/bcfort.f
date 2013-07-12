@@ -1153,3 +1153,211 @@ c-----------------------------------------------------------------------
       enddo
       end
          
+c-----------------------------------------------------------------------
+      subroutine TWSTENSORATT( ifirst, ilast, jfirst, jlast, kfirst, 
+     *                  klast, kz, t, omega, c, phase, xx, yy, zz,
+     *                  tau, mu, lambda )
+***********************************************************************
+***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
+***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
+***
+***********************************************************************
+
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      integer i, j, kz
+      real*8 muu, lambdaa, x, y, z, t, omega, c, phase
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision stensor(6)
+      doubleprecision t1
+      doubleprecision t12
+      doubleprecision t13
+      doubleprecision t15
+      doubleprecision t16
+      doubleprecision t17
+      doubleprecision t19
+      doubleprecision t20
+      doubleprecision t24
+      doubleprecision t27
+      doubleprecision t28
+      doubleprecision t3
+      doubleprecision t31
+      doubleprecision t32
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t4
+      doubleprecision t41
+      doubleprecision t42
+      doubleprecision t44
+      doubleprecision t48
+      doubleprecision t49
+      doubleprecision t5
+      doubleprecision t61
+      doubleprecision t64
+      doubleprecision t8
+      doubleprecision t9
+
+      do j=jfirst,jlast
+         do i=ifirst,ilast
+            x = xx(i,j,kz)
+            y = yy(i,j,kz)
+            z = zz(i,j,kz)
+            muu     = mu(i,j,kz)
+            lambdaa = lambda(i,j,kz)
+        t1 = c*t
+        t3 = omega*(x-t1)
+        t4 = -t3-phase
+        t5 = sin(t4)
+        t8 = omega*x+phase
+        t9 = sin(t8)
+        t12 = -omega*(z-t1)-phase
+        t13 = cos(t12)
+        t15 = t5*omega*t9*t13
+        t16 = cos(t4)
+        t17 = cos(t8)
+        t19 = omega*t13
+        t20 = t16*t17*t19
+        t24 = sin(t3)
+        t27 = -omega*(y-t1)-phase
+        t28 = sin(t27)
+        t31 = omega*z+phase
+        t32 = cos(t31)
+        t36 = omega*y+phase
+        t37 = cos(t36)
+        t41 = lambdaa*(t15+t20+t24*t28*omega*t32+t17*t37*t19)
+        stensor(1) = 2*muu*(t15+t20)+t41
+        t42 = cos(t3)
+        t44 = cos(t27)
+        stensor(2) = muu*t42*omega*t44*t32
+        t48 = sin(t12)
+        t49 = t48*omega
+        stensor(3) = muu*(t16*t9*t49+t9*omega*t37*t48)
+        stensor(4) = 2*muu*t24*t28*omega*t32+t41
+        t61 = sin(t31)
+        t64 = sin(t36)
+        stensor(5) = muu*(-t24*t44*t61*omega+t17*t64*t49)
+        stensor(6) = 2*muu*t17*t37*t13*omega+t41
+        tau(1,i,j) = stensor(1)
+        tau(2,i,j) = stensor(2)
+        tau(3,i,j) = stensor(3)
+        tau(4,i,j) = stensor(4)
+        tau(5,i,j) = stensor(5)
+        tau(6,i,j) = stensor(6)
+      enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine TWSTENSORSGATT( ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast, kz, t, omega, c, phase, xx, yy, zz,
+     *     tau, mu, lambda, omstrx, omstry )
+
+***********************************************************************
+***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
+***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
+***
+***********************************************************************
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      integer i, j, kz
+      real*8 muu, lambdaa, x, y, z, t, omega, c, phase
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision omstrx
+      doubleprecision omstry
+      doubleprecision stensor(6)
+      doubleprecision t10
+      doubleprecision t13
+      doubleprecision t14
+      doubleprecision t17
+      doubleprecision t18
+      doubleprecision t2
+      doubleprecision t21
+      doubleprecision t22
+      doubleprecision t24
+      doubleprecision t26
+      doubleprecision t31
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t38
+      doubleprecision t39
+      doubleprecision t4
+      doubleprecision t42
+      doubleprecision t43
+      doubleprecision t44
+      doubleprecision t47
+      doubleprecision t48
+      doubleprecision t5
+      doubleprecision t52
+      doubleprecision t53
+      doubleprecision t55
+      doubleprecision t59
+      doubleprecision t6
+      doubleprecision t72
+      doubleprecision t76
+      doubleprecision t8
+      doubleprecision t9
+
+      do j=jfirst,jlast
+         do i=ifirst,ilast
+            x = xx(i,j,kz)
+            y = yy(i,j,kz)
+            z = zz(i,j,kz)
+            muu = mu(i,j,kz)
+            lambdaa = lambda(i,j,kz)
+        t2 = sin(omstrx*x)
+        t4 = 1+t2/2
+        t5 = muu*t4
+        t6 = c*t
+        t8 = omega*(x-t6)
+        t9 = -t8-phase
+        t10 = sin(t9)
+        t13 = omega*x+phase
+        t14 = sin(t13)
+        t17 = -omega*(z-t6)-phase
+        t18 = cos(t17)
+        t21 = cos(t9)
+        t22 = cos(t13)
+        t24 = omega*t18
+        t26 = t10*omega*t14*t18+t21*t22*t24
+        t31 = sin(omstry*y)
+        t33 = 1+t31/2
+        t34 = sin(t8)
+        t38 = -omega*(y-t6)-phase
+        t39 = sin(t38)
+        t42 = omega*z+phase
+        t43 = cos(t42)
+        t44 = t39*omega*t43
+        t47 = omega*y+phase
+        t48 = cos(t47)
+        t52 = lambdaa*(t4*t26+t33*t34*t44+t22*t48*t24)
+        stensor(1) = 2*t5*t26+t52
+        t53 = cos(t8)
+        t55 = cos(t38)
+        stensor(2) = t5*t53*omega*t55*t43
+        t59 = sin(t17)
+        stensor(3) = muu*(t21*t14*t59*omega+t4*t14*omega*t48*t59)
+        stensor(4) = 2*muu*t33*t34*t44+t52
+        t72 = sin(t42)
+        t76 = sin(t47)
+        stensor(5) = muu*(-t34*t55*t72*omega+t33*t22*t76*omega*t59)
+        stensor(6) = 2*muu*t22*t48*t18*omega+t52
+        tau(1,i,j) = stensor(1)
+        tau(2,i,j) = stensor(2)
+        tau(3,i,j) = stensor(3)
+        tau(4,i,j) = stensor(4)
+        tau(5,i,j) = stensor(5)
+        tau(6,i,j) = stensor(6)
+      enddo
+      enddo
+      end

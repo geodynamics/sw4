@@ -176,9 +176,58 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine SUBSURFFORCINGSG( ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast, k, met, jac, tau, strx, stry, forcing )
+***********************************************************************
+***
+*** Given tau, Cartesian stress tensor on boundary, compute the stress
+*** normal to the k=1 boundary of a curvilinear grid.
+***
+*** tau is ordered as:
+***    tau(1) = t_{xx}, tau(2) = t_{xy} tau(3) = t_{xz} 
+***    tau(4) = t_{yy}, tau(5) = t_{yz} tau(6) = t_{zz}
+***
+***********************************************************************
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast
+      integer i, j, k
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 tau(6,ifirst:ilast,jfirst:jlast)
+      real*8 forcing(3,ifirst:ilast,jfirst:jlast)
+      real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 strx(ifirst:ilast), stry(jfirst:jlast)
+      real*8 sqjac, istrx, istry
+      do j=jfirst,jlast
+         istry = 1/stry(j)
+         do i=ifirst,ilast
+            istrx = 1/strx(i)
+            sqjac = SQRT(jac(i,j,k))
+c            if( i.eq.23 .and. j.eq.18 )then
+c               write(*,*) 'twf ',sqjac*( istry*met(2,i,j,k)*tau(1,i,j)+
+c     *                                istrx*met(3,i,j,k)*tau(2,i,j)+
+c     *                          istrx*istry*met(4,i,j,k)*tau(3,i,j) )
+c            endif
+            forcing(1,i,j) =  forcing(1,i,j) -
+     *                        sqjac*( istry*met(2,i,j,k)*tau(1,i,j)+
+     *                                istrx*met(3,i,j,k)*tau(2,i,j)+
+     *                          istrx*istry*met(4,i,j,k)*tau(3,i,j) )
+            forcing(2,i,j) =  forcing(2,i,j) -
+     *                        sqjac*( istry*met(2,i,j,k)*tau(2,i,j)+
+     *                                istrx*met(3,i,j,k)*tau(4,i,j)+
+     *                          istrx*istry*met(4,i,j,k)*tau(5,i,j) )
+            forcing(3,i,j) =  forcing(3,i,j) -
+     *                        sqjac*( istry*met(2,i,j,k)*tau(3,i,j)+
+     *                                istrx*met(3,i,j,k)*tau(5,i,j)+
+     *                          istrx*istry*met(4,i,j,k)*tau(6,i,j) )
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
       subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
      *                         klast, u, mu, la, met, jac, lu, 
-     *                         onesided, acof, bope, ghcof, strx, stry )
+     *                         onesided, acof, bope, ghcof, strx, stry,
+     *                         op )
 
 
 *** Routine with supergrid stretchings strx and stry. No stretching
@@ -199,7 +248,7 @@ c-----------------------------------------------------------------------
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 cof1, cof2, cof3, cof4, cof5, r1, r2, r3, ijac
-      real*8 mux1, mux2, mux3, mux4
+      real*8 mux1, mux2, mux3, mux4, a1, sgn
       real*8 mucofu2, mucofuv, mucofuw, mucofv2, mucofvw, mucofw2
       real*8 ghcof(6), acof(6,8,8), bope(6,8)
       real*8 dudrp2, dudrp1, dudrm1, dudrm2
@@ -207,12 +256,24 @@ c-----------------------------------------------------------------------
       real*8 dwdrp2, dwdrp1, dwdrm1, dwdrm2
       real*8 strx(ifirst:ilast), stry(jfirst:jlast)
       real*8 istrx, istry, istrxy
-
+      character*1 op
 
 *** met(1) is sqrt(J)*px = sqrt(J)*qy
 *** met(2) is sqrt(J)*rx
 *** met(3) is sqrt(J)*ry
 *** met(4) is sqrt(J)*rz
+
+      if( op.eq.'=' )then
+         a1 = 0
+         sgn= 1
+      elseif( op.eq.'+')then
+         a1 = 1
+         sgn= 1
+      elseif( op.eq.'-')then
+         a1 = 1
+         sgn=-1
+      endif
+
       kstart = kfirst+2
       if( onesided(5).eq.1 )then
          kstart = 7
@@ -691,9 +752,12 @@ c-----------------------------------------------------------------------
      *        c1*(u(2,i,j+1,q)-u(2,i,j-1,q))  )*istrx )
 
       enddo
-          lu(1,i,j,k) = r1*ijac
-          lu(2,i,j,k) = r2*ijac
-          lu(3,i,j,k) = r3*ijac
+c          lu(1,i,j,k) = r1*ijac
+          lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac
+c          lu(2,i,j,k) = r2*ijac
+          lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r2*ijac
+c          lu(3,i,j,k) = r3*ijac
+          lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac
                enddo
             enddo
          enddo
@@ -972,7 +1036,8 @@ c-----------------------------------------------------------------------
      *        c1*(u(2,i,j-1,k+1)-u(2,i,j-1,k-1)) ) ) )
 
 c          lu(1,i,j,k) = r1/jac(i,j,k)
-          lu(1,i,j,k) = r1*ijac
+c          lu(1,i,j,k) = r1*ijac
+          lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac
 *** v-equation
 
           r1 = 0
@@ -1242,7 +1307,8 @@ c          lu(1,i,j,k) = r1/jac(i,j,k)
      *        c1*(u(3,i,j-1,k+1)-u(3,i,j-1,k-1)) )*istrx   ) )
 
 c          lu(2,i,j,k) = r1/jac(i,j,k)
-          lu(2,i,j,k) = r1*ijac
+c          lu(2,i,j,k) = r1*ijac
+          lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r1*ijac
 *** w-equation
 
           r1 = 0
@@ -1465,7 +1531,8 @@ c      r1 = r1
 
 
 c          lu(3,i,j,k) = r1/jac(i,j,k)
-          lu(3,i,j,k) = r1*ijac
+c          lu(3,i,j,k) = r1*ijac
+          lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r1*ijac
 
       enddo
       enddo

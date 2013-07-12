@@ -112,10 +112,10 @@ c$$$ 101  format(' ', a, 2(g15.7,tr2))
 c-----------------------------------------------------------------------
       subroutine solerr3c(ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     uex, u, x, y, z, jac, li, l2, xli, x0, y0, z0, radius,
-     +     imin, imax, jmin, jmax, kmin, kmax)
+     +     imin, imax, jmin, jmax, kmin, kmax, usesg, strx, stry )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
-      integer imin, imax, jmin, jmax, kmin, kmax
+      integer imin, imax, jmin, jmax, kmin, kmax, usesg
       real*8 x0, y0, z0, radius, sradius2, dist
       real*8 uex(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -123,7 +123,7 @@ c-----------------------------------------------------------------------
       real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
-     
+      real*8 strx(ifirst:ilast), stry(jfirst:jlast)
       integer c, k, j, i
       real*8 li, l2, err(3), xli
 
@@ -161,8 +161,13 @@ c exact solution in array 'uex'
                if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
      +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
 
-               l2 = l2 + 
+               if( usesg.ne.1 )then
+                  l2 = l2 + 
      +              jac(i,j,k)*(err(1)**2 + err(2)**2 + err(3)**2)
+               else
+                  l2 = l2 + 
+     +  jac(i,j,k)*(err(1)**2 + err(2)**2 + err(3)**2)/(strx(i)*stry(j))
+               endif
             endif
           enddo
         enddo

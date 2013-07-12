@@ -109,7 +109,7 @@ c-----------------------------------------------------------------------
             alpha(2,i,j,k) = sin(om*(x(i,j,k)-cv*t))*
      *           cos(om*(y(i,j,k)-cv*t)+ph)*cos(om*z(i,j,k)+ph)
             alpha(3,i,j,k) = cos(om*x(i,j,k)+ph)*cos(om*y(i,j,k)+ph)*
-     *                cos(om*(z(i,j,k)-cv*t)+ph)
+     *                sin(om*(z(i,j,k)-cv*t)+ph)
           enddo
         enddo
       enddo
@@ -2054,10 +2054,6 @@ c-----------------------------------------------------------------------
       subroutine exactmatfortatt( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, mu, la, momega, mphase, ampmu, amplambda, h, 
      +     zmin )
-* new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
-* rho    := amprho*(2 + sin(omm*x+phm)*cos(omm*y+phm)*sin(omm*z+phm) );
-* mu     := ampmu*(3 + cos(omm*x+phm)*sin(omm*y+phm)*sin(omm*z+phm) );
-* lambda := amplambda*(2 + sin(omm*x+phm)*sin(omm*y+phm)*cos(omm*z+phm) );
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, momega, mphase
@@ -2084,10 +2080,6 @@ c-----------------------------------------------------------------------
       subroutine exactmatfortattc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, mu, la, momega, mphase, ampmu, amplambda, 
      +     x, y, z ) 
-* new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
-* rho    := amprho*(2 + sin(omm*x+phm)*cos(omm*y+phm)*sin(omm*z+phm) );
-* mu     := ampmu*(3 + cos(omm*x+phm)*sin(omm*y+phm)*sin(omm*z+phm) );
-* lambda := amplambda*(2 + sin(omm*x+phm)*sin(omm*y+phm)*cos(omm*z+phm) );
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision momega, mphase, amprho
@@ -2780,6 +2772,769 @@ c-----------------------------------------------------------------------
            y = (j-1)*h
            do i=ifirst,ilast
              x = (i-1)*h
+        t1 = 1/omegaVE
+        t2 = c*t
+        t4 = omega*(x-t2)
+        t5 = -t4-phase
+        t6 = sin(t5)
+        t9 = omega*x+phase
+        t10 = sin(t9)
+        t13 = omega*(z-t2)
+        t14 = -t13-phase
+        t15 = cos(t14)
+        t17 = t6*omega*c*t10*t15
+        t18 = cos(t5)
+        t19 = t18*t10
+        t20 = sin(t14)
+        t23 = t19*t20*omega*c
+        t25 = t1*(-t17-t23)
+        t26 = t19*t15
+        t27 = sin(t4)
+        t29 = omega*y+phase
+        t30 = sin(t29)
+        t33 = omega*z+phase
+        t34 = sin(t33)
+        t35 = t27*t30*t34
+        t36 = dt**2
+        t37 = omegaVE**2
+        t40 = omega**2
+        t42 = c**2
+        t43 = t42*t10
+        t45 = t18*t40*t43*t15
+        t48 = t6*t40*t43*t20
+        t52 = cos(t4)
+        t53 = t52*omega
+        t60 = t40*omega
+        t62 = t42*c
+        t63 = t62*t10
+        t74 = t27*t40
+        forces(1) = t25+t26-t35+t36*(t37*(t25+t26-t35)+2*omegaVE*(t1*(-2
+     #*t45+2*t48)-t17-t23+t53*c*t30*t34)+t1*(4*t6*t60*t63*t15+4*t18*t60*
+     #t63*t20)-2*t45+2*t48+t74*t42*t30*t34)/6
+        t82 = omega*(y-t2)
+        t83 = -t82-phase
+        t84 = cos(t83)
+        t86 = cos(t33)
+        t88 = t53*c*t84*t86
+        t89 = sin(t83)
+        t91 = omega*c
+        t93 = t27*t89*t91*t86
+        t95 = t1*(-t88-t93)
+        t97 = t27*t84*t86
+        t98 = sin(t82)
+        t99 = t10*t98
+        t100 = t99*t34
+        t105 = t74*t42*t84*t86
+        t109 = t52*t40*t42*t89*t86
+        t113 = cos(t82)
+        forces(2) = t95+t97-t100+t36*(t37*(t95+t97-t100)+2*omegaVE*(t1*(
+     #-2*t105+2*t109)-t88-t93+t10*t113*t91*t34)+t1*(4*t52*t60*t62*t84*t8
+     #6+4*t27*t60*t62*t89*t86)-2*t105+2*t109+t99*t40*t42*t34)/6
+        t139 = cos(t9)
+        t141 = cos(t29)
+        t142 = t1*t139*t141
+        t144 = t15*omega*c
+        t145 = t142*t144
+        t146 = t139*t141
+        t147 = t146*t20
+        t148 = t10*t30
+        t149 = sin(t13)
+        t150 = t148*t149
+        t154 = t20*t40*t42
+        t157 = cos(t13)
+        forces(3) = -t145-t147-t150+t36*(t37*(-t145-t147-t150)+2*omegaVE
+     #*(t142*t154-t146*t144+t148*t157*omega*c)+t142*t15*t60*t62+t146*t15
+     #4+t148*t149*t40*t42)/6
+        fo(1,i,j) =  forces(1)
+        fo(2,i,j) =  forces(2)
+        fo(3,i,j) =  forces(3)
+      enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine forcingfortattc( ifirst, ilast, jfirst, jlast, kfirst, 
+     +     klast, fo, t, omega, c, phase, momega, mphase, amprho, 
+     *     ampmu, amplambda, xx, yy, zz )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+      doubleprecision x, y, z, t, omega, c, phase, momega, mphase
+      doubleprecision  amprho, ampmu, amplambda
+      real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision forces(3)
+      doubleprecision t10
+      doubleprecision t100
+      doubleprecision t103
+      doubleprecision t108
+      doubleprecision t109
+      doubleprecision t11
+      doubleprecision t110
+      doubleprecision t112
+      doubleprecision t113
+      doubleprecision t116
+      doubleprecision t118
+      doubleprecision t12
+      doubleprecision t131
+      doubleprecision t133
+      doubleprecision t135
+      doubleprecision t14
+      doubleprecision t144
+      doubleprecision t15
+      doubleprecision t152
+      doubleprecision t156
+      doubleprecision t158
+      doubleprecision t159
+      doubleprecision t162
+      doubleprecision t178
+      doubleprecision t180
+      doubleprecision t182
+      doubleprecision t189
+      doubleprecision t19
+      doubleprecision t191
+      doubleprecision t195
+      doubleprecision t2
+      doubleprecision t21
+      doubleprecision t22
+      doubleprecision t23
+      doubleprecision t26
+      doubleprecision t27
+      doubleprecision t3
+      doubleprecision t30
+      doubleprecision t31
+      doubleprecision t32
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t35
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t4
+      doubleprecision t45
+      doubleprecision t51
+      doubleprecision t52
+      doubleprecision t53
+      doubleprecision t55
+      doubleprecision t56
+      doubleprecision t6
+      doubleprecision t62
+      doubleprecision t63
+      doubleprecision t67
+      doubleprecision t68
+      doubleprecision t7
+      doubleprecision t71
+      doubleprecision t72
+      doubleprecision t73
+      doubleprecision t77
+      doubleprecision t8
+      doubleprecision t80
+      doubleprecision t84
+      doubleprecision t85
+      doubleprecision t86
+      doubleprecision t87
+      doubleprecision t95
+      doubleprecision t96
+      doubleprecision t97
+
+      do k=kfirst,klast
+         do j=jfirst,jlast
+           do i=ifirst,ilast
+             x = xx(i,j,k)
+             y = yy(i,j,k)
+             z = zz(i,j,k)
+
+        t2 = momega*x+mphase
+        t3 = sin(t2)
+        t4 = ampmu*t3
+        t6 = momega*y+mphase
+        t7 = cos(t6)
+        t8 = momega*t7
+        t10 = momega*z+mphase
+        t11 = sin(t10)
+        t12 = t8*t11
+        t14 = cos(t2)
+        t15 = amplambda*t14
+        t19 = c*t
+        t21 = omega*(x-t19)
+        t22 = -t21-phase
+        t23 = sin(t22)
+        t26 = omega*x+phase
+        t27 = sin(t26)
+        t30 = -omega*(z-t19)-phase
+        t31 = cos(t30)
+        t32 = t27*t31
+        t33 = t23*omega*t32
+        t34 = cos(t22)
+        t35 = cos(t26)
+        t36 = t34*t35
+        t37 = omega*t31
+        t38 = t36*t37
+        t45 = ampmu*(3.D0/2.D0+t14*t7*t11/2)
+        t51 = amplambda*(1.D0/2.D0+t3*t7*t11/4)
+        t52 = 2*t45+t51
+        t53 = omega**2
+        t55 = t34*t53*t32
+        t56 = t23*t53
+        t62 = t15*t8
+        t63 = sin(t21)
+        t67 = -omega*(y-t19)-phase
+        t68 = sin(t67)
+        t71 = omega*z+phase
+        t72 = cos(t71)
+        t73 = t68*omega*t72
+        t77 = cos(t21)
+        t80 = t53*t68*t72
+        t84 = omega*y+phase
+        t85 = cos(t84)
+        t86 = t85*t31
+        t87 = t86*omega
+        t95 = ampmu*t14
+        t96 = sin(t6)
+        t97 = t96*momega
+        t100 = cos(t67)
+        t103 = t11*t77*omega*t100*t72
+        t108 = t95*t7
+        t109 = cos(t10)
+        t110 = t109*momega
+        t112 = sin(t30)
+        t113 = t85*t112
+        t116 = t112*omega
+        t118 = t27*omega*t113+t34*t27*t116
+        forces(1) = (-t4*t12+t15*t12/4)*(t33+t38)+t52*(-2*t55+2*t56*t35*
+     #t31)+t62*t11*t63*t73/4+t51*t77*t80+t62*t11*t35*t87/4-t51*t27*t53*t
+     #85*t31-t95*t97*t103/2+t45*t77*t80+t108*t110*t118/2+t45*(-t27*t53*t
+     #86-t55)
+        t131 = t53*t100*t72
+        t133 = t97*t11
+        t135 = amplambda*t3
+        t144 = momega*t11
+        t152 = sin(t84)
+        t156 = t35*t152
+        t158 = t63*t100
+        t159 = sin(t71)
+        t162 = t156*t116-t158*t159*omega
+        forces(2) = -t4*t8*t103/2-t45*t63*t131+(-t95*t133-t135*t133/4)*t
+     #63*t73-t52*t63*t131-t135*t96*t144*(t33+t38+t35*t85*t37)/4-t51*t35*
+     #t152*t53*t31+t108*t110*t162/2+t45*(-t156*t53*t31-t158*t72*t53)
+        t178 = t35*t53*t113
+        t180 = t56*t27*t112
+        t182 = t36*t53*t112
+        t189 = t63*t68
+        t191 = t189*t53*t159
+        t195 = t7*t109*momega
+        forces(3) = -t4*momega*t7*t11*t118/2+t45*(t178+t180+t182)-t95*t9
+     #6*t144*t162/2+t45*(t178-t191)+(t95*t195+t135*t195/4)*t35*t87+t52*t
+     #35*t113*t53+t135*t7*t110*(t33+t38+t189*omega*t72)/4+t51*(t180+t182
+     #-t191)
+        fo(1,i,j,k) = fo(1,i,j,k) + forces(1)
+        fo(2,i,j,k) = fo(2,i,j,k) + forces(2)
+        fo(3,i,j,k) = fo(3,i,j,k) + forces(3)
+      enddo
+      enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine forcingttattfortc(ifirst, ilast, jfirst, jlast, kfirst,
+     +     klast, fo, t, omega, c, phase, momega, mphase, amprho, ampmu,
+     +      amplambda, xx, yy, zz )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+      doubleprecision x, y, z, t, omega, c, phase, momega, mphase
+      doubleprecision amprho, ampmu, amplambda
+      real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision forces(3)
+      doubleprecision t10
+      doubleprecision t104
+      doubleprecision t108
+      doubleprecision t109
+      doubleprecision t11
+      doubleprecision t112
+      doubleprecision t113
+      doubleprecision t118
+      doubleprecision t12
+      doubleprecision t121
+      doubleprecision t122
+      doubleprecision t124
+      doubleprecision t125
+      doubleprecision t13
+      doubleprecision t130
+      doubleprecision t133
+      doubleprecision t134
+      doubleprecision t135
+      doubleprecision t136
+      doubleprecision t139
+      doubleprecision t14
+      doubleprecision t141
+      doubleprecision t142
+      doubleprecision t143
+      doubleprecision t151
+      doubleprecision t152
+      doubleprecision t157
+      doubleprecision t16
+      doubleprecision t160
+      doubleprecision t178
+      doubleprecision t186
+      doubleprecision t19
+      doubleprecision t190
+      doubleprecision t194
+      doubleprecision t195
+      doubleprecision t198
+      doubleprecision t2
+      doubleprecision t201
+      doubleprecision t208
+      doubleprecision t21
+      doubleprecision t211
+      doubleprecision t22
+      doubleprecision t222
+      doubleprecision t23
+      doubleprecision t231
+      doubleprecision t233
+      doubleprecision t238
+      doubleprecision t24
+      doubleprecision t25
+      doubleprecision t26
+      doubleprecision t27
+      doubleprecision t29
+      doubleprecision t3
+      doubleprecision t30
+      doubleprecision t31
+      doubleprecision t34
+      doubleprecision t35
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t39
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t41
+      doubleprecision t42
+      doubleprecision t43
+      doubleprecision t44
+      doubleprecision t45
+      doubleprecision t46
+      doubleprecision t47
+      doubleprecision t48
+      doubleprecision t56
+      doubleprecision t6
+      doubleprecision t62
+      doubleprecision t63
+      doubleprecision t64
+      doubleprecision t65
+      doubleprecision t66
+      doubleprecision t67
+      doubleprecision t68
+      doubleprecision t69
+      doubleprecision t7
+      doubleprecision t70
+      doubleprecision t74
+      doubleprecision t75
+      doubleprecision t78
+      doubleprecision t79
+      doubleprecision t80
+      doubleprecision t82
+      doubleprecision t83
+      doubleprecision t84
+      doubleprecision t85
+      doubleprecision t88
+      doubleprecision t89
+      doubleprecision t90
+      doubleprecision t91
+      doubleprecision t92
+      doubleprecision t93
+      doubleprecision t97
+      doubleprecision t99
+
+      do k=kfirst,klast
+         do j=jfirst,jlast
+           do i=ifirst,ilast
+             x = xx(i,j,k)
+             y = yy(i,j,k)
+             z = zz(i,j,k)
+
+        t2 = momega*x+mphase
+        t3 = sin(t2)
+        t4 = ampmu*t3
+        t6 = momega*y+mphase
+        t7 = cos(t6)
+        t10 = momega*z+mphase
+        t11 = sin(t10)
+        t12 = momega*t7*t11
+        t13 = t4*t12
+        t14 = cos(t2)
+        t16 = amplambda*t14*t12
+        t19 = c*t
+        t21 = omega*(x-t19)
+        t22 = -t21-phase
+        t23 = sin(t22)
+        t24 = omega**2
+        t25 = t24*omega
+        t26 = t23*t25
+        t27 = c**2
+        t29 = omega*x+phase
+        t30 = sin(t29)
+        t31 = t27*t30
+        t34 = -omega*(z-t19)-phase
+        t35 = cos(t34)
+        t36 = t31*t35
+        t37 = t26*t36
+        t38 = cos(t22)
+        t39 = t38*t25
+        t40 = sin(t34)
+        t41 = t31*t40
+        t42 = t39*t41
+        t43 = cos(t29)
+        t44 = t27*t43
+        t45 = t44*t35
+        t46 = t39*t45
+        t47 = t44*t40
+        t48 = t26*t47
+        t56 = ampmu*(3.D0/2.D0+t14*t7*t11/2)
+        t62 = amplambda*(1.D0/2.D0+t3*t7*t11/4)
+        t63 = 2*t56+t62
+        t64 = t24**2
+        t65 = t38*t64
+        t66 = t65*t36
+        t67 = t23*t64
+        t68 = t67*t41
+        t69 = t67*t45
+        t70 = t65*t47
+        t74 = sin(t21)
+        t75 = t74*t25
+        t78 = -omega*(y-t19)-phase
+        t79 = sin(t78)
+        t80 = t27*t79
+        t82 = omega*z+phase
+        t83 = cos(t82)
+        t84 = t80*t83
+        t85 = t75*t84
+        t88 = cos(t21)
+        t89 = t88*t25
+        t90 = cos(t78)
+        t91 = t27*t90
+        t92 = t91*t83
+        t93 = t89*t92
+        t97 = t64*t27
+        t99 = t97*t79*t83
+        t104 = t97*t90*t83
+        t108 = omega*y+phase
+        t109 = cos(t108)
+        t112 = t35*t25*t27
+        t113 = t43*t109*t112
+        t118 = t35*t27
+        t121 = ampmu*t14
+        t122 = sin(t6)
+        t124 = t122*momega*t11
+        t125 = t121*t124
+        t130 = 2*t56*t88*t99
+        t133 = 2*t56*t74*t104
+        t134 = t121*t7
+        t135 = cos(t10)
+        t136 = t135*momega
+        t139 = t109*t40*t27
+        t141 = 2*t37
+        t142 = 2*t42
+        t143 = -t30*t25*t139-t141-t142
+        t151 = 2*t66
+        t152 = 2*t68
+        forces(1) = (-t13+t16/4)*(-2*t37-2*t42-2*t46+2*t48)+t63*(4*t66-4
+     #*t68-4*t69-4*t70)-t16*t85/2-t16*t93/2-2*t62*t88*t99+2*t62*t74*t104
+     #-t16*t113/4+t62*t30*t64*t109*t118+t125*t93+t125*t85-t130+t133+t134
+     #*t136*t143/2+t56*(t30*t64*t109*t35*t27+t151-t152)
+        t157 = amplambda*t3
+        t160 = -t125-t157*t124/4
+        t178 = momega*t11
+        t186 = sin(t108)
+        t190 = t43*t186
+        t194 = sin(t82)
+        t195 = t91*t194
+        t198 = t80*t194
+        t201 = -t190*t25*t40*t27+2*t75*t195-2*t89*t198
+        t208 = t74*t64
+        t211 = t88*t64
+        forces(2) = t13*t93+t13*t85-t130+t133-2*t160*t74*t25*t84-2*t160*
+     #t88*t25*t92+2*t63*t74*t64*t92-2*t63*t88*t64*t84-t157*t122*t178*(-t
+     #141-t142-2*t46+2*t48-t113)/4+t62*t43*t186*t64*t118+t134*t136*t201/
+     #2+t56*(t190*t64*t35*t27+2*t208*t92-2*t211*t84)
+        t222 = t43*t64*t139
+        t231 = t208*t198
+        t233 = t211*t195
+        t238 = t7*t135*momega
+        forces(3) = -t4*momega*t7*t11*t143/2+t56*(-t222+t151-t152-2*t69-
+     #2*t70)-t121*t122*t178*t201/2+t56*(-t222+2*t231+2*t233)-(t121*t238+
+     #t157*t238/4)*t43*t109*t112-t63*t43*t109*t40*t64*t27+t157*t7*t136*(
+     #-2*t37-2*t42-2*t46+2*t48-2*t85-2*t93)/4+t62*(2*t66-2*t68-2*t69-2*t
+     #70+2*t231+2*t233)
+        fo(1,i,j,k) = fo(1,i,j,k) + forces(1)
+        fo(2,i,j,k) = fo(2,i,j,k) + forces(2)
+        fo(3,i,j,k) = fo(3,i,j,k) + forces(3)
+      enddo
+      enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine ADDMEMVARFORCINGC(ifirst, ilast, jfirst, jlast, kfirst,
+     *  klast, alpha, t, omega, c, phase, omegaVE, dt, xx, yy, zz )
+
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+      doubleprecision x, y, z, t, omega, c, phase, omegaVE, dt
+      doubleprecision icp, dto
+      real*8 alpha(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t10
+      doubleprecision t100
+      doubleprecision t105
+      doubleprecision t109
+      doubleprecision t113
+      doubleprecision t13
+      doubleprecision t139
+      doubleprecision t14
+      doubleprecision t141
+      doubleprecision t142
+      doubleprecision t144
+      doubleprecision t145
+      doubleprecision t146
+      doubleprecision t147
+      doubleprecision t148
+      doubleprecision t149
+      doubleprecision t15
+      doubleprecision t150
+      doubleprecision t154
+      doubleprecision t157
+      doubleprecision t17
+      doubleprecision t18
+      doubleprecision t19
+      doubleprecision t2
+      doubleprecision t20
+      doubleprecision t23
+      doubleprecision t25
+      doubleprecision t26
+      doubleprecision t27
+      doubleprecision t29
+      doubleprecision t30
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t35
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t42
+      doubleprecision t43
+      doubleprecision t45
+      doubleprecision t48
+      doubleprecision t5
+      doubleprecision t52
+      doubleprecision t53
+      doubleprecision t6
+      doubleprecision t60
+      doubleprecision t62
+      doubleprecision t63
+      doubleprecision t74
+      doubleprecision t82
+      doubleprecision t83
+      doubleprecision t84
+      doubleprecision t86
+      doubleprecision t88
+      doubleprecision t89
+      doubleprecision t9
+      doubleprecision t91
+      doubleprecision t93
+      doubleprecision t95
+      doubleprecision t97
+      doubleprecision t98
+      doubleprecision t99
+
+      dto = dt*omegaVE
+c      icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
+      icp = 12*dto/( 6 + 6*dto + 3*dto*dto + dto*dto*dto )
+
+      do k=kfirst,klast
+         do j=jfirst,jlast
+           do i=ifirst,ilast
+             x = xx(i,j,k)
+             y = yy(i,j,k)
+             z = zz(i,j,k)
+        t1 = 1/omegaVE
+        t2 = c*t
+        t4 = omega*(x-t2)
+        t5 = -t4-phase
+        t6 = sin(t5)
+        t9 = omega*x+phase
+        t10 = sin(t9)
+        t13 = omega*(z-t2)
+        t14 = -t13-phase
+        t15 = cos(t14)
+        t17 = t6*omega*c*t10*t15
+        t18 = cos(t5)
+        t19 = t18*t10
+        t20 = sin(t14)
+        t23 = t19*t20*omega*c
+        t25 = t1*(-t17-t23)
+        t26 = t19*t15
+        t27 = sin(t4)
+        t29 = omega*y+phase
+        t30 = sin(t29)
+        t33 = omega*z+phase
+        t34 = sin(t33)
+        t35 = t27*t30*t34
+        t36 = dt**2
+        t37 = omegaVE**2
+        t40 = omega**2
+        t42 = c**2
+        t43 = t42*t10
+        t45 = t18*t40*t43*t15
+        t48 = t6*t40*t43*t20
+        t52 = cos(t4)
+        t53 = t52*omega
+        t60 = t40*omega
+        t62 = t42*c
+        t63 = t62*t10
+        t74 = t27*t40
+        forces(1) = t25+t26-t35+t36*(t37*(t25+t26-t35)+2*omegaVE*(t1*(-2
+     #*t45+2*t48)-t17-t23+t53*c*t30*t34)+t1*(4*t6*t60*t63*t15+4*t18*t60*
+     #t63*t20)-2*t45+2*t48+t74*t42*t30*t34)/6
+        t82 = omega*(y-t2)
+        t83 = -t82-phase
+        t84 = cos(t83)
+        t86 = cos(t33)
+        t88 = t53*c*t84*t86
+        t89 = sin(t83)
+        t91 = omega*c
+        t93 = t27*t89*t91*t86
+        t95 = t1*(-t88-t93)
+        t97 = t27*t84*t86
+        t98 = sin(t82)
+        t99 = t10*t98
+        t100 = t99*t34
+        t105 = t74*t42*t84*t86
+        t109 = t52*t40*t42*t89*t86
+        t113 = cos(t82)
+        forces(2) = t95+t97-t100+t36*(t37*(t95+t97-t100)+2*omegaVE*(t1*(
+     #-2*t105+2*t109)-t88-t93+t10*t113*t91*t34)+t1*(4*t52*t60*t62*t84*t8
+     #6+4*t27*t60*t62*t89*t86)-2*t105+2*t109+t99*t40*t42*t34)/6
+        t139 = cos(t9)
+        t141 = cos(t29)
+        t142 = t1*t139*t141
+        t144 = t15*omega*c
+        t145 = t142*t144
+        t146 = t139*t141
+        t147 = t146*t20
+        t148 = t10*t30
+        t149 = sin(t13)
+        t150 = t148*t149
+        t154 = t20*t40*t42
+        t157 = cos(t13)
+        forces(3) = -t145-t147-t150+t36*(t37*(-t145-t147-t150)+2*omegaVE
+     #*(t142*t154-t146*t144+t148*t157*omega*c)+t142*t15*t60*t62+t146*t15
+     #4+t148*t149*t40*t42)/6
+        alpha(1,i,j,k) = alpha(1,i,j,k) + forces(1)*icp
+        alpha(2,i,j,k) = alpha(2,i,j,k) + forces(2)*icp
+        alpha(3,i,j,k) = alpha(3,i,j,k) + forces(3)*icp
+      enddo
+      enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine MEMVARFORCESURFC( ifirst, ilast, jfirst, jlast, kfirst, 
+     *  klast, k, fo, t, omega, c, phase, omegaVE, dt, xx, yy, zz )
+
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+      doubleprecision x, y, z, t, omega, c, phase, omegaVE, dt
+      doubleprecision icp, dto
+      real*8 fo(3,ifirst:ilast,jfirst:jlast)
+      real*8 xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t10
+      doubleprecision t100
+      doubleprecision t105
+      doubleprecision t109
+      doubleprecision t113
+      doubleprecision t13
+      doubleprecision t139
+      doubleprecision t14
+      doubleprecision t141
+      doubleprecision t142
+      doubleprecision t144
+      doubleprecision t145
+      doubleprecision t146
+      doubleprecision t147
+      doubleprecision t148
+      doubleprecision t149
+      doubleprecision t15
+      doubleprecision t150
+      doubleprecision t154
+      doubleprecision t157
+      doubleprecision t17
+      doubleprecision t18
+      doubleprecision t19
+      doubleprecision t2
+      doubleprecision t20
+      doubleprecision t23
+      doubleprecision t25
+      doubleprecision t26
+      doubleprecision t27
+      doubleprecision t29
+      doubleprecision t30
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t35
+      doubleprecision t36
+      doubleprecision t37
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t42
+      doubleprecision t43
+      doubleprecision t45
+      doubleprecision t48
+      doubleprecision t5
+      doubleprecision t52
+      doubleprecision t53
+      doubleprecision t6
+      doubleprecision t60
+      doubleprecision t62
+      doubleprecision t63
+      doubleprecision t74
+      doubleprecision t82
+      doubleprecision t83
+      doubleprecision t84
+      doubleprecision t86
+      doubleprecision t88
+      doubleprecision t89
+      doubleprecision t9
+      doubleprecision t91
+      doubleprecision t93
+      doubleprecision t95
+      doubleprecision t97
+      doubleprecision t98
+      doubleprecision t99
+
+
+         do j=jfirst,jlast
+           do i=ifirst,ilast
+             x = xx(i,j,k)
+             y = yy(i,j,k)
+             z = zz(i,j,k)
         t1 = 1/omegaVE
         t2 = c*t
         t4 = omega*(x-t2)
