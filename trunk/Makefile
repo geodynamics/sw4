@@ -52,35 +52,44 @@ SW4LIB    = $(SW4ROOT)/lib
 emptystring := ""
 foundincfile := $(emptystring)
 
-# how can we check if the file configs/make.inc exists?
+# check if the file configs/make.inc exists?
+USERMAKE := $(shell if test -r configs/make.inc; then echo "configs/make.inc"; fi)
 
-ifeq ($(UNAME),Darwin)
-  include configs/make.osx
-  foundincfile := "configs/make.osx"
-endif
+ifeq ($(USERMAKE),configs/make.inc)
+  include configs/make.inc
+  foundincfile := "configs/make.inc"
+else
 
-# put the variables in the configs/make.xyz file
-ifeq ($(UNAME),Linux)
-# For Cab at LC
-  ifeq ($(findstring cab,$(HOSTNAME)),cab)
-    include configs/make.cab
-    foundincfile := "configs/make.cab"
+# if configs/make.inc does not exist
+  ifeq ($(UNAME),Darwin)
+    include configs/make.osx
+    foundincfile := "configs/make.osx"
   endif
-# for Bjorn's tux box
-  ifeq ($(findstring tux270,$(HOSTNAME)),tux270)
-    include configs/make.tux270
-    foundincfile := "configs/make.tux270"
+  
+  # put the variables in the configs/make.xyz file
+  ifeq ($(UNAME),Linux)
+  # For Cab at LC
+    ifeq ($(findstring cab,$(HOSTNAME)),cab)
+      include configs/make.cab
+      foundincfile := "configs/make.cab"
+    endif
+  # for Bjorn's tux box
+    ifeq ($(findstring tux270,$(HOSTNAME)),tux270)
+      include configs/make.tux270
+      foundincfile := "configs/make.tux270"
+    endif
+  # for Anders' tux box
+    ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
+      include configs/make.tux355
+      foundincfile := "configs/make.tux355"
+    endif
+  # For Edison at NERSC
+    ifeq ($(findstring edison,$(HOSTNAME)),edison)
+      include configs/make.edison
+      foundincfile := "configs/make.edison"
+    endif
   endif
-# for Anders' tux box
-  ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
-    include configs/make.tux355
-    foundincfile := "configs/make.tux355"
-  endif
-# For Edison at NERSC
-  ifeq ($(findstring edison,$(HOSTNAME)),edison)
-    include configs/make.edison
-    foundincfile := "configs/make.edison"
-  endif
+
 endif
 
 ifdef EXTRA_CXX_FLAGS
@@ -125,18 +134,18 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
 # this ifeq does not work on cab
-#ifeq ($(foundincfile), $(emptystring))
-#sw4:: $(FOBJ) $(builddir)
-#	@echo "ERROR: configuration file not found"
-#	@echo "foundincfile=" $(foundincfile)
-#else
+ifeq ($(foundincfile), $(emptystring))
+sw4:: $(FOBJ) $(builddir)
+	@echo "ERROR: configuration file not found"
+	@echo "foundincfile=" $(foundincfile)
+else
 sw4: $(FOBJ)
 	@echo "*** Configuration file: " $(foundincfile) "***"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Configuration file: " $(foundincfile) "***"
 	@echo "*** Build directory: " $(builddir) " ***"
-#endif
+endif
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<

@@ -1,3 +1,4 @@
+etree = yes
 FC = openmpif77
 CC = openmpicc
 CXX = openmpicxx
