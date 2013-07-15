@@ -2,4 +2,4 @@ SW4ROOT = ""
 FC = mpiifort
 CC = mpiicc
 CXX = mpiicpc
-EXTRA_LINK_LIBS = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
+EXTRA_LINK_FLAGS = -L/home/sjogreen2/apps/lapack-3.2 -llapack -lblas -lgfortran
