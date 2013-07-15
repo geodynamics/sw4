@@ -1,0 +1,5 @@
+etree = no
+FC = gfortran
+CC = mpicc
+CXX = mpicxx
+EXTRA_LINK_FLAGS =-L/usr/lib64/atlas -llapack  -L/usr/lib64 -lblas -lgfortran
