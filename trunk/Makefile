@@ -74,9 +74,9 @@ else
       foundincfile := "configs/make.cab"
     endif
   # for Bjorn's tux box
-    ifeq ($(findstring tux270,$(HOSTNAME)),tux270)
-      include configs/make.tux270
-      foundincfile := "configs/make.tux270"
+    ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
+      include configs/make.tux337
+      foundincfile := "configs/make.tux337"
     endif
   # for Anders' tux box
     ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
