@@ -1,12 +1,12 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [etree=yes/no]
+# make sw4 [debug=yes/no]
 #
 # This Makefile asumes that the following environmental variables have been assigned:
+# etree = [yes/no]
 # CXX = C++ compiler
-# CC  = C-compiler
 # FC  = Fortran-77 compiler
-# SW4ROOT = path to third party libraries (for etree=yes). 
+# SW4ROOT = path to third party libraries (used when etree=yes). 
 #
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 #
@@ -27,6 +27,7 @@
 ifeq ($(debug),yes)
    optlevel = DEBUG
 else
+   debug := "no"
    optlevel = OPTIMIZE
 endif
 
@@ -133,19 +134,15 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
-# works on cab?
-ifeq ($(foundincfile), $(emptystring))
-sw4:: $(FOBJ)
-	@echo "ERROR: configuration file not found"
-	@echo "foundincfile=" $(foundincfile)
-else
 sw4: $(FOBJ)
-	@echo "*** Configuration file: " $(foundincfile) "***"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
-	@echo "*** Configuration file: " $(foundincfile) "***"
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "*** Build directory: " $(builddir) " ***"
-endif
+	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<

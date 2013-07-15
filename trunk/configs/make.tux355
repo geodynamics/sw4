@@ -1,4 +1,4 @@
-SW4ROOT = ""
+etree = no
 FC = gfortran
 CC = mpicc
 CXX = mpicxx
