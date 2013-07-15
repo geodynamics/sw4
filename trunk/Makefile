@@ -104,6 +104,8 @@ endif
 ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
+else
+  etree := "no"
 endif
 
 ifdef EXTRA_LINK_FLAGS
