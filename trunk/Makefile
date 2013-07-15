@@ -73,21 +73,21 @@ else
     ifeq ($(findstring cab,$(HOSTNAME)),cab)
       include configs/make.cab
       foundincfile := "configs/make.cab"
-    endif
   # for Bjorn's tux box
-    ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
+    else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
       foundincfile := "configs/make.tux337"
-    endif
   # for Anders' tux box
-    ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
+    else ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
       include configs/make.tux355
       foundincfile := "configs/make.tux355"
-    endif
   # For Edison at NERSC
-    ifeq ($(findstring edison,$(HOSTNAME)),edison)
+    else ifeq ($(findstring edison,$(HOSTNAME)),edison)
       include configs/make.edison
       foundincfile := "configs/make.edison"
+    else
+      include configs/make.linux
+      foundincfile := "configs/make.linux"
     endif
   endif
 
