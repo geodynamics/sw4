@@ -133,9 +133,9 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
-# this ifeq does not work on cab
+# works on cab?
 ifeq ($(foundincfile), $(emptystring))
-sw4:: $(FOBJ) $(builddir)
+sw4:: $(FOBJ)
 	@echo "ERROR: configuration file not found"
 	@echo "foundincfile=" $(foundincfile)
 else
