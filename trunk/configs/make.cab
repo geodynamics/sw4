@@ -1,3 +1,5 @@
+  etree = yes
+  SW4ROOT = /usr/apps/wpp
   FC = mpiifort
   CC = mpiicc
   CXX = mpiicpc
