@@ -3484,6 +3484,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   
   for(g=0 ; g<mNumberOfCartesianGrids; g++ )
   {
+    a_Uacc[g].set_to_zero();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
     mu_ptr  = a_Mu[g].c_ptr();
@@ -3531,6 +3532,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   if( topographyExists() )
   {
      g = mNumberOfGrids-1;
+     a_Uacc[g].set_to_zero();
      uacc_ptr = a_Uacc[g].c_ptr();
      u_ptr    = a_U[g].c_ptr();
      mu_ptr   = a_Mu[g].c_ptr();

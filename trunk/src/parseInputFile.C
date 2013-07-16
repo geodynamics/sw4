@@ -6652,8 +6652,8 @@ void EW::processMaterialEtree(char* buffer)
   double etreeXmax = max(max(max(nexyz[0], nwxyz[0]), sexyz[0]), swxyz[0]);
   double etreeYmin = min(min(min(nexyz[1], nwxyz[1]), sexyz[1]), swxyz[1]);
   double etreeYmax = max(max(max(nexyz[1], nwxyz[1]), sexyz[1]), swxyz[1]);
-  double etreeZmin = min(min(min(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
-  double etreeZmax = max(max(max(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
+  //  double etreeZmin = min(min(min(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
+  //  double etreeZmax = max(max(max(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
   
   if( getVerbosity() >=2 && m_myRank == 0 )
     printf("Horizontal extent of etree %s xmin=%e, xmax=%e, ymin=%e, ymax=%e\n", name.c_str(), etreeXmin, etreeXmax, etreeYmin, etreeYmax);

@@ -554,6 +554,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // evaluate right hand side
     evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
 
+    if( m_checkfornan )
+       check_for_nan( Lu, 1, "Lu pred. " );
+
 // take predictor step, store in Up
     evalPredictor( Up, U, Um, mRho, Lu, F );    
 
@@ -562,13 +565,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // communicate across processor boundaries
     for(int g=0 ; g < mNumberOfGrids ; g++ )
-      communicate_array( Up[g], g );
+       communicate_array( Up[g], g );
 
 // calculate boundary forcing at time t+mDt
     cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
     enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+
+    if( m_checkfornan )
+       check_for_nan( Up, 1, "U pred. " );
 
     if( m_use_attenuation && m_number_mechanisms > 0 )
     {
@@ -584,9 +590,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     {
        Force_tt( t, F, point_sources );
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
+
+       if( m_checkfornan )
+	  check_for_nan( Uacc, 1, "uacc " );
+
        if( m_use_attenuation && m_number_mechanisms > 0 )
           evalDpDmInTimeAtt( AlphaVEp, AlphaVE, AlphaVEm ); // store AlphaVEacc in AlphaVEm
+
        evalRHS( Uacc, mMu, mLambda, Lu, AlphaVEm );
+       if( m_checkfornan )
+	  check_for_nan( Lu, 1, "L(uacc) " );
+
        evalCorrector( Up, mRho, Lu, F );
 // add in super-grid damping terms
        if (usingSupergrid())

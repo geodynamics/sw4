@@ -855,6 +855,10 @@ void EW::set_materials()
     }
     
     convert_material_to_mulambda( );
+    
+    check_for_nan( mMu, 1,"mu ");       
+    check_for_nan( mLambda, 1,"lambda ");       
+    check_for_nan( mRho, 1,"rho ");       
 
 // do the viscoelastic materials later (after estimating the resolution)
   } // end if !m_testing, i.e., not Twilight, point source or Lamb's test
