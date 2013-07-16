@@ -148,6 +148,15 @@ sw4: $(FOBJ)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
+# distribution
+sw4.tgz:
+	@echo "building tar ball..."
+	/bin/mkdir -p sw4-v1.0
+	cp -r src configs examples tools sw4-v1.0
+	cp wave.txt Makefile sw4-v1.0
+	tar -c --exclude "CVS" -z -f $@ sw4-v1.0
+	rm -rf sw4-v1.0
+
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<
 
