@@ -4067,17 +4067,22 @@ and subdirectories:
 The best way of getting started is to first build \emph{SW4} without the proj.4 and cencalvm
 libraries. This process should be very straight forward and the resulting \emph{SW4} executable
 supports all commands except \verb+efile+ and the \verb+proj+ option in the \verb+grid+
-command. If you need to use these options, you can always install the proj.4 and cencalvm libraries
-later, and then recompile \emph{SW4}. See \S~\ref{sec:cencalvm-install} for details.
+command. If you need to use these options, you can always recompile \emph{SW4} after the proj.4 and cencalvm libraries
+have been installed. See \S~\ref{sec:cencalvm-install} for details.
 
 The basic build process is controlled by the environmental variables \verb+FC+, \verb+CXX+,
 \verb+EXTRA_FORT_FLAGS+, \verb+EXTRA_CXX_FLAGS+, and \verb+EXTRA_LINK_FLAGS+. These variables should
 hold the names of the Fortan-77 and C++ compilers, and any extra options that should be passed to
 the compilers and linker. The easiest way of assigning these variables is by creating a file in the
-\verb+configs+ directory called \verb+make.inc+, but you may also assign them in your \verb+.cshrc+
-file. The \verb+Makefile+ will look for this file and read it if it is available. To build
-\emph{SW4} under OSX on a Mac, the \verb+configs/make.inc+ file could look something like this:
+\verb+configs+ directory called \verb+make.inc+. The \verb+Makefile+ will look for this file and
+read it if it is available. There are several examples in the \verb+configs+ directory, for example
+\verb+make.osx+ for Macs an \verb+make.linux+ for Linux machines. You should copy one of these files
+to your own \verb+make.inc+ and edit it as needed. For example, if you are on a Mac, you could do
+To build \emph{SW4} under OSX on a Mac, you need to create the
+\verb+configs/make.inc+ file could look something like this:
 \begin{verbatim}
+shell>cd configs
+shell>ls make.inc
 FC = openmpif77
 CXX = openmpicxx
 EXTRA_FORT_FLAGS = -fno-underscoring
@@ -4085,43 +4090,33 @@ EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc47 -lgfortran
 \end{verbatim}
 In this case, the \verb+blas+ and \verb+lapack+ libraries are provided by the
 \verb+-framework vecLib+ option.
-Here you will find a number of configuration files. Examples are provided for some common operating
-systems, such as \verb+make.osx+ for Macs, and \verb+make.linux+ for machines running Linux.
-\begin{verbatim}
-setenv SW4MAKE /enter/your/path/sw4-v1.0/configs/make.amac
-\end{verbatim}
-If you are using a Bourne, bash, or related shell, you should instead use the command
-\begin{verbatim}
-export SW4MAKE=/enter/your/path/sw4-v1.0/configs/make.amac
-\end{verbatim}
-It is a good idea to include this command in your setup file (\verb+.cshrc+ for c-shell).
 
-You build SW4 with the "make" command from the main directory.
+You build \emph{SW4} with the "make" command from the main directory.
 \begin{verbatim}
 shell> cd /enter/your/path/sw4-v1.0
 shell> make
 \end{verbatim}
-If you for some reason wish to remove all object files and the sw4 executable, you can do
+If you for some reason wish to remove all object files and the \verb+sw4+ executable, you can do
 \begin{verbatim}
 shell> cd /enter/your/path/sw4-v1.0
 shell> make clean
 \end{verbatim}
 
-By default, the \emph{SW4} executable is located in 
+By default, the \verb+sw4+ executable is located in 
 \begin{verbatim}
-/my/installation/dir/sw4-v1.0/src/sw4
+/enter/your/path/sw4-v1.0/optimize_v1.0/sw4
 \end{verbatim}
 It can be convenient to add this directory to your \verb+PATH+ environment variable (i.e., modify
 your \verb+.cshrc+ file).
 
-You can also build a debug version of \emph{SW4} by adding the \verb+debug=1+ option to \verb+make+,
+You can also build a debug version of \emph{SW4} by adding the \verb+debug=yes+ option to \verb+make+,
 \begin{verbatim}
-shell> cd /my/installation/dir/sw4-v1.0
-shell> make debug=1
+shell> cd /enter/your/path/sw4-v1.0
+shell> make debug=yes
 \end{verbatim}
 That executable will be located in
 \begin{verbatim}
-/my/installation/dir/sw4-v1.0/debug_v2.1/sw4
+/enter/your/path/sw4-v1.0/debug_v1.0/sw4
 \end{verbatim}
 
 \subsection{How do I setup the make.inc file?}

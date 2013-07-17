@@ -63,8 +63,11 @@ else
 
 # if configs/make.inc does not exist
   ifeq ($(UNAME),Darwin)
-    include configs/make.osx
-    foundincfile := "configs/make.osx"
+  # for Anders' laptop
+    ifeq ($(findstring yorkville,$(HOSTNAME)),yorkville)
+      include configs/make.yorkville
+      foundincfile := "configs/make.yorkville"
+    endif
   endif
   
   # put the variables in the configs/make.xyz file
@@ -85,10 +88,6 @@ else
     else ifeq ($(findstring edison,$(HOSTNAME)),edison)
       include configs/make.edison
       foundincfile := "configs/make.edison"
-# it is hard to make a generic setup file for Linux
-#    else
-#      include configs/make.linux
-#      foundincfile := "configs/make.linux"
     endif
   endif
 

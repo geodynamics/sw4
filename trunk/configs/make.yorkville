@@ -1,3 +1,5 @@
+etree = yes
+SW4ROOT = /Users/petersson1
 FC = openmpif77
 CXX = openmpicxx
 EXTRA_FORT_FLAGS = -fno-underscoring
