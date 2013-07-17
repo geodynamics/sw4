@@ -153,10 +153,10 @@ tardir := "sw4-v1.0"
 sw4-v1.0.tgz:
 	/bin/mkdir -p $(tardir)
 	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
-	cd $(tardir); /bin/rm wave.txt
-#	@echo "building tar ball..."
-#	tar -c --exclude "CVS" -z -f $@ $(tardir)
-#	rm -rf $(tardir)
+	cd $(tardir); /bin/rm -rf tests docs CVSROOT
+	@echo "building tar ball..."
+	tar -c --exclude "CVS" -z -f $@ $(tardir)
+	rm -rf $(tardir)
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<
