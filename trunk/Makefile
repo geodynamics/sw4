@@ -85,9 +85,10 @@ else
     else ifeq ($(findstring edison,$(HOSTNAME)),edison)
       include configs/make.edison
       foundincfile := "configs/make.edison"
-    else
-      include configs/make.linux
-      foundincfile := "configs/make.linux"
+# it is hard to make a generic setup file for Linux
+#    else
+#      include configs/make.linux
+#      foundincfile := "configs/make.linux"
     endif
   endif
 

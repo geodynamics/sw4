@@ -1,0 +1,41 @@
+-----------------------------------------------------------------------
+-
+-  SW4 install and build instructions
+-
+-----------------------------------------------------------------------
+
+MORE DETAILED INSTALLATION INSTRUCTIONS CAN BE FOUND IN APPENDIX "A" OF THE SW4 USER'S GUIDE. 
+
+Before building SW4, you must have a reasonably modern C++ compiler and a compatible Fortran-77
+compiler installed on your system. You must first install the third party libraries. All libraries
+need to be installed in the same directory, such that each library installs its files in the lib and
+include subdirectories. For a basic installation of SW4, you need:
+
+1) the lapack and blas libraries, which provide basic linear algebra functionality. On many machines
+these libraries are preinstalled,
+
+2) an MPI library, which provides message passing on parallel machines. An example is the mpich2
+library. Note that you need the MPI library even when for installing SW4 on a single core system.
+
+For a complete installation, which also supports projections from the Proj.4 library and the efile
+command for reading e-tree material data bases, you also need to install the following
+libraries. See the User's guide for more details!
+
+3) The Etree library
+
+4) The Proj library
+
+5) The cencalvm library
+
+The details of the build process are controlled by the configuration file configs/make.inc.
+You have to edit this configuration file to reflect the setup of your system.
+
+You build SW4 with the "make" command. An optimized version is built with the command
+
+make
+
+you can also build a version with debugging symbols by doing
+
+make debug=yes
+
+More information can be found in Appendix A of the SW4 user's guide.

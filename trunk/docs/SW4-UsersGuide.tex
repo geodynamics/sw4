@@ -159,8 +159,8 @@ exception of mesh refinement, version 1.0 of \emph{SW4} supports most of the fun
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
 validation tests that are used in this document. Many Matlab/octave scripts are are provided in the
-{\tt tools} directory and described in
-Chapter~\ref{chap:scripts}.
+{\tt tools} directory.
+%and described in Chapter~\ref{chap:scripts}.
 
 \section*{Acknowledgments} 
 The \emph{SW4} code was developed under financial support from Lawrence Livermore National
@@ -3711,25 +3711,25 @@ files is provided in the matlab/octave function 'tools/readimage.m'.
 Images files hold cross-sectional data on a composite grid and are written in a binary format. The
 image file starts with a header followed by a data section, which contains a two-dimensional grid
 function for each grid patch in the composite grid. The header has two parts. The first part
-contains 4 integers (4 bytes each), 2 doubles (8 bytes each) and a character array with 25 elements
-(1 byte each), i.e., 57 bytes of data:
+contains 5 integers (4 bytes each), 2 doubles (8 bytes each) and a character array with 25 elements
+(1 byte each), i.e., 61 bytes of data:
 \begin{center}
 \begin{tabular}{llll}\hline
 Offset (bytes) & Name & Type & Bytes \\ \hline
-0 & prec & integer & 4 \\ \hline
-4 & $N_p$ & integer & 4 \\ \hline
-8 & $t$ & double & 8 \\ \hline
+0 & prec   & int & 4 \\ \hline
+4 & $N_p$  & int & 4 \\ \hline
+8 & $t$    & double & 8 \\ \hline
 16 & plane & int & 4 \\ \hline
 20 & $\xi$ & double & 8 \\ \hline
-28 & mode & int & 4 \\ \hline
+28 & mode  & int & 4 \\ \hline
 32 & grdinfo & int & 4 \\ \hline
 36 & creation-time & char[25] & 25 \\ \hline
 \end{tabular}
 \end{center}
-Here, {\tt prec} is the number of bytes per data value, i.e., 4 for single precision and 8 for
-double precision. The positive number of patches is stored in $N_p$, and $t\geq 0$ is the simulation
-time at which the image was saved. The {\tt plane} variable indicates the orientation of the
-plane. It is 0 for a constant $x$-plane, 1 for a constant $y$-plane, and 2 for a constant
+Here, {\tt prec} is the number of bytes per entry in the data section, i.e., 4 for single precision
+and 8 for double precision. The positive number of patches is stored in $N_p$, and $t\geq 0$ is the
+simulation time at which the image was saved. The {\tt plane} variable indicates the orientation of
+the plane. It is 0 for a constant $x$-plane, 1 for a constant $y$-plane, and 2 for a constant
 $z$-plane. The coordinate value is stored in $\xi$. For example, if {\tt plane}=0, the data is saved
 along $x=\xi$. The type of data is saved in {\tt mode}. The following 32 different types of data can
 be saved on an image file,
@@ -3743,8 +3743,7 @@ Data & $u^{(x)}$ & $u^{(y)}$ & $u^{(z)}$ & $\rho$ & $\lambda$ & $\mu$ & $C_p$ & 
 \begin{tabular}{l||l|l|l|l|l|l|l|l|l|l|l}\hline
 {\tt mode}  & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23 & 24 \\ \hline\hline
 Data & div$(\ub_t)$ & $|\mbox{curl($\ub_t$)}|$ & lat & lon &
-topo & $x$ & $y$ & $z$ & $u^{(x)} - u_{ex}^{(x)}$ & $u^{(y)} - u_{ex}^{(y)}$ & $u^{(z)} -
-u_{ex}^{(z)}$  \\ \hline
+topo & $x$ & $y$ & $z$ & $u_{error}^{(x)}$ & $u_{error}^{(y)}$ & $u_{error}^{(z)}$  \\ \hline
 \end{tabular}\\
 \medskip
 \begin{tabular}{l||l|l|l|lllllll}\hline
@@ -3760,11 +3759,12 @@ Data & $|\ub|$ & $\sqrt{(u^{(x)})^2+(u^{(y)})^2}$ & $\max_t\sqrt{(u^{(x)})^2+(u^
 \left| u^{(z)} \right|$ \\ \hline 
 \end{tabular}
 \end{flushleft}
-Here, $|\bf a|$ denotes the magnitude of the vector ${\bf a}\in\Re^3$ and $\ub_{ex}$ denotes the exact
-solution. The latter is only available when the exact solution is known, i.e., when \emph{SW4} is
-run in one of its test modes. Hence, modes 9, 10, 11, 22, 23, and 24, are not normally
-available. Also note that modes 19-21 store the coordinates of the grid in the data section of the
-image file. These modes provide an alternative way of saving the grid when it is curvilinear.
+Here, $|{\bf a}|$ denotes the magnitude of the vector ${\bf a}\in\Re^3$ and $\ub_{ex}$ denotes the
+exact solution, which also is needed to calculate the error in the solution, $\ub_{error}$. Note
+that image modes 9, 10, 11, 22, 23, and 24, only are available when the exact solution is known,
+i.e., when \emph{SW4} is run in one of its test modes. Also note that image modes 19-21 store the
+coordinates of the grid in the data section of the image file. These modes provide an alternative
+way of saving the grid when it is curvilinear.
 
 The {\tt grdinfo} variable can have values 0 or 1. No grid information is saved on the image file if
 {\tt grdinfo}=0. In this case all grid patches are Cartesian, and the grid can be reconstructed from
@@ -3782,12 +3782,12 @@ for each of the $N_p$ grid patches. The information is saved in the following fo
 \hspace{5mm}
 \begin{tabular}{llll}\hline
 Offset (bytes) & Name & Type & Bytes \\ \hline
-57 + $32(p - 1)$ & $h_{p}$ & double & 8 \\ \hline
-65 + $32(p - 1)$ & $zmin_{p}$ & double & 8 \\ \hline
-73 + $32(p - 1)$ & $ib_{p}$ & int & 4 \\ \hline
-77 + $32(p - 1)$ & $ni_{p}$ & int & 4 \\ \hline
-81 + $32(p - 1)$ & $jb_{p}$ & int & 4 \\ \hline
-85 + $32(p - 1)$ & $nj_{p}$ & int & 4 \\ \hline
+61 + $32(p - 1)$ & $h_{p}$ & double & 8 \\ \hline
+69 + $32(p - 1)$ & $zmin_{p}$ & double & 8 \\ \hline
+77 + $32(p - 1)$ & $ib_{p}$ & int & 4 \\ \hline
+81 + $32(p - 1)$ & $ni_{p}$ & int & 4 \\ \hline
+85 + $32(p - 1)$ & $jb_{p}$ & int & 4 \\ \hline
+89 + $32(p - 1)$ & $nj_{p}$ & int & 4 \\ \hline
 \end{tabular}\\
 \}
 \end{flushleft}
@@ -3858,12 +3858,17 @@ The same ordering is used for the coordinates as the data, as determined by the 
 %% \end{center}
 
 
-%% \section{volimage (NOT YET IMPLEMENTED)}\label{sec:volimage-format}
-%% \index{fileformats!volimage}
+\section{volimage (In progress)}\label{sec:volimage-format}
+\index{fileformats!volimage}
 
-%% The {\tt volimage} command generates (often very large) binary files holding three-dimensional
-%% volumetric data. Most users will visualize the data in these files with the open source {\em VisIt}
-%% post processor. For this reason, we will not describe the binary format here. If you really want to
+The {\tt volimage} command generates (often very large) binary files holding three-dimensional
+volumetric data. Most users will visualize the data in these files with the open source {\em VisIt}
+post processor, but \verb+volimage+ files can also be used to define the material properties in
+\emph{SW4}, using the \verb+vimaterial+ command. 
+
+DESCRIBE FORMAT...
+
+%% For this reason, we will not describe the binary format here. If you really want to
 %% know the details of the format, we suggest you look in the source code for the plug-in (in the
 %% \verb+wpp/tools/visit/volimage+ directory).
 
@@ -3914,36 +3919,6 @@ The same ordering is used for the coordinates as the data, as determined by the 
 %% data file using the \verb+volimage+ format, which should be available from the file format pull-down
 %% menu.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Scripts for analyzing the solution}\label{chap:scripts}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\index{scripts}
-
-We have developed some matlab/octave scripts for analyzing the output from \emph{SW4}. These scripts
-can be used to read, plot, and manipulate data. The scripts that read data also implicitly document
-the file formats, and can be helpful when writing readers for other systems.
-
-\section{Time series}
-\subsection{readsac}
-\subsection{readusgs}
-\subsection{plotusgs}
-\subsection{writesac}
-\subsection{writeusgs}
-
-\section{Images}
-\subsection{readimage}
-\subsection{imageinfo}
-
-\section{Test problems}
-\subsection{lamb\_exact}
-\subsection{LOH1exact}
-\subsection{LOH3exact}
-
-\section{Analysis}
-\subsection{fcnplot}
-\subsection{ftfcnplot}
-\subsection{hudsonplot}
-
 \appendix
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Installing \emph{SW4} (in progress)}\label{cha:installing-sw4}
@@ -3977,6 +3952,8 @@ communication on parallel distributed (and shared) memory machines. Note that th
 includes wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich2}
 package includes the {\tt mpicxx} and {\tt mpif77} compilers, as well as the {\tt mpirun} script. We
 highly recommend using these programs for building and running \emph{SW4}.
+
+\section{Compilers and third party libraries}
 
 Before you can build \emph{SW4} on your system, you must have
 \begin{enumerate}
@@ -4064,98 +4041,99 @@ ln -s liblapack.so.3 liblapack.so
 \index{installation!directories}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-To unpack the \emph{SW4} source code, you place the file \verb+sw4-version-1.0.tar.gz+ in the
-desired location and issue the following commands:
+To unpack the \emph{SW4} source code, you place the file \verb+sw4-v1.0.tgz+ in the
+desired directory and issue the following command:
 \begin{verbatim}
-shell> gunzip sw4-version-1.0.tar.gz
-shell> tar xvf sw4-version-1.0.tar 
+shell> tar xzf sw4-v1.0.tgz
 \end{verbatim}
-Afterwards, you will find a new directory named \verb+sw4-version-1.0+, which contains several files
+Afterwards, you will find a new directory named \verb+sw4-v1.0+ that contains several files
 and subdirectories:
 %
 \begin{itemize}
 \item \verb+LICENSE.txt+ License information.
 \item \verb+INSTALL.txt+ Information about how to build \emph{SW4} (short version).
-\item \verb+KNOWN-BUGS.txt+ List of known problems, porting issues, or bugs.
 \item \verb+README.txt+ General information about \emph{SW4}.
 \item \verb+configs+ Directory containing \verb+make+ configuration files.
 \item \verb+src+ C++ and Fortran source code of \emph{SW4}.
-\item \verb+tools+ Matlab scripts for post processing and analysis.
+\item \verb+tools+ Matlab/Octave scripts for post processing and analysis.
 \item \verb+examples+ Sample input files.
 \item \verb+Makefile+ Main makefile (don't change this file!).
 \item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
 \end{itemize}
 
-\section{Compiling and linking \emph{SW4} (without the cencalvm library)}\label{sec:basic-install}
+\section{Compiling and linking \emph{SW4} (basic)}\label{sec:basic-install}
 \index{installation!basic} 
 
-UPDATE! The best way of getting started is to first build \emph{SW4} without the cencalvm library. This
-process should be very straight forward and the resulting \emph{SW4} executable supports all
-commands except the {\tt efile} command. If you need to use the {\tt efile} command, you can later
-install the cencalvm and supporting libraries, see \S~\ref{sec:cencalvm-install}, and then recompile
-\emph{SW4}. 
+The best way of getting started is to first build \emph{SW4} without the proj.4 and cencalvm
+libraries. This process should be very straight forward and the resulting \emph{SW4} executable
+supports all commands except \verb+efile+ and the \verb+proj+ option in the \verb+grid+
+command. If you need to use these options, you can always install the proj.4 and cencalvm libraries
+later, and then recompile \emph{SW4}. See \S~\ref{sec:cencalvm-install} for details.
 
-UPDATE!!!
-Start by familiarizing yourself with the sw4 source code by listing the main sw4 directory,
+The basic build process is controlled by the environmental variables \verb+FC+, \verb+CXX+,
+\verb+EXTRA_FORT_FLAGS+, \verb+EXTRA_CXX_FLAGS+, and \verb+EXTRA_LINK_FLAGS+. These variables should
+hold the names of the Fortan-77 and C++ compilers, and any extra options that should be passed to
+the compilers and linker. The easiest way of assigning these variables is by creating a file in the
+\verb+configs+ directory called \verb+make.inc+, but you may also assign them in your \verb+.cshrc+
+file. The \verb+Makefile+ will look for this file and read it if it is available. To build
+\emph{SW4} under OSX on a Mac, the \verb+configs/make.inc+ file could look something like this:
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-version-1.0
-shell> ls
+FC = openmpif77
+CXX = openmpicxx
+EXTRA_FORT_FLAGS = -fno-underscoring
+EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc47 -lgfortran
 \end{verbatim}
-Go into the configs directory:
+In this case, the \verb+blas+ and \verb+lapack+ libraries are provided by the
+\verb+-framework vecLib+ option.
+Here you will find a number of configuration files. Examples are provided for some common operating
+systems, such as \verb+make.osx+ for Macs, and \verb+make.linux+ for machines running Linux.
 \begin{verbatim}
-shell> cd configs
-\end{verbatim}
-You should set the environment variable SW4MAKE to point to a configuration file for the main
-"Makefile". Examples for some common operating systems are given in the configs directory (make.amac
-for Mac's; make.tux, make.fc14, and make.sierra for Linux machines). For
-example, to use the configs/make.amac setup, you can use the csh-command
-\begin{verbatim}
-setenv SW4MAKE /enter/your/path/sw4-version-1.0/configs/make.amac
+setenv SW4MAKE /enter/your/path/sw4-v1.0/configs/make.amac
 \end{verbatim}
 If you are using a Bourne, bash, or related shell, you should instead use the command
 \begin{verbatim}
-export SW4MAKE=/enter/your/path/sw4-version-1.0/configs/make.amac
+export SW4MAKE=/enter/your/path/sw4-v1.0/configs/make.amac
 \end{verbatim}
 It is a good idea to include this command in your setup file (\verb+.cshrc+ for c-shell).
 
 You build SW4 with the "make" command from the main directory.
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-version-1.0
+shell> cd /enter/your/path/sw4-v1.0
 shell> make
 \end{verbatim}
 If you for some reason wish to remove all object files and the sw4 executable, you can do
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-version-1.0
+shell> cd /enter/your/path/sw4-v1.0
 shell> make clean
 \end{verbatim}
 
 By default, the \emph{SW4} executable is located in 
 \begin{verbatim}
-/my/installation/dir/sw4-version-1.0/src/sw4
+/my/installation/dir/sw4-v1.0/src/sw4
 \end{verbatim}
 It can be convenient to add this directory to your \verb+PATH+ environment variable (i.e., modify
 your \verb+.cshrc+ file).
 
 You can also build a debug version of \emph{SW4} by adding the \verb+debug=1+ option to \verb+make+,
 \begin{verbatim}
-shell> cd /my/installation/dir/sw4-version-1.0
+shell> cd /my/installation/dir/sw4-v1.0
 shell> make debug=1
 \end{verbatim}
 That executable will be located in
 \begin{verbatim}
-/my/installation/dir/sw4-version-1.0/debug_v2.1/sw4
+/my/installation/dir/sw4-v1.0/debug_v2.1/sw4
 \end{verbatim}
 
 \subsection{How do I setup the make.inc file?}
 UPDATE!!!
 The main input file for make is
 \begin{verbatim}
-sw4-version-1.0/Makefile
+sw4-v1.0/Makefile
 \end{verbatim}
 Do {\em not} change the \verb+Makefile+. It should only be necessary to edit your configuration file
 (the file name should be given in the \verb+SW4MAKE+ environment variable), for example
 \begin{verbatim}
-/my/path/sw4-version-1.0/configs/make.inc
+/my/path/sw4-v1.0/configs/make.inc
 \end{verbatim}
 This file holds all information that is particular for your system, such as the name of the
 compilers, the location of the third party libraries, and any extra arguments that should be passed
@@ -4256,7 +4234,7 @@ etree = yes
 You then need to re-compile \emph{SW4}. Go to the sw4 main directory, remove the previous executable
 and object files, and re-run make:
 \begin{verbatim}
-shell> cd /my/installation/dir/sw4-version-1.0
+shell> cd /my/installation/dir/sw4-v1.0
 shell> make clean
 shell> make
 \end{verbatim}
