@@ -149,7 +149,7 @@ sw4: $(FOBJ)
 	@echo "*** Build directory: " $(builddir) " ***"
 
 # distribution
-tardir := "sw4-v1.0"
+tardir := sw4-v1.0
 sw4-v1.0.tgz:
 	/bin/mkdir -p $(tardir)
 	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
