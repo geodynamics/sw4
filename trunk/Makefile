@@ -149,13 +149,14 @@ sw4: $(FOBJ)
 	@echo "*** Build directory: " $(builddir) " ***"
 
 # distribution
-sw4.tgz:
-	@echo "building tar ball..."
-	/bin/mkdir -p sw4-v1.0
-	cp -r src configs examples tools sw4-v1.0
-	cp wave.txt Makefile sw4-v1.0
-	tar -c --exclude "CVS" -z -f $@ sw4-v1.0
-	rm -rf sw4-v1.0
+tardir := "sw4-v1.0"
+sw4-v1.0.tgz:
+	/bin/mkdir -p $(tardir)
+	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
+	cd $(tardir); /bin/rm wave.txt
+#	@echo "building tar ball..."
+#	tar -c --exclude "CVS" -z -f $@ $(tardir)
+#	rm -rf $(tardir)
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<

@@ -3950,85 +3950,77 @@ the file formats, and can be helpful when writing readers for other systems.
 \index{installation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \emph{SW4} source code is released under the GNU general public license and can be downloaded from:
-\begin{verbatim}
-https://computation.llnl.gov/casc/serpentine/software.html
-\end{verbatim}
-Version 1.0 of \emph{SW4} is built using \verb+make+. We recommend using GNU make, sometimes called
+%The \emph{SW4} source code is released under the GNU general public license and can be downloaded
+%from:
+%\begin{verbatim}
+%https://computation.llnl.gov/casc/serpentine/software.html
+%\end{verbatim}
+
+\emph{SW4} is built with \verb+make+. We recommend using GNU make, sometimes called
 \verb+gmake+. You can check the version of make on you system with the command
 \begin{verbatim}
 shell> make -v
 \end{verbatim}
-If you don't have GNU make installed, you can obtain it from www.gnu.org.
+If you don't have GNU make installed on your system, you can obtain it from www.gnu.org.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Supported platforms and compilers}
-\index{installation!platforms}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-We have built \emph{SW4} and its supporting libraries on Intel based laptops, desktops, and clusters
-running LINUX and OSX. It has also been built on various supercomputers such as the large Linux
-clusters at (currently cab at LLNL and edison at LBNL). We have built \emph{SW4} using Gnu, and
-Intel compilers. Our experience is that \emph{SW4} is likely to build if the underlying third party
-libraries can be built. Currently, we are using the following compiler versions:
+We have built \emph{SW4} and its supporting libraries on Intel based laptops and desktops running
+LINUX and OSX. It has also been built on several supercomputers such as the {\tt cab} machine at
+LLNL and {\tt edison} at LBNL. We have successfully used the following versions of Gnu and Intel
+compilers:
 \begin{verbatim}
 Gnu:   g++/gcc/gfortran   versions 4.5 to 4.7
-Intel: icpc/icc/ifort     versions 12.1
+Intel: icpc/icc/ifort     version 12.1
 \end{verbatim}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{MPI and other third party libraries}
-\index{installation!tools}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\emph{SW4} uses the message passing interface (MPI) standard (MPI-2 to be specific) for
+communication on parallel distributed (and shared) memory machines. Note that the MPI library often
+includes wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich2}
+package includes the {\tt mpicxx} and {\tt mpif77} compilers, as well as the {\tt mpirun} script. We
+highly recommend using these programs for building and running \emph{SW4}.
 
-UPDATE! Before you can build \emph{SW4}, you must install the third party libraries. All libraries need to be
-installed in the same directory, such that each library installs its files in the lib and include
-subdirectories. To avoid incompatibility issues and linking problems, it is advisable to use the
-same compiler for building the third party libraries as for building \emph{SW4}.
-
-For a basic installation of SW4, you need:
+Before you can build \emph{SW4} on your system, you must have
 \begin{enumerate}
-\item the lapack and blas libraries, which provide basic linear algebra functionality. On many machines
-these libraries are preinstalled,
-\item an MPI-2 library, which provides support for message passing on parallel machines. An example
-  is the mpich2 library. Note that you need the MPI-2 library even when installing SW4 on a single
-  core system.
+\item the \verb+lapack+ and \verb+blas+ libraries. These libraries provide basic linear algebra
+  functionality and are pre-installed on many machines;
+\item an MPI-2 library. This library provides support for message passing on parallel
+  machines. Examples of open source implementations include Mpich-2 and OpenMPI. Note that the MPI-2
+  library must be installed even if you are only building \emph{SW4} for a single core system.
 \end{enumerate}
-Note that the MPI-2 library often include wrappers for compiling, linking, and executing MPI
-programs. For example, the mpich2 package includes the mpicxx and mpif77 compilers, as well as the
-mpirun script. These wrappers simplify the compilation and linking process and we highly recommend
-using them.
+To avoid incompatibility issues and linking problems, it is advisable to use the same compiler for
+building the libraries and \emph{SW4}.
 
-For a complete installation that supports the efile command for reading e-tree material databases,
-you need to install the following additional libraries (see Section~\ref{sec:cencalvm-install} for details):
+For a complete installation that supports projections from the Proj.4 library and material models
+from an e-tree database, you need to install three additional libraries:
 \begin{itemize}
 \item The Etree library
-\item The Proj library
+\item The Proj.4 library
 \item The cencalvm library
 \end{itemize}
+These libraries need to be installed under the same directory, such that each library installs its
+files in the {\tt lib} and {\tt include} sub-directories. See Section~\ref{sec:cencalvm-install} for
+details.
 
+\paragraph{Mac computers}
 
-\subsection{Mac computers}
-
-UPDATE! We recommend using the MacPorts package manager for installing the required compilers and
+We recommend using the MacPorts package manager for installing the required compilers and
 libraries. Simply go to www.macports.org, and install macports on your system. With that in place,
 you can use the \verb+port+ command as follows
 \begin{verbatim}
-shell> port install gcc44
-shell> port install mpich2 +gcc44
+shell> port install gcc47
+shell> port install openmpi +gcc47
 \end{verbatim}
-Here, gcc44 refers to version 4.4 of the Gnu compiler suite. Compiler versions are bound to change
- with time. Before starting, make sure you install a version of gcc that is compatible with the
- mpich2 package. By adding the \verb+gcc44+ variant, you also get a compatible Fortran compiler.
+Here, \verb+gcc47+ refers to version 4.7 of the Gnu compiler suite. Compiler versions are bound to
+change with time. Before starting, make sure you install a version of gcc that is compatible with
+the \verb+openmpi+ package. By adding the \verb+gcc47+ variant, you also get a compatible Fortran
+compiler. Alternatively, you can use the \verb+mpich2+ package.
 
-The lapack and blas libraries are preinstalled on recent Macs and can be accessed using the
-``-framework vecLib'' link option. If that does not work on your machine, you can download those
-libraries from www.netlib.org.
+The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed using the
+``-framework vecLib'' link option. If that does not work on your machine, you can download \verb+lapack+
+and \verb+blas+ from www.netlib.org.
 
-\subsection{Linux machines}
-
-UPDATE! We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core 14
-Linux. Other Linux variants use similar commands for installing software packages.
+\paragraph{Linux machines}
+UPDATE! We here give detailed instructions for installing the third part libraries under 64 bit,
+Fedora Core 14 Linux. Other Linux variants use similar commands for installing software packages.
 
 You need to have root privileges to install precompiled packages. Start by opening an xterm as root
 using the command
@@ -4053,8 +4045,8 @@ yum install lapack
 On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and
 \verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these
 files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore
-add the links explicitly. If the libraries were installed elsewhere on your system, but you don't know
-where, this is how to find them: Give the commands:
+add the links explicitly. If the libraries were installed elsewhere on your system, but you don't
+know where, you can find them with the following commands:
 \begin{verbatim}
 cd /
 find . -name "*blas*" -print
@@ -4067,14 +4059,12 @@ ln -s libblas.so.3 libblas.so
 ln -s liblapack.so.3 liblapack.so
 \end{verbatim}
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Directory structure}
 \index{installation!directories}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-UPDATE! To unpack the \emph{SW4} source code, you place the file \verb+sw4-version-1.0.tar.gz+ in the
+To unpack the \emph{SW4} source code, you place the file \verb+sw4-version-1.0.tar.gz+ in the
 desired location and issue the following commands:
 \begin{verbatim}
 shell> gunzip sw4-version-1.0.tar.gz
