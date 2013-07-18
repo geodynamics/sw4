@@ -3948,10 +3948,10 @@ Intel: icpc/icc/ifort     version 12.1
 \end{verbatim}
 
 \emph{SW4} uses the message passing interface (MPI) standard (MPI-2 to be specific) for
-communication on parallel distributed (and shared) memory machines. Note that the MPI library often
-includes wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich2}
-package includes the {\tt mpicxx} and {\tt mpif77} compilers, as well as the {\tt mpirun} script. We
-highly recommend using these programs for building and running \emph{SW4}.
+communication on parallel distributed memory machines. Note that the MPI library often includes
+wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich2} package
+includes the {\tt mpicxx} and {\tt mpif77} compilers, as well as the {\tt mpirun} script. We highly
+recommend using these programs for building and running \emph{SW4}.
 
 \section{Compilers and third party libraries}
 
@@ -3963,13 +3963,13 @@ Before you can build \emph{SW4} on your system, you must have
   machines. Examples of open source implementations include Mpich-2 and OpenMPI. Note that the MPI-2
   library must be installed even if you are only building \emph{SW4} for a single core system.
 \end{enumerate}
-To avoid incompatibility issues and linking problems, it is advisable to use the same compiler for
-building the libraries and \emph{SW4}.
+To avoid incompatibility issues and linking problems, we recommend using the same compiler for
+building the libraries as \emph{SW4}.
 
 For a complete installation that supports projections from the Proj.4 library and material models
 from an e-tree database, you need to install three additional libraries:
 \begin{itemize}
-\item The Etree library
+\item The Euclid e-tree library
 \item The Proj.4 library
 \item The cencalvm library
 \end{itemize}
@@ -3988,12 +3988,13 @@ shell> port install openmpi +gcc47
 \end{verbatim}
 Here, \verb+gcc47+ refers to version 4.7 of the Gnu compiler suite. Compiler versions are bound to
 change with time. Before starting, make sure you install a version of gcc that is compatible with
-the \verb+openmpi+ package. By adding the \verb+gcc47+ variant, you also get a compatible Fortran
-compiler. Alternatively, you can use the \verb+mpich2+ package.
+the MPI library package. The above example installs the \verb+openmpi+ package with the \verb+gcc47+
+variant, which includes a compatible Fortran compiler. Alternatively, you can use the \verb+mpich2+
+package.
 
-The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed using the
-``-framework vecLib'' link option. If that does not work on your machine, you can download \verb+lapack+
-and \verb+blas+ from www.netlib.org.
+The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed
+using the \verb+-framework vecLib+ link option. If that is not available or does not work on your
+machine, you can download \verb+lapack+ and \verb+blas+ from www.netlib.org.
 
 \paragraph{Linux machines}
 UPDATE! We here give detailed instructions for installing the third part libraries under 64 bit,
@@ -4023,18 +4024,18 @@ On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libbla
 \verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these
 files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore
 add the links explicitly. If the libraries were installed elsewhere on your system, but you don't
-know where, you can find them with the following commands:
+know where, you can find them with the following command:
 \begin{verbatim}
-cd /
-find . -name "*blas*" -print
+find / -name "*blas*" -print
 \end{verbatim}
-After locating the libraries, we add links to the libraries by issuing the commands (you need to
-be \verb+root+ for this to work) 
+After locating the directory where the libraries reside (in this case \verb+/usr/lib64+), we add
+links to the libraries with the commands:
 \begin{verbatim}
 cd /usr/lib64
 ln -s libblas.so.3 libblas.so
 ln -s liblapack.so.3 liblapack.so
 \end{verbatim}
+Note that you need to have \verb+root+ privileges for this to work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Directory structure}
@@ -4046,8 +4047,8 @@ desired directory and issue the following command:
 \begin{verbatim}
 shell> tar xzf sw4-v1.0.tgz
 \end{verbatim}
-Afterwards, you will find a new directory named \verb+sw4-v1.0+ that contains several files
-and subdirectories:
+As a result a new sub-directory named \verb+sw4-v1.0+ is created, containing several files
+and sub-directories:
 %
 \begin{itemize}
 \item \verb+LICENSE.txt+ License information.
@@ -4061,12 +4062,12 @@ and subdirectories:
 \item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
 \end{itemize}
 
-\section{Compiling and linking \emph{SW4} (basic)}\label{sec:basic-install}
+\section{Basic compilation and linking of \emph{SW4}}\label{sec:basic-install}
 \index{installation!basic} 
 
 The best way of getting started is to first build \emph{SW4} without the proj.4 and cencalvm
 libraries. This process should be very straight forward and the resulting \emph{SW4} executable
-supports all commands except \verb+efile+ and the \verb+proj+ option in the \verb+grid+
+supports all commands except \verb+efile+ and the \verb+proj+/\verb+ellps+ options in the \verb+grid+
 command. If you need to use these options, you can always recompile \emph{SW4} after the proj.4 and cencalvm libraries
 have been installed. See \S~\ref{sec:cencalvm-install} for details.
 
@@ -4075,104 +4076,138 @@ The basic build process is controlled by the environmental variables \verb+FC+, 
 hold the names of the Fortan-77 and C++ compilers, and any extra options that should be passed to
 the compilers and linker. The easiest way of assigning these variables is by creating a file in the
 \verb+configs+ directory called \verb+make.inc+. The \verb+Makefile+ will look for this file and
-read it if it is available. There are several examples in the \verb+configs+ directory, for example
-\verb+make.osx+ for Macs an \verb+make.linux+ for Linux machines. You should copy one of these files
-to your own \verb+make.inc+ and edit it as needed. For example, if you are on a Mac, you could do
-To build \emph{SW4} under OSX on a Mac, you need to create the
-\verb+configs/make.inc+ file could look something like this:
+read it if it is available. There are several examples in the \verb+configs+ directory, e.g.
+\verb+make.osx+ for Macs and \verb+make.linux+ for Linux machines. You should copy one of these files
+to your own \verb+make.inc+ and edit it as needed. 
+
+\subsection{Mac machines}
+If you are on a Mac, you could copy the setup from \verb+make.osx+,
 \begin{verbatim}
-shell>cd configs
-shell>ls make.inc
+shell> cd configs
+shell> cp make.osx make.inc
+shell> cat make.inc
 FC = openmpif77
 CXX = openmpicxx
 EXTRA_FORT_FLAGS = -fno-underscoring
 EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc47 -lgfortran
 \end{verbatim}
-In this case, the \verb+blas+ and \verb+lapack+ libraries are provided by the
-\verb+-framework vecLib+ option.
+In this case, the \verb+blas+ and \verb+lapack+ libraries are assumed to be provided by the
+\verb+-framework vecLib+ option. The \verb+libgfortran+ library is located in the directory
+\verb+/opt/local/lib/gcc47+, which is where \verb+macports+ currently installs it.
 
+\subsection{Linux machines}
+If you are on a Linux machine, we suggest you copy the configuration options from \verb+make.linux+,
+\begin{verbatim}
+shell> cd configs
+shell> cp make.linux make.inc
+shell> cat make.inc
+FC = gfortran
+CXX = mpicxx
+EXTRA_LINK_FLAGS = -L/usr/lib64 -llapack -lblas -lgfortran
+\end{verbatim}
+This setup assumes that the \verb+blas+ and \verb+lapack+ libraries are located in the
+\verb+/usr/lib64+ directory. 
+
+\subsection{Using make}
 You build \emph{SW4} with the "make" command from the main directory.
 \begin{verbatim}
 shell> cd /enter/your/path/sw4-v1.0
 shell> make
 \end{verbatim}
-If you for some reason wish to remove all object files and the \verb+sw4+ executable, you can do
+If all goes well, you will see the SW4 Lives banner on your screen after the compilation and linking
+has completed,
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-v1.0
-shell> make clean
-\end{verbatim}
+    
+``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='````'-.,_,.-'``'-.,_,.='``
 
-By default, the \verb+sw4+ executable is located in 
+
+  _________    ____      __      ____    _    __
+ /   ____  \   \   \    /  \    /   /   / |  |  |  
+ |  |    \./    \   \  /    \  /   /   /  |  |  |
+ |  |______      \   \/      \/   /   /   '--'  |
+ \______   \      \              /    |______   |
+        |  |       \     /\     /            |  |      
+ /`\____|  |        \   /  \   /             |  |      
+ \_________/         \_/    \_/              |__|      
+                                       
+   __       __  ____    ____  _______    ______    __  
+  |  |     |  | \   \  /   / |   ____|  /    __|  |  | 
+  |  |     |  |  \   \/   /  |  |__     |   (__   |  | 
+  |  |     |  |   \      /   |   __|    \__    |  |  | 
+  |  `----.|  |    \    /    |  |____    __)   |  |__| 
+  |_______||__|     \__/     |_______|  (_____/   (__)
+     
+
+``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='````'-.,_,.-'``'-.,_,.='``
+
+\end{verbatim}
+By default, \verb+make+ builds an optimized \verb+sw4+ executable. It is located in 
 \begin{verbatim}
 /enter/your/path/sw4-v1.0/optimize_v1.0/sw4
 \end{verbatim}
-It can be convenient to add this directory to your \verb+PATH+ environment variable (i.e., modify
-your \verb+.cshrc+ file).
-
-You can also build a debug version of \emph{SW4} by adding the \verb+debug=yes+ option to \verb+make+,
+You can also build a debug executable by adding the \verb+debug=yes+ option to \verb+make+,
 \begin{verbatim}
 shell> cd /enter/your/path/sw4-v1.0
 shell> make debug=yes
 \end{verbatim}
-That executable will be located in
+In this case, the executable will be located in
 \begin{verbatim}
 /enter/your/path/sw4-v1.0/debug_v1.0/sw4
 \end{verbatim}
+It can be convenient to add the corresponding directory to your \verb+PATH+ environment variable (i.e., modify
+your \verb+.cshrc+ file).
 
-\subsection{How do I setup the make.inc file?}
-UPDATE!!!
-The main input file for make is
+\subsection{How do I setup the {\tt make.inc} file?}
+
+The input file for \verb+make+ is
 \begin{verbatim}
 sw4-v1.0/Makefile
 \end{verbatim}
-Do {\em not} change the \verb+Makefile+. It should only be necessary to edit your configuration file
-(the file name should be given in the \verb+SW4MAKE+ environment variable), for example
+Do {\em not} change this \verb+Makefile+. It should only be necessary to edit your configuration
+file, that is,
 \begin{verbatim}
 /my/path/sw4-v1.0/configs/make.inc
 \end{verbatim}
 This file holds all information that is particular for your system, such as the name of the
 compilers, the location of the third party libraries, and any extra arguments that should be passed
 to the compiler or linker. This file also instructs \verb+make+ whether or not the
-cencalvm library should be linked to \emph{SW4}. 
+\verb+cencalvm+ and \verb+proj.4+ libraries should be linked to \emph{SW4}. 
 
 The following file incudes all configurable options:
 \begin{verbatim}
 etree = no
+SW4ROOT = /Users/petersson1
 
 CXX = mpicxx
-CC  = mpicc
 FC  = mpif77
-
-SW4ROOT = /Users/petersson1
 
 EXTRA_CXX_FLAGS = -DUSING_MPI
 EXTRA_FORT_FLAGS = -fno-underscoring
 EXTRA_LINK_FLAGS = -framework vecLib
 \end{verbatim}
-The \verb+etree+ variable should be set to \verb+yes+ or \verb+no+, and indicates whether the
-cencalvm and related libraries are available. The \verb+CXX+, \verb+CC+, and \verb+FC+ variables
-should be set to the names of the C++, C, and Fortran compilers, respectively. The \verb+SW4ROOT+
-variable should be set to the path of the third party libraries, such that the directories
-\verb+SW4ROOT+/lib and \verb+SW4ROOT+/include contain the libraries and include files,
-respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
-\verb+EXTRA_LINK_FLAGS+ variables can optionally be set to any additional argument that needs to be
-passed to the C++ compiler, Fortran compiler, or linker, on your system.
+The \verb+etree+ variable should be set to \verb+yes+ or \verb+no+, to indicate whether the cencalvm
+and related libraries are available. The \verb+SW4ROOT+ variable is only used when
+\verb+etree=yes+. The \verb+CXX+ and \verb+FC+ variables should be set to the names of the C++ and
+Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
+\verb+EXTRA_LINK_FLAGS+ variables should contain any additional arguments that need to be passed to
+the C++ compiler, Fortran compiler, or linker, on your system.
 
 
 \section{Installing the cencalvm, proj.4, and euclid libraries}\label{sec:cencalvm-install}
 \index{installation!cencalvm}
 \index{installation!efile}
 
-UPDATE! The cencalvm library was developed by Brad Aagaard at USGS. Both the cencalvm library and the Etree
+The cencalvm library was developed by Brad Aagaard at USGS. Both the cencalvm library and the Etree
 database files, holding the material model of Northern California, can currently be downloaded from
 \begin{verbatim}
 earthquake.usgs.gov/regional/nca/3Dgeologic/cencalvm_doc
 \end{verbatim}
-The installation process, which is outlined below, is described in detail on the above web page.
-Note that three libraries need to be installed: euclid (etree), proj4, and cencalvm.  In order for
-\emph{SW4} to use them, they should all be installed in the same base directory and you should
-assign that directory to the SW4ROOT environment variable. When these pagages are installed, the include files
-should be in \$\{SW4ROOT\}/include and the library files in \$\{SW4ROOT\}/lib.
+The installation process for cencalvm, which is outlined below, is described in detail on the above
+web page.  Note that three libraries need to be installed: euclid (etree), proj4, and cencalvm.  In
+order for \emph{SW4} to use them, they should all be installed in the same base directory and you
+should assign that directory to the SW4ROOT variable. When these three packages are installed, the
+corresponding include and library files should be in the directories \verb+${SW4ROOT}/include+ and
+\verb+${SW4ROOT}/lib+, respectively.
 
 Note that the euclid library must be installed manually by explicitly copying all include files to
 the include directory and all libraries to the lib directory,
@@ -4182,14 +4217,14 @@ shell> make
 shell> cp *.h ${SW4ROOT}/include
 shell> cp libetree.* ${SW4ROOT}/lib
 \end{verbatim}
-The proj4 library should be configured to be installed in SW4ROOT. This is accomplished by
+The proj4 library should be configured to be installed in \verb+${SW4ROOT}+. This is accomplished by
 \begin{verbatim}
 shell> cd proj-4.7.0
 shell> configure --prefix=${SW4ROOT}
 shell> make
 shell> make install
 \end{verbatim}
-The cencalvm library should also be configured to be installed in SW4ROOT. You also have to help
+The cencalvm library should also be configured to be installed in \verb+${SW4ROOT}+. You also have to help
 the configure script finding the include and library files for the proj4 and etree libraries,
 \begin{verbatim}
 shell> cd cencalvm-0.6.5
@@ -4198,7 +4233,6 @@ shell> configure --prefix=${SW4ROOT} CPPFLAGS="-I${SW4ROOT}/include" \
 shell> make
 shell> make install
 \end{verbatim}
-
 
 To verify that the libraries have been installed properly, you should go to the SW4ROOT directory
 and list the lib subdirectory (\verb+cd ${SW4ROOT}; ls lib+). You should see the following files (on
@@ -4220,22 +4254,25 @@ cencalvm
 \end{verbatim}
 Note that the include files for cencalvm are in a subdirectory with the same name.
 
-Once you have successfully installed all three libraries, it is easy to re-configure \emph{SW4} to
-use them. Simply edit the make configuration file (\verb+make.inc+) according to
+\subsection{Building {\tt sw4} with efile and proj.4 support}
+Once you have successfully installed the euclid, proj.4 and cencalvm libraries, it should be easy to
+re-configure \emph{SW4} to use them. Simply edit your configuration file (\verb+make.inc+)
+by adding two lines to the top of the file:
 \begin{verbatim}
 etree = yes
+SW4ROOT = /thid/party/basedir
 ...
 \end{verbatim}
-You then need to re-compile \emph{SW4}. Go to the sw4 main directory, remove the previous executable
-and object files, and re-run make:
+You then need to re-compile \emph{SW4}. Go to the sw4 main directory, clean up the previous object
+files and executable, and re-run make:
 \begin{verbatim}
 shell> cd /my/installation/dir/sw4-v1.0
 shell> make clean
 shell> make
 \end{verbatim}
-As before, if all goes well, the ``SW4 lives'' banner is shown after the make command is completed:
-\begin{verbatim}
-\end{verbatim}
+If all goes well, the ``SW4 lives'' banner is shown after the make command is
+completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize_v1.0+ or
+\verb+debug_v1.0+ directories.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Testing the \emph{SW4} installation (in progress)}\label{cha:testing-sw4}
