@@ -1,0 +1,131 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Fri Jul 19 13:27:36 PDT 2013
+  By user:     andersp
+  Machine:     cab670
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: tw-topo-att-3.in
+
+* Processing the grid command...
+* Setting h to 0.0314 from  x/(nx-1) (x=6.28, nx=201)
+* Setting ny to 201 to be consistent with h=0.0314
+* Setting nz to 201 to be consistent with h=0.0314
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
+Extent of the computational domain xmax=6.28 ymax=6.28 zmax=6.2656
+Corrected global_zmax = 6.2656
+Refinement levels after correction: 
+grid=0 min Z=3
+***inside setup2D_MPICommunications***
+***inside buildGaussianHillTopography***
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -5.995189e-01, max z = -2.999535e-35, top Cartesian z = 3.000000e+00
+allocateCurvilinearArrays: Number of grid points in curvilinear grid = 106, kStart = -1, kEnd = 108
+***inside setupMPICommunications***
+***inside generate_grid***
+***inside setup_metric***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0    0.0314       201       201       105      4242105
+   1    0.0314       201       201       106      4282506
+Total number of grid points (without ghost points): 8.52461e+06
+
+Default Supergrid thickness has been tuned; thickness = 10 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0
+
+   Execution time, reading input file 0.081317 seconds 
+ *** Testing = 1
+  Using Bjorn's (fast) parallel IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: twtest/
+		
+... Done!
+----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700006e+01
+2: Lon= 1.180001e+02, Lat=3.700006e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00002 kg/m^3 <=  Density <= 2.99997 kg/m^3
+       1.633 m/s    <=  Vp      <= 2.8284 m/s
+       1 m/s    <=  Vs      <= 1.73204 m/s
+       1.52753        <=  Vp/Vs   <= 1.73205
+       2.00002 Pa     <=  mu      <= 3.99997 Pa
+       1.00006 Pa     <=  lambda  <= 2.99993 Pa
+       Using attenuation 
+       -1        <=  Qs      <= -1  
+       -1        <=  Qp      <= -1  
+       ------------------------------------------------------
+
+*** Attenuation parameters calculated for 1 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 7.316348e-03
+order of accuracy=4 CFL=1.3 prel. time step=0.00731635
+*** Initialized Images
+   Execution time, start up phase 0.439288 seconds 
+Running sw4 on 16 processors...
+Writing output to directory: twtest/
+
+***  Starting solve ***
+============================================================
+ Running program on 16 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 1
+ Number of time steps = 137 dt: 0.00729927
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax free surface
+
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 1
+  c = 1.3
+  phase = 0.3
+  mat-omega = 1
+  mat-phase = 0.1
+  amprho = 1
+  amplambda = 1
+  ampmu = 1
+-----------------------------------------------------------
+  Initial data has been assigned
+  Begin time stepping...
+Time step       1  t =   7.2992701e-03
+Time step     101  t =   7.3722628e-01
+Time step     137  t =   1.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 2 minutes 37.599 seconds 
+
+ Final solution errors: Linf =   1.7021457e-05, L2 =   1.2365324e-05
+
+ Final solution errors, attenuation: Linf =   1.6526909e-05, L2 =   1.2071912e-05
+============================================================
+ program sw4 finished! 
+============================================================

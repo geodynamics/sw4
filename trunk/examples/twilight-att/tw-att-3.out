@@ -1,0 +1,125 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Fri Jul 19 13:27:36 PDT 2013
+  By user:     andersp
+  Machine:     cab670
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: tw-att-3.in
+
+* Processing the grid command...
+* Setting h to 0.0314 from  x/(nx-1) (x=6.28, nx=201)
+* Setting ny to 201 to be consistent with h=0.0314
+* Setting nz to 201 to be consistent with h=0.0314
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
+Extent of the computational domain xmax=6.28 ymax=6.28 zmax=6.28
+Corrected global_zmax = 6.28
+Refinement levels after correction: 
+grid=0 min Z=0
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0    0.0314       201       201       201      8120601
+Total number of grid points (without ghost points): 8.1206e+06
+
+Default Supergrid thickness has been tuned; thickness = 10 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0
+
+   Execution time, reading input file 0.050346 seconds 
+ *** Testing = 1
+  Using Bjorn's (fast) parallel IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: twtest/
+		
+... Done!
+----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700006e+01
+2: Lon= 1.180001e+02, Lat=3.700006e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00002 kg/m^3 <=  Density <= 2.99998 kg/m^3
+       1.63299 m/s    <=  Vp      <= 2.82841 m/s
+       1 m/s    <=  Vs      <= 1.73204 m/s
+       1.52753        <=  Vp/Vs   <= 1.73205
+       2.00002 Pa     <=  mu      <= 3.99998 Pa
+       1.00002 Pa     <=  lambda  <= 2.99998 Pa
+       Using attenuation 
+       -1        <=  Qs      <= -1  
+       -1        <=  Qp      <= -1  
+       ------------------------------------------------------
+
+*** Attenuation parameters calculated for 1 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.3 prel. time step=0.00904857
+*** Initialized Images
+   Execution time, start up phase 0.169562 seconds 
+Running sw4 on 16 processors...
+Writing output to directory: twtest/
+
+***  Starting solve ***
+============================================================
+ Running program on 16 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 1
+ Number of time steps = 111 dt: 0.00900901
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax free surface
+
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 1
+  c = 1.3
+  phase = 0.3
+  mat-omega = 1
+  mat-phase = 0.1
+  amprho = 1
+  amplambda = 1
+  ampmu = 1
+-----------------------------------------------------------
+  Initial data has been assigned
+  Begin time stepping...
+Time step       1  t =   9.0090090e-03
+Time step     101  t =   9.0990991e-01
+Time step     111  t =   1.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 1 minute  6.5701 seconds 
+
+ Final solution errors: Linf =   2.3561288e-06, L2 =   1.0466591e-05
+
+ Final solution errors, attenuation: Linf =   2.2869862e-06, L2 =   1.0568629e-05
+============================================================
+ program sw4 finished! 
+============================================================
