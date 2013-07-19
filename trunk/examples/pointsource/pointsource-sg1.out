@@ -1,0 +1,142 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Fri Jul 19 13:27:36 PDT 2013
+  By user:     andersp
+  Machine:     cab670
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: pointsource-sg1.in
+
+* Processing the grid command...
+* Setting nx to 151 to be consistent with h=0.04
+* Setting ny to 151 to be consistent with h=0.04
+* Setting nz to 151 to be consistent with h=0.04
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
+Extent of the computational domain xmax=6 ymax=6 zmax=6
+Corrected global_zmax = 6
+Refinement levels after correction: 
+grid=0 min Z=0
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0      0.04       151       151       151      3442951
+Total number of grid points (without ghost points): 3.44295e+06
+
+Default Supergrid thickness has been tuned; thickness = 25 grid sizes
+
+   Execution time, reading input file 0.016466 seconds 
+ *** Testing = 1
+  Using Bjorn's (fast) parallel IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: pointsource-h0p04/
+		
+... Done!
+----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700005e+01
+2: Lon= 1.180001e+02, Lat=3.700005e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+
+       ----------- Material properties ranges ---------------
+       1 kg/m^3 <=  Density <= 1 kg/m^3
+       1.6 m/s    <=  Vp      <= 1.6 m/s
+       0.8 m/s    <=  Vs      <= 0.8 m/s
+       2        <=  Vp/Vs   <= 2
+       0.64 Pa     <=  mu      <= 0.64 Pa
+       1.28 Pa     <=  lambda  <= 1.28 Pa
+       ------------------------------------------------------
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.3 prel. time step=0.0265361
+*** Initialized Images
+Sanity testing of the source
+   Execution time, start up phase 0.017038 seconds 
+Running sw4 on 128 processors...
+Writing output to directory: pointsource-h0p04/
+
+***  Starting solve ***
+Saving one discretized time function
+============================================================
+ Running program on 128 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 5
+ Number of time steps = 188 dt: 0.0265957
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo supergrid
+      z=zMax supergrid
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.22474 Nm 
+  Moment magnitude     (Mw): -6.00797
+  Number of sources 1
+-----------------------------------------------------------------------
+  Initial data has been assigned
+writing image plane on file pointsource-h0p04/ps.cycle=000.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=000.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=000.z=3.uz.sw4img
+  Begin time stepping...
+Time step       1  t =   2.6595745e-02
+writing image plane on file pointsource-h0p04/ps.cycle=019.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=019.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=019.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=038.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=038.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=038.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=056.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=056.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=056.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=075.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=075.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=075.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=094.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=094.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=094.z=3.uz.sw4img
+Time step     101  t =   2.6861702e+00
+writing image plane on file pointsource-h0p04/ps.cycle=113.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=113.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=113.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=132.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=132.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=132.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=150.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=150.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=150.z=3.uz.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=169.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=169.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=169.z=3.uz.sw4img
+Time step     188  t =   5.0000000e+00
+writing image plane on file pointsource-h0p04/ps.cycle=188.z=3.ux.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=188.z=3.uy.sw4img
+writing image plane on file pointsource-h0p04/ps.cycle=188.z=3.uz.sw4img
+  Time stepping finished...
+**** Closed file with solution errors for testing
+   Execution time, solver phase 7.82418 seconds 
+
+ Final solution errors: Linf =   2.8566648e-02, L2 =   1.5843165e-01
+============================================================
+ program sw4 finished! 
+============================================================
