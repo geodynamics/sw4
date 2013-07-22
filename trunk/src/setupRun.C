@@ -841,6 +841,18 @@ void EW::set_materials()
       extrapolateInXY(mQp);
     }
 
+    if( m_use_attenuation && m_qmultiplier != 1 )
+    {
+       for (int g=0; g<mNumberOfGrids; g++)
+	  for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
+	     for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
+		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+		{
+		   mQs[g](i,j,k) = m_qmultiplier*mQs[g](i,j,k);
+		   mQp[g](i,j,k) = m_qmultiplier*mQp[g](i,j,k);
+		}
+    }
+
 // threshold material velocities
     if (m_useVelocityThresholds)
     {

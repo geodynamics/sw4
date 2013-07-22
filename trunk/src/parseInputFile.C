@@ -1210,6 +1210,12 @@ void EW::processAttenuation(char* buffer)
         foundppw = true;
         CHECK_INPUT(m_att_ppw >= 0, "ERROR: minimum ppw must be >= 0, not " << m_att_ppw);
      }
+     else if( startswith("qmultiplier=",token) )
+     {
+        token += 12;
+        m_qmultiplier = atof( token ); //
+        CHECK_INPUT(m_qmultiplier > 0, "ERROR: qmultiplier must be positive, not " << m_qmultiplier);	
+     }
      else
      {
        badOption("attenuation", token);

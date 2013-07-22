@@ -337,6 +337,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_jperturb(1),
   m_kperturb(1),
   m_pervar(1),
+  m_qmultiplier(1),
   NO_TOPO(1e38)
 {
   
