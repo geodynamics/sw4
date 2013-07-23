@@ -1664,10 +1664,10 @@ frequencies in the numerical solution, and does {\em not} act as an artificial d
 \end{centering}
 \end{figure}
 
-Wave propagation in visco-elastic materials is dispersive, i.e., the phase velocity of a wave depends on
-its frequency. Figure~\ref{fig:phase-velo} illustrates that the frequency dependence on the phase
-velocity becomes more pronounced when $Q$ gets smaller. Also note that the phase velocity grows
-approximately linearly on a logarithmic scale in $\omega$, throughout the frequency band
+Wave propagation in visco-elastic materials is dispersive, i.e., the phase velocity of a wave
+depends on its frequency. Figure~\ref{fig:phase-velo} illustrates that the frequency dependence on
+the phase velocity becomes more pronounced when $Q$ gets smaller. Also note that the phase velocity
+grows approximately linearly on a logarithmic scale in $\omega$, throughout the frequency band
 $[\omega_{min},\omega_{max}]$. Outside this band, the phase velocity tends to constant values.
 %-------------------------Figure -------------------------------------
 \begin{figure}
@@ -1681,7 +1681,8 @@ $[\omega_{min},\omega_{max}]$. Outside this band, the phase velocity tends to co
 Due to the dispersive nature of visco-elastic materials, it is necessary to specify the reference
 frequency, $\omega_r$, at which the phase velocities are specified.
 
-In \emph{SW4}, visco-elastic modeling is enabled by the {\tt attenuation} command. For example, the command
+In \emph{SW4}, visco-elastic modeling is enabled by the {\tt attenuation} command. For example, the
+command
 \begin{verbatim}
 attenuation nmech=3 phasefreq=2.5 maxfreq=10
 \end{verbatim}
@@ -2091,7 +2092,68 @@ but visual inspection of Figure~\ref{fig:LOH1} indicates very good agreement of 
 finer grid with $h=25$ gives $P\approx 12.1$. For the purpose of most practical calculations, we
 suggest using in between $P=6$ and $P=12$ grid points per shortest wave length.
 
-\section{The visco-elastic layer over half-space problem: LOH.3}
+\section{The visco-elastic layer over half-space problem: LOH.3 (UPDATE)}
+The LOH.3 problem, which adds effects of anelastic attenuation to the LOH.1 problem, is
+defined in the input script \verb+examples/scec/loh3/loh3-h50.mr.in+. To reduce any artificial
+effects from the far-field boundaries, we use a slightly larger computational domain compared to
+LOH.1,
+\begin{verbatim}
+grid h=50 x=40000 y=40000 z=20000
+\end{verbatim}
+The visco-elastic modeling is enabled with the command
+\begin{verbatim}
+attenuation phasefreq=2.5 nmech=3 maxfreq=15
+\end{verbatim}
+In this case, three standard linear solid mechanisms are used (\verb+nmech=3+) to give a material
+with approximately constant quality factors in the frequency band $0.15 \leq f \leq 15$ Hz. Note
+that only the upper frequency limit needs to be specified (\verb+maxfreq=15+); the lower limit is
+always 100 times smaller (and can not be specified). Since the visco-elastic material is dispersive,
+we use the \verb+phasefreq=2.5+ option to specify at what frequency the compressional and shear
+speeds should apply. In the description of the LOH.3 problem this frequency is given as 2.5 Hz, see
+Day et al.~\cite{Day-2003}.
+
+Apart from the density and the material velocities, the material model must include the quality
+factors for the attenuation of compressional ($Q_P$) and shear waves ($Q_S$). For this problem, we
+use the block commands
+\begin{verbatim}
+block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
+block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+\end{verbatim}
+Similar to the LOH.1 test case, the source is of point moment-tensor type with a Gaussian
+time-function. Note, however, that for LOH.3, the Gaussian has spread $\sigma=0.05$, corresponding
+to the center angular frequency $\omega_0=1/\sigma=20$ and center frequency
+$f_0=20/(2\pi)\approx 3.18$ Hz. The source is specified by the command
+\begin{verbatim}
+source x=20000 y=20000 z=2000 Mxy=1 m0=1e18 t0=0.2 freq=20 \
+       type=Gaussian
+\end{verbatim}
+
+The solution is recorded in the same array of recievers as before, but all $(x,y)$ coordinates have
+been incremented by 5000 meters to be in the same position relative to the source.  Results recorded
+at station 10 are shown in Figure~\ref{fig:LOH3}. As for the LOH.1 problem, the velocity is
+presented in polar components. We conclude that the numerical solution is in very good agreement
+with the semi-analytical solution shown in black. 
+\begin{figure}[ht]
+  \begin{center}
+%    \includegraphics[width=0.90\textwidth]{loh3-m3-mr50.eps} UPDATE!
+    \caption{LOH.3: The radial (top), transverse (middle) and vertical (bottom) velocities at
+      receiver number 10. Here the numerical and semi-analytical solutions are plotted in red and
+      black, respectively.}
+    \label{fig:LOH3}
+  \end{center}
+\end{figure}
+
+As before we can estimate the resolution in terms of the number of grid points per shortest
+significant wave length. In this case the center frequency is $f_0\approx 3.18$ Hz and we estimate
+the upper power frequency to be $f_{max}\approx 2.5 f_0 = 7.95$ Hz. The material model has $\min V_s =
+2000$ m/s where the grid size is $h=25$ m, and we arrive at
+\[
+P = \dfrac{2000}{25\cdot 7.95} \approx 10.06.
+\]
+
+
+\section{The Grenoble basin test case}\label{sec:grenoble}
+\index{examples!grenoble}
 
 
 

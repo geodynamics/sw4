@@ -12,7 +12,7 @@ time t=10
 # wave speeds at 2.5 Hz, 3 viscoelastic mechanisms by default
 attenuation phasefreq=2.5 nmech=3 maxfreq=15
 
-#increase width of super grid damping layer
+#increase width of super grid damping layer (30 is the default)
 supergrid gp=30
 
 fileio path=loh3-h50
