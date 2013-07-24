@@ -111,6 +111,7 @@ void processDeveloper(char* buffer);
 void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
 void processAttenuation(char* buffer);
+void processRandomize(char* buffer);
 
 //void getEfileInfo(char* buffer);
 
@@ -520,6 +521,8 @@ void get_utc( int utc[7] ) const;
 
 void perturb_mtrl();
 
+void perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp );
+
 void metric_derivatives_test();
 
 void material_ic( vector<Sarray>& a_mtrl );
@@ -689,6 +692,10 @@ vector<Sarray*> mMuVE, mLambdaVE;
 // relaxation frequencies
 vector<double> mOmegaVE;
 
+// Randomization of the material
+bool m_randomize;
+int m_random_seed[3];
+double m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes

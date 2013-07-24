@@ -86,7 +86,7 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o rhs4curvilinearsg.o gradients.o Image3D.o MaterialVolimagefile.o MaterialInvtest.o \
-       invtestmtrl.o projectmtrl.o
+       invtestmtrl.o projectmtrl.o randomfield3d.o
 
 OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \

@@ -22,6 +22,15 @@ void F77_FUNC(bopext4th,BOPEXT4TH)(double *, double *);
 void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
 void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
 			   int & LWORK, int & INFO);
+void F77_FUNC(randomfield3d,RANDOMFIELD3D)( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
+                                              int*, double*, double*, double*, double*, double*, int* );
+void F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
+                                              int*, double*, double*, double*, double*, double*, double*, int* );
+
+void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int *, int *, double*, 
+						double*, double*, double*, double*, double*, double* );
+void F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( int *, int *, int *, int *, int *, int *, double*, 
+						  double*, double*, double*, double*, double* );
 }
 
 #define SQR(x) ((x)*(x))
@@ -866,6 +875,10 @@ void EW::set_materials()
 	      }
     }
     
+// add random perturbation
+    if( m_randomize )
+       perturb_velocities( mMu, mLambda );
+
     convert_material_to_mulambda( );
     
     check_for_nan( mMu, 1,"mu ");       
@@ -1575,5 +1588,48 @@ void EW::material_ic( vector<Sarray>& a_mtrl )
 		  a_mtrl[gc](c,i,j,m_kEnd[gc]-q) = a_mtrl[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
 	    }
 	 }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
+{
+   for (int g=0; g<mNumberOfGrids; g++)
+   {
+      double* vs_ptr  = a_vs[g].c_ptr();
+      double* vp_ptr  = a_vp[g].c_ptr();
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      int nx = m_global_nx[g];
+      int ny = m_global_ny[g];
+      int nz = m_global_nz[g];
+      int ghost = m_ghost_points;
+      double h = mGridSize[g];
+      Sarray pert(ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Sarray wgh(ifirst,ilast,jfirst,jlast,kfirst,klast);
+      double* pert_ptr = pert.c_ptr();
+      double* wgh_ptr = wgh.c_ptr();
+      if( g == mNumberOfGrids-1 && topographyExists() )
+      {
+         F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+		     &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
+		     &m_random_distz, &h, mZ.c_ptr(), m_random_seed );
+         F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+						      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
+						      mZ.c_ptr() );
+      }
+      else
+      {
+         F77_FUNC(randomfield3d,RANDOMFIELD3D)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+		     &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
+		     &m_random_distz, &h, m_random_seed );
+         F77_FUNC(perturbvelocity,PERTURBVELOCITY)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+						    vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
+						    &m_zmin[g], &h );
+      }
    }
 }
