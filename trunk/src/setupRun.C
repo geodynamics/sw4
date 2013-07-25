@@ -23,9 +23,9 @@ void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double
 void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
 			   int & LWORK, int & INFO);
 void F77_FUNC(randomfield3d,RANDOMFIELD3D)( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
-                                              int*, double*, double*, double*, double*, double*, int* );
+					    int*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
 void F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
-                                              int*, double*, double*, double*, double*, double*, double*, int* );
+                                              int*, double*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
 
 void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int *, int *, double*, 
 						double*, double*, double*, double*, double*, double* );
@@ -1594,16 +1594,35 @@ void EW::material_ic( vector<Sarray>& a_mtrl )
 //-----------------------------------------------------------------------
 void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 {
-   for (int g=0; g<mNumberOfGrids; g++)
+   int g = mNumberOfGrids-1;
+   int p = m_random_dist/mGridSize[g]+1;
+   int pz= m_random_distz/mGridSize[g]+1;
+   int ifirst = m_iStart[g];
+   int ilast  = m_iEnd[g];
+   int jfirst = m_jStart[g];
+   int jlast  = m_jEnd[g];
+   int kfirst = m_kStart[g];
+   int klast  = m_kEnd[g];
+   // Need to save random numbers on the overlap between the topograpy-grid 
+   // and the uppermost Cartesian grid, in order to make the perturbation
+   // continuous across the grid/grid interface. The overlap is always saved,
+   // even if there is only a Cartesian grid, to simplify the code.
+   //
+   // NOTE: This might not work if grid refinement is put into the code later.
+   //
+   Sarray saverand(ifirst-p,ilast+p,jfirst-p,jlast+p,kfirst-pz,kfirst+pz);
+   double* saverand_ptr = saverand.c_ptr();
+
+   for ( g=0; g<mNumberOfGrids; g++)
    {
       double* vs_ptr  = a_vs[g].c_ptr();
       double* vp_ptr  = a_vp[g].c_ptr();
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
+      ifirst = m_iStart[g];
+      ilast  = m_iEnd[g];
+      jfirst = m_jStart[g];
+      jlast  = m_jEnd[g];
+      kfirst = m_kStart[g];
+      klast  = m_kEnd[g];
       int nx = m_global_nx[g];
       int ny = m_global_ny[g];
       int nz = m_global_nz[g];
@@ -1613,11 +1632,12 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
       Sarray wgh(ifirst,ilast,jfirst,jlast,kfirst,klast);
       double* pert_ptr = pert.c_ptr();
       double* wgh_ptr = wgh.c_ptr();
+
       if( g == mNumberOfGrids-1 && topographyExists() )
       {
          F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 		     &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
-		     &m_random_distz, &h, mZ.c_ptr(), m_random_seed );
+			      &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
 						      mZ.c_ptr() );
@@ -1626,7 +1646,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
       {
          F77_FUNC(randomfield3d,RANDOMFIELD3D)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 		     &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
-		     &m_random_distz, &h, m_random_seed );
+						&m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocity,PERTURBVELOCITY)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						    vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
 						    &m_zmin[g], &h );

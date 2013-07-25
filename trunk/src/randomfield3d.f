@@ -45,13 +45,15 @@ c$$$ 101  format(' ',a,g15.5,a)
 c$$$      end
       subroutine RANDOMFIELD3D( ifirst, ilast, jfirst, jlast, kfirst,
      *                          klast, nig, njg, nkg, gh, w, wgh, dist, 
-     *                          distz, h, randw )
+     *                          distz, h, randw, savedrands, p, pz )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nig, njg, nkg
       integer i, j, k, randw(3), iseed1, iseed2, iseed3, krand, iz, gh
       integer p, pz, ii, jj, kk
       real*8  w(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  wgh(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8  savedrands(ifirst-p:ilast+p,jfirst-p:jlast+p,
+     *                                        1-pz:1+pz)
       real*8  h, dist, distz
       real*8, allocatable, dimension(:) :: b, bz
       real    randno
@@ -59,8 +61,8 @@ c$$$      end
       iseed1=randw(1)
       iseed2=randw(2)
       iseed3=randw(3)
-      p =int(dist/h)+1
-      pz=int(distz/h)+1
+c      p =int(dist/h)+1
+c      pz=int(distz/h)+1
       allocate( b(-p:p), bz(-pz:pz) )
       do k=-p,p
          b(k) = exp(-k*k*h*h/(2*dist*dist))
@@ -73,7 +75,8 @@ c$$$      end
       wgh=0
 *** wgh is maintained because of boundary effects. The stencil is cut
 *** at boundaries and will use fewer points there.
-      do k=1-gh,nkg+gh
+c      do k=1-gh,nkg+gh
+      do k=1-pz,nkg+gh
          do j=1-gh,njg+gh
             do i=1-gh,nig+gh
 *** Random number generator, expanded into loop
@@ -96,6 +99,10 @@ c$$$      end
      *             k+pz.ge.kfirst .and. k-pz.le.klast )then
 *** Compute the random number in [-1,1], and loop over stencil
                   randno = 2*real(iz)*3.0899e-5-1
+                  if( k.le.1+pz )then
+                     savedrands(i,j,k) =randno
+c                     write(*,*) 'saved ',i,j,k,randno
+                  endif
                   do kk=-pz,pz
                      if( k-kk.ge.kfirst .and. k-kk.le.klast )then 
                      do jj=-p,p
@@ -134,7 +141,7 @@ c$$$      end
       end
       subroutine RANDOMFIELD3DC( ifirst, ilast, jfirst, jlast, kfirst,
      *                          klast, nig, njg, nkg, gh, w, wgh, dist, 
-     *                          distz, h, z, randw )
+     *                          distz, h, z, randw, savedrands, p, pz )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nig, njg, nkg
       integer i, j, k, randw(3), iseed1, iseed2, iseed3, krand, iz, gh
@@ -142,6 +149,8 @@ c$$$      end
       real*8  w(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  z(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  wgh(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8  savedrands(ifirst-p:ilast+p,jfirst-p:jlast+p,
+     *                                       nkg-pz:nkg+pz)
       real*8  h, dist, distz, i2dz, bz
       real*8, allocatable, dimension(:) :: b
       real    randno
@@ -149,8 +158,8 @@ c$$$      end
       iseed1=randw(1)
       iseed2=randw(2)
       iseed3=randw(3)
-      p =int(dist/h)+1
-      pz=int(distz/h)+1
+c      p =int(dist/h)+1
+c      pz=int(distz/h)+1
       allocate( b(-p:p) )
       do k=-p,p
          b(k) = exp(-k*k*h*h/(2*dist*dist))
@@ -158,7 +167,7 @@ c$$$      end
       i2dz = 1/(2*distz*distz)      
       w = 0
       wgh=0
-      do k=1-gh,nkg+gh
+      do k=1-gh,nkg+pz
          do j=1-gh,njg+gh
             do i=1-gh,nig+gh
 *** Random number generator, expanded into loop
@@ -176,11 +185,15 @@ c$$$      end
                iz = iz+ iseed3
                if(iz.lt.1) iz = iz+32362
 *** First test if loop over stencil is necessary at all
-               if( i+p.ge.ifirst .and. i-p.le.ilast .and. 
-     *             j+p.ge.jfirst .and. j-p.le.jlast .and. 
+               if( i+p.ge.ifirst  .and. i-p.le.ilast .and. 
+     *             j+p.ge.jfirst  .and. j-p.le.jlast .and. 
      *             k+pz.ge.kfirst .and. k-pz.le.klast )then
 *** Compute the random number in [-1,1], and loop over stencil
-                  randno = 2*real(iz)*3.0899e-5-1
+                  if( k.lt.nkg-pz )then
+                     randno = 2*real(iz)*3.0899e-5-1
+                  else
+                     randno = savedrands(i,j,k)
+                  endif
                   do kk=-pz,pz
                      if( k-kk.ge.kfirst .and. k-kk.le.klast )then 
 
@@ -189,8 +202,8 @@ c$$$      end
                            do ii=-p,p
                               if( i-ii.ge.ifirst .and. i-ii.le.ilast 
      *                                                          )then
-                                 bz = EXP(-(z(i-ii,j-jj,k-kk)-z(i,j,k)
-     *                                             )**2*i2dz)
+                                 bz = EXP(-(z(i-ii,j-jj,k-kk)-
+     *                                      z(i-ii,j-jj,k)    )**2*i2dz)
                                  w(i-ii,j-jj,k-kk) = w(i-ii,j-jj,k-kk) + 
      *                             b(ii)*b(jj)*bz*randno
                                  wgh(i-ii,j-jj,k-kk) = 
