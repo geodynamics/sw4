@@ -1,0 +1,112 @@
+\begin{thebibliography}{10}
+
+\bibitem{Aki-Richards-02}
+K.~Aki and P.~G. Richards.
+\newblock {\em Quantitative seismology}.
+\newblock University Science Books, Sausalito, CA, USA, 2nd edition, 2002.
+
+\bibitem{AppCol-09}
+D.~Appel\"o and T.~Colonius.
+\newblock A high order super-grid-scale absorbing layer and its application to
+  linear hyperbolic systems.
+\newblock {\em J. Comput. Phys.}, 228:4200--4217, 2009.
+
+\bibitem{Day-2001}
+S.~M. Day, J.~Bielak, D.~Dreger, S.~Larsen, R.~Graves, A.~Pitarka, and K.~B.
+  Olsen.
+\newblock Test of 3{D} elastodynamic codes: {L}ifelines project task 1{A}01.
+\newblock Technical report, Pacific Earthquake Engineering Center, 2001.
+
+\bibitem{Day-2003}
+S.~M. Day, J.~Bielak, D.~Dreger, S.~Larsen, R.~Graves, A.~Pitarka, and K.~B.
+  Olsen.
+\newblock Test of 3{D} elastodynamic codes: {L}ifelines program task 1{A}02.
+\newblock Technical report, Pacific Earthquake Engineering Center, 2003.
+
+\bibitem{Emm-Korn-87}
+H.~Emmerich and M.~Korn.
+\newblock Incorporation of attenuation into time-dependent computations of
+  seismic wave fields.
+\newblock {\em Geophysics}, 52(9):1252--1264, 1987.
+
+\bibitem{Goldstein-et-al}
+P.~Goldstein, D.~Dodge, M.~Firpo, and L.~Miner.
+\newblock {\em International Handbook of Earthquake and Engineering
+  Seismology}, volume 81B, chapter SAC2000: Signal processing and analysis
+  tools for seismologists and engineers, pages 1613--1614.
+\newblock International Association of Seismology and Physics of the Earth's
+  Interior, 2003.
+
+\bibitem{Gustafsson-Kreiss-Oliger}
+B.~Gustafsson, H.-O. Kreiss, and J.~Oliger.
+\newblock {\em Time dependent problems and difference methods}.
+\newblock Wiley--Interscience, 1995.
+
+\bibitem{KrePet-12}
+H.-O. Kreiss and N.A. Petersson.
+\newblock Boundary estimates for the elastic wave equation in almost
+  incompressible materials.
+\newblock {\em SIAM J. Numer. Anal.}, 50:1556--1580, 2012.
+
+\bibitem{Lamb_1904}
+Horace Lamb.
+\newblock On the propagation of tremors over the surface of an elastic solid.
+\newblock {\em Phil. Trans. Roy. Soc. London, Ser. A}, 203, 1904.
+
+\bibitem{liuetal_2006}
+P.~Liu, R.~J. Archuleta, and S.~H. Hartzell.
+\newblock Prediction of broadband ground-motion time histories: Hybrid
+  low/high-frequency method with correlated random source parameters.
+\newblock {\em Bulletin of the Seismological Society of America},
+  96:2118--2130, 2006.
+
+\bibitem{Mooney_1974}
+Harold~M. Mooney.
+\newblock Some numerical solutions for {L}amb's problem.
+\newblock {\em Bull. Seismo. Soc. Amer.}, 64, 1974.
+
+\bibitem{Proj4}
+G.~Evenden (original author).
+\newblock Proj.4 cartographic projections library.
+\newblock Source code and documentation available from trac.osgeo.org/proj.
+
+\bibitem{PetSjo-10}
+N.~A. Petersson and B.~Sj\"ogreen.
+\newblock Stable grid refinement and singular source discretization for seismic
+  wave simulations.
+\newblock {\em Comm. Comput. Phys.}, 8(5):1074--1110, November 2010.
+
+\bibitem{WPP2}
+N.~A. Petersson and B.~Sj\"ogreen.
+\newblock User's guide to {WPP} version 2.1.
+\newblock Technical Report LLNL-SM-487431, Lawrence Livermore National
+  Laboratory, 2011.
+\newblock (Source code available from
+  https://computation.llnl.gov/casc/serpentine).
+
+\bibitem{PetSjo-10b}
+N.~A. Petersson and B.~Sj\"ogreen.
+\newblock Stable and efficient modeling of anelastic attenuation in seismic
+  wave propagation.
+\newblock {\em Comm. Comput. Phys.}, 12(1):193--225, 2012.
+
+\bibitem{PetSjo-13}
+N.~A. Petersson and B.~Sj\"ogreen.
+\newblock Super-grid modeling of the elastic wave equation in semi-bounded
+  domains.
+\newblock LLNL-JRNL 610212, Lawrence Livermore National Laboratory, 2013.
+\newblock Submitted to Comm. Comput. Phys.
+
+\bibitem{SjoPet-12}
+B.~Sj\"ogreen and N.~A. Petersson.
+\newblock A fourth order accurate finite difference scheme for the elastic wave
+  equation in second order formulation.
+\newblock {\em J. Sci. Comput.}, 52:17--48, 2012.
+\newblock DOI 10.1007/s10915-011-9531-1.
+
+\bibitem{WesselSmithGMT}
+P.~Wessel and W.~H.~F. Smith.
+\newblock New, improved version of generic mapping tools released.
+\newblock In {\em EOS trans. AGU}, volume~79, page 579, 1998.
+
+\end{thebibliography}
