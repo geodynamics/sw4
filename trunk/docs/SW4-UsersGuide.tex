@@ -448,21 +448,23 @@ details.
 
 \emph{SW4} implements a super-grid modeling technique to reduce artificial reflections from the
 far-field boundaries~\cite{AppCol-09, PetSjo-13}. In this method, a coordinate mapping (stretching
-function) is used to map the computational domain onto a much larger physical domain, so that it
-takes a very long time for the waves to arrive at the outer boundary. The streching is combined with
-a high order artificial dissipation operator that added in the super-grid layers. It damps out waves
-that become poorly resolved on the grid, because of the stretching. Note that the dissipative term
-is only added in the layers, and should not affect the accuracy in the interior of the domain.
+function) is used to map the computational domain onto a much larger physical domain. The idea
+behind making the physical domain very large is to delay artificial reflections from the far-field
+boundary, because it will take a very long time for waves to arrive at the far-field boundary,
+and the return back into the interior of the domain. The streching is combined with a high order
+artificial dissipation operator that is added in the super-grid layers. It damps out waves that
+become poorly resolved on the grid because of the grid stretching. Note that the dissipative term is
+only added in the layers, and should not affect the accuracy in the interior of the domain.
 
 The coordinate stretching compresses the solution inside the layers. This corresponds to a slowing
 down of all traveling waves in the direction normal to each far-field boundary. As a result, the
 isotropic elastic wave equation becomes anisotropic in the super-grid layers. It is possible to
 prove by energy estimates that the super-grid modeling leads to a stable numerical method with
 decreasing energy. This estimate is valid for heterogeneous material properties and free surface
-boundary conditions on one or more sides of the domain. See the paper by Petersson and
-Sjogreen~\cite{PetSjo-13} for more details.
+boundary conditions on one or more sides of the domain, and also extends to curvilinear grids. See
+the paper by Petersson and Sjogreen~\cite{PetSjo-13} for details.
 
-Super-grid layers are included on all sides of the computational domain, except along the
+Super-grid layers are by default added to all sides of the computational domain, except along the
 free surface, see Figure~\ref{fig:layout}.
 \begin{figure}[th]
 \begin{center}
@@ -474,22 +476,23 @@ free surface, see Figure~\ref{fig:layout}.
   damping term is added.}\label{fig:layout}
 \end{center}
 \end{figure}
-The default thickness of the layers (currently) equals 30 grid sizes, but the thickness of the
-super-grid layers can be changed with the {\tt supergrid} command, see
-Section~\ref{sec:supergrid}. Note that long waves are harder to suppress than short waves. This is
-one reason why a thicker super-grid layer leads to smaller artificial reflections.
+The default thickness of the layers is 30 grid sizes, but the thickness of the super-grid layers can
+be changed with the {\tt supergrid} command, see Section~\ref{sec:supergrid}. Note that long waves
+are harder to suppress than short waves because the artificial damping is less efficient for waves
+that are well resolved on the grid. The best way of reducing artificial reflections is to make the
+super-grid layers thicker.
 
 For practical reasons, the super-grid layers are part of the computational domain as specified by
-the grid command. If, for example, each super-grid layer is 30 grid points wide, the solution
+the {\tt grid} command. If, for example, each super-grid layer is 30 grid points wide, the solution
 should be considered artificial in the first and last 30 points in each horizontal direction, and
 the bottom 30 points in the vertical direction. Note that the numerical solution within the layers
-do {\em not} approximate the solution of the seismic wave equation. For this reason, it is important
-to make the computational domain sufficiently large. If the super grid layers are 30 grid points
-wide, the computational grid must be at least 60 grid points wide in the $x$ and $y$-directions, and
-30 points wide in the Cartesian part of the $z$-direction. Additional grid points must be added in
-the interior of the computational domain for the actual seismic modeling. Note that sources and
-receivers should only be placed in the interior of the computational domain, i.e., the white region
-of Figure~\ref{fig:layout}.
+do {\em not} approximate the solution of the seismic wave equations. For this reason, it is
+important to make the computational domain sufficiently large. If the super grid layers are 30 grid
+points wide, the computational grid must be at least 60 grid points wide in the $x$ and
+$y$-directions, and 30 points wide in the Cartesian part of the $z$-direction. Additional grid
+points must be added in the interior of the computational domain for the actual seismic
+modeling. Note that sources and receivers should only be placed in the interior of the computational
+domain, i.e., the white region of Figure~\ref{fig:layout}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Sources, time-functions, and grid size}
