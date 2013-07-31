@@ -2017,7 +2017,7 @@ gmt file=bolinas.gmt
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Examples (in progress)} \label{sec:examples}
+\chapter{Examples} \label{sec:examples}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{The elastic layer over half-space problem: LOH.1}
@@ -2116,7 +2116,7 @@ low side, but visual inspection of Figure~\ref{fig:LOH1} indicates very good agr
 forms. The finer grid with $h=25$ gives $P\approx 12.1$. For the purpose of most engineering
 calculations, we suggest using in between $P=6$ and $P=12$ grid points per shortest wave length.
 
-\section{The visco-elastic layer over half-space problem: LOH.3 (UPDATE)}
+\section{The visco-elastic layer over half-space problem: LOH.3}
 The LOH.3 benchmark problem adds effects of anelastic attenuation to the LOH.1 problem. It is
 defined in the input script \verb+examples/scec/LOH.3-h50.in+. The input file is very similar to the
 LOH.1 case. The visco-elastic modeling is enabled by the \verb+attenuation+ command,
@@ -2137,10 +2137,12 @@ use the block commands
 \begin{verbatim}
 block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
 block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+block vs=2437.6 vp=4630.8 r=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001
 \end{verbatim}
+
 Similar to the LOH.1 test case, the source is of point moment-tensor type with a Gaussian
-time-function. Note, however, that for LOH.3, the Gaussian has spread $\sigma=0.05$, corresponding
-to the center angular frequency {\tt freq}$= 1/\sigma=20$ and center frequency
+time-function. However, note that the Gaussian has spread $\sigma=0.05$ for LOH.3. This corresponds
+to center angular frequency {\tt freq}$= 1/\sigma=20$ rad/s and center frequency
 $f_0=20/(2\pi)\approx 3.18$ Hz. The source is specified by the command
 \begin{verbatim}
 source x=15000 y=15000 z=2000 mxy=1e18 t0=0.3 freq=20 \
