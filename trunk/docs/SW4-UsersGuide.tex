@@ -568,11 +568,12 @@ rate time function ($g'(t)$) for moment tensor sources, but the regular time fun
 point forces.
 
 The forcing function in \emph{SW4} is specified in the input file using at least one {\tt source} or
-{\tt rupture} command. These options can be combined. The {\tt rupture} command allows complicated source
-mechanisms to be described in a separate file. It is equivalent to at least one (but often many)
-{\tt source} command(s). There needs to be at least one source command in the input file in order for
-anything to happen during the simulation. Complicated source mechanisms can be described by having
-many source commands in the input file. An example with one source command is:
+{\tt rupture} command. These options can be combined. The {\tt rupture} command allows complicated
+source mechanisms to be described in a separate SRF (Standard Rupture Format) file. It is equivalent
+to at least one (but often many) {\tt source} command(s). There needs to be at least one source
+command in the input file in order for anything to happen during the simulation. Complicated source
+mechanisms can be described by having many source commands in the input file. An example with one
+source command is:
 \begin{verbatim}
 source x=5000 y=4000 z=600 mxx=1e15 myy=1e15 mzz=1e15 \
        type=RickerInt t0=1 freq=5
@@ -2558,6 +2559,21 @@ fz & forcing function in the z direction & real & N & 0.0 \\ \hline
 \index{command!rupture}
 \label{keyword:rupture}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}
+\bf
+Syntax:\\ \tt rupture file=...\\ 
+\bf
+Required parameters:\\ \rm name of SRF file.
+\end{flushleft}
+The \verb+rupture+ command is used to describe complex time-dependent rupture mechanisms over a
+fault surface. The \verb+rupture+ command reads a SRF (Standard Rupture Format) file and generates a
+kinematic rupture model consisting of a set of moment tensor source terms. The local shear modulus
+of the material is taken into account to calculate the strength of each source terms such that the
+prescribed amount of slip is achieved on each sub-fault of the SRF file. 
+
+The SRF file format is described on the SCEC wiki webpage:
+
+\verb+http://scec.usc.edu/scecpedia/Standard_Rupture_Format+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The material model [required]} 
