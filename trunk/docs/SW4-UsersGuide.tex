@@ -1751,13 +1751,32 @@ option,
 \begin{verbatim}
 	fileio pfs=1 nwriters=16 path=/p/lscratcha/my_output_directory
 \end{verbatim}
-The number of processes (cores) that write to disk can be changed with the \verb+nwriters+
-option. By default, \verb+nwriters=8+. The data is buffered on these cores before it is saved to
-disk. Increasing \verb+nwriters+ therefore allows larger files to be written using the same amount
-or memory. On the other hand, making \verb+nwriters+ smaller usually speeds up the reading or
-writing of large files. Note that the parallel file systems is often only accessible from certain
+Note that the parallel file systems is often only accessible from certain
 directories. Setting \verb+pfs=1+ without re-directing the output to such a directory may cause
 \emph{SW4} to either crash or hang.
+The number of processes (cores) that write to disk can be changed with the \verb+nwriters+
+option. By default, \verb+nwriters=8+. There is a trade-off when selecting \verb+nwriters+.
+If \verb+nwriters+  is too small, \emph{SW4} will not make optimal use of the parallel file system, and some
+extra overhead is incurred by passing parts of the data to the writing processors. If \verb+nwriters+ is 
+too large, the I/O operation is chopped up in too many small pieces, which will reduce the efficiency. 
+To obtain good I/O performance, the striping of the parallel file system needs be set appropriately. In our experience
+\verb+nwriters+ should be at least as large as the stripe count. On the Lustre file system, used at Livermore Computing,
+the \verb+lfs+ command can be used to set the striping. The striping is set on directories, not on files.
+For example to set the stripe count to 30 on the directory \verb+/p/lscratchd/user/sw4runs+, give the command
+\begin{verbatim}
+lfs setstripe -s 8M -c 30 /p/lscratchd/user/sw4runs
+\end{verbatim}
+This also sets the stripe size to 8 M byte. The stripe count, 30, will apply to all files that are subsequently
+written to the directory. Increasing the stripe count from the default value (currently 2 at LC)
+to somewhere around 30--60 can make a big difference when writing large 3D data files, 
+such as produced by the volimage command. If only image slices and receiver data are output, the stripe count
+is less significant.
+
+%The data is buffered on these cores before it is saved to
+%disk. Increasing \verb+nwriters+ therefore allows larger files to be written using the same amount
+%or memory. On the other hand, making \verb+nwriters+ smaller usually speeds up the reading or
+%writing of large files. 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Time-history at a reciever station: the rec (or sac) command}\label{sec:rec}
@@ -4012,7 +4031,7 @@ jb_p+nj_p-1$. The data can be read as outlined by the following pseudo code:
 If {\tt grdinfo}=0, there is no additional information on the image file.
 
 If {\tt grdinfo}=1, the $z$-coordinates of the curvilinear grid are also saved on the image file
-(as floats of doubles depending on that value of {\tt prec}). Note that the curvilinear grid always
+(as floats or doubles depending on that value of {\tt prec}). Note that the curvilinear grid always
 corresponds to the last patch, $p=N_p$. The grid coordinates can be read using the pseudo code:
 \begin{flushleft}
 {\tt $p=N_p$;\\
@@ -4036,15 +4055,82 @@ The same ordering is used for the coordinates as the data, as determined by the 
 %% \end{center}
 
 
-\section{volimage (In progress)}\label{sec:volimage-format}
+\section{volimage}\label{sec:volimage-format}
 \index{fileformats!volimage}
 
 The {\tt volimage} command generates (often very large) binary files holding three-dimensional
-volumetric data. Most users will visualize the data in these files with the open source {\em VisIt}
-post processor, but \verb+volimage+ files can also be used to define the material properties in
-\emph{SW4}, using the \verb+vimaterial+ command. 
+volumetric data. A reader for volimage files is provided in the matlab/octave function 'tools/readimage3d.m'.
+Alternatively, users might want to visualize the data in these files with the open source {\em VisIt}
+post processor. \verb+volimage+ files can also be used to define the material properties in
+\emph{SW4}, using the \verb+vimaterial+ command. \emph{SW4} volimage files have extension \verb+.3D.mode.sw4img+,
+where \verb+mode+ is one of \verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
+\par
+The format of the volimage files is the same as the format of image files, with the exception that
+the sizes of the data patches are specified by six integers in the volimage files, instead of four 
+in the image file format.
+The first part of the header of the volimage format is identical to the first part of the image file header
+given in the previous section. The plane and coordinate ($\xi$) variables are not needed for three dimensional 
+data. They are both set to -1 in a \verb+volimage+ file. 
+The number of possible variables to save is more restricted than for the image command. The volume image format
+stores one of the following variables with corresponding integer code for the \verb+mode+ variable in the file header:
+\begin{center}
+\begin{tabular}{l||l|l|l|l|l|l|l|l|l|l}\hline
+{\tt mode} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 14 & 15 \\ \hline
+Data & $u^{(x)}$ & $u^{(y)}$ & $u^{(z)}$ & $\rho$ & $\lambda$ & $\mu$ & $C_p$ & $C_s$ & $Q_p$ & $Q_s$ \\ \hline 
+\end{tabular}
+\end{center}
+After the 61 byte header follows the dimensional information for the patches stored on
+the file in the following order:
+{\samepage
+\begin{flushleft}
+{\tt for ($p=1$; $p\leq N_p$; $p$++) \{}\nopagebreak \\ 
+\hspace{5mm}
+\begin{tabular}{llll}\hline
+Offset (bytes) & Name & Type & Bytes \\ \hline
+61 + $40(p - 1)$ & $h_{p}$ & double & 8 \\ \hline
+69 + $40(p - 1)$ & $zmin_{p}$ & double & 8 \\ \hline
+77 + $40(p - 1)$ & $ib_{p}$ & int & 4 \\ \hline
+81 + $40(p - 1)$ & $ni_{p}$ & int & 4 \\ \hline
+85 + $40(p - 1)$ & $jb_{p}$ & int & 4 \\ \hline
+89 + $40(p - 1)$ & $nj_{p}$ & int & 4 \\ \hline
+93 + $40(p - 1)$ & $kb_{p}$ & int & 4 \\ \hline
+97 + $40(p - 1)$ & $nk_{p}$ & int & 4 \\ \hline
+\end{tabular}\\
+\}
+\end{flushleft}
+}
+Next, the data patches are stored as 4 or 8 byte floats, as indicated by the \verb+prec+ entry 
+in the header. These can be read as a one-dimensional sequence of bytes in the order 
+\begin{flushleft}
+{\tt for ($p=1$; $p\leq N_p$; $p$++)\{\\
+\hspace{5mm}for ($k=1$; $k\leq nk_p$; $k$++)\{\\
+\hspace{10mm}for ($j=1$; $j\leq nj_p$; $j$++)\{\\
+\hspace{15mm}for ($i=1$; $i\leq ni_p$; $i$++)\{\\
+\hspace{20mm}read $u^{(p)}(i-1+ib_p, j-1+jb_p,k-1+kb_p)$\\
+\hspace{15mm}\}\\
+\hspace{10mm}\}\\
+\hspace{5mm}\}\\
+\}}
+\end{flushleft}
+If {\tt grdinfo}=0, there is no additional information on the volimage file.
+If {\tt grdinfo}=1, the $z$-coordinates of the curvilinear grid are also saved on the volimage file
+(as floats or doubles depending on {\tt prec}). Note that the curvilinear grid always
+corresponds to the last patch, $p=N_p$. The grid coordinate can be read in the same way as
+the data patches:
+\begin{flushleft}
+{\tt $p=N_p$;\\
+for ($k=1$; $k\leq nk_p$; $k$++)\{\\
+\hspace{5mm}for ($j=1$; $j\leq nj_p$; $j$++)\{\\
+\hspace{10mm}for ($i=1$; $i\leq ni_p$; $i$++)\{\\
+\hspace{15mm}read $z^{(p)}(i-1+ib_p, j-1+jb_p,k-1+kb_p)$\\
+\hspace{10mm}\}\\
+\hspace{5mm}\}\\
+\}}
+\end{flushleft}
+The $x$- and $y-$ coordinates are uniformly distributed, also for the curvilinear grid, and can therefore always be
+reconstructed from the grid size $h$, and the index bounds. The $z$-coordinate on other patches, when present, will
+always be uniform, and can be reconstructed from $h$ and the $zmin$ variable.
 
-DESCRIBE FORMAT...
 
 %% For this reason, we will not describe the binary format here. If you really want to
 %% know the details of the format, we suggest you look in the source code for the plug-in (in the
