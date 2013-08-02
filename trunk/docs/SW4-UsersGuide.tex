@@ -4176,10 +4176,11 @@ machine, you can download \verb+lapack+ and \verb+blas+ from www.netlib.org.
 
 \paragraph{Linux machines}
 We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core
-14 Linux. Other Linux variants use similar commands for installing software packages.
+18 Linux. Other Linux variants use similar commands for installing software packages, but note that 
+the package manager \verb+yum+ is specific to Fedora Core.
 
-You need to have root privileges to install precompiled packages. Start by opening an xterm as root
-using the command
+You need to have root privileges to install precompiled packages. Start by opening an xterm and
+set your user identity to root by the command
 \begin{verbatim}
 su -
 \end{verbatim}
@@ -4193,6 +4194,19 @@ You install the \verb+mpich2+ library and include files with the command
 \begin{verbatim}
 yum install mpich2-devel
 \end{verbatim}
+The executables and libraries are installed in \verb+/usr/lib64/mpich2/bin+ and 
+\verb+/usr/lib64/mpich2/lib+ respectively. We suggest that you add \verb+/usr/lib64/mpich2/bin+ to 
+your path. This is done with the command
+\begin{verbatim}
+export PATH=${PATH}:/usr/lib64/mpich2/bin
+\end{verbatim}
+if your shell is \verb+bash+. For \verb+tcsh+ users, the command is
+\begin{verbatim}
+setenv PATH ${PATH}:/usr/lib64/mpich2/bin
+\end{verbatim}
+It is convenient to put the path setting command in
+your startup file, \verb+.bashrc+ or \verb+.cshrc+., for bash or csh/tcsh respectively.
+
 The \verb+blas+ and \verb+lapack+ libraries are installed with
 \begin{verbatim}
 yum install blas
@@ -4285,6 +4299,10 @@ EXTRA_LINK_FLAGS = -L/usr/lib64 -llapack -lblas -lgfortran
 \end{verbatim}
 This setup assumes that the \verb+blas+ and \verb+lapack+ libraries are located in the
 \verb+/usr/lib64+ directory. 
+In the case of Fedora Core 18, we needed to set the link flag variable to
+\begin{verbatim}
+EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib64/mpich2/lib  -llapack -lblas -lgfortran
+\end{verbatim}
 
 \subsection{Using make}
 You build \emph{SW4} with the "make" command from the main directory.
@@ -4427,7 +4445,7 @@ libcencalvm.a libcencalvm.la libcencalvm.so
 \end{verbatim}
 Furthermore, if you list the include subdirectory, you should see include files such as 
 \begin{verbatim}
-shell> cd ${SW4ROOT}
+shell> cd ${SW4ROOT} %$
 shell> ls include
 btree.h etree.h etree_inttypes.h
 nad_list.h projects.h proj_api.h
@@ -4654,87 +4672,82 @@ and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 \index{testing!pointsource}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Run time and memory requirements (not done)}\label{sec:performance}
+\chapter{Run time and memory requirements }\label{sec:performance}
 \index{performance}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Run time (not done)}
-UPDATE!
-%% The execution times shown in Table \ref{tab:cputime-usage} were obtained by running \emph{SW4} on a problem
-%% with 5e5 to 1e6 grid points per processor. Timings were measured on 16 processors of the sierra
-%% machine at LLNL, in July of 2011. The \emph{SW4} executable was compiled with Intel compilers at
-%% optimization level -O. While the absolute numbers in Table \ref{tab:cputime-usage} are machine
-%% dependent and destined to change in the (near) future, the relative cost of various solver
-%% configurations is likely to stay more or less constant. Note that the visco-elastic cases used 3
-%% mechanisms. For the case with topography, about 82\% of the grid points were in the curvilinear
-%% grid.
+\section{Run time}
 
-%% We note that 1): solving the visco-elastic wave equations with m=3, requires a factor 3.7 more CPU
-%% time than the purely elastic case. 2): Satisfying the interface conditions for grid refinement is
-%% relatively expensive. With one refinement and the elastic solver, those conditions required
-%% approximately 60\% of the total computation time.  For the visco-elastic case, more calculations per
-%% grid point are performed in the interior of the domain, and the relative cost for enforcing the
-%% interface conditions goes down to about 35\% of the total time. 3): The strong scaling properties
-%% are not perfect. Hence, the performance might be degraded when the number of processors is increased
-%% while keeping the number of grid points fixed. More experimentation is needed to better evaluate the strong
-%% scaling properties of \emph{SW4}.
+The execution times shown in Table \ref{tab:cputime-usage} were obtained by running \emph{SW4} on problems
+with approximately $2.8\times 10^5$ to $3.3\times 10^5$ grid points per processor. Timings were measured 
+on 16 processors of Cab, 
+a parallel supercomputer at LLNL, in August of 2013. The \emph{SW4} executable was compiled with Intel compilers at
+optimization level -O. The execution times are given in seconds per grid point and time step. 
+While the absolute numbers in Table \ref{tab:cputime-usage} are machine
+dependent and destined to change in the future, the relative cost of various solver
+configurations is likely to stay more or less constant. Note that the visco-elastic cases used 3
+mechanisms. For the case with topography, about 31\% of the grid points were in the curvilinear
+grid.
 
-%% \begin{table}
-%% \begin{center}
-%% \begin{tabular}{|l|l|r|r|}\hline
-%% Configuration              & Solver        & Execution time [s] & Relative factor \\ \hline\hline
-%% Cartesian, single grid     & elastic       & $6.90\cdot 10^{-9}$ & 1 \\ \hline
-%% Cartesian, one refinement  & elastic       & $1.64\cdot 10^{-8}$ & 2.4 \\ \hline
-%% Cartesian, two refinements & elastic       & $1.77\cdot 10^{-8}$ & 2.7 \\ \hline
-%% Topography                 & elastic       & $3.48\cdot 10^{-8}$ & 5.0 \\ \hline
-%% %Cartesian, single grid     & visco-elastic & $2.57\cdot 10^{-8}$ & 3.7\\ \hline
-%% %Cartesian, one refinement  & visco-elastic & $3.49\cdot 10^{-8}$ & 5.1\\ \hline
-%% %Topography                 & visco-elastic & $1.27\cdot 10^{-7}$ & 18.0\\ \hline
-%% \end{tabular}
-%% \end{center}
-%% \caption{Execution time per time step and grid point for different grid configurations, both for
-%%   solving the elastic and the visco-elastic wave equations. The relative factor is the execution time
-%%   relative to the Cartesian single grid case, for the elastic wave equation.}\label{tab:cputime-usage}
-%% \end{table}
+We note that solving the visco-elastic wave equations with $m=3$, requires around 3 times more CPU
+time than the purely elastic case. Using topography requires about 1.5 times more CPU time when 31\% of
+the domain is discretized on a curvilinear grid. By extrapolation, if all grid points were in the 
+curvilinear grid, the increase in CPU time would have been about a factor 2.7. 
+The strong scaling properties are not perfect. Hence, the performance might be degraded when the number 
+of processors is increased while keeping the number of grid points fixed. However, the total computational time
+always decreases with increasing number of processors. More experimentation is needed 
+to better evaluate the strong scaling properties of \emph{SW4}.
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|r|r|}\hline
+Configuration              & Solver        & Execution time [s] & Relative factor \\ \hline\hline
+Cartesian   & elastic       & $2.62\cdot 10^{-8}$ & 1 \\ \hline
+Topography  & elastic       & $4.05\cdot 10^{-8}$ & 1.5 \\ \hline
+Cartesian   & visco-elastic & $7.96\cdot 10^{-8}$ & 3.0\\ \hline
+Topography  & visco-elastic & $1.37\cdot 10^{-7}$ & 5.2\\ \hline
+\end{tabular}
+\end{center}
+\caption{Execution time per time step and grid point for different configurations, both for
+  solving the elastic and the visco-elastic wave equations. The relative factor is the execution time
+   relative to the Cartesian case for the elastic wave equation.}\label{tab:cputime-usage}
+ \end{table}
 
-\section{Memory usage (not done)}
+\section{Memory usage}
 
-UPDATE! 
-%% The memory usage in Table~\ref{tab:mem-usage} was obtained by running \emph{SW4} on a single processor
-%% using 1-2 M grid points. By inspection of the source code, we found the following number of 3-D
-%% arrays holding double precision (8 bytes) floating point variables:
-%%  15 for Cartesian grids, another
-%% 13 for topography (coordinates and metric coefficients in the curvilinear grid), and an additional
-%% 5+11*m for a m-mechanism visco-elastic material. These numbers correspond to the asymptotic memory
-%% requirements presented in the right column of Table \ref{tab:mem-usage}, which agree well with the
-%% observed memory usage. The observed numbers tend to the theoretical asymptotic numbers as the
-%% problem size increases.
-%% \begin{table}
-%% \begin{center}
-%% \begin{tabular}{|l|l|r|r|}\hline
-%% Configuration   &  solver       & Memory [bytes/grid point]  & Asymp. usage [bytes/grid point] \\ \hline\hline
-%% Cartesian grid  & elastic       & 135 & 120 \\ \hline
-%% Topography      & elastic       & 228 & 205 \\ \hline 
-%% %Cartesian grid  & visco-elastic & 440 & 424 \\ \hline 
-%% %Topography      & visco-elastic & 530 & 509 \\ \hline 
-%% \end{tabular}
-%% \end{center}
-%% \caption{Memory usage for different grid and solver configurations. The visco-elastic case has 3
-%%   mechanisms and the case with topography has 82\% of the grid point in the curvilinear
-%%   grid.}\label{tab:mem-usage}
-%% \end{table}
+The memory usage in Table~\ref{tab:mem-usage} was obtained by running \emph{SW4} on a single processor
+using 4 million grid points. By inspection of the source code, we found the following number of 3-D
+arrays holding double precision (8 bytes) floating point variables:
+21 for Cartesian grids, another
+8 for topography (coordinates and metric coefficients in the curvilinear grid), and an additional
+$2+11*m$ for a $m$-mechanism visco-elastic material. These numbers correspond to the asymptotic memory
+ requirements presented in the right column of Table \ref{tab:mem-usage}, which agree reasonably well with the
+ observed memory usage, shown in column three. The observed numbers tend to the theoretical asymptotic 
+numbers as the problem size increases. For the computations with topography, the curvilinear grid holds about 31\%
+of the grid points. This fraction is taken into account in the asymptotic estimate.
+ \begin{table}
+ \begin{center}
+ \begin{tabular}{|l|l|r|r|}\hline
+ Configuration   &  solver       & Memory [bytes/grid point]  & Asymp. [bytes/grid point] \\ \hline\hline
+ Cartesian grid  & elastic       & 188   & 168       \\ \hline
+ Topography      & elastic       & 208   &  200      \\ \hline 
+ Cartesian grid  & visco-elastic $(m=3)$ & 475 & 448 \\ \hline 
+ Topography      & visco-elastic $(m=3)$ & 500 & 468 \\ \hline 
+ \end{tabular}
+ \end{center}
+ \caption{Observed memory usage (third column) and theoretical asymptotic limit (fourth column) for different 
+   grid and solver configurations. The visco-elastic case has 3 mechanisms and the case with topography 
+   has 31\% of the grid point in the curvilinear grid.}\label{tab:mem-usage}
+ \end{table}
 
 %% As expected, the observed memory usage closely follows the linear relation
 %% \[
 %%  M=k*N+m, 
 %% \]
-%% where M is memory usage and N is the number of grid points. For parallel runs, the memory per
-%% grid point will be somewhat higher, because of duplicated ghost points at the processor
-%% boundaries. Here we only report the memory usage for a single processor run. Note that the
-%% volimage command saves a copy of the image variable over the full 3D volume. This adds (at single
-%% precision, and full resolution) 4 bytes per grid point and per volume image command. It is possible
-%% to reduce this size by only saving every n:th grid point in each coordinate direction. For example,
-%% only saving every 2nd point reduces the size of the data by a factor 8.
+%% where M is memory usage and N is the number of grid points. 
+For parallel runs, the memory per grid point will be somewhat higher, because of duplicated 
+ghost points at the processor boundaries. Here we only report the memory usage for a single processor run. 
+Note that the volimage command saves a copy of the image variable over the full 3D volume. This adds (at single
+precision) 4 bytes per grid point and per volume image command. 
 
 \printindex
 
