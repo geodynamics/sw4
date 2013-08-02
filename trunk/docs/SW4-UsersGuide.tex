@@ -1918,7 +1918,8 @@ time level. It can be used for visualizing the solution, making the images for a
 material properties. Each image file contains a scalar field as function of the spatial coordinates
 in the cross-sectional plane. The scalar field can be either a component of the solution, a derived
 quantity of the solution, a material property, or a grid coordinate, All in all, \emph{SW4} can
-output twenty-five different types of images, see Section~\ref{keyword:image} for details.
+output twenty-nine different image quantities, plus six additional image types for testing. See
+Section~\ref{keyword:image} for details.
 
 The cross-sectional plane is specified by a Cartesian coordinate ($x$, $y$, or $z$). The image can
 be written at a specific time step or at a specified time. Images can also be output at a fixed
@@ -1928,17 +1929,17 @@ For example, the command
 \begin{verbatim}
 image mode=ux y=500 file=picturefile cycle=1
 \end{verbatim}
-tells \emph{SW4} to output the $x$-displacement component of the solution along the vertical $y=500$
-plane.  The data is written to a file named {\tt picturefile.cycle=1.y=500.ux} after the first time
-step ({\tt cycle=1}). The example
+tells \emph{SW4} to output the $x$-component of the displacement (the solution) along the vertical
+$y=500$ plane.  The data is written to a file named {\tt picturefile.cycle=1.y=500.ux.sw4img} after
+the first time step ({\tt cycle=1}). The example
 \begin{verbatim}
 image mode=div x=1000 file=picturefile cycleInterval=100
 \end{verbatim}
 outputs the divergence of the solution field in the $yz$-plane at the grid surface closest to
 $x=1000$. The data is written to the files
 \begin{verbatim} 
-picturefile.cycle=100.x=1000.div
-picturefile.cycle=200.x=1000.div
+picturefile.cycle=100.x=1000.div.sw4img
+picturefile.cycle=200.x=1000.div.sw4img
 ...
 \end{verbatim}
 With this setup, one image file is output every 100 time steps.
@@ -1966,8 +1967,8 @@ command,
 fileio nwriters=4
 \end{verbatim}
 The above command tells \emph{SW4} to use 4 processors to write each image file. For simulations
-which use very large number of grid points and many processors, care must be taken to make sure that enough
-memory is available to buffer the image data before it is written to disk.
+which use very large number of grid points and many processors, care must be taken to make sure that
+enough memory is available to buffer the image data before it is written to disk.
 
 \paragraph{Notes on the image command:}
 \begin{itemize}
@@ -1978,14 +1979,14 @@ memory is available to buffer the image data before it is written to disk.
   topography. It can only be written when topography is used.
 \item A {\tt mode=grid z=0} image holds the $z$-coordinate (negative elevation) of the grid along
   the free surface, which is the actual shape of the upper surface of the computational domain.
-\item When topography or mesh refinement is used, vertical image planes intersect all component
-grids in the composite grid. In this case, cross-sectional data from all component grids are stored
+\item When topography is used, vertical image planes intersect both component
+grids in the composite grid. In this case, cross-sectional data from both component grids are stored
 on the image file.
 \item The images files are written in a binary format, see Section~\ref{sec:image-format} for
   details.
 \item We provide matlab/octave scripts for reading image files in the {\tt tools} directory. The
-  basic function is called {\tt readimagepatch.m}. A higher level interface is provided by the {\tt
-    imageinfo.m} and {\tt plotimage.m} scripts.
+  basic function is called {\tt readimage.m}. 
+% A higher level interface is provided by the {\tt imageinfo.m} and {\tt plotimage.m} scripts.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
