@@ -107,13 +107,13 @@ c need to add zmin to work in a composite grid setting
       enddo
       end
 
-      function CSW( xi, latilde )
+      real*8 function CSW( xi, latilde )
       real*8 xi, latilde
       CSW = sqrt(1-xi*xi)*sqrt(1-xi*xi/(2+latilde)) - (1-0.5d0*xi*xi)**2
       end
 
 
-      function CSWP( xi, latilde )
+      real*8 function CSWP( xi, latilde )
       real*8 xi, latilde
       CSWP = -xi*sqrt(1-xi*xi/(2+latilde))/sqrt(1-xi*xi) -
      *      xi*sqrt(1-xi*xi)/(2+latilde)/sqrt(1-xi*xi/(2+latilde))

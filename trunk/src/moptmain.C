@@ -293,7 +293,7 @@ int main(int argc, char **argv)
 	   GlobalSources[0]->get_parameters(xs);
 
 // Perturb material if gradient testing
-           simulation.perturb_mtrl();
+	   simulation.perturb_mtrl();
 
 // Default initial guess material = the material given in the input file
            int nmpar;
@@ -352,13 +352,22 @@ int main(int argc, char **argv)
            for( int i=0 ; i<nmpar ;i++)
 	      sfm[i]=1;
 
-	   //	   compute_f_and_df( simulation, nvar, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
-	   //			     GlobalObservations, f, dfs, dfm, myRank );
-           int method, bfgs_m;
-	   simulation.get_optmethod( method, bfgs_m );
+	   // New try with setting some scale factors
+	   simulation.get_scale_factors( nmpar, sfm );
+
+           if( simulation.m_opttest == 2 )
+	   {
+	      compute_f_and_df( simulation, nvar, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
+	   		        GlobalObservations, f, dfs, dfm, myRank );
+	   }
+           else
+	   {
+	      int method, bfgs_m;
+	      simulation.get_optmethod( method, bfgs_m );
 	   
-           lbfgs( simulation, nvar, xs, sf, nmpar, xm, sfm, GlobalSources, GlobalTimeSeries,
-		  GlobalObservations, bfgs_m, myRank );
+	      lbfgs( simulation, nvar, xs, sf, nmpar, xm, sfm, GlobalSources, GlobalTimeSeries,
+		     GlobalObservations, bfgs_m, myRank );
+	   }
 
 	   if( myRank == 0 )
 	   {

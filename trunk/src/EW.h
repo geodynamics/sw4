@@ -508,6 +508,7 @@ void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 void material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
 void get_material_parameter( int nmpar, double* xm );
+void get_scale_factors( int nmpar, double* xm );
 
 void material_correction( int nmpar, double* xm );
 

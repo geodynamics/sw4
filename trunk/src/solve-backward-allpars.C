@@ -15,8 +15,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
    vector<Sarray> gRho, gMu, gLambda;
+   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
- 
+
    F.resize(mNumberOfGrids);
    Lk.resize(mNumberOfGrids);
    Kacc.resize(mNumberOfGrids);
@@ -28,6 +29,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    gRho.resize(mNumberOfGrids);
    gMu.resize(mNumberOfGrids);
    gLambda.resize(mNumberOfGrids);
+
+// Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
+   AlphaVE.resize(mNumberOfGrids);
+   AlphaVEm.resize(mNumberOfGrids);
+   AlphaVEp.resize(mNumberOfGrids);
 
    BCForcing.resize(mNumberOfGrids);
 
@@ -114,7 +120,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    for( int currentTimeStep = mNumberOfTimeSteps ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
       time_measure[0] = MPI_Wtime();
-      evalRHS( K, a_Mu, a_Lambda, Lk );
+      evalRHS( K, a_Mu, a_Lambda, Lk, AlphaVE );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          F[g].set_to_zero();
       evalPredictor( Km, K, Kp, a_Rho, Lk, F );
@@ -135,7 +141,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
-      evalRHS( Kacc, a_Mu, a_Lambda, Lk );
+      evalRHS( Kacc, a_Mu, a_Lambda, Lk, AlphaVEm );
       evalCorrector( Km, a_Rho, Lk, F );
 
       time_measure[3] = MPI_Wtime();
@@ -154,7 +160,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       enforceBC( Km, a_Mu, a_Lambda, t-mDt, BCForcing );
 
       // U-backward solution, predictor
-      evalRHS( U, a_Mu, a_Lambda, Lk );
+      evalRHS( U, a_Mu, a_Lambda, Lk, AlphaVE );
       Force( t, F, point_sources );
       evalPredictor( Um, U, Up, a_Rho, Lk, F );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
@@ -170,7 +176,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
       enforceBC( Uacc, a_Mu, a_Lambda, t, BCForcing );
 
-      evalRHS( Uacc, a_Mu, a_Lambda, Lk );
+      evalRHS( Uacc, a_Mu, a_Lambda, Lk, AlphaVEm );
       Force_tt( t, F, point_sources );
       evalCorrector( Um, a_Rho, Lk, F );
 
@@ -247,7 +253,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   gLambda[0].save_to_disk("glambda.bin");
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-       mImage3DFiles[i3]->force_write_image( t, 0, Up, mRho, mMu, mLambda, gRho, gMu, gLambda, mPath, mZ );
+       mImage3DFiles[i3]->force_write_image( t, 0, Up, mRho, mMu, mLambda, gRho, gMu, gLambda, mQp, mQs, mPath, mZ );
 
     for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
     {

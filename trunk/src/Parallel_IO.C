@@ -4,7 +4,7 @@ using namespace std;
 
 #include <cstring>
 #include <errno.h>
-
+#include <unistd.h>
 #include "Parallel_IO.h"
 
 //-----------------------------------------------------------------------

@@ -5,17 +5,27 @@
       integer i, j, k
       real*8 rho(ib:ie,jb:je,kb:ke), cs(ib:ie,jb:je,kb:ke), zmin, h
       real*8 cp(ib:ie,jb:je,kb:ke), x, y, z, ep, om
+      real*8 phip, phis, phir, omx, omy, omz, pi2
       real*8 xminbox, xmaxbox, yminbox, ymaxbox, zminbox, zmaxbox
 
       ep = 0.01d0
 *** 2*pi
-      om = ATAN(1d0)*8 
+      pi2 = ATAN(1d0)*8
+      om = pi2
       xminbox = 0.4d0
       xmaxbox = 0.6d0
       yminbox = 0.4d0
       ymaxbox = 0.6d0
       zminbox = 0.1d0
       zmaxbox = 0.3d0
+      if( nr.eq.3 )then
+         omx = pi2*5d0/30000
+         omy = pi2*5d0/30000
+         omz = pi2*3d0/17000
+         phip = 0.3d0
+         phir = 0.17d0
+         phis = 0.08d0
+      endif
       do k=kb,ke
          z = zmin + (k-1)*h
          do j=jb,je
@@ -38,6 +48,15 @@
                      cs(i,j,k)  = 0.5d0
                      cp(i,j,k)  = 2
                   endif
+               elseif( nr.eq.3 )then
+                  rho(i,j,k)=2650+
+     *                  50*sin(omx*x)*sin(omy*y)*cos(omz*z+phir)
+                  cp(i,j,k)=5000+
+     *                1000*sin(omx*x+phip)*sin(omy*y)*cos(omz*z)
+                  cs(i,j,k) = cp(i,j,k)/( 1.8660d0 + 
+     *                  0.1339*cos(omx*x)*sin(omy*y+phis)*cos(omz*z) )
+c                  cs(i,j,k) =2732+cos(omx*x)*sin(omy*y+phis)*cos(omz*z)
+c     *                 732*
                endif
             enddo
          enddo
@@ -54,16 +73,27 @@ c-----------------------------------------------------------------------
       real*8 cp(ib:ie,jb:je,kb:ke), xx(ib:ie,jb:je,kb:ke)
       real*8 yy(ib:ie,jb:je,kb:ke), zz(ib:ie,jb:je,kb:ke), x, y, z, om
       real*8 xminbox, xmaxbox, yminbox, ymaxbox, zminbox, zmaxbox, ep
+      real*8 phip, phis, phir, omx, omy, omz, pi2
 
       ep = 0.01d0
 *** 2*pi
-      om = ATAN(1d0)*8
+*** 2*pi
+      pi2 = ATAN(1d0)*8
+      om = pi2
       xminbox = 0.4d0
       xmaxbox = 0.6d0
       yminbox = 0.4d0
       ymaxbox = 0.6d0
       zminbox = 0.1d0
       zmaxbox = 0.3d0
+      if( nr.eq.3 )then
+         omx = pi2*5d0/30000
+         omy = pi2*5d0/30000
+         omz = pi2*3d0/17000
+         phip = 0.3d0
+         phir = 0.17d0
+         phis = 0.08d0
+      endif
       do k=kb,ke
          do j=jb,je
             do i=ib,ie
@@ -86,6 +116,13 @@ c-----------------------------------------------------------------------
                      cs(i,j,k)  = 0.5d0
                      cp(i,j,k)  = 2
                   endif
+               elseif( nr.eq.3 )then
+                  rho(i,j,k)=2650+
+     *                  50*sin(omx*x)*sin(omy*y)*cos(omz*z+phir)
+                  cs(i,j,k) =2732+
+     *                 732*cos(omx*x)*sin(omy*y+phis)*cos(omz*z)
+                  cp(i,j,k)=5000+
+     *                1000*sin(omx*x+phip)*sin(omy*y)*cos(omz*z)
                endif
             enddo
          enddo

@@ -353,7 +353,7 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
     }
 
 // evaluate right hand side
-    evalRHS( U, a_Mu, a_Lambda, Lu ); // save Lu in composite grid 'Lu'
+    evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
 
 // take predictor step, store in Up
     evalPredictor(Up, U, Um, a_Rho, Lu, F );    
@@ -381,7 +381,7 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
        for( int g=0 ; g < mNumberOfGrids ; g++ )
 	  Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
       
-       evalRHS( Uacc, a_Mu, a_Lambda, Lu );
+       evalRHS( Uacc, a_Mu, a_Lambda, Lu, AlphaVEm );
 
        evalCorrector( Up, a_Rho, Lu, F );
       

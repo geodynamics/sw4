@@ -6867,6 +6867,8 @@ void EW::processMaterialInvtest(char* buffer)
 	    nr = 1;
 	 else if( strcmp(token,"box")==0 )
 	    nr = 2;
+	 else if( strcmp(token,"lohsine")==0 )
+	    nr = 3;
          else
 	    CHECK_INPUT( 0, "Error invtestmaterial, type = " << token << " not recognized" );
       }
@@ -6888,8 +6890,8 @@ void EW::processRandomize(char* buffer)
 	       "ERROR: not a randomize line: " << token);
    token = strtok(NULL, " \t");
    bool lengthscaleset=false, lengthscalezset=false;
-   m_random_dist = m_random_distz = 1;
-   m_random_amp      = 1;
+   m_random_dist = m_random_distz = 100;
+   m_random_amp      = 0.1;
    m_random_amp_grad = 0;
    m_random_seed[0]  = 1234;
    m_random_seed[1]  = 5678;
@@ -6950,6 +6952,6 @@ void EW::processRandomize(char* buffer)
    }
    if( lengthscaleset && !lengthscalezset )
       m_random_distz = m_random_dist;
-   if( !lengthscaleset && lengthscalezset )
-      m_random_dist = m_random_distz;
+   //   if( !lengthscaleset && lengthscalezset )
+   //      m_random_dist = m_random_distz;
 }

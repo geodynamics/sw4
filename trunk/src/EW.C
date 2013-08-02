@@ -5173,6 +5173,32 @@ void EW::get_material_parameter( int nmpar, double* xm )
 }
 
 //-----------------------------------------------------------------------
+void EW::get_scale_factors( int nmpar, double* sf )
+{
+   size_t gp, ind;
+   double rhoscale = 2.0;
+   double muscale = 1.0;
+   double lambdascale = 5.4e-3;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      if( g == 0 )
+	 gp = 0;
+      else
+	 gp = gp + 3*ind;
+      ind =0;
+      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
+	    {
+	       sf[gp+ind*3]   = rhoscale;
+	       sf[gp+ind*3+1] = muscale;
+	       sf[gp+ind*3+2] = lambdascale;
+	       ind++;
+	    }
+   }
+}
+
+//-----------------------------------------------------------------------
 void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
 		      vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
 		      vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda )

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <list>
+#include <unistd.h>
 
 #include "F77_FUNC.h"
 extern "C" {

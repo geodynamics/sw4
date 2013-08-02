@@ -5,6 +5,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K;
+   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
  
    F.resize(mNumberOfGrids);
@@ -14,6 +15,12 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    Km.resize(mNumberOfGrids);
    K.resize(mNumberOfGrids);
    BCForcing.resize(mNumberOfGrids);
+
+// Attenuation not used for backward solver, but need arrays for some parameter lists.
+// Allocate pointers, even if attenuation not used, for avoid segfault in parameter lists
+   AlphaVE.resize(mNumberOfGrids);
+   AlphaVEm.resize(mNumberOfGrids);
+   AlphaVEp.resize(mNumberOfGrids);
 
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
@@ -86,7 +93,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
    for( int currentTimeStep = mNumberOfTimeSteps ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
       time_measure[0] = MPI_Wtime();
-      evalRHS( K, mMu, mLambda, Lk );
+      evalRHS( K, mMu, mLambda, Lk, AlphaVE );
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          F[g].set_to_zero();
       evalPredictor( Km, K, Kp, mRho, Lk, F );
@@ -106,7 +113,7 @@ void EW::solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_Ti
 	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
-      evalRHS( Kacc, mMu, mLambda, Lk );
+      evalRHS( Kacc, mMu, mLambda, Lk, AlphaVEm );
       evalCorrector( Km, mRho, Lk, F );
 
       time_measure[3] = MPI_Wtime();

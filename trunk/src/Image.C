@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <ctime>
 #include <cstring>
+#include <unistd.h>
 
 // initializing static member
 int Image::mPreceedZeros=0;

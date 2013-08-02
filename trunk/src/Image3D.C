@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <ctime>
 #include <cstring>
+#include <unistd.h>
 
 // static variable definition (in class only declaration):
 int Image3D::mPreceedZeros = 0;
