@@ -1,11 +1,11 @@
-fileio verbose=2 path=pointsource-h0p02
+fileio path=pointsource-h0p02
 grid x=6 y=6 z=6 h=0.02
 time t=5.0
 
 # supergrid conditions on all sides
 boundary_conditions lx=2 hx=2 ly=2 hy=2 lz=2 hz=2
 
-# supergrid parameters
+# supergrid parameters, 50*0.02 = 1.0
 supergrid gp=50 
 
 # testing point sources

@@ -907,7 +907,8 @@ $\tau_{N_s}<t\leq T$. To avoid unexpected results due to extrapolation, we recom
 discrete time function for all $t\in[0,T]$. To also avoid incompatibilities between the forcing and
 the homogeneous initial conditions, we recommend setting $g_j=0$ for all $\tau_j\leq 0$.
 
-The file format for discrete time functions is decribed in~\ref{sec:discrete-time-function-format}.
+The file format for discrete time functions is decribed in
+Section~\ref{sec:discrete-time-function-format}.
 
 
 \section{What is the frequency content in the time function?}\label{sec:freq}
@@ -3802,11 +3803,12 @@ Line & Column 1& Column 2& Column 3& Column 4\\ \hline
 7 & $Q$-available? (logical) \\ \hline
 \end{tabular}
 \end{center}
-This is the same header as for the geographic coordinate format, with the only difference that information on
-lines 2, 3, and 4 is different. The spacing, $h$, of the grid of depth profiles is given on line 2.
-The number of depth profiles in the $x$-direction $N_x$ with minimum and maximum coordinate values
-are given on line 3. The same quantities for the $y$-direction are given on line 4. Note that all 
-distances, including the depth information on line 5, must be given in meters ({\tt [m]}).
+This is essentially the same header as for the geographic coordinate format, with the only
+difference that information on lines 2, 3, and 4 is different. The spacing, $h$, of the grid of
+depth profiles is given on line 2.  The number of depth profiles in the $x$-direction $N_x$ with
+minimum and maximum coordinate values are given on line 3. The same quantities for the $y$-direction
+are given on line 4. Note that all distances, including the depth information on line 5, must be
+given in meters ({\tt [m]}).
 
 The header is directly followed by $N_{x}\times N_{y}$ depth profiles, ordered such that the $x$-coordinate
 varies the fastest, that is, according to the pseudo-code:
@@ -4030,22 +4032,35 @@ The same ordering is used for the coordinates as the data, as determined by the 
 \section{volimage}\label{sec:volimage-format}
 \index{fileformats!volimage}
 
-The {\tt volimage} command generates (often very large) binary files holding three-dimensional
-volumetric data. A reader for volimage files is provided in the matlab/octave function
-'tools/readimage3d.m'.  Alternatively, users might want to visualize the data in these files with
-the open source {\em VisIt} post processor. \verb+volimage+ files can also be used to define the
-material properties in \emph{SW4}, using the \verb+vimaterial+ command. \emph{SW4} volimage files
-have extension \verb+.3D.mode.sw4img+, where \verb+mode+ is one of
-\verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
+The \verb+volimage+ command generates (often very large) binary files holding three-dimensional
+volumetric data. A reader for \verb+volimage+ files is provided in the matlab/octave script
+\verb+readimage3d.m+ in the \verb+tools+ directory.  Alternatively, users might want to visualize
+the data in these files with the open source {\em VisIt} post processor. \verb+volimage+ files can
+also be used to define the material properties in \emph{SW4}, using the \verb+vimaterial+
+command. \emph{SW4} \verb+volimage+ files have extension \verb+.3D.mode.sw4img+, where \verb+mode+ is one
+of \verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
 
-The format of the volimage files is the same as the format of image files, with the exception that
-the sizes of the data patches are specified by six integers in the volimage files, instead of four
-in the image file format.  The first part of the header of the volimage format is identical to the
-first part of the image file header given in the previous section. The plane and coordinate ($\xi$)
-variables are not needed for three dimensional data. They are both set to -1 in a \verb+volimage+
-file.  The number of possible variables to save is more restricted than for the image command. The
-volume image format stores one of the following variables with corresponding integer code for the
-\verb+mode+ variable in the file header:
+The format of the \verb+volimage+ files is essentially the same as the format of image files, with the
+exception that the sizes of the data patches are specified by six integers in the \verb+volimage+ files,
+instead of four in the image file format.  The first 61 bytes of the header of the \verb+volimage+ format is
+identical to the image format given in the previous section, i.e.,
+\begin{center}
+\begin{tabular}{llll}\hline
+Offset (bytes) & Name & Type & Bytes \\ \hline
+0 & prec   & int & 4 \\ \hline
+4 & $N_p$  & int & 4 \\ \hline
+8 & $t$    & double & 8 \\ \hline
+16 & plane & int & 4 \\ \hline
+20 & $\xi$ & double & 8 \\ \hline
+28 & mode  & int & 4 \\ \hline
+32 & grdinfo & int & 4 \\ \hline
+36 & creation-time & char[25] & 25 \\ \hline
+\end{tabular}
+\end{center}
+The \verb+plane+ and coordinate ($\xi$) variables are not needed for three-dimensional data. They are both
+set to -1 in a \verb+volimage+ file.  The number of possible variables to save is more restricted
+than for the image command. The volume image format stores one of the following variables with
+corresponding integer code for the \verb+mode+ variable in the file header:
 \begin{center}
 \begin{tabular}{l||l|l|l|l|l|l|l|l|l|l}\hline
 {\tt mode} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 14 & 15 \\ \hline
@@ -4085,8 +4100,8 @@ in the header. These can be read as a one-dimensional sequence of bytes in the o
 \hspace{5mm}\}\\
 \}}
 \end{flushleft}
-If {\tt grdinfo}=0, there is no additional information on the volimage file.
-If {\tt grdinfo}=1, the $z$-coordinates of the curvilinear grid are also saved on the volimage file
+If {\tt grdinfo}=0, there is no additional information on the \verb+volimage+ file.
+If {\tt grdinfo}=1, the $z$-coordinates of the curvilinear grid are also saved on the \verb+volimage+ file
 (as floats or doubles depending on {\tt prec}). Note that the curvilinear grid always
 corresponds to the last patch, $p=N_p$. The grid coordinate can be read in the same way as
 the data patches:
@@ -4584,13 +4599,13 @@ w_e(x,y,z,t) &= \sin(\omega x + \theta) \sin(\omega y + \theta) \sin(\omega( z -
 The values of the material parameters ($\omega_m$, $\theta_m$, $A_\rho$, $A_\lambda$, $A_\mu$) and
 the solution parameters ($\omega$, $\theta$, $c_e$), can be modified in the input script. Since the
 exact solution is know, it is possible to evaluate the error in the numerical solution. By repeating
-the same test on several grid sizes, it is possible to establish the convergence order of the
+the same test on several grid sizes, it is possible to establish the convergence rate of the
 numerical method.
 
-The basic twilight tests use a single grid, a flat topography, and cover the computational domain
-$(x,y,z)\in[0,1]^3$. The numerical solution is simulated up to time $t=0.8$ on a grid with $31^3$,
-$61^3$, $121^3$, and $241^3$ grid points, respectively. These cases are provided in the four input
-scripts:
+The basic twilight tests use a single grid, a flat topography, and use the unit cube
+$(x,y,z)\in[0,1]^3$ as the computational domain. The numerical solution is simulated up to time
+$t=0.8$ on a grid with $31^3$, $61^3$, $121^3$, and $241^3$ grid points, respectively. These cases
+are provided in the four input scripts:
 \begin{verbatim}
 flat-twi-1.in  flat-twi-2.in  flat-twi-3.in  flat-twi-4.in
 \end{verbatim}
@@ -4631,13 +4646,13 @@ gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in  gauss-twi-4.in  gauss-twi-5.in
 Here, the computational domain is basically a cube with side 1, where the top surface is shaped as a
 Gaussian hill. Let the shape of the top surface be described by $z=\tau(x,y)$. Because the $z$-axis
 is directed downwards, and the Gaussian hill has amplitude 0.05, the function $\tau$ satisfies
-$-0.05\leq \tau\leq 0$. The keyword {\tt zmax=0.25} in the {\tt topography} command specifies that
-the curvilinear grid should cover the domain between the top surface and $z=0.25$. A Cartesian grid
-is used to cover the rest of the computational domain, i.e., for $0.25\leq z\leq 1$. The numerical
+$-0.05\leq \tau\leq 0$. The keyword {\tt zmax=0.25} in the {\tt topography} command tells
+\emph{SW4} to build the curvilinear grid between $z=\tau(x,y)$ and $z=0.25$. A Cartesian grid is
+used to cover the rest of the computational domain, i.e., for $0.25\leq z\leq 1$. The numerical
 solution is calculated up to time $t=0.8$ on grids with grid size $h=1/30$, $1/60$, $1/120$,
-$1/240$, and $1/480$, respectively. The three first cases are relatively small and can be run on a single
-or dual core laptop computer. The number of grid point is increased by a factor of eight between each
-grid refinement.
+$1/240$, and $1/480$, respectively. The three first cases are relatively small and can be run on a
+single or dual core laptop computer. The number of grid point is increased by a factor of eight
+between each grid refinement, and the number of time steps is doubled.
 %However, the fourth case has a grid with about 14 million grid points and should be
 %run on a machine with at least 8-16 cores.
 The results of the simulations are given in the five output files
@@ -4682,13 +4697,13 @@ given in Figure~\ref{fig:ux}.
 \section{Lamb's problem}\label{sec:testlamb}
 \index{testing!lambs}
 
-In this section, we use the {\tt testlamb} command to evaluate the accuracy of the numerical
-solution. See Section~\ref{sec:lamb} for an introduction to Lamb's problem.
+In this section we use the {\tt testlamb} command to evaluate the accuracy of the numerical
+solution of Lamb's problem. An introduction to Lamb's problem is given in Section~\ref{sec:lamb}.
 
 % 1st example
-We consider the elastic half-space has shear speed $C_s=1$ m/s, compressional speed
+We consider an elastic half-space with shear speed $C_s=1$ m/s, compressional speed
 $C_p=\sqrt{3}$ m/s and density $\rho=1$ kg/m$^3$. The setup can be found in {\tt
-  examples/lamb/lamb-1.in}
+  examples/lamb/lamb-1.in},
 \begin{verbatim}
 fileio path=lamb-h0p04
 grid x=12 y=12 z=6 h=0.04
