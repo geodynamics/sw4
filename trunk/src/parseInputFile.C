@@ -1196,15 +1196,15 @@ void EW::processAttenuation(char* buffer)
         CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
         foundfreq = true;
      }
-     else if( startswith("centerfreq=",token) )
-     {
-        token += 11;
-        m_att_ppw = -1;
-        m_att_max_frequency = atof( token );
-        CHECK_INPUT( !foundfreq, "ERROR: can not give both centerfreq and maxfreq");
-        CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
-        foundfreq = true;
-     }
+     // else if( startswith("centerfreq=",token) )
+     // {
+     //    token += 11;
+     //    m_att_ppw = -1;
+     //    m_att_max_frequency = atof( token );
+     //    CHECK_INPUT( !foundfreq, "ERROR: can not give both centerfreq and maxfreq");
+     //    CHECK_INPUT(m_att_max_frequency >= 0,"ERROR: maximum frequency must be >= 0, not " << m_att_max_frequency);
+     //    foundfreq = true;
+     // }
      else if( startswith("minppw=",token) )
      {
         token += 7;

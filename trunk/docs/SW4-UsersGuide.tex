@@ -2395,7 +2395,7 @@ Note that the \verb+prefilter+ command does {\it not} modify the start time. Thi
 {\bf Option} & {\bf Description} & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline \hline
 t & duration of simulation & real & s	& none \\ \hline
 steps & number of cycles (time-steps) to advance & int & none & none\\ \hline
-utcstart & month/day/year:hour:minute:second.millisecond & string & datum & none\\ \hline
+utcstart & month/day/year:hour:minute:second.millisecond & string & datum & start of execution\\ \hline
 \end{tabular}
 \end{center}
 \index{time parameters!t, steps}
@@ -2635,7 +2635,7 @@ attenuation phasefreq=... nmech=... maxfreq=... minppw=... qmultiplier=...
 \multicolumn{5}{|c|}{\bf attenuation command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Unit} & \bf{Default} \\ \hline \hline
 phasefreq & The frequency ($>0$) at which $C_S$ and $C_P$ are specified & real & Hz & 1.0\\ \hline
-nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (between 1 and 8) & int & None & 3\\ \hline
+nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (between 0 and 8) & int & None & 3\\ \hline
 maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & real & Hz & 2.0 \\ \hline
 minppw    & Calculate the upper frequency limit based on this number of grid points per shortest
 wave length ($>0$)& real & None & None \\ \hline
@@ -2648,13 +2648,25 @@ relation $P=\min C_s/(h f)$, i.e.,
 f_{max} = \frac{1}{P_{min}}\min \frac{C_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
 \]
 The {\tt qmultiplier} value will multiply $Q_p$ and $Q_s$ at all grid points, before the computation starts,
-$$
+\[
  Q_p := {\tt qmultiplier} \times Q_p\qquad Q_s := {\tt qmultiplier} \times Q_s.
-$$
-This 
-option gives the user an easy way to modify the quality factors, even if they are given on material file formats that are hard
-to access manually. Use {\tt qmultiplier} with caution. If the quality factors are small (i.e., {\tt qmultiplier}$<<1$), 
-the equations will become ill-posed. \emph{SW4} will detect too small quality factors and terminate before the time stepping starts.
+\] 
+This option gives the user an easy way to modify the quality factors, even if they are given on
+material file formats that are hard to access manually. Use {\tt qmultiplier} with caution. If the
+quality factors are small (i.e., {\tt qmultiplier}$<<1$), the equations will become
+ill-posed. \emph{SW4} will detect too small quality factors and terminate before the time stepping
+starts.
+
+As a computationally inexpensive alternative to the visco-elastic modeling described in
+Section~\ref{sec:attenuation}, it is possible to set \verb+nmech=0+. In this case, the attenuation
+modeling is performed without memory variables. After each time step, the solution field at each
+grid point $\xb_{i,j,k}$ is simply multiplied by the factor
+\[
+e^{-\pi f_c \delta_t/Q},
+\]
+where $\delta_t$ is the time step, $f_c$ is the center frequency, and $Q=Q_s(\xb_{i,j,k})$. The
+center frequency is specified by the \verb+maxfreq+ keyword. Note that the attenuation factor $Q_p$
+is not used in this case, but it must still be specified.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3262,101 +3274,75 @@ uzerr   & $z$-component of error (difference between computed and exact solution
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{keyword:volimage}
 \begin{flushleft}
-\bf Syntax:\\ \tt volimage file=... mode=... sample=... precision=... savelayer=...
-         cycle=... cycleInterval=... time=... timeInterval=... startTime=...
-         x1=... x2=... y1=... y2=... z1=... z2=... \\
+\bf Syntax:\\ \tt 
+volimage file=... mode=... precision=... 
+         time=... timeInterval=... cycle=... cycleInterval=... startTime=... \\
 \bf Required parameter:\\
 \rm Time for output: (time, timeInterval, cycle, or cycleInterval).
 \end{flushleft}
 %
 The \verb+volimage+ command in \emph{SW4} allows you to save 3D volumetric data on file. These files
-can be read by the \emph{VisIt} post processor by using a special plug-in, which also is called
-\verb+volimage+. Be aware that these files can be {\em very} large. The output occurs at certain
-time levels during the simulation. The time levels are controlled by the parameters {\bf time=...},
-{\bf timeInterval=...}, {\bf cycle=...}, or {\bf cycleInterval=...}, which have the same meaning as
-in the image command. In addition, the {\bf startTime=...} option can be used in conjunction with
-{\bf cycleInterval} or {\bf timeInterval} to only output data after a specified time level in the
-simulation. The options {\bf file=...}, {\bf mode=...}, and {\bf precision=...} have the same
-meaning as the corresponding parameters in the image command. The set of possible modes, which is
-different from the image command, is given in the table below. Volimage produces files that are
-named in the same way as image files, but with an added extension {\tt .3D.} before the mode
-extension, for example, {\tt volimage.cycle=183.3D.curl}. When topography is present, i.e., the top
-grid is curvilinear, each {\bf volimage} command produces an additional file with the
-$z$-coordinates of the grid. In the above case, this file would be named {\tt volimage.3D.z}. This
-file is only saved once and is the same for all modes, but depends on the value of {\bf sample},
-{\bf savelayer} and {\bf x1, x2}, etc. The name of this file is included in the internal header of
-the corresponding \verb+volimage+ solution file. The grid file is needed by \emph{VisIt} to
-correctly visualize the solution. Note that the grid file is only saved when the input file contains
-a \verb+topography+ command.
+can be read by the Matlab/Octave script in \verb+tools/readimage3D.m+. You may also want to use the
+open source post processor \emph{VisIt}, to read these files. Be aware that these files can be {\em
+  very} large. The output occurs at certain time levels during the simulation. The time levels are
+controlled by the parameters {\bf time=...}, {\bf timeInterval=...}, {\bf cycle=...}, or {\bf
+  cycleInterval=...}, which have the same meaning as in the image command. In addition, the {\bf
+  startTime=...} option can be used in conjunction with {\bf cycleInterval} or {\bf timeInterval} to
+only output data after a specified time level in the simulation. The options {\bf file=...}, {\bf
+  mode=...}, and {\bf precision=...} have the same meaning as the corresponding parameters in the
+image command. The set of possible modes, which is different from the image command, is given in the
+table below. The \verb+volimage+ command produces files with extension \verb+.3D.mode.sw4img+, where
+\verb+mode+ is one of \verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
 
-By default, when using supergrid far field boundary conditions, the sponge layer is removed from the
-volimage data set. The parameter option {\bf savelayer=yes} forces SW4 to save the complete field,
-including the sponge layers.  By default, the solution is saved at every grid point. The size of the
-data file can be significantly reduced by using the {\bf sample} option. For example, {\bf sample=2}
-only saves the solution at every other grid point, {\bf sample=3} at every third point, etc. The
-coarsening of the grid is the same in all three space dimensions.  The size of the file can also be
-reduced by using the optional parameters {\bf x1=...}, {\bf x2=...}, etc.. In this case, only the
-specified sub-domain is saved to file.
+When topography is present, i.e., the top grid is curvilinear, each file also includes the
+$z$-coordinates of the curvilinear grid. Note that the grid coordinates are only saved when the
+input file contains a \verb+topography+ command.
+
+The file format is described in Section~\ref{sec:volimage-format}.
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf volimage command options (part 1)}\\ \hline
+\multicolumn{5}{|c|}{\bf volimage command options}\\ \hline
 {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
 \hline
-file        & file name header of image                                              & string & none & volimage \\ \hline
-mode        & specifies which field is written to the image file                     & string & none & rho \\  \hline
-sample      & save only every sample:th grid point                &  int   & none & 1 \\ \hline
-precision   & precision of image data on file (float/double) & string & none & float \\ \hline
-savelayer   & Include sponge layer at far field boundaries in saved data (yes/no) & string & none & no \\ \hline
-\end{tabular}
-\end{center}
-\index{volimage options!file, mode, sample, precision}
-%
-\begin{center}
-\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf volimage command options (part 2)}\\ \hline
-{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
-\hline
-time          & simulation time to output image, will be closest depending on dt taken & real  & s    & none \\ \hline
-timeInterval  & simulation time interval to output series of images                    & real  & s    & none \\ \hline
-cycle         & time-step cycle to output image                                        & int    & none & none \\ \hline
-cycleInterval & time-step cycle interval to output a series of images                  & int    & none & none \\ \hline
+file        & file name header of image                          & string & none & volimage \\ \hline
+mode        & specifies which field is written to the image file & string & none & rho \\  \hline
+precision   & precision of image data on file (float/double)     & string & none & float \\ \hline
+%% \end{tabular}
+%% \end{center}
+%% %
+%% \begin{center}
+%% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+%% \multicolumn{5}{|c|}{\bf volimage command options (part 2)}\\ \hline
+%% {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline \hline
+time          & simulation time to output image, will be closest depending on dt taken & real  & sec.  & none \\ \hline
+timeInterval  & simulation time interval to output series of images                    & real  & sec.  & none \\ \hline
+cycle         & time-step cycle to output image                                        & int   & none  & none \\ \hline
+cycleInterval & time-step cycle interval to output a series of images                  & int   & none & none \\ \hline
 startTime     & only output data after this time level (only used with {\bf cycleInterval} or {\bf
-  timeInterval}) & real & s & -999.9 \\ \hline 
-x1          & minimum x-dim for the box shaped sub-region & real & m & 0 \\ \hline
-x2          & maximum x-dim for the box shaped sub-region & real & m & max x \\ \hline
-y1          & minimum y-dim for the box shaped sub-region & real & m & 0 \\ \hline
-y2          & maximum y-dim for the box shaped sub-region & real & m &  max y \\ \hline
-z1          & minimum z-dim for the box shaped sub-region & real & m & topography \\ \hline
-z2          & maximum z-dim for the box shaped sub-region & real & m & max z \\ \hline
+ timeInterval}) & real & s & -999.9 \\ \hline 
 \end{tabular}
 \end{center}
-\index{volimage options!cycle, cycleInterval, time, timeInterval, startTime, x1, x2, y1, y2, z1, z2}
+\index{volimage options!file, mode, precision, cycle, cycleInterval, time, timeInterval, startTime}
 %
-Options for mode include:
+The \verb+mode+ keyword can have the following values:
 %
 \begin{center}
 \begin{tabular}{|c|l|} \hline
 \multicolumn{2}{|c|}{\bf volimage mode sub-options}\\ \hline
 \bf{Value} & \bf{Description} \\ \hline  \hline
-ux      & displacement in the x-direction \\ \hline
-uy      & displacement in the y-direction \\ \hline
-uz      & displacement in the z-direction \\ \hline
-rho     & density \\ \hline
-p       & p velocity \\ \hline
-s       & s velocity \\ \hline
-div     & divergence (div) of the displacement \\ \hline
-curl    & magnitude of the rotation (curl) of the displacement \\ \hline 
-veldiv  & divergence (div) of the velocity \\ \hline
-velcurl & magnitude of the rotation (curl) of the velocity \\ \hline
-mag     & magnitude of the displacement \\ \hline
-velmag  & magnitude of the velocity \\ \hline
+ux      & $x$-components of the solution (displacement) \\ \hline
+uy      & $y$-components of the solution (displacement) \\ \hline
+uz      & $z$-components of the solution (displacement) \\ \hline
+rho     & density of material \\ \hline
+p       & $C_p$ material velocity \\ \hline
+s       & $C_s$ material velocity \\ \hline
+lambda  & First Lam\'e parameter \\ \hline
+mu      & Second Lam\'e parameter \\ \hline
+qp      & $Q_p$ material attenuation factor \\ \hline
+qs      & $Q_s$ material attenuation factor \\ \hline
 \end{tabular}
 \end{center}
-Note that a supplemental \verb+volimage+ file (with extensions \verb+.z+) is created when topography
-is used. This file, which contains the $z$-coordinates of the grid, is automatically read
-by the \verb+volimage+ plug-in for \emph{VisIt} and allows it to construct the computational grid.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{gmt [optional]}
@@ -3588,38 +3574,24 @@ command. Look in the source code to get a full understanding of what this comman
 Syntax:\\
 \tt
 developer
-cfl\_number=... interpolation=... ctol=... cmaxit=... output\_load=... output\_timing=... log\_energy=... print\_energy=... mpiio=... iotiming=... \\
+cfl=... checkfornan=... \\
 \bf Required parameters:\\
 \rm
 None
 \end{flushleft}
+By setting the \verb+checkfornan+ keyword to \verb+on+ or \verb+yes+, \emph{SW4} scans the solution
+arrays for floating point exceptions and other erros resulting in NaN (Not a Number). The check is
+performaed after each time step.
 \begin{center}
 \begin{tabular}{|l|p{10cm}|l|l|} \hline
-\multicolumn{4}{|c|}{\bf developer parameters (part 1)}\\ \hline
+\multicolumn{4}{|c|}{\bf developer parameters}\\ \hline
 \bf{Option}   & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-cfl\_number   & CFL number $(>0)$ & real &  0.8\\ \hline
-interpolation & Interpolation type at grid refinement boundaries (conservative or non-conserative) &
-string & conservative \\ \hline 
-ctol          & Relative tolerance for iterative solution of conservative grid refinement $(>0)$ & real & 1e-3
-\\ \hline
-cmaxit        & Max number of interations for solving conservative grid refinement equations $(>0)$ & int & 20
+cfl   & CFL number $(>0)$ & real &  1.3\\ \hline
+checkfornan & Scan solution arrays for NaN & string & off
 \\ \hline
 \end{tabular}
 \end{center}
-\index{developer parameters!cfl\_number, interpolation, ctol, cmaxit}
-\begin{center}
-\begin{tabular}{|l|p{10cm}|l|l|} \hline
-\multicolumn{4}{|c|}{\bf developer parameters (part 2)}\\ \hline
-\bf{Option}   & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-output\_load  & Output load info (0 or 1) & int & 0 \\ \hline
-output\_timing & Output timing info (0 or 1) & int & 0 \\ \hline
-log\_energy   & File name for saving energy info & string & none \\ \hline
-print\_energy & Save energy information (0 or 1) & int & 0 \\ \hline
-mpiio         & Use the standard MPI-I/O (1) or Bjorn's fast I/O (0) routines for saving image files & int & 0 \\ \hline
-iotiming      & output timing info after each image is written to disk. (0 or 1) & int & 0 \\ \hline
-\end{tabular}
-\end{center}
-\index{developer parameters!output\_load, output\_timing, log\_energy, print\_energy, mpiio, iotiming}
+\index{developer parameters! cfl, checkfornan}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{File formats}\label{chap:formats}
@@ -4059,20 +4031,21 @@ The same ordering is used for the coordinates as the data, as determined by the 
 \index{fileformats!volimage}
 
 The {\tt volimage} command generates (often very large) binary files holding three-dimensional
-volumetric data. A reader for volimage files is provided in the matlab/octave function 'tools/readimage3d.m'.
-Alternatively, users might want to visualize the data in these files with the open source {\em VisIt}
-post processor. \verb+volimage+ files can also be used to define the material properties in
-\emph{SW4}, using the \verb+vimaterial+ command. \emph{SW4} volimage files have extension \verb+.3D.mode.sw4img+,
-where \verb+mode+ is one of \verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
-\par
+volumetric data. A reader for volimage files is provided in the matlab/octave function
+'tools/readimage3d.m'.  Alternatively, users might want to visualize the data in these files with
+the open source {\em VisIt} post processor. \verb+volimage+ files can also be used to define the
+material properties in \emph{SW4}, using the \verb+vimaterial+ command. \emph{SW4} volimage files
+have extension \verb+.3D.mode.sw4img+, where \verb+mode+ is one of
+\verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
+
 The format of the volimage files is the same as the format of image files, with the exception that
-the sizes of the data patches are specified by six integers in the volimage files, instead of four 
-in the image file format.
-The first part of the header of the volimage format is identical to the first part of the image file header
-given in the previous section. The plane and coordinate ($\xi$) variables are not needed for three dimensional 
-data. They are both set to -1 in a \verb+volimage+ file. 
-The number of possible variables to save is more restricted than for the image command. The volume image format
-stores one of the following variables with corresponding integer code for the \verb+mode+ variable in the file header:
+the sizes of the data patches are specified by six integers in the volimage files, instead of four
+in the image file format.  The first part of the header of the volimage format is identical to the
+first part of the image file header given in the previous section. The plane and coordinate ($\xi$)
+variables are not needed for three dimensional data. They are both set to -1 in a \verb+volimage+
+file.  The number of possible variables to save is more restricted than for the image command. The
+volume image format stores one of the following variables with corresponding integer code for the
+\verb+mode+ variable in the file header:
 \begin{center}
 \begin{tabular}{l||l|l|l|l|l|l|l|l|l|l}\hline
 {\tt mode} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 14 & 15 \\ \hline

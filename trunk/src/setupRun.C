@@ -262,22 +262,23 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // evaluate resolution
   double minvsoh;
   compute_minvsoverh( minvsoh );
-  //  if (proc_zero())
-  //  {
-  //     printf("\n***** PPW = minVs/h/maxFrequency ********\n");
-  //     for (int g=0; g<mNumberOfCartesianGrids; g++)
-  //     {
-  //       printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
-  //     }
-  //     if (topographyExists())
-  //     {
-  //       int g = mNumberOfGrids-1;
-  //       printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
-  //   }
-  //   printf("\n");
-  // }
+
+  if (proc_zero())
+  {
+    printf("\n***** PPW = minVs/h/maxFrequency ********\n");
+    for (int g=0; g<mNumberOfCartesianGrids; g++)
+    {
+      printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
+    }
+    if (topographyExists())
+    {
+      int g = mNumberOfGrids-1;
+      printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
+    }
+    printf("\n");
+  }
   
-    assign_supergrid_damping_arrays();
+  assign_supergrid_damping_arrays();
 
 // convert Qp and Qs to muVE, lambdaVE, and compute unrelaxed lambda, mu
   if( m_use_attenuation )
