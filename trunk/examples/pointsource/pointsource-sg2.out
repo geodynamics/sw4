@@ -27,9 +27,9 @@ Grid         h        Nx        Ny        Nz       Points
    0      0.02       301       301       301     27270901
 Total number of grid points (without ghost points): 2.72709e+07
 
-Default Supergrid thickness has been tuned; thickness = 50 grid sizes
+Default Supergrid thickness has been tuned; thickness = 75 grid sizes
 
-   Execution time, reading input file 0.406963 seconds 
+   Execution time, reading input file 0.023949 seconds 
 ----------------------------------------------------
  Making Output Directory: pointsource-h0p02/
 		
@@ -54,7 +54,7 @@ Geographic coordinates of the corners of the computational grid:
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=2.000000e-02, minVs/h=40 (Cartesian)
 
-   Execution time, start up phase 0.045315 seconds 
+   Execution time, start up phase 0.055587 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: pointsource-h0p02/
 ============================================================
@@ -77,9 +77,9 @@ Time step     301  t =   3.9920424e+00
 Time step     377  t =   5.0000000e+00
   Time stepping finished...
 **** Closed file with solution errors for testing
-   Execution time, solver phase 1 minute  32.1705 seconds 
+   Execution time, solver phase 1 minute  32.618 seconds 
 
- Final solution errors: Linf =   1.1986524e-02, L2 =   6.2050665e-02
+ Final solution errors: Linf =   2.4309629e-03, L2 =   7.6429763e-03
 ============================================================
  program sw4 finished! 
 ============================================================
