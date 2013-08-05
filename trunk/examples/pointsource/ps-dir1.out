@@ -1,0 +1,80 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Aug 5 09:56:21 PDT 2013
+  By user:     andersp
+  Machine:     cab690
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: ps-dir1.in
+
+* Processing the grid command...
+* Setting nx to 201 to be consistent with h=0.04
+* Setting ny to 201 to be consistent with h=0.04
+* Setting nz to 201 to be consistent with h=0.04
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0      0.04       201       201       201      8120601
+Total number of grid points (without ghost points): 8.1206e+06
+
+
+   Execution time, reading input file 0.019289 seconds 
+----------------------------------------------------
+ Making Output Directory: dir-h0p04/
+		
+... Done!
+----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700007e+01
+2: Lon= 1.180001e+02, Lat=3.700007e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
+
+       ----------- Material properties ranges ---------------
+       1 kg/m^3 <=  Density <= 1 kg/m^3
+       1.6 m/s    <=  Vp      <= 1.6 m/s
+       0.8 m/s    <=  Vs      <= 0.8 m/s
+       2        <=  Vp/Vs   <= 2
+       0.64 Pa     <=  mu      <= 0.64 Pa
+       1.28 Pa     <=  lambda  <= 1.28 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=4.000000e-02, minVs/h=20 (Cartesian)
+
+   Execution time, start up phase 0.160548 seconds 
+Running sw4 on 8 processors...
+Writing output to directory: dir-h0p04/
+============================================================
+ Running program on 8 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 2.5
+ Number of time steps = 94 dt: 0.0265957
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.22474 Nm 
+  Moment magnitude     (Mw): -6.00797
+  Number of sources 1
+-----------------------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   2.6595745e-02
+Time step      94  t =   2.5000000e+00
+  Time stepping finished...
+**** Closed file with solution errors for testing
+   Execution time, solver phase 1 minute  19.5627 seconds 
+
+ Final solution errors: Linf =   2.0975255e-03, L2 =   4.5113314e-03
+============================================================
+ program sw4 finished! 
+============================================================
