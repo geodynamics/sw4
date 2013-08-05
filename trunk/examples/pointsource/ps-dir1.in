@@ -1,5 +1,5 @@
-fileio path=dir-h0p01
-grid x=8 y=8 z=8 h=0.01
+fileio path=dir-h0p04
+grid x=8 y=8 z=8 h=0.04
 time t=2.5
 
 # dirichlet conditions on all sides
