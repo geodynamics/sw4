@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Fri Jul 19 13:27:36 PDT 2013
+  Compiled on: Sun Aug 4 16:46:29 PDT 2013
   By user:     andersp
-  Machine:     cab670
+  Machine:     cab687
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -18,16 +18,9 @@ Input file: pointsource-sg3.in
 * Setting nx to 601 to be consistent with h=0.01
 * Setting ny to 601 to be consistent with h=0.01
 * Setting nz to 601 to be consistent with h=0.01
-allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
-Extent of the computational domain xmax=6 ymax=6 zmax=6
-Corrected global_zmax = 6
-Refinement levels after correction: 
-grid=0 min Z=0
-***inside setup2D_MPICommunications***
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
-***inside setupMPICommunications***
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
@@ -36,19 +29,10 @@ Total number of grid points (without ghost points): 2.17082e+08
 
 Default Supergrid thickness has been tuned; thickness = 100 grid sizes
 
-   Execution time, reading input file 0.43484 seconds 
- *** Testing = 1
-  Using Bjorn's (fast) parallel IO library
-Assuming a SERIAL file system.
-Setting up SBP boundary stencils
-Detected at least one boundary with supergrid conditions
+   Execution time, reading input file 0.440668 seconds 
 ----------------------------------------------------
  Making Output Directory: pointsource-h0p01/
 		
-Info: **stat returned ENOENT (the path does not exist, or the path 
-      is an empty string) pointsource-h0p01/
-Calling mkdir() on path: pointsource-h0p01/
-mkdir() returned successfully.
 ... Done!
 ----------------------------------------------------
 Geographic coordinates of the corners of the computational grid:
@@ -66,85 +50,38 @@ Geographic coordinates of the corners of the computational grid:
        0.64 Pa     <=  mu      <= 0.64 Pa
        1.28 Pa     <=  lambda  <= 1.28 Pa
        ------------------------------------------------------
-  Assigned material properties
-*** computing the time step ***
-order of accuracy=4 CFL=1.3 prel. time step=0.00663403
-*** Initialized Images
-Sanity testing of the source
-   Execution time, start up phase 0.299003 seconds 
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.000000e-02, minVs/h=80 (Cartesian)
+
+   Execution time, start up phase 0.316659 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: pointsource-h0p01/
-
-***  Starting solve ***
-Saving one discretized time function
 ============================================================
  Running program on 128 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 5
  Number of time steps = 754 dt: 0.0066313
-
-============================================================
- Global boundary conditions 
-      x=0    supergrid
-      x=xMax supergrid
-      y=0    supergrid
-      y=yMax supergrid
-      z=topo supergrid
-      z=zMax supergrid
-
+Saving one discretized time function
 
 -----------------------------------------------------------------------
   Total seismic moment (M0): 1.22474 Nm 
   Moment magnitude     (Mw): -6.00797
   Number of sources 1
 -----------------------------------------------------------------------
-  Initial data has been assigned
-writing image plane on file pointsource-h0p01/ps.cycle=000.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=000.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=000.z=3.uz.sw4img
   Begin time stepping...
 Time step       1  t =   6.6312997e-03
-writing image plane on file pointsource-h0p01/ps.cycle=075.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=075.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=075.z=3.uz.sw4img
 Time step     101  t =   6.6976127e-01
-writing image plane on file pointsource-h0p01/ps.cycle=151.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=151.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=151.z=3.uz.sw4img
 Time step     201  t =   1.3328912e+00
-writing image plane on file pointsource-h0p01/ps.cycle=226.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=226.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=226.z=3.uz.sw4img
 Time step     301  t =   1.9960212e+00
-writing image plane on file pointsource-h0p01/ps.cycle=302.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=302.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=302.z=3.uz.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=377.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=377.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=377.z=3.uz.sw4img
 Time step     401  t =   2.6591512e+00
-writing image plane on file pointsource-h0p01/ps.cycle=452.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=452.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=452.z=3.uz.sw4img
 Time step     501  t =   3.3222812e+00
-writing image plane on file pointsource-h0p01/ps.cycle=528.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=528.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=528.z=3.uz.sw4img
 Time step     601  t =   3.9854111e+00
-writing image plane on file pointsource-h0p01/ps.cycle=603.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=603.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=603.z=3.uz.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=679.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=679.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=679.z=3.uz.sw4img
 Time step     701  t =   4.6485411e+00
 Time step     754  t =   5.0000000e+00
-writing image plane on file pointsource-h0p01/ps.cycle=754.z=3.ux.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=754.z=3.uy.sw4img
-writing image plane on file pointsource-h0p01/ps.cycle=754.z=3.uz.sw4img
   Time stepping finished...
 **** Closed file with solution errors for testing
-   Execution time, solver phase 21 minutes 30.9649 seconds 
+   Execution time, solver phase 21 minutes 29.6551 seconds 
 
  Final solution errors: Linf =   8.8143566e-04, L2 =   2.8154607e-03
 ============================================================

@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Fri Jul 19 13:27:36 PDT 2013
+  Compiled on: Sun Aug 4 16:46:29 PDT 2013
   By user:     andersp
-  Machine:     cab670
+  Machine:     cab687
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -18,16 +18,9 @@ Input file: pointsource-sg2.in
 * Setting nx to 301 to be consistent with h=0.02
 * Setting ny to 301 to be consistent with h=0.02
 * Setting nz to 301 to be consistent with h=0.02
-allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
-Extent of the computational domain xmax=6 ymax=6 zmax=6
-Corrected global_zmax = 6
-Refinement levels after correction: 
-grid=0 min Z=0
-***inside setup2D_MPICommunications***
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
-***inside setupMPICommunications***
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
@@ -36,12 +29,7 @@ Total number of grid points (without ghost points): 2.72709e+07
 
 Default Supergrid thickness has been tuned; thickness = 50 grid sizes
 
-   Execution time, reading input file 0.416218 seconds 
- *** Testing = 1
-  Using Bjorn's (fast) parallel IO library
-Assuming a SERIAL file system.
-Setting up SBP boundary stencils
-Detected at least one boundary with supergrid conditions
+   Execution time, reading input file 0.406963 seconds 
 ----------------------------------------------------
  Making Output Directory: pointsource-h0p02/
 		
@@ -62,31 +50,18 @@ Geographic coordinates of the corners of the computational grid:
        0.64 Pa     <=  mu      <= 0.64 Pa
        1.28 Pa     <=  lambda  <= 1.28 Pa
        ------------------------------------------------------
-  Assigned material properties
-*** computing the time step ***
-order of accuracy=4 CFL=1.3 prel. time step=0.0132681
-*** Initialized Images
-Sanity testing of the source
-   Execution time, start up phase 0.054224 seconds 
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e-02, minVs/h=40 (Cartesian)
+
+   Execution time, start up phase 0.045315 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: pointsource-h0p02/
-
-***  Starting solve ***
 ============================================================
  Running program on 128 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 5
  Number of time steps = 377 dt: 0.0132626
-
-============================================================
- Global boundary conditions 
-      x=0    supergrid
-      x=xMax supergrid
-      y=0    supergrid
-      y=yMax supergrid
-      z=topo supergrid
-      z=zMax supergrid
-
 Saving one discretized time function
 
 -----------------------------------------------------------------------
@@ -94,49 +69,15 @@ Saving one discretized time function
   Moment magnitude     (Mw): -6.00797
   Number of sources 1
 -----------------------------------------------------------------------
-  Initial data has been assigned
-writing image plane on file pointsource-h0p02/ps.cycle=000.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=000.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=000.z=3.uz.sw4img
   Begin time stepping...
 Time step       1  t =   1.3262599e-02
-writing image plane on file pointsource-h0p02/ps.cycle=038.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=038.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=038.z=3.uz.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=075.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=075.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=075.z=3.uz.sw4img
 Time step     101  t =   1.3395225e+00
-writing image plane on file pointsource-h0p02/ps.cycle=113.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=113.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=113.z=3.uz.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=151.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=151.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=151.z=3.uz.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=189.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=189.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=189.z=3.uz.sw4img
 Time step     201  t =   2.6657825e+00
-writing image plane on file pointsource-h0p02/ps.cycle=226.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=226.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=226.z=3.uz.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=264.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=264.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=264.z=3.uz.sw4img
 Time step     301  t =   3.9920424e+00
-writing image plane on file pointsource-h0p02/ps.cycle=302.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=302.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=302.z=3.uz.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=339.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=339.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=339.z=3.uz.sw4img
 Time step     377  t =   5.0000000e+00
-writing image plane on file pointsource-h0p02/ps.cycle=377.z=3.ux.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=377.z=3.uy.sw4img
-writing image plane on file pointsource-h0p02/ps.cycle=377.z=3.uz.sw4img
   Time stepping finished...
 **** Closed file with solution errors for testing
-   Execution time, solver phase 1 minute  32.3217 seconds 
+   Execution time, solver phase 1 minute  32.1705 seconds 
 
  Final solution errors: Linf =   1.1986524e-02, L2 =   6.2050665e-02
 ============================================================
