@@ -3462,14 +3462,22 @@ fz   & Magnitude of the forcing     & real & 1.0 \\ \hline
 \label{keyword:pointsource}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The {\bf testpointsource} command calculates the displacement due to a point source in a homogeneous
-whole space, and computes the error. Note that the reported errors are only reliable before the
-solution has reached the outflow boundaries. Look in the source code for further information.
+whole space, and computes the error. The source properties are specified by a regular \verb+source+
+command. However, there must be exactly one \verb+source+ command and, the time function must be
+one of the types \verb+VerySmoothBump+, \verb+C6SmoothBump+, \verb+SmoothWave+, or \verb+Gaussian+.
+
+Before the solution has reached the a boundary or the super-grid layers, this test evaluates the
+discretization of the source term. If supergrid layers are used on all six boundaries, this test can
+also be used to evaluate the accuracy of the supergrid far field layers.
+
+By setting \verb+diractest=1+, \emph{SW4} checks the moment conditions of the source
+discretization. See the source code for further details.
 \begin{flushleft}
 \bf
 Syntax:\\
 \tt
 testpointsource
-x=... y=... z=... cp=... cs=... rho=... m0=... mxx=... mxy=... mxz=... myy=... myz=... mzz=... f0=... fx=... fy=... fz=... freq=... t0=... type=...
+cp=... cs=... rho=... diractest=...
 \\
 \bf 
 Required parameters:\\
@@ -3478,41 +3486,15 @@ None
 \end{flushleft}
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
-\multicolumn{4}{|c|}{\bf testpointsource command parameters (part 1)}\\ \hline
+\multicolumn{4}{|c|}{\bf testpointsource command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-x    & x-coordinate of point source & real & 0 \\ \hline
-y    & y-coordinate of point source & real & 0 \\ \hline
-z    & z-coordinate of point source & real & 0 \\ \hline
-\hline
-freq & Frequency of the forcing & real & 1 \\ \hline
-t0   & Offset in time & real & 1 \\ \hline
-type & Type of the source: SmoothWave, VerySmoothBump,Ricker & string & Ricker \\ \hline
-\hline
 cp   & P-wave velocity & real & $\sqrt{3}$ \\ \hline
 cs   & S-wave velocity & real & 1 \\ \hline
 rho  & Density & real & 1 \\ \hline
+diractest & Test moment conditions (0 or 1) & int & 0 \\ \hline
 \end{tabular}
 \end{center}
-\index{testpointsource parameters!x, y, z, cp, cs, rho, freq, t0, type}
-\begin{center}
-\begin{tabular}{|l|p{8cm}|l|l|} \hline
-\multicolumn{4}{|c|}{\bf testpointsource command parameters (point source type)}\\ \hline
-\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-m0   & Moment amplitude & real & 1 \\ \hline
-mxx  & xx-component of moment tensor & real & 0 \\ \hline
-mxy  & xy-component of moment tensor & real & 0 \\ \hline
-mxz  & xz-component of moment tensor & real & 0 \\ \hline
-myy  & yy-component of moment tensor & real & 0 \\ \hline
-myz  & yz-component of moment tensor & real & 0 \\ \hline
-mzz  & zz-component of moment tensor & real & 0 \\ \hline
-\hline
-f0   & Point force amplitude                       & real & 1\\ \hline 
-fx   & Magnitude of the forcing in the x-direction & real & 1 \\ \hline
-fy   & Magnitude of the forcing in the y-direction & real & 1 \\ \hline
-fz   & Magnitude of the forcing in the z-direction & real & 1 \\ \hline
-\end{tabular}
-\end{center}
-\index{testpointsource parameters!m0, mxx, mxy, mxz, myy, myz, mzz, f0, fx, fy, fz}
+\index{testpointsource parameters! cp, cs, rho}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Advanced simulation controls [optional]}
@@ -4548,7 +4530,7 @@ completed. As before, the \verb+sw4+ executable will be located in the \verb+opt
 \verb+debug_v1.0+ directories.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Testing the \emph{SW4} installation (in progress)}\label{cha:testing-sw4}
+\chapter{Testing the \emph{SW4} installation}\label{cha:testing-sw4}
 \index{testing}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -4742,8 +4724,86 @@ and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 %% Note that the most important information is near the end of these files, where the error in the numerical
 %% solution is reported. 
 
-\section{Point moment tensor test (not done)}\label{sec:testpointsource}
+\section{Point source test}\label{sec:testpointsource}
 \index{testing!pointsource}
+
+There is an analytical solution of the elastic wave equation when the forcing is a point source
+term, and the domain is unbounded. The forcing can either be a point force or a point moment tensor
+source. In both these cases, the analytical solution is singular (i.e. infinite) at the point source,
+while the point source is acting. For time functions that are identically zero for $t\geq t_1$, the
+analytical solution becomes bounded for $t>t_1$. The smoothness of the solution is determined by the
+smoothness of the source time function.
+
+The accuracy of the numerical solution can be evaluated by comparing it to the analytical solution
+using the \verb+testpointsource+ command. As before we refine the grid by halving the grid size to
+evaluate the convergence rate of the numerical solution. Since we previously tested the point force
+discretization by solving Lamb's problem, we will here focus on the point moment tensor source
+discretization. Example input files are given in the files \verb+ps-dir1.in+, \verb+ps-dir2.in+,
+and \verb+ps-dir3.in+ in the \verb+tools/pointsource+ directory. Each input file has a corresponding
+\verb+.out+ file with the results we obtained while running these cases.
+
+The source properties are specified by exactly one regular \verb+source+ command. In this case the
+time function is a \verb+C6SmoothBump+. The coarsest grid is setup in the file \verb+ps-dir1.in+,
+\begin{verbatim}
+fileio path=dir-h0p04
+grid x=8 y=8 z=8 h=0.04
+time t=2.5
+
+# dirichlet conditions on all sides
+boundary_conditions lx=1 hx=1 ly=1 hy=1 lz=1 hz=1
+
+# testing point sources
+testpointsource rho=1 cp=1.6 cs=0.8
+
+# source
+source x=4.0 y=4.0 z=4.0 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0 freq=1 type=C6SmoothBump
+\end{verbatim}
+
+The source is located in the center of a cube with side 8, so the shortest distance from the source
+to a boundary is 4.  The solution satisfies homogeneous Dirichlet boundary conditions on all
+boundaries. The fastest wave speed is 1.6, so the solution on the boundary is identically zero until
+time $t=4/1.6 = 2.5$. There can therefore not be any reflections from the boundaries for $t\leq
+2.5$, and the analytical solution is reliable up to this point in time. The error in the numerical
+solution at $t=2.5$ (the end of the simulation) is reported at the end of each run. These numbers
+are summarized in Table~\ref{tab:point-source}. Since the convergence rate tends to 4 as the grid is
+refined, we conclude that the numerical solution is a fourth order accurate approximation of the
+analytical solution.
+\begin{table}
+\begin{center}
+\begin{tabular}{| c | c | c | c  | c | }
+\hline
+input file & $h$ & $e_h=\| \ub - \ub_{ex}\|_\infty$  & ratio$_\infty$ & rate$_\infty$ \\ \hline
+ps-dir1.in & $0.04$  & $2.09\cdot 10^{-3}$  &  --   & --   \\ \hline
+ps-dir2.in & $0.02$  & $1.41\cdot 10^{-4}$  &  14.82 & 3.88 \\ \hline
+ps-dir3.in & $0.01$  & $8.94\cdot 10^{-6}$  &  15.77 & 3.97 \\ \hline
+\end{tabular}
+\caption{Max norm errors in the displacement at time $t=2.5$. The convergence rate is calculated as
+  $\log_2(e_{2h}/e_h)$. }
+\label{tab:point-source}
+\end{center}
+\end{table}
+
+More detailed information of the error in the numerical solution is saved in the file
+\verb+PointSourceErr.txt+, which is written in the output directory that is specified by the
+\verb+fileio+ command. Each line in this file has 4 entries: time, max-error, $L_2$-error, and
+max-norm of the solution. In Figure~\ref{fig:point-error}, we plot the max-error as function of time
+for the three grid sizes. The source time function is identically zero for $t\geq 1$. Before $t=1$,
+the analytical solution is unbounded at the point source. For this reason, a few points around the
+point source are excluded from the calculation of the error in the numerical solution. For $t>1$, we
+see that the error in the numerical solution is reduced by a factor $\approx 16$ each time the grid
+size is halved.
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=0.7\textwidth]{ps-err.png}
+\caption{The max norm of the error in the point source test. The blue, green, and red lines
+  correspond to $h=0.04$, $h=0.02$, and $h=0.01$, respectively.}
+\label{fig:point-error}
+\end{center}
+\end{figure}
+
+We remark that the \verb+testpointsource+ command can also be used to evaluate the accuracy of the
+supergrid far field layers. In this case, the Dirichlet boundary conditions should be replaced by
+supergrid conditions on all six boundaries of the computational domain.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Run time and memory requirements }\label{sec:performance}
@@ -4752,25 +4812,24 @@ and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 
 \section{Run time}
 
-The execution times shown in Table \ref{tab:cputime-usage} were obtained by running \emph{SW4} on problems
-with approximately $2.8\times 10^5$ to $3.3\times 10^5$ grid points per processor. Timings were measured 
-on 16 processors of Cab, 
-a parallel supercomputer at LLNL, in August of 2013. The \emph{SW4} executable was compiled with Intel compilers at
-optimization level -O. The execution times are given in seconds per grid point and time step. 
-While the absolute numbers in Table \ref{tab:cputime-usage} are machine
-dependent and destined to change in the future, the relative cost of various solver
-configurations is likely to stay more or less constant. Note that the visco-elastic cases used 3
-mechanisms. For the case with topography, about 31\% of the grid points were in the curvilinear
-grid.
+The execution times shown in Table \ref{tab:cputime-usage} were obtained by running \emph{SW4} on
+problems with approximately $2.8\times 10^5$ to $3.3\times 10^5$ grid points per processor. Timings
+were measured on 16 processors of Cab, a parallel supercomputer at LLNL, in August of 2013. The
+\emph{SW4} executable was compiled with Intel compilers at optimization level -O. The execution
+times are given in seconds per grid point and time step.  While the absolute numbers in Table
+\ref{tab:cputime-usage} are machine dependent and destined to change in the future, the relative
+cost of various solver configurations is likely to stay more or less constant. Note that the
+visco-elastic cases used 3 mechanisms. For the case with topography, about 31\% of the grid points
+were in the curvilinear grid.
 
 We note that solving the visco-elastic wave equations with $m=3$, requires around 3 times more CPU
-time than the purely elastic case. Using topography requires about 1.5 times more CPU time when 31\% of
-the domain is discretized on a curvilinear grid. By extrapolation, if all grid points were in the 
-curvilinear grid, the increase in CPU time would have been about a factor 2.7. 
-The strong scaling properties are not perfect. Hence, the performance might be degraded when the number 
-of processors is increased while keeping the number of grid points fixed. However, the total computational time
-always decreases with increasing number of processors. More experimentation is needed 
-to better evaluate the strong scaling properties of \emph{SW4}.
+time than the purely elastic case. Using topography requires about 1.5 times more CPU time when 31\%
+of the domain is discretized on a curvilinear grid. By extrapolation, if all grid points were in the
+curvilinear grid, the increase in CPU time would have been about a factor 2.7.  The strong scaling
+properties are not perfect. Hence, the performance might be degraded when the number of processors
+is increased while keeping the number of grid points fixed. However, the total computational time
+always decreases with increasing number of processors. More experimentation is needed to better
+evaluate the strong scaling properties of \emph{SW4}.
 \begin{table}
 \begin{center}
 \begin{tabular}{|l|l|r|r|}\hline
