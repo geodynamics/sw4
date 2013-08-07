@@ -102,11 +102,25 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
       ihave_array = 0;
    init_pio( iwrite, pfs, ihave_array );
+   //   int myid;
+   //   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+   //   if( myid == 1 )
+   //   {
    //   cout << "gsizes " << globalsizes[0] <<  " " << globalsizes[1] << " " << globalsizes[2] << endl;
    //   cout << "lsizes " << localsizes[0] <<  " " << localsizes[1] << " " << localsizes[2] << endl;
    //   cout << "ssizes " << starts[0] <<  " " << starts[1] << " " << starts[2] << endl;
+   //   }
    init_array( globalsizes, localsizes, starts, nptsbuf, padding );
-   //   m_irecv.print(1);
+   //   if( myid == 1 )
+   //   {
+   //      cout << "IRECV = " << endl;
+   //      m_irecv.print(1);
+   //   }
+   //   if( myid == 1 )
+   //   {
+   //      cout << "ISEND = " << endl;
+   //      m_isend.print(0);
+   //   }
 }
 
 //-----------------------------------------------------------------------
@@ -141,6 +155,8 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
       if( narray < 1 )
       {
 	 // error 
+         return;
+         cout << "ERROR 1, in Parallel_IO::init_pio, no processor owns a part of the array" << endl;
       }
       int* array_holders = new int[narray];
       i = 0;
@@ -173,7 +189,8 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
       if( m_nwriters < 1 )
       {
          delete[] tmp;
-      // error return
+         cout << "ERROR 2 in Parallel_IO::init_pio, there are no writing processors left " << endl;
+         return;
       }
       m_writer_ids = new int[m_nwriters];
       i = 0;

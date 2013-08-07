@@ -521,6 +521,7 @@ void get_optmethod( int& method, int& bfgs_m );
 void get_utc( int utc[7] ) const;
 
 void perturb_mtrl();
+void perturb_mtrl( int peri, int perj, int perk, double h, int grid, int var );
 
 void perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp );
 
@@ -554,7 +555,12 @@ vector<double> mGridSize;
 
 // part of global array on each processor, including ghost points = all points
 vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd; 
-vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct, m_kEndAct; 
+
+   // Active subcube is the part of the domain where the material is
+   // variable in material inversion.
+   vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct, m_kEndAct; 
+   vector<int> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal, m_jEndActGlobal;
+   vector<int>  m_kStartActGlobal, m_kEndActGlobal; 
 
 // global number of grid points on each refinement level, without ghost points
 vector<int> m_global_nx, m_global_ny, m_global_nz; 

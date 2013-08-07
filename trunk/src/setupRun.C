@@ -1385,12 +1385,12 @@ void EW::setup_supergrid( )
      //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
      //	  << " " << 1+1 << " " << kmax-1 << endl;
 
-     m_iStartAct[g] = imin+1;
-     m_iEndAct[g]   = imax-1;
-     m_jStartAct[g] = jmin+1;
-     m_jEndAct[g]   = jmax-1;
-     m_kStartAct[g] = 1;
-     m_kEndAct[g]   = kmax-1;
+     m_iStartActGlobal[g] = m_iStartAct[g] = imin+1;
+     m_iEndActGlobal[g]   = m_iEndAct[g]   = imax-1;
+     m_jStartActGlobal[g] = m_jStartAct[g] = jmin+1;
+     m_jEndActGlobal[g]   = m_jEndAct[g]   = jmax-1;
+     m_kStartActGlobal[g] = m_kStartAct[g] = 1;
+     m_kEndActGlobal[g]   = m_kEndAct[g]   = kmax-1;
 
      if( m_iStartAct[g] < m_iStart[g] )
 	m_iStartAct[g] = m_iStart[g];

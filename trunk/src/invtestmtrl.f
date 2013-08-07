@@ -19,9 +19,9 @@
       zminbox = 0.1d0
       zmaxbox = 0.3d0
       if( nr.eq.3 )then
-         omx = pi2*5d0/30000
-         omy = pi2*5d0/30000
-         omz = pi2*3d0/17000
+         omx = pi2*2d0/30000
+         omy = pi2*2d0/30000
+         omz = pi2*1d0/17000
          phip = 0.3d0
          phir = 0.17d0
          phis = 0.08d0

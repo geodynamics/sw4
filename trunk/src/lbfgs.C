@@ -23,7 +23,7 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 
 //-----------------------------------------------------------------------
 //  Algorithm A6.3.1-mod from book by Dennis and Schnabel. This routine only
-//  implements the mod-part of Algorithm A6.3.1. Call from 'linesearch'.
+//  implements the mod-part of Algorithm A6.3.1. Call it from 'linesearch'.
 //
 //-----------------------------------------------------------------------   
 

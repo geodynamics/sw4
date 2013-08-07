@@ -5277,6 +5277,27 @@ void EW::perturb_mtrl()
 }
 
 //-----------------------------------------------------------------------
+void EW::perturb_mtrl( int peri, int perj, int perk, double h, int grid, int var )
+{
+   if( h != 0 && point_in_proc(peri,perj,grid) )
+   {
+      //      cout << "per = " << m_perturb << " " << m_iperturb << " " << m_jperturb << " " << m_kperturb << endl;
+      if( peri < m_iStartAct[grid] || peri > m_iEndAct[grid] )
+	 cout << "warning i-index outside active domain " << endl;
+      if( perj < m_jStartAct[grid] || perj > m_jEndAct[grid] )
+	 cout << "warning j-index outside active domain " << endl;
+      if( perk < m_kStartAct[grid] || perk > m_kEndAct[grid] )
+	 cout << "warning k-index outside active domain " << endl;
+      if( var == 0 )
+         mRho[grid](peri,perj,perk) += h;
+      else if( var == 1 )
+	 mMu[grid](peri,perj,perk) += h;
+      else if( var == 2 )
+         mLambda[grid](peri,perj,perk) += h;
+   }
+}
+
+//-----------------------------------------------------------------------
 void EW::get_optmethod( int& method, int& bfgs_m )
 {
    method = m_opt_method;

@@ -3654,6 +3654,13 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    m_kStartAct.resize(mNumberOfGrids);
    m_kEndAct.resize(mNumberOfGrids);
 
+   m_iStartActGlobal.resize(mNumberOfGrids);
+   m_iEndActGlobal.resize(mNumberOfGrids);
+   m_jStartActGlobal.resize(mNumberOfGrids);
+   m_jEndActGlobal.resize(mNumberOfGrids);
+   m_kStartActGlobal.resize(mNumberOfGrids);
+   m_kEndActGlobal.resize(mNumberOfGrids);
+
    m_iStartInt.resize(mNumberOfGrids);
    m_iEndInt.resize(mNumberOfGrids);
    m_jStartInt.resize(mNumberOfGrids);
