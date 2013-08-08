@@ -85,7 +85,7 @@ National Laboratory under contract DE-AC52-07NA27344.
 many features with our previous seismic wave propagation code~\emph{WPP}~\cite{WPP2}. Both
 \emph{WPP} and \emph{SW4} solve the seismic wave equations in second order formulation using a
 node-based finite difference approach. The underlying numerical method satisfies the principle of
-summation by parts, which guarentees energy stability of the numerical solution. The major
+summation by parts, which guarantees energy stability of the numerical solution. The major
 difference between \emph{WPP} and \emph{SW4} is that the latter implements a fourth order accurate spatial
 discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. \emph{SW4}
 is therefore significantly more efficient than the second order accurate \emph{WPP} code. Compared
@@ -188,7 +188,7 @@ command must be given on one (sometimes long) line in the input file.
 
 Since \emph{SW4} is a parallel code, it is required to be run under a parallel execution environment
 such as mpiexec, mpirun, openmpirun, or srun. The srun command is currently always used on the
-parallel machines at Livermore computing. On other machines, it is important to start \emph{SW4}
+parallel machines at Livermore Computing. On other machines, it is important to start \emph{SW4}
 with the correct parallel execution tool. For example, if you build \emph{SW4} with the openmpi
 compilers, you should use the openmpirun environment. Also note that some systems require you to
 start an \verb+mpd+ daemon before running any parallel programs. Chances are high that somebody else
@@ -536,8 +536,9 @@ Richards~\cite{Aki-Richards-02}. The syntax is described in Section~\ref{keyword
 
 The total seismic moment $\sum M_0$ [Nm] is related to the moment magnitude by the formula
 \[
-M_W = \frac{2}{3}\left[\log_{10}\left(\sum M_0\right) - 9.1\right].
+M_W = \frac{2}{3}\left[\log_{10}\left(\sum M_0\right) - 9.1\right],
 \]
+where the summation $\sum M_0$ is done over all moment sources.
 After parsing all source commands in an input file, \emph{SW4} outputs the moment magnitude using
 this formula. This information is given right before the time-stepping is started and looks like this:
 \begin{verbatim}
@@ -897,7 +898,7 @@ are specified on an equidistant grid in time, $\tau_j = t_0 + (j-1) \delta_t$. T
 $\delta_t>0$, can be chosen independently of the time step that is used to solve the elastic wave
 equation. The start time, $t_0$, can also have an arbitrary value. The interpolation procedure
 results in six polynomial coefficients for each interval $\tau_j\leq t <\tau_{j+1}$. The
-coefficients are chosen such that g(t) becomes four times continuously differentiable.
+coefficients are chosen such that $g(t)$ becomes four times continuously differentiable.
 
 It is necessary to evaluate the discrete time function throughout the simulation of the elastic wave
 equation, i.e., for $0\leq t\leq T$. If $\tau_1>0$, the discrete time function is evaluated using the
@@ -1173,13 +1174,18 @@ the smoothing by saving the top grid surface in an image file,
 image mode=grid z=0 cycle=0 file=test
 \end{verbatim}
 Note that the $z$ coordinate (positive downwards) is saved on a grid image file, while the elevation
-(positive upwards) of the raw (before smoothing) topography is saved on a topo image file.
+(positive upwards) of the raw (before smoothing) topography is saved on a topo image file (obtained by
+specifying \verb+mode=topo+ instead of \verb+mode=grid+).
 
 \section{Gaussian hill topography}\label{sec:topo-gauss-hill}
-The simplest type of topography is a Gaussian hill, allowing the user to place one Gaussian hill at
-a specified location in the $(x,y)$-plane. The user can adjust the amplitude of the hill as well as
-its spread in the $x$ and $y$-directions. The Gaussian hill topography command has the following
-syntax:
+The simplest type of topography is a Gaussian hill, i.e., a topography described by the Gaussian,
+$$
+  \tau(x,y)= A e^{-( (x-x_c)/Lx )^2 - ( (y-y_c)/L_y )^2}.
+$$
+The user can place one Gaussian hill at a location specified by $(x_c,y_c)$, in the $(x,y)$-plane.
+Furthermore, the user can adjust the amplitude of the hill, $A$, as well as
+its spread in the $x$ and $y$-directions, $L_x$ and $L_y$ respectively. 
+The Gaussian hill topography command has the following syntax:
 \begin{verbatim}
 topography input=gaussian zmax=7.5 gaussianAmp=2.4 \
            gaussianXc=3.6 gaussianYc=2.4 \
@@ -2044,7 +2050,7 @@ gmt file=bolinas.gmt
 
 \section{The elastic layer over half-space problem: LOH.1}
 The LOH.1 problem, defined in the input script \verb+examples/scec/LOH.1-h50.in+, has a layered
-material model where the top 1000 meters ($z\in [0, 1000m]$) has different properties than the rest of the
+material model where the top 1000 meters ($z\in [0, 1000]$) has different properties than the rest of the
 domain. The computational domain is taken to be $(x,y,z) \in [0,30000]^2\times [0,17000]$. The
 grid size is choosen to be $h=50\,m$ and the material properties in the
 different layers are described by
@@ -2157,9 +2163,9 @@ Apart from the density and the material velocities, the material model must incl
 factors for the attenuation of compressional ($Q_P$) and shear waves ($Q_S$). For this problem, we
 use the block commands
 \begin{verbatim}
-block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
-block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
-block vs=2437.6 vp=4630.8 r=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001
+block vs=3464 vp=6000 rho=2700 Qs=69.3 Qp=155.9
+block vs=2000 vp=4000 rho=2600 z2=1000 Qs=40 Qp=120
+block vs=2437.6 vp=4630.8 rho=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001
 \end{verbatim}
 
 Similar to the LOH.1 test case, the source is of point moment-tensor type with a Gaussian
@@ -2273,7 +2279,7 @@ that are relevant for \emph{SW4}.
 \index{command!fileio}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The {\bf fileio} command is used for specifying output directories, setting the amount of
-information outputted by \emph{SW4}, the output frequency during the time-stepping, as well
+information output by \emph{SW4}, the output frequency during the time-stepping, as well
 as enabling fast I/O for parallel file system. See \S~\ref{sec:output-dir} for more information.
 \begin{flushleft}\bf
 Syntax:\\ \tt fileio path=... verbose=... printcycle=... pfs=... nwriters=... \\ 
@@ -2361,6 +2367,10 @@ proj & name of  projection (see proj4 documentation) & string & None & utm \\ \h
 ellps & name of ellipse (see proj4 documentation) & string & None & WGS84 \\ \hline
 \end{tabular}
 \end{center}
+Note: The default projection, given by equations \eqref{eq:lat}-\eqref{eq:lon}, is used if neither \verb+proj+
+nor \verb+ellps+ are specified. The default values for \verb+ellps+ and \verb+proj+ are only used in
+the case that one of these two parameters is specified.
+
 \index{grid parameters!location - az, lat, lon, proj, ellipse, mlat, mlon}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2615,8 +2625,8 @@ parsed. This command may be located anywhere in the input file.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The \verb+attenuation+ command is used to enable visco-elastic modeling as described in
-Section~\ref{sec:attenuation}. The visco-elastic model is defined through the quality factors $Q_p$
-and $Q_s$. Similar to the elastic properties, the quality factors may vary from point to point
+Section~\ref{sec:attenuation}. The visco-elastic model is defined through the quality factors $Q_P$
+and $Q_S$. Similar to the elastic properties, the quality factors may vary from point to point
 throughout the computational domain. If visco-elastic modeling is enabled, the $Q_P$ and $Q_S$
 factors must be specified as part of every material command described below. When visco-elastic
 modeling is {\em not} enabled, the $Q_P$ and $Q_S$ factors are not required in the material
@@ -2640,17 +2650,17 @@ nmech     & Number of SLS mechanisms to approximate constant $Q_P$ and $Q_S$ (be
 maxfreq   & The upper frequency limit  ($>0$) for approximating constant $Q_P$ and $Q_S$ & real & Hz & 2.0 \\ \hline
 minppw    & Calculate the upper frequency limit based on this number of grid points per shortest
 wave length ($>0$)& real & None & None \\ \hline
-qmultiplier & A number that will multiply both $Q_p$ and $Q_S$ & real$>0$  & None & 1.0 \\ \hline
+qmultiplier & A number that will multiply both $Q_P$ and $Q_S$ & real$>0$  & None & 1.0 \\ \hline
 \end{tabular}
 \end{center}
 If you specify the \verb+minppw+ option, the upper frequency limit is calculated based on the
-relation $P=\min C_s/(h f)$, i.e.,
+relation $P=\min C_S/(h f)$, i.e.,
 \[
-f_{max} = \frac{1}{P_{min}}\min \frac{C_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
+f_{max} = \frac{1}{P_{min}}\min \frac{C_S}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
 \]
-The {\tt qmultiplier} value will multiply $Q_p$ and $Q_s$ at all grid points, before the computation starts,
+The {\tt qmultiplier} value will multiply $Q_P$ and $Q_S$ at all grid points, before the computation starts,
 \[
- Q_p := {\tt qmultiplier} \times Q_p\qquad Q_s := {\tt qmultiplier} \times Q_s.
+ Q_P := {\tt qmultiplier} \times Q_P\qquad Q_S := {\tt qmultiplier} \times Q_S.
 \] 
 This option gives the user an easy way to modify the quality factors, even if they are given on
 material file formats that are hard to access manually. Use {\tt qmultiplier} with caution. If the
@@ -2665,8 +2675,8 @@ grid point $\xb_{i,j,k}$ is simply multiplied by the factor
 \[
 e^{-\pi f_c \delta_t/Q},
 \]
-where $\delta_t$ is the time step, $f_c$ is the center frequency, and $Q=Q_s(\xb_{i,j,k})$. The
-center frequency is specified by the \verb+maxfreq+ keyword. Note that the attenuation factor $Q_p$
+where $\delta_t$ is the time step, $f_c$ is the center frequency, and $Q=Q_S(\xb_{i,j,k})$. The
+center frequency is specified by the \verb+maxfreq+ keyword. Note that the attenuation factor $Q_P$
 is not used in this case, but it must still be specified.
 
 
@@ -2942,12 +2952,12 @@ Syntax:\\
 \bf Required parameters:\\
 \rm None
 \end{flushleft}
-The {\bf randomize} command makes a random perturbation of the material velocities $V_p$ and $V_s$, according to
+The {\bf randomize} command makes a random perturbation of the material velocities $C_p$ and $C_s$, according to
 $$
- V_p := (1+A(z)*\theta)V_p\qquad V_s := (1+A(z)*\theta)V_s\qquad
+ C_p := (1+A(z)*\theta)C_p\qquad C_s := (1+A(z)*\theta)C_s\qquad
 $$
 where $\theta$ is a random field with $-1 <\theta<1$ and with correlation lengths specified by the {\tt lengthscale}
-and {\tt lengthscalez} options. $V_p$ and $V_s$ use the same random field, hence the ratio $V_p/V_s$ is unaffected
+and {\tt lengthscalez} options. $C_p$ and $C_s$ use the same random field, hence the ratio $C_p/C_s$ is unaffected
 by the perturbation. The density is not perturbed.
 The perturbation amplitude is allowed to vary with the $z$-coordinate as
 $$
@@ -2960,7 +2970,7 @@ The pseudo-random number generator uses three seed variables. Varying the seeds 
 the random perturbation is not affected by the number of processors.
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l||l|} \hline
-\multicolumn{5}{|c|}{\bf globalmaterial command parameters}\\ \hline
+\multicolumn{5}{|c|}{\bf Randomize command parameters}\\ \hline
 \bf{Option}  & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
 amplitude    & Amplitude of random perturbation & real & None & 0.1 \\ \hline
 lengthscale  & Horizontal correlation length & real & m & 100 \\ \hline
@@ -3084,15 +3094,17 @@ gaussianLy & Width of the Gaussian hill in the y-direction & real & meters & 0.1
 \section{Output commands [optional]}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The output commands enables results from the simulation to be saved on file. The {\bf rec} command
+The output commands enable results from the simulation to be saved on file. The {\bf rec} command
 saves a time series of the solution at a recording station, which can be read by the SAC
 program~\cite{Goldstein-et-al} or the readsac.m Matlab script in the {\tt tools} directory. The {\bf
   image} command is used to save a two-dimensional cross-section of the solution, the material
-properties, or the grid. The image files can be read by the readimagepatch.m Matlab script in the
+properties, or the grid. The image files can be read by the readimage.m Matlab script in the
 {\tt tools} directory. The {\bf volimage} command is used to save three-dimensional volumetric data
 of the solution, derived quantities of the solution, or the material model. These files are written
-in a binary format. These files can be read by the VisIt post processor, using the {\bf volimage}
-plug-in. The {\bf gmt} command outputs a shell script file containing the location of all {\bf rec}
+in a binary format. The readimage3d.m Matlab script in the {\tt tools} director can read the 
+three-dimensional data into Matlab or Octave.
+%These files can be read by the VisIt post processor, using the {\bf volimage} plug-in. 
+The {\bf gmt} command outputs a shell script file containing the location of all {\bf rec}
 stations and the epicenter, i.e., the location of the {\bf source} command with the earliest start
 time. This shell script file can be used for further postprocessing by programs in the GMT
 suite~\cite{WesselSmithGMT}.
@@ -3161,7 +3173,9 @@ time=... timeInterval=... cycle=... cycleInterval=... file=... mode=... precisio
 parameters:\\ \rm Location of the image plane (x, y, or z) \\ Time for output (time, timeInterval,
 cycle, or cycleInterval)\\ \bf Notes: \\ \rm \verb+mode=topo+ can only be used when the
 \verb+topography+ command is used.\\ \verb+z=0+ corresponds to the free surface when
-\verb+topography+ is used.\\ The error in the solution can only be calculated in testing mode, i.e.,
+\verb+topography+ is used. It is not possible to output a plane with $z=constant $that cuts through the
+curvilinear grid. When \verb+topography+ is used, any such $z$-plane will be output on the free surface. \\ 
+The error in the solution can only be calculated in testing mode, i.e.,
 while using \verb+twilight+, \verb+testlamb+, or \verb+testpointsource+.
 \end{flushleft}
 %
@@ -3283,7 +3297,7 @@ volimage file=... mode=... precision=...
 \end{flushleft}
 %
 The \verb+volimage+ command in \emph{SW4} allows you to save 3D volumetric data on file. These files
-can be read by the Matlab/Octave script in \verb+tools/readimage3D.m+. You may also want to use the
+can be read by the Matlab/Octave script in \verb+tools/readimage3d.m+. You may also want to use the
 open source post processor \emph{VisIt}, to read these files. Be aware that these files can be {\em
   very} large. The output occurs at certain time levels during the simulation. The time levels are
 controlled by the parameters {\bf time=...}, {\bf timeInterval=...}, {\bf cycle=...}, or {\bf
@@ -3496,6 +3510,76 @@ diractest & Test moment conditions (0 or 1) & int & 0 \\ \hline
 \end{center}
 \index{testpointsource parameters! cp, cs, rho}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{testrayleigh}
+\index{command!testrayleigh}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}
+The {\tt testrayleigh} command runs a surface wave through the domain with periodic boundary conditions
+in the horizontal plane. The file \verb+RayleighErr.txt+ with information about the error in the computation
+after each time step is produced. The file has four columns where the first column is the time, the 
+second column is the maximum norm of the error, the third column is the $L^2$ norm of the error, and the 
+fourth column is the maximum norm of the solution.
+\\
+\bf
+Syntax:\\
+\tt
+testrayleigh cp=... cs=... rho=... nwl=...
+\\
+\bf 
+Required parameters:\\
+\rm
+None
+\end{flushleft}
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|} \hline
+\multicolumn{4}{|c|}{\bf testrayleigh command parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
+cp   & P-wave velocity & real & $\sqrt{3}$ \\ \hline
+cs   & S-wave velocity & real & 1 \\ \hline
+rho  & Density & real & 1 \\ \hline
+nwl  & number of wave lengths in domain & int & 1 \\ \hline
+\end{tabular}
+\end{center}
+\index{testrayleigh parameters! cp, cs, rho, nwl}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{testenergy}
+\index{command!testenergy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}
+The numerical scheme used by \emph{SW4} can be proved to be energy conserving, see \cite{SjoPet-12}. 
+The {\tt testenergy} command verifies the implementation of the scheme by checking the energy conservation.
+Testenergy sets the material speeds, $C_P,C_S$, and the density to be completely random. The initial data
+is also set to a random field.
+By default the boundary conditions are periodic in the $x$- and $y$-directions, with free-surface conditions
+at $z=0$ and homogeneous Dirichlet conditions at $z=z_{max}$. The boundary conditions can be changed by
+the keword described in Section~\ref{keyword:boundary_conditions}.
+The file \verb+energy.log+ is produced, containing the energy after each time step. 
+\\
+\bf
+Syntax:\\
+\tt
+testenergy cpcsratio=... seed=... writeEvery=... filename=...
+\\
+\bf 
+Required parameters:\\
+\rm
+None
+\end{flushleft}
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|} \hline
+\multicolumn{4}{|c|}{\bf testenergy command parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
+cpcsratio   & P-wave velocity to S-wave velocity ratio & real & $\sqrt{3}$ \\ \hline
+seed   & Pseudo-random number generator seed & int & 2934839 \\ \hline
+writeEvery  & frequency for saving log file to disk & int & 1000 \\ \hline
+filename  & name of log file & string & energy.log \\ \hline
+\end{tabular}
+\end{center}
+\index{testenergy parameters! cpcsratio seed writeEvery filename}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Advanced simulation controls [optional]}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3519,6 +3603,8 @@ boundary\_conditions lx=... hx=... ly=... hy=... lz=... hz=...
 None
 \end{flushleft}
 Note that the boundary condition values are different in \emph{SW4} and \emph{WPP}.
+The stress-free boundary condition can only be used on the upper ($z=0$) and 
+lower ($z=z_{max}$) sides. 
 \begin{center}
 \begin{tabular}{|l|p{10cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf Boundary conditions parameters}\\ \hline
@@ -3662,7 +3748,7 @@ y_j,\quad j=1,2,\ldots,Ny,
 \]
 Note that the coordinate vectors must either be strictly increasing or strictly
 decreasing, but the step size may vary. Also note that the step size can be different from the step
-size in the computational grid. To guarentee that the topography grid covers the entire horizontal
+size in the computational grid. To guarantee that the topography grid covers the entire horizontal
 extent of the computational domain, we require
 \[
 \min_i x_i \leq 0,\quad \min_j y_j \leq 0,\\
@@ -3701,7 +3787,7 @@ x_{Nx}& y_{Ny}& e_{Nx,Ny}
 There are two variants of the pfile format: geographic or Cartesian. By default, geographic
 coordinates are used to specify the location of the depth profiles in the horizontal
 plane. Alternatively, the lattice can be specified in Cartesian coordinates. Note that different
-units are used in the two cases.
+units are used in the two cases. Pfiles are ASCII text formated.
 
 \subsection{pfile on a geographic lattice}
 The header has 7 lines and follows the following format:
