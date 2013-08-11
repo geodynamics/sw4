@@ -81,21 +81,25 @@ National Laboratory under contract DE-AC52-07NA27344.
 \chapter{Introduction}
 
 
-\emph{SW4} is a program for simulating seismic wave propagation on parallel computers. It shares
-many features with our previous seismic wave propagation code~\emph{WPP}~\cite{WPP2}. Both
-\emph{WPP} and \emph{SW4} solve the seismic wave equations in second order formulation using a
-node-based finite difference approach. The underlying numerical method satisfies the principle of
-summation by parts, which guarantees energy stability of the numerical solution. The major
-difference between \emph{WPP} and \emph{SW4} is that the latter implements a fourth order accurate spatial
-discretization, complemented by a fourth order explicit time integrator~\cite{SjoPet-12}. \emph{SW4}
-is therefore significantly more efficient than the second order accurate \emph{WPP} code. Compared
-to a second order accurate method, the advantages of a fourth order method are more pronounced when
-the solution needs to be more accurate, because the error diminishes faster as the grid size is
-reduced. A fourth order method is also more efficient when the solution needs to remain accurate for
-longer times, because the phase error grows as $t^{1/p}$ in a $p$th order accurate numerical
-method~\cite{Gustafsson-Kreiss-Oliger}. The fourth order method is also significantly more accurate
-for calculating surface waves, in particular when the ratio between the compressional and shear wave
-speeds is large, i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
+\emph{SW4} (Seismic Waves, 4th order) is a program for simulating seismic wave propagation on
+parallel computers. It shares many features with our previous seismic wave propagation
+code~\emph{WPP}~\cite{WPP2}. Both \emph{WPP} and \emph{SW4} solve the seismic wave equations in
+displacement formulation using a node-based finite difference approach. The displacement formulation
+of the seismic wave equations is a system of linear second order partial differential equations. The
+underlying numerical method satisfies the principle of summation by parts, which guarantees energy
+stability of the numerical solution. The major difference between \emph{WPP} and \emph{SW4} is that
+the numerical method in \emph{SW4} is fourth order accurate in space and time~\cite{SjoPet-12},
+while \emph{WPP} is only second order accurate. \emph{SW4} is therefore significantly more efficient
+than \emph{WPP}, because a coarser grid can be used to capture waves with the same frequency
+content. Compared to a second order accurate method, the advantages of a fourth order method are
+more pronounced when the solution needs to be more accurate, because the error diminishes faster as
+the grid size is reduced. A fourth order method is also more efficient when the solution needs to
+remain accurate for longer times, because the phase error grows at a slower rate in a higher order
+numerical method~\cite{Gustafsson-Kreiss-Oliger}. Keeping the phase error small is, for example,
+important to accurately predict the arrival times of waves that have propagated over many
+wave lengths. The fourth order method is also significantly more accurate for calculating surface
+waves, in particular when the ratio between the compressional and shear wave speeds is large,
+i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
 
 %% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
 %% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
@@ -108,13 +112,14 @@ speeds is large, i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
 \emph{SW4} implements substantial capabilities for 3-D seismic modeling, with a free surface
 condition on the top boundary, absorbing super-grid conditions on the far-field
 boundaries~\cite{PetSjo-13}, and an arbitrary number of point force and/or point moment tensor
-source terms. Each source time function can have one of many predefined analytical time dependencies,
-or interpolate a user defined discrete time series. \emph{SW4} supports a fully 3-D heterogeneous
-material model that can be specified in several formats. It uses a curvilinear mesh near the free
-surface to honor the free surface boundary condition on a realistic topography. The curvilinear mesh
-is automatically generated from the description of the topography. Below the curvilinear grid, the
-seismic wave equations are discretized on a Cartesian mesh, which leads to a more computationally
-efficient algorithm.
+source terms. Each source time function can have one of many predefined analytical time
+dependencies, or interpolate a user defined discrete time series. \emph{SW4} supports a fully 3-D
+heterogeneous material model that can be specified in several formats. It uses a curvilinear mesh
+near the free surface to honor the free surface boundary condition on a realistic topography. The
+curvilinear mesh is automatically generated from the description of the topography. To make
+\emph{SW4} more computationally efficient, the seismic wave equations are discretized on a Cartesian
+mesh below the curvilinear grid. The Cartesian mesh, which extends to the bottom of the
+computational domain, is also generated automatically.
 
 \emph{SW4} solves the seismic wave equations in Cartesian coordinates. It is therefore appropriate
 for regional simulations, where the curvature of the earth can be neglected. Locations can be
@@ -174,8 +179,9 @@ the Office of Science at the U.S.~Department of Energy.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Running \emph{SW4}}
-This section assumes that \emph{SW4} has already been installed on your system. For instructions on
-how to build \emph{SW4} from the source code distribution, see Appendix~\ref{cha:installing-sw4}.
+This section assumes that \emph{SW4} has already been installed on your computer system. For
+instructions on how to build \emph{SW4} from the source code distribution, see
+Appendix~\ref{cha:installing-sw4}.
 
 \emph{SW4} can be executed from the command prompt or from a script. The simulation is specified by
 the input file, and the name of the input file is given on the command line. The input file is an
@@ -187,13 +193,13 @@ subsequent line. There is however no support for continuation characters in \emp
 command must be given on one (sometimes long) line in the input file.
 
 Since \emph{SW4} is a parallel code, it is required to be run under a parallel execution environment
-such as mpiexec, mpirun, openmpirun, or srun. The srun command is currently always used on the
-parallel machines at Livermore Computing. On other machines, it is important to start \emph{SW4}
-with the correct parallel execution tool. For example, if you build \emph{SW4} with the openmpi
-compilers, you should use the openmpirun environment. Also note that some systems require you to
-start an \verb+mpd+ daemon before running any parallel programs. Chances are high that somebody else
-has already figured out how to run parallel programs on your system, and we recommend talking to
-your local system administrator, or somebody else with experience running MPI programs on your system.
+such as mpiexec, mpirun, openmpirun, or srun. The \verb+srun+ command is currently always used on
+the parallel machines at Livermore Computing. It is important to start \emph{SW4} with the correct
+parallel execution tool. For example, if you build \emph{SW4} with the \verb+openmpi+ compilers, you
+should use the \verb+openmpirun+ environment. Also note that some systems require you to start an
+\verb+mpd+ daemon before running any parallel programs. Chances are high that somebody else has
+already figured out how to run parallel programs on your system, and we recommend talking to your
+local system administrator, or somebody else with experience running MPI programs on your system.
 
 Throughout this document we use the convention that input files have the file suffix {\tt
   .in}. However, \emph{SW4} will attempt to read any input file, regardless of its extension.
@@ -207,11 +213,10 @@ are using \verb+mpirun+, you would instead use the command
 \begin{verbatim}
 	shell> mpirun -np 2 sw4 test.in
 \end{verbatim}
-{\bf Remark: }
-If \emph{SW4} produces strange looking outputs, for example where the same text is repeated several times (e.g. once
-per processor), you are probably running \emph{SW4} under the wrong parallel execution
-environment. Make sure you are running \emph{SW4} under an environment which is compatible with the
-compiler that was used to build \emph{SW4}.
+{\bf Remark: } If \emph{SW4} produces strange looking outputs, for example where the same text is
+repeated several times (e.g. once per processor), you are probably running \emph{SW4} under the
+wrong parallel execution environment. Make sure you are running \emph{SW4} under an environment that
+is compatible with the compiler that was used to build \emph{SW4}.
 %
 
 \subsection{Version information (-v)}
@@ -219,7 +224,7 @@ compiler that was used to build \emph{SW4}.
 
 Version information for the \emph{SW4} executable can be obtained through {\tt -v} flag:
 \begin{verbatim}
-[yorkville:~/src/sw4/src] petersson1% openmpirun -np 2 ./sw4 -v
+[yorkville:~/src/sw4/optimize_v1.0] petersson1% openmpirun -np 2 ./sw4 -v
 ----------------------------------------------------------------
             sw4 version 1.0
 
@@ -227,13 +232,13 @@ Version information for the \emph{SW4} executable can be obtained through {\tt -
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Fri Feb 22 08:31:41 PST 2013
+  Compiled on: Sun Aug 11 14:37:07 PDT 2013
   By user:     petersson1
   Machine:     yorkville.llnl.gov
   Compiler:    /opt/local/bin/openmpicxx
-  3rd party software include directory: /Users/petersson1/include
-  3rd party software library directory: /Users/petersson1/lib
------------------------------------------------------------------
+  3rd party include dir: /Users/petersson1/include, 
+        and library dir: /Users/petersson1/lib
+----------------------------------------------------------------
 \end{verbatim}
 Note that the same information is by default printed to standard out (your screen, or log file when
 running in batch mode) at the beginning of every run.
@@ -244,10 +249,10 @@ The srun command is currently used to run parallel jobs on LC machines. For exam
 \begin{verbatim}
 	shell> srun -ppdebug -n 32 sw4 xxx.in
 \end{verbatim}
-runs \emph{SW4} on 32 processors on the debug parition using xxx.in as the input file. Note that the
+runs \emph{SW4} on 32 processors on the debug partion using xxx.in as the input file. Note that the
 pdebug partition is intended for shorter jobs. It is subject to both a CPU time limit and a limit on
 the number of processors per job. Jobs requiring more computer resources must be submitted through
-the batch system, currently using the msub command. Refer to the Livermore Computing web pages for
+the batch system, currently using the \verb+msub+ command. Refer to the Livermore Computing web pages for
 detailed information (https://computing.llnl.gov).
 
 %\section{Warning and error messages}
@@ -259,19 +264,20 @@ detailed information (https://computing.llnl.gov).
 \index{coordinate system}\index{units}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\emph{SW4} simulates the motion due to a seismic event by solving the elastic (or visco-elastic) 
-wave equation in second order formulation. The equations are solved in the spatial domain 
-${\bf x}\in\Omega$ during the time interval $0\leq t\leq T$. By default, the motion starts from rest and is driven by
-a forcing function ${\bf F}({\bf x},t)$,
+\emph{SW4} simulates the motion due to a seismic event by solving the elastic or visco-elastic wave
+equations in second order displacement formulation. The equations are solved in the spatial domain
+${\bf x}\in\Omega$ during the time interval $0\leq t\leq T$. By default, the motion starts from rest
+and is driven by a forcing function ${\bf F}({\bf x},t)$. In the elastic case, the motion is
+governed by the partial differential equation
 \begin{alignat}{3}
 \rho {\bf u}_{tt} &= \nabla\cdot{\cal T} + {\bf F}({\bf x},t),&\quad\mbox{${\bf x}$ in
   $\Omega$},\ 0\leq t\leq T,\label{eq:elastic-we}\\ 
 {\bf u}({\bf x},0)&=0,\quad {\bf u}_t({\bf x},0) = 0, &\quad\mbox{${\bf x}$ in $\Omega$}.
 \end{alignat}
-Here, $\rho$ is the density, ${\bf u}({\bf x},t)$ is the displacement vector, and ${\cal T}$ is the
-stress tensor. The computational domain $\Omega$ is a box shaped region where one side optionally
-follows the shape of the topography. By default, a free surface (zero traction, or normal stress)
-boundary condition is enforced along the top boundary,
+Here, $\rho$ is the density, ${\bf u}({\bf x},t)$ is the displacement vector, and ${\cal T}={\cal
+  T}({\bf u})$ is the stress tensor. The computational domain $\Omega$ is a box shaped region where
+one side optionally follows the shape of the topography. By default, a free surface (zero traction,
+or normal stress) boundary condition is enforced along the top boundary,
 \[
 {\cal T} \cdot \nb = 0,\quad z=\tau(x,y),\ t\geq 0.
 \]
@@ -296,7 +302,7 @@ forces are in Newton (N), and seismic moment (torque) is in Newton-meters (Nm). 
 %The quality factors $Q_P$ and $Q_S$ are dimensionless.
 
 In \emph{SW4} the computational domain is rectangular in the horizontal plane and the vertical extent
-is defined by the topography surface
+is defined by the topographic surface
 \[
 z=\tau(x,y),
 \]
@@ -2254,7 +2260,7 @@ Parameter values are either integers (-2,0,5,...), real numbers (20.5, -0.05, 3.
 strings are given without quotation marks and must not contain spaces. Depending on the specific
 command, some parameter values are required to fall within specified ranges.
 
-A breif description of all commands is given in the following sections. The commands marked as
+A brief description of all commands is given in the following sections. The commands marked as
 [required] must be present in all \emph{SW4} input files, while those marked as [optional] are just
 that. Other commands, such as those specifying the material model can be given by a combination of
 different commands (block, pfile, efile, or ifile). Note that some required commands must occur
@@ -3650,7 +3656,7 @@ None
 \end{flushleft}
 By setting the \verb+checkfornan+ keyword to \verb+on+ or \verb+yes+, \emph{SW4} scans the solution
 arrays for floating point exceptions and other erros resulting in NaN (Not a Number). The check is
-performaed after each time step.
+performed after each time step.
 \begin{center}
 \begin{tabular}{|l|p{10cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf developer parameters}\\ \hline
@@ -3938,14 +3944,15 @@ http://www.iris.edu/manuals/sac/manual.html}, and we refer to that web page for 
 description of the file format.
 
 We provide a simplified Matlab/octave reader of SAC files called {\tt readsac.m} in the {\tt tools}
-directory. Note that only some of the header information is parsed by this reader.
+directory. Note that only a subset of the header information is parsed by this reader.
 
 \section{image}\label{sec:image-format}
 \index{fileformats!image}
 
-\paragraph{Important note:} The image formats used by \emph{SW4} and \emph{WPP} are different. To emphasize
-the change in format, all \emph{SW4} image files have extension {\tt .sw4img}. A reader for image
-files is provided in the matlab/octave function 'tools/readimage.m'.
+\paragraph{Important note:} The image file format used by \emph{SW4} is different from that used by
+\emph{WPP}. To emphasize the change in format, all \emph{SW4} image files have extension {\tt
+  .sw4img}. A reader for image files is provided in the matlab/octave function \verb+readimage.m+ in
+the \verb+tools+ directory.
 
 Images files hold cross-sectional data on a composite grid and are written in a binary format. The
 image file starts with a header followed by a data section, which contains a two-dimensional grid
