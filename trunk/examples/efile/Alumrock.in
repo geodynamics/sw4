@@ -1,34 +1,29 @@
-# WPP input file for modeling the October 2007, Alum Rock earthquake
+# SW4 input file for modeling the October 2007, Alum Rock earthquake
 # Uses the USGS 3D model for the Bay Area
 
-fileio path=alum-0.1-results scenario=alumrock
+fileio path=alum-0.1-results
 
 # base grid size is set in the grid command
-grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=144 h=2000
-
-# refinement above z=10e3 gets half the base grid size
-refinement zmax=10e3
-
-# refinement above z=7000 gets half of half (a quarter) of the base grid size
-refinement zmax=7000
+grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=144 h=1000
 
 # curvilinear grid extends to z=6000 and gets approximately the same gridsize as the finest Cartesian
-topography input=efile zmax=6e3 order=2
+topography input=efile zmax=6e3 order=3 file=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
 
 # enable pre-filtering of source time-functions
-# corner frequency 0.1 Hz gives 10 points per wave for h=500 length on the finest grid
-#        maxfreq=4.1201 corresponds to t95=1.0 in the Liu function
-prefilter fc=0.1 maxfreq=4.1201
+# corner frequency 0.1 Hz gives 5 points per wave for h=1000 length on the grid
+prefilter fc2=0.1 type=lowpass
 
 #time steps=0 
 time t=90 
 
-# gmt does not work on Macs with the gcc4.4 compiler
-#gmt file=wpp.gmt
+gmt file=wpp.gmt
 
 # Verison 8.3 of USGS model
 # NEED TO MODIFY PATH TO ETREE FILE
-efile query=MAXRES vsmin=500 vpmin=768 etree=/Users/petersson1/src/wpp/tests/USGSBayAreaVM-08.3.0.etree 
+efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree
+
+# threshold on vp and vs
+globalmaterial vsmin=500 vpmin=768
 
 # images
 # topography (can't be written without the topography command enabled)
@@ -70,7 +65,7 @@ sac lon=-122.347 lat=37.1986 depth=0.0 sta=jpsb file=jpsb nsew=1 velocity=1 usgs
 # Station 2034 is on the southern border of Santa Clara valley
 sac lon=-121.663 lat=37.141 depth=0.0 sta=2034 file=2034 nsew=1 velocity=1 usgsformat=1 sacformat=1
 
-# Scenario alumrock:
+# USGS' rupture model for the Alumrock event:
 source lon=-121.775 lat=37.4287 depth=6794.9 strike=140.9 rake=180 dip=95.3 m0=5.46763e+14 t0=0.78 freq=6.33865 type=Liu
 source lon=-121.774 lat=37.427 depth=6712.4 strike=145.1 rake=180 dip=95.9 m0=4.45261e+14 t0=0.845 freq=6.53988 type=Liu
 source lon=-121.758 lat=37.4077 depth=6022.6 strike=147.1 rake=180 dip=103.4 m0=1.30488e+14 t0=1.656 freq=24.236 type=Liu
