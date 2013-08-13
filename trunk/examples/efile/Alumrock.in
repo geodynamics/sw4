@@ -1,0 +1,617 @@
+# WPP input file for modeling the October 2007, Alum Rock earthquake
+# Uses the USGS 3D model for the Bay Area
+
+fileio path=alum-0.1-results scenario=alumrock
+
+# base grid size is set in the grid command
+grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=144 h=2000
+
+# refinement above z=10e3 gets half the base grid size
+refinement zmax=10e3
+
+# refinement above z=7000 gets half of half (a quarter) of the base grid size
+refinement zmax=7000
+
+# curvilinear grid extends to z=6000 and gets approximately the same gridsize as the finest Cartesian
+topography input=efile zmax=6e3 order=2
+
+# enable pre-filtering of source time-functions
+# corner frequency 0.1 Hz gives 10 points per wave for h=500 length on the finest grid
+#        maxfreq=4.1201 corresponds to t95=1.0 in the Liu function
+prefilter fc=0.1 maxfreq=4.1201
+
+#time steps=0 
+time t=90 
+
+# gmt does not work on Macs with the gcc4.4 compiler
+#gmt file=wpp.gmt
+
+# Verison 8.3 of USGS model
+# NEED TO MODIFY PATH TO ETREE FILE
+efile query=MAXRES vsmin=500 vpmin=768 etree=/Users/petersson1/src/wpp/tests/USGSBayAreaVM-08.3.0.etree 
+
+# images
+# topography (can't be written without the topography command enabled)
+image mode=topo z=0.0 cycle=0 file=img
+
+image mode=lat z=0.0 cycle=0 file=img
+image mode=lon z=0.0 cycle=0 file=img
+
+# Output images of the elastic model on the surface (z=0)
+image mode=rho z=0.0 cycle=0 file=img
+image mode=p z=0.0 cycle=0 file=img
+image mode=s z=0.0 cycle=0 file=img
+
+# vertical cross section
+image mode=grid x=50e3 cycle=0 file=img
+image mode=p x=50e3 cycle=0 file=img
+
+# solution on the surface
+image mode=velmag z=0.0 timeInterval=5 file=img
+image mode=hvelmax z=0.0 timeInterval=5 file=img
+
+# only a few sac stations for this small case
+# Milpitas
+sac lon=-121.911 lat=37.4627 depth=0.0 sta=mp1 file=mp1 nsew=1 velocity=1 usgsformat=1 sacformat=1
+# CAL is just north of Alum Rock
+sac lon=-121.8 lat=37.4503 depth=0.0 sta=cal file=cal nsew=1 velocity=1 usgsformat=1 sacformat=1
+# 1427 is in Sunnyvale
+sac lon=-122.025 lat=37.402 depth=0.0 sta=1427 file=1427 nsew=1 velocity=1 usgsformat=1 sacformat=1
+# SCCB is in San Jose
+sac lon=-121.864 lat=37.2874 depth=0.0 sta=sccb file=sccb nsew=1 velocity=1 usgsformat=1 sacformat=1
+# MHC is in the mountains E of San Jose
+sac lon=-121.643 lat=37.3416 depth=0.0 sta=mhc file=mhc nsew=1 velocity=1 usgsformat=1 sacformat=1
+# 1403 is in the mountains NE of Milpitas
+sac lon=-121.83 lat=37.515 depth=0.0 sta=1403 file=1403 nsew=1 velocity=1 usgsformat=1 sacformat=1
+# CHR: Mt. Hamilton road
+sac lon=-121.769 lat=37.3729 depth=0.0 sta=chr file=chr nsew=1 velocity=1 usgsformat=1 sacformat=1
+# JPSB: Near coast S of Half-moon bay
+sac lon=-122.347 lat=37.1986 depth=0.0 sta=jpsb file=jpsb nsew=1 velocity=1 usgsformat=1 sacformat=1
+# Station 2034 is on the southern border of Santa Clara valley
+sac lon=-121.663 lat=37.141 depth=0.0 sta=2034 file=2034 nsew=1 velocity=1 usgsformat=1 sacformat=1
+
+# Scenario alumrock:
+source lon=-121.775 lat=37.4287 depth=6794.9 strike=140.9 rake=180 dip=95.3 m0=5.46763e+14 t0=0.78 freq=6.33865 type=Liu
+source lon=-121.774 lat=37.427 depth=6712.4 strike=145.1 rake=180 dip=95.9 m0=4.45261e+14 t0=0.845 freq=6.53988 type=Liu
+source lon=-121.758 lat=37.4077 depth=6022.6 strike=147.1 rake=180 dip=103.4 m0=1.30488e+14 t0=1.656 freq=24.236 type=Liu
+source lon=-121.76 lat=37.408 depth=5743.7 strike=145.4 rake=180 dip=108.6 m0=1.72768e+13 t0=1.697 freq=206.006 type=Liu
+source lon=-121.757 lat=37.406 depth=6161.6 strike=149.7 rake=180 dip=102.2 m0=2.50125e+14 t0=1.698 freq=14.2073 type=Liu
+source lon=-121.761 lat=37.411 depth=6142.9 strike=145.6 rake=180 dip=102.4 m0=7.84265e+13 t0=1.506 freq=15.2597 type=Liu
+source lon=-121.761 lat=37.41 depth=5702.6 strike=145.2 rake=180 dip=108.6 m0=1.0947e+13 t0=1.634 freq=206.006 type=Liu
+source lon=-121.762 lat=37.4111 depth=5915.4 strike=143 rake=180 dip=106.2 m0=5.97066e+13 t0=1.552 freq=37.4557 type=Liu
+source lon=-121.756 lat=37.4043 depth=6060 strike=147.9 rake=180 dip=101.6 m0=9.78666e+13 t0=1.78 freq=21.6849 type=Liu
+source lon=-121.756 lat=37.4065 depth=6525.4 strike=149.5 rake=180 dip=97.5 m0=4.83022e+14 t0=1.618 freq=8.07867 type=Liu
+source lon=-121.754 lat=37.403 depth=6221.1 strike=147.2 rake=180 dip=101.9 m0=9.03717e+13 t0=1.802 freq=13.7337 type=Liu
+source lon=-121.755 lat=37.4049 depth=6694.7 strike=146.5 rake=180 dip=99.2 m0=6.26822e+14 t0=1.659 freq=6.98326 type=Liu
+source lon=-121.761 lat=37.4123 depth=6577.2 strike=145.6 rake=180 dip=96.1 m0=3.42576e+14 t0=1.376 freq=7.35736 type=Liu
+source lon=-121.753 lat=37.3997 depth=5850.9 strike=147.8 rake=180 dip=102.3 m0=5.21096e+13 t0=1.986 freq=51.5015 type=Liu
+source lon=-121.746 lat=37.3937 depth=6507.1 strike=147 rake=180 dip=98.6 m0=3.08206e+14 t0=2.157 freq=8.95679 type=Liu
+source lon=-121.748 lat=37.3962 depth=6595.4 strike=148.6 rake=180 dip=99.3 m0=4.44238e+14 t0=2.043 freq=7.77381 type=Liu
+source lon=-121.745 lat=37.3914 depth=6237.5 strike=147.7 rake=180 dip=101.5 m0=7.1046e+13 t0=2.282 freq=17.1672 type=Liu
+source lon=-121.743 lat=37.3912 depth=7252 strike=149 rake=180 dip=95.4 m0=3.19998e+14 t0=2.215 freq=8.07867 type=Liu
+source lon=-121.743 lat=37.3911 depth=6801.4 strike=147.8 rake=180 dip=98.3 m0=5.18275e+14 t0=2.25 freq=8.95679 type=Liu
+source lon=-121.746 lat=37.3914 depth=5875.3 strike=146.7 rake=180 dip=102.9 m0=2.12557e+13 t0=2.315 freq=82.4024 type=Liu
+source lon=-121.746 lat=37.3956 depth=7167.4 strike=146.8 rake=180 dip=95.7 m0=7.03435e+14 t0=2.025 freq=6.24261 type=Liu
+source lon=-121.746 lat=37.3961 depth=7644.7 strike=147.8 rake=180 dip=94.7 m0=6.31617e+14 t0=1.963 freq=6.24261 type=Liu
+source lon=-121.743 lat=37.3927 depth=7795 strike=148.2 rake=180 dip=94.6 m0=4.53436e+14 t0=2.109 freq=7.10366 type=Liu
+source lon=-121.751 lat=37.4008 depth=6921.6 strike=146.8 rake=180 dip=95.7 m0=6.82642e+14 t0=1.816 freq=6.33865 type=Liu
+source lon=-121.753 lat=37.403 depth=6574 strike=147.8 rake=180 dip=99.8 m0=3.77086e+14 t0=1.759 freq=7.62985 type=Liu
+source lon=-121.749 lat=37.3967 depth=6158.8 strike=146.9 rake=180 dip=102.9 m0=1.31078e+14 t0=2.06 freq=17.9136 type=Liu
+source lon=-121.745 lat=37.3964 depth=8516.6 strike=148.2 rake=180 dip=94 m0=6.24692e+14 t0=1.922 freq=6.24261 type=Liu
+source lon=-121.745 lat=37.395 depth=7790.6 strike=147.9 rake=180 dip=94.6 m0=5.57348e+14 t0=2.005 freq=6.33865 type=Liu
+source lon=-121.743 lat=37.3929 depth=8083.1 strike=148.2 rake=180 dip=94.3 m0=4.79047e+14 t0=2.091 freq=7.10366 type=Liu
+source lon=-121.743 lat=37.3929 depth=8526.5 strike=148.1 rake=180 dip=94.3 m0=4.76788e+14 t0=2.086 freq=7.22828 type=Liu
+source lon=-121.742 lat=37.393 depth=8976.2 strike=148.6 rake=180 dip=93.7 m0=4.83071e+14 t0=2.09 freq=7.22828 type=Liu
+source lon=-121.742 lat=37.387 depth=5962 strike=147.7 rake=180 dip=102.2 m0=7.38412e+12 t0=2.493 freq=206.006 type=Liu
+source lon=-121.74 lat=37.387 depth=6715.5 strike=148.3 rake=180 dip=97.7 m0=9.81617e+13 t0=2.432 freq=21.6849 type=Liu
+source lon=-121.743 lat=37.3898 depth=6361.9 strike=147.2 rake=180 dip=101.6 m0=1.05594e+14 t0=2.338 freq=15.2597 type=Liu
+source lon=-121.783 lat=37.4409 depth=9866.3 strike=140.9 rake=180 dip=95.5 m0=2.91364e+13 t0=0.471 freq=103.003 type=Liu
+source lon=-121.781 lat=37.4393 depth=9939.8 strike=141.9 rake=180 dip=95.5 m0=4.89608e+13 t0=0.455 freq=31.6932 type=Liu
+source lon=-121.778 lat=37.4349 depth=9086.6 strike=141.6 rake=180 dip=95.3 m0=4.5317e+14 t0=0.144 freq=7.62985 type=Liu
+source lon=-121.781 lat=37.4379 depth=8633 strike=141.5 rake=180 dip=95.4 m0=1.39935e+14 t0=0.153 freq=21.6849 type=Liu
+source lon=-121.779 lat=37.4343 depth=8180.2 strike=142.2 rake=180 dip=95.6 m0=4.4292e+14 t0=0.23 freq=7.62985 type=Liu
+source lon=-121.78 lat=37.437 depth=8937.7 strike=141.5 rake=180 dip=95.3 m0=2.44756e+14 t0=0.123 freq=12.118 type=Liu
+source lon=-121.776 lat=37.4342 depth=9854.8 strike=141.9 rake=180 dip=95 m0=5.62092e+14 t0=0.419 freq=6.98326 type=Liu
+source lon=-121.768 lat=37.4176 depth=5779.5 strike=144.1 rake=180 dip=109.7 m0=1.96128e+13 t0=1.362 freq=82.4024 type=Liu
+source lon=-121.767 lat=37.4178 depth=5979.4 strike=145.1 rake=180 dip=104.3 m0=4.5593e+13 t0=1.306 freq=27.4675 type=Liu
+source lon=-121.768 lat=37.4192 depth=6126.8 strike=144.2 rake=180 dip=102.8 m0=1.65097e+14 t0=1.226 freq=13.7337 type=Liu
+source lon=-121.77 lat=37.4212 depth=6113.2 strike=146.9 rake=180 dip=101.7 m0=1.55602e+14 t0=1.167 freq=13.2907 type=Liu
+source lon=-121.752 lat=37.4063 depth=10012.9 strike=146.9 rake=180 dip=93.8 m0=6.97723e+14 t0=1.541 freq=6.14944 type=Liu
+source lon=-121.752 lat=37.4071 depth=10715.5 strike=147 rake=180 dip=93.4 m0=2.27936e+14 t0=1.601 freq=7.92331 type=Liu
+source lon=-121.754 lat=37.4102 depth=11107.5 strike=146.9 rake=180 dip=93.8 m0=9.43193e+13 t0=1.542 freq=15.8466 type=Liu
+source lon=-121.749 lat=37.4041 depth=10796.4 strike=147.7 rake=180 dip=93.4 m0=4.0566e+14 t0=1.744 freq=8.95679 type=Liu
+source lon=-121.755 lat=37.4097 depth=9544.9 strike=146.3 rake=180 dip=94.3 m0=7.04104e+14 t0=1.332 freq=6.059 type=Liu
+source lon=-121.755 lat=37.4099 depth=10008.1 strike=146.8 rake=180 dip=93.5 m0=7.12152e+14 t0=1.378 freq=6.14944 type=Liu
+source lon=-121.752 lat=37.406 depth=9093.4 strike=146.8 rake=180 dip=94.5 m0=6.81155e+14 t0=1.477 freq=6.059 type=Liu
+source lon=-121.755 lat=37.4113 depth=10634 strike=147 rake=180 dip=93.7 m0=2.53364e+14 t0=1.411 freq=7.62985 type=Liu
+source lon=-121.752 lat=37.4085 depth=11345.1 strike=147.4 rake=180 dip=93.8 m0=4.09042e+13 t0=1.656 freq=34.3343 type=Liu
+source lon=-121.772 lat=37.4258 depth=6874.4 strike=143.5 rake=180 dip=96.8 m0=6.23875e+14 t0=0.834 freq=6.33865 type=Liu
+source lon=-121.778 lat=37.4302 depth=6356.1 strike=135.4 rake=180 dip=97.2 m0=1.32608e+14 t0=0.883 freq=7.77381 type=Liu
+source lon=-121.777 lat=37.4292 depth=6006.5 strike=132 rake=180 dip=110.9 m0=1.15071e+14 t0=1.018 freq=13.7337 type=Liu
+source lon=-121.777 lat=37.4368 depth=11353 strike=142.3 rake=180 dip=94.9 m0=1.14252e+13 t0=0.947 freq=103.003 type=Liu
+source lon=-121.781 lat=37.4412 depth=11363.5 strike=140.9 rake=180 dip=93.6 m0=1.09574e+12 t0=0.975 freq=1e+38 type=Liu
+source lon=-121.777 lat=37.436 depth=10955.2 strike=142.3 rake=180 dip=94.2 m0=1.42926e+14 t0=0.804 freq=17.9136 type=Liu
+source lon=-121.772 lat=37.4255 depth=7172.5 strike=143.5 rake=180 dip=96.5 m0=6.08762e+14 t0=0.765 freq=6.059 type=Liu
+source lon=-121.77 lat=37.4221 depth=6326 strike=143.1 rake=180 dip=96.6 m0=1.69764e+14 t0=1.085 freq=8.76622 type=Liu
+source lon=-121.782 lat=37.4407 depth=10411.6 strike=141.3 rake=180 dip=94 m0=1.16689e+13 t0=0.638 freq=137.337 type=Liu
+source lon=-121.777 lat=37.4363 depth=10402.6 strike=142.1 rake=180 dip=94.8 m0=1.72141e+14 t0=0.598 freq=9.15583 type=Liu
+source lon=-121.782 lat=37.4415 depth=10808.3 strike=141.3 rake=180 dip=95.2 m0=1.081e+13 t0=0.789 freq=206.006 type=Liu
+source lon=-121.777 lat=37.4355 depth=10011.1 strike=142.1 rake=180 dip=95.2 m0=4.48151e+14 t0=0.46 freq=7.77381 type=Liu
+source lon=-121.785 lat=37.4404 depth=7734.7 strike=141.2 rake=180 dip=96.5 m0=4.77433e+12 t0=0.469 freq=412.012 type=Liu
+source lon=-121.774 lat=37.4331 depth=10873 strike=143 rake=180 dip=94.8 m0=1.42066e+14 t0=0.803 freq=11.4448 type=Liu
+source lon=-121.755 lat=37.4095 depth=8937.2 strike=146.1 rake=180 dip=94.3 m0=6.93538e+14 t0=1.306 freq=6.059 type=Liu
+source lon=-121.753 lat=37.4075 depth=9856.2 strike=147.3 rake=180 dip=93.5 m0=7.14888e+14 t0=1.47 freq=6.14944 type=Liu
+source lon=-121.757 lat=37.4105 depth=8636.1 strike=146.1 rake=180 dip=94.9 m0=6.74858e+14 t0=1.253 freq=6.059 type=Liu
+source lon=-121.75 lat=37.4039 depth=9862.1 strike=147.9 rake=180 dip=93.8 m0=6.97462e+14 t0=1.635 freq=6.14944 type=Liu
+source lon=-121.753 lat=37.4071 depth=8940.8 strike=147 rake=180 dip=94.3 m0=6.93014e+14 t0=1.42 freq=6.059 type=Liu
+source lon=-121.753 lat=37.4057 depth=8221.8 strike=146.5 rake=180 dip=95.1 m0=5.60297e+14 t0=1.487 freq=6.059 type=Liu
+source lon=-121.751 lat=37.4036 depth=8946.9 strike=147.3 rake=180 dip=94.5 m0=6.6569e+14 t0=1.588 freq=6.059 type=Liu
+source lon=-121.747 lat=37.3987 depth=8216.9 strike=147.1 rake=180 dip=94.7 m0=6.25436e+14 t0=1.819 freq=6.14944 type=Liu
+source lon=-121.759 lat=37.4127 depth=8488.1 strike=145.1 rake=180 dip=94.9 m0=6.7048e+14 t0=1.146 freq=6.059 type=Liu
+source lon=-121.748 lat=37.4001 depth=8957.3 strike=147.7 rake=180 dip=93.9 m0=6.73157e+14 t0=1.756 freq=6.059 type=Liu
+source lon=-121.75 lat=37.4021 depth=8210 strike=147.4 rake=180 dip=94.6 m0=6.45526e+14 t0=1.657 freq=6.059 type=Liu
+source lon=-121.751 lat=37.4022 depth=7811.2 strike=146.8 rake=180 dip=95.2 m0=6.17486e+14 t0=1.673 freq=6.059 type=Liu
+source lon=-121.766 lat=37.42 depth=7320 strike=144 rake=180 dip=95.6 m0=6.2721e+14 t0=0.933 freq=6.059 type=Liu
+source lon=-121.765 lat=37.4194 depth=8041.1 strike=144.1 rake=180 dip=95.5 m0=6.53895e+14 t0=0.86 freq=6.059 type=Liu
+source lon=-121.769 lat=37.4222 depth=7178 strike=143.5 rake=180 dip=95.6 m0=6.14809e+14 t0=0.88 freq=6.059 type=Liu
+source lon=-121.768 lat=37.4232 depth=8482.1 strike=144.1 rake=180 dip=95.5 m0=6.69835e+14 t0=0.653 freq=6.059 type=Liu
+source lon=-121.763 lat=37.4172 depth=8190 strike=145.5 rake=180 dip=95.4 m0=6.58409e+14 t0=0.949 freq=6.059 type=Liu
+source lon=-121.769 lat=37.4238 depth=7748.5 strike=144.1 rake=180 dip=95.4 m0=6.49877e+14 t0=0.705 freq=6.059 type=Liu
+source lon=-121.766 lat=37.4209 depth=8632.5 strike=144.7 rake=180 dip=95.5 m0=6.74666e+14 t0=0.753 freq=6.059 type=Liu
+source lon=-121.768 lat=37.4267 depth=10791.5 strike=144.2 rake=180 dip=94.2 m0=1.70966e+14 t0=0.909 freq=9.36391 type=Liu
+source lon=-121.767 lat=37.4249 depth=10553.2 strike=144.2 rake=180 dip=93.6 m0=2.58052e+14 t0=0.888 freq=7.49113 type=Liu
+source lon=-121.766 lat=37.4192 depth=6870 strike=144.7 rake=180 dip=95.9 m0=6.58522e+14 t0=1.057 freq=6.43769 type=Liu
+source lon=-121.765 lat=37.4217 depth=10003.6 strike=144.9 rake=180 dip=94 m0=7.09702e+14 t0=0.872 freq=6.24261 type=Liu
+source lon=-121.766 lat=37.4234 depth=9925.1 strike=144.6 rake=180 dip=94 m0=3.58728e+14 t0=0.787 freq=6.14944 type=Liu
+source lon=-121.763 lat=37.4208 depth=10632.7 strike=145.1 rake=180 dip=93.8 m0=2.33584e+14 t0=1.048 freq=7.92331 type=Liu
+source lon=-121.746 lat=37.3992 depth=10027.5 strike=147.9 rake=180 dip=93.6 m0=6.7446e+14 t0=1.867 freq=6.24261 type=Liu
+source lon=-121.748 lat=37.403 depth=10955 strike=148.2 rake=180 dip=92.9 m0=3.04377e+14 t0=1.818 freq=11.1355 type=Liu
+source lon=-121.744 lat=37.3969 depth=10809 strike=148.6 rake=180 dip=93.2 m0=3.7352e+14 t0=2.058 freq=9.15583 type=Liu
+source lon=-121.786 lat=37.4371 depth=6214.7 strike=137.9 rake=180 dip=105.7 m0=1.84626e+13 t0=0.924 freq=103.003 type=Liu
+source lon=-121.786 lat=37.4355 depth=5835.2 strike=138.7 rake=180 dip=111.4 m0=1.54651e+13 t0=1.057 freq=103.003 type=Liu
+source lon=-121.741 lat=37.3919 depth=9131.7 strike=148.4 rake=180 dip=93.9 m0=3.82568e+14 t0=2.147 freq=8.24024 type=Liu
+source lon=-121.744 lat=37.3954 depth=9118.8 strike=148.2 rake=180 dip=93.7 m0=6.21618e+14 t0=1.981 freq=6.43769 type=Liu
+source lon=-121.739 lat=37.3897 depth=9900.6 strike=148.7 rake=180 dip=93.3 m0=1.78947e+14 t0=2.291 freq=14.7147 type=Liu
+source lon=-121.744 lat=37.3955 depth=9575.4 strike=148.1 rake=180 dip=93.7 m0=6.2159e+14 t0=1.998 freq=6.43769 type=Liu
+source lon=-121.743 lat=37.3956 depth=10034.4 strike=148.5 rake=180 dip=93.2 m0=6.08402e+14 t0=2.03 freq=6.64536 type=Liu
+source lon=-121.74 lat=37.3895 depth=8990.9 strike=148.6 rake=180 dip=93.9 m0=1.94973e+14 t0=2.256 freq=13.2907 type=Liu
+source lon=-121.745 lat=37.3965 depth=8964.9 strike=147.9 rake=180 dip=94 m0=6.39185e+14 t0=1.923 freq=6.24261 type=Liu
+source lon=-121.747 lat=37.3989 depth=9111.1 strike=147.6 rake=180 dip=94 m0=6.73125e+14 t0=1.813 freq=6.14944 type=Liu
+source lon=-121.749 lat=37.4027 depth=10019.6 strike=148 rake=180 dip=93.7 m0=6.92609e+14 t0=1.704 freq=6.14944 type=Liu
+source lon=-121.74 lat=37.3894 depth=8093.4 strike=148.2 rake=180 dip=94.5 m0=2.14219e+14 t0=2.251 freq=12.118 type=Liu
+source lon=-121.738 lat=37.386 depth=7668.6 strike=148.5 rake=180 dip=94.7 m0=4.34645e+13 t0=2.419 freq=51.5015 type=Liu
+source lon=-121.749 lat=37.3998 depth=7652.6 strike=146.8 rake=180 dip=95.2 m0=6.0233e+14 t0=1.797 freq=6.059 type=Liu
+source lon=-121.748 lat=37.3985 depth=7780.9 strike=147.3 rake=180 dip=94.7 m0=6.10206e+14 t0=1.845 freq=6.14944 type=Liu
+source lon=-121.754 lat=37.4058 depth=7823.1 strike=146.5 rake=180 dip=95.2 m0=4.78781e+14 t0=1.508 freq=6.059 type=Liu
+source lon=-121.756 lat=37.409 depth=8051.7 strike=146 rake=180 dip=95.1 m0=6.49692e+14 t0=1.345 freq=6.059 type=Liu
+source lon=-121.755 lat=37.4069 depth=7676 strike=146.1 rake=180 dip=95.6 m0=4.74698e+14 t0=1.47 freq=6.059 type=Liu
+source lon=-121.756 lat=37.4089 depth=7779.3 strike=146 rake=180 dip=95.5 m0=5.55716e+14 t0=1.364 freq=6.059 type=Liu
+source lon=-121.767 lat=37.4251 depth=11029.3 strike=144.8 rake=180 dip=93.6 m0=9.57893e+13 t0=1.028 freq=15.2597 type=Liu
+source lon=-121.765 lat=37.4235 depth=11428.1 strike=144.8 rake=180 dip=93.8 m0=3.58618e+11 t0=1.197 freq=1e+38 type=Liu
+source lon=-121.774 lat=37.4323 depth=10477.4 strike=143 rake=180 dip=94 m0=5.17242e+14 t0=0.674 freq=7.49113 type=Liu
+source lon=-121.771 lat=37.4294 depth=10396.5 strike=143.4 rake=180 dip=94.4 m0=2.94694e+14 t0=0.707 freq=6.86687 type=Liu
+source lon=-121.773 lat=37.432 depth=11030.8 strike=143.9 rake=180 dip=93.8 m0=9.2694e+13 t0=0.877 freq=15.8466 type=Liu
+source lon=-121.736 lat=37.3848 depth=8712.8 strike=148.6 rake=180 dip=93.8 m0=1.00107e+13 t0=2.474 freq=206.006 type=Liu
+source lon=-121.749 lat=37.4036 depth=11190.6 strike=148.2 rake=180 dip=93.6 m0=7.51715e+13 t0=1.826 freq=19.6196 type=Liu
+source lon=-121.756 lat=37.4133 depth=11343.9 strike=146.5 rake=180 dip=93.4 m0=3.68292e+13 t0=1.48 freq=41.2012 type=Liu
+source lon=-121.75 lat=37.4055 depth=11267.6 strike=147.9 rake=180 dip=93.2 m0=5.25257e+13 t0=1.762 freq=27.4675 type=Liu
+source lon=-121.784 lat=37.436 depth=6386.2 strike=140 rake=180 dip=104.2 m0=1.51275e+14 t0=0.851 freq=22.8896 type=Liu
+source lon=-121.78 lat=37.4326 depth=6375.2 strike=139.9 rake=180 dip=101.6 m0=3.31091e+14 t0=0.852 freq=9.36391 type=Liu
+source lon=-121.779 lat=37.4314 depth=6247 strike=135.9 rake=180 dip=97.3 m0=1.74463e+14 t0=0.907 freq=9.15583 type=Liu
+source lon=-121.778 lat=37.4313 depth=6759.3 strike=139.1 rake=180 dip=97.9 m0=3.13369e+14 t0=0.733 freq=6.7543 type=Liu
+source lon=-121.776 lat=37.4299 depth=7092.8 strike=141.6 rake=180 dip=96.5 m0=8.86326e+14 t0=0.665 freq=6.14944 type=Liu
+source lon=-121.775 lat=37.4293 depth=7596.2 strike=142.4 rake=180 dip=95.5 m0=6.52057e+14 t0=0.536 freq=6.14944 type=Liu
+source lon=-121.781 lat=37.4345 depth=6836.6 strike=141.6 rake=180 dip=97.8 m0=3.20145e+14 t0=0.683 freq=10.0491 type=Liu
+source lon=-121.779 lat=37.434 depth=7734.5 strike=142.4 rake=180 dip=96.7 m0=4.36266e+14 t0=0.38 freq=7.62985 type=Liu
+source lon=-121.778 lat=37.4331 depth=8031.7 strike=142.4 rake=180 dip=95.8 m0=5.50555e+14 t0=0.306 freq=6.86687 type=Liu
+source lon=-121.783 lat=37.4364 depth=6692.2 strike=140.2 rake=180 dip=98.5 m0=1.79486e+14 t0=0.742 freq=18.7278 type=Liu
+source lon=-121.784 lat=37.4397 depth=8038.6 strike=141.2 rake=180 dip=96.2 m0=1.49793e+13 t0=0.361 freq=206.006 type=Liu
+source lon=-121.782 lat=37.4376 depth=8030.5 strike=141.1 rake=180 dip=96.2 m0=1.2765e+14 t0=0.309 freq=22.8896 type=Liu
+source lon=-121.784 lat=37.44 depth=8486.6 strike=140.9 rake=180 dip=95.5 m0=2.45576e+13 t0=0.277 freq=103.003 type=Liu
+source lon=-121.782 lat=37.4423 depth=11206.4 strike=140.6 rake=180 dip=93.9 m0=1.08981e+12 t0=0.935 freq=1e+38 type=Liu
+source lon=-121.738 lat=37.3884 depth=9601.7 strike=148.7 rake=180 dip=93.5 m0=1.02366e+14 t0=2.328 freq=25.7508 type=Liu
+source lon=-121.736 lat=37.3849 depth=9615.9 strike=148.7 rake=180 dip=93.2 m0=4.43711e+12 t0=2.493 freq=412.012 type=Liu
+source lon=-121.738 lat=37.3885 depth=10056.7 strike=148.7 rake=180 dip=93.3 m0=8.89106e+13 t0=2.356 freq=29.4294 type=Liu
+source lon=-121.736 lat=37.3848 depth=9164.3 strike=148.3 rake=180 dip=93.8 m0=8.32477e+12 t0=2.48 freq=412.012 type=Liu
+source lon=-121.775 lat=37.4309 depth=8183.3 strike=142.6 rake=180 dip=95.8 m0=6.52156e+14 t0=0.336 freq=6.14944 type=Liu
+source lon=-121.781 lat=37.4365 depth=8179.7 strike=141.7 rake=180 dip=95.6 m0=2.30945e+14 t0=0.235 freq=12.4852 type=Liu
+source lon=-121.739 lat=37.3884 depth=9147.4 strike=148.9 rake=180 dip=93.5 m0=1.10409e+14 t0=2.314 freq=24.236 type=Liu
+source lon=-121.739 lat=37.3897 depth=10359.4 strike=148.7 rake=180 dip=92.9 m0=1.48346e+14 t0=2.327 freq=17.1672 type=Liu
+source lon=-121.77 lat=37.4274 depth=9846.9 strike=144.1 rake=180 dip=94.5 m0=7.11102e+14 t0=0.61 freq=6.14944 type=Liu
+source lon=-121.771 lat=37.4281 depth=9080.2 strike=143.1 rake=180 dip=95.5 m0=6.95133e+14 t0=0.429 freq=6.059 type=Liu
+source lon=-121.767 lat=37.4245 depth=9769.2 strike=144.1 rake=180 dip=94.5 m0=3.60707e+14 t0=0.709 freq=6.14944 type=Liu
+source lon=-121.775 lat=37.4326 depth=9928.8 strike=142.3 rake=180 dip=95 m0=3.39195e+14 t0=0.476 freq=6.24261 type=Liu
+source lon=-121.765 lat=37.4212 depth=9081.6 strike=144.6 rake=180 dip=95 m0=7.01513e+14 t0=0.758 freq=6.059 type=Liu
+source lon=-121.771 lat=37.4287 depth=10002.5 strike=143.4 rake=180 dip=93.8 m0=7.0242e+14 t0=0.608 freq=6.24261 type=Liu
+source lon=-121.767 lat=37.4235 depth=8930.9 strike=144.1 rake=180 dip=95 m0=6.93124e+14 t0=0.64 freq=6.059 type=Liu
+source lon=-121.764 lat=37.4205 depth=9848.5 strike=145.2 rake=180 dip=94.3 m0=7.11063e+14 t0=0.895 freq=6.14944 type=Liu
+source lon=-121.762 lat=37.4187 depth=9927.8 strike=145.5 rake=180 dip=94.3 m0=3.52677e+14 t0=0.982 freq=6.14944 type=Liu
+source lon=-121.76 lat=37.4171 depth=10162.5 strike=145.7 rake=180 dip=94.1 m0=3.42315e+14 t0=1.093 freq=6.33865 type=Liu
+source lon=-121.759 lat=37.4154 depth=10397.2 strike=145.7 rake=180 dip=94.1 m0=3.038e+14 t0=1.205 freq=6.7543 type=Liu
+source lon=-121.759 lat=37.4142 depth=9085.5 strike=144.9 rake=180 dip=94.5 m0=6.99431e+14 t0=1.086 freq=6.059 type=Liu
+source lon=-121.758 lat=37.4149 depth=10632 strike=146 rake=180 dip=93.7 m0=2.44209e+14 t0=1.268 freq=7.77381 type=Liu
+source lon=-121.76 lat=37.4174 depth=11107.1 strike=145.6 rake=180 dip=93.8 m0=8.01639e+13 t0=1.282 freq=18.7278 type=Liu
+source lon=-121.758 lat=37.4132 depth=9389.8 strike=145 rake=180 dip=93.9 m0=7.15249e+14 t0=1.156 freq=6.059 type=Liu
+source lon=-121.766 lat=37.4188 depth=7178.1 strike=144.7 rake=180 dip=96.4 m0=6.09576e+14 t0=1.011 freq=6.059 type=Liu
+source lon=-121.781 lat=37.4321 depth=6050.9 strike=137.7 rake=180 dip=111.4 m0=6.74382e+13 t0=0.973 freq=13.7337 type=Liu
+source lon=-121.784 lat=37.4415 depth=9094.3 strike=141 rake=180 dip=95.2 m0=1.46168e+13 t0=0.324 freq=206.006 type=Liu
+source lon=-121.765 lat=37.4168 depth=6556.3 strike=144.7 rake=180 dip=95.9 m0=4.55708e+14 t0=1.211 freq=7.35736 type=Liu
+source lon=-121.758 lat=37.4102 depth=7198.9 strike=145.5 rake=180 dip=95.9 m0=3.64835e+14 t0=1.368 freq=6.059 type=Liu
+source lon=-121.762 lat=37.4156 depth=7609.4 strike=145.4 rake=180 dip=95.6 m0=6.37016e+14 t0=1.076 freq=6.059 type=Liu
+source lon=-121.758 lat=37.4096 depth=6842.8 strike=145.4 rake=180 dip=96.2 m0=3.78061e+14 t0=1.441 freq=6.33865 type=Liu
+source lon=-121.762 lat=37.4175 depth=8633.1 strike=145.3 rake=180 dip=95 m0=6.83042e+14 t0=0.919 freq=6.059 type=Liu
+source lon=-121.765 lat=37.4197 depth=8484 strike=144.2 rake=180 dip=95 m0=6.76161e+14 t0=0.817 freq=6.059 type=Liu
+source lon=-121.76 lat=37.4137 depth=8192.6 strike=145.1 rake=180 dip=95.2 m0=6.59529e+14 t0=1.111 freq=6.059 type=Liu
+source lon=-121.761 lat=37.4165 depth=8935.4 strike=145.3 rake=180 dip=94.5 m0=6.95381e+14 t0=0.971 freq=6.059 type=Liu
+source lon=-121.738 lat=37.3857 depth=7412.3 strike=148.5 rake=180 dip=95.6 m0=2.85878e+13 t0=2.444 freq=68.6687 type=Liu
+source lon=-121.737 lat=37.3849 depth=7821.9 strike=148.8 rake=180 dip=94.4 m0=1.96033e+13 t0=2.466 freq=137.337 type=Liu
+source lon=-121.74 lat=37.3895 depth=8540.9 strike=148.7 rake=180 dip=93.9 m0=2.00781e+14 t0=2.251 freq=12.8754 type=Liu
+source lon=-121.737 lat=37.3859 depth=8557.6 strike=148.4 rake=180 dip=94 m0=2.46957e+13 t0=2.416 freq=103.003 type=Liu
+source lon=-121.78 lat=37.4307 depth=5949.2 strike=135.9 rake=180 dip=109.2 m0=1.19277e+14 t0=1.022 freq=17.9136 type=Liu
+source lon=-121.757 lat=37.4145 depth=11185.6 strike=146.1 rake=180 dip=93.8 m0=6.57627e+13 t0=1.401 freq=22.8896 type=Liu
+source lon=-121.762 lat=37.4198 depth=11266.4 strike=145.2 rake=180 dip=93.4 m0=2.64766e+13 t0=1.252 freq=58.8589 type=Liu
+source lon=-121.759 lat=37.4122 depth=7613 strike=145.2 rake=180 dip=95.4 m0=6.46892e+14 t0=1.233 freq=6.059 type=Liu
+source lon=-121.783 lat=37.4427 depth=10969.6 strike=140.6 rake=180 dip=94.5 m0=2.13979e+12 t0=0.863 freq=1e+38 type=Liu
+source lon=-121.777 lat=37.4337 depth=8933 strike=142.1 rake=180 dip=95.7 m0=5.505e+14 t0=0.15 freq=6.86687 type=Liu
+source lon=-121.785 lat=37.4411 depth=8638.1 strike=141.3 rake=180 dip=95.8 m0=1.25471e+13 t0=0.306 freq=206.006 type=Liu
+source lon=-121.755 lat=37.4063 depth=7451.6 strike=146.1 rake=180 dip=95.4 m0=4.22106e+14 t0=1.517 freq=6.059 type=Liu
+source lon=-121.751 lat=37.4011 depth=6702.2 strike=145.8 rake=180 dip=101.1 m0=4.41041e+14 t0=1.824 freq=6.98326 type=Liu
+source lon=-121.749 lat=37.3978 depth=6417.6 strike=146.4 rake=180 dip=101.2 m0=4.16531e+14 t0=1.99 freq=9.80981 type=Liu
+source lon=-121.752 lat=37.4026 depth=7081 strike=146.8 rake=180 dip=95.6 m0=5.5709e+14 t0=1.721 freq=6.14944 type=Liu
+source lon=-121.753 lat=37.4045 depth=7101.6 strike=146.7 rake=180 dip=95.7 m0=2.84339e+14 t0=1.633 freq=6.14944 type=Liu
+source lon=-121.738 lat=37.3886 depth=10978.4 strike=149 rake=180 dip=92.8 m0=2.42094e+13 t0=2.444 freq=68.6687 type=Liu
+source lon=-121.74 lat=37.3921 depth=10508.2 strike=148.7 rake=180 dip=92.9 m0=2.86769e+14 t0=2.235 freq=10.0491 type=Liu
+source lon=-121.744 lat=37.3962 depth=10264.7 strike=148.5 rake=180 dip=93.1 m0=3.09229e+14 t0=2.023 freq=6.64536 type=Liu
+source lon=-121.741 lat=37.3933 depth=10815.9 strike=148.7 rake=180 dip=93.1 m0=2.5747e+14 t0=2.216 freq=11.4448 type=Liu
+source lon=-121.743 lat=37.3958 depth=10967.2 strike=148.7 rake=180 dip=93.1 m0=2.60774e+14 t0=2.13 freq=11.7718 type=Liu
+source lon=-121.745 lat=37.3975 depth=10417.4 strike=148.6 rake=180 dip=93.1 m0=2.9805e+14 t0=1.986 freq=6.7543 type=Liu
+source lon=-121.769 lat=37.4244 depth=8629.8 strike=144.1 rake=180 dip=95.5 m0=6.8272e+14 t0=0.587 freq=6.059 type=Liu
+source lon=-121.771 lat=37.4266 depth=8481.6 strike=142.9 rake=180 dip=95.5 m0=6.7629e+14 t0=0.491 freq=6.059 type=Liu
+source lon=-121.74 lat=37.3922 depth=11439.6 strike=149.2 rake=180 dip=92.8 m0=2.49769e+13 t0=2.348 freq=68.6687 type=Liu
+source lon=-121.76 lat=37.4134 depth=7757.2 strike=145.3 rake=180 dip=95.6 m0=6.36535e+14 t0=1.161 freq=6.059 type=Liu
+source lon=-121.762 lat=37.4159 depth=8045.2 strike=145.3 rake=180 dip=95.2 m0=6.62072e+14 t0=1.018 freq=6.059 type=Liu
+source lon=-121.75 lat=37.4025 depth=9100.9 strike=148 rake=180 dip=93.9 m0=6.89986e+14 t0=1.646 freq=6.059 type=Liu
+source lon=-121.746 lat=37.3991 depth=9566.5 strike=147.9 rake=180 dip=93.6 m0=6.93674e+14 t0=1.832 freq=6.14944 type=Liu
+source lon=-121.774 lat=37.4303 depth=8931.6 strike=142.5 rake=180 dip=95.5 m0=6.81398e+14 t0=0.305 freq=6.14944 type=Liu
+source lon=-121.775 lat=37.4315 depth=9083.4 strike=142.8 rake=180 dip=95.7 m0=6.70116e+14 t0=0.272 freq=6.14944 type=Liu
+source lon=-121.772 lat=37.4275 depth=8184.9 strike=142.9 rake=180 dip=95.8 m0=6.66199e+14 t0=0.478 freq=6.059 type=Liu
+source lon=-121.774 lat=37.4297 depth=8036.3 strike=142.6 rake=180 dip=95.8 m0=6.59172e+14 t0=0.417 freq=6.14944 type=Liu
+source lon=-121.772 lat=37.4271 depth=7747.5 strike=142.6 rake=180 dip=95.5 m0=6.44648e+14 t0=0.568 freq=6.059 type=Liu
+source lon=-121.738 lat=37.3898 depth=11286.5 strike=149 rake=180 dip=92.8 m0=2.47053e+13 t0=2.431 freq=68.6687 type=Liu
+source lon=-121.743 lat=37.3964 depth=11199.9 strike=148.7 rake=180 dip=93.3 m0=7.07699e+13 t0=2.134 freq=18.7278 type=Liu
+source lon=-121.744 lat=37.3976 depth=11355 strike=148.6 rake=180 dip=93.2 m0=4.35319e+13 t0=2.105 freq=31.6932 type=Liu
+source lon=-121.762 lat=37.4191 depth=10869.7 strike=145.5 rake=180 dip=93.8 m0=1.51673e+14 t0=1.166 freq=10.8424 type=Liu
+source lon=-121.771 lat=37.4259 depth=7603.2 strike=142.6 rake=180 dip=95.5 m0=6.38676e+14 t0=0.648 freq=6.059 type=Liu
+source lon=-121.775 lat=37.4262 depth=5949.3 strike=146.1 rake=180 dip=115.7 m0=1.08312e+14 t0=1.09 freq=17.1672 type=Liu
+source lon=-121.748 lat=37.3986 depth=7261.7 strike=146.8 rake=180 dip=95.7 m0=3.70617e+14 t0=1.885 freq=6.059 type=Liu
+source lon=-121.749 lat=37.3996 depth=7403.3 strike=146.8 rake=180 dip=95.6 m0=5.69446e+14 t0=1.826 freq=6.059 type=Liu
+source lon=-121.738 lat=37.385 depth=7079.4 strike=148.2 rake=180 dip=95.3 m0=5.8951e+12 t0=2.493 freq=206.006 type=Liu
+source lon=-121.739 lat=37.3856 depth=6580.4 strike=147.4 rake=180 dip=96.7 m0=3.16291e+13 t0=2.501 freq=51.5015 type=Liu
+source lon=-121.778 lat=37.4316 depth=7079.2 strike=139.7 rake=180 dip=96.8 m0=5.50107e+14 t0=0.631 freq=6.43769 type=Liu
+source lon=-121.779 lat=37.4331 depth=7288.9 strike=141.6 rake=180 dip=97.8 m0=5.10852e+14 t0=0.541 freq=7.22828 type=Liu
+source lon=-121.762 lat=37.4135 depth=6461.7 strike=145.6 rake=180 dip=96.1 m0=2.88448e+14 t0=1.352 freq=8.07867 type=Liu
+source lon=-121.758 lat=37.4088 depth=6636.9 strike=145.4 rake=180 dip=96.2 m0=6.06105e+14 t0=1.51 freq=7.22828 type=Liu
+source lon=-121.765 lat=37.4226 depth=10869.7 strike=144.8 rake=180 dip=93.6 m0=1.49555e+14 t0=1.049 freq=11.1355 type=Liu
+source lon=-121.765 lat=37.4234 depth=11268.1 strike=144.8 rake=180 dip=93.9 m0=2.48495e+13 t0=1.149 freq=58.8589 type=Liu
+source lon=-121.761 lat=37.4186 depth=11106.9 strike=145.6 rake=180 dip=93.8 m0=7.58508e+13 t0=1.244 freq=19.6196 type=Liu
+source lon=-121.757 lat=37.4144 depth=11027 strike=146.1 rake=180 dip=93.8 m0=1.13364e+14 t0=1.366 freq=13.2907 type=Liu
+source lon=-121.77 lat=37.4286 depth=11030.2 strike=143.9 rake=180 dip=93.8 m0=9.4693e+13 t0=0.941 freq=15.8466 type=Liu
+source lon=-121.771 lat=37.4304 depth=11270.6 strike=143.9 rake=180 dip=93.8 m0=2.36031e+13 t0=0.989 freq=58.8589 type=Liu
+source lon=-121.754 lat=37.4096 depth=10871.6 strike=146.9 rake=180 dip=93.8 m0=1.73728e+14 t0=1.524 freq=9.80981 type=Liu
+source lon=-121.753 lat=37.4084 depth=10872.3 strike=147.4 rake=180 dip=93.8 m0=1.7393e+14 t0=1.574 freq=9.80981 type=Liu
+source lon=-121.773 lat=37.4311 depth=10318.7 strike=143.4 rake=180 dip=94.4 m0=6.0198e+14 t0=0.642 freq=6.86687 type=Liu
+source lon=-121.773 lat=37.4316 depth=10082.8 strike=143.4 rake=180 dip=93.8 m0=3.43487e+14 t0=0.554 freq=6.33865 type=Liu
+source lon=-121.765 lat=37.4225 depth=10396.2 strike=144.9 rake=180 dip=94 m0=2.96024e+14 t0=0.93 freq=6.86687 type=Liu
+source lon=-121.766 lat=37.4236 depth=10395.9 strike=144.6 rake=180 dip=94 m0=2.9455e+14 t0=0.888 freq=6.86687 type=Liu
+source lon=-121.779 lat=37.4384 depth=11276.1 strike=142.3 rake=180 dip=94.9 m0=2.50404e+13 t0=0.922 freq=82.4024 type=Liu
+source lon=-121.778 lat=37.4376 depth=10878.4 strike=142.3 rake=180 dip=94.2 m0=6.24693e+13 t0=0.772 freq=18.7278 type=Liu
+source lon=-121.746 lat=37.4 depth=11038 strike=148.2 rake=180 dip=92.9 m0=1.23336e+14 t0=1.957 freq=12.118 type=Liu
+source lon=-121.746 lat=37.4006 depth=11273.5 strike=148.2 rake=180 dip=93.6 m0=1.33506e+14 t0=1.966 freq=21.6849 type=Liu
+source lon=-121.753 lat=37.4076 depth=10323.1 strike=146.9 rake=180 dip=93.5 m0=6.37385e+14 t0=1.523 freq=6.64536 type=Liu
+source lon=-121.754 lat=37.4094 depth=10400.1 strike=146.8 rake=180 dip=93.5 m0=3.14515e+14 t0=1.453 freq=6.64536 type=Liu
+source lon=-121.779 lat=37.4379 depth=10326.4 strike=142.1 rake=180 dip=94.8 m0=2.06006e+14 t0=0.576 freq=13.7337 type=Liu
+source lon=-121.78 lat=37.4383 depth=10092.6 strike=142.1 rake=180 dip=95.2 m0=9.85225e+13 t0=0.496 freq=15.2597 type=Liu
+source lon=-121.761 lat=37.4182 depth=10161.1 strike=145.7 rake=180 dip=94.1 m0=3.42143e+14 t0=1.043 freq=6.33865 type=Liu
+source lon=-121.759 lat=37.4146 depth=10007 strike=145.7 rake=180 dip=94.1 m0=7.07071e+14 t0=1.169 freq=6.24261 type=Liu
+source lon=-121.74 lat=37.3922 depth=10973 strike=148.7 rake=180 dip=93.1 m0=1.43292e+14 t0=2.287 freq=16.4805 type=Liu
+source lon=-121.741 lat=37.3934 depth=11282.1 strike=148.7 rake=180 dip=93.3 m0=8.08342e+13 t0=2.275 freq=27.4675 type=Liu
+source lon=-121.747 lat=37.4004 depth=10333.8 strike=147.9 rake=180 dip=93.7 m0=6.15055e+14 t0=1.845 freq=6.64536 type=Liu
+source lon=-121.749 lat=37.4034 depth=10249.8 strike=148 rake=180 dip=93.7 m0=3.3669e+14 t0=1.7 freq=6.33865 type=Liu
+source lon=-121.765 lat=37.4177 depth=6787.5 strike=144.7 rake=180 dip=95.9 m0=3.20219e+14 t0=1.129 freq=6.53988 type=Liu
+source lon=-121.763 lat=37.4166 depth=7323.1 strike=145.4 rake=180 dip=96.3 m0=6.18421e+14 t0=1.076 freq=6.059 type=Liu
+source lon=-121.784 lat=37.4421 depth=10023.6 strike=140.8 rake=180 dip=95.4 m0=1.40039e+13 t0=0.549 freq=206.006 type=Liu
+source lon=-121.783 lat=37.4417 depth=10256 strike=140.8 rake=180 dip=94.5 m0=7.20524e+12 t0=0.607 freq=206.006 type=Liu
+source lon=-121.741 lat=37.392 depth=10045.4 strike=148.5 rake=180 dip=93.3 m0=3.62996e+14 t0=2.193 freq=8.76622 type=Liu
+source lon=-121.741 lat=37.3933 depth=10350.4 strike=148.5 rake=180 dip=93.1 m0=4.16972e+14 t0=2.166 freq=8.24024 type=Liu
+source lon=-121.778 lat=37.4357 depth=9471.9 strike=141.6 rake=180 dip=95.3 m0=2.02932e+14 t0=0.257 freq=8.07867 type=Liu
+source lon=-121.78 lat=37.4373 depth=9397.5 strike=141.7 rake=180 dip=95.3 m0=2.47957e+14 t0=0.246 freq=12.118 type=Liu
+source lon=-121.735 lat=37.385 depth=10068.2 strike=148.7 rake=180 dip=93.2 m0=1.30836e+12 t0=2.518 freq=1e+38 type=Liu
+source lon=-121.736 lat=37.3862 depth=10368.8 strike=148.7 rake=180 dip=92.8 m0=1.34846e+12 t0=2.487 freq=1e+38 type=Liu
+source lon=-121.759 lat=37.4144 depth=9544.4 strike=145.5 rake=180 dip=94.5 m0=7.07828e+14 t0=1.115 freq=6.059 type=Liu
+source lon=-121.761 lat=37.4167 depth=9389.4 strike=145.8 rake=180 dip=94.5 m0=7.08072e+14 t0=0.996 freq=6.059 type=Liu
+source lon=-121.765 lat=37.4215 depth=9540.1 strike=145.2 rake=180 dip=94.9 m0=7.09965e+14 t0=0.802 freq=6.059 type=Liu
+source lon=-121.767 lat=37.4237 depth=9384.3 strike=144.6 rake=180 dip=95 m0=7.04682e+14 t0=0.678 freq=6.059 type=Liu
+source lon=-121.772 lat=37.429 depth=9460.5 strike=143.1 rake=180 dip=95.5 m0=3.51611e+14 t0=0.459 freq=6.059 type=Liu
+source lon=-121.773 lat=37.4306 depth=9385.7 strike=142.8 rake=180 dip=95.5 m0=6.88071e+14 t0=0.374 freq=6.14944 type=Liu
+source lon=-121.753 lat=37.4073 depth=9393.7 strike=146.8 rake=180 dip=94.3 m0=6.98231e+14 t0=1.433 freq=6.059 type=Liu
+source lon=-121.756 lat=37.4109 depth=9390.2 strike=146.7 rake=180 dip=93.9 m0=7.1557e+14 t0=1.266 freq=6.059 type=Liu
+source lon=-121.748 lat=37.4002 depth=9411.6 strike=147.6 rake=180 dip=93.9 m0=6.882e+14 t0=1.768 freq=6.059 type=Liu
+source lon=-121.75 lat=37.4038 depth=9402 strike=148 rake=180 dip=93.8 m0=7.03277e+14 t0=1.601 freq=6.059 type=Liu
+source lon=-121.742 lat=37.3931 depth=9429.8 strike=148.4 rake=180 dip=93.7 m0=4.85926e+14 t0=2.101 freq=7.35736 type=Liu
+source lon=-121.745 lat=37.3967 depth=9419.9 strike=148.2 rake=180 dip=93.6 m0=6.55813e+14 t0=1.934 freq=6.24261 type=Liu
+source lon=-121.778 lat=37.4346 depth=8632 strike=142.1 rake=180 dip=95.6 m0=4.44989e+14 t0=0.116 freq=7.62985 type=Liu
+source lon=-121.78 lat=37.4367 depth=8480.8 strike=141.7 rake=180 dip=95.6 m0=2.34626e+14 t0=0.14 freq=12.118 type=Liu
+source lon=-121.737 lat=37.386 depth=9460.5 strike=148.3 rake=180 dip=93.5 m0=1.28645e+13 t0=2.432 freq=206.006 type=Liu
+source lon=-121.739 lat=37.3896 depth=9444.5 strike=148.9 rake=180 dip=93.4 m0=1.91849e+14 t0=2.266 freq=13.7337 type=Liu
+source lon=-121.739 lat=37.3883 depth=8247.3 strike=148.7 rake=180 dip=94 m0=1.28139e+14 t0=2.304 freq=20.6006 type=Liu
+source lon=-121.737 lat=37.3853 depth=8335.6 strike=148.4 rake=180 dip=94 m0=7.22542e+12 t0=2.442 freq=206.006 type=Liu
+source lon=-121.746 lat=37.3931 depth=6296.9 strike=147.7 rake=180 dip=101.5 m0=1.95816e+14 t0=2.202 freq=12.8754 type=Liu
+source lon=-121.748 lat=37.3945 depth=6126.4 strike=146.7 rake=180 dip=102.9 m0=8.95291e+13 t0=2.158 freq=21.6849 type=Liu
+source lon=-121.784 lat=37.434 depth=5864.7 strike=137.7 rake=180 dip=111.4 m0=3.52533e+13 t0=1.04 freq=45.7791 type=Liu
+source lon=-121.782 lat=37.4312 depth=5675.6 strike=137.5 rake=180 dip=111.1 m0=1.3126e+13 t0=1.115 freq=82.4024 type=Liu
+source lon=-121.772 lat=37.4278 depth=8630.7 strike=143.2 rake=180 dip=95.8 m0=6.73382e+14 t0=0.422 freq=6.059 type=Liu
+source lon=-121.774 lat=37.43 depth=8481 strike=142.6 rake=180 dip=95.8 m0=6.6473e+14 t0=0.327 freq=6.14944 type=Liu
+source lon=-121.745 lat=37.3952 depth=8223.2 strike=148.3 rake=180 dip=94.3 m0=5.97939e+14 t0=1.981 freq=6.33865 type=Liu
+source lon=-121.742 lat=37.3918 depth=8233.8 strike=148.1 rake=180 dip=94.5 m0=3.89653e+14 t0=2.141 freq=8.07867 type=Liu
+source lon=-121.759 lat=37.414 depth=8636.8 strike=145.3 rake=180 dip=95.2 m0=6.72668e+14 t0=1.084 freq=6.059 type=Liu
+source lon=-121.762 lat=37.4162 depth=8486 strike=145.5 rake=180 dip=95.2 m0=6.69842e+14 t0=0.98 freq=6.059 type=Liu
+source lon=-121.768 lat=37.4228 depth=8041.8 strike=144.1 rake=180 dip=95.5 m0=6.6076e+14 t0=0.704 freq=6.059 type=Liu
+source lon=-121.766 lat=37.4207 depth=8188.1 strike=144.2 rake=180 dip=95.5 m0=6.61303e+14 t0=0.79 freq=6.059 type=Liu
+source lon=-121.785 lat=37.4408 depth=8191.9 strike=140.9 rake=180 dip=95.8 m0=1.10482e+13 t0=0.369 freq=206.006 type=Liu
+source lon=-121.748 lat=37.3999 depth=8508.2 strike=147.1 rake=180 dip=94.6 m0=6.41529e+14 t0=1.757 freq=6.059 type=Liu
+source lon=-121.751 lat=37.4034 depth=8501.9 strike=147.4 rake=180 dip=94.5 m0=6.58649e+14 t0=1.591 freq=6.059 type=Liu
+source lon=-121.754 lat=37.4069 depth=8493.4 strike=146.5 rake=180 dip=95.1 m0=6.50635e+14 t0=1.425 freq=6.059 type=Liu
+source lon=-121.756 lat=37.4092 depth=8489.7 strike=146.2 rake=180 dip=95.1 m0=6.59995e+14 t0=1.314 freq=6.059 type=Liu
+source lon=-121.775 lat=37.429 depth=7309.2 strike=142.4 rake=180 dip=95.5 m0=6.48343e+14 t0=0.622 freq=6.14944 type=Liu
+source lon=-121.773 lat=37.4268 depth=7314.7 strike=142.6 rake=180 dip=95.5 m0=6.19159e+14 t0=0.686 freq=6.059 type=Liu
+source lon=-121.745 lat=37.3948 depth=7365.6 strike=147.7 rake=180 dip=94.6 m0=5.88084e+14 t0=2.045 freq=6.33865 type=Liu
+source lon=-121.744 lat=37.3925 depth=7366.9 strike=148.1 rake=180 dip=94.6 m0=4.05469e+14 t0=2.147 freq=7.10366 type=Liu
+source lon=-121.765 lat=37.4153 depth=6100.4 strike=145.1 rake=180 dip=104.3 m0=1.55609e+14 t0=1.362 freq=15.8466 type=Liu
+source lon=-121.765 lat=37.417 depth=6339.1 strike=143 rake=180 dip=100.8 m0=2.89529e+14 t0=1.251 freq=9.36391 type=Liu
+source lon=-121.757 lat=37.41 depth=7632.3 strike=146.1 rake=180 dip=95.4 m0=5.60568e+14 t0=1.328 freq=6.059 type=Liu
+source lon=-121.757 lat=37.4093 depth=7388.6 strike=146.1 rake=180 dip=95.4 m0=4.18061e+14 t0=1.386 freq=6.059 type=Liu
+source lon=-121.755 lat=37.4032 depth=5846 strike=147.9 rake=180 dip=101.6 m0=2.15148e+13 t0=1.853 freq=103.003 type=Liu
+source lon=-121.753 lat=37.4011 depth=5977.2 strike=147.2 rake=180 dip=101.9 m0=7.36607e+13 t0=1.911 freq=34.3343 type=Liu
+source lon=-121.763 lat=37.4126 depth=5874.4 strike=146.5 rake=180 dip=106.3 m0=4.61923e+13 t0=1.508 freq=45.7791 type=Liu
+source lon=-121.775 lat=37.4273 depth=6230.2 strike=145.1 rake=180 dip=95.9 m0=2.63344e+14 t0=0.981 freq=9.36391 type=Liu
+source lon=-121.771 lat=37.4235 depth=6408.4 strike=143.5 rake=180 dip=96.8 m0=4.2484e+14 t0=1.021 freq=8.07867 type=Liu
+source lon=-121.783 lat=37.4368 depth=7212.4 strike=141.6 rake=180 dip=97.8 m0=7.0976e+13 t0=0.561 freq=20.6006 type=Liu
+source lon=-121.784 lat=37.4378 depth=7140.2 strike=140.2 rake=180 dip=98.5 m0=3.40434e+13 t0=0.597 freq=51.5015 type=Liu
+source lon=-121.752 lat=37.4036 depth=7701.8 strike=146.8 rake=180 dip=95.2 m0=6.08108e+14 t0=1.619 freq=6.059 type=Liu
+source lon=-121.751 lat=37.4014 depth=7365.8 strike=146.8 rake=180 dip=95.6 m0=2.83632e+14 t0=1.749 freq=6.059 type=Liu
+source lon=-121.741 lat=37.3891 depth=7393.8 strike=148.5 rake=180 dip=95.6 m0=1.58279e+14 t0=2.298 freq=12.118 type=Liu
+source lon=-121.74 lat=37.3865 depth=6959.3 strike=148.2 rake=180 dip=95.3 m0=6.81645e+13 t0=2.438 freq=31.6932 type=Liu
+source lon=-121.763 lat=37.4217 depth=11507.1 strike=145.2 rake=180 dip=93.4 m0=3.58659e+11 t0=1.27 freq=1e+38 type=Liu
+source lon=-121.755 lat=37.4121 depth=11343.6 strike=146.5 rake=180 dip=93.4 m0=3.79354e+13 t0=1.522 freq=37.4557 type=Liu
+source lon=-121.74 lat=37.3854 depth=6162.1 strike=147.7 rake=180 dip=102.2 m0=7.45622e+12 t0=2.547 freq=206.006 type=Liu
+source lon=-121.741 lat=37.3864 depth=6338.1 strike=147.2 rake=180 dip=101.6 m0=3.10714e+13 t0=2.489 freq=41.2012 type=Liu
+source lon=-121.768 lat=37.4268 depth=10950.4 strike=144.2 rake=180 dip=94.2 m0=1.18367e+14 t0=0.958 freq=12.4852 type=Liu
+source lon=-121.77 lat=37.4284 depth=10554 strike=144.2 rake=180 dip=93.6 m0=2.58102e+14 t0=0.787 freq=7.49113 type=Liu
+source lon=-121.751 lat=37.4073 depth=11503.7 strike=147.9 rake=180 dip=93.2 m0=9.56012e+12 t0=1.733 freq=137.337 type=Liu
+source lon=-121.764 lat=37.422 depth=10632.3 strike=145.1 rake=180 dip=93.8 m0=2.32026e+14 t0=1.007 freq=8.07867 type=Liu
+source lon=-121.762 lat=37.4189 depth=10396.2 strike=145.5 rake=180 dip=93.8 m0=3.01791e+14 t0=1.062 freq=6.86687 type=Liu
+source lon=-121.754 lat=37.4101 depth=10634.9 strike=147 rake=180 dip=93.7 m0=2.54495e+14 t0=1.461 freq=7.49113 type=Liu
+source lon=-121.757 lat=37.4132 depth=10868.9 strike=146 rake=180 dip=93.7 m0=1.68238e+14 t0=1.38 freq=10.0491 type=Liu
+source lon=-121.776 lat=37.4348 depth=10795.5 strike=143 rake=180 dip=94.8 m0=2.66096e+14 t0=0.756 freq=11.7718 type=Liu
+source lon=-121.776 lat=37.4352 depth=10558.9 strike=143 rake=180 dip=94 m0=1.87122e+14 t0=0.667 freq=8.95679 type=Liu
+source lon=-121.751 lat=37.4065 depth=10480.4 strike=147 rake=180 dip=93.4 m0=5.77836e+14 t0=1.597 freq=6.98326 type=Liu
+source lon=-121.75 lat=37.4046 depth=10403.3 strike=147.7 rake=180 dip=93.4 m0=3.13753e+14 t0=1.666 freq=6.64536 type=Liu
+source lon=-121.745 lat=37.3995 depth=11432 strike=148.6 rake=180 dip=93.2 m0=6.66854e+13 t0=2.041 freq=41.2012 type=Liu
+source lon=-121.76 lat=37.4119 depth=7156.3 strike=145.5 rake=180 dip=95.9 m0=7.2967e+14 t0=1.301 freq=6.059 type=Liu
+source lon=-121.76 lat=37.4119 depth=6898.6 strike=145.4 rake=180 dip=96.2 m0=3.81075e+14 t0=1.335 freq=6.33865 type=Liu
+source lon=-121.78 lat=37.4396 depth=11438.5 strike=140.9 rake=180 dip=93.6 m0=2.19148e+12 t0=0.988 freq=1e+38 type=Liu
+source lon=-121.78 lat=37.4391 depth=10486.6 strike=141.3 rake=180 dip=94 m0=9.79397e+13 t0=0.645 freq=25.7508 type=Liu
+source lon=-121.779 lat=37.4387 depth=10722.5 strike=141.3 rake=180 dip=95.2 m0=5.46686e+13 t0=0.724 freq=21.6849 type=Liu
+source lon=-121.77 lat=37.4279 depth=9613.7 strike=144.1 rake=180 dip=94.5 m0=3.63362e+14 t0=0.536 freq=6.059 type=Liu
+source lon=-121.768 lat=37.425 depth=9537.2 strike=144.1 rake=180 dip=94.5 m0=7.21506e+14 t0=0.647 freq=6.059 type=Liu
+source lon=-121.745 lat=37.3987 depth=10883.1 strike=148.6 rake=180 dip=93.2 m0=1.71857e+14 t0=1.989 freq=9.58168 type=Liu
+source lon=-121.746 lat=37.3993 depth=10491.1 strike=148.6 rake=180 dip=93.1 m0=5.58457e+14 t0=1.915 freq=7.10366 type=Liu
+source lon=-121.777 lat=37.4347 depth=9623.6 strike=141.9 rake=180 dip=95 m0=2.60404e+14 t0=0.331 freq=7.22828 type=Liu
+source lon=-121.774 lat=37.4318 depth=9540.5 strike=142.3 rake=180 dip=95 m0=6.94016e+14 t0=0.372 freq=6.14944 type=Liu
+source lon=-121.783 lat=37.4413 depth=9636 strike=140.9 rake=180 dip=95.5 m0=7.51862e+12 t0=0.411 freq=206.006 type=Liu
+source lon=-121.781 lat=37.4385 depth=9552.9 strike=141.9 rake=180 dip=95.5 m0=1.47838e+14 t0=0.32 freq=20.6006 type=Liu
+source lon=-121.756 lat=37.411 depth=9851.5 strike=146.3 rake=180 dip=93.9 m0=7.12833e+14 t0=1.306 freq=6.14944 type=Liu
+source lon=-121.758 lat=37.4134 depth=9851.3 strike=145.5 rake=180 dip=93.9 m0=7.15748e+14 t0=1.199 freq=6.14944 type=Liu
+source lon=-121.764 lat=37.4202 depth=9387.3 strike=144.6 rake=180 dip=94.3 m0=7.1742e+14 t0=0.836 freq=6.059 type=Liu
+source lon=-121.762 lat=37.418 depth=9541.3 strike=145.5 rake=180 dip=94.3 m0=7.19436e+14 t0=0.958 freq=6.059 type=Liu
+source lon=-121.771 lat=37.4216 depth=5896.6 strike=143 rake=180 dip=111.4 m0=1.00891e+14 t0=1.213 freq=27.4675 type=Liu
+source lon=-121.773 lat=37.4233 depth=5821.8 strike=140.3 rake=180 dip=111.5 m0=5.98151e+13 t0=1.188 freq=34.3343 type=Liu
+source lon=-121.752 lat=37.4062 depth=9548.4 strike=147.3 rake=180 dip=93.8 m0=7.11997e+14 t0=1.499 freq=6.059 type=Liu
+source lon=-121.749 lat=37.4026 depth=9559 strike=147.9 rake=180 dip=93.9 m0=6.95928e+14 t0=1.666 freq=6.059 type=Liu
+source lon=-121.738 lat=37.3886 depth=10516.5 strike=148.7 rake=180 dip=92.8 m0=6.36484e+13 t0=2.394 freq=37.4557 type=Liu
+source lon=-121.739 lat=37.3898 depth=10822.4 strike=148.7 rake=180 dip=93.1 m0=8.7587e+13 t0=2.374 freq=24.236 type=Liu
+source lon=-121.781 lat=37.4382 depth=9092.1 strike=141.7 rake=180 dip=95.4 m0=1.42662e+14 t0=0.197 freq=20.6006 type=Liu
+source lon=-121.783 lat=37.4403 depth=8938.9 strike=141.3 rake=180 dip=95.4 m0=2.71127e+13 t0=0.257 freq=103.003 type=Liu
+source lon=-121.744 lat=37.3967 depth=9878 strike=148.1 rake=180 dip=93.6 m0=6.45831e+14 t0=1.963 freq=6.33865 type=Liu
+source lon=-121.747 lat=37.4003 depth=9871.4 strike=147.9 rake=180 dip=93.7 m0=6.95508e+14 t0=1.799 freq=6.14944 type=Liu
+source lon=-121.742 lat=37.3932 depth=9888.1 strike=148.7 rake=180 dip=93.2 m0=4.747e+14 t0=2.127 freq=7.49113 type=Liu
+source lon=-121.741 lat=37.392 depth=9586.1 strike=148.7 rake=180 dip=93.4 m0=3.79035e+14 t0=2.163 freq=8.40841 type=Liu
+source lon=-121.777 lat=37.4334 depth=8481.3 strike=142.2 rake=180 dip=95.7 m0=5.55961e+14 t0=0.187 freq=6.86687 type=Liu
+source lon=-121.775 lat=37.4312 depth=8630.5 strike=142.5 rake=180 dip=95.7 m0=6.6373e+14 t0=0.254 freq=6.14944 type=Liu
+source lon=-121.737 lat=37.386 depth=9008.4 strike=148.6 rake=180 dip=93.5 m0=1.8544e+13 t0=2.423 freq=137.337 type=Liu
+source lon=-121.736 lat=37.3861 depth=9913.3 strike=148.7 rake=180 dip=93.3 m0=5.81267e+12 t0=2.454 freq=412.012 type=Liu
+source lon=-121.742 lat=37.3918 depth=8679.6 strike=148.6 rake=180 dip=93.9 m0=3.83306e+14 t0=2.143 freq=8.07867 type=Liu
+source lon=-121.739 lat=37.3883 depth=8696.7 strike=148.6 rake=180 dip=94 m0=1.17014e+14 t0=2.308 freq=21.6849 type=Liu
+source lon=-121.747 lat=37.3988 depth=8658.6 strike=147.7 rake=180 dip=94 m0=6.58691e+14 t0=1.811 freq=6.14944 type=Liu
+source lon=-121.744 lat=37.3953 depth=8669.1 strike=147.9 rake=180 dip=94.3 m0=6.03012e+14 t0=1.977 freq=6.33865 type=Liu
+source lon=-121.762 lat=37.4177 depth=9084.8 strike=145.8 rake=180 dip=95 m0=6.94116e+14 t0=0.921 freq=6.059 type=Liu
+source lon=-121.764 lat=37.42 depth=8931 strike=144.7 rake=180 dip=95 m0=6.88253e+14 t0=0.805 freq=6.059 type=Liu
+source lon=-121.768 lat=37.4247 depth=9080.8 strike=144.6 rake=180 dip=95.5 m0=6.94176e+14 t0=0.595 freq=6.059 type=Liu
+source lon=-121.77 lat=37.4269 depth=8928.8 strike=143.2 rake=180 dip=95.5 m0=6.83592e+14 t0=0.472 freq=6.059 type=Liu
+source lon=-121.756 lat=37.4107 depth=9086.3 strike=146.7 rake=180 dip=94.9 m0=6.86746e+14 t0=1.252 freq=6.059 type=Liu
+source lon=-121.758 lat=37.413 depth=8933.9 strike=145.3 rake=180 dip=94.9 m0=6.86299e+14 t0=1.137 freq=6.059 type=Liu
+source lon=-121.759 lat=37.4097 depth=6209 strike=145.6 rake=180 dip=102.4 m0=1.87055e+14 t0=1.547 freq=12.8754 type=Liu
+source lon=-121.759 lat=37.4102 depth=6459.5 strike=145.6 rake=180 dip=96.1 m0=2.81156e+14 t0=1.481 freq=8.40841 type=Liu
+source lon=-121.753 lat=37.4058 depth=8643.3 strike=147 rake=180 dip=94.5 m0=6.73529e+14 t0=1.477 freq=6.059 type=Liu
+source lon=-121.75 lat=37.4023 depth=8652.9 strike=147.3 rake=180 dip=94.6 m0=6.52483e+14 t0=1.645 freq=6.059 type=Liu
+source lon=-121.784 lat=37.4393 depth=7579.5 strike=140.8 rake=180 dip=96.2 m0=4.5018e+12 t0=0.484 freq=412.012 type=Liu
+source lon=-121.781 lat=37.4363 depth=7733.9 strike=141.1 rake=180 dip=96.7 m0=2.22081e+14 t0=0.378 freq=12.8754 type=Liu
+source lon=-121.778 lat=37.4327 depth=7588.1 strike=141.6 rake=180 dip=95.8 m0=5.60604e+14 t0=0.453 freq=6.86687 type=Liu
+source lon=-121.776 lat=37.4306 depth=7738.3 strike=142.6 rake=180 dip=95.8 m0=6.51618e+14 t0=0.46 freq=6.14944 type=Liu
+source lon=-121.743 lat=37.3916 depth=7650.3 strike=148.1 rake=180 dip=94.5 m0=3.53444e+14 t0=2.169 freq=7.92331 type=Liu
+source lon=-121.74 lat=37.3883 depth=7804.1 strike=148.2 rake=180 dip=94.7 m0=1.43749e+14 t0=2.312 freq=17.9136 type=Liu
+source lon=-121.765 lat=37.4191 depth=7606.5 strike=144 rake=180 dip=95.5 m0=6.45064e+14 t0=0.926 freq=6.059 type=Liu
+source lon=-121.763 lat=37.4169 depth=7750.9 strike=145.3 rake=180 dip=95.4 m0=6.50716e+14 t0=1.004 freq=6.059 type=Liu
+source lon=-121.769 lat=37.4241 depth=8187.2 strike=144.1 rake=180 dip=95.4 m0=6.58868e+14 t0=0.631 freq=6.059 type=Liu
+source lon=-121.771 lat=37.4263 depth=8038.2 strike=142.6 rake=180 dip=95.5 m0=6.58386e+14 t0=0.552 freq=6.059 type=Liu
+source lon=-121.757 lat=37.4102 depth=8195.3 strike=146.3 rake=180 dip=95.4 m0=6.51814e+14 t0=1.277 freq=6.059 type=Liu
+source lon=-121.759 lat=37.4125 depth=8046.1 strike=145.3 rake=180 dip=95.4 m0=6.52433e+14 t0=1.181 freq=6.059 type=Liu
+source lon=-121.763 lat=37.4153 depth=6609.9 strike=144.7 rake=180 dip=95.9 m0=2.41546e+14 t0=1.257 freq=7.22828 type=Liu
+source lon=-121.763 lat=37.416 depth=6957.3 strike=144.7 rake=180 dip=95.9 m0=3.57486e+14 t0=1.158 freq=6.14944 type=Liu
+source lon=-121.745 lat=37.393 depth=6760.1 strike=147 rake=180 dip=98.6 m0=4.07831e+14 t0=2.169 freq=7.49113 type=Liu
+source lon=-121.746 lat=37.3946 depth=6906.4 strike=148.6 rake=180 dip=99.3 m0=2.96933e+14 t0=2.09 freq=6.53988 type=Liu
+source lon=-121.776 lat=37.4267 depth=5818.3 strike=146.1 rake=180 dip=115.7 m0=5.3285e+13 t0=1.124 freq=34.3343 type=Liu
+source lon=-121.777 lat=37.4281 depth=5852 strike=139.3 rake=180 dip=115.7 m0=3.72078e+13 t0=1.089 freq=27.4675 type=Liu
+source lon=-121.753 lat=37.4025 depth=6380.1 strike=147.8 rake=180 dip=99.8 m0=1.32842e+14 t0=1.804 freq=9.58168 type=Liu
+source lon=-121.751 lat=37.3997 depth=6478.3 strike=145.8 rake=180 dip=101.1 m0=3.12077e+14 t0=1.905 freq=8.95679 type=Liu
+source lon=-121.756 lat=37.4074 depth=7093.7 strike=146.1 rake=180 dip=95.4 m0=4.14954e+14 t0=1.505 freq=6.14944 type=Liu
+source lon=-121.754 lat=37.4055 depth=6986.7 strike=146.7 rake=180 dip=95.7 m0=5.61047e+14 t0=1.601 freq=6.14944 type=Liu
+source lon=-121.786 lat=37.4366 depth=5964.4 strike=138.7 rake=180 dip=111.4 m0=7.73261e+12 t0=1.014 freq=103.003 type=Liu
+source lon=-121.75 lat=37.3961 depth=5818.6 strike=146.9 rake=180 dip=102.9 m0=3.48228e+12 t0=2.128 freq=412.012 type=Liu
+source lon=-121.748 lat=37.394 depth=5962.6 strike=146.7 rake=180 dip=102.9 m0=1.35698e+13 t0=2.199 freq=68.6687 type=Liu
+source lon=-121.782 lat=37.4342 depth=6237.9 strike=136.5 rake=180 dip=102.5 m0=1.23449e+14 t0=0.894 freq=14.2073 type=Liu
+source lon=-121.783 lat=37.4336 depth=6023.5 strike=137.7 rake=180 dip=111.4 m0=3.86672e+13 t0=0.977 freq=20.6006 type=Liu
+source lon=-121.766 lat=37.4158 depth=5742.9 strike=144.1 rake=180 dip=109.7 m0=5.95008e+12 t0=1.429 freq=412.012 type=Liu
+source lon=-121.766 lat=37.416 depth=5942.7 strike=145.1 rake=180 dip=104.3 m0=3.52385e+13 t0=1.372 freq=34.3343 type=Liu
+source lon=-121.768 lat=37.4207 depth=6712.2 strike=143.1 rake=180 dip=96.6 m0=5.19255e+14 t0=1.037 freq=6.7543 type=Liu
+source lon=-121.771 lat=37.4235 depth=6642.7 strike=143.5 rake=180 dip=96.8 m0=2.84563e+14 t0=0.958 freq=6.64536 type=Liu
+source lon=-121.782 lat=37.4373 depth=7586.7 strike=141.6 rake=180 dip=96.2 m0=1.18444e+14 t0=0.445 freq=24.236 type=Liu
+source lon=-121.782 lat=37.4364 depth=7363.2 strike=141.6 rake=180 dip=97.8 m0=9.97319e+13 t0=0.503 freq=14.7147 type=Liu
+source lon=-121.776 lat=37.4292 depth=6597.7 strike=140.9 rake=180 dip=95.3 m0=2.47234e+14 t0=0.824 freq=6.64536 type=Liu
+source lon=-121.774 lat=37.4263 depth=6396.3 strike=145.1 rake=180 dip=95.9 m0=3.38124e+14 t0=0.951 freq=7.92331 type=Liu
+source lon=-121.784 lat=37.4378 depth=6845.8 strike=140.2 rake=180 dip=98.5 m0=3.31829e+13 t0=0.699 freq=51.5015 type=Liu
+source lon=-121.742 lat=37.3892 depth=6589.1 strike=147.4 rake=180 dip=97.9 m0=1.51598e+14 t0=2.346 freq=12.4852 type=Liu
+source lon=-121.742 lat=37.3884 depth=6245.9 strike=147.2 rake=180 dip=101.6 m0=5.23818e+13 t0=2.412 freq=25.7508 type=Liu
+source lon=-121.741 lat=37.3894 depth=7652 strike=148.5 rake=180 dip=94.5 m0=2.24869e+14 t0=2.268 freq=11.7718 type=Liu
+source lon=-121.74 lat=37.3877 depth=7289.6 strike=148.5 rake=180 dip=95.6 m0=9.16966e+13 t0=2.367 freq=19.6196 type=Liu
+source lon=-121.746 lat=37.3963 depth=8074 strike=147.9 rake=180 dip=94.7 m0=5.96458e+14 t0=1.933 freq=6.24261 type=Liu
+source lon=-121.748 lat=37.3998 depth=8069.7 strike=147.3 rake=180 dip=94.6 m0=6.25315e+14 t0=1.773 freq=6.059 type=Liu
+source lon=-121.766 lat=37.4203 depth=7752 strike=144.1 rake=180 dip=95.6 m0=6.38271e+14 t0=0.852 freq=6.059 type=Liu
+source lon=-121.768 lat=37.4225 depth=7605.7 strike=144.3 rake=180 dip=95.6 m0=6.37768e+14 t0=0.782 freq=6.059 type=Liu
+source lon=-121.769 lat=37.4187 depth=5682.2 strike=142.3 rake=180 dip=111 m0=2.22017e+13 t0=1.357 freq=137.337 type=Liu
+source lon=-121.771 lat=37.4206 depth=5724.9 strike=143 rake=180 dip=111.4 m0=1.15118e+13 t0=1.292 freq=137.337 type=Liu
+source lon=-121.763 lat=37.4153 depth=7184.7 strike=144.7 rake=180 dip=95.6 m0=6.21996e+14 t0=1.151 freq=6.059 type=Liu
+source lon=-121.76 lat=37.4131 depth=7326.8 strike=145.2 rake=180 dip=95.6 m0=6.25035e+14 t0=1.223 freq=6.059 type=Liu
+source lon=-121.747 lat=37.3971 depth=7176.6 strike=146.8 rake=180 dip=95.7 m0=3.64672e+14 t0=1.956 freq=6.14944 type=Liu
+source lon=-121.747 lat=37.3964 depth=6790.3 strike=148.6 rake=180 dip=99.3 m0=2.87589e+14 t0=2.021 freq=6.64536 type=Liu
+source lon=-121.751 lat=37.4034 depth=8079.8 strike=146.8 rake=180 dip=95.2 m0=6.22094e+14 t0=1.605 freq=6.059 type=Liu
+source lon=-121.754 lat=37.4068 depth=8074.5 strike=146.5 rake=180 dip=95.1 m0=5.68594e+14 t0=1.444 freq=6.059 type=Liu
+source lon=-121.762 lat=37.4128 depth=6278 strike=145.6 rake=180 dip=102.4 m0=1.17308e+14 t0=1.416 freq=10.3003 type=Liu
+source lon=-121.763 lat=37.4137 depth=6102.6 strike=144.3 rake=180 dip=104.2 m0=1.3881e+14 t0=1.421 freq=16.4805 type=Liu
+source lon=-121.752 lat=37.4023 depth=7258.4 strike=146.8 rake=180 dip=95.6 m0=2.8363e+14 t0=1.714 freq=6.059 type=Liu
+source lon=-121.754 lat=37.405 depth=7349 strike=146.7 rake=180 dip=95.7 m0=2.8953e+14 t0=1.585 freq=6.059 type=Liu
+source lon=-121.757 lat=37.4089 depth=7002.3 strike=145.5 rake=180 dip=95.9 m0=3.62123e+14 t0=1.448 freq=6.14944 type=Liu
+source lon=-121.756 lat=37.4076 depth=7311.3 strike=146.1 rake=180 dip=95.4 m0=4.18059e+14 t0=1.469 freq=6.059 type=Liu
+source lon=-121.761 lat=37.4132 depth=6810.3 strike=145.6 rake=180 dip=96.1 m0=4.30152e+14 t0=1.298 freq=6.53988 type=Liu
+source lon=-121.763 lat=37.415 depth=6842.3 strike=144.7 rake=180 dip=95.9 m0=2.97136e+14 t0=1.22 freq=6.43769 type=Liu
+source lon=-121.784 lat=37.4328 depth=5705 strike=137.5 rake=180 dip=111.1 m0=1.31257e+13 t0=1.1 freq=82.4024 type=Liu
+source lon=-121.78 lat=37.4302 depth=5747.3 strike=135.1 rake=180 dip=113.1 m0=3.76472e+13 t0=1.099 freq=51.5015 type=Liu
+source lon=-121.779 lat=37.4285 depth=5679.1 strike=139.3 rake=180 dip=115.7 m0=8.08858e+12 t0=1.142 freq=137.337 type=Liu
+source lon=-121.753 lat=37.4013 depth=6161.2 strike=147.2 rake=180 dip=101.9 m0=7.13878e+13 t0=1.878 freq=17.1672 type=Liu
+source lon=-121.752 lat=37.4008 depth=6320.1 strike=147.8 rake=180 dip=99.8 m0=1.14563e+14 t0=1.879 freq=11.1355 type=Liu
+source lon=-121.776 lat=37.4356 depth=11192.5 strike=142.3 rake=180 dip=94.9 m0=3.35068e+13 t0=0.896 freq=37.4557 type=Liu
+source lon=-121.77 lat=37.4286 depth=11189.9 strike=143.9 rake=180 dip=93.8 m0=4.7466e+13 t0=0.994 freq=31.6932 type=Liu
+source lon=-121.763 lat=37.4216 depth=11187.4 strike=144.8 rake=180 dip=93.9 m0=4.99631e+13 t0=1.176 freq=29.4294 type=Liu
+source lon=-121.762 lat=37.4199 depth=11426 strike=145.2 rake=180 dip=93.4 m0=1.36799e+12 t0=1.298 freq=1e+38 type=Liu
+source lon=-121.779 lat=37.4389 depth=11038.7 strike=142.3 rake=180 dip=94.2 m0=2.54834e+13 t0=0.839 freq=41.2012 type=Liu
+source lon=-121.78 lat=37.4399 depth=10882.9 strike=141.3 rake=180 dip=95.2 m0=1.81452e+13 t0=0.791 freq=58.8589 type=Liu
+source lon=-121.773 lat=37.4319 depth=10714 strike=143 rake=180 dip=94.8 m0=1.94897e+14 t0=0.766 freq=8.76622 type=Liu
+source lon=-121.771 lat=37.4303 depth=10951.1 strike=143.9 rake=180 dip=93.8 m0=1.17858e+14 t0=0.88 freq=12.4852 type=Liu
+source lon=-121.767 lat=37.4249 depth=10711.7 strike=144.2 rake=180 dip=94.2 m0=2.00296e+14 t0=0.935 freq=8.58359 type=Liu
+source lon=-121.766 lat=37.4238 depth=10870.1 strike=144.8 rake=180 dip=93.6 m0=1.48871e+14 t0=1.015 freq=11.1355 type=Liu
+source lon=-121.783 lat=37.4419 depth=10572.9 strike=141.3 rake=180 dip=94 m0=4.33198e+12 t0=0.715 freq=412.012 type=Liu
+source lon=-121.776 lat=37.435 depth=10243.5 strike=142.1 rake=180 dip=94.8 m0=2.44329e+14 t0=0.552 freq=7.62985 type=Liu
+source lon=-121.775 lat=37.434 depth=10399.9 strike=143 rake=180 dip=94 m0=2.6006e+14 t0=0.621 freq=7.35736 type=Liu
+source lon=-121.757 lat=37.4146 depth=11503.1 strike=146.5 rake=180 dip=93.4 m0=5.7196e+12 t0=1.475 freq=206.006 type=Liu
+source lon=-121.758 lat=37.4157 depth=11344.8 strike=146.1 rake=180 dip=93.8 m0=3.4804e+13 t0=1.396 freq=41.2012 type=Liu
+source lon=-121.77 lat=37.4282 depth=10238.1 strike=143.4 rake=180 dip=94.4 m0=3.35722e+14 t0=0.692 freq=6.43769 type=Liu
+source lon=-121.768 lat=37.4266 depth=10474.5 strike=144.2 rake=180 dip=93.6 m0=2.87976e+14 t0=0.812 freq=7.10366 type=Liu
+source lon=-121.748 lat=37.4025 depth=11349.8 strike=148.2 rake=180 dip=93.6 m0=4.25364e+13 t0=1.902 freq=34.3343 type=Liu
+source lon=-121.749 lat=37.4037 depth=11506.4 strike=147.9 rake=180 dip=93.2 m0=9.48987e+12 t0=1.878 freq=137.337 type=Liu
+source lon=-121.76 lat=37.4173 depth=10632.1 strike=145.5 rake=180 dip=93.8 m0=2.37558e+14 t0=1.177 freq=7.92331 type=Liu
+source lon=-121.76 lat=37.4167 depth=10869.3 strike=145.6 rake=180 dip=93.8 m0=1.59176e+14 t0=1.248 freq=10.3003 type=Liu
+source lon=-121.764 lat=37.4212 depth=10238.8 strike=144.9 rake=180 dip=94 m0=3.37343e+14 t0=0.939 freq=6.43769 type=Liu
+source lon=-121.763 lat=37.4201 depth=10396.2 strike=145.1 rake=180 dip=93.8 m0=3.00961e+14 t0=1.017 freq=6.86687 type=Liu
+source lon=-121.774 lat=37.4314 depth=9771 strike=142.3 rake=180 dip=95 m0=3.49701e+14 t0=0.457 freq=6.14944 type=Liu
+source lon=-121.772 lat=37.4304 depth=9925 strike=143.4 rake=180 dip=93.8 m0=3.56289e+14 t0=0.534 freq=6.14944 type=Liu
+source lon=-121.747 lat=37.4012 depth=10878.7 strike=148.2 rake=180 dip=92.9 m0=1.7627e+14 t0=1.885 freq=9.58168 type=Liu
+source lon=-121.746 lat=37.3999 depth=10723.8 strike=148.6 rake=180 dip=93.2 m0=2.22608e+14 t0=1.916 freq=7.92331 type=Liu
+source lon=-121.751 lat=37.406 depth=10873.4 strike=147 rake=180 dip=93.4 m0=1.75205e+14 t0=1.676 freq=9.58168 type=Liu
+source lon=-121.752 lat=37.4078 depth=11108.8 strike=147.4 rake=180 dip=93.8 m0=9.77702e+13 t0=1.637 freq=15.2597 type=Liu
+source lon=-121.768 lat=37.4253 depth=10159.2 strike=144.6 rake=180 dip=94 m0=3.41242e+14 t0=0.768 freq=6.33865 type=Liu
+source lon=-121.768 lat=37.4258 depth=9925.2 strike=144.1 rake=180 dip=94.5 m0=3.52912e+14 t0=0.694 freq=6.14944 type=Liu
+source lon=-121.78 lat=37.4381 depth=9783.6 strike=141.9 rake=180 dip=95.5 m0=1.01069e+14 t0=0.385 freq=15.2597 type=Liu
+source lon=-121.779 lat=37.4371 depth=9936.3 strike=142.1 rake=180 dip=95.2 m0=1.51414e+14 t0=0.425 freq=10.0491 type=Liu
+source lon=-121.742 lat=37.3952 depth=11357.6 strike=148.7 rake=180 dip=93.3 m0=3.79219e+13 t0=2.208 freq=34.3343 type=Liu
+source lon=-121.743 lat=37.3964 depth=11512.7 strike=148.6 rake=180 dip=93.2 m0=1.0248e+13 t0=2.179 freq=137.337 type=Liu
+source lon=-121.756 lat=37.4118 depth=10397.4 strike=147 rake=180 dip=93.7 m0=3.15574e+14 t0=1.349 freq=6.64536 type=Liu
+source lon=-121.755 lat=37.4106 depth=10241.9 strike=146.8 rake=180 dip=93.5 m0=3.47379e+14 t0=1.378 freq=6.33865 type=Liu
+source lon=-121.784 lat=37.4411 depth=9327 strike=141 rake=180 dip=95.4 m0=7.26135e+12 t0=0.332 freq=206.006 type=Liu
+source lon=-121.782 lat=37.4401 depth=9478.8 strike=140.9 rake=180 dip=95.5 m0=1.48004e+13 t0=0.331 freq=103.003 type=Liu
+source lon=-121.777 lat=37.4345 depth=9315.4 strike=141.6 rake=180 dip=95.3 m0=2.56007e+14 t0=0.229 freq=7.22828 type=Liu
+source lon=-121.776 lat=37.4335 depth=9467.1 strike=141.9 rake=180 dip=95 m0=3.14272e+14 t0=0.303 freq=6.53988 type=Liu
+source lon=-121.748 lat=37.4022 depth=10407.8 strike=148 rake=180 dip=93.7 m0=3.08593e+14 t0=1.772 freq=6.64536 type=Liu
+source lon=-121.749 lat=37.4035 depth=10561.4 strike=147.7 rake=180 dip=93.4 m0=2.8187e+14 t0=1.738 freq=7.10366 type=Liu
+source lon=-121.743 lat=37.3951 depth=10423.3 strike=148.5 rake=180 dip=93.1 m0=2.668e+14 t0=2.093 freq=7.22828 type=Liu
+source lon=-121.744 lat=37.3963 depth=10576 strike=148.6 rake=180 dip=93.1 m0=2.55194e+14 t0=2.056 freq=7.35736 type=Liu
+source lon=-121.761 lat=37.4175 depth=9773.3 strike=145.5 rake=180 dip=94.3 m0=3.60106e+14 t0=1.011 freq=6.059 type=Liu
+source lon=-121.76 lat=37.4164 depth=9929.4 strike=145.7 rake=180 dip=94.1 m0=3.5941e+14 t0=1.084 freq=6.14944 type=Liu
+source lon=-121.771 lat=37.4277 depth=9306.9 strike=143.1 rake=180 dip=95.5 m0=3.49761e+14 t0=0.482 freq=6.059 type=Liu
+source lon=-121.77 lat=37.4267 depth=9460.1 strike=144.1 rake=180 dip=94.5 m0=3.61456e+14 t0=0.559 freq=6.059 type=Liu
+source lon=-121.771 lat=37.4243 depth=6798.1 strike=143.5 rake=180 dip=96.8 m0=3.1198e+14 t0=0.895 freq=6.33865 type=Liu
+source lon=-121.769 lat=37.4234 depth=7318.2 strike=144.3 rake=180 dip=96.4 m0=6.21971e+14 t0=0.803 freq=6.059 type=Liu
+source lon=-121.747 lat=37.3929 depth=5878.9 strike=146.7 rake=180 dip=102.9 m0=1.06278e+13 t0=2.252 freq=82.4024 type=Liu
+source lon=-121.781 lat=37.435 depth=7062.4 strike=141.6 rake=180 dip=97.8 m0=1.54294e+14 t0=0.604 freq=10.8424 type=Liu
+source lon=-121.78 lat=37.4345 depth=7213.1 strike=141.6 rake=180 dip=97.8 m0=1.83966e+14 t0=0.546 freq=8.95679 type=Liu
+source lon=-121.777 lat=37.4294 depth=6217.3 strike=135.4 rake=180 dip=97.2 m0=2.08285e+14 t0=0.945 freq=9.15583 type=Liu
+source lon=-121.776 lat=37.4285 depth=6349.1 strike=140.9 rake=180 dip=95.3 m0=1.87031e+14 t0=0.92 freq=8.07867 type=Liu
+source lon=-121.749 lat=37.399 depth=7011.1 strike=146.8 rake=180 dip=95.7 m0=3.50008e+14 t0=1.887 freq=6.33865 type=Liu
+source lon=-121.748 lat=37.3976 depth=6925.9 strike=146.8 rake=180 dip=95.7 m0=3.42175e+14 t0=1.957 freq=6.33865 type=Liu
+source lon=-121.767 lat=37.4191 depth=6328.8 strike=145.3 rake=180 dip=99.7 m0=2.65437e+14 t0=1.181 freq=9.15583 type=Liu
+source lon=-121.768 lat=37.4207 depth=6471.9 strike=143.1 rake=180 dip=96.6 m0=2.06127e+14 t0=1.094 freq=7.62985 type=Liu
+source lon=-121.75 lat=37.3973 depth=6011.2 strike=146.9 rake=180 dip=102.9 m0=2.76072e+13 t0=2.051 freq=45.7791 type=Liu
+source lon=-121.751 lat=37.3983 depth=5908.6 strike=147.8 rake=180 dip=102.3 m0=2.60549e+13 t0=2.027 freq=51.5015 type=Liu
+source lon=-121.752 lat=37.4029 depth=7505.7 strike=146.8 rake=180 dip=95.6 m0=2.85313e+14 t0=1.666 freq=6.059 type=Liu
+source lon=-121.753 lat=37.4039 depth=7398.3 strike=146.8 rake=180 dip=95.6 m0=2.8363e+14 t0=1.631 freq=6.059 type=Liu
+source lon=-121.742 lat=37.3905 depth=7031.1 strike=149 rake=180 dip=95.4 m0=2.84646e+14 t0=2.259 freq=8.76622 type=Liu
+source lon=-121.741 lat=37.3881 depth=7062.5 strike=148.5 rake=180 dip=95.6 m0=1.20471e+14 t0=2.36 freq=14.7147 type=Liu
+source lon=-121.785 lat=37.439 depth=7207.4 strike=143.6 rake=180 dip=98.9 m0=4.68743e+11 t0=0.59 freq=1e+38 type=Liu
+source lon=-121.785 lat=37.4398 depth=7347.8 strike=140.8 rake=180 dip=96.3 m0=4.25764e+11 t0=0.566 freq=1e+38 type=Liu
+source lon=-121.773 lat=37.4245 depth=5960.1 strike=146.1 rake=180 dip=115.7 m0=1.07542e+14 t0=1.12 freq=17.1672 type=Liu
+source lon=-121.772 lat=37.4247 depth=6246.4 strike=145.1 rake=180 dip=95.9 m0=2.59537e+14 t0=1.031 freq=9.36391 type=Liu
+source lon=-121.759 lat=37.4169 depth=11345 strike=145.6 rake=180 dip=93.8 m0=3.0236e+13 t0=1.359 freq=51.5015 type=Liu
+source lon=-121.76 lat=37.4181 depth=11504.5 strike=145.2 rake=180 dip=93.4 m0=1.00932e+12 t0=1.368 freq=1e+38 type=Liu
+source lon=-121.768 lat=37.4269 depth=11269.6 strike=144.3 rake=180 dip=93.4 m0=2.38857e+13 t0=1.059 freq=58.8589 type=Liu
+source lon=-121.766 lat=37.4251 depth=11188.7 strike=144.8 rake=180 dip=93.9 m0=4.83172e+13 t0=1.076 freq=31.6932 type=Liu
+source lon=-121.774 lat=37.4339 depth=11271 strike=143.7 rake=180 dip=93.6 m0=2.27246e+13 t0=0.94 freq=68.6687 type=Liu
+source lon=-121.773 lat=37.4321 depth=11190.6 strike=143.9 rake=180 dip=93.8 m0=4.605e+13 t0=0.933 freq=31.6932 type=Liu
+source lon=-121.759 lat=37.4156 depth=10869 strike=146.1 rake=180 dip=93.8 m0=1.62151e+14 t0=1.291 freq=10.3003 type=Liu
+source lon=-121.757 lat=37.4137 depth=10632.6 strike=146 rake=180 dip=93.7 m0=2.4989e+14 t0=1.314 freq=7.62985 type=Liu
+source lon=-121.738 lat=37.3865 depth=8181.2 strike=148.4 rake=180 dip=94 m0=1.76956e+13 t0=2.387 freq=68.6687 type=Liu
+source lon=-121.737 lat=37.3854 depth=8038.9 strike=148.8 rake=180 dip=94.4 m0=9.85937e+12 t0=2.44 freq=137.337 type=Liu
+source lon=-121.763 lat=37.4203 depth=10869.7 strike=145.1 rake=180 dip=93.8 m0=1.50768e+14 t0=1.126 freq=10.8424 type=Liu
+source lon=-121.763 lat=37.4215 depth=11028 strike=144.8 rake=180 dip=93.6 m0=9.77544e+13 t0=1.129 freq=15.2597 type=Liu
+source lon=-121.771 lat=37.4302 depth=10792.3 strike=143.9 rake=180 dip=93.8 m0=1.7057e+14 t0=0.826 freq=9.36391 type=Liu
+source lon=-121.77 lat=37.4284 depth=10712.5 strike=144.2 rake=180 dip=94.2 m0=2.00102e+14 t0=0.838 freq=8.58359 type=Liu
+source lon=-121.751 lat=37.4066 depth=11109.1 strike=147.4 rake=180 dip=93.8 m0=9.96506e+13 t0=1.687 freq=15.2597 type=Liu
+source lon=-121.75 lat=37.4055 depth=11425.9 strike=147.9 rake=180 dip=93.2 m0=1.91045e+13 t0=1.79 freq=82.4024 type=Liu
+source lon=-121.76 lat=37.4166 depth=10397 strike=145.7 rake=180 dip=94.1 m0=3.01501e+14 t0=1.156 freq=6.86687 type=Liu
+source lon=-121.761 lat=37.4184 depth=10632.6 strike=145.5 rake=180 dip=93.8 m0=2.35886e+14 t0=1.132 freq=7.92331 type=Liu
+source lon=-121.769 lat=37.4265 depth=10316.4 strike=144.2 rake=180 dip=93.6 m0=3.26362e+14 t0=0.768 freq=6.53988 type=Liu
+source lon=-121.767 lat=37.4241 depth=10160.1 strike=144.6 rake=180 dip=94 m0=3.41209e+14 t0=0.811 freq=6.33865 type=Liu
+source lon=-121.769 lat=37.422 depth=6800.6 strike=143.5 rake=180 dip=96.8 m0=3.06579e+14 t0=0.966 freq=6.43769 type=Liu
+source lon=-121.769 lat=37.4228 depth=6956 strike=143.5 rake=180 dip=96.8 m0=3.35982e+14 t0=0.903 freq=6.059 type=Liu
+source lon=-121.738 lat=37.3847 depth=7305.4 strike=148.2 rake=180 dip=95.3 m0=5.89511e+12 t0=2.492 freq=206.006 type=Liu
+source lon=-121.745 lat=37.3907 depth=6021.5 strike=147.7 rake=180 dip=101.5 m0=2.9248e+13 t0=2.329 freq=41.2012 type=Liu
+source lon=-121.743 lat=37.3889 depth=6037.9 strike=147.2 rake=180 dip=101.6 m0=2.84536e+13 t0=2.408 freq=51.5015 type=Liu
+source lon=-121.749 lat=37.395 depth=5802.4 strike=146.7 rake=180 dip=102.9 m0=2.86102e+12 t0=2.177 freq=412.012 type=Liu
+source lon=-121.753 lat=37.4097 depth=11344.4 strike=146.9 rake=180 dip=93.8 m0=3.83601e+13 t0=1.61 freq=37.4557 type=Liu
+source lon=-121.754 lat=37.411 depth=11502.3 strike=146.5 rake=180 dip=93.4 m0=6.83209e+12 t0=1.599 freq=206.006 type=Liu
+source lon=-121.777 lat=37.4301 depth=6575.8 strike=135.4 rake=180 dip=97.2 m0=1.70721e+14 t0=0.812 freq=6.7543 type=Liu
+source lon=-121.779 lat=37.4326 depth=6667.9 strike=140.4 rake=180 dip=97.2 m0=5.04796e+14 t0=0.749 freq=7.77381 type=Liu
+source lon=-121.758 lat=37.4141 depth=10240.3 strike=145.7 rake=180 dip=94.1 m0=3.43227e+14 t0=1.226 freq=6.33865 type=Liu
+source lon=-121.757 lat=37.413 depth=10396.7 strike=146 rake=180 dip=93.7 m0=3.15369e+14 t0=1.299 freq=6.7543 type=Liu
+source lon=-121.755 lat=37.4114 depth=11106.4 strike=146.9 rake=180 dip=93.8 m0=9.34664e+13 t0=1.495 freq=16.4805 type=Liu
+source lon=-121.756 lat=37.412 depth=10869.6 strike=147 rake=180 dip=93.7 m0=1.70423e+14 t0=1.427 freq=9.80981 type=Liu
+
+
