@@ -42,17 +42,16 @@
 \renewcommand{\div}{{\rm div}}
 \renewcommand{\arraystretch}{1.3}
 
-\markboth{}{N. A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0
-(DRAFT)}
+\markboth{}{N. A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0}
 
 \begin{document}
 
-\title{\LARGE User's guide to SW4 version 1.0} 
+\title{\Huge\bf User's guide to SW4, version 1.0} 
 
 \author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
      Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This is
-     contribution LLNL-SM-XXXYYY.}}
-\date{\today} 
+     contribution LLNL-SM-642292.}}
+\date{August 13, 2013} 
 \maketitle
 
 %\thispagestyle{plain}
@@ -84,22 +83,21 @@ National Laboratory under contract DE-AC52-07NA27344.
 \emph{SW4} (Seismic Waves, 4th order) is a program for simulating seismic wave propagation on
 parallel computers. It shares many features with our previous seismic wave propagation
 code~\emph{WPP}~\cite{WPP2}. Both \emph{WPP} and \emph{SW4} solve the seismic wave equations in
-displacement formulation using a node-based finite difference approach. The displacement formulation
-of the seismic wave equations is a system of linear second order partial differential equations. The
-underlying numerical method satisfies the principle of summation by parts, which guarantees energy
-stability of the numerical solution. The major difference between \emph{WPP} and \emph{SW4} is that
-the numerical method in \emph{SW4} is fourth order accurate in space and time~\cite{SjoPet-12},
-while \emph{WPP} is only second order accurate. \emph{SW4} is therefore significantly more efficient
+displacement formulation using a node-based finite difference approach. The numerical method
+satisfies the principle of summation by parts, which guarantees energy stability of the numerical
+solution. The major difference between \emph{WPP} and \emph{SW4} is in the accuracy of the
+underlying numerical method. \emph{SW4} is fourth order accurate in space and time~\cite{SjoPet-12},
+but \emph{WPP} is only second order accurate. \emph{SW4} is therefore significantly more efficient
 than \emph{WPP}, because a coarser grid can be used to capture waves with the same frequency
 content. Compared to a second order accurate method, the advantages of a fourth order method are
-more pronounced when the solution needs to be more accurate, because the error diminishes faster as
-the grid size is reduced. A fourth order method is also more efficient when the solution needs to
-remain accurate for longer times, because the phase error grows at a slower rate in a higher order
-numerical method~\cite{Gustafsson-Kreiss-Oliger}. Keeping the phase error small is, for example,
-important to accurately predict the arrival times of waves that have propagated over many
-wave lengths. The fourth order method is also significantly more accurate for calculating surface
-waves, in particular when the ratio between the compressional and shear wave speeds is large,
-i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
+more pronounced when the solution needs to be more accurate. This is because the error diminishes at
+a faster rate as the grid size is reduced. A fourth order method is also more efficient when the
+solution needs to remain accurate for longer times, because the phase error grows at a slower rate
+in a higher order numerical method~\cite{Gustafsson-Kreiss-Oliger}. Keeping the phase error small
+is, for example, important to accurately predict the arrival times of waves that have propagated
+over many wave lengths. The fourth order method is also significantly more accurate for calculating
+surface waves, in particular when the ratio between the compressional and shear wave speeds is
+large, i.e.~$C_p/C_s\gg 1$, see~\cite{KrePet-12}.
 
 %% WHERE TO PUT THIS?  We have compared \emph{SW4} and \emph{WPP} on problems where the exact solution
 %% is known. Compared to \emph{WPP}, \emph{SW4} gives similar accuarcy with significantly fewer grid
@@ -163,7 +161,7 @@ exception of mesh refinement, version 1.0 of \emph{SW4} supports most of the fun
 \emph{WPP} (version 2.2). We hope to add the remaining features in the future.
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
-validation tests that are used in this document. Many Matlab/octave scripts are are provided in the
+validation tests that are used in this document. Many Matlab/octave scripts are provided in the
 {\tt tools} directory.
 %and described in Chapter~\ref{chap:scripts}.
 
@@ -265,10 +263,11 @@ detailed information (https://computing.llnl.gov).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 \emph{SW4} simulates the motion due to a seismic event by solving the elastic or visco-elastic wave
-equations in second order displacement formulation. The equations are solved in the spatial domain
-${\bf x}\in\Omega$ during the time interval $0\leq t\leq T$. By default, the motion starts from rest
-and is driven by a forcing function ${\bf F}({\bf x},t)$. In the elastic case, the motion is
-governed by the partial differential equation
+equations in displacement formulation, which is a system of linear second order partial differential
+equations. The equations are solved in the three-dimensional spatial domain ${\bf x}\in\Omega$
+during the time interval $0\leq t\leq T$. By default, the motion starts from rest and is driven by a
+forcing function ${\bf F}({\bf x},t)$. In the elastic case, the motion is governed by the partial
+differential equation
 \begin{alignat}{3}
 \rho {\bf u}_{tt} &= \nabla\cdot{\cal T} + {\bf F}({\bf x},t),&\quad\mbox{${\bf x}$ in
   $\Omega$},\ 0\leq t\leq T,\label{eq:elastic-we}\\ 
@@ -282,7 +281,7 @@ or normal stress) boundary condition is enforced along the top boundary,
 {\cal T} \cdot \nb = 0,\quad z=\tau(x,y),\ t\geq 0.
 \]
 Here $\nb$ is the unit normal of the $z=\tau(x,y)$ surface. By default, a super-grid damping layer
-surrounds the computational domain on all other sides of the computational domain.
+is used on all other sides of the computational domain.
 
 \emph{SW4} uses a right-handed Cartesian coordinate system with the z-direction pointing
 downwards into the medium, see figure~\ref{fig:coordsys}. 
@@ -1274,9 +1273,9 @@ material models.
 Note that \emph{SW4} uses two layers of ghost points outside the computational domain (as defined by
 the grid command). The material properties must therefore be defined for the computational domain
 padded by two layers of ghost points (one layer above the free surface boundary). If the material
-model is not defined in these ghost points, it will be extrapolated from the nearest boundary. Note
-that this behavior is different from \emph{WPP}, which requires the user to also define the material in
-the ghost points.
+model is not defined for these ghost points, it will be extrapolated from the nearest boundary. In
+other words, \emph{SW4} does {\em not} require the user to define the material properties for the
+ghost points, but will use them if they are provided. This is a change from \emph{WPP}.
 
 The order within the material commands (block, pfile, efile, and ifile) {\em does} matter (unlike
 all other commands) in that the priority of the material command increases towards the end of the
@@ -2072,10 +2071,10 @@ problem is driven by a single point moment source, positioned in the lower half-
 function in this problem is a Gaussian (if setup as in the input file, the Gaussian source is
 equivalent to using a Brune time function followed by a post processing deconvolution step, as is
 described in~\cite{Day-2001}). The advantage of using the Gaussian is that no post processing is
-necessary before comparing to the results in~\cite{Day-2001}, and the Gaussian function produces
-less high wave number waves, which are poorly resolved on the computational mesh. Note that
-\verb+freq=16.6667+ corresponds to the spread $\sigma=0.06$ ({\tt freq} = $1/\sigma$) in the
-Gaussian time function. The lines to setup the source and the time duration of the simulation are:
+necessary, and the Gaussian function produces less high wave number waves, which are poorly resolved
+on the computational mesh. Note that \verb+freq=16.6667+ corresponds to the spread $\sigma=0.06$
+({\tt freq} = $1/\sigma$) in the Gaussian time function. The command lines to setup the source and
+the time duration of the simulation are:
 \begin{verbatim}
 time t=9
 source x=15000 y=15000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 \ 
@@ -2189,7 +2188,7 @@ In this case the semi-analytical solution can be created by the Matlab/Octave sc
 \begin{verbatim}
 octave:15> [t ra tr ve]=loh3exact(0.05);
 \end{verbatim}
-As for the LOH.1 problem, the semi-analytical solution is given in polar components. The soluion
+As for the LOH.1 problem, the semi-analytical solution is given in polar components. The solution
 from \emph{SW4} is saved in Cartesian coordinates and the numerical solution at station 10 can be
 read into Octave using the command,
 \begin{verbatim}
@@ -2265,12 +2264,12 @@ A brief description of all commands is given in the following sections. The comm
 that. Other commands, such as those specifying the material model can be given by a combination of
 different commands (block, pfile, efile, or ifile). Note that some required commands must occur
 exactly once (grid, time). Some optional commands should not occur more than once (topography,
-fileio, prefilter, globalmaterial, gmt, developer). Any number of output commands can
-be given (rec, image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight,
-testlamb, testpointsource), at least one source must be specified, and the material must be specifed
-by at least one of the (block, pfile, ifile, efile) commands. Also note that the test modes are
-mutually exclusive. Not all of these rules are currently enforced by the parser, but \emph{SW4} can
-give unexpected behavior if they are violated.
+fileio, prefilter, globalmaterial, gmt, developer). Any number of output commands can be given (rec,
+image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight, testlamb,
+testpointsource, testrayleigh, testenergy), at least one source must be specified, and the material
+must be specifed by at least one of the (block, pfile, ifile, efile) commands. Also note that the
+test modes are mutually exclusive. Not all of these rules are currently enforced by the parser, but
+\emph{SW4} can give unexpected behavior if they are violated.
 
 Note that the same command parser is used for \emph{SW4} and its companion code \emph{SW4opt}, which
 calculates source parameters from seismic observations. Here we only document the commands and options
@@ -4627,15 +4626,15 @@ completed. As before, the \verb+sw4+ executable will be located in the \verb+opt
 \index{testing}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Once \emph{SW4} has been installed, it is a good idea to verify that the code works by
-running the test scripts in the \verb+examples+ directory. With each input file \verb+xyz.in+, there
-is a corresponding output file named \verb+xyz.out+. Note that when \emph{SW4} runs in parallel,
-some of the output can appear in a different order. The most important aspect of these tests is to
-verify the reported errors in the numerical solutions. This information is written near the end of
-the output files. These numbers should be independent of the number of MPI processes on a given
-machine, but due to roundoff errors, the errors can vary slightly from one type of hardware to
-another. Note that some of the tests use a significant number of grid points and will only fit in
-memory on larger machines.
+Once \emph{SW4} has been installed, it is a good idea to verify that the code is working by running
+the test scripts in the \verb+examples+ directory. With each input file \verb+xyz.in+, there is a
+corresponding output file named \verb+xyz.out+. When \emph{SW4} runs in parallel, note that some of
+the output can appear in a different order. The most important aspect of these tests is to verify
+the reported errors in the numerical solutions. This information is written near the end of the
+output files. These numbers should be independent of the number of MPI processes on a given machine,
+but due to roundoff errors, the errors can vary slightly from one type of hardware to another. Note
+that some of the tests use a significant number of grid points and will only fit in memory on larger
+machines.
 
 On some systems, it is necessary to start an MPI daemon before any parallel programs can be
 executed. This is often done by issuing the command
