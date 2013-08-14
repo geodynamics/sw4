@@ -1,0 +1,152 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Aug 14 11:11:24 PDT 2013
+  By user:     andersp
+  Machine:     cab669
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: Caucasus.in
+
+* Processing the grid command...
+* Setting nx to 321 to be consistent with h=500
+* Setting ny to 321 to be consistent with h=500
+* Setting nz to 101 to be consistent with h=500
+	Warning: ignoring fileio line option 'scenario=caucasus'
+***inside extractTopographyFromGridFile***
+Nlon=108 Nlat=90
+lonMin=4.204170e+01, lonMax=5.095830e+01
+latMin=3.704170e+01, latMax=4.445830e+01
+elevMin=0.000000e+00, evalMax=3.755000e+03
+
+***Topography grid: min z = -3.662904e+03, max z = 5.846878e+01, top Cartesian z = 7.560000e+03
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       500       321       321        86      8861526
+   1       500       321       321        19      1957779
+Total number of grid points (without ghost points): 1.08193e+07
+
+*** Reading data from Pfile caucasus_mod3.ppmod in directory ./
+Pfile model name (string): 'Caucasus'
+Grid length scale (Delta): 0.25
+Number of latitude points: 7
+Min Lat: 38 Max Lat: 39.5
+Number of longitude points: 19
+Min Lon: 44.5 Max Lon: 49
+Number of depth points: 30
+Min depth: 0 Max depth: 161000
+Optional indices: Sediment: -99 MoHo: -99 410: -99 660: -99
+Attenuation Q-factors available: yes
+******* Done reading Pfile **********
+
+
+   Execution time, reading input file 0.070732 seconds 
+----------------------------------------------------
+ Making Output Directory: caucasus-results/
+		
+... Done!
+----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 4.708000e+01, Lat=3.804000e+01
+1: Lon= 4.708000e+01, Lat=3.947730e+01
+2: Lon= 4.894209e+01, Lat=3.947730e+01
+3: Lon= 4.890496e+01, Lat=3.804000e+01
+
+Considering all material blocks
+Assigning material properties from pfile data...
+outside = 0, material = 13831599
+
+       ----------- Material properties ranges ---------------
+       2457.72 kg/m^3 <=  Density <= 3013.11 kg/m^3
+       3105.37 m/s    <=  Vp      <= 7772.12 m/s
+       1680.37 m/s    <=  Vs      <= 4200.76 m/s
+       1.8451        <=  Vp/Vs   <= 1.85425
+       6.93972e+09 Pa     <=  mu      <= 5.31697e+10 Pa
+       9.82103e+09 Pa     <=  lambda  <= 7.5667e+10 Pa
+       Using attenuation 
+       700        <=  Qs      <= 700  
+       1000        <=  Qp      <= 1000  
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=5.000000e+02, minVs/h=4.61896 (Cartesian)
+g=1, h=5.000000e+02, minVs/h=3.36074 (curvilinear)
+
+
+*** Attenuation parameters calculated for 1 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+   Execution time, start up phase 0.876822 seconds 
+Running sw4 on 64 processors...
+Writing output to directory: caucasus-results/
+============================================================
+ Running program on 64 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 60
+ Number of time steps = 1143 dt: 0.0524934
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1e+19 Nm 
+  Moment magnitude     (Mw): 6.6
+  Number of sources 1
+-----------------------------------------------------------------------
+writing image plane on file caucasus-results/g.cycle=0000.z=0.topo.sw4img
+writing image plane on file caucasus-results/g.cycle=0000.z=0.lat.sw4img
+writing image plane on file caucasus-results/g.cycle=0000.z=0.lon.sw4img
+writing image plane on file caucasus-results/g.cycle=0000.z=0.p.sw4img
+writing image plane on file caucasus-results/g.cycle=0000.y=80000.p.sw4img
+writing image plane on file caucasus-results/g.cycle=0000.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0000.z=0.curlmagdt.sw4img
+  Begin time stepping...
+Time step       1  t =   5.2493438e-02
+writing image plane on file caucasus-results/g.cycle=0095.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0095.z=0.curlmagdt.sw4img
+Time step     101  t =   5.3018373e+00
+writing image plane on file caucasus-results/g.cycle=0191.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0191.z=0.curlmagdt.sw4img
+Time step     201  t =   1.0551181e+01
+writing image plane on file caucasus-results/g.cycle=0286.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0286.z=0.curlmagdt.sw4img
+Time step     301  t =   1.5800525e+01
+writing image plane on file caucasus-results/g.cycle=0381.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0381.z=0.curlmagdt.sw4img
+Time step     401  t =   2.1049869e+01
+writing image plane on file caucasus-results/g.cycle=0476.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0476.z=0.curlmagdt.sw4img
+Time step     501  t =   2.6299213e+01
+writing image plane on file caucasus-results/g.cycle=0572.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0572.z=0.curlmagdt.sw4img
+Time step     601  t =   3.1548556e+01
+writing image plane on file caucasus-results/g.cycle=0667.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0667.z=0.curlmagdt.sw4img
+Time step     701  t =   3.6797900e+01
+writing image plane on file caucasus-results/g.cycle=0762.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0762.z=0.curlmagdt.sw4img
+Time step     801  t =   4.2047244e+01
+writing image plane on file caucasus-results/g.cycle=0857.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0857.z=0.curlmagdt.sw4img
+Time step     901  t =   4.7296588e+01
+writing image plane on file caucasus-results/g.cycle=0952.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=0952.z=0.curlmagdt.sw4img
+writing image plane on file caucasus-results/g.cycle=0952.z=0.hmaxdudt.sw4img
+Writing ASCII USGS file, of size 1001: caucasus-results/arbabil.txt
+Time step    1001  t =   5.2545932e+01
+writing image plane on file caucasus-results/g.cycle=1048.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=1048.z=0.curlmagdt.sw4img
+Time step    1101  t =   5.7795276e+01
+Time step    1143  t =   6.0000000e+01
+writing image plane on file caucasus-results/g.cycle=1143.z=0.magdudt.sw4img
+writing image plane on file caucasus-results/g.cycle=1143.z=0.curlmagdt.sw4img
+  Time stepping finished...
+   Execution time, solver phase 3 minutes 27.3161 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
+Writing ASCII USGS file, of size 1143: caucasus-results/arbabil.txt

@@ -1,12 +1,10 @@
-# WPP input file
+# SW4 input file
 
 grid x=160e3 y=160e3 z=50e3 lon=47.08 lat=38.04 az=0 h=500
 
-topography input=grid file=caucasus.topo zmax=7560 order=2
+topography input=grid file=caucasus.topo zmax=7560 order=3
 
 attenuation nmech=1
-
-refinement zmax=9000
 
 fileio path=caucasus-results scenario=caucasus
 
@@ -22,19 +20,11 @@ time t=60
 # images
 # topography (requires the topography command to be enabled)
 image mode=topo z=0 cycle=0 file=g
-#image mode=grid z=0 cycle=0 file=g
-
-#image mode=grid x=80e3 cycle=0 file=g
-
-image mode=grid y=80e3 cycle=0 file=g
 
 image mode=lat z=0  cycle=0 file=g
 image mode=lon z=0  cycle=0 file=g
 
-image mode=s z=0 cycle=0 file=g
 image mode=p z=0 cycle=0 file=g
-
-#image mode=p x=80e3 cycle=0 file=g
 
 image mode=p y=80e3 cycle=0 file=g
 
@@ -45,4 +35,4 @@ image mode=hvelmax z=0.0 time=50 file=g
 
 # Time history at a reciever station. Save North, East, Vertical velocity components
 # on the USGS text format
-sac lat=38.25 lon=48.295 depth=0 nsew=1 velocity=1 file=arbabil usgsformat=1 sacformat=0
+rec lat=38.25 lon=48.295 depth=0 nsew=1 variables=velocity file=arbabil usgsformat=1 sacformat=0
