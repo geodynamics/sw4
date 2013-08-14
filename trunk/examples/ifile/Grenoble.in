@@ -1,17 +1,14 @@
-# WPP input file
+# SW4 input file
+# NOTE: Poor resolution! Use this test for demonstration purposes only
 
 grid x=40e3 y=43e3 z=40e3 lon=5.52 lat=45.01 az=0 h=200
 
 # the topography range is zmin=-2626 zmax=-181: range=2445
 # (z is positive downwards and zero at sea level)
 
-topography input=grid file=grenobleCoarse.topo zmax=3000 order=2
+topography input=grid file=grenobleCoarse.topo zmax=4800 order=3
 
-# coarsen out the Cartesian grid below the curvilinear grid
-refinement zmax=3500
-refinement zmax=4000
-
-fileio path=grenoble-results scenario=grenable
+fileio path=grenoble-results
 
 # Bedrock model (note very high velocities at surface)
 block vp=5600 vs=3200 rho=2720
@@ -30,14 +27,16 @@ globalmaterial vpmin=800 vsmin=500
 
 # Event W1: freq = 188.56 and t0 = 0.06 NOTE VERY HIGH FREQUENCY!
 # Use Gaussian instead of GaussianInt if you want to directly calculate velocities
-source lat=45.2167 lon=5.9167 topodepth=3e3 m0=2.8184e13 strike=45 dip=90 rake=180 type=GaussianInt freq=188.56 t0=0.06
+# adding 8.1 sec to t0 to avoid sudden startup due to lowpass filtering
+source lat=45.2167 lon=5.9167 topodepth=3e3 m0=2.8184e13 strike=45 dip=90 rake=180 type=GaussianInt freq=188.56 t0=8.16
 
 # enable pre-filtering of source time-functions
-# corner frequency (fc) in Hz
-prefilter fc=1.0
+# lowpass corner frequency (fc2) in Hz
+# max frequency 2.5*fc2 = 0.833, min Vs= 500 m/s, P=3 grid points per shortest wave length, h=500/(0.833*3) = 200
+prefilter fc2=0.333 type=lowpass
 
 #time steps=0
-time t=15
+time t=23
 
 # images
 
@@ -45,7 +44,7 @@ time t=15
 image mode=lat z=0  cycle=0 file=g
 image mode=lon z=0  cycle=0 file=g
 
-# topography (can't be written without the topography command enabled)
+# topography (can't be written without the topography command being enabled)
 image mode=topo z=0 cycle=0 file=g
 
 # smoothed top grid surface
@@ -56,62 +55,57 @@ image mode=p z=0 cycle=0 file=g
 #image mode=s z=0 cycle=0 file=g
 #image mode=rho z=0 cycle=0 file=g
 
-# Grid in the vertical x=20e3 cross-section
-image mode=grid x=20e3 cycle=0 file=g
-
-# material properties
+# material properties along a vertical cross-section
 image mode=p x=20e3 cycle=0 file=g
 #image mode=s x=20e3 cycle=0 file=g
 #image mode=rho x=20e3 cycle=0 file=g
 
 #image mode=uz z=0.0 timeInterval=1 file=g
-#image mode=curl z=0.0 timeInterval=1 file=g
 
 image mode=hvelmax z=0.0 timeInterval=5 file=g
 image mode=velmag z=0.0 timeInterval=2.5 file=g
 
 # Reciever stations
 # OGMU is at reciever 1
-sac file=R01 lon=5.7268 lat=45.1950 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R02 lon=5.7365 lat=45.1814 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R03 lon=5.7400 lat=45.1930 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R04 lon=5.7757 lat=45.1200 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
+rec file=R01 lon=5.7268 lat=45.1950 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R02 lon=5.7365 lat=45.1814 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R03 lon=5.7400 lat=45.1930 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R04 lon=5.7757 lat=45.1200 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
 # OGFH is at reciever 5
-sac file=R05 lon=5.6999 lat=45.1363 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R06 lon=5.8210 lat=45.2086 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R07 lon=5.8210 lat=45.2086 topodepth=40.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R08 lon=5.8210 lat=45.2086 topodepth=541.5 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R09 lon=5.6709 lat=45.2147 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
+rec file=R05 lon=5.6999 lat=45.1363 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R06 lon=5.8210 lat=45.2086 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R07 lon=5.8210 lat=45.2086 depth=40.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R08 lon=5.8210 lat=45.2086 depth=541.5 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R09 lon=5.6709 lat=45.2147 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
 # OGFB is at reciever 10
-sac file=R10 lon=5.6909 lat=45.2113 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R11 lon=5.7161 lat=45.1716 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R12 lon=5.7578 lat=45.1967 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R13 lon=5.7573 lat=45.1738 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R14 lon=5.7518 lat=45.1756 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R15 lon=5.7494 lat=45.1728 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R16 lon=5.7554 lat=45.1763 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R17 lon=5.7529 lat=45.1805 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R18 lon=5.7467 lat=45.1754 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R19 lon=5.7869 lat=45.18456 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R20 lon=5.7454 lat=45.20450 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R21 lon=5.7250 lat=45.15965 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R22 lon=5.6989 lat=45.16108 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R23 lon=5.6888 lat=45.19249 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R24 lon=5.6750 lat=45.22450 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R25 lon=5.7993 lat=45.2207 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R26 lon=5.8047 lat=45.2177 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R27 lon=5.8101 lat=45.2147 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R28 lon=5.8156 lat=45.2117 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R29 lon=5.8250 lat=45.2065 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R30 lon=5.8290 lat=45.2043 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R31 lon=5.8323 lat=45.2021 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R32 lon=5.8370 lat=45.1999 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R33 lon=5.9300 lat=45.1650 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R34 lon=5.8968 lat=45.1193 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R35 lon=5.9166 lat=45.0996 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R36 lon=5.8500 lat=45.1912 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R37 lon=5.6414 lat=45.1494 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R38 lon=5.6368 lat=45.1798 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R39 lon=5.7094 lat=45.2356 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-sac file=R40 lon=5.7408 lat=45.2326 topodepth=0.0 nsew=1 usgsformat=1 sacformat=1 velocity=1
-
+rec file=R10 lon=5.6909 lat=45.2113 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R11 lon=5.7161 lat=45.1716 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R12 lon=5.7578 lat=45.1967 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R13 lon=5.7573 lat=45.1738 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R14 lon=5.7518 lat=45.1756 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R15 lon=5.7494 lat=45.1728 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R16 lon=5.7554 lat=45.1763 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R17 lon=5.7529 lat=45.1805 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R18 lon=5.7467 lat=45.1754 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R19 lon=5.7869 lat=45.18456 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R20 lon=5.7454 lat=45.20450 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R21 lon=5.7250 lat=45.15965 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R22 lon=5.6989 lat=45.16108 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R23 lon=5.6888 lat=45.19249 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R24 lon=5.6750 lat=45.22450 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R25 lon=5.7993 lat=45.2207 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R26 lon=5.8047 lat=45.2177 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R27 lon=5.8101 lat=45.2147 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R28 lon=5.8156 lat=45.2117 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R29 lon=5.8250 lat=45.2065 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R30 lon=5.8290 lat=45.2043 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R31 lon=5.8323 lat=45.2021 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R32 lon=5.8370 lat=45.1999 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R33 lon=5.9300 lat=45.1650 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R34 lon=5.8968 lat=45.1193 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R35 lon=5.9166 lat=45.0996 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R36 lon=5.8500 lat=45.1912 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R37 lon=5.6414 lat=45.1494 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R38 lon=5.6368 lat=45.1798 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R39 lon=5.7094 lat=45.2356 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
+#rec file=R40 lon=5.7408 lat=45.2326 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
