@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Mon Jul 22 16:51:56 PDT 2013
+  Compiled on: Wed Aug 14 11:11:24 PDT 2013
   By user:     andersp
-  Machine:     cab689
+  Machine:     cab669
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -36,7 +36,7 @@ Total number of grid points (without ghost points): 1.10533e+07
 	 Efile SF Model specified...
 	 Looking for etree model: /p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree
 
-   Execution time, reading input file 20.6943 seconds 
+   Execution time, reading input file 21.4554 seconds 
 ----------------------------------------------------
  Making Output Directory: alum-0.1-results/
 		
@@ -75,15 +75,19 @@ EFile Initialized Node Types:
        3.975e+08 Pa     <=  mu      <= 6.44701e+10 Pa
        1.4282e+08 Pa     <=  lambda  <= 7.13863e+10 Pa
        ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=3.333330e+02, minVs/h=8.88001 (Cartesian)
+g=1, h=3.333330e+02, minVs/h=1.5 (curvilinear)
+
 Filter precursor = 2.700782e+01
 margin = 1.254767e-01
 GMT file is open, about to write
 Wrote GMT file: alum-0.1-results/wpp.gmt
-   Execution time, start up phase 44.2963 seconds 
+   Execution time, start up phase 44.4413 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: alum-0.1-results/
 Lowpass filtering all source time functions to corner frequency fc2=1.000000e-01
-Saving one discretized time function
 ============================================================
  Running program on 128 MPI tasks using the following data: 
 
@@ -135,17 +139,17 @@ writing image plane on file alum-0.1-results/img.cycle=0922.z=0.magdudt.sw4img
 writing image plane on file alum-0.1-results/img.cycle=0922.z=0.hmaxdudt.sw4img
 Writing BINARY SAC files, of size 1001: alum-0.1-results/jpsb.[ev|nv|uv]
 Writing BINARY SAC files, of size 1001: alum-0.1-results/2034.[ev|nv|uv]
-Writing BINARY SAC files, of size 1001: alum-0.1-results/cal.[ev|nv|uv]
 Writing BINARY SAC files, of size 1001: alum-0.1-results/mhc.[ev|nv|uv]
+Writing BINARY SAC files, of size 1001: alum-0.1-results/chr.[ev|nv|uv]
+Writing BINARY SAC files, of size 1001: alum-0.1-results/cal.[ev|nv|uv]
+Writing BINARY SAC files, of size 1001: alum-0.1-results/sccb.[ev|nv|uv]
 Writing BINARY SAC files, of size 1001: alum-0.1-results/mp1.[ev|nv|uv]
 Writing BINARY SAC files, of size 1001: alum-0.1-results/1427.[ev|nv|uv]
-Writing BINARY SAC files, of size 1001: alum-0.1-results/chr.[ev|nv|uv]
-Writing BINARY SAC files, of size 1001: alum-0.1-results/sccb.[ev|nv|uv]
 Time step    1001  t =   4.3437801e+01
-Writing ASCII USGS file, of size 1001: alum-0.1-results/jpsb.txt
 Writing ASCII USGS file, of size 1001: alum-0.1-results/2034.txt
-Writing ASCII USGS file, of size 1001: alum-0.1-results/mhc.txt
+Writing ASCII USGS file, of size 1001: alum-0.1-results/jpsb.txt
 Writing ASCII USGS file, of size 1001: alum-0.1-results/sccb.txt
+Writing ASCII USGS file, of size 1001: alum-0.1-results/mhc.txt
 Writing ASCII USGS file, of size 1001: alum-0.1-results/chr.txt
 Writing ASCII USGS file, of size 1001: alum-0.1-results/mp1.txt
 Writing ASCII USGS file, of size 1001: alum-0.1-results/1427.txt
@@ -191,36 +195,36 @@ Time step    2001  t =   8.6832208e+01
 Writing ASCII USGS file, of size 2001: alum-0.1-results/jpsb.txt
 Writing ASCII USGS file, of size 2001: alum-0.1-results/mp1.txt
 Writing ASCII USGS file, of size 2001: alum-0.1-results/sccb.txt
-Writing ASCII USGS file, of size 2001: alum-0.1-results/1427.txt
 Writing ASCII USGS file, of size 2001: alum-0.1-results/mhc.txt
-Writing ASCII USGS file, of size 2001: alum-0.1-results/2034.txt
 Writing ASCII USGS file, of size 2001: alum-0.1-results/chr.txt
 Writing ASCII USGS file, of size 2001: alum-0.1-results/cal.txt
+Writing ASCII USGS file, of size 2001: alum-0.1-results/2034.txt
+Writing ASCII USGS file, of size 2001: alum-0.1-results/1427.txt
 Writing BINARY SAC files, of size 2001: alum-0.1-results/1403.[ev|nv|uv]
 Writing ASCII USGS file, of size 2001: alum-0.1-results/1403.txt
 Time step    2074  t =   9.0000000e+01
 writing image plane on file alum-0.1-results/img.cycle=2074.z=0.magdudt.sw4img
 writing image plane on file alum-0.1-results/img.cycle=2074.z=0.hmaxdudt.sw4img
   Time stepping finished...
-   Execution time, solver phase 1 minute  51.1665 seconds 
+   Execution time, solver phase 1 minute  51.038 seconds 
 ============================================================
  program sw4 finished! 
 ============================================================
-Writing BINARY SAC files, of size 2074: alum-0.1-results/chr.[ev|nv|uv]
-Writing BINARY SAC files, of size 2074: alum-0.1-results/mhc.[ev|nv|uv]
 Writing BINARY SAC files, of size 2074: alum-0.1-results/2034.[ev|nv|uv]
-Writing BINARY SAC files, of size 2074: alum-0.1-results/mp1.[ev|nv|uv]
+Writing BINARY SAC files, of size 2074: alum-0.1-results/chr.[ev|nv|uv]
 Writing BINARY SAC files, of size 2074: alum-0.1-results/cal.[ev|nv|uv]
-Writing BINARY SAC files, of size 2074: alum-0.1-results/sccb.[ev|nv|uv]
+Writing BINARY SAC files, of size 2074: alum-0.1-results/mhc.[ev|nv|uv]
+Writing BINARY SAC files, of size 2074: alum-0.1-results/mp1.[ev|nv|uv]
 Writing BINARY SAC files, of size 2074: alum-0.1-results/jpsb.[ev|nv|uv]
 Writing BINARY SAC files, of size 2074: alum-0.1-results/1427.[ev|nv|uv]
-Writing ASCII USGS file, of size 2074: alum-0.1-results/chr.txt
+Writing BINARY SAC files, of size 2074: alum-0.1-results/sccb.[ev|nv|uv]
 Writing ASCII USGS file, of size 2074: alum-0.1-results/2034.txt
 Writing ASCII USGS file, of size 2074: alum-0.1-results/mhc.txt
+Writing ASCII USGS file, of size 2074: alum-0.1-results/chr.txt
 Writing ASCII USGS file, of size 2074: alum-0.1-results/sccb.txt
 Writing ASCII USGS file, of size 2074: alum-0.1-results/cal.txt
 Writing ASCII USGS file, of size 2074: alum-0.1-results/mp1.txt
-Writing ASCII USGS file, of size 2074: alum-0.1-results/1427.txt
 Writing ASCII USGS file, of size 2074: alum-0.1-results/jpsb.txt
+Writing ASCII USGS file, of size 2074: alum-0.1-results/1427.txt
 Writing BINARY SAC files, of size 2074: alum-0.1-results/1403.[ev|nv|uv]
 Writing ASCII USGS file, of size 2074: alum-0.1-results/1403.txt

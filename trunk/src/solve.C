@@ -295,8 +295,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      MPI_Allreduce( &has_source_id, &has_source_max, 1, MPI_INT, MPI_MAX, m_cartesian_communicator );
      if( m_myRank == has_source_max )
      {
-       if (!mQuiet)
-	 printf("Saving one discretized time function\n");
+       if (!mQuiet && mVerbose >=1 )
+	 printf("*** Saving one discretized time function ***\n");
 
 //building the file name...
        string filename;
@@ -2512,7 +2512,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     uRec.resize(3);
     uRec[0] = (U[g0](1, i0, j0, k0) - Um2[g0](1, i0, j0, k0))/(2*mDt);
     uRec[1] = (U[g0](2, i0, j0, k0) - Um2[g0](2, i0, j0, k0))/(2*mDt);
-    uRec[3] = (U[g0](3, i0, j0, k0) - Um2[g0](3, i0, j0, k0))/(2*mDt);
+    uRec[2] = (U[g0](3, i0, j0, k0) - Um2[g0](3, i0, j0, k0))/(2*mDt);
   }
   else if(mode == TimeSeries::Div)
   {
@@ -2657,143 +2657,6 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
   
   return;
 }
-
-
-//
-// the following is from the old SAC class
-//
-//  bool curvilinear = a_ew->topographyExists() && m_grid0 == a_ew->mNumberOfGrids-1;
-//
-//     // Time to record data for sac file
-//    if( !m_div && !m_curl && !m_strains )
-//    {
-//       if( m_xycomponent )
-//       {
-// 	// Cartesian components
-// 	 mRecordedUX.push_back((float)(a_ew->mU)[m_grid0](1,m_i0,m_j0,m_k0));
-// 	 mRecordedUY.push_back((float)(a_ew->mU)[m_grid0](2,m_i0,m_j0,m_k0));
-// 	 mRecordedUZ.push_back((float)(a_ew->mU)[m_grid0](3,m_i0,m_j0,m_k0));
-//       }
-//       else
-//       {
-// 	// North-South, East-West, and Up components
-// 	 double ux  = (a_ew->mU)[m_grid0](1,m_i0,m_j0,m_k0);
-// 	 double uy  = (a_ew->mU)[m_grid0](2,m_i0,m_j0,m_k0);
-
-// 	 double uns = m_thynrm*ux-m_thxnrm*uy;
-// 	 double uew = m_salpha*ux+m_calpha*uy;
-	 
-// 	 mRecordedUX.push_back( (float)(uew) ); //E-W is stored in UX
-// 	 mRecordedUY.push_back( (float)(uns) ); //N-S is stored in UY
-// 	 mRecordedUZ.push_back(-(float)(a_ew->mU)[m_grid0](3,m_i0,m_j0,m_k0));
-//       }
-//    }
-//    // For curl and div, don't worry about one sided formulas at boundaries, because of ghost points.
-
-//    if( m_velocities )
-//    {
-//      int n = mRecordedUX.size();
-//      double vx, vy, vz;
-//      if( n == 1 )
-//      {
-// 	m_dmx = mRecordedUX[n-1];
-// 	m_dmy = mRecordedUY[n-1];
-// 	m_dmz = mRecordedUZ[n-1];
-//      }
-//      else if( n == 2 )
-//      {
-// 	m_d0x = mRecordedUX[n-1];
-// 	m_d0y = mRecordedUY[n-1];
-// 	m_d0z = mRecordedUZ[n-1];
-//      }
-//      else if( n == 3 )
-//      {
-// // one sided formula for v(1)
-//         vx = (-3*m_dmx+4*m_d0x-mRecordedUX[n-1] )*m_dthi; 
-//         mRecordedUX[n-3] = vx;
-//         vy = (-3*m_dmy+4*m_d0y-mRecordedUY[n-1] )*m_dthi; 
-//         mRecordedUY[n-3] = vy;
-//         vz = (-3*m_dmz+4*m_d0z-mRecordedUZ[n-1] )*m_dthi;
-//         mRecordedUZ[n-3] = vz;
-//      }
-//      if( n >= 3 )
-//      {
-// // Standard case;
-//         vx = (mRecordedUX[n-1]-m_dmx)*m_dthi;
-//         vy = (mRecordedUY[n-1]-m_dmy)*m_dthi;
-//         vz = (mRecordedUZ[n-1]-m_dmz)*m_dthi;
-//         mRecordedUX[n-2] = vx;
-//         mRecordedUY[n-2] = vy;
-//         mRecordedUZ[n-2] = vz;
-
-// // Need one sided forward, in case we are at the last point.
-// // Otherwise, this is overwritten in the next time step.
-//         vx = (m_dmx-4*m_d0x+3*mRecordedUX[n-1])*m_dthi;
-//         m_dmx = m_d0x;
-// 	m_d0x = mRecordedUX[n-1];
-// 	mRecordedUX[n-1] = vx;
-//         vy = (m_dmy-4*m_d0y+3*mRecordedUY[n-1])*m_dthi;
-//         m_dmy = m_d0y;
-// 	m_d0y = mRecordedUY[n-1];
-// 	mRecordedUY[n-1] = vy;
-//         vz = (m_dmz-4*m_d0z+3*mRecordedUZ[n-1])*m_dthi;
-//         m_dmz = m_d0z;
-// 	m_d0z = mRecordedUZ[n-1];
-// 	mRecordedUZ[n-1] = vz;
-//      }
-//    }
-//    if( m_velocities && m_strains )
-//    {
-//      int n = mRecordedUXY.size();
-//      double vx, vy, vz;
-//      if( n == 1 )
-//      {
-// 	m_dmxy = mRecordedUXY[n-1];
-// 	m_dmxz = mRecordedUXZ[n-1];
-// 	m_dmyz = mRecordedUYZ[n-1];
-//      }
-//      else if( n == 2 )
-//      {
-// 	m_d0xy = mRecordedUXY[n-1];
-// 	m_d0xz = mRecordedUXZ[n-1];
-// 	m_d0yz = mRecordedUYZ[n-1];
-//      }
-//      else if( n == 3 )
-//      {
-// // one sided formula for v(1)
-//         vx = (-3*m_dmxy+4*m_d0xy-mRecordedUXY[n-1] )*m_dthi; 
-//         mRecordedUXY[n-3] = vx;
-//         vy = (-3*m_dmxz+4*m_d0xz-mRecordedUXZ[n-1] )*m_dthi; 
-//         mRecordedUXZ[n-3] = vy;
-//         vz = (-3*m_dmyz+4*m_d0yz-mRecordedUYZ[n-1] )*m_dthi;
-//         mRecordedUYZ[n-3] = vz;
-//      }
-//      if( n >= 3 )
-//      {
-// // Standard case;
-//         vx = (mRecordedUXY[n-1]-m_dmxy)*m_dthi;
-//         vy = (mRecordedUXZ[n-1]-m_dmxz)*m_dthi;
-//         vz = (mRecordedUYZ[n-1]-m_dmyz)*m_dthi;
-//         mRecordedUXY[n-2] = vx;
-//         mRecordedUXZ[n-2] = vy;
-//         mRecordedUYZ[n-2] = vz;
-
-// // Need one sided forward, in case we are at the last point.
-// // Otherwise, this is overwritten in the next time step.
-//         vx = (m_dmxy-4*m_d0xy+3*mRecordedUXY[n-1])*m_dthi;
-//         m_dmxy = m_d0xy;
-// 	m_d0xy = mRecordedUXY[n-1];
-// 	mRecordedUXY[n-1] = vx;
-//         vy = (m_dmxz-4*m_d0xz+3*mRecordedUXZ[n-1])*m_dthi;
-//         m_dmxz = m_d0xz;
-// 	m_d0xz = mRecordedUXZ[n-1];
-// 	mRecordedUYZ[n-1] = vy;
-//         vz = (m_dmyz-4*m_d0yz+3*mRecordedUYZ[n-1])*m_dthi;
-//         m_dmyz = m_d0yz;
-// 	m_d0yz = mRecordedUYZ[n-1];
-// 	mRecordedUYZ[n-1] = vz;
-//      }
-//    }
 
 //---------------------------------------------------------------------------
 void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
