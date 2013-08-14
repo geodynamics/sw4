@@ -1,0 +1,154 @@
+----------------------------------------------------------------
+            sw4 version 1.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Aug 14 11:11:24 PDT 2013
+  By user:     andersp
+  Machine:     cab669
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: Grenoble-q.in
+
+* Processing the grid command...
+* Setting nx to 201 to be consistent with h=200
+* Setting ny to 216 to be consistent with h=200
+* Setting nz to 201 to be consistent with h=200
+***inside extractTopographyFromGridFile***
+Nlon=119 Nlat=127
+lonMin=5.501190e+00, lonMax=6.110610e+00
+latMin=4.499800e+01, latMax=4.540530e+01
+elevMin=1.790000e+02, evalMax=2.841000e+03
+
+***Topography grid: min z = -2.672145e+03, max z = -1.806531e+02, top Cartesian z = 4.800000e+03
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       201       216       177      7684632
+   1       200       201       216        32      1389312
+Total number of grid points (without ghost points): 9.07394e+06
+
+***inside MaterialIfile::extractSurfaceFromGridFile***
+Nlon=120 Nlat=120 Nmat=1
+Material interface surfaces: lonMin=5.589069e+00, lonMax=5.950513e+00
+latMin=4.504340e+01, latMax=4.529908e+01
+depthMin=0.000000e+00, depthMax=1.063000e+03
+
+   Execution time, reading input file 0.874794 seconds 
+----------------------------------------------------
+ Making Output Directory: grenoble-q-results/
+		
+... Done!
+----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 5.520000e+00, Lat=4.501000e+01
+1: Lon= 5.520000e+00, Lat=4.536933e+01
+2: Lon= 6.069832e+00, Lat=4.536933e+01
+3: Lon= 6.066371e+00, Lat=4.501000e+01
+
+Considering all material blocks
+block command: outside = 0, material = 14157080
+block command: outside = 1278403, material = 12878677
+block command: outside = 9435776, material = 4721304
+block command: outside = 12045376, material = 2111704
+MaterialIfile:: set_material_properties: Total # points=14026600. Defined properties in # points=25714
+
+       ----------- Material properties ranges ---------------
+       2140 kg/m^3 <=  Density <= 3320 kg/m^3
+       1450 m/s    <=  Vp      <= 8000 m/s
+       500 m/s    <=  Vs      <= 4450 m/s
+       1.72595        <=  Vp/Vs   <= 5.31836
+       5.35e+08 Pa     <=  mu      <= 6.57443e+10 Pa
+       3.42935e+09 Pa     <=  lambda  <= 8.09914e+10 Pa
+       Using attenuation 
+       50        <=  Qs      <= 10000  
+       876        <=  Qp      <= 10000  
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+02, minVs/h=17.15 (Cartesian)
+g=1, h=2.000000e+02, minVs/h=2.5 (curvilinear)
+
+
+*** Attenuation parameters calculated for 3 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+Filter precursor = 8.110443e+00
+   Execution time, start up phase 0.557223 seconds 
+Running sw4 on 128 processors...
+Writing output to directory: grenoble-q-results/
+Lowpass filtering all source time functions to corner frequency fc2=3.330000e-01
+============================================================
+ Running program on 128 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 23
+ Number of time steps = 1744 dt: 0.0131881
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 2.8184e+13 Nm 
+  Moment magnitude     (Mw): 2.9
+  Number of sources 1
+-----------------------------------------------------------------------
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.lat.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.lon.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.topo.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.gridx.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.gridy.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.p.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.x=20000.p.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0000.z=0.magdudt.sw4img
+  Begin time stepping...
+Time step       1  t =   1.3188073e-02
+Time step     101  t =   1.3319954e+00
+writing image plane on file grenoble-q-results/g.cycle=0190.z=0.magdudt.sw4img
+Time step     201  t =   2.6508028e+00
+Time step     301  t =   3.9696101e+00
+writing image plane on file grenoble-q-results/g.cycle=0379.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0379.z=0.magdudt.sw4img
+Time step     401  t =   5.2884174e+00
+Time step     501  t =   6.6072248e+00
+writing image plane on file grenoble-q-results/g.cycle=0569.z=0.magdudt.sw4img
+Time step     601  t =   7.9260321e+00
+Time step     701  t =   9.2448394e+00
+writing image plane on file grenoble-q-results/g.cycle=0758.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0758.z=0.magdudt.sw4img
+Time step     801  t =   1.0563647e+01
+Time step     901  t =   1.1882454e+01
+writing image plane on file grenoble-q-results/g.cycle=0948.z=0.magdudt.sw4img
+Writing BINARY SAC files, of size 1001: grenoble-q-results/R01.[ev|nv|uv]
+Writing BINARY SAC files, of size 1001: grenoble-q-results/R10.[ev|nv|uv]
+Writing BINARY SAC files, of size 1001: grenoble-q-results/R05.[ev|nv|uv]
+Time step    1001  t =   1.3201261e+01
+Writing ASCII USGS file, of size 1001: grenoble-q-results/R10.txt
+Writing ASCII USGS file, of size 1001: grenoble-q-results/R01.txt
+Writing ASCII USGS file, of size 1001: grenoble-q-results/R05.txt
+Time step    1101  t =   1.4520069e+01
+writing image plane on file grenoble-q-results/g.cycle=1137.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=1137.z=0.magdudt.sw4img
+Time step    1201  t =   1.5838876e+01
+Time step    1301  t =   1.7157683e+01
+writing image plane on file grenoble-q-results/g.cycle=1327.z=0.magdudt.sw4img
+Time step    1401  t =   1.8476491e+01
+Time step    1501  t =   1.9795298e+01
+writing image plane on file grenoble-q-results/g.cycle=1517.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=1517.z=0.magdudt.sw4img
+Time step    1601  t =   2.1114106e+01
+Time step    1701  t =   2.2432913e+01
+writing image plane on file grenoble-q-results/g.cycle=1706.z=0.magdudt.sw4img
+Time step    1744  t =   2.3000000e+01
+  Time stepping finished...
+   Execution time, solver phase 3 minutes 58.2425 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
+Writing BINARY SAC files, of size 1744: grenoble-q-results/R10.[ev|nv|uv]
+Writing BINARY SAC files, of size 1744: grenoble-q-results/R01.[ev|nv|uv]
+Writing BINARY SAC files, of size 1744: grenoble-q-results/R05.[ev|nv|uv]
+Writing ASCII USGS file, of size 1744: grenoble-q-results/R01.txt
+Writing ASCII USGS file, of size 1744: grenoble-q-results/R05.txt
+Writing ASCII USGS file, of size 1744: grenoble-q-results/R10.txt
