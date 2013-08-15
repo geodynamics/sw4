@@ -6,9 +6,9 @@
 %           [om,fr] = ftfcnplot( fcn, freq, tmin, tmax, t0, col, lin )
 %
 %        Input:  fcn    - Name of source function (string), same name as
-%                         used in WPP. Also some additional functions
-%                         not in WPP, see function 'fcnplot'.
-%                freq   - Frequency parameter, scaling as in WPP.
+%                         used in SW4. Also some additional functions
+%                         not in SW4, see function 'fcnplot'.
+%                freq   - Frequency parameter, scaling as in SW4.
 %                tmin, tmax - Time interval 
 %                t0     - Time shift.
 %                col    - Plotting color.

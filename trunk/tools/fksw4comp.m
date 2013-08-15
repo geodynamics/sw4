@@ -1,23 +1,23 @@
 %
-%  FKWPPCOMP
+%  FKSW4COMP
 %     Compute the difference between two 3-component time series. The first time series is stored in 3 sac files
 %     (as output by the fk program). The second time series is given in one text file using the usgs format (as 
-%     is output by the wpp program). The wpp output files is assumed to hold (x,y,z) components with z directed 
+%     is output by the sw4 program). The sw4 output files is assumed to hold (x,y,z) components with z directed 
 %     downwards. The fk time series are assumed to contain the radial, transverse and vertical (upwards) components.
 %
 %  APPROACH
-%     The wpp time series is first rotated into radial, transverse and upwards components. The fk time series is then
-%     interpolated onto the same time levels as the wpp time series. Finally, the vector L2 and max norms of the
+%     The sw4 time series is first rotated into radial, transverse and upwards components. The fk time series is then
+%     interpolated onto the same time levels as the sw4 time series. Finally, the vector L2 and max norms of the
 %     difference is output together with the vector L2 and max norms of the fk time series.
 %
 %  USAGE:
-%     [e2norm, emaxnorm, u2norm, umaxnorm]=fkwppcomp( fkbase, wppfile, plotit, tshift, loh, sigma, sac, strike )
+%     [e2norm, emaxnorm, u2norm, umaxnorm]=fksw4comp( fkbase, sw4file, plotit, tshift, loh, sigma, sac, strike )
 %
 %  ARGUMENTS:
 %     Input:
 %          fkbase:  base name for sac files. The actual files must be named fkbase.[rtz]. NOT used when loh=1
-%          wppfile: file name of wpp output file
-%          plotit:  Plot the three components of the fk solution as well as the error (fk-wpp)
+%          sw4file: file name of sw4 output file
+%          plotit:  Plot the three components of the fk solution as well as the error (fk-sw4)
 %          tshift:  Optional argument:
 %                    shift fk time series by this amount (default value tshift=0)
 %          loh:    Optional argument:
@@ -25,10 +25,10 @@
 %                     1: read output from loh1exact
 %                     3: read output from loh3exact
 %          sigma:   Optional argument: only used for LOH3: spread in Gaussian time function sigma=1/freq, 
-%                     freq is WPP frequency parameter; default value: sigma=0.06
+%                     freq is SW4 frequency parameter; default value: sigma=0.06
 %          sac:     Optional argument: (default value sac=0)
-%                     0: read wpp results from 1 usgs formatted file with name 'wppfile'
-%                     1: read wpp results from 3 sac files with base name 'wppfile'
+%                     0: read sw4 results from 1 usgs formatted file with name 'sw4file'
+%                     1: read sw4 results from 3 sac files with base name 'sw4file'
 %          strike:  Optional argument:
 %                   strike angle [degrees] for the reciever location. Default: 53.1301
 %     Output:
@@ -37,7 +37,7 @@
 %          u2norm:    Vector L2-norm of fk time series
 %          umaxnorm:  Vector max-norm of fk time series
 %
-function [e2norm, emaxnorm, u2norm, umaxnorm]=fkwppcomp( fkbase, wppfile, plotit, tshift, loh, sigma, sac, strike )
+function [e2norm, emaxnorm, u2norm, umaxnorm]=fksw4comp( fkbase, sw4file, plotit, tshift, loh, sigma, sac, strike )
 
 if nargin < 8 % standard location of the reciever for the LOH1-3 test cases
   strike = 53.1301;
@@ -72,32 +72,32 @@ end
 % test
 %plot(tfk,radfk,tfk,tranfk,tfk,vertfk)
 
-% read wpp file
+% read sw4 file
 if (sac==1)
 % x file name
-  fname=sprintf('%s.x', wppfile);
+  fname=sprintf('%s.x', sw4file);
   [uxw dtw dum dum t0w] = readsac(fname);
   uxw = uxw';
 % x file name
-  fname=sprintf('%s.y', wppfile);
+  fname=sprintf('%s.y', sw4file);
   [uyw dtw dum dum t0w] = readsac(fname);
   uyw = uyw';
 % x file name
-  fname=sprintf('%s.z', wppfile);
+  fname=sprintf('%s.z', sw4file);
   [uzw dtw dum dum t0w] = readsac(fname);
   uzw = uzw';
 % construct time levels
   ntw = length(uxw);
   tw = t0w + dtw*[0:ntw-1];
 else
-  [tw, uxw, uyw, uzw]=readusgs( wppfile );
+  [tw, uxw, uyw, uzw]=readusgs( sw4file );
 end
 
 % strike angle defines radial and tangential components
 ca = cos(strike*pi/180);
 sa = sin(strike*pi/180);
 
-% rotate wpp data
+% rotate sw4 data
 urw = ca*uxw + sa*uyw;
 utw = -sa*uxw + ca*uyw;
 uvw = uzw; % positive downwards
@@ -105,13 +105,13 @@ uvw = uzw; % positive downwards
 % test
 %plot(tw, urw, tw, utw, tw, uvw)
 
-% interpolate fk solution onto wpp time levels
+% interpolate fk solution onto sw4 time levels
 [radi, trani, upi] = fkinterp(tfk, radfk, tranfk, vertfk, tw);
 
 tfkmax = max(tfk);
 twmax  = max(tw);
 
-% ignore any part of the wpp solution that extends beyonf the fk solution
+% ignore any part of the sw4 solution that extends beyonf the fk solution
 if twmax>tfkmax
   twmin = tw(1);
   dtw = (twmax-twmin)/(length(tw)-1);
