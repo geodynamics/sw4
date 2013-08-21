@@ -33,11 +33,11 @@ endif
 
 ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g
-   CXXFLAGS  = -g 
+   CXXFLAGS  = -g -I../src
    CFLAGS    = -g
 else
    FFLAGS   = -O3 
-   CXXFLAGS = -O 
+   CXXFLAGS = -O -I../src
    CFLAGS   = -O 
 endif
 
@@ -133,8 +133,33 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        rhs4curvilinear.o rhs4curvilinearsg.o gradients.o Image3D.o MaterialVolimagefile.o MaterialInvtest.o \
        invtestmtrl.o projectmtrl.o randomfield3d.o
 
+OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
+       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+       parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
+       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
+       rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
+       Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
+       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       rhs4curvilinear.o rhs4curvilinearsg.o gradients.o Image3D.o MaterialVolimagefile.o ConvParOutput.o \
+       MaterialInvtest.o invtestmtrl.o projectmtrl.o randomfield3d.o
+
+MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
+       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+       parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
+       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
+       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
+       rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
+       Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
+       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       rhs4curvilinear.o rhs4curvilinearsg.o solve-allpars.o solve-backward-allpars.o DataPatches.o \
+       gradients.o  Image3D.o MaterialVolimagefile.o  MaterialInvtest.o invtestmtrl.o lbfgs.o  projectmtrl.o \
+       randomfield3d.o
+
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
+
+FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
@@ -146,6 +171,20 @@ sw4: $(FOBJ)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
+	@echo "*** Build directory: " $(builddir) " ***"
+
+sw4opt: $(FOBJOPT)
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(QUADPACK) $(linklibs)
+	@echo " "
+	@echo "******* sw4opt was built successfully *******" 
+	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 
 # distribution
@@ -174,6 +213,14 @@ $(builddir)/%.o:src/quadpack/%.f
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.C
+	/bin/mkdir -p $(builddir)
+	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
+
+$(builddir)/%.o:opt-src/%.f
+	/bin/mkdir -p $(builddir)
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+
+$(builddir)/%.o:opt-src/%.C
 	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
 
