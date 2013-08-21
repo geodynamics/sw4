@@ -1,41 +1,3 @@
-# #  WPP LICENSE
-# # ----------------------------------------------------------------------
-# # WPP - Wave propagation Program
-# # ----------------------------------------------------------------------
-# # Copyright (C) 2008, Lawrence Livermore National Security, LLC.  
-# # Produced at the Lawrence Livermore National Laboratory
-# # 
-# # Written by:
-# # 
-# # Bjorn Sjogreen   (sjogreen2@llnl.gov)
-# # Anders Petersson  (andersp@llnl.gov)
-# # 
-# # Alums:
-# # Stefan Nilsson      
-# # Daniel Appelo
-# # Kathleen McCandless (mccandless2@llnl.gov)
-# # Caroline Bono
-# # 
-# # CODE-227123 All rights reserved.
-# # 
-# # This file is part of WPP, v2.0
-# # 
-# # Please also read docs/GPLLICENSE.txt which contains 
-# # "Our Notice and GNU General Public License"
-# # 
-# # This program is free software; you can redistribute it and/or modify
-# # it under the terms of the GNU General Public License as published by
-# # the Free Software Foundation; version 2, dated June 1991.
-# # 
-# # This program is distributed in the hope that it will be useful,
-# # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# # terms and conditions of the GNU General Public License for more details.
-# # 
-# # You should have received a copy of the GNU General Public License along with
-# # this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-# # Place, Suite 330, Boston MA 02111-1307 USA.
-# # ----------------------------------------------------------------------
 ################################################################
 #
 # Checks to ensure the license is put in each source code file
@@ -54,9 +16,9 @@ def embedLicense(license, path):
     numFortran = 0
     numC = 0
     numCXX = 0
+    numInput = 0
     numHeaders = 0
     numPY = 0
-    numScons = 0
     
     numFixed = 0
     numExamined = 0
@@ -68,12 +30,14 @@ def embedLicense(license, path):
         count += 1
 
         excludeDirs = ['CVS',
-                       'src1.0',
-                       'src1.1',
-                       'src1.2',
-                       'docs1.0',
-                       'docs1.1',
-                       'docs1.2']
+                       'CVSROOT',
+                       'configs',
+                       'debug_v1.0',
+                       'docs',
+                       'opt-src',
+                       'optimize_v1.0',
+                       'tools',
+                       'tests']
 
         process = 1
         for key in excludeDirs[:]:
@@ -100,17 +64,16 @@ def embedLicense(license, path):
                 numCXX+=1
                 commentChar = '// '
             elif f.endswith('.c'):
-                print f
                 numC+=1
                 commentChar = '// '
+            elif f.endswith('.in') or f.endswith('.out'):
+                numInput+=1
+                commentChar = '# '
             elif f.endswith('.h'):
                 numHeaders+=1
                 commentChar = '// '
             elif f.endswith('.py'):
                 numPY+=1
-                commentChar = '# '
-            elif f.endswith('SConscript') or f.endswith('SConstruct'):
-                numScons+=1
                 commentChar = '# '
 
             if commentChar != 'NONE':
@@ -144,7 +107,7 @@ def embedLicense(license, path):
                 print f, hasEmacs
                 if hasEmacs:
                     writeFile.write(emacsLine)
-                writeFile.write(commentChar + ' WPP LICENSE\n')
+                writeFile.write(commentChar + ' SW4 LICENSE\n')
                 for line in preamble:
                     #print "new: ", commentChar, line
                     writeFile.write( commentChar + line)
@@ -157,7 +120,7 @@ def embedLicense(license, path):
                 else:
                     #print "Has old license file, so let's remove it"
                     # we want to write the new one, but remove the old.
-                    len_license = 31
+                    len_license = 30
                     
                     for i in range(0, len_license):
                         line = readFile.readline()
@@ -177,8 +140,8 @@ def embedLicense(license, path):
     print "C++:     ", numCXX
     print "C:       ", numC
     print "Headers: ", numHeaders
+    print "Input scripts & output files: ", numInput
     print "Python:  ", numPY
-    print "Scons:   ", numScons
     print
     print "Fixed  ", numFixed, " files of ", numExamined, " examined. "
     print "---------------------------------------------"
