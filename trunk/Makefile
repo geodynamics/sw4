@@ -192,7 +192,7 @@ tardir := sw4-v1.0
 sw4-v1.0.tgz:
 	/bin/mkdir -p $(tardir)
 	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
-	cd $(tardir); /bin/rm -rf tests docs CVSROOT
+	cd $(tardir); /bin/rm -rf tests docs opt-src CVSROOT
 	cd $(tardir); /bin/rm -f enforceLicense.py
 	@echo "building tar ball..."
 	tar -c --exclude "CVS" -z -f $@ $(tardir)
