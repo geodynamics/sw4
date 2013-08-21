@@ -37,7 +37,8 @@ def embedLicense(license, path):
                        'opt-src',
                        'optimize_v1.0',
                        'tools',
-                       'tests']
+                       'tests',
+                       'quadpack']
 
         process = 1
         for key in excludeDirs[:]:
