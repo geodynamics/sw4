@@ -161,6 +161,8 @@ FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
 FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
+FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
+
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
@@ -184,6 +186,20 @@ sw4opt: $(FOBJOPT)
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(QUADPACK) $(linklibs)
 	@echo " "
 	@echo "******* sw4opt was built successfully *******" 
+	@echo " "
+	@echo "*** Build directory: " $(builddir) " ***"
+
+sw4mopt: $(FMOBJOPT)
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(QUADPACK) $(linklibs)
+	@echo " "
+	@echo "******* sw4mopt was built successfully *******" 
 	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 
@@ -227,4 +243,4 @@ $(builddir)/%.o:opt-src/%.C
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 sw4opt $(OBJ) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 sw4opt $(OBJ) $(QUADPACK)
+	cd $(optdir); /bin/rm -f sw4 sw4opt sw4mopt $(OBJ) $(OBJOPT) $(MOBJOPT) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 sw4opt $(OBJ) $(OBJOPT) $(MOBJOPT) $(QUADPACK)

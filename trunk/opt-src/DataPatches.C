@@ -274,7 +274,7 @@ void DataPatches::save_to_file( )
       }
 	 
       // ...and add new data set(s)
-      size_t linuxlimit = static_cast<size_t>(round(pow(2,31)/sizeof(double)));
+      size_t linuxlimit = static_cast<size_t>(round(pow(2.0,31)/sizeof(double)));
       for( int n=0; n < m_ncurrent ; n++ )
       {
          size_t npts      = m_dataptr[m_npatches];
@@ -363,7 +363,7 @@ void DataPatches::read_from_file( int n )
       off += (nstart - m_nmin )*m_dataptr[m_npatches]*sizeof(double);
       nr = lseek( fd, off, SEEK_SET );
 
-      size_t linuxlimit = static_cast<size_t>(round(pow(2,31)/sizeof(double)));
+      size_t linuxlimit = static_cast<size_t>(round(pow(2.0,31)/sizeof(double)));
 
       m_ncurrent = m_nsteps;
       for( int s=0 ; s < m_ncurrent ; s++ )
