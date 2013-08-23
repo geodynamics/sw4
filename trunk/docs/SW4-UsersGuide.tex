@@ -2724,19 +2724,17 @@ different from {\bf vp} when $z_1\, {\bf vpgrad}$ is large.
 \multicolumn{5}{|c|}{\bf block command parameters (part 1)}\\ \hline
 {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
 \hline
-vp          & P-wave velocity           & real     & m/s      & none \\ \hline
-vs          & S-wave velocity           & real     & m/s      & none \\ \hline
-rho         & density                   & real     & kg/m$^3$ & none \\ \hline
-%qp or Qp    & P-wave quality factor     & real     & none     & none \\ \hline
-%qs or Qs    & S-wave quality factor     & real     & none     & none \\ \hline
-vpgrad      & vertical gradient for vp  & real     & s$^{-1}$  & none \\ \hline
-vsgrad      & vertical gradient for vs  & real     & s$^{-1}$  & none \\ \hline
-rhograd     & vertical gradient for rho & real     & kg/m$^4$  & none \\ \hline
-%qp          & P-wave quality factor     & real     & none \\ \hline
-%qs          & S-wave quality factor     & real     & none \\ \hline
+vp          & P-wave velocity           & real $>0$  & m/s      & none \\ \hline
+vs          & S-wave velocity           & real $>0$  & m/s      & none \\ \hline
+rho         & density                   & real $>0$  & kg/m$^3$ & none \\ \hline
+vpgrad      & vertical gradient for vp  & real       & m/s/m    & none \\ \hline
+vsgrad      & vertical gradient for vs  & real       & m/s/m    & none \\ \hline
+rhograd     & vertical gradient for rho & real       & kg/m$^4$ & none \\ \hline
+qp (or Qp)  & P-wave quality factor     & real $>0$  & none     & none \\ \hline
+qs (or Qs)  & S-wave quality factor     & real $>0$  & none    & none \\ \hline
 \end{tabular}
 \end{center}
-\index{block parameters!vp, vs, rho, vpgrad, vsgrad, rhograd}
+\index{block parameters!vp, vs, rho, vpgrad, vsgrad, rhograd, qp, qs}
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
