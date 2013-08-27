@@ -86,6 +86,20 @@ double SuperGrid::dampingCoeff(double x) const
   return f;
 }
 
+double SuperGrid::sigmaScale(double x) const
+{ // this function is zero for m_x0+m_width <= x <= m_x1-m_width
+  double f=0.;
+  if (m_left && x < m_x0+m_width)
+// the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
+// constant damping in 0 <= x <= const_width
+    f=sigma( (m_x0 + m_width - x)/m_trans_width); 
+  else if (m_right && x > m_x1-m_width)
+// the following makes the damping transition in m_x1-m_width < x < m_x1 - const_width < m_x1
+// constant damping in m_x1 - const_width <= x <= m_x1
+    f=sigma( (x - (m_x1-m_width) )/m_trans_width);
+  return f;
+}
+
 
 // used for damping coefficient
 double SuperGrid::sigma(double xi) const
@@ -108,8 +122,8 @@ double SuperGrid::sigma(double xi) const
 }
 
 double SuperGrid::stretching( double x ) const
-{
-   return 1-(1-m_epsL)*dampingCoeff(x);
+{ // this function satisfies 0 < epsL <= f <= 1
+   return 1-(1-m_epsL)*sigmaScale(x);
 }
 
 double SuperGrid::tw_stretching( double x ) const

@@ -209,6 +209,7 @@ sw4-v1.0.tgz:
 	/bin/mkdir -p $(tardir)
 	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
 	cd $(tardir); /bin/rm -rf tests docs opt-src CVSROOT
+# add a command for sticking in the license blurb in all source code files?
 	cd $(tardir); /bin/rm -f enforceLicense.py
 	cd $(tardir); /bin/rm -f Blurb.txt
 	@echo "building tar ball..."

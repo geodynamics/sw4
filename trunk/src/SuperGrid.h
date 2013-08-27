@@ -9,6 +9,7 @@ public:
 SuperGrid();
 void define_taper(bool left, double leftStart, bool right, double rightEnd, 
 		  double width );
+double sigmaScale(double x) const;
 double dampingCoeff(double x) const;
 double stretching( double x ) const;
 double tw_stretching( double x ) const;
