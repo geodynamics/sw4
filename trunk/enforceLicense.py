@@ -26,7 +26,7 @@ def embedLicense(license, path):
     from os.path import join, getsize
     count = 0
     for root, dirs, files in os.walk(path):
-        print count
+#        print count
         count += 1
 
         excludeDirs = ['CVS',
@@ -42,17 +42,17 @@ def embedLicense(license, path):
 
         process = 1
         for key in excludeDirs[:]:
-            print "KEY", key, root, dirs
+#            print "KEY", key, root, dirs
             if root.find(key) > 0:
                 process=0
 
         if not process:
             continue
 
-        print "ROOT: ", root, dirs, files
+#        print "ROOT: ", root, dirs, files
 
         for f in files:
-            print f
+#            print f
             commentChar = 'NONE'
 	    if f.startswith('.'):
                continue;
@@ -67,9 +67,10 @@ def embedLicense(license, path):
             elif f.endswith('.c'):
                 numC+=1
                 commentChar = '// '
-            elif f.endswith('.in') or f.endswith('.out'):
-                numInput+=1
-                commentChar = '# '
+# Don't add blurb to in/out files
+#            elif f.endswith('.in') or f.endswith('.out'):
+#                numInput+=1
+#                commentChar = '# '
             elif f.endswith('.h'):
                 numHeaders+=1
                 commentChar = '// '
@@ -81,7 +82,7 @@ def embedLicense(license, path):
                 # process this file
                 myfile = os.path.join(os.path.abspath(path), root, f)
                 bkfile = myfile  + '.bk'
-                print "Copying: ", myfile, " to: ", bkfile
+#                print "Copying: ", myfile, " to: ", bkfile
                 shutil.copy(myfile, bkfile)
 
                 readFile = open(myfile, 'r')
@@ -104,8 +105,7 @@ def embedLicense(license, path):
                     hasLicense = 1
 
 
-                #print " going to embedd the license file"
-                print f, hasEmacs
+                print " embedding the license blurb in file: ", f, " hasEmacs: ", hasEmacs
                 if hasEmacs:
                     writeFile.write(emacsLine)
                 writeFile.write(commentChar + ' SW4 LICENSE\n')
@@ -136,7 +136,7 @@ def embedLicense(license, path):
                 os.remove(bkfile)
                 numFixed += 1
 
-    print "-----------------------------------------"
+    print "-------SUMMARY----------------------------------"
     print "Fortran: ", numFortran
     print "C++:     ", numCXX
     print "C:       ", numC

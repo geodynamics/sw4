@@ -44,6 +44,8 @@ endif
 debugdir := debug_v1.0
 optdir := optimize_v1.0
 
+fullpath := $(shell pwd)
+
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
@@ -210,7 +212,7 @@ sw4-v1.0.tgz:
 	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
 	cd $(tardir); /bin/rm -rf tests docs opt-src CVSROOT
 # command for sticking in the license blurb in all source code files
-	cd $(tardir); python enforceLicense.py Blurb.txt $(tardir)
+	cd $(tardir); python enforceLicense.py Blurb.txt $(fullpath)/$(tardir)
 	cd $(tardir); /bin/rm -f enforceLicense.py
 	cd $(tardir); /bin/rm -f Blurb.txt
 	cd $(tardir); /bin/rm -f Makefile

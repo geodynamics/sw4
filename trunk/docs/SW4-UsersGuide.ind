@@ -117,26 +117,26 @@
   \indexspace
 
   \item parallel execution, \hyperpage{8}
-  \item performance, \hyperpage{107}
+  \item performance, \hyperpage{108}
   \item pfile parameters
     \subitem filename, directory, smoothingsize, vpmin, vsmin, rhomin, flatten, style, 
 		\hyperpage{68}
   \item prefilter parameters
-    \subitem fc1, maxfreq, \hyperpage{62}
+    \subitem fc1, fc2, type, passes, order, \hyperpage{62}
 
   \indexspace
 
   \item randomize parameters
     \subitem lengthscale, lengthscalez, seed1, seed2, seed3, 
 		\hyperpage{71}
+  \item rec parameters
+    \subitem file, sta, writeEvery, usgsformat, sacformat, nsew, variables, 
+		\hyperpage{73}
+    \subitem location - x, y, z, lat, lon, depth, topodepth, 
+		\hyperpage{73}
 
   \indexspace
 
-  \item sac parameters
-    \subitem location - x, y, z, lat, lon, depth, topodepth, 
-		\hyperpage{73}
-    \subitem sta, file, type, writeEvery, eventDate, eventTime, nsew, velocity, usgsformat, sacformat, 
-		\hyperpage{73}
   \item source   parameters
     \subitem t0, freq, type, \hyperpage{63}
   \item source parameters
@@ -150,7 +150,7 @@
 		\hyperpage{63}
   \item srun, \hyperpage{8}
   \item supergrid parameters
-    \subitem thickness, damping, \hyperpage{61}
+    \subitem gp, dc, \hyperpage{61}
 
   \indexspace
 

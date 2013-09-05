@@ -51,7 +51,7 @@
 \author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
      Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This is
      contribution LLNL-SM-642292.}}
-\date{August 23, 2013} 
+\date{Septermber 5, 2013} 
 \maketitle
 
 %\thispagestyle{plain}
@@ -2439,10 +2439,10 @@ increasing {\tt dc} may lead to instabilities.
 %
 gp &  Number of grid points in the supergrid layer & int & 30\\ \hline
 %
-dc & Damping coefficient in supergrid region & real & 0.04 \\ \hline
+dc & Damping coefficient in supergrid region & real & 0.02 \\ \hline
 \end{tabular}
 \end{center}
-\index{supergrid parameters!thickness, damping}
+\index{supergrid parameters!gp, dc}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{prefilter [optional]}\label{keyword:prefilter}
@@ -2484,7 +2484,7 @@ passes & number of passes (1 or 2) & int & None & 2 \\ \hline
 order  & order of filter (1-10) & int & None & 2 \\ \hline
 \end{tabular}
 \end{center}
-\index{prefilter parameters!fc1, maxfreq}
+\index{prefilter parameters!fc1, fc2, type, passes, order}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Sources [required]}
@@ -3145,7 +3145,7 @@ depth & depth of the receiver (below topography) & real & m & none \\ \hline
 topodepth & depth of the receiver (same as depth) & real & m & none \\ \hline
 \end{tabular}
 \end{center}
-\index{sac parameters!location - x, y, z, lat, lon, depth, topodepth} 
+\index{rec parameters!location - x, y, z, lat, lon, depth, topodepth} 
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf sac command parameters (part 2)}\\ \hline
@@ -3161,7 +3161,7 @@ nsew & output (x,y,z)-components (0) or East, North, and vertical ($-z$) compone
 variables & displacement, velocity, div, curl, or strains & string & none & displacement \\ \hline
 \end{tabular}
 \end{center}
-\index{sac parameters!sta, file, type, writeEvery, eventDate, eventTime, nsew, velocity, usgsformat, sacformat}
+\index{rec parameters!file, sta, writeEvery, usgsformat, sacformat, nsew, variables}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % images
@@ -4779,30 +4779,44 @@ $C_p=\sqrt{3}$ m/s and density $\rho=1$ kg/m$^3$. The setup can be found in {\tt
 \begin{verbatim}
 fileio path=lamb-h0p04
 grid x=12 y=12 z=6 h=0.04
-time t=11.0
+time t=15.0
 supergrid gp=50
 testlamb rho=1 cp=1.732050807568877
 source x=6 y=6 z=0 fx=0 fy=0 fz=1 t0=0 freq=1 type=C6SmoothBump
-rec x=7.0 y=6.0 z=0 file=lamb usgsformat=1 sacformat=0
+rec x=10.0 y=6.0 z=0 file=sg1 usgsformat=1 sacformat=0
+rec x=10.0 y=10.0 z=0 file=sg2 usgsformat=1 sacformat=0
 \end{verbatim}
-The super-grid far-field layer is 50 grid points wide, corresponding to the width $\ell=2$.
-The error is evaluated in the interior of the computational domain, i.e., $2\leq (x,y) \leq 10$. Since the
-surface waves propagate with speed $C_r\approx 0.92$ and the source time function is zero after
-$t=1$, the exact solution becomes identically zero along the surface after time $t\approx 1 +
-4\sqrt{2}/0.92 \approx 7.15$. After this time, the error in the numerical solution is due to
-artificial reflections from the super-grid layers. In Figure~\ref{fig:lamb-err} we plot the max
-error as function of time for grid sizes $h=0.04$ and $h=0.02$. Here, the case with grid size
-$h=0.02$ can be found in {\tt examples/lamb/lamb-2.in}. Note that the error converges to
-zero as ${\cal O}(h^4)$ for $t>1$, i.e., after the singular point force has stopped acting.
+The super-grid far-field layer is 50 grid points wide, corresponding to the width $\ell=2$.  The
+error is evaluated along the free surface $z=0$, inside of the supergrid layers, i.e., $2\leq (x,y) \leq 10$, and is
+saved on the file \verb+lamb-h0p04/LambErr.txt+. Each line of this file has four columns
+corresponding to the time, max error, $L_2$ error, max norm of solution. Since the surface waves
+propagate with speed $C_r\approx 0.92$ and the source time function is zero after $t=1$, the exact
+solution becomes identically zero along the surface after time $t\approx 1 + 4\sqrt{2}/0.92 \approx
+7.15$. After this time, the error in the numerical solution is due to artificial reflections from
+the super-grid layers. In Figure~\ref{fig:lamb-err} we plot the $L_2$ norm of the error as function of time for
+grid sizes $h=0.04$ and $h=0.02$. Here, the case with grid size $h=0.02$ can be found in {\tt
+  examples/lamb/lamb-2.in}. Note that the error converges to zero as ${\cal O}(h^4)$ for $t>1$,
+i.e., after the singular point force has stopped acting.
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{lamb-err.png}
-\caption{The max norm of the error in the solution of Lamb's problem, as function of time. The blue
+\caption{The $L_2$ norm of the error in the solution of Lamb's problem, as function of time. The blue
 and green lines correspond to $h=0.04$ and $h=0.02$, respectively.}
 \label{fig:lamb-err}
 \end{center}
 \end{figure}
-
+Another way of assessing the quality of the super-grid layers is by inspecting the solution in the
+vicinity of the super-grid layers. The two \verb+rec+ commands save the solution at $(x,y,z)=(6,10,0)$
+and $(x,y,z)=(10,10,0)$. We can use the \verb+plotusgs+ matlab/octave script to inspect the
+numerical solution, see Figure~\ref{fig:sg2}.
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=0.7\textwidth]{sg2.png}
+\caption{The $x$, $y$, and $z$-components of the solution of Lamb's problem at $(x,y,z)=(10,10,0)$.}
+\label{fig:sg2}
+\end{center}
+\end{figure}
+We conclude that there are no visible artifacts due to the truncation of the computational domain.
 
 %% Here we provide input files with four different grid sizes, with $116^2\times 59$, $231^2 \times
 %% 116$, $461^2\times 231$, and $921^2\times 461$ grid points, respectively. Be aware that the finest

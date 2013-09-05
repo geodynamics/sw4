@@ -4,7 +4,7 @@ Please see the Users Guide for more information regarding the use of SW4.
 
 Files and directories:
 
-LICENCE.txt	GNU General Public Licence version 3
+LICENCE.txt	GNU General Public Licence version 2
 INSTALL.txt     Information about how to build SW4
 README.txt      This file!
 
