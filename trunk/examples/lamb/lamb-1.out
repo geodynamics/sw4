@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Fri Mar 1 14:46:20 PST 2013
+  Compiled on: Thu Sep 5 10:45:27 PDT 2013
   By user:     andersp
-  Machine:     cab668
+  Machine:     cab669
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -29,12 +29,18 @@ Total number of grid points (without ghost points): 1.36808e+07
 
 Default Supergrid thickness has been tuned; thickness = 50 grid sizes
 
-   Execution time, reading input file 0.020147 seconds 
+   Execution time, reading input file 0.012243 seconds 
 ----------------------------------------------------
  Making Output Directory: lamb-h0p04/
 		
 ... Done!
 ----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700011e+01
+2: Lon= 1.180001e+02, Lat=3.700011e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01
+
 
        ----------- Material properties ranges ---------------
        1 kg/m^3 <=  Density <= 1 kg/m^3
@@ -44,21 +50,18 @@ Default Supergrid thickness has been tuned; thickness = 50 grid sizes
        1 Pa     <=  mu      <= 1 Pa
        1 Pa     <=  lambda  <= 1 Pa
        ------------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700011e+01
-2: Lon= 1.180001e+02, Lat=3.700011e+01
-3: Lon= 1.180001e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.037728 seconds 
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=4.000000e-02, minVs/h=25 (Cartesian)
+
+   Execution time, start up phase 0.044813 seconds 
 Running sw4 on 64 processors...
 Writing output to directory: lamb-h0p04/
-Saving one discretized time function
 ============================================================
  Running program on 64 MPI tasks using the following data: 
 
- Start Time = 0 Goal Time = 11
- Number of time steps = 535 dt: 0.0205607
+ Start Time = 0 Goal Time = 15
+ Number of time steps = 645 dt: 0.0232558
 -----------------------------------------------------------
 Lamb's problem testing
 Parameters:
@@ -70,21 +73,23 @@ Parameters:
   Source time fcn = C6SmoothBump
 -----------------------------------------------------------
   Begin time stepping...
-Time step       1  t =   2.0560748e-02
-Time step     101  t =   2.0766355e+00
-Time step     201  t =   4.1327103e+00
-writing image plane on file lamb-h0p04/lamb.cycle=243.z=0.uz.sw4img (msg from proc # 0)
-writing image plane on file lamb-h0p04/lamb.cycle=243.z=0.uzerr.sw4img (msg from proc # 0)
-Time step     301  t =   6.1887850e+00
-Time step     401  t =   8.2448598e+00
-Time step     501  t =   1.0300935e+01
-Time step     535  t =   1.1000000e+01
+Time step       1  t =   2.3255814e-02
+Time step     101  t =   2.3488372e+00
+Time step     201  t =   4.6744186e+00
+writing image plane on file lamb-h0p04/lamb.cycle=215.z=0.uz.sw4img
+writing image plane on file lamb-h0p04/lamb.cycle=215.z=0.uzerr.sw4img
+Time step     301  t =   7.0000000e+00
+Time step     401  t =   9.3255814e+00
+Time step     501  t =   1.1651163e+01
+Time step     601  t =   1.3976744e+01
+Time step     645  t =   1.5000000e+01
   Time stepping finished...
 **** Closed file with solution errors for testing
-   Execution time, solver phase 53.3704 seconds 
+   Execution time, solver phase 1 minute  8.39873 seconds 
 
- Final solution errors: Linf =   3.7941059e-03, L2 =   1.2827529e-02
+ Final solution errors: Linf =   4.4018028e-04, L2 =   1.0859345e-03
 ============================================================
  program sw4 finished! 
 ============================================================
-Writing ASCII USGS file, of size 536: lamb-h0p04/lamb.txt
+Writing ASCII USGS file, of size 646: lamb-h0p04/sg2.txt
+Writing ASCII USGS file, of size 646: lamb-h0p04/sg1.txt

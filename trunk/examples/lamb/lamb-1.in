@@ -1,9 +1,9 @@
 fileio path=lamb-h0p04
 grid x=12 y=12 z=6 h=0.04
 # the end time should exceed 1.0, which is when the source shuts off
-time t=11.0
+time t=15.0
 
-# supergrid parameters
+# supergrid parameters (gp=30 is the default width)
 supergrid gp=50
 
 # test case
@@ -16,5 +16,6 @@ source x=6 y=6 z=0 fx=0 fy=0 fz=1 t0=0 freq=1 type=C6SmoothBump
 image mode=uz    z=0 file=lamb time=5.0 precision=double
 image mode=uzerr z=0 file=lamb time=5.0 precision=double
 
-# receiver
-rec x=7.0 y=6.0 z=0 file=lamb usgsformat=1 sacformat=0
+# receiver near the supergrid layer
+rec x=10.0 y=6.0 z=0 file=sg1 usgsformat=1 sacformat=0
+rec x=10.0 y=10.0 z=0 file=sg2 usgsformat=1 sacformat=0

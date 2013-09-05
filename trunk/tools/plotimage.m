@@ -13,6 +13,9 @@ pr=fread(fd,1,'int');
 nb=fread(fd,1,'int');
 t=fread(fd,1,'double');
 plane=fread(fd,1,'int');
+coord   =fread(fd,1,'double');
+mode    =fread(fd,1,'int');
+gridinfo=fread(fd,1,'int');
 fclose(fd);
 
 for b=1:nb
@@ -30,7 +33,7 @@ for b=1:nb
    [n m]=size(im);
 % make a frame
   if plane==0
-    if b==nb
+    if (b==nb) && (gridinfo == 1)
       plot(y(1,:), z(1,:),'k')
       plot(y(n,:), z(n,:),'k')
       plot(y(:,1), z(:,1),'k')
@@ -42,7 +45,7 @@ for b=1:nb
       plot(y(m)*ones(size(z)), z,'k')
     end;
   elseif plane==1
-    if b==nb
+    if (b==nb) && (gridinfo == 1)
       plot(x(1,:), z(1,:),'k')
       plot(x(n,:), z(n,:),'k')
       plot(x(:,1), z(:,1),'k')

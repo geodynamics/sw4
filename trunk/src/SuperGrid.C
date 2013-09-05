@@ -74,6 +74,25 @@ void SuperGrid::define_taper(bool left, double leftStart, bool right, double rig
 
 double SuperGrid::dampingCoeff(double x) const
 {
+  double phi = stretching(x);
+// should be equivalent to sigmaScale/(1-(1-epsL)*sigmaScale)
+  double f=(1-phi)/phi/(1-m_epsL);
+  
+//   if (m_left && x < m_x0+m_width)
+// // the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
+// // constant damping in 0 <= x <= const_width
+//     f=sigma( (m_x0 + m_width - x)/m_trans_width); 
+//   else if (m_right && x > m_x1-m_width)
+// // the following makes the damping transition in m_x1-m_width < x < m_x1 - const_width < m_x1
+// // constant damping in m_x1 - const_width <= x <= m_x1
+//     f=sigma( (x - (m_x1-m_width) )/m_trans_width);
+  return f;
+}
+
+double SuperGrid::sigmaScale(double x) const
+{ 
+// this function is zero for m_x0+m_width <= x <= m_x1-m_width
+// and one for x=m_x0 and x=m_x1
   double f=0.;
   if (m_left && x < m_x0+m_width)
 // the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
@@ -86,17 +105,17 @@ double SuperGrid::dampingCoeff(double x) const
   return f;
 }
 
-double SuperGrid::sigmaScale(double x) const
-{ // this function is zero for m_x0+m_width <= x <= m_x1-m_width
+double SuperGrid::linTaper(double x) const
+{ 
+// this function is zero for m_x0+m_width <= x <= m_x1-m_width
+// and one for x=m_x0 and x=m_x1
   double f=0.;
   if (m_left && x < m_x0+m_width)
-// the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
-// constant damping in 0 <= x <= const_width
-    f=sigma( (m_x0 + m_width - x)/m_trans_width); 
+//  linear taper from 0 to 1
+    f= (m_x0 + m_width - x)/m_width; 
   else if (m_right && x > m_x1-m_width)
-// the following makes the damping transition in m_x1-m_width < x < m_x1 - const_width < m_x1
-// constant damping in m_x1 - const_width <= x <= m_x1
-    f=sigma( (x - (m_x1-m_width) )/m_trans_width);
+// linear taper from 0 to 1
+    f= (x - (m_x1-m_width) )/m_width;
   return f;
 }
 
@@ -124,6 +143,12 @@ double SuperGrid::sigma(double xi) const
 double SuperGrid::stretching( double x ) const
 { // this function satisfies 0 < epsL <= f <= 1
    return 1-(1-m_epsL)*sigmaScale(x);
+}
+
+double SuperGrid::cornerTaper( double x ) const
+{ // this function is 1 in the interior and tapers linearly to 1/2 in the SG layers
+  const double cmin=0.33;
+  return 1.0 - (1.0-cmin)*linTaper(x);
 }
 
 double SuperGrid::tw_stretching( double x ) const

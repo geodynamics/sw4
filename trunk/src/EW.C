@@ -242,7 +242,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
 //  m_sg_gp_transition(30), // always the same as the thickness
-  m_supergrid_damping_coefficient(0.04),
+  m_supergrid_damping_coefficient(0.02), // good value for 4th order diss. Must be reduced by factor of 4 for 6th order diss.
 
   m_minJacobian(0.),
   m_maxJacobian(0.),

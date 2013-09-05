@@ -4,10 +4,11 @@
 %  Get some info (see below) about the content of an SW4 image file
 %
 %       Syntax:
-%               [cvals,np,plane,mx,mn]=imageinfo( fil, nc )
+%               [cvals,np,plane,mx,mn]=imageinfo( fil, nc, verbose )
 %
 %       Input:  fil - Name of image file
 %               nc  - Number of countour levels (default=10).
+%               verbose - 1 for verbose mode
 %       Output: cvals - Contour level vector to be used with function plotimage (for equally spaced levels between mn and mx)
 %               np    - Number of patches on file.
 %               plane - 0: x=const, 1: y=const, 2: z=const.
@@ -34,13 +35,6 @@ np = fread(fd,1,'int');
    timecreated=fread(fd,[1 25],'uchar');
    timestring=num2str(timecreated,'%c');
    mstr=getimagemodestr(mode);
-% Display header
-   if verbose == 1
-      disp(['Found:  prec  = ' num2str(pr)  ' t= ' num2str(t) ' plane= ' num2str(plane)]);   
-      disp(['        coord = ' num2str(coord) ' mode= ' mstr ' #patches= ' num2str(np) ]);
-      disp(['        gridinfo = ' num2str(gridinfo) ]); 
-     disp(['    file created ' timecreated(1:24)]);
-   end;
 fclose(fd);
 
 mx=0;
@@ -58,3 +52,12 @@ for b=1:np
   end;
 end;
 cvals = linspace(mn,mx,nc);
+
+% Display info
+if verbose == 1
+  disp(['Found:  prec  = ' num2str(pr)  ' t= ' num2str(t) ' plane= ' num2str(plane)]);   
+  disp(['        max value = ' num2str(mx) ' min value = ' num2str(mn)]);
+  disp(['        coord = ' num2str(coord) ' mode= ' mstr ' #patches= ' num2str(np) ]);
+  disp(['        gridinfo = ' num2str(gridinfo) ]); 
+  disp(['        file created ' timecreated(1:24)]);
+end;

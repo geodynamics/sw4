@@ -54,7 +54,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     
   if( mVerbose && proc_zero() )
   {
-    cout << "  Using Bjorn's (fast) parallel" << " IO library" << endl;
+    cout << "  Using Bjorn's fast (parallel)" << " IO library" << endl;
     if (m_pfs)
     {
       cout << "Assuming a PARALLEL file system" << endl;
@@ -1434,6 +1434,11 @@ void EW::assign_supergrid_damping_arrays()
   m_sg_str_x.resize(mNumberOfGrids);
   m_sg_str_y.resize(mNumberOfGrids);
   m_sg_str_z.resize(mNumberOfGrids);
+
+// new corner taper functions to reduce strength of damping near the edges and corners
+  m_sg_corner_x.resize(mNumberOfGrids);
+  m_sg_corner_y.resize(mNumberOfGrids);
+  m_sg_corner_z.resize(mNumberOfGrids);
   
 // allocate storage for 1-D damping coefficients on each grid
   for( g=0 ; g<mNumberOfGrids; g++) 
@@ -1445,14 +1450,24 @@ void EW::assign_supergrid_damping_arrays()
     m_sg_str_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
     m_sg_str_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
     m_sg_str_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
+
+// new corner taper functions to reduce strength of damping near the edges and corners
+    m_sg_corner_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_corner_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_corner_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
   }
 
 #define dcx(i,g) (m_sg_dc_x[g])[i-m_iStart[g]]
 #define dcy(j,g) (m_sg_dc_y[g])[j-m_jStart[g]]
 #define dcz(k,g) (m_sg_dc_z[g])[k-m_kStart[g]]
+
 #define strx(i,g) (m_sg_str_x[g])[i-m_iStart[g]]
 #define stry(j,g) (m_sg_str_y[g])[j-m_jStart[g]]
 #define strz(k,g) (m_sg_str_z[g])[k-m_kStart[g]]
+
+#define cornerx(i,g) (m_sg_corner_x[g])[i-m_iStart[g]]
+#define cornery(j,g) (m_sg_corner_y[g])[j-m_jStart[g]]
+#define cornerz(k,g) (m_sg_corner_z[g])[k-m_kStart[g]]
 
   topCartesian = mNumberOfCartesianGrids-1;
 // Note: compared to WPP2, we don't need to center the damping coefficients on the half-point anymore,
@@ -1460,20 +1475,28 @@ void EW::assign_supergrid_damping_arrays()
 
   if( m_use_supergrid )
   {
+// tmp
+//    printf("SG: using supergrid!\n");
+    
      if( m_twilight_forcing )
      {
+// tmp
+//       printf("SG: twilight setup!\n");
+
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
 	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	   {
 	      x = (i-1)*mGridSize[g];
 	      dcx(i,g)  = 0;
+	      cornerx(i,g)  = 1;
 	      strx(i,g) = m_supergrid_taper_x.tw_stretching(x);
 	   }
 	   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	   {
 	      y = (j-1)*mGridSize[g];
 	      dcy(j,g)  = 0;
+	      cornery(j,g)  = 1;
 	      stry(j,g) = m_supergrid_taper_y.tw_stretching(y);
 	   }
 	   if (g > topCartesian) // must be the curvilinear grid
@@ -1482,6 +1505,7 @@ void EW::assign_supergrid_damping_arrays()
 	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
 		 dcz(k,g)  = 0.;
+		 cornerz(k,g)  = 1.;
 		 strz(k,g) = 1;
 	      }
 	   }
@@ -1491,13 +1515,17 @@ void EW::assign_supergrid_damping_arrays()
 	      {
 		 z = m_zmin[g] + (k-1)*mGridSize[g];
 		 dcz(k,g)  = 0;
+		 cornerz(k,g) = 1.;
 		 strz(k,g) = m_supergrid_taper_z.tw_stretching(z);
 	      }
 	   }
 	}
-     }
+     } // end if (m_twilight_forcing) ...
      else
-     {
+     { // standard case starts here
+// tmp
+//       printf("SG: standard case!\n");
+
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
 	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -1505,12 +1533,14 @@ void EW::assign_supergrid_damping_arrays()
 	      x = (i-1)*mGridSize[g];
 	      dcx(i,g)  = m_supergrid_taper_x.dampingCoeff(x);
 	      strx(i,g) = m_supergrid_taper_x.stretching(x);
+	      cornerx(i,g)  = m_supergrid_taper_x.cornerTaper(x);
 	   }
 	   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	   {
 	      y = (j-1)*mGridSize[g];
 	      dcy(j,g)  = m_supergrid_taper_y.dampingCoeff(y);
 	      stry(j,g) = m_supergrid_taper_y.stretching(y);
+	      cornery(j,g)  = m_supergrid_taper_y.cornerTaper(y);
 	   }
 	   if (g > topCartesian) // must be the curvilinear grid
 	   {
@@ -1519,48 +1549,87 @@ void EW::assign_supergrid_damping_arrays()
 	      {
 		 dcz(k,g) = 0.;
 		 strz(k,g) = 1;
+		 cornerz(k,g) = 1.;
 	      }
 	   }
 	   else
 	   {
 	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
-		 z = m_zmin[g] + (k-1)*mGridSize[g];
-		 dcz(k,g)  = m_supergrid_taper_z.dampingCoeff(z);
-		 strz(k,g) = m_supergrid_taper_z.stretching(z);
+		z = m_zmin[g] + (k-1)*mGridSize[g];
+		dcz(k,g)  = m_supergrid_taper_z.dampingCoeff(z);
+		strz(k,g) = m_supergrid_taper_z.stretching(z);
+		cornerz(k,g) = m_supergrid_taper_z.cornerTaper(z);
 	      }
 	   }
 	} // end for g...
      }
   }
-  else
+  else //
   {
-// Supergrid not used, but define arrays to simplify coding at some places.
+// tmp
+//       printf("SG: supergrid not used!\n");
+
+// Supergrid not used, but define arrays to simplify coding in some places.
      for( int g=0 ; g < mNumberOfGrids ; g++ )
      {
 	for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	{
 	   dcx(i,g)  = 0;
 	   strx(i,g) = 1;
+	   cornerx(i,g) = 1.;
 	}
 	for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	{
 	   dcy(j,g)  = 0;
 	   stry(j,g) = 1;
+	   cornery(j,g) = 1.;
 	}
 	for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	{
 	   dcz(k,g)  = 0.;
 	   strz(k,g) = 1;
+	   cornerz(k,g) = 1.;
 	}
      }
   }
+  
+// tmp
+// save the 1-D arrays cornerx, cornery, cornerz
+// grid g=0 (for now)
+  // g=0;
+  // char fname[100];
+  // sprintf(fname,"cx-%i.dat",m_myRank);
+  // FILE *fp=fopen(fname,"w");
+  // printf("Saving tmp file=%s, g=%i, m_iStart=%i, m_iEnd=%i\n", fname, g, m_iStart[g], m_iEnd[g]);
+  // for ( i = m_iStart[g]; i<=m_iEnd[g]; i++ )
+  //   fprintf(fp,"%i %e %e %e\n", i, cornerx(i,g), strx(i,g), strx(i,g)*dcx(i,g));
+  // fclose(fp);  
+
+  // sprintf(fname,"cy-%i.dat",m_myRank);
+  // fp=fopen(fname,"w");
+  // printf("Saving tmp file=%s, g=%i, m_jStart=%i, m_jEnd=%i\n", fname, g, m_jStart[g], m_jEnd[g]);
+  // for ( j = m_jStart[g]; j<=m_jEnd[g]; j++ )
+  //   fprintf(fp,"%i %e %e %e\n", j, cornery(j,g), stry(j,g), stry(j,g)*dcy(j,g));
+  // fclose(fp);  
+
+  // sprintf(fname,"cz-%i.dat",m_myRank);
+  // fp=fopen(fname,"w");
+  // printf("Saving tmp file=%s, g=%i, m_kStart=%i, m_kEnd=%i\n", fname, g, m_kStart[g], m_kEnd[g]);
+  // for ( k = m_kStart[g]; k<=m_kEnd[g]; k++ )
+  //   fprintf(fp,"%i %e %e %e\n", k, cornerz(k,g), strz(k,g), strz(k,g)*dcz(k,g));
+  // fclose(fp);  
+// end tmp
+
 #undef dcx
 #undef dcy
 #undef dcz
 #undef strx
 #undef stry
 #undef strz
+#undef cornerx
+#undef cornery
+#undef cornerz
 }
 
 //-----------------------------------------------------------------------

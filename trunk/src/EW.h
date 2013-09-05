@@ -787,6 +787,7 @@ double m_curlcoeff, m_d4coeff, m_d4_cfl; // these should go away
 // storage for the 1-D damping coefficients
 vector<double*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;
 vector<double*> m_sg_str_x, m_sg_str_y, m_sg_str_z;
+vector<double*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;
 
 //-------------------------------------------
 // restart data

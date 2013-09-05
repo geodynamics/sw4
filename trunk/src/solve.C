@@ -77,16 +77,20 @@ void F77_FUNC(addsgd,ADDSGD) (double* dt, double *h, double *a_U, double*a_Um, d
 			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 void F77_FUNC(addsgd4,ADDSGD4) (double* dt, double *h, double *a_Up, double*a_U, double*a_Um, double* Rho,
 				double *sg_dc_x, double* sg_dc_y, double* sg_dc_z, double* sg_str_x, double* sg_str_y, double* sg_str_z,
-			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+				double* sg_corner_x, double* sg_corner_y, double* sg_corner_z,
+				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 void F77_FUNC(addsgd6,ADDSGD6) (double* dt, double *h, double *a_Up, double*a_U, double*a_Um, double* Rho,
 				double *sg_dc_x, double* sg_dc_y, double* sg_dc_z, double* sg_str_x, double* sg_str_y, double* sg_str_z,
-			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+				double* sg_corner_x, double* sg_corner_y, double* sg_corner_z,
+				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 void F77_FUNC(addsgd4c,ADDSGD4C) (double* dt, double *a_Up, double*a_U, double*a_Um, double* Rho,
-				double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
-			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+				  double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
+				  double* sg_corner_x, double* sg_corner_y, 
+				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a_Um, double* Rho,
-				double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
-			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+				  double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
+				  double* sg_corner_x, double* sg_corner_y, 
+				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
 //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
 // +     omega, alpha, h, zmin )
    void F77_FUNC(raydirbdry,RAYDIRBDRY)( double *bforce_side_ptr, int *wind_ptr, double *t, double *lambda,
@@ -2688,22 +2692,26 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
        if( topographyExists() && g == mNumberOfGrids-1 )
 	  F77_FUNC(addsgd4c,ADDSGD4C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
 					m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
-			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+					m_sg_corner_x[g], m_sg_corner_y[g],
+					&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        else
 	  F77_FUNC(addsgd4,ADDSGD4) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+				      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+				      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+				      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
     }
     else if(  m_ghost_points == 3 )
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
 	  F77_FUNC(addsgd6c,ADDSGD6C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
 					m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
-			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+					m_sg_corner_x[g], m_sg_corner_y[g],
+					&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        else
 	  F77_FUNC(addsgd6,ADDSGD6) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+				      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+				      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+				      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
     }
   }
 }

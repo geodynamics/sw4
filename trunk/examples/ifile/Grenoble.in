@@ -36,7 +36,7 @@ source lat=45.2167 lon=5.9167 topodepth=3e3 m0=2.8184e13 strike=45 dip=90 rake=1
 prefilter fc2=0.333 type=lowpass
 
 #time steps=0
-time t=23
+time t=35
 
 # images
 
@@ -66,6 +66,10 @@ image mode=hvelmax z=0.0 timeInterval=5 file=g
 image mode=velmag z=0.0 timeInterval=2.5 file=g
 
 # Reciever stations
+# testing super-grid
+rec file=sg1 x=39e3 y=39e3 depth=0.0 nsew=0 usgsformat=1 sacformat=0 variables=velocity
+
+
 # OGMU is at reciever 1
 rec file=R01 lon=5.7268 lat=45.1950 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
 #rec file=R02 lon=5.7365 lat=45.1814 depth=0.0 nsew=1 usgsformat=1 sacformat=1 variables=velocity
