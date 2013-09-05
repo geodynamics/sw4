@@ -5,7 +5,7 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Aug 14 11:11:24 PDT 2013
+  Compiled on: Thu Sep 5 10:45:27 PDT 2013
   By user:     andersp
   Machine:     cab669
   Compiler:    /usr/local/bin/mpiicpc
@@ -38,7 +38,7 @@ Material interface surfaces: lonMin=5.589069e+00, lonMax=5.950513e+00
 latMin=4.504340e+01, latMax=4.529908e+01
 depthMin=0.000000e+00, depthMax=1.063000e+03
 
-   Execution time, reading input file 0.874794 seconds 
+   Execution time, reading input file 1.29358 seconds 
 ----------------------------------------------------
  Making Output Directory: grenoble-q-results/
 		
@@ -77,16 +77,16 @@ g=1, h=2.000000e+02, minVs/h=2.5 (curvilinear)
 *** Attenuation parameters calculated for 3 mechanisms,
       max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
 
-Filter precursor = 8.110443e+00
-   Execution time, start up phase 0.557223 seconds 
+Filter precursor = 8.110444e+00
+   Execution time, start up phase 0.55754 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: grenoble-q-results/
 Lowpass filtering all source time functions to corner frequency fc2=3.330000e-01
 ============================================================
  Running program on 128 MPI tasks using the following data: 
 
- Start Time = 0 Goal Time = 23
- Number of time steps = 1744 dt: 0.0131881
+ Start Time = 0 Goal Time = 35
+ Number of time steps = 2655 dt: 0.0131827
 
 -----------------------------------------------------------------------
   Total seismic moment (M0): 2.8184e+13 Nm 
@@ -103,52 +103,78 @@ writing image plane on file grenoble-q-results/g.cycle=0000.z=0.hmaxdudt.sw4img
 writing image plane on file grenoble-q-results/g.cycle=0000.x=20000.p.sw4img
 writing image plane on file grenoble-q-results/g.cycle=0000.z=0.magdudt.sw4img
   Begin time stepping...
-Time step       1  t =   1.3188073e-02
-Time step     101  t =   1.3319954e+00
+Time step       1  t =   1.3182674e-02
+Time step     101  t =   1.3314501e+00
 writing image plane on file grenoble-q-results/g.cycle=0190.z=0.magdudt.sw4img
-Time step     201  t =   2.6508028e+00
-Time step     301  t =   3.9696101e+00
+Time step     201  t =   2.6497175e+00
+Time step     301  t =   3.9679849e+00
 writing image plane on file grenoble-q-results/g.cycle=0379.z=0.hmaxdudt.sw4img
 writing image plane on file grenoble-q-results/g.cycle=0379.z=0.magdudt.sw4img
-Time step     401  t =   5.2884174e+00
-Time step     501  t =   6.6072248e+00
+Time step     401  t =   5.2862524e+00
+Time step     501  t =   6.6045198e+00
 writing image plane on file grenoble-q-results/g.cycle=0569.z=0.magdudt.sw4img
-Time step     601  t =   7.9260321e+00
-Time step     701  t =   9.2448394e+00
-writing image plane on file grenoble-q-results/g.cycle=0758.z=0.hmaxdudt.sw4img
-writing image plane on file grenoble-q-results/g.cycle=0758.z=0.magdudt.sw4img
-Time step     801  t =   1.0563647e+01
-Time step     901  t =   1.1882454e+01
+Time step     601  t =   7.9227872e+00
+Time step     701  t =   9.2410546e+00
+writing image plane on file grenoble-q-results/g.cycle=0759.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=0759.z=0.magdudt.sw4img
+Time step     801  t =   1.0559322e+01
+Time step     901  t =   1.1877589e+01
 writing image plane on file grenoble-q-results/g.cycle=0948.z=0.magdudt.sw4img
+Writing ASCII USGS file, of size 1001: grenoble-q-results/sg1.txt
 Writing BINARY SAC files, of size 1001: grenoble-q-results/R01.[ev|nv|uv]
 Writing BINARY SAC files, of size 1001: grenoble-q-results/R10.[ev|nv|uv]
 Writing BINARY SAC files, of size 1001: grenoble-q-results/R05.[ev|nv|uv]
-Time step    1001  t =   1.3201261e+01
-Writing ASCII USGS file, of size 1001: grenoble-q-results/R10.txt
+Time step    1001  t =   1.3195857e+01
 Writing ASCII USGS file, of size 1001: grenoble-q-results/R01.txt
+Writing ASCII USGS file, of size 1001: grenoble-q-results/R10.txt
 Writing ASCII USGS file, of size 1001: grenoble-q-results/R05.txt
-Time step    1101  t =   1.4520069e+01
-writing image plane on file grenoble-q-results/g.cycle=1137.z=0.hmaxdudt.sw4img
-writing image plane on file grenoble-q-results/g.cycle=1137.z=0.magdudt.sw4img
-Time step    1201  t =   1.5838876e+01
-Time step    1301  t =   1.7157683e+01
-writing image plane on file grenoble-q-results/g.cycle=1327.z=0.magdudt.sw4img
-Time step    1401  t =   1.8476491e+01
-Time step    1501  t =   1.9795298e+01
+Time step    1101  t =   1.4514124e+01
+writing image plane on file grenoble-q-results/g.cycle=1138.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=1138.z=0.magdudt.sw4img
+Time step    1201  t =   1.5832392e+01
+Time step    1301  t =   1.7150659e+01
+writing image plane on file grenoble-q-results/g.cycle=1328.z=0.magdudt.sw4img
+Time step    1401  t =   1.8468927e+01
+Time step    1501  t =   1.9787194e+01
 writing image plane on file grenoble-q-results/g.cycle=1517.z=0.hmaxdudt.sw4img
 writing image plane on file grenoble-q-results/g.cycle=1517.z=0.magdudt.sw4img
-Time step    1601  t =   2.1114106e+01
-Time step    1701  t =   2.2432913e+01
-writing image plane on file grenoble-q-results/g.cycle=1706.z=0.magdudt.sw4img
-Time step    1744  t =   2.3000000e+01
+Time step    1601  t =   2.1105461e+01
+Time step    1701  t =   2.2423729e+01
+writing image plane on file grenoble-q-results/g.cycle=1707.z=0.magdudt.sw4img
+Time step    1801  t =   2.3741996e+01
+writing image plane on file grenoble-q-results/g.cycle=1896.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=1896.z=0.magdudt.sw4img
+Time step    1901  t =   2.5060264e+01
+Writing ASCII USGS file, of size 2001: grenoble-q-results/sg1.txt
+Writing BINARY SAC files, of size 2001: grenoble-q-results/R01.[ev|nv|uv]
+Writing BINARY SAC files, of size 2001: grenoble-q-results/R10.[ev|nv|uv]
+Writing BINARY SAC files, of size 2001: grenoble-q-results/R05.[ev|nv|uv]
+Time step    2001  t =   2.6378531e+01
+Writing ASCII USGS file, of size 2001: grenoble-q-results/R10.txt
+Writing ASCII USGS file, of size 2001: grenoble-q-results/R01.txt
+Writing ASCII USGS file, of size 2001: grenoble-q-results/R05.txt
+writing image plane on file grenoble-q-results/g.cycle=2086.z=0.magdudt.sw4img
+Time step    2101  t =   2.7696798e+01
+Time step    2201  t =   2.9015066e+01
+writing image plane on file grenoble-q-results/g.cycle=2276.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=2276.z=0.magdudt.sw4img
+Time step    2301  t =   3.0333333e+01
+Time step    2401  t =   3.1651601e+01
+writing image plane on file grenoble-q-results/g.cycle=2465.z=0.magdudt.sw4img
+Time step    2501  t =   3.2969868e+01
+Time step    2601  t =   3.4288136e+01
+Time step    2655  t =   3.5000000e+01
+writing image plane on file grenoble-q-results/g.cycle=2655.z=0.hmaxdudt.sw4img
+writing image plane on file grenoble-q-results/g.cycle=2655.z=0.magdudt.sw4img
   Time stepping finished...
-   Execution time, solver phase 3 minutes 58.2425 seconds 
+   Execution time, solver phase 6 minutes 3.50502 seconds 
 ============================================================
  program sw4 finished! 
 ============================================================
-Writing BINARY SAC files, of size 1744: grenoble-q-results/R10.[ev|nv|uv]
-Writing BINARY SAC files, of size 1744: grenoble-q-results/R01.[ev|nv|uv]
-Writing BINARY SAC files, of size 1744: grenoble-q-results/R05.[ev|nv|uv]
-Writing ASCII USGS file, of size 1744: grenoble-q-results/R01.txt
-Writing ASCII USGS file, of size 1744: grenoble-q-results/R05.txt
-Writing ASCII USGS file, of size 1744: grenoble-q-results/R10.txt
+Writing BINARY SAC files, of size 2655: grenoble-q-results/R05.[ev|nv|uv]
+Writing BINARY SAC files, of size 2655: grenoble-q-results/R10.[ev|nv|uv]
+Writing BINARY SAC files, of size 2655: grenoble-q-results/R01.[ev|nv|uv]
+Writing ASCII USGS file, of size 2655: grenoble-q-results/sg1.txt
+Writing ASCII USGS file, of size 2655: grenoble-q-results/R10.txt
+Writing ASCII USGS file, of size 2655: grenoble-q-results/R05.txt
+Writing ASCII USGS file, of size 2655: grenoble-q-results/R01.txt
