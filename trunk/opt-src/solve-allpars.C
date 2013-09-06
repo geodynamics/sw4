@@ -53,10 +53,8 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 
     ifirst = m_iStart[g];
     ilast = m_iEnd[g];
-    
     jfirst = m_jStart[g];
     jlast = m_jEnd[g];
-
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
 

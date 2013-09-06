@@ -109,7 +109,8 @@ MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o rhs4curvilinearsg.o solve-allpars.o solve-backward-allpars.o DataPatches.o \
        gradients.o  Image3D.o MaterialVolimagefile.o  MaterialInvtest.o invtestmtrl.o lbfgs.o  projectmtrl.o \
-       randomfield3d.o
+       randomfield3d.o InterpolateMaterial.o MaterialParAllpts.o MaterialParCartesian.o MaterialParameterization.o \
+       interpolatemtrl.o 
 
 OBJ2 = test.o boundaryOp.o boundaryDisc.o gettimec.o 
 OBJ3 = test3.o boundaryOp.o gettimec.o

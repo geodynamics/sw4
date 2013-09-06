@@ -1,25 +1,29 @@
 #include "EW.h"
+#include "MaterialParameterization.h"
+
 using namespace std;
 
-void compute_f( EW& simulation, int ns, double xs[11], int nm, double* xm,
+void compute_f( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
 		vector<Source*>& GlobalSources,
 		vector<TimeSeries*>& GlobalTimeSeries,
 		vector<TimeSeries*>& GlobalObservations,
-		double& mf );
+		double& mf, MaterialParameterization* mp );
 
-void compute_f_and_df( EW& simulation, int ns, double xs[11], int nmpar, double* xm,
+void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
 		       vector<Source*>& GlobalSources,
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, 
-		       double& f, double dfs[11], double* dfm, int myrank );
+		       double& f, double* dfs, double* dfm, int myrank,
+		       MaterialParameterization* mp ); 
 
 //-----------------------------------------------------------------------
 void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 		     vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
-		     int ns, double xs[11], int nm, double* xm, double ps[11], double* pm,
-		     double xsnew[11], double* xmnew, double f, double dfsnew[11], double* dfmnew,
+		     int nspar, int nmpars, double* xs, int nm, double* xm, double* ps, double* pm,
+		     double* xsnew, double* xmnew, double f, double* dfsnew, double* dfmnew,
 		     double& lambda, double maxstep, double minlambda, double cglen, double alpha,
-		     double initslope, int myRank, double& fnew, bool& maxtaken, int& retcode )
+		     double initslope, int myRank, double& fnew, bool& maxtaken, int& retcode,
+		     MaterialParameterization* mp )
 
 //-----------------------------------------------------------------------
 //  Algorithm A6.3.1-mod from book by Dennis and Schnabel. This routine only
@@ -29,12 +33,17 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 
 {
    double beta=0.9, lambdaprev, fpprev, maxlambda;
-   compute_f_and_df( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, fnew, dfsnew, dfmnew, myRank );
-   double slope=0, slopetmp=0;
-   for( int i=0 ; i < nm ; i++ )
-      slopetmp += pm[i]*dfmnew[i];
-   MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   int ns = nspar+nmpars;
+   compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+		     GlobalObservations, fnew, dfsnew, dfmnew, myRank, mp );
+   double slope=0;
+   if( nm >  0 )
+   {
+      double slopetmp=0;
+      for( int i=0 ; i < nm ; i++ )
+	 slopetmp += pm[i]*dfmnew[i];
+      MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   }
    for( int i=0 ; i < ns ; i++ )
       slope += ps[i]*dfsnew[i];
    if( slope < beta*initslope )
@@ -51,16 +60,20 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 	       xmnew[i] = xm[i]+lambda*pm[i];
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i]+lambda*ps[i];
-	    compute_f( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew );
+	    compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, 
+		       GlobalObservations, fnew, mp );
 	    if( fnew <= f + alpha*lambda*initslope )
 	    {
-	       compute_f_and_df( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-				 GlobalObservations, fnew, dfsnew, dfmnew, myRank );
-               slopetmp = 0;
-	       for( int i=0 ; i < nm ; i++ )
-		  slopetmp += pm[i]*dfmnew[i];
-	       MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+				 GlobalObservations, fnew, dfsnew, dfmnew, myRank, mp );
+               slope = 0;
+	       if( nm > 0 )
+	       {
+		  double slopetmp = 0;
+		  for( int i=0 ; i < nm ; i++ )
+		     slopetmp += pm[i]*dfmnew[i];
+		  MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       }
 	       for( int i=0 ; i < ns ; i++ )
 		  slope += ps[i]*dfsnew[i];
 	    }
@@ -92,8 +105,8 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 	       xmnew[i] = xm[i]+lambda*pm[i];
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i]+lambda*ps[i];
-	    compute_f( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew );
+	    compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+		        GlobalObservations, fnew, mp );
 	    if( fnew > f + alpha*lambda*initslope )
 	    {
 	       lambdadiff = lambdaincr;
@@ -101,12 +114,16 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 	    }
 	    else
 	    {
-	       compute_f_and_df( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-				 GlobalObservations, fnew, dfsnew, dfmnew, myRank );
-               slopetmp = 0;
-	       for( int i=0 ; i < nm ; i++ )
-		  slopetmp += pm[i]*dfmnew[i];
-	       MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+				 GlobalObservations, fnew, dfsnew, dfmnew, myRank, mp );
+               slope = 0;
+	       if( nm > 0 )
+	       {
+		  double slopetmp = 0;
+		  for( int i=0 ; i < nm ; i++ )
+		     slopetmp += pm[i]*dfmnew[i];
+		  MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       }
 	       for( int i=0 ; i < ns ; i++ )
 		  slope += ps[i]*dfsnew[i];
 	       if( slope < beta*initslope )
@@ -137,11 +154,11 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 //-----------------------------------------------------------------------
 void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
-		 int ns, int nm, double xs[11], double* xm, double f, double dfs[11], double* dfm,
-		 double ps[11], double* pm, double cgstep, double maxstep, double steptol,
-		 double xsnew[11], double* xmnew, double& fnew, double sfs[11], double* sfm,
-		 int myRank, int& retcode, int& nstep_reductions, bool testing, double dfsnew[11],
-		 double* dfmnew )
+		 int nspar, int nmpars, double* xs, int nm, double* xm, double f, double* dfs,
+		 double* dfm, double* ps, double* pm, double cgstep, double maxstep, double steptol,
+		 double* xsnew, double* xmnew, double& fnew, double* sfs, double* sfm,
+		 int myRank, int& retcode, int& nstep_reductions, bool testing, double* dfsnew,
+		 double* dfmnew, MaterialParameterization* mp, bool usewolfe )
 
 //-----------------------------------------------------------------------
 // Line seach by backtracking for CG.
@@ -189,27 +206,34 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 
 {
    bool maxtaken = false;
+   int ns;
    double alpha = 1e-6, cglen=0, ang=0;
    vector<double> lambdasave, fcnsave;
 
-   for( int i=0 ; i < 11 ; i++ )
+   ns = nspar + nmpars;
+   for( int i=0 ; i < ns ; i++ )
       xsnew[i] = xs[i];
+
    for( int i=0 ; i < nm ; i++ )
       xmnew[i] = xm[i];
 
    retcode = 2;
 
-   for( int i=0 ; i < nm ; i++ )
+   cglen = ang = 0;
+   if( nm > 0 )
    {
-      cglen += pm[i]*pm[i]/(sfm[i]*sfm[i]);
-      ang   += pm[i]*dfm[i];
+      for( int i=0 ; i < nm ; i++ )
+      {
+	 cglen += pm[i]*pm[i]/(sfm[i]*sfm[i]);
+	 ang   += pm[i]*dfm[i];
+      }
+      double tmpv[2], tmp[2];
+      tmpv[0] = cglen;
+      tmpv[1] = ang;
+      MPI_Allreduce( tmpv, tmp, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      cglen = tmp[0];
+      ang = tmp[1];
    }
-   double tmpv[2], tmp[2];
-   tmpv[0] = cglen;
-   tmpv[1] = ang;
-   MPI_Allreduce( tmpv, tmp, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-   cglen = tmp[0];
-   ang = tmp[1];
    for( int i=0 ; i < ns ; i++ )
    {
       cglen += ps[i]*ps[i]/(sfs[i]*sfs[i]);
@@ -222,13 +246,18 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	 cout << "LINESEARCH: Warning, direction is not a descent direction" << endl;
          cout << "   switching to gradient direction search" << endl;
       }
-      double cglenloc = 0;
-      for( int i=0 ; i < nm ; i++ )
+
+      cglen = 0;
+      if( nm > 0 )
       {
-	 pm[i] = -dfm[i]/(sfm[i]*sfm[i]);
-	 cglenloc += pm[i]*pm[i]/(sfm[i]*sfm[i]);
+	 double cglenloc = 0;
+	 for( int i=0 ; i < nm ; i++ )
+	 {
+	    pm[i] = -dfm[i]/(sfm[i]*sfm[i]);
+	    cglenloc += pm[i]*pm[i]/(sfm[i]*sfm[i]);
+	 }
+	 MPI_Allreduce(&cglenloc,&cglen,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       }
-      MPI_Allreduce(&cglenloc,&cglen,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       for( int i=0 ; i < ns ; i++ )
       {
 	 ps[i] = -dfs[i]/(sfs[i]*sfs[i]);
@@ -257,18 +286,23 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
    }
       // minlambda is scaled such that x^{k+1}-x^k = lambda*p^k with lambda=minlambda implies
       //            || x^{k+1}-x^k ||_\infty < minlambda (termination criterium)
+   double initslope=0;
+   if( nm > 0 )
+   {
       double initslopetmp = 0;
       for( int i=0; i < nm ; i++ )
          initslopetmp += dfm[i]*pm[i];
-      double initslope;
       MPI_Allreduce(&initslopetmp, &initslope,1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      for( int i=0; i < ns ; i++ )
-         initslope += dfs[i]*ps[i];
+   }
+   for( int i=0; i < ns ; i++ )
+      initslope += dfs[i]*ps[i];
 
-      double rellength = 0;
+   double rellength = 0;
+   if( nm > 0 )
+   {
       for( int i=0; i < nm ; i++ )
       {
-         double rlocal;
+	 double rlocal;
          if( fabs(xm[i]) > sfm[i] )
 	    rlocal = fabs(pm[i])/fabs(xm[i]);
 	 else
@@ -278,139 +312,159 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
       }
       double rellengthtmp=rellength;
       MPI_Allreduce(&rellengthtmp,&rellength,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-      for( int i=0; i < ns ; i++ )
-      {
-         double rlocal;
-         if( fabs(xs[i]) > sfs[i] )
-	    rlocal = fabs(ps[i])/fabs(xs[i]);
-	 else
-	    rlocal = fabs(ps[i])/sfs[i];
-	 if( rlocal > rellength )
-	    rellength = rlocal;
-      }
-      
-      double minlambda = steptol/rellength;
-      double lambda = 1, fnewprev, lambdaprev;
-      nstep_reductions = 0;
-      while( retcode == 2 )
-      {
-	 for( int i=0; i < ns ; i++ )
-	    xsnew[i] = xs[i] + lambda*ps[i];
-	 for( int i=0; i < nm ; i++ )
-	    xmnew[i] = xm[i] + lambda*pm[i];
+   }
+   for( int i=0; i < ns ; i++ )
+   {
+      double rlocal;
+      if( fabs(xs[i]) > sfs[i] )
+	 rlocal = fabs(ps[i])/fabs(xs[i]);
+      else
+	 rlocal = fabs(ps[i])/sfs[i];
+      if( rlocal > rellength )
+	 rellength = rlocal;
+   }
+   double minlambda = steptol/rellength;
+   //   cout << "steptol = " << steptol << " rellength " << rellength << " ns = " << ns << endl; 
+   double lambda = 1, fnewprev, lambdaprev;
+   nstep_reductions = 0;
 
-	 compute_f( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		    fnew );
-         lambdasave.push_back(lambda);
-         fcnsave.push_back(fnew);
-         if( fnew < f + alpha*lambda*initslope )
+   while( retcode == 2 )
+   {
+      for( int i=0; i < ns ; i++ )
+	 xsnew[i] = xs[i] + lambda*ps[i];
+      for( int i=0; i < nm ; i++ )
+	 xmnew[i] = xm[i] + lambda*pm[i];
+
+      compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		 fnew, mp );
+
+      //      cout << "initslope = " << initslope << " fnew = " << fnew << endl;
+
+      lambdasave.push_back(lambda);
+      fcnsave.push_back(fnew);
+
+      if( fnew < f + alpha*lambda*initslope )
+      {
+         if( usewolfe )
+	    wolfecondition( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs, nm, xm,
+	           ps, pm, xsnew, xmnew, f, dfsnew, dfmnew, lambda, maxstep, minlambda, cglen, alpha, initslope, myRank,
+			 fnew, maxtaken, retcode, mp );
+	 else
 	 {
 	    // Found satisfactory step
-            wolfecondition( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, ns, xs, nm, xm, ps, pm,
-			    xsnew, xmnew, f, dfsnew, dfmnew, lambda, maxstep, minlambda, cglen, alpha, initslope, myRank,
-			    fnew, maxtaken, retcode );
-	       //	    retcode = 0;
-	       //	    if( lambda == 1 && (cglen > 0.99*maxstep) )
-	       //	       maxtaken = true;
+	    retcode = 0;
+	    if( lambda == 1 && (cglen > 0.99*maxstep) )
+	       maxtaken = true;
 	    return;
 	 }
-	 else if( lambda<minlambda )
-	 {
+      }
+      else if( lambda<minlambda || ( std::isnan(lambda) || std::isnan(fnew)) )
+      {
 	    // Could not find satisfactory step
-	    ang = 0;
+	 ang = 0;
+         if( nm > 0 )
+	 {
 	    for( int i=0 ; i < nm ; i++ )
 	       ang += pm[i]*dfm[i];
             double angtmp=ang;
             MPI_Allreduce(&angtmp,&ang,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-	    for( int i=0 ; i < ns ; i++ )
-	       ang += ps[i]*dfs[i];
+	 }
+	 for( int i=0 ; i < ns ; i++ )
+	    ang += ps[i]*dfs[i];
 
-            if( myRank == 0 )
-	    {
-	       cout << "LINESEARCH: no satsifactory step found \n";
-	       cout << "cg-alpha = " << cgstep << endl;
-	       cout << "scprod = " << ang << endl;
+	 if( myRank == 0 )
+	 {
+	    cout << "LINESEARCH: no satsifactory step found \n";
+	    cout << "cg-alpha = " << cgstep << endl;
+	    cout << "scprod = " << ang << endl;
 	       //	       cout << "search direction = " << endl;
 	       //	       for( int i=0 ; i < n ; i++ )
 	       //		  cout << " " << p[i] << endl;
 	       //	       cout << "gradient direction = " << endl;
 	       //	       for( int i=0 ; i < n ; i++ )
 	       //		  cout << " " << df[i] << endl;
-	       cout << "maxstep   = " << maxstep << endl;
-	       cout << "minlambda = " << minlambda << endl;
-	       cout << "initslope = " << initslope << endl;
-	       cout << " f = " << f << " fnew = " << fnew <<  " lambda = " << lambda ;
-	       cout << " fnew-(f+alpha*lambda*initslope) = " << fnew-(f+alpha*lambda*initslope) << endl;
-               cout << "lambda and f(lambda) tried = " << endl;
-	       for( int i=0 ; i < lambdasave.size() ; i++ )
-                  cout << lambdasave[i] << " " << fcnsave[i] << endl;
+	    cout << "maxstep   = " << maxstep << endl;
+	    cout << "minlambda = " << minlambda << endl;
+	    cout << "initslope = " << initslope << endl;
+	    cout << " f = " << f << " fnew = " << fnew <<  " lambda = " << lambda ;
+	    cout << " fnew-(f+alpha*lambda*initslope) = " << fnew-(f+alpha*lambda*initslope) << endl;
+	    cout << "lambda and f(lambda) tried = " << endl;
+	    for( int i=0 ; i < lambdasave.size() ; i++ )
+	       cout << lambdasave[i] << " " << fcnsave[i] << endl;
 	       //	       cout << "x = " << endl;
 	       //	       for( int i=0 ; i < n ; i++ )
 	       //		  cout << " " << x[i] << endl;
-	    }
-	    retcode = 1;
+	 }
+	 retcode = 1;
 	    // Take a full step
-	    for( int i=0 ; i < ns ; i++ )
-	       xsnew[i] = xs[i] + ps[i];
-	    for( int i=0 ; i < nm ; i++ )
-	       xmnew[i] = xm[i] + pm[i];
+	 for( int i=0 ; i < ns ; i++ )
+	    xsnew[i] = xs[i] + ps[i];
+	 for( int i=0 ; i < nm ; i++ )
+	    xmnew[i] = xm[i] + pm[i];
 
-	    // Compute return value for fnew
+	 // Compute return value for fnew
 	    //            if( !testing && (xnew[2] < 0 && p[2] != 0) )
 	    //	    {
 	    //               lambda = -x[2]/p[2];
 	    //	       for( int i=0 ; i < n ; i++ )
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
-	    compute_f( simulation, ns, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew );
-	    return;
-	 }
+	 compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
+		       fnew, mp );
+	 return;
+      }
+      else
+      {
+	    // Reduce step size
+         if( myRank == 0 )
+	    cout << " step failed for lambda = " << lambda;
+
+	 double ltemp;
+	 if( lambda == 1 )
+	    ltemp = -initslope/(2*(fnew-f-initslope));
 	 else
 	 {
-	    // Reduce step size
-            double ltemp;
-	    if( lambda == 1 )
-	       ltemp = -initslope/(2*(fnew-f-initslope));
-	    else
-	    {
-               double r1 =(fnew-f-lambda*initslope)/(lambda-lambdaprev);
-               double r2 =(fnewprev-f-lambdaprev*initslope)/(lambda-lambdaprev);
-               double a = 1/(lambda*lambda)*r1 - 1/(lambdaprev*lambdaprev)*r2;
-               double b = -lambdaprev/(lambda*lambda)*r1 +
+	    double r1 =(fnew-f-lambda*initslope)/(lambda-lambdaprev);
+	    double r2 =(fnewprev-f-lambdaprev*initslope)/(lambda-lambdaprev);
+	    double a = 1/(lambda*lambda)*r1 - 1/(lambdaprev*lambdaprev)*r2;
+	    double b = -lambdaprev/(lambda*lambda)*r1 +
 		                       lambda/(lambdaprev*lambdaprev)*r2;
-               double disc = b*b-3*a*initslope;
-               if( a == 0 )
-                  ltemp = -initslope/(2*b);
-               else
-                  ltemp = (-b+sqrt(disc))/(3*a);
-               if( ltemp> 0.5*lambda )
-                  ltemp = 0.5*lambda;
-	    }
-	    lambdaprev = lambda;
-	    fnewprev = fnew;
-	    if( ltemp < 0.1*lambda )
-	       lambda = 0.1*lambda;
+	    double disc = b*b-3*a*initslope;
+	    if( a == 0 )
+	       ltemp = -initslope/(2*b);
 	    else
-	       lambda = ltemp;
-	    nstep_reductions++;
+	       ltemp = (-b+sqrt(disc))/(3*a);
+	    if( ltemp> 0.5*lambda )
+	       ltemp = 0.5*lambda;
 	 }
+	 lambdaprev = lambda;
+	 fnewprev = fnew;
+	 if( ltemp < 0.1*lambda )
+	    lambda = 0.1*lambda;
+	 else
+	    lambda = ltemp;
+
+         if( myRank == 0 )
+	    cout << " ... trying new lambda = " << lambda << endl;
+
+	 nstep_reductions++;
       }
+   }
 }
 
 //-----------------------------------------------------------------------
-void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
-	    double* xm, double* sfm,
+void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, 
+            int nmpard, double* xm, double* sfm,
 	    vector<Source*>& GlobalSources,
 	    vector<TimeSeries*>& GlobalTimeSeries,
 	    vector<TimeSeries*> & GlobalObservations,
-	    int m, int myRank )
+	    int m, int myRank, MaterialParameterization* mp )
 
 //-----------------------------------------------------------------------
 // l-BFGS minimization of misfit function.
 // 
 // Input: simulation - simulation object
-//        ns         - Number of parameters kept global, ie., exist in each processor.
+//        nspar      - Number of parameters kept global, ie., exist in each processor.
 //        xs         - The global parameters.
 //        sf         - Scale factors for xs
 //        nmpar      - Number of parameters for distributed arrays, ie, each processor 
@@ -431,23 +485,26 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 //
 //-----------------------------------------------------------------------
 {
-   //   const int n = 11;
-   int nvar, j, k;
+   int j, k, ns;
    bool done = false;
    bool dolinesearch = true;
    bool fletcher_reeves=true;
+   bool use_wolfe = false;
    int maxit, maxrestart, varcase=0, stepselection=0;
 
    // Do not allow source to rise closer than this to the surface:
-   double tolerance;
-   double f, dfs[11], ds[11], d2f[121], da[11], xa[11], dfps[11], dx[11], rnorm;
+   double tolerance, rnorm, f;
+   //   double dfs[11], ds[11], da[11], xa[11], dfps[11], dx[11]
+   double* dfs, *ds, *da, *xa, *dfps, *dx;
    double* dfm;
-   bool testing=false, hscale=false;
+   bool testing=false, hscale=true;
    int nreductions = 0;
    
    // used variables: maxrestart, tolerance, dolinesearch
    simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
 				dolinesearch, varcase, testing );
+
+   ns = nspar + nmpars;
 
    if( maxrestart == 0 )
       return;
@@ -462,21 +519,30 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       fdx=fopen(parafile.c_str(),"w");
    }
 
-   if( nmpar > 0 )
-      dfm = new double[nmpar];
+   if( nmpard > 0 )
+      dfm = new double[nmpard];
+   if( ns > 0 )
+   {
+      dfs  = new double[ns];
+      ds   = new double[ns];
+      da   = new double[ns];
+      xa   = new double[ns];
+      dfps = new double[ns];
+      dx   = new double[ns];
+   }
    
    if( myRank == 0 )
       cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
 
-   compute_f_and_df( simulation, ns, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank );
+   compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
+		     GlobalObservations, f, dfs, dfm, myRank, mp );
    if( myRank == 0 )
    {
       cout << "Initial misfit= "  << f << endl;
-      if( ns > 0 )
+      if( nspar > 0 )
       {
 	 cout << " scaled source gradient = ";
-	 for( int i=0 ; i < ns ; i++ )
+	 for( int i=0 ; i < nspar ; i++ )
 	 {
 	    cout << dfs[i]*sf[i] << " ";
 	    if( i==5 )
@@ -484,12 +550,15 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	 }
       }
    }
-
+   //   return;
    rnorm = 0;
-   for( int i=0 ; i < nmpar ; i++ )
-      rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
-   double rnormtmp = rnorm;
-   MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+   if( nmpard > 0 )
+   {
+      for( int i=0 ; i < nmpard ; i++ )
+	 rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
+      double rnormtmp = rnorm;
+      MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+   }
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sf[i] ? rnorm : fabs(dfs[i])*sf[i];
    if( myRank == 0 )
@@ -499,8 +568,6 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
    //   fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
    //   fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
    //	   0,0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-
-
 
    // s and y stores the m vectors
 
@@ -514,10 +581,10 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
    }
    double* sm = NULL;
    double* ym = NULL;
-   if( nmpar > 0 )
+   if( nmpard > 0 )
    {
-      sm = new double[m*nmpar]; 
-      ym = new double[m*nmpar]; 
+      sm = new double[m*nmpard]; 
+      ym = new double[m*nmpard]; 
    }
 
    double* rho = new double[m];
@@ -534,22 +601,24 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
    double* xam = NULL;
    double* dfpm = NULL;
    double* dmsave=NULL;
-   double dssave[11];
+   double* dssave= NULL;
+   if( ns > 0 )
+      dssave  = new double[ns];
 
-   if( nmpar > 0 )
+   if( nmpard > 0 )
    {
-      dfmtemp = new double[nmpar];
-      dm   = new double[nmpar];
-      dam  = new double[nmpar];
-      xam  = new double[nmpar];
-      dfpm = new double[nmpar];
-      dmsave = new double[nmpar];
+      dfmtemp = new double[nmpard];
+      dm   = new double[nmpard];
+      dam  = new double[nmpard];
+      xam  = new double[nmpard];
+      dfpm = new double[nmpard];
+      dmsave = new double[nmpard];
    }
 
    
-   for( int i=0 ; i < 11 ; i++ )
+   for( int i=0 ; i < ns ; i++ )
    {
-      ds[i] = da[i] = xa[i] = dx[i] = dfs[i]=dfps[i] =0;
+      ds[i] = da[i] = xa[i] = dx[i] = dfps[i] =0;
    }
    // kf points to the first vector
    int kf = 0;
@@ -563,29 +632,32 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       {
 	 for( int i=0 ; i < ns ; i++ )
 	    ds[i] = -sf[i]*sf[i]*dfs[i];
-	 for( int i=0 ; i < nmpar ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	    dm[i] = -sfm[i]*sfm[i]*dfm[i];
       }
       else
       {
 	 for( int j=0 ; j < ns ; j++ )
 	    dftemp[j] = dfs[j];
-	 for( int j=0 ; j < nmpar ; j++ )
+	 for( int j=0 ; j < nmpard ; j++ )
 	    dfmtemp[j] = dfm[j];
-	 
+
          int vi = kf+nv-1;
 	 if( vi > m-1 )
 	    vi = vi-m;
 	 for( int i=nv ; i >= 1 ; i-- )
 	 {
-            double scprodsloc[2]={0,0};
-	    for( int j=0 ; j < nmpar ; j++ )
+            double scprods[2]={0,0};
+	    if( nmpard > 0 )
 	    {
-	       scprodsloc[0] += sm[j+nmpar*vi]*ym[j+nmpar*vi];
-	       scprodsloc[1] += sm[j+nmpar*vi]*dfmtemp[j];
+	       double scprodsloc[2]={0,0};
+	       for( int j=0 ; j < nmpard ; j++ )
+	       {
+		  scprodsloc[0] += sm[j+nmpard*vi]*ym[j+nmpard*vi];
+		  scprodsloc[1] += sm[j+nmpard*vi]*dfmtemp[j];
+	       }
+	       MPI_Allreduce( scprodsloc, scprods, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	    }
-            double scprods[2];            
-            MPI_Allreduce( scprodsloc, scprods, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	    for( int j=0 ; j < ns ; j++ )
 	    {
 	       scprods[0] += s[j+ns*vi]*y[j+ns*vi];
@@ -595,8 +667,8 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    al[vi] = scprods[1]*rho[vi];
 	    for( int j=0 ; j < ns ; j++ )
 	       dftemp[j] -= al[vi]*y[j+ns*vi];
-	    for( int j=0 ; j < nmpar ; j++ )
-	       dfmtemp[j] -= al[vi]*ym[j+nmpar*vi];
+	    for( int j=0 ; j < nmpard ; j++ )
+	       dfmtemp[j] -= al[vi]*ym[j+nmpard*vi];
 	    vi--;
 	    if( vi == -1 )
 	       vi = nv-1;
@@ -608,7 +680,7 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    // Use scale factors for diagonal H0
 	    for( int  i=0 ; i < ns ; i++ )
 	       ds[i] = sf[i]*sf[i]*dftemp[i];
-	    for( int  i=0 ; i < nmpar ; i++ )
+	    for( int  i=0 ; i < nmpard ; i++ )
 	       dm[i] = sfm[i]*sfm[i]*dfmtemp[i];
 	 }
 	 else
@@ -619,14 +691,17 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    if( vi > m-1 )
 	       vi = vi-m;
 
-            double gamsloc[2]={0,0};
-	    for( int i=0 ; i < nmpar ; i++ )
+            double gams[2]={0,0};
+	    if( nmpard > 0 )
 	    {
-	       gamsloc[0] += sm[i+nmpar*vi]*ym[i+nmpar*vi];
-	       gamsloc[1] += ym[i+nmpar*vi]*ym[i+nmpar*vi];
+	       double gamsloc[2]={0,0};
+	       for( int i=0 ; i < nmpard ; i++ )
+	       {
+		  gamsloc[0] += sm[i+nmpard*vi]*ym[i+nmpard*vi];
+		  gamsloc[1] += ym[i+nmpard*vi]*ym[i+nmpard*vi];
+	       }
+	       MPI_Allreduce( gamsloc, gams, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	    }
-            double gams[2];
-            MPI_Allreduce( gamsloc, gams, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	    for( int i=0 ; i < ns ; i++ )
 	    {
 	       gams[0] += s[i+ns*vi]*y[i+ns*vi];
@@ -636,22 +711,25 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 
 	    for( int  i=0 ; i < ns ; i++ )
 	       ds[i] = gams[0]*dftemp[i];
-	    for( int  i=0 ; i < nmpar ; i++ )
+	    for( int  i=0 ; i < nmpard ; i++ )
 	       dm[i] = gams[0]*dfmtemp[i];
 	 }
          vi = kf;
 	 for( int i=1 ; i <= nv ; i++ )
 	 {
-            double scprodloc = 0;
-	    for( int j=0 ; j < nmpar ; j++ )
-	       scprodloc += ym[j+nmpar*vi]*dm[j];
-            double scprod;
-            MPI_Allreduce( &scprodloc, &scprod, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+            double scprod = 0;
+	    if( nmpard > 0 )
+	    {
+	       double scprodloc = 0;
+	       for( int j=0 ; j < nmpard ; j++ )
+		  scprodloc += ym[j+nmpard*vi]*dm[j];
+	       MPI_Allreduce( &scprodloc, &scprod, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	    }
 	    for( int j=0 ; j < ns ; j++ )
 	       scprod += y[j+ns*vi]*ds[j];
 
-	    for( int j=0 ; j < nmpar ; j++ )
-	       dm[j] += (al[vi]-rho[vi]*scprod)*sm[j+nmpar*vi];
+	    for( int j=0 ; j < nmpard ; j++ )
+	       dm[j] += (al[vi]-rho[vi]*scprod)*sm[j+nmpard*vi];
 	    for( int j=0 ; j < ns ; j++ )
 	       ds[j] += (al[vi]-rho[vi]*scprod)*s[j+ns*vi];
             vi++;
@@ -661,18 +739,18 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	    ds[i] = -ds[i];
-	 for( int i=0 ; i < nmpar ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	    dm[i] = -dm[i];
       }
    // Done with two-loop recursion (Alg 7.4) 
 
    // Next do line search, or update with constant step length
-      double alpha = 1.0;
+      double alpha = 1;
       if( dolinesearch )
       {
 	 for( int i=0 ; i < ns ; i++ )
 	    da[i] = ds[i];
-	 for( int i=0 ; i < nmpar ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	    dam[i] = dm[i];
 	 int retcode;
          double fp;
@@ -680,9 +758,9 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    cout << "Line search.. " << endl;
 
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		     ns, nmpar, xs, xm, f, dfs, dfm, da, dam, fabs(alpha), 10.0, tolerance*0.01, xa, xam,
+		     nspar, nmpars, xs, nmpard, xm, f, dfs, dfm, da, dam, fabs(alpha), 10.0, tolerance, xa, xam,
 		     fp, sf, sfm, myRank,
-		     retcode, nreductions, testing, dfps, dfpm );
+		     retcode, nreductions, testing, dfps, dfpm, mp, use_wolfe );
 
 	 if( myRank == 0 )
 	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
@@ -691,28 +769,31 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       {
 	 for( int i=0 ; i < ns ; i++ )
 	    xa[i] = xs[i] + alpha*ds[i];
-	 for( int i=0 ; i < nmpar ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	    xam[i] = xm[i] + alpha*dm[i];
       }
 
    // xa is now the new iterate
    // store x^{k+1}-x^k in d to save memory
       double dxnorm = 0;
-      for( int i=0 ; i < nmpar ; i++ )
+      if( nmpard > 0 )
       {
-	 double locnorm = fabs(xm[i]-xam[i]);
-	 if( fabs(xam[i])> sfm[i] )
-	    locnorm /= fabs(xam[i]);
-	 else
-	    locnorm /= sfm[i];
-	 if( locnorm > dxnorm )
-	    dxnorm = locnorm;
-         dmsave[i] = dm[i];
-	 dm[i] = xam[i] - xm[i];
-	 xm[i]  = xam[i];
+	 for( int i=0 ; i < nmpard ; i++ )
+	 {
+	    double locnorm = fabs(xm[i]-xam[i]);
+	    if( fabs(xam[i])> sfm[i] )
+	       locnorm /= fabs(xam[i]);
+	    else
+	       locnorm /= sfm[i];
+	    if( locnorm > dxnorm )
+	       dxnorm = locnorm;
+	    dmsave[i] = dm[i];
+	    dm[i] = xam[i] - xm[i];
+	    xm[i]  = xam[i];
+	 }
+	 double dxnormloc=dxnorm;
+	 MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
       }
-      double dxnormloc=dxnorm;
-      MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
       for( int i=0 ; i < ns ; i++ )
       {
 	 double locnorm = fabs(xs[i]-xa[i]);
@@ -726,18 +807,24 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	 ds[i] = xa[i] - xs[i];
 	 xs[i]  = xa[i];
       }
+      //      if( myRank == 0 )
+      //	 for( int i=0 ; i < ns ; i++ )
+      //	    cout << " i="  << i << " " << ds[i] << " " << xs[i] << endl;
+      compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
+			GlobalObservations, f, dfps, dfpm, myRank, mp );
 
-      compute_f_and_df( simulation, ns, xs, nmpar, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfps, dfpm, myRank );
  // Check Wolfe condition:
       double sctmp[2]={0,0};
       double sc[2]={0,0};
-      for( int i=0 ; i < nmpar ; i++ )
+      if( nmpard > 0 )
       {
-         sctmp[0] += dmsave[i]*dfm[i];
-	 sctmp[1] += dmsave[i]*dfpm[i];
+	 for( int i=0 ; i < nmpard ; i++ )
+	 {
+	    sctmp[0] += dmsave[i]*dfm[i];
+	    sctmp[1] += dmsave[i]*dfpm[i];
+	 }
+	 MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       }
-      MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       for( int i=0 ; i < ns ; i++ )
       {
          sc[0] += dssave[i]*dfs[i];
@@ -746,11 +833,15 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       if( myRank == 0 )
 	 cout << "Wolfe condition " <<  sc[1] << " " << sc[0] << " quotient " << sc[1]/sc[0] << " should be >= beta " << endl;
 
-      double rnormloc = 0;
-      for( int i=0 ; i < nmpar ; i++ )
-	 if( fabs(dfpm[i])*sfm[i] > rnormloc )
-	    rnormloc = fabs(dfpm[i])*sfm[i];
-      MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      rnorm = 0;
+      if( nmpard > 0 )
+      {
+	 double rnormloc = 0;
+	 for( int i=0 ; i < nmpard ; i++ )
+	    if( fabs(dfpm[i])*sfm[i] > rnormloc )
+	       rnormloc = fabs(dfpm[i])*sfm[i];
+	 MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      }
       for( int i=0 ; i < ns ; i++ )
 	 if( fabs(dfps[i])*sf[i] > rnorm )
 	    rnorm = fabs(dfps[i])*sf[i];
@@ -760,16 +851,17 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	 GlobalTimeSeries[ts]->writeFile();
 
 // Check that wave speeds do not become too high or too low.
-      simulation.material_correction( nmpar, xm );
+//      simulation.material_correction( nmpard, xm );
+//      mp->constrain_material( nmpard, xm, nmpars, &xs[nspar] );
 
       if( myRank == 0 )
       {
 	 cout << "-----------------------------------------------------------------------" << endl;
 	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
-         if( ns>0 )
+         if( nspar>0 )
 	 {
 	    cout << " new x = " ;
-	    for( int i=0 ; i < ns ; i++ )
+	    for( int i=0 ; i < nspar ; i++ )
 	    {
 	       cout << xs[i] << " ";
 	       if( i==5 )
@@ -778,10 +870,10 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    cout << endl;
 	 }
 	 cout << " Misfit= "  << f << endl;
-         if( ns > 0 )
+         if( nspar > 0 )
 	 {
 	    cout << " scaled gradient = " ;
-	    for( int i=0 ; i < ns ; i++ )
+	    for( int i=0 ; i < nspar ; i++ )
 	    {
 	       cout << dfps[i]*sf[i] << " ";
 	       if( i==5 )
@@ -790,7 +882,7 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    cout << endl;
 	 }
 	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
-         if( ns>0)
+         if( nspar>0)
 	 {
 	    fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
 		 it, xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9], xs[10] );
@@ -808,10 +900,10 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    s[i+ns*kf] = ds[i];
 	    y[i+ns*kf] = dfps[i]-dfs[i];
 	 }
-	 for( int i=0 ; i < nmpar ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	 {
-	    sm[i+nmpar*kf] = dm[i];
-	    ym[i+nmpar*kf] = dfpm[i]-dfm[i];
+	    sm[i+nmpard*kf] = dm[i];
+	    ym[i+nmpard*kf] = dfpm[i]-dfm[i];
 	 }
 	 kf++;
 	 if( kf > m-1 )
@@ -824,10 +916,10 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
 	    s[i+ns*(it-1)] = ds[i];
 	    y[i+ns*(it-1)] = dfps[i]-dfs[i];
 	 }
-	 for( int i=0 ; i < nmpar ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	 {
-	    sm[i+nmpar*(it-1)] = dm[i];
-	    ym[i+nmpar*(it-1)] = dfpm[i]-dfm[i];
+	    sm[i+nmpard*(it-1)] = dm[i];
+	    ym[i+nmpard*(it-1)] = dfpm[i]-dfm[i];
 	 }
       }
 
@@ -835,9 +927,11 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       it++;
       for( int i=0 ; i < ns ; i++ )
 	 dfs[i] = dfps[i];
-      for( int i=0 ; i < nmpar ; i++ )
+      for( int i=0 ; i < nmpard ; i++ )
 	 dfm[i] = dfpm[i];
    }
+   const string parfile = simulation.getOutputPath() + "parameters.bin";
+   mp->write_parameters(parfile.c_str(),nmpars,xs);
    if( myRank == 0 )
    {
       fclose(fd);
@@ -850,8 +944,15 @@ void lbfgs( EW& simulation, int ns, double xs[11], double sf[11], int nmpar,
       delete[] s;
       delete[] y;
       delete[] dftemp;
+      delete[] dssave;
+      delete[] dfs;
+      delete[] ds;
+      delete[] da;
+      delete[] xa;
+      delete[] dfps;
+      delete[] dx;
    }
-   if( nmpar > 0 )
+   if( nmpard > 0 )
    {
       delete[] dfm;
       delete[] sm;

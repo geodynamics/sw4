@@ -10,11 +10,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
 				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
-				 double gradients[11], int nmpar, double* gradientm )
+				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
-   vector<Sarray> gRho, gMu, gLambda;
+   //   vector<Sarray> gRho, gMu, gLambda;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
 
@@ -26,9 +26,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    Km.resize(mNumberOfGrids);
    K.resize(mNumberOfGrids);
    Um.resize(mNumberOfGrids);
-   gRho.resize(mNumberOfGrids);
-   gMu.resize(mNumberOfGrids);
-   gLambda.resize(mNumberOfGrids);
+   //   gRho.resize(mNumberOfGrids);
+   //   gMu.resize(mNumberOfGrids);
+   //   gLambda.resize(mNumberOfGrids);
 
 // Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
    AlphaVE.resize(mNumberOfGrids);
@@ -77,9 +77,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
 // will accumulate the gradient of the misfit in these arrays
    for( int s=0 ; s < 11 ; s++ )
-      gradients[s] = 0;
-   for( int s=0 ; s < nmpar ; s++ )
-      gradientm[s] = 0;
+      gradientsrc[s] = 0;
+   //   for( int s=0 ; s < nmpar ; s++ )
+   //      gradientm[s] = 0;
 
 // will accumulate the Hessian of the misfit in this array
 //   for( int s=0 ; s < 121 ; s++ )
@@ -194,7 +194,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // Accumulate the gradient
       for( int s=0 ; s < point_sources.size() ; s++ )
       {
-	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradients, mGridSize, mJ, topographyExists() );
+	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradientsrc, mGridSize, mJ, topographyExists() );
 	 //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,  mGridSize );
       }
       add_to_grad( K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda );      
@@ -253,23 +253,23 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   gLambda[0].save_to_disk("glambda.bin");
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-       mImage3DFiles[i3]->force_write_image( t, 0, Up, mRho, mMu, mLambda, gRho, gMu, gLambda, mQp, mQs, mPath, mZ );
+       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath, mZ );
 
     for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
     {
        if( mImageFiles[i2]->needs_mgrad() )
-	  mImageFiles[i2]->output_image( 0, t, mDt, Up, U, Um, mRho, mMu, mLambda, gRho, gMu, gLambda, a_Sources, 0 );
+	  mImageFiles[i2]->output_image( 0, t, mDt, Up, U, Um, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, a_Sources, 0 );
     }
    //   Up[0].save_to_disk("ubackedout.bin");
    //   U[0].save_to_disk("umbackedout.bin");
    // 
-    material_to_parameters( nmpar, gradientm, gRho, gMu, gLambda );
+    //    material_to_parameters( nmpar, gradientm, gRho, gMu, gLambda );
 
-   // Sum gradient contributions from all processors
+   // Sum source gradient contributions from all processors
    double gradtmp[11];
    for( int s=0 ; s < 11 ; s++ )
-      gradtmp[s] = gradients[s];
-   MPI_Allreduce( gradtmp, gradients, 11, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+      gradtmp[s] = gradientsrc[s];
+   MPI_Allreduce( gradtmp, gradientsrc, 11, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
 
    //   // Sum Hessian contributions from all processors
    //   double hesstmp[121];
