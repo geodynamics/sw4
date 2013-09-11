@@ -14,7 +14,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nm
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
-		       MaterialParameterization* mp ); 
+		       MaterialParameterization* mp, bool mcheck=false, bool output_ts=false ); 
 
 //-----------------------------------------------------------------------
 void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
@@ -458,7 +458,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 	    vector<Source*>& GlobalSources,
 	    vector<TimeSeries*>& GlobalTimeSeries,
 	    vector<TimeSeries*> & GlobalObservations,
-	    int m, int myRank, MaterialParameterization* mp )
+	    int myRank, MaterialParameterization* mp, int maxit, double tolerance,
+	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck,
+	    bool output_ts )
 
 //-----------------------------------------------------------------------
 // l-BFGS minimization of misfit function.
@@ -487,26 +489,28 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 {
    int j, k, ns;
    bool done = false;
-   bool dolinesearch = true;
-   bool fletcher_reeves=true;
-   bool use_wolfe = false;
-   int maxit, maxrestart, varcase=0, stepselection=0;
+   //   bool dolinesearch = true;
+   //   bool fletcher_reeves=true;
+   //   bool use_wolfe = false;
+   //   int varcase=0, stepselection=0;
 
    // Do not allow source to rise closer than this to the surface:
-   double tolerance, rnorm, f;
+   double rnorm, f;
    //   double dfs[11], ds[11], da[11], xa[11], dfps[11], dx[11]
    double* dfs, *ds, *da, *xa, *dfps, *dx;
    double* dfm;
-   bool testing=false, hscale=true;
+   bool testing=false, hscale;
    int nreductions = 0;
-   
-   // used variables: maxrestart, tolerance, dolinesearch
-   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
-				dolinesearch, varcase, testing );
+   hscale = (ihess == 1);
+
+   // used variables: maxit, tolerance, dolinesearch
+   //   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
+   //				dolinesearch, varcase, testing );
+
 
    ns = nspar + nmpars;
 
-   if( maxrestart == 0 )
+   if( maxit == 0 )
       return;
    
    FILE *fd;
@@ -624,7 +628,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    int kf = 0;
    int it = 1;
 
-   while( it <= maxrestart && !done )
+   while( it <= maxit && !done )
    {
       // perform the two-loop recursion (Alg 7.4) to compute search direction d=-H*df
       int nv = it-1 < m ? it-1 : m ;
@@ -810,8 +814,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       //      if( myRank == 0 )
       //	 for( int i=0 ; i < ns ; i++ )
       //	    cout << " i="  << i << " " << ds[i] << " " << xs[i] << endl;
+
       compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			GlobalObservations, f, dfps, dfpm, myRank, mp );
+			GlobalObservations, f, dfps, dfpm, myRank, mp, mcheck, output_ts );
+
 
  // Check Wolfe condition:
       double sctmp[2]={0,0};
@@ -851,6 +857,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 	 GlobalTimeSeries[ts]->writeFile();
 
 // Check that wave speeds do not become too high or too low.
+
 //      simulation.material_correction( nmpard, xm );
 //      mp->constrain_material( nmpard, xm, nmpars, &xs[nspar] );
 

@@ -17,7 +17,18 @@ Mopt::Mopt( EW* a_ew )
    m_lambdascale = 1;
    m_misfitscale = 1;
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
-}
+   m_optmethod = 1;
+   m_nbfgs_vectors = 10;
+   m_ihess_guess = 2;
+   m_maxit = 10;
+   m_maxsubit = 0;
+   m_dolinesearch = true;
+   m_fletcher_reeves = false;
+   m_wolfe = false;
+   m_mcheck = false;
+   m_output_ts = false;
+   m_tolerance = 1e-12;
+}  
 
 //-----------------------------------------------------------------------
 bool Mopt::parseInputFileOpt( std::string filename )
@@ -44,10 +55,15 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMrun(buffer);
          else if( startswith("mscalefactors",buffer) )
 	    processMscalefactors(buffer);
+         else if( startswith("lbfgs",buffer) )
+	    processLBFGS(buffer);
+         else if( startswith("nlcg",buffer) )
+	    processNLCG(buffer);
       }
    }
    inputFile.close();
    MPI_Barrier(MPI_COMM_WORLD);
+
 // wait until all processes have read the input file
    if( m_ew->getVerbosity() >=3 && m_myrank == 0 )
       cout << "********Done reading the input file*********" << endl;
@@ -168,6 +184,20 @@ void Mopt::processMrun( char* buffer )
 	 else
 	    cout << "ERROR: mrun task=" << token << " not recognized " << endl;
       }
+      else if( startswith("mcheck=",token) )
+      {
+         token += 7;
+         CHECK_INPUT(strcmp("on",token)== 0||strcmp("off",token)== 0,"ERROR, mrun mcheck= " << token <<
+		     " not understood" << endl);
+	 m_mcheck = strcmp("on",token)== 0;
+      }
+      else if( startswith("tsoutput=",token) )
+      {
+         token += 9;
+         CHECK_INPUT(strcmp("on",token)== 0||strcmp("off",token)== 0,"ERROR, mrun tsoutput= " << token <<
+		     " not understood" << endl);
+	 m_output_ts = strcmp("on",token)== 0;
+      }
       else
          badOption("mrun",token);
       token = strtok(NULL," \t");
@@ -221,4 +251,119 @@ void Mopt::get_scalefactors( double& rhoscale, double& muscale,
    muscale = m_muscale;
    lambdascale = m_lambdascale;
    fscale = m_misfitscale;
+}
+
+//-----------------------------------------------------------------------
+void Mopt::processLBFGS( char* buffer )
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("lbfgs", token) == 0,
+	       "ERROR: not an lbfgs line: " << token);
+   token = strtok(NULL, " \t");
+   m_optmethod = 1;
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else if( startswith("nvectors=",token) )
+      {
+         token += 9;
+	 m_nbfgs_vectors = atoi(token);
+	 CHECK_INPUT( m_nbfgs_vectors > 0, 
+           "ERROR: lbfgs, nvectors must be positive, not " << m_nbfgs_vectors << endl );
+      }
+      else if( startswith("ihess0=",token) )
+      {
+         token += 7;
+         if( strcmp(token,"scale-factors")== 0 )
+	    m_ihess_guess = 1;
+	 else if( strcmp(token,"gamma")==0 )
+	    m_ihess_guess = 2;
+         else
+	    CHECK_INPUT(false,"ERROR: lbfgs ihess0="  << token << " not understood " << endl);
+      }
+      else if( startswith("maxit=",token) )
+      {
+         token += 6;
+	 m_maxit = atoi(token);
+      }
+      else if( startswith("tolerance=",token) )
+      {
+         token += 10;
+	 m_tolerance = atof(token);
+      }
+      else if( startswith("linesearch=",token) )
+      {
+         token += 11;
+         CHECK_INPUT( strcmp(token,"on")==0 ||  strcmp(token,"off")==0 || strcmp(token,"wolfe")==0,
+		      "lbfgs: ERROR: linesearch=" << token << "not understood");
+         if( strcmp(token,"wolfe")== 0 )
+	 {
+            m_dolinesearch = true;
+	    m_wolfe = true;
+ 	 }
+         else 
+	 {
+	    m_dolinesearch = strcmp(token,"on")==0;
+            m_wolfe = false;
+	 }
+      }
+      else
+         badOption("lbfgs",token);
+      token = strtok(NULL," \t");
+   }
+}
+
+
+//-----------------------------------------------------------------------
+void Mopt::processNLCG( char* buffer )
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("nlcg", token) == 0,
+	       "ERROR: not an nlcg line: " << token);
+   token = strtok(NULL, " \t");
+   m_optmethod = 2;
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else if( startswith("maxsubit=",token) )
+      {
+	 token += 9;
+	 m_maxsubit = atoi(token);
+      }
+      else if( startswith("maxit=",token) )
+      {
+         token += 6;
+	 m_maxit = atoi(token);
+      }
+      else if( startswith("tolerance=",token) )
+      {
+         token += 10;
+	 m_tolerance = atof(token);
+      }
+      else if( startswith("linesearch=",token) )
+      {
+         token += 11;
+         CHECK_INPUT( strcmp(token,"on")==0 ||  strcmp(token,"off")==0,
+		      "nlcg: ERROR: linesearch=" << token << "not understood");
+         m_dolinesearch = strcmp(token,"on")==0;
+      }
+      else if( startswith("subtype=",token) )
+      {
+         token += 8;
+         m_fletcher_reeves = strcmp(token,"fletcher-reeves")==0
+	 || strcmp(token,"Fletcher-Reeves")==0;
+         if( !m_fletcher_reeves )
+	    CHECK_INPUT( strcmp(token,"Polak-Ribiere")==0 || strcmp(token,"polak-ribiere")== 0,
+			 "ERROR: nclg subtype " << token << " not understood" << endl);
+      }
+      else
+         badOption("nlcg",token);
+      token = strtok(NULL," \t");
+   }
 }

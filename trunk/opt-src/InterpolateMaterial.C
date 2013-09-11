@@ -25,6 +25,7 @@ extern "C" {
 }
 
 
+//-----------------------------------------------------------------------
 void EW::interpolate( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
 		      double hy, double hz, Sarray& rho, Sarray& mu, Sarray& lambda,
 		      int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid )

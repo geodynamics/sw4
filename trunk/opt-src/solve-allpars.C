@@ -8,7 +8,7 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 			vector<TimeSeries*> & a_TimeSeries, 
                         vector<Sarray>& U, vector<Sarray>& Um,
 			vector<DataPatches*>& Upred_saved_sides,
-			vector<DataPatches*>& Ucorr_saved_sides )
+			vector<DataPatches*>& Ucorr_saved_sides, bool save_sides )
 {
 // solution arrays
   vector<Sarray> F, Lu, Uacc, Up;
@@ -107,28 +107,29 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 	jmax = -1;
 	kmax = -1;
      }
-     Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
-     Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
+     if( save_sides )
+     {
+	Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
+	Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
-     size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
-     size_t maxsize;
-     int mpisizelong, mpisizelonglong, mpisizeint;
-     MPI_Type_size(MPI_LONG,&mpisizelong );
-     MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
-     MPI_Type_size(MPI_INT,&mpisizeint );
-     if( sizeof(size_t) == mpisizelong )
-	MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
-     else if( sizeof(size_t) == mpisizelonglong )
-	MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
-     else if( sizeof(size_t) == mpisizeint )
-	MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-
-     if( proc_zero() )
-	cout << "Maximum temporary file size on grid " << g << " is " << maxsize << " doubles for each time step "<<endl;
-
-     if( !mQuiet && mVerbose >= 5 && proc_zero() )
-	cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
-	   Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
+	size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
+	size_t maxsize;
+	int mpisizelong, mpisizelonglong, mpisizeint;
+	MPI_Type_size(MPI_LONG,&mpisizelong );
+	MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
+	MPI_Type_size(MPI_INT,&mpisizeint );
+	if( sizeof(size_t) == mpisizelong )
+	   MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
+	else if( sizeof(size_t) == mpisizelonglong )
+	   MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
+	else if( sizeof(size_t) == mpisizeint )
+	   MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+	if( !mQuiet && mVerbose >= 5 && proc_zero() )
+	   cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
+	      Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
+	if( proc_zero() )
+	   cout << "Maximum temporary file size on grid " << g << " is " << maxsize << " doubles for each time step "<<endl;
+     }
   }
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -328,13 +329,17 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
   //        point_sources[s]->print_info();
   //  cout << getRank() << "pushing initial data " << endl;    
 
-  for( int g=0 ; g < mNumberOfGrids ; g++ )
+  if( save_sides )
   {
-     Upred_saved_sides[g]->push( Um[g], -1 );
-     Upred_saved_sides[g]->push( U[g], 0 );
-     Ucorr_saved_sides[g]->push( Um[g], -1 );
-     Ucorr_saved_sides[g]->push( U[g], 0 );
+     for( int g=0 ; g < mNumberOfGrids ; g++ )
+     {
+	Upred_saved_sides[g]->push( Um[g], -1 );
+	Upred_saved_sides[g]->push( U[g], 0 );
+	Ucorr_saved_sides[g]->push( Um[g], -1 );
+	Ucorr_saved_sides[g]->push( U[g], 0 );
+     }
   }
+
 // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
@@ -376,8 +381,9 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
        Force_tt( t, F, point_sources );
       
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
-       for( int g=0 ; g < mNumberOfGrids ; g++ )
-	  Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
+       if( save_sides )
+	  for( int g=0 ; g < mNumberOfGrids ; g++ )
+	     Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
       
        evalRHS( Uacc, a_Mu, a_Lambda, Lu, AlphaVEm );
 
@@ -399,8 +405,9 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 // update ghost points in Up
        enforceBC( Up, a_Mu, a_Lambda, t+mDt, BCForcing );
-       for( int g=0 ; g < mNumberOfGrids ; g++ )
-	  Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
+       if( save_sides )
+	  for( int g=0 ; g < mNumberOfGrids ; g++ )
+	     Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
     }
     
     if( m_checkfornan )

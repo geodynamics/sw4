@@ -63,10 +63,19 @@ MaterialParCartesian::MaterialParCartesian( EW* a_ew, int nx, int ny, int nz, in
    //   cout << " ymin, ymax = " << m_ymin << " " << m_ymax << endl;
 
    // Determine h, such that x= i*h+xmin, i=0,..,nx+1
+
    m_hx = (m_xmax-m_xmin)/(nx+1);
    m_hy = (m_ymax-m_ymin)/(ny+1);
-   m_hz = (m_zmax-m_zmin)/(nz+1);
+//   m_hz = (m_zmax-m_zmin)/(nz+1);
+   m_hz = (m_zmax-m_zmin)/nz;
+   m_zmin = m_zmin-m_hz;
 
+   if( m_myrank == 0 )
+   {
+     cout << " xmin, xmax = " << m_xmin << " " << m_xmax << " hx = " << m_hx << endl;
+     cout << " ymin, ymax = " << m_ymin << " " << m_ymax << " hy = " << m_hy << endl;
+     cout << " zmin, zmax = " << m_zmin << " " << m_zmax << " hz = " << m_hz << endl;
+   }
 // Grid is determined.
    m_nms = 3*nx*ny*nz;
    m_nmd = 0;
