@@ -50,11 +50,13 @@ c$$$      end
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nig, njg, nkg
       integer i, j, k, randw(3), iseed1, iseed2, iseed3, krand, iz, gh
       integer p, pz, ii, jj, kk
+c      integer n, nrand(20)
       real*8  w(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  wgh(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  savedrands(ifirst-p:ilast+p,jfirst-p:jlast+p,
      *                                        1-pz:1+pz)
       real*8  h, dist, distz
+c      real*8  bnorm, bznorm
       real*8, allocatable, dimension(:) :: b, bz
       real    randno
 
@@ -64,15 +66,29 @@ c$$$      end
 c      p =int(dist/h)+1
 c      pz=int(distz/h)+1
       allocate( b(-p:p), bz(-pz:pz) )
+c      bnorm = 0
       do k=-p,p
          b(k) = exp(-k*k*h*h/(2*dist*dist))
+c         bnorm = bnorm + b(k)*b(k)
       enddo
+c      bznorm = 0
       do k=-pz,pz
          bz(k) = exp(-k*k*h*h/(2*distz*distz))
+c         bznorm = bznorm + bz(k)*bz(k)
       enddo
-      
+c Normalize filter coefficients
+c      bnorm  = SQRT(bnorm)
+c      bznorm = SQRT(bznorm)
+c      do k=-p,p
+c         b(k) = b(k)/bnorm
+c      enddo
+c      do k=-pz,pz
+c         bz(k) = bz(k)/bznorm
+c      enddo
+
       w = 0
       wgh=0
+c      nrand = 0
 *** wgh is maintained because of boundary effects. The stencil is cut
 *** at boundaries and will use fewer points there.
 c      do k=1-gh,nkg+gh
@@ -98,7 +114,10 @@ c      do k=1-gh,nkg+gh
      *             j+p.ge.jfirst .and. j-p.le.jlast .and. 
      *             k+pz.ge.kfirst .and. k-pz.le.klast )then
 *** Compute the random number in [-1,1], and loop over stencil
-                  randno = 2*real(iz)*3.0899e-5-1
+                  randno = 2*real(iz)*3.0899e-5 - 1
+c                  randno = sqrt(3.0)*randno
+c                  n = (randno+1)*10
+c                  nrand(n+1) = nrand(n+1) + 1
                   if( k.le.1+pz )then
                      savedrands(i,j,k) =randno
 c                     write(*,*) 'saved ',i,j,k,randno
@@ -113,6 +132,8 @@ c                     write(*,*) 'saved ',i,j,k,randno
      *                             b(ii)*b(jj)*bz(kk)*randno
                               wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
      *                                   + b(ii)*b(jj)*bz(kk)
+c                              wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
+c     *                           + b(ii)*b(jj)*bz(kk)*b(ii)*b(jj)*bz(kk)
                            endif
                         enddo
                      endif
@@ -124,6 +145,12 @@ c                     write(*,*) 'saved ',i,j,k,randno
          enddo
       enddo
 
+c      write(*,*) 'number of numbers '
+c      do n=1,20
+c         write(*,*) n, ' ', nrand(n)
+c      enddo
+c      write(*,*) '-----------------------------'
+
 *** Save state of random number generator
       randw(1)=iseed1    
       randw(2)=iseed2
@@ -134,11 +161,14 @@ c                     write(*,*) 'saved ',i,j,k,randno
          do j=jfirst,jlast
             do i=ifirst,ilast
                w(i,j,k) = w(i,j,k)/wgh(i,j,k)
+c               w(i,j,k) = w(i,j,k)/SQRT(wgh(i,j,k))
             enddo
          enddo
       enddo
       deallocate(b,bz)
       end
+
+c-----------------------------------------------------------------------
       subroutine RANDOMFIELD3DC( ifirst, ilast, jfirst, jlast, kfirst,
      *                          klast, nig, njg, nkg, gh, w, wgh, dist, 
      *                          distz, h, z, randw, savedrands, p, pz )
@@ -234,17 +264,24 @@ c      pz=int(distz/h)+1
       enddo
       deallocate(b)
       end
+
 c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITY( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, vs, vp, per, amp, grad, zmin, h )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k
+c      integer nrand(35), n
       real*8  per(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  vs(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  vp(ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8  amp, grad, a, z, zmin, h
+      real*8  amp, grad, a, z, zmin, h, sqrt3, maxper, minper
 
+c      sqrt3 = SQRT(3d0)
+c      nrand = 0
+c      minper = 1d38
+c      maxper = -1d38
+c      write(*,*) 'amp = ',amp, ' grad= ',grad
       do k=kfirst,klast
          z = zmin + (k-1)*h
          A = amp + grad*z
@@ -252,10 +289,26 @@ c-----------------------------------------------------------------------
             do i=ifirst,ilast
                vs(i,j,k) = (1+A*per(i,j,k))*vs(i,j,k)
                vp(i,j,k) = (1+A*per(i,j,k))*vp(i,j,k)
+c               n = (per(i,j,k)+sqrt3)*10
+c               nrand(n+1) = nrand(n+1)+1
+c               if( per(i,j,k).gt.maxper )then
+c                  maxper = per(i,j,k)
+c               endif
+c               if( per(i,j,k).lt.minper )then
+c                  minper = per(i,j,k)
+c               endif
             enddo
          enddo
       enddo
+c      write(*,*) 'number of numbers '
+c      do n=1,35
+c         write(*,*) n, ' ', nrand(n)
+c      enddo
+c      write(*,*) 'min and max perturbation ',minper,' ',maxper
+c      write(*,*) '-----------------------------'
+
       end
+
 c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITYC( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, vs, vp, per, amp, grad, z )

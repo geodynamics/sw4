@@ -32,7 +32,7 @@
 #include "MaterialProperty.h"
 #include "GeographicProjection.h"
 #include "DataPatches.h"
-//#include "ErrorChecking.h"
+
 
 using namespace std;
 
@@ -62,13 +62,14 @@ void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
 		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
 		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
-		    vector<DataPatches*>& Ucorr_saved_sides );
+		    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides );
 
 void solve_backward_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
 		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
 		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
-			     vector<DataPatches*>& Ucorr_saved_sides, double gradients[11], int nmpar,
-			     double* gradientm );
+			     vector<DataPatches*>& Ucorr_saved_sides, double gradients[11], 
+			     vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
+   //int nmpar, double* gradientm );
 
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
@@ -79,6 +80,7 @@ void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, in
 
 // some (all?) of these functions are called from parseInputFile() and should be made private
 void badOption(string name, char* option) const;
+bool startswith(const char begin[], char *line);
 void processGrid(char* buffer);
 void deprecatedOption(const string& command, 
 		      const string& oldone, 
@@ -500,7 +502,7 @@ void layered_speeds( vector<double>& cp, vector<double>& z );
 void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double hessian[121] );
 void get_scalefactors( double sf[11] ); 
 bool compute_sf();
-   void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& guessshifts, bool& output_seismograms );
+void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& guessshifts, bool& output_seismograms );
 void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
 		       int& stepselection, bool& do_linesearch, int& varcase, bool& testing );
 void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
@@ -511,6 +513,12 @@ void get_material_parameter( int nmpar, double* xm );
 void get_scale_factors( int nmpar, double* xm );
 
 void material_correction( int nmpar, double* xm );
+
+void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+		       vector<Sarray>& a_lambda, int& info );
+
+void check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+		       vector<Sarray>& a_lambda );
 
 void get_nr_of_material_parameters( int& nmvar );
 void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
@@ -532,6 +540,7 @@ void material_ic( vector<Sarray>& a_mtrl );
 void gettopowgh( double ai, double wgh[8] ) const;
 
 void smooth_grid( int maxIter );
+
 void enforceDirichlet5( vector<Sarray> & a_U );
 
 bool check_for_nan( vector<Sarray>& a_U, int verbose, string name );
@@ -539,6 +548,20 @@ bool check_for_nan( vector<Sarray>& a_U, int verbose, string name );
 void define_parallel_io( vector<Parallel_IO*>& parallel_io );
 
 void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data );
+
+void interpolate( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
+		  double hy, double hz, Sarray& rho, Sarray& mu, Sarray& lambda,
+		  int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid );
+
+void interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin,
+			    double zmin, double hx, double hy, double hz,
+			    Sarray& rho, Sarray& mu, Sarray& lambda, vector<Sarray>& rhogrid, 
+			    vector<Sarray>& mugrid, vector<Sarray>& lambdagrid );
+
+void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
+			     double hy, double hz, Sarray& gradrho, Sarray& gradmu, Sarray& gradlambda,
+			     int grid, Sarray& gradrhogrid, Sarray& gradmugrid, Sarray& gradlambdagrid );
+
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -602,6 +625,11 @@ vector<MaterialProperty*> m_materials;
 MPI_Comm m_cartesian_communicator;
 
 ofstream msgStream;
+
+// vectors of Sarrays hold material properties on all grids. 
+vector<Sarray> mMu;
+vector<Sarray> mLambda;
+vector<Sarray> mRho;
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
@@ -683,10 +711,6 @@ vector<int *> m_NumberOfBCPoints;
 // ghost point index window for each side of the boundary on each grid
 vector<int *> m_BndryWindow;
 
-// vectors of Sarrays hold material properties on all grids. 
-vector<Sarray> mMu;
-vector<Sarray> mLambda;
-vector<Sarray> mRho;
 
 // attenuation variables (only allocated if attenuation is enabled)
 bool m_use_attenuation, m_att_use_max_frequency;

@@ -15,7 +15,6 @@
 #include "TimeSeries.h"
 #include "Filter.h"
 
-
 #include "Image3D.h"
 
 #include <cstring>
@@ -31,17 +30,17 @@ using namespace std;
 
 #define SQR(x) ((x)*(x))
 
-int gcd( int a, int b )
-{
-   // Euclidean algorithm
-   while( b != 0 )
-   {
-      int t = b;
-      b = a % b;
-      a = t;
-   }
-   return a;
-}
+//int gcd( int a, int b )
+//{
+//   // Euclidean algorithm
+//   while( b != 0 )
+//   {
+//      int t = b;
+//      b = a % b;
+//      a = t;
+//   }
+//   return a;
+//}
 
 int computeEndGridPoint( double maxval, double dh )
 {
@@ -67,22 +66,23 @@ int computeEndGridPoint( double maxval, double dh )
 }
 
 //-----------------------------------------------------------------------
-bool endswith(string end, string& mystr)
-{
-   int lenEnd = end.length();
-   int lenStr = mystr.length();
+//bool endswith(string end, string& mystr)
+//{
+//   int lenEnd = end.length();
+//   int lenStr = mystr.length();
 
-   if (lenEnd > lenStr) return false;
+//   if (lenEnd > lenStr) return false;
 
-   cout << "mystr: " << mystr << " end: " << end << " " << mystr.substr(lenStr-lenEnd, lenEnd) << endl;
+//   cout << "mystr: " << mystr << " end: " << end << " " << mystr.substr(lenStr-lenEnd, lenEnd) << endl;
 
-   if (mystr.substr(lenStr-lenEnd, lenEnd) == end)
-      return true;
-   else 
-      return false;
-}
+//   if (mystr.substr(lenStr-lenEnd, lenEnd) == end)
+//      return true;
+//   else 
+//      return false;
+//}
+
 //-----------------------------------------------------------------------
-bool startswith(const char begin[], char *line)
+bool EW::startswith(const char begin[], char *line)
 {
   int lenb = strlen(begin);
 
@@ -96,6 +96,7 @@ bool startswith(const char begin[], char *line)
      return false;
 }
 
+//-----------------------------------------------------------------------
 void EW::deprecatedOption(const string& command, 
 		      const string& oldone, 
 		      const string& newone)
@@ -106,15 +107,15 @@ void EW::deprecatedOption(const string& command,
 	 << newone << " instead." << endl;
 }
 
-void unchecked(const char* cmd)
-{
-   cout << "*** Not yet checking command: " << cmd << endl;
-}
+//void unchecked(const char* cmd)
+//{
+//   cout << "*** Not yet checking command: " << cmd << endl;
+//}
 
-void checked(const char* cmd)
-{
-   cout << "*** " << cmd << " command checked! " << endl;
-}
+//void checked(const char* cmd)
+//{
+//   cout << "*** " << cmd << " command checked! " << endl;
+//}
 
 //-----------------------------------
 // 
@@ -1793,7 +1794,7 @@ void EW::processDeveloper(char* buffer)
 	else if( strcmp(token,"lambda")==0 )
 	   m_pervar = 2;
 	else if( strcmp(token,"rho")==0 )
-	   m_pervar = 3;
+	   m_pervar = 0;
 	else
 	   CHECK_INPUT(false," pervar must be , mu, lambda, or rho, not " << token << endl);
      }
@@ -6347,8 +6348,8 @@ void EW::processCG( char* buffer )
      {
         token += 13;
 	m_lbfgs_m = atoi(token);
-	CHECK_INPUT( m_lbfgs_m > 0 && m_lbfgs_m <= 11,
-		     "Number of l-BFGS vectors must be between 1 and 11. Input value = " << m_lbfgs_m );
+	CHECK_INPUT( m_lbfgs_m > 0,
+		     "Number of l-BFGS vectors must be positive. Input value = " << m_lbfgs_m );
      }
      else if( startswith("solvefor=" , token) )
      {
@@ -6962,3 +6963,4 @@ void EW::processRandomize(char* buffer)
    //   if( !lengthscaleset && lengthscalezset )
    //      m_random_dist = m_random_distz;
 }
+

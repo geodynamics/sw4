@@ -242,3 +242,100 @@ c-----------------------------------------------------------------------
       
       end         
 
+c-----------------------------------------------------------------------
+      subroutine CHECKMTRL( ib,  ie,  jb,  je,  kb,  ke, 
+     *         rho, mu, lambda, dt, h, limits )
+
+***********************************************************************
+***
+*** Check if the material satisfies the following constraints
+***
+***    1. CFL condition max(vp) < h*cflmax/dt
+***    2. Smallest resolvable speed, min(vs) > vsmin
+***    3. Positive density rho > eps
+***    4. Positive mu,  mu > eps
+***    5. Non-negative lambda, lambda >= 0
+***      
+*** Input: ib, ie, jb, je, kb, ke - Declared dimensions of arrays
+***        rho - Density
+***        mu  - Lam\'e parameter
+***        lambda - Lam\'e parameter
+***        h - Grid spacing
+***        dt - time step
+***
+*** Output: limits - vector of 8 elements:
+***            (rhomin,rhomax,mumin,mumax,lamin,lamax,cfl2max,vs2min)
+***
+***********************************************************************
+
+      implicit none
+      integer ib, ie, jb, je, kb, ke
+      integer i, j, k
+      real*8 rho(ib:ie,jb:je,kb:ke), mu(ib:ie,jb:je,kb:ke)
+      real*8 lambda(ib:ie,jb:je,kb:ke), acof, c1, c2
+      real*8 dt, h
+      real*8 rhmin, rhmax, mumin, mumax, lamin, lamax
+      real*8 cfl2max, vs2min, limits(8)
+
+      rhmin =  1e38
+      rhmax = -1e38
+      mumin =  1e38
+      mumax = -1e38
+      lamin =  1e38
+      lamax = -1e38
+      cfl2max = -1e38
+      vs2min  = 1e38
+      acof = dt*dt/(h*h)
+      do k=kb,ke
+         do j=jb,je
+            do i=ib,ie
+               if( rho(i,j,k).lt.rhmin )then
+                  rhmin = rho(i,j,k)
+               endif
+               if( rho(i,j,k).gt.rhmax )then
+                  rhmax = rho(i,j,k)
+               endif
+               if( mu(i,j,k).lt.mumin )then
+                  mumin = mu(i,j,k)
+               endif
+               if( mu(i,j,k).gt.mumax )then
+                  mumax = mu(i,j,k)
+               endif
+               if( lambda(i,j,k).lt.lamin )then
+                  lamin = lambda(i,j,k)
+               endif
+               if( lambda(i,j,k).gt.lamax )then
+                  lamax = lambda(i,j,k)
+               endif
+               c1 = acof*(4*mu(i,j,k)+lambda(i,j,k))/rho(i,j,k)
+               if( c1.gt.cfl2max )then
+                  cfl2max = c1
+               endif
+               c2 = mu(i,j,k)/rho(i,j,k)
+               if( c2.lt.vs2min )then
+                  vs2min = c2
+               endif
+c               c1 = acof*rho(i,j,k)-4*mu(i,j,k)-lambda(i,j,k)
+c               if( c1.lt.c1min )then
+c                  c1min   = c1
+c                  cfl2max = dt*dt*(c1+4*mu(i,j,k)+lambda(i,j,k))/
+c     *                                    (h*h*rho(i,j,k))
+c               endif
+c               c2 = mu(i,j,k)-bcof*rho(i,j,k)
+c               if( c2.lt.c2min )then
+c                  c2min = c2
+c                  vs2min = mu(i,j,k)/rho(i,j,k)
+c               endif
+            enddo
+         enddo
+      enddo
+      limits(1) = rhmin
+      limits(2) = rhmax
+      limits(3) = mumin
+      limits(4) = mumax
+      limits(5) = lamin
+      limits(6) = lamax
+      limits(7) = cfl2max
+      limits(8) = vs2min
+
+      end

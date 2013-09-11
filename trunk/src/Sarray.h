@@ -75,6 +75,7 @@ public:
    void copy( const Sarray& u );
    double maximum( int c=1 );
    double minimum( int c=1 );
+   double sum( int c=1 );
    size_t count_nans();
    size_t count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );

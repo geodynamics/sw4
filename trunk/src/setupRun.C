@@ -1668,6 +1668,8 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
    int g = mNumberOfGrids-1;
    int p = m_random_dist/mGridSize[g]+1;
    int pz= m_random_distz/mGridSize[g]+1;
+   //   int p = 2*m_random_dist/mGridSize[g]+1;
+   //   int pz= 2*m_random_distz/mGridSize[g]+1;
    int ifirst = m_iStart[g];
    int ilast  = m_iEnd[g];
    int jfirst = m_jStart[g];

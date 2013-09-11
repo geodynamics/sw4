@@ -152,6 +152,9 @@ void F77_FUNC(projectmtrlc,PROJECTMTRLC)( int*, int*, int*, int*, int*, int*, in
 void F77_FUNC(projectmtrl,PROJECTMTRL)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 					double*, double*, double*, double*, double*, double*,
 					double*, double*, double*, double*, int* );
+void F77_FUNC(checkmtrl,CHECKMTRL)( int*, int*, int*, int*, int*, int*,
+				       double*, double*, double*, double*, double*, double* );
+
 void F77_FUNC(exactmatfortatt,EXACTMATFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
 					 double*, double*, double*, double*, double* );
 void F77_FUNC(exactmatfortattc,EXACTMATFORTATTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
@@ -5271,7 +5274,7 @@ void EW::perturb_mtrl()
 	 mMu[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
       else if( m_pervar == 2 )
          mLambda[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
-      else if( m_pervar == 3 )
+      else if( m_pervar == 0 )
          mRho[g](m_iperturb,m_jperturb,m_kperturb) += m_perturb;
    }
 }
@@ -5413,6 +5416,127 @@ void EW::material_correction( int nmpar, double* xm )
 	 cout << "Grid " << g << " info = " << info << " from projectmtrl" << endl;
    }   
    material_to_parameters( nmpar, xm, mRho, mMu, mLambda );
+}
+
+//-----------------------------------------------------------------------
+void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+			   vector<Sarray>& a_lambda, int& info )
+// routine to enforce material speed limits and positive density
+{
+   double vsmin = -1;
+   if( m_useVelocityThresholds )
+      vsmin = m_vsMin;
+   double rhoscale=1, muscale=1, lascale=1;
+   info = 0;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int infogrid;
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      int ifirstact = m_iStartAct[g];
+      int ilastact  = m_iEndAct[g];
+      int jfirstact = m_jStartAct[g];
+      int jlastact  = m_jEndAct[g];
+      int kfirstact = m_kStartAct[g];
+      int klastact  = m_kEndAct[g];
+
+      double* rhop = a_rho[g].c_ptr();
+      double* mup  = a_mu[g].c_ptr();
+      double* lap  = a_lambda[g].c_ptr();
+
+      if( topographyExists() && g == mNumberOfGrids-1 )
+      {
+	 // Curvilinear 
+	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(), mJ.c_ptr(),
+					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
+      }
+      else
+      {
+	 // Cartesian
+	 F77_FUNC(projectmtrl,PROJECTMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+					    &klastact, rhop, mup, lap, &mDt, &mGridSize[g], &mCFLmax,
+					    &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
+      }
+      if( infogrid != 0 )
+      {
+	 cout << "Grid " << g << " info = " << infogrid << " from projectmtrl" << endl;
+         if( info == 0 )
+	    info = infogrid;
+      }
+   }   
+}
+
+//-----------------------------------------------------------------------
+void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+			 vector<Sarray>& a_lambda )
+{
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      int infogrid;
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+
+      double limits[8];
+
+      double* rhop = a_rho[g].c_ptr();
+      double* mup  = a_mu[g].c_ptr();
+      double* lap  = a_lambda[g].c_ptr();
+
+      //      if( topographyExists() && g == mNumberOfGrids-1 )
+      //      {
+      //	 // Curvilinear 
+      //	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+      //					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(), mJ.c_ptr(),
+      //					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
+      //      }
+      //      else
+      //      {
+	 // Cartesian
+      F77_FUNC(checkmtrl,CHECKMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+				     rhop, mup, lap, &mDt, &mGridSize[g], limits );
+      double local[4]={limits[0],limits[2],limits[4],limits[7]};
+      double global[4];
+      MPI_Allreduce( local, global, 4, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+      limits[0]=global[0];
+      limits[2]=global[1];
+      limits[4]=global[2];
+      limits[7]=global[3];
+      local[0]=limits[1];
+      local[1]=limits[3];
+      local[2]=limits[5];
+      local[3]=limits[6];
+      MPI_Allreduce( local, global, 4, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+      limits[1]=global[0];
+      limits[3]=global[1];
+      limits[5]=global[2];
+      limits[6]=global[3];
+      if( proc_zero() )
+      {
+	 if( limits[0] < 0 )
+	    cout << "rho_min = " << limits[0] << " on grid " << g << endl;
+	 if( limits[2] < 0 )
+	    cout << "mu_min = " << limits[2] << " on grid " << g << endl;
+	 if( limits[4] < 0 )
+	    cout << "lambda_min = " << limits[4] << " on grid " << g << endl;
+         if( limits[6] < 0 )
+	    cout << " cfl_max  is imaginary on grid " << g << endl;
+         else
+	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
+
+      }
+   }
 }
 
 //-----------------------------------------------------------------------

@@ -367,6 +367,16 @@ double Sarray::minimum( int c )
 }
 
 //-----------------------------------------------------------------------
+double Sarray::sum( int c )
+{
+   int cm = c-1;
+   double s = 0;
+   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
+      s += m_data[cm+i*m_nc];
+   return s;
+}
+
+//-----------------------------------------------------------------------
 size_t Sarray::count_nans()
 {
    size_t retval = 0;
