@@ -1,13 +1,13 @@
 %
 % PLOTIMAGEF
 %
-%     plotimage( fil, cvals )
+%     plotimagef( fil, cvals )
 %
 %   Plots the image on file 'fil' with contourf, using the contour levels cvals.
 %   The boundary of each grid patch is outlined in black. A vector cvals can be 
 %   obtained from function imageinfo.
 %
-function plotimage( fil, cvals )
+function plotimagef( fil, cvals )
 fd=fopen(fil,'r');
 pr=fread(fd,1,'int');
 nb=fread(fd,1,'int');
