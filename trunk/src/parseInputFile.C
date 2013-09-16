@@ -5458,7 +5458,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
 	  << y2 << " " << z1 << " " << z2 << endl;
 
   CHECK_INPUT( vs > 0 && vp > 0 && rho > 0 , "Error in block " << name << " vp vs rho are   "
-	       << vs << " " << vp << " " << rho );
+	       << vp << " " << vs << " " << rho );
 
   MaterialBlock* bl = new MaterialBlock( this ,rho, vs, vp, x1, x2, y1, y2, z1, z2, qs, qp, freq );
   bl->set_gradients( rhograd, vsgrad, vpgrad );

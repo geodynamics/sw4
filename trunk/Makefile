@@ -211,6 +211,8 @@ sw4-v1.0.tgz:
 	/bin/mkdir -p $(tardir)
 	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
 	cd $(tardir); /bin/rm -rf tests docs opt-src CVSROOT
+# remove an empty cvs dir
+	cd $(tardir); /bin/rm -rf examples/scec/loh3
 # command for sticking in the license blurb in all source code files
 	cd $(tardir); python enforceLicense.py Blurb.txt $(fullpath)/$(tardir)
 	cd $(tardir); /bin/rm -f enforceLicense.py

@@ -2376,7 +2376,7 @@ Note: The default projection, given by equations \eqref{eq:lat}-\eqref{eq:lon}, 
 nor \verb+ellps+ are specified. The default values for \verb+ellps+ and \verb+proj+ are only used in
 the case that one of these two parameters is specified.
 
-\index{grid parameters!location - az, lat, lon, proj, ellipse, mlat, mlon}
+\index{grid parameters!location - az, lat, lon, mlat, mlon, proj, ellps}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{time [required]}
@@ -2414,7 +2414,7 @@ steps & number of cycles (time-steps) to advance & int & none & none\\ \hline
 utcstart & month/day/year:hour:minute:second.millisecond & string & datum & {\emph{SW4} start time}\\ \hline
 \end{tabular}
 \end{center}
-\index{time parameters!t, steps}
+\index{time parameters!t, steps, utcstart}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{supergrid [optional]} \label{sec:supergrid}
@@ -2551,8 +2551,9 @@ ncyc & Number of cycles (must be specified for the GaussianWindow function) & in
 dfile & File name for discrete time function & string & none & none \\ \hline
 \end{tabular}
 \end{center}
-\index{source parameters!location - x, y, z, depth, topodepth, lat, lon} \index{source
-  parameters!t0, freq, type} The {\bf type} keyword specifies the source time function. It can have
+\index{source parameters!location - x, y, z, depth, topodepth, lat, lon} 
+\index{source parameters!t0, freq, type, ncyc, dfile} 
+The {\bf type} keyword specifies the source time function. It can have
 the following values: {\tt GaussianInt, Erf, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth,
   Smoothwave, VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac}, and {\tt
   C6SmoothBump}. The functions are described in \S~\ref{sec:predefined}.  
@@ -2609,6 +2610,7 @@ prescribed amount of slip is achieved on each sub-fault of the SRF file.
 The SRF file format is described on the SCEC wiki webpage:
 
 \verb+http://scec.usc.edu/scecpedia/Standard_Rupture_Format+
+\index{rupture parameters! file}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The material model [required]} 
@@ -2658,6 +2660,7 @@ wave length ($>0$)& real & None & None \\ \hline
 qmultiplier & A number that will multiply both $Q_P$ and $Q_S$ & real$>0$  & None & 1.0 \\ \hline
 \end{tabular}
 \end{center}
+\index{attenuation parameters!phasefreq, nmech, maxfreq, minppw, qmultiplier}
 If you specify the \verb+minppw+ option, the upper frequency limit is calculated based on the
 relation $P=\min C_S/(h f)$, i.e.,
 \[
@@ -2793,7 +2796,7 @@ resolution & average properties over this distance (for query=FIXEDRES) & real  
 access     & can be set to parallel or serial                 & string  & none   &  parallel \\ \hline
 \end{tabular}
 \end{center}
-\index{efile parameters!logfile, query, resolution, access, etree, xetree}
+\index{efile parameters!etree, xetree, logfile, query, resolution, access}
 %
 The query option can be set to one of the following:
 %
@@ -2847,6 +2850,7 @@ style         & type of grid data: {\tt geographic} or {\tt cartesian} & string 
 
 \index{pfile parameters!filename, directory, smoothingsize, vpmin, vsmin, rhomin, flatten, style}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{ifile}
 \index{command!ifile}
 \label{keyword:ifile}
@@ -2868,10 +2872,12 @@ filename & name of input file holding material surfaces & string & None  \\ \hli
 input & {\tt cartesian} or {\tt geographic} & string & None  \\ \hline
 \end{tabular}
 \end{center}
-\index{ifile parameters!filename}
+\index{ifile parameters!filename, input}
 If {\tt input=cartesian}, the file is assumed to give the material surfaces as function of the $x$-
 and $y$-coordinates. If {\tt input=geographic}, they are functions of latitude and longitude. See
 Section~\ref{sec:ifile-format} for details.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{material}
 \index{command!material}
 \label{keyword:material}
@@ -2879,7 +2885,7 @@ Section~\ref{sec:ifile-format} for details.
 \begin{flushleft}\bf
 Syntax:\\
 \tt material
-id=... vp=... vs=... rho=... vpgrad=... vsgrad=... rhograd=... vp2=... vs2=... rho2=... vpsqrt=... vssqrt=... rhosqrt=...\\ 
+id=... vp=... vs=... rho=... vpgrad=... vsgrad=... rhograd=... vp2=... vs2=... rho2=... vpsqrt=... vssqrt=... rhosqrt=... qp=... qs=...\\ 
 \bf Required parameters:\\
 \tt id, vp, vs, rho
 \end{flushleft}
@@ -2893,8 +2899,8 @@ id & material ID number $>0$         & int & None  \\ \hline
 vp & P-wave velocity & real & None \\ \hline
 vs & S-wave velocity & real & None \\ \hline
 rho & Density & real & None \\ \hline
-%qp or Qp & P-wave quality factor & None & None \\ \hline
-%qs or Qs & S-wave quality factor & None & None \\ \hline
+qp or Qp & P-wave quality factor & None & None \\ \hline
+qs or Qs & S-wave quality factor & None & None \\ \hline
 \end{tabular}
 \end{center}
 \index{material parameters!id, vp, vs, rho, qp, qs}
@@ -2984,7 +2990,7 @@ seed3 & Random number generator seed & int & None & 9876 \\ \hline
 gradient & Amplitude gradient in the depth direction & real & 1/m & 0 \\ \hline
 \end{tabular}
 \end{center}
-\index{randomize parameters!lengthscale, lengthscalez, seed1, seed2, seed3}
+\index{randomize parameters!lengthscale, lengthscalez, seed1, seed2, seed3, gradient}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Topography command [optional]}
@@ -3053,7 +3059,7 @@ order & Interpolation order (2-6) & int & none & 4\\ \hline
 smooth & Number of smoothing iterations of topography grid surface & int & none & 10 \\ \hline
 \end{tabular}
 \end{center}
-\index{topography parameters!input, file, resolution, zmax, order, smooth}
+\index{topography parameters!input, file, etree, xetree, resolution, zmax, order, smooth}
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf topography command parameters (Gaussian Hill)}\\ \hline
@@ -3114,6 +3120,7 @@ suite~\cite{WesselSmithGMT}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{rec (or sac) [optional]}
 \index{command!rec}
+\index{command!sac}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The \verb+rec+ command is used to save the time history of the solution at a fixed location in
 space, see \S~\ref{sec:rec} for examples. For backwards compatibility with \emph{WPP}, this command
@@ -3194,7 +3201,7 @@ y          & y location of image plane  $(\geq 0)$    & real    & m        & non
 z          & z location of image plane  $(\geq 0)$    & real    & m        & none \\ \hline
 \end{tabular}
 \end{center}
-\index{image parameters!location - x, y, z}%, i, j, k}
+\index{image parameters!location - x, y, z}
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf image command parameters (part 2)}\\ \hline
@@ -3210,7 +3217,7 @@ mode          & The field to be saved                                       & st
 \end{tabular}
 \end{center}
 \index{image parameters!timing - time, timeInterval, cycle, cycleInterval}
-\index{image parameters!file, mode, precision}
+\index{image parameters!file, precision, mode}
 %
 {\bf mode} can take one of the following values:
 %
@@ -3228,7 +3235,7 @@ gridy   & grid $y$-coordinates in the plane of visualization \\ \hline
 gridz   & grid $z$-coordinates in the plane of visualization \\ \hline
 \end{tabular}
 \end{center}
-\index{image mode options!lat, lon, topo, grid}
+\index{image parameters!modes - lat, lon, topo, grid, gridx, gridy, gridz}
 \begin{center}
 \begin{tabular}{|c|l|} \hline
 \multicolumn{2}{|c|}{\bf mode options (material)}\\ \hline
@@ -3243,7 +3250,7 @@ qp      & $Q_P$ quality factor \\ \hline
 qs      & $Q_S$ quality factor \\ \hline
 \end{tabular}
 \end{center}
-\index{image mode options!rho, lambda, mu, p, s}
+\index{image parameters!modes - rho, lambda, mu, p, s, qp, qs}
 \begin{center}
 \begin{tabular}{|c|l|} \hline
 \multicolumn{2}{|c|}{\bf mode options (solution)}\\ \hline
@@ -3267,6 +3274,8 @@ hmaxdudt (hvelmax) & maximum in time of magnitude of $(u^{(x)}, u^{(y)})$ \\ \hl
 vmaxdudt (vvelmax) & maximum in time of $|u^{(z)}_t|$    \\ \hline
 \end{tabular}
 \end{center}
+\index{image parameters!modes - ux, uy, uz, div, curl, mag, hmag, hmax, vmax}
+\index{image parameters!modes - divdudt, curldudt, magdudt, hmagdudt, hmaxdudt, vmaxdudt}
 \begin{center}
 \begin{tabular}{|c|l|} \hline
 \multicolumn{2}{|c|}{\bf mode options (testing)}\\ \hline
@@ -3280,8 +3289,7 @@ uyerr   & $y$-component of error (difference between computed and exact solution
 uzerr   & $z$-component of error (difference between computed and exact solution)\\ \hline
 \end{tabular}
 \end{center}
-\index{image mode options!ux, uy, uz, div, curl, veldiv, velcurl,
-  velmag, hvel, hvelmax, vvelmax, uxerr, uyerr, uzerr, fx, fy, fz}
+\index{image parameters!modes - uxexact, uyexact, uzexact, uxerr, uyerr, uzerr} 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3D images
@@ -3341,7 +3349,8 @@ startTime     & only output data after this time level (only used with {\bf cycl
  timeInterval}) & real & s & -999.9 \\ \hline 
 \end{tabular}
 \end{center}
-\index{volimage options!file, mode, precision, cycle, cycleInterval, time, timeInterval, startTime}
+\index{volimage parameters!file, mode, precision}
+\index{volimage parameters!timing - cycle, cycleInterval, time, timeInterval, startTime}
 %
 The \verb+mode+ keyword can have the following values:
 %
@@ -3361,6 +3370,7 @@ qp      & $Q_p$ material attenuation factor \\ \hline
 qs      & $Q_s$ material attenuation factor \\ \hline
 \end{tabular}
 \end{center}
+\index{volimage parameters!modes - ux, uy, uz, rho, p, s, lambda, mu, qp, qs}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{gmt [optional]}
@@ -3511,7 +3521,7 @@ rho  & Density & real & 1 \\ \hline
 diractest & Test moment conditions (0 or 1) & int & 0 \\ \hline
 \end{tabular}
 \end{center}
-\index{testpointsource parameters! cp, cs, rho}
+\index{testpointsource parameters! cp, cs, rho, diractest}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{testrayleigh}
