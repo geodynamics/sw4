@@ -73,6 +73,20 @@ elseif mode == 31
    str = 'hmax';
 elseif mode == 32
    str = 'vmax';
+elseif mode == 33
+   str = 'gradrho';
+elseif mode == 34
+   str = 'gradmu';
+elseif mode == 35
+   str = 'gradlambda';
+elseif mode == 36
+   str = 'gradp';
+elseif mode == 37
+   str = 'grads';
+elseif mode == 38
+   str = 'qp';
+elseif mode == 39
+   str = 'qs';
 else
   str = 'unknown';
 end;
