@@ -7,6 +7,8 @@
       real*8 cp(ib:ie,jb:je,kb:ke), x, y, z, ep, om
       real*8 phip, phis, phir, omx, omy, omz, pi2
       real*8 xminbox, xmaxbox, yminbox, ymaxbox, zminbox, zmaxbox
+      real*8 cp1, cp2, cp3, cp4, cs1, cs2, cs3, cs4
+      real*8 z1, z2, z3, Lz,rho1, rho2, rho3, rho4
 
       ep = 0.01d0
 *** 2*pi
@@ -19,12 +21,32 @@
       zminbox = 0.1d0
       zmaxbox = 0.3d0
       if( nr.eq.3 )then
-         omx = pi2*2d0/30000
-         omy = pi2*2d0/30000
-         omz = pi2*1d0/17000
-         phip = 0.3d0
-         phir = 0.17d0
-         phis = 0.08d0
+        omx = pi2*2d0/30000
+        omy = pi2*2d0/30000
+        omz = pi2*1d0/17000
+        phip = 0.3d0
+        phir = 0.17d0
+        phis = 0.08d0
+      elseif (nr.eq.4) then
+        cp1=4000
+        cp2=6000
+        cp3=4000
+        cp4=6000
+c
+        cs1=2000
+        cs2=3464
+        cs3=2000
+        cs4=3464
+c
+        rho1 = 2600
+        rho2 = 2700
+        rho3 = 2600
+        rho4 = 2700
+c
+        z1=1000
+        z2=3000
+        z3=5000
+        Lz=200
       endif
       do k=kb,ke
          z = zmin + (k-1)*h
@@ -57,6 +79,19 @@
      *                  0.1339*cos(omx*x)*sin(omy*y+phis)*cos(omz*z) )
 c                  cs(i,j,k) =2732+cos(omx*x)*sin(omy*y+phis)*cos(omz*z)
 c     *                 732*
+               elseif(nr.eq.4)then
+                 rho(i,j,k) = rho1 
+     +                + 0.5*(rho2-rho1)*(1.0 + tanh((z-z1)/Lz))
+     +                + 0.5*(rho3-rho2)*(1.0 + tanh((z-z2)/Lz))
+     +                + 0.5*(rho4-rho3)*(1.0 + tanh((z-z3)/Lz))
+                 cp(i,j,k) = cp1 
+     +                + 0.5*(cp2-cp1)*(1.0 + tanh((z-z1)/Lz))
+     +                + 0.5*(cp3-cp2)*(1.0 + tanh((z-z2)/Lz))
+     +                + 0.5*(cp4-cp3)*(1.0 + tanh((z-z3)/Lz))
+                 cs(i,j,k) = cs1
+     +                + 0.5*(cs2-cs1)*(1.0 + tanh((z-z1)/Lz))
+     +                + 0.5*(cs3-cs2)*(1.0 + tanh((z-z2)/Lz))
+     +                + 0.5*(cs4-cs3)*(1.0 + tanh((z-z3)/Lz))
                endif
             enddo
          enddo
@@ -74,6 +109,8 @@ c-----------------------------------------------------------------------
       real*8 yy(ib:ie,jb:je,kb:ke), zz(ib:ie,jb:je,kb:ke), x, y, z, om
       real*8 xminbox, xmaxbox, yminbox, ymaxbox, zminbox, zmaxbox, ep
       real*8 phip, phis, phir, omx, omy, omz, pi2
+      real*8 cp1, cp2, cp3, cp4, cs1, cs2, cs3, cs4
+      real*8 z1, z2, z3, Lz,rho1, rho2, rho3, rho4
 
       ep = 0.01d0
 *** 2*pi
@@ -93,6 +130,27 @@ c-----------------------------------------------------------------------
          phip = 0.3d0
          phir = 0.17d0
          phis = 0.08d0
+      elseif (nr.eq.4) then
+      elseif (nr.eq.4) then
+        cp1=4000
+        cp2=6000
+        cp3=4000
+        cp4=6000
+c
+        cs1=2000
+        cs2=3464
+        cs3=2000
+        cs4=3464
+c
+        rho1 = 2600
+        rho2 = 2700
+        rho3 = 2600
+        rho4 = 2700
+c
+        z1=1000
+        z2=3000
+        z3=5000
+        Lz=200
       endif
       do k=kb,ke
          do j=jb,je
@@ -123,6 +181,19 @@ c-----------------------------------------------------------------------
      *                 732*cos(omx*x)*sin(omy*y+phis)*cos(omz*z)
                   cp(i,j,k)=5000+
      *                1000*sin(omx*x+phip)*sin(omy*y)*cos(omz*z)
+               elseif(nr.eq.4)then
+                 rho(i,j,k) = rho1 
+     +                + 0.5*(rho2-rho1)*(1.0 + tanh((z-z1)/Lz))
+     +                + 0.5*(rho3-rho2)*(1.0 + tanh((z-z2)/Lz))
+     +                + 0.5*(rho4-rho3)*(1.0 + tanh((z-z3)/Lz))
+                 cp(i,j,k) = cp1 
+     +                + 0.5*(cp2-cp1)*(1.0 + tanh((z-z1)/Lz))
+     +                + 0.5*(cp3-cp2)*(1.0 + tanh((z-z2)/Lz))
+     +                + 0.5*(cp4-cp3)*(1.0 + tanh((z-z3)/Lz))
+                 cs(i,j,k) = cs1
+     +                + 0.5*(cs2-cs1)*(1.0 + tanh((z-z1)/Lz))
+     +                + 0.5*(cs3-cs2)*(1.0 + tanh((z-z2)/Lz))
+     +                + 0.5*(cs4-cs3)*(1.0 + tanh((z-z3)/Lz))
                endif
             enddo
          enddo

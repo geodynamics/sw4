@@ -1,9 +1,9 @@
 %
-% PLOTIMAGE
+% PLOTIMAGEF
 %
 %     plotimage( fil, cvals )
 %
-%   Plots the image on file 'fil' with contour, using the contour levels cvals.
+%   Plots the image on file 'fil' with contourf, using the contour levels cvals.
 %   The boundary of each grid patch is outlined in black. A vector cvals can be 
 %   obtained from function imageinfo.
 %
@@ -26,11 +26,11 @@ x2max=-1e9;
 for b=1:nb
    [im,x,y,z] = readimage(fil,b);
    if plane==0
-     contour(y,z,im,cvals);
+     contourf(y,z,im,cvals);
    elseif plane==1
-     contour(x,z,im,cvals);
+     contourf(x,z,im,cvals);
    elseif plane==2
-     contour(x,y,im,cvals);
+     contourf(x,y,im,cvals);
    end
    if b==1
       hold on;

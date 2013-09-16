@@ -14,6 +14,7 @@
 % Image files (*.sw4img)
 % imageinfo.m   Calculate good contour levels for plotting an image file + other header info
 % plotimage.m   Make a countour plot of all component grid functions
+% plotimagef.m  Make a *filled* countour plot of all component grid functions (works best in matlab)
 % readimage.m   Read one component grid function from an image file
 %
 % Volimage files (*.3D.mode.sw4img)
