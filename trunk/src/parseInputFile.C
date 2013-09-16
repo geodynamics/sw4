@@ -4227,8 +4227,8 @@ void EW::processImage(char* buffer)
       else if (strcmp(token, "gradlambda") == 0)   mode = Image::GRADLAMBDA;
       else if (strcmp(token, "gradp") == 0)   mode = Image::GRADP;
       else if (strcmp(token, "grads") == 0)   mode = Image::GRADS;
-      // else if (strcmp(token, "qs") == 0) mode = Image::QS;
-      // else if (strcmp(token, "qp") == 0) mode = Image::QP;
+      else if (strcmp(token, "qp") == 0) mode = Image::QP;
+      else if (strcmp(token, "qs") == 0) mode = Image::QS;
       //      else if (strcmp(token, "hvel") == 0) mode = Image::HVEL;
       else
       {
@@ -4237,7 +4237,7 @@ void EW::processImage(char* buffer)
                << "|p|s|div|curl|veldiv|divdudt|velcurl|curldudt " << endl
 	       << "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|grid|gridx|gridy|gridz " << endl
 	       << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
-	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|gradlambda|gradp|grads" << endl
+	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|gradlambda|gradp|grads|qp|qs|" << endl
 	       << "*not: " << token << endl;
 	  MPI_Abort( MPI_COMM_WORLD, 1 );
       }

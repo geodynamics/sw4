@@ -14,7 +14,7 @@
 // initializing static member
 int Image::mPreceedZeros=0;
 
-int Image::MODES=38;
+int Image::MODES=40;
 
 Image* Image::nil=static_cast<Image*>(0);
 
@@ -91,7 +91,8 @@ Image::Image(EW * a_ew,
   mMode2Suffix[GRADMU] = "gradmu";
   mMode2Suffix[GRADLAMBDA] = "gradlambda";
   mMode2Suffix[GRADP] = "gradp";
-  mMode2Suffix[GRADS] = "grads";
+  mMode2Suffix[QP] = "qp";
+  mMode2Suffix[QS] = "qs";
 
   mOrientationString.resize(4);
   mOrientationString[UNDEFINED] = "undefined";

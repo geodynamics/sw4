@@ -3869,6 +3869,10 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 	    img->computeImageQuantity(a_Mu, 1);
 	 else if(img->mMode == Image::LAMBDA )
 	    img->computeImageQuantity(a_Lambda, 1);
+	 else if(img->mMode == Image::QP )
+	    img->computeImageQuantity(mQp, 1);
+	 else if(img->mMode == Image::QS )
+	    img->computeImageQuantity(mQs, 1);
 	 else if(img->mMode == Image::P )
 	    img->computeImagePvel(a_Mu, a_Lambda, a_Rho);
 	 else if(img->mMode == Image::S )
@@ -5524,6 +5528,10 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       limits[6]=global[3];
       if( proc_zero() )
       {
+         cout << limits[0] << " <=   rho    <= " << limits[1] << " (grid " << g << ")" << endl;
+         cout << limits[2] << " <=    mu    <= " << limits[3] << " (grid " << g << ")" << endl;
+         cout << limits[4] << " <=  lambda  <= " << limits[5] << " (grid " << g << ")" << endl;
+
 	 if( limits[0] < 0 )
 	    cout << "rho_min = " << limits[0] << " on grid " << g << endl;
 	 if( limits[2] < 0 )
