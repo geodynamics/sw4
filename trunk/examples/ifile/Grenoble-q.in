@@ -64,8 +64,8 @@ image mode=p z=0 cycle=0 file=g
 image mode=p x=20e3 cycle=0 file=g
 #image mode=s x=20e3 cycle=0 file=g
 #image mode=rho x=20e3 cycle=0 file=g
-#image mode=qp x=20e3 cycle=0 file=g
-#image mode=qs x=20e3 cycle=0 file=g
+image mode=qp x=20e3 cycle=0 file=g
+image mode=qs x=20e3 cycle=0 file=g
 
 #image mode=uz z=0.0 timeInterval=1 file=g
 
