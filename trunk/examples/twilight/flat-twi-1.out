@@ -5,11 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Mar  6 11:09:43 PST 2013
-  By user:     petersson1
-  Machine:     yorkville.llnl.gov
-  Compiler:    /opt/local/bin/openmpicxx
-  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
+  By user:     andersp
+  Machine:     cab668
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
 
 Input file: flat-twi-1.in
@@ -28,12 +28,18 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 29791
 
 
-   Execution time, reading input file 0.00236392 seconds 
+   Execution time, reading input file 0.007573 seconds 
 ----------------------------------------------------
  Making Output Directory: ./
 		
 ... Done!
 ----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
+
 ******************************
  ASSIGNING TWILIGHT MATERIALS 
 ******************************
@@ -46,20 +52,18 @@ Total number of grid points (without ghost points): 29791
        2.00718 Pa     <=  mu      <= 3.99285 Pa
        1.00718 Pa     <=  lambda  <= 2.99285 Pa
        ------------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700001e+01
-2: Lon= 1.180000e+02, Lat=3.700001e+01
-3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.00806284 seconds 
-Running sw4 on 2 processors...
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=3.333333e-02, minVs/h=30.0436 (Cartesian)
+
+   Execution time, start up phase 0.006513 seconds 
+Running sw4 on 16 processors...
 Writing output to directory: ./
 ============================================================
- Running program on 2 MPI tasks using the following data: 
+ Running program on 16 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
- Number of time steps = 78 dt: 0.0102564
+ Number of time steps = 69 dt: 0.0115942
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
@@ -73,12 +77,12 @@ Parameters:
   ampmu = 1
 -----------------------------------------------------------
   Begin time stepping...
-Time step       1  t =   1.0256410e-02
-Time step      78  t =   8.0000000e-01
+Time step       1  t =   1.1594203e-02
+Time step      69  t =   8.0000000e-01
   Time stepping finished...
-   Execution time, solver phase 2.2465 seconds 
+   Execution time, solver phase 0.1175 seconds 
 
- Final solution errors: Linf =   6.8365057e-04, L2 =   1.4554749e-04
+ Final solution errors: Linf =   6.8547857e-04, L2 =   1.4572736e-04
 ============================================================
  program sw4 finished! 
 ============================================================
