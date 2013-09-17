@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Jul 31 09:03:19 PDT 2013
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
   By user:     andersp
-  Machine:     cab670
+  Machine:     cab668
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -18,16 +18,9 @@ Input file: LOH.1-h50.in
 * Setting nx to 601 to be consistent with h=50
 * Setting ny to 601 to be consistent with h=50
 * Setting nz to 341 to be consistent with h=50
-allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
-Extent of the computational domain xmax=30000 ymax=30000 zmax=17000
-Corrected global_zmax = 17000
-Refinement levels after correction: 
-grid=0 min Z=0
-***inside setup2D_MPICommunications***
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
-***inside setupMPICommunications***
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
@@ -36,12 +29,7 @@ Total number of grid points (without ghost points): 1.2317e+08
 
 Default Supergrid thickness has been tuned; thickness = 30 grid sizes
 
-   Execution time, reading input file 0.423452 seconds 
- *** Testing = 0
-  Using Bjorn's (fast) parallel IO library
-Assuming a SERIAL file system.
-Setting up SBP boundary stencils
-Detected at least one boundary with supergrid conditions
+   Execution time, reading input file 0.469122 seconds 
 ----------------------------------------------------
  Making Output Directory: LOH1-h50/
 		
@@ -54,9 +42,9 @@ Geographic coordinates of the corners of the computational grid:
 3: Lon= 1.183374e+02, Lat=3.700000e+01
 
 Considering all material blocks
-block command: outside = 0, material = 148896825
-block command: outside = 138970370, material = 9926455
-block command: outside = 148465240, material = 431585
+block command: outside = 0, material = 152567625
+block command: outside = 142396450, material = 10171175
+block command: outside = 152125400, material = 442225
 
        ----------- Material properties ranges ---------------
        2600 kg/m^3 <=  Density <= 2700 kg/m^3
@@ -66,39 +54,24 @@ block command: outside = 148465240, material = 431585
        1.04e+10 Pa     <=  mu      <= 3.23981e+10 Pa
        2.08e+10 Pa     <=  lambda  <= 3.24038e+10 Pa
        ------------------------------------------------------
-  Assigned material properties
-*** computing the time step ***
-order of accuracy=4 CFL=1.3 prel. time step=0.00839156
-*** Initialized Images
- Min source z-level: 2.000000e+03, max source z-level: 2.000000e+03
-   Execution time, start up phase 0.263477 seconds 
-Running sw4 on 192 processors...
-Writing output to directory: LOH1-h50/
 
-***  Starting solve ***
-Saving one discretized time function
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=5.000000e+01, minVs/h=40 (Cartesian)
+
+   Execution time, start up phase 0.225668 seconds 
+Running sw4 on 256 processors...
+Writing output to directory: LOH1-h50/
 ============================================================
- Running program on 192 MPI tasks using the following data: 
+ Running program on 256 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 9
  Number of time steps = 1073 dt: 0.0083877
 
-============================================================
- Global boundary conditions 
-      x=0    supergrid
-      x=xMax supergrid
-      y=0    supergrid
-      y=yMax supergrid
-      z=topo free surface
-      z=zMax supergrid
-
-
 -----------------------------------------------------------------------
   Total seismic moment (M0): 1e+18 Nm 
   Moment magnitude     (Mw): 5.93333
-  Number of sources 1
+  Number of moment sources 1
 -----------------------------------------------------------------------
-  Initial data has been assigned
 writing image plane on file LOH1-h50/surf.cycle=0000.z=0.mag.sw4img
   Begin time stepping...
 Time step       1  t =   8.3876980e-03
@@ -133,10 +106,10 @@ Writing BINARY SAC files, of size 1001: LOH1-h50/sta01.[x|y|z]
 Writing ASCII USGS file, of size 1001: LOH1-h50/sta01.txt
 Time step    1001  t =   8.3960857e+00
 writing image plane on file LOH1-h50/surf.cycle=1013.z=0.mag.sw4img
-Time step    1073  t =   9.0000000e+00
 writing image plane on file LOH1-h50/surf.cycle=1073.z=0.mag.sw4img
+Time step    1073  t =   9.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 5 minutes 3.53681 seconds 
+   Execution time, solver phase 3 minutes 58.0538 seconds 
 ============================================================
  program sw4 finished! 
 ============================================================

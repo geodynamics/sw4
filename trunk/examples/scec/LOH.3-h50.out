@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Jul 31 09:03:19 PDT 2013
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
   By user:     andersp
-  Machine:     cab670
+  Machine:     cab668
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -29,7 +29,7 @@ Total number of grid points (without ghost points): 2.57282e+08
 
 Default Supergrid thickness has been tuned; thickness = 30 grid sizes
 
-   Execution time, reading input file 0.511856 seconds 
+   Execution time, reading input file 0.492577 seconds 
 ----------------------------------------------------
  Making Output Directory: loh3-h50/
 		
@@ -42,9 +42,9 @@ Geographic coordinates of the corners of the computational grid:
 3: Lon= 1.184499e+02, Lat=3.700000e+01
 
 Considering all material blocks
-block command: outside = 0, material = 297425925
-block command: outside = 280535070, material = 16890855
-block command: outside = 296691540, material = 734385
+block command: outside = 0, material = 303031125
+block command: outside = 285821950, material = 17209175
+block command: outside = 302282900, material = 748225
 
        ----------- Material properties ranges ---------------
        2600 kg/m^3 <=  Density <= 2700 kg/m^3
@@ -58,23 +58,26 @@ block command: outside = 296691540, material = 734385
        120        <=  Qp      <= 155.9  
        ------------------------------------------------------
 
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=5.000000e+01, minVs/h=40 (Cartesian)
+
+
 *** Attenuation parameters calculated for 3 mechanisms,
       max freq=1.500000e+01 [Hz], min_freq=1.500000e-01 [Hz], velo_freq=2.500000e+00 [Hz]
 
-   Execution time, start up phase 6.33829 seconds 
-Running sw4 on 192 processors...
+   Execution time, start up phase 4.87609 seconds 
+Running sw4 on 256 processors...
 Writing output to directory: loh3-h50/
 ============================================================
- Running program on 192 MPI tasks using the following data: 
+ Running program on 256 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 9
  Number of time steps = 1108 dt: 0.00812274
-Saving one discretized time function
 
 -----------------------------------------------------------------------
   Total seismic moment (M0): 1e+18 Nm 
   Moment magnitude     (Mw): 5.93333
-  Number of sources 1
+  Number of moment sources 1
 -----------------------------------------------------------------------
   Begin time stepping...
 Time step       1  t =   8.1227437e-03
@@ -93,7 +96,7 @@ Time step    1001  t =   8.1308664e+00
 Time step    1101  t =   8.9431408e+00
 Time step    1108  t =   9.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 29 minutes 38.896 seconds 
+   Execution time, solver phase 22 minutes 43.6708 seconds 
 ============================================================
  program sw4 finished! 
 ============================================================
