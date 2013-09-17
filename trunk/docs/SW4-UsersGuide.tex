@@ -2084,10 +2084,8 @@ source x=15000 y=15000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 \
 We use the \verb+fileio+ command to save all output files in the sub-directory
 \verb+LOH1-h50+. If this directory does not exist, \emph{SW4} will attempt to create it for you.
 \begin{verbatim}
-fileio verbose=1 path=LOH1-h50
+fileio path=LOH1-h50
 \end{verbatim}
-The \verb+verbose=1+ keyword makes \emph{SW4} output some extra diagnostic information during the
-run.
 
 The magnitude of the solution along the free surface ($z=0$) is saved on an image file every 0.5
 seconds
@@ -2122,16 +2120,12 @@ u_{rad} = 0.6 u_x + 0.8 u_y,\quad u_{tran} = -0.8 u_x + 0.6 u_y.
 \]
 The vertical component is stored in $u_z$ (positive downwards). We conclude that most features in
 the solution are very well captured on the grid with $h=50$. The numerical solution becomes almost
-identical with the semi-analytical solution when the grid is refined to $h=25$.
+identical with the semi-analytical solution when the grid is refined to $h=25$ (experiment not shown).
 \begin{figure}[ht]
   \begin{center}
-    \includegraphics[width=0.90\textwidth]{radial-loh1c.png}\\
-    \includegraphics[width=0.90\textwidth]{transverse-loh1c.png}\\
-    \includegraphics[width=0.90\textwidth]{vertical-loh1c.png}
+    \includegraphics[width=0.99\textwidth]{LOH1.png}
     \caption{LOH.1: The radial (top), transverse (middle) and vertical (bottom) velocities for
-      receiver number 10. Here the numerical solutions are plotted in red ($h=25$) and blue
-      ($h=50$), while the semi-analytical solution is plotted in black (almost indistinguishable
-      from the red curve).}
+      receiver number 10. Here the numerical solutions are plotted in red ($h=50$) and the semi-analytical solution is plotted in black.}
     \label{fig:LOH1}
   \end{center}
 \end{figure}
@@ -2208,13 +2202,14 @@ octave:33> plot(t,ra,"k",t1,ur,"r");axis([0 9 -1.5 1.5])
 All three components of the solution at station 10 are shown in Figure~\ref{fig:LOH3}.
 \begin{figure}[ht]
   \begin{center}
-    \includegraphics[width=1.0\textwidth]{loh3-m3.png}
+    \includegraphics[width=0.99\textwidth]{LOH3.png}
     \caption{LOH.3: The radial (top), transverse (middle) and vertical (bottom) velocities at
-      receiver number 10. Here the numerical solution with grid size $h=50$ is plotted in red, and
+      receiver number 10. Here the numerical solution with grid size $h=50$ is plotted in red and
       the semi-analytical solution is plotted in black.}
     \label{fig:LOH3}
   \end{center}
 \end{figure}
+Note that the wave forms are very similar to LOH.1, but the amplitudes are slightly smaller.
 As for LOH.1, we can estimate the resolution in terms of the number of grid points per shortest
 significant wave length. In this case the center frequency is $f_0\approx 3.18$ Hz and we estimate
 the upper power frequency to be $f_{max}\approx 2.5 f_0 = 7.95$ Hz. The material model has $\min V_s
@@ -4710,10 +4705,10 @@ output files. Some of these numbers are summarized in Table~\ref{tab:twi-err}.
 \begin{tabular}{| c | c | c | c | c  | c | }
 \hline
 input file & $N_x$ & $h$ & $e_h=\| \ub - \ub_{ex}\|_\infty$ & ratio$_\infty$ & rate$_\infty$ \\ \hline
-flat-twi-1.in & $31$  & $3.333\cdot 10^{-2}$  & $6.83\cdot 10^{-4}$ & --   & --   \\ \hline
-flat-twi-2.in & $61$  & $1.667\cdot 10^{-2}$  & $3.97\cdot 10^{-5}$ & 17.20 & 4.10 \\ \hline
-flat-twi-3.in & $121$ & $8.333\cdot 10^{-3}$  & $2.01\cdot 10^{-6}$ & 19.75 & 4.30 \\ \hline
-flat-twi-4.in & $241$ & $4.167\cdot 10^{-3}$  & $1.37\cdot 10^{-7}$ & 14.67 & 3.87 \\ \hline
+flat-twi-1.in & $31$  & $3.333\cdot 10^{-2}$  & $6.85\cdot 10^{-4}$ & --   & --   \\ \hline
+flat-twi-2.in & $61$  & $1.667\cdot 10^{-2}$  & $3.99\cdot 10^{-5}$ &17.16 & 4.10 \\ \hline
+flat-twi-3.in & $121$ & $8.333\cdot 10^{-3}$  & $2.01\cdot 10^{-6}$ &19.85 & 4.31 \\ \hline
+flat-twi-4.in & $241$ & $4.167\cdot 10^{-3}$  & $1.40\cdot 10^{-7}$ &14.36 & 3.84 \\ \hline
 \end{tabular}
 \caption{Max norm errors in the displacement at time $t=0.8$, when the free
   surface is flat. The convergence rate is calculated as $\log_2(e_{2h}/e_h)$.}
@@ -4732,14 +4727,14 @@ $-0.05\leq \tau\leq 0$. The keyword {\tt zmax=0.25} in the {\tt topography} comm
 \emph{SW4} to build the curvilinear grid between $z=\tau(x,y)$ and $z=0.25$. A Cartesian grid is
 used to cover the rest of the computational domain, i.e., for $0.25\leq z\leq 1$. The numerical
 solution is calculated up to time $t=0.8$ on grids with grid size $h=1/30$, $1/60$, $1/120$,
-$1/240$, and $1/480$, respectively. The three first cases are relatively small and can be run on a
+and $1/240$, respectively. The three first cases are relatively small and can be run on a
 single or dual core laptop computer. The number of grid point is increased by a factor of eight
 between each grid refinement, and the number of time steps is doubled.
 %However, the fourth case has a grid with about 14 million grid points and should be
 %run on a machine with at least 8-16 cores.
-The results of the simulations are given in the five output files
+The results of the simulations are given in the four output files
 \begin{verbatim}
-gauss-twi-1.out gauss-twi-2.out gauss-twi-3.out gauss-twi-4.out gauss-twi-5.out
+gauss-twi-1.out gauss-twi-2.out gauss-twi-3.out gauss-twi-4.out
 \end{verbatim}
 The errors in max norm are summarized in Table~\ref{tab:twi-gauss-err}.
 \begin{table}
@@ -4747,11 +4742,10 @@ The errors in max norm are summarized in Table~\ref{tab:twi-gauss-err}.
 \begin{tabular}{| c | c | c | c | c | c  | c | }
 \hline
 input file & $N_x$ & $h$ & $e_h=\| \ub - \ub_{ex}\|_\infty$  & ratio$_\infty$ & rate$_\infty$ \\ \hline
-gauss-twi-1.in & $31$  & $3.333\cdot 10^{-2}$  & $6.98\cdot 10^{-3}$ & --   & --   \\ \hline
-gauss-twi-2.in & $61$  & $1.667\cdot 10^{-2}$  & $7.29\cdot 10^{-4}$ & 9.57 & 3.26 \\ \hline
-gauss-twi-3.in & $121$ & $8.333\cdot 10^{-3}$  & $5.62\cdot 10^{-5}$ & 12.97 & 3.70 \\ \hline
-gauss-twi-4.in & $241$ & $4.167\cdot 10^{-3}$  & $4.41\cdot 10^{-6}$ & 12.74 & 3.67 \\ \hline
-gauss-twi-5.in & $481$ & $2.083\cdot 10^{-3}$  & $2.64\cdot 10^{-7}$ & 16.70 & 4.06 \\ \hline
+gauss-twi-1.in & $31$  & $3.333\cdot 10^{-2}$  & $1.74\cdot 10^{-3}$ & --   & --   \\ \hline
+gauss-twi-2.in & $61$  & $1.667\cdot 10^{-2}$  & $1.93\cdot 10^{-4}$ & 9.01 & 3.17 \\ \hline
+gauss-twi-3.in & $121$ & $8.333\cdot 10^{-3}$  & $9.11\cdot 10^{-6}$ & 21.1 & 4.40 \\ \hline
+gauss-twi-4.in & $241$ & $4.167\cdot 10^{-3}$  & $5.83\cdot 10^{-7}$ & 15.6 & 3.96 \\ \hline
 \end{tabular}
 \caption{Max norm errors in the displacement at time $t=0.8$, with a Gaussian hill topography. The
   number of grid points and the grid size refer to the Cartesian grid. The convergence rate is
@@ -4917,7 +4911,24 @@ size is halved.
 
 We remark that the \verb+testpointsource+ command can also be used to evaluate the accuracy of the
 supergrid far field layers. In this case, the Dirichlet boundary conditions should be replaced by
-supergrid conditions on all six boundaries of the computational domain.
+supergrid conditions on all six boundaries of the computational domain. Such an experiment is set up
+in the input files \verb+pointsource-sg1.in+, \verb+pointsource-sg2.in+, and
+\verb+pointsource-sg3.in+ in the \verb+tools/pointsource+ directory. Each input file has a
+corresponding \verb+.out+ file that holds the output from these cases. As before, the errors for
+each case are reported in the file \verb+PointSourceErr.txt+ in the sub-directories
+\verb+pointsource-h0p04++, \verb+pointsource-h0p02++, and \verb+pointsource-h0p01++. The $L_2$ norm
+of the error is shown in Figure~\ref{fig:sg-error}. The reader is enouraged to study these results,
+experiment with the duration of the simulation, and the width of the super grid layers.
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=0.7\textwidth]{sg-ps-err.png}
+\caption{The $L_2$-norm of the error in the point source test. This simulation was run to time $t=5$
+  and the errors after time $t\approx 3$ are due to artificial reflections from the super-grid
+  layers. The blue, green, and red lines 
+  correspond to $h=0.04$, $h=0.02$, and $h=0.01$, respectively.}
+\label{fig:sg-error}
+\end{center}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Run time and memory requirements }\label{sec:performance}
