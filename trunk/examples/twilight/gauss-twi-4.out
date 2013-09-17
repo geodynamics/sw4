@@ -5,11 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Mar 6 10:20:44 PST 2013
-  By user:     bjorn
-  Machine:     cab667
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
+  By user:     andersp
+  Machine:     cab668
   Compiler:    /usr/local/bin/mpiicpc
-  3rd party include dir: /usr/apps/wpp//include, and library dir: /usr/apps/wpp//lib
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
 
 Input file: gauss-twi-4.in
@@ -19,7 +19,7 @@ Input file: gauss-twi-4.in
 * Setting ny to 241 to be consistent with h=0.00416667
 * Setting nz to 241 to be consistent with h=0.00416667
 
-***Topography grid: min z = -5.000000e-02, max z = -5.291771e-12, top Cartesian z = 2.500000e-01
+***Topography grid: min z = -5.000000e-02, max z = -2.476618e-12, top Cartesian z = 2.500000e-01
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
@@ -28,12 +28,18 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 1.44041e+07
 
 
-   Execution time, reading input file 0.045535 seconds 
+   Execution time, reading input file 0.035366 seconds 
 ----------------------------------------------------
  Making Output Directory: gauss_241/
-
+		
 ... Done!
 ----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
+
 ******************************
  ASSIGNING TWILIGHT MATERIALS 
 ******************************
@@ -46,20 +52,19 @@ Total number of grid points (without ghost points): 1.44041e+07
        2.00004 Pa     <=  mu      <= 3.99996 Pa
        1.00004 Pa     <=  lambda  <= 2.99996 Pa
        ------------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700001e+01
-2: Lon= 1.180000e+02, Lat=3.700001e+01
-3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.132744 seconds 
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=4.166667e-03, minVs/h=240.001 (Cartesian)
+g=1, h=4.166667e-03, minVs/h=240.001 (curvilinear)
+
+   Execution time, start up phase 0.134828 seconds 
 Running sw4 on 64 processors...
 Writing output to directory: gauss_241/
 ============================================================
  Running program on 64 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
- Number of time steps = 719 dt: 0.00111266
+ Number of time steps = 636 dt: 0.00125786
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
@@ -72,25 +77,23 @@ Parameters:
   amplambda = 1
   ampmu = 1
 -----------------------------------------------------------
-writing image plane on file gauss_241/gaussian.cycle=000.z=0.topo.sw4img (msg from proc # 0)
+writing image plane on file gauss_241/gaussian.cycle=000.z=0.topo.sw4img
   Begin time stepping...
-Time step       1  t =   1.1126565e-03
-Time step     101  t =   1.1237830e-01
-Time step     201  t =   2.2364395e-01
-Time step     301  t =   3.3490960e-01
-Time step     401  t =   4.4617524e-01
-Time step     501  t =   5.5744089e-01
-Time step     601  t =   6.6870654e-01
-Time step     701  t =   7.7997218e-01
-Time step     719  t =   8.0000000e-01
-writing image plane on file gauss_241/gaussian.cycle=719.x=0.5.ux.sw4img (msg from proc # 24)
+Time step       1  t =   1.2578616e-03
+Time step     101  t =   1.2704403e-01
+Time step     201  t =   2.5283019e-01
+Time step     301  t =   3.7861635e-01
+Time step     401  t =   5.0440252e-01
+Time step     501  t =   6.3018868e-01
+Time step     601  t =   7.5597484e-01
+Time step     636  t =   8.0000000e-01
   Time stepping finished...
-   Execution time, solver phase 2 minutes 1.7104 seconds 
-writing image plane on file gauss_241/gaussian.cycle=719.y=0.5.ux.sw4img (msg from proc # 3)
-writing image plane on file gauss_241/gaussian.cycle=719.x=0.5.uxerr.sw4img (msg from proc # 24)
+   Execution time, solver phase 1 minute  50.3375 seconds 
+writing image plane on file gauss_241/gaussian.cycle=636.x=0.5.ux.sw4img
+writing image plane on file gauss_241/gaussian.cycle=636.y=0.5.ux.sw4img
+writing image plane on file gauss_241/gaussian.cycle=636.x=0.5.uxerr.sw4img
 
- Final solution errors: Linf =   4.4114884e-06, L2 =   5.2795969e-08
+ Final solution errors: Linf =   5.8384909e-07, L2 =   3.5493659e-08
 ============================================================
  program sw4 finished! 
 ============================================================
-

@@ -5,11 +5,11 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Mar 6 10:20:44 PST 2013
-  By user:     bjorn
-  Machine:     cab667
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
+  By user:     andersp
+  Machine:     cab668
   Compiler:    /usr/local/bin/mpiicpc
-  3rd party include dir: /usr/apps/wpp//include, and library dir: /usr/apps/wpp//lib
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
 
 Input file: gauss-twi-1.in
@@ -19,7 +19,7 @@ Input file: gauss-twi-1.in
 * Setting ny to 31 to be consistent with h=0.0333333
 * Setting nz to 31 to be consistent with h=0.0333333
 
-***Topography grid: min z = -5.000000e-02, max z = -2.008221e-14, top Cartesian z = 2.500000e-01
+***Topography grid: min z = -5.000000e-02, max z = -1.638684e-17, top Cartesian z = 2.500000e-01
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
@@ -28,12 +28,18 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 31713
 
 
-   Execution time, reading input file 0.01199 seconds 
+   Execution time, reading input file 0.020261 seconds 
 ----------------------------------------------------
  Making Output Directory: gauss_31/
-
+		
 ... Done!
 ----------------------------------------------------
+Geographic coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01
+1: Lon= 1.180000e+02, Lat=3.700001e+01
+2: Lon= 1.180000e+02, Lat=3.700001e+01
+3: Lon= 1.180000e+02, Lat=3.700000e+01
+
 ******************************
  ASSIGNING TWILIGHT MATERIALS 
 ******************************
@@ -46,20 +52,19 @@ Total number of grid points (without ghost points): 31713
        2.00385 Pa     <=  mu      <= 3.99612 Pa
        1.01051 Pa     <=  lambda  <= 2.98962 Pa
        ------------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700001e+01
-2: Lon= 1.180000e+02, Lat=3.700001e+01
-3: Lon= 1.180000e+02, Lat=3.700000e+01
 
-   Execution time, start up phase 0.022104 seconds 
-Running sw4 on 1 processors...
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=3.333333e-02, minVs/h=30.0271 (Cartesian)
+g=1, h=3.333333e-02, minVs/h=30.0271 (curvilinear)
+
+   Execution time, start up phase 0.018379 seconds 
+Running sw4 on 16 processors...
 Writing output to directory: gauss_31/
 ============================================================
- Running program on 1 MPI tasks using the following data: 
+ Running program on 16 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
- Number of time steps = 102 dt: 0.00784314
+ Number of time steps = 90 dt: 0.00888889
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
@@ -72,18 +77,17 @@ Parameters:
   amplambda = 1
   ampmu = 1
 -----------------------------------------------------------
-writing image plane on file gauss_31/gaussian.cycle=000.z=0.topo.sw4img (msg from proc # 0)
+writing image plane on file gauss_31/gaussian.cycle=00.z=0.topo.sw4img
   Begin time stepping...
-Time step       1  t =   7.8431373e-03
-Time step     101  t =   7.9215686e-01
-Time step     102  t =   8.0000000e-01
-writing image plane on file gauss_31/gaussian.cycle=102.x=0.5.ux.sw4img (msg from proc # 0)
-writing image plane on file gauss_31/gaussian.cycle=102.x=0.5.uxerr.sw4img (msg from proc # 0)
-writing image plane on file gauss_31/gaussian.cycle=102.y=0.5.ux.sw4img (msg from proc # 0)
+Time step       1  t =   8.8888889e-03
+Time step      90  t =   8.0000000e-01
   Time stepping finished...
-   Execution time, solver phase 2.73715 seconds 
+   Execution time, solver phase 0.2602 seconds 
+writing image plane on file gauss_31/gaussian.cycle=90.x=0.5.ux.sw4img
+writing image plane on file gauss_31/gaussian.cycle=90.y=0.5.ux.sw4img
+writing image plane on file gauss_31/gaussian.cycle=90.x=0.5.uxerr.sw4img
 
- Final solution errors: Linf =   6.9771344e-03, L2 =   3.7382653e-04
+ Final solution errors: Linf =   1.7416191e-03, L2 =   2.3349114e-04
 ============================================================
  program sw4 finished! 
 ============================================================
