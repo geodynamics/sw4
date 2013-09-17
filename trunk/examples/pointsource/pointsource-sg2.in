@@ -9,7 +9,7 @@ boundary_conditions lx=2 hx=2 ly=2 hy=2 lz=2 hz=2
 supergrid gp=75
 
 # testing point sources
-testpointsource rho=1 cp=1.6 cs=0.8 diractest=false
+testpointsource rho=1 cp=1.6 cs=0.8 
 
 # source
 source x=3.0 y=3.0 z=3.0 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0 freq=1 type=C6SmoothBump

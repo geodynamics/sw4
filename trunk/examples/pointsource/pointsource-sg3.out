@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Sun Aug 4 16:46:29 PDT 2013
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
   By user:     andersp
-  Machine:     cab687
+  Machine:     cab668
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -27,9 +27,9 @@ Grid         h        Nx        Ny        Nz       Points
    0      0.01       601       601       601    217081801
 Total number of grid points (without ghost points): 2.17082e+08
 
-Default Supergrid thickness has been tuned; thickness = 100 grid sizes
+Default Supergrid thickness has been tuned; thickness = 150 grid sizes
 
-   Execution time, reading input file 0.440668 seconds 
+   Execution time, reading input file 0.433711 seconds 
 ----------------------------------------------------
  Making Output Directory: pointsource-h0p01/
 		
@@ -54,7 +54,7 @@ Geographic coordinates of the corners of the computational grid:
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=1.000000e-02, minVs/h=80 (Cartesian)
 
-   Execution time, start up phase 0.316659 seconds 
+   Execution time, start up phase 0.312267 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: pointsource-h0p01/
 ============================================================
@@ -62,12 +62,11 @@ Writing output to directory: pointsource-h0p01/
 
  Start Time = 0 Goal Time = 5
  Number of time steps = 754 dt: 0.0066313
-Saving one discretized time function
 
 -----------------------------------------------------------------------
   Total seismic moment (M0): 1.22474 Nm 
   Moment magnitude     (Mw): -6.00797
-  Number of sources 1
+  Number of moment sources 1
 -----------------------------------------------------------------------
   Begin time stepping...
 Time step       1  t =   6.6312997e-03
@@ -81,9 +80,9 @@ Time step     701  t =   4.6485411e+00
 Time step     754  t =   5.0000000e+00
   Time stepping finished...
 **** Closed file with solution errors for testing
-   Execution time, solver phase 21 minutes 29.6551 seconds 
+   Execution time, solver phase 21 minutes 31.4703 seconds 
 
- Final solution errors: Linf =   8.8143566e-04, L2 =   2.8154607e-03
+ Final solution errors: Linf =   1.6177566e-07, L2 =   3.4673931e-07
 ============================================================
  program sw4 finished! 
 ============================================================

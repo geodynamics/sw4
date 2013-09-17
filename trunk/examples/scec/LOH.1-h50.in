@@ -20,9 +20,9 @@
 #
 grid h=50 x=30000 y=30000 z=17000
 time t=9
-fileio verbose=1 path=LOH1-h50
+fileio path=LOH1-h50
 
-# supergrid parameters
+#specify the width of the super grid damping layer (30 is the default)
 supergrid gp=30
 
 # first define the material properties everywhere (half-space)

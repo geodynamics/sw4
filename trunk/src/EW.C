@@ -514,7 +514,7 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
 	      << "  Total seismic moment (M0): " << myM0Sum << " Nm " << endl;
 	 if (myM0Sum > 0)
 	   msg2 <<  "  Moment magnitude     (Mw): " << (2./3.)*(log10(myM0Sum) - 9.1)  << endl;
-	 msg2 << "  Number of sources " << numsrc << endl;
+	 msg2 << "  Number of moment sources " << numsrc << endl;
 	 msg2 << "-----------------------------------------------------------------------" << endl;
 	 cout << msg2.str();
        }

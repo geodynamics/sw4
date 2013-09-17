@@ -5,9 +5,9 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Sun Aug 4 16:46:29 PDT 2013
+  Compiled on: Tue Sep 17 12:00:47 PDT 2013
   By user:     andersp
-  Machine:     cab687
+  Machine:     cab668
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -29,7 +29,7 @@ Total number of grid points (without ghost points): 2.72709e+07
 
 Default Supergrid thickness has been tuned; thickness = 75 grid sizes
 
-   Execution time, reading input file 0.023949 seconds 
+   Execution time, reading input file 0.420255 seconds 
 ----------------------------------------------------
  Making Output Directory: pointsource-h0p02/
 		
@@ -54,7 +54,7 @@ Geographic coordinates of the corners of the computational grid:
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=2.000000e-02, minVs/h=40 (Cartesian)
 
-   Execution time, start up phase 0.055587 seconds 
+   Execution time, start up phase 0.125155 seconds 
 Running sw4 on 128 processors...
 Writing output to directory: pointsource-h0p02/
 ============================================================
@@ -62,12 +62,11 @@ Writing output to directory: pointsource-h0p02/
 
  Start Time = 0 Goal Time = 5
  Number of time steps = 377 dt: 0.0132626
-Saving one discretized time function
 
 -----------------------------------------------------------------------
   Total seismic moment (M0): 1.22474 Nm 
   Moment magnitude     (Mw): -6.00797
-  Number of sources 1
+  Number of moment sources 1
 -----------------------------------------------------------------------
   Begin time stepping...
 Time step       1  t =   1.3262599e-02
@@ -77,9 +76,9 @@ Time step     301  t =   3.9920424e+00
 Time step     377  t =   5.0000000e+00
   Time stepping finished...
 **** Closed file with solution errors for testing
-   Execution time, solver phase 1 minute  32.618 seconds 
+   Execution time, solver phase 1 minute  32.3443 seconds 
 
- Final solution errors: Linf =   2.4309629e-03, L2 =   7.6429763e-03
+ Final solution errors: Linf =   7.8886507e-06, L2 =   2.7656656e-05
 ============================================================
  program sw4 finished! 
 ============================================================
