@@ -6877,6 +6877,8 @@ void EW::processMaterialInvtest(char* buffer)
 	    nr = 2;
 	 else if( strcmp(token,"lohsine")==0 )
 	    nr = 3;
+	 else if( strcmp(token,"smoothlayer")==0 )
+	    nr = 4;
          else
 	    CHECK_INPUT( 0, "Error invtestmaterial, type = " << token << " not recognized" );
       }
