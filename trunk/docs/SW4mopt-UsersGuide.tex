@@ -1,16 +1,75 @@
 \documentclass[12pt]{report}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\def\figdir{mfigs}
 \begin{document}
 
+
+\title{\Huge\bf Material inversion with SW4mopt} 
+
+\author{Bj\"orn Sj\"ogreen$^1$ \and N. Anders Petersson\thanks{Center for Applied Scientific
+     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551.}}
+\date{September 27, 2013} 
+\maketitle
 
 
 
 %-----------------------------------------------------------------------
-\chapter{The material optimzier }\label{sec:matopt}
+\chapter{ Introduction }\label{sec:matopt}
 
-\section{The mrun command}\label{sec:mrundesc}
-The \verb+mrun+ command 
+\emph{SW4mopt} is a solver for material inversion and source inversion, built on
+the forward solver \emph{SW4}. Running \emph{SW4mopt} is very similar to running
+\emph{SW4}. \emph{SW4mopt} uses the same input commands as \emph{SW4}, and 
+provides an extended set of commands, related to the inverse problem.
+\par
+Given time series data at a number of stations, \emph{SW4mopt} solves for the material
+density, $\rho$, and Lam\'e parameters $\mu$ and $\lambda$, in
+a material that has been parameterized in some way. Currently, the only available parameterization
+is a representation of the material on a coarse grid. The material at the grid points is 
+defined by interpolation from this coarse grid. \emph{SW4mopt} is written such that it will
+be easy to extend to other types of parameterizations, e.g., representation as B-splines or 
+a mesh free unstructured representation.
+\par
+For minimization, \emph{SW4mopt} provides the choice of the limited memory BFGS method (L-BFGS)
+or a non-linear conjugate gradient method. These are run together with a line search algorithm
+to determine the step length. 
+\par
+As of writing, September 2013, \emph{SW4mopt} has been successfully run on simple problems 
+with synthetic data, some of them reported below. It is a complete solver for the inverse problem. 
+However, it is far from being ready to be released to the users. \emph{SW4mopt} is not as 
+robust as \emph{SW4}, and we need to test it on many other problems, to make sure that it works 
+as expected, and to gain experience of material inversion. Furthermore, since \emph{SW4mopt} is 
+still in development, it produces a lot of output messages that might be confusing to the average user.
+
+The following should be done to improve \emph{SW4mopt}.
+\begin{itemize}
+\item Implement the material parameterization for grids with topography. Topography is the only critical
+      part that is missing. The material gradient can be computed with topography, it is just the
+      coarse grid parameterization that has not been done.
+\item Implement a material parameterization which is distributed on the processors. Currently one copy of
+      the entire coarse material grid is stored in each processor. This will lead to memory limitations
+      as problems size increases. 
+\item Possibility to refine the material grid, so that the inversion to a highly resolved material can 
+      be made hierarchally. The same
+      holds for the scaling factors. With a higher material resolution, we can not expect to compute these
+      by forming the Hessian. Can scaling factors be interpolated from a coarse grid inversion ?
+\item Automatic readjustment of the time step when the material speed increases past the 
+      largest stable CFL number. This must now be handled by manual restart, it would be better to have
+      the code doing it automatically.
+\end{itemize}
+\par
+A few more items that should be addressed, but which require new research and development,
+and new software.
+\begin{itemize}
+\item Material inversion in an anisotropic material.
+\item Homogenization techniques to recover isotropic material properties from the result of 
+      anisotropic material inversion.
+\item Material inversion with attenuation.
+\end{itemize}
+
+
+
+
 
 %-----------------------------------------------------------------------
 \chapter{The material description}\label{sec:matdesc}
@@ -67,7 +126,7 @@ parameters, open circles are fixed boundary values.}
 \end{figure}
 \par
 The material grid discretizes only the interior part the domain, without the super-grid
-sponge layers. The configuration is outline in Fig~\ref{fig:mparcart} below.
+sponge layers. The configuration is outlined in Fig.~\ref{fig:mparcart}.
 The material grid is given by
 \begin{alignat}{2}
  x_i = x_{min}+ i h_x \qquad i=0,\ldots,n_x+1\\
@@ -84,6 +143,303 @@ the offsets $d^{(\rho)}, d^{(\mu)}$, and $d^{(\lambda)}$ are fixed at zero, henc
 not part of the parameter vector. The total number of unknowns for the material inversion
 is $3 \times n_x \times n_y \times n_z$.
 
+
+%-----------------------------------------------------------------------
+\chapter{Computed examples}
+
+\section{Material grid with a single point}
+This test problem is defined on a domain of size $35000\times 35000\times 17000$.
+The material is constant with $\rho=2650$, $v_s=2437.56$, and $v_p=4630.76$, giving
+$\mu=1.57455\times 10^{10}$ and $\lambda=2.5335\times 10^{10}$. The elastic wave equation 
+is discretized on a grid with spacing $h=200$. A traction free boundary condition is 
+imposed at the boundary $z=0$. All other boundaries have super-grid sponge layers of width $2500$.
+Waves are set off by a moment source located at $x_s=y_s=17500$, $z_s=2000$. The only
+non-zero element of the moment tensor is $M_{xy}=1.0\times 10^{18}$. The source time function
+is a Gaussian with $t_0=1.5$ and $\omega=4$.
+\par
+We consider a material grid of size $1\times 1 \times 1$, i.e., there is only one point
+in the material parameterization. 
+The total number of material parameters is 3, i.e., $\rho$, $\mu$, and $\lambda$ at the 
+single point. The outline of the material grid in Fig.~\ref{fig:mparcart} shows that with
+a single point, it will be located at $x=y=17500$ and $z=0$.
+\par
+Synthetic seismograms are computed at stations on a centered $5\times 5$ grid with spacing $3000$ 
+on the surface, ($z=0$). These seismograms, computed with the constant material, are used as the
+measured data in the numerical experiments.
+In these experiments, we initialize the values at the material grid point by a perturbation
+of the constant material. Denoting the constant, reference, density by $\rho^{(ref)}$, and the perturbation
+by $d^{(\rho)}$, we have
+$$
+  \rho    = \rho^{(ref)}+d^{(\rho)}
+$$
+at the material grid point. The notation for $\mu$ and $\lambda$ are similar.
+The following five initial perturbations are considered
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|} \hline
+{\bf Name} & $d^{(\rho)}$ & $d^{(\mu)}$ & $d^{(\lambda)}$  \\ \hline 
+pp10 & $0.1\rho^{(ref)}$ & $0.1\mu^{(ref)}$ & $0.1\lambda^{(ref)}$ \\ \hline
+mm10 & $-0.1\rho^{(ref)}$ & $-0.1\mu^{(ref)}$ & $-0.1\lambda^{(ref)}$ \\ \hline
+mp10 & $-0.1\rho^{(ref)}$ & $0.1\mu^{(ref)}$ & $0.1\lambda^{(ref)}$ \\ \hline
+mp30 & $-0.3\rho^{(ref)}$ & $0.3\mu^{(ref)}$ & $0.3\lambda^{(ref)}$ \\ \hline
+pm30 & $0.3\rho^{(ref)}$ & $-0.3\mu^{(ref)}$ & $-0.3\lambda^{(ref)}$ \\ \hline
+\end{tabular}
+\label{tab:cases}
+\end{center}
+The minimizing algorithm should converge to the constant material, i.e., $d^{(\rho)}$ should approach
+zero. The Hessian at the constant material is 
+$$
+H= \begin{pmatrix}    2.9371e-03 &  -4.9563e-10 & -1.8236e-12 \\
+                     -4.9563e-10 &  8.7013e-17  & 2.4771e-19 \\
+                     -1.8236e-12 &  2.4771e-19  & 3.6478e-20
+   \end{pmatrix}
+$$
+The condition number of $H$ is $8.571\times 10^{16}$.  
+The scale factors obtained from the diagonal elements of $H$, and rescaled to have $s_{\rho}=\rho^{(ref)}$
+are,
+$$
+ s_{\rho} =2650\quad s_\mu = 1.54\times 10^{10}\quad  s_\lambda = 7.52\times 10^{11}
+$$
+with these scale factors, the condition number is $107$. Note that $s_\rho$ and $s_\mu$ are typical sizes 
+of $\rho^{(ref)}$ and $\mu^{(ref)}$ respectively, while $s_\lambda$ is around 30 times larger 
+than $\lambda^{(ref)}$.
+As an illustration, Fig.~\ref{fig:images} shows the density on the plane $x=17500$ after 1, 2, 3, and 4 iteration
+with the L-BFGS method. The initial perturbation at the single material grid point gives a hat shaped initial 
+material. The perturbation disappears as the minimizing iterations converges to the constant material 
+used to compute the synthetics.
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.45\textwidth]{\figdir/rho-it1-run6.png}\hfil
+\includegraphics[width=0.45\textwidth]{\figdir/rho-it2-run6.png}\hfil \\
+\includegraphics[width=0.45\textwidth]{\figdir/rho-it3-run6.png}
+\includegraphics[width=0.45\textwidth]{\figdir/rho-it4-run6.png}
+\caption{Density at $x=17500$ after iterations 1, 2, 3, and 4. 30 contour levels between 2650 and 2925.}
+\label{fig:images}
+\end{center}
+\end{figure}
+Figure~\ref{fig:per10conv} shows the convergence histories for the cases in Table~\ref{tab:cases} 
+with 10\% perturbation. The convergence from the 30\% perturbation are shown in Fig.~\ref{fig:per30conv}.
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.33\textwidth]{\figdir/per10pp-conv-m.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/per10mm-conv-m.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/per10mp-conv-m.png}
+\caption{Convergence rate of problems pp10 (left), mm10 (middle), and mp10 (right). Blue
+is the maximum norm of the gradient of the misfit, red is the misfit.}
+\label{fig:per10conv}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.45\textwidth]{\figdir/per30pm-conv-m.png}\hfil
+\includegraphics[width=0.45\textwidth]{\figdir/per30mp-conv-m.png}
+\caption{Convergence rate of problems pm30 (left), mp30 (right). Blue
+is the maximum norm of the gradient of the misfit, red is the misfit.}
+\label{fig:per30conv}
+\end{center}
+\end{figure}
+With the 10\% perturbation, it takes 7-10 iterations to converge the misfit down 
+to its final value. The 30\% perturbations require 17-20 iterations. 
+\par
+Next, we investigate the convergence of the material properties at the material grid point.
+Figures~\ref{fig:per10vars} and \ref{fig:per30vars} show the evolution of the 
+relative error, $d^{(\rho)}/\rho^{(ref)}$ for the density and similarly for $\mu$ and $\lambda$.
+The perturbation converges to zero, and as shown by the convergence curves, the material has
+converged in the picture norm after around 10 iterations for the 10\%  perturbations. With the
+30\% initial perturbation, around 20 iterations are needed. Figures~\ref{fig:per10vars} and \ref{fig:per30vars}
+also show that the amplitudes of the perturbations in $\rho$ and $\mu$ never exceeds the size of the
+initial perturbation. $\lambda$, on the other hands, have very large variation, especially for the 30\%
+perturbation. This is caused by the scaling factor $s_\lambda$ being much larger than the 
+size of $\lambda^{(ref)}$. The line search algorithm bases its largest allowed step length on the scale
+factors, which implies that a much longer relative step is allowed for $\lambda$ than for $\rho$ and $\mu$.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.33\textwidth]{\figdir/per10pp-m.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/per10mm-m.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/per10mp-m.png}
+\caption{Convergence of $\rho$ (blue), $\mu$ (red), and $\lambda$ (black) for 
+problems pp10 (left), mm10 (middle), and mp10 (right).}
+\label{fig:per10vars}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.45\textwidth]{\figdir/per30pm-m.png}\hfil
+\includegraphics[width=0.45\textwidth]{\figdir/per30mp-m.png}
+\caption{Convergence of $\rho$ (blue), $\mu$ (red), and $\lambda$ (black) for 
+problems pm30 (left) and mp30 (right).}
+\label{fig:per30vars}
+\end{center}
+\end{figure}
+\par
+The input file for this example contains the material specification
+\begin{verbatim}
+block vp=4630.76 vs=2437.56 r=2650
+mparcart nx=1 ny=1 nz=1 init=onep-pr10.bin
+\end{verbatim}
+meaning that the reference material is defined by the block command, and the initial 10 percent perturbation
+is read from the file \verb+onep-pr10.bin+. This file was prepared externally to \emph{SW4mopt}, by a Matlab script. 
+The minimizing algorithm was specified by the lines
+\begin{verbatim}
+mrun task=minvert mcheck=on tsoutput=on
+lbfgs nvectors=3 maxit=100 tolerance=1e-12 linesearch=on 
+\end{verbatim}
+in the inputfile.
+
+
+\section{Material with sinusodial variation, $3\times 3\times 2$ material grid}
+This test problem has the same dimensions and source as the problem in the previous subsection. The 
+synthetics are computed on a constant material with an added sinusodial variation. The constant material has the 
+properties $\rho=2650$, $v_s=2679.5$, and $v_p=5000$, leading to $\mu=1.90\times 10^{10}$ and
+$\lambda=2.82\times 10^{10}$.
+The amplitude of the sine perturbation is around 10\% in $\rho$, $\mu$ and $\lambda$. 
+Figure~\ref{fig:exactm} shows the density on the plane $z=1000$ at the exact minimum. 
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.7\textwidth]{\figdir/rh-ex.png}\hfil
+\caption{Density on the plane $z=1000$ at the exact minimum.}
+\label{fig:exactm}
+\end{center}
+\end{figure}
+\par
+The inversion algorithm starts from the constant material as initial guess, and iterates to find the
+sinusodial material variation. As an illustration of the convergence process, the density 
+in the plane $z=1000$, with the same contour levels are plotted in Fig.~\ref{fig:rho-its}.
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it1.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it10.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it20.png} \\
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it30.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it40.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it50.png} \\
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it60.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it70.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/rh-it80.png} \\
+\caption{Density on the plane $z=1000$ after 1, 10, 20, 30, 40, 50, 60, 70, and 80 iterations
+with the L-BFGS method.}
+\label{fig:rho-its}
+\end{center}
+\end{figure}
+\par
+Just as in the case with one material grid point, the Lam\'e parameter $\lambda$ shows the largest
+variation during the iteration process. The evolution of $\lambda$ is displayed in Fig.~\ref{fig:lambda-its},
+showing it out of range of the plotting contour levels after 10, 20, and 40 iterations.
+\par
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.33\textwidth]{\figdir/la-it1.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/la-it10.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/la-it20.png} \\
+\includegraphics[width=0.33\textwidth]{\figdir/la-it30.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/la-it40.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/la-it50.png} \\
+\includegraphics[width=0.33\textwidth]{\figdir/la-it60.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/la-it70.png}\hfil
+\includegraphics[width=0.33\textwidth]{\figdir/la-it80.png} \\
+\caption{Lam\'e parameter $\lambda$ on the plane $z=1000$ after 1, 10, 20, 30, 40, 50, 60, 70, and 80 iterations
+with the L-BFGS method.}
+\label{fig:lambda-its}
+\end{center}
+\end{figure}
+\par
+The convergence in Fig.~\ref{fig:sine-conv}, shows that around 200 iterations are needed to drive down
+the misfit to the level of round-off. However, Figs.~\ref{fig:rho-its} and \ref{fig:lambda-its} show that
+50--60 iterations give a satisfactory picture of the material, corresponding do a misfit reduction of
+4--5 orders of magnitude. 
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.7\textwidth]{\figdir/conv-run6.png}\hfil
+\caption{Convergence of misfit (red) and maximum norm of the gradient of the misfit (blue) for 
+the computation shown in Fig.~\ref{fig:rho-its}.}
+\label{fig:sine-conv}
+\end{center}
+\end{figure}
+\par
+The input file for this example is given by
+\begin{verbatim}
+grid h=200 x=35000 y=35000 z=19500
+time t=9 utcstart=09/10/2013:23:5:53.000
+fileio verbose=1 path=run8 obspath=obs temppath=/tmp/bjorn pfs=1
+supergrid gp=13 dc=.015
+#
+block r=2650 vs=2677.6503357897 vp=4998.11285141419
+mparcart nx=3 ny=3 nz=2 init=0
+#
+mrun task=minvert mcheck=on 
+lbfgs nvectors=35 maxit=300 tolerance=1e-12 linesearch=on ihess0=scale-factors
+mscalefactors rho=2650 mu=1.19e10 lambda=5.10e11 
+#
+source x=17500 y=17500 z=2000 Mxy=1 m0=1e18 t0=1.5 freq=4 type=Gaussian
+#
+developer cfl=1.1
+#
+observation x=11500 y=11500 z=0 file=sta11
+observation x=14500 y=11500 z=0 file=sta21
+observation x=17500 y=11500 z=0 file=sta31
+ ....
+\end{verbatim}
+The first four lines set up the domain and discretization size. It uses the same syntax as the forward
+solver, \emph{SW4}. The only additional items for the inverse problem are the two new paths,
+\verb+obspath+ and \verb+temppath+, given at the \verb+fileio+ command. The \verb+obspath+ is the directory
+containing the observed seismograms. These data are read by the solver, nothing is output into \verb+obspath+.
+\par
+The \verb+temppath+ is a directory where temporary files associated with the outflow boundaries are stored.
+In order to reconstruct the forward solution during the backward solve, the forward solution on the outflow
+boundaries needs to be saved. Each processor that holds a part of the outflow boundary, writes its own
+file to \verb+temppath+. These files can become fairly large, and there can be a lot of them. The read and write
+speeds to \verb+temppath+ will have a major effect on the preformance of the inverse solver. 
+Preferably, \verb+temppath+ should be a directory on a disk that is local to the computational node. 
+On the LC sytems, the directory \verb+/tmp/username+ is usually a good choice, if the files are not too large.
+The temporary files are deleted by \emph{SW4mopt} when they are no longer needed, however if the program
+crashes, files might be left in \verb+temppath+.
+\par
+The next two lines, 
+\begin{verbatim}
+block r=2650 vs=2677.6503357897 vp=4998.11285141419
+mparcart nx=3 ny=3 nz=2 init=0
+\end{verbatim}
+specify the material repesentation and the initial guess material. The computation starts from a zero 
+perturbation on the constant reference material described by the \verb+block+ command. The material grid 
+has $3\times 3\times 2$ points. 
+\par
+The L-BFGS method is specified by 
+\begin{verbatim}
+lbfgs nvectors=35 maxit=300 tolerance=1e-12 linesearch=on ihess0=scale-factors
+\end{verbatim}
+A maximum of 300 iterations are taken, using 35 L-BFGS vectors. The initial inverse Hessian will be
+computed from the scale factors. These are specified on the \verb+mscalefactors+ line below. The
+scale factors are also used to compute the step length in the minimization algorithm.
+\par
+The source is given below the \verb+mscalefactors+ line. The source is specified with exactly the 
+same syntax as in the forward solver. Below the \verb+source+ command, the CFL-number is set to 1.1. 
+In \emph{SW4mopt}, the maximum allowed CFL-number is hard coded to 1.3. By computing with a somewhat lower 
+CFL-number, we allow the material wave speeds to increase by (1.3-1.1)/1.1 = 18\% during the minimization. 
+\emph{SW4mopt} never changes the initially computed time step. However, the line search algorithm restricts
+the step size of the minimizer so that the maximum CFL-limit 1.3 is always respected. 
+If the material makes the CFL-number getting too close to 1.3, the minimization step length will go 
+to zero, and the minimizer fails. In that case, the computation has to be restarted with a 
+smaller CFL-number. 
+\par
+The synthetic seismograms were prepared by the forward solver, run in the perturbed material. The
+seismograms are output in USGS-format, on files \verb+sta11.txt+, \verb+sta21.txt+, etc. up
+to \verb+sta55.txt+. The synthetics are read into \emph{SW4mopt} by the commands
+\begin{verbatim}
+observation x=11500 y=11500 z=0 file=sta11
+observation x=14500 y=11500 z=0 file=sta21
+observation x=17500 y=11500 z=0 file=sta31
+....
+\end{verbatim}
+etc. for all 25 stations. The synthetics were time stamped by the forward solver. The UTC time is
+registered in the header of the output time series on USGS-format. In this example, the UTC time
+was September 10th 2013 at 23:5:53. It is important that we specify the same start time for the 
+inverse solver. This is done by the command
+\begin{verbatim}
+time t=9 utcstart=09/10/2013:23:5:53.000
+\end{verbatim}
+in the input file.
 
 %-----------------------------------------------------------------------
 \chapter{Keywords in the input file}\label{chap:keywords}
@@ -132,6 +488,10 @@ hesstest    & Compute the Hessian numerically  \\ \hline
 func1d      & Compute and output a one dimensional cut of the misfit \\ \hline
 func2d      & Compute and output a two dimensional surface of the misfit \\ \hline
 forward     & Run one forward solve and exit. \\ \hline
+minvert+src11& Perform material and source inversion, 11 parameter source. \\ \hline
+minvert+src10& Perform material and source inversion, 10 parameter source. \\ \hline
+minvert+src9& Perform material and source inversion, 9 parameter source. \\ \hline
+minvert+src6& Perform material and source inversion, 6 parameter source. \\ \hline
 \end{tabular}
 \end{center}
 Further specification of the {\tt func1d}, {\tt func2d} tasks, e.g., which parameter to
@@ -239,7 +599,7 @@ maxsubit    & Number of subiterations in CG & int & \# unknowns \\ \hline
 \end{tabular}
 \end{center}
 
-\subsection{The mscalefactors command}\label{sec:nlcg}
+\subsection{The mscalefactors command}\label{sec:mscalefactors}
 \begin{flushleft}\bf
 Syntax:\\
 \tt
@@ -285,7 +645,7 @@ misfit & Multiplier for scale factors & float & 1 \\ \hline
 \end{tabular}
 \end{center}
 
-\subsection{The mfsurf command}\label{sec:nlcg}
+\subsection{The mfsurf command}\label{sec:mfsurf}
 \begin{flushleft}\bf
 Syntax:\\
 \tt
@@ -371,7 +731,7 @@ init        & initial guess, file name or 0 & string & none \\ \hline
 \end{center}
 
 Currently, the complete material grid is stored in each processor. For very large problem sizes, the amount 
-of memory can be a limitation. TODO: Implement a material grid, which is distributed on the processors.
+of memory can be a limitation. 
 
 \section{Output}
 
