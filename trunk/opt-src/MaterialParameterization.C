@@ -141,6 +141,7 @@ void MaterialParameterization::read_parameters( int nms, double* xms )
    if( m_myrank == 0 )
    {
       int fd=open(m_filename,O_RDONLY );
+      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
       int nms_read;
       size_t nr = read(fd,&nms_read,sizeof(int));
       if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
@@ -156,7 +157,7 @@ void MaterialParameterization::read_parameters( int nms, double* xms )
       close(fd);
    }
    MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters");
+   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters"<<endl);
 }
 
 //-----------------------------------------------------------------------

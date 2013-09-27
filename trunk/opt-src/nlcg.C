@@ -1,5 +1,15 @@
+#ifdef OPTTEST_MODE
+#include "dummy-classes.h"
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <cstdio>
+#include <mpi.h>
+#else
 #include "EW.h"
 #include "MaterialParameterization.h"
+#include "Mopt.h"
+#endif
 
 using namespace std;
 
@@ -14,7 +24,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nm
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
-		       MaterialParameterization* mp, bool mcheck=false, bool output_ts=false ); 
+                       Mopt *mopt, int it=-1 );
+//		       MaterialParameterization* mp, bool mcheck=false, bool output_ts=false ); 
 
 void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
@@ -22,7 +33,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 double* dfm, double* ps, double* pm, double cgstep, double maxstep, double steptol,
 		 double* xsnew, double* xmnew, double& fnew, double* sfs, double* sfm,
 		 int myRank, int& retcode, int& nstep_reductions, bool testing, double* dfsnew,
-		 double* dfmnew, MaterialParameterization* mp, bool usewolfe );
+		 double* dfmnew, Mopt* mopt );
 
 //-----------------------------------------------------------------------
 void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
@@ -30,15 +41,20 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	   vector<Source*>& GlobalSources,
 	   vector<TimeSeries*>& GlobalTimeSeries,
 	   vector<TimeSeries*> & GlobalObservations,
-	   int myRank, MaterialParameterization* mp,
-	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
-	   bool fletcher_reeves, bool mcheck, bool output_ts )
+	   int myRank, Mopt* mopt )
+//MaterialParameterization* mp,
+//	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
+//	   bool fletcher_reeves, bool mcheck, bool output_ts )
 
 {
    int ns, verbose = -1, nreductions = 0;
    double rnorm, f;
    bool testing=false;
-   
+   int maxrestart = mopt->m_maxit;
+   int maxit      = mopt->m_maxsubit;
+   double tolerance = mopt->m_tolerance;
+   bool fletcher_reeves = mopt->m_fletcher_reeves, dolinesearch=mopt->m_dolinesearch;
+
    ns = nspar + nmpars;
 
    if( maxrestart == 0 )
@@ -48,10 +64,16 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
       maxit = ns + nmpard;
 
    FILE *fd;
+   FILE *fdx;
+   const string parfile = simulation.getOutputPath() + "parameters.bin";
    if( myRank == 0 )
    {
       const string convfile = simulation.getOutputPath() + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
+
+      const string parafile = simulation.getOutputPath() + "parameters.log";
+      if( nspar > 0 )
+	 fdx=fopen(parafile.c_str(),"w");
    }
 
    if( myRank == 0 )
@@ -76,7 +98,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
    }
 
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank, mp );
+		     GlobalObservations, f, dfs, dfm, myRank, mopt );
    if( myRank == 0 )
    {
       cout << "Initial misfit= "  << f << endl;
@@ -107,7 +129,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 // Start CG iterations
    int j = 1;
    bool done = false;
-
+   int it= 0;
    while( j <= maxrestart && !done )
    {
       for( int i=0 ; i < ns ; i++ )
@@ -131,7 +153,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	    xam[i] = xm[i] + h*dm[i];
 
 	 compute_f_and_df( simulation, nspar, nmpars, xas, nmpard, xam, GlobalSources, GlobalTimeSeries,
-			   GlobalObservations, fp, dfps, dfpm, myRank, mp );
+			   GlobalObservations, fp, dfps, dfpm, myRank, mopt );
          dtHd  = 0;
 	 alpha = 0;
 	 if( nmpard > 0 )
@@ -162,7 +184,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	    linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 			nspar, nmpars, xs, nmpard, xm, f, dfs, dfm, das, dam, fabs(alpha), 1.0, tolerance,
 			xas, xam, fp, sfs, sfm, myRank,
-			retcode, nreductions, testing, dfps, dfpm, mp, false );
+			retcode, nreductions, testing, dfps, dfpm, mopt );
             if( myRank == 0 && verbose > 2 )
 	       cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
 	 }
@@ -205,7 +227,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	    xs[i]  = xas[i];
 	 }
 	 compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			   GlobalObservations, f, dfps, dfpm, myRank, mp, mcheck, output_ts );
+			   GlobalObservations, f, dfps, dfpm, myRank, mopt, it );
 
 // Compute norm of new gradient
 	 rnorm = 0;
@@ -222,8 +244,11 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	       rnorm = fabs(dfps[i])*sfs[i];
 
 // Save the time series after each sub-iteration.
-         for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
-	    GlobalTimeSeries[ts]->writeFile();
+//         for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
+//	    GlobalTimeSeries[ts]->writeFile();
+
+	 // Save material parameters, for restart.
+	 mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
 
 // Print some information on standard output
 	 if( myRank == 0 )
@@ -232,11 +257,38 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	    cout << " it=" << j << " " << k << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
 	    cout << " Misfit= "  << f << endl;
 	 }
-// Save convergence and parameters to file
+
+// Save convergence and source parameters to file
          if( myRank == 0 )
 	 {
 	    fprintf(fd, "%i %i %15.7g %15.7g %15.7g %i\n", j, k, rnorm, dxnorm, f, nreductions );
 	    fflush(fd);
+
+	    if( nspar>0)
+	    {
+	       cout << " new x = " ;
+	       for( int i=0 ; i < nspar ; i++ )
+	       {
+		  cout << xs[i] << " ";
+		  if( i==5 )
+		     cout << endl << "      " ;
+	       }
+	       cout << endl;
+	       cout << " scaled source gradient = " ;
+	       for( int i=0 ; i < nspar ; i++ )
+	       {
+		  cout << dfps[i]*sfs[i] << " ";
+		  if( i==5 )
+		     cout << endl << "      " ;
+	       }
+	       cout << endl;
+	       fprintf(fdx, "%d  %d ", j, k );
+	       for( int p=0 ; p < nspar ; p++ )
+		  fprintf(fdx, "%15.7g ",xs[p] );
+	       fprintf(fdx,"\n");
+	       fflush(fdx);
+	    }
+
 	 }
 
          double beta;
@@ -292,10 +344,20 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
             dfs[i] = dfps[i];
 	 }
          k++;
+	 it++;
       }
       j++;
       done = rnorm < tolerance;
    }
+   mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
+
+   if( myRank == 0 )
+   {
+      fclose(fd);
+      if( nspar > 0 )
+	 fclose(fdx);
+   }
+
    if( ns > 0 )
    {
       delete[] dfs ;

@@ -1,5 +1,15 @@
+#ifdef OPTTEST_MODE
+#include "dummy-classes.h"
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <cstdio>
+#include <mpi.h>
+#else
 #include "EW.h"
+#include "Mopt.h"
 #include "MaterialParameterization.h"
+#endif
 
 using namespace std;
 
@@ -14,7 +24,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nm
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
-		       MaterialParameterization* mp, bool mcheck=false, bool output_ts=false ); 
+                       Mopt *mopt, int it=-1 );
+//		       MaterialParameterization* mp, vector<Image*>& images,
+//		       bool mcheck=false, bool output_ts=false ); 
 
 //-----------------------------------------------------------------------
 void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
@@ -23,7 +35,7 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 		     double* xsnew, double* xmnew, double f, double* dfsnew, double* dfmnew,
 		     double& lambda, double maxstep, double minlambda, double cglen, double alpha,
 		     double initslope, int myRank, double& fnew, bool& maxtaken, int& retcode,
-		     MaterialParameterization* mp )
+		     Mopt* mopt )
 
 //-----------------------------------------------------------------------
 //  Algorithm A6.3.1-mod from book by Dennis and Schnabel. This routine only
@@ -35,7 +47,7 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
    double beta=0.9, lambdaprev, fpprev, maxlambda;
    int ns = nspar+nmpars;
    compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, fnew, dfsnew, dfmnew, myRank, mp );
+		     GlobalObservations, fnew, dfsnew, dfmnew, myRank, mopt );
    double slope=0;
    if( nm >  0 )
    {
@@ -61,11 +73,11 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i]+lambda*ps[i];
 	    compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, 
-		       GlobalObservations, fnew, mp );
+		       GlobalObservations, fnew, mopt->m_mp );
 	    if( fnew <= f + alpha*lambda*initslope )
 	    {
 	       compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-				 GlobalObservations, fnew, dfsnew, dfmnew, myRank, mp );
+				 GlobalObservations, fnew, dfsnew, dfmnew, myRank, mopt );
                slope = 0;
 	       if( nm > 0 )
 	       {
@@ -106,7 +118,7 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i]+lambda*ps[i];
 	    compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-		        GlobalObservations, fnew, mp );
+		        GlobalObservations, fnew, mopt->m_mp );
 	    if( fnew > f + alpha*lambda*initslope )
 	    {
 	       lambdadiff = lambdaincr;
@@ -115,7 +127,7 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 	    else
 	    {
 	       compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-				 GlobalObservations, fnew, dfsnew, dfmnew, myRank, mp );
+				 GlobalObservations, fnew, dfsnew, dfmnew, myRank, mopt );
                slope = 0;
 	       if( nm > 0 )
 	       {
@@ -158,7 +170,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 double* dfm, double* ps, double* pm, double cgstep, double maxstep, double steptol,
 		 double* xsnew, double* xmnew, double& fnew, double* sfs, double* sfm,
 		 int myRank, int& retcode, int& nstep_reductions, bool testing, double* dfsnew,
-		 double* dfmnew, MaterialParameterization* mp, bool usewolfe )
+		 double* dfmnew, Mopt* mopt )
 
 //-----------------------------------------------------------------------
 // Line seach by backtracking for CG.
@@ -327,7 +339,42 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
    //   cout << "steptol = " << steptol << " rellength " << rellength << " ns = " << ns << endl; 
    double lambda = 1, fnewprev, lambdaprev;
    nstep_reductions = 0;
+   
+   // Restrict step size to inside of domain
+   int ok=0;
+   int ntries = 0;
+   while( !ok && ntries < 30 )
+   {
+      for( int i=0; i < ns ; i++ )
+	 xsnew[i] = xs[i] + lambda*ps[i];
+      for( int i=0; i < nm ; i++ )
+	 xmnew[i] = xm[i] + lambda*pm[i];
+      int ng = simulation.mNumberOfGrids;
+      vector<Sarray> rho(ng), mu(ng), la(ng);
+      mopt->m_mp->get_material( nm, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
+      simulation.check_material( rho, mu, la, ok );
+      if( !ok )
+	 lambda *= 0.7;
+      ntries++;
+   }
+   if( myRank == 0 && lambda != 1 )
+      cout << "After constrained material, lambda = " << lambda << " ntries = " << ntries << endl;
 
+   if( !ok )
+   {
+      // Error, could not constrain material
+      retcode = 3;
+      // Take a small step
+      for( int i=0 ; i < ns ; i++ )
+	 xsnew[i] = xs[i] + lambda*ps[i];
+      for( int i=0 ; i < nm ; i++ )
+	 xmnew[i] = xm[i] + lambda*pm[i];
+      compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+		 GlobalObservations, fnew, mopt->m_mp );
+      return;
+   }
+   
+   bool lambdaprevdefined = false;
    while( retcode == 2 )
    {
       for( int i=0; i < ns ; i++ )
@@ -335,20 +382,22 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
       for( int i=0; i < nm ; i++ )
 	 xmnew[i] = xm[i] + lambda*pm[i];
 
-      compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		 fnew, mp );
+      compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+		 GlobalObservations, fnew, mopt->m_mp );
 
-      //      cout << "initslope = " << initslope << " fnew = " << fnew << endl;
+      //      if( myRank == 0 )
+      //	 cout << "Evaluate at lambda = " << lambda << " gives f = " << fnew << " (initslope = "
+      //	      << initslope << ") " << endl;
 
       lambdasave.push_back(lambda);
       fcnsave.push_back(fnew);
 
       if( fnew < f + alpha*lambda*initslope )
       {
-         if( usewolfe )
+         if( mopt->m_wolfe )
 	    wolfecondition( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs, nm, xm,
 	           ps, pm, xsnew, xmnew, f, dfsnew, dfmnew, lambda, maxstep, minlambda, cglen, alpha, initslope, myRank,
-			 fnew, maxtaken, retcode, mp );
+			 fnew, maxtaken, retcode, mopt );
 	 else
 	 {
 	    // Found satisfactory step
@@ -410,7 +459,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
 	 compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew, mp );
+		       fnew, mopt->m_mp );
 	 return;
       }
       else
@@ -420,8 +469,13 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	    cout << " step failed for lambda = " << lambda;
 
 	 double ltemp;
-	 if( lambda == 1 )
+         if( !lambdaprevdefined )
+	    //	 if( lambda == 1 )
+	 {
 	    ltemp = -initslope/(2*(fnew-f-initslope));
+            if( ltemp > 0.5*lambda )
+	       ltemp = 0.5*lambda;
+	 }
 	 else
 	 {
 	    double r1 =(fnew-f-lambda*initslope)/(lambda-lambdaprev);
@@ -438,6 +492,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 	       ltemp = 0.5*lambda;
 	 }
 	 lambdaprev = lambda;
+         lambdaprevdefined = true;
 	 fnewprev = fnew;
 	 if( ltemp < 0.1*lambda )
 	    lambda = 0.1*lambda;
@@ -454,13 +509,15 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 
 //-----------------------------------------------------------------------
 void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, 
-            int nmpard, double* xm, double* sfm,
+            double* typxs, int nmpard, double* xm, double* sfm, double* typxd,
 	    vector<Source*>& GlobalSources,
 	    vector<TimeSeries*>& GlobalTimeSeries,
 	    vector<TimeSeries*> & GlobalObservations,
-	    int myRank, MaterialParameterization* mp, int maxit, double tolerance,
-	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck,
-	    bool output_ts )
+	    int myRank, Mopt* mopt )
+
+//            MaterialParameterization* mp, int maxit, double tolerance,
+//	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck,
+//	    bool output_ts, vector<Image*>& images )
 
 //-----------------------------------------------------------------------
 // l-BFGS minimization of misfit function.
@@ -499,9 +556,12 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    //   double dfs[11], ds[11], da[11], xa[11], dfps[11], dx[11]
    double* dfs, *ds, *da, *xa, *dfps, *dx;
    double* dfm;
-   bool testing=false, hscale;
+   bool testing=false;
    int nreductions = 0;
-   hscale = (ihess == 1);
+   bool hscale = (mopt->m_ihess_guess == 1);
+   int maxit = mopt->m_maxit, m=mopt->m_nbfgs_vectors;
+   bool dolinesearch=mopt->m_dolinesearch;
+   double tolerance = mopt->m_tolerance;
 
    // used variables: maxit, tolerance, dolinesearch
    //   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
@@ -515,13 +575,16 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    
    FILE *fd;
    FILE *fdx;
+   const string parfile = simulation.getOutputPath() + "parameters.bin";
    if( myRank == 0 )
    {
       const string convfile = simulation.getOutputPath() + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
       const string parafile = simulation.getOutputPath() + "parameters.log";
-      fdx=fopen(parafile.c_str(),"w");
+      if( nspar > 0 )
+	 fdx=fopen(parafile.c_str(),"w");
    }
+
 
    if( nmpard > 0 )
       dfm = new double[nmpard];
@@ -539,7 +602,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
 
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank, mp );
+		     GlobalObservations, f, dfs, dfm, myRank, mopt, 0 );
    if( myRank == 0 )
    {
       cout << "Initial misfit= "  << f << endl;
@@ -763,8 +826,15 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 		     nspar, nmpars, xs, nmpard, xm, f, dfs, dfm, da, dam, fabs(alpha), 10.0, tolerance, xa, xam,
-		     fp, sf, sfm, myRank,
-		     retcode, nreductions, testing, dfps, dfpm, mp, use_wolfe );
+		     fp, typxs, typxd, myRank,
+		     retcode, nreductions, testing, dfps, dfpm, mopt );
+
+         if( retcode == 3 )
+	 {
+            if( myRank == 0 )
+	       cout << "ERROR exit, could not constrain the material" << endl;
+	    it = maxit+1;
+	 }
 
 	 if( myRank == 0 )
 	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
@@ -816,7 +886,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       //	    cout << " i="  << i << " " << ds[i] << " " << xs[i] << endl;
 
       compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			GlobalObservations, f, dfps, dfpm, myRank, mp, mcheck, output_ts );
+			GlobalObservations, f, dfps, dfpm, myRank, mopt, it );
 
 
  // Check Wolfe condition:
@@ -853,11 +923,13 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 	    rnorm = fabs(dfps[i])*sf[i];
 
 // Save the time series after each sub-iteration.
-      for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
-	 GlobalTimeSeries[ts]->writeFile();
+//      for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
+//	 GlobalTimeSeries[ts]->writeFile();
+
+// Save material parameters, for restart.
+      mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
 
 // Check that wave speeds do not become too high or too low.
-
 //      simulation.material_correction( nmpard, xm );
 //      mp->constrain_material( nmpard, xm, nmpars, &xs[nspar] );
 
@@ -865,6 +937,11 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       {
 	 cout << "-----------------------------------------------------------------------" << endl;
 	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
+	 cout << " Misfit= "  << f << endl;
+
+	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
+	 fflush(fd);
+
          if( nspar>0 )
 	 {
 	    cout << " new x = " ;
@@ -875,11 +952,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 		  cout << endl << "      " ;
 	    }
 	    cout << endl;
-	 }
-	 cout << " Misfit= "  << f << endl;
-         if( nspar > 0 )
-	 {
-	    cout << " scaled gradient = " ;
+	    cout << " scaled source gradient = " ;
 	    for( int i=0 ; i < nspar ; i++ )
 	    {
 	       cout << dfps[i]*sf[i] << " ";
@@ -887,15 +960,14 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 		  cout << endl << "      " ;
 	    }
 	    cout << endl;
-	 }
-	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
-         if( nspar>0)
-	 {
-	    fprintf(fdx, "%i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
-		 it, xs[0], xs[1], xs[2], xs[3], xs[4], xs[5], xs[6], xs[7], xs[8], xs[9], xs[10] );
+
+	    fprintf(fdx, "%d ", it );
+            for( int p=0 ; p < nspar ; p++ )
+	       fprintf(fdx, "%15.7g ",xs[p] );
+            fprintf(fdx,"\n");
 	    fflush(fdx);
 	 }
-	 fflush(fd);
+
       }
       done = rnorm < tolerance;
 
@@ -937,12 +1009,11 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       for( int i=0 ; i < nmpard ; i++ )
 	 dfm[i] = dfpm[i];
    }
-   const string parfile = simulation.getOutputPath() + "parameters.bin";
-   mp->write_parameters(parfile.c_str(),nmpars,xs);
    if( myRank == 0 )
    {
       fclose(fd);
-      fclose(fdx);
+      if( nspar > 0 )
+	 fclose(fdx);
    }
    delete[] al;
    delete[] rho;

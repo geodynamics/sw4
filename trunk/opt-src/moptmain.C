@@ -7,25 +7,29 @@
 #include "MaterialParCartesian.h"
 #include "Mopt.h"
 
+
 #include <fcntl.h>
 #include <unistd.h>
 
-void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, 
-	    int nmpard, double* xm, double* sfm,
+void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, double* typxs,
+	    int nmpard, double* xm, double* sfm, double* typxd,
 	    vector<Source*>& GlobalSources,
 	    vector<TimeSeries*>& GlobalTimeSeries,
 	    vector<TimeSeries*> & GlobalObservations,
-	    int myRank, MaterialParameterization* mp, int maxit, double tolerance,
-	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck, bool output_ts );
+	    int myRank, Mopt* mopt );
+// MaterialParameterization* mp, int maxit, double tolerance,
+//	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck, bool output_ts,
+//	    vector<Image*>& images );
 
 void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
 	   int nmpard, double* xm, double* sfm, 
 	   vector<Source*>& GlobalSources,
 	   vector<TimeSeries*>& GlobalTimeSeries,
 	   vector<TimeSeries*> & GlobalObservations,
-	   int myRank, MaterialParameterization* mp,
-	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
-	   bool fletcher_reeves, bool mcheck, bool output_ts );
+	   int myRank, Mopt* mopt );
+	   //	   MaterialParameterization* mp,
+	   //	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
+	   //	   bool fletcher_reeves, bool mcheck, bool output_ts );
 
 void usage(string thereason)
 {
@@ -55,6 +59,9 @@ void set_source_pars( int nspar, double srcpars[11], double* xs )
    else if( nspar == 9 )
       for( int i=0; i<9 ;i++ )
 	 srcpars[i] = xs[i];
+   else if( nspar == 6 )
+      for( int i=0; i<6 ;i++ )
+	 srcpars[i+3] = xs[i];      
    else if( nspar !=0 )
       cout << "Error in set_source_pars, nspar = " << nspar
 	   << " undefined case"<< endl;
@@ -76,6 +83,9 @@ void get_source_pars( int nspar, double srcpars[11], double* xs )
    else if( nspar == 9 )
       for( int i=0; i<9 ;i++ )
 	 xs[i] = srcpars[i];
+   else if( nspar == 6 )
+      for( int i=0 ; i< 6 ;i++)
+	 xs[i] = srcpars[i+3];
    else if( nspar !=0 )
       cout << "Error in get_source_pars, nspar = " << nspar
 	   << " undefined case"<< endl;
@@ -123,6 +133,9 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 
 //New
    mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   int ok;
+   simulation.check_material( rho, mu, lambda, ok );
+
 // Old
  //   simulation.parameters_to_material( nm, xm, rho, mu, lambda );
 
@@ -158,7 +171,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
-		       MaterialParameterization* mp, bool mcheck, bool output_ts )
+                       Mopt* mopt, int it=-1 )
+
+//		       MaterialParameterization* mp, bool mcheck, bool output_ts,
+//		       vector<Image*>& images )
 
 //-----------------------------------------------------------------------
 // Compute misfit and its gradient.
@@ -192,14 +208,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    set_source_pars( nspar, srcpars, xs );
    src[0]->set_parameters( srcpars );
 
-// Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
+// Translate one-dimensional parameter vector (xm,xs) to material data (rho,mu,lambda)
    int ng = simulation.mNumberOfGrids;
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 //New
-   mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
-   if( mcheck )
-      simulation.check_material( rho, mu, lambda );
+   int ok=1;
+   if( mopt->m_mcheck )
+      simulation.check_material( rho, mu, lambda, ok );
 
 // Old   
 //   simulation.parameters_to_material( nmpar, xm, rho, mu, lambda );
@@ -215,7 +232,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<TimeSeries*> diffs;
    for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
    {
-      if( output_ts )
+      if( mopt->m_output_ts && it >= 0 )
          GlobalTimeSeries[m]->writeFile();
       TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
       diffs.push_back(elem);
@@ -241,8 +258,40 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
    simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda );
    get_source_pars( nspar, dfsrc, dfs );   
-   mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
+   mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
    
+   if( it >= 0 )
+      for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
+      {
+	 int ng=simulation.mNumberOfGrids;
+	 Image* image = mopt->m_image_files[im];
+	 if( image->timeToWrite( it ) )
+	 {
+	    if(image->mMode == Image::RHO )
+	       image->computeImageQuantity(rho, 1);
+	    else if(image->mMode == Image::MU )
+	       image->computeImageQuantity(mu, 1);
+	    else if(image->mMode == Image::LAMBDA )
+	       image->computeImageQuantity(lambda, 1);
+	    else if(image->mMode == Image::P )
+	       image->computeImagePvel(mu, lambda, rho);
+	    else if(image->mMode == Image::S )
+	       image->computeImageSvel(mu, rho);
+	    else if(image->mMode == Image::GRADRHO )
+	       image->computeImageQuantity( gRho, 1 );
+	    else if(image->mMode == Image::GRADMU )
+	       image->computeImageQuantity( gMu, 1 );
+	    else if(image->mMode == Image::GRADLAMBDA )
+	       image->computeImageQuantity( gLambda, 1 );
+	    else if(image->mMode == Image::GRADP )
+	       image->compute_image_gradp( gLambda, mu, lambda, rho );
+	    else if(image->mMode == Image::GRADS )
+	       image->compute_image_grads( gMu, gLambda, mu, rho );
+	    string path = simulation.getOutputPath();
+	    image->writeImagePlane_2( it, path, 0 );
+	 }
+      }
+
 // diffs no longer needed, give back memory
    for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
       delete diffs[m];
@@ -281,7 +330,8 @@ void restrict( int active[6], int wind[6], double* xm, double* xmi )
 //-----------------------------------------------------------------------
 void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSeries*>& GlobalTimeSeries,
 		   vector<TimeSeries*>& GlobalObservations, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		    int myRank, MaterialParameterization* mp, double* sf, double* sfm )
+		    //		    int myRank, MaterialParameterization* mp, double* sf, double* sfm )
+		    int myRank, Mopt* mopt, double* sf, double* sfm )
 {
    int ns = nspar+nmpars;
    double* dfs;
@@ -295,8 +345,9 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
 
    double f, fp;
       
+   vector<Image*> im;
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank, mp, false, false );
+		     GlobalObservations, f, dfs, dfm, myRank, mopt ); //mp, false, false, im );
    if( myRank == 0 )
       cout << "Initial f = " << f << " " << endl;
 
@@ -311,7 +362,7 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
          h = 3e-8*sf[ind];
 	 xs[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fp, mp );
+		 GlobalObservations, fp, mopt->m_mp );
 	 double dfnum = (fp-f)/h;
 	 double dfan  = dfs[ind];
          double relerr = fabs(dfan-dfnum)/(fabs(dfan)+1e-10);
@@ -326,18 +377,18 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
       }
    }
    int nms, nmd, nmpard_global;
-   mp->get_nr_of_parameters( nms, nmd, nmpard_global ) ;
+   mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global ) ;
    if( nmpard_global > 0 )
    {
       if( myRank == 0 )
 	 cout << "Gradient testing distributed parameters :" << endl;
       for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
       {
-         ssize_t ind = mp->local_index(indg);
+         ssize_t ind = mopt->m_mp->local_index(indg);
 	 if( ind >=0 )
 	    xm[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fp, mp );
+		 GlobalObservations, fp, mopt->m_mp );
 	 double dfnum = (fp-f)/h;
 	 double dfan;
 	 if( ind >=0 )
@@ -358,7 +409,8 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
 //-----------------------------------------------------------------------
 void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSeries*>& GlobalTimeSeries,
 		   vector<TimeSeries*>& GlobalObservations, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		   int myRank, MaterialParameterization* mp, double* sf, double* sfm )
+		   //		   int myRank, MaterialParameterization* mp, double* sf, double* sfm )
+		   int myRank, Mopt* mopt, double* sf, double* sfm )
 {
 	      // Hessian test
    int ns = nspar+nmpars;
@@ -370,8 +422,9 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
    if( nmpard > 0 )
       dfm = new double[nmpard];
 
+   vector<Image*> im;
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank, mp, false, false );
+		     GlobalObservations, f, dfs, dfm, myRank, mopt ); //mp, false, false, im );
 
    double* dfsp;
    if( ns > 0 )
@@ -397,7 +450,7 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
          h = 3e-8*sf[ind];
 	 xs[ind] += h;
 	 compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			   GlobalObservations, fp, dfsp, dfmp, myRank, mp, false, false );
+			   GlobalObservations, fp, dfsp, dfmp, myRank, mopt );// mp, false, false, im );
 	 for( int p= 0 ; p < ns ; p++ )
 	    hess[p+ns*ind] = (dfsp[p]-dfs[p])/h;
 	 xs[ind] -= h;
@@ -536,12 +589,12 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
 	       // perturb material 
 	       //	       simulation.perturb_mtrl(iper,jper,kper,h,grid,var);
 	       //	       simulation.get_material_parameter( nmpard, xm );
-		  ssize_t pind = mp->parameter_index(iper,jper,kper,grid,var);
+		  ssize_t pind = mopt->m_mp->parameter_index(iper,jper,kper,grid,var);
 		  if( pind >= 0 )
 		     xm[pind] += h;
 		  //	       mp->perturb_material(iper,jper,kper,grid,var,h,xs,xm);
 		  compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-				    GlobalObservations, f, dfs, dfmp, myRank, mp, false, false );
+				    GlobalObservations, f, dfs, dfmp, myRank, mopt ); //mp, false, false, im );
 		  for( int p= 0 ; p < nmpard ; p++ )
 		     dfmp[p] = (dfmp[p]-dfm[p])/h;
 			  // Save Hessian column
@@ -800,48 +853,48 @@ int main(int argc, char **argv)
            if( nmpard > 0 )
 	      xm = new double[nmpard];
 
-	   int nspar=0;
+	   int nspar=mopt->m_nspar;
            int ns = nmpars + nspar;
 	   double *xs = new double[ns];
 
 // Default initial guess, the input source, stored in GlobalSources[0]
            double xspar[11];
 	   GlobalSources[0]->get_parameters(xspar);
-	   set_source_pars( nspar, xspar, xs );
+	   get_source_pars( nspar, xspar, xs );
 
 // Initialize the material parameters
            mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
            string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
 	   mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
 
-// Scaling factors, for the first tests set equal to one.
+// Scale factors
 	   double* sf  = NULL;
            double* sfm = NULL;
-
-	   // Values for test problem
-	   double rhoscale=1, muscale=3.24, lascale=66.95, fscale=400;
-           mopt->get_scalefactors( rhoscale, muscale, lascale, fscale );
-	   //           cout << "sfactors " << rhoscale << " " << muscale << " " << lascale << " " << fscale << endl;
            if( ns > 0 )
-	   {
 	      sf  = new double[ns];
-              for( int i=0 ; i < ns ; i++ )
-		 sf[i] = 1;
-	      double isfscale=1/sqrt(fscale);
-	      for( int i=0 ; i < nmpars ; i += 3 )
-	      {
-		 sf[nspar+i]   = isfscale*rhoscale;
-		 sf[nspar+i+1] = isfscale*muscale;
-		 sf[nspar+i+2] = isfscale*lascale;
-	      }
-	   }
            if( nmpard > 0 )
-	   {
               sfm = new double[nmpard];
-	      for( int i=0 ; i<nmpard ;i++)
-		 sfm[i]=1;
-	   //	   simulation.get_scale_factors( nmpar, sfm );
+           mopt->set_sourcescalefactors( nspar, sf );
+           mopt->set_sscalefactors( nmpars, &sf[nspar] );
+           mopt->set_dscalefactors( nmpard, sfm );
+
+// Typical sizes, initialize as scale factors
+           double* typxs=NULL;
+	   double* typxd=NULL;
+	   if( ns > 0 )
+	   {
+	      typxs = new double[ns];
+              for( int i=0; i < ns ; i++ )
+		 typxs[i] = sf[i];
 	   }
+	   if( nmpard > 0 )
+	   {
+	      typxd = new double[nmpard];
+              for( int i=0; i < nmpard ; i++ )
+		 typxd[i] = sfm[i];
+	   }
+	   mopt->set_typx( nmpars, &sf[nspar], &typxs[nspar] );
+	   mopt->set_typx( nmpard, sfm, typxd );
 
 // Output source initial guess
 	   if( myRank == 0 && nspar > 0 )
@@ -861,32 +914,38 @@ int main(int argc, char **argv)
 	   {
 // Gradient_test compares the computed gradient with the gradient obtained by numerical differentiation.
               gradient_test( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs,
-			     nmpard, xm, myRank, mp, sf, sfm );
+			     nmpard, xm, myRank, mopt, sf, sfm );
 	   }
 	   else if( mopt->m_opttest == 3 )
 	   {
 // Hessian_test outputs the Hessian computed by numerical differentiation.
               hessian_test( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs,
-			    nmpard, xm, myRank, mp, sf, sfm );
+			    nmpard, xm, myRank, mopt, sf, sfm );
 	   }
 	   else if( mopt->m_opttest == 4 )
 	   {
 // Compute and save a one dimensional cut through the objective function
-              int npts = 100;
-	      int ix=2, jx=2, kx=2, varx=2;
+              int npts = mopt->m_nsurfpts;
+	      int ix=mopt->m_itest, jx=mopt->m_jtest, kx=mopt->m_ktest, varx=mopt->m_var;
+              double pmin = mopt->m_pmin, pmax = mopt->m_pmax;
 	      //              double pmin=-300,pmax=300; // rho
 	      //	      double pmin=-1.57e9, pmax=1.57e9; //mu
-                         double pmin=-2.533e9, pmax=2.533e9; //lambda
-			 //	      double pmin=-2,pmax=2;
+	      //                         double pmin=-2.533e9, pmax=2.533e9; //lambda
+	      //	      double pmin=-2,pmax=2;
               misfit_curve( ix, jx, kx, varx, pmin, pmax, npts, simulation, mp, nspar, nmpars, xs,
 			     nmpard, xm, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank );
 	   }
 	   else if( mopt->m_opttest == 5 )
 	   {
 // Compute and save a two dimensional cut through the objective function
-              int ix1=2, jx1=2, kx1=2, ix2=2, jx2=2, kx2=2, varx1=1, varx2=2;
-	      double pmin1=-0.5,pmax1=0.5,pmin2=-1,pmax2=1;
-	      int npts1=30,npts2=30;
+              int npts1 = mopt->m_nsurfpts;
+	      int ix1=mopt->m_itest, jx1=mopt->m_jtest, kx1=mopt->m_ktest, varx1=mopt->m_var;
+              double pmin1 = mopt->m_pmin, pmax1 = mopt->m_pmax;
+
+              int npts2 = mopt->m_nsurfpts2;
+	      int ix2=mopt->m_itest2, jx2=mopt->m_jtest2, kx2=mopt->m_ktest2, varx2=mopt->m_var2;
+              double pmin2 = mopt->m_pmin2, pmax2 = mopt->m_pmax2;
+
               misfit_surface( ix1, jx1, kx1, ix2, jx2, kx2, varx1, varx2, pmin1, pmax1,
 			      pmin2, pmax2, npts1, npts2, simulation, mp, nspar, nmpars,
 			      xs, nmpard, xm, GlobalSources, GlobalTimeSeries, GlobalObservations,
@@ -905,13 +964,15 @@ int main(int argc, char **argv)
 	   {
 // Run optimizer (default)
 	      if( mopt->m_optmethod == 1 )
-		 lbfgs( simulation, nspar, nmpars, xs, sf, nmpard, xm, sfm, GlobalSources, GlobalTimeSeries,
-			GlobalObservations, myRank, mp, mopt->m_maxit, mopt->m_tolerance, mopt->m_dolinesearch,
-			mopt->m_nbfgs_vectors, mopt->m_ihess_guess, mopt->m_wolfe, mopt->m_mcheck, mopt->m_output_ts );
+		 lbfgs( simulation, nspar, nmpars, xs, sf, typxs, nmpard, xm, sfm, typxd,
+			GlobalSources, GlobalTimeSeries,
+			GlobalObservations, myRank, mopt );//mp, mopt->m_maxit, mopt->m_tolerance, mopt->m_dolinesearch,
+	      //			mopt->m_nbfgs_vectors, mopt->m_ihess_guess, mopt->m_wolfe, mopt->m_mcheck,
+	      //	mopt->m_output_ts, mopt->m_image_files );
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, sf, nmpard, xm, sfm, GlobalSources, GlobalTimeSeries,
-		       GlobalObservations, myRank, mp, mopt->m_maxit, mopt->m_maxsubit, mopt->m_tolerance,
-		       mopt->m_dolinesearch, mopt->m_fletcher_reeves, mopt->m_mcheck, mopt->m_output_ts );
+		       GlobalObservations, myRank, mopt );//mp, mopt->m_maxit, mopt->m_maxsubit, mopt->m_tolerance,
+	      //		       mopt->m_dolinesearch, mopt->m_fletcher_reeves, mopt->m_mcheck, mopt->m_output_ts );
 	   }
            else
 	      if( myRank == 0 )

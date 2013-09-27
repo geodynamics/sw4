@@ -163,6 +163,9 @@ lamb1: $(OBJ5) $(QUADPACK)
 filterTest: $(OBJ4)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ4)
 
+opttest: opttest.C opttest-data.C lbfgs.C nlcg.C dummy-classes.h
+	$(CXX) -O -DOPTTEST_MODE -o $@ opttest.C opttest-data.C lbfgs.C nlcg.C
+
 %.o:%.f
 	$(FC) $(FFLAGS) -c $<
 
