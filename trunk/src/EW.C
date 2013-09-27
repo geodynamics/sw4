@@ -5479,8 +5479,9 @@ void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 
 //-----------------------------------------------------------------------
 void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-			 vector<Sarray>& a_lambda )
+			 vector<Sarray>& a_lambda, int& ok )
 {
+   ok = 1;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       int infogrid;
@@ -5491,7 +5492,7 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       int kfirst = m_kStart[g];
       int klast  = m_kEnd[g];
 
-      double limits[8];
+      double limits[10];
 
       double* rhop = a_rho[g].c_ptr();
       double* mup  = a_mu[g].c_ptr();
@@ -5510,22 +5511,25 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 	 // Cartesian
       F77_FUNC(checkmtrl,CHECKMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				     rhop, mup, lap, &mDt, &mGridSize[g], limits );
-      double local[4]={limits[0],limits[2],limits[4],limits[7]};
-      double global[4];
-      MPI_Allreduce( local, global, 4, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+      double local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
+      double global[5];
+      MPI_Allreduce( local, global, 5, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
       limits[0]=global[0];
       limits[2]=global[1];
       limits[4]=global[2];
       limits[7]=global[3];
+      limits[8]=global[4];
       local[0]=limits[1];
       local[1]=limits[3];
       local[2]=limits[5];
       local[3]=limits[6];
-      MPI_Allreduce( local, global, 4, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+      local[4]=limits[9];
+      MPI_Allreduce( local, global, 5, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
       limits[1]=global[0];
       limits[3]=global[1];
       limits[5]=global[2];
       limits[6]=global[3];
+      limits[9]=global[4];
       if( proc_zero() )
       {
          cout << limits[0] << " <=   rho    <= " << limits[1] << " (grid " << g << ")" << endl;
@@ -5544,6 +5548,7 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
 
       }
+      ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] < mCFLmax*mCFLmax && limits[8]>0);
    }
 }
 

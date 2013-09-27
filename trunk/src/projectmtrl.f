@@ -275,7 +275,7 @@ c-----------------------------------------------------------------------
       real*8 lambda(ib:ie,jb:je,kb:ke), acof, c1, c2
       real*8 dt, h
       real*8 rhmin, rhmax, mumin, mumax, lamin, lamax
-      real*8 cfl2max, vs2min, limits(8)
+      real*8 cfl2max, vs2min, limits(10), tmthlmin, tmthlmax
 
       rhmin =  1e38
       rhmax = -1e38
@@ -285,6 +285,9 @@ c-----------------------------------------------------------------------
       lamax = -1e38
       cfl2max = -1e38
       vs2min  = 1e38
+      tmthlmin = 1e38
+      tmthlmax =-1e38
+
       acof = dt*dt/(h*h)
       do k=kb,ke
          do j=jb,je
@@ -300,6 +303,12 @@ c-----------------------------------------------------------------------
                endif
                if( mu(i,j,k).gt.mumax )then
                   mumax = mu(i,j,k)
+               endif
+               if( 2*mu(i,j,k)+3*lambda(i,j,k).lt.tmthlmin )then
+                  tmthlmin = 2*mu(i,j,k)+3*lambda(i,j,k)
+               endif
+               if( 2*mu(i,j,k)+3*lambda(i,j,k).gt.tmthlmax )then
+                  tmthlmax = 2*mu(i,j,k)+3*lambda(i,j,k)
                endif
                if( lambda(i,j,k).lt.lamin )then
                   lamin = lambda(i,j,k)
@@ -337,5 +346,6 @@ c               endif
       limits(6) = lamax
       limits(7) = cfl2max
       limits(8) = vs2min
-
+      limits(9) = tmthlmin
+      limits(10)= tmthlmax
       end

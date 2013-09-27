@@ -406,6 +406,20 @@ bool Image::timeToWrite(double time, int cycle, double dt )
 }
 
 //-----------------------------------------------------------------------
+bool Image::timeToWrite( int cycle )
+{
+  // -----------------------------------------------
+  // Check based on cycle only
+  // -----------------------------------------------
+  bool do_it=false;
+  if( cycle == mWritingCycle )
+    do_it = true;
+  if( mCycleInterval !=  0 && cycle%mCycleInterval == 0 ) 
+    do_it = true;
+  return do_it;
+}
+
+//-----------------------------------------------------------------------
 void Image::define_pio( )
 {
    int glow = 0, ghigh = mEW->mNumberOfGrids;

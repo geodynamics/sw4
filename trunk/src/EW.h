@@ -518,7 +518,7 @@ void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		       vector<Sarray>& a_lambda, int& info );
 
 void check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-		       vector<Sarray>& a_lambda );
+		     vector<Sarray>& a_lambda, int& ok );
 
 void get_nr_of_material_parameters( int& nmvar );
 void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 

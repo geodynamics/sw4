@@ -108,6 +108,7 @@ void update_maxes_hMax( std::vector<Sarray> &a_U );
 const std::string fieldSuffix(ImageMode mode) const;
 
 bool timeToWrite(double time, int cycle, double dt );
+bool timeToWrite( int cycle );
 void compute_file_suffix( std::stringstream & fileSuffix, int cycle );
 
 ImageOrientation getOrientation() const {return mLocationType;};
