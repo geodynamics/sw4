@@ -1,6 +1,9 @@
 %
-% L2FILE(ux1,uy1,uz1,st1,ux2,uy2,uz2,st2)
+% L2FILE(fn1,stride1,fn2,stride2)
 %
+% Input:
+%       fn1, fn2:    file names for USGS formatted time series
+%       st1, st2:    strides to use when comparing the the two time series.
 %
 function diff=l2file(fn1,stride1,fn2,stride2)
 [t1 ux1 uy1 uz1]=readusgs(fn1);

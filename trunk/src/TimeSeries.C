@@ -1,10 +1,12 @@
 // -*-c++-*-
+#include <mpi.h>
+
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
 
 #include "TimeSeries.h"
-#include "mpi.h"
+//#include "mpi.h"
 #include "sacsubc.h"
 #include "csstime.h"
 

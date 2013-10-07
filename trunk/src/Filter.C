@@ -1,4 +1,6 @@
 // -*-c++-*-
+#include <mpi.h>
+
 #include <iostream>
 #include <sstream>
 #include <cstdio>

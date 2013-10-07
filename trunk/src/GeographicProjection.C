@@ -1,3 +1,5 @@
+#include <mpi.h>
+
 #include <cstring>
 #include "GeographicProjection.h"
 #include "Require.h"
