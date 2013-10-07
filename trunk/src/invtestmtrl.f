@@ -47,6 +47,7 @@ c
         z2=3000
         z3=5000
         Lz=200
+c        Lz=400
       endif
       do k=kb,ke
          z = zmin + (k-1)*h
