@@ -1041,7 +1041,7 @@ void EW::setGMTOutput(string filename, string wppfilename)
 //-----------------------------------------------------------------------
 void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 {
-// this routine needs to be updated
+// this routine needs to be updated (at least for the etree info)
    if (!mWriteGMTOutput) return;
 
    if (proc_zero())
@@ -1115,6 +1115,25 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                << lonNW << " " << latNW << endl  
                << lonSW << " " << latSW << endl
                << "EOF" << endl << endl;
+
+// compute super-grid boundary in (lat-lon) coordinates
+      int g = mNumberOfGrids-1;
+      double sg_width = m_sg_gp_thickness * mGridSize[g];
+      
+      computeGeographicCoord(sg_width,               sg_width,               lonSW, latSW);
+      computeGeographicCoord(m_global_xmax-sg_width, sg_width,               lonNW, latNW);
+      computeGeographicCoord(m_global_xmax-sg_width, m_global_ymax-sg_width, lonNE, latNE);
+      computeGeographicCoord(sg_width,               m_global_ymax-sg_width, lonSE, latSE);
+     
+      // Write out gridlines
+      contents << "#SG boundary: " << endl
+	       << "psxy -R$REGION -JM$SCALE -W10/255/255/0ta -O -K <<EOF>> plot.ps" << endl
+               << lonSW << " " << latSW << endl
+               << lonSE << " " << latSE << endl
+               << lonNE << " " << latNE << endl
+               << lonNW << " " << latNW << endl  
+               << lonSW << " " << latSW << endl
+               << "EOF" << endl << endl;
       
 #ifdef ENABLE_ETREE
       if (mEtreeFile != NULL)
@@ -1178,7 +1197,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
          while (!sw4InputFile.eof())
          { 
             sw4InputFile.getline(buffer, 256);
-            if (startswith("receiver", buffer))
+            if (startswith("rec", buffer) || startswith("sac", buffer))
             {
                numStations += 1;
                bool cartCoordSet = false;
