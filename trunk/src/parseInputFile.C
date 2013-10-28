@@ -5495,7 +5495,10 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 
   string err = "RECEIVER Error: ";
 
-  //  cout << "start receiver " << m_myRank << " " << token <<"x"<<endl;
+//* testing
+  if (proc_zero())
+    cout << "start parsing of receiver command, token:" << token << "(end token)" << endl;
+
   while (token != NULL)
   {
      // while there are tokens in the string still
@@ -5625,7 +5628,16 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      }
      else if( startswith("variables=", token) )
      {
+//* testing
+       if (proc_zero())
+	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
+       
        token += strlen("variables=");
+
+//* testing
+       if (proc_zero())
+	 printf("Inside rec command, after parsing 'variables=', token:'%s'(end token)\n", token);
+
        if( strcmp("displacement",token)==0 )
        {
 	 mode = TimeSeries::Displacement;
@@ -5649,7 +5661,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
        else
        {
 	 if (proc_zero())
-	   cerr << "receiver command: variables=" << token << " not understood" << endl
+	   cout << "receiver command: variables=" << token << " not understood" << endl
 		<< "using default mode (displacement)" << endl << endl;
 	 mode = TimeSeries::Displacement;
        }
@@ -5660,6 +5672,10 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
         badOption("receiver", token);
      }
      token = strtok(NULL, " \t");
+//* testing
+     if (proc_zero())
+       cout << "rec command: Bottom of while loop, token=" << token <<endl;
+     
   }  
   //  cout << "end receiver " << m_myRank << endl;
 
