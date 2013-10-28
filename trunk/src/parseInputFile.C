@@ -5496,8 +5496,8 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   string err = "RECEIVER Error: ";
 
 //* testing
-  if (proc_zero())
-    cout << "start parsing of receiver command, token:" << token << "(end token)" << endl;
+  // if (proc_zero())
+  //   cout << "start parsing of receiver command, token:" << token << "(end token)" << endl;
 
   while (token != NULL)
   {
@@ -5629,14 +5629,14 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      else if( startswith("variables=", token) )
      {
 //* testing
-       if (proc_zero())
-	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
+       // if (proc_zero())
+       // 	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
        
        token += strlen("variables=");
 
 //* testing
-       if (proc_zero())
-	 printf("Inside rec command, after parsing 'variables=', token:'%s'(end token)\n", token);
+       // if (proc_zero())
+       // 	 printf("Inside rec command, after parsing 'variables=', token:'%s'(end token)\n", token);
 
        if( strcmp("displacement",token)==0 )
        {
@@ -5673,8 +5673,8 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
      }
      token = strtok(NULL, " \t");
 //* testing
-     if (proc_zero())
-       cout << "rec command: Bottom of while loop, token=" << token <<endl;
+     // if (proc_zero())
+     //   cout << "rec command: Bottom of while loop, token:" << token << "(end token)" << endl;
      
   }  
   //  cout << "end receiver " << m_myRank << endl;
