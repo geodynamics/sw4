@@ -4,10 +4,20 @@
 %     plotimage( fil, cvals )
 %
 %   Plots the image on file 'fil' with contour, using the contour levels cvals.
+%   If cvals is ommitted, 21 countour levels will be obtained through the imageinfo fcn.
+%
 %   The boundary of each grid patch is outlined in black. A vector cvals can be 
 %   obtained from function imageinfo.
 %
+%   Input:
+%         fil:               Name of image file
+%         cvals (optional):  Vector of countour levels to plot
+%
 function plotimage( fil, cvals )
+if nargin < 2
+   nc=21;
+   cvals = imageinfo(fil,nc);
+end;
 fd=fopen(fil,'r');
 pr=fread(fd,1,'int');
 nb=fread(fd,1,'int');
