@@ -808,11 +808,11 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
 
 // depth index
           int kk;
-	  for( kk=1; kk <= m_nmaxdepth; kk++ )
+	  for( kk=1; kk < m_nmaxdepth; kk++ ) // AP changed from kk <= m_nmaxdepth
 	  {
 	    if (mZ(i1+1, j1+1, kk) > zs) break;
 	  }
-// at this point we should have mZ(kk-1) <= zs < mZ(kk)
+// at this point we should have mZ(kk-1) <= zs < mZ(kk), kk <= m_nmaxdepth
 
 	  int k1 = kk-1;
 // now we should have mZ(k1) <= zs < mZ(k1+1)
@@ -948,11 +948,11 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
 
 // depth index
           int kk;
-	  for( kk=1; kk <= m_nmaxdepth; kk++ )
+	  for( kk=1; kk < m_nmaxdepth; kk++ )// AP changed from kk <= m_nmaxdepth
 	  {
 	    if (mZ(i1+1,j1+1,kk) > zs) break;
 	  }
-// at this point we should have mZ(kk-1) <= zs < mZ(kk)
+// at this point we should have mZ(kk-1) <= zs < mZ(kk), kk <= m_nmaxdepth
 
 	  int k1 = kk-1;
 // now we should have mZ(k1) <= zs < mZ(k1+1)
