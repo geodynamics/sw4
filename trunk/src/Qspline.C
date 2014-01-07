@@ -1,7 +1,8 @@
 
 #include "Qspline.h"
+#include "F77_FUNC.h"
 
-extern "C" { void dgbsv_( int*, int*, int*, int*, double*, int*, int*, double*, int*, int* ); }
+extern "C" { void F77_FUNC(dgbsv,DGBSV)( int*, int*, int*, int*, double*, int*, int*, double*, int*, int* ); }
 
 //-----------------------------------------------------------------------
 Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int bchigh,
@@ -132,7 +133,7 @@ Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int 
 
    int n=2*npts, one=1, info;
    int* ipiv = new int[2*npts];
-   dgbsv_( &n, &kl, &ku, &one, mat, &lda, ipiv, rhs, &n, &info );
+   F77_FUNC(dgbsv,DGBSV)( &n, &kl, &ku, &one, mat, &lda, ipiv, rhs, &n, &info );
    if( info != 0 )
    {
       cout << "ERROR solving dbgsv in Qspline, info = " << info << endl;

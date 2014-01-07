@@ -5123,7 +5123,7 @@ void EW::get_nr_of_material_parameters( int& nmvar )
 void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 				 vector<Sarray>& mu, vector<Sarray>& lambda )
 {
-   size_t gp, ind;
+   size_t gp, ind=0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       rho[g].copy( mRho[g] );
@@ -5155,7 +5155,7 @@ void EW::parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
 void EW::material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
 				 vector<Sarray>& mu, vector<Sarray>& lambda )
 {
-   size_t gp, ind;
+   size_t gp, ind=0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       if( g == 0 )
@@ -5178,7 +5178,7 @@ void EW::material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
 //-----------------------------------------------------------------------
 void EW::get_material_parameter( int nmpar, double* xm )
 {
-   size_t gp, ind;
+   size_t gp, ind=0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       if( g == 0 )
@@ -5201,7 +5201,7 @@ void EW::get_material_parameter( int nmpar, double* xm )
 //-----------------------------------------------------------------------
 void EW::get_scale_factors( int nmpar, double* sf )
 {
-   size_t gp, ind;
+   size_t gp, ind=0;
    double rhoscale = 2.0;
    double muscale = 1.0;
    double lambdascale = 5.4e-3;

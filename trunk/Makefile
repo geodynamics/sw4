@@ -90,6 +90,10 @@ else
     else ifeq ($(findstring edison,$(HOSTNAME)),edison)
       include configs/make.edison
       foundincfile := "configs/make.edison"
+  # For Vulcan at LC
+    else ifeq ($(findstring vulcan,$(HOSTNAME)),vulcan)
+      include configs/make.bgq
+      foundincfile := "configs/make.bgq"
     endif
   endif
 
