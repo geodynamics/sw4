@@ -6,26 +6,34 @@
 c VerySmoothBump with tfun=1
 c C6SmoothBump with tfun=2
       tfun = 1
-      cs = 1000
-      rho = 1500
+      cs = 1
+      rho = 1.5
       mu = cs*cs*rho
 
 c max time and number of time step
-      tmax=15
-      nt = 2516
+      tmax=30
+      nt = 1290
 
 c source to receiver distance
-      r=1d3
+      r=1.0
+
+      write(*,101)'Shear speed: ',cs,' Density: ',rho,
+     +     ' Time function: ', tfun,' (1=VerySmoothBump, 2=C6SmoothBmp)'
+      write(*,101)'Source-rec dist: ', r,' Max time: ',tmax,
+     +     ' # time steps: ', nt
+ 101  format(' ', a, es12.5, a, es12.5, a, i7, a)
 
 c name of file
       open(10,file='uz1e.dat',status='unknown')
 
 c should not need to change anything beyond this point
-      dt = tmax/(nt-1)
+      dt = tmax/(nt)
 
-      do k=1,nt
-        t = dt*(k-1)
+      do k=0,nt
+        t = dt*k
         call LAMBONEPOINT(t,r,uex3, mu, cs, fz, tfun)
+c testing
+        write(*,*) t, uex3
         write(10,*) t, uex3
       enddo
       close(10)

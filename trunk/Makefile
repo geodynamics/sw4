@@ -163,12 +163,16 @@ MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o
        gradients.o  Image3D.o MaterialVolimagefile.o  MaterialInvtest.o invtestmtrl.o lbfgs.o  projectmtrl.o \
        randomfield3d.o
 
+OBJL  = lamb_one_point.o
+
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
 FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
 FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
+
+FOBJL = $(addprefix $(builddir)/,$(OBJL)) $(addprefix $(builddir)/,$(QUADPACK))
 
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
@@ -209,6 +213,17 @@ sw4mopt: $(FMOBJOPT)
 	@echo "******* sw4mopt was built successfully *******" 
 	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
+
+lamb1: $(FOBJL)
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(FC) $(FFLAGS) -o $@ $(OBJL) $(QUADPACK) $(linklibs)
+#	@cat "Done building lamb1 executable"
+#	@echo "*** Build directory: " $(builddir) " ***"
 
 # distribution
 tardir := sw4-v1.01
