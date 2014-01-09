@@ -1,7 +1,8 @@
       program lambmain
       implicit none
-      real*8 t, r, uex3, mu, cs, fz, rho, tmax, dt
+      real*8 t, r, uex3, mu, cs, fz, rho, tmax, dt, rocs
       integer tfun, k, nt
+      common /funpars/ t, rocs
 
 c VerySmoothBump with tfun=1
 c C6SmoothBump with tfun=2
@@ -9,14 +10,16 @@ c C6SmoothBump with tfun=2
       cs = 1
       rho = 1.5
       mu = cs*cs*rho
-
+      fz = 1d0
 c max time and number of time step
-      tmax=30
-      nt = 1290
+      tmax=2.0
+      nt = 110
 
 c source to receiver distance
       r=1.0
 
+      write(*,100)'Fz: ', fz
+ 100  format(' ', a, es12.5)
       write(*,101)'Shear speed: ',cs,' Density: ',rho,
      +     ' Time function: ', tfun,' (1=VerySmoothBump, 2=C6SmoothBmp)'
       write(*,101)'Source-rec dist: ', r,' Max time: ',tmax,
@@ -28,18 +31,19 @@ c name of file
 
 c should not need to change anything beyond this point
       dt = tmax/(nt)
+      rocs = r/cs
 
       do k=0,nt
         t = dt*k
-        call LAMBONEPOINT(t,r,uex3, mu, cs, fz, tfun)
-c testing
-        write(*,*) t, uex3
+        call LAMBONEPOINT(r,uex3, mu, cs, fz, tfun)
         write(10,*) t, uex3
+c testing
+c        write(*,*) t, uex3
       enddo
       close(10)
       end
 
-      subroutine LAMBONEPOINT(t, r, uex3, mu, cs, fz, tfun )
+      subroutine LAMBONEPOINT(r, uex3, mu, cs, fz, tfun )
       implicit none
 
       external G1FUN, G2FUN, G2FUNNW
@@ -73,15 +77,16 @@ c testing
       real*8 abserr, exact, alfa, beta
       real*8, allocatable, dimension(:) :: work
 
-      common /funpars/ tim, rocs
-      save /funpars/
+      common /funpars/ t, rocs
+c      save /funpars/
 
       if( tfun.ne.1 .and. tfun.ne.2 )then
          write(*,*) 'ERROR LAMBEXACTNUMQUAD_ only implemented '//
      * ' for VerySmoothBump and C6SmoothBump '
          return
       endif
-      tim = t
+c now passing t through the common block
+c      tim = t
       limit = 100
       lenw = 4*limit
       epsabs = 1d-12
@@ -95,10 +100,10 @@ c$$$            y = (j-1)*h
 c$$$            r = SQRT( (x-x0)*(x-x0)+(y-y0)*(y-y0) )
             cp = cpocs*cs
             if( r.ge.cp*t )then
-               uzex = 0
+               uex3 = 0
             elseif( r.ge.1d-10 )then
                csor = cs/r
-               rocs = r/cs
+c               rocs = r/cs
                a1 = MAX(csor*(t-1),1/cpocs)
                b1 = MIN(csor*t,1d0)
                a2 = MAX(csor*(t-1),1d0)
@@ -189,6 +194,8 @@ c            write(*,*) 'Doing 3'
 c$$$         enddo
 c$$$      enddo
 
+      deallocate( iwork, work )
+
       return
       end
 
@@ -231,7 +238,7 @@ c-----------------------------------------------------------------------
 
       real*8 t, rocs
       common /funpars/ t, rocs
-      save /funpars/
+c      save /funpars/
 
       G1FUN = 5*cof*(t-rocs*x)**4*(1-t+rocs*x)**4*(1-2*(t-rocs*x))*
      * ( 0.5d0*c22/SQRT(gamma**2-x*x)-c11/SQRT(x*x-gammac**2)
@@ -260,7 +267,7 @@ c      parameter( cof = 16384d0 )
 
       real*8 t, rocs
       common /funpars/ t, rocs
-      save /funpars/
+c      save /funpars/
 
       G1FUNS = 7*cof*(t-rocs*x)**6*(1-t+rocs*x)**6*(1-2*(t-rocs*x))*
      * ( 0.5d0*c22/SQRT(gamma**2-x*x)-c11/SQRT(x*x-gammac**2)
@@ -288,7 +295,7 @@ c-----------------------------------------------------------------------
 
       real*8 t, rocs
       common /funpars/ t, rocs
-      save /funpars/
+c      save /funpars/
 
       G2FUN = 5*cof*(t-rocs*x)**4*(1-t+rocs*x)**4*(1-2*(t-rocs*x))*
      *  c22/SQRT(gamma+x)
@@ -315,7 +322,7 @@ c      parameter( cof = 16384d0 )
 
       real*8 t, rocs
       common /funpars/ t, rocs
-      save /funpars/
+c      save /funpars/
 
       G2FUNS = 7*cof*(t-rocs*x)**6*(1-t+rocs*x)**6*(1-2*(t-rocs*x))*
      *  c22/SQRT(gamma+x)
@@ -341,7 +348,7 @@ c-----------------------------------------------------------------------
 
       real*8 t, rocs
       common /funpars/ t, rocs
-      save /funpars/
+c      save /funpars/
       G2FUNNW = 5*cof*(t-rocs*x)**4*(1-t+rocs*x)**4*(1-2*(t-rocs*x))*
      *  c22/SQRT((gamma-x)*(gamma+x))
       end
@@ -367,7 +374,7 @@ c      parameter( cof = 16384d0 )
 
       real*8 t, rocs
       common /funpars/ t, rocs
-      save /funpars/
+c      save /funpars/
       G2FUNNWS = 7*cof*(t-rocs*x)**6*(1-t+rocs*x)**6*(1-2*(t-rocs*x))*
      *  c22/SQRT((gamma-x)*(gamma+x))
       end
