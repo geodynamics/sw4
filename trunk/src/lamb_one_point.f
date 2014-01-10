@@ -37,7 +37,7 @@ c should not need to change anything beyond this point
         t = dt*k
         call LAMBONEPOINT(r,uex3, mu, cs, fz, tfun)
         write(10,102) t, uex3
- 102    format(' ',E,E)
+ 102    format(' ',e23.16,e23.16)
 c testing
 c        write(*,*) t, uex3
       enddo
