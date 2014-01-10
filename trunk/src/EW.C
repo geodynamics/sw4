@@ -2811,6 +2811,11 @@ void EW::get_exact_lamb2( vector<Sarray> & a_U, double a_t, Source& a_source )
      tfun = 2;
   F77_FUNC(lambexact,LAMBEXACT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				 a_U[g].c_ptr(), &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
+// test: output uz in one point
+  // int i0=176, j0=151, k0=1;
+  // if (m_iStart[g] <= i0 && i0 <= m_iEnd[g] && m_jStart[g] <= j0 && j0 <= m_jEnd[g])
+  //   printf("Lambexact: t=%e, uze=%e\n", a_t, a_U[g](3,i0,j0,k0));
+  
 }
 
 //-----------------------------------------------------------------------

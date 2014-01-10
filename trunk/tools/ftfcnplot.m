@@ -3,7 +3,7 @@
 %
 %    Plot Fourier transform of source time function.
 %
-%           [om,fr] = ftfcnplot( fcn, freq, tmin, tmax, t0, col, lin )
+%           [om,amp] = ftfcnplot( fcn, freq, tmin, tmax, t0, col, lin )
 %
 %        Input:  fcn    - Name of source function (string), same name as
 %                         used in SW4. Also some additional functions
@@ -14,8 +14,8 @@
 %                col    - Plotting color.
 %                lin    - 1: linear y-axis, 0: logarithmic y-axis
 %
-%        Output: om - Frequencies 
-%                fr - Amplitude of Fourier coefficients at om.
+%        Output: om  - Frequencies [Hz]
+%                amp - Amplitude of Fourier coefficients at om.
 %
 function [om fr]=ftfcnplot( fcn, freq, tmin, tmax, t0, col, lin )
 

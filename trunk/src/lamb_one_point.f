@@ -12,11 +12,11 @@ c C6SmoothBump with tfun=2
       mu = cs*cs*rho
       fz = 1d0
 c max time and number of time step
-      tmax=2.0
-      nt = 110
+      tmax=30.0
+      nt = 2096
 
 c source to receiver distance
-      r=1.0
+      r=4d0*sqrt(2d0)
 
       write(*,100)'Fz: ', fz
  100  format(' ', a, es12.5)
@@ -36,7 +36,8 @@ c should not need to change anything beyond this point
       do k=0,nt
         t = dt*k
         call LAMBONEPOINT(r,uex3, mu, cs, fz, tfun)
-        write(10,*) t, uex3
+        write(10,102) t, uex3
+ 102    format(' ',E,E)
 c testing
 c        write(*,*) t, uex3
       enddo

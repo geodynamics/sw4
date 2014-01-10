@@ -3,6 +3,9 @@
 -  SW4 install and build instructions
 -
 -----------------------------------------------------------------------
+*********************************************************************************************
+After reading these instructions, you have to set up the configs/make.inc file
+*********************************************************************************************
 
 MORE DETAILED INSTALLATION INSTRUCTIONS CAN BE FOUND IN APPENDIX "A" OF THE SW4 USER'S GUIDE. 
 
@@ -27,8 +30,10 @@ libraries. See the User's guide for more details!
 
 5) The cencalvm library
 
+*********************************************************************************************
 The details of the build process are controlled by the configuration file configs/make.inc.
-You have to edit this configuration file to reflect the setup of your system.
+This file must be created by you!!!!
+*********************************************************************************************
 
 You build SW4 with the "make" command. An optimized version is built with the command
 
