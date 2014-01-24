@@ -1,7 +1,8 @@
       program lambmain
       implicit none
       real*8 t, r, uex3, mu, cs, fz, rho, tmax, dt, rocs
-      integer tfun, k, nt
+      integer tfun, k, nt, i
+      character(360) buf
       common /funpars/ t, rocs
 
 c VerySmoothBump with tfun=1
@@ -13,10 +14,37 @@ c C6SmoothBump with tfun=2
       fz = 1d0
 c max time and number of time step
       tmax=30.0
-      nt = 2096
+c      nt = 1032
+c      nt = 1677
+      nt = 4695
 
 c source to receiver distance
-      r=4d0*sqrt(2d0)
+      r=10d0
+
+c read  command line arguments
+      i      = 1
+      do while( i .lt. IARGC() )
+         call GETARG( i, buf )
+         if( buf .eq. '-tmax' )then
+            call GETARG(i+1,buf)
+            read(buf,'(f16.0)') tmax
+            i = i+2
+         elseif( buf.eq.'-nsteps' )then
+            call GETARG(i+1,buf)
+            read(buf,'(i10)') nt
+            i = i+2
+         elseif( buf.eq.'-dist' )then
+            call GETARG(i+1,buf)
+            read(buf,'(f16.0)') r
+            i = i+2
+         elseif( buf.eq.'-tfunc' )then
+            call GETARG(i+1,buf)
+            read(buf,'(i10)') tfun
+            i = i+2
+         else
+            i = i+ 1
+         endif
+      enddo
 
       write(*,100)'Fz: ', fz
  100  format(' ', a, es12.5)
@@ -26,8 +54,30 @@ c source to receiver distance
      +     ' # time steps: ', nt
  101  format(' ', a, es12.5, a, es12.5, a, i7, a)
 
+c basic checks
+      if (.not.(tfun .eq. 1 .or. tfun .eq. 2)) then
+        write(*,*)'Unknown time function, tfun=', tfun
+        stop
+      endif
+
+      if (.not.(nt .gt. 0)) then
+        write(*,*)'# time steps must be positive, not:', nt
+        stop
+      endif
+
+      if (.not.(tmax .gt. 0)) then
+        write(*,*)'End time must be positive, not:', tmax
+        stop
+      endif
+
+      if (.not.(r .gt. 0)) then
+        write(*,*)'src-rec distance must be positive, not:', r
+        stop
+      endif
+      
+
 c name of file
-      open(10,file='uz1e.dat',status='unknown')
+      open(10,file='uzex.dat',status='unknown')
 
 c should not need to change anything beyond this point
       dt = tmax/(nt)
