@@ -3849,8 +3849,8 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       else
 	m_jStartInt[g] = jfirst+m_ppadding;
 
-      if (jlast == nx + m_ghost_points)
-	m_jEndInt[g]   = nx;
+      if (jlast == ny + m_ghost_points)
+	m_jEndInt[g]   = ny;
       else
 	m_jEndInt[g]   = jlast - m_ppadding;
 
