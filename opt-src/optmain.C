@@ -45,7 +45,7 @@ void guess_source_t0freq( EW & simulation, vector<Source*>& sources,
 void guess_source_moments( EW & simulation, vector<Source*>& sources, vector<TimeSeries*>& timeseries,
 			   vector<TimeSeries*>& observations, double* xv, int myRank );
 
-void guess_shift( int n, double xs[n], vector<TimeSeries*>& timeseries,
+void guess_shift( int n, double* xs, vector<TimeSeries*>& timeseries,
 		  vector<TimeSeries*>& observations, double dt );
 
 extern "C" { void F77_FUNC(linsolvelu,LINSOLVEU)( int*, double*, double*, double* );
@@ -933,7 +933,7 @@ a[120]= 256.91;
 }
 
 //-----------------------------------------------------------------------
-void compute_f( EW& simulation, int n, double x[n], vector<Source*>& GlobalSources,
+void compute_f( EW& simulation, int n, double* x, vector<Source*>& GlobalSources,
 		vector<TimeSeries*>& GlobalTimeSeries,
 		vector<TimeSeries*>& GlobalObservations, double& mf, bool testing=false )
 //-----------------------------------------------------------------------
@@ -991,11 +991,11 @@ void compute_f( EW& simulation, int n, double x[n], vector<Source*>& GlobalSourc
 }
 
 //-----------------------------------------------------------------------
-void compute_f_and_df( EW& simulation, int n, double x[n],
+void compute_f_and_df( EW& simulation, int n, double* x,
 		       vector<Source*>& GlobalSources,
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*>& GlobalObservations, int varcase,
-		       double& f, double df[n], double ddf[121], bool testing=false )
+		       double& f, double* df, double ddf[121], bool testing=false )
 //-----------------------------------------------------------------------
 // Compute misfit and its gradient.
 //
@@ -1096,9 +1096,9 @@ void compute_f_and_df( EW& simulation, int n, double x[n],
 }
 
 //-----------------------------------------------------------------------
-void compute_dtd2fd( EW& simulation, int n, double x[n], vector<Source*>& GlobalSources,
+void compute_dtd2fd( EW& simulation, int n, double* x, vector<Source*>& GlobalSources,
 		     vector<TimeSeries*>& GlobalTimeSeries,
-		     vector<TimeSeries*>& GlobalObservations, double d[n],
+		     vector<TimeSeries*>& GlobalObservations, double* d,
 		     int varcase, double& dtHd, bool ddf_isdefined,
 		     double ddf[121], int myRank, bool testing=false )
 //-----------------------------------------------------------------------
@@ -1228,9 +1228,9 @@ void compute_dtd2fd( EW& simulation, int n, double x[n], vector<Source*>& Global
 //-----------------------------------------------------------------------
 void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
-		 int nvar, int n, double x[n], double f, double df[n], double p[n],
-		 double cgstep, double maxstep, double steptol, double xnew[n],
-		 double& fnew, double sf[n], int myRank, int& retcode, int& nstep_reductions, bool testing )
+		 int nvar, int n, double* x, double f, double* df, double* p,
+		 double cgstep, double maxstep, double steptol, double* xnew,
+		 double& fnew, double* sf, int myRank, int& retcode, int& nstep_reductions, bool testing )
 
 //-----------------------------------------------------------------------
 // Line seach by backtracking for CG.
@@ -1451,7 +1451,7 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 }
 
 //-----------------------------------------------------------------------
-void cg( EW& simulation, int n, double x[n], double sf[n],
+void cg( EW& simulation, int n, double* x, double* sf,
 	 vector<Source*>& GlobalSources,
 	 vector<TimeSeries*>& GlobalTimeSeries,
 	 vector<TimeSeries*> & GlobalObservations,
@@ -1712,7 +1712,7 @@ void cg( EW& simulation, int n, double x[n], double sf[n],
 }
 
 //-----------------------------------------------------------------------
-void lbfgs( EW& simulation, int n, double x[n], double sf[n], vector<Source*>& GlobalSources,
+void lbfgs( EW& simulation, int n, double* x, double* sf, vector<Source*>& GlobalSources,
 	    vector<TimeSeries*>& GlobalTimeSeries,
 	    vector<TimeSeries*> & GlobalObservations,
 	    int m, int myRank )
@@ -1980,7 +1980,7 @@ void lbfgs( EW& simulation, int n, double x[n], double sf[n], vector<Source*>& G
 }
 
 //-----------------------------------------------------------------------
-void bfgs( EW& simulation, int n, double x[n], double sf[n],
+void bfgs( EW& simulation, int n, double* x, double* sf,
 	   vector<Source*>& GlobalSources,
 	   vector<TimeSeries*>& GlobalTimeSeries,
 	   vector<TimeSeries*> & GlobalObservations,
@@ -2177,7 +2177,7 @@ void bfgs( EW& simulation, int n, double x[n], double sf[n],
 }
 
 //-----------------------------------------------------------------------
-void steepest_descent( EW& simulation, int n, double x[n], double sf[n],
+void steepest_descent( EW& simulation, int n, double* x, double* sf,
 		       vector<Source*>& GlobalSources,
 		       vector<TimeSeries*>& GlobalTimeSeries,
 		       vector<TimeSeries*> & GlobalObservations,
@@ -3607,7 +3607,7 @@ void guess_source_moments( EW &  simulation, vector<Source*>& sources, vector<Ti
 }
 
 //-----------------------------------------------------------------------
-void guess_shift( int n, double xs[n], vector<TimeSeries*>& timeseries,
+void guess_shift( int n, double* xs, vector<TimeSeries*>& timeseries,
 		  vector<TimeSeries*>& observations, double dt )
 {
    bool l2misfit = false;
