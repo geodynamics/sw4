@@ -78,11 +78,10 @@ N.~A. Petersson and B.~Sj\"ogreen.
 
 \bibitem{WPP2}
 N.~A. Petersson and B.~Sj\"ogreen.
-\newblock User's guide to {WPP} version 2.1.
+\newblock User's guide to {WPP} version 2.2.
 \newblock Technical Report LLNL-SM-487431, Lawrence Livermore National
   Laboratory, 2011.
-\newblock (Source code available from
-  https://computation.llnl.gov/casc/serpentine).
+\newblock (Source code available from computation.llnl.gov/casc/serpentine).
 
 \bibitem{PetSjo-10b}
 N.~A. Petersson and B.~Sj\"ogreen.

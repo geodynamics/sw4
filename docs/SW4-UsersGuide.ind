@@ -3,51 +3,51 @@
   \item attenuation, \hyperpage{43}
   \item attenuation parameters
     \subitem phasefreq, nmech, maxfreq, minppw, qmultiplier, 
-		\hyperpage{65}
+		\hyperpage{64}
 
   \indexspace
 
   \item block parameters
     \subitem vp, vs, rho, vpgrad, vsgrad, rhograd, qp, qs, 
-		\hyperpage{67}
-    \subitem x1, x2, y1, y2, z1, z2, absdepth, \hyperpage{67}
+		\hyperpage{66}
+    \subitem x1, x2, y1, y2, z1, z2, absdepth, \hyperpage{66}
   \item boundary\_conditions parameters
-    \subitem lx, hx, ly, hy, lz, hz, \hyperpage{81}
+    \subitem lx, hx, ly, hy, lz, hz, \hyperpage{80}
   \item boundary\_conditions values
     \subitem  stress-free, dirichlet, supergrid, periodic, 
-		\hyperpage{82}
+		\hyperpage{81}
 
   \indexspace
 
   \item command
-    \subitem attenuation, \hyperpage{65}
-    \subitem block, \hyperpage{66}
-    \subitem boundary\_conditions, \hyperpage{81}
-    \subitem developer, \hyperpage{82}
-    \subitem efile, \hyperpage{67}
-    \subitem fileio, \hyperpage{59}
-    \subitem globalmaterial, \hyperpage{70}
-    \subitem gmt, \hyperpage{78}
-    \subitem grid, \hyperpage{59}
-    \subitem ifile, \hyperpage{69}
-    \subitem image, \hyperpage{74}
-    \subitem material, \hyperpage{69}
-    \subitem pfile, \hyperpage{68}
-    \subitem prefilter, \hyperpage{61}
-    \subitem randomize, \hyperpage{70}
-    \subitem rec, \hyperpage{73}
-    \subitem rupture, \hyperpage{64}
-    \subitem sac, \hyperpage{73}
-    \subitem source, \hyperpage{62}
-    \subitem supergrid, \hyperpage{61}
-    \subitem testenergy, \hyperpage{80}
-    \subitem testlamb, \hyperpage{79}
-    \subitem testpointsource, \hyperpage{79}
-    \subitem testrayleigh, \hyperpage{80}
-    \subitem time, \hyperpage{60}
-    \subitem topography, \hyperpage{71}
-    \subitem twilight, \hyperpage{78}
-    \subitem volimage, \hyperpage{76}
+    \subitem attenuation, \hyperpage{64}
+    \subitem block, \hyperpage{65}
+    \subitem boundary\_conditions, \hyperpage{80}
+    \subitem developer, \hyperpage{81}
+    \subitem efile, \hyperpage{66}
+    \subitem fileio, \hyperpage{58}
+    \subitem globalmaterial, \hyperpage{69}
+    \subitem gmt, \hyperpage{77}
+    \subitem grid, \hyperpage{58}
+    \subitem ifile, \hyperpage{68}
+    \subitem image, \hyperpage{73}
+    \subitem material, \hyperpage{68}
+    \subitem pfile, \hyperpage{67}
+    \subitem prefilter, \hyperpage{60}
+    \subitem randomize, \hyperpage{69}
+    \subitem rec, \hyperpage{72}
+    \subitem rupture, \hyperpage{63}
+    \subitem sac, \hyperpage{72}
+    \subitem source, \hyperpage{61}
+    \subitem supergrid, \hyperpage{60}
+    \subitem testenergy, \hyperpage{79}
+    \subitem testlamb, \hyperpage{78}
+    \subitem testpointsource, \hyperpage{78}
+    \subitem testrayleigh, \hyperpage{79}
+    \subitem time, \hyperpage{59}
+    \subitem topography, \hyperpage{70}
+    \subitem twilight, \hyperpage{77}
+    \subitem volimage, \hyperpage{75}
   \item command line options
     \subitem -v version info, \hyperpage{9}
   \item coordinate system, \hyperpage{10}
@@ -55,137 +55,137 @@
   \indexspace
 
   \item developer parameters
-    \subitem  cfl, checkfornan, \hyperpage{82}
+    \subitem  cfl, checkfornan, \hyperpage{81}
 
   \indexspace
 
   \item efile parameters
     \subitem etree, xetree, logfile, query, resolution, access, 
-		\hyperpage{68}
+		\hyperpage{67}
 
   \indexspace
 
-  \item fileformats, \hyperpage{83}
-    \subitem discrete time function, \hyperpage{83}
-    \subitem ifile, \hyperpage{87}
-    \subitem image, \hyperpage{88}
-    \subitem pfile, \hyperpage{85}
-    \subitem sac, \hyperpage{88}
-    \subitem topography, \hyperpage{83}
-    \subitem volimage, \hyperpage{91}
+  \item fileformats, \hyperpage{82}
+    \subitem discrete time function, \hyperpage{82}
+    \subitem ifile, \hyperpage{86}
+    \subitem image, \hyperpage{87}
+    \subitem pfile, \hyperpage{84}
+    \subitem sac, \hyperpage{87}
+    \subitem topography, \hyperpage{82}
+    \subitem volimage, \hyperpage{90}
   \item fileio parameters
-    \subitem path, verbose, printcycle, pfs, nwriters, \hyperpage{59}
+    \subitem path, verbose, printcycle, pfs, nwriters, \hyperpage{58}
   \item frequency content, \hyperpage{26}
 
   \indexspace
 
   \item geographical coordinates, \hyperpage{12}
   \item globalmaterial parameters
-    \subitem vpmin, vsmin, \hyperpage{70}
+    \subitem vpmin, vsmin, \hyperpage{69}
   \item gmt parameters
-    \subitem file, \hyperpage{78}
+    \subitem file, \hyperpage{77}
   \item grid parameters
     \subitem location - az, lat, lon, mlat, mlon, proj, ellps, 
-		\hyperpage{60}
-    \subitem size - x, y, z, h, nx, ny, nz, \hyperpage{60}
+		\hyperpage{59}
+    \subitem size - x, y, z, h, nx, ny, nz, \hyperpage{59}
   \item grid size, \hyperpage{27}
 
   \indexspace
 
   \item ifile parameters
-    \subitem filename, input, \hyperpage{69}
+    \subitem filename, input, \hyperpage{68}
   \item image parameters
-    \subitem file, precision, mode, \hyperpage{74}
-    \subitem location - x, y, z, \hyperpage{74}
+    \subitem file, precision, mode, \hyperpage{73}
+    \subitem location - x, y, z, \hyperpage{73}
     \subitem modes - divdudt, curldudt, magdudt, hmagdudt, hmaxdudt, vmaxdudt, 
-		\hyperpage{76}
-    \subitem modes - lat, lon, topo, grid, gridx, gridy, gridz, 
 		\hyperpage{75}
-    \subitem modes - rho, lambda, mu, p, s, qp, qs, \hyperpage{75}
-    \subitem modes - ux, uy, uz, div, curl, mag, hmag, hmax, vmax, 
-		\hyperpage{76}
-    \subitem modes - uxexact, uyexact, uzexact, uxerr, uyerr, uzerr, 
-		\hyperpage{76}
-    \subitem timing - time, timeInterval, cycle, cycleInterval, 
+    \subitem modes - lat, lon, topo, grid, gridx, gridy, gridz, 
 		\hyperpage{74}
-  \item installation, \hyperpage{93}
-    \subitem basic, \hyperpage{96}
-    \subitem cencalvm, \hyperpage{98}
-    \subitem directories, \hyperpage{95}
-    \subitem efile, \hyperpage{98}
+    \subitem modes - rho, lambda, mu, p, s, qp, qs, \hyperpage{74}
+    \subitem modes - ux, uy, uz, div, curl, mag, hmag, hmax, vmax, 
+		\hyperpage{75}
+    \subitem modes - uxexact, uyexact, uzexact, uxerr, uyerr, uzerr, 
+		\hyperpage{75}
+    \subitem timing - time, timeInterval, cycle, cycleInterval, 
+		\hyperpage{73}
+  \item installation, \hyperpage{92}
+    \subitem basic, \hyperpage{95}
+    \subitem cencalvm, \hyperpage{97}
+    \subitem directories, \hyperpage{94}
+    \subitem efile, \hyperpage{97}
 
   \indexspace
 
   \item material, \hyperpage{35}
   \item material parameters
-    \subitem id, vp, vs, rho, qp, qs, \hyperpage{69}
-    \subitem vp2, vs2, rho2, vpsqrt, vssqrt, rhosqrt, \hyperpage{70}
-    \subitem vpgrad, vsgrad, rhograd, \hyperpage{70}
+    \subitem id, vp, vs, rho, qp, qs, \hyperpage{68}
+    \subitem vp2, vs2, rho2, vpsqrt, vssqrt, rhosqrt, \hyperpage{69}
+    \subitem vpgrad, vsgrad, rhograd, \hyperpage{69}
 
   \indexspace
 
   \item parallel execution, \hyperpage{8}
-  \item performance, \hyperpage{108}
+  \item performance, \hyperpage{107}
   \item pfile parameters
     \subitem filename, directory, smoothingsize, vpmin, vsmin, rhomin, flatten, style, 
-		\hyperpage{68}
+		\hyperpage{67}
   \item prefilter parameters
-    \subitem fc1, fc2, type, passes, order, \hyperpage{62}
+    \subitem fc1, fc2, type, passes, order, \hyperpage{61}
 
   \indexspace
 
   \item randomize parameters
     \subitem lengthscale, lengthscalez, seed1, seed2, seed3, gradient, 
-		\hyperpage{71}
+		\hyperpage{70}
   \item rec parameters
     \subitem file, sta, writeEvery, usgsformat, sacformat, nsew, variables, 
-		\hyperpage{73}
+		\hyperpage{72}
     \subitem location - x, y, z, lat, lon, depth, topodepth, 
-		\hyperpage{73}
+		\hyperpage{72}
   \item rupture parameters
-    \subitem  file, \hyperpage{64}
+    \subitem  file, \hyperpage{63}
 
   \indexspace
 
   \item source parameters
-    \subitem Aki and Richards - strike, dip, rake, \hyperpage{64}
+    \subitem Aki and Richards - strike, dip, rake, \hyperpage{63}
     \subitem location - x, y, z, depth, topodepth, lat, lon, 
-		\hyperpage{63}
-    \subitem moment - m0, mxx, myy, mzz, mxy, mxz, myz, \hyperpage{64}
-    \subitem point force - f0, fx, fy, fz, \hyperpage{64}
-    \subitem t0, freq, type, ncyc, dfile, \hyperpage{63}
+		\hyperpage{62}
+    \subitem moment - m0, mxx, myy, mzz, mxy, mxz, myz, \hyperpage{63}
+    \subitem point force - f0, fx, fy, fz, \hyperpage{63}
+    \subitem t0, freq, type, ncyc, dfile, \hyperpage{62}
   \item source time function
     \subitem GaussianInt, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth, Smoothwave,   VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac, C6SmoothBump, 
-		\hyperpage{63}
+		\hyperpage{62}
   \item srun, \hyperpage{8}
   \item supergrid parameters
-    \subitem gp, dc, \hyperpage{61}
+    \subitem gp, dc, \hyperpage{60}
 
   \indexspace
 
   \item testenergy parameters
-    \subitem  cpcsratio seed writeEvery filename, \hyperpage{81}
-  \item testing, \hyperpage{101}
-    \subitem lambs, \hyperpage{103}
-    \subitem pointsource, \hyperpage{104}
-    \subitem twilight, \hyperpage{101}
+    \subitem  cpcsratio seed writeEvery filename, \hyperpage{80}
+  \item testing, \hyperpage{100}
+    \subitem lambs, \hyperpage{102}
+    \subitem pointsource, \hyperpage{103}
+    \subitem twilight, \hyperpage{100}
   \item testlamb parameters
-    \subitem x, y, cp, rho, fz, \hyperpage{79}
+    \subitem x, y, cp, rho, fz, \hyperpage{78}
   \item testpointsource parameters
-    \subitem  cp, cs, rho, diractest, \hyperpage{80}
+    \subitem  cp, cs, rho, diractest, \hyperpage{79}
   \item testrayleigh parameters
-    \subitem  cp, cs, rho, nwl, \hyperpage{80}
+    \subitem  cp, cs, rho, nwl, \hyperpage{79}
   \item time parameters
-    \subitem t, steps, utcstart, \hyperpage{61}
+    \subitem t, steps, utcstart, \hyperpage{60}
   \item topography, \hyperpage{31}
   \item topography parameters
     \subitem gaussianAmp, gaussianXc, gaussian Yc, gaussianLx, gaussianLy, 
-		\hyperpage{72}
+		\hyperpage{71}
     \subitem input, file, etree, xetree, resolution, zmax, order, smooth, 
-		\hyperpage{72}
+		\hyperpage{71}
   \item twilight parameters
     \subitem errorlog, omega, c, phase, momega, mphase, amprho, ampmu, amplambda, 
-		\hyperpage{79}
+		\hyperpage{78}
 
   \indexspace
 
@@ -194,10 +194,10 @@
   \indexspace
 
   \item volimage parameters
-    \subitem file, mode, precision, \hyperpage{77}
+    \subitem file, mode, precision, \hyperpage{76}
     \subitem modes - ux, uy, uz, rho, p, s, lambda, mu, qp, qs, 
-		\hyperpage{78}
-    \subitem timing - cycle, cycleInterval, time, timeInterval, startTime, 
 		\hyperpage{77}
+    \subitem timing - cycle, cycleInterval, time, timeInterval, startTime, 
+		\hyperpage{76}
 
 \end{theindex}
