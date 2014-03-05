@@ -2309,7 +2309,8 @@ nwriters    & set the number of processes that write an image or volimage file &
 \bf Syntax:\\
 \tt
 grid nx=...  ny=...  nz=...
-x=... y=... z=... h=... lat=... lon=... az=... proj=... ellipse=... mlat=... mlon=...\\
+x=... y=... z=... h=... lat=... lon=... az=... mlat=... mlon=... proj=... ellps=...
+datum=... scale=... lat\_p=... lon\_p=...\\
 \bf Required parameters:\\
 \rm See below.
 \end{flushleft}
@@ -2352,8 +2353,9 @@ The default projection is spheriodal as described by equations \eqref{eq:lat}-\e
 can change the parameter $M$ with the {\bf mlat} keyword. By using the {\bf mlon} keyword, you
 modify the projection by replacing $M\cos(\phi\pi/180)$ in \eqref{eq:lon} by the constant
 $M_{lon}$. More accurate projections are available through the Proj4 library (if \emph{SW4} was
-built with Proj4 support). These projections are enabled by using the {\bf proj} and/or {\bf ellps}
-keywords. See the Proj4 documentation for details.
+built with Proj4 support). These projections are enabled by using one of the keywords {\bf proj},
+{\bf ellps}, {\bf datum}, {\bf scale}, {\bf lat\_p}, or {\bf lon\_p}. See the Proj4 
+documentation for choosing appropriate values.
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf grid command parameters (geographical coordinates and projection)}\\ \hline
@@ -2365,13 +2367,19 @@ mlat & meters per degree of latitude (spheroidal projection) & real & meters & 1
 mlon & meters per degree of longitude (spheroidal projection) & real & meters & None \\ \hline
 proj & name of  projection (see proj4 documentation) & string & None & utm \\ \hline
 ellps & name of ellipse (see proj4 documentation) & string & None & WGS84 \\ \hline
+datum & datum of projection (e.g. NAD83) & string & None & None \\ \hline
+lon\_p & central meridian of projection & string & degrees & lon \\ \hline
+lat\_p & latitude of projection origin & string & degrees & lat \\ \hline
+scale & scale factor for central meridian & string & None & None \\ \hline
 \end{tabular}
 \end{center}
-Note: The default projection, given by equations \eqref{eq:lat}-\eqref{eq:lon}, is used if neither \verb+proj+
-nor \verb+ellps+ are specified. The default values for \verb+ellps+ and \verb+proj+ are only used in
-the case that one of these two parameters is specified.
+Note: The default projection, given by equations \eqref{eq:lat}-\eqref{eq:lon}, is used if neither
+of the {\bf proj}, {\bf ellps}, {\bf datum}, {\bf scale}, {\bf lat\_p}, or {\bf lon\_p} keywords
+are specified. The default value for \verb+lat_p+ and \verb+lon_p+ are taken from the geographic
+coordinates of the grid origin (\verb+\lon+ and \verb+lat+, respectively). The default value for
+\verb+ellps+ is only used in the case that \verb+datum+ is not specified.
 
-\index{grid parameters!location - az, lat, lon, mlat, mlon, proj, ellps}
+\index{grid parameters!location - az, lat, lon, mlat, mlon, proj, ellps, datum, scale, latp, lonp}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{time [required]}

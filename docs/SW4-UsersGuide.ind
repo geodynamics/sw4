@@ -33,7 +33,7 @@
     \subitem image, \hyperpage{73}
     \subitem material, \hyperpage{68}
     \subitem pfile, \hyperpage{67}
-    \subitem prefilter, \hyperpage{60}
+    \subitem prefilter, \hyperpage{61}
     \subitem randomize, \hyperpage{69}
     \subitem rec, \hyperpage{72}
     \subitem rupture, \hyperpage{63}
@@ -44,7 +44,7 @@
     \subitem testlamb, \hyperpage{78}
     \subitem testpointsource, \hyperpage{78}
     \subitem testrayleigh, \hyperpage{79}
-    \subitem time, \hyperpage{59}
+    \subitem time, \hyperpage{60}
     \subitem topography, \hyperpage{70}
     \subitem twilight, \hyperpage{77}
     \subitem volimage, \hyperpage{75}
@@ -85,8 +85,8 @@
   \item gmt parameters
     \subitem file, \hyperpage{77}
   \item grid parameters
-    \subitem location - az, lat, lon, mlat, mlon, proj, ellps, 
-		\hyperpage{59}
+    \subitem location - az, lat, lon, mlat, mlon, proj, ellps, datum, scale, latp, lonp, 
+		\hyperpage{60}
     \subitem size - x, y, z, h, nx, ny, nz, \hyperpage{59}
   \item grid size, \hyperpage{27}
 
@@ -159,7 +159,7 @@
 		\hyperpage{62}
   \item srun, \hyperpage{8}
   \item supergrid parameters
-    \subitem gp, dc, \hyperpage{60}
+    \subitem gp, dc, \hyperpage{61}
 
   \indexspace
 

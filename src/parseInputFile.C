@@ -454,11 +454,14 @@ void EW::processGrid(char* buffer)
   // nevada test site (see:  en.wikipedia.org/wiki/Nevada_Test_Site
   //-----------------------------------------------------------------
   double lat, lon;
-  bool latSet = false, lonSet = false;
+  bool latSet = false, lonSet = false, lon_p_set=false, lat_p_set=false, datum_set=false;
+  bool ellps_set=false, proj_set=false;
   bool use_geoprojection=false;
-  string projection="proj=utm";
-  string ellipse="ellps=WGS84";
+  
+  stringstream proj0;
 
+// hard code units to be in meters
+  proj0 << "+units=m";
 
 // default azimuth
   mGeoAz=0;
@@ -613,16 +616,53 @@ void EW::processGrid(char* buffer)
 	m_ghost_points = ghost;
         m_ppadding = ghost;
      }
+//                        123456789
      else if( startswith("proj=",token))
      {
-// Note that the whole string (including token) is assigned to the 'projection' variable
-        projection = token;
+        token +=5;
+// accumulate new style string
+        proj0 << " +proj=" << token;
 	use_geoprojection = true;
+        proj_set=true;
      }
+//                        123456789
      else if( startswith("ellps=",token))
      {
-// Note that the whole string (including token) is assigned to the 'ellipse' variable
-        ellipse = token;
+        token +=6;
+// accumulate new style string
+        proj0 << " +ellps=" << token;
+	use_geoprojection = true;
+        ellps_set=true;
+     }
+//                        123456789
+     else if( startswith("datum=",token))
+     {
+        token +=6;
+        proj0 << " +datum=" << token;
+        datum_set=true;
+	use_geoprojection = true;
+     }
+//                        123456789
+     else if( startswith("lon_p=",token))
+     {
+        token +=6;
+        proj0 << " +lon_0=" << atof(token);
+	use_geoprojection = true;
+        lon_p_set=true;
+     }
+//                        123456789
+     else if( startswith("lat_p=",token))
+     {
+        token +=6;
+        proj0 << " +lat_0=" << atof(token);
+	use_geoprojection = true;
+        lat_p_set=true;
+     }
+//                        123456789
+     else if( startswith("scale=",token))
+     {
+        token +=6;
+        proj0 << " +scale=" << atof(token);
 	use_geoprojection = true;
      }
      else
@@ -681,6 +721,22 @@ void EW::processGrid(char* buffer)
   // x[6] = 55 x[7] = 166 x[8] = 277 x[9] = 388 x[10] = 500.
   // -------------------------------------------------------------
 
+// check syntax for lat & lon
+  if (!(latSet && lonSet) && (latSet || lonSet))
+  {
+    stringstream msg;
+    if (m_myRank == 0)
+    {
+      msg << " \n* Improper grid location specification, must specify both lat and lon variables " << endl
+	  << " * Missing... ";
+      if (!latSet)
+	msg << " lat=value ";
+      if (!lonSet)
+	msg << " lon=value ";
+    }
+    CHECK_INPUT(0, msg.str());
+  }
+
   if (latSet && lonSet)
   {
      mLatOrigin = lat;
@@ -692,6 +748,36 @@ void EW::processGrid(char* buffer)
      mLatOrigin = 37.0;
      mLonOrigin = 118.0;
   }
+
+// default arguments for proj4 projection
+  if (use_geoprojection)
+  {
+     if (!proj_set)
+     {
+// Default projection: Universal Transverse Mercator (UTM)
+        proj0 << " +proj=utm";
+     }
+
+     if (!ellps_set && !datum_set)
+     {
+// default ellipse
+        proj0 << " +ellps=WGS84";
+     }
+     
+// if lon_p not given, use lon
+     if (!lon_p_set)
+     {
+        proj0 << " +lon_0=" << mLonOrigin;
+     }
+
+// if lat_p not given, use lat
+     if (!lat_p_set)
+     {
+        proj0 << " +lat_0=" << mLatOrigin;
+     }
+  }
+  
+  
 
   double cubelen, zcubelen;
 //   if( m_geodynbc_found )  {
@@ -963,21 +1049,6 @@ void EW::processGrid(char* buffer)
   // 	      "] not inside domain of length "<< zprime );
   // }
 
-  if (!(latSet && lonSet) && (latSet || lonSet))
-  {
-    stringstream msg;
-    if (m_myRank == 0)
-    {
-      msg << " \n* Improper grid location specification, must specify both lat and lon variables " << endl
-	  << " * Missing... ";
-      if (!latSet)
-	msg << " lat=keyword ";
-      if (!lonSet)
-	msg << " lon=keyword ";
-    }
-    CHECK_INPUT(0, msg.str());
-  }
-
   m_nx_base = nxprime;
   m_ny_base = nyprime;
   m_nz_base = nzprime;
@@ -986,40 +1057,20 @@ void EW::processGrid(char* buffer)
   m_global_ymax = yprime;
   m_global_zmax = zprime;
 
-#ifndef ENABLE_ETREE
-  CHECK_INPUT( !use_geoprojection, "ERROR: need to enable Etree to use projections from the Proj4 library");
+#ifndef ENABLE_PROJ4
+  CHECK_INPUT( !use_geoprojection, "ERROR: need to configure SW4 with proj=yes to use projections "
+               "from the Proj4 library");
 #endif
   if( use_geoprojection )
-     m_geoproj = new GeographicProjection( mLonOrigin, mLatOrigin, projection, ellipse, mGeoAz );
+  {
+// tmp
+     cout << "New proj4 string: '" << proj0.str() << "'" << endl;
+     
+     m_geoproj = new GeographicProjection( mLonOrigin, mLatOrigin, proj0.str(), mGeoAz );
+  }
   else
      m_geoproj = static_cast<GeographicProjection*>(0);
 
-  //  int nprojpars = 6;
-  //  char** projpars = new char*[nprojpars];
-  //  for( int n=0 ; n < nprojpars ; n++ )
-  //     projpars[n] = new char[35];
-  //  strncpy(projpars[0],"proj=utm",35);
-  //  strncpy(projpars[1],"ellps=WGS84",35);
-  //  snprintf(projpars[2],35,"lon_0=%25.17g",mLonOrigin);
-  //  snprintf(projpars[3],35,"lat_0=%25.17g",mLatOrigin);
-  //  strncpy(projpars[4],"units=m",35);
-  //  strncpy(projpars[5],"no_defs",35);
-
-  //  m_projection = pj_init( nprojpars, projpars );
-  //  CHECK_INPUT( m_projection != 0, "ERRROR: first call to pj_init failed with message: " << pj_strerrno(pj_errno) );
-     
-  //  double deg2rad = M_PI/180;
-  //  projUV xy, lonlat;
-  //  lonlat.u = mLonOrigin*deg2rad;
-  //  lonlat.v = mLatOrigin*deg2rad;
-  //  xy = pj_fwd( lonlat, m_projection );
-  //  CHECK_INPUT( xy.u != HUGE_VAL, "ERROR: first call to pj_fwd failed with message " << pj_strerrno(pj_errno) );
-  //  m_xoffset = xy.u;
-  //  m_yoffset = xy.v;
-  //
-  //  for( int n=0 ; n < nprojpars ; n++ )
-  //     delete[] projpars[n];
-  //  delete[] projpars;
 }
 
 //----------------------------------------------------------

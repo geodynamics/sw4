@@ -8,35 +8,25 @@ using namespace std;
 
 //-----------------------------------------------------------------------
 GeographicProjection::GeographicProjection( double lon_origin, double lat_origin,
-					    string projection, string ellipse, double az )
+					    string projection, double az )
 {
-#ifdef ENABLE_ETREE
-   int nprojpars = 6;
-   char** projpars = new char*[nprojpars];
-   for( int n=0 ; n < nprojpars ; n++ )
-      projpars[n] = new char[35];
-   strncpy(projpars[0],projection.c_str(),35);
-   strncpy(projpars[1],ellipse.c_str(),35);
-   snprintf(projpars[2],35,"lon_0=%25.17g",lon_origin);
-   snprintf(projpars[3],35,"lat_0=%25.17g",lat_origin);
-   strncpy(projpars[4],"units=m",35);
-   strncpy(projpars[5],"no_defs",35);
+#ifdef ENABLE_PROJ4
 
-   m_projection = pj_init( nprojpars, projpars );
-   CHECK_INPUT( m_projection != 0, "ERRROR: first call to pj_init failed with message: " << pj_strerrno(pj_errno) );
-     
+   m_projection = pj_init_plus(projection.c_str());
+   CHECK_INPUT( m_projection != 0, "ERRROR: Init of cartographic projection failed with message: " << pj_strerrno(pj_errno) );
+
+   m_latlong = pj_init_plus("+proj=latlong");
+   CHECK_INPUT( m_latlong != 0, "ERRROR: Init of latlong projection failed with message: " << pj_strerrno(pj_errno) );
+
    m_deg2rad = M_PI/180;
-   projUV xy, lonlat;
-   lonlat.u = lon_origin*m_deg2rad;
-   lonlat.v = lat_origin*m_deg2rad;
-   xy = pj_fwd( lonlat, m_projection );
-   CHECK_INPUT( xy.u != HUGE_VAL, "ERROR: first call to pj_fwd failed with message " << pj_strerrno(pj_errno) );
-   m_xoffset = xy.u;
-   m_yoffset = xy.v;
 
-   for( int n=0 ; n < nprojpars ; n++ )
-      delete[] projpars[n];
-   delete[] projpars;
+   double x0 = lon_origin*DEG_TO_RAD;
+   double y0 = lat_origin*DEG_TO_RAD;
+   int status = pj_transform(m_latlong, m_projection, 1, 1, &x0, &y0, NULL );
+   printf("Origin mapped from (lon,lat)=(%e, %e) to (x0,y0)=(%e, %e)\n", lon_origin, lat_origin, x0, y0);
+   m_xoffset = x0;
+   m_yoffset = y0;
+
    m_az = az*m_deg2rad;
 #endif
 }
@@ -45,15 +35,16 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
 void GeographicProjection::computeGeographicCoord(double x, double y,
 						  double & longitude, double & latitude)
 {
-#ifdef ENABLE_ETREE
- projUV lonlat, xy;
- xy.u = x*sin(m_az) + y*cos(m_az) + m_xoffset;
- xy.v = x*cos(m_az) - y*sin(m_az) + m_yoffset;
- lonlat = pj_inv( xy, m_projection );
-  if( lonlat.u == HUGE_VAL )
-     cout << "ERROR: computeGeographicCoord, pj_inv failed with message " << pj_strerrno(pj_errno) << endl;
- longitude = lonlat.u/m_deg2rad;
- latitude  = lonlat.v/m_deg2rad;
+#ifdef ENABLE_PROJ4
+   double xmap, ymap;
+   int status;
+
+   xmap = x*sin(m_az) + y*cos(m_az) + m_xoffset;
+   ymap = x*cos(m_az) - y*sin(m_az) + m_yoffset;
+   status = pj_transform(m_projection, m_latlong, 1, 1, &xmap, &ymap, NULL );
+   longitude = xmap*RAD_TO_DEG;
+   latitude  = ymap*RAD_TO_DEG;
+
 #endif
 }
 
@@ -61,17 +52,17 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
 void GeographicProjection::computeCartesianCoord(double &x, double &y,
 						 double lon, double lat )
 {
-#ifdef ENABLE_ETREE
-  projUV lonlat, xy;
-  lonlat.u = lon*m_deg2rad;
-  lonlat.v = lat*m_deg2rad;
-  xy = pj_fwd( lonlat, m_projection );
-  if( xy.u == HUGE_VAL )
-     cout << "ERROR: computeCartesianCoord pj_fwd failed with message " << pj_strerrno(pj_errno) << endl;
-  xy.u -= m_xoffset;
-  xy.v -= m_yoffset;
-  x =  xy.u*sin(m_az) + cos(m_az)*xy.v;
-  y =  xy.u*cos(m_az) - sin(m_az)*xy.v;
+#ifdef ENABLE_PROJ4
+  double xlon, ylat;
+  int status;
+  
+  xlon = lon*DEG_TO_RAD;
+  ylat = lat*DEG_TO_RAD;
+  status = pj_transform(m_latlong, m_projection, 1, 1, &xlon, &ylat, NULL );
+  xlon -= m_xoffset;
+  ylat -= m_yoffset;
+  x =  xlon*sin(m_az) + ylat*cos(m_az);
+  y =  xlon*cos(m_az) - ylat*sin(m_az);
 #endif
 }
 

@@ -250,9 +250,18 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     computeGeographicCoord(m_global_xmax, 0.0,           lon[1], lat[1]);
     computeGeographicCoord(m_global_xmax, m_global_ymax, lon[2], lat[2]);
     computeGeographicCoord(0.0,           m_global_ymax, lon[3], lat[3]);
-    printf("Geographic coordinates of the corners of the computational grid:\n");
+// test inverse mapping too
+    double xc[4], yc[4];
     for (int q=0; q<4; q++)
-      printf("%i: Lon= %e, Lat=%e\n", q, lon[q], lat[q]);
+       computeCartesianCoord(xc[q], yc[q], lon[q], lat[q]);
+    
+    printf("Geographic and Cartesian coordinates of the corners of the computational grid:\n");
+    for (int q=0; q<4; q++)
+    {
+//       printf("%i: Lon= %e, Lat=%e\n", q, lon[q], lat[q]);
+       printf("%i: Lon= %e, Lat=%e, x=%e, y=%e\n", q, lon[q], lat[q], xc[q], yc[q]);
+    }
+    
     printf("\n");
   }
   

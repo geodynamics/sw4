@@ -4,6 +4,7 @@
 #
 # This Makefile asumes that the following environmental variables have been assigned:
 # etree = [yes/no]
+# proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
@@ -108,10 +109,15 @@ ifdef EXTRA_FORT_FLAGS
 endif
 
 ifeq ($(etree),yes)
-   CXXFLAGS += -DENABLE_ETREE -I$(SW4INC)
+   CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
+else ifeq ($(proj),yes)
+   CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
+   linklibs += -L$(SW4LIB) -lproj
+   etree := "no"
 else
-  etree := "no"
+   etree := "no"
+   proj  := "no"
 endif
 
 ifdef EXTRA_LINK_FLAGS
@@ -167,6 +173,8 @@ MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o
 
 OBJL  = lamb_one_point.o
 
+OBJP = test_proj.o
+
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
@@ -175,6 +183,8 @@ FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(QUADPAC
 FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
 FOBJL = $(addprefix $(builddir)/,$(OBJL)) $(addprefix $(builddir)/,$(QUADPACK))
+
+FOBJP = $(addprefix $(builddir)/,$(OBJP))
 
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
@@ -226,6 +236,15 @@ lamb1: $(FOBJL)
 	cd $(builddir); $(FC) $(FFLAGS) -o $@ $(OBJL) $(QUADPACK) $(linklibs)
 #	@cat "Done building lamb1 executable"
 #	@echo "*** Build directory: " $(builddir) " ***"
+
+test_proj: $(FOBJP)
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJP) $(linklibs)
 
 # distribution
 tardir := sw4-v1.01

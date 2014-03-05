@@ -25,8 +25,6 @@ main(int argc, char **argv) {
    char merc_def[256];
    
    sprintf(merc_def, "+proj=tmerc +datum=NAD83 +units=m +lon_0=-123.0 +lat_0=35.0 +scale=0.9996");
-// sprintf(merc_def, "+proj=utm +ellps=WGS84 +units=m +lon_0=-123.0 +lat_0=35.0");
-//   sprintf(merc_def, "+proj=utm +ellps=WGS84 +units=m +lon_0=0.0 +lat_0=0.0");
    printf("Mercator string: '%s'\n", merc_def);
    
    if (!(pj_merc = pj_init_plus(merc_def)) )
@@ -35,7 +33,8 @@ main(int argc, char **argv) {
       exit(1);
    }
    
-   if (!(pj_latlong = pj_init_plus("+proj=latlong +ellps=WGS84")) )
+//   if (!(pj_latlong = pj_init_plus("+proj=latlong +ellps=WGS84")) )
+   if (!(pj_latlong = pj_init_plus("+proj=latlong")) )
    {
       printf("Init of latlong projection failed\n");      
       exit(1);
@@ -109,9 +108,10 @@ main(int argc, char **argv) {
    yr = 0.5*cl;
 
 // check material model on a coarse mesh along the surface
-   for (int j=0; j<2897; j+=4)
+   int nQuery = 0;
+   for (int j=0; j<2897; j+=40)
    {
-      for (int i=0; i<1400; i+=4)
+      for (int i=0; i<1400; i+=40)
       {
          xr = 0.5*cl + i*cl;
          yr = 0.5*cl + j*cl;
@@ -133,7 +133,8 @@ main(int argc, char **argv) {
 // query the detailed material model at depth 12.5 m to avoid the air/water interface
          elev = -12.5;
          mQuery.query(&mPayload, mPayloadSize, xlon, ylat, elev);
-                  
+         nQuery++;
+         
 // Make sure the query didn't generated a warning or error
          if (mQuery.errorHandler()->status() != cencalvm::storage::ErrorHandler::OK) 
          {
@@ -152,7 +153,8 @@ main(int argc, char **argv) {
    
 // done
    fclose(fp);
-   
    mQuery.close();
+
+   printf("Called query() %i times\n", nQuery);
    exit(0);
 }
