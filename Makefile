@@ -175,6 +175,8 @@ OBJL  = lamb_one_point.o
 
 OBJP = test_proj.o
 
+OBJCONV = convert_etree.o
+
 # prefix object files with build directory
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
@@ -185,6 +187,8 @@ FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADP
 FOBJL = $(addprefix $(builddir)/,$(OBJL)) $(addprefix $(builddir)/,$(QUADPACK))
 
 FOBJP = $(addprefix $(builddir)/,$(OBJP))
+
+FOBJCONV = $(addprefix $(builddir)/,$(OBJCONV))
 
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
@@ -245,6 +249,15 @@ test_proj: $(FOBJP)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJP) $(linklibs)
+
+convert_etree: $(FOBJCONV)
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJCONV) $(linklibs)
 
 # distribution
 tardir := sw4-v1.01
