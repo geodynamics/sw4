@@ -24,7 +24,7 @@ main(int argc, char **argv) {
    double dm_x[4], dm_y[4], len[4], dx, dy, alpha, beta;
 
    projPJ pj_merc, pj_latlong;
-   double x, y, xlon, ylat, x0, y0, xr, yr, xc, yc, xabs, yabs, xmap, ymap;
+   double x, y, z, xlon, ylat, x0, y0, xr, yr, xc, yc, xabs, yabs, xmap, ymap;
    int status, merc_len;
    char merc_def[256];
    
@@ -110,19 +110,36 @@ main(int argc, char **argv) {
    mQuery.queryVals(mQueryKeys, mPayloadSize);
    mQuery.open();
 
-// which subregion to query?
-   int imax[]={2896, 1448, 724, 362}; // model defined for i=2897 on finest grid, but needs to be even for coarser models
-   int jmax[]={1400,  700, 350, 175};
+// number of points for different grid sizes
+//   int nimax[]={2897, 1449, 725, 363}; // model defined for one more point on finest grid
+//   int njmax[]={1401,  701, 351, 176};
+   int nimax[]={145, 145, 145}; // model defined for one more point on finest grid
+   int njmax[]={ 71,  71,  71};
+// how many points in the vertical direction?
+   int nkmax[]={1, 6, 28};
 
+// how many components in each block?
+   int nc[]={1, 5, 5};
+   
+// block header info
 // cell size in horizontal directions
-   double cl[] = {100.0, 200.0, 400.0, 800.0};
-
-// which level to store? higher is coarser
-   int lev=3;
+//   double clh[] = {100.0, 200.0, 400.0, 800.0};
+   double clh[] = {2000.0, 2000.0, 2000.0};
+// cell size in vertical direction
+//   double clv[] = {25.0, 50.0, 100.0, 200.0};
+   double clv[] = {400.0, 400.0, 1600.0};
+// topo does not use z0, but needed by format
+   double z0[] = {0.0, -1587.5, 412.5};
+   
+// level = block
+   int lev;
    
 // extent of model in etree database
    double xmin=0.0, xmax = 289715.88;
    double ymin=0.0, ymax = 140056.01;
+
+// tmp storage for mat prop
+   double mat[5];
 
 // origin
    xc = 0.0;
@@ -134,17 +151,22 @@ main(int argc, char **argv) {
    int precision=8; 
 
 // how many blocks are stored?
-   int nblocks=1;
-// how many points in the vertical direction?
-   int kmax[]={1, 1, 1, 1};
+   int nblocks=3;
+   int attenuation=1; // saving attenuation (Qp & Qs)?
    
-   FILE *fp=fopen("topography.dat","wb"); // Another hard-coded file name
+   FILE *fp=fopen("rfile.dat","wb"); // Another hard-coded file name
+   FILE *eh=fopen("warnings.txt","w"); // Another hard-coded file name
 
 // write header
    fwrite(&magic, sizeof(int), 1, fp);
    fwrite(&precision, sizeof(int), 1, fp);
+   fwrite(&attenuation, sizeof(int), 1, fp);
 // azimuth
    fwrite(&alpha_deg, sizeof(double), 1, fp);
+// origin longitude (NE corner)
+   fwrite(&(dm_lon[3]), sizeof(double), 1, fp);
+// origin latitude (NE corner)
+   fwrite(&(dm_lat[3]), sizeof(double), 1, fp);
 // number of characters in projection string
    fwrite(&merc_len, sizeof(int), 1, fp);
 // projection string
@@ -152,26 +174,34 @@ main(int argc, char **argv) {
 
 // number of blocks
    fwrite(&nblocks, sizeof(int), 1, fp);
-// block sizes (base zero)
-   fwrite(&(imax[lev]), sizeof(int), 1, fp);
-   fwrite(&(jmax[lev]), sizeof(int), 1, fp);
-   fwrite(&(kmax[lev]), sizeof(int), 1, fp);
 
-// check material model on a coarse mesh along the surface
-   int nQuery = 0;
-   printf("Querying etree for topography at %i by %i points\n", imax[lev], jmax[lev]);
-   
-
-   for (int j=0; j<=jmax[lev]; j++)
-//   int j = jmax; 
+// block # 1: topography on a 2-D grid
+   for (lev=0; lev<nblocks; lev++)
    {
-      printf("j=%i out of %i\n", j, jmax[lev]);
-      for (int i=0; i<=imax[lev]; i++)
-//      int i=imax;
-      
+      fwrite(&(clh[lev]), sizeof(double), 1, fp); // horizontal grid size
+      fwrite(&(clv[lev]), sizeof(double), 1, fp); // vertical grid size
+      fwrite(&z0[lev], sizeof(double), 1, fp); // starting z-level
+
+// block sizes (number of grid points)
+      fwrite(&(nc[lev]), sizeof(int), 1, fp); // one component per grid point
+      fwrite(&(nimax[lev]), sizeof(int), 1, fp);
+      fwrite(&(njmax[lev]), sizeof(int), 1, fp);
+      fwrite(&(nkmax[lev]), sizeof(int), 1, fp);
+   }
+   
+   int nQuery = 0;
+   
+// save topography
+   lev = 0;
+   printf("Querying etree for topography at %i by %i points\n", nimax[lev], njmax[lev]);
+   
+   for (int j=0; j<njmax[lev]; j++)
+   {
+      printf("..%i", j);
+      for (int i=0; i<nimax[lev]; i++)
       {
-         xr = xc + i*cl[lev];
-         yr = yc + j*cl[lev];
+         xr = xc + i*clh[lev];
+         yr = yc + j*clh[lev];
       
 // coordinate system centered at NE corner (#3)
          xabs = xmap = dm_x[3] + xr*sin(alpha) + yr*cos(alpha);
@@ -202,9 +232,95 @@ main(int argc, char **argv) {
          fwrite(&(mPayload[3]), sizeof(double), 1, fp);
       }
    }
+   printf("\n");
+
+   double minmat[3];
+
+// save material properties for block 1...,nblocks
+   for (lev = 1; lev<nblocks; lev++)
+   {
+      for (int q=0; q<3; q++) minmat[q] = 1e5;
+      
+      for (int k=0; k<nkmax[lev]; k++)
+      {
+         printf("Querying the material properties for block=%i, k=%i\n", lev, k);
+         z = z0[lev] + k*clv[lev];
+         elev = -z;
+   
+         for (int j=0; j<njmax[lev]; j++)
+         {
+//            printf("..%i", j);
+            for (int i=0; i<nimax[lev]; i++)
+            {
+               xr = xc + i*clh[lev];
+               yr = yc + j*clh[lev];
+      
+// coordinate system centered at NE corner (#3)
+               xabs = xmap = dm_x[3] + xr*sin(alpha) + yr*cos(alpha);
+               yabs = ymap = dm_y[3] + xr*cos(alpha) - yr*sin(alpha);
+
+// inverse projection to get (lon,lat)   
+               status = pj_transform(pj_merc, pj_latlong, 1, 1, &xmap, &ymap, NULL );
+
+               xlon = xmap*RAD_TO_DEG;
+               ylat = ymap*RAD_TO_DEG;
+   
+//      printf("cell center (x,y)=(%e, %e), (lon, lat)=(%e, %e)\n", xabs, yabs, xlon, ylat);
+
+// query the material model
+               mQuery.query(&mPayload, mPayloadSize, xlon, ylat, elev);
+               nQuery++;
+         
+// Make sure the query didn't generated a warning or error
+               if (mQuery.errorHandler()->status() == cencalvm::storage::ErrorHandler::ERROR) 
+               {
+                  printf("Query error for indices (ix, jy, kz)=(%i, %i, %i), elev=%e\n", i, j, k, elev);
+// phony values
+                  for (int q=0; q<6; q++)
+                     mPayload[q] = -1.0;
+               }
+// SHOULD ALSO check for warnings
+               if (mQuery.errorHandler()->status() != cencalvm::storage::ErrorHandler::OK) 
+               {
+                  fprintf(eh,"lev=%i, coord=(%e %e) elev=%e, status=%i\n", lev, xr, yr, 
+                          elev, mQuery.errorHandler()->status() );
+               }
+
+// save data
+               mat[0]=mPayload[0]; // dens
+               mat[1]=mPayload[1]; // Vp
+               mat[2]=mPayload[2]; // Vs
+
+               for (int q=0; q<3; q++)
+               {
+                  if (mat[q] < minmat[q]) minmat[q] = mat[q];
+               }
+               
+               
+               if (attenuation)
+               {
+                  mat[3]=mPayload[4]; // Qp
+                  mat[4]=mPayload[5]; // Qs
+                  fwrite(mat, sizeof(double), 5, fp);
+               }
+               else
+               {
+                  fwrite(mat, sizeof(double), 3, fp);
+               }
+            
+// reset status for next query
+               mQuery.errorHandler()->resetStatus();
+            } // end for i...
+         } // end for j...
+      } // end for k...
+      printf("Block %i: Min dens, Vp, Vs= %e %e %e\n", lev, minmat[0], minmat[1], minmat[2]);
+      
+   } // end for block
+   
    
 // done
    fclose(fp);
+   fclose(eh);
    mQuery.close();
 
    printf("Called query() %i times\n", nQuery);

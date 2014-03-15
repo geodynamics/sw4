@@ -141,7 +141,7 @@ main(int argc, char **argv) {
    
 //    printf("Alpha = %20.12e, Alpha-corrected = %20.12e\n", RAD_TO_DEG*alpha, RAD_TO_DEG*az2);
    
-   int i,j;
+   int i,j, k;
    
    int nQuery = 0;
 // test for location of Sw corner of etree model   
@@ -190,30 +190,46 @@ main(int argc, char **argv) {
 // check material model on a coarse mesh along the surface
    nQuery = 0;
 
-// cell size in horizontal directions
-   cl = 100.0;
+   cl = 800.0; // cell size in horizontal directions
+//   cl = 100.0;
+   
+//   double clv = 800.0; // cell size in vertical dir
+   double clv = 200.0; // cell size in vertical dir
 
    double xmax = 289715.88;
    double ymax = 140056.01;
+   double zmax = 45000.0;
 
 // which subregion to query?
    int imax=2897;
    int jmax=1400;
 
-   FILE *fp=fopen("elev-x1.dat","w");
+// bottom block
+//   int kmax=56;
+// top block
+   int kmax=11;
+
+//   FILE *fp=fopen("elev-x1.dat","w");
 
 // origin
    xc = 0;
    yc = 0;
 
-   for (j=0; j<=jmax; j+=1)
+   double z;
+// bottom block
+//   double z0=412.5;
+// top block
+   double z0=-1587.5;
+   
+//   for (j=0; j<=jmax; j+=1)
 //   j = jmax; 
-//   j = 300;
+   j = 175; // should be over the ocean
 //   j=0;
    {
 //      for (i=0; i<=imax; i+=1)
-      i=imax;
+//      i=imax;
 //      i=0;    
+      i=30;
       {
 //         xr = 50.0 + i*cl; // cell center ?
 //         yr = 50.0 + j*cl;
@@ -237,30 +253,40 @@ main(int argc, char **argv) {
 //      printf("cell center (x,y)=(%e, %e), (lon, lat)=(%e, %e)\n", xabs, yabs, xlon, ylat);
 
 // query the detailed material model at depth 12.5 m to avoid the air/water interface
-         elev = -12.5;
-         mQuery.query(&mPayload, mPayloadSize, xlon, ylat, elev);
-         nQuery++;
+         for (k=0; k<kmax; k++)
+         {
+//            elev = -12.5;
+            z = z0 + k*clv;
+            elev = -z;
+
+            mQuery.query(&mPayload, mPayloadSize, xlon, ylat, elev);
+            nQuery++;
          
 // Make sure the query didn't generated a warning or error
-         if (mQuery.errorHandler()->status() != cencalvm::storage::ErrorHandler::OK) 
-         {
-            printf("Something went wrong for rel. coords (xr,yr)=(%e, %e)\n", xr, yr);
+            if (mQuery.errorHandler()->status() == cencalvm::storage::ErrorHandler::ERROR) 
+            {
+               printf("Fatal query error for point (ix, jy, kz, elev)=(%i, %i, %i, %e)\n", i, j, k, elev);
 // reset status for next query
-	    mQuery.errorHandler()->resetStatus();
-         }
-         else
-         {
-            fprintf(fp, "%e %e %e\n", xlon, ylat, mPayload[3]);
+               mQuery.errorHandler()->resetStatus();
+            }
+            else
+            {
+               printf("index=(%i %i %i), elev=%e, dens=%e, topo=%e, status=%i\n", i, j, k, elev, 
+                      mPayload[0], mPayload[3], mQuery.errorHandler()->status()); // payload[0] is density
+// reset status for next query
+               mQuery.errorHandler()->resetStatus();
             // fprintf(fp, "%e %e ", xr, yr);
             // for (int q=0; q<mPayloadSize; q++)
             //    fprintf(fp, "%e ", mPayload[q]);
             // fprintf(fp, "\n");
-         }
+            }
+         } // end for k
+         
       }
    }
    
 // done
-   fclose(fp);
+//   fclose(fp);
    mQuery.close();
 
    printf("Called query() %i times\n", nQuery);
