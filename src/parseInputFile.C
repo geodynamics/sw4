@@ -11,6 +11,7 @@
 #include "MaterialIfile.h"
 #include "MaterialVolimagefile.h"
 #include "MaterialInvtest.h"
+#include "MaterialRfile.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
@@ -260,6 +261,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
  	buildGaussianHillTopography(m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc);
      }      
+     else if( m_topoInputStyle == EW::Rfile )
+	extractTopographyFromRfile( m_topoFileName );
 
 // preprocess the mTopo array
      if (m_topoInputStyle != EW::GaussianHill) // no smoothing or extrapolation for a gaussian hill
@@ -369,6 +372,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processMaterialBlock(buffer, blockCount);
        else if (startswith("pfile", buffer))
 	 processMaterialPfile( buffer );
+       else if (startswith("rfile", buffer))
+	 processMaterialRfile( buffer );
        else if (startswith("vimaterial", buffer))
 	 processMaterialVimaterial( buffer );
        else if (startswith("invtestmaterial", buffer))
@@ -1379,6 +1384,12 @@ void EW::processTopography(char* buffer)
 	  else if (strcmp("efile", token) == 0)
 	  {
 	     m_topoInputStyle=Efile;
+	     m_topography_exists=true;
+	     needFileName=true; // we require the file name to be given on the topography command line
+	  }
+	  else if (strcmp("rfile", token) == 0)
+	  {
+	     m_topoInputStyle=Rfile;
 	     m_topography_exists=true;
 	     needFileName=true; // we require the file name to be given on the topography command line
 	  }
@@ -6919,6 +6930,102 @@ void EW::processMaterialVimaterial(char* buffer)
    }
    MaterialData *mdata = new MaterialVolimagefile( this, rhomula, path, rho, mu, lambda, qp, qs );
    add_mtrl_block(mdata);
+}
+
+//-----------------------------------------------------------------------
+void EW::processMaterialRfile(char* buffer)
+{
+   string name = "rfile";
+
+  // Used for pfiles
+   string filename = "NONE";
+   string directory = "NONE";
+   double a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+   string cflatten = "NONE";
+   bool flatten = false;
+   bool coords_geographic = true;
+   int nstenc = 5;
+
+   char* token = strtok(buffer, " \t");
+  //  CHECK_INPUT(strcmp("rfile", token) == 0,
+  //	      "ERROR: material data can only be set by an rfile line, not: " << token);
+
+   string err = token;
+   err += " Error: ";
+   token = strtok(NULL, " \t");
+
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      //      else if (startswith("a=", token))
+      //      {
+      //         token += 2; // skip a=
+      //         a_ppm = atof(token);
+      //      }
+      else if( startswith("smoothingsize=",token) )
+      {
+	 token += 14;
+	 nstenc = atoi(token);
+	 VERIFY2( nstenc >= 1 ,
+		 "processMaterialRfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
+      }
+      else if (startswith("vpmin=", token))
+      {
+	 token += 6; // skip vpmin=
+	 vpmin_ppm = atof(token);
+      }
+      else if (startswith("vsmin=", token))
+      {
+	 token += 6; // skip vsmin=
+	 vsmin_ppm = atof(token);
+      }
+      else if (startswith("rhomin=", token))
+      {
+	 token += 7; // skip rhomin=
+	 rhomin_ppm = atof(token);
+      }
+      else if (startswith("filename=", token))
+      {
+	 token += 9; // skip filename=
+	 filename = token;
+      }
+      else if (startswith("directory=", token))
+      {
+	 token += 10; // skip directory=
+	 directory = token;
+      }
+      //      else if (startswith("style=", token))
+      //      {
+      //	token += 6; // skip style=
+      //	if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
+      //	  coords_geographic = true;
+      //	else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
+      //	  coords_geographic = false;
+      //	else
+      //	  CHECK_INPUT( false, "processMaterialRfile Error: style= " << token << " not recognized\n" );
+      //      }
+      else
+      {
+	 cout << token << " is not a rfile option " << endl;
+      }
+      token = strtok(NULL, " \t");
+   }
+  // End parsing...
+
+  //----------------------------------------------------------------
+  // Check parameters
+  //----------------------------------------------------------------
+   if (strcmp(directory.c_str(),"NONE")==0)
+      directory = string("./");
+
+   if (m_myRank == 0)
+      cout << "*** Reading data from Rfile " << filename << " in directory " << directory << endl;
+
+   MaterialRfile* rf = new MaterialRfile( this, filename, directory );
+   add_mtrl_block( rf  );
 }
 
 //-----------------------------------------------------------------------

@@ -102,25 +102,25 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
       ihave_array = 0;
    init_pio( iwrite, pfs, ihave_array );
-   //   int myid;
-   //   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
-   //   if( myid == 1 )
+      int myid;
+      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+    //   if( myid == 1 )
    //   {
    //   cout << "gsizes " << globalsizes[0] <<  " " << globalsizes[1] << " " << globalsizes[2] << endl;
    //   cout << "lsizes " << localsizes[0] <<  " " << localsizes[1] << " " << localsizes[2] << endl;
    //   cout << "ssizes " << starts[0] <<  " " << starts[1] << " " << starts[2] << endl;
    //   }
    init_array( globalsizes, localsizes, starts, nptsbuf, padding );
-   //   if( myid == 1 )
-   //   {
-   //      cout << "IRECV = " << endl;
-   //      m_irecv.print(1);
-   //   }
-   //   if( myid == 1 )
-   //   {
-   //      cout << "ISEND = " << endl;
-   //      m_isend.print(0);
-   //   }
+   //         if( myid == 0 )
+   //         {
+   //            cout << "IRECV = " << endl;
+   //            m_irecv.print(1);
+   //         }
+   //         if( myid == 0 )
+   //         {
+   //            cout << "ISEND = " << endl;
+   //            m_isend.print(0);
+   //         }
 }
 
 //-----------------------------------------------------------------------
@@ -133,32 +133,33 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 //        ihave_array - 0 this processor holds no part of the array.
 //                      1 this processor holds some part of the array.
 //                     -1 (default) the array is present in all processors.
-// Note: I/O processors are selected from the set of processors holding the array.
 {
    int* tmp;
    int nprocs, p, i;
    MPI_Group world_group, writer_group, array_group;
 
-   // 1. Create communicator of all procs. that hold part of the array
-   // save as m_data_comm.
+// 1. Create communicator of all procs that either hold part of the array or will perform I/O.
+//    Save as m_data_comm. This communicator will be used for most operations.
    if( ihave_array == -1 )
       m_data_comm = MPI_COMM_WORLD;
    else
    {
       MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
       tmp      = new int[nprocs];
-      MPI_Allgather( &ihave_array, 1, MPI_INT, tmp, 1, MPI_INT, MPI_COMM_WORLD );
-      int narray = 0;
+      int participator = ihave_array || iwrite;
+      MPI_Allgather( &participator, 1, MPI_INT, tmp, 1, MPI_INT, MPI_COMM_WORLD );
+      int npartprocs = 0;
       for( p = 0 ; p < nprocs ; p++ )
 	 if( tmp[p] == 1 )
-	    narray++;
-      if( narray < 1 )
+	    npartprocs++;
+      if( npartprocs < 1 )
       {
 	 // error 
+         cout << "ERROR 1, in Parallel_IO::init_pio, no processors selected, npartprocs =  " << npartprocs << endl;
+         delete[] tmp;
          return;
-         cout << "ERROR 1, in Parallel_IO::init_pio, no processor owns a part of the array" << endl;
       }
-      int* array_holders = new int[narray];
+      int* array_holders = new int[npartprocs];
       i = 0;
       for( p=0 ; p < nprocs ; p++ )
       {
@@ -167,7 +168,7 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
       }
       delete[] tmp;
       MPI_Comm_group( MPI_COMM_WORLD, &world_group );
-      MPI_Group_incl( world_group, narray, array_holders, &array_group );
+      MPI_Group_incl( world_group, npartprocs, array_holders, &array_group );
       MPI_Comm_create( MPI_COMM_WORLD, array_group, &m_data_comm );
       MPI_Group_free( &world_group );
       MPI_Group_free( &array_group );
@@ -177,8 +178,8 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
    if( m_data_comm != MPI_COMM_NULL )
    {
       MPI_Comm_size( m_data_comm, &nprocs );
-
-   // 2. Create communicator of all I/O processors, save as m_write_comm
+// 2. Create communicator of all I/O processors. Save as m_write_comm. This communicator is 
+//    used in MPI_Barrier to synchronize read and writes on non-parallel file systems
       m_iwrite = iwrite;
       tmp      = new int[nprocs];
       MPI_Allgather( &m_iwrite, 1, MPI_INT, tmp, 1, MPI_INT, m_data_comm );
@@ -188,10 +189,11 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 	    m_nwriters++;
       if( m_nwriters < 1 )
       {
+         cout << "ERROR 2 in Parallel_IO::init_pio, there are no writing processors left, nwriters = " << m_nwriters << endl;
          delete[] tmp;
-         cout << "ERROR 2 in Parallel_IO::init_pio, there are no writing processors left " << endl;
          return;
       }
+ // writer_ids are the processor ids of the writer processors in the enumeration by the m_data_comm group.
       m_writer_ids = new int[m_nwriters];
       i = 0;
       for( p=0 ; p < nprocs ; p++ )
@@ -207,14 +209,13 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
       MPI_Group_free( &world_group );
       MPI_Group_free( &writer_group );
    }
-
    // 3. Save parallel file system info
    m_parallel_file_system = pfs;
 }
 
 //-----------------------------------------------------------------------
 void Parallel_IO::init_array( int globalsizes[3], int localsizes[3], 
-			  int starts[3], int nptsbuf, int padding )
+			      int starts[3], int nptsbuf, int padding )
 {
 // Set up data structures for communication before I/O
 // Input: globalsizes - global size of array ( [1..nig]x[1..njg]x[1..nkg] )
@@ -566,19 +567,51 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 		  if( vr[5] > lims[5] )
 		     lims[5] = vr[5];
 	       }
-	       m_irecv.m_ilow[b-1] = lims[0];
-	       m_irecv.m_jlow[b-1] = lims[2];
+	       //	       m_irecv.m_ilow[b-1] = lims[0];
+	       //	       m_irecv.m_jlow[b-1] = lims[2];
+	       m_irecv.m_ilow[b-1] = 1;
+	       m_irecv.m_jlow[b-1] = 1;
 	       m_irecv.m_klow[b-1] = lims[4];
-	       m_irecv.m_niblock[b-1] = lims[1]-lims[0]+1;
-	       m_irecv.m_njblock[b-1] = lims[3]-lims[2]+1;
+	       //	       m_irecv.m_niblock[b-1] = lims[1]-lims[0]+1;
+	       //	       m_irecv.m_njblock[b-1] = lims[3]-lims[2]+1;
+	       m_irecv.m_niblock[b-1] = nig;
+	       m_irecv.m_njblock[b-1] = njg;
 	       m_irecv.m_nkblock[b-1] = lims[5]-lims[4]+1;
-               npts = (lims[1]-lims[0]+1)*(lims[3]-lims[2]+1)*(lims[5]-lims[4]+1);
+	       //               npts = (lims[1]-lims[0]+1)*(lims[3]-lims[2]+1)*(lims[5]-lims[4]+1);
+               npts = nig*njg*(lims[5]-lims[4]+1);
                maxpts = maxpts > npts ? maxpts : npts;
 	    }
 	 }
       }
    }
-   m_irecv.m_maxbuf = maxpts;
+
+   if( m_iwrite == 1 )
+   {
+      size_t maxptsbz=0;
+      for( b = 1; b <= m_csteps ; b++ )
+      {
+	 size_t bsize = 0;
+	 for( i = 0  ; i < m_irecv.m_ncomm[b-1] ; i++ )
+	 {
+	    vr[0] = m_irecv.m_comm_index[0][b-1][i];
+	    vr[1] = m_irecv.m_comm_index[1][b-1][i];
+	    vr[2] = m_irecv.m_comm_index[2][b-1][i];
+	    vr[3] = m_irecv.m_comm_index[3][b-1][i];
+	    vr[4] = m_irecv.m_comm_index[4][b-1][i];
+	    vr[5] = m_irecv.m_comm_index[5][b-1][i];
+	    bsize += (vr[1]-vr[0]+1)*(vr[3]-vr[2]+1)*(vr[5]-vr[4]+1);
+	 }
+	 maxptsbz = maxptsbz > bsize ? maxptsbz:bsize;
+      }
+   //   m_irecv.m_maxbuf = maxpts;
+      //      m_irecv.m_maxbuf = maxptsbz;
+      if( maxptsbz > maxpts )
+	 m_irecv.m_maxbuf = maxptsbz;
+      else
+	 m_irecv.m_maxbuf = maxpts;
+      //      cout << "Maxpts buffer old " << maxpts << " new " << maxptsbz << endl;
+   }
+
    if( m_iwrite == 1 )
       delete[] nrecvs;
    }
@@ -883,7 +916,7 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 
 //-----------------------------------------------------------------------
 void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
-			      char* typ )
+			      const char* typ )
 {
 //  Read array previously set up by constructing object.
 // Input: fid - File descriptor, obtained by calling open.
@@ -1068,8 +1101,6 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 	    nsi = i2-i1+1;
 	    nsj = j2-j1+1;
 	    nsk = k2-k1+1;
-	    //	    ni = m_dims[fd].ni;
-	    //	    nj = m_dims[fd].nj;
 	    MPI_Recv( sbuf, nsi*nsj*nsk*nc, MPI_DOUBLE,
 		      m_isend.m_comm_id[b][i], tag, m_data_comm, &status );
 	    for( kk=k1 ; kk <= k2 ; kk++ )

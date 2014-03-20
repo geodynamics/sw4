@@ -875,14 +875,12 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
       double* doubleField = new double[nptsloc];
       if( prec == 8 )
       {
-	 char cprec[]="double";
-	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, cprec );
+	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, "double" );
 	 offset += npts*sizeof(double);
       }
       else
       {
-	 char cprec[]="float";
-	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, cprec );
+	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, "float" );
 	 offset += npts*sizeof(float);
       }
       data[g].insert_subarray( m_iStartInt[g], m_iEndInt[g], m_jStartInt[g], m_jEndInt[g],

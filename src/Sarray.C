@@ -241,6 +241,24 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 }
 
 //-----------------------------------------------------------------------
+void Sarray::define( const Sarray& u ) 
+{
+   if( m_data != NULL )
+      delete[] m_data;
+   m_nc = u.m_nc;
+   m_ib = u.m_ib;
+   m_ie = u.m_ie;
+   m_jb = u.m_jb;
+   m_je = u.m_je;
+   m_kb = u.m_kb;
+   m_ke = u.m_ke;
+   m_ni = m_ie-m_ib+1;
+   m_nj = m_je-m_jb+1;
+   m_nk = m_ke-m_kb+1;
+   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+}
+
+//-----------------------------------------------------------------------
 void Sarray::intersection( int ib, int ie, int jb, int je, int kb, int ke, int wind[6] )
 {
    wind[0] = max(ib,m_ib);
@@ -507,6 +525,13 @@ void Sarray::save_to_disk( const char* fname )
 
 //-----------------------------------------------------------------------
 void Sarray::assign( const double* ar )
+{
+   for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
+      m_data[i] = ar[i];
+}
+
+//-----------------------------------------------------------------------
+void Sarray::assign( const float* ar )
 {
    for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
       m_data[i] = ar[i];

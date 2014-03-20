@@ -26,6 +26,7 @@ public:
 		int kend );
    void define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 		int kend );
+   void define( const Sarray& u );
    inline double* c_ptr() {return m_data;}
    void reference( double* new_data ){m_data = new_data; }
 
@@ -81,6 +82,7 @@ public:
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
    void assign( const double* ar );
+   void assign( const float* ar );
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

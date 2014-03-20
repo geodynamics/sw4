@@ -8,9 +8,11 @@
 #include <sstream>
 #include <unistd.h>
 #include <algorithm>
+#include <fcntl.h>
 
 #include "startEnd.h"
 #include "version.h"
+#include "Byteswapper.h"
 #include "F77_FUNC.h"
 
 extern "C" {
@@ -5096,6 +5098,300 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
    query.close();
    delete[] pVals;
 #endif
+}
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromRfile( std::string a_topoFileName )
+{
+   std::string rname ="EW::extractTopographyFromRfile";
+   Sarray gridElev;
+   int fd=open( a_topoFileName.c_str(), O_RDONLY );
+   if( fd != -1 )
+   {
+      // ---------- magic number
+      int magic;
+      size_t nr = read(fd,&magic,sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading magic number, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+
+      Byteswapper bswap;
+      int onesw=1;
+      bswap.byte_rev( &onesw, 1, "int" );
+      bool swapbytes;
+      if( magic == 1 )
+	 swapbytes = false;
+      else if( magic == onesw )
+	 swapbytes = true;
+      else
+      {
+	 cout << rname << "error could not determine byte order on file "
+	      << a_topoFileName << " magic number is " << magic << endl;
+         close(fd);
+	 return;
+      }
+
+      // ---------- precision
+      int prec = 0;
+      nr = read(fd,&prec,sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading prec, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &prec, 1, "int" );
+      int flsize=4;
+      if( prec == 8 )
+	 flsize = sizeof(double);
+      else if( prec == 4 )
+	 flsize = sizeof(float);
+
+      // ---------- attenuation on file ?
+      int att;
+      nr = read(fd,&att,sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading att, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &att, 1, "int" );
+
+      // ---------- azimuth on file
+      double alpha;
+      nr = read(fd,&alpha,sizeof(double));
+      if( nr != sizeof(double) )
+      {
+	 cout << rname << " Error reading alpha, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &alpha, 1, "double" );
+      CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-7, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
+		   " azimuth on rfile = " << alpha << " azimuth of coordinate sytem = " << mGeoAz );
+
+      // ---------- origin on file
+      double lon0, lat0;
+      nr = read( fd, &lon0, sizeof(double));
+      if( nr != sizeof(double) )
+      {
+	 cout << rname << " Error reading lon0, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &lon0, 1, "double" );
+
+      nr = read( fd, &lat0, sizeof(double));
+      if( nr != sizeof(double) )
+      {
+	 cout << rname << " Error reading lat0, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &lat0, 1, "double" );
+
+      // ---------- length of projection string
+      int len;
+      nr = read( fd, &len, sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading len, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &len, 1, "int" );
+
+      // ---------- skip projection string
+      nr = lseek(fd, len*sizeof(char), SEEK_CUR );
+
+      // ---------- number of blocks on file
+      int npatches;
+      nr = read( fd, &npatches, sizeof(int) );
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading npatches, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &npatches, 1, "int" );
+      
+      // ---------- first part of topography block header
+      double hs[3];
+      nr = read( fd, hs, 3*sizeof(double) );
+      if( nr != 3*sizeof(double) )
+      {
+	 cout << rname << " Error reading topography spacings nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( hs, 3, "double" );
+      double hh, hv, z0;
+      hh = hs[0];
+      hv = hs[1];
+      z0 = hs[2];
+
+      // ---------- second part of topography block header
+      int dim[4];
+      nr = read( fd, dim, 4*sizeof(int) );
+      if( nr != 4*sizeof(int) )
+      {
+	 cout << rname << " Error reading topography dimensions nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( dim, 4, "int" );
+
+      int nctop, nitop, njtop, nktop;
+      nctop = dim[0];
+      nitop = dim[1];
+      njtop = dim[2];
+      nktop = dim[3];
+      if( nctop != 1 || nktop != 1 )
+      {
+	 cout << rname << " Error, topography has nc = " << nctop << " and nk = " << nktop << endl;
+	 close(fd);
+	 return;
+      }
+      // ---------- Skip other block headers
+      for( int p=0 ; p < npatches-1 ; p++ )
+	 nr=lseek(fd,4*sizeof(int)+3*sizeof(double),SEEK_CUR);
+
+      // ---------- read topography on file into array gridElev
+      gridElev.define(1,nitop,1,njtop,1,1);
+
+      if( prec == 8 )
+      {
+	 nr=read(fd,gridElev.c_ptr(),(static_cast<size_t>(nitop))*njtop*flsize);
+         if( nr != (static_cast<size_t>(nitop))*njtop*flsize )
+	 {
+	    cout << rname << " Error reading topography, nr = " << nr << 
+	       " but need " << (static_cast<size_t>(nitop))*njtop*flsize << "bytes " << endl;
+	    close(fd);
+	    return;
+	 }
+         if( swapbytes )
+	    bswap.byte_rev( gridElev.c_ptr(), nitop*njtop, "double");
+      }
+      else
+      {
+         float* data = new float[nitop*njtop];
+	 nr=read(fd,data,(static_cast<size_t>(nitop))*njtop*flsize);
+         if( nr != (static_cast<size_t>(nitop))*njtop*flsize )
+	 {
+	    cout << rname << " Error reading topography, nr = " << nr << 
+	       " but need " << (static_cast<size_t>(nitop))*njtop*flsize << "bytes " << endl;
+	    close(fd);
+	    return;
+	 }
+         if( swapbytes )
+	    bswap.byte_rev( data, nitop*njtop, "float");
+	 gridElev.assign(data);
+	 delete[] data;
+      }
+      // ---------- done reading
+      close(fd);
+
+      double x0, y0; // Origin on grid file
+      computeCartesianCoord( x0, y0, lon0, lat0 );
+      
+      // double hh, hv; // Grid spacing of topography array on file
+
+    // Topography read, next interpolate to the computational grid
+      int topLevel=mNumberOfGrids-1;
+      for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+	 for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	 {
+	    double x = (i-1)*mGridSize[topLevel];
+	    double y = (j-1)*mGridSize[topLevel];
+            int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
+            int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
+            bool extrapol=false;
+            if( i0 < -1 )
+	    {
+               extrapol = true;
+	       i0 = 1;
+	    }
+	    else if( i0 < 2 )
+	       i0 = 2;
+	    
+	    if( i0 > nitop+1 )
+	    {
+               extrapol = true;
+	       i0 = nitop;
+	    }
+	    else if( i0 > nitop-2 )
+	       i0 = nitop-2;
+	    
+            if( j0 < -1 )
+	    {
+               extrapol = true;
+	       j0 = 1;
+	    }
+	    else if( j0 < 2 )
+	       j0 = 2;
+
+	    if( j0 > njtop+1 )
+	    {
+               extrapol = true;
+	       j0 = njtop;
+	    }
+	    else if( j0 > njtop-2 )
+	       j0 = njtop-2;
+
+            if( !extrapol )
+	    {
+	       double q = i0 + (x - (i0-1)*hh)/hh;
+	       double r = j0 + (y - (j0-1)*hh)/hh;
+	       double Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+	       Qim1 = (q-i0)*(q-i0-1)*(q-i0-2)/(-6.);
+	       Qi   = (q-i0+1)*(q-i0-1)*(q-i0-2)/(2.);
+	       Qip1 = (q-i0+1)*(q-i0)*(q-i0-2)/(-2.);
+	       Qip2 = (q-i0+1)*(q-i0)*(q-i0-1)/(6.);
+
+	       Rjm1 = (r-j0)*(r-j0-1)*(r-j0-2)/(-6.);
+	       Rj   = (r-j0+1)*(r-j0-1)*(r-j0-2)/(2.);
+	       Rjp1 = (r-j0+1)*(r-j0)*(r-j0-2)/(-2.);
+	       Rjp2 = (r-j0+1)*(r-j0)*(r-j0-1)/(6.);
+
+	       tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
+		  +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+	       tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
+		  +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
+	       tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
+		  +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
+	       tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
+		  +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
+	       mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+	    }
+	    else
+	       mTopo(i,j,1) = gridElev(i0,j0,1);
+	 }
+   }
+   else
+      cout << rname << " error could not open file " << a_topoFileName << endl;
 }
 
 //-----------------------------------------------------------------------

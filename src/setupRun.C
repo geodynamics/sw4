@@ -852,6 +852,7 @@ void EW::set_materials()
 // tmp
 //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n", m_useVelocityThresholds, m_vpMin, m_vsMin);
 // Extrapolate to ghost points in x and y, if they were not set by the previous routines.
+//    cout << "min rho before " << mRho[0].minimum() << endl;
     extrapolateInXY( mRho );
     extrapolateInXY( mMu );
     extrapolateInXY( mLambda );
@@ -860,7 +861,7 @@ void EW::set_materials()
       extrapolateInXY(mQs);
       extrapolateInXY(mQp);
     }
-
+    //    cout << "min rho after " << mRho[0].minimum() << endl;
     if( m_use_attenuation && m_qmultiplier != 1 )
     {
        for (int g=0; g<mNumberOfGrids; g++)

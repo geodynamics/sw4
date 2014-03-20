@@ -28,7 +28,7 @@ public:
    Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
 	    int starts[3], int nptsbuf=1000000, int padding=0 );
    void write_array( int* fid, int nc, void* array, off_t pos0, char* type );
-   void read_array( int* fid, int nc, double* array, off_t pos0, char* typ );
+   void read_array( int* fid, int nc, double* array, off_t pos0, const char* typ );
 			      
    void print( );
    void begin_sequential( MPI_Comm comm );

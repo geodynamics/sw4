@@ -450,30 +450,34 @@ void EW::extrapolateInXY( vector<Sarray>& field )
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iStart[g] ; i < 1 ; i++ )
+	       {
 		  if( field[g](i,j,k) == -1 )
 		     field[g](i,j,k) = field[g](1,j,k);
-
+	       }
       if( m_iEndInt[g] == m_global_nx[g] )
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
+	       {
 		  if( field[g](i,j,k) == -1 )
 		     field[g](i,j,k) = field[g](m_iEndInt[g],j,k);
-
+	       }
       if( m_jStartInt[g] == 1 )
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j < 1 ; j++ )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       {
 		  if( field[g](i,j,k) == -1 )
 		     field[g](i,j,k) = field[g](i,1,k);
-
+	       }
       if( m_jEndInt[g] == m_global_ny[g] )
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       {
 		  if( field[g](i,j,k) == -1 )
 		     field[g](i,j,k) = field[g](i,m_jEndInt[g],k);
-
+	       }
 // corners not necessary to treat explicitly???
       
    }
