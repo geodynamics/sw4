@@ -78,8 +78,10 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		   int j0 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr]     ) );
 		   int k0 = static_cast<int>( trunc( 1 + (z-m_z0[gr])/m_hv[gr] ) ); 
 
+		   // Use bilinear interpolation always:
+                   intp_cubic = false;
+
 	   // Bias stencil near the boundary, need to communicate arrays afterwards.
-                   intp_cubic = true;
 		   if( i0 <= m_ifirst[gr] )
 		   {
 		      i0 = m_ifirst[gr];
@@ -137,23 +139,23 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 			       qs[ind] += wgh*mMaterial[gr](5,i0-1+ii,j0-1+jj,k0-1+kk);
 			    }
 			 }
-		   if( rhop[ind] < 1900 )
-		   {
-		      cout << "rho= " << rhop[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
-			 "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
-		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
-		      cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
-		      cout << " r, s, t = " << r << " " << s << " " << t << endl;
-                      cout << "i0, j0, k0 = " << i0 << " " << j0 << " " << k0 << endl;
-		   }
-		   if( csp[ind] < 310 )
-		   {
-		      cout << "cs= " << csp[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
-			 "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
-		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
-		      cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
-		      cout << " r, s, t = " << r << " " << s << " " << t << endl;
-		   }
+		   //		   if( rhop[ind] < 1900 )
+		   //		   {
+		   //		      cout << "rho= " << rhop[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+		   //			 "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
+		   //		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
+		   //		      cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
+		   //		      cout << " r, s, t = " << r << " " << s << " " << t << endl;
+		   //                      cout << "i0, j0, k0 = " << i0 << " " << j0 << " " << k0 << endl;
+		   //		   }
+		   //		   if( csp[ind] < 310 )
+		   //		   {
+		   //		      cout << "cs= " << csp[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+		   //			 "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
+		   //		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
+		   //		      cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
+		   //		      cout << " r, s, t = " << r << " " << s << " " << t << endl;
+		   //		   }
 		   }
 		   else
 		   {
@@ -186,12 +188,12 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
    		                wghz*(   (1-wghy)*(   (1-wghx)*mMaterial[gr](5,i0,j0,k0+1)  + wghx*mMaterial[gr](5,i0+1,j0,k0+1) ) +
    					   wghy*(     (1-wghx)*mMaterial[gr](5,i0,j0+1,k0+1)+ wghx*mMaterial[gr](5,i0+1,j0+1,k0+1) ) );
    		   }
-		   if( rhop[ind] < 1900 )
-		      cout << "rho= " << rhop[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
-			 "wghs = " << wghx << " " << wghy << " " << wghz << endl;
-		   if( csp[ind] < 310 )
-		      cout << "cs= " << csp[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
-			 "wghs = " << wghx << " " << wghy << " " << wghz << endl;
+		   //		   if( rhop[ind] < 1900 )
+		   //		      cout << "rho= " << rhop[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+		   //			 "wghs = " << wghx << " " << wghy << " " << wghz << endl;
+		   //		   if( csp[ind] < 310 )
+		   //		      cout << "cs= " << csp[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+		   //			 "wghs = " << wghx << " " << wghy << " " << wghz << endl;
 		   }
 
 		}
@@ -211,7 +213,6 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
       mEW->material_ic( xis);
       mEW->material_ic( xip );
    }
-
 }
 
 //-----------------------------------------------------------------------
@@ -568,9 +569,6 @@ void MaterialRfile::fill_in_fluids()
 	    int k0 = mMaterial[p].m_kb;
 	    while( mMaterial[p](3,i,j,k0) == -999 && k0 < mMaterial[p].m_ke )
 	       k0++;
-            if( k0 > mMaterial[p].m_kb )
-	       //	       cout << "p= " << p << "k0 = " << k0 << " rh=" << mMaterial[p](1,i,j,k0) << " cp=" << mMaterial[p](2,i,j,k0)
-	       //		    << " cs=" << mMaterial[p](3,i,j,k0) << endl;
    // k0 is now the first k with cs > 0.
             for( int k=mMaterial[p].m_kb ; k < k0 ; k++ )
 	    {
