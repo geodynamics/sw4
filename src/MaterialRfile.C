@@ -1,0 +1,589 @@
+
+// -*-c++-*-
+
+#include "Require.h"
+
+#include <cstring>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <math.h>
+#include <fcntl.h>
+#include "EW.h"
+#include "MaterialRfile.h"
+#include "Byteswapper.h"
+//#include "Parallel_IO.h"
+
+using namespace std;
+
+
+//-----------------------------------------------------------------------
+MaterialRfile::MaterialRfile( EW* a_ew, const string a_file,
+				   const string a_directory ):
+   mEW(a_ew),
+   m_model_file(a_file),
+   m_model_dir(a_directory)
+{
+   read_rfile();
+}
+
+//-----------------------------------------------------------------------
+void MaterialRfile::set_material_properties(std::vector<Sarray> & rho, 
+			       std::vector<Sarray> & cs,
+			       std::vector<Sarray> & cp, 
+			       std::vector<Sarray> & xis, 
+			       std::vector<Sarray> & xip )
+{
+   bool intp_cubic=true;
+// Assume attenuation arrays defined on all grids if they are defined on grid zero.
+   bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
+
+   for( int g=0 ; g < mEW->mNumberOfGrids  ; g++ )
+   {
+      bool curvilinear = mEW->topographyExists() && g == mEW->mNumberOfGrids-1;
+      double* rhop=rho[g].c_ptr();
+      double*  csp=cs[g].c_ptr();
+      double*  cpp=cp[g].c_ptr();
+      double* qp, *qs;
+      if( use_q  )
+      {
+	 qs = xis[g].c_ptr();
+	 qp = xip[g].c_ptr();
+      }
+      size_t ind=0;
+      size_t ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
+      size_t nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
+      size_t ofs = -mEW->m_iStart[g]-ni*(mEW->m_jStart[g])-ni*nj*(mEW->m_kStart[g]);
+      for (int k = mEW->m_kStartInt[g]; k <= mEW->m_kEndInt[g]; ++k)
+	 for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
+	    for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
+	    {
+		double x = (i-1)*mEW->mGridSize[g];
+		double y = (j-1)*mEW->mGridSize[g];
+		double z;
+		if( curvilinear )
+		   z = mEW->mZ(i,j,k);
+		else
+		   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
+		ind = ofs + i + ni*j + ni*nj*k;
+		if( inside( x, y, z )  )
+		{
+                   int gr = m_npatches-1;
+		   while( gr >= 1 && z < m_z0[gr] )
+		      gr--;
+                   if( gr==0 ) // gr=0 is topography.
+		      gr = 1;
+		   int i0 = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr]     ) );
+		   int j0 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr]     ) );
+		   int k0 = static_cast<int>( trunc( 1 + (z-m_z0[gr])/m_hv[gr] ) ); 
+
+	   // Bias stencil near the boundary, need to communicate arrays afterwards.
+                   intp_cubic = true;
+		   if( i0 <= m_ifirst[gr] )
+		   {
+		      i0 = m_ifirst[gr];
+                      intp_cubic = false;
+		   }
+		   if( i0 >= m_ilast[gr]-1 )
+		   {
+		      i0 = m_ilast[gr]-1;
+                      intp_cubic = false;
+		   }
+		   if( j0 <= m_jfirst[gr] )
+		   {
+		      j0 = m_jfirst[gr];
+		      intp_cubic = false;
+		   }
+		   if( j0 >= m_jlast[gr]-1 )
+		   {
+		      j0 = m_jlast[gr]-1;
+                      intp_cubic = false;
+		   }
+		   if( k0 <= m_kfirst[gr] )
+		   {
+		      k0 = m_kfirst[gr];
+                      intp_cubic = false;
+		   }
+		   if( k0 >= m_klast[gr]-1 )
+		   {
+		      k0 = m_klast[gr]-1;
+                      intp_cubic = false;
+		   }
+
+		   // cubic Hermite intp.
+                   if( intp_cubic )
+		   {
+		   double r = (x-( (i0-1)*m_hh[gr]+m_x0) )/m_hh[gr];
+		   double wghx[4] = {0.5*r*(-r*r+2*r-1),0.5*(3*r*r*r-5*r*r+2),0.5*r*(-3*r*r+4*r+1),0.5*r*r*(r-1)};
+		   double s = (y-( (j0-1)*m_hh[gr]+m_y0) )/m_hh[gr];
+		   double wghy[4] = {0.5*s*(-s*s+2*s-1),0.5*(3*s*s*s-5*s*s+2),0.5*s*(-3*s*s+4*s+1),0.5*s*s*(s-1)};
+                   double t=  (z-( (k0-1)*m_hv[gr]+m_z0[gr]) )/m_hv[gr];
+		   double wghz[4] = {0.5*t*(-t*t+2*t-1),0.5*(3*t*t*t-5*t*t+2),0.5*t*(-3*t*t+4*t+1),0.5*t*t*(t-1)};
+                   rhop[ind]=cpp[ind]=csp[ind]=0;
+		   if( use_q )
+		      qp[ind]=qs[ind]=0;
+                   for( int kk=0 ; kk < 4 ; kk++ )
+		      for( int jj=0 ; jj < 4 ; jj++ )
+			 for( int ii=0 ; ii < 4 ; ii++ )
+			 {
+                            double wgh = wghx[ii]*wghy[jj]*wghz[kk];
+                            rhop[ind] += wgh*mMaterial[gr](1,i0-1+ii,j0-1+jj,k0-1+kk);
+                            cpp[ind]  += wgh*mMaterial[gr](2,i0-1+ii,j0-1+jj,k0-1+kk);
+                            csp[ind]  += wgh*mMaterial[gr](3,i0-1+ii,j0-1+jj,k0-1+kk);
+			    if( use_q )
+			    {
+			       qp[ind] += wgh*mMaterial[gr](4,i0-1+ii,j0-1+jj,k0-1+kk);
+			       qs[ind] += wgh*mMaterial[gr](5,i0-1+ii,j0-1+jj,k0-1+kk);
+			    }
+			 }
+		   if( rhop[ind] < 1900 )
+		   {
+		      cout << "rho= " << rhop[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+			 "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
+		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
+		      cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
+		      cout << " r, s, t = " << r << " " << s << " " << t << endl;
+                      cout << "i0, j0, k0 = " << i0 << " " << j0 << " " << k0 << endl;
+		   }
+		   if( csp[ind] < 310 )
+		   {
+		      cout << "cs= " << csp[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+			 "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
+		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
+		      cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
+		      cout << " r, s, t = " << r << " " << s << " " << t << endl;
+		   }
+		   }
+		   else
+		   {
+   		   // bilinear intp.
+                      double wghx = (x-( (i0-1)*m_hh[gr]+m_x0) )/m_hh[gr];
+                      double wghy = (y-( (j0-1)*m_hh[gr]+m_y0) )/m_hh[gr];
+                      double wghz = (z-( (k0-1)*m_hv[gr]+m_z0[gr]) )/m_hv[gr];
+   		   rhop[ind] = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial[gr](1,i0,j0,k0)    +wghx*mMaterial[gr](1,i0+1,j0,k0)   ) +
+   					  wghy*(     (1-wghx)*mMaterial[gr](1,i0,j0+1,k0)  +wghx*mMaterial[gr](1,i0+1,j0+1,k0) ) ) + 
+   		                   wghz*( (1-wghy)*( (1-wghx)*mMaterial[gr](1,i0,j0,k0+1)  +wghx*mMaterial[gr](1,i0+1,j0,k0+1) ) +
+   				 	   wghy*(    (1-wghx)*mMaterial[gr](1,i0,j0+1,k0+1)+wghx*mMaterial[gr](1,i0+1,j0+1,k0+1) ) );
+
+   		   cpp[ind] = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial[gr](2,i0,j0,k0)    + wghx*mMaterial[gr](2,i0+1,j0,k0) ) +
+   					 wghy*(     (1-wghx)*mMaterial[gr](2,i0,j0+1,k0)  + wghx*mMaterial[gr](2,i0+1,j0+1,k0) ) ) + 
+   		                 wghz*(  (1-wghy)*( (1-wghx)*mMaterial[gr](2,i0,j0,k0+1)  + wghx*mMaterial[gr](2,i0+1,j0,k0+1) ) +
+   					 wghy*(     (1-wghx)*mMaterial[gr](2,i0,j0+1,k0+1)+ wghx*mMaterial[gr](2,i0+1,j0+1,k0+1) ) );
+   
+   		   csp[ind] = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial[gr](3,i0,j0,k0)    + wghx*mMaterial[gr](3,i0+1,j0,k0) ) +
+   					  wghy*(    (1-wghx)*mMaterial[gr](3,i0,j0+1,k0)  + wghx*mMaterial[gr](3,i0+1,j0+1,k0) ) ) + 
+   		                wghz*(   (1-wghy)*( (1-wghx)*mMaterial[gr](3,i0,j0,k0+1)  + wghx*mMaterial[gr](3,i0+1,j0,k0+1) ) +
+   					   wghy*(   (1-wghx)*mMaterial[gr](3,i0,j0+1,k0+1)+ wghx*mMaterial[gr](3,i0+1,j0+1,k0+1) ) );
+   		   if( use_q )
+   		   {
+   		      qp[ind] = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial[gr](4,i0,j0,k0)    + wghx*mMaterial[gr](4,i0+1,j0,k0) ) +
+   					  wghy*(      (1-wghx)*mMaterial[gr](4,i0,j0+1,k0)  + wghx*mMaterial[gr](4,i0+1,j0+1,k0) ) ) + 
+   		                wghz*(   (1-wghy)*(   (1-wghx)*mMaterial[gr](4,i0,j0,k0+1)  + wghx*mMaterial[gr](4,i0+1,j0,k0+1) ) +
+   					   wghy*(     (1-wghx)*mMaterial[gr](4,i0,j0+1,k0+1)+ wghx*mMaterial[gr](4,i0+1,j0+1,k0+1) ) );
+   		      qs[ind] = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial[gr](5,i0,j0,k0)    + wghx*mMaterial[gr](5,i0+1,j0,k0) ) +
+   					  wghy*(      (1-wghx)*mMaterial[gr](5,i0,j0+1,k0)  + wghx*mMaterial[gr](5,i0+1,j0+1,k0) ) ) + 
+   		                wghz*(   (1-wghy)*(   (1-wghx)*mMaterial[gr](5,i0,j0,k0+1)  + wghx*mMaterial[gr](5,i0+1,j0,k0+1) ) +
+   					   wghy*(     (1-wghx)*mMaterial[gr](5,i0,j0+1,k0+1)+ wghx*mMaterial[gr](5,i0+1,j0+1,k0+1) ) );
+   		   }
+		   if( rhop[ind] < 1900 )
+		      cout << "rho= " << rhop[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+			 "wghs = " << wghx << " " << wghy << " " << wghz << endl;
+		   if( csp[ind] < 310 )
+		      cout << "cs= " << csp[ind] << " at " << i << " " << j << " " << k << " gr= " << gr <<
+			 "wghs = " << wghx << " " << wghy << " " << wghz << endl;
+		   }
+
+		}
+	    }
+
+   }
+   mEW->communicate_arrays( rho );
+   mEW->communicate_arrays( cs );
+   mEW->communicate_arrays( cp );
+   mEW->material_ic( rho );
+   mEW->material_ic( cs );
+   mEW->material_ic( cp );
+   if( use_q )
+   {
+      mEW->communicate_arrays( xis );
+      mEW->communicate_arrays( xip );
+      mEW->material_ic( xis);
+      mEW->material_ic( xip );
+   }
+
+}
+
+//-----------------------------------------------------------------------
+int MaterialRfile::io_processor( )
+{
+   // Find out if this processor will participate in the I/O
+   int iread=0, nproc, myid;
+   int nrwriters = mEW->getNumberOfWritersPFS();
+   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+   if( nrwriters > nproc )
+      nrwriters = nproc;
+   int q, r;
+   if( nproc == 1 || nrwriters == 1 )
+   {
+      q = 0;
+      r = 0;
+   }
+   else
+   {
+      q = (nproc-1)/(nrwriters-1);
+      r = (nproc-1) % (nrwriters-1);
+   }
+   for( int w=0 ; w < nrwriters ; w++ )
+      if( q*w+r == myid )
+	 iread = 1;
+   return iread;
+}
+
+//-----------------------------------------------------------------------
+void MaterialRfile::read_rfile( )
+{
+   string rname = "MaterialRfile::read_rfile";
+
+  // Figure out bounding box in this processor
+   double xmin=1e38, xmax=-1e38, ymin=1e38, ymax=-1e38, zmin=1e38, zmax=-1e38;
+   for( int g=0 ; g < mEW->mNumberOfGrids ; g++ )
+   {
+      double h=mEW->mGridSize[g];
+      if( xmin > (mEW->m_iStart[g]-1)*h )
+	 xmin =  (mEW->m_iStart[g]-1)*h;
+      if( xmax < (mEW->m_iEnd[g]-1)*h )
+	 xmax =  (mEW->m_iEnd[g]-1)*h;
+      if( ymin > (mEW->m_jStart[g]-1)*h )
+	 ymin =  (mEW->m_jStart[g]-1)*h;
+      if( ymax < (mEW->m_jEnd[g]-1)*h )
+	 ymax =  (mEW->m_jEnd[g]-1)*h;
+      if( mEW->topographyExists() && g == mEW->mNumberOfGrids-1 )
+      {
+         int kb=mEW->m_kStart[g], ke=mEW->m_kEnd[g];
+         for( int j=mEW->m_jStart[g] ; j <= mEW->m_jEnd[g] ; j++ )
+	    for( int i=mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
+	    {
+	       if( zmin > mEW->mZ(i,j,kb) )
+		  zmin = mEW->mZ(i,j,kb);
+	       if( zmax < mEW->mZ(i,j,ke) )
+		  zmax = mEW->mZ(i,j,ke);
+	    }
+      }
+      else
+      {
+	 if( zmin > (mEW->m_kStart[g]-1)*h + mEW->m_zmin[g] ) 
+	    zmin = (mEW->m_kStart[g]-1)*h + mEW->m_zmin[g];
+	 if( zmax < (mEW->m_kEnd[g]-1)*h + mEW->m_zmin[g] )
+	    zmax = (mEW->m_kEnd[g]-1)*h + mEW->m_zmin[g];
+      }
+   }
+   m_xminloc = xmin;
+   m_xmaxloc = xmax;
+   m_yminloc = ymin;
+   m_ymaxloc = ymax;
+   m_zminloc = zmin;
+   m_zmaxloc = zmax;
+
+  // Read rfile header. Translate each patch into SW4 Cartesian coordinate system
+   string fname = m_model_dir + "/" + m_model_file;
+   int fd = open( fname.c_str(), O_RDONLY );
+   if( fd != -1 )
+   {
+      int magic;
+      size_t nr = read(fd,&magic,sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading magic number, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+
+      Byteswapper bswap;
+      int onesw=1;
+      bswap.byte_rev( &onesw, 1, "int" );
+      bool swapbytes;
+      if( magic == 1 )
+	 swapbytes = false;
+      else if( magic == onesw )
+	 swapbytes = true;
+      else
+      {
+	 cout << rname << "error could not determine byte order on file "
+	      << fname << " magic number is " << magic << endl;
+         close(fd);
+	 return;
+      }
+
+      // ---------- precision
+      int prec = 0;
+      nr = read(fd,&prec,sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading prec, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &prec, 1, "int" );
+      int flsize=4;
+      if( prec == 8 )
+	 flsize = sizeof(double);
+      else if( prec == 4 )
+	 flsize = sizeof(float);
+
+      // ---------- attenuation on file ?
+      int att;
+      nr = read(fd,&att,sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading att, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &att, 1, "int" );
+      m_use_attenuation = (att==1);
+
+      // ---------- azimuth on file
+      double alpha;
+      nr = read(fd,&alpha,sizeof(double));
+      if( nr != sizeof(double) )
+      {
+	 cout << rname << " Error reading alpha, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &alpha, 1, "double" );
+      CHECK_INPUT( fabs(alpha-mEW->getGridAzimuth()) < 1e-7, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
+		   " azimuth on rfile = " << alpha << " azimuth of coordinate sytem = " << mEW->getGridAzimuth() );
+
+      // ---------- origin on file
+      double lon0, lat0;
+      nr = read( fd, &lon0, sizeof(double));
+      if( nr != sizeof(double) )
+      {
+	 cout << rname << " Error reading lon0, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &lon0, 1, "double" );
+
+      nr = read( fd, &lat0, sizeof(double));
+      if( nr != sizeof(double) )
+      {
+	 cout << rname << " Error reading lat0, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &lat0, 1, "double" );
+      mEW->computeCartesianCoord( m_x0, m_y0, lon0, lat0 );
+
+      // ---------- length of projection string
+      int len;
+      nr = read( fd, &len, sizeof(int));
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading len, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &len, 1, "int" );
+
+      // ---------- skip projection string
+      nr = lseek(fd, len*sizeof(char), SEEK_CUR );
+
+      // ---------- number of blocks on file
+      nr = read( fd, &m_npatches, sizeof(int) );
+      if( nr != sizeof(int) )
+      {
+	 cout << rname << " Error reading npatches, nr= " << nr
+	      << "bytes read" << endl;
+         close(fd);
+	 return;
+      }
+      if( swapbytes )
+	 bswap.byte_rev( &m_npatches, 1, "int" );
+
+      m_hh.resize(m_npatches);
+      m_hv.resize(m_npatches);
+      m_z0.resize(m_npatches);
+      m_ni.resize(m_npatches);
+      m_nj.resize(m_npatches);
+      m_nk.resize(m_npatches);
+      // ---------- read block headers
+      vector<int> ncblock(m_npatches);
+      for( int p=0 ; p < m_npatches ; p++ )
+      {
+	 // ---------- first part of block header
+	 double hs[3];
+	 nr = read( fd, hs, 3*sizeof(double) );
+	 if( nr != 3*sizeof(double) )
+	 {
+	    cout << rname << " Error reading block spacings nr= " << nr
+		 << "bytes read" << endl;
+	    close(fd);
+	    return;
+	 }
+	 if( swapbytes )
+	    bswap.byte_rev( hs, 3, "double" );
+	 m_hh[p] = hs[0];
+	 m_hv[p] = hs[1];
+	 m_z0[p] = hs[2];
+
+      // ---------- second part of block header
+	 int dim[4];
+	 nr = read( fd, dim, 4*sizeof(int) );
+	 if( nr != 4*sizeof(int) )
+	 {
+	    cout << rname << " Error reading block dimensions nr= " << nr
+		 << "bytes read" << endl;
+	    close(fd);
+	    return;
+	 }
+	 if( swapbytes )
+	    bswap.byte_rev( dim, 4, "int" );
+
+	 ncblock[p] = dim[0];
+	 m_ni[p]    = dim[1];
+	 m_nj[p]    = dim[2];
+	 m_nk[p]    = dim[3];
+      }
+
+
+      mMaterial.resize(m_npatches);
+      m_ifirst.resize(m_npatches);
+      m_ilast.resize(m_npatches);
+      m_jfirst.resize(m_npatches);
+      m_jlast.resize(m_npatches);
+      m_kfirst.resize(m_npatches);
+      m_klast.resize(m_npatches);
+
+      size_t pos0 = 5*sizeof(int) + 3*sizeof(double)+ len*sizeof(char) +
+	 m_npatches*(3*sizeof(double)+4*sizeof(int));
+
+// For each patch, figure out a box that encloses [xmin,xmax] x [ymin,ymax] x [zmin,zmax]
+      for( int p=0 ; p < m_npatches ; p++ )
+      {
+	 m_ifirst[p] = static_cast<int>(floor( 1 + (xmin-m_x0)/m_hh[p]));
+	 m_ilast[p] = static_cast<int>( ceil(  1 + (xmax-m_x0)/m_hh[p]));
+	 m_jfirst[p] = static_cast<int>(floor( 1 + (ymin-m_y0)/m_hh[p]));
+	 m_jlast[p] = static_cast<int>( ceil(  1 + (ymax-m_y0)/m_hh[p]));
+	 m_kfirst[p] = static_cast<int>(floor( 1 + (zmin-m_z0[p])/m_hv[p]));
+	 m_klast[p] = static_cast<int>( ceil(  1 + (zmax-m_z0[p])/m_hv[p]));
+
+      // Limit index ranges to global size limits
+	 if( m_ifirst[p] < 1 )
+	    m_ifirst[p] = 1;
+	 if( m_ilast[p] > m_ni[p] )
+	    m_ilast[p] = m_ni[p];
+	 if( m_jfirst[p] < 1 )
+	    m_jfirst[p] = 1;
+	 if( m_jlast[p] > m_nj[p] )
+	    m_jlast[p] = m_nj[p];
+	 if( m_kfirst[p] < 1 )
+	    m_kfirst[p] = 1;
+	 if( m_klast[p] > m_nk[p] )
+	    m_klast[p] = m_nk[p];
+	 cout << "patch nr " << p << " i " << m_ifirst[p] << " " << m_ilast[p] <<
+	    " j " << m_jfirst[p] << " " << m_jlast[p] << 
+	    " k " << m_kfirst[p] << " " << m_klast[p] << endl;
+         cout << "nr components " << ncblock[p] << endl;
+	 cout << "patch nr global size " << m_ni[p] << " x " << m_nj[p] << " x " << m_nk[p] << endl;
+	 // Allocate memory
+	 mMaterial[p].define(ncblock[p],m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+      }
+      int iread = io_processor();
+      //      vector<Parallel_IO*> pio(m_npatches);
+      for( int p=0 ; p < m_npatches ; p++ )
+      {
+	 int global[3]={ m_ni[p], m_nj[p], m_nk[p] };
+	 int local[3] ={ m_ilast[p]-m_ifirst[p]+1, m_jlast[p]-m_jfirst[p]+1, m_klast[p]-m_kfirst[p]+1 };
+	 int start[3] ={ m_ifirst[p]-1, m_jfirst[p]-1, m_kfirst[p]-1 };
+	 Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
+	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
+    // Read corresponding part of patches
+         if( prec == 8 )
+	    pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "double" );
+         else
+	    pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "float" );
+
+	 if( swapbytes )
+	 {
+	    size_t npts = local[0]*static_cast<size_t>(local[1])*local[2]*ncblock[p];
+	    bswap.byte_rev( mMaterial[p].c_ptr(), npts, "double" );
+	 }
+	 pos0 += ncblock[p]*m_ni[p]*static_cast<size_t>(m_nj[p])*m_nk[p]*flsize;
+         delete pio;
+      }
+      close(fd);
+
+      fill_in_fluids();
+      //      for( int p=1 ; p < m_npatches ; p++ )
+      //      {
+      //	 cout << "rho min and max " << mMaterial[p].minimum(1)<< " " << mMaterial[p].maximum(1) << endl;
+      //	 cout << "cp  min and max " << mMaterial[p].minimum(2)<< " " << mMaterial[p].maximum(2) << endl;
+      //	 cout << "cs  min and max " << mMaterial[p].minimum(3)<< " " << mMaterial[p].maximum(3) << endl;
+      //      }
+      //      for( int p=0 ; p < m_npatches ; p++ )
+      //	 delete pio[p];
+      
+      //      cout << "origin " << m_x0 << " " << m_y0 << endl;
+      //      cout << "DEBUG -----" << endl;
+      //      cout << "Block nr 2  " << endl;
+      //      cout << "index " << 1+(50000-m_x0)/m_hh[1] << endl;
+      //
+      //      int i=26;
+      //      for( int k=m_kfirst[1] ; k <= m_klast[1] ; k++ )
+      //	 for( int j=m_jfirst[1] ; j <= m_jlast[1] ; j++ )
+      //	    cout << j << " " << k << " " << mMaterial[1](1,i,j,k) << endl;
+      //
+      //      cout << "END DEBUG -----" << endl;
+   }
+   else
+      cout << "MaterialRfile::read_rfile, error could not open file " << fname << endl;
+}
+
+//-----------------------------------------------------------------------
+void MaterialRfile::fill_in_fluids()
+{
+   // Start from p=1, p=0 is the topography.
+   for( int p=1 ; p < m_npatches ; p++ )
+   {
+      for( int j=mMaterial[p].m_jb ; j <= mMaterial[p].m_je ; j++ )
+	 for( int i=mMaterial[p].m_ib ; i <= mMaterial[p].m_ie ; i++ )
+	 {
+	    int k0 = mMaterial[p].m_kb;
+	    while( mMaterial[p](3,i,j,k0) == -999 && k0 < mMaterial[p].m_ke )
+	       k0++;
+            if( k0 > mMaterial[p].m_kb )
+	       //	       cout << "p= " << p << "k0 = " << k0 << " rh=" << mMaterial[p](1,i,j,k0) << " cp=" << mMaterial[p](2,i,j,k0)
+	       //		    << " cs=" << mMaterial[p](3,i,j,k0) << endl;
+   // k0 is now the first k with cs > 0.
+            for( int k=mMaterial[p].m_kb ; k < k0 ; k++ )
+	    {
+	       mMaterial[p](1,i,j,k) = mMaterial[p](1,i,j,k0);
+	       mMaterial[p](2,i,j,k) = mMaterial[p](2,i,j,k0);
+	       mMaterial[p](3,i,j,k) = mMaterial[p](3,i,j,k0);
+               if( mMaterial[p].m_nc > 3 )
+	       {
+		  mMaterial[p](4,i,j,k) = mMaterial[p](4,i,j,k0);
+		  mMaterial[p](5,i,j,k) = mMaterial[p](5,i,j,k0);
+	       }
+	    }
+	 }
+   }
+   
+}
