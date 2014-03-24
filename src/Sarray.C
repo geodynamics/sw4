@@ -534,7 +534,7 @@ void Sarray::assign( const double* ar )
 void Sarray::assign( const float* ar )
 {
    for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
-      m_data[i] = ar[i];
+     m_data[i] = (double) ar[i];
 }
 
 //-----------------------------------------------------------------------

@@ -498,12 +498,17 @@ void MaterialRfile::read_rfile( )
 	    m_kfirst[p] = 1;
 	 if( m_klast[p] > m_nk[p] )
 	    m_klast[p] = m_nk[p];
-	 cout << "patch nr " << p << " i " << m_ifirst[p] << " " << m_ilast[p] <<
-	    " j " << m_jfirst[p] << " " << m_jlast[p] << 
-	    " k " << m_kfirst[p] << " " << m_klast[p] << endl;
-         cout << "nr components " << ncblock[p] << endl;
-	 cout << "patch nr global size " << m_ni[p] << " x " << m_nj[p] << " x " << m_nk[p] << endl;
-	 // Allocate memory
+	 if (mEW->getVerbosity() >=3)
+	 {
+	   cout << "myRank = " << mEW->getRank() << endl;
+	   cout << "patch nr " << p << " i " << m_ifirst[p] << " " << m_ilast[p] <<
+	     " j " << m_jfirst[p] << " " << m_jlast[p] << 
+	     " k " << m_kfirst[p] << " " << m_klast[p] << endl;
+	   cout << "nr components " << ncblock[p] << endl;
+	   cout << "patch nr global size " << m_ni[p] << " x " << m_nj[p] << " x " << m_nk[p] << endl;
+	 }
+	 
+// Allocate memory
 	 mMaterial[p].define(ncblock[p],m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
       }
       int iread = io_processor();

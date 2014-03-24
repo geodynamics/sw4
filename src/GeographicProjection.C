@@ -1,6 +1,7 @@
 #include <mpi.h>
 
 #include <cstring>
+#include <cstdio>
 #include "GeographicProjection.h"
 #include "Require.h"
 

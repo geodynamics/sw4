@@ -93,7 +93,9 @@ main(int argc, char **argv)
   
   MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
 
-  cout.precision(6);
+  cout.precision(8);
+// use sci format: 1.2345e-6
+  cout << std::scientific;
   
 // Save the source description here
   vector<Source*> GlobalSources; 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string>
+#include <cstring>
 #include <proj_api.h>
 
 #include "cencalvm/storage/Payload.h"
@@ -28,6 +29,9 @@ main(int argc, char **argv) {
    int status, merc_len;
    char merc_def[256];
    
+/* should parse the file name from the arguments... */
+   std::string filename="/p/lscratche/andersp/USGSBayAreaVM-08.3.0.etree"; // Hard-coded filename!
+
 // hard coded for the USGS Bay Area model
    sprintf(merc_def, "+proj=tmerc +datum=NAD83 +units=m +lon_0=-123.0 +lat_0=35.0 +scale=0.9996");
    merc_len = strlen(merc_def);
@@ -92,44 +96,53 @@ main(int argc, char **argv) {
    
 
 // calculate (lon,lat) coordinates along cell centers in detailed model
-// use SW corner as origin (dm_*[1])
 
    const char* mQueryKeys[]={"Density", "Vp", "Vs", "elevation", "Qp", "Qs","FaultBlock"};
    int mPayloadSize=7;
    double *mPayload, elev;
    cencalvm::query::VMQuery mQuery;
    cencalvm::storage::Geometry* mQueryGeom;
-   char filename[]={"/Users/petersson1/USGSBayAreaVM-08.3.0.etree"}; // Hard-coded filename!
    
    mPayload = new double[7];
    
 // open up the data base file
-   mQuery.filename(filename);
+   mQuery.filename(filename.c_str());
    mQuery.queryType(cencalvm::query::VMQuery::MAXRES);
 // Set values to be returned in queries
    mQuery.queryVals(mQueryKeys, mPayloadSize);
    mQuery.open();
 
+// how many blocks are stored?
+//   int nblocks=3;
+   int nblocks=5;
+   int attenuation=1; // saving attenuation (Qp & Qs)?
+
+// float=4, double=8
+   int prec=4; 
+   printf("Saving data with %i bytes of precision\n", prec);
+   
 // number of points for different grid sizes
-//   int nimax[]={2897, 1449, 725, 363}; // model defined for one more point on finest grid
-//   int njmax[]={1401,  701, 351, 176};
-   int nimax[]={145, 145, 145}; // model defined for one more point on finest grid
-   int njmax[]={ 71,  71,  71};
+   int nimax[]={2897, 2897, 1449, 725, 363}; // NOTE: model is defined for one more point on the finest grid
+   int njmax[]={1401, 1401,  701, 351, 176};
+   // int nimax[]={2897, 145, 145}; 
+   // int njmax[]={1401,  71,  71};
 // how many points in the vertical direction?
-   int nkmax[]={1, 6, 28};
+   int nkmax[]={1, 74, 57, 33, 194};
+//   int nkmax[]={1, 6, 28};
 
 // how many components in each block?
-   int nc[]={1, 5, 5};
+   int nc[]={1, 5, 5, 5, 5};
    
 // block header info
 // cell size in horizontal directions
-//   double clh[] = {100.0, 200.0, 400.0, 800.0};
-   double clh[] = {2000.0, 2000.0, 2000.0};
+   double clh[] = {100.0, 100.0, 200.0, 400.0, 800.0};
+//   double clh[] = {100.0, 2000.0, 2000.0};
 // cell size in vertical direction
-//   double clv[] = {25.0, 50.0, 100.0, 200.0};
-   double clv[] = {400.0, 400.0, 1600.0};
+   double clv[] = {25.0, 25.0, 50.0, 100.0, 200.0};
+//   double clv[] = {400.0, 400.0, 1600.0};
 // topo does not use z0, but needed by format
-   double z0[] = {0.0, -1587.5, 412.5};
+   double z0[] = {0.0, -1437.5, 387.5, 3187.5, 6387.5};
+//   double z0[] = {0.0, -1587.5, 412.5};
    
 // level = block
    int lev;
@@ -140,6 +153,7 @@ main(int argc, char **argv) {
 
 // tmp storage for mat prop
    double mat[5];
+   float felev, fmat[5];
 
 // origin
    xc = 0.0;
@@ -147,19 +161,13 @@ main(int argc, char **argv) {
 
 // magic number
    int magic=1;
-// float=4, double=8
-   int precision=8; 
 
-// how many blocks are stored?
-   int nblocks=3;
-   int attenuation=1; // saving attenuation (Qp & Qs)?
-   
    FILE *fp=fopen("rfile.dat","wb"); // Another hard-coded file name
    FILE *eh=fopen("warnings.txt","w"); // Another hard-coded file name
 
 // write header
    fwrite(&magic, sizeof(int), 1, fp);
-   fwrite(&precision, sizeof(int), 1, fp);
+   fwrite(&prec, sizeof(int), 1, fp);
    fwrite(&attenuation, sizeof(int), 1, fp);
 // azimuth
    fwrite(&alpha_deg, sizeof(double), 1, fp);
@@ -227,9 +235,17 @@ main(int argc, char **argv) {
 // reset status for next query
 	    mQuery.errorHandler()->resetStatus();
 // phony value
-            mPayload[3] = -999.999;
+            mPayload[3] = -999.0;
          }
-         fwrite(&(mPayload[3]), sizeof(double), 1, fp);
+	 if (prec==8)
+	 {
+	   fwrite(&(mPayload[3]), sizeof(double), 1, fp);
+	 }
+	 else
+	 {
+	   felev = (float) mPayload[3];
+	   fwrite(&felev, sizeof(float), 1, fp);
+	 }
       }
    }
    printf("\n");
@@ -294,6 +310,7 @@ main(int argc, char **argv) {
                for (int q=0; q<3; q++)
                {
                   if (mat[q] < minmat[q]) minmat[q] = mat[q];
+		  fmat[q] = (float) mat[q];
                }
                
                
@@ -301,12 +318,28 @@ main(int argc, char **argv) {
                {
                   mat[3]=mPayload[4]; // Qp
                   mat[4]=mPayload[5]; // Qs
-                  fwrite(mat, sizeof(double), 5, fp);
+		  fmat[3] = (float) mat[3];
+		  fmat[4] = (float) mat[4];
+		  if (prec == 8)
+		  {
+		    fwrite(mat, sizeof(double), 5, fp);
+		  }
+		  else
+		  {
+		    fwrite(fmat, sizeof(float), 5, fp);
+		  }
                }
                else
                {
-                  fwrite(mat, sizeof(double), 3, fp);
-               }
+		  if (prec == 8)
+		  {
+		    fwrite(mat, sizeof(double), 3, fp);
+		  }
+		  else
+		  {
+		    fwrite(fmat, sizeof(float), 3, fp);
+		  }               
+	       }
             
 // reset status for next query
                mQuery.errorHandler()->resetStatus();

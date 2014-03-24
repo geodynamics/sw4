@@ -5178,6 +5178,7 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
       }
       if( swapbytes )
 	 bswap.byte_rev( &alpha, 1, "double" );
+
       CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-7, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
 		   " azimuth on rfile = " << alpha << " azimuth of coordinate sytem = " << mGeoAz );
 
@@ -5234,6 +5235,16 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
       if( swapbytes )
 	 bswap.byte_rev( &npatches, 1, "int" );
       
+// test
+      if (m_myRank==0 && mVerbose >= 2)
+      {
+	printf("Rfile header: magic=%i, prec=%i, att=%i\n", magic, prec, att);
+	printf("              azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
+	printf("              pstring-len=%i, pstr='%s'\n", len, "not implemented");
+	printf("              nblocks=%i\n", npatches);
+      }
+      
+
       // ---------- first part of topography block header
       double hs[3];
       nr = read( fd, hs, 3*sizeof(double) );
@@ -5275,6 +5286,15 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
 	 close(fd);
 	 return;
       }
+
+// test
+      if (m_myRank==0 && mVerbose >= 2)
+      {
+	printf("Topography header (block #1)\n");
+	printf("  hh=%e, hv=%e, z0=%e\n", hh, hv, z0);
+	printf("  nc=%i, ni=%i, nj=%i, nk=%i\n", nctop, nitop, njtop, nktop);
+      }
+
       // ---------- Skip other block headers
       for( int p=0 ; p < npatches-1 ; p++ )
 	 nr=lseek(fd,4*sizeof(int)+3*sizeof(double),SEEK_CUR);
@@ -5308,7 +5328,24 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
 	 }
          if( swapbytes )
 	    bswap.byte_rev( data, nitop*njtop, "float");
+	 
 	 gridElev.assign(data);
+
+// test
+	 if (m_myRank==0 && mVerbose >= 3)
+	 {
+	   printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
+	   printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[nitop*njtop-1], gridElev(nitop,njtop,1));
+// get min and max
+	   float tmax=-9e-10, tmin=9e+10;
+	   for (int q=0; q<nitop*njtop; q++)
+	   {
+	     if (data[q]>tmax) tmax=data[q];
+	     if (data[q]<tmin) tmin=data[q];	     
+	   }
+	   printf("topo max (float)=%e, min (float)=%e\n", tmax, tmin);
+	 }
+
 	 delete[] data;
       }
       // ---------- done reading
@@ -5317,78 +5354,127 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
       double x0, y0; // Origin on grid file
       computeCartesianCoord( x0, y0, lon0, lat0 );
       
-      // double hh, hv; // Grid spacing of topography array on file
+// test
+      if (m_myRank==0 && mVerbose >= 3)
+      {
+	printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
+      }
+      
 
     // Topography read, next interpolate to the computational grid
       int topLevel=mNumberOfGrids-1;
+
+      double topomax=-1e99, topomin=1e99;
+      
       for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-	 for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-	 {
-	    double x = (i-1)*mGridSize[topLevel];
-	    double y = (j-1)*mGridSize[topLevel];
-            int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
-            int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
-            bool extrapol=false;
-            if( i0 < -1 )
-	    {
-               extrapol = true;
-	       i0 = 1;
-	    }
-	    else if( i0 < 2 )
-	       i0 = 2;
+      {
+	for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	{
+	  double x = (i-1)*mGridSize[topLevel];
+	  double y = (j-1)*mGridSize[topLevel];
+	  int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
+	  int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
+// test
+	  double xmat0 = (i0-1)*hh, ymat0 = (j0-1)*hh;
+	  double xmatx = x - x0, ymaty = y - y0;
+	  
+	  if (mVerbose>=3)
+	  {
+	    if (xmatx<xmat0 || xmatx>xmat0+hh) printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x, xmatx);
+	    if (ymaty<ymat0 || ymaty>ymat0+hh) printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y, ymaty);
+	  }
+	  
+// end test
+
+	  bool extrapol=false;
+	  if( i0 < -1 )
+	  {
+	    extrapol = true;
+	    i0 = 1;
+	  }
+	  else if( i0 < 2 )
+	    i0 = 2;
 	    
-	    if( i0 > nitop+1 )
-	    {
-               extrapol = true;
-	       i0 = nitop;
-	    }
-	    else if( i0 > nitop-2 )
-	       i0 = nitop-2;
+	  if( i0 > nitop+1 )
+	  {
+	    extrapol = true;
+	    i0 = nitop;
+	  }
+	  else if( i0 > nitop-2 )
+	    i0 = nitop-2;
 	    
-            if( j0 < -1 )
+	  if( j0 < -1 )
+	  {
+	    extrapol = true;
+	    j0 = 1;
+	  }
+	  else if( j0 < 2 )
+	    j0 = 2;
+
+	  if( j0 > njtop+1 )
+	  {
+	    extrapol = true;
+	    j0 = njtop;
+	  }
+	  else if( j0 > njtop-2 )
+	    j0 = njtop-2;
+
+	  if( !extrapol )
+	  {
+	    double q = (x - x0 - (i0-1)*hh)/hh;
+	    double r = (y - y0 - (j0-1)*hh)/hh;
+	    double Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+	    Qim1 = (q)*(q-1)*(q-2)/(-6.);
+	    Qi   = (q+1)*(q-1)*(q-2)/(2.);
+	    Qip1 = (q+1)*(q)*(q-2)/(-2.);
+	    Qip2 = (q+1)*(q)*(q-1)/(6.);
+
+	    Rjm1 = (r)*(r-1)*(r-2)/(-6.);
+	    Rj   = (r+1)*(r-1)*(r-2)/(2.);
+	    Rjp1 = (r+1)*(r)*(r-2)/(-2.);
+	    Rjp2 = (r+1)*(r)*(r-1)/(6.);
+
+// test
+	    if (mVerbose>=3)
 	    {
-               extrapol = true;
-	       j0 = 1;
+	      if (i0<2 || i0>nitop-2) printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0, nitop);
+	      if (j0<2 || j0>njtop-2) printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0, njtop);
 	    }
-	    else if( j0 < 2 )
-	       j0 = 2;
-
-	    if( j0 > njtop+1 )
+	    
+	    tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
+	      +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+	    tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
+	      +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
+	    tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
+	      +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
+	    tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
+	      +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
+	    mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+	  }
+	  else
+	  {
+// tmp
+	    if (mVerbose>=3)
 	    {
-               extrapol = true;
-	       j0 = njtop;
+	      printf("INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, j0=%i\n", i, j, x, y, i0, j0);
 	    }
-	    else if( j0 > njtop-2 )
-	       j0 = njtop-2;
-
-            if( !extrapol )
-	    {
-	       double q = i0 + (x - (i0-1)*hh)/hh;
-	       double r = j0 + (y - (j0-1)*hh)/hh;
-	       double Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
-	       Qim1 = (q-i0)*(q-i0-1)*(q-i0-2)/(-6.);
-	       Qi   = (q-i0+1)*(q-i0-1)*(q-i0-2)/(2.);
-	       Qip1 = (q-i0+1)*(q-i0)*(q-i0-2)/(-2.);
-	       Qip2 = (q-i0+1)*(q-i0)*(q-i0-1)/(6.);
-
-	       Rjm1 = (r-j0)*(r-j0-1)*(r-j0-2)/(-6.);
-	       Rj   = (r-j0+1)*(r-j0-1)*(r-j0-2)/(2.);
-	       Rjp1 = (r-j0+1)*(r-j0)*(r-j0-2)/(-2.);
-	       Rjp2 = (r-j0+1)*(r-j0)*(r-j0-1)/(6.);
-
-	       tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
-		  +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
-	       tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
-		  +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
-	       tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
-		  +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
-	       tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
-		  +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
-	       mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
-	    }
-	    else
-	       mTopo(i,j,1) = gridElev(i0,j0,1);
-	 }
+	    
+	    mTopo(i,j,1) = gridElev(i0,j0,1);
+	  }
+	  
+// test
+	  if (mTopo(i,j,1)>topomax) topomax=mTopo(i,j,1);
+	  if (mTopo(i,j,1)<topomin) topomin=mTopo(i,j,1);
+	    
+	}// end for j
+      }// end for i
+      
+// test
+      if (m_myRank==0 && mVerbose>=3)
+      {
+	printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+      }
+      
    }
    else
       cout << rname << " error could not open file " << a_topoFileName << endl;
