@@ -418,6 +418,16 @@ void MaterialRfile::read_rfile( )
       if( swapbytes )
 	 bswap.byte_rev( &m_npatches, 1, "int" );
 
+// test
+      if (mEW->getRank()==0 && mEW->getVerbosity() >= 2)
+      {
+	printf("Rfile header: magic=%i, prec=%i, att=%i\n", magic, prec, att);
+	printf("              azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
+	printf("              pstring-len=%i, pstr='%s'\n", len, "not implemented");
+	printf("              nblocks=%i\n", m_npatches);
+      }
+      
+
       m_hh.resize(m_npatches);
       m_hv.resize(m_npatches);
       m_z0.resize(m_npatches);
@@ -461,6 +471,13 @@ void MaterialRfile::read_rfile( )
 	 m_ni[p]    = dim[1];
 	 m_nj[p]    = dim[2];
 	 m_nk[p]    = dim[3];
+// test
+	 if (mEW->getRank()==0 && mEW->getVerbosity() >= 2)
+	 {
+	   printf("  header block #%i\n", p);
+	   printf("  hh=%e, hv=%e, z0=%e\n", m_hh[p], m_hv[p], m_z0[p]);
+	   printf("  nc=%i, ni=%i, nj=%i, nk=%i\n", ncblock[p], m_ni[p], m_nj[p], m_nk[p]);
+	 }
       }
 
 
