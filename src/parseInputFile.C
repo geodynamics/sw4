@@ -4319,7 +4319,8 @@ void EW::processImage(char* buffer)
       token += 2; // skip x=
       if ( coordWasSet )
       {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, x and " << locationType << " were both set." << endl;
+	cerr << "Processing image command: " << "cannot set a coordinate location twice, x and " << 
+	  locationType << " were both set." << endl;
 	MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       coordWasSet=true;
@@ -4327,7 +4328,8 @@ void EW::processImage(char* buffer)
       coordValue = atof(token);
       if ( coordValue < 0.0 || coordValue > m_global_xmax )
       {
-	cerr << "Processing image command: " << "x value must be within the computational domain, not: " << coordValue << endl;
+	cerr << "Processing image command: " << "x value must be within the computational domain 0<=x<=" 
+	     << m_global_xmax << ", not x=: " << coordValue << endl;
 	MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
@@ -4337,7 +4339,8 @@ void EW::processImage(char* buffer)
       token += 2; // skip y=
       if ( coordWasSet )
       {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, y and " << locationType << " were both set." << endl;
+	cerr << "Processing image command: " << "cannot set a coordinate location twice, y and " 
+	     << locationType << " were both set." << endl;
 	MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       coordWasSet=true;
@@ -4345,7 +4348,8 @@ void EW::processImage(char* buffer)
       coordValue = atof(token);
       if ( coordValue < 0.0 || coordValue > m_global_ymax )
       {
-	cerr << "Processing image command: " << "y value must be within the computational domain, not: " << coordValue << endl;
+	cerr << "Processing image command: " << "y value must be within the computational domain 0<=y<=" 
+	     << m_global_ymax << ", not y= " << coordValue << endl;
 	MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
@@ -4354,7 +4358,8 @@ void EW::processImage(char* buffer)
       token += 2; // skip z=
       if ( coordWasSet )
       {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, z and " << locationType << " were both set." << endl;
+	cerr << "Processing image command: " << "cannot set a coordinate location twice, z and " 
+	     << locationType << " were both set." << endl;
 	MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       coordWasSet=true;
@@ -4362,7 +4367,8 @@ void EW::processImage(char* buffer)
       coordValue = atof(token);
       if ( coordValue < 0.0 || coordValue > m_global_zmax )
       {
-	cerr << "Processing image command: " << "z value must be within the computational domain, not: " << coordValue << endl;
+	cerr << "Processing image command: " << "z value must be within the computational domain 0<=z<=" 
+	     << m_global_zmax << ", not z= " << coordValue << endl;
 	MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }

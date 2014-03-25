@@ -583,7 +583,9 @@ void MaterialRfile::read_rfile( )
 void MaterialRfile::fill_in_fluids()
 {
    // Start from p=1, p=0 is the topography.
-   for( int p=1 ; p < m_npatches ; p++ )
+//   for( int p=1 ; p < m_npatches ; p++ )
+// start from the last (bottom) block and progress upwards
+   for( int p=m_npatches-1 ; p >=1; p-- )
    {
       for( int j=mMaterial[p].m_jb ; j <= mMaterial[p].m_je ; j++ )
 	 for( int i=mMaterial[p].m_ib ; i <= mMaterial[p].m_ie ; i++ )
@@ -591,7 +593,51 @@ void MaterialRfile::fill_in_fluids()
 	    int k0 = mMaterial[p].m_kb;
 	    while( mMaterial[p](3,i,j,k0) == -999 && k0 < mMaterial[p].m_ke )
 	       k0++;
+// consider the case where the top block is all water. Then k0 = mMaterial[p].m_ke and mMaterial[p](3,i,j,k0)=-999
    // k0 is now the first k with cs > 0.
+	    if (mMaterial[p](3,i,j,k0)==-999)
+	    {
+// get value from block p+1
+	      if (p<m_npatches-1)
+	      {
+		int pd=p+1, id, jd, kd; // index of donor block
+		double xm=(i-1)*m_hh[p];
+		double ym=(j-1)*m_hh[p];
+// get closest (id,jd) index on patch pd
+		id = static_cast<int>( 1 + trunc(xm/m_hh[pd]) );
+		jd = static_cast<int>( 1 + trunc(ym/m_hh[pd]) );
+		kd = mMaterial[pd].m_kb; // get value from top of block pd
+		
+		if (! (id >= mMaterial[pd].m_ib && id <= mMaterial[pd].m_ie && 
+		       jd >= mMaterial[pd].m_jb && jd <= mMaterial[pd].m_je ))
+		{
+// out of bounds: find nearest interior point
+		  if (id < mMaterial[pd].m_ib) id=mMaterial[pd].m_ib;
+		  if (id > mMaterial[pd].m_ie) id=mMaterial[pd].m_ie;
+		  if (jd < mMaterial[pd].m_jb) jd=mMaterial[pd].m_jb;
+		  if (jd > mMaterial[pd].m_je) jd=mMaterial[pd].m_je;
+
+		  printf("WARNING: nearest grid point to (%e,%e) was outside local part of block pd=%i\n"
+			 " using id=%i, jd=%i, at (%e, %e)\n", xm, ym, pd, id, jd, (id-1)*m_hh[pd], (jd-1)*m_hh[pd]);
+
+		}
+// get values from block 'pd'
+		mMaterial[p](1,i,j,k0)= mMaterial[pd](1,id,jd,kd);
+		mMaterial[p](2,i,j,k0)= mMaterial[pd](2,id,jd,kd);
+		mMaterial[p](3,i,j,k0)= mMaterial[pd](3,id,jd,kd);
+		if (m_use_attenuation)
+		{
+		  mMaterial[p](4,i,j,k0)= mMaterial[pd](4,id,jd,kd);
+		  mMaterial[p](5,i,j,k0)= mMaterial[pd](5,id,jd,kd);
+		}
+	      }
+	      else
+	      {
+		printf("ERROR: found undefined material properties in last material block\n"
+		       " patch p=%i, i=%i, j=%i, k0=%i\n", p, i, j, k0);
+	      }
+	    }
+	    
             for( int k=mMaterial[p].m_kb ; k < k0 ; k++ )
 	    {
 	       mMaterial[p](1,i,j,k) = mMaterial[p](1,i,j,k0);

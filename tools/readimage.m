@@ -4,17 +4,21 @@
 %    Read image produced by sw4 on format with the *.sw4img extension.
 %    This script will not read the older WPP image format.
 %
-%         [im,x,y,z,plane,t,timestring]=readimage( imfile, pnr, verbose )
+%         [im,x,y,z,plane,t,timestring]=readimage( imfile, pnr, verbose, machineformat )
 %
 %                Input: imfile  - Image file name
 %                       pnr     - Patch number, if more than one grid is used.
 %                       verbose - Set to 1 to display file header information.
+%                       machineformat - passed to fopen to read big endian, little endian, etc
 %                Output: im      - The image, as a 2D array.
 %                        x, y, z - The spatial coordinates of the image, one of these is a scalar.
 %                        plane   - 0: x=const, 1: y=const, 2: z=const
 %                        t       - Simulation time at which the image was output.
 %                        timestring - String holding creation date
-function [im,x,y,z,plane,t,timestring]=readimage( imfile, pnr, verbose )
+function [im,x,y,z,plane,t,timestring]=readimage( imfile, pnr, verbose, machineformat )
+if nargin < 4
+   machineformat='native';
+end;
 if nargin < 3
    verbose= 0;
 end;
@@ -22,7 +26,7 @@ if nargin < 2
    pnr = 1;
 end;
 
-fd=fopen(imfile,'r');
+fd=fopen(imfile,'r',machineformat);
 if fd ~= -1 
 % Read header
    prec    =fread(fd,1,'int');

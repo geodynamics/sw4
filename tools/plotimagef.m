@@ -1,7 +1,7 @@
 %
 % PLOTIMAGEF
 %
-%     plotimagef( fil, cvals )
+%     plotimagef( fil, machineformat, cvals )
 %
 %   Plots the image on file 'fil' with contourf, using the contour levels cvals.
 %   If cvals is ommitted, 21 countour levels will be obtained through the imageinfo fcn.
@@ -11,14 +11,19 @@
 %
 %   Input:
 %         fil:               Name of image file
+%         machineformat (optional):  Passed to fopen to read big endian, little endian, native, etc
 %         cvals (optional):  Vector of countour levels to plot
 %
-function plotimagef( fil, cvals )
+function plotimagef( fil, machineformat, cvals )
 if nargin < 2
-   nc=21;
-   cvals = imageinfo(fil,nc);
+   machineformat='native';
 end;
-fd=fopen(fil,'r');
+if nargin < 3
+   nc=21;
+   cvals = imageinfo(fil,nc,0,machineformat);
+end;
+
+fd=fopen(fil,'r',machineformat);
 pr=fread(fd,1,'int');
 nb=fread(fd,1,'int');
 t=fread(fd,1,'double');
@@ -34,7 +39,7 @@ x1max=-1e9;
 x2max=-1e9;
 
 for b=1:nb
-   [im,x,y,z] = readimage(fil,b);
+   [im,x,y,z] = readimage(fil,b,0,machineformat);
    if plane==0
      contourf(y,z,im,cvals);
    elseif plane==1
