@@ -111,16 +111,16 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
    //   cout << "ssizes " << starts[0] <<  " " << starts[1] << " " << starts[2] << endl;
    //   }
    init_array( globalsizes, localsizes, starts, nptsbuf, padding );
-   //         if( myid == 0 )
-   //         {
-   //            cout << "IRECV = " << endl;
-   //            m_irecv.print(1);
-   //         }
-   //         if( myid == 0 )
-   //         {
-   //            cout << "ISEND = " << endl;
-   //            m_isend.print(0);
-   //         }
+   //            if( myid == 0 )
+   //            {
+   //               cout << "IRECV = " << endl;
+   //               m_irecv.print(1);
+   //            }
+   //            if( myid == 0 )
+   //            {
+   //               cout << "ISEND = " << endl;
+   //               m_isend.print(0);
+   //            }
 }
 
 //-----------------------------------------------------------------------
@@ -231,9 +231,8 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    int blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
    int ibl, iel, jbl, jel, kbl, kel, nsend;
    int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag, tag2, myid;
-   int maxpts, npts;
    int* nrecvs;
-   size_t nblocks;
+   size_t nblocks, npts, maxpts;
 
    MPI_Status status;
 
@@ -433,7 +432,7 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 	       m_isend.m_comm_index[5][b-1][nsend] = kel;
 	       m_isend.m_comm_id[b-1][nsend] = m_writer_ids[p-1];
 	       nsend++;
-               npts = (iel-ibl+1)*(jel-jbl+1)*(kel-kbl+1);
+               npts = (iel-ibl+1)*static_cast<size_t>((jel-jbl+1))*(kel-kbl+1);
                maxpts = maxpts > npts ? maxpts : npts;
 	    }
             else if( nkg == 1 && !(jel<kb || jbl>ke) )
@@ -450,7 +449,7 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 	       m_isend.m_comm_index[5][b-1][nsend] = kel;
 	       m_isend.m_comm_id[b-1][nsend] = m_writer_ids[p-1];
 	       nsend++;
-               npts = (iel-ibl+1)*(jel-jbl+1)*(kel-kbl+1);
+               npts = (iel-ibl+1)*static_cast<size_t>((jel-jbl+1))*(kel-kbl+1);
                maxpts = maxpts > npts ? maxpts : npts;
 	    }
 	 }
@@ -578,7 +577,7 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 	       m_irecv.m_njblock[b-1] = njg;
 	       m_irecv.m_nkblock[b-1] = lims[5]-lims[4]+1;
 	       //               npts = (lims[1]-lims[0]+1)*(lims[3]-lims[2]+1)*(lims[5]-lims[4]+1);
-               npts = nig*njg*(lims[5]-lims[4]+1);
+               npts = nig*static_cast<size_t>(njg)*(lims[5]-lims[4]+1);
                maxpts = maxpts > npts ? maxpts : npts;
 	    }
 	 }
@@ -976,9 +975,14 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 	       mxsize = m_irecv.m_ncomm[b];
 	 req = new MPI_Request[mxsize];
 
-	 il = m_irecv.m_ilow[0];
-	 jl = m_irecv.m_jlow[0];
-	 kl = m_irecv.m_klow[0];
+         int bb=0;
+         while( m_irecv.m_ncomm[bb] == 0 )
+	    bb++;
+	 
+	 il = m_irecv.m_ilow[bb];
+	 jl = m_irecv.m_jlow[bb];
+	 kl = m_irecv.m_klow[bb];
+	 
 	 ind = il-1+((off_t)nig)*(jl-1)+((off_t)nig)*njg*(kl-1);
 	 sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET );
 	 if( sizew == -1 )

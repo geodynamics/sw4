@@ -60,7 +60,7 @@ class MaterialRfile : public MaterialData
 
 // 3-dimensional Sarrays
    vector<Sarray> mMaterial;
-
+   vector<bool> m_isempty;
    //   int m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
    //   int m_nstenc;
    //   double m_h, m_dlon, m_dlat;
