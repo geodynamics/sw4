@@ -916,7 +916,7 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 
 //-----------------------------------------------------------------------
 void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
-			      const char* typ )
+			      const char* typ, bool swap_bytes )
 {
 //  Read array previously set up by constructing object.
 // Input: fid - File descriptor, obtained by calling open.
@@ -1033,6 +1033,8 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 		  cout << "  requested "<< sizeof(double)*((off_t)nc)*niblock*njblock*nkblock << " bytes\n";
 		  cout << "  read "<< sizew << " bytes\n";
 	       }
+	       if( swap_bytes )
+		  m_bswap.byte_rev( rbuf, nc*((size_t)niblock)*njblock*nkblock, "double");
 	    }
 	    else
 	    {
@@ -1043,6 +1045,8 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 		  cout << "  requested "<< sizeof(double)*((off_t)nc)*niblock*njblock*nkblock << " bytes\n";
 		  cout << "  read "<< sizew << " bytes\n";
 	       }
+	       if( swap_bytes )
+		  m_bswap.byte_rev( rfbuf, nc*((size_t)niblock)*njblock*nkblock, "float");
 	    }
 	    end_sequential( m_write_comm );
 

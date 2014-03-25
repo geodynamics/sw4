@@ -539,15 +539,15 @@ void MaterialRfile::read_rfile( )
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
     // Read corresponding part of patches
          if( prec == 8 )
-	    pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "double" );
+	    pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "double", swapbytes );
          else
-	    pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "float" );
+	    pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "float", swapbytes );
 
-	 if( swapbytes )
-	 {
-	    size_t npts = local[0]*static_cast<size_t>(local[1])*local[2]*ncblock[p];
-	    bswap.byte_rev( mMaterial[p].c_ptr(), npts, "double" );
-	 }
+	 //	 if( swapbytes )
+	 //	 {
+	 //	    size_t npts = local[0]*static_cast<size_t>(local[1])*local[2]*ncblock[p];
+	 //	    bswap.byte_rev( mMaterial[p].c_ptr(), npts, "double" );
+	 //	 }
 	 pos0 += ncblock[p]*m_ni[p]*static_cast<size_t>(m_nj[p])*m_nk[p]*flsize;
          delete pio;
       }

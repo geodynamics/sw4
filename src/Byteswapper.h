@@ -39,6 +39,8 @@
 #ifndef WPP_BYTESWAPPER_H
 #define WPP_BYTESWAPPER_H
 
+#include <cstring>
+
 class Byteswapper
 {
    inline void swap_bytes (volatile void *ptr, unsigned int i, unsigned int j)

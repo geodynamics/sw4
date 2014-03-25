@@ -2,6 +2,8 @@
 #ifndef EW_WPPPIO_H
 #define EW_WPPPIO_H
 
+#include "Byteswapper.h"
+
 class Comminfo
 {
 public:
@@ -28,7 +30,7 @@ public:
    Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
 	    int starts[3], int nptsbuf=1000000, int padding=0 );
    void write_array( int* fid, int nc, void* array, off_t pos0, char* type );
-   void read_array( int* fid, int nc, double* array, off_t pos0, const char* typ );
+   void read_array( int* fid, int nc, double* array, off_t pos0, const char* typ, bool swap_bytes=false );
 			      
    void print( );
    void begin_sequential( MPI_Comm comm );
@@ -46,6 +48,7 @@ private:
    int m_csteps;
    int* m_writer_ids;
    int ni, nj, nk, nig, njg, nkg, oi, oj, ok;
+   Byteswapper m_bswap;
 
    MPI_Comm m_write_comm; 
    MPI_Comm m_data_comm;
