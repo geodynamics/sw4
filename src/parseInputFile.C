@@ -1069,7 +1069,7 @@ void EW::processGrid(char* buffer)
   if( use_geoprojection )
   {
 // tmp
-     cout << "New proj4 string: '" << proj0.str() << "'" << endl;
+//     cout << "New proj4 string: '" << proj0.str() << "'" << endl;
      
      m_geoproj = new GeographicProjection( mLonOrigin, mLatOrigin, proj0.str(), mGeoAz );
   }
