@@ -35,7 +35,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 			       std::vector<Sarray> & xis, 
 			       std::vector<Sarray> & xip )
 {
-   bool intp_cubic=true;
+   bool intp_cubic=false;
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
 
