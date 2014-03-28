@@ -16,7 +16,7 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
    m_projection = pj_init_plus(projection.c_str());
    CHECK_INPUT( m_projection != 0, "ERRROR: Init of cartographic projection failed with message: " << pj_strerrno(pj_errno) );
 
-   m_latlong = pj_init_plus("+proj=latlong");
+   m_latlong = pj_init_plus("+proj=latlong +datum=NAD83");
    CHECK_INPUT( m_latlong != 0, "ERRROR: Init of latlong projection failed with message: " << pj_strerrno(pj_errno) );
 
    m_deg2rad = M_PI/180;
