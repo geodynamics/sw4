@@ -25,6 +25,7 @@ MaterialRfile::MaterialRfile( EW* a_ew, const string a_file,
    m_model_file(a_file),
    m_model_dir(a_directory)
 {
+   mCoversAllPoints = false;
    read_rfile();
 }
 
@@ -38,6 +39,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
    bool intp_cubic=false;
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
+   size_t outside=0, material=0;
 
    for( int g=0 ; g < mEW->mNumberOfGrids  ; g++ )
    {
@@ -69,6 +71,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		ind = ofs + i + ni*j + ni*nj*k;
 		if( inside( x, y, z )  )
 		{
+		   material++;
                    int gr = m_npatches-1;
 		   while( gr >= 1 && z < m_z0[gr] )
 		      gr--;
@@ -197,6 +200,8 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		   }
 
 		}
+		else
+		   outside++;
 	    }
 
    }
@@ -213,7 +218,49 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
       mEW->material_ic( xis);
       mEW->material_ic( xip );
    }
+
+   size_t materialSum, outsideSum;
+   int mpisizelong, mpisizelonglong, mpisizeint;
+   MPI_Type_size(MPI_LONG,&mpisizelong );
+   MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
+   MPI_Type_size(MPI_INT,&mpisizeint );
+   if( sizeof(size_t) == mpisizelong )
+   {
+      MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+   }
+   else if( sizeof(size_t) == mpisizelonglong )
+   {
+      MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+   }
+   else if( sizeof(size_t) == mpisizeint )
+   {
+      MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+   }
+   else
+   {
+      int materialsumi, outsidesumi, materiali=material, outsidei=outside;
+      MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&outsidei,   &outsidesumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      materialSum=materialsumi;
+      outsideSum=outsidesumi;
+   }
+   if (mEW->getRank() == 0)
+      //      cout << endl 
+      //           << "--------------------------------------------------------------\n"
+      //           << "Rfile Initialized Node Types: " << endl
+      //           << "   Material:        " << materialSum << endl
+      //           << endl
+      //           << "*Outside Domain:    " << outsideSum << endl
+      //           << endl 
+      //           << "--------------------------------------------------------------\n"
+      //           << endl;
+      cout << endl
+	   << "rfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
 }
+
 
 //-----------------------------------------------------------------------
 int MaterialRfile::io_processor( )
@@ -480,7 +527,27 @@ void MaterialRfile::read_rfile( )
 	 }
       }
 
+      // Intersect local grid with grid on rfile, assume all patches have the
+      // same x- and y- extent. Assume patch=0 is topography, patches =1,..npatches-1
+      // are ordered from top to bottom.
+      double xminrf = m_x0,    xmaxrf = m_x0+(m_ni[0]-1)*m_hh[0];
+      double yminrf = m_y0,    ymaxrf = m_y0+(m_nj[0]-1)*m_hh[0];
+      double zminrf = m_z0[1], zmaxrf = m_z0[m_npatches-1] + (m_nk[m_npatches-1]-1)*m_hv[m_npatches-1];
 
+      if( xminrf > m_xminloc )
+	 m_xminloc = xminrf;
+      if( xmaxrf < m_xmaxloc )
+	 m_xmaxloc = xmaxrf;
+      if( yminrf > m_yminloc )
+	 m_yminloc = yminrf;
+      if( ymaxrf < m_ymaxloc )
+	 m_ymaxloc = ymaxrf;
+      if( zminrf > m_zminloc )
+	 m_zminloc = zminrf;
+      if( zmaxrf < m_zmaxloc )
+	 m_zmaxloc = zmaxrf;
+      
+      
       mMaterial.resize(m_npatches);
       m_ifirst.resize(m_npatches);
       m_ilast.resize(m_npatches);
@@ -492,50 +559,87 @@ void MaterialRfile::read_rfile( )
       size_t pos0 = 5*sizeof(int) + 3*sizeof(double)+ len*sizeof(char) +
 	 m_npatches*(3*sizeof(double)+4*sizeof(int));
 
-// For each patch, figure out a box that encloses [xmin,xmax] x [ymin,ymax] x [zmin,zmax]
+      m_outside = m_xminloc >= m_xmaxloc || m_yminloc >= m_ymaxloc;
       m_isempty.resize(m_npatches);
-      for( int p=0 ; p < m_npatches ; p++ )
+
+      if( !m_outside )
       {
-	 m_ifirst[p] = static_cast<int>(floor( 1 + (xmin-m_x0)/m_hh[p]));
-	 m_ilast[p] = static_cast<int>( ceil(  1 + (xmax-m_x0)/m_hh[p]));
-	 m_jfirst[p] = static_cast<int>(floor( 1 + (ymin-m_y0)/m_hh[p]));
-	 m_jlast[p] = static_cast<int>( ceil(  1 + (ymax-m_y0)/m_hh[p]));
-	 m_kfirst[p] = static_cast<int>(floor( 1 + (zmin-m_z0[p])/m_hv[p]));
-	 m_klast[p] = static_cast<int>( ceil(  1 + (zmax-m_z0[p])/m_hv[p]));
+// For each patch, figure out a box that encloses [xmin,xmax] x [ymin,ymax] x [zmin,zmax]
+	 for( int p=0 ; p < m_npatches ; p++ )
+	 {
+	    m_ifirst[p] = static_cast<int>(floor( 1 + (m_xminloc-m_x0)/m_hh[p]));
+	    m_ilast[p]  = static_cast<int>( ceil(  1 + (m_xmaxloc-m_x0)/m_hh[p]));
+	    m_jfirst[p] = static_cast<int>(floor( 1 + (m_yminloc-m_y0)/m_hh[p]));
+	    m_jlast[p]  = static_cast<int>( ceil(  1 + (m_ymaxloc-m_y0)/m_hh[p]));
+	    m_kfirst[p] = static_cast<int>(floor( 1 + (m_zminloc-m_z0[p])/m_hv[p]));
+	    m_klast[p]  = static_cast<int>( ceil(  1 + (m_zmaxloc-m_z0[p])/m_hv[p]));
+
+	    if( p == 0 )
+	       m_kfirst[0] = m_klast[0] = 1; //topography
 
       // Limit index ranges to global size limits
-	 if( m_ifirst[p] < 1 )
-	    m_ifirst[p] = 1;
-	 if( m_ilast[p] > m_ni[p] )
-	    m_ilast[p] = m_ni[p];
-	 if( m_jfirst[p] < 1 )
-	    m_jfirst[p] = 1;
-	 if( m_jlast[p] > m_nj[p] )
-	    m_jlast[p] = m_nj[p];
-	 if( m_kfirst[p] < 1 )
-	    m_kfirst[p] = 1;
-	 if( m_klast[p] > m_nk[p] )
-	    m_klast[p] = m_nk[p];
+	    if( m_ifirst[p] < 1 )
+	       m_ifirst[p] = 1;
+	    if( m_ilast[p] > m_ni[p] )
+	       m_ilast[p] = m_ni[p];
+	    if( m_jfirst[p] < 1 )
+	       m_jfirst[p] = 1;
+	    if( m_jlast[p] > m_nj[p] )
+	       m_jlast[p] = m_nj[p];
+	    if( m_kfirst[p] < 1 )
+	       m_kfirst[p] = 1;
+	    if( m_klast[p] > m_nk[p] )
+	       m_klast[p] = m_nk[p];
 
-         m_isempty[p] = false;
-         if( m_klast[p] < m_kfirst[p] )
-	    m_isempty[p] = true;
-	    
-	    
-	 if (mEW->getVerbosity() >=3)
-	 {
-	   cout << "myRank = " << mEW->getRank() << endl;
-	   cout << "patch nr " << p << " i " << m_ifirst[p] << " " << m_ilast[p] <<
-	     " j " << m_jfirst[p] << " " << m_jlast[p] << 
-	     " k " << m_kfirst[p] << " " << m_klast[p] << endl;
-	   cout << "nr components " << ncblock[p] << endl;
-	   cout << "patch nr global size " << m_ni[p] << " x " << m_nj[p] << " x " << m_nk[p] << endl;
-	 }
+	    m_isempty[p] = false;
+	    if( m_klast[p] < m_kfirst[p] )
+	    {
+	       m_isempty[p] = true;
+	       m_ilast[p] = 0;
+	       m_jlast[p] = 0;
+	       m_klast[p] = 0;
+	       m_ifirst[p] = 1;
+	       m_jfirst[p] = 1;
+	       m_kfirst[p] = 1;
+	    }
+	    if (mEW->getVerbosity() >=3)
+	    {
+	       cout << "myRank = " << mEW->getRank() << endl;
+	       cout << "patch nr " << p << " i " << m_ifirst[p] << " " << m_ilast[p] <<
+		  " j " << m_jfirst[p] << " " << m_jlast[p] << 
+		  " k " << m_kfirst[p] << " " << m_klast[p] << endl;
+	       cout << "nr components " << ncblock[p] << endl;
+	       cout << "patch nr global size " << m_ni[p] << " x " << m_nj[p] << " x " << m_nk[p] << endl;
+	    }
 	 
-// Allocate memory
-         if( !m_isempty[p] )
-	    mMaterial[p].define(ncblock[p],m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+	 }
       }
+      else
+      {
+	 for( int p=0 ; p < m_npatches ; p++ )
+	 {
+	    m_isempty[p] = true;
+            m_ilast[p] = 0;
+	    m_jlast[p] = 0;
+	    m_klast[p] = 0;
+            m_ifirst[p] = 1;
+	    m_jfirst[p] = 1;
+	    m_kfirst[p] = 1;
+	 }
+      }
+      vector<int> isempty(m_npatches), isemptymin(m_npatches);
+      for( int p=0 ; p < m_npatches ; p++ )
+	 isempty[p] = m_isempty[p];
+      MPI_Allreduce( &isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
+      for( int p=0 ; p < m_npatches ; p++ )
+	 m_isempty[p] = (isemptymin[p] == 1);
+
+// Allocate memory
+      for( int p=0 ; p < m_npatches ; p++ )
+	 if( !m_isempty[p] )
+	    mMaterial[p].define(ncblock[p],m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+
+
       int iread = io_processor();
       //      vector<Parallel_IO*> pio(m_npatches);
       int bufsize =  5000000;
@@ -560,6 +664,7 @@ void MaterialRfile::read_rfile( )
       close(fd);
 
       fill_in_fluids();
+      
       //      for( int p=1 ; p < m_npatches ; p++ )
       //      {
       //	 cout << "rho min and max " << mMaterial[p].minimum(1)<< " " << mMaterial[p].maximum(1) << endl;
@@ -591,6 +696,8 @@ void MaterialRfile::fill_in_fluids()
    // Start from p=1, p=0 is the topography.
 //   for( int p=1 ; p < m_npatches ; p++ )
 // start from the last (bottom) block and progress upwards
+   if( !m_outside )
+   {
    for( int p=m_npatches-1 ; p >=1; p-- )
    {
       if( !m_isempty[p] )
@@ -660,5 +767,5 @@ void MaterialRfile::fill_in_fluids()
 	    }
       }
    }
-   
+   }   
 }

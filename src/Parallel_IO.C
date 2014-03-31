@@ -1130,10 +1130,10 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
       {
 	 delete[] req;
 	 delete[] ribuf;
-	 if( flt == 0 )
-	    delete[] rbuf;
-	 else
+	 if( flt == 1 )
 	    delete[] rfbuf;
+	 else
+	    delete[] rbuf;
       }
    }
 }

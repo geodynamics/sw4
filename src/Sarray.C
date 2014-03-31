@@ -18,7 +18,10 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 //   m_mpi_datatype_initialized = false;
 }
 
@@ -35,7 +38,10 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 //   m_mpi_datatype_initialized = false;
 }
 
@@ -52,7 +58,10 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 //   m_mpi_datatype_initialized = false;
 }
 
@@ -69,7 +78,10 @@ Sarray::Sarray( int iend, int jend, int kend )
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 //   m_mpi_datatype_initialized = false;
 }
 
@@ -178,7 +190,10 @@ void Sarray::define( int nc, int iend, int jend, int kend )
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 //   m_mpi_datatype_initialized = false;
 }
 
@@ -198,7 +213,10 @@ void Sarray::define( int iend, int jend, int kend )
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 //   m_mpi_datatype_initialized = false;
 }
 
@@ -218,7 +236,10 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 }
 
 //-----------------------------------------------------------------------
@@ -237,7 +258,10 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 }
 
 //-----------------------------------------------------------------------
@@ -255,7 +279,10 @@ void Sarray::define( const Sarray& u )
    m_ni = m_ie-m_ib+1;
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
-   m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   if( m_nc*m_ni*m_nj*m_nk > 0 )
+      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+   else
+      m_data = NULL;
 }
 
 //-----------------------------------------------------------------------

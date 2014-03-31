@@ -57,6 +57,7 @@ class MaterialRfile : public MaterialData
 
    // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in this processor.
    double m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
+   bool m_outside;
 
 // 3-dimensional Sarrays
    vector<Sarray> mMaterial;
