@@ -538,7 +538,7 @@ void MaterialRfile::read_rfile( )
       }
       int iread = io_processor();
       //      vector<Parallel_IO*> pio(m_npatches);
-      int bufsize = 5000000;
+      int bufsize =  5000000;
       for( int p=0 ; p < m_npatches ; p++ )
       {
 	 if( !m_isempty[p] )
