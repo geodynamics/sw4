@@ -566,18 +566,31 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 		  if( vr[5] > lims[5] )
 		     lims[5] = vr[5];
 	       }
-	       //	       m_irecv.m_ilow[b-1] = lims[0];
-	       //	       m_irecv.m_jlow[b-1] = lims[2];
-	       m_irecv.m_ilow[b-1] = 1;
-	       m_irecv.m_jlow[b-1] = 1;
-	       m_irecv.m_klow[b-1] = lims[4];
-	       //	       m_irecv.m_niblock[b-1] = lims[1]-lims[0]+1;
-	       //	       m_irecv.m_njblock[b-1] = lims[3]-lims[2]+1;
-	       m_irecv.m_niblock[b-1] = nig;
-	       m_irecv.m_njblock[b-1] = njg;
-	       m_irecv.m_nkblock[b-1] = lims[5]-lims[4]+1;
+	       if( nkg > 1 )
+	       {
+		  //	       m_irecv.m_ilow[b-1] = lims[0];
+		  //	       m_irecv.m_jlow[b-1] = lims[2];
+		  m_irecv.m_ilow[b-1] = 1;
+		  m_irecv.m_jlow[b-1] = 1;
+		  m_irecv.m_klow[b-1] = lims[4];
+		  //	       m_irecv.m_niblock[b-1] = lims[1]-lims[0]+1;
+		  //	       m_irecv.m_njblock[b-1] = lims[3]-lims[2]+1;
+		  m_irecv.m_niblock[b-1] = nig;
+		  m_irecv.m_njblock[b-1] = njg;
+		  m_irecv.m_nkblock[b-1] = lims[5]-lims[4]+1;
 	       //               npts = (lims[1]-lims[0]+1)*(lims[3]-lims[2]+1)*(lims[5]-lims[4]+1);
-               npts = nig*static_cast<size_t>(njg)*(lims[5]-lims[4]+1);
+		  npts = nig*static_cast<size_t>(njg)*(lims[5]-lims[4]+1);
+	       }
+	       else if( nkg == 1 )
+	       {
+		  m_irecv.m_ilow[b-1] = 1;
+		  m_irecv.m_jlow[b-1] = lims[2];
+		  m_irecv.m_klow[b-1] = lims[4];
+		  m_irecv.m_niblock[b-1] = nig;
+		  m_irecv.m_njblock[b-1] = lims[3]-lims[2]+1;
+		  m_irecv.m_nkblock[b-1] = lims[5]-lims[4]+1;
+		  npts = nig*static_cast<size_t>(lims[3]-lims[2]+1)*(lims[5]-lims[4]+1);
+	       }
                maxpts = maxpts > npts ? maxpts : npts;
 	    }
 	 }
@@ -636,7 +649,7 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
    MPI_Request* req;
    double* rbuf, *ribuf;
    float* rfbuf, *ribuff;
-
+   bool debug =false;
    if( m_data_comm != MPI_COMM_NULL )
    {
       float* arf;
@@ -663,6 +676,13 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 	 // error return
       }
 
+      if( debug )
+      {
+	 cout << "DEBUGPARIO iwrite= " << m_iwrite << endl;
+	 m_isend.print(0);
+	 if( m_iwrite==1 )
+	    m_irecv.print(1);
+      }
       bool really_writing;
       if( m_iwrite == 1 )
       {

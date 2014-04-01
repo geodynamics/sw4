@@ -1145,6 +1145,14 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
 	 else
 	 {
 	    char fltStr[]="float";
+	    //	    bool dbg=false;
+	    //	    if( mMode == S && mEW->getRank() == 10 )
+	    //	    {
+	    //	       cout << "Before write, value is  " << m_floatField[g][618] << " g= " << g << "off= " << offset << " glow= " << glow << " ghigh= "<< ghigh << endl;
+	    //	       dbg = true;
+	    //	    }
+	    //	    if( mMode == S && mEW->getRank() == 63 && mLocationType == Z )
+	    //	       dbg = true;
 	    m_pio[g-glow]->write_array( &fid, 1, m_floatField[g], offset, fltStr );
 	    offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
 	 }
