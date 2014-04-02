@@ -652,8 +652,19 @@ void MaterialRfile::read_rfile( )
 	    
 	 }
       }
-
       int iread = io_processor();
+
+      if( mEW->getRank() == 7423 )
+      {
+	 cout << "DEBUG: from 7423, iread= " << iread << endl;
+	 for( int p=0 ; p < m_npatches ; p++ )
+	 {
+	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
+	       " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
+	       " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << endl;
+	 }
+      }
+
       //      vector<Parallel_IO*> pio(m_npatches);
       int bufsize =  5000000;
       for( int p=0 ; p < m_npatches ; p++ )
