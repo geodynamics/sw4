@@ -636,9 +636,22 @@ void MaterialRfile::read_rfile( )
 
 // Allocate memory
       for( int p=0 ; p < m_npatches ; p++ )
-	 if( !m_isempty[p] )
-	    mMaterial[p].define(ncblock[p],m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-
+      {
+	 try {
+	    if( !m_isempty[p] )
+	       mMaterial[p].define(ncblock[p],m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+	 }
+	 catch( bad_alloc& ba )
+	 {
+	    cout << "Processor " << mEW->getRank() << " allocation of mMaterial failed." << endl;
+	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
+	       " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
+	       " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << 
+	       " Exception= " << ba.what() << endl;
+	    MPI_Abort(MPI_COMM_WORLD,0);
+	    
+	 }
+      }
 
       int iread = io_processor();
       //      vector<Parallel_IO*> pio(m_npatches);
