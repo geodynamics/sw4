@@ -254,7 +254,19 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    MPI_Comm_rank( m_data_comm, &myid );
 
    if( m_iwrite == 1 )
-      nrecvs = new int[nprocs];
+   {
+      try{
+	 nrecvs = new int[nprocs];
+      }
+      catch( bad_alloc& ba )
+      {
+         int gproc;
+	 MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	 cout << "Parallel_IO::init_array, Processor " << gproc <<  ". Allocation of nrecvs failed "
+	      << " nprocs = " << nprocs << " Exception= " << ba.what() << endl;
+	 MPI_Abort(MPI_COMM_WORLD,0);
+      }
+   }
 
    // 3. Split the domain into strips
    // Takes care of 3D and all 2D cases
@@ -296,12 +308,22 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 //   else
 //      m_isend[fd].m_maxbuf = blsize*typsize*nig*njg;
 
-   m_isend.m_steps = m_csteps;
-   m_isend.m_has_values = true;
-   m_isend.m_ncomm = new int[m_csteps];
-   m_isend.m_comm_id = new int*[m_csteps];
-   for( p = 0 ; p < 6 ; p++ )
-      m_isend.m_comm_index[p] = new int*[m_csteps];
+   try{
+      m_isend.m_steps = m_csteps;
+      m_isend.m_has_values = true;
+      m_isend.m_ncomm = new int[m_csteps];
+      m_isend.m_comm_id = new int*[m_csteps];
+      for( p = 0 ; p < 6 ; p++ )
+	 m_isend.m_comm_index[p] = new int*[m_csteps];
+   }
+   catch( bad_alloc &ba )
+   {
+      int gproc;
+      MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+      cout << "Parallel_IO::init_array, processor " << gproc <<  ". Initial allocation of m_isend failed "
+	      << " csteps = " << m_csteps << " Exception= " << ba.what() << endl;
+      MPI_Abort(MPI_COMM_WORLD,0);
+   }
       // Initialize pointers to nil
    for( int p1=0 ; p1 < m_csteps ; p1++ )
    {
@@ -361,9 +383,21 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
       m_isend.m_ncomm[b-1] = nsend;
       if( nsend > 0 )
       {
-	 m_isend.m_comm_id[b-1]  = new int[nsend];
-	 for( p = 0 ; p < 6 ; p++ )
-	    m_isend.m_comm_index[p][b-1] = new int[nsend];
+         try
+	 {
+	    m_isend.m_comm_id[b-1]  = new int[nsend];
+	    for( p = 0 ; p < 6 ; p++ )
+	       m_isend.m_comm_index[p][b-1] = new int[nsend];
+	 }
+	 catch( bad_alloc& ba )
+	 {
+	    int gproc;
+	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	    cout << "Parallel_IO::init_array, processor " << gproc <<  
+	       ". Allocation of m_isend.m_comm_id or m_comm_index failed " 
+		 << " nsend = " << nsend << " b= " << b << " Exception= " << ba.what() << endl;
+	    MPI_Abort(MPI_COMM_WORLD,0);
+	 }
       }
    }
 
@@ -462,18 +496,30 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    /* Senders pass info to receievers */
    if( m_iwrite == 1 )
    {
-      m_irecv.m_steps = m_csteps;
-      m_irecv.m_has_values = true;
-      m_irecv.m_ncomm   = new int[m_csteps];
-      m_irecv.m_comm_id = new int*[m_csteps];
-      for( p= 0 ; p < 6 ; p++ )
-	 m_irecv.m_comm_index[p] = new int*[m_csteps];
-      m_irecv.m_ilow    = new int[m_csteps];
-      m_irecv.m_jlow    = new int[m_csteps];
-      m_irecv.m_klow    = new int[m_csteps];
-      m_irecv.m_niblock = new int[m_csteps];
-      m_irecv.m_njblock = new int[m_csteps];
-      m_irecv.m_nkblock = new int[m_csteps];
+      try
+      {
+	 m_irecv.m_steps = m_csteps;
+	 m_irecv.m_has_values = true;
+	 m_irecv.m_ncomm   = new int[m_csteps];
+	 m_irecv.m_comm_id = new int*[m_csteps];
+	 for( p= 0 ; p < 6 ; p++ )
+	    m_irecv.m_comm_index[p] = new int*[m_csteps];
+	 m_irecv.m_ilow    = new int[m_csteps];
+	 m_irecv.m_jlow    = new int[m_csteps];
+	 m_irecv.m_klow    = new int[m_csteps];
+	 m_irecv.m_niblock = new int[m_csteps];
+	 m_irecv.m_njblock = new int[m_csteps];
+	 m_irecv.m_nkblock = new int[m_csteps];
+      }
+      catch( bad_alloc& ba )
+      {
+	 int gproc;
+	 MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	 cout << "Parallel_IO::init_array, processor " << gproc <<  ". Initial allocation of m_irecv failed "
+	      << " csteps = " << m_csteps << " Exception= " << ba.what() << endl;
+	 MPI_Abort(MPI_COMM_WORLD,0);
+      }
+
       // Initialize pointers to nil
       for( int p1=0 ; p1 < m_csteps ; p1++ )
       {
@@ -522,16 +568,28 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 	    m_irecv.m_ncomm[b-1] = j;
 	    if( j > 0 )
 	    {
-	       m_irecv.m_comm_id[b-1] = new int[j];
-               l = 0;
-               for( i=0 ; i < nprocs ; i++ )
+               try
 	       {
-		  if( nrecvs[i]>-1)
-		     m_irecv.m_comm_id[b-1][l++] = i;
-	       }
+		  m_irecv.m_comm_id[b-1] = new int[j];
+		  l = 0;
+		  for( i=0 ; i < nprocs ; i++ )
+		  {
+		     if( nrecvs[i]>-1)
+			m_irecv.m_comm_id[b-1][l++] = i;
+		  }
 	       // l should be j here 
-	       for( q = 0 ; q < 6 ; q++ )
-		  m_irecv.m_comm_index[q][b-1] = new int[j];
+		  for( q = 0 ; q < 6 ; q++ )
+		     m_irecv.m_comm_index[q][b-1] = new int[j];
+	       }
+	       catch( bad_alloc& ba )
+	       {
+		  int gproc;
+		  MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+		  cout << "Parallel_IO::init_array, processor " << gproc <<  
+		     ". Allocation of m_irecv.m_comm_id or m_comm_index failed " 
+		       << " j = " << j << " b= " << b << " Exception= " << ba.what() << endl;
+		  MPI_Abort(MPI_COMM_WORLD,0);
+	       }
 	       lims[0] = nig+1;
 	       lims[1] = -1;
 	       lims[2] = njg+1;
@@ -657,23 +715,39 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
       double* sbuf;
       float*  sbuff;
       int flt, typsize;
-      if( strcmp(typ,"float")==0)
+      try
       {
-	 arf = static_cast<float*>(array);
-	 sbuff = new float[m_isend.m_maxbuf*nc];
-	 flt = 1;
-         typsize = sizeof(float);
-      }
-      else if( strcmp(typ,"double")==0 )
-      {
-	 ar = static_cast<double*>(array);
-	 sbuf  = new double[m_isend.m_maxbuf*nc];
-         typsize = sizeof(double);
-         flt = 0;
-      }
-      else
-      {
+	 if( strcmp(typ,"float")==0)
+	 {
+	    arf = static_cast<float*>(array);
+	    sbuff = new float[m_isend.m_maxbuf*nc];
+	    flt = 1;
+	    typsize = sizeof(float);
+	 }
+	 else if( strcmp(typ,"double")==0 )
+	 {
+	    ar = static_cast<double*>(array);
+	    sbuf  = new double[m_isend.m_maxbuf*nc];
+	    typsize = sizeof(double);
+	    flt = 0;
+	 }
+	 else
+	 {
 	 // error return
+	 }
+      }
+      catch( bad_alloc& ba )
+      {
+	 int gproc;
+	 MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	 cout << "Parallel_IO::write_array, processor " << gproc <<  
+	    ". Allocation of sbuf or sbuff failed. Tried to allocate " << m_isend.m_maxbuf*nc;
+	 if( flt == 0 )
+	    cout << "doubles";
+	 else
+	    cout << "floats";
+	 cout << " Exception= " << ba.what() << endl;
+	 MPI_Abort(MPI_COMM_WORLD,0);
       }
 
       if( debug )
@@ -696,21 +770,48 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 
       if( m_iwrite == 1 && really_writing )
       {
-	 if( flt == 1 )
+	 try
 	 {
-	    rfbuf  = new float[m_irecv.m_maxbuf*nc];
-	    ribuff = new float[m_irecv.m_maxbuf*nc];
+	    if( flt == 1 )
+	    {
+	       rfbuf  = new float[m_irecv.m_maxbuf*nc];
+	       ribuff = new float[m_irecv.m_maxbuf*nc];
+	    }
+	    else
+	    {
+	       rbuf  = new double[m_irecv.m_maxbuf*nc];
+	       ribuf = new double[m_irecv.m_maxbuf*nc];
+	    }
 	 }
-	 else
+	 catch( bad_alloc& ba )
 	 {
-	    rbuf  = new double[m_irecv.m_maxbuf*nc];
-	    ribuf = new double[m_irecv.m_maxbuf*nc];
+	    int gproc;
+	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	    cout << "Parallel_IO::write_array, processor " << gproc <<  
+	    ". Allocation of rbuf and ribuff failed. Tried to allocate " << m_irecv.m_maxbuf*nc;
+	    if( flt ==  0 )
+	       cout  << " doubles x 2";
+	    else
+	       cout  << " doubles and the same number of floats";
+	    cout  <<  ". Exception= " << ba.what() << endl;
+	    MPI_Abort(MPI_COMM_WORLD,0);
 	 }
 	 mxsize = 0;
 	 for( b= 0; b < m_csteps ; b++ )
 	    if( mxsize < m_irecv.m_ncomm[b] )
 	       mxsize = m_irecv.m_ncomm[b];
-	 req = new MPI_Request[mxsize];
+	 try
+	 {
+	    req = new MPI_Request[mxsize];
+	 }
+	 catch( bad_alloc& ba )
+	 {
+	    int gproc;
+	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	    cout << "Parallel_IO::write_array, processor " << gproc << ". Allocating req failed. " 
+		 << "Tried to allocate " << mxsize << " MPI_Requests. " << "Exception = " << ba.what() << endl;
+	    MPI_Abort(MPI_COMM_WORLD,0);
+	 }
 
 	 il = m_irecv.m_ilow[0];
 	 jl = m_irecv.m_jlow[0];
@@ -971,7 +1072,18 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
       {
 	 // error return
       }
-      sbuf  = new double[m_isend.m_maxbuf*nc];
+      try{
+	 sbuf  = new double[m_isend.m_maxbuf*nc];
+      }
+      catch( bad_alloc &ba )
+      {
+	 int gproc;
+	 MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	 cout << "Parallel_IO::read_array, processor " << gproc << ". Allocating memory for sbuf failed. "
+	      << "Tried to allocate " << m_isend.m_maxbuf*nc << " doubles. "  
+	      <<  "Exception= " << ba.what() << endl;
+	 MPI_Abort(MPI_COMM_WORLD,0);
+      }
       bool really_reading=false;
       if( m_iwrite == 1 )
       {
@@ -984,16 +1096,41 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 
       if( m_iwrite == 1 && really_reading )
       {
-	 if( flt == 1 )
-	    rfbuf  = new float[m_irecv.m_maxbuf*nc];
-	 else
-	    rbuf  = new double[m_irecv.m_maxbuf*nc];
-	 ribuf = new double[m_irecv.m_maxbuf*nc];
+	 try {
+	    if( flt == 1 )
+	       rfbuf  = new float[m_irecv.m_maxbuf*nc];
+	    else
+	       rbuf  = new double[m_irecv.m_maxbuf*nc];
+	    ribuf = new double[m_irecv.m_maxbuf*nc];
+	 }
+	 catch( bad_alloc &ba )
+	 {
+	    int gproc;
+	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	    cout << "Parallel_IO::read_array, processor " << gproc << ". Allocating memory for rbuf and ribuf failed. "
+		 << "Tried to allocate " << m_irecv.m_maxbuf*nc;
+	    if( flt ==  0 )
+	       cout  << " doubles x 2. ";
+	    else
+	       cout  << " doubles and the same number of floats.";
+	    cout  <<  " Exception= " << ba.what() << endl;
+	    MPI_Abort(MPI_COMM_WORLD,0);
+	 }
 	 mxsize = 0;
 	 for( b= 0; b < m_csteps ; b++ )
 	    if( mxsize < m_irecv.m_ncomm[b] )
 	       mxsize = m_irecv.m_ncomm[b];
-	 req = new MPI_Request[mxsize];
+	 try{
+	    req = new MPI_Request[mxsize];
+	 }
+	 catch( bad_alloc &ba )
+	 {
+	    int gproc;
+	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+	    cout << "Parallel_IO::read_array, processor " << gproc << ". Allocating req failed. " 
+		 << "Tried to allocate " << mxsize << " MPI_Requests. " << "Exception = " << ba.what() << endl;
+	    MPI_Abort(MPI_COMM_WORLD,0);
+	 }
 
          int bb=0;
          while( m_irecv.m_ncomm[bb] == 0 )
