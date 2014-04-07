@@ -1309,7 +1309,7 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 	       if( sizew != sizeof(float)*nc*((size_t)niblock)*njblock*nkblock )
 	       {
                   cout << "Error in read_array: could not read requested array size";
-		  cout << "  requested "<< sizeof(double)*((off_t)nc)*niblock*njblock*nkblock << " bytes\n";
+		  cout << "  requested "<< sizeof(float)*((off_t)nc)*niblock*njblock*nkblock << " bytes\n";
 		  cout << "  read "<< sizew << " bytes\n";
 	       }
 	       if( swap_bytes )

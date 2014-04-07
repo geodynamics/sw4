@@ -5300,6 +5300,7 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
 	 nr=lseek(fd,4*sizeof(int)+3*sizeof(double),SEEK_CUR);
 
       // ---------- read topography on file into array gridElev
+      bool roworder=true;
       gridElev.define(1,nitop,1,njtop,1,1);
 
       if( prec == 8 )
@@ -5348,6 +5349,9 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
 
 	 delete[] data;
       }
+      if( roworder )
+	 gridElev.transposeik();
+
       // ---------- done reading
       close(fd);
 

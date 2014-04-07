@@ -565,6 +565,26 @@ void Sarray::assign( const float* ar )
 }
 
 //-----------------------------------------------------------------------
+void Sarray::transposeik( )
+{
+   // Transpose a_{i,j,k} := a_{k,j,i}
+   double* tmpar = new double[m_nc*m_ni*m_nj*m_nk];
+   for( int i=0 ; i <m_ni ; i++ )
+      for( int j=0 ; j <m_nj ; j++ )
+	 for( int k=0 ; k <m_nk ; k++ )
+	 {
+	    size_t ind  = i + m_ni*j + m_ni*m_nj*k;
+	    size_t indr = k + m_nk*j + m_nk*m_nj*i;
+	    for( int c=0 ; c < m_nc ; c++ )
+	       tmpar[c+m_nc*ind] = m_data[c+m_nc*indr];
+	 }
+   
+   for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
+      m_data[i] = tmpar[i];
+   delete[] tmpar;
+}
+
+//-----------------------------------------------------------------------
 // void Sarray::write( char* filename, CartesianProcessGrid* cartcomm,
 // 		    std::vector<double> pars )
 // {

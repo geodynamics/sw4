@@ -83,6 +83,7 @@ public:
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
    void assign( const double* ar );
    void assign( const float* ar );
+   void transposeik();
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

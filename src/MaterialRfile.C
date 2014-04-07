@@ -654,19 +654,20 @@ void MaterialRfile::read_rfile( )
       }
       int iread = io_processor();
 
-      if( mEW->getRank() == 7423 )
-      {
-	 cout << "DEBUG: from 7423, iread= " << iread << endl;
-	 for( int p=0 ; p < m_npatches ; p++ )
-	 {
-	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
-	       " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
-	       " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << endl;
-	 }
-      }
+      //      if( mEW->getRank() == 7423 )
+      //      {
+      //	 cout << "DEBUG: from 7423, iread= " << iread << endl;
+      //	 for( int p=0 ; p < m_npatches ; p++ )
+      //	 {
+      //	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
+      //	       " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
+      //	       " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << endl;
+      //	 }
+      //      }
 
       //      vector<Parallel_IO*> pio(m_npatches);
       int bufsize =  5000000;
+      bool roworder = true;
       for( int p=0 ; p < m_npatches ; p++ )
       {
 	 if( !m_isempty[p] )
@@ -674,6 +675,18 @@ void MaterialRfile::read_rfile( )
 	    int global[3]={ m_ni[p], m_nj[p], m_nk[p] };
 	    int local[3] ={ m_ilast[p]-m_ifirst[p]+1, m_jlast[p]-m_jfirst[p]+1, m_klast[p]-m_kfirst[p]+1 };
 	    int start[3] ={ m_ifirst[p]-1, m_jfirst[p]-1, m_kfirst[p]-1 };
+            if( roworder )
+	    {
+	       int tmp=global[0];
+	       global[0]=global[2];
+	       global[2]=tmp;
+	       tmp=local[0];
+	       local[0]=local[2];
+	       local[2]=tmp;
+	       tmp=start[0];
+	       start[0]=start[2];
+	       start[2]=tmp;
+	    }
 	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, bufsize );
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
     // Read corresponding part of patches
@@ -682,6 +695,8 @@ void MaterialRfile::read_rfile( )
 	    else
 	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "float", swapbytes );
 	    delete pio;
+	    if( roworder )
+	       mMaterial[p].transposeik();
 	 }
 	 pos0 += ncblock[p]*m_ni[p]*static_cast<size_t>(m_nj[p])*m_nk[p]*flsize;
       }
