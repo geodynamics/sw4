@@ -16,12 +16,18 @@ public:
    int** m_comm_id;
    int** m_comm_index[6];
    int  m_maxbuf;
+   int  m_maxiobuf;
    int* m_ilow;
    int* m_jlow;
    int* m_klow;
    int* m_niblock;
    int* m_njblock;
    int* m_nkblock;
+
+   // Communication substeps 
+   int* m_nsubcomm;
+   int** m_subcomm;
+   int** m_subcommlabel; 
 };
 
 class Parallel_IO
@@ -43,7 +49,7 @@ private:
    void init_pio( int iwrite, int pfs, int ihave_array=-1 );
    void init_array( int globalsizes[3], int localsizes[3], 
 		    int starts[3], int nptsbuf, int padding=0 );
-
+   void setup_substeps( );
    int m_iwrite, m_nwriters, m_parallel_file_system;
    int m_csteps;
    int* m_writer_ids;

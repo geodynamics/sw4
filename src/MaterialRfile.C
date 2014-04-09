@@ -666,7 +666,7 @@ void MaterialRfile::read_rfile( )
       //      }
 
       //      vector<Parallel_IO*> pio(m_npatches);
-      int bufsize =  5000000;
+      int bufsize =  200000;
       bool roworder = true;
       for( int p=0 ; p < m_npatches ; p++ )
       {
