@@ -30,7 +30,7 @@ main(int argc, char **argv) {
    char merc_def[256];
    
 /* should parse the file name from the arguments... */
-   std::string filename="/p/lscratche/andersp/USGSBayAreaVM-08.3.0.etree"; // Hard-coded filename!
+   std::string filename="/p/lscratche/andersp/USGSBayAreaVM-08.3.0.efile"; // Hard-coded filename!
 
 // hard coded for the USGS Bay Area model
    sprintf(merc_def, "+proj=tmerc +datum=NAD83 +units=m +lon_0=-123.0 +lat_0=35.0 +scale=0.9996");
@@ -44,7 +44,7 @@ main(int argc, char **argv) {
    }
    
 //   if (!(pj_latlong = pj_init_plus("+proj=latlong +ellps=WGS84")) )
-   if (!(pj_latlong = pj_init_plus("+proj=latlong")) )
+   if (!(pj_latlong = pj_init_plus("+proj=latlong +datum=NAD83")) )
    {
       printf("Init of latlong projection failed\n");      
       exit(1);
@@ -203,10 +203,11 @@ main(int argc, char **argv) {
    lev = 0;
    printf("Querying etree for topography at %i by %i points\n", nimax[lev], njmax[lev]);
    
-   for (int j=0; j<njmax[lev]; j++)
+// store data in "C" order
+   for (int i=0; i<nimax[lev]; i++)
    {
-      printf("..%i", j);
-      for (int i=0; i<nimax[lev]; i++)
+      printf("..%i", i);
+      for (int j=0; j<njmax[lev]; j++)
       {
          xr = xc + i*clh[lev];
          yr = yc + j*clh[lev];
@@ -257,93 +258,94 @@ main(int argc, char **argv) {
    {
       for (int q=0; q<3; q++) minmat[q] = 1e5;
       
-      for (int k=0; k<nkmax[lev]; k++)
+// store data in "C" order
+      for (int i=0; i<nimax[lev]; i++)
       {
-         printf("Querying the material properties for block=%i, k=%i\n", lev, k);
-         z = z0[lev] + k*clv[lev];
-         elev = -z;
+         printf("Querying the material properties for block=%i, i=%i\n", lev, i);
    
          for (int j=0; j<njmax[lev]; j++)
          {
-//            printf("..%i", j);
-            for (int i=0; i<nimax[lev]; i++)
-            {
-               xr = xc + i*clh[lev];
-               yr = yc + j*clh[lev];
+	   for (int k=0; k<nkmax[lev]; k++)
+	   {
+	     z = z0[lev] + k*clv[lev];
+	     elev = -z;
+
+	     xr = xc + i*clh[lev];
+	     yr = yc + j*clh[lev];
       
 // coordinate system centered at NE corner (#3)
-               xabs = xmap = dm_x[3] + xr*sin(alpha) + yr*cos(alpha);
-               yabs = ymap = dm_y[3] + xr*cos(alpha) - yr*sin(alpha);
+	     xabs = xmap = dm_x[3] + xr*sin(alpha) + yr*cos(alpha);
+	     yabs = ymap = dm_y[3] + xr*cos(alpha) - yr*sin(alpha);
 
 // inverse projection to get (lon,lat)   
-               status = pj_transform(pj_merc, pj_latlong, 1, 1, &xmap, &ymap, NULL );
+	     status = pj_transform(pj_merc, pj_latlong, 1, 1, &xmap, &ymap, NULL );
 
-               xlon = xmap*RAD_TO_DEG;
-               ylat = ymap*RAD_TO_DEG;
+	     xlon = xmap*RAD_TO_DEG;
+	     ylat = ymap*RAD_TO_DEG;
    
 //      printf("cell center (x,y)=(%e, %e), (lon, lat)=(%e, %e)\n", xabs, yabs, xlon, ylat);
 
 // query the material model
-               mQuery.query(&mPayload, mPayloadSize, xlon, ylat, elev);
-               nQuery++;
+	     mQuery.query(&mPayload, mPayloadSize, xlon, ylat, elev);
+	     nQuery++;
          
 // Make sure the query didn't generated a warning or error
-               if (mQuery.errorHandler()->status() == cencalvm::storage::ErrorHandler::ERROR) 
-               {
-                  printf("Query error for indices (ix, jy, kz)=(%i, %i, %i), elev=%e\n", i, j, k, elev);
+	     if (mQuery.errorHandler()->status() == cencalvm::storage::ErrorHandler::ERROR) 
+	     {
+	       printf("Query error for indices (ix, jy, kz)=(%i, %i, %i), elev=%e\n", i, j, k, elev);
 // phony values
-                  for (int q=0; q<6; q++)
-                     mPayload[q] = -1.0;
-               }
+	       for (int q=0; q<6; q++)
+		 mPayload[q] = -1.0;
+	     }
 // SHOULD ALSO check for warnings
-               if (mQuery.errorHandler()->status() != cencalvm::storage::ErrorHandler::OK) 
-               {
-                  fprintf(eh,"lev=%i, coord=(%e %e) elev=%e, status=%i\n", lev, xr, yr, 
-                          elev, mQuery.errorHandler()->status() );
-               }
+	     if (mQuery.errorHandler()->status() != cencalvm::storage::ErrorHandler::OK) 
+	     {
+	       fprintf(eh,"lev=%i, coord=(%e %e) elev=%e, status=%i\n", lev, xr, yr, 
+		       elev, mQuery.errorHandler()->status() );
+	     }
 
 // save data
-               mat[0]=mPayload[0]; // dens
-               mat[1]=mPayload[1]; // Vp
-               mat[2]=mPayload[2]; // Vs
+	     mat[0]=mPayload[0]; // dens
+	     mat[1]=mPayload[1]; // Vp
+	     mat[2]=mPayload[2]; // Vs
 
-               for (int q=0; q<3; q++)
-               {
-                  if (mat[q] < minmat[q]) minmat[q] = mat[q];
-		  fmat[q] = (float) mat[q];
-               }
+	     for (int q=0; q<3; q++)
+	     {
+	       if (mat[q] < minmat[q]) minmat[q] = mat[q];
+	       fmat[q] = (float) mat[q];
+	     }
                
                
-               if (attenuation)
-               {
-                  mat[3]=mPayload[4]; // Qp
-                  mat[4]=mPayload[5]; // Qs
-		  fmat[3] = (float) mat[3];
-		  fmat[4] = (float) mat[4];
-		  if (prec == 8)
-		  {
-		    fwrite(mat, sizeof(double), 5, fp);
-		  }
-		  else
-		  {
-		    fwrite(fmat, sizeof(float), 5, fp);
-		  }
-               }
-               else
-               {
-		  if (prec == 8)
-		  {
-		    fwrite(mat, sizeof(double), 3, fp);
-		  }
-		  else
-		  {
-		    fwrite(fmat, sizeof(float), 3, fp);
-		  }               
+	     if (attenuation)
+	     {
+	       mat[3]=mPayload[4]; // Qp
+	       mat[4]=mPayload[5]; // Qs
+	       fmat[3] = (float) mat[3];
+	       fmat[4] = (float) mat[4];
+	       if (prec == 8)
+	       {
+		 fwrite(mat, sizeof(double), 5, fp);
 	       }
+	       else
+	       {
+		 fwrite(fmat, sizeof(float), 5, fp);
+	       }
+	     }
+	     else
+	     {
+	       if (prec == 8)
+	       {
+		 fwrite(mat, sizeof(double), 3, fp);
+	       }
+	       else
+	       {
+		 fwrite(fmat, sizeof(float), 3, fp);
+	       }               
+	     }
             
 // reset status for next query
-               mQuery.errorHandler()->resetStatus();
-            } // end for i...
+	     mQuery.errorHandler()->resetStatus();
+	   } // end for i...
          } // end for j...
       } // end for k...
       printf("Block %i: Min dens, Vp, Vs= %e %e %e\n", lev, minmat[0], minmat[1], minmat[2]);

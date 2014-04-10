@@ -68,7 +68,9 @@ if fd ~= -1
   else
     arr = fread(fd, ni(pnr)*nj(pnr)*nk(pnr)*nc(pnr),'double');
   end;
-  arr = reshape(arr,nc(pnr),ni(pnr),nj(pnr),nk(pnr));
+%  arr = reshape(arr,nc(pnr),ni(pnr),nj(pnr),nk(pnr));
+% "C"-order
+  arr = reshape(arr,nc(pnr),nk(pnr),nj(pnr),ni(pnr));
 
 % make grid arrays
   x = ((0:ni(pnr)-1)*hh(pnr))';
