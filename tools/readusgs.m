@@ -5,6 +5,7 @@
 %  fault earthquake scenarios.
 %
 %              [t,ux,uy,uz,uxy,uxz,uyz]=readusgs(filename, evtlon, evtlat, rotate)
+%              [t,r,ux,uy,uz,p]=readusgs(filename, evtlon, evtlat, rotate)
 %
 %       Input: filename - Name of receiever data file
 %              evtlon - event longitude [optional]
@@ -12,11 +13,18 @@
 %              rotate - transform to radial, tangential, up (=-z) components [optional]
 %          
 %       Output: t  - Time vector of the same length as the data vectors (1st column of data).
+%           For seismic stations (solid earth):
 %               ux - X- or East-West direction data component (2nd column of data )
 %               uy - Y- or North-South direction data component (3rd column of data )
 %               uz - Z- or Up direction data component (4th column of data)
 %               uxy, uxz, uyz - When strains are output (ux,uy,uz) are the diagonal
 %                    components and these are the off diagonals.
+%           For acoustic calculations (air):
+%               r  - density
+%               ux - X-velocity component
+%               uy - Y-velocity component
+%               uz - Z-velocity component
+%               p - pressure
 %       if (rotate)
 %          call heading.m to calculate the azimuthal angle
 %          rotate components to radial, tangential components (but leave vertical=z)
