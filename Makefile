@@ -66,10 +66,14 @@ else
 
 # if configs/make.inc does not exist
   ifeq ($(UNAME),Darwin)
-  # for Anders' laptop
+  # for Anders' old laptop
     ifeq ($(findstring yorkville,$(HOSTNAME)),yorkville)
       include configs/make.yorkville
       foundincfile := "configs/make.yorkville"
+  # for Anders' new laptop
+    else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
+      include configs/make.fourier
+      foundincfile := "configs/make.fourier"
     endif
   endif
   

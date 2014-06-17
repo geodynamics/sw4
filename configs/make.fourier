@@ -1,0 +1,7 @@
+etree = no
+proj = no
+SW4ROOT = /Users/petersson1
+FC = mpif77
+CXX = mpicxx
+EXTRA_FORT_FLAGS = -fno-underscoring
+EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc48 -lgfortran
