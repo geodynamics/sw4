@@ -42,13 +42,13 @@ else
    CFLAGS   = -O 
 endif
 
-debugdir := debug_v1.0
-optdir := optimize_v1.0
-
 fullpath := $(shell pwd)
 
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
+
+debugdir := debug
+optdir := optimize
 
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
@@ -66,10 +66,14 @@ else
 
 # if configs/make.inc does not exist
   ifeq ($(UNAME),Darwin)
-  # for Anders' laptop
+  # for Anders' old laptop
     ifeq ($(findstring yorkville,$(HOSTNAME)),yorkville)
       include configs/make.yorkville
       foundincfile := "configs/make.yorkville"
+  # for Anders' new laptop
+    else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
+      include configs/make.fourier
+      foundincfile := "configs/make.fourier"
     endif
   endif
   
@@ -79,6 +83,9 @@ else
     ifeq ($(findstring cab,$(HOSTNAME)),cab)
       include configs/make.cab
       foundincfile := "configs/make.cab"
+# object code goes in machine specific directory on LC
+      debugdir := debug_cab
+      optdir := optimize_cab
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
@@ -95,6 +102,9 @@ else
     else ifeq ($(findstring vulcan,$(HOSTNAME)),vulcan)
       include configs/make.bgq
       foundincfile := "configs/make.bgq"
+# object code goes in machine specific directory on LC
+      debugdir := debug_vulcan
+      optdir := optimize_vulcan
     endif
   endif
 

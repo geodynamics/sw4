@@ -42,16 +42,16 @@
 \renewcommand{\div}{{\rm div}}
 \renewcommand{\arraystretch}{1.3}
 
-\markboth{}{N. A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.1}
+\markboth{}{N. A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-1.0}
 
 \begin{document}
 
-\title{\Huge\bf User's guide to SW4, version 1.1} 
+\title{\Huge\bf User's guide to SW4, version 1.0} 
 
 \author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
      Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This is
      contribution LLNL-SM-642292.}}
-\date{\today} 
+\date{September 5, 2013} 
 \maketitle
 
 %\thispagestyle{plain}
@@ -120,16 +120,14 @@ mesh below the curvilinear grid. The Cartesian mesh, which extends to the bottom
 computational domain, is also generated automatically.
 
 \emph{SW4} solves the seismic wave equations in Cartesian coordinates. It is therefore appropriate
-for local and regional simulations, where the curvature of the earth can be neglected. Locations can
-be specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
+for regional simulations, where the curvature of the earth can be neglected. Locations can be
+specified directly in Cartesian coordinates, or through geographic (latitude, longitude)
 coordinates. \emph{SW4} can be built to use the Proj.4 library~\cite{Proj4} for calculating the
 mapping between geographic and Cartesian coordinates, or use an approximate spheroidal
 mapping. \emph{SW4} can output synthetic seismograms in an ASCII text format, or in the \emph{SAC}
 format~\cite{Goldstein-et-al}. It can also present simulation information as
-\emph{GMT}~\cite{WesselSmithGMT} scripts, which can be used to create annotated maps. \emph{SW4} can
-output the solution, derived quantities of the solution, as well as the material model along 2-D
-grid planes. Furthermore, \emph{SW4} can output the 3-D volumetric solution, or material model, in a
-binary file format.
+\emph{GMT}~\cite{WesselSmithGMT} scripts, which can be used to create annotated maps. Furthermore,
+\emph{SW4} can output the solution as well as the material model along 2-D grid planes.
 
 %In version 2.1 of \emph{SW4}, Cartesian local mesh refinement can be used to make the computational
 %mesh finer near the free surface, where more resolution often is needed to resolve short wave
@@ -152,20 +150,15 @@ based on the technique described in~\cite{PetSjo-10b}.
 While most of the \emph{SW4} code is written in C++, almost all numerical computations are
 implemented in Fortan-77. \emph{SW4} uses a distributed memory programming model, implemented with
 the C-bindings of the MPI library. Compatible versions of the C++ and Fortran-77 compilers as well
-as the MPI library must be available to build the code. We have built and tested
+as the MPI library must therefore be available to build the code. We have built and tested
 \emph{SW4} on a variety of machines, ranging from single processor laptops to large super-computers
-with ${\cal O}(100,000)$ cores.
+with ${\cal O}(10,000)$ cores.
 
 With the exception of some minor details, the syntax of the \emph{SW4} command file is the same as
 in \emph{WPP}. Most of the input and output files also use the same formats, but we have taken the
 opportunity to improve the image file format (see Chapter~\ref{chap:formats} for details). With the
-exception of mesh refinement, \emph{SW4} supports most of the functionality of \emph{WPP}, version
-2.2. Apart from a few bugfixes, the main improvement in version 1.1 of \emph{SW4} is the ability to
-read complex heterogeneous material models in a new binary file format (\verb+rfile+). This file
-format supports a hierarchical data structure, which allows the material model to be represented with
-higher resolution near the surface of the earth. These files can be read in parallel (if a parallel
-file system is available), with automatic byte-swapping, and has been shown to work well on very
-large parallel machines (tested on up to 131,072 cores).
+exception of mesh refinement, version 1.0 of \emph{SW4} supports most of the functionality of
+\emph{WPP} (version 2.2). We hope to add the remaining features in the future.
 
 The {\tt examples} subdirectory of the \emph{SW4} source distribution contains several examples and
 validation tests that are used in this document. Many Matlab/octave scripts are provided in the
@@ -229,9 +222,9 @@ is compatible with the compiler that was used to build \emph{SW4}.
 
 Version information for the \emph{SW4} executable can be obtained through {\tt -v} flag:
 \begin{verbatim}
-[yorkville:~/src/sw4/optimize] petersson1% openmpirun -np 2 ./sw4 -v
+[yorkville:~/src/sw4/optimize_v1.0] petersson1% openmpirun -np 2 ./sw4 -v
 ----------------------------------------------------------------
-            sw4 version 1.1
+            sw4 version 1.0
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
@@ -313,7 +306,7 @@ is defined by the topographic surface
 z=\tau(x,y),
 \]
 which defines the shape of the free surface. \emph{SW4} can also be run with flat topography, in
-which case $\tau(x,y)=0$ and the $z$-coordinate equals the depth below the free surface. In the general
+which case $\tau(x,y)=0$ and the $z$-coordinate is the depth below the free surface. In the general
 case, the computational domain is given by
 \begin{equation}\label{eq:domain}
 0\leq x\leq x_{max},\quad 0\leq y\leq y_{max},\quad \tau(x,y) \leq z \leq z_{max}.
@@ -327,7 +320,7 @@ chosen such that the average of the vertical grid size approximately equals $h$.
 %When mesh refinement is enabled, this is the grid size in the
 %coarsest grid. 
 
-The most precise way of specifying the grid is by providing the number of grid points in each
+The most obvious way of specifying the grid is by providing the number of grid points in each
 direction as well as the grid size,
 %
 \begin{verbatim}
@@ -379,11 +372,11 @@ The simulation always starts at $t=0$ and runs until $t=T$, where the user must 
 time t=1.6
 \end{verbatim}
 sets $T=1.6$ seconds. Alternatively, the simulation time interval can be specified as 
-a number of time steps,
+a number of time steps, as in the example
 \begin{verbatim}
 time steps=1200
 \end{verbatim}
-The end time will in this case be $T=1200\Delta t$,
+Here the number of time steps is set to 1200. The end time will in this case be $T=1200\Delta t$,
 where the time step $\Delta t$ is determined automatically by \emph{SW4} to satisfy the CFL time
 step restriction. This calculation is based on the ratio between the grid size and the largest
 characteristic wave speed, which depends on both the compressional and shear wave speeds. 
@@ -463,7 +456,7 @@ far-field boundaries~\cite{AppCol-09, PetSjo-13}. In this method, a coordinate m
 function) is used to map the computational domain onto a much larger physical domain. The idea
 behind making the physical domain very large is to delay artificial reflections from the far-field
 boundary, because it will take a very long time for waves to arrive at the far-field boundary,
-and then return back into the interior of the domain. The streching is combined with a high order
+and the return back into the interior of the domain. The streching is combined with a high order
 artificial dissipation operator that is added in the super-grid layers. It damps out waves that
 become poorly resolved on the grid because of the grid stretching. Note that the dissipative term is
 only added in the layers, and should not affect the accuracy in the interior of the domain.
@@ -1142,26 +1135,39 @@ computational domain,
 \[
 z=\tau(x,y).
 \]
-The topography can currently be described in one of four ways: a Gaussian hill
-(\S~\ref{sec:topo-gauss-hill}), by the elevation on a latitude-longitude grid
-(\S~\ref{sec:topo-gridfile}), through an \verb+efile+ database (\S~\ref{sec:topo-efile}), or by
-using a \verb+rfile+ raster file (\S~\ref{sec:topo-rfile}).
+Three different topography descriptions are currently implemented in \emph{SW4}: a Gaussian hill
+(\S~\ref{sec:topo-gauss-hill}), a latitude-longitude grid file (\S~\ref{sec:topo-gridfile}), or
+topography from an Etree database (\S~\ref{sec:topo-efile}).
 
 A curvilinear grid is automatically constructed between the topography surface and a user specified depth
 $z=$\verb+zmax+. If no topography command is present in the input file, the top surface is taken to
 be the plane $z=0$, and no curvilinear grid is constructed. If the topography surface $z=\tau(x,y)$ varies between
 $\tau_{min}\leq z\leq \tau_{max}$ ($z$ is positive downwards), the grid generation usually works well if
 \begin{equation}\label{zmax-limit}
-\mbox{\tt zmax} \geq \tau_{max} + 3(\tau_{max}-\tau_{min}),
+\mbox{\tt zmax} \geq \tau_{max} + 2(\tau_{max}-\tau_{min}),
 \end{equation}
 After reading the topography, \emph{SW4} prints out the min and max $z$-coordinates, as well as the
-specified value of \verb+zmax+. For example,
+specified value of \verb+zmax+,
 \begin{verbatim}
 ***Topography grid: min z = -1.1443e+03, max z = 1.0929e+03, \
-   top Cartesian z = 8.000000e+03
+   top Cartesian z = 6.000000e+03
 \end{verbatim}
-Here, $\tau_{min} = -1144.3$, $\tau_{max} = 1092.9$ and \verb+zmax=+ 8000.  We have $\tau_{max} +
-3(\tau_{max}-\tau_{min})=7804.5$, which satisfies \eqref{zmax-limit}.
+This case corresponds to the topography shown in Figure~\ref{fig:efile-topo},
+\[
+\tau_{min} = -1144.3, \quad \tau_{max} = 1092.9,
+\]
+and \verb+zmax=+ 6000.  We have $\tau_{max} + 2(\tau_{max}-\tau_{min})=5567.3$, which satisfies \eqref{zmax-limit}.
+%
+\begin{figure}[htp]
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{efile-topo.png}
+    \caption{Topography and bathymetry in the
+      vicinity of San Jose, south of San Francisco. The coastline is outlined by a thicker black
+      line. Note the deep water in the Monterey Canyon, near the bottom corner of the computational domain. }
+    \label{fig:efile-topo}
+  \end{center}
+\end{figure}
+%
 
 Except for the Gaussian hill topography, the topography surface is smoothed by a Jacobi iteration
 before the curvilinear grid is generated,. The purpose of the smoothing is to ensure that the
@@ -1178,9 +1184,9 @@ specifying \verb+mode=topo+ instead of \verb+mode=grid+).
 
 \section{Gaussian hill topography}\label{sec:topo-gauss-hill}
 The simplest type of topography is a Gaussian hill, i.e., a topography described by the Gaussian,
-\[
+$$
   \tau(x,y)= A e^{-( (x-x_c)/Lx )^2 - ( (y-y_c)/L_y )^2}.
-\]
+$$
 The user can place one Gaussian hill at a location specified by $(x_c,y_c)$, in the $(x,y)$-plane.
 Furthermore, the user can adjust the amplitude of the hill, $A$, as well as
 its spread in the $x$ and $y$-directions, $L_x$ and $L_y$ respectively. 
@@ -1200,9 +1206,8 @@ gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in
 \section{Topography grid file}\label{sec:topo-gridfile}
 The topography can be given on a regular lattice in geographical (lat, lon), or Cartesian $(x, y)$
 coordinates. This approach works well together with the \verb+block+, \verb+pfile+, and \verb+ifile+
-material commands. It can also be used together with the \verb+rfile+ or \verb+efile+ commands, but
-in those cases it is important that the topography is consistent with the material data, because it
-is given relative to mean sea level ($z=0$).
+material commands. It can also be used together with the \verb+efile+ command, but in that case it is important
+that the topography is consistent with the etree database, see Section~\ref{sec:topo-efile}.
 
 To setup the topography, you can give the command
 % for the Grenoble basin test case described in
@@ -1224,54 +1229,27 @@ function. The topography is shown in Figure~\ref{fig:grenoble-topo}.
   \end{center}
 \end{figure}
 
-\section{efile topography}\label{sec:topo-efile}
+\section{Etree topography}\label{sec:topo-efile}
 
 The Etree databases for the San Francisco bay area and Northern California contain topographic
 information. You can setup the computational grid to follow this topography by using the following command,
 \begin{verbatim}
-topography input=efile etree=USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
+topography input=efile etree=USGSBayAreaVM-08.3.0.etree zmax=6e3 order=3
 \end{verbatim}
-Note that the syntax has been changed from \emph{WPP}. This style of the topography command tells
-\emph{SW4} to read the topography from the specified Etree file. Figure~\ref{fig:efile-topo} shows
-the resulting elevation of the free surface. 
-%
-\begin{figure}[htp]
-  \begin{center}
-    \includegraphics[width=0.7\textwidth]{efile-topo.png}
-    \caption{Topography and bathymetry around San Jose, just south of San Francisco. The coastline
-      is outlined by a thicker black line. Note the deep water in the Monterey Canyon, near the
-      bottom corner of the computational domain. }
-    \label{fig:efile-topo}
-  \end{center}
-\end{figure}
-%
-The \verb+efile+ keyword can also be called
-\verb+etree+. The \verb+order=3+ option specifies the type of stretching to use when making the
+Note that the syntax has been changed from \emph{WPP}. Here, the topography command tells \emph{SW4}
+to read the topography from the specified Etree file. The \verb+etree+ keyword can also be called
+\verb+file+. The \verb+order=3+ option specifies the type of stretching to use when making the
 curvilinear grid. A higher value makes the curvilinear grid smoother near the bottom, but can cause
-a larger variation in grid size near the top. The \verb+zmax=8e3+ option tells \emph{SW4} to put the
-bottom boundary of the curvilinear grid at $z=8000$.
+a larger variation in grid size near the top. The \verb+zmax=6e3+ option tells \emph{SW4} to put the
+bottom boundary of the curvilinear grid at $z=6000$.
 
 When the computational domain is larger, it is possible to combine the topographic information from
 the detailed and regional databases, using the following syntax:
 \begin{verbatim}
 topography input=efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree \
-           zmax=8e3 order=3
+           zmax=6e3 order=3
 \end{verbatim}
 Here the filenames have been abbreviated to improve readability.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{rfile topography}\label{sec:topo-rfile}
-
-The first block in an \verb+rfile+ raster file contains the topographic
-information. You can setup the computational grid to follow this topography by using the following command,
-\begin{verbatim}
-topography input=rfile zmax=6e3 order=3 file=USGSBayAreaVM-08.3.0.rfile 
-\end{verbatim}
-Here, the topography command tells \emph{SW4} to read the topography from the specified raster
-file. Similar to \verb+efile+ topography, the \verb+order=3+ option specifies the type of stretching
-to use when making the curvilinear grid, and the \verb+zmax=8e3+ option tells \emph{SW4} to put the
-bottom boundary of the curvilinear grid at $z=8000$. The format for the \verb+rfile+ is described in
-Section~\ref{sec:rfile-format}. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1281,25 +1259,25 @@ Section~\ref{sec:rfile-format}.
 
 The elastic material model in \emph{SW4} is defined by the grid point values of the density
 ($\rho$), the compressional velocity ($V_p$), and the shear velocity ($V_s$). The material
-properties can be specified by the \verb+block+ command (\S~\ref{sec:block}), the \verb+rfile+
-command (\S~\ref{sec:rfile}), the \verb+efile+ command (\S~\ref{sec:efile}), the \verb+pfile+
-command (\S~\ref{sec:pfile}), the \verb+ifile+ command (\S~\ref{sec:ifile}), or by a combination of
-them. If the same computational grid is used for several simulations, the material model can also be
-obtained through the \verb+vimaterial+ command, assuming that it was initially saved using the
-\verb+volimage+ command. See \S~\ref{sec:vimat} for details.
+properties can be specified by the \verb+block+ command (\S~\ref{sec:block}), the \verb+efile+ command
+(\S~\ref{sec:efile}), the \verb+pfile+ command (\S~\ref{sec:pfile}), the \verb+ifile+ command
+(\S~\ref{sec:ifile}), or by a combination of them. If the same computational grid is used for
+several simulations, the material model can also be obtained through the \verb+vimaterial+ command,
+assuming that it was initially saved using the \verb+volimage+ command. See \S~\ref{sec:vimat} for
+details.
 
 This chapter only discusses elastic materials. See chapter~\ref{sec:attenuation} for visco-elastic
 material models.
 
-Note that \emph{SW4} uses two layers of ghost points outside the computational domain (as defined by
-the grid command). To get precise control over the material properties, you should define them for
-the computational domain padded by two layers of ghost points (only one layer is used above the
-free surface boundary). If the material properties are not defined for some ghost points, they are
-extrapolated from the nearest boundary point. In other words, \emph{SW4} does {\em not} require the
-user to define the material properties for the ghost points, but will use them if they are
-provided. This is a change from \emph{WPP}.
 
-The order within the material commands (block, pfile, rfile, efile, and ifile) {\em does} matter (unlike
+Note that \emph{SW4} uses two layers of ghost points outside the computational domain (as defined by
+the grid command). The material properties must therefore be defined for the computational domain
+padded by two layers of ghost points (one layer above the free surface boundary). If the material
+model is not defined for these ghost points, it will be extrapolated from the nearest boundary. In
+other words, \emph{SW4} does {\em not} require the user to define the material properties for the
+ghost points, but will use them if they are provided. This is a change from \emph{WPP}.
+
+The order within the material commands (block, pfile, efile, and ifile) {\em does} matter (unlike
 all other commands) in that the priority of the material command increases towards the end of the
 input file. Hence, a material command in the input file can be completely or partially overridden by
 subsequent material commands.
@@ -1307,9 +1285,9 @@ subsequent material commands.
 In the block, pfile, and ifile commands, material properties are assigned based on the depth below
 the free surface. This means that the internal material model depends on the topography, but the
 material properties along the free surface will always be the same, independent of the topographic
-model. For the rfile and efile commands, material properties are defined as functions of elevation relative to
+model. For the efile command, material properties are defined as functions of elevation relative to
 mean sea level ($z=0$). In this case the topography information is embedded in the material
-description. If you combine the rfile or efile commands with a planar topography, a linear mapping is
+description. If you combine the efile command with a planar topography, a linear mapping is
 constructed before the material properties are assigned. The properties at the free surface are thus
 mapped to the top grid surface ($z=0$), and the bottom grid surface (with $z=z_N$) is assigned
 material properties for elevation $-z_N$. Elevation values at intermediate grid points follow from
@@ -1381,40 +1359,6 @@ block vp=6000 vs=3500 rho=2700 \
       x1=15e3 x2=85e3 z1=15e3 z2=85e3 y1=38e3 y2=45e3
 \end{verbatim}
 This material is displayed on the right side of Figure~\ref{fig:blockpics}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The rfile command} \label{sec:rfile}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The rfile command is used to obtain material properties from a binary file that internally describes
-the material and topography in several blocks of data. The blocked format allows material properties
-to be represented with finer spatial resolution near the surface. Topography and bathymetry
-information is described in the first block of the raster file. The raster file format is ideally
-suited for large material models with heterogeneous properties because the file can be read in
-parallel (if a parallel file system is available). In this approach, only a subset of the cores
-(processors) interact with the file system, and the data is propagated to all other cores using
-calls to the MPI library. Note that the grid size in the raster file is independent of the grid size
-in the computational grid. Linear interpolation is used to define the material properties between the data
-points of the \verb+rfile+.
-
-Material properties in the rfile are stored as functions of geographical coordinates (latitude,
-longitude, elevation), and \emph{SW4} must determine the geographical coordinates before it obtains
-the material properties from the file. The \verb+rfile+ material model relies on the \verb+proj.4+
-library to map between Cartesian and geographic coordinates, and can therefore only be used if
-\emph{SW4} has been linked with the \verb+proj.4+ library. See Appendix~\ref{cha:installing-sw4} for
-instructions.
-
-It is important to note the bounds of the geographical region in the material model. Assuming that
-the computational domain is contained within those bounds, and the azimuth of the grid agrees with
-the \verb+rfile+, the following command sets up the material model:
-\begin{verbatim}
-grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=143.6380 h=500
-rfile filename=USGSBayAreaVM-08.3.0.rfile directory=/Users/petersson1
-\end{verbatim}
-To verify that the computational domain is inside the \verb+rfile+, we recommend checking the
-geographical coordinates on a map during the construction of the input file. We often use the Google Earth
-program for this purpose. The restriction that the azimuth of the computational grid
-must agree with the azimuth of the \verb+rfile+ is made to simplify the parallel reading algorithm.
-%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The efile command} \label{sec:efile}
@@ -1553,7 +1497,7 @@ where the weights are given by
 \omega_{m,n} = e^{-[(\phi_m-\phi)^2 + (\theta_n-\theta)^2]/\alpha^2},\quad \alpha = \frac{N_G \Delta}{2
   \sqrt{-\log 10^{-6}}},
 \]
-where the parameter $\Delta$ is given in header of the pfile (on line 2). It should approximately equal the
+where the parameter $\Delta$ is given in the header of the pfile. It should approximately equal the
 grid size in latitude and longitude (which do {\em not} have to be equal). This choice of $\alpha$ makes
 the weights $\omega_{m,n}<10^{-6}$ for points that are further from $(\phi_m, \theta_n)$ than $N_G
 \Delta/2$, which justifies the truncation of the series in (\ref{eq:gaussian-average}). A
@@ -1707,8 +1651,8 @@ Petersson and Sjogreen~\cite{PetSjo-10b} and the references therein.
 
 There are three components in each of the vector variables $\ub$ and $\bar{\ub}^{(\nu)}$,
 $\nu=1,2,\ldots,n$, resulting in $3+3n$ differential equations for as many dependent
-variables. Hence, compared to the purely elastic case, visco-elastic modeling will require more
-memory and more CPU-time.
+variables. Hence, visco-elastic modeling will require more memory and more CPU-time, compared to the
+purely elastic case.
 
 The material parameters $\mu_\nu$ and $\lambda_{\nu}$, as well as the relaxation frequencies
 $\omega_\nu$ are determined by Emmerich and Korn's~\cite{Emm-Korn-87} least-squares procedure. In
@@ -1771,13 +1715,12 @@ Instead of using \verb+maxfreq+, the upper frequency limit can alternatively be 
 upper frequency limit is then calculated through the relation $P=\min V_s/(h
 f)$, i.e.,
 \[
-f_{max} = \frac{1}{P_{min}}\min \frac{V_s}{h},\quad P_{min}=\mbox{minppw}.
+f_{max} = \frac{1}{P_{min}}\min \frac{V_s}{h},\quad f_{max} = \mbox{maxfreq},\quad P_{min}=\mbox{minppw}.
 \]
 The syntax for using \verb+minppw+ is given by
 \begin{verbatim}
 attenuation nmech=3 phasefreq=2.5 minppw=5
 \end{verbatim}
-This procedure results in the same visco-elastic model as by replacing the \verb+minppw+ keyword by \verb+maxfreq=+$f_{max}$.
 
 After the input file has been parsed, \emph{SW4} outputs basic information about the attenuation
 modeling:
@@ -2910,31 +2853,6 @@ style         & type of grid data: {\tt geographic} or {\tt cartesian} & string 
 
 \index{pfile parameters!filename, directory, smoothingsize, vpmin, vsmin, rhomin, flatten, style}
 
-%
-\subsection{rfile}
-\index{command!rfile}
-\label{keyword:rfile}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{flushleft}\bf
-Syntax:\\
-\tt
-rfile filename=... directory=...\\
-\bf Required parameters:\\
-\tt filename
-\end{flushleft}
-%
-\begin{center}
-\begin{tabular}{|l|p{8cm}|l|l||l|} \hline
-\multicolumn{5}{|c|}{\bf rfile command parameters}\\ \hline
-{\bf Option} & {\bf Description}                        & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
-\hline
-filename      & name of raster file                     & string  & none & none \\ \hline
-directory     & name of directory for the raster file   & string  & none & . \\ \hline
-\end{tabular}
-\end{center}
-
-\index{rfile parameters!filename, directory}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{ifile}
 \index{command!ifile}
@@ -3104,20 +3022,17 @@ curvilinear grid is located between the topography and $z=z_{max}$ (recall that 
 downwards). If the elevation '$e$' of the topography ranges between $e_{min}\leq e \leq e_{max}$, we
 recommend using $z_{max} \geq -e_{min} + 2|e_{max} - e_{min}|$.
 
-There are five ways of specifying the topography:
+There are four ways of specifying the topography:
 \begin{itemize}
 \item {\bf input=geographic} Read the topography from a file, where the coordinates are given as as
   function of geographic coordinates (latitude and longitude). The file name must be specified by
-  the {\bf file=...} keyword. The format for this file is described in Section~\ref{sec:topo-file-format}.
+  the {\bf file=...} parameter. The format for this file is described in Section~\ref{sec:topo-file-format}.
 \item {\bf input=cartesian} Read the topography as function of Cartesian coordinates. The file name
-   must be specified by the {\bf file=...} keyword. The format for this file is described in
+   must be specified by the {\bf file=...} parameter. The format for this file is described in
    Section~\ref{sec:topo-file-format}.
-\item {\bf input=rfile} Read the topography from a binary raster file. The name of the raster file
-   must be specified by the {\bf file=...} keyword. The format of this file is described in
-   Section~\ref{sec:rfile-format}.
 \item {\bf input=efile} Read the topography from the Etree database. The database file name
-   must be specified by the {\bf file=...} keyword. The spatial resolution for querying the Etree
-  database may be specified by the {\bf resolution=...} keyword.
+   must be specified by the {\bf file=...} parameter. The spatial resolution for querying the Etree
+  database may be specified by the {\bf resolution=...} parameter.
 \item {\bf input=gaussian} Build an analytical topography in the shape of a Gaussian hill. The
   amplitude is specified by {\bf gaussianAmp=...}, the hill is centered at {\bf gaussianXc=...},
   {\bf gaussianYc=...}, and the half width of the hill in the $x$ and $y$-directions are specified by 
@@ -4030,13 +3945,6 @@ Lon_{N_{lon}}& Lat_{N_{lat}} & d_{1,N_{lon},N_{lat}} & \ldots & d_{N_{mat},N_{lo
 \]
 It is required that $d_{q,i,j} \leq d_{q+1,i,j}$.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{rfile}\label{sec:rfile-format}
-\index{fileformats!rfile}
-
-The material raster file (rfile) should be a binary file with the following format...
-UPDATE!
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{sac}\label{sec:sac-format}
 \index{fileformats!sac}
 
@@ -4048,7 +3956,6 @@ description of the file format.
 We provide a simplified Matlab/octave reader of SAC files called {\tt readsac.m} in the {\tt tools}
 directory. Note that only a subset of the header information is parsed by this reader.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{image}\label{sec:image-format}
 \index{fileformats!image}
 
@@ -4369,13 +4276,12 @@ shell> make -v
 If you don't have GNU make installed on your system, you can obtain it from www.gnu.org.
 
 We have built \emph{SW4} and its supporting libraries on Intel based laptops and desktops running
-LINUX and OSX. It has also been built on several supercomputers such as the Intel machines {\tt cab}
-(at LLNL) and {\tt edison} (at LBNL), as well as the IBM BGQ machine {\tt vulcan} at LLNL. We have
-successfully used the following versions of Gnu, Intel, and IBM compilers:
+LINUX and OSX. It has also been built on several supercomputers such as the {\tt cab} machine at
+LLNL and {\tt edison} at LBNL. We have successfully used the following versions of Gnu and Intel
+compilers:
 \begin{verbatim}
-Gnu:   g++/gcc/gfortran      versions 4.5 to 4.8
-Intel: icpc/icc/ifort        version 12.1
-IBM Blue Gene: xlc++/xlc/xlf version 12.1
+Gnu:   g++/gcc/gfortran   versions 4.5 to 4.7
+Intel: icpc/icc/ifort     version 12.1
 \end{verbatim}
 
 \emph{SW4} uses the message passing interface (MPI) standard (MPI-2 to be specific) for
@@ -4400,8 +4306,8 @@ the libraries as for \emph{SW4}.
 For a complete installation that supports projections from the Proj.4 library and material models
 from an e-tree database, you need to download and install three additional libraries:
 \begin{itemize}
-\item The Proj.4 library, {\tt http://trac.osgeo.org/proj}
 \item The Euclid e-tree library, {\tt http://www-2.cs.cmu.edu/~euclid}
+\item The Proj.4 library, {\tt http://trac.osgeo.org/proj}
 \item The cencalvm library, {\tt ftp://ehzftp.wr.usgs.gov/baagaard/cencalvm/software}
 \end{itemize}
 These libraries need to be installed under the same directory, such that each library installs its
@@ -4414,20 +4320,14 @@ We recommend using the MacPorts package manager for installing the required comp
 libraries. Simply go to www.macports.org, and install macports on your system. With that in place,
 you can use the \verb+port+ command as follows
 \begin{verbatim}
-shell> sudo port install gcc48
-shell> sudo port select --set gcc mp-gcc48
-shell> sudo port install openmpi +gcc48
-shell> sudo port select --set mpi openmpi-gcc48-fortran
+shell> port install gcc47
+shell> port install openmpi +gcc47
 \end{verbatim}
-Here, \verb+gcc48+ refers to version 4.8 of the Gnu compiler suite. Compiler versions are bound to
-change in the future, so the above commands will need to be modified accordingly. Before starting,
-make sure you install a version of gcc that is compatible with the MPI library package. The above
-example installs the \verb+openmpi+ package with the \verb+gcc48+ variant, which includes a
-compatible Fortran compiler. Alternatively, you can use the \verb+mpich2+ package. Note that the
-\verb+port select+ commands are used to create shortcuts to the compilers and MPI environment. By
-using the above setup, the Gnu compilers can be accessed with \verb+gcc+ and \verb+gfortran+
-commands, and the MPI compilers and execution environment are called \verb+mpicxx+, \verb+mpif77+,
-and \verb+mpirun+, respectively.
+Here, \verb+gcc47+ refers to version 4.7 of the Gnu compiler suite. Compiler versions are bound to
+change with time. Before starting, make sure you install a version of gcc that is compatible with
+the MPI library package. The above example installs the \verb+openmpi+ package with the \verb+gcc47+
+variant, which includes a compatible Fortran compiler. Alternatively, you can use the \verb+mpich2+
+package.
 
 The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed
 using the \verb+-framework vecLib+ link option. If that is not available or does not work on your
@@ -4493,12 +4393,12 @@ Note that you need to have \verb+root+ privileges for this to work.
 \index{installation!directories}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-To unpack the \emph{SW4} source code, you place the file \verb+sw4-v1.1.tgz+ in the
+To unpack the \emph{SW4} source code, you place the file \verb+sw4-v1.0.tgz+ in the
 desired directory and issue the following command:
 \begin{verbatim}
-shell> tar xzf sw4-v1.1.tgz
+shell> tar xzf sw4-v1.0.tgz
 \end{verbatim}
-As a result a new sub-directory named \verb+sw4-v1.1+ is created. It contains several files
+As a result a new sub-directory named \verb+sw4-v1.0+ is created. It contains several files
 and sub-directories:
 %
 \begin{itemize}
@@ -4566,7 +4466,7 @@ EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib64/mpich2/lib  -llapack -lblas -lgfortran
 \subsection{Using make}
 You build \emph{SW4} with the "make" command from the main directory.
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-v1.1
+shell> cd /enter/your/path/sw4-v1.0
 shell> make
 \end{verbatim}
 If all goes well, you will see the SW4 Lives banner on your screen after the compilation and linking
@@ -4598,16 +4498,16 @@ has completed,
 \end{verbatim}
 By default, \verb+make+ builds an optimized \verb+sw4+ executable. It is located in 
 \begin{verbatim}
-/enter/your/path/sw4-v1.1/optimize/sw4
+/enter/your/path/sw4-v1.0/optimize_v1.0/sw4
 \end{verbatim}
 You can also build an executable with debugging symbols by adding the \verb+debug=yes+ option to \verb+make+,
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-v1.1
+shell> cd /enter/your/path/sw4-v1.0
 shell> make debug=yes
 \end{verbatim}
 In this case, the executable will be located in
 \begin{verbatim}
-/enter/your/path/sw4-v1.1/debug/sw4
+/enter/your/path/sw4-v1.0/debug_v1.0/sw4
 \end{verbatim}
 It can be convenient to add the corresponding directory to your \verb+PATH+ environment
 variable. This can be accomplished by modifying your shell configuration file, e.g. \verb+~/.cshrc+
@@ -4617,12 +4517,12 @@ if you are using C-shell.
 
 The input file for \verb+make+ is
 \begin{verbatim}
-sw4-v1.1/Makefile
+sw4-v1.0/Makefile
 \end{verbatim}
 Do {\em not} change this \verb+Makefile+. It should only be necessary to edit your configuration
 file, that is,
 \begin{verbatim}
-/my/path/sw4-v1.1/configs/make.inc
+/my/path/sw4-v1.0/configs/make.inc
 \end{verbatim}
 Note that you must create this file, for example by copying one of the \verb+make.xyz+ files in the
 same directory. The \verb+make.inc+ file holds all information that is particular for your system,
@@ -4724,13 +4624,13 @@ SW4ROOT = /thid/party/basedir
 You then need to re-compile \emph{SW4}. Go to the \emph{SW4} main directory, clean up the previous object
 files and executable, and re-run make:
 \begin{verbatim}
-shell> cd /my/installation/dir/sw4-v1.1
+shell> cd /my/installation/dir/sw4-v1.0
 shell> make clean
 shell> make
 \end{verbatim}
 If all goes well, the ``SW4 lives'' banner is shown after the make command is
-completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
-\verb+debug+ directories.
+completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize_v1.0+ or
+\verb+debug_v1.0+ directories.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Testing the \emph{SW4} installation}\label{cha:testing-sw4}
@@ -4800,7 +4700,7 @@ machine. Assuming \verb+openmpirun+ is used to execute parallel programs, you ru
 cases on 2 processes with the command
 \begin{verbatim}
 cd examples/twilight
-openmpirun -np 2 ../../optimize/sw4 flat-twi-1.in
+openmpirun -np 2 ../../optimize_v1.0/sw4 flat-twi-1.in
 \end{verbatim}
 The results for the four cases are given in the output files
 \begin{verbatim}
