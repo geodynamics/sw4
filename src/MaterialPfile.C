@@ -816,9 +816,13 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
 
 	  int k1 = kk-1;
 // now we should have mZ(k1) <= zs < mZ(k1+1)
+	  if( k1 <= 0 )
+	     k1 = 1;
 
 // linear interpolation factor ( what happens if two mZ values are identical? )
 	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
+	  if( factor < 0 )
+	     factor = 0;
 
 	  vp    += (mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)) )*wgh;
 	  vs    += (mVs(i1+1,j1+1,k1) + factor*(mVs(i1+1,j1+1,k1+1)-mVs(i1+1,j1+1,k1)) )*wgh;
@@ -955,15 +959,22 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
 // at this point we should have mZ(kk-1) <= zs < mZ(kk), kk <= m_nmaxdepth
 
 	  int k1 = kk-1;
+
+// Need to make sure that k1 is in range:
+	  if( k1 <= 0 )
+	     k1 = 1;
+
 // now we should have mZ(k1) <= zs < mZ(k1+1)
 
 // linear interpolation factor
 	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
+          if( factor < 0 )
+	     factor = 0;
 
 // new style
-	  vp    += (mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)) )*wgh;
-	  vs    += (mVs(i1+1,j1+1,k1) + factor*(mVs(i1+1,j1+1,k1+1)-mVs(i1+1,j1+1,k1)) )*wgh;
-	  rho    += (mRho(i1+1,j1+1,k1) + factor*(mRho(i1+1,j1+1,k1+1)-mRho(i1+1,j1+1,k1)) )*wgh;
+	  vp    += (mVp(i1+1,j1+1,k1)  + factor*(mVp(i1+1,j1+1,k1+1)- mVp(i1+1,j1+1,k1))  )*wgh;
+	  vs    += (mVs(i1+1,j1+1,k1)  + factor*(mVs(i1+1,j1+1,k1+1)- mVs(i1+1,j1+1,k1))  )*wgh;
+	  rho   += (mRho(i1+1,j1+1,k1) + factor*(mRho(i1+1,j1+1,k1+1)-mRho(i1+1,j1+1,k1)) )*wgh;
 // tmp
 	  // if (debug) printf("DEBUG: i1+1=%i, j1+1=%i, k1=%i, vp=%e, wgh=%e\n", i1+1, j1+1, k1,
 	  // 		    mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)), wgh);
