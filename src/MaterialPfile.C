@@ -444,26 +444,35 @@ void MaterialPfile::read_pfile( )
    {
       m_lat = new double[m_nlat];
       m_lon = new double[m_nlon];
+// new 3-D Sarrays
+      mZ.define(m_nlon, m_nlat, m_nmaxdepth);
+      mVp.define(m_nlon, m_nlat, m_nmaxdepth);
+      mVs.define(m_nlon, m_nlat, m_nmaxdepth);
+      mRho.define(m_nlon, m_nlat, m_nmaxdepth);
+      if(m_qf)
+      {
+// new 3-D Sarrays
+	 mQp.define(m_nlon, m_nlat, m_nmaxdepth);
+	 mQs.define(m_nlon, m_nlat, m_nmaxdepth);
+      }
    }
    else
    {
       m_x = new double[m_nx];
       m_y = new double[m_ny];
-   }
-
 // new 3-D Sarrays
-   mZ.define(m_nlon, m_nlat, m_nmaxdepth);
-   mVp.define(m_nlon, m_nlat, m_nmaxdepth);
-   mVs.define(m_nlon, m_nlat, m_nmaxdepth);
-   mRho.define(m_nlon, m_nlat, m_nmaxdepth);
-
-   if(m_qf)
-   {
+      mZ.define(m_nx, m_ny, m_nmaxdepth);
+      mVp.define(m_nx, m_ny, m_nmaxdepth);
+      mVs.define(m_nx, m_ny, m_nmaxdepth);
+      mRho.define(m_nx, m_ny, m_nmaxdepth);
+      if(m_qf)
+      {
 // new 3-D Sarrays
-      mQp.define(m_nlon, m_nlat, m_nmaxdepth);
-      mQs.define(m_nlon, m_nlat, m_nmaxdepth);
+	 mQp.define(m_nx, m_ny, m_nmaxdepth);
+	 mQs.define(m_nx, m_ny, m_nmaxdepth);
+      }
    }
-   else
+   if( !m_qf )
    {
      if (myRank == 0) printf("ppmod: NOT allocating arrays for Qp and Qs\n");
    }
@@ -542,9 +551,9 @@ void MaterialPfile::read_pfile( )
 			     << " nread= " << nread << " but expected 5\n" );
 	       }
 	       
- 	       mZ(ix+1,jy+1,k+1) = zc;
- 	       mVp(ix+1,jy+1,k+1) = vp;
- 	       mVs(ix+1,jy+1,k+1) = vs;
+ 	       mZ(ix+1,jy+1,k+1)   = zc;
+ 	       mVp(ix+1,jy+1,k+1)  = vp;
+ 	       mVs(ix+1,jy+1,k+1)  = vs;
  	       mRho(ix+1,jy+1,k+1) = rho;
 
 	       if (m_qf)
