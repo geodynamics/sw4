@@ -5179,8 +5179,9 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
       if( swapbytes )
 	 bswap.byte_rev( &alpha, 1, "double" );
 
-      CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-7, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
-		   " azimuth on rfile = " << alpha << " azimuth of coordinate sytem = " << mGeoAz );
+      CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-6, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
+		   " azimuth on rfile = " << alpha << " azimuth of coordinate sytem = " << mGeoAz << 
+                   " difference = " << alpha-mGeoAz );
 
       // ---------- origin on file
       double lon0, lat0;

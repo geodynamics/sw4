@@ -1,5 +1,5 @@
 etree = no
-proj = no
+proj = yes
 SW4ROOT = /Users/petersson1
 FC = mpif77
 CXX = mpicxx

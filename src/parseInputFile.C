@@ -6971,28 +6971,6 @@ void EW::processMaterialRfile(char* buffer)
       //         token += 2; // skip a=
       //         a_ppm = atof(token);
       //      }
-      else if( startswith("smoothingsize=",token) )
-      {
-	 token += 14;
-	 nstenc = atoi(token);
-	 VERIFY2( nstenc >= 1 ,
-		 "processMaterialRfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
-      }
-      else if (startswith("vpmin=", token))
-      {
-	 token += 6; // skip vpmin=
-	 vpmin_ppm = atof(token);
-      }
-      else if (startswith("vsmin=", token))
-      {
-	 token += 6; // skip vsmin=
-	 vsmin_ppm = atof(token);
-      }
-      else if (startswith("rhomin=", token))
-      {
-	 token += 7; // skip rhomin=
-	 rhomin_ppm = atof(token);
-      }
       else if (startswith("filename=", token))
       {
 	 token += 9; // skip filename=
@@ -7003,16 +6981,6 @@ void EW::processMaterialRfile(char* buffer)
 	 token += 10; // skip directory=
 	 directory = token;
       }
-      //      else if (startswith("style=", token))
-      //      {
-      //	token += 6; // skip style=
-      //	if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
-      //	  coords_geographic = true;
-      //	else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
-      //	  coords_geographic = false;
-      //	else
-      //	  CHECK_INPUT( false, "processMaterialRfile Error: style= " << token << " not recognized\n" );
-      //      }
       else
       {
 	 cout << token << " is not a rfile option " << endl;

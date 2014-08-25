@@ -50,7 +50,7 @@
 
 \author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
      Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This is
-     contribution LLNL-SM-642292.}}
+     contribution LLNL-SM-ABCDEF.}}
 \date{\today} 
 \maketitle
 
@@ -4004,12 +4004,18 @@ $Q_P$ and $Q_S$ can be left out when indicated not present by the $Q$-availabili
 the header.  Note that, unlike the pfiles on a geographic lattice, the units should here be
 the standard MKS units, which normally are used in \emph{SW4}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{ifile}\label{sec:ifile-format}
 \index{fileformats!ifile}
 
-The material surface file (ifile) should be an ASCII text file with the following format. The first line of the
-file holds the number of longitude and latitude data points, as well as the number of material
-surfaces:
+The material surface file (ifile) should be an ASCII text file with the following format. We start
+by assuming the material surfaces are given as function of geographic coordinates
+(\verb+input=geographic+). Modifications for the Cartesian case are described at the end of this
+section.
+
+The first line of the file holds the number of longitude and latitude data points, as well as the number
+of material surfaces:
 \[
 N_{lon}\quad N_{lat}\quad N_{mat}
 \]
@@ -4028,7 +4034,19 @@ Lon_2& Lat_{N_{lat}}      & d_{1,2,N_{lat}} & \ldots & d_{N_{mat},2,N_{lat}}\\
 Lon_{N_{lon}}& Lat_{N_{lat}} & d_{1,N_{lon},N_{lat}} & \ldots & d_{N_{mat},N_{lon},N_{lat}}
 \end{array}
 \]
-It is required that $d_{q,i,j} \leq d_{q+1,i,j}$.
+It is required that $0\leq d_{q,i,j} \leq d_{q+1,i,j}$.
+
+\subsection{Cartesian ifile}
+
+When the material surfaces are given as function of Cartesian coordinates (\verb+input=cartesian+),
+the first line of the file holds the number of data points in the ``x'' and ``y'' directions, as
+well as the number of material surfaces:
+\[
+N_{x}\quad N_{y}\quad N_{mat}
+\]
+The subsequent lines have essentially the same format as in the geographic case. In the above
+description, simply substitute ``longitude'' by ``x'' and ``latitude'' by ``y''.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{rfile}\label{sec:rfile-format}

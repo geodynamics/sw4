@@ -165,7 +165,8 @@ OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
-       MaterialVolimagefile.o ConvParOutput.o MaterialInvtest.o invtestmtrl.o projectmtrl.o randomfield3d.o
+       MaterialVolimagefile.o ConvParOutput.o MaterialInvtest.o MaterialRfile.o \
+       invtestmtrl.o projectmtrl.o randomfield3d.o
 
 MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
@@ -177,7 +178,7 @@ MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o solve-allpars.o \
        solve-backward-allpars.o DataPatches.o \
-       gradients.o  Image3D.o MaterialVolimagefile.o  MaterialInvtest.o invtestmtrl.o lbfgs.o \
+       gradients.o  Image3D.o MaterialVolimagefile.o  MaterialInvtest.o MaterialRfile.o invtestmtrl.o lbfgs.o \
        projectmtrl.o randomfield3d.o nlcg.o MaterialParameterization.o Mopt.o MaterialParCartesian.o \
        InterpolateMaterial.o interpolatemtrl.o
 
@@ -203,7 +204,7 @@ FOBJCONV = $(addprefix $(builddir)/,$(OBJCONV))
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -215,7 +216,7 @@ sw4: $(FOBJ)
 sw4opt: $(FOBJOPT)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -229,7 +230,7 @@ sw4opt: $(FOBJOPT)
 sw4mopt: $(FMOBJOPT)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)

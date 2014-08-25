@@ -409,7 +409,7 @@ void MaterialRfile::read_rfile( )
       }
       if( swapbytes )
 	 bswap.byte_rev( &alpha, 1, "double" );
-      CHECK_INPUT( fabs(alpha-mEW->getGridAzimuth()) < 1e-7, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
+      CHECK_INPUT( fabs(alpha-mEW->getGridAzimuth()) < 1e-6, "ERROR: Rfile azimuth must be equal to coordinate system azimuth" <<
 		   " azimuth on rfile = " << alpha << " azimuth of coordinate sytem = " << mEW->getGridAzimuth() );
 
       // ---------- origin on file

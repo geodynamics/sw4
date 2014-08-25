@@ -4,6 +4,7 @@
 #include "ConvParOutput.h"
 
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <string>

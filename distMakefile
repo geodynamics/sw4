@@ -4,6 +4,7 @@
 #
 # This Makefile asumes that the following environmental variables have been assigned:
 # etree = [yes/no]
+# proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
@@ -41,8 +42,8 @@ else
    CFLAGS   = -O 
 endif
 
-debugdir := debug_v1.0
-optdir := optimize_v1.0
+debugdir := debug
+optdir := optimize
 
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
@@ -67,6 +68,10 @@ else
     ifeq ($(findstring yorkville,$(HOSTNAME)),yorkville)
       include configs/make.yorkville
       foundincfile := "configs/make.yorkville"
+  # for Anders' new laptop
+    else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
+      include configs/make.fourier
+      foundincfile := "configs/make.fourier"
     endif
   endif
   
@@ -76,6 +81,9 @@ else
     ifeq ($(findstring cab,$(HOSTNAME)),cab)
       include configs/make.cab
       foundincfile := "configs/make.cab"
+# object code goes in machine specific directory on LC
+      debugdir := debug_cab
+      optdir := optimize_cab
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
@@ -88,6 +96,13 @@ else
     else ifeq ($(findstring edison,$(HOSTNAME)),edison)
       include configs/make.edison
       foundincfile := "configs/make.edison"
+  # For Vulcan at LC
+    else ifeq ($(findstring vulcan,$(HOSTNAME)),vulcan)
+      include configs/make.bgq
+      foundincfile := "configs/make.bgq"
+# object code goes in machine specific directory on LC
+      debugdir := debug_vulcan
+      optdir := optimize_vulcan
     endif
   endif
 
@@ -102,10 +117,15 @@ ifdef EXTRA_FORT_FLAGS
 endif
 
 ifeq ($(etree),yes)
-   CXXFLAGS += -DENABLE_ETREE -I$(SW4INC)
+   CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
+else ifeq ($(proj),yes)
+   CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
+   linklibs += -L$(SW4LIB) -lproj
+   etree := "no"
 else
-  etree := "no"
+   etree := "no"
+   proj  := "no"
 endif
 
 ifdef EXTRA_LINK_FLAGS
@@ -131,7 +151,7 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
-       MaterialVolimagefile.o MaterialInvtest.o invtestmtrl.o projectmtrl.o randomfield3d.o
+       MaterialVolimagefile.o MaterialInvtest.o MaterialRfile.o invtestmtrl.o projectmtrl.o randomfield3d.o
 
 
 # prefix object files with build directory
@@ -140,7 +160,7 @@ FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 sw4: $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
