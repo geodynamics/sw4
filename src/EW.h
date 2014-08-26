@@ -401,7 +401,7 @@ void initializePaddingCells();
 
 void convert_material_to_mulambda();
 
-void check_materials();
+void check_materials(); // verify that the density is positive on the grid
 
 void computeSolutionError(vector<Sarray> &U, double t, vector<Sarray*> &Alpha );
 
@@ -545,6 +545,7 @@ void material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
 void get_material_parameter( int nmpar, double* xm );
 void get_scale_factors( int nmpar, double* xm );
 
+#ifdef ENABLE_OPT
 void material_correction( int nmpar, double* xm );
 
 void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
@@ -552,6 +553,7 @@ void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 
 void check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		     vector<Sarray>& a_lambda, int& ok );
+#endif
 
 void get_nr_of_material_parameters( int& nmvar );
 void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 

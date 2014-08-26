@@ -41,13 +41,15 @@
 #include "MaterialPfile.h"
 #include "MaterialIfile.h"
 #include "MaterialVolimagefile.h"
-#include "MaterialInvtest.h"
 #include "MaterialRfile.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
-
 #include "Image3D.h"
+
+#ifdef ENABLE_OPT
+#include "MaterialInvtest.h"
+#endif
 
 #include <cstring>
 #include <iostream>
@@ -408,7 +410,15 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        else if (startswith("vimaterial", buffer))
 	 processMaterialVimaterial( buffer );
        else if (startswith("invtestmaterial", buffer))
+       {
+#ifdef ENABLE_OPT
 	  processMaterialInvtest(buffer);
+#else
+          if (m_myRank==0) 
+             cout << "Error: SW4 was not built with source/material optimization support" << endl;
+          return false;
+#endif
+       }
        else if (startswith("efile", buffer))
        {
 #ifndef ENABLE_ETREE
@@ -7033,6 +7043,7 @@ void EW::processMaterialRfile(char* buffer)
    add_mtrl_block( rf  );
 }
 
+#ifdef ENABLE_OPT
 //-----------------------------------------------------------------------
 void EW::processMaterialInvtest(char* buffer)
 {
@@ -7070,6 +7081,7 @@ void EW::processMaterialInvtest(char* buffer)
    MaterialData *mdata = new MaterialInvtest( this, nr );
    add_mtrl_block(mdata);
 }
+#endif
 
 //-----------------------------------------------------------------------
 void EW::processRandomize(char* buffer)

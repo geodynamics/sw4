@@ -145,7 +145,10 @@ QUADPACK = dqags.o dqagse.o  dqaws.o  dqawse.o  dqc25s.o \
            dqpsrt.o  dqwgts.o  qaws.o  qawse.o  qc25s.o \
            qcheb.o  qk15w.o  qmomo.o  qpsrt.o  qwgts.o xerror.o d1mach.o r1mach.o
 
-OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
+# sw4 main program (kept separate)
+OBJSW4 = main.o
+
+OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
@@ -153,33 +156,15 @@ OBJ  = main.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
-       MaterialVolimagefile.o MaterialInvtest.o MaterialRfile.o \
-       invtestmtrl.o projectmtrl.o randomfield3d.o
+       MaterialVolimagefile.o MaterialRfile.o randomfield3d.o
 
-OBJOPT  = optmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
-       parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
-       rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
-       Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
-       MaterialVolimagefile.o ConvParOutput.o MaterialInvtest.o MaterialRfile.o \
-       invtestmtrl.o projectmtrl.o randomfield3d.o
+OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o \
+       MaterialInvtest.o invtestmtrl.o projectmtrl.o 
 
-MOBJOPT  = moptmain.o EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
-       parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o linsolvelu.o velsum.o solve-backward.o \
-       rayleighfort.o energy4.o TestRayleighWave.o MaterialPfile.o \
-       Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o solve-allpars.o \
+MOBJOPT  = moptmain.o linsolvelu.o solve-backward.o solve-allpars.o \
        solve-backward-allpars.o DataPatches.o \
-       gradients.o  Image3D.o MaterialVolimagefile.o  MaterialInvtest.o MaterialRfile.o invtestmtrl.o lbfgs.o \
-       projectmtrl.o randomfield3d.o nlcg.o MaterialParameterization.o Mopt.o MaterialParCartesian.o \
+       MaterialInvtest.o invtestmtrl.o lbfgs.o projectmtrl.o nlcg.o \
+       MaterialParameterization.o Mopt.o MaterialParCartesian.o \
        InterpolateMaterial.o interpolatemtrl.o
 
 OBJL  = lamb_one_point.o
@@ -189,9 +174,11 @@ OBJP = test_proj.o
 OBJCONV = convert_etree.o
 
 # prefix object files with build directory
+FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
+
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
-FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
+FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
 FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
@@ -201,7 +188,7 @@ FOBJP = $(addprefix $(builddir)/,$(OBJP))
 
 FOBJCONV = $(addprefix $(builddir)/,$(OBJCONV))
 
-sw4: $(FOBJ)
+sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -209,11 +196,12 @@ sw4: $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(QUADPACK) $(linklibs)
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
-sw4opt: $(FOBJOPT)
+sw4opt: $(FOBJ) $(FOBJOPT)
+# need to set ENABLE_OPT before compiling some files in the sw4/src directory
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -221,13 +209,13 @@ sw4opt: $(FOBJOPT)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(QUADPACK) $(linklibs)
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
 	@echo " "
 	@echo "******* sw4opt was built successfully *******" 
 	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 
-sw4mopt: $(FMOBJOPT)
+sw4mopt: $(FOBJ) $(FMOBJOPT)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -235,7 +223,7 @@ sw4mopt: $(FMOBJOPT)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(QUADPACK) $(linklibs)
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
 	@echo " "
 	@echo "******* sw4mopt was built successfully *******" 
 	@echo " "
@@ -270,23 +258,25 @@ convert_etree: $(FOBJCONV)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJCONV) $(linklibs)
 
-# distribution
-tardir := sw4-v1.01
-sw4-v1.01.tgz:
-	/bin/mkdir -p $(tardir)
-	cd $(tardir); cvs -d:ext:petersson1@sourceforge.llnl.gov:/cvsroot/sbp4w checkout .
-	cd $(tardir); /bin/rm -rf tests docs opt-src CVSROOT
-# remove an empty cvs dir
-	cd $(tardir); /bin/rm -rf examples/scec/loh3
+# distribution (don't need this anymore. Be very careful to not overwrite any git-controlled files
+# if you decide to build the source code from a tar-ball
+#tardir := sw4-v1.1
+#sw4-v1.1.tgz:
+#	/bin/mkdir -p $(tardir)
+#	cd $(tardir); git clone https://andersp@lc.llnl.gov/stash/scm/wave/sw4.git
+# with git, all files are put in a directory call sw4
+#	cd $(tardir)/sw4; /bin/rm -rf tests docs opt-src .git
 # command for sticking in the license blurb in all source code files
-	cd $(tardir); python enforceLicense.py Blurb.txt $(fullpath)/$(tardir)
-	cd $(tardir); /bin/rm -f enforceLicense.py
-	cd $(tardir); /bin/rm -f Blurb.txt
-	cd $(tardir); /bin/rm -f Makefile
-	cd $(tardir); /bin/mv distMakefile Makefile
-	@echo "building tar ball..."
-	tar -c --exclude "CVS" -z -f $@ $(tardir)
-	rm -rf $(tardir)
+#	cd $(tardir)/sw4; python enforceLicense.py Blurb.txt $(fullpath)/$(tardir)
+#	cd $(tardir)/sw4; /bin/rm -f enforceLicense.py
+#	cd $(tardir)/sw4; /bin/rm -f Blurb.txt
+#	cd $(tardir)/sw4; /bin/rm -f Makefile
+#	cd $(tardir)/sw4; /bin/mv distMakefile Makefile
+# rename the main direcory
+#	cd $(tardir); /bin/mv sw4 sw4-v1.1
+#	@echo "building tar ball..."
+#	cd $(tardir); tar -c -z -f $@ sw4-v1.1; /bin/mv $@ ..
+#	rm -rf $(tardir)
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<

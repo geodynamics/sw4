@@ -5812,6 +5812,7 @@ void EW::check_min_max_int( vector<Sarray>& a_U )
    }
 }
 
+#ifdef ENABLE_OPT
 //-----------------------------------------------------------------------
 void EW::material_correction( int nmpar, double* xm )
 // routine to enforce material speed limits and positive density
@@ -5863,7 +5864,9 @@ void EW::material_correction( int nmpar, double* xm )
    }   
    material_to_parameters( nmpar, xm, mRho, mMu, mLambda );
 }
+#endif
 
+#ifdef ENABLE_OPT
 //-----------------------------------------------------------------------
 void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 			   vector<Sarray>& a_lambda, int& info )
@@ -5918,7 +5921,9 @@ void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       }
    }   
 }
+#endif
 
+#ifdef ENABLE_OPT
 //-----------------------------------------------------------------------
 void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 			 vector<Sarray>& a_lambda, int& ok )
@@ -5993,6 +5998,7 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] < mCFLmax*mCFLmax && limits[8]>0);
    }
 }
+#endif
 
 //-----------------------------------------------------------------------
 void EW::extrapolateTopo(Sarray& field)
