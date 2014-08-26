@@ -1,4 +1,4 @@
-// -*-c++-*-
+//-*-c++-*-
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -30,25 +30,24 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
-#ifndef POLYNOMIAL_H
-#define POLYNOMIAL_H
+#ifndef MATERIALINVTEST_H
+#define MATERIALINVTEST_H
 
-using namespace std;
+#include "MaterialData.h"
 
-class Polynomial{
+class EW;
 
-friend std::ostream& operator<<(std::ostream& output, const Polynomial& s);
-
-public:
-Polynomial();
-Polynomial(double c[3]);
-double coeff(unsigned int q);
-
-// for efficiency and simplicity reasons, we make the coefficients public
-double m_c[3];
-
-private:   
-
+class MaterialInvtest : public MaterialData
+{
+ public:
+   MaterialInvtest( EW* a_ew, int nr );
+   void set_material_properties(std::vector<Sarray> & rho, std::vector<Sarray> & cs,
+				std::vector<Sarray> & cp,
+				std::vector<Sarray>& xis, std::vector<Sarray>& xip);
+ private:
+   int m_nr;
+   EW *mEW; 
 };
 
 #endif
+
