@@ -1,16 +1,16 @@
 %
 % PLOTTS
 %
-%              plotts(basename, bk, ek, comp, voff)
+%              plotts(basename, bk, ek, comp, scale)
 %
 %       Input: 
 %              basename - Name of receiever data file
 %              bk: int
 %              ek: int
 %              comp: component number in usgs file
-%              voff: vertical offset
+%              scale: constant scale factor applied to all time series
 %               
-function plotts(basename, bk, ek, comp, voff)
+function plotts(basename, bk, ek, comp, scale)
 
 % assume comp=5 for now (pressure)
   comp=5;
@@ -57,16 +57,17 @@ for k=bk:ek
     pmin = lmin;
   end;
 
-  scale = lrange/grange;
-  scale = 1.;
-  scale = grange/lrange;
+%  scale = lrange/grange;
+%  scale = 1.;
+%  scale = 10000 * grange/lrange;
 
-  rscale = 10000;
   k0 = 5;
 % reduced time: k-k0 is range on a 10 km scale
   toff = abs(k-k0)*10/0.4;
 
-  plot(t - toff,rscale*((k-k0)*voff + p.*scale),'k','linewidth',2);
+  rscale = sqrt(0.5 + abs(k-k0));
+
+  plot(t - toff,((k-k0)*10.0 + rscale* p.*scale),'k','linewidth',2);
 
 end;
 hold off;
