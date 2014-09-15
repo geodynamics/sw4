@@ -1,0 +1,6 @@
+# Graphite-Epoxy (65%-35%)
+#
+ablock c11=155.43e9 c22=16.34e9 c33=16.34e9 c12=3.72e9 c13=3.72e9 c23=4.96e9 c44=3.37e9 c55=7.48e9 c66=7.48e9 rho=1700
+#
+# Rotated 30 degrees around z-axis (might be wrong)
+ablock c11=95.46e9 c22=25.91e9 c33=16.34e9 c12=28.93e9 c13=4.03e9 c23=4.65e9 c44=4.40e9 c55=6.45e9 c66=32.68e9 c16=44.67e9 c26=15.56e9 c36=0.54e9 c45=-1.78e9 rho=1700
