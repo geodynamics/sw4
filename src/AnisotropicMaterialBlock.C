@@ -30,20 +30,22 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
-#include "MaterialBlock.h"
+#include "AnisotropicMaterialBlock.h"
 
 #include <iostream>
 #include "EW.h"
 
 using namespace std;
 //-----------------------------------------------------------------------
-MaterialBlock::MaterialBlock( EW * a_ew, double rho, double vs, double vp, double xmin, 
-                              double xmax, double ymin, double ymax, double zmin, double zmax,
-			      double qs, double qp, double freq )
+AnisotropicMaterialBlock::AnisotropicMaterialBlock( EW * a_ew, double rho, double c[21], double xmin,
+                              double xmax, double ymin, double ymax, double zmin, double zmax )
 {
    m_rho = rho;
-   m_vp  = vp;
-   m_vs  = vs;
+   for( int i=0; i < 21 ; i++ )
+   {
+      m_c[i] = c[i];
+      m_cgrad[i] = 0;
+   }
    m_xmin = xmin;
    m_xmax = xmax;
    m_ymin = ymin;
@@ -51,15 +53,8 @@ MaterialBlock::MaterialBlock( EW * a_ew, double rho, double vs, double vp, doubl
    m_zmin = zmin;
    m_zmax = zmax;
    m_tol = 1e-5;
-   m_vpgrad  = 0;
-   m_vsgrad  = 0;
-   m_rhograd = 0;
-   m_qs = qs;
-   m_qp = qp;
-   m_freq = freq;
    m_absoluteDepth = false;
    mEW = a_ew;
-
    double bbox[6];
    mEW->getGlobalBoundingBox( bbox );
   
@@ -87,35 +82,33 @@ MaterialBlock::MaterialBlock( EW * a_ew, double rho, double vs, double vp, doubl
    {
      mCoversAllPoints=false;
    }
+   
 }
 
 //-----------------------------------------------------------------------
-void MaterialBlock::set_absoluteDepth( bool absDepth )
+void AnisotropicMaterialBlock::set_absoluteDepth( bool absDepth )
 {
    m_absoluteDepth = absDepth;
 }
 
 //-----------------------------------------------------------------------
-void MaterialBlock::set_gradients( double rhograd, double vsgrad, double vpgrad )
+void AnisotropicMaterialBlock::set_gradients( double rhograd, double cgrad[21] )
 {
    m_rhograd = rhograd;
-   m_vsgrad  = vsgrad;
-   m_vpgrad  = vpgrad;
+   for( int i=0; i < 21 ; i++ )
+      m_cgrad[i] = cgrad[i];
 }
 
 //-----------------------------------------------------------------------
-bool MaterialBlock::inside_block( double x, double y, double z )
+bool AnisotropicMaterialBlock::inside_block( double x, double y, double z )
 {
    return m_xmin-m_tol <= x && x <= m_xmax+m_tol && m_ymin-m_tol <= y && 
     y <= m_ymax+m_tol &&  m_zmin-m_tol <= z && z <= m_zmax+m_tol;
 }
 
 //-----------------------------------------------------------------------
-void MaterialBlock::set_material_properties( std::vector<Sarray> & rho, 
-                                             std::vector<Sarray> & cs,
-                                             std::vector<Sarray> & cp, 
-                                             std::vector<Sarray> & qs, 
-                                             std::vector<Sarray> & qp)
+void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rho, 
+							std::vector<Sarray> & c )
 {
   int pc[4];
 // compute the number of parallel overlap points
@@ -153,14 +146,8 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	  {
 	    if( m_rho != -1 )
 	      rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
-	    if( m_vs != -1 )
-	      cs[g](i,j,k)  = m_vs + m_vsgrad*(depth-zsurf);
-	    if( m_vp != -1 )
-	      cp[g](i,j,k)  = m_vp + m_vpgrad*(depth-zsurf);
-	    if( m_qp != -1 && qp[g].is_defined())
-	      qp[g](i,j,k) = m_qp;
-	    if( m_qs != -1 && qs[g].is_defined())
-	      qs[g](i,j,k) = m_qs;
+	    for( int nr=1 ; nr <= 21 ; nr++ )
+	       c[g](nr,i,j,k) = m_c[nr-1] + m_cgrad[nr-1]*(depth-zsurf);
 	    material++;
 	  }
 	  else
@@ -183,14 +170,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
     
 // communicate material properties to ghost points (necessary on refined meshes because ghost points don't have a well defined depth/topography)
     mEW->communicate_array( rho[g], g );
-    mEW->communicate_array( cs[g], g );
-    mEW->communicate_array( cp[g], g );
-
-    if (qs[g].is_defined())
-      mEW->communicate_array( qs[g], g );
-    if (qp[g].is_defined())
-      mEW->communicate_array( qp[g], g );
-
+    mEW->communicate_array( c[g], g );
   } // end for all Cartesian grids
   
   if (mEW->topographyExists()) // curvilinear grid
@@ -226,14 +206,8 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	  {
 	    if( m_rho != -1 )
 	      rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
-	    if( m_vs != -1 )
-	      cs[g](i,j,k)  = m_vs + m_vsgrad*(depth-zsurf);
-	    if( m_vp != -1 )
-	      cp[g](i,j,k)  = m_vp + m_vpgrad*(depth-zsurf);
-	    if( m_qp != -1 && qp[g].is_defined())
-	      qp[g](i,j,k) = m_qp;
-	    if( m_qs != -1 && qs[g].is_defined())
-	      qs[g](i,j,k) = m_qs;
+	    for( int nr=1 ; nr <= 21 ; nr++ )
+	       c[g](nr,i,j,k) = m_c[nr-1] + m_cgrad[nr-1]*(depth-zsurf);
 	    material++;
 	  }
 	  else
@@ -260,5 +234,5 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
   if (mEW->proc_zero()) 
     cout << "block command: outside = " << outsideSum << ", " << "material = " << materialSum << endl;
 
-} // end MaterialBlock::set_material_properties
+} 
 

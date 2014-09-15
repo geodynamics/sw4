@@ -531,3 +531,75 @@ void EW::extrapolateInZ( int g, Sarray& field, bool lowk, bool highk )
 		  field(i,j,k) = field(i,j,m_kEndInt[g]);
 }
 
+//-----------------------------------------------------------------------
+void EW::extrapolateInXYvector( vector<Sarray>& field )
+{
+
+   for( int g= 0; g < mNumberOfGrids ; g++ )
+   {
+      int nc = field[g].m_nc;
+      if( m_iStartInt[g] == 1 )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	       for( int i=m_iStart[g] ; i < 1 ; i++ )
+		  for( int m=1 ; m <= nc ; m++ )
+		  {
+		     if( field[g](m,i,j,k) == -1 )
+			field[g](m,i,j,k) = field[g](m,1,j,k);
+		  }
+      if( m_iEndInt[g] == m_global_nx[g] )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	       for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
+		  for( int m=1 ; m <= nc ; m++ )
+		  {
+		     if( field[g](m,i,j,k) == -1 )
+			field[g](m,i,j,k) = field[g](m,m_iEndInt[g],j,k);
+		  }
+      if( m_jStartInt[g] == 1 )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jStart[g] ; j < 1 ; j++ )
+	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+		  for( int m=1 ; m <= nc ; m++ )
+		  {
+		     if( field[g](m,i,j,k) == -1 )
+			field[g](m,i,j,k) = field[g](m,i,1,k);
+		  }
+      if( m_jEndInt[g] == m_global_ny[g] )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
+	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+		  for( int m=1 ; m <= nc ; m++ )
+		  {
+		     if( field[g](m,i,j,k) == -1 )
+			field[g](m,i,j,k) = field[g](m,i,m_jEndInt[g],k);
+		  }
+// corners not necessary to treat explicitly???
+      
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::extrapolateInZvector( int g, Sarray& field, bool lowk, bool highk )
+{
+   int nc = field.m_nc;
+   if( lowk )
+      for( int k=m_kStart[g] ; k < 1 ; k++ )
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int m=1 ; m <= nc ; m++ )
+	       {
+		  if( field(m,i,j,k) == -1 )
+		     field(m,i,j,k) = field(m,i,j,1);
+	       }
+   if( highk )
+      for( int k=m_kEndInt[g]+1 ; k <= m_kEnd[g] ; k++ )
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int m=1 ; m <= nc ; m++ )
+	       {
+		  if( field(m,i,j,k) == -1 )
+		     field(m,i,j,k) = field(m,i,j,m_kEndInt[g]);
+	       }
+}
+

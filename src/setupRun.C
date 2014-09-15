@@ -63,6 +63,12 @@ void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int 
 						double*, double*, double*, double*, double*, double* );
 void F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( int *, int *, int *, int *, int *, int *, double*, 
 						  double*, double*, double*, double*, double* );
+void F77_FUNC(checkanisomtrl,CHECKANISOMTRL)( int *, int *, int *, int *, int *, int *, double*, 
+					      double*, double*, double*, double*, double* );
+void F77_FUNC(computedtaniso,COMPUTEDTANISO)( int *, int *, int *, int *, int *, int *, double*,
+					      double*, double*, double*, double* );
+void F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( int *, int *, int *, int *, int *, int *, double*,
+					      double*, double*, double*, double* );
 }
 
 #define SQR(x) ((x)*(x))
@@ -237,7 +243,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  string cachePath = mPath;
+  //  string cachePath = mPath;
    
 // tmp
   if ( mVerbose >= 3 )
@@ -267,7 +273,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 //    if( m_output_load )
 //       print_loadbalance_info();
 
-  string saved_path = mPath;
+//  string saved_path = mPath;
 
   int beginCycle = 1;
 
@@ -297,25 +303,30 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   }
   
 // set material properties
-  set_materials();
+  if( m_anisotropic )
+     set_anisotropic_materials();
+  else
+     set_materials();
 
 // evaluate resolution
   double minvsoh;
-  compute_minvsoverh( minvsoh );
-
-  if (proc_zero())
+  if( !m_anisotropic )
   {
-    printf("\n***** PPW = minVs/h/maxFrequency ********\n");
-    for (int g=0; g<mNumberOfCartesianGrids; g++)
-    {
-      printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
-    }
-    if (topographyExists())
-    {
-      int g = mNumberOfGrids-1;
-      printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
-    }
-    printf("\n");
+     compute_minvsoverh( minvsoh );
+     if (proc_zero())
+     {
+	printf("\n***** PPW = minVs/h/maxFrequency ********\n");
+	for (int g=0; g<mNumberOfCartesianGrids; g++)
+	{
+	   printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
+	}
+	if (topographyExists())
+	{
+	   int g = mNumberOfGrids-1;
+	   printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
+	}
+	printf("\n");
+     }
   }
   
   assign_supergrid_damping_arrays();
@@ -336,7 +347,10 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 // compute time-step and number of time steps. 
 // Note: SW4 always ends the simulation at mTmax, whether prefilter is enabled or not.
 // This behavior is different from WPP
-  computeDT( );
+  if( m_anisotropic )
+     computeDTanisotropic();
+  else
+     computeDT( );
 
 // should we initialize all images after the prefilter time offset stuff?
 
@@ -756,10 +770,8 @@ void EW::set_materials()
 // by a block command covering all grid points). 
     int lastAllCoveringBlock=0;
     for( unsigned int b = 0 ; b < m_mtrlblocks.size() ; b++ )
-    {
-      if (m_mtrlblocks[b]->coversAllPoints())
-        lastAllCoveringBlock=b;
-    }
+       if (m_mtrlblocks[b]->coversAllPoints())
+	  lastAllCoveringBlock=b;
 // tmp
     if (proc_zero())
     {
@@ -768,11 +780,8 @@ void EW::set_materials()
       else
 	cout << "Only considering material blocks with index >= " << lastAllCoveringBlock << endl;
     } // end if proc_zero()
-    
     for( unsigned int b = lastAllCoveringBlock ; b < m_mtrlblocks.size() ; b++ )
-    {
-      m_mtrlblocks[b]->set_material_properties(mRho, mMu, mLambda, mQs, mQp); // this is where all the assignments are done
-    }
+       m_mtrlblocks[b]->set_material_properties(mRho, mMu, mLambda, mQs, mQp); 
 
 //   bool linearExtrapolation=false;
 // note that material thresholding for vs and vp happens further down in this procedure
@@ -1061,6 +1070,115 @@ void EW::set_materials()
 }
 
 //-----------------------------------------------------------------------
+void EW::set_anisotropic_materials()
+{
+   int lastAllCoveringBlock=0;
+   for( unsigned int b = 0 ; b < m_anisotropic_mtrlblocks.size() ; b++ )
+      if (m_anisotropic_mtrlblocks[b]->coversAllPoints())
+	 lastAllCoveringBlock=b;
+
+   for( unsigned int b = lastAllCoveringBlock ; b < m_anisotropic_mtrlblocks.size() ; b++ )
+      m_anisotropic_mtrlblocks[b]->set_material_properties( mRho, mC );
+
+    if (proc_zero())
+    {
+      if (lastAllCoveringBlock == 0)
+	cout << "Considering all material blocks" << endl;
+      else
+	cout << "Only considering material blocks with index >= " << lastAllCoveringBlock << endl;
+    } // end if proc_zero()
+
+   int g = mNumberOfGrids-1;
+   extrapolateInZ( g, mRho[g],    true, false ); 
+   extrapolateInZvector( g, mC[g],    true, false ); 
+
+   g = 0;
+   extrapolateInZ( g, mRho[g],    false, true ); 
+   extrapolateInZvector( g, mC[g],    false, true ); 
+   if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1)
+   {
+      int kFrom;
+      for (g=0; g<mNumberOfCartesianGrids; g++)
+      {
+	 if (g < mNumberOfCartesianGrids-1) // extrapolate to top
+	 {
+	    kFrom = m_kStart[g]+mMaterialExtrapolate;
+	    if (!mQuiet && proc_zero() && mVerbose>=3)
+	       printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
+	    for (int k = m_kStart[g]; k < kFrom; ++k)
+	       for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+		  for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+		  {
+		     mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		     for( int m=1 ; m <= 21 ; m++ )
+			mC[g](m,i,j,k)    = mC[g](m,i,j,kFrom);
+		  }
+	 } // end extrapolat to top
+	 if (g > 0) // extrapolate to bottom
+	 {
+	    kFrom = m_kEnd[g]-mMaterialExtrapolate;
+	    if (!mQuiet && proc_zero() && mVerbose>=3)
+	       printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
+	    for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+	       for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+		  for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+		  {
+		     mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		     for( int m=1 ; m <= 21 ; m++ )
+			mC[g](m,i,j,k)    = mC[g](m,i,j,kFrom);
+		  }
+	} 
+      }
+    } 
+   extrapolateInXY( mRho );
+   extrapolateInXYvector( mC );
+   check_anisotropic_material( mRho, mC );
+
+}
+
+//-----------------------------------------------------------------------
+void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
+{
+   double rhomin=1e38, rhomax=-1e38;
+   double eigmin=1e38, eigmax=-1e38;
+   double rhominloc, rhomaxloc, eigminloc, eigmaxloc;
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      double* rho_ptr = rho[g].c_ptr();
+      double* c_ptr = c[g].c_ptr();
+      F77_FUNC(checkanisomtrl,CHECKANISOMTRL)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+					      &m_kStart[g], &m_kEnd[g],
+					      rho_ptr, c_ptr,
+					      &rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
+      if( rhominloc < rhomin )
+	 rhomin = rhominloc;
+      if( rhomaxloc > rhomax )
+	 rhomax = rhomaxloc;
+      if( eigminloc < eigmin )
+	 eigmin = eigminloc;
+      if( eigmaxloc > eigmax )
+	 eigmax = eigmaxloc;
+   }
+   rhominloc = rhomin;
+   rhomaxloc = rhomax;
+   eigminloc = eigmin;
+   eigmaxloc = eigmax;
+   MPI_Allreduce( &rhominloc, &rhomin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+   MPI_Allreduce( &rhomaxloc, &rhomax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &eigminloc, &eigmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+   MPI_Allreduce( &eigmaxloc, &eigmax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+
+   if( proc_zero() )
+   {
+      cout << " Material properties " << endl;
+      cout <<  rhomin <<  " <=  Density <= " << rhomax  << endl;
+      cout <<  eigmin <<  " <=  Eig(c)  <= " << eigmax << endl;
+      if( eigmin <= 0 )
+	 cout << "ERROR: stress tensor is not positive definite. The problem is not well posed" << endl;
+   }
+}
+
+//-----------------------------------------------------------------------
 void EW::create_output_directory( )
 {
    if (proc_zero()) 
@@ -1261,15 +1379,56 @@ void EW::computeDT()
 }
 
 //-----------------------------------------------------------------------
+void EW::computeDTanisotropic()
+{
+   if (!mQuiet && mVerbose >= 1 && proc_zero())
+   {
+      printf("*** computing the time step ***\n");
+   }
+   double dtproc=1.e38;
+   for (int g=0; g<mNumberOfCartesianGrids; g++)
+   {
+      double* rho_ptr = mRho[g].c_ptr();
+      double* c_ptr = mC[g].c_ptr();
+      double dtgrid;
+      F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+						 &m_kStart[g], &m_kEnd[g],
+						 rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
+      if( dtgrid < dtproc )
+	 dtproc = dtgrid;
+   }
+// compute the global minima
+    MPI_Allreduce( &dtproc, &mDt, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+    if (!mQuiet && mVerbose >= 1 && proc_zero())
+    {
+      cout << "order of accuracy=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
+    }
+    
+    if (mTimeIsSet)
+    {
+// constrain the dt based on the goal time
+//      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax! ***");  
+      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
+      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
+// the resulting mDt could be slightly too large, because the numberOfTimeSteps is rounded to the nearest int
+      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+    }
+}
+
+//-----------------------------------------------------------------------
 int EW::mkdirs(const string& path)
 {
 
-   string pathTemp(path.begin(), path.end()); 
+   //   string pathTemp(path.begin(), path.end()); 
+   string pathTemp = path;
    //-----------------------------------------------------------------
    // Recursively call stat and then mkdir on each sub-directory in 'path'
    //-----------------------------------------------------------------
    string sep = "/";
-   char* token = strtok(const_cast<char*>(pathTemp.c_str()), sep.c_str());
+   char * pathtemparg = new char[pathTemp.length()+1];
+   strcpy(pathtemparg,pathTemp.c_str());
+   char* token = strtok( pathtemparg, sep.c_str() );
+   //   char* token = strtok(const_cast<char*>(pathTemp.c_str()), sep.c_str());
 
    stringstream pathsofar;
 
@@ -1301,6 +1460,7 @@ int EW::mkdirs(const string& path)
 	{
 	  cerr << "stat() says: '" << pathsofar.str() << "' is not a directory." << endl;
 	// real error, let's bail...
+	  delete[] pathtemparg;
 	  return -1;
 	}
 	
@@ -1311,11 +1471,13 @@ int EW::mkdirs(const string& path)
 	if (errno == EACCES)
 	{
 	  cerr << "Error: **Search permission is denied for one of the directories in the path prefix of " << pathsofar.str() << endl;
+	  delete[] pathtemparg;
 	  return -1;
 	}
 	else if (errno == ENOTDIR)
 	{
 	  cerr << "Error: **A component of the path '" <<  pathsofar.str() << "' is not a directory. " << endl;
+	  delete[] pathtemparg;
 	  return -1;
 	}
  	else if (errno == ENOENT)
@@ -1365,6 +1527,7 @@ int EW::mkdirs(const string& path)
 	else if (errno == ENOSPC)
 	  cerr << "Error: ** The new directory cannot be created because the user's disk quota is exhausted." << pathsofar.str() << endl;
 	// real error, let's bail...
+	delete[] pathtemparg;
 	return -1;
       }
       else
@@ -1375,6 +1538,7 @@ int EW::mkdirs(const string& path)
 	token = strtok(NULL, sep.c_str());
       }
    }
+   delete[] pathtemparg;
    return 0;
 }
 

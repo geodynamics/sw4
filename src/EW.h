@@ -57,6 +57,7 @@
 #include "TestRayleighWave.h"
 
 #include "MaterialData.h"
+#include "AnisotropicMaterial.h"
 #include "EtreeFile.h"
 
 #include "SuperGrid.h"
@@ -136,6 +137,7 @@ void processMaterialEtree(char* buffer);
 void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
+void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
@@ -200,21 +202,33 @@ void setupSBPCoeff( );
 void simpleAttenuation( vector<Sarray> & a_Up );
 void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		double t, vector<double **> & a_BCForcing );
+
 void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
 			   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 		       vector<double **>& a_BCForcing, double bop[5], double a_t );
+
+void enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C, 
+			   double t, vector<double **> & a_BCForcing );
+   
 void addAttToFreeBcForcing( vector<Sarray*>& AlphaVEp, vector<double**>& BCForcing, double bop[5] );
 
 void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing, vector<Source*>& a_Source );
+
 void evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray> & a_Lu,
 	     vector<Sarray*>& a_Alpha );
 
+void evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C, 
+			vector<Sarray> & a_Uacc );
+
 void evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		   vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
+
 void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		    vector<Sarray> & a_Uacc );
+
 void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
+
 void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
 			    vector<Sarray*>& a_AlphaVEm,
 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
@@ -237,6 +251,7 @@ void test_RhoUtt_Lu( vector<Sarray> & a_Uacc, vector<Sarray> & a_Lu, vector<Sarr
 
 void setRestartInfo(int fromCycle, int dumpInterval, const string& filePrefix);
 void computeDT();
+void computeDTanisotropic();
    //bool inTestSourceMode() { return mTestSource; }
    //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
@@ -315,12 +330,15 @@ void communicate_array_2d_asym( Sarray& u, int g, int k );
 void communicate_array_2d_ext( Sarray& u );
 
 void set_materials();
+void set_anisotropic_materials();
 void setup_attenuation_relaxation(double minvsoh );
 void setup_viscoelastic();
 void setup_viscoelastic_tw();
 
 void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk );
 void extrapolateInXY( vector<Sarray>& field );
+void extrapolateInZvector(int g, Sarray& field, bool lowk, bool highk );
+void extrapolateInXYvector( vector<Sarray>& field );
 void extrapolateTopo(Sarray& field);
 void checkTopo(Sarray& field);
 
@@ -555,6 +573,8 @@ void check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		     vector<Sarray>& a_lambda, int& ok );
 #endif
 
+void check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c );
+
 void get_nr_of_material_parameters( int& nmvar );
 void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
 		  vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
@@ -665,6 +685,7 @@ ofstream msgStream;
 vector<Sarray> mMu;
 vector<Sarray> mLambda;
 vector<Sarray> mRho;
+vector<Sarray> mC; // Anisotropic material parameters
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
@@ -684,6 +705,8 @@ TestLamb* m_lamb_test;
 TestRayleighWave* m_rayleigh_wave_test;
 
 vector<MaterialData*> m_mtrlblocks;
+vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;
+  
 // index convention: [0]: low-x, [1]: high-x, [2]: low-y, [3]: high-y; [4]: low-z, [5]: high-z  
 boundaryConditionType mbcGlobalType[6]; // these are the boundary conditions for the global problem
 vector<boundaryConditionType*> m_bcType;  // these are the boundary conditions for each grid on the local processor, with bProcessor conditions
@@ -757,6 +780,9 @@ vector<Sarray> mQp, mQs;
 vector<Sarray*> mMuVE, mLambdaVE;
 // relaxation frequencies
 vector<double> mOmegaVE;
+
+// Anisotropic material
+bool m_anisotropic;
 
 // Randomization of the material
 bool m_randomize;
@@ -940,6 +966,7 @@ int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;
 vector<MPI_Datatype> m_send_type4; // metric
+vector<MPI_Datatype> m_send_type21; // anisotropic
 MPI_Datatype m_send_type_2dfinest[2];
 MPI_Datatype m_send_type_2dfinest_ext[2];
 vector<MPI_Datatype> m_send_type_2dx;

@@ -156,7 +156,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
-       MaterialVolimagefile.o MaterialRfile.o randomfield3d.o
+       MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
+       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o
 
 OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o \
        MaterialInvtest.o invtestmtrl.o projectmtrl.o 
