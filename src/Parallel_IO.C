@@ -916,8 +916,9 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
       int bufsize1, bufsize2;
       MPI_Allreduce(&(m_irecv.m_maxbuf),  &bufsize1,1,MPI_INT,MPI_MAX,m_write_comm);
       MPI_Allreduce(&(m_irecv.m_maxiobuf),&bufsize2,1,MPI_INT,MPI_MAX,m_write_comm);
-      if( myid == m_writer_ids[0] )
-	 cout << "Parallel_IO::init_array maxiobuf = " << bufsize2 << " maxbuf = " << bufsize1 << endl;
+// should check verbose value before printing this...
+      // if( myid == m_writer_ids[0] )
+      // 	 cout << "Parallel_IO::init_array maxiobuf = " << bufsize2 << " maxbuf = " << bufsize1 << endl;
       delete[] nrecvs;
    }
    }

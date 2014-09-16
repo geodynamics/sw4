@@ -4,6 +4,7 @@
 fileio path=pointsource-inas
 grid x=6000 y=6000 z=6000 h=40
 time t=2
+#time steps=1
 
 # supergrid conditions on all sides
 boundary_conditions lx=2 hx=2 ly=2 hy=2 lz=2 hz=2
@@ -22,15 +23,9 @@ ablock c11=83.29e9 c22=83.29e9 c33=83.29e9 c12=45.26e9 c13=45.26e9 c23=45.26e9 c
 source x=3000 y=3000 z=3000 m0=1e17 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0 freq=25 type=C6SmoothBump
 
 # images
-image mode=ux z=3000 file=ptsrc timeInterval=0.5
-image mode=uy z=3000 file=ptsrc timeInterval=0.5
-image mode=uz z=3000 file=ptsrc timeInterval=0.5
-image mode=ux x=3000 file=ptsrc timeInterval=0.5
-image mode=uy x=3000 file=ptsrc timeInterval=0.5
-image mode=uz x=3000 file=ptsrc timeInterval=0.5
-image mode=ux y=3000 file=ptsrc timeInterval=0.5
-image mode=uy y=3000 file=ptsrc timeInterval=0.5
-image mode=uz y=3000 file=ptsrc timeInterval=0.5
+image mode=mag z=3000 file=ptsrc timeInterval=0.5
+image mode=mag x=3000 file=ptsrc timeInterval=0.5
+image mode=mag y=3000 file=ptsrc timeInterval=0.5
 
 #image mode=mu z=3 file=ps time=0
 #image mode=lambda z=3 file=ps time=0
