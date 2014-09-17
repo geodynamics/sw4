@@ -1,4 +1,4 @@
-bjorn@cab668 60) srun -ppdebug -n 32 ../../optimize_cab/sw4 pointsource.in
+bjorn@cab669 52) srun -ppdebug -n 32 ../../optimize_cab/sw4 pointsource.in
 ----------------------------------------------------------------
             sw4 version 1.09
 
@@ -6,9 +6,9 @@ bjorn@cab668 60) srun -ppdebug -n 32 ../../optimize_cab/sw4 pointsource.in
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Mon Sep 8 14:12:32 PDT 2014
+  Compiled on: Mon Sep 15 16:28:38 PDT 2014
   By user:     bjorn
-  Machine:     cab687
+  Machine:     cab669
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -16,21 +16,21 @@ bjorn@cab668 60) srun -ppdebug -n 32 ../../optimize_cab/sw4 pointsource.in
 Input file: pointsource.in
 
 * Processing the grid command...
-* Setting nx to 151 to be consistent with h=4.00000000e+01
-* Setting ny to 151 to be consistent with h=4.00000000e+01
-* Setting nz to 151 to be consistent with h=4.00000000e+01
+* Setting nx to 301 to be consistent with h=4.00000000e+01
+* Setting ny to 301 to be consistent with h=4.00000000e+01
+* Setting nz to 301 to be consistent with h=4.00000000e+01
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
-   0        40       151       151       151      3442951
-Total number of grid points (without ghost points): 3.44295e+06
+   0        40       301       301       301     27270901
+Total number of grid points (without ghost points): 2.72709e+07
 
 Default Supergrid thickness has been tuned; thickness = 38 grid sizes
 
-   Execution time, reading input file 2.11510000e-02 seconds 
+   Execution time, reading input file 1.10244000e-01 seconds 
 ----------------------------------------------------
  Making Output Directory: pointsource-inas/
 
@@ -38,90 +38,157 @@ Default Supergrid thickness has been tuned; thickness = 38 grid sizes
 ----------------------------------------------------
 Geographic and Cartesian coordinates of the corners of the computational grid:
 0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
-1: Lon= 1.180000e+02, Lat=3.705390e+01, x=6.000000e+03, y=0.000000e+00
-2: Lon= 1.180675e+02, Lat=3.705390e+01, x=6.000000e+03, y=6.000000e+03
-3: Lon= 1.180675e+02, Lat=3.700000e+01, x=0.000000e+00, y=6.000000e+03
+1: Lon= 1.180000e+02, Lat=3.710780e+01, x=1.200000e+04, y=0.000000e+00
+2: Lon= 1.181352e+02, Lat=3.710780e+01, x=1.200000e+04, y=1.200000e+04
+3: Lon= 1.181350e+02, Lat=3.700000e+01, x=0.000000e+00, y=1.200000e+04
 
-block command: outside = 0, material = 4736955
+block command: outside = 0, material = 32196105
 Considering all material blocks
  Material properties 
 5.67000000e+03 <=  Density <= 5.67000000e+03
 3.80300000e+10 <=  Eig(c)  <= 1.73810000e+11
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
-   Execution time, start up phase 3.16949000e-01 seconds 
+   Execution time, start up phase 2.02829700e+00 seconds 
 Running sw4 on 32 processors...
 Writing output to directory: pointsource-inas/
 ============================================================
  Running program on 32 MPI tasks using the following data: 
 
- Start Time = 0 Goal Time = 2
- Number of time steps = 206 dt: 0.00970874
+ Start Time = 0 Goal Time = 6
+ Number of time steps = 618 dt: 0.00970874
 
 -----------------------------------------------------------------------
   Total seismic moment (M0): 1.22474e+17 Nm 
   Moment magnitude     (Mw): 5.32536
   Number of moment sources 1
 -----------------------------------------------------------------------
-writing image plane on file pointsource-inas/ptsrc.cycle=000.z=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.z=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.z=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.x=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.y=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.x=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.x=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.y=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=000.y=3000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=000.y=6000.uz.sw4img
   Begin time stepping...
 Time step       1  t =   9.7087379e-03
-writing image plane on file pointsource-inas/ptsrc.cycle=052.z=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.z=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.z=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.x=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.y=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.x=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.x=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.y=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=052.y=3000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=052.y=6000.uz.sw4img
 Time step     101  t =   9.8058252e-01
-writing image plane on file pointsource-inas/ptsrc.cycle=103.z=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.z=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.z=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.x=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.y=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.x=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.x=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.y=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=103.y=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.z=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.z=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.z=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.x=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.y=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.x=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.x=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.y=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=155.y=3000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=103.y=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=155.y=6000.uz.sw4img
 Time step     201  t =   1.9514563e+00
-Time step     206  t =   2.0000000e+00
-writing image plane on file pointsource-inas/ptsrc.cycle=206.z=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.z=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.z=3000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=206.y=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=258.y=6000.uz.sw4img
+Time step     301  t =   2.9223301e+00
+writing image plane on file pointsource-inas/ptsrc.cycle=309.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=309.y=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=361.y=6000.uz.sw4img
+Time step     401  t =   3.8932039e+00
+writing image plane on file pointsource-inas/ptsrc.cycle=412.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=412.y=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=463.y=6000.uz.sw4img
+Time step     501  t =   4.8640777e+00
+writing image plane on file pointsource-inas/ptsrc.cycle=515.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=515.y=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.z=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.z=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=566.y=6000.uz.sw4img
+Time step     601  t =   5.8349515e+00
+writing image plane on file pointsource-inas/ptsrc.cycle=618.z=6000.ux.sw4img
+Time step     618  t =   6.0000000e+00
+writing image plane on file pointsource-inas/ptsrc.cycle=618.z=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=618.z=6000.uz.sw4img
   Time stepping finished...
-   Execution time, solver phase 3.13156030e+01 seconds 
-writing image plane on file pointsource-inas/ptsrc.cycle=206.x=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.y=3000.ux.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.x=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.x=3000.uz.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.y=3000.uy.sw4img
-writing image plane on file pointsource-inas/ptsrc.cycle=206.y=3000.uz.sw4img
+   Execution time, solver phase 14 minutes 1.88924620e+01 seconds 
+writing image plane on file pointsource-inas/ptsrc.cycle=618.x=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=618.y=6000.ux.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=618.x=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=618.x=6000.uz.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=618.y=6000.uy.sw4img
+writing image plane on file pointsource-inas/ptsrc.cycle=618.y=6000.uz.sw4img
 ============================================================
  program sw4 finished! 
 ============================================================

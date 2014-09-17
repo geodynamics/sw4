@@ -1,4 +1,5 @@
-fileio path=lamb-h0p04
+#fileio path=/g/g12/andersp/src/sw4/examples/lamb/lamb-h0p04
+fileio path=lamb-h0p04 verbose=2
 grid x=12 y=12 z=6 h=0.04
 # the end time should exceed 1.0, which is when the source shuts off
 time t=15.0
@@ -13,8 +14,8 @@ testlamb rho=1 cp=1.732050807568877
 source x=6 y=6 z=0 fx=0 fy=0 fz=1 t0=0 freq=1 type=C6SmoothBump
 
 # images
-image mode=uz    z=0 file=lamb time=5.0 precision=double
-image mode=uzerr z=0 file=lamb time=5.0 precision=double
+#image mode=uz    z=0 file=lamb time=5.0 precision=double
+#image mode=uzerr z=0 file=lamb time=5.0 precision=double
 
 # receiver near the supergrid layer
 rec x=10.0 y=6.0 z=0 file=sg1 usgsformat=1 sacformat=0

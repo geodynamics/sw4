@@ -325,6 +325,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        
   } // end if prefiltering
 
+// AP changed to false
   bool output_timefunc = true;
   if( output_timefunc )
   {
@@ -565,7 +566,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test ) && proc_zero() )
   {
-    string path=getOutputPath();
+    string path=getPath();
 
     stringstream fileName;
     if( path != "." )

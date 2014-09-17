@@ -271,7 +271,7 @@ void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;
 int mkdirs(const string& path);
 void setOutputPath(const string& path);
-const string& getOutputPath() { return mPath; };
+const string& getOutputPath() { return mPath; }; // Consider getPath instead! This function has caused grief in the past
 const string& getObservationPath() { return mObsPath; };
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions

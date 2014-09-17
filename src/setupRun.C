@@ -1189,6 +1189,7 @@ void EW::create_output_directory( )
 	  << "\t\t" << endl;
 
       // Create directory where all these files will be written.
+
       int err = mkdirs(mPath);
 
       if (err == 0)
@@ -1418,17 +1419,18 @@ void EW::computeDTanisotropic()
 //-----------------------------------------------------------------------
 int EW::mkdirs(const string& path)
 {
-
+   
    //   string pathTemp(path.begin(), path.end()); 
    string pathTemp = path;
    //-----------------------------------------------------------------
    // Recursively call stat and then mkdir on each sub-directory in 'path'
    //-----------------------------------------------------------------
    string sep = "/";
+
    char * pathtemparg = new char[pathTemp.length()+1];
    strcpy(pathtemparg,pathTemp.c_str());
    char* token = strtok( pathtemparg, sep.c_str() );
-   //   char* token = strtok(const_cast<char*>(pathTemp.c_str()), sep.c_str());
+//   char* token = strtok(const_cast<char*>(pathTemp.c_str()), sep.c_str());
 
    stringstream pathsofar;
 
