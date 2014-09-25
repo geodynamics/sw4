@@ -1,17 +1,17 @@
 #
 # Point source in free space, in anisotropic material: InAs 
 #
-fileio path=halfspace-inas0-h20
+fileio path=halfspace-inas0-h10
 
-grid x=12000 y=12000 z=6000 h=20
+grid x=12000 y=12000 z=6000 h=10
 #time t=6
-time steps=1238
+time steps=2476
 
 # supergrid conditions on all sides except the free surface (std setup)
 
 # supergrid parameters width = 40*40 = 1600
 # 80*20 = 1600
-supergrid gp=80
+supergrid gp=160
 #
 anisotropy
 #

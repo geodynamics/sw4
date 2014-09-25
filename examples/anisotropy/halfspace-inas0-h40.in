@@ -24,7 +24,7 @@ ablock c11=83.29e9 c22=83.29e9 c33=83.29e9 c12=45.26e9 c13=45.26e9 c23=45.26e9 c
 #ablock c11=103.86e9 c22=103.86e9 c33=83.29e9 c12=24.68e9 c13=45.26e9 c23=45.26e9 c44=39.59e9 c55=39.59e9 c66=19.01e9 rho=5670
 #
 # source
-source x=6e3 y=6e3 z=1e3 m0=1e17 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0.24 freq=25 type=Gaussian
+source x=6e3 y=6e3 z=1e3 m0=1e17 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0.375 freq=16 type=Gaussian
 
 # images
 image mode=mag z=0   file=ptsrc timeInterval=0.5
