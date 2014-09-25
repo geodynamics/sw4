@@ -163,7 +163,7 @@ main(int argc, char **argv)
       {
 	cout << "Running sw4 on " <<  nProcs << " processors..." << endl
 	     << "Writing output to directory: " 
-	     << simulation.getOutputPath() << endl;
+	     << simulation.getPath() << endl;
       }
 // run the simulation
       simulation.solve( GlobalSources, GlobalTimeSeries );

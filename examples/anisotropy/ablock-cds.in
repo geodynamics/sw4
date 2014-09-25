@@ -1,0 +1,3 @@
+#
+# CdS, hexagonal symmetry
+ablock c11=90.7e9 c22=90.7e9 c33=93.8e9 c12=58.1e9 c13=51.0e9 c23=51.0e9 c44=15.04e9 c55=15.04e9 c66=16.3e9 rho=4826

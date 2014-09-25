@@ -59,7 +59,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_myPoint(false),
   m_fileName(fileName),
   m_staName(staName),
-  m_path(a_ew->getOutputPath()),
+  m_path(a_ew->getPath()),
   mX(x),
   mY(y),
   mZ(depth),

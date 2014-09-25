@@ -37,6 +37,7 @@
 #include "Require.h"
 #include "nearlyEqual.h"
 #include "boundaryConditionTypes.h"
+#include "AnisotropicMaterialBlock.h"
 #include "MaterialBlock.h"
 #include "MaterialPfile.h"
 #include "MaterialIfile.h"
@@ -163,6 +164,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   char buffer[256];
   ifstream inputFile;
   int blockCount=0;
+  int ablockCount=0;
 
   MPI_Barrier(MPI_COMM_WORLD);
   double time_start = MPI_Wtime();
@@ -238,6 +240,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
         processAttenuation(buffer);
      }
+     else if (startswith("anisotropy", buffer))
+     {
+        m_anisotropic = true;
+     }
      else if (startswith("time", buffer))
      {
         processTime(buffer); // process time command to set reference UTC before reading stations.
@@ -254,6 +260,22 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     }
     
   }
+  if( m_anisotropic && m_topography_exists )
+  {
+    if (m_myRank == 0)
+    {
+      cerr << "Error: Topography not implemented with anisotropy " << endl;
+      return false; // unsuccessful
+    }
+  }  
+  if( m_anisotropic && m_use_attenuation )
+  {
+    if (m_myRank == 0)
+    {
+      cerr << "Error: Attenuation not implemented with anisotropy " << endl;
+      return false; // unsuccessful
+    }
+  }  
 
 // sort and correct vector 'm_refinementBoundaries'. Initialize if not already available
   cleanUpRefinementLevels();
@@ -363,6 +385,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 //	   startswith("refinement", buffer) || 
 	   startswith("topography", buffer) || 
 	   startswith("attenuation", buffer) || 
+	   startswith("anisotropy", buffer) || 
 	   startswith("fileio", buffer) ||
 	   startswith("time", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
@@ -403,6 +426,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	 processRupture(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
 	 processMaterialBlock(buffer, blockCount);
+       else if (startswith("ablock", buffer) && m_anisotropic )
+	 processAnisotropicMaterialBlock(buffer, ablockCount);
        else if (startswith("pfile", buffer))
 	 processMaterialPfile( buffer );
        else if (startswith("rfile", buffer))
@@ -2236,7 +2261,9 @@ void EW::processFileIO(char* buffer)
           break;
        if(startswith("path=", token)) {
           token += 5; // skip path=
-          path = token;
+	  mPath = token;
+	  mPath += '/';
+	  //          path = token;
        }
        else if (startswith("obspath=", token))
        {
@@ -2284,7 +2311,7 @@ void EW::processFileIO(char* buffer)
        token = strtok(NULL, " \t");
     }
 
-  if (path != 0) setOutputPath(path);
+//  if (path != 0) setOutputPath(path);
   setPrintCycle(printcycle);
   setVerbosity(verbose);
   setParallel_IO(pfs, nwriters);
@@ -3720,6 +3747,7 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    mMu.resize(mNumberOfGrids);
    mLambda.resize(mNumberOfGrids);
    mRho.resize(mNumberOfGrids);
+   mC.resize(mNumberOfGrids);
    m_zmin.resize(mNumberOfGrids);
    mGridSize.resize(mNumberOfGrids);
    mMinVsOverH.resize(mNumberOfGrids);
@@ -3895,16 +3923,25 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 
       // mF[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 
+      if( m_anisotropic )
+      {
+	 mC[g].define(21,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mC[g].set_to_minusOne();
+	 mRho[g].set_to_minusOne();
+      }
+      else
+      {
 // elastic material
-      mMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-      mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-      mLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 
 // initialize the material coefficients to -1
-      mMu[g].set_to_minusOne();
-      mRho[g].set_to_minusOne();
-      mLambda[g].set_to_minusOne();
-
+	 mMu[g].set_to_minusOne();
+	 mRho[g].set_to_minusOne();
+	 mLambda[g].set_to_minusOne();
+      }
 // viscoelastic material coefficients & memory variables
       if (m_use_attenuation)
       {
@@ -5574,6 +5611,401 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   bl->set_absoluteDepth( absDepth );
   add_mtrl_block( bl );
 }
+
+//-----------------------------------------------------------------------
+void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
+{
+   double rho=-1, rhograd=0.0;
+   double c[21], cgrad[21];
+   for( int m=0 ; m < 21 ; m++ )
+   {
+      c[m] = -1;
+      cgrad[m] = 0;
+   }
+
+   bool x1set=false, x2set=false, y1set=false, y2set=false, 
+      z1set=false, z2set=false;
+
+   double x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
+   int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
+
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("ablock", token) == 0,
+	       "ERROR: material block can be set by a ablock line, not: " << token);
+
+   string err = token;
+   err += " Error: ";
+
+   token = strtok(NULL, " \t");
+   bool absDepth=false;
+
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+	 break;
+// the xygrad keywords must occur before the corresponding xy keywords
+      if (startswith("rhograd=", token))
+      {
+         token += 8; // skip rhograd=
+         rhograd = atof(token);
+      }
+      if (startswith("rho=", token))
+      {
+         token += 4; // skip rho=
+         rho = atof(token);
+      }
+      else if (startswith("c11grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[0] = atof(token);
+      }
+      else if (startswith("c11=", token))
+      {
+         token += 4; // skip c1=
+         c[0] = atof(token);
+      }
+      else if (startswith("c16grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[1] = atof(token);
+      }
+      else if (startswith("c16=", token))
+      {
+         token += 4; // skip c1=
+         c[1] = atof(token);
+      }
+      else if (startswith("c15grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[2] = atof(token);
+      }
+      else if (startswith("c15=", token))
+      {
+         token += 4; // skip c1=
+         c[2] = atof(token);
+      }
+      else if (startswith("c12grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[3] = atof(token);
+      }
+      else if (startswith("c12=", token))
+      {
+         token += 4; // skip c1=
+         c[3] = atof(token);
+      }
+      else if (startswith("c14grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[4] = atof(token);
+      }
+      else if (startswith("c14=", token))
+      {
+         token += 4; // skip c1=
+         c[4] = atof(token);
+      }
+      else if (startswith("c13grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[5] = atof(token);
+      }
+      else if (startswith("c13=", token))
+      {
+         token += 4; // skip c1=
+         c[5] = atof(token);
+      }
+      else if (startswith("c66grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[6] = atof(token);
+      }
+      else if (startswith("c66=", token))
+      {
+         token += 4; // skip c1=
+         c[6] = atof(token);
+      }
+      else if (startswith("c56grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[7] = atof(token);
+      }
+      else if (startswith("c56=", token))
+      {
+         token += 4; // skip c1=
+         c[7] = atof(token);
+      }
+      else if (startswith("c26grad=", token))
+      {
+         token += 8; // skip c1grad=
+         cgrad[8] = atof(token);
+      }
+      else if (startswith("c26=", token))
+      {
+         token += 4; // skip c1=
+         c[8] = atof(token);
+      }
+      else if (startswith("c46grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[9] = atof(token);
+      }
+      else if (startswith("c46=", token))
+      {
+         token += 4; // skip c10=
+         c[9] = atof(token);
+      }
+      else if (startswith("c36grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[10] = atof(token);
+      }
+      else if (startswith("c36=", token))
+      {
+         token += 4; // skip c10=
+         c[10] = atof(token);
+      }
+      else if (startswith("c55grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[11] = atof(token);
+      }
+      else if (startswith("c55=", token))
+      {
+         token += 4; // skip c10=
+         c[11] = atof(token);
+      }
+      else if (startswith("c25grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[12] = atof(token);
+      }
+      else if (startswith("c25=", token))
+      {
+         token += 4; // skip c10=
+         c[12] = atof(token);
+      }
+      else if (startswith("c45grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[13] = atof(token);
+      }
+      else if (startswith("c45=", token))
+      {
+         token += 4; // skip c10=
+         c[13] = atof(token);
+      }
+      else if (startswith("c35grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[14] = atof(token);
+      }
+      else if (startswith("c35=", token))
+      {
+         token += 4; // skip c10=
+         c[14] = atof(token);
+      }
+      else if (startswith("c22grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[15] = atof(token);
+      }
+      else if (startswith("c22=", token))
+      {
+         token += 4; // skip c10=
+         c[15] = atof(token);
+      }
+      else if (startswith("c24grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[16] = atof(token);
+      }
+      else if (startswith("c24=", token))
+      {
+         token += 4; // skip c10=
+         c[16] = atof(token);
+      }
+      else if (startswith("c23grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[17] = atof(token);
+      }
+      else if (startswith("c23=", token))
+      {
+         token += 4; // skip c10=
+         c[17] = atof(token);
+      }
+      else if (startswith("c44grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[18] = atof(token);
+      }
+      else if (startswith("c44=", token))
+      {
+         token += 4; // skip c10=
+         c[18] = atof(token);
+      }
+      else if (startswith("c34grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[19] = atof(token);
+      }
+      else if (startswith("c34=", token))
+      {
+         token += 4; // skip c10=
+         c[19] = atof(token);
+      }
+      else if (startswith("c33grad=", token))
+      {
+         token += 8; // skip c10grad=
+         cgrad[20] = atof(token);
+      }
+      else if (startswith("c33=", token))
+      {
+         token += 4; // skip c10=
+         c[20] = atof(token);
+      }
+      else if (startswith("x1=", token))
+      {
+         token += 3; // skip x1=
+         x1 = atof(token);
+	 x1set = true;
+      }
+      else if (startswith("x2=", token))
+      {
+         token += 3; // skip x2=
+         x2 = atof(token);
+	 x2set = true;
+      }
+      else if (startswith("y1=", token))
+      {
+         token += 3; // skip y1=
+         y1 = atof(token);
+	 y1set = true;
+      }
+      else if (startswith("y2=", token))
+      {
+         token += 3; // skip y2=
+         y2 = atof(token);
+	 y2set = true;
+      }
+      else if (startswith("z1=", token))
+      {
+         token += 3; // skip z1=
+         z1 = atof(token);
+	 z1set = true;
+      }
+      else if (startswith("z2=", token))
+      {
+         token += 3; // skip z2=
+         z2 = atof(token);
+	 z2set = true;
+      }
+      else if (startswith("absdepth=", token) )
+      {
+	token += 9; // skip absdepth=
+	absDepth = (bool) atoi(token);
+      }
+      else
+      {
+         badOption("ablock",token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   string name = "ABlock";
+   blockCount++;
+   stringstream blockname;
+   blockname << name << " " << blockCount;
+   name = blockname.str();
+
+  // Set up a block on the EW object.
+
+   if (x1set)
+   {
+     // CHECK_INPUT(x1 >= 0.,
+     // 	     err << "x1 is less than the minimum x, " 
+     // 	     << x1 << " < " << 0.);
+      CHECK_INPUT(x1 <= m_global_xmax,
+		  err << "x1 is greater than the maximum x, " 
+		  << x1 << " > " << m_global_xmax);
+   }
+   else
+      x1 = -m_global_xmax; //x1 = 0.;
+
+   if (x2set)
+   {
+      CHECK_INPUT(x2 >= 0.,
+             err << "x2 is less than the minimum x, " 
+             << x2 << " < " << 0.);
+     // CHECK_INPUT(x2 <= m_global_xmax,
+     //         err << "x2 is greater than the maximum x, " 
+     //         << x2 << " > " << m_global_xmax);
+   }
+   else
+      x2 = 2.*m_global_xmax;//x2 = m_global_xmax;
+
+   CHECK_INPUT( x2 >= x1, " (x1..x2), upper bound is smaller than lower bound");
+  
+  //--------------------------------------------------------
+  // Set j bounds, goes with Y in WPP
+  //--------------------------------------------------------
+   if (y1set)
+   {
+     // CHECK_INPUT(y1 >= 0.,
+     // 	     err << "y1 is less than the minimum y, " << y1 << " < " << 0.);
+
+      CHECK_INPUT(y1 <= m_global_ymax,
+		  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
+   }
+   else
+      y1 = -m_global_ymax;//y1 = 0.;
+      
+   if (y2set)
+   {
+      CHECK_INPUT(y2 >= 0.,
+	     err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
+   }
+   else
+      y2 = 2.*m_global_ymax;//y2 = m_global_ymax;
+
+   CHECK_INPUT( y2 >= y1, " (y1..y2), upper bound is smaller than lower bound");
+
+   if (z1set)
+   {
+    // CHECK_INPUT(topographyExists() || z1 >= 0.,
+    //         err << "z1 is less than the minimum z, " << z1 << " < " << 0.);
+      CHECK_INPUT(z1 <= m_global_zmax, 
+            err << "z1 is greater than the maximum z, " << z1 << " > " << m_global_zmax);
+   }
+   else
+      z1 = m_global_zmin - (m_global_zmax-m_global_zmin);
+
+   if (z2set)
+   {
+      CHECK_INPUT(topographyExists() || z2 >= 0.,
+            err << "z2 is less than the minimum z, " << z2 << " < " << 0.);
+    // CHECK_INPUT(z2 <= m_global_zmax,
+    // 		err << "z2 is greater than the maximum z, " << z2 << " > " << m_global_zmax);
+   }
+   else
+      z2 = m_global_zmax + (m_global_zmax-m_global_zmin);
+
+   CHECK_INPUT( z2 >= z1, " (z1..z2), upper bound is smaller than lower bound");
+
+   if(getVerbosity() >=2 &&  m_myRank == 0 )
+      cout << name << " has bounds " << x1 << " " << x2 << " " << y1 << " "
+	   << y2 << " " << z1 << " " << z2 << endl;
+
+   CHECK_INPUT( rho > 0 , "Error in ablock " << name << " rho is " << rho );
+
+   AnisotropicMaterialBlock* bl = new AnisotropicMaterialBlock( this, rho, c, x1, x2, y1, y2, z1, z2 );
+
+   bl->set_gradients( rhograd, cgrad );
+   bl->set_absoluteDepth( absDepth );
+   m_anisotropic_mtrlblocks.push_back(bl);
+}   
 
 //-----------------------------------------------------------------------
 void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)

@@ -375,6 +375,10 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
    }
    // 3. Save parallel file system info
    m_parallel_file_system = pfs;
+
+   // 4. Initialize some variables to shut up the memory checker 
+   if( m_data_comm == MPI_COMM_NULL )
+      m_iwrite = false;
 }
 
 //-----------------------------------------------------------------------
@@ -864,6 +868,8 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    }
    if( m_iwrite == 1 )
       m_irecv.m_maxiobuf = maxpts;
+   else
+      m_irecv.m_maxiobuf = 0;
 
    setup_substeps();
 
@@ -916,8 +922,9 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
       int bufsize1, bufsize2;
       MPI_Allreduce(&(m_irecv.m_maxbuf),  &bufsize1,1,MPI_INT,MPI_MAX,m_write_comm);
       MPI_Allreduce(&(m_irecv.m_maxiobuf),&bufsize2,1,MPI_INT,MPI_MAX,m_write_comm);
-      if( myid == m_writer_ids[0] )
-	 cout << "Parallel_IO::init_array maxiobuf = " << bufsize2 << " maxbuf = " << bufsize1 << endl;
+// should check verbose value before printing this...
+      // if( myid == m_writer_ids[0] )
+      // 	 cout << "Parallel_IO::init_array maxiobuf = " << bufsize2 << " maxbuf = " << bufsize1 << endl;
       delete[] nrecvs;
    }
    }
@@ -1771,7 +1778,7 @@ void Parallel_IO::end_sequential( MPI_Comm comm )
 {
    if( m_parallel_file_system == 0 )
    {
-      int mtag, slask, myid, nproc;
+      int mtag, slask=0, myid, nproc;
       mtag = 10;
       MPI_Comm_rank( comm, &myid );
       MPI_Comm_size( comm, &nproc );

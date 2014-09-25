@@ -1,0 +1,10 @@
+# InAs has cubic symmetry.
+#
+# If cubes aligned with coordinate axes:
+ablock c11=83.29e9 c22=83.29e9 c33=83.29e9 c12=45.26e9 c13=45.26e9 c23=45.26e9 c44=39.59e9 c55=39.59e9 c66=39.59e9 rho=5670
+#
+# If cubic structure rotated 30 degrees around the z-axis
+ablock c11=98.72e9 c22=98.72e9 c33=83.29e9 c12=29.83e9 c13=45.26e9 c23=45.26e9 c44=39.59e9 c55=39.59e9 c66=24.16e9 c16=-8.91e9 c26=8.91e9 rho=5670
+#
+# If cubic structure rotated 45 degrees around the z-axis
+ablock c11=103.86e9 c22=103.86e9 c33=83.29e9 c12=24.68e9 c13=45.26e9 c23=45.26e9 c44=39.59e9 c55=39.59e9 c66=19.01e9 rho=5670

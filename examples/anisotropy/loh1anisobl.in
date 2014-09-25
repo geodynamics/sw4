@@ -1,0 +1,47 @@
+#
+# This is the standard LOH1 problem run with the anisotropic solver, using the isotropic LOH material.
+#
+grid h=200 x=30000 y=30000 z=17000
+time t=9
+fileio path=LOH1AI-h200
+anisotropy
+# first define the material properties everywhere (half-space)
+# vp=6000, vs=3464 --> mu=3.2398e10, la=3.2404e10, 2*mu+la=9.72e10
+# 
+# Voigt enumeration
+ablock c11=9.72e10 c22=9.72e10 c33=9.72e10 c12=3.2404e10 c13=3.2404e10 c23=3.2404e10 c44=3.2398e10 c55=3.2398e10 c66=3.2398e10 rho=2700 
+
+# then define the slower material in the top layer (z < 1000 m)
+# vp=4000, vs=2000 --> mu=1.04e10, la=2.08e10, 2*mu+la=4.16e10
+#
+# Voigt enumeration
+ablock c11=4.16e10 c22=4.16e10 c33=4.16e10 c12=2.08e10 c13=2.08e10 c23=2.08e10 c44=1.04e10 c55=1.04e10 c66=1.04e10 rho=2600 z2=1000
+
+# lastly define the properties right at the interface, using harmonic avg for mu and lambda
+# and artithmetic avg for rho
+# avgmu = 1.5746e10 avgla=2.2025e10, 2*mu+la = 5.3516e10
+#
+# Voigt enumeration:
+ablock c11=5.3516e10 c22=5.3516e10 c33=5.3516e10 c12=2.2025e10 c13=2.2025e10 c23=2.2025e10 c44=1.5746e10 c55=1.5746e10 c66=1.5746e10 rho=2650 z1=999 z2=1001
+#
+#
+supergrid gp=30
+# Gaussian time function gives the velocities directly
+# sigma=0.05 gives freq=1/sigma=20 (LOH.3)
+# sigma=0.06 gives freq=1/sigma=16.6667 (LOH.1)
+# t0 = 6*sigma = 0.36 avoids (most) startup transients and is
+# consistent with the matlab script PlotAnalyticalLOH1.m
+source x=17000 y=17000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 type=Gaussian
+#
+rec x=17600 y=17800 z=0 file=sta01 writeEvery=10
+rec x=18200 y=18600 z=0 file=sta02 writeEvery=10
+rec x=18800 y=19400 z=0 file=sta03 writeEvery=10
+rec x=19400 y=20200 z=0 file=sta04 writeEvery=10
+rec x=20000 y=21000 z=0 file=sta05 writeEvery=10
+rec x=20600 y=21800 z=0 file=sta06 writeEvery=10
+rec x=21200 y=22600 z=0 file=sta07 writeEvery=10
+rec x=21800 y=23400 z=0 file=sta08 writeEvery=10
+rec x=22400 y=24200 z=0 file=sta09 writeEvery=10
+rec x=23000 y=25000 z=0 file=sta10 writeEvery=10
+#
+image mode=mag z=0 file=surf timeInterval=0.5

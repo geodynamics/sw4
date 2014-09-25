@@ -117,6 +117,9 @@ void F77_FUNC(rhs4th3fort,RHS4TH3FORT)(int*, int*, int*, int*, int*, int*, int*,
 				       double*, double*, double*, double*, double*, char* );
 void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
 						 double*, double*, double*, double*, double*, double*,double*,double*, char* );
+void F77_FUNC(innerloopanisgstrvc,INNERLOOPANISGSTRVC)( int*, int*, int*, int*, int*, int*, int*, 
+							double*, double*, double*, int*, double*,
+							double*, double*, double*, double*, double*, double* );
 void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
@@ -375,6 +378,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_pervar(1),
   m_qmultiplier(1),
   m_randomize(false),
+  m_anisotropic(false),
   NO_TOPO(1e38)
 {
   
@@ -3637,6 +3641,44 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
        }
     }
+  }
+}
+
+//-----------------------------------------------------------------------
+void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C, 
+			    vector<Sarray> & a_Uacc )
+{
+  int ifirst, ilast, jfirst, jlast, kfirst, klast;
+  double *uacc_ptr, *u_ptr, *c_ptr, h;
+  
+  int *onesided_ptr;
+  
+  int g, nz;
+  
+  for(g=0 ; g<mNumberOfCartesianGrids; g++ )
+  {
+    uacc_ptr = a_Uacc[g].c_ptr();
+    u_ptr    = a_U[g].c_ptr();
+    c_ptr    = a_C[g].c_ptr();
+    ifirst   = m_iStart[g];
+    ilast    = m_iEnd[g];
+    jfirst   = m_jStart[g];
+    jlast    = m_jEnd[g];
+    kfirst   = m_kStart[g];
+    klast    = m_kEnd[g];
+    h        = mGridSize[g]; 
+    nz       = m_global_nz[g];
+    onesided_ptr = m_onesided[g];
+    //    if( usingSupergrid() )
+       F77_FUNC(innerloopanisgstrvc,INNERLOOPANISGSTRVC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+							 &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
+							 m_acof, m_bope, m_ghcof, &h, m_sg_str_x[g],
+							 m_sg_str_y[g], m_sg_str_z[g] );
+       //    else
+       //       F77_FUNC(innerloopanivc,INNERLOOPANIVC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+       //					       &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
+       //					       m_acof, m_bope, m_ghcof, &h );
+       //  }
   }
 }
 

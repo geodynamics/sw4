@@ -1,0 +1,365 @@
+bjorn@cab668 61) srun -ppdebug -n 32 ../../optimize_cab/sw4 loh1anisobl.in 
+----------------------------------------------------------------
+            sw4 version 1.09
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Sep 8 14:12:32 PDT 2014
+  By user:     bjorn
+  Machine:     cab687
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: loh1anisobl.in
+
+* Processing the grid command...
+* Setting nx to 151 to be consistent with h=2.00000000e+02
+* Setting ny to 151 to be consistent with h=2.00000000e+02
+* Setting nz to 86 to be consistent with h=2.00000000e+02
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       151       151        86      1960886
+Total number of grid points (without ghost points): 1.96089e+06
+
+Default Supergrid thickness has been tuned; thickness = 30 grid sizes
+
+   Execution time, reading input file 1.56590000e-02 seconds 
+----------------------------------------------------
+ Making Output Directory: LOH1AI-h200/
+
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.726949e+01, x=3.000000e+04, y=0.000000e+00
+2: Lon= 1.183386e+02, Lat=3.726949e+01, x=3.000000e+04, y=3.000000e+04
+3: Lon= 1.183374e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+04
+
+block command: outside = 0, material = 2750490
+block command: outside = 2506002, material = 244488
+block command: outside = 2719929, material = 30561
+Considering all material blocks
+ Material properties 
+2.60000000e+03 <=  Density <= 2.70000000e+03
+1.04000000e+10 <=  Eig(c)  <= 1.62008000e+11
+Parallel_IO::init_array maxiobuf = 22801 maxbuf = 22801
+   Execution time, start up phase 2.13384000e-01 seconds 
+Running sw4 on 32 processors...
+Writing output to directory: LOH1AI-h200/
+============================================================
+ Running program on 32 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 9
+ Number of time steps = 268 dt: 0.0335821
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1e+18 Nm 
+  Moment magnitude     (Mw): 5.93333
+  Number of moment sources 1
+-----------------------------------------------------------------------
+writing image plane on file LOH1AI-h200/surf.cycle=000.z=0.mag.sw4img
+  Begin time stepping...
+Time step       1  t =   3.3582090e-02
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 11: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=015.z=0.mag.sw4img
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 21: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=030.z=0.mag.sw4img
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 31: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 41: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=045.z=0.mag.sw4img
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 51: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=060.z=0.mag.sw4img
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 61: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 71: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=074.z=0.mag.sw4img
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 81: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=089.z=0.mag.sw4img
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 91: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 101: LOH1AI-h200/sta07.[x|y|z]
+Time step     101  t =   3.3917910e+00
+writing image plane on file LOH1AI-h200/surf.cycle=104.z=0.mag.sw4img
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 111: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=119.z=0.mag.sw4img
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 121: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 131: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=134.z=0.mag.sw4img
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 141: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=149.z=0.mag.sw4img
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 151: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 161: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=164.z=0.mag.sw4img
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 171: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=179.z=0.mag.sw4img
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 181: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 191: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=194.z=0.mag.sw4img
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 201: LOH1AI-h200/sta07.[x|y|z]
+Time step     201  t =   6.7500000e+00
+writing image plane on file LOH1AI-h200/surf.cycle=208.z=0.mag.sw4img
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 211: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 221: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=223.z=0.mag.sw4img
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 231: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=238.z=0.mag.sw4img
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 241: LOH1AI-h200/sta07.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 251: LOH1AI-h200/sta07.[x|y|z]
+writing image plane on file LOH1AI-h200/surf.cycle=253.z=0.mag.sw4img
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 261: LOH1AI-h200/sta07.[x|y|z]
+Time step     268  t =   9.0000000e+00
+writing image plane on file LOH1AI-h200/surf.cycle=268.z=0.mag.sw4img
+  Time stepping finished...
+   Execution time, solver phase 2.42911370e+01 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta01.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta08.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta03.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta10.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta02.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta09.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta04.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta05.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta06.[x|y|z]
+Writing BINARY SAC files, of size 269: LOH1AI-h200/sta07.[x|y|z]

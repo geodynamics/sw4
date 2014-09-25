@@ -73,6 +73,11 @@ void F77_FUNC(bcfortsg, BCFORTSG)( int*, int*, int*, int*, int*, int*,
 			       double* bf2_p, double*bf3_p, 
 			       double*bf4_p, double*bf5_p, 
 			       double*, double*, double*, double*, double* );
+   void F77_FUNC(bcfortanisg, BCFORTANISG)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*,
+					 double*, double*, boundaryConditionType*, double*, double*,
+					 double*, double*, double*, double*, double*, double*,
+					 double*, double* );
+
 void F77_FUNC(twfrsurfz, TWFRSURFZ)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
 				  int * klast_p, double* h_p, int * k_p,
 				  double* t_p, double* om_p, double* cv_p, double* ph_p,
@@ -320,6 +325,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        
   } // end if prefiltering
 
+// AP changed to false
   bool output_timefunc = true;
   if( output_timefunc )
   {
@@ -496,7 +502,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( m_use_attenuation && m_number_mechanisms > 0 )
      addAttToFreeBcForcing( AlphaVE, BCForcing, m_sbop );
 // enforce boundary condition
-   enforceBC( U, mMu, mLambda, t, BCForcing );   
+  if( m_anisotropic )
+     enforceBCanisotropic( U, mC, t, BCForcing );
+  else
+     enforceBC( U, mMu, mLambda, t, BCForcing );   
 
 // Um
 // communicate across processor boundaries
@@ -508,7 +517,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      addAttToFreeBcForcing( AlphaVEm, BCForcing, m_sbop );
 
 // enforce boundary condition
-   enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
+  if( m_anisotropic )
+     enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
+  else
+     enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
 
   if (m_twilight_forcing && getVerbosity()>=3)
   {
@@ -554,7 +566,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test ) && proc_zero() )
   {
-    string path=getOutputPath();
+    string path=getPath();
 
     stringstream fileName;
     if( path != "." )
@@ -587,7 +599,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
 
 // evaluate right hand side
-    evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+    if( m_anisotropic )
+       evalRHSanisotropic( U, mC, Lu );
+    else
+       evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
 
     if( m_checkfornan )
        check_for_nan( Lu, 1, "Lu pred. " );
@@ -606,7 +621,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
-    enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+    if( m_anisotropic )
+       enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
+    else
+       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
     if( m_checkfornan )
        check_for_nan( Up, 1, "U pred. " );
@@ -632,7 +650,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_use_attenuation && m_number_mechanisms > 0 )
           evalDpDmInTimeAtt( AlphaVEp, AlphaVE, AlphaVEm ); // store AlphaVEacc in AlphaVEm
 
-       evalRHS( Uacc, mMu, mLambda, Lu, AlphaVEm );
+       if( m_anisotropic )
+	  evalRHSanisotropic( Uacc, mC, Lu );
+       else
+	  evalRHS( Uacc, mMu, mLambda, Lu, AlphaVEm );
+       
        if( m_checkfornan )
 	  check_for_nan( Lu, 1, "L(uacc) " );
 
@@ -661,7 +683,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  addAttToFreeBcForcing( AlphaVEp, BCForcing, m_sbop );
        }
 // update ghost points in Up
-       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+       if( m_anisotropic )
+	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
+       else
+	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
     }
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
@@ -978,6 +1003,75 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 	 }
       //      cout << "Difference of curvilinear and cartesian common grid line = "<< nrm[0] << " " << nrm[1] << " " << nrm[2] << endl;
    }
+}
+
+//---------------------------------------------------------------------------
+void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
+		    double t, vector<double **> & a_BCForcing )
+{
+  int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
+  double *u_ptr, *c_ptr, h;
+  boundaryConditionType *bcType_ptr;
+  double *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
+  int *wind_ptr;
+  double om=0, ph=0, cv=0;
+    
+  for(g=0 ; g<mNumberOfGrids; g++ )
+  {
+    u_ptr    = a_U[g].c_ptr();
+    c_ptr    = a_C[g].c_ptr();
+
+    ifirst = m_iStart[g];
+    ilast  = m_iEnd[g];
+    jfirst = m_jStart[g];
+    jlast  = m_jEnd[g];
+    kfirst = m_kStart[g];
+    klast  = m_kEnd[g];
+    nx = m_global_nx[g];
+    ny = m_global_ny[g];
+    nz = m_global_nz[g];
+    
+    h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+    bcType_ptr = m_bcType[g]; // get a pointer to the boundary conditions for grid 'g'
+    
+    wind_ptr = m_BndryWindow[g];// get a pointer to the boundary window array for grid 'g'
+    //    cout << "Grid: " << g << endl;
+    //    for( int s=0 ; s < 6 ; s++ )
+    //       cout << " side " << s << " wind = " << wind_ptr[6*s] << " " << wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " " 
+    //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " << wind_ptr[6*s+5] << endl;
+    int topo=topographyExists() && g == mNumberOfGrids-1;
+    
+// THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
+// for periodic bc, a_BCForcing[g][s] == NULL, so you better not access the
+// theses arrays in that case
+    bforce_side0_ptr = a_BCForcing[g][0]; // low-i bndry forcing array pointer
+    bforce_side1_ptr = a_BCForcing[g][1]; // high-i bndry forcing array pointer
+    bforce_side2_ptr = a_BCForcing[g][2]; // low-j bndry forcing array pointer
+    bforce_side3_ptr = a_BCForcing[g][3]; // high-j bndry forcing array pointer
+    bforce_side4_ptr = a_BCForcing[g][4]; // low-k bndry forcing array pointer
+    bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
+    
+    //    if( usingSupergrid() )
+    //    {
+       F77_FUNC(bcfortanisg, BCFORTANISG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+				       wind_ptr, &nx, &ny, &nz,
+				       u_ptr, &h, bcType_ptr, m_sbop, c_ptr, 
+				       bforce_side0_ptr, bforce_side1_ptr, 
+				       bforce_side2_ptr, bforce_side3_ptr, 
+				       bforce_side4_ptr, bforce_side5_ptr, 
+				       m_sg_str_x[g], m_sg_str_y[g] );
+       //    }
+    //    else
+    //    {
+       //       F77_FUNC(bcfort, BCFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+       //				 wind_ptr, &nx, &ny, &nz,
+       //				 u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
+       //				 bforce_side0_ptr, bforce_side1_ptr, 
+       //				 bforce_side2_ptr, bforce_side3_ptr, 
+       //				 bforce_side4_ptr, bforce_side5_ptr )
+       //				
+    //  }
+  }
 }
 
 //-----------------------------------------------------------------------
