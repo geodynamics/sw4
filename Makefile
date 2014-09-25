@@ -158,35 +158,10 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o
 
-OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o \
-       MaterialInvtest.o invtestmtrl.o projectmtrl.o 
-
-MOBJOPT  = moptmain.o linsolvelu.o solve-backward.o solve-allpars.o \
-       solve-backward-allpars.o DataPatches.o \
-       MaterialInvtest.o invtestmtrl.o lbfgs.o projectmtrl.o nlcg.o \
-       MaterialParameterization.o Mopt.o MaterialParCartesian.o \
-       InterpolateMaterial.o interpolatemtrl.o
-
-OBJL  = lamb_one_point.o
-
-OBJP = test_proj.o
-
-OBJCONV = convert_etree.o
-
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
 
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
-
-FOBJOPT = $(addprefix $(builddir)/,$(OBJOPT)) $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
-
-FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
-
-FOBJL = $(addprefix $(builddir)/,$(OBJL)) $(addprefix $(builddir)/,$(QUADPACK))
-
-FOBJP = $(addprefix $(builddir)/,$(OBJP))
-
-FOBJCONV = $(addprefix $(builddir)/,$(OBJCONV))
 
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
@@ -199,84 +174,6 @@ sw4: $(FSW4) $(FOBJ)
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
-
-sw4opt: $(FOBJ) $(FOBJOPT)
-# need to set ENABLE_OPT before compiling some files in the sw4/src directory
-	@echo "*** Configuration file: '" $(foundincfile) "' ***"
-	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
-	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
-	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
-	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
-	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
-	@echo " "
-	@echo "******* sw4opt was built successfully *******" 
-	@echo " "
-	@echo "*** Build directory: " $(builddir) " ***"
-
-sw4mopt: $(FOBJ) $(FMOBJOPT)
-	@echo "*** Configuration file: '" $(foundincfile) "' ***"
-	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
-	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
-	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
-	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
-	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
-	@echo " "
-	@echo "******* sw4mopt was built successfully *******" 
-	@echo " "
-	@echo "*** Build directory: " $(builddir) " ***"
-
-lamb1: $(FOBJL)
-	@echo "*** Configuration file: '" $(foundincfile) "' ***"
-	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
-	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
-	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
-	@echo "******************************************************"
-	cd $(builddir); $(FC) $(FFLAGS) -o $@ $(OBJL) $(QUADPACK) $(linklibs)
-#	@cat "Done building lamb1 executable"
-#	@echo "*** Build directory: " $(builddir) " ***"
-
-test_proj: $(FOBJP)
-	@echo "*** Configuration file: '" $(foundincfile) "' ***"
-	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
-	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
-	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
-	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJP) $(linklibs)
-
-convert_etree: $(FOBJCONV)
-	@echo "*** Configuration file: '" $(foundincfile) "' ***"
-	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
-	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
-	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
-	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJCONV) $(linklibs)
-
-# distribution (don't need this anymore. Be very careful to not overwrite any git-controlled files
-# if you decide to build the source code from a tar-ball
-#tardir := sw4-v1.1
-#sw4-v1.1.tgz:
-#	/bin/mkdir -p $(tardir)
-#	cd $(tardir); git clone https://andersp@lc.llnl.gov/stash/scm/wave/sw4.git
-# with git, all files are put in a directory call sw4
-#	cd $(tardir)/sw4; /bin/rm -rf tests docs opt-src .git
-# command for sticking in the license blurb in all source code files
-#	cd $(tardir)/sw4; python enforceLicense.py Blurb.txt $(fullpath)/$(tardir)
-#	cd $(tardir)/sw4; /bin/rm -f enforceLicense.py
-#	cd $(tardir)/sw4; /bin/rm -f Blurb.txt
-#	cd $(tardir)/sw4; /bin/rm -f Makefile
-#	cd $(tardir)/sw4; /bin/mv distMakefile Makefile
-# rename the main direcory
-#	cd $(tardir); /bin/mv sw4 sw4-v1.1
-#	@echo "building tar ball..."
-#	cd $(tardir); tar -c -z -f $@ sw4-v1.1; /bin/mv $@ ..
-#	rm -rf $(tardir)
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<
@@ -296,15 +193,7 @@ $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
 
-$(builddir)/%.o:opt-src/%.f
-	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
-
-$(builddir)/%.o:opt-src/%.C
-	/bin/mkdir -p $(builddir)
-	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
-
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 sw4opt sw4mopt $(OBJ) $(OBJOPT) $(MOBJOPT) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 sw4opt $(OBJ) $(OBJOPT) $(MOBJOPT) $(QUADPACK)
+	cd $(optdir); /bin/rm -f sw4 $(OBJ) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 $(OBJ) $(QUADPACK)
