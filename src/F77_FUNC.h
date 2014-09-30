@@ -42,7 +42,7 @@
 
 /* MACOSX predefines __APPLE__ */
 #ifdef __APPLE__
-#  define F77_FUNC(x, X) x
+#  define F77_FUNC(x, X) x##_
 #endif
 
 # ifdef ANSI_F77
