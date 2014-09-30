@@ -176,6 +176,14 @@ sw4: $(FSW4) $(FOBJ)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
+# tarball
+sw4-v1.1.tgz:  $(FSW4) $(FOBJ)
+	rm -rf sw4-v1.1
+	mkdir sw4-v1.1
+	cp -r src configs tools examples Makefile wave.txt CMakeLists.txt INSTALL.txt LICENSE.txt README.txt sw4-v1.1
+	tar czf $@ sw4-v1.1
+	rm -rf sw4-v1.1 
+
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<
 
