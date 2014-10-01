@@ -40,6 +40,11 @@
 
 #ifndef F77_FUNC
 
+#ifdef CMAKE_FC_FUNC
+#include "FC.h"
+#define F77_FUNC FC_GLOBAL
+#else /* CMAKE_FC_FUNC */
+
 /* MACOSX predefines __APPLE__ */
 #ifdef __APPLE__
 #  define F77_FUNC(x, X) x##_
@@ -64,6 +69,8 @@
 # ifndef F77_FUNC
 #  define F77_FUNC(x, X)  x ## _
 # endif /* F77_FUNC */
+
+#endif /* CMAKE_FC_FUNC */
 
 #endif /* F77_FUNC */
 
