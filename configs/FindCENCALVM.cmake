@@ -37,5 +37,5 @@ endif(CENCALVM_LIBRARY AND ETREE_LIBRARY)
 # if all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CENCALVM DEFAULT_MSG
-    CENCALVM_LIBRARY
+    CENCALVM_LIBRARIES
     CENCALVM_INCLUDE_DIR)
