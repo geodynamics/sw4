@@ -24,9 +24,14 @@ find_library(CENCALVM_LIBRARY
     PATHS ${CENCALVM_HOME}/lib
     DOC "Path to cencalvm library file")
 
-if(CENCALVM_LIBRARY)
-    set(CENCALVM_LIBRARIES ${CENCALVM_LIBRARY})
-endif(CENCALVM_LIBRARY)
+find_library(ETREE_LIBRARY
+    NAMES etree
+    PATHS ${CENCALVM_HOME}/lib
+    DOC "Path to etree library file")
+
+if(CENCALVM_LIBRARY AND ETREE_LIBRARY)
+    set(CENCALVM_LIBRARIES ${CENCALVM_LIBRARY} ${ETREE_LIBRARY})
+endif(CENCALVM_LIBRARY AND ETREE_LIBRARY)
 
 # Handle the QUIETLY and REQUIRED arguments and set CENCALVM_FOUND to TRUE
 # if all listed variables are TRUE
