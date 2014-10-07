@@ -299,7 +299,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_projection_cycle(1000),
   m_checkfornan(false),
 
-  m_error_log_file("twilight_errors.dat"),
+  m_error_log_file("TwilightErr.txt"),
   m_error_log(false),
   m_error_print(true),
   m_inner_loop(9),

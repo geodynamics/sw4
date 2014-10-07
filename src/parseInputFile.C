@@ -1693,7 +1693,7 @@ void EW::processTwilight(char* buffer)
   CHECK_INPUT(strcmp("twilight", token) == 0, "ERROR: not a twilight line...: " << token);
   token = strtok(NULL, " \t");
 
-  string err = "Twilight Error: ";
+  string err = "Twilight command syntax error: ";
 
   while (token != NULL)
     {
@@ -1701,10 +1701,11 @@ void EW::processTwilight(char* buffer)
        if (startswith("#", token) || startswith(" ", buffer))
           // Ignore commented lines and lines with just a space.
           break;
+//                     123456789
        if( startswith("errorlog=",token) )
        {
           token += 9;
-	  bool errorlog = atoi(token)==1;
+	  bool errorlog = (atoi(token)==1);
 	  if( errorlog )
 	     switch_on_error_log();
        }

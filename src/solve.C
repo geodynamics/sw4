@@ -564,7 +564,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   FILE *lf=NULL;
 // open file for saving norm of error
-  if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test ) && proc_zero() )
+  if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
     string path=getPath();
 
@@ -572,7 +572,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( path != "." )
       fileName << path;
     
-    if (m_lamb_test)
+    if (m_error_log)
+      fileName << m_error_log_file;
+    else if (m_lamb_test)
       fileName << "LambErr.txt";
     else if (m_point_source_test)
       fileName << "PointSourceErr.txt";
@@ -777,15 +779,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 //   if( ind != 0 )
 //      delete[] ind;
-
-// close error file for Lamb's test
-  if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test) && proc_zero() )
-  {
-    fclose(lf);
-    printf("**** Closed file with solution errors for testing\n");
-  }
   
-
    double time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
 
@@ -813,8 +807,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
 
       if ( proc_zero() )
+      {         
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
 
+// output time, Linf-err, Linf-sol-err
+         if ( m_error_log )
+         {
+            fprintf(lf, "Final time\n");
+            fprintf(lf, "%e\n", t);
+            fprintf(lf, "Displacement variables (errInf, errL2, solInf)\n");            
+            fprintf(lf, "%15.7e %15.7e %15.7e\n", errInf, errL2, solInf);
+         }
+         
+      }
+      
       if( m_twilight_forcing && m_use_attenuation )
       {
          vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
@@ -825,7 +831,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	 }
 	 normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
 	 if ( proc_zero() )
+         {
 	    printf("\n Final solution errors, attenuation: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+            if ( m_error_log )
+            {
+               fprintf(lf, "Attennuation variables (errInf, errL2, solInf)\n");
+               fprintf(lf, "%15.7e %15.7e %15.7e\n", errInf, errL2, solInf);
+            }
+            
+         }
+         
       }
 // test
 //      int g=mNumberOfCartesianGrids - 1;
@@ -834,7 +849,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //      normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
 //      if ( proc_zero() )
 //	 printf("\n Surface norm of 1: Inf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-   }
+   } // end if exactSol
+   
+// close error log file for testing
+  if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
+  {
+    fclose(lf);
+    printf("**** Closed file with solution errors for testing\n");
+  }
+
    finalizeIO();
    cout.flush(); cerr.flush();
 
