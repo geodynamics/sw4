@@ -157,10 +157,30 @@ ADD_TEST(
     )
 
 ADD_TEST(
+    NAME twilight_flat-twi-1_result_check
+    WORKING_DIRECTORY ${SW4_BINARY_DIR}/flat-1
+    COMMAND ${EXAMPLE_DIR}/twilight/check_twilight.py TwilightErr.txt 1e-3 1e-3 1
+    )
+SET_TESTS_PROPERTIES(
+    twilight_flat-twi-1_result_check 
+    PROPERTIES DEPENDS twilight_flat-twi-1
+    )
+
+ADD_TEST(
     NAME twilight_flat-twi-2
     WORKING_DIRECTORY ${SW4_BINARY_DIR}
     COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/twilight/flat-twi-2.in
+    )
+
+ADD_TEST(
+    NAME twilight_flat-twi-2_result_check
+    WORKING_DIRECTORY ${SW4_BINARY_DIR}/flat-2
+    COMMAND ${EXAMPLE_DIR}/twilight/check_twilight.py TwilightErr.txt 1e-4 1e-4 1
+    )
+SET_TESTS_PROPERTIES(
+    twilight_flat-twi-2_result_check 
+    PROPERTIES DEPENDS twilight_flat-twi-2
     )
 
 ADD_TEST(
