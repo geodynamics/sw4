@@ -1,23 +1,23 @@
 ----------------------------------------------------------------
-            sw4 version 1.0
+            sw4 version 1.1
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Tue Sep 17 12:00:47 PDT 2013
-  By user:     andersp
-  Machine:     cab668
-  Compiler:    /usr/local/bin/mpiicpc
-  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+  Compiled on: Tue Oct  7 08:00:03 PDT 2014
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
 ----------------------------------------------------------------
 
 Input file: gauss-twi-1.in
 
 * Processing the grid command...
-* Setting h to 0.0333333 from  x/(nx-1) (x=1, nx=31)
-* Setting ny to 31 to be consistent with h=0.0333333
-* Setting nz to 31 to be consistent with h=0.0333333
+* Setting h to 3.33333333e-02 from  x/(nx-1) (x=1.00000000e+00, nx=31)
+* Setting ny to 31 to be consistent with h=3.33333333e-02
+* Setting nz to 31 to be consistent with h=3.33333333e-02
 
 ***Topography grid: min z = -5.000000e-02, max z = -1.638684e-17, top Cartesian z = 2.500000e-01
 
@@ -28,66 +28,67 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 31713
 
 
-   Execution time, reading input file 0.020261 seconds 
+   Execution time, reading input file 6.65616989e-03 seconds 
 ----------------------------------------------------
  Making Output Directory: gauss_31/
 		
 ... Done!
 ----------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700001e+01
-2: Lon= 1.180000e+02, Lat=3.700001e+01
-3: Lon= 1.180000e+02, Lat=3.700000e+01
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700001e+01, x=1.000000e+00, y=0.000000e+00
+2: Lon= 1.180000e+02, Lat=3.700001e+01, x=1.000000e+00, y=1.000000e+00
+3: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=1.000000e+00
 
 ******************************
  ASSIGNING TWILIGHT MATERIALS 
 ******************************
 
        ----------- Material properties ranges ---------------
-       1.00385 kg/m^3 <=  Density <= 2.99612 kg/m^3
-       1.63433 m/s    <=  Vp      <= 2.82251 m/s
-       1.0009 m/s    <=  Vs      <= 1.72828 m/s
-       1.52841        <=  Vp/Vs   <= 1.73171
-       2.00385 Pa     <=  mu      <= 3.99612 Pa
-       1.01051 Pa     <=  lambda  <= 2.98962 Pa
+       1.00385171e+00 kg/m^3 <=  Density <= 2.99611576e+00 kg/m^3
+       1.63433064e+00 m/s    <=  Vp      <= 2.82250885e+00 m/s
+       1.00090375e+00 m/s    <=  Vs      <= 1.72827563e+00 m/s
+       1.52841444e+00        <=  Vp/Vs   <= 1.73171382e+00
+       2.00385171e+00 Pa     <=  mu      <= 3.99611576e+00 Pa
+       1.01050988e+00 Pa     <=  lambda  <= 2.98962220e+00 Pa
        ------------------------------------------------------
 
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=3.333333e-02, minVs/h=30.0271 (Cartesian)
 g=1, h=3.333333e-02, minVs/h=30.0271 (curvilinear)
 
-   Execution time, start up phase 0.018379 seconds 
-Running sw4 on 16 processors...
+   Execution time, start up phase 1.32658482e-02 seconds 
+Running sw4 on 2 processors...
 Writing output to directory: gauss_31/
 ============================================================
- Running program on 16 MPI tasks using the following data: 
+ Running program on 2 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
  Number of time steps = 90 dt: 0.00888889
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
-  omega = 6.28
-  c = 1.3
-  phase = 0.8
-  mat-omega = 6.28
-  mat-phase = 0.4
-  amprho = 1
-  amplambda = 1
-  ampmu = 1
+  omega = 6.28000000e+00
+  c = 1.30000000e+00
+  phase = 8.00000000e-01
+  mat-omega = 6.28000000e+00
+  mat-phase = 4.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
 -----------------------------------------------------------
 writing image plane on file gauss_31/gaussian.cycle=00.z=0.topo.sw4img
   Begin time stepping...
 Time step       1  t =   8.8888889e-03
 Time step      90  t =   8.0000000e-01
-  Time stepping finished...
-   Execution time, solver phase 0.2602 seconds 
 writing image plane on file gauss_31/gaussian.cycle=90.x=0.5.ux.sw4img
-writing image plane on file gauss_31/gaussian.cycle=90.y=0.5.ux.sw4img
 writing image plane on file gauss_31/gaussian.cycle=90.x=0.5.uxerr.sw4img
+writing image plane on file gauss_31/gaussian.cycle=90.y=0.5.ux.sw4img
+  Time stepping finished...
+   Execution time, solver phase 1.71482396e+00 seconds 
 
  Final solution errors: Linf =   1.7416191e-03, L2 =   2.3349114e-04
+**** Closed file with solution errors for testing
 ============================================================
  program sw4 finished! 
 ============================================================

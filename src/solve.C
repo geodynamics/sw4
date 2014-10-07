@@ -855,7 +855,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
     fclose(lf);
-    printf("**** Closed file with solution errors for testing\n");
+    printf("**** Closing file with solution errors for testing\n");
   }
 
    finalizeIO();

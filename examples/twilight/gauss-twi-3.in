@@ -2,7 +2,7 @@ grid nx=121 x=1.0 y=1.0 z=1.0
 time t=0.8
 
 topography input=gaussian zmax=0.25 order=4  gaussianAmp=0.05
-twilight omega=6.28 phase=0.8 momega=6.28
+twilight omega=6.28 phase=0.8 momega=6.28 errorlog=1
 fileio path=gauss_121
 
 image mode=topo z=0 cycle=0 file=gaussian
