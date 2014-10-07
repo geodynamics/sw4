@@ -1,28 +1,28 @@
 ----------------------------------------------------------------
-            sw4 version 1.0
+            sw4 version 1.1
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Fri Jul 19 13:27:36 PDT 2013
-  By user:     andersp
-  Machine:     cab670
-  Compiler:    /usr/local/bin/mpiicpc
-  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+  Compiled on: Tue Oct  7 14:17:59 PDT 2014
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
 ----------------------------------------------------------------
 
 Input file: tw-topo-att-1.in
 
 * Processing the grid command...
-* Setting h to 0.1256 from  x/(nx-1) (x=6.28, nx=51)
-* Setting ny to 51 to be consistent with h=0.1256
-* Setting nz to 51 to be consistent with h=0.1256
+* Setting h to 1.25600000e-01 from  x/(nx-1) (x=6.28000000e+00, nx=51)
+* Setting ny to 51 to be consistent with h=1.25600000e-01
+* Setting nz to 51 to be consistent with h=1.25600000e-01
 allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
-Extent of the computational domain xmax=6.28 ymax=6.28 zmax=6.2656
-Corrected global_zmax = 6.2656
+Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.26560000e+00
+Corrected global_zmax = 6.26560000e+00
 Refinement levels after correction: 
-grid=0 min Z=3
+grid=0 min Z=3.00000000e+00
 ***inside setup2D_MPICommunications***
 ***inside buildGaussianHillTopography***
 ***inside allocateCurvilinearArrays***
@@ -40,40 +40,45 @@ Grid         h        Nx        Ny        Nz       Points
 Total number of grid points (without ghost points): 140454
 
 Default Supergrid thickness has been tuned; thickness = 10 grid sizes
-Default Supergrid damping coefficient has been tuned; damping coefficient = 0
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 
-   Execution time, reading input file 0.007595 seconds 
+   Execution time, reading input file 6.27207756e-03 seconds 
  *** Testing = 1
-  Using Bjorn's (fast) parallel IO library
+  Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
 Setting up SBP boundary stencils
 Detected at least one boundary with supergrid conditions
 ----------------------------------------------------
- Making Output Directory: twtest/
+ Making Output Directory: gauss-1/
 		
 ... Done!
 ----------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700006e+01
-2: Lon= 1.180001e+02, Lat=3.700006e+01
-3: Lon= 1.180001e+02, Lat=3.700000e+01
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700006e+01, x=6.280000e+00, y=0.000000e+00
+2: Lon= 1.180001e+02, Lat=3.700006e+01, x=6.280000e+00, y=6.280000e+00
+3: Lon= 1.180001e+02, Lat=3.700000e+01, x=0.000000e+00, y=6.280000e+00
 
 ******************************
  ASSIGNING TWILIGHT MATERIALS 
 ******************************
 
        ----------- Material properties ranges ---------------
-       1.00118 kg/m^3 <=  Density <= 2.99886 kg/m^3
-       1.63354 m/s    <=  Vp      <= 2.82632 m/s
-       1.00034 m/s    <=  Vs      <= 1.73075 m/s
-       1.52767        <=  Vp/Vs   <= 1.73199
-       2.00118 Pa     <=  mu      <= 3.99886 Pa
-       1.00157 Pa     <=  lambda  <= 2.99848 Pa
+       1.00118341e+00 kg/m^3 <=  Density <= 2.99885859e+00 kg/m^3
+       1.63353903e+00 m/s    <=  Vp      <= 2.82632270e+00 m/s
+       1.00033876e+00 m/s    <=  Vs      <= 1.73075388e+00 m/s
+       1.52767088e+00        <=  Vp/Vs   <= 1.73199227e+00
+       2.00118341e+00 Pa     <=  mu      <= 3.99885859e+00 Pa
+       1.00157479e+00 Pa     <=  lambda  <= 2.99848185e+00 Pa
        Using attenuation 
-       -1        <=  Qs      <= -1  
-       -1        <=  Qp      <= -1  
+       -1.00000000e+00        <=  Qs      <= -1.00000000e+00  
+       -1.00000000e+00        <=  Qp      <= -1.00000000e+00  
        ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.256000e-01, minVs/h=7.96448 (Cartesian)
+g=1, h=1.256000e-01, minVs/h=7.96466 (curvilinear)
+
 
 *** Attenuation parameters calculated for 1 mechanisms,
       max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
@@ -81,15 +86,15 @@ Geographic coordinates of the corners of the computational grid:
   Assigned material properties
 *** computing the time step ***
 INFO: Smallest stable time step for curvilinear grid only: 2.558142e-02
-order of accuracy=4 CFL=1.3 prel. time step=0.0255814
+order of accuracy=4 CFL=1.30000000e+00 prel. time step=2.55814155e-02
 *** Initialized Images
-   Execution time, start up phase 0.020365 seconds 
-Running sw4 on 16 processors...
-Writing output to directory: twtest/
+   Execution time, start up phase 2.86469460e-02 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: gauss-1/
 
 ***  Starting solve ***
 ============================================================
- Running program on 16 MPI tasks using the following data: 
+ Running program on 4 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 1
  Number of time steps = 39 dt: 0.025641
@@ -106,25 +111,26 @@ Writing output to directory: twtest/
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
-  omega = 1
-  c = 1.3
-  phase = 0.3
-  mat-omega = 1
-  mat-phase = 0.1
-  amprho = 1
-  amplambda = 1
-  ampmu = 1
+  omega = 1.00000000e+00
+  c = 1.30000000e+00
+  phase = 3.00000000e-01
+  mat-omega = 1.00000000e+00
+  mat-phase = 1.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
 -----------------------------------------------------------
   Initial data has been assigned
   Begin time stepping...
 Time step       1  t =   2.5641026e-02
 Time step      39  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 1.12298 seconds 
+   Execution time, solver phase 4.90388107e+00 seconds 
 
  Final solution errors: Linf =   2.7253532e-03, L2 =   2.4135977e-03
 
  Final solution errors, attenuation: Linf =   2.8156161e-03, L2 =   2.3570885e-03
+**** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 
 ============================================================

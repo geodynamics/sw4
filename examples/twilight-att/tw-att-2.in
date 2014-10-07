@@ -1,4 +1,4 @@
-fileio verbose=1 path=twtest
+fileio verbose=1 path=flat-2
 grid nx=101 x=6.28 y=6.28 z=6.28
 time t=1
 #time steps=1
