@@ -146,54 +146,54 @@ TARGET_LINK_LIBRARIES(sw4 ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES}
 # Show the banner once sw4 is built
 ADD_CUSTOM_COMMAND(TARGET sw4 POST_BUILD COMMAND cat ${SW4_SOURCE_DIR}/wave.txt)
 
+# Level of tests to run, corresponding to computational time
+# Level 0 tests should take just less than a minute each, level 1 tests take less than 10 minutes (includes level 0 tests)
+# and level 2 consists of all tests
+SET(TESTING_LEVEL 0)
+
 SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
 
-# Run the shorter twilight tests
-ADD_TEST(
-    NAME twilight_flat-twi-1
-    WORKING_DIRECTORY ${SW4_BINARY_DIR}
-    COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/twilight/flat-twi-1.in
-    )
+# Define tests and tolerances
+SET(TWILIGHT_TESTS      twilight/flat-twi-1.in      twilight/flat-twi-2.in      twilight/flat-twi-3.in
+                        twilight-att/tw-att-1.in    twilight-att/tw-att-2.in    twilight-att/tw-att-3.in)
+SET(TWILIGHT_TEST_LEVEL 0                           0                           1
+                        0                           0                           1)
+SET(TWILIGHT_DIRS       flat-1                      flat-2                      flat-3
+                        flat-1                      flat-2                      flat-3)
+SET(TWILIGHT_ERRINF_TOL 1e-3                        1e-4                        1e-5
+                        1e-3                        1e-4                        1e-5)
+SET(TWILIGHT_ERRL2_TOL  1e-3                        1e-4                        1e-5
+                        1e-2                        1e-3                        1e-4)
+SET(TWILIGHT_SOLINF_TOL 1e-2                        1e-2                        1e-2
+                        1e-2                        1e-2                        1e-2)
+LIST(LENGTH TWILIGHT_TESTS N)
+MATH(EXPR NUM_TWILIGHT_TESTS "${N}-1")
 
-ADD_TEST(
-    NAME twilight_flat-twi-1_result_check
-    WORKING_DIRECTORY ${SW4_BINARY_DIR}/flat-1
-    COMMAND ${EXAMPLE_DIR}/twilight/check_twilight.py TwilightErr.txt 1e-3 1e-3 1
-    )
-SET_TESTS_PROPERTIES(
-    twilight_flat-twi-1_result_check 
-    PROPERTIES DEPENDS twilight_flat-twi-1
-    )
+# Run through and register all tests within the current testing level
+FOREACH(TEST_IND RANGE ${NUM_TWILIGHT_TESTS})
+    LIST(GET TWILIGHT_TEST_LEVEL ${TEST_IND} TEST_LEVEL)
+    IF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
+        LIST(GET TWILIGHT_TESTS ${TEST_IND} TEST_NAME)
+        LIST(GET TWILIGHT_DIRS ${TEST_IND} TEST_OUTPUT_DIR)
+        LIST(GET TWILIGHT_ERRINF_TOL ${TEST_IND} ERRINF_TOL)
+        LIST(GET TWILIGHT_ERRL2_TOL ${TEST_IND} ERRL2_TOL)
+        LIST(GET TWILIGHT_SOLINF_TOL ${TEST_IND} SOLINF_TOL)
+        ADD_TEST(
+            NAME ${TEST_NAME}
+            WORKING_DIRECTORY ${SW4_BINARY_DIR}
+            COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/${TEST_NAME}
+            )
 
-ADD_TEST(
-    NAME twilight_flat-twi-2
-    WORKING_DIRECTORY ${SW4_BINARY_DIR}
-    COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/twilight/flat-twi-2.in
-    )
-
-ADD_TEST(
-    NAME twilight_flat-twi-2_result_check
-    WORKING_DIRECTORY ${SW4_BINARY_DIR}/flat-2
-    COMMAND ${EXAMPLE_DIR}/twilight/check_twilight.py TwilightErr.txt 1e-4 1e-4 1
-    )
-SET_TESTS_PROPERTIES(
-    twilight_flat-twi-2_result_check 
-    PROPERTIES DEPENDS twilight_flat-twi-2
-    )
-
-ADD_TEST(
-    NAME twilight_gauss-twi-1
-    WORKING_DIRECTORY ${SW4_BINARY_DIR}
-    COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/twilight/gauss-twi-1.in
-    )
-
-ADD_TEST(
-    NAME twilight_gauss-twi-2
-    WORKING_DIRECTORY ${SW4_BINARY_DIR}
-    COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/twilight/gauss-twi-2.in
-    )
+        ADD_TEST(
+            NAME ${TEST_NAME}_result_check
+            WORKING_DIRECTORY ${SW4_BINARY_DIR}/${TEST_OUTPUT_DIR}
+            COMMAND ${EXAMPLE_DIR}/check_results.py TwilightErr.txt ${ERRINF_TOL} ${ERRL2_TOL} ${SOLINF_TOL}
+            )
+        SET_TESTS_PROPERTIES(
+            ${TEST_NAME}_result_check 
+            PROPERTIES DEPENDS ${TEST_NAME}
+            )
+    ENDIF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
+ENDFOREACH(TEST_IND RANGE ${NUM_TWILIGHT_TESTS})
 
