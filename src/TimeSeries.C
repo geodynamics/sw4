@@ -935,7 +935,8 @@ void TimeSeries::write_usgs_format(string a_fileName)
       {
 	 fprintf(fd, "%e", m_shift + i*m_dt);
 	 for (int q=0; q<m_nComp; q++)
-	    fprintf(fd, " %20.12g", mRecordedSol[q][i]);
+// AP (not always enough resolution)	    fprintf(fd, " %20.12g", mRecordedSol[q][i]);
+	    fprintf(fd, " %24.17e", mRecordedSol[q][i]);
 	 fprintf(fd, "\n");
       }
    }
@@ -946,9 +947,13 @@ void TimeSeries::write_usgs_format(string a_fileName)
 	 fprintf(fd, "%e", m_shift + i*m_dt);
 	 double uns = m_thynrm*mRecordedSol[0][i]-m_thxnrm*mRecordedSol[1][i];
 	 double uew = m_salpha*mRecordedSol[0][i]+m_calpha*mRecordedSol[1][i];
-	 fprintf(fd, " %20.12g", uew );
-	 fprintf(fd, " %20.12g", uns );
-	 fprintf(fd, " %20.12g", -mRecordedSol[2][i] );
+// AP (not always enough resolution)
+	 // fprintf(fd, " %20.12g", uew );
+	 // fprintf(fd, " %20.12g", uns );
+	 // fprintf(fd, " %20.12g", -mRecordedSol[2][i] );
+	 fprintf(fd, " %24.17e", uew );
+	 fprintf(fd, " %24.17e", uns );
+	 fprintf(fd, " %24.17e", -mRecordedSol[2][i] );
 	 fprintf(fd, "\n");
       }
    }

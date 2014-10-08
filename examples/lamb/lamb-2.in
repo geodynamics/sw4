@@ -1,4 +1,4 @@
-fileio path=lamb-h0p02
+fileio path=lamb-2
 grid x=12 y=12 z=6 h=0.02
 
 # the end time should exceed 1.0, which is when the source shuts off
