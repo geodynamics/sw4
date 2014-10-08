@@ -3,7 +3,7 @@ time t=0.8
 
 topography input=gaussian zmax=0.25 order=4 gaussianAmp=0.05
 twilight omega=6.28 phase=0.8 momega=6.28 errorlog=1
-fileio path=gauss_31
+fileio path=gauss-1
 
 image mode=topo z=0 cycle=0 file=gaussian
 image mode=ux x=0.5 time=0.8 file=gaussian
