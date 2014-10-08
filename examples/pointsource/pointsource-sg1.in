@@ -1,4 +1,4 @@
-fileio path=pointsource-h0p04
+fileio path=pointsource-1
 grid x=6 y=6 z=6 h=0.04
 time t=5.0
 
