@@ -1,5 +1,5 @@
 #fileio path=/g/g12/andersp/src/sw4/examples/lamb/lamb-h0p04
-fileio path=lamb-h0p04 verbose=2
+fileio path=lamb-1
 grid x=12 y=12 z=6 h=0.04
 # the end time should exceed 1.0, which is when the source shuts off
 time t=15.0

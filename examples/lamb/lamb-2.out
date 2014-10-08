@@ -1,13 +1,13 @@
 ----------------------------------------------------------------
-            sw4 version 1.0
+            sw4 version 1.1
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Thu Sep 5 10:45:27 PDT 2013
+  Compiled on: Wed Oct 8 09:01:27 PDT 2014
   By user:     andersp
-  Machine:     cab669
+  Machine:     cab689
   Compiler:    /usr/local/bin/mpiicpc
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
@@ -15,9 +15,9 @@
 Input file: lamb-2.in
 
 * Processing the grid command...
-* Setting nx to 601 to be consistent with h=0.02
-* Setting ny to 601 to be consistent with h=0.02
-* Setting nz to 301 to be consistent with h=0.02
+* Setting nx to 601 to be consistent with h=2.00000000e-02
+* Setting ny to 601 to be consistent with h=2.00000000e-02
+* Setting nz to 301 to be consistent with h=2.00000000e-02
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
@@ -29,47 +29,47 @@ Total number of grid points (without ghost points): 1.08722e+08
 
 Default Supergrid thickness has been tuned; thickness = 100 grid sizes
 
-   Execution time, reading input file 0.419473 seconds 
+   Execution time, reading input file 8.53573000e-01 seconds 
 ----------------------------------------------------
- Making Output Directory: lamb-h0p02/
+ Making Output Directory: lamb-2/
 		
 ... Done!
 ----------------------------------------------------
-Geographic coordinates of the corners of the computational grid:
-0: Lon= 1.180000e+02, Lat=3.700000e+01
-1: Lon= 1.180000e+02, Lat=3.700011e+01
-2: Lon= 1.180001e+02, Lat=3.700011e+01
-3: Lon= 1.180001e+02, Lat=3.700000e+01
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700011e+01, x=1.200000e+01, y=0.000000e+00
+2: Lon= 1.180001e+02, Lat=3.700011e+01, x=1.200000e+01, y=1.200000e+01
+3: Lon= 1.180001e+02, Lat=3.700000e+01, x=0.000000e+00, y=1.200000e+01
 
 
        ----------- Material properties ranges ---------------
-       1 kg/m^3 <=  Density <= 1 kg/m^3
-       1.73205 m/s    <=  Vp      <= 1.73205 m/s
-       1 m/s    <=  Vs      <= 1 m/s
-       1.73205        <=  Vp/Vs   <= 1.73205
-       1 Pa     <=  mu      <= 1 Pa
-       1 Pa     <=  lambda  <= 1 Pa
+       1.00000000e+00 kg/m^3 <=  Density <= 1.00000000e+00 kg/m^3
+       1.73205081e+00 m/s    <=  Vp      <= 1.73205081e+00 m/s
+       1.00000000e+00 m/s    <=  Vs      <= 1.00000000e+00 m/s
+       1.73205081e+00        <=  Vp/Vs   <= 1.73205081e+00
+       1.00000000e+00 Pa     <=  mu      <= 1.00000000e+00 Pa
+       1.00000000e+00 Pa     <=  lambda  <= 1.00000000e+00 Pa
        ------------------------------------------------------
 
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=2.000000e-02, minVs/h=50 (Cartesian)
 
-   Execution time, start up phase 0.151655 seconds 
-Running sw4 on 128 processors...
-Writing output to directory: lamb-h0p02/
+   Execution time, start up phase 6.28510000e-02 seconds 
+Running sw4 on 256 processors...
+Writing output to directory: lamb-2/
 ============================================================
- Running program on 128 MPI tasks using the following data: 
+ Running program on 256 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 15
  Number of time steps = 1290 dt: 0.0116279
 -----------------------------------------------------------
 Lamb's problem testing
 Parameters:
-  Cp = 1.73205
-  Cs = 1
-  Rho = 1
-  (xs, ys, zs) = 6, 6, 0
-  (fx, fy, fz) = 0, 0, 1
+  Cp = 1.73205081e+00
+  Cs = 1.00000000e+00
+  Rho = 1.00000000e+00
+  (xs, ys, zs) = 6.00000000e+00, 6.00000000e+00, 0.00000000e+00
+  (fx, fy, fz) = 0.00000000e+00, 0.00000000e+00, 1.00000000e+00
   Source time fcn = C6SmoothBump
 -----------------------------------------------------------
   Begin time stepping...
@@ -78,26 +78,26 @@ Time step     101  t =   1.1744186e+00
 Time step     201  t =   2.3372093e+00
 Time step     301  t =   3.5000000e+00
 Time step     401  t =   4.6627907e+00
-writing image plane on file lamb-h0p02/lamb.cycle=0430.z=0.uz.sw4img
-writing image plane on file lamb-h0p02/lamb.cycle=0430.z=0.uzerr.sw4img
+writing image plane on file lamb-2/lamb.cycle=0430.z=0.uz.sw4img
+writing image plane on file lamb-2/lamb.cycle=0430.z=0.uzerr.sw4img
 Time step     501  t =   5.8255814e+00
 Time step     601  t =   6.9883721e+00
 Time step     701  t =   8.1511628e+00
 Time step     801  t =   9.3139535e+00
 Time step     901  t =   1.0476744e+01
-Writing ASCII USGS file, of size 1001: lamb-h0p02/sg2.txt
-Writing ASCII USGS file, of size 1001: lamb-h0p02/sg1.txt
+Writing ASCII USGS file, of size 1001: lamb-2/sg2.txt
+Writing ASCII USGS file, of size 1001: lamb-2/sg1.txt
 Time step    1001  t =   1.1639535e+01
 Time step    1101  t =   1.2802326e+01
 Time step    1201  t =   1.3965116e+01
 Time step    1290  t =   1.5000000e+01
   Time stepping finished...
-**** Closed file with solution errors for testing
-   Execution time, solver phase 8 minutes 23.0376 seconds 
+   Execution time, solver phase 4 minutes 3.06548360e+01 seconds 
 
  Final solution errors: Linf =   1.5881405e-05, L2 =   1.2062388e-04
+**** Closing file with solution errors for testing
 ============================================================
+Writing ASCII USGS file, of size 1291: lamb-2/sg1.txt
  program sw4 finished! 
-Writing ASCII USGS file, of size 1291: lamb-h0p02/sg1.txt
 ============================================================
-Writing ASCII USGS file, of size 1291: lamb-h0p02/sg2.txt
+Writing ASCII USGS file, of size 1291: lamb-2/sg2.txt
