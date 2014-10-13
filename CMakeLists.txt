@@ -149,7 +149,7 @@ ADD_CUSTOM_COMMAND(TARGET sw4 POST_BUILD COMMAND cat ${SW4_SOURCE_DIR}/wave.txt)
 # Level of tests to run, corresponding to computational time
 # Level 0 tests should take just less than a minute each, level 1 tests take less than 10 minutes (includes level 0 tests)
 # and level 2 consists of all tests
-SET(TESTING_LEVEL 0)
+SET(TESTING_LEVEL 0 CACHE STRING "Level of testing thoroughness: 0=short tests, 2=all tests")
 
 SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
 
