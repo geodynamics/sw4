@@ -155,16 +155,28 @@ SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
 
 # Define tests and tolerances
 SET(TWILIGHT_TESTS      twilight/flat-twi-1.in      twilight/flat-twi-2.in      twilight/flat-twi-3.in
-                        twilight-att/tw-att-1.in    twilight-att/tw-att-2.in    twilight-att/tw-att-3.in)
+                        twilight/gauss-twi-1.in     twilight/gauss-twi-2.in     twilight/gauss-twi-3.in
+                        twilight-att/tw-att-1.in    twilight-att/tw-att-2.in    twilight-att/tw-att-3.in
+                        twilight-att/tw-topo-att-1.in   twilight-att/tw-topo-att-2.in   twilight-att/tw-topo-att-3.in)
 SET(TWILIGHT_TEST_LEVEL 0                           0                           1
-                        0                           0                           1)
+                        0                           0                           1
+                        0                           0                           1
+                        0                           1                           2)
 SET(TWILIGHT_DIRS       flat-1                      flat-2                      flat-3
-                        flat-1                      flat-2                      flat-3)
+                        gauss-1                     gauss-2                     gauss-3
+                        flat-1                      flat-2                      flat-3
+                        gauss-1                     gauss-2                     gauss-3)
 SET(TWILIGHT_ERRINF_TOL 1e-3                        1e-4                        1e-5
-                        1e-3                        1e-4                        1e-5)
+                        1e-2                        1e-3                        1e-4
+                        1e-3                        1e-4                        1e-5
+                        1e-2                        1e-3                        1e-4)
 SET(TWILIGHT_ERRL2_TOL  1e-3                        1e-4                        1e-5
+                        1e-3                        1e-4                        1e-5
+                        1e-2                        1e-3                        1e-4
                         1e-2                        1e-3                        1e-4)
 SET(TWILIGHT_SOLINF_TOL 1e-2                        1e-2                        1e-2
+                        1e-2                        1e-2                        1e-2
+                        1e-2                        1e-2                        1e-2
                         1e-2                        1e-2                        1e-2)
 LIST(LENGTH TWILIGHT_TESTS N)
 MATH(EXPR NUM_TWILIGHT_TESTS "${N}-1")
