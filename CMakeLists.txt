@@ -149,47 +149,59 @@ ADD_CUSTOM_COMMAND(TARGET sw4 POST_BUILD COMMAND cat ${SW4_SOURCE_DIR}/wave.txt)
 # Level of tests to run, corresponding to computational time
 # Level 0 tests should take just less than a minute each, level 1 tests take less than 10 minutes (includes level 0 tests)
 # and level 2 consists of all tests
-SET(TESTING_LEVEL 0 CACHE STRING "Level of testing thoroughness: 0=short tests, 2=all tests")
+SET(TESTING_LEVEL 0 CACHE STRING "Level of testing thoroughness: 0=short tests (<1 minute each), 2=all tests (may take an hour)")
 
 SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
 
 # Define tests and tolerances
-SET(TWILIGHT_TESTS      twilight/flat-twi-1.in      twilight/flat-twi-2.in      twilight/flat-twi-3.in
-                        twilight/gauss-twi-1.in     twilight/gauss-twi-2.in     twilight/gauss-twi-3.in
-                        twilight-att/tw-att-1.in    twilight-att/tw-att-2.in    twilight-att/tw-att-3.in
-                        twilight-att/tw-topo-att-1.in   twilight-att/tw-topo-att-2.in   twilight-att/tw-topo-att-3.in)
-SET(TWILIGHT_TEST_LEVEL 0                           0                           1
-                        0                           0                           1
-                        0                           0                           1
-                        0                           1                           2)
-SET(TWILIGHT_DIRS       flat-1                      flat-2                      flat-3
-                        gauss-1                     gauss-2                     gauss-3
-                        flat-1                      flat-2                      flat-3
-                        gauss-1                     gauss-2                     gauss-3)
-SET(TWILIGHT_ERRINF_TOL 1e-3                        1e-4                        1e-5
-                        1e-2                        1e-3                        1e-4
-                        1e-3                        1e-4                        1e-5
-                        1e-2                        1e-3                        1e-4)
-SET(TWILIGHT_ERRL2_TOL  1e-3                        1e-4                        1e-5
-                        1e-3                        1e-4                        1e-5
-                        1e-2                        1e-3                        1e-4
-                        1e-2                        1e-3                        1e-4)
-SET(TWILIGHT_SOLINF_TOL 1e-2                        1e-2                        1e-2
-                        1e-2                        1e-2                        1e-2
-                        1e-2                        1e-2                        1e-2
-                        1e-2                        1e-2                        1e-2)
-LIST(LENGTH TWILIGHT_TESTS N)
-MATH(EXPR NUM_TWILIGHT_TESTS "${N}-1")
+SET(AUTO_TESTS      twilight/flat-twi-1.in          twilight/flat-twi-2.in          twilight/flat-twi-3.in
+                    twilight/gauss-twi-1.in         twilight/gauss-twi-2.in         twilight/gauss-twi-3.in
+                    twilight-att/tw-att-1.in        twilight-att/tw-att-2.in        twilight-att/tw-att-3.in
+                    twilight-att/tw-topo-att-1.in   twilight-att/tw-topo-att-2.in   twilight-att/tw-topo-att-3.in
+                    lamb/lamb-1.in                  lamb/lamb-2.in
+                    pointsource/pointsource-sg1.in  pointsource/pointsource-sg2.in  pointsource/pointsource-sg3.in)
+SET(AUTO_TEST_LEVEL 0                               0                               1
+                    0                               0                               1
+                    0                               0                               1
+                    0                               1                               2
+                    2                               1
+                    1                               2                               2)
+SET(AUTO_DIRS       flat-1                          flat-2                          flat-3
+                    gauss-1                         gauss-2                         gauss-3
+                    flat-1                          flat-2                          flat-3
+                    gauss-1                         gauss-2                         gauss-3
+                    lamb-1                          lamb-2
+                    pointsource-1                   pointsource-2                   pointsource-3)
+SET(AUTO_ERRINF_TOL 1e-3                            1e-4                            1e-5
+                    1e-2                            1e-3                            1e-4
+                    1e-3                            1e-4                            1e-5
+                    1e-2                            1e-3                            1e-4
+                    0                               0
+                    0                               0                               0)
+SET(AUTO_ERRL2_TOL  1e-3                            1e-4                            1e-5
+                    1e-3                            1e-4                            1e-5
+                    1e-2                            1e-3                            1e-4
+                    1e-2                            1e-3                            1e-4
+                    0                               0
+                    0                               0                               0)
+SET(AUTO_SOLINF_TOL 1e-2                            1e-2                            1e-2
+                    1e-2                            1e-2                            1e-2
+                    1e-2                            1e-2                            1e-2
+                    1e-2                            1e-2                            1e-2
+                    0                               0
+                    0                               0                               0)
+LIST(LENGTH AUTO_TESTS N)
+MATH(EXPR NUM_AUTO_TESTS "${N}-1")
 
 # Run through and register all tests within the current testing level
-FOREACH(TEST_IND RANGE ${NUM_TWILIGHT_TESTS})
-    LIST(GET TWILIGHT_TEST_LEVEL ${TEST_IND} TEST_LEVEL)
+FOREACH(TEST_IND RANGE ${NUM_AUTO_TESTS})
+    LIST(GET AUTO_TEST_LEVEL ${TEST_IND} TEST_LEVEL)
     IF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
-        LIST(GET TWILIGHT_TESTS ${TEST_IND} TEST_NAME)
-        LIST(GET TWILIGHT_DIRS ${TEST_IND} TEST_OUTPUT_DIR)
-        LIST(GET TWILIGHT_ERRINF_TOL ${TEST_IND} ERRINF_TOL)
-        LIST(GET TWILIGHT_ERRL2_TOL ${TEST_IND} ERRL2_TOL)
-        LIST(GET TWILIGHT_SOLINF_TOL ${TEST_IND} SOLINF_TOL)
+        LIST(GET AUTO_TESTS ${TEST_IND} TEST_NAME)
+        LIST(GET AUTO_DIRS ${TEST_IND} TEST_OUTPUT_DIR)
+        LIST(GET AUTO_ERRINF_TOL ${TEST_IND} ERRINF_TOL)
+        LIST(GET AUTO_ERRL2_TOL ${TEST_IND} ERRL2_TOL)
+        LIST(GET AUTO_SOLINF_TOL ${TEST_IND} SOLINF_TOL)
         ADD_TEST(
             NAME ${TEST_NAME}
             WORKING_DIRECTORY ${SW4_BINARY_DIR}
@@ -207,5 +219,5 @@ FOREACH(TEST_IND RANGE ${NUM_TWILIGHT_TESTS})
             PROPERTIES DEPENDS ${TEST_NAME}
             )
     ENDIF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
-ENDFOREACH(TEST_IND RANGE ${NUM_TWILIGHT_TESTS})
+ENDFOREACH(TEST_IND RANGE ${NUM_AUTO_TESTS})
 
