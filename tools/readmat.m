@@ -3,9 +3,10 @@
 %
 %         [arr,x,y,z,pstr]=readmat( imfile, pnr, verbose )
 %
-%                Input: imfile  - Image file name
+%                Input: imfile  - name of rfile
+%                       pnr     - patch number 
 %                       verbose - Set to 1 to display file header information.
-%                Output: topo    - The topography, as a 2D array.
+%                Output: arr     - Data for patch 'pnr', as a 4d array.
 %                        x, y, z - The spatial coordinates of the image as 1-D arrays.
 %                        pstr    - String specifying the Proj4 projection command
 function [arr,x,y,z,pstr]=readmat( imfile, pnr, verbose )
@@ -35,7 +36,7 @@ if fd ~= -1
    if verbose == 1
       disp(['Header: magic  = ' num2str(magic) ' prec= ' num2str(prec) ' att= ' num2str(att)]);   
       disp(['        azimuth= ' num2str(alpha,14) ' lon0= ' num2str(xlon0,14) ' lat0= ' num2str(ylat0,14)] );
-      disp(['        len = ' num2str(len) ' proj-string=' num2str(pstr(1:len))]);
+      disp(['        len = ' num2str(len) ' proj-string= "' num2str(pstr(1:len)), '"']);
       disp(['        nblocks= ' num2str(nblocks) ]);
    end;
    for p=1:nblocks

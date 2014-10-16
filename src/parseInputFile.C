@@ -5750,32 +5750,32 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
       }
       else if (startswith("c46grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[9] = atof(token);
       }
       else if (startswith("c46=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[9] = atof(token);
       }
       else if (startswith("c36grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[10] = atof(token);
       }
       else if (startswith("c36=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[10] = atof(token);
       }
       else if (startswith("c55grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[11] = atof(token);
       }
       else if (startswith("c55=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[11] = atof(token);
       }
       else if (startswith("c25grad=", token))
@@ -5800,72 +5800,72 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
       }
       else if (startswith("c35grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[14] = atof(token);
       }
       else if (startswith("c35=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[14] = atof(token);
       }
       else if (startswith("c22grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[15] = atof(token);
       }
       else if (startswith("c22=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[15] = atof(token);
       }
       else if (startswith("c24grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[16] = atof(token);
       }
       else if (startswith("c24=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[16] = atof(token);
       }
       else if (startswith("c23grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[17] = atof(token);
       }
       else if (startswith("c23=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[17] = atof(token);
       }
       else if (startswith("c44grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[18] = atof(token);
       }
       else if (startswith("c44=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[18] = atof(token);
       }
       else if (startswith("c34grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[19] = atof(token);
       }
       else if (startswith("c34=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[19] = atof(token);
       }
       else if (startswith("c33grad=", token))
       {
-         token += 8; // skip c10grad=
+         token += 8; // skip cxxgrad=
          cgrad[20] = atof(token);
       }
       else if (startswith("c33=", token))
       {
-         token += 4; // skip c10=
+         token += 4; // skip cxx=
          c[20] = atof(token);
       }
       else if (startswith("x1=", token))
