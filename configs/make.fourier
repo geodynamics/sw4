@@ -1,4 +1,4 @@
-etree = no
+etree = yes
 proj = yes
 SW4ROOT = /Users/petersson1
 FC = mpif77

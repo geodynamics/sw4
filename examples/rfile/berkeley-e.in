@@ -1,11 +1,11 @@
 # SW4 input file for testing the efile command
 
 # use pfs=1 if you are on a parallel file system
-fileio path=small-e pfs=0 verbose=2
+fileio path=berk-e pfs=0 verbose=2
 
 # grid size is set in the grid command
 # DO NOT CHANGE AZ!
-grid x=2e3 y=2e3 z=5e3 h=100 lat=39.18 lon=-122.56 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+grid x=12e3 y=12e3 z=5e3 nx=601 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
 
 # curvilinear grid extends to z=6000 and gets approximately the same gridsize as the finest Cartesian
 # CHECK PATH TO RFILE
@@ -23,24 +23,24 @@ efile etree=/Users/petersson1/USGSBayAreaVM-08.3.0.efile
 
 # images
 # topography (can't be written without the topography command enabled)
-image mode=topo z=0.0 cycle=0 file=small
+image mode=topo z=0.0 cycle=0 file=berk
 
-image mode=lat z=0.0 cycle=0 file=small
-image mode=lon z=0.0 cycle=0 file=small
+image mode=lat z=0.0 cycle=0 file=berk
+image mode=lon z=0.0 cycle=0 file=berk
 
 # Output images of the elastic model on the surface (z=0)
-image mode=rho z=0.0 cycle=0 file=small
-image mode=p z=0.0 cycle=0 file=small
-image mode=s z=0.0 cycle=0 file=small
+image mode=rho z=0.0 cycle=0 file=berk
+image mode=p z=0.0 cycle=0 file=berk
+image mode=s z=0.0 cycle=0 file=berk
 
 # vertical cross section
-image mode=rho x=2.5e3 cycle=0 file=small
-image mode=s x=2.5e3 cycle=0 file=small
-image mode=p x=2.5e3 cycle=0 file=small
+image mode=rho x=2.5e3 cycle=0 file=berk
+image mode=s x=2.5e3 cycle=0 file=berk
+image mode=p x=2.5e3 cycle=0 file=berk
 
 # solution on the surface
-#image mode=velmag z=0.0 timeInterval=5 file=small
-#image mode=hvelmax z=0.0 timeInterval=5 file=small
+#image mode=velmag z=0.0 timeInterval=5 file=berk
+#image mode=hvelmax z=0.0 timeInterval=5 file=berk
 
-# simple source (irrelevant for this test
+# simple source (irrelevant for this test)
 source x=2.5e3 y=2.5e3 z=1e3 strike=142.1 rake=180 dip=95.6 m0=1.7162e+17 t0=27.116 freq=7.62985 type=Liu
