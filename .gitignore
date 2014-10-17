@@ -6,3 +6,10 @@
 *.out
 
 *.log
+
+build/
+
+*.toc
+
+*.synctex.gz
+

@@ -52,7 +52,7 @@
     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This work
     performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National
     Laboratory under contract DE-AC52-07NA27344. This is contribution LLNL-SM-xxxyyy.} \and Eric
-  Heinen\thanks{Computational Infrastructure for Geodynamics, University of California, Davis.}}
+  Heien\thanks{Computational Infrastructure for Geodynamics, University of California, Davis.}}
 \date{October 16, 2014} \maketitle
 
 %\thispagestyle{plain}
@@ -194,6 +194,7 @@ and sub-directories:
 \item \verb+tools+ Matlab/Octave scripts for post processing and analysis.
 \item \verb+examples+ Sample input files.
 \item \verb+Makefile+ Main makefile (don't change this file!).
+\item \verb+CMakeLists.txt+ CMake configuration file.
 \item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
 \end{itemize}
 
@@ -369,6 +370,91 @@ Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTR
 \verb+EXTRA_LINK_FLAGS+ variables should contain any additional arguments that need to be passed to
 the C++ compiler, Fortran compiler, or linker, on your system.
 
+
+\section{Installing \emph{SW4} with CMake}\label{cha:installing-cmake-sw4}
+\emph{SW4} also allows building using CMake.  The \emph{SW4} CMake configuration includes several tests used to ensure the code calculates the correct values for some well established benchmark cases and that answers converge appropriately to analytical solutions.
+
+To use CMake, change to the sw4 directory and run the following commands:
+\begin{verbatim}
+shell> mkdir build
+shell> cd build
+shell> cmake [options] ..
+shell> make
+\end{verbatim}
+The \verb+cmake+ command searches for the necessary libraries and other dependencies, then creates makefiles appropriate to your system.  Running \verb+make+ compiles \emph{SW4} using these makefiles.  For details about the exact commands being used in compilation, run \texttt{make VERBOSE=1}.  Once SW4 is successfully compiled and linked you will see the ``SW4 Lives!'' banner on the screen.
+
+\subsection{CMake Options}
+CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option, add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the options in the \texttt{cmake} command.  For example:
+
+\begin{verbatim}
+cmake -DTESTING_LEVEL=1 -DCMAKE_BUILD_TYPE=Debug ..
+\end{verbatim}
+
+will configure \emph{SW4} with testing level 1 and compile the debug version of the code.  A list of options is shown in the table below.
+
+\begin{center}
+\begin{tabular}{|l|c|p{0.55\textwidth}|}
+\hline
+Option & Default & Details \\
+\hline
+PROJ4\_HOME & (none) & The path to the Proj.4 installation to use when compiling \emph{SW4}. \\
+\hline
+CENCALVM\_HOME & (none) & The path to the cencalvm installation to use when compiling \emph{SW4}. \\
+\hline
+CMAKE\_BUILD\_TYPE & Release & Which type of build to perform.  Can be either \texttt{Debug}, \texttt{Release}, or \texttt{RelWithDebInfo}.  This affects the type of optimization and debug flags used in compiling \emph{SW4}. \\
+\hline
+TESTING\_LEVEL & 0 & Specifies the testing level for automated tests.  Level 0 corresponds to tests which run in roughly a minute or less (7 total), level 1 to tests which run in roughly 10 minutes or less (13 total) and level 2 to tests which may require up to an hour or more (17 total). \\
+\hline
+MPI\_NUM\_TEST\_PROCS & 4 & Number of MPI processes to use in tests. Generally using more processes will result in tests finishing faster.  We strongly recommend at least 8 processes if TESTING\_LEVEL is 1 or higher.\\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{CTest}
+The \emph{SW4} CMake configuration includes several test cases to confirm the code is working correctly.  Each test consists of two parts, 1) it performs a run using an input file in the \verb+examples/+ directory, then 2) it confirms the results of the run are within accepted error tolerances.
+
+To run the tests, use either the command \texttt{make test} or \texttt{ctest} as follows:
+
+\begin{verbatim}
+build > make test
+Running tests...
+Test project /.../sw4/build
+      Start  1: twilight/flat-twi-1.in
+ 1/14 Test  #1: twilight/flat-twi-1.in ....................   Passed    0.70 sec
+      Start  2: twilight/flat-twi-1.in_result_check
+ 2/14 Test  #2: twilight/flat-twi-1.in_result_check .......   Passed    0.07 sec
+      Start  3: twilight/flat-twi-2.in
+...
+      Start 13: twilight-att/tw-topo-att-1.in
+13/14 Test #13: twilight-att/tw-topo-att-1.in .............   Passed    5.23 sec
+      Start 14: twilight-att/tw-topo-att-1.in_result_check
+14/14 Test #14: twilight-att/tw-topo-att-1.in_result_check    Passed    0.02 sec
+
+100% tests passed, 0 tests failed out of 14
+
+Total Test time (real) =  50.49 sec
+\end{verbatim}
+
+You can run tests selectively using \texttt{ctest -R \textless regex\textgreater}, for example:
+
+\begin{verbatim}
+build > ctest -R twi-2
+Test project /.../sw4/build
+    Start 3: twilight/flat-twi-2.in
+1/4 Test #3: twilight/flat-twi-2.in .................   Passed    5.77 sec
+    Start 4: twilight/flat-twi-2.in_result_check
+2/4 Test #4: twilight/flat-twi-2.in_result_check ....   Passed    0.02 sec
+    Start 7: twilight/gauss-twi-2.in
+3/4 Test #7: twilight/gauss-twi-2.in ................   Passed    9.08 sec
+    Start 8: twilight/gauss-twi-2.in_result_check
+4/4 Test #8: twilight/gauss-twi-2.in_result_check ...   Passed    0.02 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =  14.90 sec
+\end{verbatim}
+
+You can use these tests to help ensure your \emph{SW4} installation is working correctly.  If a test fails you can check the details in the output log at \texttt{Testing/Temporary/LastTest.log}.
 
 \section{Installing the cencalvm, proj.4, and euclid libraries}\label{sec:cencalvm-install}
 \index{installation!cencalvm}
