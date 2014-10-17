@@ -4,8 +4,7 @@
 fileio path=halfspace-inas0-h40
 
 grid x=12000 y=12000 z=6000 h=40
-#time t=6
-time steps=619
+time t=6
 
 # supergrid conditions on all sides except the free surface (std setup)
 
