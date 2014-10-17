@@ -150,6 +150,7 @@ ADD_CUSTOM_COMMAND(TARGET sw4 POST_BUILD COMMAND cat ${SW4_SOURCE_DIR}/wave.txt)
 # Level 0 tests should take just less than a minute each, level 1 tests take less than 10 minutes (includes level 0 tests)
 # and level 2 consists of all tests
 SET(TESTING_LEVEL 0 CACHE STRING "Level of testing thoroughness: 0=short tests (<1 minute each), 2=all tests (may take an hour)")
+SET(MPI_NUM_TEST_PROCS 4 CACHE STRING "Number of MPI processes to use in tests")
 
 SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
 
@@ -227,7 +228,7 @@ FOREACH(TEST_IND RANGE ${NUM_TESTS})
         ADD_TEST(
             NAME ${TEST_NAME}
             WORKING_DIRECTORY ${SW4_BINARY_DIR}
-            COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
+            COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPI_NUM_TEST_PROCS} ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
                 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/${TEST_DIR}/${TEST_IN_FILE}
             )
 
