@@ -48,7 +48,7 @@
 
 \title{Installing SW4 version 1.1}
 
-\author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
+\author{ N. Anders Petersson$^*$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This work
     performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National
     Laboratory under contract DE-AC52-07NA27344. This is contribution LLNL-SM-662989.} \and Eric
@@ -187,14 +187,14 @@ and sub-directories:
 %
 \begin{itemize}
 \item \verb+LICENSE.txt+ License information.
-\item \verb+INSTALL.txt+ Information about how to build \emph{SW4} (short version).
+\item \verb+INSTALL.txt+ A link to this document.
 \item \verb+README.txt+ General information about \emph{SW4}.
 \item \verb+configs+ Directory containing \verb+make+ configuration files.
 \item \verb+src+ C++ and Fortran source code of \emph{SW4}.
 \item \verb+tools+ Matlab/Octave scripts for post processing and analysis.
 \item \verb+examples+ Sample input files.
 \item \verb+Makefile+ Main makefile (don't change this file!).
-\item \verb+CMakeLists.txt+ CMake configuration file.
+\item \verb+CMakeLists.txt+ CMake configuration file (don't change this file either!).
 \item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
 \end{itemize}
 
@@ -256,14 +256,16 @@ If you are on a Mac, you could copy the setup from \verb+make.osx+,
 shell> cd configs
 shell> cp make.osx make.inc
 shell> cat make.inc
-FC = openmpif77
-CXX = openmpicxx
-EXTRA_FORT_FLAGS = -fno-underscoring
-EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc47 -lgfortran
+etree = no
+proj = no
+FC = mpif77
+CXX = mpicxx
+EXTRA_FORT_FLAGS = 
+EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc48 -lgfortran
 \end{verbatim}
 In this case, the \verb+blas+ and \verb+lapack+ libraries are assumed to be provided by the
 \verb+-framework vecLib+ option. The \verb+libgfortran+ library is located in the directory
-\verb+/opt/local/lib/gcc47+, which is where \verb+macports+ currently installs it.
+\verb+/opt/local/lib/gcc48+, which is where \verb+macports+ currently installs it.
 
 \subsubsection{Linux machines}
 If you are on a Linux machine, we suggest you copy the configuration options from \verb+make.linux+,
@@ -354,6 +356,7 @@ or not the \verb+cencalvm+ and \verb+proj.4+ libraries are available and where t
 The following \verb+make.inc+ file includes all configurable options:
 \begin{verbatim}
 etree = no
+proj = no
 SW4ROOT = /Users/petersson1
 
 CXX = mpicxx
@@ -370,9 +373,42 @@ Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTR
 \verb+EXTRA_LINK_FLAGS+ variables should contain any additional arguments that need to be passed to
 the C++ compiler, Fortran compiler, or linker, on your system.
 
+\subsection{Building {\tt sw4} with proj.4 and/or efile support}
+The installation of the proj.4, euclid, and cencalvm libraries is discussed in
+Section~\ref{sec:cencalvm-install}. Note that the proj.4 libraray enables the more advanced
+geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile}
+command. To enable the {\tt efile} command, you have to also install the {\tt euclid} and {\tt
+  cencalvm} libraries. Note that the latter two libraries are only needed by the {\tt efile}
+command. If you are not planning on using that command, there is no need to install those
+libraies. This is a change from \emph{SW4} version 1.0.
+
+Once you have successfully installed the proj.4, and optionally the euclid and cencalvm libraries,
+it should be easy to re-configure \emph{SW4} to use them. Simply edit your configuration file
+(\verb+make.inc+) by adding two lines to the top of the file, setting the {\tt etree} keyword to
+{\tt yes} or {\tt no}, as appropriate.
+\begin{verbatim}
+proj = yes
+etree = no
+SW4ROOT = /thid/party/basedir
+...
+\end{verbatim}
+You then need to re-compile \emph{SW4}. Go to the \emph{SW4} main directory, clean up the previous
+object files and executable, and re-run make:
+\begin{verbatim}
+shell> cd /my/installation/dir/sw4-v1.1
+shell> make clean
+shell> make
+\end{verbatim}
+If all goes well, the ``SW4 lives'' banner is shown after the make command is
+completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
+\verb+debug+ directories.
 
 \section{Installing \emph{SW4} with CMake}\label{cha:installing-cmake-sw4}
-\emph{SW4} also allows building using CMake.  The \emph{SW4} CMake configuration includes several tests used to ensure the code calculates the correct values for some well established benchmark cases and that answers converge appropriately to analytical solutions.
+\emph{SW4} also allows building using CMake.  The \emph{SW4} CMake configuration also automates the
+testing of the code, which ensures that it functions correctly. The tests run a number of input
+scripts in the \verb+examples+ directory and evaluates the accuracy of the numerical solutions using
+various analytical solutions, see the Appendix of the \emph{SW4} user's guide~\cite{SW4-11} for
+details.
 
 To use CMake, change to the sw4 directory and run the following commands:
 \begin{verbatim}
@@ -381,40 +417,63 @@ shell> cd build
 shell> cmake [options] ..
 shell> make
 \end{verbatim}
-The \verb+cmake+ command searches for the necessary libraries and other dependencies, then creates makefiles appropriate to your system.  Running \verb+make+ compiles \emph{SW4} using these makefiles.  For details about the exact commands being used in compilation, run \texttt{make VERBOSE=1}.  Once SW4 is successfully compiled and linked you will see the ``SW4 Lives!'' banner on the screen.
+The two dots after {\tt cmake [options]} are essential and instructs it to look in the parent
+directory for the {\tt CMakeLists.txt} file.
+ 
+The \verb+cmake+ command searches for the necessary libraries and other dependencies, then creates
+makefiles appropriate to your system.  Running \verb+make+ compiles \emph{SW4} using these
+makefiles.  For details about the exact commands being used in compilation, run \texttt{make
+  VERBOSE=1}.  Once SW4 is successfully compiled and linked you will see the ``SW4 Lives!'' banner
+on the screen.
 
 \subsection{CMake Options}
-CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option, add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the options in the \texttt{cmake} command.  For example:
-
+CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option,
+add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the options in the
+\texttt{cmake} command.  For example:
+%
 \begin{verbatim}
 cmake -DTESTING_LEVEL=1 -DCMAKE_BUILD_TYPE=Debug ..
 \end{verbatim}
-
-will configure \emph{SW4} with testing level 1 and compile the debug version of the code.  A list of options is shown in the table below.
-
+%
+configures \emph{SW4} with testing level 1, to be compiled with debugging symbols in the object
+files. A list of options is shown in the table below.
+%
 \begin{center}
 \begin{tabular}{|l|c|p{0.55\textwidth}|}
 \hline
 Option & Default & Details \\
 \hline
-PROJ4\_HOME & (none) & The path to the Proj.4 installation to use when compiling \emph{SW4}. \\
-\hline
-CENCALVM\_HOME & (none) & The path to the cencalvm installation to use when compiling \emph{SW4}. \\
-\hline
-CMAKE\_BUILD\_TYPE & Release & Which type of build to perform.  Can be either \texttt{Debug}, \texttt{Release}, or \texttt{RelWithDebInfo}.  This affects the type of optimization and debug flags used in compiling \emph{SW4}. \\
-\hline
-TESTING\_LEVEL & 0 & Specifies the testing level for automated tests.  Level 0 corresponds to tests which run in roughly a minute or less (7 total), level 1 to tests which run in roughly 10 minutes or less (13 total) and level 2 to tests which may require up to an hour or more (17 total). \\
-\hline
-MPI\_NUM\_TEST\_PROCS & 4 & Number of MPI processes to use in tests. Generally using more processes will result in tests finishing faster.  We strongly recommend at least 8 processes if TESTING\_LEVEL is 1 or higher.\\
-\hline
+%
+PROJ4\_HOME & (none) & The path to the Proj.4 installation to use when compiling
+\emph{SW4}. \\ \hline
+%
+CENCALVM\_HOME & (none) & The path to the cencalvm installation to use when compiling
+\emph{SW4}. \\ \hline
+%
+CMAKE\_BUILD\_TYPE & Release & The type of build to setup. Can be either \texttt{Debug},
+\texttt{Release}, or \texttt{RelWithDebInfo}.  This affects the type of optimization and debug flags
+used in compiling \emph{SW4}. \\ \hline
+%
+TESTING\_LEVEL & 0 & Specifies the testing level for automated tests.  Level 0 corresponds to tests
+that run in roughly a minute or less (7 total), level 1 to tests that run in roughly 10 minutes or
+less (13 total) and level 2 to tests that may require up to an hour or more (17 total). \\ \hline
+%
+MPI\_NUM\_TEST\_PROCS & 4 & Number of MPI processes to use in tests. Generally using more processes
+will result in the tests finishing faster, but there is no point exceeding the number of available
+cores on your system.  We strongly recommend at least 8 processes if TESTING\_LEVEL is 1 or
+higher.\\ \hline
+%
 \end{tabular}
 \end{center}
 
 \subsection{CTest}
-The \emph{SW4} CMake configuration includes several test cases to confirm the code is working correctly.  Each test consists of two parts, 1) it performs a run using an input file in the \verb+examples/+ directory, then 2) it confirms the results of the run are within accepted error tolerances.
+The \emph{SW4} CMake configuration includes several test cases, which can be used to confirm that
+the code is working correctly.  Each test consists of two parts. First it runs a case using an input
+file in the \verb+examples/+ directory. Secondly, it confirms that the results are within
+a reasonable error tolerances from previously recorded results.
 
 To run the tests, use either the command \texttt{make test} or \texttt{ctest} as follows:
-
+%
 \begin{verbatim}
 build > make test
 Running tests...
@@ -436,7 +495,7 @@ Total Test time (real) =  50.49 sec
 \end{verbatim}
 
 You can run tests selectively using \texttt{ctest -R \textless regex\textgreater}, for example:
-
+%
 \begin{verbatim}
 build > ctest -R twi-2
 Test project /.../sw4/build
@@ -454,11 +513,22 @@ Test project /.../sw4/build
 Total Test time (real) =  14.90 sec
 \end{verbatim}
 
-You can use these tests to help ensure your \emph{SW4} installation is working correctly.  If a test fails you can check the details in the output log at \texttt{Testing/Temporary/LastTest.log}.
+If a test fails you can check the details in the output log at
+\texttt{Testing/Temporary/LastTest.log}.
 
-\section{Installing the cencalvm, proj.4, and euclid libraries}\label{sec:cencalvm-install}
-\index{installation!cencalvm}
-\index{installation!efile}
+\section{Installing the proj.4, euclid, and cencalvm packages}\label{sec:cencalvm-install}
+\index{installation!cencalvm} \index{installation!efile}
+
+If you are only interested in using the advanced geographical mapping options of the {\tt grid} command,
+or the {\tt rfile} command, you only need to install the proj.4 package.
+
+The following instructions describe how to install all three packages. For simplicity all packages
+are installed under the same top directory. If you are using {\tt cmake}, you may optionally put the
+proj.4 package in a separate directory. In the following we shall assume that all packages are
+installed under the same top directory, and that you assign the name of that directory to the
+environment variable \verb+SW4ROOT+. When you are finished installing the packages, the
+corresponding include and library files should be in the sub-directories \verb+${SW4ROOT}/include+
+and \verb+${SW4ROOT}/lib+, respectively.
 
 The cencalvm library was developed by Brad Aagaard at USGS. Instructions for building the cencalvm
 library as well as downloading the Etree database files for Northern California, can
@@ -467,13 +537,9 @@ currently be downloaded from
 http://earthquake.usgs.gov/data/3dgeologic/cencalvm_doc/INSTALL.html
 \end{verbatim}
 The installation process for cencalvm, which is outlined below, is described in detail on the above
-web page.  Note that three libraries need to be installed: euclid (etree), proj4, and cencalvm.  In
-order for \emph{SW4} to use them, they should all be installed in the same base directory and you
-should assign that directory to the \verb+SW4ROOT+ variable. When these three packages are installed, the
-corresponding include and library files should be in the directories \verb+${SW4ROOT}/include+ and
-\verb+${SW4ROOT}/lib+, respectively.
+web page.  Note that cencalvm relies on both the euclid and the proj.4 libraries.
 
-Note that the euclid library must be installed manually by explicitly copying all include files to
+The euclid library must be installed manually by explicitly copying all include files to
 the include directory and all libraries to the lib directory,
 \begin{verbatim}
 shell> cd euclid3-1.2/libsrc
@@ -488,8 +554,11 @@ shell> configure --prefix=${SW4ROOT}
 shell> make
 shell> make install
 \end{verbatim}
+We remark that the {\tt proj.4} library can alternatively be installed using {\tt macports} (if you are
+on a Mac OSX machine).
+
 The cencalvm library should also be configured to be installed in \verb+${SW4ROOT}+. You also have to help
-the configure script finding the include and library files for the proj4 and etree libraries,
+the configure script finding the include and library files for the proj.4 and etree libraries,
 \begin{verbatim}
 shell> cd cencalvm-0.6.5
 shell> configure --prefix=${SW4ROOT} CPPFLAGS="-I${SW4ROOT}/include" \
@@ -498,9 +567,9 @@ shell> make
 shell> make install
 \end{verbatim}
 
-To verify that the libraries have been installed properly, you should go to the \verb+SW4ROOT+ directory
-and list the lib subdirectory (\verb+cd ${SW4ROOT}; ls lib+). You should see the following files (on
-Mac OSX machines, the .so extension is replaced by .dylib ):
+To verify that the libraries have been installed properly, you should go to the \verb+SW4ROOT+
+directory and list the {\tt lib} sub-directory (\verb+cd ${SW4ROOT}; ls lib+). You should see the
+following files (on Mac OSX machines, the .so extension is replaced by .dylib ):
 \begin{verbatim}
 shell> cd ${SW4ROOT}
 shell> ls lib
@@ -508,7 +577,7 @@ libetree.so libetree.a
 libproj.so libproj.a libproj.la 
 libcencalvm.a libcencalvm.la libcencalvm.so 
 \end{verbatim}
-Furthermore, if you list the include subdirectory, you should see include files such as 
+Furthermore, if you list the include sub-directory, you should see include files such as 
 \begin{verbatim}
 shell> cd ${SW4ROOT} %$
 shell> ls include
@@ -516,27 +585,7 @@ btree.h etree.h etree_inttypes.h
 nad_list.h projects.h proj_api.h
 cencalvm
 \end{verbatim}
-Note that the include files for cencalvm are in a subdirectory with the same name.
-
-\subsection{Building {\tt sw4} with efile and proj.4 support}
-Once you have successfully installed the euclid, proj.4 and cencalvm libraries, it should be easy to
-re-configure \emph{SW4} to use them. Simply edit your configuration file (\verb+make.inc+)
-by adding two lines to the top of the file:
-\begin{verbatim}
-etree = yes
-SW4ROOT = /thid/party/basedir
-...
-\end{verbatim}
-You then need to re-compile \emph{SW4}. Go to the \emph{SW4} main directory, clean up the previous object
-files and executable, and re-run make:
-\begin{verbatim}
-shell> cd /my/installation/dir/sw4-v1.1
-shell> make clean
-shell> make
-\end{verbatim}
-If all goes well, the ``SW4 lives'' banner is shown after the make command is
-completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
-\verb+debug+ directories.
+Note that the include files for cencalvm are in the sub-directory with the same name.
 
 \section{Disclaimer} 
 This document was prepared as an account of work sponsored by an agency of the United States
