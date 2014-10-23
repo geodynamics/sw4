@@ -161,9 +161,9 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
-
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
+# prefix 
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
@@ -180,7 +180,7 @@ sw4: $(FSW4) $(FOBJ)
 sw4-v1.1.tgz:  $(FSW4) $(FOBJ)
 	rm -rf sw4-v1.1
 	mkdir sw4-v1.1
-	cp -r src configs tools examples Makefile wave.txt CMakeLists.txt INSTALL.txt LICENSE.txt README.txt sw4-v1.1
+	cp -r src configs tools examples doc Makefile wave.txt CMakeLists.txt INSTALL.txt LICENSE.txt README.txt sw4-v1.1
 	tar czf $@ sw4-v1.1
 	rm -rf sw4-v1.1 
 
