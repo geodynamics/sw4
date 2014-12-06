@@ -1100,7 +1100,7 @@ c-----------------------------------------------------------------------
       integer i, j, kz
       real*8 muu, lambdaa, x, y, z, t, om, c, ph
       doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
-      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)      doubleprecision x
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
       doubleprecision omstrx
       doubleprecision omstry
 

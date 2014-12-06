@@ -47,6 +47,7 @@
 #include "TimeSeries.h"
 #include "Filter.h"
 #include "Image3D.h"
+#include "sacutils.h"
 
 #ifdef ENABLE_OPT
 #include "MaterialInvtest.h"
@@ -76,6 +77,16 @@ using namespace std;
 //   }
 //   return a;
 //}
+
+void EW::revvector( int npts, double* v )
+{
+   for( int i=0 ; i < npts/2; i++ )
+   {
+      double sl=v[i];
+      v[i]=v[npts-1-i];
+      v[npts-1-i]=sl;
+   }
+}
 
 int computeEndGridPoint( double maxval, double dh )
 {
@@ -4564,13 +4575,14 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   bool geoCoordSet = false;
   bool strikeDipRake = false;
   bool dfileset=false;
+  bool sacbaseset = false;
 
   int ncyc = 0;
   bool ncyc_set = false;
 
   timeDep tDep = iRickerInt;
   char formstring[100];
-  char dfile[100];
+  char dfile[1000];
 
   strcpy(formstring, "Ricker");
 
@@ -4830,8 +4842,15 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       else if (startswith("dfile=",token))
       {
          token += 6;
-         strncpy(dfile, token,100);
+         strncpy(dfile, token,1000);
 	 dfileset = true;
+      }
+      else if (startswith("sacbase=",token))
+      {
+         token += 8;
+         strncpy(dfile, token,1000);
+	 sacbaseset = true;
+	 isMomentType = 1;
       }
       else
       {
@@ -4879,6 +4898,77 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
      //     cout << "Read disc source: t0=" << t0 << " dt="  << dt << " npts= " << npts << endl;
      fclose(fd);
   }
+  if( sacbaseset )
+  {
+     // Read moment tensor components from sac files.
+     // Set constant tensor to identity. m0 can give some scaling.
+     mxx = myy = mzz = 1;
+     mxy = mxz = myz = 0;
+
+     bool timereverse = false; // Set true for testing purpose only, the users want to do this themselves outside SW4.
+
+     tDep = iDiscrete6moments;
+     double dt, t0, latsac, lonsac,cmpazsac, cmpincsac;
+     int utcsac[7], npts;
+     string basename = dfile;
+     string fname;
+     fname = basename + ".xx";
+     bool byteswap;
+     readSACheader( fname.c_str(), dt, t0, latsac, lonsac, cmpazsac, cmpincsac, utcsac, npts, byteswap );
+     if( geoCoordSet )
+     {
+	double laterr = fabs((latsac-lat)/lat);
+	double lonerr = fabs((lonsac-lon)/lon);
+	if( laterr > 1e-6 || lonerr < 1e-6 )
+	{
+	   if( proc_zero() )
+	      cout << "WARNING in processSource: reading sac files: (lat,lon) location on sac file different from (lat,lon) on command line" << endl;
+	}
+     }
+     freq = 1/dt;
+     npar  = 6*(npts+1);
+     nipar = 1;
+     par = new double [npar];
+     ipar = new int[1];
+     ipar[0] = npts;
+     size_t offset = 0;
+     par[offset] = t0;
+     fname = basename + ".xx";
+     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+     if( timereverse )
+	revvector( npts, &par[offset+1]);
+     offset += npts+1;
+     par[offset] = t0;
+     fname = basename + ".xy";
+     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+     if( timereverse )
+	revvector( npts, &par[offset+1]);
+     offset += npts+1;
+     par[offset] = t0;
+     fname = basename + ".xz";
+     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+     if( timereverse )
+	revvector( npts, &par[offset+1]);
+     offset += npts+1;
+     par[offset] = t0;
+     fname = basename + ".yy";
+     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+     if( timereverse )
+	revvector( npts, &par[offset+1]);
+     offset += npts+1;
+     par[offset] = t0;
+     fname = basename + ".yz";
+     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+     if( timereverse )
+	revvector( npts, &par[offset+1]);
+     offset += npts+1;
+     par[offset] = t0;
+     fname = basename + ".zz";
+     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+     if( timereverse )
+	revvector( npts, &par[offset+1]);
+  }
+
   // --------------------------------------------------------------------------- 
   // Regardless of how the location for the source was specified, we are going to
   // find the grid points associated with the location. (i.e., assign

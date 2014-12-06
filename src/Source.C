@@ -127,7 +127,7 @@ Source::Source(EW *a_ew,
       mIpar  = new int[1];
    }
 
-   if( mTimeDependence == iDiscrete )
+   if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
       spline_interpolation();
    else
    {
@@ -198,7 +198,7 @@ Source::Source(EW *a_ew, double frequency, double t0,
      mNipar = 1;
      mIpar  = new int[1];
   }
-  if( mTimeDependence == iDiscrete )
+  if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
      spline_interpolation();
   else
   {
@@ -1710,6 +1710,36 @@ int Source::spline_interpolation( )
       //      for( int i=0 ; i < npts ; i++ )
       //	 cout << "fun[" << i << "] = "<< mPar[6*i+1] << endl;
       
+      return 1;
+   }
+   else if( mTimeDependence == iDiscrete6moments )
+   {
+      int npts = mIpar[0];
+      // Six different time function, one for each momentum component.
+      // Store sequentially in mPar, i.e., 
+      // mPar = [tstart, first time func, tstart, second time func, ...]
+      // tstart before each function ---> Can reuse time function iDiscrete.
+
+      double* parin = new double[(npts+1)*6];
+      for( int i=0 ; i < (npts+1)*6; i++ )
+	 parin[i] = mPar[i];
+      double tstart = mPar[0];
+      delete[] mPar;
+      mNpar = 6*(6*(npts-1)+1);
+      mPar = new double[mNpar];
+
+      size_t pos_in=0, pos_out=0;
+      for( int tf=0 ; tf < 6 ; tf++ )
+      {
+	 Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
+	 pos_in += npts+1;
+	 mPar[pos_out] = tstart;
+	 double* qsppt = quinticspline.get_polycof_ptr();
+	 for( int i=0 ; i < 6*(npts-1) ; i++ )
+	    mPar[pos_out+i+1] = qsppt[i];
+	 pos_out += 6*(npts-1)+1;
+      }
+      delete[] parin;
       return 1;
    }
    else
