@@ -4919,7 +4919,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
      {
 	double laterr = fabs((latsac-lat)/lat);
 	double lonerr = fabs((lonsac-lon)/lon);
-	if( laterr > 1e-6 || lonerr < 1e-6 )
+	if( laterr > 1e-6 || lonerr > 1e-6 )
 	{
 	   if( proc_zero() )
 	      cout << "WARNING in processSource: reading sac files: (lat,lon) location on sac file different from (lat,lon) on command line" << endl;
@@ -5127,6 +5127,10 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       a_GlobalUniqueSources.push_back(sourcePtr);
     }
   }	  
+  if( npar > 0 )
+     delete[] par;
+  if( nipar > 0 )
+     delete[] ipar;
   if (mVerbose >=4 && proc_zero())
     cout << "********Done parsing source command*********" << endl;
 }

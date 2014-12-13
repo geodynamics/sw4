@@ -216,14 +216,17 @@ Source::Source(EW *a_ew, double frequency, double t0,
 //-----------------------------------------------------------------------
 Source::Source()
 {
-
+   mNpar = 0;
+   mNipar = 0;
 }
 
 //-----------------------------------------------------------------------
 Source::~Source()
 {
-   delete[] mPar;
-   delete[] mIpar;
+   if( mNpar > 0 )
+      delete[] mPar;
+   if( mNipar > 0 )
+      delete[] mIpar;
 }
 
 //-----------------------------------------------------------------------

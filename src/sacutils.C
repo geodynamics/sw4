@@ -127,8 +127,8 @@ void readSACheader( const char* fname, double& dt, double& t0,
    cmpinc = float70[58];
    utc[0] = int35[0];
    int jday=int35[1];
-
-   convertjday( jday, utc[0], utc[2], utc[1] );
+   if( utc[0] != -12345 )
+      convertjday( jday, utc[0], utc[2], utc[1] );
    utc[3] = int35[2];
    utc[4] = int35[3];
    utc[5] = int35[4];
