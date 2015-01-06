@@ -9,14 +9,14 @@ grid x=12e3 y=12e3 z=5e3 nx=601 lat=37.93 lon=-122.25 az=143.6380001671 proj=tme
 
 # curvilinear grid extends to z=6000 and gets approximately the same gridsize as the finest Cartesian
 # CHECK PATH TO RFILE
-topography input=rfile zmax=2e3 order=3 file=/Users/petersson1/src/sw4/examples/rfile/berkeley.rfile
+topography input=rfile zmax=2e3 order=3 file=/Users/petersson1/src/sw4-cig/examples/rfile/berkeley.rfile
 
 time steps=0 
 #time t=90 
 
 # Verison 8.3 of USGS model in rfile format
 # CHECK PATH TO RFILE
-rfile filename=berkeley.rfile directory=/Users/petersson1/src/sw4/examples/rfile
+rfile filename=berkeley.rfile directory=/Users/petersson1/src/sw4-cig/examples/rfile
 
 # threshold on vp and vs
 #globalmaterial vsmin=500 vpmin=768

@@ -1,0 +1,149 @@
+[fourier:sw4-cig/examples/rfile] petersson1% mpirun -np 4 ../../optimize/sw4 berkeley-r.in 
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Nov  5 12:24:37 PST 2014
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+----------------------------------------------------------------
+
+Input file: berkeley-r.in
+
+* Processing the grid command...
+* Setting h to 2.00000000e+01 from  x/(nx-1) (x=1.20000000e+04, nx=601)
+* Setting ny to 601 to be consistent with h=2.00000000e+01
+* Setting nz to 251 to be consistent with h=2.00000000e+01
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
+Extent of the computational domain xmax=1.20000000e+04 ymax=1.20000000e+04 zmax=5.00000000e+03
+Corrected global_zmax = 5.00000000e+03
+Refinement levels after correction: 
+grid=0 min Z=2.00000000e+03
+***inside setup2D_MPICommunications***
+Rfile header: magic=1, prec=4, att=1
+              azimuth=1.436380e+02, lon0=-1.222500e+02, lat0=3.793000e+01
+              pstring-len=73, pstr='not implemented'
+              nblocks=4
+Topography header (block #1)
+  hh=1.000000e+02, hv=2.500000e+01, z0=0.000000e+00
+  nc=1, ni=121, nj=121, nk=1
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -5.581435e+02, max z = 5.261421e+00, top Cartesian z = 2.000000e+03
+allocateCurvilinearArrays: Number of grid points in curvilinear grid = 114, kStart = -1, kEnd = 116
+***inside setupMPICommunications***
+***inside generate_grid***
+***inside setup_metric***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0        20       601       601       151     54541351
+   1        20       601       601       114     41176914
+Total number of grid points (without ghost points): 9.57183e+07
+
+*** Reading data from Rfile berkeley.rfile in directory /Users/petersson1/src/sw4-cig/examples/rfile
+Rfile header: magic=1, prec=4, att=1
+              azimuth=1.436380e+02, lon0=-1.222500e+02, lat0=3.793000e+01
+              pstring-len=73, pstr='not implemented'
+              nblocks=4
+  header block #0
+  hh=1.000000e+02, hv=2.500000e+01, z0=0.000000e+00
+  nc=1, ni=121, nj=121, nk=1
+  header block #1
+  hh=1.000000e+02, hv=2.500000e+01, z0=-5.625000e+02
+  nc=5, ni=121, nj=121, nk=39
+  header block #2
+  hh=2.000000e+02, hv=5.000000e+01, z0=3.875000e+02
+  nc=5, ni=61, nj=61, nk=57
+  header block #3
+  hh=4.000000e+02, hv=1.000000e+02, z0=3.187500e+03
+  nc=5, ni=31, nj=31, nk=33
+
+   Execution time, reading input file 1.80686593e+00 seconds 
+ *** Testing = 0
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: berk-r/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.222500e+02, Lat=3.793000e+01, x=1.891139e-09, y=-1.390519e-09
+1: Lon= -1.221701e+02, Lat=3.784240e+01, x=1.200000e+04, y=-3.523382e-09
+2: Lon= -1.222805e+02, Lat=3.777903e+01, x=1.200000e+04, y=1.200000e+04
+3: Lon= -1.223605e+02, Lat=3.786655e+01, x=4.647518e-10, y=1.200000e+04
+
+Considering all material blocks
+
+rfile command: outside = 0, material = 95718265
+
+       ----------- Material properties ranges ---------------
+       1.59000000e+03 kg/m^3 <=  Density <= 2.67000000e+03 kg/m^3
+       7.00000000e+02 m/s    <=  Vp      <= 5.56125000e+03 m/s
+       8.00000000e+01 m/s    <=  Vs      <= 3.33125000e+03 m/s
+       1.65595804e+00        <=  Vp/Vs   <= 1.08333333e+01
+       1.01760000e+07 Pa     <=  mu      <= 2.96295949e+10 Pa
+       7.58748000e+08 Pa     <=  lambda  <= 2.33245860e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+01, minVs/h=91.175 (Cartesian)
+g=1, h=2.000000e+01, minVs/h=4 (curvilinear)
+
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 3.880931e-03
+order of accuracy=4 CFL=1.30000000e+00 prel. time step=3.56727282e-03
+*** Initialized Images
+ Min source z-level: 1.000000e+03, max source z-level: 1.000000e+03
+   Execution time, start up phase 1.19250572e+01 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: berk-r/
+*** Saving one discretized time function ***
+
+***  Starting solve ***
+============================================================
+ Running program on 4 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0
+ Number of time steps = 0 dt: 0.00356727
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax supergrid
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.7162e+17 Nm 
+  Moment magnitude     (Mw): 5.42305
+  Number of moment sources 1
+-----------------------------------------------------------------------
+  Initial data has been assigned
+writing image plane on file berk-r/berk.cycle=0.z=0.topo.sw4img
+writing image plane on file berk-r/berk.cycle=0.z=0.lat.sw4img
+writing image plane on file berk-r/berk.cycle=0.z=0.lon.sw4img
+writing image plane on file berk-r/berk.cycle=0.z=0.rho.sw4img
+writing image plane on file berk-r/berk.cycle=0.z=0.p.sw4img
+writing image plane on file berk-r/berk.cycle=0.z=0.s.sw4img
+writing image plane on file berk-r/berk.cycle=0.x=2500.rho.sw4img
+writing image plane on file berk-r/berk.cycle=0.x=2500.s.sw4img
+writing image plane on file berk-r/berk.cycle=0.x=2500.p.sw4img
+  Begin time stepping...
+  Time stepping finished...
+   Execution time, solver phase 8.09989929e-01 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
