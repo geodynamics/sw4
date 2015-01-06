@@ -689,7 +689,7 @@ vector<Sarray> mC; // Anisotropic material parameters
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
-
+void revvector( int npts, double* v );
 // epicenter
 double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
 

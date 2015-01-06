@@ -110,7 +110,7 @@ SET(SW4_SRC_C_FILES src/main.C src/EW.C src/Sarray.C src/version.C src/parseInpu
     src/EtreeFile.C src/MaterialIfile.C src/GeographicProjection.C 
     src/Image3D.C src/MaterialVolimagefile.C
     src/MaterialRfile.C 
-    src/AnisotropicMaterialBlock.C )
+    src/AnisotropicMaterialBlock.C src/sacutils.C )
 
 SET(SW4_SRC_F_FILES src/addsgd.f src/bcfort.f 
     src/randomfield3d.f src/testsrc.f src/twilightfort.f

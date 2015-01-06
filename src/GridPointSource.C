@@ -235,6 +235,14 @@ void GridPointSource::initializeTimeFunction()
        mTimeFunc_om = Discrete_om;
        mTimeFunc_omtt = Discrete_omtt;
        break;
+    case iDiscrete6moments :
+       mTimeFunc = Discrete;
+       mTimeFunc_t = Discrete_t;
+       mTimeFunc_tt = Discrete_tt;
+       mTimeFunc_ttt = Discrete_ttt;
+       mTimeFunc_om = Discrete_om;
+       mTimeFunc_omtt = Discrete_omtt;
+       break;
     case iC6SmoothBump :
       mTimeFunc = C6SmoothBump;
       mTimeFunc_t = C6SmoothBump_t;
@@ -283,6 +291,13 @@ void GridPointSource::initializeTimeFunction()
      mTimeFunc_tom = Discrete_tom;
      mTimeFunc_omom = Discrete_omom;
      break;
+  case iDiscrete6moments :
+     mTimeFunc_tttt = Discrete_tttt;
+     mTimeFunc_tttom = Discrete_tttom;
+     mTimeFunc_ttomom = Discrete_ttomom;
+     mTimeFunc_tom = Discrete_tom;
+     mTimeFunc_omom = Discrete_omom;
+     break;
   default: 
 // tmp
 // std::cout << "High derivatives not implemented for time fuction:" << mTimeDependence <<
@@ -298,12 +313,41 @@ void GridPointSource::initializeTimeFunction()
 //-----------------------------------------------------------------------
 void GridPointSource::getFxyz( double t, double* fxyz ) const
 {
-  double afun = mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
+   double afun, afunv[6];
+   if( mTimeDependence != iDiscrete6moments )
+      afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
+   else
+   {
+      int npts = mIpar[0];
+      int size = 6*(npts-1)+1;
+      size_t pos = 0;
+      afunv[0] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[1] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[2] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[3] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[4] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[5] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+   }
+      
   if( m_derivative==-1)
   {
-     fxyz[0] = mForces[0]*afun;
-     fxyz[1] = mForces[1]*afun;
-     fxyz[2] = mForces[2]*afun;
+     if( mTimeDependence != iDiscrete6moments )
+     {
+	fxyz[0] = mForces[0]*afun;
+	fxyz[1] = mForces[1]*afun;
+	fxyz[2] = mForces[2]*afun;
+     }
+     else
+     {
+	fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
+	fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
+	fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
+     }
   }
   else if( m_derivative >= 0 && m_derivative <= 8 )
   {
@@ -360,12 +404,42 @@ void GridPointSource::getFxyz_notime( double* fxyz ) const
 //-----------------------------------------------------------------------
 void GridPointSource::getFxyztt( double t, double* fxyz ) const
 {
-  double afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+   double afun, afunv[6];
+   if( mTimeDependence != iDiscrete6moments )
+      afun= mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
+   else
+   {
+      int npts = mIpar[0];
+      int size = 6*(npts-1)+1;
+      size_t pos = 0;
+      afunv[0] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[1] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[2] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[3] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[4] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[5] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+   }
+
+   //  double afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
   if( m_derivative==-1)
   {
-     fxyz[0] = mForces[0]*afun;
-     fxyz[1] = mForces[1]*afun;
-     fxyz[2] = mForces[2]*afun;
+     if( mTimeDependence != iDiscrete6moments )
+     {
+	fxyz[0] = mForces[0]*afun;
+	fxyz[1] = mForces[1]*afun;
+	fxyz[2] = mForces[2]*afun;
+     }
+     else
+     {
+	fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
+	fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
+	fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
+     }
   }
   else if( m_derivative >= 0 && m_derivative <= 8 )
   {

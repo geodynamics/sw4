@@ -413,7 +413,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_ext( Sarray& u )
 {
-   REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for three-component arrays" );
+   REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for one-component arrays" );
    int g = mNumberOfGrids-1;
    int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
    int je = m_jEnd[g]+m_ext_ghost_points, jb=m_jStart[g]-m_ext_ghost_points;

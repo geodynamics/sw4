@@ -403,6 +403,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
      mParsingSuccessful = true;
 
 // AP: need to figure out a better way of handling these error log files
+//
    // char fname[100];
    // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
    // msgStream.open(fname);
