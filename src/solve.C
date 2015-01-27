@@ -2751,9 +2751,9 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 //       }
     }
   } // end Curl
-  else if(mode == TimeSeries::Strains)
+  else if(mode == TimeSeries::Strains )
   {
-    uRec.resize(6);
+     uRec.resize(6);
     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
@@ -2806,7 +2806,68 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
       uRec[5] = ( 0.5*(duydz+duzdy) );
    }
   } // end Strains
-  
+  else if(mode == TimeSeries::DisplacementGradient )
+  {
+     uRec.resize(9);
+     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+     {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+	double factor = 1.0/(2*mGridSize[g0]);
+	double duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+	double duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+	double duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+	double duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+	double duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+	double duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+	double duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+	double duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+	double duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+	uRec[0] =  duxdx;
+	uRec[1] =  duxdy;
+	uRec[2] =  duxdz;
+	uRec[3] =  duydx;
+	uRec[4] =  duydy;
+	uRec[5] =  duydz;
+	uRec[6] =  duzdx;
+	uRec[7] =  duzdy;
+	uRec[8] =  duzdz;
+     }
+     else // must be curvilinear
+     {
+//       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
+	double factor = 0.5/sqrt(mJ(i0,j0,k0));
+	double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+	double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+	double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+	double duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+	double duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+	double duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+	double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+	double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+	double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+	double duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
+	double duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
+	double duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
+	double duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
+	double duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
+	double duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
+	double duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+	double duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+	double duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+	uRec[0] =  duxdx;
+	uRec[1] =  duxdy;
+	uRec[2] =  duxdz;
+	uRec[3] =  duydx;
+	uRec[4] =  duydy;
+	uRec[5] =  duydz;
+	uRec[6] =  duzdx;
+	uRec[7] =  duzdy;
+	uRec[8] =  duzdz;
+     }
+
+  } // end DisplacementGradient
   return;
 }
 

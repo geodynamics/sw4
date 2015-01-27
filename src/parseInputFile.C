@@ -4905,7 +4905,8 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
      mxx = myy = mzz = 1;
      mxy = mxz = myz = 0;
 
-     bool timereverse = false; // Set true for testing purpose only, the users want to do this themselves outside SW4.
+     bool timereverse = false; // Reverse the SAC data. Set true for testing purpose only, the users want to do this themselves outside SW4.
+     bool useB = false; // Use sac header begin time parameter B.
 
      tDep = iDiscrete6moments;
      double dt, t0, latsac, lonsac,cmpazsac, cmpincsac;
@@ -4915,6 +4916,9 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
      fname = basename + ".xx";
      bool byteswap;
      readSACheader( fname.c_str(), dt, t0, latsac, lonsac, cmpazsac, cmpincsac, utcsac, npts, byteswap );
+     if( !useB )
+	t0 = 0;
+     
      if( geoCoordSet )
      {
 	double laterr = fabs((latsac-lat)/lat);
@@ -6293,6 +6297,10 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
        else if( strcmp("strains",token)==0 )
        {
 	 mode = TimeSeries::Strains;
+       }
+       else if( strcmp("displacementgradient",token)==0 )
+       {
+	 mode = TimeSeries::DisplacementGradient;
        }
        else
        {

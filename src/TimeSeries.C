@@ -251,6 +251,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
       m_nComp=3;
    else if (m_mode == Strains)
       m_nComp=6;
+   else if (m_mode == DisplacementGradient )
+      m_nComp=9;
 
 // allocate handles to solution array pointers
    mRecordedSol = new double*[m_nComp];
@@ -432,7 +434,7 @@ void TimeSeries::writeFile( string suffix )
 // get the epicenter from EW object (note that the epicenter is not always known when this object is created)
   m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset );
   
-  stringstream ux, uy, uz, uxy, uxz, uyz;
+  stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
   
 // Write out displacement components (ux, uy, uz)
 
@@ -448,7 +450,7 @@ void TimeSeries::writeFile( string suffix )
 	<< "of size " << mLastTimeStep+1 << ": "
 	<< filePrefix.str();
 
-     string xfield, yfield, zfield, xyfield, xzfield, yzfield;
+    string xfield, yfield, zfield, xyfield, xzfield, yzfield, yxfield, zxfield, zyfield;
      float azimx, azimy, updownang;
      if( m_mode == Displacement )
      {
@@ -549,6 +551,37 @@ void TimeSeries::writeFile( string suffix )
 	azimy = m_x_azimuth+90.;
      	updownang = 180;
      	msg << "[xx|yy|zz|xy|xz|yz]" << endl;
+     }
+     else if( m_mode == DisplacementGradient )
+     {
+     	xfield  = "DUXDX";
+     	xyfield = "DUXDY";
+     	xzfield = "DUXDZ";
+
+     	yxfield = "DUYDX";
+     	yfield  = "DUYDY";
+     	yzfield = "DUYDZ";
+
+     	zxfield = "DUZDX";
+     	zyfield = "DUZDY";
+     	zfield  = "DUZDZ";
+
+     	ux  << filePrefix.str() << "duxdx";
+     	uxy << filePrefix.str() << "duxdy";
+     	uxz << filePrefix.str() << "duxdz";
+
+     	uyx << filePrefix.str() << "duydx";
+     	uy << filePrefix.str()  << "duydy";
+     	uyz << filePrefix.str() << "duydz";
+
+     	uzx << filePrefix.str() << "duzdx";
+     	uzy << filePrefix.str() << "duzdy";
+     	uz << filePrefix.str()  << "duzdz";
+
+	azimx = m_x_azimuth;
+	azimy = m_x_azimuth+90.;
+     	updownang = 180;
+     	msg << "[duxdx|duxdy|duxdz|duydx|duydy|duydz|duzdx|duzdy|duzdz]" << endl;
      }
      // 	else if( !m_xycomponent && !m_velocities )
      // 	{
@@ -729,6 +762,48 @@ void TimeSeries::writeFile( string suffix )
 			mRecordedFloats[5], (float) m_shift, (float) m_dt,
 			const_cast<char*>(yzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
      }
+     else if (m_mode == DisplacementGradient ) // 9 components
+     {
+       write_sac_format(mLastTimeStep+1, 
+			const_cast<char*>(ux.str().c_str()), 
+			mRecordedFloats[0], (float) m_shift, (float) m_dt,
+			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
+       write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uxy.str().c_str()), 
+			mRecordedFloats[1], (float) m_shift, (float) m_dt,
+			const_cast<char*>(xyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+       write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uxz.str().c_str()), 
+			mRecordedFloats[2], (float) m_shift, (float) m_dt,
+			const_cast<char*>(xzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+
+       write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uyx.str().c_str()), 
+			mRecordedFloats[3], (float) m_shift, (float) m_dt,
+			const_cast<char*>(yxfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+       write_sac_format(mLastTimeStep+1, 
+			const_cast<char*>(uy.str().c_str()), 
+			mRecordedFloats[4], (float) m_shift, (float) m_dt,
+			const_cast<char*>(yfield.c_str()), 90.0, azimy); 
+       write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uyz.str().c_str()), 
+			mRecordedFloats[5], (float) m_shift, (float) m_dt,
+			const_cast<char*>(yzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+
+       write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uzx.str().c_str()), 
+			mRecordedFloats[6], (float) m_shift, (float) m_dt,
+			const_cast<char*>(zxfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+       write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uzy.str().c_str()), 
+			mRecordedFloats[7], (float) m_shift, (float) m_dt,
+			const_cast<char*>(zyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+       write_sac_format(mLastTimeStep+1, 
+			const_cast<char*>(uz.str().c_str()), 
+			mRecordedFloats[8], (float) m_shift, (float) m_dt,
+			const_cast<char*>(zfield.c_str()), updownang, 0.0); 
+     }
+
   } // end if m_sacFormat
   
   if( m_usgsFormat )
@@ -926,6 +1001,18 @@ void TimeSeries::write_usgs_format(string a_fileName)
      fprintf(fd, "# Column 6: xz strain component ()\n");
      fprintf(fd, "# Column 7: yz strain component ()\n");
    }
+   else if( m_mode == DisplacementGradient )
+   {
+     fprintf(fd, "# Column 2 : dux/dx component ()\n");
+     fprintf(fd, "# Column 3 : dux/dy component ()\n");
+     fprintf(fd, "# Column 4 : dux/dz component ()\n");
+     fprintf(fd, "# Column 5 : duy/dx component ()\n");
+     fprintf(fd, "# Column 6 : duy/dy component ()\n");
+     fprintf(fd, "# Column 7 : duy/dz component ()\n");
+     fprintf(fd, "# Column 8 : duz/dx component ()\n");
+     fprintf(fd, "# Column 9 : duz/dy component ()\n");
+     fprintf(fd, "# Column 10: duz/dz component ()\n");
+   }
 
 // write the data
 
@@ -964,6 +1051,8 @@ void TimeSeries::write_usgs_format(string a_fileName)
 	 printf("strains");
       else if( m_mode == Curl )
 	 printf("curl");
+      else if( m_mode == DisplacementGradient )
+	 printf("displacement gradient");
       printf(" in geographic coordinates\n" );
    }
    fclose(fd);

@@ -47,7 +47,7 @@ class TimeSeries{
 public:
 
 // support for derived quantities of the time derivative are not yet implemented
-enum receiverMode{Displacement, Div, Curl, Strains, Velocity /*, DivVelo, CurlVelo, StrainsVelo */ };
+  enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
 TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
 	    double x, double y, double z, bool topoDepth, int writeEvery, bool xyzcomponent=true );
