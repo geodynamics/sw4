@@ -852,7 +852,7 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
 	  {
 	    if (mZ(i1+1, j1+1, kk) > zs) break;
 	  }
-// at this point we should have mZ(kk-1) <= zs < mZ(kk), kk <= m_nmaxdepth
+// at this point we should have mZ(kk-1) <= zs < mZ(kk), kk < m_nmaxdepth
 
 	  int k1 = kk-1;
 // now we should have mZ(k1) <= zs < mZ(k1+1)
@@ -860,9 +860,19 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
 	     k1 = 1;
 
 // linear interpolation factor ( what happens if two mZ values are identical? )
-	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
-	  if( factor < 0 )
-	     factor = 0;
+//	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
+//	  if( factor < 0 )
+//	     factor = 0;
+	  double dz = mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1);
+	  double factor=0;
+	  if( dz != 0 )
+	  {
+	     factor = (zs-mZ(i1+1,j1+1,k1))/dz;
+	     if( factor < 0 )
+		factor = 0;
+	     if( factor > 1 )
+		factor = 1;
+	  }
 
 	  vp    += (mVp(i1+1,j1+1,k1) + factor*(mVp(i1+1,j1+1,k1+1)-mVp(i1+1,j1+1,k1)) )*wgh;
 	  vs    += (mVs(i1+1,j1+1,k1) + factor*(mVs(i1+1,j1+1,k1+1)-mVs(i1+1,j1+1,k1)) )*wgh;
@@ -996,7 +1006,7 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
 	  {
 	    if (mZ(i1+1,j1+1,kk) > zs) break;
 	  }
-// at this point we should have mZ(kk-1) <= zs < mZ(kk), kk <= m_nmaxdepth
+// at this point we should have mZ(kk-1) <= zs < mZ(kk), kk < m_nmaxdepth
 
 	  int k1 = kk-1;
 
@@ -1007,10 +1017,19 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
 // now we should have mZ(k1) <= zs < mZ(k1+1)
 
 // linear interpolation factor
-	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
-          if( factor < 0 )
-	     factor = 0;
-
+	  double dz =mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1);
+	  double factor=0;
+	  //	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
+	  //          if( factor < 0 )
+	  //	     factor = 0;
+	  if( dz != 0 )
+	  {
+	     factor = (zs-mZ(i1+1,j1+1,k1))/dz;
+	     if( factor < 0 )
+		factor = 0;
+	     if( factor > 1 )
+		factor = 1;
+	  }
 // new style
 	  vp    += (mVp(i1+1,j1+1,k1)  + factor*(mVp(i1+1,j1+1,k1+1)- mVp(i1+1,j1+1,k1))  )*wgh;
 	  vs    += (mVs(i1+1,j1+1,k1)  + factor*(mVs(i1+1,j1+1,k1+1)- mVs(i1+1,j1+1,k1))  )*wgh;
