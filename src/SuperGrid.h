@@ -52,8 +52,9 @@ private:
 bool m_left, m_right;
 double m_x0, m_x1, m_width, m_trans_width, m_const_width;
 double m_epsL, m_tw_omega;
-double sigma(double xi) const;
-double sigmaScale(double x) const;
+double Psi0(double xi) const;
+double PsiAux(double x) const;
+double PsiDamp(double x) const;
 double linTaper(double x) const;
 
 };
