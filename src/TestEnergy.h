@@ -61,7 +61,7 @@ public:
 	    FILE *fd=fopen(filewpath.str().c_str(),"w");
 	    //	 	 cout << "energy = " << energy << endl;
 	    for( int i=0 ; i < m_energyvector.size() ; i++ )
-	       fprintf(fd, "%20.12g\n", m_energyvector[i] );
+	       fprintf(fd, "%30.20g\n", m_energyvector[i] );
 	    fclose(fd);
 	 }
       }

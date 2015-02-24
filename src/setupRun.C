@@ -1133,7 +1133,13 @@ void EW::set_anisotropic_materials()
    extrapolateInXY( mRho );
    extrapolateInXYvector( mC );
    check_anisotropic_material( mRho, mC );
-
+   if( m_energy_test )
+   {
+      material_ic( mRho );
+      material_ic( mC );
+      communicate_array( mRho[g], g );
+      communicate_array( mC[g], g );
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -1174,7 +1180,7 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
       cout <<  rhomin <<  " <=  Density <= " << rhomax  << endl;
       cout <<  eigmin <<  " <=  Eig(c)  <= " << eigmax << endl;
       if( eigmin <= 0 )
-	 cout << "ERROR: stress tensor is not positive definite. The problem is not well posed" << endl;
+	 cout << "ERROR: tensor of elastic coefficients is not positive definite. The problem is not well posed" << endl;
    }
 }
 
@@ -1845,9 +1851,10 @@ void EW::material_ic( vector<Sarray>& a_mtrl )
 // interface between curvilinear and top Cartesian grid
    if (topographyExists())
    {
-      int nc=1;
+      //      int nc=1;
       int g  = mNumberOfCartesianGrids-1;
       int gc = mNumberOfGrids-1;
+      int nc = a_mtrl[g].ncomp();
       int q, i, j;
 // inject values between lower boundary of gc and upper boundary of g
       for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )

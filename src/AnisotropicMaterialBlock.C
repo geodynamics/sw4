@@ -153,7 +153,7 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
 	  else
 	  {
 	    outside++;
-	    if (mEW->getVerbosity() > 2)
+	    if (mEW->getVerbosity() > 5)
 	    {
 	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
 		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
