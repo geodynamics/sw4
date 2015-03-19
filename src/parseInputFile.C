@@ -271,14 +271,14 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     }
     
   }
-  if( m_anisotropic && m_topography_exists )
-  {
-    if (m_myRank == 0)
-    {
-      cerr << "Error: Topography not implemented with anisotropy " << endl;
-      return false; // unsuccessful
-    }
-  }  
+  //  if( m_anisotropic && m_topography_exists )
+  //  {
+  //    if (m_myRank == 0)
+  //    {
+  //      cerr << "Error: Topography not implemented with anisotropy " << endl;
+  //      return false; // unsuccessful
+  //    }
+  //  }  
   if( m_anisotropic && m_use_attenuation )
   {
     if (m_myRank == 0)
@@ -3935,23 +3935,20 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 
       // mF[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 
+      mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+      mRho[g].set_to_minusOne();
       if( m_anisotropic )
       {
 	 mC[g].define(21,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	 mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 	 mC[g].set_to_minusOne();
-	 mRho[g].set_to_minusOne();
       }
       else
       {
 // elastic material
 	 mMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	 mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 	 mLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-
 // initialize the material coefficients to -1
 	 mMu[g].set_to_minusOne();
-	 mRho[g].set_to_minusOne();
 	 mLambda[g].set_to_minusOne();
       }
 // viscoelastic material coefficients & memory variables
@@ -4204,12 +4201,23 @@ void EW::allocateCurvilinearArrays()
 // and the Jacobian of the transformation
   mJ.define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
 // and material properties, initialize to -1
-  mMu[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-  mMu[gTop].set_to_minusOne();
   mRho[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
   mRho[gTop].set_to_minusOne();
-  mLambda[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-  mLambda[gTop].set_to_minusOne();
+
+  if( m_anisotropic )
+  {
+     mC[gTop].define(21,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+     mCcurv.define(45,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+     mC[gTop].set_to_minusOne();
+     mCcurv.set_to_minusOne();
+  }
+  else
+  {
+     mMu[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+     mMu[gTop].set_to_minusOne();
+     mLambda[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+     mLambda[gTop].set_to_minusOne();
+  }
 // viscoelastic material coefficients
   if (m_use_attenuation)
   {

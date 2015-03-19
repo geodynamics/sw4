@@ -219,6 +219,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
   if (! (q >= qMin && q <= qMax && r >= rMin && r <= rMax && s >= sMin && s <= sMax))
   {
     cout << "curvilinear_grid_mapping: input parameters out of bounds (q,r,s) = " << q << ", " << r << ", " << s << endl;
+    cout << "limits are " << qMin << " " << qMax << " " << rMin << " " << rMax << " " <<sMin <<  " " << sMax << endl;
     return false;
   }
   

@@ -168,6 +168,8 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
    void F77_FUNC(solveattfreec,SOLVEATTFREEC)( int*, int*, int*, int*, int*, int*, double*, double*,    
 					       double*, double*, double*, double*, double*, double*, int*, double*, double* );
    void F77_FUNC(solveattfreeac,SOLVEATTFREEAC)( int*, int*, int*, int*, int*, int*, double*, double*, double*);
+   void F77_FUNC(bcfreesurfcurvani,BCFREESURFCURVANI)( int*, int*, int*, int*, int*, int*, int*, double*, double*, int*,
+						       double*, double*, double*, double*, double* );
 }
 
 
@@ -1083,6 +1085,15 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
 				       bforce_side2_ptr, bforce_side3_ptr, 
 				       bforce_side4_ptr, bforce_side5_ptr, 
 				       m_sg_str_x[g], m_sg_str_y[g] );
+       if( topographyExists() && g == mNumberOfGrids-1 && m_bcType[g][4] == bStressFree )
+       {
+	  int fside = 5;
+	  double* cc_ptr = mCcurv.c_ptr();
+          F77_FUNC(bcfreesurfcurvani,BCFREESURFCURVANI)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+							&nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
+                                                        bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
+       }
+
        //    }
     //    else
     //    {
@@ -1095,6 +1106,7 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
        //				
     //  }
   }
+  update_curvilinear_cartesian_interface( a_U );
 }
 
 //-----------------------------------------------------------------------

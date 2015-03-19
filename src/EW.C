@@ -202,6 +202,8 @@ void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, do
 
 void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
 			   int & LWORK, int & INFO);
+   void F77_FUNC(ilanisocurv,ILANISOCURV)( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
+					   int*, double*, double*, double*, double*, double*, double*);
 }
 
 using namespace std;
@@ -3670,16 +3672,30 @@ void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C,
     h        = mGridSize[g]; 
     nz       = m_global_nz[g];
     onesided_ptr = m_onesided[g];
-    //    if( usingSupergrid() )
-       F77_FUNC(innerloopanisgstrvc,INNERLOOPANISGSTRVC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-							 &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
-							 m_acof, m_bope, m_ghcof, &h, m_sg_str_x[g],
-							 m_sg_str_y[g], m_sg_str_z[g] );
-       //    else
-       //       F77_FUNC(innerloopanivc,INNERLOOPANIVC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-       //					       &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
-       //					       m_acof, m_bope, m_ghcof, &h );
-       //  }
+    F77_FUNC(innerloopanisgstrvc,INNERLOOPANISGSTRVC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+						      &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
+						      m_acof, m_bope, m_ghcof, &h, m_sg_str_x[g],
+						      m_sg_str_y[g], m_sg_str_z[g] );
+  }
+  if( topographyExists() )
+  {
+     g = mNumberOfGrids-1;
+     uacc_ptr = a_Uacc[g].c_ptr();
+     u_ptr    = a_U[g].c_ptr();
+     c_ptr    = mCcurv.c_ptr();
+     double* met_ptr = mMetric.c_ptr();
+     double* jac_ptr = mJ.c_ptr();
+     ifirst   = m_iStart[g];
+     ilast    = m_iEnd[g];
+     jfirst   = m_jStart[g];
+     jlast    = m_jEnd[g];
+     kfirst   = m_kStart[g];
+     klast    = m_kEnd[g];
+     nz       = m_global_nz[g];
+     F77_FUNC(ilanisocurv,ILANISOCURV)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+				       &nz, u_ptr, c_ptr, jac_ptr, uacc_ptr, m_onesided[g],
+				       m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
+				       m_sg_str_z[g] );
   }
 }
 

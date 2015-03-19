@@ -157,7 +157,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
-       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o
+       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
+       anisomtrltocurvilinear.o bcfreesurfcurvani.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
@@ -205,4 +206,4 @@ $(builddir)/%.o:src/%.C
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 $(OBJ) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 $(OBJ) $(QUADPACK)
+	cd $(optdir); /bin/rm -f sw4 $(OBJ) $(OBJSW4) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 $(OBJ) $(OBJSW4) $(QUADPACK)

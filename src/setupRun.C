@@ -69,6 +69,9 @@ void F77_FUNC(computedtaniso,COMPUTEDTANISO)( int *, int *, int *, int *, int *,
 					      double*, double*, double*, double* );
 void F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( int *, int *, int *, int *, int *, int *, double*,
 					      double*, double*, double*, double* );
+void F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( int *, int *, int *, int *, int *, int *, double*,
+					      double*, double*, double*, double* );
+   void F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( int*, int*, int*, int*, int*, int*, double*, double*, double* );
 }
 
 #define SQR(x) ((x)*(x))
@@ -1140,6 +1143,13 @@ void EW::set_anisotropic_materials()
       communicate_array( mRho[g], g );
       communicate_array( mC[g], g );
    }
+   if( topographyExists() )
+   {
+      int g=mNumberOfGrids-1;
+      F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
+					    &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+					     mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -1401,6 +1411,19 @@ void EW::computeDTanisotropic()
       F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
 						 &m_kStart[g], &m_kEnd[g],
 						 rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
+      if( dtgrid < dtproc )
+	 dtproc = dtgrid;
+   }
+   if( topographyExists() )
+   {
+      int g=mNumberOfGrids-1;
+      double* rho_ptr = mRho[g].c_ptr();
+      double* c_ptr = mCcurv.c_ptr();
+      double* jac_ptr = mJ.c_ptr();
+      double dtgrid;
+      F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+							 &m_kStart[g], &m_kEnd[g],
+							 rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
       if( dtgrid < dtproc )
 	 dtproc = dtgrid;
    }

@@ -686,6 +686,7 @@ vector<Sarray> mMu;
 vector<Sarray> mLambda;
 vector<Sarray> mRho;
 vector<Sarray> mC; // Anisotropic material parameters
+Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );

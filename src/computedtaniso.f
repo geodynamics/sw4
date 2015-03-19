@@ -185,3 +185,60 @@ c     *                   k2*k2*c(19) + k2*k3*2*c(20) + k3*k3*c(21)
       endif
       end
       
+c-----------------------------------------------------------------------
+      subroutine COMPUTEDTANISO2CURV( ifirst, ilast, jfirst, jlast, 
+     *                     kfirst, klast, rho, c, jac, cfl, dtloc )
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+c      integer nphi, nth
+      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 c(45,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 dtloc, dtgp, cfl, eigestimate
+c      real*8, allocatable, dimension(:) :: ws
+c      nphi = 40
+c      nth  = 10
+c      allocate(ws(2*nth))
+      dtloc = 1d38
+      do k=kfirst,klast
+         do j=jfirst,jlast
+            do i=ifirst,ilast
+c               call MAXWAVE2( c(1,i,j,k), rho(i,j,k), eigestimate, 
+c     *                       nphi, nth, ws )
+               call MAXWAVECURV( c(1,i,j,k), rho(i,j,k), jac(i,j,k), 
+     *                           eigestimate )
+               dtgp = cfl/SQRT( eigestimate )
+               if( dtgp .lt. dtloc )then
+                  dtloc = dtgp
+               endif
+            enddo
+         enddo
+      enddo
+c      deallocate(ws)
+      end
+
+c-----------------------------------------------------------------------
+      subroutine MAXWAVECURV( c, rho, jac, wavespeed2 )
+*** Compute the maximum of the sum of eigenvalues of the matrix 
+***   \sum_{i,j} ki* kj* Aij
+***   where \sum_{i} ki*ki = 1, scaled by the density.
+*** This is equal to (4*mu+lambda)/rho in the isotropic case 
+      implicit none
+      integer info
+      real*8 c(45), rho, wavespeed2, jac
+      real*8 eg(3), a(6), work(9), z
+*** Traces of matrices, in order xx,xy,xz,yy,yz,zz
+      a(1) = c(1)+c(4)+c(6)
+      a(2) = c(19)+c(23)+c(27)
+      a(3) = c(28)+c(32)+c(36)
+      a(4) = c(7)+c(10)+c(12)
+      a(5) = c(37)+c(41)+c(45)
+      a(6) = c(13)+c(16)+c(18)
+      call DSPEV('N', 'L', 3, a, eg, z, 1, work, info )
+      if( info .ne. 0 )then
+         write(*,*) 'ERROR in maxwave:',
+     *        ' could not compute eigenvalues. info from DSPEV = ',
+     *        info
+      endif
+      wavespeed2 = MAX(eg(1),eg(2),eg(3))/(jac*rho)
+      end
