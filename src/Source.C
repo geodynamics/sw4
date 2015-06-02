@@ -1649,18 +1649,20 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
       {    
 	 double wghv, xi;
 	 int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
-
-	 for( int i=1 ; i<=p0-1 ; i++ )
+	 if( p0+p <= nsteps )
 	 {
-	    discfunc[i-1] = 0;
-	 }
-	 for( int i=p0 ; i<=p0+p ; i++ )
-	 {
-	    wghv = 0;
-	    xi = (i-p0)/((double) p);
+	    for( int i=1 ; i<=p0-1 ; i++ )
+	    {
+	       discfunc[i-1] = 0;
+	    }
+	    for( int i=p0 ; i<=p0+p ; i++ )
+	    {
+	       wghv = 0;
+	       xi = (i-p0)/((double) p);
 	 // polynomial P(xi), P(0) = 0, P(1)=1
-	    wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
-	    discfunc[i-1] *=wghv;
+	       wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+	       discfunc[i-1] *=wghv;
+	    }
 	 }
       }
 
