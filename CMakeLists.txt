@@ -119,7 +119,9 @@ SET(SW4_SRC_F_FILES src/addsgd.f src/bcfort.f
     src/innerloop-ani-sgstr-vc.f src/checkanisomtrl.f src/computedtaniso.f
     src/rhs4curvilinear.f src/velsum.f src/gradients.f
     src/rhs4curvilinearsg.f src/energy4.f 
-    src/rhs4th3fort.f src/lamb_exact_numquad.f src/solerr3.f src/bcfortanisg.f )
+    src/rhs4th3fort.f src/lamb_exact_numquad.f src/solerr3.f
+    src/bcfortanisg.f src/ilanisocurv.f
+    src/anisomtrltocurvilinear.f src/bcfreesurfcurvani.f)
 
 # Unused:
 # bcsf.f
