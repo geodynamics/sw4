@@ -1,5 +1,5 @@
 #ifndef SW4_SACUTILS
-#define SACUTILS
+#define SW4_SACUTILS
 
 int lastofmonth( int year, int month );
 

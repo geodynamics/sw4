@@ -2417,8 +2417,8 @@ void Image::output_image( int a_cycle, double a_time, double a_dt,
       compute_image_gradp( a_gLambda, a_Mu, a_Lambda, a_Rho );
    else if(mMode == GRADS )
       compute_image_grads( a_gMu, a_gLambda, a_Mu, a_Rho );
-   else if (!mMode == HMAXDUDT || !mMode == VMAXDUDT
-	    || !mMode == HMAX   || !mMode == VMAX )
+   else if (mMode != HMAXDUDT || mMode != VMAXDUDT
+	    || mMode != HMAX   || mMode != VMAX )
    {
       if (mEW->proc_zero())
       {
