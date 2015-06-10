@@ -558,13 +558,20 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 	 {
 	    for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+= st )
 	       for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+= st )
-		  m_doubleField[g][ind++] = 2*m_doubleField[g][ind-koff]-m_doubleField[g][ind-ok*koff];
+               {
+		  m_doubleField[g][ind] = 2*m_doubleField[g][ind-koff]-m_doubleField[g][ind-ok*koff];
+                  ind++;
+               }
+            
 	 }
 	 else
 	 {
 	    for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+= st )
 	       for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+= st )
-		  m_floatField[g][ind++] = 2*m_floatField[g][ind-koff]-m_floatField[g][ind-ok*koff];
+               {
+		  m_floatField[g][ind] = 2*m_floatField[g][ind-koff]-m_floatField[g][ind-ok*koff];
+                  ind++;
+               }
 	 }
       }
    }
