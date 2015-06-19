@@ -158,7 +158,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
-       anisomtrltocurvilinear.o bcfreesurfcurvani.o
+       anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
@@ -192,6 +192,10 @@ $(builddir)/version.o:src/version.C .FORCE
 .FORCE:
 
 $(builddir)/%.o:src/%.f
+	/bin/mkdir -p $(builddir)
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+
+$(builddir)/%.o:src/%.f90
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 

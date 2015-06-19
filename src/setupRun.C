@@ -43,7 +43,10 @@
 
 #include "F77_FUNC.h"
 extern "C" {
-void F77_FUNC(exactmatfort,EXACTMATFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
+   void tw_ani_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double h, double zmin,
+                     double omm, double phm, double amprho, double *rho, double *phc, double *cm);
+   
+   void F77_FUNC(exactmatfort,EXACTMATFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double*, double*);
    void F77_FUNC(exactmatfortc,EXACTMATFORTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
                                             double*, double*, double*, double*, double*, double*, double*, double*); 
@@ -1075,82 +1078,165 @@ void EW::set_materials()
 //-----------------------------------------------------------------------
 void EW::set_anisotropic_materials()
 {
-   int lastAllCoveringBlock=0;
-   for( unsigned int b = 0 ; b < m_anisotropic_mtrlblocks.size() ; b++ )
-      if (m_anisotropic_mtrlblocks[b]->coversAllPoints())
-	 lastAllCoveringBlock=b;
+   if (!m_testing)
+   {      
+      int lastAllCoveringBlock=0;
+      for( unsigned int b = 0 ; b < m_anisotropic_mtrlblocks.size() ; b++ )
+         if (m_anisotropic_mtrlblocks[b]->coversAllPoints())
+            lastAllCoveringBlock=b;
 
-   for( unsigned int b = lastAllCoveringBlock ; b < m_anisotropic_mtrlblocks.size() ; b++ )
-      m_anisotropic_mtrlblocks[b]->set_material_properties( mRho, mC );
+      for( unsigned int b = lastAllCoveringBlock ; b < m_anisotropic_mtrlblocks.size() ; b++ )
+         m_anisotropic_mtrlblocks[b]->set_material_properties( mRho, mC );
 
-    if (proc_zero())
-    {
-      if (lastAllCoveringBlock == 0)
-	cout << "Considering all material blocks" << endl;
-      else
-	cout << "Only considering material blocks with index >= " << lastAllCoveringBlock << endl;
-    } // end if proc_zero()
+      if (proc_zero())
+      {
+         if (lastAllCoveringBlock == 0)
+            cout << "Considering all material blocks" << endl;
+         else
+            cout << "Only considering material blocks with index >= " << lastAllCoveringBlock << endl;
+      } // end if proc_zero()
 
-   int g = mNumberOfGrids-1;
-   extrapolateInZ( g, mRho[g],    true, false ); 
-   extrapolateInZvector( g, mC[g],    true, false ); 
+      int g = mNumberOfGrids-1;
+      extrapolateInZ( g, mRho[g],    true, false ); 
+      extrapolateInZvector( g, mC[g],    true, false ); 
 
-   g = 0;
-   extrapolateInZ( g, mRho[g],    false, true ); 
-   extrapolateInZvector( g, mC[g],    false, true ); 
-   if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1)
+      g = 0;
+      extrapolateInZ( g, mRho[g],    false, true ); 
+      extrapolateInZvector( g, mC[g],    false, true ); 
+      if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1)
+      {
+         int kFrom;
+         for (g=0; g<mNumberOfCartesianGrids; g++)
+         {
+            if (g < mNumberOfCartesianGrids-1) // extrapolate to top
+            {
+               kFrom = m_kStart[g]+mMaterialExtrapolate;
+               if (!mQuiet && proc_zero() && mVerbose>=3)
+                  printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
+               for (int k = m_kStart[g]; k < kFrom; ++k)
+                  for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+                     for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+                     {
+                        mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+                        for( int m=1 ; m <= 21 ; m++ )
+                           mC[g](m,i,j,k)    = mC[g](m,i,j,kFrom);
+                     }
+            } // end extrapolat to top
+            if (g > 0) // extrapolate to bottom
+            {
+               kFrom = m_kEnd[g]-mMaterialExtrapolate;
+               if (!mQuiet && proc_zero() && mVerbose>=3)
+                  printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
+               for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+                  for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+                     for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+                     {
+                        mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+                        for( int m=1 ; m <= 21 ; m++ )
+                           mC[g](m,i,j,k)    = mC[g](m,i,j,kFrom);
+                     }
+            } 
+         }
+      } 
+      extrapolateInXY( mRho );
+      extrapolateInXYvector( mC );
+      check_anisotropic_material( mRho, mC );
+      if( m_energy_test )
+      {
+         material_ic( mRho );
+         material_ic( mC );
+         communicate_array( mRho[g], g );
+         communicate_array( mC[g], g );
+      }
+      if( topographyExists() )
+      {
+         int g=mNumberOfGrids-1;
+         F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
+                                                                  &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+                                                                  mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+      }
+   }// end if !m_testing, i.e., not Twilight
+   else if (m_twilight_forcing) 
    {
-      int kFrom;
+// tmp
+      if (proc_zero())
+         cout << "******************************" << endl
+              << " ASSIGNING ANISOTROPIC TWILIGHT MATERIALS " << endl
+              << "******************************" << endl;
+
+// For some forcings (such as twilight forcing) the material is set here.
+      double xP, yP, zP;
+      
+      int ifirst, ilast, jfirst, jlast, kfirst, klast, g;
+      double *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
+      double phc[21]; // move these angles to the EW class
+
+      // need to store all the phase angle constants somewhere
+     phc[0]=0;
+      for (int i=0; i<21; i++)
+         phc[i] = i*10*M_PI/180;
+	
       for (g=0; g<mNumberOfCartesianGrids; g++)
       {
-	 if (g < mNumberOfCartesianGrids-1) // extrapolate to top
-	 {
-	    kFrom = m_kStart[g]+mMaterialExtrapolate;
-	    if (!mQuiet && proc_zero() && mVerbose>=3)
-	       printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
-	    for (int k = m_kStart[g]; k < kFrom; ++k)
-	       for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-		  for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-		  {
-		     mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
-		     for( int m=1 ; m <= 21 ; m++ )
-			mC[g](m,i,j,k)    = mC[g](m,i,j,kFrom);
-		  }
-	 } // end extrapolat to top
-	 if (g > 0) // extrapolate to bottom
-	 {
-	    kFrom = m_kEnd[g]-mMaterialExtrapolate;
-	    if (!mQuiet && proc_zero() && mVerbose>=3)
-	       printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
-	    for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
-	       for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-		  for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-		  {
-		     mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
-		     for( int m=1 ; m <= 21 ; m++ )
-			mC[g](m,i,j,k)    = mC[g](m,i,j,kFrom);
-		  }
-	} 
+         rho_ptr = mRho[g].c_ptr();
+         cm_ptr = mC[g].c_ptr();
+
+         ifirst = m_iStart[g];
+         ilast  = m_iEnd[g];
+         jfirst = m_jStart[g];
+         jlast  = m_jEnd[g];
+         kfirst = m_kStart[g];
+         klast  = m_kEnd[g];
+         h = mGridSize[g];
+         zmin = m_zmin[g];
+         omm = m_twilight_forcing->m_momega;
+         phm = m_twilight_forcing->m_mphase;
+         amprho = m_twilight_forcing->m_amprho;
+
+// setup density (rho)
+// setup rho and stiffness matrix         
+// tmp
+        if (proc_zero() )
+           printf("set_anisotropic_mat> before tw_ani_stiff\n");
+        tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
+                     omm, phm, amprho, rho_ptr, phc, cm_ptr);
+        if (proc_zero() )
+           printf("set_anisotropic_mat> after tw_ani_stiff\n");
+         
+// also need rho
       }
-    } 
-   extrapolateInXY( mRho );
-   extrapolateInXYvector( mC );
-   check_anisotropic_material( mRho, mC );
-   if( m_energy_test )
+      if( topographyExists() )
+      {
+         g = mNumberOfGrids-1;
+         rho_ptr = mRho[g].c_ptr();
+         ifirst = m_iStart[g];
+         ilast  = m_iEnd[g];
+         jfirst = m_jStart[g];
+         jlast  = m_jEnd[g];
+         kfirst = m_kStart[g];
+         klast  = m_kEnd[g];
+         double* x_ptr = mX.c_ptr();
+         double* y_ptr = mY.c_ptr();
+         double* z_ptr = mZ.c_ptr();
+         omm = m_twilight_forcing->m_momega;
+         phm = m_twilight_forcing->m_mphase;
+         amprho = m_twilight_forcing->m_amprho;
+         ampmu = m_twilight_forcing->m_ampmu;
+         ampla = m_twilight_forcing->m_amplambda;
+// tmp
+         CHECK_INPUT(false, "Error:  topography not yet implemented for anisotropic twilight testing" << endl);
+         // F77_FUNC(exactmatfortc,EXACTMATFORTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+         //                                       &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+         //                                       &amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+      }
+   } // end if m_twilight
+   else
    {
-      material_ic( mRho );
-      material_ic( mC );
-      communicate_array( mRho[g], g );
-      communicate_array( mC[g], g );
+      CHECK_INPUT(false, "Error:  the only test for an anisotropic material is twilight" << endl);
    }
-   if( topographyExists() )
-   {
-      int g=mNumberOfGrids-1;
-      F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
-					    &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-					     mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
-   }
-}
+   
+} // end set_anisotropic_materials()
+
 
 //-----------------------------------------------------------------------
 void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )

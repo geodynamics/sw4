@@ -225,7 +225,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // can be read in with the other material properties
 //---------------------------------------------------------------
 
-// these commands can enter data directly the object (this->)
+// these commands can enter data directly into the object (this->)
   while (!inputFile.eof())
   {    
      inputFile.getline(buffer, 256);
@@ -271,14 +271,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     }
     
   }
-  //  if( m_anisotropic && m_topography_exists )
-  //  {
-  //    if (m_myRank == 0)
-  //    {
-  //      cerr << "Error: Topography not implemented with anisotropy " << endl;
-  //      return false; // unsuccessful
-  //    }
-  //  }  
+
   if( m_anisotropic && m_use_attenuation )
   {
     if (m_myRank == 0)
