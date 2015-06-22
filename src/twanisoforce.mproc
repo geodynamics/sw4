@@ -1,25 +1,26 @@
 # elements of symmetric stiffness matrix (6x6)
-c1:= 2+sin(omm*x+ph1)*cos(omm*y+ph1)*sin(omm*z+ph1);
+# Note that the constant is 10 for the diagonal elements
+c1:= 10+sin(omm*x+ph1)*cos(omm*y+ph1)*sin(omm*z+ph1);
 c2:= 2+sin(omm*x+ph2)*cos(omm*y+ph1)*sin(omm*z+ph2);
 c3:= 2+sin(omm*x+ph3)*cos(omm*y+ph2)*sin(omm*z+ph3);
 c4:= 2+sin(omm*x+ph4)*cos(omm*y+ph2)*sin(omm*z+ph4);
 c5:= 2+sin(omm*x+ph5)*cos(omm*y+ph3)*sin(omm*z+ph5);
 c6:= 2+sin(omm*x+ph6)*cos(omm*y+ph3)*sin(omm*z+ph6);
-c7:= 2+sin(omm*x+ph7)*cos(omm*y+ph4)*sin(omm*z+ph7);
+c7:= 10+sin(omm*x+ph7)*cos(omm*y+ph4)*sin(omm*z+ph7);
 c8:= 2+sin(omm*x+ph8)*cos(omm*y+ph4)*sin(omm*z+ph8);
 c9:= 2+sin(omm*x+ph9)*cos(omm*y+ph5)*sin(omm*z+ph9);
 c10:= 2+sin(omm*x+ph10)*cos(omm*y+ph5)*sin(omm*z+ph1);
 c11:= 2+sin(omm*x+ph11)*cos(omm*y+ph6)*sin(omm*z+ph2);
-c12:= 2+sin(omm*x+ph12)*cos(omm*y+ph6)*sin(omm*z+ph3);
+c12:= 10+sin(omm*x+ph12)*cos(omm*y+ph6)*sin(omm*z+ph3);
 c13:= 2+sin(omm*x+ph13)*cos(omm*y+ph7)*sin(omm*z+ph4);
 c14:= 2+sin(omm*x+ph14)*cos(omm*y+ph7)*sin(omm*z+ph5);
 c15:= 2+sin(omm*x+ph15)*cos(omm*y+ph8)*sin(omm*z+ph6);
-c16:= 2+sin(omm*x+ph16)*cos(omm*y+ph8)*sin(omm*z+ph7);
+c16:= 10+sin(omm*x+ph16)*cos(omm*y+ph8)*sin(omm*z+ph7);
 c17:= 2+sin(omm*x+ph17)*cos(omm*y+ph9)*sin(omm*z+ph8);
 c18:= 2+sin(omm*x+ph18)*cos(omm*y+ph9)*sin(omm*z+ph9);
-c19:= 2+sin(omm*x+ph19)*cos(omm*y+ph10)*sin(omm*z+ph10);
+c19:= 10+sin(omm*x+ph19)*cos(omm*y+ph10)*sin(omm*z+ph10);
 c20:= 2+sin(omm*x+ph20)*cos(omm*y+ph10)*sin(omm*z+ph11);
-c21:= 2+sin(omm*x+ph21)*cos(omm*y+ph10)*sin(omm*z+ph12);
+c21:= 10+sin(omm*x+ph21)*cos(omm*y+ph10)*sin(omm*z+ph12);
 
 # exact (manufactured) solution
 u:=sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);

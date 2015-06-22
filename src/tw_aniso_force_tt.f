@@ -19,282 +19,282 @@ c
       real(dp), intent(in), value:: h, zmin
 
 c local variables      
-      doubleprecision x
-      doubleprecision y
-      doubleprecision z
+      real(dp) x
+      real(dp) y
+      real(dp) z
 
-      doubleprecision forces(3)
-      doubleprecision t1
-      doubleprecision t10
-      doubleprecision t100
-      doubleprecision t101
-      doubleprecision t103
-      doubleprecision t107
-      doubleprecision t108
-      doubleprecision t109
-      doubleprecision t110
-      doubleprecision t111
-      doubleprecision t112
-      doubleprecision t114
-      doubleprecision t115
-      doubleprecision t116
-      doubleprecision t117
-      doubleprecision t118
-      doubleprecision t119
-      doubleprecision t12
-      doubleprecision t120
-      doubleprecision t121
-      doubleprecision t122
-      doubleprecision t123
-      doubleprecision t125
-      doubleprecision t127
-      doubleprecision t130
-      doubleprecision t131
-      doubleprecision t134
-      doubleprecision t137
-      doubleprecision t139
-      doubleprecision t14
-      doubleprecision t140
-      doubleprecision t141
-      doubleprecision t142
-      doubleprecision t143
-      doubleprecision t144
-      doubleprecision t145
-      doubleprecision t146
-      doubleprecision t147
-      doubleprecision t149
-      doubleprecision t15
-      doubleprecision t152
-      doubleprecision t154
-      doubleprecision t155
-      doubleprecision t156
-      doubleprecision t157
-      doubleprecision t158
-      doubleprecision t159
-      doubleprecision t160
-      doubleprecision t162
-      doubleprecision t163
-      doubleprecision t166
-      doubleprecision t167
-      doubleprecision t169
-      doubleprecision t17
-      doubleprecision t170
-      doubleprecision t171
-      doubleprecision t172
-      doubleprecision t174
-      doubleprecision t176
-      doubleprecision t181
-      doubleprecision t183
-      doubleprecision t185
-      doubleprecision t186
-      doubleprecision t187
-      doubleprecision t188
-      doubleprecision t189
-      doubleprecision t19
-      doubleprecision t191
-      doubleprecision t193
-      doubleprecision t194
-      doubleprecision t197
-      doubleprecision t199
-      doubleprecision t2
-      doubleprecision t20
-      doubleprecision t200
-      doubleprecision t203
-      doubleprecision t205
-      doubleprecision t207
-      doubleprecision t208
-      doubleprecision t213
-      doubleprecision t214
-      doubleprecision t215
-      doubleprecision t216
-      doubleprecision t217
-      doubleprecision t22
-      doubleprecision t222
-      doubleprecision t224
-      doubleprecision t226
-      doubleprecision t227
-      doubleprecision t23
-      doubleprecision t230
-      doubleprecision t233
-      doubleprecision t234
-      doubleprecision t236
-      doubleprecision t239
-      doubleprecision t24
-      doubleprecision t244
-      doubleprecision t246
-      doubleprecision t248
-      doubleprecision t25
-      doubleprecision t250
-      doubleprecision t254
-      doubleprecision t255
-      doubleprecision t262
-      doubleprecision t263
-      doubleprecision t265
-      doubleprecision t266
-      doubleprecision t267
-      doubleprecision t269
-      doubleprecision t27
-      doubleprecision t273
-      doubleprecision t28
-      doubleprecision t283
-      doubleprecision t284
-      doubleprecision t286
-      doubleprecision t29
-      doubleprecision t291
-      doubleprecision t299
-      doubleprecision t3
-      doubleprecision t301
-      doubleprecision t303
-      doubleprecision t306
-      doubleprecision t307
-      doubleprecision t308
-      doubleprecision t31
-      doubleprecision t310
-      doubleprecision t314
-      doubleprecision t317
-      doubleprecision t32
-      doubleprecision t320
-      doubleprecision t323
-      doubleprecision t327
-      doubleprecision t33
-      doubleprecision t334
-      doubleprecision t34
-      doubleprecision t341
-      doubleprecision t347
-      doubleprecision t349
-      doubleprecision t35
-      doubleprecision t352
-      doubleprecision t355
-      doubleprecision t357
-      doubleprecision t358
-      doubleprecision t36
-      doubleprecision t366
-      doubleprecision t369
-      doubleprecision t37
-      doubleprecision t372
-      doubleprecision t373
-      doubleprecision t374
-      doubleprecision t38
-      doubleprecision t386
-      doubleprecision t388
-      doubleprecision t389
-      doubleprecision t392
-      doubleprecision t393
-      doubleprecision t394
-      doubleprecision t395
-      doubleprecision t396
-      doubleprecision t397
-      doubleprecision t4
-      doubleprecision t400
-      doubleprecision t404
-      doubleprecision t407
-      doubleprecision t408
-      doubleprecision t409
-      doubleprecision t41
-      doubleprecision t412
-      doubleprecision t415
-      doubleprecision t42
-      doubleprecision t420
-      doubleprecision t423
-      doubleprecision t425
-      doubleprecision t43
-      doubleprecision t431
-      doubleprecision t433
-      doubleprecision t438
-      doubleprecision t441
-      doubleprecision t444
-      doubleprecision t447
-      doubleprecision t450
-      doubleprecision t452
-      doubleprecision t46
-      doubleprecision t461
-      doubleprecision t464
-      doubleprecision t468
-      doubleprecision t47
-      doubleprecision t470
-      doubleprecision t472
-      doubleprecision t474
-      doubleprecision t478
-      doubleprecision t48
-      doubleprecision t481
-      doubleprecision t484
-      doubleprecision t486
-      doubleprecision t489
-      doubleprecision t49
-      doubleprecision t494
-      doubleprecision t5
-      doubleprecision t50
-      doubleprecision t502
-      doubleprecision t510
-      doubleprecision t512
-      doubleprecision t515
-      doubleprecision t516
-      doubleprecision t517
-      doubleprecision t518
-      doubleprecision t52
-      doubleprecision t521
-      doubleprecision t525
-      doubleprecision t53
-      doubleprecision t536
-      doubleprecision t538
-      doubleprecision t54
-      doubleprecision t543
-      doubleprecision t55
-      doubleprecision t554
-      doubleprecision t556
-      doubleprecision t562
-      doubleprecision t573
-      doubleprecision t58
-      doubleprecision t581
-      doubleprecision t587
-      doubleprecision t588
-      doubleprecision t592
-      doubleprecision t598
-      doubleprecision t6
-      doubleprecision t60
-      doubleprecision t600
-      doubleprecision t603
-      doubleprecision t608
-      doubleprecision t61
-      doubleprecision t619
-      doubleprecision t625
-      doubleprecision t628
-      doubleprecision t637
-      doubleprecision t638
-      doubleprecision t639
-      doubleprecision t640
-      doubleprecision t65
-      doubleprecision t652
-      doubleprecision t66
-      doubleprecision t663
-      doubleprecision t669
-      doubleprecision t67
-      doubleprecision t672
-      doubleprecision t684
-      doubleprecision t69
-      doubleprecision t70
-      doubleprecision t72
-      doubleprecision t73
-      doubleprecision t76
-      doubleprecision t77
-      doubleprecision t8
-      doubleprecision t80
-      doubleprecision t82
-      doubleprecision t83
-      doubleprecision t85
-      doubleprecision t86
-      doubleprecision t87
-      doubleprecision t88
-      doubleprecision t9
-      doubleprecision t90
-      doubleprecision t91
-      doubleprecision t92
-      doubleprecision t93
-      doubleprecision t94
-      doubleprecision t96
-      doubleprecision t97
-      doubleprecision t98
-      doubleprecision t99
+      real(dp) forces(3)
+      real(dp) t1
+      real(dp) t10
+      real(dp) t100
+      real(dp) t101
+      real(dp) t102
+      real(dp) t103
+      real(dp) t104
+      real(dp) t105
+      real(dp) t106
+      real(dp) t108
+      real(dp) t109
+      real(dp) t11
+      real(dp) t110
+      real(dp) t111
+      real(dp) t112
+      real(dp) t113
+      real(dp) t114
+      real(dp) t115
+      real(dp) t117
+      real(dp) t118
+      real(dp) t121
+      real(dp) t124
+      real(dp) t125
+      real(dp) t130
+      real(dp) t132
+      real(dp) t133
+      real(dp) t134
+      real(dp) t135
+      real(dp) t136
+      real(dp) t137
+      real(dp) t139
+      real(dp) t14
+      real(dp) t142
+      real(dp) t146
+      real(dp) t147
+      real(dp) t148
+      real(dp) t149
+      real(dp) t15
+      real(dp) t151
+      real(dp) t152
+      real(dp) t154
+      real(dp) t155
+      real(dp) t156
+      real(dp) t158
+      real(dp) t159
+      real(dp) t161
+      real(dp) t163
+      real(dp) t167
+      real(dp) t168
+      real(dp) t169
+      real(dp) t17
+      real(dp) t170
+      real(dp) t173
+      real(dp) t174
+      real(dp) t175
+      real(dp) t176
+      real(dp) t177
+      real(dp) t179
+      real(dp) t18
+      real(dp) t181
+      real(dp) t184
+      real(dp) t185
+      real(dp) t187
+      real(dp) t189
+      real(dp) t193
+      real(dp) t195
+      real(dp) t196
+      real(dp) t198
+      real(dp) t199
+      real(dp) t2
+      real(dp) t20
+      real(dp) t200
+      real(dp) t201
+      real(dp) t204
+      real(dp) t206
+      real(dp) t210
+      real(dp) t214
+      real(dp) t217
+      real(dp) t218
+      real(dp) t22
+      real(dp) t221
+      real(dp) t222
+      real(dp) t224
+      real(dp) t225
+      real(dp) t227
+      real(dp) t23
+      real(dp) t233
+      real(dp) t236
+      real(dp) t24
+      real(dp) t240
+      real(dp) t243
+      real(dp) t245
+      real(dp) t25
+      real(dp) t251
+      real(dp) t252
+      real(dp) t253
+      real(dp) t254
+      real(dp) t255
+      real(dp) t257
+      real(dp) t261
+      real(dp) t267
+      real(dp) t268
+      real(dp) t269
+      real(dp) t27
+      real(dp) t270
+      real(dp) t271
+      real(dp) t273
+      real(dp) t277
+      real(dp) t278
+      real(dp) t280
+      real(dp) t282
+      real(dp) t285
+      real(dp) t288
+      real(dp) t29
+      real(dp) t296
+      real(dp) t299
+      real(dp) t3
+      real(dp) t301
+      real(dp) t303
+      real(dp) t31
+      real(dp) t310
+      real(dp) t314
+      real(dp) t315
+      real(dp) t316
+      real(dp) t317
+      real(dp) t32
+      real(dp) t322
+      real(dp) t328
+      real(dp) t33
+      real(dp) t333
+      real(dp) t335
+      real(dp) t338
+      real(dp) t34
+      real(dp) t341
+      real(dp) t343
+      real(dp) t344
+      real(dp) t352
+      real(dp) t353
+      real(dp) t354
+      real(dp) t356
+      real(dp) t36
+      real(dp) t361
+      real(dp) t366
+      real(dp) t37
+      real(dp) t373
+      real(dp) t375
+      real(dp) t378
+      real(dp) t381
+      real(dp) t384
+      real(dp) t397
+      real(dp) t398
+      real(dp) t399
+      real(dp) t4
+      real(dp) t401
+      real(dp) t404
+      real(dp) t405
+      real(dp) t406
+      real(dp) t407
+      real(dp) t408
+      real(dp) t409
+      real(dp) t41
+      real(dp) t412
+      real(dp) t416
+      real(dp) t419
+      real(dp) t42
+      real(dp) t421
+      real(dp) t425
+      real(dp) t428
+      real(dp) t430
+      real(dp) t436
+      real(dp) t438
+      real(dp) t439
+      real(dp) t44
+      real(dp) t443
+      real(dp) t444
+      real(dp) t447
+      real(dp) t450
+      real(dp) t46
+      real(dp) t464
+      real(dp) t467
+      real(dp) t469
+      real(dp) t472
+      real(dp) t474
+      real(dp) t477
+      real(dp) t48
+      real(dp) t483
+      real(dp) t488
+      real(dp) t49
+      real(dp) t490
+      real(dp) t493
+      real(dp) t496
+      real(dp) t498
+      real(dp) t5
+      real(dp) t50
+      real(dp) t511
+      real(dp) t512
+      real(dp) t513
+      real(dp) t514
+      real(dp) t516
+      real(dp) t518
+      real(dp) t52
+      real(dp) t521
+      real(dp) t524
+      real(dp) t526
+      real(dp) t53
+      real(dp) t531
+      real(dp) t533
+      real(dp) t538
+      real(dp) t540
+      real(dp) t55
+      real(dp) t552
+      real(dp) t554
+      real(dp) t556
+      real(dp) t559
+      real(dp) t56
+      real(dp) t562
+      real(dp) t563
+      real(dp) t567
+      real(dp) t57
+      real(dp) t572
+      real(dp) t573
+      real(dp) t574
+      real(dp) t575
+      real(dp) t58
+      real(dp) t581
+      real(dp) t586
+      real(dp) t589
+      real(dp) t596
+      real(dp) t6
+      real(dp) t60
+      real(dp) t602
+      real(dp) t605
+      real(dp) t616
+      real(dp) t619
+      real(dp) t62
+      real(dp) t63
+      real(dp) t630
+      real(dp) t643
+      real(dp) t65
+      real(dp) t657
+      real(dp) t659
+      real(dp) t66
+      real(dp) t662
+      real(dp) t68
+      real(dp) t684
+      real(dp) t70
+      real(dp) t71
+      real(dp) t72
+      real(dp) t73
+      real(dp) t76
+      real(dp) t78
+      real(dp) t79
+      real(dp) t8
+      real(dp) t80
+      real(dp) t81
+      real(dp) t84
+      real(dp) t85
+      real(dp) t86
+      real(dp) t87
+      real(dp) t88
+      real(dp) t89
+      real(dp) t9
+      real(dp) t90
+      real(dp) t91
+      real(dp) t93
+      real(dp) t94
+      real(dp) t95
+      real(dp) t96
+      real(dp) t97
+      real(dp) t98
+      real(dp) t99
 
       real(dp) ph1
       real(dp) ph2
@@ -350,305 +350,305 @@ c extract all the phase angles for the stress matrix
             z=zmin+(k-1)*h
 
         t1 = omm*x
-        t2 = t1+ph9
+        t2 = t1+ph11
         t3 = sin(t2)
         t4 = omm*y
-        t5 = t4+ph5
-        t6 = cos(t5)
+        t5 = t4+ph6
+        t6 = sin(t5)
         t8 = omm*z
-        t9 = t8+ph9
+        t9 = t8+ph2
         t10 = sin(t9)
-        t12 = 2+t3*t6*t10
+        t11 = omm*t10
         t14 = om*x+ph
         t15 = sin(t14)
-        t17 = cv*t
-        t19 = om*(y-t17)
-        t20 = sin(t19)
-        t22 = om**2
-        t23 = t22**2
-        t24 = cv**2
-        t25 = t23*t24
-        t27 = om*z+ph
-        t28 = sin(t27)
-        t29 = t25*t28
-        t31 = t1+ph3
+        t17 = om*y+ph
+        t18 = sin(t17)
+        t20 = cv*t
+        t22 = om*(z-t20)
+        t23 = cos(t22)
+        t24 = om**2
+        t25 = t24*om
+        t27 = cv**2
+        t29 = t15*t18*t23*t25*t27
+        t31 = t1+ph1
         t32 = sin(t31)
-        t33 = t4+ph2
+        t33 = t4+ph1
         t34 = cos(t33)
-        t35 = t32*t34
-        t36 = t8+ph3
-        t37 = cos(t36)
-        t38 = t37*omm
-        t41 = om*(x-t17)
-        t42 = cos(t41)
-        t43 = t22*om
-        t46 = om*y+ph
-        t47 = sin(t46)
-        t48 = t24*t47
-        t49 = t48*t28
-        t50 = t42*t43*t49
-        t52 = t1+ph7
-        t53 = sin(t52)
-        t54 = t4+ph4
-        t55 = cos(t54)
-        t58 = sin(t8+ph7)
-        t60 = 2+t53*t55*t58
-        t61 = sin(t41)
-        t65 = t1+ph10
-        t66 = sin(t65)
-        t67 = sin(t5)
-        t69 = t8+ph1
-        t70 = sin(t69)
-        t72 = t66*t67*omm*t70
-        t73 = cos(t46)
-        t76 = om*(z-t17)
-        t77 = sin(t76)
-        t80 = t15*t73*t43*t77*t24
-        t82 = t1+ph2
-        t83 = cos(t82)
-        t85 = t4+ph1
-        t86 = cos(t85)
-        t87 = t8+ph2
-        t88 = sin(t87)
-        t90 = t83*omm*t86*t88
-        t91 = t61*t43
-        t92 = t24*t73
-        t93 = t92*t28
-        t94 = t91*t93
-        t96 = t1+ph12
-        t97 = sin(t96)
-        t98 = t4+ph6
-        t99 = cos(t98)
-        t100 = t97*t99
-        t101 = sin(t36)
-        t103 = 2+t100*t101
-        t107 = t100*t38
-        t108 = cos(t14)
-        t109 = t108*t43
-        t110 = t47*t77
-        t111 = t110*t24
+        t36 = t8+ph1
+        t37 = sin(t36)
+        t41 = om*(x-t20)
+        t42 = sin(t41)
+        t44 = t24**2
+        t46 = t27*t18
+        t48 = om*z+ph
+        t49 = sin(t48)
+        t50 = t46*t49
+        t52 = t1+ph5
+        t53 = cos(t52)
+        t55 = t4+ph3
+        t56 = cos(t55)
+        t57 = t8+ph5
+        t58 = sin(t57)
+        t60 = t53*omm*t56*t58
+        t62 = om*(y-t20)
+        t63 = sin(t62)
+        t65 = t25*t27
+        t66 = cos(t48)
+        t68 = t15*t63*t65*t66
+        t70 = t1+ph10
+        t71 = sin(t70)
+        t72 = t4+ph5
+        t73 = sin(t72)
+        t76 = t71*t73*omm*t37
+        t78 = t1+ph7
+        t79 = sin(t78)
+        t80 = t4+ph4
+        t81 = sin(t80)
+        t84 = sin(t8+ph7)
+        t85 = omm*t84
+        t86 = t79*t81*t85
+        t87 = t42*t25
+        t88 = cos(t17)
+        t89 = t27*t88
+        t90 = t89*t49
+        t91 = t87*t90
+        t93 = t1+ph12
+        t94 = sin(t93)
+        t95 = cos(t5)
+        t96 = t94*t95
+        t97 = t8+ph3
+        t98 = cos(t97)
+        t99 = t98*omm
+        t100 = t96*t99
+        t101 = cos(t14)
+        t102 = t101*t25
+        t103 = sin(t22)
+        t104 = t18*t103
+        t105 = t104*t27
+        t106 = t102*t105
+        t108 = t1+ph14
+        t109 = sin(t108)
+        t110 = t4+ph7
+        t111 = cos(t110)
         t112 = t109*t111
-        t114 = t1+ph8
-        t115 = sin(t114)
-        t116 = t115*t55
-        t117 = t8+ph8
-        t118 = cos(t117)
-        t119 = t118*omm
-        t120 = t116*t119
-        t121 = t20*t24
-        t122 = t121*t28
-        t123 = t109*t122
-        t125 = sin(t117)
-        t127 = 2+t116*t125
-        t130 = cos(t27)
-        t131 = t92*t130
-        t134 = cos(t31)
-        t137 = t134*omm*t34*t101
-        t139 = t1+ph15
-        t140 = sin(t139)
-        t141 = t4+ph8
-        t142 = cos(t141)
-        t143 = t140*t142
-        t144 = t8+ph6
-        t145 = cos(t144)
-        t146 = t145*omm
-        t147 = t143*t146
-        t149 = cos(t76)
-        t152 = t15*t47*t149*t43*t24
-        t154 = t1+ph14
-        t155 = sin(t154)
-        t156 = t4+ph7
-        t157 = cos(t156)
-        t158 = t155*t157
-        t159 = t8+ph5
-        t160 = sin(t159)
-        t162 = 2+t158*t160
-        t163 = t162*t15
-        t166 = t48*t130
-        t167 = t91*t166
-        t169 = -t12*t15*t20*t29+t35*t38*t50-t60*t61*t23*t49-t72*t80+t90*
-     #t94-t103*t61*t23*t49+t107*t112+t120*t123+2*t127*t61*t23*t131+t137*
-     #t112+t147*t152-t163*t20*t29+t137*t167
-        t170 = cos(t159)
-        t171 = t170*omm
-        t172 = t158*t171
-        t174 = t43*t24
-        t176 = t15*t20*t174*t130
-        t181 = cos(t19)
-        t183 = t181*t24*t28
-        t185 = t1+ph5
-        t186 = sin(t185)
-        t187 = t4+ph3
-        t188 = cos(t187)
-        t189 = t186*t188
-        t191 = 2+t189*t160
-        t193 = t191*t108*t23
-        t194 = t121*t130
-        t197 = sin(t54)
-        t199 = omm*t125
-        t200 = t115*t197*t199
-        t203 = t127*t108*t23
-        t205 = t73*t77*t24
-        t207 = t1+ph1
-        t208 = cos(t207)
-        t213 = t1+ph13
-        t214 = sin(t213)
-        t215 = t214*t157
-        t216 = t8+ph4
-        t217 = cos(t216)
-        t222 = t15*t181*t174*t28
-        t224 = t66*t6
-        t226 = 2+t224*t70
-        t227 = t226*t15
-        t230 = t23*t77*t24
-        t233 = omm*t58
-        t234 = t53*t197*t233
-        t236 = sin(t82)
-        t239 = 2+t236*t86*t88
-        t244 = t25*t130
-        t246 = t172*t176-t72*t176+t60*t108*t23*t183+t193*t194+t107*t167-
-     #t200*t112+t203*t205+t208*omm*t86*t70*t50+t215*t217*omm*t222-t227*t
-     #47*t230-t234*t123-t239*t15*t23*t122+t227*t181*t244
-        t248 = sin(t144)
-        t250 = 2+t143*t248
-        t254 = t1+ph6
-        t255 = cos(t254)
-        t262 = omm*t10
-        t263 = t3*t67*t262
-        t265 = t1+ph11
-        t266 = sin(t265)
-        t267 = t266*t99
-        t269 = 2+t267*t88
-        t273 = t23*t149*t24
-        t283 = t1+ph4
-        t284 = cos(t283)
-        t286 = sin(t216)
-        t291 = 2+t35*t101
-        t299 = t47*t149*t24
-        t301 = sin(t85)
-        t303 = omm*t88
-        t306 = -t250*t15*t47*t230+t255*omm*t188*t248*t152+t90*t123-t263*
-     #t222+t269*t15*t73*t273+t172*t80+t163*t73*t273+t203*t194+2*t239*t42
-     #*t23*t93+t284*omm*t34*t286*t222+2*t291*t42*t23*t166+t103*t108*t23*
-     #t299-t236*t301*t303*t50
-        t307 = sin(t254)
-        t308 = t307*t188
-        t310 = 2+t308*t248
-        t314 = cos(t185)
-        t317 = t314*omm*t188*t160
-        t320 = sin(t283)
-        t323 = 2+t320*t34*t286
-        t327 = sin(t207)
-        t334 = sin(t98)
-        t341 = 2+t215*t286
-        t347 = sin(t1+phm)
-        t349 = cos(t4+phm)
-        t352 = sin(t8+phm)
-        t355 = amprho*(2+t347*t349*t352)
-        t357 = t24**2
-        t358 = t23*t357
-        t366 = t310*t108*t23*t299+t317*t176+t317*t80+t323*t108*t23*t183-
-     #(2+t327*t86*t70)*t61*t23*t49-t266*t334*t303*t152+t193*t205-t234*t9
-     #4+t341*t15*t181*t244-t200*t167+t355*t61*t358*t47*t28+t120*t94-t291
-     #*t15*t23*t111
-        forces(1) = t169+t246+t306+t366
-        t369 = t162*t108*t23
-        t372 = sin(t1+ph18)
-        t373 = t4+ph9
-        t374 = sin(t373)
-        t386 = sin(t156)
-        t388 = omm*t286
-        t389 = t214*t386*t388
-        t392 = sin(t1+ph19)
-        t393 = t4+ph10
-        t394 = cos(t393)
-        t395 = t392*t394
-        t396 = t8+ph10
-        t397 = sin(t396)
-        t400 = (2+t395*t397)*t15
-        t404 = t226*t61*t23
-        t407 = sin(t1+ph17)
-        t408 = cos(t373)
-        t409 = t407*t408
-        t412 = (2+t409*t125)*t15
-        t415 = cos(t265)
-        t420 = cos(t52)
-        t423 = t420*omm*t55*t58
-        t425 = t355*t15
-        t431 = t226*t108*t23
-        t433 = t369*t299-t372*t374*t262*t152+2*t12*t108*t23*t183+t172*t1
-     #67-t239*t61*t23*t49-t389*t167+t400*t73*t273+t404*t131-t412*t47*t23
-     #0+t415*omm*t99*t88*t152+t423*t94+t425*t20*t23*t357*t28+t431*t205
-        t438 = t191*t42*t23
-        t441 = t341*t108*t23
-        t444 = cos(t114)
-        t447 = t444*omm*t55*t125
-        t450 = cos(t69)
-        t452 = t224*t450*omm
-        t461 = t127*t42*t23
-        t464 = t407*t374*t199
-        t468 = t269*t108*t23
-        t470 = -t60*t15*t23*t122+t438*t166+t441*t205-t389*t112+t447*t167
-     #+t447*t112+t452*t123+t323*t42*t23*t93+2*t412*t181*t244+t461*t166-t
-     #464*t80-t263*t94+t468*t299
-        t472 = cos(t396)
-        t474 = t395*t472*omm
-        t478 = cos(t65)
-        t481 = t478*omm*t6*t70
-        t484 = t162*t61*t23
-        t486 = t372*t408
-        t489 = (2+t486*t10)*t15
-        t494 = cos(t2)
-        t502 = sin(t33)
-        t510 = t474*t80-t400*t20*t29+t481*t80-t484*t49+t489*t73*t273-t26
-     #3*t123+t474*t176+t494*omm*t6*t10*t222+t172*t112+t189*t171*t50-t320
-     #*t502*t388*t50+t341*t61*t23*t131+t423*t123
-        t512 = t127*t15*t23
-        t515 = sin(t1+ph20)
-        t516 = t515*t394
-        t517 = t8+ph11
-        t518 = sin(t517)
-        t521 = (2+t516*t518)*t15
-        t525 = sin(t1+ph16)
-        t536 = cos(t517)
-        t538 = t516*t536*omm
-        t543 = sin(t141)
-        t554 = -t512*t111-t521*t47*t230-(2+t525*t142*t58)*t15*t20*t29+t4
-     #81*t176-t12*t61*t23*t49+t538*t152+2*t431*t194+t452*t94-t525*t543*t
-     #233*t222+t90*t50+t60*t42*t23*t93-t464*t176+t409*t119*t222
-        forces(2) = t433+t470+t510+t554
-        t556 = cos(t213)
-        t562 = sin(t393)
-        t573 = t392*t562*omm*t397
-        t581 = cos(t139)
-        t587 = omm*t160
-        t588 = t155*t386*t587
-        t592 = t556*omm*t157*t286*t222+t484*t131-t515*t562*omm*t518*t152
-     #+t461*t93+t425*t110*t358-t512*t122-t573*t80-t72*t123+2*t250*t108*t
-     #23*t299+t468*t194+t581*omm*t142*t248*t152-t588*t167+t308*t146*t50
-        t598 = cos(t87)
-        t600 = t267*t598*omm
-        t603 = sin(t187)
-        t608 = cos(t9)
-        t619 = t447*t94+t538*t176-t291*t61*t23*t49+t600*t94+t438*t93-t18
-     #6*t603*t587*t50+t431*t183+t486*t608*omm*t222+t369*t194-t521*t20*t2
-     #9+t538*t80+t600*t123+2*t369*t205
-        t625 = cos(t96)
-        t628 = t625*omm*t99*t101
-        t637 = sin(t1+ph21)
-        t638 = t637*t394
-        t639 = t8+ph12
-        t640 = cos(t639)
-        t652 = -t573*t176+t441*t183+t489*t181*t244+t628*t112-t250*t61*t2
-     #3*t49-t404*t49+t400*t181*t244+t638*t640*omm*t152-t72*t94+t447*t123
-     #-t400*t47*t230-t464*t222+t269*t61*t23*t131
-        t663 = sin(t639)
-        t669 = cos(t154)
-        t672 = t669*omm*t157*t160
-        t684 = t103*t42*t23*t166+t147*t112+2*t521*t73*t273+t310*t42*t23*
-     #t166-(2+t638*t663)*t15*t47*t230+t672*t176+t672*t80+t628*t167-t103*
-     #t15*t23*t111+t147*t167-t412*t20*t29-t588*t112+t137*t50
-        forces(3) = t592+t619+t652+t684
+        t113 = cos(t57)
+        t114 = t113*omm
+        t115 = t112*t114
+        t117 = t1+ph2
+        t118 = sin(t117)
+        t121 = 2+t118*t34*t10
+        t124 = t63*t27
+        t125 = t124*t49
+        t130 = t15*t88*t25*t103*t27
+        t132 = t1+ph8
+        t133 = sin(t132)
+        t134 = cos(t80)
+        t135 = t133*t134
+        t136 = t8+ph8
+        t137 = sin(t136)
+        t139 = 2+t135*t137
+        t142 = t89*t66
+        t146 = omm*t137
+        t147 = t133*t81*t146
+        t148 = t46*t66
+        t149 = t87*t148
+        t151 = cos(t72)
+        t152 = t71*t151
+        t154 = 2+t152*t37
+        t155 = t154*t15
+        t156 = cos(t62)
+        t158 = t44*t27
+        t159 = t158*t66
+        t161 = sin(t97)
+        t163 = 10+t96*t161
+        t167 = -t3*t6*t11*t29-(10+t32*t34*t37)*t42*t44*t50+t60*t68-t76*t
+     #68-t86*t91+t100*t106+t115*t68-t121*t15*t44*t125+t115*t130+2*t139*t
+     #42*t44*t142-t147*t149+t155*t156*t159-t163*t42*t44*t50
+        t168 = cos(t136)
+        t169 = t168*omm
+        t170 = t135*t169
+        t173 = t1+ph3
+        t174 = sin(t173)
+        t175 = t4+ph2
+        t176 = cos(t175)
+        t177 = t174*t176
+        t179 = cos(t41)
+        t181 = t179*t25*t50
+        t184 = t139*t101*t44
+        t185 = t124*t66
+        t187 = t3*t95
+        t189 = 2+t187*t10
+        t193 = t44*t23*t27
+        t195 = t1+ph9
+        t196 = sin(t195)
+        t198 = t8+ph9
+        t199 = sin(t198)
+        t200 = omm*t199
+        t201 = t196*t73*t200
+        t204 = t15*t156*t65*t49
+        t206 = t102*t125
+        t210 = 10+t79*t134*t84
+        t214 = t156*t27*t49
+        t217 = 2+t112*t58
+        t218 = t217*t15
+        t221 = t1+ph4
+        t222 = sin(t221)
+        t224 = t8+ph4
+        t225 = sin(t224)
+        t227 = 2+t222*t176*t225
+        t233 = t44*t103*t27
+        t236 = 2+t177*t161
+        t240 = cos(t173)
+        t243 = t240*omm*t176*t161
+        t245 = t170*t91-t147*t106+t177*t99*t181+t184*t185+t189*t15*t88*t
+     #193-t201*t204+t170*t206+t210*t101*t44*t214+t218*t88*t193+t227*t101
+     #*t44*t214-t155*t18*t233-t236*t15*t44*t105+t243*t106
+        t251 = t1+ph6
+        t252 = sin(t251)
+        t253 = t252*t56
+        t254 = t8+ph6
+        t255 = sin(t254)
+        t257 = 2+t253*t255
+        t261 = t18*t23*t27
+        t267 = t1+ph15
+        t268 = sin(t267)
+        t269 = t4+ph8
+        t270 = cos(t269)
+        t271 = t268*t270
+        t273 = 2+t271*t255
+        t277 = sin(t52)
+        t278 = t277*t56
+        t280 = 2+t278*t58
+        t282 = t280*t101*t44
+        t285 = t158*t49
+        t288 = t88*t103*t27
+        t296 = cos(t117)
+        t299 = t296*omm*t34*t10
+        t301 = 2*t121*t179*t44*t90+t257*t101*t44*t261-t86*t206+t163*t101
+     #*t44*t261-t273*t15*t18*t233+t282*t185-t218*t63*t285+t184*t288-t76*
+     #t130-t210*t42*t44*t50+t282*t288+t60*t130+t299*t206
+        t303 = cos(t31)
+        t310 = 2+t196*t151*t199
+        t314 = t1+ph13
+        t315 = sin(t314)
+        t316 = t315*t111
+        t317 = cos(t224)
+        t322 = cos(t221)
+        t328 = 2+t316*t225
+        t333 = sin(t1+phm)
+        t335 = cos(t4+phm)
+        t338 = sin(t8+phm)
+        t341 = amprho*(2+t333*t335*t338)
+        t343 = t27**2
+        t344 = t44*t343
+        t352 = cos(t254)
+        t353 = t352*omm
+        t354 = t271*t353
+        t356 = sin(t33)
+        t361 = cos(t251)
+        t366 = t100*t149+t303*omm*t34*t37*t181-t310*t15*t63*t285+t316*t3
+     #17*omm*t204+t299*t91+t322*omm*t176*t225*t204+t328*t15*t156*t159+t3
+     #41*t42*t344*t18*t49+2*t236*t179*t44*t148+t354*t29-t118*t356*t11*t1
+     #81+t243*t149+t361*omm*t56*t255*t29
+        forces(1) = t167+t245+t301+t366
+        t373 = t280*t179*t44
+        t375 = cos(t70)
+        t378 = t375*omm*t151*t37
+        t381 = t154*t101*t44
+        t384 = sin(t1+ph16)
+        t397 = sin(t1+ph17)
+        t398 = t4+ph9
+        t399 = sin(t398)
+        t401 = t397*t399*t146
+        t404 = sin(t1+ph20)
+        t405 = t4+ph10
+        t406 = cos(t405)
+        t407 = t404*t406
+        t408 = t8+ph11
+        t409 = sin(t408)
+        t412 = (2+t407*t409)*t15
+        t416 = t328*t101*t44
+        t419 = t139*t179*t44
+        t421 = -t201*t91-t210*t15*t44*t125+t373*t148+t378*t130+t381*t288
+     #-(10+t384*t270*t84)*t15*t63*t285+t115*t149+t328*t42*t44*t142+t299*
+     #t181-t401*t68-t412*t18*t233+t416*t288+t419*t148
+        t425 = cos(t132)
+        t428 = t425*omm*t134*t137
+        t430 = cos(t2)
+        t436 = t154*t42*t44
+        t438 = cos(t398)
+        t439 = t397*t438
+        t443 = sin(t1+ph18)
+        t444 = t443*t438
+        t447 = (2+t444*t199)*t15
+        t450 = cos(t195)
+        t464 = (2+t439*t137)*t15
+        t467 = cos(t36)
+        t469 = t152*t467*omm
+        t472 = t139*t15*t44
+        t474 = t210*t179*t44*t90+t428*t149+t430*omm*t95*t10*t29+t436*t14
+     #2+t439*t169*t204+t447*t88*t193+t450*omm*t151*t199*t204+t115*t106+t
+     #227*t179*t44*t90-t310*t42*t44*t50-t464*t18*t233+t469*t206-t472*t10
+     #5
+        t477 = t189*t101*t44
+        t483 = sin(t269)
+        t488 = sin(t175)
+        t490 = omm*t225
+        t493 = cos(t78)
+        t496 = t493*omm*t134*t84
+        t498 = t341*t15
+        t511 = sin(t1+ph19)
+        t512 = t511*t406
+        t513 = t8+ph10
+        t514 = cos(t513)
+        t516 = t512*t514*omm
+        t518 = sin(t513)
+        t521 = (10+t512*t518)*t15
+        t524 = t477*t261+2*t310*t101*t44*t214-t384*t483*t85*t204+t378*t6
+     #8-t222*t488*t490*t181+t496*t91+t498*t63*t44*t343*t49+t428*t106-t12
+     #1*t42*t44*t50+t278*t114*t181-t201*t206+t516*t130+t521*t88*t193
+        t526 = t217*t42*t44
+        t531 = cos(t408)
+        t533 = t407*t531*omm
+        t538 = sin(t110)
+        t540 = t315*t538*t490
+        t552 = t217*t101*t44
+        t554 = -t526*t50+2*t464*t156*t159+t533*t29-t521*t63*t285+t496*t2
+     #06-t540*t149-t443*t399*t200*t29-t401*t130-t540*t106+t469*t91+t516*
+     #t68+2*t381*t185+t552*t261
+        forces(2) = t421+t474+t524+t554
+        t556 = cos(t108)
+        t559 = t556*omm*t111*t58
+        t562 = omm*t58
+        t563 = t109*t538*t562
+        t567 = cos(t198)
+        t572 = sin(t1+ph21)
+        t573 = t572*t406
+        t574 = t8+ph12
+        t575 = sin(t574)
+        t581 = sin(t55)
+        t586 = sin(t405)
+        t589 = t511*t586*omm*t518
+        t596 = cos(t267)
+        t602 = t559*t68-t563*t149+t419*t90+t373*t90+t444*t567*omm*t204-(
+     #10+t573*t575)*t15*t18*t233-t277*t581*t562*t181+t243*t181-t589*t130
+     #+t354*t106+2*t273*t101*t44*t261+t596*omm*t270*t255*t29-t472*t125
+        t605 = cos(t314)
+        t616 = cos(t93)
+        t619 = t616*omm*t95*t161
+        t630 = t381*t214+t552*t185+t605*omm*t111*t225*t204-t76*t91+t526*
+     #t142-t412*t63*t285-t521*t18*t233+t619*t149+2*t412*t88*t193+t428*t2
+     #06-t563*t106+t354*t149-t163*t15*t44*t105
+        t643 = cos(t574)
+        t657 = cos(t9)
+        t659 = t187*t657*omm
+        t662 = t163*t179*t44*t148+t257*t179*t44*t148+t416*t214-t404*t586
+     #*omm*t409*t29+t573*t643*omm*t29+t447*t156*t159+t533*t130-t76*t206-
+     #t464*t63*t285+t533*t68-t236*t42*t44*t50+t659*t206+t619*t106
+        t684 = -t273*t42*t44*t50-t401*t204-t436*t50+t189*t42*t44*t142+t5
+     #21*t156*t159+t659*t91+t428*t91+t498*t104*t344-t589*t68+t477*t185+t
+     #253*t353*t181+2*t552*t288+t559*t130
+        forces(3) = t602+t630+t662+t684
 
       fo(1,i,j,k) = forces(1)
       fo(2,i,j,k) = forces(2)
@@ -659,3 +659,670 @@ c extract all the phase angles for the stress matrix
 
       return
       end
+
+
+      subroutine tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, 
+     *     kfirst, klast, fo, t,om,cv,ph,omm,phm,amprho,phc,
+     *     xx,yy,zz) bind(c)
+      use iso_c_binding
+      implicit none
+      integer, parameter:: dp = c_double
+c
+      integer, intent(in), value:: ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast
+      real(dp), intent(in), value:: t
+      real(dp), intent(in), value:: om
+      real(dp), intent(in), value:: cv
+      real(dp), intent(in), value:: ph
+      real(dp), intent(in), value:: omm
+      real(dp), intent(in), value:: phm
+      real(dp), intent(in), value:: amprho
+      real(dp), intent(in):: phc(21)
+      real(dp), intent(out):: fo(3,ifirst:ilast,jfirst:jlast,
+     *     kfirst:klast)
+      real(dp), intent(in):: xx(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real(dp), intent(in):: yy(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real(dp), intent(in):: zz(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+c local variables      
+      real(dp) x
+      real(dp) y
+      real(dp) z
+
+      real(dp) forces(3)
+      real(dp) t1
+      real(dp) t10
+      real(dp) t100
+      real(dp) t101
+      real(dp) t102
+      real(dp) t103
+      real(dp) t104
+      real(dp) t105
+      real(dp) t106
+      real(dp) t108
+      real(dp) t109
+      real(dp) t11
+      real(dp) t110
+      real(dp) t111
+      real(dp) t112
+      real(dp) t113
+      real(dp) t114
+      real(dp) t115
+      real(dp) t117
+      real(dp) t118
+      real(dp) t121
+      real(dp) t124
+      real(dp) t125
+      real(dp) t130
+      real(dp) t132
+      real(dp) t133
+      real(dp) t134
+      real(dp) t135
+      real(dp) t136
+      real(dp) t137
+      real(dp) t139
+      real(dp) t14
+      real(dp) t142
+      real(dp) t146
+      real(dp) t147
+      real(dp) t148
+      real(dp) t149
+      real(dp) t15
+      real(dp) t151
+      real(dp) t152
+      real(dp) t154
+      real(dp) t155
+      real(dp) t156
+      real(dp) t158
+      real(dp) t159
+      real(dp) t161
+      real(dp) t163
+      real(dp) t167
+      real(dp) t168
+      real(dp) t169
+      real(dp) t17
+      real(dp) t170
+      real(dp) t173
+      real(dp) t174
+      real(dp) t175
+      real(dp) t176
+      real(dp) t177
+      real(dp) t179
+      real(dp) t18
+      real(dp) t181
+      real(dp) t184
+      real(dp) t185
+      real(dp) t187
+      real(dp) t189
+      real(dp) t193
+      real(dp) t195
+      real(dp) t196
+      real(dp) t198
+      real(dp) t199
+      real(dp) t2
+      real(dp) t20
+      real(dp) t200
+      real(dp) t201
+      real(dp) t204
+      real(dp) t206
+      real(dp) t210
+      real(dp) t214
+      real(dp) t217
+      real(dp) t218
+      real(dp) t22
+      real(dp) t221
+      real(dp) t222
+      real(dp) t224
+      real(dp) t225
+      real(dp) t227
+      real(dp) t23
+      real(dp) t233
+      real(dp) t236
+      real(dp) t24
+      real(dp) t240
+      real(dp) t243
+      real(dp) t245
+      real(dp) t25
+      real(dp) t251
+      real(dp) t252
+      real(dp) t253
+      real(dp) t254
+      real(dp) t255
+      real(dp) t257
+      real(dp) t261
+      real(dp) t267
+      real(dp) t268
+      real(dp) t269
+      real(dp) t27
+      real(dp) t270
+      real(dp) t271
+      real(dp) t273
+      real(dp) t277
+      real(dp) t278
+      real(dp) t280
+      real(dp) t282
+      real(dp) t285
+      real(dp) t288
+      real(dp) t29
+      real(dp) t296
+      real(dp) t299
+      real(dp) t3
+      real(dp) t301
+      real(dp) t303
+      real(dp) t31
+      real(dp) t310
+      real(dp) t314
+      real(dp) t315
+      real(dp) t316
+      real(dp) t317
+      real(dp) t32
+      real(dp) t322
+      real(dp) t328
+      real(dp) t33
+      real(dp) t333
+      real(dp) t335
+      real(dp) t338
+      real(dp) t34
+      real(dp) t341
+      real(dp) t343
+      real(dp) t344
+      real(dp) t352
+      real(dp) t353
+      real(dp) t354
+      real(dp) t356
+      real(dp) t36
+      real(dp) t361
+      real(dp) t366
+      real(dp) t37
+      real(dp) t373
+      real(dp) t375
+      real(dp) t378
+      real(dp) t381
+      real(dp) t384
+      real(dp) t397
+      real(dp) t398
+      real(dp) t399
+      real(dp) t4
+      real(dp) t401
+      real(dp) t404
+      real(dp) t405
+      real(dp) t406
+      real(dp) t407
+      real(dp) t408
+      real(dp) t409
+      real(dp) t41
+      real(dp) t412
+      real(dp) t416
+      real(dp) t419
+      real(dp) t42
+      real(dp) t421
+      real(dp) t425
+      real(dp) t428
+      real(dp) t430
+      real(dp) t436
+      real(dp) t438
+      real(dp) t439
+      real(dp) t44
+      real(dp) t443
+      real(dp) t444
+      real(dp) t447
+      real(dp) t450
+      real(dp) t46
+      real(dp) t464
+      real(dp) t467
+      real(dp) t469
+      real(dp) t472
+      real(dp) t474
+      real(dp) t477
+      real(dp) t48
+      real(dp) t483
+      real(dp) t488
+      real(dp) t49
+      real(dp) t490
+      real(dp) t493
+      real(dp) t496
+      real(dp) t498
+      real(dp) t5
+      real(dp) t50
+      real(dp) t511
+      real(dp) t512
+      real(dp) t513
+      real(dp) t514
+      real(dp) t516
+      real(dp) t518
+      real(dp) t52
+      real(dp) t521
+      real(dp) t524
+      real(dp) t526
+      real(dp) t53
+      real(dp) t531
+      real(dp) t533
+      real(dp) t538
+      real(dp) t540
+      real(dp) t55
+      real(dp) t552
+      real(dp) t554
+      real(dp) t556
+      real(dp) t559
+      real(dp) t56
+      real(dp) t562
+      real(dp) t563
+      real(dp) t567
+      real(dp) t57
+      real(dp) t572
+      real(dp) t573
+      real(dp) t574
+      real(dp) t575
+      real(dp) t58
+      real(dp) t581
+      real(dp) t586
+      real(dp) t589
+      real(dp) t596
+      real(dp) t6
+      real(dp) t60
+      real(dp) t602
+      real(dp) t605
+      real(dp) t616
+      real(dp) t619
+      real(dp) t62
+      real(dp) t63
+      real(dp) t630
+      real(dp) t643
+      real(dp) t65
+      real(dp) t657
+      real(dp) t659
+      real(dp) t66
+      real(dp) t662
+      real(dp) t68
+      real(dp) t684
+      real(dp) t70
+      real(dp) t71
+      real(dp) t72
+      real(dp) t73
+      real(dp) t76
+      real(dp) t78
+      real(dp) t79
+      real(dp) t8
+      real(dp) t80
+      real(dp) t81
+      real(dp) t84
+      real(dp) t85
+      real(dp) t86
+      real(dp) t87
+      real(dp) t88
+      real(dp) t89
+      real(dp) t9
+      real(dp) t90
+      real(dp) t91
+      real(dp) t93
+      real(dp) t94
+      real(dp) t95
+      real(dp) t96
+      real(dp) t97
+      real(dp) t98
+      real(dp) t99
+
+      real(dp) ph1
+      real(dp) ph2
+      real(dp) ph3
+      real(dp) ph4
+      real(dp) ph5
+      real(dp) ph6
+      real(dp) ph7
+      real(dp) ph8
+      real(dp) ph9
+      real(dp) ph10
+      real(dp) ph11
+      real(dp) ph12
+      real(dp) ph13
+      real(dp) ph14
+      real(dp) ph15
+      real(dp) ph16
+      real(dp) ph17
+      real(dp) ph18
+      real(dp) ph19
+      real(dp) ph20
+      real(dp) ph21
+
+      integer i, j, k
+c extract all the phase angles for the stress matrix
+      ph1 = phc(1)
+      ph2 = phc(2)
+      ph3 = phc(3)
+      ph4 = phc(4)
+      ph5 = phc(5)
+      ph6 = phc(6)
+      ph7 = phc(7)
+      ph8 = phc(8)
+      ph9 = phc(9)
+      ph10 = phc(10)
+      ph11 = phc(11)
+      ph12 = phc(12)
+      ph13 = phc(13)
+      ph14 = phc(14)
+      ph15 = phc(15)
+      ph16 = phc(16)
+      ph17 = phc(17)
+      ph18 = phc(18)
+      ph19 = phc(19)
+      ph20 = phc(20)
+      ph21 = phc(21)
+      
+      do k=kfirst,klast
+        do j=jfirst,jlast
+          do i=ifirst,ilast
+             x = xx(i,j,k)
+             y = yy(i,j,k)
+             z = zz(i,j,k)
+
+        t1 = omm*x
+        t2 = t1+ph11
+        t3 = sin(t2)
+        t4 = omm*y
+        t5 = t4+ph6
+        t6 = sin(t5)
+        t8 = omm*z
+        t9 = t8+ph2
+        t10 = sin(t9)
+        t11 = omm*t10
+        t14 = om*x+ph
+        t15 = sin(t14)
+        t17 = om*y+ph
+        t18 = sin(t17)
+        t20 = cv*t
+        t22 = om*(z-t20)
+        t23 = cos(t22)
+        t24 = om**2
+        t25 = t24*om
+        t27 = cv**2
+        t29 = t15*t18*t23*t25*t27
+        t31 = t1+ph1
+        t32 = sin(t31)
+        t33 = t4+ph1
+        t34 = cos(t33)
+        t36 = t8+ph1
+        t37 = sin(t36)
+        t41 = om*(x-t20)
+        t42 = sin(t41)
+        t44 = t24**2
+        t46 = t27*t18
+        t48 = om*z+ph
+        t49 = sin(t48)
+        t50 = t46*t49
+        t52 = t1+ph5
+        t53 = cos(t52)
+        t55 = t4+ph3
+        t56 = cos(t55)
+        t57 = t8+ph5
+        t58 = sin(t57)
+        t60 = t53*omm*t56*t58
+        t62 = om*(y-t20)
+        t63 = sin(t62)
+        t65 = t25*t27
+        t66 = cos(t48)
+        t68 = t15*t63*t65*t66
+        t70 = t1+ph10
+        t71 = sin(t70)
+        t72 = t4+ph5
+        t73 = sin(t72)
+        t76 = t71*t73*omm*t37
+        t78 = t1+ph7
+        t79 = sin(t78)
+        t80 = t4+ph4
+        t81 = sin(t80)
+        t84 = sin(t8+ph7)
+        t85 = omm*t84
+        t86 = t79*t81*t85
+        t87 = t42*t25
+        t88 = cos(t17)
+        t89 = t27*t88
+        t90 = t89*t49
+        t91 = t87*t90
+        t93 = t1+ph12
+        t94 = sin(t93)
+        t95 = cos(t5)
+        t96 = t94*t95
+        t97 = t8+ph3
+        t98 = cos(t97)
+        t99 = t98*omm
+        t100 = t96*t99
+        t101 = cos(t14)
+        t102 = t101*t25
+        t103 = sin(t22)
+        t104 = t18*t103
+        t105 = t104*t27
+        t106 = t102*t105
+        t108 = t1+ph14
+        t109 = sin(t108)
+        t110 = t4+ph7
+        t111 = cos(t110)
+        t112 = t109*t111
+        t113 = cos(t57)
+        t114 = t113*omm
+        t115 = t112*t114
+        t117 = t1+ph2
+        t118 = sin(t117)
+        t121 = 2+t118*t34*t10
+        t124 = t63*t27
+        t125 = t124*t49
+        t130 = t15*t88*t25*t103*t27
+        t132 = t1+ph8
+        t133 = sin(t132)
+        t134 = cos(t80)
+        t135 = t133*t134
+        t136 = t8+ph8
+        t137 = sin(t136)
+        t139 = 2+t135*t137
+        t142 = t89*t66
+        t146 = omm*t137
+        t147 = t133*t81*t146
+        t148 = t46*t66
+        t149 = t87*t148
+        t151 = cos(t72)
+        t152 = t71*t151
+        t154 = 2+t152*t37
+        t155 = t154*t15
+        t156 = cos(t62)
+        t158 = t44*t27
+        t159 = t158*t66
+        t161 = sin(t97)
+        t163 = 10+t96*t161
+        t167 = -t3*t6*t11*t29-(10+t32*t34*t37)*t42*t44*t50+t60*t68-t76*t
+     #68-t86*t91+t100*t106+t115*t68-t121*t15*t44*t125+t115*t130+2*t139*t
+     #42*t44*t142-t147*t149+t155*t156*t159-t163*t42*t44*t50
+        t168 = cos(t136)
+        t169 = t168*omm
+        t170 = t135*t169
+        t173 = t1+ph3
+        t174 = sin(t173)
+        t175 = t4+ph2
+        t176 = cos(t175)
+        t177 = t174*t176
+        t179 = cos(t41)
+        t181 = t179*t25*t50
+        t184 = t139*t101*t44
+        t185 = t124*t66
+        t187 = t3*t95
+        t189 = 2+t187*t10
+        t193 = t44*t23*t27
+        t195 = t1+ph9
+        t196 = sin(t195)
+        t198 = t8+ph9
+        t199 = sin(t198)
+        t200 = omm*t199
+        t201 = t196*t73*t200
+        t204 = t15*t156*t65*t49
+        t206 = t102*t125
+        t210 = 10+t79*t134*t84
+        t214 = t156*t27*t49
+        t217 = 2+t112*t58
+        t218 = t217*t15
+        t221 = t1+ph4
+        t222 = sin(t221)
+        t224 = t8+ph4
+        t225 = sin(t224)
+        t227 = 2+t222*t176*t225
+        t233 = t44*t103*t27
+        t236 = 2+t177*t161
+        t240 = cos(t173)
+        t243 = t240*omm*t176*t161
+        t245 = t170*t91-t147*t106+t177*t99*t181+t184*t185+t189*t15*t88*t
+     #193-t201*t204+t170*t206+t210*t101*t44*t214+t218*t88*t193+t227*t101
+     #*t44*t214-t155*t18*t233-t236*t15*t44*t105+t243*t106
+        t251 = t1+ph6
+        t252 = sin(t251)
+        t253 = t252*t56
+        t254 = t8+ph6
+        t255 = sin(t254)
+        t257 = 2+t253*t255
+        t261 = t18*t23*t27
+        t267 = t1+ph15
+        t268 = sin(t267)
+        t269 = t4+ph8
+        t270 = cos(t269)
+        t271 = t268*t270
+        t273 = 2+t271*t255
+        t277 = sin(t52)
+        t278 = t277*t56
+        t280 = 2+t278*t58
+        t282 = t280*t101*t44
+        t285 = t158*t49
+        t288 = t88*t103*t27
+        t296 = cos(t117)
+        t299 = t296*omm*t34*t10
+        t301 = 2*t121*t179*t44*t90+t257*t101*t44*t261-t86*t206+t163*t101
+     #*t44*t261-t273*t15*t18*t233+t282*t185-t218*t63*t285+t184*t288-t76*
+     #t130-t210*t42*t44*t50+t282*t288+t60*t130+t299*t206
+        t303 = cos(t31)
+        t310 = 2+t196*t151*t199
+        t314 = t1+ph13
+        t315 = sin(t314)
+        t316 = t315*t111
+        t317 = cos(t224)
+        t322 = cos(t221)
+        t328 = 2+t316*t225
+        t333 = sin(t1+phm)
+        t335 = cos(t4+phm)
+        t338 = sin(t8+phm)
+        t341 = amprho*(2+t333*t335*t338)
+        t343 = t27**2
+        t344 = t44*t343
+        t352 = cos(t254)
+        t353 = t352*omm
+        t354 = t271*t353
+        t356 = sin(t33)
+        t361 = cos(t251)
+        t366 = t100*t149+t303*omm*t34*t37*t181-t310*t15*t63*t285+t316*t3
+     #17*omm*t204+t299*t91+t322*omm*t176*t225*t204+t328*t15*t156*t159+t3
+     #41*t42*t344*t18*t49+2*t236*t179*t44*t148+t354*t29-t118*t356*t11*t1
+     #81+t243*t149+t361*omm*t56*t255*t29
+        forces(1) = t167+t245+t301+t366
+        t373 = t280*t179*t44
+        t375 = cos(t70)
+        t378 = t375*omm*t151*t37
+        t381 = t154*t101*t44
+        t384 = sin(t1+ph16)
+        t397 = sin(t1+ph17)
+        t398 = t4+ph9
+        t399 = sin(t398)
+        t401 = t397*t399*t146
+        t404 = sin(t1+ph20)
+        t405 = t4+ph10
+        t406 = cos(t405)
+        t407 = t404*t406
+        t408 = t8+ph11
+        t409 = sin(t408)
+        t412 = (2+t407*t409)*t15
+        t416 = t328*t101*t44
+        t419 = t139*t179*t44
+        t421 = -t201*t91-t210*t15*t44*t125+t373*t148+t378*t130+t381*t288
+     #-(10+t384*t270*t84)*t15*t63*t285+t115*t149+t328*t42*t44*t142+t299*
+     #t181-t401*t68-t412*t18*t233+t416*t288+t419*t148
+        t425 = cos(t132)
+        t428 = t425*omm*t134*t137
+        t430 = cos(t2)
+        t436 = t154*t42*t44
+        t438 = cos(t398)
+        t439 = t397*t438
+        t443 = sin(t1+ph18)
+        t444 = t443*t438
+        t447 = (2+t444*t199)*t15
+        t450 = cos(t195)
+        t464 = (2+t439*t137)*t15
+        t467 = cos(t36)
+        t469 = t152*t467*omm
+        t472 = t139*t15*t44
+        t474 = t210*t179*t44*t90+t428*t149+t430*omm*t95*t10*t29+t436*t14
+     #2+t439*t169*t204+t447*t88*t193+t450*omm*t151*t199*t204+t115*t106+t
+     #227*t179*t44*t90-t310*t42*t44*t50-t464*t18*t233+t469*t206-t472*t10
+     #5
+        t477 = t189*t101*t44
+        t483 = sin(t269)
+        t488 = sin(t175)
+        t490 = omm*t225
+        t493 = cos(t78)
+        t496 = t493*omm*t134*t84
+        t498 = t341*t15
+        t511 = sin(t1+ph19)
+        t512 = t511*t406
+        t513 = t8+ph10
+        t514 = cos(t513)
+        t516 = t512*t514*omm
+        t518 = sin(t513)
+        t521 = (10+t512*t518)*t15
+        t524 = t477*t261+2*t310*t101*t44*t214-t384*t483*t85*t204+t378*t6
+     #8-t222*t488*t490*t181+t496*t91+t498*t63*t44*t343*t49+t428*t106-t12
+     #1*t42*t44*t50+t278*t114*t181-t201*t206+t516*t130+t521*t88*t193
+        t526 = t217*t42*t44
+        t531 = cos(t408)
+        t533 = t407*t531*omm
+        t538 = sin(t110)
+        t540 = t315*t538*t490
+        t552 = t217*t101*t44
+        t554 = -t526*t50+2*t464*t156*t159+t533*t29-t521*t63*t285+t496*t2
+     #06-t540*t149-t443*t399*t200*t29-t401*t130-t540*t106+t469*t91+t516*
+     #t68+2*t381*t185+t552*t261
+        forces(2) = t421+t474+t524+t554
+        t556 = cos(t108)
+        t559 = t556*omm*t111*t58
+        t562 = omm*t58
+        t563 = t109*t538*t562
+        t567 = cos(t198)
+        t572 = sin(t1+ph21)
+        t573 = t572*t406
+        t574 = t8+ph12
+        t575 = sin(t574)
+        t581 = sin(t55)
+        t586 = sin(t405)
+        t589 = t511*t586*omm*t518
+        t596 = cos(t267)
+        t602 = t559*t68-t563*t149+t419*t90+t373*t90+t444*t567*omm*t204-(
+     #10+t573*t575)*t15*t18*t233-t277*t581*t562*t181+t243*t181-t589*t130
+     #+t354*t106+2*t273*t101*t44*t261+t596*omm*t270*t255*t29-t472*t125
+        t605 = cos(t314)
+        t616 = cos(t93)
+        t619 = t616*omm*t95*t161
+        t630 = t381*t214+t552*t185+t605*omm*t111*t225*t204-t76*t91+t526*
+     #t142-t412*t63*t285-t521*t18*t233+t619*t149+2*t412*t88*t193+t428*t2
+     #06-t563*t106+t354*t149-t163*t15*t44*t105
+        t643 = cos(t574)
+        t657 = cos(t9)
+        t659 = t187*t657*omm
+        t662 = t163*t179*t44*t148+t257*t179*t44*t148+t416*t214-t404*t586
+     #*omm*t409*t29+t573*t643*omm*t29+t447*t156*t159+t533*t130-t76*t206-
+     #t464*t63*t285+t533*t68-t236*t42*t44*t50+t659*t206+t619*t106
+        t684 = -t273*t42*t44*t50-t401*t204-t436*t50+t189*t42*t44*t142+t5
+     #21*t156*t159+t659*t91+t428*t91+t498*t104*t344-t589*t68+t477*t185+t
+     #253*t353*t181+2*t552*t288+t559*t130
+        forces(3) = t602+t630+t662+t684
+
+      fo(1,i,j,k) = forces(1)
+      fo(2,i,j,k) = forces(2)
+      fo(3,i,j,k) = forces(3)
+      enddo
+      enddo
+      enddo
+
+      return
+      end
+      

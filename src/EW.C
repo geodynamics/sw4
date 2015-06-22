@@ -51,9 +51,17 @@ extern "C" {
                        double t, double om, double cv, double ph,double omm, double phm,
                        double amprho, double *phc, double h, double zmin) ;
    
+   void tw_aniso_curvi_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* fo,
+                       double t, double om, double cv, double ph,double omm, double phm,
+                       double amprho, double *phc, double* xx, double* yy, double* zz) ;
+
    void tw_aniso_force_tt(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* fo,
                           double t, double om, double cv, double ph,double omm, double phm,
                           double amprho, double *phc, double h, double zmin) ;
+
+   void tw_aniso_curvi_force_tt(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* fo,
+                       double t, double om, double cv, double ph,double omm, double phm,
+                       double amprho, double *phc, double* xx, double* yy, double* zz) ;
 
    void F77_FUNC(corrfort,CORRFORT)(int*, int*, int*, int*, int*, int*, 
 				 double*, double*, double*, double*, double* );
@@ -3326,7 +3334,31 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
            tw_aniso_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                           a_t, om, cv, ph, omm, phm,
                           amprho, phc, h, zmin);
-        }
+        } // end for all Cartesian grids
+        if( topographyExists() )
+        {
+           g = mNumberOfGrids-1;
+           f_ptr    = a_F[g].c_ptr();
+           ifirst = m_iStart[g];
+           ilast  = m_iEnd[g];
+           jfirst = m_jStart[g];
+           jlast  = m_jEnd[g];
+           kfirst = m_kStart[g];
+           klast  = m_kEnd[g];
+           om = m_twilight_forcing->m_omega;
+           ph = m_twilight_forcing->m_phase;
+           cv = m_twilight_forcing->m_c;
+           omm = m_twilight_forcing->m_momega;
+           phm = m_twilight_forcing->m_mphase;
+           amprho = m_twilight_forcing->m_amprho;
+
+           tw_aniso_curvi_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
+                                a_t, om, cv, ph, omm, phm, amprho, phc,
+                                mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+
+        } // end if topographyExists
+        
+        
      }
      else
      { // isotropic twilight forcing
@@ -3373,7 +3405,8 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
                                                           &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
                                                           &h, &zmin );
            }
-        }
+        } // end for all Cartesian grids
+        
         if( topographyExists() )
         {
            g = mNumberOfGrids-1;
@@ -3497,7 +3530,31 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
            tw_aniso_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                              a_t, om, cv, ph, omm, phm,
                              amprho, phc, h, zmin);
-        }
+        } // end for all Cartesian grids
+
+        if( topographyExists() )
+        {
+           g = mNumberOfGrids-1;
+           f_ptr    = a_F[g].c_ptr();
+           ifirst = m_iStart[g];
+           ilast  = m_iEnd[g];
+           jfirst = m_jStart[g];
+           jlast  = m_jEnd[g];
+           kfirst = m_kStart[g];
+           klast  = m_kEnd[g];
+           om = m_twilight_forcing->m_omega;
+           ph = m_twilight_forcing->m_phase;
+           cv = m_twilight_forcing->m_c;
+           omm = m_twilight_forcing->m_momega;
+           phm = m_twilight_forcing->m_mphase;
+           amprho = m_twilight_forcing->m_amprho;
+
+           tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
+                                   a_t, om, cv, ph, omm, phm, amprho, phc,
+                                   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+
+        } // end if topographyExists
+                
      }
      else
      { // isotropic twilight forcing

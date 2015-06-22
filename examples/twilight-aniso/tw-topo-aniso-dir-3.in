@@ -1,0 +1,16 @@
+fileio path=gauss-3 verbose=2
+
+anisotropy
+grid nx=201 x=6.28 y=6.28 z=6.28
+time t=1.0
+#time steps=1
+
+topography order=5 input=gaussian zmax=3.0 gaussianAmp=0.6 gaussianXc=3.6 gaussianYc=2.4 gaussianLx=0.6 gaussianLy=0.63
+
+twilight freeupper=0 omega=1.0 phase=0.3 momega=1.0  mphase=0.1 amprho=1.0 errorlog=1 
+
+image time=1.0 mode=uxerr x=3.14 file=test
+developer checkfornan=on
+
+
+

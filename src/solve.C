@@ -1067,7 +1067,7 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
     int topo=topographyExists() && g == mNumberOfGrids-1;
     
 // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
-// for periodic bc, a_BCForcing[g][s] == NULL, so you better not access the
+// for periodic bc, a_BCForcing[g][s] == NULL, so you better not access
 // theses arrays in that case
     bforce_side0_ptr = a_BCForcing[g][0]; // low-i bndry forcing array pointer
     bforce_side1_ptr = a_BCForcing[g][1]; // high-i bndry forcing array pointer

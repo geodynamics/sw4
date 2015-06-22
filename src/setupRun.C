@@ -45,6 +45,9 @@
 extern "C" {
    void tw_ani_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double h, double zmin,
                      double omm, double phm, double amprho, double *rho, double *phc, double *cm);
+
+   void tw_ani_curvi_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double *xx, double *yy, double *zz,
+                     double omm, double phm, double amprho, double *rho, double *phc, double *cm);
    
    void F77_FUNC(exactmatfort,EXACTMATFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double*, double*);
@@ -1189,6 +1192,7 @@ void EW::set_anisotropic_materials()
          klast  = m_kEnd[g];
          h = mGridSize[g];
          zmin = m_zmin[g];
+         
          omm = m_twilight_forcing->m_momega;
          phm = m_twilight_forcing->m_mphase;
          amprho = m_twilight_forcing->m_amprho;
@@ -1209,26 +1213,42 @@ void EW::set_anisotropic_materials()
       {
          g = mNumberOfGrids-1;
          rho_ptr = mRho[g].c_ptr();
+         cm_ptr = mC[g].c_ptr();
+
+         double* x_ptr = mX.c_ptr();
+         double* y_ptr = mY.c_ptr();
+         double* z_ptr = mZ.c_ptr();
+
          ifirst = m_iStart[g];
          ilast  = m_iEnd[g];
          jfirst = m_jStart[g];
          jlast  = m_jEnd[g];
          kfirst = m_kStart[g];
          klast  = m_kEnd[g];
-         double* x_ptr = mX.c_ptr();
-         double* y_ptr = mY.c_ptr();
-         double* z_ptr = mZ.c_ptr();
+
          omm = m_twilight_forcing->m_momega;
          phm = m_twilight_forcing->m_mphase;
          amprho = m_twilight_forcing->m_amprho;
-         ampmu = m_twilight_forcing->m_ampmu;
-         ampla = m_twilight_forcing->m_amplambda;
-// tmp
-         CHECK_INPUT(false, "Error:  topography not yet implemented for anisotropic twilight testing" << endl);
-         // F77_FUNC(exactmatfortc,EXACTMATFORTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-         //                                       &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-         //                                       &amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+
+         if (proc_zero() )
+            printf("set_anisotropic_mat> before tw_ani_curvi_stiff\n");
+         tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
+                            omm, phm, amprho, rho_ptr, phc, cm_ptr);
+         if (proc_zero() )
+            printf("set_anisotropic_mat> after tw_ani_curvi_stiff\n");
+
       }
+
+// make sure the stiffness matrix is positive definite
+      check_anisotropic_material( mRho, mC );
+      if( topographyExists() )
+      {
+         int g=mNumberOfGrids-1;
+         F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
+                                                                  &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+                                                                  mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+      }
+      
    } // end if m_twilight
    else
    {
@@ -1275,8 +1295,7 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
       cout << " Material properties " << endl;
       cout <<  rhomin <<  " <=  Density <= " << rhomax  << endl;
       cout <<  eigmin <<  " <=  Eig(c)  <= " << eigmax << endl;
-      if( eigmin <= 0 )
-	 cout << "ERROR: tensor of elastic coefficients is not positive definite. The problem is not well posed" << endl;
+      CHECK_INPUT(eigmin > 0, "ERROR: tensor of elastic coefficients is not positive definite. The problem is not well posed" << endl);
    }
 }
 
@@ -1795,6 +1814,10 @@ void EW::assign_supergrid_damping_arrays()
 // Note: compared to WPP2, we don't need to center the damping coefficients on the half-point anymore,
 // because the damping term is now 4th order: D+D-( a(x) D+D- ut(x) )
 
+// tmp
+  if (proc_zero())
+     printf("assign_supergrid_damping_arrays>  m_use_supergrid = %i, m_twilight_forcing = %i\n", m_use_supergrid? 1:0, m_twilight_forcing? 1:0);
+
   if( m_use_supergrid )
   {
 // tmp
@@ -1886,7 +1909,7 @@ void EW::assign_supergrid_damping_arrays()
 	   }
 	} // end for g...
      }
-  }
+  } // end if m_use_supergrid  
   else //
   {
 // tmp

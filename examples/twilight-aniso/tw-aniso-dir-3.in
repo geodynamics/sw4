@@ -1,0 +1,11 @@
+# Twilight testing with generalized forcing functions
+anisotropy
+grid nx=121 x=1.0 y=1.0 z=1.0
+time t=0.1
+fileio path=flat-3 verbose=2
+twilight freeupper=0 omega=6.28 phase=0.8 momega=6.28 errorlog=1
+image time=0.1 mode=uxerr x=0.5 file=test
+
+
+
+
