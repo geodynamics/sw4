@@ -217,6 +217,7 @@ c moved the assignment of bforce5/6 into its own routine
                   rhs3 = rhs3 + c(15,i,j,k)*du  + c(20,i,j,k)*dv + 
      *                             c(21,i,j,k)*dw - h*bforce5(3,qq)
 
+
 *** Solve symmetric system for ghost point values
                   x(1) = rhs1
                   x(2) = rhs2
@@ -285,7 +286,14 @@ c s=6
      *                             c(20,i,j,k)*dw - h*bforce6(2,qq)
                   rhs3 = rhs3 + c(15,i,j,k)*du  + c(20,i,j,k)*dv + 
      *                             c(21,i,j,k)*dw - h*bforce6(3,qq)
-
+c AP testing
+c$$$                  rhs1 = rhs1 + c(12,i,j,k)*du  + c(14,i,j,k)*dv + 
+c$$$     *                             c(15,i,j,k)*dw + h*bforce6(1,qq)
+c$$$                  rhs2 = rhs2 + c(14,i,j,k)*du  + c(19,i,j,k)*dv + 
+c$$$     *                             c(20,i,j,k)*dw + h*bforce6(2,qq)
+c$$$                  rhs3 = rhs3 + c(15,i,j,k)*du  + c(20,i,j,k)*dv + 
+c$$$     *                             c(21,i,j,k)*dw + h*bforce6(3,qq)
+c$$$
 *** Solve symmetric system for ghost point values
                   x(1) = rhs1
                   x(2) = rhs2

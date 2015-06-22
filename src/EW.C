@@ -3308,7 +3308,6 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
         double phc[21]; // move these angles to the EW class
 
         // need to store all the phase angle constants somewhere
-        phc[0]=0;
         for (int i=0; i<21; i++)
            phc[i] = i*10*M_PI/180;
 

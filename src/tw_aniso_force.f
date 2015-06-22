@@ -1308,3 +1308,251 @@ c extract all the phase angles for the stress matrix
       return
       end
       
+      subroutine tw_aniso_free_surf_z(ifirst, ilast, jfirst, jlast,
+     *     kfirst, klast,
+     *     kz, t, om, cv, ph, omm, phc, bforce, h, zmin )
+     *     bind(c)
+      use iso_c_binding
+      implicit none
+      integer, parameter:: dp = c_double
+
+      integer, intent(in), value::  ifirst, ilast, jfirst, jlast,
+     *     kfirst, klast
+      integer, intent(in), value:: kz
+      real(dp), intent(in), value:: t, om, cv, ph, omm
+      real(dp), intent(in):: phc(21)
+      real(dp), intent(out):: bforce(3,ifirst:ilast,jfirst:jlast)
+      real(dp), intent(in), value:: h, zmin
+
+c local variables
+      integer i, j
+      real(dp) x
+      real(dp) y
+      real(dp) z
+      real(dp) ph1
+      real(dp) ph2
+      real(dp) ph3
+      real(dp) ph4
+      real(dp) ph5
+      real(dp) ph6
+      real(dp) ph7
+      real(dp) ph8
+      real(dp) ph9
+      real(dp) ph10
+      real(dp) ph11
+      real(dp) ph12
+      real(dp) ph13
+      real(dp) ph14
+      real(dp) ph15
+      real(dp) ph16
+      real(dp) ph17
+      real(dp) ph18
+      real(dp) ph19
+      real(dp) ph20
+      real(dp) ph21
+      real(dp) crea_par(3)
+
+      real(dp) forces(3)
+      real(dp) t1
+      real(dp) t10
+      real(dp) t101
+      real(dp) t104
+      real(dp) t106
+      real(dp) t108
+      real(dp) t110
+      real(dp) t113
+      real(dp) t115
+      real(dp) t122
+      real(dp) t124
+      real(dp) t127
+      real(dp) t129
+      real(dp) t13
+      real(dp) t137
+      real(dp) t139
+      real(dp) t146
+      real(dp) t148
+      real(dp) t15
+      real(dp) t151
+      real(dp) t154
+      real(dp) t16
+      real(dp) t160
+      real(dp) t163
+      real(dp) t166
+      real(dp) t169
+      real(dp) t176
+      real(dp) t179
+      real(dp) t181
+      real(dp) t189
+      real(dp) t19
+      real(dp) t192
+      real(dp) t20
+      real(dp) t202
+      real(dp) t205
+      real(dp) t21
+      real(dp) t23
+      real(dp) t24
+      real(dp) t25
+      real(dp) t28
+      real(dp) t3
+      real(dp) t30
+      real(dp) t33
+      real(dp) t35
+      real(dp) t36
+      real(dp) t38
+      real(dp) t39
+      real(dp) t4
+      real(dp) t40
+      real(dp) t43
+      real(dp) t45
+      real(dp) t48
+      real(dp) t50
+      real(dp) t52
+      real(dp) t55
+      real(dp) t56
+      real(dp) t59
+      real(dp) t6
+      real(dp) t60
+      real(dp) t62
+      real(dp) t65
+      real(dp) t67
+      real(dp) t70
+      real(dp) t73
+      real(dp) t75
+      real(dp) t77
+      real(dp) t8
+      real(dp) t80
+      real(dp) t83
+      real(dp) t85
+      real(dp) t86
+      real(dp) t88
+      real(dp) t92
+      real(dp) t93
+      real(dp) t94
+      real(dp) t96
+      real(dp) t99
+
+c extract all the phase angles for the stress matrix
+      ph1 = phc(1)
+      ph2 = phc(2)
+      ph3 = phc(3)
+      ph4 = phc(4)
+      ph5 = phc(5)
+      ph6 = phc(6)
+      ph7 = phc(7)
+      ph8 = phc(8)
+      ph9 = phc(9)
+      ph10 = phc(10)
+      ph11 = phc(11)
+      ph12 = phc(12)
+      ph13 = phc(13)
+      ph14 = phc(14)
+      ph15 = phc(15)
+      ph16 = phc(16)
+      ph17 = phc(17)
+      ph18 = phc(18)
+      ph19 = phc(19)
+      ph20 = phc(20)
+      ph21 = phc(21)
+
+      z = (kz-1)*h + zmin
+c the do loops should span jfirst,jlast and ifirst,ilast
+      do j=jfirst,jlast
+         y = (j-1)*h
+         do i=ifirst,ilast
+            x=(i-1)*h
+
+        t1 = omm*x
+        t3 = sin(t1+ph3)
+        t4 = omm*y
+        t6 = cos(t4+ph2)
+        t8 = omm*z
+        t10 = sin(t8+ph3)
+        t13 = cv*t
+        t15 = om*(x-t13)
+        t16 = cos(t15)
+        t19 = om*y+ph
+        t20 = sin(t19)
+        t21 = om*t20
+        t23 = om*z+ph
+        t24 = sin(t23)
+        t25 = t21*t24
+        t28 = sin(t1+ph8)
+        t30 = cos(t4+ph4)
+        t33 = sin(t8+ph8)
+        t35 = 2+t28*t30*t33
+        t36 = sin(t15)
+        t38 = cos(t19)
+        t39 = t38*om
+        t40 = t39*t24
+        t43 = sin(t1+ph12)
+        t45 = cos(t4+ph6)
+        t48 = 10+t43*t45*t10
+        t50 = cos(t23)
+        t52 = t20*t50*om
+        t55 = om*x+ph
+        t56 = cos(t55)
+        t59 = om*(y-t13)
+        t60 = sin(t59)
+        t62 = om*t60*t24
+        t65 = sin(t1+ph13)
+        t67 = cos(t4+ph7)
+        t70 = sin(t8+ph4)
+        t73 = sin(t55)
+        t75 = cos(t59)
+        t77 = t75*om*t24
+        t80 = sin(t1+ph14)
+        t83 = sin(t8+ph5)
+        t85 = 2+t80*t67*t83
+        t86 = t85*t73
+        t88 = t60*t50*om
+        t92 = om*(z-t13)
+        t93 = sin(t92)
+        t94 = t21*t93
+        t96 = t39*t93
+        t99 = sin(t1+ph15)
+        t101 = cos(t4+ph8)
+        t104 = sin(t8+ph6)
+        t106 = 2+t99*t101*t104
+        t108 = cos(t92)
+        t110 = t20*t108*om
+        forces(1) = (2+t3*t6*t10)*t16*t25+t35*t36*t40+t48*t36*t52+t35*t
+     #56*t62+(2+t65*t67*t70)*t73*t77+t86*t88+t48*t56*t94+t86*t96+t106*t7
+     #3*t110
+        t113 = sin(t1+ph5)
+        t115 = cos(t4+ph3)
+        t122 = sin(t1+ph10)
+        t124 = cos(t4+ph5)
+        t127 = sin(t8+ph1)
+        t129 = 2+t122*t124*t127
+        t137 = sin(t1+ph17)
+        t139 = cos(t4+ph9)
+        t146 = sin(t1+ph19)
+        t148 = cos(t4+ph10)
+        t151 = sin(t8+ph10)
+        t154 = (10+t146*t148*t151)*t73
+        t160 = sin(t1+ph20)
+        t163 = sin(t8+ph11)
+        t166 = (2+t160*t148*t163)*t73
+        forces(2) = (2+t113*t115*t83)*t16*t25+t129*t36*t40+t85*t36*t52+
+     #t129*t56*t62+(2+t137*t139*t33)*t73*t77+t154*t88+t85*t56*t94+t154*t
+     #96+t166*t110
+        t169 = sin(t1+ph6)
+        t176 = sin(t1+ph11)
+        t179 = sin(t8+ph2)
+        t181 = 2+t176*t45*t179
+        t189 = sin(t1+ph18)
+        t192 = sin(t8+ph9)
+        t202 = sin(t1+ph21)
+        t205 = sin(t8+ph12)
+        forces(3) = (2+t169*t115*t104)*t16*t25+t181*t36*t40+t106*t36*t5
+     #2+t181*t56*t62+(2+t189*t139*t192)*t73*t77+t166*t88+t106*t56*t94+t1
+     #66*t96+(10+t202*t148*t205)*t73*t110
+
+      bforce(1,i,j) = forces(1)
+      bforce(2,i,j) = forces(2)
+      bforce(3,i,j) = forces(3)
+      enddo
+      enddo
+      end
+
+      

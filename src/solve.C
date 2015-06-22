@@ -35,6 +35,10 @@
 #include "F77_FUNC.h"
 
 extern "C" {
+   void tw_aniso_free_surf_z(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                             int kz, double t, double om, double cv, double ph, double omm, double* phc, double* bforce,
+                             double h, double zmin );
+
 void F77_FUNC(satt,SATT)(double *up, double *qs, double *dt, double *cfreq, int *ifirst, int *ilast, 
 			 int *jfirst, int *jlast, int *kfirst, int *klast);
 
@@ -1331,7 +1335,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
   boundaryConditionType *bcType_ptr;
   double *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
-  double om=0, ph=0, cv=0;
+  double om=0, ph=0, cv=0, omm;
     
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -1365,9 +1369,15 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
     if (m_twilight_forcing)
     {
-      om = m_twilight_forcing->m_omega;
-      ph = m_twilight_forcing->m_phase;
-      cv = m_twilight_forcing->m_c;
+       double phc[21]; // move these angles to the EW class
+       om = m_twilight_forcing->m_omega;
+       ph = m_twilight_forcing->m_phase;
+       cv = m_twilight_forcing->m_c;
+       omm = m_twilight_forcing->m_momega;
+
+      // need to store all the phase angle constants somewhere
+      for (int i=0; i<21; i++)
+         phc[i] = i*10*M_PI/180;
 
 // the following code can probably be improved by introducing a loop over all sides,
 // but bStressFree is only implemented for side=4 and 5, so there must be some special cases
@@ -1424,99 +1434,112 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
       else if (m_bcType[g][4] == bStressFree)
       {
 	 k = 1;
-         if( usingSupergrid() && !curvilinear )
-	 {
-            double omstrx = m_supergrid_taper_x.get_tw_omega();
-            double omstry = m_supergrid_taper_y.get_tw_omega();
-	    F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-						      &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-						      bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
-            if( m_use_attenuation )
-	    {
-	       double* mua_ptr    = mMuVE[g][0].c_ptr();
-	       double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-	       F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-							       &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-							       bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+         if( m_anisotropic )
+         {
+// curvilinear anisotropic case is not yet implemented
+            CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
+
+            tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om, cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
+         }
+         else
+         { //isotropic stuff
+            
+            if( usingSupergrid() && !curvilinear )
+            {
+               double omstrx = m_supergrid_taper_x.get_tw_omega();
+               double omstry = m_supergrid_taper_y.get_tw_omega();
+               F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                                         &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+                                                         bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  double* mua_ptr    = mMuVE[g][0].c_ptr();
+                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                                                  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+                                                                  bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
-	    }
-	 }
-         else if( !usingSupergrid() && curvilinear )
-	 {
-	    // Stress tensor on boundary
-            Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
-	    // Get twilight stress tensor, tau.
-            F77_FUNC(twstensor,TWSTENSOR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					   &k, &t, &om, &cv, &ph,
-					   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
-	    // Compute boundary forcing for given stress tensor, tau.
+               }
+            }
+            else if( !usingSupergrid() && curvilinear )
+            {
+               // Stress tensor on boundary
+               Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+               // Get twilight stress tensor, tau.
+               F77_FUNC(twstensor,TWSTENSOR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                                              &k, &t, &om, &cv, &ph,
+                                              mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+               // Compute boundary forcing for given stress tensor, tau.
 
-	    F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-						     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-						     tau.c_ptr(), bforce_side4_ptr );
-	    //	    F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-	    //							 &klast, &k, &h, tau.c_ptr(), bforce_side4_ptr,
-	    //							 &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc,
-	    //							 &m_GaussianLx, &m_GaussianLy );
-            if( m_use_attenuation )
-	    {
-	       double* mua_ptr    = mMuVE[g][0].c_ptr();
-	       double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-	       F77_FUNC(twstensoratt,TWSTENSORATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-						    &k, &t, &om, &cv, &ph,
-						    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
-	       F77_FUNC(subsurfforcing,SUBSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-							&klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-							tau.c_ptr(), bforce_side4_ptr );
-	    }
-	 }
-	 else if( !usingSupergrid() && !curvilinear )
-	 {
-	    F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					    &klast, &h, &k, &t, &om, &cv, &ph,
-					    bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
-            if( m_use_attenuation )
-	    {
-	       double* mua_ptr    = mMuVE[g][0].c_ptr();
-	       double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-	       F77_FUNC(twfrsurfzatt, TWFRSURFZATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					    &klast, &h, &k, &t, &om, &cv, &ph,
-					    bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+               F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                                        &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                                                        tau.c_ptr(), bforce_side4_ptr );
+               //	    F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+               //							 &klast, &k, &h, tau.c_ptr(), bforce_side4_ptr,
+               //							 &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc,
+               //							 &m_GaussianLx, &m_GaussianLy );
+               if( m_use_attenuation )
+               {
+                  double* mua_ptr    = mMuVE[g][0].c_ptr();
+                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  F77_FUNC(twstensoratt,TWSTENSORATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                                                       &k, &t, &om, &cv, &ph,
+                                                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+                  F77_FUNC(subsurfforcing,SUBSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                                           &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                                                           tau.c_ptr(), bforce_side4_ptr );
+               }
+            }
+            else if( !usingSupergrid() && !curvilinear )
+            {
+               F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                               &klast, &h, &k, &t, &om, &cv, &ph,
+                                               bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  double* mua_ptr    = mMuVE[g][0].c_ptr();
+                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  F77_FUNC(twfrsurfzatt, TWFRSURFZATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                                        &klast, &h, &k, &t, &om, &cv, &ph,
+                                                        bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
-	    }
-	 }
-	 else if( usingSupergrid() && curvilinear )
-	 {
-            double omstrx = m_supergrid_taper_x.get_tw_omega();
-            double omstry = m_supergrid_taper_y.get_tw_omega();
+               }
+            }
+            else if( usingSupergrid() && curvilinear )
+            {
+               double omstrx = m_supergrid_taper_x.get_tw_omega();
+               double omstry = m_supergrid_taper_y.get_tw_omega();
 
-	    // Stress tensor on boundary
-            Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
-	    // Get twilight stress tensor, tau.
-            F77_FUNC(twstensorsg,TWSTENSORSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					   &k, &t, &om, &cv, &ph,
-					   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
-					       mu_ptr, la_ptr, &omstrx, &omstry );
-	    // Compute boundary forcing for given stress tensor, tau.
-	    F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-			         &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-				 tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+               // Stress tensor on boundary
+               Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+               // Get twilight stress tensor, tau.
+               F77_FUNC(twstensorsg,TWSTENSORSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                                                  &k, &t, &om, &cv, &ph,
+                                                  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+                                                  mu_ptr, la_ptr, &omstrx, &omstry );
+               // Compute boundary forcing for given stress tensor, tau.
+               F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                                            &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                                                            tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
 
-            if( m_use_attenuation )
-	    {
-	       double* mua_ptr    = mMuVE[g][0].c_ptr();
-	       double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-	       F77_FUNC(twstensorsgatt,TWSTENSORSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-							&k, &t, &om, &cv, &ph,
-							mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
-							mua_ptr, laa_ptr, &omstrx, &omstry );
-	       F77_FUNC(subsurfforcingsg,SUBSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-							    &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-							    tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
-							    bforce_side4_ptr );
-	    }
-      	 }
-      }
+               if( m_use_attenuation )
+               {
+                  double* mua_ptr    = mMuVE[g][0].c_ptr();
+                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  F77_FUNC(twstensorsgatt,TWSTENSORSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                                                           &k, &t, &om, &cv, &ph,
+                                                           mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+                                                           mua_ptr, laa_ptr, &omstrx, &omstry );
+                  F77_FUNC(subsurfforcingsg,SUBSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                                               &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                                                               tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
+                                                               bforce_side4_ptr );
+               }
+            } // end supergrid && curvilinear
+         
+         } // end isotropic case
+         
+      } // end side==4 is bStressFree
 
       if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid)
       {
@@ -1530,38 +1553,56 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
       else if (m_bcType[g][5] == bStressFree)
       {
 	 k = nz;
-         if( usingSupergrid() )
-	 {
-            double omstrx = m_supergrid_taper_x.get_tw_omega();
-            double omstry = m_supergrid_taper_y.get_tw_omega();
-	    F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-						      &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-						      bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
-            if( m_use_attenuation )
-	    {
-	       double* mua_ptr    = mMuVE[g][0].c_ptr();
-	       double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-	       F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-							       &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-							       bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+         if( m_anisotropic )
+         {
+// curvilinear anisotropic case is not yet implemented
+            CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
+
+// tmp
+            if (proc_zero())
+               printf("cartesian_bc_forcing, side=5, calling tw_aniso_free_surf_z\n");
+            
+            tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om, cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
+         }
+         else
+         { //isotropic stuff
+
+            if( usingSupergrid() )
+            {
+               double omstrx = m_supergrid_taper_x.get_tw_omega();
+               double omstry = m_supergrid_taper_y.get_tw_omega();
+               F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                                         &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+                                                         bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  double* mua_ptr    = mMuVE[g][0].c_ptr();
+                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                                                  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+                                                                  bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
-	    }
-	 }
-	 else
-	 {
-	    F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					    &klast, &h, &k, &t, &om, &cv, &ph,
-					    bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
-            if( m_use_attenuation )
-	    {
-	       double* mua_ptr    = mMuVE[g][0].c_ptr();
-	       double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-	       F77_FUNC(twfrsurfzatt, TWFRSURFZATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-						     &klast, &h, &k, &t, &om, &cv, &ph,
-						     bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
-	    }
-	 }
-      }
+               }
+            }
+            else
+            {
+               F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                               &klast, &h, &k, &t, &om, &cv, &ph,
+                                               bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  double* mua_ptr    = mMuVE[g][0].c_ptr();
+                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  F77_FUNC(twfrsurfzatt, TWFRSURFZATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                                        &klast, &h, &k, &t, &om, &cv, &ph,
+                                                        bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+               }
+            } // end ! supergrid
+            
+         } // end isotropic case
+         
+      } // end bStressFree on side 5
+      
     }
     else if (m_rayleigh_wave_test)
     {
