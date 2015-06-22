@@ -274,12 +274,12 @@ c s=6
      *                                                  c(20,i,j,k)*dw
 
 *** z-derivatives, excepting ghost points.
-                  du = -(sbop(1)*u(1,i,j,1)+sbop(2)*u(1,i,j,2)+
-     *                            sbop(3)*u(1,i,j,3)+sbop(4)*u(1,i,j,4))
-                  dv = -(sbop(1)*u(2,i,j,1)+sbop(2)*u(2,i,j,2)+
-     *                            sbop(3)*u(2,i,j,3)+sbop(4)*u(2,i,j,4))
-                  dw = -(sbop(1)*u(3,i,j,1)+sbop(2)*u(3,i,j,2)+
-     *                            sbop(3)*u(3,i,j,3)+sbop(4)*u(3,i,j,4))
+                  du = -(sbop(1)*u(1,i,j,k)+sbop(2)*u(1,i,j,k-1)+
+     *                        sbop(3)*u(1,i,j,k-2)+sbop(4)*u(1,i,j,k-3))
+                  dv = -(sbop(1)*u(2,i,j,k)+sbop(2)*u(2,i,j,k-1)+
+     *                        sbop(3)*u(2,i,j,k-2)+sbop(4)*u(2,i,j,k-3))
+                  dw = -(sbop(1)*u(3,i,j,k)+sbop(2)*u(3,i,j,k-1)+
+     *                        sbop(3)*u(3,i,j,k-2)+sbop(4)*u(3,i,j,k-3))
                   rhs1 = rhs1 + c(12,i,j,k)*du  + c(14,i,j,k)*dv + 
      *                             c(15,i,j,k)*dw - h*bforce6(1,qq)
                   rhs2 = rhs2 + c(14,i,j,k)*du  + c(19,i,j,k)*dv + 
