@@ -2,11 +2,11 @@
 fileio path=flat-free-3 verbose=2
 
 anisotropy
-grid nx=121 x=1.0 y=1.0 z=1.0
-time t=0.1
+grid nx=121 x=6.0 y=6.0 z=6.0
+time t=1.0
 
-twilight freeupper=1 freelower=0 omega=6.28 phase=0.8 momega=6.28 errorlog=1
-image time=0.1 mode=uxerr x=0.5 file=test
+twilight freeupper=1 freelower=0 omega=1.2 c=1.3 phase=0.8 amprho=1.5 momega=0.8 mphase=0.3 errorlog=1
+image time=1.0 mode=uxerr x=0.5 file=test
 
 
 
