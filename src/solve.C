@@ -1474,10 +1474,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
                F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                                         &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
                                                         tau.c_ptr(), bforce_side4_ptr );
-               //	    F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-               //							 &klast, &k, &h, tau.c_ptr(), bforce_side4_ptr,
-               //							 &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc,
-               //							 &m_GaussianLx, &m_GaussianLy );
+
                if( m_use_attenuation )
                {
                   double* mua_ptr    = mMuVE[g][0].c_ptr();
@@ -1558,10 +1555,6 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 // curvilinear anisotropic case is not yet implemented
             CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
 
-// tmp
-            if (proc_zero())
-               printf("cartesian_bc_forcing, side=5, calling tw_aniso_free_surf_z\n");
-            
             tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om, cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
          }
          else

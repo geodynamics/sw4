@@ -1199,13 +1199,8 @@ void EW::set_anisotropic_materials()
 
 // setup density (rho)
 // setup rho and stiffness matrix         
-// tmp
-        if (proc_zero() )
-           printf("set_anisotropic_mat> before tw_ani_stiff\n");
         tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
                      omm, phm, amprho, rho_ptr, phc, cm_ptr);
-        if (proc_zero() )
-           printf("set_anisotropic_mat> after tw_ani_stiff\n");
          
 // also need rho
       }
@@ -1813,10 +1808,6 @@ void EW::assign_supergrid_damping_arrays()
   topCartesian = mNumberOfCartesianGrids-1;
 // Note: compared to WPP2, we don't need to center the damping coefficients on the half-point anymore,
 // because the damping term is now 4th order: D+D-( a(x) D+D- ut(x) )
-
-// tmp
-  if (proc_zero())
-     printf("assign_supergrid_damping_arrays>  m_use_supergrid = %i, m_twilight_forcing = %i\n", m_use_supergrid? 1:0, m_twilight_forcing? 1:0);
 
   if( m_use_supergrid )
   {
