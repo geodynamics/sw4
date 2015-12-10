@@ -208,9 +208,25 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   while (!inputFile.eof())
   {    
      inputFile.getline(buffer, 256);
-     if (startswith("testrayleigh", buffer) || startswith("testenergy",buffer) )
+     if (startswith("testrayleigh", buffer) )
      {
        m_doubly_periodic = true;
+     }
+     if( startswith("testenergy",buffer) )
+     {
+	m_doubly_periodic = checkTestEnergyPeriodic(buffer);
+     }
+     if (startswith("refinement",buffer) )
+     {
+	// mesh refinements require 3 ghost points, must know 
+	// before processing grid command.
+	m_mesh_refinements = true;
+     }
+     if( startswith("supergrid",buffer) )
+     {
+	// If supergrid damping is 6th order, 3 ghost points are needed, must know 
+	// before processing grid command.
+	processSupergrid(buffer);
      }
   }
 
@@ -239,10 +255,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
        processFileIO(buffer);
      }
-     // else if (startswith("refinement", buffer))
-     // {
-     //   processRefinement(buffer);
-     // }
+     else if (startswith("refinement", buffer))
+     {
+	processRefinement(buffer);
+     }
      else if (startswith("topography", buffer))
      {
         processTopography(buffer);
@@ -280,6 +296,15 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
       return false; // unsuccessful
     }
   }  
+
+  if( (m_anisotropic || m_use_attenuation) && m_mesh_refinements )
+  {
+    if (m_myRank == 0)
+    {
+      cerr << "Error: Grid refinements not implemented with attenuation or anisotropy " << endl;
+      return false; // unsuccessful
+    }
+  }
 
 // sort and correct vector 'm_refinementBoundaries'. Initialize if not already available
   cleanUpRefinementLevels();
@@ -374,7 +399,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     printf("Total number of grid points (without ghost points): %g\n\n", nTot);
       
   }
-
   //----------------------------------------------------------
   // Now onto the rest of the input file...
   //----------------------------------------------------------
@@ -386,11 +410,12 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
        if (startswith("#", buffer) || 
 	   startswith("grid", buffer) ||
-//	   startswith("refinement", buffer) || 
+	   startswith("refinement", buffer) || 
 	   startswith("topography", buffer) || 
 	   startswith("attenuation", buffer) || 
 	   startswith("anisotropy", buffer) || 
 	   startswith("fileio", buffer) ||
+	   startswith("supergrid", buffer) ||
 	   startswith("time", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
@@ -467,8 +492,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
           processImage3D(buffer);
        else if (startswith("boundary_conditions", buffer))
          processBoundaryConditions(buffer);
-       else if (startswith("supergrid", buffer))
-         processSupergrid(buffer);
+       //       else if (startswith("supergrid", buffer))
+       //         processSupergrid(buffer);
        else if (startswith("prefilter", buffer))
 	 processPrefilter(buffer);
        else if( startswith("developer", buffer ) )
@@ -565,6 +590,14 @@ void EW::processGrid(char* buffer)
 
   if (m_myRank == 0)
     cout << endl << "* Processing the grid command..." << endl;
+
+  // Assume presence of mesh refinements has already been checked.
+  // Assume supergrid command has already been processed.
+  if( m_mesh_refinements || m_sg_damping_order == 6 )
+  {
+     m_ghost_points = 3;
+     m_ppadding = 3;
+  }
 
   while (token != NULL)
   {
@@ -678,19 +711,22 @@ void EW::processGrid(char* buffer)
      {
         token += 12;
         int extrapolate = atoi(token);
-        CHECK_INPUT(extrapolate >= 0 && extrapolate <= 2,
-                err << "extrapolate must be an integer between 0 and 2, not " 
+        CHECK_INPUT(extrapolate >= 0 && extrapolate <= 5,
+                err << "extrapolate must be an integer between 0 and 5, not " 
                 << extrapolate);
 	mMaterialExtrapolate = extrapolate;
      }
-     else if( startswith("ghostpts=",token))
-     {
-	token += 9;
-        int ghost = atoi(token);
-	CHECK_INPUT( ghost == 2 || ghost == 3, err << "Number of ghost points must be 2 or 3, not " << ghost );
-	m_ghost_points = ghost;
-        m_ppadding = ghost;
-     }
+     //     else if( startswith("ghostpts=",token))
+     //     {
+     //	token += 9;
+     //        int ghost = atoi(token);
+     //	CHECK_INPUT( ghost == 2 || ghost == 3, err << "Number of ghost points must be 2 or 3, not " << ghost );
+
+     //	if( m_mesh_refinements && ghost == 2 )
+     //	   CHECK_INPUT( false, err << "Number of ghost points must be 3 when using mesh refinement  ");
+     //	m_ghost_points = ghost;
+     //        m_ppadding = ghost;
+     //     }
 //                        123456789
      else if( startswith("proj=",token))
      {
@@ -1151,55 +1187,40 @@ void EW::processGrid(char* buffer)
 //----------------------------------------------------------
 void EW::cleanUpRefinementLevels()
 {
-  CHECK_INPUT(m_topo_zmax < m_global_zmax-m_h_base,"The topography is extending too deep into the ground and there is no space for the Cartesian grid.");
+   CHECK_INPUT(m_topo_zmax < m_global_zmax-m_h_base,"The topography is extending too deep into the ground and there is no space for the Cartesian grid.");
 
 // Add a top zMin level
 // Here zMin = m_topo_zmax if m_topography_exists, otherwise zMin = 0;
-  double zMin;
+   double zMin;
   
-  if (m_topography_exists)
-  {
-    m_refinementBoundaries.push_back(m_topo_zmax);
-    zMin = m_topo_zmax;
-  }
-  else
-  {
-    m_refinementBoundaries.push_back(0.0);
-    zMin = 0.;
-  }
+   if (m_topography_exists)
+   {
+      m_refinementBoundaries.push_back(m_topo_zmax);
+      zMin = m_topo_zmax;
+   }
+   else
+   {
+      m_refinementBoundaries.push_back(0.0);
+      zMin = 0.;
+   }
 
 // need to sort m_refinementBoundaries in decreasing order
-  int nRef = m_refinementBoundaries.size();
-  double *zValues = new double[nRef];
-  int q;
-// tmp
-//   cout << "Original order"<<endl;
-//   for (q=0; q<nRef; q++)
-//     cout<< m_refinementBoundaries[q] << endl;
+   int nRef = m_refinementBoundaries.size();
+   double *zValues = new double[nRef];
+   int q;
 
-  for (q=0; q<nRef; q++)
-    zValues[q] = m_refinementBoundaries[q];
-  
-  sort(zValues, zValues+nRef);
-  
+   for (q=0; q<nRef; q++)
+      zValues[q] = m_refinementBoundaries[q];
+   sort(zValues, zValues+nRef);
 // reverse the ordering to get decreasing order
-  for (q=0; q<nRef; q++)
-    m_refinementBoundaries[q] = zValues[nRef-q-1];
-  
-// tmp
-//   cout << "Sorted order"<<endl;
-//   for (q=0; q<nRef; q++)
-//     cout<< m_refinementBoundaries[q] << endl;
+   for (q=0; q<nRef; q++)
+      m_refinementBoundaries[q] = zValues[nRef-q-1];
 
 // cleanup
   delete [] zValues;
 
-// remove any refinement levels outside zMin < z < m_zmax. 
-// declare an iterator
   vector<double>::iterator it;
-// tmp
 //  cout << "Removing items outside the range zMin = " << zMin << " < z < " << " zMax=" << m_zmax << "..." << endl;
-
   for (it=m_refinementBoundaries.begin(); it!=m_refinementBoundaries.end(); it++)
   {
     if (*it < zMin || *it >= m_global_zmax)
@@ -1241,40 +1262,36 @@ void EW::cleanUpRefinementLevels()
 }
 
 
-// //-----------------------------------------------------------------------
-// void FileInput::processRefinement(char* buffer)
-// {
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("refinement", token) == 0, 
-// 	      "ERROR: not a refinement line...: " << token);
-//   token = strtok(NULL, " \t");
+//-----------------------------------------------------------------------
+void EW::processRefinement(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("refinement", token) == 0, 
+	      "ERROR: not a refinement line...: " << token);
+   token = strtok(NULL, " \t");
+   string err = "Refinement error ";
 
-//   string err = "Refinement error ";
-
-//   while (token != NULL)
-//   {
-//     // while there are tokens in the string still
-//     if (startswith("#", token) || startswith(" ", buffer))
-//       // Ignore commented lines and lines with just a space.
-//       break;
-//     else if( startswith("zmax=", token) )
-//     {
-//       token += 5; // skip zmax=
-//       double z1 = atof(token);
-//       m_refinementBoundaries.push_back(z1);
-// //       if (m_myRank==0)
-// // 	cout <<"Adding refinement boundary at z=" << z1 << endl;
-//     }
-//     else
-//     {
-//       badOption("refinement", token);
-//     }
-//     token = strtok(NULL, " \t");
-//   }
-  
-// //  mSimulation->add_refinement_block( refb );
-
-// }
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+     if (startswith("#", token) || startswith(" ", buffer))
+       // Ignore commented lines and lines with just a space.
+       break;
+     else if( startswith("zmax=", token) )
+     {
+       token += 5; // skip zmax=
+       double z1 = atof(token);
+       m_refinementBoundaries.push_back(z1);
+ //       if (m_myRank==0)
+ // 	cout <<"Adding refinement boundary at z=" << z1 << endl;
+     }
+     else
+     {
+       badOption("refinement", token);
+     }
+     token = strtok(NULL, " \t");
+   }
+}
 
 //-----------------------------------------------------------------------
 void EW::processAttenuation(char* buffer)
@@ -1836,10 +1853,14 @@ void EW::processTwilight(char* buffer)
      if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
 	CHECK_INPUT( !topographyExists(), "Error: Twilight testing, supergrid stretching can not be used in the z-direction when topography is present");
 	
+     for( int g=0 ; g < mNumberOfGrids ; g++ )
+	m_supergrid_taper_z[g].set_twilight(0.0);
+     
      if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
-	m_supergrid_taper_z.set_twilight(omstrz);
-     else
-	m_supergrid_taper_z.set_twilight( 0.0 );
+     {
+	m_supergrid_taper_z[mNumberOfGrids-1].set_twilight(omstrz);
+	m_supergrid_taper_z[0].set_twilight(omstrz);
+     }
   }
   set_global_bcs(bct);
 }
@@ -1964,16 +1985,21 @@ void EW::processDeveloper(char* buffer)
 //       token += 14;
 //       cons = strcmp(token,"conservative") == 0;
 //     }
-//     else if (startswith("ctol=", token))
-//     {
-//       token += 5;
-//       ctol = atof(token);
-//     }
-//     else if (startswith("cmaxit=", token))
-//     {
-//       token += 7;
-//       cmaxit = atoi(token);
-//     }
+     else if (startswith("ctol=", token))
+     {
+       token += 5;
+       m_citol = atof(token);
+     }
+     else if (startswith("cmaxit=", token))
+     {
+       token += 7;
+       m_cimaxiter = atoi(token);
+     }
+     else if (startswith("crelax=", token))
+     {
+       token += 7;
+       m_cirelfact = atof(token);
+     }
 //     else if (startswith("log_energy=", token))
 //     {
 //        logenergy = true;
@@ -2198,6 +2224,7 @@ void EW::processTestEnergy(char* buffer)
   string err = "Testenergy Error: ";
   CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
   token = strtok(NULL, " \t");
+  bool use_dirichlet = false;
   int seed=2934839, write_every=1000;
   string filename("energy.log");
 
@@ -2230,6 +2257,11 @@ void EW::processTestEnergy(char* buffer)
       token += 9; 
       filename = token;
     }
+    else if( startswith("bchorizontal=",token))
+    {
+       token += 13;
+       use_dirichlet =  strcmp(token,"dirichlet")==0 || strcmp(token,"Dirichlet")==0;
+    }
     else
     {
        badOption("testenergy", token);
@@ -2238,7 +2270,32 @@ void EW::processTestEnergy(char* buffer)
   }
   m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename );
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
+  for( int side=0 ; side < 6 ; side++ )
+     if( bct[side] == bPeriodic && use_dirichlet )
+	bct[side] = bDirichlet;
   set_global_bcs(bct);
+}
+
+//-----------------------------------------------------------------------
+bool EW::checkTestEnergyPeriodic(char* buffer)
+{
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
+  token = strtok(NULL, " \t");
+  bool use_dirichlet = false;
+  while (token != NULL)
+  {
+    if (startswith("#", token) || startswith(" ", buffer))
+      break;
+
+    if( startswith("bchorizontal=",token))
+    {
+       token += 13;
+       use_dirichlet =  strcmp(token,"dirichlet")==0 || strcmp(token,"Dirichlet")==0;
+    }
+    token = strtok(NULL, " \t");
+  }
+  return !use_dirichlet;
 }
   
 
@@ -2568,6 +2625,7 @@ void EW::processBoundaryConditions(char *buffer)
   set_global_bcs(bct);
 }
 
+//-----------------------------------------------------------------------
 void EW::processSupergrid(char *buffer)
 {
   char* token = strtok(buffer, " \t");
@@ -2606,6 +2664,13 @@ void EW::processSupergrid(char *buffer)
       CHECK_INPUT(sg_coeff>=0., "The supergrid damping coefficient must be non-negative, not: "<<sg_coeff);
       dampingCoeffSet=true;
     }
+    else if (startswith("order=", token))
+    {
+       token += 6;
+       int damping = atoi(token);
+       CHECK_INPUT( damping == 4 || damping == 6, "The supergrid dissipation order must be 4 or 6, not:" << damping);
+       m_sg_damping_order = damping;
+    }
     else
     {
       badOption("supergrid", token);
@@ -2621,6 +2686,10 @@ void EW::processSupergrid(char *buffer)
 
   if (dampingCoeffSet)
     set_sg_damping(sg_coeff);
+  else if( m_sg_damping_order == 4 )
+     set_sg_damping(0.02);
+  else if( m_sg_damping_order == 6 )
+     set_sg_damping(0.005);
 }
 
 // // void 
@@ -3697,23 +3766,29 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 
 // is there an attenuation command in the file?
    if (!m_use_attenuation)
-     m_number_mechanisms = 0;
-
-   int nx_finest_w_ghost = refFact*(m_nx_base-1)+1+2*m_ghost_points;
-   int ny_finest_w_ghost = refFact*(m_ny_base-1)+1+2*m_ghost_points;
-   int proc_max[2];
-// this info is obtained by the contructor
-//   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
-   proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
+      m_number_mechanisms = 0;
 
    int is_periodic[2]={0,0};
 
 // some test cases, such as testrayleigh uses periodic boundary conditions in the x and y directions
    if (m_doubly_periodic)
    {
-     is_periodic[0]=1;
-     is_periodic[1]=1;
+      is_periodic[0]=1;
+      is_periodic[1]=1;
    }
+
+   int nx_finest_w_ghost = refFact*(m_nx_base-1)+1+2*m_ghost_points;
+   int ny_finest_w_ghost = refFact*(m_ny_base-1)+1+2*m_ghost_points;
+   if( is_periodic[0] )
+      nx_finest_w_ghost = refFact*m_nx_base + 2*m_ghost_points;
+   if( is_periodic[1] )
+      ny_finest_w_ghost = refFact*m_ny_base + 2*m_ghost_points;
+
+   int proc_max[2];
+// this info is obtained by the contructor
+//   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
+   proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
+
    
    MPI_Cart_create( MPI_COMM_WORLD, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
    int my_proc_coords[2];
@@ -3749,6 +3824,13 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    if( m_topography_exists )
       mNumberOfGrids++;
 
+   m_iscurvilinear.resize(mNumberOfGrids);
+   for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
+      m_iscurvilinear[g] = false;
+   if( m_topography_exists )
+      m_iscurvilinear[mNumberOfGrids-1] = true;
+
+   m_supergrid_taper_z.resize(mNumberOfGrids);
    mMu.resize(mNumberOfGrids);
    mLambda.resize(mNumberOfGrids);
    mRho.resize(mNumberOfGrids);
@@ -3850,8 +3932,14 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    
    for (int g=nCartGrids-2; g >=0; g--)
    {
-     m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
-     m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
+      if( is_periodic[0] )
+	 m_global_nx[g] = m_global_nx[g+1]/2;
+      else
+	 m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
+      if( is_periodic[1] )
+	 m_global_ny[g] = m_global_ny[g+1]/2;
+      else
+	 m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
    }
 
 // the curvilinear grid has a variable grid size, but matches the finest Cartesian grid where they meet
@@ -4000,8 +4088,8 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       m_kEndInt[g]   = nz[g];
 
       // go to next coarser grid 
-      coarsen1d( nx, ifirst, ilast );
-      coarsen1d( ny, jfirst, jlast );
+      coarsen1d( nx, ifirst, ilast, is_periodic[0] );
+      coarsen1d( ny, jfirst, jlast, is_periodic[1] );
       //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst << " , " << ilast << endl;
       //      cout << g << " " << my_proc_coords[1] << " J Split into " << jfirst << " , " << jlast << endl;
       //      cout << "grid " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << " kinterval " << kfirst << " , " << klast << endl;

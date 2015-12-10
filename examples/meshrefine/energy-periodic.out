@@ -1,0 +1,239 @@
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Oct 1 11:02:36 PDT 2015
+  By user:     bjorn
+  Machine:     cab690
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: energy-periodic.in
+
+* Processing the grid command...
+* Setting h to 2.00000000e-01 from  x/nx (x=3.00000000e+01, nx=150)
+allocateCartesianSolverArrays: #ghost points=3, #parallel padding points=3
+ Grid distributed on 16 processors 
+ Finest grid size    306 x 306
+ Processor array     4 x 4
+Extent of the computational domain xmax=3.00000000e+01 ymax=3.00000000e+01 zmax=1.70000000e+01
+Corrected global_zmax = 1.70000000e+01
+Refinement levels after correction: 
+grid=0 min Z=5.00000000e+00
+grid=1 min Z=0.00000000e+00
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       0.2       150       150        61      1372500
+   1       0.1       300       300        51      4590000
+Total number of grid points (without ghost points): 5.9625e+06
+
+
+********Done reading the input file*********
+   Execution time, reading input file 1.21250000e-02 seconds 
+ *** Testing = 1
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Info: Grid #1 min z-coordinate: 0.00000000e+00
+Info: Grid #0 min z-coordinate: 5.00000000e+00
+Info: mGridSize[1]=1.00000000e-01
+Info: mGridSize[0]=2.00000000e-01
+
+*** Inside setup_supergrid ***
+=================Processor #0 index bounds====================
+m_iStart=-2, m_iEnd=78, m_global_nx=300, m_jStart=-2, m_jEnd=78, m_global_ny=300
+=================Processor #6 index bounds====================
+m_iStart=73, m_iEnd=153, m_global_nx=300, m_jStart=148, m_jEnd=228, m_global_ny=300
+=================Processor #6 interior index bounds====================
+m_iStartInt=76, m_iEndInt=150, m_jStartInt=151, m_jEndInt=225
+=================Processor #6 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #1 index bounds====================
+m_iStart=-2, m_iEnd=78, m_global_nx=300, m_jStart=73, m_jEnd=153, m_global_ny=300
+=================Processor #1 interior index bounds====================
+m_iStartInt=1, m_iEndInt=75, m_jStartInt=76, m_jEndInt=150
+=================Processor #1 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #2 index bounds====================
+m_iStart=-2, m_iEnd=78, m_global_nx=300, m_jStart=148, m_jEnd=228, m_global_ny=300
+=================Processor #2 interior index bounds====================
+m_iStartInt=1, m_iEndInt=75, m_jStartInt=151, m_jEndInt=225
+=================Processor #2 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #3 index bounds====================
+m_iStart=-2, m_iEnd=78, m_global_nx=300, m_jStart=223, m_jEnd=303, m_global_ny=300
+=================Processor #3 interior index bounds====================
+m_iStartInt=1, m_iEndInt=75, m_jStartInt=226, m_jEndInt=300
+=================Processor #3 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #5 index bounds====================
+m_iStart=73, m_iEnd=153, m_global_nx=300, m_jStart=73, m_jEnd=153, m_global_ny=300
+=================Processor #5 interior index bounds====================
+m_iStartInt=76, m_iEndInt=150, m_jStartInt=76, m_jEndInt=150
+=================Processor #5 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #7 index bounds====================
+m_iStart=73, m_iEnd=153, m_global_nx=300, m_jStart=223, m_jEnd=303, m_global_ny=300
+=================Processor #7 interior index bounds====================
+m_iStartInt=76, m_iEndInt=150, m_jStartInt=226, m_jEndInt=300
+=================Processor #7 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #10 index bounds====================
+m_iStart=148, m_iEnd=228, m_global_nx=300, m_jStart=148, m_jEnd=228, m_global_ny=300
+=================Processor #10 interior index bounds====================
+m_iStartInt=151, m_iEndInt=225, m_jStartInt=151, m_jEndInt=225
+=================Processor #10 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #11 index bounds====================
+m_iStart=148, m_iEnd=228, m_global_nx=300, m_jStart=223, m_jEnd=303, m_global_ny=300
+=================Processor #11 interior index bounds====================
+m_iStartInt=151, m_iEndInt=225, m_jStartInt=226, m_jEndInt=300
+=================Processor #11 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #12 index bounds====================
+m_iStart=223, m_iEnd=303, m_global_nx=300, m_jStart=-2, m_jEnd=78, m_global_ny=300
+=================Processor #12 interior index bounds====================
+m_iStartInt=226, m_iEndInt=300, m_jStartInt=1, m_jEndInt=75
+=================Processor #12 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #13 index bounds====================
+m_iStart=223, m_iEnd=303, m_global_nx=300, m_jStart=73, m_jEnd=153, m_global_ny=300
+=================Processor #13 interior index bounds====================
+m_iStartInt=226, m_iEndInt=300, m_jStartInt=76, m_jEndInt=150
+=================Processor #13 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #14 index bounds====================
+m_iStart=223, m_iEnd=303, m_global_nx=300, m_jStart=148, m_jEnd=228, m_global_ny=300
+=================Processor #14 interior index bounds====================
+m_iStartInt=226, m_iEndInt=300, m_jStartInt=151, m_jEndInt=225
+=================Processor #14 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #15 index bounds====================
+m_iStart=223, m_iEnd=303, m_global_nx=300, m_jStart=223, m_jEnd=303, m_global_ny=300
+=================Processor #15 interior index bounds====================
+m_iStartInt=226, m_iEndInt=300, m_jStartInt=226, m_jEndInt=300
+=================Processor #15 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #4 index bounds====================
+m_iStart=73, m_iEnd=153, m_global_nx=300, m_jStart=-2, m_jEnd=78, m_global_ny=300
+=================Processor #4 interior index bounds====================
+m_iStartInt=76, m_iEndInt=150, m_jStartInt=1, m_jEndInt=75
+=================Processor #4 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #8 index bounds====================
+m_iStart=148, m_iEnd=228, m_global_nx=300, m_jStart=-2, m_jEnd=78, m_global_ny=300
+=================Processor #8 interior index bounds====================
+m_iStartInt=151, m_iEndInt=225, m_jStartInt=1, m_jEndInt=75
+=================Processor #8 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #9 index bounds====================
+m_iStart=148, m_iEnd=228, m_global_nx=300, m_jStart=73, m_jEnd=153, m_global_ny=300
+=================Processor #9 interior index bounds====================
+m_iStartInt=151, m_iEndInt=225, m_jStartInt=76, m_jEndInt=150
+=================Processor #9 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+=================Processor #0 interior index bounds====================
+m_iStartInt=1, m_iEndInt=75, m_jStartInt=1, m_jEndInt=75
+=================Processor #0 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=5
+----------------------------------------------------
+ Making Output Directory: etest-per/
+
+Info: **stat returned ENOENT (the path does not exist, or the path 
+      is an empty string) etest-per/
+Calling mkdir() on path: etest-per/
+mkdir() returned successfully.
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700027e+01, x=3.000000e+01, y=0.000000e+00
+2: Lon= 1.180003e+02, Lat=3.700027e+01, x=3.000000e+01, y=3.000000e+01
+3: Lon= 1.180003e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+01
+
+
+       ----------- Material properties ranges ---------------
+       2.00000544e+00 kg/m^3 <=  Density <= 2.99999895e+00 kg/m^3
+       1.41653389e+00 m/s    <=  Vp      <= 2.23053909e+00 m/s
+       8.16686802e-01 m/s    <=  Vs      <= 1.22455111e+00 m/s
+       1.73200037e+00        <=  Vp/Vs   <= 1.87067084e+00
+       2.00000300e+00 Pa     <=  mu      <= 2.99999939e+00 Pa
+       1.99998206e+00 Pa     <=  lambda  <= 3.99784120e+00 Pa
+       ------------------------------------------------------
+Grid #0:, 2.000006e+00 <= Rho <= 2.999999e+00, 2.000008e+00 <= Mu <= 2.999999e+00, 1.999982e+00 <= Lambda <= 3.997747e+00
+Grid #1:, 2.000005e+00 <= Rho <= 2.999998e+00, 2.000003e+00 <= Mu <= 2.999999e+00, 2.003592e+00 <= Lambda <= 3.997841e+00
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e-01, minVs/h=4.08343 (Cartesian)
+g=1, h=1.000000e-01, minVs/h=8.16708 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.30000000e+00 prel. time step=4.60427616e-02
+*** Initialized Images
+   Execution time, start up phase 8.23540000e-02 seconds 
+Running sw4 on 16 processors...
+Writing output to directory: etest-per/
+***  Allocated all receiver time series
+
+***  Starting solve ***
+============================================================
+ Running program on 16 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 100
+ Number of time steps = 2172 dt: 0.0460405
+
+============================================================
+ Global boundary conditions 
+      x=0    periodic
+      x=xMax periodic
+      y=0    periodic
+      y=yMax periodic
+      z=topo free surface
+      z=zMax dirichlet
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of moment sources 0
+-----------------------------------------------------------------------
+  Initial data has been assigned
+  Begin time stepping...
+Time step       1  t =   4.6040516e-02
+Time step     101  t =   4.6500921e+00
+Time step     201  t =   9.2541436e+00
+Time step     301  t =   1.3858195e+01
+Time step     401  t =   1.8462247e+01
+Time step     501  t =   2.3066298e+01
+Time step     601  t =   2.7670350e+01
+Time step     701  t =   3.2274401e+01
+Time step     801  t =   3.6878453e+01
+Time step     901  t =   4.1482505e+01
+Time step    1001  t =   4.6086556e+01
+Time step    1101  t =   5.0690608e+01
+Time step    1201  t =   5.5294659e+01
+Time step    1301  t =   5.9898711e+01
+Time step    1401  t =   6.4502762e+01
+Time step    1501  t =   6.9106814e+01
+Time step    1601  t =   7.3710866e+01
+Time step    1701  t =   7.8314917e+01
+Time step    1801  t =   8.2918969e+01
+Time step    1901  t =   8.7523020e+01
+Time step    2001  t =   9.2127072e+01
+Time step    2101  t =   9.6731123e+01
+Time step    2172  t =   1.0000000e+02
+  Time stepping finished...
+   Execution time, solver phase 9 minutes 7.57521200e+00 seconds 
+============================================================
+ program sw4 finished! 
+============================================================

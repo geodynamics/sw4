@@ -515,6 +515,18 @@ Total Test time (real) =  14.90 sec
 
 If a test fails you can check the details in the output log at
 \texttt{Testing/Temporary/LastTest.log}.
+\bigskip\par
+On LC machines CMake finds the program \verb+mpirun+ to use for running the tests. This is not correct, the command to run MPI on the compute nodes is \verb+srun+, for example, 
+\begin{verbatim}
+srun -ppdebug -n 128 sw4 inputfile.in
+\end{verbatim}
+for running on the debug queue using 128 cores. To specify the MPI program and exact parameters to use for the tests,
+the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and MPIEXEC\_PREFLAGS can be set as in the example, 
+\begin{verbatim}
+cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=/usr/bin/srun \
+                          -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
+\end{verbatim}
+
 
 \section{Installing the proj.4, euclid, and cencalvm packages}\label{sec:cencalvm-install}
 \index{installation!cencalvm} \index{installation!efile}

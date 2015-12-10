@@ -174,6 +174,16 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
    void F77_FUNC(solveattfreeac,SOLVEATTFREEAC)( int*, int*, int*, int*, int*, int*, double*, double*, double*);
    void F77_FUNC(bcfreesurfcurvani,BCFREESURFCURVANI)( int*, int*, int*, int*, int*, int*, int*, double*, double*, int*,
 						       double*, double*, double*, double*, double* );
+   void F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( int*, int*, int*, int*, int*, int*, double*, double*,
+						     double*, double*, double*, double*, double*, int*, int*,
+						     int*, int*, int*, int* );
+   void F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( int*, int*, int*, int*, int*, int*, int*, int*, double*,
+						   double*, double*,double*, double*, double*, double*, double*,
+						   double*, double*, double*, char*, int*, int*, int*, int* );
+   void F77_FUNC(forcingfort,FORCINGFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
+					       double*, double*, double*, double*, double*, double*, double*, double* );
+   void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
+					       double*, double*, double*, double*, double*, double*, double*, double* );
 }
 
 
@@ -644,6 +654,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // Impose coupled free surface boundary condition
        enforceBCfreeAtt( Up, U, Um, mMu, mLambda, AlphaVEp, AlphaVEm, BCForcing, m_sbop, t );
     }
+
+// Grid refinement interface conditions:
+    enforceIC( Up, U, Um, t, true, point_sources );
+    
     time_measure[3] = time_measure[4] = MPI_Wtime();
 
 // get 4th order in time
@@ -695,6 +709,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
 	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+       enforceIC( Up, U, Um, t, false, point_sources );
     }
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
@@ -1141,6 +1156,837 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 	 }
    }
 }
+//---------------------------------------------------------------------------
+void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
+		    double t, bool predictor, vector<GridPointSource*> point_sources )
+{
+   for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
+   {
+      // Interpolate between g and g+1, assume factor 2 refinement with at least three ghost points
+      VERIFY2( m_ghost_points >= 3,
+		  "enforceIC Error: "<<
+                  "Number of ghost points must be three or more, not " << m_ghost_points );
+
+      Sarray Unextf, Unextc, Bf, Bc;
+      int ibf=m_iStart[g+1], ief=m_iEnd[g+1], jbf=m_jStart[g+1], jef=m_jEnd[g+1];
+      int kf = m_global_nz[g+1];
+      int ibc=m_iStart[g], iec=m_iEnd[g], jbc=m_jStart[g], jec=m_jEnd[g];
+      int kc = 1;
+      Unextf.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
+      Bf.define(3,ibf,ief,jbf,jef,kf,kf);
+      Unextc.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
+      Bc.define(3,ibc,iec,jbc,jec,kc,kc);
+
+    // Set ghost point values that are also unknown variables to zero. Assume that Dirichlet data
+    // are already set on ghost points on the sides, that are not treated as unknown variables.
+      dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true );
+      dirichlet_hom_ic( a_Up[g], g, kc-1, true );
+      if( m_doubly_periodic )
+      {
+	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
+	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
+      }
+
+      if( predictor )
+      {
+	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
+         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
+	 if( !m_doubly_periodic )
+	    dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
+      }
+      else
+      {
+	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
+	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
+	 if( !m_doubly_periodic )
+	    dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
+      }
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf );
+      compute_icstresses( a_Up[g], Bc, g, kc );
+
+      communicate_array_2d( Unextf, g+1, kf );
+      communicate_array_2d( Unextc, g, kc );
+      communicate_array_2d( Bf, g+1, kf );
+      communicate_array_2d( Bc, g, kc );
+
+      // Preliminary quantities computed with correct ghost point values on the sides of 
+      // the interface. Next set these ghost point values to zero. This allows us to form
+      // stencils over ghost points, with non-unknown ghost points giving zero contribution.
+      if( !m_doubly_periodic )
+      {
+	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
+	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
+      }
+
+      // Initial guesses for grid interface iteration
+      gridref_initial_guess( a_Up[g+1], g+1, false );
+      gridref_initial_guess( a_Up[g], g, true );
+
+      double cof = predictor ? 12 : 1;
+      int is_periodic[2] ={0,0};
+      if( m_doubly_periodic )
+	 is_periodic[0] = is_periodic[1] = 1;
+      consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
+		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
+		cof, g, g+1, is_periodic );// mDt, m_citol, &m_cimaxiter, &m_sbop[0], &m_ghcof[0] );
+      //      CHECK_INPUT(false," controlled termination");
+
+      // Finally, restore the ghost point values on the sides of the domain.
+      if( !m_doubly_periodic )
+      {
+	 dirichlet_LRic( a_Up[g+1], g+1, kf+1, t+mDt, 0 );
+	 dirichlet_LRic( a_Up[g], g, kc-1, t+mDt, 0 );
+      }
+
+      //      if( predictor )
+      //      {
+      //	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
+      //         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
+      //	 dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
+      //      }
+      //     else
+      //      {
+      //	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
+      //	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
+      //	 dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
+      //      }
+      //      check_corrector( a_Up[g+1], a_Up[g], Unextf, Unextc, kf, kc );
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc )
+{
+   int ic =2, jc=4, c=1;
+   int i = 2*ic-1, j=2*jc-1;
+   //   cout <<"check " << Uf(c,i,j,kf) << " " << Uc(c,ic,jc,kc) << " " << Uf(c,i,j,kf)-Uc(c,ic,jc,kc) << endl;
+   //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
+   i = 2*ic;
+   //   j = 2*jc;
+   double pci   = (9*(Uc(c,ic,jc,kc)+Uc(c,ic+1,jc,kc))-(Uc(c,ic-1,jc,kc)+Uc(c,ic+2,jc,kc)))/16;
+   double pcim  = (9*(Uc(c,ic,jc-1,kc)+Uc(c,ic+1,jc-1,kc))-(Uc(c,ic-1,jc-1,kc)+Uc(c,ic+2,jc-1,kc)))/16;
+   double pcip  = (9*(Uc(c,ic,jc+1,kc)+Uc(c,ic+1,jc+1,kc))-(Uc(c,ic-1,jc+1,kc)+Uc(c,ic+2,jc+1,kc)))/16;
+   double pcipp = (9*(Uc(c,ic,jc+2,kc)+Uc(c,ic+1,jc+2,kc))-(Uc(c,ic-1,jc+2,kc)+Uc(c,ic+2,jc+2,kc)))/16;
+   double pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
+
+   double pcj = (9*(Uc(c,ic,jc,kc)+Uc(c,ic,jc+1,kc))-(Uc(c,ic,jc-1,kc)+Uc(c,ic,jc+2,kc)))/16;
+   cout <<"check " << Uf(c,i,j,kf) << " " << Uc(c,ic,jc,kc) << " " << pci << " " << Uf(c,i,j,kf)-pci << endl;
+   //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
+   double pcni   = (9*(Unextc(c,ic,jc,kc)+Unextc(c,ic+1,jc,kc))-(Unextc(c,ic-1,jc,kc)+Unextc(c,ic+2,jc,kc)))/16;
+     cout << "  check next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << " " << pcni << " " << Unextf(c,i,j,kf)-pcni << endl;
+   //   cout << " check " << Uc(c,ic-2,jc,kc) << " " << Unextc(c,ic-2,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic-1,jc,kc) << " " << Unextc(c,ic-1,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic,jc,kc)  << " " << Unextc(c,ic,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic+1,jc,kc) << " " << Unextc(c,ic+1,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic+2,jc,kc) << " " << Unextc(c,ic+2,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic+3,jc,kc) << " " << Unextc(c,ic+3,jc,kc) << endl;
+
+}
+
+//-----------------------------------------------------------------------
+void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
+{
+   // zero out all ghost points
+   if( !inner )
+   {
+      // Outer layer of non-unknown ghost points
+      if( m_iStartInt[g] == 1 )
+      {
+      // low i-side
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= 1 ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,k) = 0;
+      }
+      if( m_iEndInt[g] == m_global_nx[g] )
+      {
+	 // high i-side
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iEndInt[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,k) = 0;
+      }
+      if( m_jStartInt[g] == 1 )
+      {
+	 // low j-side
+	 for( int j=m_jStart[g] ; j <= 1 ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,k) = 0;
+      }
+      if( m_jEndInt[g] == m_global_ny[g] )
+      {
+	 // high j-side
+	 for( int j=m_jEndInt[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,k) = 0;
+      }
+   }
+   else
+   {
+      // Interior, unknown ghost points.
+      int ib, ie, jb, je;
+      if( m_iStartInt[g] == 1 )
+	 ib = 2;
+      else
+	 ib = m_iStart[g];
+      if( m_iEndInt[g] == m_global_nx[g] )
+	 ie = m_global_nx[g]-1;
+      else
+	 ie = m_iEnd[g];
+      if( m_jStartInt[g] == 1 )
+	 jb = 2;
+      else
+	 jb = m_jStart[g];
+      if( m_jEndInt[g] == m_global_ny[g] )
+	 je = m_global_ny[g]-1;
+      else
+	 je = m_jEnd[g];
+      for( int j=jb ; j <= je ; j++ )
+	 for( int i=ib ; i <= ie ; i++ )
+	    for( int c=1 ; c <= U.m_nc ; c++ )
+	       U(c,i,j,k) = 0;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
+{
+   // Put back exact solution at non-unknown ghost points at sides.
+   //   int k = upper ? 0 : m_global_nz[g]+1;
+   //
+   // set adj= 0 for ghost pts + boundary pt
+   //          1 for only ghost pts.
+
+   int kdb=U.m_kb, kde=U.m_ke;
+   if( !m_twilight_forcing )
+   {
+      if( m_iStartInt[g] == 1 )
+      {
+	 // low i-side
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= 1-adj ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,kic) = 0;
+      }
+      if( m_iEndInt[g] == m_global_nx[g] )
+      {
+	 // high i-side
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,kic) = 0;
+      }
+      if( m_jStartInt[g] == 1 )
+      {
+	 // low j-side
+	 for( int j=m_jStart[g] ; j <= 1-adj ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,kic) = 0;
+      }
+      if( m_jEndInt[g] == m_global_ny[g] )
+      {
+	 // high j-side
+	 for( int j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= U.m_nc ; c++ )
+		  U(c,i,j,kic) = 0;
+      }
+   }
+   else
+   {
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      double h  = mGridSize[g];
+      double* u_ptr = U.c_ptr();
+      if( m_iStartInt[g] == 1 )
+      {
+	 // low i-side
+	 int i1 = m_iStart[g], i2=m_iStartInt[g]-adj;
+	 int j1 = m_jStart[g], j2=m_jEnd[g];
+	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+						      &h, &m_zmin[g],
+				                      &i1, &i2, &j1, &j2, &kic, &kic );
+      }
+      if( m_iEndInt[g] == m_global_nx[g] )
+      {
+	 // high i-side
+	 int i1 = m_iEndInt[g]+adj, i2=m_iEnd[g];
+	 int j1 = m_jStart[g], j2=m_jEnd[g];
+	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+						      &h, &m_zmin[g],
+						      &i1, &i2, &j1, &j2, &kic, &kic );
+      }
+      if( m_jStartInt[g] == 1 )
+      {
+	 // low j-side
+	 int i1 = m_iStart[g], i2=m_iEnd[g];
+	 int j1 = m_jStart[g], j2=m_jStartInt[g]-adj;
+	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+						      &h, &m_zmin[g],
+						      &i1, &i2, &j1, &j2, &kic, &kic );
+      }
+      if( m_jEndInt[g] == m_global_ny[g] )
+      {
+	 // high j-side
+	 int i1 = m_iStart[g], i2=m_iEnd[g];
+	 int j1 = m_jEndInt[g]+adj, j2=m_jEnd[g];
+	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+						      &h, &m_zmin[g],
+						      &i1, &i2, &j1, &j2, &kic, &kic );
+      }
+   }      
+}
+
+//-----------------------------------------------------------------------
+void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
+{
+// Extrapolate the initial guess from neighboring point.
+   int k, s;
+   if( upper )
+   {
+      k = 0;
+      s = 1;
+   }
+   else
+   {
+      k = m_kEndInt[g]+1;
+      s = -1;
+   }
+   int ib, ie, jb, je;
+   if( m_iStartInt[g] == 1 )
+      ib = 2;
+   else
+      ib = m_iStart[g];
+   if( m_iEndInt[g] == m_global_nx[g] )
+      ie = m_global_nx[g]-1;
+   else
+      ie = m_iEnd[g];
+   if( m_jStartInt[g] == 1 )
+      jb = 2;
+   else
+      jb = m_jStart[g];
+   if( m_jEndInt[g] == m_global_ny[g] )
+      je = m_global_ny[g]-1;
+   else
+      je = m_jEnd[g];
+
+   for( int j=jb ; j <= je ; j++ )
+      for( int i=ib ; i <= ie ; i++ )
+      {
+	 u(1,i,j,k) = u(1,i,j,k+s);
+	 u(2,i,j,k) = u(2,i,j,k+s);
+	 u(3,i,j,k) = u(3,i,j,k+s);
+      }
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
+					int g, int kic, double t, vector<GridPointSource*> point_sources )
+{
+   double idt2 = 1/(mDt*mDt);
+   for( int k=Unext.m_kb ; k <= Unext.m_ke ; k++ )
+      for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
+	 for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
+	 {
+	    Unext(1,i,j,k) = idt2*(a_Up(1,i,j,k)-2*a_U(1,i,j,k)+a_Um(1,i,j,k));
+	    Unext(2,i,j,k) = idt2*(a_Up(2,i,j,k)-2*a_U(2,i,j,k)+a_Um(2,i,j,k));
+	    Unext(3,i,j,k) = idt2*(a_Up(3,i,j,k)-2*a_U(3,i,j,k)+a_Um(3,i,j,k));
+	 }
+   int ib=m_iStart[g], jb=m_jStart[g], kb=m_kStart[g];
+   int ie=m_iEnd[g], je=m_jEnd[g], ke=m_kEnd[g];
+   int kbu = Unext.m_kb, keu= Unext.m_ke;
+
+   // Compute L(unext) at k=kic.
+   char op='=';
+   int nz = m_global_nz[g];
+   Sarray Lu(3,ib,ie,jb,je,kic,kic);
+   F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+					      m_bope, m_ghcof, Lu.c_ptr(), Unext.c_ptr(), mMu[g].c_ptr(),
+					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+					      m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic );
+   // Compute forcing_{tt} at k=kic
+   Sarray f(3,ib,ie,jb,je,kic,kic);
+   if( m_twilight_forcing )
+   {
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      double omm= m_twilight_forcing->m_momega;
+      double phm= m_twilight_forcing->m_mphase;
+      double amprho   = m_twilight_forcing->m_amprho;
+      double ampmu    = m_twilight_forcing->m_ampmu;
+      double amplambda= m_twilight_forcing->m_amplambda;
+      F77_FUNC(forcingttfort,FORCINGTTFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+   }
+   else if( m_rayleigh_wave_test || m_energy_test )
+      f.set_to_zero();
+   else
+   {
+     // Default: m_point_source_test, m_lamb_test or full seismic case
+      f.set_to_zero();
+      for( int s = 0 ; s < point_sources.size() ; s++ )
+      {
+	 if( point_sources[s]->m_grid == g && point_sources[s]->m_k0 == kic )
+	 {
+	    double fxyz[3];
+	    point_sources[s]->getFxyztt(t,fxyz);
+	    f(1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
+	    f(2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
+	    f(3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+	 }
+      }
+   }
+
+   double cof = mDt*mDt*mDt*mDt/12.0;
+   for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
+      for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
+      {
+	 double irho=cof/mRho[g](i,j,kic);
+	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lu(1,i,j,kic)+f(1,i,j,kic));
+	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lu(2,i,j,kic)+f(2,i,j,kic));
+	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lu(3,i,j,kic)+f(3,i,j,kic));
+      }
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
+					int g, int kic, double t, vector<GridPointSource*> point_sources )
+{
+   int ib=m_iStart[g], jb=m_jStart[g], kb=m_kStart[g];
+   int ie=m_iEnd[g], je=m_jEnd[g], ke=m_kEnd[g];
+
+   // Compute L(Up) at k=kic.
+   Sarray Lu(3,ib,ie,jb,je,kic,kic);
+   char op='=';
+   int nz = m_global_nz[g];
+   F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+					      m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
+					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+					      m_sg_str_z[g], &op, &kb, &ke, &kic, &kic );
+
+   // Compute forcing at k=kic
+   Sarray f(3,ib,ie,jb,je,kic,kic);
+   if( m_twilight_forcing )
+   {
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      double omm= m_twilight_forcing->m_momega;
+      double phm= m_twilight_forcing->m_mphase;
+      double amprho=m_twilight_forcing->m_amprho;
+      double ampmu=m_twilight_forcing->m_ampmu;
+      double amplambda=m_twilight_forcing->m_amplambda;
+      F77_FUNC(forcingfort,FORCINGFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+   }
+   else if( m_rayleigh_wave_test || m_energy_test )
+      f.set_to_zero();
+   else
+   {
+     // Default: m_point_source_test, m_lamb_test or full seismic case
+      f.set_to_zero();
+      for( int s = 0 ; s < point_sources.size() ; s++ )
+      {
+	 if( point_sources[s]->m_grid == g && point_sources[s]->m_k0 == kic )
+	 {
+	    double fxyz[3];
+	    point_sources[s]->getFxyz(t,fxyz);
+	    f(1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
+	    f(2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
+	    f(3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+	 }
+      }
+   }
+   double cof = mDt*mDt;
+   for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
+      for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
+      {
+	 double irho=cof/mRho[g](i,j,kic);
+	 Unext(1,i,j,kic) = 2*a_Up(1,i,j,kic) - a_U(1,i,j,kic) + irho*(Lu(1,i,j,kic)+f(1,i,j,kic));
+	 Unext(2,i,j,kic) = 2*a_Up(2,i,j,kic) - a_U(2,i,j,kic) + irho*(Lu(2,i,j,kic)+f(2,i,j,kic));
+	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+f(3,i,j,kic));
+      }
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic )
+{
+   const double a1=2.0/3, a2=-1.0/12;
+   bool upper = (kic == 1);
+   int k=kic;
+   double ih = 1/mGridSize[g];
+   double uz, vz, wz;
+   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+      {
+	 uz = vz = wz = 0;
+	 if( upper )
+	 {
+	    for( int m=0 ; m <= 4 ; m++ )
+	    {
+	       uz += m_sbop[m]*a_Up(1,i,j,k+m-1);
+	       vz += m_sbop[m]*a_Up(2,i,j,k+m-1);
+	       wz += m_sbop[m]*a_Up(3,i,j,k+m-1);
+	    }
+	 }
+	 else
+	 {
+	    for( int m=0 ; m <= 4 ; m++ )
+	    {
+	       uz -= m_sbop[m]*a_Up(1,i,j,k+1-m);
+	       vz -= m_sbop[m]*a_Up(2,i,j,k+1-m);
+	       wz -= m_sbop[m]*a_Up(3,i,j,k+1-m);
+	    }
+	 }
+	 B(1,i,j,k) = ih*mMu[g](i,j,k)*(
+	      a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k)) +
+	      (uz)  );
+	 B(2,i,j,k) = ih*mMu[g](i,j,k)*(
+	      a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k)) +
+	      (vz)  );
+	 B(3,i,j,k) = ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
+	      a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k)) +
+	      a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k)) ) );
+      }
+}
+
+//-----------------------------------------------------------------------
+void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
+		   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
+		   double cof, int gc, int gf, int is_periodic[2] )
+{
+   // At boundaries to the left and right, at least three ghost points are required
+   // e.g., domain in i-direction:   i=-2,-1,0,1,2,...,Ni,Ni+1,Ni+2,Ni+3
+   // we solve for ghost points at i=2,..,Ni-1, assuming Dirichlet conditions given on i=1,i=Ni and
+   // at the ghost points i=-2,-1,0,Ni+1,Ni+2,Ni+3. 
+   // The arrays Bf,Unextf, etc are assumed to be computed with all z-ghost points zero,
+   // i.e., Uf(i,Nkf+1) was zero for i=-2,-1,..,Ni+3 when Bf and Unextf were evaluated from Uf 
+   // (similarly for Unextc and Bc). Before this routine is called, correct boundary values for
+   // Uf(-2,Nkf+1),..Uf(1,Nkf+1) (and similarly at the upper i-boundary, and for Uc) must be imposed.
+   // In this way the restriction and prolongation stencils can be computed without any special
+   // treatment near the i-boundaries. 
+
+   const double i16 = 1.0/16;
+   const double i256 = 1.0/256;
+   const double i1024 = 1.0/1024;
+
+   int jcb, jce, icb, ice, jfb, jfe, ifb, ife, nkf;
+   double nuf = mDt*mDt/(cof*hf*hf);
+   double nuc = mDt*mDt/(cof*hc*hc);
+   double ihc = 1/hc, ihf=1/hf;
+   double jacerr = m_citol+1,jacerr0;
+   double a11, a12, a21, a22, b1, b2, r1, r2, r3, deti, relax;
+   int it = 0;
+   relax = m_cirelfact;
+   if( m_iStartInt[gc] == 1 && !is_periodic[0] )
+      ifb = icb = 2;
+   else
+   {
+      icb = m_iStartInt[gc];
+      ifb = m_iStartInt[gf];
+   }
+   if( m_iEndInt[gc] == m_global_nx[gc] && !is_periodic[0] )
+   {
+      ice = m_global_nx[gc]-1;
+      ife = m_global_nx[gf]-1;
+   }
+   else
+   {
+      ice = m_iEndInt[gc];
+      ife = m_iEndInt[gf];
+   }
+   if( m_jStartInt[gc] == 1 && !is_periodic[1] )
+      jfb = jcb = 2;
+   else
+   {
+      jcb = m_jStartInt[gc];
+      jfb = m_jStartInt[gf];
+   }
+   if( m_jEndInt[gc] == m_global_ny[gc] && !is_periodic[1] )
+   {
+      jce = m_global_ny[gc]-1;
+      jfe = m_global_ny[gf]-1;
+   }
+   else
+   {
+      jce = m_jEndInt[gc];
+      jfe = m_jEndInt[gf];
+   }
+   nkf = m_global_nz[gf];
+   Sarray Mlf(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
+   for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
+      for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
+	 Mlf(i,j,nkf) = 2*Muf(i,j,nkf)+Lambdaf(i,j,nkf);
+   Sarray Morc(m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],1,1);
+   Sarray Mlrc(m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],1,1);
+   for( int jc=m_jStart[gc] ; jc<=m_jEnd[gc] ; jc++ )
+      for( int ic=m_iStart[gc] ; ic<=m_iEnd[gc] ; ic++ )
+      {
+	 double irho=1/Rhoc(ic,jc,1);
+	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho;
+	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho;
+      }
+
+   while( jacerr > m_citol && it < m_cimaxiter )
+   {
+      double rmax[3]={0,0,0};
+      for( int jc= jcb ; jc <= jce ; jc++ )
+	 for( int ic= icb ; ic <= ice ; ic++ )
+	 {
+	    int i=2*ic-1, j=2*jc-1;
+	    a11 = 0.25*Muf(i,j,nkf)*m_sbop[0]*ihf;
+	    a12 =      Muc(ic,jc,1)*m_sbop[0]*ihc;
+	    a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0];
+	    a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0];
+	    for( int c=1 ; c <= 2 ; c++ )
+	    {
+	       b1  = i1024*( 
+                    Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf) +
+	        9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf)) +
+	       16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) + 
+	        9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
+	  	    Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf) );
+	       b1 = b1 - i1024*m_sbop[0]*ihf*(
+                Muf(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Muf(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
+   	    -16*Muf(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Muf(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
+               +Muf(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
+	  9*(  -Muf(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Muf(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
+	    +16*Muf(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Muf(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
+	       -Muf(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
+	 16*(  -Muf(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Muf(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) 
+	                                             + 9*Muf(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
+               -Muf(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
+	  9*(  -Muf(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Muf(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
+            +16*Muf(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Muf(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
+	       -Muf(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
+	        Muf(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Muf(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
+	    -16*Muf(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Muf(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
+	       +Muf(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
+
+	       b1 = b1 - Bc(c,ic,jc,1);
+	       b2 = Unextc(c,ic,jc,1)-Unextf(c,i,j,nkf);
+	       deti=1/(a11*a22-a12*a21);
+	       r1 = Uf(c,i,j,nkf+1);
+	       r2 = Uc(c,ic,jc,0);
+	       Uf(c,i,j,nkf+1) = deti*( a22*b1-a12*b2);
+	       Uc(c,ic,jc,0)   = deti*(-a21*b1+a11*b2);
+	       Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1) + (1-relax)*r1;
+	       Uc(c,ic,jc,0)   = relax*Uc(c,ic,jc,0)   + (1-relax)*r2;
+	       r1 = r1-Uf(c,i,j,nkf+1);
+	       r2 = r2-Uc(c,ic,jc,0);
+	       rmax[c-1] = rmax[c-1] > fabs(r1) ? rmax[c-1] : fabs(r1);
+	       rmax[c-1] = rmax[c-1] > fabs(r2) ? rmax[c-1] : fabs(r2);
+	       //	       if( c == 2 && ic == 12 && jc == 13 )
+	       //	       {
+	       //	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
+	       //		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
+	       //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
+	       //	       }
+	    }
+	    a11 = 0.25*Mlf(i,j,nkf)*m_sbop[0]*ihf;
+	    a12 =    (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc;
+	    a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0];
+	    a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
+	    b1  = i1024*( 
+                    Bf(3,i-3,j-3,nkf)-9*Bf(3,i-3,j-1,nkf)-16*Bf(3,i-3,j,nkf)-9*Bf(3,i-3,j+1,nkf)+Bf(3,i-3,j+3,nkf) +
+	        9*(-Bf(3,i-1,j-3,nkf)+9*Bf(3,i-1,j-1,nkf)+16*Bf(3,i-1,j,nkf)+9*Bf(3,i-1,j+1,nkf)-Bf(3,i-1,j+3,nkf)) +
+	       16*(-Bf(3,i,  j-3,nkf)+9*Bf(3,i,  j-1,nkf)+16*Bf(3,i,  j,nkf)+9*Bf(3,i,  j+1,nkf)-Bf(3,i,  j+3,nkf)) + 
+	        9*(-Bf(3,i+1,j-3,nkf)+9*Bf(3,i+1,j-1,nkf)+16*Bf(3,i+1,j,nkf)+9*Bf(3,i+1,j+1,nkf)-Bf(3,i+1,j+3,nkf)) +
+	  	    Bf(3,i+3,j-3,nkf)-9*Bf(3,i+3,j-1,nkf)-16*Bf(3,i+3,j,nkf)-9*Bf(3,i+3,j+1,nkf)+Bf(3,i+3,j+3,nkf) );
+	    b1 = b1 - i1024*m_sbop[0]*ihf*(
+                Mlf(i-3,j-3,nkf)*Uf(3,i-3,j-3,nkf+1) - 9*Mlf(i-3,j-1,nkf)*Uf(3,i-3,j-1,nkf+1)
+   	    -16*Mlf(i-3,j,  nkf)*Uf(3,i-3,  j,nkf+1) - 9*Mlf(i-3,j+1,nkf)*Uf(3,i-3,j+1,nkf+1)
+               +Mlf(i-3,j+3,nkf)*Uf(3,i-3,j+3,nkf+1) +					    
+	  9*(  -Mlf(i-1,j-3,nkf)*Uf(3,i-1,j-3,nkf+1) + 9*Mlf(i-1,j-1,nkf)*Uf(3,i-1,j-1,nkf+1) 
+	    +16*Mlf(i-1,j,  nkf)*Uf(3,i-1,j,  nkf+1) + 9*Mlf(i-1,j+1,nkf)*Uf(3,i-1,j+1,nkf+1) 
+	       -Mlf(i-1,j+3,nkf)*Uf(3,i-1,j+3,nkf+1) ) +
+	 16*(  -Mlf(i,  j-3,nkf)*Uf(3,i,  j-3,nkf+1) + 9*Mlf(i,  j-1,nkf)*Uf(3,i,  j-1,nkf+1) 
+	                                             + 9*Mlf(i,  j+1,nkf)*Uf(3,i,  j+1,nkf+1)
+               -Mlf(i,  j+3,nkf)*Uf(3,i,  j+3,nkf+1) ) + 
+	  9*(  -Mlf(i+1,j-3,nkf)*Uf(3,i+1,j-3,nkf+1) + 9*Mlf(i+1,j-1,nkf)*Uf(3,i+1,j-1,nkf+1)
+            +16*Mlf(i+1,j,  nkf)*Uf(3,i+1,j,  nkf+1) + 9*Mlf(i+1,j+1,nkf)*Uf(3,i+1,j+1,nkf+1)
+	       -Mlf(i+1,j+3,nkf)*Uf(3,i+1,j+3,nkf+1) ) +
+	        Mlf(i+3,j-3,nkf)*Uf(3,i+3,j-3,nkf+1) - 9*Mlf(i+3,j-1,nkf)*Uf(3,i+3,j-1,nkf+1)
+	    -16*Mlf(i+3,j,  nkf)*Uf(3,i+3,j,  nkf+1) - 9*Mlf(i+3,j+1,nkf)*Uf(3,i+3,j+1,nkf+1)
+	       +Mlf(i+3,j+3,nkf)*Uf(3,i+3,j+3,nkf+1) );
+
+	       b1 = b1 - Bc(3,ic,jc,1);
+	       b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf);
+	       deti=1/(a11*a22-a12*a21);
+	       r1 = Uf(3,i,j,nkf+1);
+	       r2 = Uc(3,ic,jc,0);
+	       Uf(3,i,j,nkf+1) = deti*( a22*b1-a12*b2);
+	       Uc(3,ic,jc,0)   = deti*(-a21*b1+a11*b2);
+	       Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1) + (1-relax)*r1;
+	       Uc(3,ic,jc,0)   = relax*Uc(3,ic,jc,0)   + (1-relax)*r2;
+	       r1 = r1-Uf(3,i,j,nkf+1);
+	       r2 = r2-Uc(3,ic,jc,0);
+	       rmax[2] = rmax[2] > fabs(r1) ? rmax[2] : fabs(r1);
+	       rmax[2] = rmax[2] > fabs(r2) ? rmax[2] : fabs(r2);
+	       //	       int c=3;
+	       //	       if( c == 3 && ic == 12 && jc == 13 )
+	       //	       {
+	       //	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
+	       //		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
+	       //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
+	       //	       }
+	 }
+      //      goto skipthis;
+      int ic, jc;
+      for( int j=jfb ; j <= jfe ; j++ )
+	 for( int i=ifb ; i <= ife ; i++ )
+	 {
+	    if( !( (i % 2 == 1 && j % 2 == 1 ) ) )
+	    {
+	       for( int c=1 ; c <= 2 ; c++ )
+	       {
+		  if( (j % 2 == 0) && (i % 2 == 1) )
+		  {
+		     ic = (i+1)/2;
+		     jc = j/2;
+		     b1 = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
+		     b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(c,ic,jc-1,0)*Morc(ic,jc-1,1) + 
+						      9*Uc(c,ic,jc  ,0)*Morc(ic,jc  ,1) + 
+						      9*Uc(c,ic,jc+1,0)*Morc(ic,jc+1,1)
+						      -Uc(c,ic,jc+2,0)*Morc(ic,jc+2,1) );
+		  }
+		  if( (j % 2 == 1) && (i % 2 == 0) )
+		  {
+		     ic = i/2;
+		     jc = (j+1)/2;
+		     b1 = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
+		     b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+ 
+						      9*Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+ 
+						      9*Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1)
+						      -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1));
+		  }
+		  if( (j % 2 == 0) && (i % 2 == 0) )
+		  {
+		     ic = i/2;
+		     jc = j/2;
+		     b1 = i256*
+                            ( Unextc(c,ic-1,jc-1,1)-9*(Unextc(c,ic,jc-1,1)+Unextc(c,ic+1,jc-1,1))+Unextc(c,ic+2,jc-1,1)
+	 	        + 9*(-Unextc(c,ic-1,jc,  1)+9*(Unextc(c,ic,jc,  1)+Unextc(c,ic+1,jc,  1))-Unextc(c,ic+2,jc,  1)  
+			     -Unextc(c,ic-1,jc+1,1)+9*(Unextc(c,ic,jc+1,1)+Unextc(c,ic+1,jc+1,1))-Unextc(c,ic+2,jc+1,1))
+		             +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
+
+		     b1 = b1 + nuc*m_ghcof[0]*i256*(
+						    Uc(c,ic-1,jc-1,0)*Morc(ic-1,jc-1,1)
+						-9*(Uc(c,ic,  jc-1,0)*Morc(ic,  jc-1,1)+
+						    Uc(c,ic+1,jc-1,0)*Morc(ic+1,jc-1,1))+
+						    Uc(c,ic+2,jc-1,0)*Morc(ic+2,jc-1,1)
+			      + 9*(
+				      -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+
+				   9*( Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+
+                                       Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1))
+                                      -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1)  
+				      -Uc(c,ic-1,jc+1,0)*Morc(ic-1,jc+1,1)+
+				   9*( Uc(c,ic,  jc+1,0)*Morc(ic,  jc+1,1)+
+                                       Uc(c,ic+1,jc+1,0)*Morc(ic+1,jc+1,1))
+				      -Uc(c,ic+2,jc+1,0)*Morc(ic+2,jc+1,1)  )
+					      + Uc(c,ic-1,jc+2,0)*Morc(ic-1,jc+2,1)
+					    -9*(Uc(c,ic,  jc+2,0)*Morc(ic,  jc+2,1) +
+			  		        Uc(c,ic+1,jc+2,0)*Morc(ic+1,jc+2,1)) +
+						    Uc(c,ic+2,jc+2,0)*Morc(ic+2,jc+2,1)   );
+		  }
+		  b1 = b1 - Unextf(c,i,j,nkf);
+		  	       a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+		  r3 = Uf(c,i,j,nkf+1);
+	       //	       Uf(c,i,j,nkf+1) = b1/a11;
+		  Uf(c,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*Muf(i,j,nkf));
+		  Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1)+(1-relax)*r3;
+		  //		  if( i == 4 && j == 7 && c == 1)
+		  //		     cout << "in loop " << -a11*Uf(c,i,j,nkf+1) + b1  << endl;
+		  r3 = r3 - Uf(c,i,j,nkf+1);
+		  rmax[c-1] = rmax[c-1] > fabs(r3) ? rmax[c-1] : fabs(r3);
+	       }
+
+	       if( (j % 2 == 0) && (i % 2 == 1) )
+	       {
+		  ic = (i+1)/2;
+		  jc = j/2;
+		  b1 = i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
+		  b1 = b1 + nuc*m_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
+						   9*Uc(3,ic,jc  ,0)*Mlrc(ic,jc  ,1) + 
+						   9*Uc(3,ic,jc+1,0)*Mlrc(ic,jc+1,1)
+						    -Uc(3,ic,jc+2,0)*Mlrc(ic,jc+2,1) );
+	       }
+	       if( (j % 2 == 1) && (i % 2 == 0) )
+	       {
+		  ic = i/2;
+		  jc = (j+1)/2;
+		  b1 = i16*(-Unextc(3,ic-1,jc,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic+1,jc,1))-Unextc(3,ic+2,jc,1));
+		  b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+ 
+						  9*Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+ 
+						  9*Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1)
+						   -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1));
+	       }
+	       if( (j % 2 == 0) && (i % 2 == 0) )
+	       {
+		  ic = i/2;
+		  jc = j/2;
+		  b1 = i256*
+                            ( Unextc(3,ic-1,jc-1,1)-9*(Unextc(3,ic,jc-1,1)+Unextc(3,ic+1,jc-1,1))+Unextc(3,ic+2,jc-1,1)
+	 	        + 9*(-Unextc(3,ic-1,jc,  1)+9*(Unextc(3,ic,jc,  1)+Unextc(3,ic+1,jc,  1))-Unextc(3,ic+2,jc,  1)  
+			     -Unextc(3,ic-1,jc+1,1)+9*(Unextc(3,ic,jc+1,1)+Unextc(3,ic+1,jc+1,1))-Unextc(3,ic+2,jc+1,1))
+		             +Unextc(3,ic-1,jc+2,1)-9*(Unextc(3,ic,jc+2,1)+Unextc(3,ic+1,jc+2,1))+Unextc(3,ic+2,jc+2,1) );
+
+		  b1 = b1 + nuc*m_ghcof[0]*i256*(
+						    Uc(3,ic-1,jc-1,0)*Mlrc(ic-1,jc-1,1)
+						-9*(Uc(3,ic,  jc-1,0)*Mlrc(ic,  jc-1,1)+
+						    Uc(3,ic+1,jc-1,0)*Mlrc(ic+1,jc-1,1))+
+						    Uc(3,ic+2,jc-1,0)*Mlrc(ic+2,jc-1,1)
+			      + 9*(
+				      -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+
+				   9*( Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+
+                                       Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1))
+                                      -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1)  
+				      -Uc(3,ic-1,jc+1,0)*Mlrc(ic-1,jc+1,1)+
+				   9*( Uc(3,ic,  jc+1,0)*Mlrc(ic,  jc+1,1)+
+                                       Uc(3,ic+1,jc+1,0)*Mlrc(ic+1,jc+1,1))
+				      -Uc(3,ic+2,jc+1,0)*Mlrc(ic+2,jc+1,1)  )
+					      + Uc(3,ic-1,jc+2,0)*Mlrc(ic-1,jc+2,1)
+					    -9*(Uc(3,ic,  jc+2,0)*Mlrc(ic,  jc+2,1) +
+			  		        Uc(3,ic+1,jc+2,0)*Mlrc(ic+1,jc+2,1)) +
+						    Uc(3,ic+2,jc+2,0)*Mlrc(ic+2,jc+2,1)   );
+	       }
+	       b1 = b1 - Unextf(3,i,j,nkf);
+		  //	       a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+	       r3 = Uf(3,i,j,nkf+1);
+	       //	       Uf(3,i,j,nkf+1) = b1/a11;
+	       Uf(3,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf)));
+	       Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1)+(1-relax)*r3;
+	       r3 = r3 - Uf(3,i,j,nkf+1);
+	       rmax[2] = rmax[2] > fabs(r3) ? rmax[2] : fabs(r3);
+	    }
+	 }
+      //   skipthis:
+      communicate_array_2d( Uf, gf, nkf+1 );
+      communicate_array_2d( Uc, gc, 0 );
+      double jacerrtmp = rmax[0]+rmax[1]+rmax[2];
+      MPI_Allreduce( &jacerrtmp, &jacerr, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+      if( it == 0 )
+	 jacerr0 = jacerr;
+      if( jacerr0 > 0 )
+	 jacerr = jacerr/jacerr0;
+      it++;
+   }
+   if( jacerr > m_citol && proc_zero() )
+      cout << "EW::consintp, Warning, no convergence. err = " << jacerr << " tol= " << m_citol << endl;
+      
+   if( proc_zero() && mVerbose >= 4 )
+      cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;
+}
+
 //-----------------------------------------------------------------------
 // void EW::update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, double t, vector<Sarray*> &AlphaVE )
 // {
@@ -2942,7 +3788,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
     //    F77_FUNC(addsgd,ADDSGD) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, 
     //			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
     //			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
-    if( m_ghost_points == 2 )
+    if( m_sg_damping_order == 4 )
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
 	  F77_FUNC(addsgd4c,ADDSGD4C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
@@ -2955,7 +3801,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 				      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 				      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
     }
-    else if(  m_ghost_points == 3 )
+    else if(  m_sg_damping_order == 6 )
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
 	  F77_FUNC(addsgd6c,ADDSGD6C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,

@@ -1,0 +1,128 @@
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Oct 1 11:02:36 PDT 2015
+  By user:     bjorn
+  Machine:     cab690
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: energy-dirichlet.in
+
+* Processing the grid command...
+* Setting h to 2.00000000e-01 from  x/(nx-1) (x=3.00000000e+01, nx=151)
+* Setting ny to 151 to be consistent with h=2.00000000e-01
+* Setting nz to 86 to be consistent with h=2.00000000e-01
+allocateCartesianSolverArrays: #ghost points=3, #parallel padding points=3
+Extent of the computational domain xmax=3.00000000e+01 ymax=3.00000000e+01 zmax=1.70000000e+01
+Corrected global_zmax = 1.70000000e+01
+Refinement levels after correction: 
+grid=0 min Z=5.00000000e+00
+grid=1 min Z=0.00000000e+00
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       0.2       151       151        61      1390861
+   1       0.1       301       301        51      4620651
+Total number of grid points (without ghost points): 6.01151e+06
+
+
+   Execution time, reading input file 1.02270000e-02 seconds 
+ *** Testing = 1
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+----------------------------------------------------
+ Making Output Directory: etest-dir/
+
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700027e+01, x=3.000000e+01, y=0.000000e+00
+2: Lon= 1.180003e+02, Lat=3.700027e+01, x=3.000000e+01, y=3.000000e+01
+3: Lon= 1.180003e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+01
+
+
+       ----------- Material properties ranges ---------------
+       2.00000626e+00 kg/m^3 <=  Density <= 2.99999895e+00 kg/m^3
+       1.41902142e+00 m/s    <=  Vp      <= 2.22809038e+00 m/s
+       8.16686802e-01 m/s    <=  Vs      <= 1.22433914e+00 m/s
+       1.73200163e+00        <=  Vp/Vs   <= 1.87047306e+00
+       2.00000820e+00 Pa     <=  mu      <= 2.99999859e+00 Pa
+       1.99998206e+00 Pa     <=  lambda  <= 3.99774735e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e-01, minVs/h=4.08343 (Cartesian)
+g=1, h=1.000000e-01, minVs/h=8.17068 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.30000000e+00 prel. time step=4.61141469e-02
+*** Initialized Images
+   Execution time, start up phase 2.60680000e-02 seconds 
+Running sw4 on 64 processors...
+Writing output to directory: etest-dir/
+
+***  Starting solve ***
+============================================================
+ Running program on 64 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 100
+ Number of time steps = 2169 dt: 0.0461042
+
+============================================================
+ Global boundary conditions 
+      x=0    dirichlet
+      x=xMax dirichlet
+      y=0    dirichlet
+      y=yMax dirichlet
+      z=topo free surface
+      z=zMax dirichlet
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of moment sources 0
+-----------------------------------------------------------------------
+  Initial data has been assigned
+  Begin time stepping...
+Time step       1  t =   4.6104195e-02
+Time step     101  t =   4.6565237e+00
+Time step     201  t =   9.2669433e+00
+Time step     301  t =   1.3877363e+01
+Time step     401  t =   1.8487782e+01
+Time step     501  t =   2.3098202e+01
+Time step     601  t =   2.7708621e+01
+Time step     701  t =   3.2319041e+01
+Time step     801  t =   3.6929461e+01
+Time step     901  t =   4.1539880e+01
+Time step    1001  t =   4.6150300e+01
+Time step    1101  t =   5.0760719e+01
+Time step    1201  t =   5.5371139e+01
+Time step    1301  t =   5.9981558e+01
+Time step    1401  t =   6.4591978e+01
+Time step    1501  t =   6.9202397e+01
+Time step    1601  t =   7.3812817e+01
+Time step    1701  t =   7.8423237e+01
+Time step    1801  t =   8.3033656e+01
+Time step    1901  t =   8.7644076e+01
+Time step    2001  t =   9.2254495e+01
+Time step    2101  t =   9.6864915e+01
+Time step    2169  t =   1.0000000e+02
+  Time stepping finished...
+   Execution time, solver phase 2 minutes 4.28895120e+01 seconds 
+============================================================
+ program sw4 finished! 
+============================================================

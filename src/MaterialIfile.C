@@ -84,9 +84,9 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
       for( int k = kLow ; k <= mEw->m_kEnd[g]; k++ )
       {
 // what should the index boundaries be here to avoid parallel overlap points, but include real ghost points
-	 for( int j = mEw->m_jStart[g]; j <= mEw->m_jEnd[g]; j++ )
+	 for( int j = mEw->m_jStartInt[g]; j <= mEw->m_jEndInt[g]; j++ )
 	 {
-	    for( int i = mEw->m_iStart[g]; i <= mEw->m_iEnd[g] ; i++ )
+	    for( int i = mEw->m_iStartInt[g]; i <= mEw->m_iEndInt[g] ; i++ )
 	    {
 	       totalPoints += 1;
 	       double x = (i-1)*mEw->mGridSize[g];
@@ -146,14 +146,14 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
       } // end for k
 
 // communicate material properties to ghost points (necessary on refined meshes because ghost points don't have a well defined depth/topography)
-//      mEw->communicate_array( rho[g], g );
-//      mEw->communicate_array( cs[g], g );
-//      mEw->communicate_array( cp[g], g );
+      mEw->communicate_array( rho[g], g );
+      mEw->communicate_array( cs[g], g );
+      mEw->communicate_array( cp[g], g );
 // attenuation variables
-//      if( qp[g].is_defined())
-//	 mEw->communicate_array( qp[g], g );
-//      if( qs[g].is_defined())
-//	 mEw->communicate_array( qs[g], g );
+      if( qp[g].is_defined())
+	 mEw->communicate_array( qp[g], g );
+      if( qs[g].is_defined())
+	 mEw->communicate_array( qs[g], g );
    } // end for g (all Cartesian grids)
    if (mEw->topographyExists()) // curvilinear grid
    {

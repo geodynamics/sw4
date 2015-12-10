@@ -1,4 +1,4 @@
-fileio verbose=1 path=gauss-1
+fileio verbose=1 path=tw-att-gauss-1
 grid nx=51 x=6.28 y=6.28 z=6.28
 time t=1
 #time steps=1

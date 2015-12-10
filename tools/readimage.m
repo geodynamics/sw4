@@ -15,7 +15,7 @@
 %                        plane   - 0: x=const, 1: y=const, 2: z=const
 %                        t       - Simulation time at which the image was output.
 %                        timestring - String holding creation date
-function [im,x,y,z,plane,t,timestring]=readimage( imfile, pnr, verbose, machineformat )
+function [im,x,y,z,plane,t,timestring,npatches]=readimage( imfile, pnr, verbose, machineformat )
 if nargin < 4
    machineformat='native';
 end;

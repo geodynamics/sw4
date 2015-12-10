@@ -141,6 +141,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   assign_local_bcs(); 
   initializePaddingCells();
 
+// Check that f.d. operators fit inside the domains.
+  check_dimensions();
+
 // for all sides with dirichlet, free surface, supergrid, or periodic boundary conditions,
 // save the extent of the multi-D boundary window, and allocate arrays to hold the boundary forcing
   int wind[6], npts;
@@ -192,10 +195,15 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	    wind[5] = wind[4];
 	  }
 	}
+	else if( m_bcType[g][side] == bPeriodic )
+	  side_plane( g, side, wind, m_ghost_points );
 	else // for Dirichlet, super grid, and periodic conditions, we
 	     // apply the forcing directly on the ghost points
 	{
-	  side_plane( g, side, wind, m_ghost_points );
+	   if( m_mesh_refinements && side < 4 )
+	      side_plane( g, side, wind, m_ghost_points+1 );
+	   else
+	      side_plane( g, side, wind, m_ghost_points );
 	}
 	
 	npts = (wind[5]-wind[4]+1)*
@@ -1699,14 +1707,28 @@ void EW::setup_supergrid( )
   m_supergrid_taper_y.define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0, (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
 				    m_sg_gp_thickness*mGridSize[gTop] );
 
-// Note that we use the grid size on the bottom grid to define the transition width in the z-direction 
-  if (topographyExists()) // the taper function in z is currently not defined for a non-planar top surface
-    m_supergrid_taper_z.define_taper( false, 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
-				      m_sg_gp_thickness*mGridSize[gBot] );
-  else
-    m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
-				      m_sg_gp_thickness*mGridSize[gBot] );
+  // Removed below code and replaced m_supergrid_taper_z with a vector over g, to make it possible
+  // to have different widths at the top and bottom boundary, when the top and bottom grids have different spacings.
+  //
+  //// Note that we use the grid size on the bottom grid to define the transition width in the z-direction 
+  //  if (topographyExists()) // the taper function in z is currently not defined for a non-planar top surface
+  //    m_supergrid_taper_z.define_taper( false, 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
+  //				      m_sg_gp_thickness*mGridSize[gBot] );
+  //  else
+  //    m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax//, 				      m_sg_gp_thickness*mGridSize[gBot] );
 
+  if( mNumberOfGrids == 1 )
+     m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), 
+				         m_global_zmax,  m_sg_gp_thickness*mGridSize[gBot] );
+  else
+  {
+     m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid),
+							 0.0, false, m_global_zmax,  m_sg_gp_thickness*mGridSize[gTop] );
+     m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
+					  m_sg_gp_thickness*mGridSize[gBot] );
+     for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
+	m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, m_sg_gp_thickness*mGridSize[gBot] );
+  }
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
    // Add one to thickness to allow two layers of internal ghost points
@@ -1805,10 +1827,11 @@ void EW::assign_supergrid_damping_arrays()
 #define cornery(j,g) (m_sg_corner_y[g])[j-m_jStart[g]]
 #define cornerz(k,g) (m_sg_corner_z[g])[k-m_kStart[g]]
 
-  topCartesian = mNumberOfCartesianGrids-1;
+  //  topCartesian = mNumberOfCartesianGrids-1;
 // Note: compared to WPP2, we don't need to center the damping coefficients on the half-point anymore,
 // because the damping term is now 4th order: D+D-( a(x) D+D- ut(x) )
 
+  topCartesian = mNumberOfCartesianGrids-1;
   if( m_use_supergrid )
   {
 // tmp
@@ -1835,9 +1858,8 @@ void EW::assign_supergrid_damping_arrays()
 	      cornery(j,g)  = 1;
 	      stry(j,g) = m_supergrid_taper_y.tw_stretching(y);
 	   }
-	   if (g > topCartesian) // must be the curvilinear grid
+	   if ( g > topCartesian || (0 < g && g < mNumberOfGrids-1) ) // curvilinear grid or refinement grid.
 	   {
-// supergrid damping in the vertical (k-) direction on a curvilinear grid is not defined
 	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
 		 dcz(k,g)  = 0.;
@@ -1852,7 +1874,7 @@ void EW::assign_supergrid_damping_arrays()
 		 z = m_zmin[g] + (k-1)*mGridSize[g];
 		 dcz(k,g)  = 0;
 		 cornerz(k,g) = 1.;
-		 strz(k,g) = m_supergrid_taper_z.tw_stretching(z);
+		 strz(k,g) = m_supergrid_taper_z[g].tw_stretching(z);
 	      }
 	   }
 	}
@@ -1878,9 +1900,9 @@ void EW::assign_supergrid_damping_arrays()
 	      stry(j,g) = m_supergrid_taper_y.stretching(y);
 	      cornery(j,g)  = m_supergrid_taper_y.cornerTaper(y);
 	   }
-	   if (g > topCartesian) // must be the curvilinear grid
+	   if (g > topCartesian || (0 < g && g < mNumberOfGrids-1)  ) // Curvilinear or refinement grid
 	   {
-// supergrid damping in the vertical (k-) direction on a curvilinear grid is not defined
+// No supergrid damping in the vertical (k-) direction on a curvilinear or refinement grid.
 	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
 		 dcz(k,g) = 0.;
@@ -1893,9 +1915,9 @@ void EW::assign_supergrid_damping_arrays()
 	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
 		z = m_zmin[g] + (k-1)*mGridSize[g];
-		dcz(k,g)  = m_supergrid_taper_z.dampingCoeff(z);
-		strz(k,g) = m_supergrid_taper_z.stretching(z);
-		cornerz(k,g) = m_supergrid_taper_z.cornerTaper(z);
+		dcz(k,g)  = m_supergrid_taper_z[g].dampingCoeff(z);
+		strz(k,g) = m_supergrid_taper_z[g].stretching(z);
+		cornerz(k,g) = m_supergrid_taper_z[g].cornerTaper(z);
 	      }
 	   }
 	} // end for g...

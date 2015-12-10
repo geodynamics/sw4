@@ -114,6 +114,7 @@ void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, in
 void badOption(string name, char* option) const;
 bool startswith(const char begin[], char *line);
 void processGrid(char* buffer);
+void processRefinement(char* buffer);
 void deprecatedOption(const string& command, 
 		      const string& oldone, 
 		      const string& newone);
@@ -127,6 +128,7 @@ void processTestPointSource(char* buffer);
 void processTestRayleigh(char* buffer);
 void processTestLamb(char* buffer);
 void processTestEnergy(char* buffer);
+bool checkTestEnergyPeriodic(char* buffer);
 void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources);
 void processMaterial( char* buffer );
@@ -314,7 +316,7 @@ void assign_local_bcs( );
 bool timeSteppingSet();
 bool proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] );
 void decomp1d( int nglobal, int myid, int nproc, int& s, int& e );
-void coarsen1d( int& n, int& ifirst, int& ilast );
+void coarsen1d( int& n, int& ifirst, int& ilast, int periodic );
 void allocateCurvilinearArrays();
 void generate_grid();
 void setup_metric();
@@ -416,6 +418,7 @@ bool point_in_proc(int a_i, int a_j, int a_g);          // both interior and par
 bool point_in_proc_ext(int a_i, int a_j, int a_g);      // both interior and parallel ghost points+extra ghost points
   
 void initializePaddingCells();
+void check_dimensions();
 
 void convert_material_to_mulambda();
 
@@ -475,11 +478,11 @@ void get_geodyn_timelevel( vector<Sarray>& geodyndata );
 void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 			    vector<Sarray>& geodyndata2 );
 
-void consintp( Sarray& u_a, Sarray& um_a, Sarray& f_a, Sarray& mu_a, Sarray& la_a, Sarray& rho_a,
-	       Sarray& uf_a, Sarray& ufm_a, Sarray& ff_a, Sarray& muf_a, Sarray& laf_a,
-	       Sarray& rhof_a, Sarray* AlphaVE, Sarray* AlphaVEf, double hc, double hf, double dt, int g,
-	       double* a1, int* ipiv1, double* a2, int* ipiv2, int bctype[4], double tp1 );
-void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alphaf_a );
+   //void consintp( Sarray& u_a, Sarray& um_a, Sarray& f_a, Sarray& mu_a, Sarray& la_a, Sarray& rho_a,
+   //	       Sarray& uf_a, Sarray& ufm_a, Sarray& ff_a, Sarray& muf_a, Sarray& laf_a,
+   //	       Sarray& rhof_a, Sarray* AlphaVE, Sarray* AlphaVEf, double hc, double hf, double dt, int g,
+   //	       double* a1, int* ipiv1, double* a2, int* ipiv2, int bctype[4], double tp1 );
+   //void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alphaf_a );
 
 void integrate_source( );
 
@@ -617,6 +620,21 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
 			     double hy, double hz, Sarray& gradrho, Sarray& gradmu, Sarray& gradlambda,
 			     int grid, Sarray& gradrhogrid, Sarray& gradmugrid, Sarray& gradlambdagrid );
 
+// Functions to impose conditions at grid refinement interface:
+   void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+		   double t, bool predictor, std::vector<GridPointSource*> point_sources );
+void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
+void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
+void gridref_initial_guess( Sarray& u, int g, bool upper );
+void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
+				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
+				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic );
+void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
+	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
+	       double cof, int gc, int gp, int is_periodic[2] );
+void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -759,8 +777,10 @@ int m_nwriters;
 // supergrid
 bool m_use_supergrid;
 int m_sg_gp_thickness; //, m_sg_gp_transition;
+int m_sg_damping_order; // 4 or 6 order dissipation operator
 double m_supergrid_damping_coefficient;
-SuperGrid m_supergrid_taper_x, m_supergrid_taper_y, m_supergrid_taper_z;
+SuperGrid m_supergrid_taper_x, m_supergrid_taper_y;
+vector<SuperGrid> m_supergrid_taper_z;
 
 string mPath, mObsPath, mTempPath;
 
@@ -812,6 +832,7 @@ int mMaterialExtrapolate;
 // variables from the old FileInput class
 int m_nx_base, m_ny_base, m_nz_base;
 double m_h_base;
+vector<bool> m_iscurvilinear;
 vector<double> m_refinementBoundaries;
 InputMode m_topoInputStyle;
 string m_topoFileName, m_topoExtFileName, m_QueryType;
@@ -910,9 +931,10 @@ bool m_error_log, m_error_print;
 int m_inner_loop;
 
 //  Conservative interface
-bool m_intp_conservative;
+//bool m_intp_conservative;
+bool m_mesh_refinements;
 bool m_matrices_decomposed;
-double m_citol;
+double m_citol, m_cirelfact;
 int m_cimaxiter;
 
 vector<double*> m_cimat1;

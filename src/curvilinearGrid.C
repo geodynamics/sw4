@@ -805,8 +805,10 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
   computeNearestGridPoint(iNear, jNear, kNear, g, X0, Y0, Z0);
 
   if (g != gCurv)
+  {
+     cout << "interpolate_topography: g = " << g << " gcurv = " << gCurv << endl;
     return false;
-
+  }
   double tau; // holds the elevation at (q,r). Recall that elevation=-z
   if (m_analytical_topo)
   {
@@ -868,12 +870,15 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
 	     tau += a6cofi[k-i+3]*a6cofj[l-j+3]*mTopoGridExt(k,l,1);
     }
     else
+    {
+       cout << "interpolate_topography: point not in ext domain i= "  << i << " j = " << j << " limits " << 
+	  m_iStart[gCurv] << " " << m_iEnd[gCurv] << " " << m_jStart[gCurv] << " " << m_jEnd[gCurv] << 
+	  " nearest i = " << iNear << " j= " << jNear << endl;
        return false;
     }
+    }
   }// end general case: interpolating mTopoGrid array  
-
   Z0 = -tau;
-  
   return true;
 }
 

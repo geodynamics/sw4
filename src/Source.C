@@ -886,6 +886,275 @@ void Source::getmetdwgh7( double ai, double wgh[7] ) const
 }
 
 //-----------------------------------------------------------------------
+// Sources at grid refinement boundary
+void Source::getsourcewghNM2sm6(  double alph,  double wghk[6] ) const
+{
+      wghk[0] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(alph*alph*alph*alph/24.0+alph/12.0-alph*alph/24.0-alph*
+alph*alph/12.0);
+      wghk[1] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-alph*alph*alph*alph/6.0-2.0/3.0*alph+2.0/3.0*alph*alph+
+alph*alph*alph/6.0)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph
+*alph*alph*alph)*(-pow(alph-1.0,2.0)/30.0+alph/10.0-1.0/10.0+pow(alph-1.0,4.0)/
+30.0-pow(alph-1.0,3.0)/10.0);
+      wghk[2] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(1.0+alph*alph*alph*alph/4.0-5.0/4.0*alph*alph)+(10.0*alph
+*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(5.0/8.0*pow(
+alph-1.0,2.0)-3.0/4.0*alph+3.0/4.0-pow(alph-1.0,4.0)/8.0+pow(alph-1.0,3.0)/4.0)
+;
+      wghk[3] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-alph*alph*alph/6.0-alph*alph*alph*alph/6.0+2.0/3.0*alph+
+2.0/3.0*alph*alph)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(5.0/6.0-7.0/6.0*pow(alph-1.0,2.0)+alph/6.0+pow(alph-1.0,4.0)/
+6.0-pow(alph-1.0,3.0)/6.0);
+      wghk[4] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(alph*alph*alph*alph/24.0-alph/12.0-alph*alph/24.0+alph*
+alph*alph/12.0)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(7.0/12.0*pow(alph-1.0,2.0)+alph/2.0-1.0/2.0-pow(alph-1.0,4.0)/
+12.0);
+      wghk[5] = (10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(-pow(alph-1.0,2.0)/120.0-alph/60.0+1.0/60.0+pow(alph-1.0,4.0)/
+120.0+pow(alph-1.0,3.0)/60.0);
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcedwghNM2sm6(  double alph,  double dwghk[6] ) const
+{
+      dwghk[0] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-1.0/12.0-alph*alph*alph/6.0+alph*alph/4.0+alph/12.0);
+      dwghk[1] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(2.0/3.0+2.0/3.0*alph*alph*alph-alph*alph/2.0-4.0/3.0*alph
+)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(
+-1.0/6.0-2.0/15.0*pow(alph-1.0,3.0)+3.0/10.0*pow(alph-1.0,2.0)+alph/15.0);
+      dwghk[2] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-alph*alph*alph+5.0/2.0*alph)+(10.0*alph*alph*alph-15.0*
+alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(2.0+pow(alph-1.0,3.0)/2.0
+-3.0/4.0*pow(alph-1.0,2.0)-5.0/4.0*alph);
+      dwghk[3] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-2.0/3.0+2.0/3.0*alph*alph*alph+alph*alph/2.0-4.0/3.0*
+alph)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*
+alph)*(-5.0/2.0-2.0/3.0*pow(alph-1.0,3.0)+7.0/3.0*alph+pow(alph-1.0,2.0)/2.0);
+      dwghk[4] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(1.0/12.0-alph*alph*alph/6.0-alph*alph/4.0+alph/12.0)+(
+10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(2.0
+/3.0+pow(alph-1.0,3.0)/3.0-7.0/6.0*alph);
+      dwghk[5] = (10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(-pow(alph-1.0,3.0)/30.0-pow(alph-1.0,2.0)/20.0+alph/60.0);
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcewghNM1sm6(  double alph,  double wghk[6] ) const
+{
+      wghk[0] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-alph*alph/30.0+alph/10.0+alph*alph*alph*alph/30.0-alph*
+alph*alph/10.0);
+      wghk[1] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(5.0/8.0*alph*alph-3.0/4.0*alph-alph*alph*alph*alph/8.0+
+alph*alph*alph/4.0)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph
+*alph*alph*alph)*(-5.0/48.0*pow(alph-1.0,3.0)+pow(alph-1.0,4.0)/48.0+alph/6.0
+-1.0/6.0+pow(alph-1.0,2.0)/24.0);
+      wghk[2] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(1.0-7.0/6.0*alph*alph+alph/6.0+alph*alph*alph*alph/6.0-
+alph*alph*alph/6.0)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph
+*alph*alph*alph)*(4.0/15.0*pow(alph-1.0,3.0)-pow(alph-1.0,4.0)/15.0-16.0/15.0*
+alph+16.0/15.0+4.0/15.0*pow(alph-1.0,2.0));
+      wghk[3] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(7.0/12.0*alph*alph+alph/2.0-alph*alph*alph*alph/12.0)+(
+10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(1.0
+/4.0+3.0/4.0*alph-3.0/16.0*pow(alph-1.0,3.0)-pow(alph-1.0,2.0)/2.0+pow(alph-1.0
+,4.0)/16.0);
+      wghk[4] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-alph*alph/120.0-alph/60.0+alph*alph*alph*alph/120.0+alph
+*alph*alph/60.0)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(pow(alph-1.0,3.0)/48.0-pow(alph-1.0,4.0)/48.0+alph/6.0-1.0/6.0
++5.0/24.0*pow(alph-1.0,2.0));
+      wghk[5] = (10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(pow(alph-1.0,3.0)/240.0+pow(alph-1.0,4.0)/240.0-alph/60.0+1.0/
+60.0-pow(alph-1.0,2.0)/60.0);
+
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcedwghNM1sm6(  double alph,  double dwghk[6] ) const
+{
+      dwghk[0] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-1.0/10.0-2.0/15.0*alph*alph*alph+3.0/10.0*alph*alph+alph
+/15.0);
+      dwghk[1] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(3.0/4.0+alph*alph*alph/2.0-3.0/4.0*alph*alph-5.0/4.0*alph
+)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(
+-alph/12.0-1.0/12.0+5.0/16.0*pow(alph-1.0,2.0)-pow(alph-1.0,3.0)/12.0);
+      dwghk[2] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-1.0/6.0-2.0/3.0*alph*alph*alph+7.0/3.0*alph+alph*alph/
+2.0)+(10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph
+)*(-8.0/15.0*alph+8.0/5.0-4.0/5.0*pow(alph-1.0,2.0)+4.0/15.0*pow(alph-1.0,3.0))
+;
+      dwghk[3] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(-1.0/2.0+alph*alph*alph/3.0-7.0/6.0*alph)+(10.0*alph*alph
+*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(-7.0/4.0+9.0/16.0
+*pow(alph-1.0,2.0)+alph-pow(alph-1.0,3.0)/4.0);
+      dwghk[4] = (1.0-10.0*alph*alph*alph+15.0*alph*alph*alph*alph-6.0*alph*
+alph*alph*alph*alph)*(1.0/60.0-alph*alph*alph/30.0-alph*alph/20.0+alph/60.0)+(
+10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*alph*alph*alph)*(1.0
+/4.0-pow(alph-1.0,2.0)/16.0-5.0/12.0*alph+pow(alph-1.0,3.0)/12.0);
+      dwghk[5] = (10.0*alph*alph*alph-15.0*alph*alph*alph*alph+6.0*alph*alph*
+alph*alph*alph)*(-1.0/60.0-pow(alph-1.0,2.0)/80.0+alph/30.0-pow(alph-1.0,3.0)/
+60.0);
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcewghNsm6(  double alph,  double wghk[6] ) const
+{
+      wghk[0] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-5.0/48.0*alph*alph*alph+alph*alph*alph*alph/
+48.0+alph/6.0+alph*alph/24.0);
+      wghk[1] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(4.0/15.0*alph*alph*alph-alph*alph*alph*alph/
+15.0-16.0/15.0*alph+4.0/15.0*alph*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*
+alph*alph*alph+3.0/16.0*alph*alph*alph*alph*alph)*(-4.0/105.0*pow(alph-2.0,2.0)
++pow(alph-2.0,4.0)/105.0+16.0/105.0*alph-32.0/105.0-4.0/105.0*pow(alph-2.0,3.0)
+);
+      wghk[2] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(1.0+3.0/4.0*alph-3.0/16.0*alph*alph*alph-alph*
+alph/2.0+alph*alph*alph*alph/16.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*
+alph*alph+3.0/16.0*alph*alph*alph*alph*alph)*(5.0/24.0*pow(alph-2.0,2.0)-pow(
+alph-2.0,4.0)/48.0-alph/2.0+1.0+pow(alph-2.0,3.0)/16.0);
+      wghk[3] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(alph*alph*alph/48.0-alph*alph*alph*alph/48.0+
+alph/6.0+5.0/24.0*alph*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*
+alph+3.0/16.0*alph*alph*alph*alph*alph)*(5.0/6.0+pow(alph-2.0,4.0)/48.0+alph/
+12.0-pow(alph-2.0,3.0)/48.0-pow(alph-2.0,2.0)/3.0);
+      wghk[4] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(alph*alph*alph/240.0+alph*alph*alph*alph/240.0-
+alph/60.0-alph*alph/60.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph
++3.0/16.0*alph*alph*alph*alph*alph)*(-pow(alph-2.0,3.0)/80.0+7.0/40.0*pow(alph
+-2.0,2.0)-pow(alph-2.0,4.0)/80.0+3.0/10.0*alph-3.0/5.0);
+      wghk[5] = (5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*
+alph*alph*alph*alph*alph)*(-pow(alph-2.0,2.0)/84.0+pow(alph-2.0,4.0)/336.0-alph
+/28.0+1.0/14.0+pow(alph-2.0,3.0)/112.0);
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcedwghNsm6(  double alph,  double dwghk[6] ) const
+{
+   //      dwghk[0] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+   //16.0*alph*alph*alph*alph*alph)*(-alph/12.0-1.0/6.0+5.0/16.0*alph*alph-alph*alph
+   //*alph/12.0);
+   //      dwghk[1] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+   //16.0*alph*alph*alph*alph*alph)*(-8.0/15.0*alph+16.0/15.0-4.0/5.0*alph*alph+4.0/
+   //15.0*alph*alph*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/
+   //16.0*alph*alph*alph*alph*alph)*(-alph/12.0+1.0/12.0+5.0/16.0*pow(alph-3.0,2.0)-
+   //pow(alph-3.0,3.0)/12.0);
+   //      dwghk[2] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+   //16.0*alph*alph*alph*alph*alph)*(-3.0/4.0+9.0/16.0*alph*alph+alph-alph*alph*alph
+   ///4.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*alph*alph*
+   //alph*alph*alph)*(-8.0/15.0*alph+8.0/3.0-4.0/5.0*pow(alph-3.0,2.0)+4.0/15.0*pow(
+   //alph-3.0,3.0));
+   //      dwghk[3] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+   //16.0*alph*alph*alph*alph*alph)*(-1.0/6.0-alph*alph/16.0-5.0/12.0*alph+alph*alph
+   //*alph/12.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*alph
+   //*alph*alph*alph*alph)*(-15.0/4.0+9.0/16.0*pow(alph-3.0,2.0)+alph-pow(alph-3.0,
+   //3.0)/4.0);
+   //      dwghk[4] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+   //16.0*alph*alph*alph*alph*alph)*(1.0/60.0-alph*alph/80.0+alph/30.0-alph*alph*
+   //alph/60.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*alph*
+   //alph*alph*alph*alph)*(13.0/12.0-pow(alph-3.0,2.0)/16.0-5.0/12.0*alph+pow(alph
+   //-3.0,3.0)/12.0);
+   //      dwghk[5] = (5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*
+   //alph*alph*alph*alph*alph)*(-1.0/12.0-pow(alph-3.0,2.0)/80.0+alph/30.0-pow(alph
+   //-3.0,3.0)/60.0);
+
+      dwghk[0] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-alph/12.0-1.0/6.0+5.0/16.0*alph*alph-alph*alph
+*alph/12.0);
+      dwghk[1] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-8.0/15.0*alph+16.0/15.0-4.0/5.0*alph*alph+4.0/
+15.0*alph*alph*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/
+16.0*alph*alph*alph*alph*alph)*(-32.0/105.0-4.0/105.0*pow(alph-2.0,3.0)+4.0/
+35.0*pow(alph-2.0,2.0)+8.0/105.0*alph);
+      dwghk[2] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-3.0/4.0+9.0/16.0*alph*alph+alph-alph*alph*alph
+/4.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*alph*alph*
+alph*alph*alph)*(4.0/3.0+pow(alph-2.0,3.0)/12.0-3.0/16.0*pow(alph-2.0,2.0)-5.0/
+12.0*alph);
+      dwghk[3] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-1.0/6.0-alph*alph/16.0-5.0/12.0*alph+alph*alph
+*alph/12.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*alph
+*alph*alph*alph*alph)*(-17.0/12.0-pow(alph-2.0,3.0)/12.0+pow(alph-2.0,2.0)/16.0
++2.0/3.0*alph);
+      dwghk[4] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(1.0/60.0-alph*alph/80.0+alph/30.0-alph*alph*
+alph/60.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*alph*
+alph*alph*alph*alph)*(2.0/5.0+pow(alph-2.0,3.0)/20.0+3.0/80.0*pow(alph-2.0,2.0)
+-7.0/20.0*alph);
+      dwghk[5] = (5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*
+alph*alph*alph*alph*alph)*(-1.0/84.0-pow(alph-2.0,3.0)/84.0-3.0/112.0*pow(alph
+-2.0,2.0)+alph/42.0);
+
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcewghP1sm6(  double alph,  double wghk[6] ) const
+{
+      wghk[0] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-4.0/105.0*alph*alph+alph*alph*alph*alph/105.0+
+16.0/105.0*alph-4.0/105.0*alph*alph*alph);
+      wghk[1] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(5.0/24.0*alph*alph-alph*alph*alph*alph/48.0-
+alph/2.0+alph*alph*alph/16.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*
+alph+3.0/16.0*alph*alph*alph*alph*alph)*(-pow(alph-2.0,2.0)/96.0+pow(alph-2.0,
+4.0)/384.0+alph/24.0-1.0/12.0-pow(alph-2.0,3.0)/96.0);
+      wghk[2] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(1.0+alph*alph*alph*alph/48.0+alph/12.0-alph*
+alph*alph/48.0-alph*alph/3.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*
+alph+3.0/16.0*alph*alph*alph*alph*alph)*(pow(alph-2.0,2.0)/6.0-pow(alph-2.0,4.0
+)/96.0-alph/3.0+2.0/3.0+pow(alph-2.0,3.0)/48.0);
+      wghk[3] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-alph*alph*alph/80.0+7.0/40.0*alph*alph-alph*
+alph*alph*alph/80.0+3.0/10.0*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*
+alph*alph+3.0/16.0*alph*alph*alph*alph*alph)*(1.0-5.0/16.0*pow(alph-2.0,2.0)+
+pow(alph-2.0,4.0)/64.0);
+      wghk[4] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-alph*alph/84.0+alph*alph*alph*alph/336.0-alph/
+28.0+alph*alph*alph/112.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*
+alph+3.0/16.0*alph*alph*alph*alph*alph)*(-pow(alph-2.0,3.0)/48.0+pow(alph-2.0,
+2.0)/6.0-pow(alph-2.0,4.0)/96.0+alph/3.0-2.0/3.0);
+      wghk[5] = (5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0
+*alph*alph*alph*alph*alph)*(-pow(alph-2.0,2.0)/96.0+pow(alph-2.0,4.0)/384.0-
+alph/24.0+1.0/12.0+pow(alph-2.0,3.0)/96.0);
+}
+
+//-----------------------------------------------------------------------
+void Source::getsourcedwghP1sm6(  double alph,  double dwghk[6] ) const
+{
+      dwghk[0] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-16.0/105.0-4.0/105.0*alph*alph*alph+4.0/35.0*
+alph*alph+8.0/105.0*alph);
+      dwghk[1] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(1.0/2.0+alph*alph*alph/12.0-3.0/16.0*alph*alph
+-5.0/12.0*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*
+alph*alph*alph*alph*alph)*(-1.0/12.0-pow(alph-2.0,3.0)/96.0+pow(alph-2.0,2.0)/
+32.0+alph/48.0);
+      dwghk[2] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-1.0/12.0-alph*alph*alph/12.0+alph*alph/16.0+
+2.0/3.0*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*
+alph*alph*alph*alph*alph)*(1.0+pow(alph-2.0,3.0)/24.0-pow(alph-2.0,2.0)/16.0-
+alph/3.0);
+      dwghk[3] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(-3.0/10.0+alph*alph*alph/20.0+3.0/80.0*alph*
+alph-7.0/20.0*alph)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/
+16.0*alph*alph*alph*alph*alph)*(5.0/8.0*alph-5.0/4.0-pow(alph-2.0,3.0)/16.0);
+      dwghk[4] = (1.0-5.0/4.0*alph*alph*alph+15.0/16.0*alph*alph*alph*alph-3.0/
+16.0*alph*alph*alph*alph*alph)*(1.0/28.0-alph*alph*alph/84.0-3.0/112.0*alph*
+alph+alph/42.0)+(5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0*
+alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
+16.0-alph/3.0);
+      dwghk[5] = (5.0/4.0*alph*alph*alph-15.0/16.0*alph*alph*alph*alph+3.0/16.0
+*alph*alph*alph*alph*alph)*(-pow(alph-2.0,3.0)/96.0-pow(alph-2.0,2.0)/32.0+alph
+/48.0);
+}
+
+//-----------------------------------------------------------------------
 void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources ) const
 {
 // note that this routine is called from all processors, for each input source 
@@ -949,7 +1218,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    int Nz = a_EW->m_global_nz[g];
 
    int ic, jc, kc;
-   bool upperbndry, lowerbndry, ccbndry;
+   bool upperbndry, lowerbndry, ccbndry, gridrefbndry;
    double ai, bi, ci;
 
 // Delta distribution
@@ -959,6 +1228,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    double dwghi[6], dwghj[6], dwghk[6], dwghix[6], dwghjy[6], dwghkz[6];
    double dwghixx[6], dwghjyy[6], dwghkzz[6];
 
+   // k-weights across mesh refinement boundary
+   double wghkref[6], dwghkref[6], wghrefkz[6], wghrefkzz[6];
 
    if( canBeInverted )
    {
@@ -992,9 +1263,14 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 // Defined as the six point stencil uses values from both grids.
       ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
 					       (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
-// If not at the interface between curvilinear and Cartesian grids, bias stencil away 
+
+// gridrefbndry=true if at the interface between two cartesian grids of different refinements.
+      gridrefbndry = (upperbndry && g < a_EW->mNumberOfGrids-1 && !ccbndry) ||
+	 (lowerbndry && g>0 && !ccbndry );
+
+// If not at the interface between different grids, bias stencil away 
 // from the boundary.
-      if( !ccbndry )
+      if( !ccbndry && !gridrefbndry )
       {
 	 if( kc <= 2 )    kc = 3;
 	 if( kc >= Nz-2 ) kc = Nz-3;
@@ -1012,14 +1288,207 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
 
    // Special boundary stencil at free surface
-      if( !ccbndry && (kc == 3 && ci <= 0) )
+      if( !ccbndry && !gridrefbndry && (kc == 3 && ci <= 0) )
       {
 	 getsourcewghlow( ci, wghk, wghkz, wghkzz );
 	 getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
       }
 
+  // Special source discretization across grid refinement boundary
+      //      cout << "grid ref bndr " << gridrefbndry << " kc = " << kc << endl;
+      if( gridrefbndry )
+      {
+	 if( lowerbndry )
+	 {
+	    if( kc == Nz-1 )
+	    {
+	       getsourcedwghNM1sm6( ci, dwghk );
+	       getsourcewghNM1sm6(  ci,  wghk );
+	       wghkref[3]  = wghk[3]*0.5;
+	       wghk[3]     = wghk[3]*0.5;
+	       wghkref[4]  = wghk[4];
+	       wghkref[5]  = wghk[5];
+
+	       dwghkref[3] = dwghk[3]*0.5;
+	       dwghk[3]    = dwghk[3]*0.5;
+	       dwghkref[4] = dwghk[4];
+	       dwghkref[5] = dwghk[5];	       
+
+	       wghkref[3] /= normwgh[0];
+	       wghkref[4] /= normwgh[1];
+	       wghkref[5] /= normwgh[2];
+	       wghk[3]    /= normwgh[0];
+	       wghk[2]    /= normwgh[1];
+	       wghk[1]    /= normwgh[2];
+	       wghk[0]    /= normwgh[3];
+	       dwghkref[3] /= normwgh[0];
+	       dwghkref[4] /= normwgh[1];
+	       dwghkref[5] /= normwgh[2];
+	       dwghk[3]    /= normwgh[0];
+	       dwghk[2]    /= normwgh[1];
+	       dwghk[1]    /= normwgh[2];
+	       dwghk[0]    /= normwgh[3];
+	    }
+	    else if( kc == Nz-2 )
+	    {
+	       getsourcedwghNM2sm6( ci, dwghk );
+	       getsourcewghNM2sm6(  ci,  wghk );
+	       wghkref[4]  = wghk[4]*0.5;
+	       wghk[4]     = wghk[4]*0.5;
+	       wghkref[5]  = wghk[5];
+
+	       dwghkref[4] = dwghk[4]*0.5;
+	       dwghk[4]    = dwghk[4]*0.5;
+	       dwghkref[5] = dwghk[5];
+
+	       wghkref[4] /= normwgh[0];
+	       wghkref[5] /= normwgh[1];
+	       wghk[4]    /= normwgh[0];
+	       wghk[3]    /= normwgh[1];
+	       wghk[2]    /= normwgh[2];
+	       wghk[1]    /= normwgh[3];
+	       dwghkref[4] /= normwgh[0];
+	       dwghkref[5] /= normwgh[1];
+	       dwghk[4]    /= normwgh[0];
+	       dwghk[3]    /= normwgh[1];
+	       dwghk[2]    /= normwgh[2];
+	       dwghk[1]    /= normwgh[3];
+	    }
+	    else if( kc == Nz-3 )
+	    {
+	       getsourcedwgh( ci, dwghk, wghrefkz, wghrefkzz );
+	       getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
+	       wghkref[5]  = wghk[5]*0.5;
+	       wghk[5]     = wghk[5]*0.5;
+	       dwghkref[5] = dwghk[5]*0.5;
+	       dwghk[5]    = dwghk[5]*0.5;
+ //	       cout << " sumwgh = " << dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] << endl;
+
+	       wghkref[5] /= normwgh[0];
+	       wghk[5]    /= normwgh[0];
+	       wghk[4]    /= normwgh[1];
+	       wghk[3]    /= normwgh[2];
+	       wghk[2]    /= normwgh[3];
+	       dwghkref[5] /= normwgh[0];
+	       dwghk[5]    /= normwgh[0];
+	       dwghk[4]    /= normwgh[1];
+	       dwghk[3]    /= normwgh[2];
+	       dwghk[2]    /= normwgh[3];
+
+	    }
+	 }
+	 else
+	 {
+	    if( kc == 1 )
+	    {
+	       getsourcedwghNsm6( 2*ci, dwghk );
+	       getsourcewghNsm6(  2*ci,  wghk );
+	       wghkref[0]  = wghk[0];
+	       wghkref[1]  = wghk[1];
+	       wghkref[2]  = wghk[2]*0.5;
+	       wghk[2]     = wghk[2]*0.5;
+
+	       dwghkref[0] = dwghk[0];
+	       dwghkref[1] = dwghk[1];
+	       dwghkref[2] = dwghk[2]*0.5;
+	       dwghk[2]    = dwghk[2]*0.5;
+
+//	       cout << "kc = 1  ref:  " << wghkref[0] << " " << wghkref[1] << " " << wghkref[2] << endl;
+//	       cout << "        this: " << wghk[2] << " " << wghk[3] << " " << wghk[4] << " " << wghk[5] << endl;
+//	       cout << "  middle sum: " << wghk[2]+wghkref[2] << endl;
+//	       cout << " 2*ci = " << 2*ci << endl;
+
+	       wghkref[0] /= normwgh[2];
+	       wghkref[1] /= normwgh[1];
+	       wghkref[2] /= normwgh[0];
+	       wghk[2]    /= normwgh[0];
+	       wghk[3]    /= normwgh[1];
+	       wghk[4]    /= normwgh[2];
+	       wghk[5]    /= normwgh[3];
+
+	       dwghkref[0] /= normwgh[2];
+	       dwghkref[1] /= normwgh[1];
+	       dwghkref[2] /= normwgh[0];
+	       dwghk[2]    /= normwgh[0];
+	       dwghk[3]    /= normwgh[1];
+	       dwghk[4]    /= normwgh[2];
+	       dwghk[5]    /= normwgh[3];
+
+	       dwghk[2] *= 2;
+	       dwghk[3] *= 2;
+	       dwghk[4] *= 2;
+	       dwghk[5] *= 2;
+	    }
+	    else if( kc == 2 )
+	    {
+	       getsourcedwghP1sm6( 2*ci, dwghk );
+	       getsourcewghP1sm6(  2*ci,  wghk );
+
+	       wghkref[0]  = wghk[0];
+	       wghkref[1]  = wghk[1]*0.5;
+	       wghk[1]     = wghk[1]*0.5;
+
+	       dwghkref[0] = dwghk[0];
+	       dwghkref[1] = dwghk[1]*0.5;
+	       dwghk[1]    = dwghk[1]*0.5;
+
+	       wghkref[0] /= normwgh[1];
+	       wghkref[1] /= normwgh[0];
+	       wghk[1]    /= normwgh[0];
+	       wghk[2]    /= normwgh[1];
+	       wghk[3]    /= normwgh[2];
+	       wghk[4]    /= normwgh[3];
+
+	       dwghkref[0] /= normwgh[1];
+	       dwghkref[1] /= normwgh[0];
+	       dwghk[1]    /= normwgh[0];
+	       dwghk[2]    /= normwgh[1];
+	       dwghk[3]    /= normwgh[2];
+	       dwghk[4]    /= normwgh[3];
+
+	       dwghk[1] *= 2;
+	       dwghk[2] *= 2;
+	       dwghk[3] *= 2;
+	       dwghk[4] *= 2;
+	       dwghk[5] *= 2;
+	       
+	    }
+	    else if( kc == 3 )
+	    {
+	       getsourcedwgh( ci, dwghk, wghrefkz, wghrefkzz );
+	       for( int k=0 ; k <= 5 ;k++ )
+		  dwghk[k] *= 0.5;
+	       getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
+	       wghkref[0]  = wghk[0]*0.5;
+	       wghk[0]     = wghk[0]*0.5;
+	       dwghkref[0] = dwghk[0]*0.5;
+	       dwghk[0]    = dwghk[0]*0.5;
+
+	       wghkref[0] /= normwgh[0];
+	       wghk[0]    /= normwgh[0];
+	       wghk[1]    /= normwgh[1];
+	       wghk[2]    /= normwgh[2];
+	       wghk[3]    /= normwgh[3];
+	       dwghkref[0] /= normwgh[0];
+	       dwghk[0]    /= normwgh[0];
+	       dwghk[1]    /= normwgh[1];
+	       dwghk[2]    /= normwgh[2];
+	       dwghk[3]    /= normwgh[3];
+	       dwghk[0] *= 2;
+	       dwghk[1] *= 2;
+	       dwghk[2] *= 2;
+	       dwghk[3] *= 2;
+	       dwghk[4] *= 2;
+	       dwghk[5] *= 2;
+
+	    }
+
+	 }
+      }
+
 // Boundary correction, at upper boundary, but only if SBP operators are used there
-      if( (g == a_EW->mNumberOfGrids-1) && a_EW->is_onesided(g,4)  )
+//      if( !gridrefbndry && (g == a_EW->mNumberOfGrids-1) && a_EW->is_onesided(g,4)  )
+      if( !gridrefbndry && a_EW->is_onesided(g,4)  )
       {
 	 for( int k=0 ; k <= 5 ; k++ )
 	 {
@@ -1034,6 +1503,21 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 	    }
 	 }
       }
+      if( !gridrefbndry && a_EW->is_onesided(g,5)  )
+      {
+	 for( int k=0 ; k <= 5 ; k++ )
+	 {
+	    if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
+	    {
+	       wghk[k]    /= normwgh[Nz-k-kc+2];
+	       dwghk[k]   /= normwgh[Nz-k-kc+2];
+	       wghkz[k]   /= normwgh[Nz-k-kc+2];
+	       dwghkz[k]  /= normwgh[Nz-k-kc+2];
+	       wghkzz[k]  /= normwgh[Nz-k-kc+2];
+	       dwghkzz[k] /= normwgh[Nz-k-kc+2];
+	    }
+	 }
+      }
    }
    int myid;
    MPI_Comm_rank(MPI_COMM_WORLD, &myid );
@@ -1042,6 +1526,48 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    //      cout << " can be inverted";
    //   else
    //      cout << " can not be inverted";
+
+
+  // If source at grid refinement interface, set up variables for 
+  // discretization on grid on the other side of the interface
+   int icref, jcref;
+   double airef, biref, wghiref[6], wghirefx[6], wghirefxx[6];
+   double wghjref[6], wghjrefy[6], wghjrefyy[6];
+   double dwghiref[6], dwghjref[6];
+   if( gridrefbndry )
+   {
+      int Niref, Njref;
+      double qref, rref;
+      if( kc-1 < Nz-kc )
+      {
+     // kc closer to upper boundary. Source spread to finer grid above.
+	 qref = mX0/(0.5*h)+1;
+	 rref = mY0/(0.5*h)+1;
+	 Niref = a_EW->m_global_nx[g+1];
+	 Njref = a_EW->m_global_ny[g+1];
+      }
+      else
+      {
+     // kc closer to lower boundary. Source spread to coarser grid below.
+	 qref = mX0/(2*h)+1;
+	 rref = mY0/(2*h)+1;
+	 Niref = a_EW->m_global_nx[g-1];
+	 Njref = a_EW->m_global_ny[g-1];
+      }
+      icref = static_cast<int>(qref);
+      jcref = static_cast<int>(rref);
+      if( icref <= 2 ) icref = 3;
+      if( icref >= Niref-2 ) icref = Niref-3;
+      if( jcref <= 2 ) jcref = 3;
+      if( jcref >= Njref-2 ) jcref = Njref-3;
+      airef = qref-icref;
+      biref = rref-jcref;
+      getsourcewgh( airef, wghiref, wghirefx, wghirefxx );
+      getsourcewgh( biref, wghjref, wghjrefy, wghjrefyy );
+      // reuse wghirefx,wghirefxx, these are assumed not to be used with grid refinement.
+      getsourcedwgh( airef, dwghiref, wghirefx, wghirefxx );
+      getsourcedwgh( biref, dwghjref, wghjrefy, wghjrefyy );
+   }
 
    // Point source. NOTE: Derivatives needed for source inversion not implemented for this case.
    if( !mIsMomentSource && canBeInverted )
@@ -1092,6 +1618,55 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 		  }
 	       }
 	    }
+      if( gridrefbndry )
+      {
+	 for( int k=kc-2 ; k <= kc+3 ; k++ )
+	 {
+	    if( k <= 1 )
+	    {
+	       // Finer grid above
+	       for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+		  for( int i=icref-2 ; i <= icref+3 ; i++ )
+		  {
+		     double wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
+		     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+			 && a_EW->interior_point_in_proc(i,j,g+1) ) // checks if (i,j) belongs to this processor
+		     {
+			wF /= 0.125*h*h*h;
+			int Nzp =a_EW->m_global_nz[g+1];
+			int kk = Nzp - 1 + k;
+			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+								      i,j,kk,g+1,
+								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
+								      mTimeDependence, mNcyc, 
+								      mPar, mNpar, mIpar, mNipar );
+			point_sources.push_back(sourcePtr);
+		     }
+		  }
+	    }
+	    if( k >= Nz )
+	    {
+	       // Coarser grid below
+	       for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+		  for( int i=icref-2 ; i <= icref+3 ; i++ )
+		  {
+		     double wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
+		     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+			 && a_EW->interior_point_in_proc(i,j,g-1) ) // checks if (i,j) belongs to this processor
+		     {
+			wF /= 8*h*h*h;
+			int kk = k-Nz + 1;
+			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+									  i,j,kk,g-1,
+									  wF*mForces[0], wF*mForces[1], wF*mForces[2],
+									  mTimeDependence, mNcyc, 
+									  mPar, mNpar, mIpar, mNipar );
+			point_sources.push_back(sourcePtr);
+		     }
+		  }
+	    }
+	 }
+      }// Grid refinement boundary
    } 
    // Moment source.
    else if( mIsMomentSource )
@@ -1476,10 +2051,72 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 			point_sources.push_back(sourcePtr);
 		     }
 		  }
+	       }
+	 if( gridrefbndry )
+	 {
+	    // Tese arrays are currently undefined across the mesh refinement boundary.
+	    // --> Source inversion can not be done if the source is located at the interface.
+	    double dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
+	    for( int k=kc-2 ; k <= kc+3 ; k++ )
+	    {
+	       if( k <= 1 )
+	       {
+		  double hi = 1.0/(0.5*h);
+		  double jaci = 1.0/(0.125*h*h*h);
+		  for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+		     for( int i=icref-2 ; i <= icref+3 ; i++ )
+		     {
+			double wFx=0, wFy=0, wFz=0;
+			if( a_EW->interior_point_in_proc(i,j,g+1) ) 
+			{
+			   wFx = dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+			   wFy =  wghiref[i-icref+2]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+			   wFz =  wghiref[i-icref+2]* wghjref[j-jcref+2]*dwghkref[k-kc+2]*hi;
+			   double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+			   double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
+			   double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+			   int Nzp =a_EW->m_global_nz[g+1];
+			   int kk = Nzp - 1 + k;
+			   GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
+									  fx, fy, fz, mTimeDependence, mNcyc,
+									  mPar, mNpar, mIpar, mNipar,
+									  dsdp, dddp, dh1, dh2, dh3 );
+			   point_sources.push_back(sourcePtr);
+			}
+		     }
+	       }
+	       if( k >= Nz )
+	       {
+		  double jaci = 1.0/(8*h*h*h);
+		  double hi = 1.0/(2*h);
+		  for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+		     for( int i=icref-2 ; i <= icref+3 ; i++ )
+		     {
+			double wFx=0, wFy=0, wFz=0;
+			if( a_EW->interior_point_in_proc(i,j,g-1) ) 
+			{
+			   wFx = dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+			   wFy =  wghiref[i-icref+2]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+			   wFz =  wghiref[i-icref+2]* wghjref[j-jcref+2]*dwghkref[k-kc+2]*2*hi;
+			   double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+			   double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
+			   double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+			   int kk = k-Nz + 1;
+			   GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
+									  fx, fy, fz, mTimeDependence, mNcyc,
+									  mPar, mNpar, mIpar, mNipar,
+									  dsdp, dddp, dh1, dh2, dh3 );
+			   point_sources.push_back(sourcePtr);
+			}
+		     }
+		  
+	       }
 	    }
+	 }
       }
    }
 }
+
 
 //-----------------------------------------------------------------------
 void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], double momex[3] )

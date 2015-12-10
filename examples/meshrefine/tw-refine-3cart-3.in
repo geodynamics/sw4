@@ -1,0 +1,7 @@
+grid nx=129 x=0.8 y=1.2 z=1.0 
+refinement zmax=0.2
+refinement zmax=0.5
+fileio verbose=1 path=meshref-3c-3
+developer ctol=1e-10 cmaxit=100 crelax=0.92
+time t=0.3
+twilight omega=3.14159 errorlog=1

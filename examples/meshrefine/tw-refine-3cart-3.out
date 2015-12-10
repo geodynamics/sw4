@@ -1,0 +1,127 @@
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Oct 1 11:02:36 PDT 2015
+  By user:     bjorn
+  Machine:     cab690
+  Compiler:    /usr/local/bin/mpiicpc
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: refine-3cart.in
+
+* Processing the grid command...
+* Setting h to 6.25000000e-03 from  x/(nx-1) (x=8.00000000e-01, nx=129)
+* Setting ny to 193 to be consistent with h=6.25000000e-03
+* Setting nz to 161 to be consistent with h=6.25000000e-03
+allocateCartesianSolverArrays: #ghost points=3, #parallel padding points=3
+Extent of the computational domain xmax=8.00000000e-01 ymax=1.20000000e+00 zmax=1.00000000e+00
+Corrected global_zmax = 1.00000000e+00
+Refinement levels after correction: 
+grid=0 min Z=5.00000000e-01
+grid=1 min Z=2.00000000e-01
+grid=2 min Z=0.00000000e+00
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0   0.00625       129       193        81      2016657
+   1  0.003125       257       385        97      9597665
+   2 0.0015625       513       769       129     50890113
+Total number of grid points (without ghost points): 6.25044e+07
+
+
+   Execution time, reading input file 2.82450000e-02 seconds 
+ *** Testing = 1
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+----------------------------------------------------
+ Making Output Directory: meshref-3c-3/
+
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700001e+01, x=8.000000e-01, y=0.000000e+00
+2: Lon= 1.180000e+02, Lat=3.700001e+01, x=8.000000e-01, y=1.200000e+00
+3: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=1.200000e+00
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.95552372e+00 kg/m^3 <=  Density <= 2.86122118e+00 kg/m^3
+       1.70386185e+00 m/s    <=  Vp      <= 2.23366000e+00 m/s
+       1.04538380e+00 m/s    <=  Vs      <= 1.40557241e+00 m/s
+       1.58899863e+00        <=  Vp/Vs   <= 1.70645716e+00
+       3.05308894e+00 Pa     <=  mu      <= 3.91748989e+00 Pa
+       2.02096893e+00 Pa     <=  lambda  <= 2.86171475e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=6.250000e-03, minVs/h=167.261 (Cartesian)
+g=1, h=3.125000e-03, minVs/h=344.346 (Cartesian)
+g=2, h=1.562500e-03, minVs/h=711.624 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.30000000e+00 prel. time step=7.07719207e-04
+*** Initialized Images
+   Execution time, start up phase 1.77569000e-01 seconds 
+Running sw4 on 64 processors...
+Writing output to directory: meshref-3c-3/
+
+***  Starting solve ***
+============================================================
+ Running program on 64 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.3
+ Number of time steps = 424 dt: 0.000707547
+
+============================================================
+ Global boundary conditions 
+      x=0    dirichlet
+      x=xMax dirichlet
+      y=0    dirichlet
+      y=yMax dirichlet
+      z=topo free surface
+      z=zMax dirichlet
+
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 3.14159000e+00
+  c = 1.30000000e+00
+  phase = 0.00000000e+00
+  mat-omega = 1.00000000e+00
+  mat-phase = 4.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
+-----------------------------------------------------------
+  Initial data has been assigned
+  Begin time stepping...
+Time step       1  t =   7.0754717e-04
+Time step     101  t =   7.1462264e-02
+Time step     201  t =   1.4221698e-01
+Time step     301  t =   2.1297170e-01
+Time step     401  t =   2.8372642e-01
+Time step     424  t =   3.0000000e-01
+  Time stepping finished...
+   Execution time, solver phase 4 minutes 5.00443630e+01 seconds 
+
+ Final solution errors: Linf =   3.6428663e-08, L2 =   4.2469751e-09
+**** Closing file with solution errors for testing
+============================================================
+ program sw4 finished! 
+============================================================

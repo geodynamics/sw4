@@ -300,7 +300,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_sg_gp_thickness(30),
 //  m_sg_gp_transition(30), // always the same as the thickness
   m_supergrid_damping_coefficient(0.02), // good value for 4th order diss. Must be reduced by factor of 4 for 6th order diss.
-
+  m_sg_damping_order(4),
   m_minJacobian(0.),
   m_maxJacobian(0.),
 
@@ -359,9 +359,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
   mPrintInterval(100),
   m_matrices_decomposed(false),
-  m_citol(1e-3),
+  m_citol(1e-7),
   m_cimaxiter(20),
-  m_intp_conservative(true),
+  m_cirelfact(0.94),
+  m_mesh_refinements(false),
+  //  m_intp_conservative(true),
   mMaterialExtrapolate(0),
 
   m_use_attenuation(false),
@@ -635,54 +637,38 @@ void EW::assign_local_bcs( )
   }
   
 // vertical bc's are interpolating except at the bottom and the top, where they equal the global conditions
-  for( g= 0 ; g < mNumberOfGrids ; g++ )
-  {
-    m_bcType[g][4] = bInterpolate;
-    m_bcType[g][5] = bInterpolate;
-  }
+//   ( Only preliminary support for acoustic/elastic, not fully implemented)
   m_bcType[top][4] = mbcGlobalType[4];
+  for( g = 0 ; g < mNumberOfGrids-1 ; g++ )
+  {
+     if( m_iscurvilinear[g+1] && !m_iscurvilinear[g] ) // Elastic case only
+	m_bcType[g][4] = bCCInterface;
+     if( !m_iscurvilinear[g+1] && !m_iscurvilinear[g] ) // Two Cartesian grids, must be refinement bndry.
+	m_bcType[g][4] = bRefInterface;
+     if( !m_iscurvilinear[g+1] && m_iscurvilinear[g] ) // Acoustic case only
+	m_bcType[g][4] = bCCInterface;
+     if( m_iscurvilinear[g+1] && m_iscurvilinear[g] ) // Acoustic/Elastic interface
+	m_bcType[g][4] = bAEInterface;
+  }
+
   m_bcType[0][5] = mbcGlobalType[5];
+  for( g = 1 ; g < mNumberOfGrids ; g++ )
+  {
+     if( m_iscurvilinear[g] && !m_iscurvilinear[g-1] ) // Elastic case
+	m_bcType[g][5] = bCCInterface;
+     if( !m_iscurvilinear[g] && !m_iscurvilinear[g-1] ) // Two Cartesian grids, must be refinement bndry.
+	m_bcType[g][5] = bRefInterface;
+     if( !m_iscurvilinear[g] && m_iscurvilinear[g-1] ) // Acoustic case
+	m_bcType[g][5] = bCCInterface;
+     if( m_iscurvilinear[g] && m_iscurvilinear[g-1] ) // Acoustic/Elastic interface
+	m_bcType[g][5] = bAEInterface;
+  }
 
 // Find out which boundaries need one sided approximation in mixed derivatives
   for( g= 0 ; g < mNumberOfGrids ; g++ )
-  {
-    for(side=0 ; side < 6 ; side++ )
-    {
-// add energy conserving mesh coupling condition
-      m_onesided[g][side] = (m_bcType[g][side] == bStressFree); 
-    }
-  }
-
-// one-sided cross-terms at conservative interpolation
-  if( m_intp_conservative ) 
-  {
-    for( g= 0 ; g < mNumberOfCartesianGrids ; g++ )
-    {
-      for(side=0 ; side < 6 ; side++ )
-      {
-	if(m_bcType[g][side] == bInterpolate ) // THIS MAKES THE STENCIL ONE-SIDED AT THE CURVILINEAR-CARTESIAN INTERFACE!
-	  m_onesided[g][side] = 1;
-      }
-    }
-
-// Must be careful not to use one-sided formulas at the curvilinear-cartesian interface!
-    g = mNumberOfCartesianGrids - 1; // top Cartesian grid
-    side = 4; // low-k
-    if (topographyExists())
-    {
-      if(m_bcType[g][side] == bInterpolate ) // THIS MAKES THE STENCIL CENTERD AT THE CURVILINEAR-CARTESIAN INTERFACE!
-      {
-	m_onesided[g][side] = 0;
-// tmp
-// 	if (proc_zero() && mVerbose >= 1)
-// 	  printf("******* Reverting the cross-term to CENTERED on the Cartesian-curvilinear interface!!!!!!!!!\n");
-	
-      }
-      
-    }
-        
-  } // end if
-  
+    for(side=4 ; side < 6 ; side++ )
+       m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+	  (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface); 
 }
 
 //-----------------------------------------------------------------------
@@ -702,6 +688,28 @@ void EW::initializePaddingCells()
      {
        m_paddingCells[aa] = m_ghost_points;
      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::check_dimensions()
+{
+   for( int g= 0 ; g < mNumberOfGrids ; g++ )
+   {
+      int nz=m_kEndInt[g]-m_kStartInt[g]+1;
+      int nzmin;
+      if( m_onesided[g][4] && m_onesided[g][5] )
+	 nzmin = 12;
+      else if( m_onesided[g][4] || m_onesided[g][5] )
+	 nzmin = 8;
+      else
+	 nzmin = 1;
+      REQUIRE2( nz >= nzmin, "The number of grid points (not counting ghost pts) in the z-direction in grid " << g <<
+		" must be >= " << nzmin << " current value is " << nz );
+      int nx = m_iEndInt[g]-m_iStartInt[g]+1;
+      REQUIRE2( nx >= 1, "No grid points left (not counting ghost pts) in the x-direction in grid " << g );
+      int ny = m_jEndInt[g]-m_jStartInt[g]+1;
+      REQUIRE2( ny >= 1, "No grid points left (not counting ghost pts) in the y-direction in grid " << g );
    }
 }
 
@@ -730,8 +738,12 @@ string EW::bc_name( const boundaryConditionType bc ) const
       retval = "supergrid";
    else if( bc == bPeriodic )
       retval = "periodic";
-   else if( bc == bInterpolate )
-      retval = "interpolation";
+   else if( bc == bCCInterface )
+      retval = "Curvilinear/Cartesian interface";
+   else if( bc == bRefInterface )
+      retval = "Grid refinement interface";
+   else if( bc == bAEInterface )
+      retval = "Acoustic/Elastic interface";
    else if( bc == bProcessor )
       retval = "processor";
    else if( bc == bNone )
@@ -775,7 +787,7 @@ bool EW::getDepth( double x, double y, double z, double & depth)
     if (!interpolate_topography(q, r, zMinTilde, true))
     {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
-      // cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
+      //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
       // cerr << "Setting elevation of topography to ZERO" << endl;
       success = false;
 //      zMinTilde = 0;
@@ -1471,7 +1483,9 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
 //tmp  
 //   if (proc_zero())
 //     printf("Inside normOfDifference\n");
-  
+  double htop = mGridSize[mNumberOfGrids-1];
+  double hbot = mGridSize[0];
+
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
     uex_ptr  = a_Uex[g].c_ptr();
@@ -1484,33 +1498,40 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];  
 
+    
+    h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+
+    int nsgxy = (int)(0.5+m_sg_gp_thickness*htop/h);
+    int nsgz  = (int)(0.5+m_sg_gp_thickness*hbot/h);
     if (mbcGlobalType[0] == bSuperGrid)
-      imin = max(m_iStartInt[g], m_sg_gp_thickness+1);
+      imin = max(m_iStartInt[g], nsgxy+1);
     else
       imin = m_iStartInt[g];
   
     if (mbcGlobalType[1] == bSuperGrid)
-      imax = min(m_iEndInt[g], m_global_nx[g] - m_sg_gp_thickness);
+      imax = min(m_iEndInt[g], m_global_nx[g] - nsgxy);
     else
       imax = m_iEndInt[g];
 
     if (mbcGlobalType[2] == bSuperGrid)
-      jmin = max(m_jStartInt[g], m_sg_gp_thickness+1);
+      jmin = max(m_jStartInt[g], nsgxy+1);
     else
       jmin = m_jStartInt[g];
 
     if (mbcGlobalType[3] == bSuperGrid)
-      jmax = min(m_jEndInt[g], m_global_ny[g] - m_sg_gp_thickness);
+      jmax = min(m_jEndInt[g], m_global_ny[g] - nsgxy);
     else
       jmax = m_jEndInt[g];
 
-    if (mbcGlobalType[4] == bSuperGrid)
-      kmin = max(m_kStartInt[g], m_sg_gp_thickness+1);
+// Can not test on global type when there is more than one grid in the z-direction
+// if uppermost grid has layer on top boundary, the fine grid spacing is used for the s.g. layer width
+    if (m_bcType[g][4] == bSuperGrid)
+      kmin = max(m_kStartInt[g], nsgxy+1);
     else
       kmin = m_kStartInt[g];
-
-    if (mbcGlobalType[5] == bSuperGrid)
-      kmax = min(m_kEndInt[g], m_global_nz[g] - m_sg_gp_thickness);
+   // The lowermost grid has the s.g. layer width based on the spacing of the coarsest grid
+    if (m_bcType[g][5] == bSuperGrid)
+      kmax = min(m_kEndInt[g], m_global_nz[g] - nsgz);
     else
       kmax = m_kEndInt[g];
 
@@ -1520,7 +1541,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
 //     printf("proc=%i, if= %i, il=%i, jf=%i, jl=%i, kf=%i, kl=%i\n", m_myRank, 
 // 	   ifirst, ilast, jfirst, jlast, kfirst, klast);
 
-    h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+
 
     if( m_point_source_test )
     {
@@ -3184,7 +3205,7 @@ void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
     {
        double omstrx = m_supergrid_taper_x.get_tw_omega();
        double omstry = m_supergrid_taper_y.get_tw_omega();
-       double omstrz = m_supergrid_taper_z.get_tw_omega();
+       double omstrz = m_supergrid_taper_z[g].get_tw_omega();
        F77_FUNC(exactrhsfortsg,EXACTRHSFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
 						&amprho, &ampmu, &ampla, &h, &zmin,
@@ -3222,7 +3243,7 @@ void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
      {
 	double omstrx = m_supergrid_taper_x.get_tw_omega();
 	double omstry = m_supergrid_taper_y.get_tw_omega();
-	double omstrz = m_supergrid_taper_z.get_tw_omega();
+	double omstrz = m_supergrid_taper_z[g].get_tw_omega();
 	F77_FUNC(exactrhsfortsgc,EXACTRHSFORTSGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
 						   &amprho, &ampmu, &ampla, 
@@ -3385,7 +3406,7 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
            {
               double omstrx = m_supergrid_taper_x.get_tw_omega();
               double omstry = m_supergrid_taper_y.get_tw_omega();
-              double omstrz = m_supergrid_taper_z.get_tw_omega();
+              double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
                                                      &h, &zmin, &omstrx, &omstry, &omstrz );
@@ -3428,7 +3449,7 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
            {
               double omstrx = m_supergrid_taper_x.get_tw_omega();
               double omstry = m_supergrid_taper_y.get_tw_omega();
-              double omstrz = m_supergrid_taper_z.get_tw_omega();
+              double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingfortcsg,FORCINGFORTCSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                        &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
                                                        &amprho, &ampmu, &ampla,
@@ -3581,7 +3602,7 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
            {
               double omstrx = m_supergrid_taper_x.get_tw_omega();
               double omstry = m_supergrid_taper_y.get_tw_omega();
-              double omstrz = m_supergrid_taper_z.get_tw_omega();
+              double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                          &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
                                                          &h, &zmin, &omstrx, &omstry, &omstrz );
@@ -3623,7 +3644,7 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
            {
               double omstrx = m_supergrid_taper_x.get_tw_omega();
               double omstry = m_supergrid_taper_y.get_tw_omega();
-              double omstrz = m_supergrid_taper_z.get_tw_omega();
+              double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                            &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
                                                            &amprho, &ampmu, &ampla,
@@ -4463,6 +4484,8 @@ void EW::average_speeds( double& cp, double& cs )
 {
    cp = 0;
    cs = 0;
+   double htop = mGridSize[mNumberOfGrids-1];
+   double hbot = mGridSize[0];
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       int istart = m_iStart[g];
@@ -4471,19 +4494,25 @@ void EW::average_speeds( double& cp, double& cs )
       int jend   = m_jEnd[g];
       int kstart = m_kStart[g];
       int kend   = m_kEnd[g];
+      double h=mGridSize[g];
+      int nsgxy = (int)(0.5+m_sg_gp_thickness*htop/h);
+      int nsgz  = (int)(0.5+m_sg_gp_thickness*hbot/h);
+
       double cpgrid, csgrid, npts;
       if( m_bcType[g][0] == bSuperGrid )
-	 istart = istart+m_sg_gp_thickness;
+	 istart = istart+nsgxy;
       if( m_bcType[g][1] == bSuperGrid )
-	 iend = iend-m_sg_gp_thickness;
+	 iend = iend-nsgxy;
       if( m_bcType[g][2] == bSuperGrid )
-	 jstart = jstart+m_sg_gp_thickness;
+	 jstart = jstart+nsgxy;
       if( m_bcType[g][3] == bSuperGrid )
-	 jend = jend-m_sg_gp_thickness;
+	 jend = jend-nsgxy;
+      // Use finest spacing on top z-boundary
       if( m_bcType[g][4] == bSuperGrid )
-	 kstart = kstart+m_sg_gp_thickness;
+	 kstart = kstart+nsgxy;
+      // Use coarsest spacing on bottom z-boundary
       if( m_bcType[g][5] == bSuperGrid )
-	 kend = kend-m_sg_gp_thickness;
+	 kend = kend-nsgz;
       double* mu_ptr     = mMu[g].c_ptr();
       double* lambda_ptr = mLambda[g].c_ptr();
       double* rho_ptr    = mRho[g].c_ptr();

@@ -88,7 +88,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
       size_t ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
       size_t nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
       size_t ofs = -mEW->m_iStart[g]-ni*(mEW->m_jStart[g])-ni*nj*(mEW->m_kStart[g]);
-      for (int k = mEW->m_kStartInt[g]; k <= mEW->m_kEndInt[g]; ++k)
+      for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k)
 	 for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
 	    for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
 	    {

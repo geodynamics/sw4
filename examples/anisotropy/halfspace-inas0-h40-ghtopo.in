@@ -1,7 +1,7 @@
 #
 # Point source in free space, in anisotropic material: InAs 
 #
-fileio path=halfspace-inas0-h40
+fileio path=halfspace-inas0-h40-ghtopo
 
 grid x=12000 y=12000 z=6000 h=40
 time t=6

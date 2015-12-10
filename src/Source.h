@@ -145,6 +145,15 @@ public:
   void getmetwgh7( double ai, double wgh[7] ) const;
   void getmetdwgh7( double ai, double wgh[7] ) const;
 
+  void getsourcewghNM2sm6(  double ci,  double wghk[6] ) const;
+  void getsourcedwghNM2sm6(  double ci,  double dwghk[6] ) const;
+  void getsourcewghNM1sm6(  double ci,  double wghk[6] ) const;
+  void getsourcedwghNM1sm6(  double ci,  double dwghk[6] ) const;
+  void getsourcewghNsm6(  double ci,  double wghk[6] ) const;
+  void getsourcedwghNsm6(  double ci,  double dwghk[6] ) const;
+  void getsourcewghP1sm6(  double ci,  double wghk[6] ) const;
+  void getsourcedwghP1sm6(  double ci,  double dwghk[6] ) const;
+
   double find_min_exponent() const;
   std::string mName;
   std::vector<double> mForces;

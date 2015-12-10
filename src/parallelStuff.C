@@ -68,17 +68,21 @@ bool EW::proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] )
 }
 
 //-----------------------------------------------------------------------
-void EW::coarsen1d( int& n, int& ifirst, int& ilast )
+void EW::coarsen1d( int& n, int& ifirst, int& ilast, int periodic )
 {
    // n - total number of points 1<=i<=n, 
    // Total index space is 1-ghosts <= i <= n + ghosts
    //
    // This routine coarsens the interval ifirst <= i <= ilast
    // by a factor two, and returns coarsened values of
-   // all input paramters.
+   // all input parameters.
    //
-   // Note this routine does not work with periodic b.c.
-   int nc = (n-1)/2+1;
+   int nc;
+   if( periodic )
+      nc = n/2;
+   else
+      nc = (n-1)/2+1;
+   
    if( ilast == n + m_ghost_points )
       ilast = nc + m_ghost_points;
    else
@@ -99,7 +103,6 @@ void EW::coarsen1d( int& n, int& ifirst, int& ilast )
    }
    n = nc;
 }
-
 
 //-----------------------------------------------------------------------
 void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )

@@ -129,9 +129,9 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 
     for( int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++ )
     {
-      for( int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++ )
+      for( int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++ )
       {
-	for( int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g] ; i++ )
+	for( int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g] ; i++ )
 	{
 	  double x = (i-1)*mEW->mGridSize[g]                ;
 	  double y = (j-1)*mEW->mGridSize[g]                ;

@@ -57,6 +57,34 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine twilightfortwind( ifirst, ilast, jfirst, jlast, kfirst, 
+     +     klast, u, t, om, cv, ph, h, zmin, i1, i2, j1, j2, k1, k2 )
+* new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
+* u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
+* v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
+* w      := sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t));
+      implicit none
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
+      integer i1, i2, j1, j2, k1, k2
+      doubleprecision x, y, z, t, om, cv, ph, zmin
+      doubleprecision ampmu, amplambda, h
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      do k=k1,k2
+        z = (k-1)*h + zmin
+        do j=j1,j2
+          y = (j-1)*h
+          do i=i1,i2
+            x = (i-1)*h
+            u(1,i,j,k) = sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph)
+            u(2,i,j,k) = sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph)
+            u(3,i,j,k) = sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t))
+          enddo
+        enddo
+      enddo
+      return
+      end
+
+c-----------------------------------------------------------------------
       subroutine twilightfortc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, u, t, om, cv, ph, x, y, z )
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below

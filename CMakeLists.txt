@@ -121,7 +121,9 @@ SET(SW4_SRC_F_FILES src/addsgd.f src/bcfort.f
     src/rhs4curvilinearsg.f src/energy4.f 
     src/rhs4th3fort.f src/lamb_exact_numquad.f src/solerr3.f
     src/bcfortanisg.f src/ilanisocurv.f
-    src/anisomtrltocurvilinear.f src/bcfreesurfcurvani.f)
+    src/anisomtrltocurvilinear.f src/bcfreesurfcurvani.f 
+    src/tw_aniso_force_tt.f src/tw_aniso_force.f src/tw_ani_stiff.f90
+    src/rhs4th3fortwind.f )
 
 # Unused:
 # bcsf.f
@@ -161,54 +163,63 @@ SET(TEST_DIRS       twilight                twilight                twilight
                     twilight                twilight                twilight
                     twilight-att            twilight-att            twilight-att
                     twilight-att            twilight-att            twilight-att
+		    meshrefine              meshrefine
                     lamb                    lamb
                     pointsource             pointsource             pointsource)
-SET(TEST_SUBDIRS    flat-1                  flat-2                  flat-3
-                    gauss-1                 gauss-2                 gauss-3
-                    flat-1                  flat-2                  flat-3
-                    gauss-1                 gauss-2                 gauss-3
+SET(TEST_SUBDIRS    flat-twi-1              flat-twi-2              flat-twi-3
+                    gauss-twi-1             gauss-twi-2             gauss-twi-3
+                    tw-att-flat-1           tw-att-flat-2           tw-att-flat-3
+                    tw-att-gauss-1          tw-att-gauss-2          tw-att-gauss-3
+                    meshref-3c-1            meshref-3c-2
                     lamb-1                  lamb-2
                     pointsource-1           pointsource-2           pointsource-3)
 SET(TEST_IN_FILES   flat-twi-1.in           flat-twi-2.in           flat-twi-3.in
                     gauss-twi-1.in          gauss-twi-2.in          gauss-twi-3.in
                     tw-att-1.in             tw-att-2.in             tw-att-3.in
                     tw-topo-att-1.in        tw-topo-att-2.in        tw-topo-att-3.in
+		    tw-refine-3cart-1.in    tw-refine-3cart-2.in
                     lamb-1.in               lamb-2.in
                     pointsource-sg1.in      pointsource-sg2.in      pointsource-sg3.in)
 SET(TEST_BASE_FILES TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
+                    TwilightErr             TwilightErr
                     LambErr                 LambErr    
                     PointSourceErr          PointSourceErr          PointSourceErr)
 SET(TEST_CHECKS     err_tol                 err_tol                 err_tol 
                     err_tol                 err_tol                 err_tol 
                     err_tol                 err_tol                 err_tol 
                     err_tol                 err_tol                 err_tol 
+		    err_tol                 err_tol
                     compare                 compare 
                     compare                 compare                 compare)
 SET(TEST_LEVELS     0                       0                       1
                     0                       0                       1
                     0                       0                       1
                     0                       1                       2
+		    1                       2
                     1                       2
                     1                       2                       2)
 SET(TEST_ERRINF_TOL 1e-3                    1e-4                    1e-5
                     1e-2                    1e-3                    1e-4
                     1e-3                    1e-4                    1e-5
                     1e-2                    1e-3                    1e-4
+		    1e-3                    1e-3
                     1e-4                    1e-4
                     1e-4                    1e-4                    1e-4)
 SET(TEST_ERRL2_TOL  1e-3                    1e-4                    1e-5
                     1e-3                    1e-4                    1e-5
                     1e-2                    1e-3                    1e-4
                     1e-2                    1e-3                    1e-4
+		    1e-3                    1e-3
                     1e-4                    1e-4
                     1e-4                    1e-4                    1e-4)
 SET(TEST_SOLINF_TOL 1e-2                    1e-2                    1e-2
                     1e-2                    1e-2                    1e-2
                     1e-2                    1e-2                    1e-2
                     1e-2                    1e-2                    1e-2
+		    1e-2                    1e-2
                     0                       0
                     0                       0                       0)
 LIST(LENGTH TEST_DIRS N)
