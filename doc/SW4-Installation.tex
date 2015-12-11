@@ -46,14 +46,15 @@
 
 \begin{document}
 
-\title{Installing SW4 version 1.1}
+\title{Installing SW4 version 1.18}
 
 \author{ N. Anders Petersson$^*$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This work
     performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National
     Laboratory under contract DE-AC52-07NA27344. This is contribution LLNL-SM-662989.} \and Eric
   Heien\thanks{Computational Infrastructure for Geodynamics, University of California, Davis.}}
-\date{October 16, 2014} \maketitle
+\date{October 16, 2014\\Revised December 11, 2015}
+\maketitle
 
 %\thispagestyle{plain}
 
@@ -424,7 +425,7 @@ The \verb+cmake+ command searches for the necessary libraries and other dependen
 makefiles appropriate to your system.  Running \verb+make+ compiles \emph{SW4} using these
 makefiles.  For details about the exact commands being used in compilation, run \texttt{make
   VERBOSE=1}.  Once SW4 is successfully compiled and linked you will see the ``SW4 Lives!'' banner
-on the screen.
+on the screen. The \verb+sw4+ executable resides in the \verb+build/bin+ directory.
 
 \subsection{CMake Options}
 CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option,
@@ -515,13 +516,19 @@ Total Test time (real) =  14.90 sec
 
 If a test fails you can check the details in the output log at
 \texttt{Testing/Temporary/LastTest.log}.
-\bigskip\par
-On LC machines CMake finds the program \verb+mpirun+ to use for running the tests. This is not correct, the command to run MPI on the compute nodes is \verb+srun+, for example, 
+
+\paragraph{Modifying the MPI execution commands.}
+By default, \verb+mpirun+ is used to start parallel runs when you do \verb+make test+.  However, on
+Livermore computing (LC) machines the command for running MPI programs is \verb+srun+, not
+\verb+mpirun+. Also, the flag for specifying the number of processors is different, and you must
+give an additional flag for running interactive jobs on the debug partition. For example, you would
+say
 \begin{verbatim}
 srun -ppdebug -n 128 sw4 inputfile.in
 \end{verbatim}
-for running on the debug queue using 128 cores. To specify the MPI program and exact parameters to use for the tests,
-the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and MPIEXEC\_PREFLAGS can be set as in the example, 
+to run on the debug partition using 128 cores. To modify the default MPI execution program and
+other runtime parameters, the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and
+MPIEXEC\_PREFLAGS can be set as in the following example:
 \begin{verbatim}
 cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=/usr/bin/srun \
                           -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
