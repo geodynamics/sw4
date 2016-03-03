@@ -5371,7 +5371,7 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
       sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
 // nothing to do if nt1=nt2=nt3=0
       if (nt1<=0 && nt2<=0 && nt3<=0) continue;
-      if (proc_zero() && mVerbose >= 3)
+      if (proc_zero() && mVerbose >= 2)
       {
 	printf("point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n", 
 	       pts+1, lon, lat, dep, stk, dip, area, tinit, dt);
@@ -5424,7 +5424,37 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	{
 	  par[i] *= 1e-2;
 	}
-	
+
+// AP: Mar. 1, 2016: Additional scaling is needed to make the integral of the time function = 1
+        double slip_m=slip1*1e-2;
+        double slip_sum=0;
+	for (int i=1; i<=nt1dim+1; i++)
+	{
+	  slip_sum += par[i];
+	}
+        slip_sum *=dt;
+
+        if (proc_zero() && mVerbose >= 2)
+        {
+           printf("INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n", slip_sum, slip_m);
+        }
+// scale time series to sum to integrate to one        
+	for (int i=1; i<=nt1dim+1; i++)
+	{
+           par[i] /= slip_sum;
+	}
+        if (proc_zero() && mVerbose >= 2)
+        {
+           slip_sum=0;
+           for (int i=1; i<=nt1dim+1; i++)
+           {
+              slip_sum += par[i];
+           }
+           slip_sum *=dt;
+           printf("INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n", slip_sum);
+        }
+//done scaling        
+        
 	npar = nt1dim+2;
 	nipar = 1;
 

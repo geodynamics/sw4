@@ -54,7 +54,7 @@ elseif strcmp( fcn, 'Ricker' ) == 1
 elseif strcmp( fcn, 'Triangle' ) == 1
    for i=1:n+1
      ta = omega*(t(i)-t0);
-     if ta>0 & ta < 1
+     if (ta>0 && ta < 1)
         g(i) = 16/(pi*pi)*(sin(pi*ta)-(1/9)*sin(3*pi*ta)+(1/25)*sin(5*pi*ta)-(1/49)*sin(7*pi*ta));
      else
         g(i) = 0;
@@ -65,7 +65,7 @@ elseif strcmp( fcn, 'Triangle' ) == 1
 elseif strcmp( fcn, 'Sawtooth' ) == 1
    for i=1:n+1
      ta = omega*(t(i)-t0);
-     if ta>0 & ta < 1
+     if (ta>0 && ta < 1)
         g(i) =  8/(pi*pi)*(sin(2*pi*ta)-(1/9)*sin(6*pi*ta)+(1/25)*sin(10*pi*ta)-(1/49)*sin(14*pi*ta));
      else
         g(i) = 0;
@@ -100,7 +100,7 @@ elseif strcmp( fcn, 'DRamp' ) == 1
 elseif strcmp( fcn, 'Smoothwave' ) == 1
    for i=1:n+1
      ta = omega*(t(i)-t0);
-     if ta>0 & ta < 1
+     if (ta>0 && ta < 1)
         g(i) = (2187/8)*ta.^3-(10935/8)*ta.^4+(19683/8)*ta.^5-(15309/8)*ta.^6+(2187/4)*ta.^7;
      else
         g(i) = 0;
@@ -216,6 +216,9 @@ elseif strcmp( fcn, 'Liu' ) == 1
        end;
      end;
    end;
+else
+  disp 'Unknown function name: ', disp(fcn)
+  return;
 end;
 if doplot == 1
    [h]=plot(t,g,col);
