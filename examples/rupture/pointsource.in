@@ -1,0 +1,15 @@
+fileio path=ps_gaussian
+grid x=6e3 y=6e3 z=4e3 nx=101 az=0
+time t=15
+
+# receiver
+rec x=3.0e3 y=3.0e3 z=0 file=r1 usgsformat=1 sacformat=0
+
+# source
+source lat=37.0269494562947 lon=118.033756343501 depth=1.0e3 m0=6.4e14 strike=90 dip=0 rake=45 type=Gaussian freq=6.28 t0=0.67
+
+block vp=800 vs=400 rho=1000
+
+
+
+
