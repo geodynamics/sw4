@@ -427,6 +427,9 @@ makefiles.  For details about the exact commands being used in compilation, run 
   VERBOSE=1}.  Once SW4 is successfully compiled and linked you will see the ``SW4 Lives!'' banner
 on the screen. The \verb+sw4+ executable resides in the \verb+build/bin+ directory.
 
+If you want to rebuild \verb+sw4+ with a new set of options, you can force \verb+cmake+ to start
+from scratch by removing the file \verb+CMakeCache.txt+ in the \verb+build+ directory.
+
 \subsection{CMake Options}
 CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option,
 add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the options in the
@@ -464,6 +467,13 @@ will result in the tests finishing faster, but there is no point exceeding the n
 cores on your system.  We strongly recommend at least 8 processes if TESTING\_LEVEL is 1 or
 higher.\\ \hline
 %
+% -DMPIEXEC=/usr/bin/srun
+%
+MPIEXEC & mpirun & UNIX command for running an MPI application.\\ \hline
+% -DMPIEXEC_NUMPROC_FLAG=-n
+MPIEXEC\_NUMPROC\_FLAG & -np & MPI command option for specifying the number of processes.\\ \hline 
+% -DMPIEXEC_PREFLAGS=-ppdebug
+MPIEXEC\_PREFLAGS & (none) & Extra MPI command option.\\ \hline 
 \end{tabular}
 \end{center}
 
@@ -531,9 +541,25 @@ other runtime parameters, the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and
 MPIEXEC\_PREFLAGS can be set as in the following example:
 \begin{verbatim}
 cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=/usr/bin/srun \
-                          -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
+      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
 \end{verbatim}
 
+After the proj.4, euclid and cencalvm libraries have been installed (see next section), you need to tell
+\verb+cmake+ where to find them. On the LC-machines, all three libraries are currently installed under
+\verb+/usr/apps/wpp+, and you can use the following command options to configure \verb+sw4+:
+\begin{verbatim}
+cmake -DTESTING_LEVEL=1 -DMPI_NUM_TEST_PROCS=16 -DMPIEXEC=/usr/bin/srun \
+      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug \
+      -DPROJ4_HOME=/usr/apps/wpp -DCENCALVM_HOME=/usr/apps/wpp ..
+\end{verbatim}
+To verify that \verb+cmake+ actually found the libraries, pay attention to the
+following lines of the output from the \verb+cmake+ command:
+\begin{verbatim}
+...
+-- Found PROJ4: /usr/apps/wpp/lib/libproj.so  
+-- Found CENCALVM: /usr/apps/wpp/lib/libcencalvm.so;/usr/apps/wpp/lib/libetree.so  
+...
+\end{verbatim}
 
 \section{Installing the proj.4, euclid, and cencalvm packages}\label{sec:cencalvm-install}
 \index{installation!cencalvm} \index{installation!efile}
