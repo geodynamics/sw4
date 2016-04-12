@@ -1702,33 +1702,40 @@ void EW::setup_supergrid( )
   int gTop = mNumberOfCartesianGrids-1;
   int gBot = 0;
 
-  m_supergrid_taper_x.define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0, (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-				    m_sg_gp_thickness*mGridSize[gTop] );
-  m_supergrid_taper_y.define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0, (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-				    m_sg_gp_thickness*mGridSize[gTop] );
-
-  // Removed below code and replaced m_supergrid_taper_z with a vector over g, to make it possible
-  // to have different widths at the top and bottom boundary, when the top and bottom grids have different spacings.
-  //
-  //// Note that we use the grid size on the bottom grid to define the transition width in the z-direction 
-  //  if (topographyExists()) // the taper function in z is currently not defined for a non-planar top surface
-  //    m_supergrid_taper_z.define_taper( false, 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax, 
-  //				      m_sg_gp_thickness*mGridSize[gBot] );
-  //  else
-  //    m_supergrid_taper_z.define_taper( (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), m_global_zmax//, 				      m_sg_gp_thickness*mGridSize[gBot] );
+  for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
+  {
+     m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
+					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+					  m_sg_gp_thickness*mGridSize[g] );
+     m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
+					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+					  m_sg_gp_thickness*mGridSize[g] );
+  }
+  if( topographyExists() )
+  {
+     int g=mNumberOfGrids-1;
+     m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
+					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+					  m_sg_gp_thickness*mGridSize[gTop] );
+     m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
+					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+					  m_sg_gp_thickness*mGridSize[gTop] );
+  }
 
   if( mNumberOfGrids == 1 )
-     m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0, (mbcGlobalType[5] == bSuperGrid), 
-				         m_global_zmax,  m_sg_gp_thickness*mGridSize[gBot] );
+     m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
+					  (mbcGlobalType[5] == bSuperGrid), m_global_zmax,
+					  m_sg_gp_thickness*mGridSize[0] );
   else
   {
-     m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid),
-							 0.0, false, m_global_zmax,  m_sg_gp_thickness*mGridSize[gTop] );
+     m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
+							 false, m_global_zmax, m_sg_gp_thickness*mGridSize[gTop] );
      m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
 					  m_sg_gp_thickness*mGridSize[gBot] );
      for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
 	m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, m_sg_gp_thickness*mGridSize[gBot] );
   }
+  
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
    // Add one to thickness to allow two layers of internal ghost points
@@ -1849,14 +1856,14 @@ void EW::assign_supergrid_damping_arrays()
 	      x = (i-1)*mGridSize[g];
 	      dcx(i,g)  = 0;
 	      cornerx(i,g)  = 1;
-	      strx(i,g) = m_supergrid_taper_x.tw_stretching(x);
+	      strx(i,g) = m_supergrid_taper_x[g].tw_stretching(x);
 	   }
 	   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	   {
 	      y = (j-1)*mGridSize[g];
 	      dcy(j,g)  = 0;
 	      cornery(j,g)  = 1;
-	      stry(j,g) = m_supergrid_taper_y.tw_stretching(y);
+	      stry(j,g) = m_supergrid_taper_y[g].tw_stretching(y);
 	   }
 	   if ( g > topCartesian || (0 < g && g < mNumberOfGrids-1) ) // curvilinear grid or refinement grid.
 	   {
@@ -1883,22 +1890,21 @@ void EW::assign_supergrid_damping_arrays()
      { // standard case starts here
 // tmp
 //       printf("SG: standard case!\n");
-
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
 	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	   {
 	      x = (i-1)*mGridSize[g];
-	      dcx(i,g)  = m_supergrid_taper_x.dampingCoeff(x);
-	      strx(i,g) = m_supergrid_taper_x.stretching(x);
-	      cornerx(i,g)  = m_supergrid_taper_x.cornerTaper(x);
+	      dcx(i,g)  = m_supergrid_taper_x[g].dampingCoeff(x);
+	      strx(i,g) = m_supergrid_taper_x[g].stretching(x);
+	      cornerx(i,g)  = m_supergrid_taper_x[g].cornerTaper(x);
 	   }
 	   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	   {
 	      y = (j-1)*mGridSize[g];
-	      dcy(j,g)  = m_supergrid_taper_y.dampingCoeff(y);
-	      stry(j,g) = m_supergrid_taper_y.stretching(y);
-	      cornery(j,g)  = m_supergrid_taper_y.cornerTaper(y);
+	      dcy(j,g)  = m_supergrid_taper_y[g].dampingCoeff(y);
+	      stry(j,g) = m_supergrid_taper_y[g].stretching(y);
+	      cornery(j,g)  = m_supergrid_taper_y[g].cornerTaper(y);
 	   }
 	   if (g > topCartesian || (0 < g && g < mNumberOfGrids-1)  ) // Curvilinear or refinement grid
 	   {

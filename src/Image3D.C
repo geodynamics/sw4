@@ -290,7 +290,7 @@ void Image3D::define_pio( )
       for( int w=0 ; w < nrwriters ; w++ )
 	 if( q*w+r == myid )
 	    iwrite = 1;
-      //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
+//      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
       m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start );
       delete[] owners;
@@ -702,6 +702,7 @@ void Image3D::write_image( int cycle, std::string &path, double t,
 	 ret = write( fid, globalSize, 6*sizeof(int) );
 	 CHECK_INPUT( ret == 6*sizeof(int),"Image3D::write_image: Error writing global sizes" );
       }
+      fsync(fid);
    }
    m_parallel_io[0]->writer_barrier();
 

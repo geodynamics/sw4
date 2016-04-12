@@ -3203,8 +3203,8 @@ void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
     }
     if( usingSupergrid() )
     {
-       double omstrx = m_supergrid_taper_x.get_tw_omega();
-       double omstry = m_supergrid_taper_y.get_tw_omega();
+       double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+       double omstry = m_supergrid_taper_y[g].get_tw_omega();
        double omstrz = m_supergrid_taper_z[g].get_tw_omega();
        F77_FUNC(exactrhsfortsg,EXACTRHSFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -3241,8 +3241,8 @@ void EW::exactRhsTwilight(double a_t, vector<Sarray> & a_F)
      // +     klast, utt, t, om, c, ph, h, zmin )
      if( usingSupergrid() )
      {
-	double omstrx = m_supergrid_taper_x.get_tw_omega();
-	double omstry = m_supergrid_taper_y.get_tw_omega();
+	double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+	double omstry = m_supergrid_taper_y[g].get_tw_omega();
 	double omstrz = m_supergrid_taper_z[g].get_tw_omega();
 	F77_FUNC(exactrhsfortsgc,EXACTRHSFORTSGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 						   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -3404,8 +3404,8 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
            ampla = m_twilight_forcing->m_amplambda;
            if( usingSupergrid() )
            {
-              double omstrx = m_supergrid_taper_x.get_tw_omega();
-              double omstry = m_supergrid_taper_y.get_tw_omega();
+              double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+              double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
@@ -3447,8 +3447,8 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
            ampla = m_twilight_forcing->m_amplambda;
            if( usingSupergrid() )
            {
-              double omstrx = m_supergrid_taper_x.get_tw_omega();
-              double omstry = m_supergrid_taper_y.get_tw_omega();
+              double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+              double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingfortcsg,FORCINGFORTCSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                        &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -3600,8 +3600,8 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
            ampla = m_twilight_forcing->m_amplambda;
            if( usingSupergrid() )
            {
-              double omstrx = m_supergrid_taper_x.get_tw_omega();
-              double omstry = m_supergrid_taper_y.get_tw_omega();
+              double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+              double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                          &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
@@ -3642,8 +3642,8 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
            ampla = m_twilight_forcing->m_amplambda;
            if( usingSupergrid() )
            {
-              double omstrx = m_supergrid_taper_x.get_tw_omega();
-              double omstry = m_supergrid_taper_y.get_tw_omega();
+              double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+              double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
               F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                            &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -6021,11 +6021,20 @@ bool EW::check_for_nan( vector<Sarray>& a_U, int verbose, string name )
 //-----------------------------------------------------------------------
 void EW::check_min_max_int( vector<Sarray>& a_U )
 {
+   int nc = a_U[0].m_nc;
+   double* mx = new double[nc];
+   double* mn = new double[nc];
    for( int g=0 ; g < a_U.size() ; g++ )
    {
-      double mx[4]={-1e30,-1e30,-1e30,-1e30};
-      double mn[4]={1e30,1e30,1e30,1e30};
-      int nc = a_U[g].m_nc;   
+      //      double mx[4]={-1e30,-1e30,-1e30,-1e30};
+      //      double mn[4]={1e30,1e30,1e30,1e30};
+      for( int c=1 ; c <= nc ; c++ )
+      {
+	 //	 mx[c] = -1e38;
+	 //	 mn[c] =  1e38;
+	 mx[c-1] = mn[c-1] = a_U[g](c,m_iStartInt[g],m_jStartInt[g],m_kStartInt[g]);
+      }
+
       for( int k=m_kStartInt[g] ; k <= m_kEndInt[g] ; k++ )
 	 for( int j=m_jStartInt[g] ; j <= m_jEndInt[g] ; j++ )
 	    for( int i=m_iStartInt[g] ; i <= m_iEndInt[g] ; i++ )
@@ -6038,6 +6047,8 @@ void EW::check_min_max_int( vector<Sarray>& a_U )
 	       }
       cout << g << " " << mn[0] << " " << mx[0] << endl;
    }
+   delete[] mx;
+   delete[] mn;
 }
 
 #ifdef ENABLE_OPT

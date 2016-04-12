@@ -1201,8 +1201,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 if( !m_doubly_periodic )
 	    dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
       }
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf );
-      compute_icstresses( a_Up[g], Bc, g, kc );
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
+      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
 
       communicate_array_2d( Unextf, g+1, kf );
       communicate_array_2d( Unextc, g, kc );
@@ -1618,13 +1618,19 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
 }
 
 //-----------------------------------------------------------------------
-void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic )
+void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
+			     double* a_str_x, double* a_str_y )
 {
    const double a1=2.0/3, a2=-1.0/12;
    bool upper = (kic == 1);
    int k=kic;
    double ih = 1/mGridSize[g];
    double uz, vz, wz;
+   int ifirst = a_Up.m_ib;
+   int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i-ifirst)]   
+#define str_y(j) a_str_y[(j-jfirst)]   
+
    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
       {
@@ -1648,15 +1654,19 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic )
 	    }
 	 }
 	 B(1,i,j,k) = ih*mMu[g](i,j,k)*(
-	      a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k)) +
+	    str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
+		       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) +
 	      (uz)  );
 	 B(2,i,j,k) = ih*mMu[g](i,j,k)*(
-	      a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k)) +
+	          str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
+			     a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
 	      (vz)  );
 	 B(3,i,j,k) = ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
-	      a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k)) +
-	      a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k)) ) );
+  	   str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
+	   str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
       }
+#undef str_x
+#undef str_y
 }
 
 //-----------------------------------------------------------------------
@@ -2292,8 +2302,8 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
             
             if( usingSupergrid() && !curvilinear )
             {
-               double omstrx = m_supergrid_taper_x.get_tw_omega();
-               double omstry = m_supergrid_taper_y.get_tw_omega();
+               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               double omstry = m_supergrid_taper_y[g].get_tw_omega();
                F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                          &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
                                                          bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
@@ -2350,8 +2360,8 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
             }
             else if( usingSupergrid() && curvilinear )
             {
-               double omstrx = m_supergrid_taper_x.get_tw_omega();
-               double omstry = m_supergrid_taper_y.get_tw_omega();
+               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               double omstry = m_supergrid_taper_y[g].get_tw_omega();
 
                // Stress tensor on boundary
                Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
@@ -2408,8 +2418,8 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
             if( usingSupergrid() )
             {
-               double omstrx = m_supergrid_taper_x.get_tw_omega();
-               double omstry = m_supergrid_taper_y.get_tw_omega();
+               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               double omstry = m_supergrid_taper_y[g].get_tw_omega();
                F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                          &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
                                                          bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );

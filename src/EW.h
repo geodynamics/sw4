@@ -630,7 +630,7 @@ void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sar
 				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
 void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
 				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
-void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic );
+void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, double* a_str_x, double* a_str_y);
 void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
 	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
 	       double cof, int gc, int gp, int is_periodic[2] );
@@ -779,7 +779,7 @@ bool m_use_supergrid;
 int m_sg_gp_thickness; //, m_sg_gp_transition;
 int m_sg_damping_order; // 4 or 6 order dissipation operator
 double m_supergrid_damping_coefficient;
-SuperGrid m_supergrid_taper_x, m_supergrid_taper_y;
+vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;
 vector<SuperGrid> m_supergrid_taper_z;
 
 string mPath, mObsPath, mTempPath;

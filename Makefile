@@ -86,6 +86,12 @@ else
 # object code goes in machine specific directory on LC
       debugdir := debug_cab
       optdir := optimize_cab
+  # for Sierra (old Sierra) on LC, almost same machine as Cab
+    else ifeq ($(findstring sierra,$(HOSTNAME)),sierra)
+      include configs/make.sierra
+      foundincfile := "configs/make.sierra"
+      debugdir := debug_sierra
+      optdir := optimize_sierra
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337

@@ -1844,10 +1844,15 @@ void EW::processTwilight(char* buffer)
 	   bct[side] = bSuperGrid;
      
      if( bct[0] == bSuperGrid || bct[1] == bSuperGrid )
-	m_supergrid_taper_x.set_twilight(omstrx);
+     {
+	for( int g=0 ; g < mNumberOfGrids ; g++ )
+	   m_supergrid_taper_x[g].set_twilight(omstrx);
+     }
      if( bct[2] == bSuperGrid || bct[3] == bSuperGrid )
-	m_supergrid_taper_y.set_twilight(omstry);
-
+     {
+	for( int g=0 ; g < mNumberOfGrids ; g++ )
+	   m_supergrid_taper_y[g].set_twilight(omstry);
+     }
      CHECK_INPUT( (bct[4] == bSuperGrid && bct[5] == bSuperGrid) || (bct[4] == bStressFree && bct[5] == bStressFree) || (bct[4]==bDirichlet || bct[5] == bDirichlet),
 	   "Error: Twilight testing with supergrid stretching must have the same b.c. (stress free or supergrid) on the z=low and z=high boundaries" );
      if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
@@ -3830,6 +3835,8 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    if( m_topography_exists )
       m_iscurvilinear[mNumberOfGrids-1] = true;
 
+   m_supergrid_taper_x.resize(mNumberOfGrids);
+   m_supergrid_taper_y.resize(mNumberOfGrids);
    m_supergrid_taper_z.resize(mNumberOfGrids);
    mMu.resize(mNumberOfGrids);
    mLambda.resize(mNumberOfGrids);
