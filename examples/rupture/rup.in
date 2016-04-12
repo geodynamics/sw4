@@ -1,0 +1,7 @@
+grid x=280e3 y=130e3 z=45e3 h=400 lon=-122.688 lat=39.009 az=144 proj=utm ellps=WGS84
+fileio verbose=3
+time steps=0
+block vp=3200 vs=1500 r=2280 
+rupture file=rtest.srf
+
+
