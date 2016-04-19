@@ -10,7 +10,7 @@ topography order=5 input=gaussian zmax=3.0 gaussianAmp=0.6 gaussianXc=3.6 gaussi
 twilight freeupper=0 omega=1.0 phase=0.3 momega=1.0  mphase=0.1 amprho=1.0 errorlog=1 
 
 image time=1.0 mode=uxerr x=3.14 file=test
-developer checkfornan=on
+#developer checkfornan=on
 
 
 

@@ -17,6 +17,14 @@ if nargin < 4
    tshift = 0;
 end;
 
+if nargin < 3
+  erase = 1;
+end;
+
+if nargin < 2
+  colorstring='b';
+end;
+
 [t ux uy uz]=readusgs(filename);
 
 if (erase ~= 0)
