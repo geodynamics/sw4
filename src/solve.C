@@ -1192,14 +1192,20 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
 	 if( !m_doubly_periodic )
+	 {
 	    dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
+	    dirichlet_LRic( Unextf, g+1, kf, t+mDt, 0 );
+	 }
       }
       else
       {
 	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
 	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
 	 if( !m_doubly_periodic )
+	 {
 	    dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
+	    dirichlet_LRic( Unextf, g+1, kf, t+2*mDt, 0 );
+	 }
       }
       compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
       compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
@@ -1217,7 +1223,6 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
 	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
       }
-
       // Initial guesses for grid interface iteration
       gridref_initial_guess( a_Up[g+1], g+1, false );
       gridref_initial_guess( a_Up[g], g, true );
