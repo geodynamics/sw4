@@ -38,6 +38,7 @@ ifeq ($(optlevel),DEBUG)
    CFLAGS    = -g
 else
    FFLAGS   = -O3 
+# AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
    CXXFLAGS = -O -I../src
    CFLAGS   = -O 
 endif
