@@ -218,4 +218,4 @@ $(builddir)/%.o:src/%.C
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 $(OBJ) $(OBJSW4) $(QUADPACK); cd ../$(debugdir); /bin/rm -f sw4 $(OBJ) $(OBJSW4) $(QUADPACK)
+	cd $(optdir); /bin/rm -f sw4 *.o; cd ../$(debugdir); /bin/rm -f sw4 *.o
