@@ -298,9 +298,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
-//  m_sg_gp_transition(30), // always the same as the thickness
   m_supergrid_damping_coefficient(0.02), // good value for 4th order diss. Must be reduced by factor of 4 for 6th order diss.
   m_sg_damping_order(4),
+  m_use_sg_width(false), // width in meters instead of thickness in grid points.
   m_minJacobian(0.),
   m_maxJacobian(0.),
 
@@ -1187,6 +1187,8 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 // compute super-grid boundary in (lat-lon) coordinates
       int g = mNumberOfGrids-1;
       double sg_width = m_sg_gp_thickness * mGridSize[g];
+      if( m_use_sg_width )
+	 sg_width = m_supergrid_width;
       
       computeGeographicCoord(sg_width,               sg_width,               lonSW, latSW);
       computeGeographicCoord(m_global_xmax-sg_width, sg_width,               lonNW, latNW);
@@ -1501,8 +1503,17 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double
     
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
 
-    int nsgxy = (int)(0.5+m_sg_gp_thickness*htop/h);
-    int nsgz  = (int)(0.5+m_sg_gp_thickness*hbot/h);
+    // don't think this is correct:
+    //    int nsgxy = (int)(0.5+m_sg_gp_thickness*htop/h);
+    //    int nsgz  = (int)(0.5+m_sg_gp_thickness*hbot/h);    
+    int nsgxy = static_cast<int>(0.5+m_sg_gp_thickness);
+    int nsgz  = static_cast<int>(0.5+m_sg_gp_thickness);
+    if( m_use_sg_width )
+    {
+       nsgxy = static_cast<int>(ceil(m_supergrid_width/h));
+       nsgz  = static_cast<int>(ceil(m_supergrid_width/h));
+    }
+
     if (mbcGlobalType[0] == bSuperGrid)
       imin = max(m_iStartInt[g], nsgxy+1);
     else
@@ -1633,24 +1644,27 @@ void EW::normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U,
 
 // also exclude points in the super grid damping layer
   int imin, imax, jmin, jmax;
+  int nsgxy = m_sg_gp_thickness;
+  if( m_use_sg_width )
+     nsgxy = static_cast<int>(floor(m_supergrid_width/h));
   
   if (mbcGlobalType[0] == bSuperGrid)
-    imin = max(m_iStartInt[g], m_sg_gp_thickness+1);
+    imin = max(m_iStartInt[g], nsgxy+1);
   else
     imin = m_iStartInt[g];
   
   if (mbcGlobalType[1] == bSuperGrid)
-    imax = min(m_iEndInt[g], m_global_nx[g] - m_sg_gp_thickness);
+    imax = min(m_iEndInt[g], m_global_nx[g] - nsgxy);
   else
     imax = m_iEndInt[g];
 
   if (mbcGlobalType[2] == bSuperGrid)
-    jmin = max(m_jStartInt[g], m_sg_gp_thickness+1);
+    jmin = max(m_jStartInt[g], nsgxy+1);
   else
     jmin = m_jStartInt[g];
 
   if (mbcGlobalType[3] == bSuperGrid)
-    jmax = min(m_jEndInt[g], m_global_ny[g] - m_sg_gp_thickness);
+    jmax = min(m_jEndInt[g], m_global_ny[g] - nsgxy );
   else
     jmax = m_jEndInt[g];
   
@@ -4352,7 +4366,6 @@ void EW::update_images( int currentTimeStep, double time, vector<Sarray> & a_Up,
 // write the image plane on file    
       double t[3];
       t[0] = t[1] = t[2] = MPI_Wtime();
-
       img->writeImagePlane_2( currentTimeStep-td, mPath, time-td*mDt );
       t[2] = MPI_Wtime();
       
@@ -4437,12 +4450,13 @@ void EW::set_sg_thickness(int gp_thickness)
 }
 
 //-----------------------------------------------------------------------
-// void EW::set_sg_transition(int gp_trans)
-// {
-//   m_sg_gp_transition = gp_trans;
-//   if (m_myRank==0)
-//     cout << "Default Supergrid transition width has been tuned; width = " << m_sg_gp_transition << " grid sizes" << endl;
-// }
+void EW::set_sg_width(double sg_width)
+{
+   m_supergrid_width = sg_width;
+   m_use_sg_width = true;
+   if (m_myRank==0)
+      cout << "Default Supergrid thickness has been tuned; width = " << m_supergrid_width << " meters" << endl;
+}
 
 //-----------------------------------------------------------------------
 void EW::set_sg_damping(double damp_coeff)
@@ -4495,8 +4509,15 @@ void EW::average_speeds( double& cp, double& cs )
       int kstart = m_kStart[g];
       int kend   = m_kEnd[g];
       double h=mGridSize[g];
-      int nsgxy = (int)(0.5+m_sg_gp_thickness*htop/h);
-      int nsgz  = (int)(0.5+m_sg_gp_thickness*hbot/h);
+      int nsgxy = static_cast<int>(0.5+m_sg_gp_thickness);
+      int nsgz  = static_cast<int>(0.5+m_sg_gp_thickness);
+      if( m_use_sg_width )
+      {
+	 nsgxy = static_cast<int>(ceil(m_supergrid_width/h));
+	 nsgz  = static_cast<int>(ceil(m_supergrid_width/h));
+      }
+      //      int nsgxy = (int)(0.5+m_sg_gp_thickness*htop/h);
+      //      int nsgz  = (int)(0.5+m_sg_gp_thickness*hbot/h);
 
       double cpgrid, csgrid, npts;
       if( m_bcType[g][0] == bSuperGrid )

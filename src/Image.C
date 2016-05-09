@@ -496,6 +496,8 @@ void Image::define_pio( )
 	 local[0]=local[1]=local[2]=0;
 
       int iwrite = 0;
+      // mpiComm_writers consists of all processors that
+      // own some part of the image.
       if( m_mpiComm_writers != MPI_COMM_NULL )
       {
 	 int nproc=0, myid=0;
@@ -1029,11 +1031,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
 	 s << path;
       s << fileSuffix.str();
    }
-  //  if( m_pio[0]->i_write() )
-  //  {
-     // Need to synchronize writing of header if file system is not parallel:
-     //     m_pio[0]->begin_sequential( );
-     //     if (proc_write())
+
    if( m_pio[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
@@ -1043,7 +1041,6 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
       }  
 
       cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
-
       prec = m_double ? 8 : 4;
       size_t ret=write(fid,&prec,sizeof(int));
       if( ret != sizeof(int) )
@@ -1134,13 +1131,10 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
          if( ret != 4*sizeof(int) )
 	    cout << "ERROR: Image::writeImagePlane_2 could not write dimensions of grid " << g << endl;
       }
-	//	fsync(fid);
+      fsync(fid);
    }
-     //     m_pio[0]->end_sequential();
-     //  }
 
-
-      // write the data...
+// write the data...
    if( ihavearray )
    {
       for( int g = glow ; g < ghigh; g++)
@@ -1238,7 +1232,8 @@ void Image::add_grid_to_file( const char* fname, bool iwrite, size_t offset )
 	 m_pio[g]->write_array( &fid, 1, m_gridimage->m_floatField[g], offset, fltStr );
 	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
       }
-      close(fid);
+      if( iwrite )
+	 close(fid);
    }
 }
 

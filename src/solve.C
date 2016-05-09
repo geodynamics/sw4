@@ -1215,7 +1215,6 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       communicate_array_2d( Bf, g+1, kf );
       communicate_array_2d( Bc, g, kc );
 
-
       // Preliminary quantities computed with correct ghost point values on the sides of 
       // the interface. Next set these ghost point values to zero. This allows us to form
       // stencils over ghost points, with non-unknown ghost points giving zero contribution.

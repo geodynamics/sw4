@@ -162,7 +162,6 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
 		  int starts[3], int nptsbuf, int padding )
 {
    int ihave_array=1;
-   m_data_comm = m_write_comm = MPI_COMM_NULL;
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
       ihave_array = 0;
    init_pio( iwrite, pfs, ihave_array );
@@ -207,6 +206,7 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
 
 //-----------------------------------------------------------------------
 void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
+//-----------------------------------------------------------------------
 // Initialize for parallel I/O, 
 // Input: iwrite - 0 this processor will not participate in I/O op.
 //                 1 this processor will participate in I/O op.
@@ -215,6 +215,15 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 //        ihave_array - 0 this processor holds no part of the array.
 //                      1 this processor holds some part of the array.
 //                     -1 (default) the array is present in all processors.
+//
+// Constructs communicators from input iwrite and ihave_array:
+//
+//    m_data_comm  - All processors that holds part of the array or 
+//                   writes to disc, or both, i.e., iwrite .or. ihave_array
+//    m_write_comm - Subset of m_data_comm that writes to disk, i.e., iwrite.
+//
+// m_writer_ids[i] is id in m_data_comm of proc i in m_write_comm.
+//-----------------------------------------------------------------------
 {
    int* tmp;
    int nprocs, p, i, retcode;
@@ -223,6 +232,9 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
    // Global processor no for error messages
    int gproc;
    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
+
+// 0. Default communicators are NULL.
+   m_data_comm = m_write_comm = MPI_COMM_NULL;
 
 // 1. Create communicator of all procs that either hold part of the array or will perform I/O.
 //    Save as m_data_comm. This communicator will be used for most operations.
@@ -1826,13 +1838,16 @@ void Parallel_IO::print( )
 
 //-----------------------------------------------------------------------
 int Parallel_IO::proc_zero()
+// One unique processor in m_write_comm, to write file headers etc.
 {
    int retval=0;
    if( m_write_comm != MPI_COMM_NULL )
    {
       int myid;
       MPI_Comm_rank( m_write_comm, &myid );
-      if( myid == m_writer_ids[0] )
+      //      cout << "PIO::Proc_zero myid= " << myid << " m_writer_ids[0]= " << m_writer_ids[0] << endl;
+      //      if( myid == m_writer_ids[0] )
+      if( myid == 0 )
 	 retval = 1;
    }
    return retval;

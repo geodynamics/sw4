@@ -2637,8 +2637,8 @@ void EW::processSupergrid(char *buffer)
   CHECK_INPUT(strcmp("supergrid", token) == 0, "ERROR: not a supergrid line...: " << token);
   token = strtok(NULL, " \t");
   int sg_thickness; // sg_transition;
-  double sg_coeff;
-  bool thicknessSet=false, dampingCoeffSet=false; // , transitionSet=false
+  double sg_coeff, sg_width;
+  bool thicknessSet=false, dampingCoeffSet=false, widthSet=false; // , transitionSet=false
   
   while (token != NULL)
   {
@@ -2662,6 +2662,13 @@ void EW::processSupergrid(char *buffer)
     //   CHECK_INPUT(sg_transition>0, "The number of grid points in the supergrid transition layer must be positive, not: "<< sg_transition);
     //   transitionSet = true;
     // }
+    else if (startswith("width=", token))
+    {
+      token += 6;
+      sg_width = atoi(token);
+      CHECK_INPUT(sg_width>0, "The width of the supergrid damping layer must be positive, not: "<< sg_width);
+      widthSet = true;
+    }
     else if (startswith("dc=", token))
     {
       token += 3;
@@ -2683,11 +2690,13 @@ void EW::processSupergrid(char *buffer)
     token = strtok(NULL, " \t");
   } // end while token
   
+  CHECK_INPUT( !(thicknessSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
+     
   if (thicknessSet)
-    set_sg_thickness(sg_thickness);
+     set_sg_thickness(sg_thickness);
 
-  // if (transitionSet)
-  //   set_sg_transition(sg_transition);
+  if( widthSet )
+     set_sg_width( sg_width );
 
   if (dampingCoeffSet)
     set_sg_damping(sg_coeff);
@@ -2697,73 +2706,12 @@ void EW::processSupergrid(char *buffer)
      set_sg_damping(0.005);
 }
 
-// // void 
-// // FileInput::
-// // processRestart(char* buffer)
-// // {
-// //   int fromCycle=0, dumpInterval=0;
-// //   string filePrefix = "wpp_restart";
-  
-// //   char* token = strtok(buffer, " \t");
-// //   CHECK_INPUT(strcmp("restart", token) == 0, "ERROR: not a restart line...: " 
-// // 	   << token);
-// //   token = strtok(NULL, " \t");
-
-// //   string err = "Restart Error: ";
-
-// //   while (token != NULL)
-// //     {
-// //       // while there are tokens in the string still
-// //      if (startswith("#", token) || startswith(" ", buffer))
-// //         // Ignore commented lines and lines with just a space.
-// //         break;
-// //      if (startswith("fromCycle=", token) )
-// //      {
-// //         token += 10; // skip fromCycle=
-// //         CHECK_INPUT(atoi(token) >= 0,
-// //                 err << 
-// //                 "fromCycle must be an integer >= to zero,  not: " << token);
-// //         fromCycle = atoi(token);
-// //      }
-// //      else if (startswith("dumpInterval=", token) )
-// //      {
-// // 	     token += 13; // skip dumpInterval=
-// //         CHECK_INPUT(atoi(token) >= 0,
-// //                 err << "dumpInterval must be a positive int, not: " << token);
-// //         dumpInterval = atoi(token);
-// //      }
-// //      else if (startswith("file=", token) )
-// //      {
-// //         token += 5; // skip file=
-// //         filePrefix = token;
-// //      }
-// //      else
-// //      {
-// //         badOption("restart", token);
-// //      }
-// //      token = strtok(NULL, " \t");
-// //     }
-  
-// //   mSimulation->setRestartInfo(fromCycle, dumpInterval, filePrefix);
-// // }
-
-
 //-----------------------------------------------------------------------
 void EW::badOption(string name, char* option) const
 {
    if (m_myRank == 0)
       cout << "\tWarning: ignoring " << name << " line option '" << option << "'" << endl;
 }
-
-
-// // //-----------------------------------------------------------------------
-// // void FileInput::processCheckfornan( char* buffer )
-// // {
-// //    char* token = strtok(buffer, " \t");
-// //    CHECK_INPUT(strcmp("checkfornan", token) == 0, "ERROR: not a check for nan line...: " << token);
-// //    mSimulation->switch_on_checkfornan();
-// // }
-
 
 //-----------------------------------------------------------------------
 void EW::processGlobalMaterial(char* buffer)

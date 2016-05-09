@@ -1700,46 +1700,53 @@ void EW::setup_supergrid( )
     cout << "Detected at least one boundary with supergrid conditions" << endl;
   
   int gTop = mNumberOfCartesianGrids-1;
-  int gBot = 0;
-
+  vector<double> sg_width(mNumberOfCartesianGrids);
   for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
   {
+     if( m_use_sg_width )
+	sg_width[g] = m_supergrid_width;
+     else
+	sg_width[g] = m_sg_gp_thickness*mGridSize[g];
+
      m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
 					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-					  m_sg_gp_thickness*mGridSize[g] );
+					   sg_width[g] );
      m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
 					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-					  m_sg_gp_thickness*mGridSize[g] );
+					   sg_width[g] );
   }
   if( topographyExists() )
   {
      int g=mNumberOfGrids-1;
      m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
 					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-					  m_sg_gp_thickness*mGridSize[gTop] );
+					  sg_width[gTop] );
      m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
 					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-					  m_sg_gp_thickness*mGridSize[gTop] );
+					  sg_width[gTop] );
   }
-
   if( mNumberOfGrids == 1 )
+  {
      m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
 					  (mbcGlobalType[5] == bSuperGrid), m_global_zmax,
-					  m_sg_gp_thickness*mGridSize[0] );
+					  sg_width[0] );
+  }
   else
   {
      m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-							 false, m_global_zmax, m_sg_gp_thickness*mGridSize[gTop] );
+							 false, m_global_zmax, sg_width[gTop] );
      m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
-					  m_sg_gp_thickness*mGridSize[gBot] );
+					  sg_width[0] );
      for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
-	m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, m_sg_gp_thickness*mGridSize[gBot] );
+	m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, sg_width[g] );
   }
   
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
    // Add one to thickness to allow two layers of internal ghost points
      int sgpts = m_sg_gp_thickness;
+     if( m_use_sg_width )
+	sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
      int kmax=m_global_nz[g]-sgpts;
 
