@@ -13,6 +13,8 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
    if( m_corder )
    {
+#pragma omp parallel
+#pragma omp for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
@@ -23,6 +25,8 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    }
    else
    {
+#pragma omp parallel
+#pragma omp for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
@@ -42,6 +46,8 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    if( m_corder )
    {
       // Like this ?
+#pragma omp parallel
+#pragma omp for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt2orh = dt2/rho[i];
@@ -67,6 +73,8 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    }
    else
    {
+#pragma omp parallel
+#pragma omp for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt2orh = dt2/rho[i];
@@ -82,6 +90,8 @@ void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* u
 		    float_sw4* u, float_sw4* um, float_sw4* u2, float_sw4 dt2i )
 {
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
+#pragma omp parallel
+#pragma omp for
    for( size_t i = 0 ; i < 3*npts ; i++ )
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
    //   if( m_corder )
@@ -209,7 +219,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 		     qq++;
 		  }
 	 }
-	 else if( s==3 )
+	 else if( s==2 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -222,7 +232,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 		     qq++;
 		  }
 	 }
-	 else if( s==4 )
+	 else if( s==3 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -235,7 +245,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 		     qq++;
 		  }
 	 }
-	 else if( s==5 )
+	 else if( s==4 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -248,7 +258,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 		     qq++;
 		  }
 	 }
-	 else if( s==6 )
+	 else if( s==5 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -450,7 +460,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 		     qq++;
 		  }
 	 }
-	 else if( s==3 )
+	 else if( s==2 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -463,7 +473,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 		     qq++;
 		  }
 	 }
-	 else if( s==4 )
+	 else if( s==3 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -476,7 +486,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 		     qq++;
 		  }
 	 }
-	 else if( s==5 )
+	 else if( s==4 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -489,7 +499,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 		     qq++;
 		  }
 	 }
-	 else if( s==6 )
+	 else if( s==5 )
 	 {
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
@@ -673,6 +683,8 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
+#pragma omp parallel
+#pragma omp for      
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
@@ -769,6 +781,8 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 #define coz(k) a_coz[(k-kfirst)]
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
+#pragma omp parallel
+#pragma omp for      
       for( int k=kfirst+3; k <= klast-3 ; k++ )
 	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
 	    for( int i=ifirst+3; i <= ilast-3 ; i++ )

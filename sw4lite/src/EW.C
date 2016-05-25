@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include "Source.h"
 #include "GridPointSource.h"
@@ -82,7 +83,7 @@ EW::EW( const string& filename ) :
    mPrintInterval(100),
    m_ghost_points(2),
    m_ppadding(2),
-   mVerbose(1),
+   mVerbose(0),
    mQuiet(false),
    m_supergrid_damping_coefficient(0.02),
    m_sg_damping_order(4),
@@ -93,6 +94,8 @@ EW::EW( const string& filename ) :
    m_point_source_test(false),
    mPath("./"),
    m_moment_test(false),
+   m_pfs(false),
+   m_nwriters(8),
    m_output_detailed_timing(false),
    m_ndevice(0),
    m_corder(false)
@@ -403,6 +406,58 @@ void EW::processTime(char* buffer)
       mNumberOfTimeSteps = steps;
       mTimeIsSet = false;
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::processFileIO(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("fileio", token) == 0, "ERROR: not a fileio line...: " << token);
+   token = strtok(NULL, " \t");
+   string err = "FileIO Error: ";
+
+   while (token != NULL)
+    {
+       if (startswith("#", token) || startswith(" ", buffer))
+          break;
+       if(startswith("path=", token)) {
+          token += 5; // skip path=
+	  mPath = token;
+	  mPath += '/';
+	  //          path = token;
+       }
+       else if (startswith("verbose=", token))
+       {
+          token += 8; // skip verbose=
+          CHECK_INPUT(atoi(token) >= 0, err << "verbose must be non-negative, not: " << token);
+          mVerbose = atoi(token);
+       }
+       else if (startswith("printcycle=", token))
+       {
+          token += 11; // skip printcycle=
+          CHECK_INPUT(atoi(token) > -1,
+	         err << "printcycle must be zero or greater, not: " << token);
+          mPrintInterval = atoi(token);
+       }
+       else if (startswith("pfs=", token))
+       {
+          token += 4; // skip pfs=
+          m_pfs = (atoi(token) == 1);
+       }
+//                          1234567890
+       else if (startswith("nwriters=", token))
+       {
+          token += 9; // skip nwriters=
+          CHECK_INPUT(atoi(token) > 0,
+	         err << "nwriters must be positive, not: " << token);
+          m_nwriters = atoi(token);
+       }
+       else
+       {
+          badOption("fileio", token);
+       }
+       token = strtok(NULL, " \t");
+    }
 }
 
 //-----------------------------------------------------------------------
@@ -1250,6 +1305,8 @@ bool EW::parseInputFile( const string& filename )
 	    processTestPointSource(buffer);
 	 else if(startswith("developer", buffer))
 	    processDeveloper(buffer);
+	 else if( startswith("fileio",buffer))
+	    processFileIO(buffer);
 	 else if (!inputFile.eof() && m_myrank == 0)
 	 {
 	    cout << "*** Ignoring command: '" << buffer << "'" << endl;
@@ -1284,7 +1341,7 @@ void EW::setupRun()
    setup_boundary_arrays();
 // Time step
    computeDT( );
-// Sources
+// Set up sources:
    for( int s=0 ; s < m_globalUniqueSources.size() ; s++)
    {
       m_globalUniqueSources[s]->set_grid_point_sources4( this, m_point_sources );
@@ -1352,8 +1409,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
    int beginCycle = 1;
    float_sw4 t = mTstart;
-   float_sw4 time_measure[7];
-   float_sw4 time_sum[4];
+   float_sw4 time_measure[20];
+   float_sw4 time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 #ifdef SW4_OPENMP
 #pragma omp parallel
@@ -1397,6 +1454,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 F[g].copy_to_device(m_cuobj);
 
+      time_measure[1] = MPI_Wtime();
+
 // evaluate right hand side
       if( m_cuobj->has_gpu() )
 	 evalRHSCU( U, mMu, mLambda, Lu, 0 ); // save Lu in composite grid 'Lu'
@@ -1412,11 +1471,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       else
 	 evalPredictor( Up, U, Um, mRho, Lu, F );    
 
-      time_measure[1] = MPI_Wtime();
-      time_measure[2] = MPI_Wtime();
-
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 Up[g].copy_from_device(m_cuobj);
+
+      time_measure[2] = MPI_Wtime();
 
 // communicate across processor boundaries
       for(int g=0 ; g < mNumberOfGrids ; g++ )
@@ -1430,7 +1488,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "U pred. " );
 
-      time_measure[3] = time_measure[4] = MPI_Wtime();
+      time_measure[3] = MPI_Wtime();
 
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 Up[g].copy_to_device(m_cuobj);
@@ -1439,6 +1497,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       Force( t, F, m_point_sources, true );
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 F[g].copy_to_device(m_cuobj);
+
+      time_measure[4] = MPI_Wtime();
 
       if( m_cuobj->has_gpu() )
 	 evalDpDmInTimeCU( Up, U, Um, Uacc, 0 ); // store result in Uacc
@@ -1460,6 +1520,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 evalCorrectorCU( Up, mRho, Lu, F, 0 );
       else
 	 evalCorrector( Up, mRho, Lu, F );
+      time_measure[5] = MPI_Wtime();
+
+
+
 // add in super-grid damping terms
       if ( m_use_supergrid )
       {
@@ -1469,10 +1533,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	    addSuperGridDamping( Up, U, Um, mRho );
 
       }
-      time_measure[4] = MPI_Wtime();
-
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 Up[g].copy_from_device(m_cuobj);
+
+      time_measure[6] = MPI_Wtime();
 
 // also check out EW::update_all_boundaries 
 // communicate across processor boundaries
@@ -1489,7 +1553,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // increment time
       t += mDt;
 
-      time_measure[5] = MPI_Wtime();	  
+      time_measure[7] = MPI_Wtime();	  
 
 // periodically, print time stepping info to stdout
       printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
@@ -1523,6 +1587,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // cycle the solution arrays
       cycleSolutionArrays(Um, U, Up);
 
+      time_measure[8] = MPI_Wtime();	  
 // evaluate error for some test cases
 //      if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
       if ( m_point_source_test && saveerror )
@@ -1535,21 +1600,21 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
          if ( m_myrank == 0 )
 	    cout << t << " " << errInf << " " << errL2 << " " << solInf << endl;
       }
-      time_measure[6] = MPI_Wtime();	  	
+      time_measure[9] = MPI_Wtime();	  	
 // // See if it is time to write a restart file
 // //      if (mRestartDumpInterval > 0 &&  currentTimeStep % mRestartDumpInterval == 0)
 // //        serialize(currentTimeStep, U, Um);  
       if( currentTimeStep > 1 )
       {
-	 time_sum[0] += time_measure[1]-time_measure[0] + time_measure[4]-time_measure[3]; // step
-	 time_sum[1] += time_measure[2]-time_measure[1] + time_measure[5]-time_measure[4]; // bcs
-	 time_sum[2] += time_measure[6]-time_measure[5]; // image & sac
-	 time_sum[3] += time_measure[6]-time_measure[0];//  total
+	 time_sum[0] += time_measure[1]-time_measure[0] + time_measure[4]-time_measure[3]; // F
+	 time_sum[1] += time_measure[2]-time_measure[1] + time_measure[5]-time_measure[4]; // RHS
+	 time_sum[2] += time_measure[3]-time_measure[2] + time_measure[7]-time_measure[6]; // bcs
+	 time_sum[3] += time_measure[6]-time_measure[5]; // super grid damping
+	 time_sum[4] += time_measure[8]-time_measure[7]; // print outs
+	 time_sum[5] += time_measure[9]-time_measure[8]; //  compute exact solution
+	 time_sum[6] += time_measure[9]-time_measure[0]; // total measured
       }
-// where does bc_time_measure come from?
-      // time_sum[4] += bc_time_measure[1]-bc_time_measure[0]; // comm. + overlap grids.
-      // time_sum[5] += bc_time_measure[2]-bc_time_measure[1]+bc_time_measure[4]-bc_time_measure[3]; // update proc boundary
-      // time_sum[6] += bc_time_measure[3]-bc_time_measure[2]; // impose bc.
+
    } // end time stepping loop
    float_sw4 time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
@@ -3671,22 +3736,24 @@ void EW::print_execution_times( float_sw4 times[7] )
       cout << "\n----------------------------------------" << endl;
       cout << "          Execution time summary " << endl;
 //      cout << "Processor  Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  "
-      cout << "Processor  Total      BC total   Step   Image&Time series  "
+      cout << "Processor  Total      BC total   Step   supergrid   Forcing "
 	   <<endl;
       cout.setf(ios::left);
-      cout.precision(3);
+      cout.precision(5);
       for( int p= 0 ; p < m_nprocs ; p++ )
       {
          cout.width(11);
          cout << p;
          cout.width(11);
-	 cout << time_sums[7*p+3];
+	 cout << time_sums[7*p+6];
+	 cout.width(11);
+	 cout << time_sums[7*p+2];
 	 cout.width(11);
 	 cout << time_sums[7*p+1];
 	 cout.width(11);
-	 cout << time_sums[7*p];
+	 cout << time_sums[7*p+3];
 	 cout.width(11);
-	 cout << time_sums[7*p+2];
+	 cout << time_sums[7*p];
 	 cout.width(11);
 	 //	 cout << time_sums[7*p+4];
 	 //	 cout.width(11);
@@ -3695,13 +3762,36 @@ void EW::print_execution_times( float_sw4 times[7] )
 	 //	 cout << time_sums[7*p+6];
          cout << endl;
       }
-      cout.setf(ios::right);
-      cout.precision(6);
       //
       // << "|" << time_sums[p*7+3] << "|\t" << time_sums[p*7+1] << "|\t" << time_sums[p*7]
       //	      << "|\t " << time_sums[7*p+2] << "|\t" << time_sums[p*7+4] << "|\t" << time_sums[p*7+5]
       //	      << "|\t" << time_sums[7*p+6]<<endl;
+      cout << "Clock tick is " << MPI_Wtick() << " seconds" << endl;
+      cout << "MPI_Wtime is ";
+      int flag;
+      bool wtime_is_global;
+      MPI_Comm_get_attr( MPI_COMM_WORLD, MPI_WTIME_IS_GLOBAL, &wtime_is_global, &flag );
+      if( wtime_is_global )
+	 cout << "global";
+      else
+	 cout << "local";
+      cout << endl;
       cout << "----------------------------------------\n" << endl;
+      cout.setf(ios::right);
+      cout.precision(6);
+
+      // Save timings to file 
+      string fname = mPath+"timings.bin";
+      int fd=open( fname.c_str(), O_TRUNC|O_CREAT|O_WRONLY, 0660 );
+      if( fd == -1 )
+	 cout << "Error opening " << fname.c_str()  << " for writing execution times" << endl;
+      size_t nr=write(fd,&m_nprocs,sizeof(int));
+      if( nr != sizeof(int) )
+	 cout << "Error wrting nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
+      nr = write(fd, time_sums, 7*m_nprocs*sizeof(double));
+      if( nr != 7*m_nprocs*sizeof(double) )
+	 cout << "Error wrting time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
+      close(fd);
    }
    delete[] time_sums;
 }

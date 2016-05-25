@@ -31,6 +31,7 @@ class EW
    void processSource( char* buffer );
    void processSuperGrid( char* buffer );
    void processDeveloper(char* buffer);
+   void processFileIO( char* buffer );
    void defineDimensionsGXY( );
    void defineDimensionsZ();
    void allocateArrays();
@@ -240,6 +241,10 @@ class EW
    bool mQuiet;
    bool m_checkfornan, m_output_detailed_timing;
    string mPath;
+
+   // File io
+   bool m_pfs;
+   int m_nwriters;
 
    // Sources
    vector<Source*> m_globalUniqueSources;

@@ -64,8 +64,17 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
    
    /* this pragma does not seem to help  */
    /*  #pragma ivdep  */
+#pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
+              r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,m,u3zip2,u3zip1,\
+              u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy,\
+              mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,\
+             u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb)
+   {
+#pragma omp parallel for
    for( k= k1; k <= k2 ; k++ )
       for( j=jfirst+2; j <= jlast-2 ; j++ )
+#pragma simd
+#pragma ivdep	 
 	 for( i=ifirst+2; i <= ilast-2 ; i++ )
 	 {
 
@@ -298,9 +307,12 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 	 }
       if( onesided[4]==1 )
       {
+#pragma omp parallel for
 	 for( k=1 ; k<= 6 ; k++ )
 /* the centered stencil can be used in the x- and y-directions */
 	    for( j=jfirst+2; j<=jlast-2; j++ )
+	       /* #pragma simd */
+#pragma ivdep
 	       for( i=ifirst+2; i<=ilast-2; i++ )
 	       {
 /* from inner_loop_4a */
@@ -349,18 +361,23 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 		  mu3zz = 0;
 		  for( q=1; q <= 8; q ++ )
 		  {
-		     lap2mu= 0;
-		     mucof = 0;
-		     for( m=1 ; m<=8; m++ )
-		     {
-			mucof  += acof(k,q,m)*mu(i,j,m);
-			lap2mu += acof(k,q,m)*(la(i,j,m)+2*mu(i,j,m));
-		     }
+		     //		     lap2mu= 0;
+		     //		     mucof = 0;
+		     //		     for( m=1 ; m<=8; m++ )
+		     //		     {
+		     //			mucof  += acof(k,q,m)*mu(i,j,m);
+		     //			lap2mu += acof(k,q,m)*(la(i,j,m)+2*mu(i,j,m));
+		     //		     }
+		     lap2mu = acof(k,q,1)*(la(i,j,1)+2*mu(i,j,1))+acof(k,q,2)*(la(i,j,2)+2*mu(i,j,2))+
+			acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3))+acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4))+
+			acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5))+acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6))+
+			acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7))+acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8));
+		     mucof = acof(k,q,1)*mu(i,j,1)+acof(k,q,2)*mu(i,j,2)+acof(k,q,3)*mu(i,j,3)+acof(k,q,4)*mu(i,j,4)+
+			acof(k,q,5)*mu(i,j,5)+acof(k,q,6)*mu(i,j,6)+acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8);
 		     mu1zz += mucof*u(1,i,j,q);
 		     mu2zz += mucof*u(2,i,j,q);
 		     mu3zz += lap2mu*u(3,i,j,q);
 		  }
-
 
 		  /* ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2*/
 		  r1 = r1 + (mu1zz + ghcof(k)*mu(i,j,1)*u(1,i,j,0));
@@ -542,8 +559,11 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
       }
       if( onesided[5] == 1 )
       {
+#pragma omp parallel for
 	 for(  k = nk-5 ; k <= nk ; k++ )
 	    for(  j=jfirst+2; j<=jlast-2; j++ )
+	       /* #pragma simd */
+#pragma ivdep
 	       for(  i=ifirst+2; i<=ilast-2; i++ )
 	       {
 		  /* from inner_loop_4a */
@@ -791,7 +811,7 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 	       }
       }
-
+   }
 #undef mu
 #undef la
 #undef u
