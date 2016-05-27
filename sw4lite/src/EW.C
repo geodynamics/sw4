@@ -1415,14 +1415,13 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 #ifdef SW4_OPENMP
 #pragma omp parallel
    {
-      if( omp_get_thread_num() == 0 )
+      if( omp_get_thread_num() == 0 &&  m_myrank == 0  )
       {
 	 int nth=omp_get_num_threads();
 	 cout << "Using OpenMP with " << nth << " thread";
-	 if( nth == 1 )
-	    cout << endl;
-	 else
-	    cout << "s" << endl;
+	 if( nth > 1 )
+	    cout << "s";
+	 cout << " per MPI task" << endl;
       }
    }
 #endif

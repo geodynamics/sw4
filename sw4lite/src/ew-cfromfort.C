@@ -355,7 +355,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
       }
       else if( bccnd[s]==0 )
       {
-	 REQUIRE2( s != 4 && s != 5, "EW::bcfortsg,  ERROR: Free surface condition"
+	 REQUIRE2( s == 4 || s == 5, "EW::bcfortsg,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 if( s==4 )
 	 {
@@ -596,7 +596,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
       }
       else if( bccnd[s]==0 )
       {
-	 REQUIRE2( s != 4 && s != 5, "EW::bcfortsg_indrev,  ERROR: Free surface condition"
+	 REQUIRE2( s == 4 || s == 5, "EW::bcfortsg_indrev,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 if( s==4 )
 	 {
@@ -684,9 +684,12 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
 #pragma omp parallel
+{
 #pragma omp for      
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+#pragma simd
+#pragma ivdep
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
 	       float_sw4 birho=beta/rho(i,j,k);
@@ -739,6 +742,7 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 
 	       }
 	    }
+ }
 #undef rho
 #undef up
 #undef u
@@ -782,9 +786,12 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
 #pragma omp parallel
+      {
 #pragma omp for      
       for( int k=kfirst+3; k <= klast-3 ; k++ )
 	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
+#pragma simd
+#pragma ivdep
 	    for( int i=ifirst+3; i <= ilast-3 ; i++ )
 	    {
 	       float_sw4 birho=0.5*beta/rho(i,j,k);
@@ -836,6 +843,7 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 					     )  );
 	       }
 	    }
+      }
 #undef rho
 #undef up
 #undef u
@@ -881,8 +889,13 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
+#pragma omp parallel
+      {
+#pragma omp for      
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+#pragma simd
+#pragma ivdep
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
 	       float_sw4 birho=beta/rho(i,j,k);
@@ -935,6 +948,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 
 	       }
 	    }
+      }
 #undef rho
 #undef up
 #undef u
@@ -978,8 +992,13 @@ void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
+#pragma omp parallel
+      {
+#pragma omp for      
       for( int k=kfirst+3; k <= klast-3 ; k++ )
 	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
+#pragma simd
+#pragma ivdep
 	    for( int i=ifirst+3; i <= ilast-3 ; i++ )
 	    {
 	       float_sw4 birho=0.5*beta/rho(i,j,k);
@@ -1031,6 +1050,7 @@ void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 					     )  );
 	       }
 	    }
+      }
 #undef rho
 #undef up
 #undef u
