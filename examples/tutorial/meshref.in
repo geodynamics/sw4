@@ -12,12 +12,12 @@ refinement zmax=2.5e3
 # first define the material properties everywhere (half-space)
 block vp=8000 vs=4000 rho=3000 
 
-# then define the slower material in the top layer (z < 2500 m)
-block vp=4000 vs=2000 rho=2600 z2=2500
+# then define the slower material in the top layer, with a linear gradient (z < 2500 m)
+block vp=4000 vs=2000 rho=2600 vpgrad=1.6 vsgrad=0.8 rhograd=0.16  z2=2500
 
 # Gaussian time function gives the velocities directly
 
-source x=15000 y=15000 z=3000 mxy=1e18 t0=1.2 freq=5.0 type=Gaussian
+source x=15000 y=15000 z=3000 mxy=1e18 t0=2.4 freq=2.5 type=Gaussian
 
 #
 # Note that all recording stations are relative to the (0,0,0) origin
@@ -26,13 +26,13 @@ rec x=15750 y=15750 z=0 file=sta01 usgsformat=1 sacformat=0
 rec x=21000 y=22925 z=0 file=sta10 usgsformat=1 sacformat=0
 
 # material images
-#image mode=mu z=0 file=hor cycle=0
-#image mode=lambda z=0 file=hor cycle=0
+#image mode=p z=0 file=hor cycle=0
+#image mode=s z=0 file=hor cycle=0
 #image mode=rho z=0 file=hor cycle=0
 
-#image mode=lambda y=15e3 file=ver cycle=0
-#image mode=mu y=15e3 file=ver cycle=0
-#image mode=rho y=15e3 file=ver cycle=0
+image mode=p y=15e3 file=ver cycle=0
+image mode=s y=15e3 file=ver cycle=0
+image mode=rho y=15e3 file=ver cycle=0
 
 # solution images
 #image mode=uz z=0 file=hor timeInterval=0.5
