@@ -3,7 +3,7 @@
 //#include <iostream>
 //using namespace std;
 // Performance findings: 
-// Intel 16.0.180, need pragma simd to force vectorization, __restrict__ does not help
+// Intel 16.0.180, need pragma simd to force vectorization, neither pragma ivdep nor __restrict__ helps
 // pgi 15.7, need both pragma ivdep and __restrict__ to vectorize
 // gnu 4.9, have not been able to vectorize
 
@@ -89,7 +89,7 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
    for( k= k1; k <= k2 ; k++ )
       for( j=jfirst+2; j <= jlast-2 ; j++ )
 #pragma simd
-#pragma ivdep 
+#pragma ivdep
 	 for( i=ifirst+2; i <= ilast-2 ; i++ )
 	 {
 /* from inner_loop_4a, 28x3 = 84 ops */

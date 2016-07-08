@@ -297,7 +297,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     }
   }  
 
-  if( (m_anisotropic || m_use_attenuation) && m_mesh_refinements )
+  if( (m_anisotropic || (m_use_attenuation && m_number_mechanisms>0) ) && m_mesh_refinements )
   {
     if (m_myRank == 0)
     {

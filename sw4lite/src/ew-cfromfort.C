@@ -13,8 +13,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
    if( m_corder )
    {
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
@@ -25,8 +24,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    }
    else
    {
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
@@ -46,8 +44,7 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    if( m_corder )
    {
       // Like this ?
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt2orh = dt2/rho[i];
@@ -73,8 +70,7 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    }
    else
    {
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
       for( size_t i=0 ; i < npts ; i++ )
       {
 	 float_sw4 dt2orh = dt2/rho[i];
@@ -90,8 +86,7 @@ void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* u
 		    float_sw4* u, float_sw4* um, float_sw4* u2, float_sw4 dt2i )
 {
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel
-#pragma omp for
+#pragma omp parallel for
    for( size_t i = 0 ; i < 3*npts ; i++ )
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
    //   if( m_corder )
@@ -190,92 +185,120 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
    const size_t nij = ni*(je-jb+1);
    for( int s=0 ; s < 6 ; s++ )
    {
+//      printf("in bcfortsg, s=%d bccnd[s]=%d\n",s,bccnd[s]); fflush(stdout);
       if( bccnd[s]==1 || bccnd[s]==2 )
       {
-	 size_t qq=0;
+         // Would it make any sense to line up pointers to the bforceN vectors in
+         // a vector and collapse these 6 blocks? I think they're all the same.
+         // This would make this code simpler and speed parameter passing.
+         // OTOH there is some benefit in having the compiler know what s is.
+         size_t idel = 1+wind[1+6*s]-wind[6*s];
+         size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
+         int k;
 	 if( s== 0 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            // Note - don't use collapse(2) since loop indices are used in loop body;
+            // it's hard to get them back after collapse
+            #pragma omp parallel for 
+	    for( k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               int qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[3*ind  ] = bforce1[  3*qq];
 		     u[3*ind+1] = bforce1[1+3*qq];
 		     u[3*ind+2] = bforce1[2+3*qq];
 		     qq++;
 		  }
+               }
+            }    
 	 }
 	 else if( s== 1 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[3*ind  ] = bforce2[  3*qq];
 		     u[3*ind+1] = bforce2[1+3*qq];
 		     u[3*ind+2] = bforce2[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s==2 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[3*ind  ] = bforce3[  3*qq];
 		     u[3*ind+1] = bforce3[1+3*qq];
 		     u[3*ind+2] = bforce3[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s==3 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[3*ind  ] = bforce4[  3*qq];
 		     u[3*ind+1] = bforce4[1+3*qq];
 		     u[3*ind+2] = bforce4[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s==4 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[3*ind  ] = bforce5[  3*qq];
 		     u[3*ind+1] = bforce5[1+3*qq];
 		     u[3*ind+2] = bforce5[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s==5 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[3*ind  ] = bforce6[  3*qq];
 		     u[3*ind+1] = bforce6[1+3*qq];
 		     u[3*ind+2] = bforce6[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
       }
       else if( bccnd[s]==3 )
       {
 	 if( s==0 )
 	 {
+            #pragma omp parallel for 
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -289,6 +312,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 }
 	 else if( s==1 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -302,6 +326,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 }
 	 else if( s==2 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -315,6 +340,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 }
 	 else if( s==3 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -328,6 +354,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 }
 	 else if( s==4 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -341,6 +368,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 }
 	 else if( s==5 )
 	 {
+            #pragma omp parallel for 
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -355,11 +383,12 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
       }
       else if( bccnd[s]==0 )
       {
-	 REQUIRE2( s == 4 || s == 5, "EW::bcfortsg,  ERROR: Free surface condition"
+	 REQUIRE2( s == 4 && s == 5, "EW::bcfortsg,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 if( s==4 )
 	 {
 	    int k=1, kl=1;
+            #pragma omp parallel for   
 	    for( int j=jb+2 ; j <= je-2 ; j++ )
 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
 	       {
@@ -387,6 +416,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 else
 	 {
 	    int k=nz, kl=-1;
+            #pragma omp parallel for   
 	    for( int j=jb+2 ; j <= je-2 ; j++ )
 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
 	       {
@@ -433,90 +463,111 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
    {
       if( bccnd[s]==1 || bccnd[s]==2 )
       {
+         size_t idel = 1+wind[1+6*s]-wind[6*s];
+         size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
 	 size_t qq=0;
 	 if( s== 0 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[ind  ]      = bforce1[  3*qq];
 		     u[ind+npts]   = bforce1[1+3*qq];
 		     u[ind+2*npts] = bforce1[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s== 1 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[ind]        = bforce2[  3*qq];
 		     u[ind+npts]   = bforce2[1+3*qq];
 		     u[ind+2*npts] = bforce2[2+3*qq];
 		     qq++;
 		  }
+               }
+            } 
 	 }
 	 else if( s==2 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[ind  ] = bforce3[  3*qq];
 		     u[ind+npts] = bforce3[1+3*qq];
 		     u[ind+2*npts] = bforce3[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s==3 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[ind  ] = bforce4[  3*qq];
 		     u[ind+npts] = bforce4[1+3*qq];
 		     u[ind+2*npts] = bforce4[2+3*qq];
 		     qq++;
 		  }
+               }
+            } 
 	 }
 	 else if( s==4 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[ind  ] = bforce5[  3*qq];
 		     u[ind+npts] = bforce5[1+3*qq];
 		     u[ind+2*npts] = bforce5[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
 	 else if( s==5 )
 	 {
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
-		  {
+            #pragma omp parallel for 
+	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+               size_t qq = (k-wind[4+6*s])*ijdel;
+	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		     u[ind  ] = bforce6[  3*qq];
 		     u[ind+npts] = bforce6[1+3*qq];
 		     u[ind+2*npts] = bforce6[2+3*qq];
 		     qq++;
 		  }
+               }
+            }
 	 }
       }
       else if( bccnd[s]==3 )
       {
 	 if( s==0 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -530,6 +581,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 }
 	 else if( s==1 )
 	 {
+            #pragma omp parallel for 
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -543,6 +595,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 }
 	 else if( s==2 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -556,6 +609,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 }
 	 else if( s==3 )
 	 {
+            #pragma omp parallel for 
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -569,6 +623,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 }
 	 else if( s==4 )
 	 {
+            #pragma omp parallel for
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -582,6 +637,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 }
 	 else if( s==5 )
 	 {
+            #pragma omp parallel for 
 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
@@ -596,11 +652,12 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
       }
       else if( bccnd[s]==0 )
       {
-	 REQUIRE2( s == 4 || s == 5, "EW::bcfortsg_indrev,  ERROR: Free surface condition"
+	 REQUIRE2( s == 4 && s == 5, "EW::bcfortsg_indrev,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 if( s==4 )
 	 {
 	    int k=1, kl=1;
+            #pragma omp parallel for 
 	    for( int j=jb+2 ; j <= je-2 ; j++ )
 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
 	       {
@@ -628,6 +685,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 else
 	 {
 	    int k=nz, kl=-1;
+            #pragma omp parallel for 
 	    for( int j=jb+2 ; j <= je-2 ; j++ )
 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
 	       {
@@ -683,9 +741,7 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
-#pragma omp parallel
-{
-#pragma omp for      
+#pragma omp parallel for
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 #pragma simd
@@ -742,7 +798,7 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 
 	       }
 	    }
- }
+ 
 #undef rho
 #undef up
 #undef u
@@ -785,9 +841,7 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 #define coz(k) a_coz[(k-kfirst)]
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
-#pragma omp parallel
-      {
-#pragma omp for      
+#pragma omp parallel for
       for( int k=kfirst+3; k <= klast-3 ; k++ )
 	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
 #pragma simd
@@ -843,7 +897,6 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 					     )  );
 	       }
 	    }
-      }
 #undef rho
 #undef up
 #undef u
@@ -889,9 +942,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
-#pragma omp parallel
-      {
-#pragma omp for      
+#pragma omp parallel for
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 #pragma simd
@@ -948,7 +999,6 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 
 	       }
 	    }
-      }
 #undef rho
 #undef up
 #undef u
@@ -992,9 +1042,7 @@ void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
-#pragma omp parallel
-      {
-#pragma omp for      
+#pragma omp parallel for
       for( int k=kfirst+3; k <= klast-3 ; k++ )
 	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
 #pragma simd
@@ -1050,7 +1098,6 @@ void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 					     )  );
 	       }
 	    }
-      }
 #undef rho
 #undef up
 #undef u

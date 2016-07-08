@@ -1,6 +1,12 @@
-FC  = mpiifort
-CXX = mpiicpc
+# To define the compilers on LC:
+# use ic-16.0.210
+# use mvapich2-intel-2.1
+#
+FC  = mpif90
+CXX = mpic++
+OMPOPT = -qopenmp
 EXTRA_LINK_FLAGS = -lifcore
+openmp = yes
 
 ifeq ($(debug),yes)
    optlevel = DEBUG
@@ -15,18 +21,21 @@ ifeq ($(optlevel),DEBUG)
    CFLAGS    = -g
 else
    FFLAGS   = -O3 -g
-   CXXFLAGS = -O -I../src -g
-   CFLAGS   = -O -g
+   CXXFLAGS = -O2 -I../src -g
+   CFLAGS   = -O2 -g
 endif
 
 ifeq ($(openmp),yes)
-  FFLAGS   += -openmp 
-  CXXFLAGS += -openmp -DSW4_OPENMP
-  CFLAGS   += -openmp -DSW4_OPENMP
+  FFLAGS   += $(OMPOPT)
+  CXXFLAGS += $(OMPOPT) -DSW4_OPENMP
+  CFLAGS   += $(OMPOPT) -DSW4_OPENMP
 endif
 
 ifeq ($(nofort),yes)
    CXXFLAGS += -DSW4_CROUTINES
+   ifeq ($(openmp),yes)
+	CXXFLAGS += $(OMPOPT) -DSW4_OPENMP
+   endif
 endif
 
 fullpath := $(shell pwd)
@@ -34,17 +43,22 @@ fullpath := $(shell pwd)
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
-debugdir := debug
-optdir := optimize
-
-ifeq ($(openmp),yes)
-   debugdir := debug_omp
-   optdir   := optimize_omp
-endif
-
 ifeq ($(nofort),yes)
-   debugdir := debug_c
-   optdir   := optimize_c
+   ifeq ($(openmp),yes)
+      debugdir := debug_mp_c
+      optdir   := optimize_mp_c
+   else
+      debugdir := debug_c
+      optdir   := optimize_c
+   endif
+else
+   ifeq ($(openmp),yes)
+      debugdir := debug_mp
+      optdir   := optimize_mp
+   else
+      debugdir := debug
+      optdir   := optimize
+   endif
 endif
 
 ifdef EXTRA_CXX_FLAGS
@@ -65,7 +79,7 @@ else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o EWCuda.o
+OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o EWCuda.o CheckPoint.o Parallel_IO.o
 
 FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o
 

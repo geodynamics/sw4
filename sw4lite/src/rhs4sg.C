@@ -309,7 +309,7 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 	 for( k=1 ; k<= 6 ; k++ )
 /* the centered stencil can be used in the x- and y-directions */
 	    for( j=jfirst+2; j<=jlast-2; j++ )
-	       /* #pragma simd */
+#pragma simd
 #pragma ivdep
 	       for( i=ifirst+2; i<=ilast-2; i++ )
 	       {
@@ -560,7 +560,7 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 #pragma omp for
 	 for(  k = nk-5 ; k <= nk ; k++ )
 	    for(  j=jfirst+2; j<=jlast-2; j++ )
-	       /* #pragma simd */
+#pragma simd
 #pragma ivdep
 	       for(  i=ifirst+2; i<=ilast-2; i++ )
 	       {

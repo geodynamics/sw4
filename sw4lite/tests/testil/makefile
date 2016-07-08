@@ -14,7 +14,7 @@
 #CFLAGS = -O3
 
 #intel,  use ic-16.0.150
-#
+# newer compiler, ic-16.0.210
 FC = ifort
 CC = icc
 CXX= icpc

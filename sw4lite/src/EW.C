@@ -21,6 +21,7 @@
 
 #include "Source.h"
 #include "GridPointSource.h"
+#include "CheckPoint.h"
 
 #include "F77_FUNC.h"
 #include "EWCuda.h"
@@ -106,6 +107,8 @@ EW::EW( const string& filename ) :
 
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
    MPI_Comm_size( MPI_COMM_WORLD, &m_nprocs );
+
+   m_restart_check_point = CheckPoint::nil;
    parseInputFile( filename );
    setupRun( );
    timesteploop( mU, mUm );
@@ -458,6 +461,116 @@ void EW::processFileIO(char* buffer)
        }
        token = strtok(NULL, " \t");
     }
+}
+
+//-----------------------------------------------------------------------
+void EW::processCheckPoint(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("checkpoint", token) == 0, "ERROR: not a checkpoint line...: " << token);
+   token = strtok(NULL, " \t");
+   string err = "CheckPoint Error: ";
+   int cycle=-1, cycleInterval=0;
+   double time=0.0, timeInterval=0.0;
+   bool timingSet=false;
+   string filePrefix = "restart";
+   size_t bufsize=10000000;
+
+   while (token != NULL)
+    {
+       if (startswith("#", token) || startswith(" ", buffer))
+          break;
+      if (startswith("time=", token) )
+      {
+	 token += 5; // skip time=
+	 CHECK_INPUT( atof(token) >= 0., err << "time must be a non-negative number, not: " << token);
+	 time = atof(token);
+	 timingSet = true;
+      }
+      else if (startswith("timeInterval=", token) )
+      {
+	 token += 13; // skip timeInterval=
+	 CHECK_INPUT( atof(token) >= 0., err<< "timeInterval must be a non-negative number, not: " << token);
+	 timeInterval = atof(token);
+	 timingSet = true;
+      }
+      else if (startswith("cycle=", token) )
+      {
+	 token += 6; // skip cycle=
+	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative integer, not: " << token);
+	 cycle = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("cycleInterval=", token) )
+      {
+	 token += 14; // skip cycleInterval=
+	 CHECK_INPUT( atoi(token) >= 0., err << "cycleInterval must be a non-negative integer, not: " << token);
+	 cycleInterval = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("file=", token))
+      {
+	 token += 5; // skip file=
+	 filePrefix = token;
+      }
+      else if (startswith("bufsize=", token))
+      {
+	 token += 8; // skip bufsize=
+	 bufsize = atoi(token);
+      }
+      else
+      {
+	 badOption("checkpoint", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   CHECK_INPUT( timingSet, "Processing checkpoint command: " << 
+		"at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl );
+   CheckPoint* chkpt = new CheckPoint( this, time, timeInterval, cycle, cycleInterval, filePrefix, bufsize ); 
+   m_check_points.push_back(chkpt);
+}
+
+//-----------------------------------------------------------------------
+void EW::processRestart(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("restart", token) == 0, "ERROR: not a restart line...: " << token);
+   token = strtok(NULL, " \t");
+   string err = "Restart Error: ";
+   int cycle=-1, cycleInterval=0;
+   double time=0.0, timeInterval=0.0;
+   bool timingSet=false;
+   string fileName;
+   bool filenamegiven = false;
+   size_t bufsize=10000000;
+
+   while (token != NULL)
+    {
+       if (startswith("#", token) || startswith(" ", buffer))
+          break;
+      if (startswith("file=", token) )
+      {
+	 token += 5; // skip file=
+	 fileName = token;
+	 filenamegiven = true;
+      }
+      else if (startswith("bufsize=", token))
+      {
+	 token += 8; // skip bufsize=
+	 bufsize = atoi(token);
+      }
+      else
+      {
+	 badOption("restart", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   CHECK_INPUT( filenamegiven, "Processing restart command: " << 
+		"restart file name must be given"  << endl );
+   CHECK_INPUT( m_restart_check_point == CheckPoint::nil, "Processing restart command: "<<
+		" There can only be one restart file");
+   m_restart_check_point = new CheckPoint( this, fileName, bufsize );
+
 }
 
 //-----------------------------------------------------------------------
@@ -1307,6 +1420,10 @@ bool EW::parseInputFile( const string& filename )
 	    processDeveloper(buffer);
 	 else if( startswith("fileio",buffer))
 	    processFileIO(buffer);
+	 else if( startswith("checkpoint",buffer))
+	    processCheckPoint(buffer);
+	 else if( startswith("restart",buffer))
+	    processRestart(buffer);
 	 else if (!inputFile.eof() && m_myrank == 0)
 	 {
 	    cout << "*** Ignoring command: '" << buffer << "'" << endl;
@@ -1346,6 +1463,16 @@ void EW::setupRun()
    {
       m_globalUniqueSources[s]->set_grid_point_sources4( this, m_point_sources );
    }
+   if( m_myrank == 0 && m_globalUniqueSources.size() > 0 )
+      cout << "setup of sources done" << endl;
+
+// Setup I/O in check points
+   if( m_restart_check_point != CheckPoint::nil )
+      m_restart_check_point->setup_sizes();
+   for( int c = 0 ; c < m_check_points.size() ; c++ )
+      m_check_points[c]->setup_sizes();
+   if( m_myrank == 0 && (m_restart_check_point != CheckPoint::nil || m_check_points.size() > 0) )
+      cout << "setup of check point file done" << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -1407,8 +1534,23 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       Lu[g].set_value(0.0);
    }
 
-   int beginCycle = 1;
+   int beginCycle = 0;
    float_sw4 t = mTstart;
+   if( m_restart_check_point != CheckPoint::nil )
+   {
+      m_restart_check_point->read_checkpoint( t, beginCycle, Um, U );
+      for(int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+	 communicate_array( U[g], g );
+	 communicate_array( Um[g], g );
+      }
+      cartesian_bc_forcing( t, BCForcing, m_globalUniqueSources );
+      enforceBC( U, mMu, mLambda, t, BCForcing );
+      cartesian_bc_forcing( t-mDt, BCForcing, m_globalUniqueSources );
+      enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
+   }
+   beginCycle++;
+
    float_sw4 time_measure[20];
    float_sw4 time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -1431,7 +1573,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       Lu[g].allocate_on_device(m_cuobj);
    }
 #endif
-
+   if( m_myrank == 0 )
+      cout << "starting at time " << t << " at cycle " << beginCycle << endl;
 // Begin time stepping loop
    for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++ )
    {    
@@ -1558,6 +1701,21 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
+//
+      double time_chkpt, time_chkpt_tmp;
+      bool wrote=false;
+      MPI_Barrier( MPI_COMM_WORLD );
+      time_chkpt=MPI_Wtime();
+      for( int c=0 ; c < m_check_points.size() ; c++ )
+	 if( m_check_points[c]->timeToWrite( t, currentTimeStep, mDt) )
+	 {
+	    m_check_points[c]->write_checkpoint( t, currentTimeStep, U, Up );
+	    wrote=true;
+	 }
+      time_chkpt_tmp =MPI_Wtime()-time_chkpt;
+      MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+      if( m_myrank == 0 && wrote )
+	 cout << "Cpu time to write check point file " << time_chkpt << " seconds " << endl;
 //
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)

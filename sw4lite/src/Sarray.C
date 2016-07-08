@@ -447,6 +447,7 @@ void Sarray::set_value( double scalar )
 //-----------------------------------------------------------------------
 void Sarray::set_to_random( double llim, double ulim )
 {
+   // drand48 is not thread-safe; you will probably not get what you expect
 #pragma omp parallel for
    for( size_t i=0 ; i<m_npts ; i++ )
       m_data[i] = llim + (ulim-llim)*drand48();
@@ -473,7 +474,7 @@ double Sarray::maximum( int c )
    {
       size_t first = (c-1)*npts;
       mx = m_data[first];
-#pragma omp parallel for
+#pragma omp parallel for reduction(max:mx)
       for( int i=0 ; i<npts ; i++ )
 	 mx = mx > m_data[first+i] ? mx : m_data[first+i];
    }
@@ -481,7 +482,7 @@ double Sarray::maximum( int c )
    {
       size_t first = (c-1);
       mx = m_data[first];
-#pragma omp parallel for
+#pragma omp parallel for reduction(max:mx)
       for( int i=0 ; i<npts ; i++ )
 	 mx = mx > m_data[first+i*m_nc] ? mx : m_data[first+i*m_nc];
    }
@@ -501,7 +502,7 @@ double Sarray::minimum( int c )
    {
       size_t first = (c-1)*npts;
       mn = m_data[first];
-#pragma omp parallel for
+#pragma omp parallel for reduction(min:mn)
       for( int i=0 ; i<npts ; i++ )
 	 mn = mn < m_data[first+i] ? mn : m_data[first+i];
    }
@@ -509,7 +510,7 @@ double Sarray::minimum( int c )
    {
       size_t first = (c-1);
       mn = m_data[first];
-#pragma omp parallel for
+#pragma omp parallel for reduction(min:mn)
       for( int i=0 ; i<npts ; i++ )
 	 mn = mn < m_data[first+i*m_nc] ? mn : m_data[first+i*m_nc];
    }
@@ -529,14 +530,14 @@ double Sarray::sum( int c )
    if( m_corder )
    {
       size_t first = (c-1)*npts;
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:s)
       for( int i=0 ; i<npts ; i++ )
 	 s += m_data[first+i];
    }
    else
    {
       size_t first = (c-1);
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:s)
       for( int i=0 ; i<npts ; i++ )
 	 s += m_data[first+i*m_nc];
    }
@@ -548,7 +549,7 @@ size_t Sarray::count_nans()
 {
    size_t retval = 0;
    size_t npts = m_nc*m_ni*static_cast<size_t>(m_nj)*m_nk;
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:retval)
    for( size_t ind = 0; ind < npts ; ind++)
       if( std::isnan(m_data[ind]) )
 	 retval++;
@@ -560,7 +561,8 @@ size_t Sarray::count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst )
 {
    cfirst = ifirst = jfirst = kfirst = 0;
    size_t retval = 0, ind=0;
-#pragma omp parallel for
+   // Note: you're going to get various threads racing to set the "first" values. This won't work.
+#pragma omp parallel for reduction(+:retval)
    for( int k=m_kb ; k<=m_ke ; k++ )
       for( int j=m_jb ; j<=m_je ; j++ )
 	 for( int i=m_ib ; i <= m_ie ; i++ )
@@ -601,13 +603,33 @@ void Sarray::copy( const Sarray& u )
    if( m_nc*m_ni*m_nj*m_nk > 0 )
    {
       m_data = new double[m_nc*m_ni*m_nj*m_nk];
-#pragma omp parallel for
+#pragma omp parallel for 
       for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
 	 m_data[i] = u.m_data[i];
    }
    else
       m_data = NULL;
    define_offsets();
+}
+
+//-----------------------------------------------------------------------
+void Sarray::extract_subarray( int ib, int ie, int jb, int je, int kb,
+			       int ke, double* ar )
+{
+   // Assuming nc is the same for m_data and subarray ar.
+   int nis = ie-ib+1;
+   int njs = je-jb+1;
+   //   int nks = ke-kb+1;
+   size_t sind=0, ind=0;
+   for( int k=kb ; k<=ke ; k++ )
+      for( int j=jb ; j<=je ; j++ )
+	 for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  ar[sind*m_nc+c-1] = m_data[ind*m_nc+c-1];
+	    }
 }
 
 //-----------------------------------------------------------------------

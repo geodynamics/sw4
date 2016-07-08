@@ -14,6 +14,7 @@ using namespace std;
 class Source;
 class GridPointSource;
 class EWCuda;
+class CheckPoint;
 
 class EW
 {
@@ -32,6 +33,8 @@ class EW
    void processSuperGrid( char* buffer );
    void processDeveloper(char* buffer);
    void processFileIO( char* buffer );
+   void processCheckPoint( char* buffer );
+   void processRestart( char* buffer );
    void defineDimensionsGXY( );
    void defineDimensionsZ();
    void allocateArrays();
@@ -170,8 +173,8 @@ class EW
    void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
 				float_sw4* _bope, float_sw4* _sbop );
 
-
-
+   bool usingParallelFS(){ return m_pfs;}
+   int getNumberOfWritersPFS(){ return m_nwriters;}
 
    // Variables ----------
 
@@ -261,6 +264,10 @@ class EW
    EWCuda* m_cuobj;
 
    bool m_corder; // (i,j,k,c) order 
+
+   // Output: Images, stations, checkpoints
+   vector<CheckPoint*> m_check_points;
+   CheckPoint* m_restart_check_point;
 };
 
 #endif
