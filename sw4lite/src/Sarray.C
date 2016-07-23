@@ -809,8 +809,11 @@ void Sarray::copy_to_device( EWCuda* cu, bool async, int st )
 	 retcode = cudaMemcpy( dev_data, m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
 			    cudaMemcpyHostToDevice );
 	 if( retcode != cudaSuccess )
+	 {
 	    cout << "Error Sarray::copy_to_device, cudaMemcpy returned " <<
 	       cudaGetErrorString(retcode) << endl;
+	    exit(2);
+	 }
       }
       else
       {
@@ -843,8 +846,11 @@ void Sarray::copy_from_device( EWCuda* cu, bool async, int st )
 	 retcode = cudaMemcpy( m_data, dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
 			    cudaMemcpyDeviceToHost );
 	 if( retcode != cudaSuccess )
+	 {
 	    cout << "Error Sarray::copy_from_device, cudaMemcpy returned " <<
 	       cudaGetErrorString(retcode) << endl;
+	    exit(2);
+	 }
       }
       else
       {

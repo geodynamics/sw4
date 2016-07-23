@@ -42,9 +42,9 @@ __global__ void dpdmt_dev( int ifirst, int ilast, int jfirst, int jlast, int kfi
    int myj = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
    int myk = kfirst + ghost_points + threadIdx.z + blockIdx.z*blockDim.z;
    size_t i = 3*(myi-ifirst+(ilast-ifirst+1)*((myj-jfirst)+(jlast-jfirst+1)*(myk-kfirst)));
-   up[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
-   up[i+1] = dt2i*(up[i+1]-2*u[i+1]+um[i+1]);
-   up[i+2] = dt2i*(up[i+2]-2*u[i+2]+um[i+2]);
+   u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
+   u2[i+1] = dt2i*(up[i+1]-2*u[i+1]+um[i+1]);
+   u2[i+2] = dt2i*(up[i+2]-2*u[i+2]+um[i+2]);
 }
 
 //-----------------------------------------------------------------------

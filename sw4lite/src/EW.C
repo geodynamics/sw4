@@ -1571,6 +1571,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       Lu[g].allocate_on_device(m_cuobj);
+      Up[g].allocate_on_device(m_cuobj);
+      Um[g].copy_to_device(m_cuobj);
+      Uacc[g].copy_to_device(m_cuobj);
    }
 #endif
    if( m_myrank == 0 )
@@ -1663,8 +1666,6 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       else
 	 evalCorrector( Up, mRho, Lu, F );
       time_measure[5] = MPI_Wtime();
-
-
 
 // add in super-grid damping terms
       if ( m_use_supergrid )
