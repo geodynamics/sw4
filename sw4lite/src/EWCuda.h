@@ -13,7 +13,9 @@ class EWCuda
    cudaStream_t* m_stream;
 #endif
    EWCuda( int ndevice, int nstream ); 
+   ~EWCuda();
    bool has_gpu(){return m_ndevice>0;}
    void reset_gpu();
+   void sync_stream( int st );
 };
 #endif

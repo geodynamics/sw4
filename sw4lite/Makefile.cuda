@@ -1,19 +1,26 @@
 #EXTRA_LINK_FLAGS = -lifcore
+#
 # Intel  
-#CXX = mpiicpc
-#MPIINC = /usr/local/tools/mvapich-intel/include
-#MPILIB = /usr/local/tools/mvapich-intel/lib
-# gnu
-MPIPATH = /usr/local/tools/mvapich2-gnu
-# Intel
-#MPIPATH = /usr/local/tools/mvapich2-intel
+COMPILERPATH = /usr/local/tools/ic-15.0.223/bin
+MPIPATH = /usr/local/tools/mvapich2-intel-2.2
+HOSTCOMP = $(COMPILERPATH)/icpc
+#
+# Gnu
+#COMPILERPATH = /usr/local/tools/gcc-4.6.1/bin
+#MPIPATH = /usr/local/tools/mvapich2-gnu
+#HOSTCOMP = $(COMPILERPATH)/g++
+#
 # Pgi
+# (currently this does not work)
 #MPIPATH = /usr/local/tools/mvapich2-pgi
+#COMPILERPATH = /usr/local/tools/pgi-15.7/bin
+#HOSTCOMP=$(COMPILERPATH)/pgCC
 #
 #CXX    = $(MPIPATH)/bin/mpicxx
 MPIINC = $(MPIPATH)/include
 MPILIB = $(MPIPATH)/lib
 CXX = nvcc
+#CC = icc
 #
 #
 
@@ -26,11 +33,11 @@ endif
 
 ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g 
-   CXXFLAGS  = -g -x cu -I../src -c -dc -arch=sm_35 -DBZ_DEBUG -DSW4_CROUTINES -DSW4_CUDA -I$(MPIINC)
-   CFLAGS    = -g
+   CXXFLAGS  = -g -x cu -I../src -c -dc -arch=sm_35 -DBZ_DEBUG -DSW4_CROUTINES -DSW4_CUDA -I$(MPIINC) -ccbin $(HOSTCOMP)
+   CFLAGS    = -g 
 else
    FFLAGS   = -O3 
-   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=sm_35 -DSW4_CROUTINES -DSW4_CUDA -I$(MPIINC)
+   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=sm_35 -DSW4_CROUTINES -DSW4_CUDA -I$(MPIINC) -ccbin $(HOSTCOMP)
    CFLAGS   = -O 
 endif
 
@@ -75,9 +82,14 @@ sw4g: $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -L$(MPILIB) -Xlinker "-rpath=$(MPILIB)" -arch=sm_35 -o $@ $(OBJ) -lcudart -lmpich -lmpl -lpmi
+	cd $(builddir); nvcc -L$(MPILIB) -Xlinker "-rpath=$(MPILIB)" -arch=sm_35 -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart -lmpich -lmpl -lpmi
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
+
+
+#$(builddir)/device-routines.o:src/device-routines.C
+#	/bin/mkdir -p $(builddir)
+#	cd $(builddir); nvcc $(CXXFLAGS) -c ../$< 
 
 $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)
@@ -89,3 +101,4 @@ $(builddir)/%.o:src/%.f
 
 clean:
 	cd optimize_cuda;/bin/rm *.o
+	cd debug_cuda;/bin/rm *.o

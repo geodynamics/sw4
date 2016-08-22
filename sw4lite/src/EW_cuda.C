@@ -5,6 +5,8 @@
 #ifdef SW4_CUDA
 #include <cuda_runtime.h>
 
+void copy_stencilcoefficients( float_sw4* acof, float_sw4* ghcof, float_sw4* bope );
+
 __global__ void pred_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  float_sw4* up, float_sw4* u, float_sw4* um, float_sw4* lu, float_sw4* fo,
 			  float_sw4* rho, float_sw4 dt2, int ghost_points );
@@ -36,9 +38,19 @@ __global__ void rhs4center_dev( int ifirst, int ilast, int jfirst, int jlast, in
 				float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 				int ghost_points );
 
-__constant__ float_sw4 dev_acof[384];
-__constant__ float_sw4 dev_ghcof[6];
-__constant__ float_sw4 dev_bope[48];
+__global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+			       int ghost_points );
+
+__global__ void rhs4upper_dummy_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast );
+				     //    				     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+				     //    				     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+				     //    				     int ghost_points );
+
+//__constant__ float_sw4 dev_acof[384];
+//__constant__ float_sw4 dev_ghcof[6];
+//__constant__ float_sw4 dev_bope[48];
 
 //__constant__ float_sw4 dev_acof2[384];
 //__constant__ float_sw4 dev_ghcof2[6];
@@ -66,6 +78,30 @@ void EW::evalRHSCU(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a
 	   a_Lambda[g].dev_ptr(), mGridSize[g],
 	   dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
    }
+// Boundary operator at upper boundary
+   blocksize.z = 1;
+   gridsize.z  = 6;
+//   cudaDeviceSynchronize();
+//   cudaError_t e = cudaGetLastError();
+//   if( e != cudaSuccess )
+//         cout << "Error in rhs4upper_dev. Error= "
+//      	      << cudaGetErrorString(e) << endl;
+// else
+//      cout << "First step successful " << endl;
+
+   for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
+   {
+      if( m_onesided[g][4] )
+      {
+	 rhs4upper_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+	    ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],  m_kEnd[g],
+	      a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
+	      a_Lambda[g].dev_ptr(), mGridSize[g],
+	      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+      }
+   }
+   //   cudaDeviceSynchronize();
+   //   cout << "Second step successful " << endl;
 #endif
 }
 
@@ -193,23 +229,24 @@ void EW::setupSBPCoeff()
 //   F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
    GetStencilCoefficients( m_acof, m_ghcof, m_bope, m_sbop );
 #ifdef SW4_CUDA
-   cudaError_t retcode;
-   if( m_ndevice > 0 )
-   {
-      retcode = cudaMemcpyToSymbol( dev_acof,  m_acof, 384*sizeof(float_sw4));
-      if( retcode != cudaSuccess )
-	 cout << "Error copying acof to device constant memory. Error= "
-	      << cudaGetErrorString(retcode) << endl;
-      retcode = cudaMemcpyToSymbol( dev_bope,  m_bope,  48*sizeof(float_sw4));
-      if( retcode != cudaSuccess )
-	 cout << "Error copying bope to device constant memory. Error= "
-	      << cudaGetErrorString(retcode) << endl;
-      retcode = cudaMemcpyToSymbol( dev_ghcof, m_ghcof,  6*sizeof(float_sw4));
-      if( retcode != cudaSuccess )
-	 cout << "Error copying ghcof to device constant memory. Error= "
-	      << cudaGetErrorString(retcode) << endl;
-      
-   }
+   copy_stencilcoefficients( m_acof, m_ghcof, m_bope );
+   //   cudaError_t retcode;
+   //   if( m_ndevice > 0 )
+   //   {
+   //      retcode = cudaMemcpyToSymbol( dev_acof,  m_acof, 384*sizeof(float_sw4));
+   //      if( retcode != cudaSuccess )
+   //	 cout << "Error copying acof to device constant memory. Error= "
+   //	      << cudaGetErrorString(retcode) << endl;
+   //      retcode = cudaMemcpyToSymbol( dev_bope,  m_bope,  48*sizeof(float_sw4));
+   //      if( retcode != cudaSuccess )
+   //	 cout << "Error copying bope to device constant memory. Error= "
+   //	      << cudaGetErrorString(retcode) << endl;
+   //      retcode = cudaMemcpyToSymbol( dev_ghcof, m_ghcof,  6*sizeof(float_sw4));
+   //      if( retcode != cudaSuccess )
+   //	 cout << "Error copying ghcof to device constant memory. Error= "
+   //	      << cudaGetErrorString(retcode) << endl;
+   //      
+   //   }
 #endif   
 }
 

@@ -536,10 +536,10 @@ void EW::processRestart(char* buffer)
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("restart", token) == 0, "ERROR: not a restart line...: " << token);
    token = strtok(NULL, " \t");
-   string err = "Restart Error: ";
-   int cycle=-1, cycleInterval=0;
-   double time=0.0, timeInterval=0.0;
-   bool timingSet=false;
+   //   string err = "Restart Error: ";
+   //   int cycle=-1, cycleInterval=0;
+   //   double time=0.0, timeInterval=0.0;
+   //   bool timingSet=false;
    string fileName;
    bool filenamegiven = false;
    size_t bufsize=10000000;
@@ -1110,7 +1110,7 @@ void EW::defineDimensionsGXY( )
    int is_periodic[2]={0,0};
 
    MPI_Cart_create( MPI_COMM_WORLD, 2, m_nprocs_2d, is_periodic, true, &m_cartesian_communicator );
-   int my_proc_coords[2];
+   //   int my_proc_coords[2];
    MPI_Cart_get( m_cartesian_communicator, 2, m_nprocs_2d, is_periodic, m_myrank_2d );
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
    MPI_Cart_shift( m_cartesian_communicator, 1, 1, m_neighbor+2, m_neighbor+3 );
@@ -1572,8 +1572,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    {
       Lu[g].allocate_on_device(m_cuobj);
       Up[g].allocate_on_device(m_cuobj);
+      Uacc[g].allocate_on_device(m_cuobj);
       Um[g].copy_to_device(m_cuobj);
-      Uacc[g].copy_to_device(m_cuobj);
+
    }
 #endif
    if( m_myrank == 0 )
@@ -1585,8 +1586,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       // Predictor 
       // Need U on device for evalRHS, will make this asynchronous:
       for( int g=0; g < mNumberOfGrids ; g++ )
-	 U[g].copy_to_device(m_cuobj);
-
+      {
+	 U[g].page_lock(m_cuobj);
+	 U[g].copy_to_device(m_cuobj,true,0);
+	 U[g].page_unlock(m_cuobj);
+      }
 // all types of forcing...
       Force( t, F, m_point_sources, false );
       if( m_checkfornan )
@@ -1597,8 +1601,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       // Need F on device for predictor, will make this asynchronous:
       for( int g=0; g < mNumberOfGrids ; g++ )
-	 F[g].copy_to_device(m_cuobj);
-
+      {
+	 F[g].page_lock(m_cuobj);
+	 F[g].copy_to_device(m_cuobj,true,1);
+	 F[g].page_unlock(m_cuobj);
+      }
       time_measure[1] = MPI_Wtime();
 
 // evaluate right hand side
@@ -1611,14 +1618,16 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 check_for_nan( Lu, 1, "Lu pred. " );
 
 // take predictor step, store in Up
+      m_cuobj->sync_stream( 0 );
       if( m_cuobj->has_gpu() )
-	 evalPredictorCU( Up, U, Um, mRho, Lu, F, 0 );    
+	 evalPredictorCU( Up, U, Um, mRho, Lu, F, 1 );    
       else
 	 evalPredictor( Up, U, Um, mRho, Lu, F );    
 
       for( int g=0; g < mNumberOfGrids ; g++ )
+      {
 	 Up[g].copy_from_device(m_cuobj);
-
+      }
       time_measure[2] = MPI_Wtime();
 
 // communicate across processor boundaries
@@ -1636,13 +1645,19 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       time_measure[3] = MPI_Wtime();
 
       for( int g=0; g < mNumberOfGrids ; g++ )
-	 Up[g].copy_to_device(m_cuobj);
-
+      {
+	 Up[g].page_lock(m_cuobj);
+	 Up[g].copy_to_device(m_cuobj,true,0);
+	 Up[g].page_unlock(m_cuobj);
+      }
       // Corrector
       Force( t, F, m_point_sources, true );
       for( int g=0; g < mNumberOfGrids ; g++ )
-	 F[g].copy_to_device(m_cuobj);
-
+      {
+	 F[g].page_lock(m_cuobj);
+	 F[g].copy_to_device(m_cuobj,true,1);
+	 F[g].page_unlock(m_cuobj);
+      }
       time_measure[4] = MPI_Wtime();
 
       if( m_cuobj->has_gpu() )
@@ -1661,8 +1676,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if( m_checkfornan )
 	 check_for_nan( Lu, 1, "L(uacc) " );
 
+      m_cuobj->sync_stream(0);
       if( m_cuobj->has_gpu() )
-	 evalCorrectorCU( Up, mRho, Lu, F, 0 );
+	 evalCorrectorCU( Up, mRho, Lu, F, 1 );
       else
 	 evalCorrector( Up, mRho, Lu, F );
       time_measure[5] = MPI_Wtime();
@@ -1671,7 +1687,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if ( m_use_supergrid )
       {
 	 if( m_cuobj->has_gpu() )
-	    addSuperGridDampingCU( Up, U, Um, mRho, 0 );
+	    addSuperGridDampingCU( Up, U, Um, mRho, 1 );
 	 else
 	    addSuperGridDamping( Up, U, Um, mRho );
 
@@ -1750,7 +1766,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 //      if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
       if ( m_point_source_test && saveerror )
       {
-	 float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
+	 float_sw4 errInf=0, errL2=0, solInf=0; //, solL2=0;
 	 exactSol( t, Up, m_globalUniqueSources ); // store exact solution in Up
 //	 //	 if (m_lamb_test)
 //	 //	    normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
@@ -1781,7 +1797,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
    if ( m_point_source_test )
    {
-      float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
+      float_sw4 errInf=0, errL2=0, solInf=0;//, solL2=0;
       exactSol( t, Up, m_globalUniqueSources ); // store exact solution in Up
 //	 //	 if (m_lamb_test)
 //	 //	    normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
@@ -2040,7 +2056,7 @@ void EW::communicate_array( Sarray& u, int grid )
 {
    REQUIRE2( u.m_nc == 3 || u.m_nc == 1, "Communicate array, only implemented for one- and three-component arrays"
 	     << " nc = " << u.m_nc );
-   int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, ke=u.m_ke, kb=u.m_kb;
+   int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
    MPI_Status status;
    if( u.m_nc == 1 )
    {
@@ -2332,6 +2348,7 @@ bool EW::exactSol( float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources
 	get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
      retval = true;
   }
+  return retval;
 }
 
 //-----------------------------------------------------------------------
@@ -2622,7 +2639,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
       m0 = 1;
    }
    //   bool curvilinear = topographyExists() && g == mNumberOfGrids-1;
-   bool curvilinear = false;
+   //   bool curvilinear = false;
    //   float_sw4* up = u.c_ptr();
    float_sw4 h   = mGridSize[g];
    float_sw4 eps = 1e-3*h;
@@ -3474,7 +3491,6 @@ void EW::assign_local_bcs( )
 {
 // This routine assigns m_bcType[g][b], b=0,1,2,3, based on mbcGlobalType, taking parallel overlap boundaries into account
 
-   int g, b, side;
    int top=mNumberOfGrids-1; // index of the top grid in the arrays m_iStart, m_iEnd, etc
   
 // horizontal bc's are the same for all grids

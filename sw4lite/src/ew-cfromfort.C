@@ -383,7 +383,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
       }
       else if( bccnd[s]==0 )
       {
-	 REQUIRE2( s == 4 && s == 5, "EW::bcfortsg,  ERROR: Free surface condition"
+	 REQUIRE2( s == 4 || s == 5, "EW::bcfortsg,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 if( s==4 )
 	 {
@@ -465,7 +465,6 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
       {
          size_t idel = 1+wind[1+6*s]-wind[6*s];
          size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
-	 size_t qq=0;
 	 if( s== 0 )
 	 {
             #pragma omp parallel for 
@@ -652,7 +651,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
       }
       else if( bccnd[s]==0 )
       {
-	 REQUIRE2( s == 4 && s == 5, "EW::bcfortsg_indrev,  ERROR: Free surface condition"
+	 REQUIRE2( s == 4 || s == 5, "EW::bcfortsg_indrev,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 if( s==4 )
 	 {

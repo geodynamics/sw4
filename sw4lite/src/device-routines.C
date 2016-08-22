@@ -1,6 +1,35 @@
 #include "sw4.h"
 
 #ifdef SW4_CUDA
+#include <cuda_runtime.h>
+
+__constant__ float_sw4 dev_acof[384];
+__constant__ float_sw4 dev_ghcof[6];
+__constant__ float_sw4 dev_bope[48];
+
+#include <iostream>
+using namespace std;
+//-----------------------------------------------------------------------
+void copy_stencilcoefficients( float_sw4* acof, float_sw4* ghcof, float_sw4* bope )
+{
+   cudaError_t retcode;
+   //   if( m_ndevice > 0 )
+   {
+      retcode = cudaMemcpyToSymbol( dev_acof,  acof, 384*sizeof(float_sw4));
+      if( retcode != cudaSuccess )
+	 cout << "Error copying acof to device constant memory. Error= "
+	      << cudaGetErrorString(retcode) << endl;
+      retcode = cudaMemcpyToSymbol( dev_bope,  bope,  48*sizeof(float_sw4));
+      if( retcode != cudaSuccess )
+	 cout << "Error copying bope to device constant memory. Error= "
+	      << cudaGetErrorString(retcode) << endl;
+      retcode = cudaMemcpyToSymbol( dev_ghcof, ghcof,  6*sizeof(float_sw4));
+      if( retcode != cudaSuccess )
+	 cout << "Error copying ghcof to device constant memory. Error= "
+	      << cudaGetErrorString(retcode) << endl;
+   }
+}
+
 //-----------------------------------------------------------------------
 __global__ void pred_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  float_sw4* up, float_sw4* u, float_sw4* um, float_sw4* lu, float_sw4* fo,
@@ -241,7 +270,7 @@ __global__ void rhs4center_dev( int ifirst, int ilast, int jfirst, int jlast, in
 #define strz(k) a_strz[k-kfirst0]
    const float_sw4 a1   = 0;
    const float_sw4 i6   = 1.0/6;
-   const float_sw4 i12  = 1.0/12;
+   //   const float_sw4 i12  = 1.0/12;
    const float_sw4 i144 = 1.0/144;
    const float_sw4 tf   = 0.75;
 
@@ -496,11 +525,20 @@ __global__ void rhs4center_dev( int ifirst, int ilast, int jfirst, int jlast, in
 }
 
 //-----------------------------------------------------------------------
-__device__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			       float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
+__global__ void rhs4upper_dummy_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast )
+				     //			       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+				     //			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+				     //			       int ghost_points )
+{
+      return;
+}
+
+//-----------------------------------------------------------------------
+__global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+       //		       float_sw4* dev_acof, float_sw4* dev_bope, float_sw4* dev_ghcof,
 			       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-			       int i, int j, int k )
+			       int ghost_points )
 {
    // For 1 <= k <= 6 if free surface boundary.
 #define mu(i,j,k)     a_mu[base+i+ni*(j)+nij*(k)]
@@ -509,10 +547,10 @@ __device__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int
 #define lu(c,i,j,k) a_lu[base3+c+3*(i)+nic*(j)+nijc*(k)]   
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
-#define strz(k) a_strz[k-kfirst0]
-#define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
-#define bope(i,j) a_bope[i-1+6*(j-1)]
-#define ghcof(i) a_ghcof[i-1]
+   //#define strz(k) a_strz[k-kfirst0]
+#define acof(i,j,k) dev_acof[(i-1)+6*(j-1)+48*(k-1)]
+#define bope(i,j) dev_bope[(i-1)+6*(j-1)]
+#define ghcof(i) dev_ghcof[(i-1)]
    const float_sw4 a1   = 0;
    const float_sw4 i6   = 1.0/6;
    const float_sw4 i12  = 1.0/12;
@@ -527,14 +565,22 @@ __device__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int
    const int nijc = 3*nij;
    const int ifirst0 = ifirst;
    const int jfirst0 = jfirst;
-   const int kfirst0 = kfirst;
+   //   const int kfirst0 = kfirst;
 
    int q, m;
-   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;//, muz1, muz2, muz3, muz4;
    float_sw4 r1, r2, r3, cof, mucof, mu1zz, mu2zz, mu3zz;
    float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
    float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
    float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
+
+   //   return;
+
+   int i = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
+   int j = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
+   int k = kfirst + ghost_points + threadIdx.z + blockIdx.z*blockDim.z;
+   if( k < 1 || k > 6 )
+      return;
 
    cof = 1.0/(h*h);
    mux1 = mu(i-1,j,k)*strx(i-1)-
@@ -795,7 +841,7 @@ __device__ void rhs4lower_dev( int ifirst, int ilast, int jfirst, int jlast, int
 #define lu(c,i,j,k) a_lu[base3+c+3*(i)+nic*(j)+nijc*(k)]   
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
-#define strz(k) a_strz[k-kfirst0]
+   //#define strz(k) a_strz[k-kfirst0]
 #define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
@@ -814,11 +860,11 @@ __device__ void rhs4lower_dev( int ifirst, int ilast, int jfirst, int jlast, int
    const int nijc = 3*nij;
    const int ifirst0 = ifirst;
    const int jfirst0 = jfirst;
-   const int kfirst0 = kfirst;
+   //   const int kfirst0 = kfirst;
 
    int kb;
    int qb, mb;
-   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;//, muz1, muz2, muz3, muz4;
    float_sw4 r1, r2, r3, cof, mucof, mu1zz, mu2zz, mu3zz;
    float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
    float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
