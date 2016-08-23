@@ -33,17 +33,21 @@ void EWCuda::reset_gpu()
 
 void EWCuda::sync_stream( int st )
 {
+#ifdef SW4_CUDA
    cudaError_t retcode;
    retcode = cudaStreamSynchronize(m_stream[st]);
    if( retcode != cudaSuccess )
       cout << "Error EWCuda::EWCuda, cudaStreamSynchronize no " << st << " returned " <<
 	 cudaGetErrorString(retcode) << endl;
+#endif
 }
 
 EWCuda::~EWCuda()
 {
+#ifdef SW4_CUDA
    for( int s=0 ; s < m_nstream ; s++ )
       cudaStreamDestroy(m_stream[s]);
    if( m_nstream > 0 )
       delete[] m_stream;
+#endif
 }
