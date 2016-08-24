@@ -1574,7 +1574,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       Up[g].allocate_on_device(m_cuobj);
       Uacc[g].allocate_on_device(m_cuobj);
       Um[g].copy_to_device(m_cuobj);
-
+      F[g].page_lock(m_cuobj);
+      U[g].page_lock(m_cuobj);
+      Um[g].page_lock(m_cuobj);
+      Up[g].page_lock(m_cuobj);
    }
 #endif
    if( m_myrank == 0 )
@@ -1587,9 +1590,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       // Need U on device for evalRHS, will make this asynchronous:
       for( int g=0; g < mNumberOfGrids ; g++ )
       {
-	 U[g].page_lock(m_cuobj);
+	 //	 U[g].page_lock(m_cuobj);
 	 U[g].copy_to_device(m_cuobj,true,0);
-	 U[g].page_unlock(m_cuobj);
+	 //	 U[g].page_unlock(m_cuobj);
       }
 // all types of forcing...
       Force( t, F, m_point_sources, false );
@@ -1602,9 +1605,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       // Need F on device for predictor, will make this asynchronous:
       for( int g=0; g < mNumberOfGrids ; g++ )
       {
-	 F[g].page_lock(m_cuobj);
+	 //	 F[g].page_lock(m_cuobj);
 	 F[g].copy_to_device(m_cuobj,true,1);
-	 F[g].page_unlock(m_cuobj);
+	 //	 F[g].page_unlock(m_cuobj);
       }
       time_measure[1] = MPI_Wtime();
 
@@ -1626,8 +1629,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       for( int g=0; g < mNumberOfGrids ; g++ )
       {
-	 Up[g].copy_from_device(m_cuobj);
+	 Up[g].copy_from_device(m_cuobj,true,1);
       }
+      m_cuobj->sync_stream(1);
+
       time_measure[2] = MPI_Wtime();
 
 // communicate across processor boundaries
@@ -1646,17 +1651,17 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       for( int g=0; g < mNumberOfGrids ; g++ )
       {
-	 Up[g].page_lock(m_cuobj);
+	 //	 Up[g].page_lock(m_cuobj);
 	 Up[g].copy_to_device(m_cuobj,true,0);
-	 Up[g].page_unlock(m_cuobj);
+	 //	 Up[g].page_unlock(m_cuobj);
       }
       // Corrector
       Force( t, F, m_point_sources, true );
       for( int g=0; g < mNumberOfGrids ; g++ )
       {
-	 F[g].page_lock(m_cuobj);
+	 //	 F[g].page_lock(m_cuobj);
 	 F[g].copy_to_device(m_cuobj,true,1);
-	 F[g].page_unlock(m_cuobj);
+	 //	 F[g].page_unlock(m_cuobj);
       }
       time_measure[4] = MPI_Wtime();
 
@@ -1693,7 +1698,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       }
       for( int g=0; g < mNumberOfGrids ; g++ )
-	 Up[g].copy_from_device(m_cuobj);
+      {
+	 Up[g].copy_from_device(m_cuobj,true,1);
+      }
+      m_cuobj->sync_stream(1);
 
       time_measure[6] = MPI_Wtime();
 
@@ -1804,6 +1812,13 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       normOfDifference( Up, U, errInf, errL2, solInf, m_globalUniqueSources );
       if ( m_myrank == 0 )
 	 cout << "Errors at time " << t << " Linf = " << errInf << " L2 = " << errL2 << " norm of solution = " << solInf << endl;
+   }
+   for( int g= 0 ; g < mNumberOfGrids ; g++ )
+   {
+      F[g].page_unlock(m_cuobj);
+      U[g].page_unlock(m_cuobj);
+      Um[g].page_unlock(m_cuobj);
+      Up[g].page_unlock(m_cuobj);
    }
    m_cuobj->reset_gpu();
 }
