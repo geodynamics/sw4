@@ -3944,12 +3944,12 @@ void EW::print_execution_times( float_sw4 times[7] )
       cout << "MPI_Wtime is ";
       int flag;
       bool wtime_is_global;
-      MPI_Comm_get_attr( MPI_COMM_WORLD, MPI_WTIME_IS_GLOBAL, &wtime_is_global, &flag );
-      if( wtime_is_global )
-	 cout << "global";
-      else
-	 cout << "local";
-      cout << endl;
+      // MPI_Comm_get_attr( MPI_COMM_WORLD, MPI_WTIME_IS_GLOBAL, &wtime_is_global, &flag );
+      // if( wtime_is_global )
+      // 	 cout << "global";
+      // else
+      // 	 cout << "local";
+      // cout << endl;
       cout << "----------------------------------------\n" << endl;
       cout.setf(ios::right);
       cout.precision(6);
