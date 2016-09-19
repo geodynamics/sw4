@@ -83,6 +83,9 @@ public:
    //// discretize a time function at each time step and change the time function to be "Discrete()"
    //  void discretizeTimeFuncAndFilter(double tStart, double dt, int nSteps, Filter *filter_ptr);
 
+// make public for simplicity
+  double mFreq, mT0;
+
  private:
 
   GridPointSource();
@@ -90,7 +93,6 @@ public:
   void initializeTimeFunction();
   double mForces[3];
    //  double mAmp;
-  double mFreq, mT0;
 
   timeDep mTimeDependence;
    double (*mTimeFunc)(double f, double t,double* par, int npar, int* ipar, int nipar );
