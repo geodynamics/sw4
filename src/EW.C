@@ -963,6 +963,7 @@ void EW::computeNearestGridPoint(int & a_i,
               "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
               << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
     }
+
 }
 
 void EW::computeNearestLowGridPoint(int & a_i, 

@@ -140,6 +140,12 @@ Source::Source(EW *a_ew,
 // Correct source location for discrepancy between raw and smoothed topography
    correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
 
+   if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
+  {
+    printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
+  }
+  
+
 }
 
 //-----------------------------------------------------------------------
