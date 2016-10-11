@@ -172,6 +172,31 @@ void EW::check_materials()
 			 << " (" << i <<","<<j<<","<<k<<") ");
 	  }
   }
+  if( m_use_attenuation )
+  {
+     if( mins[6] <= 0.0 )
+     {
+	for (int g = 0; g < mNumberOfGrids; g++)
+	   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+		 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+		 {
+		    CHECK_INPUT( mQs[g](i,j,k) >= 0., "Qs= " << mQs[g](i,j,k)<< " in grid g= " << g << " at point " 
+				 << " (" << i <<","<<j<<","<<k<<") ");
+		 }
+     }
+     if( mins[7] <= 0.0 )
+     {
+	for (int g = 0; g < mNumberOfGrids; g++)
+	   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+		 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+		 {
+		    CHECK_INPUT( mQp[g](i,j,k) >= 0., "Qp= " << mQp[g](i,j,k)<< " in grid g= " << g << " at point " 
+				 << " (" << i <<","<<j<<","<<k<<") ");
+		 }
+     }
+  }
 
    CHECK_INPUT(mins[0] > 0.0,
 		"Error: the material data has density values less than or equal to zero.");
