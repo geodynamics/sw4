@@ -268,6 +268,10 @@ class EW
    // Output: Images, stations, checkpoints
    vector<CheckPoint*> m_check_points;
    CheckPoint* m_restart_check_point;
+
+   // Discontinuous Galerkin stuff
+   bool m_use_dg;
+   
 };
 
 #endif

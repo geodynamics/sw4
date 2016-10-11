@@ -2,11 +2,21 @@
 # use ic-16.0.210
 # use mvapich2-intel-2.1
 #
-FC  = mpif90
-CXX = mpic++
-OMPOPT = -qopenmp
-EXTRA_LINK_FLAGS = -lifcore
-openmp = yes
+HOSTNAME := $(shell hostname)
+
+ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
+  FC = mpif90
+  CXX = mpicxx
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc48 -lgfortran
+  openmp = yes
+else
+  FC  = mpif90
+  CXX = mpic++
+  OMPOPT = -qopenmp
+  EXTRA_LINK_FLAGS = -lifcore
+  openmp = yes
+endif
 
 ifeq ($(debug),yes)
    optlevel = DEBUG
@@ -107,5 +117,10 @@ $(builddir)/%.o:src/%.C
 $(builddir)/%.o:src/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$< 
+
+clean:
+	/bin/mkdir -p $(optdir)
+	/bin/mkdir -p $(debugdir)
+	cd $(optdir); /bin/rm -f sw4g *.o; cd ../$(debugdir); /bin/rm -f sw4g *.o
 
 

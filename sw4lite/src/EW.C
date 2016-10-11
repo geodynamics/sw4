@@ -99,7 +99,8 @@ EW::EW( const string& filename ) :
    m_nwriters(8),
    m_output_detailed_timing(false),
    m_ndevice(0),
-   m_corder(false)
+   m_corder(false),
+   m_use_dg(false)
 {
    m_gpu_blocksize[0] = 16;
    m_gpu_blocksize[1] = 16;
@@ -1375,6 +1376,12 @@ bool EW::parseInputFile( const string& filename )
 	 foundGrid = true;
 	 processGrid(buffer);
       }
+      else if( startswith("dgalerkin", buffer) )
+      {
+         m_use_dg=true;
+         cout << "Using DG solver" << endl;
+      }
+      
    }   
    if (!foundGrid)
       if (m_myrank == 0)
