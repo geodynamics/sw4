@@ -47,9 +47,11 @@ public:
    void Qsplineold( int npts, double* fun, double tmin, double dt );
    ~Qspline();
    double* get_polycof_ptr() { return m_polcof;}
-   void evalf( double t, double& f );
+// AP: evalf and evaldd are not used by GridPointSource::getTimeFunc. 
+// Instead the functions Discrete() and Discrete_tt(), defined in time_functions.C, are called
+//   void evalf( double t, double& f );
    //   void evald( double t, double& f, double& f1, double& f2 );
-   void evaldd( double t, double& f, double& f1, double& f2, double& f3, double& f4 );
+//   void evaldd( double t, double& f, double& f1, double& f2, double& f3, double& f4 );
 };
 
 #endif

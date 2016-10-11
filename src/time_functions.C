@@ -1503,7 +1503,9 @@ double Dirac_ttomom( double freq, double t, double* par, int npar, int* ipar, in
 double Discrete( double freq, double t, double* par, int npar, int* ipar, int nipar )
 {
 // freq holds 1/dt
-   double tstart = par[0];
+// AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
+//   double tstart = par[0];
+   double tstart = 0;
    int npts = ipar[0];
 
    int k = static_cast<int>(floor((t-tstart)*freq));
@@ -1528,7 +1530,9 @@ double Discrete( double freq, double t, double* par, int npar, int* ipar, int ni
 double Discrete_t( double freq, double t, double* par, int npar, int* ipar, int nipar )
 {
 // freq holds 1/dt
-   double tstart = par[0];
+// AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
+//   double tstart = par[0];
+   double tstart = 0;
    int npts = ipar[0];
    int k = static_cast<int>(floor((t-tstart)*freq));
    if( k < 0 )
@@ -1548,7 +1552,9 @@ double Discrete_t( double freq, double t, double* par, int npar, int* ipar, int 
 
 double Discrete_tt( double freq, double t, double* par, int npar, int* ipar, int nipar )
 {
-   double tstart = par[0];
+// AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
+//   double tstart = par[0];
+   double tstart = 0;
    int npts = ipar[0];
    int k = static_cast<int>(floor((t-tstart)*freq));
    if( k < 0 )
@@ -1567,7 +1573,9 @@ double Discrete_tt( double freq, double t, double* par, int npar, int* ipar, int
 
 double Discrete_ttt( double freq, double t, double* par, int npar, int* ipar, int nipar )
 {
-   double tstart = par[0];
+// AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
+//   double tstart = par[0];
+   double tstart = 0;
    int npts = ipar[0];
    int k = static_cast<int>(floor((t-tstart)*freq));
    if( k < 0 )
@@ -1586,7 +1594,9 @@ double Discrete_ttt( double freq, double t, double* par, int npar, int* ipar, in
 
 double Discrete_tttt( double freq, double t, double* par, int npar, int* ipar, int nipar )
 {
-   double tstart = par[0];
+// AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
+//   double tstart = par[0];
+   double tstart = 0;
    int npts = ipar[0];
    int k = static_cast<int>(floor((t-tstart)*freq));
    if( k < 0 )

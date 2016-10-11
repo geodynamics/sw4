@@ -140,6 +140,12 @@ Source::Source(EW *a_ew,
 // Correct source location for discrepancy between raw and smoothed topography
    correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
 
+   if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
+  {
+    printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
+  }
+  
+
 }
 
 //-----------------------------------------------------------------------
@@ -2334,11 +2340,18 @@ int Source::spline_interpolation( )
    if( mTimeDependence == iDiscrete )
    {
       int npts = mIpar[0];
-      //            cout << "before spline interp" << endl;
-      //            cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq << endl;
-      //            for( int i=0 ; i < npts ; i++ )
-      //      	 cout << "fun[" << i << "] = "<< mPar[i+1] << endl;
 
+// tmp
+      // int myRank;
+      // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      // if (myRank == 0)
+      // {
+      // 	cout << "before spline interp" << endl;
+      // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq << endl;
+      // 	for( int i=0 ; i < npts ; i++ )
+      // 	  cout << "fun[" << i << "] = "<< mPar[i+1] << endl;
+      // }
+      
       Qspline quinticspline( npts, &mPar[1], mPar[0], 1/mFreq );
       double tstart = mPar[0];
       delete[] mPar;

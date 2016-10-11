@@ -29,11 +29,13 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
-
+#include "mpi.h"
 #include "Qspline.h"
 #include "F77_FUNC.h"
 
 extern "C" { void F77_FUNC(dgbsv,DGBSV)( int*, int*, int*, int*, double*, int*, int*, double*, int*, int* ); }
+
+using namespace std;
 
 //-----------------------------------------------------------------------
 Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int bchigh,
@@ -80,6 +82,7 @@ Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int 
    }
    m_npts = npts;
    m_polcof = NULL;
+// AP: Sept-19-2016: NOTE: tmin is only used within this class
    m_tmin = tmin;
    m_dt = dt;
    m_dti=1/dt;
@@ -90,6 +93,16 @@ Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int 
       ku = 3;
    if( bchigh == 2 )
       kl = 3;
+// tmp
+   // int myRank;
+   // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+   // if (myRank == 0)
+   // {
+   //   cout << "Qspline constructor:" << endl;
+   //   cout << "m_tmin = " << m_tmin << " m_dt= " << m_dt << " m_npts= " << m_npts << endl;
+   // }
+// end tmp
+      
    int lda = (2*kl+ku+1);
    double *mat = new double[lda*2*npts];
    double *rhs = new double[2*npts];
@@ -140,19 +153,20 @@ Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int 
    if( bchigh == 1 )
    {
    // 'not a knot' conditions
+      A(2*npts,2*npts)   = -0.5;
+      A(2*npts,2*npts-1) =  3;
+      A(2*npts,2*npts-2) =  1;
+      A(2*npts,2*npts-4) = -0.5;
+      A(2*npts,2*npts-5) = -3;
+      rhs[2*npts-1] = 6*(fun[npts-1]-2*fun[npts-2]+fun[npts-3]);
+
       A(2*npts-1,2*npts-2) =  -0.5;
+      A(2*npts-1,2*npts-3) =  3;
       A(2*npts-1,2*npts-4) =   1;
       A(2*npts-1,2*npts-6) =  -0.5;
-      A(2*npts-1,2*npts-3) =  3;
       A(2*npts-1,2*npts-7) = -3;
       rhs[2*npts-2] = 6*(fun[npts-2]-2*fun[npts-3]+fun[npts-4]);
 
-      A(2*npts,2*npts)   = -0.5;
-      A(2*npts,2*npts-2) =  1;
-      A(2*npts,2*npts-4) = -0.5;
-      A(2*npts,2*npts-1) =  3;
-      A(2*npts,2*npts-5) = -3;
-      rhs[2*npts-1] = 6*(fun[npts-1]-2*fun[npts-2]+fun[npts-3]);
    }
    else if( bchigh == 2 )
    {
@@ -193,35 +207,35 @@ Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int 
 }
 
 //-----------------------------------------------------------------------
-void Qspline::evalf( double t, double& f )
-{
-   int k = static_cast<int>(floor((t-m_tmin)/m_dt));
-   if( k < 0 )
-      k = 0;
-   if( k > m_npts-2 )
-      k = m_npts-2;
-   double arg=(t-(m_tmin+k*m_dt))/m_dt;
-   f = m_polcof[6*k] + m_polcof[1+6*k]*arg + m_polcof[2+6*k]*arg*arg + m_polcof[3+6*k]*arg*arg*arg +
-       m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg; 
-}
+// void Qspline::evalf( double t, double& f )
+// {
+//    int k = static_cast<int>(floor((t-m_tmin)/m_dt));
+//    if( k < 0 )
+//       k = 0;
+//    if( k > m_npts-2 )
+//       k = m_npts-2;
+//    double arg=(t-(m_tmin+k*m_dt))/m_dt;
+//    f = m_polcof[6*k] + m_polcof[1+6*k]*arg + m_polcof[2+6*k]*arg*arg + m_polcof[3+6*k]*arg*arg*arg +
+//        m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg; 
+// }
 
-//-----------------------------------------------------------------------
-void Qspline::evaldd( double t, double& f, double& f1, double& f2, double& f3, double& f4 )
-{
-   int k = static_cast<int>(floor((t-m_tmin)/m_dt));
-   if( k < 0 )
-      k = 0;
-   if( k > m_npts-2 )
-      k = m_npts-2;
-   double arg=(t-(m_tmin+k*m_dt))/m_dt;
-   f = m_polcof[6*k] + m_polcof[1+6*k]*arg + m_polcof[2+6*k]*arg*arg + m_polcof[3+6*k]*arg*arg*arg +
-       m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg; 
-   f1= (m_polcof[1+6*k] + 2*m_polcof[2+6*k]*arg + 3*m_polcof[3+6*k]*arg*arg + 4*m_polcof[4+6*k]*arg*arg*arg+
-	5*m_polcof[5+6*k]*arg*arg*arg*arg)*m_dti;
-   f2 = (2*m_polcof[2+6*k] + 6*m_polcof[3+6*k]*arg + 12*m_polcof[4+6*k]*arg*arg + 20*m_polcof[5+6*k]*arg*arg*arg)*m_dti*m_dti;
-   f3 = (6*m_polcof[3+6*k] + 24*m_polcof[4+6*k]*arg + 60*m_polcof[5+6*k]*arg*arg)*m_dti*m_dti*m_dti;
-   f4 = (24*m_polcof[4+6*k] + 120*m_polcof[5+6*k]*arg)*m_dti*m_dti*m_dti*m_dti;
-}
+// //-----------------------------------------------------------------------
+// void Qspline::evaldd( double t, double& f, double& f1, double& f2, double& f3, double& f4 )
+// {
+//    int k = static_cast<int>(floor((t-m_tmin)/m_dt));
+//    if( k < 0 )
+//       k = 0;
+//    if( k > m_npts-2 )
+//       k = m_npts-2;
+//    double arg=(t-(m_tmin+k*m_dt))/m_dt;
+//    f = m_polcof[6*k] + m_polcof[1+6*k]*arg + m_polcof[2+6*k]*arg*arg + m_polcof[3+6*k]*arg*arg*arg +
+//        m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg; 
+//    f1= (m_polcof[1+6*k] + 2*m_polcof[2+6*k]*arg + 3*m_polcof[3+6*k]*arg*arg + 4*m_polcof[4+6*k]*arg*arg*arg+
+// 	5*m_polcof[5+6*k]*arg*arg*arg*arg)*m_dti;
+//    f2 = (2*m_polcof[2+6*k] + 6*m_polcof[3+6*k]*arg + 12*m_polcof[4+6*k]*arg*arg + 20*m_polcof[5+6*k]*arg*arg*arg)*m_dti*m_dti;
+//    f3 = (6*m_polcof[3+6*k] + 24*m_polcof[4+6*k]*arg + 60*m_polcof[5+6*k]*arg*arg)*m_dti*m_dti*m_dti;
+//    f4 = (24*m_polcof[4+6*k] + 120*m_polcof[5+6*k]*arg)*m_dti*m_dti*m_dti*m_dti;
+// }
 
 //-----------------------------------------------------------------------
 Qspline::~Qspline()

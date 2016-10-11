@@ -355,6 +355,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if (!mQuiet && mVerbose >=1 )
 	 printf("*** Saving one discretized time function ***\n");
 
+// tmp
+       // printf("mTstart = %e, mDt = %e\n", mTstart, mDt);
+       // printf("GridPointSource::mT0 = %e\n", point_sources[0]->mT0);
+// end tmp
+       
 //building the file name...
        string filename;
        if( mPath != "." )
