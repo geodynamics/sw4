@@ -37,7 +37,7 @@ ifeq ($(optlevel),DEBUG)
    CXXFLAGS  = -g -I../src -DBZ_DEBUG
    CFLAGS    = -g
 else
-   FFLAGS   = -O2
+   FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
    CXXFLAGS = -O -I../src
    CFLAGS   = -O 
@@ -93,6 +93,10 @@ else
       foundincfile := "configs/make.sierra"
       debugdir := debug_sierra
       optdir := optimize_sierra
+# For Quartz at LC (why doesn't this work when HOSTNAME is quartz770 ?
+    else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
+      include configs/make.haswell
+      foundincfile := "configs/make.haswell"
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
