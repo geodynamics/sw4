@@ -1084,7 +1084,8 @@ void EW::set_materials()
   }
   check_materials( );
 
-}
+} // end EW::set_materials()
+
 
 //-----------------------------------------------------------------------
 void EW::set_anisotropic_materials()

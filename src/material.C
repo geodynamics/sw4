@@ -98,7 +98,7 @@ void EW::check_materials()
   lmax = localMaxVpOverVs();  
   MPI_Allreduce(&lmax,&maxs[5],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
 
-  if( usingAttenuation() )
+  if( usingAttenuation() && !m_twilight_forcing)
   {
       lmin = localMin(mQs);
       MPI_Allreduce(&lmin,&mins[6],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
@@ -126,7 +126,7 @@ void EW::check_materials()
 	 << indent << mins[3] << " Pa     <=  mu      <= " << maxs[3] << " Pa"
 	 << indent << mins[4] << " Pa     <=  lambda  <= " << maxs[4] << " Pa" << endl;
 
-    if( usingAttenuation() )
+    if( usingAttenuation() && !m_twilight_forcing)
     {
       cout << indents << "Using attenuation "
            << indent << mins[6] << "        <=  Qs      <= " << maxs[6] << "  "
@@ -172,7 +172,7 @@ void EW::check_materials()
 			 << " (" << i <<","<<j<<","<<k<<") ");
 	  }
   }
-  if( m_use_attenuation )
+  if( m_use_attenuation && !m_twilight_forcing)
   {
      if( mins[6] <= 0.0 )
      {
