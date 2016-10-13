@@ -13,9 +13,10 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
 else
   FC  = mpif90
   CXX = mpic++
-  OMPOPT = -qopenmp
-  EXTRA_LINK_FLAGS = -lifcore
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -lgfortran -lblas -llapack
   openmp = yes
+  debug = no
 endif
 
 ifeq ($(debug),yes)
@@ -91,7 +92,7 @@ endif
 
 OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o EWCuda.o CheckPoint.o Parallel_IO.o
 
-FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o
+FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o type_defs.o lglnodes.o dgmodule.o
 
 ifneq ($(nofort),yes)
   OBJ += $(FOROBJ)
@@ -115,6 +116,10 @@ $(builddir)/%.o:src/%.C
 	cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
 
 $(builddir)/%.o:src/%.f
+	/bin/mkdir -p $(builddir)
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$< 
+
+$(builddir)/%.o:src/%.f90
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$< 
 

@@ -21,6 +21,7 @@ class EW
  public:
    // Methods ----------
    void timesteploop( vector<Sarray>& U, vector<Sarray>& Um);
+   void timeStepLoopdGalerkin();
    EW( const string& filename );
 
    int computeEndGridPoint( float_sw4 maxval, float_sw4 h );
@@ -35,6 +36,7 @@ class EW
    void processFileIO( char* buffer );
    void processCheckPoint( char* buffer );
    void processRestart( char* buffer );
+   void processdGalerkin( char* buffer );
    void defineDimensionsGXY( );
    void defineDimensionsZ();
    void allocateArrays();
@@ -175,6 +177,10 @@ class EW
 
    bool usingParallelFS(){ return m_pfs;}
    int getNumberOfWritersPFS(){ return m_nwriters;}
+   // DG stuff
+   void set_dg_orders( int qu, int qv);
+   int m_qu;
+   int m_qv; 
 
    // Variables ----------
 
@@ -209,7 +215,7 @@ class EW
    // Vectors of solution at time t_n and t_{n-1}
    vector<Sarray> mU;
    vector<Sarray> mUm;
-   
+
    // SBP boundary operator coefficients and info
    float_sw4 m_iop[5], m_iop2[5], m_bop2[24], m_sbop[5], m_acof[384], m_bop[24];
    float_sw4 m_bope[48], m_ghcof[6], m_hnorm[4];
