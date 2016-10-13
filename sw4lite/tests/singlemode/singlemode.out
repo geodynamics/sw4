@@ -1,0 +1,33 @@
+
+* Processing the grid command...
+* Setting nx to 9 to be consistent with h=0.125
+* Setting ny to 9 to be consistent with h=0.125
+* Setting nz to 9 to be consistent with h=0.125
+Using DG solver
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0     0.125         9         9         9          729
+Total number of grid points (without ghost points): 729
+
+Done reading input file 
+ no GPUs found
+----------------------------------------------------
+ Making Output Directory: ./
+		
+... Done!
+----------------------------------------------------
+
+***** Number of MPI-tasks: 2 *******
+****** Using OpenMP with 4 threads per MPI task *******
+
+l2_err in initial data 1 0.00141557
+l2_err in initial data 2 0.00141557
+l2_err in initial data 3 0.00141557
+Starting DG-solver Using 4 time derivatives and degree 2 polynomials.
+checking errors at final time: 1
+l2_err 1 0.00430069
+l2_err 2 0.00430069
+l2_err 3 0.00430069
+
+***** Solver execution time: 15.9027 seconds ******
