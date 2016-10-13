@@ -223,3 +223,8 @@ clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
 	cd $(optdir); /bin/rm -f sw4 *.o; cd ../$(debugdir); /bin/rm -f sw4 *.o
+
+# Special rule for the target test
+test:
+	echo "Running tests..."
+	/opt/local/bin/ctest --force-new-ctest-process $(ARGS)
