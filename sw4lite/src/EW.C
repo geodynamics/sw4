@@ -1059,21 +1059,21 @@ void EW::processDeveloper(char* buffer)
 	token += 13;
 	m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0 || strcmp(token,"yes")==0;
      }
-#ifdef SW4_OPENMP
-     else if( startswith("numthreads=",token) )
-     {
-	token += 11;
-	int nth = atoi(token);
-	CHECK_INPUT( 0 < nth && nth < 1024, "Number of threads " << nth << " out of range\n");
-        omp_set_num_threads(nth);
-     }
-#else
+// #ifdef SW4_OPENMP
+//      else if( startswith("numthreads=",token) )
+//      {
+// 	token += 11;
+// 	int nth = atoi(token);
+// 	CHECK_INPUT( 0 < nth && nth < 1024, "Number of threads " << nth << " out of range\n");
+//         omp_set_num_threads(nth);
+//      }
+// #else
      else if( startswith("numthreads=",token) )
      {
 	if( m_myrank == 0 )
-	   cout << "WARNING: OpenMP not in use, developer numthreads ignored" << endl;
+	   cout << "WARNING: developer option numthreads ignored" << endl;
      }     
-#endif
+//#endif
      else if( startswith("thblocki=",token) )
      {
 	token += 9;
@@ -4039,6 +4039,23 @@ void EW::set_dg_orders( int qu, int qv)
 void EW::timeStepLoopdGalerkin()
 {
         // DG timestepping routine
+   float_sw4 time_begin_solve = MPI_Wtime();
+
+#ifdef SW4_OPENMP
+#pragma omp parallel
+   {
+      if( omp_get_thread_num() == 0 &&  m_myrank == 0  )
+      {
+	cout << endl << "***** Number of MPI-tasks: " << m_nprocs << " *******" << endl;
+	 int nth=omp_get_num_threads();
+	 cout <<  "****** Using OpenMP with " << nth << " thread";
+	 if( nth > 1 )
+	    cout << "s";
+	 cout << " per MPI task *******" << endl<< endl;
+      }
+   }
+#endif
+
     int g = 0;
     double h = mGridSize[g];
     int ifirst = m_iStartInt[g], ilast = m_iEndInt[g];
@@ -4214,15 +4231,19 @@ void EW::timeStepLoopdGalerkin()
                               &kfirst,&klast,&h,&mTmax,&q_u,&n_int);
     MPI_Allreduce( l2_err_tmp, l2_err, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     if( m_myrank == 0 ){
-        cout << "checking errors at final time: " << mTmax <<  endl;
-        cout << "l2_err 1 " << sqrt(l2_err[0]) <<  endl;
-        cout << "l2_err 2 " << sqrt(l2_err[1]) <<  endl;
-        cout << "l2_err 3 " << sqrt(l2_err[2]) <<  endl;
-        
+      float_sw4 time_end_solve = MPI_Wtime();
+      cout << "checking errors at final time: " << mTmax <<  endl;
+      cout << "l2_err 1 " << sqrt(l2_err[0]) <<  endl;
+      cout << "l2_err 2 " << sqrt(l2_err[1]) <<  endl;
+      cout << "l2_err 3 " << sqrt(l2_err[2]) <<  endl;
+      cout << endl << "***** Solver execution time: " << time_end_solve - time_begin_solve << 
+	" seconds ******" << endl;
+    }
+
     delete [] udg,vdg,utdg,vtdg,updg,vpdg,MU,MV,SU,SV,LU,LV,force_u,force_v;
     delete [] x_out_b,x_out_e,y_out_b,y_out_e,x_in_b,x_in_e,y_in_b,y_in_e;
     delete [] w_in_all_faces,w_out_all_faces,w_star_all_faces,v_in_all_faces,
         v_out_all_faces,v_star_all_faces,l2_err,l2_err_tmp;
-    }
     
+
 }

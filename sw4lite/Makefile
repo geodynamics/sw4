@@ -10,6 +10,15 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   OMPOPT = -fopenmp
   EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc48 -lgfortran
   openmp = yes
+else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
+  FC = mpiifort
+  CXX = mpicxx
+  OMPOPT = -qopenmp
+  MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
+  EXTRA_CXX_FLAGS = -xCORE-AVX2
+  EXTRA_FORT_FLAGS = -xCORE-AVX2
+  EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
+  openmp = yes
 else
   FC  = mpif90
   CXX = mpic++

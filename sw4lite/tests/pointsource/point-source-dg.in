@@ -4,5 +4,5 @@ time t=1.0
 testpointsource rho=1 cp=1.6 cs=0.8 halfspace=1
 supergrid gp=2
 source x=0.1 y=0.3 z=0.10 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0 freq=1 type=C6SmoothBump
-developer checkfornan=1 cfl=1.3 reporttiming=1 numthreads=2
+developer checkfornan=1 cfl=1.3 reporttiming=1
 dgalerkin order=2
