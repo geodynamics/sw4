@@ -15,6 +15,7 @@ contains
     REAL(dp), DIMENSION(0:nint,0:nint,3,ifirst:ilast,kfirst:klast,2) :: y_in_b,y_in_e
     integer :: i1,i2,i3,i4,i5
 
+    !$OMP PARALLEL DO PRIVATE(i5,i4,i3,i2,i1)
     do i5 = kfirst,klast
      do i4 = jfirst,jlast
       do i3 = 1,3
@@ -28,9 +29,6 @@ contains
        end do
       end do
      end do
-    end do
-
-    do i5 = kfirst,klast
      do i4 = ifirst,ilast
       do i3  = 1,3
        do i2 = 0,nint
@@ -59,6 +57,7 @@ contains
     REAL(dp), DIMENSION(0:nint,0:nint,3,ifirst:ilast,kfirst:klast,2) :: y_out_b,y_out_e
     integer :: i1,i2,i3,i4,i5
 
+    !$OMP PARALLEL DO PRIVATE(i5,i4,i3,i2,i1)
     do i5 = kfirst,klast
      do i4 = jfirst,jlast
       do i3 = 1,3
@@ -72,9 +71,6 @@ contains
        end do
       end do
      end do
-    end do
-
-    do i5 = kfirst,klast
      do i4 = ifirst,ilast
       do i3  = 1,3
        do i2 = 0,nint
@@ -88,6 +84,7 @@ contains
       end do
      end do
     end do
+    
 
   END SUBROUTINE put_comm_sides
 
@@ -218,38 +215,47 @@ contains
          w_in_all_faces,w_out_all_faces
 
     if (sbx_b.eq.1) then
+     !$OMP WORKSHARE
      v_out_all_faces(:,:,1,1,ifirst,:,:)     =  v_in_all_faces(:,:,1,1,ifirst,:,:)
      v_out_all_faces(:,:,1,2,ifirst,:,:)     = -v_in_all_faces(:,:,1,2,ifirst,:,:)
      v_out_all_faces(:,:,1,3,ifirst,:,:)     = -v_in_all_faces(:,:,1,3,ifirst,:,:)
      w_out_all_faces(:,:,1,1,ifirst,:,:)     = -w_in_all_faces(:,:,1,1,ifirst,:,:)
      w_out_all_faces(:,:,1,2,ifirst,:,:)     =  w_in_all_faces(:,:,1,2,ifirst,:,:)
      w_out_all_faces(:,:,1,3,ifirst,:,:)     =  w_in_all_faces(:,:,1,3,ifirst,:,:)
+     !$OMP END WORKSHARE
     end if
     if (sbx_e.eq.1) then
+     !$OMP WORKSHARE
      v_out_all_faces(:,:,2,1,ilast,:,:)     =  v_in_all_faces(:,:,2,1,ilast,:,:)
      v_out_all_faces(:,:,2,2,ilast,:,:)     = -v_in_all_faces(:,:,2,2,ilast,:,:)
      v_out_all_faces(:,:,2,3,ilast,:,:)     = -v_in_all_faces(:,:,2,3,ilast,:,:)
      w_out_all_faces(:,:,2,1,ilast,:,:)     = -w_in_all_faces(:,:,2,1,ilast,:,:)
      w_out_all_faces(:,:,2,2,ilast,:,:)     =  w_in_all_faces(:,:,2,2,ilast,:,:)
      w_out_all_faces(:,:,2,3,ilast,:,:)     =  w_in_all_faces(:,:,2,3,ilast,:,:)
+     !$OMP END WORKSHARE
     end if
 
     if (sby_b.eq.1) then
+     !$OMP WORKSHARE
      v_out_all_faces(:,:,3,1,:,jfirst,:)     = -v_in_all_faces(:,:,3,1,:,jfirst,:)
      v_out_all_faces(:,:,3,2,:,jfirst,:)     =  v_in_all_faces(:,:,3,2,:,jfirst,:)
      v_out_all_faces(:,:,3,3,:,jfirst,:)     = -v_in_all_faces(:,:,3,3,:,jfirst,:)
      w_out_all_faces(:,:,3,1,:,jfirst,:)     =  w_in_all_faces(:,:,3,1,:,jfirst,:)
      w_out_all_faces(:,:,3,2,:,jfirst,:)     = -w_in_all_faces(:,:,3,2,:,jfirst,:)
      w_out_all_faces(:,:,3,3,:,jfirst,:)     =  w_in_all_faces(:,:,3,3,:,jfirst,:)
+     !$OMP END WORKSHARE
     end if
     if (sby_e.eq.1) then
+     !$OMP WORKSHARE
      v_out_all_faces(:,:,4,1,:,jlast,:)     = -v_in_all_faces(:,:,4,1,:,jlast,:)
      v_out_all_faces(:,:,4,2,:,jlast,:)     =  v_in_all_faces(:,:,4,2,:,jlast,:)
      v_out_all_faces(:,:,4,3,:,jlast,:)     = -v_in_all_faces(:,:,4,3,:,jlast,:)
      w_out_all_faces(:,:,4,1,:,jlast,:)     =  w_in_all_faces(:,:,4,1,:,jlast,:)
      w_out_all_faces(:,:,4,2,:,jlast,:)     = -w_in_all_faces(:,:,4,2,:,jlast,:)
      w_out_all_faces(:,:,4,3,:,jlast,:)     =  w_in_all_faces(:,:,4,3,:,jlast,:)
+     !$OMP END WORKSHARE
     end if
+    !$OMP WORKSHARE
     v_out_all_faces(:,:,5,1,:,:,kfirst)     = -v_in_all_faces(:,:,5,1,:,:,kfirst)
     v_out_all_faces(:,:,5,2,:,:,kfirst)     = -v_in_all_faces(:,:,5,2,:,:,kfirst)
     v_out_all_faces(:,:,5,3,:,:,kfirst)     =  v_in_all_faces(:,:,5,3,:,:,kfirst)
@@ -263,7 +269,7 @@ contains
     w_out_all_faces(:,:,6,1,:,:,klast)     =  w_in_all_faces(:,:,6,1,:,:,klast)
     w_out_all_faces(:,:,6,2,:,:,klast)     =  w_in_all_faces(:,:,6,2,:,:,klast)
     w_out_all_faces(:,:,6,3,:,:,klast)     = -w_in_all_faces(:,:,6,3,:,:,klast)
-
+    !$OMP END WORKSHARE
   END SUBROUTINE set_boundary_conditions
 
   SUBROUTINE taylor_swap(utdg,vtdg,updg,vpdg,udg,vdg,df,ifirst,ilast,jfirst,jlast,kfirst,klast,q_v,q_u) bind(c)
@@ -333,7 +339,7 @@ contains
     ! do an l2 projection of the initial data
     udg = 0.0_dp
     vdg = 0.0_dp
-
+    !$OMP PARALLEL DO PRIVATE(i3,i2,i1,ivar,k3,k2,k1,x_int,y_int,z_int,f_int) 
     do i3 = kfirst,klast
      do i2 = jfirst,jlast
       do i1 = ifirst,ilast
@@ -418,6 +424,7 @@ contains
       end do
      end do
     end do
+    
   END SUBROUTINE get_initial_data
 
   SUBROUTINE ASSEMBLE(MU,MV,SU,SV,LU,LV,q_u,q_v,nint,hx) bind(c)
