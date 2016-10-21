@@ -45,9 +45,11 @@ class EW
    void decomp1d( int nglobal, int myid, int nproc, int& s, int& e );
    void setupMPICommunications();
    bool check_for_nan( vector<Sarray>& a_U, int verbose, string name );
+   bool check_for_nan_GPU( vector<Sarray>& a_U, int verbose, string name );
+   bool check_for_match_on_cpu_gpu( vector<Sarray>& a_U, int verbose, string name );
    void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U,
 			    vector<Sarray> & a_Up ) ;
-   void Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, bool tt );
+   void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, bool tt );
    void evalRHS( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		 vector<Sarray> & a_Uacc );
    void evalRHSCU( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -77,7 +79,7 @@ class EW
    void addSuperGridDampingCU(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			      vector<Sarray> & a_Um, vector<Sarray> & a_Rho, int st );
    void printTime( int cycle, float_sw4 t, bool force ) const;
-   bool exactSol(double a_t, vector<Sarray> & a_U, vector<Source*>& sources );
+   bool exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources );
 
    float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
    float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
@@ -94,7 +96,7 @@ class EW
    float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
    float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
    float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
-   void get_exact_point_source( double* up, double t, int g, Source& source,
+   void get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& source,
 				int* wind=NULL );
    void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, 
 			  float_sw4 &diffL2, float_sw4 &xInf, vector<Source*>& a_globalSources );
@@ -106,8 +108,8 @@ class EW
    void create_output_directory( );
    int mkdirs(const string& path);
    void computeDT();
-   void computeNearestGridPoint(int & a_i, int & a_j, int & a_k, int & a_g, double a_x, 
-				double a_y, double a_z);
+   void computeNearestGridPoint(int & a_i, int & a_j, int & a_k, int & a_g, float_sw4 a_x, 
+				float_sw4 a_y, float_sw4 a_z);
    bool interior_point_in_proc(int a_i, int a_j, int a_g);   
    bool is_onesided( int g, int side ) const;
    void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );

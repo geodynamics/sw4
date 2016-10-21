@@ -60,7 +60,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -82,7 +82,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -104,7 +104,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -126,7 +126,7 @@ Sarray::Sarray( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -157,7 +157,7 @@ Sarray::Sarray( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -181,7 +181,7 @@ Sarray::Sarray( Sarray& u, int nc )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -225,7 +225,7 @@ Sarray::Sarray( Sarray& u, int nc )
 //    m_nk = m_ke-m_kb+1;
 //    //   std::cout << "Sarray dims " << m_nc << " " << m_ni << " " 
 //    //	     << m_nj << " " << m_nk << std::endl;
-//    m_data = new double[m_nc*m_ni*m_nj*m_nk];
+//    m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
 // }
 
 //-----------------------------------------------------------------------
@@ -245,7 +245,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -270,7 +270,7 @@ void Sarray::define( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -295,7 +295,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -319,7 +319,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -342,7 +342,7 @@ void Sarray::define( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -437,7 +437,7 @@ void Sarray::set_to_minusOne()
 }
 
 //-----------------------------------------------------------------------
-void Sarray::set_value( double scalar )
+void Sarray::set_value( float_sw4 scalar )
 {
 #pragma omp parallel for
    for( size_t i=0 ; i < m_npts ; i++ )
@@ -445,7 +445,7 @@ void Sarray::set_value( double scalar )
 }
 
 //-----------------------------------------------------------------------
-void Sarray::set_to_random( double llim, double ulim )
+void Sarray::set_to_random( float_sw4 llim, float_sw4 ulim )
 {
    // drand48 is not thread-safe; you will probably not get what you expect
 #pragma omp parallel for
@@ -461,15 +461,15 @@ bool Sarray::in_domain( int i, int j, int k )
 }
 
 //-----------------------------------------------------------------------
-double Sarray::maximum( int c )
+float_sw4 Sarray::maximum( int c )
 {
    ///   int cm = c-1;
-   //   double mx = m_data[cm];
+   //   float_sw4 mx = m_data[cm];
    //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
    //      mx = mx > m_data[cm+i*m_nc] ? mx : m_data[cm+i*m_nc];
    //   size_t first = m_base+m_offc*c+m_offi*m_ib+m_offj*m_jb+m_offk*m_kb;
    size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
-   double mx;
+   float_sw4 mx;
    if( m_corder )
    {
       size_t first = (c-1)*npts;
@@ -490,14 +490,14 @@ double Sarray::maximum( int c )
 }
 
 //-----------------------------------------------------------------------
-double Sarray::minimum( int c )
+float_sw4 Sarray::minimum( int c )
 {
    //   int cm = c-1;
-   //   double mn = m_data[cm];
+   //   float_sw4 mn = m_data[cm];
    //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
    //      mn = mn < m_data[cm+i*m_nc] ? mn : m_data[cm+i*m_nc];
    size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
-   double mn;
+   float_sw4 mn;
    if( m_corder )
    {
       size_t first = (c-1)*npts;
@@ -518,15 +518,15 @@ double Sarray::minimum( int c )
 }
 
 //-----------------------------------------------------------------------
-double Sarray::sum( int c )
+float_sw4 Sarray::sum( int c )
 {
    //   int cm = c-1;
-   //   double s = 0;
+   //   float_sw4 s = 0;
    //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
    //      s += m_data[cm+i*m_nc];
    //   size_t first = m_base+m_offc*c+m_offi*m_ib+m_offj*m_jb+m_offk*m_kb;
    size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
-   double s = 0;
+   float_sw4 s = 0;
    if( m_corder )
    {
       size_t first = (c-1)*npts;
@@ -602,7 +602,7 @@ void Sarray::copy( const Sarray& u )
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
    {
-      m_data = new double[m_nc*m_ni*m_nj*m_nk];
+      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
 #pragma omp parallel for 
       for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
 	 m_data[i] = u.m_data[i];
@@ -614,7 +614,7 @@ void Sarray::copy( const Sarray& u )
 
 //-----------------------------------------------------------------------
 void Sarray::extract_subarray( int ib, int ie, int jb, int je, int kb,
-			       int ke, double* ar )
+			       int ke, float_sw4* ar )
 {
    // Assuming nc is the same for m_data and subarray ar.
    int nis = ie-ib+1;
@@ -634,7 +634,7 @@ void Sarray::extract_subarray( int ib, int ie, int jb, int je, int kb,
 
 //-----------------------------------------------------------------------
 void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
-			      int ke, double* ar )
+			      int ke, float_sw4* ar )
 {
    // Assuming nc is the same for m_data and subarray ar.
    int nis = ie-ib+1;
@@ -668,7 +668,7 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
                sind = (i-ib) + nis*(j-jb) + nis*njs*(k-kb);
                ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
 	       for( int c=1 ; c <= m_nc ; c++ )
-		  m_data[ind*m_nc+c-1] = (double)ar[sind*m_nc+c-1];
+		  m_data[ind*m_nc+c-1] = (float_sw4)ar[sind*m_nc+c-1];
 	    }
 }
 
@@ -693,28 +693,52 @@ void Sarray::save_to_disk( const char* fname )
    size_t npts = m_nc*( (size_t)m_ni)*m_nj*( (size_t)m_nk);
    if( m_corder )
    {
-      double* ar = new double[npts];
+      float_sw4* ar = new float_sw4[npts];
       for( int k = 0 ; k < m_nk ; k++ )
 	 for( int j = 0 ; j < m_nj ; j++ )
 	    for( int i = 0 ; i < m_ni ; i++ )
 	       for( int c=0 ; c < m_nc ; c++ )
 		  ar[c-1+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];
-      nr = write(fd,ar,sizeof(double)*npts);
+      nr = write(fd,ar,sizeof(float_sw4)*npts);
       delete[] ar;
    }
    else
-      nr = write(fd,m_data,sizeof(double)*npts);
-   if( nr != sizeof(double)*npts )
+      nr = write(fd,m_data,sizeof(float_sw4)*npts);
+   if( nr != sizeof(float_sw4)*npts )
       std::cout << "Error saving data array to " << fname << std::endl;
    close(fd);
 }
 
 //-----------------------------------------------------------------------
-void Sarray::assign( const double* ar )
+void Sarray::assign( const float_sw4* ar, int corder )
 {
+   if( corder == m_corder || corder == -1 )
+   {
+      // Both arrays in the same order
 #pragma omp parallel for
-   for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
-      m_data[i] = ar[i];
+      for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
+	 m_data[i] = ar[i];
+   }
+   else if( m_corder )
+   {
+      // Class array in corder, input array in fortran order, 
+#pragma omp parallel for
+      for( int i=0 ; i <m_ni ; i++ )
+	 for( int j=0 ; j <m_nj ; j++ )
+	    for( int k=0 ; k <m_nk ; k++ )
+	       for( int c=0 ; c < m_nc ; c++ )
+		  m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c] = ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];
+   }
+   else
+   {
+  // Class array in fortran order, input array in corder, 
+#pragma omp parallel for
+      for( int i=0 ; i <m_ni ; i++ )
+	 for( int j=0 ; j <m_nj ; j++ )
+	    for( int k=0 ; k <m_nk ; k++ )
+	       for( int c=0 ; c < m_nc ; c++ )
+		  m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -722,7 +746,7 @@ void Sarray::assign( const float* ar )
 {
 #pragma omp parallel for
    for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
-     m_data[i] = (double) ar[i];
+     m_data[i] = (float_sw4) ar[i];
 }
 
 //-----------------------------------------------------------------------
@@ -756,7 +780,7 @@ void Sarray::define_offsets()
 void Sarray::transposeik( )
 {
    // Transpose a_{i,j,k} := a_{k,j,i}
-   double* tmpar = new double[m_nc*m_ni*m_nj*m_nk];
+   float_sw4* tmpar = new float_sw4[m_nc*m_ni*m_nj*m_nk];
    if( m_corder )
    {
       size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
@@ -799,14 +823,14 @@ void Sarray::copy_to_device( EWCuda* cu, bool async, int st )
       cudaError_t retcode;
       if( dev_data == NULL )
       {
-	 retcode = cudaMalloc( (void**)&dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double) );
+	 retcode = cudaMalloc( (void**)&dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4) );
 	 if( retcode != cudaSuccess )
 	    cout << "Error Sarray::copy_to_device, cudaMalloc returned " <<
 	       cudaGetErrorString(retcode) << endl;
       }
       if( !async )
       {
-	 retcode = cudaMemcpy( dev_data, m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
+	 retcode = cudaMemcpy( dev_data, m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4),
 			    cudaMemcpyHostToDevice );
 	 if( retcode != cudaSuccess )
 	 {
@@ -819,7 +843,7 @@ void Sarray::copy_to_device( EWCuda* cu, bool async, int st )
       {
 	 if( st < cu->m_nstream )
 	 {
-	    retcode = cudaMemcpyAsync( dev_data, m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
+	    retcode = cudaMemcpyAsync( dev_data, m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4),
 				    cudaMemcpyHostToDevice, cu->m_stream[st] );
 	    if( retcode != cudaSuccess )
 	       cout << "Error Sarray::copy_to_device, cudaMemcpyAsync returned " <<
@@ -843,7 +867,7 @@ void Sarray::copy_from_device( EWCuda* cu, bool async, int st )
 	 cout << "Error Sarray::copy_from_device: Device memory is not allocated " << endl;
       if( !async )
       {
-	 retcode = cudaMemcpy( m_data, dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
+	 retcode = cudaMemcpy( m_data, dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4),
 			    cudaMemcpyDeviceToHost );
 	 if( retcode != cudaSuccess )
 	 {
@@ -856,7 +880,7 @@ void Sarray::copy_from_device( EWCuda* cu, bool async, int st )
       {
 	 if( st < cu->m_nstream )
 	 {
-	    retcode =cudaMemcpyAsync( m_data, dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
+	    retcode =cudaMemcpyAsync( m_data, dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4),
 				   cudaMemcpyDeviceToHost, cu->m_stream[st] );
 	    if( retcode != cudaSuccess )
 	       cout << "Error Sarray::copy_from_device, cudaMemcpyAsync returned " <<
@@ -883,7 +907,7 @@ void Sarray::allocate_on_device( EWCuda* cu )
 	    cout << "Error Sarray::allocate_on_device, cudaFree returned " <<
 	       cudaGetErrorString(retcode) << endl;
       }
-      retcode = cudaMalloc( (void**)&dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double) );
+      retcode = cudaMalloc( (void**)&dev_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4) );
       if( retcode != cudaSuccess )
 	 cout << "Error Sarray::allocate_on_device, cudaMalloc returned " <<
 	    cudaGetErrorString(retcode) << endl;
@@ -898,7 +922,7 @@ void Sarray::page_lock( EWCuda* cu )
    if( cu->has_gpu() )
    {
       cudaError_t retcode;
-      retcode = cudaHostRegister( m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(double),
+      retcode = cudaHostRegister( m_data, m_ni*((size_t) m_nj)*m_nk*m_nc*sizeof(float_sw4),
 				  cudaHostRegisterDefault );
       if( retcode != cudaSuccess )
 	 cout << "Error Sarray::page_lock, cudaHostRegister returned " <<
@@ -920,4 +944,136 @@ void Sarray::page_unlock( EWCuda* cu )
 	    cudaGetErrorString(retcode) << endl;
    }
 #endif
+}
+
+//-----------------------------------------------------------------------
+size_t Sarray::check_match_cpu_gpu( EWCuda* cu, string name )
+{
+
+#ifdef SW4_CUDA
+
+   size_t retval = 0;
+   size_t npts = m_nc*m_ni*static_cast<size_t>(m_nj)*m_nk;
+   size_t nsize_bytes = npts*sizeof(double);
+   double* m_data_test;
+   cudaError_t retcode;
+
+   if( npts > 0 )
+      m_data_test = new double [npts];
+   else
+      m_data_test = NULL;
+
+   if(m_data_test == NULL)
+   {
+      cout  << name << " error: no allocaiton to m_data_test "  << endl;
+      exit(-1);
+   }
+
+   if(m_data == NULL)
+   {
+      cout << name << " error: no allocaiton to m_data "  << endl;
+      exit(-1);
+   }
+
+   if(dev_data == NULL)
+   {
+       cout << name << " error: no allocaiton to dev_data "  << endl;
+       exit(-1);
+   }
+
+   retcode = cudaMemcpy( m_data_test, dev_data, nsize_bytes, cudaMemcpyDeviceToHost );
+   if( cudaSuccess != retcode )
+   {
+      if( m_data_test != NULL)
+          delete[] m_data_test;
+      cout << name << " error Sarray:: check_match_cpu_gpu (*), cudaMemcpy returned " << cudaGetErrorString(retcode) << endl;
+      exit(-1);
+   }
+
+   for( size_t ind = 0; ind < npts; ind++ )
+   {
+      if( fabs(m_data[ind] - m_data_test[ind]) >= (1.0e-4) )
+          retval++;
+   }
+
+   if( m_data_test != NULL)
+       delete[] m_data_test;
+
+   return retval;
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------
+size_t Sarray::check_match_cpu_gpu( EWCuda* cu, int& cfirst, int& ifirst, int& jfirst, int& kfirst , string name )
+{
+
+#ifdef SW4_CUDA
+
+   size_t retval;
+
+   size_t npts = m_nc*m_ni*static_cast<size_t>(m_nj)*m_nk;
+   size_t nsize_bytes = npts*sizeof(double);
+   double* m_data_test;
+   cudaError_t retcode;
+
+   if( npts > 0 )
+      m_data_test = new double[npts];
+   else
+      m_data_test = NULL;
+
+   if(m_data_test == NULL)
+   {
+       cout << name << " error: no allocaiton to m_data_test "  << endl;
+       exit(-1);
+   }
+
+   if(m_data == NULL)
+   {
+       cout << name << " error: no allocaiton to m_data "  << endl;
+       exit(-1);
+   }
+
+   if(dev_data == NULL)
+   {
+       cout << name << " error: no allocaiton to dev_data "  << endl;
+       exit(-1);
+   }
+
+   retcode = cudaMemcpy( m_data_test, dev_data, nsize_bytes, cudaMemcpyDeviceToHost );
+   if( retcode != cudaSuccess )
+   {
+      cout << name << " error Sarray:: check_match_cpu_gpu(*,*,*,*)  :  cudaMemcpy returned" << cudaGetErrorString(retcode) << endl;
+      exit(-1);
+   }
+
+   cfirst = ifirst = jfirst = kfirst = 0;
+   size_t  ind=0;
+   retval = 0;
+   for( int k=m_kb ; k<=m_ke ; k++ )
+          for( int j=m_jb ; j<=m_je ; j++ )
+             for( int i=m_ib ; i <= m_ie ; i++ )
+                for( int c=1 ; c <= m_nc ; c++ )
+                {
+                   if( abs(m_data[ind] - m_data_test[ind]) >= (1.0e-4) )
+                   {
+                      if( retval == 0 )
+                      {
+                         ifirst = i;
+                         jfirst = j;
+                         kfirst = k;
+                         cfirst = c;
+                     }
+                     retval++;
+                  }
+                  ind++;
+               }
+
+    delete[] m_data_test;
+
+    return retval;
+
+#endif
+
 }

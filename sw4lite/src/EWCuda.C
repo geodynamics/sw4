@@ -2,6 +2,7 @@
 #include <iostream>
 using namespace std;
 
+//-----------------------------------------------------------------------
 EWCuda::EWCuda( int ndevice, int nstream )
 {
    m_ndevice = ndevice;
@@ -12,17 +13,10 @@ EWCuda::EWCuda( int ndevice, int nstream )
       m_stream  = new cudaStream_t[nstream];
    else
       m_stream = static_cast<cudaStream_t*>(0);
-   for( int s=0 ; s < nstream ; s++ )
-   {
-      cudaError_t retcode;
-      retcode = cudaStreamCreate(&m_stream[s]);
-      if( retcode != cudaSuccess )
-	 cout << "Error EWCuda::EWCuda, cudaStreamCreate no " << s << " returned " <<
-	    cudaGetErrorString(retcode) << endl;
-   }
 #endif
 }
 
+//-----------------------------------------------------------------------
 void EWCuda::reset_gpu()
 {
 #ifdef SW4_CUDA
@@ -31,6 +25,7 @@ void EWCuda::reset_gpu()
 #endif
 }
 
+//-----------------------------------------------------------------------
 void EWCuda::sync_stream( int st )
 {
 #ifdef SW4_CUDA
@@ -42,6 +37,37 @@ void EWCuda::sync_stream( int st )
 #endif
 }
 
+//-----------------------------------------------------------------------
+void EWCuda::initialize_gpu(int myrank)
+{
+#ifdef SW4_CUDA
+   if( m_ndevice > 0){
+
+      cudaDeviceReset();
+      int myDevice = sched_getcpu()/(40);
+      int cpu = sched_getcpu();
+      cout << "myrank = " << myrank <<  "  cpuid = " << cpu << "  mydevice = " << myDevice  << endl;
+
+     cudaError_t retcode;
+     retcode  = cudaSetDevice(myDevice);
+     if (retcode != cudaSuccess)
+	cout << "Error cudaSetDevice: "  << cudaGetErrorString(retcode) << endl;
+     else
+     {
+	for (int i = 0; i < m_nstream; i++)
+	{
+	   cudaError_t retcode;
+	   retcode = cudaStreamCreate(&m_stream[i]);
+	   if( retcode != cudaSuccess )
+	      cout << "Error EWCuda::EWCuda, cudaStreamCreate no " << i << " returned " <<
+		 cudaGetErrorString(retcode) << endl;
+	}
+     }
+   }
+#endif
+}
+
+//-----------------------------------------------------------------------
 EWCuda::~EWCuda()
 {
 #ifdef SW4_CUDA

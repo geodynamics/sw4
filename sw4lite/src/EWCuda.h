@@ -16,6 +16,7 @@ class EWCuda
    ~EWCuda();
    bool has_gpu(){return m_ndevice>0;}
    void reset_gpu();
+   void initialize_gpu( int myrank );
    void sync_stream( int st );
 };
 #endif

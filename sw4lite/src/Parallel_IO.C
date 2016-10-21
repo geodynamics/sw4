@@ -37,7 +37,7 @@ using namespace std;
 #include <errno.h>
 #include <unistd.h>
 #include "Parallel_IO.h"
-
+#include <fcntl.h>
 //-----------------------------------------------------------------------
 Comminfo::Comminfo()
 {
@@ -418,12 +418,14 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 //                      padding avoids writing these twice.
    int blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
    int ibl, iel, jbl, jel, kbl, kel, nsend;
-   int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag, tag2, myid;
+   int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag2, myid;
    int retcode, gproc;
    int* nrecvs;
    size_t nblocks, npts, maxpts;
 
    MPI_Status status;
+   //   int nrw, flim = 600;
+   double t0 = MPI_Wtime();
 
    if( m_data_comm != MPI_COMM_NULL )
    {
@@ -539,6 +541,12 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
       olast = oj;
    }
 
+   //   if( myid == 0 )
+   //   {
+   //      cout << " init_array " << nglast << " " << nlast << " " << olast << endl;
+   //      cout << "            " << nblocks << " " << blsize << " " << m_csteps << endl;
+   //   }
+
 // Count the number of sends
    for( b = 1 ; b <= m_csteps ; b++ )
    {
@@ -597,7 +605,6 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 	 }
       }
    }
-
 
 /* Setup send information */
    maxpts = 0;
@@ -688,7 +695,6 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    }
    m_isend.m_maxbuf = maxpts;
 
-   tag = 335;
    tag2 = 336;
    /* Senders pass info to receievers */
    if( m_iwrite == 1 )
@@ -744,10 +750,19 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    }
    maxpts = 0;
 
+   //   MPI_Barrier(m_data_comm);
+   //   int fd=open("dbginfo.bin", O_CREAT | O_TRUNC | O_WRONLY, 0660 );
+   //   MPI_Barrier( m_data_comm );
+
+   //   if( myid == 0 )
+   //      cout << "init_array point 4, csteps= " << m_csteps << endl;
+
    for( b = 1; b <= m_csteps ; b++ )
    {
       for( p = 1 ; p <= m_nwriters ; p++ )
       {
+	 tag2 = 336 + b-1 + m_csteps*(p-1);
+	 MPI_Request req;
          found = -1;
          if( m_isend.m_ncomm[b-1] > 0 )
 	 {
@@ -758,13 +773,14 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 		  break;
 	       }
 	 }
+	 // Note: nrecvs only touched by m_writer_ids[p-1], hence do not need to allocate
+	 //       it in non-writer procs.
          retcode = MPI_Gather( &found, 1, MPI_INT, nrecvs, 1, MPI_INT, m_writer_ids[p-1], m_data_comm );
 	 if( retcode != MPI_SUCCESS )
 	 {
 	    cout << "Parallel_IO::init_array, error from call to MPI_Gather. "
 	      << "Return code = " << retcode << " from processor " << gproc << endl;
 	 }
-
          if( found != -1  )
 	 {
             v[0] = m_isend.m_comm_index[0][b-1][found];
@@ -775,7 +791,8 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
             v[5] = m_isend.m_comm_index[5][b-1][found];
 	    if( myid != m_writer_ids[p-1] )
 	    {
-	       retcode = MPI_Send( v, 6, MPI_INT, m_writer_ids[p-1], tag2, m_data_comm );
+	       //	       retcode = MPI_Send( v, 6, MPI_INT, m_writer_ids[p-1], tag2, m_data_comm );
+	       retcode = MPI_Isend( v, 6, MPI_INT, m_writer_ids[p-1], tag2, m_data_comm, &req );
 	       if( retcode != MPI_SUCCESS )
 	       {
 		  cout << "Parallel_IO::init_array, error from call to MPI_Send. "
@@ -784,6 +801,11 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 
 	    }
 	 }
+
+	 //	 MPI_Barrier(m_data_comm);
+	 //	 if( myid == 0 )
+	 //	    cout << "init_array point 4c, b= " << b << " p= " << p << endl;
+
 	 if( m_writer_ids[p-1] == myid )
 	 {
 	    j = 0;
@@ -821,6 +843,12 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 	       lims[3] = -1;
 	       lims[4] = nkg+1;
 	       lims[5] = -1;
+	       //	       if( b == 10 && p == 77 )
+	       //	       {
+	       //		  cout << " preparing to receive from " << j << " processors :" << endl;
+	       //		  for( i=0 ; i < j ; i++ )
+	       //		     cout << i << " from proc no " << m_irecv.m_comm_id[b-1][i] << endl;
+	       //	       }
 	       for( i=0 ; i<j ; i++ )
 	       {
                   if( myid != m_irecv.m_comm_id[b-1][i] )
@@ -884,12 +912,31 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
                maxpts = maxpts > npts ? maxpts : npts;
 	    }
 	 }
+	 //         lseek(fd,myid*sizeof(int),SEEK_SET);
+	 //         nrw=write(fd,&tag2,sizeof(int));
+	 //	 if( MPI_Wtime()-t0 > flim )
+	 //	 {
+	 //	    fsync(fd);
+	 //	    flim = flim + 500;
+	 //	 }
+	 //	 //	 MPI_Barrier(m_data_comm);
+	 //	 //	 if( myid == 0 )
+	 //	 //	    cout << "init_array point 4d, b= " << b << " p= " << p << endl;
       }
    }
+   //   close(fd);
+
    if( m_iwrite == 1 )
       m_irecv.m_maxiobuf = maxpts;
    else
       m_irecv.m_maxiobuf = 0;
+
+   //   MPI_Barrier(m_data_comm);
+   //   if( myid == 0 )
+   //      cout << "init_array point 5" << endl;
+
+   //   if( m_iwrite == 1 )
+   //      delete[] nrecvs;
 
    setup_substeps();
 
@@ -956,6 +1003,12 @@ void Parallel_IO::setup_substeps( )
    size_t buflim = static_cast<size_t>(m_irecv.m_maxiobuf*1.3);
 //   size_t buflim = 1512;
 
+//   int fd=open("dbginfo.bin", O_CREAT | O_TRUNC | O_WRONLY, 0660 );
+//   MPI_Barrier( m_data_comm );
+
+//   int myid;
+//   MPI_Comm_rank( m_data_comm, &myid );
+
    // 1. Make sure that bufsize is large enough to fit the largest 
    //    single message.
    if( m_iwrite )
@@ -990,6 +1043,9 @@ void Parallel_IO::setup_substeps( )
       }
    }
 
+   //   if( myid == 0 )
+   //      cout << "setup_substeps point 1 "  << endl;
+
    for( int b=0; b < m_csteps ; b++ )
    {
       int tag=665+b;
@@ -1000,9 +1056,9 @@ void Parallel_IO::setup_substeps( )
       if( m_iwrite && m_irecv.m_ncomm[b]>0 )
       {
 	 int nsub=1;
-	 size_t mxblock=0;
+	 //	 size_t mxblock=0;
 	 size_t size=0;
-         req = new MPI_Request[m_irecv.m_ncomm[b]];
+
 	 for( int i=0 ; i < m_irecv.m_ncomm[b]; i++ )
 	 {
 	    int i1 = m_irecv.m_comm_index[0][b][i];
@@ -1015,11 +1071,11 @@ void Parallel_IO::setup_substeps( )
 	    int nrj = j2-j1+1;
 	    int nrk = k2-k1+1;
 	    size_t blsize = nri*((size_t)nrj)*nrk ;
-	    mxblock = blsize > mxblock ? blsize : mxblock;
+	    //	    mxblock = blsize > mxblock ? blsize : mxblock;
 	    if( size + blsize > buflim )
 	    {
-	       size = blsize;
 	       nsub++;
+	       size = blsize;
 	    }
 	    else
 	       size += blsize;
@@ -1054,6 +1110,7 @@ void Parallel_IO::setup_substeps( )
       
       // Communicate the step id to non-io processors
 	 rbuf = new int[m_irecv.m_ncomm[b]];
+         req  = new MPI_Request[m_irecv.m_ncomm[b]];
 	 for( int ss= 0 ; ss < nsub ; ss++ )
 	 {
 	    for( int i= m_irecv.m_subcomm[b][ss] ; i < m_irecv.m_subcomm[b][ss+1] ; i++ )
@@ -1067,18 +1124,34 @@ void Parallel_IO::setup_substeps( )
       {
 	 m_irecv.m_nsubcomm[b] = 0;
       }
+      //      if( myid == 0 )
+      //	 cout << "setup_substeps point 2, b= "  << b << " out of " << m_csteps << " steps " << endl;
   
       // Receive the step id
-      m_isend.m_subcommlabel[b] = new int[m_isend.m_ncomm[b]];
+      if( m_isend.m_ncomm[b] > 0 )
+	 m_isend.m_subcommlabel[b] = new int[m_isend.m_ncomm[b]];
+
+      //      lseek(fd,myid*sizeof(int),SEEK_SET);
+      //      int one=1;
+      //      size_t nr=write(fd,&one,sizeof(int));
+
       for( int i = 0 ; i < m_isend.m_ncomm[b] ; i++ )
       {
 	 int subid;
 	 MPI_Recv( &subid, 1, MPI_INT, m_isend.m_comm_id[b][i], tag, m_data_comm, &status );
 	 m_isend.m_subcommlabel[b][i] = subid;
       }
+      //      lseek(fd,myid*sizeof(int),SEEK_SET);
+      //      int two=2;
+      //      nr=write(fd,&two,sizeof(int));
+
       if( m_iwrite == 1 )
 	 for( int i = 0 ; i < m_irecv.m_ncomm[b]; i++ )
 	    MPI_Wait( &req[i], &status );
+
+      //      lseek(fd,myid*sizeof(int),SEEK_SET);
+      //      int three=3;
+      //      nr=write(fd,&three,sizeof(int));
 
       if( m_iwrite == 1 && m_irecv.m_ncomm[b]>0 )
       {
@@ -1086,8 +1159,11 @@ void Parallel_IO::setup_substeps( )
 	 delete[] req;
       }
    }
-
+   //   close(fd);
    // Compute exact bufsize needed, should now be < buflim.
+   //   if( myid == 0 )
+   //      cout << "setup_substeps point 3 "  << endl;
+
    if( m_iwrite )
    {
       size_t maxbuf=0;
@@ -1482,7 +1558,7 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 }
 
 //-----------------------------------------------------------------------
-void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
+void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
 			      const char* typ, bool swap_bytes )
 {
 //  Read array previously set up by constructing object.
@@ -1490,12 +1566,13 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 //        nc  - Number of components per grid point of array.
 //        array - The data array, local in the processor
 //        pos0  - Start reading the array at this byte position in file.
-//        typ   - Declared type of 'array', possible values are "float" or "double".
+//        typ   - Type of array stored on file, possible values are "float" or "double".
 //
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, s;
    size_t ind, ptr, sizew;
+   off_t sizelseek;
    MPI_Status status;
    MPI_Request* req;
 
@@ -1589,8 +1666,8 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 	 kl = m_irecv.m_klow[bb];
 	 
 	 ind = il-1+((off_t)nig)*(jl-1)+((off_t)nig)*njg*(kl-1);
-	 sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET );
-	 if( sizew == -1 )
+	 sizelseek = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET );
+	 if( sizelseek == -1 )
 	 {
 	    int eno = errno;
 	    cout << "Error in read_array: could not go to read start position" << endl;

@@ -3,7 +3,21 @@
 #include "EWCuda.h"
 
 #ifdef SW4_CUDA
+
+// IBM Comment: Uncomment following macro to check kernel error
+//#define DEBUG_CUDA
+  #ifdef DEBUG_CUDA
+    #define CHECK_ERROR(str) \
+        cudaError err = cudaGetLastError(); \
+        if ( cudaSuccess != err ) \
+          cerr << "Error in " << str << " : " << cudaGetErrorString( err ) << endl;
+  #else
+    #define CHECK_ERROR(str)
+  #endif
+
 #include <cuda_runtime.h>
+
+
 
 void copy_stencilcoefficients( float_sw4* acof, float_sw4* ghcof, float_sw4* bope );
 
@@ -11,7 +25,15 @@ __global__ void pred_dev( int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  float_sw4* up, float_sw4* u, float_sw4* um, float_sw4* lu, float_sw4* fo,
 			  float_sw4* rho, float_sw4 dt2, int ghost_points );
 
+__global__ void pred_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			  float_sw4* up, float_sw4* u, float_sw4* um, float_sw4* lu, float_sw4* fo,
+			  float_sw4* rho, float_sw4 dt2, int ghost_points );
+
 __global__ void corr_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			  float_sw4* up, float_sw4* lu, float_sw4* fo,
+			  float_sw4* rho, float_sw4 dt4, int ghost_points );
+
+__global__ void corr_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  float_sw4* up, float_sw4* lu, float_sw4* fo,
 			  float_sw4* rho, float_sw4 dt4, int ghost_points );
 
@@ -26,7 +48,21 @@ __global__ void addsgd4_dev( int ifirst, int ilast, int jfirst, int jlast, int k
 			     float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 			     float_sw4 beta, int ghost_points );
 
+__global__ void addsgd4_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+			     float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+			     float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+			     float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+			     float_sw4 beta, int ghost_points );
+
 __global__ void addsgd6_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+			     float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+			     float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+			     float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+			     float_sw4 beta, int ghost_points );
+
+__global__ void addsgd6_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
 			     float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
 			     float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
@@ -38,23 +74,33 @@ __global__ void rhs4center_dev( int ifirst, int ilast, int jfirst, int jlast, in
 				float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 				int ghost_points );
 
+__global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+				float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+				float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+				int ghost_points );
+
 __global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 			       int ghost_points );
 
-__global__ void rhs4upper_dummy_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast );
-				     //    				     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
-				     //    				     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-				     //    				     int ghost_points );
+__global__ void rhs4upper_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+			       int ghost_points );
 
-//__constant__ float_sw4 dev_acof[384];
-//__constant__ float_sw4 dev_ghcof[6];
-//__constant__ float_sw4 dev_bope[48];
+__global__ void rhs4lower_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			       int nk, float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+			       int ghost_points );
 
-//__constant__ float_sw4 dev_acof2[384];
-//__constant__ float_sw4 dev_ghcof2[6];
-//__constant__ float_sw4 dev_bope2[48];
+__global__ void rhs4lower_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+				   int nk, float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+			       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+			       int ghost_points );
+
+__global__ void check_nan_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			       float_sw4* u, int* retval_dev, int* idx_dev );
 
 #endif
 
@@ -72,36 +118,43 @@ void EW::evalRHSCU(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a
    blocksize.z = m_gpu_blocksize[2];
    for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
    {
-      rhs4center_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+      if( m_corder )
+	 rhs4center_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
 	 ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
 	   m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
 	   a_Lambda[g].dev_ptr(), mGridSize[g],
 	   dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+      else
+	 rhs4center_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+	 ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
+	   m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
+	   a_Lambda[g].dev_ptr(), mGridSize[g],
+	   dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+      CHECK_ERROR("evalRHSCU")
    }
 // Boundary operator at upper boundary
    blocksize.z = 1;
    gridsize.z  = 6;
-//   cudaDeviceSynchronize();
-//   cudaError_t e = cudaGetLastError();
-//   if( e != cudaSuccess )
-//         cout << "Error in rhs4upper_dev. Error= "
-//      	      << cudaGetErrorString(e) << endl;
-// else
-//      cout << "First step successful " << endl;
 
    for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
    {
       if( m_onesided[g][4] )
       {
-	 rhs4upper_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+	 if( m_corder )
+	    rhs4upper_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+	    ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],  m_kEnd[g],
+	      a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
+	      a_Lambda[g].dev_ptr(), mGridSize[g],
+	      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+	 else
+	    rhs4upper_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
 	    ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],  m_kEnd[g],
 	      a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
 	      a_Lambda[g].dev_ptr(), mGridSize[g],
 	      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
       }
+      CHECK_ERROR("evalRHSCU_upper")
    }
-   //   cudaDeviceSynchronize();
-   //   cout << "Second step successful " << endl;
 #endif
 }
 
@@ -112,18 +165,25 @@ void EW::evalPredictorCU( vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sa
 #ifdef SW4_CUDA
    float_sw4 dt2 = mDt*mDt;
    dim3 gridsize, blocksize;
-   gridsize.x  = m_gpu_gridsize[0];
-   gridsize.y  = m_gpu_gridsize[1];
-   gridsize.z  = m_gpu_gridsize[2];
-   blocksize.x = m_gpu_blocksize[0];
-   blocksize.y = m_gpu_blocksize[1];
-   blocksize.z = m_gpu_blocksize[2];
+   gridsize.x  = m_gpu_gridsize[0] * m_gpu_gridsize[1] * m_gpu_gridsize[2];
+   gridsize.y  = 1;
+   gridsize.z  = 1;
+   blocksize.x = m_gpu_blocksize[0] * m_gpu_blocksize[1] * m_gpu_blocksize[2];
+   blocksize.y = 1;
+   blocksize.z = 1;
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
-      pred_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-								m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), a_U[g].dev_ptr(),
-								a_Um[g].dev_ptr(), a_Lu[g].dev_ptr(), a_F[g].dev_ptr(),
-								a_Rho[g].dev_ptr(), dt2, m_ghost_points );
+      if( m_corder )
+	 pred_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+								   m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), a_U[g].dev_ptr(),
+								   a_Um[g].dev_ptr(), a_Lu[g].dev_ptr(), a_F[g].dev_ptr(),
+								   a_Rho[g].dev_ptr(), dt2, m_ghost_points );
+      else
+	 pred_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+								   m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), a_U[g].dev_ptr(),
+								   a_Um[g].dev_ptr(), a_Lu[g].dev_ptr(), a_F[g].dev_ptr(),
+								   a_Rho[g].dev_ptr(), dt2, m_ghost_points );
+      CHECK_ERROR("evalPredictorCU")
    }
 #endif
 }
@@ -135,18 +195,25 @@ void EW::evalCorrectorCU( vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
 #ifdef SW4_CUDA
    float_sw4 dt4 = mDt*mDt*mDt*mDt;  
    dim3 gridsize, blocksize;
-   gridsize.x  = m_gpu_gridsize[0];
-   gridsize.y  = m_gpu_gridsize[1];
-   gridsize.z  = m_gpu_gridsize[2];
-   blocksize.x = m_gpu_blocksize[0];
-   blocksize.y = m_gpu_blocksize[1];
-   blocksize.z = m_gpu_blocksize[2];
+   gridsize.x  = m_gpu_gridsize[0] * m_gpu_gridsize[1] * m_gpu_gridsize[2];
+   gridsize.y  = 1;
+   gridsize.z  = 1;
+   blocksize.x = m_gpu_blocksize[0] * m_gpu_blocksize[1] * m_gpu_blocksize[2];
+   blocksize.y = 1;
+   blocksize.z = 1;
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
-      corr_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+      if( m_corder )
+	 corr_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 								m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), a_Lu[g].dev_ptr(),
 								a_F[g].dev_ptr(), a_Rho[g].dev_ptr(), dt4,
 								m_ghost_points );
+      else
+	 corr_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+								m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), a_Lu[g].dev_ptr(),
+								a_F[g].dev_ptr(), a_Rho[g].dev_ptr(), dt4,
+								m_ghost_points );
+      CHECK_ERROR("evalCorrectorCU")
    }
 #endif
 }
@@ -158,18 +225,19 @@ void EW::evalDpDmInTimeCU(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sa
 #ifdef SW4_CUDA
    float_sw4 dt2i = 1./(mDt*mDt);
    dim3 gridsize, blocksize;
-   gridsize.x  = m_gpu_gridsize[0];
-   gridsize.y  = m_gpu_gridsize[1];
-   gridsize.z  = m_gpu_gridsize[2];
-   blocksize.x = m_gpu_blocksize[0];
-   blocksize.y = m_gpu_blocksize[1];
-   blocksize.z = m_gpu_blocksize[2];
+   gridsize.x  = m_gpu_gridsize[0] * m_gpu_gridsize[1] * m_gpu_gridsize[2];
+   gridsize.y  = 1;
+   gridsize.z  = 1;
+   blocksize.x = m_gpu_blocksize[0] * m_gpu_blocksize[1] * m_gpu_blocksize[2];
+   blocksize.y = 1;
+   blocksize.z = 1;
    for(int g=0 ; g<mNumberOfGrids; g++ )
    {
       dpdmt_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 								 m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), a_U[g].dev_ptr(),
 								 a_Um[g].dev_ptr(), a_Uacc[g].dev_ptr(), dt2i,
 								 m_ghost_points );
+      CHECK_ERROR("evalDpDmInTimeCU")
    }
 #endif
 }
@@ -190,23 +258,43 @@ void EW::addSuperGridDampingCU(vector<Sarray> & a_Up, vector<Sarray> & a_U,
    {
       if( m_sg_damping_order == 4 )
       {
-	 addsgd4_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+	 if( m_corder )
+	    addsgd4_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 								      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
                                                                       a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
 								      dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
 								      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
 								      dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
 								      m_supergrid_damping_coefficient, m_ghost_points );
+	 else
+	    addsgd4_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+								      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
+                                                                      a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
+								      dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
+								      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
+								      dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
+								      m_supergrid_damping_coefficient, m_ghost_points );
+	 CHECK_ERROR("addsgd4_dev")
       }
       else if(  m_sg_damping_order == 6 )
       {
-	 addsgd6_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+	 if( m_corder )
+	    addsgd6_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 								      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
                                                                       a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
 								      dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
 								      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
 								      dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
 								      m_supergrid_damping_coefficient, m_ghost_points );
+	 else
+	    addsgd6_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+								      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
+                                                                      a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
+								      dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
+								      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
+								      dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
+								      m_supergrid_damping_coefficient, m_ghost_points );
+	 CHECK_ERROR("addsgd6_dev")
       }
    }
 #endif
@@ -230,23 +318,6 @@ void EW::setupSBPCoeff()
    GetStencilCoefficients( m_acof, m_ghcof, m_bope, m_sbop );
 #ifdef SW4_CUDA
    copy_stencilcoefficients( m_acof, m_ghcof, m_bope );
-   //   cudaError_t retcode;
-   //   if( m_ndevice > 0 )
-   //   {
-   //      retcode = cudaMemcpyToSymbol( dev_acof,  m_acof, 384*sizeof(float_sw4));
-   //      if( retcode != cudaSuccess )
-   //	 cout << "Error copying acof to device constant memory. Error= "
-   //	      << cudaGetErrorString(retcode) << endl;
-   //      retcode = cudaMemcpyToSymbol( dev_bope,  m_bope,  48*sizeof(float_sw4));
-   //      if( retcode != cudaSuccess )
-   //	 cout << "Error copying bope to device constant memory. Error= "
-   //	      << cudaGetErrorString(retcode) << endl;
-   //      retcode = cudaMemcpyToSymbol( dev_ghcof, m_ghcof,  6*sizeof(float_sw4));
-   //      if( retcode != cudaSuccess )
-   //	 cout << "Error copying ghcof to device constant memory. Error= "
-   //	      << cudaGetErrorString(retcode) << endl;
-   //      
-   //   }
 #endif   
 }
 
@@ -396,6 +467,9 @@ void EW::find_cuda_device()
 	    ",  Memory (GB) " << (prop.totalGlobalMem  >> 30) << endl;
       }
    }
+   //Added following line for all ranks 
+   retcode = cudaGetDeviceProperties(&prop, 0 );
+
    // Check block size
    CHECK_INPUT( m_gpu_blocksize[0] <= prop.maxThreadsDim[0],
 		"Error: EW::find_cuda_device max block x " << m_gpu_blocksize[0] << " too large\n");
@@ -459,3 +533,61 @@ void EW::find_cuda_device()
    if( m_ndevice == 0 )
       m_cuobj = new EWCuda(0,0);
 }
+
+//-----------------------------------------------------------------------
+bool EW::check_for_nan_GPU( vector<Sarray>& a_U, int verbose, string name )
+{
+#ifdef SW4_CUDA
+   dim3 gridsize, blocksize;
+   gridsize.x  = m_gpu_gridsize[0] * m_gpu_gridsize[1] * m_gpu_gridsize[2];
+   gridsize.y  = 1;
+   gridsize.z  = 1;
+   blocksize.x = m_gpu_blocksize[0] * m_gpu_blocksize[1] * m_gpu_blocksize[2];
+   blocksize.y = 1;
+   blocksize.z = 1;
+
+   int  *retval_dev, retval_host = 0;
+   int  *idx_dev, idx_host = 0;
+   int cnan, inan, jnan, knan;
+   int  nijk, nij, ni;
+
+   cudaMalloc( (void **)&retval_dev, sizeof(int) );
+   cudaMemcpy( retval_dev, &retval_host, sizeof(int), cudaMemcpyHostToDevice );
+   cudaMalloc( (void **)&idx_dev, sizeof (int) );
+   cudaMemcpy( idx_dev, &idx_host, sizeof(int), cudaMemcpyHostToDevice );
+
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      check_nan_dev<<<gridsize,blocksize>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+					     m_kStart[g], m_kEnd[g], a_U[g].dev_ptr(), retval_dev, idx_dev );
+
+      CHECK_ERROR("check_for_nan_GPU")
+
+      cudaMemcpy( &retval_host, retval_dev, sizeof(int), cudaMemcpyDeviceToHost );
+
+      if ( retval_host != 0) 
+      {
+         cudaMemcpy(&idx_host, idx_dev, sizeof(int), cudaMemcpyDeviceToHost);
+
+         nijk = (m_kEnd[g]-m_kStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_iEnd[g]-m_iStart[g]+1);
+         nij  = (m_jEnd[g]-m_jStart[g]+1)*(m_iEnd[g]-m_iStart[g]+1);
+         ni   = m_iEnd[g]-m_iStart[g]+1;
+
+         cnan = idx_host/nijk;
+         idx_host = idx_host - cnan*nijk; 
+         knan = idx_host / nij; 
+         idx_host = idx_host - knan*nij;
+         jnan = idx_host/ni;
+         inan = idx_host - jnan*ni; 
+
+         cout << "grid " << g << " array " << name << " found " << retval_host << " nans. First nan at " <<
+                    cnan << " " << inan << " " << jnan << " " << knan << endl;
+
+         return false; 
+      }
+   }
+
+  return true;
+#endif
+}
+

@@ -69,6 +69,10 @@ extern "C" {
 				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
 }
 #else
+void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
+	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
+	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
 void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
 	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
@@ -471,7 +475,7 @@ void EW::processCheckPoint(char* buffer)
    token = strtok(NULL, " \t");
    string err = "CheckPoint Error: ";
    int cycle=-1, cycleInterval=0;
-   double time=0.0, timeInterval=0.0;
+   float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet=false;
    string filePrefix = "restart";
    size_t bufsize=10000000;
@@ -1009,7 +1013,7 @@ void EW::processDeveloper(char* buffer)
      if( startswith("cfl=",token) )
      {
 	token += 4;
-	double cfl = atof(token);
+	float_sw4 cfl = atof(token);
 	CHECK_INPUT( cfl > 0, "Error negative CFL number");
 	//	set_cflnumber( cfl );
 	mCFL = cfl;
@@ -1024,21 +1028,21 @@ void EW::processDeveloper(char* buffer)
 	token += 13;
 	m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0 || strcmp(token,"yes")==0;
      }
-#ifdef SW4_OPENMP
-     else if( startswith("numthreads=",token) )
-     {
-	token += 11;
-	int nth = atoi(token);
-	CHECK_INPUT( 0 < nth && nth < 1024, "Number of threads " << nth << " out of range\n");
-        omp_set_num_threads(nth);
-     }
-#else
-     else if( startswith("numthreads=",token) )
-     {
-	if( m_myrank == 0 )
-	   cout << "WARNING: OpenMP not in use, developer numthreads ignored" << endl;
-     }     
-#endif
+     //#ifdef SW4_OPENMP
+     //     else if( startswith("numthreads=",token) )
+     //     {
+     //	token += 11;
+     //	int nth = atoi(token);
+     //	CHECK_INPUT( 0 < nth && nth < 1024, "Number of threads " << nth << " out of range\n");
+     //        omp_set_num_threads(nth);
+     //     }
+     //#else
+     //     else if( startswith("numthreads=",token) )
+     //     {
+     //	if( m_myrank == 0 )
+     //	   cout << "WARNING: OpenMP not in use, developer numthreads ignored" << endl;
+     //     }     
+     //#endif
      else if( startswith("thblocki=",token) )
      {
 	token += 9;
@@ -1057,8 +1061,9 @@ void EW::processDeveloper(char* buffer)
      else if( startswith("corder=",token) )
      {
 	token += 7;
-	Sarray::m_corder = strcmp(token,"yes")==0
+	m_corder = strcmp(token,"yes")==0
 	   || strcmp(token,"1")==0 || strcmp(token,"on")==0;
+	Sarray::m_corder = m_corder;
      }
      else
      {
@@ -1375,6 +1380,9 @@ bool EW::parseInputFile( const string& filename )
 	 foundGrid = true;
 	 processGrid(buffer);
       }
+      // Need process developer before setupMPICommunication, because of array ordering m_corder
+      else if(startswith("developer", buffer))
+	 processDeveloper(buffer);
    }   
    if (!foundGrid)
       if (m_myrank == 0)
@@ -1416,8 +1424,8 @@ bool EW::parseInputFile( const string& filename )
 	    processSuperGrid(buffer);
 	 else if(startswith("testpointsource", buffer))
 	    processTestPointSource(buffer);
-	 else if(startswith("developer", buffer))
-	    processDeveloper(buffer);
+	 //	 else if(startswith("developer", buffer))
+	 //	    processDeveloper(buffer);
 	 else if( startswith("fileio",buffer))
 	    processFileIO(buffer);
 	 else if( startswith("checkpoint",buffer))
@@ -1442,6 +1450,9 @@ void EW::setupRun()
 {
 // Check if any GPUs are available
    find_cuda_device( );
+
+   m_cuobj->initialize_gpu(m_myrank);
+
 // setup coefficients for SBP operators
    setupSBPCoeff();
 // Check that f.d. operators fit inside the domains
@@ -1570,10 +1581,12 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 #ifdef SW4_CUDA
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      Lu[g].allocate_on_device(m_cuobj);
-      Up[g].allocate_on_device(m_cuobj);
-      Uacc[g].allocate_on_device(m_cuobj);
+      //      Lu[g].allocate_on_device(m_cuobj);
+      //      Up[g].allocate_on_device(m_cuobj);
+      Lu[g].copy_to_device(m_cuobj);
+      Up[g].copy_to_device(m_cuobj);
       Um[g].copy_to_device(m_cuobj);
+      Uacc[g].copy_to_device(m_cuobj);
       F[g].page_lock(m_cuobj);
       U[g].page_lock(m_cuobj);
       Um[g].page_lock(m_cuobj);
@@ -1587,28 +1600,28 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    {    
       time_measure[0] = MPI_Wtime();
       // Predictor 
-      // Need U on device for evalRHS, will make this asynchronous:
+      // Need U on device for evalRHS,
       for( int g=0; g < mNumberOfGrids ; g++ )
-      {
-	 //	 U[g].page_lock(m_cuobj);
 	 U[g].copy_to_device(m_cuobj,true,0);
-	 //	 U[g].page_unlock(m_cuobj);
-      }
+
 // all types of forcing...
       Force( t, F, m_point_sources, false );
-      if( m_checkfornan )
-      {
-	 check_for_nan( F, 1, "F" );
-	 check_for_nan( U, 1, "U" );
-      }
 
       // Need F on device for predictor, will make this asynchronous:
       for( int g=0; g < mNumberOfGrids ; g++ )
-      {
-	 //	 F[g].page_lock(m_cuobj);
 	 F[g].copy_to_device(m_cuobj,true,1);
-	 //	 F[g].page_unlock(m_cuobj);
+
+      if( m_checkfornan )
+      {
+#ifdef SW4_CUDA
+	 check_for_nan_GPU( F, 1, "F" );
+	 check_for_nan_GPU( U, 1, "U" );
+#else
+	 check_for_nan( F, 1, "F" );
+	 check_for_nan( U, 1, "U" );
+#endif
       }
+
       time_measure[1] = MPI_Wtime();
 
 // evaluate right hand side
@@ -1618,7 +1631,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 evalRHS( U, mMu, mLambda, Lu ); // save Lu in composite grid 'Lu'
 
       if( m_checkfornan )
+#ifdef SW4_CUDA
+	 check_for_nan_GPU( Lu, 1, "Lu pred. " );
+#else      
 	 check_for_nan( Lu, 1, "Lu pred. " );
+#endif
 
 // take predictor step, store in Up
       m_cuobj->sync_stream( 0 );
@@ -1650,19 +1667,13 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       time_measure[3] = MPI_Wtime();
 
       for( int g=0; g < mNumberOfGrids ; g++ )
-      {
-	 //	 Up[g].page_lock(m_cuobj);
 	 Up[g].copy_to_device(m_cuobj,true,0);
-	 //	 Up[g].page_unlock(m_cuobj);
-      }
+
       // Corrector
       Force( t, F, m_point_sources, true );
       for( int g=0; g < mNumberOfGrids ; g++ )
-      {
-	 //	 F[g].page_lock(m_cuobj);
 	 F[g].copy_to_device(m_cuobj,true,1);
-	 //	 F[g].page_unlock(m_cuobj);
-      }
+
       time_measure[4] = MPI_Wtime();
 
       if( m_cuobj->has_gpu() )
@@ -1671,7 +1682,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
 
       if( m_checkfornan )
+#ifdef SW4_CUDA
+	 check_for_nan_GPU( Uacc, 1, "uacc " );
+#else
 	 check_for_nan( Uacc, 1, "uacc " );
+#endif
 
       if( m_cuobj->has_gpu() )
 	 evalRHSCU( Uacc, mMu, mLambda, Lu, 0 );
@@ -1679,7 +1694,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
        	 evalRHS( Uacc, mMu, mLambda, Lu );
 
       if( m_checkfornan )
+#ifdef SW4_CUDA
+	 check_for_nan_GPU( Lu, 1, "L(uacc) " );
+#else
 	 check_for_nan( Lu, 1, "L(uacc) " );
+#endif
 
       m_cuobj->sync_stream(0);
       if( m_cuobj->has_gpu() )
@@ -1698,9 +1717,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       }
       for( int g=0; g < mNumberOfGrids ; g++ )
-      {
 	 Up[g].copy_from_device(m_cuobj,true,1);
-      }
+
       m_cuobj->sync_stream(1);
 
       time_measure[6] = MPI_Wtime();
@@ -1727,7 +1745,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
 //
-      double time_chkpt, time_chkpt_tmp;
+      float_sw4 time_chkpt, time_chkpt_tmp;
       bool wrote=false;
       MPI_Barrier( MPI_COMM_WORLD );
       time_chkpt=MPI_Wtime();
@@ -1901,9 +1919,16 @@ void EW::setupMPICommunications()
       MPI_Type_vector( nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type1[2*g] );
       MPI_Type_vector( nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type1[2*g+1] );
 
-      MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, MPI_DOUBLE, &m_send_type3[2*g] );
-      MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
-
+      if( m_corder )
+      {
+	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type3[2*g] );
+	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
+      }
+      else
+      {
+	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, MPI_DOUBLE, &m_send_type3[2*g] );
+	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
+      }
       //      MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, MPI_DOUBLE, &m_send_type4[2*g] );
       //      MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, MPI_DOUBLE, &m_send_type4[2*g+1] );
 
@@ -2050,11 +2075,28 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
    for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
    {
 #ifdef SW4_CROUTINES
-      rhs4sg( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
-	      m_kStart[g], m_kEnd[g], m_global_nz[g], m_onesided[g],
-	      m_acof, m_bope, m_ghcof, a_Uacc[g].c_ptr(), a_U[g].c_ptr(), 
-	      a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mGridSize[g],
-	      m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g] );
+      if( m_corder )
+	 rhs4sg_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
+		     m_kStart[g], m_kEnd[g], m_global_nz[g], m_onesided[g],
+		     m_acof, m_bope, m_ghcof, a_Uacc[g].c_ptr(), a_U[g].c_ptr(), 
+		     a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mGridSize[g],
+		     m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g] );
+      else
+	 rhs4sg( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
+		 m_kStart[g], m_kEnd[g], m_global_nz[g], m_onesided[g],
+		 m_acof, m_bope, m_ghcof, a_Uacc[g].c_ptr(), a_U[g].c_ptr(), 
+		 a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mGridSize[g],
+		 m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g] );
+#ifdef DEBUG_CUDA
+      printf("params = %d, %d, %d, %d, %d, %d \n %f, %f, %f, %f \n %f, %f, %f, %f \n %d \n",  
+           m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
+              m_kStart[g], m_kEnd[g],
+	   (a_Uacc[g].c_ptr())[1], (a_U[g].c_ptr())[1], 
+              (a_Mu[g].c_ptr())[1], (a_Lambda[g].c_ptr())[1], 
+	   mGridSize[g], m_sg_str_x[g][1], m_sg_str_y[g][1], m_sg_str_z[g][1],
+           m_ghost_points); 
+     printf("onesided[%d](4,5) = %d, %d\n", g, m_onesided[g][4], m_onesided[g][5]);
+#endif
 #else
       char op = '=';    // Assign Uacc := L(u)
       F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
@@ -2360,7 +2402,14 @@ bool EW::exactSol( float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources
   if( m_point_source_test )
   {
      for( int g=0 ; g < mNumberOfGrids; g++ ) 
-	get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
+     {
+	size_t npts = static_cast<size_t>(m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1);
+	float_sw4* utmp = new float_sw4[npts*3];
+	   //	get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
+	get_exact_point_source( utmp, a_t, g, *sources[0] );
+	a_U[g].assign( utmp, 0 );
+	delete[] utmp;
+     }
      retval = true;
   }
   return retval;
@@ -2654,7 +2703,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
       m0 = 1;
    }
    //   bool curvilinear = topographyExists() && g == mNumberOfGrids-1;
-   //   bool curvilinear = false;
+   bool curvilinear = false;
    //   float_sw4* up = u.c_ptr();
    float_sw4 h   = mGridSize[g];
    float_sw4 eps = 1e-3*h;
@@ -3780,9 +3829,9 @@ void EW::computeNearestGridPoint(int & a_i,
                                    int & a_j, 
                                    int & a_k,
                                    int & a_g, // grid on which indices are located
-                                   double a_x, 
-                                   double a_y, 
-                                   double a_z)
+                                   float_sw4 a_x, 
+                                   float_sw4 a_y, 
+                                   float_sw4 a_z)
 {
   bool breakLoop = false;
   
@@ -3977,11 +4026,35 @@ void EW::print_execution_times( float_sw4 times[7] )
       size_t nr=write(fd,&m_nprocs,sizeof(int));
       if( nr != sizeof(int) )
 	 cout << "Error wrting nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
-      nr = write(fd, time_sums, 7*m_nprocs*sizeof(double));
-      if( nr != 7*m_nprocs*sizeof(double) )
+      nr = write(fd, time_sums, 7*m_nprocs*sizeof(float_sw4));
+      if( nr != 7*m_nprocs*sizeof(float_sw4) )
 	 cout << "Error wrting time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
       close(fd);
    }
    delete[] time_sums;
 }
 
+//-----------------------------------------------------------------------
+bool EW::check_for_match_on_cpu_gpu( vector<Sarray>& a_U, int verbose, string name )
+{
+
+   bool retval=false;
+
+   if( m_cuobj->has_gpu() )
+   {
+      retval = false;
+      for( int g=0 ; g<mNumberOfGrids; g++ )
+      {
+         size_t nn=a_U[g].check_match_cpu_gpu( m_cuobj, name );
+         retval = retval || nn > 0;
+         if( nn > 0 && verbose == 1 )
+         {
+            int cnan, inan, jnan, knan;
+            a_U[g].check_match_cpu_gpu( m_cuobj, cnan, inan, jnan, knan, name );
+            cout << "grid " << g << " array " << name << " found " << nn << "  dismatch. First dismatch at " <<
+                    cnan << " " << inan << " " << jnan << " " << knan << endl;
+         }
+      }
+   }
+   return retval;
+}

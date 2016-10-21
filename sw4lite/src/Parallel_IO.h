@@ -33,6 +33,7 @@
 #ifndef EW_WPPPIO_H
 #define EW_WPPPIO_H
 
+#include "sw4.h"
 #include "Byteswapper.h"
 
 class Comminfo
@@ -67,7 +68,7 @@ public:
    Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
 	    int starts[3], int nptsbuf=1000000, int padding=0 );
    void write_array( int* fid, int nc, void* array, off_t pos0, char* type );
-   void read_array( int* fid, int nc, double* array, off_t pos0, const char* typ, bool swap_bytes=false );
+   void read_array( int* fid, int nc, float_sw4* array, off_t pos0, const char* typ, bool swap_bytes=false );
 			      
    void print( );
    void begin_sequential( MPI_Comm comm );

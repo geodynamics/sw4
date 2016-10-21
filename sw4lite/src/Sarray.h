@@ -37,6 +37,10 @@
 //#include <mpi.h>
 #include "Require.h"
 #include <vector>
+#include <string>
+#include "sw4.h"
+
+using std::string;
 
 class EWCuda;
 
@@ -60,17 +64,17 @@ public:
    void define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 		int kend );
    void define( const Sarray& u );
-   inline double* c_ptr() {return m_data;}
-   inline double* dev_ptr() {return dev_data;}
-   void reference( double* new_data ){m_data = new_data; }
-   void reference_dev( double* new_data ){dev_data = new_data; }
+   inline float_sw4* c_ptr() {return m_data;}
+   inline float_sw4* dev_ptr() {return dev_data;}
+   void reference( float_sw4* new_data ){m_data = new_data; }
+   void reference_dev( float_sw4* new_data ){dev_data = new_data; }
 
-   //   inline double& operator()( int c, int i, int j, int k )
+   //   inline float_sw4& operator()( int c, int i, int j, int k )
    //   {return m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
    inline bool in_range( int c, int i, int j, int k )
      {return 1 <= c && c <= m_nc && m_ib <= i && i <= m_ie && m_jb <= j 
 	&& j <= m_je && m_kb <= k && k <= m_ke ;}
-   inline double& operator()( int c, int i, int j, int k )
+   inline float_sw4& operator()( int c, int i, int j, int k )
    {
 #ifdef BZ_DEBUG
       VERIFY2( in_range(c,i,j,k), "Error Index (c,i,j,k) = (" << c << "," << i << "," << j << "," << k
@@ -79,7 +83,7 @@ public:
 #endif
 //      return m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
       return m_data[m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k];}
-   inline double& operator()( int i, int j, int k )
+   inline float_sw4& operator()( int i, int j, int k )
       {
 #ifdef BZ_DEBUG
          if (!in_range(1,i,j,k))
@@ -108,21 +112,23 @@ public:
    bool in_domain( int i, int j, int k );
    void set_to_zero();
    void set_to_minusOne();
-   void set_value( double scalar );
-   void set_to_random( double llim =0.0, double ulim = 1.0 );
+   void set_value( float_sw4 scalar );
+   void set_to_random( float_sw4 llim =0.0, float_sw4 ulim = 1.0 );
    void save_to_disk( const char* fname );
    int ncomp() const {return m_nc;}
    int npts() const  {return m_ni*m_nj*m_nk;}
    void copy( const Sarray& u );
-   double maximum( int c=1 );
-   double minimum( int c=1 );
-   double sum( int c=1 );
+   float_sw4 maximum( int c=1 );
+   float_sw4 minimum( int c=1 );
+   float_sw4 sum( int c=1 );
    size_t count_nans();
    size_t count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst );
-   void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
-   void extract_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
+   size_t check_match_cpu_gpu( EWCuda* cu, string name );
+   size_t check_match_cpu_gpu( EWCuda* cu,  int& cfirst, int& ifirst, int& jfirst, int& kfirst, string name );
+   void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
+   void extract_subarray( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
-   void assign( const double* ar );
+   void assign( const float_sw4* ar, int corder=-1 );
    void assign( const float* ar );
    void transposeik();
    void copy_to_device( EWCuda* cu, bool async=false, int st=0 );
@@ -131,12 +137,12 @@ public:
    void page_lock( EWCuda* cu );
    void page_unlock( EWCuda* cu );
    void define_offsets();
-//   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
+//   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:
 
-   double* m_data;
-   double* dev_data;
+   float_sw4* m_data;
+   float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
 
