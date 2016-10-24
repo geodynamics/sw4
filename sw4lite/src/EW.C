@@ -1593,6 +1593,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    float_sw4 time_measure[20];
    float_sw4 time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+   if (m_myrank == 0)
+   {
+      cout << "Running on " << m_nprocs << " MPI tasks" << endl;
+   }
+   
 #ifdef SW4_OPENMP
 #pragma omp parallel
    {
