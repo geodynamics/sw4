@@ -1083,6 +1083,9 @@ void EW::processDeveloper(char* buffer)
 	m_corder = strcmp(token,"yes")==0
 	   || strcmp(token,"1")==0 || strcmp(token,"on")==0;
 	Sarray::m_corder = m_corder;
+#ifndef SW4_CROUTINES
+	CHECK_INPUT(m_corder==0,"ERROR: developer option corder, must be zero when fortran routines are used");
+#endif	
      }
      else
      {
@@ -1593,6 +1596,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    float_sw4 time_measure[20];
    float_sw4 time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+   if (m_myrank == 0)
+   {
+      cout << "Running on " << m_nprocs << " MPI tasks" << endl;
+   }
+   
 #ifdef SW4_OPENMP
 #pragma omp parallel
    {

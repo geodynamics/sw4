@@ -25,6 +25,14 @@ else ifeq ($(findstring cab,$(HOSTNAME)),cab)
   CXX = mpic++
   OMPOPT = -fopenmp
   EXTRA_LINK_FLAGS = -lblas -llapack
+else ifeq ($(findstring carl,$(HOSTNAME)),carl)
+  FC = mpiifort
+  CXX = mpiicpc
+  OMPOPT = -qopenmp
+  MKL_PATH = /usr/common/software/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64
+  EXTRA_CXX_FLAGS = -xCORE-AVX2
+  EXTRA_FORT_FLAGS = -xCORE-AVX2
+  EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
 else
   FC  = mpif90
