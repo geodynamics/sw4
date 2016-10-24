@@ -366,6 +366,8 @@ __global__ void rhs4center_dev( int ifirst, int ilast, int jfirst, int jlast, in
    int k = kfirst + ghost_points + threadIdx.z + blockIdx.z*blockDim.z;
 
    cof = 1.0/(h*h);
+   if ( (i <= ilast-2) && (j <= jlast-2) && (k <= klast-2) )
+   {
    mux1 = mu(i-1,j,k)*strx(i-1)-
       tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
    mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
@@ -599,7 +601,7 @@ __global__ void rhs4center_dev( int ifirst, int ilast, int jfirst, int jlast, in
 #undef stry
 #undef strz
 }
-
+}
 //-----------------------------------------------------------------------
 __global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
        //		       float_sw4* dev_acof, float_sw4* dev_bope, float_sw4* dev_ghcof,
@@ -650,6 +652,8 @@ __global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int
       return;
 
    cof = 1.0/(h*h);
+   if ( (i <= ilast-2) && (j <= jlast-2) && (k <= klast-2) )
+   {
    mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
    mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
@@ -893,7 +897,7 @@ __global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int
 #undef bope
 #undef ghcof
 }
-
+}
 //-----------------------------------------------------------------------
 __device__ void rhs4lower_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			       int nk,
@@ -944,7 +948,8 @@ __device__ void rhs4lower_dev( int ifirst, int ilast, int jfirst, int jlast, int
       return;
 
    cof = 1.0/(h*h);
-
+   if ( (i <= ilast-2) && (j <= jlast-2) && (k <= klast-2) )
+   {
    mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
    mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
@@ -1197,6 +1202,7 @@ __device__ void rhs4lower_dev( int ifirst, int ilast, int jfirst, int jlast, int
 #undef acof
 #undef bope
 #undef ghcof
+}
 }
 
 //-----------------------------------------------------------------------
@@ -1509,6 +1515,8 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
    int j = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
    int k = kfirst + ghost_points + threadIdx.z + blockIdx.z*blockDim.z;
 
+   if ( (i <= ilast-2) && (j <= jlast-2) && (k <= klast-2) )
+   {
    cof = 1.0/(h*h);
    mux1 = mu(i-1,j,k)*strx(i-1)-
       tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -1743,6 +1751,7 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 #undef stry
 #undef strz
 }
+}
 
 //-----------------------------------------------------------------------
 __global__ void rhs4upper_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -1792,6 +1801,8 @@ __global__ void rhs4upper_dev_rev( int ifirst, int ilast, int jfirst, int jlast,
    if( k < 1 || k > 6 )
       return;
 
+   if ( (i <= ilast-2) && (j <= jlast-2) && (k <= klast-2) )
+   {
    cof = 1.0/(h*h);
    mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -2036,6 +2047,7 @@ __global__ void rhs4upper_dev_rev( int ifirst, int ilast, int jfirst, int jlast,
 #undef bope
 #undef ghcof
 }
+}
 
 //-----------------------------------------------------------------------
 __device__ void rhs4lower_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -2085,6 +2097,8 @@ __device__ void rhs4lower_dev_rev( int ifirst, int ilast, int jfirst, int jlast,
    if( k < nk-5 || k > nk )
       return;
 
+   if ( (i <= ilast-2) && (j <= jlast-2) && (k <= klast-2) )
+   {
    cof = 1.0/(h*h);
 
    mux1 = mu(i-1,j,k)*strx(i-1)-
@@ -2340,7 +2354,7 @@ __device__ void rhs4lower_dev_rev( int ifirst, int ilast, int jfirst, int jlast,
 #undef bope
 #undef ghcof
 }
-
+}
 //-----------------------------------------------------------------------
 __global__ void check_nan_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                                float_sw4* u, int *retval_global, int *idx_global )

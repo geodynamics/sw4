@@ -1083,6 +1083,9 @@ void EW::processDeveloper(char* buffer)
 	m_corder = strcmp(token,"yes")==0
 	   || strcmp(token,"1")==0 || strcmp(token,"on")==0;
 	Sarray::m_corder = m_corder;
+#ifndef SW4_CROUTINES
+	CHECK_INPUT(m_corder==0,"ERROR: developer option corder, must be zero when fortran routines are used");
+#endif	
      }
      else
      {
