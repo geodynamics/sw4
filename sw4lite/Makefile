@@ -51,7 +51,7 @@ ifeq ($(openmp),yes)
   CFLAGS   += $(OMPOPT) -DSW4_OPENMP
 endif
 
-ifeq ($(nofort),yes)
+ifeq ($(conly),yes)
    CXXFLAGS += -DSW4_CROUTINES
    ifeq ($(openmp),yes)
 	CXXFLAGS += $(OMPOPT) -DSW4_OPENMP
@@ -63,7 +63,7 @@ fullpath := $(shell pwd)
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
-ifeq ($(nofort),yes)
+ifeq ($(conly),yes)
    ifeq ($(openmp),yes)
       debugdir := debug_mp_c
       optdir   := optimize_mp_c
@@ -103,7 +103,7 @@ OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_function
 
 FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o type_defs.o lglnodes.o dgmodule.o
 
-ifneq ($(nofort),yes)
+ifneq ($(conly),yes)
   OBJ += $(FOROBJ)
 endif
 FOBJ = $(addprefix $(builddir)/,$(OBJ))
