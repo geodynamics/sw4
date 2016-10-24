@@ -44,7 +44,7 @@ void EWCuda::initialize_gpu(int myrank)
    if( m_ndevice > 0){
 
       cudaDeviceReset();
-      int myDevice = sched_getcpu()/(40);
+      int myDevice = sched_getcpu()/(8);
       int cpu = sched_getcpu();
       cout << "myrank = " << myrank <<  "  cpuid = " << cpu << "  mydevice = " << myDevice  << endl;
 

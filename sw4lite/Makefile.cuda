@@ -12,8 +12,8 @@ HOSTCOMP = $(COMPILERPATH)/icpc
 #
 # Pgi
 # (currently this does not work)
-#MPIPATH = /usr/local/tools/mvapich2-pgi
 #COMPILERPATH = /usr/local/tools/pgi-15.7/bin
+#MPIPATH = /usr/local/tools/mvapich2-pgi
 #HOSTCOMP=$(COMPILERPATH)/pgCC
 #
 #CXX    = $(MPIPATH)/bin/mpicxx
@@ -23,6 +23,7 @@ CXX = nvcc
 #CC = icc
 #
 #
+
 
 ifeq ($(debug),yes)
    optlevel = DEBUG
@@ -41,17 +42,26 @@ else
    CFLAGS   = -O 
 endif
 
-#FFLAGS   += -Mcuda 
-#CXXFLAGS += -DSW4_OPENMP
-#CFLAGS   += -openmp -DSW4_OPENMP
+#FFLAGS   += -Mcuda
+
+ifeq ($(openmp),yes)
+   OMPOPT = -Xcompiler -fopenmp
+   CXXFLAGS += $(OMPOPT) -DSW4_OPENMP
+   CFLAGS   += $(OMPOPT) -DSW4_OPENMP
+endif
 
 fullpath := $(shell pwd)
 
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
-debugdir := debug_cuda
-optdir := optimize_cuda
+ifeq ($(openmp),yes)
+   debugdir := debug_mp_cuda
+   optdir := optimize_mp_cuda
+else
+   debugdir := debug_cuda
+   optdir := optimize_cuda
+endif
 
 ifdef EXTRA_CXX_FLAGS
    CXXFLAGS += $(EXTRA_CXX_FLAGS)
@@ -82,7 +92,7 @@ sw4g: $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -L$(MPILIB) -Xlinker "-rpath=$(MPILIB)" -arch=sm_35 -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart -lmpich -lmpl -lpmi
+	cd $(builddir); nvcc -L$(MPILIB) $(OMPOPT) -Xlinker "-rpath=$(MPILIB)" -arch=sm_35 -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart -lmpich -lmpl -lpmi 
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
