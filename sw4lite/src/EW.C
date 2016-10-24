@@ -26,7 +26,6 @@
 #include "F77_FUNC.h"
 #include "EWCuda.h"
 
-
 #ifndef SW4_CROUTINES
 extern "C" {
    void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)( int*, int*, int*, int*, int*, int*, int*, int*, 
@@ -103,7 +102,8 @@ EW::EW( const string& filename ) :
    m_nwriters(8),
    m_output_detailed_timing(false),
    m_ndevice(0),
-   m_corder(false)
+   m_corder(false),
+   m_use_dg(false)
 {
    m_gpu_blocksize[0] = 16;
    m_gpu_blocksize[1] = 16;
@@ -115,7 +115,14 @@ EW::EW( const string& filename ) :
    m_restart_check_point = CheckPoint::nil;
    parseInputFile( filename );
    setupRun( );
-   timesteploop( mU, mUm );
+   if(m_use_dg){
+       timeStepLoopdGalerkin();
+   }
+   else
+   {
+       timesteploop( mU, mUm );
+   }
+    
 }
 
 //-----------------------------------------------------------------------
@@ -414,6 +421,33 @@ void EW::processTime(char* buffer)
       mTimeIsSet = false;
    }
 }
+
+void EW::processdGalerkin(char* buffer)
+{
+    char* token = strtok(buffer, " \t");
+    token = strtok(NULL, " \t");
+    string err = "ERROR in processGalerkin: ";
+    while (token != NULL)
+    {
+            // while there are still tokens in the string
+        if (startswith("#", token) || startswith(" ", buffer))
+                // Ignore commented lines and lines with just a space.
+            break;
+        if (startswith("order=", token))
+        {
+            token += 6; // skip order=
+            CHECK_INPUT(atoi(token) >= 1, err << "order must be greater than 1: " << token);
+            int qorder = atoi(token);
+            set_dg_orders(qorder,qorder);
+        }
+        else
+        {
+            badOption("time", token);
+        }
+        token = strtok(NULL, " \t");
+    }
+}
+
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer)
@@ -1028,21 +1062,6 @@ void EW::processDeveloper(char* buffer)
 	token += 13;
 	m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0 || strcmp(token,"yes")==0;
      }
-     //#ifdef SW4_OPENMP
-     //     else if( startswith("numthreads=",token) )
-     //     {
-     //	token += 11;
-     //	int nth = atoi(token);
-     //	CHECK_INPUT( 0 < nth && nth < 1024, "Number of threads " << nth << " out of range\n");
-     //        omp_set_num_threads(nth);
-     //     }
-     //#else
-     //     else if( startswith("numthreads=",token) )
-     //     {
-     //	if( m_myrank == 0 )
-     //	   cout << "WARNING: OpenMP not in use, developer numthreads ignored" << endl;
-     //     }     
-     //#endif
      else if( startswith("thblocki=",token) )
      {
 	token += 9;
@@ -1383,6 +1402,14 @@ bool EW::parseInputFile( const string& filename )
       // Need process developer before setupMPICommunication, because of array ordering m_corder
       else if(startswith("developer", buffer))
 	 processDeveloper(buffer);
+      else if( startswith("dgalerkin", buffer) )
+      {
+          m_use_dg=true;
+          if (m_myrank == 0){
+              cout << "Using DG solver" << endl;
+          }
+          processdGalerkin(buffer);
+      }
    }   
    if (!foundGrid)
       if (m_myrank == 0)
@@ -1412,7 +1439,8 @@ bool EW::parseInputFile( const string& filename )
       {
 	 if (startswith("#", buffer) || 
 	     startswith("grid", buffer) ||
-	     startswith("\n", buffer) ||
+             startswith("dgalerkin", buffer) ||
+             startswith("\n", buffer) ||
 	     startswith("\r", buffer) )
 	 {
 	 }

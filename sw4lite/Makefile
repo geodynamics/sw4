@@ -2,11 +2,31 @@
 # use ic-16.0.210
 # use mvapich2-intel-2.1
 #
-FC  = mpif90
-CXX = mpic++
-OMPOPT = -qopenmp
-EXTRA_LINK_FLAGS = -lifcore
-openmp = yes
+HOSTNAME := $(shell hostname)
+
+ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
+  FC = mpif90
+  CXX = mpicxx
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc48 -lgfortran
+  openmp = yes
+else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
+  FC = mpiifort
+  CXX = mpicxx
+  OMPOPT = -qopenmp
+  MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
+  EXTRA_CXX_FLAGS = -xCORE-AVX2
+  EXTRA_FORT_FLAGS = -xCORE-AVX2
+  EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
+  openmp = yes
+else
+  FC  = mpif90
+  CXX = mpic++
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -lgfortran -lblas -llapack
+  openmp = yes
+  debug = no
+endif
 
 ifeq ($(debug),yes)
    optlevel = DEBUG
@@ -79,9 +99,9 @@ else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o rhs4sg_rev.o EWCuda.o CheckPoint.o Parallel_IO.o
+OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o rhs4sg_rev.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o
 
-FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o
+FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o type_defs.o lglnodes.o dgmodule.o
 
 ifneq ($(nofort),yes)
   OBJ += $(FOROBJ)
@@ -107,5 +127,14 @@ $(builddir)/%.o:src/%.C
 $(builddir)/%.o:src/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$< 
+
+$(builddir)/%.o:src/%.f90
+	/bin/mkdir -p $(builddir)
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$< 
+
+clean:
+	/bin/mkdir -p $(optdir)
+	/bin/mkdir -p $(debugdir)
+	cd $(optdir); /bin/rm -f sw4g *.o; cd ../$(debugdir); /bin/rm -f sw4g *.o
 
 
