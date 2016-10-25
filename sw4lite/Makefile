@@ -19,6 +19,12 @@ else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
+else ifeq ($(findstring cab,$(HOSTNAME)),cab)
+# assumes: use ic_16.0.210, use mvapich2-intel-2.1
+  FC = mpif90
+  CXX = mpic++
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -lblas -llapack
 else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   FC = mpiifort
   CXX = mpiicpc
