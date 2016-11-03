@@ -180,10 +180,24 @@ class EW
    bool usingParallelFS(){ return m_pfs;}
    int getNumberOfWritersPFS(){ return m_nwriters;}
    // DG stuff
-   void set_dg_orders( int qu, int qv);
+
    int m_qu;
    int m_qv; 
-
+   int m_nint;
+   int m_single_mode_problem;
+   int m_dg_bc_type;
+       // Methods
+   void initialData(double* udg, double* vdg);
+   void assemble(double* MU,double* MV,double* SU,double* SV,double* LU,double* LV);
+   void set_dg_orders( int qu, int qv);   
+   void build_w_and_v(double* udg, double* vdg, double* w_in_all_faces, double* v_in_all_faces);
+   void numerical_fluxes(double* w_star_all_faces, double* v_star_all_faces,
+                         double* w_in_all_faces, double* v_in_all_faces,
+                         double* w_out_all_faces, double* v_out_all_faces);
+   void computeError(double* udg, double* vdg, double t);
+   void get_exact_point_source_dG(double* u, double t, double x, double y, double z);
+   
+   
    // Variables ----------
 
    // Grid and domain
