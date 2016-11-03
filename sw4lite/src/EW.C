@@ -670,7 +670,7 @@ void EW::processSource( char* buffer )
 
    //   int ncyc = 0;
    //   bool ncyc_set = false;
-
+                                     
    float_sw4* par=NULL;
    int* ipar=NULL;
    int npar=0, nipar=0;
@@ -1417,8 +1417,8 @@ bool EW::parseInputFile( const string& filename )
 	 else if(startswith("time", buffer))
 	    processTime(buffer);
 	 else if( startswith("source",buffer))
-	    processSource(buffer);
-	 else if( startswith("supergrid",buffer))
+             processSource(buffer);
+         else if( startswith("supergrid",buffer))
 	    processSuperGrid(buffer);
 	 else if(startswith("testpointsource", buffer))
 	    processTestPointSource(buffer);

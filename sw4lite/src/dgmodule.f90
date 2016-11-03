@@ -271,7 +271,7 @@ contains
      w_out_all_faces(:,:,6,2,:,:,klast)     =  w_in_all_faces(:,:,6,2,:,:,klast)
      w_out_all_faces(:,:,6,3,:,:,klast)     = -w_in_all_faces(:,:,6,3,:,:,klast)
      !$OMP END WORKSHARE
-    else
+    else !! One free surface
      if (sbx_b.eq.1) then
       !$OMP WORKSHARE
       v_out_all_faces(:,:,1,1,ifirst,:,:)     = -v_in_all_faces(:,:,1,1,ifirst,:,:)
@@ -314,16 +314,16 @@ contains
       !$OMP END WORKSHARE
      end if
      !$OMP WORKSHARE
-     v_out_all_faces(:,:,5,1,:,:,kfirst)     = -v_in_all_faces(:,:,5,1,:,:,kfirst)
-     v_out_all_faces(:,:,5,2,:,:,kfirst)     = -v_in_all_faces(:,:,5,2,:,:,kfirst)
-     v_out_all_faces(:,:,5,3,:,:,kfirst)     = -v_in_all_faces(:,:,5,3,:,:,kfirst)
+     v_out_all_faces(:,:,5,1,:,:,kfirst)     =  v_in_all_faces(:,:,5,1,:,:,kfirst)
+     v_out_all_faces(:,:,5,2,:,:,kfirst)     =  v_in_all_faces(:,:,5,2,:,:,kfirst)
+     v_out_all_faces(:,:,5,3,:,:,kfirst)     =  v_in_all_faces(:,:,5,3,:,:,kfirst)
      v_out_all_faces(:,:,6,1,:,:,klast)      = -v_in_all_faces(:,:,6,1,:,:,klast)
      v_out_all_faces(:,:,6,2,:,:,klast)      = -v_in_all_faces(:,:,6,2,:,:,klast)
      v_out_all_faces(:,:,6,3,:,:,klast)      = -v_in_all_faces(:,:,6,3,:,:,klast)
 
-     w_out_all_faces(:,:,5,1,:,:,kfirst)     =  w_in_all_faces(:,:,5,1,:,:,kfirst)
-     w_out_all_faces(:,:,5,2,:,:,kfirst)     =  w_in_all_faces(:,:,5,2,:,:,kfirst)
-     w_out_all_faces(:,:,5,3,:,:,kfirst)     =  w_in_all_faces(:,:,5,3,:,:,kfirst)
+     w_out_all_faces(:,:,5,1,:,:,kfirst)     =  -w_in_all_faces(:,:,5,1,:,:,kfirst)
+     w_out_all_faces(:,:,5,2,:,:,kfirst)     =  -w_in_all_faces(:,:,5,2,:,:,kfirst)
+     w_out_all_faces(:,:,5,3,:,:,kfirst)     =  -w_in_all_faces(:,:,5,3,:,:,kfirst)
      w_out_all_faces(:,:,6,1,:,:,klast)      =  w_in_all_faces(:,:,6,1,:,:,klast)
      w_out_all_faces(:,:,6,2,:,:,klast)      =  w_in_all_faces(:,:,6,2,:,:,klast)
      w_out_all_faces(:,:,6,3,:,:,klast)      =  w_in_all_faces(:,:,6,3,:,:,klast)
@@ -2565,7 +2565,7 @@ contains
         end do
         ! Compute l2-err
         f_int = (u_exact - u_elem)**2
-        if( R .lt. 1.5_dp ) then
+        if( R .lt. 1.99_dp*h) then
          f_int = 0.0_dp
         end if
         if (ivar.eq.3) then

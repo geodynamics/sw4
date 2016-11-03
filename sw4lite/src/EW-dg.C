@@ -134,7 +134,6 @@ void EW::timeStepLoopdGalerkin()
         cout << endl << "****** Computing the error in initial data ******" << endl;
     }
     computeError(udg,vdg,t);
-
     double mu, lambda,rho;
         // Assume constant material, sample it in middle of domain
     int imid = (ifirst+ilast)/2;
@@ -149,6 +148,136 @@ void EW::timeStepLoopdGalerkin()
     dt = mTmax/(1.0*nsteps);
     mDt = dt;
     if( m_myrank == 0 ){cout << endl << "****** CFL= " << mCFL << " time step=" << mDt << endl;}
+
+    double rec_coord[3];
+    rec_coord[0] = 5.0+0.5*h;
+    rec_coord[1] = 5.0+0.5*h;
+    rec_coord[2] = 6.0+0.5*h;
+        // Look for a recorder
+        // Is this recorder inside this processor?
+        // We always push into + quadrant if we are on a face/edge/vertex
+    double tol = 1e-10;
+    int inx,iny,inz;
+    double r1,r2,r3;
+    double rtmp;
+    inx = rec_coord[0]/h;
+    rtmp = rec_coord[0];
+    if (fabs(rtmp - inx*h) < tol) {
+        rtmp = rtmp + 0.1*h;
+    }
+    inx = rtmp/h+1;
+    iny = rec_coord[1]/h;
+    rtmp = rec_coord[1];
+    if (fabs(rtmp - iny*h) < tol) {
+        rtmp = rtmp + 0.1*h;
+    }
+    iny = rtmp/h+1;
+    inz = rec_coord[2]/h;
+    rtmp = rec_coord[2];
+    if (fabs(rtmp - inz*h) < tol) {
+        rtmp = rtmp + 0.1*h;
+    }
+    inz = rtmp/h+1;
+    int got_rec = 0;
+    
+    double * px_rec = new double[q_u+1];
+    double * py_rec = new double[q_u+1];
+    double * pz_rec = new double[q_u+1];
+    double * prx_rec = new double[q_u+1];
+    double * pry_rec = new double[q_u+1];
+    double * prz_rec = new double[q_u+1];
+    int ncomponents = 3;
+    double urec[ncomponents];
+    double vrec[ncomponents];
+    
+    ofstream myfile;    
+    if ( inx >= ifirst && inx <= ilast &&
+         iny >= jfirst && iny <= jlast){
+        got_rec = 1;
+        char fn [100];
+	snprintf (fn, sizeof fn, "error_%05d.txt", klast);
+        myfile.open (fn);
+
+        r1 = 2.0*((rec_coord[0] - (inx-1.0)*h)/h)-1.0;
+        r2 = 2.0*((rec_coord[1] - (iny-1.0)*h)/h)-1.0;
+        r3 = 2.0*((rec_coord[2] - (inz-1.0)*h)/h)-1.0;
+        cout << endl << "****** Recorder found in proc " << m_myrank << "  ******" << endl;
+        cout.precision(7);
+	cout << fixed << "x,y,z computed location : " << ((inx-0.5)+0.5*r1)*h << " "
+	     << ((iny-0.5)+0.5*r2)*h << " "<<  ((inz-0.5)+0.5*r3)*h << endl << endl ;
+        eval_legendre(px_rec,prx_rec,&q_u,&r1);
+        eval_legendre(py_rec,pry_rec,&q_u,&r2);
+        eval_legendre(pz_rec,prz_rec,&q_u,&r3);
+        get_recorder(udg,vdg,urec,vrec,
+                     &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,&q_u,
+                     px_rec,prx_rec,py_rec,pry_rec,pz_rec,prz_rec,
+                     &inx,&iny,&inz,&ncomponents);
+    }
+
+    int got_src = 0;    
+    double * px_src;
+    double * py_src;
+    double * pz_src;
+    double * prx_src;
+    double * pry_src;
+    double * prz_src;
+    double * point_src;
+    double src_coord[3], f_amp[3];
+    int inxs,inys,inzs;
+
+    if(m_globalUniqueSources.size() > 0){
+        vector<Source*>& a_sources = m_globalUniqueSources;
+        Source source = *a_sources[0];
+        src_coord[0] = source.getX0();
+        src_coord[1] = source.getY0();
+        src_coord[2] = source.getZ0();
+        source.getForces(f_amp[0],f_amp[1],f_amp[2]);
+            // Look for a src
+            // Is this src inside this processor?
+            // We always push into + quadrant if we are on a face/edge/vertex
+        inxs = src_coord[0]/h;
+        rtmp = src_coord[0];
+        if (fabs(rtmp - inxs*h) < tol) {
+            rtmp = rtmp + 0.1*h;
+        }
+        inxs = rtmp/h+1;
+        inys = src_coord[1]/h;
+        rtmp = src_coord[1];
+        if (fabs(rtmp - inys*h) < tol) {
+            rtmp = rtmp + 0.1*h;
+        }
+        inys = rtmp/h+1;
+        inzs = src_coord[2]/h;
+        rtmp = src_coord[2];
+        if (fabs(rtmp - inzs*h) < tol) {
+            rtmp = rtmp + 0.1*h;
+        }
+        inzs = rtmp/h+1;
+        px_src = new double[q_u+1];
+        py_src = new double[q_u+1];
+        pz_src = new double[q_u+1];
+        prx_src = new double[q_u+1];
+        pry_src = new double[q_u+1];
+        prz_src = new double[q_u+1];
+        point_src = new double[(q_v+1)*(q_v+1)*(q_v+1)];
+        if ( inxs >= ifirst && inxs <= ilast &&
+             inys >= jfirst && inys <= jlast){
+            got_src = 1;
+            cout << endl << "****** Source found in proc " << m_myrank << "  ******" << endl;
+            cout << "Source coordinates x0: " << src_coord[0]
+        	 << " y0: " << src_coord[1] << " z0: "
+        	 << src_coord[2] << endl;
+            r1 = 2.0*((src_coord[0] - (inxs-1.)*h)/h)-1.0;
+            r2 = 2.0*((src_coord[1] - (inys-1.)*h)/h)-1.0;
+            r3 = 2.0*((src_coord[2] - (inzs-1.)*h)/h)-1.0;
+            cout << fixed << "r1, r1 and r3 local coord : " << r1 << " "<< r2 << " "<< r3 << endl << endl ;
+            eval_legendre(px_src,prx_src,&q_u,&r1);
+            eval_legendre(py_src,pry_src,&q_u,&r2);
+            eval_legendre(pz_src,prz_src,&q_u,&r3);
+            get_dirac_source(point_src,px_src,py_src,pz_src,&q_u);
+        }
+    }
+
     double df;
         //int ntay = 4*(((int) (q_u-1)/4)+1);
     int ntay = max(4,q_u+1);
@@ -156,6 +285,25 @@ void EW::timeStepLoopdGalerkin()
         cout << "Starting DG-solver Using " << ntay << " time derivatives and degree "
              << q_u << " polynomials."<<  endl;
     }
+
+    int nsrc;
+    double * tg;
+    double * ct;
+    double * fsrc;
+    double * source_tay_coeff;
+    
+    if(got_src == 1){
+            //DEAA What can we get away with here?
+        nsrc = ntay+3;
+        tg = new double[nsrc+1];
+        ct = new double[(nsrc+1)*(ntay+1)];
+        fsrc = new double[nsrc+1];
+        source_tay_coeff = new double[nsrc+1];
+        
+        set_tay_weights(tg,ct,&nsrc,&ntay);
+        get_source_tay_coeff(source_tay_coeff,tg,ct,&nsrc,&ntay,&t,&dt);
+    }
+
         // Do we need to set boundary conditions?
     int sbx_b,sbx_e,sby_b,sby_e;
     sbx_b = (ifirst == 1) ? 1 : 0;                
@@ -165,9 +313,9 @@ void EW::timeStepLoopdGalerkin()
     
     for (int it = 1; it <= nsteps; it++){
         t = (it-1)*dt;
-        // if (got_src == 1){
-        //     get_source_tay_coeff(source_tay_coeff,tg,ct,&nsrc,&ntay,&t,&dt);
-        // }
+        if (got_src == 1){
+             get_source_tay_coeff(source_tay_coeff,tg,ct,&nsrc,&ntay,&t,&dt);
+         }
         df = dt;
             // Start the update to u(t+dt) = updg = dt*utdg+dt^2/2* (d\dt)(utdg) ...
         start_next_step(updg,vpdg,udg,vdg,&ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,&q_u);
@@ -207,14 +355,13 @@ void EW::timeStepLoopdGalerkin()
             compute_surface_integrals(v_in_all_faces,v_star_all_faces,w_star_all_faces,
                                       force_u,force_v,LU,LV,&h,&q_u,&q_v,&n_int,
                                       &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast);
-                // if (got_src == 1){
-                //         // Add forcing
-                //     double stc = source_tay_coeff[itay-1];
-                //     add_dirac_source(force_v,point_src,f_amp,&stc,
-                //                      &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,
-                //                      &inxs,&inys,&inzs);
-                // }
-            
+             if (got_src == 1){
+                     // Add forcing
+                 double stc = source_tay_coeff[itay-1];
+                 add_dirac_source(force_v,point_src,f_amp,&stc,
+                                  &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,
+                                  &inxs,&inys,&inzs);
+             }
             compute_time_derivatives(utdg,vtdg,udg,vdg,force_u,force_v,
                                      MU,MV,SU,SV,
                                      &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,
@@ -225,6 +372,40 @@ void EW::timeStepLoopdGalerkin()
             // Swap the new into the old
         start_next_step(udg,vdg,updg,vpdg,&ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,&q_u);
         t = t+dt;
+        if(got_rec == 1){
+            get_recorder(udg,vdg,urec,vrec,
+                         &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,&q_u,
+                         px_rec,prx_rec,py_rec,pry_rec,pz_rec,prz_rec,
+                         &inx,&iny,&inz,&ncomponents);
+            cout.precision(16);
+            double ups[3];
+            double x_err = rec_coord[0];
+            double y_err = rec_coord[1];
+            double z_err = rec_coord[2];
+            get_exact_point_source_dG(ups,t,x_err,y_err,z_err);
+            myfile << fixed << t << " " << ups[2] << " " << urec[2] << " " << ups[2]-urec[2] << endl;
+            char fn [100];
+            snprintf (fn, sizeof fn, "ul_%05d_%05d.txt",klast, it);
+
+            ofstream linefile;    
+            linefile.open (fn);
+            linefile.precision(16);
+                // record at the center of each element along the source.
+            for (int iline = kfirst; iline <= klast; iline++){
+                x_err = (inx-0.5)*h;
+                y_err = (iny-0.5)*h;
+                z_err = (iline-0.5)*h;
+                get_exact_point_source_dG(ups,t,x_err,y_err,z_err);
+                get_recorder(udg,vdg,urec,vrec,
+                             &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,&q_u,
+                             px_rec,prx_rec,py_rec,pry_rec,pz_rec,prz_rec,
+                             &inx,&iny,&iline,&ncomponents);
+                linefile << fixed << " " << urec[0] << " " << urec[1] << " " << urec[2] <<
+                    " " << ups[0] << " " << ups[1] << " " << ups[2] << endl;
+            }
+            linefile.close();
+        }
+        
     }
 
     if(m_myrank == 0){cout << "checking errors at final time: " << mTmax <<  endl;}
@@ -239,6 +420,13 @@ void EW::timeStepLoopdGalerkin()
     delete [] x_out_b,x_out_e,y_out_b,y_out_e,x_in_b,x_in_e,y_in_b,y_in_e;
     delete [] w_in_all_faces,w_out_all_faces,w_star_all_faces,v_in_all_faces,
         v_out_all_faces,v_star_all_faces;
+
+    delete [] px_rec, py_rec, pz_rec;
+    delete [] prx_rec, pry_rec, prz_rec;
+    if(got_rec == 1)
+        myfile.close();
+
+
 #endif
 }
 
@@ -341,9 +529,9 @@ void EW::computeError(double* udg, double* vdg, double t)
         MPI_Allreduce( &l2_err_tmp[0], &l2_err[0], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
         if( m_myrank == 0 ){
             cout << "checking errors at time: " << t <<  endl;
-            cout << "l2_err 1 " << l2_err[0] <<  endl;
-            cout << "l2_err 2 " << sqrt(l2_err[1]) <<  endl;
-            cout << "l2_err 3 " << sqrt(l2_err[2]) <<  endl;
+            cout << "Max-err in u_z " << l2_err[0] <<  endl;
+            cout << "l2_err in u_y " << sqrt(l2_err[1]) <<  endl;
+            cout << "l2_err in u_z " << sqrt(l2_err[2]) <<  endl;
         }
     }
 
@@ -482,12 +670,10 @@ void EW::processdGalerkin(char* buffer)
                 double rho = 1.0;
                 double mu  = 1.0;
                 double la  = 1.0;
-                for( int g=0 ; g < mNumberOfGrids ; g++ )
-                {
-                    mRho[g].set_value(rho);
-                    mMu[g].set_value(mu);
-                    mLambda[g].set_value(la);
-                }
+                int g = 0;
+                mRho[g].set_value(rho);
+                mMu[g].set_value(mu);
+                mLambda[g].set_value(la);
             }
         }
         else
@@ -498,4 +684,39 @@ void EW::processdGalerkin(char* buffer)
     }
 }
 
+//-----------------------------------------------------------------------
+void EW::get_exact_point_source_dG(double* u, double t, double x, double y, double z)
+{
+        // Assume constant material, sample it in middle of domain
+    float_sw4 rho   = 1.0;
+    float_sw4 beta  =  1.0;
+    float_sw4 alpha =  sqrt(3.0);
+    float_sw4 h   = mGridSize[0];
+    
+    float_sw4 x0 = 0.5*h+5.;
+    float_sw4 y0 = 0.5*h+5.;
+    float_sw4 z0 = 0.5*h+5.;
+    float_sw4 fr = 1.0;
+    float_sw4 time = t;
+    float_sw4 fx = 0.0;
+    float_sw4 fy = 0.0;
+    float_sw4 fz = 1.0;
+    float_sw4 eps = 1e-3*h;
+    float_sw4 R = sqrt( (x - x0)*(x - x0) + (y - y0)*(y - y0) + (z - z0)*(z - z0) );
+    float_sw4 A, B;
+    if( R < eps )
+        u[0] = u[1] = u[2] = 0.0;
+    else
+    {
+            //else if (tD == iC6SmoothBump)
+        A = ( 1/pow(alpha,2) * C6SmoothBump(time, fr*R, alpha) - 1/pow(beta,2) * C6SmoothBump(time, fr*R, beta) +
+              3/pow(fr*R,2) * C6SmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R*R*R)  ;
+	
+        B = ( 1/pow(beta,2) * C6SmoothBump(time, fr*R, beta) -
+              1/pow(fr*R,2) * C6SmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R) ;
+    }
+    u[0] = ( (x - x0)*(x - x0)*fx + (x - x0)*(y - y0)*fy + (x - x0)*(z - z0)*fz )*A + fx*B;
+    u[1] = ( (y - y0)*(x - x0)*fx + (y - y0)*(y - y0)*fy + (y - y0)*(z - z0)*fz )*A + fy*B;
+    u[2] = ( (z - z0)*(x - x0)*fx + (z - z0)*(y - y0)*fy + (z - z0)*(z - z0)*fz )*A + fz*B;
+}
 
