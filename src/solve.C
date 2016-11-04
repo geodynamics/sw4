@@ -1183,7 +1183,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
 
     // Set ghost point values that are also unknown variables to zero. Assume that Dirichlet data
-    // are already set on ghost points on the sides, that are not treated as unknown variables.
+    // are already set on ghost points on the sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true );
       dirichlet_hom_ic( a_Up[g], g, kc-1, true );
       if( m_doubly_periodic )
@@ -1192,7 +1192,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
       }
 
-      if( predictor )
+      if( predictor ) // AP: the name of the routine compute_preliminary_corrector() suggests
+// that it should be called if !predictor ???
       {
 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
