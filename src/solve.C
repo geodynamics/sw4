@@ -1557,6 +1557,24 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       }
    }
 
+// FROM WPP
+   // // add -(1/rho)*L(alpha) to forcing. Note: forcing array will be modified
+   // // however this is just a temporary array in the calling routine.
+   // for( int a = 0 ; a < m_number_mechanisms ; a++ )
+   // {
+   //    double* alpha_p  = alpha_a[a].c_ptr();
+   //    double* alphaf_p = alphaf_a[a].c_ptr();
+   //    double* muve_p      = mMuVE[g][a].c_ptr();
+   //    double* lambdave_p  = mLambdaVE[g][a].c_ptr();
+   //    double* muvef_p     = mMuVE[g+1][a].c_ptr();
+   //    double* lambdavef_p = mLambdaVE[g+1][a].c_ptr();
+   //    // f := f - L_a(alpha)/rho
+   //    F77_FUNC(cikplaneatt,CIKPLANEATT)( &ni, &nj, &nk, alpha_p, f_p, &side_low,
+   //      			         &hc, muve_p, lambdave_p, rho_p );
+   //    F77_FUNC(cikplaneatt,CIKPLANEATT)( &nif, &njf, &nkf, alphaf_p, ff_p, &side_high,
+   //      			         &hf, muvef_p, lambdavef_p, rhof_p );
+   // }
+
    double cof = mDt*mDt*mDt*mDt/12.0;
    for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
       for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
