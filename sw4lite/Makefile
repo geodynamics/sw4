@@ -34,12 +34,19 @@ else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
+else ifeq ($(findstring valhall,$(HOSTNAME)),valhall)
+  FC = mpif90_ifort
+  CXX = mpicc_icc
+  OMPOPT = -qopenmp
+  EXTRA_LINK_FLAGS = -lifcore -lblas -llapack
+  openmp = yes
+  debug = no
 else
   FC  = mpif90
   CXX = mpic++
   OMPOPT = -fopenmp
   EXTRA_LINK_FLAGS = -lgfortran -lblas -llapack
-  openmp = yes
+  openmp = no
   debug = no
 endif
 

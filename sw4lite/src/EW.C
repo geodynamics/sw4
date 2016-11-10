@@ -422,31 +422,6 @@ void EW::processTime(char* buffer)
    }
 }
 
-void EW::processdGalerkin(char* buffer)
-{
-    char* token = strtok(buffer, " \t");
-    token = strtok(NULL, " \t");
-    string err = "ERROR in processGalerkin: ";
-    while (token != NULL)
-    {
-            // while there are still tokens in the string
-        if (startswith("#", token) || startswith(" ", buffer))
-                // Ignore commented lines and lines with just a space.
-            break;
-        if (startswith("order=", token))
-        {
-            token += 6; // skip order=
-            CHECK_INPUT(atoi(token) >= 1, err << "order must be greater than 1: " << token);
-            int qorder = atoi(token);
-            set_dg_orders(qorder,qorder);
-        }
-        else
-        {
-            badOption("time", token);
-        }
-        token = strtok(NULL, " \t");
-    }
-}
 
 
 //-----------------------------------------------------------------------
@@ -695,7 +670,7 @@ void EW::processSource( char* buffer )
 
    //   int ncyc = 0;
    //   bool ncyc_set = false;
-
+                                     
    float_sw4* par=NULL;
    int* ipar=NULL;
    int npar=0, nipar=0;
@@ -1405,14 +1380,6 @@ bool EW::parseInputFile( const string& filename )
       // Need process developer before setupMPICommunication, because of array ordering m_corder
       else if(startswith("developer", buffer))
 	 processDeveloper(buffer);
-      else if( startswith("dgalerkin", buffer) )
-      {
-          m_use_dg=true;
-          if (m_myrank == 0){
-              cout << "Using DG solver" << endl;
-          }
-          processdGalerkin(buffer);
-      }
    }   
    if (!foundGrid)
       if (m_myrank == 0)
@@ -1442,7 +1409,7 @@ bool EW::parseInputFile( const string& filename )
       {
 	 if (startswith("#", buffer) || 
 	     startswith("grid", buffer) ||
-             startswith("dgalerkin", buffer) ||
+             startswith("developer", buffer) ||
              startswith("\n", buffer) ||
 	     startswith("\r", buffer) )
 	 {
@@ -1450,8 +1417,8 @@ bool EW::parseInputFile( const string& filename )
 	 else if(startswith("time", buffer))
 	    processTime(buffer);
 	 else if( startswith("source",buffer))
-	    processSource(buffer);
-	 else if( startswith("supergrid",buffer))
+             processSource(buffer);
+         else if( startswith("supergrid",buffer))
 	    processSuperGrid(buffer);
 	 else if(startswith("testpointsource", buffer))
 	    processTestPointSource(buffer);
@@ -1463,7 +1430,15 @@ bool EW::parseInputFile( const string& filename )
 	    processCheckPoint(buffer);
 	 else if( startswith("restart",buffer))
 	    processRestart(buffer);
-	 else if (!inputFile.eof() && m_myrank == 0)
+         else if( startswith("dgalerkin", buffer) )
+         {
+             m_use_dg=true;
+             if (m_myrank == 0){
+                 cout << "Using DG solver" << endl;
+             }
+             processdGalerkin(buffer);
+         }
+         else if (!inputFile.eof() && m_myrank == 0)
 	 {
 	    cout << "*** Ignoring command: '" << buffer << "'" << endl;
 	 }
