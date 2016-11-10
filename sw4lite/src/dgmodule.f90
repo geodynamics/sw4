@@ -2565,7 +2565,7 @@ contains
         end do
         ! Compute l2-err
         f_int = (u_exact - u_elem)**2
-        if( R .lt. 1.99_dp*h) then
+        if( R .lt. 1.0_dp) then
          f_int = 0.0_dp
         end if
         if (ivar.eq.3) then
