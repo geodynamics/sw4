@@ -457,9 +457,13 @@ void EW::assemble(double* MU,double* MV,double* SU,double* SV,double* LU,double*
     mu = mMu[g](imid,jmid,kmid);
     lambda = mLambda[g](imid,jmid,kmid);
     rho = mRho[g](imid,jmid,kmid);
+#ifdef SW4_CROUTINES
+    std::cout << "ERROR, DG requires compilation with fortran" << endl;
+    exit(2);
+#else
     assemble_const_coeff(MU,MV,SU,SV,LU,LV,&q_u,&q_v,&n_int,&h,&lambda,&mu,&rho);
     factor(MU,MV,&q_u,&q_v);
-
+#endif
 }
 
 
@@ -483,8 +487,13 @@ void EW::computeError(double* udg, double* vdg, double t)
     double * l2_err = new double[3];
     double * l2_err_tmp = new double[3];
     if(m_single_mode_problem == 1){
-        compute_single_mode_error(l2_err_tmp,udg,&ifirst,&ilast,&jfirst,&jlast,
+#ifdef SW4_CROUTINES
+       std::cout << "ERROR, DG requires compilation with fortran" << endl;
+       exit(2);
+#else
+       compute_single_mode_error(l2_err_tmp,udg,&ifirst,&ilast,&jfirst,&jlast,
                                   &kfirst,&klast,&h,&t,&q_u,&n_int);
+#endif
         MPI_Allreduce( l2_err_tmp, l2_err, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         if( m_myrank == 0 ){
             cout << "checking errors at time: " << t <<  endl;
@@ -523,8 +532,13 @@ void EW::computeError(double* udg, double* vdg, double t)
         parameters[8] = fx;
         parameters[9] = fy;
         parameters[10] = fz;
+#ifdef SW4_CROUTINES
+	std::cout << "ERROR, DG requires compilation with fortran" << endl;
+	exit(2);
+#else
         compute_point_dirac_error(l2_err_tmp,udg,&ifirst,&ilast,&jfirst,&jlast,
                                   &kfirst,&klast,&h,&t,&q_u,&n_int,parameters);
+#endif
         MPI_Allreduce( &l2_err_tmp[1], &l2_err[1], 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         MPI_Allreduce( &l2_err_tmp[0], &l2_err[0], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
         if( m_myrank == 0 ){
@@ -565,10 +579,14 @@ void EW::numerical_fluxes(double* w_star_all_faces, double* v_star_all_faces,
     mu = mMu[g](imid,jmid,kmid);
     lambda = mLambda[g](imid,jmid,kmid);
     rho = mRho[g](imid,jmid,kmid);
+#ifdef SW4_CROUTINES
+    std::cout << "ERROR, DG requires compilation with fortran" << endl;
+    exit(2);
+#else
     compute_numerical_fluxes(v_out_all_faces,v_in_all_faces,w_out_all_faces,w_in_all_faces,
                              v_star_all_faces,w_star_all_faces,
                              &ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&n_int,&lambda,&mu,&rho);
-
+#endif
 }
 
 
@@ -593,9 +611,13 @@ void EW::initialData(double * udg, double * vdg)
     if(m_single_mode_problem == 1){
         id_type=1;
     }
+#ifdef SW4_CROUTINES
+    std::cout << "ERROR, DG requires compilation with fortran" << endl;
+    exit(2);
+#else
     get_initial_data(udg,vdg,&ifirst,&ilast,&jfirst,&jlast,
                      &kfirst,&klast,&h,&q_v,&q_u,&n_int_id,&id_type);
-
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -624,10 +646,13 @@ void EW::build_w_and_v(double* udg, double* vdg, double* w_in_all_faces, double*
     mu = mMu[g](imid,jmid,kmid);
     lambda = mLambda[g](imid,jmid,kmid);
     rho = mRho[g](imid,jmid,kmid);
-
+#ifdef SW4_CROUTINES
+    std::cout << "ERROR, DG requires compilation with fortran" << endl;
+    exit(2);
+#else
     build_my_v_const_coeff(vdg,v_in_all_faces,&ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&q_v,&n_int);
     build_my_w_const_coeff(udg,w_in_all_faces,&ifirst,&ilast,&jfirst,&jlast,&kfirst,&klast,&h,&q_u,&n_int,&lambda,&mu);
-
+#endif
 }
 
 void EW::processdGalerkin(char* buffer)
