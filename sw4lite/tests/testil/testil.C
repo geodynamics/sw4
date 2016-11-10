@@ -12,8 +12,8 @@ extern "C" {
    void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
 	     int* onesided, double* acof, double* bope, double* ghcof, float_sw4* a_lu,
 	     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4 h,
-		float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-	     float_sw4* lu1, float_sw4* lu2, float_sw4* lu3 );
+		float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz );
+		//	     float_sw4* lu1, float_sw4* lu2, float_sw4* lu3 );
    void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
 	     int* onesided, double* acof, double* bope, double* ghcof, float_sw4* a_lu,
 	     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4 h,
@@ -93,21 +93,21 @@ int main( int argc, char** argv )
    double h = 1.0/(ni-1);
    int ie = ni+ib-1, je=nj+jb-1, ke=nk+kb-1;
   
-   double* u  =new double[ni*nj*nk*3];
-   double* urev  =new double[ni*nj*nk*3];
-   double* eqs=new double[ni*nj*nk*3];
-   double* lu  =new double[ni*nj*nk*3];
-   double* lurev=new double[ni*nj*nk*3];
-   double* lu2 =new double[ni*nj*nk*3];
-   double* mu =new double[ni*nj*nk];
-   double* lambda=new double[ni*nj*nk];
-   double* rho=new double[ni*nj*nk];
-   double* strx = new double[ni];
-   double* stry = new double[nj];
-   double* strz = new double[nk];
-   double* lucmp1  =new double[ni*nj*nk];
-   double* lucmp2  =new double[ni*nj*nk];
-   double* lucmp3  =new double[ni*nj*nk];
+   double* u      = new double[ni*nj*nk*3];
+   double* urev   = new double[ni*nj*nk*3];
+   double* eqs    = new double[ni*nj*nk*3];
+   double* lu     = new double[ni*nj*nk*3];
+   double* lurev  = new double[ni*nj*nk*3];
+   double* lu2    = new double[ni*nj*nk*3];
+   double* mu     = new double[ni*nj*nk];
+   double* lambda = new double[ni*nj*nk];
+   double* rho    = new double[ni*nj*nk];
+   double* strx   = new double[ni];
+   double* stry   = new double[nj];
+   double* strz   = new double[nk];
+   //   double* lucmp1 = new double[ni*nj*nk];
+   //   double* lucmp2 = new double[ni*nj*nk];
+   //   double* lucmp3 = new double[ni*nj*nk];
 
  // Populate the arrays
    size_t npts = ni*nj*nk;
@@ -122,6 +122,15 @@ int main( int argc, char** argv )
 	    get_data( i*h, j*h, k*h, urev[ind], urev[ind+npts], urev[ind+2*npts],
 		      mu[ind], lambda[ind], rho[ind]);
 	    fg( i*h, j*h, k*h, &eqs[3*ind] );
+	    //	    lu[3*ind]  =1e38;
+	    //	    lu[3*ind+1]=1e38;
+	    //	    lu[3*ind+2]=1e38;
+	    //	    lu2[3*ind]  =1e30;
+	    //	    lu2[3*ind+1]=1e30;
+	    //	    lu2[3*ind+2]=1e30;
+	    //	    lurev[ind]  =1e25;
+	    //	    lurev[ind+npts]=1e25;
+	    //	    lurev[ind+2*npts]=1e25;
 	 }
    for( int i=0 ; i< ni ; i++ )
       strx[i] = 1;
@@ -145,7 +154,8 @@ int main( int argc, char** argv )
    {
       tc[s] = gettimec_();
       rhs4sg( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
-	      lu, u, mu, lambda, h, strx, stry, strz, lucmp1, lucmp2, lucmp3 );
+	      lu, u, mu, lambda, h, strx, stry, strz );
+      //	      lu, u, mu, lambda, h, strx, stry, strz, lucmp1, lucmp2, lucmp3 );
       tc[s] = gettimec_()-tc[s];
       //      for( int i=0 ; i < npts ; i++ )
       //      {
@@ -188,7 +198,6 @@ int main( int argc, char** argv )
 		  cout << " component " << m << " at i= " << i << " j= " << j << " k= " << k << " : " << endl;
 		  cout << "         lu(fortran) = " << lu2[3*ind+m] << " lu(Crev) = "  << lurev[ind+m*npts] << endl;
 	       }
-	       
 	    }
 	 }
    cout << "Errors " << er[0] << " " << er[1] << " " << er[2] << endl;

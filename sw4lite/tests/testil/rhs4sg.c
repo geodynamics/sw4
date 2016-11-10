@@ -9,7 +9,7 @@
 
 
 void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-	     int nk, int* onesided,
+	     int nk, int* __restrict__ onesided,
 	     float_sw4* __restrict__ a_acof,
 	     float_sw4* __restrict__ a_bope,
 	     float_sw4* __restrict__ a_ghcof,
@@ -20,10 +20,11 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 	     float_sw4 h,
 	     float_sw4* __restrict__ a_strx,
 	     float_sw4* __restrict__ a_stry,
-	     float_sw4* __restrict__ a_strz,
-	     float_sw4* __restrict__ a_lu1,
-	     float_sw4* __restrict__ a_lu2, 
-	     float_sw4* __restrict__ a_lu3  )
+	     float_sw4* __restrict__ a_strz
+	     )
+//	     float_sw4* __restrict__ a_lu1,
+//	     float_sw4* __restrict__ a_lu2, 
+//	     float_sw4* __restrict__ a_lu3  )
 //void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 //	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
 //	     float_sw4*  a_lu, float_sw4*  a_u, float_sw4*  a_mu, 
@@ -50,9 +51,9 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 #define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
-#define lu1(i,j,k) a_lu1[base+i+ni*(j)+nij*(k)]   
-#define lu2(i,j,k) a_lu2[base+i+ni*(j)+nij*(k)]   
-#define lu3(i,j,k) a_lu3[base+i+ni*(j)+nij*(k)]   
+   //#define lu1(i,j,k) a_lu1[base+i+ni*(j)+nij*(k)]   
+   //#define lu2(i,j,k) a_lu2[base+i+ni*(j)+nij*(k)]   
+   //#define lu3(i,j,k) a_lu3[base+i+ni*(j)+nij*(k)]   
 
    const float_sw4 a1   = 0;
    const float_sw4 i6   = 1.0/6;
@@ -318,28 +319,17 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 //	    lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
 //            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 //            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	    lu(1,i,j,k) = cof*r1;
-	    lu(2,i,j,k) = cof*r2;
-	    lu(3,i,j,k) = cof*r3;
-//	    a_lu[ind++]=cof*r1;
-//	    a_lu[ind++]=cof*r2;
-//	    a_lu[ind++]=cof*r3;
-//	    lu1(i,j,k) = cof*r1;
-//	    lu2(i,j,k) = cof*r2;
-//	    lu3(i,j,k) = cof*r3;
-//	    lu1rr(i,j,k) = cof*r1;
-//	    lu2rr(i,j,k) = cof*r2;
-//	    lu3rr(i,j,k) = cof*r3;
-	    //	    lu1d1[i-ifirst] = cof*r1;
-	    //	    lu1d2[i-ifirst] = cof*r2;
-	    //	    lu1d3[i-ifirst] = cof*r3;
+	    lu(1,i,j,k) =  cof*r1;
+            lu(2,i,j,k) =  cof*r2;
+            lu(3,i,j,k) =  cof*r3;
 	 }
       if( onesided[4]==1 )
       {
 	 for( k=1 ; k<= 6 ; k++ )
 /* the centered stencil can be used in the x- and y-directions */
 	    for( j=jfirst+2; j<=jlast-2; j++ )
-	       //#pragma ivdep
+#pragma simd
+#pragma ivdep
 	       for( i=ifirst+2; i<=ilast-2; i++ )
 	       {
 /* from inner_loop_4a */
@@ -580,18 +570,17 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
                    -8*u(2,i,j-1,q) + u(2,i,j-2,q)) );
             r3 = r3 + stry(j)*lau2yz;
 
-	    //            lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
-	    //            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
-	    //            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	    lu1(i,j,k) = cof*r1;
-	    lu2(i,j,k) = cof*r2;
-	    lu3(i,j,k) = cof*r3;
+            lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
+            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
+            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 	       }
       }
       if( onesided[5] == 1 )
       {
 	 for(  k = nk-5 ; k <= nk ; k++ )
 	    for(  j=jfirst+2; j<=jlast-2; j++ )
+#pragma simd
+#pragma ivdep
 	       for(  i=ifirst+2; i<=ilast-2; i++ )
 	       {
 		  /* from inner_loop_4a */
@@ -834,12 +823,9 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 	    }
             r3 = r3 + stry(j)*lau2yz;
 
-	    //            lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
-	    //            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
-	    //            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	    lu1(i,j,k) = cof*r1;
-	    lu2(i,j,k) = cof*r2;
-	    lu3(i,j,k) = cof*r3;
+            lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
+            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
+            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 	       }
       }
 

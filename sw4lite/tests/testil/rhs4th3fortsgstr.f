@@ -278,9 +278,12 @@ c note that we could have introduced intermediate variables for the average of l
      *                        8*(-u(2,i,j-1,k+2)+u(2,i,j+1,k+2))) )) 
 
 *** 9 ops
-            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
-            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
-            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
+c            uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
+c            uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
+c            uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
+            uacc(1,i,j,k) = cof*r1
+            uacc(2,i,j,k) = cof*r2
+            uacc(3,i,j,k) = cof*r3
 
             enddo
          enddo

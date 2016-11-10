@@ -1204,6 +1204,7 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 //        array - The data array, local in the processor
 //        pos0  - Start writing the array at this byte position in file.
 //        typ   - Declared type of 'array', possible values are "float" or "double".
+//                Note the array on disk will be written with this type.
 //
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
@@ -1562,12 +1563,14 @@ void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
 			      const char* typ, bool swap_bytes )
 {
 //  Read array previously set up by constructing object.
-// Input: fid - File descriptor, obtained by calling open.
-//        nc  - Number of components per grid point of array.
+// Input: fid   - File descriptor, obtained by calling open (before calling this function).
+//        nc    - Number of components per grid point of array.
 //        array - The data array, local in the processor
 //        pos0  - Start reading the array at this byte position in file.
 //        typ   - Type of array stored on file, possible values are "float" or "double".
-//
+//       Note: internal buffer uses double irrespective of the type of float_sw4,
+//             however, this would have been a problem only if data on disk were stored with
+//             higher precision than double.
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, s;
