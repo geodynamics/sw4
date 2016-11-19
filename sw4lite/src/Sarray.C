@@ -634,7 +634,7 @@ void Sarray::extract_subarray( int ib, int ie, int jb, int je, int kb,
 
 //-----------------------------------------------------------------------
 void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
-			      int ke, float_sw4* ar )
+			      int ke, double* ar )
 {
    // Assuming nc is the same for m_data and subarray ar.
    int nis = ie-ib+1;

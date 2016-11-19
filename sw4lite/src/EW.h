@@ -8,7 +8,8 @@
 #include "sw4.h"
 #include "Sarray.h"
 #include "SuperGrid.h"
-
+#include "MaterialData.h"
+#include "TimeSeries.h"
 using namespace std;
 
 class Source;
@@ -36,7 +37,9 @@ class EW
    void processFileIO( char* buffer );
    void processCheckPoint( char* buffer );
    void processRestart( char* buffer );
+   void processMaterialBlock( char* buffer );
    void processdGalerkin( char* buffer );
+   void processReceiver( char* buffer );
    void defineDimensionsGXY( );
    void defineDimensionsZ();
    void allocateArrays();
@@ -106,18 +109,37 @@ class EW
    void check_dimensions();
    void setup_supergrid( );
    void assign_supergrid_damping_arrays();
+   void default_bcs();
    void assign_local_bcs( );
    void create_output_directory( );
    int mkdirs(const string& path);
+   bool topographyExists() {return m_topography_exists;}
+   bool interpolate_topography( float_sw4 q, float_sw4 r, float_sw4& Z0, bool smoothed );
+   void gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const;
+   bool invert_grid_mapping( int g, float_sw4 x, float_sw4 y, float_sw4 z, 
+			     float_sw4& q, float_sw4& r, float_sw4& s );
+
    void computeDT();
    void computeNearestGridPoint(int & a_i, int & a_j, int & a_k, int & a_g, float_sw4 a_x, 
 				float_sw4 a_y, float_sw4 a_z);
    bool interior_point_in_proc(int a_i, int a_j, int a_g);   
+   bool point_in_proc(int a_i, int a_j, int a_g);
+   bool point_in_proc_ext(int a_i, int a_j, int a_g);
+   void getGlobalBoundingBox(float_sw4 bbox[6]);
+   bool getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth );
+   void computeCartesianCoord(float_sw4 &x, float_sw4 &y, float_sw4 lon, float_sw4 lat);
+   void computeGeographicCoord(float_sw4 x, float_sw4 y, float_sw4 & longitude, float_sw4 & latitude);
+   float_sw4 getGridAzimuth() const {return mGeoAz;}
+   float_sw4 getMetersPerDegree() const {return mMetersPerDegree;}
    bool is_onesided( int g, int side ) const;
-   void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );
-   void print_execution_times( float_sw4 time[7] );
+   void print_execution_time( double t1, double t2, string msg );
+   void print_execution_times( double time[7] );
    void copy_supergrid_arrays_to_device();
    void copy_material_to_device();
+   void setup_materials();
+   void convert_material_to_mulambda();
+   void extrapolateInZ( int g, Sarray& field , bool lowk, bool highk);
+   void extrapolateInXY( vector<Sarray>& fields );
    void find_cuda_device();
    //   void reset_gpu();
    void corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up,
@@ -176,11 +198,14 @@ class EW
 		      float_sw4 beta );
    void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
 				float_sw4* _bope, float_sw4* _sbop );
+   int getVerbosity() const {return 0;}
+   bool usingParallelFS() const { return m_pfs;}
+   int getNumberOfWritersPFS() const { return m_nwriters;}
+   void get_utc( int utc[7] ) const;
+   void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
+			  vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
 
-   bool usingParallelFS(){ return m_pfs;}
-   int getNumberOfWritersPFS(){ return m_nwriters;}
    // DG stuff
-
    int m_qu;
    int m_qv; 
    int m_nint;
@@ -196,13 +221,13 @@ class EW
                          double* w_out_all_faces, double* v_out_all_faces);
    void computeError(double* udg, double* vdg, double t);
    void get_exact_point_source_dG(double* u, double t, double x, double y, double z);
-   
-   
+
+
    // Variables ----------
 
    // Grid and domain
    int mNumberOfGrids, mNumberOfCartesianGrids;
-   int m_ghost_points, m_ppadding;
+   int m_ghost_points, m_ppadding, m_ext_ghost_points;
    float_sw4 m_global_xmax, m_global_ymax, m_global_zmax, m_global_zmin;
    vector<float_sw4> m_zmin;
    vector<float_sw4> mGridSize;
@@ -211,15 +236,31 @@ class EW
    vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt, m_kEndInt;
    int m_nx_base, m_ny_base, m_nz_base;
    float_sw4 m_h_base;
+
+ // Curvilinear grid and topography
    bool m_topography_exists;
    float_sw4 m_topo_zmax;
    vector<bool> m_is_curvilinear;
+   Sarray mX, mY, mZ;
+   Sarray mMetric, mJ;
+
+   Sarray mTopo, mTopoGridExt;
+   int m_grid_interpolation_order;
+   float_sw4 m_zetaBreak;
+// For some simple topographies (e.g. Gaussian hill) there is an analytical expression for the top elevation
+   bool m_analytical_topo, m_use_analytical_metric;
+   float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
+
+// Geographic coordinate system
+   float_sw4 mGeoAz, mLatOrigin, mLonOrigin, mMetersPerLongitude, mMetersPerDegree;
+   bool mConstMetersPerLongitude;
    
    // MPI information and data structures
    int m_myrank, m_nprocs, m_nprocs_2d[2], m_myrank_2d[2], m_neighbor[4];
    MPI_Comm  m_cartesian_communicator;
    vector<MPI_Datatype> m_send_type1;
    vector<MPI_Datatype> m_send_type3;
+   MPI_Datatype m_mpifloat;
    //   vector<MPI_Datatype> m_send_type4; // metric
    //   vector<MPI_Datatype> m_send_type21; // anisotropic
 
@@ -227,7 +268,9 @@ class EW
    vector<Sarray> mMu;
    vector<Sarray> mLambda;
    vector<Sarray> mRho;
-
+   // Material data is the material model used to populate mMu,mLambda,mRho
+   vector<MaterialData*> m_mtrlblocks;
+   
    // Vectors of solution at time t_n and t_{n-1}
    vector<Sarray> mU;
    vector<Sarray> mUm;
@@ -241,6 +284,8 @@ class EW
    float_sw4 mCFL, mTstart, mTmax, mDt;
    int mNumberOfTimeSteps;
    bool mTimeIsSet;
+// UTC time corresponding to simulation time 0.
+   int m_utc0[7];
 
    // Storage for supergrid damping coefficients (1-D)
    vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;
@@ -290,6 +335,7 @@ class EW
    // Output: Images, stations, checkpoints
    vector<CheckPoint*> m_check_points;
    CheckPoint* m_restart_check_point;
+   vector<TimeSeries*> m_GlobalTimeSeries;
 
    // Discontinuous Galerkin stuff
    bool m_use_dg;

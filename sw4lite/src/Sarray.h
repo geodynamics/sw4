@@ -125,8 +125,8 @@ public:
    size_t count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst );
    size_t check_match_cpu_gpu( EWCuda* cu, string name );
    size_t check_match_cpu_gpu( EWCuda* cu,  int& cfirst, int& ifirst, int& jfirst, int& kfirst, string name );
-   void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
    void extract_subarray( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
+   void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
    void assign( const float_sw4* ar, int corder=-1 );
    void assign( const float* ar );
