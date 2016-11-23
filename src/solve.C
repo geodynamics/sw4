@@ -665,8 +665,28 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     
     time_measure[3] = time_measure[4] = MPI_Wtime();
 
-// get 4th order in time
-    if (mOrder == 4)
+//
+// *** 2nd order in TIME
+//
+    if (mOrder == 2)
+    {
+// add in super-grid damping terms
+       if (usingSupergrid())
+       {
+	  addSuperGridDamping( Up, U, Um, mRho );
+       }
+// Arben's simplified attenuation
+       if (m_use_attenuation && m_number_mechanisms == 0)
+       {
+	 simpleAttenuation( Up );
+       }
+       time_measure[4] = MPI_Wtime();
+       
+    } // end mOrder == 2
+//
+// *** 4th order in time ***
+//
+    else if (mOrder == 4)
     {
        Force_tt( t, F, point_sources );
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
@@ -715,7 +735,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        else
 	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
        enforceIC( Up, U, Um, t, false, point_sources );
-    }
+
+    }// end if mOrder == 4
+    
+    
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
 
@@ -1163,6 +1186,111 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 }
 //---------------------------------------------------------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
+		    double t, bool predictor, vector<GridPointSource*> point_sources )
+{
+   for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
+   {
+      // Interpolate between g and g+1, assume factor 2 refinement with at least three ghost points
+      VERIFY2( m_ghost_points >= 3,
+		  "enforceIC Error: "<<
+                  "Number of ghost points must be three or more, not " << m_ghost_points );
+
+      Sarray Unextf, Unextc, Bf, Bc;
+      int ibf=m_iStart[g+1], ief=m_iEnd[g+1], jbf=m_jStart[g+1], jef=m_jEnd[g+1];
+      int kf = m_global_nz[g+1];
+      int ibc=m_iStart[g], iec=m_iEnd[g], jbc=m_jStart[g], jec=m_jEnd[g];
+      int kc = 1;
+      Unextf.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
+      Bf.define(3,ibf,ief,jbf,jef,kf,kf);
+      Unextc.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
+      Bc.define(3,ibc,iec,jbc,jec,kc,kc);
+
+    // Set ghost point values that are also unknown variables to zero. Assume that Dirichlet data
+    // are already set on ghost points on the sides, which are not treated as unknown variables.
+      dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true );
+      dirichlet_hom_ic( a_Up[g], g, kc-1, true );
+      if( m_doubly_periodic )
+      {
+	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
+	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
+      }
+
+      if( predictor ) // AP: the name of the routine compute_preliminary_corrector() suggests
+// that it should be called if !predictor ???
+      {
+	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
+         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
+	 if( !m_doubly_periodic )
+	 {
+	    dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
+	    dirichlet_LRic( Unextf, g+1, kf, t+mDt, 0 );
+	 }
+      }
+      else
+      {
+	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
+	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
+
+	 if( !m_doubly_periodic )
+	 {
+	    dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
+	    dirichlet_LRic( Unextf, g+1, kf, t+2*mDt, 0 );
+	 }
+      }
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
+      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
+
+      communicate_array_2d( Unextf, g+1, kf );
+      communicate_array_2d( Unextc, g, kc );
+      communicate_array_2d( Bf, g+1, kf );
+      communicate_array_2d( Bc, g, kc );
+
+      // Preliminary quantities computed with correct ghost point values on the sides of 
+      // the interface. Next set these ghost point values to zero. This allows us to form
+      // stencils over ghost points, with non-unknown ghost points giving zero contribution.
+      if( !m_doubly_periodic )
+      {
+	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
+	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
+      }
+      // Initial guesses for grid interface iteration
+      gridref_initial_guess( a_Up[g+1], g+1, false );
+      gridref_initial_guess( a_Up[g], g, true );
+
+      double cof = predictor ? 12 : 1;
+      int is_periodic[2] ={0,0};
+      if( m_doubly_periodic )
+	 is_periodic[0] = is_periodic[1] = 1;
+      consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
+		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
+		cof, g, g+1, is_periodic );// mDt, m_citol, &m_cimaxiter, &m_sbop[0], &m_ghcof[0] );
+      //      CHECK_INPUT(false," controlled termination");
+
+      // Finally, restore the ghost point values on the sides of the domain.
+      if( !m_doubly_periodic )
+      {
+	 dirichlet_LRic( a_Up[g+1], g+1, kf+1, t+mDt, 0 );
+	 dirichlet_LRic( a_Up[g], g, kc-1, t+mDt, 0 );
+      }
+
+      //      if( predictor )
+      //      {
+      //	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
+      //         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
+      //	 dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
+      //      }
+      //     else
+      //      {
+      //	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
+      //	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
+      //	 dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
+      //      }
+      //      check_corrector( a_Up[g+1], a_Up[g], Unextf, Unextc, kf, kc );
+   }
+}
+
+//-----------------------Special case for 2nd order time stepper----------------------------------------------------
+void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		    double t, bool predictor, vector<GridPointSource*> point_sources )
 {
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
