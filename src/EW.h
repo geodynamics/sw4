@@ -624,18 +624,20 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
 // Functions to impose conditions at grid refinement interface:
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
 		   double t, bool predictor, std::vector<GridPointSource*> point_sources );
-void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
-void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
-void gridref_initial_guess( Sarray& u, int g, bool upper );
-void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
-				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
-void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
-				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
-void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, double* a_str_x, double* a_str_y);
-void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
-	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
-	       double cof, int gc, int gp, int is_periodic[2] );
-void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
+   void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+                    double t, bool predictor, std::vector<GridPointSource*> point_sources );
+   void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
+   void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
+   void gridref_initial_guess( Sarray& u, int g, bool upper );
+   void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
+                                       int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+   void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
+                                       int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+   void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, double* a_str_x, double* a_str_y);
+   void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
+                  Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
+                  double cof, int gc, int gp, int is_periodic[2] );
+   void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
 //
 // VARIABLES BEYOND THIS POINT
 //
