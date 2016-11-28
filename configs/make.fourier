@@ -2,7 +2,7 @@
 etree = no
 proj = yes
 SW4ROOT = /opt/local/lib/proj47
-FC = mpif77
+FC = mpif90
 CXX = mpicxx
 EXTRA_FORT_FLAGS =
 EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc5 -lgfortran

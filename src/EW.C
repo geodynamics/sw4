@@ -211,8 +211,10 @@ void F77_FUNC(exactmatfortatt,EXACTMATFORTATT)( int*, int*, int*, int*, int*, in
 					 double*, double*, double*, double*, double* );
 void F77_FUNC(exactmatfortattc,EXACTMATFORTATTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
 						  double*, double*, double*, double*, double*, double* );
-void F77_FUNC(updatememvar,UPDATEMEMVAR)(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
-					 double*, double*, double*, double*, int* );
+void updatememvar(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
+                  double*, double*, double*, double*, int*, int *use2ndOrder );
+// void F77_FUNC(updatememvar,UPDATEMEMVAR)(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
+// 					 double*, double*, double*, double*, int* );
 
 void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
 
@@ -221,6 +223,10 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
    void F77_FUNC(ilanisocurv,ILANISOCURV)( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
 					   int*, double*, double*, double*, double*, double*, double*);
 }
+
+void  addmemvarforcing2( double zMin, double h, double t, Sarray &alpha,
+                         double omegaVE, double dt, double omega, double phase, double c );
+
 
 using namespace std;
 
@@ -3977,6 +3983,8 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
 				double a_t )
 {
    int domain = 0;
+   int use2ndOrder = (mOrder==2); // experimenting with PC formulation
+   
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
       double* up_ptr  = a_Up[g].c_ptr();
@@ -3993,9 +4001,12 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
       {
 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
-	 F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-					     &mOmegaVE[a], &mDt, &domain );
+	 updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                      &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+                      &mOmegaVE[a], &mDt, &domain, &use2ndOrder );
+	 // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+	 //        			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+	 //        			     &mOmegaVE[a], &mDt, &domain );
       }
       if( m_twilight_forcing )
       {
@@ -4008,19 +4019,34 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
 						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
 							   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 else
-	    F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-							 &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-							 &mGridSize[g], &m_zmin[g] );
+         {
+            if (mOrder == 2) // only works without SG stretching
+            {
+// this routine comes from WPP
+               addmemvarforcing2( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            }
+            else // 4th order in time (HOW CAN THIS WORK WITH SG STRETCHING???)
+            {
+               F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                                            &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+                                                            &mGridSize[g], &m_zmin[g] );
+            }
+            
+         }
+         
       }
    }
 }
 
 //-----------------------------------------------------------------------
+// IS THIS ROUTINE EVER CALLED???
 void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
 				     vector<Sarray*>& a_AlphaVEm,
 				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
 {
    int domainlow = 2, domainup=1;
+   int use2ndOrder = 0;
+   
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
       double* up_ptr  = a_Up[g].c_ptr();
@@ -4038,13 +4064,19 @@ void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
 	 if( m_bcType[g][4] != bProcessor )
-	    F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-					     &mOmegaVE[a], &mDt, &domainup );
+	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                         &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+                         &mOmegaVE[a], &mDt, &domainup, &use2ndOrder );
+	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+	    //     			     &mOmegaVE[a], &mDt, &domainup );
 	 if( m_bcType[g][5] != bProcessor )
-	    F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-						&mOmegaVE[a], &mDt, &domainlow );
+	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                         &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+                         &mOmegaVE[a], &mDt, &domainlow, &use2ndOrder );
+	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+	    //     				&mOmegaVE[a], &mDt, &domainlow );
       }
    }
 }

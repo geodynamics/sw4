@@ -1925,6 +1925,13 @@ void EW::processDeveloper(char* buffer)
 	CHECK_INPUT( cfl > 0, "Error negative CFL number");
 	set_cflnumber( cfl );
      }
+     else if( startswith("time_order=",token) )
+     {
+	token += 11;
+	int newOrder = atoi(token);
+	CHECK_INPUT( newOrder == 2 || newOrder == 4, "Error unknown time-order");
+	mOrder = newOrder;
+     }
      else if( startswith("perturb=",token) )
      {
         token += 8;

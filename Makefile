@@ -170,7 +170,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
-       rhs4th3fortwind.o
+       rhs4th3fortwind.o updatememvar.o addmemvarforcing2.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
