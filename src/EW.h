@@ -625,7 +625,7 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
 		   double t, bool predictor, std::vector<GridPointSource*> point_sources );
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-                    double t, bool predictor, std::vector<GridPointSource*> point_sources );
+                    double t, std::vector<GridPointSource*> point_sources );
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
    void gridref_initial_guess( Sarray& u, int g, bool upper );

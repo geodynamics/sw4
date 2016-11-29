@@ -661,7 +661,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
 
 // Grid refinement interface conditions:
-    enforceIC( Up, U, Um, t, true, point_sources );
+    if (mOrder == 2)
+       enforceIC2( Up, U, Um, t, point_sources );
+    else
+       enforceIC( Up, U, Um, t, true, point_sources );
+
     
     time_measure[3] = time_measure[4] = MPI_Wtime();
 
@@ -1291,13 +1295,14 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
 void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-		    double t, bool predictor, vector<GridPointSource*> point_sources )
+		    double t, vector<GridPointSource*> point_sources )
 {
+   bool predictor = false;   // or true???
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
    {
       // Interpolate between g and g+1, assume factor 2 refinement with at least three ghost points
       VERIFY2( m_ghost_points >= 3,
-		  "enforceIC Error: "<<
+		  "enforceIC2 Error: "<<
                   "Number of ghost points must be three or more, not " << m_ghost_points );
 
       Sarray Unextf, Unextc, Bf, Bc;
@@ -1314,45 +1319,29 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
     // are already set on ghost points on the sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true );
       dirichlet_hom_ic( a_Up[g], g, kc-1, true );
+
       if( m_doubly_periodic )
       {
 	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
 	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
       }
 
-      if( predictor ) // AP: the name of the routine compute_preliminary_corrector() suggests
-// that it should be called if !predictor ???
-      {
-	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
-         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
-	 if( !m_doubly_periodic )
-	 {
-	    dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
-	    dirichlet_LRic( Unextf, g+1, kf, t+mDt, 0 );
-	 }
-      }
-      else
+// which one should I use for the 2nd order case???
+//       if( predictor ) // AP: the name of the routine compute_preliminary_corrector() suggests
+// // that it should be called if !predictor ???
+//       {
+// 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
+//          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
+// 	 if( !m_doubly_periodic )
+// 	 {
+// 	    dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
+// 	    dirichlet_LRic( Unextf, g+1, kf, t+mDt, 0 );
+// 	 }
+//       }
+//       else
       {
 	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
 	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
-
-// FROM WPP
-   // // add -(1/rho)*L(alpha) to forcing. Note: forcing array will be modified
-   // // however this is just a temporary array in the calling routine.
-   // for( int a = 0 ; a < m_number_mechanisms ; a++ )
-   // {
-   //    double* alpha_p  = alpha_a[a].c_ptr();
-   //    double* alphaf_p = alphaf_a[a].c_ptr();
-   //    double* muve_p      = mMuVE[g][a].c_ptr();
-   //    double* lambdave_p  = mLambdaVE[g][a].c_ptr();
-   //    double* muvef_p     = mMuVE[g+1][a].c_ptr();
-   //    double* lambdavef_p = mLambdaVE[g+1][a].c_ptr();
-   //    // f := f - L_a(alpha)/rho
-   //    F77_FUNC(cikplaneatt,CIKPLANEATT)( &ni, &nj, &nk, alpha_p, f_p, &side_low,
-   //      			         &hc, muve_p, lambdave_p, rho_p );
-   //    F77_FUNC(cikplaneatt,CIKPLANEATT)( &nif, &njf, &nkf, alphaf_p, ff_p, &side_high,
-   //      			         &hf, muvef_p, lambdavef_p, rhof_p );
-   // }
 
 	 if( !m_doubly_periodic )
 	 {
@@ -1395,6 +1384,24 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 	 dirichlet_LRic( a_Up[g+1], g+1, kf+1, t+mDt, 0 );
 	 dirichlet_LRic( a_Up[g], g, kc-1, t+mDt, 0 );
       }
+
+// FROM WPP
+   // // add -(1/rho)*L(alpha) to forcing. Note: forcing array will be modified
+   // // however this is just a temporary array in the calling routine.
+   // for( int a = 0 ; a < m_number_mechanisms ; a++ )
+   // {
+   //    double* alpha_p  = alpha_a[a].c_ptr();
+   //    double* alphaf_p = alphaf_a[a].c_ptr();
+   //    double* muve_p      = mMuVE[g][a].c_ptr();
+   //    double* lambdave_p  = mLambdaVE[g][a].c_ptr();
+   //    double* muvef_p     = mMuVE[g+1][a].c_ptr();
+   //    double* lambdavef_p = mLambdaVE[g+1][a].c_ptr();
+   //    // f := f - L_a(alpha)/rho
+   //    F77_FUNC(cikplaneatt,CIKPLANEATT)( &ni, &nj, &nk, alpha_p, f_p, &side_low,
+   //      			         &hc, muve_p, lambdave_p, rho_p );
+   //    F77_FUNC(cikplaneatt,CIKPLANEATT)( &nif, &njf, &nkf, alphaf_p, ff_p, &side_high,
+   //      			         &hf, muvef_p, lambdavef_p, rhof_p );
+   // }
 
       //      if( predictor )
       //      {

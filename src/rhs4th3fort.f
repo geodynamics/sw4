@@ -1839,68 +1839,6 @@ c evaluate 2nd divided time difference D+D-(u)
       return
       end
 
-c$$$c-----------------------------------------------------------------------
-c$$$      subroutine updatememvar( ifirst, ilast, jfirst, jlast, kfirst,
-c$$$     * klast, alp, alm, up, u, um, omega, dt, domain, pred ) bind(c)
-c$$$
-c$$$***********************************************************************
-c$$$*** 
-c$$$*** domain = 0 --> Entire domain
-c$$$*** domain = 1 --> Only upper (k=1) boundary ghost points + boundary point
-c$$$*** domain = 2 --> Only lower (k=N) boundary ghost points + boundary point
-c$$$***
-c$$$***********************************************************************      
-c$$$
-c$$$      implicit none
-c$$$      real*8 i6
-c$$$      parameter( i6=1d0/6 )
-c$$$      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
-c$$$      integer domain, k1, k2
-c$$$c AP Nov 14, 2016: experimenting with PC formulation for memory variables
-c$$$      integer pred
-c$$$      real*8 pcoeff
-c$$$      
-c$$$      real*8 omega, dt, dto, icp, cm, cof3
-c$$$      real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-c$$$      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-c$$$      real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-c$$$      real*8 alp(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-c$$$      real*8 alm(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-c$$$
-c$$$      dto = dt*omega
-c$$$      if (pred==1) then
-c$$$        icp = 1/( 1d0/2 + 1/(2*dto) )
-c$$$        cm = 1d0/2 - 1/(2*dto)
-c$$$        pcoeff = 0
-c$$$      else
-c$$$        icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
-c$$$        cm  =     1d0/2 - 1/(2*dto) - dto/4 + dto*dto/12
-c$$$        pcoeff = 1
-c$$$      endif
-c$$$      if( domain.eq.0 )then
-c$$$         k1 = kfirst
-c$$$         k2 = klast
-c$$$      elseif( domain.eq.1 )then
-c$$$         k1 = kfirst
-c$$$         k2 = kfirst+2
-c$$$      elseif( domain.eq.2 )then
-c$$$         k1 = klast-2
-c$$$         k2 = klast
-c$$$      endif
-c$$$      do k=k1,k2
-c$$$         do j=jfirst,jlast
-c$$$            do i=ifirst,ilast
-c$$$               do c=1,3
-c$$$                  alp(c,i,j,k) = icp*(-cm*alm(c,i,j,k) + u(c,i,j,k) +
-c$$$     *                pcoeff*i6* ( dto*dto*u(c,i,j,k) +
-c$$$     *                dto*(up(c,i,j,k)-um(c,i,j,k)) +
-c$$$     *                (up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k))  )
-c$$$     *                )
-c$$$               enddo
-c$$$            enddo
-c$$$         enddo
-c$$$      enddo
-c$$$      end
 
 c-----------------------------------------------------------------------
       subroutine dpdmtfortatt(ifirst, ilast, jfirst, jlast, kfirst, 
