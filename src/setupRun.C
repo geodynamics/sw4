@@ -201,7 +201,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	     // apply the forcing directly on the ghost points
 	{
 	   if( m_mesh_refinements && side < 4 )
-	      side_plane( g, side, wind, m_ghost_points+1 );
+	      side_plane( g, side, wind, m_ghost_points+1 ); // AP: why are we adding one more ghost point in the (x,y)-directions?
 	   else
 	      side_plane( g, side, wind, m_ghost_points );
 	}

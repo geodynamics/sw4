@@ -1326,29 +1326,15 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
       }
 
-// which one should I use for the 2nd order case???
-//       if( predictor ) // AP: the name of the routine compute_preliminary_corrector() suggests
-// // that it should be called if !predictor ???
-//       {
-// 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Unextf, g+1, kf, t, point_sources );
-//          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Unextc, g, kc, t, point_sources );
-// 	 if( !m_doubly_periodic )
-// 	 {
-// 	    dirichlet_LRic( Unextc, g, kc, t+mDt, 0 );
-// 	    dirichlet_LRic( Unextf, g+1, kf, t+mDt, 0 );
-// 	 }
-//       }
-//       else
-      {
-	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
-	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
+      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
+      compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
 
-	 if( !m_doubly_periodic )
-	 {
-	    dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
-	    dirichlet_LRic( Unextf, g+1, kf, t+2*mDt, 0 );
-	 }
+      if( !m_doubly_periodic )
+      {
+         dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
+         dirichlet_LRic( Unextf, g+1, kf, t+2*mDt, 0 );
       }
+
       compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
       compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
 
@@ -1359,8 +1345,10 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
       // Preliminary quantities computed with correct ghost point values on the sides of 
       // the interface. Next set these ghost point values to zero. This allows us to form
-      // stencils over ghost points, with non-unknown ghost points giving zero contribution.
-      if( !m_doubly_periodic )
+      // stencils over ghost points, with non-unknown ghost points giving zero contribution. WHAT IS A NON-UNKNOWN???
+      //
+      // AP: Different from above, the inside flag is now false -> only zero out the ghost points on the sides (dirichlet/sg)
+      if( !m_doubly_periodic ) 
       {
 	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
 	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
@@ -1373,6 +1361,8 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       int is_periodic[2] ={0,0};
       if( m_doubly_periodic )
 	 is_periodic[0] = is_periodic[1] = 1;
+
+// Iteratively determine the ghost point values in Up to satisfy the jump conditions
       consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
 		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
 		cof, g, g+1, is_periodic );// mDt, m_citol, &m_cimaxiter, &m_sbop[0], &m_ghcof[0] );
@@ -1518,7 +1508,7 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 //-----------------------------------------------------------------------
 void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
 {
-   // Put back exact solution at non-unknown ghost points at sides.
+   // Put back exact solution at non-unknown ghost points at sides. WHAT IS A NON_UNKNOWN GHOST POINT???
    //   int k = upper ? 0 : m_global_nz[g]+1;
    //
    // set adj= 0 for ghost pts + boundary pt
