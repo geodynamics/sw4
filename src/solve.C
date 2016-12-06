@@ -36,8 +36,14 @@
 
 extern "C" {
    void tw_aniso_free_surf_z(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-                             int kz, double t, double om, double cv, double ph, double omm, double* phc, double* bforce,
-                             double h, double zmin );
+                             int kz, double t, double om, double cv, double ph, double omm, double* phc,
+                             double* bforce, double h, double zmin );
+
+   void twfrsurfz_wind( int *ifirst, int *ilast, int *jfirst, int *jlast, int *kfirst, int *klast,
+                        double *h, int* kz, double *t, double *omega, double *c, double *phase, double *bforce,
+                        double *mu, double *lambda, double *zmin,
+                        int *i1, int *i2, int *j1, int *j2 );
+   
 
 void F77_FUNC(satt,SATT)(double *up, double *qs, double *dt, double *cfreq, int *ifirst, int *ilast, 
 			 int *jfirst, int *jlast, int *kfirst, int *klast);
@@ -561,9 +567,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( m_moment_test )
     test_sources( point_sources, a_Sources, F );
 
-  if ( !mQuiet && proc_zero() )
-    cout << "  Begin time stepping..." << endl;
-
 // save initial data on receiver records
   vector<double> uRec;
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -607,6 +610,26 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   //     for( int s = 0 ; s < point_sources.size() ; s++ )
   //        point_sources[s]->print_info();
     
+// output flags and setting that affect the run
+   if( proc_zero() && mVerbose >= 3 )
+   {
+      printf("\nReporting SW4 internal flags and settings:\n");
+      printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s," 
+             "rayleigh_test=%s\n",
+             m_testing?"yes":"no",
+             m_twilight_forcing?"yes":"no",
+             m_point_source_test?"yes":"no",
+             m_moment_test?"yes":"no",
+             m_energy_test?"yes":"no",
+             m_lamb_test?"yes":"no",
+             m_rayleigh_wave_test?"yes":"no");
+      printf("m_use_supergrid=%s\n", m_use_supergrid?"yes":"no");
+      printf("End report settings\n\n");
+   }
+   
+  if ( !mQuiet && proc_zero() )
+    cout << "  Begin time stepping..." << endl;
+
 // Begin time stepping loop
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
@@ -1316,7 +1339,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
 
     // Set ghost point values that are also unknown variables to zero. Assume that Dirichlet data
-    // are already set on ghost points on the sides, which are not treated as unknown variables.
+    // are already set on ghost points on the (supergrid) sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true );
       dirichlet_hom_ic( a_Up[g], g, kc-1, true );
 
@@ -1331,7 +1354,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
       if( !m_doubly_periodic )
       {
-// homogeneous dirichlet condition for Unextc in super-grid layer
+// dirichlet conditions for Unextc in super-grid layer at time t+dt
          dirichlet_LRic( Unextc, g, kc, t+2*mDt, 1 ); 
       }
 
@@ -1340,8 +1363,8 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
       if( !m_doubly_periodic )
       {
-// homogeneous dirichlet condition for Bf in super-grid layer (correct this for twilight forcing)
-         dirichlet_LRic( Bf, g+1, kf, t+2*mDt, 1 ); 
+//  dirichlet condition for Bf in the super-grid layer at time t+dt
+         dirichlet_LRstress( Bf, g+1, kf, t+mDt, 1 ); 
       }
       
       communicate_array_2d( Unextf, g+1, kf );
@@ -1376,7 +1399,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
       // Finally, restore the ghost point values on the supergrid sides of the domain.
       //
-      // AP: This doesn't seem to be needed anymore
+      // AP: This doesn't seem to be needed anymore ?
       //
       // if( !m_doubly_periodic )
       // {
@@ -1605,6 +1628,104 @@ void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
 						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
 						      &h, &m_zmin[g],
 						      &i1, &i2, &j1, &j2, &kic, &kic );
+      }
+   }      
+}
+
+//-----------------------------------------------------------------------
+void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
+{
+   // Exact stresses at the ghost points that don't participate in the interface conditions,
+   // i.e. at supergrid points
+   //   int k = upper ? 0 : m_global_nz[g]+1;
+   //
+   // set adj= 0 for ghost pts + boundary pt
+   //          1 for only ghost pts.
+
+   int kdb=B.m_kb, kde=B.m_ke;
+   if( !m_twilight_forcing )
+   {
+      if( m_iStartInt[g] == 1 )
+      {
+	 // low i-side
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= 1-adj ; i++ )
+	       for( int c=1 ; c <= B.m_nc ; c++ )
+		  B(c,i,j,kic) = 0;
+      }
+      if( m_iEndInt[g] == m_global_nx[g] )
+      {
+	 // high i-side
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= B.m_nc ; c++ )
+		  B(c,i,j,kic) = 0;
+      }
+      if( m_jStartInt[g] == 1 )
+      {
+	 // low j-side
+	 for( int j=m_jStart[g] ; j <= 1-adj ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= B.m_nc ; c++ )
+		  B(c,i,j,kic) = 0;
+      }
+      if( m_jEndInt[g] == m_global_ny[g] )
+      {
+	 // high j-side
+	 for( int j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       for( int c=1 ; c <= B.m_nc ; c++ )
+		  B(c,i,j,kic) = 0;
+      }
+   }
+   else
+   {
+      double* mu_ptr    = mMu[g].c_ptr();
+      double* la_ptr    = mLambda[g].c_ptr();
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      double h  = mGridSize[g];
+      double* b_ptr = B.c_ptr();
+      if( m_iStartInt[g] == 1 )
+      {
+	 // low i-side
+	 int i1 = m_iStart[g], i2=m_iStartInt[g]-adj;
+	 int j1 = m_jStart[g], j2=m_jEnd[g];
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                         mu_ptr, la_ptr, &m_zmin[g],
+                         &i1, &i2, &j1, &j2 );
+      }
+      if( m_iEndInt[g] == m_global_nx[g] )
+      {
+	 // high i-side
+	 int i1 = m_iEndInt[g]+adj, i2=m_iEnd[g];
+	 int j1 = m_jStart[g], j2=m_jEnd[g];
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                         mu_ptr, la_ptr, &m_zmin[g],
+                         &i1, &i2, &j1, &j2 );
+      }
+      if( m_jStartInt[g] == 1 )
+      {
+	 // low j-side
+	 int i1 = m_iStart[g], i2=m_iEnd[g];
+	 int j1 = m_jStart[g], j2=m_jStartInt[g]-adj;
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                         mu_ptr, la_ptr, &m_zmin[g],
+                         &i1, &i2, &j1, &j2 );
+      }
+      if( m_jEndInt[g] == m_global_ny[g] )
+      {
+	 // high j-side
+	 int i1 = m_iStart[g], i2=m_iEnd[g];
+	 int j1 = m_jEndInt[g]+adj, j2=m_jEnd[g];
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                         mu_ptr, la_ptr, &m_zmin[g],
+                         &i1, &i2, &j1, &j2 );
       }
    }      
 }

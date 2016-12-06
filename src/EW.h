@@ -628,6 +628,8 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
                     double t, std::vector<GridPointSource*> point_sources );
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
+   void dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj );
+   
    void gridref_initial_guess( Sarray& u, int g, bool upper );
    void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
                                        int g, int kic, double t, std::vector<GridPointSource*> point_sources );

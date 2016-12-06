@@ -753,6 +753,89 @@ c the do loops should span jfirst,jlast and ifirst,ilast
       end
 
 c-----------------------------------------------------------------------
+      subroutine twfrsurfz_wind( ifirst, ilast, jfirst, jlast, kfirst,
+     +     klast,
+     +     h, kz, t, omega, c, phase, bforce, mu, lambda, zmin,
+     +     i1, i2, j1, j2 ) bind(c)
+      implicit none
+      integer i1, i2, j1, j2
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, attenuation
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
+      integer i, j, kz
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z, zmin
+      doubleprecision t
+      doubleprecision omega
+      doubleprecision c
+      doubleprecision phase
+
+      doubleprecision forces(3)
+      doubleprecision t13
+      doubleprecision t15
+      doubleprecision t16
+      doubleprecision t19
+      doubleprecision t20
+      doubleprecision t21
+      doubleprecision t23
+      doubleprecision t24
+      doubleprecision t28
+      doubleprecision t29
+      doubleprecision t32
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t43
+      doubleprecision t44
+      doubleprecision t49
+      doubleprecision t60
+      doubleprecision t62
+      doubleprecision t65
+
+      z = (kz-1)*h + zmin
+c the do loops should span j1,j2 and i1,i2
+c      do j=jfirst,jlast
+      do j=j1,j2
+         y = (j-1)*h
+c         do i=ifirst,ilast
+         do i=i1,i2
+            x=(i-1)*h
+        t13 = mu(i,j,kz)
+        t15 = omega*x+phase
+        t16 = cos(t15)
+        t19 = omega*y+phase
+        t20 = sin(t19)
+        t21 = c*t
+        t23 = omega*(z-t21)
+        t24 = sin(t23)
+        t28 = omega*(x-t21)
+        t29 = sin(t28)
+        t32 = omega*z+phase
+        t33 = cos(t32)
+        t34 = t33*omega
+        forces(1) = t13*(t16*omega*t20*t24+t29*t20*t34)
+        t37 = sin(t15)
+        t38 = cos(t19)
+        t43 = omega*(y-t21)
+        t44 = sin(t43)
+        forces(2) = t13*(t37*t38*omega*t24+t37*t44*t34)
+        t49 = cos(t23)
+        t60 = cos(t28)
+        t62 = sin(t32)
+        t65 = cos(t43)
+        forces(3) = 2*t13*t37*t20*t49*omega+lambda(i,j,kz)*(t6
+     #0*omega*t20*t62+t37*t65*omega*t62+t37*t20*t49*omega)
+        bforce(1,i,j) = forces(1)
+        bforce(2,i,j) = forces(2)
+        bforce(3,i,j) = forces(3)
+      enddo
+      enddo
+      end
+      
+c-----------------------------------------------------------------------
       subroutine TWFRSURFZATT( ifirst, ilast, jfirst, jlast, kfirst,
      +   klast, h, kz, t, omega, c, phase, bforce, mua, lambdaa, zmin )
       implicit none
