@@ -1310,9 +1310,9 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       int kf = m_global_nz[g+1];
       int ibc=m_iStart[g], iec=m_iEnd[g], jbc=m_jStart[g], jec=m_jEnd[g];
       int kc = 1;
-      Unextf.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
+      Unextf.define(3,ibf,ief,jbf,jef,kf-7,kf+1); // needs to be wide in k because ???
       Bf.define(3,ibf,ief,jbf,jef,kf,kf);
-      Unextc.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
+      Unextc.define(3,ibc,iec,jbc,jec,kc-1,kc+7); // needs to be wide in k because ???
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
 
     // Set ghost point values that are also unknown variables to zero. Assume that Dirichlet data
@@ -1331,13 +1331,19 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
       if( !m_doubly_periodic )
       {
-         dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
-         dirichlet_LRic( Unextf, g+1, kf, t+2*mDt, 0 );
+// homogeneous dirichlet condition for Unextc in super-grid layer
+         dirichlet_LRic( Unextc, g, kc, t+2*mDt, 1 ); 
       }
 
       compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
       compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
 
+      if( !m_doubly_periodic )
+      {
+// homogeneous dirichlet condition for Bf in super-grid layer (correct this for twilight forcing)
+         dirichlet_LRic( Bf, g+1, kf, t+2*mDt, 1 ); 
+      }
+      
       communicate_array_2d( Unextf, g+1, kf );
       communicate_array_2d( Unextc, g, kc );
       communicate_array_2d( Bf, g+1, kf );
@@ -1368,12 +1374,15 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 		cof, g, g+1, is_periodic );// mDt, m_citol, &m_cimaxiter, &m_sbop[0], &m_ghcof[0] );
       //      CHECK_INPUT(false," controlled termination");
 
-      // Finally, restore the ghost point values on the sides of the domain.
-      if( !m_doubly_periodic )
-      {
-	 dirichlet_LRic( a_Up[g+1], g+1, kf+1, t+mDt, 0 );
-	 dirichlet_LRic( a_Up[g], g, kc-1, t+mDt, 0 );
-      }
+      // Finally, restore the ghost point values on the supergrid sides of the domain.
+      //
+      // AP: This doesn't seem to be needed anymore
+      //
+      // if( !m_doubly_periodic )
+      // {
+      //    dirichlet_LRic( a_Up[g+1], g+1, kf+1, t+mDt, 1 );
+      //    dirichlet_LRic( a_Up[g], g, kc-1, t+mDt, 1 );
+      // }
 
 // FROM WPP
    // // add -(1/rho)*L(alpha) to forcing. Note: forcing array will be modified
@@ -1449,7 +1458,7 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
       {
       // low i-side
 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iStart[g] ; i <= 1 ; i++ )
+	    for( int i=m_iStart[g] ; i <= 0 ; i++ )
 	       for( int c=1 ; c <= U.m_nc ; c++ )
 		  U(c,i,j,k) = 0;
       }
@@ -1457,14 +1466,14 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
       {
 	 // high i-side
 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iEndInt[g] ; i <= m_iEnd[g] ; i++ )
+	    for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
 	       for( int c=1 ; c <= U.m_nc ; c++ )
 		  U(c,i,j,k) = 0;
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
-	 for( int j=m_jStart[g] ; j <= 1 ; j++ )
+	 for( int j=m_jStart[g] ; j <= 0 ; j++ )
 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	       for( int c=1 ; c <= U.m_nc ; c++ )
 		  U(c,i,j,k) = 0;
@@ -1472,7 +1481,7 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
-	 for( int j=m_jEndInt[g] ; j <= m_jEnd[g] ; j++ )
+	 for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	       for( int c=1 ; c <= U.m_nc ; c++ )
 		  U(c,i,j,k) = 0;
@@ -1483,19 +1492,19 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
       // Interior, unknown ghost points.
       int ib, ie, jb, je;
       if( m_iStartInt[g] == 1 )
-	 ib = 2;
+         ib = 1;
       else
 	 ib = m_iStart[g];
       if( m_iEndInt[g] == m_global_nx[g] )
-	 ie = m_global_nx[g]-1;
+	 ie = m_global_nx[g];
       else
 	 ie = m_iEnd[g];
       if( m_jStartInt[g] == 1 )
-	 jb = 2;
+	 jb = 1;
       else
 	 jb = m_jStart[g];
       if( m_jEndInt[g] == m_global_ny[g] )
-	 je = m_global_ny[g]-1;
+	 je = m_global_ny[g];
       else
 	 je = m_jEnd[g];
       for( int j=jb ; j <= je ; j++ )
@@ -1508,7 +1517,7 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 //-----------------------------------------------------------------------
 void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
 {
-   // Put back exact solution at non-unknown ghost points at sides. WHAT IS A NON_UNKNOWN GHOST POINT???
+   // Put back exact solution at the ghost points that don't participate in the interface conditions, i.e. at supergrid points
    //   int k = upper ? 0 : m_global_nz[g]+1;
    //
    // set adj= 0 for ghost pts + boundary pt
@@ -1617,19 +1626,19 @@ void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
    }
    int ib, ie, jb, je;
    if( m_iStartInt[g] == 1 )
-      ib = 2;
+      ib = 1;
    else
       ib = m_iStart[g];
    if( m_iEndInt[g] == m_global_nx[g] )
-      ie = m_global_nx[g]-1;
+      ie = m_global_nx[g];
    else
       ie = m_iEnd[g];
    if( m_jStartInt[g] == 1 )
-      jb = 2;
+      jb = 1;
    else
       jb = m_jStart[g];
    if( m_jEndInt[g] == m_global_ny[g] )
-      je = m_global_ny[g]-1;
+      je = m_global_ny[g];
    else
       je = m_jEnd[g];
 
@@ -1810,8 +1819,7 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 	 }
 	 B(1,i,j,k) = ih*mMu[g](i,j,k)*(
 	    str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
-		       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) +
-	      (uz)  );
+		       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
 	 B(2,i,j,k) = ih*mMu[g](i,j,k)*(
 	          str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
 			     a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
@@ -1852,40 +1860,19 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    double a11, a12, a21, a22, b1, b2, r1, r2, r3, deti, relax;
    int it = 0;
    relax = m_cirelfact;
-   if( m_iStartInt[gc] == 1 && !is_periodic[0] )
-      ifb = icb = 2;
-   else
-   {
-      icb = m_iStartInt[gc];
-      ifb = m_iStartInt[gf];
-   }
-   if( m_iEndInt[gc] == m_global_nx[gc] && !is_periodic[0] )
-   {
-      ice = m_global_nx[gc]-1;
-      ife = m_global_nx[gf]-1;
-   }
-   else
-   {
-      ice = m_iEndInt[gc];
-      ife = m_iEndInt[gf];
-   }
-   if( m_jStartInt[gc] == 1 && !is_periodic[1] )
-      jfb = jcb = 2;
-   else
-   {
-      jcb = m_jStartInt[gc];
-      jfb = m_jStartInt[gf];
-   }
-   if( m_jEndInt[gc] == m_global_ny[gc] && !is_periodic[1] )
-   {
-      jce = m_global_ny[gc]-1;
-      jfe = m_global_ny[gf]-1;
-   }
-   else
-   {
-      jce = m_jEndInt[gc];
-      jfe = m_jEndInt[gf];
-   }
+ 
+   icb = m_iStartInt[gc];
+   ifb = m_iStartInt[gf];
+
+   ice = m_iEndInt[gc];
+   ife = m_iEndInt[gf];
+   
+   jcb = m_jStartInt[gc];
+   jfb = m_jStartInt[gf];
+
+   jce = m_jEndInt[gc];
+   jfe = m_jEndInt[gf];
+
    nkf = m_global_nz[gf];
    Sarray Mlf(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
    for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
@@ -2180,189 +2167,6 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;
 }
 
-//-----------------------------------------------------------------------
-// void EW::update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, double t, vector<Sarray*> &AlphaVE )
-// {
-//   int g;
-// boundary forcing on Cartesian grids
-//   for (g=0; g<mNumberOfCartesianGrids; g++)
-//   {
-//     cartesian_bc_forcing(mMu[g], m_BCForcing[g], m_NumberOfBCPoints[g], m_bcType[g], m_forcing, m_zmin[g], 
-// 			 t, mGridSize[g], m_onesided[g], m_curlcoeff, m_number_mechanisms, AlphaVE[g],
-// 			 mMuVE[g], mLambdaVE[g] );
-//   }
-// // boundary forcing for curvilinear grid
-//   if (topographyExists())
-//   {
-//     g = mNumberOfGrids - 1;
-//     curvilinear_bc_forcing(m_BCForcing[g], m_NumberOfBCPoints[g],
-// 			   mX, mY, mZ,
-// 			   mMu[g], mLambda[g], mQ, mR, mS, mJ,
-// 			   mTime, m_bcType[g], m_forcing, m_number_mechanisms, AlphaVE[g],
-// 			   mMuVE[g], mLambdaVE[g] );
-// tmp
-// save the bc forcing on side=4 (assume one proc)
-//
-//     if (m_bcType[g][4] == bStressFree)
-//     {
-//       FILE *tf=fopen("bstress.txt","w");
-      
-//       int ind=0;
-//       fprintf(tf,"%i %i\n", mX.m_ni-2, mX.m_nj-2);
-//       for (int j=2; j<=mX.m_nj-1; j++)
-// 	for (int i=2; i<=mX.m_ni-1; i++)
-// 	{
-// 	  fprintf(tf,"%e %e %e\n", m_BCForcing[g][4][ind], m_BCForcing[g][4][ind+1], m_BCForcing[g][4][ind+2]);
-// 	  ind+=3;
-// 	}
-
-//       fclose(tf);
-//     }
-// end tmp
-//  } // end if topographyExists()
-  
-// boundary forcing (NEW style)
-//   cartesian_bc_forcing( t );
-    
-//   if( mNumberOfGrids > 1 )
-//   {
-//     for( g=0 ; g < mNumberOfGrids ; g++ )
-//        communicate_array( U[g], g );
-// // Why is it necessary to impose the physical bc twice?   
-//     enforceBC( U, t );
-// //    impose_physical_bc( U, UM, t, AlphaVE );
-// // interpolate in vertical direction
-// // not yet activated
-// //    interpolate_between_grids( U, UM, t, AlphaVE );
-//   }
-
-// // communicate across processor boundaries
-//   for( g=0 ; g < mNumberOfGrids ; g++ )
-//     communicate_array( U[g], g );
-// // physical bc's on the outer boundaries
-//   enforceBC( U, t );
-// //  impose_physical_bc( U, UM, t, AlphaVE );
-// // communicate across processor boundaries
-//   for( g=0 ; g < mNumberOfGrids ; g++ )
-//     communicate_array( U[g], g );
-
-// tmp
-// testing eval_curvilinear_bc_stress
-//   if (topographyExists())
-//   {
-//     g = mNumberOfGrids - 1;
-//     eval_curvilinear_bc_stress(U[g], m_BCForcing[g], mX, mY, mZ, mMu[g], mLambda[g],
-// 			       mQ, mR, mS, mJ);
-
-// // save the bc forcing on side=4 (assume one proc)
-// //
-//     if (m_bcType[g][4] == bStressFree)
-//     {
-//       FILE *tf=fopen("estress.txt","w");
-      
-//       int ind=0;
-//       fprintf(tf,"%i %i\n", mX.m_ni-2, mX.m_nj-2);
-//       for (int j=2; j<=mX.m_nj-1; j++)
-// 	for (int i=2; i<=mX.m_ni-1; i++)
-// 	{
-// 	  fprintf(tf,"%e %e %e\n", m_BCForcing[g][4][ind], m_BCForcing[g][4][ind+1], m_BCForcing[g][4][ind+2]);
-// 	  ind+=3;
-// 	}
-
-//       fclose(tf);
-//       MPI_Abort(MPI_COMM_WORLD, 1);
-//     }
-//   }
-// end tmp  
-//}
-
-//-----------------------------------------------------------------------
-// void EW::impose_physical_bc(vector<Sarray> &U, vector<Sarray> &UM, double t, 
-// 			    vector<Sarray*> &AlphaVE )
-// {
-//   int g;
-
-//   // if( m_do_geodynbc )
-//   //    impose_geodyn_ibcdata( U, UM, t );
-
-//   for( g = 0 ; g < mNumberOfCartesianGrids ; g++ ) // only Cartesian grids
-// //  for( g = 0 ; g < mNumberOfGrids ; g++ ) // tmp: all grids
-//   {
-//     double h= mGridSize[g];
-// // Find out boundary condition types, and set some straightforward bc:s
-//     for( int side= 0 ; side < 6 ; side++ )
-//     {
-// // new approach: assign all sides with dirichlet and free surface bc in one go.
-//       impose_cartesian_bc( U[g], mMu[g], mLambda[g], m_BCForcing[g], m_bcType[g], // note that U points to the same array as a_Up
-// 			   m_onesided[g], m_curlcoeff, h ); 
-
-//     } // end for all Cartesian grids
-
-//     if (topographyExists())
-//     {
-// //     if (proc_zero())
-// //       cout << "*** Calling impose_curvilinear_bc ***" << endl;
-    
-//       g = mNumberOfGrids-1;
-//       impose_curvilinear_bc(U[g], m_BCForcing[g],
-// 			    mX, mY, mZ, mMu[g], mLambda[g],
-// 			    mQ, mR, mS, mJ, t, m_bcType[g] ); 
-
-//     }
-  
-//   }
-// }
-
-
-
-// //-----------------------------------------------------------------------
-// void EW::bc_dirichlet( Sarray& u, int grid, double t, int side,
-// 			 Forcing* forcing, double h )
-// {
-// // this routine sets Dirichlet conditions on the boundary points for Cartesian grids (and not the ghost points!)
-//    int wind[6];
-//    u.side_plane( side, wind );
-// // tmp	
-// //   printf("bc_dirichlet side=%i, wind=(%i %i %i %i %i %i)\n", side, wind[0], wind[1], wind[2], wind[3], wind[4], wind[5]);
-
-//    int sidecorr[3] = {0,0,0};
-//    if( side == 0 )
-//       sidecorr[0] = 1;
-//    else if( side == 1 )
-//       sidecorr[0] = -1;
-//    else if( side == 2 )
-//       sidecorr[1] = 1;
-//    else if( side == 3 )
-//       sidecorr[1] =-1;
-//    else if( side == 4 )
-//       sidecorr[2] = 1;
-//    else if( side == 5 )
-//       sidecorr[2] =-1;
-
-//    for( int k = wind[4] ; k <= wind[5] ; k++ )
-//       for( int j = wind[2] ; j <= wind[3] ; j++ )
-// 	 for( int i = wind[0] ; i <= wind[1] ; i++ )
-// 	 {
-//             double x, y, z;
-//             if( grid < mNumberOfCartesianGrids )
-// 	    {
-// 	       x = (i+sidecorr[0]-1)*h;
-//                y = (j+sidecorr[1]-1)*h;
-// 	       z = (k+sidecorr[2]-1)*h + m_zmin[grid];
-// //                x = (i-1)*h;
-// //                y = (j-1)*h;
-// // 	          z = (k-1)*h + m_zmin[grid];
-// 	    }
-// 	    else
-// 	    {
-// 	       x = mX(i+sidecorr[0], j+sidecorr[1], k+sidecorr[2]);
-//                y = mY(i+sidecorr[0], j+sidecorr[1], k+sidecorr[2]);
-// 	       z = mZ(i+sidecorr[0], j+sidecorr[1], k+sidecorr[2]);
-// 	    }
-// // assign the boundary value straight into the solution array
-// 	    forcing->get_exact( x, y, z, t, &(u(1,i+sidecorr[0], j+sidecorr[1], k+sidecorr[2])), h );
-// 	 }
-// }
 
 //------------------------------------------------------------------------------
 void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
@@ -2693,705 +2497,6 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
   }
 }
 
-
-
-//------------------------------------------------------------------------------
-// void
-// impose_curvilinear_bc(Sarray & a_u, double ** bcForcing, Sarray & a_x, Sarray & a_y, Sarray & a_z,
-// 		      Sarray & a_mu, Sarray & a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J,
-// 		      double t, boundaryConditionType bcType[] )
-
-// {
-// // 4D macros swap the last and first indices to compensate for different conventions between how 
-// // the Sarrays were allocated and how this routine was originally written
-// #define u(i,j,k,c) u_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// #define q(i,j,k,c) q_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// #define r(i,j,k,c) r_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// #define s(i,j,k,c) s_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// // 3D array macros are special cases of the 4D macros with c=1 and nc=1
-// #define x(i,j,k) x_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define y(i,j,k) y_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define z(i,j,k) z_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define J(i,j,k) J_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define mu(i,j,k) mu_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define lam(i,j,k) lam_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// // not necessary to store lambda + 2*mu in separate array
-// #define lam2mu(i,j,k) (lam(i,j,k) + 2.*mu(i,j,k))
-  
-// // extract pointers for the macros
-// // 4D arrays
-//   double * u_=a_u.c_ptr();
-//   double * q_=a_q.c_ptr();
-//   double * r_=a_r.c_ptr();
-//   double * s_=a_s.c_ptr();
-// // 3D arrays
-//   double * x_=a_x.c_ptr();
-//   double * y_=a_y.c_ptr();
-//   double * z_=a_z.c_ptr();
-//   double * mu_=a_mu.c_ptr();
-//   double * lam_=a_lam.c_ptr();
-//   double * J_=a_J.c_ptr();
-  
-// // all 3D/4D Sarrays must have the same number of grid points and the same starting/ending indices
-//   int m_nc = a_q.m_nc;
-//   int m_ni = a_q.m_ni;
-//   int m_nj = a_q.m_nj;
-//   int m_nk = a_q.m_nk;
-// // to mimic the original coding:
-// // setting starting indices to one 
-// // setting ending indices to equal the number of points in each dimension
-//   int m_ib = 1;
-//   int m_jb = 1;
-//   int m_kb = 1;
-//   int Nx = a_q.m_ni;
-//   int Ny = a_q.m_nj;
-//   int Nz = a_q.m_nk;
-
-//   int i, j, k, q, side, ind;
-   
-// //
-// // This routine only knows about dirichlet and free surface conditions
-// //
-
-//   side = 2;
-//   ind = 0;
-//   if (bcType[2]==bDirichlet || bcType[2]==bSuperGrid)
-//   {
-// // set the dirichlet condition on the boundary point
-//     int j=2;
-//     for(int k=1; k<=Nz; k++)
-//       for(int i=1; i<=Nx; i++)
-//       {
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,k,c) = bcForcing[side][ind+c-1];
-// 	ind += 3;
-//       }
-//   }
-
-//   side = 3;
-//   ind = 0;
-//   if (bcType[3]==bDirichlet || bcType[3]==bSuperGrid)
-//   {
-// // set the dirichlet condition on the boundary point
-//     j=Ny-1;
-//     for(int k=1; k<=Nz; k++)
-//       for(int i=1; i<=Nx; i++)
-//       {
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,k,c) = bcForcing[side][ind+c-1];
-// 	ind += 3;
-//       }
-//   }
-
-//   side = 0;
-//   ind = 0;
-//   if (bcType[0]==bDirichlet || bcType[0]==bSuperGrid)
-//   {
-// // set the dirichlet condition on the boundary point
-//     i=2;
-//     for(int k=1; k<=Nz; k++)
-//       for(int j=1; j<=Ny; j++)
-//       {
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,k,c) = bcForcing[side][ind+c-1];
-// 	ind += 3;
-//       }
-//   }
-  
-//   side = 1;
-//   ind = 0;
-//   if (bcType[1]==bDirichlet || bcType[1]==bSuperGrid)
-//   {
-// // set the dirichlet condition on the boundary point
-//     i=Nx-1;
-//     for(int k=1; k<=Nz; k++)
-//       for(int j=1; j<=Ny; j++)
-//       {
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,k,c) = bcForcing[side][ind+c-1];
-// 	ind += 3;
-//       }
-//   }
-
-//   side = 5;
-//   ind = 0;
-//   if (bcType[5]==bDirichlet || bcType[5]==bSuperGrid)
-//   {
-// // set the dirichlet condition on the boundary point
-//     k=Nz-1;
-//     for(int j=1; j<=Ny; j++)
-//       for(int i=1; i<=Nx; i++)
-//       {
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,k,c) = bcForcing[side][ind+c-1];
-// 	ind += 3;
-//       }
-//   }
-//   else if (bcType[5]==bStressFree)
-//   {
-// #define E1(i,j,t1,t2,i2,t3,i3,t4) (t1(i,j,Nz-1)*t2(i,j,Nz-1,i2)*t3(i,j,Nz-1,i3)*t4(i,j,Nz-1))
-// #define E12(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,Nz)*t2(i,j,Nz,i2)*t3(i,j,Nz,i3)*t4(i,j,Nz)\
-// 				 +t1(i,j,Nz-1)*t2(i,j,Nz-1,i2)*t3(i,j,Nz-1,i3)*t4(i,j,Nz-1)))
-// #define E32(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,Nz-2)*t2(i,j,Nz-2,i2)*t3(i,j,Nz-2,i3)*t4(i,j,Nz-2)\
-// 				 +t1(i,j,Nz-1)*t2(i,j,Nz-1,i2)*t3(i,j,Nz-1,i3)*t4(i,j,Nz-1)))
-//     double Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9];
-//     int info,N1,N2,N3 ,ipv[3]; 
-//     N1=3;N2=1;N3=3;
-//     for(int j=2; j<=Ny-1; j++)
-//       for(int i=2; i<=Nx-1; i++)
-//       {
-// // note that the free surface conditions are imposed on the boundary itself (as opposed to the ghost point)
-// 	for(int c=1; c<=3;c++){
-// 	  Dr0[c-1]=0.5*(u(i,j+1,Nz-1,c)-u(i,j-1,Nz-1,c));
-// 	  Dq0[c-1]=0.5*(u(i+1,j,Nz-1,c)-u(i-1,j,Nz-1,c));
-// 	  Dsp[c-1]=u(i,j,Nz-1,c)-u(i,j,Nz-2,c);
-// 	}
-// 	b[0]=(E1(i,j,J,s,1,q,1,lam2mu)*Dq0[0]
-// 	      +E1(i,j,J,s,1,r,1,lam2mu)*Dr0[0]	
-// 	      +E1(i,j,J,s,1,q,2,lam)*Dq0[1]
-// 	      +E1(i,j,J,s,1,r,2,lam)*Dr0[1]	 
-// 	      +E1(i,j,J,s,1,q,3,lam)*Dq0[2]
-// 	      +E1(i,j,J,s,1,r,3,lam)*Dr0[2]	 
-// 	      +E1(i,j,J,s,2,q,1,mu)*Dq0[1]
-// 	      +E1(i,j,J,s,2,r,1,mu)*Dr0[1]	 
-// 	      +E1(i,j,J,s,2,q,2,mu)*Dq0[0]
-// 	      +E1(i,j,J,s,2,r,2,mu)*Dr0[0]	 
-// 	      +E1(i,j,J,s,3,q,1,mu)*Dq0[2]
-// 	      +E1(i,j,J,s,3,r,1,mu)*Dr0[2]	 
-// 	      +E1(i,j,J,s,3,q,3,mu)*Dq0[0]
-// 	      +E1(i,j,J,s,3,r,3,mu)*Dr0[0]	 
-// 	      +0.5*(
-// 		E32(i,j,J,s,1,s,1,lam2mu)*Dsp[0]
-// 		+E32(i,j,J,s,1,s,2,lam)*Dsp[1]
-// 		+E32(i,j,J,s,1,s,3,lam)*Dsp[2]
-// 		+E32(i,j,J,s,2,s,1,mu)*Dsp[1]
-// 		+E32(i,j,J,s,2,s,2,mu)*Dsp[0]
-// 		+E32(i,j,J,s,3,s,1,mu)*Dsp[2]
-// 		+E32(i,j,J,s,3,s,3,mu)*Dsp[0])); 
-// 	b[1]=(E1(i,j,J,s,1,q,1,mu)*Dq0[1]
-// 	      +E1(i,j,J,s,1,r,1,mu)*Dr0[1]	
-// 	      +E1(i,j,J,s,1,q,2,mu)*Dq0[0]
-// 	      +E1(i,j,J,s,1,r,2,mu)*Dr0[0]	 
-// 	      +E1(i,j,J,s,2,q,2,lam2mu)*Dq0[1]
-// 	      +E1(i,j,J,s,2,r,2,lam2mu)*Dr0[1]
-// 	      +E1(i,j,J,s,2,r,1,lam)*Dr0[0]	 
-// 	      +E1(i,j,J,s,2,q,1,lam)*Dq0[0]
-// 	      +E1(i,j,J,s,2,r,3,lam)*Dr0[2]	 
-// 	      +E1(i,j,J,s,2,q,3,lam)*Dq0[2]
-// 	      +E1(i,j,J,s,3,q,2,mu)*Dq0[2]
-// 	      +E1(i,j,J,s,3,r,2,mu)*Dr0[2]	 
-// 	      +E1(i,j,J,s,3,q,3,mu)*Dq0[1]
-// 	      +E1(i,j,J,s,3,r,3,mu)*Dr0[1]	 
-// 	      +0.5*(E32(i,j,J,s,2,s,2,lam2mu)*Dsp[1]
-// 		    +E32(i,j,J,s,2,s,1,lam)*Dsp[0]
-// 		    +E32(i,j,J,s,2,s,3,lam)*Dsp[2]
-// 		    +E32(i,j,J,s,1,s,1,mu)*Dsp[1]
-// 		    +E32(i,j,J,s,1,s,2,mu)*Dsp[0]
-// 		    +E32(i,j,J,s,3,s,2,mu)*Dsp[2]
-// 		    +E32(i,j,J,s,3,s,3,mu)*Dsp[1]));
-	    
-// 	b[2]=(E1(i,j,J,s,1,q,1,mu)*Dq0[2]
-// 	      +E1(i,j,J,s,1,r,1,mu)*Dr0[2]	
-// 	      +E1(i,j,J,s,1,q,3,mu)*Dq0[0]
-// 	      +E1(i,j,J,s,1,r,3,mu)*Dr0[0]	 
-// 	      +E1(i,j,J,s,3,q,3,lam2mu)*Dq0[2]
-// 	      +E1(i,j,J,s,3,r,3,lam2mu)*Dr0[2]
-// 	      +E1(i,j,J,s,3,r,1,lam)*Dr0[0]	 
-// 	      +E1(i,j,J,s,3,q,1,lam)*Dq0[0]
-// 	      +E1(i,j,J,s,3,r,2,lam)*Dr0[1]	 
-// 	      +E1(i,j,J,s,3,q,2,lam)*Dq0[1]
-// 	      +E1(i,j,J,s,2,q,2,mu)*Dq0[2]
-// 	      +E1(i,j,J,s,2,r,2,mu)*Dr0[2]	 
-// 	      +E1(i,j,J,s,2,q,3,mu)*Dq0[1]
-// 	      +E1(i,j,J,s,2,r,3,mu)*Dr0[1]	 
-// 	      +0.5*(E32(i,j,J,s,3,s,3,lam2mu)*Dsp[2]
-// 		    +E32(i,j,J,s,3,s,1,lam)*Dsp[0]
-// 		    +E32(i,j,J,s,3,s,2,lam)*Dsp[1]
-// 		    +E32(i,j,J,s,1,s,1,mu)*Dsp[2]
-// 		    +E32(i,j,J,s,1,s,3,mu)*Dsp[0]
-// 		    +E32(i,j,J,s,2,s,2,mu)*Dsp[2]
-// 		    +E32(i,j,J,s,2,s,3,mu)*Dsp[1]));
-
-// // add in boundary forcing
-// 	for(int c=1; c<=3;c++)
-// 	{
-// 	  b[c-1]+= bcForcing[side][ind+c-1];
-// 	}
-// 	ind += 3;
-	    
-// 	A[0]=(
-// 	  E12(i,j,J,s,1,s,1,lam2mu)
-// 	  +E12(i,j,J,s,2,s,2,mu)
-// 	  +E12(i,j,J,s,3,s,3,mu));
-// 	A[3]=(E12(i,j,J,s,1,s,2,lam)
-// 	      +E12(i,j,J,s,2,s,1,mu));
-// 	A[6]=(E12(i,j,J,s,1,s,3,lam)
-// 	      +E12(i,j,J,s,3,s,1,mu));
-// // u, v, w in v eq.
-// 	A[1]=(E12(i,j,J,s,2,s,1,lam)
-// 	      +E12(i,j,J,s,1,s,2,mu));
-// 	A[4]=(E12(i,j,J,s,3,s,3,mu)
-// 	      +E12(i,j,J,s,1,s,1,mu)
-// 	      +E12(i,j,J,s,2,s,2,lam2mu));
-// 	A[7]=(E12(i,j,J,s,2,s,3,lam)
-// 	      +E12(i,j,J,s,3,s,2,mu));
-// // u, v, w in w eq.
-// 	A[2]=(+E12(i,j,J,s,3,s,1,lam)
-// 	      +E12(i,j,J,s,1,s,3,mu));
-// 	A[5]=(E12(i,j,J,s,2,s,3,mu)
-// 	      +E12(i,j,J,s,3,s,2,lam));
-// 	A[8]=(+E12(i,j,J,s,3,s,3,lam2mu)
-// 	      +E12(i,j,J,s,1,s,1,mu)
-// 	      +E12(i,j,J,s,2,s,2,mu));
-// 	for(int c=0; c<9; c++)
-// 	  A[c]*=0.5;
-	    
-// 	F77_FUNC(dgesv,DGESV)(N1, N2, &A[0], N1, &ipv[0], &b[0], N3, info);
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,Nz,c)=u(i,j,Nz-1,c)-b[c-1];
-//       }
-// #undef E1
-// #undef E12
-// #undef E32
-      
-//   }
-  
-//   side = 4;
-//   ind = 0;
-//   if (bcType[4]==bDirichlet || bcType[4]==bSuperGrid)
-//   {
-// // set the dirichlet condition on the boundary point
-//     k=2;
-//     for(int j=1; j<=Ny; j++)
-//       for(int i=1; i<=Nx; i++)
-//       {
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,k,c) = bcForcing[side][ind+c-1];
-// 	ind += 3;
-//       }
-//   }
-
-//   if (bcType[4]==bStressFree)
-//   {
-// #define E1(i,j,t1,t2,i2,t3,i3,t4) (t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2))
-// #define E12(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,1)*t2(i,j,1,i2)*t3(i,j,1,i3)*t4(i,j,1)\
-// 				 +t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2)))
-// #define E32(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,3)*t2(i,j,3,i2)*t3(i,j,3,i3)*t4(i,j,3)\
-// 				 +t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2)))
-//     double Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9];
-//     int info,N1,N2,N3 ,ipv[3]; 
-//     N1=3;N2=1;N3=3;
-//     k=2; ///NOTE!!! 
-//     for(int j=2; j<=Ny-1; j++)
-//       for(int i=2; i<=Nx-1; i++)
-//       {
-// 	for(int c=1; c<=3;c++){
-// 	  Dr0[c-1]=0.5*(u(i,j+1,2,c)-u(i,j-1,2,c));
-// 	  Dq0[c-1]=0.5*(u(i+1,j,2,c)-u(i-1,j,2,c));
-// 	  Dsp[c-1]=u(i,j,3,c)-u(i,j,2,c);
-// 	}
-// 	b[0]=-(E1(i,j,J,s,1,q,1,lam2mu)*Dq0[0]
-// 	       +E1(i,j,J,s,1,r,1,lam2mu)*Dr0[0]	
-// 	       +E1(i,j,J,s,1,q,2,lam)*Dq0[1]
-// 	       +E1(i,j,J,s,1,r,2,lam)*Dr0[1]	 
-// 	       +E1(i,j,J,s,1,q,3,lam)*Dq0[2]
-// 	       +E1(i,j,J,s,1,r,3,lam)*Dr0[2]	 
-// 	       +E1(i,j,J,s,2,q,1,mu)*Dq0[1]
-// 	       +E1(i,j,J,s,2,r,1,mu)*Dr0[1]	 
-// 	       +E1(i,j,J,s,2,q,2,mu)*Dq0[0]
-// 	       +E1(i,j,J,s,2,r,2,mu)*Dr0[0]	 
-// 	       +E1(i,j,J,s,3,q,1,mu)*Dq0[2]
-// 	       +E1(i,j,J,s,3,r,1,mu)*Dr0[2]	 
-// 	       +E1(i,j,J,s,3,q,3,mu)*Dq0[0]
-// 	       +E1(i,j,J,s,3,r,3,mu)*Dr0[0]	 
-// 	       +0.5*(
-// 		 E32(i,j,J,s,1,s,1,lam2mu)*Dsp[0]
-// 		 +E32(i,j,J,s,1,s,2,lam)*Dsp[1]
-// 		 +E32(i,j,J,s,1,s,3,lam)*Dsp[2]
-// 		 +E32(i,j,J,s,2,s,1,mu)*Dsp[1]
-// 		 +E32(i,j,J,s,2,s,2,mu)*Dsp[0]
-// 		 +E32(i,j,J,s,3,s,1,mu)*Dsp[2]
-// 		 +E32(i,j,J,s,3,s,3,mu)*Dsp[0]));
-// 	b[1]=-(E1(i,j,J,s,1,q,1,mu)*Dq0[1]
-// 	       +E1(i,j,J,s,1,r,1,mu)*Dr0[1]	
-// 	       +E1(i,j,J,s,1,q,2,mu)*Dq0[0]
-// 	       +E1(i,j,J,s,1,r,2,mu)*Dr0[0]	 
-// 	       +E1(i,j,J,s,2,q,2,lam2mu)*Dq0[1]
-// 	       +E1(i,j,J,s,2,r,2,lam2mu)*Dr0[1]
-// 	       +E1(i,j,J,s,2,r,1,lam)*Dr0[0]	 
-// 	       +E1(i,j,J,s,2,q,1,lam)*Dq0[0]
-// 	       +E1(i,j,J,s,2,r,3,lam)*Dr0[2]	 
-// 	       +E1(i,j,J,s,2,q,3,lam)*Dq0[2]
-// 	       +E1(i,j,J,s,3,q,2,mu)*Dq0[2]
-// 	       +E1(i,j,J,s,3,r,2,mu)*Dr0[2]	 
-// 	       +E1(i,j,J,s,3,q,3,mu)*Dq0[1]
-// 	       +E1(i,j,J,s,3,r,3,mu)*Dr0[1]	 
-// 	       +0.5*(E32(i,j,J,s,2,s,2,lam2mu)*Dsp[1]
-// 		     +E32(i,j,J,s,2,s,1,lam)*Dsp[0]
-// 		     +E32(i,j,J,s,2,s,3,lam)*Dsp[2]
-// 		     +E32(i,j,J,s,1,s,1,mu)*Dsp[1]
-// 		     +E32(i,j,J,s,1,s,2,mu)*Dsp[0]
-// 		     +E32(i,j,J,s,3,s,2,mu)*Dsp[2]
-// 		     +E32(i,j,J,s,3,s,3,mu)*Dsp[1]));
-	    
-// 	b[2]=-(E1(i,j,J,s,1,q,1,mu)*Dq0[2]
-// 	       +E1(i,j,J,s,1,r,1,mu)*Dr0[2]	
-// 	       +E1(i,j,J,s,1,q,3,mu)*Dq0[0]
-// 	       +E1(i,j,J,s,1,r,3,mu)*Dr0[0]	 
-// 	       +E1(i,j,J,s,3,q,3,lam2mu)*Dq0[2]
-// 	       +E1(i,j,J,s,3,r,3,lam2mu)*Dr0[2]
-// 	       +E1(i,j,J,s,3,r,1,lam)*Dr0[0]	 
-// 	       +E1(i,j,J,s,3,q,1,lam)*Dq0[0]
-// 	       +E1(i,j,J,s,3,r,2,lam)*Dr0[1]	 
-// 	       +E1(i,j,J,s,3,q,2,lam)*Dq0[1]
-// 	       +E1(i,j,J,s,2,q,2,mu)*Dq0[2]
-// 	       +E1(i,j,J,s,2,r,2,mu)*Dr0[2]	 
-// 	       +E1(i,j,J,s,2,q,3,mu)*Dq0[1]
-// 	       +E1(i,j,J,s,2,r,3,mu)*Dr0[1]	 
-// 	       +0.5*(E32(i,j,J,s,3,s,3,lam2mu)*Dsp[2]
-// 		     +E32(i,j,J,s,3,s,1,lam)*Dsp[0]
-// 		     +E32(i,j,J,s,3,s,2,lam)*Dsp[1]
-// 		     +E32(i,j,J,s,1,s,1,mu)*Dsp[2]
-// 		     +E32(i,j,J,s,1,s,3,mu)*Dsp[0]
-// 		     +E32(i,j,J,s,2,s,2,mu)*Dsp[2]
-// 		     +E32(i,j,J,s,2,s,3,mu)*Dsp[1]));
-
-// 	for(int c=1; c<=3;c++)
-// 	{
-// 	  b[c-1]+= bcForcing[side][ind+c-1];
-// 	}
-// 	ind += 3;
-
-// 	A[0]=(
-// 	  E12(i,j,J,s,1,s,1,lam2mu)
-// 	  +E12(i,j,J,s,2,s,2,mu)
-// 	  +E12(i,j,J,s,3,s,3,mu));
-// 	A[3]=(E12(i,j,J,s,1,s,2,lam)
-// 	      +E12(i,j,J,s,2,s,1,mu));
-// 	A[6]=(E12(i,j,J,s,1,s,3,lam)
-// 	      +E12(i,j,J,s,3,s,1,mu));
-// // u, v, w in v eq.
-// 	A[1]=(E12(i,j,J,s,2,s,1,lam)
-// 	      +E12(i,j,J,s,1,s,2,mu));
-// 	A[4]=(E12(i,j,J,s,3,s,3,mu)
-// 	      +E12(i,j,J,s,1,s,1,mu)
-// 	      +E12(i,j,J,s,2,s,2,lam2mu));
-// 	A[7]=(E12(i,j,J,s,2,s,3,lam)
-// 	      +E12(i,j,J,s,3,s,2,mu));
-// 	// u, v, w in w eq.
-// 	A[2]=(E12(i,j,J,s,3,s,1,lam)
-// 	      +E12(i,j,J,s,1,s,3,mu));
-// 	A[5]=(E12(i,j,J,s,2,s,3,mu)
-// 	      +E12(i,j,J,s,3,s,2,lam));
-// 	A[8]=(E12(i,j,J,s,3,s,3,lam2mu)
-// 	      +E12(i,j,J,s,1,s,1,mu)
-// 	      +E12(i,j,J,s,2,s,2,mu));
-// 	for(int c=0; c<9; c++)
-// 	  A[c]*=0.5;
-	    
-// 	F77_FUNC(dgesv,DGESV)(N1, N2 ,&A[0] ,N1 ,&ipv[0] , &b[0] ,N3 ,info);
-	    
-// // update ghost point
-// 	for(int c=1; c<=3;c++)
-// 	  u(i,j,1,c)=(u(i,j,2,c)-b[c-1]);
-	    
-//       }
-//   }
-  
-// #undef u
-// #undef x
-// #undef y
-// #undef z
-// #undef q
-// #undef r
-// #undef s
-// #undef J
-// #undef mu
-// #undef lam
-// #undef lam2mu
-  
-// }
-
-//---------------------------------------------------------------
-// void curvilinear_bc_forcing(double ** bcForcing,
-// 		       int * numberOfBCPoints,
-// 		       Sarray & a_x,
-// 		       Sarray & a_y,
-// 		       Sarray & a_z,
-// 		       Sarray & a_mu,
-// 		       Sarray & a_lam,
-// 		       Sarray & a_q,
-// 		       Sarray & a_r,
-// 		       Sarray & a_s,
-// 		       Sarray & a_J,
-// 		       double t,
-// 		       boundaryConditionType bcType[],
-// 		       Forcing * f,
-// 		       int noof_mechanisms, Sarray* alphaVE, Sarray* muVE, Sarray* lambdaVE )
-// {
-// // 4D macros swap the last and first indices to compensate for different conventions between how 
-// // the Sarrays were allocated and how this routine was originally written
-// #define q(i,j,k,c) q_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// #define r(i,j,k,c) r_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// #define s(i,j,k,c) s_[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)]
-// // 3D array macros are special cases of the 4D macros with c=1 and nc=1
-// #define x(i,j,k) x_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define y(i,j,k) y_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define z(i,j,k) z_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define J(i,j,k) J_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define mu(i,j,k) mu_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// #define lam(i,j,k) lam_[(i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb)]
-// // not necessary to store lambda + 2*mu in separate array
-// #define lam2mu(i,j,k) (lam(i,j,k) + 2.*mu(i,j,k))
-  
-// // extract pointers for the macros
-// // 4D arrays
-//   double * q_=a_q.c_ptr();
-//   double * r_=a_r.c_ptr();
-//   double * s_=a_s.c_ptr();
-// // 3D arrays
-//   double * x_=a_x.c_ptr();
-//   double * y_=a_y.c_ptr();
-//   double * z_=a_z.c_ptr();
-//   double * mu_=a_mu.c_ptr();
-//   double * lam_=a_lam.c_ptr();
-//   double * J_=a_J.c_ptr();
-  
-// // all 3D/4D Sarrays must have the same number of grid points and the same starting/ending indices
-//   int m_nc = a_q.m_nc;
-//   int m_ni = a_q.m_ni;
-//   int m_nj = a_q.m_nj;
-//   int m_nk = a_q.m_nk;
-// // to mimic the original coding:
-// // setting starting indices to one 
-// // setting ending indices to equal the number of points in each dimension
-//   int m_ib = 1;
-//   int m_jb = 1;
-//   int m_kb = 1;
-//   int Nx = a_q.m_ni;
-//   int Ny = a_q.m_nj;
-//   int Nz = a_q.m_nk;
-
-// // bcType[0-5] are low-q, high-q, low-r, high-r, low-s, high-s
-// // this routine only knows about Dirichlet and Stress-free boundary conditions
-
-// // exact solution must be known everywhere in the domain
-//   if (f->knows_exact() && !f->exact_only_surface() )
-//   {
-//     int i, j, k, q, ind, side;
-//     double tau[6], uEx[3], dum=0.;
-  
-//     side = 4;
-//     ind = 0;
-//  // Dirichlet. k=1 is the ghost point
-//     if (bcType[4]==bDirichlet || bcType[4]==bSuperGrid) 
-//     {
-// // set the dirichlet condition on the boundary point
-//       k=2;
-//       for(int j=1; j<=Ny; j++)
-// 	for(int i=1; i<=Nx; i++)
-// 	{
-// 	  f->get_exact( x(i,j,k), y(i,j,k), z(i,j,k), t, uEx, dum);	  
-// 	  for(int c=1; c<=3;c++)
-// 	  {
-// 	    bcForcing[side][ind+c-1] = uEx[c-1];
-// 	  }
-// 	  ind += 3;
-// 	}
-//     }
-// // stress-free at k=2
-//     else if (bcType[4]==bStressFree)
-//     {
-//       for(int j=2; j<=Ny-1; j++)
-// 	for(int i=2; i<=Nx-1; i++)
-//         {
-// 	  f->stress_tensor( x(i,j,2), y(i,j,2), z(i,j,2), t, tau);	  
-
-// 	  bcForcing[side][ind] = J(i,j,2)
-// 	    *(s(i,j,2,1)*tau[0]
-// 	      +s(i,j,2,2)*tau[1]
-// 	      +s(i,j,2,3)*tau[2]
-// 	      );
-// 	  bcForcing[side][ind+1] = J(i,j,2)
-// 	    *(s(i,j,2,2)*tau[3]
-// 	      +s(i,j,2,1)*tau[1]
-// 	      +s(i,j,2,3)*tau[4]
-// 	      );
-// 	  bcForcing[side][ind+2] = J(i,j,2)
-// 	    *(s(i,j,2,3)*tau[5]
-// 	      +s(i,j,2,1)*tau[2]
-// 	      +s(i,j,2,2)*tau[4]
-// 	      );
-
-// // tmp
-// // 	  if (i==50 && j==30)
-// // 	  {
-// // 	    printf("curvilinear_bc_forcing: t=%e x=%e y=%e z=%e\n"
-// // 		   "J=%e, sx=%e, sy=%e, sz=%e\n"
-// // 		   "tau[0]=%e, tau[1]=%e, tau[2]=%e, tau[3]=%e, tau[4]=%e, tau[5]=%e\n", t,  x(i,j,2), y(i,j,2), z(i,j,2), 
-// // //		   bcForcing[side][ind], bcForcing[side][ind+1], bcForcing[side][ind+2],
-// // 		   J(i,j,2), s(i,j,2,1), s(i,j,2,2), s(i,j,2,3),
-// // 		   tau[0], tau[1], tau[2], tau[3], tau[4], tau[5]);
-// // 	  }
-
-// 	  ind += 3;
-// 	}
-//     } // end bStressFree
-  
-//     side = 5;
-//     ind = 0;
-// // Dirichlet (k=Nz is the ghost point)
-//     if (bcType[5]==bDirichlet || bcType[5]==bSuperGrid)
-//     {
-// // set the dirichlet condition on the boundary point
-//       k=Nz-1;
-//       for(int j=1; j<=Ny; j++)
-// 	for(int i=1; i<=Nx; i++)
-// 	{
-// 	  f->get_exact( x(i,j,k), y(i,j,k), z(i,j,k), t, uEx, dum);	  
-// 	  for(int c=1; c<=3;c++)
-// 	  {
-// 	    bcForcing[side][ind+c-1] = uEx[c-1];
-// 	  }
-// 	  ind += 3;
-// 	}
-//     }
-
-// // Stress-free at k=Nz-1
-//     else if (bcType[5]==bStressFree)
-//     {
-//       for(int j=2; j<=Ny-1; j++)
-// 	for(int i=2; i<=Nx-1; i++)
-//         {
-// 	  f->stress_tensor( x(i,j,Nz-1), y(i,j,Nz-1), z(i,j,Nz-1), t, tau);	  
-	  
-// 	  bcForcing[side][ind]  = -J(i,j,Nz-1)
-// 	    *(s(i,j,Nz-1,1)*tau[0]
-// 	      +s(i,j,Nz-1,2)*tau[1]
-// 	      +s(i,j,Nz-1,3)*tau[2]
-// 	      );
-// 	  bcForcing[side][ind+1] = -J(i,j,Nz-1)
-// 	    *(s(i,j,Nz-1,2)*tau[3]
-// 	      +s(i,j,Nz-1,1)*tau[1]
-// 	      +s(i,j,Nz-1,3)*tau[4]
-// 	      );
-// 	  bcForcing[side][ind+2] = -J(i,j,Nz-1)
-// 	    *(s(i,j,Nz-1,3)*tau[5]
-// 	      +s(i,j,Nz-1,1)*tau[2]
-// 	      +s(i,j,Nz-1,2)*tau[4]
-// 	      );
-// 	  ind += 3;
-// 	}
-//     } // end if stress free at k=Nz
-  
-//     side = 2;
-//     ind = 0;
-// // Dirichlet (j=1 is the ghost point)
-//     if (bcType[2]==bDirichlet || bcType[2]==bSuperGrid)
-//     {
-// // set the dirichlet condition on the boundary point
-//       int j=2;
-//       for(int k=1; k<=Nz; k++)
-// 	for(int i=1; i<=Nx; i++)
-// 	{
-// 	  f->get_exact( x(i,j,k), y(i,j,k), z(i,j,k), t, uEx, dum);	  
-// 	  for(int c=1; c<=3;c++)
-// 	  {
-// 	    bcForcing[side][ind+c-1] = uEx[c-1];
-// 	  }
-// 	  ind += 3;
-// 	}
-//     }
-
-//     side = 3;
-//     ind = 0;
-// // Dirichlet (j=Ny is the ghost point)
-//     if (bcType[3]==bDirichlet || bcType[3]==bSuperGrid)
-//     { 
-// // set the dirichlet condition on the boundary point
-//       j=Ny-1;
-//       for(int k=1; k<=Nz; k++)
-// 	for(int i=1; i<=Nx; i++)
-// 	{
-// 	  f->get_exact( x(i,j,k), y(i,j,k), z(i,j,k), t, uEx, dum);	  
-// 	  for(int c=1; c<=3;c++)
-// 	  {
-// 	    bcForcing[side][ind+c-1] = uEx[c-1];
-// 	  }
-// 	  ind += 3;
-// 	}
-//     }
-
-//     side = 0;
-//     ind = 0;
-// // Dirichlet (i=1 is the ghost point)
-//     if (bcType[0]==bDirichlet || bcType[0]==bSuperGrid)
-//     { 
-// // set the dirichlet condition on the boundary point
-//       i=2;
-//       for(int k=1; k<=Nz; k++)
-// 	for(int j=1; j<=Ny; j++)
-// 	{
-// 	  f->get_exact( x(i,j,k), y(i,j,k), z(i,j,k), t, uEx, dum);	  
-// 	  for(int c=1; c<=3;c++)
-// 	  {
-// 	    bcForcing[side][ind+c-1] =uEx[c-1];
-// 	  }
-// 	  ind += 3;
-// 	}
-//     }
-
-//     side = 1;
-//     ind = 0;
-// // Dirichlet on i=Nx
-//     if (bcType[1]==bDirichlet || bcType[1]==bSuperGrid)
-//     {
-// // set the dirichlet condition on the boundary point
-//       i=Nx-1;
-//       for(int k=1; k<=Nz; k++)
-// 	for(int j=1; j<=Ny; j++)
-// 	{
-// 	  f->get_exact( x(i,j,k), y(i,j,k), z(i,j,k), t, uEx, dum);	  
-// 	  for(int c=1; c<=3;c++)
-// 	  {
-// 	    bcForcing[side][ind+c-1] = uEx[c-1];
-// 	  }
-// 	  ind += 3;
-// 	}
-    
-//     }
-//   } // end forcing knows exact solution
-//   else // just assign zeros to the forcing array
-//   {
-//     for (int side = 0; side < 6; side++)
-//     {
-//       if (bcType[side]==bDirichlet || bcType[side]==bSuperGrid || bcType[side]==bStressFree)
-//       {
-// 	for (int i=0; i<3*numberOfBCPoints[side]; i++)
-// 	  bcForcing[side][i]=0.;
-//       }
-//     }
-//   } // end homogeneous forcing
-
-// // Add attenuation contribution to free surface bcForcing.
-//   if (bcType[4]==bStressFree)
-//   {
-// // Add attenuation contribution to free surface b.c:s
-//       for( int a = 0 ; a < noof_mechanisms ; a++ )
-// 	eval_curvilinear_bc_stress(alphaVE[a], bcForcing, a_x, a_y, a_z, muVE[a], lambdaVE[a], a_q, a_r, a_s, a_J);
-//   }
-  
-// #undef x
-// #undef y
-// #undef z
-// #undef q
-// #undef r
-// #undef s
-// #undef J
-// #undef mu
-// #undef lam
-// #undef lam2mu
-// }
 
 
 //---------------------------------------------------------------------------

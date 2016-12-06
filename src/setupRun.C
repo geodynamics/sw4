@@ -198,12 +198,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	else if( m_bcType[g][side] == bPeriodic )
 	  side_plane( g, side, wind, m_ghost_points );
 	else // for Dirichlet, super grid, and periodic conditions, we
-	     // apply the forcing directly on the ghost points
 	{
-	   if( m_mesh_refinements && side < 4 )
-	      side_plane( g, side, wind, m_ghost_points+1 ); // AP: why are we adding one more ghost point in the (x,y)-directions?
-	   else
-	      side_plane( g, side, wind, m_ghost_points );
+           // apply the forcing directly on the ghost points
+           side_plane( g, side, wind, m_ghost_points );
 	}
 	
 	npts = (wind[5]-wind[4]+1)*

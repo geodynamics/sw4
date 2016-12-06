@@ -3,4 +3,4 @@ grid x=30 y=30 z=17 nx=75
 time t=10
 fileio verbose=1 path=etest-dir-coarse
 testenergy seed=34983249 cpcsratio=1.732 bchorizontal=dirichlet
-developer ctol=1e-10 cmaxit=100 crelax=0.92
+developer ctol=1e-10 cmaxit=100 crelax=0.92  time_order=2 cfl=0.8
