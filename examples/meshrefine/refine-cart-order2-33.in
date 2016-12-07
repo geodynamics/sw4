@@ -1,14 +1,14 @@
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.8
 
-fileio verbose=3 path=order2-33_out
+fileio verbose=1 path=order2-33_out
 
 grid nx=33 x=0.8 y=1.2 z=1.0 
 refinement zmax=0.2
 refinement zmax=0.5
 
-#time t=0.3
-time steps=1
+time t=0.3
+#time steps=1
 twilight omega=3.14159 errorlog=1
 
 #image mode=mu y=0.6 cycle=0 file=mr
