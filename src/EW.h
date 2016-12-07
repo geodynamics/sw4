@@ -627,6 +627,8 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     double t, std::vector<GridPointSource*> point_sources );
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
+   void dirichlet_twilight_ic( Sarray& U, int g, int kic, double t);
+   
    void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
    void dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj );
    

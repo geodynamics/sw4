@@ -8,4 +8,5 @@ refinement zmax=0.2
 refinement zmax=0.5
 
 time t=0.3
+#time steps=1
 twilight omega=3.14159 errorlog=1

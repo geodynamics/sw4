@@ -828,6 +828,13 @@ c         do i=ifirst,ilast
         t65 = cos(t43)
         forces(3) = 2*t13*t37*t20*t49*omega+lambda(i,j,kz)*(t6
      #0*omega*t20*t62+t37*t65*omega*t62+t37*t20*t49*omega)
+c$$$        if ((kz==1 .and. j==25.and. i==0) .or.
+c$$$     +       ( kz==25 .and. j==49.and. i==-1)) then
+c$$$          write(*,'(3(a,i3,tr1),7(a,tr1,es10.3,tr1))')
+c$$$     +         'i=', i, 'j=', j, 'k=', kz, 'x=', x, 'y=', y, 'z=', z, 
+c$$$     +         'mu=', mu(i,j,kz), 'la=', lambda(i,j,kz),
+c$$$     +         'bf1=', forces(1)
+c$$$        endif
         bforce(1,i,j) = forces(1)
         bforce(2,i,j) = forces(2)
         bforce(3,i,j) = forces(3)

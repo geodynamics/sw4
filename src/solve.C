@@ -1318,7 +1318,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
 void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-		    double t, vector<GridPointSource*> point_sources )
+		    double time, vector<GridPointSource*> point_sources )
 {
    bool predictor = false;   // or true???
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1333,10 +1333,24 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       int kf = m_global_nz[g+1];
       int ibc=m_iStart[g], iec=m_iEnd[g], jbc=m_jStart[g], jec=m_jEnd[g];
       int kc = 1;
-      Unextf.define(3,ibf,ief,jbf,jef,kf-7,kf+1); // needs to be wide in k because ???
+//      Unextf.define(3,ibf,ief,jbf,jef,kf-7,kf+1); // needs to be wide in k because ???
+      Unextf.define(3,ibf,ief,jbf,jef,kf,kf); // only needs k=kf (on the interface)
       Bf.define(3,ibf,ief,jbf,jef,kf,kf);
-      Unextc.define(3,ibc,iec,jbc,jec,kc-1,kc+7); // needs to be wide in k because ???
+//      Unextc.define(3,ibc,iec,jbc,jec,kc-1,kc+7); // needs to be wide in k because ???
+      Unextc.define(3,ibc,iec,jbc,jec,kc,kc); // only needs k=kc (on the interface)
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
+
+// check material prop:
+      if (false && g==0)
+      {
+         int i=0, j=25, k=1;
+         double x=(i-1)*mGridSize[g];
+         double y=(j-1)*mGridSize[g];
+         double z=(k-1)*mGridSize[g] + m_zmin[g];
+
+         printf("1: x=%e, y=%e, z=%e, mu=%e\n", x, y, z, mMu[g](i,j,k));
+      }
+      
 
     // Set ghost point values that are also unknown variables to zero. Assume that Dirichlet data
     // are already set on ghost points on the (supergrid) sides, which are not treated as unknown variables.
@@ -1349,22 +1363,35 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
       }
 
-      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, t+mDt, point_sources );
-      compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, t+mDt, point_sources );
+// note: t+dt refers to the time level for the forcing. Unextf lives on time level t+2*dt
+      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, time+mDt, point_sources );
+      compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, time+mDt, point_sources );
 
       if( !m_doubly_periodic )
       {
-// dirichlet conditions for Unextc in super-grid layer at time t+dt
-         dirichlet_LRic( Unextc, g, kc, t+2*mDt, 1 ); 
+// dirichlet conditions for Unextc in super-grid layer at time t+2*dt
+         dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
       }
 
       compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
       compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
 
+// check material prop:
+      if (false && g==0)
+      {
+         int i=0, j=25, k=1;
+         double x=(i-1)*mGridSize[g];
+         double y=(j-1)*mGridSize[g];
+         double z=(k-1)*mGridSize[g] + m_zmin[g];
+
+         printf("2: x=%e, y=%e, z=%e, mu=%e\n", x, y, z, mMu[g](i,j,k));
+      }
+
       if( !m_doubly_periodic )
       {
 //  dirichlet condition for Bf in the super-grid layer at time t+dt
-         dirichlet_LRstress( Bf, g+1, kf, t+mDt, 1 ); 
+//         printf("1st call to dirichlet_LRstress, grid=%d\n", g+1);
+         dirichlet_LRstress( Bf, g+1, kf, time+mDt, 1 ); 
       }
       
       communicate_array_2d( Unextf, g+1, kf );
@@ -1377,10 +1404,12 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       // stencils over ghost points, with non-unknown ghost points giving zero contribution. WHAT IS A NON-UNKNOWN???
       //
       // AP: Different from above, the inside flag is now false -> only zero out the ghost points on the sides (dirichlet/sg)
+      //  this is needed because Up[g+1] (fine grid) is used in a 7-point restriction stencil, and Up[g] (coarse grid) is 
+      // used in a 4-point interpolation stencil (ic-1,jc-1) -> (ic+2, jc+2)
       if( !m_doubly_periodic ) 
       {
-	 dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
-	 dirichlet_hom_ic( a_Up[g], g, kc-1, false );
+         dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, false );
+         dirichlet_hom_ic( a_Up[g], g, kc-1, false );
       }
       // Initial guesses for grid interface iteration
       gridref_initial_guess( a_Up[g+1], g+1, false );
@@ -1399,14 +1428,131 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
       // Finally, restore the ghost point values on the supergrid sides of the domain.
       //
-      // AP: This doesn't seem to be needed anymore ?
+      // AP: Are these ghost points used?
       //
-      // if( !m_doubly_periodic )
-      // {
-      //    dirichlet_LRic( a_Up[g+1], g+1, kf+1, t+mDt, 1 );
-      //    dirichlet_LRic( a_Up[g], g, kc-1, t+mDt, 1 );
-      // }
+      if( !m_doubly_periodic )
+      {
+         dirichlet_LRic( a_Up[g+1], g+1, kf+1, time+mDt, 1 );
+         dirichlet_LRic( a_Up[g], g, kc-1, time+mDt, 1 );
+      }
 
+// check the residual in displacement
+// Notimee: t+dt is for computing the interior forcing
+      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, time+mDt, point_sources ); 
+      compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, time+mDt, point_sources );
+      if( !m_doubly_periodic )
+      {
+// twilight dirichlet data for Unextc,  Unextf in super-grid layer at time time+2*dt
+         dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
+         dirichlet_LRic( Unextf, g+1, kf, time+2*mDt, 1 ); 
+      }
+      
+// save Unextc, Unextf
+      char fname[100];
+      FILE *fp;
+      int j;
+// fine side
+      j=0.5*(m_jStart[g+1] + m_jEnd[g+1]);
+      sprintf(fname, "ufi-j%d-num.txt",j);
+      fp=fopen(fname,"w");
+      for( int i=m_iStart[g+1] ; i <= m_iEnd[g+1] ; i++ )
+         fprintf(fp,"%e %e %e %e\n", (i-1)*mGridSize[g+1], Unextf(1,i,j,kf), Unextf(2,i,j,kf), Unextf(3,i,j,kf));
+      fclose(fp);
+// coarse side
+      j=0.5*(m_jStart[g] + m_jEnd[g]);
+      sprintf(fname, "uci-j%d-num.txt",j);
+      fp=fopen(fname,"w");
+      for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+         fprintf(fp,"%e %e %e %e\n", (i-1)*mGridSize[g], Unextc(1,i,j,kc), Unextc(2,i,j,kc), Unextc(3,i,j,kc));
+      fclose(fp);
+
+// experiment: assign the exact solution to all points on all grids in Up
+      vector<Source*> sources; // dummy argument not used with twilight
+      vector<Sarray*> alphave; // dummy argument not used if m_use_attenuation = false
+      exactSol( time+mDt, a_Up, alphave, sources ); // use a_Um to store the exact solution
+
+// check residual in normal stresses
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
+      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
+      if( !m_doubly_periodic )
+      {
+//  dirichlet condition for Bf in the super-grid layer at time t+dt
+//         printf("2nd call to dirichlet_LRstress, grid=%d\n", g);
+         dirichlet_LRstress( Bc, g, kc, time+mDt, 1 ); 
+//         printf("3rd call to dirichlet_LRstress, grid=%d\n", g+1);
+         dirichlet_LRstress( Bf, g+1, kf, time+mDt, 1 ); // discontinuity in Bf between sg and interior points?
+// controlled exit
+//         CHECK_INPUT (false, "Controlled exit after checking errors" <<endl);
+      }
+// fine side
+      j=0.5*(m_jStart[g+1] + m_jEnd[g+1]);
+      sprintf(fname, "bfi-j%d-num.txt",j);
+      fp=fopen(fname,"w");
+      for( int i=m_iStart[g+1] ; i <= m_iEnd[g+1] ; i++ )
+         fprintf(fp,"%e %e %e %e\n", (i-1)*mGridSize[g+1], Bf(1,i,j,kf), Bf(2,i,j,kf), Bf(3,i,j,kf));
+      fclose(fp);
+// coarse side
+      j=0.5*(m_jStart[g] + m_jEnd[g]);
+      sprintf(fname, "bci-j%d-num.txt",j);
+      fp=fopen(fname,"w");
+      for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+         fprintf(fp,"%e %e %e %e\n", (i-1)*mGridSize[g], Bc(1,i,j,kc), Bc(2,i,j,kc), Bc(3,i,j,kc));
+      fclose(fp);
+      
+// // Ghost points...
+// // fine side
+//       sprintf(fname, "gpf-j%d-num.txt",j);
+//       fp=fopen(fname,"w");
+//       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+//          fprintf(fp,"%e %e %e\n", a_Up[g+1](1,i,j,kf+1), a_Up[g+1](2,i,j,kf+1), a_Up[g+1](3,i,j,kf+1));
+//       fclose(fp);
+// // coarse side
+//       j=0.5*(m_jStart[g] + m_jEnd[g]);
+//       sprintf(fname, "gpc-j%d-num.txt",j);
+//       fp=fopen(fname,"w");
+//       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+//          fprintf(fp,"%e %e %e\n", a_Up[g](1,i,j,kc-1), a_Up[g](2,i,j,kc-1), a_Up[g](3,i,j,kc-1));
+//       fclose(fp);
+
+// test: set exact ghost point values for all ghost points & check convergence
+      // this leads to large error! Why???
+      if (m_twilight_forcing)
+      {
+         dirichlet_twilight_ic( a_Up[g+1], g+1, kf+1, time+mDt);
+         dirichlet_twilight_ic( a_Up[g], g, kc-1, time+mDt);
+//      test for singe proc run
+// fine side
+         j=0.5*(m_jStart[g+1] + m_jEnd[g+1]);
+         sprintf(fname, "gpf-j%d-exact.txt",j);
+         fp=fopen(fname,"w");
+         for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+            fprintf(fp,"%e %e %e\n", a_Up[g+1](1,i,j,kf+1), a_Up[g+1](2,i,j,kf+1), a_Up[g+1](3,i,j,kf+1));
+         fclose(fp);
+// coarse side
+         j=0.5*(m_jStart[g] + m_jEnd[g]);
+         sprintf(fname, "gpc-j%d-exact.txt",j);
+         fp=fopen(fname,"w");
+         for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+            fprintf(fp,"%e %e %e\n", a_Up[g](1,i,j,kc-1), a_Up[g](2,i,j,kc-1), a_Up[g](3,i,j,kc-1));
+         fclose(fp);
+      }
+      
+// check error at ghost points
+      if (m_twilight_forcing)
+      {
+// check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
+         vector<Source*> sources; // dummy argument not used with twilight
+         vector<Sarray*> alphave; // dummy argument not used if m_use_attenuation = false
+         double eInf, eL2;
+         
+         exactSol( time+mDt, a_Um, alphave, sources ); // use a_Um to store the exact solution
+         normOfDifferenceGhostPoints(a_Um, a_Up, eInf, eL2);
+         if( proc_zero() )
+            printf("Error at all grid points; eInf=%e, eL2=%e\n", eInf, eL2);
+// controlled exit
+         CHECK_INPUT (false, "Controlled exit after checking errors" <<endl);
+      }
+      
 // FROM WPP
    // // add -(1/rho)*L(alpha) to forcing. Note: forcing array will be modified
    // // however this is just a temporary array in the calling routine.
@@ -1538,6 +1684,28 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 }
 
 //-----------------------------------------------------------------------
+void EW::dirichlet_twilight_ic( Sarray& U, int g, int kic, double t )
+{
+   // assign exact solution at all ghost points with a given 'k'-index
+   if (m_twilight_forcing)
+   {
+      int i1 = m_iStart[g], i2=m_iEnd[g];
+      int j1 = m_jStart[g], j2=m_jEnd[g];
+      int kdb=U.m_kb, kde=U.m_ke;
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      double h  = mGridSize[g];
+      double* u_ptr = U.c_ptr();
+      F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+                                                   &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+                                                   &h, &m_zmin[g],
+                                                   &i1, &i2, &j1, &j2, &kic, &kic );      
+   }
+   
+}
+
+//-----------------------------------------------------------------------
 void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
 {
    // Put back exact solution at the ghost points that don't participate in the interface conditions, i.e. at supergrid points
@@ -1643,6 +1811,8 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
    //          1 for only ghost pts.
 
    int kdb=B.m_kb, kde=B.m_ke;
+//   printf("dirichlet_LRstress> kdb=%d, kde=%d\n", kdb, kde);
+   
    if( !m_twilight_forcing )
    {
       if( m_iStartInt[g] == 1 )
@@ -1680,6 +1850,16 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
    }
    else
    {
+// dbg
+      if (false && g==0)
+      {
+         int i=0, j=25, k=1;
+         double x=(i-1)*mGridSize[g];
+         double y=(j-1)*mGridSize[g];
+         double z=(k-1)*mGridSize[g] + m_zmin[g];
+
+         printf("3: x=%e, y=%e, z=%e, mu=%e\n", x, y, z, mMu[g](i,j,k));
+      }
       double* mu_ptr    = mMu[g].c_ptr();
       double* la_ptr    = mLambda[g].c_ptr();
       double om = m_twilight_forcing->m_omega;
@@ -1692,7 +1872,7 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
 	 // low i-side
 	 int i1 = m_iStart[g], i2=m_iStartInt[g]-adj;
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
                          &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                          mu_ptr, la_ptr, &m_zmin[g],
                          &i1, &i2, &j1, &j2 );
@@ -1702,7 +1882,7 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
 	 // high i-side
 	 int i1 = m_iEndInt[g]+adj, i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
                          &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                          mu_ptr, la_ptr, &m_zmin[g],
                          &i1, &i2, &j1, &j2 );
@@ -1712,7 +1892,7 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
 	 // low j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jStartInt[g]-adj;
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
                          &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                          mu_ptr, la_ptr, &m_zmin[g],
                          &i1, &i2, &j1, &j2 );
@@ -1722,7 +1902,7 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
 	 // high j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jEndInt[g]+adj, j2=m_jEnd[g];
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb, &kde,
+	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
                          &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                          mu_ptr, la_ptr, &m_zmin[g],
                          &i1, &i2, &j1, &j2 );
@@ -1892,8 +2072,10 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
       }
    }
    double cof = mDt*mDt;
-   for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
-      for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
+// initialize
+   Unext.set_to_zero();
+   for( int j=jb+2 ; j <= je-2 ; j++ )
+      for( int i=ib+2 ; i <= ie-2 ; i++ )
       {
 	 double irho=cof/mRho[g](i,j,kic);
 	 Unext(1,i,j,kic) = 2*a_Up(1,i,j,kic) - a_U(1,i,j,kic) + irho*(Lu(1,i,j,kic)+f(1,i,j,kic));
@@ -2011,7 +2193,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
    while( jacerr > m_citol && it < m_cimaxiter )
    {
-      double rmax[3]={0,0,0};
+      double rmax[6]={0,0,0,0,0,0};
 // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
       for( int jc= jcb ; jc <= jce ; jc++ )
 	 for( int ic= icb ; ic <= ice ; ic++ )
@@ -2198,7 +2380,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 		  //		  if( i == 4 && j == 7 && c == 1)
 		  //		     cout << "in loop " << -a11*Uf(c,i,j,nkf+1) + b1  << endl;
 		  r3 = r3 - Uf(c,i,j,nkf+1);
-		  rmax[c-1] = rmax[c-1] > fabs(r3) ? rmax[c-1] : fabs(r3);
+		  rmax[c-1+3] = rmax[c-1+3] > fabs(r3) ? rmax[c-1+3] : fabs(r3);
 	       } // end for c=1,2
                
 // work on componet 3 of the ghost point value of Uf
@@ -2260,18 +2442,21 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	       Uf(3,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf)));
 	       Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1)+(1-relax)*r3;
 	       r3 = r3 - Uf(3,i,j,nkf+1);
-	       rmax[2] = rmax[2] > fabs(r3) ? rmax[2] : fabs(r3);
+	       rmax[2+3] = rmax[2+3] > fabs(r3) ? rmax[2+3] : fabs(r3);
 
 	    } // end if not ( i%2=1 &&  j%2=1), i.e, not both i and j are odd
 
-            // what about both i odd, j odd???
+            // (i,j) both odd is handled by the first iteration
             
 	 } // end for all fine grid points on the interface
       
       //   skipthis:
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
-      double jacerrtmp = rmax[0]+rmax[1]+rmax[2];
+      double jacerrtmp = 0;
+      for (int q=0; q<6; q++)
+         jacerrtmp += rmax[q];
+      
       MPI_Allreduce( &jacerrtmp, &jacerr, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
       if( it == 0 )
 	 jacerr0 = jacerr;

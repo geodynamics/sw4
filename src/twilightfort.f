@@ -1562,6 +1562,13 @@ c-----------------------------------------------------------------------
      +           sin(omm*z+phm) )
             la(i,j,k)  = amplambda*(2 + 
      +           sin(omm*x+phm)*sin(omm*y+phm)*cos(omm*z+phm) )
+c test
+c$$$            if ((k==1 .and. j==25 .and. i==0) .or.
+c$$$     +           ( k==25 .and. j==49 .and. i==-1)) then
+c$$$              write(*,'(3(a,i3,tr1),7(a,tr1,es10.3,tr1))')
+c$$$     +             'i=', i,  'j=', j, 'k=', k, 'x=', x, 'y=', y, 
+c$$$     +             'z=', z, 'mu=', mu(i,j,k), 'la=', la(i,j,k)
+c$$$            endif
           enddo
         enddo
       enddo
