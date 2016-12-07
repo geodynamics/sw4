@@ -424,7 +424,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    int tmpcyc=a_cycle;
    MPI_Allreduce( &tmpcyc, &a_cycle, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
    float_sw4 tmpt  = a_time;
-   MPI_Allreduce( &tmpt, &a_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &tmpt, &a_time, 1, mEW->m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
 
    // Open file from all readers
    if( iread && !m_parallel_io[0]->proc_zero() )

@@ -56,12 +56,12 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
    int k1, k2, kb;
    int i, j, k, q, m, qb, mb;
    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
-   float_sw4 r1, r2, r3, cof, mucof, mu1zz, mu2zz, mu3zz;
+   float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;
    float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
    float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
    float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
 
-   cof = 1.0/(h*h);
+   const float_sw4 cof = 1.0/(h*h);
 
 
    k1 = kfirst+2;
@@ -300,12 +300,12 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 				     8*(-u(2,i,j-1,k+2)+u(2,i,j+1,k+2))) )) ;
 
 /* 9 ops */
-	    lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
-            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
-            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	    //	    lu(1,i,j,k) = cof*r1;
-	    //            lu(2,i,j,k) = cof*r2;
-	    //            lu(3,i,j,k) = cof*r3;
+//	    lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
+//            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
+//            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
+	    lu(1,i,j,k) =  cof*r1;
+            lu(2,i,j,k) =  cof*r2;
+            lu(3,i,j,k) =  cof*r3;
 	 }
       if( onesided[4]==1 )
       {

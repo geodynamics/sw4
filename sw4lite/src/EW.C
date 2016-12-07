@@ -22,6 +22,8 @@
 #include "Source.h"
 #include "GridPointSource.h"
 #include "CheckPoint.h"
+#include "MaterialBlock.h"
+#include "TimeSeries.h"
 
 #include "F77_FUNC.h"
 #include "EWCuda.h"
@@ -86,6 +88,7 @@ EW::EW( const string& filename ) :
    mNumberOfTimeSteps(-1),
    mPrintInterval(100),
    m_ghost_points(2),
+   m_ext_ghost_points(2),
    m_ppadding(2),
    mVerbose(0),
    mQuiet(false),
@@ -95,6 +98,8 @@ EW::EW( const string& filename ) :
    m_use_supergrid(false),
    m_checkfornan(false),
    m_topography_exists(false),
+   m_grid_interpolation_order(4),
+   m_zetaBreak(0.95),
    m_point_source_test(false),
    mPath("./"),
    m_moment_test(false),
@@ -103,11 +108,24 @@ EW::EW( const string& filename ) :
    m_output_detailed_timing(false),
    m_ndevice(0),
    m_corder(false),
-   m_use_dg(false)
+   m_use_dg(false),
+   mGeoAz(0.0),
+   mLonOrigin(-118.0), 
+   mLatOrigin(37.0), 
+   mMetersPerDegree(111319.5),
+   mMetersPerLongitude(87721.0),
+   mConstMetersPerLongitude(false)
 {
    m_gpu_blocksize[0] = 16;
    m_gpu_blocksize[1] = 16;
    m_gpu_blocksize[2] = 1;
+
+   if( sizeof(float_sw4) == 4 )
+      m_mpifloat = MPI_FLOAT;
+   else if( sizeof(float_sw4) == 8 )
+      m_mpifloat = MPI_DOUBLE;
+   else
+      CHECK_INPUT(false,"Error, could not identify float_sw4");
 
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
    MPI_Comm_size( MPI_COMM_WORLD, &m_nprocs );
@@ -420,34 +438,18 @@ void EW::processTime(char* buffer)
       mNumberOfTimeSteps = steps;
       mTimeIsSet = false;
    }
+     // Set UTC as current date
+   time_t tsec;
+   time( &tsec );
+   struct tm *utctime = gmtime( &tsec );
+   m_utc0[0] = utctime->tm_year+1900;
+   m_utc0[1] = utctime->tm_mon+1;
+   m_utc0[2] = utctime->tm_mday;
+   m_utc0[3] = utctime->tm_hour;
+   m_utc0[4] = utctime->tm_min;
+   m_utc0[5] = utctime->tm_sec;
+   m_utc0[6] = 0; //milliseconds not given by 'time', not needed here.
 }
-
-void EW::processdGalerkin(char* buffer)
-{
-    char* token = strtok(buffer, " \t");
-    token = strtok(NULL, " \t");
-    string err = "ERROR in processGalerkin: ";
-    while (token != NULL)
-    {
-            // while there are still tokens in the string
-        if (startswith("#", token) || startswith(" ", buffer))
-                // Ignore commented lines and lines with just a space.
-            break;
-        if (startswith("order=", token))
-        {
-            token += 6; // skip order=
-            CHECK_INPUT(atoi(token) >= 1, err << "order must be greater than 1: " << token);
-            int qorder = atoi(token);
-            set_dg_orders(qorder,qorder);
-        }
-        else
-        {
-            badOption("time", token);
-        }
-        token = strtok(NULL, " \t");
-    }
-}
-
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer)
@@ -695,7 +697,7 @@ void EW::processSource( char* buffer )
 
    //   int ncyc = 0;
    //   bool ncyc_set = false;
-
+                                     
    float_sw4* par=NULL;
    int* ipar=NULL;
    int npar=0, nipar=0;
@@ -1095,6 +1097,488 @@ void EW::processDeveloper(char* buffer)
    }
 }
 
+//------------------------------------------------------------------------
+void EW::processMaterialBlock( char* buffer )
+{
+  float_sw4 vpgrad=0.0, vsgrad=0.0, rhograd=0.0;
+  bool x1set=false, x2set=false, y1set=false, y2set=false, 
+    z1set=false, z2set=false;
+
+  float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
+  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
+  string name = "Block";
+
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("block", token) == 0,
+	      "ERROR: material block can be set by a block line, not: " << token);
+
+  string err = token;
+  err += " Error: ";
+
+  token = strtok(NULL, " \t");
+
+  float_sw4 vp=-1, vs=-1, rho=-1, qp=-1, qs=-1, freq=1;
+  bool absDepth=false;
+
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+	break;
+// the xygrad keywords must occur before the corresponding xy keywords
+      if (startswith("rhograd=", token))
+      {
+         token += 8; // skip rhograd=
+         rhograd = atof(token);
+      }
+      else if (startswith("vpgrad=", token))
+      {
+         token += 7; // skip vpgrad=
+         vpgrad = atof(token);
+      }
+      else if (startswith("vsgrad=", token))
+      {
+         token += 7; // skip vsgrad=
+         vsgrad = atof(token);
+      }
+      else if (startswith("vp=", token) )
+      {
+         token += 3; // skip vp=
+         vp = atof(token);
+      }
+      else if (startswith("vs=", token) )
+      {
+         token += 3; // skip vs=
+         vs = atof(token);
+      }
+      else if (startswith("rho=", token))
+      {
+         token += 4; // skip rho=
+         rho = atof(token);
+      }
+      else if (startswith("r=", token)) // superseded by rho=, but keep for backward compatibility
+      {
+         token += 2; // skip r=
+         rho = atof(token);
+      }
+      else if (startswith("Qs=", token) || startswith("qs=",token) )
+      {
+         token += 3; // skip qs=
+         qs = atof(token);
+      }
+      else if (startswith("Qp=", token) || startswith("qp=",token) )
+      {
+         token += 3; // skip qp=
+         qp = atof(token);
+      }
+//                         1234567890
+      else if (startswith("absdepth=", token) )
+      {
+	token += 9; // skip absdepth=
+	absDepth = (bool) atoi(token);
+      }
+      else if (startswith("x1=", token))
+      {
+         token += 3; // skip x1=
+         x1 = atof(token);
+         x1set = true;
+      }
+      else if (startswith("x2=", token))
+      {
+         token += 3; // skip x2=
+         x2 = atof(token);
+         x2set = true;
+      }
+      else if (startswith("y1=", token))
+      {
+         token += 3; // skip y1=
+         y1 = atof(token);
+         y1set = true;
+      }
+      else if (startswith("y2=", token))
+      {
+         token += 3; // skip y2=
+         y2 = atof(token);
+         y2set = true;
+      }
+      else if (startswith("z1=", token))
+      {
+         token += 3; // skip z1=
+         z1 = atof(token);
+         z1set = true;
+      }
+      else if (startswith("z2=", token))
+      {
+         token += 3; // skip z2=
+         z2 = atof(token);
+         z2set = true;
+      }
+      else
+      {
+         badOption("block", token);
+      }
+      token = strtok(NULL, " \t");
+    }
+  // End parsing...
+  
+
+  // Set up a block on the EW object.
+
+  if (x1set)
+  {
+     // CHECK_INPUT(x1 >= 0.,
+     // 	     err << "x1 is less than the minimum x, " 
+     // 	     << x1 << " < " << 0.);
+     CHECK_INPUT(x1 <= m_global_xmax,
+	     err << "x1 is greater than the maximum x, " 
+	     << x1 << " > " << m_global_xmax);
+  }
+  else
+    x1 = -m_global_xmax; //x1 = 0.;
+
+  if (x2set)
+  {
+     CHECK_INPUT(x2 >= 0.,
+             err << "x2 is less than the minimum x, " 
+             << x2 << " < " << 0.);
+     // CHECK_INPUT(x2 <= m_global_xmax,
+     //         err << "x2 is greater than the maximum x, " 
+     //         << x2 << " > " << m_global_xmax);
+  }
+  else
+    x2 = 2.*m_global_xmax;//x2 = m_global_xmax;
+
+  CHECK_INPUT( x2 >= x1, " (x1..x2), upper bound is smaller than lower bound");
+  
+  //--------------------------------------------------------
+  // Set j bounds, goes with Y in WPP
+  //--------------------------------------------------------
+  if (y1set)
+  {
+     // CHECK_INPUT(y1 >= 0.,
+     // 	     err << "y1 is less than the minimum y, " << y1 << " < " << 0.);
+
+     CHECK_INPUT(y1 <= m_global_ymax,
+		  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
+  }
+  else
+    y1 = -m_global_ymax;//y1 = 0.;
+      
+  if (y2set)
+  {
+     CHECK_INPUT(y2 >= 0.,
+	     err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
+  }
+  else
+    y2 = 2.*m_global_ymax;//y2 = m_global_ymax;
+
+  CHECK_INPUT( y2 >= y1, " (y1..y2), upper bound is smaller than lower bound");
+
+  if (z1set)
+  {
+    // CHECK_INPUT(topographyExists() || z1 >= 0.,
+    //         err << "z1 is less than the minimum z, " << z1 << " < " << 0.);
+    CHECK_INPUT(z1 <= m_global_zmax, 
+            err << "z1 is greater than the maximum z, " << z1 << " > " << m_global_zmax);
+  }
+  else
+    z1 = m_global_zmin - (m_global_zmax-m_global_zmin);
+
+  if (z2set)
+  {
+    CHECK_INPUT(topographyExists() || z2 >= 0.,
+            err << "z2 is less than the minimum z, " << z2 << " < " << 0.);
+    // CHECK_INPUT(z2 <= m_global_zmax,
+    // 		err << "z2 is greater than the maximum z, " << z2 << " > " << m_global_zmax);
+  }
+  else
+    z2 = m_global_zmax + (m_global_zmax-m_global_zmin);
+
+  CHECK_INPUT( z2 >= z1, " (z1..z2), upper bound is smaller than lower bound");
+
+  if( getVerbosity() >=2 &&  m_myrank == 0 )
+     cout << name << " has bounds " << x1 << " " << x2 << " " << y1 << " "
+	  << y2 << " " << z1 << " " << z2 << endl;
+
+  CHECK_INPUT( vs > 0 && vp > 0 && rho > 0 , "Error in block " << name << " vp vs rho are   "
+	       << vp << " " << vs << " " << rho );
+
+  MaterialBlock* bl = new MaterialBlock( this ,rho, vs, vp, x1, x2, y1, y2, z1, z2, qs, qp, freq );
+  bl->set_gradients( rhograd, vsgrad, vpgrad );
+  bl->set_absoluteDepth( absDepth );
+  m_mtrlblocks.push_back(bl);
+}
+
+//-----------------------------------------------------------------------
+void EW::processReceiver(char* buffer )
+{
+  float_sw4 x=0.0, y=0.0, z=0.0;
+  float_sw4 lat = 0.0, lon = 0.0, depth = 0.0;
+  bool cartCoordSet = false, geoCoordSet = false;
+  string fileName = "station";
+  string staName = "station";
+  bool staNameGiven=false;
+  
+  int writeEvery = 1000;
+
+  bool topodepth = false;
+
+  bool usgsformat = 0, sacformat=1; // default is to write sac files
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+
+  char* token = strtok(buffer, " \t");
+  bool nsew=false; 
+  //int vel=0;
+
+// tmp
+//  cerr << "******************** INSIDE process receiver *********************" << endl;
+
+  CHECK_INPUT(strcmp("rec", token) == 0 || strcmp("sac", token) == 0, "ERROR: not a rec line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "RECEIVER Error: ";
+
+//* testing
+  // if (proc_zero())
+  //   cout << "start parsing of receiver command, token:" << token << "(end token)" << endl;
+
+  while (token != NULL)
+  {
+     // while there are tokens in the string still
+     //     cout << m_myRank << " token " << token <<"x"<<endl;
+
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("x=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip x=
+        cartCoordSet = true;
+        x = atof(token);
+        CHECK_INPUT(x >= 0.0,
+		    "receiver command: x must be greater than or equal to 0, not " << x);
+        CHECK_INPUT(x <= m_global_xmax,
+		    "receiver command: x must be less than or equal to xmax, not " << x);
+     }
+     else if (startswith("y=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip y=
+        cartCoordSet = true;
+        y = atof(token);
+        CHECK_INPUT(y >= 0.0,
+                "receiver command: y must be greater than or equal to 0, not " << y);
+        CHECK_INPUT(y <= m_global_ymax,
+		    "receiver command: y must be less than or equal to ymax, not " << y);
+     }
+     else if (startswith("lat=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lat=
+        lat = atof(token);
+        CHECK_INPUT(lat >= -90.0,
+                "receiver command: lat must be greater than or equal to -90 degrees, not " 
+                << lat);
+        CHECK_INPUT(lat <= 90.0,
+                "receiver command: lat must be less than or equal to 90 degrees, not "
+                << lat);
+        geoCoordSet = true;
+     }
+     else if (startswith("lon=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lon=
+        lon = atof(token);
+        CHECK_INPUT(lon >= -180.0,
+                "receiver command: lon must be greater or equal to -180 degrees, not " 
+                << lon);
+        CHECK_INPUT(lon <= 180.0,
+                "receiver command: lon must be less than or equal to 180 degrees, not "
+                << lon);
+        geoCoordSet = true;
+     }
+     else if (startswith("z=", token))
+     {
+       token += 2; // skip z=
+       depth = z = atof(token);
+       topodepth = false; // absolute depth (below mean sea level)
+       CHECK_INPUT(z <= m_global_zmax,
+		   "receiver command: z must be less than or equal to zmax, not " << z);
+     }
+     else if (startswith("depth=", token))
+     {
+        token += 6; // skip depth=
+       z = depth = atof(token);
+       topodepth = true; // by depth we here mean depth below topography
+       CHECK_INPUT(depth >= 0.0,
+	       err << "receiver command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+     }
+//                        1234567890
+     else if (startswith("topodepth=", token))
+     {
+        token += 10; // skip topodepth=
+       z = depth = atof(token);
+       topodepth = true; // by depth we here mean depth below topography
+       CHECK_INPUT(depth >= 0.0,
+	       err << "receiver command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+     }
+     else if(startswith("file=", token))
+     {
+        token += 5; // skip file=
+        fileName = token;
+     }
+     else if (startswith("sta=", token))
+     {
+        token += strlen("sta=");
+        staName = token;
+	staNameGiven=true;
+     }
+     else if( startswith("nsew=", token) )
+     {
+        token += strlen("nsew=");
+        nsew = atoi(token) == 1;
+     }
+     // else if( startswith("velocity=", token) )
+     // {
+     //    token += strlen("velocity=");
+     //    vel = atoi(token);
+     // }
+     else if (startswith("writeEvery=", token))
+     {
+       token += strlen("writeEvery=");
+       writeEvery = atoi(token);
+       CHECK_INPUT(writeEvery >= 0,
+	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
+     }
+     else if( startswith("usgsformat=", token) )
+     {
+        token += strlen("usgsformat=");
+        usgsformat = atoi(token);
+     }
+     else if( startswith("sacformat=", token) )
+     {
+        token += strlen("sacformat=");
+        sacformat = atoi(token);
+     }
+     else if( startswith("variables=", token) )
+     {
+//* testing
+       // if (proc_zero())
+       // 	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
+       
+       token += strlen("variables=");
+
+//* testing
+       // if (proc_zero())
+       // 	 printf("Inside rec command, after parsing 'variables=', token:'%s'(end token)\n", token);
+
+       if( strcmp("displacement",token)==0 )
+       {
+	 mode = TimeSeries::Displacement;
+       }
+       else if( strcmp("velocity",token)==0 )
+       {
+	 mode = TimeSeries::Velocity;
+       }
+       else if( strcmp("div",token)==0 )
+       {
+	 mode = TimeSeries::Div;
+       }
+       else if( strcmp("curl",token)==0 )
+       {
+	 mode = TimeSeries::Curl;
+       }
+       else if( strcmp("strains",token)==0 )
+       {
+	 mode = TimeSeries::Strains;
+       }
+       else if( strcmp("displacementgradient",token)==0 )
+       {
+	 mode = TimeSeries::DisplacementGradient;
+       }
+       else
+       {
+	 if (m_myrank == 0 )
+	   cout << "receiver command: variables=" << token << " not understood" << endl
+		<< "using default mode (displacement)" << endl << endl;
+	 mode = TimeSeries::Displacement;
+       }
+       
+     }
+     else
+     {
+        badOption("receiver", token);
+     }
+     token = strtok(NULL, " \t");
+//* testing
+     // if (proc_zero())
+     //   cout << "rec command: Bottom of while loop, token:" << token << "(end token)" << endl;
+     
+  }  
+  //  cout << "end receiver " << m_myRank << endl;
+
+  if (geoCoordSet)
+  {
+    computeCartesianCoord(x, y, lon, lat);
+// check if (x,y) is within the computational domain
+  }
+
+  if (!staNameGiven)
+    staName = fileName;
+
+  bool inCurvilinear=false;
+// we are in or above the curvilinear grid 
+  if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
+  {
+    inCurvilinear = true;
+  }
+      
+// check if (x,y,z) is not in the global bounding box
+  if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
+  {
+// The location of this station was outside the domain, so don't include it in the global list
+    if (m_myrank == 0 && getVerbosity() > 0)
+    {
+      stringstream receivererr;
+  
+      receivererr << endl 
+		  << "***************************************************" << endl
+		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+      receivererr << " No RECEIVER file will be generated for file = " << fileName << endl;
+      if (geoCoordSet)
+      {
+	receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+      }
+      else
+      {
+	receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+      }
+      
+      receivererr << "***************************************************" << endl;
+      cerr << receivererr.str();
+      cerr.flush();
+    }
+  }
+  else
+  {
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
+					topodepth, writeEvery, !nsew);
+// include the receiver in the global list
+    m_GlobalTimeSeries.push_back(ts_ptr);
+  }
+}
+
 //-----------------------------------------------------------------------
 void EW::defineDimensionsGXY( )
 {
@@ -1252,7 +1736,7 @@ void EW::defineDimensionsZ()
    float_sw4 topo_avg=0;
    //   if( m_topography_exists )
    //   {
-   //      doubleb tzmin, tzmax;
+   //      float_sw4b tzmin, tzmax;
    //      compute_minmax_topography(tzmin,tzmax);  // note: tzmin,tzmax depth
    //      topo_avg = 0.5*(tzmin+tzmax);
    //   }
@@ -1405,14 +1889,6 @@ bool EW::parseInputFile( const string& filename )
       // Need process developer before setupMPICommunication, because of array ordering m_corder
       else if(startswith("developer", buffer))
 	 processDeveloper(buffer);
-      else if( startswith("dgalerkin", buffer) )
-      {
-          m_use_dg=true;
-          if (m_myrank == 0){
-              cout << "Using DG solver" << endl;
-          }
-          processdGalerkin(buffer);
-      }
    }   
    if (!foundGrid)
       if (m_myrank == 0)
@@ -1433,6 +1909,9 @@ bool EW::parseInputFile( const string& filename )
 // output grid size info
    printGridSizes();
 
+// set default boundary conditions,
+   default_bcs();
+   
    inputFile.clear();
    inputFile.seekg(0, ios::beg); // reset file pointer to the beginning of the input file
    while (!inputFile.eof())
@@ -1442,7 +1921,7 @@ bool EW::parseInputFile( const string& filename )
       {
 	 if (startswith("#", buffer) || 
 	     startswith("grid", buffer) ||
-             startswith("dgalerkin", buffer) ||
+             startswith("developer", buffer) ||
              startswith("\n", buffer) ||
 	     startswith("\r", buffer) )
 	 {
@@ -1450,8 +1929,8 @@ bool EW::parseInputFile( const string& filename )
 	 else if(startswith("time", buffer))
 	    processTime(buffer);
 	 else if( startswith("source",buffer))
-	    processSource(buffer);
-	 else if( startswith("supergrid",buffer))
+             processSource(buffer);
+         else if( startswith("supergrid",buffer))
 	    processSuperGrid(buffer);
 	 else if(startswith("testpointsource", buffer))
 	    processTestPointSource(buffer);
@@ -1463,7 +1942,19 @@ bool EW::parseInputFile( const string& filename )
 	    processCheckPoint(buffer);
 	 else if( startswith("restart",buffer))
 	    processRestart(buffer);
-	 else if (!inputFile.eof() && m_myrank == 0)
+	 else if( startswith("rec",buffer))
+	    processReceiver(buffer);
+	 else if( startswith("block",buffer))
+	    processMaterialBlock(buffer);
+         else if( startswith("dgalerkin", buffer) )
+         {
+             m_use_dg=true;
+             if (m_myrank == 0){
+                 cout << "Using DG solver" << endl;
+             }
+             processdGalerkin(buffer);
+         }
+         else if (!inputFile.eof() && m_myrank == 0)
 	 {
 	    cout << "*** Ignoring command: '" << buffer << "'" << endl;
 	 }
@@ -1479,6 +1970,8 @@ bool EW::parseInputFile( const string& filename )
 //-----------------------------------------------------------------------
 void EW::setupRun()
 {
+// Assign values to material data arrays mRho,mMu,mLambda
+   setup_materials();
 // Check if any GPUs are available
    find_cuda_device( );
 
@@ -1524,7 +2017,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
    // local arrays: F, Up, Lu, Uacc
    vector<Sarray> F, Lu, Uacc, Up;
-   float_sw4 time_start_solve = MPI_Wtime();
+   // Do all timing in double, time differences have to much cancellation for float.
+   double time_start_solve = MPI_Wtime();
    bool saveerror = false;
 
    // Define local arrays
@@ -1593,8 +2087,12 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    }
    beginCycle++;
 
-   float_sw4 time_measure[20];
-   float_sw4 time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   double time_measure[20];
+   double time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+
+   for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
+      m_GlobalTimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt);
 
    if (m_myrank == 0)
    {
@@ -1629,8 +2127,30 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       Up[g].page_lock(m_cuobj);
    }
 #endif
+
+// save initial data on receiver records
+  vector<float_sw4> uRec;
+  for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
+  {
+// can't compute a 2nd order accurate time derivative at this point
+// therefore, don't record anything related to velocities for the initial data
+    if (m_GlobalTimeSeries[ts]->getMode() != TimeSeries::Velocity && m_GlobalTimeSeries[ts]->myPoint())
+    {
+      int i0 = m_GlobalTimeSeries[ts]->m_i0;
+      int j0 = m_GlobalTimeSeries[ts]->m_j0;
+      int k0 = m_GlobalTimeSeries[ts]->m_k0;
+      int grid0 = m_GlobalTimeSeries[ts]->m_grid0;
+
+      extractRecordData(m_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
+			uRec, Um, U); 
+      m_GlobalTimeSeries[ts]->recordData(uRec);
+    }
+  }
+
    if( m_myrank == 0 )
       cout << "starting at time " << t << " at cycle " << beginCycle << endl;
+
+
 // Begin time stepping loop
    for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++ )
    {    
@@ -1781,9 +2301,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
 //
-      float_sw4 time_chkpt, time_chkpt_tmp;
+      double time_chkpt, time_chkpt_tmp;
       bool wrote=false;
-      MPI_Barrier( MPI_COMM_WORLD );
+      //      MPI_Barrier( MPI_COMM_WORLD );
       time_chkpt=MPI_Wtime();
       for( int c=0 ; c < m_check_points.size() ; c++ )
 	 if( m_check_points[c]->timeToWrite( t, currentTimeStep, mDt) )
@@ -1798,23 +2318,23 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 //
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
-//      for (int ts=0; ts<a_TimeSeries.size(); ts++)
-//      {
-//	 if (a_TimeSeries[ts]->myPoint())
-//	 {
-//	    int i0 = a_TimeSeries[ts]->m_i0;
-//	    int j0 = a_TimeSeries[ts]->m_j0;
-//	    int k0 = a_TimeSeries[ts]->m_k0;
-//	    int grid0 = a_TimeSeries[ts]->m_grid0;
+      for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
+      {
+	 if (m_GlobalTimeSeries[ts]->myPoint())
+	 {
+	    int i0 = m_GlobalTimeSeries[ts]->m_i0;
+	    int j0 = m_GlobalTimeSeries[ts]->m_j0;
+	    int k0 = m_GlobalTimeSeries[ts]->m_k0;
+	    int grid0 = m_GlobalTimeSeries[ts]->m_grid0;
 //
 // note that the solution on the new time step is in Up
 // also note that all quantities related to velocities lag by one time step; they are not
 // saved before the time stepping loop started
-//	    extractRecordData(a_TimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
-//			      uRec, Um, Up);
-//	    a_TimeSeries[ts]->recordData(uRec);
-//	 }
-//      }
+	    extractRecordData(m_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
+			      uRec, Um, Up);
+	    m_GlobalTimeSeries[ts]->recordData(uRec);
+	 }
+      }
 
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.
 //      if( m_energy_test )
@@ -1852,7 +2372,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       }
 
    } // end time stepping loop
-   float_sw4 time_end_solve = MPI_Wtime();
+   double time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
    if( m_output_detailed_timing )
       print_execution_times( time_sum );
@@ -1867,6 +2387,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if ( m_myrank == 0 )
 	 cout << "Errors at time " << t << " Linf = " << errInf << " L2 = " << errL2 << " norm of solution = " << solInf << endl;
    }
+   for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
+      m_GlobalTimeSeries[ts]->writeFile();
+
    for( int g= 0 ; g < mNumberOfGrids ; g++ )
    {
       F[g].page_unlock(m_cuobj);
@@ -1952,18 +2475,18 @@ void EW::setupMPICommunications()
       int nj = m_jEnd[g] - m_jStart[g] + 1;
       int nk = m_kEnd[g] - m_kStart[g] + 1;
 
-      MPI_Type_vector( nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type1[2*g] );
-      MPI_Type_vector( nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type1[2*g+1] );
+      MPI_Type_vector( nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type1[2*g] );
+      MPI_Type_vector( nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type1[2*g+1] );
 
       if( m_corder )
       {
-	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type3[2*g] );
-	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
+	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type3[2*g] );
+	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
       }
       else
       {
-	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, MPI_DOUBLE, &m_send_type3[2*g] );
-	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
+	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, m_mpifloat, &m_send_type3[2*g] );
+	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
       }
       //      MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, MPI_DOUBLE, &m_send_type4[2*g] );
       //      MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, MPI_DOUBLE, &m_send_type4[2*g+1] );
@@ -3388,9 +3911,9 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
       diffL2Local += l2Local;
    }
 // communicate local results for global errors
-   MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-   MPI_Allreduce( &xInfLocal,    &xInf,    1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-   MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+   MPI_Allreduce( &diffInfLocal, &diffInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+   MPI_Allreduce( &xInfLocal,    &xInf,    1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+   MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
    diffL2 = sqrt(diffL2);
 }
 
@@ -3846,7 +4369,7 @@ void EW::computeDT()
    }
    mDt = dtloc;
 // compute the global minima
-   MPI_Allreduce( &dtloc, &mDt, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &dtloc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
    if (!mQuiet && mVerbose >= 1 && m_myrank == 0 )
       cout << " CFL= " << mCFL << " prel. time step=" << mDt << endl;
 
@@ -3967,18 +4490,46 @@ bool EW::interior_point_in_proc(int a_i, int a_j, int a_g)
 }
 
 //-----------------------------------------------------------------------
+bool EW::point_in_proc(int a_i, int a_j, int a_g)
+{
+// TAKING PARALLEL GHOST POINTS INTO ACCOUNT!
+// Determine if grid point with index (a_i, a_j) on grid a_g is a grid point on this processor 
+
+   bool retval = false;
+   if (a_g >=0 && a_g < mNumberOfGrids){
+     retval = (a_i >= m_iStart[a_g] && a_i <= m_iEnd[a_g] &&   
+               a_j >= m_jStart[a_g] && a_j <= m_jEnd[a_g] );
+   }
+   return retval; 
+}
+
+//-----------------------------------------------------------------------
+bool EW::point_in_proc_ext(int a_i, int a_j, int a_g)
+{
+// TAKING PARALLEL GHOST POINTS+EXTRA GHOST POINTS INTO ACCOUNT!
+// Determine if grid point with index (a_i, a_j) on grid a_g is a grid point on this processor 
+
+   bool retval = false;
+   if (a_g >=0 && a_g < mNumberOfGrids){
+     retval = (a_i >= m_iStart[a_g]-m_ext_ghost_points && a_i <= m_iEnd[a_g]+m_ext_ghost_points &&   
+               a_j >= m_jStart[a_g]-m_ext_ghost_points && a_j <= m_jEnd[a_g]+m_ext_ghost_points );
+   }
+   return retval; 
+}
+
+//-----------------------------------------------------------------------
 bool EW::is_onesided( int g, int side ) const
 {
    return m_onesided[g][side] == 1;
 }
 
 //-----------------------------------------------------------------------
-void EW::print_execution_time( float_sw4 t1, float_sw4 t2, string msg )
+void EW::print_execution_time( double t1, double t2, string msg )
 {
 //   if( !mQuiet && proc_zero() )
    if( m_myrank == 0 )
    {
-      float_sw4 s = t2 - t1;
+      double s = t2 - t1;
       int h = static_cast<int>(s/3600.0);
       s = s - h*3600;
       int m = static_cast<int>(s/60.0);
@@ -4001,9 +4552,9 @@ void EW::print_execution_time( float_sw4 t1, float_sw4 t2, string msg )
 }
 
 //-----------------------------------------------------------------------
-void EW::print_execution_times( float_sw4 times[7] )
+void EW::print_execution_times( double times[7] )
 {
-   float_sw4* time_sums =new float_sw4[7*m_nprocs];
+   double* time_sums =new double[7*m_nprocs];
    MPI_Gather( times, 7, MPI_DOUBLE, time_sums, 7, MPI_DOUBLE, 0, MPI_COMM_WORLD );
    if( m_myrank == 0 )
    {
@@ -4062,8 +4613,8 @@ void EW::print_execution_times( float_sw4 times[7] )
       size_t nr=write(fd,&m_nprocs,sizeof(int));
       if( nr != sizeof(int) )
 	 cout << "Error wrting nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
-      nr = write(fd, time_sums, 7*m_nprocs*sizeof(float_sw4));
-      if( nr != 7*m_nprocs*sizeof(float_sw4) )
+      nr = write(fd, time_sums, 7*m_nprocs*sizeof(double));
+      if( nr != 7*m_nprocs*sizeof(double) )
 	 cout << "Error wrting time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
       close(fd);
    }
@@ -4093,4 +4644,602 @@ bool EW::check_for_match_on_cpu_gpu( vector<Sarray>& a_U, int verbose, string na
       }
    }
    return retval;
+}
+
+//-----------------------------------------------------------------------
+void EW::setup_materials()
+{
+   // Point source test sets material directly in processTestPointSource
+   if( !m_point_source_test )
+   {
+      // Undefined q-factors, attenutation not yet implemented
+      vector<Sarray> Qs(mNumberOfGrids), Qp(mNumberOfGrids);
+      for( int b=0 ; b < m_mtrlblocks.size() ; b++ )
+	 m_mtrlblocks[b]->set_material_properties( mRho, mMu, mLambda, Qs, Qp );
+      // Here mMu contains cs, and mLambda contains cp
+      int g = mNumberOfGrids-1;
+      extrapolateInZ( g, mRho[g],    true, false ); 
+      extrapolateInZ( g, mLambda[g], true, false ); 
+      extrapolateInZ( g, mMu[g],     true, false );
+      g = 0;
+      extrapolateInZ( g, mRho[g],    false, true ); 
+      extrapolateInZ( g, mLambda[g], false, true ); 
+      extrapolateInZ( g, mMu[g],     false, true );
+      extrapolateInXY( mRho );
+      extrapolateInXY( mMu );
+      extrapolateInXY( mLambda );
+      // Convert mMu to mu, and mLambda to lambda
+      convert_material_to_mulambda( );
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::convert_material_to_mulambda( )
+{
+  for( int g = 0 ; g < mNumberOfGrids; g++)
+  {
+      // On input, we have stored cs in MU, cp in Lambda
+      // use mu = rho*cs*cs and lambda = rho*cp*cp  - 2*mu
+      for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
+      {
+          for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+          {
+              for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+              {
+                  mMu[g](i,j,k)     = mRho[g](i,j,k)*mMu[g](i,j,k)*mMu[g](i,j,k);                  
+                  mLambda[g](i,j,k) = mRho[g](i,j,k)*mLambda[g](i,j,k)*mLambda[g](i,j,k)-2*mMu[g](i,j,k);
+              }
+          }
+      }
+  }
+}
+
+//-----------------------------------------------------------------------
+void EW::extrapolateInXY( vector<Sarray>& field )
+{
+   for( int g= 0; g < mNumberOfGrids ; g++ )
+   {
+      if( m_iStartInt[g] == 1 )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	       for( int i=m_iStart[g] ; i < 1 ; i++ )
+	       {
+		  if( field[g](i,j,k) == -1 )
+		     field[g](i,j,k) = field[g](1,j,k);
+	       }
+      if( m_iEndInt[g] == m_global_nx[g] )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	       for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
+	       {
+		  if( field[g](i,j,k) == -1 )
+		     field[g](i,j,k) = field[g](m_iEndInt[g],j,k);
+	       }
+      if( m_jStartInt[g] == 1 )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jStart[g] ; j < 1 ; j++ )
+	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       {
+		  if( field[g](i,j,k) == -1 )
+		     field[g](i,j,k) = field[g](i,1,k);
+	       }
+      if( m_jEndInt[g] == m_global_ny[g] )
+         for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+	    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
+	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       {
+		  if( field[g](i,j,k) == -1 )
+		     field[g](i,j,k) = field[g](i,m_jEndInt[g],k);
+	       }
+// corners not necessary to treat explicitly???
+      
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::extrapolateInZ( int g, Sarray& field, bool lowk, bool highk )
+{
+   if( lowk )
+      for( int k=m_kStart[g] ; k < 1 ; k++ )
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       if( field(i,j,k) == -1 )
+		  field(i,j,k) = field(i,j,1);
+   if( highk )
+      for( int k=m_kEndInt[g]+1 ; k <= m_kEnd[g] ; k++ )
+	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	       if( field(i,j,k) == -1 )
+		  field(i,j,k) = field(i,j,m_kEndInt[g]);
+}
+
+//-----------------------------------------------------------------------
+void EW::getGlobalBoundingBox(float_sw4 bbox[6])
+{
+  bbox[0] = 0.;
+  bbox[1] = m_global_xmax;
+  bbox[2] = 0.;
+  bbox[3] = m_global_ymax;
+  bbox[4] = m_global_zmin;
+  bbox[5] = m_global_zmax;
+}
+
+//-----------------------------------------------------------------------
+bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth )
+{
+   depth = z;
+   return true;
+}
+
+//-----------------------------------------------------------------------
+bool EW::interpolate_topography( float_sw4 q, float_sw4 r, float_sw4 & Z0, bool smoothed)
+{
+// Interpolate the smoothed or raw topography
+
+// Assume that (q,r) are indices in the curvilinear grid.
+
+// if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
+// Return true and assign Z0 corresponding to (q,r)
+
+// Returns false if 
+// 1) (q,r) is outside the global parameter domain (expanded by ghost points)
+// 2) (q,r) is not on this processor
+
+// NOTE:
+// The parameters are normalized such that 1 <= q <= Nx is the full domain (without ghost points),
+//  1 <= r <= Ny.
+
+// 0. No topography, easy case:
+   if( !topographyExists() )
+   {
+      Z0 = 0;
+      return true;
+   }
+// 1. Check that the point is inside the domain
+   int g = mNumberOfGrids-1;
+   float_sw4 h = mGridSize[g];
+   float_sw4 qMin = (float_sw4) (1- m_ghost_points);
+   float_sw4 qMax = (float_sw4) (m_global_nx[g] + m_ghost_points);
+   float_sw4 rMin = (float_sw4) (1- m_ghost_points);
+   float_sw4 rMax = (float_sw4) (m_global_ny[g] + m_ghost_points);
+   if (!(q >= qMin && q <= qMax && r >= rMin && r <= rMax))
+   {
+      Z0 = 0;
+      return false;
+   }
+// 2. Compute elevation at (q,r)
+   float_sw4 tau; // holds the elevation at (q,r). Recall that elevation=-z
+   if (m_analytical_topo)
+   {
+      float_sw4 X0   = (q-1.0)*h;
+      float_sw4 Y0   = (r-1.0)*h;
+      float_sw4 igx2 = 1.0/(m_GaussianLx*m_GaussianLx);
+      float_sw4 igy2 = 1.0/(m_GaussianLy*m_GaussianLy);
+      tau = m_GaussianAmp*exp(-(X0-m_GaussianXc)*(X0-m_GaussianXc)*igx2
+			      -(Y0-m_GaussianYc)*(Y0-m_GaussianYc)*igy2 );
+   }
+   else
+   {
+// 3.Compute nearest grid point
+      int iNear = static_cast<int>(round(q));
+      int jNear = static_cast<int>(round(r));
+      bool smackOnTop = (fabs(iNear-q) < 1.e-9 && fabs(jNear-r)) < 1.e-9;
+      if (smackOnTop && point_in_proc(iNear,jNear,g)) 
+      {
+	 // 3a. (q,r) coincides with a grid point. Get elevation at that point.
+	 if (smoothed)
+	    tau = mTopoGridExt(iNear,jNear,1);
+	 else
+	    tau = mTopo(iNear,jNear,1);
+      }
+      else
+      {
+	 // 3b. (q,r) not at a grid point. Interpolate to get the elevation.
+	 // Nearest lower grid point:
+	 int i = static_cast<int>(floor(q));
+	 int j = static_cast<int>(floor(r));
+	 if( point_in_proc_ext(i-3,j-3,g) && point_in_proc_ext(i+4,j+4,g) )
+	 {
+	    float_sw4 a6cofi[8], a6cofj[8];
+	    gettopowgh( q-i, a6cofi );
+	    gettopowgh( r-j, a6cofj );
+	    tau = 0;
+	    for( int l=j-3 ; l <= j+4 ; l++ )
+	       for( int k=i-3 ; k <= i+4 ; k++ )
+		  tau += a6cofi[k-i+3]*a6cofj[l-j+3]*mTopoGridExt(k,l,1);
+	 }
+	 else
+	 {
+	    Z0 = 0;
+	    return false;
+	 }
+      }
+   }
+   Z0 = -tau;
+   return true;
+}
+
+//-----------------------------------------------------------------------
+void EW::gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const
+{
+   float_sw4 pol = ai*ai*ai*ai*ai*ai*ai*(-251+135*ai+25*ai*ai-
+                                      33*ai*ai*ai+6*ai*ai*ai*ai)/720;
+   wgh[0] = -1.0/60*ai + 1.0/180*ai*ai + 1.0/48*ai*ai*ai + 23.0/144*ai*ai*ai*ai 
+      - (17.0*ai + 223.0)*ai*ai*ai*ai*ai/720 - pol;
+   wgh[1] = 3.0/20*ai -3.0/40*ai*ai -1.0/6*ai*ai*ai - 13.0/12*ai*ai*ai*ai + 
+      97.0/45*ai*ai*ai*ai*ai + 1.0/6*ai*ai*ai*ai*ai*ai + 7*pol;
+   wgh[2] = -0.75*ai +0.75*ai*ai+(13.0+155*ai)*ai*ai*ai/48 -103.0/16*ai*ai*ai*ai*ai
+      - 121.0/240*ai*ai*ai*ai*ai*ai - 21*pol;
+   wgh[3] = 1 - 49.0/36*ai*ai - 49.0/9*ai*ai*ai*ai+385.0/36*ai*ai*ai*ai*ai +
+      61.0/72*ai*ai*ai*ai*ai*ai + 35*pol;
+   wgh[4] = 0.75*ai + 0.75*ai*ai - 13.0/48*ai*ai*ai + 89.0/16*ai*ai*ai*ai - 
+         1537.0/144*ai*ai*ai*ai*ai - 41.0/48*ai*ai*ai*ai*ai*ai - 35*pol;
+   wgh[5] = -3.0/20*ai - 3.0/40*ai*ai + 1.0/6*ai*ai*ai - 41.0/12*ai*ai*ai*ai
+      + 6.4*ai*ai*ai*ai*ai + 31.0/60*ai*ai*ai*ai*ai*ai + 21*pol;
+   wgh[6] = 1.0/60*ai + 1.0/180*ai*ai - 1.0/48*ai*ai*ai + 167.0/144*ai*ai*ai*ai -
+      1537.0/720*ai*ai*ai*ai*ai- 25.0/144*ai*ai*ai*ai*ai*ai - 7*pol;
+   wgh[7] = -1.0/6*ai*ai*ai*ai + 11.0/36*ai*ai*ai*ai*ai + 1.0/40*ai*ai*ai*ai*ai*ai + pol;
+}
+
+//-----------------------------------------------------------------------
+bool EW::invert_grid_mapping( int g, float_sw4 x, float_sw4 y, float_sw4 z, 
+			      float_sw4& q, float_sw4& r, float_sw4& s )
+{
+// Translates (x,y,z) to grid indices on grid g.
+// Successful only if (x,y) is in my processor, will return false if
+// the point is outside the processor.
+//
+   bool success=true;
+   q = x/mGridSize[g]+1;
+   r = y/mGridSize[g]+1;
+   if( g < mNumberOfCartesianGrids )
+      s = (z-m_zmin[g])/mGridSize[g]+1;
+   else
+   {
+      // Grid is curvilinear
+      // Maximum number of iterations, and error tolerance
+      // for Newton iterations
+      int    maxit = 10;
+      float_sw4 tol = 1e-9;
+      float_sw4 zTopo;
+      if( interpolate_topography(q, r, zTopo, true ) )      
+      {
+	 int    nz  = m_global_nz[g];
+	 float_sw4 h   = mGridSize[g];
+	 float_sw4 izb = 1.0/m_zetaBreak;
+	    // Elastic region top grid, sun is s normalized to 0 < sun < 1
+	 float_sw4 sun = 1-(m_topo_zmax-z)/((nz-1)*h);
+	 if( sun >= m_zetaBreak )
+	  // In uniform part of grid
+	    s = (nz-1)*sun+1;
+	 else
+	 {
+	  // Non-uniform, solve for s by Newton iteration
+	    int it = 0;
+	    float_sw4 numerr=tol+1;
+	    while( numerr > tol && it < maxit )
+	    {
+	       float_sw4 omsm = (1-izb*sun);
+	       for( int l=2 ; l <= m_grid_interpolation_order-1 ; l++ )
+		  omsm *= (1-izb*sun);
+	       float_sw4 fp =  h*(nz-1) + izb*m_grid_interpolation_order*omsm*(m_topo_zmax - (nz-1)*h - zTopo);
+	       omsm *= (1-izb*sun);
+	       float_sw4 f  = m_topo_zmax - (nz-1)*h*(1-sun) - omsm*(m_topo_zmax-(nz-1)*h-zTopo)-z;
+	       float_sw4 ds= f/fp;
+	       numerr = fabs(ds);
+	       sun = sun - ds;
+	       it++;
+	    }
+	    s = (nz-1)*sun+1;
+	    if( numerr >= tol )
+	    {
+	       cout << "EW::invert_grid_mapping: WARNING no convergence err=" << numerr << " tol = " << tol << endl;
+	       s = -1e38;
+	       success = false;
+	    }
+	 }
+      }
+      else
+      {
+      // point not in processor, could not evaluate topography
+	 s = -1e38;
+	 success = false;
+      }
+   }
+// Communicate the result to all processors
+//   double sloc = s;
+//   MPI_Allreduce( &sloc, &s, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+//   success = s != -1e38;
+   return success;
+}
+
+//-----------------------------------------------------------------------
+void EW::computeGeographicCoord(float_sw4 x, float_sw4 y, float_sw4 & longitude, float_sw4 & latitude)
+{
+  // conversion factor between degrees and radians
+   //   if( m_geoproj == 0 )
+   {
+      float_sw4 deg2rad = M_PI/180.0;
+      float_sw4 phi = mGeoAz * deg2rad;
+      latitude = mLatOrigin + 
+	 (x*cos(phi) - y*sin(phi))/mMetersPerDegree;
+      if (mConstMetersPerLongitude)
+      {
+	 longitude = mLonOrigin + 
+	    (x*sin(phi) + y*cos(phi))/(mMetersPerLongitude);
+      }
+      else
+      {
+	 longitude = mLonOrigin + 
+	    (x*sin(phi) + y*cos(phi))/(mMetersPerDegree*cos(latitude*deg2rad));
+      }
+   }
+   //   else
+      //      m_geoproj->computeGeographicCoord( x, y, longitude, latitude );
+}
+
+//-----------------------------------------------------------------------
+void EW::computeCartesianCoord(float_sw4 &x, float_sw4 &y, float_sw4 lon, float_sw4 lat)
+{
+  // -----------------------------------------------------------------
+  // Compute the cartesian coordinate given the geographic coordinate
+  // -----------------------------------------------------------------
+   //   if( m_geoproj == 0 )
+   //  // compute x and y
+   {
+      float_sw4 deg2rad = M_PI/180.0;
+      float_sw4 phi = mGeoAz * deg2rad;
+     //     x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
+     //     y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
+      if (mConstMetersPerLongitude)
+      {
+	 x = mMetersPerDegree*cos(phi)*(lat-mLatOrigin)    + mMetersPerLongitude*(lon-mLonOrigin)*sin(phi);
+	 y = mMetersPerDegree*(-sin(phi))*(lat-mLatOrigin) + mMetersPerLongitude*(lon-mLonOrigin)*cos(phi);
+      }
+      else
+      {
+	 x = mMetersPerDegree*(cos(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*sin(phi));
+	 y = mMetersPerDegree*(-sin(phi)*(lat-mLatOrigin) + cos(lat*deg2rad)*(lon-mLonOrigin)*cos(phi));
+      }
+   }
+   //   else
+      //      m_geoproj->computeCartesianCoord(x,y,lon,lat);
+}
+
+//-----------------------------------------------------------------------
+void EW::get_utc( int utc[7] ) const
+{
+   for( int c=0 ; c < 7 ; c++ )
+      utc[c] = m_utc0[c];
+}
+
+//-----------------------------------------------------------------------
+void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
+			   vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U)
+{
+  if (mode == TimeSeries::Displacement)
+  {
+    uRec.resize(3);
+    uRec[0] = U[g0](1, i0, j0, k0);
+    uRec[1] = U[g0](2, i0, j0, k0);
+    uRec[2] = U[g0](3, i0, j0, k0);
+  }
+  else if (mode == TimeSeries::Velocity)
+  {
+    uRec.resize(3);
+    uRec[0] = (U[g0](1, i0, j0, k0) - Um2[g0](1, i0, j0, k0))/(2*mDt);
+    uRec[1] = (U[g0](2, i0, j0, k0) - Um2[g0](2, i0, j0, k0))/(2*mDt);
+    uRec[2] = (U[g0](3, i0, j0, k0) - Um2[g0](3, i0, j0, k0))/(2*mDt);
+  }
+  else if(mode == TimeSeries::Div)
+  {
+    uRec.resize(1);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+    {
+//      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      uRec[0] = ((U[g0](1,i0+1, j0, k0) - U[g0](1,i0-1, j0, k0)+
+		  U[g0](2,i0, j0+1, k0) - U[g0](2,i0, j0-1, k0)+
+		  U[g0](3,i0, j0, k0+1) - U[g0](3,i0, j0, k0-1))*factor);
+    }
+    else // must be curvilinear
+    {
+//      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+       float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+       uRec[0] = ( ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		     mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		     mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
+		     mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
+		     mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
+    }
+  } // end div
+  else if(mode == TimeSeries::Curl)
+  {
+    uRec.resize(3);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+    {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+//       if( m_xycomponent )
+//       {
+      uRec[0] = ( duzdy-duydz );
+      uRec[1] = ( duxdz-duzdx );
+      uRec[2] = ( duydx-duxdy );
+//       }
+//       else
+//       {
+// 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 mRecordedUX.push_back( uew );
+// 	 mRecordedUY.push_back( uns );
+// 	 mRecordedUZ.push_back( -(duydx-duxdy) );
+//       }
+    }
+    else // must be curvilinear
+    {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+      float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      float_sw4 duzdy = mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds;
+      float_sw4 duydz = mMetric(4,i0,j0,k0)*duyds;
+      float_sw4 duxdz = mMetric(4,i0,j0,k0)*duxds;
+      float_sw4 duzdx = mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds;
+      float_sw4 duydx = mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds;
+      float_sw4 duxdy = mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds;
+//       if( m_xycomponent )
+//       {
+      uRec[0] = (duzdy-duydz)*factor;
+      uRec[1] = (duxdz-duzdx)*factor;
+      uRec[2] = (duydx-duxdy)*factor;
+//       }
+//       else
+//       {
+// 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 mRecordedUX.push_back( uew*factor );
+// 	 mRecordedUY.push_back( uns*factor );
+// 	 mRecordedUZ.push_back( -(duydx-duxdy)*factor );
+//       }
+    }
+  } // end Curl
+  else if(mode == TimeSeries::Strains )
+  {
+     uRec.resize(6);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+    {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+      float_sw4 duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+      float_sw4 duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+      float_sw4 duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+      uRec[0] = ( duxdx );
+      uRec[1] = ( duydy );
+      uRec[2] = ( duzdz );
+      uRec[3] = ( 0.5*(duydx+duxdy) );
+      uRec[4] = ( 0.5*(duzdx+duxdz) );
+      uRec[5] = ( 0.5*(duydz+duzdy) );
+   }
+    else // must be curvilinear
+   {
+//       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
+      float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+      float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      float_sw4 duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
+      float_sw4 duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
+      float_sw4 duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+      float_sw4 duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+      float_sw4 duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+      uRec[0] = ( duxdx );
+      uRec[1] = ( duydy );
+      uRec[2] = ( duzdz );
+      uRec[3] = ( 0.5*(duydx+duxdy) );
+      uRec[4] = ( 0.5*(duzdx+duxdz) );
+      uRec[5] = ( 0.5*(duydz+duzdy) );
+   }
+  } // end Strains
+  else if(mode == TimeSeries::DisplacementGradient )
+  {
+     uRec.resize(9);
+     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+     {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+	float_sw4 factor = 1.0/(2*mGridSize[g0]);
+	float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+	float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+	float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+	float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+	float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+	float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+	float_sw4 duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+	float_sw4 duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+	float_sw4 duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+	uRec[0] =  duxdx;
+	uRec[1] =  duxdy;
+	uRec[2] =  duxdz;
+	uRec[3] =  duydx;
+	uRec[4] =  duydy;
+	uRec[5] =  duydz;
+	uRec[6] =  duzdx;
+	uRec[7] =  duzdy;
+	uRec[8] =  duzdz;
+     }
+     else // must be curvilinear
+     {
+//       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
+	float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+	float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+	float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+	float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+	float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+	float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+	float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+	float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+	float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+	float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+	float_sw4 duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
+	float_sw4 duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
+	float_sw4 duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+	float_sw4 duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+	float_sw4 duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+	uRec[0] =  duxdx;
+	uRec[1] =  duxdy;
+	uRec[2] =  duxdz;
+	uRec[3] =  duydx;
+	uRec[4] =  duydy;
+	uRec[5] =  duydz;
+	uRec[6] =  duzdx;
+	uRec[7] =  duzdy;
+	uRec[8] =  duzdz;
+     }
+
+  } // end DisplacementGradient
+  return;
+}
+
+//-----------------------------------------------------------------------
+void EW::default_bcs( )
+{
+   for( int side=0 ; side < 6 ; side++ )
+      mbcGlobalType[side] = bSuperGrid;
+   mbcGlobalType[4] = bStressFree; // low-z is normally free surface
 }

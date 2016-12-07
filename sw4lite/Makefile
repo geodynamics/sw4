@@ -34,12 +34,19 @@ else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
+else ifeq ($(findstring valhall,$(HOSTNAME)),valhall)
+  FC = mpif90_ifort
+  CXX = mpicc_icc
+  OMPOPT = -qopenmp
+  EXTRA_LINK_FLAGS = -lifcore -lblas -llapack
+  openmp = yes
+  debug = no
 else
   FC  = mpif90
   CXX = mpic++
   OMPOPT = -fopenmp
   EXTRA_LINK_FLAGS = -lgfortran -lblas -llapack
-  openmp = yes
+  openmp = no
   debug = no
 endif
 
@@ -114,7 +121,7 @@ else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o rhs4sg_rev.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o
+OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o rhs4sg_rev.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o
 
 FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o type_defs.o lglnodes.o dgmodule.o
 

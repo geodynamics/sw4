@@ -1694,7 +1694,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 
          // Simpler solution
          float_sw4 zder[9];
-	 MPI_Allreduce( zdertmp, zder, 9, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
 	 zq  = zder[0];
 	 zr  = zder[1];
 	 zs  = zder[2];

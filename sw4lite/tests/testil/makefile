@@ -1,4 +1,5 @@
 #clang, use clang
+#use clang-3.9.0
 #FC = clang
 #CC = clang
 #CXX = clang++
@@ -6,26 +7,32 @@
 #CFLAGS = -O2
 
 #pgi, use pgi-15.7
+#pgi, use pgi-16.7
 # 
 #FC = pgf77
 #CC = pgcc
 #CXX =  pgCC
-#FFLAGS = -O3
-#CFLAGS = -O3
+#FFLAGS = -O3 
+#CFLAGS = -O3 
 
 #intel,  use ic-16.0.150
 # newer compiler, ic-16.0.210
 FC = ifort
 CC = icc
 CXX= icpc
-FFLAGS = -O2 -g
-CFLAGS = -O2 -g 
-CXXFLAGS = -O2 -g
+FFLAGS =  -O3
+CFLAGS =  -O3
+CXXFLAGS =-O3
+#FFLAGS =  -g
+#CFLAGS =  -g
+#CXXFLAGS =-g
 
 #gnu, use gcc-4.9.3p
 #FC = gfortran 
 #CC = gcc 
 #CXX= g++
+#FFLAGS = -g
+#CFLAGS = -g
 #FFLAGS = -O2 -ftree-vectorize -ftree-vectorizer-verbose=6
 #CFLAGS = -O3 -ftree-vectorize -ftree-vectorizer-verbose=6
 
