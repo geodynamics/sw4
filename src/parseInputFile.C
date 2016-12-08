@@ -203,7 +203,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   // inputFile.clear();
   // inputFile.seekg(0, ios::beg);
   
-// process th testrayleigh command to enable a periodic domain in the (x,y)-directions
+// process the testrayleigh command to enable a periodic domain in the (x,y)-directions
 // these commands can enter data directly the object (this->)
   while (!inputFile.eof())
   {    
@@ -212,22 +212,23 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
        m_doubly_periodic = true;
      }
-     if( startswith("testenergy",buffer) )
+     else if( startswith("testenergy",buffer) )
      {
 	m_doubly_periodic = checkTestEnergyPeriodic(buffer);
      }
-     if (startswith("refinement",buffer) )
+     else if (startswith("refinement",buffer) )
      {
 	// mesh refinements require 3 ghost points, must know 
 	// before processing grid command.
 	m_mesh_refinements = true;
      }
-     if( startswith("supergrid",buffer) )
+     else if( startswith("supergrid",buffer) )
      {
 	// If supergrid damping is 6th order, 3 ghost points are needed, must know 
 	// before processing grid command.
 	processSupergrid(buffer);
      }
+     
   }
 
   inputFile.clear();
@@ -274,6 +275,12 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      else if (startswith("time", buffer))
      {
         processTime(buffer); // process time command to set reference UTC before reading stations.
+     }
+     else if (startswith("prefilter", buffer))
+     {
+       // before reading any rupture command, we need to know 
+       // if they need to be prefiltered  
+       processPrefilter(buffer);
      }
   }
 
@@ -416,6 +423,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("anisotropy", buffer) || 
 	   startswith("fileio", buffer) ||
 	   startswith("supergrid", buffer) ||
+	   startswith("prefilter", buffer) ||
 	   startswith("time", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
@@ -494,8 +502,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processBoundaryConditions(buffer);
        //       else if (startswith("supergrid", buffer))
        //         processSupergrid(buffer);
-       else if (startswith("prefilter", buffer))
-	 processPrefilter(buffer);
+       // else if (startswith("prefilter", buffer))
+       // 	 processPrefilter(buffer);
        else if( startswith("developer", buffer ) )
           processDeveloper(buffer);
        // else if( startswith("geodynbc", buffer ) )
