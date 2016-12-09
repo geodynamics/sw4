@@ -1,6 +1,8 @@
-fileio path=ps_gaussian
+fileio path=ps_prefilter
 grid x=6e3 y=6e3 z=4e3 nx=101 az=0
 time t=15
+
+prefilter fc2=1.0 type=lowpass passes=2 order=2
 
 # receiver
 rec x=3.0e3 y=3.0e3 z=0 file=r1 usgsformat=1 sacformat=0

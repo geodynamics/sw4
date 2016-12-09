@@ -516,6 +516,7 @@ double getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
 double getTimeStep() const {return mDt;};
+int getNumberOfTimeSteps() const {return mNumberOfTimeSteps;};
 
  // test point source
 void get_exact_point_source( double* u, double t, int g, Source& source, int* wind=0 );

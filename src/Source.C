@@ -128,9 +128,10 @@ Source::Source(EW *a_ew,
       mIpar  = new int[1];
    }
 
-   if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
-      spline_interpolation();
-   else
+   // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
+   //    spline_interpolation();
+   // else
+   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments ) // not sure about iDiscrete6moments
    {
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
@@ -1161,6 +1162,141 @@ alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
 /48.0);
 }
 
+//------ filter and fix up any discrete time functions ----------------
+void Source::prepareTimeFunc(bool doFilter, double sw4TimeStep, int sw4TimeSamples, Filter* sw4_filter)
+{
+
+   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
+   {
+      // new approach for Discrete time functions
+      if (!doFilter)
+      {
+         spline_interpolation();
+         m_timeFuncIsReady = true;
+      }
+      else
+      {
+         // 0. build filter for the discrete time series
+         // 1. compute pre and post durations of filter tail
+         // 2. extend time grid by appropriate number of time samples, pad with zeros
+         // 3. Perform filtering with the dt of the time series
+         // 4. Interpolate by spline
+         Filter my_filter( sw4_filter->get_type(), sw4_filter->get_order(), sw4_filter->get_passes(),
+                           sw4_filter->get_corner_freq1(), sw4_filter->get_corner_freq2());
+// time step in the time series
+         double dt = 1/mFreq;
+// setup the filter for time step dt
+         my_filter.computeSOS( dt );
+         double preCursorTime = my_filter.estimatePrecursor();
+         int nPadding = static_cast<int>(ceil(preCursorTime/dt));
+// current number of points
+         int npts = mIpar[0];
+         double tstart = mPar[0];
+         int ext_npts = npts + 2*nPadding;
+         double *ext_par = new double[ext_npts+1];
+         double ext_tstart = tstart - nPadding*dt;
+// setup ext_par
+         ext_par[0] = ext_tstart;
+         int i;
+// initial zeros
+         for (i=0; i<nPadding; i++)
+            ext_par[i+1] = 0.0;
+// copy values from origianla time series
+         for (i=0; i<npts; i++)
+            ext_par[i + nPadding + 1] = mPar[i+1];
+// trailing zeros
+         for (i=nPadding+npts; i<ext_npts; i++)
+            ext_par[i+1] = 0.0;
+
+// Filter the extended time series (ext_par[0] = ext_tstart and should not be filtered)
+         my_filter.evaluate( ext_npts, &ext_par[1], &ext_par[1] );
+
+// Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter (copied from below)
+         if( my_filter.get_passes() == 2 && my_filter.get_type() == bandPass )
+         {    
+            double wghv, xi;
+            int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+            if( p0+p <= ext_npts ) // only do this if the time series is long enough
+            {
+               for( int i=1 ; i<=p0-1 ; i++ )
+               {
+                  ext_par[i] = 0;
+               }
+               for( int i=p0 ; i<=p0+p ; i++ )
+               {
+                  wghv = 0;
+                  xi = (i-p0)/((double) p);
+	 // polynomial P(xi), P(0) = 0, P(1)=1
+                  wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+                  ext_par[i] *=wghv;
+               }
+            }
+         }
+
+   // update parameters for the discrete function
+         mNipar = 1;
+//      mIpar = new int[mNipar];
+         mIpar[0] = ext_npts;
+//      mFreq = 1./dt;   
+         delete[] mPar; // return memory for the previous time series
+         mNpar = ext_npts+1;
+         mPar = ext_par;
+         mPar[0] = ext_tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
+         mT0 = ext_tstart;
+      // for( int i=0 ; i < nsteps; i++ )
+      //    mPar[i+1] = discfunc[i];
+      // delete[] discfunc;
+
+   // Build the spline representation
+         spline_interpolation();
+         m_is_filtered = true;
+// only do the filtering once
+         m_timeFuncIsReady = true;
+      } // end doFilter
+      
+   } // end if iDiscrete or iDiscrete6Moments
+   else // all other time functions
+   {
+// Modify the time functions if prefiltering is enabled
+      if (doFilter)
+      {
+// the sw4 filter is assumed to already been initialized for the sw4 time step
+	
+// 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
+	double t0_inc = 0;
+	double t0_min;
+	t0_min = sw4_filter->estimatePrecursor();
+	
+// here we only have one time function
+// // old estimate for 2-pole low-pass Butterworth
+// //	t0_min = 4./sw4_filter->get_corner_freq2();
+	
+        t0_inc = compute_t0_increase( t0_min );
+	  
+// If t0_inc is positive, the t0 field in the source command should be incremented 
+// by at least this amount. Otherwise, there might be significant artifacts from 
+// a sudden start of some source.
+	if (t0_inc > 0.)
+	{
+// Don't mess with t0.
+// Instead, warn the user of potential transients due to unsmooth start
+           printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
+		   "*** To avoid artifacts due to sudden startup, increase t0 in the source named '%s' by at least %e\n\n",
+                  t0_min, getName().c_str(), t0_inc);
+	}
+
+// Do the actual filtering
+// this function no longer handles discrete time functions
+        filter_timefunc( sw4_filter, 0.0, sw4TimeStep, sw4TimeSamples ); 
+   }
+      
+// set the flag to indicate that the filtering is complete
+      m_timeFuncIsReady = true;
+   } // end if timeDep != iDiscrete
+   
+}
+
+
 //-----------------------------------------------------------------------
 void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources )
 {
@@ -1288,7 +1424,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                if (a_EW->interior_point_in_proc(i,j,g) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
                {
 // filter the time function in this Source object, unless already done before
-                  m_timeFuncIsReady = true;
+                  prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
+                                  a_EW->m_filter_ptr);
                }
             }         
    }
@@ -2362,18 +2499,20 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
       case iDirac :
 	 timeFunc = Dirac;
 	 break;
-      case iDiscrete :
-	 timeFunc = Discrete;
-	 break;
+// discrete time functions are now handled differently
+      // case iDiscrete :
+      //    timeFunc = Discrete;
+      //    break;
       default:
 	 cout << "ERROR in Source::filter_timefunc, source type not recoginzed" << endl;
       }
 
       // Convert to discrete representation
+      mTimeDependence = iDiscrete;
+
       double *discfunc = new double[nsteps];
       for (int k=0; k < nsteps; k++ )
 	 discfunc[k] = timeFunc( mFreq, tstart+k*dt-mT0, mPar, mNpar, mIpar, mNipar );
-      mTimeDependence = iDiscrete;
 
 // Filter the discretized function 
       filter_ptr->evaluate( nsteps, &discfunc[0], &discfunc[0] );
@@ -2409,8 +2548,9 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
       delete[] mPar;
       mNpar = nsteps+1;
       mPar = new double[mNpar];
-      //      mPar[0] = tstart;
-      mPar[0] = tstart-mT0;
+      mPar[0] = tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
+      mT0 = tstart;
+//      mPar[0] = tstart-mT0;
       for( int i=0 ; i < nsteps; i++ )
          mPar[i+1] = discfunc[i];
       delete[] discfunc;

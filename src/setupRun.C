@@ -420,7 +420,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // 2: if any source returns get_ShearModulusFactor() == true, it multiplies Mij by the shear modulus
 // 3: evaluate the min and max z-coordinate of all sources
 // 4: sets freq=1/dt in all sources with iDirac time-function
-// 5: modifies the time function if pre-filtering is enabled
+// 5: modifies the time function if pre-filtering is enabled *** MOVED TO Source:prepareTimeFunc() ***
 // 6: saves a GMT file if requested
 
 // make sure that the material model is in place
@@ -618,7 +618,6 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	 if( a_GlobalUniqueSources[s]->getTfunc() == iDirac )
 	    a_GlobalUniqueSources[s]->setFrequency( 1.0/mDt );
 
-// Modify the time functions if prefiltering is enabled
       if (m_prefilter_sources)
       {
 // tell the filter about the time step and compute the second order sections
@@ -626,51 +625,60 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 
 // output details about the filter
 	if (mVerbose>=3 && proc_zero() )
-	  cout << *m_filter_ptr;
-	
-// 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
-	double dt0 = 0;
-	double dt0loc, dt0max, t0_min;
-	t0_min = m_filter_ptr->estimatePrecursor();
-// tmp
-	if (!mQuiet && proc_zero() )
-	  printf("Filter precursor = %e\n", t0_min);
-	
-// old estimate for 2-pole low-pass Butterworth
-//	t0_min = 4./m_filter_ptr->get_corner_freq2();
-	
-	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-	{
-	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( t0_min );
-	  
-	  if( dt0loc > dt0 )
-	    dt0 = dt0loc;
-	}
-// compute global max over all processors
-	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+           cout << *m_filter_ptr;
 
-// dt0max is the maxima over all dt0loc in all processors. 
-// If it is positive, the t0 field in all source commands should be incremented 
-// by at least this amount. Otherwise, there might be significant artifacts from 
-// a sudden start of some source.
-	if (dt0max > 0.)
-	{
-// Don't mess with t0.
-// Instead, warn the user of potential transients due to unsmooth start
-//	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-//	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
-	  if ( !mQuiet && proc_zero() )
-	    printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
-		   "*** To avoid artifacts due to sudden startup, increase t0 in all source commands by at least %e\n\n",
-		   t0_min, dt0max);
-	}
-
-// Do the filtering
-	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-           a_GlobalUniqueSources[s]->filter_timefunc( m_filter_ptr, mTstart, mDt, mNumberOfTimeSteps );
+	if (!getQuiet() && proc_zero() )
+        {
+           printf("Filter precursor = %e\n", m_filter_ptr->estimatePrecursor() );
+        }
+        
       }
+      
+// // Modify the time functions if prefiltering is enabled
+	
+// // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
+// 	double dt0 = 0;
+// 	double dt0loc, dt0max, t0_min;
+// 	t0_min = m_filter_ptr->estimatePrecursor();
+// // tmp
+// 	if (!mQuiet && proc_zero() )
+// 	  printf("Filter precursor = %e\n", t0_min);
+	
+// // old estimate for 2-pole low-pass Butterworth
+// //	t0_min = 4./m_filter_ptr->get_corner_freq2();
+	
+// 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+// 	{
+// 	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( t0_min );
+	  
+// 	  if( dt0loc > dt0 )
+// 	    dt0 = dt0loc;
+// 	}
+// // compute global max over all processors
+// 	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
-// TODO: check that t0 is large enough even when prefilter is NOT used
+// // dt0max is the maxima over all dt0loc in all processors. 
+// // If it is positive, the t0 field in all source commands should be incremented 
+// // by at least this amount. Otherwise, there might be significant artifacts from 
+// // a sudden start of some source.
+// 	if (dt0max > 0.)
+// 	{
+// // Don't mess with t0.
+// // Instead, warn the user of potential transients due to unsmooth start
+// //	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+// //	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
+// 	  if ( !mQuiet && proc_zero() )
+// 	    printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
+// 		   "*** To avoid artifacts due to sudden startup, increase t0 in all source commands by at least %e\n\n",
+// 		   t0_min, dt0max);
+// 	}
+
+// // Do the filtering
+// 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+//            a_GlobalUniqueSources[s]->filter_timefunc( m_filter_ptr, mTstart, mDt, mNumberOfTimeSteps );
+//       }
+
+// // TODO: check that t0 is large enough even when prefilter is NOT used
 
       if (proc_zero())
 	saveGMTFile( a_GlobalUniqueSources );

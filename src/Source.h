@@ -81,6 +81,7 @@ public:
 
 // keep track of new filtering approach:
    bool m_timeFuncIsReady;
+   void prepareTimeFunc(bool doFilter, double sw4TimeStep, int sw4TimeSamples, Filter *sw4_filter);
 
   double getX0() const;
   double getY0() const;
