@@ -283,10 +283,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
 
  // Debug
-  //    for( int i=0 ; i < point_sources.size() ; i++ )
-  //       cout << *point_sources[i] << endl;
-
-// modify the time functions if prefiltering is enabled
+  for (int proc = 0; proc<m_nProcs; proc++)
+     if (proc == m_myRank)
+     {
+        int nSources=0;
+        for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
+        {
+           if (a_Sources[i]->m_timeFuncIsReady) nSources++;
+        }
+        printf("\n**** MPI-task #%d needs %d source terms  ********\n\n", proc, nSources);     
+  }
+// end debug
+  
+// modification of time functions by prefiltering is currently done in preprocessSources()
+  // only reported here
   if (!m_testing && m_prefilter_sources)
   {
     if (!mQuiet && proc_zero() )
