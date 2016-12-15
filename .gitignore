@@ -3,8 +3,6 @@
 
 *.idx
 
-*.out
-
 *.log
 
 build/

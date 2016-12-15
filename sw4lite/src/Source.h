@@ -132,11 +132,13 @@ public:
 
  private:
   Source();
-
-  void correct_Z_level( EW *a_ew );
-   //  void compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic, int jc, int kc,
-   //				 int g, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq, float_sw4& zqr,
-   //				 float_sw4& zqs, float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const;
+  void adjust_zcoord( EW* a_ew );
+  void compute_mapped_coordinates( EW *a_ew );
+   //  void correct_Z_level( EW *a_ew );
+  void compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic,
+				 int jc, int kc, int g, float_sw4& zq, float_sw4& zr,
+				 float_sw4& zs, float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
+				 float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const;
    //  int spline_interpolation( );
   void getsourcewgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
   void getsourcedwgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
@@ -165,6 +167,7 @@ public:
   bool m_myPoint;
   bool m_zRelativeToTopography;
   float_sw4 mX0,mY0,mZ0;
+  float_sw4 mQ0,mR0,mS0;
   float_sw4* mPar;
   int* mIpar;
   int mNpar, mNipar;

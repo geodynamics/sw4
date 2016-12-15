@@ -20,24 +20,24 @@
 FC = ifort
 CC = icc
 CXX= icpc
-FFLAGS =  -O3
-CFLAGS =  -O3
-CXXFLAGS =-O3
-#FFLAGS =  -g
-#CFLAGS =  -g
-#CXXFLAGS =-g
+FFLAGS =  -O2 -warn all
+CFLAGS =  -O2 -Wall
+CXXFLAGS =-O2 -Wall
+#FFLAGS =  -g -warn all
+#CFLAGS =  -g -warn all
+#CXXFLAGS =-g -warn all
 
 #gnu, use gcc-4.9.3p
 #FC = gfortran 
 #CC = gcc 
 #CXX= g++
-#FFLAGS = -g
-#CFLAGS = -g
-#FFLAGS = -O2 -ftree-vectorize -ftree-vectorizer-verbose=6
-#CFLAGS = -O3 -ftree-vectorize -ftree-vectorizer-verbose=6
+#FFLAGS = -g -Wall
+#CFLAGS = -g -Wall
+#FFLAGS = -O2 -ftree-vectorize -ftree-vectorizer-verbose=6 -Wall
+#CFLAGS = -O3 -ftree-vectorize -ftree-vectorizer-verbose=6 -Wall
 
-COBJ = rhs4sg.o rhs4sg_rev.o gettimec.o
-FOBJ = rhs4th3fortsgstr.o boundaryOp.o
+COBJ = rhs4sg.o rhs4sg_rev.o gettimec.o grid-utilities.o
+FOBJ = rhs4th3fortsgstr.o boundaryOp.o curvilinear4sg.o metric.o 
 
 main : $(FOBJ) $(COBJ) testil.o
 	$(CXX) -O2 -o $@ testil.o $(FOBJ) $(COBJ)

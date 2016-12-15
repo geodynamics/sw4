@@ -18,9 +18,9 @@
 # A single moment point source is used with 
 # the time dependency being the Gaussian function
 #
-grid h=200 x=30000 y=30000 z=17000
+grid h=50 x=30000 y=30000 z=17000
 time t=9
-fileio path=LOH1-h200
+fileio path=LOH1-h50
 
 #specify the width of the super grid damping layer (30 is the default)
 supergrid gp=30
