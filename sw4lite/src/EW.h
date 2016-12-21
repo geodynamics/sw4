@@ -129,6 +129,31 @@ class EW
 		      float_sw4& y, float_sw4& z );
    bool invert_grid_mapping( int g, float_sw4 x, float_sw4 y, float_sw4 z, 
 			     float_sw4& q, float_sw4& r, float_sw4& s );
+   int metric(  int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a_x,
+		 float_sw4* a_y, float_sw4* a_z, float_sw4* a_met, float_sw4* a_jac );
+   int metric_rev(  int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a_x,
+		 float_sw4* a_y, float_sw4* a_z, float_sw4* a_met, float_sw4* a_jac );
+   void metricexgh( int ib, int ie, int jb, int je, int kb, int ke,
+		    int nz, float_sw4* a_x, float_sw4* a_y, float_sw4* a_z, 
+		    float_sw4* a_met, float_sw4* a_jac, int order,
+		    float_sw4 sb, float_sw4 zmax, float_sw4 amp, float_sw4 xc,
+		    float_sw4 yc, float_sw4 xl, float_sw4 yl );
+   void metricexgh_rev( int ib, int ie, int jb, int je, int kb, int ke,
+			int nz, float_sw4* a_x, float_sw4* a_y, float_sw4* a_z, 
+			float_sw4* a_met, float_sw4* a_jac, int order,
+			float_sw4 sb, float_sw4 zmax, float_sw4 amp, float_sw4 xc,
+			float_sw4 yc, float_sw4 xl, float_sw4 yl );
+   void freesurfcurvisg( int ib, int ie, int jb, int je, int kb, int ke,
+			 int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+			 float_sw4* a_la, float_sw4* a_met, float_sw4* s,
+			 float_sw4* a_forcing, float_sw4* a_strx, float_sw4* a_stry );
+   void freesurfcurvisg_rev( int ib, int ie, int jb, int je, int kb, int ke,
+			 int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+			 float_sw4* a_la, float_sw4* a_met, float_sw4* s,
+			 float_sw4* a_forcing, float_sw4* a_strx, float_sw4* a_stry );
+   void gridinfo( int ib, int ie, int jb, int je, int kb, int ke,
+		  float_sw4* a_met, float_sw4* a_jac, float_sw4&  minj,
+		  float_sw4& maxj );
 
    void computeDT();
    void computeNearestGridPoint(int & a_i, int & a_j, int & a_k, int & a_g, float_sw4 a_x, 
@@ -193,6 +218,15 @@ class EW
 		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 		     float_sw4 beta );
+   void addsgd4cfort( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+		      float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
+   void addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+			     float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+			     float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
+
    void addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
 		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
@@ -207,6 +241,14 @@ class EW
 		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 		      float_sw4 beta );
+   void addsgd6cfort( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+		      float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
+   void addsgd6cfort_indrev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+			     float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+			     float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
    void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
 				float_sw4* _bope, float_sw4* _sbop );
    int getVerbosity() const {return 0;}
