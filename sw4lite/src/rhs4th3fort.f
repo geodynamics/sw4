@@ -816,6 +816,7 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mu1zx, u1zim2, u1zim1, u1zip1, u1zip2
       real*8 mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2
       real*8 r1, r2, r3, h, cof, d4a, d4b, a1
+      real*8 mucofs, lap2mus, lacofs
       real*8 strx(ifirst:ilast), stry(jfirst:jlast), strz(kfirst:klast)
       character*1 op
       parameter( d4a=2d0/3, d4b=-1d0/12 )
@@ -838,7 +839,7 @@ c the centered stencil can be evaluated 2 points away from the boundary
 !$OMP PARALLEL PRIVATE(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,
 !$OMP*   r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,m,u3zip2,u3zip1,
 !$OMP*   u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy,
-!$OMP*   mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,
+!$OMP*   mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,lap2mus,mucofs,lacofs,
 !$OMP*   u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb)
 !$OMP DO
       do k=k1,k2
@@ -1078,11 +1079,23 @@ c note that we could have introduced intermediate variables for the average of l
 
 *** Total number of ops away from boundary loop, per grid point computed:
 *** 84+75*3+3*116+9 = 666 ops
-*** Memory access mu,lambda,u = 5^3*(1+1+3) = 625
-***                uacc = 3
+*** Memory access mu,lambda  2*(5+5+5-2) = 26  (stencil is a cross)
+***                          u = 3*( 3*5*5-3*5+1) = 183 (stencil is three intersecting planes)
+***                          uacc = 3
 ***             strx,stry,strz = 5*3 = 15
-***  Memory access read, 643 vars. = 5144 bytes (double prec.)
+***  Memory access read, 227 vars. = 1816 bytes (double prec.)
 ***                write, 3 vars. = 24 bytes (double prec.)
+***
+*** Loop below for the upper boundary (1 <= k <= 6), per grid point:
+***    1244 arithmetic ops
+***   Memory access, mu, lambda (5 pts in i,j, 8pts in k:) 2*(5+5+8-2)=32      
+***                  u       3*(5*5+5*9+5*9-5-5-9+1) : 291 ( u uses ghost point+8 pts in k)
+***                  uacc    3
+***            strx,stry,strz:  5*3 = 15
+***            acof:   6*8 = 48
+***            bope:     8
+***      Memory access read 397 vars.= 3176 bytes (double)
+***                   write, 3 vars = 24 bytes
 
 c low-k boundary modified stencils
       if (onesided(5).eq.1) then
@@ -1092,6 +1105,7 @@ c the centered stencil can be used in the x- and y-directions
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
 c from inner_loop_4a
+*** 56 ops
             mux1 = mu(i-1,j,k)*strx(i-1)-
      *                 tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2))
             mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
@@ -1113,6 +1127,7 @@ c
 *** xx, yy, and zz derivatives:
 c note that we could have introduced intermediate variables for the average of lambda 
 c in the same way as we did for mu
+*** 62 ops, tot=118
             r1 = i6*(strx(i)*((2*mux1+la(i-1,j,k)*strx(i-1)-
      *                  tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
      *                         (u(1,i-2,j,k)-u(1,i,j,k))+
@@ -1125,7 +1140,7 @@ c in the same way as we did for mu
      *           (2*mux4+ la(i+1,j,k)*strx(i+1)-
      *                  tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
      *           (u(1,i+2,j,k)-u(1,i,j,k)) ) + stry(j)*(
-     *              + muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
+     *                muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
      *                muy2*(u(1,i,j-1,k)-u(1,i,j,k)) + 
      *                muy3*(u(1,i,j+1,k)-u(1,i,j,k)) +
      *                muy4*(u(1,i,j+2,k)-u(1,i,j,k)) ) )
@@ -1134,18 +1149,44 @@ c second derivative (mu*u_z)_z at grid point z_k
 c averaging the coefficient, 
 c leave out the z- supergrid stretching strz, since it will
 c never be used together with the sbp-boundary operator
-            do q=1,8
-              mucof(q)=0
-              do m=1,8
-                mucof(q) = mucof(q)+acof(k,q,m)*mu(i,j,m)
-              enddo
-            end do
-c computing the second derivative
+*** 8*(19) = 152 ops, tot = 270 (+another 8*33 which is added 73 lines down).
+*** Now brought down to 8*(19+19)=304 from 152+8*33=416, newtot=422
             mu1zz = 0
+            mu2zz = 0
+            mu3zz = 0
             do q=1,8
-              mu1zz = mu1zz + mucof(q)*u(1,i,j,q)
+               mucofs = acof(k,q,1)*mu(i,j,1)+acof(k,q,2)*mu(i,j,2)+
+     *acof(k,q,3)*mu(i,j,3)+acof(k,q,4)*mu(i,j,4)+acof(k,q,5)*mu(i,j,5)+
+     *acof(k,q,6)*mu(i,j,6)+acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8)
+               mu1zz = mu1zz + mucofs*u(1,i,j,q)
+               mu2zz = mu2zz + mucofs*u(2,i,j,q)
+               lacofs = acof(k,q,1)*la(i,j,1)+acof(k,q,2)*la(i,j,2)+
+     *acof(k,q,3)*la(i,j,3)+acof(k,q,4)*la(i,j,4)+acof(k,q,5)*la(i,j,5)+
+     *acof(k,q,6)*la(i,j,6)+acof(k,q,7)*la(i,j,7)+acof(k,q,8)*la(i,j,8)
+               mu3zz = mu3zz +(lacofs+2*mucofs)*u(3,i,j,q)
+c               lap2mus = acof(k,q,1)*(la(i,j,1)+2*mu(i,j,1)) +
+c     *        acof(k,q,2)*(la(i,j,2)+2*mu(i,j,2)) +
+c     *        acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3)) +
+c     *        acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4)) +
+c     *        acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5)) +
+c     *        acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6)) +
+c     *        acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7)) +
+c     *        acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8))
+c               mu3zz = mu3zz + lap2mus*u(3,i,j,q)
             enddo
+c            do q=1,8
+c              mucof(q)=0
+c              do m=1,8
+c                mucof(q) = mucof(q)+acof(k,q,m)*mu(i,j,m)
+c              enddo
+c            end do
+c computing the second derivative
+c            mu1zz = 0
+c            do q=1,8
+c              mu1zz = mu1zz + mucof(q)*u(1,i,j,q)
+c            enddo
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
+*** 66 ops, tot=488
             r1 = r1 + (mu1zz + ghcof(k)*mu(i,j,1)*u(1,i,j,0))
 
             r2 = i6*(strx(i)*(mux1*(u(2,i-2,j,k)-u(2,i,j,k)) + 
@@ -1168,11 +1209,12 @@ c (mu*vz)_z can not be centered
 c second derivative (mu*v_z)_z at grid point z_k
 c averaging the coefficient: already done above
 c computing the second derivative
-            mu2zz = 0
-            do q=1,8
-              mu2zz = mu2zz + mucof(q)*u(2,i,j,q)
-            enddo
+c            mu2zz = 0
+c            do q=1,8
+c              mu2zz = mu2zz + mucof(q)*u(2,i,j,q)
+c            enddo
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
+*** 30 ops, tot=518
             r2 = r2 + (mu2zz + ghcof(k)*mu(i,j,1)*u(2,i,j,0))
 
             r3 = i6*(strx(i)*(mux1*(u(3,i-2,j,k)-u(3,i,j,k)) + 
@@ -1185,19 +1227,33 @@ c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
      *                muy4*(u(3,i,j+2,k)-u(3,i,j,k)) ) )
 c ((2*mu+lambda)*w_z)_z can not be centered
 c averaging the coefficient
-            do q=1,8
-              lap2mu(q)=0
-              do m=1,8
-                lap2mu(q) = lap2mu(q)+acof(k,q,m)*
-     +                                (la(i,j,m)+2*mu(i,j,m))
-              enddo
-            end do
-c computing the second derivative
-            mu3zz = 0
-            do q=1,8
-              mu3zz = mu3zz + lap2mu(q)*u(3,i,j,q)
-            enddo
+*** 8*33 = 264 ops, tot=630
+c            mu3zz = 0
+c            do q=1,8
+c               lap2mus = acof(k,q,1)*(la(i,j,1)+2*mu(i,j,1)) +
+c     *        acof(k,q,2)*(la(i,j,2)+2*mu(i,j,2)) +
+c     *        acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3)) +
+c     *        acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4)) +
+c     *        acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5)) +
+c     *        acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6)) +
+c     *        acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7)) +
+c     *        acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8))
+c               mu3zz = mu3zz + lap2mus*u(3,i,j,q)
+c            enddo
+c            do q=1,8
+c              lap2mu(q)=0
+c              do m=1,8
+c                lap2mu(q) = lap2mu(q)+acof(k,q,m)*
+c     +                                (la(i,j,m)+2*mu(i,j,m))
+c              enddo
+c            end do
+cc computing the second derivative
+c            mu3zz = 0
+c            do q=1,8
+c              mu3zz = mu3zz + lap2mu(q)*u(3,i,j,q)
+c            enddo
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
+*** 5 ops, tot=523
             r3 = r3 + (mu3zz + ghcof(k)*(la(i,j,1)+2*mu(i,j,1))*
      +           u(3,i,j,0))
 
@@ -1208,6 +1264,7 @@ c$$$          u1z = u1z + bope(k,q)*u1(q)
 c$$$        enddo
 
 c cross-terms in first component of rhs
+*** 56 ops, tot=579
 ***   (la*v_y)_x
             r1 = r1 + strx(i)*stry(j)*(
      *            i144*( la(i-2,j,k)*(u(2,i-2,j-2,k)-u(2,i-2,j+2,k)+
@@ -1228,6 +1285,7 @@ c cross-terms in first component of rhs
      *                   mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
      *                        8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) )) )
 ***   (la*w_z)_x: NOT CENTERED
+*** 8*8 + 12= 76 ops, tot=655
             u3zip2=0
             u3zip1=0
             u3zim1=0
@@ -1243,6 +1301,7 @@ c cross-terms in first component of rhs
             r1 = r1 + strx(i)*lau3zx
 
 ***   (mu*w_x)_z: NOT CENTERED
+*** 8*9+2 = 74 ops, tot=729
             mu3xz=0
             do q=1,8
               mu3xz = mu3xz + bope(k,q)*( mu(i,j,q)*i12*
@@ -1253,6 +1312,7 @@ c cross-terms in first component of rhs
             r1 = r1 + strx(i)*mu3xz
 
 c cross-terms in second component of rhs
+*** 56 ops , tot=785
 ***   (mu*u_y)_x
             r2 = r2 + strx(i)*stry(j)*(
      *            i144*( mu(i-2,j,k)*(u(1,i-2,j-2,k)-u(1,i-2,j+2,k)+
@@ -1273,6 +1333,7 @@ c cross-terms in second component of rhs
      *                   la(i,j+2,k)*(u(1,i-2,j+2,k)-u(1,i+2,j+2,k)+
      *                        8*(-u(1,i-1,j+2,k)+u(1,i+1,j+2,k))) )) )
 *** (la*w_z)_y : NOT CENTERED
+*** 8*8+12=76 ops, tot=861
             u3zjp2=0
             u3zjp1=0
             u3zjm1=0
@@ -1289,6 +1350,7 @@ c cross-terms in second component of rhs
             r2 = r2 + stry(j)*lau3zy
 
 *** (mu*w_y)_z: NOT CENTERED
+*** 8*9+2 = 74 ops, tot=935
             mu3yz=0
             do q=1,8
               mu3yz = mu3yz + bope(k,q)*( mu(i,j,q)*i12*
@@ -1300,6 +1362,7 @@ c cross-terms in second component of rhs
 
 c No centered cross terms in r3
 ***  (mu*u_z)_x: NOT CENTERED
+*** 76 ops, tot=1011
             u1zip2=0
             u1zip1=0
             u1zim1=0
@@ -1315,6 +1378,7 @@ c No centered cross terms in r3
             r3 = r3 + strx(i)*mu1zx
 
 *** (mu*v_z)_y: NOT CENTERED
+*** 76 ops, tot=1087
             u2zjp2=0
             u2zjp1=0
             u2zjm1=0
@@ -1330,6 +1394,7 @@ c No centered cross terms in r3
             r3 = r3 + stry(j)*mu2zy
 
 ***   (la*u_x)_z: NOT CENTERED
+*** 74 ops, tot=1161
             lau1xz=0
             do q=1,8
               lau1xz = lau1xz + bope(k,q)*( la(i,j,q)*i12*
@@ -1340,6 +1405,7 @@ c No centered cross terms in r3
             r3 = r3 + strx(i)*lau1xz
 
 *** (la*v_y)_z: NOT CENTERED
+*** 74 ops, tot=1235
             lau2yz=0
             do q=1,8
               lau2yz = lau2yz + bope(k,q)*( la(i,j,q)*i12*
@@ -1347,7 +1413,7 @@ c No centered cross terms in r3
      +              -8*u(2,i,j-1,q) + u(2,i,j-2,q)) )
             enddo
             r3 = r3 + stry(j)*lau2yz
-
+*** 9 ops, tot=1244
             uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
             uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
             uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3

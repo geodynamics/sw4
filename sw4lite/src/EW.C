@@ -64,20 +64,65 @@ extern "C" {
 				float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
 				float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
 				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+    void F77_FUNC(addsgd4c,ADDSGD4C) ( float_sw4* dt, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um, 
+				       float_sw4* Rho, float_sw4* sg_dc_x, float_sw4* sg_dc_y,
+				       float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* mJ,
+				       float_sw4* sg_corner_x, float_sw4* sg_corner_y,
+				       int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, 
+				       int* klast, float_sw4* damping_coefficient );
+
    void F77_FUNC(addsgd6,ADDSGD6) (float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
 				float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
 				float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
 				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+
+    void F77_FUNC(addsgd6c,ADDSGD6C) ( float_sw4* dt, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um, 
+				       float_sw4* Rho, float_sw4* sg_dc_x, float_sw4* sg_dc_y,
+				       float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* mJ,
+				       float_sw4* sg_corner_x, float_sw4* sg_corner_y,
+				       int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, 
+				       int* klast, float_sw4* damping_coefficient );
+
+   void F77_FUNC(gridinfo,GRIDINFO) (int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
+				     float_sw4* met, float_sw4* jac, float_sw4* minj, float_sw4* maxj );
+   void F77_FUNC(metric,METRIC)( int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
+				 float_sw4* x, float_sw4* y, float_sw4* z, float_sw4* met, float_sw4* jac, int* ierr );
+   void F77_FUNC(metricexgh,METRICEXGH)( int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
+					 int* nx, int* ny, int* nz, float_sw4* x, float_sw4* y, float_sw4* z, float_sw4* met,
+					 float_sw4* jac, int* order, float_sw4* sb, float_sw4* zmax, float_sw4* amp, 
+					 float_sw4* xc, float_sw4* yc, float_sw4* xl, float_sw4* yl );
+   void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
+						 float_sw4* u, float_sw4* mu, float_sw4* lambda, float_sw4* met, float_sw4* jac,
+						 float_sw4* lu, int* onesided, float_sw4* acof, float_sw4* bope, float_sw4* ghcof,
+						 float_sw4* strx, float_sw4* stry, char* op );
+   void F77_FUNC(freesurfcurvisg,FREESURFCURVISG)( int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
+						   int *nz, int* side, float_sw4* u, float_sw4* mu, float_sw4* lambda, float_sw4* met,
+						   float_sw4* s, float_sw4* forcing, float_sw4* strx, float_sw4* stry );
 }
 #else
+extern "C" 
+{
+   void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
+}
 void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
 	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
+
 void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
 	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
+
+void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
+		     float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* acof,
+		     float_sw4* bope, float_sw4* ghcof, float_sw4* a_strx, float_sw4* a_stry );
+
+void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		 float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
+		 float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* acof,
+		 float_sw4* bope, float_sw4* ghcof, float_sw4* a_strx, float_sw4* a_stry );
 #endif
 
 EW::EW( const string& filename ) :
@@ -449,6 +494,202 @@ void EW::processTime(char* buffer)
    m_utc0[4] = utctime->tm_min;
    m_utc0[5] = utctime->tm_sec;
    m_utc0[6] = 0; //milliseconds not given by 'time', not needed here.
+}
+
+//-----------------------------------------------------------------------
+void EW::processTopography(char * buffer )
+{
+   //
+   // Note, m_topoFileName, m_topoExtFileName, m_maxIter, m_EFileResolution, m_QueryTyp could
+   // have been declared local variables in EW::parseInputFile, and transfered as
+   // procedure parameters to smoothTopography and getEfileInfo
+   //
+    char* token = strtok(buffer, " \t");
+    CHECK_INPUT(strcmp("topography", token) == 0, 
+ 	    "ERROR: not a topography line...: " << token);
+    string topoFile="surf.tp", style, fileName;
+    bool needFileName=false, gotFileName=false;
+
+    m_zetaBreak=0.95;
+    m_grid_interpolation_order = 4;
+    m_use_analytical_metric = false;
+
+    token = strtok(NULL, " \t");
+
+    while (token != NULL)
+    {
+      // while there are still tokens in the string 
+       if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+	  break;
+       if (startswith("zmax=", token))
+       {
+	  token += 5; // skip logfile=
+	  m_topo_zmax = atof(token);
+       }
+// //                       1234567890
+       else if (startswith("order=", token))
+       {
+	  token += 6; // skip logfile=
+	  m_grid_interpolation_order = atoi(token);
+	  if (m_grid_interpolation_order < 2 || m_grid_interpolation_order > 7)
+	  {
+	     if (m_myrank == 0)
+		cout << "order needs to be 2,3,4,5,6,or 7 not: " << m_grid_interpolation_order << endl;
+	     MPI_Abort(MPI_COMM_WORLD, 1);
+	  }
+       
+       }
+//                          123456789
+       else if( startswith("zetabreak=", token) ) // developer option: not documented in user's guide
+       {
+	  token += 10;
+	  m_zetaBreak = atof(token);
+	  CHECK_INPUT( m_zetaBreak > 0 && m_zetaBreak <= 1, "Error: zetabreak must be in [0,1], not " << m_zetaBreak);
+       }
+       //       else if (startswith("smooth=", token))
+       //       {
+       //	  token += 7; // skip smooth=
+       //	  m_maxIter = atoi(token);
+       //	  if (m_maxIter < 0 || m_maxIter > 1000)
+       //	  {
+       //	     if (m_myRank == 0)
+       //		cout << "Number of smoothing iterations needs to be >=0 and <=1000, not: "<< m_maxIter << endl;
+       //	     MPI_Abort(MPI_COMM_WORLD, 1);
+       //	  }
+       //       }
+       else if( startswith("input=", token ) )
+       {
+	  token += 6;
+	  style = token;
+// new keyword: geographic, but keeping grid for backwards compatibility with WPP
+//	  if (strcmp("grid", token) == 0 || strcmp("geographic", token) == 0)
+//	  {
+//	     m_topoInputStyle=GridFile;
+//	     m_topography_exists=true;
+//	     needFileName=true;
+//	  }
+//	  else if (strcmp("cartesian", token) == 0)
+//	  {
+//	     m_topoInputStyle=CartesianGrid;
+//	     m_topography_exists=true;
+//	     needFileName=true;
+//	  }
+//	  else if (strcmp("efile", token) == 0)
+//	  {
+//	     m_topoInputStyle=Efile;
+//	     m_topography_exists=true;
+//	     needFileName=true; // we require the file name to be given on the topography command line
+//	  }
+//	  else if (strcmp("rfile", token) == 0)
+//	  {
+//	     m_topoInputStyle=Rfile;
+//	     m_topography_exists=true;
+//	     needFileName=true; // we require the file name to be given on the topography command line
+//	  }
+//	  else if (strcmp("image", token) == 0)
+//	  {
+//	     m_topoInputStyle=TopoImage;
+//	     m_topography_exists=true;
+//	     needFileName=true; // we require the file name to be given on the topography command line
+//	  }
+	  if( strcmp("gaussian", token) == 0)
+	     //	  else if (strcmp("gaussian", token) == 0)
+	  {
+	     m_topoInputStyle=GaussianHill;
+	     m_topography_exists=true;
+	  }
+	  else
+	  {
+	     badOption("topography> input", token);
+	  }
+       }
+       else if( startswith("file=", token ) )
+       {
+	  token += 5;
+	  m_topoFileName = token;
+	  gotFileName=true;
+	//        if (m_myRank==0)
+	// 	 cout << "read topo file name=" << m_topoFileName <<endl;
+       }
+       //#ifdef ENABLE_ETREE
+       //       else if( startswith("etree=", token ) )
+       //       {
+       //	  token += 6;
+       //	  m_topoFileName = token;
+       //	  m_topoInputStyle=Efile;
+       //	  m_topography_exists=true;
+       //	  gotFileName=true;
+       //       }
+       //      else if (startswith("xetree=", token))
+       //      {
+       //	 token += 7; // skip xetree=
+       //	 m_topoExtFileName = token;
+       //      }
+       //#endif
+//                        12345678901
+//       else if( startswith("resolution=", token ) )
+//       {
+//	  token += 11;
+//	  m_EFileResolution = atof(token);
+//	  CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
+//       }
+//                        123456789012
+       else if( startswith("gaussianAmp=", token ) )
+       {
+	  token += 12;
+	  m_GaussianAmp = atof(token);
+       }
+//                        123456789012
+       else if( startswith("gaussianXc=", token ) )
+       {
+	  token += 11;
+	  m_GaussianXc = atof(token);
+       }
+//                        123456789012
+       else if( startswith("gaussianYc=", token ) )
+       {
+	  token += 11;
+	  m_GaussianYc = atof(token);
+       }
+// //                        123456789012
+       else if( startswith("gaussianLx=", token ) )
+       {
+	  token += 11;
+	  m_GaussianLx = atof(token);
+       }
+//                        123456789012
+       else if( startswith("gaussianLy=", token ) )
+       {
+	  token += 11;
+	  m_GaussianLy = atof(token);
+       }
+       else if( startswith("analyticalMetric=", token ) )
+       {
+	  token += 17;
+	  m_use_analytical_metric = strcmp(token,"1")==0 ||
+	     strcmp(token,"true")==0 || strcmp(token,"yes")==0;
+       }
+       else
+       {
+	  badOption("topography", token);
+       }
+       token = strtok(NULL, " \t");
+    }
+    if (needFileName)
+       CHECK_INPUT(gotFileName, 
+		   "ERROR: no topography file name specified...: " << token);
+
+    CHECK_INPUT(m_topoInputStyle == GaussianHill,
+		"Topography style " << m_topoInputStyle << " not yet implemented " << endl);
+
+    if( m_topoInputStyle != GaussianHill && m_use_analytical_metric )
+    {
+       m_use_analytical_metric = false;
+       if( m_myrank == 0 )
+	  cout << "Analytical metric only defined for Gaussian Hill topography" <<
+	     " topography analyticalMetric option will be ignored " << endl;
+    }
 }
 
 //-----------------------------------------------------------------------
@@ -1598,13 +1839,13 @@ void EW::defineDimensionsGXY( )
  // Note, this is oposite to the z-coordinate which is largest at the bottom and smallest at the top.
    if( m_nz_base > 1 && !m_topography_exists )
    {
-      // Flat elastic
+      // Flat
       mNumberOfCartesianGrids = mNumberOfGrids = 1;
       m_is_curvilinear.push_back(false);
    }
    else if( m_nz_base > 1 && m_topography_exists )
    {
-      // Curvilinear elastic
+      // Curvilinear
       mNumberOfGrids = 2;
       mNumberOfCartesianGrids = 1;
       m_is_curvilinear.push_back(false);
@@ -1734,12 +1975,12 @@ void EW::defineDimensionsZ()
 
    // Compute average elevation 
    float_sw4 topo_avg=0;
-   //   if( m_topography_exists )
-   //   {
-   //      float_sw4b tzmin, tzmax;
-   //      compute_minmax_topography(tzmin,tzmax);  // note: tzmin,tzmax depth
-   //      topo_avg = 0.5*(tzmin+tzmax);
-   //   }
+   if( m_topography_exists )
+   {
+      float_sw4 tzmin, tzmax;
+      compute_minmax_topography(tzmin,tzmax);
+      topo_avg = 0.5*(tzmin+tzmax);
+   }
 
    m_zmin.resize(mNumberOfGrids);
    m_global_nz.resize(mNumberOfGrids);
@@ -1747,13 +1988,13 @@ void EW::defineDimensionsZ()
 // Adjust m_global_zmin and m_global_zmax, if necessary.
    if( m_nz_base > 1 && !m_topography_exists )
    {
-      // Flat elastic
+      // Flat 
       m_global_nz[0] = m_nz_base;
       m_zmin[0] = 0;
    }
    else if( m_nz_base > 1 && m_topography_exists )
    {
-      // Curvilinear elastic
+      // Curvilinear 
       int nz = static_cast<int>(1 + round((m_global_zmax-m_topo_zmax)/m_h_base));
       m_global_zmax = m_topo_zmax+(nz-1)*m_h_base;
       m_global_nz[0] = nz;
@@ -1783,6 +2024,24 @@ void EW::defineDimensionsZ()
 }
 
 //-----------------------------------------------------------------------
+void EW::allocateTopoArrays()
+{
+   if( m_topography_exists )
+   {
+      int ifirst = m_iStart[mNumberOfGrids-1];
+      int ilast  = m_iEnd[mNumberOfGrids-1];
+      int jfirst = m_jStart[mNumberOfGrids-1];
+      int jlast  = m_jEnd[mNumberOfGrids-1];
+// Two versions of the topography:
+      mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly 
+// smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
+      m_ext_ghost_points = 2;
+      mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
+			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+   }
+}
+
+//-----------------------------------------------------------------------
 void EW::allocateArrays()
 {
    for( int g=0 ; g < mNumberOfGrids ; g++ )
@@ -1802,15 +2061,6 @@ void EW::allocateArrays()
       mRho[g].set_to_minusOne();
       mLambda[g].set_to_minusOne();
 
-    // Grid and metric
-      //      mJ[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast); // Used also on Cartesian grids.
-      //      if( m_is_curvilinear[g] )
-      //      {
-      //	 mX[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-      //	 mY[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-      //	 mZ[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-      //	 mMetric[g].define(4,ifirst,ilast,jfirst,jlast,kfirst,klast);
-      //      }
     // Supergrid arrays
       m_sg_dc_x[g]     = new float_sw4[ilast-ifirst+1];
       m_sg_dc_y[g]     = new float_sw4[jlast-jfirst+1];
@@ -1836,6 +2086,21 @@ void EW::allocateArrays()
       //	       m_sg_corner_y[g][j-jfirst] =0;
       //	       m_sg_corner_z[g][k-kfirst] =0;
       //	    }
+      if( m_topography_exists && g == mNumberOfGrids-1 )
+      {
+    // Grid and metric
+	 mJ.define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mX.define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mY.define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mZ.define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 mMetric.define(4,ifirst,ilast,jfirst,jlast,kfirst,klast);
+     // Initialization, to touch memory in case OpenMP is in use
+	 mJ.set_to_zero();
+	 mX.set_to_zero();
+	 mY.set_to_zero();
+	 mZ.set_to_zero();
+	 mMetric.set_to_zero();
+      }
    }
 }
 
@@ -1889,6 +2154,10 @@ bool EW::parseInputFile( const string& filename )
       // Need process developer before setupMPICommunication, because of array ordering m_corder
       else if(startswith("developer", buffer))
 	 processDeveloper(buffer);
+      else if (startswith("topography", buffer))
+	 processTopography(buffer);
+      else if( startswith("fileio",buffer))
+	 processFileIO(buffer);
    }   
    if (!foundGrid)
       if (m_myrank == 0)
@@ -1897,14 +2166,21 @@ bool EW::parseInputFile( const string& filename )
 	 return false; 
       }
    defineDimensionsGXY();
-
-   // when topography supported, read and process it here
-   m_topography_exists = false;
-
+   if( m_topography_exists )
+   {
+      allocateTopoArrays();
+      if( m_topoInputStyle == EW::GaussianHill )
+	 buildGaussianHillTopography(m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc);
+   }
    defineDimensionsZ();
+   setupMPICommunications();
    allocateArrays();
 
-   setupMPICommunications();
+   if( m_topography_exists )
+   {
+      generate_grid();
+      setup_metric();
+   }
 
 // output grid size info
    printGridSizes();
@@ -1922,6 +2198,8 @@ bool EW::parseInputFile( const string& filename )
 	 if (startswith("#", buffer) || 
 	     startswith("grid", buffer) ||
              startswith("developer", buffer) ||
+             startswith("topography", buffer) ||
+             startswith("fileio", buffer) ||
              startswith("\n", buffer) ||
 	     startswith("\r", buffer) )
 	 {
@@ -1936,8 +2214,6 @@ bool EW::parseInputFile( const string& filename )
 	    processTestPointSource(buffer);
 	 //	 else if(startswith("developer", buffer))
 	 //	    processDeveloper(buffer);
-	 else if( startswith("fileio",buffer))
-	    processFileIO(buffer);
 	 else if( startswith("checkpoint",buffer))
 	    processCheckPoint(buffer);
 	 else if( startswith("restart",buffer))
@@ -2466,7 +2742,7 @@ void EW::setupMPICommunications()
 // Define MPI datatypes for communication across processor boundaries
    m_send_type1.resize(2*mNumberOfGrids);
    m_send_type3.resize(2*mNumberOfGrids);
-   //   m_send_type4.resize(2*mNumberOfGrids);
+   m_send_type4.resize(2*mNumberOfGrids);
    //   m_send_type21.resize(2*mNumberOfGrids);
    for( int g= 0 ; g < mNumberOfGrids ; g++ )
    {
@@ -2482,14 +2758,16 @@ void EW::setupMPICommunications()
       {
 	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type3[2*g] );
 	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
+	 MPI_Type_vector( 4*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type4[2*g] );
+	 MPI_Type_vector( 4*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
       }
       else
       {
 	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, m_mpifloat, &m_send_type3[2*g] );
 	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
+	 MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, m_mpifloat, &m_send_type4[2*g] );
+	 MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
       }
-      //      MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, MPI_DOUBLE, &m_send_type4[2*g] );
-      //      MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, MPI_DOUBLE, &m_send_type4[2*g+1] );
 
       //      MPI_Type_vector( nj*nk, 21*m_ppadding, 21*ni, MPI_DOUBLE, &m_send_type21[2*g] );
       //      MPI_Type_vector( nk, 21*m_ppadding*ni, 21*ni*nj, MPI_DOUBLE, &m_send_type21[2*g+1] );
@@ -2500,8 +2778,8 @@ void EW::setupMPICommunications()
       MPI_Type_commit( &m_send_type3[2*g] ); 
       MPI_Type_commit( &m_send_type3[2*g+1] ); 
 
-      //      MPI_Type_commit( &m_send_type4[2*g] ); 
-      //      MPI_Type_commit( &m_send_type4[2*g+1] ); 
+      MPI_Type_commit( &m_send_type4[2*g] ); 
+      MPI_Type_commit( &m_send_type4[2*g+1] ); 
 
       //      MPI_Type_commit( &m_send_type21[2*g] ); 
       //      MPI_Type_commit( &m_send_type21[2*g+1] ); 
@@ -2665,12 +2943,36 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 						   m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
 #endif	
    }
+   if( m_topography_exists )
+   {
+      int g=mNumberOfGrids-1;
+      char op = '=';    // Assign Uacc := L(u)
+#ifdef SW4_CROUTINES
+      if( m_corder )
+         rhs4sgcurv_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			 a_U[g].c_ptr(), a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mMetric.c_ptr(),
+			 mJ.c_ptr(), a_Uacc[g].c_ptr(), m_onesided[g], m_acof, m_bope, m_ghcof,
+			 m_sg_str_x[g], m_sg_str_y[g] );
+      else
+         rhs4sgcurv( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		     a_U[g].c_ptr(), a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mMetric.c_ptr(),
+		     mJ.c_ptr(), a_Uacc[g].c_ptr(), m_onesided[g], m_acof, m_bope, m_ghcof,
+		     m_sg_str_x[g], m_sg_str_y[g] );
+#else      
+      F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
+					      &m_kStart[g], &m_kEnd[g], a_U[g].c_ptr(), a_Mu[g].c_ptr(),
+					      a_Lambda[g].c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), a_Uacc[g].c_ptr(),
+					      m_onesided[g], m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
+					      &op );
+#endif
+   }
 }
 
 //-----------------------------------------------------------------------
 void EW::communicate_array( Sarray& u, int grid )
 {
-   REQUIRE2( u.m_nc == 3 || u.m_nc == 1, "Communicate array, only implemented for one- and three-component arrays"
+   REQUIRE2( u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
+	     "Communicate array, only implemented for nc=1,3, and 4 "
 	     << " nc = " << u.m_nc );
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
    MPI_Status status;
@@ -2714,6 +3016,27 @@ void EW::communicate_array( Sarray& u, int grid )
 		    m_cartesian_communicator, &status );
       MPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, m_send_type3[2*grid+1], m_neighbor[2], ytag2,
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type3[2*grid+1], m_neighbor[3], ytag2,
+		    m_cartesian_communicator, &status );
+   }
+   else if( u.m_nc == 4 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, m_send_type4[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, m_send_type4[2*grid], m_neighbor[0], xtag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, m_send_type4[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, m_send_type4[2*grid], m_neighbor[1], xtag2,
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, m_send_type4[2*grid+1], m_neighbor[2], ytag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, m_send_type4[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag2,
 		    m_cartesian_communicator, &status );
    }
 }
@@ -2876,15 +3199,59 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 				    a_BCForcing[g][3], a_BCForcing[g][4], a_BCForcing[g][5],
 				    &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
 #endif
-      //      int side;
-      //       if( topo == 1 && m_bcType[g][4] == bStressFree )
-      //       {
-      //	  side = 5;
-      //          F77_FUNC(freesurfcurvisg,FREESURFCURVISG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-      //						    &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
-      //						    m_sbop, bforce_side4_ptr, m_sg_str_x[g],
-      //						    m_sg_str_y[g] );
-      //       }
+      if( m_topography_exists && g == mNumberOfGrids-1 && m_bcType[g][4] == bStressFree )
+      {
+	 int side = 5;
+#ifdef SW4_CROUTINES
+	 if( m_corder )
+	    freesurfcurvisg_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g], 
+				 m_global_nz[g], side, a_U[g].c_ptr(), a_Mu[g].c_ptr(),
+				 a_Lambda[g].c_ptr(), mMetric.c_ptr(), m_sbop,
+			         a_BCForcing[g][4], m_sg_str_x[g], m_sg_str_y[g] );
+	 else
+	    freesurfcurvisg( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g], 
+			     m_global_nz[g], side, a_U[g].c_ptr(), a_Mu[g].c_ptr(),
+			     a_Lambda[g].c_ptr(), mMetric.c_ptr(), m_sbop,
+			     a_BCForcing[g][4], m_sg_str_x[g], m_sg_str_y[g] );
+#else
+	 F77_FUNC(freesurfcurvisg,FREESURFCURVISG)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
+						    &m_kStart[g], &m_kEnd[g], &m_global_nz[g], &side,
+						    a_U[g].c_ptr(), a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(),
+						    mMetric.c_ptr(), m_sbop, a_BCForcing[g][4], m_sg_str_x[g], m_sg_str_y[g] );
+#endif
+      }
+
+   }
+   enforceCartTopo( a_U );
+}
+
+//-----------------------------------------------------------------------
+void EW::enforceCartTopo( vector<Sarray>& a_U )
+{
+// interface between curvilinear and top Cartesian grid
+   if (m_topography_exists)
+   {
+      int nc = 3;
+      int g = mNumberOfCartesianGrids-1;
+      int gc = mNumberOfGrids-1;
+      int q, i, j;
+// inject solution values between lower boundary of gc and upper boundary of g
+      for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	 for( i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+	 {
+// assign ghost points in the Cartesian grid
+	    for (q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	    {
+	       for( int c = 1; c <= nc ; c++ )
+		  a_U[g](c,i,j,m_kStart[g] + q) = a_U[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+	    }
+// assign ghost points in the Curvilinear grid
+	    for (q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	    {
+	       for( int c = 1; c <= nc ; c++ )
+		  a_U[gc](c,i,j,m_kEnd[gc]-q) = a_U[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
+	    }
+	 }
    }
 }
 
@@ -2892,7 +3259,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			     vector<Sarray> & a_Um, vector<Sarray> & a_Rho )
 {
-   for(int g=0 ; g<mNumberOfGrids; g++ )
+   for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
    {
       if( m_sg_damping_order == 4 )
       {
@@ -2940,6 +3307,56 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 				     &m_kStart[g], &m_kEnd[g], &m_supergrid_damping_coefficient );
 #endif
       }
+   }
+   if( m_topography_exists )
+   {
+      int g=mNumberOfGrids-1;
+      if( m_sg_damping_order == 4 )
+      {
+#ifdef SW4_CROUTINES	 
+	 if( m_corder )
+	    addsgd4cfort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+				 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+				 mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				 m_supergrid_damping_coefficient );
+	 else
+	    addsgd4cfort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			  a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+			  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], 
+			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
+#else
+	 F77_FUNC(addsgd4c,ADDSGD4C) ( &mDt, a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), 
+				     a_Rho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], 
+				       m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				      &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
+				       &m_kStart[g], &m_kEnd[g], &m_supergrid_damping_coefficient );
+#endif
+      }
+      else if(  m_sg_damping_order == 6 )
+      {
+#ifdef SW4_CROUTINES	 
+	 if( m_corder )
+	    addsgd6cfort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+				 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+				 mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				 m_supergrid_damping_coefficient );
+	 else
+	    addsgd6cfort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+				 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+				 mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				 m_supergrid_damping_coefficient );
+#else
+	 F77_FUNC(addsgd6c,ADDSGD6C) ( &mDt, a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), 
+				       a_Rho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], 
+				       m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				       &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
+				       &m_kStart[g], &m_kEnd[g], &m_supergrid_damping_coefficient );
+#endif
+      }
+
    }
 }
 
@@ -4367,6 +4784,73 @@ void EW::computeDT()
       float_sw4 ieigmax = 1/sqrt(eigmax);
       dtloc = dtloc < mCFL*mGridSize[g]*ieigmax ? dtloc : mCFL*mGridSize[g]*ieigmax;
    }
+   if( m_topography_exists )
+   {
+#define SQR(x) (x)*(x)
+// Curvilinear grid
+      float_sw4 dtCurv;
+      int g = mNumberOfGrids-1;
+      float_sw4 Amat[6], la, mu, la2mu;
+      int N=3, LDZ=1, INFO;
+      char JOBZ='N', UPLO='L';
+      float_sw4 W[3], Z[1], WORK[9];
+      float_sw4 eigmax = -1;
+// do consider ghost points (especially the ghost line above the topography might be important)
+      for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
+	 for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
+	    for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
+	    {
+	       la = mLambda[g](i,j,k);
+	       mu = mMu[g](i,j,k);
+	       //	       for( int a = 0 ; a < m_number_mechanisms ; a++ )
+	       //	       {
+	       //		  la += mLambdaVE[g][a](i,j,k);
+	       //		  mu += mMuVE[g][a](i,j,k);
+	       //	       }
+	       la2mu = la + 2.*mu;
+	       float_sw4 jinv = 1/mJ(i,j,k);
+// A11
+	       Amat[0] = -4*(SQR(mMetric(1,i,j,k))*la2mu + SQR(mMetric(1,i,j,k))*mu + 
+			 SQR(mMetric(2,i,j,k))*la2mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*mu)*jinv;
+// A21 = A12
+	       Amat[1] = -4.*mMetric(2,i,j,k)*mMetric(3,i,j,k)*(mu+la)*jinv;
+// A31 = A13	   
+	       Amat[2] = -4.*mMetric(2,i,j,k)*mMetric(4,i,j,k)*(mu+la)*jinv;
+// A22	   
+	       Amat[3] = -4.*(SQR(mMetric(1,i,j,k))*mu + SQR(mMetric(1,i,j,k))*la2mu +
+		        + SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*la2mu + SQR(mMetric(4,i,j,k))*mu)*jinv;
+// A32 = A23
+	       Amat[4] = -4.*mMetric(3,i,j,k)*mMetric(4,i,j,k)*(mu+la)*jinv;
+// A33
+	       Amat[5] = -4.*(SQR(mMetric(1,i,j,k))*mu + SQR(mMetric(1,i,j,k))*mu
+			+ SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*la2mu)*jinv;
+// calculate eigenvalues of symmetric matrix
+	       F77_FUNC(dspev,DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
+	       if (INFO != 0)
+	       {
+		  printf("ERROR: computeDT: dspev returned INFO = %i for grid point (%i, %i, %i)\n", INFO, i, j, k);
+		  printf("lambda = %e, mu = %e\n", la, mu);
+		  printf("Jacobian = %15.7g \n",mJ(i,j,k));
+		  printf("Matrix = \n");
+		  printf(" %15.7g  %15.7g %15.7g \n",Amat[0],Amat[1],Amat[2]);
+		  printf(" %15.7g  %15.7g %15.7g \n",Amat[1],Amat[3],Amat[4]);
+		  printf(" %15.7g  %15.7g %15.7g \n",Amat[2],Amat[4],Amat[5]);
+		  MPI_Abort(MPI_COMM_WORLD, 1);
+	       }
+// eigenvalues in ascending order: W[0] < W[1] < W[2]
+	       if (W[0] >= 0.)
+	       {
+		  printf("ERROR: computeDT: determining eigenvalue is non-negative; W[0] = %e at curvilinear grid point (%i, %i, %i)\n", W[0], i, j, k);
+		  MPI_Abort(MPI_COMM_WORLD, 1);
+	       }
+	       float_sw4 loceig = (-W[0])/(4.*mRho[g](i,j,k));
+	       eigmax = loceig > eigmax ? loceig:eigmax;
+	    }
+      float_sw4 ieigmax = 1/sqrt(eigmax);
+      dtCurv = mCFL*ieigmax;
+      dtloc = dtloc<dtCurv ? dtloc: dtCurv;
+#undef SQR
+   } // end if topographyExists()
    mDt = dtloc;
 // compute the global minima
    MPI_Allreduce( &dtloc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
@@ -4767,8 +5251,22 @@ void EW::getGlobalBoundingBox(float_sw4 bbox[6])
 //-----------------------------------------------------------------------
 bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth )
 {
-   depth = z;
-   return true;
+   if( !m_topography_exists )
+   {
+      depth = z;
+      return true;
+   }
+   else
+   {
+      float_sw4 ztopo=0;
+      if( find_topo_zcoord_owner(x,y,ztopo) )
+      {
+	 depth = z-ztopo;
+	 return true;
+      }
+      else
+	 return false;
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -4879,6 +5377,34 @@ void EW::gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const
    wgh[6] = 1.0/60*ai + 1.0/180*ai*ai - 1.0/48*ai*ai*ai + 167.0/144*ai*ai*ai*ai -
       1537.0/720*ai*ai*ai*ai*ai- 25.0/144*ai*ai*ai*ai*ai*ai - 7*pol;
    wgh[7] = -1.0/6*ai*ai*ai*ai + 11.0/36*ai*ai*ai*ai*ai + 1.0/40*ai*ai*ai*ai*ai*ai + pol;
+}
+
+//-----------------------------------------------------------------------
+void EW::grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, float_sw4& x,
+		       float_sw4& y, float_sw4& z )
+{
+   int g=mNumberOfGrids-1;
+   float_sw4 h=mGridSize[g];
+   x = (q-1)*h;
+   y = (r-1)*h;
+   float_sw4 ztopo;
+   if( interpolate_topography(q,r,ztopo,true) )
+   {
+      int nz = m_global_nz[g];
+      float_sw4 izb = 1.0/(m_zetaBreak*(nz-1));
+      float_sw4 sa  = (s-1)*izb;
+      float_sw4 omsm = (1-sa);
+      for( int l=2 ; l <= m_grid_interpolation_order ; l++ )
+	 omsm *= (1-sa);
+      if( sa >= 1 )
+	 z = m_topo_zmax - (nz-s)*h;
+      else
+	 z = m_topo_zmax - (nz-s)*h - omsm*(m_topo_zmax-(nz-1)*h-ztopo);
+   }
+   else
+      z = -1e38;
+   //   double zloc = z;
+   //   MPI_Allreduce( &zloc, &z, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
 }
 
 //-----------------------------------------------------------------------
@@ -5242,4 +5768,291 @@ void EW::default_bcs( )
    for( int side=0 ; side < 6 ; side++ )
       mbcGlobalType[side] = bSuperGrid;
    mbcGlobalType[4] = bStressFree; // low-z is normally free surface
+}
+
+//-----------------------------------------------------------------------
+void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0)
+{
+   if (mVerbose >= 1 && (m_myrank == 0 ) )
+    cout << "***inside buildGaussianHillTopography***"<< endl;
+
+#define SQR(x) (x)*(x)
+  int topLevel = mNumberOfGrids-1;
+
+  float_sw4 x, y;
+
+// copy data
+  m_analytical_topo = true;
+//  m_analytical_topo = false;
+  m_GaussianAmp = amp;
+  m_GaussianLx = Lx;
+  m_GaussianLy = Ly;
+  m_GaussianXc = x0;
+  m_GaussianYc = y0;
+
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+    {
+      x = (i-1)*mGridSize[topLevel];
+      y = (j-1)*mGridSize[topLevel];
+// positive topography  is up (negative z)
+      mTopo(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
+			               -SQR((y-m_GaussianYc)/m_GaussianLy));
+    }
+
+  for (int i = mTopoGridExt.m_ib ; i <= mTopoGridExt.m_ie ; ++i)
+     for (int j = mTopoGridExt.m_jb ; j <= mTopoGridExt.m_je; ++j)
+     {
+	x = (i-1)*mGridSize[topLevel];
+	y = (j-1)*mGridSize[topLevel];
+// positive topography  is up (negative z)
+	mTopoGridExt(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
+						-SQR((y-m_GaussianYc)/m_GaussianLy)); 
+     }
+#undef SQR
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_minmax_topography( float_sw4& topo_zmin, float_sw4& topo_zmax )
+{
+   if( m_topography_exists )
+   {
+      int g = mNumberOfGrids-1;
+
+      int i=m_iStart[g], j=m_jEnd[g];
+// The z-coordinate points downwards, so positive topography (above sea level)
+// gets negative z-values
+      float_sw4 zMinLocal, zMaxLocal;
+      zMaxLocal = zMinLocal = -mTopoGridExt(i,j,1);
+// tmp
+      int i_min_loc=i, i_max_loc=i;
+      int j_min_loc=j, j_max_loc=j;
+// end tmp
+      int imin = mTopoGridExt.m_ib;
+      int imax = mTopoGridExt.m_ie;
+      int jmin = mTopoGridExt.m_jb;
+      int jmax = mTopoGridExt.m_je;
+      for (i= imin ; i<=imax ; i++)
+	 for (j=jmin; j<=jmax ; j++)
+	 {
+	    if (-mTopoGridExt(i,j,1) > zMaxLocal)
+	    {
+	       zMaxLocal = -mTopoGridExt(i,j,1);
+	       i_max_loc = i;
+	       j_max_loc = j;
+	    }
+	    if (-mTopoGridExt(i,j,1) < zMinLocal)
+	    {
+	       zMinLocal = -mTopoGridExt(i,j,1);
+	       i_min_loc = i;
+	       j_min_loc = j;
+	    }
+	 }
+      MPI_Allreduce( &zMinLocal, &topo_zmin, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+      MPI_Allreduce( &zMaxLocal, &topo_zmax, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+   }
+   else
+   {
+      topo_zmin = topo_zmax = 0;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::generate_grid()
+{
+   // Generate grid on domain: topography <= z <= zmax, 
+   // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
+   // spacing h. 
+  if (!m_topography_exists ) return;
+  
+//  m_grid_interpolation_order = a_order;
+
+  if (mVerbose >= 1 && (m_myrank==0) )
+     cout << "***inside generate_grid***"<< endl;
+
+// get the size from the top Cartesian grid
+  int g = mNumberOfCartesianGrids-1;
+  int ifirst = m_iStart[g];
+  int ilast  = m_iEnd[g];
+  int jfirst = m_jStart[g];
+  int jlast  = m_jEnd[g];
+
+  float_sw4 h = mGridSize[g]; // grid size must agree with top cartesian grid
+  float_sw4 zMaxCart = m_zmin[g]; // bottom z-level for curvilinear grid
+
+  int i, j;
+  int gTop = mNumberOfGrids-1;
+  int Nz = m_kEnd[gTop] - m_ghost_points;
+
+  if(mVerbose > 4 &&  (m_myrank == 0 ) )
+  {
+    printf("generate_grid: Number of grid points in curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
+	Nz, m_kStart[gTop], m_kEnd[gTop]);
+  }
+
+// generate the grid by calling the curvilinear mapping function
+  float_sw4 X0, Y0, Z0;
+  int k;
+  for (k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
+    for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+      for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+      {
+	grid_mapping((float_sw4) i, (float_sw4) j, (float_sw4) k, X0, Y0, Z0);
+	mX(i,j,k) = X0;
+	mY(i,j,k) = Y0;
+	mZ(i,j,k) = Z0;
+      }
+  communicate_array( mZ, gTop );
+
+// calculate min and max((mZ(i,j,k)-mZ(i,j,k-1))/h) for k=Nz
+  k = Nz;
+  float_sw4 hRatio;
+  float_sw4 mZmin = 1.0e9, mZmax=0;
+  for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+    for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+    {
+       hRatio = (mZ(i,j,k)-mZ(i,j,k-1))/mGridSize[gTop];
+	if (hRatio < mZmin) mZmin = hRatio;
+	if (hRatio > mZmax) mZmax = hRatio;
+    }
+  float_sw4 zMinGlobal, zMaxGlobal;
+  MPI_Allreduce( &mZmin, &zMinGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+  MPI_Allreduce( &mZmax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+  if(mVerbose > 3 &&  (m_myrank == 0) )
+  {
+    printf("Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 = %e, max ratio z - 1 = %e, top grid # = %i\n", 
+           zMinGlobal-1., zMaxGlobal-1., gTop);
+  }
+}
+
+//---------------------------------------------------------
+void EW::setup_metric()
+{
+   if (!m_topography_exists ) return;
+   if (mVerbose >= 1 && (m_myrank == 0))
+      cout << "***inside setup_metric***"<< endl;
+   int g=mNumberOfGrids-1;
+   int Bx=m_iStart[g];
+   int By=m_jStart[g];
+   int Bz=m_kStart[g];
+   int Nx=m_iEnd[g];
+   int Ny=m_jEnd[g];
+   int Nz=m_kEnd[g];
+
+   if( m_analytical_topo && m_use_analytical_metric )
+   {
+      // Gaussian hill topography, analytical expressions for metric derivatives.
+      int nxg = m_global_nx[g];
+      int nyg = m_global_ny[g];
+      int nzg = m_global_nz[g];
+      float_sw4 h= mGridSize[g];   
+      float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
+#ifdef SW4_CROUTINES
+      if( m_corder )
+	 metricexgh_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			 m_global_nz[g], mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
+			 m_grid_interpolation_order, m_zetaBreak, zmax, m_GaussianAmp, m_GaussianXc, 
+			 m_GaussianYc, m_GaussianLx, m_GaussianLy );
+      else
+	 metricexgh( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		     m_global_nz[g], mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
+		     m_grid_interpolation_order, m_zetaBreak, zmax, m_GaussianAmp, m_GaussianXc, 
+		     m_GaussianYc, m_GaussianLx, m_GaussianLy );
+#else
+      F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				       mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
+#endif      
+   }
+   else
+   {
+     int ierr=0;
+#ifdef SW4_CROUTINES
+     if( m_corder )
+	ierr = metric_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+     else
+	ierr = metric( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+#else
+     F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+			      mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+#endif
+     CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
+   }
+   communicate_array( mMetric, mNumberOfGrids-1 );
+   communicate_array( mJ, mNumberOfGrids-1 );
+
+   //   if( m_analytical_topo && !m_use_analytical_metric && mVerbose > 3 )
+   //      // Test metric derivatives if available
+   //      metric_derivatives_test( );
+
+   float_sw4 minJ, maxJ;
+#ifdef SW4_CROUTINES
+   gridinfo( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+	     mMetric.c_ptr(), mJ.c_ptr(), minJ, maxJ );
+#else   
+   F77_FUNC(gridinfo,GRIDINFO)(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
+#endif
+   float_sw4 minJglobal, maxJglobal;
+   MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+   if (mVerbose>3 && (m_myrank == 0))
+      printf("*** Jacobian of metric: minJ = %e maxJ = %e\n", minJglobal, maxJglobal);
+   //// just save the results for now... do the sanity check later
+   //   m_minJacobian= minJglobal;
+   //   m_maxJacobian= maxJglobal;
+}
+
+//-----------------------------------------------------------------------
+bool EW::find_topo_zcoord_owner( float_sw4 X, float_sw4 Y, float_sw4& Ztopo )
+{
+   bool success = true;
+   if ( m_topography_exists )
+   {
+      float_sw4 h = mGridSize[mNumberOfGrids-1];
+      float_sw4 q, r;
+      q = X/h + 1.0;
+      r = Y/h + 1.0;
+// evaluate elevation of topography on the grid
+      if (!interpolate_topography(q, r, Ztopo, true))
+      {
+	 cerr << "Unable to evaluate topography at" << " X= " << X << " Y= " << Y << endl;
+	 cerr << "Setting topography to ZERO" << endl;
+	 Ztopo = 0;
+	 success = false;
+      }
+   }
+   else
+   {
+      Ztopo = 0; // no topography
+   }
+   return success;
+}
+
+//-----------------------------------------------------------------------
+bool EW::find_topo_zcoord_all( float_sw4 X, float_sw4 Y, float_sw4& Ztopo )
+{
+   bool success = true;
+   if (m_topography_exists )
+   {
+      float_sw4 h = mGridSize[mNumberOfGrids-1];
+      float_sw4 q, r;
+      q = X/h + 1.0;
+      r = Y/h + 1.0;
+      float_sw4 Ztopoloc;
+// evaluate elevation of topography on the grid
+      if (!interpolate_topography(q, r, Ztopoloc, true))
+      {
+	 Ztopoloc = -1e38;
+      }
+      MPI_Allreduce( &Ztopoloc, &Ztopo, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+      success = Ztopo > -1e38;
+   }
+   else
+   {
+      Ztopo = 0; // no topography
+      success = true;
+   }
+   return success;
 }

@@ -134,13 +134,14 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
       return;
    }
 
+ // Only owner processor executes from here
    if( a_ew->topographyExists() && (m_grid0 == a_ew->mNumberOfGrids-1 || m_zRelativeToTopography) )
    {
 // Topography exists and point is located in the curvilinear grid, or point needs be corrected for topodepth.
 //             Need to find z-coordinate of topography to check that the station is below it.
 //             The z-coordinate of topography is also needed for topodepth correction
 // 1. Evaluate z-coordinate of topography
-      find_topo_zcoord( mX, mY, m_zTopo );
+      a_ew->find_topo_zcoord_owner( mX, mY, m_zTopo );
 // 2. If location was specified with topodepth, correct z-level  
       if (m_zRelativeToTopography)
       {
@@ -156,7 +157,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 	 return;
       }
 // 4. Recompute m_grid0 and k0 with corrected mZ
-      if( computeNearestGridPointZ( mX, mY, mZ, m_grid0, m_k0 ) )
+      if( !computeNearestGridPointZ( mX, mY, mZ, m_grid0, m_k0 ) )
       {
 	 cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= " 
 	      << mY << " mZ= " << mZ << endl;
@@ -299,32 +300,6 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
   // Move this time series to always start at 'startTime'. Perhaps this should be done elsewhere ?
    m_shift = startTime-m_t0;
    m_dt = timeStep;
-}
-
-//-----------------------------------------------------------------------
-bool TimeSeries::find_topo_zcoord( float_sw4 X, float_sw4 Y, float_sw4& Ztopo )
-{
-   float_sw4 q, r;
-   bool success = true;
-   if (m_ew->topographyExists())
-   {
-      float_sw4 h = m_ew->mGridSize[m_ew->mNumberOfGrids-1];
-      q = X/h + 1.0;
-      r = Y/h + 1.0;
-// evaluate elevation of topography on the grid
-      if (!m_ew->interpolate_topography(q, r, Ztopo, true))
-      {
-	 cerr << "Unable to evaluate topography for receiver station" << m_fileName << " mX= " << mX << " mY= " << mY << endl;
-	 cerr << "Setting topography to ZERO" << endl;
-	 Ztopo = 0;
-	 success = false;
-      }
-   }
-   else
-   {
-      Ztopo = 0; // no topography
-   }
-   return success;
 }
 
 //-----------------------------------------------------------------------

@@ -5,6 +5,24 @@ void get_data( double x, double y, double z, double& u, double& v, double& w,
 
 void fg(double x,double y,double z, double eqs[3] );
 
+void generate_ghgrid( int ib, int ie, int jb, int je, int kb, int ke,
+		      double h, double* x, double* y, double* z, double topo_zmax );
+
+void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		 float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
+		 float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* a_acof,
+		 float_sw4* a_bope, float_sw4* a_ghcof, float_sw4* a_strx, float_sw4* a_stry );
+
+void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		 float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
+		 float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* a_acof,
+		 float_sw4* a_bope, float_sw4* a_ghcof, float_sw4* a_strx, float_sw4* a_stry );
+
+int metric( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+	    float_sw4* x, float_sw4* y, float_sw4* z, float_sw4* met, float_sw4* jac );
+int metric_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+	    float_sw4* x, float_sw4* y, float_sw4* z, float_sw4* met, float_sw4* jac );
+
 extern "C" {
    void rhs4th3fortsgstr_( int*, int*, int*, int*, int*, int*, int*, int*,
 			   double*, double*, double*, double*, double*, double*, double*,
@@ -22,6 +40,11 @@ extern "C" {
    void varcoeffs4_( double*, double* );
    void wavepropbop_4_( double*, double*, double*, double*, double*, double*, double* );
    void bopext4th_( double*, double* );
+   void curvilinear4sg_( int*, int*, int*, int*, int*, int*, double*, double*, double*,
+			 double*, double*, double*, int*, double*, double*, double*,
+			 double*, double*, char* );
+   void metric_( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
+		 double*, int* );
 }
 
 #include <cstring>
@@ -43,6 +66,7 @@ int main( int argc, char** argv )
    int a=1;
    int onesided[6]={0,0,0,0,0,0};
    bool append=true;
+   int cartesian = 1;
 
    while( a < argc )
    {
@@ -83,6 +107,11 @@ int main( int argc, char** argv )
 	 append = false;
 	 a++;
       }
+      else if( strcmp(argv[a],"-curvilinear")== 0 )
+      {
+	 cartesian = 0;
+	 a++;
+      }
       else
       {
 	 cout << "Unknown option " << argv[a] << endl;
@@ -105,6 +134,10 @@ int main( int argc, char** argv )
    double* strx   = new double[ni];
    double* stry   = new double[nj];
    double* strz   = new double[nk];
+   double* met    = new double[ni*nj*nk*4];
+   double* metrev = new double[ni*nj*nk*4];
+   double* jac    = new double[ni*nj*nk];
+
    //   double* lucmp1 = new double[ni*nj*nk];
    //   double* lucmp2 = new double[ni*nj*nk];
    //   double* lucmp3 = new double[ni*nj*nk];
@@ -139,6 +172,7 @@ int main( int argc, char** argv )
    for( int k=0 ; k< nk ; k++ )
       strz[k] = 1;
 
+
  // SBP boundary operator definition
    double acof[384], bope[48], ghcof[6], bop[24];
    double m_iop[5], m_iop2[5], m_bop2[24], gh2, m_hnorm[4], m_sbop[5];
@@ -146,37 +180,86 @@ int main( int argc, char** argv )
    wavepropbop_4_(m_iop, m_iop2, bop, m_bop2, &gh2, m_hnorm, m_sbop );
    bopext4th_( bop, bope );
 
+   if( !cartesian )
+   {
+ // setup grid, metric mapping and jacobian
+      double* x = new double[ni*nj*nk];
+      double* y = new double[ni*nj*nk];
+      double* z = new double[ni*nj*nk];
+      generate_ghgrid( ib, ie, jb, je, kb, ke, h, x, y, z, 1.0 );
+      int ierr;
+      metric_( &ib, &ie, &jb, &je, &kb, &ke, x, y, z, met, jac, &ierr );
+      if( ierr != 0 )
+      {
+	 cout << "ERROR, metric returned ierr= " << ierr << endl;
+	 exit(-1);
+      }
+      ierr = metric_rev( ib, ie, jb, je, kb, ke, x, y, z, metrev, jac );
+      if( ierr != 0 )
+      {
+	 cout << "ERROR, metric_rev returned ierr= " << ierr << endl;
+	 exit(-1);
+      }
+   }
+
    int nkupbndry = ke-2;
 
 // Run and time C and fortran routines
    double tc[10], tf[10], tcr[10];
-   for( int s=0 ; s < 10 ; s++ )
+   int nopsint, nopsbnd;
+   if( cartesian )
    {
-      tc[s] = gettimec_();
-      rhs4sg( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
-	      lu, u, mu, lambda, h, strx, stry, strz );
+      nopsint = 666;
+      nopsbnd = 1244;
+      for( int s=0 ; s < 10 ; s++ )
+      {
+	 tc[s] = gettimec_();
+	 rhs4sg( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
+		 lu, u, mu, lambda, h, strx, stry, strz );
       //	      lu, u, mu, lambda, h, strx, stry, strz, lucmp1, lucmp2, lucmp3 );
-      tc[s] = gettimec_()-tc[s];
+	 tc[s] = gettimec_()-tc[s];
       //      for( int i=0 ; i < npts ; i++ )
       //      {
       //	 lu[3*i]=lucmp1[i];
       //	 lu[3*i+1]=lucmp2[i];
       //	 lu[3*i+2]=lucmp3[i];
       //      }
-      tcr[s] = gettimec_();
-      rhs4sg_rev( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
-	      lurev, urev, mu, lambda, h, strx, stry, strz );
-      tcr[s] = gettimec_()-tcr[s];
-      char op='=';
-      tf[s] = gettimec_();
-      rhs4th3fortsgstr_( &ib, &ie, &jb, &je, &kb, &ke, 
-		      &nkupbndry, onesided, acof, bope, ghcof,
-		      lu2, u, mu, lambda, &h, strx, stry, strz, &op );
-      tf[s] = gettimec_() - tf[s];
+	 tcr[s] = gettimec_();
+	 rhs4sg_rev( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
+		     lurev, urev, mu, lambda, h, strx, stry, strz );
+	 tcr[s] = gettimec_()-tcr[s];
+	 char op='=';
+	 tf[s] = gettimec_();
+	 rhs4th3fortsgstr_( &ib, &ie, &jb, &je, &kb, &ke, 
+			    &nkupbndry, onesided, acof, bope, ghcof,
+			    lu2, u, mu, lambda, &h, strx, stry, strz, &op );
+	 tf[s] = gettimec_() - tf[s];
+      }
    }
+   else
+   {
+      nopsint = 2126;
+      nopsbnd = 6049;
+      for( int s=0 ; s < 10 ; s++ )
+      {
+	 tc[s] = gettimec_();
+	 rhs4sgcurv( ib, ie, jb, je, kb, ke, u, mu, lambda, met, jac, lu,
+		     onesided, acof, bope, ghcof, strx, stry );
+	 tc[s] = gettimec_()-tc[s];
+	 tcr[s] = gettimec_();
+	 rhs4sgcurv_rev( ib, ie, jb, je, kb, ke, urev, mu, lambda, metrev, jac, lurev,
+		     onesided, acof, bope, ghcof, strx, stry );
+	 tcr[s] = gettimec_()-tcr[s];
+	 char op='=';
+	 tf[s] = gettimec_();
+	 curvilinear4sg_( &ib, &ie, &jb, &je, &kb, &ke, 
+		       u, mu, lambda, met, jac, lu2, onesided,
+		       acof, bope, ghcof, strx, stry, &op );
+	 tf[s] = gettimec_() - tf[s];
+      }
+  }
 
-
-// Compute approximation error and make a consistency check that both routines give the same result:
+ // Compute approximation error and make a consistency check that both routines give the same result:
    double er[3]={0,0,0};
    for( int k=nb ; k< nk-nb ; k++ )
       for( int j=nb ; j< nj-nb ; j++ )
@@ -220,12 +303,12 @@ int main( int argc, char** argv )
    travg /= 8;
    int totpts = (ni-4)*(nj-4)*(nk-4);
    double cmflop, fmflop, crflop;
-   cmflop = 666*(totpts/tcavg)/1e9;
-   crflop = 666*(totpts/travg)/1e9;
-   fmflop = 666*(totpts/tfavg)/1e9;
-   cout << " C code, average (8 last)       " << tcavg << " flop/sec = " << cmflop << " Gflops" << endl;
-   cout << " C code (rev), average (8 last) " << travg << " flop/sec = " << crflop << " Gflops" << endl;
-   cout << " Fortran code, average (8 last) " << tfavg << " flop/sec = " << fmflop << " Gflops" << endl;
+   cmflop = nopsint*(totpts/tcavg)/1e9;
+   crflop = nopsint*(totpts/travg)/1e9;
+   fmflop = nopsint*(totpts/tfavg)/1e9;
+   cout << " C code, average (8 last)       " << tcavg << " sec = " << cmflop << " Gflops" << endl;
+   cout << " C code (rev), average (8 last) " << travg << " sec = " << crflop << " Gflops" << endl;
+   cout << " Fortran code, average (8 last) " << tfavg << " sec = " << fmflop << " Gflops" << endl;
 
 // Save timing numbers to file for plotting purpose
    ofstream* utfil;
