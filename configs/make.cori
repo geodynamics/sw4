@@ -1,5 +1,5 @@
   etree = no
-  proj = no
+  proj = yes
 # cray compiler wrappers
   FC = ftn
   CXX = CC
