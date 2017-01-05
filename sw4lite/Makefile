@@ -11,7 +11,7 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc48 -lgfortran
   openmp = yes
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
-  FC = mpiifort
+  FC = mpifort
   CXX = mpicxx
   OMPOPT = -qopenmp
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
@@ -131,7 +131,7 @@ endif
 FOBJ = $(addprefix $(builddir)/,$(OBJ))
 
 
-sw4g: $(FOBJ)
+sw4lite: $(FOBJ)
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
@@ -157,6 +157,6 @@ $(builddir)/%.o:src/%.f90
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4g *.o; cd ../$(debugdir); /bin/rm -f sw4g *.o
+	cd $(optdir); /bin/rm -f sw4lite *.o; cd ../$(debugdir); /bin/rm -f sw4lite *.o
 
 
