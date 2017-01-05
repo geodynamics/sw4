@@ -15,11 +15,11 @@ export OMP_PROC_BIND=spread
 
 # quad,flat
 # C-executable
-srun -n 4 -c 64 --cpu_bind=cores numactl -m 1 ./sw4lite_c uni.in
+srun -n 4 -c 64 --cpu_bind=cores numactl -m 1 ./sw4lite_c basic.in
 # fortran executable
-#srun -n 4 -c 64 --cpu_bind=cores numactl -m 1 ./sw4lite uni.in
+#srun -n 4 -c 64 --cpu_bind=cores numactl -m 1 ./sw4lite basic.in
 
 #quad, cache
-#srun -n 4 -c 64 --cpu_bind=cores ./sw4lite_c uni.in
+#srun -n 4 -c 64 --cpu_bind=cores ./sw4lite_c basic.in
 
 
