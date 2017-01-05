@@ -168,7 +168,6 @@ c-----------------------------------------------------------------------
      *               mux2*(u(2,i-1,j,k)-u(2,i,j,k)) + 
      *               mux3*(u(2,i+1,j,k)-u(2,i,j,k)) +
      *               mux4*(u(2,i+2,j,k)-u(2,i,j,k))  )*istry
-
 *** qq derivative (v) (v-eq)
 *** 53 ops, tot=197
           cof1=(2*mu(i,j-2,k)+la(i,j-2,k))*met(1,i,j-2,k)*met(1,i,j-2,k)
@@ -191,6 +190,7 @@ c-----------------------------------------------------------------------
      *               mux2*(u(2,i,j-1,k)-u(2,i,j,k)) + 
      *               mux3*(u(2,i,j+1,k)-u(2,i,j,k)) +
      *               mux4*(u(2,i,j+2,k)-u(2,i,j,k))  )*istrx
+
 
 *** pp derivative (w) (w-eq)
 *** 43 ops, tot=240
@@ -363,6 +363,7 @@ c-----------------------------------------------------------------------
      *          c2*(u(1,i-1,j+2,k)-u(1,i-1,j-2,k)) + 
      *          c1*(u(1,i-1,j+1,k)-u(1,i-1,j-1,k))))
 
+
 *** rp - derivatives
 *** 24*8 = 192 ops, tot=4355
          dudrm2 = 0
@@ -514,6 +515,7 @@ c-----------------------------------------------------------------------
      *    + la(i,j-1,k)*met(4,i,j-1,k)*met(1,i,j-1,k)*dwdrm1*istrx )
      *        )
 
+
 *** rq derivatives (w-eq)
 *** 39 ops, tot=4845
       r3 = r3 + ( c2*(
@@ -592,6 +594,7 @@ c-----------------------------------------------------------------------
      *        c1*(u(2,i,j+1,q)-u(2,i,j-1,q))  )*istrx )
 
       enddo
+
 *** 12 ops, tot=6049
 c          lu(1,i,j,k) = r1*ijac
           lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac
@@ -915,6 +918,7 @@ c          lu(1,i,j,k) = r1*ijac
      *               mux2*(u(2,i-1,j,k)-u(2,i,j,k)) + 
      *               mux3*(u(2,i+1,j,k)-u(2,i,j,k)) +
      *               mux4*(u(2,i+2,j,k)-u(2,i,j,k))  )*istry
+
 *** qq derivative (v)
 *** 53 ops, tot=869
           cof1=(2*mu(i,j-2,k)+la(i,j-2,k))*met(1,i,j-2,k)*met(1,i,j-2,k)
@@ -1132,6 +1136,7 @@ c          lu(1,i,j,k) = r1*ijac
      *        c2*(u(3,i,j+2,k-1)-u(3,i,j-2,k-1)) +
      *        c1*(u(3,i,j+1,k-1)-u(3,i,j-1,k-1)) )*istrx  ) )
 
+
 *** rq derivatives
 *** 130 ops, tot=1537
       r1 = r1 + c2*(
@@ -1172,6 +1177,7 @@ c          lu(1,i,j,k) = r1*ijac
      *     + la(i,j-1,k)*met(4,i,j-1,k)*met(1,i,j-1,k)*(
      *        c2*(u(3,i,j-1,k+2)-u(3,i,j-1,k-2)) +
      *        c1*(u(3,i,j-1,k+1)-u(3,i,j-1,k-1)) )*istrx   ) )
+
 
 c          lu(2,i,j,k) = r1/jac(i,j,k)
 c          lu(2,i,j,k) = r1*ijac
@@ -1216,6 +1222,7 @@ c          lu(2,i,j,k) = r1*ijac
      *               mux2*(u(3,i,j-1,k)-u(3,i,j,k)) + 
      *               mux3*(u(3,i,j+1,k)-u(3,i,j,k)) +
      *               mux4*(u(3,i,j+2,k)-u(3,i,j,k))  )*istrx
+
 *** rr derivative (u)
 *** 43 ops, tot=1666
           cof1=(mu(i,j,k-2)+la(i,j,k-2))*met(2,i,j,k-2)*met(4,i,j,k-2)
@@ -1402,11 +1409,10 @@ c      r1 = r1
      *        c2*(u(2,i,j-1,k+2)-u(2,i,j-1,k-2)) +
      *        c1*(u(2,i,j-1,k+1)-u(2,i,j-1,k-1)) ) ) ) )
 
-
 c          lu(3,i,j,k) = r1/jac(i,j,k)
 c          lu(3,i,j,k) = r1*ijac
 *** 4 ops, tot=2126
-          lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r1*ijac
+            lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r1*ijac
 
       enddo
       enddo

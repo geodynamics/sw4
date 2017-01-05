@@ -101,14 +101,29 @@ extern "C" {
    void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
 }
 #else
+extern "C" 
+{
+   void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
+}
 void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
 	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
+
 void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
 	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
+
+void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
+		     float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* acof,
+		     float_sw4* bope, float_sw4* ghcof, float_sw4* a_strx, float_sw4* a_stry );
+
+void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		 float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
+		 float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* acof,
+		 float_sw4* bope, float_sw4* ghcof, float_sw4* a_strx, float_sw4* a_stry );
 #endif
 
 EW::EW( const string& filename ) :
@@ -2933,11 +2948,24 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
    {
       int g=mNumberOfGrids-1;
       char op = '=';    // Assign Uacc := L(u)
+#ifdef SW4_CROUTINES
+      if( m_corder )
+         rhs4sgcurv_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			 a_U[g].c_ptr(), a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mMetric.c_ptr(),
+			 mJ.c_ptr(), a_Uacc[g].c_ptr(), m_onesided[g], m_acof, m_bope, m_ghcof,
+			 m_sg_str_x[g], m_sg_str_y[g] );
+      else
+         rhs4sgcurv( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		     a_U[g].c_ptr(), a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(), mMetric.c_ptr(),
+		     mJ.c_ptr(), a_Uacc[g].c_ptr(), m_onesided[g], m_acof, m_bope, m_ghcof,
+		     m_sg_str_x[g], m_sg_str_y[g] );
+#else      
       F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
 					      &m_kStart[g], &m_kEnd[g], a_U[g].c_ptr(), a_Mu[g].c_ptr(),
 					      a_Lambda[g].c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), a_Uacc[g].c_ptr(),
 					      m_onesided[g], m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
 					      &op );
+#endif
    }
 }
 
@@ -3171,15 +3199,29 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 				    &t, a_BCForcing[g][0], a_BCForcing[g][1], a_BCForcing[g][2],
 				    a_BCForcing[g][3], a_BCForcing[g][4], a_BCForcing[g][5],
 				    &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
+#endif
       if( m_topography_exists && g == mNumberOfGrids-1 && m_bcType[g][4] == bStressFree )
       {
 	 int side = 5;
+#ifdef SW4_CROUTINES
+	 if( m_corder )
+	    freesurfcurvisg_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g], 
+				 m_global_nz[g], side, a_U[g].c_ptr(), a_Mu[g].c_ptr(),
+				 a_Lambda[g].c_ptr(), mMetric.c_ptr(), m_sbop,
+			         a_BCForcing[g][4], m_sg_str_x[g], m_sg_str_y[g] );
+	 else
+	    freesurfcurvisg( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g], 
+			     m_global_nz[g], side, a_U[g].c_ptr(), a_Mu[g].c_ptr(),
+			     a_Lambda[g].c_ptr(), mMetric.c_ptr(), m_sbop,
+			     a_BCForcing[g][4], m_sg_str_x[g], m_sg_str_y[g] );
+#else
 	 F77_FUNC(freesurfcurvisg,FREESURFCURVISG)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], 
 						    &m_kStart[g], &m_kEnd[g], &m_global_nz[g], &side,
 						    a_U[g].c_ptr(), a_Mu[g].c_ptr(), a_Lambda[g].c_ptr(),
 						    mMetric.c_ptr(), m_sbop, a_BCForcing[g][4], m_sg_str_x[g], m_sg_str_y[g] );
-      }
 #endif
+      }
+
    }
    enforceCartTopo( a_U );
 }
@@ -3273,18 +3315,17 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
       if( m_sg_damping_order == 4 )
       {
 #ifdef SW4_CROUTINES	 
-	 //	 if( m_corder )
-	 //	    addsgd4fort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-	 //		      a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
-	 //		      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], 
-	 //		      m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g],
-	 //		      m_sg_corner_z[g], m_supergrid_damping_coefficient );
-	 //	 else
-	 //	    addsgd4fort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-	 //		      a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
-	 //		      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], 
-	 //		      m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g],
-	 //		      m_sg_corner_z[g], m_supergrid_damping_coefficient );
+	 if( m_corder )
+	    addsgd4cfort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+				 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+				 mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				 m_supergrid_damping_coefficient );
+	 else
+	    addsgd4cfort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			  a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+			  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], 
+			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
 #else
 	 F77_FUNC(addsgd4c,ADDSGD4C) ( &mDt, a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), 
 				     a_Rho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], 
@@ -3296,18 +3337,18 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
       else if(  m_sg_damping_order == 6 )
       {
 #ifdef SW4_CROUTINES	 
-	 //	 if( m_corder )
-	 //	    addsgd6fort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-	 //		      a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
-	 //		      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], 
-	 //		      m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g],
-	 //		      m_sg_corner_z[g], m_supergrid_damping_coefficient );
-	 //	 else
-	 //	    addsgd6fort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-	 //		      a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
-	 //		      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], 
-	 //		      m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g],
-	 //		      m_sg_corner_z[g], m_supergrid_damping_coefficient );
+	 if( m_corder )
+	    addsgd6cfort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+				 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+				 mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				 m_supergrid_damping_coefficient );
+	 else
+	    addsgd6cfort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Rho[g].c_ptr(),
+				 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+				 mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+				 m_supergrid_damping_coefficient );
 #else
 	 F77_FUNC(addsgd6c,ADDSGD6C) ( &mDt, a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), 
 				       a_Rho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], 
@@ -5056,10 +5097,10 @@ void EW::print_execution_times( double times[7] )
 	 cout << "Error opening " << fname.c_str()  << " for writing execution times" << endl;
       size_t nr=write(fd,&m_nprocs,sizeof(int));
       if( nr != sizeof(int) )
-	 cout << "Error wrting nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
+	 cout << "Error writing nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
       nr = write(fd, time_sums, 7*m_nprocs*sizeof(double));
       if( nr != 7*m_nprocs*sizeof(double) )
-	 cout << "Error wrting time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
+	 cout << "Error writing time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
       close(fd);
    }
    delete[] time_sums;
@@ -5907,14 +5948,37 @@ void EW::setup_metric()
       int nzg = m_global_nz[g];
       float_sw4 h= mGridSize[g];   
       float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
+#ifdef SW4_CROUTINES
+      if( m_corder )
+	 metricexgh_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			 m_global_nz[g], mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
+			 m_grid_interpolation_order, m_zetaBreak, zmax, m_GaussianAmp, m_GaussianXc, 
+			 m_GaussianYc, m_GaussianLx, m_GaussianLy );
+      else
+	 metricexgh( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		     m_global_nz[g], mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
+		     m_grid_interpolation_order, m_zetaBreak, zmax, m_GaussianAmp, m_GaussianXc, 
+		     m_GaussianYc, m_GaussianLx, m_GaussianLy );
+#else
       F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
 				       mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
+#endif      
    }
    else
    {
      int ierr=0;
-     F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+#ifdef SW4_CROUTINES
+     if( m_corder )
+	ierr = metric_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+     else
+	ierr = metric( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+		mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+#else
+     F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+			      mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+#endif
      CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
    }
    communicate_array( mMetric, mNumberOfGrids-1 );
@@ -5925,7 +5989,12 @@ void EW::setup_metric()
    //      metric_derivatives_test( );
 
    float_sw4 minJ, maxJ;
+#ifdef SW4_CROUTINES
+   gridinfo( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+	     mMetric.c_ptr(), mJ.c_ptr(), minJ, maxJ );
+#else   
    F77_FUNC(gridinfo,GRIDINFO)(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
+#endif
    float_sw4 minJglobal, maxJglobal;
    MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
    MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
