@@ -23,7 +23,7 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   openmp = yes
 # LC quartz is a large cluster of Intel Haswell nodes
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
-  FC = mpiifort
+  FC = mpifort
   CXX = mpicxx
   OMPOPT = -qopenmp
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
