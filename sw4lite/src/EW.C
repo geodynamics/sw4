@@ -98,6 +98,7 @@ extern "C" {
    void F77_FUNC(freesurfcurvisg,FREESURFCURVISG)( int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
 						   int *nz, int* side, float_sw4* u, float_sw4* mu, float_sw4* lambda, float_sw4* met,
 						   float_sw4* s, float_sw4* forcing, float_sw4* strx, float_sw4* stry );
+   void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
 }
 #else
 extern "C" 
@@ -5096,10 +5097,10 @@ void EW::print_execution_times( double times[7] )
 	 cout << "Error opening " << fname.c_str()  << " for writing execution times" << endl;
       size_t nr=write(fd,&m_nprocs,sizeof(int));
       if( nr != sizeof(int) )
-	 cout << "Error wrting nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
+	 cout << "Error writing nprocs on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
       nr = write(fd, time_sums, 7*m_nprocs*sizeof(double));
       if( nr != 7*m_nprocs*sizeof(double) )
-	 cout << "Error wrting time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
+	 cout << "Error writing time_sums on " << fname.c_str() << " nr = " << nr << " bytes" << endl;
       close(fd);
    }
    delete[] time_sums;
