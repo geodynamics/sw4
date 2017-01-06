@@ -1,0 +1,31 @@
+# This is an SW4 input file for evaluating performance at the 1-node level
+#
+#
+# A single moment point source is used with 
+# the time dependency being the Gaussian function
+#
+
+# corder=yes only works with the C-version of sw4lite
+developer reporttiming=1 checkfornan=0 corder=no
+#developer reporttiming=1 checkfornan=0
+
+grid h=17 nx=96 ny=96 nz=1600
+#time t=2
+time steps=10
+
+fileio path=skinny-results verbose=1
+
+block vp=4.0e3 vs=2.0e3 r=2.6e3
+
+supergrid gp=30
+
+# C6SmoothBump time function
+# freq=f0=10 Hz, fmax=30 Hz
+# WaveLength = min Vs/fmax = 2000/30 = 66.7 m
+# Grid points per shortest wave length, P = waveLength/h = 6.67 (marginally ok)
+# t0 = 0 ok
+
+source x=816 y=816 z=500 mxy=1e18 t0=0 freq=10 type=C6SmoothBump
+
+# record the solution at one point on the free surface
+rec x=500 y=300 depth=0 file=sta01 usgsformat=1 sacformat=0
