@@ -87,9 +87,7 @@ c-----------------------------------------------------------------------
 !$OMP PARALLEL PRIVATE(k,i,j,q,m,mux1,mux2,mux3,mux4,r1,r2,r3,ijac,
 !$OMP*   istry,istrx,istrxy,cof1,cof2,cof3,cof4,cof5,mucofu2,mucofuv,
 !$OMP*   mucofuw,mucofvw,mucofv2,mucofw2,dudrm2,dudrm1,dudrp1,dudrp2,
-!$OMP*       dvdrm2,dvdrm1,dvdrp1,dvdrp2,dwdrm2,dwdrm1,dwdrp1,dwdrp2,
-!$OMP*   a1,sgn)
-
+!$OMP*       dvdrm2,dvdrm1,dvdrp1,dvdrp2,dwdrm2,dwdrm1,dwdrp1,dwdrp2)
       if( onesided(5).eq.1 )then
          kstart = 7
 *** SBP Boundary closure terms

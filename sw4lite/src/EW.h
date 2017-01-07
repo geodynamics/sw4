@@ -118,8 +118,8 @@ class EW
    int mkdirs(const string& path);
    bool topographyExists() {return m_topography_exists;}
    bool interpolate_topography( float_sw4 q, float_sw4 r, float_sw4& Z0, bool smoothed );
-   void buildGaussianHillTopography(double amp, double Lx, double Ly, double x0, double y0);
-   void compute_minmax_topography( double& topo_zmin, double& topo_zmax );
+   void buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0);
+   void compute_minmax_topography( float_sw4& topo_zmin, float_sw4& topo_zmax );
    void gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const;
    bool find_topo_zcoord_owner( float_sw4 X, float_sw4 Y, float_sw4& Ztopo );
    bool find_topo_zcoord_all( float_sw4 X, float_sw4 Y, float_sw4& Ztopo );

@@ -23,6 +23,21 @@ int metric( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 int metric_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	    float_sw4* x, float_sw4* y, float_sw4* z, float_sw4* met, float_sw4* jac );
 
+void addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
+		  int kfirst, int klast,
+		  float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		  float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+		  float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		  float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		  float_sw4 beta );
+void addsgd4fort_rev( int ifirst, int ilast, int jfirst, int jlast,
+		  int kfirst, int klast,
+		  float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		  float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+		  float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		  float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		  float_sw4 beta );
+
 extern "C" {
    void rhs4th3fortsgstr_( int*, int*, int*, int*, int*, int*, int*, int*,
 			   double*, double*, double*, double*, double*, double*, double*,
@@ -37,6 +52,7 @@ extern "C" {
 	     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4 h,
 	     float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
    double gettimec_();
+   //   double gettimec2();
    void varcoeffs4_( double*, double* );
    void wavepropbop_4_( double*, double*, double*, double*, double*, double*, double* );
    void bopext4th_( double*, double* );
@@ -45,6 +61,9 @@ extern "C" {
 			 double*, double*, char* );
    void metric_( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
 		 double*, int* );
+   void addsgd4_( double*, double*, double*, double*, double*, double*, double*, double*, double*,
+		  double*, double*, double*, double*, double*, double*,
+		  int*, int*, int*, int*, int*, int*, double* );
 }
 
 #include <cstring>
@@ -67,6 +86,8 @@ int main( int argc, char** argv )
    int onesided[6]={0,0,0,0,0,0};
    bool append=true;
    int cartesian = 1;
+   bool supergrid = false;
+   float_sw4 dt =0.01;
 
    while( a < argc )
    {
@@ -112,6 +133,12 @@ int main( int argc, char** argv )
 	 cartesian = 0;
 	 a++;
       }
+      else if( strcmp(argv[a],"-supergrid")== 0 )
+      {
+	 supergrid = true;
+	 cartesian = 1;
+	 a++;
+      }
       else
       {
 	 cout << "Unknown option " << argv[a] << endl;
@@ -138,6 +165,12 @@ int main( int argc, char** argv )
    double* metrev = new double[ni*nj*nk*4];
    double* jac    = new double[ni*nj*nk];
 
+   double* dcx   = new double[ni];
+   double* dcy   = new double[nj];
+   double* dcz   = new double[nk];
+   double* cox   = new double[ni];
+   double* coy   = new double[nj];
+   double* coz   = new double[nk];
    //   double* lucmp1 = new double[ni*nj*nk];
    //   double* lucmp2 = new double[ni*nj*nk];
    //   double* lucmp3 = new double[ni*nj*nk];
@@ -165,13 +198,26 @@ int main( int argc, char** argv )
 	    //	    lurev[ind+npts]=1e25;
 	    //	    lurev[ind+2*npts]=1e25;
 	 }
+// Supergrid info
+   double beta = 0.0001;
    for( int i=0 ; i< ni ; i++ )
+   {
       strx[i] = 1;
+      dcx[i]= 0.02;
+      cox[i]= 0.01;
+   }
    for( int j=0 ; j< nj ; j++ )
+   {
       stry[j] = 1;
+      dcy[j]= 0.02;
+      coy[j]= 0.01;
+   }
    for( int k=0 ; k< nk ; k++ )
+   {
       strz[k] = 1;
-
+      dcz[k]= 0.02;
+      coz[k]= 0.01;
+   }
 
  // SBP boundary operator definition
    double acof[384], bope[48], ghcof[6], bop[24];
@@ -204,87 +250,120 @@ int main( int argc, char** argv )
 
    int nkupbndry = ke-2;
 
+
 // Run and time C and fortran routines
    double tc[10], tf[10], tcr[10];
    int nopsint, nopsbnd;
-   if( cartesian )
+   if( supergrid )
    {
-      nopsint = 666;
-      nopsbnd = 1244;
+      for( size_t i=0 ; i < 3*ni*nj*nk ; i++ )
+      {
+	 lu[i] = u[i]+0.2;
+	 lu2[i] = u[i]-0.3;
+      }
+      nopsint = 375;
+      nopsbnd = 0;
       for( int s=0 ; s < 10 ; s++ )
       {
 	 tc[s] = gettimec_();
-	 rhs4sg( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
-		 lu, u, mu, lambda, h, strx, stry, strz );
-      //	      lu, u, mu, lambda, h, strx, stry, strz, lucmp1, lucmp2, lucmp3 );
+	 addsgd4fort( ib, ie, jb, je, kb, ke, u, lu, lu2, rho, dcx, dcy, dcz,
+		      strx, stry, strz, cox, coy, coz, beta ); 
 	 tc[s] = gettimec_()-tc[s];
+
+	 tcr[s] = gettimec_();
+	 addsgd4fort_rev( ib, ie, jb, je, kb, ke, urev, lu, lu2, rho, dcx, dcy, dcz,
+		      strx, stry, strz, cox, coy, coz, beta ); 
+	 tcr[s] = gettimec_()-tcr[s];
+	 tf[s] = gettimec_();
+	 //	 double t1 = gettimec2();
+	 addsgd4_( &dt, &h, u, lu, lu2, rho, dcx, dcy, dcz,
+		   strx, stry, strz, cox, coy, coz,
+		   &ib, &ie, &jb, &je, &kb, &ke, &beta );  
+	 //	 double t2=gettimec2();
+	 //	 cout << t1 << " " << t2 << " diff = " << t2-t1 << endl;
+	 tf[s] = gettimec_() - tf[s];
+
+      }
+   }
+   else
+   {
+      if( cartesian )
+      {
+	 nopsint = 666;
+	 nopsbnd = 1244;
+	 for( int s=0 ; s < 10 ; s++ )
+	 {
+	    tc[s] = gettimec_();
+	    rhs4sg( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
+		    lu, u, mu, lambda, h, strx, stry, strz );
+      //	      lu, u, mu, lambda, h, strx, stry, strz, lucmp1, lucmp2, lucmp3 );
+	    tc[s] = gettimec_()-tc[s];
       //      for( int i=0 ; i < npts ; i++ )
       //      {
       //	 lu[3*i]=lucmp1[i];
       //	 lu[3*i+1]=lucmp2[i];
       //	 lu[3*i+2]=lucmp3[i];
       //      }
-	 tcr[s] = gettimec_();
-	 rhs4sg_rev( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
-		     lurev, urev, mu, lambda, h, strx, stry, strz );
-	 tcr[s] = gettimec_()-tcr[s];
-	 char op='=';
-	 tf[s] = gettimec_();
-	 rhs4th3fortsgstr_( &ib, &ie, &jb, &je, &kb, &ke, 
-			    &nkupbndry, onesided, acof, bope, ghcof,
-			    lu2, u, mu, lambda, &h, strx, stry, strz, &op );
-	 tf[s] = gettimec_() - tf[s];
+	    tcr[s] = gettimec_();
+	    rhs4sg_rev( ib, ie, jb, je, kb, ke, nkupbndry, onesided, acof, bope, ghcof,
+			lurev, urev, mu, lambda, h, strx, stry, strz );
+	    tcr[s] = gettimec_()-tcr[s];
+	    char op='=';
+	    tf[s] = gettimec_();
+	    rhs4th3fortsgstr_( &ib, &ie, &jb, &je, &kb, &ke, 
+			       &nkupbndry, onesided, acof, bope, ghcof,
+			       lu2, u, mu, lambda, &h, strx, stry, strz, &op );
+	    tf[s] = gettimec_() - tf[s];
+	 }
       }
-   }
-   else
-   {
-      nopsint = 2126;
-      nopsbnd = 6049;
-      for( int s=0 ; s < 10 ; s++ )
+      else
       {
-	 tc[s] = gettimec_();
-	 rhs4sgcurv( ib, ie, jb, je, kb, ke, u, mu, lambda, met, jac, lu,
-		     onesided, acof, bope, ghcof, strx, stry );
-	 tc[s] = gettimec_()-tc[s];
-	 tcr[s] = gettimec_();
-	 rhs4sgcurv_rev( ib, ie, jb, je, kb, ke, urev, mu, lambda, metrev, jac, lurev,
-		     onesided, acof, bope, ghcof, strx, stry );
-	 tcr[s] = gettimec_()-tcr[s];
-	 char op='=';
-	 tf[s] = gettimec_();
-	 curvilinear4sg_( &ib, &ie, &jb, &je, &kb, &ke, 
-		       u, mu, lambda, met, jac, lu2, onesided,
-		       acof, bope, ghcof, strx, stry, &op );
-	 tf[s] = gettimec_() - tf[s];
-      }
-  }
-
- // Compute approximation error and make a consistency check that both routines give the same result:
-   double er[3]={0,0,0};
-   for( int k=nb ; k< nk-nb ; k++ )
-      for( int j=nb ; j< nj-nb ; j++ )
-	 for( int i=nb ; i< ni-nb ; i++ )
+	 nopsint = 2126;
+	 nopsbnd = 6049;
+	 for( int s=0 ; s < 10 ; s++ )
 	 {
-	    int ind = i+ni*j+ni*nj*k;
-	    for( int m= 0 ; m<3 ; m++ )
+	    tc[s] = gettimec_();
+	    rhs4sgcurv( ib, ie, jb, je, kb, ke, u, mu, lambda, met, jac, lu,
+			onesided, acof, bope, ghcof, strx, stry );
+	    tc[s] = gettimec_()-tc[s];
+	    tcr[s] = gettimec_();
+	    rhs4sgcurv_rev( ib, ie, jb, je, kb, ke, urev, mu, lambda, metrev, jac, lurev,
+			    onesided, acof, bope, ghcof, strx, stry );
+	    tcr[s] = gettimec_()-tcr[s];
+	    char op='=';
+	    tf[s] = gettimec_();
+	    curvilinear4sg_( &ib, &ie, &jb, &je, &kb, &ke, 
+			     u, mu, lambda, met, jac, lu2, onesided,
+			     acof, bope, ghcof, strx, stry, &op );
+	    tf[s] = gettimec_() - tf[s];
+	 }
+      }
+ // Compute approximation error and make a consistency check that both routines give the same result:
+      double er[3]={0,0,0};
+      for( int k=nb ; k< nk-nb ; k++ )
+	 for( int j=nb ; j< nj-nb ; j++ )
+	    for( int i=nb ; i< ni-nb ; i++ )
 	    {
-	       double err = eqs[3*ind+m]*rho[ind]-lu[3*ind+m];
-	       if( fabs(err) > er[m] )
-		  er[m] = fabs(err);
-	       if( fabs(lu[3*ind+m]-lu2[3*ind+m])> 1e-7 )
+	       int ind = i+ni*j+ni*nj*k;
+	       for( int m= 0 ; m<3 ; m++ )
 	       {
-		  cout << " component " << m << " at i= " << i << " j= " << j << " k= " << k << " : " << endl;
-		  cout << "         lu(fortran) = " << lu2[3*ind+m] << " lu(C) = "  << lu[3*ind+m] << endl;
-	       }
-	       if( fabs(lurev[ind+m*npts]-lu2[3*ind+m])> 1e-7 )
-	       {
-		  cout << " component " << m << " at i= " << i << " j= " << j << " k= " << k << " : " << endl;
-		  cout << "         lu(fortran) = " << lu2[3*ind+m] << " lu(Crev) = "  << lurev[ind+m*npts] << endl;
+		  double err = eqs[3*ind+m]*rho[ind]-lu[3*ind+m];
+		  if( fabs(err) > er[m] )
+		     er[m] = fabs(err);
+		  if( fabs(lu[3*ind+m]-lu2[3*ind+m])> 1e-7 )
+		  {
+		     cout << " component " << m << " at i= " << i << " j= " << j << " k= " << k << " : " << endl;
+		     cout << "         lu(fortran) = " << lu2[3*ind+m] << " lu(C) = "  << lu[3*ind+m] << endl;
+		  }
+		  if( fabs(lurev[ind+m*npts]-lu2[3*ind+m])> 1e-7 )
+		  {
+		     cout << " component " << m << " at i= " << i << " j= " << j << " k= " << k << " : " << endl;
+		     cout << "         lu(fortran) = " << lu2[3*ind+m] << " lu(Crev) = "  << lurev[ind+m*npts] << endl;
+		  }
 	       }
 	    }
-	 }
-   cout << "Errors " << er[0] << " " << er[1] << " " << er[2] << endl;
-
+      cout << "Errors " << er[0] << " " << er[1] << " " << er[2] << endl;
+   }
 // Output timing results:
    cout <<  "Time C code and fortran code :" << endl;
    double tcavg=0, tfavg=0, travg=0;

@@ -1,46 +1,34 @@
-#EXTRA_LINK_FLAGS = -lifcore
-#
-# Intel  
-COMPILERPATH = /usr/local/tools/ic-15.0.223/bin
-MPIPATH = /usr/local/tools/mvapich2-intel-2.2
-HOSTCOMP = $(COMPILERPATH)/icpc
-#
-# Gnu
-#COMPILERPATH = /usr/local/tools/gcc-4.6.1/bin
-#MPIPATH = /usr/local/tools/mvapich2-gnu
-#HOSTCOMP = $(COMPILERPATH)/g++
-#
-# Pgi
-# (currently this does not work)
-#COMPILERPATH = /usr/local/tools/pgi-15.7/bin
-#MPIPATH = /usr/local/tools/mvapich2-pgi
-#HOSTCOMP=$(COMPILERPATH)/pgCC
-#
-#CXX    = $(MPIPATH)/bin/mpicxx
-MPIINC = $(MPIPATH)/include
-MPILIB = $(MPIPATH)/lib
-CXX = nvcc
-#CC = icc
-#
-#
+HOSTNAME := $(shell hostname)
 
+ifeq ($(findstring ray,$(HOSTNAME)),ray)
+   NVCC = /usr/local/cuda-8.0/bin/nvcc
+   HOSTCOMP = mpicxx
+   MPIPATH = /opt/ibm/spectrum_mpi
+   gpuarch := sm_60
+   EXTRA_LINK_FLAGS = -lmpi_ibm
+else ifeq ($(findstring surface,$(HOSTNAME)),surface)
+   NVCC = nvcc
+   HOSTCOMP = /usr/local/tools/ic-16.0.258/bin/icpc
+   MPIPATH  = /usr/local/tools/mvapich2-intel-2.2
+   gpuarch := sm_35
+   EXTRA_LINK_FLAGS = -lmpich -lmpl -lpmi
+   MPIINC = $(MPIPATH)/include
+endif
+CXX  = $(NVCC)
+MPILIB = $(MPIPATH)/lib
 
 ifeq ($(debug),yes)
-   optlevel = DEBUG
-else
-   debug := "no"
-   optlevel = OPTIMIZE
-endif
-
-ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g 
-   CXXFLAGS  = -g -x cu -I../src -c -dc -arch=sm_35 -DBZ_DEBUG -DSW4_CROUTINES -DSW4_CUDA -I$(MPIINC) -ccbin $(HOSTCOMP)
+   CXXFLAGS  = -g -x cu -I../src -c -dc -arch=$(gpuarch) -DBZ_DEBUG -DSW4_CROUTINES -DSW4_CUDA -ccbin $(HOSTCOMP)
    CFLAGS    = -g 
 else
    FFLAGS   = -O3 
-   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=sm_35 -DSW4_CROUTINES -DSW4_CUDA -I$(MPIINC) -ccbin $(HOSTCOMP)
+   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=$(gpuarch) -DSW4_CROUTINES -DSW4_CUDA -ccbin $(HOSTCOMP)
    CFLAGS   = -O 
 endif
+ifdef MPIINC
+  CXXFLAGS += -I$(MPIINC)
+endif	   
 
 #FFLAGS   += -Mcuda
 
@@ -50,17 +38,19 @@ ifeq ($(openmp),yes)
    CFLAGS   += $(OMPOPT) -DSW4_OPENMP
 endif
 
-fullpath := $(shell pwd)
-
-HOSTNAME := $(shell hostname)
-UNAME := $(shell uname)
-
 ifeq ($(openmp),yes)
    debugdir := debug_mp_cuda
    optdir := optimize_mp_cuda
 else
    debugdir := debug_cuda
    optdir := optimize_cuda
+endif
+ifeq ($(single),yes)
+   debugdir := $(debugdir)_sp
+   optdir := $(optdir)_sp
+   CXXFLAGS += -I../src/float   
+else
+   CXXFLAGS += -I../src/double
 endif
 
 ifdef EXTRA_CXX_FLAGS
@@ -75,31 +65,31 @@ ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif
 
-ifeq ($(optlevel),DEBUG)
+ifeq ($(debug),yes)
    builddir = $(debugdir)
 else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Source.o rhs4sg.o rhs4sg_rev.o SuperGrid.o GridPointSource.o time_functions.o ew-cfromfort.o EW_cuda.o Sarray.o device-routines.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o
+OBJ  = main.o EW.o Source.o rhs4sg.o rhs4sg_rev.o SuperGrid.o GridPointSource.o time_functions.o ew-cfromfort.o EW_cuda.o Sarray.o device-routines.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o
 
 FOBJ = $(addprefix $(builddir)/,$(OBJ))
 
-sw4g: $(FOBJ) 
+sw4lite: $(FOBJ) 
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -L$(MPILIB) $(OMPOPT) -Xlinker "-rpath=$(MPILIB)" -arch=sm_35 -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart -lmpich -lmpl -lpmi 
+	cd $(builddir); $(NVCC) -L$(MPILIB) $(OMPOPT) -Xlinker "-rpath=$(MPILIB)" -arch=$(gpuarch) -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart  $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
 
 #$(builddir)/device-routines.o:src/device-routines.C
 #	/bin/mkdir -p $(builddir)
-#	cd $(builddir); nvcc $(CXXFLAGS) -c ../$< 
+#	cd $(builddir); $(NVCC) $(CXXFLAGS) -c ../$< 
 
 $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)
@@ -110,5 +100,7 @@ $(builddir)/%.o:src/%.f
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$< 
 
 clean:
-	cd optimize_cuda;/bin/rm *.o
-	cd debug_cuda;/bin/rm *.o
+	/bin/mkdir -p $(optdir)
+	/bin/mkdir -p $(debugdir)
+	cd $(optdir);/bin/rm -f *.o sw4lite
+	cd $(debugdir);/bin/rm -f *.o sw4lite

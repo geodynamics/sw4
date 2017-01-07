@@ -33,6 +33,7 @@
 #include "MaterialBlock.h"
 
 #include <iostream>
+#include <cstdio>
 #include "EW.h"
 
 using namespace std;
