@@ -726,7 +726,7 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
 #define up(c,i,j,k) a_up[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
-#define u(c,i,j,k) a_u[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+#define u(c,i,j,k)   a_u[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
 #define um(c,i,j,k) a_um[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
 #define strx(i) a_strx[(i-ifirst)]
 #define dcx(i) a_dcx[(i-ifirst)]
@@ -743,11 +743,11 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp parallel for
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
 	       float_sw4 birho=beta/rho(i,j,k);
+#pragma simd
+#pragma ivdep
 	       for( int c=0 ; c < 3 ; c++ )
 	       {
 		  up(c,i,j,k) -= birho*( 
@@ -944,11 +944,11 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp parallel for
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
 	       float_sw4 birho=beta/rho(i,j,k);
+#pragma simd
+#pragma ivdep
 	       for( int c=0 ; c < 3 ; c++ )
 	       {
 		  up(c,i,j,k) -= birho*( 

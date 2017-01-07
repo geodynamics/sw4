@@ -133,11 +133,6 @@ ifeq ($(ckernel),yes)
    CXXFLAGS += -DSW4_CROUTINES
 endif
 
-fullpath := $(shell pwd)
-
-HOSTNAME := $(shell hostname)
-UNAME := $(shell uname)
-
 ifeq ($(ckernel),yes)
    ifeq ($(openmp),yes)
       debugdir := debug_mp_c
@@ -154,6 +149,13 @@ else
       debugdir := debug
       optdir   := optimize
    endif
+endif
+ifeq ($(single),yes)
+   debugdir := $(debugdir)_sp
+   optdir   := $(optdir)_sp
+   CXXFLAGS += -I../src/float
+else
+   CXXFLAGS += -I../src/double
 endif
 
 ifdef EXTRA_CXX_FLAGS

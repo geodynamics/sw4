@@ -44,6 +44,7 @@ c-----------------------------------------------------------------------
 ***********************************************************************
 
 	implicit none
+	integer ifirst, ilast, jfirst, jlast, kfirst, klast
 	real*8 dt, h
 	real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -52,7 +53,6 @@ c-----------------------------------------------------------------------
 	real*8 dcx(ifirst:ilast), strx(ifirst:ilast), cox(ifirst:ilast)
 	real*8 dcy(jfirst:jlast), stry(jfirst:jlast), coy(jfirst:jlast)
 	real*8 dcz(kfirst:klast), strz(kfirst:klast), coz(kfirst:klast)
-	integer ifirst, ilast, jfirst, jlast, kfirst, klast
 	real*8 beta
 
 c time stepping stability condition on beta?
@@ -76,7 +76,9 @@ c strx -> strx*coy(j)*coz(k)
 c stry -> stry*cox(i)*coz(k)
 c strz -> strz*cox(i)*coy(j)
 c
-!$OMP PARALLEL PRIVATE(k,i,j,c,irho,coeff)
+c approximately 375 a.o.
+c
+!$OMP PARALLEL PRIVATE(k,i,j,c,irho)
 !$OMP DO
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2
@@ -175,7 +177,7 @@ c beta is the supergrid damping coefficient as entered in the input file
 c
 c add in the SG damping
 c
-!$OMP PARALLEL PRIVATE(k,i,j,c,irhoh,coeff)
+!$OMP PARALLEL PRIVATE(k,i,j,c,irhoh)
 !$OMP DO
 	do k=kfirst+3,klast-3
 	  do j=jfirst+3,jlast-3
@@ -276,7 +278,7 @@ c
 c
 c add in the SG damping
 c    
-!$OMP PARALLEL PRIVATE(k,i,j,c,irhoj,coeff)
+!$OMP PARALLEL PRIVATE(k,i,j,c,irhoj)
 !$OMP DO
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2
@@ -357,7 +359,7 @@ c beta is the supergrid damping coefficient as entered in the input file
 c
 c add in the SG damping
 c
-!$OMP PARALLEL PRIVATE(k,i,j,c,irhoj,coeff)
+!$OMP PARALLEL PRIVATE(k,i,j,c,irhoj)
 !$OMP DO
 	do k=kfirst+3,klast-3
 	  do j=jfirst+3,jlast-3
