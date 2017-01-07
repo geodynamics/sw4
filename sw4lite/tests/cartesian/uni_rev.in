@@ -11,7 +11,7 @@ grid h=10 nx=128 ny=128 nz=512
 time steps=10
 fileio path=uni-results verbose=1
 
-developer reporttiming=1 checkfornan=0 corder=no
+developer reporttiming=1 checkfornan=0 corder=yes
 # corder=yes only works with the C-version of sw4lite(?)
 #developer reporttiming=1 checkfornan=0
 
