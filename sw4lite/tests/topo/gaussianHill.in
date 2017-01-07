@@ -1,4 +1,9 @@
 # Gaussian hill analytical topography
+
+developer reporttiming=1 checkfornan=0 corder=no
+# corder=yes only works with the C-version of sw4lite(?)
+#developer reporttiming=1 checkfornan=0
+
 grid x=1.0 y=1.0 z=1.5 h=0.01
 #
 fileio path=gaussianHill-h0p01
