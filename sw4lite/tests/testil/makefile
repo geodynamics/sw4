@@ -46,7 +46,7 @@ ifeq ($(openmp),yes)
 endif
 
 COBJ = rhs4sg.o rhs4sg_rev.o gettimec.o grid-utilities.o rhs4sgcurv.o rhs4sgcurv_rev.o metricC.o \
-       addsgd4fort.o addsgd4fort_rev.o gettimec2.o
+       addsgd4fort.o addsgd4fort_rev.o
 FOBJ = rhs4th3fortsgstr.o boundaryOp.o curvilinear4sg.o metric.o addsgd4.o
 
 main : $(FOBJ) $(COBJ) testil.o

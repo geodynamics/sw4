@@ -941,15 +941,16 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
+
+      for( int c=0 ; c < 3 ; c++ )
 #pragma omp parallel for
       for( int k=kfirst+2; k <= klast-2 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+#pragma simd
+#pragma ivdep
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
 	       float_sw4 birho=beta/rho(i,j,k);
-#pragma simd
-#pragma ivdep
-	       for( int c=0 ; c < 3 ; c++ )
 	       {
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
