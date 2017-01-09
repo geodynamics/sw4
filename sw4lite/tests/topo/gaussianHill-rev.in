@@ -1,6 +1,6 @@
 # Gaussian hill analytical topography
 
-developer reporttiming=1 checkfornan=0 corder=no
+developer reporttiming=1 checkfornan=0 corder=yes
 # corder=yes only works with the C-version of sw4lite(?)
 #developer reporttiming=1 checkfornan=0
 
