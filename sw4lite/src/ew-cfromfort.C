@@ -716,10 +716,13 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 //-----------------------------------------------------------------------
 void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
-		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
-		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		      float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+		      float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+		      float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
+		      float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx,
+		      float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
+		      float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
+		      float_sw4* __restrict__ a_coz,
 		      float_sw4 beta )
 {
    if( beta != 0 )
@@ -817,11 +820,13 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 //-----------------------------------------------------------------------
 void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
-		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
-		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
-		      float_sw4 beta )
+		      float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+		      float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+		      float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
+		      float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx,
+		      float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
+		      float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
+		      float_sw4* __restrict__ a_coz, float_sw4 beta )
 {
    if( beta != 0 )
    {
@@ -914,12 +919,15 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
-		      int kfirst, int klast,
-		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
-		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
-		      float_sw4 beta )
+			     int kfirst, int klast,
+			     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+			     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+			     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
+			     float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx, 
+			     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
+			     float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
+			     float_sw4* __restrict__ a_coz,
+			     float_sw4 beta )
 {
 
    if( beta != 0 )
@@ -1017,12 +1025,14 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
-		      int kfirst, int klast,
-		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
-		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
-		      float_sw4 beta )
+			     int kfirst, int klast,
+			     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+			     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+			     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
+			     float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx,
+			     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
+			     float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
+			     float_sw4* __restrict__ a_coz, float_sw4 beta )
 {
    if( beta != 0 )
    {
@@ -1117,9 +1127,12 @@ void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 //-----------------------------------------------------------------------
 void EW::addsgd4cfort( int ifirst, int ilast, int jfirst, int jlast,
 		       int kfirst, int klast,
-		       float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		       float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
-		       float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta )
+		       float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u, 
+		       float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+		       float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy, 
+		       float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+		       float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,  
+		       float_sw4* __restrict__ a_coy, float_sw4 beta )
 {
    if( beta != 0 )
    {
@@ -1195,9 +1208,12 @@ void EW::addsgd4cfort( int ifirst, int ilast, int jfirst, int jlast,
 //-----------------------------------------------------------------------
 void EW::addsgd6cfort( int ifirst, int ilast, int jfirst, int jlast,
 		       int kfirst, int klast,
-		       float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		       float_sw4* a_dcx,  float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry,
-		       float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy,
+		       float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+		       float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+		       float_sw4* __restrict__ a_dcx,  float_sw4* __restrict__ a_dcy,
+		       float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
+		       float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,
+		       float_sw4* __restrict__ a_coy,
 		       float_sw4 beta )
 {
    if( beta != 0 )
@@ -1273,10 +1289,13 @@ void EW::addsgd6cfort( int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast,
-		       int kfirst, int klast,
-		       float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		       float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
-		       float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta )
+			      int kfirst, int klast,
+			      float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+			      float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+			      float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
+			      float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+			      float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,
+			      float_sw4* __restrict__ a_coy, float_sw4 beta )
 {
    if( beta != 0 )
    {
@@ -1352,10 +1371,13 @@ void EW::addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::addsgd6cfort_indrev(  int ifirst, int ilast, int jfirst, int jlast,
-		       int kfirst, int klast,
-		       float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		       float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
-		       float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta )
+			       int kfirst, int klast,
+			       float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+			       float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
+			       float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
+			       float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+			       float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,
+			       float_sw4* __restrict__ a_coy, float_sw4 beta )
 {
    if( beta != 0 )
    {
