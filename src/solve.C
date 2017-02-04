@@ -43,7 +43,12 @@ extern "C" {
                         double *h, int* kz, double *t, double *omega, double *c, double *phase, double *bforce,
                         double *mu, double *lambda, double *zmin,
                         int *i1, int *i2, int *j1, int *j2 );
-   
+
+   void twfrsurfzsg_wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                          double h, int kz, double t, double omega, double c, double phase, double omstrx, double omstry,
+                          double *bforce, double *mu, double *lambda, double zmin,
+                          int i1, int i2, int j1, int j2 );
+
 
 void F77_FUNC(satt,SATT)(double *up, double *qs, double *dt, double *cfreq, int *ifirst, int *ilast, 
 			 int *jfirst, int *jlast, int *kfirst, int *klast);
@@ -137,6 +142,12 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
 				  double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
 				  double* sg_corner_x, double* sg_corner_y, 
 				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+   void addsg4wind( double *dt, double *h, double *up, double *u, double *um, double *rho,
+                    double *dcx, double *dcy, double*  dcz, double *strx, double *stry, double *strz,
+                    double *cox, double *coy, double *coz, 
+                    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double beta,
+                    int kupb, int kupe, int kwindb, int kwinde );
+   
 //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
 // +     omega, alpha, h, zmin )
    void F77_FUNC(raydirbdry,RAYDIRBDRY)( double *bforce_side_ptr, int *wind_ptr, double *t, double *lambda,
@@ -183,11 +194,14 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
    void F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( int*, int*, int*, int*, int*, int*, double*, double*,
 						     double*, double*, double*, double*, double*, int*, int*,
 						     int*, int*, int*, int* );
-   void F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( int*, int*, int*, int*, int*, int*, int*, int*, double*,
-						   double*, double*,double*, double*, double*, double*, double*,
-						   double*, double*, double*, char*, int*, int*, int*, int* );
-   void F77_FUNC(forcingfort,FORCINGFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
+   void rhs4th3fortwind( int*, int*, int*, int*, int*, int*, int*, int*, double*,
+                         double*, double*,double*, double*, double*, double*, double*,
+                         double*, double*, double*, char*, int*, int*, int*, int* );
+   void forcingfort( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
+                double*, double*, double*, double*, double*, double*, double*, double* );
+   void forcingfortsg(int*, int*, int*, int*, int*, 
+                      int*, double*, double*, double*, double*, double*, double*, double*, 
+                      double*, double*, double*, double*, double*,double*,double*,double* );
    void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
 }
@@ -610,7 +624,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   //     for( int s = 0 ; s < point_sources.size() ; s++ )
   //        point_sources[s]->print_info();
     
-// output flags and setting that affect the run
+// output flags and settings that affect the run
    if( proc_zero() && mVerbose >= 3 )
    {
       printf("\nReporting SW4 internal flags and settings:\n");
@@ -1378,8 +1392,8 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       Unextc.define(3,ibc,iec,jbc,jec,kc,kc); // only needs k=kc (on the interface)
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
 
-    // Set ghost point values that are unknowns when solving the interface condition to zero. Assume that Dirichlet data
-    // are already set on ghost points on the (supergrid) sides, which are not treated as unknown variables.
+    //  Zero out the ghost point values that are unknowns when solving the interface condition. Assume that Dirichlet data
+    // are already set on ghost points on the other (supergrid) sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true ); // inside=true
       dirichlet_hom_ic( a_Up[g], g, kc-1, true );
 
@@ -1391,6 +1405,9 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
 //  compute contribution to the displacements at the next time level (Unextc, Unextf) from the interior grid points in Up
 // note: t+dt refers to the time level for the forcing. Unextf lives on time level t+2*dt
+//
+      // Check super-grid terms !
+      //
       compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, time+mDt, point_sources );
       compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, time+mDt, point_sources );
 
@@ -1762,6 +1779,7 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
 
          printf("3: x=%e, y=%e, z=%e, mu=%e\n", x, y, z, mMu[g](i,j,k));
       }
+// get array pointers for fortran
       double* mu_ptr    = mMu[g].c_ptr();
       double* la_ptr    = mLambda[g].c_ptr();
       double om = m_twilight_forcing->m_omega;
@@ -1769,45 +1787,83 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
       double cv = m_twilight_forcing->m_c;
       double h  = mGridSize[g];
       double* b_ptr = B.c_ptr();
+      double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+      double omstry = m_supergrid_taper_y[g].get_tw_omega();
+
       if( m_iStartInt[g] == 1 )
       {
 	 // low i-side
 	 int i1 = m_iStart[g], i2=m_iStartInt[g]-adj;
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                         mu_ptr, la_ptr, &m_zmin[g],
-                         &i1, &i2, &j1, &j2 );
+         if( usingSupergrid() )
+         {
+            twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                              h, kic, t, om, cv, ph, omstrx, omstry,
+                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+         }
+         else
+         {
+            twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+                            &h, &kic, &t, &om, &cv, &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2 );
+         }
+         
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
 	 // high i-side
 	 int i1 = m_iEndInt[g]+adj, i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                         mu_ptr, la_ptr, &m_zmin[g],
-                         &i1, &i2, &j1, &j2 );
+         if( usingSupergrid() )
+         {
+            twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                              h, kic, t, om, cv, ph, omstrx, omstry,
+                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+         }
+         else
+         {
+            twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                            mu_ptr, la_ptr, &m_zmin[g],
+                            &i1, &i2, &j1, &j2 );
+         }
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jStartInt[g]-adj;
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                         mu_ptr, la_ptr, &m_zmin[g],
-                         &i1, &i2, &j1, &j2 );
+         if( usingSupergrid() )
+         {
+            twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                              h, kic, t, om, cv, ph, omstrx, omstry,
+                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+         }
+         else
+         {
+            twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                            mu_ptr, la_ptr, &m_zmin[g],
+                            &i1, &i2, &j1, &j2 );
+         }
       }
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jEndInt[g]+adj, j2=m_jEnd[g];
-	 twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                         &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                         mu_ptr, la_ptr, &m_zmin[g],
-                         &i1, &i2, &j1, &j2 );
+         if( usingSupergrid() )
+         {
+            twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                              h, kic, t, om, cv, ph, omstrx, omstry,
+                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+         }
+         else
+         {
+            twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+                            mu_ptr, la_ptr, &m_zmin[g],
+                            &i1, &i2, &j1, &j2 );
+         }
       }
    }      
 }
@@ -1881,7 +1937,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    Sarray Lutt(3,ib,ie,jb,je,kic,kic);
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
-   F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+   rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
 					      m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
 					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 					      m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic );
@@ -1949,10 +2005,10 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
    int nz = m_global_nz[g];
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
-   F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
-					      m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-					      m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
+   rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+                    m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
+                    mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+                    m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
 // Note: 4 last arguments of the above function call:
 // (kb,ke) is the declared size of Up in the k-direction
 // (kic,kic) is the declared size of Lu in the k-direction
@@ -1969,8 +2025,21 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
       double amprho=m_twilight_forcing->m_amprho;
       double ampmu=m_twilight_forcing->m_ampmu;
       double amplambda=m_twilight_forcing->m_amplambda;
-      F77_FUNC(forcingfort,FORCINGFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+      if( usingSupergrid() )
+      {
+         double omstrx = m_supergrid_taper_x[g].get_tw_omega();
+         double omstry = m_supergrid_taper_y[g].get_tw_omega();
+         double omstrz = m_supergrid_taper_z[g].get_tw_omega();
+         forcingfortsg(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+                         &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
+                         &omstrx, &omstry, &omstrz );
+      }
+      else
+      {
+         forcingfort( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+                      &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+      }
+           
    }
    else if( m_rayleigh_wave_test || m_energy_test )
       f.set_to_zero();
@@ -2001,6 +2070,16 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
 	 Unext(2,i,j,kic) = 2*a_Up(2,i,j,kic) - a_U(2,i,j,kic) + irho*(Lu(2,i,j,kic)+f(2,i,j,kic));
 	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+f(3,i,j,kic));
       }
+// add in super-grid damping terms
+   if (usingSupergrid()) // assume 4th order AD, Cartesian grid
+   {
+// assign array pointers on the fly
+      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+                  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+                  m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+                  ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
+      // Note: the last four arguments define the declared size of Unext, followed by the lower and upper boundaries of the k-window
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -2063,19 +2142,22 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    // e.g., domain in i-direction:   i=-2,-1,0,1,2,...,Ni,Ni+1,Ni+2,Ni+3
    // we solve for ghost points at i=2,..,Ni-1, assuming Dirichlet conditions given on i=1,i=Ni and
    // at the ghost points i=-2,-1,0,Ni+1,Ni+2,Ni+3. 
+   //
    // The arrays Bf,Unextf, etc are assumed to be computed with all z-ghost points zero,
    // i.e., Uf(i,Nkf+1) was zero for i=-2,-1,..,Ni+3 when Bf and Unextf were evaluated from Uf 
-   // (similarly for Unextc and Bc). Before this routine is called, correct boundary values for
+   // (similarly for Unextc and Bc).
+   //
+   // Before this routine is called, correct boundary values for
    // Uf(-2,Nkf+1),..Uf(1,Nkf+1) (and similarly at the upper i-boundary, and for Uc) must be imposed.
    // In this way the restriction and prolongation stencils can be computed without any special
-   // treatment near the i-boundaries. 
+   // treatment near the (i,j)-boundaries. 
 
    const double i16 = 1.0/16;
    const double i256 = 1.0/256;
    const double i1024 = 1.0/1024;
 
    int jcb, jce, icb, ice, jfb, jfe, ifb, ife, nkf;
-   double nuf = mDt*mDt/(cof*hf*hf); // cof is an argument to this routine
+   double nuf = mDt*mDt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
    double nuc = mDt*mDt/(cof*hc*hc);
    double ihc = 1/hc, ihf=1/hf;
    double jacerr = m_citol+1,jacerr0;
@@ -2113,6 +2195,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    while( jacerr > m_citol && it < m_cimaxiter )
    {
       double rmax[6]={0,0,0,0,0,0};
+//
+// REMARK: check jump condition in the presence of stretching function;
+// stretching function may be different in the fine and coarse grids!
+//
 // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
       for( int jc= jcb ; jc <= jce ; jc++ )
 	 for( int ic= icb ; ic <= ice ; ic++ )
@@ -2120,38 +2206,44 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // i odd, j odd
 	    int i=2*ic-1, j=2*jc-1;
             // setup 2x2 system matrix
+            // unknowns: (Uf, Uc)
+// eqn 1: continuity of normal stress
 	    a11 = 0.25*Muf(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid
 	    a12 =      Muc(ic,jc,1)*m_sbop[0]*ihc;  // ihc = 1/h on the coarse grid
+// eqn 2: continuity of displacement
+            // NEED stretching terms in the matrix elements!!!
 	    a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; // nuf = dt^2/(cof * h^2) on the fine grid
 	    a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0]; // nuc = dt^2/(cof * h^2) on the coarse grid
-	    for( int c=1 ; c <= 2 ; c++ ) // AP: what are the 2 components? 
+	    for( int c=1 ; c <= 2 ; c++ ) //  the 2 tangential components ? 
 	    {
 // apply the restriction operator to the normal stress on the interface (Bf is on the fine grid)
 	       b1  = i1024*( 
-                    Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf) +
-	        9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf)) +
-	       16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) + 
-	        9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
-	  	    Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf) );
+                  Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf) +
+                  9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf)) +
+                  16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) + 
+                  9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
+                  Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf) );
+
 	       b1 = b1 - i1024*m_sbop[0]*ihf*(
-                Muf(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Muf(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
-   	    -16*Muf(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Muf(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
-               +Muf(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
-	  9*(  -Muf(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Muf(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
-	    +16*Muf(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Muf(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
-	       -Muf(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
-	 16*(  -Muf(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Muf(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) 
-	                                             + 9*Muf(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
-               -Muf(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
-	  9*(  -Muf(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Muf(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
-            +16*Muf(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Muf(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
-	       -Muf(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
-	        Muf(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Muf(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
-	    -16*Muf(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Muf(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
-	       +Muf(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
+                  Muf(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Muf(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
+                  -16*Muf(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Muf(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
+                  +Muf(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
+                  9*(  -Muf(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Muf(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
+                       +16*Muf(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Muf(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
+                       -Muf(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
+                  16*(  -Muf(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Muf(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) 
+                        + 9*Muf(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
+                        -Muf(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
+                  9*(  -Muf(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Muf(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
+                       +16*Muf(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Muf(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
+                       -Muf(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
+                  Muf(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Muf(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
+                  -16*Muf(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Muf(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
+                  +Muf(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
 
 	       b1 = b1 - Bc(c,ic,jc,1);
-	       b2 = Unextc(c,ic,jc,1)-Unextf(c,i,j,nkf);
+            // NEED stretching terms in b2!!!
+	       b2 = Unextc(c,ic,jc,1)-Unextf(c,i,j,nkf); // add stretching functions
 	       deti=1/(a11*a22-a12*a21);
 	       r1 = Uf(c,i,j,nkf+1);
 	       r2 = Uc(c,ic,jc,0);
@@ -2176,6 +2268,8 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // setup the matrix for the 3rd component of the normal stress (different coefficients)
 	    a11 = 0.25*Mlf(i,j,nkf)*m_sbop[0]*ihf;
 	    a12 =    (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc;
+
+            // NEED stretching terms in the matrix elements a21 & a22!!!
 	    a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0];
 	    a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
 // apply the restriction operator to the fine grid normal stress grid function (Bf)
@@ -2204,7 +2298,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
 // setup the RHS
 	       b1 = b1 - Bc(3,ic,jc,1);
-	       b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf);
+	       b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf); // need stretching terms in b2!!!
 	       deti=1/(a11*a22-a12*a21);
 // previous values
 	       r1 = Uf(3,i,j,nkf+1);
@@ -2231,6 +2325,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       //      goto skipthis;
       
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
+//
+// TODO: insert coarse and fine stretching functions below
+//
       int ic, jc;
       for( int j=jfb ; j <= jfe ; j++ )
 	 for( int i=ifb ; i <= ife ; i++ )
@@ -2244,7 +2341,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 		  {
 		     ic = (i+1)/2;
 		     jc = j/2;
+// All Unextc/str_coarse
 		     b1 = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
+// All Uc/str_coarse
 		     b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(c,ic,jc-1,0)*Morc(ic,jc-1,1) + 
 						      9*Uc(c,ic,jc  ,0)*Morc(ic,jc  ,1) + 
 						      9*Uc(c,ic,jc+1,0)*Morc(ic,jc+1,1)
@@ -2254,7 +2353,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 		  {
 		     ic = i/2;
 		     jc = (j+1)/2;
+// All Unextc/str_coarse
 		     b1 = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
+// All Uc/str_coarse
 		     b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+ 
 						      9*Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+ 
 						      9*Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1)
@@ -2264,34 +2365,38 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 		  {
 		     ic = i/2;
 		     jc = j/2;
+// All Unextc/str_coarse
 		     b1 = i256*
                             ( Unextc(c,ic-1,jc-1,1)-9*(Unextc(c,ic,jc-1,1)+Unextc(c,ic+1,jc-1,1))+Unextc(c,ic+2,jc-1,1)
 	 	        + 9*(-Unextc(c,ic-1,jc,  1)+9*(Unextc(c,ic,jc,  1)+Unextc(c,ic+1,jc,  1))-Unextc(c,ic+2,jc,  1)  
 			     -Unextc(c,ic-1,jc+1,1)+9*(Unextc(c,ic,jc+1,1)+Unextc(c,ic+1,jc+1,1))-Unextc(c,ic+2,jc+1,1))
 		             +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
 
+// All Uc/str_coarse
 		     b1 = b1 + nuc*m_ghcof[0]*i256*(
-						    Uc(c,ic-1,jc-1,0)*Morc(ic-1,jc-1,1)
-						-9*(Uc(c,ic,  jc-1,0)*Morc(ic,  jc-1,1)+
-						    Uc(c,ic+1,jc-1,0)*Morc(ic+1,jc-1,1))+
-						    Uc(c,ic+2,jc-1,0)*Morc(ic+2,jc-1,1)
-			      + 9*(
-				      -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+
-				   9*( Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+
-                                       Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1))
-                                      -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1)  
-				      -Uc(c,ic-1,jc+1,0)*Morc(ic-1,jc+1,1)+
-				   9*( Uc(c,ic,  jc+1,0)*Morc(ic,  jc+1,1)+
-                                       Uc(c,ic+1,jc+1,0)*Morc(ic+1,jc+1,1))
-				      -Uc(c,ic+2,jc+1,0)*Morc(ic+2,jc+1,1)  )
-					      + Uc(c,ic-1,jc+2,0)*Morc(ic-1,jc+2,1)
-					    -9*(Uc(c,ic,  jc+2,0)*Morc(ic,  jc+2,1) +
-			  		        Uc(c,ic+1,jc+2,0)*Morc(ic+1,jc+2,1)) +
-						    Uc(c,ic+2,jc+2,0)*Morc(ic+2,jc+2,1)   );
+                        Uc(c,ic-1,jc-1,0)*Morc(ic-1,jc-1,1)
+                        -9*(Uc(c,ic,  jc-1,0)*Morc(ic,  jc-1,1)+
+                            Uc(c,ic+1,jc-1,0)*Morc(ic+1,jc-1,1))+
+                        Uc(c,ic+2,jc-1,0)*Morc(ic+2,jc-1,1)
+                        + 9*(
+                           -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+
+                           9*(Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+
+                               Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1))
+                           -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1)  
+                           -Uc(c,ic-1,jc+1,0)*Morc(ic-1,jc+1,1)+
+                           9*(Uc(c,ic,  jc+1,0)*Morc(ic,  jc+1,1)+
+                               Uc(c,ic+1,jc+1,0)*Morc(ic+1,jc+1,1))
+                           -Uc(c,ic+2,jc+1,0)*Morc(ic+2,jc+1,1)
+                           )
+                        + Uc(c,ic-1,jc+2,0)*Morc(ic-1,jc+2,1)
+                        -9*(Uc(c,ic,  jc+2,0)*Morc(ic,  jc+2,1) +
+                            Uc(c,ic+1,jc+2,0)*Morc(ic+1,jc+2,1)) +
+                        Uc(c,ic+2,jc+2,0)*Morc(ic+2,jc+2,1)
+                        );
 		  }
-		  b1 = b1 - Unextf(c,i,j,nkf);
-		  	       a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
-		  r3 = Uf(c,i,j,nkf+1);
+		  b1 = b1 - Unextf(c,i,j,nkf); // b1*str_fine on rhs
+                  a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+		  r3 = Uf(c,i,j,nkf+1); // save old value for relaxation
 	       //	       Uf(c,i,j,nkf+1) = b1/a11;
 // update ghost point value Uf(c,i,j,nkf+1)
 		  Uf(c,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*Muf(i,j,nkf));
@@ -2307,7 +2412,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	       {
 		  ic = (i+1)/2;
 		  jc = j/2;
+// All Unextc/str_coarse
 		  b1 = i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
+// All Uc/str_coarse
 		  b1 = b1 + nuc*m_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
 						   9*Uc(3,ic,jc  ,0)*Mlrc(ic,jc  ,1) + 
 						   9*Uc(3,ic,jc+1,0)*Mlrc(ic,jc+1,1)
@@ -2317,7 +2424,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	       {
 		  ic = i/2;
 		  jc = (j+1)/2;
+// All Unextc/str_coarse
 		  b1 = i16*(-Unextc(3,ic-1,jc,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic+1,jc,1))-Unextc(3,ic+2,jc,1));
+// All Uc/str_coarse
 		  b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+ 
 						  9*Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+ 
 						  9*Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1)
@@ -2327,35 +2436,37 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	       {
 		  ic = i/2;
 		  jc = j/2;
+// All Unextc/str_coarse
 		  b1 = i256*
-                            ( Unextc(3,ic-1,jc-1,1)-9*(Unextc(3,ic,jc-1,1)+Unextc(3,ic+1,jc-1,1))+Unextc(3,ic+2,jc-1,1)
-	 	        + 9*(-Unextc(3,ic-1,jc,  1)+9*(Unextc(3,ic,jc,  1)+Unextc(3,ic+1,jc,  1))-Unextc(3,ic+2,jc,  1)  
-			     -Unextc(3,ic-1,jc+1,1)+9*(Unextc(3,ic,jc+1,1)+Unextc(3,ic+1,jc+1,1))-Unextc(3,ic+2,jc+1,1))
-		             +Unextc(3,ic-1,jc+2,1)-9*(Unextc(3,ic,jc+2,1)+Unextc(3,ic+1,jc+2,1))+Unextc(3,ic+2,jc+2,1) );
+                     ( Unextc(3,ic-1,jc-1,1)-9*(Unextc(3,ic,jc-1,1)+Unextc(3,ic+1,jc-1,1))+Unextc(3,ic+2,jc-1,1)
+                       + 9*(-Unextc(3,ic-1,jc,  1)+9*(Unextc(3,ic,jc,  1)+Unextc(3,ic+1,jc,  1))-Unextc(3,ic+2,jc,  1)  
+                            -Unextc(3,ic-1,jc+1,1)+9*(Unextc(3,ic,jc+1,1)+Unextc(3,ic+1,jc+1,1))-Unextc(3,ic+2,jc+1,1))
+                       +Unextc(3,ic-1,jc+2,1)-9*(Unextc(3,ic,jc+2,1)+Unextc(3,ic+1,jc+2,1))+Unextc(3,ic+2,jc+2,1) );
 
+// All Uc/str_coarse
 		  b1 = b1 + nuc*m_ghcof[0]*i256*(
-						    Uc(3,ic-1,jc-1,0)*Mlrc(ic-1,jc-1,1)
-						-9*(Uc(3,ic,  jc-1,0)*Mlrc(ic,  jc-1,1)+
-						    Uc(3,ic+1,jc-1,0)*Mlrc(ic+1,jc-1,1))+
-						    Uc(3,ic+2,jc-1,0)*Mlrc(ic+2,jc-1,1)
-			      + 9*(
-				      -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+
-				   9*( Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+
-                                       Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1))
-                                      -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1)  
-				      -Uc(3,ic-1,jc+1,0)*Mlrc(ic-1,jc+1,1)+
-				   9*( Uc(3,ic,  jc+1,0)*Mlrc(ic,  jc+1,1)+
-                                       Uc(3,ic+1,jc+1,0)*Mlrc(ic+1,jc+1,1))
-				      -Uc(3,ic+2,jc+1,0)*Mlrc(ic+2,jc+1,1)  )
-					      + Uc(3,ic-1,jc+2,0)*Mlrc(ic-1,jc+2,1)
-					    -9*(Uc(3,ic,  jc+2,0)*Mlrc(ic,  jc+2,1) +
-			  		        Uc(3,ic+1,jc+2,0)*Mlrc(ic+1,jc+2,1)) +
-						    Uc(3,ic+2,jc+2,0)*Mlrc(ic+2,jc+2,1)   );
+                     Uc(3,ic-1,jc-1,0)*Mlrc(ic-1,jc-1,1)
+                     -9*(Uc(3,ic,  jc-1,0)*Mlrc(ic,  jc-1,1)+
+                         Uc(3,ic+1,jc-1,0)*Mlrc(ic+1,jc-1,1))+
+                     Uc(3,ic+2,jc-1,0)*Mlrc(ic+2,jc-1,1)
+                     + 9*(
+                        -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+
+                        9*( Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+
+                            Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1))
+                        -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1)  
+                        -Uc(3,ic-1,jc+1,0)*Mlrc(ic-1,jc+1,1)+
+                        9*( Uc(3,ic,  jc+1,0)*Mlrc(ic,  jc+1,1)+
+                            Uc(3,ic+1,jc+1,0)*Mlrc(ic+1,jc+1,1))
+                        -Uc(3,ic+2,jc+1,0)*Mlrc(ic+2,jc+1,1)  )
+                     + Uc(3,ic-1,jc+2,0)*Mlrc(ic-1,jc+2,1)
+                     -9*(Uc(3,ic,  jc+2,0)*Mlrc(ic,  jc+2,1) +
+                         Uc(3,ic+1,jc+2,0)*Mlrc(ic+1,jc+2,1)) +
+                     Uc(3,ic+2,jc+2,0)*Mlrc(ic+2,jc+2,1)   );
 	       } // end  j even, i even
 // right hand side is mismatch in displacement                
-	       b1 = b1 - Unextf(3,i,j,nkf);
+	       b1 = b1 - Unextf(3,i,j,nkf); // b1*str_fine on rhs
 		  //	       a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
-	       r3 = Uf(3,i,j,nkf+1);
+	       r3 = Uf(3,i,j,nkf+1); // save previous value for relaxation below
 	       //	       Uf(3,i,j,nkf+1) = b1/a11;
 // solve for the ghost point value Uf(3,i,j,nkf+1)
 	       Uf(3,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf)));

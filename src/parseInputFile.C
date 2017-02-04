@@ -1866,7 +1866,11 @@ void EW::processTwilight(char* buffer)
 	m_supergrid_taper_z[mNumberOfGrids-1].set_twilight(omstrz);
 	m_supergrid_taper_z[0].set_twilight(omstrz);
      }
-  }
+// set the damping coefficient to zero
+     set_sg_damping(0.0);
+     set_sg_thickness(1); // just to keep the routine assign_supergrid_damping_arrays() happy
+     
+  } // end if sgstretch == 1
   set_global_bcs(bct);
 }
 
@@ -2699,7 +2703,7 @@ void EW::processSupergrid(char *buffer)
   
   CHECK_INPUT( !(thicknessSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
      
-  if (thicknessSet)
+  if (thicknessSet)// gp specified
      set_sg_thickness(sg_thickness);
 
   if( widthSet )

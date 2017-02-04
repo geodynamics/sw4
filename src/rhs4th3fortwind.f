@@ -1,7 +1,7 @@
       subroutine rhs4th3fortwind( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
      +     Lu, u, mu, la, h, strx, stry, strz, op, 
-     *     kfirstu, klastu, kfirstw, klastw )
+     +     kfirstu, klastu, kfirstw, klastw ) bind(c)
 
 ***********************************************************************
 *** Computes the L(u) = div(stress) operator on a subdomain 

@@ -993,6 +993,102 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine twfrsurfzsg_wind( ifirst, ilast, jfirst, jlast, 
+     *     kfirst, klast, h, kz, t, om, c, ph, omstrx, omstry,
+     *     bforce, mu, lambda, zmin, i1, i2, j1, j2 ) bind(c)
+c
+      implicit none
+c arguments
+      integer, value:: ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8, value:: h
+      integer, value:: kz
+      doubleprecision, value:: t
+      doubleprecision, value:: om,c,ph,omstrx,omstry
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast)
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision, value:: zmin
+      integer, value:: i1, i2, j1, j2
+c local variables
+      doubleprecision x
+      doubleprecision y
+      integer i, j
+      doubleprecision z
+
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t10
+      doubleprecision t11
+      doubleprecision t12
+      doubleprecision t15
+      doubleprecision t17
+      doubleprecision t19
+      doubleprecision t20
+      doubleprecision t22
+      doubleprecision t24
+      doubleprecision t25
+      doubleprecision t29
+      doubleprecision t3
+      doubleprecision t31
+      doubleprecision t32
+      doubleprecision t36
+      doubleprecision t39
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t46
+      doubleprecision t51
+      doubleprecision t53
+      doubleprecision t56
+      doubleprecision t6
+      doubleprecision t7
+
+      z = (kz-1)*h + zmin
+c the do loops should span j1,j2 and i1,i2
+c      do j=jfirst,jlast
+      do j=j1,j2
+         y = (j-1)*h
+c         do i=ifirst,ilast
+         do i=i1,i2
+            x=(i-1)*h
+            t1 = c*t
+            t3 = om*(x-t1)
+            t4 = sin(t3)
+            t6 = om*y+ph
+            t7 = sin(t6)
+            t10 = om*z+ph
+            t11 = cos(t10)
+            t12 = t11*om
+            t15 = sin(omstrx*x)
+            t17 = 1+t15/2
+            t19 = om*x+ph
+            t20 = cos(t19)
+            t22 = om*t7
+            t24 = om*(z-t1)
+            t25 = sin(t24)
+            forces(1) = mu(i,j,kz)*(t4*t7*t12+t17*t20*t22*t25)
+            t29 = sin(t19)
+            t31 = om*(y-t1)
+            t32 = sin(t31)
+            t36 = sin(omstry*y)
+            t39 = (1+t36/2)*t29
+            t40 = cos(t6)
+            forces(2) = mu(i,j,kz)*(t29*t32*t12+t39*t40*om*t25)
+            t46 = cos(t24)
+            t51 = cos(t3)
+            t53 = sin(t10)
+            t56 = cos(t31)
+            forces(3) = 2*mu(i,j,kz)*t29*t7*t46*om+lambda(i,j,kz)*
+     #(t17*t51*t22*t53+t39*t56*om*t53+t29*t7*t46*om)
+            bforce(1,i,j) = forces(1)
+            bforce(2,i,j) = forces(2)
+            bforce(3,i,j) = forces(3)
+         enddo
+      enddo
+      return
+      end
+
+
+c-----------------------------------------------------------------------
       subroutine TWFRSURFZSGSTRATT( ifirst, ilast, jfirst, jlast, 
      *       kfirst, klast, h, kz, t, omega, c, phase, omstrx, omstry,
      *       bforce, mua, lambdaa, zmin )

@@ -1702,55 +1702,55 @@ void EW::setup_supergrid( )
   for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
   {
      if( m_use_sg_width )
-	sg_width[g] = m_supergrid_width;
+        sg_width[g] = m_supergrid_width;
      else
-	sg_width[g] = m_sg_gp_thickness*mGridSize[g];
+        sg_width[g] = m_sg_gp_thickness*mGridSize[g];
 
      m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
-					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-					   sg_width[g] );
+                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+                                          sg_width[g] );
      m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
-					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-					   sg_width[g] );
+                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+                                          sg_width[g] );
   }
   if( topographyExists() )
   {
      int g=mNumberOfGrids-1;
      m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
-					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-					  sg_width[gTop] );
+                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+                                          sg_width[gTop] );
      m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
-					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-					  sg_width[gTop] );
+                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+                                          sg_width[gTop] );
   }
   if( mNumberOfGrids == 1 )
   {
      m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-					  (mbcGlobalType[5] == bSuperGrid), m_global_zmax,
-					  sg_width[0] );
+                                          (mbcGlobalType[5] == bSuperGrid), m_global_zmax,
+                                          sg_width[0] );
   }
   else
   {
      m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-							 false, m_global_zmax, sg_width[gTop] );
+                                                         false, m_global_zmax, sg_width[gTop] );
      m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
-					  sg_width[0] );
+                                          sg_width[0] );
      for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
-	m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, sg_width[g] );
+        m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, sg_width[g] );
   }
   
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
-   // Add one to thickness to allow two layers of internal ghost points
+     // Add one to thickness to allow two layers of internal ghost points
      int sgpts = m_sg_gp_thickness;
      if( m_use_sg_width )
-	sgpts = m_supergrid_width/mGridSize[g];
+        sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
      int kmax=m_global_nz[g]-sgpts;
 
      // Only grid 0 has super grid boundary at the bottom
      if( g > 0 )
-	kmax = m_global_nz[g];
+        kmax = m_global_nz[g];
 
      //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
      //	  << " " << 1+1 << " " << kmax-1 << endl;
@@ -1763,22 +1763,24 @@ void EW::setup_supergrid( )
      m_kEndActGlobal[g]   = m_kEndAct[g]   = kmax-1;
 
      if( m_iStartAct[g] < m_iStart[g] )
-	m_iStartAct[g] = m_iStart[g];
+        m_iStartAct[g] = m_iStart[g];
      if( m_jStartAct[g] < m_jStart[g] )
-	m_jStartAct[g] = m_jStart[g];
+        m_jStartAct[g] = m_jStart[g];
      if( m_iEndAct[g] > m_iEnd[g] )
-	m_iEndAct[g] = m_iEnd[g];
+        m_iEndAct[g] = m_iEnd[g];
      if( m_jEndAct[g] > m_jEnd[g] )
-	m_jEndAct[g] = m_jEnd[g];
+        m_jEndAct[g] = m_jEnd[g];
 
      // If empty, set dimensions so that imax-imin+1=0, to avoid negative element count.
      if( m_iStartAct[g] > m_iEndAct[g] )
-	m_iStartAct[g] = m_iEndAct[g]+1;
+        m_iStartAct[g] = m_iEndAct[g]+1;
      if( m_jStartAct[g] > m_jEndAct[g] )
-	m_jStartAct[g] = m_jEndAct[g]+1;
+        m_jStartAct[g] = m_jEndAct[g]+1;
      if( m_kStartAct[g] > m_kEndAct[g] )
-	m_kStartAct[g] = m_kEndAct[g]+1;
+        m_kStartAct[g] = m_kEndAct[g]+1;
   }
+
+  
 // tmp
 //   if (mVerbose >= 2 && proc_zero())
 //   {
@@ -1847,12 +1849,14 @@ void EW::assign_supergrid_damping_arrays()
   if( m_use_supergrid )
   {
 // tmp
-//    printf("SG: using supergrid!\n");
+     if( proc_zero() )
+        printf("SG: using supergrid!\n");
     
      if( m_twilight_forcing )
      {
 // tmp
-//       printf("SG: twilight setup!\n");
+     if( proc_zero() )
+        printf("SG: twilight setup!\n");
 
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
@@ -1894,7 +1898,9 @@ void EW::assign_supergrid_damping_arrays()
      else
      { // standard case starts here
 // tmp
-//       printf("SG: standard case!\n");
+        if( proc_zero() )
+           printf("SG: standard case!\n");
+
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
 	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )

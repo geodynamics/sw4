@@ -31,7 +31,7 @@
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine forcingfortsg( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     h, zmin, omstrx, omstry, omstrz )
+     +     h, zmin, omstrx, omstry, omstrz ) bind(c)
 
       implicit none
 

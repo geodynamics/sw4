@@ -71,9 +71,9 @@ void F77_FUNC(predfort,PREDFORT)(int*, int*, int*, int*, int*, int*,
 				 double*, double*, double*, double*, double*, double*, double*);    
 void F77_FUNC(rhouttlumf, RHOUTTLUMF)(int*, int*, int*, int*, int*, int*, 
 				      int*, double*, double*, double*, double*, double*, double*, double*);
-void F77_FUNC(forcingfort,FORCINGFORT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-				       double*, double*, double*, double*, double* );
+void forcingfort(int*, int*, int*, int*, int*, 
+                 int*, double*, double*, double*, double*, double*, double*, double*, 
+                 double*, double*, double*, double*, double* );
 void F77_FUNC(forcingfortc,FORCINGFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double* );
@@ -83,9 +83,9 @@ void F77_FUNC(forcingfortatt,FORCINGFORTATT)(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfortattc,FORCINGFORTATTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void forcingfortsg(int*, int*, int*, int*, int*, 
+                   int*, double*, double*, double*, double*, double*, double*, double*, 
+                   double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
@@ -3428,9 +3428,9 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
               double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
-              F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                     &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                     &h, &zmin, &omstrx, &omstry, &omstrz );
+              forcingfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                             &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                             &h, &zmin, &omstrx, &omstry, &omstrz );
               if( m_use_attenuation )
                  F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                               &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
@@ -3438,9 +3438,9 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
            }
            else
            {
-              F77_FUNC(forcingfort,FORCINGFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                 &h, &zmin );
+              forcingfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                           &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                           &h, &zmin );
               if( m_use_attenuation )
                  F77_FUNC(forcingfortatt,FORCINGFORTATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                           &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,

@@ -688,7 +688,7 @@ c equation, corresponding to exactSol and exactMat
 c
       subroutine forcingfort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     h, zmin)
+     +     h, zmin) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho, zmin
