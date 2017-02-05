@@ -1351,7 +1351,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       
       consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
 		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
-		cof, g, g+1, is_periodic );// mDt, m_citol, &m_cimaxiter, &m_sbop[0], &m_ghcof[0] );
+		cof, g, g+1, is_periodic );
       //      CHECK_INPUT(false," controlled termination");
 
       // Finally, restore the ghost point values on the sides of the domain.
@@ -1458,7 +1458,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 // Iteratively determine the ghost point values in Up to satisfy the jump conditions
       consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
 		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
-		cof, g, g+1, is_periodic );// mDt, m_citol, &m_cimaxiter, &m_sbop[0], &m_ghcof[0] );
+		cof, g, g+1, is_periodic);
       //      CHECK_INPUT(false," controlled termination");
 
       // Finally, restore the corner ghost point values (above and below) the Dirichlet sides of the domain.
@@ -2136,7 +2136,7 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 //-----------------------------------------------------------------------
 void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
 		   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
-		   double cof, int gc, int gf, int is_periodic[2] )
+		   double cof, int gc, int gf, int is_periodic[2])
 {
    // At boundaries to the left and right, at least three ghost points are required
    // e.g., domain in i-direction:   i=-2,-1,0,1,2,...,Ni,Ni+1,Ni+2,Ni+3
@@ -2152,6 +2152,20 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    // In this way the restriction and prolongation stencils can be computed without any special
    // treatment near the (i,j)-boundaries. 
 
+   double *a_strc_x = m_sg_str_x[gc];
+   double *a_strc_y = m_sg_str_y[gc];
+   double *a_strf_x  = m_sg_str_x[gf];
+   double *a_strf_y  = m_sg_str_y[gf];
+
+// stretching on the coarse side
+#define strc_x(i) a_strc_x[(i-m_iStart[gc])]   
+#define strc_y(j) a_strc_y[(j-m_jStart[gc])]   
+
+// stretching on the fine side
+#define strf_x(i) a_strf_x[(i-m_iStart[gf])]   
+#define strf_y(j) a_strf_y[(j-m_jStart[gf])]   
+
+      
    const double i16 = 1.0/16;
    const double i256 = 1.0/256;
    const double i1024 = 1.0/1024;
@@ -2188,10 +2202,25 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       for( int ic=m_iStart[gc] ; ic<=m_iEnd[gc] ; ic++ )
       {
 	 double irho=1/Rhoc(ic,jc,1);
-	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho; // mu/rho on the coarse grid
-	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho; // (2*mu+lambda)/rho on the coarse grid
+//	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho; // mu/rho on the coarse grid (no stretching)
+//	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho; // (2*mu+lambda)/rho on the coarse grid
+// new: include stretching in Morc and Mlrc
+	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho/(strc_x(ic)*strc_y(jc)); // mu/rho/(strc_x*strc_y) on the coarse grid
+	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho/(strc_x(ic)*strc_y(jc)); // (2*mu+lambda)/rho/(strc_x*strc_y)
+// new: include stretching terms in Unextc
+         for (int c=1; c<=3; c++)
+            Unextc(c,ic,jc,1) = Unextc(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
       }
 
+// new: include stretching terms in Unextf
+   for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
+      for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
+         for (int c=1; c<=3; c++)
+         {
+            Unextf(c,i,j,nkf) = Unextf(c,i,j,nkf)/(strf_x(i)*strf_y(j));
+         }
+      
+// start iteration
    while( jacerr > m_citol && it < m_cimaxiter )
    {
       double rmax[6]={0,0,0,0,0,0};
@@ -2211,9 +2240,12 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	    a11 = 0.25*Muf(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid
 	    a12 =      Muc(ic,jc,1)*m_sbop[0]*ihc;  // ihc = 1/h on the coarse grid
 // eqn 2: continuity of displacement
+// nuf = dt^2/(cof * hf^2), nuc = dt^2/(cof * hc^2)
             // NEED stretching terms in the matrix elements!!!
-	    a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; // nuf = dt^2/(cof * h^2) on the fine grid
-	    a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0]; // nuc = dt^2/(cof * h^2) on the coarse grid
+	    // a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; 
+	    // a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0];
+	    a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]/(strf_x(i)*strf_y(j)); 
+	    a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0]/(strc_x(ic)*strc_y(jc)); 
 	    for( int c=1 ; c <= 2 ; c++ ) //  the 2 tangential components ? 
 	    {
 // apply the restriction operator to the normal stress on the interface (Bf is on the fine grid)
@@ -2244,6 +2276,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	       b1 = b1 - Bc(c,ic,jc,1);
             // NEED stretching terms in b2!!!
 	       b2 = Unextc(c,ic,jc,1)-Unextf(c,i,j,nkf); // add stretching functions
+//	       b2 = Unextc(c,ic,jc,1)/(strc_x(ic)*strc_y(jc)) - Unextf(c,i,j,nkf)/(strf_x(i)*strf_y(j)); // stretching functions added
 	       deti=1/(a11*a22-a12*a21);
 	       r1 = Uf(c,i,j,nkf+1);
 	       r2 = Uc(c,ic,jc,0);
@@ -2253,6 +2286,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // damp the update of the ghost point values (r1, r2) hold previous values
 	       Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1) + (1-relax)*r1;
 	       Uc(c,ic,jc,0)   = relax*Uc(c,ic,jc,0)   + (1-relax)*r2;
+// change in solution
 	       r1 = r1-Uf(c,i,j,nkf+1);
 	       r2 = r2-Uc(c,ic,jc,0);
 	       rmax[c-1] = rmax[c-1] > fabs(r1) ? rmax[c-1] : fabs(r1);
@@ -2270,8 +2304,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	    a12 =    (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc;
 
             // NEED stretching terms in the matrix elements a21 & a22!!!
-	    a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0];
-	    a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
+	    // a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0];
+	    // a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
+	    a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0]/(strf_x(i)*strf_y(j)); 
+	    a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0]/(strc_x(ic)*strc_y(jc)); 
 // apply the restriction operator to the fine grid normal stress grid function (Bf)
 	    b1  = i1024*( 
                     Bf(3,i-3,j-3,nkf)-9*Bf(3,i-3,j-1,nkf)-16*Bf(3,i-3,j,nkf)-9*Bf(3,i-3,j+1,nkf)+Bf(3,i-3,j+3,nkf) +
@@ -2299,6 +2335,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // setup the RHS
 	       b1 = b1 - Bc(3,ic,jc,1);
 	       b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf); // need stretching terms in b2!!!
+//	       b2 = Unextc(3,ic,jc,1)/(strc_x(ic)*strc_y(jc)) - Unextf(3,i,j,nkf)/(strf_x(i)*strf_y(j)); // stretching functions added
 	       deti=1/(a11*a22-a12*a21);
 // previous values
 	       r1 = Uf(3,i,j,nkf+1);
@@ -2322,8 +2359,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	       //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
 	       //	       }
 	 }
-      //      goto skipthis;
-      
+//      
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
 //
 // TODO: insert coarse and fine stretching functions below
@@ -2374,35 +2410,33 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
 // All Uc/str_coarse
 		     b1 = b1 + nuc*m_ghcof[0]*i256*(
-                        Uc(c,ic-1,jc-1,0)*Morc(ic-1,jc-1,1)
-                        -9*(Uc(c,ic,  jc-1,0)*Morc(ic,  jc-1,1)+
-                            Uc(c,ic+1,jc-1,0)*Morc(ic+1,jc-1,1))+
+                        Uc(c,ic-1,jc-1,0)*Morc(ic-1,jc-1,1)-9*(Uc(c,ic,  jc-1,0)*Morc(ic,  jc-1,1)+Uc(c,ic+1,jc-1,0)*Morc(ic+1,jc-1,1)) +
                         Uc(c,ic+2,jc-1,0)*Morc(ic+2,jc-1,1)
                         + 9*(
-                           -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+
-                           9*(Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+
-                               Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1))
+                           -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)
+                           +9*(Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1))
                            -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1)  
                            -Uc(c,ic-1,jc+1,0)*Morc(ic-1,jc+1,1)+
-                           9*(Uc(c,ic,  jc+1,0)*Morc(ic,  jc+1,1)+
-                               Uc(c,ic+1,jc+1,0)*Morc(ic+1,jc+1,1))
+                           9*(Uc(c,ic,  jc+1,0)*Morc(ic,  jc+1,1)+Uc(c,ic+1,jc+1,0)*Morc(ic+1,jc+1,1))
                            -Uc(c,ic+2,jc+1,0)*Morc(ic+2,jc+1,1)
                            )
                         + Uc(c,ic-1,jc+2,0)*Morc(ic-1,jc+2,1)
-                        -9*(Uc(c,ic,  jc+2,0)*Morc(ic,  jc+2,1) +
-                            Uc(c,ic+1,jc+2,0)*Morc(ic+1,jc+2,1)) +
-                        Uc(c,ic+2,jc+2,0)*Morc(ic+2,jc+2,1)
+                        -9*(Uc(c,ic,  jc+2,0)*Morc(ic,  jc+2,1) +Uc(c,ic+1,jc+2,0)*Morc(ic+1,jc+2,1))
+                        +Uc(c,ic+2,jc+2,0)*Morc(ic+2,jc+2,1)
                         );
 		  }
 		  b1 = b1 - Unextf(c,i,j,nkf); // b1*str_fine on rhs
-                  a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+//		  b1 = b1 - Unextf(c,i,j,nkf)/(strf_x(i)*strf_y(j)); // b1*str_fine on rhs
+//                  a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+                  a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf))/(strf_x(i)*strf_y(j));
 		  r3 = Uf(c,i,j,nkf+1); // save old value for relaxation
-	       //	       Uf(c,i,j,nkf+1) = b1/a11;
 // update ghost point value Uf(c,i,j,nkf+1)
-		  Uf(c,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*Muf(i,j,nkf));
+//		  Uf(c,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*Muf(i,j,nkf)); // without stretching
+                  Uf(c,i,j,nkf+1) = b1/a11; // with stretching
 		  Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1)+(1-relax)*r3;
 		  //		  if( i == 4 && j == 7 && c == 1)
 		  //		     cout << "in loop " << -a11*Uf(c,i,j,nkf+1) + b1  << endl;
+// change in ghost point value
 		  r3 = r3 - Uf(c,i,j,nkf+1);
 		  rmax[c-1+3] = rmax[c-1+3] > fabs(r3) ? rmax[c-1+3] : fabs(r3);
 	       } // end for c=1,2
@@ -2415,6 +2449,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // All Unextc/str_coarse
 		  b1 = i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
 // All Uc/str_coarse
+// stretching coeff in Mlrc
 		  b1 = b1 + nuc*m_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
 						   9*Uc(3,ic,jc  ,0)*Mlrc(ic,jc  ,1) + 
 						   9*Uc(3,ic,jc+1,0)*Mlrc(ic,jc+1,1)
@@ -2437,6 +2472,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 		  ic = i/2;
 		  jc = j/2;
 // All Unextc/str_coarse
+// stretching coeff in Unextc
 		  b1 = i256*
                      ( Unextc(3,ic-1,jc-1,1)-9*(Unextc(3,ic,jc-1,1)+Unextc(3,ic+1,jc-1,1))+Unextc(3,ic+2,jc-1,1)
                        + 9*(-Unextc(3,ic-1,jc,  1)+9*(Unextc(3,ic,jc,  1)+Unextc(3,ic+1,jc,  1))-Unextc(3,ic+2,jc,  1)  
@@ -2444,6 +2480,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
                        +Unextc(3,ic-1,jc+2,1)-9*(Unextc(3,ic,jc+2,1)+Unextc(3,ic+1,jc+2,1))+Unextc(3,ic+2,jc+2,1) );
 
 // All Uc/str_coarse
+// stretching coeff in Mlrc
 		  b1 = b1 + nuc*m_ghcof[0]*i256*(
                      Uc(3,ic-1,jc-1,0)*Mlrc(ic-1,jc-1,1)
                      -9*(Uc(3,ic,  jc-1,0)*Mlrc(ic,  jc-1,1)+
@@ -2466,10 +2503,11 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // right hand side is mismatch in displacement                
 	       b1 = b1 - Unextf(3,i,j,nkf); // b1*str_fine on rhs
 		  //	       a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+               a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/Rhof(i,j,nkf)/(strf_x(i)*strf_y(j));
 	       r3 = Uf(3,i,j,nkf+1); // save previous value for relaxation below
-	       //	       Uf(3,i,j,nkf+1) = b1/a11;
 // solve for the ghost point value Uf(3,i,j,nkf+1)
-	       Uf(3,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf)));
+//	       Uf(3,i,j,nkf+1) = b1*Rhof(i,j,nkf)/(nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))); // no stretching
+	       Uf(3,i,j,nkf+1) = b1/a11;
 	       Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1)+(1-relax)*r3;
 	       r3 = r3 - Uf(3,i,j,nkf+1);
 	       rmax[2+3] = rmax[2+3] > fabs(r3) ? rmax[2+3] : fabs(r3);
@@ -2501,6 +2539,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       
    if( proc_zero() && mVerbose >= 4 )
       cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;
+#undef strc_x
+#undef strc_y
+#undef strf_x
+#undef strf_y
 }
 
 
