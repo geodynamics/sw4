@@ -699,7 +699,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // Grid refinement interface conditions:
     if (mOrder == 2)
+    {
+// add super-grid damping terms before enforcing interface conditions (otherwise, Up doesn't have the correct values on the interface)
+       if (usingSupergrid())
+       {
+	  addSuperGridDamping( Up, U, Um, mRho );
+       }
        enforceIC2( Up, U, Um, t, point_sources );
+    }
     else
        enforceIC( Up, U, Um, t, true, point_sources );
 
@@ -711,11 +718,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //
     if (mOrder == 2)
     {
-// add in super-grid damping terms
-       if (usingSupergrid())
-       {
-	  addSuperGridDamping( Up, U, Um, mRho );
-       }
 // Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
        {
@@ -1392,6 +1394,9 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       Unextc.define(3,ibc,iec,jbc,jec,kc,kc); // only needs k=kc (on the interface)
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
 
+// test: check that the condition Up[g+1](kf) = P Up[g](1) is satisfied on the interface
+      check_displacement_continuity( a_Up[g+1], a_Up[g], g+1, g);
+      
     //  Zero out the ghost point values that are unknowns when solving the interface condition. Assume that Dirichlet data
     // are already set on ghost points on the other (supergrid) sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true ); // inside=true
@@ -1526,6 +1531,70 @@ void EW::check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc
    //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
    double pcni   = (9*(Unextc(c,ic,jc,kc)+Unextc(c,ic+1,jc,kc))-(Unextc(c,ic-1,jc,kc)+Unextc(c,ic+2,jc,kc)))/16;
      cout << "  check next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << " " << pcni << " " << Unextf(c,i,j,kf)-pcni << endl;
+   //   cout << " check " << Uc(c,ic-2,jc,kc) << " " << Unextc(c,ic-2,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic-1,jc,kc) << " " << Unextc(c,ic-1,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic,jc,kc)  << " " << Unextc(c,ic,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic+1,jc,kc) << " " << Unextc(c,ic+1,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic+2,jc,kc) << " " << Unextc(c,ic+2,jc,kc) << endl;
+   //   cout << "       " << Uc(c,ic+3,jc,kc) << " " << Unextc(c,ic+3,jc,kc) << endl;
+
+}
+
+//-----------------------------------------------------------------------
+void EW::check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc )
+{
+   int icb, ifb, ice, ife, jcb, jfb, jce, jfe, nkf;
+   
+   icb = m_iStartInt[gc];
+   ifb = m_iStartInt[gf];
+
+   ice = m_iEndInt[gc];
+   ife = m_iEndInt[gf];
+   
+   jcb = m_jStartInt[gc];
+   jfb = m_jStartInt[gf];
+
+   jce = m_jEndInt[gc];
+   jfe = m_jEndInt[gf];
+
+   nkf = m_global_nz[gf];
+
+   double l2err=0, l2err_global=0;
+   
+// for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
+   for( int jc= jcb ; jc <= jce ; jc++ )
+      for( int ic= icb ; ic <= ice ; ic++ )
+      {
+// i odd, j odd
+         int i=2*ic-1, j=2*jc-1;
+         
+         for (int c=1; c<=3; c++)
+         {
+            l2err += (Uc(c,ic,jc,1)-Uf(c,i,j,nkf))*(Uc(c,ic,jc,1)-Uf(c,i,j,nkf));
+         }
+      }
+   l2err = sqrt(l2err);
+
+   MPI_Allreduce( &l2err, &l2err_global, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+
+   if (proc_zero())
+      cout << "Fine-coarse displacement missmatch = " << l2err_global << endl;
+               
+   // //   cout <<"check " << Uf(c,i,j,kf) << " " << Uc(c,ic,jc,kc) << " " << Uf(c,i,j,kf)-Uc(c,ic,jc,kc) << endl;
+   // //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
+   // i = 2*ic;
+   // //   j = 2*jc;
+   // double pci   = (9*(Uc(c,ic,jc,kc)+Uc(c,ic+1,jc,kc))-(Uc(c,ic-1,jc,kc)+Uc(c,ic+2,jc,kc)))/16;
+   // double pcim  = (9*(Uc(c,ic,jc-1,kc)+Uc(c,ic+1,jc-1,kc))-(Uc(c,ic-1,jc-1,kc)+Uc(c,ic+2,jc-1,kc)))/16;
+   // double pcip  = (9*(Uc(c,ic,jc+1,kc)+Uc(c,ic+1,jc+1,kc))-(Uc(c,ic-1,jc+1,kc)+Uc(c,ic+2,jc+1,kc)))/16;
+   // double pcipp = (9*(Uc(c,ic,jc+2,kc)+Uc(c,ic+1,jc+2,kc))-(Uc(c,ic-1,jc+2,kc)+Uc(c,ic+2,jc+2,kc)))/16;
+   // double pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
+
+   // double pcj = (9*(Uc(c,ic,jc,kc)+Uc(c,ic,jc+1,kc))-(Uc(c,ic,jc-1,kc)+Uc(c,ic,jc+2,kc)))/16;
+   // cout <<"check " << Uf(c,i,j,kf) << " " << Uc(c,ic,jc,kc) << " " << pci << " " << Uf(c,i,j,kf)-pci << endl;
+   // //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
+   // double pcni   = (9*(Unextc(c,ic,jc,kc)+Unextc(c,ic+1,jc,kc))-(Unextc(c,ic-1,jc,kc)+Unextc(c,ic+2,jc,kc)))/16;
+   //   cout << "  check next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << " " << pcni << " " << Unextf(c,i,j,kf)-pcni << endl;
    //   cout << " check " << Uc(c,ic-2,jc,kc) << " " << Unextc(c,ic-2,jc,kc) << endl;
    //   cout << "       " << Uc(c,ic-1,jc,kc) << " " << Unextc(c,ic-1,jc,kc) << endl;
    //   cout << "       " << Uc(c,ic,jc,kc)  << " " << Unextc(c,ic,jc,kc) << endl;

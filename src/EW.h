@@ -479,12 +479,6 @@ void get_geodyn_timelevel( vector<Sarray>& geodyndata );
 void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 			    vector<Sarray>& geodyndata2 );
 
-   //void consintp( Sarray& u_a, Sarray& um_a, Sarray& f_a, Sarray& mu_a, Sarray& la_a, Sarray& rho_a,
-   //	       Sarray& uf_a, Sarray& ufm_a, Sarray& ff_a, Sarray& muf_a, Sarray& laf_a,
-   //	       Sarray& rhof_a, Sarray* AlphaVE, Sarray* AlphaVEf, double hc, double hf, double dt, int g,
-   //	       double* a1, int* ipiv1, double* a2, int* ipiv2, int bctype[4], double tp1 );
-   //void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alphaf_a );
-
 void integrate_source( );
 
 void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
@@ -641,6 +635,7 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
    void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
                   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
                   double cof, int gc, int gp, int is_periodic[2] );
+   void check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc );
    void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
 //
 // VARIABLES BEYOND THIS POINT

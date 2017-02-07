@@ -58,11 +58,24 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    jfe = m_jEndInt[gf];
 
    nkf = m_global_nz[gf];
-   Sarray Mlf(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
+// material coefficients along the interface (fine grid)
+   Sarray Mlfs(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
+// make a local copy of Muf to simplify the addition of stretching
+   Sarray Mufs(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
+
    for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
       for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
-	 Mlf(i,j,nkf) = 2*Muf(i,j,nkf)+Lambdaf(i,j,nkf); // 2*mu + lambda on the fine grid
+      {
+	 Mlfs(i,j,nkf) = (2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))/(strf_x(i)*strf_y(j)); // (2*mu + lambda)/stretching on the fine grid
+         Mufs(i,j,nkf) = Muf(i,j,nkf)/(strf_x(i)*strf_y(j)); // mu/stretching on the fine grid
+// include stretching terms in Bf
+         for (int c=1; c<=3; c++)
+         {
+            Bf(c,i,j,nkf) = Bf(c,i,j,nkf)/(strf_x(i)*strf_y(j));
+         }
+      }
 
+// material coefficients along the interface (coarse grid)
    Sarray Morc(m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],1,1);
    Sarray Mlrc(m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],1,1);
    for( int jc=m_jStart[gc] ; jc<=m_jEnd[gc] ; jc++ )
@@ -71,6 +84,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	 double irho=1/Rhoc(ic,jc,1);
 	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho; // mu/rho on the coarse grid (no stretching)
 	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho; // (2*mu+lambda)/rho on the coarse grid
+// scale normal stress by stretching
+         for (int c=1; c<=3; c++)
+            Bc(c,ic,jc,1) = Bc(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
 // // new: include stretching in Morc and Mlrc
 // 	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho/(strc_x(ic)*strc_y(jc)); // mu/rho/(strc_x*strc_y) on the coarse grid
 // 	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho/(strc_x(ic)*strc_y(jc)); // (2*mu+lambda)/rho/(strc_x*strc_y)
@@ -104,8 +120,8 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
             // setup 2x2 system matrix
             // unknowns: (Uf, Uc)
 // eqn 1: continuity of normal stress: NEED stretching
-	    a11 = 0.25*Muf(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid
-	    a12 =      Muc(ic,jc,1)*m_sbop[0]*ihc;  // ihc = 1/h on the coarse grid
+	    a11 = 0.25*Mufs(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
+	    a12 = Muc(ic,jc,1)*m_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));  // ihc = 1/h on the coarse grid
 // eqn 2: continuity of displacement
 // nuf = dt^2/(cof * hf^2), nuc = dt^2/(cof * hc^2)
 	    a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; 
@@ -117,29 +133,30 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // apply the restriction operator to the normal stress on the interface (Bf is on the fine grid)
 // scale Bf by 1/strf ?
 	       b1  = i1024*( 
-                  Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf) +
-                  9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf)) +
-                  16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) + 
-                  9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
-                  Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf) );
+                  Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
+                  +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
+                  +16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf))
+                  +9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
+                  Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf)
+                  );
 
 // scale Muf by 1/strf ?
 	       b1 = b1 - i1024*m_sbop[0]*ihf*(
-                  Muf(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Muf(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
-                  -16*Muf(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Muf(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
-                  +Muf(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
-                  9*(  -Muf(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Muf(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
-                       +16*Muf(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Muf(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
-                       -Muf(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
-                  16*(  -Muf(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Muf(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) 
-                        + 9*Muf(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
-                        -Muf(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
-                  9*(  -Muf(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Muf(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
-                       +16*Muf(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Muf(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
-                       -Muf(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
-                  Muf(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Muf(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
-                  -16*Muf(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Muf(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
-                  +Muf(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
+                  Mufs(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Mufs(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
+                  -16*Mufs(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Mufs(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
+                  +Mufs(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
+                  9*(  -Mufs(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Mufs(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
+                       +16*Mufs(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Mufs(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
+                       -Mufs(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
+                  16*(  -Mufs(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Mufs(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) // NOTE: the Uf(i,j) term is in a11
+                        + 9*Mufs(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
+                        -Mufs(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
+                  9*(  -Mufs(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Mufs(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
+                       +16*Mufs(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Mufs(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
+                       -Mufs(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
+                  Mufs(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Mufs(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
+                  -16*Mufs(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Mufs(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
+                  +Mufs(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
 
             // NEED stretching term in b1; scale Bc ?
 	       b1 = b1 - Bc(c,ic,jc,1);
@@ -170,10 +187,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
             
 // setup the matrix for the 3rd component of the normal stress (different coefficients)
             // NEED stretching terms in a11 & a12
-	    a11 = 0.25*Mlf(i,j,nkf)*m_sbop[0]*ihf;
-	    a12 =    (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc;
+	    a11 = 0.25*Mlfs(i,j,nkf)*m_sbop[0]*ihf; // Mlfs contains stretching
+	    a12 = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));
 
-	    a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0];
+	    a21 = nuf/Rhof(i,j,nkf)*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))*m_ghcof[0];
 	    a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
 	    // a21 = nuf/Rhof(i,j,nkf)*Mlf(i,j,nkf)*m_ghcof[0]/(strf_x(i)*strf_y(j)); 
 	    // a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0]/(strc_x(ic)*strc_y(jc)); 
@@ -188,21 +205,21 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
                Bf(3,i+3,j-3,nkf)-9*Bf(3,i+3,j-1,nkf)-16*Bf(3,i+3,j,nkf)-9*Bf(3,i+3,j+1,nkf)+Bf(3,i+3,j+3,nkf) );
 
 	    b1 = b1 - i1024*m_sbop[0]*ihf*(
-               Mlf(i-3,j-3,nkf)*Uf(3,i-3,j-3,nkf+1) - 9*Mlf(i-3,j-1,nkf)*Uf(3,i-3,j-1,nkf+1)
-               -16*Mlf(i-3,j,  nkf)*Uf(3,i-3,  j,nkf+1) - 9*Mlf(i-3,j+1,nkf)*Uf(3,i-3,j+1,nkf+1)
-               +Mlf(i-3,j+3,nkf)*Uf(3,i-3,j+3,nkf+1) +					    
-               9*(  -Mlf(i-1,j-3,nkf)*Uf(3,i-1,j-3,nkf+1) + 9*Mlf(i-1,j-1,nkf)*Uf(3,i-1,j-1,nkf+1) 
-                    +16*Mlf(i-1,j,  nkf)*Uf(3,i-1,j,  nkf+1) + 9*Mlf(i-1,j+1,nkf)*Uf(3,i-1,j+1,nkf+1) 
-                    -Mlf(i-1,j+3,nkf)*Uf(3,i-1,j+3,nkf+1) ) +
-               16*(  -Mlf(i,  j-3,nkf)*Uf(3,i,  j-3,nkf+1) + 9*Mlf(i,  j-1,nkf)*Uf(3,i,  j-1,nkf+1) 
-                     + 9*Mlf(i,  j+1,nkf)*Uf(3,i,  j+1,nkf+1)
-               -Mlf(i,  j+3,nkf)*Uf(3,i,  j+3,nkf+1) ) + 
-               9*(  -Mlf(i+1,j-3,nkf)*Uf(3,i+1,j-3,nkf+1) + 9*Mlf(i+1,j-1,nkf)*Uf(3,i+1,j-1,nkf+1)
-                    +16*Mlf(i+1,j,  nkf)*Uf(3,i+1,j,  nkf+1) + 9*Mlf(i+1,j+1,nkf)*Uf(3,i+1,j+1,nkf+1)
-                    -Mlf(i+1,j+3,nkf)*Uf(3,i+1,j+3,nkf+1) ) +
-               Mlf(i+3,j-3,nkf)*Uf(3,i+3,j-3,nkf+1) - 9*Mlf(i+3,j-1,nkf)*Uf(3,i+3,j-1,nkf+1)
-               -16*Mlf(i+3,j,  nkf)*Uf(3,i+3,j,  nkf+1) - 9*Mlf(i+3,j+1,nkf)*Uf(3,i+3,j+1,nkf+1)
-	       +Mlf(i+3,j+3,nkf)*Uf(3,i+3,j+3,nkf+1) );
+               Mlfs(i-3,j-3,nkf)*Uf(3,i-3,j-3,nkf+1) - 9*Mlfs(i-3,j-1,nkf)*Uf(3,i-3,j-1,nkf+1)
+               -16*Mlfs(i-3,j,  nkf)*Uf(3,i-3,  j,nkf+1) - 9*Mlfs(i-3,j+1,nkf)*Uf(3,i-3,j+1,nkf+1)
+               +Mlfs(i-3,j+3,nkf)*Uf(3,i-3,j+3,nkf+1) +					    
+               9*(  -Mlfs(i-1,j-3,nkf)*Uf(3,i-1,j-3,nkf+1) + 9*Mlfs(i-1,j-1,nkf)*Uf(3,i-1,j-1,nkf+1) 
+                    +16*Mlfs(i-1,j,  nkf)*Uf(3,i-1,j,  nkf+1) + 9*Mlfs(i-1,j+1,nkf)*Uf(3,i-1,j+1,nkf+1) 
+                    -Mlfs(i-1,j+3,nkf)*Uf(3,i-1,j+3,nkf+1) ) +
+               16*(  -Mlfs(i,  j-3,nkf)*Uf(3,i,  j-3,nkf+1) + 9*Mlfs(i,  j-1,nkf)*Uf(3,i,  j-1,nkf+1) 
+                     + 9*Mlfs(i,  j+1,nkf)*Uf(3,i,  j+1,nkf+1)
+               -Mlfs(i,  j+3,nkf)*Uf(3,i,  j+3,nkf+1) ) + 
+               9*(  -Mlfs(i+1,j-3,nkf)*Uf(3,i+1,j-3,nkf+1) + 9*Mlfs(i+1,j-1,nkf)*Uf(3,i+1,j-1,nkf+1)
+                    +16*Mlfs(i+1,j,  nkf)*Uf(3,i+1,j,  nkf+1) + 9*Mlfs(i+1,j+1,nkf)*Uf(3,i+1,j+1,nkf+1)
+                    -Mlfs(i+1,j+3,nkf)*Uf(3,i+1,j+3,nkf+1) ) +
+               Mlfs(i+3,j-3,nkf)*Uf(3,i+3,j-3,nkf+1) - 9*Mlfs(i+3,j-1,nkf)*Uf(3,i+3,j-1,nkf+1)
+               -16*Mlfs(i+3,j,  nkf)*Uf(3,i+3,j,  nkf+1) - 9*Mlfs(i+3,j+1,nkf)*Uf(3,i+3,j+1,nkf+1)
+	       +Mlfs(i+3,j+3,nkf)*Uf(3,i+3,j+3,nkf+1) );
 
 // setup the RHS
 	       b1 = b1 - Bc(3,ic,jc,1); // need stretching terms in Bc
