@@ -625,7 +625,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   //        point_sources[s]->print_info();
     
 // output flags and settings that affect the run
-   if( proc_zero() && mVerbose >= 3 )
+   if( proc_zero() && mVerbose >= 1 )
    {
       printf("\nReporting SW4 internal flags and settings:\n");
       printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s," 
@@ -637,7 +637,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
              m_energy_test?"yes":"no",
              m_lamb_test?"yes":"no",
              m_rayleigh_wave_test?"yes":"no");
-      printf("m_use_supergrid=%s\n", m_use_supergrid?"yes":"no");
+      printf("m_use_supergrid=%s\n", usingSupergrid()?"yes":"no");
       printf("End report settings\n\n");
    }
    
@@ -1395,7 +1395,8 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
 
 // test: check that the condition Up[g+1](kf) = P Up[g](1) is satisfied on the interface
-      check_displacement_continuity( a_Up[g+1], a_Up[g], g+1, g);
+      if (mVerbose >= 3)
+         check_displacement_continuity( a_Up[g+1], a_Up[g], g+1, g);
       
     //  Zero out the ghost point values that are unknowns when solving the interface condition. Assume that Dirichlet data
     // are already set on ghost points on the other (supergrid) sides, which are not treated as unknown variables.
@@ -1573,9 +1574,9 @@ void EW::check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc )
             l2err += (Uc(c,ic,jc,1)-Uf(c,i,j,nkf))*(Uc(c,ic,jc,1)-Uf(c,i,j,nkf));
          }
       }
-   l2err = sqrt(l2err);
-
    MPI_Allreduce( &l2err, &l2err_global, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+
+   l2err_global = sqrt(l2err_global);
 
    if (proc_zero())
       cout << "Fine-coarse displacement missmatch = " << l2err_global << endl;

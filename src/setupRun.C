@@ -844,10 +844,10 @@ void EW::set_materials()
       {
 	if (g < mNumberOfCartesianGrids-1) // extrapolate to top
 	{
-	  kFrom = m_kStart[g]+mMaterialExtrapolate;
+	  kFrom = m_kStartInt[g]+mMaterialExtrapolate;
 
 	  if (!mQuiet && proc_zero() && mVerbose>=3)
-	    printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
+	    printf("setMaterials> top extrapol, g=%i, kFrom=%d, kStart=%d, kStartInt=%d\n", g, kFrom, m_kStart[g], m_kStartInt[g]);
 
 	  for (int k = m_kStart[g]; k < kFrom; ++k)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -873,10 +873,10 @@ void EW::set_materials()
 
 	if (g > 0) // extrapolate to bottom
 	{
-	  kFrom = m_kEnd[g]-mMaterialExtrapolate;
+	  kFrom = m_kEndInt[g]-mMaterialExtrapolate;
 
 	  if (!mQuiet && proc_zero() && mVerbose>=3)
-	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
+	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%d, kEndInt=%d\n", g, kFrom, m_kEnd[g], m_kEndInt[g]);
 
 	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -1897,9 +1897,24 @@ void EW::assign_supergrid_damping_arrays()
      } // end if (m_twilight_forcing) ...
      else
      { // standard case starts here
-// tmp
-        if( proc_zero() )
-           printf("SG: standard case!\n");
+
+        if (m_energy_test) // change the eps parameter in the stretching to make the discrete energy smaller
+        {
+           for( g=0 ; g<mNumberOfGrids; g++)  
+           {
+              m_supergrid_taper_x[g].set_eps(0.1);
+              m_supergrid_taper_y[g].set_eps(0.1);
+              m_supergrid_taper_z[g].set_eps(0.1);
+           }
+           if( proc_zero() )
+              printf("SG: standard case with epsL=0.1!\n");
+        }
+        else
+        {
+           if( proc_zero() )
+              printf("SG: standard case!\n");
+        }
+        
 
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{

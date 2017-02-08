@@ -2241,6 +2241,8 @@ void EW::processTestEnergy(char* buffer)
   CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
   token = strtok(NULL, " \t");
   bool use_dirichlet = false;
+  bool use_supergrid=false;
+  
   int seed=2934839, write_every=1000;
   string filename("energy.log");
 
@@ -2277,6 +2279,7 @@ void EW::processTestEnergy(char* buffer)
     {
        token += 13;
        use_dirichlet =  strcmp(token,"dirichlet")==0 || strcmp(token,"Dirichlet")==0;
+       use_supergrid =  strcmp(token,"supergrid")==0 || strcmp(token,"Supergrid")==0;
     }
     else
     {
@@ -2286,9 +2289,28 @@ void EW::processTestEnergy(char* buffer)
   }
   m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename );
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
-  for( int side=0 ; side < 6 ; side++ )
-     if( bct[side] == bPeriodic && use_dirichlet )
+  if (use_dirichlet)
+  {
+     for( int side=0 ; side < 4 ; side++ )
 	bct[side] = bDirichlet;
+  }
+  else if (use_supergrid)
+  {
+// testing
+     for( int side=0 ; side < 6 ; side++ )
+	bct[side] = bDirichlet;
+
+     bct[0]=bSuperGrid;
+     bct[1]=bSuperGrid;
+     // bct[2]=bSuperGrid;
+     // bct[3]=bSuperGrid;
+
+//     bct[4] = bSuperGrid;
+     bct[5] = bSuperGrid;
+     
+     bct[4] = bStressFree;
+  }
+  
   set_global_bcs(bct);
 }
 
@@ -3925,14 +3947,14 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    for( int g = nCartGrids-1; g >= 0; g-- )
    {
      double zmax = (g>0? m_refinementBoundaries[g-1]:a_global_zmax);
-     nz[g]     = 1 + static_cast<int> ( (zmax - m_zmin[g])/mGridSize[g] + 0.5 );
+     nz[g]     = 1 + static_cast<int> ( (zmax - m_zmin[g])/mGridSize[g] + 0.5 );// starting from m_zmin[g]
 
      zmax = m_zmin[g] + (nz[g]-1)*mGridSize[g];
       
      m_global_nz[g] = nz[g]; // save the number of grid points in the z-direction
 
      if( g>0 )
-       m_zmin[g-1] = zmax;
+        m_zmin[g-1] = zmax; // save m_zmin[g-1] for next iteration
      else
        a_global_zmax = zmax;
    }
@@ -4059,8 +4081,14 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst << " , " << ilast << endl;
       //      cout << g << " " << my_proc_coords[1] << " J Split into " << jfirst << " , " << jlast << endl;
       //      cout << "grid " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << " kinterval " << kfirst << " , " << klast << endl;
+// output bounds
+      if (mVerbose >=3 && proc_zero())
+      {
+         printf("Grid #%d, iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n", g, m_iStartInt[g], m_iEndInt[g],
+                m_jStartInt[g], m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
+      }
       
-   }
+   }// end for all Cartesian grids
 
    if( m_topography_exists )
    {
