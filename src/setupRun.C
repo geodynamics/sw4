@@ -1057,16 +1057,33 @@ void EW::set_materials()
   else if ( m_energy_test )
   {
      double cpocs = m_energy_test->m_cpcsratio;
+     double amp = m_energy_test->m_stochastic_amp;
+// tmp
+     if (proc_zero())
+     {
+        printf("\n ENERGY TEST material amplitude: %e\n", amp);
+        
+     }
+     
+// hardcoded loh1 test (assumes 2 grids)
+     double rho0[2]={2700, 2600};
+     double vp0[2]={6000, 4000};
+     double vs0[2]={3464, 2000};
+
      for (g=0; g<mNumberOfGrids; g++)
      {
 	double* rho_ptr    = mRho[g].c_ptr();
 	double* mu_ptr     = mMu[g].c_ptr();
 	double* lambda_ptr = mLambda[g].c_ptr();
+        // setting all points in the grid to constant + random perturb: No need to extrapolate ghost points!
 	for( int i=0 ; i < (m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
 	{
-	   rho_ptr[i]    = drand48()+2;
-	   mu_ptr[i]     = drand48()+2;
-           lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+drand48();
+	   // rho_ptr[i]    = amp*drand48()+2;
+	   // mu_ptr[i]    = amp*drand48()+2;
+           // lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+amp*drand48();
+	   rho_ptr[i]    = rho0[g] + amp*drand48();
+	   mu_ptr[i]    = rho0[g]*vs0[g]*vs0[g] + amp*drand48();
+           lambda_ptr[i] = rho0[g]*(vp0[g]*vp0[g] - 2*vs0[g]*vs0[g]) + amp*drand48();
 	}
 	// Communication needed here. Because of random material data,
 	// processor overlap points will otherwise have different values
@@ -1699,6 +1716,14 @@ void EW::setup_supergrid( )
   
   int gTop = mNumberOfCartesianGrids-1;
   vector<double> sg_width(mNumberOfCartesianGrids);
+
+// if the number of grid points was specified in the input file, we need to convert that to a physical width, based on the coarsest grid
+  if ( !m_use_sg_width )
+  {
+     m_supergrid_width = m_sg_gp_thickness*mGridSize[0];
+     m_use_sg_width = true;
+  }
+  
   for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
   {
      if( m_use_sg_width )
@@ -1902,20 +1927,19 @@ void EW::assign_supergrid_damping_arrays()
         {
            for( g=0 ; g<mNumberOfGrids; g++)  
            {
-              m_supergrid_taper_x[g].set_eps(0.1);
-              m_supergrid_taper_y[g].set_eps(0.1);
-              m_supergrid_taper_z[g].set_eps(0.1);
+              m_supergrid_taper_x[g].set_eps(m_energy_test->m_sg_epsL);
+              m_supergrid_taper_y[g].set_eps(m_energy_test->m_sg_epsL);
+              m_supergrid_taper_z[g].set_eps(m_energy_test->m_sg_epsL);
            }
            if( proc_zero() )
-              printf("SG: standard case with epsL=0.1!\n");
+              printf("SG: standard case with epsL = %e\n", m_energy_test->m_sg_epsL);
         }
         else
         {
            if( proc_zero() )
-              printf("SG: standard case!\n");
+              printf("SG: standard case with default epsL\n");
         }
         
-
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
 	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -1985,6 +2009,16 @@ void EW::assign_supergrid_damping_arrays()
   }
   
 // tmp
+// save stry
+  // g=0;
+  // char fname[100];
+  // sprintf(fname,"stry-%i.dat",m_myRank);
+  // FILE *fp=fopen(fname,"w");
+  // printf("Saving tmp file=%s, g=%i, m_iStart=%i, m_iEnd=%i\n", fname, g, m_iStart[g], m_iEnd[g]);
+  // for ( j = m_jStart[g]; j<=m_jEnd[g]; j++ )
+  //    fprintf(fp,"%d %e\n", j, stry(j,g));
+  // fclose(fp);  
+
 // save the 1-D arrays cornerx, cornery, cornerz
 // grid g=0 (for now)
   // g=0;

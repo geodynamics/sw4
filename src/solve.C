@@ -441,10 +441,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //     m_forcing->get_initial_data_Curvilinear( mX, mY, mZ, mTstart+mDt, Up[g] );
 //   }
   
-// save any images for cycle = 0 (initial data) ?
-  update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
-  for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
+// moved below, after enforcing BC
+// // save any images for cycle = 0 (initial data) ?
+//   update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
+//   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
+//     mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
 // do some testing...
   if (m_twilight_forcing && getVerbosity() >= 3) // only do these tests if verbose>=3
@@ -500,7 +501,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       }
     }
   
-// c test accuracy of forcing
+//  test accuracy of forcing
     evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
     Force( t, F, point_sources );
     exactAccTwilight( t, Uacc ); // save Utt in Uacc
@@ -578,6 +579,45 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
   }
 
+// test if the spatial operator is self-adjoint
+  if (m_energy_test && getVerbosity() >= 1)
+  {
+    if ( proc_zero() )
+    {
+      printf("Using the intial data to check if the spatial operator is self-adjoint\n");
+    }
+     
+// compute Uacc = L(U) and Vacc=L(V); V=Um
+    evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+    evalRHS( Um, mMu, mLambda, Uacc, AlphaVE ); // save Lu in composite grid 'Lu'
+// should not be necessary to communicate across processor boundaries to make ghost points agree
+  
+// evaluate (V, Uacc) and (U, Vacc) and compare!
+    double sp_vLu = scalarProduct( Um,Lu );
+    double sp_uLv = scalarProduct( U,Uacc );
+    
+    if ( proc_zero() )
+    {
+       printf("Scalar products (Um, L(U)) = %e and (U, L(Um)) = %e, diff=%e\n", sp_vLu, sp_uLv, sp_vLu-sp_uLv);
+    }
+
+// tmp
+// save U
+  // int g=0;
+  // char fname[100];
+  // sprintf(fname,"ux-%i.dat",m_myRank);
+  // FILE *fp=fopen(fname,"w");
+  // printf("Saving tmp file=%s, g=%i, m_jStart=%i, m_jEnd=%i\n", fname, g, m_jStart[g], m_jEnd[g]);
+  // for ( int j = m_jStart[g]; j<=m_jEnd[g]; j++ )
+  //    fprintf(fp,"%d %e\n", j, U[g](1,35,j,35));
+  // fclose(fp);  
+
+
+// tmp: save L(Um) in U
+    // evalRHS( Um, mMu, mLambda, U, AlphaVE );
+    
+  }
+  
   if( m_moment_test )
     test_sources( point_sources, a_Sources, F );
 
@@ -599,6 +639,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       a_TimeSeries[ts]->recordData(uRec);
     }
   }
+
+// save any images for cycle = 0 (initial data) ?
+  update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
+  for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
+    mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
   FILE *lf=NULL;
 // open file for saving norm of error

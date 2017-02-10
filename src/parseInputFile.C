@@ -2242,6 +2242,8 @@ void EW::processTestEnergy(char* buffer)
   token = strtok(NULL, " \t");
   bool use_dirichlet = false;
   bool use_supergrid=false;
+  double stochastic_amp = 1;
+  double sg_eps = 1e-4;
   
   int seed=2934839, write_every=1000;
   string filename("energy.log");
@@ -2262,6 +2264,18 @@ void EW::processTestEnergy(char* buffer)
     {
       token += 5; 
       seed = atoi(token);
+    }
+    else if (startswith("amplitude=", token))
+    {
+      token += 10; 
+      stochastic_amp = atof(token);
+    }
+    else if (startswith("sg_eps=", token))
+    {
+      token += 7; 
+      sg_eps = atof(token);
+      CHECK_INPUT(sg_eps > 0,
+                  err << "testenergy command: sg_eps must be positive, not: " << token);
     }
      else if (startswith("writeEvery=", token))
      {
@@ -2287,27 +2301,20 @@ void EW::processTestEnergy(char* buffer)
     }
     token = strtok(NULL, " \t");
   }
-  m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename );
+  m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename, stochastic_amp, sg_eps );
+  // default bc is periodic in the horizontal directions
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
+
   if (use_dirichlet)
   {
      for( int side=0 ; side < 4 ; side++ )
 	bct[side] = bDirichlet;
   }
-  else if (use_supergrid)
+  else if (use_supergrid) // supergrid on all sides, except low-z, where we use a free surface bc 
   {
-// testing
      for( int side=0 ; side < 6 ; side++ )
-	bct[side] = bDirichlet;
+	bct[side] = bSuperGrid;
 
-     bct[0]=bSuperGrid;
-     bct[1]=bSuperGrid;
-     // bct[2]=bSuperGrid;
-     // bct[3]=bSuperGrid;
-
-//     bct[4] = bSuperGrid;
-     bct[5] = bSuperGrid;
-     
      bct[4] = bStressFree;
   }
   
@@ -2320,7 +2327,7 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
   token = strtok(NULL, " \t");
-  bool use_dirichlet = false;
+  bool use_periodic = true;
   while (token != NULL)
   {
     if (startswith("#", token) || startswith(" ", buffer))
@@ -2329,11 +2336,11 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
     if( startswith("bchorizontal=",token))
     {
        token += 13;
-       use_dirichlet =  strcmp(token,"dirichlet")==0 || strcmp(token,"Dirichlet")==0;
+       use_periodic =  strcmp(token,"periodic")==0 || strcmp(token,"Periodic")==0;
     }
     token = strtok(NULL, " \t");
   }
-  return !use_dirichlet;
+  return use_periodic;
 }
   
 
@@ -2669,9 +2676,9 @@ void EW::processSupergrid(char *buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("supergrid", token) == 0, "ERROR: not a supergrid line...: " << token);
   token = strtok(NULL, " \t");
-  int sg_thickness; // sg_transition;
+  int sg_n_gp; // sg_transition;
   double sg_coeff, sg_width;
-  bool thicknessSet=false, dampingCoeffSet=false, widthSet=false; // , transitionSet=false
+  bool gpSet=false, dampingCoeffSet=false, widthSet=false; // , transitionSet=false
   
   while (token != NULL)
   {
@@ -2683,9 +2690,9 @@ void EW::processSupergrid(char *buffer)
     if (startswith("gp=", token)) // in number of grid sizes (different from WPP)
     {
       token += 3;
-      sg_thickness = atoi(token);
-      CHECK_INPUT(sg_thickness>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_thickness);
-      thicknessSet = true;
+      sg_n_gp = atoi(token);
+      CHECK_INPUT(sg_n_gp>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_n_gp);
+      gpSet = true;
     }
 //                  12345678901
     // else if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
@@ -2723,10 +2730,10 @@ void EW::processSupergrid(char *buffer)
     token = strtok(NULL, " \t");
   } // end while token
   
-  CHECK_INPUT( !(thicknessSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
+  CHECK_INPUT( !(gpSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
      
-  if (thicknessSet)// gp specified
-     set_sg_thickness(sg_thickness);
+  if (gpSet)// gp specified
+     set_sg_thickness(sg_n_gp);
 
   if( widthSet )
      set_sg_width( sg_width );
@@ -3980,11 +3987,11 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // tmp
    if( mVerbose >= 1 && proc_zero() )
    {
-     cout << "Corrected global_zmax = " << m_global_zmax << endl;
+      cout << endl << "Corrected global_zmax = " << m_global_zmax << endl;
      cout << "Refinement levels after correction: " << endl;
      for( int g=0; g<nCartGrids; g++ )
      {
-       cout << "grid=" << g << " min Z=" << m_zmin[g] << endl;
+       cout << "grid=" << g << " z-min=" << m_zmin[g] << endl;
      }
    }
    

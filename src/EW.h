@@ -484,6 +484,8 @@ void integrate_source( );
 void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
 		     vector<Sarray>& U, vector<Sarray>& Up, int step );
 
+   double scalarProduct( vector<Sarray>& U, vector<Sarray>& V);
+
 void get_gridgen_info( int& order, double& zetaBreak ) const;
 
 //  void update_maxes_hVelMax();

@@ -179,7 +179,11 @@ void energy4( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*,
               double*, double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(energy4c,ENERGY4C)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
                                    double*, double*, double*, double*, double*, double* );
-void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
+
+   void scalar_prod( int, int, int, int, int, int,  int, int, int, int, int, int, int*,
+              double*, double*, double*, double*, double*, double* );
+
+   void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 				    double*, double*, double*, int* );
 void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 					  double*, int*, double*, double*, double*, char* );
@@ -608,6 +612,9 @@ void EW::assign_local_bcs( )
     for (b=0; b<=3; b++)
       m_bcType[g][b] = mbcGlobalType[b];
   
+    // printf("assign_local_bc> BEFORE loop: rank=%d, bct[0]=%d, bct[1]=%d, bct[2]=%d, bct[3]=%d\n", m_myRank,
+    //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
+    
     if (m_iStart[top]+m_ghost_points > 1)
     {
       m_bcType[g][0] = bProcessor;
@@ -626,10 +633,12 @@ void EW::assign_local_bcs( )
 
     if (m_jStart[top]+m_ghost_points > 1)
     {
+//       printf(" rank=%d, jStart=%d, setting bcType[2] = proc\n", m_myRank, m_jStart[top]);
       m_bcType[g][2] = bProcessor;
     }
     if (m_jEnd[top]-m_ghost_points < m_global_ny[top])
     {
+//       printf(" rank=%d, jEnd=%d, setting bcType[3] = proc\n", m_myRank, m_jEnd[top]);
       m_bcType[g][3] = bProcessor;
     }
 
@@ -639,6 +648,9 @@ void EW::assign_local_bcs( )
       m_bcType[g][2] = bProcessor;
       m_bcType[g][3] = bProcessor;
     }
+
+    // printf("assign_local_bc> AFTER loop: rank=%d, bct[0]=%d, bct[1]=%d, bct[2]=%d, bct[3]=%d\n", m_myRank,
+    //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
 
   }
   
@@ -1864,14 +1876,32 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   }
   else if( m_energy_test )
   {
-     //    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
-    for(int g=0 ; g<mNumberOfGrids; g++ ) // This case does not make sense with topography
+     for(int g=0 ; g<mNumberOfGrids; g++ ) // ranomized initial data
     {
        u_ptr    = a_U[g].c_ptr();
-       for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
-	  u_ptr[i] = drand48();
-    }
-  }
+       for( size_t i=0 ; i < 3*((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+          u_ptr[i] = drand48();
+
+// Test: use smooth initial data
+        // u_ptr    = a_U[g].c_ptr();
+        // ifirst = m_iStart[g];
+        // ilast  = m_iEnd[g];
+        // jfirst = m_jStart[g];
+        // jlast  = m_jEnd[g];
+        // kfirst = m_kStart[g];
+        // klast  = m_kEnd[g];
+        // h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+        // zmin = m_zmin[g];
+        // om = 1;
+        // ph = 0.5;
+        // cv = 1000;
+        
+        // F77_FUNC(twilightfort,TWILIGHTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+        // 				     &klast, u_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+       
+    } // end for g
+     
+  } // end m_energy_test
   else
 // homogeneous initial data is the default
   {
@@ -4475,11 +4505,12 @@ void EW::initialize_image_files( )
 }
 
 //-----------------------------------------------------------------------
-void EW::set_sg_thickness(int gp_thickness)
+void EW::set_sg_thickness(int n_gp)
 {
-  m_sg_gp_thickness = gp_thickness;
+  m_sg_gp_thickness = n_gp;
+  m_use_sg_width = false; // will be changed to true once the number of gp has been converted to a physical width
   if (m_myRank==0)
-    cout << "Default Supergrid thickness has been tuned; thickness = " << m_sg_gp_thickness << " grid sizes" << endl;
+    cout << "Default Supergrid thickness has been tuned; # grid points = " << m_sg_gp_thickness << " grid sizes" << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -4740,6 +4771,41 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
    double energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
+}
+
+//-----------------------------------------------------------------------
+double EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
+{
+// Compute weighted scalar product between composite grid functions U and C
+//
+// NOTE: assumes a Cartesian grid with super-grid stretching
+//
+   double s_prod    = 0;
+   for( int g=0; g < mNumberOfGrids ; g++ )
+   {
+      int istart = m_iStartInt[g];
+      int iend   = m_iEndInt[g];
+      int jstart = m_jStartInt[g];
+      int jend   = m_jEndInt[g];
+      int kstart = m_kStartInt[g];
+      int kend   = m_kEndInt[g];
+      double* u_ptr  = U[g].c_ptr();
+      double* v_ptr  = V[g].c_ptr();
+
+      double loc_s_prod;
+      int* onesided_ptr = m_onesided[g];
+
+      scalar_prod(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+              istart, iend, jstart, jend, kstart, kend, onesided_ptr,
+              u_ptr, v_ptr, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &loc_s_prod );
+      s_prod += loc_s_prod;
+   }
+// output my sum
+//   printf("scalarProd: myRank=%d, my_s_prod=%e\n", m_myRank, s_prod);
+   
+   double s_prod_tmp = s_prod;
+   MPI_Allreduce( &s_prod_tmp, &s_prod, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+   return s_prod;
 }
 
 //-----------------------------------------------------------------------
