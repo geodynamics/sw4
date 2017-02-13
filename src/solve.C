@@ -579,8 +579,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
   }
 
-// test if the spatial operator is self-adjoint
-  if (m_energy_test && getVerbosity() >= 1)
+// test if the spatial operator is self-adjoint (only works without mesh refinement)
+  if (m_energy_test && getVerbosity() >= 1 && getNumberOfGrids() == 1)
   {
     if ( proc_zero() )
     {
@@ -593,6 +593,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // should not be necessary to communicate across processor boundaries to make ghost points agree
   
 // evaluate (V, Uacc) and (U, Vacc) and compare!
+
+// NOTE: scalalarProd() is not implemented for curvilinear grids
     double sp_vLu = scalarProduct( Um,Lu );
     double sp_uLv = scalarProduct( U,Uacc );
     
@@ -743,38 +745,42 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
 
 // Grid refinement interface conditions:
+// *** 2nd order in TIME
     if (mOrder == 2)
     {
-// add super-grid damping terms before enforcing interface conditions (otherwise, Up doesn't have the correct values on the interface)
+// add super-grid damping terms before enforcing interface conditions
+// (otherwise, Up doesn't have the correct values on the interface)
+//
        if (usingSupergrid())
        {
 	  addSuperGridDamping( Up, U, Um, mRho );
        }
-       enforceIC2( Up, U, Um, t, point_sources );
-    }
-    else
-       enforceIC( Up, U, Um, t, true, point_sources );
-
-    
-    time_measure[3] = time_measure[4] = MPI_Wtime();
-
-//
-// *** 2nd order in TIME
-//
-    if (mOrder == 2)
-    {
-// Arben's simplified attenuation
+// Also add Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
        {
 	 simpleAttenuation( Up );
        }
-       time_measure[4] = MPI_Wtime();
-       
-    } // end mOrder == 2
+// should this timer be here?
+//       time_measure[4] = MPI_Wtime();
+
+// interface conditions for 2nd order in time
+       enforceIC2( Up, U, Um, t, point_sources );
+    }
+    else
+    {
+// *** 4th order in TIME interface conditions for the predictor
+// No supergrid or attenuation
+       enforceIC( Up, U, Um, t, true, point_sources );
+    }
+    
+// should these timers be here?
+    time_measure[3] = time_measure[4] = MPI_Wtime();
+
 //
+// corrector step for
 // *** 4th order in time ***
 //
-    else if (mOrder == 4)
+    if (mOrder == 4)
     {
        Force_tt( t, F, point_sources );
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
@@ -822,6 +828,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
 	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+
+// interface conditions for the corrector
        enforceIC( Up, U, Um, t, false, point_sources );
 
     }// end if mOrder == 4
@@ -1327,23 +1335,6 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 // only enable for testing
 //	    dirichlet_LRic( Unextf, g+1, kf, time+mDt, 1 );
 	 }
-// // save Unextf on file (single proc)
-//          FILE *fp;
-//          char fname[100];
-//          int j;
-//          double x;
-         
-//          j = 0.5*(m_jStart[g+1] + m_jEnd[g+1]);
-//          sprintf(fname,"ufi-j=%d.txt", j);
-//          fp = fopen(fname,"w");
-//          for (int i=m_iStart[g+1]; i<=m_iEnd[g+1]; i++)
-//          {
-//             x = (i-1)*mGridSize[g+1];
-//             fprintf(fp,"%e %e %e %e\n", x, Unextf(1,i,j,kf), Unextf(2,i,j,kf), Unextf(3,i,j,kf));
-//          }
-//          fclose(fp);
-//          CHECK_INPUT(false," controlled termination");
-// // end test         
       }
       else // In the corrector step, (Unextc, Unextf) represent the displacement after next predictor step
       {
@@ -1354,8 +1345,6 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
             dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
-	    // dirichlet_LRic( Unextc, g, kc, t+2*mDt, 0 );
-	    // dirichlet_LRic( Unextf, g+1, kf, t+2*mDt, 0 );
 	 }
       }
       compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );

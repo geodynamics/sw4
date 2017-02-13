@@ -1,5 +1,5 @@
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
-developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.8
+developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.75
 
 fileio verbose=1 path=order2-33_out
 

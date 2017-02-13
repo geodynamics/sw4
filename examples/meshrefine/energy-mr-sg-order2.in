@@ -1,16 +1,16 @@
-developer ctol=1e-10 cmaxit=100 crelax=0.92  time_order=2 cfl=0.8
+developer ctol=1e-10 cmaxit=100 crelax=0.92  time_order=2 cfl=0.75
 
 grid x=30 y=30 z=30 nx=75
 
-refinement zmax=10
+refinement zmax=2.5
 
 time t=50
 #time steps=0
 
-fileio verbose=1 path=etest-sg
+fileio verbose=1 path=etest-sg-o2
 
 testenergy seed=34983249 cpcsratio=1.732 bchorizontal=supergrid amplitude=0.5 sg_eps=1e-2
 
 # the supergrid command is ignored unless bchorizontal=supergrid
-supergrid gp=20 dc=0.02
+supergrid gp=20 dc=0
 

@@ -1066,9 +1066,9 @@ void EW::set_materials()
      }
      
 // hardcoded loh1 test (assumes 2 grids)
-     double rho0[2]={2700, 2600};
-     double vp0[2]={6000, 4000};
-     double vs0[2]={3464, 2000};
+     // double rho0[2]={2700, 2600};
+     // double vp0[2]={6000, 4000};
+     // double vs0[2]={3464, 2000};
 
      for (g=0; g<mNumberOfGrids; g++)
      {
@@ -1078,12 +1078,13 @@ void EW::set_materials()
         // setting all points in the grid to constant + random perturb: No need to extrapolate ghost points!
 	for( int i=0 ; i < (m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
 	{
-	   // rho_ptr[i]    = amp*drand48()+2;
-	   // mu_ptr[i]    = amp*drand48()+2;
-           // lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+amp*drand48();
-	   rho_ptr[i]    = rho0[g] + amp*drand48();
-	   mu_ptr[i]    = rho0[g]*vs0[g]*vs0[g] + amp*drand48();
-           lambda_ptr[i] = rho0[g]*(vp0[g]*vp0[g] - 2*vs0[g]*vs0[g]) + amp*drand48();
+	   rho_ptr[i]    = amp*drand48()+2;
+	   mu_ptr[i]    = amp*drand48()+2;
+           lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+amp*drand48();
+// hard-coded loh1 test (only works for 2 grids)
+	   // rho_ptr[i]    = rho0[g] + amp*drand48();
+	   // mu_ptr[i]    = rho0[g]*vs0[g]*vs0[g] + amp*drand48();
+           // lambda_ptr[i] = rho0[g]*(vp0[g]*vp0[g] - 2*vs0[g]*vs0[g]) + amp*drand48();
 	}
 	// Communication needed here. Because of random material data,
 	// processor overlap points will otherwise have different values

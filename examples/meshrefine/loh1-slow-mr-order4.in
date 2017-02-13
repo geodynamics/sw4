@@ -5,9 +5,9 @@
 # the time dependency being the Gaussian function
 #
 
-developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.75
+developer ctol=1e-10 cmaxit=100 crelax=0.92
 
-fileio path=loh1-mr-out
+fileio path=loh1-mr-4-out
 #printcycle=10
 
 # Extrapolate material properties to ghost points & interface points
