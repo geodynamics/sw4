@@ -5,15 +5,16 @@
 #CXX = clang++
 #FFLAGS = -O2
 #CFLAGS = -O2
-
+#CXXFLAGS = -O2
 #pgi, use pgi-15.7
 #pgi, use pgi-16.7
 # 
 #FC = pgf77
 #CC = pgcc
-#CXX =  pgCC
+#CXX =  pgc++
 #FFLAGS = -O3 
 #CFLAGS = -O3 
+#CXXFLAGS = -O3
 #OMPOPT = -mp
 #intel,  use ic-16.0.150
 # newer compiler, ic-16.0.210
@@ -38,6 +39,14 @@ OMPOPT = -qopenmp
 #FFLAGS = -O2 -ftree-vectorize -ftree-vectorizer-verbose=6 -Wall
 #CXXFLAGS = -O2 -ftree-vectorize -ftree-vectorizer-verbose=6 -Wall
 #CFLAGS   = -O2 -ftree-vectorize -ftree-vectorizer-verbose=6 -Wall
+
+#IBM
+#FC = xlf
+#CC = xlc
+#CXX= xlC
+#FFLAGS = -O2 
+#CFLAGS = -O2 
+#CXXFLAGS = -O3 
 
 ifeq ($(openmp),yes)
    FFLAGS += $(OMPOPT)

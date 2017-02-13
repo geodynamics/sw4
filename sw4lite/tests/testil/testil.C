@@ -30,6 +30,13 @@ void addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 		  float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 		  float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 		  float_sw4 beta );
+void addsgd4fort_unrl( int ifirst, int ilast, int jfirst, int jlast,
+		  int kfirst, int klast,
+		  float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		  float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+		  float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		  float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		  float_sw4 beta );
 void addsgd4fort_rev( int ifirst, int ilast, int jfirst, int jlast,
 		  int kfirst, int klast,
 		  float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,

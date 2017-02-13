@@ -832,11 +832,12 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       endif
 
       k1 = kfirst+2
-      if (onesided(5).eq.1) k1 = 7;
+      if (onesided(5).eq.1) k1 = 7
       k2 = klast-2
-      if (onesided(6).eq.1) k2 = nz-6;
+      if (onesided(6).eq.1) k2 = nz-6
 c the centered stencil can be evaluated 2 points away from the boundary
 !$OMP PARALLEL PRIVATE(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,
+!$OMP*   muz1,muz2,muz3,muz4,
 !$OMP*   r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,m,u3zip2,u3zip1,
 !$OMP*   u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy,
 !$OMP*   mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,lap2mus,mucofs,lacofs,

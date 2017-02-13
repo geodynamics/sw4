@@ -2439,7 +2439,6 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
 // all types of forcing...
       Force( t, F, m_point_sources, false );
-
       // Need F on device for predictor, will make this asynchronous:
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 F[g].copy_to_device(m_cuobj,true,1);
@@ -2494,6 +2493,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
+
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "U pred. " );
 
@@ -2520,7 +2520,6 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 #else
 	 check_for_nan( Uacc, 1, "uacc " );
 #endif
-
       if( m_cuobj->has_gpu() )
 	 evalRHSCU( Uacc, mMu, mLambda, Lu, 0 );
       else
