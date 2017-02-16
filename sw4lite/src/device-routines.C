@@ -1,4 +1,6 @@
 #include "sw4.h"
+#include "Sarray.h"
+#include "GridPointSource.h"
 
 #ifdef SW4_CUDA
 #include <cuda_runtime.h>
@@ -2385,6 +2387,55 @@ __global__ void check_nan_dev( int ifirst, int ilast, int jfirst, int jlast, int
 
   atomicAdd(retval_global, retval);
   atomicMin(idx_global, idx);
+}
+
+//-----------------------------------------------------------------------
+__global__ void forcing_dev( float_sw4 a_t, Sarray* a_F, int ng,
+			     GridPointSource** point_sources, int nsrc,
+			     int* identsources, int nident, bool a_tt )
+{
+
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t r = threadIdx.x + static_cast<size_t>(blockIdx.x)* blockDim.x;
+
+   while( r < nident-1 )
+   {
+      int s0 = identsources[r];
+      int g = point_sources[s0]->m_grid;
+      int i = point_sources[s0]->m_i0;
+      int j = point_sources[s0]->m_j0;
+      int k = point_sources[s0]->m_k0;
+      size_t ind1 = a_F[g].index(1,i,j,k);
+      //      size_t ind2 = a_F[g].index(2,i,j,k);
+      //      size_t ind3 = a_F[g].index(3,i,j,k);
+      size_t oc = a_F[g].m_offc;
+      float_sw4* fptr =a_F[g].dev_ptr();
+      fptr[ind1] = fptr[ind1+oc] = fptr[ind1+2*oc] = 0;
+      for( int s=identsources[r]; s < identsources[r+1] ; s++ )
+      {
+	float_sw4 fxyz[3];
+	if( a_tt )
+	   point_sources[s]->getFxyztt(a_t,fxyz);
+	else
+	   point_sources[s]->getFxyz(a_t,fxyz);
+	fptr[ind1]      += fxyz[0];
+	fptr[ind1+oc]   += fxyz[1];
+	fptr[ind1+2*oc] += fxyz[2];
+      }
+      r += nthreads;
+   }
+}
+
+//-----------------------------------------------------------------------
+__global__ void init_forcing_dev( GridPointSource** point_sources, int nsrc )
+{
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t r = threadIdx.x + static_cast<size_t>(blockIdx.x)* blockDim.x;
+   while( r < nsrc )
+   {
+      point_sources[r]->init_dev();
+      r += nthreads;
+   }
 }
 
 #endif

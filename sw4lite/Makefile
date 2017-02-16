@@ -22,6 +22,7 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc48 -lgfortran
   openmp = yes
 # LC quartz is a large cluster of Intel Haswell nodes
+  computername := fourier
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   FC = mpifort
   CXX = mpicxx
@@ -31,6 +32,7 @@ else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
+  computername := quartz
 # LC cab is a large cluster of Intel Xeon nodes
 else ifeq ($(findstring cab,$(HOSTNAME)),cab)
 # assumes: use ic_16.0.210, use mvapich2-intel-2.1
@@ -38,6 +40,7 @@ else ifeq ($(findstring cab,$(HOSTNAME)),cab)
   CXX = mpic++
   OMPOPT = -fopenmp
   EXTRA_LINK_FLAGS = -lblas -llapack
+  computername := cab
 # NERSC carl is a single node Intel KNL machine
 else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   FC = mpiifort
@@ -50,6 +53,7 @@ else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   EXTRA_FORT_FLAGS = -xmic-avx512,core-avx2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
+  computername := carl
 #
 # LBL quadknl is Hans' single node Intel KNL machine
 #
@@ -68,6 +72,7 @@ else ifeq ($(findstring quadknl,$(HOSTNAME)),quadknl)
 # for building testil
 #  EXTRA_LINK_FLAGS = -Wl,-rpath=${OTHER_PATH} -L${OTHER_PATH} -lifcore -L${BASIC_PATH} -limf -lsvml -lintlc -lm -ldl 
   openmp = yes
+  computername := quadknl
 #
 # Cori
 else ifeq ($(findstring cori,$(HOSTNAME)),cori)
@@ -91,12 +96,14 @@ else ifeq ($(findstring cori,$(HOSTNAME)),cori)
   OMPOPT = -qopenmp
   EXTRA_LINK_FLAGS =  -lpthread -lm -ldl -lifcore
   openmp = yes
+  computername := cori
 else ifeq ($(findstring valhall,$(HOSTNAME)),valhall)
   FC = mpif90_ifort
   CXX = mpicc_icc
   OMPOPT = -qopenmp
   EXTRA_LINK_FLAGS = -lifcore -lblas -llapack
   openmp = yes
+  computername := valhall
 else
   FC  = mpif90
   CXX = mpic++
@@ -156,6 +163,11 @@ ifeq ($(single),yes)
    CXXFLAGS += -I../src/float
 else
    CXXFLAGS += -I../src/double
+endif
+
+ifneq ($(origin computername),undefined)
+   debugdir := $(debugdir)_$(computername)
+   optdir   := $(optdir)_$(computername)
 endif
 
 ifdef EXTRA_CXX_FLAGS

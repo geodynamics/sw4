@@ -5,7 +5,7 @@
 #ifdef SW4_CUDA
 
 // IBM Comment: Uncomment following macro to check kernel error
-//#define DEBUG_CUDA
+#define DEBUG_CUDA
   #ifdef DEBUG_CUDA
     #define CHECK_ERROR(str) \
         cudaError err = cudaGetLastError(); \
@@ -102,6 +102,9 @@ __global__ void rhs4lower_dev_rev( int ifirst, int ilast, int jfirst, int jlast,
 __global__ void check_nan_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			       float_sw4* u, int* retval_dev, int* idx_dev );
 
+__global__ void forcing_dev( float_sw4 t, Sarray* dev_F, int NumberOfGrids, GridPointSource** dev_point_sources,
+			     int nptsrc, int* dev_identsources, int nident, bool tt );
+__global__ void init_forcing_dev( GridPointSource** point_sources, int nsrc );
 #endif
 
 //-----------------------------------------------------------------------
@@ -161,6 +164,7 @@ void EW::evalRHSCU(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a
 //-----------------------------------------------------------------------
 void EW::evalPredictorCU( vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 			  vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F, int st )
+//			  vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, Sarray* a_F, int st )
 {
 #ifdef SW4_CUDA
    float_sw4 dt2 = mDt*mDt;
@@ -191,6 +195,7 @@ void EW::evalPredictorCU( vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sa
 //---------------------------------------------------------------------------
 void EW::evalCorrectorCU( vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
 			  vector<Sarray> & a_Lu, vector<Sarray> & a_F, int st )
+//			  vector<Sarray> & a_Lu, Sarray* a_F, int st )
 {
 #ifdef SW4_CUDA
    float_sw4 dt4 = mDt*mDt*mDt*mDt;  
@@ -591,3 +596,35 @@ bool EW::check_for_nan_GPU( vector<Sarray>& a_U, int verbose, string name )
 #endif
 }
 
+//-----------------------------------------------------------------------
+void EW::ForceCU( float_sw4 t, Sarray* dev_F, bool tt, int st )
+{
+#ifdef SW4_CUDA
+   dim3 blocksize, gridsize;
+   gridsize.x  = m_gpu_gridsize[0] * m_gpu_gridsize[1] * m_gpu_gridsize[2];
+   gridsize.y  = 1;
+   gridsize.z  = 1;
+   blocksize.x = m_gpu_blocksize[0] * m_gpu_blocksize[1] * m_gpu_blocksize[2];
+   blocksize.y = 1;
+   blocksize.z = 1;
+   forcing_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( t, dev_F, mNumberOfGrids, dev_point_sources, m_point_sources.size(),
+					dev_identsources, m_identsources.size(), tt );
+   CHECK_ERROR("ForceCU")
+#endif
+}
+
+//-----------------------------------------------------------------------
+void EW::init_point_sourcesCU( )
+{
+#ifdef SW4_CUDA
+   dim3 blocksize, gridsize;
+   gridsize.x  = m_gpu_gridsize[0] * m_gpu_gridsize[1] * m_gpu_gridsize[2];
+   gridsize.y  = 1;
+   gridsize.z  = 1;
+   blocksize.x = m_gpu_blocksize[0] * m_gpu_blocksize[1] * m_gpu_blocksize[2];
+   blocksize.y = 1;
+   blocksize.z = 1;
+   init_forcing_dev<<<gridsize,blocksize>>>( dev_point_sources, m_point_sources.size() );
+   CHECK_ERROR("InitPointSourcesCU")
+#endif
+}
