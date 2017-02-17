@@ -297,11 +297,13 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     }
   }  
 
-  if( m_mesh_refinements && (m_anisotropic || (m_use_attenuation && m_number_mechanisms>0) ) )
+//  if( m_mesh_refinements && (m_anisotropic || (m_use_attenuation && m_number_mechanisms>0) ) )
+  if( m_mesh_refinements && m_anisotropic )
   {
     if (m_myRank == 0)
     {
-      cerr << "Error: Grid refinements not implemented with attenuation or anisotropy " << endl;
+//      cerr << "Error: Grid refinements not implemented with attenuation or anisotropy " << endl;
+      cerr << "Error: Grid refinements not implemented with anisotropy " << endl;
       return false; // unsuccessful
     }
   }

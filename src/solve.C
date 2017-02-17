@@ -3333,7 +3333,8 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 		  a_AlphaVEp[g][a](3,i,j,0) = cof[a]*a_Up[g](3,i,j,0)+ r3[a];
 	       }
 	    }
-      }
+      } // end if bcType[g][4] == bStressFree
+      
       if( m_bcType[g][5] == bStressFree  )
       {
          int nk=m_global_nz[g];
@@ -3436,7 +3437,8 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 		  a_AlphaVEp[g][a](3,i,j,nk+1) = cof[a]*a_Up[g](3,i,j,nk+1)+ r3[a];
 	       }
 	    }
-      }
+      }// end if bcType[g][5] == bStressFree
+      
       if( m_bcType[g][4] == bStressFree && topo && g == mNumberOfGrids-1 )
       {
 	 // Note: Only one memforce, because twilight assumes nmech=1.
@@ -3492,7 +3494,8 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 						      u_p, um_p, mMetric.c_ptr(), &side, &mDt, &mOmegaVE[a], mf, 
 						      mubnd.c_ptr(), lambdabnd.c_ptr(), m_sbop, &cof[a], &usesg,
 						      m_sg_str_x[g], m_sg_str_y[g] );
-	 }
+	 } // end for a...
+         
          F77_FUNC(solveattfreec,SOLVEATTFREEC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 					       up_p, mu_p, la_p, mubnd.c_ptr(), lambdabnd.c_ptr(),
 					       bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, &usesg,
@@ -3503,9 +3506,11 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	    F77_FUNC(solveattfreeac,SOLVEATTFREEAC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						    alphap_p, &cof[a], up_p );
 	 }
-      }
-   }
+      } // end if bcType[g][4] == bStressFree && topography
+      
+   }  // end for g=0,...
 }
+
 
 //-----------------------------------------------------------------------
 void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
