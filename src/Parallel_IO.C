@@ -290,12 +290,30 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 	    array_holders[i++] = p;
       }
       delete[] tmp;
+      if( i != npartprocs )
+	 cout << "Parallel_IO::init_pio, ERROR: this should never happen " << endl;
+      
       retcode = MPI_Comm_group( MPI_COMM_WORLD, &world_group );
       if( retcode != MPI_SUCCESS )
       {
 	 cout << "Parallel_IO::init_pio, error from first call to MPI_Comm_group, "
 	      << "return code = " << retcode << " from processor " << gproc << endl;
       }
+
+      bool array_ok=true;
+      i = 0;
+      while( array_ok && i < npartprocs )
+      {
+	 if( array_holders[i] <0 || array_holders[i] > nprocs-1 )
+	 {
+	    cout <<"ERROR in parallel_IO:init_pio myid= " << gproc << " array_holders[" << i << "]= "
+		 <<  array_holders[i] << " npartprocs = " << npartprocs << " nprocs = " << nprocs << endl;
+	    array_ok = false;
+	 }
+	 else
+	    i++;
+      }
+      
       retcode = MPI_Group_incl( world_group, npartprocs, array_holders, &array_group );
       if( retcode != MPI_SUCCESS )
       {

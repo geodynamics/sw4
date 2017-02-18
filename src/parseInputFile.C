@@ -7609,6 +7609,7 @@ void EW::processMaterialRfile(char* buffer)
    bool flatten = false;
    bool coords_geographic = true;
    int nstenc = 5;
+   int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
    char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
@@ -7639,6 +7640,13 @@ void EW::processMaterialRfile(char* buffer)
 	 token += 10; // skip directory=
 	 directory = token;
       }
+      else if (startswith("bufsize=", token))
+      {
+	 token += 8;
+	 bufsize = atoi(token);
+	 CHECK_INPUT( bufsize > 10 && bufsize < 1e9, "ParseInputfile: rfile bufsize = " <<
+		      bufsize << " out of allowed range" );
+      }
       else
       {
 	 cout << token << " is not a rfile option " << endl;
@@ -7656,7 +7664,7 @@ void EW::processMaterialRfile(char* buffer)
    if (m_myRank == 0)
       cout << "*** Reading data from Rfile " << filename << " in directory " << directory << endl;
 
-   MaterialRfile* rf = new MaterialRfile( this, filename, directory );
+   MaterialRfile* rf = new MaterialRfile( this, filename, directory, bufsize );
    add_mtrl_block( rf  );
 }
 

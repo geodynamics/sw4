@@ -51,12 +51,13 @@ using namespace std;
 
 //-----------------------------------------------------------------------
 MaterialRfile::MaterialRfile( EW* a_ew, const string a_file,
-				   const string a_directory ):
+			      const string a_directory, int a_bufsize ):
    mEW(a_ew),
    m_model_file(a_file),
    m_model_dir(a_directory)
 {
    mCoversAllPoints = false;
+   m_bufsize = a_bufsize;
    read_rfile();
 }
 
@@ -312,7 +313,8 @@ int MaterialRfile::io_processor( )
    else
    {
       q = (nproc-1)/(nrwriters-1);
-      r = (nproc-1) % (nrwriters-1);
+      //      r = (nproc-1) % (nrwriters-1);
+      r = 0;
    }
    for( int w=0 ; w < nrwriters ; w++ )
       if( q*w+r == myid )
@@ -697,7 +699,7 @@ void MaterialRfile::read_rfile( )
       //      }
 
       //      vector<Parallel_IO*> pio(m_npatches);
-      int bufsize =  200000;
+      //      int bufsize =  200000;
       bool roworder = true;
       for( int p=0 ; p < m_npatches ; p++ )
       {
@@ -718,7 +720,7 @@ void MaterialRfile::read_rfile( )
 	       start[0]=start[2];
 	       start[2]=tmp;
 	    }
-	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, bufsize );
+	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, m_bufsize );
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
     // Read corresponding part of patches
 	    if( prec == 8 )

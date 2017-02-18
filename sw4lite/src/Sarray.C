@@ -1077,3 +1077,20 @@ size_t Sarray::check_match_cpu_gpu( EWCuda* cu, int& cfirst, int& ifirst, int& j
 #endif
 
 }
+
+//-----------------------------------------------------------------------
+Sarray* Sarray::create_copy_on_device( EWCuda* cu )
+{
+#ifdef SW4_CUDA
+   copy_to_device(cu);
+   Sarray* dev_array;
+   cudaError_t retcode = cudaMalloc( (void**)&dev_array,sizeof(Sarray));
+   if( retcode != cudaSuccess )
+      cout << "Error creating Sarray on device. retval = " << cudaGetErrorString(retcode) << endl;
+   retcode = cudaMemcpy(dev_array,this,sizeof(Sarray),cudaMemcpyHostToDevice);
+   if( retcode != cudaSuccess )
+      cout << "Error create_copy Sarray to device. retval = " << cudaGetErrorString(retcode) << endl;
+   return dev_array;
+#endif
+}
+   
