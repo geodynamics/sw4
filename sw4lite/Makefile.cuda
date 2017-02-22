@@ -6,6 +6,8 @@ ifeq ($(findstring ray,$(HOSTNAME)),ray)
    MPIPATH = /opt/ibm/spectrum_mpi
    gpuarch := sm_60
    EXTRA_LINK_FLAGS = -lmpi_ibm
+   debugdir := debug_cuda_ray
+   optdir   := optimize_cuda_ray
 else ifeq ($(findstring surface,$(HOSTNAME)),surface)
    NVCC = nvcc
    HOSTCOMP = /usr/local/tools/ic-16.0.258/bin/icpc
@@ -13,6 +15,8 @@ else ifeq ($(findstring surface,$(HOSTNAME)),surface)
    gpuarch := sm_35
    EXTRA_LINK_FLAGS = -lmpich -lmpl -lpmi
    MPIINC = $(MPIPATH)/include
+   debugdir := debug_cuda_surface
+   optdir   := optimize_cuda_surface
 endif
 CXX  = $(NVCC)
 MPILIB = $(MPIPATH)/lib
@@ -39,11 +43,8 @@ ifeq ($(openmp),yes)
 endif
 
 ifeq ($(openmp),yes)
-   debugdir := debug_mp_cuda
-   optdir := optimize_mp_cuda
-else
-   debugdir := debug_cuda
-   optdir := optimize_cuda
+   debugdir := $(debugdir)_mp
+   optdir   := $(optdir)_mp
 endif
 ifeq ($(single),yes)
    debugdir := $(debugdir)_sp
@@ -71,7 +72,7 @@ else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Source.o rhs4sg.o rhs4sg_rev.o SuperGrid.o GridPointSource.o time_functions.o ew-cfromfort.o EW_cuda.o Sarray.o device-routines.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o
+OBJ  = main.o EW.o Source.o rhs4sg.o rhs4sg_rev.o SuperGrid.o GridPointSource.o time_functions_cu.o ew-cfromfort.o EW_cuda.o Sarray.o device-routines.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o
 
 FOBJ = $(addprefix $(builddir)/,$(OBJ))
 

@@ -10,7 +10,7 @@
 //#include "Filter.h"
 //#include "Qspline.h"
 
-#include "time_functions.h"
+//#include "time_functions.h"
 
 
 using namespace std;
@@ -1040,8 +1040,11 @@ alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
 }
 
 //-----------------------------------------------------------------------
-void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources ) const
+void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources ) 
 {
+   // for GPU computing copy mpar, mipar to device before creating GridPointSources.
+   copy_pars_to_device();
+
 // note that this routine is called from all processors, for each input source 
 //   int i,j,k,g;
 //   a_EW->computeNearestGridPoint( i, j, k, g, mX0, mY0, mZ0 );
@@ -1480,7 +1483,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 								      i,j,k,m_grid,
 								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
 								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
+								       mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar );
 		     point_sources.push_back(sourcePtr);
 		  }
 		  if( k <= 1 && ccbndry && upperbndry )
@@ -1492,7 +1495,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 								      i,j,kk,m_grid+1,
 								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
 								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
+								       mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar );
 		     point_sources.push_back(sourcePtr);
 		  }
 		  if( k >= Nz && ccbndry && lowerbndry )
@@ -1502,7 +1505,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 									  i,j,kk,m_grid-1,
 									  wF*mForces[0], wF*mForces[1], wF*mForces[2],
 									  mTimeDependence, mNcyc, 
-									  mPar, mNpar, mIpar, mNipar );
+								       mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar );
 		     point_sources.push_back(sourcePtr);
 		  }
 	       }
@@ -1528,7 +1531,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 								      i,j,kk,m_grid+1,
 								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
 								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar );
 			point_sources.push_back(sourcePtr);
 		     }
 		  }
@@ -1549,7 +1552,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 									  i,j,kk,m_grid-1,
 									  wF*mForces[0], wF*mForces[1], wF*mForces[2],
 									  mTimeDependence, mNcyc, 
-									  mPar, mNpar, mIpar, mNipar );
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar );
 			point_sources.push_back(sourcePtr);
 		     }
 		  }
@@ -1895,7 +1898,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 		     {
 			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, m_grid, 
 									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar,
 									  dsdp, dddp, dh1, dh2, dh3 );
 			if( m_derivative >= 0 )
 			   sourcePtr->set_derivative(m_derivative,m_dir);
@@ -1907,7 +1910,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 			int kk = Nzp - 1 + k;
 			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, m_grid+1, 
 									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar,
 									  dsdp, dddp, dh1, dh2, dh3 );
 			if( m_derivative >= 0 )
 			   sourcePtr->set_derivative(m_derivative,m_dir);
@@ -1918,7 +1921,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 			int kk = k-Nz + 1;
 			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, m_grid-1, 
 									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar,
 									  dsdp, dddp, dh1, dh2, dh3 );
 			if( m_derivative >= 0 )
 			   sourcePtr->set_derivative(m_derivative,m_dir);
@@ -1953,7 +1956,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 			   int kk = Nzp - 1 + k;
 			   GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, m_grid+1, 
 									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar,
 									  dsdp, dddp, dh1, dh2, dh3 );
 			   point_sources.push_back(sourcePtr);
 			}
@@ -1978,7 +1981,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 			   int kk = k-Nz + 1;
 			   GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, m_grid-1, 
 									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
+									  mPar, mNpar, mIpar, mNipar, mdevPar, mdevIpar,
 									  dsdp, dddp, dh1, dh2, dh3 );
 			   point_sources.push_back(sourcePtr);
 			}
@@ -2122,11 +2125,14 @@ Source* Source::copy( std::string a_name )
    retval->mPar = new float_sw4[mNpar];
    for( int i=0 ; i < mNpar ; i++ )
       retval->mPar[i] = mPar[i];
+//   retval->mdevPar = mdevPar;
 
    retval->mNipar = mNipar;
    retval->mIpar = new int[mNipar];
    for( int i=0 ; i < mNipar ; i++ )
       retval->mIpar[i] = mIpar[i];
+//   retval->mdevIpar = mIpar;
+
 
    retval->mNcyc = mNcyc;
    retval->m_derivative = m_derivative;
@@ -2312,4 +2318,24 @@ void Source::compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float
 	 }
       }
    }
+}
+
+//-----------------------------------------------------------------------
+void Source::copy_pars_to_device()
+{
+#ifdef SW4_CUDA
+   cudaError_t retcode;
+   retcode=cudaMalloc((void**)&mdevPar,  mNpar*sizeof(float_sw4));
+   if( retcode != cudaSuccess )
+      cout << "Error in Source::copy_pars_to_device 1, retval= " << cudaGetErrorString(retcode) << endl;
+   retcode=cudaMalloc((void**)&mdevIpar, mNipar*sizeof(int));
+   if( retcode != cudaSuccess )
+      cout << "Error in Source::copy_pars_to_device 2, retval= " << cudaGetErrorString(retcode) << endl;
+   retcode=cudaMemcpy( mdevPar,  mPar,  mNpar*sizeof(float_sw4), cudaMemcpyHostToDevice );
+   if( retcode != cudaSuccess )
+      cout << "Error in Source::copy_pars_to_device 3, retval= " << cudaGetErrorString(retcode) << endl;
+   retcode=cudaMemcpy( mdevIpar, mIpar, mNipar*sizeof(int),      cudaMemcpyHostToDevice );
+   if( retcode != cudaSuccess )
+      cout << "Error in Source::copy_pars_to_device 4, retval= " << cudaGetErrorString(retcode) << endl;
+#endif
 }

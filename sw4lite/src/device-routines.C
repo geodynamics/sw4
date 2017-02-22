@@ -1,4 +1,6 @@
 #include "sw4.h"
+#include "Sarray.h"
+#include "GridPointSource.h"
 
 #ifdef SW4_CUDA
 #include <cuda_runtime.h>
@@ -46,33 +48,34 @@ __global__ void pred_dev( int ifirst, int ilast, int jfirst, int jlast, int kfir
    //   size_t i = myi+(ilast-ifirst+1)*(myj+(jlast-jfirst+1)*myk);
 
 
-   //   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
-   //   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
-   //   const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
    //   //   size_t j;
 
-   //   for (size_t i = myi; i < 3*npts; i += nthreads) 
+   for (size_t i = myi; i < 3*npts; i += nthreads) 
+   {
+      //       j = i/3;
+      //       float_sw4 dt2orh = dt2/rho[j];
+      //       float_sw4 dt2orh = dt2/rho[i/3];
+      up[i  ] = 2*u[i  ]-um[i  ] + (dt2/rho[i/3])*(lu[i  ]+fo[i  ]);
+   }
+
+   //   size_t i = threadIdx.x + blockIdx.x * blockDim.x;
+   //   const size_t nthreads = static_cast<size_t> (gridDim.x)*blockDim.x;
+   //   const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
+   //   up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
+   //   i += nthreads;
+   //   up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
+   //   i += nthreads;
+   //   if( i < 3*npts )
    //   {
-   //      //       j = i/3;
-   //      //       float_sw4 dt2orh = dt2/rho[j];
-   //       float_sw4 dt2orh = dt2/rho[i/3];
-   //       up[i  ] = 2*u[i  ]-um[i  ] + dt2orh*(lu[i  ]+fo[i  ]);
+   //      up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
+   //      i += nthreads;
+   //      if( i < 3*npts )
+   //	 up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
    //   }
 
-   size_t i = threadIdx.x + blockIdx.x * blockDim.x;
-   const size_t nthreads = static_cast<size_t> (gridDim.x)*blockDim.x;
-   const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
-   i += nthreads;
-   up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
-   i += nthreads;
-   if( i < 3*npts )
-   {
-      up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
-      i += nthreads;
-      if( i < 3*npts )
-	 up[i] = 2*u[i] - um[i] + dt2/rho[i/3]*(lu[i]+fo[i]);
-   }
    //   float_sw4 dt2orh = dt2/rho[i];
    //   i *= 3;
    //   up[i  ] = 2*u[i  ]-um[i  ] + dt2orh*(lu[i  ]+fo[i  ]);
@@ -99,20 +102,25 @@ __global__ void corr_dev( int ifirst, int ilast, int jfirst, int jlast, int kfir
    //   up[i+1] += dt4i12orh*(lu[i+1]+fo[i+1]);
    //   up[i+2] += dt4i12orh*(lu[i+2]+fo[i+2]);
 
-   size_t i = threadIdx.x + blockIdx.x * blockDim.x;
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
    const size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
-   i += nthreads;
-   up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
-   i += nthreads;
-   if( i < 3*npts )
+
+   for (size_t i = myi; i < 3*npts; i += nthreads) 
    {
       up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
-      i += nthreads;
-      if( i < 3*npts )
-	 up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
    }
+   //   up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
+   //   i += nthreads;
+   //   up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
+   //   i += nthreads;
+   //   if( i < 3*npts )
+   //   {
+   //      up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
+   //      i += nthreads;
+   //      if( i < 3*npts )
+   //	 up[i  ] += dt4/(12*rho[i/3])*(lu[i  ]+fo[i  ]);
+   //   }
 }
 
 //-----------------------------------------------------------------------
@@ -127,23 +135,22 @@ __global__ void dpdmt_dev( int ifirst, int ilast, int jfirst, int jlast, int kfi
    //   u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
    //   u2[i+1] = dt2i*(up[i+1]-2*u[i+1]+um[i+1]);
    //   u2[i+2] = dt2i*(up[i+2]-2*u[i+2]+um[i+2]);
-   size_t i = threadIdx.x + blockIdx.x * blockDim.x;
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
    const size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
-   i += nthreads;
-   u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
-   i += nthreads;
-   if( i < 3*npts )
-   {
+   //   u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
+   //   i += nthreads;
+   //   u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
+   //   i += nthreads;
+   //   if( i < 3*npts )
+   //   {
+   //      u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
+   //      i += nthreads;
+   //      if( i < 3*npts )
+   //	 u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
+   //   }
+   for (size_t i = myi; i < 3*npts; i += nthreads) 
       u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
-      i += nthreads;
-      if( i < 3*npts )
-	 u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
-   }
-
-   //   for (size_t i = myi; i < 3*npts; i += nthreads) 
-   //       u2[i  ] = dt2i*(up[i  ]-2*u[i  ]+um[i  ]);
 }
 
 //-----------------------------------------------------------------------
@@ -1237,7 +1244,7 @@ __global__ void pred_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int 
    size_t i = threadIdx.x + blockIdx.x * blockDim.x;
    const size_t nthreads = static_cast<size_t> (gridDim.x)*blockDim.x;
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   up[i] = 2*u[i] - um[i] + dt2/rho[i]*(lu[i]+fo[i]);
+   up[i] = 2*u[i] - um[i] + dt2/rho[i%npts]*(lu[i]+fo[i]);
    i += nthreads;
    up[i] = 2*u[i] - um[i] + dt2/rho[i%npts]*(lu[i]+fo[i]);
    i += nthreads;
@@ -1278,8 +1285,8 @@ __global__ void corr_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int 
    size_t i = ghost_points + threadIdx.x + blockIdx.x * blockDim.x;
    const size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   size_t j= i;
-   up[i  ] += dt4/(12*rho[i])*(lu[i  ]+fo[i  ]);
+   //   size_t j= i;
+   up[i  ] += dt4/(12*rho[i%npts])*(lu[i  ]+fo[i  ]);
    i += nthreads;
    up[i  ] += dt4/(12*rho[i%npts])*(lu[i  ]+fo[i  ]);
    i += nthreads;
@@ -1488,8 +1495,8 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 				int ghost_points )
 {
  // Direct reuse of fortran code by these macro definitions:
-#define mu(i,j,k)     a_mu[base+i+ni*(j)+nij*(k)]
-#define la(i,j,k) a_lambda[base+i+ni*(j)+nij*(k)]
+#define mu(i,j,k)     a_mu[base+(i)+ni*(j)+nij*(k)]
+#define la(i,j,k) a_lambda[base+(i)+ni*(j)+nij*(k)]
 #define u(c,i,j,k)   a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
 #define lu(c,i,j,k) a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
 #define strx(i) a_strx[i-ifirst0]
@@ -1779,7 +1786,7 @@ __global__ void rhs4upper_dev_rev( int ifirst, int ilast, int jfirst, int jlast,
 
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
-   const int nijk  = ni*(klast-kfirst+1);
+   const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int base3 = base-nijk;
    const int ifirst0 = ifirst;
@@ -2380,6 +2387,55 @@ __global__ void check_nan_dev( int ifirst, int ilast, int jfirst, int jlast, int
 
   atomicAdd(retval_global, retval);
   atomicMin(idx_global, idx);
+}
+
+//-----------------------------------------------------------------------
+__global__ void forcing_dev( float_sw4 a_t, Sarray* a_F, int ng,
+			     GridPointSource** point_sources, int nsrc,
+			     int* identsources, int nident, bool a_tt )
+{
+
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t r = threadIdx.x + static_cast<size_t>(blockIdx.x)* blockDim.x;
+
+   while( r < nident-1 )
+   {
+      int s0 = identsources[r];
+      int g = point_sources[s0]->m_grid;
+      int i = point_sources[s0]->m_i0;
+      int j = point_sources[s0]->m_j0;
+      int k = point_sources[s0]->m_k0;
+      size_t ind1 = a_F[g].index(1,i,j,k);
+      //      size_t ind2 = a_F[g].index(2,i,j,k);
+      //      size_t ind3 = a_F[g].index(3,i,j,k);
+      size_t oc = a_F[g].m_offc;
+      float_sw4* fptr =a_F[g].dev_ptr();
+      fptr[ind1] = fptr[ind1+oc] = fptr[ind1+2*oc] = 0;
+      for( int s=identsources[r]; s < identsources[r+1] ; s++ )
+      {
+	float_sw4 fxyz[3];
+	if( a_tt )
+	   point_sources[s]->getFxyztt(a_t,fxyz);
+	else
+	   point_sources[s]->getFxyz(a_t,fxyz);
+	fptr[ind1]      += fxyz[0];
+	fptr[ind1+oc]   += fxyz[1];
+	fptr[ind1+2*oc] += fxyz[2];
+      }
+      r += nthreads;
+   }
+}
+
+//-----------------------------------------------------------------------
+__global__ void init_forcing_dev( GridPointSource** point_sources, int nsrc )
+{
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t r = threadIdx.x + static_cast<size_t>(blockIdx.x)* blockDim.x;
+   while( r < nsrc )
+   {
+      point_sources[r]->init_dev();
+      r += nthreads;
+   }
 }
 
 #endif
