@@ -129,74 +129,78 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 #pragma omp parallel 
      {
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
-    float_sw4 zsurf = 0.; // ?
+        float_sw4 zsurf = 0.; // ?
 
+// the following pragma causes an internal error for the cray compiler?
 #pragma omp for reduction (+:material,outside)
-    for( int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++ )
-    {
-      for( int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++ )
-      {
-	 //#pragma simd
+        for( int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++ )
+        {
+           for( int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++ )
+           {
+              //#pragma simd
 #pragma ivdep
-	for( int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g] ; i++ )
-	{
-	  float_sw4 x = (i-1)*mEW->mGridSize[g]                ;
-	  float_sw4 y = (j-1)*mEW->mGridSize[g]                ;
-	  float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
+             for( int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g] ; i++ )
+             {
+                 float_sw4 x = (i-1)*mEW->mGridSize[g]                ;
+                 float_sw4 y = (j-1)*mEW->mGridSize[g]                ;
+                 float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
                       
-	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
+                 //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
                       
-	  float_sw4 depth;
-	  if (m_absoluteDepth)
-	  {
-	    depth = z;
-	  }
-	  else
-	  {
-	    mEW->getDepth(x, y, z, depth);
-	  }	  
+                 float_sw4 depth;
+                 if (m_absoluteDepth)
+                 {
+                    depth = z;
+                 }
+                 else
+                 {
+                    mEW->getDepth(x, y, z, depth);
+                 }	  
 
-	  if(inside_block(x,y,depth))
-	  {
-	    if( m_rho != -1 )
-	      rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
-	    if( m_vs != -1 )
-	      cs[g](i,j,k)  = m_vs + m_vsgrad*(depth-zsurf);
-	    if( m_vp != -1 )
-	      cp[g](i,j,k)  = m_vp + m_vpgrad*(depth-zsurf);
-	    if( m_qp != -1 && qp[g].is_defined())
-	      qp[g](i,j,k) = m_qp;
-	    if( m_qs != -1 && qs[g].is_defined())
-	      qs[g](i,j,k) = m_qs;
-	    material++;
-	  }
-	  else
-	  {
-	    outside++;
-	    if (mEW->getVerbosity() > 2)
-	    {
-	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
-		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
-		     "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
-		     i, j, k, g, 
-		     x, y, z, depth,
-		     m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
-	    }
-	  }
+                 if(inside_block(x,y,depth))
+                 {
+                    if( m_rho != -1 )
+                       rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
+                    if( m_vs != -1 )
+                       cs[g](i,j,k)  = m_vs + m_vsgrad*(depth-zsurf);
+                    if( m_vp != -1 )
+                       cp[g](i,j,k)  = m_vp + m_vpgrad*(depth-zsurf);
+                    if( m_qp != -1 && qp[g].is_defined())
+                       qp[g](i,j,k) = m_qp;
+                    if( m_qs != -1 && qs[g].is_defined())
+                       qs[g](i,j,k) = m_qs;
+                    material++;
+                 }
+                 else
+                 {
+                    outside++;
+                    if (mEW->getVerbosity() > 2)
+                    {
+                       printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+                              "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
+                              "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
+                              i, j, k, g, 
+                              x, y, z, depth,
+                              m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
+                    }
+                 } // end ! inside_block
 	  
-	}
-      }
-    }
-     }
+             } // end for i
+              
+           }// end for j
+       } // end for k
+        
+     } // end pragma omp parallel
+     
 // communicate material properties to ghost points (necessary on refined meshes because ghost points don't have a well defined depth/topography)
-    mEW->communicate_array( rho[g], g );
-    mEW->communicate_array( cs[g], g );
-    mEW->communicate_array( cp[g], g );
+     mEW->communicate_array( rho[g], g );
+     mEW->communicate_array( cs[g], g );
+     mEW->communicate_array( cp[g], g );
 
-    if (qs[g].is_defined())
-      mEW->communicate_array( qs[g], g );
-    if (qp[g].is_defined())
-      mEW->communicate_array( qp[g], g );
+     if (qs[g].is_defined())
+        mEW->communicate_array( qs[g], g );
+     if (qp[g].is_defined())
+        mEW->communicate_array( qp[g], g );
 
   } // end for all Cartesian grids
 
@@ -209,6 +213,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
     float_sw4 zsurf = 0.;
 
+// the following pragma causes an internal error for the cray compiler?
 #pragma omp for reduction (+:material,outside)
     for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
     {

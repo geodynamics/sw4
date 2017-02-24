@@ -4,11 +4,13 @@ developer reporttiming=1 checkfornan=0 corder=yes
 # corder=yes only works with the C-version of sw4lite(?)
 #developer reporttiming=1 checkfornan=0
 
-grid x=1.0 y=1.0 z=1.5 h=0.01
+#grid x=1.0 y=1.0 z=1.5 h=0.01
+grid x=1.27 y=1.27 z=19.99 h=0.01
 #
 fileio path=gaussianHill-h0p01
 #
-time t=3.0
+#time t=3.0
+time steps=100
 
 block vp=2 vs=1 r=1.5 
 
