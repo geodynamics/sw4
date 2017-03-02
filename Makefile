@@ -95,8 +95,8 @@ else
       optdir := optimize_sierra
 # For Quartz at LC (why doesn't this work when HOSTNAME is quartz770 ?
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
-      include configs/make.haswell
-      foundincfile := "configs/make.haswell"
+      include configs/make.quartz
+      foundincfile := "configs/make.quartz"
     else ifeq ($(findstring cori,$(HOSTNAME)),cori)
       include configs/make.cori
       foundincfile := "configs/make.cori"

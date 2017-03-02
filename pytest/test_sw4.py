@@ -70,7 +70,26 @@ def compare_to_ref(base_file_name, test_file_name, errInfTol, errL2Tol):
     return success
 
 #------------------------------------------------
-def main_test(testing_level=0, mpirun_cmd="mpirun -np 4"):
+def guess_mpi_cmd():
+    node_name = os.uname().nodename
+    sys_name = os.uname().sysname
+    print('node_name=', node_name)
+
+    if 'quartz' in node_name:
+        mpirun_cmd="srun -ppdebug -n 36"
+    elif 'fourier' in node_name:
+        mpirun_cmd="mpirun -np 4"
+    # add more machine names here
+    elif 'Linux' in sys_name:
+        mpirun_cmd="mpirun -np 1"
+    else:
+        #default mpi command
+        mpirun_cmd="mpirun -np 1"
+
+    return mpirun_cmd
+
+#------------------------------------------------
+def main_test(testing_level=0):
     sep = '/'
     pytest_dir = os.getcwd()
     print('pytest_dir =', pytest_dir)
@@ -88,6 +107,9 @@ def main_test(testing_level=0, mpirun_cmd="mpirun -np 4"):
     sw4_exe = optimize_dir + '/sw4'
     #print('sw4-exe = ', sw4_exe)
 
+    # guess the mpi run command from the uname info
+    mpirun_cmd=guess_mpi_cmd()
+
     print('mpirun_cmd = ', mpirun_cmd)
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     #print('sw4_mpi_run = ', sw4_mpi_run)
@@ -103,9 +125,9 @@ def main_test(testing_level=0, mpirun_cmd="mpirun -np 4"):
     # make num_meshes depend on the testing level
     print("Testing level=", testing_level)
     if testing_level == 0:
-        num_meshes =[2, 2, 0]
+        num_meshes =[2, 2, 1]
     elif testing_level == 1:
-        num_meshes =[3, 3, 1]
+        num_meshes =[3, 3, 2]
     
     # run all tests
     for qq in range(len(all_dirs)):

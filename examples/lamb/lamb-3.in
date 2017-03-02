@@ -1,10 +1,12 @@
-fileio path=lamb-1
-grid x=12 y=12 z=6 h=0.08
+fileio path=lamb-3
+grid x=12 y=12 z=6 h=0.02
+
 # the end time should exceed 1.0, which is when the source shuts off
+# t=11 is after all waves have left the domain
 time t=5.0
 
-# supergrid parameters (gp=30 is the default width)
-supergrid gp=30
+# supergrid parameters
+supergrid gp=100
 
 # test case
 testlamb rho=1 cp=1.732050807568877
@@ -13,9 +15,10 @@ testlamb rho=1 cp=1.732050807568877
 source x=6 y=6 z=0 fx=0 fy=0 fz=1 t0=0 freq=1 type=C6SmoothBump
 
 # images
-#image mode=uz    z=0 file=lamb time=5.0 precision=double
-#image mode=uzerr z=0 file=lamb time=5.0 precision=double
+image mode=uz    z=0 file=lamb time=5.0 precision=double
+image mode=uzerr z=0 file=lamb time=5.0 precision=double
 
 # receiver near the supergrid layer
 rec x=10.0 y=6.0 z=0 file=sg1 usgsformat=1 sacformat=0
 rec x=10.0 y=10.0 z=0 file=sg2 usgsformat=1 sacformat=0
+
