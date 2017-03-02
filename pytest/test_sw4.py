@@ -14,7 +14,7 @@ def run_checks(checks):
     return fail
 
 #------------------------------------------------
-def compare_to_ref(base_file_name, test_file_name, errInfTol, errL2Tol):
+def compare_to_ref(base_file_name, test_file_name, errTol):
 
     success = True
 
@@ -47,23 +47,23 @@ def compare_to_ref(base_file_name, test_file_name, errInfTol, errL2Tol):
     #print('test_num=', test_num);
 
     try:
-        t0 = test_num[0]
-        t1 = test_num[1]
-        b0 = base_num[0]
-        b1 = base_num[1]
-        re0 = re1 = 0
-        if t0 != 0 or b0 != 0: re0 = abs(b0-t0)/max(t0,b0)
-        if t1 != 0 or b1 != 0: re1 = abs(b1-t1)/max(t1,b1)
-        # tmp
-        #print('t0=', t0, 'b0=', b0, 'rel err=', re0);
-        #print('t1=', t1, 'b1=', b1, 'rel err=', re1);
-        # end tmp
-        if re0 > errInfTol:
-            print("ERROR: Linf tolerance: %(tol)f Actual: %(actual)f"%{"tol": errInfTol, "actual": re0})
-            success = False
-        if re1 > errL2Tol:
-            print("ERROR: L2 tolerance: %(tol)f Actual: %(actual)f"%{"tol": errL2Tol, "actual": re1})
-            success = False
+        for jj in range(len(base_data)):
+            t0 = test_num[jj]
+            b0 = base_num[jj]
+            re0 = 0
+            if abs(b0) > 0: 
+                re0 = abs(b0-t0)/abs(b0)
+            else:
+                re0 = abs(b0-t0)
+
+            # tmp
+            print('col=', jj, 'test=', t0, 'base=', b0, 'err=', re0);
+            # end tmp
+            if re0 > errTol:
+                print('ERROR: compare_to_ref, base_data=', base_data, 'test_data=', test_data)
+                success = False
+            # end if
+        # end for
     except:
         success = False
 
@@ -174,7 +174,7 @@ def main_test(testing_level=0):
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'reference_dir =', reference_dir)
 
             # compare output
-            success = compare_to_ref(reference_dir + sep + result_file, case_dir + sep + result_file, 1e-5, 1e-5)
+            success = compare_to_ref(reference_dir + sep + result_file, case_dir + sep + result_file, 1e-5)
             if success:        
                 print('Test #', num_test, 'PASSED')
                 num_pass += 1
