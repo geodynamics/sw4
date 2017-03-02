@@ -70,12 +70,12 @@ def compare_to_ref(base_file_name, test_file_name, errInfTol, errL2Tol):
     return success
 
 #------------------------------------------------
-def main_test():
+def main_test(testing_level=0, mpirun_cmd="mpirun -np 4"):
     sep = '/'
     pytest_dir = os.getcwd()
     print('pytest_dir =', pytest_dir)
     pytest_dir_list = pytest_dir.split(sep)
-    sw4_base_list = pytest_dir_list[:-2] # discard the last 2 sub-directories (examples/pytest)
+    sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
     sw4_base_dir = sep.join(sw4_base_list)
     examples_dir = sw4_base_dir + '/examples'
@@ -87,19 +87,25 @@ def main_test():
     
     sw4_exe = optimize_dir + '/sw4'
     #print('sw4-exe = ', sw4_exe)
-    mpirun_base = 'mpirun'
-    num_proc = 4
-    mpirun_cmd = mpirun_base + ' -np ' + str(num_proc)
+
     print('mpirun_cmd = ', mpirun_cmd)
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     #print('sw4_mpi_run = ', sw4_mpi_run)
 
-    test_num=0
+    num_test=0
+    num_pass=0
+    num_fail=0
 
     all_dirs = ['twilight', 'twilight', 'lamb']
     all_cases = ['flat-twi', 'gauss-twi', 'lamb']
     all_results =['TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
-    num_meshes =[3, 3, 2]
+
+    # make num_meshes depend on the testing level
+    print("Testing level=", testing_level)
+    if testing_level == 0:
+        num_meshes =[2, 2, 0]
+    elif testing_level == 1:
+        num_meshes =[3, 3, 1]
     
     # run all tests
     for qq in range(len(all_dirs)):
@@ -116,10 +122,11 @@ def main_test():
 
         # put all test cases in a list and add a for loop for each test_dir
         for ii in range(num_meshes[qq]):
-            test_num = test_num+1
+            num_test = num_test+1
         
             case_dir = base_case + '-' + str(ii+1)
             test_case = case_dir + '.in'
+            print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
             reference_dir = pytest_dir + '/reference' + sep + test_dir + sep + case_dir
             #print('reference_dir=', reference_dir)
@@ -134,25 +141,32 @@ def main_test():
     
             # pipe stdout and stderr to a temporary file
             run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
-            print('Test #', test_num, 'run_cmd:', run_cmd)
 
             # run sw4
             run_dir = os.getcwd()
             #print('Running sw4 from directory:', run_dir)
             status = os.system(run_cmd)
-            print('Test #', test_num, 'execution status = ', status)
-            print('Test #', test_num, 'output dirs: local case_dir =', case_dir, 'reference_dir =', reference_dir)
+            if status!=0:
+                print('WARNING: Test #', num_test, 'returned non-zero exe status=', status)
+                print('       run_cmd=', run_cmd)
+            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'reference_dir =', reference_dir)
 
             # compare output
             success = compare_to_ref(reference_dir + sep + result_file, case_dir + sep + result_file, 1e-5, 1e-5)
-            print('Test #', test_num, 'compare_to_ref returned:', success)
+            if success:        
+                print('Test #', num_test, 'PASSED')
+                num_pass += 1
+            else:
+                print('Test #', num_test, 'FAILED')
+                num_fail += 1
+            
+        # end for qq in all_dirs[qq]
 
-        # end for all base_cases
+        os.chdir('..') # change back to the parent directory
 
     # end for all cases in the test_dir
+    print('Out of', num_test, 'tests,', num_pass, 'PASSED and', num_fail, 'Failed')
     
-    os.chdir('..') # change back to the parent directory
-
 #------------------------------------------------
 if __name__ == "__main__":
    main_test()
