@@ -95,26 +95,30 @@ def main_test():
     #print('sw4_mpi_run = ', sw4_mpi_run)
 
     test_num=0
+
+    all_dirs = ['twilight', 'twilight', 'lamb']
+    all_cases = ['flat-twi', 'gauss-twi', 'lamb']
+    all_results =['TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
+    num_meshes =[3, 3, 2]
     
-    # run all tests in the twilight directory
-    test_dir = 'twilight'
-    #for test_dir in ['twilight', 'lamb']: # this won't work because the base_cases are different in 'twilight' and 'lamb'
+    # run all tests
+    for qq in range(len(all_dirs)):
     
-    #make a local test directory
-    if not os.path.exists(test_dir):
-        os.mkdir(test_dir)
+        test_dir = all_dirs[qq]
+        base_case = all_cases[qq]
+        result_file = all_results[qq]
 
-    os.chdir(test_dir) # change to the new local directory
+        #make a local test directory
+        if not os.path.exists(test_dir):
+            os.mkdir(test_dir)
 
-    result_file = 'TwilightErr.txt'
+        os.chdir(test_dir) # change to the new local directory
 
-    #base_case = 'flat-twi'
-    for base_case in ['flat-twi', 'gauss-twi']:
         # put all test cases in a list and add a for loop for each test_dir
-        for i in [1,2,3]:
+        for ii in range(num_meshes[qq]):
             test_num = test_num+1
         
-            case_dir = base_case + '-' + str(i)
+            case_dir = base_case + '-' + str(ii+1)
             test_case = case_dir + '.in'
 
             reference_dir = pytest_dir + '/reference' + sep + test_dir + sep + case_dir
