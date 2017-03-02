@@ -950,6 +950,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
 
+// AP: The for c loop could be inside the for i loop. The simd, ivdep pragmas should be outside the inner-most loop
       for( int c=0 ; c < 3 ; c++ )
 #pragma omp parallel for
       for( int k=kfirst+2; k <= klast-2 ; k++ )

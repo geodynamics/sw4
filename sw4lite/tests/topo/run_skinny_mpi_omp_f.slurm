@@ -8,7 +8,7 @@
 
 # do the loop
 for numprocs in 1 2 4 8 16 32 64; do
-# for numprocs in 1 2 4; do
+#for numprocs in 8 16 32 64; do
 
 # Number of ranks x threads is constant
 # pc = physical cores

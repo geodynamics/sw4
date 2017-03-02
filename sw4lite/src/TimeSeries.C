@@ -127,7 +127,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 
 // from here on this processor writes this sac station and knows about its topography
    // Check that station is not above free surface
-   if ( !a_ew->topographyExists() && (mZ < -1.0e-9 ) )
+   if ( !a_ew->topographyExists() && (mZ < -1.0e-9 ) ) //AP: the tolerance 1e-9 assumes double precision?
    {
       printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
 	     m_fileName.c_str(),  mX,  mY, mZ, 0.0);
@@ -150,7 +150,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 	 m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
       }
 // 3. Make sure the station is below the topography, allow for a small roundoff (z is positive downwards)
-      if ( mZ < m_zTopo - 1.0e-9 )
+      if ( mZ < m_zTopo - 1.0e-9 ) //AP: the tolerance 1e-9 assumes double precision?
       {
 	 printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
 		m_fileName.c_str(),  mX,  mY, mZ, m_zTopo);

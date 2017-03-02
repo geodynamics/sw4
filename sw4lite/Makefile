@@ -1,6 +1,7 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4lite [ckernel=yes/no] (default is ckernel=no, i.e. use the Fortran kernel)
+# make sw4lite [ckernel=yes/no single=yes/no] 
+# (default is ckernel=no, single=no, i.e. use the Fortran kernel and double precision)
 #
 # To define the compilers on LC:
 # use ic-16.0.210
@@ -11,7 +12,14 @@ ifneq ($(ckernel),yes)
    ckernel := "no"
 endif
 
+ifneq ($(single),yes)
+   single := "no"
+endif
+
 HOSTNAME := $(shell hostname)
+
+# default optimization level (may be modified below)
+OPT = -O3
 
 # Fourier is Anders' mac powerbook
 ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
@@ -79,20 +87,13 @@ else ifeq ($(findstring cori,$(HOSTNAME)),cori)
 # cray compiler wrappers
   FC = ftn
   CXX = CC
-# intel
-#  FC = mpiifort
-#  CXX = mpiicpc
-#  OMPOPT = -fopenmp
-# haswell
-#  EXTRA_CXX_FLAGS = -xCORE-AVX2
-#  EXTRA_FORT_FLAGS = -xCORE-AVX2
-# optimization report
-#  EXTRA_CXX_FLAGS = -qopt_report=3
-# mkl flags
-#  EXTRA_LINK_FLAGS =  -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lpthread -lm -ldl -lifcore
-# Cray-knl
-#  EXTRA_CXX_FLAGS = -hcpu=mic-knl
-#  EXTRA_FORT_FLAGS = -hcpu=mic-knl
+# Cray compiler:  (requires modules: PrgEnv-cray and cray-mpich)
+# rhs4sgcurv_rev.C gives segfault with -O, try -O1 instead
+# the ftn compiler does not accept -O. Need to specify -O2
+#  OPT = -O2
+#  EXTRA_LINK_FLAGS =  # only needs module load cray-mpich
+# Intel compiler:
+  OPT = -O3 -qoverride-limits
   OMPOPT = -qopenmp
   EXTRA_LINK_FLAGS =  -lpthread -lm -ldl -lifcore
   openmp = yes
@@ -125,9 +126,9 @@ ifeq ($(optlevel),DEBUG)
    CXXFLAGS  = -g -I../src -DBZ_DEBUG
    CFLAGS    = -g
 else
-   FFLAGS   = -O3
-   CXXFLAGS = -O3 -I../src
-   CFLAGS   = -O3
+   FFLAGS   = $(OPT)
+   CXXFLAGS = $(OPT) -I../src
+   CFLAGS   = $(OPT)
 endif
 
 ifeq ($(openmp),yes)
@@ -157,6 +158,7 @@ else
       optdir   := optimize
    endif
 endif
+
 ifeq ($(single),yes)
    debugdir := $(debugdir)_sp
    optdir   := $(optdir)_sp
