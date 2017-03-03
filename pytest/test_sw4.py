@@ -131,12 +131,12 @@ def main_test(testing_level=0, mpi_tasks=0, verbose=False):
     num_meshes =[1, 2, 2, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
-    if verbose: print("Testing level=", testing_level)
     if testing_level == 1:
         num_meshes =[2, 3, 3, 2]
     elif testing_level == 2:
         num_meshes =[3, 3, 3, 3]
     
+    print("Running all tests for level", testing_level, "...")
     # run all tests
     for qq in range(len(all_dirs)):
     
