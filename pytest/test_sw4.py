@@ -30,8 +30,8 @@ def compare_last_line(base_file_name, test_file_name, errTol, verbose):
     base_file.close()
     test_file.close()
     if len(base_data) != len(test_data):
-        print("ERROR: " + base_file_name + " and " + test_file_name + " are different lengths.")
-        return False
+        print("WARNING: " + base_file_name + " and " + test_file_name + " are different lengths.")
+
 
     # for twilight tests, compare the 3 numbers on the last line of each file
     base_numbers = base_data[-1:][0]
@@ -97,12 +97,12 @@ def main_test(testing_level=0, verbose=False):
     sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
     sw4_base_dir = sep.join(sw4_base_list)
-    examples_dir = sw4_base_dir + '/examples'
     optimize_dir =  sw4_base_dir + '/optimize'
+    reference_dir = pytest_dir + '/reference' 
 
     print('sw4_base_dir =', sw4_base_dir)
-    print('examples_dir =', examples_dir)
     print('optimize_dir =', optimize_dir)          
+    print('reference_dir =', reference_dir)          
     
     sw4_exe = optimize_dir + '/sw4'
     #print('sw4-exe = ', sw4_exe)
@@ -149,10 +149,7 @@ def main_test(testing_level=0, verbose=False):
             test_case = case_dir + '.in'
             print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
-            reference_dir = pytest_dir + '/reference' + sep + test_dir + sep + case_dir
-            #print('reference_dir=', reference_dir)
-    
-            sw4_input_file = examples_dir + sep + test_dir + sep + test_case
+            sw4_input_file = reference_dir + sep + test_dir + sep + test_case
             #print('sw4_input_file = ', sw4_input_file)
 
             sw4_stdout_file = case_dir + '.out'
@@ -168,12 +165,17 @@ def main_test(testing_level=0, verbose=False):
             #print('Running sw4 from directory:', run_dir)
             status = os.system(run_cmd)
             if status!=0:
-                print('WARNING: Test #', num_test, 'returned non-zero exe status=', status)
+                print('WARNING: Test #', num_test, 'sw4 returned non-zero exit status=', status)
                 print('       run_cmd=', run_cmd)
-            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'reference_dir =', reference_dir)
+                print('Test #', num_test, 'FAILED')
+                num_fail += 1
+                break
+
+            ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
+            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
             # compare output
-            success = compare_last_line(reference_dir + sep + result_file, case_dir + sep + result_file, 1e-5, verbose)
+            success = compare_last_line(ref_result , case_dir + sep + result_file, 1e-5, verbose)
             if success:        
                 print('Test #', num_test, 'PASSED')
                 num_pass += 1
