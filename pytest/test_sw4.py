@@ -16,30 +16,32 @@ def run_checks(checks):
     return fail
 
 #------------------------------------------------
-def compare_last_line(base_file_name, test_file_name, errTol, absErrLimit, verbose):
+def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNum, verbose):
 
     success = True
 
     base_file = open(base_file_name)
     test_file = open(test_file_name)
-    base_data = base_file.readlines()
+    base_data = base_file.readlines() #reads all lines in the file
     test_data = test_file.readlines()
 
     # tmp
-    #print('base_data:', base_data)
-    #print('test_data:', test_data)
+    #print('base_data file:', base_data)
+    #print('test_data file:', test_data)
 
     base_file.close()
     test_file.close()
     if len(base_data) != len(test_data):
         print("WARNING: " + base_file_name + " and " + test_file_name + " are different lengths.")
 
-
     # for twilight tests, compare the 3 numbers on the last line of each file
-    base_numbers = base_data[-1:][0]
-    test_numbers = test_data[-1:][0]
-    base_data = base_numbers.split() #base_data is a list of strings
-    test_data = test_numbers.split()
+    base_line = base_data[lineNum]
+    test_line = test_data[lineNum]
+    #print('base_line=', base_line)
+    #print('test_line=', test_line)
+
+    base_data = base_line.split() #base_data is a list of strings
+    test_data = test_line.split()
     #print('base_data=', base_data)
     #print('test_data=', test_data)
 
@@ -59,16 +61,19 @@ def compare_last_line(base_file_name, test_file_name, errTol, absErrLimit, verbo
                 re0 = abs(b0-t0)
 
             if verbose or re0 > errTol:
-                print('INFO: compare_last_line: col=', jj, 'test=', t0, 'base=', b0, 'err=', re0);
+                print('INFO: compare_one_line: col=', jj, 'test=', t0, 'base=', b0, 'err=', re0);
 
             if re0 > errTol:
-                print('ERROR: compare_last_line: err=', re0, '> tolerance=', errTol)
+                print('ERROR: compare_one_line: err=', re0, '> tolerance=', errTol)
                 success = False
             # end if
         # end for
     except:
         success = False
 
+    base_file.close()
+    test_file.close()
+    
     return success
 
 #------------------------------------------------
@@ -125,16 +130,16 @@ def main_test(testing_level=0, mpi_tasks=0, verbose=False):
     num_pass=0
     num_fail=0
 
-    all_dirs = ['pointsource', 'twilight', 'twilight', 'lamb']
-    all_cases = ['pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
-    all_results =['PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
-    num_meshes =[1, 2, 2, 1] # default number of meshes for level 0
+    all_dirs = ['attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
+    all_cases = ['tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
+    all_results =['TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
+    num_meshes =[2, 1, 1, 2, 2, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[2, 3, 3, 2]
+        num_meshes =[3, 2, 2, 3, 3, 2]
     elif testing_level == 2:
-        num_meshes =[3, 3, 3, 3]
+        num_meshes =[3, 3, 3, 3, 3, 3]
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
@@ -184,8 +189,11 @@ def main_test(testing_level=0, mpi_tasks=0, verbose=False):
             ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
-            # compare output
-            success = compare_last_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, verbose)
+            # compare output (always compare the last line)
+            success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
+            if success and 'attenuation' in test_dir:
+                # also compare the 3rd last line in the files
+                success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
             if success:        
                 print('Test #', num_test, "Input file:", test_case, 'PASSED')
                 num_pass += 1
@@ -198,7 +206,7 @@ def main_test(testing_level=0, mpi_tasks=0, verbose=False):
         os.chdir('..') # change back to the parent directory
 
     # end for all cases in the test_dir
-    print('Out of', num_test, 'tests,', num_pass, 'PASSED and', num_fail, 'Failed')
+    print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')
     
 #------------------------------------------------
 if __name__ == "__main__":
