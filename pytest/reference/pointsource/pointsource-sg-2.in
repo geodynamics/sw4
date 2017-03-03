@@ -5,8 +5,8 @@ time t=2.5
 # supergrid conditions on all sides
 boundary_conditions lx=2 hx=2 ly=2 hy=2 lz=2 hz=2
 
-# supergrid parameters, 75*0.02 = 1.5
-supergrid gp=75
+# supergrid parameters, 60*0.03 = 1.8
+supergrid gp=60
 
 # testing point sources
 testpointsource rho=1 cp=1.6 cs=0.8 

@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 # Arguments:
 # This assumes displacement variables and attenuation variables have the same tolerance
 
-import os, sys
+import os, sys, argparse
 
-#------------------------------------------------
+#----(Currently not used)--------------------------------------------
 def run_checks(checks):
     fail = False
     for elem in checks:
@@ -14,7 +16,7 @@ def run_checks(checks):
     return fail
 
 #------------------------------------------------
-def compare_last_line(base_file_name, test_file_name, errTol, verbose):
+def compare_last_line(base_file_name, test_file_name, errTol, absErrLimit, verbose):
 
     success = True
 
@@ -51,7 +53,7 @@ def compare_last_line(base_file_name, test_file_name, errTol, verbose):
             t0 = test_num[jj]
             b0 = base_num[jj]
             re0 = 0
-            if abs(b0) > 0: 
+            if abs(b0) > absErrLimit: 
                 re0 = abs(b0-t0)/abs(b0)
             else:
                 re0 = abs(b0-t0)
@@ -70,29 +72,34 @@ def compare_last_line(base_file_name, test_file_name, errTol, verbose):
     return success
 
 #------------------------------------------------
-def guess_mpi_cmd():
+def guess_mpi_cmd(mpi_tasks, verbose):
     node_name = os.uname().nodename
     sys_name = os.uname().sysname
-    print('node_name=', node_name)
+    if verbose: print('node_name=', node_name)
 
     if 'quartz' in node_name:
-        mpirun_cmd="srun -ppdebug -n 36"
+        if mpi_tasks<=0: mpi_tasks = 36
+        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks)
     elif 'fourier' in node_name:
-        mpirun_cmd="mpirun -np 4"
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="mpirun -np " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
-        mpirun_cmd="mpirun -np 1"
+        if mpi_tasks<=0: mpi_tasks = 1
+        mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
-        mpirun_cmd="mpirun -np 1"
+        if mpi_tasks<=0: mpi_tasks = 1
+        mpirun_cmd="mpirun -np " + str(mpi_tasks)
+
+    if verbose: print('mpirun_cmd = ', mpirun_cmd)
 
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(testing_level=0, verbose=False):
+def main_test(testing_level=0, mpi_tasks=0, verbose=False):
     sep = '/'
     pytest_dir = os.getcwd()
-    print('pytest_dir =', pytest_dir)
     pytest_dir_list = pytest_dir.split(sep)
     sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
@@ -100,17 +107,17 @@ def main_test(testing_level=0, verbose=False):
     optimize_dir =  sw4_base_dir + '/optimize'
     reference_dir = pytest_dir + '/reference' 
 
-    print('sw4_base_dir =', sw4_base_dir)
-    print('optimize_dir =', optimize_dir)          
-    print('reference_dir =', reference_dir)          
+    if verbose: print('pytest_dir =', pytest_dir)
+    if verbose: print('sw4_base_dir =', sw4_base_dir)
+    if verbose: print('optimize_dir =', optimize_dir)          
+    if verbose: print('reference_dir =', reference_dir)          
     
     sw4_exe = optimize_dir + '/sw4'
     #print('sw4-exe = ', sw4_exe)
 
     # guess the mpi run command from the uname info
-    mpirun_cmd=guess_mpi_cmd()
+    mpirun_cmd=guess_mpi_cmd(mpi_tasks, verbose)
 
-    print('mpirun_cmd = ', mpirun_cmd)
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     #print('sw4_mpi_run = ', sw4_mpi_run)
 
@@ -124,9 +131,11 @@ def main_test(testing_level=0, verbose=False):
     num_meshes =[1, 2, 2, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
-    print("Testing level=", testing_level)
+    if verbose: print("Testing level=", testing_level)
     if testing_level == 1:
-        num_meshes =[3, 3, 3, 2]
+        num_meshes =[2, 3, 3, 2]
+    elif testing_level == 2:
+        num_meshes =[3, 3, 3, 3]
     
     # run all tests
     for qq in range(len(all_dirs)):
@@ -147,7 +156,8 @@ def main_test(testing_level=0, verbose=False):
         
             case_dir = base_case + '-' + str(ii+1)
             test_case = case_dir + '.in'
-            print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
+            if verbose: 
+                print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
             sw4_input_file = reference_dir + sep + test_dir + sep + test_case
             #print('sw4_input_file = ', sw4_input_file)
@@ -165,22 +175,22 @@ def main_test(testing_level=0, verbose=False):
             #print('Running sw4 from directory:', run_dir)
             status = os.system(run_cmd)
             if status!=0:
-                print('WARNING: Test #', num_test, 'sw4 returned non-zero exit status=', status)
+                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status)
                 print('       run_cmd=', run_cmd)
-                print('Test #', num_test, 'FAILED')
+                print('Test #', num_test, "Input file:", test_case, 'FAILED')
                 num_fail += 1
-                break
+                continue #skip to next test
 
             ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
             # compare output
-            success = compare_last_line(ref_result , case_dir + sep + result_file, 1e-5, verbose)
+            success = compare_last_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, verbose)
             if success:        
-                print('Test #', num_test, 'PASSED')
+                print('Test #', num_test, "Input file:", test_case, 'PASSED')
                 num_pass += 1
             else:
-                print('Test #', num_test, 'FAILED')
+                print('Test #', num_test, "Input file:", test_case, 'FAILED')
                 num_fail += 1
             
         # end for qq in all_dirs[qq]
@@ -192,5 +202,26 @@ def main_test(testing_level=0, verbose=False):
     
 #------------------------------------------------
 if __name__ == "__main__":
-   main_test()
+    # default arguments
+    testing_level=0
+    verbose=False
+    mpi_tasks=0 # machine dependent default
+
+    parser=argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("-l", "--level", type=int, choices=[0, 1, 2], 
+                        help="testing level")
+    parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
+    args = parser.parse_args()
+    if args.verbose:
+        #print("verbose mode enabled")
+        verbose=True
+    if args.level:
+        #print("Testing level specified=", args.level)
+        testing_level=args.level
+    if args.mpitasks:
+        #print("MPI-tasks specified=", args.mpitasks)
+        if args.mpitasks > 0: mpi_tasks=args.mpitasks
+
+    main_test(testing_level, mpi_tasks, verbose)
 
