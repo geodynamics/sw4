@@ -14,7 +14,7 @@ def run_checks(checks):
     return fail
 
 #------------------------------------------------
-def compare_to_ref(base_file_name, test_file_name, errTol):
+def compare_last_line(base_file_name, test_file_name, errTol, verbose):
 
     success = True
 
@@ -56,11 +56,11 @@ def compare_to_ref(base_file_name, test_file_name, errTol):
             else:
                 re0 = abs(b0-t0)
 
-            # tmp
-            print('col=', jj, 'test=', t0, 'base=', b0, 'err=', re0);
-            # end tmp
+            if verbose or re0 > errTol:
+                print('INFO: compare_last_line: col=', jj, 'test=', t0, 'base=', b0, 'err=', re0);
+
             if re0 > errTol:
-                print('ERROR: compare_to_ref, base_data=', base_data, 'test_data=', test_data)
+                print('ERROR: compare_last_line: err=', re0, '> tolerance=', errTol)
                 success = False
             # end if
         # end for
@@ -89,7 +89,7 @@ def guess_mpi_cmd():
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(testing_level=0):
+def main_test(testing_level=0, verbose=False):
     sep = '/'
     pytest_dir = os.getcwd()
     print('pytest_dir =', pytest_dir)
@@ -118,16 +118,15 @@ def main_test(testing_level=0):
     num_pass=0
     num_fail=0
 
-    all_dirs = ['twilight', 'twilight', 'lamb']
-    all_cases = ['flat-twi', 'gauss-twi', 'lamb']
-    all_results =['TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
+    all_dirs = ['pointsource', 'twilight', 'twilight', 'lamb']
+    all_cases = ['pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
+    all_results =['PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
+    num_meshes =[1, 2, 2, 1] # default number of meshes for level 0
 
-    # make num_meshes depend on the testing level
+    # add more tests for higher values of the testing level
     print("Testing level=", testing_level)
-    if testing_level == 0:
-        num_meshes =[2, 2, 1]
-    elif testing_level == 1:
-        num_meshes =[3, 3, 2]
+    if testing_level == 1:
+        num_meshes =[3, 3, 3, 2]
     
     # run all tests
     for qq in range(len(all_dirs)):
@@ -174,7 +173,7 @@ def main_test(testing_level=0):
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'reference_dir =', reference_dir)
 
             # compare output
-            success = compare_to_ref(reference_dir + sep + result_file, case_dir + sep + result_file, 1e-5)
+            success = compare_last_line(reference_dir + sep + result_file, case_dir + sep + result_file, 1e-5, verbose)
             if success:        
                 print('Test #', num_test, 'PASSED')
                 num_pass += 1
