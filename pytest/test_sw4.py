@@ -197,11 +197,9 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
             #print('Running sw4 from directory:', run_dir)
             status = os.system(run_cmd)
             if status!=0:
-                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status)
+                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
                 print('       run_cmd=', run_cmd)
-                print('Test #', num_test, "Input file:", test_case, 'FAILED')
-                num_fail += 1
-                continue #skip to next test
+                return False # bail out
 
             ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
