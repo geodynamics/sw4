@@ -102,16 +102,28 @@ def guess_mpi_cmd(mpi_tasks, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(testing_level=0, mpi_tasks=0, verbose=False):
+def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=False):
+    assert sys.version_info >= (3,3) # named tuples in version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
     pytest_dir_list = pytest_dir.split(sep)
     sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
     sw4_base_dir = sep.join(sw4_base_list)
-    optimize_dir =  sw4_base_dir + '/optimize'
-    reference_dir = pytest_dir + '/reference' 
+    optimize_dir =  sw4_base_dir + sep + sw4_exe_dir
+    reference_dir = pytest_dir + '/reference'
 
+    # make sure the directories are there
+    if not os.path.isdir(sw4_base_dir):
+        print("ERROR: directory", sw4_base_dir, "does not exists")
+        return False
+    if not os.path.isdir(optimize_dir):
+        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir')")
+        return False
+    if not os.path.isdir(reference_dir):
+        print("ERROR: directory", reference_dir, "does not exists")
+        return False
+    
     if verbose: print('pytest_dir =', pytest_dir)
     if verbose: print('sw4_base_dir =', sw4_base_dir)
     if verbose: print('optimize_dir =', optimize_dir)          
@@ -119,6 +131,11 @@ def main_test(testing_level=0, mpi_tasks=0, verbose=False):
     
     sw4_exe = optimize_dir + '/sw4'
     #print('sw4-exe = ', sw4_exe)
+
+    # make sure sw4 is present in the optimize dir
+    if not os.path.isfile(sw4_exe):
+        print("ERROR: the file", sw4_exe, "does not exists (DID YOU FORGET TO BUILD SW4?)")
+        return False
 
     # guess the mpi run command from the uname info
     mpirun_cmd=guess_mpi_cmd(mpi_tasks, verbose)
@@ -207,9 +224,12 @@ def main_test(testing_level=0, mpi_tasks=0, verbose=False):
 
     # end for all cases in the test_dir
     print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')
+    # normal termination
+    return True
     
 #------------------------------------------------
 if __name__ == "__main__":
+    assert sys.version_info >= (3,3) # named tuples in version >=3.3
     # default arguments
     testing_level=0
     verbose=False
@@ -220,6 +240,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--level", type=int, choices=[0, 1, 2], 
                         help="testing level")
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
+    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
     args = parser.parse_args()
     if args.verbose:
         #print("verbose mode enabled")
@@ -230,6 +251,10 @@ if __name__ == "__main__":
     if args.mpitasks:
         #print("MPI-tasks specified=", args.mpitasks)
         if args.mpitasks > 0: mpi_tasks=args.mpitasks
+    if args.sw4_exe_dir:
+        #print("sw4_exe_dir specified=", args.sw4_exe_dir)
+        sw4_exe_dir=args.sw4_exe_dir
 
-    main_test(testing_level, mpi_tasks, verbose)
+    if main_test(sw4_exe_dir, testing_level, mpi_tasks, verbose):
+        print("test_sw4 ran to completion")
 
