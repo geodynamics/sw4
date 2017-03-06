@@ -78,12 +78,17 @@ def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNu
 
 #------------------------------------------------
 def guess_mpi_cmd(mpi_tasks, verbose):
-    node_name = os.uname().nodename
-    sys_name = os.uname().sysname
+    if verbose: print('os.uname=', os.uname())
+    node_name = os.uname()[1]
     if verbose: print('node_name=', node_name)
+    sys_name = os.uname()[0]
+    if verbose: print('sys_name=', sys_name)
 
     if 'quartz' in node_name:
         if mpi_tasks<=0: mpi_tasks = 36
+        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks)
+    elif 'cab' in node_name:
+        if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks)
     elif 'fourier' in node_name:
         if mpi_tasks<=0: mpi_tasks = 4
@@ -103,7 +108,7 @@ def guess_mpi_cmd(mpi_tasks, verbose):
 
 #------------------------------------------------
 def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=False):
-    assert sys.version_info >= (3,3) # named tuples in version >=3.3
+    assert sys.version_info >= (3,2) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
     pytest_dir_list = pytest_dir.split(sep)
@@ -198,7 +203,8 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
             status = os.system(run_cmd)
             if status!=0:
                 print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
-                print('       run_cmd=', run_cmd)
+                print('run_cmd=', run_cmd)
+                print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
                 return False # bail out
 
             ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
@@ -227,7 +233,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
     
 #------------------------------------------------
 if __name__ == "__main__":
-    assert sys.version_info >= (3,3) # named tuples in version >=3.3
+    assert sys.version_info >= (3,2) # named tuples in Python version >=3.3
     # default arguments
     testing_level=0
     verbose=False
@@ -253,6 +259,6 @@ if __name__ == "__main__":
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
 
-    if main_test(sw4_exe_dir, testing_level, mpi_tasks, verbose):
-        print("test_sw4 ran to completion")
+    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, verbose):
+        print("test_sw4 was unsuccessful")
 
