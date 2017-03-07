@@ -27,7 +27,7 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   CC = gcc
   CXX = mpicxx
   OMPOPT = -fopenmp
-  EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc48 -lgfortran
+  EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc5 -lgfortran
   openmp = yes
 # LC quartz is a large cluster of Intel Haswell nodes
   computername := fourier
