@@ -5,6 +5,7 @@
 # This assumes displacement variables and attenuation variables have the same tolerance
 
 import sys
+import numbers
 
 def run_checks(checks):
     fail = False
@@ -46,8 +47,21 @@ def main():
             print("ERROR: "+sys.argv[2]+" and "+sys.argv[3]+" are different lengths.")
             fail = True
         for i in range(min(len(test_data),len(base_data))):
-            base_line = [float(x) for x in base_data[i].split()[1:3]]
-            test_line = [float(x) for x in test_data[i].split()[1:3]]
+            # some lines in the header are text only and must be ignored before converting to float
+            base_line_ent = base_data[i].split()
+            try:
+                first_ent = float(base_line_ent[0]);
+            except:
+                #print("compare: line #", i, "base_line_ent[0]=' ", base_line_ent[0], "' could not be converted to a number, skipping this line")
+                pass
+                continue # skip this line
+
+            base_line = [float(x) for x in base_data[i].split()]
+            test_line = [float(x) for x in test_data[i].split()]
+            if len(base_line) < 2:
+                #print("base_line=' ", base_line, " ' has less than 2 numbers. Skipping this line")
+                continue
+            
             try:
                 t0 = test_line[0]
                 t1 = test_line[1]
@@ -63,6 +77,7 @@ def main():
                     print("ERROR: Line %(line)d Tolerance: %(tol)f Actual: %(actual)f"%{"line":i, "tol": errL2Tol, "actual": re1})
                     fail = True
             except:
+                printf("compare: exception thrown for base_line=' ", base_line)
                 fail = True
     else:
         print("Unknown test type: "+sys.argv[1])

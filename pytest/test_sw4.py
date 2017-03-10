@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Arguments:
-# This assumes displacement variables and attenuation variables have the same tolerance
+# -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir
 
 import os, sys, argparse
 
