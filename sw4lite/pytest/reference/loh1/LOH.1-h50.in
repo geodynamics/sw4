@@ -45,16 +45,16 @@ source x=15000 y=15000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 type=Gaussian
 #
 # Note that all recording stations are relative to the (0,0,0) origin
 #
-rec x=15600 y=15800 z=0 file=sta01 usgsformat=1
-rec x=16200 y=16600 z=0 file=sta02 usgsformat=1
-rec x=16800 y=17400 z=0 file=sta03 usgsformat=1
-rec x=17400 y=18200 z=0 file=sta04 usgsformat=1
-rec x=18000 y=19000 z=0 file=sta05 usgsformat=1
-rec x=18600 y=19800 z=0 file=sta06 usgsformat=1
-rec x=19200 y=20600 z=0 file=sta07 usgsformat=1
-rec x=19800 y=21400 z=0 file=sta08 usgsformat=1
-rec x=20400 y=22200 z=0 file=sta09 usgsformat=1
-rec x=21000 y=23000 z=0 file=sta10 usgsformat=1
+#rec x=15600 y=15800 z=0 file=sta01 usgsformat=1 sacformat=0
+#rec x=16200 y=16600 z=0 file=sta02 usgsformat=1 sacformat=0
+#rec x=16800 y=17400 z=0 file=sta03 usgsformat=1 sacformat=0
+#rec x=17400 y=18200 z=0 file=sta04 usgsformat=1 sacformat=0
+#rec x=18000 y=19000 z=0 file=sta05 usgsformat=1 sacformat=0
+#rec x=18600 y=19800 z=0 file=sta06 usgsformat=1 sacformat=0
+#rec x=19200 y=20600 z=0 file=sta07 usgsformat=1 sacformat=0
+#rec x=19800 y=21400 z=0 file=sta08 usgsformat=1 sacformat=0
+#rec x=20400 y=22200 z=0 file=sta09 usgsformat=1 sacformat=0
+rec x=21000 y=23000 z=0 file=sta10 usgsformat=1 sacformat=0
 
 # material images
 #image mode=mu z=0 file=hor cycle=0
