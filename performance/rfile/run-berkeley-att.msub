@@ -5,6 +5,6 @@
 #MSUB -q pdebug
 
 echo "Berkeley r-file with attenuation"
-srun -N 6 --ntasks-per-node=36 ./sw4 berkeley-h20-att.in >& berkeley-h20-att.out
+srun -N 6 --ntasks-per-node=36 ./sw4 berkeley-att-h20.in >& berkeley-att-h20.out
 
 
