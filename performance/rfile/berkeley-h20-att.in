@@ -1,7 +1,7 @@
 # SW4 input file for testing the rfile command
 
 # set pfs=1 if you are on a parallel file system
-fileio path=berkeley-att-results pfs=0
+fileio path=berkeley-h20-att-results pfs=0
 
 time t=4
 
@@ -35,6 +35,6 @@ image mode=lon z=0.0 cycle=0 file=berk
 # simple source (at least 1 source is needed to run)
 source x=2.5e3 y=2.5e3 z=1.5e3 mxy=1e18 t0=0.4 freq=15 type=Gaussian
 
-# record time histories
+# record 1 time history for verification
 rec x=2.5e3 y=2.5e3 depth=0 file=sta1 usgsformat=1 sacformat=0
 

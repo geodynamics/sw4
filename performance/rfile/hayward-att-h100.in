@@ -1,9 +1,7 @@
 # SW4 input RUN: Hayward_scenario_M6.5_s500_3Drfile_h25m
 
 # using parallel i/o
-#fileio path=/p/lscratchh/andersp/rfile-lscratch/hayward-h100-results pfs=1 nwriters=32
-# not using parallel io
-fileio path=hayward-h100-results
+fileio path=hayward-att-h100-results pfs=1 nwriters=32
 
 # Grid coords:
 # DON'T CHANGE AZ
@@ -12,6 +10,8 @@ grid x=100e3 y=100e3 z=30e3 h=100  lat=38.33 lon=-122.075 az=143.6380001671 proj
 time t=9.0
 
 globalmaterial  vpmin=866 vsmin=500
+
+attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
 
 # Earth Model
 
@@ -33,7 +33,7 @@ rupture file=m6.5-20.0x13.0.s500.v5.1.srf
 # 1 source to make SW4 happy
 #source x=50e3 y=50e3 depth=3e3
 
-# Image output z=0 (make sure you are on a parallel file system if fileio pio=1
+# Image output z=0
 # image z=0 mode=p file=image cycle=0
 # image z=0 mode=s file=image cycle=0
 # image z=1000 mode=s file=image cycle=0
@@ -53,8 +53,8 @@ rupture file=m6.5-20.0x13.0.s500.v5.1.srf
 # record 1 station for verification
 rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1
 
-# SF Bay Area stations (from Artie's input file)
-#rec sta=BK.BDM lon=-121.8655 lat=37.9540 depth=0 file=BK.BDM nsew=1
+# SF Bay Area stations
+#rec sta=BK.BDM lon=-121.8655 lat=37.9540 depth=0 file=BK.BDM nsew=1 sacformat=0 usgsformat=1
 #rec sta=BK.BKS lon=-122.2356 lat=37.8762 depth=0 file=BK.BKS nsew=1
 #rec sta=BK.BL67 lon=-122.2432 lat=37.8749 depth=0 file=BK.BL67 nsew=1
 #rec sta=BK.BL88 lon=-122.2543 lat=37.8772 depth=0 file=BK.BL88 nsew=1

@@ -1,0 +1,40 @@
+# SW4 input RUN: Hayward_scenario_M6.5_s500_3Drfile_h25m
+
+# using parallel i/o, with 8 writers (default)
+fileio path=/p/lscratchh/andersp/rfile-lscratch/hayward-img-h100-results pfs=1 nwriters=8
+# not using parallel io
+#fileio path=hayward-img-h100-results
+
+# Grid coords:
+# DON'T CHANGE AZ
+grid x=100e3 y=100e3 z=30e3 h=100  lat=38.33 lon=-122.075 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+
+time t=9.0
+
+globalmaterial  vpmin=866 vsmin=500
+
+# Earth Model
+
+# Rfile USGS 3D model + topography
+# NERSC (cori) parallel file system:
+#rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp/hayward
+#topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/hayward/USGSBayAreaVM-08.3.0-corder.rfile
+
+# LC (quartz) parallel file system
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/p/lscratchh/andersp/rfile-lscratch
+topography input=rfile zmax=2.5e3 order=3 file=/p/lscratchh/andersp/rfile-lscratch/USGSBayAreaVM-08.3.0-corder.rfile
+
+# NEED TO CORRECT THE CORNER FREQ FOR H=100
+prefilter fc2=0.5 type=lowpass passes=2 order=2
+
+# SRF rupture
+rupture file=m6.5-20.0x13.0.s500.v5.1.srf
+
+# 1 source to make SW4 happy
+#source x=50e3 y=50e3 depth=3e3
+
+# save the magnitude of 'u' (dependent variable) at every time step
+image z=0 mode=mag file=image cycleInterval=1
+
+# record 1 station for verification
+rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1
