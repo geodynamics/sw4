@@ -2474,7 +2474,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 ForceCU( t, dev_F, false, 1 );
       else
 	 Force( t, F, m_point_sources, false );
-      // Need F on device for predictor, will make this asynchronous:
+ // Need F on device for predictor, will make this asynchronous:
       //      for( int g=0; g < mNumberOfGrids ; g++ )
       //	 F[g].copy_to_device(m_cuobj,true,1);
 
@@ -2488,7 +2488,6 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 check_for_nan( U, 1, "U" );
 #endif
       }
-
       time_measure[1] = MPI_Wtime();
 
 // evaluate right hand side
@@ -5127,38 +5126,69 @@ void EW::print_execution_times( double times[8] )
 {
    double* time_sums =new double[8*m_nprocs];
    MPI_Gather( times, 8, MPI_DOUBLE, time_sums, 8, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   bool printavgs = true;
    if( m_myrank == 0 )
    {
+      double avgs[8]={0,0,0,0,0,0,0,0};
+      for( int p= 0 ; p < m_nprocs ; p++ )
+	 for( int c=0 ; c < 8 ; c++ )
+	    avgs[c] += time_sums[8*p+c];
+      for( int c=0 ; c < 8 ; c++ )
+	 avgs[c] /= m_nprocs;
+      
       cout << "\n----------------------------------------" << endl;
       cout << "          Execution time summary " << endl;
 //      cout << "Processor  Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  "
-      cout << "Processor  Total      BC comm    BC phys    Scheme     Supergrid  Forcing "
-	   <<endl;
-      cout.setf(ios::left);
-      cout.precision(5);
-      for( int p= 0 ; p < m_nprocs ; p++ )
+      if( printavgs )
       {
-         cout.width(11);
-         cout << p;
-         cout.width(11);
-	 cout << time_sums[8*p+7];
+	 cout << "  Total      BC comm    BC phys    Scheme     Supergrid  Forcing "
+	   <<endl;
+	 cout.setf(ios::left);
+	 cout.precision(5);
 	 cout.width(11);
-	 cout << time_sums[8*p+2];
+	 cout << avgs[7];
 	 cout.width(11);
-	 cout << time_sums[8*p+3];
+	 cout << avgs[2];
 	 cout.width(11);
-	 cout << time_sums[8*p+1];
+	 cout << avgs[3];
 	 cout.width(11);
-	 cout << time_sums[8*p+4];
+	 cout << avgs[1];
 	 cout.width(11);
-	 cout << time_sums[8*p];
+	 cout << avgs[4];
 	 cout.width(11);
+	 cout << avgs[0];
+	 cout.width(11);
+      }
+      else
+      {
+	 cout << "Processor  Total      BC comm    BC phys    Scheme     Supergrid  Forcing "
+	      <<endl;
+	 cout.setf(ios::left);
+	 cout.precision(5);
+	 for( int p= 0 ; p < m_nprocs ; p++ )
+	 {
+	    cout.width(11);
+	    cout << p;
+	    cout.width(11);
+	    cout << time_sums[8*p+7];
+	    cout.width(11);
+	    cout << time_sums[8*p+2];
+	    cout.width(11);
+	    cout << time_sums[8*p+3];
+	    cout.width(11);
+	    cout << time_sums[8*p+1];
+	    cout.width(11);
+	    cout << time_sums[8*p+4];
+	    cout.width(11);
+	    cout << time_sums[8*p];
+	    cout.width(11);
 	 //	 cout << time_sums[7*p+4];
 	 //	 cout.width(11);
 	 //	 cout << time_sums[7*p+5];
 	 //	 cout.width(11);
 	 //	 cout << time_sums[7*p+6];
-         cout << endl;
+	    cout << endl;
+	 }
       }
       //
       // << "|" << time_sums[p*7+3] << "|\t" << time_sums[p*7+1] << "|\t" << time_sums[p*7]

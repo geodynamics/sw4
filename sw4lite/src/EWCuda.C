@@ -43,16 +43,20 @@ void EWCuda::initialize_gpu(int myrank)
 #ifdef SW4_CUDA
    if( m_ndevice > 0){
 
-      cudaDeviceReset();
-      int myDevice = sched_getcpu()/(8);
-      int cpu = sched_getcpu();
-      cout << "myrank = " << myrank <<  "  cpuid = " << cpu << "  mydevice = " << myDevice  << endl;
-
-     cudaError_t retcode;
-     retcode  = cudaSetDevice(myDevice);
+     cudaError_t retcode  = cudaSetDevice(0);
      if (retcode != cudaSuccess)
 	cout << "Error cudaSetDevice: "  << cudaGetErrorString(retcode) << endl;
-     else
+      //     else
+      cudaDeviceReset();
+      //      int myDevice = sched_getcpu()/(8);
+      //      int cpu = sched_getcpu();
+      //      cout << "myrank = " << myrank <<  "  cpuid = " << cpu << "  mydevice = " << myDevice  << endl;
+
+      //     cudaError_t retcode;
+      //     retcode  = cudaSetDevice(myDevice);
+      //     if (retcode != cudaSuccess)
+      //	cout << "Error cudaSetDevice: "  << cudaGetErrorString(retcode) << endl;
+      //     else
      {
 	for (int i = 0; i < m_nstream; i++)
 	{

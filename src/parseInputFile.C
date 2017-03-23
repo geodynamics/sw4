@@ -1988,11 +1988,12 @@ void EW::processDeveloper(char* buffer)
 //       token += 12;
 //       output_load = (atoi(token) == 1);
 //     }
-//     else if (startswith("output_timing=", token))
-//     {
-//       token += 14;
-//       output_timing = (atoi(token) == 1);
-//     }
+     else if( startswith("reporttiming=",token) )
+     {
+	token += 13;
+	m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0
+	   || strcmp(token,"yes")==0;
+     }
 //     else if (startswith("interpolation=", token))
 //     {
 //       token += 14;

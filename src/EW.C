@@ -1424,33 +1424,62 @@ void EW::print_execution_times( double times[7] )
 {
    double* time_sums =new double[7*no_of_procs()];
    MPI_Gather( times, 7, MPI_DOUBLE, time_sums, 7, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   bool printavgs = true;
    if( !mQuiet && proc_zero() )
    {
+      double avgs[7]={0,0,0,0,0,0,0};
+      for( int p= 0 ; p < no_of_procs() ; p++ )
+	 for( int c=0 ; c < 7 ; c++ )
+	    avgs[c] += time_sums[7*p+c];
+      for( int c=0 ; c < 7 ; c++ )
+	 avgs[c] /= no_of_procs();
       cout << "\n----------------------------------------" << endl;
       cout << "          Execution time summary " << endl;
-      cout << "Processor  Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  "
-	   <<endl;
-      cout.setf(ios::left);
-      cout.precision(3);
-      for( int p= 0 ; p < no_of_procs() ; p++ )
+      if( printavgs )
       {
-         cout.width(11);
-         cout << p;
-         cout.width(11);
-	 cout << time_sums[7*p+3];
+	 cout << " Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  " << endl;
 	 cout.width(11);
-	 cout << time_sums[7*p+1];
+	 cout << avgs[3];
 	 cout.width(11);
-	 cout << time_sums[7*p];
+	 cout << avgs[1];
 	 cout.width(11);
-	 cout << time_sums[7*p+2];
+	 cout << avgs[0];
 	 cout.width(11);
-	 cout << time_sums[7*p+4];
+	 cout << avgs[2];
 	 cout.width(11);
-	 cout << time_sums[7*p+5];
+	 cout << avgs[4];
 	 cout.width(11);
-	 cout << time_sums[7*p+6];
-         cout << endl;
+	 cout << avgs[5];
+	 cout.width(11);
+	 cout << avgs[6];
+	 cout << endl;
+      }
+      else
+      {
+	 cout << "Processor  Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  "
+	   <<endl;
+	 cout.setf(ios::left);
+	 cout.precision(3);
+	 for( int p= 0 ; p < no_of_procs() ; p++ )
+	 {
+	    cout.width(11);
+	    cout << p;
+	    cout.width(11);
+	    cout << time_sums[7*p+3];
+	    cout.width(11);
+	    cout << time_sums[7*p+1];
+	    cout.width(11);
+	    cout << time_sums[7*p];
+	    cout.width(11);
+	    cout << time_sums[7*p+2];
+	    cout.width(11);
+	    cout << time_sums[7*p+4];
+	    cout.width(11);
+	    cout << time_sums[7*p+5];
+	    cout.width(11);
+	    cout << time_sums[7*p+6];
+	    cout << endl;
+	 }
       }
       cout.setf(ios::right);
       cout.precision(6);
