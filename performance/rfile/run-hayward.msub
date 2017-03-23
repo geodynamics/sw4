@@ -1,0 +1,10 @@
+#!/bin/csh
+#MSUB -l nodes=8           #this is the number of nodes on which to run
+#MSUB -l walltime=00:30:00   #sets total wall time 
+#MSUB -V # import environment
+#MSUB -q pdebug
+
+echo "Hayward, srf-rupture, and rfile material"
+srun -N 8 --ntasks-per-node=36 ./sw4 hayward-h100.in >& hayward-h100.out
+
+

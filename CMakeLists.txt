@@ -159,48 +159,48 @@ SET(MPI_NUM_TEST_PROCS 4 CACHE STRING "Number of MPI processes to use in tests")
 SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
 
 # Define tests and tolerances
-SET(TEST_DIRS       twilight                twilight                twilight
-                    twilight                twilight                twilight
+SET(TEST_DIRS       twilight      twilight                twilight
+                    twilight                  twilight                twilight
                     twilight-att            twilight-att            twilight-att
                     twilight-att            twilight-att            twilight-att
-		    meshrefine              meshrefine
+		    meshrefine          meshrefine
                     lamb                    lamb
-                    pointsource             pointsource             pointsource)
-SET(TEST_SUBDIRS    flat-twi-1              flat-twi-2              flat-twi-3
-                    gauss-twi-1             gauss-twi-2             gauss-twi-3
-                    tw-att-flat-1           tw-att-flat-2           tw-att-flat-3
-                    tw-att-gauss-1          tw-att-gauss-2          tw-att-gauss-3
-                    meshref-3c-1            meshref-3c-2
+                    pointsource         pointsource             pointsource)
+SET(TEST_SUBDIRS  flat-twi-1  flat-twi-2            flat-twi-3
+                    gauss-twi-1           gauss-twi-2       gauss-twi-3
+                    tw-att-flat-1           tw-att-flat-2      tw-att-flat-3
+                    tw-att-gauss-1      tw-att-gauss-2  tw-att-gauss-3
+                    meshref-3c-1        meshref-3c-2
                     lamb-1                  lamb-2
-                    pointsource-1           pointsource-2           pointsource-3)
+                    pointsource-sg-1  pointsource-sg-2  pointsource-sg-3)
 SET(TEST_IN_FILES   flat-twi-1.in           flat-twi-2.in           flat-twi-3.in
-                    gauss-twi-1.in          gauss-twi-2.in          gauss-twi-3.in
+                    gauss-twi-1.in       gauss-twi-2.in          gauss-twi-3.in
                     tw-att-1.in             tw-att-2.in             tw-att-3.in
-                    tw-topo-att-1.in        tw-topo-att-2.in        tw-topo-att-3.in
+                    tw-topo-att-1.in    tw-topo-att-2.in        tw-topo-att-3.in
 		    tw-refine-3cart-1.in    tw-refine-3cart-2.in
-                    lamb-1.in               lamb-2.in
-                    pointsource-sg1.in      pointsource-sg2.in      pointsource-sg3.in)
-SET(TEST_BASE_FILES TwilightErr             TwilightErr             TwilightErr    
+                    lamb-1.in              lamb-2.in
+                    pointsource-sg-1.in      pointsource-sg-2.in      pointsource-sg-3.in)
+SET(TEST_BASE_FILES TwilightErr     TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr
-                    LambErr                 LambErr    
-                    PointSourceErr          PointSourceErr          PointSourceErr)
-SET(TEST_CHECKS     err_tol                 err_tol                 err_tol 
-                    err_tol                 err_tol                 err_tol 
-                    err_tol                 err_tol                 err_tol 
-                    err_tol                 err_tol                 err_tol 
-		    err_tol                 err_tol
-                    compare                 compare 
-                    compare                 compare                 compare)
+                    LambErr                LambErr    
+                    PointSourceErr      PointSourceErr    PointSourceErr)
+SET(TEST_CHECKS   compare                 compare                 compare 
+                    compare             compare                 compare 
+                    compare             compare                 compare 
+                    compare             compare                 compare 
+		    compare             compare
+                    compare             compare 
+                    compare             compare                 compare)
 SET(TEST_LEVELS     0                       0                       1
                     0                       0                       1
                     0                       0                       1
                     0                       1                       2
-		    1                       2
-                    1                       2
-                    1                       2                       2)
+		    0                       1
+                    0                       1
+                    0                       1                       2)
 SET(TEST_ERRINF_TOL 1e-3                    1e-4                    1e-5
                     1e-2                    1e-3                    1e-4
                     1e-3                    1e-4                    1e-5
