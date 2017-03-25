@@ -407,11 +407,20 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_qmultiplier(1),
   m_randomize(false),
   m_anisotropic(false),
+  m_croutines(false),
   NO_TOPO(1e38)
 {
   
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
+
+   if( sizeof(float_sw4) == 4 )
+      m_mpifloat = MPI_FLOAT;
+   else if( sizeof(float_sw4) == 8 )
+      m_mpifloat = MPI_DOUBLE;
+   else
+      CHECK_INPUT(false,"Error, could not identify float_sw4");
+
    //   m_error_checking = new ErrorChecking();
 // initialize the boundary condition array
    for (int i=0; i<6; i++)

@@ -29,6 +29,7 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+
 #include "EW.h"
 #include "impose_cartesian_bc.h"
 //#include "impose_curvilinear_bc.h"
@@ -36,156 +37,152 @@
 
 extern "C" {
    void tw_aniso_free_surf_z(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-                             int kz, double t, double om, double cv, double ph, double omm, double* phc, double* bforce,
-                             double h, double zmin );
+                             int kz, float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 omm, float_sw4* phc, float_sw4* bforce,
+                             float_sw4 h, float_sw4 zmin );
 
-void F77_FUNC(satt,SATT)(double *up, double *qs, double *dt, double *cfreq, int *ifirst, int *ilast, 
+void F77_FUNC(satt,SATT)(float_sw4 *up, float_sw4 *qs, float_sw4 *dt, float_sw4 *cfreq, int *ifirst, int *ilast, 
 			 int *jfirst, int *jlast, int *kfirst, int *klast);
 
 
-void F77_FUNC(dgesv,DGESV)(int & N1, int & N2, double *A, int & LDA, int *IPIV, double * B, int &N3, int &INFO);
+void F77_FUNC(dgesv,DGESV)(int & N1, int & N2, float_sw4 *A, int & LDA, int *IPIV, float_sw4 * B, int &N3, int &INFO);
 void F77_FUNC(factorizeinterfacematrices,FACTORIZEINTERFACEMATRICES)( int*, int*, int*, int*, int*,
-								      double*, double*, double*,
-								      int*, int*, int*, int*, int*, double*,
-								      double*, double*, double*, double*, 
-								      double*, int*, double*, int* );
+								      float_sw4*, float_sw4*, float_sw4*,
+								      int*, int*, int*, int*, int*, float_sw4*,
+								      float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
+								      float_sw4*, int*, float_sw4*, int* );
 void F77_FUNC(acc_bc_free_i,ACC_BC_FREE_I)
-  ( int*, int*, int*, double*, double*, double*, double*, double*, int*, int*, double* );
+  ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
 
 void F77_FUNC(acc_bc_free_j,ACC_BC_FREE_J)
-  ( int*, int*, int*, double*, double*, double*, double*, double*, int*, int*, double* );
+  ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
 
 void F77_FUNC(acc_bc_free_k,ACC_BC_FREE_K)
-  ( int*, int*, int*, double*, double*, double*, double*, double*, int*, int*, double* );
+  ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
 
-void F77_FUNC(bcfort, BCFORT)( int*, int*, int*, int*, int*, int*, 
-			       int *, int*, int*, int*,
-			       double*, double*, boundaryConditionType*, double *, double*, double*, double*,
-			       double* bf0_p, double* bf1_p, 
-			       double* bf2_p, double*bf3_p, 
-			       double*bf4_p, double*bf5_p, 
-			       double*, double*, double*, int* );
+void bcfort( int*, int*, int*, int*, int*, int*, 
+	     int *, int*, int*, int*,
+	     float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
+	     float_sw4* bf0_p, float_sw4* bf1_p, 
+	     float_sw4* bf2_p, float_sw4*bf3_p, 
+	     float_sw4*bf4_p, float_sw4*bf5_p, 
+	     float_sw4*, float_sw4*, float_sw4*, int* );
 void F77_FUNC(freesurfcurvi,FREESURFCURVI)(int*, int*, int*, int*, int*, int*, int*, int*,
-					  double*, double*, double*, double*, double*, double* );
+					  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
 void F77_FUNC(freesurfcurvisg,FREESURFCURVISG)(int*, int*, int*, int*, int*, int*, int*, int*,
-					       double*, double*, double*, double*, double*,
-					       double*, double*, double* );
-void F77_FUNC(bcfortsg, BCFORTSG)( int*, int*, int*, int*, int*, int*, 
-			       int *, int*, int*, int*,
-			       double*, double*, boundaryConditionType*, double *, double*, double*, double*,
-			       double* bf0_p, double* bf1_p, 
-			       double* bf2_p, double*bf3_p, 
-			       double*bf4_p, double*bf5_p, 
-			       double*, double*, double*, double*, double* );
-   void F77_FUNC(bcfortanisg, BCFORTANISG)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*,
-					 double*, double*, boundaryConditionType*, double*, double*,
-					 double*, double*, double*, double*, double*, double*,
-					 double*, double* );
+					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+					       float_sw4*, float_sw4*, float_sw4* );
+void bcfortsg( int*, int*, int*, int*, int*, int*, 
+	       int *, int*, int*, int*,
+	       float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
+	       float_sw4* bf0_p, float_sw4* bf1_p, 
+	       float_sw4* bf2_p, float_sw4*bf3_p, 
+	       float_sw4*bf4_p, float_sw4*bf5_p, 
+	       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
 
-void F77_FUNC(twfrsurfz, TWFRSURFZ)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
-				  int * klast_p, double* h_p, int * k_p,
-				  double* t_p, double* om_p, double* cv_p, double* ph_p,
-				    double* bforce_side5_ptr, double* mu_ptr, double* la_ptr, double* zmin );
-void F77_FUNC(twfrsurfzatt, TWFRSURFZATT)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
-				  int * klast_p, double* h_p, int * k_p,
-				  double* t_p, double* om_p, double* cv_p, double* ph_p,
-				    double* bforce_side5_ptr, double* mu_ptr, double* la_ptr, double* zmin );
-void F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
-				  int * klast_p, double* h_p, int * k_p,
-				  double* t_p, double* om_p, double* cv_p, double* ph_p,
-					      double* omstrx_p, double* omstry_p,
-					      double* bforce_side5_ptr, double* mu_ptr, double* la_ptr, double* zmin );
-void F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p,
-						    int * kfirst_p, int * klast_p, double* h_p, int * k_p,
-				  double* t_p, double* om_p, double* cv_p, double* ph_p,
-					      double* omstrx_p, double* omstry_p,
-					      double* bforce_side5_ptr, double* mu_ptr, double* la_ptr, double* zmin );
-void F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( int*, int*, int*, int*, int*, double*, double*, double*, 
-						   double*, double*, double*, double*, double*, double* );
-   void F77_FUNC(memvarforcesurfc,MEMVARFORCESURFC)( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, 
-						  double*, double*, double*, double*, double*, double*, double* );
-void F77_FUNC(twdirbdry,TWDIRBDRY)( int *wind_ptr, double *h_p, double *t_p, double *om_p, double * cv_p, 
-				    double *ph_p,  double * bforce_side_ptr, double* zmin );
-   void F77_FUNC(twdirbdryc,TWDIRBDRYC)( int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, int* klast,
-                                         int *wind_ptr, double *t_p, double *om_p, double * cv_p, 
-				      double *ph_p,  double * bforce_side_ptr, double* x, double* y, double* z );
-void F77_FUNC(testsrc, TESTSRC )( double* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
-				   int* klast, int* nz, int* wind, double* m_zmin, double* h, int* kx, int* ky, int* kz,
-				   double* momgrid );
-void F77_FUNC(addsgd,ADDSGD) (double* dt, double *h, double *a_U, double*a_Um, double*a_Up, 
-			      double *sg_dc_x, double* sg_dc_y, double* sg_dc_z,
-			      int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
-void F77_FUNC(addsgd4,ADDSGD4) (double* dt, double *h, double *a_Up, double*a_U, double*a_Um, double* Rho,
-				double *sg_dc_x, double* sg_dc_y, double* sg_dc_z, double* sg_str_x, double* sg_str_y, double* sg_str_z,
-				double* sg_corner_x, double* sg_corner_y, double* sg_corner_z,
-				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
-void F77_FUNC(addsgd6,ADDSGD6) (double* dt, double *h, double *a_Up, double*a_U, double*a_Um, double* Rho,
-				double *sg_dc_x, double* sg_dc_y, double* sg_dc_z, double* sg_str_x, double* sg_str_y, double* sg_str_z,
-				double* sg_corner_x, double* sg_corner_y, double* sg_corner_z,
-				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
-void F77_FUNC(addsgd4c,ADDSGD4C) (double* dt, double *a_Up, double*a_U, double*a_Um, double* Rho,
-				  double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
-				  double* sg_corner_x, double* sg_corner_y, 
-				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
-void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a_Um, double* Rho,
-				  double *sg_dc_x, double* sg_dc_y, double* sg_str_x, double* sg_str_y, double* jac,
-				  double* sg_corner_x, double* sg_corner_y, 
-				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, double* damping_coefficient );
+void bcfortanisg( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*,
+		  float_sw4*, float_sw4*, boundaryConditionType*, float_sw4*, float_sw4*,
+		  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		  float_sw4*, float_sw4* );
+
+void twfrsurfz(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
+	       int * klast_p, float_sw4* h_p, int * k_p,
+	       float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
+	       float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
+void twfrsurfzatt(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
+		  int * klast_p, float_sw4* h_p, int * k_p,
+		  float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
+		  float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
+void twfrsurfzsgstr(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
+		    int * klast_p, float_sw4* h_p, int * k_p,
+		    float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
+		    float_sw4* omstrx_p, float_sw4* omstry_p,
+		    float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
+void twfrsurfzsgstratt(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p,
+		       int * kfirst_p, int * klast_p, float_sw4* h_p, int * k_p,
+		       float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
+		       float_sw4* omstrx_p, float_sw4* omstry_p,
+		       float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
+void F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+void F77_FUNC(memvarforcesurfc,MEMVARFORCESURFC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+						  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+void twdirbdry( int *wind_ptr, float_sw4 *h_p, float_sw4 *t_p, float_sw4 *om_p, float_sw4 * cv_p, 
+		float_sw4 *ph_p,  float_sw4 * bforce_side_ptr, float_sw4* zmin );
+void twdirbdryc( int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, int* klast,
+		 int *wind_ptr, float_sw4 *t_p, float_sw4 *om_p, float_sw4 * cv_p, 
+		 float_sw4 *ph_p,  float_sw4 * bforce_side_ptr, float_sw4* x, float_sw4* y, float_sw4* z );
+void F77_FUNC(testsrc, TESTSRC )( float_sw4* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
+				   int* klast, int* nz, int* wind, float_sw4* m_zmin, float_sw4* h, int* kx, int* ky, int* kz,
+				   float_sw4* momgrid );
+void addsgd4(float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+				float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
+				float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
+				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+void addsgd6(float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+				float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
+				float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
+				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+void addsgd4c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+				  float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
+				  float_sw4* sg_corner_x, float_sw4* sg_corner_y, 
+				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+void addsgd6c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+				  float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
+				  float_sw4* sg_corner_x, float_sw4* sg_corner_y, 
+				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
 //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
 // +     omega, alpha, h, zmin )
-   void F77_FUNC(raydirbdry,RAYDIRBDRY)( double *bforce_side_ptr, int *wind_ptr, double *t, double *lambda,
-					 double *mu, double *rho,
-				         double *cr, double *omega, double *alpha, double *h, double *zmin );
-   void F77_FUNC(twstensor,TWSTENSOR)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
-				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
-				       double* tau, double* mu, double* lambda );
-   void F77_FUNC(twstensoratt,TWSTENSORATT)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
-				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
-				       double* tau, double* mu, double* lambda );
-   void F77_FUNC(twstensorsg,TWSTENSORSG)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
-				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
-					   double* tau, double* mu, double* lambda, double* omstrx, double* omstry );
-   void F77_FUNC(twstensorsgatt,TWSTENSORSGATT)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
-                                          int* kz,
-				       double* t, double* om, double* c, double* ph, double* xx, double* yy, double* zz,
-					   double* tau, double* mu, double* lambda, double* omstrx, double* omstry );
+   void F77_FUNC(raydirbdry,RAYDIRBDRY)( float_sw4 *bforce_side_ptr, int *wind_ptr, float_sw4 *t, float_sw4 *lambda,
+					 float_sw4 *mu, float_sw4 *rho,
+				         float_sw4 *cr, float_sw4 *omega, float_sw4 *alpha, float_sw4 *h, float_sw4 *zmin );
+   void twstensor( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
+		   float_sw4* t, float_sw4* om, float_sw4* c, float_sw4* ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
+		   float_sw4* tau, float_sw4* mu, float_sw4* lambda );
+   void twstensoratt( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
+		      float_sw4* t, float_sw4* om, float_sw4* c, float_sw4* ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
+		      float_sw4* tau, float_sw4* mu, float_sw4* lambda );
+   void twstensorsg( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
+		     float_sw4* t, float_sw4* om, float_sw4* c, float_sw4* ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
+		     float_sw4* tau, float_sw4* mu, float_sw4* lambda, float_sw4* omstrx, float_sw4* omstry );
+   void twstensorsgatt( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
+			int* kz, float_sw4* t, float_sw4* om, float_sw4* c, float_sw4* ph, float_sw4* xx, float_sw4* yy, 
+			float_sw4* zz, float_sw4* tau, float_sw4* mu, float_sw4* lambda, float_sw4* omstrx, float_sw4* omstry );
    void F77_FUNC(getsurfforcing,GETSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
-						 int* k, double* met, double* jac, double* tau, double* forcing );
+						 int* k, float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* forcing );
    void F77_FUNC(subsurfforcing,SUBSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
-						 int* k, double* met, double* jac, double* tau, double* forcing );
+						 int* k, float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* forcing );
    void F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
-						    int* k, double* h, double* tau, double* forcing, double* amp, double* xc,
-						    double* yc, double* xl, double* yl );
+						    int* k, float_sw4* h, float_sw4* tau, float_sw4* forcing, float_sw4* amp, float_sw4* xc,
+						    float_sw4* yc, float_sw4* xl, float_sw4* yl );
    void F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( 
 	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
-           double* met, double* jac, double* tau, double* strx, double* stry, double* forcing );
+           float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
    void F77_FUNC(subsurfforcingsg,SUBSURFFORCINGSG)( 
 	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
-           double* met, double* jac, double* tau, double* strx, double* stry, double* forcing );
-   void F77_FUNC(addbstressc,ADDBSTRESSC)( int*, int*, int*, int*, int*, int*, int*, double*,  
-					   double*,  double*,  double*, double*, int*,  double*, char*,
-					   int*, int*,  double*,  double* );
-   void F77_FUNC(addbstresswresc,ADDBSTRESSWRESC)( int*, int*, int*, int*, int*, int*, int*, double*, double*,    
-						   double*, double*, double*, double*, double*, double*, int*, 
-						   double*, double*, double*, double*, double*, double*, double*,
-						   int*, double*, double* );
-   void F77_FUNC(solveattfreec,SOLVEATTFREEC)( int*, int*, int*, int*, int*, int*, double*, double*,    
-					       double*, double*, double*, double*, double*, double*, int*, double*, double* );
-   void F77_FUNC(solveattfreeac,SOLVEATTFREEAC)( int*, int*, int*, int*, int*, int*, double*, double*, double*);
-   void F77_FUNC(bcfreesurfcurvani,BCFREESURFCURVANI)( int*, int*, int*, int*, int*, int*, int*, double*, double*, int*,
-						       double*, double*, double*, double*, double* );
-   void F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( int*, int*, int*, int*, int*, int*, double*, double*,
-						     double*, double*, double*, double*, double*, int*, int*,
+           float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
+   void F77_FUNC(addbstressc,ADDBSTRESSC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*,  
+					   float_sw4*,  float_sw4*,  float_sw4*, float_sw4*, int*,  float_sw4*, char*,
+					   int*, int*,  float_sw4*,  float_sw4* );
+   void F77_FUNC(addbstresswresc,ADDBSTRESSWRESC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
+						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, 
+						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+						   int*, float_sw4*, float_sw4* );
+   void F77_FUNC(solveattfreec,SOLVEATTFREEC)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
+					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4* );
+   void F77_FUNC(solveattfreeac,SOLVEATTFREEAC)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*);
+   void bcfreesurfcurvani( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, int*,
+			   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,
+						     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*,
 						     int*, int*, int*, int* );
-   void F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( int*, int*, int*, int*, int*, int*, int*, int*, double*,
-						   double*, double*,double*, double*, double*, double*, double*,
-						   double*, double*, double*, char*, int*, int*, int*, int* );
-   void F77_FUNC(forcingfort,FORCINGFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
-   void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
+   void F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( int*, int*, int*, int*, int*, int*, int*, int*, float_sw4*,
+						   float_sw4*, float_sw4*,float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+						   float_sw4*, float_sw4*, float_sw4*, char*, int*, int*, int*, int* );
+   void F77_FUNC(forcingfort,FORCINGFORT)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
+					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
+					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
 }
-
 
 //--------------------------------------------------------------------
 void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
@@ -194,7 +191,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
 // vectors of pointers to hold boundary forcing arrays in each grid
-  vector<double **> BCForcing;
+  vector<float_sw4 **> BCForcing;
 
   BCForcing.resize(mNumberOfGrids);
   F.resize(mNumberOfGrids);
@@ -221,13 +218,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   for( int g = 0; g <mNumberOfGrids; g++ )
   {
-    BCForcing[g] = new double *[6];
+    BCForcing[g] = new float_sw4 *[6];
     for (int side=0; side < 6; side++)
     {
       BCForcing[g][side]=NULL;
       if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
       {
-    	BCForcing[g][side] = new double[3*m_NumberOfBCPoints[g][side]];
+    	BCForcing[g][side] = new float_sw4[3*m_NumberOfBCPoints[g][side]];
       }
       
     }
@@ -315,8 +312,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     //   printf("Saving one un-filtered original time function\n");
 	 
     //   FILE *tf=fopen("g0.dat","w");
-    //   double t;
-    //   double gt;
+    //   float_sw4 t;
+    //   float_sw4 gt;
     //   for (int i=0; i<=mNumberOfTimeSteps; i++)
     //   {
     // 	t = mTstart + i*mDt;
@@ -336,8 +333,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //      printf("Saving one filtered discretized time function\n");
 //	 
 //      FILE *tf=fopen("g1.dat","w");
-//      double t;
-//      double gt, gt1, gt2;
+//      float_sw4 t;
+//      float_sw4 gt, gt1, gt2;
 //      for (int i=0; i<=mNumberOfTimeSteps; i++)
 //      {
 //    	t = mTstart + i*mDt;
@@ -377,8 +374,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        filename += "g1.dat";	 
 
        FILE *tf=fopen(filename.c_str(),"w");
-       double t;
-       double gt, gt1, gt2;
+       float_sw4 t;
+       float_sw4 gt, gt1, gt2;
        for (int i=0; i<=mNumberOfTimeSteps; i++)
        {
 	 //           for( int sb=0 ; sb < 10 ; sb++ )
@@ -402,13 +399,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   printPreamble(a_Sources);
 
 // this is the time level
-  double t=mTstart;
+  float_sw4 t=mTstart;
   
 // Set up timers
-  double time_start_solve = MPI_Wtime();
-  double time_measure[7];
-  double time_sum[7]={0,0,0,0,0,0,0};
-  double bc_time_measure[5]={0,0,0,0,0};
+  float_sw4 time_start_solve = MPI_Wtime();
+  float_sw4 time_measure[7];
+  float_sw4 time_sum[7]={0,0,0,0,0,0,0};
+  float_sw4 bc_time_measure[5]={0,0,0,0,0};
 
   int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
 
@@ -462,22 +459,22 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     evalRHS( U, mMu, mLambda, Up, AlphaVE ); // save Lu in composite grid 'Up'
 
 // evaluate and print errors
-    double * lowZ = new double[3*mNumberOfGrids];
-    double * interiorZ = new double[3*mNumberOfGrids];
-    double * highZ = new double[3*mNumberOfGrids];
-    //    double lowZ[3], interiorZ[3], highZ[3];
+    float_sw4 * lowZ = new float_sw4[3*mNumberOfGrids];
+    float_sw4 * interiorZ = new float_sw4[3*mNumberOfGrids];
+    float_sw4 * highZ = new float_sw4[3*mNumberOfGrids];
+    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
     bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
 
-    double* tmp= new double[3*mNumberOfGrids];
+    float_sw4* tmp= new float_sw4[3*mNumberOfGrids];
     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
       tmp[i] = lowZ[i];
-    MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+    MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
       tmp[i] = interiorZ[i];
-    MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+    MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
       tmp[i] = highZ[i];
-    MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+    MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
 
     if ( proc_zero() )
     {
@@ -498,13 +495,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
       tmp[i] = lowZ[i];
-    MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+    MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
       tmp[i] = interiorZ[i];
-    MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+    MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
     for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
       tmp[i] = highZ[i];
-    MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, MPI_DOUBLE, MPI_MAX, 0, m_cartesian_communicator );
+    MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
 
     if ( proc_zero() )
     {
@@ -562,7 +559,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
 // check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
     exactSol( t, Up, AlphaVE, a_Sources );
-    double errInf, errL2;
+    float_sw4 errInf, errL2;
     normOfDifferenceGhostPoints( Up, U, errInf, errL2 );
     if ( proc_zero() )
       printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
@@ -575,7 +572,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     cout << "  Begin time stepping..." << endl;
 
 // save initial data on receiver records
-  vector<double> uRec;
+  vector<float_sw4> uRec;
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
 // can't compute a 2nd order accurate time derivative at this point
@@ -778,7 +775,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // evaluate error for some test cases
     if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
     {
-      double errInf=0, errL2=0, solInf=0, solL2=0;
+      float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
       exactSol( t, Up, AlphaVE, a_Sources ); // store exact solution in Up
 
       if (m_lamb_test)
@@ -816,7 +813,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //   if( ind != 0 )
 //      delete[] ind;
   
-   double time_end_solve = MPI_Wtime();
+   float_sw4 time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
 
    if( m_output_detailed_timing )
@@ -825,7 +822,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVEp, a_Sources ) )
    {
-     double errInf, errL2, solInf, solL2;
+     float_sw4 errInf, errL2, solInf, solL2;
 
 // tmp: output exact sol for Lamb's prolem 
 //      cout << *mGlobalUniqueSources[0] << endl;
@@ -922,13 +919,13 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
  {
   for (int g=0; g<mNumberOfGrids; g++)
   {
-    double *tmp = a_Um[g].c_ptr();
+    float_sw4 *tmp = a_Um[g].c_ptr();
     a_Um[g].reference(a_U[g].c_ptr());
     a_U[g].reference(a_Up[g].c_ptr());
     a_Up[g].reference(tmp);
     for( int a = 0 ; a < m_number_mechanisms ; a++ )
     {
-       double *tmp = a_AlphaVEm[g][a].c_ptr();
+       float_sw4 *tmp = a_AlphaVEm[g][a].c_ptr();
        a_AlphaVEm[g][a].reference(a_AlphaVE[g][a].c_ptr());
        a_AlphaVE[g][a].reference(a_AlphaVEp[g][a].c_ptr());
        a_AlphaVEp[g][a].reference(tmp);
@@ -938,14 +935,14 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 
 //---------------------------------------------------------------------------
 void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		    double t, vector<double **> & a_BCForcing )
+		    float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
-  double *u_ptr, *mu_ptr, *la_ptr, h;
+  float_sw4 *u_ptr, *mu_ptr, *la_ptr, h;
   boundaryConditionType *bcType_ptr;
-  double *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
+  float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
-  double om=0, ph=0, cv=0;
+  float_sw4 om=0, ph=0, cv=0;
     
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -985,13 +982,22 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
     
     if( usingSupergrid() )
     {
-       F77_FUNC(bcfortsg, BCFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-				     wind_ptr, &nx, &ny, &nz,
-				     u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
-				     bforce_side0_ptr, bforce_side1_ptr, 
-				     bforce_side2_ptr, bforce_side3_ptr, 
-				     bforce_side4_ptr, bforce_side5_ptr, 
-				     &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
+       if( m_croutines )
+	  bcfortsg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+		    wind_ptr, nx, ny, nz,
+		    u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
+		    bforce_side0_ptr, bforce_side1_ptr, 
+		    bforce_side2_ptr, bforce_side3_ptr, 
+		    bforce_side4_ptr, bforce_side5_ptr, 
+		    om, ph, cv, m_sg_str_x[g], m_sg_str_y[g] );
+       else
+	  bcfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+		    wind_ptr, &nx, &ny, &nz,
+		    u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
+		    bforce_side0_ptr, bforce_side1_ptr, 
+		    bforce_side2_ptr, bforce_side3_ptr, 
+		    bforce_side4_ptr, bforce_side5_ptr, 
+		    &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
        int side;
        if( topo == 1 && m_bcType[g][4] == bStressFree )
        {
@@ -1004,13 +1010,22 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
     }
     else
     {
-       F77_FUNC(bcfort, BCFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-				 wind_ptr, &nx, &ny, &nz,
-				 u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
-				 bforce_side0_ptr, bforce_side1_ptr, 
-				 bforce_side2_ptr, bforce_side3_ptr, 
-				 bforce_side4_ptr, bforce_side5_ptr, 
-				 &om, &ph, &cv, &topo );
+       if( m_croutines )
+	  bcfort_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+		     wind_ptr, nx, ny, nz,
+		     u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
+		     bforce_side0_ptr, bforce_side1_ptr, 
+		     bforce_side2_ptr, bforce_side3_ptr, 
+		     bforce_side4_ptr, bforce_side5_ptr, 
+		     om, ph, cv, topo );
+       else
+	  bcfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+		  wind_ptr, &nx, &ny, &nz,
+		  u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
+		  bforce_side0_ptr, bforce_side1_ptr, 
+		  bforce_side2_ptr, bforce_side3_ptr, 
+		  bforce_side4_ptr, bforce_side5_ptr, 
+		  &om, &ph, &cv, &topo );
        int side;
        if( topo == 1 && m_bcType[g][4] == bStressFree )
        {
@@ -1033,7 +1048,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
       int g = mNumberOfCartesianGrids-1;
       int gc = mNumberOfGrids-1;
 
-      //      double nrm[3]={0,0,0};
+      //      float_sw4 nrm[3]={0,0,0};
       int q, i, j;
 // inject solution values between lower boundary of gc and upper boundary of g
       for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
@@ -1055,7 +1070,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 	    //            if( i>= 1 && i <= m_global_nx[g] && j >= 1 && j <= m_global_ny[g] )
 	    //            for( int c=1; c <= nc ; c++ )
 	    //	    {
-	    //	       double ndiff=fabs(a_U[gc](c,i,j,m_kEnd[gc]-m_ghost_points)-a_U[g](c,i,j,m_kStart[g]+m_ghost_points));
+	    //	       float_sw4 ndiff=fabs(a_U[gc](c,i,j,m_kEnd[gc]-m_ghost_points)-a_U[g](c,i,j,m_kStart[g]+m_ghost_points));
 	    //	       if( ndiff > nrm[c-1] )
 	    //		  nrm[c-1] = ndiff;
 	    //	    }
@@ -1066,14 +1081,14 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 
 //---------------------------------------------------------------------------
 void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
-		    double t, vector<double **> & a_BCForcing )
+		    float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
-  double *u_ptr, *c_ptr, h;
+  float_sw4 *u_ptr, *c_ptr, h;
   boundaryConditionType *bcType_ptr;
-  double *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
+  float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
-  double om=0, ph=0, cv=0;
+  float_sw4 om=0, ph=0, cv=0;
     
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -1110,35 +1125,35 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
     bforce_side4_ptr = a_BCForcing[g][4]; // low-k bndry forcing array pointer
     bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
     
-    //    if( usingSupergrid() )
-    //    {
-       F77_FUNC(bcfortanisg, BCFORTANISG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-				       wind_ptr, &nx, &ny, &nz,
-				       u_ptr, &h, bcType_ptr, m_sbop, c_ptr, 
-				       bforce_side0_ptr, bforce_side1_ptr, 
-				       bforce_side2_ptr, bforce_side3_ptr, 
-				       bforce_side4_ptr, bforce_side5_ptr, 
-				       m_sg_str_x[g], m_sg_str_y[g] );
+    if( m_croutines )
+       bcfortanisg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+		    wind_ptr, nx, ny, nz,
+		    u_ptr, h, bcType_ptr, m_sbop, c_ptr, 
+		    bforce_side0_ptr, bforce_side1_ptr, 
+		    bforce_side2_ptr, bforce_side3_ptr, 
+		    bforce_side4_ptr, bforce_side5_ptr, 
+		    m_sg_str_x[g], m_sg_str_y[g] );
+    else
+       bcfortanisg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+		    wind_ptr, &nx, &ny, &nz,
+		    u_ptr, &h, bcType_ptr, m_sbop, c_ptr, 
+		    bforce_side0_ptr, bforce_side1_ptr, 
+		    bforce_side2_ptr, bforce_side3_ptr, 
+		    bforce_side4_ptr, bforce_side5_ptr, 
+		    m_sg_str_x[g], m_sg_str_y[g] );
        if( topographyExists() && g == mNumberOfGrids-1 && m_bcType[g][4] == bStressFree )
        {
 	  int fside = 5;
-	  double* cc_ptr = mCcurv.c_ptr();
-          F77_FUNC(bcfreesurfcurvani,BCFREESURFCURVANI)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-							&nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
-                                                        bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
+	  float_sw4* cc_ptr = mCcurv.c_ptr();
+	  if( m_croutines )
+	     bcfreesurfcurvani_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			       nz, u_ptr, cc_ptr, fside, m_sbop, bforce_side4_ptr,
+			       bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
+	  else
+	     bcfreesurfcurvani(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			       &nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
+			       bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
        }
-
-       //    }
-    //    else
-    //    {
-       //       F77_FUNC(bcfort, BCFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-       //				 wind_ptr, &nx, &ny, &nz,
-       //				 u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
-       //				 bforce_side0_ptr, bforce_side1_ptr, 
-       //				 bforce_side2_ptr, bforce_side3_ptr, 
-       //				 bforce_side4_ptr, bforce_side5_ptr )
-       //				
-    //  }
   }
   update_curvilinear_cartesian_interface( a_U );
 }
@@ -1173,7 +1188,7 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 }
 //---------------------------------------------------------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-		    double t, bool predictor, vector<GridPointSource*> point_sources )
+		    float_sw4 t, bool predictor, vector<GridPointSource*> point_sources )
 {
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
    {
@@ -1242,7 +1257,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       gridref_initial_guess( a_Up[g+1], g+1, false );
       gridref_initial_guess( a_Up[g], g, true );
 
-      double cof = predictor ? 12 : 1;
+      float_sw4 cof = predictor ? 12 : 1;
       int is_periodic[2] ={0,0};
       if( m_doubly_periodic )
 	 is_periodic[0] = is_periodic[1] = 1;
@@ -1283,16 +1298,16 @@ void EW::check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc
    //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
    i = 2*ic;
    //   j = 2*jc;
-   double pci   = (9*(Uc(c,ic,jc,kc)+Uc(c,ic+1,jc,kc))-(Uc(c,ic-1,jc,kc)+Uc(c,ic+2,jc,kc)))/16;
-   double pcim  = (9*(Uc(c,ic,jc-1,kc)+Uc(c,ic+1,jc-1,kc))-(Uc(c,ic-1,jc-1,kc)+Uc(c,ic+2,jc-1,kc)))/16;
-   double pcip  = (9*(Uc(c,ic,jc+1,kc)+Uc(c,ic+1,jc+1,kc))-(Uc(c,ic-1,jc+1,kc)+Uc(c,ic+2,jc+1,kc)))/16;
-   double pcipp = (9*(Uc(c,ic,jc+2,kc)+Uc(c,ic+1,jc+2,kc))-(Uc(c,ic-1,jc+2,kc)+Uc(c,ic+2,jc+2,kc)))/16;
-   double pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
+   float_sw4 pci   = (9*(Uc(c,ic,jc,kc)+Uc(c,ic+1,jc,kc))-(Uc(c,ic-1,jc,kc)+Uc(c,ic+2,jc,kc)))/16;
+   float_sw4 pcim  = (9*(Uc(c,ic,jc-1,kc)+Uc(c,ic+1,jc-1,kc))-(Uc(c,ic-1,jc-1,kc)+Uc(c,ic+2,jc-1,kc)))/16;
+   float_sw4 pcip  = (9*(Uc(c,ic,jc+1,kc)+Uc(c,ic+1,jc+1,kc))-(Uc(c,ic-1,jc+1,kc)+Uc(c,ic+2,jc+1,kc)))/16;
+   float_sw4 pcipp = (9*(Uc(c,ic,jc+2,kc)+Uc(c,ic+1,jc+2,kc))-(Uc(c,ic-1,jc+2,kc)+Uc(c,ic+2,jc+2,kc)))/16;
+   float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
 
-   double pcj = (9*(Uc(c,ic,jc,kc)+Uc(c,ic,jc+1,kc))-(Uc(c,ic,jc-1,kc)+Uc(c,ic,jc+2,kc)))/16;
+   float_sw4 pcj = (9*(Uc(c,ic,jc,kc)+Uc(c,ic,jc+1,kc))-(Uc(c,ic,jc-1,kc)+Uc(c,ic,jc+2,kc)))/16;
    cout <<"check " << Uf(c,i,j,kf) << " " << Uc(c,ic,jc,kc) << " " << pci << " " << Uf(c,i,j,kf)-pci << endl;
    //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << endl;
-   double pcni   = (9*(Unextc(c,ic,jc,kc)+Unextc(c,ic+1,jc,kc))-(Unextc(c,ic-1,jc,kc)+Unextc(c,ic+2,jc,kc)))/16;
+   float_sw4 pcni   = (9*(Unextc(c,ic,jc,kc)+Unextc(c,ic+1,jc,kc))-(Unextc(c,ic-1,jc,kc)+Unextc(c,ic+2,jc,kc)))/16;
      cout << "  check next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) << " " << pcni << " " << Unextf(c,i,j,kf)-pcni << endl;
    //   cout << " check " << Uc(c,ic-2,jc,kc) << " " << Unextc(c,ic-2,jc,kc) << endl;
    //   cout << "       " << Uc(c,ic-1,jc,kc) << " " << Unextc(c,ic-1,jc,kc) << endl;
@@ -1371,7 +1386,7 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 }
 
 //-----------------------------------------------------------------------
-void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
+void EW::dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj )
 {
    // Put back exact solution at non-unknown ghost points at sides.
    //   int k = upper ? 0 : m_global_nz[g]+1;
@@ -1417,11 +1432,11 @@ void EW::dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj )
    }
    else
    {
-      double om = m_twilight_forcing->m_omega;
-      double ph = m_twilight_forcing->m_phase;
-      double cv = m_twilight_forcing->m_c;
-      double h  = mGridSize[g];
-      double* u_ptr = U.c_ptr();
+      float_sw4 om = m_twilight_forcing->m_omega;
+      float_sw4 ph = m_twilight_forcing->m_phase;
+      float_sw4 cv = m_twilight_forcing->m_c;
+      float_sw4 h  = mGridSize[g];
+      float_sw4* u_ptr = U.c_ptr();
       if( m_iStartInt[g] == 1 )
       {
 	 // low i-side
@@ -1509,9 +1524,9 @@ void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
-					int g, int kic, double t, vector<GridPointSource*> point_sources )
+					int g, int kic, float_sw4 t, vector<GridPointSource*> point_sources )
 {
-   double idt2 = 1/(mDt*mDt);
+   float_sw4 idt2 = 1/(mDt*mDt);
    for( int k=Unext.m_kb ; k <= Unext.m_ke ; k++ )
       for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
 	 for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
@@ -1536,14 +1551,14 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    Sarray f(3,ib,ie,jb,je,kic,kic);
    if( m_twilight_forcing )
    {
-      double om = m_twilight_forcing->m_omega;
-      double ph = m_twilight_forcing->m_phase;
-      double cv = m_twilight_forcing->m_c;
-      double omm= m_twilight_forcing->m_momega;
-      double phm= m_twilight_forcing->m_mphase;
-      double amprho   = m_twilight_forcing->m_amprho;
-      double ampmu    = m_twilight_forcing->m_ampmu;
-      double amplambda= m_twilight_forcing->m_amplambda;
+      float_sw4 om = m_twilight_forcing->m_omega;
+      float_sw4 ph = m_twilight_forcing->m_phase;
+      float_sw4 cv = m_twilight_forcing->m_c;
+      float_sw4 omm= m_twilight_forcing->m_momega;
+      float_sw4 phm= m_twilight_forcing->m_mphase;
+      float_sw4 amprho   = m_twilight_forcing->m_amprho;
+      float_sw4 ampmu    = m_twilight_forcing->m_ampmu;
+      float_sw4 amplambda= m_twilight_forcing->m_amplambda;
       F77_FUNC(forcingttfort,FORCINGTTFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
 		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
    }
@@ -1557,7 +1572,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       {
 	 if( point_sources[s]->m_grid == g && point_sources[s]->m_k0 == kic )
 	 {
-	    double fxyz[3];
+	    float_sw4 fxyz[3];
 	    point_sources[s]->getFxyztt(t,fxyz);
 	    f(1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
 	    f(2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
@@ -1566,11 +1581,11 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       }
    }
 
-   double cof = mDt*mDt*mDt*mDt/12.0;
+   float_sw4 cof = mDt*mDt*mDt*mDt/12.0;
    for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
       for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
       {
-	 double irho=cof/mRho[g](i,j,kic);
+	 float_sw4 irho=cof/mRho[g](i,j,kic);
 	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lu(1,i,j,kic)+f(1,i,j,kic));
 	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lu(2,i,j,kic)+f(2,i,j,kic));
 	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lu(3,i,j,kic)+f(3,i,j,kic));
@@ -1579,7 +1594,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
-					int g, int kic, double t, vector<GridPointSource*> point_sources )
+					int g, int kic, float_sw4 t, vector<GridPointSource*> point_sources )
 {
    int ib=m_iStart[g], jb=m_jStart[g], kb=m_kStart[g];
    int ie=m_iEnd[g], je=m_jEnd[g], ke=m_kEnd[g];
@@ -1597,14 +1612,14 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
    Sarray f(3,ib,ie,jb,je,kic,kic);
    if( m_twilight_forcing )
    {
-      double om = m_twilight_forcing->m_omega;
-      double ph = m_twilight_forcing->m_phase;
-      double cv = m_twilight_forcing->m_c;
-      double omm= m_twilight_forcing->m_momega;
-      double phm= m_twilight_forcing->m_mphase;
-      double amprho=m_twilight_forcing->m_amprho;
-      double ampmu=m_twilight_forcing->m_ampmu;
-      double amplambda=m_twilight_forcing->m_amplambda;
+      float_sw4 om = m_twilight_forcing->m_omega;
+      float_sw4 ph = m_twilight_forcing->m_phase;
+      float_sw4 cv = m_twilight_forcing->m_c;
+      float_sw4 omm= m_twilight_forcing->m_momega;
+      float_sw4 phm= m_twilight_forcing->m_mphase;
+      float_sw4 amprho=m_twilight_forcing->m_amprho;
+      float_sw4 ampmu=m_twilight_forcing->m_ampmu;
+      float_sw4 amplambda=m_twilight_forcing->m_amplambda;
       F77_FUNC(forcingfort,FORCINGFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
 		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
    }
@@ -1618,7 +1633,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
       {
 	 if( point_sources[s]->m_grid == g && point_sources[s]->m_k0 == kic )
 	 {
-	    double fxyz[3];
+	    float_sw4 fxyz[3];
 	    point_sources[s]->getFxyz(t,fxyz);
 	    f(1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
 	    f(2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
@@ -1626,11 +1641,11 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
 	 }
       }
    }
-   double cof = mDt*mDt;
+   float_sw4 cof = mDt*mDt;
    for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
       for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
       {
-	 double irho=cof/mRho[g](i,j,kic);
+	 float_sw4 irho=cof/mRho[g](i,j,kic);
 	 Unext(1,i,j,kic) = 2*a_Up(1,i,j,kic) - a_U(1,i,j,kic) + irho*(Lu(1,i,j,kic)+f(1,i,j,kic));
 	 Unext(2,i,j,kic) = 2*a_Up(2,i,j,kic) - a_U(2,i,j,kic) + irho*(Lu(2,i,j,kic)+f(2,i,j,kic));
 	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+f(3,i,j,kic));
@@ -1639,13 +1654,13 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
 
 //-----------------------------------------------------------------------
 void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
-			     double* a_str_x, double* a_str_y )
+			     float_sw4* a_str_x, float_sw4* a_str_y )
 {
-   const double a1=2.0/3, a2=-1.0/12;
+   const float_sw4 a1=2.0/3, a2=-1.0/12;
    bool upper = (kic == 1);
    int k=kic;
-   double ih = 1/mGridSize[g];
-   double uz, vz, wz;
+   float_sw4 ih = 1/mGridSize[g];
+   float_sw4 uz, vz, wz;
    int ifirst = a_Up.m_ib;
    int jfirst = a_Up.m_jb;
 #define str_x(i) a_str_x[(i-ifirst)]   
@@ -1690,9 +1705,9 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 }
 
 //-----------------------------------------------------------------------
-void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
-		   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
-		   double cof, int gc, int gf, int is_periodic[2] )
+void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
+		   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
+		   float_sw4 cof, int gc, int gf, int is_periodic[2] )
 {
    // At boundaries to the left and right, at least three ghost points are required
    // e.g., domain in i-direction:   i=-2,-1,0,1,2,...,Ni,Ni+1,Ni+2,Ni+3
@@ -1705,16 +1720,16 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    // In this way the restriction and prolongation stencils can be computed without any special
    // treatment near the i-boundaries. 
 
-   const double i16 = 1.0/16;
-   const double i256 = 1.0/256;
-   const double i1024 = 1.0/1024;
+   const float_sw4 i16 = 1.0/16;
+   const float_sw4 i256 = 1.0/256;
+   const float_sw4 i1024 = 1.0/1024;
 
    int jcb, jce, icb, ice, jfb, jfe, ifb, ife, nkf;
-   double nuf = mDt*mDt/(cof*hf*hf);
-   double nuc = mDt*mDt/(cof*hc*hc);
-   double ihc = 1/hc, ihf=1/hf;
-   double jacerr = m_citol+1,jacerr0;
-   double a11, a12, a21, a22, b1, b2, r1, r2, r3, deti, relax;
+   float_sw4 nuf = mDt*mDt/(cof*hf*hf);
+   float_sw4 nuc = mDt*mDt/(cof*hc*hc);
+   float_sw4 ihc = 1/hc, ihf=1/hf;
+   float_sw4 jacerr = m_citol+1,jacerr0;
+   float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti, relax;
    int it = 0;
    relax = m_cirelfact;
    if( m_iStartInt[gc] == 1 && !is_periodic[0] )
@@ -1761,14 +1776,14 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    for( int jc=m_jStart[gc] ; jc<=m_jEnd[gc] ; jc++ )
       for( int ic=m_iStart[gc] ; ic<=m_iEnd[gc] ; ic++ )
       {
-	 double irho=1/Rhoc(ic,jc,1);
+	 float_sw4 irho=1/Rhoc(ic,jc,1);
 	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho;
 	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho;
       }
 
    while( jacerr > m_citol && it < m_cimaxiter )
    {
-      double rmax[3]={0,0,0};
+      float_sw4 rmax[3]={0,0,0};
       for( int jc= jcb ; jc <= jce ; jc++ )
 	 for( int ic= icb ; ic <= ice ; ic++ )
 	 {
@@ -2002,8 +2017,8 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       //   skipthis:
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
-      double jacerrtmp = rmax[0]+rmax[1]+rmax[2];
-      MPI_Allreduce( &jacerrtmp, &jacerr, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
+      float_sw4 jacerrtmp = rmax[0]+rmax[1]+rmax[2];
+      MPI_Allreduce( &jacerrtmp, &jacerr, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
       if( it == 0 )
 	 jacerr0 = jacerr;
       if( jacerr0 > 0 )
@@ -2018,7 +2033,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 }
 
 //-----------------------------------------------------------------------
-// void EW::update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, double t, vector<Sarray*> &AlphaVE )
+// void EW::update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, float_sw4 t, vector<Sarray*> &AlphaVE )
 // {
 //   int g;
 // boundary forcing on Cartesian grids
@@ -2114,7 +2129,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //}
 
 //-----------------------------------------------------------------------
-// void EW::impose_physical_bc(vector<Sarray> &U, vector<Sarray> &UM, double t, 
+// void EW::impose_physical_bc(vector<Sarray> &U, vector<Sarray> &UM, float_sw4 t, 
 // 			    vector<Sarray*> &AlphaVE )
 // {
 //   int g;
@@ -2125,7 +2140,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //   for( g = 0 ; g < mNumberOfCartesianGrids ; g++ ) // only Cartesian grids
 // //  for( g = 0 ; g < mNumberOfGrids ; g++ ) // tmp: all grids
 //   {
-//     double h= mGridSize[g];
+//     float_sw4 h= mGridSize[g];
 // // Find out boundary condition types, and set some straightforward bc:s
 //     for( int side= 0 ; side < 6 ; side++ )
 //     {
@@ -2153,8 +2168,8 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
 
 // //-----------------------------------------------------------------------
-// void EW::bc_dirichlet( Sarray& u, int grid, double t, int side,
-// 			 Forcing* forcing, double h )
+// void EW::bc_dirichlet( Sarray& u, int grid, float_sw4 t, int side,
+// 			 Forcing* forcing, float_sw4 h )
 // {
 // // this routine sets Dirichlet conditions on the boundary points for Cartesian grids (and not the ghost points!)
 //    int wind[6];
@@ -2180,7 +2195,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //       for( int j = wind[2] ; j <= wind[3] ; j++ )
 // 	 for( int i = wind[0] ; i <= wind[1] ; i++ )
 // 	 {
-//             double x, y, z;
+//             float_sw4 x, y, z;
 //             if( grid < mNumberOfCartesianGrids )
 // 	    {
 // 	       x = (i+sidecorr[0]-1)*h;
@@ -2202,16 +2217,16 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // }
 
 //------------------------------------------------------------------------------
-void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
+void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			      vector<Source*>& a_sources )
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
-  double *u_ptr, *mu_ptr, *la_ptr, h, zmin;
+  float_sw4 *u_ptr, *mu_ptr, *la_ptr, h, zmin;
   boundaryConditionType *bcType_ptr;
-  double *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
+  float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
-  double om=0, ph=0, cv=0, omm;
+  float_sw4 om=0, ph=0, cv=0, omm;
     
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -2245,7 +2260,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
     if (m_twilight_forcing)
     {
-       double phc[21]; // move these angles to the EW class
+       float_sw4 phc[21]; // move these angles to the EW class
        om = m_twilight_forcing->m_omega;
        ph = m_twilight_forcing->m_phase;
        cv = m_twilight_forcing->m_c;
@@ -2261,51 +2276,111 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
       if (m_bcType[g][0] == bDirichlet || m_bcType[g][0] == bSuperGrid )
       {
          if( !curvilinear )
-	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr, &m_zmin[g] );
+	 {
+	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[0], h, t, om, cv, ph, bforce_side0_ptr, m_zmin[g] );
+	    else
+	       twdirbdry( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr, &m_zmin[g] );
+	 }
 	 else
-	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+	 {
+	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			      &wind_ptr[0], t, om, cv, ph, bforce_side0_ptr,
+			      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	    else
+	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                                              &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
 					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
       }
 
       if (m_bcType[g][1] == bDirichlet || m_bcType[g][1] == bSuperGrid )
       {
          if( !curvilinear )
-	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr, &m_zmin[g] );
+	 {
+	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6], h, t, om, cv, ph, bforce_side1_ptr, m_zmin[g] );
+	    else
+	       twdirbdry( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr, &m_zmin[g] );
+	 }
 	 else
-	    F77_FUNC(twdirbdryc,TWDIRBDRYC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					    &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
-					    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 {
+	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
+		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	    else
+	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			  &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
+			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
       }
 
       if (m_bcType[g][2] == bDirichlet || m_bcType[g][2] == bSuperGrid)
       {
 	 if( !curvilinear )
-	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr, &m_zmin[g] );
+	 {
+	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*2], h, t, om, cv, ph, bforce_side2_ptr, m_zmin[g] );
+	    else
+	       twdirbdry( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr, &m_zmin[g] );
+	 }
          else
-	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					     &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
-					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 {
+	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*2], t, om, cv, ph, bforce_side2_ptr,
+		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	    else
+	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			   &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
+			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
       }
 
       if (m_bcType[g][3] == bDirichlet || m_bcType[g][3] == bSuperGrid)
       {
          if( !curvilinear )
-	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr, &m_zmin[g] );
+	 {
+	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*3], h, t, om, cv, ph, bforce_side3_ptr, m_zmin[g] );
+	    else
+	       twdirbdry( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr, &m_zmin[g] );
+	 }
          else
-	    F77_FUNC(twdirbdryc,TWDIRBDRYC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					    &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
-					    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 {
+	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*3], t, om, cv, ph, bforce_side3_ptr,
+		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	    else
+	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			  &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
+			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
       }
 
       if (m_bcType[g][4] == bDirichlet || m_bcType[g][4] == bSuperGrid)
       {
 	 if( !curvilinear )
-	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr, &m_zmin[g] );
+	 {
+	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*4], h, t, om, cv, ph, bforce_side4_ptr, m_zmin[g] );
+	    else
+	       twdirbdry( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr, &m_zmin[g] );
+	 }
          else
-	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					     &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
-					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 {
+	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*4], t, om, cv, ph, bforce_side4_ptr,
+		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	    else
+	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			   &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
+			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
       }
       else if (m_bcType[g][4] == bStressFree)
       {
@@ -2322,19 +2397,28 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
             
             if( usingSupergrid() && !curvilinear )
             {
-               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
-               double omstry = m_supergrid_taper_y[g].get_tw_omega();
-               F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                         &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-                                                         bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+	       if( m_croutines )
+		  twfrsurfzsgstr_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				  klast, h, k, t, om, cv, ph, omstrx, omstry,
+				  bforce_side4_ptr, mu_ptr, la_ptr, m_zmin[g] );
+	       else
+		  twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+				  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+				  bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
-                  double* mua_ptr    = mMuVE[g][0].c_ptr();
-                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                                  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-                                                                  bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
-	       
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+		  if( m_croutines )
+		     twfrsurfzsgstratt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+					   klast, h, k, t, om, cv, ph, omstrx, omstry,
+					   bforce_side4_ptr, mua_ptr, laa_ptr, m_zmin[g] );
+		  else
+		     twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+					&klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+					bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
                }
             }
             else if( !usingSupergrid() && curvilinear )
@@ -2342,9 +2426,14 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
                // Stress tensor on boundary
                Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
                // Get twilight stress tensor, tau.
-               F77_FUNC(twstensor,TWSTENSOR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                                              &k, &t, &om, &cv, &ph,
-                                              mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+	       if( m_croutines )
+		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				k, t, om, cv, ph,
+				mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+	       else
+		  twstensor( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			     &k, &t, &om, &cv, &ph,
+			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
                // Compute boundary forcing for given stress tensor, tau.
 
                F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
@@ -2353,11 +2442,16 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
                if( m_use_attenuation )
                {
-                  double* mua_ptr    = mMuVE[g][0].c_ptr();
-                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  F77_FUNC(twstensoratt,TWSTENSORATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                                                       &k, &t, &om, &cv, &ph,
-                                                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+		  if( m_croutines )
+		     twstensoratt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				      k, t, om, cv, ph,
+				      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+		  else
+		     twstensoratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+				   &k, &t, &om, &cv, &ph,
+				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
                   F77_FUNC(subsurfforcing,SUBSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                                            &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
                                                            tau.c_ptr(), bforce_side4_ptr );
@@ -2365,31 +2459,47 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
             }
             else if( !usingSupergrid() && !curvilinear )
             {
-               F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                               &klast, &h, &k, &t, &om, &cv, &ph,
-                                               bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+	       if( m_croutines )
+		  twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				klast, h, k, t, om, cv, ph,
+				bforce_side4_ptr, mu_ptr, la_ptr, m_zmin[g] );
+	       else
+		  twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+			     &klast, &h, &k, &t, &om, &cv, &ph,
+			     bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
-                  double* mua_ptr    = mMuVE[g][0].c_ptr();
-                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  F77_FUNC(twfrsurfzatt, TWFRSURFZATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                        &klast, &h, &k, &t, &om, &cv, &ph,
-                                                        bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+		  if( m_croutines )
+		     twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				      klast, h, k, t, om, cv, ph,
+				      bforce_side4_ptr, mua_ptr, laa_ptr, m_zmin[g] );
+		  else
+		     twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+				   &klast, &h, &k, &t, &om, &cv, &ph,
+				   bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
                }
             }
             else if( usingSupergrid() && curvilinear )
             {
-               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
-               double omstry = m_supergrid_taper_y[g].get_tw_omega();
+               float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
 
                // Stress tensor on boundary
                Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
                // Get twilight stress tensor, tau.
-               F77_FUNC(twstensorsg,TWSTENSORSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                                                  &k, &t, &om, &cv, &ph,
-                                                  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
-                                                  mu_ptr, la_ptr, &omstrx, &omstry );
+	       if( m_croutines )
+		  twstensorsg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				  k, t, om, cv, ph,
+				  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+				  mu_ptr, la_ptr, omstrx, omstry );
+	       else
+		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			       &k, &t, &om, &cv, &ph,
+			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+			       mu_ptr, la_ptr, &omstrx, &omstry );
                // Compute boundary forcing for given stress tensor, tau.
                F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                                             &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
@@ -2397,12 +2507,18 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
                if( m_use_attenuation )
                {
-                  double* mua_ptr    = mMuVE[g][0].c_ptr();
-                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  F77_FUNC(twstensorsgatt,TWSTENSORSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                                                           &k, &t, &om, &cv, &ph,
-                                                           mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
-                                                           mua_ptr, laa_ptr, &omstrx, &omstry );
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+		  if( m_croutines )
+		     twstensorsgatt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+					k, t, om, cv, ph,
+					mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+					mua_ptr, laa_ptr, omstrx, omstry );
+		  else
+		     twstensorsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+				     &k, &t, &om, &cv, &ph,
+				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+				     mua_ptr, laa_ptr, &omstrx, &omstry );
                   F77_FUNC(subsurfforcingsg,SUBSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                                                &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
                                                                tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
@@ -2417,11 +2533,23 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
       if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid)
       {
 	 if( !curvilinear )
-	    F77_FUNC(twdirbdry,TWDIRBDRY)( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr, &m_zmin[g] );
+	 {
+	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*5], h, t, om, cv, ph, bforce_side5_ptr, m_zmin[g] );
+	    else
+	       twdirbdry( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr, &m_zmin[g] );
+	 }
 	 else
-	    F77_FUNC(twdirbdryc,TWDIRBDRYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					     &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
-					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 {
+	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*5], t, om, cv, ph, bforce_side5_ptr,
+		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	    else
+	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			   &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
+			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
       }
       else if (m_bcType[g][5] == bStressFree)
       {
@@ -2438,16 +2566,16 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
             if( usingSupergrid() )
             {
-               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
-               double omstry = m_supergrid_taper_y[g].get_tw_omega();
-               F77_FUNC(twfrsurfzsgstr, TWFRSURFZSGSTR)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+               float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+               twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                          &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
                                                          bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
-                  double* mua_ptr    = mMuVE[g][0].c_ptr();
-                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  F77_FUNC(twfrsurfzsgstratt, TWFRSURFZSGSTRATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                                   &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
                                                                   bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
@@ -2455,14 +2583,14 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
             }
             else
             {
-               F77_FUNC(twfrsurfz, TWFRSURFZ)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+               twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                &klast, &h, &k, &t, &om, &cv, &ph,
                                                bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
-                  double* mua_ptr    = mMuVE[g][0].c_ptr();
-                  double* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  F77_FUNC(twfrsurfzatt, TWFRSURFZATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                         &klast, &h, &k, &t, &om, &cv, &ph,
                                                         bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
                }
@@ -2476,7 +2604,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
     else if (m_rayleigh_wave_test)
     {
       int q;
-      double lambda, mu, rho, cr, omega, alpha;
+      float_sw4 lambda, mu, rho, cr, omega, alpha;
       
       lambda = m_rayleigh_wave_test->m_lambda;
       mu = m_rayleigh_wave_test->m_mu;
@@ -2534,9 +2662,9 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
 //------------------------------------------------------------------------------
 // void
-// impose_curvilinear_bc(Sarray & a_u, double ** bcForcing, Sarray & a_x, Sarray & a_y, Sarray & a_z,
+// impose_curvilinear_bc(Sarray & a_u, float_sw4 ** bcForcing, Sarray & a_x, Sarray & a_y, Sarray & a_z,
 // 		      Sarray & a_mu, Sarray & a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J,
-// 		      double t, boundaryConditionType bcType[] )
+// 		      float_sw4 t, boundaryConditionType bcType[] )
 
 // {
 // // 4D macros swap the last and first indices to compensate for different conventions between how 
@@ -2557,17 +2685,17 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
   
 // // extract pointers for the macros
 // // 4D arrays
-//   double * u_=a_u.c_ptr();
-//   double * q_=a_q.c_ptr();
-//   double * r_=a_r.c_ptr();
-//   double * s_=a_s.c_ptr();
+//   float_sw4 * u_=a_u.c_ptr();
+//   float_sw4 * q_=a_q.c_ptr();
+//   float_sw4 * r_=a_r.c_ptr();
+//   float_sw4 * s_=a_s.c_ptr();
 // // 3D arrays
-//   double * x_=a_x.c_ptr();
-//   double * y_=a_y.c_ptr();
-//   double * z_=a_z.c_ptr();
-//   double * mu_=a_mu.c_ptr();
-//   double * lam_=a_lam.c_ptr();
-//   double * J_=a_J.c_ptr();
+//   float_sw4 * x_=a_x.c_ptr();
+//   float_sw4 * y_=a_y.c_ptr();
+//   float_sw4 * z_=a_z.c_ptr();
+//   float_sw4 * mu_=a_mu.c_ptr();
+//   float_sw4 * lam_=a_lam.c_ptr();
+//   float_sw4 * J_=a_J.c_ptr();
   
 // // all 3D/4D Sarrays must have the same number of grid points and the same starting/ending indices
 //   int m_nc = a_q.m_nc;
@@ -2671,7 +2799,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 // 				 +t1(i,j,Nz-1)*t2(i,j,Nz-1,i2)*t3(i,j,Nz-1,i3)*t4(i,j,Nz-1)))
 // #define E32(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,Nz-2)*t2(i,j,Nz-2,i2)*t3(i,j,Nz-2,i3)*t4(i,j,Nz-2)\
 // 				 +t1(i,j,Nz-1)*t2(i,j,Nz-1,i2)*t3(i,j,Nz-1,i3)*t4(i,j,Nz-1)))
-//     double Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9];
+//     float_sw4 Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9];
 //     int info,N1,N2,N3 ,ipv[3]; 
 //     N1=3;N2=1;N3=3;
 //     for(int j=2; j<=Ny-1; j++)
@@ -2815,7 +2943,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 // 				 +t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2)))
 // #define E32(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,3)*t2(i,j,3,i2)*t3(i,j,3,i3)*t4(i,j,3)\
 // 				 +t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2)))
-//     double Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9];
+//     float_sw4 Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9];
 //     int info,N1,N2,N3 ,ipv[3]; 
 //     N1=3;N2=1;N3=3;
 //     k=2; ///NOTE!!! 
@@ -2950,7 +3078,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 // }
 
 //---------------------------------------------------------------
-// void curvilinear_bc_forcing(double ** bcForcing,
+// void curvilinear_bc_forcing(float_sw4 ** bcForcing,
 // 		       int * numberOfBCPoints,
 // 		       Sarray & a_x,
 // 		       Sarray & a_y,
@@ -2961,7 +3089,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 // 		       Sarray & a_r,
 // 		       Sarray & a_s,
 // 		       Sarray & a_J,
-// 		       double t,
+// 		       float_sw4 t,
 // 		       boundaryConditionType bcType[],
 // 		       Forcing * f,
 // 		       int noof_mechanisms, Sarray* alphaVE, Sarray* muVE, Sarray* lambdaVE )
@@ -2983,16 +3111,16 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
   
 // // extract pointers for the macros
 // // 4D arrays
-//   double * q_=a_q.c_ptr();
-//   double * r_=a_r.c_ptr();
-//   double * s_=a_s.c_ptr();
+//   float_sw4 * q_=a_q.c_ptr();
+//   float_sw4 * r_=a_r.c_ptr();
+//   float_sw4 * s_=a_s.c_ptr();
 // // 3D arrays
-//   double * x_=a_x.c_ptr();
-//   double * y_=a_y.c_ptr();
-//   double * z_=a_z.c_ptr();
-//   double * mu_=a_mu.c_ptr();
-//   double * lam_=a_lam.c_ptr();
-//   double * J_=a_J.c_ptr();
+//   float_sw4 * x_=a_x.c_ptr();
+//   float_sw4 * y_=a_y.c_ptr();
+//   float_sw4 * z_=a_z.c_ptr();
+//   float_sw4 * mu_=a_mu.c_ptr();
+//   float_sw4 * lam_=a_lam.c_ptr();
+//   float_sw4 * J_=a_J.c_ptr();
   
 // // all 3D/4D Sarrays must have the same number of grid points and the same starting/ending indices
 //   int m_nc = a_q.m_nc;
@@ -3016,7 +3144,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 //   if (f->knows_exact() && !f->exact_only_surface() )
 //   {
 //     int i, j, k, q, ind, side;
-//     double tau[6], uEx[3], dum=0.;
+//     float_sw4 tau[6], uEx[3], dum=0.;
   
 //     side = 4;
 //     ind = 0;
@@ -3232,7 +3360,7 @@ void EW::cartesian_bc_forcing(double t, vector<double **> & a_BCForcing,
 
 
 //---------------------------------------------------------------------------
-void eval_curvilinear_bc_stress(Sarray & a_u, double ** bcForcing, Sarray & a_x, Sarray & a_y, Sarray & a_z,
+void eval_curvilinear_bc_stress(Sarray & a_u, float_sw4 ** bcForcing, Sarray & a_x, Sarray & a_y, Sarray & a_z,
 				Sarray & a_mu, Sarray & a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J)
 {
 // 4D macros swap the last and first indices to compensate for different conventions between how 
@@ -3253,17 +3381,17 @@ void eval_curvilinear_bc_stress(Sarray & a_u, double ** bcForcing, Sarray & a_x,
   
 // extract pointers for the macros
 // 4D arrays
-  double * u_=a_u.c_ptr();
-  double * q_=a_q.c_ptr();
-  double * r_=a_r.c_ptr();
-  double * s_=a_s.c_ptr();
+  float_sw4 * u_=a_u.c_ptr();
+  float_sw4 * q_=a_q.c_ptr();
+  float_sw4 * r_=a_r.c_ptr();
+  float_sw4 * s_=a_s.c_ptr();
 // 3D arrays
-  double * x_=a_x.c_ptr();
-  double * y_=a_y.c_ptr();
-  double * z_=a_z.c_ptr();
-  double * mu_=a_mu.c_ptr();
-  double * lam_=a_lam.c_ptr();
-  double * J_=a_J.c_ptr();
+  float_sw4 * x_=a_x.c_ptr();
+  float_sw4 * y_=a_y.c_ptr();
+  float_sw4 * z_=a_z.c_ptr();
+  float_sw4 * mu_=a_mu.c_ptr();
+  float_sw4 * lam_=a_lam.c_ptr();
+  float_sw4 * J_=a_J.c_ptr();
   
 // all 3D/4D Sarrays must have the same number of grid points and the same starting/ending indices
   int m_nc = a_q.m_nc;
@@ -3293,7 +3421,7 @@ void eval_curvilinear_bc_stress(Sarray & a_u, double ** bcForcing, Sarray & a_x,
 				 +t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2)))
 #define E32(i,j,t1,t2,i2,t3,i3,t4) (0.5*(t1(i,j,3)*t2(i,j,3,i2)*t3(i,j,3,i3)*t4(i,j,3)\
 				 +t1(i,j,2)*t2(i,j,2,i2)*t3(i,j,2,i3)*t4(i,j,2)))
-    double Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9],x[3],Ax[3];
+    float_sw4 Dr0[3],Dq0[3],Dsp[3],ugp[3],b[3],A[9],x[3],Ax[3];
     int info,N1,N2,N3 ,ipv[3]; 
     N1=3;N2=1;N3=3;
     k=2; ///NOTE!!! 
@@ -3440,7 +3568,7 @@ void EW::test_sources( vector<GridPointSource*>& a_point_sources,
   int kx[3] = {0,0,0};
   int ky[3] = {0,0,0};
   int kz[3] = {0,0,0};
-  double moments[3], momexact[3];
+  float_sw4 moments[3], momexact[3];
   int nsourcesloc = a_point_sources.size();
   int nsources;
   MPI_Allreduce( &nsourcesloc, &nsources, 1, MPI_INT, MPI_SUM, m_cartesian_communicator );
@@ -3520,14 +3648,14 @@ void EW::test_sources( vector<GridPointSource*>& a_point_sources,
 
 //-----------------------------------------------------------------------
 void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
-				   double moments[3],
+				   float_sw4 moments[3],
 				   vector<GridPointSource*>& point_sources,
 				   vector<Sarray>& F )
 {
    // Evaluate sources at a large time (assume that the time function is=1 at t=infinity)
    // Compute moments, integrals of the source times polynomials of degree (kx,ky,kz).
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
-  double h;
+  float_sw4 h;
 
 //tmp  
   if (proc_zero())
@@ -3538,14 +3666,14 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
      F[g].set_to_zero();
   for( int s= 0 ; s < point_sources.size() ; s++ ) 
   {
-     double fxyz[3];
+     float_sw4 fxyz[3];
      point_sources[s]->getFxyz_notime( fxyz );
      int g = point_sources[s]->m_grid;
      F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
      F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
      F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
   }
-  double momgrid[3]={0,0,0};
+  float_sw4 momgrid[3]={0,0,0};
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
     ifirst = m_iStart[g];
@@ -3555,7 +3683,7 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];  
     h      = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
-    double* f_ptr = F[g].c_ptr();
+    float_sw4* f_ptr = F[g].c_ptr();
     int wind[6];
     wind[0] = m_iStartInt[g];
     wind[1] = m_iEndInt[g];
@@ -3567,12 +3695,12 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     F77_FUNC( testsrc, TESTSRC )( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				  &nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
   }
-  MPI_Allreduce( momgrid, moments, 3, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+  MPI_Allreduce( momgrid, moments, 3, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 }
 
 //-----------------------------------------------------------------------
 void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
-			   vector<double> &uRec, vector<Sarray> &Um2, vector<Sarray> &U)
+			   vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U)
 {
   if (mode == TimeSeries::Displacement)
   {
@@ -3594,7 +3722,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
 //      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      double factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
       uRec[0] = ((U[g0](1,i0+1, j0, k0) - U[g0](1,i0-1, j0, k0)+
 		  U[g0](2,i0, j0+1, k0) - U[g0](2,i0, j0-1, k0)+
 		  U[g0](3,i0, j0, k0+1) - U[g0](3,i0, j0, k0-1))*factor);
@@ -3602,7 +3730,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
     {
 //      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-       double factor = 0.5/sqrt(mJ(i0,j0,k0));
+       float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
        uRec[0] = ( ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
 		     mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
 		     mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
@@ -3616,13 +3744,13 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      double factor = 1.0/(2*mGridSize[g0]);
-      double duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
-      double duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
-      double duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
-      double duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
-      double duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
-      double duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
 //       if( m_xycomponent )
 //       {
       uRec[0] = ( duzdy-duydz );
@@ -3631,8 +3759,8 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 //       }
 //       else
 //       {
-// 	 double uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
-// 	 double uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
 // 	 mRecordedUX.push_back( uew );
 // 	 mRecordedUY.push_back( uns );
 // 	 mRecordedUZ.push_back( -(duydx-duxdy) );
@@ -3641,22 +3769,22 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
     {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      double factor = 0.5/sqrt(mJ(i0,j0,k0));
-      double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
-      double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
-      double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
-      double duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
-      double duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
-      double duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
-      double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
-      double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
-      double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-      double duzdy = mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds;
-      double duydz = mMetric(4,i0,j0,k0)*duyds;
-      double duxdz = mMetric(4,i0,j0,k0)*duxds;
-      double duzdx = mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds;
-      double duydx = mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds;
-      double duxdy = mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds;
+      float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+      float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      float_sw4 duzdy = mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds;
+      float_sw4 duydz = mMetric(4,i0,j0,k0)*duyds;
+      float_sw4 duxdz = mMetric(4,i0,j0,k0)*duxds;
+      float_sw4 duzdx = mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds;
+      float_sw4 duydx = mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds;
+      float_sw4 duxdy = mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds;
 //       if( m_xycomponent )
 //       {
       uRec[0] = (duzdy-duydz)*factor;
@@ -3665,8 +3793,8 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 //       }
 //       else
 //       {
-// 	 double uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
-// 	 double uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
 // 	 mRecordedUX.push_back( uew*factor );
 // 	 mRecordedUY.push_back( uns*factor );
 // 	 mRecordedUZ.push_back( -(duydx-duxdy)*factor );
@@ -3679,16 +3807,16 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      double factor = 1.0/(2*mGridSize[g0]);
-      double duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
-      double duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
-      double duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
-      double duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
-      double duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
-      double duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
-      double duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
-      double duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
-      double duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+      float_sw4 duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+      float_sw4 duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+      float_sw4 duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
       uRec[0] = ( duxdx );
       uRec[1] = ( duydy );
       uRec[2] = ( duzdz );
@@ -3699,27 +3827,27 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
    {
 //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-      double factor = 0.5/sqrt(mJ(i0,j0,k0));
-      double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
-      double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
-      double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
-      double duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
-      double duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
-      double duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
-      double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
-      double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
-      double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-      double duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
-      double duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
-      double duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
-      double duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
-      double duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
-      double duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
-      double duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+      float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+      float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      float_sw4 duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
+      float_sw4 duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
+      float_sw4 duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
 		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
-      double duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+      float_sw4 duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
 		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
-      double duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+      float_sw4 duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
       uRec[0] = ( duxdx );
       uRec[1] = ( duydy );
       uRec[2] = ( duzdz );
@@ -3734,16 +3862,16 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
      if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
      {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-	double factor = 1.0/(2*mGridSize[g0]);
-	double duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
-	double duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
-	double duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
-	double duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
-	double duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
-	double duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
-	double duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
-	double duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
-	double duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+	float_sw4 factor = 1.0/(2*mGridSize[g0]);
+	float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+	float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+	float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+	float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+	float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+	float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+	float_sw4 duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+	float_sw4 duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+	float_sw4 duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
 	uRec[0] =  duxdx;
 	uRec[1] =  duxdy;
 	uRec[2] =  duxdz;
@@ -3757,27 +3885,27 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
      else // must be curvilinear
      {
 //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-	double factor = 0.5/sqrt(mJ(i0,j0,k0));
-	double duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
-	double duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
-	double duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
-	double duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
-	double duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
-	double duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
-	double duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
-	double duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
-	double duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-	double duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
-	double duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
-	double duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
-	double duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
-	double duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
-	double duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
-	double duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+	float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+	float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+	float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+	float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+	float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+	float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+	float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+	float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+	float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+	float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+	float_sw4 duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
+	float_sw4 duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
+	float_sw4 duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
 		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
-	double duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+	float_sw4 duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
 		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
-	double duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+	float_sw4 duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
 	uRec[0] =  duxdx;
 	uRec[1] =  duxdy;
 	uRec[2] =  duxdz;
@@ -3798,7 +3926,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			     vector<Sarray> & a_Um, vector<Sarray> & a_Rho )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
-  double *up_ptr, *u_ptr, *um_ptr, dt2i;
+  float_sw4 *up_ptr, *u_ptr, *um_ptr, dt2i;
   
   int g;
   
@@ -3807,7 +3935,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
     up_ptr  = a_Up[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
     um_ptr  = a_Um[g].c_ptr();
-    double* rho_ptr = a_Rho[g].c_ptr();
+    float_sw4* rho_ptr = a_Rho[g].c_ptr();
 
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
@@ -3815,34 +3943,58 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
     jlast  = m_jEnd[g];
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
-    //    F77_FUNC(addsgd,ADDSGD) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, 
-    //			      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-    //			      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
     if( m_sg_damping_order == 4 )
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
-	  F77_FUNC(addsgd4c,ADDSGD4C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
-					m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
-					m_sg_corner_x[g], m_sg_corner_y[g],
-					&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       {
+	  if( m_croutines )
+	     addsgd4c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr,
+			  rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
+          else
+	     addsgd4c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
+		        m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       }
        else
-	  F77_FUNC(addsgd4,ADDSGD4) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-				      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-				      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-				      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       {
+	  if( m_croutines )
+	     addsgd4_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr, rho_ptr,
+			 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], 
+			 m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+			 m_supergrid_damping_coefficient );
+	  else
+	     addsgd4( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
+		      m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+		      m_sg_corner_y[g], m_sg_corner_z[g],
+		      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       }
     }
     else if(  m_sg_damping_order == 6 )
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
-	  F77_FUNC(addsgd6c,ADDSGD6C) ( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr,
-					m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
-					m_sg_corner_x[g], m_sg_corner_y[g],
-					&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       {
+	  if( m_croutines )
+	     addsgd6c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr,
+			  rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
+			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
+	  else
+	     addsgd6c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g],
+		       m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       }
        else
-	  F77_FUNC(addsgd6,ADDSGD6) ( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-				      m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-				      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-				      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       {
+	  if( m_croutines )
+	     addsgd6_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr, rho_ptr,
+			 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], 
+			 m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+			 m_supergrid_damping_coefficient );
+	  else
+	     addsgd6( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+		      m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+		      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+       }
     }
   }
 }
@@ -3851,7 +4003,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 void EW::simpleAttenuation( vector<Sarray> & a_Up )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
-  double *up_ptr, cfreq, dt;
+  float_sw4 *up_ptr, cfreq, dt;
 // Qs is saved in the EW object as mQs
 // center frequency is called m_att_max_frecuency
 // time step is called mDt  
@@ -3863,7 +4015,7 @@ void EW::simpleAttenuation( vector<Sarray> & a_Up )
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
     up_ptr  = a_Up[g].c_ptr();
-    double* qs_ptr =mQs[g].c_ptr();
+    float_sw4* qs_ptr =mQs[g].c_ptr();
 
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
@@ -3880,7 +4032,7 @@ void EW::simpleAttenuation( vector<Sarray> & a_Up )
 void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
 			   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
-                           vector<double **>& a_BCForcing, double bop[5], double a_t )
+                           vector<float_sw4 **>& a_BCForcing, float_sw4 bop[5], float_sw4 a_t )
 {
    int sg = usingSupergrid();
    for(int g=0 ; g<mNumberOfGrids; g++ )
@@ -3891,7 +4043,7 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
       int jlast  = m_jEnd[g];
       int kfirst = m_kStart[g];
       int klast  = m_kEnd[g];
-      double h   = mGridSize[g];
+      float_sw4 h   = mGridSize[g];
       int topo = topographyExists() && g == mNumberOfGrids-1;
       if( m_bcType[g][4] == bStressFree && !topo )
       {
@@ -3899,10 +4051,10 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 Sarray memforce(3,ifirst,ilast,jfirst,jlast,1,1);
 	 if( m_twilight_forcing )
 	 {
-            double om = m_twilight_forcing->m_omega;
-	    double cv = m_twilight_forcing->m_c;
-	    double ph = m_twilight_forcing->m_phase;
-	    double* mf = memforce.c_ptr();
+            float_sw4 om = m_twilight_forcing->m_omega;
+	    float_sw4 cv = m_twilight_forcing->m_c;
+	    float_sw4 ph = m_twilight_forcing->m_phase;
+	    float_sw4* mf = memforce.c_ptr();
             int k=0; // Ghost point
 	    F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
 						      &cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
@@ -3910,11 +4062,11 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 else
 	    memforce.set_value(0.0);
 
-	 double g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
-	 const double i6  = 1.0/6;
-	 const double d4a = 2.0/3;
-	 const double d4b =-1.0/12;
-	 double* forcing = a_BCForcing[g][4];
+	 float_sw4 g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
+	 const float_sw4 i6  = 1.0/6;
+	 const float_sw4 d4a = 2.0/3;
+	 const float_sw4 d4b =-1.0/12;
+	 float_sw4* forcing = a_BCForcing[g][4];
 	 int ni = (ilast-ifirst+1);
 	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
 	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
@@ -3952,9 +4104,9 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	       bcof = 2*a_Mu[g](i,j,1)+a_Lambda[g](i,j,1);
 	       for( int a=0 ; a < m_number_mechanisms ; a++ )
 	       {
-		  double omdt = mOmegaVE[a]*mDt;
-		  double cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
-		  double cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
+		  float_sw4 omdt = mOmegaVE[a]*mDt;
+		  float_sw4 cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
+		  float_sw4 cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
 
 		  cof[a]= (omdt+1)/(6*cp);
 		  r1[a] = (-cm*a_AlphaVEm[g][a](1,i,j,0)+(4+omdt*omdt)*i6*a_U[g](1,i,j,0)+i6*(1-omdt)*a_Um[g](1,i,j,0)+
@@ -4004,10 +4156,10 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 Sarray memforce(3,ifirst,ilast,jfirst,jlast,1,1);
 	 if( m_twilight_forcing )
 	 {
-            double om = m_twilight_forcing->m_omega;
-	    double cv = m_twilight_forcing->m_c;
-	    double ph = m_twilight_forcing->m_phase;
-	    double* mf = memforce.c_ptr();
+            float_sw4 om = m_twilight_forcing->m_omega;
+	    float_sw4 cv = m_twilight_forcing->m_c;
+	    float_sw4 ph = m_twilight_forcing->m_phase;
+	    float_sw4* mf = memforce.c_ptr();
             int k=nk+1; // Ghost point
 	    F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
 						      &cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
@@ -4015,11 +4167,11 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 else
 	    memforce.set_value(0.0);
 
-	 double g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
-	 const double i6  = 1.0/6;
-	 const double d4a = 2.0/3;
-	 const double d4b =-1.0/12;
-	 double* forcing = a_BCForcing[g][5];
+	 float_sw4 g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
+	 const float_sw4 i6  = 1.0/6;
+	 const float_sw4 d4a = 2.0/3;
+	 const float_sw4 d4b =-1.0/12;
+	 float_sw4* forcing = a_BCForcing[g][5];
 	 int ni = (ilast-ifirst+1);
 	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
 	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
@@ -4055,9 +4207,9 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	       bcof = 2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk);
 	       for( int a=0 ; a < m_number_mechanisms ; a++ )
 	       {
-		  double omdt = mOmegaVE[a]*mDt;
-		  double cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
-		  double cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
+		  float_sw4 omdt = mOmegaVE[a]*mDt;
+		  float_sw4 cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
+		  float_sw4 cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
 
 		  cof[a]= (omdt+1)/(6*cp);
 		  r1[a] = (-cm*a_AlphaVEm[g][a](1,i,j,nk+1)+(4+omdt*omdt)*i6*a_U[g](1,i,j,nk+1)+i6*(1-omdt)*a_Um[g](1,i,j,nk+1)+
@@ -4104,12 +4256,12 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
       {
 	 // Note: Only one memforce, because twilight assumes nmech=1.
 	 Sarray memforce(3,ifirst,ilast,jfirst,jlast,1,1);
-	 double* mf = memforce.c_ptr();
+	 float_sw4* mf = memforce.c_ptr();
 	 if( m_twilight_forcing )
 	 {
-            double om = m_twilight_forcing->m_omega;
-	    double cv = m_twilight_forcing->m_c;
-	    double ph = m_twilight_forcing->m_phase;
+            float_sw4 om = m_twilight_forcing->m_omega;
+	    float_sw4 cv = m_twilight_forcing->m_c;
+	    float_sw4 ph = m_twilight_forcing->m_phase;
             int k=0; // Ghost point
 	    F77_FUNC(memvarforcesurfc,MEMVARFORCESURFC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &k,
 							 mf, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt, mX.c_ptr(),
@@ -4118,14 +4270,14 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 else
 	    memforce.set_value(0.0);
 
-	 double* mu_p = a_Mu[g].c_ptr();
-	 double* la_p = a_Lambda[g].c_ptr();
-	 double* up_p = a_Up[g].c_ptr();
+	 float_sw4* mu_p = a_Mu[g].c_ptr();
+	 float_sw4* la_p = a_Lambda[g].c_ptr();
+	 float_sw4* up_p = a_Up[g].c_ptr();
          int side = 5;
 	 int nz = m_global_nz[g];
          int ghno = 0;
          char op = '-';
-	 double* forcing = a_BCForcing[g][4];
+	 float_sw4* forcing = a_BCForcing[g][4];
 	 int usesg = usingSupergrid() ? 1 : 0;
 
          Sarray bforcerhs(3,ifirst,ilast,jfirst,jlast,1,1);
@@ -4134,9 +4286,9 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 F77_FUNC(addbstressc,ADDBSTRESSC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 					   &nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
 					   &side, m_sbop, &op, &ghno, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
-         double cof[8];
-	 double* u_p      = a_U[g].c_ptr();
-	 double* um_p     = a_Um[g].c_ptr();
+         float_sw4 cof[8];
+	 float_sw4* u_p      = a_U[g].c_ptr();
+	 float_sw4* um_p     = a_Um[g].c_ptr();
 
          Sarray mubnd(ifirst,ilast,jfirst,jlast,1,1);
          Sarray lambdabnd(ifirst,ilast,jfirst,jlast,1,1);
@@ -4144,10 +4296,10 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	 lambdabnd.set_to_zero();
          for( int a = 0 ; a < m_number_mechanisms ; a++ )
 	 {
-	    double* muve_p   = mMuVE[g][a].c_ptr();
-	    double* lave_p   = mLambdaVE[g][a].c_ptr();
-	    double* alphap_p = a_AlphaVEp[g][a].c_ptr();
-	    double* alpham_p = a_AlphaVEm[g][a].c_ptr();
+	    float_sw4* muve_p   = mMuVE[g][a].c_ptr();
+	    float_sw4* lave_p   = mLambdaVE[g][a].c_ptr();
+	    float_sw4* alphap_p = a_AlphaVEp[g][a].c_ptr();
+	    float_sw4* alpham_p = a_AlphaVEm[g][a].c_ptr();
 	    // This function will 1.update bforcerhs, 2.update alphap, 3.accumulate mubnd and lambdabnd,
 	    //  4.compute cof.
 	    F77_FUNC(addbstresswresc,ADDBSTRESSWRESC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
@@ -4162,7 +4314,7 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 					       m_sg_str_x[g], m_sg_str_y[g] );
          for( int a = 0 ; a < m_number_mechanisms ; a++ )
 	 {
-	    double* alphap_p = a_AlphaVEp[g][a].c_ptr();
+	    float_sw4* alphap_p = a_AlphaVEp[g][a].c_ptr();
 	    F77_FUNC(solveattfreeac,SOLVEATTFREEAC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						    alphap_p, &cof[a], up_p );
 	 }
@@ -4172,7 +4324,7 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 
 //-----------------------------------------------------------------------
 void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
-				vector<double**>& a_BCForcing, double bop[5] )
+				vector<float_sw4**>& a_BCForcing, float_sw4 bop[5] )
 {
    int sg = usingSupergrid();
    for(int g=0 ; g<mNumberOfGrids; g++ )
@@ -4183,14 +4335,14 @@ void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
       int jlast  = m_jEnd[g];
       int kfirst = m_kStart[g];
       int klast  = m_kEnd[g];
-      double ih = 1.0/mGridSize[g];
+      float_sw4 ih = 1.0/mGridSize[g];
       int topo=topographyExists() && g == mNumberOfGrids-1;
       if( (m_bcType[g][4] == bStressFree) && !topo )
       {
-	 double a4ci, b4ci, a4cj, b4cj;
-	 const double d4a = 2.0/3;
-	 const double d4b =-1.0/12;
-	 double* forcing = a_BCForcing[g][4];
+	 float_sw4 a4ci, b4ci, a4cj, b4cj;
+	 const float_sw4 d4a = 2.0/3;
+	 const float_sw4 d4b =-1.0/12;
+	 float_sw4* forcing = a_BCForcing[g][4];
 	 int ni = (ilast-ifirst+1);
 	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
 	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
@@ -4236,10 +4388,10 @@ void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
       }
       if( m_bcType[g][5] == bStressFree )
       {
-	 double a4ci, b4ci, a4cj, b4cj;
-	 const double d4a = 2.0/3;
-	 const double d4b =-1.0/12;
-	 double* forcing = a_BCForcing[g][5];
+	 float_sw4 a4ci, b4ci, a4cj, b4cj;
+	 const float_sw4 d4a = 2.0/3;
+	 const float_sw4 d4b =-1.0/12;
+	 float_sw4* forcing = a_BCForcing[g][5];
 	 int ni = (ilast-ifirst+1);
 	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
 	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
@@ -4289,12 +4441,12 @@ void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
          char op = '+';
 	 int side = 5, ghyes=1;
          int usesg = usingSupergrid() ? 1:0;
-	 double* forcing = a_BCForcing[g][4];
+	 float_sw4* forcing = a_BCForcing[g][4];
          for( int a=0 ; a < m_number_mechanisms ; a++ )
 	 {
-	    double* muve_p  = mMuVE[g][a].c_ptr();
-	    double* lave_p  = mLambdaVE[g][a].c_ptr();
-	    double* alpha_p = a_AlphaVEp[g][a].c_ptr();
+	    float_sw4* muve_p  = mMuVE[g][a].c_ptr();
+	    float_sw4* lave_p  = mLambdaVE[g][a].c_ptr();
+	    float_sw4* alpha_p = a_AlphaVEp[g][a].c_ptr();
 	    F77_FUNC(addbstressc,ADDBSTRESSC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 					      &nz, alpha_p, muve_p, lave_p, forcing, mMetric.c_ptr(),
 					      &side, bop, &op, &ghyes, &usesg, m_sg_str_x[g], m_sg_str_y[g] );

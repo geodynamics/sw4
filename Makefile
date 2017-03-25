@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no]
+# make sw4 [debug=yes/no] [prec=single/double]
 #
 # This Makefile asumes that the following environmental variables have been assigned:
 # etree = [yes/no]
@@ -144,6 +144,21 @@ else
    proj  := "no"
 endif
 
+ifeq ($(openmp),yes)
+   debugdir := $(debugdir)_mp
+   optdir   := $(optdir)_mp
+   CXXFLAGS += -fopenmp
+   FFLAGS   += -fopenmp
+endif
+
+ifeq ($(prec),single)
+   debugdir := $(debugdir)_sp
+   optdir   := $(optdir)_sp
+   CXXFLAGS += -I../src/float
+else
+   CXXFLAGS += -I../src/double
+endif
+
 ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif
@@ -174,6 +189,10 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
        rhs4th3fortwind.o 
+
+# new C-routines converted from fortran
+ OBJ += addsgdc.o bcfortc.o bcfortanisgc.o bcfreesurfcurvanic.o boundaryOpc.o
+
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 
 # prefix object files with build directory

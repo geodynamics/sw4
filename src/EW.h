@@ -40,6 +40,8 @@
 #include <fstream>
 #include <list>
 
+#include "sw4.h"
+
 #include "Sarray.h"
 #include "TimeSeries.h"
 #include "Source.h"
@@ -80,8 +82,8 @@ bool isInitialized();
 void set_output_options( bool output_load, bool output_detailed_timing );
 void setGMTOutput(string filename, string wppfilename);
 void saveGMTFile( vector<Source*> & a_GlobalUniqueSources );
-void allocateCartesianSolverArrays(double a_global_zmax);
-void setGoalTime(double t);
+void allocateCartesianSolverArrays(float_sw4 a_global_zmax);
+void setGoalTime(float_sw4 t);
 //double getCurrentTime(){return mTime;}
 
 void setNumberSteps(int steps); // remove???
@@ -90,7 +92,7 @@ int getNumberOfSteps() const;
 void setupRun( vector<Source*> & a_GlobalUniqueSources );
 
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
-void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, double gradient[11], double hessian[121] );
+void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
 void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
 		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
 		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
@@ -99,16 +101,16 @@ void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, ve
 void solve_backward_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
 		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
 		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
-			     vector<DataPatches*>& Ucorr_saved_sides, double gradients[11], 
+			     vector<DataPatches*>& Ucorr_saved_sides, float_sw4 gradients[11], 
 			     vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
-   //int nmpar, double* gradientm );
+   //int nmpar, float_sw4* gradientm );
 
 bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
 		int& second, int& msecond, int& fail );
 
 void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int grid0, 
-		       vector<double> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
+		       vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
 
 // some (all?) of these functions are called from parseInputFile() and should be made private
 void badOption(string name, char* option) const;
@@ -162,15 +164,15 @@ int  getVerbosity() {return mVerbose; };
 int  getRank() {return m_myRank; };
 void setDebugIO(bool onoff) { mDebugIO = onoff; }
   
-//void setDampingCFL(double d4_cfl) { m_d4_cfl = d4_cfl; }
+//void setDampingCFL(float_sw4 d4_cfl) { m_d4_cfl = d4_cfl; }
 
-void printTime(int cycle, double t, bool force=false ) const;
+void printTime(int cycle, float_sw4 t, bool force=false ) const;
 void printPreamble(vector<Source*> & a_Sources) const;
 void switch_on_checkfornan();
 void switch_on_error_log();
 void set_energylog( string logfile, bool print, bool elog );
 void set_inner_loop( int loopnr );
-void set_cflnumber( double cfl );
+void set_cflnumber( float_sw4 cfl );
 void set_testing_mode(bool a_testing){m_testing = a_testing;}
 bool get_testing_mode(){return m_testing;}
 
@@ -180,42 +182,42 @@ void update_curvilinear_cartesian_interface( vector<Sarray>& a_U );
 void set_twilight_forcing( ForcingTwilight* a_forcing );
 // perhaps these functions should be in the ForcingTwilight class? 
 // but how will they get access to the material properties and grid sizes?
-void initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE);
-bool exactSol(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, vector<Source*>& source );
-void exactRhsTwilight(double a_t, vector<Sarray> & a_F);
-void exactAccTwilight(double a_t, vector<Sarray> & a_Uacc);
-void Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
-void Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE);
+bool exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, vector<Source*>& source );
+void exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F);
+void exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc);
+void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
 
-void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2, double &xInf,
+void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, float_sw4 &diffL2, float_sw4 &xInf,
 		       vector<Source*>& a_globalSources );
-void normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, double &diffL2 );
-void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, double &diffInf, 
-			      double &diffL2, double &solInf, double &solL2, vector<Source*> & a_globalSources);
+void normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, float_sw4 &diffL2 );
+void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, 
+			      float_sw4 &diffL2, float_sw4 &solInf, float_sw4 &solL2, vector<Source*> & a_globalSources);
 
 void test_sources( vector<GridPointSource*>& a_point_sources, vector<Source*>& a_global_unique_sources,
 		   vector<Sarray>& F );
 void testSourceDiscretization( int kx[3], int ky[3], int kz[3],
-			       double moments[3], vector<GridPointSource*>& point_sources, vector<Sarray>& F );
+			       float_sw4 moments[3], vector<GridPointSource*>& point_sources, vector<Sarray>& F );
 
 void setupSBPCoeff( );
 
 // time stepping routines
 void simpleAttenuation( vector<Sarray> & a_Up );
 void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		double t, vector<double **> & a_BCForcing );
+		float_sw4 t, vector<float_sw4 **> & a_BCForcing );
 
 void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
 			   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
-		       vector<double **>& a_BCForcing, double bop[5], double a_t );
+		       vector<float_sw4 **>& a_BCForcing, float_sw4 bop[5], float_sw4 a_t );
 
 void enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C, 
-			   double t, vector<double **> & a_BCForcing );
+			   float_sw4 t, vector<float_sw4 **> & a_BCForcing );
    
-void addAttToFreeBcForcing( vector<Sarray*>& AlphaVEp, vector<double**>& BCForcing, double bop[5] );
+void addAttToFreeBcForcing( vector<Sarray*>& AlphaVEp, vector<float_sw4**>& BCForcing, float_sw4 bop[5] );
 
-void cartesian_bc_forcing( double t, vector<double **> & a_BCForcing, vector<Source*>& a_Source );
+void cartesian_bc_forcing( float_sw4 t, vector<float_sw4 **> & a_BCForcing, vector<Source*>& a_Source );
 
 void evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray> & a_Lu,
 	     vector<Sarray*>& a_Alpha );
@@ -233,7 +235,7 @@ void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> 
 
 void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
 			    vector<Sarray*>& a_AlphaVEm,
-			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, float_sw4 a_t );
 void updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
 			    vector<Sarray*>& a_AlphaVEm,
 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
@@ -242,14 +244,15 @@ void evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
 
 void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um, vector<Sarray>& a_Rho );
 
+
 void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
 			 vector<Sarray*> & a_AlphaVEm, vector<Sarray*> & a_AlphaVE, vector<Sarray*> & a_AlphaVEp);
 void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up ); 
 
 void bndryInteriorDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, 
-			      double lowZ[3], double interiorZ[3], double highZ[3] );
+			      float_sw4 lowZ[3], float_sw4 interiorZ[3], float_sw4 highZ[3] );
 void test_RhoUtt_Lu( vector<Sarray> & a_Uacc, vector<Sarray> & a_Lu, vector<Sarray> & a_F, 
-		     double lowZ[3], double interiorZ[3], double highZ[3] );
+		     float_sw4 lowZ[3], float_sw4 interiorZ[3], float_sw4 highZ[3] );
 
 void setRestartInfo(int fromCycle, int dumpInterval, const string& filePrefix);
 void computeDT();
@@ -260,15 +263,15 @@ bool proc_zero() const;
 int no_of_procs() const;
 void create_output_directory();
 void initialize_image_files();
-void update_images( int Nsteps, double time, vector<Sarray> & a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
+void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
 		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		    vector<Source*> & a_sources, int dminus );
 
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
 
-void print_execution_times( double times[7] );
-void print_execution_time( double t1, double t2, string msg );
+void print_execution_times( float_sw4 times[7] );
+void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );
 void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;
 int mkdirs(const string& path);
@@ -281,10 +284,10 @@ void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundar
 void add_mtrl_block( MaterialData* md ){ m_mtrlblocks.push_back( md ); };
 
 
-void set_threshold_velocities(double vpmin, double vsmin);
+void set_threshold_velocities(float_sw4 vpmin, float_sw4 vsmin);
 
 // material properties by id
-//inline bool inside_material_surfaces( double lat, double lon )
+//inline bool inside_material_surfaces( float_sw4 lat, float_sw4 lon )
 //    {
 //      return (lat <= m_materialLatMax && lat >= m_materialLatMin && 
 //	      lon <= m_materialLonMax && lon >= m_materialLonMin);
@@ -292,21 +295,21 @@ void set_threshold_velocities(double vpmin, double vsmin);
 
 void addMaterialProperty(MaterialProperty* mat){m_materials.push_back(mat);}
 
-   //void getMaterialID(double lat, double lon, double depth, int &materialID);
+   //void getMaterialID(float_sw4 lat, float_sw4 lon, float_sw4 depth, int &materialID);
    //bool knownMaterial(int materialID);
-   //double lookup_Rho(int materialID, double depth);
-   //double lookup_Vs(int materialID, double depth);
-   //double lookup_Vp(int materialID, double depth);
+   //float_sw4 lookup_Rho(int materialID, float_sw4 depth);
+   //float_sw4 lookup_Vs(int materialID, float_sw4 depth);
+   //float_sw4 lookup_Vp(int materialID, float_sw4 depth);
 
 //// attenuation model
-//double lookup_Qp(int materialID, double depth);
-//double lookup_Qs(int materialID, double depth);
+//float_sw4 lookup_Qp(int materialID, float_sw4 depth);
+//float_sw4 lookup_Qs(int materialID, float_sw4 depth);
 
 // super-grid functions
 void processSupergrid(char *buffer);
-void set_sg_damping(double coeff);
+void set_sg_damping(float_sw4 coeff);
 void set_sg_thickness(int gp_thickness);
-void set_sg_width(double sg_width);
+void set_sg_width(float_sw4 sg_width);
 //void set_sg_transition(int gp_trans);
 bool usingSupergrid(){return m_use_supergrid;};
 void setup_supergrid( );
@@ -334,7 +337,7 @@ void communicate_array_2d_ext( Sarray& u );
 
 void set_materials();
 void set_anisotropic_materials();
-void setup_attenuation_relaxation(double minvsoh );
+void setup_attenuation_relaxation(float_sw4 minvsoh );
 void setup_viscoelastic();
 void setup_viscoelastic_tw();
 
@@ -356,63 +359,63 @@ void extractTopographyFromCartesianFile(string a_topoFileName);
 
 void setEtreeFile(EtreeFile* efile); 
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
-                                double a_EFileResolution);
+                                float_sw4 a_EFileResolution);
 void extractTopographyFromRfile( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
 
-void buildGaussianHillTopography(double amp, double Lx, double Ly, double x0, double y0);
+void buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0);
 
 void extractSurfaceFromGridFile(string a_surfaceFileName);
 void extractSurfaceFromCartesianFile(string a_surfaceFileName);
 
-void computeCartesianCoord(double &x, double &y, double lon, double lat);
-void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
+void computeCartesianCoord(float_sw4 &x, float_sw4 &y, float_sw4 lon, float_sw4 lat);
+void computeGeographicCoord(float_sw4 x, float_sw4 y, float_sw4 & longitude, float_sw4 & latitude);
 
 void initializeSystemTime();
 void compute_epicenter( vector<Source*> & a_GlobalUniqueSources );
-void set_epicenter(double epiLat, double epiLon, double epiDepth, double earliestTime); 
-void get_epicenter(double &epiLat, double &epiLon, double &epiDepth, double &earliestTime); 
+void set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth, float_sw4 earliestTime); 
+void get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth, float_sw4 &earliestTime); 
    
-// void update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, double t,
+// void update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, float_sw4 t,
 // 			   vector<Sarray*> &AlphaVE );
 
-// void impose_physical_bc(vector<Sarray> &U, vector<Sarray> &UM, double t,
+// void impose_physical_bc(vector<Sarray> &U, vector<Sarray> &UM, float_sw4 t,
 // 			vector<Sarray*> &AlphaVE );
 
-/* void bc_dirichlet( Sarray& u, int g, double t, int side, */
-/*  		   Forcing* forcing, double h ); */
+/* void bc_dirichlet( Sarray& u, int g, float_sw4 t, int side, */
+/*  		   Forcing* forcing, float_sw4 h ); */
 
-/* void bc_free_surface( Sarray& u, int g, double t, int side, */
-/* 		      Forcing* forcing, double h, int onesided[6] ); */
+/* void bc_free_surface( Sarray& u, int g, float_sw4 t, int side, */
+/* 		      Forcing* forcing, float_sw4 h, int onesided[6] ); */
 
 void computeNearestGridPoint(int & a_i, 
 			     int & a_j, 
 			     int & a_k,
 			     int & a_g, // grid on which indices are located
-			     double a_x, 
-			     double a_y, 
-			     double a_z);
+			     float_sw4 a_x, 
+			     float_sw4 a_y, 
+			     float_sw4 a_z);
   
 
 void computeNearestSurfaceGridPoint(int & a_i, 
                                     int & a_j, 
-                                    double a_x, 
-                                    double a_y, 
-                                    double a_z);
+                                    float_sw4 a_x, 
+                                    float_sw4 a_y, 
+                                    float_sw4 a_z);
   
-void coord_from_index( int i, int j, int k, int g, double& x, double& y, double& z );
+void coord_from_index( int i, int j, int k, int g, float_sw4& x, float_sw4& y, float_sw4& z );
 
-double distance(double a_x1, double a_y1, double a_z1,
-                double a_x0, double a_y0, double a_z0);
+float_sw4 distance(float_sw4 a_x1, float_sw4 a_y1, float_sw4 a_z1,
+                float_sw4 a_x0, float_sw4 a_y0, float_sw4 a_z0);
 
 void computeNearestLowGridPoint(int & a_i, 
                                 int & a_j, 
                                 int & a_k,
                                 int & a_g, // grid on which indices are located
-                                double a_x, 
-                                double a_y, 
-                                double a_z);
+                                float_sw4 a_x, 
+                                float_sw4 a_y, 
+                                float_sw4 a_z);
   
 bool interior_point_in_proc(int a_i, int a_j, int a_g); // only takes interior points into account
 bool point_in_proc(int a_i, int a_j, int a_g);          // both interior and parallel ghost points
@@ -425,54 +428,54 @@ void convert_material_to_mulambda();
 
 void check_materials(); // verify that the density is positive on the grid
 
-void computeSolutionError(vector<Sarray> &U, double t, vector<Sarray*> &Alpha );
+void computeSolutionError(vector<Sarray> &U, float_sw4 t, vector<Sarray*> &Alpha );
 
-double localMin(vector<Sarray> & a_field);
-double localMax(vector<Sarray> & a_field);
-double localMinVp();
-double localMaxVp(); 
-double localMinVs(); 
-double localMaxVs(); 
-double localMinVpOverVs();
-double localMaxVpOverVs(); 
+float_sw4 localMin(vector<Sarray> & a_field);
+float_sw4 localMax(vector<Sarray> & a_field);
+float_sw4 localMinVp();
+float_sw4 localMaxVp(); 
+float_sw4 localMinVs(); 
+float_sw4 localMaxVs(); 
+float_sw4 localMinVpOverVs();
+float_sw4 localMaxVpOverVs(); 
 
 bool topographyExists(){return m_topography_exists;};
 bool usingAttenuation(){return m_use_attenuation;};
 
 bool is_onesided( int g, int side ) const;
 
-void interpolate_between_grids( vector<Sarray>& u, vector<Sarray>& um, double t, 
+void interpolate_between_grids( vector<Sarray>& u, vector<Sarray>& um, float_sw4 t, 
   			        vector<Sarray*> &AlphaVE );
 
-bool interpolate_topography( double q, double r, double & Z0, bool smoothed);
+bool interpolate_topography( float_sw4 q, float_sw4 r, float_sw4 & Z0, bool smoothed);
 
 void copy_topo_to_topogridext();
 
-bool getDepth( double x, double y, double z, double & depth);
+bool getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth);
 
-bool curvilinear_grid_mapping( double q, double r, double s, double & X0, double & Y0, double & Z0 );
+bool curvilinear_grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
 
-bool invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, double& q, double& r, double& s );
+bool invert_curvilinear_grid_mapping( float_sw4 X0, float_sw4 Y0, float_sw4 Z0, float_sw4& q, float_sw4& r, float_sw4& s );
 
-bool find_curvilinear_derivatives_at_point( double q, double r, double s,
-					    double qX[], double rX[], double sX[]);
+bool find_curvilinear_derivatives_at_point( float_sw4 q, float_sw4 r, float_sw4 s,
+					    float_sw4 qX[], float_sw4 rX[], float_sw4 sX[]);
  
-void save_errors( double max_error[3], double l2_error[3] );
+void save_errors( float_sw4 max_error[3], float_sw4 l2_error[3] );
 
-void compute_minvsoverh( double& minvsoh );
+void compute_minvsoverh( float_sw4& minvsoh );
 
 void set_resolution( int ppw );
 
-void set_prefilter( FilterType passband, int order, int passes, double fc1, double fc2 );
+void set_prefilter( FilterType passband, int order, int passes, float_sw4 fc1, float_sw4 fc2 );
 
 void set_scenario(const string& scenario );
 
-void set_conservative_interpolation( bool onoff, double ctol, int cmaxit );
+void set_conservative_interpolation( bool onoff, float_sw4 ctol, int cmaxit );
 
-void set_geodyn_data( string filename, int nx, int nz, double h, double origin[3],
-		      double dt, int nsteps, int faces );
+void set_geodyn_data( string filename, int nx, int nz, float_sw4 h, float_sw4 origin[3],
+		      float_sw4 dt, int nsteps, int faces );
 
-void impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um, double t );
+void impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um, float_sw4 t );
 
 void get_geodyn_timelevel( vector<Sarray>& geodyndata );
 
@@ -481,16 +484,16 @@ void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 
    //void consintp( Sarray& u_a, Sarray& um_a, Sarray& f_a, Sarray& mu_a, Sarray& la_a, Sarray& rho_a,
    //	       Sarray& uf_a, Sarray& ufm_a, Sarray& ff_a, Sarray& muf_a, Sarray& laf_a,
-   //	       Sarray& rhof_a, Sarray* AlphaVE, Sarray* AlphaVEf, double hc, double hf, double dt, int g,
-   //	       double* a1, int* ipiv1, double* a2, int* ipiv2, int bctype[4], double tp1 );
+   //	       Sarray& rhof_a, Sarray* AlphaVE, Sarray* AlphaVEf, float_sw4 hc, float_sw4 hf, float_sw4 dt, int g,
+   //	       float_sw4* a1, int* ipiv1, float_sw4* a2, int* ipiv2, int bctype[4], float_sw4 tp1 );
    //void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alphaf_a );
 
 void integrate_source( );
 
-void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
+void compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 		     vector<Sarray>& U, vector<Sarray>& Up, int step );
 
-void get_gridgen_info( int& order, double& zetaBreak ) const;
+void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 
 //  void update_maxes_hVelMax();
 //  void update_maxes_vVelMax();
@@ -510,41 +513,41 @@ int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
 int getNumberOfGrids(){return mNumberOfGrids;};
 int getNumberOfGhostPoints(){return m_ghost_points;};
 int getNumberOfParallelPaddingPoints(){return m_ppadding;};
-double getLatOrigin(){ return mLatOrigin;};
-double getGridAzimuth(){ return mGeoAz;};
-double getMetersPerDegree(){ return mMetersPerDegree;};
+float_sw4 getLatOrigin(){ return mLatOrigin;};
+float_sw4 getGridAzimuth(){ return mGeoAz;};
+float_sw4 getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
-double getTimeStep() const {return mDt;};
+float_sw4 getTimeStep() const {return mDt;};
 int getNumberOfTimeSteps() const {return mNumberOfTimeSteps;};
 
  // test point source
-void get_exact_point_source( double* u, double t, int g, Source& source, int* wind=0 );
-double VerySmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
-double C6SmoothBump_x_T_Integral(double t, double R, double alpha, double beta);
-double SmoothWave_x_T_Integral(double t, double R, double alpha, double beta);
-double Gaussian_x_T_Integral(double t, double R, double f, double alpha, double beta);
-double VSBTP(double Lim, double t);
-double C6SBTP(double Lim, double t);
-double SWTP(double Lim, double t);
-double d_VerySmoothBump_dt(double t, double R, double c);
-double d_C6SmoothBump_dt(double t, double R, double c);
-double d_SmoothWave_dt(double t, double R, double c);
-double d_Gaussian_dt(double t, double R, double c, double f);
-double VerySmoothBump(double t, double R, double c);
-double C6SmoothBump(double t, double R, double c);
-double SmoothWave(double t, double R, double c);
-double Gaussian(double t, double R, double c,double f);
+void get_exact_point_source( float_sw4* u, float_sw4 t, int g, Source& source, int* wind=0 );
+float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
+float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
+float_sw4 SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
+float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
+float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
+float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
+float_sw4 SWTP(float_sw4 Lim, float_sw4 t);
+float_sw4 d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c);
+float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c);
+float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c);
+float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f);
+float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
+float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
+float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
+float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c,float_sw4 f);
 
 // Lamb's problem
-void get_exact_lamb( vector<Sarray> & a_U, double a_t, Source& a_source );
-void get_exact_lamb2( vector<Sarray> & a_U, double a_t, Source& a_source );
-double G4_Integral(double T, double t, double r, double beta);
-double G3_Integral(double iT, double it, double ir, double ibeta);
-double G2_Integral(double iT, double it, double ir, double ibeta);
+void get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source );
+void get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source );
+float_sw4 G4_Integral(float_sw4 T, float_sw4 t, float_sw4 r, float_sw4 beta);
+float_sw4 G3_Integral(float_sw4 iT, float_sw4 it, float_sw4 ir, float_sw4 ibeta);
+float_sw4 G2_Integral(float_sw4 iT, float_sw4 it, float_sw4 ir, float_sw4 ibeta);
 
 
-void getGlobalBoundingBox(double bbox[6]);
+void getGlobalBoundingBox(float_sw4 bbox[6]);
 
 string getPath(){ return mPath; }
 void set_utcref( TimeSeries& ts );
@@ -553,23 +556,23 @@ void print_utc();
    // For inverse problem
 void processCG(char* buffer );
 void processScaleFactors(char* buffer );
-void average_speeds( double& cp, double& cs );
-void layered_speeds( vector<double>& cp, vector<double>& z );
-void testsourcediff( vector<Source*> GlobalSources, double gradient[11], double hessian[121] );
-void get_scalefactors( double sf[11] ); 
+void average_speeds( float_sw4& cp, float_sw4& cs );
+void layered_speeds( vector<float_sw4>& cp, vector<float_sw4>& z );
+void testsourcediff( vector<Source*> GlobalSources, float_sw4 gradient[11], float_sw4 hessian[121] );
+void get_scalefactors( float_sw4 sf[11] ); 
 bool compute_sf();
 void compute_guess( bool& guesspos, bool& guesst0fr, bool& guessmom, bool& guessshifts, bool& output_seismograms );
-void get_cgparameters( int& maxit, int& maxrestart, double& tolerance, bool& fletcherreeves,
+void get_cgparameters( int& maxit, int& maxrestart, float_sw4& tolerance, bool& fletcherreeves,
 		       int& stepselection, bool& do_linesearch, int& varcase, bool& testing );
-void parameters_to_material( int nmpar, double* xm, vector<Sarray>& rho,
+void parameters_to_material( int nmpar, float_sw4* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
-void material_to_parameters( int nmpar, double* xm, vector<Sarray>& rho,
+void material_to_parameters( int nmpar, float_sw4* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
-void get_material_parameter( int nmpar, double* xm );
-void get_scale_factors( int nmpar, double* xm );
+void get_material_parameter( int nmpar, float_sw4* xm );
+void get_scale_factors( int nmpar, float_sw4* xm );
 
 #ifdef ENABLE_OPT
-void material_correction( int nmpar, double* xm );
+void material_correction( int nmpar, float_sw4* xm );
 
 void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		       vector<Sarray>& a_lambda, int& info );
@@ -589,7 +592,7 @@ void get_optmethod( int& method, int& bfgs_m );
 void get_utc( int utc[7] ) const;
 
 void perturb_mtrl();
-void perturb_mtrl( int peri, int perj, int perk, double h, int grid, int var );
+void perturb_mtrl( int peri, int perj, int perk, float_sw4 h, int grid, int var );
 
 void perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp );
 
@@ -597,7 +600,7 @@ void metric_derivatives_test();
 
 void material_ic( vector<Sarray>& a_mtrl );
 
-void gettopowgh( double ai, double wgh[8] ) const;
+void gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const;
 
 void smooth_grid( int maxIter );
 
@@ -609,38 +612,118 @@ void define_parallel_io( vector<Parallel_IO*>& parallel_io );
 
 void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data );
 
-void interpolate( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
-		  double hy, double hz, Sarray& rho, Sarray& mu, Sarray& lambda,
+void interpolate( int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
+		  float_sw4 hy, float_sw4 hz, Sarray& rho, Sarray& mu, Sarray& lambda,
 		  int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid );
 
-void interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin,
-			    double zmin, double hx, double hy, double hz,
+void interpolate_to_coarse( int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
+			    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
 			    Sarray& rho, Sarray& mu, Sarray& lambda, vector<Sarray>& rhogrid, 
 			    vector<Sarray>& mugrid, vector<Sarray>& lambdagrid );
 
-void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
-			     double hy, double hz, Sarray& gradrho, Sarray& gradmu, Sarray& gradlambda,
+void interpolation_gradient( int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
+			     float_sw4 hy, float_sw4 hz, Sarray& gradrho, Sarray& gradmu, Sarray& gradlambda,
 			     int grid, Sarray& gradrhogrid, Sarray& gradmugrid, Sarray& gradlambdagrid );
 
 // Functions to impose conditions at grid refinement interface:
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-		   double t, bool predictor, std::vector<GridPointSource*> point_sources );
+		   float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
 void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
-void dirichlet_LRic( Sarray& U, int g, int kic, double t, int adj );
+void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
 void gridref_initial_guess( Sarray& u, int g, bool upper );
 void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
-				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+				    int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
 void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
-				    int g, int kic, double t, std::vector<GridPointSource*> point_sources );
-void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, double* a_str_x, double* a_str_y);
-void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, double hf,
-	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, double hc,
-	       double cof, int gc, int gp, int is_periodic[2] );
+				    int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
+void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
+	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
+	       float_sw4 cof, int gc, int gp, int is_periodic[2] );
 void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
+
+   // Previous version fortran routines, now in C
+void addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4 *a_Up, float_sw4*a_U,
+		 float_sw4*a_Um, float_sw4* Rho, float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x,
+		 float_sw4* sg_str_y, float_sw4* sg_str_z, float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
+		 float_sw4 damping_coefficient );
+void addsgd6_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4 *a_Up, float_sw4*a_U,
+		 float_sw4*a_Um, float_sw4* Rho, float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x,
+		 float_sw4* sg_str_y, float_sw4* sg_str_z, float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
+		 float_sw4 damping_coefficient );
+void addsgd4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4 *a_Up, float_sw4*a_U,
+		 float_sw4*a_Um, float_sw4* Rho, float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y,
+		 float_sw4* jac, float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4 damping_coefficient );
+void addsgd6c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4 *a_Up, float_sw4*a_U,
+		 float_sw4*a_Um, float_sw4* Rho, float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y,
+		 float_sw4* jac, float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4 damping_coefficient );
+
+void bcfort_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
+		int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
+		float_sw4 sbop[5], float_sw4* mu, float_sw4* la, float_sw4 t,
+		float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3, 
+		float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
+		float_sw4 om, float_sw4 ph, float_sw4 cv, int curvilinear );
+void bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
+		  int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
+		  float_sw4 sbop[5], float_sw4* mu, float_sw4* la, float_sw4 t,
+		  float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3, 
+		  float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
+		  float_sw4 om, float_sw4 ph, float_sw4 cv,
+		  float_sw4* strx, float_sw4* stry );
+void twdirbdry_ci( int wind[6], float_sw4 h, float_sw4 t, float_sw4 om, 
+		   float_sw4 cv, float_sw4 ph, float_sw4* bforce, float_sw4 zmin );
+void twdirbdryc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		    int wind[6], float_sw4 t, float_sw4 om, float_sw4 cv, 
+		    float_sw4 ph, float_sw4* bforce, float_sw4* x, float_sw4* y,
+		    float_sw4* z );
+void twfrsurfz_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		   float_sw4 h, int kz, float_sw4 t, float_sw4 omega, float_sw4 c,
+		   float_sw4 phase, float_sw4* bforce, float_sw4* mu, float_sw4* lambda,
+		   float_sw4 zmin );
+void twfrsurfzatt_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4 h, int kz, float_sw4 t, float_sw4 omega, float_sw4 c,
+		     float_sw4 phase, float_sw4* bforce, float_sw4* mua, float_sw4* lambdaa,
+		     float_sw4 zmin );
+void twfrsurfzsgstr_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		       float_sw4 h, int kz, float_sw4 t, float_sw4 om, float_sw4 c,
+		       float_sw4 ph, float_sw4 omstrx, float_sw4 omstry, float_sw4* bforce, 
+		       float_sw4* mu, float_sw4* lambda, float_sw4 zmin );
+void twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			  float_sw4 h, int kz, float_sw4 t, float_sw4 omega, float_sw4 c,
+			  float_sw4 phase, float_sw4 omstrx, float_sw4 omstry, float_sw4* bforce, 
+			  float_sw4* mua, float_sw4* lambdaa, float_sw4 zmin );
+void twstensor_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		   int kz, float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph, 
+		   float_sw4* xx, float_sw4* yy, float_sw4* zz,
+		   float_sw4* tau, float_sw4* mu, float_sw4* lambda );
+void twstensorsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int kz, float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph, 
+		     float_sw4* xx, float_sw4* yy, float_sw4* zz,
+		     float_sw4* tau, float_sw4* mu, float_sw4* lambda, float_sw4 omstrx,
+		     float_sw4 omstry );
+void twstensoratt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		      int kz, float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase, 
+		      float_sw4* xx, float_sw4* yy, float_sw4* zz,
+		      float_sw4* tau, float_sw4* mu, float_sw4* lambda );
+void twstensorsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			int kz, float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase, 
+			float_sw4* xx, float_sw4* yy, float_sw4* zz, float_sw4* tau,
+			float_sw4* mu, float_sw4* lambda, float_sw4 omstrx, float_sw4 omstry );
+void bcfortanisg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
+		     int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
+		     float_sw4 sbop[5], float_sw4* c, 
+		     float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3, 
+		     float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
+		     float_sw4* strx, float_sw4* stry );
+void bcfreesurfcurvani_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			   int nz, float_sw4* u, float_sw4* c, int side, float_sw4 sbop[5], 
+			   float_sw4* bforce5, float_sw4* bforce6, float_sw4* strx, float_sw4* stry );
+void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof, float_sw4* _bope, float_sw4* _sbop );
+
 //
 // VARIABLES BEYOND THIS POINT
 //
-const double NO_TOPO;
+const float_sw4 NO_TOPO;
 
 // ------------------------------------------
 // Grid 
@@ -649,7 +732,7 @@ const double NO_TOPO;
 int mNumberOfGrids, mNumberOfCartesianGrids;
 
 // grid sizes are needed by the Source and Image classes, so should be kept public
-vector<double> mGridSize;
+vector<float_sw4> mGridSize;
 
 // part of global array on each processor, including ghost points = all points
 vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd; 
@@ -671,7 +754,7 @@ vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt, m_kEndI
 int m_paddingCells[4]; // indexing is [0] = low-i, [1] = high-i, [2] = low-j, [3] = high-j
 
 // For the Cartesian grid, we only need to offset in z
-vector<double> m_zmin; // needed by the Source and Image classes
+vector<float_sw4> m_zmin; // needed by the Source and Image classes
 
 // for the curvilinear grid, we also store the cartesian coordinates of the grid points
 Sarray mX, mY, mZ; // needed by the Source class, so must be public
@@ -710,12 +793,12 @@ Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
-void revvector( int npts, double* v );
+void revvector( int npts, float_sw4* v );
 // epicenter
-double m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
+float_sw4 m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
 
    //PJ *m_projection;
-   //double m_xoffset, m_yoffset;
+   //float_sw4 m_xoffset, m_yoffset;
 GeographicProjection* m_geoproj;
 
 ForcingTwilight* m_twilight_forcing;
@@ -731,8 +814,8 @@ vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;
 // index convention: [0]: low-x, [1]: high-x, [2]: low-y, [3]: high-y; [4]: low-z, [5]: high-z  
 boundaryConditionType mbcGlobalType[6]; // these are the boundary conditions for the global problem
 vector<boundaryConditionType*> m_bcType;  // these are the boundary conditions for each grid on the local processor, with bProcessor conditions
-double mTstart;
-double mDt;
+float_sw4 mTstart;
+float_sw4 mDt;
 EtreeFile * mEtreeFile;
 
 bool m_doubly_periodic;
@@ -741,33 +824,32 @@ int m_proc_array[2];
 
 bool mbcsSet;
 
-
 // for some simple topographies (e.g. Gaussian hill) there is an analytical expression for the top elevation
 bool m_analytical_topo, m_use_analytical_metric;
-double m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
+float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
 
 // interface surfaces in the material model
 //int m_number_material_surfaces, m_Nlon, m_Nlat;
-//double m_materialLonMax, m_materialLonMin, m_materialLatMax, m_materialLatMin;
+//float_sw4 m_materialLonMax, m_materialLonMin, m_materialLatMax, m_materialLatMin;
 //Sarray m_materialDepth;
-//double *m_materialLon, *m_materialLat;
+//float_sw4 *m_materialLon, *m_materialLat;
 
 // global material thresholds
 bool m_useVelocityThresholds;
-double m_vpMin, m_vsMin;
+float_sw4 m_vpMin, m_vsMin;
 
 
 // order of polynomial mapping in algebraic grid genenerator
 int m_grid_interpolation_order;
-double m_zetaBreak;
+float_sw4 m_zetaBreak;
 
 // metric of the curvilinear grid
-double m_minJacobian, m_maxJacobian;
+float_sw4 m_minJacobian, m_maxJacobian;
 
 string m_scenario;
 
 // command limitfrequency
-double m_frequency_limit;
+float_sw4 m_frequency_limit;
 bool m_limit_frequency;
 int m_ppw;
 
@@ -780,8 +862,8 @@ int m_nwriters;
 bool m_use_supergrid;
 int m_sg_gp_thickness; //, m_sg_gp_transition;
 int m_sg_damping_order; // 4 or 6 order dissipation operator
-double m_supergrid_damping_coefficient;
-double m_supergrid_width; // width in physical units
+float_sw4 m_supergrid_damping_coefficient;
+float_sw4 m_supergrid_width; // width in physical units
 bool m_use_sg_width; // use width instead of gp
 vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;
 vector<SuperGrid> m_supergrid_taper_z;
@@ -798,13 +880,13 @@ vector<int *> m_BndryWindow;
 // attenuation variables (only allocated if attenuation is enabled)
 bool m_use_attenuation, m_att_use_max_frequency;
 int m_number_mechanisms;
-double m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency, m_att_ppw;
-double m_qmultiplier;
+float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency, m_att_ppw;
+float_sw4 m_qmultiplier;
 
 vector<Sarray> mQp, mQs;
 vector<Sarray*> mMuVE, mLambdaVE;
 // relaxation frequencies
-vector<double> mOmegaVE;
+vector<float_sw4> mOmegaVE;
 
 // Anisotropic material
 bool m_anisotropic;
@@ -812,7 +894,7 @@ bool m_anisotropic;
 // Randomization of the material
 bool m_randomize;
 int m_random_seed[3];
-double m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
+float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes
@@ -820,7 +902,7 @@ double m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
 // vector<int*> m_geodyn_dims;
 // vector<Sarray> m_geodyn_data1;
 // vector<Sarray> m_geodyn_data2;
-// double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;
+// float_sw4 m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;
 // int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
 //    int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
 // string m_geodyn_filename;
@@ -828,22 +910,22 @@ double m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
 // bool m_geodyn_iwillread;   
 
 // with topo, zmin might be different from 0
-double m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax; 
+float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax; 
 
 // number of grid points near mesh refinement boundary, for  extrapolating material properties
 int mMaterialExtrapolate; 
 
 // variables from the old FileInput class
 int m_nx_base, m_ny_base, m_nz_base;
-double m_h_base;
+float_sw4 m_h_base;
 vector<bool> m_iscurvilinear;
-vector<double> m_refinementBoundaries;
+vector<float_sw4> m_refinementBoundaries;
 InputMode m_topoInputStyle;
 string m_topoFileName, m_topoExtFileName, m_QueryType;
 bool mTopoImageFound;
-double m_topo_zmax;
+float_sw4 m_topo_zmax;
 int m_maxIter;
-double m_EFileResolution;
+float_sw4 m_EFileResolution;
 
 //-------------------------------------------
 // IO data
@@ -875,7 +957,7 @@ bool m_iotiming;
 
 // time data
 bool mTimeIsSet;
-double mTmax;
+float_sw4 mTmax;
 
 int mNumberOfTimeSteps;
 
@@ -889,16 +971,16 @@ int mOrder;
    // mCFL actual cfl. Used to determine time step in forward solver.
    // mCFLmax, maximum possible cfl. Used for limiting 
    //          wave speeds during material inversion
-double mCFL, mCFLmax;
+float_sw4 mCFL, mCFLmax;
 
 // info on SBP boundary operators, or not.
 vector<int*> m_onesided; 
-double m_curlcoeff, m_d4coeff, m_d4_cfl; // these should go away
+float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl; // these should go away
 
 // storage for the 1-D damping coefficients
-vector<double*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;
-vector<double*> m_sg_str_x, m_sg_str_y, m_sg_str_z;
-vector<double*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;
+vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;
+vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;
+vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;
 
 //-------------------------------------------
 // restart data
@@ -911,9 +993,9 @@ vector<double*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;
 // Energy test data
 //----------------------------------------
 bool m_energy_log, m_energy_print;
-double m_saved_energy;
+float_sw4 m_saved_energy;
 string m_energy_logfile;
-vector<double> m_energy; // *
+vector<float_sw4> m_energy; // *
 
 //-------------------------------------------
 // Measure wall clock time variables
@@ -928,7 +1010,7 @@ int m_projection_cycle;
 bool m_checkfornan;
   
 // testing
-double m_max_error[3], m_l2_error[3];
+float_sw4 m_max_error[3], m_l2_error[3];
 
 string m_error_log_file;
 bool m_error_log, m_error_print;
@@ -938,11 +1020,11 @@ int m_inner_loop;
 //bool m_intp_conservative;
 bool m_mesh_refinements;
 bool m_matrices_decomposed;
-double m_citol, m_cirelfact;
+float_sw4 m_citol, m_cirelfact;
 int m_cimaxiter;
 
-vector<double*> m_cimat1;
-vector<double*> m_cimat2;
+vector<float_sw4*> m_cimat1;
+vector<float_sw4*> m_cimat2;
 vector<int*> m_ciipiv1;
 vector<int*> m_ciipiv2;
 
@@ -951,11 +1033,11 @@ EW& operator=(const EW&);
 
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as
-double mGeoAz;
-double mLonOrigin, mLatOrigin;
+float_sw4 mGeoAz;
+float_sw4 mLonOrigin, mLatOrigin;
 
 //GeographicCoord mGeoCoord;
-double mMetersPerDegree, mMetersPerLongitude;
+float_sw4 mMetersPerDegree, mMetersPerLongitude;
 bool mConstMetersPerLongitude;
 
 // is this object ready for time-stepping?
@@ -968,26 +1050,26 @@ bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom, m_iniguess_shifts;// Estim
 bool m_output_initial_seismograms;
 bool m_compute_scalefactors;
 int m_maxit,m_maxrestart;
-double m_tolerance;
-double m_scalefactors[11];   
+float_sw4 m_tolerance;
+float_sw4 m_scalefactors[11];   
 int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
    // perturbations for testing
-double m_perturb;
+float_sw4 m_perturb;
 int m_iperturb, m_jperturb, m_kperturb, m_pervar;
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
-vector<double> mMinVsOverH;
+vector<float_sw4> mMinVsOverH;
 
 int m_ext_ghost_points;
 int m_ghost_points;
 int m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
-double m_iop[5], m_iop2[5], m_bop2[24], m_sbop[5], m_acof[384], m_bop[24];
-double m_bope[48], m_ghcof[6], m_hnorm[4];
+float_sw4 m_iop[5], m_iop2[5], m_bop2[24], m_sbop[5], m_acof[384], m_bop[24];
+float_sw4 m_bope[48], m_ghcof[6], m_hnorm[4];
 
 int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
@@ -1002,6 +1084,8 @@ vector<MPI_Datatype> m_send_type_2dx3p;
 vector<MPI_Datatype> m_send_type_2dy3p;
 vector<MPI_Datatype> m_send_type_2dx1p;
 vector<MPI_Datatype> m_send_type_2dy1p;
+MPI_Datatype m_mpifloat;
+
 bool m_topography_exists;
 
 // UTC time corresponding to simulation time 0.
@@ -1010,6 +1094,9 @@ int m_utc0[7];
 
 // Error handling facility
 //ErrorChecking* m_error_checking;
+
+// Use C-version of computational kernels
+   bool m_croutines;
 };
 
 #endif

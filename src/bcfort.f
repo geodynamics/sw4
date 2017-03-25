@@ -35,12 +35,13 @@ c-----------------------------------------------------------------------
      +     u, h, bccnd, sbop, mu, la, t,
      *     bforce1, bforce2, bforce3, bforce4, bforce5, bforce6, 
      +     om, ph, cv, curvilinear )
+     + bind(c)
       implicit none
       real*8 d4a, d4b
       parameter( d4a=2d0/3, d4b=-1d0/12 )
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz
       integer s, wind(6,6), i, j, k, bccnd(6), w, kl, qq, curvilinear
-      real*8 x, y, z, h, sbop(0:4)
+      real*8 h, sbop(0:4)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -54,6 +55,7 @@ c note that the numbering of bforce adds one from C (side goes from 1 in Fortran
 c the boundary window 'wind' is now an input argument
 
 c loop over all sides of the 3-D domain
+!$OMP PARALLEL PRIVATE(i,j,k,qq,ux,vy,wx,wy,uz,vz,wz,kl)
       do s=1,6
 *** dirichlet condition, bccnd=1
 *** supergrid condition, bccnd=2
@@ -63,6 +65,7 @@ c now assigning the forcing arrays outside of this routine!
             qq=1
             if (s.eq.1) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce1 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -73,8 +76,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce1 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.2) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce2 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -85,8 +90,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce2 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.3) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce3 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -97,8 +104,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce3 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.4) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce4 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -109,9 +118,11 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce4 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.5) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce5 )
               do k=wind(5,s),wind(6,s)
+
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = bforce5(1,qq)
@@ -120,24 +131,29 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce5 )
                     qq = qq+1
                   enddo
                 enddo
+
               enddo
             else if (s.eq.6) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
               do k=wind(5,s),wind(6,s)
+
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
+                   qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
                     u(1,i,j,k) = bforce6(1,qq)
                     u(2,i,j,k) = bforce6(2,qq)
                     u(3,i,j,k) = bforce6(3,qq)
                     qq = qq+1
                   enddo
                 enddo
+
               enddo
             endif
 
           elseif( bccnd(s).eq.3 )then
 *** Periodic condition, bccnd=3
             if (s.eq.1) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -147,7 +163,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.2) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -157,7 +175,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.3) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -167,7 +187,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.4) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -177,8 +199,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.5) then
               do k=wind(5,s),wind(6,s)
+!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k+nz)
@@ -186,9 +210,11 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k+nz)
                   enddo
                 enddo
+!$OMP ENDDO               
               enddo
             elseif (s.eq.6) then
               do k=wind(5,s),wind(6,s)
+!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k-nz)
@@ -196,6 +222,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k-nz)
                   enddo
                 enddo
+!$OMP ENDDO               
               enddo
             endif
          elseif( bccnd(s).eq.0 )then
@@ -213,6 +240,7 @@ c moved the assignment of bforce5/6 into its own routine
           if( s.eq.5 .and. curvilinear.eq.0 )then
              k = 1
              kl= 1
+!$OMP DO               
              do j=jfirst+2,jlast-2
                 do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -250,10 +278,12 @@ c interior contribution to uz, vz, wz (kl is the direction)
      *                    /sbop(0)
                 enddo
              enddo
+!$OMP ENDDO               
           elseif( s.eq.6 .and. curvilinear.eq.0 )then
 c s=6
              k = nz
              kl= -1
+!$OMP DO               
              do j=jfirst+2,jlast-2
                 do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -291,9 +321,11 @@ c interior contribution to uz, vz, wz (kl is the direction)
      *                  /sbop(0)
                 enddo
              enddo
+!$OMP ENDDO               
           endif
        endif
       enddo
+!$OMP END PARALLEL
       end
 
 
@@ -303,6 +335,7 @@ c-----------------------------------------------------------------------
      +     u, h, bccnd, sbop, mu, la, t,
      *     bforce1, bforce2, bforce3, bforce4, bforce5, bforce6, 
      +     om, ph, cv, strx, stry )
+     + bind(c)
       implicit none
       real*8 d4a, d4b
       parameter( d4a=2d0/3, d4b=-1d0/12 )
@@ -323,6 +356,7 @@ c note that the numbering of bforce adds one from C (side goes from 1 in Fortran
 c the boundary window 'wind' is now an input argument
 
 c loop over all sides of the 3-D domain
+!$OMP PARALLEL PRIVATE(i,j,k,qq,ux,vy,wx,wy,uz,vz,wz,kl)
       do s=1,6
 *** dirichlet condition, bccnd=1
 *** supergrid condition, bccnd=2
@@ -332,6 +366,7 @@ c now assigning the forcing arrays outside of this routine!
             qq=1
             if (s.eq.1) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce1 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -342,8 +377,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce1 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.2) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce2 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -354,8 +391,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce2 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.3) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce3 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -366,8 +405,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce3 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.4) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce4 )
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -378,6 +419,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce4 )
                   enddo
                 enddo
               enddo
+
             else if (s.eq.5) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce5 )
               do k=wind(5,s),wind(6,s)
@@ -407,6 +449,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
           elseif( bccnd(s).eq.3 )then
 *** Periodic condition, bccnd=3
             if (s.eq.1) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -416,7 +459,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.2) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -426,7 +471,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.3) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -436,7 +483,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.4) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -446,8 +495,10 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
+!$OMP ENDDO               
             elseif (s.eq.5) then
               do k=wind(5,s),wind(6,s)
+!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k+nz)
@@ -455,9 +506,11 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k+nz)
                   enddo
                 enddo
+!$OMP ENDDO               
               enddo
             elseif (s.eq.6) then
               do k=wind(5,s),wind(6,s)
+!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k-nz)
@@ -465,6 +518,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k-nz)
                   enddo
                 enddo
+!$OMP ENDDO               
               enddo
             endif
           elseif( bccnd(s).eq.0 )then
@@ -482,7 +536,7 @@ c moved the assignment of bforce5/6 into its own routine
           if( s.eq.5 )then
             k = 1
             kl= 1
-
+!$OMP DO               
             do j=jfirst+2,jlast-2
               do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -520,11 +574,12 @@ c interior contribution to uz, vz, wz (kl is the direction)
      *               /sbop(0)
               enddo
             enddo
+!$OMP ENDDO               
           else
 c s=6
             k = nz
             kl= -1
-
+!$OMP DO               
             do j=jfirst+2,jlast-2
               do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -562,16 +617,19 @@ c interior contribution to uz, vz, wz (kl is the direction)
      *               /sbop(0)
               enddo
             enddo
+!$OMP ENDDO               
           endif
 
         endif
       enddo
+!$OMP END PARALLEL
       end
 
 
 c----------------------------------------------------------------------
       subroutine HDIRICHLET5( ifirst, ilast, jfirst, jlast, kfirst,
      *  klast, iafirst, ialast, jafirst, jalast, kafirst, kalast, u )
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer iafirst, ialast, jafirst, jalast, kafirst, kalast
@@ -618,6 +676,7 @@ c----------------------------------------------------------------------
 
 c----------------------------------------------------------------------
       subroutine TWDIRBDRY( wind, h, t, om, cv, ph, bforce, zmin )
+     + bind(c)
       implicit none
       integer wind(6)
       real*8 bforce(3,*), h, t, om, cv, ph, x, y, z, zmin
@@ -646,6 +705,7 @@ c need to add zmin to work in a composite grid setting
 c----------------------------------------------------------------------
       subroutine TWDIRBDRYC(ifirst, ilast, jfirst, jlast, kfirst, klast, 
      *                      wind, t, om, cv, ph, bforce, x, y, z )
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, wind(6)
       real*8 bforce(3,*), t, om, cv, ph
@@ -677,6 +737,7 @@ c
 c-----------------------------------------------------------------------
       subroutine TWFRSURFZ( ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     h, kz, t, omega, c, phase, bforce, mu, lambda, zmin )
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, attenuation
       real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
@@ -755,6 +816,7 @@ c the do loops should span jfirst,jlast and ifirst,ilast
 c-----------------------------------------------------------------------
       subroutine TWFRSURFZATT( ifirst, ilast, jfirst, jlast, kfirst,
      +   klast, h, kz, t, omega, c, phase, bforce, mua, lambdaa, zmin )
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
@@ -816,7 +878,7 @@ c-----------------------------------------------------------------------
       subroutine TWFRSURFZSGSTR( ifirst, ilast, jfirst, jlast, kfirst, 
      *                  klast, h, kz, t, om, c, ph, omstrx, omstry,
      *                  bforce, mu, lambda, zmin )
-
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
@@ -906,7 +968,7 @@ c-----------------------------------------------------------------------
       subroutine TWFRSURFZSGSTRATT( ifirst, ilast, jfirst, jlast, 
      *       kfirst, klast, h, kz, t, omega, c, phase, omstrx, omstry,
      *       bforce, mua, lambdaa, zmin )
-
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
@@ -999,6 +1061,7 @@ c-----------------------------------------------------------------------
       subroutine TWSTENSOR( ifirst, ilast, jfirst, jlast, kfirst, 
      *                  klast, kz, t, om, c, ph, xx, yy, zz,
      *                  tau, mu, lambda )
+     + bind(c)
 ***********************************************************************
 ***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
 ***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
@@ -1085,7 +1148,7 @@ c-----------------------------------------------------------------------
       subroutine TWSTENSORSG( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, kz, t, om, c, ph, xx, yy, zz,
      *     tau, mu, lambda, omstrx, omstry )
-
+     + bind(c)
 ***********************************************************************
 ***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
 ***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
@@ -1188,6 +1251,7 @@ c-----------------------------------------------------------------------
       subroutine TWSTENSORATT( ifirst, ilast, jfirst, jlast, kfirst, 
      *                  klast, kz, t, omega, c, phase, xx, yy, zz,
      *                  tau, mu, lambda )
+     + bind(c)
 ***********************************************************************
 ***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
 ***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}
@@ -1288,7 +1352,7 @@ c-----------------------------------------------------------------------
       subroutine TWSTENSORSGATT( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, kz, t, omega, c, phase, xx, yy, zz,
      *     tau, mu, lambda, omstrx, omstry )
-
+     + bind(c)
 ***********************************************************************
 ***  Stress tensor ordered as tau(1) = t_{xx}, tau(2) = t_{xy}
 ***  tau(3) = t_{xz}, tau(4) = t_{yy}, tau(5)=t_{yz}, tau(6)=t_{zz}

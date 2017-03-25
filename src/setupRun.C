@@ -77,7 +77,7 @@ void F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( int *, int *, int *, int *, int 
 					      double*, double*, double*, double* );
 void F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( int *, int *, int *, int *, int *, int *, double*,
 					      double*, double*, double*, double* );
-   void F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( int*, int*, int*, int*, int*, int*, double*, double*, double* );
+  void anisomtrltocurvilinear( int*, int*, int*, int*, int*, int*, double*, double*, double* );
 }
 
 #define SQR(x) ((x)*(x))
@@ -733,17 +733,20 @@ void EW::setupSBPCoeff()
   double gh2; // this coefficient is also stored in m_ghcof[0]
   if (mVerbose >=1 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
-  
+  if( m_croutines )
+     GetStencilCoefficients( m_acof, m_ghcof, m_bope, m_sbop );
+  else
+  {
 // get coefficients for difference approximation of 2nd derivative with variable coefficients
 //      call VARCOEFFS4( acof, ghcof )
-  F77_FUNC(varcoeffs4,VARCOEFFS4)(m_acof, m_ghcof);
+     F77_FUNC(varcoeffs4,VARCOEFFS4)(m_acof, m_ghcof);
 // get coefficients for difference approximation of 1st derivative
 //      call WAVEPROPBOP_4( iop, iop2, bop, bop2, gh2, hnorm, sbop )
-  F77_FUNC(wavepropbop_4,WAVEPROPBOP_4)(m_iop, m_iop2, m_bop, m_bop2, &gh2, m_hnorm, m_sbop);
+     F77_FUNC(wavepropbop_4,WAVEPROPBOP_4)(m_iop, m_iop2, m_bop, m_bop2, &gh2, m_hnorm, m_sbop);
 // extend the definition of the 1st derivative tothe first 6 points
 //      call BOPEXT4TH( bop, bope )
-  F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
-
+     F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
+  }
 }
 
 
@@ -1171,9 +1174,8 @@ void EW::set_anisotropic_materials()
       if( topographyExists() )
       {
          int g=mNumberOfGrids-1;
-         F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
-                                                                  &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                                                                  mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
       }
    }// end if !m_testing, i.e., not Twilight
    else if (m_twilight_forcing) 
@@ -1256,9 +1258,8 @@ void EW::set_anisotropic_materials()
       if( topographyExists() )
       {
          int g=mNumberOfGrids-1;
-         F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
-                                                                  &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                                                                  mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
       }
       
    } // end if m_twilight
