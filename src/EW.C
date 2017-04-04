@@ -217,20 +217,29 @@ void F77_FUNC(exactmatfortattc,EXACTMATFORTATTC)( int*, int*, int*, int*, int*, 
 						  double*, double*, double*, double*, double*, double* );
 void updatememvar(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
                   double*, double*, double*, double*, int*, int *use2ndOrder );
-// void F77_FUNC(updatememvar,UPDATEMEMVAR)(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
-// 					 double*, double*, double*, double*, int* );
 
-void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
+   void memvar_pred_fort(int, int, int, int, int, int, double*, double*, double*, double, double, int );
 
-void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
-			   int & LWORK, int & INFO);
+   void memvar_corr_fort(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* alp, double *alm, double *up,
+                         double *u, double *um, double omega, double dt, int domain );
+   
+
+   void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
+
+   void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
+                              int & LWORK, int & INFO);
    void F77_FUNC(ilanisocurv,ILANISOCURV)( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
 					   int*, double*, double*, double*, double*, double*, double*);
 }
 
-void  addmemvarforcing2( double zMin, double h, double t, Sarray &alpha,
-                         double omegaVE, double dt, double omega, double phase, double c );
+void  addMemVarForcingCart( double zMin, double h, double t, Sarray &alpha,
+                            double omegaVE, double dt ,double omega, double phase, double c);
 
+void addMemVarForceCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+                                Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
+
+void addMemVarCorrCart(double zMin, double h, double t, Sarray &alpha,
+                       double omegaVE, double dt, double omega, double phase, double c );
 
 using namespace std;
 
@@ -4008,6 +4017,95 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 }
 
 //-----------------------------------------------------------------------
+void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+				vector<Sarray>& a_U, double a_t )
+{
+   int domain = 0;
+   
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      double* u_ptr   = a_U[g].c_ptr();
+
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+	 memvar_pred_fort(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr, u_ptr, mOmegaVE[a], mDt, domain );
+      }
+      if( m_twilight_forcing )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+	 double om = m_twilight_forcing->m_omega;
+	 double ph = m_twilight_forcing->m_phase;
+	 double cv = m_twilight_forcing->m_c;
+         if( topographyExists() && g == mNumberOfGrids-1 )
+            addMemVarForceCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+	 else
+         {
+// this routine comes from WPP
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+            addMemVarForcingCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+         
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+                           vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t )
+{
+   int domain = 0;
+   
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      double* up_ptr  = a_Up[g].c_ptr();
+      double* u_ptr    = a_U[g].c_ptr();
+      double* um_ptr = a_Um[g].c_ptr();
+
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+	 memvar_corr_fort(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr, mOmegaVE[a], mDt, domain );
+      }
+      if( m_twilight_forcing )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+	 double om = m_twilight_forcing->m_omega;
+	 double ph = m_twilight_forcing->m_phase;
+	 double cv = m_twilight_forcing->m_c;
+         if( topographyExists() && g == mNumberOfGrids-1 )
+         {
+// UPDATE
+//            addMemVarForceCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            ;
+         }
+	 else
+         {
+// this routine comes from WPP
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+            addMemVarCorrCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+         
+      }
+   }
+}
+
+
+//-----------------------------------------------------------------------
 void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
 				double a_t )
@@ -4053,7 +4151,7 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
             if (mOrder == 2) // only works without SG stretching
             {
 // this routine comes from WPP
-               addmemvarforcing2( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+               addMemVarForcingCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
             }
             else // 4th order in time (HOW CAN THIS WORK WITH SG STRETCHING???)
             {

@@ -2050,7 +2050,7 @@ c-----------------------------------------------------------------------
       subroutine ADDBSTRESSWRESC( ifirst, ilast, jfirst, jlast, kfirst,
      *      klast, nz, alphap, alpham, muve, lave, bforcerhs, 
      *      u, um, met, side, dt, omegave, memforce, muvebnd,
-     *      lambdavebnd, s, cof, usesg, sgstrx, sgstry )
+     *      lambdavebnd, sbop, cof, usesg, sgstrx, sgstry )
       implicit none
       real*8 i6, c1, c2
       parameter( i6=1d0/6, c1=2d0/3, c2=-1d0/12 )
@@ -2068,7 +2068,7 @@ c-----------------------------------------------------------------------
       real*8 lambdavebnd(ifirst:ilast,jfirst:jlast)
       real*8 bforcerhs(3,ifirst:ilast,jfirst:jlast)
       real*8 memforce(3,ifirst:ilast,jfirst:jlast)
-      real*8 dt, omegave, s(0:4), cof, omdt, cp, cm, r1, r2, r3
+      real*8 dt, omegave, sbop(0:4), cof, omdt, cp, cm, r1, r2, r3
       real*8 rhs1, rhs2, rhs3, un1, vn1, wn1, rtu, ac
       real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
       real*8 sgx, sgy, isgx, isgy, m2sg, m3sg, m4sg
@@ -2089,6 +2089,7 @@ c-----------------------------------------------------------------------
       isgy = 1
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
+c THIS IS THE OLD COUPLED UPDATE PROCEDURE
             r1 = (-cm*alpham(1,i,j,k-kl)+(4+omdt*omdt)*i6*u(1,i,j,k-kl)+
      *                i6*(1-omdt)*um(1,i,j,k-kl)+ memforce(1,i,j) )/cp
             r2 = (-cm*alpham(2,i,j,k-kl)+(4+omdt*omdt)*i6*u(2,i,j,k-kl)+
@@ -2166,15 +2167,15 @@ c-----------------------------------------------------------------------
      *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*isgx  
       
 *** normal derivatives
-           un1 = s(1)*alphap(1,i,j,k)+s(2)*alphap(1,i,j,k+kl)
-     *          +s(3)*alphap(1,i,j,k+2*kl)
-     *          +s(4)*alphap(1,i,j,k+3*kl) + s(0)*r1
-           vn1 = s(1)*alphap(2,i,j,k)+s(2)*alphap(2,i,j,k+kl)
-     *          +s(3)*alphap(2,i,j,k+2*kl)
-     *          +s(4)*alphap(2,i,j,k+3*kl) + s(0)*r2
-           wn1 = s(1)*alphap(3,i,j,k)+s(2)*alphap(3,i,j,k+kl)
-     *          +s(3)*alphap(3,i,j,k+2*kl)
-     *          +s(4)*alphap(3,i,j,k+3*kl) + s(0)*r3
+           un1 = sbop(1)*alphap(1,i,j,k)+sbop(2)*alphap(1,i,j,k+kl)
+     *          +sbop(3)*alphap(1,i,j,k+2*kl)
+     *          +sbop(4)*alphap(1,i,j,k+3*kl) + sbop(0)*r1
+           vn1 = sbop(1)*alphap(2,i,j,k)+sbop(2)*alphap(2,i,j,k+kl)
+     *          +sbop(3)*alphap(2,i,j,k+2*kl)
+     *          +sbop(4)*alphap(2,i,j,k+3*kl) + sbop(0)*r2
+           wn1 = sbop(1)*alphap(3,i,j,k)+sbop(2)*alphap(3,i,j,k+kl)
+     *          +sbop(3)*alphap(3,i,j,k+2*kl)
+     *          +sbop(4)*alphap(3,i,j,k+3*kl) + sbop(0)*r3
 
            m2sg = SQRT(sgx*isgy)
            m3sg = 1/m2sg
@@ -2196,3 +2197,300 @@ c-----------------------------------------------------------------------
          enddo
       enddo
       end      
+
+c-----------------------------------------------------------------------
+      subroutine ve_bndry_stress_curvi(
+     *     ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
+     *     alphap, muve, lave, bforcerhs, met, side, 
+     *     sbop, usesg, sgstrx, sgstry ) bind(c)
+      implicit none
+      real*8 c1, c2
+      parameter( c1=2d0/3, c2=-1d0/12 )
+
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, kl
+      integer nz, side, usesg
+      real*8 alphap(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 muve(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 lave(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 bforcerhs(3,ifirst:ilast,jfirst:jlast)
+      real*8 sbop(0:4)
+c      real*8 dt, omegave, sbop(0:4), cof, omdt, cp, cm, r1, r2, r3
+      real*8 rhs1, rhs2, rhs3, un1, vn1, wn1, rtu, ac
+      real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
+      real*8 sgx, sgy, isgx, isgy, m2sg, m3sg, m4sg
+      if( side.eq.5 )then
+         k  = 1
+         kl = 1
+      elseif( side.eq.6 )then
+         k  = nz
+         kl = -1
+      endif
+c      omdt = omegave*dt
+c      cp = 0.5d0 + 1/(2*omdt) + omdt/4 + omdt*omdt/12
+c      cm = 0.5d0 - 1/(2*omdt) - omdt/4 + omdt*omdt/12
+c      cof = (omdt+1)/(6*cp)
+      sgx = 1
+      sgy = 1
+      isgx = 1
+      isgy = 1
+      do j=jfirst+2,jlast-2
+         do i=ifirst+2,ilast-2
+            if( usesg.eq.1 )then
+               sgx = sgstrx(i)
+               sgy = sgstry(j)
+               isgy = 1/sgy
+               isgx = 1/sgx
+            endif
+
+***   tangential derivatives
+            rhs1 = 
+*** pr
+     *   (2*muve(i,j,k)+lave(i,j,k))*met(2,i,j,k)*met(1,i,j,k)*(
+     *          c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+     *          c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   )*sgx*isgy 
+     *  + muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i+2,j,k)-alphap(2,i-2,j,k)) +
+     *        c1*(alphap(2,i+1,j,k)-alphap(2,i-1,j,k))  ) 
+     *  + muve(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i+2,j,k)-alphap(3,i-2,j,k)) +
+     *        c1*(alphap(3,i+1,j,k)-alphap(3,i-1,j,k))  )*isgy   
+*** qr
+     *  +  muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i,j+2,k)-alphap(1,i,j-2,k)) +
+     *        c1*(alphap(1,i,j+1,k)-alphap(1,i,j-1,k))   )*isgx*sgy
+     *  + lave(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+     *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )  
+
+*** (v-eq)
+            rhs2 = 
+*** pr
+     *     lave(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+     *        c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   ) 
+     *  + muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i+2,j,k)-alphap(2,i-2,j,k)) +
+     *        c1*(alphap(2,i+1,j,k)-alphap(2,i-1,j,k))  )*sgx*isgy
+*** qr
+     *  +    muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i,j+2,k)-alphap(1,i,j-2,k)) +
+     *        c1*(alphap(1,i,j+1,k)-alphap(1,i,j-1,k))   ) 
+     * + (2*muve(i,j,k)+lave(i,j,k))*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+     *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*sgy*isgx 
+     *  + muve(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i,j+2,k)-alphap(3,i,j-2,k)) +
+     *        c1*(alphap(3,i,j+1,k)-alphap(3,i,j-1,k))   )*isgx 
+
+*** (w-eq)
+            rhs3 = 
+*** pr
+     *      lave(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+     *        c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   )*isgy
+     *  + muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i+2,j,k)-alphap(3,i-2,j,k)) +
+     *        c1*(alphap(3,i+1,j,k)-alphap(3,i-1,j,k))  )*sgx*isgy
+*** qr 
+     *  +   muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(3,i,j+2,k)-alphap(3,i,j-2,k)) +
+     *        c1*(alphap(3,i,j+1,k)-alphap(3,i,j-1,k))   )*sgy*isgx
+     *  + lave(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+     *        c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*isgx  
+      
+*** normal derivatives
+            un1 = sbop(0)*alphap(1,i,j,k-kl)
+     *           +sbop(1)*alphap(1,i,j,k)
+     *           +sbop(2)*alphap(1,i,j,k+kl)
+     *           +sbop(3)*alphap(1,i,j,k+2*kl)
+     *           +sbop(4)*alphap(1,i,j,k+3*kl)
+            vn1 = sbop(0)*alphap(2,i,j,k-kl)
+     *           +sbop(1)*alphap(2,i,j,k)
+     *           +sbop(2)*alphap(2,i,j,k+kl)
+     *           +sbop(3)*alphap(2,i,j,k+2*kl)
+     *           +sbop(4)*alphap(2,i,j,k+3*kl)
+            wn1 = sbop(0)*alphap(3,i,j,k-kl)
+     *           +sbop(1)*alphap(3,i,j,k)
+     *           +sbop(2)*alphap(3,i,j,k+kl)
+     *           +sbop(3)*alphap(3,i,j,k+2*kl)
+     *           +sbop(4)*alphap(3,i,j,k+3*kl)
+
+           m2sg = SQRT(sgx*isgy)
+           m3sg = 1/m2sg
+           m4sg = isgx*m2sg
+
+           rtu = un1*m2sg*met(2,i,j,k)+vn1*m3sg*met(3,i,j,k)+
+     *           wn1*m4sg*met(4,i,j,k)
+           ac  = sgx*isgy*met(2,i,j,k)**2+sgy*isgx*met(3,i,j,k)**2+
+     *           isgx*isgy*met(4,i,j,k)**2
+           rhs1 = rhs1 +(muve(i,j,k)+lave(i,j,k))*rtu*m2sg*met(2,i,j,k)+
+     *                                            muve(i,j,k)*ac*un1
+           rhs2 = rhs2 +(muve(i,j,k)+lave(i,j,k))*rtu*m3sg*met(3,i,j,k)+
+     *                                            muve(i,j,k)*ac*vn1
+           rhs3 = rhs3 +(muve(i,j,k)+lave(i,j,k))*rtu*m4sg*met(4,i,j,k)+
+     *                                            muve(i,j,k)*ac*wn1
+           bforcerhs(1,i,j) = rhs1 + bforcerhs(1,i,j)
+           bforcerhs(2,i,j) = rhs2 + bforcerhs(2,i,j)
+           bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j)
+         enddo
+      enddo
+      end      
+
+c-----------------------------------------------------------------------
+      subroutine att_free_curvi( ifirst, ilast, jfirst, jlast, kfirst,
+     *     klast, u, mu, la, bforce_rhs, met, sbop, 
+     *     usesg, sgstrx, sgstry ) bind(c)
+      implicit none
+      real*8 c1, c2
+      parameter( c1=2d0/3, c2=-1d0/12 )
+
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, kl
+      integer usesg
+      real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 bforce_rhs(3,ifirst:ilast,jfirst:jlast)
+      real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
+      real*8 sbop(0:4)
+      real*8 mupt, lapt, ac, bc, cc, dc, s0i
+      real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
+      real*8 sgx, sgy, isgx, isgy, m2sg, m3sg, m4sg
+      real*8 isqrtxy, rhs1, rhs2, rhs3, xoysqrt, yoxsqrt
+*** Hardcoded for the k=1 surface
+      k  = 1
+      kl = 1
+      sgx = 1
+      sgy = 1
+      isgx = 1
+      isgy = 1
+      s0i= 1/sbop(0)
+      do j=jfirst+2,jlast-2
+         do i=ifirst+2,ilast-2
+            if( usesg.eq.1 )then
+               sgx = sgstrx(i)
+               sgy = sgstry(j)
+               isgx = 1/sgx
+               isgy = 1/sgy
+            endif
+c
+c from rhscurvilinearsg.f
+c            istrx = 1/strx(i)
+
+*** First tangential derivatives
+            rhs1 = 
+*** pr
+     *   (2*mu(i,j,k)+la(i,j,k))*met(2,i,j,k)*met(1,i,j,k)*(
+     *          c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+     *          c1*(u(1,i+1,j,k)-u(1,i-1,j,k))  )*sgx*isgy 
+     *  + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i+2,j,k)-u(2,i-2,j,k)) +
+     *        c1*(u(2,i+1,j,k)-u(2,i-1,j,k))  ) 
+     *  + mu(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i+2,j,k)-u(3,i-2,j,k)) +
+     *        c1*(u(3,i+1,j,k)-u(3,i-1,j,k))  )*isgy   
+*** qr
+     *  + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i,j+2,k)-u(1,i,j-2,k)) +
+     *        c1*(u(1,i,j+1,k)-u(1,i,j-1,k))   )*isgx*sgy 
+     *  + la(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+     *        c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )  -
+     *                 bforce_rhs(1,i,j)
+
+*** (v-eq)
+            rhs2 = 
+*** pr
+     *    la(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+     *        c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   ) 
+     *  + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i+2,j,k)-u(2,i-2,j,k)) +
+     *        c1*(u(2,i+1,j,k)-u(2,i-1,j,k))  )*sgx*isgy 
+*** qr
+     *  + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i,j+2,k)-u(1,i,j-2,k)) +
+     *        c1*(u(1,i,j+1,k)-u(1,i,j-1,k))   ) 
+     * + (2*mu(i,j,k)+la(i,j,k))*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+     *        c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )*sgy*isgx 
+     *  + mu(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i,j+2,k)-u(3,i,j-2,k)) +
+     *        c1*(u(3,i,j+1,k)-u(3,i,j-1,k))   )*isgx -
+     *                  bforce_rhs(2,i,j)
+
+*** (w-eq)
+            rhs3 = 
+*** pr
+     *    la(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+     *        c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   )*isgy 
+     *  + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i+2,j,k)-u(3,i-2,j,k)) +
+     *        c1*(u(3,i+1,j,k)-u(3,i-1,j,k))  )*sgx*isgy
+*** qr 
+     *  + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(3,i,j+2,k)-u(3,i,j-2,k)) +
+     *        c1*(u(3,i,j+1,k)-u(3,i,j-1,k))   )*sgy*isgx
+     *  + la(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+     *        c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+     *        c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )*isgx -
+     *                  bforce_rhs(3,i,j)
+
+*** Normal derivatives
+            ac = sgx*isgy*met(2,i,j,k)**2+
+     *         sgy*isgx*met(3,i,j,k)**2+met(4,i,j,k)**2*isgy*isgx
+            bc = 1/(mu(i,j,k)*ac)
+            cc = (mu(i,j,k)+la(i,j,k))/(2*mu(i,j,k)+la(i,j,k))*bc/ac
+
+            xoysqrt = SQRT(sgx*isgy)
+            yoxsqrt = 1/xoysqrt
+            isqrtxy = isgx*xoysqrt
+            dc = cc*( xoysqrt*met(2,i,j,k)*rhs1 + 
+     *           yoxsqrt*met(3,i,j,k)*rhs2 + isqrtxy*met(4,i,j,k)*rhs3)
+
+            u(1,i,j,k-kl) = -s0i*(
+     *           sbop(1)*u(1,i,j,k)+sbop(2)*u(1,i,j,k+kl)+
+     *           sbop(3)*u(1,i,j,k+2*kl)+sbop(4)*u(1,i,j,k+3*kl) +
+     *            bc*rhs1 - dc*met(2,i,j,k)*xoysqrt )
+            u(2,i,j,k-kl) = -s0i*(
+     +           sbop(1)*u(2,i,j,k)+sbop(2)*u(2,i,j,k+kl)+
+     *           sbop(3)*u(2,i,j,k+2*kl)+sbop(4)*u(2,i,j,k+3*kl) + 
+     *           bc*rhs2 - dc*met(3,i,j,k)*yoxsqrt )
+            u(3,i,j,k-kl) = -s0i*(
+     *           sbop(1)*u(3,i,j,k)+sbop(2)*u(3,i,j,k+kl)+
+     *           sbop(3)*u(3,i,j,k+2*kl)+sbop(4)*u(3,i,j,k+3*kl) +
+     *            bc*rhs3 - dc*met(4,i,j,k)*isqrtxy )
+
+c Only need elastic (mu, lambda)
+c$$$            mupt = mu(i,j,k)
+c$$$            lapt = la(i,j,k)
+c$$$            if( usesg.eq.1 )then
+c$$$               sgx = sgstrx(i)
+c$$$               sgy = sgstry(j)
+c$$$               isgy = 1/sgy
+c$$$               isgx = 1/sgx
+c$$$            endif
+c$$$            m2sg = SQRT(sgx*isgy)
+c$$$            m3sg = 1/m2sg
+c$$$            m4sg = isgx*m2sg
+c$$$
+c$$$            ac = sgx*isgy*met(2,i,j,k)**2+isgx*sgy*met(3,i,j,k)**2+
+c$$$     *                                     isgx*isgy*met(4,i,j,k)**2
+c$$$            bc = 1/(mupt*ac)
+c$$$            cc = (mupt+lapt)/(2*mupt+lapt)*bc/ac
+c$$$            dc = cc*(  m2sg*met(2,i,j,k)*bforce_rhs(1,i,j)  
+c$$$     *               + m3sg*met(3,i,j,k)*bforce_rhs(2,i,j)  
+c$$$     *               + m4sg*met(4,i,j,k)*bforce_rhs(3,i,j) )
+c$$$            u(1,i,j,k-kl) = s0i*(    
+c$$$     *                bc*bforce_rhs(1,i,j) - dc*met(2,i,j,k)*m2sg )
+c$$$            u(2,i,j,k-kl) = s0i*(
+c$$$     *                bc*bforce_rhs(2,i,j) - dc*met(3,i,j,k)*m3sg )
+c$$$            u(3,i,j,k-kl) = s0i*( 
+c$$$     *                bc*bforce_rhs(3,i,j) - dc*met(4,i,j,k)*m4sg )
+           
+         enddo
+      enddo
+      end
+      

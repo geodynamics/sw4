@@ -204,6 +204,12 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
                       double*, double*, double*, double*, double*,double*,double*,double* );
    void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
+   void att_free_curvi( int *ifirst, int *ilast, int *jfirst, int *jlast, int *kfirst,
+                        int *klast, double *u, double *mu, double *la, double *bforce_rhs, double *met, double *sbop, 
+                        int *usesg, double *sgstrx, double *sgstry );
+   void ve_bndry_stress_curvi(int *ifirst, int *ilast, int *jfirst, int *jlast, int *kfirst, int *klast, int *nz,
+                              double *alphap, double *muve, double *lave, double *bforcerhs, double *met, int *side, 
+                              double *sbop, int *usesg, double *sgstrx, double *sgstry );
 }
 
 
@@ -618,8 +624,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // tmp: save L(Um) in U
     // evalRHS( Um, mMu, mLambda, U, AlphaVE );
     
-  }
-  
+  } // end m_energy_test ...
+
   if( m_moment_test )
     test_sources( point_sources, a_Sources, F );
 
@@ -727,22 +733,32 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // calculate boundary forcing at time t+mDt
     cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
+// NEW (Apr. 3, 2017) PC-time stepping for the memory variable
+    if( m_use_attenuation && m_number_mechanisms > 0 )
+       updateMemVarPred( AlphaVEp, AlphaVEm, U, t );
+
 // update ghost points in Up
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
        enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
+// NEW
+// Impose un-coupled free surface boundary condition with visco-elastic terms
+    if( m_use_attenuation && m_number_mechanisms > 0 )
+       enforceBCfreeAtt2( Up, mMu, mLambda, AlphaVEp, BCForcing );
+    
     if( m_checkfornan )
        check_for_nan( Up, 1, "U pred. " );
 
-    if( m_use_attenuation && m_number_mechanisms > 0 )
-    {
-// Update memory variables
-       updateMemoryVariables( AlphaVEp, AlphaVEm, Up, U, Um, t );
-// Impose coupled free surface boundary condition
-       enforceBCfreeAtt( Up, U, Um, mMu, mLambda, AlphaVEp, AlphaVEm, BCForcing, m_sbop, t );
-    }
+// OLD
+//     if( m_use_attenuation && m_number_mechanisms > 0 )
+//     {
+// // Update memory variables
+//        updateMemoryVariables( AlphaVEp, AlphaVEm, Up, U, Um, t );
+// // Impose coupled free surface boundary condition
+//        enforceBCfreeAtt( Up, U, Um, mMu, mLambda, AlphaVEp, AlphaVEm, BCForcing, m_sbop, t );
+//     }
 
 // Grid refinement interface conditions:
 // *** 2nd order in TIME
@@ -788,6 +804,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_checkfornan )
 	  check_for_nan( Uacc, 1, "uacc " );
 
+// NEW (Apr. 4, 2017) Apply corrector for memory variables BEFORE 'Up' is corrected
+       if( m_use_attenuation && m_number_mechanisms > 0 )
+          updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
+
        if( m_use_attenuation && m_number_mechanisms > 0 )
           evalDpDmInTimeAtt( AlphaVEp, AlphaVE, AlphaVEm ); // store AlphaVEacc in AlphaVEm
 
@@ -819,16 +839,26 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
-       if( m_use_attenuation && (m_number_mechanisms > 0) )
-       {
-	  addAttToFreeBcForcing( AlphaVEp, BCForcing, m_sbop );
-       }
+
+// OLD
+//       if( m_use_attenuation && (m_number_mechanisms > 0) )
+//       {
+//	  addAttToFreeBcForcing( AlphaVEp, BCForcing, m_sbop );
+//       }
+       
 // update ghost points in Up
        if( m_anisotropic )
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
 	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
+// NEW (Apr. 4, 2017)
+// Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
+       if( m_use_attenuation && (m_number_mechanisms > 0) )
+       {
+          enforceBCfreeAtt2( Up, mMu, mLambda, AlphaVEp, BCForcing );
+       }
+       
 // interface conditions for the corrector
        enforceIC( Up, U, Um, t, false, point_sources );
 
@@ -1083,8 +1113,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
     int topo=topographyExists() && g == mNumberOfGrids-1;
     
 // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
-// for periodic bc, a_BCForcing[g][s] == NULL, so you better not access the
-// theses arrays in that case
+// for periodic bc, a_BCForcing[g][s] == NULL, so you better not access theses arrays in that case
     bforce_side0_ptr = a_BCForcing[g][0]; // low-i bndry forcing array pointer
     bforce_side1_ptr = a_BCForcing[g][1]; // high-i bndry forcing array pointer
     bforce_side2_ptr = a_BCForcing[g][2]; // low-j bndry forcing array pointer
@@ -3293,7 +3322,7 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 		  double cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
 		  double cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
 
-		  cof[a]= (omdt+1)/(6*cp);
+		  cof[a]= (omdt+1)/(6*cp); // assumes 4th order timestepping for memory variables
 		  r1[a] = (-cm*a_AlphaVEm[g][a](1,i,j,0)+(4+omdt*omdt)*i6*a_U[g](1,i,j,0)+i6*(1-omdt)*a_Um[g](1,i,j,0)+
 			   memforce(1,i,j,1))/cp;
 		  r2[a] = (-cm*a_AlphaVEm[g][a](2,i,j,0)+(4+omdt*omdt)*i6*a_U[g](2,i,j,0)+i6*(1-omdt)*a_Um[g](2,i,j,0)+
@@ -3512,6 +3541,7 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 }
 
 
+
 //-----------------------------------------------------------------------
 void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
 				vector<double**>& a_BCForcing, double bop[5] )
@@ -3643,4 +3673,214 @@ void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
 	 }
       }
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                            vector<Sarray*>& a_AlphaVEp, vector<double **>& a_BCForcing ) 
+{
+// AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time stepping for memory variables
+   int sg = usingSupergrid();
+   for(int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      double h   = mGridSize[g];
+      int topo = topographyExists() && g == mNumberOfGrids-1;
+      if( m_bcType[g][4] == bStressFree && !topo ) // Cartesian case
+      {
+	 double g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
+	 const double i6  = 1.0/6;
+	 const double d4a = 2.0/3;
+	 const double d4b =-1.0/12;
+	 double* forcing = a_BCForcing[g][4];
+	 int ni = (ilast-ifirst+1);
+	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	    {
+	       int ind = i-ifirst + ni*(j-jfirst);
+	       //               if( i==23 && j==18 )
+	       //		  cout << "bforce rhs " << forcing[3*ind] << endl;
+	       a4ci = a4cj = d4a;
+	       b4ci = b4cj = d4b;
+	       if( sg == 1 )
+	       {
+		  a4ci = d4a*m_sg_str_x[g][i-ifirst];
+		  b4ci = d4b*m_sg_str_x[g][i-ifirst];
+		  a4cj = d4a*m_sg_str_y[g][j-jfirst];
+		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
+	       }
+// this would be more efficient if done in Fortran
+	       g1 =  h*forcing[3*ind]
+                  - a_Mu[g](i,j,1)*
+                  (m_sbop[1]*a_Up[g](1,i,j,1) + m_sbop[2]*a_Up[g](1,i,j,2)
+                   + m_sbop[3]*a_Up[g](1,i,j,3) + m_sbop[4]*a_Up[g](1,i,j,4)
+                   + a4ci*(a_Up[g](3,i+1,j,1)-a_Up[g](3,i-1,j,1))
+                   + b4ci*(a_Up[g](3,i+2,j,1)-a_Up[g](3,i-2,j,1)) );
+
+	       g2 =  h*forcing[3*ind+1]
+                  - a_Mu[g](i,j,1)*
+                  ( m_sbop[1]*a_Up[g](2,i,j,1) + m_sbop[2]*a_Up[g](2,i,j,2)
+                    + m_sbop[3]*a_Up[g](2,i,j,3) + m_sbop[4]*a_Up[g](2,i,j,4)
+                    + a4cj*(a_Up[g](3,i,j+1,1)-a_Up[g](3,i,j-1,1))
+                    + b4cj*(a_Up[g](3,i,j+2,1)-a_Up[g](3,i,j-2,1)) );
+
+	       g3 =  h*forcing[3*ind+2]
+                  - (2*a_Mu[g](i,j,1)+a_Lambda[g](i,j,1))*
+                  ( m_sbop[1]*a_Up[g](3,i,j,1) + m_sbop[2]*a_Up[g](3,i,j,2)
+                    + m_sbop[3]*a_Up[g](3,i,j,3) + m_sbop[4]*a_Up[g](3,i,j,4) )
+                  - a_Lambda[g](i,j,1)*
+                  ( a4ci*(a_Up[g](1,i+1,j,1)-a_Up[g](1,i-1,j,1))
+                    + b4ci*(a_Up[g](1,i+2,j,1)-a_Up[g](1,i-2,j,1)) 
+                    + a4cj*(a_Up[g](2,i,j+1,1)-a_Up[g](2,i,j-1,1))
+                    + b4cj*(a_Up[g](2,i,j+2,1)-a_Up[g](2,i,j-2,1)) );
+               
+	       acof = a_Mu[g](i,j,1);
+	       bcof = 2*a_Mu[g](i,j,1)+a_Lambda[g](i,j,1);
+	       for( int a=0 ; a < m_number_mechanisms ; a++ )
+	       {
+// this would be more efficient if done in Fortran
+// mu*( a1_z + a3_x )
+		  g1 = g1 + mMuVE[g][a](i,j,1)*
+                     ( m_sbop[0]*a_AlphaVEp[g][a](1,i,j,0) + m_sbop[1]*a_AlphaVEp[g][a](1,i,j,1)+m_sbop[2]*a_AlphaVEp[g][a](1,i,j,2)
+                       + m_sbop[3]*a_AlphaVEp[g][a](1,i,j,3)+m_sbop[4]*a_AlphaVEp[g][a](1,i,j,4)
+                       + a4ci*(a_AlphaVEp[g][a](3,i+1,j,1)-a_AlphaVEp[g][a](3,i-1,j,1))
+                       + b4ci*(a_AlphaVEp[g][a](3,i+2,j,1)-a_AlphaVEp[g][a](3,i-2,j,1)) );
+// mu*( a2_z + a3_y )
+		  g2 = g2 + mMuVE[g][a](i,j,1)*
+                     ( m_sbop[0]*a_AlphaVEp[g][a](2,i,j,0) + m_sbop[1]*a_AlphaVEp[g][a](2,i,j,1)+m_sbop[2]*a_AlphaVEp[g][a](2,i,j,2)
+                       + m_sbop[3]*a_AlphaVEp[g][a](2,i,j,3) + m_sbop[4]*a_AlphaVEp[g][a](2,i,j,4)
+                       + a4cj*(a_AlphaVEp[g][a](3,i,j+1,1)-a_AlphaVEp[g][a](3,i,j-1,1))
+                       + b4cj*(a_AlphaVEp[g][a](3,i,j+2,1)-a_AlphaVEp[g][a](3,i,j-2,1)) );
+// (2*mu + lambda)*( a3_z ) + lambda*( a1_x + a2_y )
+		  g3 = g3 + (2*mMuVE[g][a](i,j,1)+mLambdaVE[g][a](i,j,1))*
+                     (m_sbop[0]*a_AlphaVEp[g][a](3,i,j,0)
+                      + m_sbop[1]*a_AlphaVEp[g][a](3,i,j,1)+m_sbop[2]*a_AlphaVEp[g][a](3,i,j,2)
+                      + m_sbop[3]*a_AlphaVEp[g][a](3,i,j,3)+m_sbop[4]*a_AlphaVEp[g][a](3,i,j,4) )
+                     + mLambdaVE[g][a](i,j,1)*
+                     ( a4ci*(a_AlphaVEp[g][a](1,i+1,j,1)-a_AlphaVEp[g][a](1,i-1,j,1))
+                       + b4ci*(a_AlphaVEp[g][a](1,i+2,j,1)-a_AlphaVEp[g][a](1,i-2,j,1)) 
+                       + a4cj*(a_AlphaVEp[g][a](2,i,j+1,1)-a_AlphaVEp[g][a](2,i,j-1,1))
+                       + b4cj*(a_AlphaVEp[g][a](2,i,j+2,1)-a_AlphaVEp[g][a](2,i,j-2,1)) );
+	       } // end for all mechanisms
+	       a_Up[g](1,i,j,0) = g1/(acof*m_sbop[0]);
+	       a_Up[g](2,i,j,0) = g2/(acof*m_sbop[0]);
+	       a_Up[g](3,i,j,0) = g3/(bcof*m_sbop[0]);
+	    }
+      } // end if bcType[g][4] == bStressFree
+      
+      if( m_bcType[g][5] == bStressFree  )
+      {
+         int nk=m_global_nz[g];
+
+	 double g1, g2, g3, r1[8], r2[8], r3[8], cof[8], acof, bcof, a4ci, b4ci, a4cj, b4cj;
+	 const double i6  = 1.0/6;
+	 const double d4a = 2.0/3;
+	 const double d4b =-1.0/12;
+	 double* forcing = a_BCForcing[g][5];
+	 int ni = (ilast-ifirst+1);
+	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	    {
+	       int ind = i-ifirst + ni*(j-jfirst);
+	       a4ci = a4cj = d4a;
+	       b4ci = b4cj = d4b;
+	       if( sg == 1 )
+	       {
+		  a4ci = d4a*m_sg_str_x[g][i-ifirst];
+		  b4ci = d4b*m_sg_str_x[g][i-ifirst];
+		  a4cj = d4a*m_sg_str_y[g][j-jfirst];
+		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
+	       }
+	       g1 = h*forcing[3*ind] - a_Mu[g](i,j,nk)*
+                  (-m_sbop[1]*a_Up[g](1,i,j,nk) - m_sbop[2]*a_Up[g](1,i,j,nk-1) 
+                   -m_sbop[3]*a_Up[g](1,i,j,nk-2) - m_sbop[4]*a_Up[g](1,i,j,nk-3)
+                   + a4ci*(a_Up[g](3,i+1,j,nk)-a_Up[g](3,i-1,j,nk))
+                   + b4ci*(a_Up[g](3,i+2,j,nk)-a_Up[g](3,i-2,j,nk)) );
+
+	       g2 = h*forcing[3*ind+1] - a_Mu[g](i,j,nk)*
+                  (-m_sbop[1]*a_Up[g](2,i,j,nk) - m_sbop[2]*a_Up[g](2,i,j,nk-1)
+                   -m_sbop[3]*a_Up[g](2,i,j,nk-2) - m_sbop[4]*a_Up[g](2,i,j,nk-3)
+                   + a4cj*(a_Up[g](3,i,j+1,nk)-a_Up[g](3,i,j-1,nk))
+                   + b4cj*(a_Up[g](3,i,j+2,nk)-a_Up[g](3,i,j-2,nk)) );
+
+	       g3 =  h*forcing[3*ind+2] - (2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk))*
+                  ( -m_sbop[1]*a_Up[g](3,i,j,nk) - m_sbop[2]*a_Up[g](3,i,j,nk-1) 
+                    -m_sbop[3]*a_Up[g](3,i,j,nk-2) - m_sbop[4]*a_Up[g](3,i,j,nk-3) )
+                  - a_Lambda[g](i,j,nk)*
+                  ( a4ci*(a_Up[g](1,i+1,j,nk)-a_Up[g](1,i-1,j,nk))
+                    + b4ci*(a_Up[g](1,i+2,j,nk)-a_Up[g](1,i-2,j,nk)) 
+                    + a4cj*(a_Up[g](2,i,j+1,nk)-a_Up[g](2,i,j-1,nk))
+                    + b4cj*(a_Up[g](2,i,j+2,nk)-a_Up[g](2,i,j-2,nk)) );
+               
+	       acof = a_Mu[g](i,j,nk);
+	       bcof = 2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk);
+	       for( int a=0 ; a < m_number_mechanisms ; a++ )
+	       {
+		  g1 = g1 + mMuVE[g][a](i,j,nk)*
+                     (-m_sbop[0]*a_AlphaVEp[g][a](1,i,j,nk+1) - m_sbop[1]*a_AlphaVEp[g][a](1,i,j,nk)-m_sbop[2]*a_AlphaVEp[g][a](1,i,j,nk-1)
+                      -m_sbop[3]*a_AlphaVEp[g][a](1,i,j,nk-2)-m_sbop[4]*a_AlphaVEp[g][a](1,i,j,nk-3)
+                      +a4ci*(a_AlphaVEp[g][a](3,i+1,j,nk)-a_AlphaVEp[g][a](3,i-1,j,nk))
+                      +b4ci*(a_AlphaVEp[g][a](3,i+2,j,nk)-a_AlphaVEp[g][a](3,i-2,j,nk)));
+
+		  g2 = g2 + mMuVE[g][a](i,j,nk)*
+                     ( - m_sbop[0]*a_AlphaVEp[g][a](2,i,j,nk+1) -m_sbop[1]*a_AlphaVEp[g][a](2,i,j,nk)-m_sbop[2]*a_AlphaVEp[g][a](2,i,j,nk-1)
+                       - m_sbop[3]*a_AlphaVEp[g][a](2,i,j,nk-2)-m_sbop[4]*a_AlphaVEp[g][a](2,i,j,nk-3)
+                       + a4cj*(a_AlphaVEp[g][a](3,i,j+1,nk)-a_AlphaVEp[g][a](3,i,j-1,nk))
+                       + b4cj*(a_AlphaVEp[g][a](3,i,j+2,nk)-a_AlphaVEp[g][a](3,i,j-2,nk)) );
+                                                  
+		  g3 = g3 + (2*mMuVE[g][a](i,j,nk)+mLambdaVE[g][a](i,j,nk))*
+                     (-m_sbop[0]*a_AlphaVEp[g][a](3,i,j,nk+1)-m_sbop[1]*a_AlphaVEp[g][a](3,i,j,nk)-m_sbop[2]*a_AlphaVEp[g][a](3,i,j,nk-1)
+                      -m_sbop[3]*a_AlphaVEp[g][a](3,i,j,nk-2)-m_sbop[4]*a_AlphaVEp[g][a](3,i,j,nk-3))
+                     + mLambdaVE[g][a](i,j,nk)*
+                     (a4ci*(a_AlphaVEp[g][a](1,i+1,j,nk)-a_AlphaVEp[g][a](1,i-1,j,nk))
+                      + b4ci*(a_AlphaVEp[g][a](1,i+2,j,nk)-a_AlphaVEp[g][a](1,i-2,j,nk)) 
+                      + a4cj*(a_AlphaVEp[g][a](2,i,j+1,nk)-a_AlphaVEp[g][a](2,i,j-1,nk))
+                      + b4cj*(a_AlphaVEp[g][a](2,i,j+2,nk)-a_AlphaVEp[g][a](2,i,j-2,nk)) );
+	       }
+	       a_Up[g](1,i,j,nk+1) = g1/(-m_sbop[0]*acof);
+	       a_Up[g](2,i,j,nk+1) = g2/(-m_sbop[0]*acof);
+	       a_Up[g](3,i,j,nk+1) = g3/(-m_sbop[0]*bcof);
+	    }
+      }// end if bcType[g][5] == bStressFree
+      
+// all the curvilinear code needs to be overhauled
+      if( m_bcType[g][4] == bStressFree && topo && g == mNumberOfGrids-1 )
+      {
+         double* mu_p = a_Mu[g].c_ptr();
+         double* la_p = a_Lambda[g].c_ptr();
+         double* up_p = a_Up[g].c_ptr();
+         int side = 5;
+         int nz = m_global_nz[g];
+         int ghno = 0;
+         char op = '-';
+         double* forcing = a_BCForcing[g][4]; // setup in cartesian_bc_forcing()
+         int usesg = usingSupergrid() ? 1 : 0;
+
+// make a local copy of the boundary forcing array to simplify access
+         Sarray bforcerhs(3,ifirst,ilast,jfirst,jlast,1,1);
+         bforcerhs.assign(forcing);
+
+         for( int a = 0 ; a < m_number_mechanisms ; a++ )
+         {
+            double* mu_ve_p   = mMuVE[g][a].c_ptr();
+            double* lave_p   = mLambdaVE[g][a].c_ptr();
+            double* alphap_p = a_AlphaVEp[g][a].c_ptr();
+            // This function adds the visco-elastic boundary stresses to bforcerhs
+            ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+                                  alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
+                                  m_sbop, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+         } // end for a...
+         
+// update GHOST POINT VALUES OF UP
+         att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                         up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop,
+                         &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+      } // end if bcType[g][4] == bStressFree && topography
+      
+   }  // end for g=0,...
 }

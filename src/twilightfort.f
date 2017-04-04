@@ -2668,6 +2668,9 @@ c-----------------------------------------------------------------------
       doubleprecision t99
 
       dto = dt*omegaVE
+c: AP Apr. 3, 2017: Only add forcing for the predictor:
+c      icp  = 1/( 1d0/2 + 1/(2*dto) )
+c: Original: both formulas are equivalent
 c      icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
       icp = 12*dto/( 6 + 6*dto + 3*dto*dto + dto*dto*dto )
 

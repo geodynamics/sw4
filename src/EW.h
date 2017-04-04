@@ -210,6 +210,9 @@ void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>
 			   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 		       vector<double **>& a_BCForcing, double bop[5], double a_t );
 
+   void enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+			   vector<Sarray*>& a_AlphaVEp, vector<double **>& a_BCForcing );
+
 void enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C, 
 			   double t, vector<double **> & a_BCForcing );
    
@@ -231,6 +234,11 @@ void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
 void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
 
+void updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_U, double a_t );
+
+void updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
+                       vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+   
 void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
 			    vector<Sarray*>& a_AlphaVEm,
 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
