@@ -37,6 +37,7 @@
 //#include <mpi.h>
 #include "Require.h"
 #include <vector>
+#include <sys/types.h>
 #include <string>
 #include "sw4.h"
 
@@ -55,7 +56,7 @@ public:
    Sarray( const Sarray& u );
    Sarray( Sarray& u, int nc=-1 );
    Sarray();
-   ~Sarray() {if( m_data != 0 ) delete[] m_data;}
+  ~Sarray() {if( m_data != 0 ) delmanaged(m_data);}
 //   void define( CartesianProcessGrid* cartcomm, int nc );
    void define( int iend, int jend, int kend );
    void define( int nc, int iend, int jend, int kend );
@@ -102,6 +103,7 @@ public:
 #endif
 //      return m_data[m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
       return m_data[m_base+m_offi*i+m_offj*j+m_offk*k+m_offc];}
+  inline double* offset( int c, int i, int j, int k ){ return m_data+(m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k);}
    inline bool is_defined()
       {return m_data != NULL;}
    int m_ib, m_ie, m_jb, m_je, m_kb, m_ke;
@@ -147,13 +149,18 @@ public:
    void page_unlock( EWCuda* cu );
    Sarray* create_copy_on_device( EWCuda* cu );
    void define_offsets();
-//   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
+   double* newmanaged(size_t len);
+  void delmanaged(double* &dptr);
+  char *status();
+  void prefetch();
+//   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:
-   float_sw4* m_data;
-   float_sw4* dev_data;
-   inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
-   inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
+  bool managed;
+  float_sw4* m_data;
+  float_sw4* dev_data;
+  inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
+  inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
 //   void init_mpi_datatype( CartesianProcessGrid* cartcomm );
 //    bool m_mpi_datatype_initialized;
 //    MPI_Datatype m_local_block_type;

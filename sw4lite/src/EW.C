@@ -28,7 +28,16 @@
 
 #include "F77_FUNC.h"
 #include "EWCuda.h"
+#include "mynvtx.h"
 
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      omp_parallel_for_exec>>
+EXEC_CARTBC;
+typedef RAJA::omp_parallel_for_exec EXEC;
+//typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
+//			      cuda_threadblock_z_exec<16>>>
+			      //EXEC_CARTBC;
+void PrintPointerAttributes(void *ptr);
 #ifndef SW4_CROUTINES
 extern "C" {
    void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)( int*, int*, int*, int*, int*, int*, int*, int*, 
@@ -107,14 +116,14 @@ extern "C"
    void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
 }
 void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
-	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
-	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
+	     int nk, int* onesided, const float_sw4* a_acof, const float_sw4* a_bope, const float_sw4* a_ghcof,
+	     float_sw4* a_lu, const float_sw4* a_u, const float_sw4* a_mu, const float_sw4* a_lambda, 
+	     float_sw4 h, const float_sw4* a_strx, const float_sw4* a_stry, const float_sw4* a_strz  );
 
 void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-	     int nk, int* onesided, float_sw4* a_acof, float_sw4* a_bope, float_sw4* a_ghcof,
-	     float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
-	     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz  );
+	     int nk, int* onesided, const float_sw4* a_acof, const float_sw4* a_bope, const float_sw4* a_ghcof,
+	     float_sw4* a_lu, const float_sw4* a_u, const float_sw4* a_mu, const float_sw4* a_lambda, 
+	     float_sw4 h, const float_sw4* a_strx, const float_sw4* a_stry, const float_sw4* a_strz  );
 
 void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
@@ -941,7 +950,7 @@ void EW::processSource( char* buffer )
 
    //   int ncyc = 0;
    //   bool ncyc_set = false;
-                                     
+
    float_sw4* par=NULL;
    int* ipar=NULL;
    int npar=0, nipar=0;
@@ -2071,15 +2080,15 @@ void EW::allocateArrays()
       mLambda[g].set_to_minusOne();
 
     // Supergrid arrays
-      m_sg_dc_x[g]     = new float_sw4[ilast-ifirst+1];
-      m_sg_dc_y[g]     = new float_sw4[jlast-jfirst+1];
-      m_sg_dc_z[g]     = new float_sw4[klast-kfirst+1];
-      m_sg_str_x[g]    = new float_sw4[ilast-ifirst+1];
-      m_sg_str_y[g]    = new float_sw4[jlast-jfirst+1];
-      m_sg_str_z[g]    = new float_sw4[klast-kfirst+1];
-      m_sg_corner_x[g] = new float_sw4[ilast-ifirst+1];
-      m_sg_corner_y[g] = new float_sw4[jlast-jfirst+1];
-      m_sg_corner_z[g] = new float_sw4[klast-kfirst+1];
+      m_sg_dc_x[g]     = newmanaged(ilast-ifirst+1);
+      m_sg_dc_y[g]     = newmanaged(jlast-jfirst+1);
+      m_sg_dc_z[g]     = newmanaged(klast-kfirst+1);
+      m_sg_str_x[g]    = newmanaged(ilast-ifirst+1);
+      m_sg_str_y[g]    = newmanaged(jlast-jfirst+1);
+      m_sg_str_z[g]    = newmanaged(klast-kfirst+1);
+      m_sg_corner_x[g] = newmanaged(ilast-ifirst+1);
+      m_sg_corner_y[g] = newmanaged(jlast-jfirst+1);
+      m_sg_corner_z[g] = newmanaged(klast-kfirst+1);
       //#pragma omp parallel for
       //      for( int k=kfirst ; k<= klast ; k++)
       //	 for( int j=jfirst ; j <= jlast ; j++ )
@@ -2463,6 +2472,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // Begin time stepping loop
    for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++ )
    {    
+     PUSH_RANGE("TIME STEP",0);
       time_measure[0] = MPI_Wtime();
       // Predictor 
       // Need U on device for evalRHS,
@@ -2480,22 +2490,20 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 
       if( m_checkfornan )
       {
-#ifdef SW4_CUDA
-	 check_for_nan_GPU( F, 1, "F" );
-	 check_for_nan_GPU( U, 1, "U" );
-#else
-	 check_for_nan( F, 1, "F" );
-	 check_for_nan( U, 1, "U" );
-#endif
+	//std::cout<<"HEREEEEEEEEE\n";
+	check_for_nan( F, 1, "F" );
+	check_for_nan( U, 1, "U" );
+	//std::cout<<"HEREEEEEEEEE\n";
       }
       time_measure[1] = MPI_Wtime();
 
 // evaluate right hand side
+      PUSH_RANGE("evalRHS",2);
       if( m_cuobj->has_gpu() )
 	 evalRHSCU( U, mMu, mLambda, Lu, 0 ); // save Lu in composite grid 'Lu'
       else
 	 evalRHS( U, mMu, mLambda, Lu ); // save Lu in composite grid 'Lu'
-
+      POP_RANGE;
       if( m_checkfornan )
 #ifdef SW4_CUDA
 	 check_for_nan_GPU( Lu, 1, "Lu pred. " );
@@ -2525,11 +2533,13 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       time_measure[3] = MPI_Wtime();
 
 // calculate boundary forcing at time t+mDt
+      PUSH_RANGE("CART-BC",5);
       cartesian_bc_forcing( t+mDt, BCForcing, m_globalUniqueSources );
-
+      POP_RANGE;
+      PUSH_RANGE("enforceBC",0);
       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
-
-
+      POP_RANGE;
+      PUSH_RANGE("CHK-NAN",1);
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "U pred. " );
 
@@ -2550,22 +2560,24 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       //      time_measure[4] = MPI_Wtime();
       time_measure[5] = MPI_Wtime();
 
+      PUSH_RANGE("evalDpDmInTIme",0);
       if( m_cuobj->has_gpu() )
 	 evalDpDmInTimeCU( Up, U, Um, Uacc, 0 ); // store result in Uacc
       else
 	 evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
-
+      POP_RANGE;
       if( m_checkfornan )
 #ifdef SW4_CUDA
 	 check_for_nan_GPU( Uacc, 1, "uacc " );
 #else
 	 check_for_nan( Uacc, 1, "uacc " );
-#endif
+#endif      
+      PUSH_RANGE("evalRHS-2",1);
       if( m_cuobj->has_gpu() )
 	 evalRHSCU( Uacc, mMu, mLambda, Lu, 0 );
       else
        	 evalRHS( Uacc, mMu, mLambda, Lu );
-
+      POP_RANGE;
       if( m_checkfornan )
 #ifdef SW4_CUDA
 	 check_for_nan_GPU( Lu, 1, "L(uacc) " );
@@ -2581,7 +2593,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       //      time_measure[5] = MPI_Wtime();
       time_measure[6] = MPI_Wtime();
 
-// add in super-grid damping terms
+      // add in super-grid damping terms
+      PUSH_RANGE("addSuperGridDamping",3);
       if ( m_use_supergrid )
       {
 	 if( m_cuobj->has_gpu() )
@@ -2590,6 +2603,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	    addSuperGridDamping( Up, U, Um, mRho );
 
       }
+      POP_RANGE;
       for( int g=0; g < mNumberOfGrids ; g++ )
 	 Up[g].copy_from_device(m_cuobj,true,1);
 
@@ -2606,9 +2620,12 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       time_measure[8] = MPI_Wtime();
 
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
+      PUSH_RANGE("CART-BC2",5);
       cartesian_bc_forcing( t+mDt, BCForcing, m_globalUniqueSources );
+      POP_RANGE;
+      PUSH_RANGE("enforceBC2",0);
       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
-
+      POP_RANGE;
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "Up" );
 
@@ -2675,7 +2692,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 exactSol( t, Up, m_globalUniqueSources ); // store exact solution in Up
 //	 //	 if (m_lamb_test)
 //	 //	    normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
+	 PUSH_RANGE("NormOfDiff",1);
 	 normOfDifference( Up, U, errInf, errL2, solInf, m_globalUniqueSources );
+	 POP_RANGE;
          if ( m_myrank == 0 )
 	    cout << t << " " << errInf << " " << errL2 << " " << solInf << endl;
       }
@@ -3476,7 +3495,7 @@ bool EW::exactSol( float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources
 
 //-----------------------------------------------------------------------
 // smooth wave for time dependence to test point force term with 
-float_sw4 EW::SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -3491,7 +3510,7 @@ float_sw4 EW::SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // very smooth bump for time dependence for further testing of point force 
-float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 1024, c1 = -5120, c2 = 10240, c3 = -10240, c4 = 5120, c5 = -1024;
@@ -3506,7 +3525,7 @@ float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // C6 smooth bump for time dependence for further testing of point force 
-float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 retval = 0;
   if( (t-R/c) > 0 && (t-R/c) < 1 )
@@ -3516,7 +3535,7 @@ float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // derivative of smooth wave 
-float_sw4 EW::d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -3531,7 +3550,7 @@ float_sw4 EW::d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // very smooth bump for time dependence to further testing of point force 
-float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 1024, c1 = -5120, c2 = 10240, c3 = -10240, c4 = 5120, c5 = -1024;
@@ -3546,7 +3565,7 @@ float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // C6 smooth bump for time dependence to further testing of point force 
-float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 retval=0;
   if( (t-R/c) > 0 && (t-R/c) < 1 )
@@ -3556,7 +3575,7 @@ float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // Primitive function (for T) of SmoothWave(t-T)*T
-float_sw4 EW::SWTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE float_sw4 EW::SWTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 temp = Lim;
 
@@ -3574,7 +3593,7 @@ float_sw4 EW::SWTP(float_sw4 Lim, float_sw4 t)
 
 //-----------------------------------------------------------------------
 // Primitive function (for T) of VerySmoothBump(t-T)*T
-float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 temp = Lim;
   float_sw4 f = 1024., g = -5120., h = 10240., i = -10240., j = 5120., k = -1024.;
@@ -3588,7 +3607,7 @@ float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
 }
 //-----------------------------------------------------------------------
 // Primitive function (for T) of C6SmoothBump(t-T)*T
-float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 x = t-Lim;
   return pow(x,8)*(-3217.5*pow(x,8)+3432.0*(7+t)*pow(x,7)-25740.0*(3+t)*pow(x,6)
@@ -3598,7 +3617,7 @@ float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*SmoothWave(t-T)*T from R/alpha to R/beta
-float_sw4 EW::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -3625,7 +3644,7 @@ float_sw4 EW::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha,
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*VerySmoothBump(t-T)*T from R/alpha to R/beta
-float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -3651,7 +3670,7 @@ float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 al
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*C6SmoothBump(t-T)*T from R/alpha to R/beta
-float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -3676,7 +3695,7 @@ float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alph
 }
 
 //-----------------------------------------------------------------------
-float_sw4 EW::Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f )
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f )
 {
   float_sw4 temp = R;
   temp = 1 /(f* sqrt(2*M_PI))*exp(-pow(t-R/c,2) / (2*f*f));
@@ -3684,7 +3703,7 @@ float_sw4 EW::Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f )
 }
 
 //-----------------------------------------------------------------------
-float_sw4 EW::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f)
+RAJA_HOST_DEVICE float_sw4 EW::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f)
 {
   float_sw4 temp = R;
   temp = 1 /(f* sqrt(2*M_PI))*(-exp(-pow(t-R/c,2)/(2*f*f))*(t-R/c))/pow(f,2);
@@ -3692,7 +3711,7 @@ float_sw4 EW::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f)
 }
 
 //-----------------------------------------------------------------------
-float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
   temp = -0.5*t*(erf( (t-R/beta)/(sqrt(2.0)*f))     - erf( (t-R/alpha)/(sqrt(2.0)*f)) ) -
@@ -3790,11 +3809,19 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    //   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
    //      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
    //	 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-   for( int k=kmin ; k <= kmax ; k++ )
-      for( int j=jmin ; j <= jmax ; j++ )
-	 for( int i=imin ; i <= imax ; i++ )
-	 {
+   //   for( int k=kmin ; k <= kmax ; k++ )
+   //   for( int j=jmin ; j <= jmax ; j++ )
+   //	 for( int i=imin ; i <= imax ; i++ )
+   int m_zmin_local= m_zmin[g];
+   //PrintPointerAttributes(up);
+   forallN<EXEC_CARTBC, int, int,int>(
+				  RangeSegment(kmin,kmax+1),
+				  RangeSegment(jmin,jmax+1),
+				  RangeSegment(imin,imax+1),
+				  [=] RAJA_DEVICE(int k, int j, int i) {
+	 
             float_sw4 x,y,z;
+	    size_t ind = (i-imin)+(j-jmin)*(imax-imin+1)+(k-kmin)*(jmax-jmin+1)*(imax-imin+1);
 	    //	    if( curvilinear )
 	    //	    {
 	    //               x = mX(i,j,k);
@@ -3805,7 +3832,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	    {
 	       x = (i-1)*h;
 	       y = (j-1)*h;
-	       z = (k-1)*h + m_zmin[g];
+	       z = (k-1)*h + m_zmin_local;
 	    }
 	    if( !ismomentsource )
 	    {
@@ -4326,8 +4353,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 	       }
 	    }
-	    ind++;
-	 }
+	    //ind++;
+				  });
+   //cudaDeviceSynchronize();
 }
 
 //-----------------------------------------------------------------------
@@ -6280,4 +6308,25 @@ void EW::copy_point_sources_to_gpu()
       cout << "Error EW::copy_point_sources_to_gpu, cudaMemcpy, 3, retcode = " <<
 	 cudaGetErrorString(retcode) << endl;
 #endif
+}
+float_sw4* EW::newmanaged(size_t len){
+   void *ptr;
+   //std::cout<<"******Using overloaded new**********\n";
+   //cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachHost);
+#ifdef CUDA_CODE
+   cudaMallocManaged(&ptr, len*sizeof(float_sw4));
+   cudaDeviceSynchronize();
+#else
+   ptr=malloc(len*sizeof(float_sw4));
+#endif
+   return (float_sw4*)ptr;
+}
+void EW::delmanaged(float_sw4* &dptr){
+#ifdef CUDA_CODE
+  cudaDeviceSynchronize();
+  cudaFree((void*)dptr);
+#else
+  free((void*)dptr);
+#endif
+  dptr=NULL;
 }

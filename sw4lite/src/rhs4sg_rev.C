@@ -1,4 +1,34 @@
 #include "sw4.h"
+using namespace std;
+#include <stdio.h>
+#include "RAJA/RAJA.hxx"
+using namespace RAJA;
+
+
+// Note 4,4,32 runs out of registers
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      omp_parallel_for_exec>>
+EXEC0;
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_collapse_nowait_exec,
+		 RAJA::omp_collapse_nowait_exec,
+		 RAJA::omp_collapse_nowait_exec >,
+  RAJA::OMP_Parallel<> > EXEC1;
+
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec,
+		 RAJA::seq_exec,
+		 RAJA::simd_exec > > EXEC2;
+
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec,
+		 RAJA::seq_exec,
+		 RAJA::force_simd_exec > > EXEC;
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::seq_exec, RAJA::seq_exec, RAJA::force_simd_exec > > EXEC4;
+
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
 //#include <iostream>
 //using namespace std;
@@ -11,11 +41,11 @@
 //		 float_sw4 h, float_sw4*  a_strx, float_sw4*  a_stry, 
 //		 float_sw4* a_strz  )
 void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		 int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
-		 float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-		 float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-		 float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-		 float_sw4* __restrict__ a_strz )
+		 int nk, int* __restrict__ onesided, const float_sw4* __restrict__ a_acof, const float_sw4 *__restrict__ a_bope,
+		 const float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, const float_sw4* __restrict__ a_u,
+		 const float_sw4* __restrict__ a_mu, const float_sw4* __restrict__ a_lambda, 
+		 float_sw4 h, const float_sw4* __restrict__ a_strx, const float_sw4* __restrict__ a_stry, 
+		 const float_sw4* __restrict__ a_strz )
 {
    // This would work to create multi-dimensional C arrays:
    //   float_sw4** b_ar=(float_sw4*)malloc(ni*nj*sizeof(float_sw4*));
@@ -70,20 +100,16 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
    k2 = klast-2;
    if( onesided[5] == 1 )
       k2 = nk-6;
-   
-#pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
-              r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,u3zip2,u3zip1,\
-              u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy,\
-              mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,\
-	      u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb,muz1,muz2,muz3,muz4)
    {
-#pragma omp for
-   for( k= k1; k <= k2 ; k++ )
-      for( j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
-	 for( i=ifirst+2; i <= ilast-2 ; i++ )
-	 {
+     //std::cout<<"LOOPSET #1\n";
+     forallN<EXEC, int, int,int>(
+				 RangeSegment(k1,k2+1),
+				 RangeSegment(jfirst+2,jlast-1),
+				 RangeSegment(ifirst+2,ilast-1),
+				 [=] RAJA_DEVICE(int k, int j, int i) {
+	
+				   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+	   float_sw4 r1, r2, r3;
 
 /* from inner_loop_4a, 28x3 = 84 ops */
             mux1 = mu(i-1,j,k)*strx(i-1)-
@@ -314,17 +340,16 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	    lu(1,i,j,k) =  cof*r1;
             lu(2,i,j,k) =  cof*r2;
             lu(3,i,j,k) =  cof*r3;
-	 }
+				 }); // END OF RAJA LOOP
       if( onesided[4]==1 )
       {
-#pragma omp for
-	 for( k=1 ; k<= 6 ; k++ )
-/* the centered stencil can be used in the x- and y-directions */
-	    for( j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
-#pragma ivdep
-	       for( i=ifirst+2; i<=ilast-2; i++ )
-	       {
+	//std::cout<<"LOOP SET # 2\n";
+	forallN<EXEC, int, int,int>(
+				    RangeSegment(1,6+1),
+				    RangeSegment(jfirst+2,jlast-1),
+				    RangeSegment(ifirst+2,ilast-1),
+				    [=] RAJA_DEVICE(int k, int j, int i) {
+float_sw4 mux1, mux2, mux3, mux4,r1,r2,r3,muy1,muy2,muy3,muy4;
 /* from inner_loop_4a */
 		  mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -366,9 +391,11 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 		  /* averaging the coefficient, */
 		  /* leave out the z-supergrid stretching strz, since it will */
 		  /* never be used together with the sbp-boundary operator */
-		  mu1zz = 0;
-		  mu2zz = 0;
-		  mu3zz = 0;
+		  float_sw4 mu1zz = 0;
+		  float_sw4 mu2zz = 0;
+		  float_sw4 mu3zz = 0;
+		  int q;
+		  float_sw4 lap2mu,mucof;
 		  for( q=1; q <= 8; q ++ )
 		  {
 		     //		     lap2mu= 0;
@@ -446,10 +473,10 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
                         mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
 				     8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) )) );
 /*   (la*w_z)_x: NOT CENTERED */
-            u3zip2=0;
-            u3zip1=0;
-            u3zim1=0;
-            u3zim2=0;
+            float_sw4 u3zip2=0;
+            float_sw4 u3zip1=0;
+            float_sw4 u3zim1=0;
+            float_sw4 u3zim2=0;
 	    for( q=1 ; q <=8 ; q++ )
 	    {
 	       u3zip2 += bope(k,q)*u(3,i+2,j,q);
@@ -457,11 +484,11 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	       u3zim1 += bope(k,q)*u(3,i-1,j,q);
 	       u3zim2 += bope(k,q)*u(3,i-2,j,q);
 	    }
-            lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
+            float_sw4 lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
 	               -8*la(i-1,j,k)*u3zim1 +   la(i-2,j,k)*u3zim2);
             r1 = r1 + strx(i)*lau3zx;
 	    /*   (mu*w_x)_z: NOT CENTERED */
-            mu3xz=0;
+            float_sw4 mu3xz=0;
             for( q=1 ; q<=8 ; q++ )
               mu3xz += bope(k,q)*( mu(i,j,q)*i12*
                   (-u(3,i+2,j,q) + 8*u(3,i+1,j,q)
@@ -489,10 +516,11 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
                         la(i,j+2,k)*(u(1,i-2,j+2,k)-u(1,i+2,j+2,k)+
 				     8*(-u(1,i-1,j+2,k)+u(1,i+1,j+2,k))) )) );
 /* (la*w_z)_y : NOT CENTERED */
-            u3zjp2=0;
-            u3zjp1=0;
-            u3zjm1=0;
-            u3zjm2=0;
+            float_sw4 u3zjp2=0;
+            float_sw4 u3zjp1=0;
+            float_sw4 u3zjm1=0;
+            float_sw4 u3zjm2=0;
+	    float_sw4 lau3zy,mu3yz;
 	    for( q=1 ; q <=8 ; q++ )
 	    {
 	       u3zjp2 += bope(k,q)*u(3,i,j+2,q);
@@ -516,10 +544,11 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 
 	    /* No centered cross terms in r3 */
 	    /*  (mu*u_z)_x: NOT CENTERED */
-            u1zip2=0;
-            u1zip1=0;
-            u1zim1=0;
-            u1zim2=0;
+            float_sw4 u1zip2=0;
+            float_sw4 u1zip1=0;
+            float_sw4 u1zim1=0;
+            float_sw4 u1zim2=0;
+	    float_sw4 mu1zx,mu2zy;
 	    for(  q=1 ; q <=8 ; q++ )
 	    {
 	       u1zip2 += bope(k,q)*u(1,i+2,j,q);
@@ -532,10 +561,10 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             r3 = r3 + strx(i)*mu1zx;
 
 	    /* (mu*v_z)_y: NOT CENTERED */
-            u2zjp2=0;
-            u2zjp1=0;
-            u2zjm1=0;
-            u2zjm2=0;
+            float_sw4 u2zjp2=0;
+            float_sw4 u2zjp1=0;
+            float_sw4 u2zjm1=0;
+            float_sw4 u2zjm2=0;
 	    for(  q=1 ; q <=8 ; q++ )
 	    {
 	       u2zjp2 += bope(k,q)*u(2,i,j+2,q);
@@ -548,7 +577,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             r3 = r3 + stry(j)*mu2zy;
 
 /*   (la*u_x)_z: NOT CENTERED */
-            lau1xz=0;
+            float_sw4 lau1xz=0;
 	    for(  q=1 ; q <=8 ; q++ )
 	       lau1xz += bope(k,q)*( la(i,j,q)*i12*
                   (-u(1,i+2,j,q) + 8*u(1,i+1,j,q)
@@ -556,7 +585,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             r3 = r3 + strx(i)*lau1xz;
 
 /* (la*v_y)_z: NOT CENTERED */
-            lau2yz=0;
+            float_sw4 lau2yz=0;
 	    for(  q=1 ; q <=8 ; q++ )
               lau2yz += bope(k,q)*( la(i,j,q)*i12*
                   (-u(2,i,j+2,q) + 8*u(2,i,j+1,q)
@@ -566,17 +595,18 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	       }
+				    });
       }
       if( onesided[5] == 1 )
       {
-#pragma omp for
-	 for(  k = nk-5 ; k <= nk ; k++ )
-	    for(  j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
-#pragma ivdep
-	       for(  i=ifirst+2; i<=ilast-2; i++ )
+	std::cout<<"Loop set #3 \n";
+	forallN<EXEC, int, int,int>(
+				    RangeSegment(nk-5,nk+1),
+				    RangeSegment(jfirst+2,jlast-1),
+				    RangeSegment(ifirst+2,ilast-1),
+				    [=] RAJA_DEVICE(int k, int j, int i)
 	       {
+		 float_sw4 mux1, mux2, mux3, mux4,r1,r2,r3,muy1,muy2,muy3,muy4;
 		  /* from inner_loop_4a */
 		  mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -617,16 +647,19 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 		   muy4*(u(1,i,j+2,k)-u(1,i,j,k)) ) );
 
     /* all indices ending with 'b' are indices relative to the boundary, going into the domain (1,2,3,...)*/
-		  kb = nk-k+1;
+		  int kb = nk-k+1;
     /* all coefficient arrays (acof, bope, ghcof) should be indexed with these indices */
     /* all solution and material property arrays should be indexed with (i,j,k) */
 
 	       /* (mu*uz)_z can not be centered */
 	       /* second derivative (mu*u_z)_z at grid point z_k */
 	       /* averaging the coefficient */
-		  mu1zz = 0;
-		  mu2zz = 0;
-		  mu3zz = 0;
+		  float_sw4 mu1zz = 0;
+		  float_sw4 mu2zz = 0;
+		  float_sw4 mu3zz = 0;
+		  int qb;
+		  float_sw4 mucof,lap2mu;
+		  int mb;
 		  for(  qb=1; qb <= 8 ; qb++ )
 		  {
 		     mucof = 0;
@@ -698,10 +731,10 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
                         mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
 				     8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) )) );
     /*   (la*w_z)_x: NOT CENTERED */
-            u3zip2=0;
-            u3zip1=0;
-            u3zim1=0;
-            u3zim2=0;
+            float_sw4 u3zip2=0;
+            float_sw4 u3zip1=0;
+            float_sw4 u3zim1=0;
+            float_sw4 u3zim2=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
 	    {
 	       u3zip2 -= bope(kb,qb)*u(3,i+2,j,nk-qb+1);
@@ -709,12 +742,12 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	       u3zim1 -= bope(kb,qb)*u(3,i-1,j,nk-qb+1);
 	       u3zim2 -= bope(kb,qb)*u(3,i-2,j,nk-qb+1);
 	    }
-            lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
+            float_sw4 lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
 			 -8*la(i-1,j,k)*u3zim1 + la(i-2,j,k)*u3zim2);
             r1 = r1 + strx(i)*lau3zx;
 
     /*   (mu*w_x)_z: NOT CENTERED */
-            mu3xz=0;
+            float_sw4 mu3xz=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
               mu3xz -= bope(kb,qb)*( mu(i,j,nk-qb+1)*i12*
                   (-u(3,i+2,j,nk-qb+1) + 8*u(3,i+1,j,nk-qb+1)
@@ -743,10 +776,10 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
                         la(i,j+2,k)*(u(1,i-2,j+2,k)-u(1,i+2,j+2,k)+
 				     8*(-u(1,i-1,j+2,k)+u(1,i+1,j+2,k))) )) );
 	    /* (la*w_z)_y : NOT CENTERED */
-            u3zjp2=0;
-            u3zjp1=0;
-            u3zjm1=0;
-            u3zjm2=0;
+            float_sw4 u3zjp2=0;
+            float_sw4 u3zjp1=0;
+            float_sw4 u3zjm1=0;
+            float_sw4 u3zjm2=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
 	    {
 	       u3zjp2 -= bope(kb,qb)*u(3,i,j+2,nk-qb+1);
@@ -754,12 +787,12 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	       u3zjm1 -= bope(kb,qb)*u(3,i,j-1,nk-qb+1);
 	       u3zjm2 -= bope(kb,qb)*u(3,i,j-2,nk-qb+1);
 	    }
-            lau3zy= i12*(-la(i,j+2,k)*u3zjp2 + 8*la(i,j+1,k)*u3zjp1
+            float_sw4 lau3zy= i12*(-la(i,j+2,k)*u3zjp2 + 8*la(i,j+1,k)*u3zjp1
 			 -8*la(i,j-1,k)*u3zjm1 + la(i,j-2,k)*u3zjm2);
             r2 = r2 + stry(j)*lau3zy;
 
 	    /* (mu*w_y)_z: NOT CENTERED */
-            mu3yz=0;
+            float_sw4 mu3yz=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
               mu3yz -= bope(kb,qb)*( mu(i,j,nk-qb+1)*i12*
                   (-u(3,i,j+2,nk-qb+1) + 8*u(3,i,j+1,nk-qb+1)
@@ -768,10 +801,10 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 
 	    /* No centered cross terms in r3 */
 	    /*  (mu*u_z)_x: NOT CENTERED */
-            u1zip2=0;
-            u1zip1=0;
-            u1zim1=0;
-            u1zim2=0;
+            float_sw4 u1zip2=0;
+            float_sw4 u1zip1=0;
+            float_sw4 u1zim1=0;
+            float_sw4 u1zim2=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
 	    {
 	       u1zip2 -= bope(kb,qb)*u(1,i+2,j,nk-qb+1);
@@ -779,15 +812,15 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	       u1zim1 -= bope(kb,qb)*u(1,i-1,j,nk-qb+1);
 	       u1zim2 -= bope(kb,qb)*u(1,i-2,j,nk-qb+1);
 	    }
-            mu1zx= i12*(-mu(i+2,j,k)*u1zip2 + 8*mu(i+1,j,k)*u1zip1
+            float_sw4 mu1zx= i12*(-mu(i+2,j,k)*u1zip2 + 8*mu(i+1,j,k)*u1zip1
                         -8*mu(i-1,j,k)*u1zim1 + mu(i-2,j,k)*u1zim2);
             r3 = r3 + strx(i)*mu1zx;
 
 	    /* (mu*v_z)_y: NOT CENTERED */
-            u2zjp2=0;
-            u2zjp1=0;
-            u2zjm1=0;
-            u2zjm2=0;
+            float_sw4 u2zjp2=0;
+            float_sw4 u2zjp1=0;
+            float_sw4 u2zjm1=0;
+            float_sw4 u2zjm2=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
 	    {
 	       u2zjp2 -= bope(kb,qb)*u(2,i,j+2,nk-qb+1);
@@ -795,12 +828,12 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	       u2zjm1 -= bope(kb,qb)*u(2,i,j-1,nk-qb+1);
 	       u2zjm2 -= bope(kb,qb)*u(2,i,j-2,nk-qb+1);
 	    }
-            mu2zy= i12*(-mu(i,j+2,k)*u2zjp2 + 8*mu(i,j+1,k)*u2zjp1
+            float_sw4 mu2zy= i12*(-mu(i,j+2,k)*u2zjp2 + 8*mu(i,j+1,k)*u2zjp1
                         -8*mu(i,j-1,k)*u2zjm1 + mu(i,j-2,k)*u2zjm2);
             r3 = r3 + stry(j)*mu2zy;
 
 	    /*   (la*u_x)_z: NOT CENTERED */
-            lau1xz=0;
+            float_sw4 lau1xz=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
               lau1xz -= bope(kb,qb)*( la(i,j,nk-qb+1)*i12*
                  (-u(1,i+2,j,nk-qb+1) + 8*u(1,i+1,j,nk-qb+1)
@@ -808,7 +841,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             r3 = r3 + strx(i)*lau1xz;
 
 	    /* (la*v_y)_z: NOT CENTERED */
-            lau2yz=0;
+            float_sw4 lau2yz=0;
 	    for(  qb=1; qb <= 8 ; qb++ )
 	    {
               lau2yz -= bope(kb,qb)*( la(i,j,nk-qb+1)*i12*
@@ -820,7 +853,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	       }
+	       }); // END OF RAJA LOOP
       }
    }
 #undef mu

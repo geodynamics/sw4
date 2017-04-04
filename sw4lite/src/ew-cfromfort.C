@@ -3,6 +3,26 @@
 #include "Require.h"
 #include <iostream>
 
+//#include <cuda_runtime.h>
+#include "RAJA/RAJA.hxx"
+using namespace RAJA;
+// typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
+// 			      cuda_threadblock_z_exec<32>>>
+//   EXEC;
+// typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<16>,cuda_threadblock_y_exec<16>,
+// 			      cuda_threadblock_z_exec<16>>>
+//   EXEC_BC;
+
+// typedef NestedPolicy<ExecList<seq_exec, seq_exec, seq_exec>>
+//  CEXEC_BC;
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      omp_parallel_for_exec>>
+  EXEC_BC;
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      omp_parallel_for_exec>>
+  EXEC;
+typedef RAJA::omp_parallel_for_exec FEXEC;
+void PrintPointerAttributes(void *ptr);
 
 using namespace std;
 //-----------------------------------------------------------------------
@@ -11,27 +31,46 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
 {
    const float_sw4 dt4i12= dt4/12;
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
+   // cudaMemPrefetchAsync(up, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(lu, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(fo, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(rho, 
+   // 			npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaDeviceSynchronize();
    if( m_corder )
    {
-#pragma omp parallel for
-      for( size_t i=0 ; i < npts ; i++ )
+     //for( size_t i=0 ; i < npts ; i++ )
+     forall< FEXEC> (0,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
 	 up[i  ]      += dt4i12orh*(lu[i  ]     +fo[i  ]);
 	 up[i+npts]   += dt4i12orh*(lu[i+npts]  +fo[i+npts]);
 	 up[i+2*npts] += dt4i12orh*(lu[i+2*npts]+fo[i+2*npts]);
-      }
+      });
+     //cudaDeviceSynchronize();
    }
    else
    {
-#pragma omp parallel for
-      for( size_t i=0 ; i < npts ; i++ )
+     //for( size_t i=0 ; i < npts ; i++ )
+     forall< FEXEC> (0,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
 	 up[3*i  ] += dt4i12orh*(lu[3*i  ]+fo[3*i  ]);
 	 up[3*i+1] += dt4i12orh*(lu[3*i+1]+fo[3*i+1]);
 	 up[3*i+2] += dt4i12orh*(lu[3*i+2]+fo[3*i+2]);
-      }
+      });
+     //cudaDeviceSynchronize();
    }
 }
 
@@ -41,17 +80,43 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
 		   float_sw4* rho, float_sw4 dt2 )
 {
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
+   // cudaMemPrefetchAsync(up, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(u, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(um, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(lu, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(fo, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(rho, 
+   // 			npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaDeviceSynchronize();
    if( m_corder )
    {
       // Like this ?
-#pragma omp parallel for
-      for( size_t i=0 ; i < npts ; i++ )
+     //for( size_t i=0 ; i < npts ; i++ )
+     forall< FEXEC> (0,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt2orh = dt2/rho[i];
 	 up[i  ]      = 2*u[i  ]     -um[i  ]      + dt2orh*(lu[i  ]     +fo[i  ]);
 	 up[i+npts]   = 2*u[i+npts]  -um[i+npts]   + dt2orh*(lu[i+npts]  +fo[i+npts]);
 	 up[i+2*npts] = 2*u[i+2*npts]-um[i+2*npts] + dt2orh*(lu[i+2*npts]+fo[i+2*npts]);
-      }
+      });
+     //cudaDeviceSynchronize();
 // Alternatives:
 //      // Or this ?
 //      for( int c=0 ; c < 3 ; c++ )
@@ -70,25 +135,48 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    }
    else
    {
-#pragma omp parallel for
-      for( size_t i=0 ; i < npts ; i++ )
+     //for( size_t i=0 ; i < npts ; i++ )
+forall<FEXEC > (0,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt2orh = dt2/rho[i];
 	 up[3*i  ] = 2*u[3*i  ]-um[3*i  ] + dt2orh*(lu[3*i  ]+fo[3*i  ]);
 	 up[3*i+1] = 2*u[3*i+1]-um[3*i+1] + dt2orh*(lu[3*i+1]+fo[3*i+1]);
 	 up[3*i+2] = 2*u[3*i+2]-um[3*i+2] + dt2orh*(lu[3*i+2]+fo[3*i+2]);
-      }
+      });
+//cudaDeviceSynchronize();
    }
 }
 
 //-----------------------------------------------------------------------
-void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up,
-		    float_sw4* u, float_sw4* um, float_sw4* u2, float_sw4 dt2i )
+void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, const float_sw4* __restrict__ up,
+		    const float_sw4* __restrict__ u, const float_sw4* __restrict__ um,
+		    float_sw4* __restrict__ u2, float_sw4 dt2i )
 {
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel for
-   for( size_t i = 0 ; i < 3*npts ; i++ )
+   // cudaMemPrefetchAsync(up, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(u, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(um, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaMemPrefetchAsync(u2, 
+   // 			3*npts*sizeof(float_sw4),
+   // 			0,
+   // 			0);
+   // cudaDeviceSynchronize();
+   // Code is slower with this RAJA loop due to the cost of copying data. Prefecth version is the fastest:: 2.70s on 20 procs. Without this loop it is around 2.4s
+   // To fix. either port more loops to device or wait for the UM copies to reach 30GB/s
+   forall< FEXEC> (0,3*npts,[=] RAJA_DEVICE(size_t i){
+       //   for( size_t i = 0 ; i < 3*npts ; i++ )
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
+     });
+   //cudaDeviceSynchronize();
    //   if( m_corder )
    //   {
    //      for( size_t i=0 ; i < npts ; i++ )
@@ -116,6 +204,7 @@ void EW::solerr3fort( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4 y0, float_sw4 z0, float_sw4 radius,
 		      int imin, int imax, int jmin, int jmax, int kmin, int kmax )
 {
+
    li = 0;
    l2 = 0;
    xli= 0;
@@ -199,99 +288,141 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 {
             // Note - don't use collapse(2) since loop indices are used in loop body;
             // it's hard to get them back after collapse
-            #pragma omp parallel for 
-	    for( k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
-               int qq = (k-wind[4+6*s])*ijdel;
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
-		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     u[3*ind  ] = bforce1[  3*qq];
-		     u[3*ind+1] = bforce1[1+3*qq];
-		     u[3*ind+2] = bforce1[2+3*qq];
-		     qq++;
-		  }
-               }
-            }    
+	   //for( k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+	   //   int qq = (k-wind[4+6*s])*ijdel;
+	   //   for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+	   //	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+	   int is = wind[0+6*s];
+	   int ie = wind[1+6*s];
+	   int js = wind[2+6*s];
+	   int je = wind[3+6*s];
+	   int ks = wind[4+6*s];
+	   int ke = wind[5+6*s];
+	   //PrintPointerAttributes((void*)bforce1);
+	   forallN<EXEC_BC, int, int,int>(
+					  RangeSegment(ks,ke+1),
+					  RangeSegment(js,je+1),
+					  RangeSegment(is,ie+1),
+					  [=] RAJA_DEVICE(int k, int j, int i) {
+					 size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+					 int qq=(k-ks)*ijdel+(i-is)+(j-js)*(ie-is+1);
+					 u[3*ind  ] = bforce1[  3*qq];
+					 u[3*ind+1] = bforce1[1+3*qq];
+					 u[3*ind+2] = bforce1[2+3*qq];
+				       });
+	   //cudaDeviceSynchronize();
 	 }
 	 else if( s== 1 )
 	 {
-            #pragma omp parallel for 
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
-               size_t qq = (k-wind[4+6*s])*ijdel;
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
-		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     u[3*ind  ] = bforce2[  3*qq];
-		     u[3*ind+1] = bforce2[1+3*qq];
-		     u[3*ind+2] = bforce2[2+3*qq];
-		     qq++;
-		  }
-               }
-            }
+	   int is = wind[0+6*s];
+	   int ie = wind[1+6*s];
+	   int js = wind[2+6*s];
+	   int je = wind[3+6*s];
+	   int ks = wind[4+6*s];
+	   int ke = wind[5+6*s];
+	   //PrintPointerAttributes((void*)bforce1);
+	   forallN<EXEC_BC, int, int,int>(
+					  RangeSegment(ks,ke+1),
+					  RangeSegment(js,je+1),
+					  RangeSegment(is,ie+1),
+					  [=] RAJA_DEVICE(int k, int j, int i) {
+					    size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+					    int qq=(k-ks)*ijdel+(i-is)+(j-js)*(ie-is+1);
+					    u[3*ind  ] = bforce2[  3*qq];
+					    u[3*ind+1] = bforce2[1+3*qq];
+					    u[3*ind+2] = bforce2[2+3*qq];
+					  });
+	   //cudaDeviceSynchronize();
 	 }
 	 else if( s==2 )
 	 {
-            #pragma omp parallel for 
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
-               size_t qq = (k-wind[4+6*s])*ijdel;
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
-		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     u[3*ind  ] = bforce3[  3*qq];
-		     u[3*ind+1] = bforce3[1+3*qq];
-		     u[3*ind+2] = bforce3[2+3*qq];
-		     qq++;
-		  }
-               }
-            }
+	   int is = wind[0+6*s];
+	   int ie = wind[1+6*s];
+	   int js = wind[2+6*s];
+	   int je = wind[3+6*s];
+	   int ks = wind[4+6*s];
+	   int ke = wind[5+6*s];
+	   //PrintPointerAttributes((void*)bforce1);
+	   forallN<EXEC_BC, int, int,int>(
+					  RangeSegment(ks,ke+1),
+					  RangeSegment(js,je+1),
+					  RangeSegment(is,ie+1),
+					  [=] RAJA_DEVICE(int k, int j, int i) {
+					    size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+					    int qq=(k-ks)*ijdel+(i-is)+(j-js)*(ie-is+1);
+					    u[3*ind  ] = bforce3[  3*qq];
+					    u[3*ind+1] = bforce3[1+3*qq];
+					    u[3*ind+2] = bforce3[2+3*qq];
+					  });
+	   //cudaDeviceSynchronize();
 	 }
 	 else if( s==3 )
 	 {
-            #pragma omp parallel for
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
-               size_t qq = (k-wind[4+6*s])*ijdel;
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
-		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     u[3*ind  ] = bforce4[  3*qq];
-		     u[3*ind+1] = bforce4[1+3*qq];
-		     u[3*ind+2] = bforce4[2+3*qq];
-		     qq++;
-		  }
-               }
-            }
+	   int is = wind[0+6*s];
+	   int ie = wind[1+6*s];
+	   int js = wind[2+6*s];
+	   int je = wind[3+6*s];
+	   int ks = wind[4+6*s];
+	   int ke = wind[5+6*s];
+	   //PrintPointerAttributes((void*)bforce1);
+	   forallN<EXEC_BC, int, int,int>(
+					  RangeSegment(ks,ke+1),
+					  RangeSegment(js,je+1),
+					  RangeSegment(is,ie+1),
+					  [=] RAJA_DEVICE(int k, int j, int i) {
+					    size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+					    int qq=(k-ks)*ijdel+(i-is)+(j-js)*(ie-is+1);
+					    u[3*ind  ] = bforce4[  3*qq];
+					    u[3*ind+1] = bforce4[1+3*qq];
+					    u[3*ind+2] = bforce4[2+3*qq];
+					  });
+	   //cudaDeviceSynchronize();
 	 }
 	 else if( s==4 )
 	 {
-            #pragma omp parallel for 
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
-               size_t qq = (k-wind[4+6*s])*ijdel;
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
-		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     u[3*ind  ] = bforce5[  3*qq];
-		     u[3*ind+1] = bforce5[1+3*qq];
-		     u[3*ind+2] = bforce5[2+3*qq];
-		     qq++;
-		  }
-               }
-            }
+	   int is = wind[0+6*s];
+	   int ie = wind[1+6*s];
+	   int js = wind[2+6*s];
+	   int je = wind[3+6*s];
+	   int ks = wind[4+6*s];
+	   int ke = wind[5+6*s];
+	   //PrintPointerAttributes((void*)bforce1);
+	   forallN<EXEC_BC, int, int,int>(
+					  RangeSegment(ks,ke+1),
+					  RangeSegment(js,je+1),
+					  RangeSegment(is,ie+1),
+					  [=] RAJA_DEVICE(int k, int j, int i) {
+					    size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+					    int qq=(k-ks)*ijdel+(i-is)+(j-js)*(ie-is+1);
+					    u[3*ind  ] = bforce5[  3*qq];
+					    u[3*ind+1] = bforce5[1+3*qq];
+					    u[3*ind+2] = bforce5[2+3*qq];
+					  });
+	   //cudaDeviceSynchronize();
 	 }
 	 else if( s==5 )
 	 {
-            #pragma omp parallel for 
-	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
-               size_t qq = (k-wind[4+6*s])*ijdel;
-	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
-		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     u[3*ind  ] = bforce6[  3*qq];
-		     u[3*ind+1] = bforce6[1+3*qq];
-		     u[3*ind+2] = bforce6[2+3*qq];
-		     qq++;
-		  }
-               }
-            }
+	   
+	   int is = wind[0+6*s];
+	   int ie = wind[1+6*s];
+	   int js = wind[2+6*s];
+	   int je = wind[3+6*s];
+	   int ks = wind[4+6*s];
+	   int ke = wind[5+6*s];
+	   //PrintPointerAttributes((void*)bforce1);
+	   forallN<EXEC_BC, int, int,int>(
+					  RangeSegment(ks,ke+1),
+					  RangeSegment(js,je+1),
+					  RangeSegment(is,ie+1),
+					  [=] RAJA_DEVICE(int k, int j, int i) {
+					    size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+					    int qq=(k-ks)*ijdel+(i-is)+(j-js)*(ie-is+1);
+					    u[3*ind  ] = bforce6[  3*qq];
+					    u[3*ind+1] = bforce6[1+3*qq];
+					    u[3*ind+2] = bforce6[2+3*qq];
+					  });
+	   //cudaDeviceSynchronize();
+	   
 	 }
       }
       else if( bccnd[s]==3 )
@@ -713,16 +844,13 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
    }
 }
 
-//-----------------------------------------------------------------------
+//----------------------------------------------------------------------- 15%
 void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
-		      float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
-		      float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
-		      float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
-		      float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx,
-		      float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
-		      float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
-		      float_sw4* __restrict__ a_coz,
+		      float_sw4* a_up, const float_sw4* __restrict__ a_u, const float_sw4* __restrict__ a_um, const float_sw4* __restrict__ a_rho,
+		      const float_sw4* __restrict__ a_dcx,  const float_sw4* __restrict__ a_dcy,  const float_sw4* __restrict__ a_dcz,
+		      const float_sw4* __restrict__ a_strx, const float_sw4* __restrict__ a_stry, const float_sw4* __restrict__ a_strz,
+		      const float_sw4* __restrict__ a_cox,  const float_sw4* __restrict__ a_coy,  const float_sw4* __restrict__ a_coz,
 		      float_sw4 beta )
 {
    if( beta != 0 )
@@ -743,14 +871,15 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
-#pragma omp parallel for
-      for( int k=kfirst+2; k <= klast-2 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	    {
+
+      forallN<EXEC, int, int,int>(
+				  RangeSegment(kfirst+2,klast-1),
+				  RangeSegment(jfirst+2,jlast-1),
+				  RangeSegment(ifirst+2,ilast-1),
+				  [=] RAJA_DEVICE(int k, int j, int i) {
+
 	       float_sw4 birho=beta/rho(i,j,k);
-#pragma simd
-#pragma ivdep
+#pragma unroll 
 	       for( int c=0 ; c < 3 ; c++ )
 	       {
 		  up(c,i,j,k) -= birho*( 
@@ -799,7 +928,8 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 					 );
 
 	       }
-	    }
+				  });
+      //cudaDeviceSynchronize();
  
 #undef rho
 #undef up
@@ -820,13 +950,11 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 //-----------------------------------------------------------------------
 void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
-		      float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
-		      float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
-		      float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
-		      float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx,
-		      float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
-		      float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
-		      float_sw4* __restrict__ a_coz, float_sw4 beta )
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		      float_sw4 beta )
 {
    if( beta != 0 )
    {
@@ -919,15 +1047,12 @@ void EW::addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
-			     int kfirst, int klast,
-			     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
-			     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
-			     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
-			     float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx, 
-			     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
-			     float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
-			     float_sw4* __restrict__ a_coz,
-			     float_sw4 beta )
+		      int kfirst, int klast,
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		      float_sw4 beta )
 {
 
    if( beta != 0 )
@@ -1026,14 +1151,12 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::addsgd6fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
-			     int kfirst, int klast,
-			     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
-			     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
-			     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
-			     float_sw4* __restrict__ a_dcz, float_sw4* __restrict__ a_strx,
-			     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz,
-			     float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
-			     float_sw4* __restrict__ a_coz, float_sw4 beta )
+		      int kfirst, int klast,
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		      float_sw4 beta )
 {
    if( beta != 0 )
    {

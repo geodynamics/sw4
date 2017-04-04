@@ -143,8 +143,15 @@ endif
 
 ifeq ($(ckernel),yes)
    ifeq ($(openmp),yes)
-      debugdir := debug_mp_c
-      optdir   := optimize_mp_c
+	ifeq ($(raja),yes)
+		debugdir:= debug_mp_c_raja
+		optdir:= optimize_mp_c_raja
+		CXXFLAGS += -std=c++11 -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include  -DSW4_CROUTINES 
+		EXTRA_LINK_FLAGS += -qopenmp -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA 
+	else	
+		debugdir := debug_mp_c
+		optdir   := optimize_mp_c
+	endif
    else
       debugdir := debug_c
       optdir   := optimize_c

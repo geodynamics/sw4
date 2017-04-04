@@ -107,7 +107,7 @@ void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right, float_s
 
 float_sw4 SuperGrid::dampingCoeff(float_sw4 x) const
 {
-  float_sw4 phi = stretching(x);
+  double phi = stretching(x);
 // should be equivalent to PsiAux/phi
 //  float_sw4 f=(1-phi)/phi/(1-m_epsL);
   float_sw4 f = PsiDamp(x)/phi;

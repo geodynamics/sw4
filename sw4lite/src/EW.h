@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-
 #include "sw4.h"
 #include "Sarray.h"
 #include "SuperGrid.h"
@@ -16,6 +15,8 @@ class Source;
 class GridPointSource;
 class EWCuda;
 class CheckPoint;
+#include "RAJA/RAJA.hxx"
+using namespace RAJA;
 
 class EW
 {
@@ -90,22 +91,22 @@ class EW
    void printTime( int cycle, float_sw4 t, bool force ) const;
    bool exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources );
 
-   float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
-   float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
-   float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
-   float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f );
-   float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c);
-   float_sw4 d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c);
-   float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c);
-   float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f);
-   float_sw4 SWTP(float_sw4 Lim, float_sw4 t);   
-   float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
-   float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
-   float_sw4 SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
-   float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
-   float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
-   float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
-   void get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& source,
+   RAJA_HOST_DEVICE float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
+   RAJA_HOST_DEVICE float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
+   RAJA_HOST_DEVICE float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c);
+   RAJA_HOST_DEVICE float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f );
+   RAJA_HOST_DEVICE float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c);
+   RAJA_HOST_DEVICE float_sw4 d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c);
+   RAJA_HOST_DEVICE float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c);
+   RAJA_HOST_DEVICE float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f);
+   RAJA_HOST_DEVICE float_sw4 SWTP(float_sw4 Lim, float_sw4 t);   
+   RAJA_HOST_DEVICE float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
+   RAJA_HOST_DEVICE float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
+   RAJA_HOST_DEVICE float_sw4 SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
+   RAJA_HOST_DEVICE float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
+   RAJA_HOST_DEVICE float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
+   RAJA_HOST_DEVICE float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
+   void get_exact_point_source( double* up, double t, int g, Source& source,
 				int* wind=NULL );
    void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, 
 			  float_sw4 &diffL2, float_sw4 &xInf, vector<Source*>& a_globalSources );
@@ -184,8 +185,8 @@ class EW
    void predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up,
 		   float_sw4* u, float_sw4* um, float_sw4* lu, float_sw4* fo,
 		  float_sw4* rho, float_sw4 dt2 );
-   void dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up,
-		   float_sw4* u, float_sw4* um, float_sw4* u2, float_sw4 dt2i );
+   void dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, const float_sw4* up,
+		   const float_sw4* u, const float_sw4* um, float_sw4* u2, float_sw4 dt2i );
    void solerr3fort( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4 h, float_sw4* uex, float_sw4* u, float_sw4& li,
 		      float_sw4& l2, float_sw4& xli, float_sw4 zmin, float_sw4 x0,
@@ -207,10 +208,10 @@ class EW
 		  float_sw4* strx, float_sw4* stry );
    void addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
-		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-		      float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
-		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+		      float_sw4* a_up, const float_sw4* a_u, const float_sw4* a_um, const float_sw4* a_rho,
+		      const float_sw4* a_dcx,  const float_sw4* a_dcy,  const float_sw4* a_dcz,
+		      const float_sw4* a_strx, const float_sw4* a_stry, const float_sw4* a_strz,
+		      const float_sw4* a_cox,  const float_sw4* a_coy,  const float_sw4* a_coz,
 		     float_sw4 beta );
    void addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
@@ -407,6 +408,9 @@ class EW
    // Discontinuous Galerkin stuff
    bool m_use_dg;
    
+ private:
+   float_sw4* newmanaged(size_t len);
+   void delmanaged(float_sw4* &dptr);
 };
 
 #endif

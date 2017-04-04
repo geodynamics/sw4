@@ -37,18 +37,22 @@
 #include <unistd.h>
 
 using namespace std;
-
+void PrintPointerAttributes(void *ptr);
 #ifdef SW4_CUDA
 #include <cuda_runtime.h>
 #endif
 #include "EWCuda.h"
-
+#include "RAJA/RAJA.hxx"
+using namespace RAJA;
+RAJA_DEVICE bool myisnan(const double in);
+typedef RAJA::omp_parallel_for_exec EXEC;
 // Default value 
 bool Sarray::m_corder = false;
 
 //-----------------------------------------------------------------------
 Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
 {
+   managed=false;
    m_nc = nc;
    m_ib = ibeg;
    m_ie = iend;
@@ -60,7 +64,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -71,6 +75,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
 //-----------------------------------------------------------------------
 Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
 {
+  managed=false;
    m_nc = 1;
    m_ib = ibeg;
    m_ie = iend;
@@ -82,7 +87,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -93,6 +98,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
 //-----------------------------------------------------------------------
 Sarray::Sarray( int nc, int iend, int jend, int kend )
 {
+  managed=false;
    m_nc = nc;
    m_ib = 1;
    m_ie = iend;
@@ -104,7 +110,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -115,6 +121,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
 //-----------------------------------------------------------------------
 Sarray::Sarray( int iend, int jend, int kend )
 {
+  managed=false;
    m_nc = 1;
    m_ib = 1;
    m_ie = iend;
@@ -126,7 +133,7 @@ Sarray::Sarray( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -138,6 +145,7 @@ Sarray::Sarray( int iend, int jend, int kend )
 Sarray::Sarray()
 {
 //   m_mpi_datatype_initialized = false;
+   managed=false;
    m_nc = m_ib = m_ie = m_jb = m_je = m_kb = m_ke = 0;
    m_data = NULL;
    dev_data = NULL;
@@ -146,6 +154,7 @@ Sarray::Sarray()
 //-----------------------------------------------------------------------
 Sarray::Sarray( const Sarray& u )
 {
+   managed=false;
    m_nc = u.m_nc;
    m_ib = u.m_ib;
    m_ie = u.m_ie;
@@ -157,7 +166,7 @@ Sarray::Sarray( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -167,6 +176,7 @@ Sarray::Sarray( const Sarray& u )
 //-----------------------------------------------------------------------
 Sarray::Sarray( Sarray& u, int nc )
 {
+   managed=false;
    if( nc == -1 )
       m_nc = u.m_nc;
    else
@@ -181,7 +191,7 @@ Sarray::Sarray( Sarray& u, int nc )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -225,14 +235,14 @@ Sarray::Sarray( Sarray& u, int nc )
 //    m_nk = m_ke-m_kb+1;
 //    //   std::cout << "Sarray dims " << m_nc << " " << m_ni << " " 
 //    //	     << m_nj << " " << m_nk << std::endl;
-//    m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+//    m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
 // }
 
 //-----------------------------------------------------------------------
 void Sarray::define( int nc, int iend, int jend, int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+     delmanaged(m_data);
 
    m_nc = nc;
    m_ib = 1;
@@ -245,7 +255,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -257,7 +267,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
 void Sarray::define( int iend, int jend, int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      delmanaged(m_data);
 
    m_nc = 1;
    m_ib = 1;
@@ -270,7 +280,7 @@ void Sarray::define( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -283,7 +293,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 		     int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      delmanaged(m_data);
    m_nc = nc;
    m_ib = ibeg;
    m_ie = iend;
@@ -295,7 +305,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -307,7 +317,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 		     int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      delmanaged(m_data);
    m_nc = 1;
    m_ib = ibeg;
    m_ie = iend;
@@ -319,7 +329,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -330,7 +340,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 void Sarray::define( const Sarray& u ) 
 {
    if( m_data != NULL )
-      delete[] m_data;
+      delmanaged(m_data);
    m_nc = u.m_nc;
    m_ib = u.m_ib;
    m_ie = u.m_ie;
@@ -342,7 +352,7 @@ void Sarray::define( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -423,6 +433,13 @@ void Sarray::side_plane_fortran( int side, int wind[6], int nGhost )
 //-----------------------------------------------------------------------
 void Sarray::set_to_zero()
 {
+  double *m_data_local=m_data;
+  prefetch();
+  forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
+      m_data_local[i]=0.0;
+    });
+  //cudaDeviceSynchronize();
+  return;
 #pragma omp parallel for
    for( size_t i=0 ; i < m_npts ; i++ )
       m_data[i] = 0;
@@ -548,7 +565,20 @@ float_sw4 Sarray::sum( int c )
 size_t Sarray::count_nans()
 {
    size_t retval = 0;
+   const int block_size=1024;
+   ReduceSum<omp_reduce, size_t> rretval(0);
    size_t npts = m_nc*m_ni*static_cast<size_t>(m_nj)*m_nk;
+   //cudaMemPrefetchAsync(m_data, 
+   //			npts*sizeof(double),
+   //			0,
+   //			0);
+   double* m_data_copy = m_data;
+   //PrintPointerAttributes((void*)m_data);
+   forall<EXEC> (0,npts,[=] RAJA_DEVICE(size_t ind){
+       if(::isnan(m_data_copy[ind]) ) rretval+=1;
+     });
+   //cudaDeviceSynchronize();
+   return rretval.get();
 #pragma omp parallel for reduction(+:retval)
    for( size_t ind = 0; ind < npts ; ind++)
       if( std::isnan(m_data[ind]) )
@@ -588,7 +618,7 @@ size_t Sarray::count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst )
 void Sarray::copy( const Sarray& u )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      delmanaged(m_data);
 
    m_nc = u.m_nc;
    m_ib = u.m_ib;
@@ -602,7 +632,7 @@ void Sarray::copy( const Sarray& u )
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
    {
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = newmanaged(m_nc*m_ni*m_nj*m_nk);
 #pragma omp parallel for 
       for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
 	 m_data[i] = u.m_data[i];
@@ -614,7 +644,7 @@ void Sarray::copy( const Sarray& u )
 
 //-----------------------------------------------------------------------
 void Sarray::extract_subarray( int ib, int ie, int jb, int je, int kb,
-			       int ke, float_sw4* ar )
+			       int ke, double* ar )
 {
    // Assuming nc is the same for m_data and subarray ar.
    int nis = ie-ib+1;
@@ -1093,4 +1123,68 @@ Sarray* Sarray::create_copy_on_device( EWCuda* cu )
    return dev_array;
 #endif
 }
+double *Sarray::newmanaged(size_t len){
+   void *ptr;
+   //std::cout<<"******Using overloaded new**********\n";
+   //cudaMallocManaged(&ptr, len*sizeof(double),cudaMemAttachHost);
+#ifdef CUDA_CODE
+   cudaMallocManaged(&ptr, len*sizeof(double),cudaMemAttachGlobal);
+   cudaDeviceSynchronize();
+   managed=true;
+#else
+   ptr=malloc(len*sizeof(double));
+#endif
+   return (double*)ptr;
+}
+void Sarray::delmanaged(double* &dptr){
+#ifdef CUDA_CODE
+  if (managed){
+    cudaDeviceSynchronize();
+    cudaFree((void*)dptr);
+    dptr=NULL;
+  } else
+    delete [] dptr;
+#else
+  free(dptr);
+#endif
+  
+  dptr=NULL;
+}
+char *Sarray::status(){
+  if (managed) return " MANAGED ";
+  else return " UNMANAGED ";
+}
+RAJA_DEVICE bool myisnan(const double in) {
+  return ::isnan(in);
+}
+#ifdef CUDA_CODE
+void PrintPointerAttributes(void *ptr){
+  struct cudaPointerAttributes ptr_att;
+  if (cudaPointerGetAttributes(&ptr_att,ptr)!=cudaSuccess){
+    printf("PrintPointerAttributes:: Raw pointer\n");
+    return;
+  }
+  if (ptr_att.isManaged){
+    printf("PrintPointerAttributes:: Managed pointer\n");
+    printf("Host address = %p, Device Address = %p\n",ptr_att.hostPointer, ptr_att.devicePointer);
+    if (ptr_att.memoryType==cudaMemoryTypeHost) printf("Memory is located on host\n");
+    if (ptr_att.memoryType==cudaMemoryTypeDevice) printf("Memory is located on device\n");
+    printf("Device associated with this pointer is %d\n",ptr_att.device);
+  } else {
+    printf("PrintPointerAttributes:: Non-Managed & non-raw pointer\n Probably a device pointer\n");
+  }
+  return;
+}
+#endif
+void Sarray::prefetch(){
+#ifdef CUDA_CODE
+  if (managed){
+    cudaMemPrefetchAsync(m_data, 
+			 m_nc*m_ni*m_nj*m_nk*sizeof(double),
+			 0,
+			 0);
+  }
+#endif
+}
+
    

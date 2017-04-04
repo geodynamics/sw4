@@ -1,5 +1,5 @@
 fileio verbose=1 path=pointsource-h0p04
-grid x=8 y=8 z=4 h=0.04
+grid x=8 y=8 z=8 h=0.04
 time t=0.6
 testpointsource rho=1 cp=1.6 cs=0.8 halfspace=1
 supergrid gp=30
