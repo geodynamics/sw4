@@ -2305,7 +2305,7 @@ void EW::setupRun()
 //-----------------------------------------------------------------------
 void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 {
-   // input: U,Um,mMu,mLambda,mRho,
+   // // input: U,Um,mMu,mLambda,mRho,
 
    // local arrays: F, Up, Lu, Uacc
    vector<Sarray> F, Lu, Uacc, Up;
