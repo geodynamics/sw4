@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -N 6
+#SBATCH -N 12
 #SBATCH -p debug
 #SBATCH -A m2545
 #SBATCH -S 4     # Special cores per nodes (4 are idle)
 #SBATCH -t 00:30:00 
 #SBATCH -C knl,quad,cache
 
-numnodes=6
+numnodes=12
 
 CASE=LOH.3-h50
 RUN_COMMAND="./sw4 ${CASE}.in"
@@ -41,7 +41,7 @@ MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores"
 
 COMMAND="${MPI_COMMAND} ${RUN_COMMAND}" 
 #echo "OMP_NUM_THREADS="${OMP_NUM_THREADS}
-echo ${COMMAND}
+#echo ${COMMAND}
 
 # actual sw4 command
 ${COMMAND} >& ${CASE}.out

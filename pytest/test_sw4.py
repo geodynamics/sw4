@@ -90,6 +90,10 @@ def guess_mpi_cmd(mpi_tasks, verbose):
     elif 'cab' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks)
+    elif 'nid' in node_name:
+        # all KNL nodes on cori have a node name starting with 'nid'
+        if mpi_tasks<=0: mpi_tasks = 64
+        mpirun_cmd="srun -c 4 --cpu_bind=cores -n " + str(mpi_tasks)
     elif 'fourier' in node_name:
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
