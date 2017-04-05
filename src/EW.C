@@ -232,14 +232,17 @@ void updatememvar(int*, int*, int*, int*, int*, int*,  double*, double*, double*
 					   int*, double*, double*, double*, double*, double*, double*);
 }
 
-void  addMemVarForcingCart( double zMin, double h, double t, Sarray &alpha,
+void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
                             double omegaVE, double dt ,double omega, double phase, double c);
 
-void addMemVarForceCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
                                 Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
 
 void addMemVarCorrCart(double zMin, double h, double t, Sarray &alpha,
                        double omegaVE, double dt, double omega, double phase, double c );
+
+void addMemVarCorrCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+                               Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
 
 using namespace std;
 
@@ -4045,12 +4048,12 @@ void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 	 double ph = m_twilight_forcing->m_phase;
 	 double cv = m_twilight_forcing->m_c;
          if( topographyExists() && g == mNumberOfGrids-1 )
-            addMemVarForceCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            addMemVarPredCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
 	 else
          {
 // this routine comes from WPP
 //  It  works with SG stretching because no spatial derivatives occur in the forcing
-            addMemVarForcingCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            addMemVarPredCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
          }
          
       }
@@ -4089,9 +4092,7 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 	 double cv = m_twilight_forcing->m_c;
          if( topographyExists() && g == mNumberOfGrids-1 )
          {
-// UPDATE
-//            addMemVarForceCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
-            ;
+            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
          }
 	 else
          {
@@ -4105,109 +4106,109 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 }
 
 
-//-----------------------------------------------------------------------
-void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
-				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
-				double a_t )
-{
-   int domain = 0;
-   int use2ndOrder = (mOrder==2); // experimenting with PC formulation
+//---------------------------------REPLACED BY updateMemVarPred & Corr--------------------------------------
+// void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+// 				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
+// 				double a_t )
+// {
+//    int domain = 0;
+//    int use2ndOrder = (mOrder==2); // experimenting with PC formulation
    
-   for( int g=0 ; g<mNumberOfGrids; g++ )
-   {
-      double* up_ptr  = a_Up[g].c_ptr();
-      double* u_ptr   = a_U[g].c_ptr();
-      double* um_ptr  = a_Um[g].c_ptr();
+//    for( int g=0 ; g<mNumberOfGrids; g++ )
+//    {
+//       double* up_ptr  = a_Up[g].c_ptr();
+//       double* u_ptr   = a_U[g].c_ptr();
+//       double* um_ptr  = a_Um[g].c_ptr();
 
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
-      for( int a=0 ; a < m_number_mechanisms ; a++ )
-      {
-	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
-	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
-	 updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                      &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-                      &mOmegaVE[a], &mDt, &domain, &use2ndOrder );
-	 // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-	 //        			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-	 //        			     &mOmegaVE[a], &mDt, &domain );
-      }
-      if( m_twilight_forcing )
-      {
-	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
-	 double om = m_twilight_forcing->m_omega;
-	 double ph = m_twilight_forcing->m_phase;
-	 double cv = m_twilight_forcing->m_c;
-         if( topographyExists() && g == mNumberOfGrids-1 )
-	    F77_FUNC(addmemvarforcingc,ADDMEMVARFORCINGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-							   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	 else
-         {
-            if (mOrder == 2) // only works without SG stretching
-            {
-// this routine comes from WPP
-               addMemVarForcingCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
-            }
-            else // 4th order in time (HOW CAN THIS WORK WITH SG STRETCHING???)
-            {
-               F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                                            &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-                                                            &mGridSize[g], &m_zmin[g] );
-            }
+//       int ifirst = m_iStart[g];
+//       int ilast  = m_iEnd[g];
+//       int jfirst = m_jStart[g];
+//       int jlast  = m_jEnd[g];
+//       int kfirst = m_kStart[g];
+//       int klast  = m_kEnd[g];
+//       for( int a=0 ; a < m_number_mechanisms ; a++ )
+//       {
+// 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+// 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+// 	 updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                       &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+//                       &mOmegaVE[a], &mDt, &domain, &use2ndOrder );
+// 	 // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 	 //        			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+// 	 //        			     &mOmegaVE[a], &mDt, &domain );
+//       }
+//       if( m_twilight_forcing )
+//       {
+// 	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+// 	 double om = m_twilight_forcing->m_omega;
+// 	 double ph = m_twilight_forcing->m_phase;
+// 	 double cv = m_twilight_forcing->m_c;
+//          if( topographyExists() && g == mNumberOfGrids-1 )
+// 	    F77_FUNC(addmemvarforcingc,ADDMEMVARFORCINGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+// 							   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+// 	 else
+//          {
+//             if (mOrder == 2) // only works without SG stretching
+//             {
+// // this routine comes from WPP
+//                addMemVarPredCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+//             }
+//             else // 4th order in time (HOW CAN THIS WORK WITH SG STRETCHING???)
+//             {
+//                F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                                                             &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+//                                                             &mGridSize[g], &m_zmin[g] );
+//             }
             
-         }
+//          }
          
-      }
-   }
-}
+//       }
+//    }
+// }
 
 //-----------------------------------------------------------------------
 // IS THIS ROUTINE EVER CALLED???
-void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
-				     vector<Sarray*>& a_AlphaVEm,
-				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
-{
-   int domainlow = 2, domainup=1;
-   int use2ndOrder = 0;
+// void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
+// 				     vector<Sarray*>& a_AlphaVEm,
+// 				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
+// {
+//    int domainlow = 2, domainup=1;
+//    int use2ndOrder = 0;
    
-   for( int g=0 ; g<mNumberOfGrids; g++ )
-   {
-      double* up_ptr  = a_Up[g].c_ptr();
-      double* u_ptr   = a_U[g].c_ptr();
-      double* um_ptr  = a_Um[g].c_ptr();
+//    for( int g=0 ; g<mNumberOfGrids; g++ )
+//    {
+//       double* up_ptr  = a_Up[g].c_ptr();
+//       double* u_ptr   = a_U[g].c_ptr();
+//       double* um_ptr  = a_Um[g].c_ptr();
 
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
-      for( int a=0 ; a < m_number_mechanisms ; a++ )
-      {
-	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
-	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
-	 if( m_bcType[g][4] != bProcessor )
-	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                         &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-                         &mOmegaVE[a], &mDt, &domainup, &use2ndOrder );
-	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-	    //     			     &mOmegaVE[a], &mDt, &domainup );
-	 if( m_bcType[g][5] != bProcessor )
-	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                         &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-                         &mOmegaVE[a], &mDt, &domainlow, &use2ndOrder );
-	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-	    //     				&mOmegaVE[a], &mDt, &domainlow );
-      }
-   }
-}
+//       int ifirst = m_iStart[g];
+//       int ilast  = m_iEnd[g];
+//       int jfirst = m_jStart[g];
+//       int jlast  = m_jEnd[g];
+//       int kfirst = m_kStart[g];
+//       int klast  = m_kEnd[g];
+//       for( int a=0 ; a < m_number_mechanisms ; a++ )
+//       {
+// 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+// 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+// 	 if( m_bcType[g][4] != bProcessor )
+// 	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                          &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+//                          &mOmegaVE[a], &mDt, &domainup, &use2ndOrder );
+// 	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+// 	    //     			     &mOmegaVE[a], &mDt, &domainup );
+// 	 if( m_bcType[g][5] != bProcessor )
+// 	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                          &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+//                          &mOmegaVE[a], &mDt, &domainlow, &use2ndOrder );
+// 	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+// 	    //     				&mOmegaVE[a], &mDt, &domainlow );
+//       }
+//    }
+// }
 
 //-----------------------------------------------------------------------
 void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,

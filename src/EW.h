@@ -239,12 +239,12 @@ void updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 void updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
                        vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
    
-void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
-			    vector<Sarray*>& a_AlphaVEm,
-			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
-void updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
-			    vector<Sarray*>& a_AlphaVEm,
-			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
+// void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
+// 			    vector<Sarray*>& a_AlphaVEm,
+// 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+// void updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
+// 			    vector<Sarray*>& a_AlphaVEm,
+// 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
 void evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
                             vector<Sarray*>& a_AlphaVEm );
 
