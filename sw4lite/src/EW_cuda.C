@@ -78,6 +78,10 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 				float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 				float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 				int ghost_points );
+__global__ void rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                                   float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda,
+                                   float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                                     int ghost_points );
 
 __global__ void rhs4upper_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
@@ -121,12 +125,27 @@ void EW::evalRHSCU(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a
    blocksize.z = m_gpu_blocksize[2];
    for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
    {
-      if( m_corder )
-	 rhs4center_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
-	 ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-	   m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
-	   a_Lambda[g].dev_ptr(), mGridSize[g],
-	   dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+      if( m_corder ) 
+      {
+	 // rhs4center_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+	 // ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
+	 //   m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
+	 //   a_Lambda[g].dev_ptr(), mGridSize[g],
+	 //   dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+        int ni = m_iEnd[g] - m_iStart[g] + 1 - 2*m_ghost_points;
+        int nj = m_jEnd[g] - m_jStart[g] + 1 - 2*m_ghost_points;
+        int nk = m_kEnd[g] - m_kStart[g] + 1 - 2*m_ghost_points;
+        dim3 block(RHS4_BLOCKX,RHS4_BLOCKY);
+        dim3 grid;
+        grid.x = (ni + block.x - 1) / block.x;
+        grid.y = (nj + block.y - 1) / block.y;
+        grid.z = 1;
+        rhs4center_dev_nv<<<grid,block,0,m_cuobj->m_stream[st]>>>
+          ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
+            m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
+            a_Lambda[g].dev_ptr(), mGridSize[g],
+            dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+      }
       else
 	 rhs4center_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
 	 ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],

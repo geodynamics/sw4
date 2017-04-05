@@ -17,6 +17,15 @@ else ifeq ($(findstring surface,$(HOSTNAME)),surface)
    MPIINC = $(MPIPATH)/include
    debugdir := debug_cuda_surface
    optdir   := optimize_cuda_surface
+else
+   NVCC = nvcc
+   HOSTCOMP = gcc
+   MPIPATH = $(dir $(shell which mpicc))../
+   gpuarch := sm_60
+   EXTRA_LINK_FLAGS = -lmpi
+   MPIINC = $(MPIPATH)/include
+   debugdir := debug_cuda_surface
+   optdir   := optimize_cuda_surface
 endif
 CXX  = $(NVCC)
 MPILIB = $(MPIPATH)/lib
