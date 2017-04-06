@@ -1396,6 +1396,179 @@ __global__ void addsgd4_dev_rev( int ifirst, int ilast, int jfirst, int jlast, i
 #undef coz
 }
 
+__global__ void 
+__launch_bounds__(384, 1)
+addsgd4_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                                float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+                                float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+                                float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                                float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+                                float_sw4 beta, int ghost_points )
+{   
+// #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
+// #define up(c,i,j,k) a_up[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+// #define u(c,i,j,k) a_u[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+// #define um(c,i,j,k) a_um[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+// #define strx(i) a_strx[(i-ifirst)]
+// #define dcx(i) a_dcx[(i-ifirst)]
+// #define cox(i) a_cox[(i-ifirst)]
+// #define stry(j) a_stry[(j-jfirst)]
+// #define dcy(j) a_dcy[(j-jfirst)]
+// #define coy(j) a_coy[(j-jfirst)]
+// #define strz(k) a_strz[(k-kfirst)]
+// #define dcz(k) a_dcz[(k-kfirst)]
+// #define coz(k) a_coz[(k-kfirst)]
+#define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
+#define up(c,i,j,k) a_up[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)+nijk*(c)]
+#define u(c,i,j,k)   a_u[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)+nijk*(c)]
+#define um(c,i,j,k) a_um[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)+nijk*(c)]
+#define strx(i) a_strx[(i-ifirst)]
+#define dcx(i) a_dcx[(i-ifirst)]
+#define cox(i) a_cox[(i-ifirst)]
+#define stry(j) a_stry[(j-jfirst)]
+#define dcy(j) a_dcy[(j-jfirst)]
+#define coy(j) a_coy[(j-jfirst)]
+#define strz(k) a_strz[(k-kfirst)]
+#define dcz(k) a_dcz[(k-kfirst)]
+#define coz(k) a_coz[(k-kfirst)]
+#define su(c,i,j,k) su[c][i][j]
+#define sum(c,i,j,k) sum[c][i][j]
+  if( beta == 0 )
+    return;
+
+  const size_t ni = ilast-ifirst+1;
+  const size_t nij = ni*(jlast-jfirst+1);
+  const size_t nijk = nij*(klast-kfirst+1);
+  int i = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
+  int j = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
+  int ith = threadIdx.x + 2;
+  int jth = threadIdx.y + 2;
+  __shared__ float_sw4 su[3][ADDSGD4_BLOCKX+2*RADIUS][ADDSGD4_BLOCKY+2*RADIUS],
+    sum[3][ADDSGD4_BLOCKX+2*RADIUS][ADDSGD4_BLOCKY+2*RADIUS];
+  float_sw4 qu[3][DIAMETER], qum[3][DIAMETER];
+
+#pragma unroll
+  for (int q = 1; q < DIAMETER; q++)
+  {
+    for (int c = 0; c < 3; c++)
+    {
+      qu[c][q] = u(c,i,j,kfirst+q-1);
+      qum[c][q] = um(c,i,j,kfirst+q-1);
+    }
+  }
+
+  for (int k = kfirst+RADIUS; k <= klast-RADIUS; k++)
+  {
+#pragma unroll
+    for (int q = 0; q < DIAMETER-1; q++)
+    {
+      for (int c = 0; c < 3; c++)
+      {
+        qu[c][q] = qu[c][q+1];
+        qum[c][q] = qum[c][q+1];
+      }
+    }
+#pragma unroll
+    for (int c = 0; c < 3; c++)
+    {
+      qu[c][4] = u(c,i,j,k+RADIUS);
+      qum[c][4] = um(c,i,j,k+RADIUS);
+    }
+
+    __syncthreads();
+    for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y)
+    {
+      int gj = (j-threadIdx.y) + tj - RADIUS;
+      if (gj <= jlast)
+      {
+        for (int ti = threadIdx.x; ti < blockDim.x+2*RADIUS; ti += blockDim.x)
+        {
+          int gi =  (i-threadIdx.x) + ti - RADIUS;
+          if (gi <= ilast)
+          {
+            #pragma unroll
+            for( int c=0 ; c < 3 ; c++ )
+            {
+              su[c][ti][tj] = u(c,gi,gj,k);
+              sum[c][ti][tj] = um(c,gi,gj,k);
+            }
+          }
+        }
+      }
+    }
+    __syncthreads();
+
+    if (i <= ilast-ghost_points && j <= jlast-ghost_points)
+    {
+      float_sw4 birho=beta/rho(i,j,k);
+#pragma unroll
+      for( int c=0 ; c < 3 ; c++ )
+      {
+        up(c,i,j,k) -= birho*(
+          // x-differences
+          strx(i)*coy(j)*coz(k)*(
+            rho(i+1,j,k)*dcx(i+1)*
+            ( su(c,ith+2,jth,k) -2*su(c,ith+1,jth,k)+ su(c,ith,  jth,k))
+            -2*rho(i,j,k)*dcx(i)  *
+            ( su(c,ith+1,jth,k) -2*su(c,ith,  jth,k)+ su(c,ith-1,jth,k))
+            +rho(i-1,j,k)*dcx(i-1)*
+            ( su(c,ith,  jth,k) -2*su(c,ith-1,jth,k)+ su(c,ith-2,jth,k))
+            -rho(i+1,j,k)*dcx(i+1)*
+            (sum(c,ith+2,jth,k)-2*sum(c,ith+1,jth,k)+sum(c,ith,  jth,k))
+            +2*rho(i,j,k)*dcx(i)  *
+            (sum(c,ith+1,jth,k)-2*sum(c,ith,  jth,k)+sum(c,ith-1,jth,k))
+            -rho(i-1,j,k)*dcx(i-1)*
+            (sum(c,ith,  jth,k)-2*sum(c,ith-1,jth,k)+sum(c,ith-2,jth,k)) ) +
+// y-differences
+          stry(j)*cox(i)*coz(k)*(
+            +rho(i,j+1,k)*dcy(j+1)*
+            ( su(c,ith,jth+2,k) -2*su(c,ith,jth+1,k)+ su(c,ith,jth,  k))
+            -2*rho(i,j,k)*dcy(j)  *
+            ( su(c,ith,jth+1,k) -2*su(c,ith,jth,  k)+ su(c,ith,jth-1,k))
+            +rho(i,j-1,k)*dcy(j-1)*
+            ( su(c,ith,jth,  k) -2*su(c,ith,jth-1,k)+ su(c,ith,jth-2,k))
+            -rho(i,j+1,k)*dcy(j+1)*
+            (sum(c,ith,jth+2,k)-2*sum(c,ith,jth+1,k)+sum(c,ith,jth,  k))
+            +2*rho(i,j,k)*dcy(j)  *
+            (sum(c,ith,jth+1,k)-2*sum(c,ith,jth,  k)+sum(c,ith,jth-1,k))
+            -rho(i,j-1,k)*dcy(j-1)*
+            (sum(c,ith,jth,  k)-2*sum(c,ith,jth-1,k)+sum(c,ith,jth-2,k)) ) +
+          strz(k)*cox(i)*coy(j)*(
+// z-differences
+            +rho(i,j,k+1)*dcz(k+1)*
+            ( qu[c][4] -2*qu[c][3] + su(c,ith,jth,k  ))
+            -2*rho(i,j,k)*dcz(k)  *
+            ( qu[c][3] -2*su(c,ith,jth,k  )+ qu[c][1])
+            +rho(i,j,k-1)*dcz(k-1)*
+            ( su(c,ith,jth,k  ) -2*qu[c][1]+ qu[c][0])
+            -rho(i,j,k+1)*dcz(k+1)*
+            (qum[c][4]-2*qum[c][3]+sum(c,ith,jth,k  ))
+            +2*rho(i,j,k)*dcz(k)  *
+            (qum[c][3]-2*sum(c,ith,jth,k  )+qum[c][1])
+            -rho(i,j,k-1)*dcz(k-1)*
+            (sum(c,ith,jth,k  )-2*qum[c][1]+qum[c][0]) )
+          );
+      }
+    }
+  }
+#undef rho
+#undef up
+#undef u
+#undef um
+#undef strx
+#undef dcx
+#undef cox
+#undef stry
+#undef dcy
+#undef coy
+#undef strz
+#undef dcz
+#undef coz
+#undef su
+#undef sum
+}
+
+
 //-----------------------------------------------------------------------
 __global__ void addsgd6_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
@@ -1762,7 +1935,9 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 }
 
 
-__global__ void rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+__global__ void 
+__launch_bounds__(256,1)
+rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                                    float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda,
                                    float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
                                    int ghost_points )

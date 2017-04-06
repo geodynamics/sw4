@@ -24,4 +24,7 @@ class EWCuda
 #define DIAMETER (2*RADIUS+1)
 #define RHS4_BLOCKX 16
 #define RHS4_BLOCKY 16
+#define ADDSGD4_BLOCKX 24
+#define ADDSGD4_BLOCKY 16
+
 #endif

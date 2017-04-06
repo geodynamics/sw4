@@ -1,5 +1,5 @@
 #include "EW.h"
-
+   
 #include "EWCuda.h"
 
 #ifdef SW4_CUDA
@@ -55,6 +55,13 @@ __global__ void addsgd4_dev_rev( int ifirst, int ilast, int jfirst, int jlast, i
 			     float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 			     float_sw4 beta, int ghost_points );
 
+__global__ void addsgd4_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                                float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+                                float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+                                float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                                float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+                                  float_sw4 beta, int ghost_points );
+
 __global__ void addsgd6_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
 			     float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
@@ -78,6 +85,7 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 				float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, 
 				float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 				int ghost_points );
+
 __global__ void rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                                    float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda,
                                    float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
@@ -110,7 +118,7 @@ __global__ void forcing_dev( float_sw4 t, Sarray* dev_F, int NumberOfGrids, Grid
 			     int nptsrc, int* dev_identsources, int nident, bool tt );
 __global__ void init_forcing_dev( GridPointSource** point_sources, int nsrc );
 #endif
-
+  
 //-----------------------------------------------------------------------
 void EW::evalRHSCU(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		   vector<Sarray> & a_Uacc, int st )
@@ -283,13 +291,31 @@ void EW::addSuperGridDampingCU(vector<Sarray> & a_Up, vector<Sarray> & a_U,
       if( m_sg_damping_order == 4 )
       {
 	 if( m_corder )
-	    addsgd4_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-								      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
-                                                                      a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
-								      dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
-								      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
-								      dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
-								      m_supergrid_damping_coefficient, m_ghost_points );
+         {
+	    // addsgd4_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+	    //     						      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
+            //                                                           a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
+	    //     						      dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
+	    //     						      dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
+	    //     						      dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
+	    //     						      m_supergrid_damping_coefficient, m_ghost_points ); 
+           int ni = m_iEnd[g] - m_iStart[g] + 1 - 2*m_ghost_points;
+           int nj = m_jEnd[g] - m_jStart[g] + 1 - 2*m_ghost_points;
+           int nk = m_kEnd[g] - m_kStart[g] + 1 - 2*m_ghost_points;
+           const dim3 block(ADDSGD4_BLOCKX,ADDSGD4_BLOCKY,1);
+           dim3 grid;
+           grid.x = (ni + block.x - 1) / block.x;
+           grid.y = (nj + block.y - 1) / block.y;
+           grid.z = 1;
+           addsgd4_dev_nv<<<grid,block,0,m_cuobj->m_stream[st]>>>(
+             m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+             m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(),
+             a_U[g].dev_ptr(), a_Um[g].dev_ptr(), a_Rho[g].dev_ptr(),
+             dev_sg_dc_x[g], dev_sg_dc_y[g], dev_sg_dc_z[g],
+             dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g],
+             dev_sg_corner_x[g], dev_sg_corner_y[g], dev_sg_corner_z[g],
+             m_supergrid_damping_coefficient, m_ghost_points );
+         }
 	 else
 	    addsgd4_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 								      m_kStart[g], m_kEnd[g], a_Up[g].dev_ptr(), 
