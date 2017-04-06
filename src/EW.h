@@ -812,7 +812,7 @@ bool m_anisotropic;
 // Randomization of the material
 bool m_randomize;
 int m_random_seed[3];
-double m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
+double m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes
