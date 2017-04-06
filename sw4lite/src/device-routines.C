@@ -1395,29 +1395,16 @@ __global__ void addsgd4_dev_rev( int ifirst, int ilast, int jfirst, int jlast, i
 #undef dcz
 #undef coz
 }
-
+ 
 __global__ void 
 __launch_bounds__(384, 1)
-addsgd4_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-                                float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
-                                float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
-                                float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-                                float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
-                                float_sw4 beta, int ghost_points )
+addsgd4_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                    float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+                    float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+                    float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                    float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+                    float_sw4 beta, int ghost_points )
 {   
-// #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
-// #define up(c,i,j,k) a_up[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
-// #define u(c,i,j,k) a_u[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
-// #define um(c,i,j,k) a_um[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
-// #define strx(i) a_strx[(i-ifirst)]
-// #define dcx(i) a_dcx[(i-ifirst)]
-// #define cox(i) a_cox[(i-ifirst)]
-// #define stry(j) a_stry[(j-jfirst)]
-// #define dcy(j) a_dcy[(j-jfirst)]
-// #define coy(j) a_coy[(j-jfirst)]
-// #define strz(k) a_strz[(k-kfirst)]
-// #define dcz(k) a_dcz[(k-kfirst)]
-// #define coz(k) a_coz[(k-kfirst)]
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
 #define up(c,i,j,k) a_up[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)+nijk*(c)]
 #define u(c,i,j,k)   a_u[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)+nijk*(c)]
@@ -1441,8 +1428,8 @@ addsgd4_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int kl
   const size_t nijk = nij*(klast-kfirst+1);
   int i = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
   int j = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
-  int ith = threadIdx.x + 2;
-  int jth = threadIdx.y + 2;
+  int ith = threadIdx.x + RADIUS;
+  int jth = threadIdx.y + RADIUS;
   __shared__ float_sw4 su[3][ADDSGD4_BLOCKX+2*RADIUS][ADDSGD4_BLOCKY+2*RADIUS],
     sum[3][ADDSGD4_BLOCKX+2*RADIUS][ADDSGD4_BLOCKY+2*RADIUS];
   float_sw4 qu[3][DIAMETER], qum[3][DIAMETER];
@@ -1459,22 +1446,6 @@ addsgd4_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int kl
 
   for (int k = kfirst+RADIUS; k <= klast-RADIUS; k++)
   {
-#pragma unroll
-    for (int q = 0; q < DIAMETER-1; q++)
-    {
-      for (int c = 0; c < 3; c++)
-      {
-        qu[c][q] = qu[c][q+1];
-        qum[c][q] = qum[c][q+1];
-      }
-    }
-#pragma unroll
-    for (int c = 0; c < 3; c++)
-    {
-      qu[c][4] = u(c,i,j,k+RADIUS);
-      qum[c][4] = um(c,i,j,k+RADIUS);
-    }
-
     __syncthreads();
     for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y)
     {
@@ -1500,6 +1471,22 @@ addsgd4_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int kl
 
     if (i <= ilast-ghost_points && j <= jlast-ghost_points)
     {
+#pragma unroll
+      for (int q = 0; q < DIAMETER-1; q++)
+      {
+        for (int c = 0; c < 3; c++)
+        {
+          qu[c][q] = qu[c][q+1];
+          qum[c][q] = qum[c][q+1];
+        }
+      }
+#pragma unroll
+      for (int c = 0; c < 3; c++)
+      {
+        qu[c][DIAMETER-1] = u(c,i,j,k+RADIUS);
+        qum[c][DIAMETER-1] = um(c,i,j,k+RADIUS);
+      }
+
       float_sw4 birho=beta/rho(i,j,k);
 #pragma unroll
       for( int c=0 ; c < 3 ; c++ )
@@ -1937,19 +1924,12 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 
 __global__ void 
 __launch_bounds__(256,1)
-rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-                                   float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda,
-                                   float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
-                                   int ghost_points )
+rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda,
+                       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                       int ghost_points )
 {
   // Direct reuse of fortran code by these macro definitions:
-// #define mu(i,j,k)     a_mu[base+i+ni*(j)+nij*(k)]
-// #define la(i,j,k) a_lambda[base+i+ni*(j)+nij*(k)]
-// #define u(c,i,j,k)   a_u[base3+c+3*(i)+nic*(j)+nijc*(k)]
-// #define lu(c,i,j,k) a_lu[base3+c+3*(i)+nic*(j)+nijc*(k)]
-// #define strx(i) a_strx[i-ifirst0]
-// #define stry(j) a_stry[j-jfirst0]
-// #define strz(k) a_strz[k-kfirst0]
 #define mu(i,j,k)     a_mu[base+(i)+ni*(j)+nij*(k)]
 #define la(i,j,k) a_lambda[base+(i)+ni*(j)+nij*(k)]
 #define u(c,i,j,k)   a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
@@ -1957,7 +1937,6 @@ rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
 #define strz(k) a_strz[k-kfirst0]
-//#define uSh(c,i,j,k) a_uSh[ c-1 + 3 * (i) + sh_ni * (j) + sh_nij * (k)]
 #define uSh(c,i,j,k) a_uSh[c-1][k][j][i]
 
   const float_sw4 a1   = 0;
@@ -1970,8 +1949,7 @@ rhs4center_dev_nv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int
   const int nij   = ni*(jlast-jfirst+1);
   const int nijk  = nij*(klast-kfirst+1);
   const int base  = -(ifirst+ni*jfirst+nij*kfirst);
-  // const int base3 = 3*base-1;
-   const int base3 = base-nijk;
+  const int base3 = base-nijk;
   const int nic  = 3*ni;
   const int nijc = 3*nij;
   const int ifirst0 = ifirst;
