@@ -17,6 +17,15 @@ else ifeq ($(findstring surface,$(HOSTNAME)),surface)
    MPIINC = $(MPIPATH)/include
    debugdir := debug_cuda_surface
    optdir   := optimize_cuda_surface
+else
+   NVCC = nvcc
+   HOSTCOMP = gcc
+   MPIPATH = $(dir $(shell which mpicc))../
+   gpuarch := sm_60
+   EXTRA_LINK_FLAGS = -lmpi
+   MPIINC = $(MPIPATH)/include
+   debugdir := debug_cuda_surface
+   optdir   := optimize_cuda_surface
 endif
 CXX  = $(NVCC)
 MPILIB = $(MPIPATH)/lib
@@ -27,7 +36,7 @@ ifeq ($(debug),yes)
    CFLAGS    = -g 
 else
    FFLAGS   = -O3 
-   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=$(gpuarch) -DSW4_CROUTINES -DSW4_CUDA -ccbin $(HOSTCOMP)
+   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=$(gpuarch) -DSW4_CROUTINES -DSW4_CUDA -ccbin $(HOSTCOMP) -Xptxas -v
    CFLAGS   = -O 
 endif
 ifdef MPIINC
@@ -86,7 +95,6 @@ sw4lite: $(FOBJ)
 	cd $(builddir); $(NVCC) -L$(MPILIB) $(OMPOPT) -Xlinker "-rpath=$(MPILIB)" -arch=$(gpuarch) -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart  $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
-
 
 #$(builddir)/device-routines.o:src/device-routines.C
 #	/bin/mkdir -p $(builddir)
