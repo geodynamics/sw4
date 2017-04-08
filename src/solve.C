@@ -34,6 +34,7 @@
 //#include "impose_curvilinear_bc.h"
 #include "F77_FUNC.h"
 
+#define SQR(x) ((x)*(x))
 extern "C" {
    void tw_aniso_free_surf_z(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                              int kz, double t, double om, double cv, double ph, double omm, double* phc,
@@ -44,11 +45,20 @@ extern "C" {
                         double *mu, double *lambda, double *zmin,
                         int *i1, int *i2, int *j1, int *j2 );
 
+   void twfrsurfz_att_wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                          double h, int kz, double t, double omega, double c, double phase,
+                          double *bforce, double *mu, double *lambda, double zmin,
+                          int i1, int i2, int j1, int j2 );
+
    void twfrsurfzsg_wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                           double h, int kz, double t, double omega, double c, double phase, double omstrx, double omstry,
                           double *bforce, double *mu, double *lambda, double zmin,
                           int i1, int i2, int j1, int j2 );
 
+   void twfrsurfzsg_att_wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                          double h, int kz, double t, double omega, double c, double phase, double omstrx, double omstry,
+                          double *bforce, double *mu, double *lambda, double zmin,
+                          int i1, int i2, int j1, int j2 );
 
 void F77_FUNC(satt,SATT)(double *up, double *qs, double *dt, double *cfreq, int *ifirst, int *ilast, 
 			 int *jfirst, int *jlast, int *kfirst, int *klast);
@@ -202,7 +212,10 @@ void F77_FUNC(addsgd6c,ADDSGD6C) (double* dt, double *a_Up, double*a_U, double*a
    void forcingfortsg(int*, int*, int*, int*, int*, 
                       int*, double*, double*, double*, double*, double*, double*, double*, 
                       double*, double*, double*, double*, double*,double*,double*,double* );
-   void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
+   void forcingfortsgatt(int*, int*, int*, int*, int*, 
+                      int*, double*, double*, double*, double*, double*, double*, double*, 
+                      double*, double*, double*, double*, double*,double*,double*,double* );
+   void forcingttfort( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double*, double*, double* );
    void att_free_curvi( int *ifirst, int *ilast, int *jfirst, int *jlast, int *kfirst,
                         int *klast, double *u, double *mu, double *la, double *bforce_rhs, double *met, double *sbop, 
@@ -780,13 +793,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //       time_measure[4] = MPI_Wtime();
 
 // interface conditions for 2nd order in time
-       enforceIC2( Up, U, Um, t, point_sources );
+//       printf("Before enforceIC2\n");
+       enforceIC2( Up, U, Um, AlphaVEp, t, point_sources );
+//       printf("After enforceIC2\n");
     }
     else
     {
 // *** 4th order in TIME interface conditions for the predictor
 // No supergrid or attenuation
-       enforceIC( Up, U, Um, t, true, point_sources );
+       enforceIC( Up, U, Um, AlphaVEp, t, true, point_sources );
     }
     
 // should these timers be here?
@@ -860,7 +875,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        }
        
 // interface conditions for the corrector
-       enforceIC( Up, U, Um, t, false, point_sources );
+       enforceIC( Up, U, Um, AlphaVEp, t, false, point_sources );
 
     }// end if mOrder == 4
     
@@ -1311,6 +1326,7 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 }
 //--------------------Mesh refinement interface condition for 4th order predictor-corrector scheme----------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
+                    vector<Sarray*>& a_AlphaVEp, 
 		    double time, bool predictor, vector<GridPointSource*> point_sources )
 {
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1367,8 +1383,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       }
       else // In the corrector step, (Unextc, Unextf) represent the displacement after next predictor step
       {
-	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, time+mDt, point_sources );
-	 compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, time+mDt, point_sources );
+	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, point_sources );
+	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, point_sources );
 
 	 if( !m_doubly_periodic )
 	 {
@@ -1376,7 +1392,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
             dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
 	 }
       }
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1]);
       compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
 
 // from enforceIC2()
@@ -1435,7 +1451,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
 void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-		    double time, vector<GridPointSource*> point_sources )
+                     vector<Sarray*>& a_AlphaVEp,
+                     double time, vector<GridPointSource*> point_sources )
 {
    bool predictor = false;   // or true???
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1477,8 +1494,8 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 //
       // Check super-grid terms !
       //
-      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], Unextf, g+1, kf, time+mDt, point_sources );
-      compute_preliminary_predictor( a_Up[g], a_U[g], Unextc, g, kc, time+mDt, point_sources );
+      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, point_sources );
+      compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, point_sources );
 
       if( !m_doubly_periodic )
       {
@@ -1486,10 +1503,134 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
          dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
       }
 
+// test: assign exact (twilight) solution to a_Up
+//      initialData(time+mDt, a_Up, a_AlphaVEp);
+// end test
 //  compute contribution to the normal stresses (Bc, Bf) from the interior grid points in Up
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1] );
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1]);
+      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
 
+// add in the visco-elastic boundary traction
+      if( m_use_attenuation && m_number_mechanisms > 0 )
+      {
+         for( int a=0 ; a < m_number_mechanisms ; a++ )
+         {
+            add_ve_stresses( a_AlphaVEp[g+1][a], Bf, g+1, kf, a, m_sg_str_x[g+1], m_sg_str_y[g+1]);
+            add_ve_stresses( a_AlphaVEp[g][a],     Bc, g,    kc, a, m_sg_str_x[g],     m_sg_str_y[g]   );
+         }
+      }
+
+// // check error in interface stresses
+//       int gc = g, gf = g+1;
+
+//       int icb = m_iStartInt[gc];
+//       int ifb = m_iStartInt[gf];
+
+//       int ice = m_iEndInt[gc];
+//       int ife = m_iEndInt[gf];
+   
+//       int jcb = m_jStartInt[gc];
+//       int jfb = m_jStartInt[gf];
+
+//       int jce = m_jEndInt[gc];
+//       int jfe = m_jEndInt[gf];
+
+//       int nkf = m_global_nz[gf];
+
+//       double hc = mGridSize[gc];
+//       double hf = mGridSize[gf];
+
+//       double omstrx = m_supergrid_taper_x[gf].get_tw_omega();
+//       double omstry = m_supergrid_taper_y[gf].get_tw_omega();
+      
+//       double* mu_ptr, *la_ptr, *b_ptr;
+
+//       double* mua_ptr = NULL;
+//       double* laa_ptr   = NULL;
+
+//       double om = m_twilight_forcing->m_omega;
+//       double ph = m_twilight_forcing->m_phase;
+//       double cv = m_twilight_forcing->m_c;
+
+// // fine grid exact boundary traction (twilight)
+//    Sarray BfExact;
+//    BfExact.define(3,m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], nkf, nkf);
+//    BfExact.set_to_zero();
+   
+// // get array pointers for fortran
+//    mu_ptr    = mMu[gf].c_ptr();
+//    la_ptr    = mLambda[gf].c_ptr();
+//    b_ptr = BfExact.c_ptr();
+//    omstrx = m_supergrid_taper_x[gf].get_tw_omega();
+//    omstry = m_supergrid_taper_y[gf].get_tw_omega();
+
+//    mua_ptr = NULL;
+//    laa_ptr   = NULL;
+//    if (m_use_attenuation)
+//    {
+//       mua_ptr    = mMuVE[gf][0].c_ptr();
+//       laa_ptr    = mLambdaVE[gf][0].c_ptr();
+//    }
+
+//    // fill in the interior of BfExact
+//    double t1=time+mDt;
+   
+//    if( usingSupergrid() )
+//    {
+//       twfrsurfzsg_wind( m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], m_kStart[gf], m_kEnd[gf],// 1st 6 args for dim of mu, lambda
+//                         hf, nkf, t1, om, cv, ph, omstrx, omstry,
+//                         BfExact.c_ptr(), mu_ptr, la_ptr, m_zmin[gf], ifb, ife, jfb, jfe );
+//       if (m_use_attenuation) // only 1 mechanism with twilight forcing
+//       {
+//          twfrsurfzsg_att_wind( m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], m_kStart[gf], m_kEnd[gf],
+//                                hf, nkf, t1, om, cv, ph, omstrx, omstry,
+//                                BfExact.c_ptr(), mua_ptr, laa_ptr, m_zmin[gf], ifb, ife, jfb, jfe );
+//       }
+//    }
+//    else
+//    {
+//       twfrsurfz_wind( &m_iStart[gf], &m_iEnd[gf], &m_jStart[gf], &m_jEnd[gf], &m_kStart[gf], &m_kEnd[gf],
+//                       &hf, &nkf, &t1, &om, &cv, &ph,
+//                       BfExact.c_ptr(), mu_ptr, la_ptr, &m_zmin[gf], &ifb, &ife, &jfb, &jfe );
+//       if (m_use_attenuation) // only 1 mechanism with twilight forcing
+//       {
+//          twfrsurfz_att_wind( m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], m_kStart[gf], m_kEnd[gf],
+//                              hf, nkf, t1, om, cv, ph, 
+//                              BfExact.c_ptr(), mua_ptr, laa_ptr, m_zmin[gf], ifb, ife, jfb, jfe );
+//       }
+//    }
+
+//    FILE *fpf=fopen("fine-stress.dat","w");
+//    FILE *fpt=fopen("tw-stress.dat","w");
+
+//    double err_f, err2_stress=0, errmax_stress=0;
+   
+//    for (int ic=ifb; ic<=ife; ic++)
+//       for (int jc=jfb; jc<=jfe; jc++)
+//       {
+//          err_f = 0;
+//          for (int q=1; q<=3; q++)
+//             err_f += SQR(Bf(q,ic,jc,nkf) - BfExact(q,ic,jc,nkf));
+         
+//          err2_stress += err_f;
+//          err_f = sqrt(err_f);
+//          if (err_f > errmax_stress) errmax_stress = err_f;
+
+//          fprintf(fpt,"%d %d %e %e %e\n", ic, jc, BfExact(1,ic,jc,nkf), BfExact(2,ic,jc,nkf), BfExact(3,ic,jc,nkf));
+//          fprintf(fpf,"%d %d %e %e %e\n", ic, jc, Bf(1,ic,jc,nkf), Bf(2,ic,jc,nkf), Bf(3,ic,jc,nkf));
+//       }
+   
+//    fclose(fpt);
+//    fclose(fpf);
+   
+//    err2_stress = sqrt(err2_stress/((ife-ifb+1)*(jfe-jfb+1)));
+   
+//    printf("Fine grid traction error, max: %e, L2=%e\n", errmax_stress, err2_stress);
+   
+//    exit(1);
+// // end test   
+
+      
       if( !m_doubly_periodic )
       {
 //  dirichlet condition for Bf in the super-grid layer at time t+dt (also works with twilight)
@@ -1518,12 +1659,19 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
       // Initial guesses for grid interface iteration
       gridref_initial_guess( a_Up[g+1], g+1, false );
       gridref_initial_guess( a_Up[g], g, true );
-
       double cof = predictor ? 12 : 1;
       int is_periodic[2] ={0,0};
       if( m_doubly_periodic )
 	 is_periodic[0] = is_periodic[1] = 1;
 
+// // testing (twilight)
+//       initialData(time+mDt, a_Up, a_AlphaVEp);
+//       // Iteratively determine the ghost point values in Up to satisfy the jump conditions
+//       checkintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
+//                  a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
+//                  cof, g, g+1, is_periodic, time+mDt);
+// // end test
+      
 // Iteratively determine the ghost point values in Up to satisfy the jump conditions
       consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
 		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
@@ -1923,6 +2071,16 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
       double omstrx = m_supergrid_taper_x[g].get_tw_omega();
       double omstry = m_supergrid_taper_y[g].get_tw_omega();
 
+      double* mua_ptr = NULL;
+      double* laa_ptr   = NULL;
+      if (m_use_attenuation)
+      {
+         mua_ptr    = mMuVE[g][0].c_ptr();
+         laa_ptr    = mLambdaVE[g][0].c_ptr();
+      }
+
+      bool corner[4]={false, false, false, false};
+         
       if( m_iStartInt[g] == 1 )
       {
 	 // low i-side
@@ -1933,13 +2091,25 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
             twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                     h, kic, t, om, cv, ph, omstrx, omstry,
+                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
          else
          {
             twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
                             &h, &kic, &t, &om, &cv, &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
-         
+         corner[0]=true;
+         corner[2]=true;
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
@@ -1951,6 +2121,12 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
             twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                     h, kic, t, om, cv, ph, omstrx, omstry,
+                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
          else
          {
@@ -1958,7 +2134,14 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
                             &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                             mu_ptr, la_ptr, &m_zmin[g],
                             &i1, &i2, &j1, &j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
+         corner[1]=true;
+         corner[3]=true;
       }
       if( m_jStartInt[g] == 1 )
       {
@@ -1970,6 +2153,14 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
             twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               if (corner[0]) i1 = m_iStartInt[g];
+               if (corner[1]) i2 = m_iEndInt[g];
+               twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                     h, kic, t, om, cv, ph, omstrx, omstry,
+                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
          else
          {
@@ -1977,6 +2168,13 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
                             &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                             mu_ptr, la_ptr, &m_zmin[g],
                             &i1, &i2, &j1, &j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               if (corner[0]) i1 = m_iStartInt[g];
+               if (corner[1]) i2 = m_iEndInt[g];
+               twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
       }
       if( m_jEndInt[g] == m_global_ny[g] )
@@ -1989,6 +2187,14 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
             twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               if (corner[2]) i1 = m_iStartInt[g];
+               if (corner[3]) i2 = m_iEndInt[g];
+               twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                     h, kic, t, om, cv, ph, omstrx, omstry,
+                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
          else
          {
@@ -1996,6 +2202,13 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj )
                             &h, &kic, &t, &om, &cv, &ph, b_ptr, 
                             mu_ptr, la_ptr, &m_zmin[g],
                             &i1, &i2, &j1, &j2 );
+            if (m_use_attenuation) // only 1 mechanism with twilight forcing
+            {
+               if (corner[2]) i1 = m_iStartInt[g];
+               if (corner[3]) i2 = m_iEndInt[g];
+               twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+            }
          }
       }
    }      
@@ -2090,7 +2303,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       double amprho   = m_twilight_forcing->m_amprho;
       double ampmu    = m_twilight_forcing->m_ampmu;
       double amplambda= m_twilight_forcing->m_amplambda;
-      F77_FUNC(forcingttfort,FORCINGTTFORT)( &ib, &ie, &jb, &je, &kic, &kic, force.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+      forcingttfort( &ib, &ie, &jb, &je, &kic, &kic, force.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
 		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
    }
    else if( m_rayleigh_wave_test || m_energy_test )
@@ -2126,7 +2339,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 }
 
 //-----------------------------------------------------------------------
-void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
+void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
 					int g, int kic, double t, vector<GridPointSource*> point_sources )
 {
    int ib=m_iStart[g], jb=m_jStart[g], kb=m_kStart[g];
@@ -2145,6 +2358,22 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
 // Note: 4 last arguments of the above function call:
 // (kb,ke) is the declared size of Up in the k-direction
 // (kic,kic) is the declared size of Lu in the k-direction
+
+   // add in visco-elastic terms
+   if( m_use_attenuation && m_number_mechanisms > 0 )
+   {
+      op = '-'; // Subtract Lu := Lu - L_a(alpha)
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+         double* alpha_ptr = a_AlphaVEp[a].c_ptr();
+         double* mua_ptr = mMuVE[g][a].c_ptr();
+         double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
+         rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+                          m_bope, m_ghcof, Lu.c_ptr(), alpha_ptr, mua_ptr,
+                          lambdaa_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+                          m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
+      }
+   }
    
    // Compute forcing at k=kic
    Sarray f(3,ib,ie,jb,je,kic,kic);
@@ -2166,14 +2395,18 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
          forcingfortsg(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
                          &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
                          &omstrx, &omstry, &omstrz );
+         if( m_use_attenuation ) // NOTE: forcingfortsgatt only adds in the visco-elastic terms to 'f'
+            forcingfortsgatt(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+                            &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
+                            &omstrx, &omstry, &omstrz );
       }
       else
       {
          forcingfort( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
                       &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
       }
-           
-   }
+   } // end twilight
+   
    else if( m_rayleigh_wave_test || m_energy_test )
       f.set_to_zero();
    else
@@ -2251,16 +2484,68 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 	       wz -= m_sbop[m]*a_Up(3,i,j,k+1-m);
 	    }
 	 }
-	 B(1,i,j,k) = ih*mMu[g](i,j,k)*(
-	    str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
-		       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
-	 B(2,i,j,k) = ih*mMu[g](i,j,k)*(
-	          str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
-			     a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
-	      (vz)  );
-	 B(3,i,j,k) = ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
-  	   str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
-	   str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+         B(1,i,j,k) = ih*mMu[g](i,j,k)*(
+            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
+                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
+         B(2,i,j,k) = ih*mMu[g](i,j,k)*(
+            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
+                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
+            (vz)  );
+         B(3,i,j,k) = ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
+                             str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
+                             str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+         
+      }
+#undef str_x
+#undef str_y
+}
+
+//-----------------------------------------------------------------------
+void EW::add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, double* a_str_x, double* a_str_y)
+{
+   const double a1=2.0/3, a2=-1.0/12;
+   bool upper = (kic == 1);
+   int k=kic;
+   double ih = 1/mGridSize[g];
+   double uz, vz, wz;
+   int ifirst = a_Up.m_ib;
+   int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i-ifirst)]   
+#define str_y(j) a_str_y[(j-jfirst)]   
+
+   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+      {
+	 uz = vz = wz = 0;
+	 if( upper )
+	 {
+	    for( int m=0 ; m <= 4 ; m++ )
+	    {
+	       uz += m_sbop[m]*a_Up(1,i,j,k+m-1);
+	       vz += m_sbop[m]*a_Up(2,i,j,k+m-1);
+	       wz += m_sbop[m]*a_Up(3,i,j,k+m-1);
+	    }
+	 }
+	 else
+	 {
+	    for( int m=0 ; m <= 4 ; m++ )
+	    {
+	       uz -= m_sbop[m]*a_Up(1,i,j,k+1-m);
+	       vz -= m_sbop[m]*a_Up(2,i,j,k+1-m);
+	       wz -= m_sbop[m]*a_Up(3,i,j,k+1-m);
+	    }
+	 }
+// subtract the visco-elastic contribution from mechanism 'a_a'
+         B(1,i,j,k) = B(1,i,j,k) - ih*mMuVE[g][a_a](i,j,k)*(
+            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
+                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
+         B(2,i,j,k) = B(2,i,j,k) - ih*mMuVE[g][a_a](i,j,k)*(
+            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
+                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) + (vz)  );
+         B(3,i,j,k) = B(3,i,j,k) - ih*((2*mMuVE[g][a_a](i,j,k)+mLambdaVE[g][a_a](i,j,k))*(wz) + mLambdaVE[g][a_a](i,j,k)*(
+                                          str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
+                                          str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+         
       }
 #undef str_x
 #undef str_y

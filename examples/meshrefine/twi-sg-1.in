@@ -1,4 +1,5 @@
-# test supergrid with twilight forcing
+# test meshrefinement & supergrid stretching with twilight forcing
+# cfl must be reduced with supergrid stretching in twilight mode (phi > 1)
 developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.6
 
 fileio verbose=1 path=tw-sg-51
@@ -10,13 +11,3 @@ time t=1.0
 #time steps=1
 
 twilight errorlog=1 omega=1.0 momega=1.0 phase=0.3 mphase=0.1 amprho=1.0 ampmu=1.0 amplambda=1.0 c=1.3 sgstretching=1 omstrx=0.5 omstry=0.5 omstrz=0.5 freeupper=1
-#omstrx=2.1 omstry=2.6 omstrz=2.3 freelower=1
-
-image mode=uxerr cycle=1 file=test y=3
-#image mode=uxerr time=1.0 file=test y=3
-
-#image mode=ux cycle=0 file=test z=0
-#image mode=ux cycle=1 file=test z=0
-#image mode=uxerr time=0.1 file=test x=3
-#image mode=uxerr time=0.1 file=test z=3
-#image mode=ux time=1 file=test z=0

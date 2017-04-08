@@ -1,4 +1,4 @@
-developer time_order=2 cfl=0.75
+#developer time_order=2 cfl=0.75
 
 fileio verbose=1 path=tw-att-gauss-2
 grid nx=101 x=6.28 y=6.28 z=6.28

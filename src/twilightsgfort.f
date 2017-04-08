@@ -282,7 +282,7 @@
 c-----------------------------------------------------------------------
       subroutine forcingttfortsg( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     h, zmin, omstrx, omstry, omstrz )
+     +     h, zmin, omstrx, omstry, omstrz ) bind(c)
 
       implicit none
 
@@ -1061,8 +1061,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine forcingfortsgatt( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, omega, c, phase, momega, mphase, amprho, ampmu,
-     +      amplambda, h, zmin, omstrx, omstry, omstrz )
-
+     +      amplambda, h, zmin, omstrx, omstry, omstrz ) bind(c)
+c
+c NOTE: this routine adds visco-elastic forcing terms to fo(), i.e., assumes that
+c forcingfortsg() has been called before calling this routine
       implicit none
 
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
@@ -1295,7 +1297,7 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine forcingttattfortsg( ifirst, ilast, jfirst, jlast, 
      +    kfirst, klast, fo, t, omega, c, phase, momega, mphase, amprho,
-     +     ampmu, amplambda, h, zmin, omstrx, omstry, omstrz )
+     +     ampmu, amplambda, h, zmin, omstrx, omstry, omstrz ) bind(c)
 
       implicit none
 

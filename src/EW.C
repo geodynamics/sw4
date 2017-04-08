@@ -89,27 +89,27 @@ void forcingfortsg(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
-void F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void forcingfortsgatt(int*, int*, int*, int*, int*, 
+                      int*, double*, double*, double*, double*, double*, double*, double*, 
+                      double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingfortsgattc,FORCINGFORTSGATTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				   double*, double*, double*, double*, double*,double*,double*,double*, double* );
-void F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
+void forcingttfortsg(int*, int*, int*, int*, int*, 
+                     int*, double*, double*, double*, double*, double*, double*, double*, 
+                     double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
-void F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
+void forcingttattfortsg(int*, int*, int*, int*, int*, 
+                        int*, double*, double*, double*, double*, double*, double*, double*, 
+                        double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttattfortsgc,FORCINGTTATTFORTSGC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-				       double*, double*, double*, double*, double* );
+void forcingttfort(int*, int*, int*, int*, int*, 
+                   int*, double*, double*, double*, double*, double*, double*, double*, 
+                   double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfortc,FORCINGTTFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					     double*, double*, double*, double*, double*, double* );
@@ -3474,9 +3474,9 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
                              &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
                              &h, &zmin, &omstrx, &omstry, &omstrz );
               if( m_use_attenuation )
-                 F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                              &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                              &h, &zmin, &omstrx, &omstry, &omstrz );
+                 forcingfortsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                                   &h, &zmin, &omstrx, &omstry, &omstrz );
            }
            else
            {
@@ -3666,17 +3666,17 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
               double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
-              F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                         &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                         &h, &zmin, &omstrx, &omstry, &omstrz );
+              forcingttfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                               &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                               &h, &zmin, &omstrx, &omstry, &omstrz );
               if( m_use_attenuation )
-                 F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                                  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                                  &h, &zmin, &omstrx, &omstry, &omstrz );
+                 forcingttattfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                     &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                                     &h, &zmin, &omstrx, &omstry, &omstrz );
            }
            else
            {
-              F77_FUNC(forcingttfort,FORCINGTTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+              forcingttfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
                                                      &amprho, &ampmu, &ampla, &h, &zmin );
               if( m_use_attenuation )
