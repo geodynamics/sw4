@@ -1,6 +1,8 @@
 #ifndef SW4_EW
 #define SW4_EW
 
+#define SafeCudaCall(call)    CheckCudaCall(call, #call, __FILE__, __LINE__)
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -75,13 +77,17 @@ class EW
    void evalDpDmInTimeCU(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 			 vector<Sarray> & a_Uacc, int st );
    void communicate_array( Sarray& U, int g );
- 
    void cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources );
+   void cartesian_bc_forcingCU( float_sw4 t, vector<float_sw4**> & a_BCForcing,
+                              vector<Source*>& a_sources , int st);
+
    void setup_boundary_arrays();
    void side_plane( int g, int side, int wind[6], int nGhost );   
    void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		   float_sw4 t, vector<float_sw4**> & a_BCForcing );
+   void enforceBCCU( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                   float_sw4 t, vector<float_sw4**> & a_BCForcing , int st);
    void enforceCartTopo( vector<Sarray>& a_U );
    void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			    vector<Sarray> & a_Um, vector<Sarray> & a_Rho );
@@ -367,6 +373,14 @@ class EW
    vector<int *> m_NumberOfBCPoints;
    vector<int *> m_BndryWindow;
 
+   vector<boundaryConditionType*> dev_bcType;
+   vector<int *> dev_BndryWindow;
+   vector<float_sw4**> BCForcing;
+   vector<float_sw4**> dev_BCForcing;
+   void copy_bcforcing_arrays_to_device();
+   void copy_bctype_arrays_to_device();
+   void copy_bndrywindow_arrays_to_device();
+
    // Test modes
    bool m_point_source_test, m_moment_test;
 
@@ -406,6 +420,15 @@ class EW
 
    // Discontinuous Galerkin stuff
    bool m_use_dg;
+ 
+   // Halo data communication 
+   vector<float_sw4*> dev_SideEdge_Send, dev_SideEdge_Recv;
+   vector<float_sw4*>  m_SideEdge_Send, m_SideEdge_Recv;
+   void setup_device_communication_array();
+   void communicate_arrayCU( Sarray& u, int g , int st);
+
+   void CheckCudaCall(cudaError_t command, const char * commandName, const char * fileName, int line);
+
    
 };
 

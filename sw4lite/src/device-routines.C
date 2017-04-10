@@ -1,6 +1,7 @@
 #include "sw4.h"
 #include "Sarray.h"
 #include "GridPointSource.h"
+#include <stdio.h>
 
 #ifdef SW4_CUDA
 #include <cuda_runtime.h>
@@ -8,6 +9,7 @@
 __constant__ float_sw4 dev_acof[384];
 __constant__ float_sw4 dev_ghcof[6];
 __constant__ float_sw4 dev_bope[48];
+__constant__ float_sw4 dev_sbop[5];
 
 #include <iostream>
 using namespace std;
@@ -31,6 +33,32 @@ void copy_stencilcoefficients( float_sw4* acof, float_sw4* ghcof, float_sw4* bop
 	      << cudaGetErrorString(retcode) << endl;
    }
 }
+
+//-----------------------------------------------------------------------
+void copy_stencilcoefficients1( float_sw4* acof, float_sw4* ghcof, float_sw4* bope , float_sw4* sbop )
+{
+  cudaError_t retcode;
+  {
+    retcode = cudaMemcpyToSymbol( dev_acof,  acof, 384*sizeof(float_sw4));
+    if( retcode != cudaSuccess )
+      cout << "Error copying acof to device constant memory. Error= "
+           << cudaGetErrorString(retcode) << endl;
+    retcode = cudaMemcpyToSymbol( dev_bope,  bope,  48*sizeof(float_sw4));
+    if( retcode != cudaSuccess )
+      cout << "Error copying bope to device constant memory. Error= "
+           << cudaGetErrorString(retcode) << endl;
+    retcode = cudaMemcpyToSymbol( dev_ghcof, ghcof,  6*sizeof(float_sw4));
+    if( retcode != cudaSuccess )
+      cout << "Error copying ghcof to device constant memory. Error= "
+           << cudaGetErrorString(retcode) << endl;
+    retcode = cudaMemcpyToSymbol( dev_sbop,  sbop,  5*sizeof(float_sw4));
+    if( retcode != cudaSuccess )
+      cout << "Error copying bope to device constant memory. Error= "
+           << cudaGetErrorString(retcode) << endl;
+  }
+}
+
+
 
 //-----------------------------------------------------------------------
 __global__ void pred_dev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -2437,5 +2465,596 @@ __global__ void init_forcing_dev( GridPointSource** point_sources, int nsrc )
       r += nthreads;
    }
 }
+
+//-----------------------------------------------------------------------
+__global__ void HaloToBufferKernel_dev(float_sw4* block_left, float_sw4* block_right, float_sw4* block_up, float_sw4* block_down,
+                        float_sw4 * leftSideEdge, float_sw4 * rightSideEdge, float_sw4 * upSideEdge, float_sw4 * downSideEdge,
+                        int ni, int nj, int nk, int m_padding, const int m_neighbor0 ,const int  m_neighbor1, const int m_neighbor2,
+                        const int m_neighbor3, const int mpi_process_null)
+{
+   int njk = nj*nk;
+   int n_m_padding, istart, idx_halo,  i, idx, j;
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
+
+   n_m_padding = 3*m_padding;
+   size_t npts = static_cast<size_t>(nj*nk);
+
+   if( m_neighbor1 !=  mpi_process_null)
+      for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+      {
+         idx = i/(n_m_padding);
+         j  = i - idx*n_m_padding;
+         istart = idx*(3*ni);
+         block_up[istart+j] = upSideEdge[i];
+      }
+
+   if( m_neighbor0 !=  mpi_process_null)
+      for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+      {
+         idx = i/(n_m_padding);
+         j  = i - idx*n_m_padding;
+         istart = idx*(3*ni);
+         block_down[istart+j] = downSideEdge[i];
+      }
+
+   n_m_padding = 3*m_padding*ni;
+   npts = static_cast<size_t>(nk);
+
+   if( m_neighbor2 !=  mpi_process_null)
+      for (i = myi; i < n_m_padding*npts; i += nthreads)
+      {
+         idx = i/n_m_padding;
+         j  = i - idx*n_m_padding;
+         istart = idx*(3*ni*nj);
+         block_left[istart+j] = leftSideEdge[i];
+      }
+
+
+   if( m_neighbor3 !=  mpi_process_null)
+      for (i = myi; i < n_m_padding*npts; i += nthreads)
+      {
+         idx = i/n_m_padding;
+         j  = i - idx*n_m_padding;
+         istart = idx*(3*ni*nj);
+         block_right[istart+j] = rightSideEdge[i];
+      }
+
+}
+
+//-----------------------------------------------------------------------
+__global__ void HaloToBufferKernel_dev_rev(float_sw4* block_left, float_sw4* block_right, float_sw4* block_up, float_sw4* block_down,
+                        float_sw4 * leftSideEdge, float_sw4 * rightSideEdge, float_sw4 * upSideEdge, float_sw4 * downSideEdge,
+                        int ni, int nj, int nk, int m_padding, const int m_neighbor0 ,const int  m_neighbor1, const int m_neighbor2,
+                        const int m_neighbor3, const int mpi_process_null)
+{
+   int njk = nj*nk;
+   int n_m_padding, istart, idx_halo,  i, idx, j;
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
+
+   n_m_padding = m_padding;
+   size_t npts = static_cast<size_t>(3*nj*nk);
+
+   if( m_neighbor1 !=  mpi_process_null)
+      for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+      {
+         idx = i/(n_m_padding);
+         j  = i - idx*n_m_padding;
+         istart = idx*ni;
+         block_up[istart+j] = upSideEdge[i];
+      }
+
+   if( m_neighbor0 !=  mpi_process_null)
+      for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+      {
+         idx = i/(n_m_padding);
+         j  = i - idx*n_m_padding;
+         istart = idx*ni;
+         block_down[istart+j] = downSideEdge[i];
+      }
+
+   n_m_padding = m_padding*ni;
+   npts = static_cast<size_t>(3*nk);
+
+   if( m_neighbor2 !=  mpi_process_null)
+      for (i = myi; i < n_m_padding*npts; i += nthreads)
+      {
+         idx = i/n_m_padding;
+         j  = i - idx*n_m_padding;
+         istart = idx*(ni*nj);
+         block_left[istart+j] = leftSideEdge[i];
+      }
+
+
+   if( m_neighbor3 !=  mpi_process_null)
+      for (i = myi; i < n_m_padding*npts; i += nthreads)
+      {
+         idx = i/n_m_padding;
+         j  = i - idx*n_m_padding;
+         istart = idx*(ni*nj);
+         block_right[istart+j] = rightSideEdge[i];
+      }
+
+}
+
+//-----------------------------------------------------------------------
+__global__ void BufferToHaloKernel_dev(float_sw4* block_left, float_sw4* block_right, float_sw4* block_up, float_sw4* block_down,
+                float_sw4 * leftSideEdge, float_sw4 * rightSideEdge, float_sw4 * upSideEdge, float_sw4 * downSideEdge,
+                int ni, int nj, int nk, int m_padding, const int m_neighbor0 ,const int  m_neighbor1, const int m_neighbor2,
+                        const int m_neighbor3, const int mpi_process_null )
+{
+   int njk = nj*nk;
+   int n_m_padding, istart, idx_halo,  i, idx, j;
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
+
+   n_m_padding = 3*m_padding;
+   size_t npts = static_cast<size_t>(nj*nk);
+
+   if( m_neighbor1 !=  mpi_process_null)
+   for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+   {
+        idx = i/(n_m_padding);
+        j  = i - idx*n_m_padding;
+        istart = idx*(3*ni);
+        upSideEdge[i] = block_up[istart+j];
+   }
+
+   if( m_neighbor0 !=  mpi_process_null)
+   for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+   {
+        idx = i/(n_m_padding);
+        j  = i - idx*n_m_padding;
+        istart = idx*(3*ni);
+        downSideEdge[i] = block_down[istart+j];
+   }
+
+   n_m_padding = 3*m_padding*ni;
+   npts = static_cast<size_t>(nk);
+
+   if( m_neighbor2 !=  mpi_process_null)
+   for (i = myi; i < n_m_padding*npts; i += nthreads)
+   {
+        idx = i/n_m_padding;
+        j  = i - idx*n_m_padding;
+        istart = idx*(3*ni*nj);
+        leftSideEdge[i] = block_left[istart+j];
+   }
+
+   if( m_neighbor3 !=  mpi_process_null)
+   for (i = myi; i < n_m_padding*npts; i += nthreads)
+   {
+        idx = i/n_m_padding;
+        j  = i - idx*n_m_padding;
+        istart = idx*(3*ni*nj);
+        rightSideEdge[i] = block_right[istart+j];
+   }
+
+}
+
+//-----------------------------------------------------------------------
+__global__ void BufferToHaloKernel_dev_rev(float_sw4* block_left, float_sw4* block_right, float_sw4* block_up, float_sw4* block_down,
+                float_sw4 * leftSideEdge, float_sw4 * rightSideEdge, float_sw4 * upSideEdge, float_sw4 * downSideEdge,
+                int ni, int nj, int nk, int m_padding, const int m_neighbor0 ,const int  m_neighbor1, const int m_neighbor2,
+                        const int m_neighbor3, const int mpi_process_null )
+{
+   int njk = nj*nk;
+   int n_m_padding, istart, idx_halo,  i, idx, j;
+   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
+
+   n_m_padding = m_padding;
+   size_t npts = static_cast<size_t>(3*nj*nk);
+
+   if( m_neighbor1 !=  mpi_process_null)
+   for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+   {
+        idx = i/(n_m_padding);
+        j  = i - idx*n_m_padding;
+        istart = idx*ni;
+        upSideEdge[i] = block_up[istart+j];
+   }
+
+   if( m_neighbor0 !=  mpi_process_null)
+   for ( size_t i = myi; i < n_m_padding*npts; i += nthreads )
+   {
+        idx = i/(n_m_padding);
+        j  = i - idx*n_m_padding;
+        istart = idx*ni;
+        downSideEdge[i] = block_down[istart+j];
+   }
+
+   n_m_padding = m_padding*ni;
+   npts = static_cast<size_t>(3*nk);
+
+   if( m_neighbor2 !=  mpi_process_null)
+   for (i = myi; i < n_m_padding*npts; i += nthreads)
+   {
+        idx = i/n_m_padding;
+        j  = i - idx*n_m_padding;
+        istart = idx*(ni*nj);
+        leftSideEdge[i] = block_left[istart+j];
+   }
+
+   if( m_neighbor3 !=  mpi_process_null)
+   for (i = myi; i < n_m_padding*npts; i += nthreads)
+   {
+        idx = i/n_m_padding;
+        j  = i - idx*n_m_padding;
+        istart = idx*(ni*nj);
+        rightSideEdge[i] = block_right[istart+j];
+   }
+
+}
+
+//-----------------------------------------------------------------------
+__global__ void bcfortsg_dev_indrev( int ib, int ie, int jb, int je, int kb, int ke, int* wind,
+                                     int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType *bccnd,
+                                     float_sw4* mu, float_sw4* la, float_sw4 t,
+                                     float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3,
+                                     float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
+                                     float_sw4 om, float_sw4 ph, float_sw4 cv,
+                                     float_sw4* strx, float_sw4* stry )
+{
+  const float_sw4 d4a = 2.0/3.0;
+  const float_sw4 d4b = -1.0/12.0;
+  const size_t ni  = ie-ib+1;
+  const size_t nij = ni*(je-jb+1);
+  const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
+  for( int s=0 ; s < 6 ; s++ )
+  {
+    if( bccnd[s]==1 || bccnd[s]==2 )
+    {
+      size_t idel = 1+wind[1+6*s]-wind[6*s];
+      size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
+      int i = wind[6*s] + threadIdx.x + blockIdx.x*blockDim.x;
+      int j = wind[6*s+2] + threadIdx.y + blockIdx.y*blockDim.y;
+      int k = wind[6*s+4] +  threadIdx.z + blockIdx.z*blockDim.z;
+      if( i > wind[6*s+1] || j > wind[6*s+3] || k > wind[6*s+5])
+        continue;
+      int qq = i-wind[6*s] + idel*(j-wind[6*s+2]) + (k-wind[4+6*s])*ijdel;
+      size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+      if( s== 0 )
+      {
+        u[ind  ]      = bforce1[  3*qq];
+        u[ind+npts]   = bforce1[1+3*qq];
+        u[ind+2*npts] = bforce1[2+3*qq];
+      }
+      else if( s== 1 )
+      {
+        u[ind]        = bforce2[  3*qq];
+        u[ind+npts]   = bforce2[1+3*qq];
+        u[ind+2*npts] = bforce2[2+3*qq];
+      }
+      else if( s==2 )
+      {
+        u[ind  ] = bforce3[  3*qq];
+        u[ind+npts] = bforce3[1+3*qq];
+        u[ind+2*npts] = bforce3[2+3*qq];
+      }
+      else if( s==3 )
+      {
+        u[ind  ] = bforce4[  3*qq];
+        u[ind+npts] = bforce4[1+3*qq];
+        u[ind+2*npts] = bforce4[2+3*qq];
+      }
+      else if( s==4 )
+      {
+        u[ind  ] = bforce5[  3*qq];
+        u[ind+npts] = bforce5[1+3*qq];
+        u[ind+2*npts] = bforce5[2+3*qq];
+      }
+      else if( s==5 )
+      {
+        u[ind  ] = bforce6[  3*qq];
+        u[ind+npts] = bforce6[1+3*qq];
+        u[ind+2*npts] = bforce6[2+3*qq];
+      }
+    }
+    else if( bccnd[s]==3 )
+    {
+      int i = wind[6*s] + threadIdx.x + blockIdx.x*blockDim.x;
+      int j = wind[6*s+2] + threadIdx.y + blockIdx.y*blockDim.y;
+      int k = wind[6*s+4] +  threadIdx.z + blockIdx.z*blockDim.z;
+      if( i > wind[6*s+1] || j > wind[6*s+3] || k > wind[6*s+5])
+        continue;
+      size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+      if( s==0 )
+      {
+        size_t indp= ind+nx;
+        u[ind  ] = u[indp];
+        u[ind+npts] = u[indp+npts];
+        u[ind+2*npts] = u[indp+2*npts];
+      }
+      else if( s==1 )
+      {
+        size_t indp= ind-nx;
+        u[ind  ] = u[indp];
+        u[ind+npts] = u[indp+npts];
+        u[ind+2*npts] = u[indp+2*npts];
+      }
+      else if( s==2 )
+      {
+        size_t indp= ind+ni*ny;
+        u[ind  ] = u[indp];
+        u[ind+npts] = u[indp+npts];
+        u[ind+2*npts] = u[indp+2*npts];
+      }
+      else if( s==3 )
+      {
+        size_t indp= ind-ni*ny;
+        u[ind ] = u[indp];
+        u[ind+npts] = u[indp+npts];
+        u[ind+2*npts] = u[indp+2*npts];
+      }
+      else if( s==4 )
+      {
+        size_t indp= ind+nij*nz;
+        u[ind  ] = u[indp];
+        u[ind+npts] = u[indp+npts];
+        u[ind+2*npts] = u[indp+2*npts];
+      }
+      else if( s==5 )
+      {
+        size_t indp= ind-nij*nz;
+        u[ind  ] = u[indp];
+        u[ind+npts] = u[indp+npts];
+        u[ind+2*npts] = u[indp+2*npts];
+      }
+    }
+    else if( bccnd[s]==0 )
+    {
+      if( s != 4 && s != 5)
+      {
+        printf("EW::bcfortsg_dev_indrev, ERROR: Free surface conditio not implemented for side\n");
+        return ;
+      }
+
+      int i = ib+2 + threadIdx.x + blockIdx.x*blockDim.x;
+      int j = jb+2 + threadIdx.y + blockIdx.y*blockDim.y;
+      int kk = kb+2 + threadIdx.z + blockIdx.z*blockDim.z;
+      if( i > ie-2 || j > je-2 || kk != kb+2)
+        continue;
+
+      if( s==4 )
+      {
+        int k=1, kl=1;
+        size_t qq = i-ib+ni*(j-jb);
+        size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+        float_sw4 wx = strx[i-ib]*(d4a*(u[2*npts+ind+1]-u[2*npts+ind-1])+d4b*(u[2*npts+ind+2]-u[2*npts+ind-2]));
+        float_sw4 ux = strx[i-ib]*(d4a*(u[ind+1]-u[ind-1])+d4b*(u[ind+2]-u[ind-2]));
+        float_sw4 wy = stry[j-jb]*(d4a*(u[2*npts+ind+ni  ]-u[2*npts+ind-ni  ])+
+                                   d4b*(u[2*npts+ind+2*ni]-u[2*npts+ind-2*ni]));
+        float_sw4 vy = stry[j-jb]*(d4a*(u[npts+ind+ni]  -u[npts+ind-ni])+
+                                   d4b*(u[npts+ind+2*ni]-u[npts+ind-2*ni]));
+        float_sw4 uz=0, vz=0, wz=0;
+        for( int w=1 ; w <= 4 ; w++ )
+        {
+          uz += dev_sbop[w]*u[       ind+nij*kl*(w-1)];
+          vz += dev_sbop[w]*u[npts  +ind+nij*kl*(w-1)];
+          wz += dev_sbop[w]*u[2*npts+ind+nij*kl*(w-1)];
+        }
+        u[       ind-nij*kl] = (-uz-kl*wx+kl*h*bforce5[  3*qq]/mu[ind])/dev_sbop[0];
+        u[npts  +ind-nij*kl] = (-vz-kl*wy+kl*h*bforce5[1+3*qq]/mu[ind])/dev_sbop[0];
+        u[2*npts+ind-nij*kl] = (-wz + (-kl*la[ind]*(ux+vy)+kl*h*bforce5[2+3*qq])/
+                                (2*mu[ind]+la[ind]))/dev_sbop[0];
+      }
+      else
+      {
+        int k=nz, kl=-1;
+        size_t qq = i-ib+ni*(j-jb);
+        size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+        float_sw4 wx = strx[i-ib]*(d4a*(u[2*npts+ind+1]-u[2*npts+ind-1])+d4b*(u[2*npts+ind+2]-u[2*npts+ind-2]));
+        float_sw4 ux = strx[i-ib]*(d4a*(u[ind+1]-u[ind-1])+d4b*(u[ind+2]-u[ind-2]));
+        float_sw4 wy = stry[j-jb]*(d4a*(u[2*npts+ind+ni  ]-u[2*npts+ind-ni  ])+
+                                   d4b*(u[2*npts+ind+2*ni]-u[2*npts+ind-2*ni]));
+        float_sw4 vy = stry[j-jb]*(d4a*(u[npts+ind+ni]  -u[npts+ind-ni])+
+                                   d4b*(u[npts+ind+2*ni]-u[npts+ind-2*ni]));
+        float_sw4 uz=0, vz=0, wz=0;
+        for( int w=1 ; w <= 4 ; w++ )
+        {
+          uz += dev_sbop[w]*u[       ind+nij*kl*(w-1)];
+          vz += dev_sbop[w]*u[npts  +ind+nij*kl*(w-1)];
+          wz += dev_sbop[w]*u[2*npts+ind+nij*kl*(w-1)];
+        }
+        u[       ind-nij*kl] = (-uz-kl*wx+kl*h*bforce6[  3*qq]/mu[ind])/dev_sbop[0];
+        u[npts  +ind-nij*kl] = (-vz-kl*wy+kl*h*bforce6[1+3*qq]/mu[ind])/dev_sbop[0];
+        u[2*npts+ind-nij*kl] = (-wz+(-kl*la[ind]*(ux+vy)+kl*h*bforce6[2+3*qq])/
+                                (2*mu[ind]+la[ind]))/dev_sbop[0];
+
+      }
+    }
+  }
+}
+                                                           
+
+//-----------------------------------------------------------------------
+__global__ void bcfortsg_dev( int ib, int ie, int jb, int je, int kb, int ke, int* wind,
+                              int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType *bccnd,
+                              float_sw4* mu, float_sw4* la, float_sw4 t,
+                              float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3,
+                              float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
+                              float_sw4 om, float_sw4 ph, float_sw4 cv,
+                              float_sw4* strx, float_sw4* stry )
+{
+  const float_sw4 d4a = 2.0/3.0;
+  const float_sw4 d4b = -1.0/12.0;
+  const size_t ni  = ie-ib+1;
+  const size_t nij = ni*(je-jb+1);
+
+  for( int s=0 ; s < 6 ; s++ )
+  {
+
+    if( bccnd[s]==1 || bccnd[s]==2 )
+    {
+      size_t idel = 1+wind[1+6*s]-wind[6*s];
+      size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
+      int i = wind[6*s] + threadIdx.x + blockIdx.x*blockDim.x;
+      int j = wind[6*s+2] + threadIdx.y + blockIdx.y*blockDim.y;
+      int k = wind[6*s+4] +  threadIdx.z + blockIdx.z*blockDim.z;
+      if( i > wind[6*s+1] || j > wind[6*s+3] || k > wind[6*s+5])
+        continue;
+      int qq = i-wind[6*s] + idel*(j-wind[6*s+2]) + (k-wind[4+6*s])*ijdel;
+      size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+      if( s== 0 )
+      {
+        u[3*ind  ] = bforce1[  3*qq];
+        u[3*ind+1] = bforce1[1+3*qq];
+        u[3*ind+2] = bforce1[2+3*qq];
+
+      }
+      else if( s== 1 )
+      {
+        u[3*ind  ] = bforce2[  3*qq];
+        u[3*ind+1] = bforce2[1+3*qq];
+        u[3*ind+2] = bforce2[2+3*qq];
+      }
+      else if( s==2 )
+      {
+        u[3*ind  ] = bforce3[  3*qq];
+        u[3*ind+1] = bforce3[1+3*qq];
+        u[3*ind+2] = bforce3[2+3*qq];
+      }
+      else if( s==3 )
+      {
+        u[3*ind  ] = bforce4[  3*qq];
+        u[3*ind+1] = bforce4[1+3*qq];
+        u[3*ind+2] = bforce4[2+3*qq];
+      }
+      else if( s==4 )
+      {
+        u[3*ind  ] = bforce5[  3*qq];
+        u[3*ind+1] = bforce5[1+3*qq];
+        u[3*ind+2] = bforce5[2+3*qq];
+      }
+      else if( s==5 )
+      {
+        u[3*ind  ] = bforce6[  3*qq];
+        u[3*ind+1] = bforce6[1+3*qq];
+        u[3*ind+2] = bforce6[2+3*qq];
+      }
+    }
+    else if( bccnd[s]==3 )
+    {
+      int i = wind[6*s] + threadIdx.x + blockIdx.x*blockDim.x;
+      int j = wind[6*s+2] + threadIdx.y + blockIdx.y*blockDim.y;
+      int k = wind[6*s+4] +  threadIdx.z + blockIdx.z*blockDim.z;
+      if( i > wind[6*s+1] || j > wind[6*s+3] || k > wind[6*s+5])
+        continue;
+      size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+      if( s==0 )
+      {
+        size_t indp= ind+nx;
+        u[3*ind  ] = u[3*indp];
+        u[3*ind+1] = u[3*indp+1];
+        u[3*ind+2] = u[3*indp+2];
+      }
+      else if( s==1 )
+      {
+        size_t indp= ind-nx;
+        u[3*ind  ] = u[3*indp];
+        u[3*ind+1] = u[3*indp+1];
+        u[3*ind+2] = u[3*indp+2];
+      }
+      else if( s==2 )
+      {
+        size_t indp= ind+ni*ny;
+        u[3*ind  ] = u[3*indp];
+        u[3*ind+1] = u[3*indp+1];
+        u[3*ind+2] = u[3*indp+2];
+      }
+      else if( s==3 )
+      {
+        size_t indp= ind-ni*ny;
+        u[3*ind  ] = u[3*indp];
+        u[3*ind+1] = u[3*indp+1];
+        u[3*ind+2] = u[3*indp+2];
+      }
+      else if( s==4 )
+      {
+        size_t indp= ind+nij*nz;
+        u[3*ind  ] = u[3*indp];
+        u[3*ind+1] = u[3*indp+1];
+        u[3*ind+2] = u[3*indp+2];
+      }
+      else if( s==5 )
+      {
+        size_t indp= ind-nij*nz;
+        u[3*ind  ] = u[3*indp];
+        u[3*ind+1] = u[3*indp+1];
+        u[3*ind+2] = u[3*indp+2];
+      }
+    }
+    else if( bccnd[s]==0 )
+    {
+      if( s != 4 && s != 5)
+      {
+        printf("EW::bcfortsg_dev, ERROR: Free surface conditio not implemented for side\n");
+        return ;
+      }
+
+      int i = ib+2 + threadIdx.x + blockIdx.x*blockDim.x;
+      int j = jb+2 + threadIdx.y + blockIdx.y*blockDim.y;
+      int kk = kb+2 + threadIdx.z + blockIdx.z*blockDim.z;
+      if( i > ie-2 || j > je-2 || kk != (kb+2) )
+        continue;
+      if( s==4 )
+      {
+        int k=1, kl=1;
+        size_t qq = i-ib+ni*(j-jb);
+        size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+        float_sw4 wx = strx[i-ib]*(d4a*(u[2+3*ind+3]-u[2+3*ind-3])+d4b*(u[2+3*ind+6]-u[2+3*ind-6]));
+        float_sw4 ux = strx[i-ib]*(d4a*(u[  3*ind+3]-u[  3*ind-3])+d4b*(u[  3*ind+6]-u[  3*ind-6]));
+        float_sw4 wy = stry[j-jb]*(d4a*(u[2+3*ind+3*ni]-u[2+3*ind-3*ni])+
+                                   d4b*(u[2+3*ind+6*ni]-u[2+3*ind-6*ni]));
+        float_sw4 vy = stry[j-jb]*(d4a*(u[1+3*ind+3*ni]-u[1+3*ind-3*ni])+
+                                   d4b*(u[1+3*ind+6*ni]-u[1+3*ind-6*ni]));
+        float_sw4 uz=0, vz=0, wz=0;
+        for( int w=1 ; w <= 4 ; w++ )
+        {
+          uz += dev_sbop[w]*u[  3*ind+3*nij*kl*(w-1)];
+          vz += dev_sbop[w]*u[1+3*ind+3*nij*kl*(w-1)];
+          wz += dev_sbop[w]*u[2+3*ind+3*nij*kl*(w-1)];
+        }
+        u[  3*ind-3*nij*kl] = (-uz-kl*wx+kl*h*bforce5[  3*qq]/mu[ind])/dev_sbop[0];
+        u[1+3*ind-3*nij*kl] = (-vz-kl*wy+kl*h*bforce5[1+3*qq]/mu[ind])/dev_sbop[0];
+        u[2+3*ind-3*nij*kl] = (-wz + (-kl*la[ind]*(ux+vy)+kl*h*bforce5[2+3*qq])/
+                               (2*mu[ind]+la[ind]))/dev_sbop[0];
+
+      }
+      else
+      {
+        int k=nz, kl=-1;
+        size_t qq = i-ib+ni*(j-jb);
+        size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
+        float_sw4 wx = strx[i-ib]*(d4a*(u[2+3*ind+3]-u[2+3*ind-3])+d4b*(u[2+3*ind+6]-u[2+3*ind-6]));
+        float_sw4 ux = strx[i-ib]*(d4a*(u[  3*ind+3]-u[  3*ind-3])+d4b*(u[  3*ind+6]-u[  3*ind-6]));
+        float_sw4 wy = stry[j-jb]*(d4a*(u[2+3*ind+3*ni]-u[2+3*ind-3*ni])+
+                                   d4b*(u[2+3*ind+6*ni]-u[2+3*ind-6*ni]));
+        float_sw4 vy = stry[j-jb]*(d4a*(u[1+3*ind+3*ni]-u[1+3*ind-3*ni])+
+                                   d4b*(u[1+3*ind+6*ni]-u[1+3*ind-6*ni]));
+        float_sw4 uz=0, vz=0, wz=0;
+        for( int w=1 ; w <= 4 ; w++ )
+        {
+          uz += dev_sbop[w]*u[  3*ind+3*nij*kl*(w-1)];
+          vz += dev_sbop[w]*u[1+3*ind+3*nij*kl*(w-1)];
+          wz += dev_sbop[w]*u[2+3*ind+3*nij*kl*(w-1)];
+        }
+        u[  3*ind-3*nij*kl] = (-uz-kl*wx+kl*h*bforce6[  3*qq]/mu[ind])/dev_sbop[0];
+        u[1+3*ind-3*nij*kl] = (-vz-kl*wy+kl*h*bforce6[1+3*qq]/mu[ind])/dev_sbop[0];
+        u[2+3*ind-3*nij*kl] = (-wz+(-kl*la[ind]*(ux+vy)+kl*h*bforce6[2+3*qq])/
+                               (2*mu[ind]+la[ind]))/dev_sbop[0];
+
+      }
+    }
+  }
+}
+
+//-----------------------------------------------------------------------
+
+
+
+
 
 #endif
