@@ -97,6 +97,9 @@ else
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
       include configs/make.haswell
       foundincfile := "configs/make.haswell"
+    else ifeq ($(findstring cori,$(HOSTNAME)),cori)
+      include configs/make.cori
+      foundincfile := "configs/make.cori"
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337

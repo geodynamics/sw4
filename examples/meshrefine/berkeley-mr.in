@@ -1,0 +1,60 @@
+# SW4 input file for testing the refinement and attenuation commands on a realistic material model
+
+developer time_order=2 cfl=0.75
+
+# set pfs=1 if you are on a parallel file system
+fileio path=berk-mr-out pfs=1 
+
+# grid size is set in the grid command
+# DO NOT CHANGE AZ!
+grid x=12e3 y=12e3 z=10e3 h=100 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+
+# curvilinear grid extends to zmax=2e3 and gets approximately the same gridsize as the finest Cartesian
+# CHECK PATH TO RFILE
+topography input=rfile zmax=2.5e3 order=3 file=berkeley-r.rfile
+
+# wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
+attenuation phasefreq=2.5 nmech=3 maxfreq=15
+
+# mesh refinement along material jump (12*175 = 2100)
+refinement zmax=3000
+
+refinement zmax=4000
+
+#time steps=0 
+time t=6
+
+# CHECK PATH TO RFILE
+rfile filename=berkeley-r.rfile
+
+# threshold on vp and vs
+globalmaterial vsmin=500 vpmin=768
+
+# images
+# topography (can't be written without the topography command enabled)
+image mode=topo z=0.0 cycle=0 file=berk
+
+image mode=lat z=0.0 cycle=0 file=berk
+image mode=lon z=0.0 cycle=0 file=berk
+
+# Output images of the elastic model on the surface (z=0)
+#image mode=rho z=0.0 cycle=0 file=berk
+#image mode=p z=0.0 cycle=0 file=berk
+#image mode=s z=0.0 cycle=0 file=berk
+
+# vertical cross section
+#image mode=rho x=6e3 cycle=0 file=berk
+#image mode=s x=6e3 cycle=0 file=berk
+#image mode=p x=6e3 cycle=0 file=berk
+
+# solution on the surface
+#image mode=velmag z=0.0 timeInterval=5 file=berk
+#image mode=hvelmax z=0.0 timeInterval=5 file=berk
+
+# simple source (just for testing)
+source x=6e3 y=6e3 z=1e3 strike=142.1 rake=180 dip=95.6 m0=1.7162e+17 t0=1.0 freq=6.28 type=Gaussian
+
+rec x=8e3 y=8e3 depth=0 file=sta01 usgsformat=1 sacformat=0
+
+image mode=mag z=0 file=surf timeInterval=1.0
+image mode=mag x=6e3 file=vert timeInterval=1.0
