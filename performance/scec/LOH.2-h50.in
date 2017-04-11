@@ -29,6 +29,9 @@ grid h=50 x=30000 y=30000 z=17000
 time t=9
 fileio path=loh2-results
 
+# the developer line is to get the reversed c-order in sw4lite
+developer checkfornan=0 reporttiming=1 corder=1
+
 supergrid gp=30
 
 # half-space
