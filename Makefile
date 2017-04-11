@@ -39,8 +39,8 @@ ifeq ($(optlevel),DEBUG)
 else
    FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
-   CXXFLAGS = -O -I../src
-   CFLAGS   = -O 
+   CXXFLAGS = -O3 -I../src
+   CFLAGS   = -O3 
 endif
 
 fullpath := $(shell pwd)
