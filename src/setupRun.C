@@ -66,9 +66,9 @@ void F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( int *, int *, int *, int *, int *,
                                               int*, double*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
 
 void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int *, int *, double*, 
-						double*, double*, double*, double*, double*, double* );
+						double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( int *, int *, int *, int *, int *, int *, double*, 
-						  double*, double*, double*, double*, double* );
+						  double*, double*, double*, double*, double*, double* );
 void F77_FUNC(checkanisomtrl,CHECKANISOMTRL)( int *, int *, int *, int *, int *, int *, double*, 
 					      double*, double*, double*, double*, double* );
 void F77_FUNC(computedtaniso,COMPUTEDTANISO)( int *, int *, int *, int *, int *, int *, double*,
@@ -2066,7 +2066,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
    //
    Sarray saverand(ifirst-p,ilast+p,jfirst-p,jlast+p,kfirst-pz,kfirst+pz);
    double* saverand_ptr = saverand.c_ptr();
-
+   double plimit=m_random_sdlimit/sqrt(3.0);
    for ( g=0; g<mNumberOfGrids; g++)
    {
       double* vs_ptr  = a_vs[g].c_ptr();
@@ -2094,7 +2094,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 			      &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						      mZ.c_ptr() );
+						      mZ.c_ptr(), &plimit );
       }
       else
       {
@@ -2103,7 +2103,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 						&m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocity,PERTURBVELOCITY)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						    vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						    &m_zmin[g], &h );
+						    &m_zmin[g], &h, &plimit );
       }
    }
 }
