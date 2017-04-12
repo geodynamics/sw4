@@ -46,27 +46,25 @@ void EWCuda::initialize_gpu(int myrank)
      cudaError_t retcode  = cudaSetDevice(0);
      if (retcode != cudaSuccess)
 	cout << "Error cudaSetDevice: "  << cudaGetErrorString(retcode) << endl;
-      //     else
-      cudaDeviceReset();
-      //      int myDevice = sched_getcpu()/(8);
-      //      int cpu = sched_getcpu();
-      //      cout << "myrank = " << myrank <<  "  cpuid = " << cpu << "  mydevice = " << myDevice  << endl;
+     else
+        cudaDeviceReset();
+        int myDevice = sched_getcpu()/(40);
+        int cpu = sched_getcpu();
+        cout << "myrank = " << myrank <<  "  cpuid = " << cpu << "  mydevice = " << myDevice  << endl;
 
-      //     cudaError_t retcode;
-      //     retcode  = cudaSetDevice(myDevice);
-      //     if (retcode != cudaSuccess)
-      //	cout << "Error cudaSetDevice: "  << cudaGetErrorString(retcode) << endl;
-      //     else
-     {
-	for (int i = 0; i < m_nstream; i++)
-	{
-	   cudaError_t retcode;
-	   retcode = cudaStreamCreate(&m_stream[i]);
-	   if( retcode != cudaSuccess )
-	      cout << "Error EWCuda::EWCuda, cudaStreamCreate no " << i << " returned " <<
-		 cudaGetErrorString(retcode) << endl;
-	}
-     }
+        retcode  = cudaSetDevice(myDevice);
+        if (retcode != cudaSuccess)
+      	   cout << "Error cudaSetDevice: "  << cudaGetErrorString(retcode) << endl;
+        else
+        {
+	   for (int i = 0; i < m_nstream; i++)
+	   {
+	      retcode = cudaStreamCreate(&m_stream[i]);
+	      if( retcode != cudaSuccess )
+	         cout << "Error EWCuda::EWCuda, cudaStreamCreate no " << i << " returned " <<
+		          cudaGetErrorString(retcode) << endl;
+	   }
+        }
    }
 #endif
 }
