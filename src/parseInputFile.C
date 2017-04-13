@@ -4093,6 +4093,19 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst << " , " << ilast << endl;
       //      cout << g << " " << my_proc_coords[1] << " J Split into " << jfirst << " , " << jlast << endl;
       //      cout << "grid " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << " kinterval " << kfirst << " , " << klast << endl;
+
+// check that there are more interior points than padding points
+      if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
+      {
+         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
+                "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+      }
+      if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
+      {
+         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
+                "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+      }
+      
 // output bounds
       if (mVerbose >=3 && proc_zero())
       {

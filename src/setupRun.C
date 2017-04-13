@@ -260,7 +260,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   //  string cachePath = mPath;
    
 // tmp
-  if ( mVerbose >= 3 )
+  if ( mVerbose >= 2 )
    {
      int top = mNumberOfGrids-1;
      printf("=================Processor #%i index bounds====================\n"
