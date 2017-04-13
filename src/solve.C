@@ -695,7 +695,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    {
       printf("\nReporting SW4 internal flags and settings:\n");
       printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s," 
-             "rayleigh_test=%s\n",
+             "lamb_test=%s rayleigh_test=%s\n",
              m_testing?"yes":"no",
              m_twilight_forcing?"yes":"no",
              m_point_source_test?"yes":"no",

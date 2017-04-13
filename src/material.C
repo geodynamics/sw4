@@ -69,6 +69,8 @@ void EW::check_materials()
 
 // confusing with variables and functions that have names which only differ in capitalization 
   double lmin = localMin(mRho);
+  double rho_min = lmin;
+  
   MPI_Allreduce(&lmin,&mins[0],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
   lmin = localMinVp();  
   MPI_Allreduce(&lmin,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
@@ -135,8 +137,6 @@ void EW::check_materials()
     cout  << indents << "------------------------------------------------------" << endl;
   }
    
-  VERIFY2(mins[5] >= sqrt(2.),
-	  "Error: vp/vs is smaller than sqrt(2).");
 
   if( mins[0] <= 0.0 )
   {
@@ -206,6 +206,9 @@ void EW::check_materials()
            "Error: mu has values that are negative.");
    CHECK_INPUT(mins[4] > 0.0,
            "Error: lambda has values that are negative or zero.");
+  
+  VERIFY2(mins[5] >= sqrt(2.),
+	  "Error: vp/vs is smaller than sqrt(2).");
 
 // check material ranges on each grid
    if (mVerbose >= 3)
