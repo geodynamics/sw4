@@ -601,6 +601,9 @@ void EW::processGrid(char* buffer)
      m_ppadding = 3;
   }
 
+  if (m_myRank == 0)
+     cout << endl << "* number of ghost points = " << m_ghost_points << endl;
+
   while (token != NULL)
   {
      // while there are tokens in the string still

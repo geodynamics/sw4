@@ -79,6 +79,8 @@ void EW::check_materials()
   lmin = localMin(mLambda);
   MPI_Allreduce(&lmin,&mins[4],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
   
+  CHECK_INPUT(mins[0] > 0.0,
+          "Error: the material data has non-positive density.");
   CHECK_INPUT(mins[2] >= 0.0,
           "Error: the material data has s velocities that are negative.");
 
