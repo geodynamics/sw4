@@ -29,14 +29,8 @@
 #include "F77_FUNC.h"
 #include "EWCuda.h"
 #include "mynvtx.h"
+#include "policies.h"
 
-typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
-			      omp_parallel_for_exec>>
-EXEC_CARTBC;
-typedef RAJA::omp_parallel_for_exec EXEC;
-//typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
-//			      cuda_threadblock_z_exec<16>>>
-			      //EXEC_CARTBC;
 void PrintPointerAttributes(void *ptr);
 #ifndef SW4_CROUTINES
 extern "C" {
@@ -187,6 +181,21 @@ EW::EW( const string& filename ) :
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
    MPI_Comm_size( MPI_COMM_WORLD, &m_nprocs );
 
+#ifdef CUDA_CODE
+   m_iop = newmanaged(5+5+24+5+384+24+48+6+4);
+   memset(m_iop,0,sizeof(float_sw4)*(5+5+24+5+384+24+48+6+4));
+   m_iop2 = m_iop+5;
+   m_bop2 = m_iop2+5;
+   m_sbop = m_bop2+24;
+   m_acof = m_sbop+5;
+   m_bop = m_acof+384;
+   m_bope = m_bop+24;
+   m_ghcof = m_bope+48;
+   m_hnorm = m_ghcof+6;
+   
+#endif
+
+
    m_restart_check_point = CheckPoint::nil;
    parseInputFile( filename );
    setupRun( );
@@ -198,8 +207,15 @@ EW::EW( const string& filename ) :
        timesteploop( mU, mUm );
    }
     
-}
 
+}
+EW::~EW(){
+#ifdef CUDA_CODE
+  delmanaged(m_iop);
+  m_iop2=m_bop2=m_sbop=m_acof=m_bop=m_bope=m_ghcof=m_hnorm;
+#endif
+}
+  
 //-----------------------------------------------------------------------
 int EW::computeEndGridPoint( float_sw4 maxval, float_sw4 h )
 {
@@ -2355,7 +2371,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 BCForcing[g][side]=NULL;
 	 if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
 	 {
-	    BCForcing[g][side] = new float_sw4[3*m_NumberOfBCPoints[g][side]];
+	   BCForcing[g][side] = newmanaged(3*m_NumberOfBCPoints[g][side]);
 	 }
       }
    }
@@ -2483,7 +2499,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if( m_cuobj->has_gpu() )
 	 ForceCU( t, dev_F, false, 1 );
       else
-	 Force( t, F, m_point_sources, false );
+	 ForceOffload( t, F, m_point_sources, false );
  // Need F on device for predictor, will make this asynchronous:
       //      for( int g=0; g < mNumberOfGrids ; g++ )
       //	 F[g].copy_to_device(m_cuobj,true,1);
@@ -2542,6 +2558,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       PUSH_RANGE("CHK-NAN",1);
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "U pred. " );
+      POP_RANGE;
 
       //      time_measure[3] = MPI_Wtime();
       time_measure[4] = MPI_Wtime();
@@ -2553,7 +2570,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if( m_cuobj->has_gpu() )
 	 ForceCU( t, dev_F, true, 1 );
       else
-	 Force( t, F, m_point_sources, true );
+	 ForceOffload( t, F, m_point_sources, true );
       //      for( int g=0; g < mNumberOfGrids ; g++ )
       //	 F[g].copy_to_device(m_cuobj,true,1);
 
@@ -2717,7 +2734,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       if( m_save_trace )
 	 for( int s = 0 ; s < 12 ; s++ )
 	    trdata[s+12*(currentTimeStep-beginCycle)]= time_measure[s];
-
+      POP_RANGE;
    } // end time stepping loop
    double time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
@@ -2731,8 +2748,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 //	 //	 if (m_lamb_test)
 //	 //	    normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       normOfDifference( Up, U, errInf, errL2, solInf, m_globalUniqueSources );
+      //      std::cout<<"VALUES"<<Up[10]<<"\n";
       if ( m_myrank == 0 )
-	 cout << "Errors at time " << t << " Linf = " << errInf << " L2 = " << errL2 << " norm of solution = " << solInf << endl;
+	 cout << "Errors at time " << t << " Linf = " << errInf << " L2 = " << errL2 << " noorm of solution = " << solInf << endl;
    }
    for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
       m_GlobalTimeSeries[ts]->writeFile();
@@ -2947,6 +2965,83 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	//	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
      }
   }
+}
+//-----------------------------------------------------------------------
+void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
+	       bool tt )
+{
+  static int firstcall=1;
+  if (firstcall){
+#pragma omp parallel for
+    for( int r=0 ; r<m_identsources.size()-1 ; r++ )
+      {
+	int index=r*3;
+	int s0 = m_identsources[r];
+	int g = point_sources[s0]->m_grid;
+	int i = point_sources[s0]->m_i0;
+	int j = point_sources[s0]->m_j0;
+	int k = point_sources[s0]->m_k0;
+	size_t ind1 = a_F[g].index(1,i,j,k);
+	//     size_t ind2 = a_F[g].index(2,i,j,k);
+	//     size_t ind3 = a_F[g].index(3,i,j,k);
+	size_t oc = a_F[g].m_offc;
+	float_sw4* fptr =a_F[g].c_ptr();
+	ForceAddress[index]=fptr+ind1;
+	ForceAddress[index+1]=fptr+ind1+oc;
+	ForceAddress[index+2]=fptr+ind1+2*oc;
+      }
+    firstcall=0;
+  }
+  
+  for( int g =0 ; g < mNumberOfGrids ; g++ )
+    a_F[g].set_to_zero();
+  
+#pragma omp parallel for
+  for( int r=0 ; r<m_identsources.size()-1 ; r++ )
+    {
+      int index=r*3;
+      int s0 = m_identsources[r];
+      int g = point_sources[s0]->m_grid;
+      int i = point_sources[s0]->m_i0;
+      int j = point_sources[s0]->m_j0;
+      int k = point_sources[s0]->m_k0;
+      size_t ind1 = a_F[g].index(1,i,j,k);
+      //     size_t ind2 = a_F[g].index(2,i,j,k);
+      //     size_t ind3 = a_F[g].index(3,i,j,k);
+      size_t oc = a_F[g].m_offc;
+      float_sw4* fptr =a_F[g].c_ptr();
+      for (int i=0;i<3;i++)
+	ForceVector[index+i]=0.0;
+      for( int s=m_identsources[r]; s< m_identsources[r+1] ; s++ )
+	//  for( int s = 0 ; s < point_sources.size() ; s++ )
+	{
+	  float_sw4 fxyz[3];
+	  if( tt )
+	    point_sources[s]->getFxyztt(a_t,fxyz);
+	  else
+	    point_sources[s]->getFxyz(a_t,fxyz);
+	  for (int i=0;i<3;i++)
+	    ForceVector[index+i]+=fxyz[i];
+	  //fptr[ind1]      += fxyz[0];
+	  //fptr[ind1+oc]   += fxyz[1];
+	  //fptr[ind1+2*oc] += fxyz[2];
+	  //	a_F[g](1,i,j,k) += fxyz[0];
+	  //	a_F[g](2,i,j,k) += fxyz[1];
+	  //	a_F[g](3,i,j,k) += fxyz[2];
+	  //	a_F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
+	  //	a_F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
+	  //	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+	}
+    }
+#pragma omp parallel for
+  for( int r=0 ; r<m_identsources.size()-1 ; r++ )
+    {
+      int index=r*3;
+      //float_sw4* fptr =a_F[g].c_ptr();
+      for(int i=0;i<3;i++)
+	*ForceAddress[index+i]+=ForceVector[index+i]; // DOes this need to be an update and not an assignment
+}
+	  
 }
 
 //---------------------------------------------------------------------------
@@ -3482,11 +3577,11 @@ bool EW::exactSol( float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources
      for( int g=0 ; g < mNumberOfGrids; g++ ) 
      {
 	size_t npts = static_cast<size_t>(m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1);
-	float_sw4* utmp = new float_sw4[npts*3];
+	float_sw4* utmp = newmanaged(npts*3);
 	   //	get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
 	get_exact_point_source( utmp, a_t, g, *sources[0] );
 	a_U[g].assign( utmp, 0 );
-	delete[] utmp;
+	delmanaged(utmp);
      }
      retval = true;
   }
@@ -4351,11 +4446,14 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 
 		      + ( 15*(z-z0)*(z-z0)*(y-y0) / pow(R,7) - 3*(y-y0) / pow(R,5) ) * C
 		      );
+		  //printf("VALUE = %lf \n",up[3*ind+2]);
 	       }
 	    }
 	    //ind++;
 				  });
-   //cudaDeviceSynchronize();
+#ifdef CUDA_CODE
+   cudaDeviceSynchronize();
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -6257,6 +6355,15 @@ void EW::sort_grid_point_sources()
    // Test   
    int nrsrc =m_point_sources.size();
    int nrunique = m_identsources.size()-1;
+
+#ifdef CUDA_CODE
+   ForceVector = newmanaged(nrunique*3);
+   cudaMallocManaged(&ForceAddress, 3*nrunique*sizeof(float_sw4*));
+   cudaDeviceSynchronize();
+#else
+   ForceVector = new double[nrunique*3];
+   ForceAddress= new float_sw4*[nrunique*3];
+#endif
    int nrsrctot, nruniquetot;
    MPI_Reduce( &nrsrc, &nrsrctot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
    MPI_Reduce( &nrunique, &nruniquetot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );

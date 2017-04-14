@@ -25,7 +25,7 @@ class EW
    void timesteploop( vector<Sarray>& U, vector<Sarray>& Um);
    void timeStepLoopdGalerkin();
    EW( const string& filename );
-
+   ~EW();
    int computeEndGridPoint( float_sw4 maxval, float_sw4 h );
    bool startswith(const char begin[], char *line);
    void badOption(string name, char* option) const;
@@ -58,6 +58,7 @@ class EW
    void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U,
 			    vector<Sarray> & a_Up ) ;
    void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, bool tt );
+   void ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, bool tt );
    void ForceCU( float_sw4 a_t, Sarray* dev_F, bool tt, int st );
    void evalRHS( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		 vector<Sarray> & a_Uacc );
@@ -341,8 +342,12 @@ class EW
    vector<Sarray> mUm;
 
    // SBP boundary operator coefficients and info
+#ifdef CUDA_CODE
+   float_sw4 *m_iop,*m_iop2,*m_bop2,*m_sbop,*m_acof,*m_bop,*m_bope,*m_ghcof,*m_hnorm;
+#else
    float_sw4 m_iop[5], m_iop2[5], m_bop2[24], m_sbop[5], m_acof[384], m_bop[24];
    float_sw4 m_bope[48], m_ghcof[6], m_hnorm[4];
+#endif
    vector<int*> m_onesided; 
 
    // Time stepping variables
@@ -387,6 +392,8 @@ class EW
    vector<int> m_identsources;
    GridPointSource** dev_point_sources;
    int* dev_identsources;
+   float_sw4 *ForceVector;
+   float_sw4 **ForceAddress;
 
    // Supergrid boundary conditions
    float_sw4 m_supergrid_damping_coefficient;

@@ -45,7 +45,7 @@ void PrintPointerAttributes(void *ptr);
 #include "RAJA/RAJA.hxx"
 using namespace RAJA;
 RAJA_DEVICE bool myisnan(const double in);
-typedef RAJA::omp_parallel_for_exec EXEC;
+#include "policies.h"
 // Default value 
 bool Sarray::m_corder = false;
 
@@ -438,7 +438,9 @@ void Sarray::set_to_zero()
   forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
       m_data_local[i]=0.0;
     });
-  //cudaDeviceSynchronize();
+#ifdef CUDA_CODE
+  cudaDeviceSynchronize();
+#endif
   return;
 #pragma omp parallel for
    for( size_t i=0 ; i < m_npts ; i++ )
@@ -456,6 +458,14 @@ void Sarray::set_to_minusOne()
 //-----------------------------------------------------------------------
 void Sarray::set_value( float_sw4 scalar )
 {
+double *m_data_local=m_data;
+  prefetch();
+  forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
+      m_data_local[i]=scalar;
+    });
+#ifdef CUDA_CODE
+  cudaDeviceSynchronize();
+#endif
 #pragma omp parallel for
    for( size_t i=0 ; i < m_npts ; i++ )
       m_data[i] = scalar;
@@ -566,7 +576,7 @@ size_t Sarray::count_nans()
 {
    size_t retval = 0;
    const int block_size=1024;
-   ReduceSum<omp_reduce, size_t> rretval(0);
+   ReduceSum<REDUCE_POLICY, size_t> rretval(0);
    size_t npts = m_nc*m_ni*static_cast<size_t>(m_nj)*m_nk;
    //cudaMemPrefetchAsync(m_data, 
    //			npts*sizeof(double),
@@ -577,7 +587,9 @@ size_t Sarray::count_nans()
    forall<EXEC> (0,npts,[=] RAJA_DEVICE(size_t ind){
        if(::isnan(m_data_copy[ind]) ) rretval+=1;
      });
-   //cudaDeviceSynchronize();
+#ifdef CUDA_CODE
+   cudaDeviceSynchronize();
+#endif
    return rretval.get();
 #pragma omp parallel for reduction(+:retval)
    for( size_t ind = 0; ind < npts ; ind++)

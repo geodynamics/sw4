@@ -6,6 +6,11 @@ using namespace RAJA;
 
 
 // Note 4,4,32 runs out of registers
+#ifdef CUDA_CODE
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
+			      cuda_threadblock_z_exec<16>>>
+  EXEC;
+#else
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 			      omp_parallel_for_exec>>
 EXEC0;
@@ -23,13 +28,15 @@ typedef RAJA::NestedPolicy<
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec,
 		 RAJA::seq_exec,
-		 RAJA::force_simd_exec > > EXEC;
+		 RAJA::simd_exec > > EXEC3;
 typedef RAJA::NestedPolicy<
-  RAJA::ExecList<RAJA::seq_exec, RAJA::seq_exec, RAJA::force_simd_exec > > EXEC4;
+  RAJA::ExecList<RAJA::seq_exec, RAJA::seq_exec, RAJA::simd_exec > > EXEC4;
 
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
+#define EXEC EXEC1
+#endif
 //#include <iostream>
 //using namespace std;
 

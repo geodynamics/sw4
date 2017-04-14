@@ -34,13 +34,25 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   FC = mpifort
   CXX = mpicxx
-  OMPOPT = -qopenmp
+  OMPOPT = -qopenmp -g
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
   EXTRA_CXX_FLAGS = -xCORE-AVX2
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
+  LINKER = mpicxx
   computername := quartz
+ RAJA_LOCATION=/usr/workspace/wsb/ramesh/Quartz/RAJA_APRIL_10/RAJA/install
+else ifeq ($(findstring ray,$(HOSTNAME)),ray)
+  FC = mpif90
+  CXX = nvcc
+  OPT = -O3 -g -ccbin mpixlC -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -G -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE
+  OMPOPT = 
+  EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -llapack -lblas -lxlf90 -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
+ RAJA_LOCATION =  /g/g0/ramesh/Project6/Ray/RAJA/install/
+  LINKER = mpixlC	
+ LINKFLAGS = 
+  computername := ray
 # LC cab is a large cluster of Intel Xeon nodes
 else ifeq ($(findstring cab,$(HOSTNAME)),cab)
 # assumes: use ic_16.0.210, use mvapich2-intel-2.1
@@ -146,16 +158,23 @@ ifeq ($(ckernel),yes)
 	ifeq ($(raja),yes)
 		debugdir:= debug_mp_c_raja
 		optdir:= optimize_mp_c_raja
-		CXXFLAGS += -std=c++11 -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include  -DSW4_CROUTINES 
-		EXTRA_LINK_FLAGS += -qopenmp -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA 
+		CXXFLAGS += -std=c++11 -I $(RAJA_LOCATION)/include  -DSW4_CROUTINES 
+		EXTRA_LINK_FLAGS += -qopenmp -L $(RAJA_LOCATION)/lib -lRAJA 
 	else	
 		debugdir := debug_mp_c
 		optdir   := optimize_mp_c
 	endif
    else
-      debugdir := debug_c
-      optdir   := optimize_c
-   endif
+	ifeq ($(raja),yes)
+		debugdir:= debug_c_raja
+		optdir:= optimize_c_raja
+		CXXFLAGS += -I $(RAJA_LOCATION)/include  -DSW4_CROUTINES 
+		EXTRA_LINK_FLAGS += -L $(RAJA_LOCATION)/lib -lRAJA 
+	else	
+		debugdir := debug_mp_c
+		optdir   := optimize_mp_c
+	endif
+    endif
 else
    ifeq ($(openmp),yes)
       debugdir := debug_mp
@@ -217,7 +236,7 @@ sw4lite: $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(linklibs)
+	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ $(OBJ) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 

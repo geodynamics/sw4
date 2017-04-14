@@ -6,22 +6,33 @@
 //#include <cuda_runtime.h>
 #include "RAJA/RAJA.hxx"
 using namespace RAJA;
-// typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
-// 			      cuda_threadblock_z_exec<32>>>
-//   EXEC;
-// typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<16>,cuda_threadblock_y_exec<16>,
-// 			      cuda_threadblock_z_exec<16>>>
-//   EXEC_BC;
+#ifdef CUDA_CODE
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
+			      cuda_threadblock_z_exec<32>>>
+  EXEC;
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<16>,cuda_threadblock_y_exec<16>,
+			      cuda_threadblock_z_exec<16>>>
+  EXEC_BC;
 
-// typedef NestedPolicy<ExecList<seq_exec, seq_exec, seq_exec>>
-//  CEXEC_BC;
+typedef NestedPolicy<ExecList<seq_exec, seq_exec, seq_exec>>
+  CEXEC_BC;
+
+typedef RAJA::cuda_exec<1024> FEXEC;
+
+#define SYNC_DEVICE cudaDeviceSynchronize();
+#else
+
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 			      omp_parallel_for_exec>>
   EXEC_BC;
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 			      omp_parallel_for_exec>>
   EXEC;
+
 typedef RAJA::omp_parallel_for_exec FEXEC;
+#define SYNC_DEVICE 
+#endif
+
 void PrintPointerAttributes(void *ptr);
 
 using namespace std;
@@ -47,7 +58,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    // 			npts*sizeof(float_sw4),
    // 			0,
    // 			0);
-   // cudaDeviceSynchronize();
+   // SYNC_DEVICE
    if( m_corder )
    {
      //for( size_t i=0 ; i < npts ; i++ )
@@ -58,7 +69,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
 	 up[i+npts]   += dt4i12orh*(lu[i+npts]  +fo[i+npts]);
 	 up[i+2*npts] += dt4i12orh*(lu[i+2*npts]+fo[i+2*npts]);
       });
-     //cudaDeviceSynchronize();
+     SYNC_DEVICE
    }
    else
    {
@@ -70,7 +81,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
 	 up[3*i+1] += dt4i12orh*(lu[3*i+1]+fo[3*i+1]);
 	 up[3*i+2] += dt4i12orh*(lu[3*i+2]+fo[3*i+2]);
       });
-     //cudaDeviceSynchronize();
+     SYNC_DEVICE
    }
 }
 
@@ -104,7 +115,7 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    // 			npts*sizeof(float_sw4),
    // 			0,
    // 			0);
-   // cudaDeviceSynchronize();
+   // SYNC_DEVICE
    if( m_corder )
    {
       // Like this ?
@@ -116,7 +127,7 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
 	 up[i+npts]   = 2*u[i+npts]  -um[i+npts]   + dt2orh*(lu[i+npts]  +fo[i+npts]);
 	 up[i+2*npts] = 2*u[i+2*npts]-um[i+2*npts] + dt2orh*(lu[i+2*npts]+fo[i+2*npts]);
       });
-     //cudaDeviceSynchronize();
+     SYNC_DEVICE
 // Alternatives:
 //      // Or this ?
 //      for( int c=0 ; c < 3 ; c++ )
@@ -143,7 +154,7 @@ forall<FEXEC > (0,npts,[=] RAJA_DEVICE(size_t i)
 	 up[3*i+1] = 2*u[3*i+1]-um[3*i+1] + dt2orh*(lu[3*i+1]+fo[3*i+1]);
 	 up[3*i+2] = 2*u[3*i+2]-um[3*i+2] + dt2orh*(lu[3*i+2]+fo[3*i+2]);
       });
-//cudaDeviceSynchronize();
+SYNC_DEVICE
    }
 }
 
@@ -169,14 +180,14 @@ void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, const float_
    // 			3*npts*sizeof(float_sw4),
    // 			0,
    // 			0);
-   // cudaDeviceSynchronize();
+   SYNC_DEVICE
    // Code is slower with this RAJA loop due to the cost of copying data. Prefecth version is the fastest:: 2.70s on 20 procs. Without this loop it is around 2.4s
    // To fix. either port more loops to device or wait for the UM copies to reach 30GB/s
    forall< FEXEC> (0,3*npts,[=] RAJA_DEVICE(size_t i){
        //   for( size_t i = 0 ; i < 3*npts ; i++ )
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
      });
-   //cudaDeviceSynchronize();
+   SYNC_DEVICE
    //   if( m_corder )
    //   {
    //      for( size_t i=0 ; i < npts ; i++ )
@@ -310,7 +321,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					 u[3*ind+1] = bforce1[1+3*qq];
 					 u[3*ind+2] = bforce1[2+3*qq];
 				       });
-	   //cudaDeviceSynchronize();
+	   SYNC_DEVICE
 	 }
 	 else if( s== 1 )
 	 {
@@ -332,7 +343,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce2[1+3*qq];
 					    u[3*ind+2] = bforce2[2+3*qq];
 					  });
-	   //cudaDeviceSynchronize();
+	   SYNC_DEVICE
 	 }
 	 else if( s==2 )
 	 {
@@ -354,7 +365,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce3[1+3*qq];
 					    u[3*ind+2] = bforce3[2+3*qq];
 					  });
-	   //cudaDeviceSynchronize();
+	   SYNC_DEVICE
 	 }
 	 else if( s==3 )
 	 {
@@ -376,7 +387,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce4[1+3*qq];
 					    u[3*ind+2] = bforce4[2+3*qq];
 					  });
-	   //cudaDeviceSynchronize();
+	  SYNC_DEVICE
 	 }
 	 else if( s==4 )
 	 {
@@ -398,7 +409,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce5[1+3*qq];
 					    u[3*ind+2] = bforce5[2+3*qq];
 					  });
-	   //cudaDeviceSynchronize();
+	   SYNC_DEVICE
 	 }
 	 else if( s==5 )
 	 {
@@ -421,7 +432,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce6[1+3*qq];
 					    u[3*ind+2] = bforce6[2+3*qq];
 					  });
-	   //cudaDeviceSynchronize();
+	   SYNC_DEVICE
 	   
 	 }
       }
@@ -929,7 +940,7 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 
 	       }
 				  });
-      //cudaDeviceSynchronize();
+      SYNC_DEVICE
  
 #undef rho
 #undef up
@@ -1055,6 +1066,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 		      float_sw4 beta )
 {
 
+  //std::cout<<"addsgd\n";
    if( beta != 0 )
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
@@ -1076,16 +1088,20 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t npts = nij*(klast-kfirst+1);
 
 // AP: The for c loop could be inside the for i loop. The simd, ivdep pragmas should be outside the inner-most loop
-      for( int c=0 ; c < 3 ; c++ )
-#pragma omp parallel for
-      for( int k=kfirst+2; k <= klast-2 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	    {
+//      for( int c=0 ; c < 3 ; c++ )
+	//#pragma omp parallel for
+	//      for( int k=kfirst+2; k <= klast-2 ; k++ )
+	//	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+	//#pragma simd
+	//#pragma ivdep
+	//    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+	forallN<EXEC, int, int,int>(
+				  RangeSegment(kfirst+2,klast-1),
+				  RangeSegment(jfirst+2,jlast-1),
+				  RangeSegment(ifirst+2,ilast-1),
+				  [=] RAJA_DEVICE(int k, int j, int i){
 	       float_sw4 birho=beta/rho(i,j,k);
-	       {
+	       for( int c=0 ; c < 3 ; c++ ){
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
 		   strx(i)*coy(j)*coz(k)*(
@@ -1132,7 +1148,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 					 );
 
 	       }
-	    }
+				  });
 #undef rho
 #undef up
 #undef u
