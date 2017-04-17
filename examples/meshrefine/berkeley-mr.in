@@ -3,29 +3,31 @@
 developer time_order=2 cfl=0.75
 
 # set pfs=1 if you are on a parallel file system
-fileio path=berk-mr-out pfs=1 
+fileio path=berk-mr-out pfs=1 verbose=1 nwriters=4
 
 # grid size is set in the grid command
 # DO NOT CHANGE AZ!
-grid x=12e3 y=12e3 z=10e3 h=100 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+#grid x=12e3 y=12e3 z=30e3 h=136 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+# 96 = 3*32 should give enough interior points?
+grid nx=96 ny=96 nz=221 h=136 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
 
-# curvilinear grid extends to zmax=2e3 and gets approximately the same gridsize as the finest Cartesian
+# curvilinear grid extends to zmax=2.5e3 and gets approximately the same gridsize as the finest Cartesian
 # CHECK PATH TO RFILE
-topography input=rfile zmax=2.5e3 order=3 file=berkeley-r.rfile
+topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/USGSBayAreaVM-08.3.0-corder.rfile
 
 # wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
 attenuation phasefreq=2.5 nmech=3 maxfreq=15
 
-# mesh refinement along material jump (12*175 = 2100)
-refinement zmax=3000
+# CHECK PATH TO RFILE
+rfile directory=/global/cscratch1/sd/andersp filename=USGSBayAreaVM-08.3.0-corder.rfile
 
-refinement zmax=4000
+# mesh refinement along material jump (12*175 = 2100)
+refinement zmax=2636
+refinement zmax=3044
+refinement zmax=15000
 
 #time steps=0 
 time t=6
-
-# CHECK PATH TO RFILE
-rfile filename=berkeley-r.rfile
 
 # threshold on vp and vs
 globalmaterial vsmin=500 vpmin=768
