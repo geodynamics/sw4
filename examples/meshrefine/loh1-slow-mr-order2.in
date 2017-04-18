@@ -13,7 +13,7 @@ fileio path=loh1-mr-2-out
 # Extrapolate material properties to ghost points & interface points
 grid h=175 x=30000 y=30000 z=17000 extrapolate=1
 
-time t=18
+time t=8
 #time steps=50
 
 
