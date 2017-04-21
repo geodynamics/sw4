@@ -7,8 +7,7 @@ fileio path=berk-mr-out pfs=1 verbose=1 nwriters=4
 
 # grid size is set in the grid command
 # DO NOT CHANGE AZ!
-#grid x=12e3 y=12e3 z=30e3 h=136 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
-# 96 = 3*32 should give enough interior points?
+# 96 = 3*32 should give enough interior points
 grid nx=96 ny=96 nz=221 h=136 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
 
 # curvilinear grid extends to zmax=2.5e3 and gets approximately the same gridsize as the finest Cartesian

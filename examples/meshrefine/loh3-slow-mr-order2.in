@@ -1,13 +1,13 @@
 # This is an SW4 input file with MESH REFINEMENT for a scaled-down & modified version
-# of the LOH.1 problem from the SCEC test suite
+# of the LOH.3 problem from the SCEC test suite
 #
 # A single moment point source is used with 
 # the time dependency being the Gaussian function
 #
 
-developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.75
+developer time_order=2 cfl=0.75
 
-fileio path=loh3-mr-2-out
+fileio path=loh3-mr-2-out verbose=1
 #printcycle=10
 
 # Extrapolate material properties to ghost points & interface points
@@ -44,7 +44,7 @@ source x=15000 y=15000 z=3000 mxy=1e18 t0=1.2 freq=5.0 type=Gaussian
 # Note that all recording stations are relative to the (0,0,0) origin
 # Also note that the stations do NOT fall on a grid point when h=175
 #
-rec x=15600 y=15800 z=0 file=sta01 usgsformat=1
+rec x=15600 y=15800 z=0 file=sta01 usgsformat=1 sacformat=1
 #rec x=16200 y=16600 z=0 file=sta02 usgsformat=1
 #rec x=16800 y=17400 z=0 file=sta03 usgsformat=1
 #rec x=17400 y=18200 z=0 file=sta04 usgsformat=1
@@ -53,7 +53,7 @@ rec x=15600 y=15800 z=0 file=sta01 usgsformat=1
 #rec x=19200 y=20600 z=0 file=sta07 usgsformat=1
 #rec x=19800 y=21400 z=0 file=sta08 usgsformat=1
 #rec x=20400 y=22200 z=0 file=sta09 usgsformat=1
-rec x=21000 y=23000 z=0 file=sta10 usgsformat=1
+rec x=21000 y=23000 z=0 file=sta10 usgsformat=1 sacformat=0
 
 # material images
 #image mode=mu z=0 file=hor cycle=0
@@ -65,11 +65,11 @@ rec x=21000 y=23000 z=0 file=sta10 usgsformat=1
 #image mode=p y=15e3 file=ver cycle=0
 
 # solution images
-image mode=mag z=0 file=surf timeInterval=0.5
-image mode=mag z=2099 file=mrf timeInterval=0.5
-image mode=mag z=2101 file=mrc timeInterval=0.5
+#image mode=mag z=0 file=surf timeInterval=0.5
+#image mode=mag z=2099 file=mrf timeInterval=0.5
+#image mode=mag z=2101 file=mrc timeInterval=0.5
 
 # no point saving uz and ux on the y=15e3 plane, because they are zero by symmetry
-image mode=mag y=15e3 file=vert timeInterval=0.5
+#image mode=mag y=15e3 file=vert timeInterval=0.5
 
 
