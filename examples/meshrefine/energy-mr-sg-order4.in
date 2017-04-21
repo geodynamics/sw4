@@ -9,8 +9,13 @@ time t=50
 
 fileio verbose=1 path=etest-sg-o4
 
-testenergy seed=34983249 cpcsratio=1.732 bchorizontal=supergrid amplitude=0 sg_eps=1e-2
+#testenergy seed=34983249 cpcsratio=1.732 bchorizontal=supergrid amplitude=0 sg_eps=1e-2
+testenergy seed=34983249 cpcsratio=1.732 bchorizontal=supergrid amplitude=1 sg_eps=1e-2
 
 # the supergrid command is ignored unless bchorizontal=supergrid
 supergrid gp=20 dc=0
+
+image mode=s x=15 cycle=0 file=vert
+image mode=mag x=15 file=vert cycleInterval=5
+
 
