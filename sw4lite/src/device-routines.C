@@ -2,7 +2,7 @@
 #include "Sarray.h"
 #include "GridPointSource.h"
 #include "EWCuda.h"
-//#include <stdio.h>
+#include <stdio.h>
 
 #ifdef SW4_CUDA
 #include <cuda_runtime.h>
