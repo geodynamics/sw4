@@ -2,10 +2,12 @@
 
 //-----------------------------------------------------------------------
 void EW::GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
-				 float_sw4* _bope, float_sw4* _sbop )
+				 float_sw4* _bop, float_sw4* _bope,
+				 float_sw4* _sbop )
 {
 #define acof(q,k,m) (_acof[q-1+6*(k-1)+48*(m-1)])
 #define ghcof(k) (_ghcof[k-1])
+#define bop(q,k) (_bop[q-1+4*(k-1)])
 #define bope(q,k) (_bope[q-1+6*(k-1)])
 
    ghcof(1) = 12.0/17;
@@ -400,42 +402,47 @@ void EW::GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
    acof(6,8,7) = 1.0/6.0;
    acof(6,8,8) = -1.0/8.0;
 
-   bope(1,1) = -24.0/17.0;
-   bope(1,2) = 59.0/34.0;
-   bope(1,3) = -4.0/17.0;
-   bope(1,4) = -3.0/34.0;
-   bope(1,5) = 0;
-   bope(1,6) = 0;
+   bop(1,1) = -24.0/17.0;
+   bop(1,2) = 59.0/34.0;
+   bop(1,3) = -4.0/17.0;
+   bop(1,4) = -3.0/34.0;
+   bop(1,5) = 0;
+   bop(1,6) = 0;
+   bop(2,1) = -1.0/2.0;
+   bop(2,2) = 0;
+   bop(2,3) = 1.0/2.0;
+   bop(2,4) = 0;
+   bop(2,5) = 0;
+   bop(2,6) = 0;
+   bop(3,1) = 4.0/43.0;
+   bop(3,2) = -59.0/86.0;
+   bop(3,3) = 0;
+   bop(3,4) = 59.0/86.0;
+   bop(3,5) = -4.0/43.0;
+   bop(3,6) = 0;
+   bop(4,1) = 3.0/98.0;
+   bop(4,2) = 0;
+   bop(4,3) = -59.0/98.0;
+   bop(4,4) = 0;
+   bop(4,5) = 32.0/49.0;
+   bop(4,6) = -4.0/49.0;
+
+   for( int k=1 ; k <= 6 ; k++ )
+      for( int q=1 ; q <=4 ; q++ )
+	 bope(q,k) = bop(q,k);
    bope(1,7) = 0;
    bope(1,8) = 0;
-   bope(2,1) = -1.0/2.0;
-   bope(2,2) = 0;
-   bope(2,3) = 1.0/2.0;
-   bope(2,4) = 0;
-   bope(2,5) = 0;
-   bope(2,6) = 0;
    bope(2,7) = 0;
    bope(2,8) = 0;
-   bope(3,1) = 4.0/43.0;
-   bope(3,2) = -59.0/86.0;
-   bope(3,3) = 0;
-   bope(3,4) = 59.0/86.0;
-   bope(3,5) = -4.0/43.0;
-   bope(3,6) = 0;
    bope(3,7) = 0;
    bope(3,8) = 0;
-   bope(4,1) = 3.0/98.0;
-   bope(4,2) = 0;
-   bope(4,3) = -59.0/98.0;
-   bope(4,4) = 0;
-   bope(4,5) = 32.0/49.0;
-   bope(4,6) = -4.0/49.0;
    bope(4,7) = 0;
    bope(4,8) = 0;
-   bope(5,1) = 0;
-   bope(5,2) = 0;
+
    float_sw4 d4a = 2.0/3;
    float_sw4 d4b = -1.0/12;
+   bope(5,1) = 0;
+   bope(5,2) = 0;
    bope(5,3) = -d4b;
    bope(5,4) = -d4a;
    bope(5,5) = 0;

@@ -718,7 +718,37 @@ void bcfortanisg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36
 void bcfreesurfcurvani_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			   int nz, float_sw4* u, float_sw4* c, int side, float_sw4 sbop[5], 
 			   float_sw4* bforce5, float_sw4* bforce6, float_sw4* strx, float_sw4* stry );
-void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof, float_sw4* _bope, float_sw4* _sbop );
+void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof, float_sw4* _bop,
+				float_sw4* _bope, float_sw4* _sbop );
+void checkanisomtrl_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4* rho, float_sw4* c, float_sw4& rhomin, float_sw4& rhomax,
+		     float_sw4& eigmin, float_sw4& eigmax );
+void maxwave( float_sw4 c[21], float_sw4 rho, float_sw4& eigestimate );
+void maxwavecurv( float_sw4 c[21], float_sw4 rho, float_sw4 jac, float_sw4& eigestimate );
+void computedtaniso2_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			 float_sw4* rho, float_sw4* c, float_sw4 cfl, float_sw4 dx, float_sw4& a_dtloc );
+void computedtaniso2curv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* rho, float_sw4* c, float_sw4* jac, float_sw4 cfl,
+			     float_sw4& a_dtloc );
+void randomfield3d_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+		       int klast, int nig, int njg, int nkg, int gh, float_sw4* __restrict__ a_w,
+		       float_sw4* __restrict__ a_wgh, float_sw4 dist, float_sw4 distz, float_sw4 h,
+		       int* randw, float_sw4* __restrict__ a_saverands, int p, int pz );
+void randomfield3dc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			int klast, int nig, int njg, int nkg, int gh, float_sw4* __restrict__ a_w,
+			float_sw4* __restrict__ a_wgh, float_sw4 dist, float_sw4 distz, float_sw4 h,
+			float_sw4* __restrict__ a_z, int* randw, float_sw4* __restrict__ a_saverands,
+			int p, int pz );
+void perturbvelocity_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			int klast, float_sw4* __restrict__ a_vs, float_sw4* __restrict__ a_vp,
+			float_sw4* __restrict__ a_per,
+			float_sw4 amp, float_sw4 grad, float_sw4 zmin, float_sw4 h,
+			float_sw4 plimit );
+void perturbvelocityc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			 int klast, float_sw4* a_vs, float_sw4* a_vp, float_sw4* a_per,
+			 float_sw4 amp, float_sw4 grad, float_sw4* a_z,
+			 float_sw4 plimit );
+
 
 //
 // VARIABLES BEYOND THIS POINT
@@ -894,7 +924,7 @@ bool m_anisotropic;
 // Randomization of the material
 bool m_randomize;
 int m_random_seed[3];
-float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad;
+   float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes
@@ -1068,8 +1098,8 @@ int m_ghost_points;
 int m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
-float_sw4 m_iop[5], m_iop2[5], m_bop2[24], m_sbop[5], m_acof[384], m_bop[24];
-float_sw4 m_bope[48], m_ghcof[6], m_hnorm[4];
+float_sw4 m_sbop[5], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
+//float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
 
 int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;

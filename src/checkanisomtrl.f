@@ -1,6 +1,6 @@
       subroutine CHECKANISOMTRL( ifirst, ilast, jfirst, jlast, kfirst,
      *                           klast, rho, c, 
-     *                           rhomin, rhomax, eigmin, eigmax )
+     *                         rhomin, rhomax, eigmin, eigmax ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       integer m, info

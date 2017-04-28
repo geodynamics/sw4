@@ -175,29 +175,29 @@ void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int
 					  double*rho, double*cr, double*omega, double *alpha, double *h, double *zmin);
 void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			      double*, double*, double*, double*, double*, double* );
-void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
-                                   double*, double*, double*, double*, double*, double* );
-void F77_FUNC(energy4c,ENERGY4C)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
-                                   double*, double*, double*, double*, double*, double* );
+void energy4( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
+	      double*, double*, double*, double*, double*, double* );
+void energy4c( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
+	       double*, double*, double*, double*, double*, double* );
 void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 				    double*, double*, double*, int* );
-void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
-					  double*, int*, double*, double*, double*, char* );
-void F77_FUNC(curvilinear4sg,CURVILINEAR4SG)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
-					      double*, double*, int*, double*, double*, double*, double*, double*, char* );
+void curvilinear4( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
+				double*, int*, double*, double*, double*, char* );
+void curvilinear4sg( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
+		     double*, double*, int*, double*, double*, double*, double*, double*, char* );
 
-void F77_FUNC(addgradrho,ADDGRADRHO)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-				       double*, double*, double*, double*, double*, double*, double*,
-				       double*, double*, int* );
-void F77_FUNC(addgradrhoc,ADDGRADRHOC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-				       double*, double*, double*, double*, double*, double*, double*,
-				       double*, double*, int* );
-void F77_FUNC(addgradmula,ADDGRADMULA)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-				       double*, double*, double*, double*, double*,
-					double*, double*, double*, int*, int*, int*, double* );
-void F77_FUNC(addgradmulac,ADDGRADMULAC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-				        double*, double*, double*, double*, double*,
-					  double*, double*, double*, double*, double*, int*, int*, int*, double* );
+void addgradrho( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+		 double*, double*, double*, double*, double*, double*, double*,
+		 double*, double*, int* );
+void addgradrhoc( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+		  double*, double*, double*, double*, double*, double*, double*,
+		  double*, double*, int* );
+void addgradmula( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+		  double*, double*, double*, double*, double*,
+		  double*, double*, double*, int*, int*, int*, double* );
+void addgradmulac( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+		   double*, double*, double*, double*, double*,
+		   double*, double*, double*, double*, double*, int*, int*, int*, double* );
 void F77_FUNC(projectmtrlc,PROJECTMTRLC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
                                           double*, double*, double*, double*, double*, double*,
 					  double*, double*, double*, double*, double*, int* );
@@ -223,12 +223,55 @@ void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A
 }
 
 // the routine will replace the Fortran routine curvilinear4sg()
-void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-	         double* __restrict__ a_u, double* __restrict__ a_mu, double* __restrict__ a_lambda,
-                 double* __restrict__ a_met, double* __restrict__ a_jac, double* __restrict__ a_lu,
-		 int* onesided, double* __restrict__ a_acof, double* __restrict__ a_bope,
-		 double* __restrict__ a_ghcof, double* __restrict__ a_strx, double* __restrict__ a_stry, 
-                 char op );
+void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			double* __restrict__ a_u, double* __restrict__ a_mu, double* __restrict__ a_lambda,
+			double* __restrict__ a_met, double* __restrict__ a_jac, double* __restrict__ a_lu,
+			int* onesided, double* __restrict__ a_acof, double* __restrict__ a_bope,
+			double* __restrict__ a_ghcof, double* __restrict__ a_strx, double* __restrict__ a_stry, 
+			char op );
+void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		 int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
+		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
+		 float_sw4* __restrict__ a_rho, float_sw4 h, float_sw4& a_energy );
+void energy4c_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		  int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
+		  float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
+		  float_sw4* __restrict__ a_rho, float_sw4* __restrict__ a_jac, float_sw4& a_energy );
+void addgradrho_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		    int ifirstact, int ilastact, int jfirstact, int jlastact, 
+		    int kfirstact, int klastact, 
+		    float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
+		    float_sw4* __restrict__ a_um,  float_sw4* __restrict__ a_u,
+		    float_sw4* __restrict__ a_up,  float_sw4* __restrict__ a_uacc,
+		    float_sw4* __restrict__ a_grho,
+		    float_sw4 dt, float_sw4 h, int onesided[6]);
+void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
+		     int kfirstact, int klastact, 
+		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
+		     float_sw4* __restrict__ a_um,  float_sw4* __restrict__ a_u,
+		     float_sw4* __restrict__ a_up,  float_sw4* __restrict__ a_uacc,
+		     float_sw4* __restrict__ a_grho,
+		     float_sw4 dt, float_sw4* __restrict__ a_jac, int onesided[6]);
+void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
+		     int kfirstact, int klastact, 
+		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
+		     float_sw4* __restrict__ a_u,   float_sw4* __restrict__ a_uacc,
+		     float_sw4* __restrict__ a_gmu, float_sw4* __restrict__ a_glambda,
+		     float_sw4 dt, float_sw4 h, int onesided[6],
+		     int nb, int wb, float_sw4* __restrict__ a_bop );
+void addgradmulac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
+		     int kfirstact, int klastact, 
+		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
+		     float_sw4* __restrict__ a_u,   float_sw4* __restrict__ a_uacc,
+		     float_sw4* __restrict__ a_gmu, float_sw4* __restrict__ a_glambda,
+		     float_sw4 dt, float_sw4 h, float_sw4* __restrict__ a_met,
+		     float_sw4* __restrict__ a_jac, int onesided[6],
+		     int nb, int wb, float_sw4* __restrict__ a_bop );
+
+
 
 using namespace std;
 
@@ -3838,19 +3881,23 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      klast    = m_kEnd[g];
      onesided_ptr = m_onesided[g];
      char op = '='; // assign Uacc := L_u(u)
-     if( usingSupergrid() )
-	F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-						m_sg_str_x[g], m_sg_str_y[g], &op );
-        // rhs4sgcurv(ifirst, ilast, jfirst, jlast, kfirst, klast, 
-        //            u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-        //            uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-        //            m_sg_str_x[g], m_sg_str_y[g], op );
+     if( m_croutines )
+	curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			   u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
+			   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			   m_sg_str_x[g], m_sg_str_y[g], op );
      else
-	F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+     {
+	if( usingSupergrid() )
+	   curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+			  u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
+			  uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			  m_sg_str_x[g], m_sg_str_y[g], &op );
+	else
+	   curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+			u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
+			uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+     }
     if( m_use_attenuation && m_number_mechanisms > 0 )
     {
        op = '-'; // Subtract Uacc := Uacc - L_a(alpha)
@@ -3859,19 +3906,25 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
           double* alpha_ptr   = a_AlphaVE[g][a].c_ptr();
           double* mua_ptr     = mMuVE[g][a].c_ptr();
           double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
-          if(  usingSupergrid() )
-	     F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-	        			    alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-	        			    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-	        				m_sg_str_x[g], m_sg_str_y[g], &op );
-             // rhs4sgcurv(ifirst, ilast, jfirst, jlast, kfirst, klast, 
-             //            alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-             //            uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-             //            m_sg_str_x[g], m_sg_str_y[g], op );
+	  if( m_croutines )
+	  {
+	     curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+			       uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			       m_sg_str_x[g], m_sg_str_y[g], op );
+	  }	     
 	  else
-	     F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-					    alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+	  {
+	     if(  usingSupergrid() )
+		curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+			       uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			       m_sg_str_x[g], m_sg_str_y[g], &op );
+	     else
+		curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+			     alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+			     uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+	  }
        }
     }
   }
@@ -4748,19 +4801,33 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
       double locenergy;
       int* onesided_ptr = m_onesided[g];
       if( topographyExists() && g == mNumberOfGrids-1 )
-	 F77_FUNC(energy4c,ENERGY4C)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
-				     um_ptr, u_ptr, up_ptr, rho_ptr, mJ.c_ptr(), &locenergy );
+      {
+	 if( m_croutines )
+	    energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			istart, iend, jstart, jend, kstart, kend, onesided_ptr,
+			um_ptr, u_ptr, up_ptr, rho_ptr, mJ.c_ptr(), locenergy );
+	 else
+	    energy4c(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+		     &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
+		     um_ptr, u_ptr, up_ptr, rho_ptr, mJ.c_ptr(), &locenergy );
+      }
       else
-	 F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
-			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
+      {
+	 if( m_croutines )
+	    energy4_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+			istart, iend, jstart, jend, kstart, kend, onesided_ptr,
+			um_ptr, u_ptr, up_ptr, rho_ptr, mGridSize[g], locenergy );
+	 else
+	    energy4( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+		     &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
+		     um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
       energy += locenergy;
    }
    energy /= (dt*dt);
    double energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -5984,25 +6051,53 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
       int nb = 4, wb=6;
       if( topographyExists() && g == mNumberOfGrids-1 )
       {
-	 F77_FUNC(addgradrhoc,ADDGRADRHOC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+	 if( m_croutines )
+	 {
+	    addgradrhoc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+			    k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+			    mDt, mJ.c_ptr(), onesided_ptr );
+	    addgradmulac_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			     ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+			     k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt, h,
+			     mMetric.c_ptr(), mJ.c_ptr(), onesided_ptr, nb, wb, m_bop );
+	 }
+	 else
+	 {
+	    addgradrhoc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 					     &mDt, mJ.c_ptr(), onesided_ptr );
-	 F77_FUNC(addgradmulac,ADDGRADMULAC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+	    addgradmulac( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
 	      glambda_ptr, &mDt, &h, mMetric.c_ptr(), mJ.c_ptr(), onesided_ptr, &nb, &wb, m_bop );
+	 }
       }
       else
       {
-	 F77_FUNC(addgradrho,ADDGRADRHO)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+	 if( m_croutines )
+	 {
+	    addgradrho_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			   ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+			   k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+			   mDt, h, onesided_ptr );
+	    addgradmula_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+			    k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
+			    glambda_ptr, mDt, h, onesided_ptr, nb, wb, m_bop );
+	 }
+	 else
+	 {
+	    addgradrho( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 					&mDt, &h, onesided_ptr );
-	 F77_FUNC(addgradmula,ADDGRADMULA)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+	    addgradmula( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
 					k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
 				    glambda_ptr, &mDt, &h, onesided_ptr, &nb, &wb, m_bop );
+	 }
       }
    }
 }

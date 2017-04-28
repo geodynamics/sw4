@@ -66,18 +66,16 @@ void F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( int *, int *, int *, int *, int *,
                                               int*, double*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
 
 void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int *, int *, double*, 
-						double*, double*, double*, double*, double*, double* );
+						double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( int *, int *, int *, int *, int *, int *, double*, 
-						  double*, double*, double*, double*, double* );
-void F77_FUNC(checkanisomtrl,CHECKANISOMTRL)( int *, int *, int *, int *, int *, int *, double*, 
-					      double*, double*, double*, double*, double* );
-void F77_FUNC(computedtaniso,COMPUTEDTANISO)( int *, int *, int *, int *, int *, int *, double*,
-					      double*, double*, double*, double* );
-void F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( int *, int *, int *, int *, int *, int *, double*,
-					      double*, double*, double*, double* );
-void F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( int *, int *, int *, int *, int *, int *, double*,
-					      double*, double*, double*, double* );
-  void anisomtrltocurvilinear( int*, int*, int*, int*, int*, int*, double*, double*, double* );
+						  double*, double*, double*, double*, double*, double* );
+void checkanisomtrl( int *, int *, int *, int *, int *, int *, double*, 
+		     double*, double*, double*, double*, double* );
+void computedtaniso2( int *, int *, int *, int *, int *, int *, double*,
+		      double*, double*, double*, double* );
+void computedtaniso2curv( int *, int *, int *, int *, int *, int *, double*,
+			  double*, double*, double*, double* );
+void anisomtrltocurvilinear( int*, int*, int*, int*, int*, int*, double*, double*, double* );
 }
 
 #define SQR(x) ((x)*(x))
@@ -734,15 +732,17 @@ void EW::setupSBPCoeff()
   if (mVerbose >=1 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
   if( m_croutines )
-     GetStencilCoefficients( m_acof, m_ghcof, m_bope, m_sbop );
+     GetStencilCoefficients( m_acof, m_ghcof, m_bop, m_bope, m_sbop );
   else
   {
+// m_iop, m_iop2, m_bop2, m_hnorm never used in code, change to local variables:
+     double hnorm[4], gh2, iop[5], iop2[5], bop2[24];
 // get coefficients for difference approximation of 2nd derivative with variable coefficients
 //      call VARCOEFFS4( acof, ghcof )
      F77_FUNC(varcoeffs4,VARCOEFFS4)(m_acof, m_ghcof);
 // get coefficients for difference approximation of 1st derivative
 //      call WAVEPROPBOP_4( iop, iop2, bop, bop2, gh2, hnorm, sbop )
-     F77_FUNC(wavepropbop_4,WAVEPROPBOP_4)(m_iop, m_iop2, m_bop, m_bop2, &gh2, m_hnorm, m_sbop);
+     F77_FUNC(wavepropbop_4,WAVEPROPBOP_4)(iop, iop2, m_bop, bop2, &gh2, hnorm, m_sbop);
 // extend the definition of the 1st derivative tothe first 6 points
 //      call BOPEXT4TH( bop, bope )
      F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
@@ -1281,10 +1281,15 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
    {
       double* rho_ptr = rho[g].c_ptr();
       double* c_ptr = c[g].c_ptr();
-      F77_FUNC(checkanisomtrl,CHECKANISOMTRL)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-					      &m_kStart[g], &m_kEnd[g],
-					      rho_ptr, c_ptr,
-					      &rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
+      if( m_croutines )
+	 checkanisomtrl_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+			    m_kStart[g], m_kEnd[g], rho_ptr, c_ptr,
+			    rhominloc, rhomaxloc, eigminloc, eigmaxloc );
+      else
+	 checkanisomtrl(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			&m_kStart[g], &m_kEnd[g],
+			rho_ptr, c_ptr,
+			&rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
       if( rhominloc < rhomin )
 	 rhomin = rhominloc;
       if( rhomaxloc > rhomax )
@@ -1526,9 +1531,14 @@ void EW::computeDTanisotropic()
       double* rho_ptr = mRho[g].c_ptr();
       double* c_ptr = mC[g].c_ptr();
       double dtgrid;
-      F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-						 &m_kStart[g], &m_kEnd[g],
-						 rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
+      if( m_croutines )
+	 computedtaniso2_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+			     m_kStart[g], m_kEnd[g],
+			     rho_ptr, c_ptr, mCFL, mGridSize[g], dtgrid );
+      else
+	 computedtaniso2( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			  &m_kStart[g], &m_kEnd[g],
+			  rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
       if( dtgrid < dtproc )
 	 dtproc = dtgrid;
    }
@@ -1539,9 +1549,14 @@ void EW::computeDTanisotropic()
       double* c_ptr = mCcurv.c_ptr();
       double* jac_ptr = mJ.c_ptr();
       double dtgrid;
-      F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-							 &m_kStart[g], &m_kEnd[g],
-							 rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
+      if( m_croutines )
+	 computedtaniso2curv_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+				 m_kStart[g], m_kEnd[g],
+				 rho_ptr, c_ptr, jac_ptr, mCFL, dtgrid );
+      else
+	 computedtaniso2curv( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			      &m_kStart[g], &m_kEnd[g],
+			      rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
       if( dtgrid < dtproc )
 	 dtproc = dtgrid;
    }
@@ -2067,7 +2082,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
    //
    Sarray saverand(ifirst-p,ilast+p,jfirst-p,jlast+p,kfirst-pz,kfirst+pz);
    double* saverand_ptr = saverand.c_ptr();
-
+   double plimit=m_random_sdlimit/sqrt(3.0);
    for ( g=0; g<mNumberOfGrids; g++)
    {
       double* vs_ptr  = a_vs[g].c_ptr();
@@ -2095,7 +2110,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 			      &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						      mZ.c_ptr() );
+						      mZ.c_ptr(), &plimit );
       }
       else
       {
@@ -2104,7 +2119,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 						&m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocity,PERTURBVELOCITY)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						    vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						    &m_zmin[g], &h );
+						    &m_zmin[g], &h, &plimit );
       }
    }
 }

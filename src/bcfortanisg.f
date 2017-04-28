@@ -24,7 +24,7 @@ c the boundary window 'wind' is now an input argument
 
 c loop over all sides of the 3-D domain
 !$OMP PARALLEL PRIVATE(i,j,k,qq,du,dv,dw,rhs1,rhs2,rhs3,x,a,ipiv,s0i,
-     & info)
+!$OMP& info)
       do s=1,6
 *** dirichlet condition, bccnd=1
 *** supergrid condition, bccnd=2

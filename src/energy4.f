@@ -31,6 +31,7 @@
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine ENERGY4( is, ie, js, je, ks, ke, i1, i2, j1, j2, k1,
      *                    k2, onesided, um, u, up, rho, h, energy )
+     *         bind(c)
       implicit none
       integer is, ie, js, je, ks, ke, i1, i2, j1, j2, k1, k2
       integer i, j, k, onesided(6)
@@ -68,6 +69,7 @@
 c-----------------------------------------------------------------------
       subroutine ENERGY4C( is, ie, js, je, ks, ke, i1, i2, j1, j2, k1,
      *                     k2, onesided, um, u, up, rho, jac, energy )
+     *         bind(c)
       implicit none
       integer is, ie, js, je, ks, ke, i1, i2, j1, j2, k1, k2
       integer i, j, k, onesided(6)

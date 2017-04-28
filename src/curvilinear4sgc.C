@@ -1,11 +1,11 @@
-#include "math.h"
+#include "sw4.h"
 
-void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-	         double* __restrict__ a_u, double* __restrict__ a_mu, double* __restrict__ a_lambda,
-                 double* __restrict__ a_met, double* __restrict__ a_jac, double* __restrict__ a_lu,
-		 int* onesided, double* __restrict__ a_acof, double* __restrict__ a_bope,
-		 double* __restrict__ a_ghcof, double* __restrict__ a_strx, double* __restrict__ a_stry,
-                 char op )
+void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
+			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
+			int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
+			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
+			char op )
 {
 //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
 //     *                         klast, u, mu, la, met, jac, lu, 
@@ -20,9 +20,9 @@ void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 //      Interior (k>6), 2126 arithmetic ops.
 //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
 
-//   const double a1 =0;
-   double a1 =0;
-   double sgn = 1;
+//   const float_sw4 a1 =0;
+   float_sw4 a1 =0;
+   float_sw4 sgn = 1;
    if( op=='=' )
    {
       a1 = 0;
@@ -39,31 +39,28 @@ void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
       sgn=-1;
    }
 
-   const double i6 = 1.0/6;
-   const double tf = 0.75;
-   const double c1 =  2.0/3;
-   const double c2 = -1.0/12;
-
+   const float_sw4 i6 = 1.0/6;
+   const float_sw4 tf = 0.75;
+   const float_sw4 c1 =  2.0/3;
+   const float_sw4 c2 = -1.0/12;
 
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
+   const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
-   const int base3 = 3*base-1;
-   const int base4 = 4*base-1;
-   const int ni3  = 3*ni;
-   const int nij3 = 3*nij;
-   const int ni4  = 4*ni;
-   const int nij4 = 4*nij;
+   const int base3 = base-nijk;
+   const int base4 = base-nijk;
    const int ifirst0 = ifirst;
    const int jfirst0 = jfirst;
 
  // Direct reuse of fortran code by these macro definitions:
-#define mu(i,j,k)     a_mu[base+i+ni*(j)+nij*(k)]
-#define la(i,j,k) a_lambda[base+i+ni*(j)+nij*(k)]
-#define jac(i,j,k)   a_jac[base+i+ni*(j)+nij*(k)]
-#define u(c,i,j,k)     a_u[base3+(c)+3*(i)+ni3*(j)+nij3*(k)]   
-#define lu(c,i,j,k)   a_lu[base3+(c)+3*(i)+ni3*(j)+nij3*(k)]   
-#define met(c,i,j,k) a_met[base4+(c)+4*(i)+ni4*(j)+nij4*(k)]   
+ // Direct reuse of fortran code by these macro definitions:
+#define mu(i,j,k)     a_mu[base+(i)+ni*(j)+nij*(k)]
+#define la(i,j,k) a_lambda[base+(i)+ni*(j)+nij*(k)]
+#define jac(i,j,k)   a_jac[base+(i)+ni*(j)+nij*(k)]
+#define u(c,i,j,k)     a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
+#define lu(c,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
+#define met(c,i,j,k) a_met[base4+(i)+ni*(j)+nij*(k)+nijk*(c)]   
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
 #define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
@@ -85,29 +82,29 @@ void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
 // 5 ops                  
-               double ijac   = strx(i)*stry(j)/jac(i,j,k);
-               double istry  = 1/(stry(j));
-               double istrx  = 1/(strx(i));
-	       double istrxy = istry*istrx;
+               float_sw4 ijac   = strx(i)*stry(j)/jac(i,j,k);
+               float_sw4 istry  = 1/(stry(j));
+               float_sw4 istrx  = 1/(strx(i));
+	       float_sw4 istrxy = istry*istrx;
 
-               double r1 = 0,r2 = 0,r3 = 0;
+               float_sw4 r1 = 0,r2 = 0,r3 = 0;
 
        // pp derivative (u) (u-eq)
 // 53 ops, tot=58
-	       double cof1=(2*mu(i-2,j,k)+la(i-2,j,k))*met(1,i-2,j,k)*met(1,i-2,j,k)
+	       float_sw4 cof1=(2*mu(i-2,j,k)+la(i-2,j,k))*met(1,i-2,j,k)*met(1,i-2,j,k)
 		  *strx(i-2);
-	       double cof2=(2*mu(i-1,j,k)+la(i-1,j,k))*met(1,i-1,j,k)*met(1,i-1,j,k)
+	       float_sw4 cof2=(2*mu(i-1,j,k)+la(i-1,j,k))*met(1,i-1,j,k)*met(1,i-1,j,k)
 		  *strx(i-1);
-	       double cof3=(2*mu(i,j,k)+la(i,j,k))*met(1,i,j,k)*met(1,i,j,k)*strx(i);
-	       double cof4=(2*mu(i+1,j,k)+la(i+1,j,k))*met(1,i+1,j,k)*met(1,i+1,j,k)
+	       float_sw4 cof3=(2*mu(i,j,k)+la(i,j,k))*met(1,i,j,k)*met(1,i,j,k)*strx(i);
+	       float_sw4 cof4=(2*mu(i+1,j,k)+la(i+1,j,k))*met(1,i+1,j,k)*met(1,i+1,j,k)
 		  *strx(i+1);
-	       double cof5=(2*mu(i+2,j,k)+la(i+2,j,k))*met(1,i+2,j,k)*met(1,i+2,j,k)
+	       float_sw4 cof5=(2*mu(i+2,j,k)+la(i+2,j,k))*met(1,i+2,j,k)*met(1,i+2,j,k)
 		  *strx(i+2);
 
-	       double mux1 = cof2 -tf*(cof3+cof1);
-	       double mux2 = cof1 + cof4+3*(cof3+cof2);
-	       double mux3 = cof2 + cof5+3*(cof4+cof3);
-	       double mux4 = cof4-tf*(cof3+cof5);
+	       float_sw4 mux1 = cof2 -tf*(cof3+cof1);
+	       float_sw4 mux2 = cof1 + cof4+3*(cof3+cof2);
+	       float_sw4 mux3 = cof2 + cof5+3*(cof4+cof3);
+	       float_sw4 mux4 = cof4-tf*(cof3+cof5);
 
 	       r1 = r1 + i6* (
 			      mux1*(u(1,i-2,j,k)-u(1,i,j,k)) + 
@@ -213,7 +210,7 @@ void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	       // All rr-derivatives at once
 	       // averaging the coefficient
 // 54*8*8+25*8 = 3656 ops, tot=3939
-	       double mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+	       float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
 	       for( int q=1 ; q <= 8 ; q++ )
 	       {
 		  mucofu2=0;
@@ -342,9 +339,9 @@ void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 
       // rp - derivatives
 // 24*8 = 192 ops, tot=4355
-	       double dudrm2 = 0, dudrm1=0, dudrp1=0, dudrp2=0;
-	       double dvdrm2 = 0, dvdrm1=0, dvdrp1=0, dvdrp2=0;
-	       double dwdrm2 = 0, dwdrm1=0, dwdrp1=0, dwdrp2=0;
+	       float_sw4 dudrm2 = 0, dudrm1=0, dudrp1=0, dudrp2=0;
+	       float_sw4 dvdrm2 = 0, dvdrm1=0, dvdrp1=0, dvdrp2=0;
+	       float_sw4 dwdrm2 = 0, dwdrm1=0, dwdrp1=0, dwdrp2=0;
 	       for( int q=1 ; q <= 8 ; q++ )
 	       {
 		  dudrm2 += bope(k,q)*u(1,i-2,j,q);
@@ -579,29 +576,29 @@ void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	 {
 // 5 ops
-	    double ijac = strx(i)*stry(j)/jac(i,j,k);
-            double istry = 1/(stry(j));
-            double istrx = 1/(strx(i));
-            double istrxy = istry*istrx;
+	    float_sw4 ijac = strx(i)*stry(j)/jac(i,j,k);
+            float_sw4 istry = 1/(stry(j));
+            float_sw4 istrx = 1/(strx(i));
+            float_sw4 istrxy = istry*istrx;
 
-            double r1 = 0, r2=0, r3=0;
+            float_sw4 r1 = 0, r2=0, r3=0;
 
 	    // pp derivative (u)
 // 53 ops, tot=58
-	    double cof1=(2*mu(i-2,j,k)+la(i-2,j,k))*met(1,i-2,j,k)*met(1,i-2,j,k)
+	    float_sw4 cof1=(2*mu(i-2,j,k)+la(i-2,j,k))*met(1,i-2,j,k)*met(1,i-2,j,k)
 	       *strx(i-2);
-	    double cof2=(2*mu(i-1,j,k)+la(i-1,j,k))*met(1,i-1,j,k)*met(1,i-1,j,k)
+	    float_sw4 cof2=(2*mu(i-1,j,k)+la(i-1,j,k))*met(1,i-1,j,k)*met(1,i-1,j,k)
 	       *strx(i-1);
-	    double cof3=(2*mu(i,j,k)+la(i,j,k))*met(1,i,j,k)*met(1,i,j,k)
+	    float_sw4 cof3=(2*mu(i,j,k)+la(i,j,k))*met(1,i,j,k)*met(1,i,j,k)
 		  *strx(i);
-	    double cof4=(2*mu(i+1,j,k)+la(i+1,j,k))*met(1,i+1,j,k)*met(1,i+1,j,k)
+	    float_sw4 cof4=(2*mu(i+1,j,k)+la(i+1,j,k))*met(1,i+1,j,k)*met(1,i+1,j,k)
 	     *strx(i+1);
-	    double cof5=(2*mu(i+2,j,k)+la(i+2,j,k))*met(1,i+2,j,k)*met(1,i+2,j,k)
+	    float_sw4 cof5=(2*mu(i+2,j,k)+la(i+2,j,k))*met(1,i+2,j,k)*met(1,i+2,j,k)
 	     *strx(i+2);
-            double mux1 = cof2 -tf*(cof3+cof1);
-            double mux2 = cof1 + cof4+3*(cof3+cof2);
-            double mux3 = cof2 + cof5+3*(cof4+cof3);
-            double mux4 = cof4-tf*(cof3+cof5);
+            float_sw4 mux1 = cof2 -tf*(cof3+cof1);
+            float_sw4 mux2 = cof1 + cof4+3*(cof3+cof2);
+            float_sw4 mux3 = cof2 + cof5+3*(cof4+cof3);
+            float_sw4 mux4 = cof4-tf*(cof3+cof5);
 
             r1 +=  i6* (
                     mux1*(u(1,i-2,j,k)-u(1,i,j,k)) + 

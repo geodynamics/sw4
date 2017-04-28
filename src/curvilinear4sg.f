@@ -33,7 +33,7 @@ c-----------------------------------------------------------------------
       subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
      *                         klast, u, mu, la, met, jac, lu, 
      *                         onesided, acof, bope, ghcof, strx, stry,
-     *                         op )
+     *                         op ) bind(c)
 
 
 *** Routine with supergrid stretchings strx and stry. No stretching

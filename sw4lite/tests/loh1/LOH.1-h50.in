@@ -42,6 +42,8 @@ block vp=4630.76 vs=2437.56 rho=2650 z1=999 z2=1001
 # consistent with the matlab script PlotAnalyticalLOH1.m
 source x=15000 y=15000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 type=Gaussian
 
+developer checkfornan=0 reporttiming=1 corder=1
+
 #
 # Note that all recording stations are relative to the (0,0,0) origin
 #

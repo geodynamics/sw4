@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <algorithm>
+#include <cmath>
 
 #include "Source.h"
 #include "GridPointSource.h"
@@ -131,19 +132,19 @@ EW::EW( const string& filename ) :
    mCFL(1.3),
    mTstart(0.0),
    mTmax(0.0),
-   mTimeIsSet(false),
    mNumberOfTimeSteps(-1),
-   mPrintInterval(100),
-   m_ghost_points(2),
-   m_ext_ghost_points(2),
+   mTimeIsSet(false),
    m_ppadding(2),
+   m_ghost_points(2),
+   mPrintInterval(100),
+   m_ext_ghost_points(2),
    mVerbose(0),
    mQuiet(false),
    m_supergrid_damping_coefficient(0.02),
    m_sg_damping_order(4),
    m_sg_gp_thickness(20),
-   m_use_supergrid(false),
    m_checkfornan(false),
+   m_use_supergrid(false),
    m_topography_exists(false),
    m_grid_interpolation_order(4),
    m_zetaBreak(0.95),
@@ -1355,7 +1356,7 @@ void EW::processMaterialBlock( char* buffer )
     z1set=false, z2set=false;
 
   float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+  //  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
   string name = "Block";
 
@@ -2700,6 +2701,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	    trdata[s+12*(currentTimeStep-beginCycle)]= time_measure[s];
 
    } // end time stepping loop
+
    double time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
    if( m_output_detailed_timing )
@@ -3454,6 +3456,8 @@ void EW::printTime( int cycle, float_sw4 t, bool force ) const
    //      printf("Time step %7i  t = %15.7e\n", cycle, t);
 }
 
+
+
 //-----------------------------------------------------------------------
 bool EW::exactSol( float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources )
 {
@@ -3466,6 +3470,7 @@ bool EW::exactSol( float_sw4 a_t, vector<Sarray> & a_U, vector<Source*>& sources
 	float_sw4* utmp = new float_sw4[npts*3];
 	   //	get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
 	get_exact_point_source( utmp, a_t, g, *sources[0] );
+	//	cout << "value at test pt " << utmp[3*(103)+3*205*(103)+3*205*205*(53)] << endl;
 	a_U[g].assign( utmp, 0 );
 	delete[] utmp;
      }
@@ -3762,7 +3767,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
       m0 = 1;
    }
    //   bool curvilinear = topographyExists() && g == mNumberOfGrids-1;
-   bool curvilinear = false;
+   //   bool curvilinear = false;
    //   float_sw4* up = u.c_ptr();
    float_sw4 h   = mGridSize[g];
    float_sw4 eps = 1e-3*h;
@@ -3898,9 +3903,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		  }
 		  up[3*ind] += 
 	// m_xx*G_xx,x
-		     + m0*mxx/(4*M_PI*rho)*
+		      m0*mxx/(4*M_PI*rho)*
 		     ( 
-		      + 3*(x-x0)*(x-x0)*(x-x0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(x-x0)*(x-x0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 	 
 		      - 2*(x-x0) / pow(R,3) * (A/pow(alpha,2) - B/pow(beta,2))
 	 
@@ -3920,9 +3925,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_yy*G_xy,y
-		     + m0*myy/(4*M_PI*rho)*
+		      m0*myy/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(y-y0)*(y-y0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(y-y0)*(y-y0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 	 
 		      - (x-x0) / pow(R,3) * (A/pow(alpha,2) - B/pow(beta,2))
 
@@ -3934,9 +3939,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_zz*G_xz,z
-		     + m0*mzz/(4*M_PI*rho)*
+		      m0*mzz/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(z-z0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(z-z0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 
 		      - (x-x0) / pow(R,3) * (A/pow(alpha,2) - B/pow(beta,2))
 
@@ -3948,9 +3953,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_xy*G_xy,x
-		     + m0*mxy/(4*M_PI*rho)*
+		      m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(x-x0)*(y-y0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(x-x0)*(y-y0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 
 		      - (y-y0) / pow(R,3) * (A/pow(alpha,2) - B/pow(beta,2))
 
@@ -3962,9 +3967,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_xy*G_xx,y
-		     + m0*mxy/(4*M_PI*rho)*
+		      m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(x-x0)*(y-y0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(x-x0)*(y-y0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 	 
 		      + 3*(x-x0)*(x-x0) / pow(R,5) * ((y-y0)*A/pow(alpha,2) - (y-y0)*B/pow(beta,2))
 	 
@@ -3982,9 +3987,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_xz*G_xz,x
-		     + m0*mxz/(4*M_PI*rho)*
+		      m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(x-x0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(x-x0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 
 		      - (z-z0) / pow(R,3) * (A/pow(alpha,2) - B/pow(beta,2))
 
@@ -3996,9 +4001,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_yz*G_xz,y
-		     + m0*myz/(4*M_PI*rho)*
+		      m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(y-y0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(y-y0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 
 		      + (x-x0)*(z-z0) / pow(R,3)* ((y-y0)*D - (y-y0)*E)
 
@@ -4008,9 +4013,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_xz*G_xx,z
-		     + m0*mxz/(4*M_PI*rho)*
+		      m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(x-x0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(x-x0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 	 
 		      + 3*(x-x0)*(x-x0) / pow(R,5) * ((z-z0)*A/pow(alpha,2) - (z-z0)*B/pow(beta,2))
 	 
@@ -4028,9 +4033,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 		  up[3*ind] +=
 		     // m_yz*G_yx,z
-		     + m0*myz/(4*M_PI*rho)*
+		      m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*(x-x0)*(y-y0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
+		       3*(x-x0)*(y-y0)*(z-z0) / pow(R,5) * (A/pow(alpha,2) - B/pow(beta,2))
 
 		      + (x-x0)*(y-y0) / pow(R,3)* ((z-z0)*D - (z-z0)*E)
 
@@ -4324,6 +4329,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 
 		      + ( 15*(z-z0)*(z-z0)*(y-y0) / pow(R,7) - 3*(y-y0) / pow(R,5) ) * C
 		      );
+
 	       }
 	    }
 	    ind++;

@@ -32,6 +32,7 @@
       subroutine ADDGRADRHO(ifirst, ilast, jfirst, jlast, kfirst, klast,
      *    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
      *    kap, kapacc, um, u, up, uacc, grho, dt, h, onesided )
+     * bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer ifirstact, ilastact, jfirstact, jlastact, kfirstact
@@ -76,6 +77,7 @@ c-----------------------------------------------------------------------
       subroutine ADDGRADRHOC(ifirst,ilast, jfirst, jlast, kfirst, klast,
      *    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
      *    kap, kapacc, um, u, up, uacc, grho, dt, jac, onesided )
+     * bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer ifirstact, ilastact, jfirstact, jlastact, kfirstact
@@ -121,6 +123,7 @@ c-----------------------------------------------------------------------
      *  klast, ifirstact, ilastact, jfirstact, jlastact, kfirstact,
      *   klastact, kap, kapacc, u, uacc, gmu, glambda,
      *    dt, h, onesided, nb, wb, bop )
+     * bind(c)
       implicit none
       real*8 d4a, d4b, c6, c8, al1, al2, al3, al4
       parameter( d4a=2d0/3, d4b=-1d0/12, c6=1d0/18, c8=1d0/144 )
@@ -879,7 +882,7 @@ c-----------------------------------------------------------------------
      *  klast, ifirstact, ilastact, jfirstact, jlastact, kfirstact,
      *   klastact, kap, kapacc, u, uacc, gmu, glambda,
      *    dt, h, met, jac, onesided, nb, wb, bop )
-
+     * bind(c)
       implicit none
       real*8 d4a, d4b, c6, c8, al1, al2, al3, al4
       parameter( d4a=2d0/3, d4b=-1d0/12, c6=1d0/18, c8=1d0/144 )

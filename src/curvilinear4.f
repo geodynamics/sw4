@@ -33,6 +33,7 @@ c-----------------------------------------------------------------------
       subroutine CURVILINEAR4( ifirst, ilast, jfirst, jlast, kfirst,
      *                         klast, u, mu, la, met, jac, lu, 
      *                         onesided, acof, bope, ghcof, op )
+     *         bind(c)
 
       implicit none
       real*8 c1, c2, tf, i6, i144

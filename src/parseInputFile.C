@@ -7718,6 +7718,7 @@ void EW::processRandomize(char* buffer)
    token = strtok(NULL, " \t");
    bool lengthscaleset=false, lengthscalezset=false;
    m_random_dist = m_random_distz = 100;
+   m_random_sdlimit  = 3;
    m_random_amp      = 0.1;
    m_random_amp_grad = 0;
    m_random_seed[0]  = 1234;
@@ -7755,6 +7756,12 @@ void EW::processRandomize(char* buffer)
 	 m_random_distz = atof(token);
 	 lengthscalezset = true;
 	 CHECK_INPUT( m_random_distz>0, "Error randomize, distz must be > 0, not " << token);
+      }
+      else if( startswith("sdthreshold=",token) )
+      {
+	 token += 12;
+	 m_random_sdlimit = atof(token);
+	 CHECK_INPUT( m_random_sdlimit>0, "Error sdthreshold > 0, not " << token);
       }
       else if( startswith("seed1=",token) )
       {

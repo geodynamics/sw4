@@ -39,6 +39,8 @@ block vp=6000 vs=3464 rho=2700
 # top layer
 block vp=4000 vs=2000 rho=2600 z2=1000
 
+developer corder=1 reporttiming=1 checkfornan=0
+
 # write time-histories for the velocities in the (x,y,z)-directions using the usgs (ASCII) and SAC formats
 rec x=15600 y=15800 z=0 file=sta01 usgsformat=1 writeEvery=500
 rec x=16200 y=16600 z=0 file=sta02 usgsformat=1 writeEvery=500

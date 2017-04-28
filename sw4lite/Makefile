@@ -19,7 +19,7 @@ endif
 HOSTNAME := $(shell hostname)
 
 # default optimization level (may be modified below)
-OPT = -O3
+OPT = -O2
 
 # Fourier is Anders' mac powerbook
 ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
@@ -105,6 +105,19 @@ else ifeq ($(findstring valhall,$(HOSTNAME)),valhall)
   EXTRA_LINK_FLAGS = -lifcore -lblas -llapack
   openmp = yes
   computername := valhall
+else ifeq ($(findstring ray,$(HOSTNAME)),ray)
+  FC  = mpif90
+  CXX = mpic++
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -lgfortran  -llapack -lblas
+  OPT += -g 
+#  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib
+#  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib	
+  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/blas/blas-3.6.0-gfortran-4.8.5/lib
+  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/lapack/lapack-3.6.0-gfortran-4.8.5/lib
+  openmp = no
+  debug = no
+  computername := ray
 else
   FC  = mpif90
   CXX = mpic++
@@ -194,7 +207,7 @@ else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o rhs4sg_rev.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o
+OBJ  = main.o EW.o Sarray.o Source.o SuperGrid.o GridPointSource.o time_functions.o EW_cuda.o ew-cfromfort.o rhs4sg.o rhs4sg_rev.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o  
 
 FOROBJ = rhs4th3fort.o boundaryOp.o addsgd.o solerr3.o bcfort.o type_defs.o lglnodes.o dgmodule.o metric.o curvilinear4sg.o freesurfcurvisg.o
 

@@ -33,6 +33,7 @@
 #ifndef EW_SARRAY_H
 #define EW_SARRAY_H
 
+#include <sys/types.h>
 //#include <iostream>
 //#include <mpi.h>
 #include "Require.h"
