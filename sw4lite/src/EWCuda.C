@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstring>
 using namespace std;
 
 //-----------------------------------------------------------------------
@@ -50,6 +51,7 @@ int mystrcmp(void const *a, void const *b) {
 extern "C"
 void setupgpu(int verbose)
 {
+#ifdef SW4_CUDA
   int rank, nrank;
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -100,6 +102,7 @@ void setupgpu(int verbose)
   }
 
   free(hosts);
+#endif
 }
 
 //-----------------------------------------------------------------------
