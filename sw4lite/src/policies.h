@@ -1,6 +1,6 @@
 #ifdef CUDA_CODE
-typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
-  cuda_threadblock_z_exec<16>>>
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<16>,cuda_threadblock_y_exec<4>,
+  cuda_threadblock_z_exec<4>>>
   EXEC_CARTBC;
 
 #define REDUCE_BLOCK_SIZE 1024

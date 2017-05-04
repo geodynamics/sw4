@@ -149,8 +149,7 @@ public:
    void page_unlock( EWCuda* cu );
    Sarray* create_copy_on_device( EWCuda* cu );
    void define_offsets();
-   double* newmanaged(size_t len);
-  void delmanaged(double* &dptr);
+
   char *status();
   void prefetch();
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
@@ -161,6 +160,8 @@ private:
   float_sw4* dev_data;
   inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
   inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
+  double* newmanaged(size_t len);
+  void delmanaged(double* &dptr);
 //   void init_mpi_datatype( CartesianProcessGrid* cartcomm );
 //    bool m_mpi_datatype_initialized;
 //    MPI_Datatype m_local_block_type;

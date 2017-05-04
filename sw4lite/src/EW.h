@@ -9,6 +9,7 @@
 #include "SuperGrid.h"
 #include "MaterialData.h"
 #include "TimeSeries.h"
+#include <unordered_map>
 using namespace std;
 
 class Source;
@@ -108,6 +109,8 @@ class EW
    RAJA_HOST_DEVICE float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta);
    RAJA_HOST_DEVICE float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
    void get_exact_point_source( double* up, double t, int g, Source& source,
+				int* wind=NULL );
+   void get_exact_point_source2( double* up, double t, int g, Source& source,
 				int* wind=NULL );
    void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, 
 			  float_sw4 &diffL2, float_sw4 &xInf, vector<Source*>& a_globalSources );
@@ -416,6 +419,8 @@ class EW
    bool m_use_dg;
    
  private:
+   std::unordered_map<void*,size_t> map;
+   void prefetch(void *ptr);
    float_sw4* newmanaged(size_t len);
    void delmanaged(float_sw4* &dptr);
 };

@@ -1174,6 +1174,7 @@ void PrintPointerAttributes(void *ptr){
   struct cudaPointerAttributes ptr_att;
   if (cudaPointerGetAttributes(&ptr_att,ptr)!=cudaSuccess){
     printf("PrintPointerAttributes:: Raw pointer\n");
+    cudaGetLastError();
     return;
   }
   if (ptr_att.isManaged){
