@@ -1188,6 +1188,15 @@ void PrintPointerAttributes(void *ptr){
   }
   return;
 }
+bool IsManaged(void *ptr){
+  struct cudaPointerAttributes ptr_att;
+  if (cudaPointerGetAttributes(&ptr_att,ptr)!=cudaSuccess){
+    cudaGetLastError();
+    return false;
+  }
+  if (ptr_att.isManaged) return true;
+  return false;
+}
 #endif
 void Sarray::prefetch(){
 #ifdef CUDA_CODE

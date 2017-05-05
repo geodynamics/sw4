@@ -18,7 +18,8 @@ class EWCuda;
 class CheckPoint;
 #include "RAJA/RAJA.hxx"
 using namespace RAJA;
-
+#include <cstdio>
+#define PREFETCH(input_ptr) if (prefetch(input_ptr)==1) printf("BAD PREFETCH ERROR IN FILE %s, line %d\n",__FILE__,__LINE__);
 class EW
 {
  public:
@@ -420,7 +421,7 @@ class EW
    
  private:
    std::unordered_map<void*,size_t> map;
-   void prefetch(void *ptr);
+   int prefetch(void *ptr);
    float_sw4* newmanaged(size_t len);
    void delmanaged(float_sw4* &dptr);
 };

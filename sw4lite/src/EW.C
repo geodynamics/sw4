@@ -32,6 +32,8 @@
 #include "policies.h"
 
 void PrintPointerAttributes(void *ptr);
+bool IsManaged(void *ptr);
+
 #ifndef SW4_CROUTINES
 extern "C" {
    void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)( int*, int*, int*, int*, int*, int*, int*, int*, 
@@ -2567,10 +2569,12 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 Up[g].copy_to_device(m_cuobj,true,0);
 
       // Corrector
+      PUSH_RANGE("ForceOffload",3);
       if( m_cuobj->has_gpu() )
 	 ForceCU( t, dev_F, true, 1 );
       else
-	 ForceOffload( t, F, m_point_sources, true );
+	ForceOffload( t, F, m_point_sources, true );
+      POP_RANGE;
       //      for( int g=0; g < mNumberOfGrids ; g++ )
       //	 F[g].copy_to_device(m_cuobj,true,1);
 
@@ -2989,9 +2993,12 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 	ForceAddress[index]=fptr+ind1;
 	ForceAddress[index+1]=fptr+ind1+oc;
 	ForceAddress[index+2]=fptr+ind1+2*oc;
+	//PrintPointerAttributes(fptr+ind1);
+	//PrintPointerAttributes(fptr+ind1+oc);
+	//PrintPointerAttributes(fptr+ind1+2*oc);
       }
     firstcall=0;
-  }
+  } // First call only ends
   
   for( int g =0 ; g < mNumberOfGrids ; g++ )
     a_F[g].set_to_zero();
@@ -3033,14 +3040,27 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 	  //	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
 	}
     }
-#pragma omp parallel for
-  for( int r=0 ; r<m_identsources.size()-1 ; r++ )
+  //#pragma omp parallel for
+  for( int r=0 ; r<m_identsources.size()-1 ; r++ ){
+    int index=r*3;
+      //float_sw4* fptr =a_F[g].c_ptr();
+    for(int i=0;i<3;i++){
+      if (!IsManaged(ForceAddress[index+i])) std::cerr<<" NO MANAGED1\n";
+      if (!IsManaged(ForceVector+index+i)) std::cerr<<" NOT MANAGED2\n";
+    }
+  }
+  // Need the lines below becuase the object is not in managed memory and the this pointer is host only
+  float_sw4 *ForceVector_copy=ForceVector;
+  float_sw4 **ForceAddress_copy=ForceAddress;
+  PREFETCH(ForceVector);
+  PREFETCH(ForceAddress);
+  forall<EXEC > (0,m_identsources.size()-1,[=] RAJA_DEVICE(int r)
     {
       int index=r*3;
       //float_sw4* fptr =a_F[g].c_ptr();
       for(int i=0;i<3;i++)
-	*ForceAddress[index+i]+=ForceVector[index+i]; // DOes this need to be an update and not an assignment
-}
+	*ForceAddress_copy[index+i]+=ForceVector_copy[index+i]; // DOes this need to be an update and not an assignment
+    });
 	  
 }
 
@@ -3126,9 +3146,10 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      a_Mu[g].prefetch();
      a_Lambda[g].prefetch();
      a_Uacc[g].prefetch();
-     prefetch(m_sg_str_x[g]);
-     prefetch(m_sg_str_y[g]);
-     prefetch(m_sg_str_z[g]);
+     PREFETCH(m_sg_str_x[g]);
+     PREFETCH(m_sg_str_y[g]);
+     PREFETCH(m_sg_str_z[g]);
+     PREFETCH(m_iop);
 #ifdef SW4_CROUTINES
       if( m_corder )
 	 rhs4sg_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
@@ -3268,22 +3289,28 @@ void EW::cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
    {
       if( m_point_source_test )
       {
-	 for( int side=0 ; side < 6 ; side++ )
+	
+	for( int side=0 ; side < 6 ; side++ ){
+	  float_sw4 *tmp=a_BCForcing[g][side];
 	    if( m_bcType[g][side] == bDirichlet )
 	       get_exact_point_source2( a_BCForcing[g][side], t, g, *a_sources[0], &m_BndryWindow[g][6*side] );
 	    else
-	       for (int q=0; q<3*m_NumberOfBCPoints[g][side]; q++)
-		  a_BCForcing[g][side][q] = 0;
+	      forall<EXEC> (0,3*m_NumberOfBCPoints[g][side],[=] RAJA_DEVICE(int q){
+		  tmp[q] = 0;});
+	}
       }
       else
       {
 	 // no boundary forcing
 	 // we can do the same loop for all types of bc. For bParallel boundaries, numberOfBCPoints=0
-	 for( int side=0 ; side < 6 ; side++ )
-	    for( int q=0 ; q < 3*m_NumberOfBCPoints[g][side] ; q++ )
-	       a_BCForcing[g][side][q] = 0.;
+	for( int side=0 ; side < 6 ; side++ ){
+	  float_sw4 *tmp=a_BCForcing[g][side];
+	  forall<EXEC> (0,3*m_NumberOfBCPoints[g][side],[=] RAJA_DEVICE(int q){
+		  tmp[q] = 0;});
+	}
       }
    }
+   SYNC_DEVICE
 }
 
 //-----------------------------------------------------------------------
@@ -3395,10 +3422,10 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      a_U[g].prefetch();
      a_Mu[g].prefetch();
      a_Lambda[g].prefetch();
-     prefetch(m_sg_str_x[g]);
-     prefetch(m_sg_str_y[g]);
+     PREFETCH(m_sg_str_x[g]);
+     PREFETCH(m_sg_str_y[g]);
      for(int j=0;j<6;j++)
-       prefetch(a_BCForcing[g][j]);
+       PREFETCH(a_BCForcing[g][j]);
       //      int topo=topographyExists() && g == mNumberOfGrids-1;
 #ifdef SW4_CROUTINES
       if( m_corder )
@@ -3491,17 +3518,17 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
      a_Um[g].prefetch();
      a_Rho[g].prefetch();
 
-     prefetch(m_sg_dc_x[g]);
-     prefetch(m_sg_dc_y[g]);
-     prefetch(m_sg_dc_z[g]);
+     PREFETCH(m_sg_dc_x[g]);
+     PREFETCH(m_sg_dc_y[g]);
+     PREFETCH(m_sg_dc_z[g]);
 
-     prefetch(m_sg_str_x[g]);
-     prefetch(m_sg_str_y[g]);
-     prefetch(m_sg_str_z[g]);
+     PREFETCH(m_sg_str_x[g]);
+     PREFETCH(m_sg_str_y[g]);
+     PREFETCH(m_sg_str_z[g]);
 
-     prefetch(m_sg_corner_x[g]);
-     prefetch(m_sg_corner_y[g]);
-     prefetch(m_sg_corner_z[g]);
+     PREFETCH(m_sg_corner_x[g]);
+     PREFETCH(m_sg_corner_y[g]);
+     PREFETCH(m_sg_corner_z[g]);
 
       if( m_sg_damping_order == 4 )
       {
@@ -6404,6 +6431,7 @@ void EW::sort_grid_point_sources()
 #ifdef CUDA_CODE
    ForceVector = newmanaged(nrunique*3);
    cudaMallocManaged(&ForceAddress, 3*nrunique*sizeof(float_sw4*));
+   map[ForceAddress]= 3*nrunique*sizeof(float_sw4*);
    cudaDeviceSynchronize();
 #else
    ForceVector = new double[nrunique*3];
@@ -6489,18 +6517,24 @@ void EW::delmanaged(float_sw4* &dptr){
 #endif
   dptr=NULL;
 }
-void EW::prefetch(void *ptr){
+int EW::prefetch(void *ptr){
+  if (ptr==NULL) return 0;
   PUSH_RANGE("EW::PREFETCH",2);
-  if (map.find(ptr)!=map.end())
+
+  if (map.find(ptr)!=map.end()){
     cudaMemPrefetchAsync(ptr, 
 			 map[ptr],
 			 0,
 			 0);
-  else
-    std::cout<<"Warning :: Trying to prefetch non-managed memory\n";
-  SYNC_DEVICE
-  POP_RANGE;
-    
+
+    SYNC_DEVICE
+      POP_RANGE;
+      return 0;
+  }
+  else{
+    //std::cout<<"BAD PREFETCH\n";
+    return 1;
+  }
 }
 //-----------------------------------------------------------------------
 void EW::get_exact_point_source2( float_sw4* up, float_sw4 t, int g, Source& source,

@@ -881,19 +881,19 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
 #define dcz(k) a_dcz[(k-kfirst)]
 #define coz(k) a_coz[(k-kfirst)]
 
-     prefetch(const_cast<void*>(static_cast<const void*>((a_rho))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_up))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_u))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_um))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_strx))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_dcx))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_cox))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_stry))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_dcy))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_coy))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_strz))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_dcz))));
-     prefetch(const_cast<void*>(static_cast<const void*>((a_coz))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_rho))));
+     // prefetch(const_cast<void*>(static_cast<const void*>((a_up))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_u))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_um))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_strx))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_dcx))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_cox))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_stry))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_dcy))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_coy))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_strz))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_dcz))));
+     //prefetch(const_cast<void*>(static_cast<const void*>((a_coz))));
      
      const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
