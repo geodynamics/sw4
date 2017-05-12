@@ -2476,8 +2476,8 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       time_measure[0] = MPI_Wtime();
       // Predictor 
       // Need U on device for evalRHS,
-      //for( int g=0; g < mNumberOfGrids ; g++ )
-	// U[g].copy_to_device(m_cuobj,true,0);
+      //      for( int g=0; g < mNumberOfGrids ; g++ )
+      //	 U[g].copy_to_device(m_cuobj,true,0);
 
 // all types of forcing...
       if( m_cuobj->has_gpu() )
@@ -2664,6 +2664,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
 //
+      m_cuobj->sync_stream(0);
       double time_chkpt, time_chkpt_tmp;
       bool wrote=false;
       //      MPI_Barrier( MPI_COMM_WORLD );
@@ -2753,7 +2754,14 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 //	 //	    normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       normOfDifference( Up, U, errInf, errL2, solInf, m_globalUniqueSources );
       if ( m_myrank == 0 )
+      {
 	 cout << "Errors at time " << t << " Linf = " << errInf << " L2 = " << errL2 << " norm of solution = " << solInf << endl;
+	 string fname = mPath+"PointSourceErr.txt";
+	 ofstream esave(fname.c_str());
+	 esave.precision(12);
+	 esave << t << " " << errInf << " " << errL2 << " " << solInf << endl;
+	 esave.close();
+      }
    }
    for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
       m_GlobalTimeSeries[ts]->writeFile();

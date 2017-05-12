@@ -190,6 +190,11 @@ void EW::evalRHSCU(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a
             m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
             a_Lambda[g].dev_ptr(), mGridSize[g],
             dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
+	//	rhs4center_dev_rev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
+	//	        ( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
+	//	        m_kEnd[g], a_Uacc[g].dev_ptr(), a_U[g].dev_ptr(), a_Mu[g].dev_ptr(),
+	//	          a_Lambda[g].dev_ptr(), mGridSize[g],
+	//	          dev_sg_str_x[g], dev_sg_str_y[g], dev_sg_str_z[g], m_ghost_points );
       }
       else
 	 rhs4center_dev<<<gridsize,blocksize,0,m_cuobj->m_stream[st]>>>
@@ -921,6 +926,7 @@ void EW::communicate_arrayCU( Sarray& u, int g , int st)
 }
 
 
+//-----------------------------------------------------------------------
 void EW::enforceBCCU( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                       float_sw4 t, vector<float_sw4**> & a_BCForcing, int st )
 {

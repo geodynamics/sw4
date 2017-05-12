@@ -38,6 +38,7 @@
 #include "Require.h"
 #include <vector>
 #include <string>
+#include <unistd.h>
 #include "sw4.h"
 
 using std::string;
