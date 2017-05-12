@@ -3,13 +3,15 @@ using namespace std;
 #include <stdio.h>
 #include "RAJA/RAJA.hxx"
 using namespace RAJA;
-
+#include "mynvtx.h"
 
 // Note 4,4,32 runs out of registers
 #ifdef CUDA_CODE
 typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
 			      cuda_threadblock_z_exec<16>>>
   EXEC;
+
+#define SYNC_DEVICE cudaDeviceSynchronize();
 #else
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 			      omp_parallel_for_exec>>
@@ -36,6 +38,7 @@ typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
 #define EXEC EXEC1
+#define SYNC_DEVICE
 #endif
 //#include <iostream>
 //using namespace std;
@@ -54,6 +57,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 		 float_sw4 h, const float_sw4* __restrict__ a_strx, const float_sw4* __restrict__ a_stry, 
 		 const float_sw4* __restrict__ a_strz )
 {
+  PUSH_RANGE("rhs4sg_rev",1);
    // This would work to create multi-dimensional C arrays:
    //   float_sw4** b_ar=(float_sw4*)malloc(ni*nj*sizeof(float_sw4*));
    //   for( int j=0;j<nj;j++)
@@ -84,14 +88,14 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
    const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int base3 = base-nijk;
-   const int nic  = 3*ni;
-   const int nijc = 3*nij;
+   //const int nic  = 3*ni;
+   //const int nijc = 3*nij;
    const int ifirst0 = ifirst;
    const int jfirst0 = jfirst;
    const int kfirst0 = kfirst;
 
-   int k1, k2, kb;
-   int i, j, k, q, m, qb, mb;
+   int k1, k2;
+   //int i, j, k, q, m, qb, mb;
    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
    float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;
    float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
@@ -870,4 +874,6 @@ float_sw4 mux1, mux2, mux3, mux4,r1,r2,r3,muy1,muy2,muy3,muy4;
 #undef strx
 #undef stry
 #undef strz
+   SYNC_DEVICE;
+   POP_RANGE;
 }

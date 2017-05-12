@@ -421,6 +421,7 @@ class EW
    
  private:
    std::unordered_map<void*,size_t> map;
+   std::unordered_map<void*,bool> prefetched;
    int prefetch(void *ptr);
    float_sw4* newmanaged(size_t len);
    void delmanaged(float_sw4* &dptr);

@@ -1382,7 +1382,7 @@ void EW::processMaterialBlock( char* buffer )
     z1set=false, z2set=false;
 
   float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
 
   string name = "Block";
 
@@ -3140,6 +3140,7 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		 vector<Sarray> & a_Uacc )
 {
+  PUSH_RANGE("evalRHS",3);
    for(int g=0 ; g<mNumberOfCartesianGrids; g++ )
    {
      a_U[g].prefetch();
@@ -3205,6 +3206,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 					      &op );
 #endif
    }
+   POP_RANGE;
 }
 
 //-----------------------------------------------------------------------
@@ -3419,6 +3421,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
    float_sw4 om=0, ph=0, cv=0;
    for(int g=0 ; g<mNumberOfGrids; g++ )
    {
+     PUSH_RANGE("enforceBC::PREFETCH",1);
      a_U[g].prefetch();
      a_Mu[g].prefetch();
      a_Lambda[g].prefetch();
@@ -3426,6 +3429,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      PREFETCH(m_sg_str_y[g]);
      for(int j=0;j<6;j++)
        PREFETCH(a_BCForcing[g][j]);
+     POP_RANGE;
       //      int topo=topographyExists() && g == mNumberOfGrids-1;
 #ifdef SW4_CROUTINES
       if( m_corder )
@@ -6496,6 +6500,7 @@ float_sw4* EW::newmanaged(size_t len){
 #ifdef CUDA_CODE
    cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachGlobal);
    map[ptr]=len*sizeof(float_sw4);
+   prefetched[ptr]=false;
    cudaDeviceSynchronize();
 #else
    ptr=malloc(len*sizeof(float_sw4));
@@ -6519,6 +6524,8 @@ void EW::delmanaged(float_sw4* &dptr){
 }
 int EW::prefetch(void *ptr){
   if (ptr==NULL) return 0;
+  if (prefetched[ptr]) return 0;
+  prefetched[ptr]=true;
   PUSH_RANGE("EW::PREFETCH",2);
 
   if (map.find(ptr)!=map.end()){

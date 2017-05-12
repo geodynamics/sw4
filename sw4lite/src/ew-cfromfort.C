@@ -6,6 +6,7 @@
 //#include <cuda_runtime.h>
 #include "RAJA/RAJA.hxx"
 using namespace RAJA;
+#include "mynvtx.h"
 #ifdef CUDA_CODE
 typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
 			      cuda_threadblock_z_exec<32>>>
@@ -298,7 +299,6 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
          // OTOH there is some benefit in having the compiler know what s is.
          size_t idel = 1+wind[1+6*s]-wind[6*s];
          size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
-         int k;
 	 if( s== 0 )
 	 {
             // Note - don't use collapse(2) since loop indices are used in loop body;
@@ -325,7 +325,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					 u[3*ind+1] = bforce1[1+3*qq];
 					 u[3*ind+2] = bforce1[2+3*qq];
 				       });
-	   SYNC_DEVICE
+      
 	 }
 	 else if( s== 1 )
 	 {
@@ -347,7 +347,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce2[1+3*qq];
 					    u[3*ind+2] = bforce2[2+3*qq];
 					  });
-	   SYNC_DEVICE
+	  
 	 }
 	 else if( s==2 )
 	 {
@@ -369,7 +369,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce3[1+3*qq];
 					    u[3*ind+2] = bforce3[2+3*qq];
 					  });
-	   SYNC_DEVICE
+	   
 	 }
 	 else if( s==3 )
 	 {
@@ -391,7 +391,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce4[1+3*qq];
 					    u[3*ind+2] = bforce4[2+3*qq];
 					  });
-	  SYNC_DEVICE
+	  
 	 }
 	 else if( s==4 )
 	 {
@@ -413,7 +413,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce5[1+3*qq];
 					    u[3*ind+2] = bforce5[2+3*qq];
 					  });
-	   SYNC_DEVICE
+	   
 	 }
 	 else if( s==5 )
 	 {
@@ -436,7 +436,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 					    u[3*ind+1] = bforce6[1+3*qq];
 					    u[3*ind+2] = bforce6[2+3*qq];
 					  });
-	   SYNC_DEVICE
+	   
 	   
 	 }
       }
@@ -589,6 +589,7 @@ void EW::bcfortsg( int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 	 }
       }
    }
+   SYNC_DEVICE;
 }
 
 //-----------------------------------------------------------------------
@@ -600,6 +601,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 		   float_sw4 om, float_sw4 ph, float_sw4 cv,
 		   float_sw4* strx, float_sw4* stry )
 {
+  PUSH_RANGE("EW::bcfortsg_indrev",5);
    const float_sw4 d4a = 2.0/3.0;
    const float_sw4 d4b = -1.0/12.0;
    const size_t ni  = ie-ib+1;
@@ -615,11 +617,12 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
      int ke = wind[5+6*s];
       if( bccnd[s]==1 || bccnd[s]==2 )
       {
+	PUSH_RANGE_PAYLOAD("bcfortsg_indrev_RAJA",4,s);
          size_t idel = 1+wind[1+6*s]-wind[6*s];
          size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
 	 if( s== 0 )
 	 {
-	   
+	   PUSH_RANGE("LOOP-0",0);
 	   forallN<EXEC_BC, int, int,int>(
 					  RangeSegment(ks,ke+1),
 					  RangeSegment(js,je+1),
@@ -631,9 +634,11 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 					    u[ind+npts]   = bforce1[1+3*qq];
 					    u[ind+2*npts] = bforce1[2+3*qq];
 					  });
+	   SYNC_DEVICE;POP_RANGE;
 	 }
 	 else if( s== 1 )
 	 {
+	   PUSH_RANGE("LOOP-1",1);
 	   forallN<EXEC_BC, int, int,int>(
 					  RangeSegment(ks,ke+1),
 					  RangeSegment(js,je+1),
@@ -646,6 +651,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 					    u[ind+2*npts] = bforce2[2+3*qq];
 		    
 					  });
+	   SYNC_DEVICE;POP_RANGE;
 	 }
 	 else if( s==2 )
 	 {
@@ -702,6 +708,7 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 					    u[ind+npts] = bforce6[1+3*qq];
 					    u[ind+2*npts] = bforce6[2+3*qq];
 					  });
+	 POP_RANGE;
       }
       else if( bccnd[s]==3 )
       {
@@ -854,6 +861,8 @@ void EW::bcfortsg_indrev( int ib, int ie, int jb, int je, int kb, int ke, int wi
 	 }
       }
    }
+   SYNC_DEVICE;
+   POP_RANGE;
 }
 
 //----------------------------------------------------------------------- 15%
