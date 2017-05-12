@@ -47,7 +47,7 @@ else ifeq ($(findstring cab,$(HOSTNAME)),cab)
   FC = mpif90
   CXX = mpic++
   OMPOPT = -fopenmp
-  EXTRA_LINK_FLAGS = -lblas -llapack
+  EXTRA_LINK_FLAGS = -lblas -llapack -lifcore
   computername := cab
 # NERSC carl is a single node Intel KNL machine
 else ifeq ($(findstring carl,$(HOSTNAME)),carl)
