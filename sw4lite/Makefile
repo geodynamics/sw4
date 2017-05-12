@@ -105,6 +105,19 @@ else ifeq ($(findstring valhall,$(HOSTNAME)),valhall)
   EXTRA_LINK_FLAGS = -lifcore -lblas -llapack
   openmp = yes
   computername := valhall
+else ifeq ($(findstring ray,$(HOSTNAME)),ray)
+  FC  = mpif90
+  CXX = mpic++
+  OMPOPT = -fopenmp
+  EXTRA_LINK_FLAGS = -lgfortran  -llapack -lblas
+  OPT += -g 
+#  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib
+#  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib	
+  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/blas/blas-3.6.0-gfortran-4.8.5/lib
+  EXTRA_LINK_FLAGS += -L/usr/tcetmp/packages/lapack/lapack-3.6.0-gfortran-4.8.5/lib
+  openmp = no
+  debug = no
+  computername := ray
 else
   FC  = mpif90
   CXX = mpic++
