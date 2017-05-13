@@ -1424,6 +1424,169 @@ __global__ void addsgd4_dev_rev( int ifirst, int ilast, int jfirst, int jlast, i
 #undef coz
 }
  
+//----------------------------------------------------------------------
+ 
+__global__ void 
+__launch_bounds__(384, 1)
+addsgd4_dev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                    float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+                    float_sw4* a_dcx,  float_sw4* a_dcy,  float_sw4* a_dcz,
+                    float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                    float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
+                    float_sw4 beta, int ghost_points )
+{   
+#define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
+#define up(c,i,j,k) a_up[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+#define u(c,i,j,k) a_u[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+#define um(c,i,j,k) a_um[c + 3*(i-ifirst)+3*ni*(j-jfirst)+3*nij*(k-kfirst)]
+#define strx(i) a_strx[(i-ifirst)]
+#define dcx(i) a_dcx[(i-ifirst)]
+#define cox(i) a_cox[(i-ifirst)]
+#define stry(j) a_stry[(j-jfirst)]
+#define dcy(j) a_dcy[(j-jfirst)]
+#define coy(j) a_coy[(j-jfirst)]
+#define strz(k) a_strz[(k-kfirst)]
+#define dcz(k) a_dcz[(k-kfirst)]
+#define coz(k) a_coz[(k-kfirst)]
+#define su(c,i,j,k) su[i][j][c]
+#define sum(c,i,j,k) sum[i][j][c]
+  if( beta == 0 )
+    return;
+
+  const size_t ni = ilast-ifirst+1;
+  const size_t nij = ni*(jlast-jfirst+1);
+  const size_t nijk = nij*(klast-kfirst+1);
+  int i = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
+  int j = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
+  int ith = threadIdx.x + RADIUS;
+  int jth = threadIdx.y + RADIUS;
+  __shared__ float_sw4 su[ADDSGD4_BLOCKX+2*RADIUS][ADDSGD4_BLOCKY+2*RADIUS][3],
+    sum[ADDSGD4_BLOCKX+2*RADIUS][ADDSGD4_BLOCKY+2*RADIUS][3];
+  float_sw4 qu[DIAMETER][3], qum[DIAMETER][3];
+
+#pragma unroll
+  for (int q = 1; q < DIAMETER; q++)
+  {
+    for (int c = 0; c < 3; c++)
+    {
+      qu[q][c] = u(c,i,j,kfirst+q-1);
+      qum[q][c] = um(c,i,j,kfirst+q-1);
+    }
+  }
+
+  for (int k = kfirst+RADIUS; k <= klast-RADIUS; k++)
+  {
+    __syncthreads();
+    for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y)
+    {
+      int gj = (j-threadIdx.y) + tj - RADIUS;
+      if (gj <= jlast)
+      {
+        for (int ti = threadIdx.x; ti < blockDim.x+2*RADIUS; ti += blockDim.x)
+        {
+          int gi =  (i-threadIdx.x) + ti - RADIUS;
+          if (gi <= ilast)
+          {
+            #pragma unroll
+            for( int c=0 ; c < 3 ; c++ )
+            {
+              su[c][ti][tj] = u(c,gi,gj,k);
+              sum[c][ti][tj] = um(c,gi,gj,k);
+            }
+          }
+        }
+      }
+    }
+    __syncthreads();
+
+    if (i <= ilast-ghost_points && j <= jlast-ghost_points)
+    {
+#pragma unroll
+      for (int q = 0; q < DIAMETER-1; q++)
+      {
+        for (int c = 0; c < 3; c++)
+        {
+          qu[q][c] = qu[q+1][c];
+          qum[q][c] = qum[q+1][c];
+        }
+      }
+#pragma unroll
+      for (int c = 0; c < 3; c++)
+      {
+        qu[DIAMETER-1][c] = u(c,i,j,k+RADIUS);
+        qum[DIAMETER-1][c] = um(c,i,j,k+RADIUS);
+      }
+
+      float_sw4 birho=beta/rho(i,j,k);
+#pragma unroll
+      for( int c=0 ; c < 3 ; c++ )
+      {
+        up(c,i,j,k) -= birho*(
+          // x-differences
+          strx(i)*coy(j)*coz(k)*(
+            rho(i+1,j,k)*dcx(i+1)*
+            ( su(c,ith+2,jth,k) -2*su(c,ith+1,jth,k)+ su(c,ith,  jth,k))
+            -2*rho(i,j,k)*dcx(i)  *
+            ( su(c,ith+1,jth,k) -2*su(c,ith,  jth,k)+ su(c,ith-1,jth,k))
+            +rho(i-1,j,k)*dcx(i-1)*
+            ( su(c,ith,  jth,k) -2*su(c,ith-1,jth,k)+ su(c,ith-2,jth,k))
+            -rho(i+1,j,k)*dcx(i+1)*
+            (sum(c,ith+2,jth,k)-2*sum(c,ith+1,jth,k)+sum(c,ith,  jth,k))
+            +2*rho(i,j,k)*dcx(i)  *
+            (sum(c,ith+1,jth,k)-2*sum(c,ith,  jth,k)+sum(c,ith-1,jth,k))
+            -rho(i-1,j,k)*dcx(i-1)*
+            (sum(c,ith,  jth,k)-2*sum(c,ith-1,jth,k)+sum(c,ith-2,jth,k)) ) +
+// y-differences
+          stry(j)*cox(i)*coz(k)*(
+            +rho(i,j+1,k)*dcy(j+1)*
+            ( su(c,ith,jth+2,k) -2*su(c,ith,jth+1,k)+ su(c,ith,jth,  k))
+            -2*rho(i,j,k)*dcy(j)  *
+            ( su(c,ith,jth+1,k) -2*su(c,ith,jth,  k)+ su(c,ith,jth-1,k))
+            +rho(i,j-1,k)*dcy(j-1)*
+            ( su(c,ith,jth,  k) -2*su(c,ith,jth-1,k)+ su(c,ith,jth-2,k))
+            -rho(i,j+1,k)*dcy(j+1)*
+            (sum(c,ith,jth+2,k)-2*sum(c,ith,jth+1,k)+sum(c,ith,jth,  k))
+            +2*rho(i,j,k)*dcy(j)  *
+            (sum(c,ith,jth+1,k)-2*sum(c,ith,jth,  k)+sum(c,ith,jth-1,k))
+            -rho(i,j-1,k)*dcy(j-1)*
+            (sum(c,ith,jth,  k)-2*sum(c,ith,jth-1,k)+sum(c,ith,jth-2,k)) ) +
+          strz(k)*cox(i)*coy(j)*(
+// z-differences
+            +rho(i,j,k+1)*dcz(k+1)*
+            ( qu[4][c] -2*qu[3][c] + su(c,ith,jth,k  ))
+            -2*rho(i,j,k)*dcz(k)  *
+            ( qu[3][c] -2*su(c,ith,jth,k  )+ qu[1][c])
+            +rho(i,j,k-1)*dcz(k-1)*
+            ( su(c,ith,jth,k  ) -2*qu[1][c]+ qu[0][c])
+            -rho(i,j,k+1)*dcz(k+1)*
+            (qum[c][4]-2*qum[c][3]+sum(c,ith,jth,k  ))
+            +2*rho(i,j,k)*dcz(k)  *
+            (qum[c][3]-2*sum(c,ith,jth,k  )+qum[c][1])
+            -rho(i,j,k-1)*dcz(k-1)*
+            (sum(c,ith,jth,k  )-2*qum[c][1]+qum[c][0]) )
+          );
+      }
+    }
+  }
+#undef rho
+#undef up
+#undef u
+#undef um
+#undef strx
+#undef dcx
+#undef cox
+#undef stry
+#undef dcy
+#undef coy
+#undef strz
+#undef dcz
+#undef coz
+#undef su
+#undef sum
+}
+
+//----------------------------------------------------------------------
+
 __global__ void 
 __launch_bounds__(384, 1)
 addsgd4_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -1949,6 +2112,348 @@ __global__ void rhs4center_dev_rev( int ifirst, int ilast, int jfirst, int jlast
 }
 }
 
+__global__ void 
+__launch_bounds__(256,1)
+rhs4center_dev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                       float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda,
+                       float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+                       int ghost_points )
+{
+  // Direct reuse of fortran code by these macro definitions:
+#define mu(i,j,k)     a_mu[base+(i)+ni*(j)+nij*(k)]
+#define la(i,j,k) a_lambda[base+(i)+ni*(j)+nij*(k)]
+#define u(c,i,j,k)   a_u[base3+c+3*(i)+nic*(j)+nijc*(k)]   
+#define lu(c,i,j,k) a_lu[base3+c+3*(i)+nic*(j)+nijc*(k)]   
+#define strx(i) a_strx[i-ifirst0]
+#define stry(j) a_stry[j-jfirst0]
+#define strz(k) a_strz[k-kfirst0]
+#define uSh(c,i,j,k) a_uSh[k][j][i][c-1]
+
+  const float_sw4 a1   = 0;
+  const float_sw4 i6   = 1.0/6;
+  //   const float_sw4 i12  = 1.0/12;
+  const float_sw4 i144 = 1.0/144;
+  const float_sw4 tf   = 0.75;
+
+  const int ni    = ilast-ifirst+1;
+  const int nij   = ni*(jlast-jfirst+1);
+  const int nijk  = nij*(klast-kfirst+1);
+  const int base  = -(ifirst+ni*jfirst+nij*kfirst);
+   const int base3 = 3*base-1;
+  const int nic  = 3*ni;
+  const int nijc = 3*nij;
+  const int ifirst0 = ifirst;
+  const int jfirst0 = jfirst;
+  const int kfirst0 = kfirst;
+  float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+  float_sw4 r1, r2, r3, cof;
+  const int i = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
+  const int j = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
+
+  __shared__ float_sw4 a_uSh[DIAMETER][RHS4_BLOCKY+2*RADIUS][RHS4_BLOCKX+2*RADIUS][3];
+
+  const int ith = threadIdx.x + RADIUS;
+  const int jth = threadIdx.y + RADIUS;
+  //const int kth = threadIdx.z + RADIUS;
+
+  int kthm0=3, kthm1=2, kthm2=1, kthm3=0, kthm4=4, kthtmp;
+
+  for (int tk = 0; tk < DIAMETER; tk++)
+  {
+    int gk =  kfirst + tk;
+    if ( gk <= klast)
+    {
+      for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y)
+      {
+        int gj =  (j-threadIdx.y) + tj - RADIUS;
+        if ( gj <= jlast)
+        {
+          for (int ti = threadIdx.x; ti < blockDim.x+2*RADIUS; ti += blockDim.x)
+          {
+            int gi =  (i-threadIdx.x) + ti - RADIUS;
+            if ( gi <= ilast)
+            {
+              uSh(1, ti, tj, tk) = u(1, gi, gj, gk);
+              uSh(2, ti, tj, tk) = u(2, gi, gj, gk);
+              uSh(3, ti, tj, tk) = u(3, gi, gj, gk);
+            }
+          }
+        }
+      }
+    }
+  }
+  __syncthreads();
+
+  cof = 1.0/(h*h);
+
+  for (int k = kfirst+RADIUS; k <= klast-RADIUS; k++)
+  {
+    kthtmp = kthm4;
+    kthm4  = kthm3;
+    kthm3  = kthm2;
+    kthm2  = kthm1;
+    kthm1  = kthm0;
+    kthm0  = kthtmp;
+    if ( (i <= ilast-RADIUS) && (j <= jlast-RADIUS) )
+    {
+      mux1 = mu(i-1,j,k)*strx(i-1)-
+        tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
+      mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
+        3*(mu(i,j,k)*strx(i)+mu(i-1,j,k)*strx(i-1));
+      mux3 = mu(i-1,j,k)*strx(i-1)+mu(i+2,j,k)*strx(i+2)+
+        3*(mu(i+1,j,k)*strx(i+1)+mu(i,j,k)*strx(i));
+      mux4 = mu(i+1,j,k)*strx(i+1)-
+        tf*(mu(i,j,k)*strx(i)+mu(i+2,j,k)*strx(i+2));
+
+      muy1 = mu(i,j-1,k)*stry(j-1)-
+        tf*(mu(i,j,k)*stry(j)+mu(i,j-2,k)*stry(j-2));
+      muy2 = mu(i,j-2,k)*stry(j-2)+mu(i,j+1,k)*stry(j+1)+
+        3*(mu(i,j,k)*stry(j)+mu(i,j-1,k)*stry(j-1));
+      muy3 = mu(i,j-1,k)*stry(j-1)+mu(i,j+2,k)*stry(j+2)+
+        3*(mu(i,j+1,k)*stry(j+1)+mu(i,j,k)*stry(j));
+      muy4 = mu(i,j+1,k)*stry(j+1)-
+        tf*(mu(i,j,k)*stry(j)+mu(i,j+2,k)*stry(j+2));
+
+      muz1 = mu(i,j,k-1)*strz(k-1)-
+        tf*(mu(i,j,k)*strz(k)+mu(i,j,k-2)*strz(k-2));
+      muz2 = mu(i,j,k-2)*strz(k-2)+mu(i,j,k+1)*strz(k+1)+
+        3*(mu(i,j,k)*strz(k)+mu(i,j,k-1)*strz(k-1));
+      muz3 = mu(i,j,k-1)*strz(k-1)+mu(i,j,k+2)*strz(k+2)+
+        3*(mu(i,j,k+1)*strz(k+1)+mu(i,j,k)*strz(k));
+      muz4 = mu(i,j,k+1)*strz(k+1)-
+        tf*(mu(i,j,k)*strz(k)+mu(i,j,k+2)*strz(k+2));
+/* xx, yy, and zz derivatives:*/
+/* 75 ops */
+      r1 = i6*( strx(i)*( (2*mux1+la(i-1,j,k)*strx(i-1)-
+                           tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
+                          (uSh(1,ith-2,jth,kthm2)-uSh(1,ith,jth,kthm2))+
+                          (2*mux2+la(i-2,j,k)*strx(i-2)+la(i+1,j,k)*strx(i+1)+
+                           3*(la(i,j,k)*strx(i)+la(i-1,j,k)*strx(i-1)))*
+                          (uSh(1,ith-1,jth,kthm2)-uSh(1,ith,jth,kthm2))+
+                          (2*mux3+la(i-1,j,k)*strx(i-1)+la(i+2,j,k)*strx(i+2)+
+                           3*(la(i+1,j,k)*strx(i+1)+la(i,j,k)*strx(i)))*
+                          (uSh(1,ith+1,jth,kthm2)-uSh(1,ith,jth,kthm2))+
+                          (2*mux4+ la(i+1,j,k)*strx(i+1)-
+                           tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
+                          (uSh(1,ith+2,jth,kthm2)-uSh(1,ith,jth,kthm2)) ) + stry(j)*(
+                            muy1*(uSh(1,ith,jth-2,kthm2)-uSh(1,ith,jth,kthm2)) +
+                            muy2*(uSh(1,ith,jth-1,kthm2)-uSh(1,ith,jth,kthm2)) +
+                            muy3*(uSh(1,ith,jth+1,kthm2)-uSh(1,ith,jth,kthm2)) +
+                            muy4*(uSh(1,ith,jth+2,kthm2)-uSh(1,ith,jth,kthm2)) ) + strz(k)*(
+                              muz1*(uSh(1,ith,jth,kthm4)-uSh(1,ith,jth,kthm2)) +
+                              muz2*(uSh(1,ith,jth,kthm3)-uSh(1,ith,jth,kthm2)) +
+                              muz3*(uSh(1,ith,jth,kthm1)-uSh(1,ith,jth,kthm2)) +
+                              muz4*(uSh(1,ith,jth,kthm0)-uSh(1,ith,jth,kthm2)) ) );
+
+/* 75 ops */
+      r2 = i6*( strx(i)*(mux1*(uSh(2,ith-2,jth,kthm2)-uSh(2,ith,jth,kthm2)) +
+                         mux2*(uSh(2,ith-1,jth,kthm2)-uSh(2,ith,jth,kthm2)) +
+                         mux3*(uSh(2,ith+1,jth,kthm2)-uSh(2,ith,jth,kthm2)) +
+                         mux4*(uSh(2,ith+2,jth,kthm2)-uSh(2,ith,jth,kthm2)) ) + stry(j)*(
+                           (2*muy1+la(i,j-1,k)*stry(j-1)-
+                            tf*(la(i,j,k)*stry(j)+la(i,j-2,k)*stry(j-2)))*
+                           (uSh(2,ith,jth-2,kthm2)-uSh(2,ith,jth,kthm2))+
+                           (2*muy2+la(i,j-2,k)*stry(j-2)+la(i,j+1,k)*stry(j+1)+
+                            3*(la(i,j,k)*stry(j)+la(i,j-1,k)*stry(j-1)))*
+                           (uSh(2,ith,jth-1,kthm2)-uSh(2,ith,jth,kthm2))+
+                           (2*muy3+la(i,j-1,k)*stry(j-1)+la(i,j+2,k)*stry(j+2)+
+                            3*(la(i,j+1,k)*stry(j+1)+la(i,j,k)*stry(j)))*
+                           (uSh(2,ith,jth+1,kthm2)-uSh(2,ith,jth,kthm2))+
+                           (2*muy4+la(i,j+1,k)*stry(j+1)-
+                            tf*(la(i,j,k)*stry(j)+la(i,j+2,k)*stry(j+2)))*
+                           (uSh(2,ith,jth+2,kthm2)-uSh(2,ith,jth,kthm2)) ) + strz(k)*(
+                             muz1*(uSh(2,ith,jth,kthm4)-uSh(2,ith,jth,kthm2)) +
+                             muz2*(uSh(2,ith,jth,kthm3)-uSh(2,ith,jth,kthm2)) +
+                             muz3*(uSh(2,ith,jth,kthm1)-uSh(2,ith,jth,kthm2)) +
+                             muz4*(uSh(2,ith,jth,kthm0)-uSh(2,ith,jth,kthm2)) ) );
+
+/* 75 ops */
+      r3 = i6*( strx(i)*(mux1*(uSh(3,ith-2,jth,kthm2)-uSh(3,ith,jth,kthm2)) +
+                         mux2*(uSh(3,ith-1,jth,kthm2)-uSh(3,ith,jth,kthm2)) +
+                         mux3*(uSh(3,ith+1,jth,kthm2)-uSh(3,ith,jth,kthm2)) +
+                         mux4*(uSh(3,ith+2,jth,kthm2)-uSh(3,ith,jth,kthm2))  ) + stry(j)*(
+                           muy1*(uSh(3,ith,jth-2,kthm2)-uSh(3,ith,jth,kthm2)) +
+                           muy2*(uSh(3,ith,jth-1,kthm2)-uSh(3,ith,jth,kthm2)) +
+                           muy3*(uSh(3,ith,jth+1,kthm2)-uSh(3,ith,jth,kthm2)) +
+                           muy4*(uSh(3,ith,jth+2,kthm2)-uSh(3,ith,jth,kthm2)) ) + strz(k)*(
+                             (2*muz1+la(i,j,k-1)*strz(k-1)-
+                              tf*(la(i,j,k)*strz(k)+la(i,j,k-2)*strz(k-2)))*
+                             (uSh(3,ith,jth,kthm4)-uSh(3,ith,jth,kthm2))+
+                             (2*muz2+la(i,j,k-2)*strz(k-2)+la(i,j,k+1)*strz(k+1)+
+                              3*(la(i,j,k)*strz(k)+la(i,j,k-1)*strz(k-1)))*
+                             (uSh(3,ith,jth,kthm3)-uSh(3,ith,jth,kthm2))+
+                             (2*muz3+la(i,j,k-1)*strz(k-1)+la(i,j,k+2)*strz(k+2)+
+                              3*(la(i,j,k+1)*strz(k+1)+la(i,j,k)*strz(k)))*
+                             (uSh(3,ith,jth,kthm1)-uSh(3,ith,jth,kthm2))+
+                             (2*muz4+la(i,j,k+1)*strz(k+1)-
+                              tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2)))*
+                             (uSh(3,ith,jth,kthm0)-uSh(3,ith,jth,kthm2)) ) );
+
+
+/* Mixed derivatives: */
+/* 29ops /mixed derivative */
+/* 116 ops for r1 */
+/*   (la*v_y)_x */
+      r1 = r1 + strx(i)*stry(j)*
+        i144*( la(i-2,j,k)*(uSh(2,ith-2,jth-2,kthm2)-uSh(2,ith-2,jth+2,kthm2)+
+                            8*(-uSh(2,ith-2,jth-1,kthm2)+uSh(2,ith-2,jth+1,kthm2))) - 8*(
+                              la(i-1,j,k)*(uSh(2,ith-1,jth-2,kthm2)-uSh(2,ith-1,jth+2,kthm2)+
+                                           8*(-uSh(2,ith-1,jth-1,kthm2)+uSh(2,ith-1,jth+1,kthm2))) )+8*(
+                                             la(i+1,j,k)*(uSh(2,ith+1,jth-2,kthm2)-uSh(2,ith+1,jth+2,kthm2)+
+                                                          8*(-uSh(2,ith+1,jth-1,kthm2)+uSh(2,ith+1,jth+1,kthm2))) ) - (
+                                                            la(i+2,j,k)*(uSh(2,ith+2,jth-2,kthm2)-uSh(2,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(2,ith+2,jth-1,kthm2)+uSh(2,ith+2,jth+1,kthm2))) ))
+/*   (la*w_z)_x */
+        + strx(i)*strz(k)*
+        i144*( la(i-2,j,k)*(uSh(3,ith-2,jth,kthm4)-uSh(3,ith-2,jth,kthm0)+
+                            8*(-uSh(3,ith-2,jth,kthm3)+uSh(3,ith-2,jth,kthm1))) - 8*(
+                              la(i-1,j,k)*(uSh(3,ith-1,jth,kthm4)-uSh(3,ith-1,jth,kthm0)+
+                                           8*(-uSh(3,ith-1,jth,kthm3)+uSh(3,ith-1,jth,kthm1))) )+8*(
+                                             la(i+1,j,k)*(uSh(3,ith+1,jth,kthm4)-uSh(3,ith+1,jth,kthm0)+
+                                                          8*(-uSh(3,ith+1,jth,kthm3)+uSh(3,ith+1,jth,kthm1))) ) - (
+                                                            la(i+2,j,k)*(uSh(3,ith+2,jth,kthm4)-uSh(3,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(3,ith+2,jth,kthm3)+uSh(3,ith+2,jth,kthm1))) ))
+/*   (mu*v_x)_y */
+        + strx(i)*stry(j)*
+        i144*( mu(i,j-2,k)*(uSh(2,ith-2,jth-2,kthm2)-uSh(2,ith+2,jth-2,kthm2)+
+                            8*(-uSh(2,ith-1,jth-2,kthm2)+uSh(2,ith+1,jth-2,kthm2))) - 8*(
+                              mu(i,j-1,k)*(uSh(2,ith-2,jth-1,kthm2)-uSh(2,ith+2,jth-1,kthm2)+
+                                           8*(-uSh(2,ith-1,jth-1,kthm2)+uSh(2,ith+1,jth-1,kthm2))) )+8*(
+                                             mu(i,j+1,k)*(uSh(2,ith-2,jth+1,kthm2)-uSh(2,ith+2,jth+1,kthm2)+
+                                                          8*(-uSh(2,ith-1,jth+1,kthm2)+uSh(2,ith+1,jth+1,kthm2))) ) - (
+                                                            mu(i,j+2,k)*(uSh(2,ith-2,jth+2,kthm2)-uSh(2,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(2,ith-1,jth+2,kthm2)+uSh(2,ith+1,jth+2,kthm2))) ))
+/*   (mu*w_x)_z */
+        + strx(i)*strz(k)*
+        i144*( mu(i,j,k-2)*(uSh(3,ith-2,jth,kthm4)-uSh(3,ith+2,jth,kthm4)+
+                            8*(-uSh(3,ith-1,jth,kthm4)+uSh(3,ith+1,jth,kthm4))) - 8*(
+                              mu(i,j,k-1)*(uSh(3,ith-2,jth,kthm3)-uSh(3,ith+2,jth,kthm3)+
+                                           8*(-uSh(3,ith-1,jth,kthm3)+uSh(3,ith+1,jth,kthm3))) )+8*(
+                                             mu(i,j,k+1)*(uSh(3,ith-2,jth,kthm1)-uSh(3,ith+2,jth,kthm1)+
+                                                          8*(-uSh(3,ith-1,jth,kthm1)+uSh(3,ith+1,jth,kthm1))) ) - (
+                                                            mu(i,j,k+2)*(uSh(3,ith-2,jth,kthm0)-uSh(3,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(3,ith-1,jth,kthm0)+uSh(3,ith+1,jth,kthm0))) )) ;
+
+/* 116 ops for r2 */
+/*   (mu*u_y)_x */
+      r2 = r2 + strx(i)*stry(j)*
+        i144*( mu(i-2,j,k)*(uSh(1,ith-2,jth-2,kthm2)-uSh(1,ith-2,jth+2,kthm2)+
+                            8*(-uSh(1,ith-2,jth-1,kthm2)+uSh(1,ith-2,jth+1,kthm2))) - 8*(
+                              mu(i-1,j,k)*(uSh(1,ith-1,jth-2,kthm2)-uSh(1,ith-1,jth+2,kthm2)+
+                                           8*(-uSh(1,ith-1,jth-1,kthm2)+uSh(1,ith-1,jth+1,kthm2))) )+8*(
+                                             mu(i+1,j,k)*(uSh(1,ith+1,jth-2,kthm2)-uSh(1,ith+1,jth+2,kthm2)+
+                                                          8*(-uSh(1,ith+1,jth-1,kthm2)+uSh(1,ith+1,jth+1,kthm2))) ) - (
+                                                            mu(i+2,j,k)*(uSh(1,ith+2,jth-2,kthm2)-uSh(1,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(1,ith+2,jth-1,kthm2)+uSh(1,ith+2,jth+1,kthm2))) ))
+/* (la*u_x)_y */
+        + strx(i)*stry(j)*
+        i144*( la(i,j-2,k)*(uSh(1,ith-2,jth-2,kthm2)-uSh(1,ith+2,jth-2,kthm2)+
+                            8*(-uSh(1,ith-1,jth-2,kthm2)+uSh(1,ith+1,jth-2,kthm2))) - 8*(
+                              la(i,j-1,k)*(uSh(1,ith-2,jth-1,kthm2)-uSh(1,ith+2,jth-1,kthm2)+
+                                           8*(-uSh(1,ith-1,jth-1,kthm2)+uSh(1,ith+1,jth-1,kthm2))) )+8*(
+                                             la(i,j+1,k)*(uSh(1,ith-2,jth+1,kthm2)-uSh(1,ith+2,jth+1,kthm2)+
+                                                          8*(-uSh(1,ith-1,jth+1,kthm2)+uSh(1,ith+1,jth+1,kthm2))) ) - (
+                                                            la(i,j+2,k)*(uSh(1,ith-2,jth+2,kthm2)-uSh(1,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(1,ith-1,jth+2,kthm2)+uSh(1,ith+1,jth+2,kthm2))) ))
+/* (la*w_z)_y */
+        + stry(j)*strz(k)*
+        i144*( la(i,j-2,k)*(uSh(3,ith,jth-2,kthm4)-uSh(3,ith,jth-2,kthm0)+
+                            8*(-uSh(3,ith,jth-2,kthm3)+uSh(3,ith,jth-2,kthm1))) - 8*(
+                              la(i,j-1,k)*(uSh(3,ith,jth-1,kthm4)-uSh(3,ith,jth-1,kthm0)+
+                                           8*(-uSh(3,ith,jth-1,kthm3)+uSh(3,ith,jth-1,kthm1))) )+8*(
+                                             la(i,j+1,k)*(uSh(3,ith,jth+1,kthm4)-uSh(3,ith,jth+1,kthm0)+
+                                                          8*(-uSh(3,ith,jth+1,kthm3)+uSh(3,ith,jth+1,kthm1))) ) - (
+                                                            la(i,j+2,k)*(uSh(3,ith,jth+2,kthm4)-uSh(3,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(3,ith,jth+2,kthm3)+uSh(3,ith,jth+2,kthm1))) ))
+/* (mu*w_y)_z */
+        + stry(j)*strz(k)*
+        i144*( mu(i,j,k-2)*(uSh(3,ith,jth-2,kthm4)-uSh(3,ith,jth+2,kthm4)+
+                            8*(-uSh(3,ith,jth-1,kthm4)+uSh(3,ith,jth+1,kthm4))) - 8*(
+                              mu(i,j,k-1)*(uSh(3,ith,jth-2,kthm3)-uSh(3,ith,jth+2,kthm3)+
+                                           8*(-uSh(3,ith,jth-1,kthm3)+uSh(3,ith,jth+1,kthm3))) )+8*(
+                                             mu(i,j,k+1)*(uSh(3,ith,jth-2,kthm1)-uSh(3,ith,jth+2,kthm1)+
+                                                          8*(-uSh(3,ith,jth-1,kthm1)+uSh(3,ith,jth+1,kthm1))) ) - (
+                                                            mu(i,j,k+2)*(uSh(3,ith,jth-2,kthm0)-uSh(3,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(3,ith,jth-1,kthm0)+uSh(3,ith,jth+1,kthm0))) )) ;
+/* 116 ops for r3 */
+/*  (mu*u_z)_x */
+      r3 = r3 + strx(i)*strz(k)*
+        i144*( mu(i-2,j,k)*(uSh(1,ith-2,jth,kthm4)-uSh(1,ith-2,jth,kthm0)+
+                            8*(-uSh(1,ith-2,jth,kthm3)+uSh(1,ith-2,jth,kthm1))) - 8*(
+                              mu(i-1,j,k)*(uSh(1,ith-1,jth,kthm4)-uSh(1,ith-1,jth,kthm0)+
+                                           8*(-uSh(1,ith-1,jth,kthm3)+uSh(1,ith-1,jth,kthm1))) )+8*(
+                                             mu(i+1,j,k)*(uSh(1,ith+1,jth,kthm4)-uSh(1,ith+1,jth,kthm0)+
+                                                          8*(-uSh(1,ith+1,jth,kthm3)+uSh(1,ith+1,jth,kthm1))) ) - (
+                                                            mu(i+2,j,k)*(uSh(1,ith+2,jth,kthm4)-uSh(1,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(1,ith+2,jth,kthm3)+uSh(1,ith+2,jth,kthm1))) ))
+/* (mu*v_z)_y */
+        + stry(j)*strz(k)*
+        i144*( mu(i,j-2,k)*(uSh(2,ith,jth-2,kthm4)-uSh(2,ith,jth-2,kthm0)+
+                            8*(-uSh(2,ith,jth-2,kthm3)+uSh(2,ith,jth-2,kthm1))) - 8*(
+                              mu(i,j-1,k)*(uSh(2,ith,jth-1,kthm4)-uSh(2,ith,jth-1,kthm0)+
+                                           8*(-uSh(2,ith,jth-1,kthm3)+uSh(2,ith,jth-1,kthm1))) )+8*(
+                                             mu(i,j+1,k)*(uSh(2,ith,jth+1,kthm4)-uSh(2,ith,jth+1,kthm0)+
+                                                          8*(-uSh(2,ith,jth+1,kthm3)+uSh(2,ith,jth+1,kthm1))) ) - (
+                                                            mu(i,j+2,k)*(uSh(2,ith,jth+2,kthm4)-uSh(2,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(2,ith,jth+2,kthm3)+uSh(2,ith,jth+2,kthm1))) ))
+/*   (la*u_x)_z */
+        + strx(i)*strz(k)*
+        i144*( la(i,j,k-2)*(uSh(1,ith-2,jth,kthm4)-uSh(1,ith+2,jth,kthm4)+
+                            8*(-uSh(1,ith-1,jth,kthm4)+uSh(1,ith+1,jth,kthm4))) - 8*(
+                              la(i,j,k-1)*(uSh(1,ith-2,jth,kthm3)-uSh(1,ith+2,jth,kthm3)+
+                                           8*(-uSh(1,ith-1,jth,kthm3)+uSh(1,ith+1,jth,kthm3))) )+8*(
+                                             la(i,j,k+1)*(uSh(1,ith-2,jth,kthm1)-uSh(1,ith+2,jth,kthm1)+
+                                                          8*(-uSh(1,ith-1,jth,kthm1)+uSh(1,ith+1,jth,kthm1))) ) - (
+                                                            la(i,j,k+2)*(uSh(1,ith-2,jth,kthm0)-uSh(1,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(1,ith-1,jth,kthm0)+uSh(1,ith+1,jth,kthm0))) ))
+/* (la*v_y)_z */
+        + stry(j)*strz(k)*
+        i144*( la(i,j,k-2)*(uSh(2,ith,jth-2,kthm4)-uSh(2,ith,jth+2,kthm4)+
+                            8*(-uSh(2,ith,jth-1,kthm4)+uSh(2,ith,jth+1,kthm4))) - 8*(
+                              la(i,j,k-1)*(uSh(2,ith,jth-2,kthm3)-uSh(2,ith,jth+2,kthm3)+
+                                           8*(-uSh(2,ith,jth-1,kthm3)+uSh(2,ith,jth+1,kthm3))) )+8*(
+                                             la(i,j,k+1)*(uSh(2,ith,jth-2,kthm1)-uSh(2,ith,jth+2,kthm1)+
+                                                          8*(-uSh(2,ith,jth-1,kthm1)+uSh(2,ith,jth+1,kthm1))) ) - (
+                                                            la(i,j,k+2)*(uSh(2,ith,jth-2,kthm0)-uSh(2,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(2,ith,jth-1,kthm0)+uSh(2,ith,jth+1,kthm0))) )) ;
+
+/* 9 ops */
+      lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
+      lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
+      lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
+    }
+
+    __syncthreads();
+    if (k+RADIUS+1 <= klast)
+    {
+      for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y) {
+        int gj =  (j-threadIdx.y) + tj - RADIUS;
+        if ( gj <= jlast) {
+          for (int ti = threadIdx.x; ti < blockDim.x+2*RADIUS; ti += blockDim.x) {
+            int gi =  (i-threadIdx.x) + ti - RADIUS;
+            if ( gi <= ilast) {
+              uSh(1, ti, tj, kthm4) = u(1, gi, gj, k+RADIUS+1);
+              uSh(2, ti, tj, kthm4) = u(2, gi, gj, k+RADIUS+1);
+              uSh(3, ti, tj, kthm4) = u(3, gi, gj, k+RADIUS+1);
+            }
+          }
+        }
+      }
+    }
+    __syncthreads();
+  }
+#undef mu
+#undef la
+#undef u
+#undef lu
+#undef strx
+#undef stry
+#undef strz
+#undef uSh
+}
+
+
+//-----------------------------------------------------------------------
 
 __global__ void 
 __launch_bounds__(256,1)
@@ -1992,7 +2497,9 @@ rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
   const int ith = threadIdx.x + RADIUS;
   const int jth = threadIdx.y + RADIUS;
-  const int kth = threadIdx.z + RADIUS;
+//  const int kth = threadIdx.z + RADIUS;
+
+  int kthm0=3, kthm1=2, kthm2=1, kthm3=0, kthm4=4, kthtmp;
 
   for (int tk = 0; tk < DIAMETER; tk++)
   {
@@ -2024,6 +2531,12 @@ rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
   for (int k = kfirst+RADIUS; k <= klast-RADIUS; k++)
   {
+    kthtmp = kthm4;
+    kthm4  = kthm3;
+    kthm3  = kthm2;
+    kthm2  = kthm1;
+    kthm1  = kthm0;
+    kthm0  = kthtmp;
     if ( (i <= ilast-RADIUS) && (j <= jlast-RADIUS) )
     {
       mux1 = mu(i-1,j,k)*strx(i-1)-
@@ -2056,68 +2569,68 @@ rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 /* 75 ops */
       r1 = i6*( strx(i)*( (2*mux1+la(i-1,j,k)*strx(i-1)-
                            tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
-                          (uSh(1,ith-2,jth,kth)-uSh(1,ith,jth,kth))+
+                          (uSh(1,ith-2,jth,kthm2)-uSh(1,ith,jth,kthm2))+
                           (2*mux2+la(i-2,j,k)*strx(i-2)+la(i+1,j,k)*strx(i+1)+
                            3*(la(i,j,k)*strx(i)+la(i-1,j,k)*strx(i-1)))*
-                          (uSh(1,ith-1,jth,kth)-uSh(1,ith,jth,kth))+
+                          (uSh(1,ith-1,jth,kthm2)-uSh(1,ith,jth,kthm2))+
                           (2*mux3+la(i-1,j,k)*strx(i-1)+la(i+2,j,k)*strx(i+2)+
                            3*(la(i+1,j,k)*strx(i+1)+la(i,j,k)*strx(i)))*
-                          (uSh(1,ith+1,jth,kth)-uSh(1,ith,jth,kth))+
+                          (uSh(1,ith+1,jth,kthm2)-uSh(1,ith,jth,kthm2))+
                           (2*mux4+ la(i+1,j,k)*strx(i+1)-
                            tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
-                          (uSh(1,ith+2,jth,kth)-uSh(1,ith,jth,kth)) ) + stry(j)*(
-                            muy1*(uSh(1,ith,jth-2,kth)-uSh(1,ith,jth,kth)) +
-                            muy2*(uSh(1,ith,jth-1,kth)-uSh(1,ith,jth,kth)) +
-                            muy3*(uSh(1,ith,jth+1,kth)-uSh(1,ith,jth,kth)) +
-                            muy4*(uSh(1,ith,jth+2,kth)-uSh(1,ith,jth,kth)) ) + strz(k)*(
-                              muz1*(uSh(1,ith,jth,kth-2)-uSh(1,ith,jth,kth)) +
-                              muz2*(uSh(1,ith,jth,kth-1)-uSh(1,ith,jth,kth)) +
-                              muz3*(uSh(1,ith,jth,kth+1)-uSh(1,ith,jth,kth)) +
-                              muz4*(uSh(1,ith,jth,kth+2)-uSh(1,ith,jth,kth)) ) );
+                          (uSh(1,ith+2,jth,kthm2)-uSh(1,ith,jth,kthm2)) ) + stry(j)*(
+                            muy1*(uSh(1,ith,jth-2,kthm2)-uSh(1,ith,jth,kthm2)) +
+                            muy2*(uSh(1,ith,jth-1,kthm2)-uSh(1,ith,jth,kthm2)) +
+                            muy3*(uSh(1,ith,jth+1,kthm2)-uSh(1,ith,jth,kthm2)) +
+                            muy4*(uSh(1,ith,jth+2,kthm2)-uSh(1,ith,jth,kthm2)) ) + strz(k)*(
+                              muz1*(uSh(1,ith,jth,kthm4)-uSh(1,ith,jth,kthm2)) +
+                              muz2*(uSh(1,ith,jth,kthm3)-uSh(1,ith,jth,kthm2)) +
+                              muz3*(uSh(1,ith,jth,kthm1)-uSh(1,ith,jth,kthm2)) +
+                              muz4*(uSh(1,ith,jth,kthm0)-uSh(1,ith,jth,kthm2)) ) );
 
 /* 75 ops */
-      r2 = i6*( strx(i)*(mux1*(uSh(2,ith-2,jth,kth)-uSh(2,ith,jth,kth)) +
-                         mux2*(uSh(2,ith-1,jth,kth)-uSh(2,ith,jth,kth)) +
-                         mux3*(uSh(2,ith+1,jth,kth)-uSh(2,ith,jth,kth)) +
-                         mux4*(uSh(2,ith+2,jth,kth)-uSh(2,ith,jth,kth)) ) + stry(j)*(
+      r2 = i6*( strx(i)*(mux1*(uSh(2,ith-2,jth,kthm2)-uSh(2,ith,jth,kthm2)) +
+                         mux2*(uSh(2,ith-1,jth,kthm2)-uSh(2,ith,jth,kthm2)) +
+                         mux3*(uSh(2,ith+1,jth,kthm2)-uSh(2,ith,jth,kthm2)) +
+                         mux4*(uSh(2,ith+2,jth,kthm2)-uSh(2,ith,jth,kthm2)) ) + stry(j)*(
                            (2*muy1+la(i,j-1,k)*stry(j-1)-
                             tf*(la(i,j,k)*stry(j)+la(i,j-2,k)*stry(j-2)))*
-                           (uSh(2,ith,jth-2,kth)-uSh(2,ith,jth,kth))+
+                           (uSh(2,ith,jth-2,kthm2)-uSh(2,ith,jth,kthm2))+
                            (2*muy2+la(i,j-2,k)*stry(j-2)+la(i,j+1,k)*stry(j+1)+
                             3*(la(i,j,k)*stry(j)+la(i,j-1,k)*stry(j-1)))*
-                           (uSh(2,ith,jth-1,kth)-uSh(2,ith,jth,kth))+
+                           (uSh(2,ith,jth-1,kthm2)-uSh(2,ith,jth,kthm2))+
                            (2*muy3+la(i,j-1,k)*stry(j-1)+la(i,j+2,k)*stry(j+2)+
                             3*(la(i,j+1,k)*stry(j+1)+la(i,j,k)*stry(j)))*
-                           (uSh(2,ith,jth+1,kth)-uSh(2,ith,jth,kth))+
+                           (uSh(2,ith,jth+1,kthm2)-uSh(2,ith,jth,kthm2))+
                            (2*muy4+la(i,j+1,k)*stry(j+1)-
                             tf*(la(i,j,k)*stry(j)+la(i,j+2,k)*stry(j+2)))*
-                           (uSh(2,ith,jth+2,kth)-uSh(2,ith,jth,kth)) ) + strz(k)*(
-                             muz1*(uSh(2,ith,jth,kth-2)-uSh(2,ith,jth,kth)) +
-                             muz2*(uSh(2,ith,jth,kth-1)-uSh(2,ith,jth,kth)) +
-                             muz3*(uSh(2,ith,jth,kth+1)-uSh(2,ith,jth,kth)) +
-                             muz4*(uSh(2,ith,jth,kth+2)-uSh(2,ith,jth,kth)) ) );
+                           (uSh(2,ith,jth+2,kthm2)-uSh(2,ith,jth,kthm2)) ) + strz(k)*(
+                             muz1*(uSh(2,ith,jth,kthm4)-uSh(2,ith,jth,kthm2)) +
+                             muz2*(uSh(2,ith,jth,kthm3)-uSh(2,ith,jth,kthm2)) +
+                             muz3*(uSh(2,ith,jth,kthm1)-uSh(2,ith,jth,kthm2)) +
+                             muz4*(uSh(2,ith,jth,kthm0)-uSh(2,ith,jth,kthm2)) ) );
 
 /* 75 ops */
-      r3 = i6*( strx(i)*(mux1*(uSh(3,ith-2,jth,kth)-uSh(3,ith,jth,kth)) +
-                         mux2*(uSh(3,ith-1,jth,kth)-uSh(3,ith,jth,kth)) +
-                         mux3*(uSh(3,ith+1,jth,kth)-uSh(3,ith,jth,kth)) +
-                         mux4*(uSh(3,ith+2,jth,kth)-uSh(3,ith,jth,kth))  ) + stry(j)*(
-                           muy1*(uSh(3,ith,jth-2,kth)-uSh(3,ith,jth,kth)) +
-                           muy2*(uSh(3,ith,jth-1,kth)-uSh(3,ith,jth,kth)) +
-                           muy3*(uSh(3,ith,jth+1,kth)-uSh(3,ith,jth,kth)) +
-                           muy4*(uSh(3,ith,jth+2,kth)-uSh(3,ith,jth,kth)) ) + strz(k)*(
+      r3 = i6*( strx(i)*(mux1*(uSh(3,ith-2,jth,kthm2)-uSh(3,ith,jth,kthm2)) +
+                         mux2*(uSh(3,ith-1,jth,kthm2)-uSh(3,ith,jth,kthm2)) +
+                         mux3*(uSh(3,ith+1,jth,kthm2)-uSh(3,ith,jth,kthm2)) +
+                         mux4*(uSh(3,ith+2,jth,kthm2)-uSh(3,ith,jth,kthm2))  ) + stry(j)*(
+                           muy1*(uSh(3,ith,jth-2,kthm2)-uSh(3,ith,jth,kthm2)) +
+                           muy2*(uSh(3,ith,jth-1,kthm2)-uSh(3,ith,jth,kthm2)) +
+                           muy3*(uSh(3,ith,jth+1,kthm2)-uSh(3,ith,jth,kthm2)) +
+                           muy4*(uSh(3,ith,jth+2,kthm2)-uSh(3,ith,jth,kthm2)) ) + strz(k)*(
                              (2*muz1+la(i,j,k-1)*strz(k-1)-
                               tf*(la(i,j,k)*strz(k)+la(i,j,k-2)*strz(k-2)))*
-                             (uSh(3,ith,jth,kth-2)-uSh(3,ith,jth,kth))+
+                             (uSh(3,ith,jth,kthm4)-uSh(3,ith,jth,kthm2))+
                              (2*muz2+la(i,j,k-2)*strz(k-2)+la(i,j,k+1)*strz(k+1)+
                               3*(la(i,j,k)*strz(k)+la(i,j,k-1)*strz(k-1)))*
-                             (uSh(3,ith,jth,kth-1)-uSh(3,ith,jth,kth))+
+                             (uSh(3,ith,jth,kthm3)-uSh(3,ith,jth,kthm2))+
                              (2*muz3+la(i,j,k-1)*strz(k-1)+la(i,j,k+2)*strz(k+2)+
                               3*(la(i,j,k+1)*strz(k+1)+la(i,j,k)*strz(k)))*
-                             (uSh(3,ith,jth,kth+1)-uSh(3,ith,jth,kth))+
+                             (uSh(3,ith,jth,kthm1)-uSh(3,ith,jth,kthm2))+
                              (2*muz4+la(i,j,k+1)*strz(k+1)-
                               tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2)))*
-                             (uSh(3,ith,jth,kth+2)-uSh(3,ith,jth,kth)) ) );
+                             (uSh(3,ith,jth,kthm0)-uSh(3,ith,jth,kthm2)) ) );
 
 
 /* Mixed derivatives: */
@@ -2125,127 +2638,127 @@ rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 /* 116 ops for r1 */
 /*   (la*v_y)_x */
       r1 = r1 + strx(i)*stry(j)*
-        i144*( la(i-2,j,k)*(uSh(2,ith-2,jth-2,kth)-uSh(2,ith-2,jth+2,kth)+
-                            8*(-uSh(2,ith-2,jth-1,kth)+uSh(2,ith-2,jth+1,kth))) - 8*(
-                              la(i-1,j,k)*(uSh(2,ith-1,jth-2,kth)-uSh(2,ith-1,jth+2,kth)+
-                                           8*(-uSh(2,ith-1,jth-1,kth)+uSh(2,ith-1,jth+1,kth))) )+8*(
-                                             la(i+1,j,k)*(uSh(2,ith+1,jth-2,kth)-uSh(2,ith+1,jth+2,kth)+
-                                                          8*(-uSh(2,ith+1,jth-1,kth)+uSh(2,ith+1,jth+1,kth))) ) - (
-                                                            la(i+2,j,k)*(uSh(2,ith+2,jth-2,kth)-uSh(2,ith+2,jth+2,kth)+
-                                                                         8*(-uSh(2,ith+2,jth-1,kth)+uSh(2,ith+2,jth+1,kth))) ))
+        i144*( la(i-2,j,k)*(uSh(2,ith-2,jth-2,kthm2)-uSh(2,ith-2,jth+2,kthm2)+
+                            8*(-uSh(2,ith-2,jth-1,kthm2)+uSh(2,ith-2,jth+1,kthm2))) - 8*(
+                              la(i-1,j,k)*(uSh(2,ith-1,jth-2,kthm2)-uSh(2,ith-1,jth+2,kthm2)+
+                                           8*(-uSh(2,ith-1,jth-1,kthm2)+uSh(2,ith-1,jth+1,kthm2))) )+8*(
+                                             la(i+1,j,k)*(uSh(2,ith+1,jth-2,kthm2)-uSh(2,ith+1,jth+2,kthm2)+
+                                                          8*(-uSh(2,ith+1,jth-1,kthm2)+uSh(2,ith+1,jth+1,kthm2))) ) - (
+                                                            la(i+2,j,k)*(uSh(2,ith+2,jth-2,kthm2)-uSh(2,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(2,ith+2,jth-1,kthm2)+uSh(2,ith+2,jth+1,kthm2))) ))
 /*   (la*w_z)_x */
         + strx(i)*strz(k)*
-        i144*( la(i-2,j,k)*(uSh(3,ith-2,jth,kth-2)-uSh(3,ith-2,jth,kth+2)+
-                            8*(-uSh(3,ith-2,jth,kth-1)+uSh(3,ith-2,jth,kth+1))) - 8*(
-                              la(i-1,j,k)*(uSh(3,ith-1,jth,kth-2)-uSh(3,ith-1,jth,kth+2)+
-                                           8*(-uSh(3,ith-1,jth,kth-1)+uSh(3,ith-1,jth,kth+1))) )+8*(
-                                             la(i+1,j,k)*(uSh(3,ith+1,jth,kth-2)-uSh(3,ith+1,jth,kth+2)+
-                                                          8*(-uSh(3,ith+1,jth,kth-1)+uSh(3,ith+1,jth,kth+1))) ) - (
-                                                            la(i+2,j,k)*(uSh(3,ith+2,jth,kth-2)-uSh(3,ith+2,jth,kth+2)+
-                                                                         8*(-uSh(3,ith+2,jth,kth-1)+uSh(3,ith+2,jth,kth+1))) ))
+        i144*( la(i-2,j,k)*(uSh(3,ith-2,jth,kthm4)-uSh(3,ith-2,jth,kthm0)+
+                            8*(-uSh(3,ith-2,jth,kthm3)+uSh(3,ith-2,jth,kthm1))) - 8*(
+                              la(i-1,j,k)*(uSh(3,ith-1,jth,kthm4)-uSh(3,ith-1,jth,kthm0)+
+                                           8*(-uSh(3,ith-1,jth,kthm3)+uSh(3,ith-1,jth,kthm1))) )+8*(
+                                             la(i+1,j,k)*(uSh(3,ith+1,jth,kthm4)-uSh(3,ith+1,jth,kthm0)+
+                                                          8*(-uSh(3,ith+1,jth,kthm3)+uSh(3,ith+1,jth,kthm1))) ) - (
+                                                            la(i+2,j,k)*(uSh(3,ith+2,jth,kthm4)-uSh(3,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(3,ith+2,jth,kthm3)+uSh(3,ith+2,jth,kthm1))) ))
 /*   (mu*v_x)_y */
         + strx(i)*stry(j)*
-        i144*( mu(i,j-2,k)*(uSh(2,ith-2,jth-2,kth)-uSh(2,ith+2,jth-2,kth)+
-                            8*(-uSh(2,ith-1,jth-2,kth)+uSh(2,ith+1,jth-2,kth))) - 8*(
-                              mu(i,j-1,k)*(uSh(2,ith-2,jth-1,kth)-uSh(2,ith+2,jth-1,kth)+
-                                           8*(-uSh(2,ith-1,jth-1,kth)+uSh(2,ith+1,jth-1,kth))) )+8*(
-                                             mu(i,j+1,k)*(uSh(2,ith-2,jth+1,kth)-uSh(2,ith+2,jth+1,kth)+
-                                                          8*(-uSh(2,ith-1,jth+1,kth)+uSh(2,ith+1,jth+1,kth))) ) - (
-                                                            mu(i,j+2,k)*(uSh(2,ith-2,jth+2,kth)-uSh(2,ith+2,jth+2,kth)+
-                                                                         8*(-uSh(2,ith-1,jth+2,kth)+uSh(2,ith+1,jth+2,kth))) ))
+        i144*( mu(i,j-2,k)*(uSh(2,ith-2,jth-2,kthm2)-uSh(2,ith+2,jth-2,kthm2)+
+                            8*(-uSh(2,ith-1,jth-2,kthm2)+uSh(2,ith+1,jth-2,kthm2))) - 8*(
+                              mu(i,j-1,k)*(uSh(2,ith-2,jth-1,kthm2)-uSh(2,ith+2,jth-1,kthm2)+
+                                           8*(-uSh(2,ith-1,jth-1,kthm2)+uSh(2,ith+1,jth-1,kthm2))) )+8*(
+                                             mu(i,j+1,k)*(uSh(2,ith-2,jth+1,kthm2)-uSh(2,ith+2,jth+1,kthm2)+
+                                                          8*(-uSh(2,ith-1,jth+1,kthm2)+uSh(2,ith+1,jth+1,kthm2))) ) - (
+                                                            mu(i,j+2,k)*(uSh(2,ith-2,jth+2,kthm2)-uSh(2,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(2,ith-1,jth+2,kthm2)+uSh(2,ith+1,jth+2,kthm2))) ))
 /*   (mu*w_x)_z */
         + strx(i)*strz(k)*
-        i144*( mu(i,j,k-2)*(uSh(3,ith-2,jth,kth-2)-uSh(3,ith+2,jth,kth-2)+
-                            8*(-uSh(3,ith-1,jth,kth-2)+uSh(3,ith+1,jth,kth-2))) - 8*(
-                              mu(i,j,k-1)*(uSh(3,ith-2,jth,kth-1)-uSh(3,ith+2,jth,kth-1)+
-                                           8*(-uSh(3,ith-1,jth,kth-1)+uSh(3,ith+1,jth,kth-1))) )+8*(
-                                             mu(i,j,k+1)*(uSh(3,ith-2,jth,kth+1)-uSh(3,ith+2,jth,kth+1)+
-                                                          8*(-uSh(3,ith-1,jth,kth+1)+uSh(3,ith+1,jth,kth+1))) ) - (
-                                                            mu(i,j,k+2)*(uSh(3,ith-2,jth,kth+2)-uSh(3,ith+2,jth,kth+2)+
-                                                                         8*(-uSh(3,ith-1,jth,kth+2)+uSh(3,ith+1,jth,kth+2))) )) ;
+        i144*( mu(i,j,k-2)*(uSh(3,ith-2,jth,kthm4)-uSh(3,ith+2,jth,kthm4)+
+                            8*(-uSh(3,ith-1,jth,kthm4)+uSh(3,ith+1,jth,kthm4))) - 8*(
+                              mu(i,j,k-1)*(uSh(3,ith-2,jth,kthm3)-uSh(3,ith+2,jth,kthm3)+
+                                           8*(-uSh(3,ith-1,jth,kthm3)+uSh(3,ith+1,jth,kthm3))) )+8*(
+                                             mu(i,j,k+1)*(uSh(3,ith-2,jth,kthm1)-uSh(3,ith+2,jth,kthm1)+
+                                                          8*(-uSh(3,ith-1,jth,kthm1)+uSh(3,ith+1,jth,kthm1))) ) - (
+                                                            mu(i,j,k+2)*(uSh(3,ith-2,jth,kthm0)-uSh(3,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(3,ith-1,jth,kthm0)+uSh(3,ith+1,jth,kthm0))) )) ;
 
 /* 116 ops for r2 */
 /*   (mu*u_y)_x */
       r2 = r2 + strx(i)*stry(j)*
-        i144*( mu(i-2,j,k)*(uSh(1,ith-2,jth-2,kth)-uSh(1,ith-2,jth+2,kth)+
-                            8*(-uSh(1,ith-2,jth-1,kth)+uSh(1,ith-2,jth+1,kth))) - 8*(
-                              mu(i-1,j,k)*(uSh(1,ith-1,jth-2,kth)-uSh(1,ith-1,jth+2,kth)+
-                                           8*(-uSh(1,ith-1,jth-1,kth)+uSh(1,ith-1,jth+1,kth))) )+8*(
-                                             mu(i+1,j,k)*(uSh(1,ith+1,jth-2,kth)-uSh(1,ith+1,jth+2,kth)+
-                                                          8*(-uSh(1,ith+1,jth-1,kth)+uSh(1,ith+1,jth+1,kth))) ) - (
-                                                            mu(i+2,j,k)*(uSh(1,ith+2,jth-2,kth)-uSh(1,ith+2,jth+2,kth)+
-                                                                         8*(-uSh(1,ith+2,jth-1,kth)+uSh(1,ith+2,jth+1,kth))) ))
+        i144*( mu(i-2,j,k)*(uSh(1,ith-2,jth-2,kthm2)-uSh(1,ith-2,jth+2,kthm2)+
+                            8*(-uSh(1,ith-2,jth-1,kthm2)+uSh(1,ith-2,jth+1,kthm2))) - 8*(
+                              mu(i-1,j,k)*(uSh(1,ith-1,jth-2,kthm2)-uSh(1,ith-1,jth+2,kthm2)+
+                                           8*(-uSh(1,ith-1,jth-1,kthm2)+uSh(1,ith-1,jth+1,kthm2))) )+8*(
+                                             mu(i+1,j,k)*(uSh(1,ith+1,jth-2,kthm2)-uSh(1,ith+1,jth+2,kthm2)+
+                                                          8*(-uSh(1,ith+1,jth-1,kthm2)+uSh(1,ith+1,jth+1,kthm2))) ) - (
+                                                            mu(i+2,j,k)*(uSh(1,ith+2,jth-2,kthm2)-uSh(1,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(1,ith+2,jth-1,kthm2)+uSh(1,ith+2,jth+1,kthm2))) ))
 /* (la*u_x)_y */
         + strx(i)*stry(j)*
-        i144*( la(i,j-2,k)*(uSh(1,ith-2,jth-2,kth)-uSh(1,ith+2,jth-2,kth)+
-                            8*(-uSh(1,ith-1,jth-2,kth)+uSh(1,ith+1,jth-2,kth))) - 8*(
-                              la(i,j-1,k)*(uSh(1,ith-2,jth-1,kth)-uSh(1,ith+2,jth-1,kth)+
-                                           8*(-uSh(1,ith-1,jth-1,kth)+uSh(1,ith+1,jth-1,kth))) )+8*(
-                                             la(i,j+1,k)*(uSh(1,ith-2,jth+1,kth)-uSh(1,ith+2,jth+1,kth)+
-                                                          8*(-uSh(1,ith-1,jth+1,kth)+uSh(1,ith+1,jth+1,kth))) ) - (
-                                                            la(i,j+2,k)*(uSh(1,ith-2,jth+2,kth)-uSh(1,ith+2,jth+2,kth)+
-                                                                         8*(-uSh(1,ith-1,jth+2,kth)+uSh(1,ith+1,jth+2,kth))) ))
+        i144*( la(i,j-2,k)*(uSh(1,ith-2,jth-2,kthm2)-uSh(1,ith+2,jth-2,kthm2)+
+                            8*(-uSh(1,ith-1,jth-2,kthm2)+uSh(1,ith+1,jth-2,kthm2))) - 8*(
+                              la(i,j-1,k)*(uSh(1,ith-2,jth-1,kthm2)-uSh(1,ith+2,jth-1,kthm2)+
+                                           8*(-uSh(1,ith-1,jth-1,kthm2)+uSh(1,ith+1,jth-1,kthm2))) )+8*(
+                                             la(i,j+1,k)*(uSh(1,ith-2,jth+1,kthm2)-uSh(1,ith+2,jth+1,kthm2)+
+                                                          8*(-uSh(1,ith-1,jth+1,kthm2)+uSh(1,ith+1,jth+1,kthm2))) ) - (
+                                                            la(i,j+2,k)*(uSh(1,ith-2,jth+2,kthm2)-uSh(1,ith+2,jth+2,kthm2)+
+                                                                         8*(-uSh(1,ith-1,jth+2,kthm2)+uSh(1,ith+1,jth+2,kthm2))) ))
 /* (la*w_z)_y */
         + stry(j)*strz(k)*
-        i144*( la(i,j-2,k)*(uSh(3,ith,jth-2,kth-2)-uSh(3,ith,jth-2,kth+2)+
-                            8*(-uSh(3,ith,jth-2,kth-1)+uSh(3,ith,jth-2,kth+1))) - 8*(
-                              la(i,j-1,k)*(uSh(3,ith,jth-1,kth-2)-uSh(3,ith,jth-1,kth+2)+
-                                           8*(-uSh(3,ith,jth-1,kth-1)+uSh(3,ith,jth-1,kth+1))) )+8*(
-                                             la(i,j+1,k)*(uSh(3,ith,jth+1,kth-2)-uSh(3,ith,jth+1,kth+2)+
-                                                          8*(-uSh(3,ith,jth+1,kth-1)+uSh(3,ith,jth+1,kth+1))) ) - (
-                                                            la(i,j+2,k)*(uSh(3,ith,jth+2,kth-2)-uSh(3,ith,jth+2,kth+2)+
-                                                                         8*(-uSh(3,ith,jth+2,kth-1)+uSh(3,ith,jth+2,kth+1))) ))
+        i144*( la(i,j-2,k)*(uSh(3,ith,jth-2,kthm4)-uSh(3,ith,jth-2,kthm0)+
+                            8*(-uSh(3,ith,jth-2,kthm3)+uSh(3,ith,jth-2,kthm1))) - 8*(
+                              la(i,j-1,k)*(uSh(3,ith,jth-1,kthm4)-uSh(3,ith,jth-1,kthm0)+
+                                           8*(-uSh(3,ith,jth-1,kthm3)+uSh(3,ith,jth-1,kthm1))) )+8*(
+                                             la(i,j+1,k)*(uSh(3,ith,jth+1,kthm4)-uSh(3,ith,jth+1,kthm0)+
+                                                          8*(-uSh(3,ith,jth+1,kthm3)+uSh(3,ith,jth+1,kthm1))) ) - (
+                                                            la(i,j+2,k)*(uSh(3,ith,jth+2,kthm4)-uSh(3,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(3,ith,jth+2,kthm3)+uSh(3,ith,jth+2,kthm1))) ))
 /* (mu*w_y)_z */
         + stry(j)*strz(k)*
-        i144*( mu(i,j,k-2)*(uSh(3,ith,jth-2,kth-2)-uSh(3,ith,jth+2,kth-2)+
-                            8*(-uSh(3,ith,jth-1,kth-2)+uSh(3,ith,jth+1,kth-2))) - 8*(
-                              mu(i,j,k-1)*(uSh(3,ith,jth-2,kth-1)-uSh(3,ith,jth+2,kth-1)+
-                                           8*(-uSh(3,ith,jth-1,kth-1)+uSh(3,ith,jth+1,kth-1))) )+8*(
-                                             mu(i,j,k+1)*(uSh(3,ith,jth-2,kth+1)-uSh(3,ith,jth+2,kth+1)+
-                                                          8*(-uSh(3,ith,jth-1,kth+1)+uSh(3,ith,jth+1,kth+1))) ) - (
-                                                            mu(i,j,k+2)*(uSh(3,ith,jth-2,kth+2)-uSh(3,ith,jth+2,kth+2)+
-                                                                         8*(-uSh(3,ith,jth-1,kth+2)+uSh(3,ith,jth+1,kth+2))) )) ;
+        i144*( mu(i,j,k-2)*(uSh(3,ith,jth-2,kthm4)-uSh(3,ith,jth+2,kthm4)+
+                            8*(-uSh(3,ith,jth-1,kthm4)+uSh(3,ith,jth+1,kthm4))) - 8*(
+                              mu(i,j,k-1)*(uSh(3,ith,jth-2,kthm3)-uSh(3,ith,jth+2,kthm3)+
+                                           8*(-uSh(3,ith,jth-1,kthm3)+uSh(3,ith,jth+1,kthm3))) )+8*(
+                                             mu(i,j,k+1)*(uSh(3,ith,jth-2,kthm1)-uSh(3,ith,jth+2,kthm1)+
+                                                          8*(-uSh(3,ith,jth-1,kthm1)+uSh(3,ith,jth+1,kthm1))) ) - (
+                                                            mu(i,j,k+2)*(uSh(3,ith,jth-2,kthm0)-uSh(3,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(3,ith,jth-1,kthm0)+uSh(3,ith,jth+1,kthm0))) )) ;
 /* 116 ops for r3 */
 /*  (mu*u_z)_x */
       r3 = r3 + strx(i)*strz(k)*
-        i144*( mu(i-2,j,k)*(uSh(1,ith-2,jth,kth-2)-uSh(1,ith-2,jth,kth+2)+
-                            8*(-uSh(1,ith-2,jth,kth-1)+uSh(1,ith-2,jth,kth+1))) - 8*(
-                              mu(i-1,j,k)*(uSh(1,ith-1,jth,kth-2)-uSh(1,ith-1,jth,kth+2)+
-                                           8*(-uSh(1,ith-1,jth,kth-1)+uSh(1,ith-1,jth,kth+1))) )+8*(
-                                             mu(i+1,j,k)*(uSh(1,ith+1,jth,kth-2)-uSh(1,ith+1,jth,kth+2)+
-                                                          8*(-uSh(1,ith+1,jth,kth-1)+uSh(1,ith+1,jth,kth+1))) ) - (
-                                                            mu(i+2,j,k)*(uSh(1,ith+2,jth,kth-2)-uSh(1,ith+2,jth,kth+2)+
-                                                                         8*(-uSh(1,ith+2,jth,kth-1)+uSh(1,ith+2,jth,kth+1))) ))
+        i144*( mu(i-2,j,k)*(uSh(1,ith-2,jth,kthm4)-uSh(1,ith-2,jth,kthm0)+
+                            8*(-uSh(1,ith-2,jth,kthm3)+uSh(1,ith-2,jth,kthm1))) - 8*(
+                              mu(i-1,j,k)*(uSh(1,ith-1,jth,kthm4)-uSh(1,ith-1,jth,kthm0)+
+                                           8*(-uSh(1,ith-1,jth,kthm3)+uSh(1,ith-1,jth,kthm1))) )+8*(
+                                             mu(i+1,j,k)*(uSh(1,ith+1,jth,kthm4)-uSh(1,ith+1,jth,kthm0)+
+                                                          8*(-uSh(1,ith+1,jth,kthm3)+uSh(1,ith+1,jth,kthm1))) ) - (
+                                                            mu(i+2,j,k)*(uSh(1,ith+2,jth,kthm4)-uSh(1,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(1,ith+2,jth,kthm3)+uSh(1,ith+2,jth,kthm1))) ))
 /* (mu*v_z)_y */
         + stry(j)*strz(k)*
-        i144*( mu(i,j-2,k)*(uSh(2,ith,jth-2,kth-2)-uSh(2,ith,jth-2,kth+2)+
-                            8*(-uSh(2,ith,jth-2,kth-1)+uSh(2,ith,jth-2,kth+1))) - 8*(
-                              mu(i,j-1,k)*(uSh(2,ith,jth-1,kth-2)-uSh(2,ith,jth-1,kth+2)+
-                                           8*(-uSh(2,ith,jth-1,kth-1)+uSh(2,ith,jth-1,kth+1))) )+8*(
-                                             mu(i,j+1,k)*(uSh(2,ith,jth+1,kth-2)-uSh(2,ith,jth+1,kth+2)+
-                                                          8*(-uSh(2,ith,jth+1,kth-1)+uSh(2,ith,jth+1,kth+1))) ) - (
-                                                            mu(i,j+2,k)*(uSh(2,ith,jth+2,kth-2)-uSh(2,ith,jth+2,kth+2)+
-                                                                         8*(-uSh(2,ith,jth+2,kth-1)+uSh(2,ith,jth+2,kth+1))) ))
+        i144*( mu(i,j-2,k)*(uSh(2,ith,jth-2,kthm4)-uSh(2,ith,jth-2,kthm0)+
+                            8*(-uSh(2,ith,jth-2,kthm3)+uSh(2,ith,jth-2,kthm1))) - 8*(
+                              mu(i,j-1,k)*(uSh(2,ith,jth-1,kthm4)-uSh(2,ith,jth-1,kthm0)+
+                                           8*(-uSh(2,ith,jth-1,kthm3)+uSh(2,ith,jth-1,kthm1))) )+8*(
+                                             mu(i,j+1,k)*(uSh(2,ith,jth+1,kthm4)-uSh(2,ith,jth+1,kthm0)+
+                                                          8*(-uSh(2,ith,jth+1,kthm3)+uSh(2,ith,jth+1,kthm1))) ) - (
+                                                            mu(i,j+2,k)*(uSh(2,ith,jth+2,kthm4)-uSh(2,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(2,ith,jth+2,kthm3)+uSh(2,ith,jth+2,kthm1))) ))
 /*   (la*u_x)_z */
         + strx(i)*strz(k)*
-        i144*( la(i,j,k-2)*(uSh(1,ith-2,jth,kth-2)-uSh(1,ith+2,jth,kth-2)+
-                            8*(-uSh(1,ith-1,jth,kth-2)+uSh(1,ith+1,jth,kth-2))) - 8*(
-                              la(i,j,k-1)*(uSh(1,ith-2,jth,kth-1)-uSh(1,ith+2,jth,kth-1)+
-                                           8*(-uSh(1,ith-1,jth,kth-1)+uSh(1,ith+1,jth,kth-1))) )+8*(
-                                             la(i,j,k+1)*(uSh(1,ith-2,jth,kth+1)-uSh(1,ith+2,jth,kth+1)+
-                                                          8*(-uSh(1,ith-1,jth,kth+1)+uSh(1,ith+1,jth,kth+1))) ) - (
-                                                            la(i,j,k+2)*(uSh(1,ith-2,jth,kth+2)-uSh(1,ith+2,jth,kth+2)+
-                                                                         8*(-uSh(1,ith-1,jth,kth+2)+uSh(1,ith+1,jth,kth+2))) ))
+        i144*( la(i,j,k-2)*(uSh(1,ith-2,jth,kthm4)-uSh(1,ith+2,jth,kthm4)+
+                            8*(-uSh(1,ith-1,jth,kthm4)+uSh(1,ith+1,jth,kthm4))) - 8*(
+                              la(i,j,k-1)*(uSh(1,ith-2,jth,kthm3)-uSh(1,ith+2,jth,kthm3)+
+                                           8*(-uSh(1,ith-1,jth,kthm3)+uSh(1,ith+1,jth,kthm3))) )+8*(
+                                             la(i,j,k+1)*(uSh(1,ith-2,jth,kthm1)-uSh(1,ith+2,jth,kthm1)+
+                                                          8*(-uSh(1,ith-1,jth,kthm1)+uSh(1,ith+1,jth,kthm1))) ) - (
+                                                            la(i,j,k+2)*(uSh(1,ith-2,jth,kthm0)-uSh(1,ith+2,jth,kthm0)+
+                                                                         8*(-uSh(1,ith-1,jth,kthm0)+uSh(1,ith+1,jth,kthm0))) ))
 /* (la*v_y)_z */
         + stry(j)*strz(k)*
-        i144*( la(i,j,k-2)*(uSh(2,ith,jth-2,kth-2)-uSh(2,ith,jth+2,kth-2)+
-                            8*(-uSh(2,ith,jth-1,kth-2)+uSh(2,ith,jth+1,kth-2))) - 8*(
-                              la(i,j,k-1)*(uSh(2,ith,jth-2,kth-1)-uSh(2,ith,jth+2,kth-1)+
-                                           8*(-uSh(2,ith,jth-1,kth-1)+uSh(2,ith,jth+1,kth-1))) )+8*(
-                                             la(i,j,k+1)*(uSh(2,ith,jth-2,kth+1)-uSh(2,ith,jth+2,kth+1)+
-                                                          8*(-uSh(2,ith,jth-1,kth+1)+uSh(2,ith,jth+1,kth+1))) ) - (
-                                                            la(i,j,k+2)*(uSh(2,ith,jth-2,kth+2)-uSh(2,ith,jth+2,kth+2)+
-                                                                         8*(-uSh(2,ith,jth-1,kth+2)+uSh(2,ith,jth+1,kth+2))) )) ;
+        i144*( la(i,j,k-2)*(uSh(2,ith,jth-2,kthm4)-uSh(2,ith,jth+2,kthm4)+
+                            8*(-uSh(2,ith,jth-1,kthm4)+uSh(2,ith,jth+1,kthm4))) - 8*(
+                              la(i,j,k-1)*(uSh(2,ith,jth-2,kthm3)-uSh(2,ith,jth+2,kthm3)+
+                                           8*(-uSh(2,ith,jth-1,kthm3)+uSh(2,ith,jth+1,kthm3))) )+8*(
+                                             la(i,j,k+1)*(uSh(2,ith,jth-2,kthm1)-uSh(2,ith,jth+2,kthm1)+
+                                                          8*(-uSh(2,ith,jth-1,kthm1)+uSh(2,ith,jth+1,kthm1))) ) - (
+                                                            la(i,j,k+2)*(uSh(2,ith,jth-2,kthm0)-uSh(2,ith,jth+2,kthm0)+
+                                                                         8*(-uSh(2,ith,jth-1,kthm0)+uSh(2,ith,jth+1,kthm0))) )) ;
 
 /* 9 ops */
       lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
@@ -2256,25 +2769,15 @@ rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     __syncthreads();
     if (k+RADIUS+1 <= klast)
     {
-      for (int kk = 0; kk < DIAMETER-1; kk++) {
-        for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y) {
-          for (int ti = threadIdx.x; ti < blockDim.x+2*RADIUS; ti += blockDim.x) {
-            uSh(1, ti, tj, kk) = uSh(1, ti, tj, kk+1);
-            uSh(2, ti, tj, kk) = uSh(2, ti, tj, kk+1);
-            uSh(3, ti, tj, kk) = uSh(3, ti, tj, kk+1);
-          }
-        }
-      }
-      __syncthreads();
       for (int tj = threadIdx.y; tj < blockDim.y+2*RADIUS; tj += blockDim.y) {
         int gj =  (j-threadIdx.y) + tj - RADIUS;
         if ( gj <= jlast) {
           for (int ti = threadIdx.x; ti < blockDim.x+2*RADIUS; ti += blockDim.x) {
             int gi =  (i-threadIdx.x) + ti - RADIUS;
             if ( gi <= ilast) {
-              uSh(1, ti, tj, DIAMETER-1) = u(1, gi, gj, k+RADIUS+1);
-              uSh(2, ti, tj, DIAMETER-1) = u(2, gi, gj, k+RADIUS+1);
-              uSh(3, ti, tj, DIAMETER-1) = u(3, gi, gj, k+RADIUS+1);
+              uSh(1, ti, tj, kthm4) = u(1, gi, gj, k+RADIUS+1);
+              uSh(2, ti, tj, kthm4) = u(2, gi, gj, k+RADIUS+1);
+              uSh(3, ti, tj, kthm4) = u(3, gi, gj, k+RADIUS+1);
             }
           }
         }
