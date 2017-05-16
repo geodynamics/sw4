@@ -3561,6 +3561,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
       }
       else if(  m_sg_damping_order == 6 )
       {
+	std::cout<<" addsgd6fort_indrev needs offloading\n";
 #ifdef SW4_CROUTINES	 
 	 if( m_corder )
 	    addsgd6fort_indrev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],

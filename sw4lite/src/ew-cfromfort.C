@@ -1475,6 +1475,7 @@ void EW::addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 			      float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,
 			      float_sw4* __restrict__ a_coy, float_sw4 beta )
 {
+  PUSH_RANGE("addsgd4cfort_indrev",3);
    if( beta != 0 )
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
@@ -1492,16 +1493,21 @@ void EW::addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni   =     (ilast-ifirst+1);
       const size_t nij  =  ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
-      for( int c=0 ; c < 3 ; c++ )
-#pragma omp parallel for
-      for( int k=kfirst+2; k <= klast-2 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+      
+// #pragma omp parallel for
+//       for( int k=kfirst+2; k <= klast-2 ; k++ )
+// 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+// #pragma simd
+// #pragma ivdep
+// 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+forallN<EXEC, int, int,int>(
+			    RangeSegment(kfirst+2,klast-1),
+			    RangeSegment(jfirst+2,jlast-1),
+			    RangeSegment(ifirst+2,ilast-1),
+			    [=] RAJA_DEVICE(int k, int j, int i)
 	    {
 	       float_sw4 irhoj=beta/(rho(i,j,k)*jac(i,j,k));
-	       {
+	       for( int c=0 ; c < 3 ; c++ ) {
 		  up(c,i,j,k) -= irhoj*( 
 		  // x-differences
 		   strx(i)*coy(j)*(
@@ -1532,7 +1538,8 @@ void EW::addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 		    -rho(i,j-1,k)*dcy(j-1)*jac(i,j-1,k)*
 		    (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) ) );
 	       }
-	    } 
+	    });
+ SYNC_DEVICE;
 #undef rho
 #undef up
 #undef u
@@ -1545,6 +1552,7 @@ void EW::addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 #undef coy
 #undef jac
    }
+   POP_RANGE;
 }
 
 //-----------------------------------------------------------------------
@@ -1573,16 +1581,24 @@ void EW::addsgd6cfort_indrev(  int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
-	       for( int c=0 ; c < 3 ; c++ )
-#pragma omp parallel for
-      for( int k=kfirst+3; k <= klast-3 ; k++ )
-	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
-#pragma simd
-#pragma ivdep
-	    for( int i=ifirst+3; i <= ilast-3 ; i++ )
+// 	       for( int c=0 ; c < 3 ; c++ )
+// #pragma omp parallel for
+//       for( int k=kfirst+3; k <= klast-3 ; k++ )
+// 	 for( int j=jfirst+3; j <= jlast-3 ; j++ )
+// #pragma simd
+// #pragma ivdep
+// 	    for( int i=ifirst+3; i <= ilast-3 ; i++ )
+
+// This has not been testted May 16 2017
+forallN<EXEC, int, int,int>(
+			    RangeSegment(kfirst+3,klast-2),
+			    RangeSegment(jfirst+3,jlast-2),
+			    RangeSegment(ifirst+3,ilast-2),
+			    [=] RAJA_DEVICE(int k, int j, int i)
+
 	    {
 	       float_sw4 birho=0.5*beta/(rho(i,j,k)*jac(i,j,k));
-	       {
+	       for( int c=0 ; c < 3 ; c++ ) {
 		 up(c,i,j,k) += birho*( 
        strx(i)*coy(j)*(
 // x-differences
@@ -1614,7 +1630,8 @@ void EW::addsgd6cfort_indrev(  int ifirst, int ilast, int jfirst, int jlast,
       -(um(c,i, j,k)-3*um(c,i,j-1,k)+ 3*um(c,i,j-2,k)-um(c,i,j-3,k)) )
 					     )  );
 	       }
-	    }
+	    });
+ SYNC_DEVICE;
 #undef rho
 #undef up
 #undef u
