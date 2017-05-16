@@ -3212,6 +3212,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 //-----------------------------------------------------------------------
 void EW::communicate_array( Sarray& u, int grid )
 {
+  u.prefetch(cudaCpuDeviceId);
    REQUIRE2( u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
 	     "Communicate array, only implemented for nc=1,3, and 4 "
 	     << " nc = " << u.m_nc );
@@ -3280,6 +3281,7 @@ void EW::communicate_array( Sarray& u, int grid )
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag2,
 		    m_cartesian_communicator, &status );
    }
+   u.prefetch();
 }
 
 //-----------------------------------------------------------------------
@@ -6239,6 +6241,8 @@ void EW::generate_grid()
   float_sw4 zMinGlobal, zMaxGlobal;
   MPI_Allreduce( &mZmin, &zMinGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
   MPI_Allreduce( &mZmax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+   printf("Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 = %e, max ratio z - 1 = %e, top grid # = %i Local = %e %e Type = %s\n", 
+	  zMinGlobal-1., zMaxGlobal-1., gTop,mZmin,mZmax,mZ.status());
   if(mVerbose > 3 &&  (m_myrank == 0) )
   {
     printf("Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 = %e, max ratio z - 1 = %e, top grid # = %i\n", 

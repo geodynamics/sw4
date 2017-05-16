@@ -1,5 +1,47 @@
 #include "sw4.h"
 
+using namespace std;
+#include <stdio.h>
+#include "RAJA/RAJA.hxx"
+using namespace RAJA;
+#include "mynvtx.h"
+
+// Note 4,4,32 runs out of registers
+#ifdef CUDA_CODE
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
+			      cuda_threadblock_z_exec<16>>>
+  EXEC;
+
+#define SYNC_DEVICE cudaDeviceSynchronize();
+#else
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      omp_parallel_for_exec>>
+EXEC0;
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_collapse_nowait_exec,
+		 RAJA::omp_collapse_nowait_exec,
+		 RAJA::omp_collapse_nowait_exec >,
+  RAJA::OMP_Parallel<> > EXEC1;
+
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec,
+		 RAJA::seq_exec,
+		 RAJA::simd_exec > > EXEC2;
+
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec,
+		 RAJA::seq_exec,
+		 RAJA::simd_exec > > EXEC3;
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::seq_exec, RAJA::seq_exec, RAJA::simd_exec > > EXEC4;
+
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
+
+#define EXEC EXEC1
+#define SYNC_DEVICE
+#endif
+
 void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
 		     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,

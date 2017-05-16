@@ -151,7 +151,7 @@ public:
    void define_offsets();
 
   char *status();
-  void prefetch();
+  void prefetch(int device=0);
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

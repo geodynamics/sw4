@@ -1198,15 +1198,17 @@ bool IsManaged(void *ptr){
   return false;
 }
 #endif
-void Sarray::prefetch(){
+void Sarray::prefetch(int device){
 #ifdef CUDA_CODE
   if (managed){
     cudaMemPrefetchAsync(m_data, 
 			 m_nc*m_ni*m_nj*m_nk*sizeof(double),
-			 0,
+			 device,
 			 0);
+    if (device==cudaCpuDeviceId) SYNC_DEVICE;
   }
 #endif
 }
+
 
    

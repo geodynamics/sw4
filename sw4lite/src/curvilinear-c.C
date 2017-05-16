@@ -164,8 +164,9 @@ int EW::metric_rev( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a
       for( int j = jb; j <= je ; j++ )
 	 for( int i = ib; i <= ie ; i++ )
 	 {
+
     // k-derivatives
-	    double zr, zp, zq, sqzr;
+	    double zr=-100.0, zp, zq, sqzr;
 	    if( k >= kb+2 && k <= ke-2 )
                   zr = c2*(z(i,j,k+2)-z(i,j,k-2)) +
 		     c1*(z(i,j,k+1)-z(i,j,k-1));
@@ -245,9 +246,12 @@ int EW::metric_rev( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a
 	    }
 
 // Compute the metric
-	    if( zr <= 0 )
+	    if( zr <= 0 ){
+	      std::cout<<"Fail in metric_rec "<<zr<<" for "<<i<<" "<<j<<" "<<k<<"\n";
+	      std::cout<<"ib ie"<<ib<<" "<<ie<<" jb je "<<jb<<" "<<je<<"  kb ke "<<kb<<" "<<ke<<"\n";
+	      //std::cout<<" Z"<<z(i,j,k)<<" "<<z(i,j,k-1)<<" "<<z(i,j,k+1)<<"\n";
 	       return -1;
-
+	    }
 	    sqzr = sqrt(zr);
 	    jac(i,j,k) = h*h*zr;
 	    met(1,i,j,k) = sqzr;

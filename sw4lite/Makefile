@@ -46,11 +46,12 @@ else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
 else ifeq ($(findstring ray,$(HOSTNAME)),ray)
   FC = mpif90
   CXX = nvcc
-  OPT = -O3 -ccbin mpixlC -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE 
+  OPT = -O2 -ccbin mpixlC -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE 
   OMPOPT = 
-  EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -llapack -lblas -lxlf90 -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
+  EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
+#EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/blas/blas-3.6.0-gfortran-4.8.5/lib/ -L /usr/tcetmp/packages/lapack/lapack-3.6.0-gfortran-4.8.5/lib/ -llapack -lblas -lm -lgfortran  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
  RAJA_LOCATION =  /g/g0/ramesh/Project6/Ray/RAJA/install/
-  LINKER = mpixlC	
+  LINKER = mpixlC
  LINKFLAGS = 
   computername := ray
 # LC cab is a large cluster of Intel Xeon nodes
