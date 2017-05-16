@@ -50,6 +50,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		     float_sw4* __restrict__  a_ghcof, float_sw4* __restrict__ a_strx,
 		     float_sw4* __restrict__ a_stry )
 {
+  PUSH_RANGE("rhs4sgcurv_rev",3);
 //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
 //     *                         klast, u, mu, la, met, jac, lu, 
 //     *                         onesided, acof, bope, ghcof, strx, stry,
@@ -92,19 +93,17 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
 
-#pragma omp parallel
+
    {
    int kstart = kfirst+2;
    if( onesided[4] == 1 )
    {
       kstart = 7;
-   // SBP Boundary closure terms
-#pragma omp for
-      for( int k= 1; k <= 6 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep	 
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+	      forallN<EXEC, int, int,int>(
+				    RangeSegment(1,7),
+				    RangeSegment(jfirst+2,jlast-1),
+				    RangeSegment(ifirst+2,ilast-1),
+				    [=] RAJA_DEVICE(int k, int j, int i) 
 	    {
 // 5 ops                  
                float_sw4 ijac   = strx(i)*stry(j)/jac(i,j,k);
@@ -585,14 +584,14 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	       lu(1,i,j,k) = a1*lu(1,i,j,k) + r1*ijac;
 	       lu(2,i,j,k) = a1*lu(2,i,j,k) + r2*ijac;
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + r3*ijac;
-	    }
-   }
-#pragma omp for
-   for( int k= kstart; k <= klast-2 ; k++ )
-      for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep	 
-	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
+	    });
+   } // if onesided...
+   
+	   forallN<EXEC, int, int,int>(
+			    RangeSegment(kstart,klast-1),
+			    RangeSegment(jfirst+2,jlast-1),
+			    RangeSegment(ifirst+2,ilast-1),
+			    [=] RAJA_DEVICE(int k, int j, int i) 
 	 {
 // 5 ops
 	    float_sw4 ijac = strx(i)*stry(j)/jac(i,j,k);
@@ -1390,7 +1389,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
              c1*(u(2,i,j-1,k+1)-u(2,i,j-1,k-1)) ) ) ) );
 // 4 ops, tot=2126
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + r1*ijac;
-	 }
+	 });
    }
 #undef mu
 #undef la
@@ -1403,4 +1402,5 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #undef acof
 #undef bope
 #undef ghcof
-}
+   POP_RANGE;
+   }
