@@ -1509,6 +1509,7 @@ forallN<EXEC, int, int,int>(
 			    [=] RAJA_DEVICE(int k, int j, int i)
 	    {
 	       float_sw4 irhoj=beta/(rho(i,j,k)*jac(i,j,k));
+#pragma unroll
 	       for( int c=0 ; c < 3 ; c++ ) {
 		  up(c,i,j,k) -= irhoj*( 
 		  // x-differences

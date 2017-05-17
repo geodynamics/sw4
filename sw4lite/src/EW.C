@@ -3286,7 +3286,7 @@ void EW::communicate_array( Sarray& u, int grid )
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag2,
 		    m_cartesian_communicator, &status );
    }
-   //u.prefetch();
+   u.prefetch();
    POP_RANGE;
 }
 
