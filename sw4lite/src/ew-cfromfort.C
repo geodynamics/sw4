@@ -22,7 +22,7 @@ typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<32>,cuda_threadblock_y_exe
 typedef NestedPolicy<ExecList<seq_exec, seq_exec, seq_exec>>
   CEXEC_BC;
 
-typedef RAJA::cuda_exec<1024> FEXEC;
+typedef RAJA::cuda_exec<1024,true> FEXEC;
 
 #define SYNC_DEVICE cudaDeviceSynchronize();
 #else
@@ -188,11 +188,12 @@ void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, const float_
    //SYNC_DEVICE
    // Code is slower with this RAJA loop due to the cost of copying data. Prefecth version is the fastest:: 2.70s on 20 procs. Without this loop it is around 2.4s
    // To fix. either port more loops to device or wait for the UM copies to reach 30GB/s
+   PUSH_RANGE("dpdmtfort",2);
    forall< FEXEC> (0,3*npts,[=] RAJA_DEVICE(size_t i){
        //   for( size_t i = 0 ; i < 3*npts ; i++ )
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
      });
-   SYNC_DEVICE
+   POP_RANGE;
    //   if( m_corder )
    //   {
    //      for( size_t i=0 ; i < npts ; i++ )
@@ -1139,6 +1140,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 				  RangeSegment(ifirst+2,ilast-1),
 				  [=] RAJA_DEVICE(int k, int j, int i){
 	       float_sw4 birho=beta/rho(i,j,k);
+#pragma unroll
 	       for( int c=0 ; c < 3 ; c++ ){
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences

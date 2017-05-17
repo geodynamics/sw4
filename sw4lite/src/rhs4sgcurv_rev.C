@@ -43,12 +43,12 @@ typedef RAJA::NestedPolicy<
 #endif
 
 void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
-		     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
-		     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
-		     int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-		     float_sw4* __restrict__  a_ghcof, float_sw4* __restrict__ a_strx,
-		     float_sw4* __restrict__ a_stry )
+		     const float_sw4* __restrict__ a_u, const float_sw4* __restrict__ a_mu,
+		     const float_sw4* __restrict__ a_lambda, const float_sw4* __restrict__ a_met,
+		     const float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
+		     const int* onesided, const float_sw4* __restrict__ a_acof, const float_sw4* __restrict__ a_bope,
+		     const float_sw4* __restrict__  a_ghcof, const float_sw4* __restrict__ a_strx,
+		     const float_sw4* __restrict__ a_stry )
 {
   PUSH_RANGE("rhs4sgcurv_rev",3);
 //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
@@ -99,6 +99,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    if( onesided[4] == 1 )
    {
       kstart = 7;
+      PUSH_RANGE("rhs4sgcurv_rev::1",4);
 	      forallN<EXEC, int, int,int>(
 				    RangeSegment(1,7),
 				    RangeSegment(jfirst+2,jlast-1),
@@ -585,8 +586,11 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	       lu(2,i,j,k) = a1*lu(2,i,j,k) + r2*ijac;
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + r3*ijac;
 	    });
+	      SYNC_DEVICE;
+	      POP_RANGE;
    } // if onesided...
    
+   PUSH_RANGE("rhs4sgcurv_rev::2",5);
 	   forallN<EXEC, int, int,int>(
 			    RangeSegment(kstart,klast-1),
 			    RangeSegment(jfirst+2,jlast-1),
@@ -1390,6 +1394,8 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 // 4 ops, tot=2126
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + r1*ijac;
 	 });
+	   SYNC_DEVICE;
+	   POP_RANGE;
    }
 #undef mu
 #undef la
@@ -1402,5 +1408,6 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #undef acof
 #undef bope
 #undef ghcof
+   SYNC_DEVICE;
    POP_RANGE;
    }

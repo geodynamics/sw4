@@ -122,9 +122,9 @@ void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast
 	     float_sw4 h, const float_sw4* a_strx, const float_sw4* a_stry, const float_sw4* a_strz  );
 
 void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		     float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
-		     float_sw4* a_jac, float_sw4* a_lu, int* onesided, float_sw4* acof,
-		     float_sw4* bope, float_sw4* ghcof, float_sw4* a_strx, float_sw4* a_stry );
+		     const float_sw4* a_u, const float_sw4* a_mu, const float_sw4* a_lambda, const float_sw4* a_met,
+		     const float_sw4* a_jac, float_sw4* a_lu, const int* onesided, const float_sw4* acof,
+		     const float_sw4* bope, const float_sw4* ghcof, const float_sw4* a_strx, const float_sw4* a_stry );
 
 void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 float_sw4* a_u, float_sw4* a_mu, float_sw4* a_lambda, float_sw4* a_met,
@@ -3120,10 +3120,11 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
    float_sw4 dt2i = 1./(mDt*mDt);
    for(int g=0 ; g<mNumberOfGrids; g++ )
    {
-     a_Up[g].prefetch();
-     a_U[g].prefetch();
-     a_Um[g].prefetch();
-     a_Uacc[g].prefetch();
+     //a_Up[g].prefetch();
+     //a_U[g].prefetch();
+     //a_Um[g].prefetch();
+     //a_Uacc[g].prefetch();
+     // Prefetched version is slower. Needs visitiing after Ray is upgraded.
 #ifdef SW4_CROUTINES
       dpdmtfort( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 		 a_Up[g].c_ptr(), a_U[g].c_ptr(), a_Um[g].c_ptr(), a_Uacc[g].c_ptr(), dt2i );
@@ -3134,6 +3135,7 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 				    a_Uacc[g].c_ptr(), &dt2i );
 #endif
    }
+   SYNC_DEVICE;
 }
 
 //-----------------------------------------------------------------------
@@ -3186,6 +3188,8 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
    if( m_topography_exists )
    {
       int g=mNumberOfGrids-1;
+      mMetric.prefetch();
+      mJ.prefetch();
       char op = '=';    // Assign Uacc := L(u)
 #ifdef SW4_CROUTINES
       if( m_corder )
@@ -3212,7 +3216,8 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 //-----------------------------------------------------------------------
 void EW::communicate_array( Sarray& u, int grid )
 {
-  u.prefetch(cudaCpuDeviceId);
+  PUSH_RANGE("COMM_ARRAY",4);
+  //u.prefetch(cudaCpuDeviceId);
    REQUIRE2( u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
 	     "Communicate array, only implemented for nc=1,3, and 4 "
 	     << " nc = " << u.m_nc );
@@ -3281,7 +3286,8 @@ void EW::communicate_array( Sarray& u, int grid )
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag2,
 		    m_cartesian_communicator, &status );
    }
-   u.prefetch();
+   //u.prefetch();
+   POP_RANGE;
 }
 
 //-----------------------------------------------------------------------
