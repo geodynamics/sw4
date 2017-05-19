@@ -2848,6 +2848,14 @@ void EW::setupMPICommunications()
    m_send_type1.resize(2*mNumberOfGrids);
    m_send_type3.resize(2*mNumberOfGrids);
    m_send_type4.resize(2*mNumberOfGrids);
+
+   send_type1.resize(2*mNumberOfGrids);
+   send_type3.resize(2*mNumberOfGrids);
+   send_type4.resize(2*mNumberOfGrids);
+
+   bufs_type1.resize(2*mNumberOfGrids);
+   bufs_type3.resize(2*mNumberOfGrids);
+   bufs_type4.resize(2*mNumberOfGrids);
    //   m_send_type21.resize(2*mNumberOfGrids);
    for( int g= 0 ; g < mNumberOfGrids ; g++ )
    {
@@ -2859,12 +2867,30 @@ void EW::setupMPICommunications()
       MPI_Type_vector( nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type1[2*g] );
       MPI_Type_vector( nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type1[2*g+1] );
 
+
+      send_type1[2*g]=std::make_tuple(nj*nk, m_ppadding, ni);
+      send_type1[2*g+1]=std::make_tuple(nk, m_ppadding*ni, ni*nj);
+      
+      bufs_type1[2*g]=std::make_tuple(newmanagedh(nj*nk*m_ppadding),newmanagedh(nj*nk*m_ppadding));
+      bufs_type1[2*g+1]=std::make_tuple(newmanagedh(nk*m_ppadding*ni),newmanagedh(nk*m_ppadding*ni));
+      
       if( m_corder )
       {
 	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type3[2*g] );
 	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
 	 MPI_Type_vector( 4*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type4[2*g] );
 	 MPI_Type_vector( 4*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
+
+
+	 send_type3[2*g]=std::make_tuple(3*nj*nk, m_ppadding, ni);
+	 send_type3[2*g+1]=std::make_tuple(3*nk, m_ppadding*ni, ni*nj);
+	 send_type4[2*g]=std::make_tuple(4*nj*nk, m_ppadding, ni);
+	 send_type4[2*g+1]=std::make_tuple(4*nk, m_ppadding*ni, ni*nj);
+
+	 bufs_type3[2*g]=std::make_tuple(newmanaged(3*nj*nk*m_ppadding),newmanaged(3*nj*nk*m_ppadding));
+	 bufs_type3[2*g+1]=std::make_tuple(newmanaged(3*nk*m_ppadding*ni),newmanaged(3*nk*m_ppadding*ni));
+	 bufs_type4[2*g]=std::make_tuple(newmanaged(4*nj*nk*m_ppadding),newmanaged(4*nj*nk*m_ppadding));
+	 bufs_type4[2*g+1]=std::make_tuple(newmanaged(4*nk*m_ppadding*ni),newmanaged(4*nk*m_ppadding*ni));
       }
       else
       {
@@ -3214,7 +3240,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 }
 
 //-----------------------------------------------------------------------
-void EW::communicate_array( Sarray& u, int grid )
+void EW::communicate_array_async( Sarray& u, int grid )
 {
   PUSH_RANGE("COMM_ARRAY",4);
   //u.prefetch(cudaCpuDeviceId);
@@ -3229,6 +3255,8 @@ void EW::communicate_array( Sarray& u, int grid )
       int xtag2 = 346;
       int ytag1 = 347;
       int ytag2 = 348;
+      //for (int i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
+      //std::cout<<"\n";
       // X-direction communication
       MPI_Sendrecv( &u(ie-(2*m_ppadding-1),jb,kb), 1, m_send_type1[2*grid], m_neighbor[1], xtag1,
 		    &u(ib,jb,kb), 1, m_send_type1[2*grid], m_neighbor[0], xtag1,
@@ -3290,6 +3318,88 @@ void EW::communicate_array( Sarray& u, int grid )
    POP_RANGE;
 }
 
+void EW::communicate_array( Sarray& u, int grid )
+{
+  PUSH_RANGE("COMM_ARRAY",4);
+  //u.prefetch(cudaCpuDeviceId);
+   REQUIRE2( u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
+	     "Communicate array, only implemented for nc=1,3, and 4 "
+	     << " nc = " << u.m_nc );
+   int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
+   MPI_Status status;
+   if( u.m_nc == 1 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      //for (int i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
+      //std::cout<<"\n";
+      AMPI_Sendrecv( &u(ie-(2*m_ppadding-1),jb,kb), 1, send_type1[2*grid], m_neighbor[1], xtag1,
+		    &u(ib,jb,kb), 1, send_type1[2*grid], m_neighbor[0], xtag1,
+		     bufs_type1[2*grid],
+		    m_cartesian_communicator, &status );
+      AMPI_Sendrecv( &u(ib+m_ppadding,jb,kb), 1, send_type1[2*grid], m_neighbor[0], xtag2,
+		    &u(ie-(m_ppadding-1),jb,kb), 1, send_type1[2*grid], m_neighbor[1], xtag2,
+		     bufs_type1[2*grid],
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      AMPI_Sendrecv( &u(ib,je-(2*m_ppadding-1),kb), 1, send_type1[2*grid+1], m_neighbor[3], ytag1,
+		     &u(ib,jb,kb), 1, send_type1[2*grid+1], m_neighbor[2], ytag1,
+		     bufs_type1[2*grid+1],
+		    m_cartesian_communicator, &status );
+      
+      AMPI_Sendrecv( &u(ib,jb+m_ppadding,kb), 1, send_type1[2*grid+1], m_neighbor[2], ytag2,
+		    &u(ib,je-(m_ppadding-1),kb), 1, send_type1[2*grid+1], m_neighbor[3], ytag2,
+		     bufs_type1[2*grid+1],
+		    m_cartesian_communicator, &status );
+   }
+   else if( u.m_nc == 3 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, m_send_type3[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, m_send_type3[2*grid], m_neighbor[0], xtag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, m_send_type3[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, m_send_type3[2*grid], m_neighbor[1], xtag2,
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, m_send_type3[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, m_send_type3[2*grid+1], m_neighbor[2], ytag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, m_send_type3[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type3[2*grid+1], m_neighbor[3], ytag2,
+		    m_cartesian_communicator, &status );
+   }
+   else if( u.m_nc == 4 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, m_send_type4[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, m_send_type4[2*grid], m_neighbor[0], xtag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, m_send_type4[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, m_send_type4[2*grid], m_neighbor[1], xtag2,
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, m_send_type4[2*grid+1], m_neighbor[2], ytag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, m_send_type4[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, m_send_type4[2*grid+1], m_neighbor[3], ytag2,
+		    m_cartesian_communicator, &status );
+   }
+   u.prefetch();
+   POP_RANGE;
+}
 //-----------------------------------------------------------------------
 void EW::cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources )
@@ -6518,6 +6628,20 @@ float_sw4* EW::newmanaged(size_t len){
 #endif
    return (float_sw4*)ptr;
 }
+float_sw4* EW::newmanagedh(size_t len){
+   void *ptr;
+   //std::cout<<"******Using overloaded new**********\n";
+   //cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachHost);
+#ifdef CUDA_CODE_NOPE
+   cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachGlobal);
+   map[ptr]=len*sizeof(float_sw4);
+   prefetched[ptr]=false;
+   cudaDeviceSynchronize();
+#else
+   ptr=malloc(len*sizeof(float_sw4));
+#endif
+   return (float_sw4*)ptr;
+}
 void EW::delmanaged(float_sw4* &dptr){
 #ifdef CUDA_CODE
   if (map.find(dptr)!=map.end())
@@ -6553,6 +6677,58 @@ int EW::prefetch(void *ptr){
     //std::cout<<"BAD PREFETCH\n";
     return 1;
   }
+}
+void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sendto, int stag,
+		       float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		       std::tuple<float_sw4*,float_sw4*> &buf,
+		       MPI_Comm comm, MPI_Status *status){
+  MPI_Request send_req,recv_req;
+  
+  int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
+  int send_count=std::get<0>(sendt)*std::get<1>(sendt);
+  
+  // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
+  if (recvfrom!=MPI_PROC_NULL)
+    if (MPI_Irecv(std::get<1>(buf),recv_count,MPI_DOUBLE,recvfrom,rtag,comm,&recv_req)!=MPI_SUCCESS) std::cerr<<"MPI_Isend failed in EW::AMPI_Sendrecv\n";
+
+  if (sendto!=MPI_PROC_NULL){
+    getbuffer(a,std::get<0>(buf),sendt);
+    //std::cout<<"SENDING :: "<<sendto<<" ";
+    //for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
+    //std::cout<<"\n";
+    if (MPI_Isend(std::get<0>(buf),send_count,MPI_DOUBLE,sendto,stag,comm,&send_req)!=MPI_SUCCESS) std::cerr<<"MPI_Irecv failed in EW::AMPI_Sendrecv\n";
+  }
+  MPI_Status send_status,recv_status;
+
+  if (recvfrom!=MPI_PROC_NULL){
+    if (MPI_Wait(&recv_req,&recv_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT RECV FAILED IN AMPI_SENDrecv\n";
+    putbuffer(b,std::get<1>(buf),recvt);
+    //std::cout<<"RECEIVING :: "<<recvfrom<<" ";
+    //for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
+    //std::cout<<"\n";
+  }
+  
+  if (sendto!=MPI_PROC_NULL)
+    if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
+}
+void EW::getbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
+
+  int count=std::get<0>(mtype);
+  int bl = std::get<1>(mtype);
+  int stride = std::get<2>(mtype);
+  for (int i=0;i<count;i++){
+    for (int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
+  }
+}
+
+void EW::putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
+  int count=std::get<0>(mtype);
+  int bl = std::get<1>(mtype);
+  int stride = std::get<2>(mtype);
+  for (int i=0;i<count;i++){
+    for (int k=0;k<bl;k++) data[i*stride+k]=buf[k+i*bl];
+  }
+  
 }
 //-----------------------------------------------------------------------
 void EW::get_exact_point_source2( float_sw4* up, float_sw4 t, int g, Source& source,

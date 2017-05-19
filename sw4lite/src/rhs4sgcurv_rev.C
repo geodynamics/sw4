@@ -12,6 +12,9 @@ typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec
 			      cuda_threadblock_z_exec<16>>>
   EXEC;
 
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<16>,cuda_threadblock_y_exec<4>,
+			      cuda_threadblock_z_exec<16>>>
+  EXEC_LARGE;
 #define SYNC_DEVICE cudaDeviceSynchronize();
 #else
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
@@ -1396,6 +1399,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	 });
 	   SYNC_DEVICE;
 	   POP_RANGE;
+	  
    }
 #undef mu
 #undef la

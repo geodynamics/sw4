@@ -10,6 +10,7 @@
 #include "MaterialData.h"
 #include "TimeSeries.h"
 #include <unordered_map>
+#include <tuple>
 using namespace std;
 
 class Source;
@@ -79,7 +80,7 @@ class EW
    void evalDpDmInTimeCU(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 			 vector<Sarray> & a_Uacc, int st );
    void communicate_array( Sarray& U, int g );
- 
+   void communicate_array_async( Sarray& U, int g );
    void cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources );
    void setup_boundary_arrays();
@@ -330,6 +331,14 @@ class EW
    vector<MPI_Datatype> m_send_type1;
    vector<MPI_Datatype> m_send_type3;
    vector<MPI_Datatype> m_send_type4; // metric
+
+   vector<std::tuple<int,int,int>> send_type1;
+   vector<std::tuple<int,int,int>> send_type3;
+   vector<std::tuple<int,int,int>> send_type4;
+
+   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type1;
+   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type3;
+   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type4;
    MPI_Datatype m_mpifloat;
 
    //   vector<MPI_Datatype> m_send_type21; // anisotropic
@@ -424,7 +433,13 @@ class EW
    std::unordered_map<void*,bool> prefetched;
    int prefetch(void *ptr);
    float_sw4* newmanaged(size_t len);
+   float_sw4* newmanagedh(size_t len);
    void delmanaged(float_sw4* &dptr);
+   void AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
+		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		      std::tuple<float_sw4*,float_sw4*> &buf,
+		      MPI_Comm comm, MPI_Status *status);
+   void getbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+   void putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
 };
-
 #endif
