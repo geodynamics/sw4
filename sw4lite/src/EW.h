@@ -427,7 +427,8 @@ class EW
 
    // Discontinuous Galerkin stuff
    bool m_use_dg;
-   
+   void getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+   void putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
  private:
    std::unordered_map<void*,size_t> map;
    std::unordered_map<void*,bool> prefetched;
@@ -440,6 +441,8 @@ class EW
 		      std::tuple<float_sw4*,float_sw4*> &buf,
 		      MPI_Comm comm, MPI_Status *status);
    void getbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+
    void putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+
 };
 #endif
