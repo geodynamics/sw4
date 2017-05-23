@@ -32,8 +32,9 @@
 #include "policies.h"
 
 void PrintPointerAttributes(void *ptr);
+#ifdef CUDA_CODE
 bool IsManaged(void *ptr);
-
+#endif
 #ifndef SW4_CROUTINES
 extern "C" {
    void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)( int*, int*, int*, int*, int*, int*, int*, int*, 
@@ -3067,6 +3068,7 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 	}
     }
   //#pragma omp parallel for
+#ifdef CUDA_CODE
   for( int r=0 ; r<m_identsources.size()-1 ; r++ ){
     int index=r*3;
       //float_sw4* fptr =a_F[g].c_ptr();
@@ -3075,6 +3077,7 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
       if (!IsManaged(ForceVector+index+i)) std::cerr<<" NOT MANAGED2\n";
     }
   }
+#endif
   // Need the lines below becuase the object is not in managed memory and the this pointer is host only
   float_sw4 *ForceVector_copy=ForceVector;
   float_sw4 **ForceAddress_copy=ForceAddress;
@@ -3405,7 +3408,7 @@ void EW::communicate_array( Sarray& u, int grid )
 		    bufs_type4[2*grid+1],
 		    m_cartesian_communicator, &status );
    }
-   u.prefetch();
+   //u.prefetch();
    POP_RANGE;
 }
 //-----------------------------------------------------------------------
@@ -6641,9 +6644,9 @@ float_sw4* EW::newmanagedh(size_t len){
    //std::cout<<"******Using overloaded new**********\n";
    //cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachHost);
 #ifdef CUDA_CODE_NOPE
-   cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachGlobal);
+   cudaMalloc(&ptr, len*sizeof(float_sw4));
    map[ptr]=len*sizeof(float_sw4);
-   prefetched[ptr]=false;
+   //prefetched[ptr]=false;
    cudaDeviceSynchronize();
 #else
    ptr=malloc(len*sizeof(float_sw4));
@@ -6665,7 +6668,8 @@ void EW::delmanaged(float_sw4* &dptr){
 #endif
   dptr=NULL;
 }
-int EW::prefetch(void *ptr){
+int EW::prefetch(void *ptr,int device){
+#ifdef CUDA_CODE
   if (ptr==NULL) return 0;
   if (prefetched[ptr]) return 0;
   prefetched[ptr]=true;
@@ -6674,7 +6678,7 @@ int EW::prefetch(void *ptr){
   if (map.find(ptr)!=map.end()){
     cudaMemPrefetchAsync(ptr, 
 			 map[ptr],
-			 0,
+			 device,
 			 0);
 
     SYNC_DEVICE
@@ -6685,7 +6689,31 @@ int EW::prefetch(void *ptr){
     //std::cout<<"BAD PREFETCH\n";
     return 1;
   }
+#endif
 }
+int EW::prefetchforced(void *ptr,int device){
+#ifdef CUDA_CODE
+  if (ptr==NULL) return 0;
+  prefetched[ptr]=true;
+  PUSH_RANGE("EW::PREFETCHFORCED",2);
+
+  if (map.find(ptr)!=map.end()){
+    cudaMemPrefetchAsync(ptr, 
+			 map[ptr],
+			 device,
+			 0);
+
+    SYNC_DEVICE
+      POP_RANGE;
+      return 0;
+  }
+  else{
+    //std::cout<<"BAD PREFETCH\n";
+    return 1;
+  }
+#endif
+}
+
 void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sendto, int stag,
 		       float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		       std::tuple<float_sw4*,float_sw4*> &buf,
@@ -6733,10 +6761,14 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int count=std::get<0>(mtype);
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
+  PUSH_RANGE_PAYLOAD("GET_BUFFER",1,count*bl);
+  PREFETCHFORCED(buf);
   forall<EXEC > (0,count,[=] RAJA_DEVICE(int i){
     for (int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
   });
+
   SYNC_DEVICE;
+  POP_RANGE;
 }
 
 void EW::putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
@@ -6753,13 +6785,14 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int count=std::get<0>(mtype);
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
-  PREFETCH(buf);
+  PUSH_RANGE_PAYLOAD("PUT_BUFFER",2,count*bl);
+  PREFETCHFORCED(buf);
   forall<EXEC > (0,count,[=] RAJA_DEVICE(int i){
       for (int k=0;k<bl;k++) data[i*stride+k]=buf[k+i*bl];
     });
 
   SYNC_DEVICE;
-  
+  POP_RANGE;
 }
 //-----------------------------------------------------------------------
 void EW::get_exact_point_source2( float_sw4* up, float_sw4 t, int g, Source& source,

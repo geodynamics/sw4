@@ -34,11 +34,11 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   FC = mpifort
   CXX = mpicxx
-  OMPOPT = -qopenmp -g
+  OMPOPT = -fopenmp -std=c++11 
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
-  EXTRA_CXX_FLAGS = -xCORE-AVX2
+  EXTRA_CXX_FLAGS = -xCORE-AVX2 -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include
   EXTRA_FORT_FLAGS = -xCORE-AVX2
-  EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
+  EXTRA_LINK_FLAGS = -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA
   openmp = yes
   LINKER = mpicxx
   computername := quartz

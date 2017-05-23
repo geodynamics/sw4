@@ -21,6 +21,7 @@ class CheckPoint;
 using namespace RAJA;
 #include <cstdio>
 #define PREFETCH(input_ptr) if (prefetch(input_ptr)==1) printf("BAD PREFETCH ERROR IN FILE %s, line %d\n",__FILE__,__LINE__);
+#define PREFETCHFORCED(input_ptr) if (prefetchforced(input_ptr)==1) printf("BAD PREFETCH ERROR IN FILE %s, line %d\n",__FILE__,__LINE__);
 class EW
 {
  public:
@@ -432,7 +433,8 @@ class EW
  private:
    std::unordered_map<void*,size_t> map;
    std::unordered_map<void*,bool> prefetched;
-   int prefetch(void *ptr);
+   int prefetch(void *ptr,int device=0);
+   int prefetchforced(void *ptr,int device=0);
    float_sw4* newmanaged(size_t len);
    float_sw4* newmanagedh(size_t len);
    void delmanaged(float_sw4* &dptr);

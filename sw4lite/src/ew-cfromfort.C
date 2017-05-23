@@ -33,6 +33,8 @@ typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 			      omp_parallel_for_exec>>
   EXEC;
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec>>
+  EXEC_BC2;
 
 typedef RAJA::omp_parallel_for_exec FEXEC;
 #define SYNC_DEVICE 

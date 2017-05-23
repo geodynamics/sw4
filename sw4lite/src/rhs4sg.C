@@ -37,6 +37,7 @@ typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
 #define EXEC EXEC5
+#define SYNC_DEVICE
 #endif
 // restrict qualifier does not seem to help 
 void rhs4sg( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
