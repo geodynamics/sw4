@@ -51,6 +51,7 @@ public:
 		  int i0, int j0, int k0, int g,
 		  float_sw4 Fx, float_sw4 Fy, float_sw4 Fz,
 		  timeDep tDep, int ncyc, float_sw4* pars, int npar, int* ipars, int nipar,
+		  float_sw4* devpars, int* devipars,
 		  float_sw4* jacobian=NULL, float_sw4* dddp=NULL, float_sw4* hess1=NULL,
 		  float_sw4* hess2=NULL, float_sw4* hess3=NULL );
 
@@ -59,8 +60,15 @@ public:
   int m_i0,m_j0,m_k0; // grid point index
   int m_grid;
 
+  size_t m_key; // Key for sorting sources.
+
+#ifdef SW4_CUDA
+  __host__ __device__ void getFxyz( float_sw4 t, float_sw4* fxyz ) const;
+  __host__ __device__ void getFxyztt( float_sw4 t, float_sw4* fxyz ) const;
+#else
   void getFxyz( float_sw4 t, float_sw4* fxyz ) const;
   void getFxyztt( float_sw4 t, float_sw4* fxyz ) const;
+#endif
   void getFxyz_notime( float_sw4* fxyz ) const;
 
   // evaluate time fcn: RENAME to evalTimeFunc
@@ -80,21 +88,27 @@ public:
   void set_derivative( int der, const float_sw4 dir[11] );
   void set_noderivative( );
   void print_info() const;
-
+  void set_sort_key( size_t key );
+#ifdef SW4_CUDA
+  __device__ void init_dev();
+#endif
    //// discretize a time function at each time step and change the time function to be "Discrete()"
    //  void discretizeTimeFuncAndFilter(float_sw4 tStart, float_sw4 dt, int nSteps, Filter *filter_ptr);
 
  private:
 
   GridPointSource();
-
+#ifdef SW4_CUDA
+  __device__ void initializeTimeFunction();
+#else
   void initializeTimeFunction();
+#endif
   float_sw4 mForces[3];
    //  float_sw4 mAmp;
   float_sw4 mFreq, mT0;
 
   timeDep mTimeDependence;
-   float_sw4 (*mTimeFunc)(float_sw4 f, float_sw4 t,float_sw4* par, int npar, int* ipar, int nipar );
+  float_sw4 (*mTimeFunc)(float_sw4 f, float_sw4 t,float_sw4* par, int npar, int* ipar, int nipar );
   float_sw4 (*mTimeFunc_t)(float_sw4 f, float_sw4 t,float_sw4* par, int npar, int* ipar, int nipar );
   float_sw4 (*mTimeFunc_tt)(float_sw4 f, float_sw4 t,float_sw4* par, int npar, int* ipar, int nipar );
   float_sw4 (*mTimeFunc_ttt)(float_sw4 f, float_sw4 t,float_sw4* par, int npar, int* ipar, int nipar );
@@ -108,6 +122,8 @@ public:
 
   float_sw4* mPar;
   int* mIpar; 
+  float_sw4* mdevPar; //GPU copy 
+  int* mdevIpar; // GPU copy
   int  mNpar, mNipar;
 
   int mNcyc;

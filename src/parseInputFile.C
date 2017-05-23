@@ -203,7 +203,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   // inputFile.clear();
   // inputFile.seekg(0, ios::beg);
   
-// process th testrayleigh command to enable a periodic domain in the (x,y)-directions
+// process the testrayleigh command to enable a periodic domain in the (x,y)-directions
 // these commands can enter data directly the object (this->)
   while (!inputFile.eof())
   {    
@@ -212,22 +212,23 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      {
        m_doubly_periodic = true;
      }
-     if( startswith("testenergy",buffer) )
+     else if( startswith("testenergy",buffer) )
      {
 	m_doubly_periodic = checkTestEnergyPeriodic(buffer);
      }
-     if (startswith("refinement",buffer) )
+     else if (startswith("refinement",buffer) )
      {
 	// mesh refinements require 3 ghost points, must know 
 	// before processing grid command.
 	m_mesh_refinements = true;
      }
-     if( startswith("supergrid",buffer) )
+     else if( startswith("supergrid",buffer) )
      {
 	// If supergrid damping is 6th order, 3 ghost points are needed, must know 
 	// before processing grid command.
 	processSupergrid(buffer);
      }
+     
   }
 
   inputFile.clear();
@@ -274,6 +275,12 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
      else if (startswith("time", buffer))
      {
         processTime(buffer); // process time command to set reference UTC before reading stations.
+     }
+     else if (startswith("prefilter", buffer))
+     {
+       // before reading any rupture command, we need to know 
+       // if they need to be prefiltered  
+       processPrefilter(buffer);
      }
   }
 
@@ -418,6 +425,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("anisotropy", buffer) || 
 	   startswith("fileio", buffer) ||
 	   startswith("supergrid", buffer) ||
+	   startswith("prefilter", buffer) ||
 	   startswith("time", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
@@ -496,8 +504,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processBoundaryConditions(buffer);
        //       else if (startswith("supergrid", buffer))
        //         processSupergrid(buffer);
-       else if (startswith("prefilter", buffer))
-	 processPrefilter(buffer);
+       // else if (startswith("prefilter", buffer))
+       // 	 processPrefilter(buffer);
        else if( startswith("developer", buffer ) )
           processDeveloper(buffer);
        // else if( startswith("geodynbc", buffer ) )
@@ -1996,11 +2004,12 @@ void EW::processDeveloper(char* buffer)
 //       token += 12;
 //       output_load = (atoi(token) == 1);
 //     }
-//     else if (startswith("output_timing=", token))
-//     {
-//       token += 14;
-//       output_timing = (atoi(token) == 1);
-//     }
+     else if( startswith("reporttiming=",token) )
+     {
+	token += 13;
+	m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0
+	   || strcmp(token,"yes")==0;
+     }
 //     else if (startswith("interpolation=", token))
 //     {
 //       token += 14;
@@ -7665,6 +7674,7 @@ void EW::processMaterialRfile(char* buffer)
    bool flatten = false;
    bool coords_geographic = true;
    int nstenc = 5;
+   int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
    char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
@@ -7695,6 +7705,13 @@ void EW::processMaterialRfile(char* buffer)
 	 token += 10; // skip directory=
 	 directory = token;
       }
+      else if (startswith("bufsize=", token))
+      {
+	 token += 8;
+	 bufsize = atoi(token);
+	 CHECK_INPUT( bufsize > 10 && bufsize < 1e9, "ParseInputfile: rfile bufsize = " <<
+		      bufsize << " out of allowed range" );
+      }
       else
       {
 	 cout << token << " is not a rfile option " << endl;
@@ -7712,7 +7729,7 @@ void EW::processMaterialRfile(char* buffer)
    if (m_myRank == 0)
       cout << "*** Reading data from Rfile " << filename << " in directory " << directory << endl;
 
-   MaterialRfile* rf = new MaterialRfile( this, filename, directory );
+   MaterialRfile* rf = new MaterialRfile( this, filename, directory, bufsize );
    add_mtrl_block( rf  );
 }
 
@@ -7767,6 +7784,7 @@ void EW::processRandomize(char* buffer)
    m_random_dist = m_random_distz = 100;
    m_random_amp      = 0.1;
    m_random_amp_grad = 0;
+   m_random_sdlimit  = 3;
    m_random_seed[0]  = 1234;
    m_random_seed[1]  = 5678;
    m_random_seed[2]  = 9876;
@@ -7802,6 +7820,12 @@ void EW::processRandomize(char* buffer)
 	 m_random_distz = atof(token);
 	 lengthscalezset = true;
 	 CHECK_INPUT( m_random_distz>0, "Error randomize, distz must be > 0, not " << token);
+      }
+      else if( startswith("sdthreshold=",token) )
+      {
+	 token += 12;
+	 m_random_sdlimit = atof(token);
+	 CHECK_INPUT( m_random_sdlimit>0, "Error sdthreshold > 0, not " << token);
       }
       else if( startswith("seed1=",token) )
       {

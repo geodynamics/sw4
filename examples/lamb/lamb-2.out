@@ -1,35 +1,36 @@
 ----------------------------------------------------------------
-            sw4 version 1.1
+            sw4 version 1.19
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Oct 8 09:01:27 PDT 2014
+  Compiled on: Thu Mar 2 11:29:23 PST 2017
   By user:     andersp
-  Machine:     cab689
-  Compiler:    /usr/local/bin/mpiicpc
+  Machine:     quartz1916
+  Compiler:    /usr/tce/packages/impi/impi-2017.1-intel-17.0.0/bin/mpicxx
   3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
 
 Input file: lamb-2.in
+Default Supergrid thickness has been tuned; thickness = 50 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 2.00000000e-02
 
 * Processing the grid command...
-* Setting nx to 601 to be consistent with h=2.00000000e-02
-* Setting ny to 601 to be consistent with h=2.00000000e-02
-* Setting nz to 301 to be consistent with h=2.00000000e-02
+* Setting nx to 301 to be consistent with h=4.00000000e-02
+* Setting ny to 301 to be consistent with h=4.00000000e-02
+* Setting nz to 151 to be consistent with h=4.00000000e-02
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
-   0      0.02       601       601       301    108721501
-Total number of grid points (without ghost points): 1.08722e+08
+   0      0.04       301       301       151     13680751
+Total number of grid points (without ghost points): 1.36808e+07
 
-Default Supergrid thickness has been tuned; thickness = 100 grid sizes
 
-   Execution time, reading input file 8.53573000e-01 seconds 
+   Execution time, reading input file 1.68809891e-02 seconds 
 ----------------------------------------------------
  Making Output Directory: lamb-2/
 		
@@ -52,16 +53,16 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
        ------------------------------------------------------
 
 ***** PPW = minVs/h/maxFrequency ********
-g=0, h=2.000000e-02, minVs/h=50 (Cartesian)
+g=0, h=4.000000e-02, minVs/h=25 (Cartesian)
 
-   Execution time, start up phase 6.28510000e-02 seconds 
-Running sw4 on 256 processors...
+   Execution time, start up phase 4.21838760e-02 seconds 
+Running sw4 on 32 processors...
 Writing output to directory: lamb-2/
 ============================================================
- Running program on 256 MPI tasks using the following data: 
+ Running program on 32 MPI tasks using the following data: 
 
- Start Time = 0 Goal Time = 15
- Number of time steps = 1290 dt: 0.0116279
+ Start Time = 0 Goal Time = 5
+ Number of time steps = 215 dt: 0.0232558
 -----------------------------------------------------------
 Lamb's problem testing
 Parameters:
@@ -73,31 +74,17 @@ Parameters:
   Source time fcn = C6SmoothBump
 -----------------------------------------------------------
   Begin time stepping...
-Time step       1  t =   1.1627907e-02
-Time step     101  t =   1.1744186e+00
-Time step     201  t =   2.3372093e+00
-Time step     301  t =   3.5000000e+00
-Time step     401  t =   4.6627907e+00
-writing image plane on file lamb-2/lamb.cycle=0430.z=0.uz.sw4img
-writing image plane on file lamb-2/lamb.cycle=0430.z=0.uzerr.sw4img
-Time step     501  t =   5.8255814e+00
-Time step     601  t =   6.9883721e+00
-Time step     701  t =   8.1511628e+00
-Time step     801  t =   9.3139535e+00
-Time step     901  t =   1.0476744e+01
-Writing ASCII USGS file, of size 1001: lamb-2/sg2.txt
-Writing ASCII USGS file, of size 1001: lamb-2/sg1.txt
-Time step    1001  t =   1.1639535e+01
-Time step    1101  t =   1.2802326e+01
-Time step    1201  t =   1.3965116e+01
-Time step    1290  t =   1.5000000e+01
+Time step       1  t =   2.3255814e-02
+Time step     101  t =   2.3488372e+00
+Time step     201  t =   4.6744186e+00
+Time step     215  t =   5.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 4 minutes 3.06548360e+01 seconds 
+   Execution time, solver phase 3.82614932e+01 seconds 
 
- Final solution errors: Linf =   1.5881405e-05, L2 =   1.2062388e-04
+ Final solution errors: Linf =   1.2840831e-02, L2 =   2.6931701e-02
 **** Closing file with solution errors for testing
 ============================================================
-Writing ASCII USGS file, of size 1291: lamb-2/sg1.txt
  program sw4 finished! 
 ============================================================
-Writing ASCII USGS file, of size 1291: lamb-2/sg2.txt
+Writing ASCII USGS file, of size 216: lamb-2/sg2.txt
+Writing ASCII USGS file, of size 216: lamb-2/sg1.txt

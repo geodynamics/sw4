@@ -8,7 +8,7 @@
 #include <ctime>
 #include <cstring>
 #include <unistd.h>
-
+#include <cstdio>
 
 CheckPoint* CheckPoint::nil=static_cast<CheckPoint*>(0);
 

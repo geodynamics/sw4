@@ -95,8 +95,8 @@ else
       optdir := optimize_sierra
 # For Quartz at LC (why doesn't this work when HOSTNAME is quartz770 ?
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
-      include configs/make.haswell
-      foundincfile := "configs/make.haswell"
+      include configs/make.quartz
+      foundincfile := "configs/make.quartz"
     else ifeq ($(findstring cori,$(HOSTNAME)),cori)
       include configs/make.cori
       foundincfile := "configs/make.cori"
@@ -175,6 +175,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
        rhs4th3fortwind.o updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o
 
+# OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
+
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
@@ -189,6 +191,8 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+# test: linking with openmp for the routine rhs4sgcurv.o
+#	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
@@ -199,6 +203,12 @@ sw4-v1.1.tgz:  $(FSW4) $(FOBJ)
 	cp -r src configs tools examples doc Makefile wave.txt CMakeLists.txt INSTALL.txt LICENSE.txt README.txt sw4-v1.1
 	tar czf $@ sw4-v1.1
 	rm -rf sw4-v1.1 
+
+# test
+$(builddir)/rhs4sgcurv.o:src/rhs4sgcurv.C
+	cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$<
+#	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -c ../$<
+
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<

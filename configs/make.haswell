@@ -1,7 +1,8 @@
   etree = no
   proj = yes
   SW4ROOT = /usr/apps/wpp
-  FC = mpiifort
+# module load mvapich2
+  FC = mpifort
   CXX = mpicxx
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
   EXTRA_CXX_FLAGS = -xCORE-AVX2

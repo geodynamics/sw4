@@ -36,20 +36,24 @@
 #include <fenv.h>
 #include <cmath>
 
-#include  "EW.h"
+//#include  "EW.h"
 
 using namespace std;
 
+#ifdef SW4_CUDA
+#include "time_functions_cu.h"
+#else
 #include "time_functions.h"
-
+#endif
 //-----------------------------------------------------------------------
 GridPointSource::GridPointSource( float_sw4 frequency, float_sw4 t0,
-				 int N, int M, int L, int G,
-				 float_sw4 Fx, float_sw4 Fy, float_sw4 Fz,
-				 timeDep tDep,
-				 int ncyc, float_sw4* pars, int npar, int* ipars, int nipar,
-				 float_sw4* jacobian,
-				 float_sw4* dddp, float_sw4* hess1, float_sw4* hess2, float_sw4* hess3 ):
+				  int N, int M, int L, int G,
+				  float_sw4 Fx, float_sw4 Fy, float_sw4 Fz,
+				  timeDep tDep,
+				  int ncyc, float_sw4* pars, int npar, int* ipars, int nipar,
+				  float_sw4* devpars, int* devipars,
+				  float_sw4* jacobian,
+				  float_sw4* dddp, float_sw4* hess1, float_sw4* hess2, float_sw4* hess3 ):
   mFreq(frequency),
   mT0(t0),
   m_i0(N), m_j0(M), m_k0(L),m_grid(G),
@@ -57,20 +61,24 @@ GridPointSource::GridPointSource( float_sw4 frequency, float_sw4 t0,
   mNcyc(ncyc)
 {
    // Copy only pointers, not memory.
-   // mPar, mIpar will no longer be changed by this class, they should
+   // mPar, mIpar will not be changed by this class, they should
    // be set correctly in Source.
 
   mPar   = pars;
   mNpar  = npar;
   mIpar  = ipars;
   mNipar = nipar;
+  mdevPar  = devpars;
+  mdevIpar = devipars;
 
   mForces[0] = Fx;
   mForces[1] = Fy;
   mForces[2] = Fz;
 
+#ifndef SW4_CUDA
   initializeTimeFunction();
-
+#endif
+  //  cout << "Size of time function pointer " << sizeof(mTimeFunc) << endl;
   m_derivative = -1;
 
   m_jacobian_known = jacobian != NULL;
@@ -100,7 +108,11 @@ GridPointSource::~GridPointSource()
 }
 
 //-----------------------------------------------------------------------
+#ifdef SW4_CUDA
+__device__ void GridPointSource::initializeTimeFunction()
+#else
 void GridPointSource::initializeTimeFunction()
+#endif
 {
    //   if( mTimeDependence != iDiscrete )
    //      mPar[0] = m_min_exponent;
@@ -252,7 +264,7 @@ void GridPointSource::initializeTimeFunction()
       mTimeFunc_omtt = C6SmoothBump_omtt;
       break;
     default :
-      std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
+       //      std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
       mTimeFunc = RickerWavelet;
       mTimeFunc_t = RickerWavelet_t;
       mTimeFunc_tt = RickerWavelet_tt;
@@ -393,6 +405,47 @@ void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
 }
 
 //-----------------------------------------------------------------------
+//__device__ void GridPointSource::getFxyz_dev( float_sw4 t, float_sw4* fxyz ) const
+//{
+//   float_sw4 afun, afunv[6];
+//   if( mTimeDependence != iDiscrete6moments )
+//      afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
+//   else
+//   {
+//      int npts = mIpar[0];
+//      int size = 6*(npts-1)+1;
+//      size_t pos = 0;
+//      afunv[0] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[1] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[2] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[3] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[4] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[5] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//   }
+      
+//  if( m_derivative==-1)
+//  {
+//     if( mTimeDependence != iDiscrete6moments )
+//     {
+//	fxyz[0] = mForces[0]*afun;
+//	fxyz[1] = mForces[1]*afun;
+//	fxyz[2] = mForces[2]*afun;
+//     }
+//     else
+//     {
+//	fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
+//	fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
+//	fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
+//     }
+//  }
+//}
+
+//-----------------------------------------------------------------------
 void GridPointSource::getFxyz_notime( float_sw4* fxyz ) const
 {
 // For source spatial discretization testing
@@ -483,6 +536,48 @@ void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
      fxyz[2] += afun*mForces[2]*m_dir[i];
   }
 }
+
+//-----------------------------------------------------------------------
+//__device__ void GridPointSource::getFxyztt_dev( float_sw4 t, float_sw4* fxyz ) const
+//{
+//   float_sw4 afun, afunv[6];
+//   if( mTimeDependence != iDiscrete6moments )
+//      afun= mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
+//   else
+//   {
+//      int npts = mIpar[0];
+//      int size = 6*(npts-1)+1;
+//    size_t pos = 0;
+//      afunv[0] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[1] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[2] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[3] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[4] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//      pos += size;
+//      afunv[5] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+//   }
+
+   //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+//  if( m_derivative==-1)
+//  {
+//     if( mTimeDependence != iDiscrete6moments )
+//     {
+//	fxyz[0] = mForces[0]*afun;
+//	fxyz[1] = mForces[1]*afun;
+//	fxyz[2] = mForces[2]*afun;
+//     }
+//     else
+//     {
+//	fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
+//	fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
+//	fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
+//     }
+//  }
+//}
 
 //-----------------------------------------------------------------------
 void GridPointSource::set_derivative( int der, const float_sw4 dir[11] )
@@ -717,3 +812,19 @@ void GridPointSource::print_info() const
    cout << "-----------------------------------------------------------------------"<<endl;
 
 }
+
+//-----------------------------------------------------------------------
+void GridPointSource::set_sort_key( size_t key )
+{
+   m_key = key;
+}
+
+#ifdef SW4_CUDA
+//-----------------------------------------------------------------------
+__device__ void GridPointSource::init_dev( )
+{
+   mPar = mdevPar;
+   mIpar = mdevIpar;
+   initializeTimeFunction();
+}
+#endif

@@ -91,7 +91,8 @@ Source::Source(EW *a_ew,
   mShearModulusFactor(correctForMu),
   m_derivative(-1),
   m_is_filtered(false),
-  m_myPoint(false)
+  m_myPoint(false),
+  m_timeFuncIsReady(false)
 {
    mForces.resize(6);
    mForces[0] = Mxx;
@@ -127,9 +128,10 @@ Source::Source(EW *a_ew,
       mIpar  = new int[1];
    }
 
-   if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
-      spline_interpolation();
-   else
+   // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
+   //    spline_interpolation();
+   // else
+   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments ) // not sure about iDiscrete6moments
    {
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
@@ -1160,8 +1162,143 @@ alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
 /48.0);
 }
 
+//------ filter and fix up any discrete time functions ----------------
+void Source::prepareTimeFunc(bool doFilter, double sw4TimeStep, int sw4TimeSamples, Filter* sw4_filter)
+{
+
+   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
+   {
+      // new approach for Discrete time functions
+      if (!doFilter)
+      {
+         spline_interpolation();
+         m_timeFuncIsReady = true;
+      }
+      else
+      {
+         // 0. build filter for the discrete time series
+         // 1. compute pre and post durations of filter tail
+         // 2. extend time grid by appropriate number of time samples, pad with zeros
+         // 3. Perform filtering with the dt of the time series
+         // 4. Interpolate by spline
+         Filter my_filter( sw4_filter->get_type(), sw4_filter->get_order(), sw4_filter->get_passes(),
+                           sw4_filter->get_corner_freq1(), sw4_filter->get_corner_freq2());
+// time step in the time series
+         double dt = 1/mFreq;
+// setup the filter for time step dt
+         my_filter.computeSOS( dt );
+         double preCursorTime = my_filter.estimatePrecursor();
+         int nPadding = static_cast<int>(ceil(preCursorTime/dt));
+// current number of points
+         int npts = mIpar[0];
+         double tstart = mPar[0];
+         int ext_npts = npts + 2*nPadding;
+         double *ext_par = new double[ext_npts+1];
+         double ext_tstart = tstart - nPadding*dt;
+// setup ext_par
+         ext_par[0] = ext_tstart;
+         int i;
+// initial zeros
+         for (i=0; i<nPadding; i++)
+            ext_par[i+1] = 0.0;
+// copy values from origianla time series
+         for (i=0; i<npts; i++)
+            ext_par[i + nPadding + 1] = mPar[i+1];
+// trailing zeros
+         for (i=nPadding+npts; i<ext_npts; i++)
+            ext_par[i+1] = 0.0;
+
+// Filter the extended time series (ext_par[0] = ext_tstart and should not be filtered)
+         my_filter.evaluate( ext_npts, &ext_par[1], &ext_par[1] );
+
+// Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter (copied from below)
+         if( my_filter.get_passes() == 2 && my_filter.get_type() == bandPass )
+         {    
+            double wghv, xi;
+            int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+            if( p0+p <= ext_npts ) // only do this if the time series is long enough
+            {
+               for( int i=1 ; i<=p0-1 ; i++ )
+               {
+                  ext_par[i] = 0;
+               }
+               for( int i=p0 ; i<=p0+p ; i++ )
+               {
+                  wghv = 0;
+                  xi = (i-p0)/((double) p);
+	 // polynomial P(xi), P(0) = 0, P(1)=1
+                  wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+                  ext_par[i] *=wghv;
+               }
+            }
+         }
+
+   // update parameters for the discrete function
+         mNipar = 1;
+//      mIpar = new int[mNipar];
+         mIpar[0] = ext_npts;
+//      mFreq = 1./dt;   
+         delete[] mPar; // return memory for the previous time series
+         mNpar = ext_npts+1;
+         mPar = ext_par;
+         mPar[0] = ext_tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
+         mT0 = ext_tstart;
+      // for( int i=0 ; i < nsteps; i++ )
+      //    mPar[i+1] = discfunc[i];
+      // delete[] discfunc;
+
+   // Build the spline representation
+         spline_interpolation();
+         m_is_filtered = true;
+// only do the filtering once
+         m_timeFuncIsReady = true;
+      } // end doFilter
+      
+   } // end if iDiscrete or iDiscrete6Moments
+   else // all other time functions
+   {
+// Modify the time functions if prefiltering is enabled
+      if (doFilter)
+      {
+// the sw4 filter is assumed to already been initialized for the sw4 time step
+	
+// 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
+	double t0_inc = 0;
+	double t0_min;
+	t0_min = sw4_filter->estimatePrecursor();
+	
+// here we only have one time function
+// // old estimate for 2-pole low-pass Butterworth
+// //	t0_min = 4./sw4_filter->get_corner_freq2();
+	
+        t0_inc = compute_t0_increase( t0_min );
+	  
+// If t0_inc is positive, the t0 field in the source command should be incremented 
+// by at least this amount. Otherwise, there might be significant artifacts from 
+// a sudden start of some source.
+	if (t0_inc > 0.)
+	{
+// Don't mess with t0.
+// Instead, warn the user of potential transients due to unsmooth start
+           printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
+		   "*** To avoid artifacts due to sudden startup, increase t0 in the source named '%s' by at least %e\n\n",
+                  t0_min, getName().c_str(), t0_inc);
+	}
+
+// Do the actual filtering
+// this function no longer handles discrete time functions
+        filter_timefunc( sw4_filter, 0.0, sw4TimeStep, sw4TimeSamples ); 
+   }
+      
+// set the flag to indicate that the filtering is complete
+      m_timeFuncIsReady = true;
+   } // end if timeDep != iDiscrete
+   
+}
+
+
 //-----------------------------------------------------------------------
-void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources ) const
+void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_sources )
 {
 // note that this routine is called from all processors, for each input source 
    int i,j,k,g;
@@ -1187,7 +1324,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       MPI_Allreduce( &s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
       // ...then broadcast s
       if( s_owner > -1 )
-	 MPI_Bcast( &s, 1, MPI_DOUBLE, s_owner, MPI_COMM_WORLD );
+	 MPI_Bcast( &s, 1, MPI_DOUBLE, s_owner, MPI_COMM_WORLD );// s_owner is sender, all others receive
       else
       {
 	 printf("ERROR in Source::set_grid_point_sources4, no processor could invert the grid mapping \n");
@@ -1237,305 +1374,385 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    // k-weights across mesh refinement boundary
    double wghkref[6], dwghkref[6], wghrefkz[6], wghrefkzz[6];
 
-   if( canBeInverted )
-   {
- // Compute source location and weights in source discretization
-      ic = static_cast<int>(floor(q));
-      jc = static_cast<int>(floor(r));
-      kc = static_cast<int>(floor(s));
+// at this point canBeInverted == true
+//   if( canBeInverted )
+//   {
+   // Compute source location and weights in source discretization
+   ic = static_cast<int>(floor(q));
+   jc = static_cast<int>(floor(r));
+   kc = static_cast<int>(floor(s));
 
 // Bias stencil away from boundary, no source at ghost/padding points
-      if( ic <= 2 )    ic = 3;
-      if( ic >= Ni-2 ) ic = Ni-3;
-      if( jc <= 2 )    jc = 3;
-      if( jc >= Nj-2 ) jc = Nj-3;
+   if( ic <= 2 )    ic = 3;
+   if( ic >= Ni-2 ) ic = Ni-3;
+   if( jc <= 2 )    jc = 3;
+   if( jc >= Nj-2 ) jc = Nj-3;
 
 // Six point stencil, with points, kc-2,..kc+3, Interior in domain
 // if kc-2>=1, kc+3 <= Nz --> kc >= 3 and kc <= Nz-3
 // Can evaluate with two ghost points if kc-2>=-1 and kc+3 <= Nz+2
 //  --->  kc >=1 and kc <= Nz-1
 //
-      if( kc >= Nz )
-	 kc = Nz-1;
-      if( kc < 1 )
-	 kc = 1;
+   if( kc >= Nz )
+      kc = Nz-1;
+   if( kc < 1 )
+      kc = 1;
 
 // upper(surface) and lower boundaries , when the six point stencil kc-2,..kc+3
 // make use of the first (k=1) or the last (k=Nz) interior point.
-      upperbndry = (kc == 1    || kc == 2    || kc == 3  );
-      lowerbndry = (kc == Nz-1 || kc == Nz-2 || kc == Nz-3 );
+   upperbndry = (kc == 1    || kc == 2    || kc == 3  );
+   lowerbndry = (kc == Nz-1 || kc == Nz-2 || kc == Nz-3 );
 
 // ccbndry=true if at the interface between the curvilinear grid and the cartesian grid. 
 // Defined as the six point stencil uses values from both grids.
-      ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
-					       (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
+   ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
+                                            (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
 
 // gridrefbndry=true if at the interface between two cartesian grids of different refinements.
-      gridrefbndry = (upperbndry && g < a_EW->mNumberOfGrids-1 && !ccbndry) ||
-	 (lowerbndry && g>0 && !ccbndry );
+   gridrefbndry = (upperbndry && g < a_EW->mNumberOfGrids-1 && !ccbndry) ||
+      (lowerbndry && g>0 && !ccbndry );
+
+//
+// ********* do the filtering of the time function here as needed based on (ic, jc, kc) and gridrefbndry ******
+//      
+   if (!gridrefbndry)
+   {
+      for( int k=kc-2 ; k <= kc+3 ; k++ )
+         for( int j=jc-2 ; j <= jc+3 ; j++ )
+            for( int i=ic-2 ; i <= ic+3 ; i++ )
+            {
+               if (a_EW->interior_point_in_proc(i,j,g) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
+               {
+// filter the time function in this Source object, unless already done before
+                  prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
+                                  a_EW->m_filter_ptr);
+               }
+            }         
+   }
+   else // near MR interface
+   {
+// compute (icref, jcref) (duplicated from below)
+      int icref, jcref;
+      int Niref, Njref;
+      double qref, rref;
+      if( kc-1 < Nz-kc )
+      {
+         // kc closer to upper boundary. Source spread to finer grid above.
+         qref = mX0/(0.5*h)+1;
+         rref = mY0/(0.5*h)+1;
+         Niref = a_EW->m_global_nx[g+1];
+         Njref = a_EW->m_global_ny[g+1];
+      }
+      else
+      {
+         // kc closer to lower boundary. Source spread to coarser grid below.
+         qref = mX0/(2*h)+1;
+         rref = mY0/(2*h)+1;
+         Niref = a_EW->m_global_nx[g-1];
+         Njref = a_EW->m_global_ny[g-1];
+      }
+      icref = static_cast<int>(qref);
+      jcref = static_cast<int>(rref);
+      if( icref <= 2 ) icref = 3;
+      if( icref >= Niref-2 ) icref = Niref-3;
+      if( jcref <= 2 ) jcref = 3;
+      if( jcref >= Njref-2 ) jcref = Njref-3;
+// done computing (icref, jcref)         
+      for( int k=kc-2 ; k <= kc+3 ; k++ )
+      {
+         if( k <= 1 )
+         {
+            // Finer grid above
+            for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+               for( int i=icref-2 ; i <= icref+3 ; i++ )
+               {
+                  if( a_EW->interior_point_in_proc(i,j,g+1) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
+                  {
+// filter the time function in this Source object, unless already done
+                     m_timeFuncIsReady = true;
+                  }
+               }
+         } // end if k<=1
+         if( k >= Nz )
+         {
+            // Coarser grid below
+            for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+               for( int i=icref-2 ; i <= icref+3 ; i++ )
+               {
+                  if( a_EW->interior_point_in_proc(i,j,g-1) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
+                  {
+                     m_timeFuncIsReady = true;
+                  }
+               }
+         } // end if k >= Nz
+            
+      } // end for kc
+   } // end if near MR interface
+      
+      
 
 // If not at the interface between different grids, bias stencil away 
 // from the boundary.
-      if( !ccbndry && !gridrefbndry )
-      {
-	 if( kc <= 2 )    kc = 3;
-	 if( kc >= Nz-2 ) kc = Nz-3;
-      }
-      ai=q-ic, bi=r-jc, ci=s-kc;
+   if( !ccbndry && !gridrefbndry )
+   {
+      if( kc <= 2 )    kc = 3;
+      if( kc >= Nz-2 ) kc = Nz-3;
+   }
+   ai=q-ic, bi=r-jc, ci=s-kc;
 
    // Delta distribution
-      getsourcewgh( ai, wghi, wghix, wghixx );
-      getsourcewgh( bi, wghj, wghjy, wghjyy );
-      getsourcewgh( ci, wghk, wghkz, wghkzz );
+   getsourcewgh( ai, wghi, wghix, wghixx );
+   getsourcewgh( bi, wghj, wghjy, wghjyy );
+   getsourcewgh( ci, wghk, wghkz, wghkzz );
 
 // Delta' distribution
-      getsourcedwgh( ai, dwghi, dwghix, dwghixx );
-      getsourcedwgh( bi, dwghj, dwghjy, dwghjyy );
-      getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
+   getsourcedwgh( ai, dwghi, dwghix, dwghixx );
+   getsourcedwgh( bi, dwghj, dwghjy, dwghjyy );
+   getsourcedwgh( ci, dwghk, dwghkz, dwghkzz );
 
    // Special boundary stencil at free surface
-      if( !ccbndry && !gridrefbndry && (kc == 3 && ci <= 0) )
+   if( !ccbndry && !gridrefbndry && (kc == 3 && ci <= 0) )
+   {
+      getsourcewghlow( ci, wghk, wghkz, wghkzz );
+      getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
+   }
+
+   // Special source discretization across grid refinement boundary
+   //      cout << "grid ref bndr " << gridrefbndry << " kc = " << kc << endl;
+   if( gridrefbndry )
+   {
+      if( lowerbndry )
       {
-	 getsourcewghlow( ci, wghk, wghkz, wghkzz );
-	 getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
+         if( kc == Nz-1 )
+         {
+            getsourcedwghNM1sm6( ci, dwghk );
+            getsourcewghNM1sm6(  ci,  wghk );
+            wghkref[3]  = wghk[3]*0.5;
+            wghk[3]     = wghk[3]*0.5;
+            wghkref[4]  = wghk[4];
+            wghkref[5]  = wghk[5];
+
+            dwghkref[3] = dwghk[3]*0.5;
+            dwghk[3]    = dwghk[3]*0.5;
+            dwghkref[4] = dwghk[4];
+            dwghkref[5] = dwghk[5];	       
+
+            wghkref[3] /= normwgh[0];
+            wghkref[4] /= normwgh[1];
+            wghkref[5] /= normwgh[2];
+            wghk[3]    /= normwgh[0];
+            wghk[2]    /= normwgh[1];
+            wghk[1]    /= normwgh[2];
+            wghk[0]    /= normwgh[3];
+            dwghkref[3] /= normwgh[0];
+            dwghkref[4] /= normwgh[1];
+            dwghkref[5] /= normwgh[2];
+            dwghk[3]    /= normwgh[0];
+            dwghk[2]    /= normwgh[1];
+            dwghk[1]    /= normwgh[2];
+            dwghk[0]    /= normwgh[3];
+         }
+         else if( kc == Nz-2 )
+         {
+            getsourcedwghNM2sm6( ci, dwghk );
+            getsourcewghNM2sm6(  ci,  wghk );
+            wghkref[4]  = wghk[4]*0.5;
+            wghk[4]     = wghk[4]*0.5;
+            wghkref[5]  = wghk[5];
+
+            dwghkref[4] = dwghk[4]*0.5;
+            dwghk[4]    = dwghk[4]*0.5;
+            dwghkref[5] = dwghk[5];
+
+            wghkref[4] /= normwgh[0];
+            wghkref[5] /= normwgh[1];
+            wghk[4]    /= normwgh[0];
+            wghk[3]    /= normwgh[1];
+            wghk[2]    /= normwgh[2];
+            wghk[1]    /= normwgh[3];
+            dwghkref[4] /= normwgh[0];
+            dwghkref[5] /= normwgh[1];
+            dwghk[4]    /= normwgh[0];
+            dwghk[3]    /= normwgh[1];
+            dwghk[2]    /= normwgh[2];
+            dwghk[1]    /= normwgh[3];
+         }
+         else if( kc == Nz-3 )
+         {
+            getsourcedwgh( ci, dwghk, wghrefkz, wghrefkzz );
+            getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
+            wghkref[5]  = wghk[5]*0.5;
+            wghk[5]     = wghk[5]*0.5;
+            dwghkref[5] = dwghk[5]*0.5;
+            dwghk[5]    = dwghk[5]*0.5;
+            //	       cout << " sumwgh = " << dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] << endl;
+
+            wghkref[5] /= normwgh[0];
+            wghk[5]    /= normwgh[0];
+            wghk[4]    /= normwgh[1];
+            wghk[3]    /= normwgh[2];
+            wghk[2]    /= normwgh[3];
+            dwghkref[5] /= normwgh[0];
+            dwghk[5]    /= normwgh[0];
+            dwghk[4]    /= normwgh[1];
+            dwghk[3]    /= normwgh[2];
+            dwghk[2]    /= normwgh[3];
+
+         }
       }
-
-  // Special source discretization across grid refinement boundary
-      //      cout << "grid ref bndr " << gridrefbndry << " kc = " << kc << endl;
-      if( gridrefbndry )
+      else
       {
-	 if( lowerbndry )
-	 {
-	    if( kc == Nz-1 )
-	    {
-	       getsourcedwghNM1sm6( ci, dwghk );
-	       getsourcewghNM1sm6(  ci,  wghk );
-	       wghkref[3]  = wghk[3]*0.5;
-	       wghk[3]     = wghk[3]*0.5;
-	       wghkref[4]  = wghk[4];
-	       wghkref[5]  = wghk[5];
+         if( kc == 1 )
+         {
+            getsourcedwghNsm6( 2*ci, dwghk );
+            getsourcewghNsm6(  2*ci,  wghk );
+            wghkref[0]  = wghk[0];
+            wghkref[1]  = wghk[1];
+            wghkref[2]  = wghk[2]*0.5;
+            wghk[2]     = wghk[2]*0.5;
 
-	       dwghkref[3] = dwghk[3]*0.5;
-	       dwghk[3]    = dwghk[3]*0.5;
-	       dwghkref[4] = dwghk[4];
-	       dwghkref[5] = dwghk[5];	       
-
-	       wghkref[3] /= normwgh[0];
-	       wghkref[4] /= normwgh[1];
-	       wghkref[5] /= normwgh[2];
-	       wghk[3]    /= normwgh[0];
-	       wghk[2]    /= normwgh[1];
-	       wghk[1]    /= normwgh[2];
-	       wghk[0]    /= normwgh[3];
-	       dwghkref[3] /= normwgh[0];
-	       dwghkref[4] /= normwgh[1];
-	       dwghkref[5] /= normwgh[2];
-	       dwghk[3]    /= normwgh[0];
-	       dwghk[2]    /= normwgh[1];
-	       dwghk[1]    /= normwgh[2];
-	       dwghk[0]    /= normwgh[3];
-	    }
-	    else if( kc == Nz-2 )
-	    {
-	       getsourcedwghNM2sm6( ci, dwghk );
-	       getsourcewghNM2sm6(  ci,  wghk );
-	       wghkref[4]  = wghk[4]*0.5;
-	       wghk[4]     = wghk[4]*0.5;
-	       wghkref[5]  = wghk[5];
-
-	       dwghkref[4] = dwghk[4]*0.5;
-	       dwghk[4]    = dwghk[4]*0.5;
-	       dwghkref[5] = dwghk[5];
-
-	       wghkref[4] /= normwgh[0];
-	       wghkref[5] /= normwgh[1];
-	       wghk[4]    /= normwgh[0];
-	       wghk[3]    /= normwgh[1];
-	       wghk[2]    /= normwgh[2];
-	       wghk[1]    /= normwgh[3];
-	       dwghkref[4] /= normwgh[0];
-	       dwghkref[5] /= normwgh[1];
-	       dwghk[4]    /= normwgh[0];
-	       dwghk[3]    /= normwgh[1];
-	       dwghk[2]    /= normwgh[2];
-	       dwghk[1]    /= normwgh[3];
-	    }
-	    else if( kc == Nz-3 )
-	    {
-	       getsourcedwgh( ci, dwghk, wghrefkz, wghrefkzz );
-	       getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
-	       wghkref[5]  = wghk[5]*0.5;
-	       wghk[5]     = wghk[5]*0.5;
-	       dwghkref[5] = dwghk[5]*0.5;
-	       dwghk[5]    = dwghk[5]*0.5;
- //	       cout << " sumwgh = " << dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] << endl;
-
-	       wghkref[5] /= normwgh[0];
-	       wghk[5]    /= normwgh[0];
-	       wghk[4]    /= normwgh[1];
-	       wghk[3]    /= normwgh[2];
-	       wghk[2]    /= normwgh[3];
-	       dwghkref[5] /= normwgh[0];
-	       dwghk[5]    /= normwgh[0];
-	       dwghk[4]    /= normwgh[1];
-	       dwghk[3]    /= normwgh[2];
-	       dwghk[2]    /= normwgh[3];
-
-	    }
-	 }
-	 else
-	 {
-	    if( kc == 1 )
-	    {
-	       getsourcedwghNsm6( 2*ci, dwghk );
-	       getsourcewghNsm6(  2*ci,  wghk );
-	       wghkref[0]  = wghk[0];
-	       wghkref[1]  = wghk[1];
-	       wghkref[2]  = wghk[2]*0.5;
-	       wghk[2]     = wghk[2]*0.5;
-
-	       dwghkref[0] = dwghk[0];
-	       dwghkref[1] = dwghk[1];
-	       dwghkref[2] = dwghk[2]*0.5;
-	       dwghk[2]    = dwghk[2]*0.5;
+            dwghkref[0] = dwghk[0];
+            dwghkref[1] = dwghk[1];
+            dwghkref[2] = dwghk[2]*0.5;
+            dwghk[2]    = dwghk[2]*0.5;
 
 //	       cout << "kc = 1  ref:  " << wghkref[0] << " " << wghkref[1] << " " << wghkref[2] << endl;
 //	       cout << "        this: " << wghk[2] << " " << wghk[3] << " " << wghk[4] << " " << wghk[5] << endl;
 //	       cout << "  middle sum: " << wghk[2]+wghkref[2] << endl;
 //	       cout << " 2*ci = " << 2*ci << endl;
 
-	       wghkref[0] /= normwgh[2];
-	       wghkref[1] /= normwgh[1];
-	       wghkref[2] /= normwgh[0];
-	       wghk[2]    /= normwgh[0];
-	       wghk[3]    /= normwgh[1];
-	       wghk[4]    /= normwgh[2];
-	       wghk[5]    /= normwgh[3];
+            wghkref[0] /= normwgh[2];
+            wghkref[1] /= normwgh[1];
+            wghkref[2] /= normwgh[0];
+            wghk[2]    /= normwgh[0];
+            wghk[3]    /= normwgh[1];
+            wghk[4]    /= normwgh[2];
+            wghk[5]    /= normwgh[3];
 
-	       dwghkref[0] /= normwgh[2];
-	       dwghkref[1] /= normwgh[1];
-	       dwghkref[2] /= normwgh[0];
-	       dwghk[2]    /= normwgh[0];
-	       dwghk[3]    /= normwgh[1];
-	       dwghk[4]    /= normwgh[2];
-	       dwghk[5]    /= normwgh[3];
+            dwghkref[0] /= normwgh[2];
+            dwghkref[1] /= normwgh[1];
+            dwghkref[2] /= normwgh[0];
+            dwghk[2]    /= normwgh[0];
+            dwghk[3]    /= normwgh[1];
+            dwghk[4]    /= normwgh[2];
+            dwghk[5]    /= normwgh[3];
 
-	       dwghk[2] *= 2;
-	       dwghk[3] *= 2;
-	       dwghk[4] *= 2;
-	       dwghk[5] *= 2;
-	    }
-	    else if( kc == 2 )
-	    {
-	       getsourcedwghP1sm6( 2*ci, dwghk );
-	       getsourcewghP1sm6(  2*ci,  wghk );
+            dwghk[2] *= 2;
+            dwghk[3] *= 2;
+            dwghk[4] *= 2;
+            dwghk[5] *= 2;
+         }
+         else if( kc == 2 )
+         {
+            getsourcedwghP1sm6( 2*ci, dwghk );
+            getsourcewghP1sm6(  2*ci,  wghk );
 
-	       wghkref[0]  = wghk[0];
-	       wghkref[1]  = wghk[1]*0.5;
-	       wghk[1]     = wghk[1]*0.5;
+            wghkref[0]  = wghk[0];
+            wghkref[1]  = wghk[1]*0.5;
+            wghk[1]     = wghk[1]*0.5;
 
-	       dwghkref[0] = dwghk[0];
-	       dwghkref[1] = dwghk[1]*0.5;
-	       dwghk[1]    = dwghk[1]*0.5;
+            dwghkref[0] = dwghk[0];
+            dwghkref[1] = dwghk[1]*0.5;
+            dwghk[1]    = dwghk[1]*0.5;
 
-	       wghkref[0] /= normwgh[1];
-	       wghkref[1] /= normwgh[0];
-	       wghk[1]    /= normwgh[0];
-	       wghk[2]    /= normwgh[1];
-	       wghk[3]    /= normwgh[2];
-	       wghk[4]    /= normwgh[3];
+            wghkref[0] /= normwgh[1];
+            wghkref[1] /= normwgh[0];
+            wghk[1]    /= normwgh[0];
+            wghk[2]    /= normwgh[1];
+            wghk[3]    /= normwgh[2];
+            wghk[4]    /= normwgh[3];
 
-	       dwghkref[0] /= normwgh[1];
-	       dwghkref[1] /= normwgh[0];
-	       dwghk[1]    /= normwgh[0];
-	       dwghk[2]    /= normwgh[1];
-	       dwghk[3]    /= normwgh[2];
-	       dwghk[4]    /= normwgh[3];
+            dwghkref[0] /= normwgh[1];
+            dwghkref[1] /= normwgh[0];
+            dwghk[1]    /= normwgh[0];
+            dwghk[2]    /= normwgh[1];
+            dwghk[3]    /= normwgh[2];
+            dwghk[4]    /= normwgh[3];
 
-	       dwghk[1] *= 2;
-	       dwghk[2] *= 2;
-	       dwghk[3] *= 2;
-	       dwghk[4] *= 2;
-	       dwghk[5] *= 2;
+            dwghk[1] *= 2;
+            dwghk[2] *= 2;
+            dwghk[3] *= 2;
+            dwghk[4] *= 2;
+            dwghk[5] *= 2;
 	       
-	    }
-	    else if( kc == 3 )
-	    {
-	       getsourcedwgh( ci, dwghk, wghrefkz, wghrefkzz );
-	       for( int k=0 ; k <= 5 ;k++ )
-		  dwghk[k] *= 0.5;
-	       getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
-	       wghkref[0]  = wghk[0]*0.5;
-	       wghk[0]     = wghk[0]*0.5;
-	       dwghkref[0] = dwghk[0]*0.5;
-	       dwghk[0]    = dwghk[0]*0.5;
+         }
+         else if( kc == 3 )
+         {
+            getsourcedwgh( ci, dwghk, wghrefkz, wghrefkzz );
+            for( int k=0 ; k <= 5 ;k++ )
+               dwghk[k] *= 0.5;
+            getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
+            wghkref[0]  = wghk[0]*0.5;
+            wghk[0]     = wghk[0]*0.5;
+            dwghkref[0] = dwghk[0]*0.5;
+            dwghk[0]    = dwghk[0]*0.5;
 
-	       wghkref[0] /= normwgh[0];
-	       wghk[0]    /= normwgh[0];
-	       wghk[1]    /= normwgh[1];
-	       wghk[2]    /= normwgh[2];
-	       wghk[3]    /= normwgh[3];
-	       dwghkref[0] /= normwgh[0];
-	       dwghk[0]    /= normwgh[0];
-	       dwghk[1]    /= normwgh[1];
-	       dwghk[2]    /= normwgh[2];
-	       dwghk[3]    /= normwgh[3];
-	       dwghk[0] *= 2;
-	       dwghk[1] *= 2;
-	       dwghk[2] *= 2;
-	       dwghk[3] *= 2;
-	       dwghk[4] *= 2;
-	       dwghk[5] *= 2;
+            wghkref[0] /= normwgh[0];
+            wghk[0]    /= normwgh[0];
+            wghk[1]    /= normwgh[1];
+            wghk[2]    /= normwgh[2];
+            wghk[3]    /= normwgh[3];
+            dwghkref[0] /= normwgh[0];
+            dwghk[0]    /= normwgh[0];
+            dwghk[1]    /= normwgh[1];
+            dwghk[2]    /= normwgh[2];
+            dwghk[3]    /= normwgh[3];
+            dwghk[0] *= 2;
+            dwghk[1] *= 2;
+            dwghk[2] *= 2;
+            dwghk[3] *= 2;
+            dwghk[4] *= 2;
+            dwghk[5] *= 2;
 
-	    }
+         }
 
-	 }
       }
+   }
 
 // Boundary correction, at upper boundary, but only if SBP operators are used there
 //      if( !gridrefbndry && (g == a_EW->mNumberOfGrids-1) && a_EW->is_onesided(g,4)  )
-      if( !gridrefbndry && a_EW->is_onesided(g,4)  )
+   if( !gridrefbndry && a_EW->is_onesided(g,4)  )
+   {
+      for( int k=0 ; k <= 5 ; k++ )
       {
-	 for( int k=0 ; k <= 5 ; k++ )
-	 {
-	    if( ( 1 <= k+kc-2) && ( k+kc-2 <= 4 ) )
-	    {
-	       wghk[k]    /= normwgh[k+kc-3];
-	       dwghk[k]   /= normwgh[k+kc-3];
-	       wghkz[k]   /= normwgh[k+kc-3];
-	       dwghkz[k]  /= normwgh[k+kc-3];
-	       wghkzz[k]  /= normwgh[k+kc-3];
-	       dwghkzz[k] /= normwgh[k+kc-3];
-	    }
-	 }
-      }
-      if( !gridrefbndry && a_EW->is_onesided(g,5)  )
-      {
-	 for( int k=0 ; k <= 5 ; k++ )
-	 {
-	    if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
-	    {
-	       wghk[k]    /= normwgh[Nz-k-kc+2];
-	       dwghk[k]   /= normwgh[Nz-k-kc+2];
-	       wghkz[k]   /= normwgh[Nz-k-kc+2];
-	       dwghkz[k]  /= normwgh[Nz-k-kc+2];
-	       wghkzz[k]  /= normwgh[Nz-k-kc+2];
-	       dwghkzz[k] /= normwgh[Nz-k-kc+2];
-	    }
-	 }
+         if( ( 1 <= k+kc-2) && ( k+kc-2 <= 4 ) )
+         {
+            wghk[k]    /= normwgh[k+kc-3];
+            dwghk[k]   /= normwgh[k+kc-3];
+            wghkz[k]   /= normwgh[k+kc-3];
+            dwghkz[k]  /= normwgh[k+kc-3];
+            wghkzz[k]  /= normwgh[k+kc-3];
+            dwghkzz[k] /= normwgh[k+kc-3];
+         }
       }
    }
+   if( !gridrefbndry && a_EW->is_onesided(g,5)  )
+   {
+      for( int k=0 ; k <= 5 ; k++ )
+      {
+         if( ( Nz-3 <= k+kc-2) && ( k+kc-2 <= Nz ) )
+         {
+            wghk[k]    /= normwgh[Nz-k-kc+2];
+            dwghk[k]   /= normwgh[Nz-k-kc+2];
+            wghkz[k]   /= normwgh[Nz-k-kc+2];
+            dwghkz[k]  /= normwgh[Nz-k-kc+2];
+            wghkzz[k]  /= normwgh[Nz-k-kc+2];
+            dwghkzz[k] /= normwgh[Nz-k-kc+2];
+         }
+      }
+   }
+   
    int myid;
    MPI_Comm_rank(MPI_COMM_WORLD, &myid );
-   //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
-   //   if( canBeInverted )
-   //      cout << " can be inverted";
-   //   else
-   //      cout << " can not be inverted";
+//   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
+//   if( canBeInverted )
+//      cout << " can be inverted";
+//   else
+//      cout << " can not be inverted";
 
 
-  // If source at grid refinement interface, set up variables for 
-  // discretization on grid on the other side of the interface
+// If source at grid refinement interface, set up variables for 
+// discretization on grid on the other side of the interface
    int icref, jcref;
    double airef, biref, wghiref[6], wghirefx[6], wghirefxx[6];
    double wghjref[6], wghjrefy[6], wghjrefyy[6];
@@ -1546,19 +1763,19 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       double qref, rref;
       if( kc-1 < Nz-kc )
       {
-     // kc closer to upper boundary. Source spread to finer grid above.
-	 qref = mX0/(0.5*h)+1;
-	 rref = mY0/(0.5*h)+1;
-	 Niref = a_EW->m_global_nx[g+1];
-	 Njref = a_EW->m_global_ny[g+1];
+         // kc closer to upper boundary. Source spread to finer grid above.
+         qref = mX0/(0.5*h)+1;
+         rref = mY0/(0.5*h)+1;
+         Niref = a_EW->m_global_nx[g+1];
+         Njref = a_EW->m_global_ny[g+1];
       }
       else
       {
-     // kc closer to lower boundary. Source spread to coarser grid below.
-	 qref = mX0/(2*h)+1;
-	 rref = mY0/(2*h)+1;
-	 Niref = a_EW->m_global_nx[g-1];
-	 Njref = a_EW->m_global_ny[g-1];
+         // kc closer to lower boundary. Source spread to coarser grid below.
+         qref = mX0/(2*h)+1;
+         rref = mY0/(2*h)+1;
+         Niref = a_EW->m_global_nx[g-1];
+         Njref = a_EW->m_global_ny[g-1];
       }
       icref = static_cast<int>(qref);
       jcref = static_cast<int>(rref);
@@ -1575,107 +1792,107 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       getsourcedwgh( biref, dwghjref, wghjrefy, wghjrefyy );
    }
 
-   // Point source. NOTE: Derivatives needed for source inversion not implemented for this case.
-   if( !mIsMomentSource && canBeInverted )
+// Point source. NOTE: Derivatives needed for source inversion not implemented for this case.
+   if( !mIsMomentSource /*&& canBeInverted*/ )
    {
       for( int k=kc-2 ; k <= kc+3 ; k++ )
-	 for( int j=jc-2 ; j <= jc+3 ; j++ )
-	    for( int i=ic-2 ; i <= ic+3 ; i++ )
-	    {
-	       double wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
-	       if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-		   && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
-	       {
-		  if( curvilinear )
-		     wF /= a_EW->mJ(i,j,k);
-		  else
-		     wF /= h*h*h;
+         for( int j=jc-2 ; j <= jc+3 ; j++ )
+            for( int i=ic-2 ; i <= ic+3 ; i++ )
+            {
+               double wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
+               if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+                   && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
+               {
+                  if( curvilinear )
+                     wF /= a_EW->mJ(i,j,k);
+                  else
+                     wF /= h*h*h;
 
-		  if( 1 <= k && k <= Nz )
-		  {
-		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
-								      i,j,k,g,
-								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
-								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
-		     point_sources.push_back(sourcePtr);
-		  }
-		  if( k <= 1 && ccbndry && upperbndry )
-		  {
-		     int Nzp =a_EW->m_global_nz[g+1];
-		     int kk = Nzp - 1 + k;
+                  if( 1 <= k && k <= Nz )
+                  {
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+                                                                       i,j,k,g,
+                                                                       wF*mForces[0], wF*mForces[1], wF*mForces[2],
+                                                                       mTimeDependence, mNcyc, 
+                                                                       mPar, mNpar, mIpar, mNipar );
+                     point_sources.push_back(sourcePtr);
+                  }
+                  if( k <= 1 && ccbndry && upperbndry )
+                  {
+                     int Nzp =a_EW->m_global_nz[g+1];
+                     int kk = Nzp - 1 + k;
 
-		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
-								      i,j,kk,g+1,
-								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
-								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
-		     point_sources.push_back(sourcePtr);
-		  }
-		  if( k >= Nz && ccbndry && lowerbndry )
-		  {
-		     int kk = k-Nz + 1;
-		     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
-									  i,j,kk,g-1,
-									  wF*mForces[0], wF*mForces[1], wF*mForces[2],
-									  mTimeDependence, mNcyc, 
-									  mPar, mNpar, mIpar, mNipar );
-		     point_sources.push_back(sourcePtr);
-		  }
-	       }
-	    }
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+                                                                       i,j,kk,g+1,
+                                                                       wF*mForces[0], wF*mForces[1], wF*mForces[2],
+                                                                       mTimeDependence, mNcyc, 
+                                                                       mPar, mNpar, mIpar, mNipar );
+                     point_sources.push_back(sourcePtr);
+                  }
+                  if( k >= Nz && ccbndry && lowerbndry )
+                  {
+                     int kk = k-Nz + 1;
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+                                                                       i,j,kk,g-1,
+                                                                       wF*mForces[0], wF*mForces[1], wF*mForces[2],
+                                                                       mTimeDependence, mNcyc, 
+                                                                       mPar, mNpar, mIpar, mNipar );
+                     point_sources.push_back(sourcePtr);
+                  }
+               }
+            }
       if( gridrefbndry )
       {
-	 for( int k=kc-2 ; k <= kc+3 ; k++ )
-	 {
-	    if( k <= 1 )
-	    {
-	       // Finer grid above
-	       for( int j=jcref-2 ; j <= jcref+3 ; j++ )
-		  for( int i=icref-2 ; i <= icref+3 ; i++ )
-		  {
-		     double wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
-		     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-			 && a_EW->interior_point_in_proc(i,j,g+1) ) // checks if (i,j) belongs to this processor
-		     {
-			wF /= 0.125*h*h*h;
-			int Nzp =a_EW->m_global_nz[g+1];
-			int kk = Nzp - 1 + k;
-			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
-								      i,j,kk,g+1,
-								      wF*mForces[0], wF*mForces[1], wF*mForces[2],
-								      mTimeDependence, mNcyc, 
-								      mPar, mNpar, mIpar, mNipar );
-			point_sources.push_back(sourcePtr);
-		     }
-		  }
-	    }
-	    if( k >= Nz )
-	    {
-	       // Coarser grid below
-	       for( int j=jcref-2 ; j <= jcref+3 ; j++ )
-		  for( int i=icref-2 ; i <= icref+3 ; i++ )
-		  {
-		     double wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
-		     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
-			 && a_EW->interior_point_in_proc(i,j,g-1) ) // checks if (i,j) belongs to this processor
-		     {
-			wF /= 8*h*h*h;
-			int kk = k-Nz + 1;
-			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
-									  i,j,kk,g-1,
-									  wF*mForces[0], wF*mForces[1], wF*mForces[2],
-									  mTimeDependence, mNcyc, 
-									  mPar, mNpar, mIpar, mNipar );
-			point_sources.push_back(sourcePtr);
-		     }
-		  }
-	    }
-	 }
+         for( int k=kc-2 ; k <= kc+3 ; k++ )
+         {
+            if( k <= 1 )
+            {
+               // Finer grid above
+               for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+                  for( int i=icref-2 ; i <= icref+3 ; i++ )
+                  {
+                     double wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
+                     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+                         && a_EW->interior_point_in_proc(i,j,g+1) ) // checks if (i,j) belongs to this processor
+                     {
+                        wF /= 0.125*h*h*h;
+                        int Nzp =a_EW->m_global_nz[g+1];
+                        int kk = Nzp - 1 + k;
+                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+                                                                          i,j,kk,g+1,
+                                                                          wF*mForces[0], wF*mForces[1], wF*mForces[2],
+                                                                          mTimeDependence, mNcyc, 
+                                                                          mPar, mNpar, mIpar, mNipar );
+                        point_sources.push_back(sourcePtr);
+                     }
+                  }
+            } // end if k<=1
+            if( k >= Nz )
+            {
+               // Coarser grid below
+               for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+                  for( int i=icref-2 ; i <= icref+3 ; i++ )
+                  {
+                     double wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
+                     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+                         && a_EW->interior_point_in_proc(i,j,g-1) ) // checks if (i,j) belongs to this processor
+                     {
+                        wF /= 8*h*h*h;
+                        int kk = k-Nz + 1;
+                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+                                                                          i,j,kk,g-1,
+                                                                          wF*mForces[0], wF*mForces[1], wF*mForces[2],
+                                                                          mTimeDependence, mNcyc, 
+                                                                          mPar, mNpar, mIpar, mNipar );
+                        point_sources.push_back(sourcePtr);
+                     }
+                  }
+            }
+         }
       }// Grid refinement boundary
-   } 
-   // Moment source.
-   else if( mIsMomentSource )
+   } // if !mIsMomentSource (i.e. pointForce)
+   
+   else if( mIsMomentSource ) // Moment source.
    {
       double qX0[3], rX0[3], sX0[3];
 
@@ -1685,86 +1902,86 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       double d2sX0[6], d2sY0[6], d2sZ0[6];
       if( !curvilinear )
       {
-	 // Cartesian case, constant metric
-	 qX0[0] = 1/h;qX0[1]=0;  qX0[2]=0;
-	 rX0[0] = 0;  rX0[1]=1/h;rX0[2]=0;
-	 sX0[0] = 0;  sX0[1]=0;  sX0[2]=1/h;
-	 dsX0[0] = dsX0[1] = dsX0[2] = 0;
-	 dsY0[0] = dsY0[1] = dsY0[2] = 0;
-	 dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
+         // Cartesian case, constant metric
+         qX0[0] = 1/h;qX0[1]=0;  qX0[2]=0;
+         rX0[0] = 0;  rX0[1]=1/h;rX0[2]=0;
+         sX0[0] = 0;  sX0[1]=0;  sX0[2]=1/h;
+         dsX0[0] = dsX0[1] = dsX0[2] = 0;
+         dsY0[0] = dsY0[1] = dsY0[2] = 0;
+         dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
          for( int i=0 ; i < 6  ; i++ )
-	    d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
+            d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
       }	 
       else
       {
-	 // Compute the curvilinear metric in the processor that owns the source.
-	 //   (ic, jc are undefined if canBeInverted is false.)
-	 double zdertmp[9]={0,0,0,0,0,0,0,0,0}, zq, zr, zs;
-	 double zqq, zqr, zqs, zrr, zrs, zss;
-	 if( a_EW->interior_point_in_proc(ic,jc,g) && canBeInverted )
-	 {
-	    compute_metric_at_source( a_EW, q, r, s, ic, jc, kc, g, zq, zr, zs,
-				      zqq, zqr, zqs, zrr, zrs, zss );
-	    zdertmp[0] = zq;
-	    zdertmp[1] = zr;
-	    zdertmp[2] = zs;
-	    zdertmp[3] = zqq;
-	    zdertmp[4] = zqr;
-	    zdertmp[5] = zqs;
-	    zdertmp[6] = zrr;
-	    zdertmp[7] = zrs;
-	    zdertmp[8] = zss;
-	 }
-	 //	 // Broadcast the computed metric to all processors. 
-	 //	 // First find out the ID of the processor that computed the metric...
-	 //	 int owner = -1;
-	 //	 if( a_EW->interior_point_in_proc( ic, jc, g ) && canBeInverted )
-	 //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
-	 //	 int owntmp = owner;
-	 //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-	 //	 // ...then broadcast the derivatives
-	 //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
+         // Compute the curvilinear metric in the processor that owns the source.
+         //   (ic, jc are undefined if canBeInverted is false.)
+         double zdertmp[9]={0,0,0,0,0,0,0,0,0}, zq, zr, zs;
+         double zqq, zqr, zqs, zrr, zrs, zss;
+         if( a_EW->interior_point_in_proc(ic,jc,g) /*&& canBeInverted*/ )
+         {
+            compute_metric_at_source( a_EW, q, r, s, ic, jc, kc, g, zq, zr, zs,
+                                      zqq, zqr, zqs, zrr, zrs, zss );
+            zdertmp[0] = zq;
+            zdertmp[1] = zr;
+            zdertmp[2] = zs;
+            zdertmp[3] = zqq;
+            zdertmp[4] = zqr;
+            zdertmp[5] = zqs;
+            zdertmp[6] = zrr;
+            zdertmp[7] = zrs;
+            zdertmp[8] = zss;
+         }
+         //	 // Broadcast the computed metric to all processors. 
+         //	 // First find out the ID of the processor that computed the metric...
+         //	 int owner = -1;
+         //	 if( a_EW->interior_point_in_proc( ic, jc, g ) && canBeInverted )
+         //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
+         //	 int owntmp = owner;
+         //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+         //	 // ...then broadcast the derivatives
+         //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
 
          // Simpler solution
          double zder[9];
-	 MPI_Allreduce( zdertmp, zder, 9, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-	 zq  = zder[0];
-	 zr  = zder[1];
-	 zs  = zder[2];
-	 zqq = zder[3];
-	 zqr = zder[4];
-	 zqs = zder[5];
-	 zrr = zder[6];
-	 zrs = zder[7];
-	 zss = zder[8];
+         MPI_Allreduce( zdertmp, zder, 9, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+         zq  = zder[0];
+         zr  = zder[1];
+         zs  = zder[2];
+         zqq = zder[3];
+         zqr = zder[4];
+         zqs = zder[5];
+         zrr = zder[6];
+         zrs = zder[7];
+         zss = zder[8];
 
-	 qX0[0] = 1/h;
-	 qX0[1] = 0;
-	 qX0[2] = 0;
-	 rX0[0] = 0;
-	 rX0[1] = 1/h;
-	 rX0[2] = 0;
-	 sX0[0] = -zq/(h*zs);
-	 sX0[1] = -zr/(h*zs);
-	 sX0[2] =   1/zs;
+         qX0[0] = 1/h;
+         qX0[1] = 0;
+         qX0[2] = 0;
+         rX0[0] = 0;
+         rX0[1] = 1/h;
+         rX0[2] = 0;
+         sX0[0] = -zq/(h*zs);
+         sX0[1] = -zr/(h*zs);
+         sX0[2] =   1/zs;
 
          double deni = 1/(h*zs*zs);
-	 dsX0[0] = -(zqq*zs-zqs*zq)*deni;
-	 dsX0[1] = -(zqr*zs-zrs*zq)*deni;
-	 dsX0[2] = -(zqs*zs-zss*zq)*deni;
+         dsX0[0] = -(zqq*zs-zqs*zq)*deni;
+         dsX0[1] = -(zqr*zs-zrs*zq)*deni;
+         dsX0[2] = -(zqs*zs-zss*zq)*deni;
 
-	 dsY0[0] = -(zqr*zs-zqs*zr)*deni;
-	 dsY0[1] = -(zrr*zs-zrs*zr)*deni;
-	 dsY0[2] = -(zrs*zs-zss*zr)*deni;
+         dsY0[0] = -(zqr*zs-zqs*zr)*deni;
+         dsY0[1] = -(zrr*zs-zrs*zr)*deni;
+         dsY0[2] = -(zrs*zs-zss*zr)*deni;
 
          deni *= h;
-	 dsZ0[0] = -zqs*deni;
-	 dsZ0[1] = -zrs*deni;
-	 dsZ0[2] = -zss*deni;
-      }
+         dsZ0[0] = -zqs*deni;
+         dsZ0[1] = -zrs*deni;
+         dsZ0[2] = -zss*deni;
+      } // end curvilinear
 
-	    // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
-	    // NYI
+      // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
+      // NYI
       //            double dsX0[3], dsY0[3], dsZ0[3], d2sX0[6], d2sY0[6], d2sZ0[6];
       //	    dsX0[0] = 0;
       //	    dsX0[1] = 0;
@@ -1777,7 +1994,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       //	    dsZ0[0] = 0;
       //	    dsZ0[1] = 0;
       //	    dsZ0[2] = 0;
-	    // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order qq,qr,qs,rr,rs,ss
+      // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order qq,qr,qs,rr,rs,ss
       //	    d2sX0[0] = 0;
       //	    d2sX0[1] =0;
       //	    d2sX0[2] =0;
@@ -1799,329 +2016,340 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       //	    d2sZ0[4] =0;
       //	    d2sZ0[5] =0;
 
-      if( canBeInverted )
-      {
-	 for( int k=kc-2 ; k <= kc+3 ; k++ )
-	    for( int j=jc-2 ; j <= jc+3 ; j++ )
-	       for( int i=ic-2 ; i <= ic+3 ; i++ )
-	       {
-		  double wFx=0, wFy=0, wFz=0, dsdp[27];
-		  if( a_EW->interior_point_in_proc(i,j,g) ) 
-		  {
-		     //                     cout << " src at " << i << " " << j << " " << k << endl;
-		     wFx += qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
-		  //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]; 
-		  //		  wFz += qX0[2]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
+//      if( canBeInverted )
+      //   {
+      for( int k=kc-2 ; k <= kc+3 ; k++ )
+         for( int j=jc-2 ; j <= jc+3 ; j++ )
+            for( int i=ic-2 ; i <= ic+3 ; i++ )
+            {
+               double wFx=0, wFy=0, wFz=0, dsdp[27];
+               if( a_EW->interior_point_in_proc(i,j,g) ) 
+               {
+                  //                     cout << " src at " << i << " " << j << " " << k << endl;
+                  wFx += qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
+                  //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]; 
+                  //		  wFz += qX0[2]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 
-		  //		  wFx +=  wghi[i-ic+2]*rX0[0]*dwghj[j-jc+2]* wghk[k-kc+2];
-		     wFy +=  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
-		  //		  wFz +=  wghi[i-ic+2]*rX0[2]*dwghj[j-jc+2]* wghk[k-kc+2];
+                  //		  wFx +=  wghi[i-ic+2]*rX0[0]*dwghj[j-jc+2]* wghk[k-kc+2];
+                  wFy +=  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
+                  //		  wFz +=  wghi[i-ic+2]*rX0[2]*dwghj[j-jc+2]* wghk[k-kc+2];
 
-		     wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
-		     //		     wFx +=  sX0[0];
-		     wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
-		     wFz +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[2]*dwghk[k-kc+2];
+                  wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
+                  //		     wFx +=  sX0[0];
+                  wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
+                  wFz +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[2]*dwghk[k-kc+2];
 
-		     double hi=1.0/h;
-		     double hi2=hi*hi;
-		     double wFxdx0 =dwghix[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi*qX0[0];
-		     double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghk[k-kc+2]*hi*rX0[1];
-		     //                     double wFxdy0 = 0;
-		     double wFxdz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[2];
+                  double hi=1.0/h;
+                  double hi2=hi*hi;
+                  double wFxdx0 =dwghix[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi*qX0[0];
+                  double wFxdy0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghk[k-kc+2]*hi*rX0[1];
+                  //                     double wFxdy0 = 0;
+                  double wFxdz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[2];
 
-		     double wFydx0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi*qX0[0];
-		     double wFydy0 =  wghi[i-ic+2]*dwghjy[j-jc+2]*  wghk[k-kc+2]*hi*rX0[1];
-		     double wFydz0 =  wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[2];
+                  double wFydx0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi*qX0[0];
+                  double wFydy0 =  wghi[i-ic+2]*dwghjy[j-jc+2]*  wghk[k-kc+2]*hi*rX0[1];
+                  double wFydz0 =  wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[2];
 
-		     double wFzdx0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*sX0[2]*qX0[0];
-		     double wFzdy0 =  wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*sX0[2]*rX0[1];
-		     double wFzdz0 =  wghi[i-ic+2]*  wghj[j-jc+2]*dwghkz[k-kc+2]*sX0[2]*sX0[2];
+                  double wFzdx0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*sX0[2]*qX0[0];
+                  double wFzdy0 =  wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*sX0[2]*rX0[1];
+                  double wFzdz0 =  wghi[i-ic+2]*  wghj[j-jc+2]*dwghkz[k-kc+2]*sX0[2]*sX0[2];
 
-		     if( curvilinear && kc <= Nz-3 )
-		     {
-			wFxdx0 += dwghi[i-ic+2]*wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[0] +
-                                  wghix[i-ic+2]*wghj[j-jc+2]* dwghk[k-kc+2]*hi*sX0[0] +
-                                   wghi[i-ic+2]*wghj[j-jc+2]*dwghkz[k-kc+2]*sX0[0]*sX0[0] +
-			    wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsX0[0]+sX0[0]*dsX0[2]);
+                  if( curvilinear && kc <= Nz-3 )
+                  {
+                     wFxdx0 += dwghi[i-ic+2]*wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[0] +
+                        wghix[i-ic+2]*wghj[j-jc+2]* dwghk[k-kc+2]*hi*sX0[0] +
+                        wghi[i-ic+2]*wghj[j-jc+2]*dwghkz[k-kc+2]*sX0[0]*sX0[0] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsX0[0]+sX0[0]*dsX0[2]);
 
-                        wFxdy0 += dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[1] +
-                                  wghi[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi*sX0[0] +
-                                  wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[1] +
- 			    wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsX0[1]+sX0[1]*dsX0[2]);
-			//			wFxdy0 += (hi*dsX0[1]+sX0[1]*dsX0[2]);
+                     wFxdy0 += dwghi[i-ic+2]*  wghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[1] +
+                        wghi[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi*sX0[0] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[1] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsX0[1]+sX0[1]*dsX0[2]);
+                     //			wFxdy0 += (hi*dsX0[1]+sX0[1]*dsX0[2]);
 
-                        wFxdz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[2] +
-			          wghi[i-ic+2]*  wghj[j-jc+2]*  dwghk[k-kc+2]*sX0[2]*dsX0[2];
+                     wFxdz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[2] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]*  dwghk[k-kc+2]*sX0[2]*dsX0[2];
 
-                        wFydx0 += wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[0] +
-			          wghix[i-ic+2]* wghj[j-jc+2]* dwghk[k-kc+2]*hi*sX0[1] +
-                                  wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[1] +
-			          wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsY0[0]+sX0[0]*dsY0[2]);
+                     wFydx0 += wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[0] +
+                        wghix[i-ic+2]* wghj[j-jc+2]* dwghk[k-kc+2]*hi*sX0[1] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[1] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsY0[0]+sX0[0]*dsY0[2]);
 
-                        wFydy0 += wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[1] +
-			          wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi*sX0[1] +
-                                  wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[1]*sX0[1] +
-			          wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsY0[1]+sX0[1]*dsY0[2]);
+                     wFydy0 += wghi[i-ic+2]* dwghj[j-jc+2]* wghkz[k-kc+2]*hi*sX0[1] +
+                        wghi[i-ic+2]* wghjy[j-jc+2]* dwghk[k-kc+2]*hi*sX0[1] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[1]*sX0[1] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsY0[1]+sX0[1]*dsY0[2]);
 
-                        wFydz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[1]*sX0[2] +
- 			          wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*sX0[2]*dsY0[2];
+                     wFydz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[1]*sX0[2] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*sX0[2]*dsY0[2];
 
-			wFzdx0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[2] +
- 			          wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsZ0[0] + sX0[0]*dsZ0[2]);
+                     wFzdx0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[0]*sX0[2] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsZ0[0] + sX0[0]*dsZ0[2]);
 
-			wFzdy0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[1]*sX0[2] +
- 			          wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsZ0[1] + sX0[1]*dsZ0[2]);
+                     wFzdy0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*sX0[1]*sX0[2] +
+                        wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(hi*dsZ0[1] + sX0[1]*dsZ0[2]);
 
-                        wFzdz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(sX0[2]*dsZ0[2]);
+                     wFzdz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(sX0[2]*dsZ0[2]);
 
-		     }
-		  // NOTE:  Source second derivatives wrt. (x0,y0,z0) currently not yet implemented 
-		  // for curvilinear grids.
+                  }
+                  // NOTE:  Source second derivatives wrt. (x0,y0,z0) currently not yet implemented 
+                  // for curvilinear grids.
 
-		  // Second derivatives
+                  // Second derivatives
 
-		     double wFxdx0dx0 = dwghixx[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
-		     double wFxdx0dy0 = dwghix[i-ic+2]*  wghjy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
-		     double wFxdx0dz0 = dwghix[i-ic+2]*  wghj[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
-		     double wFxdy0dy0 = dwghi[i-ic+2]* wghjyy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
-		     double wFxdy0dz0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
-		     double wFxdz0dz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkzz[k-kc+2]*hi2*hi;
+                  double wFxdx0dx0 = dwghixx[i-ic+2]*  wghj[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+                  double wFxdx0dy0 = dwghix[i-ic+2]*  wghjy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+                  double wFxdx0dz0 = dwghix[i-ic+2]*  wghj[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+                  double wFxdy0dy0 = dwghi[i-ic+2]* wghjyy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+                  double wFxdy0dz0 = dwghi[i-ic+2]* wghjy[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+                  double wFxdz0dz0 = dwghi[i-ic+2]*  wghj[j-jc+2]* wghkzz[k-kc+2]*hi2*hi;
 
-		     double wFydx0dx0 = wghixx[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
-		     double wFydx0dy0 = wghix[i-ic+2]* dwghjy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
-		     double wFydx0dz0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
-		     double wFydy0dy0 = wghi[i-ic+2]*dwghjyy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
-		     double wFydy0dz0 = wghi[i-ic+2]*dwghjy[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
-		     double wFydz0dz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkzz[k-kc+2]*hi2*hi;
+                  double wFydx0dx0 = wghixx[i-ic+2]* dwghj[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+                  double wFydx0dy0 = wghix[i-ic+2]* dwghjy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+                  double wFydx0dz0 = wghix[i-ic+2]* dwghj[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+                  double wFydy0dy0 = wghi[i-ic+2]*dwghjyy[j-jc+2]*  wghk[k-kc+2]*hi2*hi;
+                  double wFydy0dz0 = wghi[i-ic+2]*dwghjy[j-jc+2]*  wghkz[k-kc+2]*hi2*hi;
+                  double wFydz0dz0 = wghi[i-ic+2]* dwghj[j-jc+2]* wghkzz[k-kc+2]*hi2*hi;
 
-		     double wFzdx0dx0 = wghixx[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
-		     double wFzdx0dy0 = wghix[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
-		     double wFzdx0dz0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*hi2*hi;
-		     double wFzdy0dy0 = wghi[i-ic+2]* wghjyy[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
-		     double wFzdy0dz0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghkz[k-kc+2]*hi2*hi;
-		     double wFzdz0dz0 = wghi[i-ic+2]*  wghj[j-jc+2]*dwghkzz[k-kc+2]*hi2*hi;
-		     //                  if( curvilinear && kc <= Nz-3 )
-		     //		  {
+                  double wFzdx0dx0 = wghixx[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
+                  double wFzdx0dy0 = wghix[i-ic+2]*  wghjy[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
+                  double wFzdx0dz0 = wghix[i-ic+2]*  wghj[j-jc+2]* dwghkz[k-kc+2]*hi2*hi;
+                  double wFzdy0dy0 = wghi[i-ic+2]* wghjyy[j-jc+2]* dwghk[k-kc+2]*hi2*hi;
+                  double wFzdy0dz0 = wghi[i-ic+2]* wghjy[j-jc+2]* dwghkz[k-kc+2]*hi2*hi;
+                  double wFzdz0dz0 = wghi[i-ic+2]*  wghj[j-jc+2]*dwghkzz[k-kc+2]*hi2*hi;
+                  //                  if( curvilinear && kc <= Nz-3 )
+                  //		  {
 
-		     //		  }
+                  //		  }
                
-		     double jaci;
-		     if( curvilinear )
-			jaci = 1/a_EW->mJ(i,j,k);
-		     else
-			jaci = 1.0/(h*h*h);
+                  double jaci;
+                  if( curvilinear )
+                     jaci = 1/a_EW->mJ(i,j,k);
+                  else
+                     jaci = 1.0/(h*h*h);
 
-		     double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-		     double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-		     double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+                  double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+                  double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
+                  double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
 
-		     // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
-		     dsdp[0] = -(mForces[0]*wFxdx0+mForces[1]*wFydx0 + mForces[2]*wFzdx0)*jaci;
-		     dsdp[1] = -(mForces[1]*wFxdx0+mForces[3]*wFydx0 + mForces[4]*wFzdx0)*jaci;
-		     dsdp[2] = -(mForces[2]*wFxdx0+mForces[4]*wFydx0 + mForces[5]*wFzdx0)*jaci;
-		     dsdp[3] = -(mForces[0]*wFxdy0+mForces[1]*wFydy0 + mForces[2]*wFzdy0)*jaci;
-		     dsdp[4] = -(mForces[1]*wFxdy0+mForces[3]*wFydy0 + mForces[4]*wFzdy0)*jaci;
-		     dsdp[5] = -(mForces[2]*wFxdy0+mForces[4]*wFydy0 + mForces[5]*wFzdy0)*jaci;
-		     dsdp[6] = -(mForces[0]*wFxdz0+mForces[1]*wFydz0 + mForces[2]*wFzdz0)*jaci;
-		     dsdp[7] = -(mForces[1]*wFxdz0+mForces[3]*wFydz0 + mForces[4]*wFzdz0)*jaci;
-		     dsdp[8] = -(mForces[2]*wFxdz0+mForces[4]*wFydz0 + mForces[5]*wFzdz0)*jaci;
-		     dsdp[9]  = -wFx*jaci;
-		     dsdp[10] =  0;
-		     dsdp[11] =  0;
-		     dsdp[12]  =-wFy*jaci;
-		     dsdp[13] = -wFx*jaci;
-		     dsdp[14] =  0;
-		     dsdp[15] = -wFz*jaci;
-		     dsdp[16] =  0;
-		     dsdp[17] = -wFx*jaci;
-		     dsdp[18] =  0;
-		     dsdp[19] = -wFy*jaci;
-		     dsdp[20] =  0;
-		     dsdp[21] =  0;
-		     dsdp[22] = -wFz*jaci;
-		     dsdp[23] = -wFy*jaci;
-		     dsdp[24] =  0;
-		     dsdp[25] =  0;
-		     dsdp[26] = -wFz*jaci;
+                  // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+                  dsdp[0] = -(mForces[0]*wFxdx0+mForces[1]*wFydx0 + mForces[2]*wFzdx0)*jaci;
+                  dsdp[1] = -(mForces[1]*wFxdx0+mForces[3]*wFydx0 + mForces[4]*wFzdx0)*jaci;
+                  dsdp[2] = -(mForces[2]*wFxdx0+mForces[4]*wFydx0 + mForces[5]*wFzdx0)*jaci;
+                  dsdp[3] = -(mForces[0]*wFxdy0+mForces[1]*wFydy0 + mForces[2]*wFzdy0)*jaci;
+                  dsdp[4] = -(mForces[1]*wFxdy0+mForces[3]*wFydy0 + mForces[4]*wFzdy0)*jaci;
+                  dsdp[5] = -(mForces[2]*wFxdy0+mForces[4]*wFydy0 + mForces[5]*wFzdy0)*jaci;
+                  dsdp[6] = -(mForces[0]*wFxdz0+mForces[1]*wFydz0 + mForces[2]*wFzdz0)*jaci;
+                  dsdp[7] = -(mForces[1]*wFxdz0+mForces[3]*wFydz0 + mForces[4]*wFzdz0)*jaci;
+                  dsdp[8] = -(mForces[2]*wFxdz0+mForces[4]*wFydz0 + mForces[5]*wFzdz0)*jaci;
+                  dsdp[9]  = -wFx*jaci;
+                  dsdp[10] =  0;
+                  dsdp[11] =  0;
+                  dsdp[12]  =-wFy*jaci;
+                  dsdp[13] = -wFx*jaci;
+                  dsdp[14] =  0;
+                  dsdp[15] = -wFz*jaci;
+                  dsdp[16] =  0;
+                  dsdp[17] = -wFx*jaci;
+                  dsdp[18] =  0;
+                  dsdp[19] = -wFy*jaci;
+                  dsdp[20] =  0;
+                  dsdp[21] =  0;
+                  dsdp[22] = -wFz*jaci;
+                  dsdp[23] = -wFy*jaci;
+                  dsdp[24] =  0;
+                  dsdp[25] =  0;
+                  dsdp[26] = -wFz*jaci;
 
-		     // Matrices needed for computing the Hessian wrt (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
-		     double dddp[9], dh1[9], dh2[9], dh3[9];
-		     dddp[0]  =-wFxdx0*jaci;
-		     dddp[1]  =-wFxdy0*jaci;
-		     dddp[2]  =-wFxdz0*jaci;
-		     dddp[3]  =-wFydx0*jaci;
-		     dddp[4]  =-wFydy0*jaci;
-		     dddp[5]  =-wFydz0*jaci;
-		     dddp[6]  =-wFzdx0*jaci;
-		     dddp[7]  =-wFzdy0*jaci;
-		     dddp[8]  =-wFzdz0*jaci;
+                  // Matrices needed for computing the Hessian wrt (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+                  double dddp[9], dh1[9], dh2[9], dh3[9];
+                  dddp[0]  =-wFxdx0*jaci;
+                  dddp[1]  =-wFxdy0*jaci;
+                  dddp[2]  =-wFxdz0*jaci;
+                  dddp[3]  =-wFydx0*jaci;
+                  dddp[4]  =-wFydy0*jaci;
+                  dddp[5]  =-wFydz0*jaci;
+                  dddp[6]  =-wFzdx0*jaci;
+                  dddp[7]  =-wFzdy0*jaci;
+                  dddp[8]  =-wFzdz0*jaci;
 
-		     //                     if( i == ic && j == jc && k == kc )
-		     //		     {
-		     //                        cout.precision(16);
-		     //                        cout << "forcing " << endl;
-		     //			cout << fx << " " << fy << " " << fz << endl;
-		     //			cout << "gradient dsdp- = " << endl;
-		     //			for( int dd=0 ; dd < 9 ; dd++ )
-		     //			   cout << dsdp[dd] << endl;
-			//                        cout << "wFz and dwFzdx0 at " << ic << " " << jc << " " << kc << endl;
-			//			cout << wFz << endl;
-			//			cout << wFzdx0 << endl;
-			//			cout << wFzdy0 << endl;
-			//			cout << wFzdz0 << endl;
-		     //		     }
+                  //                     if( i == ic && j == jc && k == kc )
+                  //		     {
+                  //                        cout.precision(16);
+                  //                        cout << "forcing " << endl;
+                  //			cout << fx << " " << fy << " " << fz << endl;
+                  //			cout << "gradient dsdp- = " << endl;
+                  //			for( int dd=0 ; dd < 9 ; dd++ )
+                  //			   cout << dsdp[dd] << endl;
+                  //                        cout << "wFz and dwFzdx0 at " << ic << " " << jc << " " << kc << endl;
+                  //			cout << wFz << endl;
+                  //			cout << wFzdx0 << endl;
+                  //			cout << wFzdy0 << endl;
+                  //			cout << wFzdz0 << endl;
+                  //		     }
 
-		     // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
-		     dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
-		     dh1[1] = -(mForces[0]*wFxdx0dy0 + mForces[1]*wFydx0dy0+mForces[2]*wFzdx0dy0)*jaci;
-		     dh1[2] = -(mForces[0]*wFxdx0dz0 + mForces[1]*wFydx0dz0+mForces[2]*wFzdx0dz0)*jaci;
+                  // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
+                  dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
+                  dh1[1] = -(mForces[0]*wFxdx0dy0 + mForces[1]*wFydx0dy0+mForces[2]*wFzdx0dy0)*jaci;
+                  dh1[2] = -(mForces[0]*wFxdx0dz0 + mForces[1]*wFydx0dz0+mForces[2]*wFzdx0dz0)*jaci;
 
-		     dh1[3] = dh1[1];
-		     dh1[4] = -(mForces[0]*wFxdy0dy0 + mForces[1]*wFydy0dy0+mForces[2]*wFzdy0dy0)*jaci;
-		     dh1[5] = -(mForces[0]*wFxdy0dz0 + mForces[1]*wFydy0dz0+mForces[2]*wFzdy0dz0)*jaci;
+                  dh1[3] = dh1[1];
+                  dh1[4] = -(mForces[0]*wFxdy0dy0 + mForces[1]*wFydy0dy0+mForces[2]*wFzdy0dy0)*jaci;
+                  dh1[5] = -(mForces[0]*wFxdy0dz0 + mForces[1]*wFydy0dz0+mForces[2]*wFzdy0dz0)*jaci;
 
-		     dh1[6] = dh1[2];
-		     dh1[7] = dh1[5];
-		     dh1[8] = -(mForces[0]*wFxdz0dz0 + mForces[1]*wFydz0dz0+mForces[2]*wFzdz0dz0)*jaci;
+                  dh1[6] = dh1[2];
+                  dh1[7] = dh1[5];
+                  dh1[8] = -(mForces[0]*wFxdz0dz0 + mForces[1]*wFydz0dz0+mForces[2]*wFzdz0dz0)*jaci;
 
-		     // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
-		     dh2[0] = -(mForces[1]*wFxdx0dx0 + mForces[3]*wFydx0dx0+mForces[4]*wFzdx0dx0)*jaci;
-		     dh2[1] = -(mForces[1]*wFxdx0dy0 + mForces[3]*wFydx0dy0+mForces[4]*wFzdx0dy0)*jaci;
-		     dh2[2] = -(mForces[1]*wFxdx0dz0 + mForces[3]*wFydx0dz0+mForces[4]*wFzdx0dz0)*jaci;
+                  // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
+                  dh2[0] = -(mForces[1]*wFxdx0dx0 + mForces[3]*wFydx0dx0+mForces[4]*wFzdx0dx0)*jaci;
+                  dh2[1] = -(mForces[1]*wFxdx0dy0 + mForces[3]*wFydx0dy0+mForces[4]*wFzdx0dy0)*jaci;
+                  dh2[2] = -(mForces[1]*wFxdx0dz0 + mForces[3]*wFydx0dz0+mForces[4]*wFzdx0dz0)*jaci;
 
-		     dh2[3] = dh2[1];
-		     dh2[4] = -(mForces[1]*wFxdy0dy0 + mForces[3]*wFydy0dy0+mForces[4]*wFzdy0dy0)*jaci;
-		     dh2[5] = -(mForces[1]*wFxdy0dz0 + mForces[3]*wFydy0dz0+mForces[4]*wFzdy0dz0)*jaci;
+                  dh2[3] = dh2[1];
+                  dh2[4] = -(mForces[1]*wFxdy0dy0 + mForces[3]*wFydy0dy0+mForces[4]*wFzdy0dy0)*jaci;
+                  dh2[5] = -(mForces[1]*wFxdy0dz0 + mForces[3]*wFydy0dz0+mForces[4]*wFzdy0dz0)*jaci;
 
-		     dh2[6] = dh2[2];
-		     dh2[7] = dh2[5];
-		     dh2[8] = -(mForces[1]*wFxdz0dz0 + mForces[3]*wFydz0dz0+mForces[4]*wFzdz0dz0)*jaci;
+                  dh2[6] = dh2[2];
+                  dh2[7] = dh2[5];
+                  dh2[8] = -(mForces[1]*wFxdz0dz0 + mForces[3]*wFydz0dz0+mForces[4]*wFzdz0dz0)*jaci;
 
-		     // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
-		     dh3[0] = -(mForces[2]*wFxdx0dx0 + mForces[4]*wFydx0dx0+mForces[5]*wFzdx0dx0)*jaci;
-		     dh3[1] = -(mForces[2]*wFxdx0dy0 + mForces[4]*wFydx0dy0+mForces[5]*wFzdx0dy0)*jaci;
-		     dh3[2] = -(mForces[2]*wFxdx0dz0 + mForces[4]*wFydx0dz0+mForces[5]*wFzdx0dz0)*jaci;
+                  // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
+                  dh3[0] = -(mForces[2]*wFxdx0dx0 + mForces[4]*wFydx0dx0+mForces[5]*wFzdx0dx0)*jaci;
+                  dh3[1] = -(mForces[2]*wFxdx0dy0 + mForces[4]*wFydx0dy0+mForces[5]*wFzdx0dy0)*jaci;
+                  dh3[2] = -(mForces[2]*wFxdx0dz0 + mForces[4]*wFydx0dz0+mForces[5]*wFzdx0dz0)*jaci;
 
-		     dh3[3] = dh3[1];
-		     dh3[4] = -(mForces[2]*wFxdy0dy0 + mForces[4]*wFydy0dy0+mForces[5]*wFzdy0dy0)*jaci;
-		     dh3[5] = -(mForces[2]*wFxdy0dz0 + mForces[4]*wFydy0dz0+mForces[5]*wFzdy0dz0)*jaci;
+                  dh3[3] = dh3[1];
+                  dh3[4] = -(mForces[2]*wFxdy0dy0 + mForces[4]*wFydy0dy0+mForces[5]*wFzdy0dy0)*jaci;
+                  dh3[5] = -(mForces[2]*wFxdy0dz0 + mForces[4]*wFydy0dz0+mForces[5]*wFzdy0dz0)*jaci;
 
-		     dh3[6] = dh3[2];
-		     dh3[7] = dh3[5];
-		     dh3[8] = -(mForces[2]*wFxdz0dz0 + mForces[4]*wFydz0dz0+mForces[5]*wFzdz0dz0)*jaci;
+                  dh3[6] = dh3[2];
+                  dh3[7] = dh3[5];
+                  dh3[8] = -(mForces[2]*wFxdz0dz0 + mForces[4]*wFydz0dz0+mForces[5]*wFzdz0dz0)*jaci;
 
-		     //                  if( i==42 && j==55 && k==39 )
-		     //		  {
-		     //		     cout.precision(16);
-		     //                  cout << "-----------------------------------------------------------------------\n";
-		     //		  cout << "     " << i <<  " " << j << " " << k << endl;
-		     //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5] << "  " << dsdp[8] << endl;
-		     //                  cout << "dh  = " << dh3[0] << " " << dh3[1] << "  " << dh3[2] << endl;
-		     //                  cout << "      " << dh3[3] << " " << dh3[4] << "  " << dh3[5] << endl;
-		     //                  cout << "      " << dh3[6] << " " << dh3[7] << "  " << dh3[8] << endl;
-		     //                  cout << "-----------------------------------------------------------------------" << endl;
-		     //		  }
+                  //                  if( i==42 && j==55 && k==39 )
+                  //		  {
+                  //		     cout.precision(16);
+                  //                  cout << "-----------------------------------------------------------------------\n";
+                  //		  cout << "     " << i <<  " " << j << " " << k << endl;
+                  //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5] << "  " << dsdp[8] << endl;
+                  //                  cout << "dh  = " << dh3[0] << " " << dh3[1] << "  " << dh3[2] << endl;
+                  //                  cout << "      " << dh3[3] << " " << dh3[4] << "  " << dh3[5] << endl;
+                  //                  cout << "      " << dh3[6] << " " << dh3[7] << "  " << dh3[8] << endl;
+                  //                  cout << "-----------------------------------------------------------------------" << endl;
+                  //		  }
 
-		     //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
-		     if( 1 <= k && k <= Nz )
-		     {
-			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, g, 
-									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
-									  dsdp, dddp, dh1, dh2, dh3 );
-			if( m_derivative >= 0 )
-			   sourcePtr->set_derivative(m_derivative,m_dir);
-			point_sources.push_back(sourcePtr);
-		     }
-		     if( k <= 1 && ccbndry && upperbndry )
-		     {
-			int Nzp =a_EW->m_global_nz[g+1];
-			int kk = Nzp - 1 + k;
-			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
-									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
-									  dsdp, dddp, dh1, dh2, dh3 );
-			if( m_derivative >= 0 )
-			   sourcePtr->set_derivative(m_derivative,m_dir);
-			point_sources.push_back(sourcePtr);
-		     }
-		     if( k >= Nz && ccbndry && lowerbndry )
-		     {
-			int kk = k-Nz + 1;
-			GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
-									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
-									  dsdp, dddp, dh1, dh2, dh3 );
-			if( m_derivative >= 0 )
-			   sourcePtr->set_derivative(m_derivative,m_dir);
-			point_sources.push_back(sourcePtr);
-		     }
-		  }
-	       }
-	 if( gridrefbndry )
-	 {
-	    // Tese arrays are currently undefined across the mesh refinement boundary.
-	    // --> Source inversion can not be done if the source is located at the interface.
-	    double dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
-	    for( int k=kc-2 ; k <= kc+3 ; k++ )
-	    {
-	       if( k <= 1 )
-	       {
-		  double hi = 1.0/(0.5*h);
-		  double jaci = 1.0/(0.125*h*h*h);
-		  for( int j=jcref-2 ; j <= jcref+3 ; j++ )
-		     for( int i=icref-2 ; i <= icref+3 ; i++ )
-		     {
-			double wFx=0, wFy=0, wFz=0;
-			if( a_EW->interior_point_in_proc(i,j,g+1) ) 
-			{
-			   wFx = dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
-			   wFy =  wghiref[i-icref+2]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
-			   wFz =  wghiref[i-icref+2]* wghjref[j-jcref+2]*dwghkref[k-kc+2]*hi;
-			   double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-			   double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-			   double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
-			   int Nzp =a_EW->m_global_nz[g+1];
-			   int kk = Nzp - 1 + k;
-			   GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
-									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
-									  dsdp, dddp, dh1, dh2, dh3 );
-			   point_sources.push_back(sourcePtr);
-			}
-		     }
-	       }
-	       if( k >= Nz )
-	       {
-		  double jaci = 1.0/(8*h*h*h);
-		  double hi = 1.0/(2*h);
-		  for( int j=jcref-2 ; j <= jcref+3 ; j++ )
-		     for( int i=icref-2 ; i <= icref+3 ; i++ )
-		     {
-			double wFx=0, wFy=0, wFz=0;
-			if( a_EW->interior_point_in_proc(i,j,g-1) ) 
-			{
-			   wFx = dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
-			   wFy =  wghiref[i-icref+2]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
-			   wFz =  wghiref[i-icref+2]* wghjref[j-jcref+2]*dwghkref[k-kc+2]*2*hi;
-			   double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-			   double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-			   double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
-			   int kk = k-Nz + 1;
-			   GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
-									  fx, fy, fz, mTimeDependence, mNcyc,
-									  mPar, mNpar, mIpar, mNipar,
-									  dsdp, dddp, dh1, dh2, dh3 );
-			   point_sources.push_back(sourcePtr);
-			}
-		     }
+                  //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
+                  if( 1 <= k && k <= Nz )
+                  {
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, g, 
+                                                                       fx, fy, fz, mTimeDependence, mNcyc,
+                                                                       mPar, mNpar, mIpar, mNipar,
+                                                                       dsdp, dddp, dh1, dh2, dh3 );
+                     if( m_derivative >= 0 )
+                        sourcePtr->set_derivative(m_derivative,m_dir);
+                     point_sources.push_back(sourcePtr);
+                  }
+                  if( k <= 1 && ccbndry && upperbndry )
+                  {
+                     int Nzp =a_EW->m_global_nz[g+1];
+                     int kk = Nzp - 1 + k;
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
+                                                                       fx, fy, fz, mTimeDependence, mNcyc,
+                                                                       mPar, mNpar, mIpar, mNipar,
+                                                                       dsdp, dddp, dh1, dh2, dh3 );
+                     if( m_derivative >= 0 )
+                        sourcePtr->set_derivative(m_derivative,m_dir);
+                     point_sources.push_back(sourcePtr);
+                  }
+                  if( k >= Nz && ccbndry && lowerbndry )
+                  {
+                     int kk = k-Nz + 1;
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
+                                                                       fx, fy, fz, mTimeDependence, mNcyc,
+                                                                       mPar, mNpar, mIpar, mNipar,
+                                                                       dsdp, dddp, dh1, dh2, dh3 );
+                     if( m_derivative >= 0 )
+                        sourcePtr->set_derivative(m_derivative,m_dir);
+                     point_sources.push_back(sourcePtr);
+                  }
+               }
+            } // end for k,j,i
+         
+      if( gridrefbndry )
+      {
+         // These arrays are currently undefined across the mesh refinement boundary.
+         // --> Source inversion can not be done if the source is located at the interface.
+         double dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
+         for( int k=kc-2 ; k <= kc+3 ; k++ )
+         {
+            if( k <= 1 )
+            {
+               double hi = 1.0/(0.5*h);
+               double jaci = 1.0/(0.125*h*h*h);
+               for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+                  for( int i=icref-2 ; i <= icref+3 ; i++ )
+                  {
+                     double wFx=0, wFy=0, wFz=0;
+                     if( a_EW->interior_point_in_proc(i,j,g+1) ) 
+                     {
+                        wFx = dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+                        wFy =  wghiref[i-icref+2]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+                        wFz =  wghiref[i-icref+2]* wghjref[j-jcref+2]*dwghkref[k-kc+2]*hi;
+                        double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+                        double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
+                        double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+                        int Nzp =a_EW->m_global_nz[g+1];
+                        int kk = Nzp - 1 + k;
+                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
+                                                                          fx, fy, fz, mTimeDependence, mNcyc,
+                                                                          mPar, mNpar, mIpar, mNipar,
+                                                                          dsdp, dddp, dh1, dh2, dh3 );
+                        point_sources.push_back(sourcePtr);
+                     }
+                  }
+            } // end if k <= 1
+               
+            if( k >= Nz )
+            {
+               double jaci = 1.0/(8*h*h*h);
+               double hi = 1.0/(2*h);
+               for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+                  for( int i=icref-2 ; i <= icref+3 ; i++ )
+                  {
+                     double wFx=0, wFy=0, wFz=0;
+                     if( a_EW->interior_point_in_proc(i,j,g-1) ) 
+                     {
+                        wFx = dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+                        wFy =  wghiref[i-icref+2]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*hi;
+                        wFz =  wghiref[i-icref+2]* wghjref[j-jcref+2]*dwghkref[k-kc+2]*2*hi;
+                        double fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+                        double fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
+                        double fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+                        int kk = k-Nz + 1;
+                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
+                                                                          fx, fy, fz, mTimeDependence, mNcyc,
+                                                                          mPar, mNpar, mIpar, mNipar,
+                                                                          dsdp, dddp, dh1, dh2, dh3 );
+                        point_sources.push_back(sourcePtr);
+                     }
+                  } // end for i
+                  
 		  
-	       }
-	    }
-	 }
-      }
-   }
-}
+            } // end if kz >= Nz
+               
+         } // end for kc
+            
+      } // end if gridrefbndry
+         
+//      } // end if canBeInverted
+      
+   } // end if momentTensorSource
+   
+} // end set_grid_point_sources4
+
+
+   
 
 
 //-----------------------------------------------------------------------
@@ -2271,18 +2499,20 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
       case iDirac :
 	 timeFunc = Dirac;
 	 break;
-      case iDiscrete :
-	 timeFunc = Discrete;
-	 break;
+// discrete time functions are now handled differently
+      // case iDiscrete :
+      //    timeFunc = Discrete;
+      //    break;
       default:
 	 cout << "ERROR in Source::filter_timefunc, source type not recoginzed" << endl;
       }
 
       // Convert to discrete representation
+      mTimeDependence = iDiscrete;
+
       double *discfunc = new double[nsteps];
       for (int k=0; k < nsteps; k++ )
 	 discfunc[k] = timeFunc( mFreq, tstart+k*dt-mT0, mPar, mNpar, mIpar, mNipar );
-      mTimeDependence = iDiscrete;
 
 // Filter the discretized function 
       filter_ptr->evaluate( nsteps, &discfunc[0], &discfunc[0] );
@@ -2318,8 +2548,9 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
       delete[] mPar;
       mNpar = nsteps+1;
       mPar = new double[mNpar];
-      //      mPar[0] = tstart;
-      mPar[0] = tstart-mT0;
+      mPar[0] = tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
+      mT0 = tstart;
+//      mPar[0] = tstart-mT0;
       for( int i=0 ; i < nsteps; i++ )
          mPar[i+1] = discfunc[i];
       delete[] discfunc;

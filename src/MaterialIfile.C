@@ -637,7 +637,7 @@ int MaterialIfile::getMaterialID(double lat, double lon, double depth )
    {
       maxDepth = (1.0-eta)*( (1.0-xi)*m_materialDepth(q,i0,j0,1) + xi*m_materialDepth(q,i0+1,j0,1) ) +
 	 eta*( (1.0-xi)*m_materialDepth(q,i0,j0+1,1) + xi*m_materialDepth(q,i0+1,j0+1,1) );
-      
+
       if (maxDepth > minDepth && depth <= maxDepth && depth >= minDepth)
 	 // maxDepth>minDepth removes zero thickness layers
       {

@@ -1,7 +1,7 @@
 #include "Sarray.h"
 //-----------------From WPP------------------------------------------------------
 void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
-                                                  double omegaVE, double dt ,double omega, double phase, double c)
+                         double omegaVE, double dt ,double omega, double phase, double c)
 {
   double x, y, z;
   // double omega =m_omega;
@@ -462,6 +462,3 @@ void addMemVarCorrCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
       } // end for*3
   return;
 } // end function
-
-  
-

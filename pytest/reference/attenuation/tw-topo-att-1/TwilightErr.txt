@@ -1,0 +1,6 @@
+Final time
+1.000000e+00
+Displacement variables (errInf, errL2, solInf)
+  2.7253532e-03   3.1830713e-03   9.9977459e-01
+Attennuation variables (errInf, errL2, solInf)
+  2.8156161e-03   3.0991607e-03   9.9937313e-01

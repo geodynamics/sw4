@@ -1,0 +1,41 @@
+=======================================================================
+mpirun -np 1 ../../optimize_cuda_ray/sw4lite LOH.1-h100.in
+Running on 1 MPI tasks
+starting at time 0 at cycle 1
+Time step 1 t= 0.016791
+Time step 101 t= 1.6959
+Time step 201 t= 3.375
+Time step 301 t= 5.0541
+Time step 401 t= 6.73321
+Time step 501 t= 8.41231
+Time step 536 t= 9
+   Execution time, solver phase 1 minute  4.73664 seconds 
+
+----------------------------------------
+          Execution time summary 
+  Total      BC comm    BC phys    Scheme     Supergrid  Forcing 
+64.254     0.0019092  7.8304     40.61      15.743     0.062312   Clock tick is 1e-09 seconds
+----------------------------------------
+
+Total running time: 65.724
+
+=======================================================================
+bjorn@ray35 25) mpirun -np 4 mpibind ../../optimize_cuda_ray/sw4lite LOH.1-h100.in
+
+Running on 4 MPI tasks
+starting at time 0 at cycle 1
+Time step 1 t= 0.016791
+Time step 101 t= 1.6959
+Time step 201 t= 3.375
+Time step 301 t= 5.0541
+Time step 401 t= 6.73321
+Time step 501 t= 8.41231
+Time step 536 t= 9
+   Execution time, solver phase 29.2605 seconds 
+
+----------------------------------------
+          Execution time summary 
+  Total      BC comm    BC phys    Scheme     Supergrid  Forcing 
+29.069     9.526      2.0333     11.939     5.2534     0.097831   Clock tick is 1e-09 seconds
+----------------------------------------
+Total running time: 29.9553
