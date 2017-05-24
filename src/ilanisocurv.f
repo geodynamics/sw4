@@ -1,7 +1,7 @@
       subroutine ILANISOCURV( ifirst, ilast, jfirst, jlast, kfirst, 
      *                        klast, nk, u, c, jac, lu, 
      *                        onesided, acof, bop, ghcof, 
-     *                        strx, stry, strz )
+     *                        strx, stry, strz ) bind(c)
       implicit none
       real*8 i6, a1, a2
       parameter( i6=1d0/6, a1=2d0/3, a2=-1d0/12 )

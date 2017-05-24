@@ -1,6 +1,6 @@
       subroutine INNERLOOPANISGSTRVC( ifirst, ilast, jfirst, jlast, 
      *      kfirst, klast, nk, u, res, c, onesided, acof, bop,
-     *      ghcof, h, strx, stry, strz )
+     *      ghcof, h, strx, stry, strz ) bind(c)
 
       implicit none
       real*8 a1, a2, i6

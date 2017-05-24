@@ -133,9 +133,6 @@ void F77_FUNC(rhs4th3fort,RHS4TH3FORT)(int*, int*, int*, int*, int*, int*, int*,
 				       double*, double*, double*, double*, double*, char* );
 void F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, double*,
 						 double*, double*, double*, double*, double*, double*,double*,double*, char* );
-void F77_FUNC(innerloopanisgstrvc,INNERLOOPANISGSTRVC)( int*, int*, int*, int*, int*, int*, int*, 
-							double*, double*, double*, int*, double*,
-							double*, double*, double*, double*, double*, double* );
 void F77_FUNC(exactrhsfort,EXACTRHSFORT)( int*, int*, int*, int*, int*, int*, double*, double*, 
 					  double*, double*, double*, double*, double*, double*, double*, double*,
 					  double*, double* );
@@ -218,9 +215,28 @@ void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, do
 
 void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
 			   int & LWORK, int & INFO);
-   void F77_FUNC(ilanisocurv,ILANISOCURV)( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
-					   int*, double*, double*, double*, double*, double*, double*);
+
+void innerloopanisgstrvc( int*, int*, int*, int*, int*, int*, int*, 
+			  double*, double*, double*, int*, double*,
+			  double*, double*, double*, double*, double*, double* );
+
+void ilanisocurv( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
+		  int*, double*, double*, double*, double*, double*, double*);
 }
+
+
+void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int nk, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_c,
+		     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
+		     int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
+		     float_sw4* __restrict__  a_ghcof, float_sw4* __restrict__ a_strx,
+		     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz );
+
+void innerloopanisgstrvc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     int nk, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_c,
+			     int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
+			     float_sw4* __restrict__ a_ghcof, float_sw4 h, float_sw4* __restrict__ a_strx,
+			     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz );
 
 // the routine will replace the Fortran routine curvilinear4sg()
 void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -3955,10 +3971,16 @@ void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C,
     h        = mGridSize[g]; 
     nz       = m_global_nz[g];
     onesided_ptr = m_onesided[g];
-    F77_FUNC(innerloopanisgstrvc,INNERLOOPANISGSTRVC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-						      &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
-						      m_acof, m_bope, m_ghcof, &h, m_sg_str_x[g],
-						      m_sg_str_y[g], m_sg_str_z[g] );
+    if( m_croutines )
+       innerloopanisgstrvc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+			    klast, nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
+			    m_acof, m_bope, m_ghcof, h, m_sg_str_x[g],
+			    m_sg_str_y[g], m_sg_str_z[g] );
+    else
+       innerloopanisgstrvc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+			    &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
+			    m_acof, m_bope, m_ghcof, &h, m_sg_str_x[g],
+			    m_sg_str_y[g], m_sg_str_z[g] );
   }
   if( topographyExists() )
   {
@@ -3975,10 +3997,16 @@ void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C,
      kfirst   = m_kStart[g];
      klast    = m_kEnd[g];
      nz       = m_global_nz[g];
-     F77_FUNC(ilanisocurv,ILANISOCURV)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-				       &nz, u_ptr, c_ptr, jac_ptr, uacc_ptr, m_onesided[g],
-				       m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
-				       m_sg_str_z[g] );
+    if( m_croutines )
+       ilanisocurv_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       nz, u_ptr, c_ptr, jac_ptr, uacc_ptr, m_onesided[g],
+		       m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
+		       m_sg_str_z[g] );
+    else
+       ilanisocurv( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+		    &nz, u_ptr, c_ptr, jac_ptr, uacc_ptr, m_onesided[g],
+		    m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
+		    m_sg_str_z[g] );
   }
 }
 
