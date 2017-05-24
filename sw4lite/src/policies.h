@@ -8,6 +8,7 @@ typedef RAJA::cuda_exec<REDUCE_BLOCK_SIZE> EXEC;
 
 typedef cuda_reduce<REDUCE_BLOCK_SIZE> REDUCE_POLICY;
 #define SYNC_DEVICE cudaDeviceSynchronize();
+
 #else
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
   omp_parallel_for_exec>>

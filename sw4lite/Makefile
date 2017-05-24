@@ -34,11 +34,11 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   FC = mpifort
   CXX = mpicxx
-  OMPOPT = -fopenmp -std=c++11 
+  OMPOPT = -fopenmp -std=c++11 -O3 -qoverride-limits
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
   EXTRA_CXX_FLAGS = -xCORE-AVX2 -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include
   EXTRA_FORT_FLAGS = -xCORE-AVX2
-  EXTRA_LINK_FLAGS = -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA
+  EXTRA_LINK_FLAGS = -O3 -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA
   openmp = yes
   LINKER = mpicxx
   computername := quartz
@@ -46,13 +46,13 @@ else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
 else ifeq ($(findstring ray,$(HOSTNAME)),ray)
   FC = mpif90
   CXX = nvcc
-  OPT = -O2 -ccbin mpixlC -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE 
-  OMPOPT = 
+  OPT = -O2 -ccbin mpixlC -std=c++11 -Xcompiler="-qsmp=omp" --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE 
+  OMPOPT = -qsmp=omp
   EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
 #EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/blas/blas-3.6.0-gfortran-4.8.5/lib/ -L /usr/tcetmp/packages/lapack/lapack-3.6.0-gfortran-4.8.5/lib/ -llapack -lblas -lm -lgfortran  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
  RAJA_LOCATION =  /g/g0/ramesh/Project6/Ray/RAJA/install/
   LINKER = mpixlC
- LINKFLAGS = 
+ LINKFLAGS = -qsmp=omp
   computername := ray
 # LC cab is a large cluster of Intel Xeon nodes
 else ifeq ($(findstring cab,$(HOSTNAME)),cab)

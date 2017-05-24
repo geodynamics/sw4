@@ -2872,8 +2872,8 @@ void EW::setupMPICommunications()
       send_type1[2*g]=std::make_tuple(nj*nk, m_ppadding, ni);
       send_type1[2*g+1]=std::make_tuple(nk, m_ppadding*ni, ni*nj);
       
-      bufs_type1[2*g]=std::make_tuple(newmanaged(nj*nk*m_ppadding),newmanaged(nj*nk*m_ppadding));
-      bufs_type1[2*g+1]=std::make_tuple(newmanaged(nk*m_ppadding*ni),newmanaged(nk*m_ppadding*ni));
+      bufs_type1[2*g]=std::make_tuple(newmanagedh(nj*nk*m_ppadding),newmanagedh(nj*nk*m_ppadding));
+      bufs_type1[2*g+1]=std::make_tuple(newmanagedh(nk*m_ppadding*ni),newmanagedh(nk*m_ppadding*ni));
       
       if( m_corder )
       {
@@ -2888,10 +2888,10 @@ void EW::setupMPICommunications()
 	 send_type4[2*g]=std::make_tuple(4*nj*nk, m_ppadding, ni);
 	 send_type4[2*g+1]=std::make_tuple(4*nk, m_ppadding*ni, ni*nj);
 
-	 bufs_type3[2*g]=std::make_tuple(newmanaged(3*nj*nk*m_ppadding),newmanaged(3*nj*nk*m_ppadding));
-	 bufs_type3[2*g+1]=std::make_tuple(newmanaged(3*nk*m_ppadding*ni),newmanaged(3*nk*m_ppadding*ni));
-	 bufs_type4[2*g]=std::make_tuple(newmanaged(4*nj*nk*m_ppadding),newmanaged(4*nj*nk*m_ppadding));
-	 bufs_type4[2*g+1]=std::make_tuple(newmanaged(4*nk*m_ppadding*ni),newmanaged(4*nk*m_ppadding*ni));
+	 bufs_type3[2*g]=std::make_tuple(newmanagedh(3*nj*nk*m_ppadding),newmanagedh(3*nj*nk*m_ppadding));
+	 bufs_type3[2*g+1]=std::make_tuple(newmanagedh(3*nk*m_ppadding*ni),newmanagedh(3*nk*m_ppadding*ni));
+	 bufs_type4[2*g]=std::make_tuple(newmanagedh(4*nj*nk*m_ppadding),newmanagedh(4*nj*nk*m_ppadding));
+	 bufs_type4[2*g+1]=std::make_tuple(newmanagedh(4*nk*m_ppadding*ni),newmanagedh(4*nk*m_ppadding*ni));
       }
       else
       {
@@ -3330,6 +3330,11 @@ void EW::communicate_array( Sarray& u, int grid )
 	     << " nc = " << u.m_nc );
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
    MPI_Status status;
+#ifdef THREADED_MPI
+   const int threaded_mpi=1
+#else
+     const int threaded_mpi=0;
+#endif
    if( u.m_nc == 1 )
    {
       int xtag1 = 345;
@@ -3339,49 +3344,65 @@ void EW::communicate_array( Sarray& u, int grid )
       // X-direction communication
       //for (int i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
       //std::cout<<"\n";
+#pragma omp parallel default(shared) if (threaded_mpi)
+#pragma omp sections 
+      {
+#pragma omp section
       AMPI_Sendrecv( &u(ie-(2*m_ppadding-1),jb,kb), 1, send_type1[2*grid], m_neighbor[1], xtag1,
 		    &u(ib,jb,kb), 1, send_type1[2*grid], m_neighbor[0], xtag1,
 		     bufs_type1[2*grid],
 		    m_cartesian_communicator, &status );
+#pragma omp section
       AMPI_Sendrecv( &u(ib+m_ppadding,jb,kb), 1, send_type1[2*grid], m_neighbor[0], xtag2,
 		    &u(ie-(m_ppadding-1),jb,kb), 1, send_type1[2*grid], m_neighbor[1], xtag2,
 		     bufs_type1[2*grid],
 		    m_cartesian_communicator, &status );
       // Y-direction communication
+#pragma omp section
       AMPI_Sendrecv( &u(ib,je-(2*m_ppadding-1),kb), 1, send_type1[2*grid+1], m_neighbor[3], ytag1,
 		     &u(ib,jb,kb), 1, send_type1[2*grid+1], m_neighbor[2], ytag1,
 		     bufs_type1[2*grid+1],
-		    m_cartesian_communicator, &status );
-      
+		    m_cartesian_communicator, &status );    
+#pragma omp section  
       AMPI_Sendrecv( &u(ib,jb+m_ppadding,kb), 1, send_type1[2*grid+1], m_neighbor[2], ytag2,
 		    &u(ib,je-(m_ppadding-1),kb), 1, send_type1[2*grid+1], m_neighbor[3], ytag2,
 		     bufs_type1[2*grid+1],
 		    m_cartesian_communicator, &status );
    }
+   }
    else if( u.m_nc == 3 )
    {
+
       int xtag1 = 345;
       int xtag2 = 346;
       int ytag1 = 347;
       int ytag2 = 348;
+#pragma omp parallel default(shared) if (threaded_mpi)
+#pragma omp sections 
+      {
       // X-direction communication
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, send_type3[2*grid], m_neighbor[1], xtag1,
 		    &u(1,ib,jb,kb), 1, send_type3[2*grid], m_neighbor[0], xtag1,
 		     bufs_type3[2*grid],
 		    m_cartesian_communicator, &status );
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, send_type3[2*grid], m_neighbor[0], xtag2,
 		    &u(1,ie-(m_ppadding-1),jb,kb), 1, send_type3[2*grid], m_neighbor[1], xtag2,
 		    bufs_type3[2*grid],
 		    m_cartesian_communicator, &status );
       // Y-direction communication
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, send_type3[2*grid+1], m_neighbor[3], ytag1,
 		    &u(1,ib,jb,kb), 1, send_type3[2*grid+1], m_neighbor[2], ytag1,
 		    bufs_type3[2*grid+1],
 		    m_cartesian_communicator, &status );
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, send_type3[2*grid+1], m_neighbor[2], ytag2,
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, send_type3[2*grid+1], m_neighbor[3], ytag2,
 		    bufs_type3[2*grid+1],
 		    m_cartesian_communicator, &status );
+      }
    }
    else if( u.m_nc == 4 )
    {
@@ -3389,24 +3410,32 @@ void EW::communicate_array( Sarray& u, int grid )
       int xtag2 = 346;
       int ytag1 = 347;
       int ytag2 = 348;
+#pragma omp parallel default(shared) if (threaded_mpi)
+#pragma omp sections 
+      {
       // X-direction communication
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, send_type4[2*grid], m_neighbor[1], xtag1,
 		    &u(1,ib,jb,kb), 1, send_type4[2*grid], m_neighbor[0], xtag1,
 		    bufs_type4[2*grid],
 		    m_cartesian_communicator, &status );
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, send_type4[2*grid], m_neighbor[0], xtag2,
 		    &u(1,ie-(m_ppadding-1),jb,kb), 1, send_type4[2*grid], m_neighbor[1], xtag2,
 		    bufs_type4[2*grid],
 		    m_cartesian_communicator, &status );
+#pragma omp section  
       // Y-direction communication
       AMPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, send_type4[2*grid+1], m_neighbor[3], ytag1,
 		    &u(1,ib,jb,kb), 1, send_type4[2*grid+1], m_neighbor[2], ytag1,
 		    bufs_type4[2*grid+1],
 		    m_cartesian_communicator, &status );
+#pragma omp section  
       AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, send_type4[2*grid+1], m_neighbor[2], ytag2,
 		    &u(1,ib,je-(m_ppadding-1),kb), 1, send_type4[2*grid+1], m_neighbor[3], ytag2,
 		    bufs_type4[2*grid+1],
 		    m_cartesian_communicator, &status );
+      }
    }
    //u.prefetch();
    POP_RANGE;
@@ -6643,7 +6672,7 @@ float_sw4* EW::newmanagedh(size_t len){
    void *ptr;
    //std::cout<<"******Using overloaded new**********\n";
    //cudaMallocManaged(&ptr, len*sizeof(float_sw4),cudaMemAttachHost);
-#ifdef CUDA_CODE_NOPE
+#ifdef CUDA_CODE
    cudaMalloc(&ptr, len*sizeof(float_sw4));
    map[ptr]=len*sizeof(float_sw4);
    //prefetched[ptr]=false;
@@ -6718,6 +6747,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
 		       float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		       std::tuple<float_sw4*,float_sw4*> &buf,
 		       MPI_Comm comm, MPI_Status *status){
+  PUSH_RANGE_PAYLOAD("AMPI_SENDRECV",stag%6,stag);
   MPI_Request send_req,recv_req;
   
   int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
@@ -6746,6 +6776,8 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   
   if (sendto!=MPI_PROC_NULL)
     if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
+
+  POP_RANGE;
 }
 void EW::getbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
 
@@ -6761,14 +6793,16 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int count=std::get<0>(mtype);
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
+  //std::cout<<"getbuffer_device...";
   PUSH_RANGE_PAYLOAD("GET_BUFFER",1,count*bl);
-  PREFETCHFORCED(buf);
+  //PREFETCHFORCED(buf);
   forall<EXEC > (0,count,[=] RAJA_DEVICE(int i){
     for (int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
   });
 
   SYNC_DEVICE;
   POP_RANGE;
+  //std::cout<<"Done\n";
 }
 
 void EW::putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
@@ -6785,13 +6819,15 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int count=std::get<0>(mtype);
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
+  //std::cout<<"putbuffer_device...";
   PUSH_RANGE_PAYLOAD("PUT_BUFFER",2,count*bl);
-  PREFETCHFORCED(buf);
+  //PREFETCHFORCED(buf);
   forall<EXEC > (0,count,[=] RAJA_DEVICE(int i){
       for (int k=0;k<bl;k++) data[i*stride+k]=buf[k+i*bl];
     });
 
   SYNC_DEVICE;
+  //std::cout<<"Done\n";
   POP_RANGE;
 }
 //-----------------------------------------------------------------------

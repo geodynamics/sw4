@@ -9,7 +9,14 @@ int main( int argc, char** argv )
    //MPI_Init(&argc, &argv);
    int myRank;
    double  time_start, time_end;
+#ifndef THREADED_MPI
    MPI_Init(&argc, &argv);
+#else
+   int provided;
+   MPI_Init_thread(&argc,&argv,MPI_THREAD_MULTIPLE,&provided);
+   if (provided!=MPI_THREAD_MULTIPLE) std::cerr<<"ERROR:: MPI_THREAD_MULTIPLE is not supported\n";
+   else std::cerr<<"Using Threaded MPI with MPI_THREAD_MULTIPLE\n";
+#endif
    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
    MPI_Barrier(MPI_COMM_WORLD);
