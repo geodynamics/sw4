@@ -19,6 +19,7 @@ class EWCuda;
 class CheckPoint;
 #include "RAJA/RAJA.hxx"
 using namespace RAJA;
+typedef std::tuple<MPI_Request *, float_sw4*, float_sw4*, std::tuple<int,int,int>, MPI_Request*> AMPI_Ret_type;
 #include <cstdio>
 #define PREFETCH(input_ptr) if (prefetch(input_ptr)==1) printf("BAD PREFETCH ERROR IN FILE %s, line %d\n",__FILE__,__LINE__);
 #define PREFETCHFORCED(input_ptr) if (prefetchforced(input_ptr)==1) printf("BAD PREFETCH ERROR IN FILE %s, line %d\n",__FILE__,__LINE__);
@@ -82,6 +83,7 @@ class EW
 			 vector<Sarray> & a_Uacc, int st );
    void communicate_array( Sarray& U, int g );
    void communicate_array_async( Sarray& U, int g );
+   void communicate_array_old( Sarray& U, int g );
    void cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources );
    void setup_boundary_arrays();
@@ -442,9 +444,13 @@ class EW
 		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		      std::tuple<float_sw4*,float_sw4*> &buf,
 		      MPI_Comm comm, MPI_Status *status);
+   std::tuple<MPI_Request *, float_sw4*, float_sw4*, std::tuple<int,int,int>, MPI_Request*> AMPI_SendrecvSplit(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
+		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		      std::tuple<float_sw4*,float_sw4*> &buf,
+		      MPI_Comm comm, MPI_Status *status);
    void getbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
 
    void putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
-
+   void AMPI_SendrecvSync(std::vector<AMPI_Ret_type> &list);
 };
 #endif

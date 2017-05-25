@@ -3321,7 +3321,7 @@ void EW::communicate_array_async( Sarray& u, int grid )
    POP_RANGE;
 }
 
-void EW::communicate_array( Sarray& u, int grid )
+void EW::communicate_array_old( Sarray& u, int grid )
 {
   PUSH_RANGE("COMM_ARRAY",4);
   //u.prefetch(cudaCpuDeviceId);
@@ -3331,7 +3331,7 @@ void EW::communicate_array( Sarray& u, int grid )
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
    MPI_Status status;
 #ifdef THREADED_MPI
-   const int threaded_mpi=1
+   const int threaded_mpi=1;
 #else
      const int threaded_mpi=0;
 #endif
@@ -3440,6 +3440,103 @@ void EW::communicate_array( Sarray& u, int grid )
    //u.prefetch();
    POP_RANGE;
 }
+
+
+void EW::communicate_array( Sarray& u, int grid )
+{
+  PUSH_RANGE("COMM_ARRAY_SPLIT",4);
+  //u.prefetch(cudaCpuDeviceId);
+   REQUIRE2( u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
+	     "Communicate array, only implemented for nc=1,3, and 4 "
+	     << " nc = " << u.m_nc );
+   int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
+   MPI_Status status;
+   std::vector<AMPI_Ret_type> list;
+   if( u.m_nc == 1 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      //for (int i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
+      //std::cout<<"\n";
+      list.push_back(AMPI_SendrecvSplit( &u(ie-(2*m_ppadding-1),jb,kb), 1, send_type1[2*grid], m_neighbor[1], xtag1,
+       &u(ib,jb,kb), 1, send_type1[2*grid], m_neighbor[0], xtag1,
+       bufs_type1[2*grid],
+       m_cartesian_communicator, &status ));
+      list.push_back(AMPI_SendrecvSplit( &u(ib+m_ppadding,jb,kb), 1, send_type1[2*grid], m_neighbor[0], xtag2,
+       &u(ie-(m_ppadding-1),jb,kb), 1, send_type1[2*grid], m_neighbor[1], xtag2,
+       bufs_type1[2*grid],
+       m_cartesian_communicator, &status ));
+      // Y-direction communication
+      list.push_back(AMPI_SendrecvSplit( &u(ib,je-(2*m_ppadding-1),kb), 1, send_type1[2*grid+1], m_neighbor[3], ytag1,
+       &u(ib,jb,kb), 1, send_type1[2*grid+1], m_neighbor[2], ytag1,
+       bufs_type1[2*grid+1],
+       m_cartesian_communicator, &status ));    
+      list.push_back(AMPI_SendrecvSplit( &u(ib,jb+m_ppadding,kb), 1, send_type1[2*grid+1], m_neighbor[2], ytag2,
+       &u(ib,je-(m_ppadding-1),kb), 1, send_type1[2*grid+1], m_neighbor[3], ytag2,
+       bufs_type1[2*grid+1],
+       m_cartesian_communicator, &status ));
+      AMPI_SendrecvSync(list);
+   }
+   else if( u.m_nc == 3 )
+   {
+
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      list.push_back(AMPI_SendrecvSplit( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, send_type3[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, send_type3[2*grid], m_neighbor[0], xtag1,
+		     bufs_type3[2*grid],
+		    m_cartesian_communicator, &status ));
+      list.push_back(AMPI_SendrecvSplit( &u(1,ib+m_ppadding,jb,kb), 1, send_type3[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, send_type3[2*grid], m_neighbor[1], xtag2,
+		    bufs_type3[2*grid],
+		    m_cartesian_communicator, &status ));
+      // Y-direction communication
+      list.push_back(AMPI_SendrecvSplit( &u(1,ib,je-(2*m_ppadding-1),kb), 1, send_type3[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, send_type3[2*grid+1], m_neighbor[2], ytag1,
+		    bufs_type3[2*grid+1],
+		    m_cartesian_communicator, &status ));
+      list.push_back(AMPI_SendrecvSplit( &u(1,ib,jb+m_ppadding,kb), 1, send_type3[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, send_type3[2*grid+1], m_neighbor[3], ytag2,
+		    bufs_type3[2*grid+1],
+		    m_cartesian_communicator, &status ));
+      AMPI_SendrecvSync(list);
+   }
+   else if( u.m_nc == 4 )
+   {
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+      // X-direction communication
+      list.push_back(AMPI_SendrecvSplit( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, send_type4[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, send_type4[2*grid], m_neighbor[0], xtag1,
+		    bufs_type4[2*grid],
+		    m_cartesian_communicator, &status ));
+      list.push_back(AMPI_SendrecvSplit( &u(1,ib+m_ppadding,jb,kb), 1, send_type4[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, send_type4[2*grid], m_neighbor[1], xtag2,
+		    bufs_type4[2*grid],
+		    m_cartesian_communicator, &status ));
+      // Y-direction communication
+      list.push_back(AMPI_SendrecvSplit( &u(1,ib,je-(2*m_ppadding-1),kb), 1, send_type4[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, send_type4[2*grid+1], m_neighbor[2], ytag1,
+		    bufs_type4[2*grid+1],
+		    m_cartesian_communicator, &status ));
+      list.push_back(AMPI_SendrecvSplit( &u(1,ib,jb+m_ppadding,kb), 1, send_type4[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, send_type4[2*grid+1], m_neighbor[3], ytag2,
+		    bufs_type4[2*grid+1],
+		    m_cartesian_communicator, &status ));
+      AMPI_SendrecvSync(list);
+   }
+   //u.prefetch();
+   POP_RANGE;
+}
+
 //-----------------------------------------------------------------------
 void EW::cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources )
@@ -6777,6 +6874,73 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   if (sendto!=MPI_PROC_NULL)
     if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
 
+  POP_RANGE;
+}
+
+std::tuple<MPI_Request *, float_sw4*, float_sw4*, std::tuple<int,int,int>, MPI_Request*> 
+EW::AMPI_SendrecvSplit(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sendto, int stag,
+		       float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		       std::tuple<float_sw4*,float_sw4*> &buf,
+		       MPI_Comm comm, MPI_Status *status){
+  PUSH_RANGE_PAYLOAD("AMPI_SR_SPLIT",stag%6,stag);
+  MPI_Request *send_req,*recv_req;
+  send_req = new MPI_Request;
+  recv_req = new MPI_Request;
+
+  *send_req = MPI_REQUEST_NULL;
+  *recv_req = MPI_REQUEST_NULL;
+  int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
+  int send_count=std::get<0>(sendt)*std::get<1>(sendt);
+  
+  // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
+  if (recvfrom!=MPI_PROC_NULL)
+    if (MPI_Irecv(std::get<1>(buf),recv_count,MPI_DOUBLE,recvfrom,rtag,comm,recv_req)!=MPI_SUCCESS) std::cerr<<"MPI_Irecv failed in EW::AMPI_Sendrecv\n";
+
+  if (sendto!=MPI_PROC_NULL){
+    getbuffer_device(a,std::get<0>(buf),sendt);
+    //std::cout<<"SENDING :: "<<sendto<<" ";
+    //for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
+    //std::cout<<"\n";
+    if (MPI_Isend(std::get<0>(buf),send_count,MPI_DOUBLE,sendto,stag,comm,send_req)!=MPI_SUCCESS) std::cerr<<"MPI_Isend failed in EW::AMPI_Sendrecv\n";
+  }
+
+  // if (recvfrom!=MPI_PROC_NULL){
+  //   if (MPI_Wait(recv_req,&recv_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT RECV FAILED IN AMPI_SENDrecv\n";
+  //   putbuffer_device(b,std::get<1>(buf),recvt);
+  // }
+  
+  //std::tuple<MPI_Status,double *, double *, std::tuple<int,int,int> &,MPI_Status> retval;
+  auto retval = std::make_tuple(recv_req,b,std::get<1>(buf),recvt,send_req);
+
+  POP_RANGE;
+  return retval;
+}
+
+void EW::AMPI_SendrecvSync(std::vector<AMPI_Ret_type> &list){
+  //std::cout<<"AMPI_SYNC.."<<MPI_REQUEST_NULL;
+  PUSH_RANGE("AMPI_SYNC",4);
+  MPI_Request *waitlist;
+  int indx;
+  waitlist = new MPI_Request[list.size()];
+  //for (int i=0;i<list.size();i++) std::cout<<i<<"["<<*std::get<0>(list[i])<<","<<std::get<1>(list[i])<<","<<std::get<2>(list[i])<<","<<*std::get<4>(list[i])<<"]  ";
+  //std::cout<<"EOL\n";
+  for (int i=0;i<list.size();i++) waitlist[i]=*(std::get<0>(list[i]));
+  for (int i=0;i<list.size();i++){
+    MPI_Status status;
+    MPI_Waitany(list.size(),waitlist,&indx,&status);
+    if (indx>=0)
+      putbuffer_device(std::get<1>(list[indx]),std::get<2>(list[indx]),std::get<3>(list[indx]));
+  }
+  for (int i=0;i<list.size();i++) waitlist[i]=*(std::get<4>(list[i]));
+  MPI_Status *stats = new MPI_Status[list.size()];
+  if (MPI_Waitall(list.size(),waitlist,stats)!=MPI_SUCCESS) std::cerr<<"ERROR in MPI_Waitany in"<<__LINE__<<"\n";
+  delete [] stats;
+  delete [] waitlist;
+  for (int i=0;i<list.size();i++){
+    delete std::get<0>(list[i]);
+    delete std::get<4>(list[i]);
+  }
+  //std::cout<<"Done \n";
   POP_RANGE;
 }
 void EW::getbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
