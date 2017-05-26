@@ -80,7 +80,6 @@ __global__ void pred_dev( int ifirst, int ilast, int jfirst, int jlast, int kfir
    size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
    size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   //   //   size_t j;
 
    for (size_t i = myi; i < 3*npts; i += nthreads) 
    {
@@ -1246,54 +1245,11 @@ __global__ void pred_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int 
 			  float_sw4* up, float_sw4* u, float_sw4* um, float_sw4* lu, float_sw4* fo,
 			  float_sw4* rho, float_sw4 dt2, int ghost_points )
 {
-   //   int myi = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
-   //   int myj = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
-   //   int myk = kfirst + ghost_points + threadIdx.z + blockIdx.z*blockDim.z;
-   //   size_t i = myi-ifirst+(ilast-ifirst+1)*((myj-jfirst)+(jlast-jfirst+1)*(myk-kfirst));
-
-   //   int myi = 2 + threadIdx.x + blockIdx.x*blockDim.x;
-   //   int myj = 2 + threadIdx.y + blockIdx.y*blockDim.y;
-   //   int myk = 2 + threadIdx.z + blockIdx.z*blockDim.z;
-   //   size_t i = myi+(ilast-ifirst+1)*(myj+(jlast-jfirst+1)*myk);
-
-
-   //   size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
-   //   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
-   //   const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   //   //   size_t j;
-
-   //   for (size_t i = myi; i < 3*npts; i += nthreads) 
-   //   {
-   //      //       j = i/3;
-   //      //       float_sw4 dt2orh = dt2/rho[j];
-   //       float_sw4 dt2orh = dt2/rho[i/3];
-   //       up[i  ] = 2*u[i  ]-um[i  ] + dt2orh*(lu[i  ]+fo[i  ]);
-   //   }
-
-   size_t i = threadIdx.x + blockIdx.x * blockDim.x;
-   const size_t nthreads = static_cast<size_t> (gridDim.x)*blockDim.x;
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
+   const size_t nthreads = static_cast<size_t>(gridDim.x)*blockDim.x;
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   up[i] = 2*u[i] - um[i] + dt2/rho[i%npts]*(lu[i]+fo[i]);
-   i += nthreads;
-   up[i] = 2*u[i] - um[i] + dt2/rho[i%npts]*(lu[i]+fo[i]);
-   i += nthreads;
-   if( i < 3*npts )
-   {
+   for (size_t i = myi; i < 3*npts; i += nthreads) 
       up[i] = 2*u[i] - um[i] + dt2/rho[i%npts]*(lu[i]+fo[i]);
-      i += nthreads;
-      if( i < 3*npts )
-	 up[i] = 2*u[i] - um[i] + dt2/rho[i%npts]*(lu[i]+fo[i]);
-   }
-
-   //   float_sw4 dt2orh = dt2/rho[i];
-   //   i *= 3;
-   //   up[i  ] = 2*u[i  ]-um[i  ] + dt2orh*(lu[i  ]+fo[i  ]);
-   //   up[i+1] = 2*u[i+1]-um[i+1] + dt2orh*(lu[i+1]+fo[i+1]);
-   //   up[i+2] = 2*u[i+2]-um[i+2] + dt2orh*(lu[i+2]+fo[i+2]);
-
-   //   up[3*i  ] = 2*u[3*i  ]-um[3*i  ] + dt2/rho[i]*(lu[3*i  ]+fo[3*i  ]);
-   //   up[3*i+1] = 2*u[3*i+1]-um[3*i+1] + dt2/rho[i]*(lu[3*i+1]+fo[3*i+1]);
-   //   up[3*i+2] = 2*u[3*i+2]-um[3*i+2] + dt2/rho[i]*(lu[3*i+2]+fo[3*i+2]);
 }
 
 //-----------------------------------------------------------------------
@@ -1301,31 +1257,11 @@ __global__ void corr_dev_rev( int ifirst, int ilast, int jfirst, int jlast, int 
 			  float_sw4* up, float_sw4* lu, float_sw4* fo,
 			  float_sw4* rho, float_sw4 dt4, int ghost_points )
 {
-   //   int myi = ifirst + ghost_points + threadIdx.x + blockIdx.x*blockDim.x;
-   //   int myj = jfirst + ghost_points + threadIdx.y + blockIdx.y*blockDim.y;
-   //   int myk = kfirst + ghost_points + threadIdx.z + blockIdx.z*blockDim.z;
-   //   size_t i = myi-ifirst+(ilast-ifirst+1)*((myj-jfirst)+(jlast-jfirst+1)*(myk-kfirst));
-   //   float_sw4 dt4i12orh=dt4/(12*rho[i]);
-   //   i *= 3;
-   //   up[i  ] += dt4i12orh*(lu[i  ]+fo[i  ]);
-   //   up[i+1] += dt4i12orh*(lu[i+1]+fo[i+1]);
-   //   up[i+2] += dt4i12orh*(lu[i+2]+fo[i+2]);
-
-   size_t i = ghost_points + threadIdx.x + blockIdx.x * blockDim.x;
+   size_t myi = threadIdx.x + blockIdx.x * blockDim.x;
    const size_t nthreads = static_cast<size_t> (gridDim.x) * (blockDim.x);
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
-   //   size_t j= i;
-   up[i  ] += dt4/(12*rho[i%npts])*(lu[i  ]+fo[i  ]);
-   i += nthreads;
-   up[i  ] += dt4/(12*rho[i%npts])*(lu[i  ]+fo[i  ]);
-   i += nthreads;
-   if( i < 3*npts )
-   {
+   for (size_t i = myi; i < 3*npts; i += nthreads) 
       up[i  ] += dt4/(12*rho[i%npts])*(lu[i  ]+fo[i  ]);
-      i += nthreads;
-      if( i < 3*npts )
-	 up[i  ] += dt4/(12*rho[i%npts])*(lu[i  ]+fo[i  ]);
-   }
 }
 
 //----------------------------------------------------------------------
