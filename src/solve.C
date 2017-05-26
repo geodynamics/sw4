@@ -66,11 +66,11 @@ void bcfort( int*, int*, int*, int*, int*, int*,
 	     float_sw4* bf2_p, float_sw4*bf3_p, 
 	     float_sw4*bf4_p, float_sw4*bf5_p, 
 	     float_sw4*, float_sw4*, float_sw4*, int* );
-void F77_FUNC(freesurfcurvi,FREESURFCURVI)(int*, int*, int*, int*, int*, int*, int*, int*,
-					  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-void F77_FUNC(freesurfcurvisg,FREESURFCURVISG)(int*, int*, int*, int*, int*, int*, int*, int*,
-					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-					       float_sw4*, float_sw4*, float_sw4* );
+void freesurfcurvi(int*, int*, int*, int*, int*, int*, int*, int*,
+		   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+void freesurfcurvisg(int*, int*, int*, int*, int*, int*, int*, int*,
+		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		     float_sw4*, float_sw4*, float_sw4* );
 void bcfortsg( int*, int*, int*, int*, int*, int*, 
 	       int *, int*, int*, int*,
 	       float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
@@ -147,22 +147,22 @@ void addsgd6c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, flo
    void twstensorsgatt( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, 
 			int* kz, float_sw4* t, float_sw4* om, float_sw4* c, float_sw4* ph, float_sw4* xx, float_sw4* yy, 
 			float_sw4* zz, float_sw4* tau, float_sw4* mu, float_sw4* lambda, float_sw4* omstrx, float_sw4* omstry );
-   void F77_FUNC(getsurfforcing,GETSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
-						 int* k, float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* forcing );
-   void F77_FUNC(subsurfforcing,SUBSURFFORCING)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
-						 int* k, float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* forcing );
-   void F77_FUNC(getsurfforcinggh,GETSURFFORCINGGH)( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
-						    int* k, float_sw4* h, float_sw4* tau, float_sw4* forcing, float_sw4* amp, float_sw4* xc,
-						    float_sw4* yc, float_sw4* xl, float_sw4* yl );
-   void F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( 
+   void getsurfforcing( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
+			int* k, float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* forcing );
+   void subsurfforcing( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
+			int* k, float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* forcing );
+   //   void getsurfforcinggh( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast,
+   //			  int* k, float_sw4* h, float_sw4* tau, float_sw4* forcing, float_sw4* amp, float_sw4* xc,
+   //			  float_sw4* yc, float_sw4* xl, float_sw4* yl );
+   void getsurfforcingsg( 
 	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
            float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
-   void F77_FUNC(subsurfforcingsg,SUBSURFFORCINGSG)( 
+   void subsurfforcingsg( 
 	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
            float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
-   void F77_FUNC(addbstressc,ADDBSTRESSC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*,  
-					   float_sw4*,  float_sw4*,  float_sw4*, float_sw4*, int*,  float_sw4*, char*,
-					   int*, int*,  float_sw4*,  float_sw4* );
+   void addbstressc( int*, int*, int*, int*, int*, int*, int*, float_sw4*,  
+		     float_sw4*,  float_sw4*,  float_sw4*, float_sw4*, int*,  float_sw4*, char*,
+		     int*, int*,  float_sw4*,  float_sw4* );
    void F77_FUNC(addbstresswresc,ADDBSTRESSWRESC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
 						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, 
 						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
@@ -1002,10 +1002,14 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
        if( topo == 1 && m_bcType[g][4] == bStressFree )
        {
 	  side = 5;
-          F77_FUNC(freesurfcurvisg,FREESURFCURVISG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-						    &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
-						    m_sbop, bforce_side4_ptr, m_sg_str_x[g],
-						    m_sg_str_y[g] );
+	  if( m_croutines )
+	     freesurfcurvisg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				 nz, side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+				 m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
+	  else
+	     freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			     &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+			     m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
        }
     }
     else
@@ -1030,14 +1034,22 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
        if( topo == 1 && m_bcType[g][4] == bStressFree )
        {
 	  side = 5;
-          F77_FUNC(freesurfcurvi,FREESURFCURVI)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-			       &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
+	  if( m_croutines )
+	     freesurfcurvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
+			       side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
+	  else
+	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
        }
        if( topo == 1 && m_bcType[g][5] == bStressFree )
        {
 	  side = 6;
-          F77_FUNC(freesurfcurvi,FREESURFCURVI)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-			       &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
+	  if( m_croutines )
+	     freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
+			      side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
+	  else
+	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
        }
     }
   }
@@ -2436,9 +2448,14 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
                // Compute boundary forcing for given stress tensor, tau.
 
-               F77_FUNC(getsurfforcing,GETSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                                        &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-                                                        tau.c_ptr(), bforce_side4_ptr );
+	       if( m_croutines )
+		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				     klast, k, mMetric.c_ptr(), mJ.c_ptr(),
+				     tau.c_ptr(), bforce_side4_ptr );
+	       else
+		  getsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+				  &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				  tau.c_ptr(), bforce_side4_ptr );
 
                if( m_use_attenuation )
                {
@@ -2452,9 +2469,13 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 		     twstensoratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				   &k, &t, &om, &cv, &ph,
 				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
-                  F77_FUNC(subsurfforcing,SUBSURFFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                                           &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-                                                           tau.c_ptr(), bforce_side4_ptr );
+		  if( m_croutines )
+		     subsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k,
+					mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(), bforce_side4_ptr );
+		  else
+		     subsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+				     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				     tau.c_ptr(), bforce_side4_ptr );
                }
             }
             else if( !usingSupergrid() && !curvilinear )
@@ -2501,28 +2522,41 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
 			       mu_ptr, la_ptr, &omstrx, &omstry );
                // Compute boundary forcing for given stress tensor, tau.
-               F77_FUNC(getsurfforcingsg,GETSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                                            &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-                                                            tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+	       if( m_croutines )
+		  getsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				       klast, k, mMetric.c_ptr(), mJ.c_ptr(),
+				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+	       else
+		  getsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+				    &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				    tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
 
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
 		  if( m_croutines )
+		  {
 		     twstensorsgatt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 					k, t, om, cv, ph,
 					mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
 					mua_ptr, laa_ptr, omstrx, omstry );
+		     subsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
+					  klast, k, mMetric.c_ptr(), mJ.c_ptr(),
+					  tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
+					  bforce_side4_ptr );
+		  }
 		  else
+		  {
 		     twstensorsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				     &k, &t, &om, &cv, &ph,
 				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
 				     mua_ptr, laa_ptr, &omstrx, &omstry );
-                  F77_FUNC(subsurfforcingsg,SUBSURFFORCINGSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                                               &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-                                                               tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
-                                                               bforce_side4_ptr );
+		     subsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+				       &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
+				       bforce_side4_ptr );
+		  }
                }
             } // end supergrid && curvilinear
          
@@ -4283,9 +4317,14 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
          Sarray bforcerhs(3,ifirst,ilast,jfirst,jlast,1,1);
          bforcerhs.assign(forcing);
 
-	 F77_FUNC(addbstressc,ADDBSTRESSC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					   &nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
-					   &side, m_sbop, &op, &ghno, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	 if( m_croutines )
+	    addbstressc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			    nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
+			    side, m_sbop, op, ghno, usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	 else
+	    addbstressc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			 &nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
+			 &side, m_sbop, &op, &ghno, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
          float_sw4 cof[8];
 	 float_sw4* u_p      = a_U[g].c_ptr();
 	 float_sw4* um_p     = a_Um[g].c_ptr();
@@ -4447,9 +4486,14 @@ void EW::addAttToFreeBcForcing( vector<Sarray*>& a_AlphaVEp,
 	    float_sw4* muve_p  = mMuVE[g][a].c_ptr();
 	    float_sw4* lave_p  = mLambdaVE[g][a].c_ptr();
 	    float_sw4* alpha_p = a_AlphaVEp[g][a].c_ptr();
-	    F77_FUNC(addbstressc,ADDBSTRESSC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					      &nz, alpha_p, muve_p, lave_p, forcing, mMetric.c_ptr(),
-					      &side, bop, &op, &ghyes, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	    if( m_croutines )
+	       addbstressc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			       nz, alpha_p, muve_p, lave_p, forcing, mMetric.c_ptr(),
+			       side, bop, op, ghyes, usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	    else
+	       addbstressc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			    &nz, alpha_p, muve_p, lave_p, forcing, mMetric.c_ptr(),
+			    &side, bop, &op, &ghyes, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
 	 }
       }
    }

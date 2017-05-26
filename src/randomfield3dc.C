@@ -274,11 +274,10 @@ void EW::perturbvelocity_ci(int ifirst, int ilast, int jfirst, int jlast, int kf
 
 //-----------------------------------------------------------------------
 void EW::perturbvelocityc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-			     int klast, float_sw4* a_vs, float_sw4* a_vp, float_sw4* a_per,
-			     float_sw4 amp, float_sw4 grad, float_sw4* a_z,
-			     float_sw4 plimit )
+			     int klast, float_sw4* __restrict__ a_vs, float_sw4* __restrict__ a_vp, 
+			     float_sw4* __restrict__ a_per, float_sw4 amp, float_sw4 grad, 
+			     float_sw4* a_z, float_sw4 plimit )
 {
-
    size_t ind = 0;
 #pragma omp parallel for
    for( int k=kfirst ; k <= klast ; k++ )

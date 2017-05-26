@@ -25,7 +25,10 @@
       else
          ke = klast-2
       endif
+!$OMP PARALLEL PRIVATE(i,j,k,m,q,ijac,r1,r2,r3,cm2,cm1,cp1,cp2,ac1,ac2,
+!$OMP*   ac3,ac4,ac5,ac6,dum2,dum1,dup1,dup2,du)
       if( onesided(5).eq.1 )then
+!$OMP DO
          do k=1,6
             do j=jfirst+2,jlast-2
                do i=ifirst+2,ilast-2
@@ -540,7 +543,9 @@
                enddo
             enddo
          enddo
+!$OMP ENDDO
       endif
+!$OMP DO
       do k=kb,ke
       do j=jfirst+2,jlast-2
       do i=ifirst+2,ilast-2
@@ -1674,7 +1679,9 @@ c$$$     &+a2*(c(45,i,j,k+2)*dup2-c(45,i,j,k-2)*dum2))
       enddo
       enddo
       enddo
+!$OMP ENDDO
       if( onesided(6).eq.1 )then
+!$OMP DO
          do k=nk-5,nk
             do j=jfirst+2,jlast-2
                do i=ifirst+2,ilast-2
@@ -2184,5 +2191,7 @@ c$$$     &+a2*(c(45,i,j,k+2)*dup2-c(45,i,j,k-2)*dum2))
                enddo
             enddo
          enddo
+!$OMP ENDDO
       endif   
+!$OMP END PARALLEL
       end

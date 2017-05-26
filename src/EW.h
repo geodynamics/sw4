@@ -749,6 +749,58 @@ void perturbvelocityc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirs
 			 float_sw4 amp, float_sw4 grad, float_sw4* a_z,
 			 float_sw4 plimit );
 
+void gridinfo_ci( int ib, int ie, int jb, int je, int kb, int ke,
+	       float_sw4* met, float_sw4* jac, float_sw4&  minj,
+	       float_sw4& maxj );
+
+int metric_ci( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a_x,
+		float_sw4* a_y, float_sw4* a_z, float_sw4* a_met, float_sw4* a_jac );
+
+void metricexgh_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		    int nz, float_sw4* a_x, float_sw4* a_y, float_sw4* a_z, 
+		    float_sw4* a_met, float_sw4* a_jac, int order,
+		    float_sw4 sb, float_sw4 zmax, float_sw4 amp, float_sw4 xc,
+		    float_sw4 yc, float_sw4 xl, float_sw4 yl );
+   
+void freesurfcurvi_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		       int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+		       float_sw4* a_la, float_sw4* a_met, float_sw4* s,
+		       float_sw4* a_forcing );
+
+void freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
+			     int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+			     float_sw4* a_la, float_sw4* a_met, float_sw4* s,
+			     float_sw4* a_forcing, float_sw4* a_strx, float_sw4* a_stry );
+
+void getsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
+			int kfirst, int klast, int k, float_sw4* a_met,
+			float_sw4* a_jac, float_sw4* a_tau, float_sw4* a_forcing );
+
+void getsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
+			  int kfirst, int klast, int k, float_sw4* a_met,
+			  float_sw4* a_jac, float_sw4* a_tau, float_sw4* a_strx,
+			  float_sw4* a_stry, float_sw4* a_forcing );
+
+void getsurfforcinggh_ci( int ifirst, int ilast, int jfirst, int jlast,
+			  int kfirst, int klast, int k, float_sw4 h, 
+			  float_sw4* a_tau, float_sw4* a_forcing, float_sw4 amp,
+			  float_sw4 xc, float_sw4 yc, float_sw4 xl, float_sw4 yl );
+
+void subsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
+			int kfirst, int klast, int k, float_sw4* a_met,
+			float_sw4* a_jac, float_sw4* a_tau, float_sw4* a_forcing );
+
+void subsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
+			  int kfirst, int klast, int k, float_sw4* a_met,
+			  float_sw4* a_jac, float_sw4* a_tau,
+			  float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_forcing );
+
+void addbstressc_ci( int ifirst, int ilast, int jfirst, int jlast,
+		       int kfirst, int klast, int nz, float_sw4* a_u, float_sw4* a_mu,
+		       float_sw4* a_la, float_sw4* a_bs, float_sw4* a_met,
+		       int side, float_sw4* s, char op, int ghterm, int usesg,
+		       float_sw4* a_sgstrx, float_sw4* a_sgstry );
+
 
 //
 // VARIABLES BEYOND THIS POINT

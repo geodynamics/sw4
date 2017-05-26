@@ -28,8 +28,12 @@
          ke = klast-2
       endif
       cof = 1/(h*h)
+
+!$OMP PARALLEL PRIVATE(i,j,k,m,q,r1,r2,r3,cm2,cm1,cp1,cp2,ac1,ac2,
+!$OMP*   ac3,ac4,ac5,ac6,dum2,dum1,dup1,dup2,du)
       if( onesided(5).eq.1 )then
 *** Lower k-boundary SBP operators
+!$OMP DO
          do k=1,6
             do j=jfirst+2,jlast-2
                do i=ifirst+2,ilast-2
@@ -552,9 +556,11 @@
                enddo
             enddo
          enddo
+!$OMP END DO
       endif
 
 *** Centered operators
+!$OMP DO
       do k=kb,ke
          do j=jfirst+2,jlast-2
             do i=ifirst+2,ilast-2
@@ -1126,8 +1132,10 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO
       if( onesided(6).eq.1 )then
 *** Upper k-boundary SBP operators
+!$OMP DO
          do k=nk-5,nk
             do j=jfirst+2,jlast-2
                do i=ifirst+2,ilast-2
@@ -1649,6 +1657,7 @@
                enddo
             enddo
          enddo
+!$OMP ENDDO
       endif
-
+!$OMP END PARALLEL
       end

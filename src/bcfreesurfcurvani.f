@@ -88,6 +88,7 @@
       else
 c s=6
          k = nz
+!$OMP DO               
          do j=jfirst+2,jlast-2
             do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -154,6 +155,7 @@ c s=6
                u(3,i,j,k+1) = s0i*x(3)
             enddo
          enddo
+!$OMP ENDDO               
       endif
 !$OMP END PARALLEL
       end

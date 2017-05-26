@@ -35,11 +35,11 @@
 
 #include "F77_FUNC.h"
 extern "C" {
-   void F77_FUNC(metric,METRIC)( int*, int*, int*, int*, int*, int*,
+   void metric( int*, int*, int*, int*, int*, int*,
 				 double*, double*, double*, double*, double*, int * );
-   void F77_FUNC(gridinfo,GRIDINFO)( int*, int*, int*, int*, int*, int*,
+   void gridinfo( int*, int*, int*, int*, int*, int*,
 				     double*, double*, double*, double* );
-   void F77_FUNC(metricexgh,METRICEXGH)( int*, int*, int*, int*, int*, int*, int*, int*, int*,
+   void metricexgh( int*, int*, int*, int*, int*, int*, int*, int*, int*,
 					 double*, double*, double*, double*, double*,
 					 int*, double*, double*, double*, double*,
 					 double*, double*, double* );
@@ -70,17 +70,25 @@ void EW::setup_metric()
       int nzg = m_global_nz[g];
       double h= mGridSize[g];   
       double zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
-      F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-				       mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+      if( m_croutines )
+	 metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				       mMetric.c_ptr(), mJ.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
+				       m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
+	 
+      else
+	 metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+		     mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+		     &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    }
    else
    {
      int ierr=0;
-     F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+     if( m_croutines )
+	ierr=metric_ci( Bx, Nx, By, Ny, Bz, Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+     else
+	metric( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
      CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
    }
-   
 
    communicate_array( mMetric, mNumberOfGrids-1 );
    communicate_array( mJ, mNumberOfGrids-1 );
@@ -90,7 +98,10 @@ void EW::setup_metric()
       metric_derivatives_test( );
 
    double minJ, maxJ;
-   F77_FUNC(gridinfo,GRIDINFO)(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
+   if( m_croutines )
+      gridinfo_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), mJ.c_ptr(), minJ, maxJ );
+   else
+      gridinfo(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
    double minJglobal, maxJglobal;
    MPI_Allreduce( &minJ, &minJglobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
    MPI_Allreduce( &maxJ, &maxJglobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
@@ -904,7 +915,12 @@ void EW::metric_derivatives_test()
    double h= mGridSize[g];   
    double zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
 
-   F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+   if( m_croutines )
+      metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				    metex.c_ptr(), jacex.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
+				    m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
+   else
+      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
 				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
 				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    communicate_array( metex, mNumberOfGrids-1 );

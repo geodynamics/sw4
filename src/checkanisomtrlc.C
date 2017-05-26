@@ -21,7 +21,7 @@ void EW::checkanisomtrl_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
       {
 	 int info=0, six=6, one=1;
 	 char n='N', l='L';
-	 float_sw4 a[21], eig[6], work[18], z;
+	 double a[21], eig[6], work[18], z;
 	 if( rho[ind] < rhomin )
 	    rhomin = rho[ind];
 	 if( rho[ind] > rhomax )

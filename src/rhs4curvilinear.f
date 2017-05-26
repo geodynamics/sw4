@@ -30,7 +30,7 @@
 ! # along with this program; if not, write to the Free Software
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine GRIDINFO( ifirst, ilast, jfirst, jlast, kfirst, klast,
-     *     met, jac, minj, maxj )
+     *     met, jac, minj, maxj ) bind(c)
       implicit none
       real*8 c1, c2
       parameter( c1=2d0/3, c2=-1d0/12 )
@@ -45,6 +45,8 @@
 
       maxj = -1d30
       minj =  1d30
+!$OMP PARALLEL PRIVATE(i,j,k) 
+!$OMP DO REDUCTION(max:maxj) REDUCTION(min:minj)
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
@@ -57,11 +59,13 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine METRIC( ifirst, ilast, jfirst, jlast, kfirst, klast,
-     *                   x, y, z, met, jac, ierr )
+     *                   x, y, z, met, jac, ierr ) bind(c)
       implicit none
       real*8 c1, c2
       parameter( c1=2d0/3, c2=-1d0/12 )
@@ -79,6 +83,9 @@ c-----------------------------------------------------------------------
 
       ierr=0
       h = x(ifirst+1,jfirst,kfirst)-x(ifirst,jfirst,kfirst)
+      ierr = 0
+!$OMP PARALLEL PRIVATE(i,j,k,zr,zq,zp,sqzr) 
+!$OMP DO REDUCTION(min:ierr)
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
@@ -165,9 +172,8 @@ c     *       +3*z(ilast-2,j,k)-  ft*z(ilast-3,j,k)+0.25d0*z(ilast-4,j,k)
                if( zr.le.0 )then
                   write(*,101) 'Error, zr = ' , zr, ' at ', i, j, k
  101              format(' ', a, g12.5, a, 3(tr1,i3) )
-c are you kidding me?                  stop
                   ierr=-1
-                  return
+c                  return
                endif
 c               if(i.eq.(ifirst+ilast)/2.and.j.eq.(jfirst+jlast)/2 )then
 c                  write(*,102) k, zr, z(i,j,k)
@@ -183,12 +189,15 @@ c               endif
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine METRICEXGH( ifirst, ilast, jfirst, jlast, kfirst, 
      *                       klast, nx, ny, nz, x, y, z, met, jac,
-     *                       order, sb, zmax, amp, xc, yc, xl, yl )
+     *                       order, sb, zmax, amp, xc, yc, xl, yl ) 
+     *   bind(c)
 *** Exact metric derivatives for the Gaussian hill topography
 
       implicit none
@@ -209,6 +218,9 @@ c-----------------------------------------------------------------------
       h = x(ifirst+1,jfirst,kfirst)-x(ifirst,jfirst,kfirst)
       ixl2 = 1/(xl*xl)
       iyl2 = 1/(yl*yl)
+!$OMP PARALLEL PRIVATE(i,j,k,l,s,sdb,tau,taup,tauq,p1,p2,zr,zq,zp,
+!$OMP*                 zz,sqzr) 
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
@@ -258,11 +270,13 @@ c               endif
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine FREESURFCURVI( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, nz, side, u, mu, la, met, s, forcing )
+     *     klast, nz, side, u, mu, la, met, s, forcing ) bind(c)
       implicit none
       real*8 c1, c2
       parameter( c1=2d0/3, c2=-1d0/12 )
@@ -285,6 +299,8 @@ c-----------------------------------------------------------------------
       endif
 
       s0i = 1/s(0)
+!$OMP PARALLEL PRIVATE(i,j,rhs1,rhs2,rhs3,ac,bc,cc,dc)
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
 *** First tangential derivatives
@@ -364,11 +380,13 @@ c-----------------------------------------------------------------------
      *                                           dc*met(4,i,j,k) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine GETSURFFORCING( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, k, met, jac, tau, forcing )
+     *     klast, k, met, jac, tau, forcing ) bind(c)
 ***********************************************************************
 ***
 *** Given tau, Cartesian stress tensor on boundary, compute the stress
@@ -387,6 +405,8 @@ c-----------------------------------------------------------------------
       real*8 forcing(3,ifirst:ilast,jfirst:jlast)
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 sqjac
+!$OMP PARALLEL PRIVATE(i,j,sqjac)
+!$OMP DO
       do j=jfirst,jlast
          do i=ifirst,ilast
             sqjac = SQRT(jac(i,j,k))
@@ -398,11 +418,13 @@ c-----------------------------------------------------------------------
      *         met(3,i,j,k)*tau(5,i,j)+met(4,i,j,k)*tau(6,i,j) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine GETSURFFORCINGGH( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, k, h, tau, forcing, amp, xc, yc, xl, yl )
+     *     klast, k, h, tau, forcing, amp, xc, yc, xl, yl ) bind(c)
 ***********************************************************************
 ***
 *** Given tau, Cartesian stress tensor on boundary, compute the stress
@@ -423,6 +445,8 @@ c-----------------------------------------------------------------------
       real*8 zp, zq, x, y, h
       ixl2 = 1/(xl*xl)
       iyl2 = 1/(yl*yl)
+!$OMP PARALLEL PRIVATE(i,j,x,y,efact,zp,zq)
+!$OMP DO
       do j=jfirst,jlast
          y = (j-1)*h
          do i=ifirst,ilast
@@ -438,11 +462,13 @@ c-----------------------------------------------------------------------
      *                              -zq*tau(5,i,j)+tau(6,i,j) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine SUBSURFFORCING( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, k, met, jac, tau, forcing )
+     *     klast, k, met, jac, tau, forcing ) bind(c)
 ***********************************************************************
 ***
 *** Given tau, Cartesian stress tensor on boundary, compute the stress
@@ -461,14 +487,11 @@ c-----------------------------------------------------------------------
       real*8 forcing(3,ifirst:ilast,jfirst:jlast)
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 sqjac
+!$OMP PARALLEL PRIVATE(i,j,sqjac)
+!$OMP DO
       do j=jfirst,jlast
          do i=ifirst,ilast
             sqjac = SQRT(jac(i,j,k))
-c            if( i.eq.23 .and. j.eq.18 )then
-c               write(*,*) 'twf ',sqjac*( met(2,i,j,k)*tau(1,i,j)+
-c     *                                met(3,i,j,k)*tau(2,i,j)+
-c     *                          met(4,i,j,k)*tau(3,i,j) )
-c            endif
             forcing(1,i,j) =  forcing(1,i,j) - 
      *         sqjac*( met(2,i,j,k)*tau(1,i,j)+ 
      *         met(3,i,j,k)*tau(2,i,j)+met(4,i,j,k)*tau(3,i,j) ) 
@@ -480,12 +503,14 @@ c            endif
      *         met(3,i,j,k)*tau(5,i,j)+met(4,i,j,k)*tau(6,i,j) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine ADDBSTRESSC( ifirst, ilast, jfirst, jlast, kfirst, 
      *              klast, nz, u, mu, la, bs, met, side, s, op, ghterm,
-     *              usesg, sgstrx, sgstry )
+     *              usesg, sgstrx, sgstry ) bind(c)
       implicit none
       real*8 c1, c2
       parameter( c1=2d0/3, c2=-1d0/12 )
@@ -499,7 +524,7 @@ c-----------------------------------------------------------------------
       real*8 bs(3,ifirst:ilast,jfirst:jlast)
       real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast), sgx, sgy
       real*8 s(0:4), rhs1, rhs2, rhs3, ac, rtu, un1, vn1, wn1
-      real*8 m2sg, m3sg, m4sg, isgx, isgy, sf
+      real*8 m2sg, m3sg, m4sg, isgx, isgy
       character*1 op
 
       if( side.eq.5 )then
@@ -523,8 +548,10 @@ c-----------------------------------------------------------------------
       sgy = 1
       isgx = 1
       isgy = 1
-      sf = 1
 
+!$OMP PARALLEL PRIVATE(i,j,sgx,sgy,isgy,isgx,rhs1,rhs2,rhs3,un1,vn1,
+!$OMP*                 wn1,m2sg,m3sg,m4sg,rtu,ac)
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             if( usesg.eq.1 )then
@@ -625,4 +652,6 @@ c     *                - forcing(3,i,j)
            bs(3,i,j) = a1*bs(3,i,j) + a2*rhs3
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end

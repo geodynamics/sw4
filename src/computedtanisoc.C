@@ -13,7 +13,7 @@ void EW::maxwave( float_sw4 c[21], float_sw4 rho, float_sw4& eigestimate )
 // This is equal to (4*mu+lambda)/rho in the isotropic case 
    int info, three=3, one=1;
    char n='N', l='L';
-   float_sw4 eg[3], a[6], work[9], z;
+   double eg[3], a[6], work[9], z;
    a[0] = c[0]+c[6]+c[11];
    a[1] = c[1]+c[8]+c[13];
    a[2] = c[2]+c[9]+c[14];
@@ -37,7 +37,7 @@ void EW::maxwavecurv( float_sw4 c[45], float_sw4 rho, float_sw4 jac, float_sw4& 
  // Traces of matrices, in order xx,xy,xz,yy,yz,zz
    int info, three=3, one=1;
    char n='N', l='L';
-   float_sw4 eg[3], a[6], work[9], z;
+   double eg[3], a[6], work[9], z;
    a[0] = c[0] +c[3] +c[5];
    a[1] = c[18]+c[22]+c[26];
    a[2] = c[27]+c[31]+c[35];

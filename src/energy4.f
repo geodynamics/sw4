@@ -43,6 +43,8 @@
       normwgh(3) = 43d0/48
       normwgh(4) = 49d0/48
       energy = 0
+!$OMP PARALLEL PRIVATE(i,j,k,term,normfact)
+!$OMP DO REDUCTION(+:energy)      
       do k=k1,k2
          do j=j1,j2
             do i=i1,i2
@@ -65,7 +67,10 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       end
+
 c-----------------------------------------------------------------------
       subroutine ENERGY4C( is, ie, js, je, ks, ke, i1, i2, j1, j2, k1,
      *                     k2, onesided, um, u, up, rho, jac, energy )
@@ -82,6 +87,8 @@ c-----------------------------------------------------------------------
       normwgh(3) = 43d0/48
       normwgh(4) = 49d0/48
       energy = 0
+!$OMP PARALLEL PRIVATE(i,j,k,term,normfact)
+!$OMP DO REDUCTION(+:energy)      
       do k=k1,k2
          do j=j1,j2
             do i=i1,i2
@@ -104,4 +111,6 @@ c-----------------------------------------------------------------------
             enddo
          enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       end
