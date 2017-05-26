@@ -83,7 +83,8 @@ class EW
 			 vector<Sarray> & a_Uacc, int st );
    void communicate_array( Sarray& U, int g );
    void communicate_array_async( Sarray& U, int g );
-   void communicate_array_old( Sarray& U, int g );
+   void communicate_array_org( Sarray& U, int g );
+   void communicate_array_new( Sarray& U, int g );
    void cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources );
    void setup_boundary_arrays();
@@ -342,6 +343,7 @@ class EW
    vector<std::tuple<float_sw4*,float_sw4*>> bufs_type1;
    vector<std::tuple<float_sw4*,float_sw4*>> bufs_type3;
    vector<std::tuple<float_sw4*,float_sw4*>> bufs_type4;
+   //vector<std::tuple<float_sw4*,float_sw4*>> bufs_typed;
    MPI_Datatype m_mpifloat;
 
    //   vector<MPI_Datatype> m_send_type21; // anisotropic
@@ -444,7 +446,8 @@ class EW
 		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		      std::tuple<float_sw4*,float_sw4*> &buf,
 		      MPI_Comm comm, MPI_Status *status);
-   std::tuple<MPI_Request *, float_sw4*, float_sw4*, std::tuple<int,int,int>, MPI_Request*> AMPI_SendrecvSplit(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
+   AMPI_Ret_type
+     AMPI_SendrecvSplit(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
 		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		      std::tuple<float_sw4*,float_sw4*> &buf,
 		      MPI_Comm comm, MPI_Status *status);
@@ -452,5 +455,6 @@ class EW
 
    void putbuffer(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
    void AMPI_SendrecvSync(std::vector<AMPI_Ret_type> &list);
+   void buffdiff(float_sw4* buf1, float_sw4*buf2,std::tuple<int,int,int> &mtype);
 };
 #endif
