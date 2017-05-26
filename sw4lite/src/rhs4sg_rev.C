@@ -113,6 +113,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
       k2 = nk-6;
    {
      //std::cout<<"LOOPSET #1\n";
+     PUSH_RANGE("RHS4SG_REV:1",2);
      forallN<EXEC, int, int,int>(
 				 RangeSegment(k1,k2+1),
 				 RangeSegment(jfirst+2,jlast-1),
@@ -352,9 +353,12 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
             lu(2,i,j,k) =  cof*r2;
             lu(3,i,j,k) =  cof*r3;
 				 }); // END OF RAJA LOOP
+     SYNC_DEVICE;
+     POP_RANGE;
       if( onesided[4]==1 )
       {
 	//std::cout<<"LOOP SET # 2\n";
+	PUSH_RANGE("RHS4SG_REV:2",3);
 	forallN<EXEC, int, int,int>(
 				    RangeSegment(1,6+1),
 				    RangeSegment(jfirst+2,jlast-1),
@@ -607,10 +611,13 @@ float_sw4 mux1, mux2, mux3, mux4,r1,r2,r3,muy1,muy2,muy3,muy4;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 				    });
+	SYNC_DEVICE;
+	POP_RANGE;
       }
       if( onesided[5] == 1 )
       {
 	std::cout<<"Loop set #3 \n";
+	PUSH_RANGE("RHS4SG_REV:3",3);
 	forallN<EXEC, int, int,int>(
 				    RangeSegment(nk-5,nk+1),
 				    RangeSegment(jfirst+2,jlast-1),
@@ -865,6 +872,8 @@ float_sw4 mux1, mux2, mux3, mux4,r1,r2,r3,muy1,muy2,muy3,muy4;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 	       }); // END OF RAJA LOOP
+	SYNC_DEVICE;
+	POP_RANGE;
       }
    }
 #undef mu
