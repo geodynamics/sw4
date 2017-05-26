@@ -1511,7 +1511,7 @@ void EW::computeDT()
       }
     }
 
-    if (!mQuiet && mVerbose >= 1 && proc_zero())
+    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero())
     {
       cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
