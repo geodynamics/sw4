@@ -126,7 +126,11 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 	
 				   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
 	   float_sw4 r1, r2, r3;
-
+	   float_sw4 u1,u2,u3;
+	   int off=base3+i+ni*(j)+nij*(k)+nijk;
+	   u1 = a_u[off];
+	   u2 = a_u[off+nijk];
+	   u3 = a_u[off+nijk*2]; 
 	   // const float_sw4 a1   = 0;
 	   // const float_sw4 i6   = 1.0/6;
 	   // const float_sw4 i12  = 1.0/12;
@@ -163,71 +167,71 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 /* 75 ops */
             r1 = i6*( strx(i)*( (2*mux1+la(i-1,j,k)*strx(i-1)-
                tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
-                              (u(1,i-2,j,k)-u(1,i,j,k))+
+                              (u(1,i-2,j,k)-u1)+
            (2*mux2+la(i-2,j,k)*strx(i-2)+la(i+1,j,k)*strx(i+1)+
                 3*(la(i,j,k)*strx(i)+la(i-1,j,k)*strx(i-1)))*
-                              (u(1,i-1,j,k)-u(1,i,j,k))+ 
+                              (u(1,i-1,j,k)-u1)+ 
            (2*mux3+la(i-1,j,k)*strx(i-1)+la(i+2,j,k)*strx(i+2)+
                 3*(la(i+1,j,k)*strx(i+1)+la(i,j,k)*strx(i)))*
-                              (u(1,i+1,j,k)-u(1,i,j,k))+
+                              (u(1,i+1,j,k)-u1)+
                 (2*mux4+ la(i+1,j,k)*strx(i+1)-
                tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
-                (u(1,i+2,j,k)-u(1,i,j,k)) ) + stry(j)*(
-                     muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-                     muy2*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-                     muy3*(u(1,i,j+1,k)-u(1,i,j,k)) +
-                     muy4*(u(1,i,j+2,k)-u(1,i,j,k)) ) + strz(k)*(
-                     muz1*(u(1,i,j,k-2)-u(1,i,j,k)) + 
-                     muz2*(u(1,i,j,k-1)-u(1,i,j,k)) + 
-                     muz3*(u(1,i,j,k+1)-u(1,i,j,k)) +
-                     muz4*(u(1,i,j,k+2)-u(1,i,j,k)) ) );
+                (u(1,i+2,j,k)-u1) ) + stry(j)*(
+                     muy1*(u(1,i,j-2,k)-u1) + 
+                     muy2*(u(1,i,j-1,k)-u1) + 
+                     muy3*(u(1,i,j+1,k)-u1) +
+                     muy4*(u(1,i,j+2,k)-u1) ) + strz(k)*(
+                     muz1*(u(1,i,j,k-2)-u1) + 
+                     muz2*(u(1,i,j,k-1)-u1) + 
+                     muz3*(u(1,i,j,k+1)-u1) +
+                     muz4*(u(1,i,j,k+2)-u1) ) );
 
 /* 75 ops */
-            r2 = i6*( strx(i)*(mux1*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-                      mux2*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-                      mux3*(u(2,i+1,j,k)-u(2,i,j,k)) +
-                      mux4*(u(2,i+2,j,k)-u(2,i,j,k)) ) + stry(j)*(
+            r2 = i6*( strx(i)*(mux1*(u(2,i-2,j,k)-u2) + 
+                      mux2*(u(2,i-1,j,k)-u2) + 
+                      mux3*(u(2,i+1,j,k)-u2) +
+                      mux4*(u(2,i+2,j,k)-u2) ) + stry(j)*(
                   (2*muy1+la(i,j-1,k)*stry(j-1)-
                       tf*(la(i,j,k)*stry(j)+la(i,j-2,k)*stry(j-2)))*
-                          (u(2,i,j-2,k)-u(2,i,j,k))+
+                          (u(2,i,j-2,k)-u2)+
            (2*muy2+la(i,j-2,k)*stry(j-2)+la(i,j+1,k)*stry(j+1)+
                      3*(la(i,j,k)*stry(j)+la(i,j-1,k)*stry(j-1)))*
-                          (u(2,i,j-1,k)-u(2,i,j,k))+ 
+                          (u(2,i,j-1,k)-u2)+ 
            (2*muy3+la(i,j-1,k)*stry(j-1)+la(i,j+2,k)*stry(j+2)+
                      3*(la(i,j+1,k)*stry(j+1)+la(i,j,k)*stry(j)))*
-                          (u(2,i,j+1,k)-u(2,i,j,k))+
+                          (u(2,i,j+1,k)-u2)+
                   (2*muy4+la(i,j+1,k)*stry(j+1)-
                     tf*(la(i,j,k)*stry(j)+la(i,j+2,k)*stry(j+2)))*
-                          (u(2,i,j+2,k)-u(2,i,j,k)) ) + strz(k)*(
-                     muz1*(u(2,i,j,k-2)-u(2,i,j,k)) + 
-                     muz2*(u(2,i,j,k-1)-u(2,i,j,k)) + 
-                     muz3*(u(2,i,j,k+1)-u(2,i,j,k)) +
-                     muz4*(u(2,i,j,k+2)-u(2,i,j,k)) ) );
+                          (u(2,i,j+2,k)-u2 ) + strz(k)*(
+                     muz1*(u(2,i,j,k-2)-u2) + 
+                     muz2*(u(2,i,j,k-1)-u2) + 
+                     muz3*(u(2,i,j,k+1)-u2) +
+                     muz4*(u(2,i,j,k+2)-u2) ) ));
 
 /* 75 ops */
-            r3 = i6*( strx(i)*(mux1*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-                      mux2*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-                      mux3*(u(3,i+1,j,k)-u(3,i,j,k)) +
-                      mux4*(u(3,i+2,j,k)-u(3,i,j,k))  ) + stry(j)*(
-                     muy1*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-                     muy2*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-                     muy3*(u(3,i,j+1,k)-u(3,i,j,k)) +
-                     muy4*(u(3,i,j+2,k)-u(3,i,j,k)) ) + strz(k)*(
+            r3 = i6*( strx(i)*(mux1*(u(3,i-2,j,k)-u3) + 
+                      mux2*(u(3,i-1,j,k)-u3) + 
+                      mux3*(u(3,i+1,j,k)-u3) +
+                      mux4*(u(3,i+2,j,k)-u3)  ) + stry(j)*(
+                     muy1*(u(3,i,j-2,k)-u3) + 
+                     muy2*(u(3,i,j-1,k)-u3) + 
+                     muy3*(u(3,i,j+1,k)-u3) +
+                     muy4*(u(3,i,j+2,k)-u3) ) + strz(k)*(
                   (2*muz1+la(i,j,k-1)*strz(k-1)-
                       tf*(la(i,j,k)*strz(k)+la(i,j,k-2)*strz(k-2)))*
-                          (u(3,i,j,k-2)-u(3,i,j,k))+
+                          (u(3,i,j,k-2)-u3)+
            (2*muz2+la(i,j,k-2)*strz(k-2)+la(i,j,k+1)*strz(k+1)+
                       3*(la(i,j,k)*strz(k)+la(i,j,k-1)*strz(k-1)))*
-                          (u(3,i,j,k-1)-u(3,i,j,k))+ 
+                          (u(3,i,j,k-1)-u3)+ 
            (2*muz3+la(i,j,k-1)*strz(k-1)+la(i,j,k+2)*strz(k+2)+
                       3*(la(i,j,k+1)*strz(k+1)+la(i,j,k)*strz(k)))*
-                          (u(3,i,j,k+1)-u(3,i,j,k))+
+                          (u(3,i,j,k+1)-u3)+
                   (2*muz4+la(i,j,k+1)*strz(k+1)-
                     tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2)))*
-		  (u(3,i,j,k+2)-u(3,i,j,k)) ) );
+		  (u(3,i,j,k+2)-u3 ) ) );
 	    lu(1,i,j,k) =  cof*r1;
             lu(2,i,j,k) =  cof*r2;
-            lu(3,i,j,k) =  cof*r3;
+            lu(3,i,j,k) =  cof*r3; 
 				 });
      forallN<EXEC, int, int,int>(
 				 RangeSegment(k1,k2+1),
