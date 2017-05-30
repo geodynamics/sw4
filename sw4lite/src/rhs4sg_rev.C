@@ -8,8 +8,12 @@ using namespace RAJA;
 // Note 4,4,32 runs out of registers
 #ifdef CUDA_CODE
 typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
-			      cuda_threadblock_z_exec<16>>>
+			      cuda_threadblock_z_exec<32>>>
   EXEC;
+
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<32>,cuda_threadblock_y_exec<4>,
+			      cuda_threadblock_z_exec<4>>>
+  EXEC2;
 
 #define SYNC_DEVICE cudaDeviceSynchronize();
 #else
@@ -112,7 +116,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
    if( onesided[5] == 1 )
       k2 = nk-6;
    {
-     //std::cout<<"LOOPSET #1\n";
+     //std::cout<<" LOOPSET #1 "<<k2+1-k1<<" "<<jlast-1-jfirst+2<<" "<<ilast-1-ifirst-2<<"\n";
      PUSH_RANGE("RHS4SG_REV:1",2);
      forallN<EXEC, int, int,int>(
 				 RangeSegment(k1,k2+1),
@@ -123,6 +127,11 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 				   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
 	   float_sw4 r1, r2, r3;
 
+	   // const float_sw4 a1   = 0;
+	   // const float_sw4 i6   = 1.0/6;
+	   // const float_sw4 i12  = 1.0/12;
+	   // const float_sw4 i144 = 1.0/144;
+	   // const float_sw4 tf   = 0.75;
 /* from inner_loop_4a, 28x3 = 84 ops */
             mux1 = mu(i-1,j,k)*strx(i-1)-
 	       tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -216,8 +225,18 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
                   (2*muz4+la(i,j,k+1)*strz(k+1)-
                     tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2)))*
 		  (u(3,i,j,k+2)-u(3,i,j,k)) ) );
-
-
+	    lu(1,i,j,k) =  cof*r1;
+            lu(2,i,j,k) =  cof*r2;
+            lu(3,i,j,k) =  cof*r3;
+				 });
+     forallN<EXEC, int, int,int>(
+				 RangeSegment(k1,k2+1),
+				 RangeSegment(jfirst+2,jlast-1),
+				 RangeSegment(ifirst+2,ilast-1),
+				 [=] RAJA_DEVICE(int k, int j, int i) {
+	
+				   //float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+	   float_sw4 r1=0.0, r2=0.0, r3=0.0;
 /* Mixed derivatives: */
 /* 29ops /mixed derivative */
 /* 116 ops for r1 */
@@ -349,9 +368,9 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 //	    lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
 //            lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 //            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	    lu(1,i,j,k) =  cof*r1;
-            lu(2,i,j,k) =  cof*r2;
-            lu(3,i,j,k) =  cof*r3;
+	    lu(1,i,j,k) +=  cof*r1;
+            lu(2,i,j,k) +=  cof*r2;
+            lu(3,i,j,k) +=  cof*r3;
 				 }); // END OF RAJA LOOP
      SYNC_DEVICE;
      POP_RANGE;

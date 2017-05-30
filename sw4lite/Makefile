@@ -46,6 +46,7 @@ else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
 else ifeq ($(findstring ray,$(HOSTNAME)),ray)
   FC = mpif90
   CXX = nvcc
+  REG_CHECK = -cubin -Xptxas="-v" --maxrregcount=32 
   OPT = -O2 -ccbin mpixlC -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE
   OMPOPT =
   EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
