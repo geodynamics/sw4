@@ -102,6 +102,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    if( onesided[4] == 1 )
    {
       kstart = 7;
+      // Used 255 registers, 508 bytes cmem[0], 48 bytes cmem[2] About 2KB of spill loads and stores: 2.8 s on 4 proc case
       PUSH_RANGE("rhs4sgcurv_rev::1",4);
 	      forallN<EXEC, int, int,int>(
 				    RangeSegment(1,7),
@@ -291,7 +292,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	       r1 += istrxy*mucofu2*u(1,i,j,0) + mucofuv*u(2,i,j,0) + istry*mucofuw*u(3,i,j,0);
 	       r2 += mucofuv*u(1,i,j,0) + istrxy*mucofv2*u(2,i,j,0) + istrx*mucofvw*u(3,i,j,0);
 	       r3 += istry*mucofuw*u(1,i,j,0) + istrx*mucofvw*u(2,i,j,0) + istrxy*mucofw2*u(3,i,j,0);
-
+	       
 	       // pq-derivatives (u-eq)
 // 38 ops., tot=4049
 	       r1 += 
@@ -592,7 +593,7 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	      SYNC_DEVICE;
 	      POP_RANGE;
    } // if onesided...
-   
+   //Uses 216 registers, 532 bytes cmem[0], 48 bytes cmem[2] 5.8 on 4 procs
    PUSH_RANGE("rhs4sgcurv_rev::2",5);
 	   forallN<EXEC, int, int,int>(
 			    RangeSegment(kstart,klast-1),
@@ -602,8 +603,8 @@ void rhs4sgcurv_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	 {
 // 5 ops
 	    float_sw4 ijac = strx(i)*stry(j)/jac(i,j,k);
-            float_sw4 istry = 1/(stry(j));
-            float_sw4 istrx = 1/(strx(i));
+            float_sw4 istry = 1.0/(stry(j));
+            float_sw4 istrx = 1.0/(strx(i));
             float_sw4 istrxy = istry*istrx;
 
             float_sw4 r1 = 0;
