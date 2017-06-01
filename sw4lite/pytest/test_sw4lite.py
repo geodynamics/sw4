@@ -198,7 +198,7 @@ def main_test(sw4lite_exe_dir="optimize_cuda_ray", testing_level=0, mpi_tasks=0,
         #print('Running sw4lite from directory:', run_dir)
         status = os.system(run_cmd)
         if status!=0:
-            print('ERROR: Test', test_cases[qq], ': sw4 returned non-zero exit status=', status, 'aborting test')
+            print('ERROR: Test in dir:', test_dirs[qq], 'Input file:', input_files[qq], ': sw4 returned non-zero exit status=', status, 'aborting test')
             print('run_cmd=', run_cmd)
             print("DID YOU USE THE CORRECT SW4LITE EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
             return False # bail out
