@@ -688,7 +688,7 @@ c equation, corresponding to exactSol and exactMat
 c
       subroutine forcingfort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     h, zmin)
+     +     h, zmin) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho, zmin
@@ -894,7 +894,7 @@ c
 c-----------------------------------------------------------------------
       subroutine forcingttfort( ifirst, ilast, jfirst, jlast, kfirst,
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     h, zmin)
+     +     h, zmin) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho, zmin
@@ -1562,6 +1562,13 @@ c-----------------------------------------------------------------------
      +           sin(omm*z+phm) )
             la(i,j,k)  = amplambda*(2 + 
      +           sin(omm*x+phm)*sin(omm*y+phm)*cos(omm*z+phm) )
+c test
+c$$$            if ((k==1 .and. j==25 .and. i==0) .or.
+c$$$     +           ( k==25 .and. j==49 .and. i==-1)) then
+c$$$              write(*,'(3(a,i3,tr1),7(a,tr1,es10.3,tr1))')
+c$$$     +             'i=', i,  'j=', j, 'k=', k, 'x=', x, 'y=', y, 
+c$$$     +             'z=', z, 'mu=', mu(i,j,k), 'la=', la(i,j,k)
+c$$$            endif
           enddo
         enddo
       enddo
@@ -2661,6 +2668,9 @@ c-----------------------------------------------------------------------
       doubleprecision t99
 
       dto = dt*omegaVE
+c: AP Apr. 3, 2017: Only add forcing for the predictor:
+c      icp  = 1/( 1d0/2 + 1/(2*dto) )
+c: Original: both formulas are equivalent
 c      icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
       icp = 12*dto/( 6 + 6*dto + 3*dto*dto + dto*dto*dto )
 

@@ -66,9 +66,9 @@ void F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( int *, int *, int *, int *, int *,
                                               int*, double*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
 
 void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int *, int *, double*, 
-						double*, double*, double*, double*, double*, double* );
+						double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( int *, int *, int *, int *, int *, int *, double*, 
-						  double*, double*, double*, double*, double* );
+						  double*, double*, double*, double*, double*, double* );
 void F77_FUNC(checkanisomtrl,CHECKANISOMTRL)( int *, int *, int *, int *, int *, int *, double*, 
 					      double*, double*, double*, double*, double* );
 void F77_FUNC(computedtaniso,COMPUTEDTANISO)( int *, int *, int *, int *, int *, int *, double*,
@@ -198,12 +198,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	else if( m_bcType[g][side] == bPeriodic )
 	  side_plane( g, side, wind, m_ghost_points );
 	else // for Dirichlet, super grid, and periodic conditions, we
-	     // apply the forcing directly on the ghost points
 	{
-	   if( m_mesh_refinements && side < 4 )
-	      side_plane( g, side, wind, m_ghost_points+1 );
-	   else
-	      side_plane( g, side, wind, m_ghost_points );
+           // apply the forcing directly on the ghost points
+           side_plane( g, side, wind, m_ghost_points );
 	}
 	
 	npts = (wind[5]-wind[4]+1)*
@@ -263,7 +260,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   //  string cachePath = mPath;
    
 // tmp
-  if ( mVerbose >= 3 )
+  if ( mVerbose >= 2 )
    {
      int top = mNumberOfGrids-1;
      printf("=================Processor #%i index bounds====================\n"
@@ -855,10 +852,10 @@ void EW::set_materials()
       {
 	if (g < mNumberOfCartesianGrids-1) // extrapolate to top
 	{
-	  kFrom = m_kStart[g]+mMaterialExtrapolate;
+	  kFrom = m_kStartInt[g]+mMaterialExtrapolate;
 
 	  if (!mQuiet && proc_zero() && mVerbose>=3)
-	    printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
+	    printf("setMaterials> top extrapol, g=%i, kFrom=%d, kStart=%d, kStartInt=%d\n", g, kFrom, m_kStart[g], m_kStartInt[g]);
 
 	  for (int k = m_kStart[g]; k < kFrom; ++k)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -884,10 +881,10 @@ void EW::set_materials()
 
 	if (g > 0) // extrapolate to bottom
 	{
-	  kFrom = m_kEnd[g]-mMaterialExtrapolate;
+	  kFrom = m_kEndInt[g]-mMaterialExtrapolate;
 
 	  if (!mQuiet && proc_zero() && mVerbose>=3)
-	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
+	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%d, kEndInt=%d\n", g, kFrom, m_kEnd[g], m_kEndInt[g]);
 
 	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -1068,16 +1065,34 @@ void EW::set_materials()
   else if ( m_energy_test )
   {
      double cpocs = m_energy_test->m_cpcsratio;
+     double amp = m_energy_test->m_stochastic_amp;
+// tmp
+     if (proc_zero())
+     {
+        printf("\n ENERGY TEST material amplitude: %e\n", amp);
+        
+     }
+     
+// hardcoded loh1 test (assumes 2 grids)
+     // double rho0[2]={2700, 2600};
+     // double vp0[2]={6000, 4000};
+     // double vs0[2]={3464, 2000};
+
      for (g=0; g<mNumberOfGrids; g++)
      {
 	double* rho_ptr    = mRho[g].c_ptr();
 	double* mu_ptr     = mMu[g].c_ptr();
 	double* lambda_ptr = mLambda[g].c_ptr();
+        // setting all points in the grid to constant + random perturb: No need to extrapolate ghost points!
 	for( int i=0 ; i < (m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
 	{
-	   rho_ptr[i]    = drand48()+2;
-	   mu_ptr[i]     = drand48()+2;
-           lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+drand48();
+	   rho_ptr[i]    = amp*drand48()+2;
+	   mu_ptr[i]    = amp*drand48()+2;
+           lambda_ptr[i] = mu_ptr[i]*(cpocs*cpocs-2)+amp*drand48();
+// hard-coded loh1 test (only works for 2 grids)
+	   // rho_ptr[i]    = rho0[g] + amp*drand48();
+	   // mu_ptr[i]    = rho0[g]*vs0[g]*vs0[g] + amp*drand48();
+           // lambda_ptr[i] = rho0[g]*(vp0[g]*vp0[g] - 2*vs0[g]*vs0[g]) + amp*drand48();
 	}
 	// Communication needed here. Because of random material data,
 	// processor overlap points will otherwise have different values
@@ -1496,9 +1511,9 @@ void EW::computeDT()
       }
     }
 
-    if (!mQuiet && mVerbose >= 1 && proc_zero())
+    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero())
     {
-      cout << "order of accuracy=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
+      cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
     
     if (mTimeIsSet)
@@ -1710,58 +1725,66 @@ void EW::setup_supergrid( )
   
   int gTop = mNumberOfCartesianGrids-1;
   vector<double> sg_width(mNumberOfCartesianGrids);
+
+// if the number of grid points was specified in the input file, we need to convert that to a physical width, based on the coarsest grid
+  if ( !m_use_sg_width )
+  {
+     m_supergrid_width = m_sg_gp_thickness*mGridSize[0];
+     m_use_sg_width = true;
+  }
+  
   for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
   {
      if( m_use_sg_width )
-	sg_width[g] = m_supergrid_width;
+        sg_width[g] = m_supergrid_width;
      else
-	sg_width[g] = m_sg_gp_thickness*mGridSize[g];
+        sg_width[g] = m_sg_gp_thickness*mGridSize[g];
 
      m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
-					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-					   sg_width[g] );
+                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+                                          sg_width[g] );
      m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
-					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-					   sg_width[g] );
+                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+                                          sg_width[g] );
   }
   if( topographyExists() )
   {
      int g=mNumberOfGrids-1;
      m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
-					  (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-					  sg_width[gTop] );
+                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+                                          sg_width[gTop] );
      m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
-					  (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-					  sg_width[gTop] );
+                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+                                          sg_width[gTop] );
   }
   if( mNumberOfGrids == 1 )
   {
      m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-					  (mbcGlobalType[5] == bSuperGrid), m_global_zmax,
-					  sg_width[0] );
+                                          (mbcGlobalType[5] == bSuperGrid), m_global_zmax,
+                                          sg_width[0] );
   }
   else
   {
      m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-							 false, m_global_zmax, sg_width[gTop] );
+                                                         false, m_global_zmax, sg_width[gTop] );
      m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
-					  sg_width[0] );
+                                          sg_width[0] );
      for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
-	m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, sg_width[g] );
+        m_supergrid_taper_z[g].define_taper( false, 0.0, false, 0.0, sg_width[g] );
   }
   
   for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
-   // Add one to thickness to allow two layers of internal ghost points
+     // Add one to thickness to allow two layers of internal ghost points
      int sgpts = m_sg_gp_thickness;
      if( m_use_sg_width )
-	sgpts = m_supergrid_width/mGridSize[g];
+        sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
      int kmax=m_global_nz[g]-sgpts;
 
      // Only grid 0 has super grid boundary at the bottom
      if( g > 0 )
-	kmax = m_global_nz[g];
+        kmax = m_global_nz[g];
 
      //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
      //	  << " " << 1+1 << " " << kmax-1 << endl;
@@ -1774,22 +1797,24 @@ void EW::setup_supergrid( )
      m_kEndActGlobal[g]   = m_kEndAct[g]   = kmax-1;
 
      if( m_iStartAct[g] < m_iStart[g] )
-	m_iStartAct[g] = m_iStart[g];
+        m_iStartAct[g] = m_iStart[g];
      if( m_jStartAct[g] < m_jStart[g] )
-	m_jStartAct[g] = m_jStart[g];
+        m_jStartAct[g] = m_jStart[g];
      if( m_iEndAct[g] > m_iEnd[g] )
-	m_iEndAct[g] = m_iEnd[g];
+        m_iEndAct[g] = m_iEnd[g];
      if( m_jEndAct[g] > m_jEnd[g] )
-	m_jEndAct[g] = m_jEnd[g];
+        m_jEndAct[g] = m_jEnd[g];
 
      // If empty, set dimensions so that imax-imin+1=0, to avoid negative element count.
      if( m_iStartAct[g] > m_iEndAct[g] )
-	m_iStartAct[g] = m_iEndAct[g]+1;
+        m_iStartAct[g] = m_iEndAct[g]+1;
      if( m_jStartAct[g] > m_jEndAct[g] )
-	m_jStartAct[g] = m_jEndAct[g]+1;
+        m_jStartAct[g] = m_jEndAct[g]+1;
      if( m_kStartAct[g] > m_kEndAct[g] )
-	m_kStartAct[g] = m_kEndAct[g]+1;
+        m_kStartAct[g] = m_kEndAct[g]+1;
   }
+
+  
 // tmp
 //   if (mVerbose >= 2 && proc_zero())
 //   {
@@ -1858,12 +1883,14 @@ void EW::assign_supergrid_damping_arrays()
   if( m_use_supergrid )
   {
 // tmp
-//    printf("SG: using supergrid!\n");
+     if( proc_zero() )
+        printf("SG: using supergrid!\n");
     
      if( m_twilight_forcing )
      {
 // tmp
-//       printf("SG: twilight setup!\n");
+     if( proc_zero() )
+        printf("SG: twilight setup!\n");
 
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
@@ -1904,8 +1931,24 @@ void EW::assign_supergrid_damping_arrays()
      } // end if (m_twilight_forcing) ...
      else
      { // standard case starts here
-// tmp
-//       printf("SG: standard case!\n");
+
+        if (m_energy_test) // change the eps parameter in the stretching to make the discrete energy smaller
+        {
+           for( g=0 ; g<mNumberOfGrids; g++)  
+           {
+              m_supergrid_taper_x[g].set_eps(m_energy_test->m_sg_epsL);
+              m_supergrid_taper_y[g].set_eps(m_energy_test->m_sg_epsL);
+              m_supergrid_taper_z[g].set_eps(m_energy_test->m_sg_epsL);
+           }
+           if( proc_zero() )
+              printf("SG: standard case with epsL = %e\n", m_energy_test->m_sg_epsL);
+        }
+        else
+        {
+           if( proc_zero() )
+              printf("SG: standard case with default epsL\n");
+        }
+        
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
 	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -1975,6 +2018,16 @@ void EW::assign_supergrid_damping_arrays()
   }
   
 // tmp
+// save stry
+  // g=0;
+  // char fname[100];
+  // sprintf(fname,"stry-%i.dat",m_myRank);
+  // FILE *fp=fopen(fname,"w");
+  // printf("Saving tmp file=%s, g=%i, m_iStart=%i, m_iEnd=%i\n", fname, g, m_iStart[g], m_iEnd[g]);
+  // for ( j = m_jStart[g]; j<=m_jEnd[g]; j++ )
+  //    fprintf(fp,"%d %e\n", j, stry(j,g));
+  // fclose(fp);  
+
 // save the 1-D arrays cornerx, cornery, cornerz
 // grid g=0 (for now)
   // g=0;
@@ -2066,7 +2119,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
    //
    Sarray saverand(ifirst-p,ilast+p,jfirst-p,jlast+p,kfirst-pz,kfirst+pz);
    double* saverand_ptr = saverand.c_ptr();
-
+   double plimit=m_random_sdlimit/sqrt(3.0);
    for ( g=0; g<mNumberOfGrids; g++)
    {
       double* vs_ptr  = a_vs[g].c_ptr();
@@ -2094,7 +2147,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 			      &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						      mZ.c_ptr() );
+						      mZ.c_ptr(), &plimit );
       }
       else
       {
@@ -2103,7 +2156,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 						&m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
          F77_FUNC(perturbvelocity,PERTURBVELOCITY)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 						    vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						    &m_zmin[g], &h );
+						    &m_zmin[g], &h, &plimit );
       }
    }
 }

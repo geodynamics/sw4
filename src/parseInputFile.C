@@ -304,11 +304,13 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
     }
   }  
 
-  if( m_mesh_refinements && (m_anisotropic || (m_use_attenuation && m_number_mechanisms>0) ) )
+//  if( m_mesh_refinements && (m_anisotropic || (m_use_attenuation && m_number_mechanisms>0) ) )
+  if( m_mesh_refinements && m_anisotropic )
   {
     if (m_myRank == 0)
     {
-      cerr << "Error: Grid refinements not implemented with attenuation or anisotropy " << endl;
+//      cerr << "Error: Grid refinements not implemented with attenuation or anisotropy " << endl;
+      cerr << "Error: Grid refinements not implemented with anisotropy " << endl;
       return false; // unsuccessful
     }
   }
@@ -525,6 +527,23 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 
   inputFile.close();
 
+// tmp:
+  if (m_myRank == 0)
+  {
+    cout << "INFO: m_mesh_refinements=" << m_mesh_refinements << " m_use_attenuation=" << m_use_attenuation << " mOrder=" << mOrder << endl;
+  }
+  
+// make sure the time order is set to 2 if we use both MR & Attenuation
+  if( m_mesh_refinements && m_use_attenuation && mOrder!=2 )
+  {
+    if (m_myRank == 0)
+    {
+      cerr << "Error: MR+Q is currently only implemented with 2nd order time stepping " << endl;
+      cerr << "Set time_order=2 and CFL=0.8 with the developer command" << endl;
+      return false; // unsuccessful
+    }
+  }
+
   if (mVerbose >=3 && proc_zero())
     cout << "********Done reading the input file*********" << endl;
   // if (mVerbose >=3)
@@ -606,6 +625,9 @@ void EW::processGrid(char* buffer)
      m_ghost_points = 3;
      m_ppadding = 3;
   }
+
+  if (m_myRank == 0)
+     cout << endl << "* number of ghost points = " << m_ghost_points << endl;
 
   while (token != NULL)
   {
@@ -1874,7 +1896,11 @@ void EW::processTwilight(char* buffer)
 	m_supergrid_taper_z[mNumberOfGrids-1].set_twilight(omstrz);
 	m_supergrid_taper_z[0].set_twilight(omstrz);
      }
-  }
+// set the damping coefficient to zero
+     set_sg_damping(0.0);
+     set_sg_thickness(1); // just to keep the routine assign_supergrid_damping_arrays() happy
+     
+  } // end if sgstretch == 1
   set_global_bcs(bct);
 }
 
@@ -1932,6 +1958,13 @@ void EW::processDeveloper(char* buffer)
 	double cfl = atof(token);
 	CHECK_INPUT( cfl > 0, "Error negative CFL number");
 	set_cflnumber( cfl );
+     }
+     else if( startswith("time_order=",token) )
+     {
+	token += 11;
+	int newOrder = atoi(token);
+	CHECK_INPUT( newOrder == 2 || newOrder == 4, "Error unknown time-order");
+	mOrder = newOrder;
      }
      else if( startswith("perturb=",token) )
      {
@@ -2239,6 +2272,10 @@ void EW::processTestEnergy(char* buffer)
   CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
   token = strtok(NULL, " \t");
   bool use_dirichlet = false;
+  bool use_supergrid=false;
+  double stochastic_amp = 1;
+  double sg_eps = 1e-4;
+  
   int seed=2934839, write_every=1000;
   string filename("energy.log");
 
@@ -2259,6 +2296,18 @@ void EW::processTestEnergy(char* buffer)
       token += 5; 
       seed = atoi(token);
     }
+    else if (startswith("amplitude=", token))
+    {
+      token += 10; 
+      stochastic_amp = atof(token);
+    }
+    else if (startswith("sg_eps=", token))
+    {
+      token += 7; 
+      sg_eps = atof(token);
+      CHECK_INPUT(sg_eps > 0,
+                  err << "testenergy command: sg_eps must be positive, not: " << token);
+    }
      else if (startswith("writeEvery=", token))
      {
        token += strlen("writeEvery=");
@@ -2275,6 +2324,7 @@ void EW::processTestEnergy(char* buffer)
     {
        token += 13;
        use_dirichlet =  strcmp(token,"dirichlet")==0 || strcmp(token,"Dirichlet")==0;
+       use_supergrid =  strcmp(token,"supergrid")==0 || strcmp(token,"Supergrid")==0;
     }
     else
     {
@@ -2282,11 +2332,23 @@ void EW::processTestEnergy(char* buffer)
     }
     token = strtok(NULL, " \t");
   }
-  m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename );
+  m_energy_test = new TestEnergy( seed, cpcsratio, write_every, filename, stochastic_amp, sg_eps );
+  // default bc is periodic in the horizontal directions
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
-  for( int side=0 ; side < 6 ; side++ )
-     if( bct[side] == bPeriodic && use_dirichlet )
+
+  if (use_dirichlet)
+  {
+     for( int side=0 ; side < 4 ; side++ )
 	bct[side] = bDirichlet;
+  }
+  else if (use_supergrid) // supergrid on all sides, except low-z, where we use a free surface bc 
+  {
+     for( int side=0 ; side < 6 ; side++ )
+	bct[side] = bSuperGrid;
+
+     bct[4] = bStressFree;
+  }
+  
   set_global_bcs(bct);
 }
 
@@ -2296,7 +2358,7 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("testenergy", token) == 0, "ERROR: not a testenergy line...: " << token);
   token = strtok(NULL, " \t");
-  bool use_dirichlet = false;
+  bool use_periodic = true;
   while (token != NULL)
   {
     if (startswith("#", token) || startswith(" ", buffer))
@@ -2305,11 +2367,11 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
     if( startswith("bchorizontal=",token))
     {
        token += 13;
-       use_dirichlet =  strcmp(token,"dirichlet")==0 || strcmp(token,"Dirichlet")==0;
+       use_periodic =  strcmp(token,"periodic")==0 || strcmp(token,"Periodic")==0;
     }
     token = strtok(NULL, " \t");
   }
-  return !use_dirichlet;
+  return use_periodic;
 }
   
 
@@ -2645,9 +2707,9 @@ void EW::processSupergrid(char *buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("supergrid", token) == 0, "ERROR: not a supergrid line...: " << token);
   token = strtok(NULL, " \t");
-  int sg_thickness; // sg_transition;
+  int sg_n_gp; // sg_transition;
   double sg_coeff, sg_width;
-  bool thicknessSet=false, dampingCoeffSet=false, widthSet=false; // , transitionSet=false
+  bool gpSet=false, dampingCoeffSet=false, widthSet=false; // , transitionSet=false
   
   while (token != NULL)
   {
@@ -2659,9 +2721,9 @@ void EW::processSupergrid(char *buffer)
     if (startswith("gp=", token)) // in number of grid sizes (different from WPP)
     {
       token += 3;
-      sg_thickness = atoi(token);
-      CHECK_INPUT(sg_thickness>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_thickness);
-      thicknessSet = true;
+      sg_n_gp = atoi(token);
+      CHECK_INPUT(sg_n_gp>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_n_gp);
+      gpSet = true;
     }
 //                  12345678901
     // else if (startswith("transition=", token)) // in number of grid sizes (different from WPP)
@@ -2699,10 +2761,10 @@ void EW::processSupergrid(char *buffer)
     token = strtok(NULL, " \t");
   } // end while token
   
-  CHECK_INPUT( !(thicknessSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
+  CHECK_INPUT( !(gpSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
      
-  if (thicknessSet)
-     set_sg_thickness(sg_thickness);
+  if (gpSet)// gp specified
+     set_sg_thickness(sg_n_gp);
 
   if( widthSet )
      set_sg_width( sg_width );
@@ -3923,14 +3985,14 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
    for( int g = nCartGrids-1; g >= 0; g-- )
    {
      double zmax = (g>0? m_refinementBoundaries[g-1]:a_global_zmax);
-     nz[g]     = 1 + static_cast<int> ( (zmax - m_zmin[g])/mGridSize[g] + 0.5 );
+     nz[g]     = 1 + static_cast<int> ( (zmax - m_zmin[g])/mGridSize[g] + 0.5 );// starting from m_zmin[g]
 
      zmax = m_zmin[g] + (nz[g]-1)*mGridSize[g];
       
      m_global_nz[g] = nz[g]; // save the number of grid points in the z-direction
 
      if( g>0 )
-       m_zmin[g-1] = zmax;
+        m_zmin[g-1] = zmax; // save m_zmin[g-1] for next iteration
      else
        a_global_zmax = zmax;
    }
@@ -3956,11 +4018,11 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 // tmp
    if( mVerbose >= 1 && proc_zero() )
    {
-     cout << "Corrected global_zmax = " << m_global_zmax << endl;
+      cout << endl << "Corrected global_zmax = " << m_global_zmax << endl;
      cout << "Refinement levels after correction: " << endl;
      for( int g=0; g<nCartGrids; g++ )
      {
-       cout << "grid=" << g << " min Z=" << m_zmin[g] << endl;
+       cout << "grid=" << g << " z-min=" << m_zmin[g] << endl;
      }
    }
    
@@ -4057,8 +4119,27 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
       //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst << " , " << ilast << endl;
       //      cout << g << " " << my_proc_coords[1] << " J Split into " << jfirst << " , " << jlast << endl;
       //      cout << "grid " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << " kinterval " << kfirst << " , " << klast << endl;
+
+// check that there are more interior points than padding points
+      if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
+      {
+         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
+                "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+      }
+      if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
+      {
+         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
+                "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+      }
       
-   }
+// output bounds
+      if (mVerbose >=3 && proc_zero())
+      {
+         printf("Grid #%d, iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n", g, m_iStartInt[g], m_iEndInt[g],
+                m_jStartInt[g], m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
+      }
+      
+   }// end for all Cartesian grids
 
    if( m_topography_exists )
    {
@@ -7720,6 +7801,7 @@ void EW::processRandomize(char* buffer)
    m_random_dist = m_random_distz = 100;
    m_random_amp      = 0.1;
    m_random_amp_grad = 0;
+   m_random_sdlimit  = 3;
    m_random_seed[0]  = 1234;
    m_random_seed[1]  = 5678;
    m_random_seed[2]  = 9876;
@@ -7755,6 +7837,12 @@ void EW::processRandomize(char* buffer)
 	 m_random_distz = atof(token);
 	 lengthscalezset = true;
 	 CHECK_INPUT( m_random_distz>0, "Error randomize, distz must be > 0, not " << token);
+      }
+      else if( startswith("sdthreshold=",token) )
+      {
+	 token += 12;
+	 m_random_sdlimit = atof(token);
+	 CHECK_INPUT( m_random_sdlimit>0, "Error sdthreshold > 0, not " << token);
       }
       else if( startswith("seed1=",token) )
       {

@@ -90,6 +90,10 @@ def guess_mpi_cmd(mpi_tasks, verbose):
     elif 'cab' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks)
+    elif 'nid' in node_name:
+        # all KNL nodes on cori have a node name starting with 'nid'
+        if mpi_tasks<=0: mpi_tasks = 64
+        mpirun_cmd="srun -c 4 --cpu_bind=cores -n " + str(mpi_tasks)
     elif 'fourier' in node_name:
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
@@ -152,16 +156,16 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
     num_pass=0
     num_fail=0
 
-    all_dirs = ['attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
-    all_cases = ['tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
-    all_results =['TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
-    num_meshes =[2, 1, 1, 2, 2, 1] # default number of meshes for level 0
+    all_dirs = ['meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
+    all_cases = ['refine-el', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
+    all_results =['TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
+    num_meshes =[1, 1, 2, 1, 1, 2, 2, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[3, 2, 2, 3, 3, 2]
+        num_meshes =[2, 2, 3, 2, 2, 3, 3, 2]
     elif testing_level == 2:
-        num_meshes =[3, 3, 3, 3, 3, 3]
+        num_meshes =[2, 2, 3, 3, 3, 3, 3, 3]
     
     print("Running all tests for level", testing_level, "...")
     # run all tests

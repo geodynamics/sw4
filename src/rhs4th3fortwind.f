@@ -1,7 +1,7 @@
-      subroutine RHS4TH3FORTWIND( ifirst, ilast, jfirst, jlast, kfirst, 
+      subroutine rhs4th3fortwind( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
      +     Lu, u, mu, la, h, strx, stry, strz, op, 
-     *     kfirstu, klastu, kfirstw, klastw )
+     +     kfirstu, klastu, kfirstw, klastw ) bind(c)
 
 ***********************************************************************
 *** Computes the L(u) = div(stress) operator on a subdomain 
@@ -19,6 +19,7 @@
 ***      ifirst,ilast,jfirst,jlast,kfirst,klast - Full domain.
 ***      kfirstu,klastu                     - Declared size of array u
 ***      kfirstw,klastw                     - Declared size of array Lu
+***      nz                                      - k-index for high-k boundary
 ***        Lu is computed over the domain kfirstw <= k <= klastw.
 ***   Arrays mu and la are assumed to be declared over the full domain.
 ***      strz

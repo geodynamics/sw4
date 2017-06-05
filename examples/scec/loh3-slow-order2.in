@@ -1,7 +1,15 @@
-developer time_order=2 cfl=0.8
+# This is a SW4 input file for a scaled-down version of
+# problem LOH.3 from the SCEC test suite, see
+# "Steven Day et al., Tests of 3D Elastodynamic Codes:
+# Final report for lifelines project 1A01, Pacific Eartquake
+# Engineering Center, 2001".
 
+developer time_order=2 cfl=0.8
 grid h=175 x=30000 y=30000 z=17000
-time t=9
+#time t=9
+# reduce time duration to make case run faster on laptop
+time t=3
+
 fileio path=loh3-slow-order2
 
 # wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
@@ -14,6 +22,7 @@ supergrid gp=30
 block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
 # material properties in the top layer
 block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+
 #
 # Interface (harmonic (mu,la)-averages, arithmetic rho,Q
 block vs=2437.6 vp=4630.8 r=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001

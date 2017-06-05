@@ -39,6 +39,7 @@
 #include <vector>
 #include <sys/types.h>
 #include <string>
+#include <unistd.h>
 #include "sw4.h"
 
 using std::string;
@@ -88,6 +89,18 @@ public:
 #endif
 //      return m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
       return m_data[m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k];}
+
+   inline float_sw4& operator()( int c, int i, int j, int k, bool dev_ponter)
+   {
+#ifdef BZ_DEBUG
+      VERIFY2( in_range(c,i,j,k), "Error Index (c,i,j,k) = (" << c << "," << i << "," << j << "," << k
+       << ") not in range 1<= c <= " << m_nc << " " << m_ib << " <= i <= " << m_ie << " " << m_jb
+               << " <= j <= " << m_je << " " << m_kb << " <=  k <= " << m_ke );
+#endif
+         return dev_data[m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k];
+   }
+
+
    inline float_sw4& operator()( int i, int j, int k )
       {
 #ifdef BZ_DEBUG

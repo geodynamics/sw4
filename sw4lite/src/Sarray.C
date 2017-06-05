@@ -740,7 +740,7 @@ void Sarray::save_to_disk( const char* fname )
 	 for( int j = 0 ; j < m_nj ; j++ )
 	    for( int i = 0 ; i < m_ni ; i++ )
 	       for( int c=0 ; c < m_nc ; c++ )
-		  ar[c-1+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];
+		  ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];
       nr = write(fd,ar,sizeof(float_sw4)*npts);
       delete[] ar;
    }

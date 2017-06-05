@@ -22,7 +22,7 @@ numht=1
 # logical cores = OMP_NUM_TASK
 numcores=$(( ${numpc}*${numht} ))
 # srun reservation logical cores per mpi-task  (-c arg)
-numlc=$(( ${numpc}*2 ))
+numlc=$(( ${numpc} ))
 
     echo "Running with ${numprocs} MPI ranks and ${numpc} cores, ${numht} threads per core."
 

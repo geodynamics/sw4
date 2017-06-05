@@ -71,9 +71,9 @@ void F77_FUNC(predfort,PREDFORT)(int*, int*, int*, int*, int*, int*,
 				 double*, double*, double*, double*, double*, double*, double*);    
 void F77_FUNC(rhouttlumf, RHOUTTLUMF)(int*, int*, int*, int*, int*, int*, 
 				      int*, double*, double*, double*, double*, double*, double*, double*);
-void F77_FUNC(forcingfort,FORCINGFORT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-				       double*, double*, double*, double*, double* );
+void forcingfort(int*, int*, int*, int*, int*, 
+                 int*, double*, double*, double*, double*, double*, double*, double*, 
+                 double*, double*, double*, double*, double* );
 void F77_FUNC(forcingfortc,FORCINGFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					 double*, double*, double*, double*, double*, double* );
@@ -83,33 +83,33 @@ void F77_FUNC(forcingfortatt,FORCINGFORTATT)(int*, int*, int*, int*, int*,
 void F77_FUNC(forcingfortattc,FORCINGFORTATTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					       double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingfortsg,FORCINGFORTSG)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void forcingfortsg(int*, int*, int*, int*, int*, 
+                   int*, double*, double*, double*, double*, double*, double*, double*, 
+                   double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingfortcsg,FORCINGFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
-void F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-   	 			       double*, double*, double*, double*, double*,double*,double*,double* );
+void forcingfortsgatt(int*, int*, int*, int*, int*, 
+                      int*, double*, double*, double*, double*, double*, double*, double*, 
+                      double*, double*, double*, double*, double*,double*,double*,double* );
 void F77_FUNC(forcingfortsgattc,FORCINGFORTSGATTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				   double*, double*, double*, double*, double*,double*,double*,double*, double* );
-void F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
+void forcingttfortsg(int*, int*, int*, int*, int*, 
+                     int*, double*, double*, double*, double*, double*, double*, double*, 
+                     double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfortcsg,FORCINGTTFORTCSG)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 			     double*, double*, double*, double*, double*,double*,double*,double*, double* );
-void F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-					       double*, double*, double*, double*, double*, double*, double*, double* );
+void forcingttattfortsg(int*, int*, int*, int*, int*, 
+                        int*, double*, double*, double*, double*, double*, double*, double*, 
+                        double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttattfortsgc,FORCINGTTATTFORTSGC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 				       double*, double*, double*, double*, double*, double*, double*, double*, double* );
-void F77_FUNC(forcingttfort,FORCINGTTFORT)(int*, int*, int*, int*, int*, 
-				       int*, double*, double*, double*, double*, double*, double*, double*, 
-				       double*, double*, double*, double*, double* );
+void forcingttfort(int*, int*, int*, int*, int*, 
+                   int*, double*, double*, double*, double*, double*, double*, double*, 
+                   double*, double*, double*, double*, double* );
 void F77_FUNC(forcingttfortc,FORCINGTTFORTC)(int*, int*, int*, int*, int*, 
 				       int*, double*, double*, double*, double*, double*, double*, double*, 
 					     double*, double*, double*, double*, double*, double* );
@@ -175,11 +175,15 @@ void F77_FUNC(rayleighfort,RAYLEIGHFORT)( int*ifirst, int*ilast, int*jfirst, int
 					  double*rho, double*cr, double*omega, double *alpha, double *h, double *zmin);
 void F77_FUNC(velsum,VELSUM)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			      double*, double*, double*, double*, double*, double* );
-void F77_FUNC(energy4,ENERGY4)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
-                                   double*, double*, double*, double*, double*, double* );
+void energy4( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
+              double*, double*, double*, double*, double*, double*, double*, double*, double* );
 void F77_FUNC(energy4c,ENERGY4C)( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
                                    double*, double*, double*, double*, double*, double* );
-void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
+
+   void scalar_prod( int, int, int, int, int, int,  int, int, int, int, int, int, int*,
+              double*, double*, double*, double*, double*, double* );
+
+   void F77_FUNC(lambexact,LAMBEXACT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 				    double*, double*, double*, int* );
 void F77_FUNC(curvilinear4,CURVILINEAR4)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double*, double*,
 					  double*, int*, double*, double*, double*, char* );
@@ -211,18 +215,36 @@ void F77_FUNC(exactmatfortatt,EXACTMATFORTATT)( int*, int*, int*, int*, int*, in
 					 double*, double*, double*, double*, double* );
 void F77_FUNC(exactmatfortattc,EXACTMATFORTATTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
 						  double*, double*, double*, double*, double*, double* );
-void F77_FUNC(updatememvar,UPDATEMEMVAR)(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
-					 double*, double*, double*, double*, int* );
+void updatememvar(int*, int*, int*, int*, int*, int*,  double*, double*, double*,
+                  double*, double*, double*, double*, int*, int *use2ndOrder );
 
-void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
+   void memvar_pred_fort(int, int, int, int, int, int, double*, double*, double*, double, double, int );
 
-void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
-			   int & LWORK, int & INFO);
+   void memvar_corr_fort(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* alp, double *alm, double *up,
+                         double *u, double *um, double omega, double dt, int domain );
+   
+
+   void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
+
+   void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
+                              int & LWORK, int & INFO);
    void F77_FUNC(ilanisocurv,ILANISOCURV)( int*, int*, int*, int*, int*, int*, int*, double*, double*, double*, double*,
 					   int*, double*, double*, double*, double*, double*, double*);
 }
 
-// the routine will replace the Fortran routine curvilinear4sg()
+void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
+                            double omegaVE, double dt ,double omega, double phase, double c);
+
+void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+                                Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
+
+void addMemVarCorrCart(double zMin, double h, double t, Sarray &alpha,
+                       double omegaVE, double dt, double omega, double phase, double c );
+
+void addMemVarCorrCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+                               Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
+
+// this routine will replace the Fortran routine curvilinear4sg()
 void rhs4sgcurv( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 	         double* __restrict__ a_u, double* __restrict__ a_mu, double* __restrict__ a_lambda,
                  double* __restrict__ a_met, double* __restrict__ a_jac, double* __restrict__ a_lu,
@@ -610,6 +632,9 @@ void EW::assign_local_bcs( )
     for (b=0; b<=3; b++)
       m_bcType[g][b] = mbcGlobalType[b];
   
+    // printf("assign_local_bc> BEFORE loop: rank=%d, bct[0]=%d, bct[1]=%d, bct[2]=%d, bct[3]=%d\n", m_myRank,
+    //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
+    
     if (m_iStart[top]+m_ghost_points > 1)
     {
       m_bcType[g][0] = bProcessor;
@@ -628,10 +653,12 @@ void EW::assign_local_bcs( )
 
     if (m_jStart[top]+m_ghost_points > 1)
     {
+//       printf(" rank=%d, jStart=%d, setting bcType[2] = proc\n", m_myRank, m_jStart[top]);
       m_bcType[g][2] = bProcessor;
     }
     if (m_jEnd[top]-m_ghost_points < m_global_ny[top])
     {
+//       printf(" rank=%d, jEnd=%d, setting bcType[3] = proc\n", m_myRank, m_jEnd[top]);
       m_bcType[g][3] = bProcessor;
     }
 
@@ -641,6 +668,9 @@ void EW::assign_local_bcs( )
       m_bcType[g][2] = bProcessor;
       m_bcType[g][3] = bProcessor;
     }
+
+    // printf("assign_local_bc> AFTER loop: rank=%d, bct[0]=%d, bct[1]=%d, bct[2]=%d, bct[3]=%d\n", m_myRank,
+    //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
 
   }
   
@@ -1895,14 +1925,32 @@ void EW::initialData(double a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   }
   else if( m_energy_test )
   {
-     //    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
-    for(int g=0 ; g<mNumberOfGrids; g++ ) // This case does not make sense with topography
+     for(int g=0 ; g<mNumberOfGrids; g++ ) // ranomized initial data
     {
        u_ptr    = a_U[g].c_ptr();
-       for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
-	  u_ptr[i] = drand48();
-    }
-  }
+       for( size_t i=0 ; i < 3*((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+          u_ptr[i] = drand48();
+
+// Test: use smooth initial data
+        // u_ptr    = a_U[g].c_ptr();
+        // ifirst = m_iStart[g];
+        // ilast  = m_iEnd[g];
+        // jfirst = m_jStart[g];
+        // jlast  = m_jEnd[g];
+        // kfirst = m_kStart[g];
+        // klast  = m_kEnd[g];
+        // h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+        // zmin = m_zmin[g];
+        // om = 1;
+        // ph = 0.5;
+        // cv = 1000;
+        
+        // F77_FUNC(twilightfort,TWILIGHTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+        // 				     &klast, u_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+       
+    } // end for g
+     
+  } // end m_energy_test
   else
 // homogeneous initial data is the default
   {
@@ -3459,19 +3507,19 @@ void EW::Force(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_
               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
               double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
-              F77_FUNC(forcingfortsg,FORCINGFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                     &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                     &h, &zmin, &omstrx, &omstry, &omstrz );
+              forcingfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                             &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                             &h, &zmin, &omstrx, &omstry, &omstrz );
               if( m_use_attenuation )
-                 F77_FUNC(forcingfortsgatt,FORCINGFORTSGATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                              &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                              &h, &zmin, &omstrx, &omstry, &omstrz );
+                 forcingfortsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                                   &h, &zmin, &omstrx, &omstry, &omstrz );
            }
            else
            {
-              F77_FUNC(forcingfort,FORCINGFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                 &h, &zmin );
+              forcingfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                           &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                           &h, &zmin );
               if( m_use_attenuation )
                  F77_FUNC(forcingfortatt,FORCINGFORTATT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                           &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
@@ -3655,17 +3703,17 @@ void EW::Force_tt(double a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
               double omstrx = m_supergrid_taper_x[g].get_tw_omega();
               double omstry = m_supergrid_taper_y[g].get_tw_omega();
               double omstrz = m_supergrid_taper_z[g].get_tw_omega();
-              F77_FUNC(forcingttfortsg,FORCINGTTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                         &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                         &h, &zmin, &omstrx, &omstry, &omstrz );
+              forcingttfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                               &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                               &h, &zmin, &omstrx, &omstry, &omstrz );
               if( m_use_attenuation )
-                 F77_FUNC(forcingttattfortsg,FORCINGTTATTFORTSG)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                                  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-                                                                  &h, &zmin, &omstrx, &omstry, &omstrz );
+                 forcingttattfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+                                     &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
+                                     &h, &zmin, &omstrx, &omstry, &omstrz );
            }
            else
            {
-              F77_FUNC(forcingttfort,FORCINGTTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+              forcingttfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
                                                      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
                                                      &amprho, &ampmu, &ampla, &h, &zmin );
               if( m_use_attenuation )
@@ -4017,16 +4065,14 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 }
 
 //-----------------------------------------------------------------------
-void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
-				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
-				double a_t )
+void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+				vector<Sarray>& a_U, double a_t )
 {
    int domain = 0;
+   
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
-      double* up_ptr  = a_Up[g].c_ptr();
       double* u_ptr   = a_U[g].c_ptr();
-      double* um_ptr  = a_Um[g].c_ptr();
 
       int ifirst = m_iStart[g];
       int ilast  = m_iEnd[g];
@@ -4038,9 +4084,7 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
       {
 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
-	 F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-					     &mOmegaVE[a], &mDt, &domain );
+	 memvar_pred_fort(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr, u_ptr, mOmegaVE[a], mDt, domain );
       }
       if( m_twilight_forcing )
       {
@@ -4049,28 +4093,29 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
 	 double ph = m_twilight_forcing->m_phase;
 	 double cv = m_twilight_forcing->m_c;
          if( topographyExists() && g == mNumberOfGrids-1 )
-	    F77_FUNC(addmemvarforcingc,ADDMEMVARFORCINGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-							   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+            addMemVarPredCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
 	 else
-	    F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-							 &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-							 &mGridSize[g], &m_zmin[g] );
+         {
+// this routine comes from WPP
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+            addMemVarPredCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+         
       }
    }
 }
 
 //-----------------------------------------------------------------------
-void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
-				     vector<Sarray*>& a_AlphaVEm,
-				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
+void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+                           vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t )
 {
-   int domainlow = 2, domainup=1;
+   int domain = 0;
+   
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
       double* up_ptr  = a_Up[g].c_ptr();
-      double* u_ptr   = a_U[g].c_ptr();
-      double* um_ptr  = a_Um[g].c_ptr();
+      double* u_ptr    = a_U[g].c_ptr();
+      double* um_ptr = a_Um[g].c_ptr();
 
       int ifirst = m_iStart[g];
       int ilast  = m_iEnd[g];
@@ -4082,17 +4127,133 @@ void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
       {
 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
-	 if( m_bcType[g][4] != bProcessor )
-	    F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-					     &mOmegaVE[a], &mDt, &domainup );
-	 if( m_bcType[g][5] != bProcessor )
-	    F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-					     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-						&mOmegaVE[a], &mDt, &domainlow );
+	 memvar_corr_fort(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr, mOmegaVE[a], mDt, domain );
+      }
+      if( m_twilight_forcing )
+      {
+	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+	 double om = m_twilight_forcing->m_omega;
+	 double ph = m_twilight_forcing->m_phase;
+	 double cv = m_twilight_forcing->m_c;
+         if( topographyExists() && g == mNumberOfGrids-1 )
+         {
+            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+	 else
+         {
+// this routine comes from WPP
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+            addMemVarCorrCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+         
       }
    }
 }
+
+
+//---------------------------------REPLACED BY updateMemVarPred & Corr--------------------------------------
+// void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+// 				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
+// 				double a_t )
+// {
+//    int domain = 0;
+//    int use2ndOrder = (mOrder==2); // experimenting with PC formulation
+   
+//    for( int g=0 ; g<mNumberOfGrids; g++ )
+//    {
+//       double* up_ptr  = a_Up[g].c_ptr();
+//       double* u_ptr   = a_U[g].c_ptr();
+//       double* um_ptr  = a_Um[g].c_ptr();
+
+//       int ifirst = m_iStart[g];
+//       int ilast  = m_iEnd[g];
+//       int jfirst = m_jStart[g];
+//       int jlast  = m_jEnd[g];
+//       int kfirst = m_kStart[g];
+//       int klast  = m_kEnd[g];
+//       for( int a=0 ; a < m_number_mechanisms ; a++ )
+//       {
+// 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+// 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+// 	 updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                       &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+//                       &mOmegaVE[a], &mDt, &domain, &use2ndOrder );
+// 	 // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 	 //        			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+// 	 //        			     &mOmegaVE[a], &mDt, &domain );
+//       }
+//       if( m_twilight_forcing )
+//       {
+// 	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+// 	 double om = m_twilight_forcing->m_omega;
+// 	 double ph = m_twilight_forcing->m_phase;
+// 	 double cv = m_twilight_forcing->m_c;
+//          if( topographyExists() && g == mNumberOfGrids-1 )
+// 	    F77_FUNC(addmemvarforcingc,ADDMEMVARFORCINGC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 						      &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+// 							   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+// 	 else
+//          {
+//             if (mOrder == 2) // only works without SG stretching
+//             {
+// // this routine comes from WPP
+//                addMemVarPredCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+//             }
+//             else // 4th order in time (HOW CAN THIS WORK WITH SG STRETCHING???)
+//             {
+//                F77_FUNC(addmemvarforcing,ADDMEMVARFORCING)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                                                             &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
+//                                                             &mGridSize[g], &m_zmin[g] );
+//             }
+            
+//          }
+         
+//       }
+//    }
+// }
+
+//-----------------------------------------------------------------------
+// IS THIS ROUTINE EVER CALLED???
+// void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
+// 				     vector<Sarray*>& a_AlphaVEm,
+// 				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
+// {
+//    int domainlow = 2, domainup=1;
+//    int use2ndOrder = 0;
+   
+//    for( int g=0 ; g<mNumberOfGrids; g++ )
+//    {
+//       double* up_ptr  = a_Up[g].c_ptr();
+//       double* u_ptr   = a_U[g].c_ptr();
+//       double* um_ptr  = a_Um[g].c_ptr();
+
+//       int ifirst = m_iStart[g];
+//       int ilast  = m_iEnd[g];
+//       int jfirst = m_jStart[g];
+//       int jlast  = m_jEnd[g];
+//       int kfirst = m_kStart[g];
+//       int klast  = m_kEnd[g];
+//       for( int a=0 ; a < m_number_mechanisms ; a++ )
+//       {
+// 	 double* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+// 	 double* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+// 	 if( m_bcType[g][4] != bProcessor )
+// 	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                          &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+//                          &mOmegaVE[a], &mDt, &domainup, &use2ndOrder );
+// 	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+// 	    //     			     &mOmegaVE[a], &mDt, &domainup );
+// 	 if( m_bcType[g][5] != bProcessor )
+// 	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//                          &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+//                          &mOmegaVE[a], &mDt, &domainlow, &use2ndOrder );
+// 	    // F77_FUNC(updatememvar,UPDATEMEMVAR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+// 	    //     			     &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
+// 	    //     				&mOmegaVE[a], &mDt, &domainlow );
+//       }
+//    }
+// }
 
 //-----------------------------------------------------------------------
 void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
@@ -4488,11 +4649,12 @@ void EW::initialize_image_files( )
 }
 
 //-----------------------------------------------------------------------
-void EW::set_sg_thickness(int gp_thickness)
+void EW::set_sg_thickness(int n_gp)
 {
-  m_sg_gp_thickness = gp_thickness;
+  m_sg_gp_thickness = n_gp;
+  m_use_sg_width = false; // will be changed to true once the number of gp has been converted to a physical width
   if (m_myRank==0)
-    cout << "Default Supergrid thickness has been tuned; thickness = " << m_sg_gp_thickness << " grid sizes" << endl;
+    cout << "Default Supergrid thickness has been tuned; # grid points = " << m_sg_gp_thickness << " grid sizes" << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -4743,15 +4905,51 @@ void EW::compute_energy( double dt, bool write_file, vector<Sarray>& Um,
 			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
 				     um_ptr, u_ptr, up_ptr, rho_ptr, mJ.c_ptr(), &locenergy );
       else
-	 F77_FUNC(energy4,ENERGY4)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+	 energy4(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 			        &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
-			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
+			        um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+                                     m_sg_str_z[g], &locenergy );
       energy += locenergy;
    }
    energy /= (dt*dt);
    double energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
+}
+
+//-----------------------------------------------------------------------
+double EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
+{
+// Compute weighted scalar product between composite grid functions U and C
+//
+// NOTE: assumes a Cartesian grid with super-grid stretching
+//
+   double s_prod    = 0;
+   for( int g=0; g < mNumberOfGrids ; g++ )
+   {
+      int istart = m_iStartInt[g];
+      int iend   = m_iEndInt[g];
+      int jstart = m_jStartInt[g];
+      int jend   = m_jEndInt[g];
+      int kstart = m_kStartInt[g];
+      int kend   = m_kEndInt[g];
+      double* u_ptr  = U[g].c_ptr();
+      double* v_ptr  = V[g].c_ptr();
+
+      double loc_s_prod;
+      int* onesided_ptr = m_onesided[g];
+
+      scalar_prod(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+              istart, iend, jstart, jend, kstart, kend, onesided_ptr,
+              u_ptr, v_ptr, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &loc_s_prod );
+      s_prod += loc_s_prod;
+   }
+// output my sum
+//   printf("scalarProd: myRank=%d, my_s_prod=%e\n", m_myRank, s_prod);
+   
+   double s_prod_tmp = s_prod;
+   MPI_Allreduce( &s_prod_tmp, &s_prod, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+   return s_prod;
 }
 
 //-----------------------------------------------------------------------
