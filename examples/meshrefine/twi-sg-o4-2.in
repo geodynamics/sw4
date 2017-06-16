@@ -2,7 +2,7 @@
 # cfl must be reduced, because the twilight stretching functions exceed 1
 developer ctol=1e-10 cmaxit=100 crelax=0.92 cfl=1.0
 
-fileio verbose=1 path=tw-sg-101
+fileio verbose=1 path=tw-sg-o4-101
 grid nx=101 x=6.28 y=6.28 z=6.28
 
 refinement zmax=2.5

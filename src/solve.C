@@ -243,7 +243,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   Um.resize(mNumberOfGrids);
   U.resize(mNumberOfGrids);
 
-// Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
+// Allocate pointers, even if attenuation not used, to avoid segfault in parameter list with mMuVE[g], etc...
   AlphaVE.resize(mNumberOfGrids);
   AlphaVEm.resize(mNumberOfGrids);
   AlphaVEp.resize(mNumberOfGrids);
@@ -811,7 +811,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     {
 // *** 4th order in TIME interface conditions for the predictor
 // No supergrid or attenuation
-       enforceIC( Up, U, Um, AlphaVEp, t, true, point_sources );
+// June 14, 2017: adding AlphaVE & AlphaVEm
+       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, point_sources );
     }
     
 // should these timers be here?
@@ -829,7 +830,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_checkfornan )
 	  check_for_nan( Uacc, 1, "uacc " );
 
-// NEW (Apr. 4, 2017) Apply corrector for memory variables BEFORE 'Up' is corrected
+// NEW (Apr. 4, 2017) 4th order update for memory variables BEFORE 'Up' is corrected
        if( m_use_attenuation && m_number_mechanisms > 0 )
           updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
 
@@ -850,6 +851,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        {
 	  addSuperGridDamping( Up, U, Um, mRho );
        }
+
+// June 15, 2017:
+// Avoid coupled update of the interface conditions by updating the memory variables AFTER the displacement correction
+// Unfortunately, it seems UNSTABLE
+//       if( m_use_attenuation && m_number_mechanisms > 0 )
+//          updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
+
 // Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
        {
@@ -885,7 +893,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        }
        
 // interface conditions for the corrector
-       enforceIC( Up, U, Um, AlphaVEp, t, false, point_sources );
+// June 14, 2017: adding AlphaVE & AlphaVEm
+       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, point_sources );
 
     }// end if mOrder == 4
     
@@ -1336,7 +1345,7 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 }
 //--------------------Mesh refinement interface condition for 4th order predictor-corrector scheme----------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-                    vector<Sarray*>& a_AlphaVEp, 
+                    vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm, 
 		    double time, bool predictor, vector<GridPointSource*> point_sources )
 {
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1347,6 +1356,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
                   "Number of ghost points must be three or more, not " << m_ghost_points );
 
       Sarray Unextf, Unextc, Bf, Bc, Uf_tt, Uc_tt;
+      
       int ibf=m_iStart[g+1], ief=m_iEnd[g+1], jbf=m_jStart[g+1], jef=m_jEnd[g+1];
       int kf = m_global_nz[g+1];
       int ibc=m_iStart[g], iec=m_iEnd[g], jbc=m_jStart[g], jec=m_jEnd[g];
@@ -1360,7 +1370,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 // to compute the corrector we need the acceleration in the vicinity of the interface
       Uf_tt.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
       Uc_tt.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
-
+// reuse Utt to hold the acceleration of the memory variables
+      
     // Set ghost point values that are unknowns when solving the interface condition to zero. Assume that Dirichlet data
     // are already set on ghost points on the (supergrid) sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true ); // inside=true
@@ -1373,6 +1384,12 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 
       if( predictor ) // In the predictor step, (Unextc, Unextf) represent the displacement after the corrector step
       {
+//  REMARK: June 15, 2017:
+// if predictor == true, the memory variable a_alphaVEp holds the predicted (2nd order) values on entry
+// However, the interior contribution to the displacement on the interface depends on the ghost point value of
+// the memory varaible, which in tern depends on the displacement at the ghost point. Hence, the
+// problem is (weakly) coupled.
+
 // TEST: compute_preliminary_corrector by first assigning exact ghost point values to Up; inspect Unextf & Unextc
 // alphave is only used in visco-elastic mode
 // source is not used with twilight mode
@@ -1380,8 +1397,13 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
          // vector<Source*> sources;
          // exactSol( time+mDt, a_Up, alphave, sources );
 
-	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1], Uf_tt, Unextf, g+1, kf, time, point_sources );
-         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g], Uc_tt, Unextc, g, kc, time, point_sources );
+// get the interior contribution to the displacements on the interface
+	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1],
+                                        a_AlphaVEp[g+1], a_AlphaVE[g+1], a_AlphaVEm[g+1],
+                                        Uf_tt, Unextf, g+1, kf, time, point_sources );
+         compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g],
+                                        a_AlphaVEp[g], a_AlphaVE[g], a_AlphaVEm[g],
+                                        Uc_tt, Unextc, g, kc, time, point_sources );
 	 if( !m_doubly_periodic )
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+dt
@@ -1393,7 +1415,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       }
       else // In the corrector step, (Unextc, Unextf) represent the displacement after next predictor step
       {
-	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, point_sources );
+	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt,
+                                        point_sources );
 	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, point_sources );
 
 	 if( !m_doubly_periodic )
@@ -1404,6 +1427,16 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       }
       compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1]);
       compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
+
+// NEW June 13, 2017: add in the visco-elastic boundary traction
+      if( m_use_attenuation && m_number_mechanisms > 0 )
+      {
+         for( int a=0 ; a < m_number_mechanisms ; a++ )
+         {
+            add_ve_stresses( a_AlphaVEp[g+1][a], Bf, g+1, kf, a, m_sg_str_x[g+1], m_sg_str_y[g+1]);
+            add_ve_stresses( a_AlphaVEp[g][a],     Bc, g,    kc, a, m_sg_str_x[g],     m_sg_str_y[g]   );
+         }
+      }
 
 // from enforceIC2()
       if( !m_doubly_periodic )
@@ -1456,7 +1489,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
          dirichlet_LRic( a_Up[g+1], g+1, kf+1, time+mDt, 1 );
          dirichlet_LRic( a_Up[g], g, kc-1, time+mDt, 1 );
       }
-   }
+       
+   } // end for g...
 }
 
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
@@ -2267,9 +2301,16 @@ void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
 }
 
 //-----------------------------------------------------------------------
-void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Utt, Sarray& Unext,
-					int g, int kic, double t, vector<GridPointSource*> point_sources )
+void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
+                                        Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt,
+                                        Sarray& Unext, int g, int kic, double t, vector<GridPointSource*> point_sources )
 {
+   //
+   // NOTE: This routine is called by enforceIC() after the predictor stage to calculate the interior contribution to
+   // the corrector on the interface at time step.
+   // It is NOT called by enforceIC2(), which handles 2nd order time stepping.
+   // Super-grid dissipation is added because it is part of the interior contribution to the corrected displacement.
+   //
    double idt2 = 1/(mDt*mDt);
    // to evaluate L(Up_tt) for k=kic, we need Up(k) in the vicinity of the interface
    // Note: Utt is needed at all points (interior + ghost) to evaluate L(Utt) in all interior points
@@ -2297,10 +2338,33 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 					      m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
 					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 					      m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic );
-// Note: 4 last arguments of the above function call:
-// (kbu,keu) is the declared size of Utt in the k-direction
-// (kic,kic) is the declared size of Lutt in the k-direction
-
+// Plan: 1) loop over all mechanisms, 2) precompute d^2 alpha/dt^2 and store in Utt, 3) accumulate visco-elastic stresses
+   if( m_use_attenuation && m_number_mechanisms > 0 )
+   {
+      op = '-'; // Subtract Lu := Lu - L_a(alpha)
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+// assume a_U and a_AlphaVE have the same dimensions for all mechanisms
+         for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
+            for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
+               for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
+               {
+                  Utt(1,i,j,k) = idt2*(a_AlphaVEp[a](1,i,j,k)-2*a_AlphaVE[a](1,i,j,k)+a_AlphaVEm[a](1,i,j,k));
+                  Utt(2,i,j,k) = idt2*(a_AlphaVEp[a](2,i,j,k)-2*a_AlphaVE[a](2,i,j,k)+a_AlphaVEm[a](2,i,j,k));
+                  Utt(3,i,j,k) = idt2*(a_AlphaVEp[a](3,i,j,k)-2*a_AlphaVE[a](3,i,j,k)+a_AlphaVEm[a](3,i,j,k));
+               }
+      
+// NEW June 13, 2017: add in visco-elastic terms
+         double* mua_ptr = mMuVE[g][a].c_ptr();
+         double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
+         rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+                          m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mua_ptr,
+                          lambdaa_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+                          m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic ); 
+      } // end for a      
+   } // end if using attenuation
+   
+    
    // Compute forcing_{tt} at k=kic
    Sarray force(3,ib,ie,jb,je,kic,kic);
    if( m_twilight_forcing )
@@ -2346,12 +2410,29 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+force(2,i,j,kic));
 	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+force(3,i,j,kic));
       }
-}
+
+// add in super-grid damping terms (does it make a difference?)
+   if (usingSupergrid()) // Assume 4th order AD, Cartesian grid
+   {
+// assign array pointers on the fly
+      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+                  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+                  m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+                  ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
+      // Note: the last four arguments define the declared size of Unext, followed by the lower and upper boundaries of the k-window
+   }
+} //end compute_preliminary_corrector
+
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
 					int g, int kic, double t, vector<GridPointSource*> point_sources )
 {
+   //
+   // NOTE: This routine is called by enforceIC() after the corrector stage to calculate the interior contribution to
+   // the predictor on the interface at next time step.
+   // It is also called by enforceIC2(), which handles 2nd order time stepping. Only in that case should super-grid dissipation be added.
+   //
    int ib=m_iStart[g], jb=m_jStart[g], kb=m_kStart[g];
    int ie=m_iEnd[g], je=m_jEnd[g], ke=m_kEnd[g];
 
@@ -2416,7 +2497,6 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
                       &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
       }
    } // end twilight
-   
    else if( m_rayleigh_wave_test || m_energy_test )
       f.set_to_zero();
    else
@@ -2434,7 +2514,8 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 	    f(3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
 	 }
       }
-   }
+   } // end else... (not twilight, rayleigh_test, or energy_test)
+   
    double cof = mDt*mDt;
 // initialize
    Unext.set_to_zero();
@@ -2447,7 +2528,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+f(3,i,j,kic));
       }
 // add in super-grid damping terms
-   if (usingSupergrid()) // assume 4th order AD, Cartesian grid
+   if (mOrder==2 && usingSupergrid()) // only needed for 2nd order time-stepping. Assume 4th order AD, Cartesian grid
    {
 // assign array pointers on the fly
       addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),

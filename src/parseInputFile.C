@@ -534,15 +534,15 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   }
   
 // make sure the time order is set to 2 if we use both MR & Attenuation
-  if( m_mesh_refinements && m_use_attenuation && mOrder!=2 )
-  {
-    if (m_myRank == 0)
-    {
-      cerr << "Error: MR+Q is currently only implemented with 2nd order time stepping " << endl;
-      cerr << "Set time_order=2 and CFL=0.8 with the developer command" << endl;
-      return false; // unsuccessful
-    }
-  }
+  // if( m_mesh_refinements && m_use_attenuation && mOrder!=2 )
+  // {
+  //   if (m_myRank == 0)
+  //   {
+  //     cerr << "Error: MR+Q is currently only implemented with 2nd order time stepping " << endl;
+  //     cerr << "Set time_order=2 and CFL=0.8 with the developer command" << endl;
+  //     return false; // unsuccessful
+  //   }
+  // }
 
   if (mVerbose >=3 && proc_zero())
     cout << "********Done reading the input file*********" << endl;

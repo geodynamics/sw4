@@ -238,10 +238,10 @@ void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
 void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
                                 Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
 
-void addMemVarCorrCart(double zMin, double h, double t, Sarray &alpha,
+void addMemVarCorr2Cart(double zMin, double h, double t, Sarray &alpha,
                        double omegaVE, double dt, double omega, double phase, double c );
 
-void addMemVarCorrCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
                                Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
 
 // this routine will replace the Fortran routine curvilinear4sg()
@@ -4137,13 +4137,15 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 	 double cv = m_twilight_forcing->m_c;
          if( topographyExists() && g == mNumberOfGrids-1 )
          {
-            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+//            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            addMemVarCorr2Curvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
          }
 	 else
          {
-// this routine comes from WPP
 //  It  works with SG stretching because no spatial derivatives occur in the forcing
-            addMemVarCorrCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+//            addMemVarCorrCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+// NEW June 14, 2017
+            addMemVarCorr2Cart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
          }
          
       }

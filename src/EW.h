@@ -627,8 +627,12 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
 			     int grid, Sarray& gradrhogrid, Sarray& gradmugrid, Sarray& gradlambdagrid );
 
 // Functions to impose conditions at grid refinement interface:
+   // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+   //                 vector<Sarray*>& a_AlphaVEp,
+   //      	   double t, bool predictor, std::vector<GridPointSource*> point_sources );
+// NEW June 14, 2017
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-                   vector<Sarray*>& a_AlphaVEp,
+                   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
 		   double t, bool predictor, std::vector<GridPointSource*> point_sources );
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp,
@@ -640,8 +644,12 @@ void interpolation_gradient( int nx, int ny, int nz, double xmin, double ymin, d
    void dirichlet_LRstress( Sarray& B, int g, int kic, double t, int adj );
    
    void gridref_initial_guess( Sarray& u, int g, bool upper );
-   void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Utt, Sarray& Unext,
+   void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
+                                       Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
                                        int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
+   //                                     Sarray& Utt, Sarray& Unext,
+   //                                     int g, int kic, double t, std::vector<GridPointSource*> point_sources );
 
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
                                        int g, int kic, double t, vector<GridPointSource*> point_sources );
