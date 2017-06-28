@@ -193,7 +193,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 # new C-routines converted from fortran
  OBJ += addsgdc.o bcfortc.o bcfortanisgc.o bcfreesurfcurvanic.o boundaryOpc.o energy4c.o checkanisomtrlc.o \
         computedtanisoc.o curvilinear4sgc.o gradientsc.o randomfield3dc.o innerloop-ani-sgstr-vcc.o ilanisocurvc.o \
-        rhs4curvilinearc.o rhs4curvilinearsgc.o
+        rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o rhs4th3fortwindc.o solerr3c.o testsrcc.o \
+        tw_aniso_forcec.o tw_aniso_force_ttc.o velsumc.o twilightfortc.o twilightsgfortc.o tw_ani_stiffc.o
 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 

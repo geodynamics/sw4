@@ -30,7 +30,7 @@
 ! # along with this program; if not, write to the Free Software
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine TESTSRC( f, if, il, jf, jl, kf, kl, nk, wind, zmin, h,
-     *                    kx, ky, kz, mom )
+     *                    kx, ky, kz, mom ) bind(c)
       implicit none
       integer if, il, jf, jl, kf, kl, nk, kx(3), ky(3), kz(3), wind(6)
       integer i, j, k
@@ -41,6 +41,8 @@
       wgh(3) = 43d0/48
       wgh(4) = 49d0/48
       h3 = h*h*h
+!$OMP PARALLEL PRIVATE(k,j,i,z,y,x,normfact,x1,x2,x3,y1,y2,y3,z1,z2,z3)
+!$OMP DO REDUCTION(+:mom)
       do k=wind(5),wind(6)
          z = zmin + (k-1)*h
          do j=wind(3),wind(4)
@@ -105,4 +107,6 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end

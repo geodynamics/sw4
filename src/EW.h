@@ -801,6 +801,333 @@ void addbstressc_ci( int ifirst, int ilast, int jfirst, int jlast,
 		       int side, float_sw4* s, char op, int ghterm, int usesg,
 		       float_sw4* a_sgstrx, float_sw4* a_sgstry );
 
+void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
+		     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+		     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+		     float_sw4 h, char op );
+void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
+			  float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+			  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+			  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+			  float_sw4* __restrict__ a_strz, char op );
+void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		    int nz, float_sw4 h,
+		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_u2,
+		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] );
+void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		    int nz, float_sw4* __restrict__ a_uacc, float_sw4* __restrict__ a_lu,
+		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_rho,
+		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] );
+void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		  float_sw4* __restrict__ up, float_sw4* __restrict__ u,
+		  float_sw4* __restrict__ um, float_sw4* __restrict__ lu,
+		  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
+		  float_sw4 dt2 );
+void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		  float_sw4* __restrict__ up, float_sw4* __restrict__ lu,
+		  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
+		  float_sw4 dt4 );
+void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		float_sw4* __restrict__ up, float_sw4* __restrict__ u,
+		float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
+		float_sw4 dt2i );
+void updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		      float_sw4* __restrict__ a_alp,
+		      float_sw4* __restrict__ a_alm, float_sw4* __restrict__ a_up, 
+		      float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
+		      float_sw4 omega, float_sw4 dt, int domain );
+void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
+		      float_sw4* __restrict__ um, float_sw4 dt2i );
+void satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
+	      float_sw4 dt, float_sw4 cfreq, int ifirst, int ilast,
+	      int jfirst, int jlast, int kfirst, int klast );
+void solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
+			int kfirst, int klast,
+			float_sw4* __restrict__ a_alpha, float_sw4 cof,
+			float_sw4* __restrict__ a_up );
+void solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
+		       int kfirst, int klast, float_sw4* __restrict__ a_u,
+		       float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_la,
+		       float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
+		       float_sw4* __restrict__ a_bforcerhs, float_sw4* __restrict__ a_met,
+		       float_sw4 s[5], int usesg, float_sw4* __restrict__ a_strx,
+		       float_sw4* __restrict__ a_stry );
+void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
+			 int kfirst, int klast, int nz, float_sw4* __restrict__ a_alphap,
+			 float_sw4* __restrict__ a_alpham, float_sw4* __restrict__ a_muve,
+			 float_sw4* __restrict__ a_lave, float_sw4* __restrict__ a_bforcerhs,
+			 float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
+			 float_sw4* __restrict__ a_met, int side, float_sw4 dt, float_sw4 omegave,
+			 float_sw4* __restrict__ a_memforce, float_sw4* __restrict__ a_muvebnd, 
+			 float_sw4* __restrict__ a_lambdavebnd, float_sw4 s[5], float_sw4& cof,
+			 int usesg, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry );
+
+void rhs4th3fortwind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			 int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
+			 float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+			 float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+			 float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+			 float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu, int kfirstw, int klastw );
+void solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		 float_sw4 h, float_sw4* __restrict__ uex,
+		 float_sw4* __restrict__ u, float_sw4& li,
+		 float_sw4& l2, float_sw4& xli, float_sw4 zmin, float_sw4 x0,
+		 float_sw4 y0, float_sw4 z0, float_sw4 radius,
+		 int imin, int imax, int jmin, int jmax, int kmin, int kmax );
+void solerrgp_ci( int ifirst, int ilast, int jfirst, int jlast,
+		  int kfirst, int klast, float_sw4 h, 
+		  float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
+		  float_sw4& li, float_sw4& l2 );
+void solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		  float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
+		  float_sw4* __restrict__ x, float_sw4* __restrict__ y,
+		  float_sw4* __restrict__ z, float_sw4* __restrict__ jac,
+		  float_sw4& li, float_sw4& l2, float_sw4& xli, float_sw4 x0,
+		  float_sw4 y0, float_sw4 z0, float_sw4 radius,
+		  int imin, int imax, int jmin, int jmax, int kmin, int kmax,
+		  int usesg, float_sw4* __restrict__ strx, float_sw4* __restrict__ stry );
+void meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+		 int klast, float_sw4* __restrict__ met, float_sw4* __restrict__ metex, 
+		 float_sw4* __restrict__ jac, float_sw4* __restrict__ jacex,
+		 float_sw4 li[5], float_sw4 l2[5], int imin, int imax, int jmin,
+		 int jmax, int kmin, int kmax, float_sw4 h );
+void testsrc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je, int kb, int ke,
+		 int nk, int wind[6], float_sw4 zmin, float_sw4 h, int kx[3], 
+		 int ky[3], int kz[3], float_sw4 mom[3] );
+void tw_aniso_force_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			int klast, float_sw4* fo, float_sw4 t,float_sw4 om,float_sw4 cv,
+			float_sw4 ph, float_sw4 omm,float_sw4 phm,float_sw4 amprho,
+			float_sw4 phc[21],float_sw4 h, float_sw4 zmin );
+void tw_aniso_curvi_force_ci( int ifirst, int ilast, int jfirst, int jlast, 
+			      int kfirst, int klast, float_sw4* __restrict__ fo, float_sw4 t,
+			      float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 omm, float_sw4 phm,
+			      float_sw4 amprho,float_sw4 phc[21],float_sw4* __restrict__ xx, 
+			      float_sw4* __restrict__ yy, float_sw4* __restrict__ zz);
+void tw_aniso_free_surf_z_ci( int ifirst, int ilast, int jfirst, int jlast,
+			      int kfirst, int klast, int kz, float_sw4 t,
+			      float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 omm,
+			      float_sw4 phc[21], float_sw4* __restrict__ bforce,
+			      float_sw4 h, float_sw4 zmin );
+void tw_aniso_force_tt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			   float_sw4* __restrict__ fo, float_sw4 t,float_sw4 om,float_sw4 cv,float_sw4 ph,
+			   float_sw4 omm,float_sw4 phm,float_sw4 amprho,float_sw4 phc[21],float_sw4 h,
+			   float_sw4 zmin);
+void tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+				 float_sw4* __restrict__ fo, float_sw4 t,float_sw4 om,
+				 float_sw4 cv,float_sw4 ph,float_sw4 omm,float_sw4 phm,
+				 float_sw4 amprho,float_sw4 phc[21],
+				 float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+				 float_sw4* __restrict__ zz );
+
+void twilightfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ u, float_sw4 t, float_sw4 om,
+			  float_sw4 cv, float_sw4 ph, float_sw4 h, float_sw4 zmin );
+void twilightfortwind_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			     int klast, float_sw4* __restrict__ u, float_sw4 t, float_sw4 om, 
+			     float_sw4 cv, float_sw4 ph, float_sw4 h, float_sw4 zmin,
+			     int i1, int i2, int j1, int j2, int k1, int k2 );
+void twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			  int klast, float_sw4* __restrict__ u, float_sw4 t, float_sw4 om,
+			  float_sw4 cv, float_sw4 ph, float_sw4* __restrict__ x,
+			  float_sw4* __restrict__ y, float_sw4* __restrict__ z );
+void twilightfortatt_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			    int klast, float_sw4* __restrict__ alpha, float_sw4 t, float_sw4 om,
+			    float_sw4 cv,float_sw4 ph,float_sw4 h,float_sw4 zmin );
+void twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			     int klast, float_sw4* __restrict__ alpha, float_sw4 t,
+			     float_sw4 om, float_sw4 cv, float_sw4 ph, 
+			     float_sw4* __restrict__ x, float_sw4* __restrict__ y,
+			     float_sw4* __restrict__ z );
+void exactrhsfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			  float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			  float_sw4 h, float_sw4 zmin );
+void exactrhsfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			   float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			   float_sw4* __restrict__ zz );
+void exactaccfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ utt, float_sw4 t, float_sw4 om,
+			  float_sw4 c, float_sw4 ph, float_sw4 h, float_sw4 zmin );
+void exactaccfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ utt, float_sw4 t, float_sw4 om,
+			   float_sw4 c, float_sw4 ph, float_sw4* __restrict__ x,
+			   float_sw4* __restrict__ y, float_sw4* __restrict__ z );
+void forcingfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			 int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			 float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			 float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			 float_sw4 h, float_sw4 zmin );
+void forcingttfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			   float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4 h, float_sw4 zmin );
+void forcingfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			  float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			  float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			  float_sw4* __restrict__ zz );
+void forcingttfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			   float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			    float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			    float_sw4* __restrict__ zz );
+void exactmatfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ rho, float_sw4* __restrict__ mu,
+			  float_sw4* __restrict__ la, float_sw4 omm, float_sw4 phm,
+			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			  float_sw4 h, float_sw4 zmin );
+void exactmatfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ rho, float_sw4* __restrict__ mu,
+			   float_sw4* __restrict__ la, float_sw4 omm, float_sw4 phm,
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4* __restrict__ x, float_sw4* __restrict__ y,
+			   float_sw4* __restrict__ z );
+void exactrhsfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			    int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			    float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			    float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			    float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
+			    float_sw4 omstrz );
+void exactrhsfortsgc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			     int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			     float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			     float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			     float_sw4* __restrict__ zz,
+			     float_sw4 omstrx, float_sw4 omstry, float_sw4 omstrz );
+void exactmatfortatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			     int klast, float_sw4* __restrict__ mu,
+			     float_sw4* __restrict__ la, float_sw4 momega, float_sw4 mphase,
+			     float_sw4 ampmu, float_sw4 amplambda,
+			     float_sw4 h, float_sw4 zmin );
+void exactmatfortattc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			      int klast, float_sw4* __restrict__ mu,
+			      float_sw4* __restrict__ la, float_sw4 momega, float_sw4 mphase,
+			      float_sw4 ampmu, float_sw4 amplambda,
+			      float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			      float_sw4* __restrict__ zz );
+void forcingfortatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			    int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			    float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase,
+			    float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			    float_sw4 h, float_sw4 zmin );
+void forcingttattfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			      int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			      float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase,
+			      float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			      float_sw4 h, float_sw4 zmin );
+void addmemvarforcing_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			      int klast, float_sw4* __restrict__ alpha, float_sw4 t, float_sw4 omega,
+			      float_sw4 c, float_sw4 phase, float_sw4 omegaVE, float_sw4 dt,
+			      float_sw4 h, float_sw4 zmin );
+void memvarforcesurf_ci( int ifirst, int ilast, int jfirst, int jlast,
+			     int k, float_sw4* __restrict__ fo, float_sw4 t,
+			     float_sw4 omega, float_sw4 c, float_sw4 phase,
+			     float_sw4 omegaVE, float_sw4 dt, float_sw4 h,
+			     float_sw4 zmin );
+void forcingfortattc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			     int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			     float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase,
+			     float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			     float_sw4* __restrict__ zz );
+void forcingttattfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			       int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			       float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase,
+			       float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			       float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			       float_sw4* __restrict__ zz );
+void addmemvarforcingc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			       int klast, float_sw4* __restrict__ alpha, float_sw4 t, float_sw4 omega,
+			       float_sw4 c, float_sw4 phase, float_sw4 omegaVE, float_sw4 dt,
+			       float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			       float_sw4* __restrict__ zz );
+void memvarforcesurfc_ci( int ifirst, int ilast, int jfirst, int jlast,
+			      int kfirst, int klast, int k, float_sw4* __restrict__ fo, 
+			      float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase,
+			      float_sw4 omegaVE, float_sw4 dt, 
+			      float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			      float_sw4* __restrict__ zz );
+
+void forcingfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			   float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
+			   float_sw4 omstrz );
+void forcingttfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			   float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
+			   float_sw4 omstrz );
+void forcingfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			float_sw4* __restrict__ xx, float_sw4* __restrict yy, 
+			float_sw4* __restrict__ zz, float_sw4 omstrx, float_sw4 omstry,
+			float_sw4 omstrz );
+void forcingttfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+			  float_sw4 c, float_sw4 ph, float_sw4 omm, float_sw4 phm, 
+			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			  float_sw4* __restrict__ xx, float_sw4* __restrict yy, 
+			  float_sw4* __restrict__ zz, float_sw4 omstrx, float_sw4 omstry,
+			  float_sw4 omstrz );
+void forcingfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			  int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			  float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase, 
+			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			  float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
+			  float_sw4 omstrz );
+void forcingttfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			    int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			    float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase, 
+			    float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			    float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
+			    float_sw4 omstrz );
+void forcingfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+		 	   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			   float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			   float_sw4* __restrict__ zz, float_sw4 omstrx, float_sw4 omstry,
+			   float_sw4 omstrz );
+void forcingttfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+		 	   int klast, float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega,
+			   float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase, 
+			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
+			   float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			   float_sw4* __restrict__ zz, float_sw4 omstrx, float_sw4 omstry,
+			   float_sw4 omstrz );
+
+void tw_ani_stiff_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+		      int klast, float_sw4 h, float_sw4 zmin, float_sw4 omm,
+		      float_sw4 phm, float_sw4 amprho, float_sw4* __restrict__ a_rho,
+		      float_sw4 a_phc[21], float_sw4* __restrict__  a_cm );
+
+void tw_ani_curvi_stiff_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			    int klast, float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+			    float_sw4* __restrict__ zz, float_sw4 omm,
+			    float_sw4 phm, float_sw4 amprho, float_sw4* __restrict__ a_rho,
+			    float_sw4 a_phc[21], float_sw4* __restrict__  a_cm );
+
+void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
+		int i1, int i2, int j1, int j2, int k1, int k2,
+		float_sw4* __restrict__ mu, float_sw4* __restrict__ lambda,
+		float_sw4* __restrict__ rho, float_sw4& cp, float_sw4& cs,
+		size_t& npts );
 
 //
 // VARIABLES BEYOND THIS POINT

@@ -43,16 +43,19 @@
 
 #include "F77_FUNC.h"
 extern "C" {
-   void tw_ani_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double h, double zmin,
-                     double omm, double phm, double amprho, double *rho, double *phc, double *cm);
-
-   void tw_ani_curvi_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double *xx, double *yy, double *zz,
-                     double omm, double phm, double amprho, double *rho, double *phc, double *cm);
-   
-   void F77_FUNC(exactmatfort,EXACTMATFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
-					 double*, double*, double*, double*, double*, double*, double*);
-   void F77_FUNC(exactmatfortc,EXACTMATFORTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
-                                            double*, double*, double*, double*, double*, double*, double*, double*); 
+   void tw_ani_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4 h, float_sw4 zmin, float_sw4 omm, float_sw4 phm,
+		     float_sw4 amprho, float_sw4 *rho, float_sw4 *phc, float_sw4 *cm);
+   void tw_ani_curvi_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			   int klast, float_sw4 *xx, float_sw4 *yy, float_sw4 *zz,
+			   float_sw4 omm, float_sw4 phm, float_sw4 amprho, float_sw4 *rho,
+			   float_sw4 *phc, float_sw4 *cm);
+   void exactmatfort(int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		     float_sw4*);
+   void exactmatfortc( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*,
+		       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		       float_sw4*, float_sw4*); 
 void F77_FUNC(wavepropbop_4, WAVEPROPBOP_4)(double *, double *, double *, double *, double *, double *, double *);
 void F77_FUNC(varcoeffs4,VARCOEFFS4)(double *, double *);
 void F77_FUNC(bopext4th,BOPEXT4TH)(double *, double *);
@@ -1003,9 +1006,14 @@ void EW::set_materials()
      //  subroutine exactmatfort( ifirst, ilast, jfirst, jlast, kfirst, 
      // +     klast, rho, mu, la, omm, phm, amprho, ampmu, amplambda, h, 
      // +     zmin )
-	F77_FUNC(exactmatfort,EXACTMATFORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					    &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-					    &amprho, &ampmu, &ampla, &h, &zmin );
+	if( m_croutines )
+	   exactmatfort_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			    rho_ptr, mu_ptr, la_ptr, omm, phm, 
+			    amprho, ampmu, ampla, h, zmin );
+	else
+	   exactmatfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+			&klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+			&amprho, &ampmu, &ampla, &h, &zmin );
 // Need to communicate across material boundaries, why ?
 //	  communicate_array( mRho[g], g );
 //	  communicate_array( mMu[g], g );
@@ -1031,9 +1039,14 @@ void EW::set_materials()
 	  amprho = m_twilight_forcing->m_amprho;
 	  ampmu = m_twilight_forcing->m_ampmu;
 	  ampla = m_twilight_forcing->m_amplambda;
-	  F77_FUNC(exactmatfortc,EXACTMATFORTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					      &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-					&amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+	  if( m_croutines )
+	     exactmatfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+			       klast, rho_ptr, mu_ptr, la_ptr, omm, phm, 
+			       amprho, ampmu, ampla, x_ptr, y_ptr, z_ptr );
+	  else
+	     exactmatfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+			   &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+			   &amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
 //   // Need this for Energy testing, random material will not agree on processor boundaries.
 // 	  communicate_array( mRho[g], g );
 // 	  communicate_array( mMu[g], g );
@@ -1218,7 +1231,11 @@ void EW::set_anisotropic_materials()
 
 // setup density (rho)
 // setup rho and stiffness matrix         
-        tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
+	 if( m_croutines )
+	    tw_ani_stiff_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
+                     omm, phm, amprho, rho_ptr, phc, cm_ptr);
+	 else
+	    tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
                      omm, phm, amprho, rho_ptr, phc, cm_ptr);
          
 // also need rho
@@ -1246,7 +1263,11 @@ void EW::set_anisotropic_materials()
 
          if (proc_zero() )
             printf("set_anisotropic_mat> before tw_ani_curvi_stiff\n");
-         tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
+	 if( m_croutines )
+	    tw_ani_curvi_stiff_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
+                            omm, phm, amprho, rho_ptr, phc, cm_ptr);
+	 else
+	    tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
                             omm, phm, amprho, rho_ptr, phc, cm_ptr);
          if (proc_zero() )
             printf("set_anisotropic_mat> after tw_ani_curvi_stiff\n");

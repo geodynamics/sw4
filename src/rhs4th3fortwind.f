@@ -1,7 +1,7 @@
       subroutine RHS4TH3FORTWIND( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
      +     Lu, u, mu, la, h, strx, stry, strz, op, 
-     *     kfirstu, klastu, kfirstw, klastw )
+     *     kfirstu, klastu, kfirstw, klastw ) bind(c)
 
 ***********************************************************************
 *** Computes the L(u) = div(stress) operator on a subdomain 
@@ -77,7 +77,17 @@ c      if (onesided(5).eq.1) k1 = 7;
 c      k2 = klast-2
 c      if (onesided(6).eq.1) k2 = nz-6;
 c the centered stencil can be evaluated 2 points away from the boundary
+!$OMP PARALLEL PRIVATE(i,j,k,kb,m,mb,q,qb,mux1,mux2,mux3,mux4,r1,r2,r3,
+!$OMP*  muy1,muy2,muy3,muy4,muz1,muz2,muz3,muz4,
+!$OMP*  mucof, mu1zz, mu2zz, lau2yz,
+!$OMP* lap2mu, mu3zz, mu3xz, mu3yz, lau1xz,
+!$OMP* lau3zx, u3zim2, u3zim1, u3zip1, u3zip2,
+!$OMP* lau3zy, u3zjm2, u3zjm1, u3zjp1, u3zjp2,
+!$OMP* mu1zx, u1zim2, u1zim1, u1zip1, u1zip2,
+!$OMP* mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2 )
+
       if( .not.upper .and. .not.lower )then
+!$OMP DO
       do k=kfirstw,klastw
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -305,9 +315,11 @@ c note that we could have introduced intermediate variables for the average of l
             enddo
          enddo
       enddo
+!$OMP ENDDO
       endif
 c low-k boundary modified stencils
       if( upper )then
+!$OMP DO
       do k=kfirstw,klastw
 c the centered stencil can be used in the x- and y-directions
         do j=jfirst+2,jlast-2
@@ -576,9 +588,11 @@ c No centered cross terms in r3
             enddo
          enddo
       enddo
+!$OMP ENDDO
       endif
 c high-k boundary
       if( lower )then
+!$OMP DO
       do k=kfirstw,klastw
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -864,6 +878,7 @@ c No centered cross terms in r3
             enddo
          enddo
       enddo
+!$OMP ENDDO
       endif
-
+!$OMP END PARALLEL
       end

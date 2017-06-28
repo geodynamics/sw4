@@ -37,104 +37,104 @@
 
 extern "C" {
    void tw_aniso_free_surf_z(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-                             int kz, float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 omm, float_sw4* phc, float_sw4* bforce,
-                             float_sw4 h, float_sw4 zmin );
+                             int kz, float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 omm,
+			     float_sw4* phc, float_sw4* bforce, float_sw4 h, float_sw4 zmin );
 
-void F77_FUNC(satt,SATT)(float_sw4 *up, float_sw4 *qs, float_sw4 *dt, float_sw4 *cfreq, int *ifirst, int *ilast, 
-			 int *jfirst, int *jlast, int *kfirst, int *klast);
+   void satt(float_sw4 *up, float_sw4 *qs, float_sw4 *dt, float_sw4 *cfreq, int *ifirst, int *ilast, 
+	     int *jfirst, int *jlast, int *kfirst, int *klast);
 
+   void F77_FUNC(dgesv,DGESV)(int & N1, int & N2, float_sw4 *A, int & LDA, int *IPIV, float_sw4 * B, int &N3, int &INFO);
+   void F77_FUNC(factorizeinterfacematrices,FACTORIZEINTERFACEMATRICES)( int*, int*, int*, int*, int*,
+									 float_sw4*, float_sw4*, float_sw4*,
+									 int*, int*, int*, int*, int*, float_sw4*,
+									 float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
+									 float_sw4*, int*, float_sw4*, int* );
+   void F77_FUNC(acc_bc_free_i,ACC_BC_FREE_I)
+      ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
 
-void F77_FUNC(dgesv,DGESV)(int & N1, int & N2, float_sw4 *A, int & LDA, int *IPIV, float_sw4 * B, int &N3, int &INFO);
-void F77_FUNC(factorizeinterfacematrices,FACTORIZEINTERFACEMATRICES)( int*, int*, int*, int*, int*,
-								      float_sw4*, float_sw4*, float_sw4*,
-								      int*, int*, int*, int*, int*, float_sw4*,
-								      float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
-								      float_sw4*, int*, float_sw4*, int* );
-void F77_FUNC(acc_bc_free_i,ACC_BC_FREE_I)
-  ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
+   void F77_FUNC(acc_bc_free_j,ACC_BC_FREE_J)
+      ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
 
-void F77_FUNC(acc_bc_free_j,ACC_BC_FREE_J)
-  ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
+   void F77_FUNC(acc_bc_free_k,ACC_BC_FREE_K)
+      ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
 
-void F77_FUNC(acc_bc_free_k,ACC_BC_FREE_K)
-  ( int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, float_sw4* );
+   void bcfort( int*, int*, int*, int*, int*, int*, 
+		int *, int*, int*, int*,
+		float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
+		float_sw4* bf0_p, float_sw4* bf1_p, 
+		float_sw4* bf2_p, float_sw4*bf3_p, 
+		float_sw4*bf4_p, float_sw4*bf5_p, 
+		float_sw4*, float_sw4*, float_sw4*, int* );
+   void freesurfcurvi(int*, int*, int*, int*, int*, int*, int*, int*,
+		      float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void freesurfcurvisg(int*, int*, int*, int*, int*, int*, int*, int*,
+			float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+			float_sw4*, float_sw4*, float_sw4* );
+   void bcfortsg( int*, int*, int*, int*, int*, int*, 
+		  int *, int*, int*, int*,
+		  float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
+		  float_sw4* bf0_p, float_sw4* bf1_p, 
+		  float_sw4* bf2_p, float_sw4*bf3_p, 
+		  float_sw4*bf4_p, float_sw4*bf5_p, 
+		  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
 
-void bcfort( int*, int*, int*, int*, int*, int*, 
-	     int *, int*, int*, int*,
-	     float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
-	     float_sw4* bf0_p, float_sw4* bf1_p, 
-	     float_sw4* bf2_p, float_sw4*bf3_p, 
-	     float_sw4*bf4_p, float_sw4*bf5_p, 
-	     float_sw4*, float_sw4*, float_sw4*, int* );
-void freesurfcurvi(int*, int*, int*, int*, int*, int*, int*, int*,
-		   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-void freesurfcurvisg(int*, int*, int*, int*, int*, int*, int*, int*,
-		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-		     float_sw4*, float_sw4*, float_sw4* );
-void bcfortsg( int*, int*, int*, int*, int*, int*, 
-	       int *, int*, int*, int*,
-	       float_sw4*, float_sw4*, boundaryConditionType*, float_sw4 *, float_sw4*, float_sw4*, float_sw4*,
-	       float_sw4* bf0_p, float_sw4* bf1_p, 
-	       float_sw4* bf2_p, float_sw4*bf3_p, 
-	       float_sw4*bf4_p, float_sw4*bf5_p, 
-	       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void bcfortanisg( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*,
+		     float_sw4*, float_sw4*, boundaryConditionType*, float_sw4*, float_sw4*,
+		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		     float_sw4*, float_sw4* );
 
-void bcfortanisg( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*,
-		  float_sw4*, float_sw4*, boundaryConditionType*, float_sw4*, float_sw4*,
-		  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-		  float_sw4*, float_sw4* );
-
-void twfrsurfz(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
-	       int * klast_p, float_sw4* h_p, int * k_p,
-	       float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
-	       float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
-void twfrsurfzatt(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
+   void twfrsurfz(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
 		  int * klast_p, float_sw4* h_p, int * k_p,
 		  float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
 		  float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
-void twfrsurfzsgstr(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
-		    int * klast_p, float_sw4* h_p, int * k_p,
-		    float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
-		    float_sw4* omstrx_p, float_sw4* omstry_p,
-		    float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
-void twfrsurfzsgstratt(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p,
-		       int * kfirst_p, int * klast_p, float_sw4* h_p, int * k_p,
+   void twfrsurfzatt(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
+		     int * klast_p, float_sw4* h_p, int * k_p,
+		     float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
+		     float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
+   void twfrsurfzsgstr(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p, int * kfirst_p, 
+		       int * klast_p, float_sw4* h_p, int * k_p,
 		       float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
 		       float_sw4* omstrx_p, float_sw4* omstry_p,
 		       float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
-void F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
-						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-void F77_FUNC(memvarforcesurfc,MEMVARFORCESURFC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
-						  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-void twdirbdry( int *wind_ptr, float_sw4 *h_p, float_sw4 *t_p, float_sw4 *om_p, float_sw4 * cv_p, 
-		float_sw4 *ph_p,  float_sw4 * bforce_side_ptr, float_sw4* zmin );
-void twdirbdryc( int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, int* klast,
-		 int *wind_ptr, float_sw4 *t_p, float_sw4 *om_p, float_sw4 * cv_p, 
-		 float_sw4 *ph_p,  float_sw4 * bforce_side_ptr, float_sw4* x, float_sw4* y, float_sw4* z );
-void F77_FUNC(testsrc, TESTSRC )( float_sw4* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
-				   int* klast, int* nz, int* wind, float_sw4* m_zmin, float_sw4* h, int* kx, int* ky, int* kz,
-				   float_sw4* momgrid );
-void addsgd4(float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
-				float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
-				float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
-				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
-void addsgd6(float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
-				float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
-				float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
-				int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
-void addsgd4c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
-				  float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
-				  float_sw4* sg_corner_x, float_sw4* sg_corner_y, 
-				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
-void addsgd6c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
-				  float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
-				  float_sw4* sg_corner_x, float_sw4* sg_corner_y, 
-				  int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
-//  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
-// +     omega, alpha, h, zmin )
-   void F77_FUNC(raydirbdry,RAYDIRBDRY)( float_sw4 *bforce_side_ptr, int *wind_ptr, float_sw4 *t, float_sw4 *lambda,
-					 float_sw4 *mu, float_sw4 *rho,
-				         float_sw4 *cr, float_sw4 *omega, float_sw4 *alpha, float_sw4 *h, float_sw4 *zmin );
+   void twfrsurfzsgstratt(int * ifirst_p, int * ilast_p, int * jfirst_p, int * jlast_p,
+			  int * kfirst_p, int * klast_p, float_sw4* h_p, int * k_p,
+			  float_sw4* t_p, float_sw4* om_p, float_sw4* cv_p, float_sw4* ph_p,
+			  float_sw4* omstrx_p, float_sw4* omstry_p,
+			  float_sw4* bforce_side5_ptr, float_sw4* mu_ptr, float_sw4* la_ptr, float_sw4* zmin );
+   void memvarforcesurf( int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+			 float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void memvarforcesurfc( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+			  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void twdirbdry( int *wind_ptr, float_sw4 *h_p, float_sw4 *t_p, float_sw4 *om_p, float_sw4 * cv_p, 
+		   float_sw4 *ph_p,  float_sw4 * bforce_side_ptr, float_sw4* zmin );
+   void twdirbdryc( int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst, int* klast,
+		    int *wind_ptr, float_sw4 *t_p, float_sw4 *om_p, float_sw4 * cv_p, 
+		    float_sw4 *ph_p,  float_sw4 * bforce_side_ptr, float_sw4* x, float_sw4* y, float_sw4* z );
+   void testsrc( float_sw4* f_ptr, int* ifirst, int* ilast, int* jfirst, int* jlast, int* kfirst,
+		 int* klast, int* nz, int* wind, float_sw4* m_zmin, float_sw4* h, int* kx, int* ky, int* kz,
+		 float_sw4* momgrid );
+   void addsgd4(float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+		float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
+		float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
+		int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+   void addsgd6(float_sw4* dt, float_sw4 *h, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+		float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* sg_str_z,
+		float_sw4* sg_corner_x, float_sw4* sg_corner_y, float_sw4* sg_corner_z,
+		int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+   void addsgd4c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+		 float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
+		 float_sw4* sg_corner_x, float_sw4* sg_corner_y, 
+		 int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+   void addsgd6c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, float_sw4* Rho,
+		 float_sw4 *sg_dc_x, float_sw4* sg_dc_y, float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
+		 float_sw4* sg_corner_x, float_sw4* sg_corner_y, 
+		 int *ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, float_sw4* damping_coefficient );
+   //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
+   // +     omega, alpha, h, zmin )
+   void raydirbdry( float_sw4 *bforce_side_ptr, int *wind_ptr, float_sw4 *t, float_sw4 *lambda,
+		    float_sw4 *mu, float_sw4 *rho,
+		    float_sw4 *cr, float_sw4 *omega, float_sw4 *alpha, float_sw4 *h, float_sw4 *zmin );
+
    void twstensor( int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* kz,
 		   float_sw4* t, float_sw4* om, float_sw4* c, float_sw4* ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
 		   float_sw4* tau, float_sw4* mu, float_sw4* lambda );
@@ -155,33 +155,34 @@ void addsgd6c(float_sw4* dt, float_sw4 *a_Up, float_sw4*a_U, float_sw4*a_Um, flo
    //			  int* k, float_sw4* h, float_sw4* tau, float_sw4* forcing, float_sw4* amp, float_sw4* xc,
    //			  float_sw4* yc, float_sw4* xl, float_sw4* yl );
    void getsurfforcingsg( 
-	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
-           float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
+			 int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
+			 float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
    void subsurfforcingsg( 
-	   int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
-           float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
+			 int*ifirst, int *ilast, int *jfirst, int* jlast, int* kfirst, int* klast, int* k,
+			 float_sw4* met, float_sw4* jac, float_sw4* tau, float_sw4* strx, float_sw4* stry, float_sw4* forcing );
    void addbstressc( int*, int*, int*, int*, int*, int*, int*, float_sw4*,  
 		     float_sw4*,  float_sw4*,  float_sw4*, float_sw4*, int*,  float_sw4*, char*,
 		     int*, int*,  float_sw4*,  float_sw4* );
-   void F77_FUNC(addbstresswresc,ADDBSTRESSWRESC)( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
-						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, 
-						   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-						   int*, float_sw4*, float_sw4* );
-   void F77_FUNC(solveattfreec,SOLVEATTFREEC)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
-					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4* );
-   void F77_FUNC(solveattfreeac,SOLVEATTFREEAC)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*);
+   void addbstresswresc( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
+			 float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, 
+			 float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+			 int*, float_sw4*, float_sw4* );
+   void solveattfreec( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,    
+		       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		       float_sw4*, int*, float_sw4*, float_sw4* );
+   void solveattfreeac( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*);
    void bcfreesurfcurvani( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, int*,
 			   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-   void F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,
-						     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*,
-						     int*, int*, int*, int* );
-   void F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( int*, int*, int*, int*, int*, int*, int*, int*, float_sw4*,
-						   float_sw4*, float_sw4*,float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-						   float_sw4*, float_sw4*, float_sw4*, char*, int*, int*, int*, int* );
-   void F77_FUNC(forcingfort,FORCINGFORT)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
-					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-   void F77_FUNC(forcingttfort,FORCINGTTFORT)( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
-					       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void twilightfortwind( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,
+			  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*,
+			  int*, int*, int*, int* );
+   void rhs4th3fortwind( int*, int*, int*, int*, int*, int*, int*, int*, float_sw4*,
+			 float_sw4*, float_sw4*,float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+			 float_sw4*, float_sw4*, float_sw4*, char*, int*, int*, int*, int* );
+   void forcingfort( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
+		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   void forcingttfort( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
+		       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
 }
 
 //--------------------------------------------------------------------
@@ -1454,40 +1455,60 @@ void EW::dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj )
 	 // low i-side
 	 int i1 = m_iStart[g], i2=m_iStartInt[g]-adj;
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-						      &h, &m_zmin[g],
-				                      &i1, &i2, &j1, &j2, &kic, &kic );
+	 if( m_croutines )
+	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+			      kdb, kde, u_ptr, t, om, cv, ph, 
+			      h, m_zmin[g], i1, i2, j1, j2, kic, kic );
+	 else
+	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+			      &h, &m_zmin[g],
+			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
 	 // high i-side
 	 int i1 = m_iEndInt[g]+adj, i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-						      &h, &m_zmin[g],
-						      &i1, &i2, &j1, &j2, &kic, &kic );
+	 if( m_croutines )
+	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+				 kdb, kde, u_ptr, t, om, cv, ph, 
+				 h, m_zmin[g], i1, i2, j1, j2, kic, kic );
+	 else
+	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+			      &h, &m_zmin[g],
+			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jStartInt[g]-adj;
-	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-						      &h, &m_zmin[g],
-						      &i1, &i2, &j1, &j2, &kic, &kic );
+	 if( m_croutines )
+	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+				 kdb, kde, u_ptr, t, om, cv, ph, 
+				 h, m_zmin[g], i1, i2, j1, j2, kic, kic );
+	 else
+	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+			      &h, &m_zmin[g],
+			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jEndInt[g]+adj, j2=m_jEnd[g];
-	 F77_FUNC(twilightfortwind,TWILIGHTFORTWIND)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-						      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-						      &h, &m_zmin[g],
-						      &i1, &i2, &j1, &j2, &kic, &kic );
+	 if( m_croutines )
+	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+				 kdb, kde, u_ptr, t, om, cv, ph, 
+				 h, m_zmin[g],i1, i2, j1, j2, kic, kic );
+	 else
+	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+			      &h, &m_zmin[g],
+			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
    }      
 }
@@ -1555,10 +1576,16 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    char op='=';
    int nz = m_global_nz[g];
    Sarray Lu(3,ib,ie,jb,je,kic,kic);
-   F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
-					      m_bope, m_ghcof, Lu.c_ptr(), Unext.c_ptr(), mMu[g].c_ptr(),
-					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-					      m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic );
+   if( m_croutines )
+      rhs4th3fortwind_ci( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof,
+		       m_bope, m_ghcof, Lu.c_ptr(), Unext.c_ptr(), mMu[g].c_ptr(),
+		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_sg_str_z[g], op, kbu, keu, kic, kic );
+   else
+      rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+		       m_bope, m_ghcof, Lu.c_ptr(), Unext.c_ptr(), mMu[g].c_ptr(),
+		       mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic );
    // Compute forcing_{tt} at k=kic
    Sarray f(3,ib,ie,jb,je,kic,kic);
    if( m_twilight_forcing )
@@ -1571,8 +1598,12 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       float_sw4 amprho   = m_twilight_forcing->m_amprho;
       float_sw4 ampmu    = m_twilight_forcing->m_ampmu;
       float_sw4 amplambda= m_twilight_forcing->m_amplambda;
-      F77_FUNC(forcingttfort,FORCINGTTFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+      if( m_croutines )
+	 forcingttfort_ci( ib, ie, jb, je, kic, kic, f.c_ptr(), t, om, cv, ph, omm, phm,
+			   amprho, ampmu, amplambda, mGridSize[g], m_zmin[g] );
+      else
+	 forcingttfort( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+			&amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
    }
    else if( m_rayleigh_wave_test || m_energy_test )
       f.set_to_zero();
@@ -1615,10 +1646,16 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
    Sarray Lu(3,ib,ie,jb,je,kic,kic);
    char op='=';
    int nz = m_global_nz[g];
-   F77_FUNC(rhs4th3fortwind,RHS4TH3FORTWIND)( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
-					      m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-					      mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-					      m_sg_str_z[g], &op, &kb, &ke, &kic, &kic );
+   if( m_croutines )
+      rhs4th3fortwind_ci( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof,
+			  m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
+			  mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+			  m_sg_str_z[g], op, kb, ke, kic, kic );
+   else
+      rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+		       m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
+		       mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_sg_str_z[g], &op, &kb, &ke, &kic, &kic );
 
    // Compute forcing at k=kic
    Sarray f(3,ib,ie,jb,je,kic,kic);
@@ -1632,8 +1669,12 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext
       float_sw4 amprho=m_twilight_forcing->m_amprho;
       float_sw4 ampmu=m_twilight_forcing->m_ampmu;
       float_sw4 amplambda=m_twilight_forcing->m_amplambda;
-      F77_FUNC(forcingfort,FORCINGFORT)( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+      if( m_croutines )
+	 forcingfort_ci( ib, ie, jb, je, kic, kic, f.c_ptr(), t, om, cv, ph, omm, phm,
+			 amprho, ampmu, amplambda, mGridSize[g], m_zmin[g] );
+      else
+	 forcingfort( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+		      &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
    }
    else if( m_rayleigh_wave_test || m_energy_test )
       f.set_to_zero();
@@ -2402,7 +2443,12 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // curvilinear anisotropic case is not yet implemented
             CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
 
-            tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om, cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
+	    if( m_croutines )
+	       tw_aniso_free_surf_z_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+					cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
+	    else
+	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+				     cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
          }
          else
          { //isotropic stuff
@@ -2593,7 +2639,12 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // curvilinear anisotropic case is not yet implemented
             CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
 
-            tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om, cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
+	    if( m_croutines )
+	       tw_aniso_free_surf_z_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+					cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );
+	    else
+	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+				     cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
          }
          else
          { //isotropic stuff
@@ -2654,8 +2705,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // assign exact solution on bottom (high-z)
       if (m_bcType[g][5] == bDirichlet)
       {
-	F77_FUNC(raydirbdry,RAYDIRBDRY)( bforce_side5_ptr, &wind_ptr[6*5], &t, &lambda, &mu, &rho, &cr, 
-					 &omega, &alpha, &h, &zmin );
+	raydirbdry( bforce_side5_ptr, &wind_ptr[6*5], &t, &lambda, &mu, &rho, &cr, 
+		    &omega, &alpha, &h, &zmin );
       }
 
      //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
@@ -3726,8 +3777,12 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     wind[4] = m_kStartInt[g];
     wind[5] = m_kEndInt[g];
     int nz = m_global_nz[g];
-    F77_FUNC( testsrc, TESTSRC )( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-				  &nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
+    if( m_croutines )
+       testsrc_ci( f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast,
+		   nz, wind, m_zmin[g], h, kx, ky, kz, momgrid );
+    else
+       testsrc( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+		&nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
   }
   MPI_Allreduce( momgrid, moments, 3, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 }
@@ -4057,8 +4112,13 @@ void EW::simpleAttenuation( vector<Sarray> & a_Up )
     jlast  = m_jEnd[g];
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
-    F77_FUNC(satt,SATT) ( up_ptr, qs_ptr, &dt, &cfreq,
-			  &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast );
+
+    if( m_croutines )
+       satt_ci( up_ptr, qs_ptr, dt, cfreq,
+		ifirst, ilast, jfirst, jlast, kfirst, klast );
+    else
+       satt( up_ptr, qs_ptr, &dt, &cfreq,
+	     &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast );
   }
 }
 
@@ -4090,8 +4150,12 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	    float_sw4 ph = m_twilight_forcing->m_phase;
 	    float_sw4* mf = memforce.c_ptr();
             int k=0; // Ghost point
-	    F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
-						      &cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
+	    if( m_croutines )
+	       memvarforcesurf_ci( ifirst, ilast, jfirst, jlast, k, mf, a_t, om,
+				   cv, ph, mOmegaVE[0], mDt, h, m_zmin[g] );
+	    else
+	       memvarforcesurf( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
+				&cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
 	 }
 	 else
 	    memforce.set_value(0.0);
@@ -4195,8 +4259,12 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	    float_sw4 ph = m_twilight_forcing->m_phase;
 	    float_sw4* mf = memforce.c_ptr();
             int k=nk+1; // Ghost point
-	    F77_FUNC(memvarforcesurf,MEMVARFORCESURF)( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
-						      &cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
+	    if( m_croutines )
+	       memvarforcesurf_ci( ifirst, ilast, jfirst, jlast, k, mf, a_t, om,
+				   cv, ph, mOmegaVE[0], mDt, h, m_zmin[g] );
+	    else
+	       memvarforcesurf( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
+				&cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
 	 }
 	 else
 	    memforce.set_value(0.0);
@@ -4297,9 +4365,14 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	    float_sw4 cv = m_twilight_forcing->m_c;
 	    float_sw4 ph = m_twilight_forcing->m_phase;
             int k=0; // Ghost point
-	    F77_FUNC(memvarforcesurfc,MEMVARFORCESURFC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &k,
-							 mf, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt, mX.c_ptr(),
-							 mY.c_ptr(), mZ.c_ptr() );
+	    if( m_croutines )
+	       memvarforcesurfc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k,
+				 mf, a_t, om, cv, ph, mOmegaVE[0], mDt, mX.c_ptr(),
+				 mY.c_ptr(), mZ.c_ptr() );
+	    else	       
+	       memvarforcesurfc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &k,
+				 mf, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt, mX.c_ptr(),
+				 mY.c_ptr(), mZ.c_ptr() );
 	 }
 	 else
 	    memforce.set_value(0.0);
@@ -4341,21 +4414,38 @@ void EW::enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sar
 	    float_sw4* alpham_p = a_AlphaVEm[g][a].c_ptr();
 	    // This function will 1.update bforcerhs, 2.update alphap, 3.accumulate mubnd and lambdabnd,
 	    //  4.compute cof.
-	    F77_FUNC(addbstresswresc,ADDBSTRESSWRESC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-						      &nz, alphap_p, alpham_p, muve_p, lave_p, bforcerhs.c_ptr(), 
-						      u_p, um_p, mMetric.c_ptr(), &side, &mDt, &mOmegaVE[a], mf, 
-						      mubnd.c_ptr(), lambdabnd.c_ptr(), m_sbop, &cof[a], &usesg,
-						      m_sg_str_x[g], m_sg_str_y[g] );
+	    if( m_croutines )
+	       addbstresswresc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+				  nz, alphap_p, alpham_p, muve_p, lave_p, bforcerhs.c_ptr(), 
+				  u_p, um_p, mMetric.c_ptr(), side, mDt, mOmegaVE[a], mf, 
+				  mubnd.c_ptr(), lambdabnd.c_ptr(), m_sbop, cof[a], usesg,
+				  m_sg_str_x[g], m_sg_str_y[g] );
+	    else
+	       addbstresswresc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			       &nz, alphap_p, alpham_p, muve_p, lave_p, bforcerhs.c_ptr(), 
+			       u_p, um_p, mMetric.c_ptr(), &side, &mDt, &mOmegaVE[a], mf, 
+			       mubnd.c_ptr(), lambdabnd.c_ptr(), m_sbop, &cof[a], &usesg,
+			       m_sg_str_x[g], m_sg_str_y[g] );
 	 }
-         F77_FUNC(solveattfreec,SOLVEATTFREEC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					       up_p, mu_p, la_p, mubnd.c_ptr(), lambdabnd.c_ptr(),
-					       bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, &usesg,
-					       m_sg_str_x[g], m_sg_str_y[g] );
+	 if( m_croutines )
+	    solveattfreec_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			      up_p, mu_p, la_p, mubnd.c_ptr(), lambdabnd.c_ptr(),
+			      bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, usesg,
+			      m_sg_str_x[g], m_sg_str_y[g] );
+	 else
+	    solveattfreec(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			  up_p, mu_p, la_p, mubnd.c_ptr(), lambdabnd.c_ptr(),
+			  bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, &usesg,
+			  m_sg_str_x[g], m_sg_str_y[g] );
          for( int a = 0 ; a < m_number_mechanisms ; a++ )
 	 {
 	    float_sw4* alphap_p = a_AlphaVEp[g][a].c_ptr();
-	    F77_FUNC(solveattfreeac,SOLVEATTFREEAC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-						    alphap_p, &cof[a], up_p );
+	    if( m_croutines )
+	       solveattfreeac_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				  alphap_p, cof[a], up_p );
+	    else
+	       solveattfreeac(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			      alphap_p, &cof[a], up_p );
 	 }
       }
    }

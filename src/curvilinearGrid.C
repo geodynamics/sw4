@@ -43,9 +43,9 @@ extern "C" {
 					 double*, double*, double*, double*, double*,
 					 int*, double*, double*, double*, double*,
 					 double*, double*, double* );
-   void F77_FUNC(meterr4c,METERR4C)( int*, int*, int*, int*, int*, int*,
-				     double*, double*, double*, double*, double*, double*,
-				     int*, int*, int*, int*, int*, int*, double* );
+   void meterr4c( int*, int*, int*, int*, int*, int*,
+		  double*, double*, double*, double*, double*, double*,
+		  int*, int*, int*, int*, int*, int*, double* );
 }
 #define SQR(x) ((x)*(x))
 //---------------------------------------------------------
@@ -934,8 +934,13 @@ void EW::metric_derivatives_test()
    int kmin = m_kStartInt[g];
    int kmax = m_kEndInt[g];
 
-   F77_FUNC(meterr4c,METERR4C)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
-				jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
+   if( m_croutines )
+      meterr4c_ci( Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
+		   jacex.c_ptr(), li, l2, imin, imax, jmin, jmax, kmin, kmax, h );
+   else
+      meterr4c( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
+		jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
+
    double tmp[5];
    for( int c=0 ; c < 5 ;c++ )
       tmp[c] =li[c];

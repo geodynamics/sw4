@@ -32,7 +32,7 @@
 c-----------------------------------------------------------------------
       subroutine rhs4th3fort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, h, op )
+     +     uacc, u, mu, la, h, op ) bind(c)
 
 *** in the interior: centered approximation of the spatial operator in the elastic wave equation
 *** near physical boundaries: one-sided approximation of the spatial operator in the elastic wave equation
@@ -812,7 +812,7 @@ c No centered cross terms in r3
 c-----------------------------------------------------------------------
       subroutine rhs4th3fortsgstr( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, h, strx, stry, strz, op )
+     +     uacc, u, mu, la, h, strx, stry, strz, op )  bind(c)
 
 *** Routine with supergrid stretchings, strx, stry, and strz.
 ***
@@ -1746,7 +1746,7 @@ c No centered cross terms in r3
 
 c----------------------------------------------------------
       subroutine rhserrfort(ifirst, ilast, jfirst, jlast, kfirst, klast, 
-     +     nz, h, fo, u2, lowZ, interZ, highZ)
+     +     nz, h, fo, u2, lowZ, interZ, highZ)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nz
       real*8 h, lowZ(3), interZ(3), highZ(3)
@@ -1819,12 +1819,12 @@ c this test only includes high-k boundary points
 
 c-------------------------------------------------
       subroutine rhouttlumf(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     nz, uacc, lu, fo, rho, lowZ, interZ, highZ)
+     +     nz, uacc, lu, fo, rho, lowZ, interZ, highZ)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, kp, nz
       real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lu(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+c      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 uacc(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lowZ(3), interZ(3), highZ(3), err(3)
@@ -1891,7 +1891,7 @@ c this test only includes high-k boundary points
 
 c---------------------------------------------------------------------
       subroutine predfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     up, u, um, lu, fo, rho, dt2 )
+     +     up, u, um, lu, fo, rho, dt2 )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt2
@@ -1921,7 +1921,7 @@ c 2nd order accurate predictor of solution at t+dt
 
 c-----------------------------------------------------------------------
       subroutine corrfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     up, lu, fo, rho, dt4 )
+     +     up, lu, fo, rho, dt4 )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt4, i12, dt4i12
@@ -1951,7 +1951,7 @@ c correct solution to 4th order accuracy
 
 c-----------------------------------------------------------------------
       subroutine dpdmtfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     up, u, um, u2, dt2i)
+     +     up, u, um, u2, dt2i)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt2i
@@ -1979,7 +1979,7 @@ c evaluate 2nd divided time difference D+D-(u)
 
 c-----------------------------------------------------------------------
       subroutine updatememvar( ifirst, ilast, jfirst, jlast, kfirst,
-     * klast, alp, alm, up, u, um, omega, dt, domain )
+     * klast, alp, alm, up, u, um, omega, dt, domain )  bind(c)
 
 ***********************************************************************
 *** 
@@ -2034,7 +2034,7 @@ c-----------------------------------------------------------------------
 
 c-----------------------------------------------------------------------
       subroutine dpdmtfortatt(ifirst, ilast, jfirst, jlast, kfirst, 
-     +    klast, up, u, um, dt2i)
+     +    klast, up, u, um, dt2i)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt2i
@@ -2061,7 +2061,7 @@ c evaluate 2nd divided time difference D+D-(u), and return in um
 
 c-----------------------------------------------------------------------
       subroutine satt(up, qs, dt, cfreq, 
-     +     ifirst, ilast, jfirst, jlast, kfirst, klast)
+     +     ifirst, ilast, jfirst, jlast, kfirst, klast)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt, cfreq, pi, fact
@@ -2093,7 +2093,7 @@ c$$$            endif
 
 c-----------------------------------------------------------------------
       subroutine SOLVEATTFREEAC( ifirst, ilast, jfirst, jlast, kfirst, 
-     *                           klast, alpha, cof, up )
+     *                           klast, alpha, cof, up )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       real*8 alpha(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -2116,7 +2116,7 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine SOLVEATTFREEC( ifirst, ilast, jfirst, jlast, kfirst, 
      *       klast, u, mu, la, muve, lambdave, bforcerhs, met, s, 
-     *       usesg, sgstrx, sgstry )
+     *       usesg, sgstrx, sgstry )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, kl
       integer usesg
@@ -2178,7 +2178,7 @@ c-----------------------------------------------------------------------
       subroutine ADDBSTRESSWRESC( ifirst, ilast, jfirst, jlast, kfirst,
      *      klast, nz, alphap, alpham, muve, lave, bforcerhs, 
      *      u, um, met, side, dt, omegave, memforce, muvebnd,
-     *      lambdavebnd, s, cof, usesg, sgstrx, sgstry )
+     *      lambdavebnd, s, cof, usesg, sgstrx, sgstry )  bind(c)
       implicit none
       real*8 i6, c1, c2
       parameter( i6=1d0/6, c1=2d0/3, c2=-1d0/12 )
