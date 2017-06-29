@@ -1387,7 +1387,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 //  REMARK: June 15, 2017:
 // if predictor == true, the memory variable a_alphaVEp holds the predicted (2nd order) values on entry
 // However, the interior contribution to the displacement on the interface depends on the ghost point value of
-// the memory varaible, which in tern depends on the displacement at the ghost point. Hence, the
+// the memory variable, which in tern depends on the displacement at the ghost point. Hence, the
 // problem is (weakly) coupled.
 
 // TEST: compute_preliminary_corrector by first assigning exact ghost point values to Up; inspect Unextf & Unextc
