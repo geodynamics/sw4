@@ -1469,7 +1469,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   if( a_EW->interior_point_in_proc(i,j,g+1) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
                   {
 // filter the time function in this Source object, unless already done
-                     m_timeFuncIsReady = true;
+                     prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
+                                     a_EW->m_filter_ptr);
                   }
                }
          } // end if k<=1
@@ -1481,7 +1482,9 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                {
                   if( a_EW->interior_point_in_proc(i,j,g-1) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
                   {
-                     m_timeFuncIsReady = true;
+// filter the time function in this Source object, unless already done
+                     prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
+                                     a_EW->m_filter_ptr);
                   }
                }
          } // end if k >= Nz
