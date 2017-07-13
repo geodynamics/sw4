@@ -2526,15 +2526,18 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       //	    Up[g].copy_from_device(m_cuobj,true,1);
       //         }
 
-      m_cuobj->sync_stream(1);
+
 
       time_measure[2] = MPI_Wtime();
 
 // communicate across processor boundaries
       if( m_cuobj->has_gpu() )
+      {
+         m_cuobj->sync_stream(1);
          for(int g=0 ; g < mNumberOfGrids ; g++ )
 	    communicate_arrayCU( Up[g], g, 0);
-      else
+      }
+      else 
          for(int g=0 ; g < mNumberOfGrids ; g++ )
 	    communicate_array( Up[g], g );
 
@@ -2618,7 +2621,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       //         for( int g=0; g < mNumberOfGrids ; g++ )
       //	    Up[g].copy_from_device(m_cuobj,true,1);
 
-      m_cuobj->sync_stream(1);
+
 
       //      time_measure[6] = MPI_Wtime();
       time_measure[7] = MPI_Wtime();
@@ -2626,8 +2629,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // also check out EW::update_all_boundaries 
 // communicate across processor boundaries
       if( m_cuobj->has_gpu() )
+      {
+	 m_cuobj->sync_stream(1);
          for(int g=0 ; g < mNumberOfGrids ; g++ )
 	    communicate_arrayCU( Up[g], g, 0 );
+      }
       else
          for(int g=0 ; g < mNumberOfGrids ; g++ )
 	    communicate_array( Up[g], g );
@@ -2650,9 +2656,11 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 check_for_nan( Up, 1, "Up" );
 
       if( m_cuobj->has_gpu() )
+      {
          for( int g=0; g < mNumberOfGrids ; g++ )
 	    Up[g].copy_from_device(m_cuobj,true,0);
 
+      }
 // increment time
       t += mDt;
 

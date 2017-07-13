@@ -1415,7 +1415,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 //
 // ********* do the filtering of the time function here as needed based on (ic, jc, kc) and gridrefbndry ******
 //      
-   if (!gridrefbndry)
+//   if (!gridrefbndry)
    {
       for( int k=kc-2 ; k <= kc+3 ; k++ )
          for( int j=jc-2 ; j <= jc+3 ; j++ )
@@ -1429,7 +1429,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                }
             }         
    }
-   else // near MR interface
+   //   else // near MR interface
+   if( gridrefbndry )
    {
 // compute (icref, jcref) (duplicated from below)
       int icref, jcref;
