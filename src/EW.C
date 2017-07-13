@@ -6063,7 +6063,8 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
          if( swapbytes )
 	    bswap.byte_rev( data, nitop*njtop, "double");
 
-	 gridElev.assign_ptr(data);
+	 gridElev.assign(data);
+	 delete[] data;
       }
       else
       {
@@ -6079,7 +6080,7 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
          if( swapbytes )
 	    bswap.byte_rev( data, nitop*njtop, "float");
 	 
-	 gridElev.assign_ptr(data);
+	 gridElev.assign(data);
 
 // test
 	 if (m_myRank==0 && mVerbose >= 3)
@@ -6095,6 +6096,7 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
 	   }
 	   printf("topo max (float)=%e, min (float)=%e\n", tmax, tmin);
 	 }
+	 delete[] data;
       }
       if( roworder )
 	 gridElev.transposeik();
@@ -6923,10 +6925,10 @@ void EW::setup_viscoelastic( )
 
 // setup least squares problem (matrix and rhs depends on Qs & Qp)
        float_sw4 *a_=new float_sw4[n*nc];
-       float_sw4 *beta=new float_sw4[nc];
-       float_sw4 *gamma=new float_sw4[nc];
+       double *beta=new double[nc];
+       double *gamma=new double[nc];
        int lwork = 3*n;
-       float_sw4 *work=new float_sw4[lwork];
+       double *work=new double[lwork];
        char trans='N';
        int info=0, nrhs=1, lda=nc, ldb=nc;
 
@@ -6961,10 +6963,7 @@ void EW::setup_viscoelastic( )
 		   }
     
 // solve the system in least squares sense
-		   if( sizeof(float_sw4) ==  8 )
-		      F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
-		   else if( sizeof(float_sw4) == 4 )
-		      F77_FUNC(sgels,SGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
+		   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
 		   if (info!= 0)
 		   {
 		      printf("setup_viscoelastic:: solving for qs=%e, processor=%i, dgels returned error code = %i\n", qs, m_myRank, info);
@@ -7012,10 +7011,7 @@ void EW::setup_viscoelastic( )
 		   }
     
 // solve the system in least squares sense
-		   if( sizeof(float_sw4) == 8 )
-		      F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, gamma, ldb, work, lwork, info);
-		   else
-		      F77_FUNC(sgels,SGELS)(trans, nc, n, nrhs, a_, lda, gamma, ldb, work, lwork, info);
+		   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, gamma, ldb, work, lwork, info);
 		   if (info!= 0)
 		   {
 		      printf("setup_viscoelastic:: solving for qp=%e, processor=%i, dgels returned error code = %i\n", qp, m_myRank, info);
