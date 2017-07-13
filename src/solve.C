@@ -1384,11 +1384,12 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 
       if( predictor ) // In the predictor step, (Unextc, Unextf) represent the displacement after the corrector step
       {
-//  REMARK: June 15, 2017:
-// if predictor == true, the memory variable a_alphaVEp holds the predicted (2nd order) values on entry
-// However, the interior contribution to the displacement on the interface depends on the ghost point value of
-// the memory variable, which in tern depends on the displacement at the ghost point. Hence, the
-// problem is (weakly) coupled.
+//  REMARK: June 15, 2017: if predictor == true, the memory variable a_alphaVEp holds the predicted
+// (2nd order) values on entry However, the interior contribution to the displacement on the
+// interface depends on the corrected memory variable. Hence the memory variable needs to be updated
+// within compute_preliminary_corrector. The corrected displacement on the interface depends on
+// L(d^2 alpha/dt^2), which needs the corrected value of alpha on the ghost point. Hence the problem is
+// (weakly) coupled.
 
 // TEST: compute_preliminary_corrector by first assigning exact ghost point values to Up; inspect Unextf & Unextc
 // alphave is only used in visco-elastic mode
