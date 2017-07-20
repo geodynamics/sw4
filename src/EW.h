@@ -1016,27 +1016,30 @@ int m_ghost_points;
 int m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
-double m_iop[5], m_iop2[5], m_bop2[24], m_sbop[5], m_acof[384], m_bop[24];
-double m_bope[48], m_ghcof[6], m_hnorm[4];
+   double m_iop[5], m_iop2[5], m_bop2[24], m_sbop[6], m_acof[384], m_bop[24];
+   double m_bope[48], m_ghcof[6], m_hnorm[4];
 
-int m_neighbor[4];
-vector<MPI_Datatype> m_send_type1;
-vector<MPI_Datatype> m_send_type3;
-vector<MPI_Datatype> m_send_type4; // metric
-vector<MPI_Datatype> m_send_type21; // anisotropic
-MPI_Datatype m_send_type_2dfinest[2];
-MPI_Datatype m_send_type_2dfinest_ext[2];
-vector<MPI_Datatype> m_send_type_2dx;
-vector<MPI_Datatype> m_send_type_2dy;
-vector<MPI_Datatype> m_send_type_2dx3p;
-vector<MPI_Datatype> m_send_type_2dy3p;
-vector<MPI_Datatype> m_send_type_2dx1p;
-vector<MPI_Datatype> m_send_type_2dy1p;
-bool m_topography_exists;
+   // Coefficients for NOT using the ghost point
+   double m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[6];
+
+   int m_neighbor[4];
+   vector<MPI_Datatype> m_send_type1;
+   vector<MPI_Datatype> m_send_type3;
+   vector<MPI_Datatype> m_send_type4; // metric
+   vector<MPI_Datatype> m_send_type21; // anisotropic
+   MPI_Datatype m_send_type_2dfinest[2];
+   MPI_Datatype m_send_type_2dfinest_ext[2];
+   vector<MPI_Datatype> m_send_type_2dx;
+   vector<MPI_Datatype> m_send_type_2dy;
+   vector<MPI_Datatype> m_send_type_2dx3p;
+   vector<MPI_Datatype> m_send_type_2dy3p;
+   vector<MPI_Datatype> m_send_type_2dx1p;
+   vector<MPI_Datatype> m_send_type_2dy1p;
+   bool m_topography_exists;
 
 // UTC time corresponding to simulation time 0.
 //bool m_utc0set, m_utc0isrefevent;
-int m_utc0[7];
+   int m_utc0[7];
 
 // Error handling facility
 //ErrorChecking* m_error_checking;

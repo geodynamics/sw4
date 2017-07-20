@@ -737,7 +737,7 @@ void EW::setupSBPCoeff()
 // get coefficients for difference approximation of 1st derivative
 //      call WAVEPROPBOP_4( iop, iop2, bop, bop2, gh2, hnorm, sbop )
   F77_FUNC(wavepropbop_4,WAVEPROPBOP_4)(m_iop, m_iop2, m_bop, m_bop2, &gh2, m_hnorm, m_sbop);
-// extend the definition of the 1st derivative tothe first 6 points
+// extend the definition of the 1st derivative to the first 6 points
 //      call BOPEXT4TH( bop, bope )
   F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
 
