@@ -3832,12 +3832,12 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
     char op = '=';    // Assign Uacc := L(u)
     if( usingSupergrid() )
        F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-  			          &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+                                                   &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof, // ghost pnts for elastic
 				   uacc_ptr, u_ptr, mu_ptr, la_ptr, &h,
   			          m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
     else
        F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof, // ghost pnts for elastic
 					 uacc_ptr, u_ptr, mu_ptr, la_ptr, &h, &op );
     if( m_use_attenuation && m_number_mechanisms > 0 )
     {
@@ -3849,12 +3849,12 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
           double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
           if(  usingSupergrid() )
 	     F77_FUNC(rhs4th3fortsgstr,RHS4TH3FORTSGSTR)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-				   &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
-				   uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h,
-  			          m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
+                                                         &klast, &nz, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp, // no ghost pnts
+                                                         uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h,
+                                                         m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
 	  else
 	     F77_FUNC(rhs4th3fort,RHS4TH3FORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				      &klast, &nz, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp, // no ghost pnts
 				    uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op );
        }
     }
@@ -3880,7 +3880,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      if( usingSupergrid() )
 	F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, // ghost pnts for elastic
 						m_sg_str_x[g], m_sg_str_y[g], &op );
         // rhs4sgcurv(ifirst, ilast, jfirst, jlast, kfirst, klast, 
         //            u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
@@ -3889,7 +3889,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      else
 	F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					    u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op ); // ghost pnts for elastic
     if( m_use_attenuation && m_number_mechanisms > 0 )
     {
        op = '-'; // Subtract Uacc := Uacc - L_a(alpha)
@@ -3901,7 +3901,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
           if(  usingSupergrid() )
 	     F77_FUNC(curvilinear4sg,CURVILINEAR4SG)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 	        			    alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-	        			    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+	        			    uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp, // no ghost pnts
 	        				m_sg_str_x[g], m_sg_str_y[g], &op );
              // rhs4sgcurv(ifirst, ilast, jfirst, jlast, kfirst, klast, 
              //            alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
@@ -3910,7 +3910,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 	  else
 	     F77_FUNC(curvilinear4,CURVILINEAR4)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 					    alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-					    uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+					    uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp, &op ); // no ghost pnts
        }
     }
   }

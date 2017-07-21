@@ -570,13 +570,19 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     communicate_array( U[g], g );
 // boundary forcing
   cartesian_bc_forcing( t, BCForcing, a_Sources );
-  if( m_use_attenuation && m_number_mechanisms > 0 )
-     addAttToFreeBcForcing( AlphaVE, BCForcing, m_sbop );
+// OLD
+//  if( m_use_attenuation && m_number_mechanisms > 0 )
+//     addAttToFreeBcForcing( AlphaVE, BCForcing, m_sbop );
 // enforce boundary condition
   if( m_anisotropic )
      enforceBCanisotropic( U, mC, t, BCForcing );
   else
      enforceBC( U, mMu, mLambda, t, BCForcing );   
+// Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
+  if( m_use_attenuation && (m_number_mechanisms > 0) )
+  {
+     enforceBCfreeAtt2( U, mMu, mLambda, AlphaVE, BCForcing );
+  }
 
 // Um
 // communicate across processor boundaries
@@ -584,14 +590,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     communicate_array( Um[g], g );
 // boundary forcing
   cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-  if( m_use_attenuation && m_number_mechanisms > 0 )
-     addAttToFreeBcForcing( AlphaVEm, BCForcing, m_sbop );
+// OLD
+// if( m_use_attenuation && m_number_mechanisms > 0 )
+//    addAttToFreeBcForcing( AlphaVEm, BCForcing, m_sbop );
 
 // enforce boundary condition
   if( m_anisotropic )
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
      enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
+// Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
+  if( m_use_attenuation && (m_number_mechanisms > 0) )
+  {
+     enforceBCfreeAtt2( Um, mMu, mLambda, AlphaVEm, BCForcing );
+  }
 
   if (m_twilight_forcing && getVerbosity()>=3)
   {
@@ -2358,8 +2370,8 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 // NEW June 13, 2017: add in visco-elastic terms
          double* mua_ptr = mMuVE[g][a].c_ptr();
          double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
-         rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
-                          m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mua_ptr,
+         rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof_no_gp, 
+                          m_bope, m_ghcof_no_gp, Lutt.c_ptr(), Utt.c_ptr(), mua_ptr, // use stencil WITHOUT ghost points
                           lambdaa_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
                           m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic ); 
       } // end for a      
@@ -2443,7 +2455,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    int nz = m_global_nz[g];
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
-   rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
+   rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof, // ghost point operators for elastic part
                     m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
                     mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
                     m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
@@ -2460,8 +2472,8 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
          double* alpha_ptr = a_AlphaVEp[a].c_ptr();
          double* mua_ptr = mMuVE[g][a].c_ptr();
          double* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
-         rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
-                          m_bope, m_ghcof, Lu.c_ptr(), alpha_ptr, mua_ptr,
+         rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof_no_gp, // NO ghost points for attenuation
+                          m_bope, m_ghcof_no_gp, Lu.c_ptr(), alpha_ptr, mua_ptr,
                           lambdaa_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
                           m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
       }
@@ -2605,26 +2617,27 @@ void EW::add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, doub
 #define str_x(i) a_str_x[(i-ifirst)]   
 #define str_y(j) a_str_y[(j-jfirst)]   
 
+// NEW July 21: use new operators WITHOUT ghost points (m_sbop -> m_sbop_no_gp)
    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
       {
 	 uz = vz = wz = 0;
 	 if( upper )
 	 {
-	    for( int m=0 ; m <= 4 ; m++ )
+	    for( int m=0 ; m <= 5 ; m++ )
 	    {
-	       uz += m_sbop[m]*a_Up(1,i,j,k+m-1);
-	       vz += m_sbop[m]*a_Up(2,i,j,k+m-1);
-	       wz += m_sbop[m]*a_Up(3,i,j,k+m-1);
+	       uz += m_sbop_no_gp[m]*a_Up(1,i,j,k+m-1);
+	       vz += m_sbop_no_gp[m]*a_Up(2,i,j,k+m-1);
+	       wz += m_sbop_no_gp[m]*a_Up(3,i,j,k+m-1);
 	    }
 	 }
 	 else
 	 {
-	    for( int m=0 ; m <= 4 ; m++ )
+	    for( int m=0 ; m <= 5 ; m++ )
 	    {
-	       uz -= m_sbop[m]*a_Up(1,i,j,k+1-m);
-	       vz -= m_sbop[m]*a_Up(2,i,j,k+1-m);
-	       wz -= m_sbop[m]*a_Up(3,i,j,k+1-m);
+	       uz -= m_sbop_no_gp[m]*a_Up(1,i,j,k+1-m);
+	       vz -= m_sbop_no_gp[m]*a_Up(2,i,j,k+1-m);
+	       wz -= m_sbop_no_gp[m]*a_Up(3,i,j,k+1-m);
 	    }
 	 }
 // subtract the visco-elastic contribution from mechanism 'a_a'
@@ -4092,24 +4105,25 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
 		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
 	       }
 // this would be more efficient if done in Fortran
+// first add interior elastic terms (use ghost point stencils)
 	       g1 =  h*forcing[3*ind]
                   - a_Mu[g](i,j,1)*
                   (m_sbop[1]*a_Up[g](1,i,j,1) + m_sbop[2]*a_Up[g](1,i,j,2)
-                   + m_sbop[3]*a_Up[g](1,i,j,3) + m_sbop[4]*a_Up[g](1,i,j,4)
+                   + m_sbop[3]*a_Up[g](1,i,j,3) + m_sbop[4]*a_Up[g](1,i,j,4) + m_sbop[5]*a_Up[g](1,i,j,5)
                    + a4ci*(a_Up[g](3,i+1,j,1)-a_Up[g](3,i-1,j,1))
                    + b4ci*(a_Up[g](3,i+2,j,1)-a_Up[g](3,i-2,j,1)) );
 
 	       g2 =  h*forcing[3*ind+1]
                   - a_Mu[g](i,j,1)*
                   ( m_sbop[1]*a_Up[g](2,i,j,1) + m_sbop[2]*a_Up[g](2,i,j,2)
-                    + m_sbop[3]*a_Up[g](2,i,j,3) + m_sbop[4]*a_Up[g](2,i,j,4)
+                    + m_sbop[3]*a_Up[g](2,i,j,3) + m_sbop[4]*a_Up[g](2,i,j,4) + m_sbop[5]*a_Up[g](2,i,j,5)
                     + a4cj*(a_Up[g](3,i,j+1,1)-a_Up[g](3,i,j-1,1))
                     + b4cj*(a_Up[g](3,i,j+2,1)-a_Up[g](3,i,j-2,1)) );
 
 	       g3 =  h*forcing[3*ind+2]
                   - (2*a_Mu[g](i,j,1)+a_Lambda[g](i,j,1))*
                   ( m_sbop[1]*a_Up[g](3,i,j,1) + m_sbop[2]*a_Up[g](3,i,j,2)
-                    + m_sbop[3]*a_Up[g](3,i,j,3) + m_sbop[4]*a_Up[g](3,i,j,4) )
+                    + m_sbop[3]*a_Up[g](3,i,j,3) + m_sbop[4]*a_Up[g](3,i,j,4)  + m_sbop[5]*a_Up[g](3,i,j,5) )
                   - a_Lambda[g](i,j,1)*
                   ( a4ci*(a_Up[g](1,i+1,j,1)-a_Up[g](1,i-1,j,1))
                     + b4ci*(a_Up[g](1,i+2,j,1)-a_Up[g](1,i-2,j,1)) 
@@ -4121,29 +4135,36 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
 	       for( int a=0 ; a < m_number_mechanisms ; a++ )
 	       {
 // this would be more efficient if done in Fortran
+// Add in visco-elastic contributions (NOT using ghost points)
 // mu*( a1_z + a3_x )
 		  g1 = g1 + mMuVE[g][a](i,j,1)*
-                     ( m_sbop[0]*a_AlphaVEp[g][a](1,i,j,0) + m_sbop[1]*a_AlphaVEp[g][a](1,i,j,1)+m_sbop[2]*a_AlphaVEp[g][a](1,i,j,2)
-                       + m_sbop[3]*a_AlphaVEp[g][a](1,i,j,3)+m_sbop[4]*a_AlphaVEp[g][a](1,i,j,4)
+                     ( m_sbop_no_gp[0]*a_AlphaVEp[g][a](1,i,j,0) + m_sbop_no_gp[1]*a_AlphaVEp[g][a](1,i,j,1)
+                       + m_sbop_no_gp[2]*a_AlphaVEp[g][a](1,i,j,2)
+                       + m_sbop_no_gp[3]*a_AlphaVEp[g][a](1,i,j,3)
+                       + m_sbop_no_gp[4]*a_AlphaVEp[g][a](1,i,j,4) + m_sbop_no_gp[5]*a_AlphaVEp[g][a](1,i,j,5)
                        + a4ci*(a_AlphaVEp[g][a](3,i+1,j,1)-a_AlphaVEp[g][a](3,i-1,j,1))
                        + b4ci*(a_AlphaVEp[g][a](3,i+2,j,1)-a_AlphaVEp[g][a](3,i-2,j,1)) );
 // mu*( a2_z + a3_y )
 		  g2 = g2 + mMuVE[g][a](i,j,1)*
-                     ( m_sbop[0]*a_AlphaVEp[g][a](2,i,j,0) + m_sbop[1]*a_AlphaVEp[g][a](2,i,j,1)+m_sbop[2]*a_AlphaVEp[g][a](2,i,j,2)
-                       + m_sbop[3]*a_AlphaVEp[g][a](2,i,j,3) + m_sbop[4]*a_AlphaVEp[g][a](2,i,j,4)
+                     ( m_sbop_no_gp[0]*a_AlphaVEp[g][a](2,i,j,0) + m_sbop_no_gp[1]*a_AlphaVEp[g][a](2,i,j,1)
+                       + m_sbop_no_gp[2]*a_AlphaVEp[g][a](2,i,j,2)
+                       + m_sbop_no_gp[3]*a_AlphaVEp[g][a](2,i,j,3)
+                       + m_sbop_no_gp[4]*a_AlphaVEp[g][a](2,i,j,4) + m_sbop_no_gp[5]*a_AlphaVEp[g][a](2,i,j,5)
                        + a4cj*(a_AlphaVEp[g][a](3,i,j+1,1)-a_AlphaVEp[g][a](3,i,j-1,1))
                        + b4cj*(a_AlphaVEp[g][a](3,i,j+2,1)-a_AlphaVEp[g][a](3,i,j-2,1)) );
 // (2*mu + lambda)*( a3_z ) + lambda*( a1_x + a2_y )
 		  g3 = g3 + (2*mMuVE[g][a](i,j,1)+mLambdaVE[g][a](i,j,1))*
-                     (m_sbop[0]*a_AlphaVEp[g][a](3,i,j,0)
-                      + m_sbop[1]*a_AlphaVEp[g][a](3,i,j,1)+m_sbop[2]*a_AlphaVEp[g][a](3,i,j,2)
-                      + m_sbop[3]*a_AlphaVEp[g][a](3,i,j,3)+m_sbop[4]*a_AlphaVEp[g][a](3,i,j,4) )
+                     (m_sbop_no_gp[0]*a_AlphaVEp[g][a](3,i,j,0)
+                      + m_sbop_no_gp[1]*a_AlphaVEp[g][a](3,i,j,1) + m_sbop_no_gp[2]*a_AlphaVEp[g][a](3,i,j,2)
+                      + m_sbop_no_gp[3]*a_AlphaVEp[g][a](3,i,j,3)
+                      + m_sbop_no_gp[4]*a_AlphaVEp[g][a](3,i,j,4) + m_sbop_no_gp[5]*a_AlphaVEp[g][a](3,i,j,5) )
                      + mLambdaVE[g][a](i,j,1)*
                      ( a4ci*(a_AlphaVEp[g][a](1,i+1,j,1)-a_AlphaVEp[g][a](1,i-1,j,1))
                        + b4ci*(a_AlphaVEp[g][a](1,i+2,j,1)-a_AlphaVEp[g][a](1,i-2,j,1)) 
                        + a4cj*(a_AlphaVEp[g][a](2,i,j+1,1)-a_AlphaVEp[g][a](2,i,j-1,1))
                        + b4cj*(a_AlphaVEp[g][a](2,i,j+2,1)-a_AlphaVEp[g][a](2,i,j-2,1)) );
 	       } // end for all mechanisms
+// solve for the ghost point value of Up (stencil uses ghost points for the elastic variable)
 	       a_Up[g](1,i,j,0) = g1/(acof*m_sbop[0]);
 	       a_Up[g](2,i,j,0) = g2/(acof*m_sbop[0]);
 	       a_Up[g](3,i,j,0) = g3/(bcof*m_sbop[0]);
@@ -4173,21 +4194,25 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
 		  a4cj = d4a*m_sg_str_y[g][j-jfirst];
 		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
 	       }
+// add in contributions from elastic terms
 	       g1 = h*forcing[3*ind] - a_Mu[g](i,j,nk)*
                   (-m_sbop[1]*a_Up[g](1,i,j,nk) - m_sbop[2]*a_Up[g](1,i,j,nk-1) 
                    -m_sbop[3]*a_Up[g](1,i,j,nk-2) - m_sbop[4]*a_Up[g](1,i,j,nk-3)
+                   -m_sbop[5]*a_Up[g](1,i,j,nk-4)
                    + a4ci*(a_Up[g](3,i+1,j,nk)-a_Up[g](3,i-1,j,nk))
                    + b4ci*(a_Up[g](3,i+2,j,nk)-a_Up[g](3,i-2,j,nk)) );
 
 	       g2 = h*forcing[3*ind+1] - a_Mu[g](i,j,nk)*
                   (-m_sbop[1]*a_Up[g](2,i,j,nk) - m_sbop[2]*a_Up[g](2,i,j,nk-1)
                    -m_sbop[3]*a_Up[g](2,i,j,nk-2) - m_sbop[4]*a_Up[g](2,i,j,nk-3)
+                   -m_sbop[5]*a_Up[g](2,i,j,nk-4)
                    + a4cj*(a_Up[g](3,i,j+1,nk)-a_Up[g](3,i,j-1,nk))
                    + b4cj*(a_Up[g](3,i,j+2,nk)-a_Up[g](3,i,j-2,nk)) );
 
 	       g3 =  h*forcing[3*ind+2] - (2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk))*
                   ( -m_sbop[1]*a_Up[g](3,i,j,nk) - m_sbop[2]*a_Up[g](3,i,j,nk-1) 
-                    -m_sbop[3]*a_Up[g](3,i,j,nk-2) - m_sbop[4]*a_Up[g](3,i,j,nk-3) )
+                    -m_sbop[3]*a_Up[g](3,i,j,nk-2) - m_sbop[4]*a_Up[g](3,i,j,nk-3)
+                    -m_sbop[5]*a_Up[g](3,i,j,nk-4) )
                   - a_Lambda[g](i,j,nk)*
                   ( a4ci*(a_Up[g](1,i+1,j,nk)-a_Up[g](1,i-1,j,nk))
                     + b4ci*(a_Up[g](1,i+2,j,nk)-a_Up[g](1,i-2,j,nk)) 
@@ -4198,27 +4223,35 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
 	       bcof = 2*a_Mu[g](i,j,nk)+a_Lambda[g](i,j,nk);
 	       for( int a=0 ; a < m_number_mechanisms ; a++ )
 	       {
+// visco-elastic terms (NOT using ghost points)
 		  g1 = g1 + mMuVE[g][a](i,j,nk)*
-                     (-m_sbop[0]*a_AlphaVEp[g][a](1,i,j,nk+1) - m_sbop[1]*a_AlphaVEp[g][a](1,i,j,nk)-m_sbop[2]*a_AlphaVEp[g][a](1,i,j,nk-1)
-                      -m_sbop[3]*a_AlphaVEp[g][a](1,i,j,nk-2)-m_sbop[4]*a_AlphaVEp[g][a](1,i,j,nk-3)
+                     (-m_sbop_no_gp[0]*a_AlphaVEp[g][a](1,i,j,nk+1) - m_sbop_no_gp[1]*a_AlphaVEp[g][a](1,i,j,nk)
+                      -m_sbop_no_gp[2]*a_AlphaVEp[g][a](1,i,j,nk-1)
+                      -m_sbop_no_gp[3]*a_AlphaVEp[g][a](1,i,j,nk-2) - m_sbop_no_gp[4]*a_AlphaVEp[g][a](1,i,j,nk-3)
+                      -m_sbop_no_gp[5]*a_AlphaVEp[g][a](1,i,j,nk-4)
                       +a4ci*(a_AlphaVEp[g][a](3,i+1,j,nk)-a_AlphaVEp[g][a](3,i-1,j,nk))
                       +b4ci*(a_AlphaVEp[g][a](3,i+2,j,nk)-a_AlphaVEp[g][a](3,i-2,j,nk)));
 
 		  g2 = g2 + mMuVE[g][a](i,j,nk)*
-                     ( - m_sbop[0]*a_AlphaVEp[g][a](2,i,j,nk+1) -m_sbop[1]*a_AlphaVEp[g][a](2,i,j,nk)-m_sbop[2]*a_AlphaVEp[g][a](2,i,j,nk-1)
-                       - m_sbop[3]*a_AlphaVEp[g][a](2,i,j,nk-2)-m_sbop[4]*a_AlphaVEp[g][a](2,i,j,nk-3)
+                     ( - m_sbop_no_gp[0]*a_AlphaVEp[g][a](2,i,j,nk+1) -m_sbop_no_gp[1]*a_AlphaVEp[g][a](2,i,j,nk)
+                       - m_sbop_no_gp[2]*a_AlphaVEp[g][a](2,i,j,nk-1)
+                       - m_sbop_no_gp[3]*a_AlphaVEp[g][a](2,i,j,nk-2) -m_sbop_no_gp[4]*a_AlphaVEp[g][a](2,i,j,nk-3)
+                       - m_sbop_no_gp[5]*a_AlphaVEp[g][a](2,i,j,nk-4)
                        + a4cj*(a_AlphaVEp[g][a](3,i,j+1,nk)-a_AlphaVEp[g][a](3,i,j-1,nk))
                        + b4cj*(a_AlphaVEp[g][a](3,i,j+2,nk)-a_AlphaVEp[g][a](3,i,j-2,nk)) );
                                                   
 		  g3 = g3 + (2*mMuVE[g][a](i,j,nk)+mLambdaVE[g][a](i,j,nk))*
-                     (-m_sbop[0]*a_AlphaVEp[g][a](3,i,j,nk+1)-m_sbop[1]*a_AlphaVEp[g][a](3,i,j,nk)-m_sbop[2]*a_AlphaVEp[g][a](3,i,j,nk-1)
-                      -m_sbop[3]*a_AlphaVEp[g][a](3,i,j,nk-2)-m_sbop[4]*a_AlphaVEp[g][a](3,i,j,nk-3))
+                     (- m_sbop_no_gp[0]*a_AlphaVEp[g][a](3,i,j,nk+1) - m_sbop_no_gp[1]*a_AlphaVEp[g][a](3,i,j,nk)
+                      - m_sbop_no_gp[2]*a_AlphaVEp[g][a](3,i,j,nk-1)
+                      - m_sbop_no_gp[3]*a_AlphaVEp[g][a](3,i,j,nk-2) - m_sbop_no_gp[4]*a_AlphaVEp[g][a](3,i,j,nk-3)
+                      - m_sbop_no_gp[5]*a_AlphaVEp[g][a](3,i,j,nk-4))
                      + mLambdaVE[g][a](i,j,nk)*
                      (a4ci*(a_AlphaVEp[g][a](1,i+1,j,nk)-a_AlphaVEp[g][a](1,i-1,j,nk))
                       + b4ci*(a_AlphaVEp[g][a](1,i+2,j,nk)-a_AlphaVEp[g][a](1,i-2,j,nk)) 
                       + a4cj*(a_AlphaVEp[g][a](2,i,j+1,nk)-a_AlphaVEp[g][a](2,i,j-1,nk))
                       + b4cj*(a_AlphaVEp[g][a](2,i,j+2,nk)-a_AlphaVEp[g][a](2,i,j-2,nk)) );
 	       }
+               // solve for the ghost point value of Up (using the ghost point stencil)
 	       a_Up[g](1,i,j,nk+1) = g1/(-m_sbop[0]*acof);
 	       a_Up[g](2,i,j,nk+1) = g2/(-m_sbop[0]*acof);
 	       a_Up[g](3,i,j,nk+1) = g3/(-m_sbop[0]*bcof);
@@ -4250,12 +4283,12 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
             // This function adds the visco-elastic boundary stresses to bforcerhs
             ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
                                   alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
-                                  m_sbop, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+                                  m_sbop_no_gp, &usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
          } // end for a...
          
 // update GHOST POINT VALUES OF UP
          att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                         up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop,
+                         up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
                          &usesg, m_sg_str_x[g], m_sg_str_y[g] );
       } // end if bcType[g][4] == bStressFree && topography
       

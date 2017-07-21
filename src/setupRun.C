@@ -78,6 +78,7 @@ void F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( int *, int *, int *, int *, int 
 void F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( int *, int *, int *, int *, int *, int *, double*,
 					      double*, double*, double*, double* );
    void F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( int*, int*, int*, int*, int*, int*, double*, double*, double* );
+   void bndryOpNoGhost( double *acof_no_gp, double *ghcof_no_gp, double *sbop_no_gp );
 }
 
 #define SQR(x) ((x)*(x))
@@ -741,6 +742,9 @@ void EW::setupSBPCoeff()
 //      call BOPEXT4TH( bop, bope )
   F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
 
+// NEW: setup stencils that do NOT use ghost points (for visco-elastic memory variables)
+  bndryOpNoGhost( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
+  
 }
 
 

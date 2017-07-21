@@ -163,7 +163,7 @@ QUADPACK = dqags.o dqagse.o  dqaws.o  dqawse.o  dqc25s.o \
 OBJSW4 = main.o
 
 OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+       curvilinearGrid.o boundaryOp.o bndryOpNoGhost.o  bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
