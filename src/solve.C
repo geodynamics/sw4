@@ -822,7 +822,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     else
     {
 // *** 4th order in TIME interface conditions for the predictor
-// No supergrid or attenuation
+// July 22, updating alphaVEp since it is used by the corrector for Up to compute L(alphaAcc)
+       if( m_use_attenuation && m_number_mechanisms > 0 )
+         updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
 // June 14, 2017: adding AlphaVE & AlphaVEm
        enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, point_sources );
     }
@@ -843,8 +845,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  check_for_nan( Uacc, 1, "uacc " );
 
 // NEW (Apr. 4, 2017) 4th order update for memory variables BEFORE 'Up' is corrected
-       if( m_use_attenuation && m_number_mechanisms > 0 )
-          updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
+// Commented out on July 22, 2017
+      // if( m_use_attenuation && m_number_mechanisms > 0 )
+      //    updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
 
        if( m_use_attenuation && m_number_mechanisms > 0 )
           evalDpDmInTimeAtt( AlphaVEp, AlphaVE, AlphaVEm ); // store AlphaVEacc in AlphaVEm
@@ -864,12 +867,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  addSuperGridDamping( Up, U, Um, mRho );
        }
 
-// June 15, 2017:
-// Avoid coupled update of the interface conditions by updating the memory variables AFTER the displacement correction
-// Unfortunately, it seems UNSTABLE
-//       if( m_use_attenuation && m_number_mechanisms > 0 )
-//          updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
-
 // Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
        {
@@ -884,6 +881,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
+
+// June 15, 2017:
+// Avoid coupled update of the interface conditions by updating the memory variables AFTER the displacement correction
+// Unfortunately, it seems UNSTABLE
+       // if( m_use_attenuation && m_number_mechanisms > 0 )
+       //    updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
 
 // OLD
 //       if( m_use_attenuation && (m_number_mechanisms > 0) )
@@ -2428,7 +2431,10 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    if (usingSupergrid()) // Assume 4th order AD, Cartesian grid
    {
 // assign array pointers on the fly
-      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+      // what time levels of U should be used here? NOTE: t_n and t_{n-1} ?  Up is the predictor for U(t_{n+1})
+// July 22: Changed time levels for (Up, U) to (U, Um)
+//      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
                   m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
                   m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
                   ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
