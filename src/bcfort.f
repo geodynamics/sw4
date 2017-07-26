@@ -55,7 +55,6 @@ c note that the numbering of bforce adds one from C (side goes from 1 in Fortran
 c the boundary window 'wind' is now an input argument
 
 c loop over all sides of the 3-D domain
-!$OMP PARALLEL PRIVATE(i,j,k,qq,ux,vy,wx,wy,uz,vz,wz,kl)
       do s=1,6
 *** dirichlet condition, bccnd=1
 *** supergrid condition, bccnd=2
@@ -122,7 +121,6 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce4 )
             else if (s.eq.5) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce5 )
               do k=wind(5,s),wind(6,s)
-
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = bforce5(1,qq)
@@ -136,10 +134,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce5 )
             else if (s.eq.6) then
 c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
               do k=wind(5,s),wind(6,s)
-
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
-                   qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
+c                   qq = i-ifirst+1 + (j-jfirst)*(ilast-ifirst+1)
                     u(1,i,j,k) = bforce6(1,qq)
                     u(2,i,j,k) = bforce6(2,qq)
                     u(3,i,j,k) = bforce6(3,qq)
@@ -153,7 +150,6 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
           elseif( bccnd(s).eq.3 )then
 *** Periodic condition, bccnd=3
             if (s.eq.1) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -163,9 +159,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.2) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -175,9 +169,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.3) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -187,9 +179,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.4) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -199,10 +189,8 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.5) then
               do k=wind(5,s),wind(6,s)
-!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k+nz)
@@ -210,11 +198,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k+nz)
                   enddo
                 enddo
-!$OMP ENDDO               
               enddo
             elseif (s.eq.6) then
               do k=wind(5,s),wind(6,s)
-!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k-nz)
@@ -222,7 +208,6 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k-nz)
                   enddo
                 enddo
-!$OMP ENDDO               
               enddo
             endif
          elseif( bccnd(s).eq.0 )then
@@ -240,6 +225,7 @@ c moved the assignment of bforce5/6 into its own routine
           if( s.eq.5 .and. curvilinear.eq.0 )then
              k = 1
              kl= 1
+!$OMP PARALLEL PRIVATE(i,j,w,qq,ux,vy,wx,wy,uz,vz,wz)
 !$OMP DO               
              do j=jfirst+2,jlast-2
                 do i=ifirst+2,ilast-2
@@ -279,10 +265,12 @@ c interior contribution to uz, vz, wz (kl is the direction)
                 enddo
              enddo
 !$OMP ENDDO               
+!$OMP END PARALLEL
           elseif( s.eq.6 .and. curvilinear.eq.0 )then
 c s=6
              k = nz
              kl= -1
+!$OMP PARALLEL PRIVATE(i,j,w,qq,ux,vy,wx,wy,uz,vz,wz)
 !$OMP DO               
              do j=jfirst+2,jlast-2
                 do i=ifirst+2,ilast-2
@@ -322,10 +310,10 @@ c interior contribution to uz, vz, wz (kl is the direction)
                 enddo
              enddo
 !$OMP ENDDO               
+!$OMP END PARALLEL
           endif
        endif
       enddo
-!$OMP END PARALLEL
       end
 
 
@@ -356,7 +344,6 @@ c note that the numbering of bforce adds one from C (side goes from 1 in Fortran
 c the boundary window 'wind' is now an input argument
 
 c loop over all sides of the 3-D domain
-!$OMP PARALLEL PRIVATE(i,j,k,qq,ux,vy,wx,wy,uz,vz,wz,kl)
       do s=1,6
 *** dirichlet condition, bccnd=1
 *** supergrid condition, bccnd=2
@@ -449,7 +436,6 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
           elseif( bccnd(s).eq.3 )then
 *** Periodic condition, bccnd=3
             if (s.eq.1) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -459,9 +445,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.2) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -471,9 +455,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.3) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -483,9 +465,7 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.4) then
-!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -495,10 +475,8 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                   enddo
                 enddo
               enddo
-!$OMP ENDDO               
             elseif (s.eq.5) then
               do k=wind(5,s),wind(6,s)
-!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k+nz)
@@ -506,11 +484,9 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k+nz)
                   enddo
                 enddo
-!$OMP ENDDO               
               enddo
             elseif (s.eq.6) then
               do k=wind(5,s),wind(6,s)
-!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k-nz)
@@ -518,7 +494,6 @@ c              call TWDIRBDRY( wind(1,s), h, t, om, cv, ph, bforce6 )
                     u(3,i,j,k) = u(3,i,j,k-nz)
                   enddo
                 enddo
-!$OMP ENDDO               
               enddo
             endif
           elseif( bccnd(s).eq.0 )then
@@ -536,6 +511,7 @@ c moved the assignment of bforce5/6 into its own routine
           if( s.eq.5 )then
             k = 1
             kl= 1
+!$OMP PARALLEL PRIVATE(i,j,qq,w,ux,vy,wx,wy,uz,vz,wz)
 !$OMP DO               
             do j=jfirst+2,jlast-2
               do i=ifirst+2,ilast-2
@@ -575,10 +551,12 @@ c interior contribution to uz, vz, wz (kl is the direction)
               enddo
             enddo
 !$OMP ENDDO               
+!$OMP END PARALLEL               
           else
 c s=6
             k = nz
             kl= -1
+!$OMP PARALLEL PRIVATE(i,j,qq,w,ux,vy,wx,wy,uz,vz,wz)
 !$OMP DO               
             do j=jfirst+2,jlast-2
               do i=ifirst+2,ilast-2
@@ -618,11 +596,11 @@ c interior contribution to uz, vz, wz (kl is the direction)
               enddo
             enddo
 !$OMP ENDDO               
+!$OMP END PARALLEL               
           endif
 
         endif
       enddo
-!$OMP END PARALLEL
       end
 
 
