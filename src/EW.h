@@ -239,6 +239,9 @@ void updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 void updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
                        vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
    
+void updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+                                    Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, double a_t, int a_mech, int a_grid );
+   
 // void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
 // 			    vector<Sarray*>& a_AlphaVEm,
 // 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );

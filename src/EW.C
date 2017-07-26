@@ -222,6 +222,10 @@ void updatememvar(int*, int*, int*, int*, int*, int*,  double*, double*, double*
 
    void memvar_corr_fort(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* alp, double *alm, double *up,
                          double *u, double *um, double omega, double dt, int domain );
+
+   void memvar_corr_fort_wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* alp,
+                              int d1b, int d1e, int d2b, int d2e, int d3b, int d3e, double *alm, double *up,
+                              double *u, double *um, double omega, double dt, int domain );
    
 
    void F77_FUNC(dpdmtfortatt,DPDMTFORTATT)( int*, int*, int*, int*, int*, int*, double*, double*, double*, double* );
@@ -4149,6 +4153,59 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
          }
          
       }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+                                        Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, double a_t, int a_mech, int a_grid )
+{
+   // NOTE: this routine updates a_AlphaVEp for mechanism a=a_mech in grid g=a_grid, for all points defined in a_AlphaVEp
+   int domain = 0;
+   
+   double* up_ptr  = a_Up.c_ptr();
+   double* u_ptr    = a_U.c_ptr();
+   double* um_ptr = a_Um.c_ptr();
+// use sizes from a_AlphaVEp for the loop in memvar_corr_fort
+   int ifirst = a_AlphaVEp.m_ib;
+   int ilast = a_AlphaVEp.m_ie;
+   int jfirst = a_AlphaVEp.m_jb;
+   int jlast = a_AlphaVEp.m_je;
+   int kfirst = a_AlphaVEp.m_kb;
+   int klast = a_AlphaVEp.m_ke;
+// assume a_Up, a_U, a_Um and a_AlphaVEm are declared with the same sizes
+   int d1b = a_Up.m_ib;
+   int d1e = a_Up.m_ie;
+   int d2b = a_Up.m_jb;
+   int d2e = a_Up.m_je;
+   int d3b = a_Up.m_kb;
+   int d3e = a_Up.m_ke;
+   
+      
+   double* alp_ptr = a_AlphaVEp.c_ptr();
+   double* alm_ptr = a_AlphaVEm.c_ptr();
+   memvar_corr_fort_wind(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, 
+                         d1b, d1e, d2b, d2e, d3b, d3e, alm_ptr, up_ptr, u_ptr, um_ptr, mOmegaVE[a_mech], mDt, domain );
+
+   if( m_twilight_forcing )
+   {
+      // only 1 mechaism is implemented
+      double* alp_ptr = a_AlphaVEp.c_ptr();
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      if( topographyExists() && a_grid == mNumberOfGrids-1 )
+      {
+         addMemVarCorr2Curvilinear( mX, mY, mZ, a_t,  a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
+      }
+      else
+      {
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+// NEW June 14, 2017
+         // loops over all elements in a_AlphaVEp
+         addMemVarCorr2Cart( m_zmin[a_grid], mGridSize[a_grid], a_t, a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
+      }
+         
    }
 }
 

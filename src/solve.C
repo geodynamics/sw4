@@ -822,9 +822,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     else
     {
 // *** 4th order in TIME interface conditions for the predictor
-// July 22, updating alphaVEp since it is used by the corrector for Up to compute L(alphaAcc)
-       if( m_use_attenuation && m_number_mechanisms > 0 )
-         updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
 // June 14, 2017: adding AlphaVE & AlphaVEm
        enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, point_sources );
     }
@@ -844,10 +841,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_checkfornan )
 	  check_for_nan( Uacc, 1, "uacc " );
 
-// NEW (Apr. 4, 2017) 4th order update for memory variables BEFORE 'Up' is corrected
-// Commented out on July 22, 2017
-      // if( m_use_attenuation && m_number_mechanisms > 0 )
-      //    updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
+// July 22,  4th order update for memory variables
+       if( m_use_attenuation && m_number_mechanisms > 0 )
+         updateMemVarCorr( AlphaVEp, AlphaVEm, Up, U, Um, t );
 
        if( m_use_attenuation && m_number_mechanisms > 0 )
           evalDpDmInTimeAtt( AlphaVEp, AlphaVE, AlphaVEm ); // store AlphaVEacc in AlphaVEm
@@ -1413,7 +1409,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
          // vector<Source*> sources;
          // exactSol( time+mDt, a_Up, alphave, sources );
 
-// get the interior contribution to the displacements on the interface
+// get the interior contribution to the displacements on the interface for the corrector (depends on the corrector value of AlphaVEp)
 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1],
                                         a_AlphaVEp[g+1], a_AlphaVE[g+1], a_AlphaVEm[g+1],
                                         Uf_tt, Unextf, g+1, kf, time, point_sources );
@@ -1449,7 +1445,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       {
          for( int a=0 ; a < m_number_mechanisms ; a++ )
          {
-            add_ve_stresses( a_AlphaVEp[g+1][a], Bf, g+1, kf, a, m_sg_str_x[g+1], m_sg_str_y[g+1]);
+// the visco-elastic stresses depend on the predictor values of AlphaVEp
+            add_ve_stresses( a_AlphaVEp[g+1][a], Bf, g+1, kf, a, m_sg_str_x[g+1], m_sg_str_y[g+1]); 
             add_ve_stresses( a_AlphaVEp[g][a],     Bc, g,    kc, a, m_sg_str_x[g],     m_sg_str_y[g]   );
          }
       }
@@ -2360,14 +2357,18 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       op = '-'; // Subtract Lu := Lu - L_a(alpha)
       for( int a=0 ; a < m_number_mechanisms ; a++ )
       {
+// compute corrected memory variable for mechanism 'a', near the interface, store in 'Utt'
+         updateMemVarCorrNearInterface( Utt, a_AlphaVEm[a], a_Up, a_U, a_Um, t, a, g );
+         
 // assume a_U and a_AlphaVE have the same dimensions for all mechanisms
          for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
             for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
                for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
                {
-                  Utt(1,i,j,k) = idt2*(a_AlphaVEp[a](1,i,j,k)-2*a_AlphaVE[a](1,i,j,k)+a_AlphaVEm[a](1,i,j,k));
-                  Utt(2,i,j,k) = idt2*(a_AlphaVEp[a](2,i,j,k)-2*a_AlphaVE[a](2,i,j,k)+a_AlphaVEm[a](2,i,j,k));
-                  Utt(3,i,j,k) = idt2*(a_AlphaVEp[a](3,i,j,k)-2*a_AlphaVE[a](3,i,j,k)+a_AlphaVEm[a](3,i,j,k));
+// corrector value of AlphaVEp in variable 'Utt'
+                  Utt(1,i,j,k) = idt2*(Utt(1,i,j,k)-2*a_AlphaVE[a](1,i,j,k)+a_AlphaVEm[a](1,i,j,k));
+                  Utt(2,i,j,k) = idt2*(Utt(2,i,j,k)-2*a_AlphaVE[a](2,i,j,k)+a_AlphaVEm[a](2,i,j,k));
+                  Utt(3,i,j,k) = idt2*(Utt(3,i,j,k)-2*a_AlphaVE[a](3,i,j,k)+a_AlphaVEm[a](3,i,j,k));
                }
       
 // NEW June 13, 2017: add in visco-elastic terms
