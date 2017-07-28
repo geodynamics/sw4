@@ -96,8 +96,8 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test || m_rayleigh_wave_test || m_energy_test ); 
 
 // tmp
-  if (mVerbose && proc_zero() )
-    cout << " *** Testing = " << m_testing << endl;
+  // if (mVerbose && proc_zero() )
+  //   cout << " *** Testing = " << m_testing << endl;
     
   if( mVerbose && proc_zero() )
   {
@@ -729,7 +729,7 @@ void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources )
 void EW::setupSBPCoeff()
 {
   double gh2; // this coefficient is also stored in m_ghcof[0]
-  if (mVerbose >=1 && m_myRank == 0)
+  if (mVerbose >=2 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
   
 // get coefficients for difference approximation of 2nd derivative with variable coefficients
@@ -1887,14 +1887,14 @@ void EW::assign_supergrid_damping_arrays()
   if( m_use_supergrid )
   {
 // tmp
-     if( proc_zero() )
-        printf("SG: using supergrid!\n");
+     // if( proc_zero() )
+     //    printf("SG: using supergrid!\n");
     
      if( m_twilight_forcing )
      {
 // tmp
-     if( proc_zero() )
-        printf("SG: twilight setup!\n");
+     // if( proc_zero() )
+     //    printf("SG: twilight setup!\n");
 
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
@@ -1944,13 +1944,13 @@ void EW::assign_supergrid_damping_arrays()
               m_supergrid_taper_y[g].set_eps(m_energy_test->m_sg_epsL);
               m_supergrid_taper_z[g].set_eps(m_energy_test->m_sg_epsL);
            }
-           if( proc_zero() )
-              printf("SG: standard case with epsL = %e\n", m_energy_test->m_sg_epsL);
+           if( mVerbose >= 2 && proc_zero() )
+              printf("Assigning SG arrays: standard case with epsL = %e\n", m_energy_test->m_sg_epsL);
         }
         else
         {
-           if( proc_zero() )
-              printf("SG: standard case with default epsL\n");
+           if( mVerbose >= 2 && proc_zero() )
+              printf("Assigning SG arrays: standard case with default epsL\n");
         }
         
 	for( g=0 ; g<mNumberOfGrids; g++)  

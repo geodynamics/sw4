@@ -14,7 +14,7 @@ subroutine bndryOpNoGhost( acof_no_gp, ghcof_no_gp, sbop_no_gp) bind(c, name="bn
   integer:: i, j, k;
   
   call varcoeffs4( acof, ghcof );
-  print *, "Called varcoeffs4"
+!  print *, "Called varcoeffs4"
   ! modified coefficients for d(a(x) du): NOT using the ghost point
   acof_no_gp = acof
   d5 = 0;

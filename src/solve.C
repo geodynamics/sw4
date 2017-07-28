@@ -716,8 +716,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    if( proc_zero() && mVerbose >= 1 )
    {
       printf("\nReporting SW4 internal flags and settings:\n");
-      printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s," 
-             "lamb_test=%s rayleigh_test=%s\n",
+      printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
+             "lamb_test=%s, rayleigh_test=%s\n",
              m_testing?"yes":"no",
              m_twilight_forcing?"yes":"no",
              m_point_source_test?"yes":"no",
@@ -726,7 +726,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
              m_lamb_test?"yes":"no",
              m_rayleigh_wave_test?"yes":"no");
       printf("m_use_supergrid=%s\n", usingSupergrid()?"yes":"no");
-      printf("End report settings\n\n");
+      printf("End report of internal flags and settings\n\n");
    }
    
   if ( !mQuiet && proc_zero() )

@@ -284,9 +284,9 @@ void EW::check_materials()
        MPI_Allreduce(&minC_hat,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
        MPI_Allreduce(&maxC_hat,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
 // printout results
-       if (proc_zero())
+       if (mVerbose >=2 && proc_zero())
        {
-	 printf("Grid g=%i:, %e <= Cs <= %e, %e <= C-hat <= %e, h[g]/max(C-hat) = %e\n",
+	 printf("Material model info, Grid g=%i: %e <= Cs <= %e, %e <= C-hat <= %e, h[g]/max(C-hat) = %e\n",
 		g, mins[0], maxs[0], mins[1], maxs[1], mGridSize[g]/maxs[1]);
        }
      } // end for all grids

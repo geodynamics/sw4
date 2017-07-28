@@ -5,7 +5,7 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Thu Jul 20 13:49:48 PDT 2017
+  Compiled on: Thu Jul 27 21:47:47 PDT 2017
   By user:     petersson1
   Machine:     fourier.llnl.gov
   Compiler:    /opt/local/bin/mpicxx
@@ -17,22 +17,13 @@ Default Supergrid thickness has been tuned; # grid points = 10 grid sizes
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 
 * Processing the grid command...
-
-* number of ghost points = 2
 * Setting h to 1.25600000e-01 from  x/(nx-1) (x=6.28000000e+00, nx=51)
 * Setting ny to 51 to be consistent with h=1.25600000e-01
 * Setting nz to 51 to be consistent with h=1.25600000e-01
-allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
 Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.28000000e+00
-
-Corrected global_zmax = 6.28000000e+00
-Refinement levels after correction: 
-grid=0 z-min=0.00000000e+00
-***inside setup2D_MPICommunications***
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
-***inside setupMPICommunications***
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
@@ -42,12 +33,9 @@ Total number of grid points (without ghost points): 132651
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
 
-INFO: m_mesh_refinements=0 m_use_attenuation=1 mOrder=4
-   Execution time, reading input file 3.05137500e-03 seconds 
- *** Testing = 1
+   Execution time, reading input file 5.70891800e-03 seconds 
   Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
-Setting up SBP boundary stencils
 Detected at least one boundary with supergrid conditions
 ----------------------------------------------------
  Making Output Directory: tw-att-flat-1/
@@ -72,13 +60,10 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
        2.00158057e+00 Pa     <=  mu      <= 3.99846142e+00 Pa
        1.00158057e+00 Pa     <=  lambda  <= 2.99846142e+00 Pa
        ------------------------------------------------------
-Grid g=0:, 1.000405e+00 <= Cs <= 1.730414e+00, 2.161053e+00 <= C-hat <= 3.738077e+00, h[g]/max(C-hat) = 3.360017e-02
 
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=1.256000e-01, minVs/h=7.96501 (Cartesian)
 
-SG: using supergrid!
-SG: twilight setup!
 
 *** Attenuation parameters calculated for 1 mechanisms,
       max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
@@ -87,7 +72,7 @@ SG: twilight setup!
 *** computing the time step ***
 TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=3.62521036e-02
 *** Initialized Images
-   Execution time, start up phase 9.45655000e-03 seconds 
+   Execution time, start up phase 1.58795800e-02 seconds 
 Running sw4 on 4 processors...
 Writing output to directory: tw-att-flat-1/
 
@@ -122,19 +107,19 @@ Parameters:
   Initial data has been assigned
 
 Reporting SW4 internal flags and settings:
-m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no,lamb_test=no rayleigh_test=no
+m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
 m_use_supergrid=yes
-End report settings
+End report of internal flags and settings
 
   Begin time stepping...
 Time step       1  t =   3.5714286e-02
 Time step      28  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 1.99583843e+00 seconds 
+   Execution time, solver phase 2.14157441e+00 seconds 
 
- Final solution errors: Linf =   6.0039568e-04, L2 =   2.7276248e-03
+ Final solution errors: Linf =   6.0059243e-04, L2 =   2.7297633e-03
 
- Final solution errors, attenuation: Linf =   5.8771059e-04, L2 =   2.7480857e-03
+ Final solution errors, attenuation: Linf =   5.8814909e-04, L2 =   2.7501890e-03
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 
