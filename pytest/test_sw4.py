@@ -231,7 +231,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
         os.chdir('..') # change back to the parent directory
 
     # end for all cases in the test_dir
-    print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')
+    print('Out of', num_test, 'tests,', num_pass, 'passed and', num_fail, 'failed.')
     # normal termination
     return True
     
