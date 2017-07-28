@@ -12,38 +12,28 @@
   3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
 ----------------------------------------------------------------
 
-Input file: tw-topo-att-2.in
-Default Supergrid thickness has been tuned; # grid points = 10 grid sizes
-Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+Input file: refine-att-2.in
 
 * Processing the grid command...
 * Setting h to 6.28000000e-02 from  x/(nx-1) (x=6.28000000e+00, nx=101)
 * Setting ny to 101 to be consistent with h=6.28000000e-02
 * Setting nz to 101 to be consistent with h=6.28000000e-02
-Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.26560000e+00
-***inside buildGaussianHillTopography***
-***inside allocateCurvilinearArrays***
 
-***Topography grid: min z = -5.990276e-01, max z = -1.624590e-37, top Cartesian z = 3.000000e+00
-allocateCurvilinearArrays: Number of grid points in curvilinear grid = 53, kStart = -1, kEnd = 55
-***inside generate_grid***
-***inside setup_metric***
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
-   0    0.0628       101       101        53       540653
-   1    0.0628       101       101        53       540653
-Total number of grid points (without ghost points): 1.08131e+06
+   0    0.0628       101       101        61       622261
+   1    0.0314       201       201        81      3272481
+Total number of grid points (without ghost points): 3.89474e+06
 
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
 
-   Execution time, reading input file 3.45982970e-02 seconds 
-  Using Bjorn's fast (parallel) IO library
-Assuming a SERIAL file system.
-Detected at least one boundary with supergrid conditions
+   Execution time, reading input file 3.79279390e-02 seconds 
 ----------------------------------------------------
- Making Output Directory: tw-att-gauss-2/
+ Making Output Directory: refine-att-2/
 		
 ... Done!
 ----------------------------------------------------
@@ -58,47 +48,30 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
 ******************************
 
        ----------- Material properties ranges ---------------
-       1.00088407e+00 kg/m^3 <=  Density <= 2.99907392e+00 kg/m^3
-       1.63305969e+00 m/s    <=  Vp      <= 2.82732411e+00 m/s
-       1.00003437e+00 m/s    <=  Vs      <= 1.73148058e+00 m/s
-       1.52762545e+00        <=  Vp/Vs   <= 1.73201714e+00
-       2.00088407e+00 Pa     <=  mu      <= 3.99907392e+00 Pa
-       1.00092131e+00 Pa     <=  lambda  <= 2.99911117e+00 Pa
+       1.00002175e+00 kg/m^3 <=  Density <= 2.99997281e+00 kg/m^3
+       1.63299548e+00 m/s    <=  Vp      <= 2.82840183e+00 m/s
+       1.00000214e+00 m/s    <=  Vs      <= 1.73203454e+00 m/s
+       1.52752801e+00        <=  Vp/Vs   <= 1.73205018e+00
+       2.00002175e+00 Pa     <=  mu      <= 3.99997281e+00 Pa
+       1.00003516e+00 Pa     <=  lambda  <= 2.99997155e+00 Pa
        ------------------------------------------------------
 
 ***** PPW = minVs/h/maxFrequency ********
-g=0, h=6.280000e-02, minVs/h=15.9241 (Cartesian)
-g=1, h=6.280000e-02, minVs/h=15.9241 (curvilinear)
+g=0, h=6.280000e-02, minVs/h=15.9246 (Cartesian)
+g=1, h=3.140000e-02, minVs/h=31.8472 (Cartesian)
 
 
 *** Attenuation parameters calculated for 1 mechanisms,
       max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
 
-  Assigned material properties
-*** computing the time step ***
-INFO: Smallest stable time step for curvilinear grid only: 1.497299e-02
-TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=1.49729876e-02
-*** Initialized Images
-   Execution time, start up phase 1.67493847e-01 seconds 
+   Execution time, start up phase 2.02531825e-01 seconds 
 Running sw4 on 4 processors...
-Writing output to directory: tw-att-gauss-2/
-
-***  Starting solve ***
+Writing output to directory: refine-att-2/
 ============================================================
  Running program on 4 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 1
- Number of time steps = 67 dt: 0.0149254
-
-============================================================
- Global boundary conditions 
-      x=0    supergrid
-      x=xMax supergrid
-      y=0    supergrid
-      y=yMax supergrid
-      z=topo free surface
-      z=zMax free surface
-
+ Number of time steps = 144 dt: 0.00694444
 -----------------------------------------------------------
 Twilight zone testing (aka method of manufactured solution)
 Parameters:
@@ -111,22 +84,16 @@ Parameters:
   amplambda = 1.00000000e+00
   ampmu = 1.00000000e+00
 -----------------------------------------------------------
-  Initial data has been assigned
-
-Reporting SW4 internal flags and settings:
-m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
-m_use_supergrid=yes
-End report of internal flags and settings
-
   Begin time stepping...
-Time step       1  t =   1.4925373e-02
-Time step      67  t =   1.0000000e+00
+Time step       1  t =   6.9444444e-03
+Time step     101  t =   7.0138889e-01
+Time step     144  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 5.63260960e+01 seconds 
+   Execution time, solver phase 4 minutes 5.18338733e+01 seconds 
 
- Final solution errors: Linf =   2.2985135e-04, L2 =   2.0268581e-04
+ Final solution errors: Linf =   9.3018893e-06, L2 =   2.2695195e-05
 
- Final solution errors, attenuation: Linf =   2.2482660e-04, L2 =   1.9837434e-04
+ Final solution errors, attenuation: Linf =   9.1020241e-06, L2 =   2.1935534e-05
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 
