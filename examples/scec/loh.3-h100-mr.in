@@ -13,19 +13,19 @@
 # on top of a half-space in the z-direction
 #
 # The solution is recorded at different locations
-# and saved in different sac-files 
+# and saved in different sac-files  (in the LOH_1 directory)
 #
 # A single moment point source is used with 
 # the time dependency being the Gaussian function
 #
 # use default values for the mesh refinement iteration
 
-grid h=50 x=30000 y=30000 z=17000 extrapolate=1
+grid h=100 x=30000 y=30000 z=17000 extrapolate=1
 time t=15
-fileio path=loh3-h50-mr
+fileio path=loh3-h100-mr
 
-# mesh refinement along material jump (50*20 = 1000)
-refinement zmax=1000
+# mesh refinement along material jump (50*40 = 2000)
+refinement zmax=2000
 
 # wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
 attenuation phasefreq=2.5 nmech=3 maxfreq=15
@@ -71,6 +71,6 @@ rec x=21000 y=23000 z=0 file=sta10 usgsformat=1 sacformat=0
 # solution images
 image mode=mag z=0 file=surf timeInterval=0.5
 # no point saving uz and ux on this plane, because they are zero by symmetry
-image mode=mag y=15e3 file=ver cycleInterval=10
+#image mode=mag y=15e3 file=ver cycleInterval=5
 
 
