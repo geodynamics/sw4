@@ -410,6 +410,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
 
+// Sort sources wrt spatial location, needed for thread parallel computing
+  vector<int> identsources;
+  sort_grid_point_sources( point_sources, identsources );
+
 // Assign initial data
   initialData(mTstart, U, AlphaVE);
   initialData(mTstart-mDt, Um, AlphaVEm );
@@ -490,7 +494,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   
 // c test accuracy of forcing
     evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
-    Force( t, F, point_sources );
+    Force( t, F, point_sources, identsources );
     exactAccTwilight( t, Uacc ); // save Utt in Uacc
     test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
 
@@ -621,7 +625,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     time_measure[0] = MPI_Wtime();
 
 // all types of forcing...
-    Force( t, F, point_sources );
+    Force( t, F, point_sources, identsources );
 
     if( m_checkfornan )
     {
@@ -676,7 +680,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // get 4th order in time
     if (mOrder == 4)
     {
-       Force_tt( t, F, point_sources );
+       Force_tt( t, F, point_sources, identsources );
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
 
        if( m_checkfornan )

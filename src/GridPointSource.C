@@ -43,13 +43,13 @@ using namespace std;
 #include "time_functions.h"
 
 //-----------------------------------------------------------------------
-GridPointSource::GridPointSource( double frequency, double t0,
+GridPointSource::GridPointSource( float_sw4 frequency, float_sw4 t0,
 				 int N, int M, int L, int G,
-				 double Fx, double Fy, double Fz,
+				 float_sw4 Fx, float_sw4 Fy, float_sw4 Fz,
 				 timeDep tDep,
-				 int ncyc, double* pars, int npar, int* ipars, int nipar,
-				 double* jacobian,
-				 double* dddp, double* hess1, double* hess2, double* hess3 ):
+				 int ncyc, float_sw4* pars, int npar, int* ipars, int nipar,
+				 float_sw4* jacobian,
+				 float_sw4* dddp, float_sw4* hess1, float_sw4* hess2, float_sw4* hess3 ):
   mFreq(frequency),
   mT0(t0),
   m_i0(N), m_j0(M), m_k0(L),m_grid(G),
@@ -311,9 +311,9 @@ void GridPointSource::initializeTimeFunction()
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::getFxyz( double t, double* fxyz ) const
+void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
 {
-   double afun, afunv[6];
+   float_sw4 afun, afunv[6];
    if( mTimeDependence != iDiscrete6moments )
       afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
    else
@@ -393,7 +393,7 @@ void GridPointSource::getFxyz( double t, double* fxyz ) const
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::getFxyz_notime( double* fxyz ) const
+void GridPointSource::getFxyz_notime( float_sw4* fxyz ) const
 {
 // For source spatial discretization testing
   fxyz[0] = mForces[0];
@@ -402,9 +402,9 @@ void GridPointSource::getFxyz_notime( double* fxyz ) const
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::getFxyztt( double t, double* fxyz ) const
+void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
 {
-   double afun, afunv[6];
+   float_sw4 afun, afunv[6];
    if( mTimeDependence != iDiscrete6moments )
       afun= mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
    else
@@ -425,7 +425,7 @@ void GridPointSource::getFxyztt( double t, double* fxyz ) const
       afunv[5] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
    }
 
-   //  double afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+   //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
   if( m_derivative==-1)
   {
      if( mTimeDependence != iDiscrete6moments )
@@ -485,7 +485,7 @@ void GridPointSource::getFxyztt( double t, double* fxyz ) const
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::set_derivative( int der, const double dir[11] )
+void GridPointSource::set_derivative( int der, const float_sw4 dir[11] )
 {
    if( der >= 0 && der <= 11 )
       m_derivative = der;
@@ -500,38 +500,38 @@ void GridPointSource::set_noderivative( )
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::limitFrequency(double max_freq)
+void GridPointSource::limitFrequency(float_sw4 max_freq)
 {
   if (mFreq > max_freq)
     mFreq=max_freq;
 }
 
 //-----------------------------------------------------------------------
-double GridPointSource::getTimeFunc(double t) const
+float_sw4 GridPointSource::getTimeFunc(float_sw4 t) const
 {
   return mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
 }
 
 //-----------------------------------------------------------------------
-double GridPointSource::evalTimeFunc_t(double t) const
+float_sw4 GridPointSource::evalTimeFunc_t(float_sw4 t) const
 {
   return mTimeFunc_t(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
 }
 
 //-----------------------------------------------------------------------
-double GridPointSource::evalTimeFunc_tt(double t) const
+float_sw4 GridPointSource::evalTimeFunc_tt(float_sw4 t) const
 {
   return mTimeFunc_tt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
 }
 
 //-----------------------------------------------------------------------
-double GridPointSource::evalTimeFunc_ttt(double t) const
+float_sw4 GridPointSource::evalTimeFunc_ttt(float_sw4 t) const
 {
   return mTimeFunc_ttt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
 }
 
 //-----------------------------------------------------------------------
-double GridPointSource::evalTimeFunc_tttt(double t) const
+float_sw4 GridPointSource::evalTimeFunc_tttt(float_sw4 t) const
 {
   return mTimeFunc_tttt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
 }
@@ -558,27 +558,27 @@ ostream& operator<<( ostream& output, const GridPointSource& s )
 
 //-----------------------------------------------------------------------
 void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
-				       double t, double dt, double gradient[11], std::vector<double> & h,
+				       float_sw4 t, float_sw4 dt, float_sw4 gradient[11], std::vector<float_sw4> & h,
 				       Sarray& Jac, bool topography_exists )
 {
    if( m_jacobian_known )
    {
-      double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
-      double dt2o12 = dt*dt/12.0;
-      double g0= mTimeFunc( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar );
-      double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar);
+      float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
+      float_sw4 dt2o12 = dt*dt/12.0;
+      float_sw4 g0= mTimeFunc( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar );
+      float_sw4 g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar);
 
       // save some work by accessing array elements only once:
-      double kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
-      double kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
-      double kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
-      double eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
-      double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
-      double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
-      double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+      float_sw4 kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
+      float_sw4 kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
+      float_sw4 kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
+      float_sw4 eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
+      float_sw4 eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
+      float_sw4 eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
+      float_sw4 h3   = h[m_grid]*h[m_grid]*h[m_grid];
       if( topography_exists && m_grid == h.size()-1 )
 	 h3 = Jac(m_i0,m_j0,m_k0);
-      //      double h3 = 1.0;
+      //      float_sw4 h3 = 1.0;
       if( 1 <= m_k0 && m_k0 <= 4 )
 	 h3 *= normwgh[m_k0-1];
 
@@ -592,8 +592,8 @@ void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<
       }
 
       // derivative wrt. (t0, freq)
-      double dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double dgom =  mTimeFunc_om(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgom =  mTimeFunc_om(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
       gradient[9]   -= dt2o12*dgt0*( eta1*mForces[0] + eta2*mForces[1] + eta3*mForces[2])*h3;
       gradient[10]  -= dt2o12*dgom*( eta1*mForces[0] + eta2*mForces[1] + eta3*mForces[2])*h3;
 
@@ -606,31 +606,31 @@ void GridPointSource::add_to_gradient( std::vector<Sarray> & kappa, std::vector<
 
 //-----------------------------------------------------------------------
 void GridPointSource::add_to_hessian( std::vector<Sarray> & kappa, std::vector<Sarray> & eta,
-				      double t, double dt, double hessian[121],
-				      std::vector<double> & h )
+				      float_sw4 t, float_sw4 dt, float_sw4 hessian[121],
+				      std::vector<float_sw4> & h )
 // Add upper part of symmetric matrix
 {
    if( m_hessian_known && m_jacobian_known )
    {
-      double normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
-      double dt2o12 = dt*dt/12.0;
-      double g0= mTimeFunc( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar );
-      double g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar);
+      float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
+      float_sw4 dt2o12 = dt*dt/12.0;
+      float_sw4 g0= mTimeFunc( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar );
+      float_sw4 g = g0 + dt2o12*mTimeFunc_tt( mFreq, t-mT0, mPar, mNpar, mIpar, mNipar);
 
       // save some work by accessing array elements only once:
-      double kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
-      double kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
-      double kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
-      double eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
-      double eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
-      double eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
-      double h3   = h[m_grid]*h[m_grid]*h[m_grid];
+      float_sw4 kap1 = kappa[m_grid](1,m_i0,m_j0,m_k0);
+      float_sw4 kap2 = kappa[m_grid](2,m_i0,m_j0,m_k0);
+      float_sw4 kap3 = kappa[m_grid](3,m_i0,m_j0,m_k0);
+      float_sw4 eta1 = eta[m_grid](1,m_i0,m_j0,m_k0);
+      float_sw4 eta2 = eta[m_grid](2,m_i0,m_j0,m_k0);
+      float_sw4 eta3 = eta[m_grid](3,m_i0,m_j0,m_k0);
+      float_sw4 h3   = h[m_grid]*h[m_grid]*h[m_grid];
 
       if( 1 <= m_k0 && m_k0 <= 4 )
 	 h3 *= normwgh[m_k0-1];
 
-      double c1 = g*h3;
-      double c2 = g0*dt2o12*h3;
+      float_sw4 c1 = g*h3;
+      float_sw4 c2 = g0*dt2o12*h3;
 
       // (pos,pos)
       for( int m=0 ; m < 3 ; m++ )
@@ -656,16 +656,16 @@ void GridPointSource::add_to_hessian( std::vector<Sarray> & kappa, std::vector<S
 	 hessian[m+11*j] -= (c1*kap3+eta3*c2)*m_dddp[m+6];
       }
       // (pos,t0)
-      double dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double dgom =  mTimeFunc_om(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgt0 = -mTimeFunc_t(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgom =  mTimeFunc_om(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
 
-      double c2t0  = dgt0*dt2o12;
-      double c2om0 = dgom*dt2o12;
+      float_sw4 c2t0  = dgt0*dt2o12;
+      float_sw4 c2om0 = dgom*dt2o12;
 
       dgt0 = dgt0 - dt2o12*mTimeFunc_ttt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
       dgom = dgom + dt2o12*mTimeFunc_omtt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double c1t0  = dgt0;
-      double c1om0 = dgom;
+      float_sw4 c1t0  = dgt0;
+      float_sw4 c1om0 = dgom;
 
       //define c1t0,c2t0, c1om0, c2om0
       for( int m=0 ; m < 9 ; m++ )
@@ -677,17 +677,17 @@ void GridPointSource::add_to_hessian( std::vector<Sarray> & kappa, std::vector<S
 	 hessian[m+11*j] -= ((c1om0*kap1+c2om0*eta1)*m_jacobian[3*m] + (c1om0*kap2+c2om0*eta2)*m_jacobian[3*m+1] +
 			     (c1om0*kap3+c2om0*eta3)*m_jacobian[3*m+2])*h3;
       }
-      double cmfact0 = (kap1*mForces[0]+kap2*mForces[1]+kap3*mForces[2]);
-      double cmfact  = ((kap1*mForces[0]+kap2*mForces[1]+kap3*mForces[2])+
+      float_sw4 cmfact0 = (kap1*mForces[0]+kap2*mForces[1]+kap3*mForces[2]);
+      float_sw4 cmfact  = ((kap1*mForces[0]+kap2*mForces[1]+kap3*mForces[2])+
 		      dt2o12*(eta1*mForces[0]+eta2*mForces[1]+eta3*mForces[2]));
       // Second derivatives of time function
-      double d2gdt02   =  mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double d2gdt0dom = -mTimeFunc_tom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double d2gdomdom =  mTimeFunc_omom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 d2gdt02   =  mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 d2gdt0dom = -mTimeFunc_tom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 d2gdomdom =  mTimeFunc_omom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
 
-      double dgdttt0t0  =  dt2o12*mTimeFunc_tttt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double dgdttt0om  = -dt2o12*mTimeFunc_tttom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-      double dgdttomom  =  dt2o12*mTimeFunc_ttomom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgdttt0t0  =  dt2o12*mTimeFunc_tttt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgdttt0om  = -dt2o12*mTimeFunc_tttom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+      float_sw4 dgdttomom  =  dt2o12*mTimeFunc_ttomom(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
 
       int m = 9;
       int j = 9;
@@ -716,4 +716,10 @@ void GridPointSource::print_info() const
    cout << "Time dep " << mTimeDependence << endl;
    cout << "-----------------------------------------------------------------------"<<endl;
 
+}
+
+//-----------------------------------------------------------------------
+void GridPointSource::set_sort_key( size_t key )
+{
+   m_key = key;
 }

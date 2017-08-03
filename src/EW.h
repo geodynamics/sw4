@@ -186,8 +186,9 @@ void initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaV
 bool exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, vector<Source*>& source );
 void exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F);
 void exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc);
-void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
-void Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, vector<int> identsources );
+void Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, vector<int> identsources );
+void sort_grid_point_sources( vector<GridPointSource*>& point_sources, vector<int>& identsources );
 
 void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, float_sw4 &diffL2, float_sw4 &xInf,
 		       vector<Source*>& a_globalSources );

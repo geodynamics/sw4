@@ -633,6 +633,7 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
      {
        float_sw4 myM0Sum = 0;
        int numsrc = 0; //, ignoredSources=0;
+#pragma omp parallel for reduction(+:numsrc,myM0Sum)
        for (unsigned int i=0; i < a_Sources.size(); ++i)
        {
          if (a_Sources[i]->isMomentSource())
@@ -1705,9 +1706,9 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
     diffL2Local += l2Local;
   }
 // communicate local results for global errors
-  MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-  MPI_Allreduce( &xInfLocal,    &xInf,    1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-  MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+  MPI_Allreduce( &diffInfLocal, &diffInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &xInfLocal,    &xInf,    1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 
   diffL2 = sqrt(diffL2);
 }
@@ -1747,8 +1748,8 @@ void EW::normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & 
     diffL2Local += l2Local;
   }
 // communicate local results for global errors
-  MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-  MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+  MPI_Allreduce( &diffInfLocal, &diffInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 
 //   diffL2 = diffL2Local;
 //   diffInf = diffInfLocal;
@@ -1834,11 +1835,11 @@ void EW::normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U,
     }
   
 // communicate local results for global errors
-  MPI_Allreduce( &diffInfLocal, &diffInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-  MPI_Allreduce( &diffL2Local,  &diffL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+  MPI_Allreduce( &diffInfLocal, &diffInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 
-  MPI_Allreduce( &solInfLocal, &solInf, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-  MPI_Allreduce( &solL2Local,  &solL2,  1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+  MPI_Allreduce( &solInfLocal, &solInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+  MPI_Allreduce( &solL2Local,  &solL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 
   diffL2 = sqrt(diffL2);
   solL2 = sqrt(solL2);
@@ -1990,7 +1991,6 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
     double cr, lambda, mu, rho, alpha;
     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     {
-      u_ptr    = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast  = m_iEnd[g];
       jfirst = m_jStart[g];
@@ -2005,8 +2005,12 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
       lambda = m_rayleigh_wave_test->m_lambda;
       mu = m_rayleigh_wave_test->m_mu;
       alpha = m_rayleigh_wave_test->m_alpha;
+      size_t npts = a_U[g].m_npts;
+      double* uini=new double[npts];
       rayleighfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-		    u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
+		    uini, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
+      a_U[g].assign(uini,0);
+      delete[] uini;
     }
   }
   else if( m_energy_test )
@@ -2014,9 +2018,10 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
      //    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     for(int g=0 ; g<mNumberOfGrids; g++ ) // This case does not make sense with topography
     {
-       u_ptr    = a_U[g].c_ptr();
-       for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
-	  u_ptr[i] = drand48();
+       //       u_ptr    = a_U[g].c_ptr();
+       //       for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+       //	  u_ptr[i] = drand48();
+       a_U[g].set_to_random();
     }
   }
   else
@@ -2113,7 +2118,14 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   else if( m_point_source_test )
   {
     for(int g=0 ; g < mNumberOfGrids; g++ ) 
-       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
+    {
+       size_t npts = a_U[g].m_npts;
+       float_sw4* uexact  = new float_sw4[npts];
+       //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
+       get_exact_point_source( uexact, a_t, g, *sources[0] );
+       a_U[g].assign(uexact,0);
+       delete[] uexact;
+    }
      retval = true;
   }
   else if( m_lamb_test )
@@ -2126,7 +2138,6 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
     double cr, lambda, mu, rho, alpha;
     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
     {
-      u_ptr    = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast  = m_iEnd[g];
       jfirst = m_jStart[g];
@@ -2141,8 +2152,12 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
       lambda = m_rayleigh_wave_test->m_lambda;
       mu = m_rayleigh_wave_test->m_mu;
       alpha = m_rayleigh_wave_test->m_alpha;
+      size_t npts = a_U[g].m_npts;
+      double* uexact  = new double[npts];
       rayleighfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-		    u_ptr, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
+		    uexact, &a_t, &lambda, &mu, &rho, &cr, &om, &alpha, &h, &zmin );
+      a_U[g].assign(uexact,0);
+      delete[] uexact;
     }
     
     retval = true;
@@ -2388,6 +2403,8 @@ float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float
 //void EW::get_exact_point_source( Sarray& u, float_sw4 t, int g, Source& source )
 void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& source, int* wind )
 {
+   // If wind is given, it is assumed that wind is the declared size of up. If not given (wind=0), 
+   // it is assumed that up is the size of the local processor arrays.
    timeDep tD;
    if(!( source.getName() == "SmoothWave" || source.getName() == "VerySmoothBump" ||
 	 source.getName() == "C6SmoothBump" || source.getName()== "Gaussian") )
@@ -2413,7 +2430,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    float_sw4 x0    = source.getX0();
    float_sw4 y0    = source.getY0();
    float_sw4 z0    = source.getZ0();
-   float_sw4 fr=source.getFrequency();
+   float_sw4 fr    = source.getFrequency();
    float_sw4 time = (t-source.getOffset()) * source.getFrequency();
    if( tD == iGaussian )
    {
@@ -2438,7 +2455,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    //   float_sw4* up = u.c_ptr();
    float_sw4 h   = mGridSize[g];
    float_sw4 eps = 1e-3*h;
-   size_t ind = 0;
+   //   size_t ind = 0;
    int imax, imin, jmax, jmin, kmax, kmin;
    if( wind == 0 )
    {
@@ -2462,10 +2479,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    //   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
    //      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
    //	 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+
+   size_t ni=(imax-imin+1);
+   size_t nij=ni*(jmax-jmin+1);
+#pragma omp parallel for
    for( int k=kmin ; k <= kmax ; k++ )
       for( int j=jmin ; j <= jmax ; j++ )
 	 for( int i=imin ; i <= imax ; i++ )
 	 {
+	    size_t ind = (i-imin) + ni*(j-jmin)+nij*(k-kmin);
             float_sw4 x,y,z;
 	    if( curvilinear )
 	    {
@@ -2998,7 +3020,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		      );
 	       }
 	    }
-	    ind++;
+	    //	    ind++;
 	 }
 }
 
@@ -3047,10 +3069,9 @@ complex<double> atan2(complex<double> z, complex<double> w)
 //-----------------------------------------------------------------------
 void EW::get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
 {
-  int g;
 // initialize
-  for (g=0; g<mNumberOfGrids; g++)
-    a_U[g].set_to_zero();
+//  for (int g=0; g<mNumberOfGrids; g++)
+//    a_U[g].set_to_zero();
   double x0 = a_source.getX0();
   double y0 = a_source.getY0();
   double z0 = a_source.getZ0();
@@ -3059,7 +3080,7 @@ void EW::get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source 
   a_source.getForces( fx, fy, fz );
   double cs  = m_lamb_test->m_cs;
   double mu  = m_lamb_test->m_mu;
-  g = mNumberOfCartesianGrids - 1; // top Cartesian grid
+  int g = mNumberOfCartesianGrids - 1; // top Cartesian grid
   double h = mGridSize[g];
   int ifirst = m_iStart[g];
   int ilast  = m_iEnd[g];
@@ -3073,8 +3094,15 @@ void EW::get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source 
   else if( a_source.getTfunc() == iC6SmoothBump )
      tfun = 2;
   // Fortran
+  size_t npts = a_U[g].m_npts;
+  float_sw4* uexact = new float_sw4[npts];
+  for( size_t i= 0 ; i< npts ;i++ )
+     uexact[i] = 0;
   lambexact( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-	     a_U[g].c_ptr(), &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
+	     uexact, &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
+	     //	     a_U[g].c_ptr(), &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
+  a_U[g].assign( uexact, 0 );
+  delete[] uexact;
 // test: output uz in one point
   // int i0=176, j0=151, k0=1;
   // if (m_iStart[g] <= i0 && i0 <= m_iEnd[g] && m_jStart[g] <= j0 && j0 <= m_jEnd[g])
@@ -3091,9 +3119,8 @@ void EW::get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
   for (g=0; g<mNumberOfGrids; g++)
     a_U[g].set_to_zero();
   
-  double x, y, z, uz, h, t=a_t;
+  double z, h, t=a_t;
   
-  double tau ,r;
   double gamma = sqrt(3. + sqrt(3.))/2.;
 
   double alpha = m_lamb_test->m_cp;
@@ -3109,20 +3136,21 @@ void EW::get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
      
 // Only the z-component of solution on the flat surface (z=0) is known by this routine
   int k = 1; 
-  double R;
 
   g = mNumberOfCartesianGrids - 1; // top Cartesian grid
   h = mGridSize[g];
   z = 0.0;
 
 //loop over all points in the horizontal plane
+#pragma omp parallel for
   for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
     for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
     {
-      x = (i-1)*h;
-      y = (j-1)*h;
+      double x = (i-1)*h;
+      double y = (j-1)*h;
+      double uz=0;
 
-      R = sqrt( (x-x0)*(x-x0)+(y-y0)*(y-y0));
+      double R = sqrt( (x-x0)*(x-x0)+(y-y0)*(y-y0));
       if( R < h )
       {
 	uz = 0;
@@ -3136,8 +3164,8 @@ void EW::get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
 	}
 	else
 	{
-	  tau = t*beta/R;
-	  r = R;
+	  double tau = t*beta/R;
+	  double r = R;
 	  if (tau > gamma)
 	  {
 	    uz += G4_Integral(min(max(0.0,tau - gamma),beta/r), tau, r, beta) - G4_Integral(0.0, tau, r, beta);
@@ -3540,7 +3568,8 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc)
 }
 
 //---------------------------------------------------------------------------
-void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources )
+void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
+	       vector<int> identsources )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -3784,20 +3813,34 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
      for( int g =0 ; g < mNumberOfGrids ; g++ )
 	a_F[g].set_to_zero();
 
-     for( int s = 0 ; s < point_sources.size() ; s++ )
+#pragma omp parallel for
+     for( int r=0 ; r < identsources.size()-1 ; r++ )
      {
-	int g = point_sources[s]->m_grid;
-        float_sw4 fxyz[3];
-	point_sources[s]->getFxyz(a_t,fxyz);
-	a_F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
-	a_F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
-	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+	int s0=identsources[r];
+	int g= point_sources[s0]->m_grid;	
+	int i= point_sources[s0]->m_i0;
+	int j= point_sources[s0]->m_j0;
+	int k= point_sources[s0]->m_k0;
+	float_sw4 f1=0, f2=0, f3=0;
+	for( int s = identsources[r] ; s < identsources[r+1] ; s++ )
+	{
+	   float_sw4 fxyz[3];
+	   point_sources[s]->getFxyz(a_t,fxyz);
+	   f1 += fxyz[0];
+	   f2 += fxyz[1];
+	   f3 += fxyz[2];
+	}
+	a_F[g](1,i,j,k) += f1;
+	a_F[g](2,i,j,k) += f2;
+	a_F[g](3,i,j,k) += f3;
+
      }
   }
 }
 
 //---------------------------------------------------------------------------
-void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources )
+void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
+		  vector<int> identsources )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -4036,15 +4079,37 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
      for( int g =0 ; g < mNumberOfGrids ; g++ )
 	a_F[g].set_to_zero();
 
-     for( int s = 0 ; s < point_sources.size() ; s++ )
+#pragma omp parallel for
+     for( int r=0 ; r < identsources.size()-1 ; r++ )
      {
-	int g = point_sources[s]->m_grid;
-        float_sw4 fxyz[3];
-	point_sources[s]->getFxyztt(a_t,fxyz);
-	a_F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
-	a_F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
-	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+	int s0=identsources[r];
+	int g= point_sources[s0]->m_grid;	
+	int i= point_sources[s0]->m_i0;
+	int j= point_sources[s0]->m_j0;
+	int k= point_sources[s0]->m_k0;
+	float_sw4 f1=0, f2=0, f3=0;
+	for( int s = identsources[r] ; s < identsources[r+1] ; s++ )
+	{
+	   float_sw4 fxyz[3];
+	   point_sources[s]->getFxyztt(a_t,fxyz);
+	   f1 += fxyz[0];
+	   f2 += fxyz[1];
+	   f3 += fxyz[2];
+	}
+	a_F[g](1,i,j,k) += f1;
+	a_F[g](2,i,j,k) += f2;
+	a_F[g](3,i,j,k) += f3;
      }
+
+     //     for( int s = 0 ; s < point_sources.size() ; s++ )
+     //     {
+     //	int g = point_sources[s]->m_grid;
+     //        float_sw4 fxyz[3];
+     //	point_sources[s]->getFxyztt(a_t,fxyz);
+     //	a_F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
+     //	a_F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
+     //	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
+     //     }
   }
 }
 
@@ -4648,6 +4713,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
                   int nc  = Uex[g].ncomp();
                   float_sw4* uxp = Uex[g].c_ptr();
 		  float_sw4* up  = a_Up[g].c_ptr();
+#pragma omp parallel for		  
 		  for( size_t i=0 ; i < n*nc ; i++ )
 		     uxp[i] = up[i]-uxp[i];
 	       }
@@ -4994,9 +5060,9 @@ void EW::average_speeds( float_sw4& cp, float_sw4& cs )
       float_sw4 cpgridtmp = cpgrid;
       float_sw4 csgridtmp = csgrid;
       float_sw4 nptstmp   = npts;
-      MPI_Allreduce( &cpgridtmp, &cpgrid, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      MPI_Allreduce( &csgridtmp, &csgrid, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      MPI_Allreduce( &nptstmp, &npts, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &cpgridtmp, &cpgrid, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &csgridtmp, &csgrid, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &nptstmp, &npts, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
       cp = cp + cpgrid/npts;
       cs = cs + csgrid/npts;
    }
@@ -5168,7 +5234,7 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
    }
    energy /= (dt*dt);
    float_sw4 energytmp = energy;
-   MPI_Allreduce( &energytmp, &energy, 1, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator );
+   MPI_Allreduce( &energytmp, &energy, 1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
    }
 }
@@ -5502,20 +5568,18 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 // 2. interpolate in the grid file to get elevations on the computational grid
    float_sw4 deltaY = (yMax-yMin)/Ny;
    float_sw4 deltaX = (xMax-xMin)/Nx;
-
-   int i0, j0;
    int topLevel = mNumberOfGrids-1;
    float_sw4 hp = 1.01*mGridSize[topLevel]; // change this to 2 grid sizes because there are double ghost points?
-   bool xGhost, yGhost;
-  
+
+#pragma omp parallel for  
    for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
    {
       for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
       {
-	 xP = (i-1)*mGridSize[topLevel];
-	 yP = (j-1)*mGridSize[topLevel];
-	 xGhost=true;
-	 yGhost=true;
+	 float_sw4 xP = (i-1)*mGridSize[topLevel];
+	 float_sw4 yP = (j-1)*mGridSize[topLevel];
+	 int i0, j0;
+	 bool xGhost=true, yGhost=true;
 	 if (yP > yMax+hp || yP < yMin-hp || xP > xMax+hp || xP < xMin-hp)
 	 {
 	   mTopo(i,j,1) = NO_TOPO;
@@ -5725,6 +5789,7 @@ void EW::extractTopographyFromImageFile(string a_topoFileName)
      nread = fread(data_flt,sizeof(float),npts,fd);
      CHECK_INPUT(npts == nread, "Number of image floats read: " << nread << ", is different from header npts: " << npts);
 // copy data to local mTopo array
+#pragma omp parallel for
      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
        for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
        {
@@ -5747,6 +5812,7 @@ void EW::extractTopographyFromImageFile(string a_topoFileName)
      nread = fread(data_dbl,sizeof(double),npts,fd);
      CHECK_INPUT(npts == nread, "Number of image double read: " << nread << ", is different from header npts: " << npts);
 // copy data to local mTopo array
+#pragma omp parallel for
      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
        for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
        {
@@ -6118,7 +6184,7 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
       int topLevel=mNumberOfGrids-1;
 
       float_sw4 topomax=-1e99, topomin=1e99;
-      
+#pragma omp parallel for reduction(max:topomax) reduction(min:topomin)      
       for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
       {
 	for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
@@ -6924,44 +6990,45 @@ void EW::setup_viscoelastic( )
        }
 
 // setup least squares problem (matrix and rhs depends on Qs & Qp)
-       float_sw4 *a_=new float_sw4[n*nc];
-       double *beta=new double[nc];
-       double *gamma=new double[nc];
-       int lwork = 3*n;
-       double *work=new double[lwork];
-       char trans='N';
-       int info=0, nrhs=1, lda=nc, ldb=nc;
 
 // test for q=80
-       float_sw4 q0=80.0, qs, qp, mu_tmp, lambda_tmp, kappa_tmp, mu_0, lambda_0, kappa_0, imm, rem, mmag, bsum;
+//       float_sw4 q0=80.0, qs, qp, mu_tmp, lambda_tmp, kappa_tmp, mu_0, lambda_0, kappa_0, imm, rem, mmag, bsum;
     
 // use base 0 indexing of matrix
 #define a(i,j) a_[i+j*nc]
 
 // loop over all grid points in all grids
        for( g = 0 ; g < mNumberOfGrids; g++ )
+#pragma omp parallel for
 	  for(k=m_kStart[g]; k<= m_kEnd[g]; k++ )
 	     for(j=m_jStart[g]; j<= m_jEnd[g]; j++ )
 		for(i=m_iStart[g]; i<= m_iEnd[g]; i++ )
 		{
-		   mu_tmp = mMu[g](i,j,k);
-		   lambda_tmp = mLambda[g](i,j,k);
-		   kappa_tmp = lambda_tmp + 2*mu_tmp;
-		   qs = mQs[g](i,j,k);
-		   qp = mQp[g](i,j,k);
+		   double *a_=new float_sw4[n*nc];
+		   double *beta=new double[nc];
+		   double *gamma=new double[nc];
+		   int lwork = 3*n;
+		   double *work=new double[lwork];
+		   char trans='N';
+		   int info=0, nrhs=1, lda=nc, ldb=nc;
+
+		   float_sw4 mu_tmp = mMu[g](i,j,k);
+		   float_sw4 lambda_tmp = mLambda[g](i,j,k);
+		   float_sw4 kappa_tmp = lambda_tmp + 2*mu_tmp;
+		   float_sw4 qs = mQs[g](i,j,k);
+		   float_sw4 qp = mQp[g](i,j,k);
 	    
 //
 // qs gives beta coefficients
 //
-		   for (q=0; q<nc; q++)
+		   for (int q=0; q<nc; q++)
 		   {
 		      beta[q] = 1./qs;
-		      for (nu=0; nu<n; nu++)
+		      for (int nu=0; nu<n; nu++)
 		      {
 			 a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qs)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
 		      }
 		   }
-    
 // solve the system in least squares sense
 		   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
 		   if (info!= 0)
@@ -6970,8 +7037,8 @@ void EW::setup_viscoelastic( )
 		      MPI_Abort(MPI_COMM_WORLD, 1);
 		   }
 // check that sum(beta) < 1
-		   bsum=0.;
-		   for (nu=0; nu<n; nu++)
+		   float_sw4 bsum=0.;
+		   for (int nu=0; nu<n; nu++)
 		      bsum += beta[nu];
 		   if (bsum>=1.)
 		   {
@@ -6980,18 +7047,18 @@ void EW::setup_viscoelastic( )
 		   }
 
 // calculate unrelaxed mu_0
-		   rem = 0., imm = 0.;
-		   for (nu=0; nu<n; nu++)
+		   float_sw4 rem = 0., imm = 0.;
+		   for (int nu=0; nu<n; nu++)
 		   {
 		      rem += beta[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
 		      imm += beta[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
 		   }
 		   rem = 1 - rem;
-		   mmag = sqrt(SQR(rem)+SQR(imm));
+		   float_sw4 mmag = sqrt(SQR(rem)+SQR(imm));
 // should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
-		   mu_0 = mu_tmp/mmag; 
+		   float_sw4 mu_0 = mu_tmp/mmag; 
 // calculate viscoelastic mu:
-		   for (nu=0; nu<n; nu++)
+		   for (int nu=0; nu<n; nu++)
 		   {
 		      mMuVE[g][nu](i,j,k) = mu_0 * beta[nu];
 		   }
@@ -7001,10 +7068,10 @@ void EW::setup_viscoelastic( )
 //
 // qp gives gamma coefficients
 //
-		   for (q=0; q<nc; q++)
+		   for (int q=0; q<nc; q++)
 		   {
 		      gamma[q] = 1./qp;
-		      for (nu=0; nu<n; nu++)
+		      for (int nu=0; nu<n; nu++)
 		      {
 			 a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qp)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
 		      }
@@ -7019,7 +7086,7 @@ void EW::setup_viscoelastic( )
 		   }
 // check that sum(gamma) < 1
 		   bsum=0.;
-		   for (nu=0; nu<n; nu++)
+		   for (int nu=0; nu<n; nu++)
 		      bsum += gamma[nu];
 		   if (bsum>=1.)
 		   {
@@ -7029,7 +7096,7 @@ void EW::setup_viscoelastic( )
 
 // calculate unrelaxed kappa_0
 		   rem = 0., imm = 0.;
-		   for (nu=0; nu<n; nu++)
+		   for (int nu=0; nu<n; nu++)
 		   {
 		      rem += gamma[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
 		      imm += gamma[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
@@ -7037,9 +7104,9 @@ void EW::setup_viscoelastic( )
 		   rem = 1 - rem;
 		   mmag = sqrt(SQR(rem)+SQR(imm));
 // should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
-		   kappa_0 = kappa_tmp/mmag; 
+		   float_sw4 kappa_0 = kappa_tmp/mmag; 
 // calculate viscoelastic lambdaVE = kappaVE - 2*muVE:
-		   for (nu=0; nu<n; nu++)
+		   for (int nu=0; nu<n; nu++)
 		   {
 		      kappa_tmp = kappa_0 * gamma[nu];
 		      mLambdaVE[g][nu](i,j,k) = kappa_tmp - 2*mMuVE[g][nu](i,j,k);
@@ -7053,13 +7120,13 @@ void EW::setup_viscoelastic( )
 //     for (q=0; q<n; q++)
 //       printf("beta[%i]=%e ", q, b[q]);
 //     printf("\n");
+		   delete[] a_;
+		   delete[] beta;
+		   delete[] gamma;
+		   delete[] work;
 
 		} // end for g,k,j,i
 #undef a
-       delete[] a_;
-       delete[] beta;
-       delete[] gamma;
-       delete[] work;
     }
 }
 
@@ -7139,8 +7206,9 @@ void EW::compute_minvsoverh( float_sw4& minvsoh )
    {
       float_sw4* mu  = mMu[g].c_ptr();
       float_sw4* rho = mRho[g].c_ptr();
-      float_sw4 npts = mMu[g].npts();
+      size_t npts = mMu[g].npts();
       float_sw4 minvs = mu[0]/rho[0];
+#pragma omp parallel for reduction(min:minvs)
       for( int i=0 ; i < npts ; i++ )
       {
 	 if( mu[i] < minvs*rho[i] )
@@ -7149,7 +7217,7 @@ void EW::compute_minvsoverh( float_sw4& minvsoh )
       minvs = sqrt(minvs);
       minvsohloc = minvs/mGridSize[g];
 // get the global min for this grid
-      MPI_Allreduce( &minvsohloc, &mMinVsOverH[g], 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+      MPI_Allreduce( &minvsohloc, &mMinVsOverH[g], 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
    } // end for all grids
 // min mMinVsOverH is saved in minvsoh
    minvsoh=mMinVsOverH[0];
@@ -7158,4 +7226,76 @@ void EW::compute_minvsoverh( float_sw4& minvsoh )
      if (mMinVsOverH[g] < minvsoh) minvsoh = mMinVsOverH[g];
    }
    
+}
+
+//-----------------------------------------------------------------------
+bool less_than( GridPointSource* ptsrc1, GridPointSource* ptsrc2 )
+{
+   return ptsrc1->m_key < ptsrc2->m_key;
+}
+
+//-----------------------------------------------------------------------
+void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
+				  vector<int>& identsources )
+{
+   size_t* gptr = new size_t[mNumberOfGrids];
+   gptr[0] = 0;
+   for(int g=0 ; g < mNumberOfGrids-1 ; g++ )
+   {
+      gptr[g+1] = gptr[g] + static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*
+	 (m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1);
+   }
+   size_t* ni   = new size_t[mNumberOfGrids];
+   size_t* nij  = new size_t[mNumberOfGrids];
+   for(int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      ni[g] = (m_iEnd[g]-m_iStart[g]+1);
+      nij[g] = ni[g]*(m_jEnd[g]-m_jStart[g]+1);
+   }
+   for( int s=0 ; s < point_sources.size() ; s++ )
+   {
+      int g = point_sources[s]->m_grid;
+      size_t key = gptr[g] + (point_sources[s]->m_i0-m_iStart[g]) +
+	 ni[g]* (point_sources[s]->m_j0-m_jStart[g]) +
+	 nij[g]*(point_sources[s]->m_k0-m_kStart[g]);
+      point_sources[s]->set_sort_key(key);
+   }
+   delete[] gptr;
+   delete[] ni;
+   delete[] nij;
+
+   std::sort(point_sources.begin(), point_sources.end(), less_than );
+   // set up array detecting sources belonging to idential points
+   identsources.resize(1);
+   identsources[0] = 0;
+   int k = 0;
+   while( identsources[k] < point_sources.size() )
+   {
+      int m = identsources[k];
+      size_t key = point_sources[m]->m_key;
+      while( m+1 < point_sources.size() && point_sources[m+1]->m_key == key )
+	 m++;
+      identsources.push_back(m+1);
+      k++;
+   }
+
+   // Test   
+   int nrsrc =point_sources.size();
+   int nrunique = identsources.size()-1;
+   int nrsrctot, nruniquetot;
+   MPI_Reduce( &nrsrc, &nrsrctot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+   MPI_Reduce( &nrunique, &nruniquetot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+   if( m_myRank == 0 )
+   {
+      cout << "number of grid point  sources = " << nrsrctot << endl;
+      cout << "number of unique g.p. sources = " << nruniquetot << endl;
+   }
+
+   //   for( int s=0 ; s<m_identsources.size()-1 ; s++ )
+   //      for( int i=m_identsources[s]; i< m_identsources[s+1] ; i++ )
+   //	 std::cout << "src= " << i << " key=" << m_point_sources[i]->m_key <<
+   //	    "grid= " << m_point_sources[i]->m_grid << " (i,j,k) = " <<
+   //	    m_point_sources[i]->m_i0 << " " << 
+   //	    m_point_sources[i]->m_j0 << " " << 
+   //	    m_point_sources[i]->m_k0 << std::endl;
 }
