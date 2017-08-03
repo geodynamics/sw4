@@ -3124,7 +3124,7 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 	}
     }
   //#pragma omp parallel for
-#ifdef CUDA_CODE
+#ifdef CUDA_CODE2
   for( int r=0 ; r<m_identsources.size()-1 ; r++ ){
     int index=r*3;
       //float_sw4* fptr =a_F[g].c_ptr();

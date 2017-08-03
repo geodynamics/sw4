@@ -7,8 +7,8 @@ using namespace RAJA;
 
 // Note 4,4,32 runs out of registers
 #ifdef CUDA_CODE
-typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<4>,cuda_threadblock_y_exec<4>,
-			      cuda_threadblock_z_exec<16>>>
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<1>,cuda_threadblock_y_exec<1>,
+			      cuda_threadblock_z_exec<64>>>
   EXEC;
 
 #define SYNC_DEVICE cudaDeviceSynchronize();
