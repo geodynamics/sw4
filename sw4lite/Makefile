@@ -33,14 +33,14 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   computername := fourier
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   FC = mpifort
-  CXX = mpicxx
+  CXX = $(PREP) mpicxx
   OMPOPT = -fopenmp -std=c++11 -O3 -qoverride-limits
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
   EXTRA_CXX_FLAGS = -xCORE-AVX2 -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -O3 -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA
   openmp = yes
-  LINKER = mpicxx
+  LINKER = $(PREP) mpicxx
   computername := quartz
  RAJA_LOCATION=/usr/workspace/wsb/ramesh/Quartz/RAJA_APRIL_10/RAJA/install
 else ifeq ($(findstring ray,$(HOSTNAME)),ray)
@@ -59,10 +59,12 @@ else ifeq ($(findstring ray,$(HOSTNAME)),ray)
 else ifeq ($(findstring cab,$(HOSTNAME)),cab)
 # assumes: use ic_16.0.210, use mvapich2-intel-2.1
   FC = mpif90
-  CXX = mpic++
+  CXX = $(PREP) mpiicpc
   OMPOPT = -fopenmp
+  EXTRA_CXX_FLAGS = -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include
   EXTRA_LINK_FLAGS = -lblas -llapack -lifcore
   computername := cab
+  LINKER = $(PREP) mpicpc
 # NERSC carl is a single node Intel KNL machine
 else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   FC = mpiifort

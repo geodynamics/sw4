@@ -11,6 +11,9 @@ typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<1>,cuda_threadblock_y_exec
 			      cuda_threadblock_z_exec<64>>>
   EXEC;
 
+
+typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<1>,cuda_threadblock_y_exec<1024>>> EXEC_DOS;
+
 #define SYNC_DEVICE cudaDeviceSynchronize();
 #else
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
@@ -37,6 +40,8 @@ typedef RAJA::NestedPolicy<
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
+typedef RAJA::NestedPolicy<
+  RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::omp_parallel_for_exec> > EXEC_DOS;
 #define EXEC EXEC1
 #define SYNC_DEVICE
 #endif
@@ -114,15 +119,28 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
    {
      //std::cout<<"LOOPSET #1\n";
      PUSH_RANGE("RHS4SG_REV:1",2);
+#ifdef CUDA_CODE
      forallN<EXEC, int, int,int>(
 				 RangeSegment(k1,k2+1),
 				 RangeSegment(jfirst+2,jlast-1),
 				 RangeSegment(ifirst+2,ilast-1),
-				 [=] RAJA_DEVICE(int k, int j, int i) {
+				 [=] RAJA_DEVICE(int k, int j,int i) {
 	
-				   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
-	   float_sw4 r1, r2, r3;
+#else
+     forallN<EXEC_DOS, int, int>(
+				 RangeSegment(k1,k2+1),
+				 RangeSegment(jfirst+2,jlast-1),
+				 [=] RAJA_DEVICE(int k, int j) {
+	
+				   
 
+#pragma simd
+#pragma ivdep
+	   for(int i=ifirst+2;i<ilast-1;i++)
+#endif
+	     {
+	       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+	       float_sw4 r1, r2, r3;
 /* from inner_loop_4a, 28x3 = 84 ops */
             mux1 = mu(i-1,j,k)*strx(i-1)-
 	       tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -351,7 +369,7 @@ void rhs4sg_rev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 //            lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 	    lu(1,i,j,k) =  cof*r1;
             lu(2,i,j,k) =  cof*r2;
-            lu(3,i,j,k) =  cof*r3;
+            lu(3,i,j,k) =  cof*r3;}
 				 }); // END OF RAJA LOOP
      SYNC_DEVICE;
      POP_RANGE;
