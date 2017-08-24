@@ -38,8 +38,8 @@ extern "C" { void F77_FUNC(dgbsv,DGBSV)( int*, int*, int*, int*, double*, int*, 
 using namespace std;
 
 //-----------------------------------------------------------------------
-Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int bchigh,
-		  double s1, double t1, double sn, double tn )
+Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bclow, int bchigh,
+		  float_sw4 s1, float_sw4 t1, float_sw4 sn, float_sw4 tn )
 {
    // Quintic spline interpolation of a function defined on a uniform grid.
    // 
@@ -193,7 +193,7 @@ Qspline::Qspline( int npts, double* fun, double tmin, double dt, int bclow, int 
    delete[] ipiv;
    
    m_npts = npts;
-   m_polcof = new double[6*(npts-1)];
+   m_polcof = new float_sw4[6*(npts-1)];
    for( int i= 0 ; i < npts-1 ; i++ )
    {
       m_polcof[  6*i] = fun[i];

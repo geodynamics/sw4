@@ -157,7 +157,7 @@ c need to add zmin to work in a composite grid setting
       end
 
 c this routine computes the Rayleigh wave phase velocity, relative to the shear velocity
-      real*8 function RVEL( la, mu )
+      real*8 function RVEL( la, mu ) bind(c)
       implicit none
       real*8 la, mu
       real*8 pr, cRel, xi, latilde, csw0, dxi

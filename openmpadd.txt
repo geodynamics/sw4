@@ -1,0 +1,53 @@
+C++ files not converted from fortran:
+
+                              OpenMP added    ivdep/simd     float_sw4    reverse C-order
+AnisotropicMaterialBlock.C          x                           x              x
+EW.C                                x             x             x              x
+EtreeFile.C                         1)                                         x
+Filter.C                            2)            x             x              x
+ForcingTwilight.C                   x             x             x              x
+GeographicProjection.C              x             x             3)             x
+GridPointSource.C                   x             x             x              x
+Image.C                             4)                          x              x      
+Image3D.C                           x                           x              x
+MaterialBlock.C                     x                           x              x
+MaterialData.C                      x                           x              x
+MaterialIfile.C                     x                           x              x
+MaterialPfile.C                     x                           x              x
+MaterialProperty.C                  x                           x              x
+MaterialRfile.C                     x                           x              x
+MaterialVolimagefile.C              x                           x              x
+Parallel_IO.C
+Polynomial.C                        x                           x              x
+Qspline.C                           x                           x              x
+Sarray.C                            x                           x              x
+SecondOrderSection.C                x                           x              x
+Source.C                            5)                          x              x
+SuperGrid.C                         x                           x              x
+TestRayleighWave.C                  x                           x              x
+TimeSeries.C
+addmemvarforcing2.C
+curvilinearGrid.C
+main.C
+material.C
+parallelStuff.C
+parseInputFile.C
+sacsubc.C
+sacutils.C
+setupRun.C
+solve.C
+time_functions.C
+version.C
+
+x- Strictly speaking 'x' under OpenMP added means OpenMP has been considered. If the code has been inspected, but no part of it is suitable for OpenMP pragmas, there is still an 'x' in this column. Similarly, 'x' in reverse C-order means the code should work in this index mode, not necessarily that any changes were made.
+
+1) OpenMP not added, not known if the etree database is thread safe. Also, need to keep double precision variables for compatibility with database api. C-order should work, since all array elements are accessed through Sarray indexation.
+
+2) There are only two loops in Filter.C that are long enough to warrant parallelization, these are in routine Filter::evaluate. However, the loops appear to have some dependencies, for now will not use OpenMP on these loops, seems hard to straighten out whether the loop dependencies are real or not.
+
+3) Double precision kept for geographic coordinates, (lat,lon) need many decimals.
+
+4) Many loops over k,j,i, but data is 2D, one index does not vary. I put OpenMP outside the k-loop in most cases, but this will not parallelize for planes with k=const. Not sure what to do about it, should not have a big influence, since loops are small (i.e. 2D) anyway. Also noted, most loops have if-statements, doubtful if it will vectorize.
+
+5) Source.C has many small loops with a lot of logic (if-statements). No obvious candidate for loop parallelism with OpenMP. It might be possible to hand out the work to threads in other ways (not by loops), leaving this as a subject for possible future optimizations for now.
+

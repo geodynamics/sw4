@@ -1,0 +1,36 @@
+  routine                      to C       OpenMP-directive   __rectrict__ pointers
+  -------
+addsgd.f                         x              x  F             x
+anisomtrltocurvilinear.f         -              x  F
+bcfort.f                         x              x* F
+bcfortanisg.f                    x              x* F
+bcfreesurfcurvani.f              x              x  F
+boundaryOp.f                     x              -  -
+checkanisomtrl.f                 x              x  F             x
+computedtaniso.f                 x              x                x
+curvilinear4.f                                     F
+curvilinear4sg.f                 x              x  F             x
+energy4.f                        x              x  F             x
+gradients.f                      x              x  F             x
+ilanisocurv.f                    x              x  F             x
+innerloop-ani-sgstr-vc.f         x              x  F             x
+lamb_exact_numquad.f
+randomfield3d.f                  x              x**              x
+rayleighfort.f
+rhs4curvilinear.f                x              x  F             x
+rhs4curvilinearsg.f              x              x  F             x
+rhs4th3fort.f                    x              x  F             x
+rhs4th3fortwind.f                x              x  F             x
+solerr3.f                        x              x  F             x
+testsrc.f                        x              x  F             x
+tw_aniso_force.f                 x              x  F             x
+tw_aniso_force_tt.f              x              x  F             x
+twilightfort.f                   x              x  F             x
+twilightsgfort.f                 x              x  F             x
+velsum.f                         x              x  F             x
+tw_ani_stiff.f90                 x              x  F             x
+
+(not used: updatememvar.f90)
+
+* = Some parts incomplete
+**= some loops not thread parallel due to dependencies in algorithm.

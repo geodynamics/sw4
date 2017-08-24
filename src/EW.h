@@ -1201,6 +1201,7 @@ vector<Sarray> mRho;
 vector<Sarray> mC; // Anisotropic material parameters
 Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
+
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
 void revvector( int npts, float_sw4* v );
@@ -1494,6 +1495,7 @@ vector<MPI_Datatype> m_send_type_2dx3p;
 vector<MPI_Datatype> m_send_type_2dy3p;
 vector<MPI_Datatype> m_send_type_2dx1p;
 vector<MPI_Datatype> m_send_type_2dy1p;
+public:
 MPI_Datatype m_mpifloat;
 
 bool m_topography_exists;
