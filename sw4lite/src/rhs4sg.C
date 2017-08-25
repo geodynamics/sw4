@@ -3,7 +3,11 @@
 //#include <iostream>
 using namespace std;
 #include <stdio.h>
+#ifdef RAJA03
+#include "RAJA/RAJA.hpp"
+#else
 #include "RAJA/RAJA.hxx"
+#endif
 using namespace RAJA;
 
 
@@ -36,7 +40,7 @@ typedef RAJA::NestedPolicy<
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
-#define EXEC EXEC5
+#define EXEC EXEC1
 #define SYNC_DEVICE
 #endif
 // restrict qualifier does not seem to help 

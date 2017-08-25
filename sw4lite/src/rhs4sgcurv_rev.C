@@ -2,7 +2,11 @@
 
 using namespace std;
 #include <stdio.h>
+#ifdef RAJA03
+#include "RAJA/RAJA.hpp"
+#else
 #include "RAJA/RAJA.hxx"
+#endif
 using namespace RAJA;
 #include "mynvtx.h"
 

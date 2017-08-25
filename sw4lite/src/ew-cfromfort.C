@@ -4,7 +4,12 @@
 #include <iostream>
 
 //#include <cuda_runtime.h>
+#ifdef RAJA03
+#include "RAJA/RAJA.hpp"
+#else
 #include "RAJA/RAJA.hxx"
+#endif
+
 using namespace RAJA;
 #include "mynvtx.h"
 #ifdef CUDA_CODE
@@ -18,13 +23,14 @@ typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<16>,cuda_threadblock_y_exe
 typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<32>,cuda_threadblock_y_exec<32>>>
   EXEC_BC2;
 
-typedef NestedPolicy<ExecList<cuda_threadblock_x_exec<1>,cuda_threadblock_y_exec<1024>>>
-  EXEC_DOS;
 
 typedef NestedPolicy<ExecList<seq_exec, seq_exec, seq_exec>>
   CEXEC_BC;
 
 typedef RAJA::cuda_exec<1024,true> FEXEC;
+typedef NestedPolicy<ExecList<cuda_threadblock_z_exec<1>,cuda_threadblock_y_exec<1>,
+			      cuda_threadblock_x_exec<1024>,seq_exec>,Permute<PERM_LIJK,Execute>>
+  EXEC_FORT_PERM;
 
 #define SYNC_DEVICE cudaDeviceSynchronize();
 #else
@@ -35,9 +41,16 @@ typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
 			      omp_parallel_for_exec>>
   EXEC;
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      omp_parallel_for_exec,simd_exec>>
+  EXEC_FORT;
+typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec,
+			      simd_exec,seq_exec>,
+				       Permute<PERM_LIJK,
+					       Execute 
+				       >>
+  EXEC_FORT_PERM;
 
-typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec>>
-  EXEC_DOS;
 typedef NestedPolicy<ExecList<omp_parallel_for_exec,omp_parallel_for_exec>>
   EXEC_BC2;
 
@@ -915,15 +928,16 @@ void EW::addsgd4fort( int ifirst, int ilast, int jfirst, int jlast,
      const size_t ni = ilast-ifirst+1;
       const size_t nij = ni*(jlast-jfirst+1);
 
-      forallN<EXEC, int, int,int>(
+      forallN<EXEC_FORT_PERM, int, int,int,int>(
 				  RangeSegment(kfirst+2,klast-1),
 				  RangeSegment(jfirst+2,jlast-1),
 				  RangeSegment(ifirst+2,ilast-1),
-				  [=] RAJA_DEVICE(int k, int j, int i) {
+				  RangeSegment(0,3),
+				  [=] RAJA_DEVICE(int k, int j, int i,int c) {
 
 	       float_sw4 birho=beta/rho(i,j,k);
 #pragma unroll 
-	       for( int c=0 ; c < 3 ; c++ )
+	       //for( int c=0 ; c < 3 ; c++ )
 	       {
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
@@ -1141,29 +1155,16 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
 	//#pragma simd
 	//#pragma ivdep
 	//    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-#ifdef CUDA_CODE
-      forallN<EXEC, int, int,int>(
+	forallN<EXEC_FORT_PERM, int, int,int,int>(
 				  RangeSegment(kfirst+2,klast-1),
 				  RangeSegment(jfirst+2,jlast-1),
 				  RangeSegment(ifirst+2,ilast-1),
-				  [=] RAJA_DEVICE(int k, int j,int i){
-#else
-      for( int c=0 ; c < 3 ; c++ )
-	forallN<EXEC_DOS, int, int>(
-				  RangeSegment(kfirst+2,klast-1),
-				  RangeSegment(jfirst+2,jlast-1),
-				  [=] RAJA_DEVICE(int k, int j){
-#pragma omp simd
-#pragma ivdep
-				    for(int i=ifirst+2;i<ilast-1;i++)
-#endif
-				      {
+				  RangeSegment(0,3),
+				  [=] RAJA_DEVICE(int k, int j, int i,int c){
 	       float_sw4 birho=beta/rho(i,j,k);
-#ifdef CUDA_CODE
-#pragma unroll
-	       for( int c=0 ; c < 3 ; c++ )
-#endif
-	       {
+	       //#pragma unroll
+//	       for( int c=0 ; c < 3 ; c++ ){
+{
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
 		   strx(i)*coy(j)*coz(k)*(
@@ -1209,7 +1210,7 @@ void EW::addsgd4fort_indrev( int ifirst, int ilast, int jfirst, int jlast,
                  (um(c,i,j,k  )-2*um(c,i,j,k-1)+um(c,i,j,k-2)) ) 
 					 );
 
-				  }}
+	       }
 				  }); SYNC_DEVICE
 #undef rho
 #undef up

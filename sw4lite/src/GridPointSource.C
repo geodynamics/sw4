@@ -325,6 +325,7 @@ void GridPointSource::initializeTimeFunction()
 //-----------------------------------------------------------------------
 void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
 {
+  //std::cout<<"getFxyz\n";
    float_sw4 afun, afunv[6];
    if( mTimeDependence != iDiscrete6moments )
       afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
@@ -457,6 +458,7 @@ void GridPointSource::getFxyz_notime( float_sw4* fxyz ) const
 //-----------------------------------------------------------------------
 void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
 {
+  //std::cout<<"getFxyztt\n";
    float_sw4 afun, afunv[6];
    if( mTimeDependence != iDiscrete6moments )
       afun= mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );

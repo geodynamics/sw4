@@ -249,7 +249,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -288,7 +288,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    if( iwrite && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
-      CHECK_INPUT(fid != -1, "CheckPoint::write_checkpoint:: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::write_checkpoint:: Error opening: " << s.str() );
    }
 
    // Write data blocks

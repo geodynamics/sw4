@@ -41,6 +41,9 @@
 #include <string>
 #include <unistd.h>
 #include "sw4.h"
+#include <unordered_map>
+
+using namespace std;
 
 using std::string;
 
@@ -167,8 +170,10 @@ public:
   void prefetch(int device=0);
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<double> pars );
    int m_nc, m_ni, m_nj, m_nk;
+  size_t memsize(void *ptr){ return map[ptr];}
 private:
   bool managed;
+  std::unordered_map<void*,size_t> map;
   float_sw4* m_data;
   float_sw4* dev_data;
   inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}

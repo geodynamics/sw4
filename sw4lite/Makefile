@@ -33,21 +33,21 @@ ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
   computername := fourier
 else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   FC = mpifort
-  CXX = $(PREP) mpicxx
-  OMPOPT = -fopenmp -std=c++11 -O3 -qoverride-limits
+  CXX = mpicxx
+  OMPOPT = -fopenmp -std=c++11 -O3 -qoverride-limits -DRAJA03
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
-  EXTRA_CXX_FLAGS = -xCORE-AVX2 -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include
+  EXTRA_CXX_FLAGS = -xCORE-AVX2 -I /usr/workspace/wsb/ramesh/Quartz/Project6/sw4/sw4lite/tests/topo/ALLINEA/RAJA/RAJA/install/usr/local/include 
   EXTRA_FORT_FLAGS = -xCORE-AVX2
-  EXTRA_LINK_FLAGS = -O3 -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -L /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/lib -lRAJA
+  EXTRA_LINK_FLAGS = -O3 -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -L /usr/workspace/wsb/ramesh/Quartz/Project6/sw4/sw4lite/tests/topo/ALLINEA/RAJA/RAJA/install/usr/local/lib  -lRAJA
   openmp = yes
-  LINKER = $(PREP) mpicxx
+  LINKER = mpicxx
   computername := quartz
- RAJA_LOCATION=/usr/workspace/wsb/ramesh/Quartz/RAJA_APRIL_10/RAJA/install
+ RAJA_LOCATION=/usr/workspace/wsb/ramesh/Quartz/Project6/sw4/sw4lite/tests/topo/ALLINEA/RAJA/RAJA/install/usr/local
 else ifeq ($(findstring ray,$(HOSTNAME)),ray)
   FC = mpif90
   CXX = nvcc
   REG_CHECK = -cubin -Xptxas="-v" --maxrregcount=32 
-  OPT = -O2 -ccbin mpixlC -std=c++11 -Xcompiler="-qsmp=omp -qmaxmem=-1" --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE
+  OPT = -O3 -ccbin mpixlC -Xcompiler="-qsmp=omp -qmaxmem=-1" -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_INCLUDES) -I /g/g0/ramesh/Project6/Ray/RAJA/install/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE
   OMPOPT =
   EXTRA_LINK_FLAGS = -qsmp=omp -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
 #EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/blas/blas-3.6.0-gfortran-4.8.5/lib/ -L /usr/tcetmp/packages/lapack/lapack-3.6.0-gfortran-4.8.5/lib/ -llapack -lblas -lm -lgfortran  -L /usr/local/cuda/lib64 -lcudart -lnvToolsExt -lcuda
@@ -59,17 +59,15 @@ else ifeq ($(findstring ray,$(HOSTNAME)),ray)
 else ifeq ($(findstring cab,$(HOSTNAME)),cab)
 # assumes: use ic_16.0.210, use mvapich2-intel-2.1
   FC = mpif90
-  CXX = $(PREP) mpiicpc
+  CXX = mpic++
   OMPOPT = -fopenmp
-  EXTRA_CXX_FLAGS = -I /usr/workspace/wsb/ramesh/Quartz/R2/RAJA/install/include
   EXTRA_LINK_FLAGS = -lblas -llapack -lifcore
   computername := cab
-  LINKER = $(PREP) mpicpc
 # NERSC carl is a single node Intel KNL machine
 else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   FC = mpiifort
   CXX = mpiicpc
-  OMPOPT = -qopenmp
+  OMPOPT = -qopenmp -qoverride-limits
   MKL_PATH = /usr/common/software/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64
 #  EXTRA_CXX_FLAGS = -xmic-avx512
   EXTRA_CXX_FLAGS = -xmic-avx2
@@ -78,6 +76,29 @@ else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
   openmp = yes
   computername := carl
+# Trinitite 
+else ifeq ($(findstring nid00259,$(HOSTNAME)),nid00259)
+  FC = ifort
+  CXX = CC
+  CC = cc
+  OMPOPT = -qopenmp -mkl -qoverride-limits
+  MKL_PATH = /opt/intel/compilers_and_libraries_2017/linux/mkl/lib/intel64
+  OTHER_PATH = /opt/intel/compilers_and_libraries_2017/linux/lib/intel64
+  BASIC_PATH = /opt/intel/lib/intel64
+  EXTRA_CXX_FLAGS = -xmic-avx512
+  EXTRA_C_FLAGS = -xmic-avx512
+  EXTRA_FORT_FLAGS = -xmic-avx512
+  LINK_FLAGS = -O3 -qopenmp
+  EXTRA_LINK_FLAGS =
+  #EXTRA_LINK_FLAGS = -Wl,-rpath=${MKL_PATH} -Wl,-rpath=${BASIC_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -Wl,-rpath=${OTHER_PATH} -L${OTHER_PATH} -lifcore -L${BASIC_PATH} -limf -lsvml 
+  #EXTRA_LINK_FLAGS = -L /usr/projects/hpcsoft/cle6.0/common/intel-clusterstudio/2017.1.024/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64_lin_mic -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl 
+# for building testil
+#  EXTRA_LINK_FLAGS = -Wl,-rpath=${OTHER_PATH} -L${OTHER_PATH} -lifcore -L${BASIC_PATH} -limf -lsvml -lintlc -lm -ldl 
+  openmp = yes
+  computername := trinitite
+  LINKER = CC
+  RAJA_LOCATION=/users/ramesh/LANL_PACKAGE/RAJA/install
+
 #
 # LBL quadknl is Hans' single node Intel KNL machine
 #

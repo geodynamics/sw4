@@ -2650,7 +2650,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	    addSuperGridDamping( Up, U, Um, mRho );
 
       }
-
+      POP_RANGE;
       //      if( !(m_cuobj->has_gpu()) )
       //         for( int g=0; g < mNumberOfGrids ; g++ )
       //	    Up[g].copy_from_device(m_cuobj,true,1);
@@ -3059,6 +3059,8 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 {
   static int firstcall=1;
   if (firstcall){
+
+    PUSH_RANGE("ForceOffload::FirstCall",3);
 #pragma omp parallel for
     for( int r=0 ; r<m_identsources.size()-1 ; r++ )
       {
@@ -3080,12 +3082,17 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 	//PrintPointerAttributes(fptr+ind1+oc);
 	//PrintPointerAttributes(fptr+ind1+2*oc);
       }
+    POP_RANGE;
     firstcall=0;
   } // First call only ends
   
+  PUSH_RANGE("ForceOffload::set_to_zero",4);
   for( int g =0 ; g < mNumberOfGrids ; g++ )
     a_F[g].set_to_zero();
-  
+  POP_RANGE;
+
+  PUSH_RANGE("ForceOffload:;HostCalc",5);
+  //std::cout<<"PA SIZE "<<m_identsources.size()-1<<"\n";
 #pragma omp parallel for
   for( int r=0 ; r<m_identsources.size()-1 ; r++ )
     {
@@ -3123,6 +3130,7 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
 	  //	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
 	}
     }
+  POP_RANGE;
   //#pragma omp parallel for
 #ifdef CUDA_CODE2
   for( int r=0 ; r<m_identsources.size()-1 ; r++ ){
@@ -3238,6 +3246,51 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      PREFETCH(m_sg_str_y[g]);
      PREFETCH(m_sg_str_z[g]);
      PREFETCH(m_iop);
+#ifdef DUMP_ARRAYS
+     std::cout<<"WARNING DUMPIING ARRAYS IN EW.C line 3251 \n";
+     int myRank;
+     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+     static int firstcall=1;
+     if ((myRank==0) && (firstcall)) {
+       ofstream off("Dump.txt");
+       off<<m_iStart[g]<<"\n";
+       off<<m_iEnd[g]<<"\n";
+       off<<m_jStart[g]<<"\n";
+       off<<m_jEnd[g]<<"\n";
+       off<<m_kStart[g]<<"\n";
+       off<<m_kEnd[g]<<"\n";
+       off<<m_global_nz[g]<<"\n";
+       
+       off<<6*sizeof(int)<<"\n";
+       off<<5*sizeof(double)<<"\n";
+       off<<24*sizeof(double)<<"\n";
+       off<<48*sizeof(double)<<"\n";
+       off<<mGridSize[g]<<"\n";
+       off<<a_Uacc[g].memsize((void*)a_Uacc[g].c_ptr())<<"\n";
+       off<<a_U[g].memsize((void*)a_U[g].c_ptr())<<"\n";
+       off<<a_Mu[g].memsize((void*)a_Mu[g].c_ptr())<<"\n";
+       off<<a_Lambda[g].memsize((void*)a_Lambda[g].c_ptr())<<"\n";
+       off<<map[m_sg_str_x[g]]<<"\n";
+       off<<map[m_sg_str_y[g]]<<"\n";
+       off<<map[m_sg_str_z[g]]<<"\n";
+
+       off.close();
+       ofstream offb("Dump.bin",ios::out|ios::binary);
+       offb.write((char*)m_onesided[g],6*sizeof(int));
+       offb.write((char*)m_acof,5*sizeof(double));
+       offb.write((char*)m_bope,24*sizeof(double));
+       offb.write((char*)m_ghcof,48*sizeof(double));
+       offb.write((char*)a_Uacc[g].c_ptr(),a_Uacc[g].memsize((void*)a_Uacc[g].c_ptr()));
+       offb.write((char*)a_U[g].c_ptr(),a_U[g].memsize((void*)a_U[g].c_ptr()));
+       offb.write((char*)a_Mu[g].c_ptr(),a_Mu[g].memsize((void*)a_Mu[g].c_ptr()));
+       offb.write((char*)a_Lambda[g].c_ptr(),a_Lambda[g].memsize((void*)a_Lambda[g].c_ptr()));
+       offb.write((char*)m_sg_str_x[g],map[m_sg_str_x[g]]);
+       offb.write((char*)m_sg_str_y[g],map[m_sg_str_y[g]]);
+       offb.write((char*)m_sg_str_z[g],map[m_sg_str_z[g]]);
+       offb.close();
+	 }
+     firstcall=0;
+#endif
 #ifdef SW4_CROUTINES
       if( m_corder )
 	 rhs4sg_rev( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
@@ -3301,6 +3354,8 @@ void EW::communicate_array( Sarray& u, int grid )
 {
   //std::this_thread::sleep_for(std::chrono::milliseconds(100));
   communicate_array_async(u,grid);
+  //communicate_array_org(u,grid);
+  // Use _async for the faster CUDA version
   //std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 //-----------------------------------------------------------------------
@@ -6830,7 +6885,12 @@ float_sw4* EW::newmanaged(size_t len){
    prefetched[ptr]=false;
    cudaDeviceSynchronize();
 #else
-   ptr=malloc(len*sizeof(float_sw4));
+   //ptr=malloc(len*sizeof(float_sw4));
+#ifdef ASSUME_ALIGNED
+   ptr=_mm_malloc(len*sizeof(float_sw4),ASSUME_ALIGNED);
+#else
+   ptr=new double[len];
+#endif
 #endif
    return (float_sw4*)ptr;
 }
@@ -6885,6 +6945,8 @@ int EW::prefetch(void *ptr,int device){
     //std::cout<<"BAD PREFETCH\n";
     return 1;
   }
+#else
+  return 0;
 #endif
 }
 int EW::prefetchforced(void *ptr,int device){
@@ -6907,6 +6969,8 @@ int EW::prefetchforced(void *ptr,int device){
     //std::cout<<"BAD PREFETCH\n";
     return 1;
   }
+#else
+  return 0;
 #endif
 }
 

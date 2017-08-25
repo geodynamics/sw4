@@ -42,13 +42,17 @@ void PrintPointerAttributes(void *ptr);
 #include <cuda_runtime.h>
 #endif
 #include "EWCuda.h"
+#ifdef RAJA03
+#include "RAJA/RAJA.hpp"
+#else
 #include "RAJA/RAJA.hxx"
+#endif
 using namespace RAJA;
 RAJA_DEVICE bool myisnan(const double in);
 #include "policies.h"
 // Default value 
 bool Sarray::m_corder = false;
-void zeroout(double * __restrict__ data,const size_t n);
+
 //-----------------------------------------------------------------------
 Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
 {
@@ -433,7 +437,6 @@ void Sarray::side_plane_fortran( int side, int wind[6], int nGhost )
 //-----------------------------------------------------------------------
 void Sarray::set_to_zero()
 {
-
   double *m_data_local=m_data;
   prefetch();
   forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
@@ -442,7 +445,10 @@ void Sarray::set_to_zero()
 #ifdef CUDA_CODE
   cudaDeviceSynchronize();
 #endif
-  
+  return;
+#pragma omp parallel for
+   for( size_t i=0 ; i < m_npts ; i++ )
+      m_data[i] = 0;
 }
 
 //-----------------------------------------------------------------------
@@ -457,13 +463,13 @@ void Sarray::set_to_minusOne()
 void Sarray::set_value( float_sw4 scalar )
 {
 double *m_data_local=m_data;
+  prefetch();
   forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
       m_data_local[i]=scalar;
     });
 #ifdef CUDA_CODE
   cudaDeviceSynchronize();
 #endif
-
 }
 
 //-----------------------------------------------------------------------
@@ -1136,10 +1142,16 @@ double *Sarray::newmanaged(size_t len){
    //cudaMallocManaged(&ptr, len*sizeof(double),cudaMemAttachHost);
 #ifdef CUDA_CODE
    cudaMallocManaged(&ptr, len*sizeof(double),cudaMemAttachGlobal);
+   map[ptr]=len*sizeof(double);
    cudaDeviceSynchronize();
    managed=true;
 #else
-   ptr=malloc(len*sizeof(double));
+   //ptr=malloc(len*sizeof(double));
+#ifdef ASSUME_ALIGNED
+   ptr=_mm_malloc(len*sizeof(double),ASSUME_ALIGNED);
+#else
+   ptr=new double[len];
+#endif
 #endif
    return (double*)ptr;
 }
@@ -1206,11 +1218,5 @@ void Sarray::prefetch(int device){
 }
 
 
-void zeroout(double * __restrict__ data,const size_t n){
-  forall<EXEC > (0,n,[=] RAJA_DEVICE(size_t i){
-      data[i]=0.0;
-    });
-#ifdef CUDA_CODE
-  cudaDeviceSynchronize();
-#endif
-}
+  
+   

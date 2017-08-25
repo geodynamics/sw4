@@ -19,7 +19,12 @@ class Source;
 class GridPointSource;
 class EWCuda;
 class CheckPoint;
+#include <stdio.h>
+#ifdef RAJA03
+#include "RAJA/RAJA.hpp"
+#else
 #include "RAJA/RAJA.hxx"
+#endif
 using namespace RAJA;
 typedef std::tuple<MPI_Request *, float_sw4*, float_sw4*, std::tuple<int,int,int>, MPI_Request*> AMPI_Ret_type;
 #include <cstdio>
@@ -460,6 +465,7 @@ class EW
    
    void getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
    void putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+   size_t memsize(void *ptr){ return map[ptr];}
  private:
    std::unordered_map<void*,size_t> map;
    std::unordered_map<void*,bool> prefetched;
