@@ -1,51 +1,54 @@
 #include "Sarray.h"
 // from WPP
 //-----------------------------------------------------------------------
-void  addmemvarforcing2( double zMin, double h, double t, Sarray &alpha,
-                         double omegaVE, double dt, double omega, double phase, double c )
+void  addmemvarforcing2( float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
+                         float_sw4 omegaVE, float_sw4 dt, float_sw4 omega, float_sw4 phase, float_sw4 c )
 {
-  double x, y, z;
+   //  float_sw4 x, y, z;
   // double omega =m_omega;
   // double phase =m_phase;
   // double c=m_c;
-  double cof = 2*dt/(1+omegaVE*dt);
+  float_sw4 cof = 2*dt/(1+omegaVE*dt);
+#pragma omp parallel for
   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
     for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+#pragma ivdep
+#pragma simd
       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
       {
-	x = (i-1)*h;
-	y = (j-1)*h;
-	z = zMin + (k-1)*h;
+	float_sw4 x = (i-1)*h;
+	float_sw4 y = (j-1)*h;
+	float_sw4 z = zMin + (k-1)*h;
 	{
-	   double t1;
-	   double t12;
-	   double t13;
-	   double t14;
-	   double t17;
-	   double t18;
-	   double t19;
-	   double t24;
-	   double t26;
-	   double t27;
-	   double t3;
-	   double t30;
-	   double t31;
-	   double t35;
-	   double t38;
-	   double t39;
-	   double t4;
-	   double t40;
-	   double t42;
-	   double t45;
-	   double t5;
-	   double t52;
-	   double t57;
-	   double t58;
-	   double t59;
-	   double t65;
-	   double t8;
-	   double t9;
-           double forces[3];
+	   float_sw4 t1;
+	   float_sw4 t12;
+	   float_sw4 t13;
+	   float_sw4 t14;
+	   float_sw4 t17;
+	   float_sw4 t18;
+	   float_sw4 t19;
+	   float_sw4 t24;
+	   float_sw4 t26;
+	   float_sw4 t27;
+	   float_sw4 t3;
+	   float_sw4 t30;
+	   float_sw4 t31;
+	   float_sw4 t35;
+	   float_sw4 t38;
+	   float_sw4 t39;
+	   float_sw4 t4;
+	   float_sw4 t40;
+	   float_sw4 t42;
+	   float_sw4 t45;
+	   float_sw4 t5;
+	   float_sw4 t52;
+	   float_sw4 t57;
+	   float_sw4 t58;
+	   float_sw4 t59;
+	   float_sw4 t65;
+	   float_sw4 t8;
+	   float_sw4 t9;
+           float_sw4 forces[3];
 	   {
 	      t1 = c*t;
 	      t3 = omega*(x-t1);

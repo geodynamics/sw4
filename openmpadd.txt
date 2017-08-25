@@ -25,19 +25,19 @@ SecondOrderSection.C                x                           x              x
 Source.C                            5)                          x              x
 SuperGrid.C                         x                           x              x
 TestRayleighWave.C                  x                           x              x
-TimeSeries.C
-addmemvarforcing2.C
-curvilinearGrid.C
-main.C
-material.C
-parallelStuff.C
-parseInputFile.C
-sacsubc.C
-sacutils.C
+TimeSeries.C                        x                           x              x
+addmemvarforcing2.C                 x             x             x              x (this file does not seem to be used)
+curvilinearGrid.C                   x                           x              x
+main.C                              x                           x              x
+material.C                          x                           x              x
+parallelStuff.C                     x                           x              x
+parseInputFile.C                    x                           x              x
+sacsubc.C                           x                           x              x
+sacutils.C                          x                           x              x
 setupRun.C
 solve.C
 time_functions.C
-version.C
+version.C                           x                           x              x
 
 x- Strictly speaking 'x' under OpenMP added means OpenMP has been considered. If the code has been inspected, but no part of it is suitable for OpenMP pragmas, there is still an 'x' in this column. Similarly, 'x' in reverse C-order means the code should work in this index mode, not necessarily that any changes were made.
 
@@ -47,7 +47,7 @@ x- Strictly speaking 'x' under OpenMP added means OpenMP has been considered. If
 
 3) Double precision kept for geographic coordinates, (lat,lon) need many decimals.
 
-4) Many loops over k,j,i, but data is 2D, one index does not vary. I put OpenMP outside the k-loop in most cases, but this will not parallelize for planes with k=const. Not sure what to do about it, should not have a big influence, since loops are small (i.e. 2D) anyway. Also noted, most loops have if-statements, doubtful if it will vectorize.
+4) Many loops over k,j,i, but data is 2D, one index does not vary. I put OpenMP outside the k-loop in most cases, but this will not parallelize for planes with k=const. Not sure what to do about it, should not have a big influence, since loops are small (i.e. 2D) anyway. Also noted, most loops have if-statements, doubtful if they will vectorize.
 
-5) Source.C has many small loops with a lot of logic (if-statements). No obvious candidate for loop parallelism with OpenMP. It might be possible to hand out the work to threads in other ways (not by loops), leaving this as a subject for possible future optimizations for now.
+5) Source.C has many small loops with a lot of logic (if-statements). No obvious candidate for loop parallelism with OpenMP. It might be possible to hand out the work to threads in other ways (not by loops), leaving this as a subject for possible future optimizations.
 

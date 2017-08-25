@@ -1444,8 +1444,8 @@ EW& operator=(const EW&);
 
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as
-float_sw4 mGeoAz;
-float_sw4 mLonOrigin, mLatOrigin;
+double mGeoAz;
+double mLonOrigin, mLatOrigin;
 
 //GeographicCoord mGeoCoord;
 float_sw4 mMetersPerDegree, mMetersPerLongitude;
