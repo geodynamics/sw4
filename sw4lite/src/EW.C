@@ -3147,7 +3147,7 @@ void EW::ForceOffload(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSourc
   float_sw4 **ForceAddress_copy=ForceAddress;
   PREFETCH(ForceVector);
   PREFETCH(ForceAddress);
-  forall<EXEC > (0,m_identsources.size()-1,[=] RAJA_DEVICE(int r)
+  forall<EXEC > (0ul,m_identsources.size()-1,[=] RAJA_DEVICE(int r)
     {
       int index=r*3;
       //float_sw4* fptr =a_F[g].c_ptr();

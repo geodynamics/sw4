@@ -87,7 +87,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    if( m_corder )
    {
      //for( size_t i=0 ; i < npts ; i++ )
-     forall< FEXEC> (0,npts,[=] RAJA_DEVICE(size_t i)
+     forall< FEXEC> (0ul,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
 	 up[i  ]      += dt4i12orh*(lu[i  ]     +fo[i  ]);
@@ -99,7 +99,7 @@ void EW::corrfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    else
    {
      //for( size_t i=0 ; i < npts ; i++ )
-     forall< FEXEC> (0,npts,[=] RAJA_DEVICE(size_t i)
+     forall< FEXEC> (0ul,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt4i12orh = dt4i12/rho[i];
 	 up[3*i  ] += dt4i12orh*(lu[3*i  ]+fo[3*i  ]);
@@ -145,7 +145,7 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    {
       // Like this ?
      //for( size_t i=0 ; i < npts ; i++ )
-     forall< FEXEC> (0,npts,[=] RAJA_DEVICE(size_t i)
+     forall< FEXEC> (0ul,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt2orh = dt2/rho[i];
 	 up[i  ]      = 2*u[i  ]     -um[i  ]      + dt2orh*(lu[i  ]     +fo[i  ]);
@@ -172,7 +172,7 @@ void EW::predfort( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* up
    else
    {
      //for( size_t i=0 ; i < npts ; i++ )
-forall<FEXEC > (0,npts,[=] RAJA_DEVICE(size_t i)
+forall<FEXEC > (0ul,npts,[=] RAJA_DEVICE(size_t i)
       {
 	 float_sw4 dt2orh = dt2/rho[i];
 	 up[3*i  ] = 2*u[3*i  ]-um[3*i  ] + dt2orh*(lu[3*i  ]+fo[3*i  ]);
@@ -209,7 +209,7 @@ void EW::dpdmtfort( int ib, int ie, int jb, int je, int kb, int ke, const float_
    // Code is slower with this RAJA loop due to the cost of copying data. Prefecth version is the fastest:: 2.70s on 20 procs. Without this loop it is around 2.4s
    // To fix. either port more loops to device or wait for the UM copies to reach 30GB/s
    PUSH_RANGE("dpdmtfort",2);
-   forall< FEXEC> (0,3*npts,[=] RAJA_DEVICE(size_t i){
+   forall< FEXEC> (0ul,3*npts,[=] RAJA_DEVICE(size_t i){
        //   for( size_t i = 0 ; i < 3*npts ; i++ )
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
      });
