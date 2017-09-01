@@ -37,7 +37,7 @@ typedef RAJA::NestedPolicy<
 
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec,
-		 RAJA::seq_exec,
+		 RAJA::omp_parallel_for_exec,
 		 RAJA::simd_exec > > EXEC3;
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::seq_exec, RAJA::seq_exec, RAJA::simd_exec > > EXEC4;
@@ -45,7 +45,7 @@ typedef RAJA::NestedPolicy<
 typedef RAJA::NestedPolicy<
   RAJA::ExecList<RAJA::omp_parallel_for_exec, RAJA::seq_exec, RAJA::seq_exec > > EXEC5;
 
-#define EXEC EXEC1
+#define EXEC EXEC3
 #define SYNC_DEVICE
 #endif
 
