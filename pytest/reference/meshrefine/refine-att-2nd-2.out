@@ -5,18 +5,16 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Tue May 23 11:09:36 PDT 2017
-  By user:     petersson1
-  Machine:     fourier.llnl.gov
-  Compiler:    /opt/local/bin/mpicxx
-  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
+  Compiled on: Tue Sep 5 10:55:43 PDT 2017
+  By user:     andersp
+  Machine:     quartz764
+  Compiler:    /usr/tce/packages/impi/impi-2017.1-intel-18.0-beta/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
 
-Input file: refine-att-2nd-2.in
+Input file: /usr/gapps/wpp/toss_3_x86_64_ib/sw4/pytest/reference/meshrefine/refine-att-2nd-2.in
 
 * Processing the grid command...
-
-* number of ghost points = 3
 * Setting h to 6.28000000e-02 from  x/(nx-1) (x=6.28000000e+00, nx=101)
 * Setting ny to 101 to be consistent with h=6.28000000e-02
 * Setting nz to 101 to be consistent with h=6.28000000e-02
@@ -33,7 +31,7 @@ Total number of grid points (without ghost points): 3.89474e+06
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
 
-   Execution time, reading input file 3.66007030e-02 seconds 
+   Execution time, reading input file 2.03399658e-02 seconds 
 ----------------------------------------------------
  Making Output Directory: refine-att-2nd-2/
 		
@@ -62,17 +60,16 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
 g=0, h=6.280000e-02, minVs/h=15.9246 (Cartesian)
 g=1, h=3.140000e-02, minVs/h=31.8472 (Cartesian)
 
-SG: using supergrid!
-SG: twilight setup!
 
 *** Attenuation parameters calculated for 1 mechanisms,
       max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
 
-   Execution time, start up phase 2.16285908e-01 seconds 
-Running sw4 on 4 processors...
+TIME accuracy order=2 CFL=6.00000000e-01 prel. time step=4.17627239e-03
+   Execution time, start up phase 2.16650963e-02 seconds 
+Running sw4 on 36 processors...
 Writing output to directory: refine-att-2nd-2/
 ============================================================
- Running program on 4 MPI tasks using the following data: 
+ Running program on 36 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 1
  Number of time steps = 239 dt: 0.0041841
@@ -94,11 +91,11 @@ Time step     101  t =   4.2259414e-01
 Time step     201  t =   8.4100418e-01
 Time step     239  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 4 minutes 2.69455699e+00 seconds 
+   Execution time, solver phase 2.26229341e+01 seconds 
 
- Final solution errors: Linf =   3.7794667e-05, L2 =   2.8139203e-04
+ Final solution errors: Linf =   3.7795075e-05, L2 =   2.8151877e-04
 
- Final solution errors, attenuation: Linf =   5.8556485e-05, L2 =   4.7252181e-04
+ Final solution errors, attenuation: Linf =   4.9427089e-05, L2 =   4.7256092e-04
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 

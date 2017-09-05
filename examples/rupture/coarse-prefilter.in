@@ -5,7 +5,7 @@ fileio path=coarse_pre_output
 # Grid coords: geo hbase: 10 hmin: 10
 grid x=30000 y=40000 z=25000 h=100 lat=37.008498 lon=129.943603 az=0 mlat=110954 mlon=88730
 # ppw: 10 fmax: 5.0 h=10
-time t=10.0 utcstart=01/01/2016:00:00:00.000
+time t=50.0 utcstart=01/01/2016:00:00:00.000
 supergrid gp=30
 
 prefilter fc2=1.0 type=lowpass passes=2 order=2
