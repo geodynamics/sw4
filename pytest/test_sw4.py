@@ -187,8 +187,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
         
             case_dir = base_case + '-' + str(ii+1)
             test_case = case_dir + '.in'
-            if verbose: 
-                print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
+            print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
             sw4_input_file = reference_dir + sep + test_dir + sep + test_case
             #print('sw4_input_file = ', sw4_input_file)
