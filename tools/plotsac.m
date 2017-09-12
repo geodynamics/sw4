@@ -43,6 +43,7 @@ end
 h=plot(t+tshift,ux,colorstring);
 %set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
+legend("East","location","southwest");
 axis tight;
 
 % north component
@@ -53,6 +54,7 @@ end
 h=plot(t+tshift,uy,colorstring);
 %set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
+legend("North","location","southwest");
 axis tight;
 
 % up component
@@ -63,4 +65,5 @@ end
 h=plot(t+tshift,uz,colorstring);
 %set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
+legend("Up","location","southwest");
 axis tight;
