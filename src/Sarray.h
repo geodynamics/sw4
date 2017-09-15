@@ -139,7 +139,8 @@ public:
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
    void assign( const float* ar, int corder );
-   void assign( const double* ar, int corder );
+   void assign(  const double* ar, int corder );
+   void extract( double* ar, int corder );
    void assign( const float* ar );
    void assign( const double* ar );
    void transposeik();

@@ -76,7 +76,8 @@ c$$$ 101  format(' ',a,g15.5,a)
 c$$$      end
       subroutine RANDOMFIELD3D( ifirst, ilast, jfirst, jlast, kfirst,
      *                          klast, nig, njg, nkg, gh, w, wgh, dist, 
-     *                          distz, h, randw, savedrands, p, pz )
+     *                          distz, h, randw, savedrands, p, pz ) 
+     *   bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nig, njg, nkg
       integer i, j, k, randw(3), iseed1, iseed2, iseed3, krand, iz, gh
@@ -207,6 +208,7 @@ c-----------------------------------------------------------------------
       subroutine RANDOMFIELD3DC( ifirst, ilast, jfirst, jlast, kfirst,
      *                          klast, nig, njg, nkg, gh, w, wgh, dist, 
      *                          distz, h, z, randw, savedrands, p, pz )
+     *   bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nig, njg, nkg
       integer i, j, k, randw(3), iseed1, iseed2, iseed3, krand, iz, gh
@@ -305,6 +307,7 @@ c               w(i,j,k) = w(i,j,k)/wgh(i,j,k)
 c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITY( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, vs, vp, per, amp, grad, zmin, h, plimit )
+     * bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k
@@ -351,6 +354,7 @@ c      write(*,*) '-----------------------------'
 c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITYC( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, vs, vp, per, amp, grad, z, plimit )
+     *   bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k

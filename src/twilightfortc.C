@@ -12,7 +12,7 @@ void EW::twilightfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
-   const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
+   const ssize_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 #pragma omp parallel
 #pragma omp for
    for( int k=kfirst; k<=klast; k++ )
@@ -158,6 +158,8 @@ void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast, int k
 #pragma omp for
    for( int k=kfirst; k<=klast; k++ )
       for( int j=jfirst; j<=jlast; j++ )
+#pragma ivdep
+#pragma simd
 	 for( int i=ifirst; i<=ilast; i++ )
 	 {
 	    size_t ind = base + i + ni*j + nij*k;
@@ -1680,7 +1682,7 @@ void EW::addmemvarforcing_ci( int ifirst, int ilast, int jfirst, int jlast, int 
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
-   const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
+   const ssize_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 #pragma omp parallel
    {
       float_sw4 dto = dt*omegaVE;
@@ -1876,9 +1878,9 @@ void EW::memvarforcesurf_ci( int ifirst, int ilast, int jfirst, int jlast,
              *(t142*t154-t146*t144+t148*t157*omega*c)+t142*t15*t60*t62+
                t146*t154+t148*t149*t40*t42)/6;
 	    size_t ind = base+i+ni*j;
-	    fo[3*ind] += forces[0];
-	    fo[3*ind+1] += forces[1];
-	    fo[3*ind+2] += forces[2];
+	    fo[ind] = forces[0];
+	    fo[ind+nij] = forces[1];
+	    fo[ind+2*nij] = forces[2];
 	 }
       }
    }
@@ -2259,7 +2261,7 @@ void EW::memvarforcesurfc_ci( int ifirst, int ilast, int jfirst, int jlast,
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base2 = -(ifirst+ni*jfirst);
-   const size_t base3 = -(ifirst+ni*jfirst-nij*kfirst);
+   const size_t base3 = -(ifirst+ni*jfirst+nij*kfirst);
 #pragma omp parallel
    {
       float_sw4 forces[3],t1,t10,t100,t105,t109,t113,t13,t139,t14,t141,t142,t144,t145,t146,t147,t148,t149,t15,t150,t154,t157,t17,t18,t19,t2,t20,t23,t25,t26,t27,t29,t30,t33,t34,t35,t36,t37,t4,t40,t42,t43,t45,t48,t5,t52,t53,t6,t60,t62,t63,t74,t82,t83,t84,t86,t88,t89,t9,t91,t93,t95,t97,t98,t99;
@@ -2346,9 +2348,9 @@ void EW::memvarforcesurfc_ci( int ifirst, int ilast, int jfirst, int jlast,
              *(t142*t154-t146*t144+t148*t157*omega*c)+t142*t15*t60*t62+
                t146*t154+t148*t149*t40*t42)/6;
 	    size_t ind2 = base2+i+ni*j;
-	    fo[3*ind2]   += forces[0];
-	    fo[3*ind2+1] += forces[1];
-	    fo[3*ind2+2] += forces[2];
+	    fo[ind2]   = forces[0];
+	    fo[ind2+nij] = forces[1];
+	    fo[ind2+2*nij] = forces[2];
 	 }
    }
 }

@@ -1718,7 +1718,6 @@ c No centered cross terms in r3
      +             (-u(1,i+2,j,q) + 8*u(1,i+1,j,q)
      +              -8*u(1,i-1,j,q) + u(1,i-2,j,q)) )
             enddo
-
             r3 = r3 + strx(i)*lau1xz
 
 *** (la*v_y)_z: NOT CENTERED
@@ -2133,13 +2132,13 @@ c-----------------------------------------------------------------------
 *** Hardcoded for the k=1 surface
       k  = 1
       kl = 1
+      s0i= 1/s(0)
+!$OMP PARALLEL PRIVATE(i,j,mupt,lapt,sgx,sgy,isgx,isgy,m2sg,m3sg,m4sg,
+!$OMP*                 ac,bc,cc,dc)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
-      s0i= 1/s(0)
-!$OMP PARALLEL PRIVATE(i,j,mupt,lapt,sgx,sgy,isgx,isgy,m2sg,m3sg,m4sg,
-!$OMP*                 ac,bc,cc,dc)
 !$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
@@ -2211,12 +2210,12 @@ c-----------------------------------------------------------------------
       cp = 0.5d0 + 1/(2*omdt) + omdt/4 + omdt*omdt/12
       cm = 0.5d0 - 1/(2*omdt) - omdt/4 + omdt*omdt/12
       cof = (omdt+1)/(6*cp)
+!$OMP PARALLEL PRIVATE(i,j,r1,r2,r3,sgx,sgy,isgx,isgy,rhs1,rhs2,
+!$OMP*                 rhs3,un1,vn1,wn1,m2sg,m3sg,m4sg,rtu,ac)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
-!$OMP PARALLEL PRIVATE(i,j,r1,r2,r3,sgx,sgy,isgx,isgy,rhs1,rhs2,
-!$OMP*                 rhs3,un1,vn1,wn1,m2sg,m3sg,m4sg,rtu,ac)
 !$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2

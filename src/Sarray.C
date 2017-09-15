@@ -769,6 +769,38 @@ void Sarray::assign( const double* ar, int corder )
 }
 
 //-----------------------------------------------------------------------
+void Sarray::extract( double* ar, int corder )
+{
+   if( corder == m_corder || corder == -1 )
+   {
+      // Both arrays in the same order
+#pragma omp parallel for
+      for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
+	 ar[i] = m_data[i];
+   }
+   else if( m_corder )
+   {
+      // Class array in corder, ar array in fortran order, 
+#pragma omp parallel for
+      for( int i=0 ; i <m_ni ; i++ )
+	 for( int j=0 ; j <m_nj ; j++ )
+	    for( int k=0 ; k <m_nk ; k++ )
+	       for( int c=0 ; c < m_nc ; c++ )
+		  ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];
+   }
+   else
+   {
+  // Class array in fortran order, ar array in corder, 
+#pragma omp parallel for
+      for( int i=0 ; i <m_ni ; i++ )
+	 for( int j=0 ; j <m_nj ; j++ )
+	    for( int k=0 ; k <m_nk ; k++ )
+	       for( int c=0 ; c < m_nc ; c++ )
+		  ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c]=m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];
+   }
+}
+
+//-----------------------------------------------------------------------
 void Sarray::assign( const float* ar )
 {
 #pragma omp parallel for

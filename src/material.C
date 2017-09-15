@@ -260,7 +260,7 @@ float_sw4 EW::localMin(std::vector<Sarray> & a_field)
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmin;
+       float_sw4 lmin=1e38;
 #pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -271,6 +271,7 @@ float_sw4 EW::localMin(std::vector<Sarray> & a_field)
                   if (a_field[g](i,j,k) < lmin)
                     {
                       lmin = a_field[g](i,j,k);
+		      //		      cout << "lmin = " << lmin << " at " << i << " " << j << " " << k << endl;
                     }
                 }
             }
@@ -287,7 +288,7 @@ float_sw4 EW::localMax(std::vector<Sarray> & a_field)
   float_sw4 lmax_all = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmax;
+       float_sw4 lmax=-1e38;
 #pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -316,7 +317,7 @@ float_sw4 EW::localMinVp()
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmin;
+       float_sw4 lmin=1e38;
 #pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -344,7 +345,7 @@ float_sw4 EW::localMaxVp()
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmax;
+       float_sw4 lmax=-1e38;
 #pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -372,7 +373,7 @@ float_sw4 EW::localMinVs()
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmin;
+       float_sw4 lmin=1e38;
 #pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -400,7 +401,7 @@ float_sw4 EW::localMaxVs()
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmax;
+       float_sw4 lmax=-1e38;
 #pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -429,7 +430,7 @@ float_sw4 EW::localMinVpOverVs()
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmin;
+       float_sw4 lmin=1e38;
 #pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
@@ -459,7 +460,7 @@ float_sw4 EW::localMaxVpOverVs()
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
-       float_sw4 lmax;
+       float_sw4 lmax=-1e38;
 #pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {

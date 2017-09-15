@@ -34,9 +34,9 @@ parallelStuff.C                     x                           x              x
 parseInputFile.C                    x                           x              x
 sacsubc.C                           x                           x              x
 sacutils.C                          x                           x              x
-setupRun.C
+setupRun.C                          x                           x              x
 solve.C
-time_functions.C
+time_functions.C                    x                           x              x
 version.C                           x                           x              x
 
 x- Strictly speaking 'x' under OpenMP added means OpenMP has been considered. If the code has been inspected, but no part of it is suitable for OpenMP pragmas, there is still an 'x' in this column. Similarly, 'x' in reverse C-order means the code should work in this index mode, not necessarily that any changes were made.

@@ -1,7 +1,7 @@
   routine                      to C       OpenMP-directive   __rectrict__ pointers
   -------
 addsgd.f                         x              x  F             x
-anisomtrltocurvilinear.f         -              x  F
+anisomtrltocurvilinear.f         x              x  F             x
 bcfort.f                         x              x* F
 bcfortanisg.f                    x              x* F
 bcfreesurfcurvani.f              x              x  F

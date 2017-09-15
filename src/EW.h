@@ -197,9 +197,10 @@ void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, flo
 			      float_sw4 &diffL2, float_sw4 &solInf, float_sw4 &solL2, vector<Source*> & a_globalSources);
 
 void test_sources( vector<GridPointSource*>& a_point_sources, vector<Source*>& a_global_unique_sources,
-		   vector<Sarray>& F );
+		   vector<Sarray>& F, vector<int>& identsources );
 void testSourceDiscretization( int kx[3], int ky[3], int kz[3],
-			       float_sw4 moments[3], vector<GridPointSource*>& point_sources, vector<Sarray>& F );
+			       float_sw4 moments[3], vector<GridPointSource*>& point_sources, vector<Sarray>& F,
+			       vector<int>& identsources );
 
 void setupSBPCoeff( );
 
@@ -1123,6 +1124,10 @@ void tw_ani_curvi_stiff_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			    float_sw4* __restrict__ zz, float_sw4 omm,
 			    float_sw4 phm, float_sw4 amprho, float_sw4* __restrict__ a_rho,
 			    float_sw4 a_phc[21], float_sw4* __restrict__  a_cm );
+
+void anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			       int klast, float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_c,
+			       float_sw4* __restrict__ a_cnew );
 
 void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 		int i1, int i2, int j1, int j2, int k1, int k2,

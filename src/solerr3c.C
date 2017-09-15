@@ -21,7 +21,9 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const size_t nijk = nij*(ke-kb+1);
 
    for( int c=0 ; c<3 ;c++)
-#pragma omp parallel for reduction(max:li,xli) reduction(+:l2)
+   {
+      float_sw4 liloc=0, l2loc=0, xliloc=0;
+#pragma omp parallel for reduction(max:liloc,xliloc) reduction(+:l2loc)
 	 for( size_t k=kmin; k <= kmax ; k++ )
 	    for( size_t j=jmin; j <= jmax ; j++ )
 	       for( size_t i=imin; i <= imax ; i++ )
@@ -30,13 +32,17 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      ((k-1)*h+zmin-z0)*((k-1)*h+zmin-z0) > sradius2 )
 		  {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb)+nijk*c;
-		     if( fabs(u[ind]-uex[ind])>li )
-			li = fabs(u[ind]-uex[ind]);
-		     if( uex[ind]>xli )
-			xli = uex[ind];
-		     l2 += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
+		     if( fabs(u[ind]-uex[ind])>liloc )
+			liloc = fabs(u[ind]-uex[ind]);
+		     if( uex[ind]>xliloc )
+			xliloc = uex[ind];
+		     l2loc += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
 		  }
 	       }
+	 l2 += l2loc;
+	 li  =  liloc >  li ?  liloc: li;
+	 xli = xliloc > xli ? xliloc:xli;
+   }
 }
 
 //-----------------------------------------------------------
@@ -52,31 +58,50 @@ void EW::solerrgp_ci( int ifirst, int ilast, int jfirst, int jlast,
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
    li = 0;
    l2 = 0;
-#pragma omp parallel 
+   //   int k=kfirst+1;
+   for( int c=0 ; c<3 ;c++)
    {
-      int k=kfirst+1;
-      for( int c=0 ; c<3 ;c++)
-#pragma omp for reduction(max:li) reduction(+:l2)
-	 for( int j=jfirst+2; j<= jlast-2 ; j++ )
-	    for( int i=ifirst+2; i<= ilast-2 ;i++ )
-	    {
+      float_sw4 liloc=0, l2loc=0;
+#pragma omp parallel for reduction(max:liloc) reduction(+:l2loc)
+      for( int j=jfirst+2; j<= jlast-2 ; j++ )
+	 for( int i=ifirst+2; i<= ilast-2 ;i++ )
+	 {
   // exact solution in array 'uex'
-	       size_t ind = base + i+ ni*j + nij*k+nijk*c;
-	       float_sw4 err = abs( u[ind]-uex[ind] );
-	       li = li > err ? li : err;
-	       l2 += h3*err*err;
-	    }
-      k=klast-1;
-      for( int c=0 ; c<3 ;c++)
-#pragma omp for reduction(max:li) reduction(+:l2)
-	 for( int j=jfirst+2; j<= jlast-2 ; j++ )
-	    for( int i=ifirst+2; i<= ilast-2 ;i++ )
+	    size_t ind = base + i+ ni*j + nij*(kfirst+1)+nijk*c;
+	    float_sw4 err = abs( u[ind]-uex[ind] );
+	    if( liloc < err )
 	    {
-	       size_t ind = base + i+ ni*j + nij*k+nijk*c;	       
-	       float_sw4 err = abs( u[ind]-uex[ind] );
-	       li = li > err ? li : err;
-	       l2 += h3*err*err;
+	       liloc = err;
+	       //	       cout << " num err= " << err << " at " << i << " " << j << " " << kfirst+1 << ", c= " << c << endl;
+	       //	       cout << "u, uex = " << u[ind] << " " << uex[ind] << endl;
 	    }
+		//	    liloc = liloc > err ? liloc : err;
+	    l2loc += h3*err*err;
+	 }
+      li  = li>liloc?li:liloc;
+      l2 += l2loc;
+   }
+   //      k=klast-1;
+   for( int c=0 ; c<3 ;c++)
+   {
+      float_sw4 liloc=0, l2loc=0;
+#pragma omp parallel for reduction(max:liloc) reduction(+:l2loc)
+      for( int j=jfirst+2; j<= jlast-2 ; j++ )
+	 for( int i=ifirst+2; i<= ilast-2 ;i++ )
+	 {
+	    size_t ind = base + i+ ni*j + nij*(klast-1)+nijk*c;	       
+	    float_sw4 err = abs( u[ind]-uex[ind] );
+	    if( liloc < err )
+	    {
+	       liloc = err;
+	       //	       cout << " num err= " << err << " at " << i << " " << j << " " << klast-1 << ", c= " << c <<  endl;
+	       //	       cout << "u, uex = " << u[ind] << " " << uex[ind] << endl;
+	    }
+	       //	    liloc = liloc > err ? liloc : err;
+	    l2loc += h3*err*err;
+	 }
+      li  = li>liloc?li:liloc;
+      l2 += l2loc;
    }
 }
 
@@ -101,9 +126,10 @@ void EW::solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const size_t nijk = nij*(ke-kb+1);
    const size_t base  = -(ib+ni*jb+nij*kb);
 
-#pragma omp parallel
    for( int c=0 ; c<3 ;c++)
-#pragma omp for reduction(max:li,xli) reduction(+:l2)
+   {
+      float_sw4 liloc=0, xliloc=0, l2loc=0;
+#pragma omp parallel for reduction(max:liloc,xliloc) reduction(+:l2loc)
 	 for( size_t k=kmin; k <= kmax ; k++ )
 	    for( size_t j=jmin; j <= jmax ; j++ )
 	       for( size_t i=imin; i <= imax ; i++ )
@@ -115,14 +141,18 @@ void EW::solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		  {
 		     size_t ind3 = ind+nijk*c;
 		     float_sw4 err = fabs(u[ind3]-uex[ind3]);
-		     li = li > err ? li:err;
-		     xli = xli > uex[ind3] ? xli:uex[ind3];
+		     liloc = liloc > err ? liloc:err;
+		     xliloc = xliloc > uex[ind3] ? xliloc:uex[ind3];
 		     if( usesg != 1 )
-			l2 += jac[ind]*err*err;
+			l2loc += jac[ind]*err*err;
 		     else
-			l2 += jac[ind]*err*err/(strx[i-ib]*stry[j-jb]);
+			l2loc += jac[ind]*err*err/(strx[i-ib]*stry[j-jb]);
 		  }
 	       }
+	 li = liloc>li?liloc:li;
+	 l2 += l2loc;
+	 xli = xliloc>xli?xliloc:xli;
+   }
 }
 
 //-----------------------------------------------------------------------

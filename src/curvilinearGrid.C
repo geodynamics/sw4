@@ -117,7 +117,7 @@ void EW::generate_grid()
 {
    // Generate grid on domain: topography <= z <= zmax, 
    // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
-   // spacing h. 
+   // spacing h.
   if (!m_topography_exists ) return;
   
 //  m_grid_interpolation_order = a_order;
@@ -157,7 +157,6 @@ void EW::generate_grid()
 	 mY(i,j,k) = Y0;
 	 mZ(i,j,k) = Z0;
       }
-
 // tmp
 // test the inverse mapping
 //  double q0, r0, s0, dist=0.;
@@ -733,8 +732,6 @@ void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, 
 
   int topLevel = mNumberOfGrids-1;
 
-  float_sw4 x, y;
-
 // copy data
   m_analytical_topo = true;
 //  m_analytical_topo = false;
@@ -748,8 +745,8 @@ void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, 
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
     {
-      x = (i-1)*mGridSize[topLevel];
-      y = (j-1)*mGridSize[topLevel];
+      float_sw4 x = (i-1)*mGridSize[topLevel];
+      float_sw4 y = (j-1)*mGridSize[topLevel];
 // positive topography  is up (negative z)
       mTopo(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
 			               -SQR((y-m_GaussianYc)/m_GaussianLy));
@@ -759,8 +756,8 @@ void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, 
   for (int i = mTopoGridExt.m_ib ; i <= mTopoGridExt.m_ie ; ++i)
      for (int j = mTopoGridExt.m_jb ; j <= mTopoGridExt.m_je; ++j)
      {
-	x = (i-1)*mGridSize[topLevel];
-	y = (j-1)*mGridSize[topLevel];
+	float_sw4 x = (i-1)*mGridSize[topLevel];
+	float_sw4 y = (j-1)*mGridSize[topLevel];
 // positive topography  is up (negative z)
 	mTopoGridExt(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
 						-SQR((y-m_GaussianYc)/m_GaussianLy)); 

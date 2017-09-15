@@ -468,7 +468,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_qmultiplier(1),
   m_randomize(false),
   m_anisotropic(false),
-  m_croutines(false),
+  m_croutines(true),
   NO_TOPO(1e38)
 {
   
@@ -481,6 +481,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
       m_mpifloat = MPI_DOUBLE;
    else
       CHECK_INPUT(false,"Error, could not identify float_sw4");
+
+#ifdef SW4_NOC
+   m_croutines = false;
+#endif
+   Sarray::m_corder = m_croutines;   
 
    //   m_error_checking = new ErrorChecking();
 // initialize the boundary condition array
@@ -1509,20 +1514,22 @@ void EW::print_execution_times( double times[7] )
       if( printavgs )
       {
 	 cout << " Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  " << endl;
+	 cout.setf(ios::left);
+	 cout.precision(3);
 	 cout.width(11);
-	 cout << avgs[3];
+	 cout <<  avgs[3];
 	 cout.width(11);
 	 cout << avgs[1];
 	 cout.width(11);
 	 cout << avgs[0];
 	 cout.width(11);
-	 cout << avgs[2];
+	 cout <<  avgs[2];
 	 cout.width(11);
-	 cout << avgs[4];
+	 cout <<  avgs[4];
 	 cout.width(11);
-	 cout << avgs[5];
+	 cout <<  avgs[5];
 	 cout.width(11);
-	 cout << avgs[6];
+	 cout <<  avgs[6];
 	 cout << endl;
       }
       else
@@ -1720,8 +1727,8 @@ void EW::normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & 
   float_sw4 *uex_ptr, *u_ptr, h, linfLocal=0, l2Local=0, diffInfLocal=0, diffL2Local=0;
 
 //tmp  
-  if (proc_zero())
-    printf("Inside normOfDifferenceGhostPoints\n");
+//  if (proc_zero())
+//    printf("Inside normOfDifferenceGhostPoints\n");
   
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -1746,7 +1753,12 @@ void EW::normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & 
 		 uex_ptr, u_ptr, &linfLocal, &l2Local);
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     diffL2Local += l2Local;
+    //    cout << m_myRank << " g, l2, li = " << " " << g << " " << l2Local << " " << linfLocal << endl;
   }
+
+  //  cout << m_myRank << " l2, li = " << diffL2Local << " " << diffInfLocal << endl;
+
+
 // communicate local results for global errors
   MPI_Allreduce( &diffInfLocal, &diffInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
   MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
@@ -1862,7 +1874,7 @@ void EW::bndryInteriorDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U,
     jlast   = m_jEnd[g];
     kfirst  = m_kStart[g];
     klast   = m_kEnd[g];
-    h       = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+    h       = mGridSize[g];
     nz      = m_global_nz[g];
     
 // need to do a gather over all processors
@@ -2126,7 +2138,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
        a_U[g].assign(uexact,0);
        delete[] uexact;
     }
-     retval = true;
+    retval = true;
   }
   else if( m_lamb_test )
   {

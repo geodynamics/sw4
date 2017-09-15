@@ -42,7 +42,7 @@ int EW::metric_ci( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* __
 
    double h = x(ib+1,jb,kb)-x(ib,jb,kb);
 
-#pragma omp parallel for reduction(min:ecode)
+#pragma omp parallel for reduction(+:ecode)
    for( int k = kb; k <= ke ; k++ )
       for( int j = jb; j <= je ; j++ )
 #pragma ivdep
@@ -131,8 +131,11 @@ int EW::metric_ci( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* __
 
 // Compute the metric
 	    if( zr <= 0 )
+	    {
 	       ecode = -1;
-
+	       //	       cout << "zr = " << zr << " at " << i << " " << j << " " << k << endl;
+	       //	       cout << "x,y,z = " << x(i,j,k) << " " << y(i,j,k) << " " << z(i,j,k) << endl;
+	    }
 	    sqzr = sqrt(zr);
 	    jac(i,j,k) = h*h*zr;
 	    met(1,i,j,k) = sqzr;
@@ -385,11 +388,13 @@ void EW::getsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base3 = base-nijk;
    const int basef3= basef-nij;
    const int nic3  = 3*ni;
+   const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]
 #define forcing(c,i,j) a_forcing[3*basef-1+(c)+3*(i)+nic3*(j)]
-#define tau(c,i,j)     a_tau[basef3+(i)+ni*(j)+nij*(c)]
+#define tau(c,i,j)     a_tau[basef-nij +(i)+ni*(j)+nij*(c)]
+   //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
 
 #pragma omp parallel for
    for( int j=jfirst ; j <= jlast ; j++ )
@@ -426,9 +431,11 @@ void EW::getsurfforcinggh_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base3 = base-nijk;
    const int basef3= basef-nij;
    const int nic3  = 3*ni;
+   const int nic6  = 6*ni;
 
 #define forcing(c,i,j) a_forcing[3*basef-1+(c)+3*(i)+nic3*(j)]
-#define tau(c,i,j)     a_tau[basef3+(i)+ni*(j)+nij*(c)]
+#define tau(c,i,j)     a_tau[basef-nij +(i)+ni*(j)+nij*(c)]
+//#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
    float_sw4 ixl2 = 1/(xl*xl);
    float_sw4 iyl2 = 1/(yl*yl);
 #pragma omp parallel for
@@ -464,11 +471,13 @@ void EW::subsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base3 = base-nijk;
    const int basef3= basef-nij;
    const int nic3  = 3*ni;
+   const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]
 #define forcing(c,i,j) a_forcing[3*basef-1+(c)+3*(i)+nic3*(j)]
-#define tau(c,i,j)     a_tau[basef3+(i)+ni*(j)+nij*(c)]
+#define tau(c,i,j)     a_tau[basef-nij +(i)+ni*(j)+nij*(c)]
+   //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
 
 #pragma omp parallel for
    for( int j=jfirst ; j <= jlast ; j++ )
