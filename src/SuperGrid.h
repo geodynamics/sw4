@@ -33,29 +33,31 @@
 #ifndef SUPERGRID_H
 #define SUPERGRID_H
 
+#include "sw4.h"
+
 class SuperGrid 
 {
 
 public:
 SuperGrid();
-void define_taper(bool left, double leftStart, bool right, double rightEnd, 
-		  double width );
-double dampingCoeff(double x) const;
-double stretching( double x ) const;
-double cornerTaper( double x ) const;
-double tw_stretching( double x ) const;
-double get_tw_omega() const {return m_tw_omega;}
-void   set_twilight( double omega );
+void define_taper(bool left, float_sw4 leftStart, bool right, float_sw4 rightEnd, 
+		  float_sw4 width );
+float_sw4 dampingCoeff(float_sw4 x) const;
+float_sw4 stretching( float_sw4 x ) const;
+float_sw4 cornerTaper( float_sw4 x ) const;
+float_sw4 tw_stretching( float_sw4 x ) const;
+float_sw4 get_tw_omega() const {return m_tw_omega;}
+void   set_twilight( float_sw4 omega );
 void   print_parameters() const;
 
 private:
 bool m_left, m_right;
-double m_x0, m_x1, m_width, m_trans_width, m_const_width;
-double m_epsL, m_tw_omega;
-double Psi0(double xi) const;
-double PsiAux(double x) const;
-double PsiDamp(double x) const;
-double linTaper(double x) const;
+float_sw4 m_x0, m_x1, m_width, m_trans_width, m_const_width;
+float_sw4 m_epsL, m_tw_omega;
+float_sw4 Psi0(float_sw4 xi) const;
+float_sw4 PsiAux(float_sw4 x) const;
+float_sw4 PsiDamp(float_sw4 x) const;
+float_sw4 linTaper(float_sw4 x) const;
 
 };
 

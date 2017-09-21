@@ -765,20 +765,24 @@ int  streql(const char *str1, const char *str2)
 
 void scmxmn(float *x, int npts, float *depmax, float *depmin, float *depmen)
 {
-	int i;
 	double sum;
-	*depmax = -1.0e+38 ;
-	*depmin =  1.0e+38 ;
+	float dpmax = -1e+38;
+	float dpmin =  1e+38;
+	//	*depmax = -1.0e+38 ;
+	//	*depmin =  1.0e+38 ;
 	sum = 0.0e+00 ;
-	for( i=0 ; i < npts ; i++){
-		if( x[i] > *depmax) *depmax = x[i] ;
-		if( x[i] < *depmin) *depmin = x[i] ;
+#pragma omp parallel for reduction(max:dpmax) reduction(min:dpmin) reduction(+:sum)
+	for( int i=0 ; i < npts ; i++){
+		if( x[i] > dpmax) dpmax = x[i] ;
+		if( x[i] < dpmin) dpmin = x[i] ;
 		sum +=  x[i] ;
  	}
 	if(npts > 0)
 		*depmen = sum / npts ;
 	else
 		*depmen = -12345. ;
+	*depmax = dpmax;
+	*depmin = dpmin;
 }
 	
 

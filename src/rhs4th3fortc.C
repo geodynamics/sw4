@@ -1203,11 +1203,11 @@ void EW::rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 		     //			lap2mu += acof(k,q,m)*(la(i,j,m)+2*mu(i,j,m));
 		     //		     }
 		     lap2mu = acof(k,q,1)*(la(i,j,1)+2*mu(i,j,1))+acof(k,q,2)*(la(i,j,2)+2*mu(i,j,2))+
-			acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3))+acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4))+
-			acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5))+acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6))+
-			acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7))+acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8));
+		     	      acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3))+acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4))+
+			      acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5))+acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6))+
+			      acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7))+acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8));
 		     mucof = acof(k,q,1)*mu(i,j,1)+acof(k,q,2)*mu(i,j,2)+acof(k,q,3)*mu(i,j,3)+acof(k,q,4)*mu(i,j,4)+
-			acof(k,q,5)*mu(i,j,5)+acof(k,q,6)*mu(i,j,6)+acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8);
+			     acof(k,q,5)*mu(i,j,5)+acof(k,q,6)*mu(i,j,6)+acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8);
 		     mu1zz += mucof*u(1,i,j,q);
 		     mu2zz += mucof*u(2,i,j,q);
 		     mu3zz += lap2mu*u(3,i,j,q);
@@ -1712,7 +1712,7 @@ void EW::rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
       float_sw4 highz=0;
 #pragma omp parallel
 #pragma omp for reduction(max:highz)
-      for( int k=7 ; k<= nz-6 ; k++ )
+      for( int k=nz-5 ; k<= nz ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
@@ -1781,7 +1781,7 @@ void EW::rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
       float_sw4 highz=0;
 #pragma omp parallel
 #pragma omp for reduction(max:highz)
-      for( int k=7 ; k<= nz-6 ; k++ )
+      for( int k=nz-5 ; k<= nz ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
@@ -1867,9 +1867,9 @@ void EW::updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 
 #define alp(c,i,j,k) a_alp[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 #define alm(c,i,j,k) a_alm[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define up(c,i,j,k) a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define u(c,i,j,k)   a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define um(c,i,j,k) a_um[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+#define up(c,i,j,k)   a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+#define u(c,i,j,k)     a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+#define um(c,i,j,k)   a_um[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 
    float_sw4 dto = dt*omega;
    float_sw4 icp = 1.0/( 1.0/2 + 1/(2*dto) + dto/4 + dto*dto/12 );
@@ -1951,7 +1951,7 @@ void EW::solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
 			    float_sw4* __restrict__ a_up )
 {
 #define alpha(c,i,j,k) a_alpha[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define up(c,i,j,k) a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+#define up(c,i,j,k)       a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);
@@ -1997,16 +1997,17 @@ void EW::solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
 #define met(c,i,j,k) a_met[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define mu(i,j,k) a_mu[base+i+ni*(j)+nij*(k)]
 #define la(i,j,k) a_la[base+i+ni*(j)+nij*(k)]
-#define muve(i,j)       a_mu[base0+i+ni*(j)]
+#define muve(i,j)       a_muve[base0+i+ni*(j)]
 #define lambdave(i,j) a_lave[base0+i+ni*(j)]
 #define sgstrx(i) a_strx[i-ifirst]
 #define sgstry(j) a_stry[j-jfirst]
-#define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
+#define bforcerhs(c,i,j) a_bforcerhs[base03+(i)+ni*(j)+nij*(c)]
 
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);
    const int base0 = -(ifirst+ni*jfirst);
+   const int base03 = base0-nij;
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int base3 = base-nijk;
 
@@ -2082,8 +2083,10 @@ void EW::addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
 #define lambdavebnd(i,j) a_lambdavebnd[base0+i+ni*(j)]
 #define sgstrx(i) a_strx[i-ifirst]
 #define sgstry(j) a_stry[j-jfirst]
-#define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
-#define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
+   //#define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
+   //#define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
+#define bforcerhs(c,i,j) a_bforcerhs[base03+(i)+ni*(j)+nij*(c)]
+#define memforce(c,i,j)   a_memforce[base03+(i)+ni*(j)+nij*(c)]
 
    const float_sw4 i6 = 1.0/6;
    const float_sw4 c1 = 2.0/3;
@@ -2091,7 +2094,9 @@ void EW::addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);
+   //   const int base0 = -(ifirst+ni*jfirst);
    const int base0 = -(ifirst+ni*jfirst);
+   const int base03 = base0 - nij;
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int base3 = base-nijk;
    int k, kl;
@@ -2109,7 +2114,6 @@ void EW::addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
    float_sw4 cp = 0.5 + 1/(2*omdt) + omdt/4 + omdt*omdt/12;
    float_sw4 cm = 0.5 - 1/(2*omdt) - omdt/4 + omdt*omdt/12;
    cof = (omdt+1)/(6*cp);
-
 #pragma omp parallel
    {
       float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;

@@ -510,7 +510,7 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 	    for( int j=jb+2 ; j <= je-2 ; j++ )
 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
 	       {
-		  size_t qq = i-ib+ni*(j-jb);
+		  size_t qq  = i-ib+ni*(j-jb);
 		  size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		  float_sw4 wx = strx[i-ib]*(d4a*(u[2*npts+ind+1]-u[2*npts+ind-1])+d4b*(u[2*npts+ind+2]-u[2*npts+ind-2]));
 		  float_sw4 ux = strx[i-ib]*(d4a*(u[ind+1]-u[ind-1])+d4b*(u[ind+2]-u[ind-2]));
@@ -784,9 +784,9 @@ void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast, int 
 	 forces[2] = 2*mua[ind]*t43*t23*t51*omega+lambdaa[ind]*
 	    (t19*(t56*omega*t8*t51+t5*t43*t61)+t42*t28*t66*omega*t68+t43*t23*t61);
 
-	 bforce[  3*qq]=forces[0];
-	 bforce[1+3*qq]=forces[1];
-	 bforce[2+3*qq]=forces[2];
+	 bforce[  3*qq]-=forces[0];
+	 bforce[1+3*qq]-=forces[1];
+	 bforce[2+3*qq]-=forces[2];
       }
 }
 
@@ -823,21 +823,21 @@ void EW::twstensor_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 	 t30 = om*(z-t1);
 	 t31 = cos(t30);
 	 t35 = lambdaa*(t4*om*t8*t12+t21*t24*t26+t21*t8*t31*om);
-	 tau[6*qq] = 2*muu*t4*om*t8*t12+t35;
+	 tau[qq] = 2*muu*t4*om*t8*t12+t35;
 	 t36 = cos(t20);
 	 t37 = t36*om;
 	 t38 = sin(t23);
 	 t41 = sin(t3);
 	 t42 = cos(t7);
-	 tau[1+6*qq] = muu*(t37*t38*t12+t41*t42*t26);
+	 tau[qq+nij] = muu*(t37*t38*t12+t41*t42*t26);
 	 t46 = sin(t30);
 	 t50 = cos(t11);
 	 t51 = t50*om;
-	 tau[2+6*qq] = muu*(t37*t8*t46+t41*t8*t51);
+	 tau[qq+2*nij] = muu*(t37*t8*t46+t41*t8*t51);
 	 t54 = muu*t21;
-	 tau[3+6*qq] = 2*t54*t24*om*t12+t35;
-	 tau[4+6*qq] = muu*(t21*t42*om*t46+t21*t38*t51);
-	 tau[5+6*qq] = 2*t54*t8*t31*om+t35;
+	 tau[qq+3*nij] = 2*t54*t24*om*t12+t35;
+	 tau[qq+4*nij] = muu*(t21*t42*om*t46+t21*t38*t51);
+	 tau[qq+5*nij] = 2*t54*t8*t31*om+t35;
       }
 }
 
@@ -883,21 +883,21 @@ void EW::twstensorsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 	 t39 = om*(z-t6);
 	 t40 = cos(t39);
 	 t44 = lambdaa*(t4*t9*t18+t30*t35+t29*t13*t40*om);
-	 tau[6*qq] = 2*muu*t4*t9*t18+t44;
+	 tau[qq] = 2*muu*t4*t9*t18+t44;
 	 t45 = cos(t28);
 	 t46 = t4*t45;
 	 t47 = sin(t32);
 	 t51 = sin(t8);
 	 t53 = cos(t12);
 	 t54 = t53*om;
-	 tau[1+6*qq] = muu*(t46*om*t47*t17+t26*t51*t54*t17);
+	 tau[qq+nij] = muu*(t46*om*t47*t17+t26*t51*t54*t17);
 	 t59 = cos(t16);
 	 t60 = t59*om;
 	 t62 = sin(t39);
-	 tau[2+6*qq] = muu*(t51*t13*t60+t46*t14*t62);
-	 tau[3+6*qq] = 2*muu*t26*t29*t35+t44;
-	 tau[4+6*qq] = muu*(t29*t47*t60+t30*t54*t62);
-	 tau[5+6*qq] = 2*muu*t29*t13*t40*om+t44;
+	 tau[qq+2*nij] = muu*(t51*t13*t60+t46*t14*t62);
+	 tau[qq+3*nij] = 2*muu*t26*t29*t35+t44;
+	 tau[qq+4*nij] = muu*(t29*t47*t60+t30*t54*t62);
+	 tau[qq+5*nij] = 2*muu*t29*t13*t40*om+t44;
       }
 }
 
@@ -955,12 +955,12 @@ void EW::twstensoratt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	 stensor[4] = muu*(-t24*t44*t61*omega+t17*t64*t49);
 	 stensor[5] = 2*muu*t17*t37*t13*omega+t41;
 
-	 tau[  6*qq]=stensor[0];
-	 tau[1+6*qq]=stensor[1];
-	 tau[2+6*qq]=stensor[2];
-	 tau[3+6*qq]=stensor[3];
-	 tau[4+6*qq]=stensor[4];
-	 tau[5+6*qq]=stensor[5];
+	 tau[qq      ]=stensor[0];
+	 tau[qq+  nij]=stensor[1];
+	 tau[qq+2*nij]=stensor[2];
+	 tau[qq+3*nij]=stensor[3];
+	 tau[qq+4*nij]=stensor[4];
+	 tau[qq+5*nij]=stensor[5];
       }
 }
 
@@ -1022,11 +1022,11 @@ void EW::twstensorsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 	 stensor[4] = muu*(-t34*t55*t72*omega+t33*t22*t76*omega*t59);
 	 stensor[5] = 2*muu*t22*t48*t18*omega+t52;
 
-	 tau[  6*qq]=stensor[0];
-	 tau[1+6*qq]=stensor[1];
-	 tau[2+6*qq]=stensor[2];
-	 tau[3+6*qq]=stensor[3];
-	 tau[4+6*qq]=stensor[4];
-	 tau[5+6*qq]=stensor[5];
+	 tau[qq      ]=stensor[0];
+	 tau[qq  +nij]=stensor[1];
+	 tau[qq+2*nij]=stensor[2];
+	 tau[qq+3*nij]=stensor[3];
+	 tau[qq+4*nij]=stensor[4];
+	 tau[qq+5*nij]=stensor[5];
       }
 }

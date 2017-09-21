@@ -119,6 +119,9 @@ c this test only includes the ghost points
 c exact solution in array 'uex'
           do c=1,3
             err(c) = ABS( u(c,i,j,k) - uex(c,i,j,k) )
+c            if( c.eq.2 .and. i.eq.4 .and. j.eq.14 )then
+c               write(*,*) 'errs',u(c,i,j,k),uex(c,i,j,k)
+c            endif
           enddo
           if( li.lt.max(err(1),err(2),err(3)) )then
             li = max(err(1),err(2),err(3))

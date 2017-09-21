@@ -157,11 +157,13 @@ void EW::getsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base3 = base-nijk;
    const int basef3= basef-nij;
    const int nic3  = 3*ni;
+   const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]
 #define forcing(c,i,j) a_forcing[3*basef-1+(c)+3*(i)+nic3*(j)]
-#define tau(c,i,j)     a_tau[basef3+(i)+ni*(j)+nij*(c)]
+   //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+#define tau(c,i,j)     a_tau[basef-nij +(i)+ni*(j)+nij*(c)]
 #define strx(i) a_strx[i-ifirst]
 #define stry(j) a_stry[j-jfirst]
 
@@ -209,11 +211,13 @@ void EW::subsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base3 = base-nijk;
    const int basef3= basef-nij;
    const int nic3  = 3*ni;
+   const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]
 #define forcing(c,i,j) a_forcing[3*basef-1+(c)+3*(i)+nic3*(j)]
-#define tau(c,i,j)     a_tau[basef3+(i)+ni*(j)+nij*(c)]
+   //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+#define tau(c,i,j)     a_tau[basef-nij +(i)+ni*(j)+nij*(c)]
 #define strx(i) a_strx[i-ifirst]
 #define stry(j) a_stry[j-jfirst]
 

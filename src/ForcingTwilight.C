@@ -32,9 +32,9 @@
 #include "ForcingTwilight.h"
 
 //-----------------------------------------------------------------------
-ForcingTwilight::ForcingTwilight( double omega, double c, double phase,
-				  double momega, double mphase, double amprho,
-				  double ampmu, double amplambda )
+ForcingTwilight::ForcingTwilight( float_sw4 omega, float_sw4 c, float_sw4 phase,
+				  float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
+				  float_sw4 ampmu, float_sw4 amplambda )
 {
    m_omega  = omega;
    m_c      = c;

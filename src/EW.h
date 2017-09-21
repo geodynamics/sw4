@@ -186,8 +186,9 @@ void initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaV
 bool exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE, vector<Source*>& source );
 void exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F);
 void exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc);
-void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
-void Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources );
+void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, vector<int> identsources );
+void Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, vector<int> identsources );
+void sort_grid_point_sources( vector<GridPointSource*>& point_sources, vector<int>& identsources );
 
 void normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, float_sw4 &diffL2, float_sw4 &xInf,
 		       vector<Source*>& a_globalSources );
@@ -196,9 +197,10 @@ void normOfSurfaceDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, flo
 			      float_sw4 &diffL2, float_sw4 &solInf, float_sw4 &solL2, vector<Source*> & a_globalSources);
 
 void test_sources( vector<GridPointSource*>& a_point_sources, vector<Source*>& a_global_unique_sources,
-		   vector<Sarray>& F );
+		   vector<Sarray>& F, vector<int>& identsources );
 void testSourceDiscretization( int kx[3], int ky[3], int kz[3],
-			       float_sw4 moments[3], vector<GridPointSource*>& point_sources, vector<Sarray>& F );
+			       float_sw4 moments[3], vector<GridPointSource*>& point_sources, vector<Sarray>& F,
+			       vector<int>& identsources );
 
 void setupSBPCoeff( );
 
@@ -1123,6 +1125,10 @@ void tw_ani_curvi_stiff_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			    float_sw4 phm, float_sw4 amprho, float_sw4* __restrict__ a_rho,
 			    float_sw4 a_phc[21], float_sw4* __restrict__  a_cm );
 
+void anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
+			       int klast, float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_c,
+			       float_sw4* __restrict__ a_cnew );
+
 void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 		int i1, int i2, int j1, int j2, int k1, int k2,
 		float_sw4* __restrict__ mu, float_sw4* __restrict__ lambda,
@@ -1199,6 +1205,7 @@ vector<Sarray> mLambda;
 vector<Sarray> mRho;
 vector<Sarray> mC; // Anisotropic material parameters
 Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
+
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
@@ -1442,8 +1449,8 @@ EW& operator=(const EW&);
 
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as
-float_sw4 mGeoAz;
-float_sw4 mLonOrigin, mLatOrigin;
+double mGeoAz;
+double mLonOrigin, mLatOrigin;
 
 //GeographicCoord mGeoCoord;
 float_sw4 mMetersPerDegree, mMetersPerLongitude;
@@ -1493,6 +1500,7 @@ vector<MPI_Datatype> m_send_type_2dx3p;
 vector<MPI_Datatype> m_send_type_2dy3p;
 vector<MPI_Datatype> m_send_type_2dx1p;
 vector<MPI_Datatype> m_send_type_2dy1p;
+public:
 MPI_Datatype m_mpifloat;
 
 bool m_topography_exists;
