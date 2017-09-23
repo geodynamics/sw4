@@ -10,10 +10,11 @@ numnodes=4
 
 #    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
-numprocspernode=64
+#numprocspernode=16
+for numprocspernode in 1 2 4 8; do
+
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
-# for numprocs in 1 2 4; do
 
 # Number of ranks x threads is constant
 # hc = hardware cores
@@ -40,10 +41,12 @@ MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores"
 # 1st case
 CASE=LOH.1-h50
 RUN_COMMAND="./sw4 ${CASE}.in"
-${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}.out
+${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 
 # 2nd case
 CASE=LOH.2-h50
 RUN_COMMAND="./sw4 ${CASE}.in"
-${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}.out
+${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
+
+done
 
