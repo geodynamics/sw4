@@ -1,15 +1,18 @@
 #!/bin/bash
-#SBATCH -N 12
+#SBATCH -N 4
 #SBATCH -p debug
 #SBATCH -A m2545
 #SBATCH -S 4     # Special cores per nodes (4 are idle)
 #SBATCH -t 00:30:00 
 #SBATCH -C knl,quad,cache
 
-numnodes=12
+numnodes=4
+
+#    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
 #numprocspernode=16
-for numprocspernode in 16 8; do
+#for numprocspernode in 1 2 4 8; do
+for numprocspernode in 64; do
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
@@ -36,8 +39,13 @@ export OMP_PROC_BIND=spread
 # Run the job with this MPI + OpenMP configuration
 MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
 
-# 3rd case
-CASE=LOH.3-h50
+# 1st case
+#CASE=LOH.1-h50
+#RUN_COMMAND="./sw4 ${CASE}.in"
+#${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
+
+# 2nd case
+CASE=LOH.2-h50
 RUN_COMMAND="./sw4 ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 

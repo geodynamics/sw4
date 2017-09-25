@@ -17,8 +17,8 @@ globalmaterial  vpmin=866 vsmin=500
 
 # Rfile USGS 3D model + topography
 # NERSC (cori) parallel file system:
-rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp/hayward
-topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/hayward/USGSBayAreaVM-08.3.0-corder.rfile
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp
+topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/USGSBayAreaVM-08.3.0-corder.rfile
 
 # LC (quartz) parallel file system
 #rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/p/lscratchh/andersp/rfile-lscratch
