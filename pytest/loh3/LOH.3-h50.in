@@ -1,0 +1,40 @@
+# This is a SW4 input file describing problem LOH.3 from the SCEC test suite, see
+# "Steven Day et al., Tests of 3D Elastodynamic Codes:
+# Final report for lifelines project 1A01, Pacific Eartquake
+# Engineering Center, 2001".
+
+grid h=50 x=40000 y=40000 z=20000
+time t=1
+fileio path=loh3-h50
+
+# wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
+attenuation phasefreq=2.5 nmech=3 maxfreq=15
+
+#specify the width of the super grid damping layer (30 is the default)
+supergrid gp=30
+
+# material properties in the half-space
+block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
+# material properties in the top layer
+block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+#
+# Interface (harmonic (mu,la)-averages, arithmetic rho,Q
+block vs=2437.6 vp=4630.8 r=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001
+
+# Gaussian time function gives velocities directly
+# sigma=0.05 gives freq=1/sigma=20 (LOH.3)
+# t0 = 6*sigma = 0.3 avoids (most) startup transients and is
+# consistent with the matlab script PlotAnalyticalLOH3.m
+source x=15000 y=15000 z=2000 mxy=1e18 t0=0.3 freq=20 type=Gaussian
+#
+# record time history at receiver stations along a line on the free surface (z=0)
+#rec x=15600 y=15800 z=0 file=sta01 usgsformat=1
+#rec x=16200 y=16600 z=0 file=sta02 usgsformat=1
+#rec x=16800 y=17400 z=0 file=sta03 usgsformat=1
+#rec x=17400 y=18200 z=0 file=sta04 usgsformat=1
+#rec x=18000 y=19000 z=0 file=sta05 usgsformat=1
+#rec x=18600 y=19800 z=0 file=sta06 usgsformat=1
+#rec x=19200 y=20600 z=0 file=sta07 usgsformat=1
+#rec x=19800 y=21400 z=0 file=sta08 usgsformat=1
+#rec x=20400 y=22200 z=0 file=sta09 usgsformat=1
+rec x=21000 y=23000 z=0 file=sta10 usgsformat=1
