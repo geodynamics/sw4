@@ -153,7 +153,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     if (omp_threads>0):
-        sw4_mpi_run = 'export OMP_NUM_THREADS=' + str(omp_threads) + '; ' + sw4_mpi_run
+        os.putenv("OMP_NUM_THREADS", str(omp_threads))
 
     if verbose: print('sw4_mpi_run = ', sw4_mpi_run)
 
