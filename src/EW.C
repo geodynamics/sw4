@@ -7012,9 +7012,9 @@ void EW::setup_viscoelastic( )
 // loop over all grid points in all grids
        for( g = 0 ; g < mNumberOfGrids; g++ )
 #pragma omp parallel for
-	  for(k=m_kStart[g]; k<= m_kEnd[g]; k++ )
-	     for(j=m_jStart[g]; j<= m_jEnd[g]; j++ )
-		for(i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+	  for(int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+	     for(int j=m_jStart[g]; j<= m_jEnd[g]; j++ )
+		for(int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
 		{
 		   double *a_=new float_sw4[n*nc];
 		   double *beta=new double[nc];

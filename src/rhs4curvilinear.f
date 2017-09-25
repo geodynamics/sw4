@@ -544,13 +544,13 @@ c-----------------------------------------------------------------------
          a1 = 1
          a2 =-1
       endif
+
+!$OMP PARALLEL PRIVATE(i,j,sgx,sgy,isgy,isgx,rhs1,rhs2,rhs3,un1,vn1,
+!$OMP*                 wn1,m2sg,m3sg,m4sg,rtu,ac)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
-
-!$OMP PARALLEL PRIVATE(i,j,sgx,sgy,isgy,isgx,rhs1,rhs2,rhs3,un1,vn1,
-!$OMP*                 wn1,m2sg,m3sg,m4sg,rtu,ac)
 !$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
