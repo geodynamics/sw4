@@ -1,0 +1,48 @@
+# SW4 input file for testing the rfile command
+
+# set pfs=1 if you are on a parallel file system
+fileio path=berkeley-r.out
+
+# grid size is set in the grid command
+# DO NOT CHANGE AZ!
+grid x=12e3 y=12e3 z=5e3 h=40 lat=37.93 lon=-122.25 az=143.638 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+
+# curvilinear grid extends to z=6000 and gets approximately the same gridsize as the finest Cartesian
+# CHECK PATH TO RFILE
+topography input=rfile zmax=2e3 order=3 file=/usr/apps/sw4/RFILE/berkeley.rfile
+
+time t=10
+
+# Verison 8.3 of USGS model in rfile format
+# CHECK PATH TO RFILE
+rfile filename=berkeley.rfile directory=/usr/apps/sw4/RFILE
+
+# threshold on vp and vs (optional)
+globalmaterial vsmin=200 vpmin=346
+
+# images
+# topography (can't be written without the topography command enabled)
+image mode=topo z=0.0 cycle=0 file=berk
+
+image mode=lat z=0.0 cycle=0 file=berk
+image mode=lon z=0.0 cycle=0 file=berk
+
+# Output images of the elastic model on the surface (z=0)
+image mode=rho z=0.0 cycle=0 file=berk
+image mode=p z=0.0 cycle=0 file=berk
+image mode=s z=0.0 cycle=0 file=berk
+
+# vertical cross section
+image mode=rho x=2.5e3 cycle=0 file=berk
+image mode=s x=2.5e3 cycle=0 file=berk
+image mode=p x=2.5e3 cycle=0 file=berk
+
+# solution on the surface
+image mode=velmag z=0.0 timeInterval=5 file=berk
+#image mode=hvelmax z=0.0 timeInterval=5 file=berk
+
+# simple source (irrelevant for this test)
+source x=6.0e3 y=6.0e3 z=1e3 strike=142.1 rake=180 dip=95.6 m0=1.7162e+17 t0=0.0 freq=1.75 type=Liu
+
+rec x=2e3 y=2e3 depth=0 file=sta1 usgsformat=1
+rec x=10e3 y=2e3 depth=0 file=sta2 usgsformat=1
