@@ -39,23 +39,23 @@ class EW;
 class MaterialBlock : public MaterialData
 {
  public:
-   MaterialBlock( EW * a_ew,double rho, double vs, double vp, double xmin, double xmax, double ymin,
-		  double ymax, double zmin, double zmax, double qs=-1, double qp=-1,
-		  double freq=1 );
+   MaterialBlock( EW * a_ew,float_sw4 rho, float_sw4 vs, float_sw4 vp, float_sw4 xmin, float_sw4 xmax, float_sw4 ymin,
+		  float_sw4 ymax, float_sw4 zmin, float_sw4 zmax, float_sw4 qs=-1, float_sw4 qp=-1,
+		  float_sw4 freq=1 );
 
    virtual void set_material_properties( std::vector<Sarray> &rho, std::vector<Sarray> &cs,
 					 std::vector<Sarray> &cp,
 					 std::vector<Sarray>& xis, std::vector<Sarray>& xip);
 
-   void set_gradients( double rhograd, double vsgrad, double vpgrad );
+   void set_gradients( float_sw4 rhograd, float_sw4 vsgrad, float_sw4 vpgrad );
    void set_absoluteDepth( bool absDepth );
 
 private:
-  bool inside_block( double x, double y, double z );
-  double m_rho, m_vp, m_vs, m_qp, m_qs, m_freq;
-  double m_vpgrad, m_vsgrad, m_rhograd;
-  double m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax;
-  double m_tol;
+  bool inside_block( float_sw4 x, float_sw4 y, float_sw4 z );
+  float_sw4 m_rho, m_vp, m_vs, m_qp, m_qs, m_freq;
+  float_sw4 m_vpgrad, m_vsgrad, m_rhograd;
+  float_sw4 m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax;
+  float_sw4 m_tol;
   bool m_absoluteDepth;
   EW *mEW; // where is this pointer needed?
 };

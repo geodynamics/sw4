@@ -272,7 +272,7 @@ float_sw4 Filter::complexConjugatedPolesBP(float_sw4 f1, float_sw4 f2, float_sw4
   float_sw4 pole_min_re=0.;
 
 // imaginary unit
-  complex<float_sw4> iu(0.,1.);
+//  complex<float_sw4> iu(0.,1.);
 
 //pre-warp the corner frequencies
   float_sw4 om1 = tan(M_PI*dt*f1);
@@ -293,17 +293,19 @@ float_sw4 Filter::complexConjugatedPolesBP(float_sw4 f1, float_sw4 f2, float_sw4
 
 // initialize storage
   float_sw4 n1[3], n2[3], d1[3], d2[3];
-  for (int q=0; q<3; q++)
+  for (int q1=0; q1<3; q1++)
   {
-    n1[q] = 0;
-    n2[q] = 0;
-    d1[q] = 0;
-    d2[q] = 0;
+    n1[q1] = 0;
+    n2[q1] = 0;
+    d1[q1] = 0;
+    d2[q1] = 0;
   }
 
 // roots of the two quadratics
-  complex<float_sw4> s1 = 0.5*(q*b + sqrt(pow(q,2)*b*b - 4*p));
-  complex<float_sw4> s2 = 0.5*(q*b - sqrt(pow(q,2)*b*b - 4*p));
+//  complex<float_sw4> s1 = 0.5*(q*b + sqrt(pow(q,2)*b*b - 4*p));
+//  complex<float_sw4> s2 = 0.5*(q*b - sqrt(pow(q,2)*b*b - 4*p));
+  complex<float_sw4> s1 = 0.5*(q*b + sqrt(q*q*b*b - 4*p));
+  complex<float_sw4> s2 = 0.5*(q*b - sqrt(q*q*b*b - 4*p));
 // these are for testing only
 //  complex<float_sw4> s3 = 0.5*(conj(q)*b + sqrt(pow(conj(q),2)*b*b - 4*p));
 //  complex<float_sw4> s4 = 0.5*(conj(q)*b - sqrt(pow(conj(q),2)*b*b - 4*p));
@@ -385,10 +387,10 @@ float_sw4 Filter::complexConjugatedPolesLP(float_sw4 fc, float_sw4 dt, float_sw4
 
 // initialize storage
   float_sw4 n1[3], d1[3];
-  for (int q=0; q<3; q++)
+  for (int q1=0; q1<3; q1++)
   {
-    n1[q] = 0;
-    d1[q] = 0;
+    n1[q1] = 0;
+    d1[q1] = 0;
   }
 
   pole_min_re = fabs(omc*real(q)*2/dt);
@@ -454,7 +456,7 @@ void Filter::evaluate(int N, float_sw4 *u, float_sw4 *mf)
 // Note: u and mf can be the same array, in which case the filtered signal overwrites the original signal
 {
   int q, i;
-  float_sw4 a[3], b[3], wn, wn1, wn2, op;
+  float_sw4 a[3], b[3], op;//, wn, wn1, wn2;
   float_sw4 x1, x2, y1, y2;
   
   CHECK_INPUT( m_initialized, "Filter::zerophase: filter is NOT initialized!");

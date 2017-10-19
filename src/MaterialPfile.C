@@ -203,7 +203,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 // tmp
 //		  bool debug = (i==15 && j==15 && k==1);
 
-		  sample_cart( x, y, z, vp, vs, density, qup, qus, false );
+		  sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
 
 		   rho[g](i,j,k) = density;
 		   cp[g](i,j,k) = vp;
@@ -314,7 +314,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-		  sample_cart( x, y, z, vp, vs, density, qup, qus, false );
+		  sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
 		   rho[g](i,j,k) = density;
 		   cp[g](i,j,k) = vp;
 		   cs[g](i,j,k) = vs;

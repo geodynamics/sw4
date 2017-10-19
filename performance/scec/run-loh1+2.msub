@@ -1,0 +1,11 @@
+#!/bin/csh
+#MSUB -l nodes=4           #this is the number of nodes on which to run
+#MSUB -l walltime=00:30:00   #sets total wall time 
+#MSUB -V # import environment
+#MSUB -q pdebug
+
+echo "LOH1"
+srun -N 4 --ntasks-per-node=36 ./sw4 LOH.1-h50.in >& LOH.1-h50.out
+echo "LOH2"
+srun -N 4 --ntasks-per-node=36 ./sw4 LOH.2-h50.in >& LOH.2-h50.out
+

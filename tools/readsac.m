@@ -81,7 +81,7 @@ disp(['Begin time (B) = ' num2str(t0) ' End time (E) = ' num2str(t1) ' Station l
      disp(['cmpaz  = ' num2str(cmpaz)]);
      disp(['cmpinc = ' num2str(cmpinc)]);
      disp(['idep    = ' num2str(idep)]);
-     disp(['stnam   =  ' stnam ]);
+%     printf('stnam   =  %s\n', stnam);
 
      fclose(fid);
   end

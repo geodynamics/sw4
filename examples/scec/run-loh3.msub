@@ -1,0 +1,11 @@
+#!/bin/csh
+#MSUB -l nodes=15           #this is the number of nodes on which to run
+#MSUB -l walltime=00:30:00   #sets total wall time 
+#MSUB -A sfbaysim             #this is the bank to run with (on quartz)
+#MSUB -V # import environment
+#MSUB -q pbatch
+##MSUB -q pdebug
+
+cd $PWD
+srun -N 15 --ntasks-per-node=36 /g/g12/andersp/src/sw4-cig/optimize/sw4 loh.3-h50-mr.in
+

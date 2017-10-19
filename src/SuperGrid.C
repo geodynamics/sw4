@@ -206,3 +206,8 @@ void SuperGrid::set_twilight( double omega )
 {
    m_tw_omega = omega;
 }
+
+void SuperGrid::set_eps( double new_eps )
+{
+   m_epsL = new_eps;
+}

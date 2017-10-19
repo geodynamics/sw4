@@ -1,0 +1,80 @@
+# SW4 input RUN: PIEDMONT_3D_TOPO
+fileio path=PIEDMONT_3D_TOPO.sw4output
+
+# for a parallel file system
+#fileio path=PIEDMONT_3D_TOPO.sw4output pfs=1 nwriters=72
+
+# hmin: 200.0 vmin: 500.0 ppw: 8 fmax: 0.312
+# npoints: 194507901
+grid x=284000.0 y=136000.0 z=40000.0 h=800.0 lat=39.14 lon=-122.57 az=143.638 mlat=111319.5 mlon=87952.099
+
+# MR, hbase=800.0 hmin=200.0
+refinement zmax=16600
+refinement zmax=11400
+
+time t=150.0 utcstart=01/01/2017:00:00:00.000
+supergrid gp=30
+globalmaterial vpmin=866.0 vsmin=500.0
+attenuation phasefreq=1.0 nmech=3 maxfreq=1.0
+
+# block model 1D 
+# 1DREF.mod
+block z1=0.0 z2=10.0 vp=1800.0 vs=700.0 rho=2100.0 qp=140.0 qs=70.0
+block z1=10.0 z2=20.0 vp=1800.0 vs=850.0 rho=2100.0 qp=170.0 qs=85.0
+block z1=20.0 z2=30.0 vp=2000.0 vs=1150.0 rho=2200.0 qp=230.0 qs=115.0
+block z1=30.0 z2=100.0 vp=2400.0 vs=1200.0 rho=2200.0 qp=240.0 qs=120.0
+block z1=100.0 z2=300.0 vp=2800.0 vs=1400.0 rho=2300.0 qp=280.0 qs=140.0
+block z1=300.0 z2=500.0 vp=3100.0 vs=1600.0 rho=2400.0 qp=320.0 qs=160.0
+block z1=500.0 z2=700.0 vp=3400.0 vs=1800.0 rho=2450.0 qp=360.0 qs=180.0
+block z1=700.0 z2=1000.0 vp=3700.0 vs=2100.0 rho=2500.0 qp=420.0 qs=210.0
+block z1=1000.0 z2=3000.0 vp=4400.0 vs=2400.0 rho=2600.0 qp=480.0 qs=240.0
+block z1=3000.0 z2=5000.0 vp=5100.0 vs=2800.0 rho=2700.0 qp=540.0 qs=280.0
+block z1=5000.0 z2=6000.0 vp=5600.0 vs=3150.0 rho=2750.0 qp=630.0 qs=315.0
+block z1=6000.0 z2=11000.0 vp=6150.0 vs=3600.0 rho=2825.0 qp=720.0 qs=360.0
+block z1=11000.0 z2=16000.0 vp=6320.0 vs=3650.0 rho=2850.0 qp=730.0 qs=365.0
+block z1=16000.0 z2=21000.0 vp=6550.0 vs=3700.0 rho=2900.0 qp=740.0 qs=370.0
+block z1=21000.0 z2=31000 vp=6800.0 vs=3800.0 rho=2950.0 qp=760.0 qs=380.0
+block z1=31000.0 vp=7800.0 vs=4400.0 rho=3300.0 qp=880.0 qs=440.0
+
+# rfile USGS 3D model
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/usr/apps/cigdata/USGS_3D_Model
+# Topography from rfile
+topography input=rfile order=3 zmax=10.0e3 file=/usr/apps/cigdata/USGS_3D_Model/USGSBayAreaVM-08.3.0-corder.rfile
+
+prefilter fc2=0.3125 type=lowpass passes=2 order=2
+
+# Source stype: dc coords: geo
+source lat=37.80635 lon=-122.18693 depth=4144.0 t0=10.0 strike=144.0 dip=82.0 rake=-176.0 m0=2620130000000000.0 type=Liu freq=1.9635
+
+# SW4 receivers from file 40199209.sw4_stafile
+rec sta=BK.BDM file=BK.BDM lat=37.954 lon=-121.866 nsew=1 depth=0 writeEvery=500
+rec sta=BK.BKS file=BK.BKS lat=37.8762 lon=-122.236 nsew=1 depth=0 writeEvery=500
+rec sta=BK.BRIB file=BK.BRIB lat=37.9188 lon=-122.152 nsew=1 depth=0 writeEvery=500
+rec sta=BK.BRK file=BK.BRK lat=37.8735 lon=-122.261 nsew=1 depth=0 writeEvery=500
+rec sta=BK.CMB file=BK.CMB lat=38.0345 lon=-120.387 nsew=1 depth=0 writeEvery=500
+rec sta=BK.CVS file=BK.CVS lat=38.3453 lon=-122.458 nsew=1 depth=0 writeEvery=500
+rec sta=BK.FARB file=BK.FARB lat=37.6978 lon=-123.001 nsew=1 depth=0 writeEvery=500
+rec sta=BK.JRSC file=BK.JRSC lat=37.4037 lon=-122.239 nsew=1 depth=0 writeEvery=500
+rec sta=BK.MCCM file=BK.MCCM lat=38.1448 lon=-122.88 nsew=1 depth=0 writeEvery=500
+rec sta=BK.MHC file=BK.MHC lat=37.3416 lon=-121.643 nsew=1 depth=0 writeEvery=500
+rec sta=BK.MNRC file=BK.MNRC lat=38.8787 lon=-122.443 nsew=1 depth=0 writeEvery=500
+rec sta=BK.PACP file=BK.PACP lat=37.008 lon=-121.287 nsew=1 depth=0 writeEvery=500
+rec sta=BK.SAO file=BK.SAO lat=36.764 lon=-121.447 nsew=1 depth=0 writeEvery=500
+rec sta=BK.WENL file=BK.WENL lat=37.6221 lon=-121.757 nsew=1 depth=0 writeEvery=500
+
+# Image output z=0 means top grid surface
+image z=0.0 mode=s file=image cycle=0
+#image z=200.0 mode=s file=image cycle=0
+image z=0.0 mode=topo file=image cycle=0
+image z=0.0 mode=gridz file=image cycle=0
+image z=0 mode=lat file=image cycle=0
+image z=0 mode=lon file=image cycle=0
+image z=0 mode=magdudt file=image timeInterval=2.0
+image x=250000 mode=s file=image cycle=0
+image x=142000 mode=s file=image cycle=0
+image x=68000 mode=s file=image cycle=0
+image z=0 mode=hmaxdudt file=image time=72.0
+image z=0 mode=hmaxdudt file=image time=90.0
+image z=0 mode=hmaxdudt file=image time=108.0
+image z=0 mode=hmaxdudt file=image time=118.8
+

@@ -19,4 +19,12 @@ class EWCuda
    void initialize_gpu( int myrank );
    void sync_stream( int st );
 };
+
+#define RADIUS 2
+#define DIAMETER (2*RADIUS+1)
+#define RHS4_BLOCKX 16
+#define RHS4_BLOCKY 16
+#define ADDSGD4_BLOCKX 24
+#define ADDSGD4_BLOCKY 16
+
 #endif

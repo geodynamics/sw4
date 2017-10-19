@@ -1,0 +1,140 @@
+----------------------------------------------------------------
+            sw4 version 1.19
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Apr 11 12:39:32 PDT 2017
+  By user:     andersp
+  Machine:     quartz2498
+  Compiler:    /usr/tce/packages/impi/impi-2017.1-intel-17.0.0/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: berkeley-mr3.in
+
+* Processing the grid command...
+* Setting nx to 90 to be consistent with h=1.36000000e+02
+* Setting ny to 90 to be consistent with h=1.36000000e+02
+* Setting nz to 222 to be consistent with h=1.36000000e+02
+* Changing x from 1.20000000e+04 to 1.21040000e+04 to be consistent with h=1.36000000e+02
+* Changing z from 3.00000000e+04 to 3.00560000e+04 to be consistent with h=1.36000000e+02
+* Changing y from 1.20000000e+04 to 1.21040000e+04 to be consistent with h=1.36000000e+02
+
+***Topography grid: min z = -5.590489e+02, max z = 5.441968e+00, top Cartesian z = 2.500000e+03
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       136        90        90       112       907200
+   1        68       179       179       177      5671257
+   2        34       357       357        13      1656837
+   3        17       713       713         9      4575321
+   4        17       713       713       164     83372516
+Total number of grid points (without ghost points): 9.61831e+07
+
+*** Reading data from Rfile USGSBayAreaVM-08.3.0-corder.rfile in directory /p/lscratchh/andersp
+
+   Execution time, reading input file 1.41411209e+00 seconds 
+----------------------------------------------------
+ Making Output Directory: berk-mr-out/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.222500e+02, Lat=3.793000e+01, x=1.891139e-09, y=-1.390519e-09
+1: Lon= -1.221694e+02, Lat=3.784164e+01, x=1.210400e+04, y=-2.590996e-09
+2: Lon= -1.222807e+02, Lat=3.777772e+01, x=1.210400e+04, y=1.210400e+04
+3: Lon= -1.223614e+02, Lat=3.786600e+01, x=1.680229e-09, y=1.210400e+04
+
+Considering all material blocks
+
+rfile command: outside = 0, material = 103289099
+
+       ----------- Material properties ranges ---------------
+       1.59073434e+03 kg/m^3 <=  Density <= 3.30000000e+03 kg/m^3
+       7.68000000e+02 m/s    <=  Vp      <= 7.78000000e+03 m/s
+       5.00000000e+02 m/s    <=  Vs      <= 4.42000000e+03 m/s
+       1.53600000e+00        <=  Vp/Vs   <= 4.48423060e+00
+       3.97683584e+08 Pa     <=  mu      <= 6.44701200e+10 Pa
+       1.42886121e+08 Pa     <=  lambda  <= 7.13862600e+10 Pa
+       Using attenuation 
+       1.30000000e+01        <=  Qs      <= 6.60000000e+02  
+       2.60000000e+01        <=  Qp      <= 1.32000000e+03  
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.360000e+02, minVs/h=26.2561 (Cartesian)
+g=1, h=6.800000e+01, minVs/h=33.4064 (Cartesian)
+g=2, h=3.400000e+01, minVs/h=62.322 (Cartesian)
+g=3, h=1.700000e+01, minVs/h=122.171 (Cartesian)
+g=4, h=1.700000e+01, minVs/h=29.4118 (curvilinear)
+
+SG: using supergrid!
+SG: standard case with default epsL
+
+*** Attenuation parameters calculated for 3 mechanisms,
+      max freq=1.500000e+01 [Hz], min_freq=1.500000e-01 [Hz], velo_freq=2.500000e+00 [Hz]
+
+   Execution time, start up phase 3.59019208e+00 seconds 
+Running sw4 on 288 processors...
+Writing output to directory: berk-mr-out/
+============================================================
+ Running program on 288 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 6
+ Number of time steps = 3353 dt: 0.00178944
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.7162e+17 Nm 
+  Moment magnitude     (Mw): 5.42305
+  Number of moment sources 1
+-----------------------------------------------------------------------
+writing image plane on file berk-mr-out/berk.cycle=0000.z=0.topo.sw4img
+writing image plane on file berk-mr-out/berk.cycle=0000.z=0.lat.sw4img
+writing image plane on file berk-mr-out/berk.cycle=0000.z=0.lon.sw4img
+writing image plane on file berk-mr-out/surf.cycle=0000.z=0.mag.sw4img
+  Begin time stepping...
+writing image plane on file berk-mr-out/vert.cycle=0000.x=6000.mag.sw4img
+Time step       1  t =   1.7894423e-03
+Time step     101  t =   1.8073367e-01
+EW::consintp, Warning, no convergence. err = 2.50372812e-04 tol= 1.00000000e-07
+EW::consintp, Warning, no convergence. err = 1.55766667e-06 tol= 1.00000000e-07
+Time step     201  t =   3.5967790e-01
+Time step     301  t =   5.3862213e-01
+Time step     401  t =   7.1756636e-01
+Time step     501  t =   8.9651059e-01
+writing image plane on file berk-mr-out/surf.cycle=0559.z=0.mag.sw4img
+writing image plane on file berk-mr-out/vert.cycle=0559.x=6000.mag.sw4img
+Time step     601  t =   1.0754548e+00
+Time step     701  t =   1.2543990e+00
+Time step     801  t =   1.4333433e+00
+Time step     901  t =   1.6122875e+00
+Writing ASCII USGS file, of size 1001: berk-mr-out/sta01.txt
+Time step    1001  t =   1.7912317e+00
+Time step    1101  t =   1.9701760e+00
+writing image plane on file berk-mr-out/surf.cycle=1118.z=0.mag.sw4img
+writing image plane on file berk-mr-out/vert.cycle=1118.x=6000.mag.sw4img
+Time step    1201  t =   2.1491202e+00
+Time step    1301  t =   2.3280644e+00
+Time step    1401  t =   2.5070086e+00
+Time step    1501  t =   2.6859529e+00
+Time step    1601  t =   2.8648971e+00
+writing image plane on file berk-mr-out/surf.cycle=1677.z=0.mag.sw4img
+writing image plane on file berk-mr-out/vert.cycle=1677.x=6000.mag.sw4img
+Time step    1701  t =   3.0438413e+00
+Time step    1801  t =   3.2227856e+00
+Time step    1901  t =   3.4017298e+00
+Writing ASCII USGS file, of size 2001: berk-mr-out/sta01.txt
+Time step    2001  t =   3.5806740e+00
+Time step    2101  t =   3.7596183e+00
+Time step    2201  t =   3.9385625e+00
+writing image plane on file berk-mr-out/surf.cycle=2235.z=0.mag.sw4img
+writing image plane on file berk-mr-out/vert.cycle=2235.x=6000.mag.sw4img
+Time step    2301  t =   4.1175067e+00
+Time step    2401  t =   4.2964509e+00
+Time step    2501  t =   4.4753952e+00
+Time step    2601  t =   4.6543394e+00
+Time step    2701  t =   4.8332836e+00
+slurmd[quartz1]: *** STEP 393049.0 CANCELLED AT 2017-04-11T18:41:03 DUE TO TIME LIMIT ***
+slurmd[quartz1]: *** JOB 393049 CANCELLED AT 2017-04-11T18:41:03 DUE TO TIME LIMIT ***

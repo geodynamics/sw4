@@ -1,0 +1,69 @@
+# This is a SW4 input file for a scaled-down version of
+# problem LOH.3 from the SCEC test suite, see
+# "Steven Day et al., Tests of 3D Elastodynamic Codes:
+# Final report for lifelines project 1A01, Pacific Eartquake
+# Engineering Center, 2001".
+
+developer time_order=2 cfl=0.8
+grid h=175 x=30000 y=30000 z=17000
+#time t=9
+# reduce time duration to make case run faster on laptop
+time t=3
+
+fileio path=loh3-slow-order2
+
+# wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
+attenuation phasefreq=2.5 nmech=3 maxfreq=15
+
+#specify the width of the super grid damping layer (30 is the default)
+supergrid gp=30
+
+# material properties in the half-space
+block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
+# material properties in the top layer
+block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+
+#
+# Interface (harmonic (mu,la)-averages, arithmetic rho,Q
+block vs=2437.6 vp=4630.8 r=2650 Qs=54.65 Qp=137.95 z1=999 z2=1001
+
+# Gaussian time function gives the velocities directly
+# In the regular LOH1 and LOH3 problems, we use
+# sigma=0.05 gives freq=1/sigma=20 (LOH.3)
+# sigma=0.06 gives freq=1/sigma=16.6667 (LOH.1)
+#
+# To resolve the solution on this coarse grid, we take sigma = 0.2 -> freq = 5.0
+# t0 = 6*sigma = 1.2 to avoid (most) startup transients
+
+source x=15000 y=15000 z=2000 mxy=1e18 t0=1.2 freq=5.0 type=Gaussian
+
+#
+# Note that all recording stations are relative to the (0,0,0) origin
+# Also note that the stations do NOT fall on a grid point when h=175
+#
+rec x=15600 y=15800 z=0 file=sta01 usgsformat=1
+#rec x=16200 y=16600 z=0 file=sta02 usgsformat=1
+#rec x=16800 y=17400 z=0 file=sta03 usgsformat=1
+#rec x=17400 y=18200 z=0 file=sta04 usgsformat=1
+#rec x=18000 y=19000 z=0 file=sta05 usgsformat=1
+#rec x=18600 y=19800 z=0 file=sta06 usgsformat=1
+#rec x=19200 y=20600 z=0 file=sta07 usgsformat=1
+#rec x=19800 y=21400 z=0 file=sta08 usgsformat=1
+#rec x=20400 y=22200 z=0 file=sta09 usgsformat=1
+rec x=21000 y=23000 z=0 file=sta10 usgsformat=1
+
+# material images
+#image mode=mu z=0 file=hor cycle=0
+#image mode=lambda z=0 file=hor cycle=0
+#image mode=rho z=0 file=hor cycle=0
+
+image mode=lambda y=15e3 file=ver cycle=0
+image mode=s y=15e3 file=ver cycle=0
+image mode=p y=15e3 file=ver cycle=0
+
+# solution images
+image mode=mag z=0 file=surf timeInterval=0.5
+# no point saving uz and ux on this plane, because they are zero by symmetry
+image mode=uy y=15e3 file=ver timeInterval=0.5
+
+

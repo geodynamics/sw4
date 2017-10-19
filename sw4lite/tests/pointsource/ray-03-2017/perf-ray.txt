@@ -1,0 +1,33 @@
+=======================================================================
+bjorn@ray35 21) mpirun -np 1 ../../optimize_cuda_ray/sw4lite pointsource.in
+Running on 1 MPI tasks
+starting at time 0 at cycle 1
+Time step 1 t= 0.026087
+Time step 23 t= 0.6
+   Execution time, solver phase 0.908763 seconds 
+
+----------------------------------------
+          Execution time summary 
+  Total      BC comm    BC phys    Scheme     Supergrid  Forcing 
+0.77629    0.000106   0.12978    0.47009    0.1741     0.002016   Clock tick is 1e-09 seconds
+----------------------------------------
+
+Errors at time 0.6 Linf = 0.569416 L2 = 0.0245361 norm of solution = 3.7439
+ Total running time: 1.84277
+
+=======================================================================
+bjorn@ray35 23) mpirun -np 4 mpibind ../../optimize_cuda_ray/sw4lite pointsource.in
+Running on 4 MPI tasks
+starting at time 0 at cycle 1
+Time step 1 t= 0.026087
+Time step 23 t= 0.6
+   Execution time, solver phase 0.41039 seconds 
+
+----------------------------------------
+          Execution time summary 
+  Total      BC comm    BC phys    Scheme     Supergrid  Forcing 
+0.34824    0.12525    0.028017   0.13243    0.055984   0.0032391  Clock tick is 1e-09 seconds
+----------------------------------------
+
+Errors at time 0.6 Linf = 0.569416 L2 = 0.0245361 norm of solution = 3.7439
+ Total running time: 1.09412

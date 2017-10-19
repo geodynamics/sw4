@@ -1,0 +1,99 @@
+----------------------------------------------------------------
+            sw4 version 1.20
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Jul 27 21:47:47 PDT 2017
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
+----------------------------------------------------------------
+
+Input file: refine-att-1.in
+
+* Processing the grid command...
+* Setting h to 1.25600000e-01 from  x/(nx-1) (x=6.28000000e+00, nx=51)
+* Setting ny to 51 to be consistent with h=1.25600000e-01
+* Setting nz to 51 to be consistent with h=1.25600000e-01
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0    0.1256        51        51        31        80631
+   1    0.0628       101       101        41       418241
+Total number of grid points (without ghost points): 498872
+
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
+
+   Execution time, reading input file 5.86151300e-03 seconds 
+----------------------------------------------------
+ Making Output Directory: refine-att-1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700006e+01, x=6.280000e+00, y=0.000000e+00
+2: Lon= 1.180001e+02, Lat=3.700006e+01, x=6.280000e+00, y=6.280000e+00
+3: Lon= 1.180001e+02, Lat=3.700000e+01, x=0.000000e+00, y=6.280000e+00
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00106604e+00 kg/m^3 <=  Density <= 2.99897596e+00 kg/m^3
+       1.63306294e+00 m/s    <=  Vp      <= 2.82730093e+00 m/s
+       1.00005813e+00 m/s    <=  Vs      <= 1.73133529e+00 m/s
+       1.52761562e+00        <=  Vp/Vs   <= 1.73201725e+00
+       2.00106604e+00 Pa     <=  mu      <= 3.99897596e+00 Pa
+       1.00106731e+00 Pa     <=  lambda  <= 2.99897596e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.256000e-01, minVs/h=7.96501 (Cartesian)
+g=1, h=6.280000e-02, minVs/h=15.9245 (Cartesian)
+
+
+*** Attenuation parameters calculated for 1 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+   Execution time, start up phase 3.05705110e-02 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: refine-att-1/
+============================================================
+ Running program on 4 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 1
+ Number of time steps = 72 dt: 0.0138889
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 1.00000000e+00
+  c = 1.30000000e+00
+  phase = 3.00000000e-01
+  mat-omega = 1.00000000e+00
+  mat-phase = 1.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
+-----------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   1.3888889e-02
+Time step      72  t =   1.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 2.16490413e+01 seconds 
+
+ Final solution errors: Linf =   1.5930427e-04, L2 =   4.0318920e-04
+
+ Final solution errors, attenuation: Linf =   1.5564287e-04, L2 =   3.9004689e-04
+**** Closing file with solution errors for testing
+============================================================
+ program sw4 finished! 
+============================================================
