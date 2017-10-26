@@ -439,7 +439,7 @@ void Sarray::set_to_zero()
 {
   double *m_data_local=m_data;
   prefetch();
-  forall<EXEC > (0ul,m_npts,[=] RAJA_DEVICE(size_t i){
+  forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
       m_data_local[i]=0.0;
     });
 #ifdef CUDA_CODE
@@ -464,7 +464,7 @@ void Sarray::set_value( float_sw4 scalar )
 {
 double *m_data_local=m_data;
   prefetch();
-  forall<EXEC > (0ul,m_npts,[=] RAJA_DEVICE(size_t i){
+  forall<EXEC > (0,m_npts,[=] RAJA_DEVICE(size_t i){
       m_data_local[i]=scalar;
     });
 #ifdef CUDA_CODE
@@ -585,7 +585,7 @@ size_t Sarray::count_nans()
    //			0);
    double* m_data_copy = m_data;
    //PrintPointerAttributes((void*)m_data);
-   forall<EXEC> (0ul,npts,[=] RAJA_DEVICE(size_t ind){
+   forall<EXEC> (0,npts,[=] RAJA_DEVICE(size_t ind){
        if(::isnan(m_data_copy[ind]) ) rretval+=1;
      });
 #ifdef CUDA_CODE

@@ -68,7 +68,7 @@ else ifeq ($(findstring cab,$(HOSTNAME)),cab)
 else ifeq ($(findstring carl,$(HOSTNAME)),carl)
   FC = mpiifort
   CXX = mpiicpc
-  OMPOPT = -qopenmp -qoverride-limits
+  OMPOPT = -qopenmp 
   MKL_PATH = /usr/common/software/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64
 #  EXTRA_CXX_FLAGS = -xmic-avx512
   EXTRA_CXX_FLAGS = -xmic-avx2
@@ -100,6 +100,29 @@ else ifeq ($(findstring nid00259,$(HOSTNAME)),nid00259)
   computername := trinitite
   LINKER = CC
 
+else ifeq ($(findstring cori,$(HOSTNAME)),cori)
+  FC = ifort
+  CXX = CC
+  CC = cc
+  RAJA_LOCATION=/global/homes/r/rameshp/RAJA/install2
+  OMPOPT = -qopenmp -mkl -qoverride-limits
+  MKL_PATH = /opt/intel/compilers_and_libraries_2017/linux/mkl/lib/intel64
+  OTHER_PATH = /opt/intel/compilers_and_libraries_2017/linux/lib/intel64
+  BASIC_PATH = /opt/intel/lib/intel64
+  EXTRA_CXX_FLAGS = -xmic-avx512
+  EXTRA_C_FLAGS = -xmic-avx512
+  EXTRA_FORT_FLAGS = -xmic-avx512
+  LINK_FLAGS = -O3 -qopenmp
+  EXTRA_LINK_FLAGS =
+  #EXTRA_LINK_FLAGS = -Wl,-rpath=${MKL_PATH} -Wl,-rpath=${BASIC_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -Wl,-rpath=${OTHER_PATH} -L${OTHER_PATH} -lifcore -L${BASIC_PATH} -limf -lsvml 
+  #EXTRA_LINK_FLAGS = -L /usr/projects/hpcsoft/cle6.0/common/intel-clusterstudio/2017.1.024/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64_lin_mic -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl 
+# for building testil
+#  EXTRA_LINK_FLAGS = -Wl,-rpath=${OTHER_PATH} -L${OTHER_PATH} -lifcore -L${BASIC_PATH} -limf -lsvml -lintlc -lm -ldl 
+  openmp = yes
+  computername := cori
+  LINKER = CC
+
+
 #
 # LBL quadknl is Hans' single node Intel KNL machine
 #
@@ -121,7 +144,7 @@ else ifeq ($(findstring quadknl,$(HOSTNAME)),quadknl)
   computername := quadknl
 #
 # Cori
-else ifeq ($(findstring cori,$(HOSTNAME)),cori)
+else ifeq ($(findstring coriold,$(HOSTNAME)),cori)
 # cray compiler wrappers
   FC = ftn
   CXX = CC
