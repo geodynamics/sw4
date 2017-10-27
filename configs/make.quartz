@@ -6,3 +6,6 @@
   CXX = mpicxx
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
+# tmp
+#  EXTRA_CXX_FLAGS = -O
+#  EXTRA_FORT_FLAGS = -O

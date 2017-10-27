@@ -1288,7 +1288,8 @@ void Source::prepareTimeFunc(bool doFilter, double sw4TimeStep, int sw4TimeSampl
 // Do the actual filtering
 // this function no longer handles discrete time functions
         filter_timefunc( sw4_filter, 0.0, sw4TimeStep, sw4TimeSamples ); 
-   }
+      } // end if doFilter
+      
       
 // set the flag to indicate that the filtering is complete
       m_timeFuncIsReady = true;
