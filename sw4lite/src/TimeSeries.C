@@ -150,7 +150,10 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 	 m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
       }
 // 3. Make sure the station is below the topography, allow for a small roundoff (z is positive downwards)
-      if ( mZ < m_zTopo - 1.0e-9 ) //AP: the tolerance 1e-9 assumes double precision?
+      float_sw4 rofftol = 1e-9;
+      if(sizeof(float_sw4) == 4 )
+	 rofftol = 1e-4;
+      if ( mZ < m_zTopo - rofftol )
       {
 	 printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
 		m_fileName.c_str(),  mX,  mY, mZ, m_zTopo);
@@ -212,7 +215,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    for (int q=0; q<m_nComp; q++)
       mRecordedSol[q] = static_cast<float_sw4*>(0);
 
-// keep a copy for saving on a sac file
+// keep a float copy for saving on a sac file
    if (m_sacFormat)
    {
       mRecordedFloats = new float*[m_nComp];
@@ -225,8 +228,19 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 // do some misc pre computations
    m_x_azimuth = a_ew->getGridAzimuth(); // degrees
   
-   a_ew->computeGeographicCoord(mX, mY, m_rec_lon, m_rec_lat);
-   a_ew->computeGeographicCoord(mGPX, mGPY, m_rec_gp_lon, m_rec_gp_lat);
+   double xd, yd, lond, latd;
+   xd=mX;
+   yd=mY;
+   //   a_ew->computeGeographicCoord(mX, mY, m_rec_lon, m_rec_lat);
+   a_ew->computeGeographicCoord(xd, yd, lond, latd );
+   m_rec_lon = lond;
+   m_rec_lat = latd;
+   xd = mGPX;
+   yd = mGPY;
+   //   a_ew->computeGeographicCoord(mGPX, mGPY, m_rec_gp_lon, m_rec_gp_lat);
+   a_ew->computeGeographicCoord(xd, yd, lond, latd );
+   m_rec_gp_lon=lond;
+   m_rec_gp_lat=latd;
 
    m_calpha = cos(M_PI*m_x_azimuth/180.0);
    m_salpha = sin(M_PI*m_x_azimuth/180.0);
@@ -429,9 +443,9 @@ void TimeSeries::writeFile( string suffix )
 	<< filePrefix.str();
 
     string xfield, yfield, zfield, xyfield, xzfield, yzfield, yxfield, zxfield, zyfield;
-     float azimx, azimy, updownang;
-     if( m_mode == Displacement )
-     {
+    float azimx, azimy, updownang;
+    if( m_mode == Displacement )
+    {
 	if( m_xyzcomponent )
 	{
 	   xfield = "X";
@@ -681,6 +695,7 @@ void TimeSeries::writeFile( string suffix )
 	   geographic[0] = new float[mLastTimeStep+1];
 	   geographic[1] = new float[mLastTimeStep+1];
 	   geographic[2] = new float[mLastTimeStep+1];
+#pragma omp parallel for
 	   for( int i=0 ; i <= mLastTimeStep ; i++ )
 	   {
 	      geographic[1][i] = m_thynrm*mRecordedFloats[0][i]-m_thxnrm*mRecordedFloats[1][i]; //ns
@@ -900,8 +915,8 @@ void TimeSeries::write_usgs_format(string a_fileName)
 {
    string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
    FILE *fd=fopen(a_fileName.c_str(),"w");
-   float_sw4 lat, lon;
-   float_sw4 x, y, z;
+//   float_sw4 lat, lon;
+//   float_sw4 x, y, z;
 
    if( fd == NULL )
       cout << "ERROR: opening USGS file " << a_fileName << " for writing" <<  endl;

@@ -562,7 +562,7 @@ size_t Sarray::count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst )
    cfirst = ifirst = jfirst = kfirst = 0;
    size_t retval = 0, ind=0;
    // Note: you're going to get various threads racing to set the "first" values. This won't work.
-#pragma omp parallel for reduction(+:retval)
+   //#pragma omp parallel for reduction(+:retval)
    for( int k=m_kb ; k<=m_ke ; k++ )
       for( int j=m_jb ; j<=m_je ; j++ )
 	 for( int i=m_ib ; i <= m_ie ; i++ )
