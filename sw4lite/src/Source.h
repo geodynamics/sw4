@@ -111,7 +111,7 @@ public:
   float_sw4 compute_t0_increase( float_sw4 t0_min ) const;
   void adjust_t0( float_sw4 dt0 );
 
-  void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources ) const;
+  void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources );
 
   void exact_testmoments( int kx[3], int ky[3], int kz[3], float_sw4 momexact[3] );
   void getForces( float_sw4& fx, float_sw4& fy, float_sw4& fz ) const;
@@ -129,14 +129,16 @@ public:
    //  void filter_timefunc( Filter* fi, float_sw4 tstart, float_sw4 dt, int nsteps );
   bool get_CorrectForMu(){return mShearModulusFactor;};
   void set_CorrectForMu(bool smf){mShearModulusFactor=smf;};
-
+  void copy_pars_to_device();
  private:
   Source();
-
-  void correct_Z_level( EW *a_ew );
-   //  void compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic, int jc, int kc,
-   //				 int g, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq, float_sw4& zqr,
-   //				 float_sw4& zqs, float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const;
+  void adjust_zcoord( EW* a_ew );
+  void compute_mapped_coordinates( EW *a_ew );
+   //  void correct_Z_level( EW *a_ew );
+  void compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic,
+				 int jc, int kc, int g, float_sw4& zq, float_sw4& zr,
+				 float_sw4& zs, float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
+				 float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const;
    //  int spline_interpolation( );
   void getsourcewgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
   void getsourcedwgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
@@ -165,8 +167,11 @@ public:
   bool m_myPoint;
   bool m_zRelativeToTopography;
   float_sw4 mX0,mY0,mZ0;
+  float_sw4 mQ0,mR0,mS0;
   float_sw4* mPar;
+  float_sw4* mdevPar;
   int* mIpar;
+  int* mdevIpar;
   int mNpar, mNipar;
   int mNcyc;
   int m_derivative;  

@@ -1,50 +1,44 @@
 ----------------------------------------------------------------
-            sw4 version 1.1
+            sw4 version 1.20
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Tue Oct  7 14:17:59 PDT 2014
-  By user:     petersson1
-  Machine:     fourier.llnl.gov
-  Compiler:    /opt/local/bin/mpicxx
-  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+  Compiled on: Fri Jul 28 10:28:45 PDT 2017
+  By user:     andersp
+  Machine:     quartz2300
+  Compiler:    /usr/tce/packages/impi/impi-2017.1-intel-18.0-beta/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
 ----------------------------------------------------------------
 
 Input file: tw-att-3.in
+Default Supergrid thickness has been tuned; # grid points = 10 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 
 * Processing the grid command...
 * Setting h to 3.14000000e-02 from  x/(nx-1) (x=6.28000000e+00, nx=201)
 * Setting ny to 201 to be consistent with h=3.14000000e-02
 * Setting nz to 201 to be consistent with h=3.14000000e-02
-allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
 Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.28000000e+00
-Corrected global_zmax = 6.28000000e+00
-Refinement levels after correction: 
-grid=0 min Z=0.00000000e+00
-***inside setup2D_MPICommunications***
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
-***inside setupMPICommunications***
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
    0    0.0314       201       201       201      8120601
 Total number of grid points (without ghost points): 8.1206e+06
 
-Default Supergrid thickness has been tuned; thickness = 10 grid sizes
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
 
-   Execution time, reading input file 8.21149349e-02 seconds 
- *** Testing = 1
+   Execution time, reading input file 3.48241329e-02 seconds 
   Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
-Setting up SBP boundary stencils
 Detected at least one boundary with supergrid conditions
 ----------------------------------------------------
- Making Output Directory: flat-3/
+ Making Output Directory: tw-att-flat-3/
 		
 ... Done!
 ----------------------------------------------------
@@ -65,9 +59,6 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
        1.52752694e+00        <=  Vp/Vs   <= 1.73205022e+00
        2.00002049e+00 Pa     <=  mu      <= 3.99998495e+00 Pa
        1.00002049e+00 Pa     <=  lambda  <= 2.99998495e+00 Pa
-       Using attenuation 
-       -1.00000000e+00        <=  Qs      <= -1.00000000e+00  
-       -1.00000000e+00        <=  Qp      <= -1.00000000e+00  
        ------------------------------------------------------
 
 ***** PPW = minVs/h/maxFrequency ********
@@ -79,15 +70,15 @@ g=0, h=3.140000e-02, minVs/h=31.8472 (Cartesian)
 
   Assigned material properties
 *** computing the time step ***
-order of accuracy=4 CFL=1.30000000e+00 prel. time step=9.04856509e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=9.04856509e-03
 *** Initialized Images
-   Execution time, start up phase 6.03641987e-01 seconds 
-Running sw4 on 4 processors...
-Writing output to directory: flat-3/
+   Execution time, start up phase 3.62040997e-02 seconds 
+Running sw4 on 36 processors...
+Writing output to directory: tw-att-flat-3/
 
 ***  Starting solve ***
 ============================================================
- Running program on 4 MPI tasks using the following data: 
+ Running program on 36 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 1
  Number of time steps = 111 dt: 0.00900901
@@ -114,16 +105,22 @@ Parameters:
   ampmu = 1.00000000e+00
 -----------------------------------------------------------
   Initial data has been assigned
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
   Begin time stepping...
 Time step       1  t =   9.0090090e-03
 Time step     101  t =   9.0990991e-01
 Time step     111  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 7 minutes 7.93182611e+00 seconds 
+   Execution time, solver phase 3.38757472e+01 seconds 
 
- Final solution errors: Linf =   2.3561288e-06, L2 =   1.0466591e-05
+ Final solution errors: Linf =   2.4026124e-06, L2 =   1.1735478e-05
 
- Final solution errors, attenuation: Linf =   2.2869862e-06, L2 =   1.0568629e-05
+ Final solution errors, attenuation: Linf =   2.3652169e-06, L2 =   1.1807151e-05
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 

@@ -1,0 +1,43 @@
+#! /usr/bin/bash
+#MSUB -q pdebug
+#MSUB -A sfbaysim
+#MSUB -l nodes=1
+#MSUB -l partition=quartz
+# 30 min limit for debug queue
+#MSUB -l walltime=00:30:00 
+# export all environment variables to the batch job
+#MSUB -V
+
+cd $PWD
+
+# do the loop
+for numprocs in 1 2 4 8 16 32; do
+# for numprocs in 1 2 4; do
+
+# Number of ranks x threads is constant
+# pc = physical cores
+numpc=$(echo ${numprocs} | awk '{print 32/$1}')
+# hyper-threads
+numht=1
+# logical cores = OMP_NUM_TASK
+numcores=$(( ${numpc}*${numht} ))
+# srun reservation logical cores per mpi-task  (-c arg)
+numlc=$(( ${numpc} ))
+
+    echo "Running with ${numprocs} MPI ranks and ${numpc} cores, ${numht} threads per core."
+
+    # Intel OpenMP runtime parameters
+    export OMP_NUM_THREADS=${numcores}
+#    export OMP_PLACES=threads
+#    export OMP_PROC_BIND=spread
+
+# -n is short for --ntasks= and -c equals --cpus-per-task=
+    MPI_COMMAND="srun -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
+    RUN_COMMAND="./sw4lite_c skinny-rev.in"
+    COMMAND="${MPI_COMMAND} ${RUN_COMMAND}"
+    echo "OMP_N_T="${OMP_NUM_THREADS}
+    echo ${COMMAND}
+
+    ${COMMAND} > c_rev_mpi${numprocs}_pc${numpc}_ht${numht}.dat
+
+done

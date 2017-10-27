@@ -39,8 +39,8 @@ ifeq ($(optlevel),DEBUG)
 else
    FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
-   CXXFLAGS = -O -I../src
-   CFLAGS   = -O 
+   CXXFLAGS = -O3 -I../src
+   CFLAGS   = -O3 
 endif
 
 fullpath := $(shell pwd)
@@ -95,8 +95,11 @@ else
       optdir := optimize_sierra
 # For Quartz at LC (why doesn't this work when HOSTNAME is quartz770 ?
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
-      include configs/make.haswell
-      foundincfile := "configs/make.haswell"
+      include configs/make.quartz
+      foundincfile := "configs/make.quartz"
+    else ifeq ($(findstring cori,$(HOSTNAME)),cori)
+      include configs/make.cori
+      foundincfile := "configs/make.cori"
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
@@ -160,7 +163,7 @@ QUADPACK = dqags.o dqagse.o  dqaws.o  dqawse.o  dqc25s.o \
 OBJSW4 = main.o
 
 OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+       curvilinearGrid.o boundaryOp.o bndryOpNoGhost.o  bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
@@ -170,7 +173,9 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
-       rhs4th3fortwind.o
+       rhs4th3fortwind.o updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o
+
+# OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
@@ -186,6 +191,8 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+# test: linking with openmp for the routine rhs4sgcurv.o
+#	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
@@ -196,6 +203,12 @@ sw4-v1.1.tgz:  $(FSW4) $(FOBJ)
 	cp -r src configs tools examples doc Makefile wave.txt CMakeLists.txt INSTALL.txt LICENSE.txt README.txt sw4-v1.1
 	tar czf $@ sw4-v1.1
 	rm -rf sw4-v1.1 
+
+# test
+$(builddir)/rhs4sgcurv.o:src/rhs4sgcurv.C
+	cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$<
+#	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -c ../$<
+
 
 $(builddir)/version.o:src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<

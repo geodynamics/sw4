@@ -1,28 +1,33 @@
 ----------------------------------------------------------------
-            sw4 version 1.1
+            sw4 version 1.20
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Tue Oct  7 14:17:59 PDT 2014
+  Compiled on: Fri Jul 21 09:02:04 PDT 2017
   By user:     petersson1
   Machine:     fourier.llnl.gov
   Compiler:    /opt/local/bin/mpicxx
-  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
 ----------------------------------------------------------------
 
 Input file: tw-topo-att-3.in
+Default Supergrid thickness has been tuned; # grid points = 10 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 
 * Processing the grid command...
+
+* number of ghost points = 2
 * Setting h to 3.14000000e-02 from  x/(nx-1) (x=6.28000000e+00, nx=201)
 * Setting ny to 201 to be consistent with h=3.14000000e-02
 * Setting nz to 201 to be consistent with h=3.14000000e-02
 allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
 Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.26560000e+00
+
 Corrected global_zmax = 6.26560000e+00
 Refinement levels after correction: 
-grid=0 min Z=3.00000000e+00
+grid=0 z-min=3.00000000e+00
 ***inside setup2D_MPICommunications***
 ***inside buildGaussianHillTopography***
 ***inside allocateCurvilinearArrays***
@@ -39,17 +44,18 @@ Grid         h        Nx        Ny        Nz       Points
    1    0.0314       201       201       106      4282506
 Total number of grid points (without ghost points): 8.52461e+06
 
-Default Supergrid thickness has been tuned; thickness = 10 grid sizes
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
 
-   Execution time, reading input file 2.27993011e-01 seconds 
+INFO: m_mesh_refinements=0 m_use_attenuation=1 mOrder=4
+   Execution time, reading input file 2.20318329e-01 seconds 
  *** Testing = 1
   Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
 Setting up SBP boundary stencils
 Detected at least one boundary with supergrid conditions
 ----------------------------------------------------
- Making Output Directory: gauss-3/
+ Making Output Directory: tw-att-gauss-3/
 		
 ... Done!
 ----------------------------------------------------
@@ -70,15 +76,16 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
        1.52753343e+00        <=  Vp/Vs   <= 1.73205017e+00
        2.00001971e+00 Pa     <=  mu      <= 3.99997486e+00 Pa
        1.00006358e+00 Pa     <=  lambda  <= 2.99992972e+00 Pa
-       Using attenuation 
-       -1.00000000e+00        <=  Qs      <= -1.00000000e+00  
-       -1.00000000e+00        <=  Qp      <= -1.00000000e+00  
        ------------------------------------------------------
+Grid g=0:, 1.000010e+00 <= Cs <= 1.731990e+00, 2.160271e+00 <= C-hat <= 3.741518e+00, h[g]/max(C-hat) = 8.392315e-03
+Grid g=1:, 1.000002e+00 <= Cs <= 1.732036e+00, 2.160253e+00 <= C-hat <= 3.741624e+00, h[g]/max(C-hat) = 8.392079e-03
 
 ***** PPW = minVs/h/maxFrequency ********
 g=0, h=3.140000e-02, minVs/h=31.8475 (Cartesian)
 g=1, h=3.140000e-02, minVs/h=31.8472 (curvilinear)
 
+SG: using supergrid!
+SG: twilight setup!
 
 *** Attenuation parameters calculated for 1 mechanisms,
       max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
@@ -86,11 +93,11 @@ g=1, h=3.140000e-02, minVs/h=31.8472 (curvilinear)
   Assigned material properties
 *** computing the time step ***
 INFO: Smallest stable time step for curvilinear grid only: 7.316348e-03
-order of accuracy=4 CFL=1.30000000e+00 prel. time step=7.31634816e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=7.31634816e-03
 *** Initialized Images
-   Execution time, start up phase 1.26016998e+00 seconds 
+   Execution time, start up phase 1.21767788e+00 seconds 
 Running sw4 on 4 processors...
-Writing output to directory: gauss-3/
+Writing output to directory: tw-att-gauss-3/
 
 ***  Starting solve ***
 ============================================================
@@ -121,16 +128,22 @@ Parameters:
   ampmu = 1.00000000e+00
 -----------------------------------------------------------
   Initial data has been assigned
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no,lamb_test=no rayleigh_test=no
+m_use_supergrid=yes
+End report settings
+
   Begin time stepping...
 Time step       1  t =   7.2992701e-03
 Time step     101  t =   7.3722628e-01
 Time step     137  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 14 minutes 1.67963109e+01 seconds 
+   Execution time, solver phase 14 minutes 1.45757301e+01 seconds 
 
- Final solution errors: Linf =   1.7021457e-05, L2 =   1.2365324e-05
+ Final solution errors: Linf =   1.6251841e-05, L2 =   1.2727191e-05
 
- Final solution errors, attenuation: Linf =   1.6526909e-05, L2 =   1.2071912e-05
+ Final solution errors, attenuation: Linf =   1.5742200e-05, L2 =   1.2454109e-05
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 

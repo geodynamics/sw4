@@ -1,0 +1,8 @@
+fileio verbose=1 path=refine-el-2
+
+grid nx=65 x=0.8 y=1.2 z=1.0 
+refinement zmax=0.2
+refinement zmax=0.5
+
+time t=0.3
+twilight omega=3.14159 errorlog=1

@@ -1,6 +1,8 @@
 #ifndef SW4_EW
 #define SW4_EW
 
+#define SafeCudaCall(call)    CheckCudaCall(call, #call, __FILE__, __LINE__)
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -40,8 +42,10 @@ class EW
    void processMaterialBlock( char* buffer );
    void processdGalerkin( char* buffer );
    void processReceiver( char* buffer );
+   void processTopography( char* buffer );
    void defineDimensionsGXY( );
    void defineDimensionsZ();
+   void allocateTopoArrays();
    void allocateArrays();
    void printGridSizes() const;
    bool parseInputFile( const string& filename );
@@ -55,6 +59,7 @@ class EW
    void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U,
 			    vector<Sarray> & a_Up ) ;
    void Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources, bool tt );
+   void ForceCU( float_sw4 a_t, Sarray* dev_F, bool tt, int st );
    void evalRHS( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		 vector<Sarray> & a_Uacc );
    void evalRHSCU( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -62,23 +67,28 @@ class EW
    void evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		      vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
    void evalPredictorCU(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
-			vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F, int st );
+			vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray>& a_F, int st );
    void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
 		      vector<Sarray> & a_Lu, vector<Sarray> & a_F );
    void evalCorrectorCU(vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
-			vector<Sarray> & a_Lu, vector<Sarray> & a_F, int st );
+			vector<Sarray> & a_Lu, vector<Sarray>& a_F, int st );
    void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		       vector<Sarray> & a_Uacc );
    void evalDpDmInTimeCU(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 			 vector<Sarray> & a_Uacc, int st );
    void communicate_array( Sarray& U, int g );
- 
    void cartesian_bc_forcing( float_sw4 t, vector<float_sw4**> & a_BCForcing,
 			      vector<Source*>& a_sources );
+   void cartesian_bc_forcingCU( float_sw4 t, vector<float_sw4**> & a_BCForcing,
+                              vector<Source*>& a_sources , int st);
+
    void setup_boundary_arrays();
    void side_plane( int g, int side, int wind[6], int nGhost );   
    void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		   float_sw4 t, vector<float_sw4**> & a_BCForcing );
+   void enforceBCCU( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                   float_sw4 t, vector<float_sw4**> & a_BCForcing , int st);
+   void enforceCartTopo( vector<Sarray>& a_U );
    void addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			    vector<Sarray> & a_Um, vector<Sarray> & a_Rho );
    void addSuperGridDampingCU(vector<Sarray> & a_Up, vector<Sarray> & a_U,
@@ -115,9 +125,42 @@ class EW
    int mkdirs(const string& path);
    bool topographyExists() {return m_topography_exists;}
    bool interpolate_topography( float_sw4 q, float_sw4 r, float_sw4& Z0, bool smoothed );
+   void buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0);
+   void compute_minmax_topography( float_sw4& topo_zmin, float_sw4& topo_zmax );
    void gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const;
+   bool find_topo_zcoord_owner( float_sw4 X, float_sw4 Y, float_sw4& Ztopo );
+   bool find_topo_zcoord_all( float_sw4 X, float_sw4 Y, float_sw4& Ztopo );
+   void generate_grid();
+   void setup_metric();
+   void grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, float_sw4& x,
+		      float_sw4& y, float_sw4& z );
    bool invert_grid_mapping( int g, float_sw4 x, float_sw4 y, float_sw4 z, 
 			     float_sw4& q, float_sw4& r, float_sw4& s );
+   int metric(  int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a_x,
+		 float_sw4* a_y, float_sw4* a_z, float_sw4* a_met, float_sw4* a_jac );
+   int metric_rev(  int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a_x,
+		 float_sw4* a_y, float_sw4* a_z, float_sw4* a_met, float_sw4* a_jac );
+   void metricexgh( int ib, int ie, int jb, int je, int kb, int ke,
+		    int nz, float_sw4* a_x, float_sw4* a_y, float_sw4* a_z, 
+		    float_sw4* a_met, float_sw4* a_jac, int order,
+		    float_sw4 sb, float_sw4 zmax, float_sw4 amp, float_sw4 xc,
+		    float_sw4 yc, float_sw4 xl, float_sw4 yl );
+   void metricexgh_rev( int ib, int ie, int jb, int je, int kb, int ke,
+			int nz, float_sw4* a_x, float_sw4* a_y, float_sw4* a_z, 
+			float_sw4* a_met, float_sw4* a_jac, int order,
+			float_sw4 sb, float_sw4 zmax, float_sw4 amp, float_sw4 xc,
+			float_sw4 yc, float_sw4 xl, float_sw4 yl );
+   void freesurfcurvisg( int ib, int ie, int jb, int je, int kb, int ke,
+			 int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+			 float_sw4* a_la, float_sw4* a_met, float_sw4* s,
+			 float_sw4* a_forcing, float_sw4* a_strx, float_sw4* a_stry );
+   void freesurfcurvisg_rev( int ib, int ie, int jb, int je, int kb, int ke,
+			 int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+			 float_sw4* a_la, float_sw4* a_met, float_sw4* s,
+			 float_sw4* a_forcing, float_sw4* a_strx, float_sw4* a_stry );
+   void gridinfo( int ib, int ie, int jb, int je, int kb, int ke,
+		  float_sw4* a_met, float_sw4* a_jac, float_sw4&  minj,
+		  float_sw4& maxj );
 
    void computeDT();
    void computeNearestGridPoint(int & a_i, int & a_j, int & a_k, int & a_g, float_sw4 a_x, 
@@ -182,6 +225,15 @@ class EW
 		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 		     float_sw4 beta );
+   void addsgd4cfort( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+		      float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
+   void addsgd4cfort_indrev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+			     float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+			     float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
+
    void addsgd6fort( int ifirst, int ilast, int jfirst, int jlast,
 		      int kfirst, int klast,
 		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
@@ -196,6 +248,14 @@ class EW
 		      float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
 		      float_sw4* a_cox,  float_sw4* a_coy,  float_sw4* a_coz,
 		      float_sw4 beta );
+   void addsgd6cfort( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		      float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+		      float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+		      float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
+   void addsgd6cfort_indrev( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     float_sw4* a_up, float_sw4* a_u, float_sw4* a_um, float_sw4* a_rho,
+			     float_sw4* a_dcx, float_sw4* a_dcy, float_sw4* a_strx, float_sw4* a_stry, 
+			     float_sw4* a_jac, float_sw4* a_cox,  float_sw4* a_coy, float_sw4 beta );
    void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
 				float_sw4* _bope, float_sw4* _sbop );
    int getVerbosity() const {return 0;}
@@ -204,6 +264,10 @@ class EW
    void get_utc( int utc[7] ) const;
    void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
 			  vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U);
+
+   void sort_grid_point_sources();
+   void copy_point_sources_to_gpu();
+   void init_point_sourcesCU();
 
    // DG stuff
    int m_qu;
@@ -221,6 +285,9 @@ class EW
                          double* w_out_all_faces, double* v_out_all_faces);
    void computeError(double* udg, double* vdg, double t);
    void get_exact_point_source_dG(double* u, double t, double x, double y, double z);
+
+
+   enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile};
 
 
    // Variables ----------
@@ -245,6 +312,8 @@ class EW
    Sarray mMetric, mJ;
 
    Sarray mTopo, mTopoGridExt;
+   InputMode m_topoInputStyle;
+   string m_topoFileName;
    int m_grid_interpolation_order;
    float_sw4 m_zetaBreak;
 // For some simple topographies (e.g. Gaussian hill) there is an analytical expression for the top elevation
@@ -260,8 +329,9 @@ class EW
    MPI_Comm  m_cartesian_communicator;
    vector<MPI_Datatype> m_send_type1;
    vector<MPI_Datatype> m_send_type3;
+   vector<MPI_Datatype> m_send_type4; // metric
    MPI_Datatype m_mpifloat;
-   //   vector<MPI_Datatype> m_send_type4; // metric
+
    //   vector<MPI_Datatype> m_send_type21; // anisotropic
 
    // Vectors of Sarrays hold material properties on all grids. 
@@ -303,13 +373,21 @@ class EW
    vector<int *> m_NumberOfBCPoints;
    vector<int *> m_BndryWindow;
 
+   vector<boundaryConditionType*> dev_bcType;
+   vector<int *> dev_BndryWindow;
+   vector<float_sw4**> BCForcing;
+   vector<float_sw4**> dev_BCForcing;
+   void copy_bcforcing_arrays_to_device();
+   void copy_bctype_arrays_to_device();
+   void copy_bndrywindow_arrays_to_device();
+
    // Test modes
    bool m_point_source_test, m_moment_test;
 
    // diagnostic output, error checking
    int mPrintInterval, mVerbose;
    bool mQuiet;
-   bool m_checkfornan, m_output_detailed_timing;
+   bool m_checkfornan, m_output_detailed_timing, m_save_trace;
    string mPath;
 
    // File io
@@ -319,6 +397,9 @@ class EW
    // Sources
    vector<Source*> m_globalUniqueSources;
    vector<GridPointSource*> m_point_sources;
+   vector<int> m_identsources;
+   GridPointSource** dev_point_sources;
+   int* dev_identsources;
 
    // Supergrid boundary conditions
    float_sw4 m_supergrid_damping_coefficient;
@@ -339,6 +420,16 @@ class EW
 
    // Discontinuous Galerkin stuff
    bool m_use_dg;
+ 
+   // Halo data communication 
+   vector<float_sw4*> dev_SideEdge_Send, dev_SideEdge_Recv;
+   vector<float_sw4*>  m_SideEdge_Send, m_SideEdge_Recv;
+   void setup_device_communication_array();
+   void communicate_arrayCU( Sarray& u, int g , int st);
+
+#ifdef SW4_CUDA
+   void CheckCudaCall(cudaError_t command, const char * commandName, const char * fileName, int line);
+#endif
    
 };
 

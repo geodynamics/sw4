@@ -109,12 +109,12 @@ SET(SW4_SRC_C_FILES src/main.C src/EW.C src/Sarray.C src/version.C src/parseInpu
     src/SecondOrderSection.C src/time_functions.C src/Qspline.C
     src/EtreeFile.C src/MaterialIfile.C src/GeographicProjection.C 
     src/Image3D.C src/MaterialVolimagefile.C
-    src/MaterialRfile.C 
-    src/AnisotropicMaterialBlock.C src/sacutils.C )
+    src/MaterialRfile.C src/AnisotropicMaterialBlock.C src/sacutils.C
+    src/consintp.C src/addmemvarforcing2.C)
 
 SET(SW4_SRC_F_FILES src/addsgd.f src/bcfort.f 
     src/randomfield3d.f src/testsrc.f src/twilightfort.f
-    src/boundaryOp.f src/rayleighfort.f src/twilightsgfort.f
+    src/boundaryOp.f src/bndryOpNoGhost.f90 src/rayleighfort.f src/twilightsgfort.f
     src/curvilinear4.f src/curvilinear4sg.f 
     src/innerloop-ani-sgstr-vc.f src/checkanisomtrl.f src/computedtaniso.f
     src/rhs4curvilinear.f src/velsum.f src/gradients.f
@@ -123,7 +123,7 @@ SET(SW4_SRC_F_FILES src/addsgd.f src/bcfort.f
     src/bcfortanisg.f src/ilanisocurv.f
     src/anisomtrltocurvilinear.f src/bcfreesurfcurvani.f 
     src/tw_aniso_force_tt.f src/tw_aniso_force.f src/tw_ani_stiff.f90
-    src/rhs4th3fortwind.f )
+    src/rhs4th3fortwind.f src/scalar_prod.f90 src/addsg4wind.f90 src/updatememvar.f90)
 
 # Unused:
 # bcsf.f
@@ -156,51 +156,52 @@ ADD_CUSTOM_COMMAND(TARGET sw4 POST_BUILD COMMAND cat ${SW4_SOURCE_DIR}/wave.txt)
 SET(TESTING_LEVEL 0 CACHE STRING "Level of testing thoroughness: 0=short tests (<1 minute each), 2=all tests (may take an hour)")
 SET(MPI_NUM_TEST_PROCS 4 CACHE STRING "Number of MPI processes to use in tests")
 
-SET(EXAMPLE_DIR ${SW4_SOURCE_DIR}/examples)
+SET(PYTEST_DIR ${SW4_SOURCE_DIR}/pytest)
+SET(REF_DIR ${SW4_SOURCE_DIR}/pytest/reference)
 
 # Define tests and tolerances
-SET(TEST_DIRS       twilight                twilight                twilight
-                    twilight                twilight                twilight
-                    twilight-att            twilight-att            twilight-att
-                    twilight-att            twilight-att            twilight-att
-		    meshrefine              meshrefine
+SET(TEST_DIRS       twilight      twilight                twilight
+                    twilight                  twilight                twilight
+                    attenuation            attenuation            attenuation
+                    attenuation            attenuation            attenuation
+		    meshrefine          meshrefine
                     lamb                    lamb
-                    pointsource             pointsource             pointsource)
-SET(TEST_SUBDIRS    flat-twi-1              flat-twi-2              flat-twi-3
-                    gauss-twi-1             gauss-twi-2             gauss-twi-3
-                    tw-att-flat-1           tw-att-flat-2           tw-att-flat-3
-                    tw-att-gauss-1          tw-att-gauss-2          tw-att-gauss-3
-                    meshref-3c-1            meshref-3c-2
-                    lamb-1                  lamb-2
-                    pointsource-1           pointsource-2           pointsource-3)
+                    pointsource         pointsource        pointsource)
+SET(RESULT_SUBDIRS  flat-twi-1  flat-twi-2          flat-twi-3
+                    gauss-twi-1          gauss-twi-2        gauss-twi-3
+                    tw-att-1                tw-att-2             tw-att-3
+                    tw-topo-att-1         tw-topo-att-2      tw-topo-att-3
+                    refine-el-1            refine-att-1
+                    lamb-1                 lamb-2
+                    pointsource-sg-1  pointsource-sg-2  pointsource-sg-3)
 SET(TEST_IN_FILES   flat-twi-1.in           flat-twi-2.in           flat-twi-3.in
-                    gauss-twi-1.in          gauss-twi-2.in          gauss-twi-3.in
-                    tw-att-1.in             tw-att-2.in             tw-att-3.in
-                    tw-topo-att-1.in        tw-topo-att-2.in        tw-topo-att-3.in
-		    tw-refine-3cart-1.in    tw-refine-3cart-2.in
-                    lamb-1.in               lamb-2.in
-                    pointsource-sg1.in      pointsource-sg2.in      pointsource-sg3.in)
-SET(TEST_BASE_FILES TwilightErr             TwilightErr             TwilightErr    
+                    gauss-twi-1.in      gauss-twi-2.in          gauss-twi-3.in
+                    tw-att-1.in            tw-att-2.in             tw-att-3.in
+                    tw-topo-att-1.in     tw-topo-att-2.in        tw-topo-att-3.in
+		    refine-el-1.in         refine-att-1.in
+                    lamb-1.in              lamb-2.in
+                    pointsource-sg-1.in      pointsource-sg-2.in      pointsource-sg-3.in)
+SET(TEST_BASE_FILES TwilightErr     TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr             TwilightErr    
                     TwilightErr             TwilightErr
-                    LambErr                 LambErr    
-                    PointSourceErr          PointSourceErr          PointSourceErr)
-SET(TEST_CHECKS     err_tol                 err_tol                 err_tol 
-                    err_tol                 err_tol                 err_tol 
-                    err_tol                 err_tol                 err_tol 
-                    err_tol                 err_tol                 err_tol 
-		    err_tol                 err_tol
-                    compare                 compare 
-                    compare                 compare                 compare)
+                    LambErr                LambErr    
+                    PointSourceErr      PointSourceErr    PointSourceErr)
+SET(TEST_CHECKS   compare                 compare                 compare 
+                    compare             compare                 compare 
+                    compare             compare                 compare 
+                    compare             compare                 compare 
+		    compare             compare
+                    compare             compare 
+                    compare             compare                 compare)
 SET(TEST_LEVELS     0                       0                       1
                     0                       0                       1
                     0                       0                       1
                     0                       1                       2
-		    1                       2
-                    1                       2
-                    1                       2                       2)
+		    0                       0
+                    0                       1
+                    0                       1                       2)
 SET(TEST_ERRINF_TOL 1e-3                    1e-4                    1e-5
                     1e-2                    1e-3                    1e-4
                     1e-3                    1e-4                    1e-5
@@ -230,8 +231,8 @@ FOREACH(TEST_IND RANGE ${NUM_TESTS})
     LIST(GET TEST_LEVELS ${TEST_IND} TEST_LEVEL)
     IF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
         LIST(GET TEST_DIRS ${TEST_IND} TEST_DIR)
-        LIST(GET TEST_SUBDIRS ${TEST_IND} TEST_SUBDIR)
-        SET(TEST_NAME ${TEST_DIR}-${TEST_SUBDIR})
+        LIST(GET RESULT_SUBDIRS ${TEST_IND} RESULT_SUBDIR)
+        SET(TEST_NAME ${TEST_DIR}-${RESULT_SUBDIR})
         LIST(GET TEST_IN_FILES ${TEST_IND} TEST_IN_FILE)
         LIST(GET TEST_BASE_FILES ${TEST_IND} TEST_BASE_FILE)
         LIST(GET TEST_CHECKS ${TEST_IND} TEST_CHECK_TYPE)
@@ -242,15 +243,15 @@ FOREACH(TEST_IND RANGE ${NUM_TESTS})
             NAME ${TEST_NAME}
             WORKING_DIRECTORY ${SW4_BINARY_DIR}
             COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPI_NUM_TEST_PROCS} ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${EXAMPLE_DIR}/${TEST_DIR}/${TEST_IN_FILE}
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sw4 ${REF_DIR}/${TEST_DIR}/${TEST_IN_FILE}
             )
 
-        SET(TEST_REF_FILE ${EXAMPLE_DIR}/${TEST_DIR}/${TEST_SUBDIR}/${TEST_BASE_FILE}.ref)
-        SET(TEST_OUT_FILE ${SW4_BINARY_DIR}/${TEST_SUBDIR}/${TEST_BASE_FILE}.txt)
+        SET(TEST_REF_FILE ${REF_DIR}/${TEST_DIR}/${RESULT_SUBDIR}/${TEST_BASE_FILE}.txt)
+        SET(TEST_OUT_FILE ${SW4_BINARY_DIR}/${RESULT_SUBDIR}/${TEST_BASE_FILE}.txt)
         ADD_TEST(
             NAME ${TEST_NAME}_result_check
             WORKING_DIRECTORY ${SW4_BINARY_DIR}/${TEST_OUTPUT_DIR}
-            COMMAND ${EXAMPLE_DIR}/check_results.py ${TEST_CHECK_TYPE} ${TEST_REF_FILE} ${TEST_OUT_FILE} ${ERRINF_TOL} ${ERRL2_TOL} ${SOLINF_TOL}
+            COMMAND ${PYTEST_DIR}/check_results.py ${TEST_CHECK_TYPE} ${TEST_REF_FILE} ${TEST_OUT_FILE} ${ERRINF_TOL} ${ERRL2_TOL} ${SOLINF_TOL}
             )
         SET_TESTS_PROPERTIES(
             ${TEST_NAME}_result_check 

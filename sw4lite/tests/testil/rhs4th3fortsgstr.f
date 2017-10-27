@@ -13,7 +13,7 @@
       parameter( tf=3d0/4, i6=1d0/6, i144=1d0/144, i12=1d0/12 )
 
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
-      integer nz, onesided(6), m, q, kb, mb, qb, k1, k2
+      integer nz, onesided(6), q, kb, mb, qb, k1, k2
       real*8 acof(6,8,8), bope(6,8), ghcof(6)
       real*8 uacc(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -22,7 +22,7 @@
 c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4
       real*8 muz1, muz2, muz3, muz4
-      real*8 mucof, mu1zz, mu2zz, lau2yz
+      real*8 mucof, mu1zz, mu2zz, lau2yz, lacof
       real*8 lap2mu, mu3zz, mu3xz, mu3yz, lau1xz
       real*8 lau3zx, u3zim2, u3zim1, u3zip1, u3zip2
       real*8 lau3zy, u3zjm2, u3zjm1, u3zjp1, u3zjp2
@@ -350,27 +350,24 @@ c computing the second derivative
             mu2zz = 0
             mu3zz = 0
             do q=1,8
-              mucof =0
-              lap2mu=0
-              do m=1,8
-                mucof = mucof+acof(k,q,m)*mu(i,j,m)
-                lap2mu= lap2mu+acof(k,q,m)*(2*mu(i,j,m)+la(i,j,m))
-c                 mucof = acof(k,q,1)*mu(i,j,1)+acof(k,q,2)*mu(i,j,2)+
-c     *                   acof(k,q,3)*mu(i,j,3)+acof(k,q,4)*mu(i,j,4)+
-c     *                   acof(k,q,5)*mu(i,j,5)+acof(k,q,6)*mu(i,j,6)+
-c     *                   acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8)
-c                 lap2mu = acof(k,q,1)*(2*mu(i,j,1)+la(i,j,1))+
-c     *                    acof(k,q,2)*(2*mu(i,j,2)+la(i,j,2))+
-c     *                    acof(k,q,3)*(2*mu(i,j,3)+la(i,j,3))+
-c     *                    acof(k,q,4)*(2*mu(i,j,4)+la(i,j,4))+
-c     *                    acof(k,q,5)*(2*mu(i,j,5)+la(i,j,5))+
-c     *                    acof(k,q,6)*(2*mu(i,j,6)+la(i,j,6))+
-c     *                    acof(k,q,7)*(2*mu(i,j,7)+la(i,j,7))+
-c     *                    acof(k,q,8)*(2*mu(i,j,8)+la(i,j,8))
-              enddo
+c              mucof =0
+c              lap2mu=0
+c              do m=1,8
+c                mucof = mucof+acof(k,q,m)*mu(i,j,m)
+c                lap2mu= lap2mu+acof(k,q,m)*(2*mu(i,j,m)+la(i,j,m))
+               mucof = acof(k,q,1)*mu(i,j,1)+acof(k,q,2)*mu(i,j,2)+
+     *                 acof(k,q,3)*mu(i,j,3)+acof(k,q,4)*mu(i,j,4)+
+     *                 acof(k,q,5)*mu(i,j,5)+acof(k,q,6)*mu(i,j,6)+
+     *                 acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8)
+               lacof = acof(k,q,1)*la(i,j,1)+acof(k,q,2)*la(i,j,2)+
+     *                 acof(k,q,3)*la(i,j,3)+acof(k,q,4)*la(i,j,4)+
+     *                 acof(k,q,5)*la(i,j,5)+acof(k,q,6)*la(i,j,6)+
+     *                 acof(k,q,7)*la(i,j,7)+acof(k,q,8)*la(i,j,8)
+c              enddo
               mu1zz = mu1zz + mucof*u(1,i,j,q)
               mu2zz = mu2zz + mucof*u(2,i,j,q)
-              mu3zz = mu3zz + lap2mu*u(3,i,j,q)
+c              mu3zz = mu3zz + lap2mu*u(3,i,j,q)
+              mu3zz = mu3zz + (lacof+2*mucof)*u(3,i,j,q)
             end do
 
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2

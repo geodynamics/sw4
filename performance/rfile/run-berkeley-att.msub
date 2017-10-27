@@ -1,0 +1,10 @@
+#!/bin/csh
+#MSUB -l nodes=6           #this is the number of nodes on which to run
+#MSUB -l walltime=00:30:00   #sets total wall time 
+#MSUB -V # import environment
+#MSUB -q pdebug
+
+echo "Berkeley r-file with attenuation"
+srun -N 6 --ntasks-per-node=36 ./sw4 berkeley-att-h20.in >& berkeley-att-h20.out
+
+

@@ -88,7 +88,7 @@ c      integer n, nrand(20)
      *                                        1-pz:1+pz)
       real*8  h, dist, distz
 c      real*8  bnorm, bznorm
-      real*8, allocatable, dimension(:) :: b, bz
+      real*8, allocatable, dimension(:) :: b, bz, b2, bz2
       real    randno
 
       iseed1=randw(1)
@@ -96,15 +96,17 @@ c      real*8  bnorm, bznorm
       iseed3=randw(3)
 c      p =int(dist/h)+1
 c      pz=int(distz/h)+1
-      allocate( b(-p:p), bz(-pz:pz) )
+      allocate( b(-p:p), bz(-pz:pz), b2(-p:p), bz2(-pz:pz) )
 c      bnorm = 0
       do k=-p,p
          b(k) = exp(-k*k*h*h/(2*dist*dist))
 c         bnorm = bnorm + b(k)*b(k)
+         b2(k) = b(k)*b(k)
       enddo
 c      bznorm = 0
       do k=-pz,pz
          bz(k) = exp(-k*k*h*h/(2*distz*distz))
+         bz2(k) = bz(k)*bz(k)
 c         bznorm = bznorm + bz(k)*bz(k)
       enddo
 c Normalize filter coefficients
@@ -161,10 +163,13 @@ c                     write(*,*) 'saved ',i,j,k,randno
                            if( i-ii.ge.ifirst .and. i-ii.le.ilast )then
                               w(i-ii,j-jj,k-kk) = w(i-ii,j-jj,k-kk) + 
      *                             b(ii)*b(jj)*bz(kk)*randno
-                              wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
-     *                                   + b(ii)*b(jj)*bz(kk)
+c L1-norm
 c                              wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
+c     *                                   + b(ii)*b(jj)*bz(kk)
+c L2-norm
+                              wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
 c     *                           + b(ii)*b(jj)*bz(kk)*b(ii)*b(jj)*bz(kk)
+     *                           + b2(ii)*b2(jj)*bz2(kk)
                            endif
                         enddo
                      endif
@@ -191,12 +196,14 @@ c      write(*,*) '-----------------------------'
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
-               w(i,j,k) = w(i,j,k)/wgh(i,j,k)
-c               w(i,j,k) = w(i,j,k)/SQRT(wgh(i,j,k))
+c L1:
+c               w(i,j,k) = w(i,j,k)/wgh(i,j,k)
+c L2:
+               w(i,j,k) = w(i,j,k)/SQRT(wgh(i,j,k))
             enddo
          enddo
       enddo
-      deallocate(b,bz)
+      deallocate(b,bz,b2,bz2)
       end
 
 c-----------------------------------------------------------------------
@@ -268,7 +275,8 @@ c      pz=int(distz/h)+1
                                  w(i-ii,j-jj,k-kk) = w(i-ii,j-jj,k-kk) + 
      *                             b(ii)*b(jj)*bz*randno
                                  wgh(i-ii,j-jj,k-kk) = 
-     *                         wgh(i-ii,j-jj,k-kk) + b(ii)*b(jj)*bz
+c     *                         wgh(i-ii,j-jj,k-kk) + b(ii)*b(jj)*bz
+     *              wgh(i-ii,j-jj,k-kk) + b(ii)*b(ii)*b(jj)*b(jj)*bz*bz
                               endif
                            enddo
                            endif
@@ -289,7 +297,8 @@ c      pz=int(distz/h)+1
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
-               w(i,j,k) = w(i,j,k)/wgh(i,j,k)
+c               w(i,j,k) = w(i,j,k)/wgh(i,j,k)
+               w(i,j,k) = w(i,j,k)/SQRT(wgh(i,j,k))
             enddo
          enddo
       enddo
@@ -298,7 +307,7 @@ c      pz=int(distz/h)+1
 
 c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITY( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, vs, vp, per, amp, grad, zmin, h )
+     *     klast, vs, vp, per, amp, grad, zmin, h, plimit )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k
@@ -307,7 +316,7 @@ c      integer nrand(35), n
       real*8  vs(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  vp(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  amp, grad, a, z, zmin, h, sqrt3, maxper, minper
-
+      real*8  plimit, perijk
 c      sqrt3 = SQRT(3d0)
 c      nrand = 0
 c      minper = 1d38
@@ -318,8 +327,10 @@ c      write(*,*) 'amp = ',amp, ' grad= ',grad
          A = amp + grad*z
          do j=jfirst,jlast
             do i=ifirst,ilast
-               vs(i,j,k) = (1+A*per(i,j,k))*vs(i,j,k)
-               vp(i,j,k) = (1+A*per(i,j,k))*vp(i,j,k)
+               perijk = MAX( per(i,j,k),-plimit )
+               perijk = MIN( perijk, plimit )
+               vs(i,j,k) = (1+A*perijk)*vs(i,j,k)
+               vp(i,j,k) = (1+A*perijk)*vp(i,j,k)
 c               n = (per(i,j,k)+sqrt3)*10
 c               nrand(n+1) = nrand(n+1)+1
 c               if( per(i,j,k).gt.maxper )then
@@ -342,7 +353,7 @@ c      write(*,*) '-----------------------------'
 
 c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITYC( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, vs, vp, per, amp, grad, z )
+     *     klast, vs, vp, per, amp, grad, z, plimit )
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k
@@ -350,14 +361,16 @@ c-----------------------------------------------------------------------
       real*8  vs(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  vp(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8  z(ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8  amp, grad, a
+      real*8  amp, grad, a, perijk, plimit
 
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
                A = amp + grad*z(i,j,k)
-               vs(i,j,k) = (1+A*per(i,j,k))*vs(i,j,k)
-               vp(i,j,k) = (1+A*per(i,j,k))*vp(i,j,k)
+               perijk = MAX( per(i,j,k),-plimit )
+               perijk = MIN( perijk,     plimit )
+               vs(i,j,k) = (1+A*perijk)*vs(i,j,k)
+               vp(i,j,k) = (1+A*perijk)*vp(i,j,k)
             enddo
          enddo
       enddo

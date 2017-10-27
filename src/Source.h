@@ -79,6 +79,10 @@ public:
   int m_i0, m_j0, m_k0;
   int m_grid;
 
+// keep track of new filtering approach:
+   bool m_timeFuncIsReady;
+   void prepareTimeFunc(bool doFilter, double sw4TimeStep, int sw4TimeSamples, Filter *sw4_filter);
+
   double getX0() const;
   double getY0() const;
   double getZ0() const;
@@ -109,7 +113,7 @@ public:
   double compute_t0_increase( double t0_min ) const;
   void adjust_t0( double dt0 );
 
-  void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources ) const;
+  void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources );
 
   void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
   void getForces( double& fx, double& fy, double& fz ) const;

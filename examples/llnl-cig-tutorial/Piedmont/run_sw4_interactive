@@ -1,0 +1,35 @@
+#!/bin/csh
+
+# Set BIN directory for SW4 executable
+set BIN = /usr/apps/sw4/optimize
+
+# Set CPUS/nodes for this machine, QUARTZ 
+set TASKSPERNODE = 36 
+
+# Set number of nodes requested
+set NODES = 4
+
+# Compute number of CPU's (cores) 
+set NCPUS = ` echo $NODES | awk '{ print $1 * '$TASKSPERNODE' }' `
+
+echo
+echo NODES: $NODES NCPUS: $NCPUS
+
+set RUN = PIEDMONT_1D
+#set RUN = PIEDMONT_3D
+
+echo
+echo RUN: $RUN
+
+cd $RUN
+
+pwd
+date
+
+# This command submits MPI job to pdebug partition 
+# This should be changed for preserve partition for workshop
+srun -N $NODES --ntasks-per-node $TASKSPERNODE -p pReserved $BIN/sw4 $RUN.sw4input >! $RUN.stdout
+
+date
+cd ..
+

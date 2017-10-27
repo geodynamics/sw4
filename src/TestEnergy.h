@@ -39,9 +39,12 @@ class TestEnergy
 {
 public:
 
-   TestEnergy( int seed, double cpcsratio, int write_every, std::string filename ) :
+   TestEnergy( int seed, double cpcsratio, int write_every, std::string filename, double amp, double sg_eps ) :
       m_seed(seed), m_cpcsratio(cpcsratio), m_write_every(write_every), m_filename(filename)
    {
+      m_stochastic_amp = amp;
+      m_sg_epsL = sg_eps;
+      
       srand48( m_seed );
    }
 
@@ -61,20 +64,20 @@ public:
 	    FILE *fd=fopen(filewpath.str().c_str(),"w");
 	    //	 	 cout << "energy = " << energy << endl;
 	    for( int i=0 ; i < m_energyvector.size() ; i++ )
-	       fprintf(fd, "%30.20g\n", m_energyvector[i] );
+	       fprintf(fd, "%.20e\n", m_energyvector[i] );
 	    fclose(fd);
 	 }
       }
    }
 
-int m_seed, m_write_every;
-double m_cpcsratio;
-std::vector<double> m_energyvector;
-std::string m_filename;
+   int m_seed, m_write_every;
+   double m_cpcsratio, m_stochastic_amp, m_sg_epsL;
+   std::vector<double> m_energyvector;
+   std::string m_filename;
    
 private:
-TestEnergy(const TestEnergy&);
-TestEnergy& operator=(const TestEnergy&);
+   TestEnergy(const TestEnergy&);
+   TestEnergy& operator=(const TestEnergy&);
 
 };
 

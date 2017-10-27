@@ -753,6 +753,94 @@ c the do loops should span jfirst,jlast and ifirst,ilast
       end
 
 c-----------------------------------------------------------------------
+      subroutine twfrsurfz_wind( ifirst, ilast, jfirst, jlast, kfirst,
+     +     klast,
+     +     h, kz, t, omega, c, phase, bforce, mu, lambda, zmin,
+     +     i1, i2, j1, j2 ) bind(c)
+      implicit none
+      integer i1, i2, j1, j2
+      integer ifirst, ilast, jfirst, jlast, kfirst, klast, attenuation
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast), h
+      integer i, j, kz
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z, zmin
+      doubleprecision t
+      doubleprecision omega
+      doubleprecision c
+      doubleprecision phase
+
+      doubleprecision forces(3)
+      doubleprecision t13
+      doubleprecision t15
+      doubleprecision t16
+      doubleprecision t19
+      doubleprecision t20
+      doubleprecision t21
+      doubleprecision t23
+      doubleprecision t24
+      doubleprecision t28
+      doubleprecision t29
+      doubleprecision t32
+      doubleprecision t33
+      doubleprecision t34
+      doubleprecision t37
+      doubleprecision t38
+      doubleprecision t43
+      doubleprecision t44
+      doubleprecision t49
+      doubleprecision t60
+      doubleprecision t62
+      doubleprecision t65
+
+      z = (kz-1)*h + zmin
+c the do loops should span j1,j2 and i1,i2
+      do j=j1,j2
+         y = (j-1)*h
+         do i=i1,i2
+            x=(i-1)*h
+        t13 = mu(i,j,kz)
+        t15 = omega*x+phase
+        t16 = cos(t15)
+        t19 = omega*y+phase
+        t20 = sin(t19)
+        t21 = c*t
+        t23 = omega*(z-t21)
+        t24 = sin(t23)
+        t28 = omega*(x-t21)
+        t29 = sin(t28)
+        t32 = omega*z+phase
+        t33 = cos(t32)
+        t34 = t33*omega
+        forces(1) = t13*(t16*omega*t20*t24+t29*t20*t34)
+        t37 = sin(t15)
+        t38 = cos(t19)
+        t43 = omega*(y-t21)
+        t44 = sin(t43)
+        forces(2) = t13*(t37*t38*omega*t24+t37*t44*t34)
+        t49 = cos(t23)
+        t60 = cos(t28)
+        t62 = sin(t32)
+        t65 = cos(t43)
+        forces(3) = 2*t13*t37*t20*t49*omega+lambda(i,j,kz)*(t6
+     #0*omega*t20*t62+t37*t65*omega*t62+t37*t20*t49*omega)
+c$$$        if ((kz==1 .and. j==25.and. i==0) .or.
+c$$$     +       ( kz==25 .and. j==49.and. i==-1)) then
+c$$$          write(*,'(3(a,i3,tr1),7(a,tr1,es10.3,tr1))')
+c$$$     +         'i=', i, 'j=', j, 'k=', kz, 'x=', x, 'y=', y, 'z=', z, 
+c$$$     +         'mu=', mu(i,j,kz), 'la=', lambda(i,j,kz),
+c$$$     +         'bf1=', forces(1)
+c$$$        endif
+        bforce(1,i,j) = forces(1)
+        bforce(2,i,j) = forces(2)
+        bforce(3,i,j) = forces(3)
+      enddo
+      enddo
+      end
+      
+c-----------------------------------------------------------------------
       subroutine TWFRSURFZATT( ifirst, ilast, jfirst, jlast, kfirst,
      +   klast, h, kz, t, omega, c, phase, bforce, mua, lambdaa, zmin )
       implicit none
@@ -903,6 +991,100 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine twfrsurfzsg_wind( ifirst, ilast, jfirst, jlast, 
+     *     kfirst, klast, h, kz, t, om, c, ph, omstrx, omstry,
+     *     bforce, mu, lambda, zmin, i1, i2, j1, j2 ) bind(c)
+c
+      implicit none
+c arguments
+      integer, value:: ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8, value:: h
+      integer, value:: kz
+      doubleprecision, value:: t
+      doubleprecision, value:: om,c,ph,omstrx,omstry
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast)
+      doubleprecision mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambda(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision, value:: zmin
+      integer, value:: i1, i2, j1, j2
+c local variables
+      doubleprecision x
+      doubleprecision y
+      integer i, j
+      doubleprecision z
+
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t10
+      doubleprecision t11
+      doubleprecision t12
+      doubleprecision t15
+      doubleprecision t17
+      doubleprecision t19
+      doubleprecision t20
+      doubleprecision t22
+      doubleprecision t24
+      doubleprecision t25
+      doubleprecision t29
+      doubleprecision t3
+      doubleprecision t31
+      doubleprecision t32
+      doubleprecision t36
+      doubleprecision t39
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t46
+      doubleprecision t51
+      doubleprecision t53
+      doubleprecision t56
+      doubleprecision t6
+      doubleprecision t7
+
+      z = (kz-1)*h + zmin
+c the do loops should span j1,j2 and i1,i2
+      do j=j1,j2
+         y = (j-1)*h
+         do i=i1,i2
+            x=(i-1)*h
+            t1 = c*t
+            t3 = om*(x-t1)
+            t4 = sin(t3)
+            t6 = om*y+ph
+            t7 = sin(t6)
+            t10 = om*z+ph
+            t11 = cos(t10)
+            t12 = t11*om
+            t15 = sin(omstrx*x)
+            t17 = 1+t15/2
+            t19 = om*x+ph
+            t20 = cos(t19)
+            t22 = om*t7
+            t24 = om*(z-t1)
+            t25 = sin(t24)
+            forces(1) = mu(i,j,kz)*(t4*t7*t12+t17*t20*t22*t25)
+            t29 = sin(t19)
+            t31 = om*(y-t1)
+            t32 = sin(t31)
+            t36 = sin(omstry*y)
+            t39 = (1+t36/2)*t29
+            t40 = cos(t6)
+            forces(2) = mu(i,j,kz)*(t29*t32*t12+t39*t40*om*t25)
+            t46 = cos(t24)
+            t51 = cos(t3)
+            t53 = sin(t10)
+            t56 = cos(t31)
+            forces(3) = 2*mu(i,j,kz)*t29*t7*t46*om+lambda(i,j,kz)*
+     #(t17*t51*t22*t53+t39*t56*om*t53+t29*t7*t46*om)
+            bforce(1,i,j) = forces(1)
+            bforce(2,i,j) = forces(2)
+            bforce(3,i,j) = forces(3)
+         enddo
+      enddo
+      return
+      end
+
+
+c-----------------------------------------------------------------------
       subroutine TWFRSURFZSGSTRATT( ifirst, ilast, jfirst, jlast, 
      *       kfirst, klast, h, kz, t, omega, c, phase, omstrx, omstry,
      *       bforce, mua, lambdaa, zmin )
@@ -992,6 +1174,177 @@ c-----------------------------------------------------------------------
             bforce(2,i,j) = bforce(2,i,j) - forces(2)
             bforce(3,i,j) = bforce(3,i,j) - forces(3)
          enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine twfrsurfzsg_att_wind( ifirst, ilast, jfirst, jlast, 
+     *       kfirst, klast, h, kz, t, omega, c, phase, omstrx, omstry,
+     *       bforce, mua, lambdaa, zmin, i1, i2, j1, j2 ) bind(c)
+c
+c THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
+c
+c How is the sign of the normal accounted for (+/- z)?
+c      
+      implicit none
+c arguments
+      integer, value:: ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8, value:: h
+      integer, value:: kz
+      doubleprecision, value:: t
+      doubleprecision, value:: omega,c,phase,omstrx,omstry
+
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast)
+      doubleprecision mua(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambdaa(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision, value:: zmin
+      integer, value:: i1, i2, j1, j2
+c local variables
+
+      integer i, j
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z
+     
+      doubleprecision forces(3)
+      doubleprecision t1
+      doubleprecision t12
+      doubleprecision t13
+      doubleprecision t17
+      doubleprecision t19
+      doubleprecision t22
+      doubleprecision t23
+      doubleprecision t28
+      doubleprecision t3
+      doubleprecision t31
+      doubleprecision t32
+      doubleprecision t35
+      doubleprecision t36
+      doubleprecision t4
+      doubleprecision t40
+      doubleprecision t42
+      doubleprecision t43
+      doubleprecision t45
+      doubleprecision t5
+      doubleprecision t51
+      doubleprecision t56
+      doubleprecision t61
+      doubleprecision t66
+      doubleprecision t68
+      doubleprecision t7
+      doubleprecision t8
+      z = (kz-1)*h + zmin
+      do j=j1,j2
+         y = (j-1)*h
+         do i=i1,i2
+            x=(i-1)*h
+            t1 = c*t
+            t3 = omega*(x-t1)
+            t4 = -t3-phase
+            t5 = cos(t4)
+            t7 = omega*x+phase
+            t8 = sin(t7)
+            t12 = -omega*(z-t1)-phase
+            t13 = sin(t12)
+            t17 = sin(omstrx*x)
+            t19 = 1+t17/2
+            t22 = omega*y+phase
+            t23 = cos(t22)
+            forces(1) = mua(i,j,kz)*(t5*t8*t13*omega+t19*t8*
+     *                          omega*t23*t13)
+            t28 = sin(t3)
+            t31 = -omega*(y-t1)-phase
+            t32 = cos(t31)
+            t35 = omega*z+phase
+            t36 = sin(t35)
+            t40 = sin(omstry*y)
+            t42 = 1+t40/2
+            t43 = cos(t7)
+            t45 = sin(t22)
+            forces(2) = mua(i,j,kz)*(-t28*t32*t36*omega+t42*t43*t45*
+     *                           omega*t13)
+            t51 = cos(t12)
+            t56 = sin(t4)
+            t61 = omega*t51
+            t66 = sin(t31)
+            t68 = cos(t35)
+            forces(3) = 2*mua(i,j,kz)*t43*t23*t51*omega+lambdaa(i,j,kz)
+     #*(t19*(t56*omega*t8*t51+t5*t43*t61)+t42*t28*t66*omega*t68+
+     *          t43*t23*t61)
+            bforce(1,i,j) = bforce(1,i,j) - forces(1)
+            bforce(2,i,j) = bforce(2,i,j) - forces(2)
+            bforce(3,i,j) = bforce(3,i,j) - forces(3)
+         enddo
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine twfrsurfz_att_wind( ifirst, ilast, jfirst, jlast, 
+     +     kfirst, klast, h, kz, t, omega, c, phase, bforce, mua,
+     +     lambdaa, zmin, i1, i2, j1, j2 ) bind(c)
+c THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
+      implicit none
+c arguments
+      integer, value:: ifirst, ilast, jfirst, jlast, kfirst, klast
+      real*8, value:: h
+      integer, value:: kz
+      doubleprecision, value:: t
+      doubleprecision, value:: omega,c,phase
+
+      real*8 bforce(3,ifirst:ilast,jfirst:jlast)
+      doubleprecision mua(ifirst:ilast,jfirst:jlast,kfirst:klast)
+      doubleprecision lambdaa(ifirst:ilast,jfirst:jlast,kfirst:klast)
+
+      doubleprecision, value:: zmin
+      integer, value:: i1, i2, j1, j2
+c local variables
+      
+      integer i, j
+      doubleprecision x
+      doubleprecision y
+      doubleprecision z
+      doubleprecision t2, t3, t6, t7, t8, t11, t12, t17, t18, t27, t30
+      doubleprecision t20, t31, t35, t40, t45, t50, t52, t54
+      doubleprecision t16, t23, t24, t34
+      doubleprecision forces(3)
+
+      z = (kz-1)*h + zmin
+      do j=j1,j2
+         y = (j-1)*h
+         do i=i1,i2
+            x=(i-1)*h
+           t2 = omega*x+phase
+           t3 = sin(t2)
+           t6 = omega*y+phase
+           t7 = cos(t6)
+           t8 = c*t
+           t11 = -omega*(z-t8)-phase
+           t12 = sin(t11)
+           t16 = omega*(x-t8)
+           t17 = -t16-phase
+           t18 = cos(t17)
+           t20 = t12*omega
+           forces(1) = mua(i,j,kz)*(t3*omega*t7*t12+t18*t3*t20)
+           t23 = cos(t2)
+           t24 = sin(t6)
+           t27 = sin(t16)
+           t30 = -omega*(y-t8)-phase
+           t31 = cos(t30)
+           t34 = omega*z+phase
+           t35 = sin(t34)
+           forces(2) = mua(i,j,kz)*(t23*t24*t20-t27*t31*t35*omega)
+           t40 = cos(t11)
+           t45 = sin(t17)
+           t50 = t40*omega
+           t52 = sin(t30)
+           t54 = cos(t34)
+           forces(3) = 2d0*mua(i,j,kz)*t23*t7*t40*omega+lambdaa(i,j,kz)*
+     *     (t45*omega*t3*t40+t18*t23*t50+t27*t52*omega*t54+t23*t7*t50)
+           bforce(1,i,j) = bforce(1,i,j) - forces(1)
+           bforce(2,i,j) = bforce(2,i,j) - forces(2)
+           bforce(3,i,j) = bforce(3,i,j) - forces(3)
+        enddo
       enddo
       end
 

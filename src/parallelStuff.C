@@ -130,7 +130,7 @@ void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )
 // -----------------------------
 void EW::setup2D_MPICommunications()
 {
-   if (mVerbose >= 1 && proc_zero())
+   if (mVerbose >= 2 && proc_zero())
       cout << "***inside setup2D_MPICommunications***"<< endl;
 // Define MPI datatypes for communication across processor boundaries
 // finest grid (curvilinear) only
@@ -179,7 +179,7 @@ void EW::setup2D_MPICommunications()
 // -----------------------------
 void EW::setupMPICommunications()
 {
-   if (mVerbose >= 1 && proc_zero())
+   if (mVerbose >= 2 && proc_zero())
       cout << "***inside setupMPICommunications***"<< endl;
 // Define MPI datatypes for communication across processor boundaries
    m_send_type1.resize(2*mNumberOfGrids);
