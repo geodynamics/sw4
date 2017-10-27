@@ -528,26 +528,13 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   inputFile.close();
 
 // tmp:
-  if (m_myRank == 0)
-  {
-    cout << "INFO: m_mesh_refinements=" << m_mesh_refinements << " m_use_attenuation=" << m_use_attenuation << " mOrder=" << mOrder << endl;
-  }
-  
-// make sure the time order is set to 2 if we use both MR & Attenuation
-  // if( m_mesh_refinements && m_use_attenuation && mOrder!=2 )
+  // if (m_myRank == 0)
   // {
-  //   if (m_myRank == 0)
-  //   {
-  //     cerr << "Error: MR+Q is currently only implemented with 2nd order time stepping " << endl;
-  //     cerr << "Set time_order=2 and CFL=0.8 with the developer command" << endl;
-  //     return false; // unsuccessful
-  //   }
+  //   cout << "INFO: m_mesh_refinements=" << m_mesh_refinements << " m_use_attenuation=" << m_use_attenuation << " mOrder=" << mOrder << endl;
   // }
-
+  
   if (mVerbose >=3 && proc_zero())
     cout << "********Done reading the input file*********" << endl;
-  // if (mVerbose >=3)
-  //   cout << "********Done reading the input file, proc=" << m_myRank << endl;
 
 // wait until all processes have read the input file
   MPI_Barrier(MPI_COMM_WORLD);
@@ -626,8 +613,8 @@ void EW::processGrid(char* buffer)
      m_ppadding = 3;
   }
 
-  if (m_myRank == 0)
-     cout << endl << "* number of ghost points = " << m_ghost_points << endl;
+  // if (m_myRank == 0)
+  //    cout << endl << "* number of ghost points = " << m_ghost_points << endl;
 
   while (token != NULL)
   {
@@ -3775,7 +3762,7 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
 //
 // note that this routine might modify the value of m_global_zmax
 //
-   if (mVerbose && proc_zero())
+   if (mVerbose>=2 && proc_zero())
      printf("allocateCartesianSolverArrays: #ghost points=%i, #parallel padding points=%i\n", m_ghost_points, m_ppadding);
 
    int nCartGrids = m_refinementBoundaries.size();
@@ -4015,15 +4002,15 @@ void EW::allocateCartesianSolverArrays(double a_global_zmax)
        m_global_zmax << endl;
    
 
-// tmp
-   if( mVerbose >= 1 && proc_zero() )
+// detailed grid refinement info
+   if( mVerbose >= 2 && proc_zero() )
    {
-      cout << endl << "Corrected global_zmax = " << m_global_zmax << endl;
-     cout << "Refinement levels after correction: " << endl;
-     for( int g=0; g<nCartGrids; g++ )
-     {
-       cout << "grid=" << g << " z-min=" << m_zmin[g] << endl;
-     }
+      cout << "Refinement levels after correction: " << endl;
+      for( int g=0; g<nCartGrids; g++ )
+      {
+         cout << "Grid=" << g << " z-min=" << m_zmin[g] << endl;
+      }
+      cout << "Corrected global_zmax = " << m_global_zmax << endl << endl;
    }
    
 // Define grid arrays, loop from finest to coarsest

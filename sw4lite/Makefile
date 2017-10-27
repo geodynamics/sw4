@@ -36,6 +36,7 @@ else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
   CXX = mpicxx
   OMPOPT = -qopenmp
   MKL_PATH = /usr/tce/packages/mkl/mkl-11.3.3/lib
+  RAJA_LOCATION=/g/g12/andersp/src/RAJA/install/usr/local
   EXTRA_CXX_FLAGS = -xCORE-AVX2
   EXTRA_FORT_FLAGS = -xCORE-AVX2
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
@@ -93,8 +94,8 @@ else ifeq ($(findstring cori,$(HOSTNAME)),cori)
 #  OPT = -O2
 #  EXTRA_LINK_FLAGS =  # only needs module load cray-mpich
 # Intel compiler:
-  OPT = -O3
-#  OPT = -O3 -qoverride-limits
+#  OPT = -O3
+  OPT = -O3 -qoverride-limits
   OMPOPT = -qopenmp
   EXTRA_LINK_FLAGS =  -lpthread -lm -ldl -lifcore
   openmp = yes
@@ -157,8 +158,17 @@ endif
 
 ifeq ($(ckernel),yes)
    ifeq ($(openmp),yes)
-      debugdir := debug_mp_c
-      optdir   := optimize_mp_c
+      ifeq ($(raja),yes)
+        debugdir:= debug_mp_c_raja
+        optdir:= optimize_mp_c_raja
+        CXXFLAGS += -std=c++11 -DRAJA03 -I $(RAJA_LOCATION)/include  -DSW4_CROUTINES 
+        EXTRA_LINK_FLAGS += -qopenmp -L $(RAJA_LOCATION)/lib -lRAJA 
+      else	
+        debugdir := debug_mp_c
+        optdir   := optimize_mp_c
+        CXXFLAGS += -DSW4_CROUTINES 
+        EXTRA_LINK_FLAGS += -qopenmp
+      endif
    else
       debugdir := debug_c
       optdir   := optimize_c

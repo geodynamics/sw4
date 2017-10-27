@@ -2214,7 +2214,7 @@ c-----------------------------------------------------------------------
       real*8 lave(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 bforcerhs(3,ifirst:ilast,jfirst:jlast)
-      real*8 sbop(0:4)
+      real*8 sbop(0:5)
 c      real*8 dt, omegave, sbop(0:4), cof, omdt, cp, cm, r1, r2, r3
       real*8 rhs1, rhs2, rhs3, un1, vn1, wn1, rtu, ac
       real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
@@ -2306,16 +2306,19 @@ c      cof = (omdt+1)/(6*cp)
      *           +sbop(2)*alphap(1,i,j,k+kl)
      *           +sbop(3)*alphap(1,i,j,k+2*kl)
      *           +sbop(4)*alphap(1,i,j,k+3*kl)
+     *           +sbop(5)*alphap(1,i,j,k+4*kl)
             vn1 = sbop(0)*alphap(2,i,j,k-kl)
      *           +sbop(1)*alphap(2,i,j,k)
      *           +sbop(2)*alphap(2,i,j,k+kl)
      *           +sbop(3)*alphap(2,i,j,k+2*kl)
      *           +sbop(4)*alphap(2,i,j,k+3*kl)
+     *           +sbop(5)*alphap(2,i,j,k+4*kl)
             wn1 = sbop(0)*alphap(3,i,j,k-kl)
      *           +sbop(1)*alphap(3,i,j,k)
      *           +sbop(2)*alphap(3,i,j,k+kl)
      *           +sbop(3)*alphap(3,i,j,k+2*kl)
      *           +sbop(4)*alphap(3,i,j,k+3*kl)
+     *           +sbop(5)*alphap(3,i,j,k+4*kl)
 
            m2sg = SQRT(sgx*isgy)
            m3sg = 1/m2sg
@@ -2353,7 +2356,7 @@ c-----------------------------------------------------------------------
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 bforce_rhs(3,ifirst:ilast,jfirst:jlast)
       real*8 met(4,ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8 sbop(0:4)
+      real*8 sbop(0:5)
       real*8 mupt, lapt, ac, bc, cc, dc, s0i
       real*8 sgstrx(ifirst:ilast), sgstry(jfirst:jlast)
       real*8 sgx, sgy, isgx, isgy, m2sg, m3sg, m4sg

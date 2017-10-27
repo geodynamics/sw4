@@ -1183,6 +1183,9 @@ c-----------------------------------------------------------------------
      *       bforce, mua, lambdaa, zmin, i1, i2, j1, j2 ) bind(c)
 c
 c THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
+c
+c How is the sign of the normal accounted for (+/- z)?
+c      
       implicit none
 c arguments
       integer, value:: ifirst, ilast, jfirst, jlast, kfirst, klast

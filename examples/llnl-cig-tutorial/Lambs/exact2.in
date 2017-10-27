@@ -1,0 +1,14 @@
+fileio path=exact2.out
+grid h=40 x=10e3 y=10e3 z=4e3
+# the end time should exceed 1.0, which is when the source shuts off
+time t=15.0
+
+# supergrid parameters (gp=30 is the default width)
+supergrid gp=60
+
+# test case
+testlamb cp=1.7320508076e+03 rho=1500 
+
+# source
+source type=C6SmoothBump x=15e3 y=15e3 z=0 fz=1e13 freq=1.0 t0=0
+

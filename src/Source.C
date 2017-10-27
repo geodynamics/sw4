@@ -1415,22 +1415,37 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 //
 // ********* do the filtering of the time function here as needed based on (ic, jc, kc) and gridrefbndry ******
 //      
-//   if (!gridrefbndry)
-   {
-      for( int k=kc-2 ; k <= kc+3 ; k++ )
-         for( int j=jc-2 ; j <= jc+3 ; j++ )
-            for( int i=ic-2 ; i <= ic+3 ; i++ )
-            {
-               if (a_EW->interior_point_in_proc(i,j,g) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
-               {
-// filter the time function in this Source object, unless already done before
-                  prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
-                                  a_EW->m_filter_ptr);
-               }
-            }         
-   }
-   //   else // near MR interface
-   if( gridrefbndry )
+
+// AP: Jun 29, 2017: Since interior_point_in_proc only takes the (i,j)
+// indices into account, there is no point looping over
+// k. Furthermore, since this source belongs to this MPI task, it
+// needs to get initialized (filtered), unless it has already been done
+//
+   for( int j=jc-2 ; j <= jc+3 ; j++ )
+     for( int i=ic-2 ; i <= ic+3 ; i++ )
+     {
+// check if (i,j) belongs to this processor
+       if (a_EW->interior_point_in_proc(i,j,g) && !m_timeFuncIsReady) 
+       {
+// (optionally) filter and spline interpolate the time function in
+// this Source object, unless already done before
+	 prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
+			 a_EW->m_filter_ptr);
+       }
+     }         
+
+// AP: Jun 29, 2017: The purpose of the following code is to make sure
+// the time function is properly initialized. This is important for
+// iDiscrete time functions, which have to be (optionally) filtered
+// and interpolated by a spline before they can be evaluated.
+//
+// Consider a source that is near a processor boundary and a grid
+// refinement boundary, but belongs to a neighboring processor. It is
+// possible that the source function also is needed on this processes,
+// because the 6-point source stencil extends further on a coarser
+// grid. In that case, we must also initialize the time function on
+// this process.
+   if (gridrefbndry) // near MR interface
    {
 // compute (icref, jcref) (duplicated from below)
       int icref, jcref;
@@ -1492,7 +1507,6 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             
       } // end for kc
    } // end if near MR interface
-      
       
 
 // If not at the interface between different grids, bias stencil away 

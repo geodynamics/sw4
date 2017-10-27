@@ -692,9 +692,12 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
    double t92;
    double t95;
 
-  for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
-    for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
-      for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
+   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+      for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+         for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+  // for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
+  //   for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
+  //     for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
       {
 	x = a_X(i,j,k);
 	y = a_Y(i,j,k);
