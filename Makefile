@@ -218,7 +218,7 @@ $(builddir)/version.o:src/version.C .FORCE
 
 $(builddir)/%.o:src/%.f
 	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+	cd $(builddir); $(FC) $(FC_FIXED_FORMAT) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.f90
 	/bin/mkdir -p $(builddir)
@@ -226,7 +226,7 @@ $(builddir)/%.o:src/%.f90
 
 $(builddir)/%.o:src/quadpack/%.f
 	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+	cd $(builddir); $(FC) $(FC_FIXED_FORMAT) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)
