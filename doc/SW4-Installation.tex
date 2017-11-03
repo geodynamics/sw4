@@ -53,7 +53,7 @@
     performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National
     Laboratory under contract DE-AC52-07NA27344. This is contribution LLNL-SM-662989.} \and Eric
   Heien\thanks{Computational Infrastructure for Geodynamics, University of California, Davis.}}
-\date{October 16, 2014\\Revised October 19, 2017}
+\date{October 16, 2014\\Revised November 2, 2017}
 \maketitle
 
 %\thispagestyle{plain}
@@ -66,7 +66,7 @@
 
 \section{Introduction}
 The sole purpose of this document is to describe the installation process of the seismic wave
-propagation code \emph{SW4}. A comprehensive user's guide of this code is provided in the report by
+propagation code \emph{SW4}. A comprehensive user's guide is provided in the report by
 Petersson and Sjogreen~\cite{SW4-11}.
 
 \section{Compilers and third party libraries}
@@ -410,12 +410,56 @@ If all goes well, the ``SW4 lives'' banner is shown after the make command is
 completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
 \verb+debug+ directories.
 
+\subsection{Testing the {\tt SW4} installation}
+The \emph{SW4} source code distribution includes a python(3) script for running
+several tests and checking the solutions against previously verified results. Note that the same set of tests can be
+performed when \emph{SW4} is built with CMake, see Section~\ref{cha:ctest-sw4}.
+
+After \emph{SW4} has been built with \verb+make+, go to the \verb+pytest+ directory and run
+\verb+test_sw4.py+. If the \verb+sw4+ executable resides in the \verb+optimize+ directory, you can run
+the basic tests by doing:
+\begin{verbatim}
+shell> cd pytest
+shell> ./test_sw4.py
+\end{verbatim}
+If all goes well, you should see the following output:
+\begin{verbatim}
+>shell test_sw4.py
+Running all tests for level 0 ...
+Starting test # 1 in directory: meshrefine with input file: refine-el-1.in
+Test # 1 Input file: refine-el-1.in PASSED
+Starting test # 2 in directory: meshrefine with input file: refine-att-1.in
+Test # 2 Input file: refine-att-1.in PASSED
+...
+Starting test # 12 in directory: lamb with input file: lamb-1.in
+Test # 12 Input file: lamb-1.in PASSED
+Out of 12 tests, 12 passed and 0 failed.
+\end{verbatim}
+Some aspects of the testing can be modified by providing command line arguments to
+\verb+test_sw4.py+. For a complete list of options do \verb+test_sw4.py --help+, which currently
+give the output:
+\begin{verbatim}
+shell> ./test_sw4.py --help
+usage: test_sw4.py [-h] [-v] [-l {0,1,2}] [-m MPITASKS] [-d SW4_EXE_DIR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase output verbosity
+  -l {0,1,2}, --level {0,1,2}
+                        testing level
+  -m MPITASKS, --mpitasks MPITASKS
+                        number of mpi tasks
+  -d SW4_EXE_DIR, --sw4_exe_dir SW4_EXE_DIR
+                        name of directory for sw4 executable
+\end{verbatim}
+In particular, note  that the directory name for the \verb+sw4+ executable should be given relative to the main
+\verb+sw4+ directory.
+
 \section{Installing \emph{SW4} with CMake}\label{cha:installing-cmake-sw4}
 \emph{SW4} also allows building using CMake.  The \emph{SW4} CMake configuration also automates the
-testing of the code, which ensures that it functions correctly. The tests run a number of input
-scripts in the \verb+examples+ directory and evaluates the accuracy of the numerical solutions using
-various analytical solutions, see the Appendix of the \emph{SW4} user's guide~\cite{SW4-11} for
-details.
+testing of the code, which ensures that it functions correctly. The tests run a number of cases in
+the \verb+pytest+ directory and evaluates the accuracy of the numerical solutions using various
+analytical solutions, see the Appendix of the \emph{SW4} user's guide~\cite{SW4-11} for details.
 
 To use CMake, change to the sw4 directory and run the following commands:
 \begin{verbatim}
@@ -486,51 +530,54 @@ MPIEXEC\_PREFLAGS & (none) & Extra MPI command option.\\ \hline
 \end{tabular}
 \end{center}
 
-\subsection{CTest}
-The \emph{SW4} CMake configuration includes several test cases, which can be used to confirm that
-the code is working correctly.  Each test consists of two parts. First it runs a case using an input
-file in the \verb+examples/+ directory. Secondly, it confirms that the results are within
-a reasonable error tolerances from previously recorded results.
+\subsection{CTest}\label{cha:ctest-sw4}
+The \emph{SW4} CMake configuration includes several test cases that are used to verify the correctness
+of the \emph{SW4} installation.  Each test consists of two parts. First it runs a case using an input
+file in the \verb+pytest+ directory. Secondly, it checks that the results are within
+a reasonable error tolerance from previously recorded results.
 
 To run the tests, use either the command \texttt{make test} or \texttt{ctest} as follows:
 %
 \begin{verbatim}
-build > make test
-Running tests...
-Test project /.../sw4/build
-      Start  1: twilight/flat-twi-1.in
- 1/14 Test  #1: twilight/flat-twi-1.in ....................   Passed    0.70 sec
-      Start  2: twilight/flat-twi-1.in_result_check
- 2/14 Test  #2: twilight/flat-twi-1.in_result_check .......   Passed    0.07 sec
-      Start  3: twilight/flat-twi-2.in
+build > ctest
+Test project /Users/petersson1/src/sw4-cig/build
+      Start  1: Run_twilight/flat-twi-1
+ 1/24 Test  #1: Run_twilight/flat-twi-1 .....................   Passed    0.49 sec
+      Start  2: Check_Result_twilight/flat-twi-1
+ 2/24 Test  #2: Check_Result_twilight/flat-twi-1 ............   Passed    0.03 sec
+      Start  3: Run_twilight/flat-twi-2
 ...
-      Start 13: twilight-att/tw-topo-att-1.in
-13/14 Test #13: twilight-att/tw-topo-att-1.in .............   Passed    5.23 sec
-      Start 14: twilight-att/tw-topo-att-1.in_result_check
-14/14 Test #14: twilight-att/tw-topo-att-1.in_result_check    Passed    0.02 sec
+      Start 23: Run_pointsource/pointsource-sg-1
+23/24 Test #23: Run_pointsource/pointsource-sg-1 ............   Passed   89.56 sec
+      Start 24: Check_Result_pointsource/pointsource-sg-1
+24/24 Test #24: Check_Result_pointsource/pointsource-sg-1 ...   Passed    0.03 sec
 
-100% tests passed, 0 tests failed out of 14
+100\% tests passed, 0 tests failed out of 24
 
-Total Test time (real) =  50.49 sec
+Total Test time (real) = 230.91 sec
 \end{verbatim}
 
 You can run tests selectively using \texttt{ctest -R \textless regex\textgreater}, for example:
 %
 \begin{verbatim}
-build > ctest -R twi-2
-Test project /.../sw4/build
-    Start 3: twilight/flat-twi-2.in
-1/4 Test #3: twilight/flat-twi-2.in .................   Passed    5.77 sec
-    Start 4: twilight/flat-twi-2.in_result_check
-2/4 Test #4: twilight/flat-twi-2.in_result_check ....   Passed    0.02 sec
-    Start 7: twilight/gauss-twi-2.in
-3/4 Test #7: twilight/gauss-twi-2.in ................   Passed    9.08 sec
-    Start 8: twilight/gauss-twi-2.in_result_check
-4/4 Test #8: twilight/gauss-twi-2.in_result_check ...   Passed    0.02 sec
+build > ctest -R meshrefine
+Test project /Users/petersson1/src/sw4-cig/build
+    Start 15: Run_meshrefine/refine-el-1
+1/6 Test #15: Run_meshrefine/refine-el-1 .................   Passed   25.61 sec
+    Start 16: Check_Result_meshrefine/refine-el-1
+2/6 Test #16: Check_Result_meshrefine/refine-el-1 ........   Passed    0.03 sec
+    Start 17: Run_meshrefine/refine-att-1
+3/6 Test #17: Run_meshrefine/refine-att-1 ................   Passed   22.00 sec
+    Start 18: Check_Result_meshrefine/refine-att-1
+4/6 Test #18: Check_Result_meshrefine/refine-att-1 .......   Passed    0.03 sec
+    Start 19: Run_meshrefine/refine-att-2nd-1
+5/6 Test #19: Run_meshrefine/refine-att-2nd-1 ............   Passed   17.63 sec
+    Start 20: Check_Result_meshrefine/refine-att-2nd-1
+6/6 Test #20: Check_Result_meshrefine/refine-att-2nd-1 ...   Passed    0.03 sec
 
-100% tests passed, 0 tests failed out of 4
+100% tests passed, 0 tests failed out of 6
 
-Total Test time (real) =  14.90 sec
+Total Test time (real) =  65.35 sec
 \end{verbatim}
 
 If a test fails you can check the details in the output log at
