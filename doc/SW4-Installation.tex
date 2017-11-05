@@ -182,12 +182,12 @@ Note that you need to have \verb+root+ privileges for this to work.
 \index{installation!directories}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-To unpack the \emph{SW4} source code, you place the file \verb+sw4-v1.1.tgz+ in the
+To unpack the \emph{SW4} source code, you place the file \verb+sw4-v2.0.tgz+ in the
 desired directory and issue the following command:
 \begin{verbatim}
-shell> tar xzf sw4-v1.1.tgz
+shell> tar xzf sw4-v2.0.tgz
 \end{verbatim}
-As a result a new sub-directory named \verb+sw4-v1.1+ is created. It contains several files
+As a result a new sub-directory named \verb+sw4-v2.0+ is created. It contains several files
 and sub-directories:
 %
 \begin{itemize}
@@ -197,6 +197,7 @@ and sub-directories:
 \item \verb+configs+ Directory containing \verb+make+ configuration files.
 \item \verb+src+ C++ and Fortran source code of \emph{SW4}.
 \item \verb+tools+ Matlab/Octave scripts for post processing and analysis.
+\item \verb+pytest+ Python script and input files for testing the \emph{SW4} installation.
 \item \verb+examples+ Sample input files.
 \item \verb+Makefile+ Main makefile (don't change this file!).
 \item \verb+CMakeLists.txt+ CMake configuration file (don't change this file either!).
@@ -227,8 +228,8 @@ quartz}
 successfully used the following versions of Gnu, Intel, and IBM compilers:
 \begin{verbatim}
 Gnu:   g++/gcc/gfortran      versions 4.5 to 7.2
-Intel: icpc/icc/ifort        version 16 to 18.0
-IBM Blue Gene: xlc++/xlc/xlf version 12.1
+Intel: icpc/icc/ifort        versions 16.0 to 18.0
+IBM Blue Gene: xlcxx/xlc/xlf versions 12.1 to 14.1
 \end{verbatim}
 
 \emph{SW4} uses the message passing interface (MPI) standard (MPI-2 to be specific) for
@@ -380,7 +381,7 @@ Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTR
 \verb+EXTRA_LINK_FLAGS+ variables should contain any additional arguments that need to be passed to
 the C++ compiler, Fortran compiler, or linker, on your system.
 
-\subsection{Building {\tt sw4} with proj.4 and/or efile support}
+\subsection{Building \emph{SW4} with proj.4 and/or efile support}
 The installation of the proj.4, euclid, and cencalvm libraries is discussed in
 Section~\ref{sec:cencalvm-install}. Note that the proj.4 libraray enables the more advanced
 geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile}
@@ -410,14 +411,14 @@ If all goes well, the ``SW4 lives'' banner is shown after the make command is
 completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
 \verb+debug+ directories.
 
-\subsection{Testing the {\tt SW4} installation}
-The \emph{SW4} source code distribution includes a python(3) script for running
-several tests and checking the solutions against previously verified results. Note that the same set of tests can be
+\subsection{Testing the \emph{SW4} installation}
+The \emph{SW4} source code distribution includes a python(3) script for running several tests and
+checking the solutions against previously verified results. Note that the same set of tests can be
 performed when \emph{SW4} is built with CMake, see Section~\ref{cha:ctest-sw4}.
 
 After \emph{SW4} has been built with \verb+make+, go to the \verb+pytest+ directory and run
-\verb+test_sw4.py+. If the \verb+sw4+ executable resides in the \verb+optimize+ directory, you can run
-the basic tests by doing:
+\verb+test_sw4.py+. If the \verb+sw4+ executable resides in the \verb+optimize+ directory, you can
+run the basic tests by doing:
 \begin{verbatim}
 shell> cd pytest
 shell> ./test_sw4.py
@@ -452,16 +453,18 @@ optional arguments:
   -d SW4_EXE_DIR, --sw4_exe_dir SW4_EXE_DIR
                         name of directory for sw4 executable
 \end{verbatim}
-In particular, note  that the directory name for the \verb+sw4+ executable should be given relative to the main
+Note  that the directory name for the \verb+sw4+ executable should be given relative to the main
 \verb+sw4+ directory.
 
 \section{Installing \emph{SW4} with CMake}\label{cha:installing-cmake-sw4}
-\emph{SW4} also allows building using CMake.  The \emph{SW4} CMake configuration also automates the
-testing of the code, which ensures that it functions correctly. The tests run a number of cases in
-the \verb+pytest+ directory and evaluates the accuracy of the numerical solutions using various
-analytical solutions, see the Appendix of the \emph{SW4} user's guide~\cite{SW4-11} for details.
+\emph{SW4} can also be built with CMake. Compared to using regular {\tt make}, this build process is
+easier to use because it is fully automated. However, it gives the user less control of which
+compilers, linker, and libraries to use. Similar to using regular {\tt make}, the \emph{SW4} CMake
+configuration allows automated correctness testing of the installation. The test runs the same set
+of cases as the \verb+test_sw4.py+ script in the \verb+pytest+ directory, see
+Section~\ref{cha:ctest-sw4} for details.
 
-To use CMake, change to the sw4 directory and run the following commands:
+To use CMake, navigate to the top {\tt sw4} directory and run the following commands:
 \begin{verbatim}
 shell> mkdir build
 shell> cd build
@@ -472,16 +475,18 @@ The two dots after {\tt cmake [options]} are essential and instructs it to look 
 directory for the {\tt CMakeLists.txt} file.
  
 The \verb+cmake+ command searches for the necessary libraries and other dependencies, then creates
-makefiles appropriate to your system.  Running \verb+make+ compiles \emph{SW4} using these
-makefiles.  For details about the exact commands being used in compilation, run \texttt{make
-  VERBOSE=1}.  Once SW4 is successfully compiled and linked you will see the ``SW4 Lives!'' banner
-on the screen.
+makefiles that are appropriate for your system. You then run \verb+make+ to compiles and link
+\emph{SW4} using these makefiles. For details about the exact commands being used in compilation,
+run \texttt{make VERBOSE=1}.  Once SW4 has been successfully built, you will see the
+``SW4 Lives!'' banner on the screen.
 
-NOTE: \verb+cmake+ puts the \verb+sw4+ executable in the \verb+build/bin+ directory; when using
-regular Makefiles, the executable is placed in a {\em different} directory.
+NOTE: \verb+cmake+ puts the \verb+sw4+ executable in the \verb+build/bin+ directory. This is
+different from regular {\tt make}, which puts the executable in the \verb+optimize+
+directory.
 
-If you want to rebuild \verb+sw4+ with a new set of options, you can force \verb+cmake+ to start
-from scratch by removing the file \verb+CMakeCache.txt+ in the \verb+build+ directory.
+NOTE: If you want to rebuild \verb+sw4+ with a new set of options, you can force \verb+cmake+ to start
+from scratch by removing the file \verb+CMakeCache.txt+ in the \verb+build+ directory. Another way
+is to remove all files in the \verb+build+ directory.
 
 \subsection{CMake Options}
 CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option,
@@ -529,6 +534,49 @@ MPIEXEC\_NUMPROC\_FLAG & -np & MPI command option for specifying the number of p
 MPIEXEC\_PREFLAGS & (none) & Extra MPI command option.\\ \hline 
 \end{tabular}
 \end{center}
+
+\paragraph{Modifying the MPI execution commands.}
+By default, \verb+mpirun+ is used to start parallel runs when you do \verb+make test+.  However, on
+Livermore computing (LC) machines the command for running MPI programs is \verb+srun+, not
+\verb+mpirun+. Also, the flag for specifying the number of processors is different, and you must
+give an additional flag for running interactive jobs on the debug partition. For example, you would
+say
+\begin{verbatim}
+srun -ppdebug -n 128 sw4 inputfile.in
+\end{verbatim}
+to run on the debug partition using 128 cores. To modify the default MPI execution program and
+other runtime parameters, the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and
+MPIEXEC\_PREFLAGS can be set as in the following example:
+\begin{verbatim}
+cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=/usr/bin/srun \
+      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
+\end{verbatim}
+
+After the proj.4, euclid and cencalvm libraries have been installed (see next section), you need to tell
+\verb+cmake+ where to find them. On the LC-machines, all three libraries are currently installed under
+\verb+/usr/apps/wpp+, and you can use the following command options to configure \verb+sw4+:
+\begin{verbatim}
+cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=36 -DMPIEXEC=/usr/bin/srun \
+      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug \
+      -DPROJ4_HOME=/usr/apps/wpp -DCENCALVM_HOME=/usr/apps/wpp ..
+\end{verbatim}
+To verify that \verb+cmake+ actually found the libraries, pay attention to the
+following lines of the output from the \verb+cmake+ command:
+\begin{verbatim}
+...
+-- Found PROJ4: /usr/apps/wpp/lib/libproj.so  
+-- Found CENCALVM: /usr/apps/wpp/lib/libcencalvm.so;/usr/apps/wpp/lib/libetree.so  
+...
+\end{verbatim}
+
+Sometimes CMake doesn't pick up the correct compiler. Say, for example that the C++ compiler on your
+system is called {\tt mpicxx} and the Fortran compiler is {\tt mpiifort}. You can tell {\tt cmake}
+to use those compilers by setting the following envoronment variables {\em before} running cmake
+(assuming a {\tt csh} shell),
+\begin{verbatim}
+  > setenv CXX mpicxx
+  > setenv FC mpiifort
+\end{verbatim}
 
 \subsection{CTest}\label{cha:ctest-sw4}
 The \emph{SW4} CMake configuration includes several test cases that are used to verify the correctness
@@ -582,40 +630,6 @@ Total Test time (real) =  65.35 sec
 
 If a test fails you can check the details in the output log at
 \texttt{Testing/Temporary/LastTest.log}.
-
-\paragraph{Modifying the MPI execution commands.}
-By default, \verb+mpirun+ is used to start parallel runs when you do \verb+make test+.  However, on
-Livermore computing (LC) machines the command for running MPI programs is \verb+srun+, not
-\verb+mpirun+. Also, the flag for specifying the number of processors is different, and you must
-give an additional flag for running interactive jobs on the debug partition. For example, you would
-say
-\begin{verbatim}
-srun -ppdebug -n 128 sw4 inputfile.in
-\end{verbatim}
-to run on the debug partition using 128 cores. To modify the default MPI execution program and
-other runtime parameters, the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and
-MPIEXEC\_PREFLAGS can be set as in the following example:
-\begin{verbatim}
-cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=/usr/bin/srun \
-      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
-\end{verbatim}
-
-After the proj.4, euclid and cencalvm libraries have been installed (see next section), you need to tell
-\verb+cmake+ where to find them. On the LC-machines, all three libraries are currently installed under
-\verb+/usr/apps/wpp+, and you can use the following command options to configure \verb+sw4+:
-\begin{verbatim}
-cmake -DTESTING_LEVEL=1 -DMPI_NUM_TEST_PROCS=16 -DMPIEXEC=/usr/bin/srun \
-      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug \
-      -DPROJ4_HOME=/usr/apps/wpp -DCENCALVM_HOME=/usr/apps/wpp ..
-\end{verbatim}
-To verify that \verb+cmake+ actually found the libraries, pay attention to the
-following lines of the output from the \verb+cmake+ command:
-\begin{verbatim}
-...
--- Found PROJ4: /usr/apps/wpp/lib/libproj.so  
--- Found CENCALVM: /usr/apps/wpp/lib/libcencalvm.so;/usr/apps/wpp/lib/libetree.so  
-...
-\end{verbatim}
 
 \section{Installing the proj.4, euclid, and cencalvm packages}\label{sec:cencalvm-install}
 \index{installation!cencalvm} \index{installation!efile}
