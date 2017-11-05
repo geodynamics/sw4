@@ -87,16 +87,11 @@ else
 # object code goes in machine specific directory on LC
       debugdir := debug_cab
       optdir := optimize_cab
-  # for Sierra (old Sierra) on LC, almost same machine as Cab
-    else ifeq ($(findstring sierra,$(HOSTNAME)),sierra)
-      include configs/make.sierra
-      foundincfile := "configs/make.sierra"
-      debugdir := debug_sierra
-      optdir := optimize_sierra
-# For Quartz at LC (why doesn't this work when HOSTNAME is quartz770 ?
+# For Quartz at LC
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
       include configs/make.quartz
       foundincfile := "configs/make.quartz"
+# Cori @ NERSC
     else ifeq ($(findstring cori,$(HOSTNAME)),cori)
       include configs/make.cori
       foundincfile := "configs/make.cori"
