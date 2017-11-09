@@ -1,7 +1,7 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [prec=single/double]
-#
+# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no]
+#   Default is: debug=no prec=double fortran=yes openmp=yes
 # This Makefile asumes that the following environmental variables have been assigned:
 # etree = [yes/no]
 # proj = [yes/no]
@@ -144,16 +144,18 @@ else
    proj  := "no"
 endif
 
-ifeq ($(openmp),yes)
+# openmp=yes is default
+ifeq ($(openmp),no)
+   CXXFLAGS += -DSW4_NOOMP
+else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
    CXXFLAGS += -fopenmp
    FFLAGS   += -fopenmp
-else
-   CXXFLAGS += -DSW4_NOOMP
 endif
 
-ifeq ($(fortran),yes)
+ifeq ($(fortran),no)
+else
    debugdir := $(debugdir)_fort
    optdir   := $(optdir)_fort
    CXXFLAGS += -DSW4_NOC
