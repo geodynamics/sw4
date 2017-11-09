@@ -89,7 +89,7 @@ c      integer n, nrand(20)
      *                                        1-pz:1+pz)
       real*8  h, dist, distz
 c      real*8  bnorm, bznorm
-      real*8, allocatable, dimension(:) :: b, bz
+      real*8, allocatable, dimension(:) :: b, bz, b2, bz2
       real    randno
 
       iseed1=randw(1)
@@ -97,15 +97,17 @@ c      real*8  bnorm, bznorm
       iseed3=randw(3)
 c      p =int(dist/h)+1
 c      pz=int(distz/h)+1
-      allocate( b(-p:p), bz(-pz:pz) )
+      allocate( b(-p:p), bz(-pz:pz), b2(-p:p), bz2(-pz:pz) )
 c      bnorm = 0
       do k=-p,p
          b(k) = exp(-k*k*h*h/(2*dist*dist))
 c         bnorm = bnorm + b(k)*b(k)
+         b2(k) = b(k)*b(k)
       enddo
 c      bznorm = 0
       do k=-pz,pz
          bz(k) = exp(-k*k*h*h/(2*distz*distz))
+         bz2(k) = bz(k)*bz(k)
 c         bznorm = bznorm + bz(k)*bz(k)
       enddo
 c Normalize filter coefficients
@@ -167,7 +169,8 @@ c                              wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
 c     *                                   + b(ii)*b(jj)*bz(kk)
 c L2-norm
                               wgh(i-ii,j-jj,k-kk) = wgh(i-ii,j-jj,k-kk)
-     *                           + b(ii)*b(jj)*bz(kk)*b(ii)*b(jj)*bz(kk)
+c     *                           + b(ii)*b(jj)*bz(kk)*b(ii)*b(jj)*bz(kk)
+     *                           + b2(ii)*b2(jj)*bz2(kk)
                            endif
                         enddo
                      endif
@@ -201,7 +204,7 @@ c L2:
             enddo
          enddo
       enddo
-      deallocate(b,bz)
+      deallocate(b,bz,b2,bz2)
       end
 
 c-----------------------------------------------------------------------
@@ -308,6 +311,7 @@ c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITY( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, vs, vp, per, amp, grad, zmin, h, plimit )
      * bind(c)
+
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k
@@ -355,6 +359,7 @@ c-----------------------------------------------------------------------
       subroutine PERTURBVELOCITYC( ifirst, ilast, jfirst, jlast, kfirst,
      *     klast, vs, vp, per, amp, grad, z, plimit )
      *   bind(c)
+
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer i, j, k

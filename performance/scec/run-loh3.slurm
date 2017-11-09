@@ -37,9 +37,16 @@ export OMP_PROC_BIND=spread
 MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
 
 # 3rd case
+# icoe branch
 CASE=LOH.3-h50
 RUN_COMMAND="./sw4 ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
+
+# developer branch
+#COMMAND="${MPI_COMMAND} ${RUN_COMMAND}" 
+#echo "OMP_NUM_THREADS="${OMP_NUM_THREADS}
+#echo ${COMMAND}
+
 
 done
 

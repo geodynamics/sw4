@@ -217,9 +217,13 @@ main(int argc, char **argv)
   }
   
   if( status == 1 )
+  {
     cout  << "============================================================" << endl
-	  << "The execution on proc " << myRank << " was unsuccessful." << endl
+	  << "The execution on proc " << myRank << " was UNSUCCESSFUL." << endl
 	  << "============================================================" << endl;
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+  
 
 // Stop MPI
   MPI_Finalize();

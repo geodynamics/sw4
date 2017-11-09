@@ -1,0 +1,90 @@
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Oct  7 08:00:03 PDT 2014
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+----------------------------------------------------------------
+
+Input file: flat-twi-2.in
+
+* Processing the grid command...
+* Setting h to 1.66666667e-02 from  x/(nx-1) (x=1.00000000e+00, nx=61)
+* Setting ny to 61 to be consistent with h=1.66666667e-02
+* Setting nz to 61 to be consistent with h=1.66666667e-02
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0 0.0166667        61        61        61       226981
+Total number of grid points (without ghost points): 226981
+
+
+   Execution time, reading input file 2.02202797e-03 seconds 
+----------------------------------------------------
+ Making Output Directory: flat-2/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700001e+01, x=1.000000e+00, y=0.000000e+00
+2: Lon= 1.180000e+02, Lat=3.700001e+01, x=1.000000e+00, y=1.000000e+00
+3: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=1.000000e+00
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00058390e+00 kg/m^3 <=  Density <= 2.99938385e+00 kg/m^3
+       1.63303103e+00 m/s    <=  Vp      <= 2.82781071e+00 m/s
+       1.00003163e+00 m/s    <=  Vs      <= 1.73165911e+00 m/s
+       1.52757460e+00        <=  Vp/Vs   <= 1.73203255e+00
+       2.00058390e+00 Pa     <=  mu      <= 3.99938385e+00 Pa
+       1.00058390e+00 Pa     <=  lambda  <= 2.99938385e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.666667e-02, minVs/h=60.0019 (Cartesian)
+
+   Execution time, start up phase 1.92849636e-02 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: flat-2/
+============================================================
+ Running program on 4 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.8
+ Number of time steps = 138 dt: 0.0057971
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 6.28000000e+00
+  c = 1.30000000e+00
+  phase = 8.00000000e-01
+  mat-omega = 6.28000000e+00
+  mat-phase = 4.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
+-----------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   5.7971014e-03
+Time step     101  t =   5.8550725e-01
+Time step     138  t =   8.0000000e-01
+  Time stepping finished...
+   Execution time, solver phase 5.85345984e+00 seconds 
+
+ Final solution errors: Linf =   3.9935104e-05, L2 =   7.9678106e-06
+**** Closed file with solution errors for testing
+============================================================
+ program sw4 finished! 
+============================================================

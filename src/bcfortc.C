@@ -1,3 +1,35 @@
+//  SW4 LICENSE
+// # ----------------------------------------------------------------------
+// # SW4 - Seismic Waves, 4th order
+// # ----------------------------------------------------------------------
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
+// # Produced at the Lawrence Livermore National Laboratory. 
+// # 
+// # Written by:
+// # N. Anders Petersson (petersson1@llnl.gov)
+// # Bjorn Sjogreen      (sjogreen2@llnl.gov)
+// # 
+// # LLNL-CODE-643337 
+// # 
+// # All rights reserved. 
+// # 
+// # This file is part of SW4, Version: 1.0
+// # 
+// # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
+// # 
+// # This program is free software; you can redistribute it and/or modify
+// # it under the terms of the GNU General Public License (as published by
+// # the Free Software Foundation) version 2, dated June 1991. 
+// # 
+// # This program is distributed in the hope that it will be useful, but
+// # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
+// # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
+// # conditions of the GNU General Public License for more details. 
+// # 
+// # You should have received a copy of the GNU General Public License
+// # along with this program; if not, write to the Free Software
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+
 #include "EW.h"
 
 //-----------------------------------------------------------------------
@@ -742,16 +774,16 @@ void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast, int 
 {
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
-   double z=(kz-1)*h + zmin;
+   float_sw4 z=(kz-1)*h + zmin;
 #pragma omp parallel for
    for( int j=jfirst ; j<= jlast ; j++ )
       for( int i=ifirst ; i<= ilast ; i++ )
       {
 	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
 	 size_t qq  = (i-ifirst)+ni*(j-jfirst);
-	 double x=(i-1)*h, y=(j-1)*h; 
-	 double t1,t12,t13,t17,t19,t22,t23,t28,t3,t31,t32,t35,t36,t4,t40,t42,t43,t45,t5,t51,t56,t61,t66,t68,t7,t8;
-	 double forces[3];
+	 float_sw4 x=(i-1)*h, y=(j-1)*h; 
+	 float_sw4 t1,t12,t13,t17,t19,t22,t23,t28,t3,t31,t32,t35,t36,t4,t40,t42,t43,t45,t5,t51,t56,t61,t66,t68,t7,t8;
+	 float_sw4 forces[3];
      
 	 t1 = c*t;
 	 t3 = omega*(x-t1);
@@ -788,6 +820,248 @@ void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast, int 
 	 bforce[1+3*qq]-=forces[1];
 	 bforce[2+3*qq]-=forces[2];
       }
+}
+
+//-----------------------------------------------------------------------
+void EW::twfrsurfz_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			    int klast, float_sw4 h, int kz, float_sw4 t, float_sw4 omega,
+			    float_sw4 c, float_sw4 phase, float_sw4* __restrict__ bforce,
+			    float_sw4* __restrict__ mu, float_sw4* __restrict__ lambda,
+			    float_sw4 zmin, int i1, int i2, int j1, int j2)
+{
+   const size_t ni  = ilast-ifirst+1;
+   const size_t nij = ni*(jlast-jfirst+1);
+   float_sw4 z=(kz-1)*h + zmin;
+// the do loops should span j1,j2 and i1,i2
+#pragma omp parallel for
+   for( int j = j1 ; j <= j2 ;j++ )
+   {
+      float_sw4 t13,t15,t16,t19,t20,t21,t23,t24,t28,t29,t32,t33,t34,t37,t38,t43,t44,t49,t60,t62,t65;
+      float_sw4 y = (j-1)*h;
+#pragma ivdep
+#pragma simd      
+      for( int i = i1; i <= i2 ;i++ )
+      {
+	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
+	 size_t qq  = (i-ifirst)+ni*(j-jfirst);
+	 float_sw4 x=(i-1)*h;
+	 float_sw4 forces[3];
+	 t13 = mu[ind];
+	 t15 = omega*x+phase;
+	 t16 = cos(t15);
+	 t19 = omega*y+phase;
+	 t20 = sin(t19);
+	 t21 = c*t;
+	 t23 = omega*(z-t21);
+	 t24 = sin(t23);
+	 t28 = omega*(x-t21);
+	 t29 = sin(t28);
+	 t32 = omega*z+phase;
+	 t33 = cos(t32);
+	 t34 = t33*omega;
+	 forces[0] = t13*(t16*omega*t20*t24+t29*t20*t34);
+	 t37 = sin(t15);
+	 t38 = cos(t19);
+	 t43 = omega*(y-t21);
+	 t44 = sin(t43);
+	 forces[1] = t13*(t37*t38*omega*t24+t37*t44*t34);
+	 t49 = cos(t23);
+	 t60 = cos(t28);
+	 t62 = sin(t32);
+	 t65 = cos(t43);
+	 forces[2] = 2*t13*t37*t20*t49*omega+lambda[ind]*(
+          t60*omega*t20*t62+t37*t65*omega*t62+t37*t20*t49*omega);
+	 bforce[3*qq  ] = forces[0];
+	 bforce[3*qq+1] = forces[1];
+	 bforce[3*qq+2] = forces[2];
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::twfrsurfzsg_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			      int klast, float_sw4 h, int kz, float_sw4 t, float_sw4 om,
+			      float_sw4 c, float_sw4 ph, float_sw4 omstrx, float_sw4 omstry,
+			      float_sw4* __restrict__ bforce, float_sw4* __restrict__ mu,
+			      float_sw4* __restrict__ lambda,
+			      float_sw4 zmin, int i1, int i2, int j1, int j2)
+{
+   const size_t ni  = ilast-ifirst+1;
+   const size_t nij = ni*(jlast-jfirst+1);
+   float_sw4 z=(kz-1)*h + zmin;
+#pragma omp parallel for
+   for( int j = j1 ; j <= j2 ;j++ )
+   {
+      float_sw4 t1,t10,t11,t12,t15,t17,t19,t20,t22,t24,t25,t29,t3,t31,t32,t36,t39,t4,t40,t46,t51,t53,t56,t6,t7;
+      float_sw4 y = (j-1)*h;
+#pragma ivdep
+#pragma simd      
+      for( int i = i1; i <= i2 ;i++ )
+      {
+	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
+	 size_t qq  = (i-ifirst)+ni*(j-jfirst);
+	 float_sw4 x=(i-1)*h;
+	 float_sw4 forces[3];
+	 t1 = c*t;
+	 t3 = om*(x-t1);
+	 t4 = sin(t3);
+	 t6 = om*y+ph;
+	 t7 = sin(t6);
+	 t10 = om*z+ph;
+	 t11 = cos(t10);
+	 t12 = t11*om;
+	 t15 = sin(omstrx*x);
+	 t17 = 1+t15/2;
+	 t19 = om*x+ph;
+	 t20 = cos(t19);
+	 t22 = om*t7;
+	 t24 = om*(z-t1);
+	 t25 = sin(t24);
+	 forces[0] = mu[ind]*(t4*t7*t12+t17*t20*t22*t25);
+	 t29 = sin(t19);
+	 t31 = om*(y-t1);
+	 t32 = sin(t31);
+	 t36 = sin(omstry*y);
+	 t39 = (1+t36/2)*t29;
+	 t40 = cos(t6);
+	 forces[1] = mu[ind]*(t29*t32*t12+t39*t40*om*t25);
+	 t46 = cos(t24);
+	 t51 = cos(t3);
+	 t53 = sin(t10);
+	 t56 = cos(t31);
+	 forces[2] = 2*mu[ind]*t29*t7*t46*om+lambda[ind]*
+	       (t17*t51*t22*t53+t39*t56*om*t53+t29*t7*t46*om);
+	 bforce[3*qq  ] = forces[0];
+	 bforce[3*qq+1] = forces[1];
+	 bforce[3*qq+2] = forces[2];
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::twfrsurfz_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast, 
+				int kfirst, int klast, float_sw4 h, int kz,
+				float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase,
+				float_sw4* __restrict__ bforce, float_sw4* __restrict__ mua,
+				float_sw4* __restrict__ lambdaa,
+				float_sw4 zmin, int i1, int i2, int j1, int j2 )
+{
+ //THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
+   const size_t ni  = ilast-ifirst+1;
+   const size_t nij = ni*(jlast-jfirst+1);
+   float_sw4 z=(kz-1)*h + zmin;
+#pragma omp parallel for
+   for( int j = j1 ; j <= j2 ;j++ )
+   {
+      float_sw4 t2, t3, t6, t7, t8, t11, t12, t17, t18, t27, t30, t20, t31, t35;
+      float_sw4 t40, t45, t50, t52, t54, t16, t23, t24, t34;
+      float_sw4 y = (j-1)*h;
+#pragma ivdep
+#pragma simd      
+      for( int i = i1; i <= i2 ;i++ )
+      {
+	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
+	 size_t qq  = (i-ifirst)+ni*(j-jfirst);
+	 float_sw4 x=(i-1)*h;
+	 float_sw4 forces[3];
+	 t2 = omega*x+phase;
+	 t3 = sin(t2);
+	 t6 = omega*y+phase;
+	 t7 = cos(t6);
+	 t8 = c*t;
+	 t11 = -omega*(z-t8)-phase;
+	 t12 = sin(t11);
+	 t16 = omega*(x-t8);
+	 t17 = -t16-phase;
+	 t18 = cos(t17);
+	 t20 = t12*omega;
+	 forces[0] = mua[ind]*(t3*omega*t7*t12+t18*t3*t20);
+	 t23 = cos(t2);
+	 t24 = sin(t6);
+	 t27 = sin(t16);
+	 t30 = -omega*(y-t8)-phase;
+	 t31 = cos(t30);
+	 t34 = omega*z+phase;
+	 t35 = sin(t34);
+	 forces[1] = mua[ind]*(t23*t24*t20-t27*t31*t35*omega);
+	 t40 = cos(t11);
+	 t45 = sin(t17);
+	 t50 = t40*omega;
+	 t52 = sin(t30);
+	 t54 = cos(t34);
+	 forces[2] = 2.0*mua[ind]*t23*t7*t40*omega+lambdaa[ind]*
+	         (t45*omega*t3*t40+t18*t23*t50+t27*t52*omega*t54+t23*t7*t50);
+	 bforce[3*qq  ] -= forces[0];
+	 bforce[3*qq+1] -= forces[1];
+	 bforce[3*qq+2] -= forces[2];
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::twfrsurfzsg_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast, 
+				  int kfirst, int klast, float_sw4 h, int kz,
+				  float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase,
+				  float_sw4 omstrx, float_sw4 omstry,
+				  float_sw4* __restrict__ bforce, float_sw4* __restrict__ mua,
+				  float_sw4* __restrict__ lambdaa,
+				  float_sw4 zmin, int i1, int i2, int j1, int j2 )
+{
+   // THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
+   const size_t ni  = ilast-ifirst+1;
+   const size_t nij = ni*(jlast-jfirst+1);
+   float_sw4 z=(kz-1)*h + zmin;
+#pragma omp parallel for
+   for( int j = j1 ; j <= j2 ;j++ )
+   {
+      float_sw4 t1,t12,t13,t17,t19,t22,t23,t28,t3,t31,t32,t35,t36,t4,t40,t42,t43,t45,t5,t51,t56,t61,t66,t68,t7,t8;
+      float_sw4 y = (j-1)*h;
+#pragma ivdep
+#pragma simd      
+      for( int i = i1; i <= i2 ;i++ )
+      {
+	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
+	 size_t qq  = (i-ifirst)+ni*(j-jfirst);
+	 float_sw4 x=(i-1)*h;
+	 float_sw4 forces[3];
+	 t1 = c*t;
+	 t3 = omega*(x-t1);
+	 t4 = -t3-phase;
+	 t5 = cos(t4);
+	 t7 = omega*x+phase;
+	 t8 = sin(t7);
+	 t12 = -omega*(z-t1)-phase;
+	 t13 = sin(t12);
+	 t17 = sin(omstrx*x);
+	 t19 = 1+t17/2;
+	 t22 = omega*y+phase;
+	 t23 = cos(t22);
+	 forces[0] = mua[ind]*(t5*t8*t13*omega+t19*t8*
+				     omega*t23*t13);
+	 t28 = sin(t3);
+	 t31 = -omega*(y-t1)-phase;
+	 t32 = cos(t31);
+	 t35 = omega*z+phase;
+	 t36 = sin(t35);
+	 t40 = sin(omstry*y);
+	 t42 = 1+t40/2;
+	 t43 = cos(t7);
+	 t45 = sin(t22);
+	 forces[1] = mua[ind]*(-t28*t32*t36*omega+t42*t43*t45*
+				  omega*t13);
+	 t51 = cos(t12);
+	 t56 = sin(t4);
+	 t61 = omega*t51;
+	 t66 = sin(t31);
+	 t68 = cos(t35);
+	 forces[2] = 2*mua[ind]*t43*t23*t51*omega+lambdaa[ind]
+     *(t19*(t56*omega*t8*t51+t5*t43*t61)+t42*t28*t66*omega*t68+
+       t43*t23*t61);
+	 bforce[3*qq  ] -= forces[0];
+	 bforce[3*qq+1] -= forces[1];
+	 bforce[3*qq+2] -= forces[2];
+      }
+   }
 }
 
 //-----------------------------------------------------------------------

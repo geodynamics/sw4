@@ -1,50 +1,44 @@
 ----------------------------------------------------------------
-            sw4 version 1.1
+            sw4 version 1.20
 
  This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Tue Oct  7 14:17:59 PDT 2014
+  Compiled on: Thu Jul 27 21:47:47 PDT 2017
   By user:     petersson1
   Machine:     fourier.llnl.gov
   Compiler:    /opt/local/bin/mpicxx
-  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
 ----------------------------------------------------------------
 
 Input file: tw-att-2.in
+Default Supergrid thickness has been tuned; # grid points = 10 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
 
 * Processing the grid command...
 * Setting h to 6.28000000e-02 from  x/(nx-1) (x=6.28000000e+00, nx=101)
 * Setting ny to 101 to be consistent with h=6.28000000e-02
 * Setting nz to 101 to be consistent with h=6.28000000e-02
-allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
 Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.28000000e+00
-Corrected global_zmax = 6.28000000e+00
-Refinement levels after correction: 
-grid=0 min Z=0.00000000e+00
-***inside setup2D_MPICommunications***
 
 *** No topography command found in input file. Using z=0 as free surface boundary ***
 
-***inside setupMPICommunications***
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points
    0    0.0628       101       101       101      1030301
 Total number of grid points (without ghost points): 1.0303e+06
 
-Default Supergrid thickness has been tuned; thickness = 10 grid sizes
 Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
 
-   Execution time, reading input file 1.25110149e-02 seconds 
- *** Testing = 1
+   Execution time, reading input file 9.67946200e-03 seconds 
   Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
-Setting up SBP boundary stencils
 Detected at least one boundary with supergrid conditions
 ----------------------------------------------------
- Making Output Directory: flat-2/
+ Making Output Directory: tw-att-flat-2/
 		
 ... Done!
 ----------------------------------------------------
@@ -65,9 +59,6 @@ Geographic and Cartesian coordinates of the corners of the computational grid:
        1.52761543e+00        <=  Vp/Vs   <= 1.73201725e+00
        2.00106604e+00 Pa     <=  mu      <= 3.99897596e+00 Pa
        1.00106604e+00 Pa     <=  lambda  <= 2.99897596e+00 Pa
-       Using attenuation 
-       -1.00000000e+00        <=  Qs      <= -1.00000000e+00  
-       -1.00000000e+00        <=  Qp      <= -1.00000000e+00  
        ------------------------------------------------------
 
 ***** PPW = minVs/h/maxFrequency ********
@@ -79,11 +70,11 @@ g=0, h=6.280000e-02, minVs/h=15.9245 (Cartesian)
 
   Assigned material properties
 *** computing the time step ***
-order of accuracy=4 CFL=1.30000000e+00 prel. time step=1.81007429e-02
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=1.81007429e-02
 *** Initialized Images
-   Execution time, start up phase 9.63230133e-02 seconds 
+   Execution time, start up phase 5.34820780e-02 seconds 
 Running sw4 on 4 processors...
-Writing output to directory: flat-2/
+Writing output to directory: tw-att-flat-2/
 
 ***  Starting solve ***
 ============================================================
@@ -114,15 +105,21 @@ Parameters:
   ampmu = 1.00000000e+00
 -----------------------------------------------------------
   Initial data has been assigned
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
   Begin time stepping...
 Time step       1  t =   1.8181818e-02
 Time step      55  t =   1.0000000e+00
   Time stepping finished...
-   Execution time, solver phase 2.75853002e+01 seconds 
+   Execution time, solver phase 2.58974265e+01 seconds 
 
- Final solution errors: Linf =   3.8182360e-05, L2 =   1.5534037e-04
+ Final solution errors: Linf =   3.8505332e-05, L2 =   1.7617664e-04
 
- Final solution errors, attenuation: Linf =   3.7139259e-05, L2 =   1.5796396e-04
+ Final solution errors, attenuation: Linf =   3.7738931e-05, L2 =   1.7858391e-04
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 

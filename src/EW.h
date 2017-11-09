@@ -214,6 +214,9 @@ void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>
 			   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 		       vector<float_sw4 **>& a_BCForcing, float_sw4 bop[5], float_sw4 a_t );
 
+   void enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+			   vector<Sarray*>& a_AlphaVEp, vector<double **>& a_BCForcing );
+
 void enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C, 
 			   float_sw4 t, vector<float_sw4 **> & a_BCForcing );
    
@@ -235,12 +238,20 @@ void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
 void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
 
-void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
-			    vector<Sarray*>& a_AlphaVEm,
-			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, float_sw4 a_t );
-void updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
-			    vector<Sarray*>& a_AlphaVEm,
-			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
+void updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_U, double a_t );
+
+void updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
+                       vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+   
+void updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+                                    Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, double a_t, int a_mech, int a_grid );
+   
+// void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
+// 			    vector<Sarray*>& a_AlphaVEm,
+// 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+// void updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
+// 			    vector<Sarray*>& a_AlphaVEm,
+// 			    vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
 void evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
                             vector<Sarray*>& a_AlphaVEm );
 
@@ -483,19 +494,14 @@ void get_geodyn_timelevel( vector<Sarray>& geodyndata );
 
 void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 			    vector<Sarray>& geodyndata2 );
-
-   //void consintp( Sarray& u_a, Sarray& um_a, Sarray& f_a, Sarray& mu_a, Sarray& la_a, Sarray& rho_a,
-   //	       Sarray& uf_a, Sarray& ufm_a, Sarray& ff_a, Sarray& muf_a, Sarray& laf_a,
-   //	       Sarray& rhof_a, Sarray* AlphaVE, Sarray* AlphaVEf, float_sw4 hc, float_sw4 hf, float_sw4 dt, int g,
-   //	       float_sw4* a1, int* ipiv1, float_sw4* a2, int* ipiv2, int bctype[4], float_sw4 tp1 );
-   //void check_consintp( Sarray& uc_a, Sarray& uf_a, Sarray* alphac_a, Sarray* alphaf_a );
-
 void integrate_source( );
 
 void compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 		     vector<Sarray>& U, vector<Sarray>& Up, int step );
 
+float_sw4 scalarProduct( vector<Sarray>& U, vector<Sarray>& V);
 void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
+
 
 //  void update_maxes_hVelMax();
 //  void update_maxes_vVelMax();
@@ -628,20 +634,25 @@ void interpolation_gradient( int nx, int ny, int nz, float_sw4 xmin, float_sw4 y
 			     int grid, Sarray& gradrhogrid, Sarray& gradmugrid, Sarray& gradlambdagrid );
 
 // Functions to impose conditions at grid refinement interface:
-   void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-		   float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
-void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
-void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
-void gridref_initial_guess( Sarray& u, int g, bool upper );
-void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
-				    int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
-void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
-				    int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
-void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
-void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
-	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
-	       float_sw4 cof, int gc, int gp, int is_periodic[2] );
-void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
+   // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+   //                 vector<Sarray*>& a_AlphaVEp,
+   //      	   double t, bool predictor, std::vector<GridPointSource*> point_sources );
+// NEW June 14, 2017
+
+void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+		float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
+   //void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
+   //void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
+   //void gridref_initial_guess( Sarray& u, int g, bool upper );
+   //void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray& Unext,
+   //				    int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+   //void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
+   //				    int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+   //void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
+   //void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
+   //	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
+   //	       float_sw4 cof, int gc, int gp, int is_periodic[2] );
+   //void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
 
    // Previous version fortran routines, now in C
 void addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4 *a_Up, float_sw4*a_U,
@@ -835,11 +846,11 @@ void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		float_sw4* __restrict__ up, float_sw4* __restrict__ u,
 		float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
 		float_sw4 dt2i );
-void updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		      float_sw4* __restrict__ a_alp,
-		      float_sw4* __restrict__ a_alm, float_sw4* __restrict__ a_up, 
-		      float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
-		      float_sw4 omega, float_sw4 dt, int domain );
+   //void updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+   //		      float_sw4* __restrict__ a_alp,
+   //		      float_sw4* __restrict__ a_alm, float_sw4* __restrict__ a_up, 
+   //		      float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
+   //		      float_sw4 omega, float_sw4 dt, int domain );
 void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
 		      float_sw4* __restrict__ um, float_sw4 dt2i );
@@ -1114,6 +1125,34 @@ void forcingttfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 			   float_sw4* __restrict__ zz, float_sw4 omstrx, float_sw4 omstry,
 			   float_sw4 omstrz );
 
+void twfrsurfz_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			int klast, float_sw4 h, int kz, float_sw4 t, float_sw4 omega,
+			float_sw4 c, float_sw4 phase, float_sw4* __restrict__ bforce,
+			float_sw4* __restrict__ mu, float_sw4* __restrict__ lambda,
+			float_sw4 zmin, int i1, int i2, int j1, int j2);
+void twfrsurfzsg_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			  int klast, float_sw4 h, int kz, float_sw4 t, float_sw4 om,
+			  float_sw4 c, float_sw4 ph, float_sw4 omstrx, float_sw4 omstry,
+			  float_sw4* __restrict__ bforce, float_sw4* __restrict__ mu,
+			  float_sw4* __restrict__ lambda,
+			  float_sw4 zmin, int i1, int i2, int j1, int j2);
+void twfrsurfz_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast, 
+			    int kfirst, int klast, float_sw4 h, int kz,
+			    float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase,
+			    float_sw4* __restrict__ bforce, float_sw4* __restrict__ mua,
+			    float_sw4* __restrict__ lambdaa,
+			    float_sw4 zmin, int i1, int i2, int j1, int j2 );
+void twfrsurfzsg_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast, 
+			      int kfirst, int klast, float_sw4 h, int kz,
+			      float_sw4 t, float_sw4 omega, float_sw4 c, float_sw4 phase,
+			      float_sw4 omstrx, float_sw4 omstry,
+			      float_sw4* __restrict__ bforce, float_sw4* __restrict__ mua,
+			      float_sw4* __restrict__ lambdaa,
+			      float_sw4 zmin, int i1, int i2, int j1, int j2 );
+
+
+
+
 void tw_ani_stiff_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
 		      int klast, float_sw4 h, float_sw4 zmin, float_sw4 omm,
 		      float_sw4 phm, float_sw4 amprho, float_sw4* __restrict__ a_rho,
@@ -1135,6 +1174,42 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 		float_sw4* __restrict__ rho, float_sw4& cp, float_sw4& cs,
 		size_t& npts );
 
+   void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+		vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
+		float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
+   void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+                    vector<Sarray*>& a_AlphaVEp,
+                    float_sw4 t, std::vector<GridPointSource*> point_sources );
+   void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
+   void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
+   
+   void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
+   void dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj );
+   
+   void gridref_initial_guess( Sarray& u, int g, bool upper );
+   void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
+                                       Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
+                                       int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
+   //                                     Sarray& Utt, Sarray& Unext,
+   //                                     int g, int kic, double t, std::vector<GridPointSource*> point_sources );
+
+   void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
+                                       int g, int kic, float_sw4 t, vector<GridPointSource*> point_sources );
+   
+   void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
+   void add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, float_sw4* a_str_x, float_sw4* a_str_y);
+   
+   void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
+                  Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
+                  float_sw4 cof, int gc, int gp, int is_periodic[2] );
+
+   void checkintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
+		   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
+                   float_sw4 cof, int gc, int gf, int is_periodic[2], float_sw4 t);
+   
+   void check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc );
+   void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -1310,7 +1385,7 @@ bool m_anisotropic;
 // Randomization of the material
 bool m_randomize;
 int m_random_seed[3];
-   float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
+float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes
@@ -1484,8 +1559,11 @@ int m_ghost_points;
 int m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
-float_sw4 m_sbop[5], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
+
+float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
+//float_sw4 m_iop[5], m_iop2[5], m_bop2[24], m_sbop[6], m_acof[384], m_bop[24];
 //float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
+float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[6];
 
 int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
@@ -1507,7 +1585,7 @@ bool m_topography_exists;
 
 // UTC time corresponding to simulation time 0.
 //bool m_utc0set, m_utc0isrefevent;
-int m_utc0[7];
+   int m_utc0[7];
 
 // Error handling facility
 //ErrorChecking* m_error_checking;

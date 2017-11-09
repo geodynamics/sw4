@@ -1,0 +1,6 @@
+grid x=30 y=30 z=17 nx=75
+refinement zmax=5
+time t=50
+fileio verbose=3 path=etest-per-coarse
+testenergy seed=34983249 cpcsratio=1.732
+developer ctol=1e-10 cmaxit=100 crelax=0.92  time_order=2 cfl=0.8

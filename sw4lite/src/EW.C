@@ -2337,7 +2337,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
    }
 
    // Set up boundary data array
-   vector<float_sw4**> BCForcing;
+   //vector<float_sw4**> BCForcing;
    BCForcing.resize(mNumberOfGrids);
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
@@ -2351,7 +2351,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	 }
       }
    }
-   
+ 
    // Initial data, touch all memory even in
    // arrays that do not need values, in order
    // to initialize OpenMP with good memory access
@@ -2381,6 +2381,10 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
    }
    beginCycle++;
+
+   copy_bcforcing_arrays_to_device();
+   copy_bctype_arrays_to_device();
+   copy_bndrywindow_arrays_to_device();
 
    double time_measure[20];
    double time_sum[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -2416,6 +2420,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       Lu[g].copy_to_device(m_cuobj);
       Up[g].copy_to_device(m_cuobj);
       Um[g].copy_to_device(m_cuobj);
+      U[g].copy_to_device(m_cuobj);
       Uacc[g].copy_to_device(m_cuobj);
       F[g].copy_to_device(m_cuobj);
       F[g].page_lock(m_cuobj);
@@ -2461,14 +2466,18 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       trdata = new double[12*(mNumberOfTimeSteps+1)];
       MPI_Barrier(m_cartesian_communicator);
    }
+
+// Set up the  array for data communication
+   setup_device_communication_array();
+
 // Begin time stepping loop
    for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++ )
    {    
       time_measure[0] = MPI_Wtime();
       // Predictor 
       // Need U on device for evalRHS,
-      for( int g=0; g < mNumberOfGrids ; g++ )
-	 U[g].copy_to_device(m_cuobj,true,0);
+      //      for( int g=0; g < mNumberOfGrids ; g++ )
+      //	 U[g].copy_to_device(m_cuobj,true,0);
 
 // all types of forcing...
       if( m_cuobj->has_gpu() )
@@ -2511,25 +2520,40 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       else
 	 evalPredictor( Up, U, Um, mRho, Lu, F );    
 
-      for( int g=0; g < mNumberOfGrids ; g++ )
-      {
-	 Up[g].copy_from_device(m_cuobj,true,1);
-      }
-      m_cuobj->sync_stream(1);
+      //      if( !(m_cuobj->has_gpu()) )
+      //         for( int g=0; g < mNumberOfGrids ; g++ )
+      //         {
+      //	    Up[g].copy_from_device(m_cuobj,true,1);
+      //         }
+
+
 
       time_measure[2] = MPI_Wtime();
 
 // communicate across processor boundaries
-      for(int g=0 ; g < mNumberOfGrids ; g++ )
-	 communicate_array( Up[g], g );
+      if( m_cuobj->has_gpu() )
+      {
+         m_cuobj->sync_stream(1);
+         for(int g=0 ; g < mNumberOfGrids ; g++ )
+	    communicate_arrayCU( Up[g], g, 0);
+      }
+      else 
+         for(int g=0 ; g < mNumberOfGrids ; g++ )
+	    communicate_array( Up[g], g );
 
       time_measure[3] = MPI_Wtime();
 
 // calculate boundary forcing at time t+mDt
-      cartesian_bc_forcing( t+mDt, BCForcing, m_globalUniqueSources );
-
-      enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
-
+      if( m_cuobj->has_gpu() )
+      {
+         cartesian_bc_forcingCU( t+mDt, BCForcing, m_globalUniqueSources,0);
+         enforceBCCU( Up, mMu, mLambda, t+mDt, BCForcing, 0);
+      }
+      else
+      {
+         cartesian_bc_forcing( t+mDt, BCForcing, m_globalUniqueSources );
+         enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+      }
 
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "U pred. " );
@@ -2537,8 +2561,9 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
       //      time_measure[3] = MPI_Wtime();
       time_measure[4] = MPI_Wtime();
 
-      for( int g=0; g < mNumberOfGrids ; g++ )
-	 Up[g].copy_to_device(m_cuobj,true,0);
+      //      if( !(m_cuobj->has_gpu()) )
+      //         for( int g=0; g < mNumberOfGrids ; g++ )
+      //	    Up[g].copy_to_device(m_cuobj,true,0);
 
       // Corrector
       if( m_cuobj->has_gpu() )
@@ -2591,28 +2616,51 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 	    addSuperGridDamping( Up, U, Um, mRho );
 
       }
-      for( int g=0; g < mNumberOfGrids ; g++ )
-	 Up[g].copy_from_device(m_cuobj,true,1);
 
-      m_cuobj->sync_stream(1);
+      //      if( !(m_cuobj->has_gpu()) )
+      //         for( int g=0; g < mNumberOfGrids ; g++ )
+      //	    Up[g].copy_from_device(m_cuobj,true,1);
+
+
 
       //      time_measure[6] = MPI_Wtime();
       time_measure[7] = MPI_Wtime();
 
 // also check out EW::update_all_boundaries 
 // communicate across processor boundaries
-      for(int g=0 ; g < mNumberOfGrids ; g++ )
-	 communicate_array( Up[g], g );
+      if( m_cuobj->has_gpu() )
+      {
+	 m_cuobj->sync_stream(1);
+         for(int g=0 ; g < mNumberOfGrids ; g++ )
+	    communicate_arrayCU( Up[g], g, 0 );
+      }
+      else
+         for(int g=0 ; g < mNumberOfGrids ; g++ )
+	    communicate_array( Up[g], g );
 
       time_measure[8] = MPI_Wtime();
 
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
-      cartesian_bc_forcing( t+mDt, BCForcing, m_globalUniqueSources );
-      enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+      if( m_cuobj->has_gpu() )
+      {
+         cartesian_bc_forcingCU( t+mDt, BCForcing, m_globalUniqueSources, 0 );
+         enforceBCCU( Up, mMu, mLambda, t+mDt, BCForcing, 0 );
+      }
+      else
+      {
+         cartesian_bc_forcing( t+mDt, BCForcing, m_globalUniqueSources );
+         enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+      }
 
       if( m_checkfornan )
 	 check_for_nan( Up, 1, "Up" );
 
+      if( m_cuobj->has_gpu() )
+      {
+         for( int g=0; g < mNumberOfGrids ; g++ )
+	    Up[g].copy_from_device(m_cuobj,true,0);
+
+      }
 // increment time
       t += mDt;
 
@@ -2624,6 +2672,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
 //
+      m_cuobj->sync_stream(0);
       double time_chkpt, time_chkpt_tmp;
       bool wrote=false;
       //      MPI_Barrier( MPI_COMM_WORLD );
@@ -2653,8 +2702,7 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 // note that the solution on the new time step is in Up
 // also note that all quantities related to velocities lag by one time step; they are not
 // saved before the time stepping loop started
-	    extractRecordData(m_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, 
-			      uRec, Um, Up);
+	    extractRecordData(m_GlobalTimeSeries[ts]->getMode(), i0, j0, k0, grid0, uRec, Um, Up);
 	    m_GlobalTimeSeries[ts]->recordData(uRec);
 	 }
       }
@@ -2715,7 +2763,14 @@ void EW::timesteploop( vector<Sarray>& U, vector<Sarray>& Um )
 //	 //	    normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       normOfDifference( Up, U, errInf, errL2, solInf, m_globalUniqueSources );
       if ( m_myrank == 0 )
+      {
 	 cout << "Errors at time " << t << " Linf = " << errInf << " L2 = " << errL2 << " norm of solution = " << solInf << endl;
+	 string fname = mPath+"PointSourceErr.txt";
+	 ofstream esave(fname.c_str());
+	 esave.precision(12);
+	 esave << t << " " << errInf << " " << errL2 << " " << solInf << endl;
+	 esave.close();
+      }
    }
    for (int ts=0; ts<m_GlobalTimeSeries.size(); ts++)
       m_GlobalTimeSeries[ts]->writeFile();
@@ -6287,3 +6342,16 @@ void EW::copy_point_sources_to_gpu()
 	 cudaGetErrorString(retcode) << endl;
 #endif
 }
+
+#ifdef SW4_CUDA
+//-----------------------------------------------------------------------
+void EW::CheckCudaCall(cudaError_t command, const char * commandName, const char * fileName, int line)
+{
+   if (command != cudaSuccess)
+   {
+      fprintf(stderr, "Error: CUDA result \"%s\" for call \"%s\" in file \"%s\" at line %d. Terminating...\n",
+              cudaGetErrorString(command), commandName, fileName, line);
+      exit(1);
+   }
+}
+#endif

@@ -1851,66 +1851,66 @@ void EW::dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
       u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
 }
 
-//-----------------------------------------------------------------------
-void EW::updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			  float_sw4* __restrict__ a_alp, float_sw4* __restrict__ a_alm,
-			  float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
-			  float_sw4* __restrict__ a_um,
-			  float_sw4 omega, float_sw4 dt, int domain )
-{
-   const float_sw4 i6 = 1.0/6;
-   const int ni    = ilast-ifirst+1;
-   const int nij   = ni*(jlast-jfirst+1);
-   const int nijk  = nij*(klast-kfirst+1);
-   const int base  = -(ifirst+ni*jfirst+nij*kfirst);
-   const int base3 = base-nijk;
+// //-----------------------------------------------------------------------
+// void EW::updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+// 			  float_sw4* __restrict__ a_alp, float_sw4* __restrict__ a_alm,
+// 			  float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+// 			  float_sw4* __restrict__ a_um,
+// 			  float_sw4 omega, float_sw4 dt, int domain )
+// {
+//    const float_sw4 i6 = 1.0/6;
+//    const int ni    = ilast-ifirst+1;
+//    const int nij   = ni*(jlast-jfirst+1);
+//    const int nijk  = nij*(klast-kfirst+1);
+//    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
+//    const int base3 = base-nijk;
 
-#define alp(c,i,j,k) a_alp[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define alm(c,i,j,k) a_alm[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define up(c,i,j,k)   a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define u(c,i,j,k)     a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
-#define um(c,i,j,k)   a_um[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+// #define alp(c,i,j,k) a_alp[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+// #define alm(c,i,j,k) a_alm[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+// #define up(c,i,j,k)   a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+// #define u(c,i,j,k)     a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
+// #define um(c,i,j,k)   a_um[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 
-   float_sw4 dto = dt*omega;
-   float_sw4 icp = 1.0/( 1.0/2 + 1/(2*dto) + dto/4 + dto*dto/12 );
-   float_sw4 cm  =     1.0/2 - 1/(2*dto) - dto/4 + dto*dto/12;
+//    float_sw4 dto = dt*omega;
+//    float_sw4 icp = 1.0/( 1.0/2 + 1/(2*dto) + dto/4 + dto*dto/12 );
+//    float_sw4 cm  =     1.0/2 - 1/(2*dto) - dto/4 + dto*dto/12;
 
-   int k1, k2;
-   if( domain == 0 )
-   {
-      k1 = kfirst;
-      k2 = klast;
-   }
-   else if( domain==1 )
-   {
-      k1 = kfirst;
-      k2 = kfirst+2;
-   }
-   else if( domain == 2 )
-   {
-      k1 = klast-2;
-      k2 = klast;
-   }
+//    int k1, k2;
+//    if( domain == 0 )
+//    {
+//       k1 = kfirst;
+//       k2 = klast;
+//    }
+//    else if( domain==1 )
+//    {
+//       k1 = kfirst;
+//       k2 = kfirst+2;
+//    }
+//    else if( domain == 2 )
+//    {
+//       k1 = klast-2;
+//       k2 = klast;
+//    }
 
-   for( int c=1 ; c<=3 ; c++ )
-#pragma omp parallel
-#pragma omp for 
-      for( int k=k1 ; k<=k2 ; k++ )
-	 for( int j=jfirst ; j<=jlast ; j++ )
-#pragma ivdep
-#pragma simd
-	    for( int i=ifirst ; i<=ilast ; i++ )
-	    {
-	       alp(c,i,j,k) = icp*(-cm*alm(c,i,j,k) + u(c,i,j,k) +
-			  i6*( dto*dto*u(c,i,j,k) + dto*(up(c,i,j,k)-um(c,i,j,k)) +
-			       (up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k))  ) );
-	    }
-#undef alp
-#undef alm
-#undef up
-#undef u
-#undef um
-}
+//    for( int c=1 ; c<=3 ; c++ )
+// #pragma omp parallel
+// #pragma omp for 
+//       for( int k=k1 ; k<=k2 ; k++ )
+// 	 for( int j=jfirst ; j<=jlast ; j++ )
+// #pragma ivdep
+// #pragma simd
+// 	    for( int i=ifirst ; i<=ilast ; i++ )
+// 	    {
+// 	       alp(c,i,j,k) = icp*(-cm*alm(c,i,j,k) + u(c,i,j,k) +
+// 			  i6*( dto*dto*u(c,i,j,k) + dto*(up(c,i,j,k)-um(c,i,j,k)) +
+// 			       (up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k))  ) );
+// 	    }
+// #undef alp
+// #undef alm
+// #undef up
+// #undef u
+// #undef um
+// }
 
 //-----------------------------------------------------------------------
 void EW::dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,

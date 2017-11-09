@@ -1108,7 +1108,9 @@ c-----------------------------------------------------------------------
       subroutine forcingfortsgatt( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, omega, c, phase, momega, mphase, amprho, ampmu,
      +      amplambda, h, zmin, omstrx, omstry, omstrz ) bind(c)
-
+c
+c NOTE: this routine adds visco-elastic forcing terms to fo(), i.e., assumes that
+c forcingfortsg() has been called before calling this routine
       implicit none
 
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k

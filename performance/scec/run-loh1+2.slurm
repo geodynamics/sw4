@@ -5,13 +5,19 @@
 #SBATCH -S 4     # Special cores per nodes (4 are idle)
 #SBATCH -t 00:30:00 
 #SBATCH -C knl,quad,cache
+##SBATCH -C knl,quad,flat
 
 numnodes=4
 
+
+#  icoe branch
 #    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
 #numprocspernode=16
 for numprocspernode in 1 2 4 8; do
+
+# developer branch
+#  numprocspernode=64
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
@@ -36,7 +42,10 @@ export OMP_PROC_BIND=spread
 # export KMP_PLACE_THREADS=1s${numhc}c${numht}t
 
 # Run the job with this MPI + OpenMP configuration
+# quad modes
 MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
+# flat mode needs the numactl command
+#MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores numactl -m 1" 
 
 # 1st case
 CASE=LOH.1-h50

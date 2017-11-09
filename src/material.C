@@ -68,7 +68,6 @@ void EW::check_materials()
   
   float_sw4 mins[8],maxs[8];
 
-// confusing with variables and functions that have names which only differ in capitalization 
   float_sw4 lmin = localMin(mRho);
   MPI_Allreduce(&lmin,&mins[0],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
   lmin = localMinVp();  
@@ -136,8 +135,6 @@ void EW::check_materials()
     cout  << indents << "------------------------------------------------------" << endl;
   }
    
-  VERIFY2(mins[5] >= sqrt(2.),
-	  "Error: vp/vs is smaller than sqrt(2).");
 
   if( mins[0] <= 0.0 )
   {
@@ -212,6 +209,9 @@ void EW::check_materials()
            "Error: mu has values that are negative.");
    CHECK_INPUT(mins[4] > 0.0,
            "Error: lambda has values that are negative or zero.");
+  
+  VERIFY2(mins[5] >= sqrt(2.),
+	  "Error: vp/vs is smaller than sqrt(2).");
 
 // check material ranges on each grid
    if (mVerbose >= 3)
@@ -250,7 +250,52 @@ void EW::check_materials()
      
    } // end for all grids
    }
-// end mVerbose >= 3   
+// end mVerbose >= 3 
+
+// evaluate min(Cs) and max(sqrt(Cp^2+2*Cs^2))for each grid  
+   if (mVerbose >= 1)
+   {
+     double Cs, C_hat, minCs, maxCs, minC_hat, maxC_hat;
+   
+     for( int g = 0 ; g < mNumberOfGrids; g++)
+     {
+       minCs=1e100, minC_hat=1e100;
+       maxCs=0, maxC_hat=0;
+       
+       for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
+	 for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	   for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+	   {
+// take square root after computing the min and max
+	     Cs = mMu[g](i,j,k)/mRho[g](i,j,k);
+	     C_hat = (mLambda[g](i,j,k) + 4*mMu[g](i,j,k))/mRho[g](i,j,k);
+
+	     
+	     if (Cs < minCs) minCs=Cs;
+	     if (Cs > maxCs) maxCs=Cs;
+
+	     if (C_hat < minC_hat) minC_hat=C_hat;
+	     if (C_hat > maxC_hat) maxC_hat=C_hat;
+	   }
+       minCs = sqrt(minCs);
+       maxCs = sqrt(maxCs);
+       minC_hat = sqrt(minC_hat);
+       maxC_hat = sqrt(maxC_hat);
+       
+// communicate min & max
+       MPI_Allreduce(&minCs,&mins[0],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+       MPI_Allreduce(&maxCs,&maxs[0],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+       MPI_Allreduce(&minC_hat,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+       MPI_Allreduce(&maxC_hat,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+// printout results
+       if (mVerbose >=2 && proc_zero())
+       {
+	 printf("Material model info, Grid g=%i: %e <= Cs <= %e, %e <= C-hat <= %e, h[g]/max(C-hat) = %e\n",
+		g, mins[0], maxs[0], mins[1], maxs[1], mGridSize[g]/maxs[1]);
+       }
+     } // end for all grids
+   }
+// end mVerbose >= 1
 }
 
 //-----------------------------------------------------------------------

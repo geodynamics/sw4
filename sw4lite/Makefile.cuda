@@ -1,5 +1,5 @@
 HOSTNAME := $(shell hostname)
-
+#HOSTNAME=ray
 ifeq ($(findstring ray,$(HOSTNAME)),ray)
    NVCC = /usr/local/cuda-8.0/bin/nvcc
    HOSTCOMP = mpicxx
@@ -17,6 +17,15 @@ else ifeq ($(findstring surface,$(HOSTNAME)),surface)
    MPIINC = $(MPIPATH)/include
    debugdir := debug_cuda_surface
    optdir   := optimize_cuda_surface
+else
+   NVCC = nvcc
+   HOSTCOMP = gcc
+   MPIPATH = $(dir $(shell which mpicc))../
+   gpuarch := sm_60
+   EXTRA_LINK_FLAGS = -lmpi
+   MPIINC = $(MPIPATH)/include
+   debugdir := debug_cuda_surface
+   optdir   := optimize_cuda_surface
 endif
 CXX  = $(NVCC)
 MPILIB = $(MPIPATH)/lib
@@ -27,7 +36,7 @@ ifeq ($(debug),yes)
    CFLAGS    = -g 
 else
    FFLAGS   = -O3 
-   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=$(gpuarch) -DSW4_CROUTINES -DSW4_CUDA -ccbin $(HOSTCOMP)
+   CXXFLAGS = -O3 -x cu -I../src -c -dc -arch=$(gpuarch) -DSW4_CROUTINES -DSW4_CUDA -ccbin $(HOSTCOMP) -Xptxas -v
    CFLAGS   = -O 
 endif
 ifdef MPIINC
@@ -40,6 +49,11 @@ ifeq ($(openmp),yes)
    OMPOPT = -Xcompiler -fopenmp
    CXXFLAGS += $(OMPOPT) -DSW4_OPENMP
    CFLAGS   += $(OMPOPT) -DSW4_OPENMP
+endif
+
+ifeq ($(cuda_aware_mpi),yes)
+   CXXFLAGS +=  -DSW4_CUDA_AWARE_MPI
+   CFLAGS   +=  -DSW4_CUDA_AWARE_MPI
 endif
 
 ifeq ($(openmp),yes)
@@ -72,7 +86,7 @@ else
    builddir = $(optdir)
 endif
 
-OBJ  = main.o EW.o Source.o rhs4sg.o rhs4sg_rev.o SuperGrid.o GridPointSource.o time_functions_cu.o ew-cfromfort.o EW_cuda.o Sarray.o device-routines.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o Filter.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o
+OBJ  = main.o EW.o Source.o rhs4sg.o rhs4sg_rev.o SuperGrid.o GridPointSource.o time_functions_cu.o ew-cfromfort.o EW_cuda.o Sarray.o device-routines.o EWCuda.o CheckPoint.o Parallel_IO.o EW-dg.o MaterialData.o MaterialBlock.o Polynomial.o SecondOrderSection.o TimeSeries.o sacsubc.o curvilinear-c.o rhs4sgcurv.o rhs4sgcurv_rev.o
 
 FOBJ = $(addprefix $(builddir)/,$(OBJ))
 
@@ -86,7 +100,6 @@ sw4lite: $(FOBJ)
 	cd $(builddir); $(NVCC) -L$(MPILIB) $(OMPOPT) -Xlinker "-rpath=$(MPILIB)" -arch=$(gpuarch) -ccbin $(HOSTCOMP) -o $@ $(OBJ) -lcudart  $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
-
 
 #$(builddir)/device-routines.o:src/device-routines.C
 #	/bin/mkdir -p $(builddir)
@@ -105,3 +118,4 @@ clean:
 	/bin/mkdir -p $(debugdir)
 	cd $(optdir);/bin/rm -f *.o sw4lite
 	cd $(debugdir);/bin/rm -f *.o sw4lite
+#	rm -r optimize_cuda_ray optimize_cuda_ray_sp

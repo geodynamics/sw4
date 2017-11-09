@@ -1,6 +1,9 @@
   etree = yes
   SW4ROOT = /usr/apps/wpp
   FC = mpiifort
+#  FC = mpif90
   CC = mpiicc
+#  CC = mpicc
   CXX = mpiicpc
+#  CXX = mpicxx
   EXTRA_LINK_FLAGS =  -Wl,-rpath=$(SW4ROOT)/lib -llapack -lblas -lifcore

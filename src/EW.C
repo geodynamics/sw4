@@ -50,7 +50,7 @@ extern "C" {
    void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4* fo,
                        float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph,float_sw4 omm, float_sw4 phm,
                        float_sw4 amprho, float_sw4 *phc, float_sw4 h, float_sw4 zmin) ;
-   
+
    void tw_aniso_curvi_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4* fo,
                        float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph,float_sw4 omm, float_sw4 phm,
                        float_sw4 amprho, float_sw4 *phc, float_sw4* xx, float_sw4* yy, float_sw4* zz) ;
@@ -120,10 +120,10 @@ extern "C" {
    void forcingttattfortc(int*, int*, int*, int*, int*, 
 			  int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
 			  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-   void addmemvarforcing( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
-			  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
-   void addmemvarforcingc( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
-			   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   //   void addmemvarforcing( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+   //			  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+   //   void addmemvarforcingc( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+   //			   float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
    void exactaccfort(int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
 		      float_sw4*, float_sw4*, float_sw4*, float_sw4* );
    void exactaccfortc(int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
@@ -174,7 +174,8 @@ extern "C" {
    void velsum( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 	     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
    void energy4( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
-	      float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+		 float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		 float_sw4*, float_sw4*, float_sw4* );
    void energy4c( int*, int*, int*, int*, int*, int*,  int*, int*, int*, int*, int*, int*, int*,
 	       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
    void lambexact( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
@@ -215,6 +216,9 @@ extern "C" {
 
    void dpdmtfortatt( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
 
+   void scalar_prod( int, int, int, int, int, int,  int, int, int, int, int, int, int*,
+		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
+
    void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA,
 			      double *B, int & LDB, double *WORK, int & LWORK, int & INFO);
 
@@ -224,6 +228,15 @@ extern "C" {
 
    void ilanisocurv( int*, int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
 		     int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*);
+
+   void memvar_pred_fort(int, int, int, int, int, int, double*, double*, double*, double, double, int );
+
+   void memvar_corr_fort(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* alp,
+			 double *alm, double *up, double *u, double *um, double omega, double dt, int domain );
+
+   void memvar_corr_fort_wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double* alp,
+                              int d1b, int d1e, int d2b, int d2e, int d3b, int d3e, double *alm, double *up,
+                              double *u, double *um, double omega, double dt, int domain );
 }
 
 
@@ -289,7 +302,37 @@ void addgradmulac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		     float_sw4* __restrict__ a_jac, int onesided[6],
 		     int nb, int wb, float_sw4* __restrict__ a_bop );
 
+void scalar_prod_ci( int is, int ie, int js, int je, int ks, int ke,
+		     int i1, int i2, int j1, int j2, int k1, int k2,
+		     int onesided[6], float_sw4* a_u, float_sw4* a_v,
+		     float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		     float_sw4& sc_prod );
 
+void memvar_pred_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			  float_sw4* alp, float_sw4* alm, float_sw4* u, float_sw4 omega,
+			  float_sw4 dt, int domain );
+
+void memvar_corr_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			  float_sw4* alp, float_sw4* alm, float_sw4* up, float_sw4*  u, 
+			  float_sw4* um, float_sw4 omega, float_sw4 dt, int domain );
+
+void memvar_corr_fort_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			       float_sw4* alp,
+			       int d1b, int d1e, int d2b, int d2e, int d3b, int d3e,
+                               float_sw4* alm, float_sw4* up,float_sw4* u, float_sw4* um,
+			       float_sw4 omega, float_sw4 dt, int domain );
+
+void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
+                            double omegaVE, double dt ,double omega, double phase, double c);
+
+void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+                                Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
+
+void addMemVarCorr2Cart(double zMin, double h, double t, Sarray &alpha,
+                       double omegaVE, double dt, double omega, double phase, double c );
+
+void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
+                               Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c );
 
 using namespace std;
 
@@ -686,6 +729,9 @@ void EW::assign_local_bcs( )
     for (b=0; b<=3; b++)
       m_bcType[g][b] = mbcGlobalType[b];
   
+    // printf("assign_local_bc> BEFORE loop: rank=%d, bct[0]=%d, bct[1]=%d, bct[2]=%d, bct[3]=%d\n", m_myRank,
+    //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
+    
     if (m_iStart[top]+m_ghost_points > 1)
     {
       m_bcType[g][0] = bProcessor;
@@ -704,10 +750,12 @@ void EW::assign_local_bcs( )
 
     if (m_jStart[top]+m_ghost_points > 1)
     {
+//       printf(" rank=%d, jStart=%d, setting bcType[2] = proc\n", m_myRank, m_jStart[top]);
       m_bcType[g][2] = bProcessor;
     }
     if (m_jEnd[top]-m_ghost_points < m_global_ny[top])
     {
+//       printf(" rank=%d, jEnd=%d, setting bcType[3] = proc\n", m_myRank, m_jEnd[top]);
       m_bcType[g][3] = bProcessor;
     }
 
@@ -717,6 +765,9 @@ void EW::assign_local_bcs( )
       m_bcType[g][2] = bProcessor;
       m_bcType[g][3] = bProcessor;
     }
+
+    // printf("assign_local_bc> AFTER loop: rank=%d, bct[0]=%d, bct[1]=%d, bct[2]=%d, bct[3]=%d\n", m_myRank,
+    //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
 
   }
   
@@ -2027,15 +2078,32 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
   }
   else if( m_energy_test )
   {
-     //    for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // This case does not make sense with topography
-    for(int g=0 ; g<mNumberOfGrids; g++ ) // This case does not make sense with topography
+     for(int g=0 ; g<mNumberOfGrids; g++ ) // ranomized initial data
     {
-       //       u_ptr    = a_U[g].c_ptr();
-       //       for( size_t i=0 ; i < 3*static_cast<size_t>((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
-       //	  u_ptr[i] = drand48();
-       a_U[g].set_to_random();
-    }
-  }
+       u_ptr    = a_U[g].c_ptr();
+       for( size_t i=0 ; i < 3*((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
+          u_ptr[i] = drand48();
+
+// Test: use smooth initial data
+        // u_ptr    = a_U[g].c_ptr();
+        // ifirst = m_iStart[g];
+        // ilast  = m_iEnd[g];
+        // jfirst = m_jStart[g];
+        // jlast  = m_jEnd[g];
+        // kfirst = m_kStart[g];
+        // klast  = m_kEnd[g];
+        // h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+        // zmin = m_zmin[g];
+        // om = 1;
+        // ph = 0.5;
+        // cv = 1000;
+        
+        // F77_FUNC(twilightfort,TWILIGHTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+        // 				     &klast, u_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
+       
+    } // end for g
+     
+  } // end m_energy_test
   else
 // homogeneous initial data is the default
   {
@@ -4192,24 +4260,24 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 	  {
 	     if(  usingSupergrid() )
 		rhs4th3fortsgstr_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-				     klast, nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				     klast, nz, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
 				     uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, h,
 				     m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], op );
 	     else
 		rhs4th3fort_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				klast, nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				klast, nz, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
 				uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, h, op );
 	  }
 	  else
 	  {
 	     if(  usingSupergrid() )
 		rhs4th3fortsgstr(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-				 &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+				 &klast, &nz, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
 				 uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h,
 				 m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &op );
 	     else
 		rhs4th3fort(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-			    &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
+			    &klast, &nz, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
 			    uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op );
 	  }	     
        }
@@ -4262,7 +4330,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 	  {
 	     curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-			       uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
 			       m_sg_str_x[g], m_sg_str_y[g], op );
 	  }	     
 	  else
@@ -4270,12 +4338,12 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 	     if(  usingSupergrid() )
 		curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-			       uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
 			       m_sg_str_x[g], m_sg_str_y[g], &op );
 	     else
 		curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 			     alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-			     uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof, &op );
+			     uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp, &op );
 	  }
        }
     }
@@ -4453,11 +4521,55 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 }
 
 //-----------------------------------------------------------------------
-void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
-				vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
-				float_sw4 a_t )
+void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+			   vector<Sarray>& a_U, float_sw4 a_t )
 {
    int domain = 0;
+   
+   for( int g=0 ; g<mNumberOfGrids; g++ )
+   {
+      float_sw4* u_ptr   = a_U[g].c_ptr();
+      int ifirst = m_iStart[g];
+      int ilast  = m_iEnd[g];
+      int jfirst = m_jStart[g];
+      int jlast  = m_jEnd[g];
+      int kfirst = m_kStart[g];
+      int klast  = m_kEnd[g];
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+      {
+	 float_sw4* alp_ptr = a_AlphaVEp[g][a].c_ptr();
+	 float_sw4* alm_ptr = a_AlphaVEm[g][a].c_ptr();
+	 if( m_croutines )
+	    memvar_pred_fort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr,
+			  u_ptr, mOmegaVE[a], mDt, domain );
+	 else
+	    memvar_pred_fort(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr,
+			  u_ptr, mOmegaVE[a], mDt, domain );
+      }
+      if( m_twilight_forcing )
+      {
+	 float_sw4* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+	 float_sw4 om = m_twilight_forcing->m_omega;
+	 float_sw4 ph = m_twilight_forcing->m_phase;
+	 float_sw4 cv = m_twilight_forcing->m_c;
+         if( topographyExists() && g == mNumberOfGrids-1 )
+            addMemVarPredCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+	 else
+         {
+// this routine comes from WPP
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+            addMemVarPredCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
+                           vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t )
+{
+   int domain = 0;
+   
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
       float_sw4* up_ptr  = a_Up[g].c_ptr();
@@ -4475,93 +4587,92 @@ void EW::updateMemoryVariables( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_
 	 float_sw4* alp_ptr = a_AlphaVEp[g][a].c_ptr();
 	 float_sw4* alm_ptr = a_AlphaVEm[g][a].c_ptr();
 	 if( m_croutines )
-	    updatememvar_ci( ifirst, ilast, jfirst, jlast, kfirst,
-			     klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-			     mOmegaVE[a], mDt, domain );
+	    memvar_corr_fort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr, up_ptr, u_ptr,
+			  um_ptr, mOmegaVE[a], mDt, domain );
 	 else
-	    updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-			 &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-			 &mOmegaVE[a], &mDt, &domain );
+	    memvar_corr_fort(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, alm_ptr, up_ptr, u_ptr,
+			  um_ptr, mOmegaVE[a], mDt, domain );
       }
       if( m_twilight_forcing )
       {
-	 float_sw4* alp_ptr = a_AlphaVEp[g][0].c_ptr();
-	 float_sw4 om = m_twilight_forcing->m_omega;
-	 float_sw4 ph = m_twilight_forcing->m_phase;
-	 float_sw4 cv = m_twilight_forcing->m_c;
+	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
+	 double om = m_twilight_forcing->m_omega;
+	 double ph = m_twilight_forcing->m_phase;
+	 double cv = m_twilight_forcing->m_c;
          if( topographyExists() && g == mNumberOfGrids-1 )
-	 {
-	    if( m_croutines )
-	       addmemvarforcingc_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				     klast, alp_ptr, a_t, om, cv, ph, mOmegaVE[0], mDt,
-				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       addmemvarforcingc( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				  &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-				  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	 }
+         {
+//            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            addMemVarCorr2Curvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
 	 else
-	 {
-	    if( m_croutines )
-	       addmemvarforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				    klast, alp_ptr, a_t, om, cv, ph, mOmegaVE[0], mDt,
-				    mGridSize[g], m_zmin[g] );
-	    else
-	       addmemvarforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				 &klast, alp_ptr, &a_t, &om, &cv, &ph, &mOmegaVE[0], &mDt,
-				 &mGridSize[g], &m_zmin[g] );
-	 }
+         {
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+//            addMemVarCorrCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+// NEW June 14, 2017
+            addMemVarCorr2Cart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         }
+         
       }
    }
 }
 
 //-----------------------------------------------------------------------
-void EW::updateMemoryVariablesBndry( vector<Sarray*>& a_AlphaVEp,
-				     vector<Sarray*>& a_AlphaVEm,
-				     vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um )
+void EW::updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+                                        Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, double a_t, int a_mech, int a_grid )
 {
-   int domainlow = 2, domainup=1;
-   for( int g=0 ; g<mNumberOfGrids; g++ )
-   {
-      float_sw4* up_ptr  = a_Up[g].c_ptr();
-      float_sw4* u_ptr   = a_U[g].c_ptr();
-      float_sw4* um_ptr  = a_Um[g].c_ptr();
+   // NOTE: this routine updates a_AlphaVEp for mechanism a=a_mech in grid g=a_grid, for all points defined in a_AlphaVEp
+   int domain = 0;
+   
+   double* up_ptr  = a_Up.c_ptr();
+   double* u_ptr    = a_U.c_ptr();
+   double* um_ptr = a_Um.c_ptr();
+// use sizes from a_AlphaVEp for the loop in memvar_corr_fort
+   int ifirst = a_AlphaVEp.m_ib;
+   int ilast = a_AlphaVEp.m_ie;
+   int jfirst = a_AlphaVEp.m_jb;
+   int jlast = a_AlphaVEp.m_je;
+   int kfirst = a_AlphaVEp.m_kb;
+   int klast = a_AlphaVEp.m_ke;
+// assume a_Up, a_U, a_Um and a_AlphaVEm are declared with the same sizes
+   int d1b = a_Up.m_ib;
+   int d1e = a_Up.m_ie;
+   int d2b = a_Up.m_jb;
+   int d2e = a_Up.m_je;
+   int d3b = a_Up.m_kb;
+   int d3e = a_Up.m_ke;
+   
+      
+   double* alp_ptr = a_AlphaVEp.c_ptr();
+   double* alm_ptr = a_AlphaVEm.c_ptr();
+   if( m_croutines )
+      memvar_corr_fort_wind_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, 
+                         d1b, d1e, d2b, d2e, d3b, d3e, alm_ptr, up_ptr, u_ptr, um_ptr, mOmegaVE[a_mech], mDt, domain );
+   else
+      memvar_corr_fort_wind(ifirst, ilast, jfirst, jlast, kfirst, klast, alp_ptr, 
+                         d1b, d1e, d2b, d2e, d3b, d3e, alm_ptr, up_ptr, u_ptr, um_ptr, mOmegaVE[a_mech], mDt, domain );
 
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
-      for( int a=0 ; a < m_number_mechanisms ; a++ )
+   if( m_twilight_forcing )
+   {
+      // only 1 mechaism is implemented
+      double* alp_ptr = a_AlphaVEp.c_ptr();
+      double om = m_twilight_forcing->m_omega;
+      double ph = m_twilight_forcing->m_phase;
+      double cv = m_twilight_forcing->m_c;
+      if( topographyExists() && a_grid == mNumberOfGrids-1 )
       {
-	 float_sw4* alp_ptr = a_AlphaVEp[g][a].c_ptr();
-	 float_sw4* alm_ptr = a_AlphaVEm[g][a].c_ptr();
-	 if( m_bcType[g][4] != bProcessor )
-	 {
-	    if( m_croutines )
-	       updatememvar_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-				mOmegaVE[a], mDt, domainup );
-	    else
-	       updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-			    &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-			    &mOmegaVE[a], &mDt, &domainup );
-	 }
-	 if( m_bcType[g][5] != bProcessor )
-	 {
-	    if( m_croutines )
-	       updatememvar_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-				mOmegaVE[a], mDt, domainlow );
-	    else
-	       updatememvar(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-			    &klast, alp_ptr, alm_ptr, up_ptr, u_ptr, um_ptr,
-			    &mOmegaVE[a], &mDt, &domainlow );
-	 }
+         addMemVarCorr2Curvilinear( mX, mY, mZ, a_t,  a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
       }
+      else
+      {
+//  It  works with SG stretching because no spatial derivatives occur in the forcing
+// NEW June 14, 2017
+         // loops over all elements in a_AlphaVEp
+         addMemVarCorr2Cart( m_zmin[a_grid], mGridSize[a_grid], a_t, a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
+      }
+         
    }
 }
+
 
 //-----------------------------------------------------------------------
 void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE,
@@ -4962,11 +5073,12 @@ void EW::initialize_image_files( )
 }
 
 //-----------------------------------------------------------------------
-void EW::set_sg_thickness(int gp_thickness)
+void EW::set_sg_thickness(int n_gp)
 {
-  m_sg_gp_thickness = gp_thickness;
+  m_sg_gp_thickness = n_gp;
+  m_use_sg_width = false; // will be changed to true once the number of gp has been converted to a physical width
   if (m_myRank==0)
-    cout << "Default Supergrid thickness has been tuned; thickness = " << m_sg_gp_thickness << " grid sizes" << endl;
+    cout << "Default Supergrid thickness has been tuned; # grid points = " << m_sg_gp_thickness << " grid sizes" << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -5239,9 +5351,10 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 			istart, iend, jstart, jend, kstart, kend, onesided_ptr,
 			um_ptr, u_ptr, up_ptr, rho_ptr, mGridSize[g], locenergy );
 	 else
-	    energy4( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-		     &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
-		     um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], &locenergy );
+	    energy4(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+		    &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
+		    um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		    m_sg_str_z[g], &locenergy );
       energy += locenergy;
    }
    energy /= (dt*dt);
@@ -5249,6 +5362,44 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
    MPI_Allreduce( &energytmp, &energy, 1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
    }
+}
+
+//-----------------------------------------------------------------------
+float_sw4 EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
+{
+// Compute weighted scalar product between composite grid functions U and C
+//
+// NOTE: assumes a Cartesian grid with super-grid stretching
+//
+   float_sw4 s_prod    = 0;
+   for( int g=0; g < mNumberOfGrids ; g++ )
+   {
+      int istart = m_iStartInt[g];
+      int iend   = m_iEndInt[g];
+      int jstart = m_jStartInt[g];
+      int jend   = m_jEndInt[g];
+      int kstart = m_kStartInt[g];
+      int kend   = m_kEndInt[g];
+      float_sw4* u_ptr  = U[g].c_ptr();
+      float_sw4* v_ptr  = V[g].c_ptr();
+      float_sw4 loc_s_prod;
+      int* onesided_ptr = m_onesided[g];
+      if( m_croutines )
+	 scalar_prod_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+              istart, iend, jstart, jend, kstart, kend, onesided_ptr,
+              u_ptr, v_ptr, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], loc_s_prod );
+      else
+	 scalar_prod(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+              istart, iend, jstart, jend, kstart, kend, onesided_ptr,
+              u_ptr, v_ptr, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], &loc_s_prod );
+      s_prod += loc_s_prod;
+   }
+// output my sum
+//   printf("scalarProd: myRank=%d, my_s_prod=%e\n", m_myRank, s_prod);
+   
+   float_sw4 s_prod_tmp = s_prod;
+   MPI_Allreduce( &s_prod_tmp, &s_prod, 1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
+   return s_prod;
 }
 
 //-----------------------------------------------------------------------

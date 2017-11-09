@@ -1,0 +1,54 @@
+# This is an SW4 input file with MESH REFINEMENT for a scaled-down & modified version
+# of the LOH.1 problem from the SCEC test suite
+#
+# A single moment point source is used with 
+# the time dependency being the Gaussian function
+#
+
+developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.75
+
+testenergy seed=34983249 cpcsratio=2.0 bchorizontal=supergrid amplitude=0 sg_eps=1e-2
+
+# the supergrid command is ignored unless bchorizontal=supergrid
+supergrid gp=20 dc=0.02
+
+fileio path=loh1-energy-mr
+#printcycle=10
+
+# Extrapolate material properties to ghost points & interface points
+grid h=175 x=30000 y=30000 z=17000 extrapolate=1
+
+#time t=18
+time steps=350
+
+# mesh refinement along material jump (12*175 = 2100)
+refinement zmax=2100
+
+#specify the width of the super grid damping layer (30 is the default)
+#supergrid gp=30
+
+# first define the material properties everywhere (half-space)
+block vp=6000 vs=3464 rho=2700 
+
+# then define the slower material in the top layer (z < 2100 m)
+block vp=4000 vs=2000 rho=2600 z2=2100
+
+
+# material images
+#image mode=mu z=0 file=hor cycle=0
+#image mode=lambda z=0 file=hor cycle=0
+#image mode=rho z=0 file=hor cycle=0
+
+#image mode=lambda y=15e3 file=ver cycle=0
+#image mode=s y=15e3 file=ver cycle=0
+#image mode=p y=15e3 file=ver cycle=0
+
+# solution images
+#image mode=mag z=0 file=surf timeInterval=0.5
+#image mode=mag z=2099 file=mrf timeInterval=0.5
+#image mode=mag z=2101 file=mrc timeInterval=0.5
+
+# no point saving uz and ux on the y=15e3 plane, because they are zero by symmetry
+#image mode=mag y=15e3 file=vert timeInterval=0.5
+
+
