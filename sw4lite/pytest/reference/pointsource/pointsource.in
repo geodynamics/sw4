@@ -1,8 +1,0 @@
-fileio verbose=1 path=pointsource-h0p04
-grid x=8 y=8 z=4 h=0.04
-time t=0.6
-testpointsource rho=1 cp=1.6 cs=0.8 halfspace=1
-supergrid gp=30
-source x=4.0 y=4.0 z=1.34 Mxx=1 Myy=1 Mzz=1 Mxy=0 Mxz=0 Myz=0 t0=0 freq=1 type=C6SmoothBump
-developer checkfornan=0 cfl=1.3 reporttiming=1 corder=1
-
