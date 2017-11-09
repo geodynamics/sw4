@@ -11,7 +11,7 @@ Makefile     Main makefile
 CMakeLists.txt  Cmake build rules
 wave.txt     Text file containing the "SW4 Lives" banner
 
-build          Directory for building SW4 with "cmake"
+build        Directory for building SW4 with "cmake"
 configs      Directory containing configuration files for "make"
 debug        Directory for object files and a SW4 executable with debug symbols
 examples     Sample SW4 input files
