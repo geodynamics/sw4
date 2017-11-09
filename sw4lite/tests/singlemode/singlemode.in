@@ -1,5 +1,0 @@
-grid x=1 y=1 z=1 h=0.125
-time t=1.0
-dgalerkin singlemode=1 order=2
-developer cfl=0.3 
-
