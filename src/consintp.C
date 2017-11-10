@@ -126,7 +126,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //
 // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
 
-      float_sw4 rmax1, rmax2, rmax3;
+      float_sw4 rmax1=0, rmax2=0, rmax3=0;
 #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
       for( int jc= jcb ; jc <= jce ; jc++ )
 	 for( int ic= icb ; ic <= ice ; ic++ )
@@ -283,6 +283,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //
 // TODO: insert coarse and fine stretching functions below
 //
+      rmax1=rmax2=rmax3=0;
 #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
       for( int j=jfb ; j <= jfe ; j++ )
 	 for( int i=ifb ; i <= ife ; i++ )
@@ -804,7 +805,7 @@ void EW::checkintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray&
 //
 // TODO: insert coarse and fine stretching functions below
 //
-   float_sw4 rmax1, rmax2, rmax3;
+   float_sw4 rmax1=0, rmax2=0, rmax3=0;
 #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
    for( int j=jfb ; j <= jfe ; j++ )
       for( int i=ifb ; i <= ife ; i++ )

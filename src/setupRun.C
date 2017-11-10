@@ -82,6 +82,7 @@ extern "C" {
    void anisomtrltocurvilinear( int*, int*, int*, int*, int*, int*, double*, double*, double* );
    void bndryOpNoGhost( double *acof_no_gp, double *ghcof_no_gp, double *sbop_no_gp );
 }
+void bndryOpNoGhostc( float_sw4* acof_no_gp, float_sw4* ghcof_no_gp, float_sw4* sbop_no_gp);
 
 #define SQR(x) ((x)*(x))
 
@@ -740,7 +741,10 @@ void EW::setupSBPCoeff()
   if (mVerbose >=2 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
   if( m_croutines )
+  {
      GetStencilCoefficients( m_acof, m_ghcof, m_bop, m_bope, m_sbop );
+     bndryOpNoGhostc( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
+  }
   else
   {
 // m_iop, m_iop2, m_bop2, m_hnorm never used in code, use local variables:

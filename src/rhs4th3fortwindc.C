@@ -34,8 +34,8 @@ void EW::rhs4th3fortwind_ci( int ifirst, int ilast, int jfirst, int jlast, int k
    const int nijku  = nij*(klastu-kfirstu+1);
    const int nijkw  = nij*(klastw-kfirstw+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
-   const int base3u = base-nijku;
-   const int base3w = base-nijkw;
+   const int base3u = -(ifirst+ni*jfirst+nij*kfirstu+nijku);
+   const int base3w = -(ifirst+ni*jfirst+nij*kfirstw+nijkw);
    const int nic  = 3*ni;
    const int nijc = 3*nij;
 

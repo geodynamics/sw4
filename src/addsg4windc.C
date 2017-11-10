@@ -84,13 +84,16 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    const size_t nijk= nij*(klast-kfirst+1);
+   const size_t nijkp = nij*(kupe-kupb+1);
    const int base = -ifirst-ni*jfirst-nij*kfirst;
-   const int basep= -ifirst-ni*jfirst-nij*kupb;
-   const size_t nijkp = (kupe-kupb+1)*nij;
+   //   const int basep= -ifirst-ni*jfirst-nij*kupb;
+   const int base3 = -ifirst-ni*jfirst-nij*kfirst-nijk;
+   const int base3p= -ifirst-ni*jfirst-nij*kupb-nijkp;
+
 #define rho(i,j,k) a_rho[base +(i)+ni*(j)+nij*(k)]
 #define u(c,i,j,k)   a_u[base +(i)+ni*(j)+nij*(k)+nijk*(c)]
-#define um(c,i,j,k) a_um[base +(i)+ni*(j)+nij*(k)+nijk*(c)]
-#define up(c,i,j,k) a_up[basep+(i)+ni*(j)+nij*(k)+nijkp*(c)]
+#define um(c,i,j,k) a_um[base3 +(i)+ni*(j)+nij*(k)+nijk*(c)]
+#define up(c,i,j,k) a_up[base3p+(i)+ni*(j)+nij*(k)+nijkp*(c)]
 #define dcx(i)   a_dcx[i-ifirst]
 #define strx(i) a_strx[i-ifirst]
 #define cox(i)   a_cox[i-ifirst]
@@ -124,6 +127,6 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
                    -rho(i,j+1,k)*dcy(j+1)* (um(c,i,j+2,k)-2*um(c,i,j+1,k)+um(c,i,j,  k)) 
                    +2*rho(i,j,k)*dcy(j)  * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
 	            -rho(i,j-1,k)*dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )  
-					  )/rho(i,j,k);
+				     )/rho(i,j,k);
 	   }
 }

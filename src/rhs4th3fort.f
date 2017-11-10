@@ -2315,10 +2315,13 @@ c      omdt = omegave*dt
 c      cp = 0.5d0 + 1/(2*omdt) + omdt/4 + omdt*omdt/12
 c      cm = 0.5d0 - 1/(2*omdt) - omdt/4 + omdt*omdt/12
 c      cof = (omdt+1)/(6*cp)
+!$OMP PARALLEL PRIVATE(i,j,rhs1,rhs2,rhs3,sgx,sgy,isgx,isgy,
+!$OMP*                 un1,vn1,wn1,m2sg,m3sg,m4sg,rtu,ac)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             if( usesg.eq.1 )then
@@ -2424,6 +2427,8 @@ c      cof = (omdt+1)/(6*cp)
            bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j)
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end      
 
 c-----------------------------------------------------------------------
@@ -2449,11 +2454,14 @@ c-----------------------------------------------------------------------
 *** Hardcoded for the k=1 surface
       k  = 1
       kl = 1
+!$OMP PARALLEL PRIVATE(i,j,rhs1,rhs2,rhs3,sgx,sgy,isgx,isgy,
+!$OMP*                 ac,bc,cc,dc,xoysqrt,yoxsqrt,isqrtxy)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
       s0i= 1/sbop(0)
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             if( usesg.eq.1 )then
@@ -2462,10 +2470,6 @@ c-----------------------------------------------------------------------
                isgx = 1/sgx
                isgy = 1/sgy
             endif
-c
-c from rhscurvilinearsg.f
-c            istrx = 1/strx(i)
-
 *** First tangential derivatives
             rhs1 = 
 *** pr
@@ -2580,5 +2584,7 @@ c$$$     *                bc*bforce_rhs(3,i,j) - dc*met(4,i,j,k)*m4sg )
            
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end
       

@@ -216,6 +216,14 @@ extern "C" {
    void addsg4wind_ci( float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* ,
 		       float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* ,
 		       float_sw4*, int, int, int, int, int, int, float_sw4, int, int, int, int );
+   void ve_bndry_stress_curvi_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nz,
+                              float_sw4 *alphap, float_sw4 *muve, float_sw4 *lave, float_sw4 *bforcerhs, 
+			      float_sw4 *met, int side, float_sw4 *sbop, int usesg, float_sw4 *sgstrx,
+			      float_sw4 *sgstry );
+   void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+                        int klast, float_sw4 *u, float_sw4 *mu, float_sw4 *la, float_sw4 *bforcerhs, 
+			float_sw4 *met, float_sw4 *sbop, int usesg, float_sw4 *sgstrx, float_sw4 *sgstry );
+
 
 //--------------------------------------------------------------------
 void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
@@ -4154,15 +4162,25 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
             float_sw4* lave_p   = mLambdaVE[g][a].c_ptr();
             float_sw4* alphap_p = a_AlphaVEp[g][a].c_ptr();
             // This function adds the visco-elastic boundary stresses to bforcerhs
-            ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                                  alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
-                                  m_sbop_no_gp, &usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
+	    if(  m_croutines )
+	       ve_bndry_stress_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
+                                  alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), side,
+                                  m_sbop_no_gp, usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
+	    else
+	       ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+				     alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
+				     m_sbop_no_gp, &usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
          } // end for a...
          
 // update GHOST POINT VALUES OF UP
-         att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+	 if( m_croutines )
+	    att_free_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
                          up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
-                         &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+                         usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	 else
+	    att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
+			    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
       } // end if bcType[g][4] == bStressFree && topography
       
    }  // end for g=0,...

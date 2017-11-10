@@ -4247,6 +4247,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 		      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
 		      uacc_ptr, u_ptr, mu_ptr, la_ptr, &h, &op );
     }
+    size_t nn=a_Uacc[g].count_nans();
+    if( nn > 0 )
+       cout << "First application of LU " << nn << " nans" << endl;
 
     if( m_use_attenuation && m_number_mechanisms > 0 )
     {
@@ -4256,6 +4259,10 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
           float_sw4* alpha_ptr = a_AlphaVE[g][a].c_ptr();
           float_sw4* mua_ptr = mMuVE[g][a].c_ptr();
           float_sw4* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
+	  nn = a_AlphaVE[g][a].count_nans();
+	  if( nn > 0 )
+	     cout << "Alpha before LU " << nn << " nans" << endl;
+
 	  if( m_croutines )
 	  {
 	     if(  usingSupergrid() )
@@ -4281,6 +4288,10 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 			    uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op );
 	  }	     
        }
+    nn=a_Uacc[g].count_nans();
+    if( nn > 0 )
+       cout << "Second application of LU " << nn << " nans" << endl;
+
     }
   }
   if( topographyExists() )

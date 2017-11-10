@@ -2249,3 +2249,303 @@ void EW::addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
 #undef bforcerhs
 #undef memforce
 }
+
+//-----------------------------------------------------------------------
+void ve_bndry_stress_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			       int nz,  float_sw4* __restrict__ a_alphap,
+			       float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
+			       float_sw4* __restrict__ a_bforcerhs, float_sw4* __restrict__ a_met,
+			       int side, float_sw4 sbop[6], int usesg, float_sw4* __restrict__ a_strx,
+			       float_sw4* __restrict__ a_stry )
+{
+#define alphap(c,i,j,k) a_alphap[base3+i+ni*(j)+nij*(k)+nijk*(c)]
+#define muve(i,j,k) a_muve[base+i+ni*(j)+nij*(k)]
+#define lave(i,j,k) a_lave[base+i+ni*(j)+nij*(k)]
+#define met(c,i,j,k) a_met[base3+i+ni*(j)+nij*(k)+nijk*(c)]
+#define sgstrx(i) a_strx[i-ifirst]
+#define sgstry(j) a_stry[j-jfirst]
+   //#define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
+   //#define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
+#define bforcerhs(c,i,j) a_bforcerhs[base03+(i)+ni*(j)+nij*(c)]
+
+   const float_sw4 i6 = 1.0/6;
+   const float_sw4 c1 = 2.0/3;
+   const float_sw4 c2 =-1.0/12;
+   const int ni    = ilast-ifirst+1;
+   const int nij   = ni*(jlast-jfirst+1);
+   const int nijk  = nij*(klast-kfirst+1);
+   //   const int base0 = -(ifirst+ni*jfirst);
+   const int base0 = -(ifirst+ni*jfirst);
+   const int base03 = base0 - nij;
+   const int base  = -(ifirst+ni*jfirst+nij*kfirst);
+   const int base3 = base-nijk;
+   int k, kl;
+   if( side==5 )
+   {
+      k  = 1;
+      kl = 1;
+   }
+   if( side==6 )
+   {
+      k  = nz;
+      kl = -1;
+   }
+#pragma omp parallel
+   {
+      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
+#pragma omp for
+      for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+#pragma ivdep
+	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	 {
+            if( usesg== 1 )
+	    {
+               sgx = sgstrx(i);
+               sgy = sgstry(j);
+               isgy = 1/sgy;
+               isgx = 1/sgx;
+	    }
+
+//   tangential derivatives
+            float_sw4 rhs1 = 
+// pr
+        (2*muve(i,j,k)+lave(i,j,k))*met(2,i,j,k)*met(1,i,j,k)*(
+               c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+               c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   )*sgx*isgy 
+       + muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(2,i+2,j,k)-alphap(2,i-2,j,k)) +
+             c1*(alphap(2,i+1,j,k)-alphap(2,i-1,j,k))  ) 
+       + muve(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(3,i+2,j,k)-alphap(3,i-2,j,k)) +
+             c1*(alphap(3,i+1,j,k)-alphap(3,i-1,j,k))  )*isgy
+// qr
+       +  muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(1,i,j+2,k)-alphap(1,i,j-2,k)) +
+             c1*(alphap(1,i,j+1,k)-alphap(1,i,j-1,k))   )*isgx*sgy
+       + lave(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+             c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  );
+
+// (v-eq)
+            float_sw4 rhs2 = 
+// pr
+          lave(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+             c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   ) 
+       + muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(2,i+2,j,k)-alphap(2,i-2,j,k)) +
+             c1*(alphap(2,i+1,j,k)-alphap(2,i-1,j,k))  )*sgx*isgy
+// qr
+       +    muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(1,i,j+2,k)-alphap(1,i,j-2,k)) +
+             c1*(alphap(1,i,j+1,k)-alphap(1,i,j-1,k))   ) 
+      + (2*muve(i,j,k)+lave(i,j,k))*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+             c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*sgy*isgx 
+       + muve(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(3,i,j+2,k)-alphap(3,i,j-2,k)) +
+             c1*(alphap(3,i,j+1,k)-alphap(3,i,j-1,k))   )*isgx;
+
+// (w-eq)
+            float_sw4 rhs3 = 
+// pr
+           lave(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(1,i+2,j,k)-alphap(1,i-2,j,k)) +
+             c1*(alphap(1,i+1,j,k)-alphap(1,i-1,j,k))   )*isgy
+       + muve(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(3,i+2,j,k)-alphap(3,i-2,j,k)) +
+             c1*(alphap(3,i+1,j,k)-alphap(3,i-1,j,k))  )*sgx*isgy
+// qr 
+       +   muve(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(3,i,j+2,k)-alphap(3,i,j-2,k)) +
+             c1*(alphap(3,i,j+1,k)-alphap(3,i,j-1,k))   )*sgy*isgx
+       + lave(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(alphap(2,i,j+2,k)-alphap(2,i,j-2,k)) +
+             c1*(alphap(2,i,j+1,k)-alphap(2,i,j-1,k))  )*isgx;
+      
+// normal derivatives
+            float_sw4 un1 = sbop[0]*alphap(1,i,j,k-kl)
+	        +sbop[1]*alphap(1,i,j,k)
+                +sbop[2]*alphap(1,i,j,k+kl)
+                +sbop[3]*alphap(1,i,j,k+2*kl)
+                +sbop[4]*alphap(1,i,j,k+3*kl)
+	        +sbop[5]*alphap(1,i,j,k+4*kl);
+            float_sw4 vn1 = sbop[0]*alphap(2,i,j,k-kl)
+                +sbop[1]*alphap(2,i,j,k)
+                +sbop[2]*alphap(2,i,j,k+kl)
+                +sbop[3]*alphap(2,i,j,k+2*kl)
+                +sbop[4]*alphap(2,i,j,k+3*kl)
+	        +sbop[5]*alphap(2,i,j,k+4*kl);
+            float_sw4 wn1 = sbop[0]*alphap(3,i,j,k-kl)
+                +sbop[1]*alphap(3,i,j,k)
+                +sbop[2]*alphap(3,i,j,k+kl)
+                +sbop[3]*alphap(3,i,j,k+2*kl)
+                +sbop[4]*alphap(3,i,j,k+3*kl)
+  	        +sbop[5]*alphap(3,i,j,k+4*kl);
+	    float_sw4 m2sg = sqrt(sgx*isgy);
+	    float_sw4 m3sg = 1/m2sg;
+	    float_sw4 m4sg = isgx*m2sg;
+	    float_sw4 rtu = un1*m2sg*met(2,i,j,k)+vn1*m3sg*met(3,i,j,k)+
+	      wn1*m4sg*met(4,i,j,k);
+	    float_sw4 ac  = sgx*isgy*met(2,i,j,k)*met(2,i,j,k)+sgy*isgx*met(3,i,j,k)*met(3,i,j,k)+
+	       isgx*isgy*met(4,i,j,k)*met(4,i,j,k);
+           rhs1 = rhs1 +(muve(i,j,k)+lave(i,j,k))*rtu*m2sg*met(2,i,j,k)+
+	      muve(i,j,k)*ac*un1;
+           rhs2 = rhs2 +(muve(i,j,k)+lave(i,j,k))*rtu*m3sg*met(3,i,j,k)+
+	      muve(i,j,k)*ac*vn1;
+           rhs3 = rhs3 +(muve(i,j,k)+lave(i,j,k))*rtu*m4sg*met(4,i,j,k)+
+	      muve(i,j,k)*ac*wn1;
+           bforcerhs(1,i,j) = rhs1 + bforcerhs(1,i,j);
+           bforcerhs(2,i,j) = rhs2 + bforcerhs(2,i,j);
+           bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j);
+	 }
+   }
+}
+#undef alphap
+#undef muve
+#undef lave
+#undef met
+#undef sgstrx
+#undef sgstry
+#undef bforcerhs
+
+//-----------------------------------------------------------------------
+void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
+		     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_bforcerhs,
+		     float_sw4* __restrict__ a_met, float_sw4 sbop[6], int usesg,
+		     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry )
+{
+#define u(c,i,j,k) a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]
+#define mu(i,j,k) a_mu[base+i+ni*(j)+nij*(k)]
+#define la(i,j,k) a_lambda[base+i+ni*(j)+nij*(k)]
+#define met(c,i,j,k) a_met[base3+i+ni*(j)+nij*(k)+nijk*(c)]
+#define sgstrx(i) a_strx[i-ifirst]
+#define sgstry(j) a_stry[j-jfirst]
+#define bforcerhs(c,i,j) a_bforcerhs[base03+(i)+ni*(j)+nij*(c)]
+
+   const float_sw4 i6 = 1.0/6;
+   const float_sw4 c1 = 2.0/3;
+   const float_sw4 c2 =-1.0/12;
+   const int ni    = ilast-ifirst+1;
+   const int nij   = ni*(jlast-jfirst+1);
+   const int nijk  = nij*(klast-kfirst+1);
+   //   const int base0 = -(ifirst+ni*jfirst);
+   const int base0 = -(ifirst+ni*jfirst);
+   const int base03 = base0 - nij;
+   const int base  = -(ifirst+ni*jfirst+nij*kfirst);
+   const int base3 = base-nijk;
+
+// Hardcoded for the k=1 surface
+   int k=1, kl=1;
+#pragma omp parallel
+   {
+      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
+      float_sw4 s0i= 1/sbop[0];
+#pragma omp for
+      for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+#pragma ivdep
+	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	 {
+            if( usesg == 1 )
+	    {
+               sgx = sgstrx(i);
+               sgy = sgstry(j);
+               isgx = 1/sgx;
+               isgy = 1/sgy;
+	    }
+
+// First tangential derivatives
+            float_sw4 rhs1 = 
+// pr
+        (2*mu(i,j,k)+la(i,j,k))*met(2,i,j,k)*met(1,i,j,k)*(
+               c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+               c1*(u(1,i+1,j,k)-u(1,i-1,j,k))  )*sgx*isgy 
+       + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(u(2,i+2,j,k)-u(2,i-2,j,k)) +
+             c1*(u(2,i+1,j,k)-u(2,i-1,j,k))  ) 
+       + mu(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(u(3,i+2,j,k)-u(3,i-2,j,k)) +
+             c1*(u(3,i+1,j,k)-u(3,i-1,j,k))  )*isgy   
+// qr
+       + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(u(1,i,j+2,k)-u(1,i,j-2,k)) +
+             c1*(u(1,i,j+1,k)-u(1,i,j-1,k))   )*isgx*sgy 
+       + la(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+             c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )  -
+	       bforcerhs(1,i,j);
+
+// (v-eq)
+            float_sw4 rhs2 = 
+// pr
+         la(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+             c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   ) 
+       + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(u(2,i+2,j,k)-u(2,i-2,j,k)) +
+             c1*(u(2,i+1,j,k)-u(2,i-1,j,k))  )*sgx*isgy 
+// qr
+       + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(u(1,i,j+2,k)-u(1,i,j-2,k)) +
+             c1*(u(1,i,j+1,k)-u(1,i,j-1,k))   ) 
+      + (2*mu(i,j,k)+la(i,j,k))*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+             c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )*sgy*isgx 
+       + mu(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(u(3,i,j+2,k)-u(3,i,j-2,k)) +
+             c1*(u(3,i,j+1,k)-u(3,i,j-1,k))   )*isgx -
+	       bforcerhs(2,i,j);
+
+// (w-eq)
+            float_sw4 rhs3 = 
+// pr
+         la(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(u(1,i+2,j,k)-u(1,i-2,j,k)) +
+             c1*(u(1,i+1,j,k)-u(1,i-1,j,k))   )*isgy 
+       + mu(i,j,k)*met(2,i,j,k)*met(1,i,j,k)*(
+             c2*(u(3,i+2,j,k)-u(3,i-2,j,k)) +
+             c1*(u(3,i+1,j,k)-u(3,i-1,j,k))  )*sgx*isgy
+// qr 
+       + mu(i,j,k)*met(3,i,j,k)*met(1,i,j,k)*(
+             c2*(u(3,i,j+2,k)-u(3,i,j-2,k)) +
+             c1*(u(3,i,j+1,k)-u(3,i,j-1,k))   )*sgy*isgx
+       + la(i,j,k)*met(4,i,j,k)*met(1,i,j,k)*(
+             c2*(u(2,i,j+2,k)-u(2,i,j-2,k)) +
+             c1*(u(2,i,j+1,k)-u(2,i,j-1,k))  )*isgx -
+	       bforcerhs(3,i,j);
+
+// Normal derivatives
+            float_sw4 ac = sgx*isgy*met(2,i,j,k)*met(2,i,j,k)+
+	       sgy*isgx*met(3,i,j,k)*met(3,i,j,k)+met(4,i,j,k)*met(4,i,j,k)*isgy*isgx;
+            float_sw4 bc = 1/(mu(i,j,k)*ac);
+            float_sw4 cc = (mu(i,j,k)+la(i,j,k))/(2*mu(i,j,k)+la(i,j,k))*bc/ac;
+
+            float_sw4 xoysqrt = sqrt(sgx*isgy);
+            float_sw4 yoxsqrt = 1/xoysqrt;
+            float_sw4 isqrtxy = isgx*xoysqrt;
+            float_sw4 dc = cc*( xoysqrt*met(2,i,j,k)*rhs1 + 
+	       yoxsqrt*met(3,i,j,k)*rhs2 + isqrtxy*met(4,i,j,k)*rhs3);
+
+            u(1,i,j,k-kl) = -s0i*(
+                sbop[1]*u(1,i,j,k)+sbop[2]*u(1,i,j,k+kl)+
+                sbop[3]*u(1,i,j,k+2*kl)+sbop[4]*u(1,i,j,k+3*kl) +
+		bc*rhs1 - dc*met(2,i,j,k)*xoysqrt );
+            u(2,i,j,k-kl) = -s0i*(
+                sbop[1]*u(2,i,j,k)+sbop[2]*u(2,i,j,k+kl)+
+                sbop[3]*u(2,i,j,k+2*kl)+sbop[4]*u(2,i,j,k+3*kl) + 
+                bc*rhs2 - dc*met(3,i,j,k)*yoxsqrt );
+            u(3,i,j,k-kl) = -s0i*(
+                sbop[1]*u(3,i,j,k)+sbop[2]*u(3,i,j,k+kl)+
+                sbop[3]*u(3,i,j,k+2*kl)+sbop[4]*u(3,i,j,k+3*kl) +
+		bc*rhs3 - dc*met(4,i,j,k)*isqrtxy );
+	 }
+   }
+#undef u
+#undef mu
+#undef la
+#undef met
+#undef sgstrx
+#undef sgstry
+#undef bforcerhs
+}

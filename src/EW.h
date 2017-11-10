@@ -672,13 +672,13 @@ void addsgd6c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 
 void bcfort_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
 		int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
-		float_sw4 sbop[5], float_sw4* mu, float_sw4* la, float_sw4 t,
+		float_sw4 sbop[6], float_sw4* mu, float_sw4* la, float_sw4 t,
 		float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3, 
 		float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
 		float_sw4 om, float_sw4 ph, float_sw4 cv, int curvilinear );
 void bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
 		  int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
-		  float_sw4 sbop[5], float_sw4* mu, float_sw4* la, float_sw4 t,
+		  float_sw4 sbop[6], float_sw4* mu, float_sw4* la, float_sw4 t,
 		  float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3, 
 		  float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
 		  float_sw4 om, float_sw4 ph, float_sw4 cv,
@@ -724,12 +724,12 @@ void twstensorsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			float_sw4* mu, float_sw4* lambda, float_sw4 omstrx, float_sw4 omstry );
 void bcfortanisg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
 		     int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
-		     float_sw4 sbop[5], float_sw4* c, 
+		     float_sw4 sbop[6], float_sw4* c, 
 		     float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3, 
 		     float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
 		     float_sw4* strx, float_sw4* stry );
 void bcfreesurfcurvani_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			   int nz, float_sw4* u, float_sw4* c, int side, float_sw4 sbop[5], 
+			   int nz, float_sw4* u, float_sw4* c, int side, float_sw4 sbop[6], 
 			   float_sw4* bforce5, float_sw4* bforce6, float_sw4* strx, float_sw4* stry );
 void GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof, float_sw4* _bop,
 				float_sw4* _bope, float_sw4* _sbop );
