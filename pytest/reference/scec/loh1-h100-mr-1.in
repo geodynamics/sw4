@@ -23,7 +23,7 @@
 
 grid h=100 x=30000 y=30000 z=17000 extrapolate=1
 time t=9
-fileio path=loh1-h100-mr
+fileio path=loh1-h100-mr-1
 
 # mesh refinement along material jump (50*20 = 1000)
 refinement zmax=1000
