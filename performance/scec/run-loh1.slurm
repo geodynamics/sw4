@@ -13,7 +13,8 @@ numnodes=4
 #numprocspernode = Number of MPI-tasks per node
 #numprocspernode=16
 #for numprocspernode in 1 2 4 8; do
-for numprocspernode in 64 32 16 8; do
+#for numprocspernode in 64 32 16 8; do
+for numprocspernode in 64; do
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
@@ -42,12 +43,7 @@ MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores"
 
 # 1st case
 CASE=LOH.1-h50
-RUN_COMMAND="./sw4_mp_fort ${CASE}.in"
-${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
-
-# 2nd case
-CASE=LOH.1-h100-mr
-RUN_COMMAND="./sw4_mp_fort ${CASE}.in"
+RUN_COMMAND="./sw4 ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 
 done
