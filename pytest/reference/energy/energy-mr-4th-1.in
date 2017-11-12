@@ -1,4 +1,4 @@
-fileio path=energy-dir-1
+fileio path=energy-mr-4th-1
 grid x=30 y=30 z=17 nx=75
 refinement zmax=5
 time t=50

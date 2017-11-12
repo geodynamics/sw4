@@ -161,16 +161,16 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
     num_pass=0
     num_fail=0
 
-    all_dirs = ['energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
-    all_cases = ['energy-dir', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
-    all_results =['energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
-    num_meshes =[1, 1, 1, 1, 2, 1, 1, 2, 2, 1] # default number of meshes for level 0
+    all_dirs = ['energy', 'energy', 'energy', 'energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
+    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
+    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
+    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[1, 2, 2, 2, 3, 2, 2, 3, 3, 2]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2]
     elif testing_level == 2:
-        num_meshes =[1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
