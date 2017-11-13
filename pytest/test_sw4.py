@@ -77,6 +77,45 @@ def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNu
     return success
 
 #------------------------------------------------
+def compare_energy(test_file_name, errTol, verbose):
+
+    success = True;
+
+    f = open(test_file_name)
+
+    Lnum=0;
+    for line in f:
+        Lnum = Lnum+1;
+        if Lnum <= 3:
+            thisEnergy = float(line);
+            thirdEnergy = thisEnergy;
+            if verbose and Lnum == 3:
+                print('INFO: compare_energy: Ref. Energy =', thirdEnergy);
+
+        else:
+            prevEnergy = thisEnergy;
+            thisEnergy = float(line);
+# relative change from previous energy
+            diff0 = (thisEnergy - prevEnergy)/thirdEnergy;
+
+            if diff0 > errTol:
+                print('ERROR: compare_energy: line =', Lnum, 'prev =', prevEnergy, 'this =', thisEnergy, 'rel diff =', diff0, '> tolerance=', errTol);
+                success = False
+                break            
+            # end if
+        # end if
+    # end for
+    if (Lnum < 4):
+        print("ERROR: compare_energy: Less than 4 lines in the energy log!");
+        success=False;
+    elif verbose:
+        print('INFO: compare_energy: line =', Lnum, 'prev =', prevEnergy, 'this =', thisEnergy, 'rel diff =', diff0);
+
+    f.close()
+    
+    return success
+
+#------------------------------------------------
 def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     if verbose: print('os.uname=', os.uname())
     node_name = os.uname()[1]
@@ -219,11 +258,16 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
-            # compare output (always compare the last line)
-            success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
-            if success and 'attenuation' in test_dir:
-                # also compare the 3rd last line in the files
-                success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
+
+            if result_file == 'energy.log':
+                success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
+            else:
+                # compare output with reference result (always compare the last line)
+                success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
+                if success and 'attenuation' in test_dir:
+                    # also compare the 3rd last line in the files
+                    success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
+
             if success:        
                 print('Test #', num_test, "Input file:", test_case, 'PASSED')
                 num_pass += 1
