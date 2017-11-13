@@ -1,0 +1,117 @@
+----------------------------------------------------------------
+            sw4 version 2.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Nov 13 12:18:45 PST 2017
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
+----------------------------------------------------------------
+
+Input file: /Users/petersson1/src/sw4-cig/pytest/reference/energy/energy-mr-sg-order2-1.in
+Default Supergrid thickness has been tuned; # grid points = 20 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+
+* Processing the grid command...
+* Setting h to 4.05405405e-01 from  x/(nx-1) (x=3.00000000e+01, nx=75)
+* Setting ny to 75 to be consistent with h=4.05405405e-01
+* Setting nz to 75 to be consistent with h=4.05405405e-01
+Extent of the computational domain xmax=3.00000000e+01 ymax=3.00000000e+01 zmax=3.00000000e+01
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0  0.405405        75        75        69       388125
+   1  0.202703       149       149        13       288613
+Total number of grid points (without ghost points): 676738
+
+
+   Execution time, reading input file 4.83025200e-03 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: energy-mr-sg-order2-1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700027e+01, x=3.000000e+01, y=0.000000e+00
+2: Lon= 1.180003e+02, Lat=3.700027e+01, x=3.000000e+01, y=3.000000e+01
+3: Lon= 1.180003e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+01
+
+
+ ENERGY TEST material amplitude: 5.000000e-01
+
+       ----------- Material properties ranges ---------------
+       2.00000272e+00 kg/m^3 <=  Density <= 2.49999948e+00 kg/m^3
+       1.55044462e+00 m/s    <=  Vp      <= 1.99578911e+00 m/s
+       8.94532401e-01 m/s    <=  Vs      <= 1.11785113e+00 m/s
+       1.73200025e+00        <=  Vp/Vs   <= 1.80262826e+00
+       2.00000150e+00 Pa     <=  mu      <= 2.49999929e+00 Pa
+       1.99981503e+00 Pa     <=  lambda  <= 2.99874460e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=4.054054e-01, minVs/h=2.20651 (Cartesian)
+g=1, h=2.027027e-01, minVs/h=4.41309 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+TIME accuracy order=2 CFL=7.50000000e-01 prel. time step=5.97313014e-02
+*** Initialized Images
+   Execution time, start up phase 5.58502000e-02 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: energy-mr-sg-order2-1/
+
+***  Starting solve ***
+============================================================
+ Running program on 4 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 50
+ Number of time steps = 837 dt: 0.0597372
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax supergrid
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of moment sources 0
+-----------------------------------------------------------------------
+  Initial data has been assigned
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=no, point_source=no, moment_test=no, energy_test=yes, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
+  Begin time stepping...
+Time step       1  t =   5.9737157e-02
+Time step     101  t =   6.0334528e+00
+Time step     201  t =   1.2007168e+01
+Time step     301  t =   1.7980884e+01
+Time step     401  t =   2.3954600e+01
+Time step     501  t =   2.9928315e+01
+Time step     601  t =   3.5902031e+01
+Time step     701  t =   4.1875747e+01
+Time step     801  t =   4.7849462e+01
+Time step     837  t =   5.0000000e+01
+  Time stepping finished...
+   Execution time, solver phase 5.68689045e+01 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
