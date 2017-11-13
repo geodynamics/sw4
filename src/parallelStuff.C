@@ -148,6 +148,7 @@ void EW::setup2D_MPICommunications()
    int extpadding = m_ppadding + m_ext_ghost_points;
    MPI_Type_vector( nj, extpadding,    ni,    m_mpifloat, &m_send_type_2dfinest_ext[0] );
    MPI_Type_vector( 1,  extpadding*ni, ni*nj, m_mpifloat, &m_send_type_2dfinest_ext[1] );
+
    MPI_Type_commit( &m_send_type_2dfinest_ext[0] );
    MPI_Type_commit( &m_send_type_2dfinest_ext[1] );
 
@@ -424,6 +425,28 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int ytag1 = 347;
    int ytag2 = 348;
 
+   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
+   {
+      Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+      u2d.copy_kplane(u,k);
+      // X-direction communication
+      MPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
+		    &u2d(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u2d(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
+		    &u2d(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      MPI_Sendrecv( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
+		    &u2d(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
+		    &u2d(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
+		    m_cartesian_communicator, &status );
+      u.copy_kplane(u2d,k);
+   }
+   else
+   {
       // X-direction communication
    MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
 		 &u(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
@@ -439,6 +462,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
 		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
 		 m_cartesian_communicator, &status );
+   }
 }
 
 //-----------------------------------------------------------------------

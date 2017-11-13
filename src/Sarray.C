@@ -668,6 +668,40 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
 }
 
 //-----------------------------------------------------------------------
+void Sarray::copy_kplane( Sarray& u, int k )
+{
+   if( !(u.m_ib==m_ib && u.m_ie==m_ie && u.m_jb==m_jb && u.m_je==m_je) )
+   {
+       cout << "Sarray::copy_kplane, ERROR arrays must have same (i,j) dimensions" << endl;
+       return;
+   }
+   if( m_corder )
+   {
+      size_t nijk = m_ni*m_nj*m_nk;
+      size_t unijk = u.m_ni*u.m_nj*u.m_nk;
+      for( int c=0 ; c < m_nc ; c++ )
+	 for( int j=m_jb ; j<=m_je ; j++ )
+	    for( int i=m_ib ; i <= m_ie ; i++ )
+	    {
+	       size_t ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       size_t uind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-u.m_kb);
+	       m_data[ind+c*nijk] = u.m_data[uind+c*unijk];
+	    }
+   }
+   else
+   {
+      for( int j=m_jb ; j<=m_je ; j++ )
+	 for( int i=m_ib ; i <= m_ie ; i++ )
+	 {
+	    size_t ind  = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	    size_t uind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-u.m_kb);
+	    for( int c=0 ; c < m_nc ; c++ )
+	       m_data[c+m_nc*ind] = u.m_data[c+m_nc*uind];
+	 }
+   }
+}
+
+//-----------------------------------------------------------------------
 void Sarray::save_to_disk( const char* fname )
 {
    int fd = open(fname, O_CREAT | O_TRUNC | O_WRONLY, 0660 );

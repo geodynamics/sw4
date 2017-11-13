@@ -38,6 +38,8 @@ subroutine memvar_pred_fort( ifirst, ilast, jfirst, jlast, kfirst, klast, alp, a
      k1 = klast-2
      k2 = klast
   endif
+!$OMP PARALLEL PRIVATE(k,j,i,c)
+!$OMP DO
   do k=k1,k2
      do j=jfirst,jlast
         do i=ifirst,ilast
@@ -47,6 +49,8 @@ subroutine memvar_pred_fort( ifirst, ilast, jfirst, jlast, kfirst, klast, alp, a
         enddo
      enddo
   enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 end subroutine memvar_pred_fort
 
 !-----------------------------------------------------------------------

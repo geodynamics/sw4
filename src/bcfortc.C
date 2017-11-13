@@ -871,9 +871,9 @@ void EW::twfrsurfz_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 	 t65 = cos(t43);
 	 forces[2] = 2*t13*t37*t20*t49*omega+lambda[ind]*(
           t60*omega*t20*t62+t37*t65*omega*t62+t37*t20*t49*omega);
-	 bforce[3*qq  ] = forces[0];
-	 bforce[3*qq+1] = forces[1];
-	 bforce[3*qq+2] = forces[2];
+	 bforce[qq  ] = forces[0];
+	 bforce[qq+nij] = forces[1];
+	 bforce[qq+2*nij] = forces[2];
       }
    }
 }
@@ -931,9 +931,9 @@ void EW::twfrsurfzsg_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 	 t56 = cos(t31);
 	 forces[2] = 2*mu[ind]*t29*t7*t46*om+lambda[ind]*
 	       (t17*t51*t22*t53+t39*t56*om*t53+t29*t7*t46*om);
-	 bforce[3*qq  ] = forces[0];
-	 bforce[3*qq+1] = forces[1];
-	 bforce[3*qq+2] = forces[2];
+	 bforce[qq  ] = forces[0];
+	 bforce[qq+nij] = forces[1];
+	 bforce[qq+2*nij] = forces[2];
       }
    }
 }
@@ -991,9 +991,9 @@ void EW::twfrsurfz_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast,
 	 t54 = cos(t34);
 	 forces[2] = 2.0*mua[ind]*t23*t7*t40*omega+lambdaa[ind]*
 	         (t45*omega*t3*t40+t18*t23*t50+t27*t52*omega*t54+t23*t7*t50);
-	 bforce[3*qq  ] -= forces[0];
-	 bforce[3*qq+1] -= forces[1];
-	 bforce[3*qq+2] -= forces[2];
+	 bforce[qq  ] -= forces[0];
+	 bforce[qq+nij] -= forces[1];
+	 bforce[qq+2*nij] -= forces[2];
       }
    }
 }
@@ -1057,9 +1057,9 @@ void EW::twfrsurfzsg_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast,
 	 forces[2] = 2*mua[ind]*t43*t23*t51*omega+lambdaa[ind]
      *(t19*(t56*omega*t8*t51+t5*t43*t61)+t42*t28*t66*omega*t68+
        t43*t23*t61);
-	 bforce[3*qq  ] -= forces[0];
-	 bforce[3*qq+1] -= forces[1];
-	 bforce[3*qq+2] -= forces[2];
+	 bforce[qq  ] -= forces[0];
+	 bforce[qq+nij] -= forces[1];
+	 bforce[qq+2*nij] -= forces[2];
       }
    }
 }

@@ -90,8 +90,8 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
    const int base3 = -ifirst-ni*jfirst-nij*kfirst-nijk;
    const int base3p= -ifirst-ni*jfirst-nij*kupb-nijkp;
 
-#define rho(i,j,k) a_rho[base +(i)+ni*(j)+nij*(k)]
-#define u(c,i,j,k)   a_u[base +(i)+ni*(j)+nij*(k)+nijk*(c)]
+#define rho(i,j,k) a_rho[base  +(i)+ni*(j)+nij*(k)]
+#define u(c,i,j,k)   a_u[base3 +(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define um(c,i,j,k) a_um[base3 +(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define up(c,i,j,k) a_up[base3p+(i)+ni*(j)+nij*(k)+nijkp*(c)]
 #define dcx(i)   a_dcx[i-ifirst]
@@ -104,7 +104,7 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 #define strz(k) a_strz[k-kfirst]
 #define coz(k)   a_coz[k-kfirst]
 
-  for( int c=0 ; c<3 ; c++ )
+  for( int c=1 ; c<=3 ; c++ )
      for( int k=kwindb ; k<= kwinde ;k++)
 #pragma omp parallel for
 	for( int j=jfirst+2 ; j<= jlast-2; j++ )

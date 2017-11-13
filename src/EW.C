@@ -263,7 +263,8 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
 		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
-		 float_sw4* __restrict__ a_rho, float_sw4 h, float_sw4& a_energy );
+		 float_sw4* __restrict__ a_rho, float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, float_sw4* a_strz,
+		 float_sw4& a_energy );
 void energy4c_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		  int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
 		  float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
@@ -4247,9 +4248,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 		      &klast, &nz, onesided_ptr, m_acof, m_bope, m_ghcof,
 		      uacc_ptr, u_ptr, mu_ptr, la_ptr, &h, &op );
     }
-    size_t nn=a_Uacc[g].count_nans();
-    if( nn > 0 )
-       cout << "First application of LU " << nn << " nans" << endl;
+    //    size_t nn=a_Uacc[g].count_nans();
+    //    if( nn > 0 )
+    //       cout << "First application of LU " << nn << " nans" << endl;
 
     if( m_use_attenuation && m_number_mechanisms > 0 )
     {
@@ -4259,9 +4260,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
           float_sw4* alpha_ptr = a_AlphaVE[g][a].c_ptr();
           float_sw4* mua_ptr = mMuVE[g][a].c_ptr();
           float_sw4* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
-	  nn = a_AlphaVE[g][a].count_nans();
-	  if( nn > 0 )
-	     cout << "Alpha before LU " << nn << " nans" << endl;
+	  //	  nn = a_AlphaVE[g][a].count_nans();
+	  //	  if( nn > 0 )
+	  //	     cout << "Alpha before LU " << nn << " nans" << endl;
 
 	  if( m_croutines )
 	  {
@@ -4288,9 +4289,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 			    uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op );
 	  }	     
        }
-    nn=a_Uacc[g].count_nans();
-    if( nn > 0 )
-       cout << "Second application of LU " << nn << " nans" << endl;
+       //    nn=a_Uacc[g].count_nans();
+       //    if( nn > 0 )
+       //       cout << "Second application of LU " << nn << " nans" << endl;
 
     }
   }
@@ -5360,21 +5361,21 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 	 if( m_croutines )
 	    energy4_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			istart, iend, jstart, jend, kstart, kend, onesided_ptr,
-			um_ptr, u_ptr, up_ptr, rho_ptr, mGridSize[g], locenergy );
+		       um_ptr, u_ptr, up_ptr, rho_ptr, mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_sg_str_z[g], locenergy );
 	 else
 	    energy4(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 		    &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
 		    um_ptr, u_ptr, up_ptr, rho_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 		    m_sg_str_z[g], &locenergy );
+      }
       energy += locenergy;
    }
    energy /= (dt*dt);
    float_sw4 energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
    m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
-   }
 }
-
 //-----------------------------------------------------------------------
 float_sw4 EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
 {

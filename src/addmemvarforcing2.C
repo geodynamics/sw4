@@ -606,8 +606,8 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
             t95 = t41*t48*t79*t75;
             t100 = cos(t71);
             forces[1] = t84+t86-t89+t35*(t36*(t84+t86-t89)+2.0*omegaVE*(t1*(-2.0*t92+
-                                                                            2.0*t95)-t77-t82+t10*omega*c*t100*t33)+t1*(4.0*t57*t26*t79*t75+4.0*t57*t76)-2.0
-                                         *t92+2.0*t95+t10*t39*t40*t87*t33)/6.0;
+                2.0*t95)-t77-t82+t10*omega*c*t100*t33)+t1*(4.0*t57*t26*t79*t75+4.0*t57*t76)-2.0
+                *t92+2.0*t95+t10*t39*t40*t87*t33)/6.0;
             t123 = cos(t9);
             t125 = cos(t28);
             t126 = t1*t123*t125;
@@ -621,7 +621,7 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
             t136 = t41*t20;
             t139 = cos(t13);
             forces[2] = -t128-t130-t133+t35*(t36*(-t128-t130-t133)+2.0*omegaVE*(t131*t2
-                                                                                *t139+t126*t136-t129*t127)+t126*t57*t15+t129*t136+t131*t41*t132)/6.0;
+                 *t139+t126*t136-t129*t127)+t126*t57*t15+t129*t136+t131*t41*t132)/6.0;
 
             alpha(1,i,j,k) += cof*forces[0];
             alpha(2,i,j,k) += cof*forces[1];

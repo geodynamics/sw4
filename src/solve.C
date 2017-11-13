@@ -575,6 +575,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for(int g=0 ; g < mNumberOfGrids ; g++ )
     communicate_array( U[g], g );
 
+  //    U[0].save_to_disk("u-dbg0.bin");
+  //    U[1].save_to_disk("u-dbg1.bin");
+
 // boundary forcing
   cartesian_bc_forcing( t, BCForcing, a_Sources );
 // OLD
@@ -591,10 +594,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      enforceBCfreeAtt2( U, mMu, mLambda, AlphaVE, BCForcing );
   }
 
+  //    U[0].save_to_disk("u-dbg0-bc.bin");
+  //    U[1].save_to_disk("u-dbg1-bc.bin");
+
 // Um
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
     communicate_array( Um[g], g );
+
+  //    Um[0].save_to_disk("um-dbg0.bin");
+  //    Um[1].save_to_disk("um-dbg1.bin");
+
 // boundary forcing
   cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
 // OLD
@@ -612,6 +622,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      enforceBCfreeAtt2( Um, mMu, mLambda, AlphaVEm, BCForcing );
   }
 
+  //    Um[0].save_to_disk("um-dbg0-bc.bin");
+  //    Um[1].save_to_disk("um-dbg1-bc.bin");
+    //    exit(0);
   if (m_twilight_forcing && getVerbosity()>=3)
   {
 // more testing
@@ -938,7 +951,18 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
 
-    //    Up[0].save_to_disk("up-dbg.bin");
+    //    Um[0].save_to_disk("um-dbg0.bin");
+    //    Um[1].save_to_disk("um-dbg1.bin");
+    //    U[0].save_to_disk("u-dbg0.bin");
+    //    U[1].save_to_disk("u-dbg1.bin");
+    //    Up[0].save_to_disk("up-dbg0.bin");
+    //    Up[1].save_to_disk("up-dbg1.bin");
+    //    mRho[0].save_to_disk("rho-dbg0.bin");
+    //    mRho[1].save_to_disk("rho-dbg1.bin");
+    //    mMu[0].save_to_disk("mu-dbg0.bin");
+    //    mMu[1].save_to_disk("mu-dbg1.bin");
+    //    mLambda[0].save_to_disk("lambda-dbg0.bin");
+    //    mLambda[1].save_to_disk("lambda-dbg1.bin");
     //    exit(0);
 // increment time
     t += mDt;
@@ -1435,6 +1459,10 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 // coarse side
       Unextc.define(3,ibc,iec,jbc,jec,kc,kc); // only needs k=kc (on the interface)
       Bc.define(3,ibc,iec,jbc,jec,kc,kc);
+      Unextf.set_to_zero();
+      Bf.set_to_zero();
+      Unextc.set_to_zero();
+      Bc.set_to_zero();
 // to compute the corrector we need the acceleration in the vicinity of the interface
       Uf_tt.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
       Uc_tt.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
@@ -2367,6 +2395,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    char op='=';
    int nz = m_global_nz[g];
    Sarray Lutt(3,ib,ie,jb,je,kic,kic);
+   Lutt.set_to_zero(); // Keep memory checker happy
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
    if( m_croutines )
@@ -2502,6 +2531,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 
    // Compute L(Up) at k=kic.
    Sarray Lu(3,ib,ie,jb,je,kic,kic);
+   Lu.set_to_zero();  // Keep memory checker happy
    char op='=';
    int nz = m_global_nz[g];
 // Note: 6 first arguments of the function call:
@@ -3129,30 +3159,30 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
                float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
                float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
                twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                         &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-                                                         bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+			       &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+			       bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
                   twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                                  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-                                                                  bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+				     &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+				     bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
                }
             }
             else
             {
                twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                               &klast, &h, &k, &t, &om, &cv, &ph,
-                                               bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+			  &klast, &h, &k, &t, &om, &cv, &ph,
+			  bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
                   twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-                                                        &klast, &h, &k, &t, &om, &cv, &ph,
-                                                        bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+				&klast, &h, &k, &t, &om, &cv, &ph,
+				bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
                }
             } // end ! supergrid
             
