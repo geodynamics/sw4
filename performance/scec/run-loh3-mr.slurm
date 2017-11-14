@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -N 4
+#SBATCH -N 12
 #SBATCH -p debug
 #SBATCH -A m2545
 #SBATCH -S 4     # Special cores per nodes (4 are idle)
 #SBATCH -t 00:30:00 
 #SBATCH -C knl,quad,cache
 
-numnodes=4
+numnodes=12
 
 #    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
@@ -41,7 +41,7 @@ export OMP_PROC_BIND=spread
 MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
 
 # 1st case
-CASE=loh1-h100-mr-1
+CASE=loh3-h100-mr-1
 RUN_COMMAND="./sw4_mp ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 
