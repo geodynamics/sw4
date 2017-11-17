@@ -3,7 +3,7 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir
 
-import os, sys, argparse
+import os, sys, argparse, subprocess
 
 #----(Currently not used)--------------------------------------------
 def run_checks(checks):
@@ -198,14 +198,28 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
             #print('local_dir = ', local_dir)
     
             # pipe stdout and stderr to a temporary file
-            run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
+            run_cmd = mpirun_cmd.split() + [
+                sw4_exe,
+                sw4_input_file
+            ]
+
+            sw4_stdout_file = open(case_dir + '.out', 'wt')
+            sw4_stderr_file = open(case_dir + '.err', 'wt')
 
             # run sw4
             run_dir = os.getcwd()
             #print('Running sw4 from directory:', run_dir)
-            status = os.system(run_cmd)
-            if status!=0:
-                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
+            status = subprocess.run(
+                run_cmd,
+                stdout=sw4_stdout_file,
+                stderr=sw4_stderr_file,
+            )
+
+            sw4_stdout_file.close()
+            sw4_stderr_file.close()
+
+            if status.returncode!=0:
+                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status.returncode, 'aborting test')
                 print('run_cmd=', run_cmd)
                 print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
                 return False # bail out
