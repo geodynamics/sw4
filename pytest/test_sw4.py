@@ -116,7 +116,6 @@ def guess_mpi_cmd(mpi_tasks, verbose):
 
 #------------------------------------------------
 def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=False):
-    assert sys.version_info >= (3,2) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
     pytest_dir_list = pytest_dir.split(sep)
@@ -254,7 +253,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
     
 #------------------------------------------------
 if __name__ == "__main__":
-    assert sys.version_info >= (3,2) # named tuples in Python version >=3.3
+    assert sys.version_info >= (3,5) # subprocess.run(...) requires 3.5
     # default arguments
     testing_level=0
     verbose=False
