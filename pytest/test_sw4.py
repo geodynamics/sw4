@@ -3,7 +3,11 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir
 
-import os, sys, argparse, subprocess
+import argparse
+import os
+import subprocess
+import sys
+
 
 #----(Currently not used)--------------------------------------------
 def run_checks(checks):
