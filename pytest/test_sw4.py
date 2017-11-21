@@ -297,19 +297,12 @@ if __name__ == "__main__":
 
     parser = create_parser()
     args = parser.parse_args()
-    if args.verbose:
-        #print("verbose mode enabled")
-        verbose=True
-    if args.level:
-        #print("Testing level specified=", args.level)
-        testing_level=args.level
-    if args.mpitasks:
-        #print("MPI-tasks specified=", args.mpitasks)
-        if args.mpitasks > 0: mpi_tasks=args.mpitasks
-    if args.sw4_exe_dir:
-        #print("sw4_exe_dir specified=", args.sw4_exe_dir)
-        sw4_exe_dir=args.sw4_exe_dir
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, verbose):
+    if not main_test(
+        args.sw4_exe_dir,
+        args.level,
+        args.mpitasks,
+            args.verbose):
+
         print("test_sw4 was unsuccessful")
 
