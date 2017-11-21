@@ -271,7 +271,7 @@ def create_parser():
         type=int,
         choices=[0, 1, 2],
         default=0,
-        help="testing level",
+        help="testing level (default: 0)",
     )
 
     parser.add_argument(
@@ -279,14 +279,14 @@ def create_parser():
         "--mpitasks",
         type=int,
         default=0,
-        help="number of mpi tasks",
+        help="number of mpi tasks. if less than or equal to 0, value will be set to a machine dependent value (default: 0)",
     )
 
     parser.add_argument(
         "-d",
         "--sw4_exe_dir",
         default="optimize",
-        help="name of directory for sw4 executable",
+        help="name of directory that contains sw4 executable (default: 'optimize')",
     )
 
     return parser
