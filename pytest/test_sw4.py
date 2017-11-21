@@ -252,19 +252,50 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
     return True
     
 #------------------------------------------------
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description=None,
+        epilog=None,
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="increase output verbosity",
+    )
+
+    parser.add_argument(
+        "-l",
+        "--level",
+        type=int,
+        choices=[0, 1, 2],
+        default=0,
+        help="testing level",
+    )
+
+    parser.add_argument(
+        "-m",
+        "--mpitasks",
+        type=int,
+        default=0,
+        help="number of mpi tasks",
+    )
+
+    parser.add_argument(
+        "-d",
+        "--sw4_exe_dir",
+        default="optimize",
+        help="name of directory for sw4 executable",
+    )
+
+    return parser
+
+#------------------------------------------------
 if __name__ == "__main__":
     assert sys.version_info >= (3,5) # subprocess.run(...) requires 3.5
-    # default arguments
-    testing_level=0
-    verbose=False
-    mpi_tasks=0 # machine dependent default
 
-    parser=argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-    parser.add_argument("-l", "--level", type=int, choices=[0, 1, 2], 
-                        help="testing level")
-    parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
-    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
+    parser = create_parser()
     args = parser.parse_args()
     if args.verbose:
         #print("verbose mode enabled")
