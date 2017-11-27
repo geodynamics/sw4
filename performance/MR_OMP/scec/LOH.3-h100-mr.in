@@ -1,0 +1,40 @@
+# This is a SW4 input file describing problem LOH.3 from the SCEC test suite, see
+# "Steven Day et al., Tests of 3D Elastodynamic Codes:
+# Final report for lifelines project 1A01, Pacific Eartquake
+# Engineering Center, 2001".
+
+grid h=100 x=30000 y=30000 z=17000 extrapolate=1
+time t=9
+fileio path=loh3-mr-results
+
+# mesh refinement along material jump (50*20 = 1000)
+refinement zmax=1000
+
+# the developer line is to get the reversed c-order in sw4lite
+developer checkfornan=0 reporttiming=1 corder=1
+
+# wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
+attenuation phasefreq=2.5 nmech=3 maxfreq=15
+
+#specify the width of the super grid damping layer (30 is the default)
+supergrid gp=30
+
+# material properties in the half-space
+block vs=3464 vp=6000 r=2700 Qs=69.3 Qp=155.9
+
+# material properties in the top layer
+block vs=2000 vp=4000 r=2600 z2=1000 Qs=40 Qp=120
+#
+
+# Gaussian time function gives velocities directly
+# sigma=0.05 gives freq=1/sigma=20 (LOH.3)
+# t0 = 6*sigma = 0.3 avoids (most) startup transients and is
+# consistent with the matlab script PlotAnalyticalLOH3.m
+
+# NOTE: sigma & freq are different from LOH.1 and LOH.2
+source x=15000 y=15000 z=2000 mxy=1e18 t0=0.3 freq=20 type=Gaussian
+#
+# record time history at receiver stations along a line on the free surface (z=0)
+rec x=21000 y=23000 z=0 file=sta10 usgsformat=1 sacformat=0
+
+#no images
