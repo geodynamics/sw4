@@ -1,7 +1,7 @@
   etree = no
   proj = yes
   SW4ROOT=/usr/gapps/wpp/bgqos_0
-  FC = mpixlf77
+  FC = mpixlf90
   CC = mpixlc
   CXX = mpixlcxx
   EXTRA_CXX_FLAGS = -qmaxmem=-1
