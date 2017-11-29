@@ -1,0 +1,6 @@
+fileio path=energy-mr-4th-1
+grid x=30 y=30 z=17 nx=75
+refinement zmax=5
+time t=50
+testenergy seed=34983249 cpcsratio=1.732 bchorizontal=dirichlet
+developer ctol=1e-10 cmaxit=100 crelax=0.92

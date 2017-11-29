@@ -87,16 +87,11 @@ else
 # object code goes in machine specific directory on LC
       debugdir := debug_cab
       optdir := optimize_cab
-  # for Sierra (old Sierra) on LC, almost same machine as Cab
-    else ifeq ($(findstring sierra,$(HOSTNAME)),sierra)
-      include configs/make.sierra
-      foundincfile := "configs/make.sierra"
-      debugdir := debug_sierra
-      optdir := optimize_sierra
-# For Quartz at LC (why doesn't this work when HOSTNAME is quartz770 ?
+# For Quartz at LC
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
       include configs/make.quartz
       foundincfile := "configs/make.quartz"
+# Cori @ NERSC
     else ifeq ($(findstring cori,$(HOSTNAME)),cori)
       include configs/make.cori
       foundincfile := "configs/make.cori"
@@ -218,7 +213,7 @@ $(builddir)/version.o:src/version.C .FORCE
 
 $(builddir)/%.o:src/%.f
 	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+	cd $(builddir); $(FC) $(FC_FIXED_FORMAT) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.f90
 	/bin/mkdir -p $(builddir)
@@ -226,7 +221,7 @@ $(builddir)/%.o:src/%.f90
 
 $(builddir)/%.o:src/quadpack/%.f
 	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+	cd $(builddir); $(FC) $(FC_FIXED_FORMAT) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)

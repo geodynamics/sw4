@@ -113,7 +113,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		   int j0 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr]     ) );
 		   int k0 = static_cast<int>( trunc( 1 + (z-m_z0[gr])/m_hv[gr] ) ); 
 
-		   // Use bilinear interpolation always:
+		   // always use bilinear interpolation:
                    intp_cubic = false;
 
 	   // Bias stencil near the boundary, need to communicate arrays afterwards.
@@ -236,7 +236,8 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		   outside++;
 	    }
 
-   }
+   } // end for g...
+
    mEW->communicate_arrays( rho );
    mEW->communicate_arrays( cs );
    mEW->communicate_arrays( cp );

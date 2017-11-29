@@ -386,7 +386,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   {
     generate_grid();
     setup_metric();
-// note that the topo image can not be made until WPP2::InitializePaddingCells() has been called
   }
 
 // output grid size info
