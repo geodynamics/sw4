@@ -446,8 +446,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   
 // Set up timers
   double time_start_solve = MPI_Wtime();
-  double time_measure[7];
-  double time_sum[7]={0,0,0,0,0,0,0};
+  double time_measure[19];
+  double time_sum[9]={0,0,0,0,0,0,0,0,0};
   double bc_time_measure[5]={0,0,0,0,0};
 
   int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
@@ -753,7 +753,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && proc_zero() )
     cout << "  Begin time stepping..." << endl;
 
-// Begin time stepping loop
+// BEGIN TIME STEPPING LOOP
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
@@ -764,6 +764,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( trace && m_myRank == dbgproc )
        cout <<" before Forcing" << endl;
     Force( t, F, point_sources, identsources );
+
+    if( m_output_detailed_timing )
+       time_measure[1] = MPI_Wtime();
+
     if( trace && m_myRank == dbgproc )
        cout <<" after Forcing" << endl;
 
@@ -778,6 +782,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        evalRHSanisotropic( U, mC, Lu );
     else
        evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+
+    if( m_output_detailed_timing )
+       time_measure[2] = MPI_Wtime();
+
     if( trace && m_myRank == dbgproc )
        cout <<" after evalRHS" << endl;
 
@@ -787,15 +795,18 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // take predictor step, store in Up
     evalPredictor( Up, U, Um, mRho, Lu, F );    
 
+    if( m_output_detailed_timing )
+       time_measure[3] = MPI_Wtime();
+
     if( trace &&  m_myRank == dbgproc )
        cout <<" after evalPredictor" << endl;
-
-    time_measure[1] = MPI_Wtime();
-    time_measure[2] = MPI_Wtime();
 
 // communicate across processor boundaries
     for(int g=0 ; g < mNumberOfGrids ; g++ )
        communicate_array( Up[g], g );
+
+    if( m_output_detailed_timing )
+       time_measure[4] = MPI_Wtime();
 
     if( trace && m_myRank == dbgproc )
        cout <<" after communicate_array " << endl;
@@ -803,9 +814,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // calculate boundary forcing at time t+mDt
     cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
+    if( m_output_detailed_timing )
+       time_measure[5] = MPI_Wtime();
+
 // NEW (Apr. 3, 2017) PC-time stepping for the memory variable
     if( m_use_attenuation && m_number_mechanisms > 0 )
        updateMemVarPred( AlphaVEp, AlphaVEm, U, t );
+
+    if( m_output_detailed_timing )
+       time_measure[6] = MPI_Wtime();
 
 // update ghost points in Up
     if( m_anisotropic )
@@ -818,6 +835,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( m_use_attenuation && m_number_mechanisms > 0 )
        enforceBCfreeAtt2( Up, mMu, mLambda, AlphaVEp, BCForcing );
     
+    if( m_output_detailed_timing )
+       time_measure[7] = MPI_Wtime();
+
     if( trace && m_myRank == dbgproc )
        cout <<" after enforceBC" << endl;
 
@@ -828,22 +848,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // *** 2nd order in TIME
     if (mOrder == 2)
     {
-       //<<<<<<< HEAD
-       //// Update memory variables
-       //       updateMemoryVariables( AlphaVEp, AlphaVEm, Up, U, Um, t );
-       //    if( trace && m_myRank == dbgproc )
-       //       cout <<" after updateMemoryVariables" << endl;
-       //// Impose coupled free surface boundary condition
-       //       enforceBCfreeAtt( Up, U, Um, mMu, mLambda, AlphaVEp, AlphaVEm, BCForcing, m_sbop, t );
-       //    }
-       //    if( trace && m_myRank == dbgproc )
-       //       cout <<" after enforceBCfreeAtt" << endl;
-
-       //// Grid refinement interface conditions:
-       //    enforceIC( Up, U, Um, t, true, point_sources );
-       //    if( trace && m_myRank == dbgproc )
-       //       cout <<" after enforceIC" << endl;
-       //=======
 // add super-grid damping terms before enforcing interface conditions
 // (otherwise, Up doesn't have the correct values on the interface)
        if (usingSupergrid())
@@ -855,22 +859,26 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        {
 	 simpleAttenuation( Up );
        }
-// should this timer be here?
-//       time_measure[4] = MPI_Wtime();
+       if( m_output_detailed_timing )
+          time_measure[8] = MPI_Wtime();
 
 // interface conditions for 2nd order in time
        enforceIC2( Up, U, Um, AlphaVEp, t, point_sources );
+
+       if( m_output_detailed_timing )
+          time_measure[9] = MPI_Wtime();
     }
     else
     {
+       if( m_output_detailed_timing )
+          time_measure[8] = MPI_Wtime();
 // *** 4th order in TIME interface conditions for the predictor
 // June 14, 2017: adding AlphaVE & AlphaVEm
        enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, point_sources );
-    }
-    //>>>>>>> developer
-    
-    time_measure[3] = time_measure[4] = MPI_Wtime();
 
+       if( m_output_detailed_timing )
+          time_measure[9] = MPI_Wtime();
+    }
 //
 // corrector step for
 // *** 4th order in time ***
@@ -878,6 +886,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if (mOrder == 4)
     {
        Force_tt( t, F, point_sources, identsources );
+
+       if( m_output_detailed_timing )
+          time_measure[10] = MPI_Wtime();
+
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
        if( trace && m_myRank == dbgproc )
           cout <<" after evalDpDmInTime" << endl;
@@ -894,10 +906,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( trace && m_myRank == dbgproc )
 	  cout <<" after evalDpDmInTimeAtt" << endl;
 
+       if( m_output_detailed_timing )
+          time_measure[11] = MPI_Wtime();
+
        if( m_anisotropic )
 	  evalRHSanisotropic( Uacc, mC, Lu );
        else
 	  evalRHS( Uacc, mMu, mLambda, Lu, AlphaVEm );
+
+       if( m_output_detailed_timing )
+          time_measure[12] = MPI_Wtime();
 
        if( trace && m_myRank == dbgproc )
 	  cout <<" after evalRHS" << endl;
@@ -906,6 +924,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  check_for_nan( Lu, 1, "L(uacc) " );
 
        evalCorrector( Up, mRho, Lu, F );
+
+       if( m_output_detailed_timing )
+          time_measure[13] = MPI_Wtime();
 
 // add in super-grid damping terms
        if (usingSupergrid())
@@ -918,11 +939,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        {
 	 simpleAttenuation( Up );
        }
-       time_measure[4] = MPI_Wtime();
+
+       if( m_output_detailed_timing )
+          time_measure[14] = MPI_Wtime();
 
 // communicate across processor boundaries
        for(int g=0 ; g < mNumberOfGrids ; g++ )
 	  communicate_array( Up[g], g );
+
+       if( m_output_detailed_timing )
+          time_measure[15] = MPI_Wtime();
 
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
@@ -940,6 +966,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        {
           enforceBCfreeAtt2( Up, mMu, mLambda, AlphaVEp, BCForcing );
        }
+
+       if( m_output_detailed_timing )
+          time_measure[16] = MPI_Wtime();
        
 // interface conditions for the corrector
 // June 14, 2017: adding AlphaVE & AlphaVEm
@@ -947,6 +976,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     }// end if mOrder == 4
     
+    if( m_output_detailed_timing )
+       time_measure[17] = MPI_Wtime();
     
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
@@ -966,8 +997,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     //    exit(0);
 // increment time
     t += mDt;
-
-    time_measure[5] = MPI_Wtime();	  
 
 // periodically, print time stepping info to stdout
     printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
@@ -1003,6 +1032,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       }
     }
 
+    if( m_output_detailed_timing )
+       time_measure[18] = MPI_Wtime();
+
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_energy_test )
        compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps, Um, U, Up, currentTimeStep  );
@@ -1010,6 +1042,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
+    if( m_output_detailed_timing )
+       time_measure[19] = MPI_Wtime();
+	  
 // evaluate error for some test cases
     if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
     {
@@ -1026,21 +1061,41 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	fprintf(lf, "%e %15.7e %15.7e %15.7e\n", t, errInf, errL2, solInf);
     }
 
-    time_measure[6] = MPI_Wtime();	  	
-	  
 // // See if it is time to write a restart file
 // //      if (mRestartDumpInterval > 0 &&  currentTimeStep % mRestartDumpInterval == 0)
 // //        serialize(currentTimeStep, U, Um);  
 
-    time_sum[0] += time_measure[1]-time_measure[0] + time_measure[4]-time_measure[3]; // step
-    time_sum[1] += time_measure[2]-time_measure[1] + time_measure[5]-time_measure[4]; // bcs
-    time_sum[2] += time_measure[6]-time_measure[5]; // image & sac
-    time_sum[3] += time_measure[6]-time_measure[0];//  total
-// where does bc_time_measure come from?
-    // time_sum[4] += bc_time_measure[1]-bc_time_measure[0]; // comm. + overlap grids.
-    // time_sum[5] += bc_time_measure[2]-bc_time_measure[1]+bc_time_measure[4]-bc_time_measure[3]; // update proc boundary
-    // time_sum[6] += bc_time_measure[3]-bc_time_measure[2]; // impose bc.
-
+    if( m_output_detailed_timing )
+    {
+       if (mOrder == 4)
+       {
+          time_sum[0] += time_measure[19]-time_measure[0]; // total
+          time_sum[1] += time_measure[2]-time_measure[1] + time_measure[12]-time_measure[11]; // div-stress
+          time_sum[2] += time_measure[1]-time_measure[0] + time_measure[10]-time_measure[9]; // forcing
+          time_sum[3] += time_measure[5]-time_measure[4]+time_measure[7]-time_measure[6] +
+             time_measure[16]-time_measure[15];//  bc
+          time_sum[4] += time_measure[14]-time_measure[13]; // super-grid
+          time_sum[5] += time_measure[4]-time_measure[3] + time_measure[15]-time_measure[14]; // communicate
+          time_sum[6] += time_measure[9]-time_measure[8] + time_measure[17]-time_measure[16]; // mesh ref
+          time_sum[7] += time_measure[18]-time_measure[17]; // images + time-series
+          time_sum[8] += time_measure[3]-time_measure[2] + time_measure[6]-time_measure[5] + 
+             time_measure[11]-time_measure[10] + time_measure[13]-time_measure[12] +
+             time_measure[19]-time_measure[18]; // remainder
+       }
+       else
+       { // 2nd order in time algorithm
+          time_sum[0] += time_measure[19]-time_measure[0]; // total
+          time_sum[1] = 0; // update later
+          time_sum[2] = 0;
+          time_sum[3] = 0;
+          time_sum[4] = 0;
+          time_sum[5] = 0;
+          time_sum[6] = 0;
+          time_sum[7] = 0;
+          time_sum[8] = 0;
+       }
+    }
+    
   } // end time stepping loop
 
   if ( !mQuiet && proc_zero() )
@@ -1053,6 +1108,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   
    double time_end_solve = MPI_Wtime();
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
+
    if( m_output_detailed_timing )
      print_execution_times( time_sum );
 

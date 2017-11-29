@@ -154,8 +154,8 @@ else
    FFLAGS   += -fopenmp
 endif
 
-ifeq ($(fortran),no)
-else
+# fortran=no is default
+ifeq ($(fortran),yes)
    debugdir := $(debugdir)_fort
    optdir   := $(optdir)_fort
    CXXFLAGS += -DSW4_NOC
