@@ -1,4 +1,4 @@
-subroutine bndryOpNoGhost( acof_no_gp, ghcof_no_gp, sbop_no_gp) bind(c, name="bndryOpNoGhost")
+subroutine bndryOpNoGhost( acof_no_gp, ghcof_no_gp, sbop_no_gp) bind(c) !, name="bndryOpNoGhost")
   use iso_fortran_env
   implicit none
   integer, parameter:: dp=real64;
