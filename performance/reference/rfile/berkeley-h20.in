@@ -1,5 +1,7 @@
 # SW4 input file for testing the rfile command
 
+developer reporttiming=1
+
 # set pfs=1 if you are on a parallel file system
 fileio path=berkeley-results pfs=0
 
