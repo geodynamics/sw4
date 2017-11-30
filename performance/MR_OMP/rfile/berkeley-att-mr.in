@@ -25,6 +25,9 @@ rfile filename=berkeley.rfile
 # threshold on vp and vs
 globalmaterial vsmin=500 vpmin=768
 
+# wave speeds are specified at 1.0 Hz, 3 viscoelastic mechanisms (the default)
+attenuation phasefreq=1.0 nmech=3 maxfreq=10
+
 # images
 # topography (can't be written without the topography command enabled)
 image mode=topo z=0.0 cycle=0 file=berk
