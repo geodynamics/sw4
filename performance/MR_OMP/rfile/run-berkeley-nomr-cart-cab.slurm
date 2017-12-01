@@ -34,7 +34,7 @@ MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores"
 
 # 1st case
 CASE=berkeley-nomr-cart
-RUN_COMMAND="./sw4_mp ${CASE}.in"
+RUN_COMMAND="./sw4_cab_mp ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4_mp-${numprocs}mpi-${numcores}threads.out
 
 done
