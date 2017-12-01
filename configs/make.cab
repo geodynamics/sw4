@@ -7,3 +7,5 @@
   CXX = mpiicpc
 #  CXX = mpicxx
   EXTRA_LINK_FLAGS =  -Wl,-rpath=$(SW4ROOT)/lib -llapack -lblas -lifcore
+#  EXTRA_CXX_FLAGS = -pg
+#  EXTRA_FORT_FLAGS = -pg
