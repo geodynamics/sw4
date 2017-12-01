@@ -67,6 +67,7 @@
 #include "GeographicProjection.h"
 #include "DataPatches.h"
 
+#include "CheckPoint.h"
 
 using namespace std;
 
@@ -152,6 +153,7 @@ void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
 void processAttenuation(char* buffer);
 void processRandomize(char* buffer);
+void processCheckPoint(char* buffer);
 
 //void getEfileInfo(char* buffer);
 
@@ -528,6 +530,7 @@ bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
 float_sw4 getTimeStep() const {return mDt;};
 int getNumberOfTimeSteps() const {return mNumberOfTimeSteps;};
+int getNumberOfMechanisms() const {return m_number_mechanisms;};
 
  // test point source
 void get_exact_point_source( float_sw4* u, float_sw4 t, int g, Source& source, int* wind=0 );
@@ -1210,6 +1213,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    
    void check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc );
    void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
+   void getDtFromRestartFile();
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -1592,6 +1596,10 @@ bool m_topography_exists;
 
 // Use C-version of computational kernels
    bool m_croutines;
+
+   //Checkpointing and restart
+   //   CheckPoint* m_restart_check_point;
+   CheckPoint* m_check_point;
 };
 
 #endif

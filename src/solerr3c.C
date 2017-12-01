@@ -32,11 +32,15 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      ((k-1)*h+zmin-z0)*((k-1)*h+zmin-z0) > sradius2 )
 		  {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb)+nijk*c;
-		     if( fabs(u[ind]-uex[ind])>liloc )
-			liloc = fabs(u[ind]-uex[ind]);
+		     float_sw4 err=fabs(u[ind]-uex[ind]);
+	     //		     if( fabs(u[ind]-uex[ind])>liloc )
+		     //			liloc = fabs(u[ind]-uex[ind]);
+		     if( err > liloc )
+			liloc = err;
 		     if( uex[ind]>xliloc )
 			xliloc = uex[ind];
-		     l2loc += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
+		     //		     l2loc += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
+		     l2loc += h3*err*err;
 		  }
 	       }
 	 l2 += l2loc;

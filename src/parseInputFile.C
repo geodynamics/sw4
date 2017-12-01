@@ -439,6 +439,10 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processGMT(buffer);
        //       else if (startswith("time", buffer))
        //	 processTime(buffer);
+       //       else if (startswith("restart",buffer))
+       //	  processRestart(buffer);
+       else if (startswith("checkpoint",buffer))
+	  processCheckPoint(buffer);
        else if (startswith("globalmaterial", buffer))
          processGlobalMaterial(buffer);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
@@ -3696,6 +3700,71 @@ void EW::processImage3D( char* buffer )
    }
 }
   
+//-----------------------------------------------------------------------
+void EW::processCheckPoint(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("checkpoint", token) == 0, "ERROR: not a checkpoint line...: " << token);
+   token = strtok(NULL, " \t");
+   string err = "CheckPoint Error: ";
+   int cycle=-1, cycleInterval=0;
+   float_sw4 time=0.0, timeInterval=0.0;
+   bool timingSet=false;
+   string filePrefix = "checkpoint";
+
+   string restartFileName;
+   bool restartFileGiven = false;
+
+   size_t bufsize=10000000;
+
+   while (token != NULL)
+    {
+       if (startswith("#", token) || startswith(" ", buffer))
+          break;
+       //      if (startswith("cycle=", token) )
+       //      {
+       //	 token += 6; // skip cycle=
+       //	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative integer, not: " << token);
+       //	 cycle = atoi(token);
+       //	 timingSet = true;
+       //      }
+      if (startswith("cycleInterval=", token) )
+      {
+	 token += 14; // skip cycleInterval=
+	 CHECK_INPUT( atoi(token) >= 0., err << "cycleInterval must be a non-negative integer, not: " << token);
+	 cycleInterval = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("file=", token))
+      {
+	 token += 5; // skip file=
+	 filePrefix = token;
+      }
+      else if (startswith("restartfile=", token))
+      {
+	 token += 12; // skip file=
+	 restartFileName = token;
+	 restartFileGiven = true;
+      }
+      else if (startswith("bufsize=", token))
+      {
+	 token += 8; // skip bufsize=
+	 bufsize = atoi(token);
+      }
+      else
+      {
+	 badOption("checkpoint", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   if( m_check_point == CheckPoint::nil )
+      m_check_point = new CheckPoint(this);
+   if( cycleInterval > 0 )
+      m_check_point->set_checkpoint_file( filePrefix, cycle, cycleInterval, bufsize );
+   if( restartFileGiven )
+      m_check_point->set_restart_file( restartFileName, bufsize );
+}
+
 //-----------------------------------------------------------------------
 void EW::setOutputPath(const string& path) 
 { 

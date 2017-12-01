@@ -526,6 +526,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    else
       CHECK_INPUT(false,"Error, could not identify float_sw4");
 
+   m_check_point = new CheckPoint(this);
+
 #ifdef SW4_NOC
    m_croutines = false;
 #endif
@@ -1729,7 +1731,6 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
        y0 = a_globalSources[0]->getY0();
        z0 = a_globalSources[0]->getZ0();
     }
-
 // need to exclude parallel overlap from L2 calculation
     int usesg = usingSupergrid();
     if( topographyExists() && g == mNumberOfGrids-1 )
@@ -2082,26 +2083,26 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
      for(int g=0 ; g<mNumberOfGrids; g++ ) // ranomized initial data
     {
        u_ptr    = a_U[g].c_ptr();
-       for( size_t i=0 ; i < 3*((m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
-          u_ptr[i] = drand48();
-
-// Test: use smooth initial data
-        // u_ptr    = a_U[g].c_ptr();
-        // ifirst = m_iStart[g];
-        // ilast  = m_iEnd[g];
-        // jfirst = m_jStart[g];
-        // jlast  = m_jEnd[g];
-        // kfirst = m_kStart[g];
-        // klast  = m_kEnd[g];
-        // h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
-        // zmin = m_zmin[g];
-        // om = 1;
-        // ph = 0.5;
-        // cv = 1000;
-        
-        // F77_FUNC(twilightfort,TWILIGHTFORT)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-        // 				     &klast, u_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
-       
+       size_t npts = (static_cast<size_t>(m_iEnd[g]-m_iStart[g]+1))*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1);
+       if( m_croutines )
+       {
+	  // Loop to make c-order and fortran-order have same random number sequence
+	  for( size_t i=0 ; i < npts ; i++ )
+	  {
+	     u_ptr[i]        = drand48();
+	     u_ptr[i+npts]   = drand48();
+	     u_ptr[i+2*npts] = drand48();
+	  }
+       }
+       else
+       {
+	  for( size_t i=0 ; i < npts; i++ )
+	  {
+	     u_ptr[3*i]   = drand48();
+	     u_ptr[3*i+1] = drand48();
+	     u_ptr[3*i+2] = drand48();
+	  }
+       }
     } // end for g
      
   } // end m_energy_test

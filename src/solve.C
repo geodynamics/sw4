@@ -441,8 +441,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
   printPreamble(a_Sources);
 
-// this is the time level
-  float_sw4 t=mTstart;
   
 // Set up timers
   double time_start_solve = MPI_Wtime();
@@ -450,15 +448,28 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   double time_sum[7]={0,0,0,0,0,0,0};
   double bc_time_measure[5]={0,0,0,0,0};
 
-  int beginCycle = 1; // also set in setupRun(), perhaps make member variable?
-
 // Sort sources wrt spatial location, needed for thread parallel computing
   vector<int> identsources;
   sort_grid_point_sources( point_sources, identsources );
 
 // Assign initial data
-  initialData(mTstart, U, AlphaVE);
-  initialData(mTstart-mDt, Um, AlphaVEm );
+  int beginCycle; 
+  float_sw4 t;
+  if( m_check_point->do_restart() )
+  {
+     m_check_point->read_checkpoint( t, beginCycle, Um, U,
+				     AlphaVEm, AlphaVE );
+      // Restart data have undefined ghost point values,
+      // no need to enforce BC here, it is done further down in this function.
+     beginCycle++;
+  }
+  else
+  {
+     beginCycle = 1;
+     t = mTstart;
+     initialData(mTstart, U, AlphaVE);
+     initialData(mTstart-mDt, Um, AlphaVEm );
+  }
   
   if ( !mQuiet && mVerbose && proc_zero() )
     cout << "  Initial data has been assigned" << endl;
@@ -754,6 +765,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     cout << "  Begin time stepping..." << endl;
 
 // Begin time stepping loop
+  for( int g=0 ; g < mNumberOfGrids ; g++ )
+     Up[g].set_to_zero();
+
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
@@ -971,6 +985,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // periodically, print time stepping info to stdout
     printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
+    //    printTime( currentTimeStep, t, true ); 
 
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
@@ -1003,7 +1018,21 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       }
     }
 
-// // Energy evaluation, requires all three time levels present, do before cycle arrays.
+// Write check point, if requested (timeToWrite returns false if checkpointing is not used)
+    if( m_check_point->timeToWrite( t, currentTimeStep, mDt ) )
+    {
+       double time_chkpt=MPI_Wtime();
+       m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+       double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
+       if( mVerbose >= 2 )
+       {
+	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	  if( m_myRank == 0 )
+	     cout << "Cpu time to write check point file " << time_chkpt << " seconds " << endl;
+       }
+    }
+
+// Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_energy_test )
        compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps, Um, U, Up, currentTimeStep  );
 
@@ -1059,7 +1088,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVEp, a_Sources ) )
    {
-     float_sw4 errInf, errL2, solInf, solL2;
+     float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
 
 // tmp: output exact sol for Lamb's prolem 
 //      cout << *mGlobalUniqueSources[0] << endl;
