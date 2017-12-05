@@ -2,13 +2,14 @@
 #include <cstdlib>
 #include <cmath>
 
-#include "EW.h"
+//extern "C" {
 
-void EW::rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		 int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
-		 float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-		 float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-		 float_sw4 h, char op )
+void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
+		     float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
+		     float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+		     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+		     float_sw4 h, char op )
 {
  // Direct reuse of fortran code by these macro definitions:
 #define mu(i,j,k)     a_mu[base+i+ni*(j)+nij*(k)]
@@ -75,7 +76,7 @@ void EW::rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 #pragma omp for
    for( k= k1; k <= k2 ; k++ )
       for( j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+//#pragma simd deprecated
 #pragma ivdep
 	 for( i=ifirst+2; i <= ilast-2 ; i++ )
 	 {
@@ -828,7 +829,7 @@ void EW::rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 }
 
 //-----------------------------------------------------------------------
-void EW::rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
 		 float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
 		 float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
@@ -1660,7 +1661,7 @@ void EW::rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 }
 
 //-----------------------------------------------------------------------
-void EW::rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		    int nz, float_sw4 h,
 		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_u2,
 		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] )
@@ -1727,7 +1728,7 @@ void EW::rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 }
 
 //-----------------------------------------------------------------------
-void EW::rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		    int nz, float_sw4* __restrict__ a_uacc, float_sw4* __restrict__ a_lu,
 		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_rho,
 		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] )
@@ -1798,7 +1799,7 @@ void EW::rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 }
 
 //-----------------------------------------------------------------------
-void EW::predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
+void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
 		      float_sw4* __restrict__ um, float_sw4* __restrict__ lu,
 		      float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
@@ -1818,7 +1819,7 @@ void EW::predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void EW::corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
+void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4* __restrict__ up, float_sw4* __restrict__ lu,
 		      float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
 		      float_sw4 dt4 )
@@ -1838,17 +1839,30 @@ void EW::corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void EW::dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		       float_sw4* __restrict__ up, float_sw4* __restrict__ u,
-		       float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
-		       float_sw4 dt2i )
+void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		   float_sw4* __restrict__ up, float_sw4* __restrict__ u,
+		   float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
+		   float_sw4 dt2i )
 {
-   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
+  const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
 #pragma simd
-   for( size_t i = 0 ; i < 3*npts ; i++ )
-      u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
+  for( size_t i = 0 ; i < 3*npts ; i++ )
+    u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
+}
+
+//-----------------------------------------------------------------------
+void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
+		      float_sw4* __restrict__ um, float_sw4 dt2i )
+{
+  const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
+#pragma omp parallel for
+#pragma ivdep
+#pragma simd
+  for( size_t i = 0 ; i < 3*npts ; i++ )
+    um[i] = dt2i*(up[i]-2*u[i]+um[i]);
 }
 
 // //-----------------------------------------------------------------------
@@ -1913,20 +1927,7 @@ void EW::dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 // }
 
 //-----------------------------------------------------------------------
-void EW::dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		    float_sw4* __restrict__ up, float_sw4* __restrict__ u,
-		    float_sw4* __restrict__ um, float_sw4 dt2i )
-{
-   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel for
-#pragma ivdep
-#pragma simd
-   for( size_t i = 0 ; i < 3*npts ; i++ )
-      um[i] = dt2i*(up[i]-2*u[i]+um[i]);
-}
-
-//-----------------------------------------------------------------------
-void EW::satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
+void satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
 		  float_sw4 dt, float_sw4 cfreq, int ifirst, int ilast,
 		  int jfirst, int jlast, int kfirst, int klast )
 {
@@ -1945,7 +1946,7 @@ void EW::satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
 }
 
 //-----------------------------------------------------------------------
-void EW::solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
+void solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
 			    int kfirst, int klast,
 			    float_sw4* __restrict__ a_alpha, float_sw4 cof,
 			    float_sw4* __restrict__ a_up )
@@ -1985,7 +1986,7 @@ void EW::solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
+void solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
 			   int kfirst, int klast, float_sw4* __restrict__ a_u,
 			   float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_la,
 			   float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
@@ -2062,7 +2063,7 @@ void EW::solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
+void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
 			     int kfirst, int klast, int nz, float_sw4* __restrict__ a_alphap,
 			     float_sw4* __restrict__ a_alpham, float_sw4* __restrict__ a_muve,
 			     float_sw4* __restrict__ a_lave, float_sw4* __restrict__ a_bforcerhs,
@@ -2549,3 +2550,5 @@ void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #undef sgstry
 #undef bforcerhs
 }
+
+//}

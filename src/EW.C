@@ -44,6 +44,9 @@
 #include "startEnd.h"
 #include "version.h"
 #include "Byteswapper.h"
+
+#include "cf_interface.h"
+
 #include "F77_FUNC.h"
 
 extern "C" {

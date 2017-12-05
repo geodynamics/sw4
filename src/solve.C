@@ -32,11 +32,10 @@
 
 #include "EW.h"
 #include "impose_cartesian_bc.h"
-//#include "impose_curvilinear_bc.h"
-#include "F77_FUNC.h"
+#include "cf_interface.h"
 
 #define SQR(x) ((x)*(x))
-extern "C" {
+extern "C" { // Fortran prototypes (to be removed once arguments are made equivalent)
    void tw_aniso_free_surf_z(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                              int kz, float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 omm,
 			     float_sw4* phc, float_sw4* bforce, float_sw4 h, float_sw4 zmin );
@@ -191,9 +190,7 @@ extern "C" {
    void twilightfortwind( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*,
 			  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*,
 			  int*, int*, int*, int* );
-   void rhs4th3fortwind( int*, int*, int*, int*, int*, int*, int*, int*, float_sw4*,
-			 float_sw4*, float_sw4*,float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-			 float_sw4*, float_sw4*, float_sw4*, char*, int*, int*, int*, int* );
+
    void forcingfort( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, 
 		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4* );
    void forcingfortsg(int*, int*, int*, int*, int*, 
@@ -213,17 +210,6 @@ extern "C" {
 			      float_sw4 *met, int *side, float_sw4 *sbop, int *usesg, float_sw4 *sgstrx,
 			      float_sw4 *sgstry );
 }
-   void addsg4wind_ci( float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* ,
-		       float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* ,
-		       float_sw4*, int, int, int, int, int, int, float_sw4, int, int, int, int );
-   void ve_bndry_stress_curvi_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nz,
-                              float_sw4 *alphap, float_sw4 *muve, float_sw4 *lave, float_sw4 *bforcerhs, 
-			      float_sw4 *met, int side, float_sw4 *sbop, int usesg, float_sw4 *sgstrx,
-			      float_sw4 *sgstry );
-   void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                        int klast, float_sw4 *u, float_sw4 *mu, float_sw4 *la, float_sw4 *bforcerhs, 
-			float_sw4 *met, float_sw4 *sbop, int usesg, float_sw4 *sgstrx, float_sw4 *sgstry );
-
 
 //--------------------------------------------------------------------
 void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
@@ -2420,8 +2406,9 @@ void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
-                                        Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt,
-                                        Sarray& Unext, int g, int kic, float_sw4 t, vector<GridPointSource*> point_sources )
+                                        Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm,
+					Sarray& Utt, Sarray& Unext, int g, int kic, float_sw4 t, 
+					vector<GridPointSource*> point_sources )
 {
    //
    // NOTE: This routine is called by enforceIC() after the predictor stage to calculate the interior contribution to
@@ -2432,14 +2419,23 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    float_sw4 idt2 = 1/(mDt*mDt);
    // to evaluate L(Up_tt) for k=kic, we need Up(k) in the vicinity of the interface
    // Note: Utt is needed at all points (interior + ghost) to evaluate L(Utt) in all interior points
-   for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
-      for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
-	 for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
-	 {
-	    Utt(1,i,j,k) = idt2*(a_Up(1,i,j,k)-2*a_U(1,i,j,k)+a_Um(1,i,j,k));
-	    Utt(2,i,j,k) = idt2*(a_Up(2,i,j,k)-2*a_U(2,i,j,k)+a_Um(2,i,j,k));
-	    Utt(3,i,j,k) = idt2*(a_Up(3,i,j,k)-2*a_U(3,i,j,k)+a_Um(3,i,j,k));
-	 }
+
+   if (m_croutines) // optimized C-version for reversed index ordering
+     dpdmt_wind( Utt.m_ib, Utt.m_ie, Utt.m_jb, Utt.m_je, Utt.m_kb, Utt.m_ke, a_U.m_kb, a_U.m_ke,
+		 a_Up.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), Utt.c_ptr(), idt2 );
+   else
+   {
+     for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
+       for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
+   	 for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
+   	 {
+   	    Utt(1,i,j,k) = idt2*(a_Up(1,i,j,k)-2*a_U(1,i,j,k)+a_Um(1,i,j,k));
+   	    Utt(2,i,j,k) = idt2*(a_Up(2,i,j,k)-2*a_U(2,i,j,k)+a_Um(2,i,j,k));
+   	    Utt(3,i,j,k) = idt2*(a_Up(3,i,j,k)-2*a_U(3,i,j,k)+a_Um(3,i,j,k));
+   	 }
+   }
+   
+
 // all points (for mMu, mLambda
 
    int ib=m_iStart[g], jb=m_jStart[g], kb=m_kStart[g];
@@ -2454,16 +2450,13 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    Lutt.set_to_zero(); // Keep memory checker happy
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
-   if( m_croutines )
-      rhs4th3fortwind_ci( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof,
+
+// there are C and Fortran versions of this routine that are selected by the Makefile
+   rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof,
 		       m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
 		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 		       m_sg_str_z[g], op, kbu, keu, kic, kic );
-   else
-      rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof,
-		       m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
-		       mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-		       m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic );
+
 // Plan: 1) loop over all mechanisms, 2) precompute d^2 alpha/dt^2 and store in Utt, 3) accumulate visco-elastic stresses
    if( m_use_attenuation && m_number_mechanisms > 0 )
    {
@@ -2487,16 +2480,10 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 // NEW June 13, 2017: add in visco-elastic terms
          float_sw4* mua_ptr = mMuVE[g][a].c_ptr();
          float_sw4* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
-	 if( m_croutines )
-	    rhs4th3fortwind_ci( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof_no_gp, 
-				m_bope, m_ghcof_no_gp, Lutt.c_ptr(), Utt.c_ptr(), mua_ptr, //use stencil WITHOUT ghost points
-				lambdaa_ptr, mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-				m_sg_str_z[g], op, kbu, keu, kic, kic );
-	 else
-	    rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof_no_gp, 
+	 rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof_no_gp, 
 			     m_bope, m_ghcof_no_gp, Lutt.c_ptr(), Utt.c_ptr(), mua_ptr, //use stencil WITHOUT ghost points
-			     lambdaa_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-			     m_sg_str_z[g], &op, &kbu, &keu, &kic, &kic ); 
+			     lambdaa_ptr, mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+			     m_sg_str_z[g], op, kbu, keu, kic, kic );
       } // end for a      
    } // end if using attenuation
    
@@ -2525,6 +2512,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    {
      // Default: m_point_source_test, m_lamb_test or full seismic case
       force.set_to_zero();
+// AP: Can we do omp for around this loop?
       for( int s = 0 ; s < point_sources.size() ; s++ )
       {
 	 if( point_sources[s]->m_grid == g && point_sources[s]->m_k0 == kic )
@@ -2539,17 +2527,18 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    }
 
    float_sw4 cof = mDt*mDt*mDt*mDt/12.0;
-   // for( int j=Unext.m_jb ; j <= Unext.m_je ; j++ )
-   //    for( int i=Unext.m_ib ; i <= Unext.m_ie ; i++ )
-#pragma omp parallel for
-   for( int j=Unext.m_jb+2 ; j <= Unext.m_je-2 ; j++ )
-      for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
-      {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
-	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+force(1,i,j,kic));
-	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+force(2,i,j,kic));
-	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+force(3,i,j,kic));
-      }
+// #pragma omp parallel for
+//    for( int j=Unext.m_jb+2 ; j <= Unext.m_je-2 ; j++ )
+//       for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
+//       {
+// 	 float_sw4 irho=cof/mRho[g](i,j,kic);
+// 	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+force(1,i,j,kic));
+// 	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+force(2,i,j,kic));
+// 	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+force(3,i,j,kic));
+//       }
+
+   update_unext( ib, ie, jb, je, kb, ke, Unext.c_ptr(), a_Up.c_ptr(), Lutt.c_ptr(), force.c_ptr(), 
+		 mRho[g].c_ptr(), cof, kic);
 
 // add in super-grid damping terms (does it make a difference?)
    if (usingSupergrid()) // Assume 4th order AD, Cartesian grid
@@ -2592,16 +2581,10 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    int nz = m_global_nz[g];
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
-   if( m_croutines )
-      rhs4th3fortwind_ci( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof, // ghost point operators for elastic part
-			  m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-			  mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-			  m_sg_str_z[g], op, kb, ke, kic, kic ); 
-   else
-      rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof, // ghost point operators for elastic part
+   rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof, // ghost point operators for elastic part
 		       m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-		       mLambda[g].c_ptr(), &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-		       m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
+		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_sg_str_z[g], op, kb, ke, kic, kic ); 
 // Note: 4 last arguments of the above function call:
 // (kb,ke) is the declared size of Up in the k-direction
 // (kic,kic) is the declared size of Lu in the k-direction
@@ -2615,16 +2598,10 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
          float_sw4* alpha_ptr = a_AlphaVEp[a].c_ptr();
          float_sw4* mua_ptr = mMuVE[g][a].c_ptr();
          float_sw4* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
-	 if( m_croutines )
-	    rhs4th3fortwind_ci( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof_no_gp, // NO ghost points for attenuation
-                          m_bope, m_ghcof_no_gp, Lu.c_ptr(), alpha_ptr, mua_ptr,
-                          lambdaa_ptr, mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-                          m_sg_str_z[g], op, kb, ke, kic, kic );
-	 else
-	    rhs4th3fortwind( &ib, &ie, &jb, &je, &kb, &ke, &nz, m_onesided[g], m_acof_no_gp,//NO ghost points for attenuation
+	 rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof_no_gp, // NO ghost points for attenuation
 			     m_bope, m_ghcof_no_gp, Lu.c_ptr(), alpha_ptr, mua_ptr,
-			     lambdaa_ptr, &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
-			     m_sg_str_z[g], &op, &kb, &ke, &kic, &kic ); 
+			     lambdaa_ptr, mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+			     m_sg_str_z[g], op, kb, ke, kic, kic );
       }
    }
    

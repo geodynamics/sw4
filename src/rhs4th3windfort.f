@@ -1,7 +1,8 @@
-      subroutine rhs4th3fortwind( ifirst, ilast, jfirst, jlast, kfirst, 
+      subroutine rhs4th3windfort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
      +     Lu, u, mu, la, h, strx, stry, strz, op, 
-     +     kfirstu, klastu, kfirstw, klastw ) bind(c)
+     +     kfirstu, klastu, kfirstw, klastw ) 
+     +     bind(c, name="rhs4th3wind")
 
 ***********************************************************************
 *** Computes the L(u) = div(stress) operator on a subdomain 
@@ -30,9 +31,12 @@
       real*8 tf, i6, i144, i12
       parameter( tf=3d0/4, i6=1d0/6, i144=1d0/144, i12=1d0/12 )
 
-      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
-      integer nz, onesided(6), m, q, kb, mb, qb, k1, k2
-      integer kfirstu,klastu,kfirstw,klastw
+      integer, value:: ifirst, ilast, jfirst, jlast, kfirst, klast, nz
+      real*8, value:: h
+      character*1, value:: op
+      integer, value:: kfirstu, klastu, kfirstw, klastw
+      integer i, j, k
+      integer onesided(6), m, q, kb, mb, qb, k1, k2
       real*8 acof(6,8,8), bope(6,8), ghcof(6)
       real*8 Lu(3,ifirst:ilast,jfirst:jlast,kfirstw:klastw)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirstu:klastu)
@@ -46,10 +50,9 @@
       real*8 lau3zy, u3zjm2, u3zjm1, u3zjp1, u3zjp2
       real*8 mu1zx, u1zim2, u1zim1, u1zip1, u1zip2
       real*8 mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2
-      real*8 r1, r2, r3, h, cof, d4a, d4b, a1
+      real*8 r1, r2, r3, cof, d4a, d4b, a1
       real*8 strx(ifirst:ilast), stry(jfirst:jlast), strz(kfirst:klast)
       logical upper, lower
-      character*1 op
       parameter( d4a=2d0/3, d4b=-1d0/12 )
 
       cof = 1d0/(h*h)

@@ -1,22 +1,36 @@
 #ifndef SW4_RHS4TH3C_H
 #include "sw4.h"
 
-void rhs4th3fortwind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			 int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
-			 float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
-			 float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-			 float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-			 float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			 float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu, int kfirstw,
-			 int klastw );
+#ifdef SW4_NOC
+extern "C" {
+#endif
+void update_unext( int ib, int ie, int jb, int je, int kb, int ke,
+		   float_sw4* __restrict__ a_unext, float_sw4* __restrict__ a_up,
+		   float_sw4* __restrict__ a_lutt, float_sw4* __restrict__ a_force,
+		   float_sw4* __restrict__ a_rho, float_sw4 cof, int kic );
+
+void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u, int ke_u,
+		 float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_utt,
+		 float_sw4 dt2i );
+
+void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
+		  float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
+		  float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+		  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+		  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+		  float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu, int kfirstw,
+		  int klastw );
 
 void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
 			  float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
 			  float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
 			  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-			  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			  float_sw4* __restrict__ a_strz, char op );
+			  float_sw4 h, float_sw4* __restrict__ a_strx, 
+			  float_sw4* __restrict__ a_stry,  float_sw4* __restrict__ a_strz, 
+			  char op );
 
 void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
@@ -81,5 +95,20 @@ void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
 			 float_sw4* __restrict__ a_memforce, float_sw4* __restrict__ a_muvebnd, 
 			 float_sw4* __restrict__ a_lambdavebnd, float_sw4 s[5], float_sw4& cof,
 			 int usesg, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry );
+
+   void addsg4wind_ci( float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* ,
+		       float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* , float_sw4* ,
+		       float_sw4*, int, int, int, int, int, int, float_sw4, int, int, int, int );
+   void ve_bndry_stress_curvi_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nz,
+                              float_sw4 *alphap, float_sw4 *muve, float_sw4 *lave, float_sw4 *bforcerhs, 
+			      float_sw4 *met, int side, float_sw4 *sbop, int usesg, float_sw4 *sgstrx,
+			      float_sw4 *sgstry );
+   void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+                        int klast, float_sw4 *u, float_sw4 *mu, float_sw4 *la, float_sw4 *bforcerhs, 
+			float_sw4 *met, float_sw4 *sbop, int usesg, float_sw4 *sgstrx, float_sw4 *sgstry );
+
+#ifdef SW4_NOC
+}
+#endif
 
 #endif
