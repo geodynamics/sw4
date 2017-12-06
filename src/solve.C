@@ -2354,19 +2354,23 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    }
 
    float_sw4 cof = mDt*mDt*mDt*mDt/12.0;
-// #pragma omp parallel for
-//    for( int j=Unext.m_jb+2 ; j <= Unext.m_je-2 ; j++ )
-//       for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
-//       {
-// 	 float_sw4 irho=cof/mRho[g](i,j,kic);
-// 	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+force(1,i,j,kic));
-// 	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+force(2,i,j,kic));
-// 	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+force(3,i,j,kic));
-//       }
 
-   update_unext( ib, ie, jb, je, kb, ke, Unext.c_ptr(), a_Up.c_ptr(), Lutt.c_ptr(), force.c_ptr(), 
-		 mRho[g].c_ptr(), cof, kic);
-
+   if (m_croutines)
+     update_unext( ib, ie, jb, je, kb, ke, Unext.c_ptr(), a_Up.c_ptr(), Lutt.c_ptr(), force.c_ptr(), 
+		   mRho[g].c_ptr(), cof, kic);
+   else
+   {
+#pragma omp parallel for
+     for( int j=Unext.m_jb+2 ; j <= Unext.m_je-2 ; j++ )
+       for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
+       {
+	 float_sw4 irho=cof/mRho[g](i,j,kic);
+	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+force(1,i,j,kic));
+	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+force(2,i,j,kic));
+	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+force(3,i,j,kic));
+       }
+   }
+   
 // add in super-grid damping terms (does it make a difference?)
    if (usingSupergrid()) // Assume 4th order AD, Cartesian grid
    {
