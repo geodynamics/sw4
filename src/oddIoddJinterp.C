@@ -201,11 +201,14 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 
 
 //--------------------------------- Optimized version
-void oddIoddJinterpOpt(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf, Sarray &Rhof, 
-		       Sarray &Uc, Sarray &Muc, Sarray &Lambdac, Sarray &Rhoc,
-		       Sarray &Mufs, Sarray &Mlfs,
-		       Sarray &Unextf, float_sw4* __restrict__ a_bf, Sarray &Unextc, Sarray &Bc,
-		       int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], 
+void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_muf, 
+		       float_sw4* __restrict__ a_lambdaf, float_sw4* __restrict__ a_rhof, 
+		       float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_muc, 
+		       float_sw4* __restrict__ a_lambdac, float_sw4* __restrict__ a_rhoc,
+		       float_sw4* __restrict__ a_mufs,   float_sw4* __restrict__ a_mlfs,
+		       float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bf, 
+		       float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
+		       int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[], 
 		       int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
 		       int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
 		       float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
@@ -214,11 +217,18 @@ void oddIoddJinterpOpt(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambd
 // stretching on the coarse side
   const int iStartC = a_iStart[gc];
   const int jStartC = a_jStart[gc];
+  const int kStartC = a_kStart[gc];
+
+  const int iEndC = a_iEnd[gc];
+  const int jEndC = a_jEnd[gc];
+  const int kEndC = a_kEnd[gc];
 
   const int iStartF = a_iStart[gf];
   const int jStartF = a_jStart[gf];
+  const int kStartF = a_kStart[gf];
   const int iEndF = a_iEnd[gf];
   const int jEndF = a_jEnd[gf];
+  const int kEndF = a_kEnd[gf];
   
 #define strc_x(i) a_strc_x[(i-iStartC)]   
 #define strc_y(j) a_strc_y[(j-jStartC)]   
@@ -232,8 +242,37 @@ void oddIoddJinterpOpt(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambd
   const int nijF   = niF*(jEndF-jStartF+1);
   const int nijk_bf = nijF*(1);
   const int base3_bf = (iStartF+niF*jStartF+nijF*nkf+nijk_bf); // only one k=nkf
+#define Bf(c,i,j,k)     a_bf[-base3_bf+i+niF*(j)+nijF*(k)+nijk_bf*(c)]   
+#define Unextf(c,i,j,k) a_unextf[-base3_bf+i+niF*(j)+nijF*(k)+nijk_bf*(c)] // same size as Bf
 
-#define Bf(c,i,j,k) a_bf[-base3_bf+i+niF*(j)+nijF*(k)+nijk_bf*(c)]   
+  const int base_mufs = (iStartF+niF*jStartF+nijF*nkf); // only one k=nkf
+#define Mufs(i,j,k)     a_mufs[-base_mufs+i+niF*(j)+nijF*(k)]
+#define Mlfs(i,j,k)     a_mlfs[-base_mufs+i+niF*(j)+nijF*(k)] // same size as Mufs
+ 
+  const int niC    = iEndC-iStartC+1;
+  const int nijC   = niC*(jEndC-jStartC+1);
+  const int nijk_unextc = nijC*(1);
+  const int base3_unextc = (iStartC+niC*jStartC+nijC*1+nijk_unextc); // only one k=1
+#define Unextc(c,i,j,k) a_unextc[-base3_unextc+i+niC*(j)+nijC*(k)+nijk_unextc*(c)]   
+#define Bc(c,i,j,k)     a_bc[-base3_unextc+i+niC*(j)+nijC*(k)+nijk_unextc*(c)] // same size as Unextc  
+
+  const int nijk_uc = nijC*(kEndC-kStartC+1);
+  const int base3_uc = (iStartC+niC*jStartC+nijC*kStartC+nijk_uc*1); // c-index has base=1 
+#define Uc(c,i,j,k)   a_uc[-base3_uc+i+niC*(j)+nijC*(k)+nijk_uc*(c)]   
+
+  const int base_rhoc = (iStartC+niC*jStartC+nijC*kStartC);
+#define Rhoc(i,j,k)   a_rhoc[-base_rhoc+i+niC*(j)+nijC*(k)]   
+#define Muc(i,j,k)    a_muc[-base_rhoc+i+niC*(j)+nijC*(k)]   // same size as Rhoc
+#define Lambdac(i,j,k) a_lambdac[-base_rhoc+i+niC*(j)+nijC*(k)] // same size as Rhoc
+
+  const int nijk_uf = nijF*(kEndF-kStartF+1);
+  const int base3_uf = (iStartF+niF*jStartF+nijF*kStartF+nijk_uf*1); // c-index has base=1 
+#define Uf(c,i,j,k)   a_uf[-base3_uf+i+niF*(j)+nijF*(k)+nijk_uf*(c)]   
+
+  const int base_rhof = (iStartF+niF*jStartF+nijF*kStartF);
+#define Rhof(i,j,k)    a_rhof[-base_rhof+i+niF*(j)+nijF*(k)]   
+#define Muf(i,j,k)     a_muf[-base_rhof+i+niF*(j)+nijF*(k)]   // same size as Rhof
+#define Lambdaf(i,j,k) a_lambdaf[-base_rhof+i+niF*(j)+nijF*(k)]  // same size as Rhof
 
 //
   const int icb = a_iStartInt[gc];

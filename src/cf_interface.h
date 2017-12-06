@@ -6,11 +6,14 @@
 extern "C" {
 #endif
 
-void oddIoddJinterpOpt(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf, Sarray &Rhof, 
-		       Sarray &Uc, Sarray &Muc, Sarray &Lambdac, Sarray &Rhoc,
-		       Sarray &Mufs, Sarray &Mlfs,
-		       Sarray &Unextf, float_sw4* __restrict__ a_bf, Sarray &Unextc, Sarray &Bc,
-		       int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], 
+void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_muf, 
+		       float_sw4* __restrict__ a_lambdaf, float_sw4* __restrict__ a_rhof, 
+		       float_sw4* __restrict__ a_uc, float_sw4* __restrict__ amuc, 
+		       float_sw4* __restrict__ a_lambdac, float_sw4* __restrict__ a_rhoc,
+		       float_sw4* __restrict__ a_mufs, float_sw4* __restrict__ a_mlfs,
+		       float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bf, 
+		       float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
+		       int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[], 
 		       int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
 		       int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
 		       float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 

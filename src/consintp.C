@@ -129,11 +129,11 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
       if (m_croutines)
 // optimized version of update for odd i and odd j
-	oddIoddJinterpOpt(rmax, Uf, Muf, Lambdaf, Rhof, 
-			  Uc, Muc, Lambdac, Rhoc,
-			  Mufs, Mlfs,
-			  Unextf, Bf.c_ptr(), Unextc, Bc,
-			  m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), 
+	oddIoddJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(),
+			  Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
+			  Mufs.c_ptr(), Mlfs.c_ptr(),
+			  Unextf.c_ptr(), Bf.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
+			  m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
 			  m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			  gf, gc, nkf, mDt, hf, hc, cof, relax,
 			  a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
