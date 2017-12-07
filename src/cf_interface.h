@@ -6,6 +6,45 @@
 extern "C" {
 #endif
 
+void evenIevenJinterpOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_muf, 
+			 float_sw4* __restrict__ a_lambdaf, float_sw4* __restrict__ a_rhof, 
+			 float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_muc, 
+			 float_sw4* __restrict__ a_lambdac, float_sw4* __restrict__ a_rhoc,
+			 float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
+			 float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bf, 
+			 float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
+			 int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[], 
+			 int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
+			 int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
+			 float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
+			 float_sw4 a_sbop[], float_sw4 a_ghcof[]);
+
+void evenIoddJinterpOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_muf, 
+			float_sw4* __restrict__ a_lambdaf, float_sw4* __restrict__ a_rhof, 
+			float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_muc, 
+			float_sw4* __restrict__ a_lambdac, float_sw4* __restrict__ a_rhoc,
+			float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
+			float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bf, 
+			float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
+			int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[], 
+			int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
+			int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
+			float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
+			float_sw4 a_sbop[], float_sw4 a_ghcof[]);
+
+void oddIevenJinterpOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_muf, 
+			float_sw4* __restrict__ a_lambdaf, float_sw4* __restrict__ a_rhof, 
+			float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_muc, 
+			float_sw4* __restrict__ a_lambdac, float_sw4* __restrict__ a_rhoc,
+			float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
+			float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bf, 
+			float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
+			int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[], 
+			int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
+			int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
+			float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
+			float_sw4 a_sbop[], float_sw4 a_ghcof[]);
+
 void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_muf, 
 		       float_sw4* __restrict__ a_lambdaf, float_sw4* __restrict__ a_rhof, 
 		       float_sw4* __restrict__ a_uc, float_sw4* __restrict__ amuc, 

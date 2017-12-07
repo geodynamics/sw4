@@ -214,7 +214,6 @@ void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw
 		       float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
 		       float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
-// stretching on the coarse side
   const int iStartC = a_iStart[gc];
   const int jStartC = a_jStart[gc];
   const int kStartC = a_kStart[gc];
@@ -230,6 +229,7 @@ void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw
   const int jEndF = a_jEnd[gf];
   const int kEndF = a_kEnd[gf];
   
+// stretching on the coarse side
 #define strc_x(i) a_strc_x[(i-iStartC)]   
 #define strc_y(j) a_strc_y[(j-jStartC)]   
 
@@ -299,156 +299,249 @@ void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw
 // residuals
   float_sw4 rmax1=0, rmax2=0, rmax3=0;
 
-#pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
-  for( int jc= jcb ; jc <= jce ; jc++ )
-    for( int ic= icb ; ic <= ice ; ic++ )
-    {
-      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
+//  int c=1;
+// #pragma omp parallel reduction(max:rmax1,rmax2,rmax3)
+//     {
+// # pragma omp for
+#pragma omp parallel for reduction(max:rmax1)
+    for( int jc= jcb ; jc <= jce ; jc++ )
+#pragma omp simd
+#pragma ivdep
+      for( int ic= icb ; ic <= ice ; ic++ )
+      {
+	float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
 // i odd, j odd
-      int i=2*ic-1, j=2*jc-1;
-      // setup 2x2 system matrix
-      // unknowns: (Uf, Uc)
+	int i=2*ic-1, j=2*jc-1;
+	// setup 2x2 system matrix
+	// unknowns: (Uf, Uc)
 // eqn 1: continuity of normal stress: NEED stretching
-      a11 = 0.25*Mufs(i,j,nkf)*a_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
-      a12 = Muc(ic,jc,1)*a_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));  // ihc = 1/h on the coarse grid
+	a11 = 0.25*Mufs(i,j,nkf)*a_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
+	a12 = Muc(ic,jc,1)*a_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));  // ihc = 1/h on the coarse grid
 // eqn 2: continuity of displacement
 // nuf = dt^2/(cof * hf^2), nuc = dt^2/(cof * hc^2)
-      a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*a_ghcof[0]; 
-      a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*a_ghcof[0];
-      for( int c=1 ; c <= 2 ; c++ ) //  the 2 tangential components ? 
-      {
+	a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*a_ghcof[0]; 
+	a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*a_ghcof[0];
 // apply the restriction operator to the normal stress on the interface (Bf is on the fine grid)
 // scale Bf by 1/strf ?
 	b1  = i1024*( 
-	  Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
-	  +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
-	  +16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) // with Bf(i,j)
-	  +9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
-	  Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf)
+	  Bf(1,i-3,j-3,nkf)-9*Bf(1,i-3,j-1,nkf)-16*Bf(1,i-3,j,nkf)-9*Bf(1,i-3,j+1,nkf)+Bf(1,i-3,j+3,nkf)
+	  +9*(-Bf(1,i-1,j-3,nkf)+9*Bf(1,i-1,j-1,nkf)+16*Bf(1,i-1,j,nkf)+9*Bf(1,i-1,j+1,nkf)-Bf(1,i-1,j+3,nkf))
+	  +16*(-Bf(1,i,  j-3,nkf)+9*Bf(1,i,  j-1,nkf)+16*Bf(1,i,  j,nkf)+9*Bf(1,i,  j+1,nkf)-Bf(1,i,  j+3,nkf)) // with Bf(i,j)
+	  +9*(-Bf(1,i+1,j-3,nkf)+9*Bf(1,i+1,j-1,nkf)+16*Bf(1,i+1,j,nkf)+9*Bf(1,i+1,j+1,nkf)-Bf(1,i+1,j+3,nkf)) +
+	  Bf(1,i+3,j-3,nkf)-9*Bf(1,i+3,j-1,nkf)-16*Bf(1,i+3,j,nkf)-9*Bf(1,i+3,j+1,nkf)+Bf(1,i+3,j+3,nkf)
 	  );
 
 // scale Muf by 1/strf ?
 	b1 = b1 - i1024*a_sbop[0]*ihf*(
-	  Mufs(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Mufs(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
-	  -16*Mufs(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Mufs(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
-	  +Mufs(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
-	  9*(  -Mufs(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Mufs(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
-	       +16*Mufs(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Mufs(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
-	       -Mufs(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
-	  16*(  -Mufs(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Mufs(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) // NOTE: the Uf(i,j) term is in a11
-		+ 9*Mufs(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
-		-Mufs(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
-	  9*(  -Mufs(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Mufs(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
-	       +16*Mufs(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Mufs(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
-	       -Mufs(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
-	  Mufs(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Mufs(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
-	  -16*Mufs(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Mufs(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
-	  +Mufs(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
+	  Mufs(i-3,j-3,nkf)*Uf(1,i-3,j-3,nkf+1) - 9*Mufs(i-3,j-1,nkf)*Uf(1,i-3,j-1,nkf+1)
+	  -16*Mufs(i-3,j,  nkf)*Uf(1,i-3,  j,nkf+1) - 9*Mufs(i-3,j+1,nkf)*Uf(1,i-3,j+1,nkf+1)
+	  +Mufs(i-3,j+3,nkf)*Uf(1,i-3,j+3,nkf+1) +					    
+	  9*(  -Mufs(i-1,j-3,nkf)*Uf(1,i-1,j-3,nkf+1) + 9*Mufs(i-1,j-1,nkf)*Uf(1,i-1,j-1,nkf+1) 
+	       +16*Mufs(i-1,j,  nkf)*Uf(1,i-1,j,  nkf+1) + 9*Mufs(i-1,j+1,nkf)*Uf(1,i-1,j+1,nkf+1) 
+	       -Mufs(i-1,j+3,nkf)*Uf(1,i-1,j+3,nkf+1) ) +
+	  16*(  -Mufs(i,  j-3,nkf)*Uf(1,i,  j-3,nkf+1) + 9*Mufs(i,  j-1,nkf)*Uf(1,i,  j-1,nkf+1) // NOTE: the Uf(i,j) term is in a11
+		+ 9*Mufs(i,  j+1,nkf)*Uf(1,i,  j+1,nkf+1)
+		-Mufs(i,  j+3,nkf)*Uf(1,i,  j+3,nkf+1) ) + 
+	  9*(  -Mufs(i+1,j-3,nkf)*Uf(1,i+1,j-3,nkf+1) + 9*Mufs(i+1,j-1,nkf)*Uf(1,i+1,j-1,nkf+1)
+	       +16*Mufs(i+1,j,  nkf)*Uf(1,i+1,j,  nkf+1) + 9*Mufs(i+1,j+1,nkf)*Uf(1,i+1,j+1,nkf+1)
+	       -Mufs(i+1,j+3,nkf)*Uf(1,i+1,j+3,nkf+1) ) +
+	  Mufs(i+3,j-3,nkf)*Uf(1,i+3,j-3,nkf+1) - 9*Mufs(i+3,j-1,nkf)*Uf(1,i+3,j-1,nkf+1)
+	  -16*Mufs(i+3,j,  nkf)*Uf(1,i+3,j,  nkf+1) - 9*Mufs(i+3,j+1,nkf)*Uf(1,i+3,j+1,nkf+1)
+	  +Mufs(i+3,j+3,nkf)*Uf(1,i+3,j+3,nkf+1) );
 
 	// NEED stretching term in b1; scale Bc ?
-	b1 = b1 - Bc(c,ic,jc,1);
+	b1 = b1 - Bc(1,ic,jc,1);
 
-	b2 = Unextc(c,ic,jc,1)-Unextf(c,i,j,nkf); 
+	b2 = Unextc(1,ic,jc,1)-Unextf(1,i,j,nkf); 
 
 	deti=1/(a11*a22-a12*a21);
-	r1 = Uf(c,i,j,nkf+1);
-	r2 = Uc(c,ic,jc,0);
+	r1 = Uf(1,i,j,nkf+1);
+	r2 = Uc(1,ic,jc,0);
 // solve the linear 2x2 system
-	Uf(c,i,j,nkf+1) = deti*( a22*b1-a12*b2);
-	Uc(c,ic,jc,0)   = deti*(-a21*b1+a11*b2);
+	Uf(1,i,j,nkf+1) = deti*( a22*b1-a12*b2);
+	Uc(1,ic,jc,0)   = deti*(-a21*b1+a11*b2);
 // damp the update of the ghost point values (r1, r2) hold previous values
-	Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1) + (1-relax)*r1;
-	Uc(c,ic,jc,0)   = relax*Uc(c,ic,jc,0)   + (1-relax)*r2;
+	Uf(1,i,j,nkf+1) = relax*Uf(1,i,j,nkf+1) + (1-relax)*r1;
+	Uc(1,ic,jc,0)   = relax*Uc(1,ic,jc,0)   + (1-relax)*r2;
 // change in solution
-	r1 = r1-Uf(c,i,j,nkf+1);
-	r2 = r2-Uc(c,ic,jc,0);
+	r1 = r1-Uf(1,i,j,nkf+1);
+	r2 = r2-Uc(1,ic,jc,0);
 	//               rmax[c-1] = rmax[c-1] > fabs(r1) ? rmax[c-1] : fabs(r1);
 	//	       rmax[c-1] = rmax[c-1] > fabs(r2) ? rmax[c-1] : fabs(r2);
 
-	if( c==1 )
-	{
-	  rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
-	  rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
-	}
-	else
-	{
-	  rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
-	  rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
-	}
-	//	       if( c == 2 && ic == 12 && jc == 13 )
-	//	       {
-	//	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
-	//		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
-	//		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
-	//	       }
-      } // end for c=1,2
-            
-// setup the matrix for the 3rd component of the normal stress (different coefficients)
-      // NEED stretching terms in a11 & a12
-      a11 = 0.25*Mlfs(i,j,nkf)*a_sbop[0]*ihf; // Mlfs contains stretching
-      a12 = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*a_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));
+	// if( c==1 )
+	// {
+	rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
+	rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
+	// }
+	// else
+	// {
+	// 	rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
+	// 	rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
+	// }
+    
+      } // end for ic, jc
 
-      a21 = nuf/Rhof(i,j,nkf)*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))*a_ghcof[0];
-      a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*a_ghcof[0];
+//  c=2;
+//#pragma omp for
+#pragma omp parallel for reduction(max:rmax2)
+    for( int jc= jcb ; jc <= jce ; jc++ )
+#pragma omp simd
+#pragma ivdep
+      for( int ic= icb ; ic <= ice ; ic++ )
+      {
+	float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
+// i odd, j odd
+	int i=2*ic-1, j=2*jc-1;
+	// setup 2x2 system matrix
+	// unknowns: (Uf, Uc)
+// eqn 1: continuity of normal stress: NEED stretching
+	a11 = 0.25*Mufs(i,j,nkf)*a_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
+	a12 = Muc(ic,jc,1)*a_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));  // ihc = 1/h on the coarse grid
+// eqn 2: continuity of displacement
+// nuf = dt^2/(cof * hf^2), nuc = dt^2/(cof * hc^2)
+	a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*a_ghcof[0]; 
+	a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*a_ghcof[0];
+// apply the restriction operator to the normal stress on the interface (Bf is on the fine grid)
+// scale Bf by 1/strf ?
+	b1  = i1024*( 
+	  Bf(2,i-3,j-3,nkf)-9*Bf(2,i-3,j-1,nkf)-16*Bf(2,i-3,j,nkf)-9*Bf(2,i-3,j+1,nkf)+Bf(2,i-3,j+3,nkf)
+	  +9*(-Bf(2,i-1,j-3,nkf)+9*Bf(2,i-1,j-1,nkf)+16*Bf(2,i-1,j,nkf)+9*Bf(2,i-1,j+1,nkf)-Bf(2,i-1,j+3,nkf))
+	  +16*(-Bf(2,i,  j-3,nkf)+9*Bf(2,i,  j-1,nkf)+16*Bf(2,i,  j,nkf)+9*Bf(2,i,  j+1,nkf)-Bf(2,i,  j+3,nkf)) // with Bf(i,j)
+	  +9*(-Bf(2,i+1,j-3,nkf)+9*Bf(2,i+1,j-1,nkf)+16*Bf(2,i+1,j,nkf)+9*Bf(2,i+1,j+1,nkf)-Bf(2,i+1,j+3,nkf)) +
+	  Bf(2,i+3,j-3,nkf)-9*Bf(2,i+3,j-1,nkf)-16*Bf(2,i+3,j,nkf)-9*Bf(2,i+3,j+1,nkf)+Bf(2,i+3,j+3,nkf)
+	  );
+
+// scale Muf by 1/strf ?
+	b1 = b1 - i1024*a_sbop[0]*ihf*(
+	  Mufs(i-3,j-3,nkf)*Uf(2,i-3,j-3,nkf+1) - 9*Mufs(i-3,j-1,nkf)*Uf(2,i-3,j-1,nkf+1)
+	  -16*Mufs(i-3,j,  nkf)*Uf(2,i-3,  j,nkf+1) - 9*Mufs(i-3,j+1,nkf)*Uf(2,i-3,j+1,nkf+1)
+	  +Mufs(i-3,j+3,nkf)*Uf(2,i-3,j+3,nkf+1) +					    
+	  9*(  -Mufs(i-1,j-3,nkf)*Uf(2,i-1,j-3,nkf+1) + 9*Mufs(i-1,j-1,nkf)*Uf(2,i-1,j-1,nkf+1) 
+	       +16*Mufs(i-1,j,  nkf)*Uf(2,i-1,j,  nkf+1) + 9*Mufs(i-1,j+1,nkf)*Uf(2,i-1,j+1,nkf+1) 
+	       -Mufs(i-1,j+3,nkf)*Uf(2,i-1,j+3,nkf+1) ) +
+	  16*(  -Mufs(i,  j-3,nkf)*Uf(2,i,  j-3,nkf+1) + 9*Mufs(i,  j-1,nkf)*Uf(2,i,  j-1,nkf+1) // NOTE: the Uf(i,j) term is in a11
+		+ 9*Mufs(i,  j+1,nkf)*Uf(2,i,  j+1,nkf+1)
+		-Mufs(i,  j+3,nkf)*Uf(2,i,  j+3,nkf+1) ) + 
+	  9*(  -Mufs(i+1,j-3,nkf)*Uf(2,i+1,j-3,nkf+1) + 9*Mufs(i+1,j-1,nkf)*Uf(2,i+1,j-1,nkf+1)
+	       +16*Mufs(i+1,j,  nkf)*Uf(2,i+1,j,  nkf+1) + 9*Mufs(i+1,j+1,nkf)*Uf(2,i+1,j+1,nkf+1)
+	       -Mufs(i+1,j+3,nkf)*Uf(2,i+1,j+3,nkf+1) ) +
+	  Mufs(i+3,j-3,nkf)*Uf(2,i+3,j-3,nkf+1) - 9*Mufs(i+3,j-1,nkf)*Uf(2,i+3,j-1,nkf+1)
+	  -16*Mufs(i+3,j,  nkf)*Uf(2,i+3,j,  nkf+1) - 9*Mufs(i+3,j+1,nkf)*Uf(2,i+3,j+1,nkf+1)
+	  +Mufs(i+3,j+3,nkf)*Uf(2,i+3,j+3,nkf+1) );
+
+	// NEED stretching term in b1; scale Bc ?
+	b1 = b1 - Bc(2,ic,jc,1);
+
+	b2 = Unextc(2,ic,jc,1)-Unextf(2,i,j,nkf); 
+
+	deti=1/(a11*a22-a12*a21);
+	r1 = Uf(2,i,j,nkf+1);
+	r2 = Uc(2,ic,jc,0);
+// solve the linear 2x2 system
+	Uf(2,i,j,nkf+1) = deti*( a22*b1-a12*b2);
+	Uc(2,ic,jc,0)   = deti*(-a21*b1+a11*b2);
+// damp the update of the ghost point values (r1, r2) hold previous values
+	Uf(2,i,j,nkf+1) = relax*Uf(2,i,j,nkf+1) + (1-relax)*r1;
+	Uc(2,ic,jc,0)   = relax*Uc(2,ic,jc,0)   + (1-relax)*r2;
+// change in solution
+	r1 = r1-Uf(2,i,j,nkf+1);
+	r2 = r2-Uc(2,ic,jc,0);
+	//               rmax[c-1] = rmax[c-1] > fabs(r1) ? rmax[c-1] : fabs(r1);
+	//	       rmax[c-1] = rmax[c-1] > fabs(r2) ? rmax[c-1] : fabs(r2);
+
+	// if( c==1 )
+	// {
+	//   rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
+	//   rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
+	// }
+	// else
+	// {
+	rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
+	rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
+//	}
+      } // end ic, jc
+  
+//  c=3;
+//#pragma omp for
+#pragma omp parallel for reduction(max:rmax3)
+      for( int jc= jcb ; jc <= jce ; jc++ )
+#pragma omp simd
+#pragma ivdep
+	for( int ic= icb ; ic <= ice ; ic++ )
+	{
+	  float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
+// i odd, j odd
+	  int i=2*ic-1, j=2*jc-1;
+
+// setup the matrix for the 3rd component of the normal stress (different coefficients)
+	  // NEED stretching terms in a11 & a12
+	  a11 = 0.25*Mlfs(i,j,nkf)*a_sbop[0]*ihf; // Mlfs contains stretching
+	  a12 = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*a_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));
+
+	  a21 = nuf/Rhof(i,j,nkf)*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))*a_ghcof[0];
+	  a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*a_ghcof[0];
 
 // apply the restriction operator to the fine grid normal stress grid function (Bf)
 // scale Bf for stretching?
-      b1  = i1024*( 
-	Bf(3,i-3,j-3,nkf)-9*Bf(3,i-3,j-1,nkf)-16*Bf(3,i-3,j,nkf)-9*Bf(3,i-3,j+1,nkf)+Bf(3,i-3,j+3,nkf) +
-	9*(-Bf(3,i-1,j-3,nkf)+9*Bf(3,i-1,j-1,nkf)+16*Bf(3,i-1,j,nkf)+9*Bf(3,i-1,j+1,nkf)-Bf(3,i-1,j+3,nkf)) +
-	16*(-Bf(3,i,  j-3,nkf)+9*Bf(3,i,  j-1,nkf)+16*Bf(3,i,  j,nkf)+9*Bf(3,i,  j+1,nkf)-Bf(3,i,  j+3,nkf)) + 
-	9*(-Bf(3,i+1,j-3,nkf)+9*Bf(3,i+1,j-1,nkf)+16*Bf(3,i+1,j,nkf)+9*Bf(3,i+1,j+1,nkf)-Bf(3,i+1,j+3,nkf)) +
-	Bf(3,i+3,j-3,nkf)-9*Bf(3,i+3,j-1,nkf)-16*Bf(3,i+3,j,nkf)-9*Bf(3,i+3,j+1,nkf)+Bf(3,i+3,j+3,nkf) );
+	  b1  = i1024*( 
+	    Bf(3,i-3,j-3,nkf)-9*Bf(3,i-3,j-1,nkf)-16*Bf(3,i-3,j,nkf)-9*Bf(3,i-3,j+1,nkf)+Bf(3,i-3,j+3,nkf) +
+	    9*(-Bf(3,i-1,j-3,nkf)+9*Bf(3,i-1,j-1,nkf)+16*Bf(3,i-1,j,nkf)+9*Bf(3,i-1,j+1,nkf)-Bf(3,i-1,j+3,nkf)) +
+	    16*(-Bf(3,i,  j-3,nkf)+9*Bf(3,i,  j-1,nkf)+16*Bf(3,i,  j,nkf)+9*Bf(3,i,  j+1,nkf)-Bf(3,i,  j+3,nkf)) + 
+	    9*(-Bf(3,i+1,j-3,nkf)+9*Bf(3,i+1,j-1,nkf)+16*Bf(3,i+1,j,nkf)+9*Bf(3,i+1,j+1,nkf)-Bf(3,i+1,j+3,nkf)) +
+	    Bf(3,i+3,j-3,nkf)-9*Bf(3,i+3,j-1,nkf)-16*Bf(3,i+3,j,nkf)-9*Bf(3,i+3,j+1,nkf)+Bf(3,i+3,j+3,nkf) );
 
-      b1 = b1 - i1024*a_sbop[0]*ihf*(
-	Mlfs(i-3,j-3,nkf)*Uf(3,i-3,j-3,nkf+1) - 9*Mlfs(i-3,j-1,nkf)*Uf(3,i-3,j-1,nkf+1)
-	-16*Mlfs(i-3,j,  nkf)*Uf(3,i-3,  j,nkf+1) - 9*Mlfs(i-3,j+1,nkf)*Uf(3,i-3,j+1,nkf+1)
-	+Mlfs(i-3,j+3,nkf)*Uf(3,i-3,j+3,nkf+1) +					    
-	9*(  -Mlfs(i-1,j-3,nkf)*Uf(3,i-1,j-3,nkf+1) + 9*Mlfs(i-1,j-1,nkf)*Uf(3,i-1,j-1,nkf+1) 
-	     +16*Mlfs(i-1,j,  nkf)*Uf(3,i-1,j,  nkf+1) + 9*Mlfs(i-1,j+1,nkf)*Uf(3,i-1,j+1,nkf+1) 
-	     -Mlfs(i-1,j+3,nkf)*Uf(3,i-1,j+3,nkf+1) ) +
-	16*(  -Mlfs(i,  j-3,nkf)*Uf(3,i,  j-3,nkf+1) + 9*Mlfs(i,  j-1,nkf)*Uf(3,i,  j-1,nkf+1) 
-	      + 9*Mlfs(i,  j+1,nkf)*Uf(3,i,  j+1,nkf+1)
-	      -Mlfs(i,  j+3,nkf)*Uf(3,i,  j+3,nkf+1) ) + 
-	9*(  -Mlfs(i+1,j-3,nkf)*Uf(3,i+1,j-3,nkf+1) + 9*Mlfs(i+1,j-1,nkf)*Uf(3,i+1,j-1,nkf+1)
-	     +16*Mlfs(i+1,j,  nkf)*Uf(3,i+1,j,  nkf+1) + 9*Mlfs(i+1,j+1,nkf)*Uf(3,i+1,j+1,nkf+1)
-	     -Mlfs(i+1,j+3,nkf)*Uf(3,i+1,j+3,nkf+1) ) +
-	Mlfs(i+3,j-3,nkf)*Uf(3,i+3,j-3,nkf+1) - 9*Mlfs(i+3,j-1,nkf)*Uf(3,i+3,j-1,nkf+1)
-	-16*Mlfs(i+3,j,  nkf)*Uf(3,i+3,j,  nkf+1) - 9*Mlfs(i+3,j+1,nkf)*Uf(3,i+3,j+1,nkf+1)
-	+Mlfs(i+3,j+3,nkf)*Uf(3,i+3,j+3,nkf+1) );
+	  b1 = b1 - i1024*a_sbop[0]*ihf*(
+	    Mlfs(i-3,j-3,nkf)*Uf(3,i-3,j-3,nkf+1) - 9*Mlfs(i-3,j-1,nkf)*Uf(3,i-3,j-1,nkf+1)
+	    -16*Mlfs(i-3,j,  nkf)*Uf(3,i-3,  j,nkf+1) - 9*Mlfs(i-3,j+1,nkf)*Uf(3,i-3,j+1,nkf+1)
+	    +Mlfs(i-3,j+3,nkf)*Uf(3,i-3,j+3,nkf+1) +					    
+	    9*(  -Mlfs(i-1,j-3,nkf)*Uf(3,i-1,j-3,nkf+1) + 9*Mlfs(i-1,j-1,nkf)*Uf(3,i-1,j-1,nkf+1) 
+		 +16*Mlfs(i-1,j,  nkf)*Uf(3,i-1,j,  nkf+1) + 9*Mlfs(i-1,j+1,nkf)*Uf(3,i-1,j+1,nkf+1) 
+		 -Mlfs(i-1,j+3,nkf)*Uf(3,i-1,j+3,nkf+1) ) +
+	    16*(  -Mlfs(i,  j-3,nkf)*Uf(3,i,  j-3,nkf+1) + 9*Mlfs(i,  j-1,nkf)*Uf(3,i,  j-1,nkf+1) 
+		  + 9*Mlfs(i,  j+1,nkf)*Uf(3,i,  j+1,nkf+1)
+		  -Mlfs(i,  j+3,nkf)*Uf(3,i,  j+3,nkf+1) ) + 
+	    9*(  -Mlfs(i+1,j-3,nkf)*Uf(3,i+1,j-3,nkf+1) + 9*Mlfs(i+1,j-1,nkf)*Uf(3,i+1,j-1,nkf+1)
+		 +16*Mlfs(i+1,j,  nkf)*Uf(3,i+1,j,  nkf+1) + 9*Mlfs(i+1,j+1,nkf)*Uf(3,i+1,j+1,nkf+1)
+		 -Mlfs(i+1,j+3,nkf)*Uf(3,i+1,j+3,nkf+1) ) +
+	    Mlfs(i+3,j-3,nkf)*Uf(3,i+3,j-3,nkf+1) - 9*Mlfs(i+3,j-1,nkf)*Uf(3,i+3,j-1,nkf+1)
+	    -16*Mlfs(i+3,j,  nkf)*Uf(3,i+3,j,  nkf+1) - 9*Mlfs(i+3,j+1,nkf)*Uf(3,i+3,j+1,nkf+1)
+	    +Mlfs(i+3,j+3,nkf)*Uf(3,i+3,j+3,nkf+1) );
 
 // setup the RHS
-      b1 = b1 - Bc(3,ic,jc,1); // need stretching terms in Bc
-      b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf); 
-      deti=1/(a11*a22-a12*a21);
+	  b1 = b1 - Bc(3,ic,jc,1); // need stretching terms in Bc
+	  b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf); 
+	  deti=1/(a11*a22-a12*a21);
 // previous values
-      r1 = Uf(3,i,j,nkf+1);
-      r2 = Uc(3,ic,jc,0);
+	  r1 = Uf(3,i,j,nkf+1);
+	  r2 = Uc(3,ic,jc,0);
 // solve the 2x2 system for component 3 of Uf and Uc
-      Uf(3,i,j,nkf+1) = deti*( a22*b1-a12*b2);
-      Uc(3,ic,jc,0)   = deti*(-a21*b1+a11*b2);
+	  Uf(3,i,j,nkf+1) = deti*( a22*b1-a12*b2);
+	  Uc(3,ic,jc,0)   = deti*(-a21*b1+a11*b2);
 // relax the updated value
-      Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1) + (1-relax)*r1;
-      Uc(3,ic,jc,0)   = relax*Uc(3,ic,jc,0)   + (1-relax)*r2;
+	  Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1) + (1-relax)*r1;
+	  Uc(3,ic,jc,0)   = relax*Uc(3,ic,jc,0)   + (1-relax)*r2;
 // change in ghost point values
-      r1 = r1-Uf(3,i,j,nkf+1);
-      r2 = r2-Uc(3,ic,jc,0);
+	  r1 = r1-Uf(3,i,j,nkf+1);
+	  r2 = r2-Uc(3,ic,jc,0);
 
-      //	       rmax[2] = rmax[2] > fabs(r1) ? rmax[2] : fabs(r1);
-      //	       rmax[2] = rmax[2] > fabs(r2) ? rmax[2] : fabs(r2);
-      rmax3 = rmax3 > fabs(r1) ? rmax3 : fabs(r1);
-      rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
+	  //	       rmax[2] = rmax[2] > fabs(r1) ? rmax[2] : fabs(r1);
+	  //	       rmax[2] = rmax[2] > fabs(r2) ? rmax[2] : fabs(r2);
+	  rmax3 = rmax3 > fabs(r1) ? rmax3 : fabs(r1);
+	  rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
 
-      //	       int c=3;
-      //	       if( c == 3 && ic == 12 && jc == 13 )
-      //	       {
-      //	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
-      //		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
-      //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
-      //	       }
-    } // end for ic, jc
+	  //	       int c=3;
+	  //	       if( c == 3 && ic == 12 && jc == 13 )
+	  //	       {
+	  //	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
+	  //		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
+	  //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
+	  //	       }
+	} // end for ic, jc
+//    } // end omp prallel reduction
+    
 
-  rmax[0] = rmax1;
-  rmax[1] = rmax2;
-  rmax[2] = rmax3;
+rmax[0] = rmax1;
+rmax[1] = rmax2;
+rmax[2] = rmax3;
 } // end oddIoddJinterp

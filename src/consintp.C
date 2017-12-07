@@ -151,32 +151,69 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //      
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
 //
-      oddIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
-      		      Uc, Muc, Lambdac, Rhoc,
-      		      Morc, Mlrc,
-      		      Unextf, Bf, Unextc, Bc,
-      		      m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-      		      gf, gc, nkf, mDt, hf, hc, cof, relax,
-      		      a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
-      		      m_sbop, m_ghcof);
+      if (m_croutines)
+// optimized version of update for odd i and even j
+	oddIevenJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(), 
+			   Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
+			   Morc.c_ptr(), Mlrc.c_ptr(),
+			   Unextf.c_ptr(), Bf.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
+			   m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			   m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			   gf, gc, nkf, mDt, hf, hc, cof, relax,
+			   a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+			   m_sbop, m_ghcof);
+      else
+	oddIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+			Uc, Muc, Lambdac, Rhoc,
+			Morc, Mlrc,
+			Unextf, Bf, Unextc, Bc,
+			m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			gf, gc, nkf, mDt, hf, hc, cof, relax,
+			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+			m_sbop, m_ghcof);
 
-      evenIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
-      		      Uc, Muc, Lambdac, Rhoc,
-      		      Morc, Mlrc,
-      		      Unextf, Bf, Unextc, Bc,
-      		      m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-      		      gf, gc, nkf, mDt, hf, hc, cof, relax,
-      		      a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
-      		      m_sbop, m_ghcof);
 
-      evenIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
-		       Uc, Muc, Lambdac, Rhoc,
-		       Morc, Mlrc,
-		       Unextf, Bf, Unextc, Bc,
-		       m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-		       gf, gc, nkf, mDt, hf, hc, cof, relax,
-		       a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
-		       m_sbop, m_ghcof);
+      if (m_croutines)
+// optimized version of update for even i and odd j
+	evenIoddJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(), 
+			   Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
+			   Morc.c_ptr(), Mlrc.c_ptr(),
+			   Unextf.c_ptr(), Bf.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
+			   m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			   m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			   gf, gc, nkf, mDt, hf, hc, cof, relax,
+			   a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+			   m_sbop, m_ghcof);
+      else
+	evenIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+			Uc, Muc, Lambdac, Rhoc,
+			Morc, Mlrc,
+			Unextf, Bf, Unextc, Bc,
+			m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			gf, gc, nkf, mDt, hf, hc, cof, relax,
+			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+			m_sbop, m_ghcof);
+
+      if (m_croutines)
+// optimized version of update for even i and even j
+	evenIevenJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(),  
+			    Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
+			    Morc.c_ptr(), Mlrc.c_ptr(),
+			    Unextf.c_ptr(), Bf.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
+			    m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			    m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			    gf, gc, nkf, mDt, hf, hc, cof, relax,
+			    a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+			    m_sbop, m_ghcof);
+      else
+	evenIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+			 Uc, Muc, Lambdac, Rhoc,
+			 Morc, Mlrc,
+			 Unextf, Bf, Unextc, Bc,
+			 m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			 gf, gc, nkf, mDt, hf, hc, cof, relax,
+			 a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+			 m_sbop, m_ghcof);
 
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
