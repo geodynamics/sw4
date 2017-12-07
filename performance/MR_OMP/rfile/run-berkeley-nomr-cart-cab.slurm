@@ -6,7 +6,7 @@
 numnodes=4
 
 #numprocspernode = Number of MPI-tasks per node
-for numprocspernode in 16 8 4; do
+for numprocspernode in 16; do
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
