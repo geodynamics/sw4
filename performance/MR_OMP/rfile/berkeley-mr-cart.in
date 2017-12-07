@@ -38,8 +38,9 @@ image mode=p y=6e3 cycle=0 file=vert
 #image mode=hvelmax z=0.0 timeInterval=5 file=berk
 
 # simple source (at least 1 source is needed to run)
-source x=2.5e3 y=2.5e3 z=1.5e3 mxy=1e18 t0=0.65 freq=7.85 type=Gaussian
+source x=6e3 y=6e3 z=1.5e3 mxy=1e18 t0=0.76 freq=7.85 type=Gaussian
 
 # record time histories
-rec x=2.5e3 y=2.5e3 depth=0 file=sta1 usgsformat=1 sacformat=0
+rec x=6.5e3 y=5.5e3 depth=0 file=sta1 usgsformat=1 sacformat=0
+
 

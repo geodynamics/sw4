@@ -258,7 +258,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   
 // Set up timers
   double time_start_solve = MPI_Wtime();
-  double time_measure[19];
+  double time_measure[20];
   double time_sum[9]={0,0,0,0,0,0,0,0,0};
   double bc_time_measure[5]={0,0,0,0,0};
 
