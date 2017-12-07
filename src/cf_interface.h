@@ -1,5 +1,6 @@
 #ifndef SW4_CF_INTERFACE_H
 #include "sw4.h"
+#include "Sarray.h"
 
 // the extern "c" is only needed for linking the Fortran version of these routines
 #ifdef SW4_NOC
