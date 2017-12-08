@@ -10,5 +10,5 @@
 # 
 #./test_sw4.py --verbose
 # default level is 0; level 2 tests all cases
-./test_sw4.py --level 1 -d optimize_mp_fort
+./test_sw4.py --level 1 -d optimize_mp
 

@@ -127,7 +127,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //
 // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
 
-      if (m_croutines)
+      if (false && m_croutines)// tmp
 // optimized version of update for odd i and odd j
 	oddIoddJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(),
 			  Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
@@ -151,7 +151,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //      
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
 //
-      if (m_croutines)
+      if (false && m_croutines) // tmp
 // optimized version of update for odd i and even j
 	oddIevenJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(), 
 			   Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
@@ -173,7 +173,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			m_sbop, m_ghcof);
 
 
-      if (m_croutines)
+      if (false && m_croutines) //tmp
 // optimized version of update for even i and odd j
 	evenIoddJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(), 
 			   Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
@@ -194,7 +194,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			m_sbop, m_ghcof);
 
-      if (m_croutines)
+      if (false && m_croutines) // tmp
 // optimized version of update for even i and even j
 	evenIevenJinterpOpt(rmax, Uf.c_ptr(), Muf.c_ptr(), Lambdaf.c_ptr(), Rhof.c_ptr(),  
 			    Uc.c_ptr(), Muc.c_ptr(), Lambdac.c_ptr(), Rhoc.c_ptr(),
@@ -233,7 +233,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    if( jacerr > m_citol && proc_zero() )
       cout << "EW::consintp, Warning, no convergence. err = " << jacerr << " tol= " << m_citol << endl;
       
-   if( proc_zero() && mVerbose >= 4 )
+   if( proc_zero() && mVerbose >= 4 ) 
       cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;
 #undef strc_x
 #undef strc_y

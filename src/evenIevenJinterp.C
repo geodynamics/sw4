@@ -50,6 +50,7 @@ void evenIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambda
 
 #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
   for( int j=jfb ; j <= jfe ; j+=2 )
+#pragma omp simd
     for( int i=ifb ; i <= ife ; i+=2 )
     {
       int ic, jc;
