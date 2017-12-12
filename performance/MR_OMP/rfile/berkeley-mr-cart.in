@@ -1,6 +1,7 @@
 # SW4 input file for testing the rfile command
 
 developer reporttiming=1 ctol=1e-5
+#developer ctol=1e-5
 
 # set pfs=1 if you are on a parallel file system
 fileio path=berkeley-mr-cart-results pfs=0 verbose=1

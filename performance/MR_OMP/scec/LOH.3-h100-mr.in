@@ -3,15 +3,14 @@
 # Final report for lifelines project 1A01, Pacific Eartquake
 # Engineering Center, 2001".
 
+developer ctol=1e-5
+
 grid h=100 x=30000 y=30000 z=17000 extrapolate=1
 time t=9
 fileio path=loh3-mr-results
 
 # mesh refinement along material jump (50*20 = 1000)
 refinement zmax=1000
-
-# the developer line is to get the reversed c-order in sw4lite
-developer checkfornan=0 reporttiming=1 corder=1
 
 # wave speeds are specified at 2.5 Hz, 3 viscoelastic mechanisms by default
 attenuation phasefreq=2.5 nmech=3 maxfreq=15

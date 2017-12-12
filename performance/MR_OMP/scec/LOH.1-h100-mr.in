@@ -21,7 +21,7 @@
 # use default values for the mesh refinement iteration
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 
-developer reporttiming=1 ctol=1e-5
+developer ctol=1e-5
 
 grid h=100 x=30000 y=30000 z=17000 extrapolate=1
 time t=9

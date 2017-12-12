@@ -1,6 +1,6 @@
 # SW4 input file for testing the rfile command
 
-developer reporttiming=1
+#developer reporttiming=1
 
 # set pfs=1 if you are on a parallel file system
 fileio path=berkeley-nomr-cart-results pfs=0
