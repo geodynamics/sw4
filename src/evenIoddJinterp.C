@@ -5,7 +5,7 @@
 void evenIoddJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf, Sarray &Rhof, 
 		     Sarray &Uc, Sarray &Muc, Sarray &Lambdac, Sarray &Rhoc,
 		     Sarray &Morc, Sarray &Mlrc,
-		     Sarray &Unextf, Sarray &Bf, Sarray &Unextc, Sarray &Bc,
+		     Sarray &Unextf, Sarray &Bf, Sarray &UnextcInterp, Sarray &Bc,
 		     int a_iStart[], int a_jStart[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
 		     int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
 		     float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
@@ -62,9 +62,9 @@ void evenIoddJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf
 	ic = i/2;
 	jc = (j+1)/2;
 // All Unextc terms
-	b1 = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
+//	b1 = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
 // All Uc terms
-	b1 = b1 + nuc*a_ghcof[0]*i16*(   -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+ 
+	b1 = UnextcInterp(c,i,j,1) + nuc*a_ghcof[0]*i16*(   -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+ 
 					 9*Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+ 
 					 9*Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1)
 					 -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1));
@@ -90,9 +90,9 @@ void evenIoddJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf
       ic = i/2;
       jc = (j+1)/2;
 // All Unextc terms
-      b1 = i16*(-Unextc(3,ic-1,jc,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic+1,jc,1))-Unextc(3,ic+2,jc,1));
+//      b1 = i16*(-Unextc(3,ic-1,jc,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic+1,jc,1))-Unextc(3,ic+2,jc,1));
 // All Uc terms
-      b1 = b1 + nuc*a_ghcof[0]*i16*(   -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+ 
+      b1 = UnextcInterp(3,i,j,1) + nuc*a_ghcof[0]*i16*(   -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+ 
 				       9*Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+ 
 				       9*Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1)
 				       -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1));

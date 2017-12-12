@@ -117,7 +117,80 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
             Bc(c,ic,jc,1) = Bc(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
       }
       
-// start iteration
+// pre-compute BfRestrict
+   Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
+// using nkf since it comes from Uf(c,i,j,nkf)
+
+#pragma omp parallel
+   for (int c=1; c<=3; c++)
+#pragma omp for
+      for( int jc= jcb ; jc <= jce ; jc++ )
+#pragma omp simd
+         for( int ic= icb ; ic <= ice ; ic++ )
+         {
+// i odd, j odd
+            int i=2*ic-1, j=2*jc-1;
+            BfRestrict(c,ic,jc,nkf)  = i1024*( 
+               Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
+               +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
+               +16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) // with Bf(i,j)
+               +9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
+               Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf)
+               );
+         }
+
+// test
+   int ifodd = ifb, ifeven= ifb;
+   if (ifeven % 2 == 1) ifeven++; // make sure ifeven is even
+   if (ifodd % 2 == 0) ifodd++; // make sure ifodd is odd
+   
+   int jfodd = jfb, jfeven = jfb;
+   if (jfodd % 2 == 0) jfodd++; // make sure jfodd is odd
+   if (jfeven % 2 == 1) jfeven++; // make sure jfeven is even
+   
+// pre-compute UnextcInterp
+   Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
+// using k=1 since it comes from Unextc(c,ic,jc,1)
+#pragma omp parallel 
+   for (int c=1; c<=3; c++)
+   {
+// this works but is a bit awkward
+#pragma omp for
+      for( int j=jfeven; j <= jfe ; j+=2 ) // odd-i, even-j
+#pragma omp simd
+         for( int i=ifodd ; i <= ife ; i+=2 )
+         {
+            int ic = (i+1)/2; 
+            int jc = j/2;
+            UnextcInterp(c,i,j,1) = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
+}
+// this works but is a bit awkward
+#pragma omp for
+      for( int j=jfodd; j <= jfe ; j+=2 ) // odd-j
+#pragma omp simd
+         for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
+         {
+            int ic = i/2; 
+            int jc = (j+1)/2;
+            UnextcInterp(c,i,j,1) = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
+         }
+// this works but is a bit awkward
+#pragma omp for
+      for( int j=jfeven; j <= jfe ; j+=2 ) // even-j
+#pragma omp simd
+         for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
+         {
+            int ic = i/2; 
+            int jc = j/2;
+            UnextcInterp(c,i,j,1) =  i256*
+               ( Unextc(c,ic-1,jc-1,1)-9*(Unextc(c,ic,jc-1,1)+Unextc(c,ic+1,jc-1,1))+Unextc(c,ic+2,jc-1,1)
+      + 9*(-Unextc(c,ic-1,jc,  1)+9*(Unextc(c,ic,jc,  1)+Unextc(c,ic+1,jc,  1))-Unextc(c,ic+2,jc,  1)  
+      -Unextc(c,ic-1,jc+1,1)+9*(Unextc(c,ic,jc+1,1)+Unextc(c,ic+1,jc+1,1))-Unextc(c,ic+2,jc+1,1))
+      +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
+         }
+}  // end for c=1,3
+   
+// Start iteration
    while( jacerr > m_citol && it < m_cimaxiter )
    {
       float_sw4 rmax[6]={0,0,0,0,0,0};
@@ -138,11 +211,11 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			  gf, gc, nkf, mDt, hf, hc, cof, relax,
 			  a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			  m_sbop, m_ghcof);
-      else
+      else // unrolling loops in _RO version
 	oddIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
 		     Uc, Muc, Lambdac, Rhoc,
 		     Mufs, Mlfs,
-		     Unextf, Bf, Unextc, Bc,
+		     Unextf, BfRestrict, Unextc, Bc,
 		     m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 		     gf, gc, nkf, mDt, hf, hc, cof, relax,
 		     a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
@@ -166,7 +239,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	oddIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
 			Uc, Muc, Lambdac, Rhoc,
 			Morc, Mlrc,
-			Unextf, Bf, Unextc, Bc,
+			Unextf, Bf, UnextcInterp, Bc,
 			m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			gf, gc, nkf, mDt, hf, hc, cof, relax,
 			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
@@ -188,7 +261,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	evenIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
 			Uc, Muc, Lambdac, Rhoc,
 			Morc, Mlrc,
-			Unextf, Bf, Unextc, Bc,
+			Unextf, Bf, UnextcInterp, Bc,
 			m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			gf, gc, nkf, mDt, hf, hc, cof, relax,
 			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
@@ -209,7 +282,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	evenIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
 			 Uc, Muc, Lambdac, Rhoc,
 			 Morc, Mlrc,
-			 Unextf, Bf, Unextc, Bc,
+			 Unextf, Bf, UnextcInterp, Bc,
 			 m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			 gf, gc, nkf, mDt, hf, hc, cof, relax,
 			 a_strf_x, a_strf_y, a_strc_x, a_strc_y, 

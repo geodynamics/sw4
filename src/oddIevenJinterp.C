@@ -5,7 +5,7 @@
 void oddIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf, Sarray &Rhof, 
 		     Sarray &Uc, Sarray &Muc, Sarray &Lambdac, Sarray &Rhoc,
 		     Sarray &Morc, Sarray &Mlrc,
-		     Sarray &Unextf, Sarray &Bf, Sarray &Unextc, Sarray &Bc,
+		     Sarray &Unextf, Sarray &Bf, Sarray &UnextcInterp, Sarray &Bc,
 		     int a_iStart[], int a_jStart[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
 		     int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
 		     float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
@@ -58,41 +58,40 @@ void oddIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf
 // updated components 1,2 of the ghost point value of Uf
       for( int c=1 ; c <= 2 ; c++ )
       {
-      {
-	ic = (i+1)/2;
-	jc = j/2;
+         ic = (i+1)/2;
+         jc = j/2;
 // All Unextc terms
-	b1 = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
+//         b1 = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
 // All Uc terms
-	b1 = b1 + nuc*a_ghcof[0]*i16*(   -Uc(c,ic,jc-1,0)*Morc(ic,jc-1,1) + 
-					 9*Uc(c,ic,jc  ,0)*Morc(ic,jc  ,1) + 
-					 9*Uc(c,ic,jc+1,0)*Morc(ic,jc+1,1)
-					 -Uc(c,ic,jc+2,0)*Morc(ic,jc+2,1) );
-      }
-      b1 = b1 - Unextf(c,i,j,nkf); 
-      a11 = nuf*a_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
+         b1 = UnextcInterp(c,i,j,1) + nuc*a_ghcof[0]*i16*(   -Uc(c,ic,jc-1,0)*Morc(ic,jc-1,1) + 
+                                          9*Uc(c,ic,jc  ,0)*Morc(ic,jc  ,1) + 
+                                          9*Uc(c,ic,jc+1,0)*Morc(ic,jc+1,1)
+                                          -Uc(c,ic,jc+2,0)*Morc(ic,jc+2,1) );
+
+         b1 = b1 - Unextf(c,i,j,nkf); 
+         a11 = nuf*a_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
 //                  a11 = nuf*a_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf))/(strf_x(i)*strf_y(j));
-      r3 = Uf(c,i,j,nkf+1); // save old value for relaxation
+         r3 = Uf(c,i,j,nkf+1); // save old value for relaxation
 // update ghost point value Uf(c,i,j,nkf+1)
-      Uf(c,i,j,nkf+1) = b1/a11;
-      Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1)+(1-relax)*r3;
+         Uf(c,i,j,nkf+1) = b1/a11;
+         Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1)+(1-relax)*r3;
 // change in ghost point value
-      r3 = r3 - Uf(c,i,j,nkf+1);
-      if( c == 1 )
-	rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
-      else
-	rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
-      //		  rmax[c-1+3] = rmax[c-1+3] > fabs(r3) ? rmax[c-1+3] : fabs(r3);
+         r3 = r3 - Uf(c,i,j,nkf+1);
+         if( c == 1 )
+            rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
+         else
+            rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
+         //		  rmax[c-1+3] = rmax[c-1+3] > fabs(r3) ? rmax[c-1+3] : fabs(r3);
       } // end for c=1,2
                
 // work on componet 3 of the ghost point value of Uf
-    {
+      {
       ic = (i+1)/2;
       jc = j/2;
 // All Unextc terms
-      b1 = i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
+//      b1 = i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
 // All Uc terms
-      b1 = b1 + nuc*a_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
+      b1 = UnextcInterp(3,i,j,1) + nuc*a_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
 				       9*Uc(3,ic,jc  ,0)*Mlrc(ic,jc  ,1) + 
 				       9*Uc(3,ic,jc+1,0)*Mlrc(ic,jc+1,1)
 				       -Uc(3,ic,jc+2,0)*Mlrc(ic,jc+2,1) );

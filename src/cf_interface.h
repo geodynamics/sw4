@@ -59,6 +59,15 @@ void oddIoddJinterpOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, float_sw
 		       float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
 		       float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
+void oddIoddJinterpRO(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf, Sarray &Rhof, 
+                      Sarray &Uc, Sarray &Muc, Sarray &Lambdac, Sarray &Rhoc,
+                      Sarray &Mufs, Sarray &Mlfs,
+                      Sarray &Unextf, Sarray &BfRestrict, Sarray &Unextc, Sarray &Bc,
+                      int a_iStart[], int a_jStart[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
+                      int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
+                      float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
+                      float_sw4 a_sbop[], float_sw4 a_ghcof[]);
+   
 void evenIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf, Sarray &Rhof, 
 		     Sarray &Uc, Sarray &Muc, Sarray &Lambdac, Sarray &Rhoc,
 		     Sarray &Morc, Sarray &Mlrc,
