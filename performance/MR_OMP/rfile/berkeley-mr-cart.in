@@ -6,8 +6,8 @@ developer reporttiming=1 ctol=1e-5 crelax=0.86
 # set pfs=1 if you are on a parallel file system
 fileio path=berkeley-mr-cart-results pfs=0 verbose=1
 
-time steps=100
-#time t=4
+#time steps=100
+time t=4
 
 # grid size is set in the grid command
 # DO NOT CHANGE AZ!
