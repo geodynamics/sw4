@@ -189,7 +189,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
          }
 }  // end for c=1,3
-   
+
+// Allocate space for the updated values of Uf and Uc (ghost points only)
+   Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0); // only one k-index
+   Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1); // the k-index is arbitrary, 
 // Start iteration
    while( jacerr > m_citol && it < m_cimaxiter )
    {
@@ -212,14 +215,22 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			  a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			  m_sbop, m_ghcof);
       else // unrolling loops in _RO version
-	oddIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
-		     Uc, Muc, Lambdac, Rhoc,
+	oddIoddJinterpJacobi(rmax, Uf, UfNew, Muf, Lambdaf, Rhof, 
+		     Uc, UcNew, Muc, Lambdac, Rhoc,
 		     Mufs, Mlfs,
 		     Unextf, BfRestrict, Unextc, Bc,
 		     m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 		     gf, gc, nkf, mDt, hf, hc, cof, relax,
 		     a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 		     m_sbop, m_ghcof);
+	// oddIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	// 	     Uc, Muc, Lambdac, Rhoc,
+	// 	     Mufs, Mlfs,
+	// 	     Unextf, BfRestrict, Unextc, Bc,
+	// 	     m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+	// 	     gf, gc, nkf, mDt, hf, hc, cof, relax,
+	// 	     a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+	// 	     m_sbop, m_ghcof);
       
 //      
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
@@ -236,7 +247,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			   a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			   m_sbop, m_ghcof);
       else
-	oddIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	oddIevenJinterpJacobi(rmax, Uf, UfNew, Muf, Lambdaf, Rhof, 
 			Uc, Muc, Lambdac, Rhoc,
 			Morc, Mlrc,
 			Unextf, Bf, UnextcInterp, Bc,
@@ -244,6 +255,14 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			gf, gc, nkf, mDt, hf, hc, cof, relax,
 			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			m_sbop, m_ghcof);
+	// oddIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	// 		Uc, Muc, Lambdac, Rhoc,
+	// 		Morc, Mlrc,
+	// 		Unextf, Bf, UnextcInterp, Bc,
+	// 		m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+	// 		gf, gc, nkf, mDt, hf, hc, cof, relax,
+	// 		a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+	// 		m_sbop, m_ghcof);
 
 
       if (false && m_croutines) //tmp
@@ -258,7 +277,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			   a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			   m_sbop, m_ghcof);
       else
-	evenIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	evenIoddJinterpJacobi(rmax, Uf, UfNew, Muf, Lambdaf, Rhof, 
 			Uc, Muc, Lambdac, Rhoc,
 			Morc, Mlrc,
 			Unextf, Bf, UnextcInterp, Bc,
@@ -266,6 +285,14 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			gf, gc, nkf, mDt, hf, hc, cof, relax,
 			a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			m_sbop, m_ghcof);
+	// evenIoddJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	// 		Uc, Muc, Lambdac, Rhoc,
+	// 		Morc, Mlrc,
+	// 		Unextf, Bf, UnextcInterp, Bc,
+	// 		m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+	// 		gf, gc, nkf, mDt, hf, hc, cof, relax,
+	// 		a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+	// 		m_sbop, m_ghcof);
 
       if (false && m_croutines) // tmp
 // optimized version of update for even i and even j
@@ -279,7 +306,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			    a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			    m_sbop, m_ghcof);
       else
-	evenIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	evenIevenJinterpJacobi(rmax, Uf, UfNew, Muf, Lambdaf, Rhof, 
 			 Uc, Muc, Lambdac, Rhoc,
 			 Morc, Mlrc,
 			 Unextf, Bf, UnextcInterp, Bc,
@@ -287,6 +314,14 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			 gf, gc, nkf, mDt, hf, hc, cof, relax,
 			 a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
 			 m_sbop, m_ghcof);
+	// evenIevenJinterp(rmax, Uf, Muf, Lambdaf, Rhof, 
+	// 		 Uc, Muc, Lambdac, Rhoc,
+	// 		 Morc, Mlrc,
+	// 		 Unextf, Bf, UnextcInterp, Bc,
+	// 		 m_iStart.data(), m_jStart.data(), m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+	// 		 gf, gc, nkf, mDt, hf, hc, cof, relax,
+	// 		 a_strf_x, a_strf_y, a_strc_x, a_strc_y, 
+	// 		 m_sbop, m_ghcof);
 
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
@@ -306,7 +341,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    if( jacerr > m_citol && proc_zero() )
       cout << "EW::consintp, Warning, no convergence. err = " << jacerr << " tol= " << m_citol << endl;
       
-   if( proc_zero() && mVerbose >= 4 ) 
+   if( proc_zero() && mVerbose >= 1 ) // 4 ) 
       cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;
 #undef strc_x
 #undef strc_y
