@@ -329,6 +329,9 @@ void setup_supergrid( );
    //void supergrid_taper_material();
 void assign_supergrid_damping_arrays();
 
+// MR coefficients
+void setup_MR_coefficients();
+
 void assign_local_bcs( );
 bool timeSteppingSet();
 bool proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] );
@@ -1217,6 +1220,8 @@ vector<Sarray> mRho;
 vector<Sarray> mC; // Anisotropic material parameters
 Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
+// Store coefficeints needed for Mesh refinement
+vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );
