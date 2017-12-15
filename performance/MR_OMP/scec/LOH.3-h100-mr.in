@@ -3,7 +3,7 @@
 # Final report for lifelines project 1A01, Pacific Eartquake
 # Engineering Center, 2001".
 
-developer ctol=1e-5
+developer reporttiming=1 ctol=1e-5 crelax=0.86
 
 grid h=100 x=30000 y=30000 z=17000 extrapolate=1
 time t=9

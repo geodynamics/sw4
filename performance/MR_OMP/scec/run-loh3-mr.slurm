@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 12
-#SBATCH -p debug
+#SBATCH -p batch
 #SBATCH -A m2545
 #SBATCH -S 4     # Special cores per nodes (4 are idle)
 #SBATCH -t 00:30:00 

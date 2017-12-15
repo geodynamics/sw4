@@ -25,7 +25,7 @@
 # the base grid has grid size h=50. The material properties are extrapolated
 # to the ghost point and the grid point on the mesh refinement interface (extrapolate=2)
 
-developer ctol=1e-5
+developer reporttiming=1 ctol=1e-5 crelax=0.86
 
 grid h=100 x=30000 y=30000 z=17000 extrapolate=1
 time t=9
