@@ -1115,10 +1115,10 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
 		vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
-		float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
+		float_sw4 t, bool predictor, vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-                    vector<Sarray*>& a_AlphaVEp,
-                    float_sw4 t, std::vector<GridPointSource*> point_sources );
+                    vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
+                    vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
    
@@ -1128,13 +1128,13 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void gridref_initial_guess( Sarray& u, int g, bool upper );
    void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                        Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+                                       int g, int kic, float_sw4 t, Sarray &Ftt, std::vector<GridPointSource*> point_sources );
    // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    //                                     Sarray& Utt, Sarray& Unext,
    //                                     int g, int kic, double t, std::vector<GridPointSource*> point_sources );
 
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, vector<GridPointSource*> point_sources );
+                                       int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
    
    void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
    void add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, float_sw4* a_str_x, float_sw4* a_str_y);

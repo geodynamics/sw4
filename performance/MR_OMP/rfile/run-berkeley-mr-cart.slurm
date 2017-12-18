@@ -11,7 +11,7 @@ numnodes=4
 #    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
 #numprocspernode = Number of MPI-tasks per node
-for numprocspernode in 64 32 16; do
+for numprocspernode in 64 32 16 8; do
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
