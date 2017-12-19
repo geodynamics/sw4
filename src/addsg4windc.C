@@ -38,6 +38,8 @@
 #include <sys/types.h>
 #include "sw4.h"
 
+//extern "C" {
+
 void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 		    float_sw4*  __restrict__ a_um, float_sw4*  __restrict__ a_rho,
 		    float_sw4*  __restrict__ a_dcx, float_sw4*  __restrict__ a_dcy,
@@ -130,3 +132,5 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 				     )/rho(i,j,k);
 	   }
 }
+
+//}

@@ -154,11 +154,13 @@ else
    FFLAGS   += -fopenmp
 endif
 
-ifeq ($(fortran),no)
-else
+# fortran=no is default
+ifeq ($(fortran),yes)
    debugdir := $(debugdir)_fort
    optdir   := $(optdir)_fort
    CXXFLAGS += -DSW4_NOC
+else
+   fortran := "no"
 endif
 
 ifeq ($(prec),single)
@@ -198,15 +200,22 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
-       rhs4th3fortwind.o updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o \
-       CheckPoint.o
+       updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o oddIoddJinterp.o evenIoddJinterp.o \
+       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o
+
 
 # new C-routines converted from fortran
  OBJ += addsgdc.o bcfortc.o bcfortanisgc.o bcfreesurfcurvanic.o boundaryOpc.o energy4c.o checkanisomtrlc.o \
         computedtanisoc.o curvilinear4sgc.o gradientsc.o randomfield3dc.o innerloop-ani-sgstr-vcc.o ilanisocurvc.o \
-        rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o rhs4th3fortwindc.o solerr3c.o testsrcc.o \
+        rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o solerr3c.o testsrcc.o \
         tw_aniso_forcec.o tw_aniso_force_ttc.o velsumc.o twilightfortc.o twilightsgfortc.o tw_ani_stiffc.o \
         anisomtrltocurvilinearc.o scalar_prodc.o updatememvarc.o addsg4windc.o bndryOpNoGhostc.o
+
+ifeq ($(fortran),yes)
+  OBJ += rhs4th3windfort.o
+else
+  OBJ += rhs4th3windc.o 
+endif
 
 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o

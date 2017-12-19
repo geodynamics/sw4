@@ -44,6 +44,9 @@
 #include "startEnd.h"
 #include "version.h"
 #include "Byteswapper.h"
+
+#include "cf_interface.h"
+
 #include "F77_FUNC.h"
 
 extern "C" {
@@ -1550,75 +1553,78 @@ void EW::print_execution_time( double t1, double t2, string msg )
 
 
 //-----------------------------------------------------------------------
-void EW::print_execution_times( double times[7] )
+void EW::print_execution_times( double times[9] )
 {
-   double* time_sums =new double[7*no_of_procs()];
-   MPI_Gather( times, 7, MPI_DOUBLE, time_sums, 7, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   double* time_sums =new double[9*no_of_procs()];
+   MPI_Gather( times, 9, MPI_DOUBLE, time_sums, 9, MPI_DOUBLE, 0, MPI_COMM_WORLD );
    bool printavgs = true;
    if( !mQuiet && proc_zero() )
    {
-      double avgs[7]={0,0,0,0,0,0,0};
+      double avgs[9]={0,0,0,0,0,0,0,0,0};
       for( int p= 0 ; p < no_of_procs() ; p++ )
-	 for( int c=0 ; c < 7 ; c++ )
-	    avgs[c] += time_sums[7*p+c];
-      for( int c=0 ; c < 7 ; c++ )
+	 for( int c=0 ; c < 9 ; c++ )
+	    avgs[c] += time_sums[9*p+c];
+      for( int c=0 ; c < 9 ; c++ )
 	 avgs[c] /= no_of_procs();
       cout << "\n----------------------------------------" << endl;
-      cout << "          Execution time summary " << endl;
+      cout << "          Execution time summary (average)" << endl;
       if( printavgs )
       {
-	 cout << " Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  " << endl;
+//                             5                  10          7      2          2                    5       2                      6                 7
+	 cout << "Total      Div-stress Forcing    BC         SG         Comm.      MR         Img+TS     Updates " << endl;
 	 cout.setf(ios::left);
 	 cout.precision(3);
 	 cout.width(11);
-	 cout <<  avgs[3];
+	 cout << avgs[0];
 	 cout.width(11);
 	 cout << avgs[1];
 	 cout.width(11);
-	 cout << avgs[0];
+	 cout << avgs[2];
 	 cout.width(11);
-	 cout <<  avgs[2];
+	 cout << avgs[3];
 	 cout.width(11);
-	 cout <<  avgs[4];
+	 cout << avgs[4];
 	 cout.width(11);
-	 cout <<  avgs[5];
+	 cout << avgs[5];
 	 cout.width(11);
-	 cout <<  avgs[6];
+	 cout << avgs[6];
+	 cout.width(11);
+	 cout << avgs[7];
+	 cout.width(11);
+	 cout << avgs[8];
 	 cout << endl;
       }
       else
       {
-	 cout << "Processor  Total      BC total   Step   Image&Time series  Comm.ref   Comm.bndry BC impose  "
-	   <<endl;
+	 cout << "Processor  Total    Div-stress    Forcing     BC     SG     Comm.    MR    Image+Time-series  Misc  " << endl;
 	 cout.setf(ios::left);
 	 cout.precision(3);
 	 for( int p= 0 ; p < no_of_procs() ; p++ )
 	 {
 	    cout.width(11);
 	    cout << p;
+	    cout << time_sums[9*p];
 	    cout.width(11);
-	    cout << time_sums[7*p+3];
+	    cout << time_sums[9*p+1];
 	    cout.width(11);
-	    cout << time_sums[7*p+1];
+	    cout << time_sums[9*p+2];
 	    cout.width(11);
-	    cout << time_sums[7*p];
+	    cout << time_sums[9*p+3];
 	    cout.width(11);
-	    cout << time_sums[7*p+2];
+	    cout << time_sums[9*p+4];
 	    cout.width(11);
-	    cout << time_sums[7*p+4];
+	    cout << time_sums[9*p+5];
 	    cout.width(11);
-	    cout << time_sums[7*p+5];
+	    cout << time_sums[9*p+6];
 	    cout.width(11);
-	    cout << time_sums[7*p+6];
+	    cout << time_sums[9*p+7];
+	    cout.width(11);
+	    cout << time_sums[9*p+8];
 	    cout << endl;
 	 }
       }
       cout.setf(ios::right);
       cout.precision(6);
-      //
-      // << "|" << time_sums[p*7+3] << "|\t" << time_sums[p*7+1] << "|\t" << time_sums[p*7]
-      //	      << "|\t " << time_sums[7*p+2] << "|\t" << time_sums[p*7+4] << "|\t" << time_sums[p*7+5]
-      //	      << "|\t" << time_sums[7*p+6]<<endl;
       cout << "----------------------------------------\n" << endl;
    }
    delete[] time_sums;

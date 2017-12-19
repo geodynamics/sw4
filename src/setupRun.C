@@ -360,6 +360,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
      else
 	setup_viscoelastic();
   }
+
+// form combinations of material coefficients for MR
+  setup_MR_coefficients();
   
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
@@ -1138,6 +1141,7 @@ void EW::set_materials()
 	communicate_array( mLambda[g], g );
      }
   }
+
   check_materials( );
 
 } // end EW::set_materials()

@@ -331,6 +331,9 @@ void setup_supergrid( );
    //void supergrid_taper_material();
 void assign_supergrid_damping_arrays();
 
+// MR coefficients
+void setup_MR_coefficients();
+
 void assign_local_bcs( );
 bool timeSteppingSet();
 bool proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] );
@@ -817,76 +820,12 @@ void addbstressc_ci( int ifirst, int ilast, int jfirst, int jlast,
 		       int side, float_sw4* s, char op, int ghterm, int usesg,
 		       float_sw4* a_sgstrx, float_sw4* a_sgstry );
 
-void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		     int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
-		     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-		     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-		     float_sw4 h, char op );
-void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
-			  float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-			  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-			  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			  float_sw4* __restrict__ a_strz, char op );
-void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		    int nz, float_sw4 h,
-		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_u2,
-		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] );
-void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		    int nz, float_sw4* __restrict__ a_uacc, float_sw4* __restrict__ a_lu,
-		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_rho,
-		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] );
-void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		  float_sw4* __restrict__ up, float_sw4* __restrict__ u,
-		  float_sw4* __restrict__ um, float_sw4* __restrict__ lu,
-		  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
-		  float_sw4 dt2 );
-void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		  float_sw4* __restrict__ up, float_sw4* __restrict__ lu,
-		  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
-		  float_sw4 dt4 );
-void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		float_sw4* __restrict__ up, float_sw4* __restrict__ u,
-		float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
-		float_sw4 dt2i );
    //void updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
    //		      float_sw4* __restrict__ a_alp,
    //		      float_sw4* __restrict__ a_alm, float_sw4* __restrict__ a_up, 
    //		      float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
    //		      float_sw4 omega, float_sw4 dt, int domain );
-void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
-		      float_sw4* __restrict__ um, float_sw4 dt2i );
-void satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
-	      float_sw4 dt, float_sw4 cfreq, int ifirst, int ilast,
-	      int jfirst, int jlast, int kfirst, int klast );
-void solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
-			int kfirst, int klast,
-			float_sw4* __restrict__ a_alpha, float_sw4 cof,
-			float_sw4* __restrict__ a_up );
-void solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
-		       int kfirst, int klast, float_sw4* __restrict__ a_u,
-		       float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_la,
-		       float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
-		       float_sw4* __restrict__ a_bforcerhs, float_sw4* __restrict__ a_met,
-		       float_sw4 s[5], int usesg, float_sw4* __restrict__ a_strx,
-		       float_sw4* __restrict__ a_stry );
-void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
-			 int kfirst, int klast, int nz, float_sw4* __restrict__ a_alphap,
-			 float_sw4* __restrict__ a_alpham, float_sw4* __restrict__ a_muve,
-			 float_sw4* __restrict__ a_lave, float_sw4* __restrict__ a_bforcerhs,
-			 float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
-			 float_sw4* __restrict__ a_met, int side, float_sw4 dt, float_sw4 omegave,
-			 float_sw4* __restrict__ a_memforce, float_sw4* __restrict__ a_muvebnd, 
-			 float_sw4* __restrict__ a_lambdavebnd, float_sw4 s[5], float_sw4& cof,
-			 int usesg, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry );
 
-void rhs4th3fortwind_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			 int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, float_sw4 *__restrict__ a_bope,
-			 float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-			 float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-			 float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			 float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu, int kfirstw, int klastw );
 void solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		 float_sw4 h, float_sw4* __restrict__ uex,
 		 float_sw4* __restrict__ u, float_sw4& li,
@@ -1179,10 +1118,10 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
 		vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
-		float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
+		float_sw4 t, bool predictor, vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-                    vector<Sarray*>& a_AlphaVEp,
-                    float_sw4 t, std::vector<GridPointSource*> point_sources );
+                    vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
+                    vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
    
@@ -1192,13 +1131,13 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void gridref_initial_guess( Sarray& u, int g, bool upper );
    void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                        Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+                                       int g, int kic, float_sw4 t, Sarray &Ftt, std::vector<GridPointSource*> point_sources );
    // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    //                                     Sarray& Utt, Sarray& Unext,
    //                                     int g, int kic, double t, std::vector<GridPointSource*> point_sources );
 
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, vector<GridPointSource*> point_sources );
+                                       int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
    
    void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
    void add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, float_sw4* a_str_x, float_sw4* a_str_y);
@@ -1285,6 +1224,8 @@ vector<Sarray> mRho;
 vector<Sarray> mC; // Anisotropic material parameters
 Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
+// Store coefficeints needed for Mesh refinement
+vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 private:
 void preprocessSources( vector<Source*> & a_GlobalSources );

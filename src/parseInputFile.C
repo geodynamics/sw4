@@ -3943,6 +3943,17 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    mGridSize.resize(mNumberOfGrids);
    mMinVsOverH.resize(mNumberOfGrids);
 
+// coefficients for Mesh refinement
+   m_Morf.resize(mNumberOfGrids);
+   m_Mlrf.resize(mNumberOfGrids);
+   m_Mufs.resize(mNumberOfGrids);
+   m_Mlfs.resize(mNumberOfGrids);
+
+   m_Morc.resize(mNumberOfGrids);
+   m_Mlrc.resize(mNumberOfGrids);
+   m_Mucs.resize(mNumberOfGrids);
+   m_Mlcs.resize(mNumberOfGrids);
+
 // always allocate the pointer arrays for the viscoelastic properties (allows. e.g., mQs[g].is_defined() to be called)
    mQs.resize(mNumberOfGrids);
    mQp.resize(mNumberOfGrids);
@@ -4135,6 +4146,17 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // initialize the material coefficients to -1
 	 mMu[g].set_to_minusOne();
 	 mLambda[g].set_to_minusOne();
+// allocate space for material coefficient arrays needed by MR
+	 m_Morc[g].define(ifirst,ilast,jfirst,jlast,1,1);
+	 m_Mlrc[g].define(ifirst,ilast,jfirst,jlast,1,1);
+	 m_Mucs[g].define(ifirst,ilast,jfirst,jlast,1,1);
+	 m_Mlcs[g].define(ifirst,ilast,jfirst,jlast,1,1);
+
+	 int nkf = m_global_nz[g];
+	 m_Morf[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+	 m_Mlrf[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+	 m_Mufs[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+	 m_Mlfs[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
       }
 // viscoelastic material coefficients & memory variables
       if (m_use_attenuation)

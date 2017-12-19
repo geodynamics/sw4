@@ -1,4 +1,5 @@
 #include "EW.h"
+#include "cf_interface.h"
 
 #define SQR(x) ((x)*(x))
 
@@ -83,17 +84,11 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    jfe = m_jEndInt[gf];
 
    nkf = m_global_nz[gf];
-// material coefficients along the interface (fine grid)
-   Sarray Mlfs(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
-// make a local copy of Muf to simplify the addition of stretching
-   Sarray Mufs(m_iStart[gf],m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf,nkf);
 
 #pragma omp parallel for
    for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
       for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
       {
-	 Mlfs(i,j,nkf) = (2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))/(strf_x(i)*strf_y(j)); // (2*mu + lambda)/stretching on the fine grid
-         Mufs(i,j,nkf) = Muf(i,j,nkf)/(strf_x(i)*strf_y(j)); // mu/stretching on the fine grid
 // include stretching terms in Bf
          for (int c=1; c<=3; c++)
          {
@@ -101,22 +96,92 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
          }
       }
 
-// material coefficients along the interface (coarse grid)
-   Sarray Morc(m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],1,1);
-   Sarray Mlrc(m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],1,1);
 #pragma omp parallel for
    for( int jc=m_jStart[gc] ; jc<=m_jEnd[gc] ; jc++ )
       for( int ic=m_iStart[gc] ; ic<=m_iEnd[gc] ; ic++ )
       {
-	 float_sw4 irho=1/Rhoc(ic,jc,1);
-	 Morc(ic,jc,1) = Muc(ic,jc,1)*irho; // mu/rho on the coarse grid (no stretching)
-	 Mlrc(ic,jc,1) = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*irho; // (2*mu+lambda)/rho on the coarse grid
 // scale normal stress by stretching
          for (int c=1; c<=3; c++)
             Bc(c,ic,jc,1) = Bc(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
       }
       
-// start iteration
+// pre-compute BfRestrict
+   Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
+// using nkf since it comes from Uf(c,i,j,nkf)
+
+#pragma omp parallel
+   for (int c=1; c<=3; c++)
+#pragma omp for
+      for( int jc= jcb ; jc <= jce ; jc++ )
+#pragma omp simd
+         for( int ic= icb ; ic <= ice ; ic++ )
+         {
+// i odd, j odd
+            int i=2*ic-1, j=2*jc-1;
+            BfRestrict(c,ic,jc,nkf)  = i1024*( 
+               Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
+               +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
+               +16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) // with Bf(i,j)
+               +9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
+               Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf)
+               );
+         }
+
+// index bounds for loops below
+   int ifodd = ifb, ifeven= ifb;
+   if (ifeven % 2 == 1) ifeven++; // make sure ifeven is even
+   if (ifodd % 2 == 0) ifodd++; // make sure ifodd is odd
+   
+   int jfodd = jfb, jfeven = jfb;
+   if (jfodd % 2 == 0) jfodd++; // make sure jfodd is odd
+   if (jfeven % 2 == 1) jfeven++; // make sure jfeven is even
+   
+// pre-compute UnextcInterp
+   Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
+// using k=1 since it comes from Unextc(c,ic,jc,1)
+#pragma omp parallel 
+   for (int c=1; c<=3; c++)
+   {
+// this works but is a bit awkward
+#pragma omp for
+      for( int j=jfeven; j <= jfe ; j+=2 ) // odd-i, even-j
+#pragma omp simd
+         for( int i=ifodd ; i <= ife ; i+=2 )
+         {
+            int ic = (i+1)/2; 
+            int jc = j/2;
+            UnextcInterp(c,i,j,1) = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
+}
+// this works but is a bit awkward
+#pragma omp for
+      for( int j=jfodd; j <= jfe ; j+=2 ) // odd-j
+#pragma omp simd
+         for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
+         {
+            int ic = i/2; 
+            int jc = (j+1)/2;
+            UnextcInterp(c,i,j,1) = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
+         }
+// this works but is a bit awkward
+#pragma omp for
+      for( int j=jfeven; j <= jfe ; j+=2 ) // even-j
+#pragma omp simd
+         for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
+         {
+            int ic = i/2; 
+            int jc = j/2;
+            UnextcInterp(c,i,j,1) =  i256*
+               ( Unextc(c,ic-1,jc-1,1)-9*(Unextc(c,ic,jc-1,1)+Unextc(c,ic+1,jc-1,1))+Unextc(c,ic+2,jc-1,1)
+      + 9*(-Unextc(c,ic-1,jc,  1)+9*(Unextc(c,ic,jc,  1)+Unextc(c,ic+1,jc,  1))-Unextc(c,ic+2,jc,  1)  
+      -Unextc(c,ic-1,jc+1,1)+9*(Unextc(c,ic,jc+1,1)+Unextc(c,ic+1,jc+1,1))-Unextc(c,ic+2,jc+1,1))
+      +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
+         }
+}  // end for c=1,3
+
+// Allocate space for the updated values of Uf and Uc (ghost points only)
+   Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0); // only one k-index
+   Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1); // the k-index is arbitrary, 
+// Start iteration
    while( jacerr > m_citol && it < m_cimaxiter )
    {
       float_sw4 rmax[6]={0,0,0,0,0,0};
@@ -126,323 +191,90 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //
 // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
 
-      float_sw4 rmax1=0, rmax2=0, rmax3=0;
-#pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
-      for( int jc= jcb ; jc <= jce ; jc++ )
-	 for( int ic= icb ; ic <= ice ; ic++ )
-	 {
-	    float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
-// i odd, j odd
-	    int i=2*ic-1, j=2*jc-1;
-            // setup 2x2 system matrix
-            // unknowns: (Uf, Uc)
-// eqn 1: continuity of normal stress: NEED stretching
-	    a11 = 0.25*Mufs(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
-	    a12 = Muc(ic,jc,1)*m_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));  // ihc = 1/h on the coarse grid
-// eqn 2: continuity of displacement
-// nuf = dt^2/(cof * hf^2), nuc = dt^2/(cof * hc^2)
-	    a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; 
-	    a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0];
-	    for( int c=1 ; c <= 2 ; c++ ) //  the 2 tangential components ? 
-	    {
-// apply the restriction operator to the normal stress on the interface (Bf is on the fine grid)
-// scale Bf by 1/strf ?
-	       b1  = i1024*( 
-                  Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
-                  +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
-                  +16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) // with Bf(i,j)
-                  +9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
-                  Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf)
-                  );
-
-// scale Muf by 1/strf ?
-	       b1 = b1 - i1024*m_sbop[0]*ihf*(
-                  Mufs(i-3,j-3,nkf)*Uf(c,i-3,j-3,nkf+1) - 9*Mufs(i-3,j-1,nkf)*Uf(c,i-3,j-1,nkf+1)
-                  -16*Mufs(i-3,j,  nkf)*Uf(c,i-3,  j,nkf+1) - 9*Mufs(i-3,j+1,nkf)*Uf(c,i-3,j+1,nkf+1)
-                  +Mufs(i-3,j+3,nkf)*Uf(c,i-3,j+3,nkf+1) +					    
-                  9*(  -Mufs(i-1,j-3,nkf)*Uf(c,i-1,j-3,nkf+1) + 9*Mufs(i-1,j-1,nkf)*Uf(c,i-1,j-1,nkf+1) 
-                       +16*Mufs(i-1,j,  nkf)*Uf(c,i-1,j,  nkf+1) + 9*Mufs(i-1,j+1,nkf)*Uf(c,i-1,j+1,nkf+1) 
-                       -Mufs(i-1,j+3,nkf)*Uf(c,i-1,j+3,nkf+1) ) +
-                  16*(  -Mufs(i,  j-3,nkf)*Uf(c,i,  j-3,nkf+1) + 9*Mufs(i,  j-1,nkf)*Uf(c,i,  j-1,nkf+1) // NOTE: the Uf(i,j) term is in a11
-                        + 9*Mufs(i,  j+1,nkf)*Uf(c,i,  j+1,nkf+1)
-                        -Mufs(i,  j+3,nkf)*Uf(c,i,  j+3,nkf+1) ) + 
-                  9*(  -Mufs(i+1,j-3,nkf)*Uf(c,i+1,j-3,nkf+1) + 9*Mufs(i+1,j-1,nkf)*Uf(c,i+1,j-1,nkf+1)
-                       +16*Mufs(i+1,j,  nkf)*Uf(c,i+1,j,  nkf+1) + 9*Mufs(i+1,j+1,nkf)*Uf(c,i+1,j+1,nkf+1)
-                       -Mufs(i+1,j+3,nkf)*Uf(c,i+1,j+3,nkf+1) ) +
-                  Mufs(i+3,j-3,nkf)*Uf(c,i+3,j-3,nkf+1) - 9*Mufs(i+3,j-1,nkf)*Uf(c,i+3,j-1,nkf+1)
-                  -16*Mufs(i+3,j,  nkf)*Uf(c,i+3,j,  nkf+1) - 9*Mufs(i+3,j+1,nkf)*Uf(c,i+3,j+1,nkf+1)
-                  +Mufs(i+3,j+3,nkf)*Uf(c,i+3,j+3,nkf+1) );
-
-            // NEED stretching term in b1; scale Bc ?
-	       b1 = b1 - Bc(c,ic,jc,1);
-
-	       b2 = Unextc(c,ic,jc,1)-Unextf(c,i,j,nkf); 
-
-	       deti=1/(a11*a22-a12*a21);
-	       r1 = Uf(c,i,j,nkf+1);
-	       r2 = Uc(c,ic,jc,0);
-// solve the linear 2x2 system
-	       Uf(c,i,j,nkf+1) = deti*( a22*b1-a12*b2);
-	       Uc(c,ic,jc,0)   = deti*(-a21*b1+a11*b2);
-// damp the update of the ghost point values (r1, r2) hold previous values
-	       Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1) + (1-relax)*r1;
-	       Uc(c,ic,jc,0)   = relax*Uc(c,ic,jc,0)   + (1-relax)*r2;
-// change in solution
-	       r1 = r1-Uf(c,i,j,nkf+1);
-	       r2 = r2-Uc(c,ic,jc,0);
-	       //               rmax[c-1] = rmax[c-1] > fabs(r1) ? rmax[c-1] : fabs(r1);
-	       //	       rmax[c-1] = rmax[c-1] > fabs(r2) ? rmax[c-1] : fabs(r2);
-
-	       if( c==1 )
-	       {
-		  rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
-		  rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
-	       }
-	       else
-	       {
-		  rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
-		  rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
-	       }
-	       //	       if( c == 2 && ic == 12 && jc == 13 )
-	       //	       {
-	       //	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
-	       //		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
-	       //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
-	       //	       }
-	    } // end for c=1,2
-            
-// setup the matrix for the 3rd component of the normal stress (different coefficients)
-            // NEED stretching terms in a11 & a12
-	    a11 = 0.25*Mlfs(i,j,nkf)*m_sbop[0]*ihf; // Mlfs contains stretching
-	    a12 = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));
-
-	    a21 = nuf/Rhof(i,j,nkf)*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))*m_ghcof[0];
-	    a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
-
-// apply the restriction operator to the fine grid normal stress grid function (Bf)
-// scale Bf for stretching?
-	    b1  = i1024*( 
-               Bf(3,i-3,j-3,nkf)-9*Bf(3,i-3,j-1,nkf)-16*Bf(3,i-3,j,nkf)-9*Bf(3,i-3,j+1,nkf)+Bf(3,i-3,j+3,nkf) +
-               9*(-Bf(3,i-1,j-3,nkf)+9*Bf(3,i-1,j-1,nkf)+16*Bf(3,i-1,j,nkf)+9*Bf(3,i-1,j+1,nkf)-Bf(3,i-1,j+3,nkf)) +
-	       16*(-Bf(3,i,  j-3,nkf)+9*Bf(3,i,  j-1,nkf)+16*Bf(3,i,  j,nkf)+9*Bf(3,i,  j+1,nkf)-Bf(3,i,  j+3,nkf)) + 
-               9*(-Bf(3,i+1,j-3,nkf)+9*Bf(3,i+1,j-1,nkf)+16*Bf(3,i+1,j,nkf)+9*Bf(3,i+1,j+1,nkf)-Bf(3,i+1,j+3,nkf)) +
-               Bf(3,i+3,j-3,nkf)-9*Bf(3,i+3,j-1,nkf)-16*Bf(3,i+3,j,nkf)-9*Bf(3,i+3,j+1,nkf)+Bf(3,i+3,j+3,nkf) );
-
-	    b1 = b1 - i1024*m_sbop[0]*ihf*(
-               Mlfs(i-3,j-3,nkf)*Uf(3,i-3,j-3,nkf+1) - 9*Mlfs(i-3,j-1,nkf)*Uf(3,i-3,j-1,nkf+1)
-               -16*Mlfs(i-3,j,  nkf)*Uf(3,i-3,  j,nkf+1) - 9*Mlfs(i-3,j+1,nkf)*Uf(3,i-3,j+1,nkf+1)
-               +Mlfs(i-3,j+3,nkf)*Uf(3,i-3,j+3,nkf+1) +					    
-               9*(  -Mlfs(i-1,j-3,nkf)*Uf(3,i-1,j-3,nkf+1) + 9*Mlfs(i-1,j-1,nkf)*Uf(3,i-1,j-1,nkf+1) 
-                    +16*Mlfs(i-1,j,  nkf)*Uf(3,i-1,j,  nkf+1) + 9*Mlfs(i-1,j+1,nkf)*Uf(3,i-1,j+1,nkf+1) 
-                    -Mlfs(i-1,j+3,nkf)*Uf(3,i-1,j+3,nkf+1) ) +
-               16*(  -Mlfs(i,  j-3,nkf)*Uf(3,i,  j-3,nkf+1) + 9*Mlfs(i,  j-1,nkf)*Uf(3,i,  j-1,nkf+1) 
-                     + 9*Mlfs(i,  j+1,nkf)*Uf(3,i,  j+1,nkf+1)
-               -Mlfs(i,  j+3,nkf)*Uf(3,i,  j+3,nkf+1) ) + 
-               9*(  -Mlfs(i+1,j-3,nkf)*Uf(3,i+1,j-3,nkf+1) + 9*Mlfs(i+1,j-1,nkf)*Uf(3,i+1,j-1,nkf+1)
-                    +16*Mlfs(i+1,j,  nkf)*Uf(3,i+1,j,  nkf+1) + 9*Mlfs(i+1,j+1,nkf)*Uf(3,i+1,j+1,nkf+1)
-                    -Mlfs(i+1,j+3,nkf)*Uf(3,i+1,j+3,nkf+1) ) +
-               Mlfs(i+3,j-3,nkf)*Uf(3,i+3,j-3,nkf+1) - 9*Mlfs(i+3,j-1,nkf)*Uf(3,i+3,j-1,nkf+1)
-               -16*Mlfs(i+3,j,  nkf)*Uf(3,i+3,j,  nkf+1) - 9*Mlfs(i+3,j+1,nkf)*Uf(3,i+3,j+1,nkf+1)
-	       +Mlfs(i+3,j+3,nkf)*Uf(3,i+3,j+3,nkf+1) );
-
-// setup the RHS
-	       b1 = b1 - Bc(3,ic,jc,1); // need stretching terms in Bc
-	       b2 = Unextc(3,ic,jc,1)-Unextf(3,i,j,nkf); 
-	       deti=1/(a11*a22-a12*a21);
-// previous values
-	       r1 = Uf(3,i,j,nkf+1);
-	       r2 = Uc(3,ic,jc,0);
-// solve the 2x2 system for component 3 of Uf and Uc
-	       Uf(3,i,j,nkf+1) = deti*( a22*b1-a12*b2);
-	       Uc(3,ic,jc,0)   = deti*(-a21*b1+a11*b2);
-// relax the updated value
-	       Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1) + (1-relax)*r1;
-	       Uc(3,ic,jc,0)   = relax*Uc(3,ic,jc,0)   + (1-relax)*r2;
-// change in ghost point values
-	       r1 = r1-Uf(3,i,j,nkf+1);
-	       r2 = r2-Uc(3,ic,jc,0);
-
-	       //	       rmax[2] = rmax[2] > fabs(r1) ? rmax[2] : fabs(r1);
-	       //	       rmax[2] = rmax[2] > fabs(r2) ? rmax[2] : fabs(r2);
-		  rmax3 = rmax3 > fabs(r1) ? rmax3 : fabs(r1);
-		  rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
-
-	       //	       int c=3;
-	       //	       if( c == 3 && ic == 12 && jc == 13 )
-	       //	       {
-	       //	         cout << "i,j " << i << " " << j << " " << b1 << " " << b2 << " " << r1 << " " << r2 << endl;
-	       //		 cout << "   " << Uf(c,i,j,nkf+1) << " " << Uc(c,ic,jc,0) << " " << 
-	       //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
-	       //	       }
-	 }
-      rmax[0] = rmax1;
-      rmax[1] = rmax2;
-      rmax[2] = rmax3;
+      if (m_croutines)// tmp
+// optimized version for updating odd i and odd j
+	oddIoddJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), UcNew.c_ptr(), 
+				m_Mufs[gf].c_ptr(), m_Mlfs[gf].c_ptr(), m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
+				m_Mucs[gc].c_ptr(), m_Mlcs[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
+				Unextf.c_ptr(), BfRestrict.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
+				m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+				m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+				gf, gc, nkf, mDt, hf, hc, cof, relax,
+				m_sbop, m_ghcof);
+      else
+	oddIoddJinterpJacobi(rmax, Uf, UfNew, Uc, UcNew, 
+			     m_Mufs[gf], m_Mlfs[gf], m_Morc[gc], m_Mlrc[gc],
+			     m_Mucs[gc], m_Mlcs[gc], m_Morf[gf], m_Mlrf[gf],
+			     Unextf, BfRestrict, Unextc, Bc,
+			     m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			     m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			     gf, gc, nkf, mDt, hf, hc, cof, relax,
+			     m_sbop, m_ghcof);
+      
 //      
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
 //
-// TODO: insert coarse and fine stretching functions below
-//
-      rmax1=rmax2=rmax3=0;
-#pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
-      for( int j=jfb ; j <= jfe ; j++ )
-	 for( int i=ifb ; i <= ife ; i++ )
-	 {
-	    int ic, jc;
-	    float_sw4 b1, a11, r3;
-	    if( !( (i % 2 == 1 && j % 2 == 1 ) ) ) // not both i and j are odd (handled above)
-	    {
-// updated components 1,2 of the ghost point value of Uf
-	       for( int c=1 ; c <= 2 ; c++ )
-	       {
-		  if( (j % 2 == 0) && (i % 2 == 1) ) // j is even, i is odd
-		  {
-		     ic = (i+1)/2;
-		     jc = j/2;
-// All Unextc terms
-		     b1 = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
-// All Uc terms
-		     b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(c,ic,jc-1,0)*Morc(ic,jc-1,1) + 
-						      9*Uc(c,ic,jc  ,0)*Morc(ic,jc  ,1) + 
-						      9*Uc(c,ic,jc+1,0)*Morc(ic,jc+1,1)
-						      -Uc(c,ic,jc+2,0)*Morc(ic,jc+2,1) );
-		  }
-		  if( (j % 2 == 1) && (i % 2 == 0) ) // j is odd, i is even
-		  {
-		     ic = i/2;
-		     jc = (j+1)/2;
-// All Unextc terms
-		     b1 = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
-// All Uc terms
-		     b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)+ 
-						      9*Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+ 
-						      9*Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1)
-						      -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1));
-		  }
-		  if( (j % 2 == 0) && (i % 2 == 0) ) // i is even, j is even
-		  {
-		     ic = i/2;
-		     jc = j/2;
-// All Unextc terms
-		     b1 = i256*
-                            ( Unextc(c,ic-1,jc-1,1)-9*(Unextc(c,ic,jc-1,1)+Unextc(c,ic+1,jc-1,1))+Unextc(c,ic+2,jc-1,1)
-	 	        + 9*(-Unextc(c,ic-1,jc,  1)+9*(Unextc(c,ic,jc,  1)+Unextc(c,ic+1,jc,  1))-Unextc(c,ic+2,jc,  1)  
-			     -Unextc(c,ic-1,jc+1,1)+9*(Unextc(c,ic,jc+1,1)+Unextc(c,ic+1,jc+1,1))-Unextc(c,ic+2,jc+1,1))
-		             +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
+      if (m_croutines) // tmp
+// optimized version for updating odd i and even j
+	oddIevenJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), 
+				 m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
+				 m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
+				 Unextf.c_ptr(), UnextcInterp.c_ptr(),
+				 m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+				 m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+				 gf, gc, nkf, mDt, hf, hc, cof, relax,
+				 m_sbop, m_ghcof);
+      else
+	oddIevenJinterpJacobi(rmax, Uf, UfNew, Uc, 
+			      m_Morc[gc], m_Mlrc[gc],
+			      m_Morf[gf], m_Mlrf[gf],
+			      Unextf, UnextcInterp,
+			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			      gf, gc, nkf, mDt, hf, hc, cof, relax,
+			      m_sbop, m_ghcof);
 
-// All Uc terms
-		     b1 = b1 + nuc*m_ghcof[0]*i256*(
-                        Uc(c,ic-1,jc-1,0)*Morc(ic-1,jc-1,1)-9*(Uc(c,ic,  jc-1,0)*Morc(ic,  jc-1,1)+Uc(c,ic+1,jc-1,0)*Morc(ic+1,jc-1,1)) +
-                        Uc(c,ic+2,jc-1,0)*Morc(ic+2,jc-1,1)
-                        + 9*(
-                           -Uc(c,ic-1,jc,0)*Morc(ic-1,jc,1)
-                           +9*(Uc(c,ic,  jc,0)*Morc(ic,  jc,1)+Uc(c,ic+1,jc,0)*Morc(ic+1,jc,1))
-                           -Uc(c,ic+2,jc,0)*Morc(ic+2,jc,1)  
-                           -Uc(c,ic-1,jc+1,0)*Morc(ic-1,jc+1,1)+
-                           9*(Uc(c,ic,  jc+1,0)*Morc(ic,  jc+1,1)+Uc(c,ic+1,jc+1,0)*Morc(ic+1,jc+1,1))
-                           -Uc(c,ic+2,jc+1,0)*Morc(ic+2,jc+1,1)
-                           )
-                        + Uc(c,ic-1,jc+2,0)*Morc(ic-1,jc+2,1)
-                        -9*(Uc(c,ic,  jc+2,0)*Morc(ic,  jc+2,1) +Uc(c,ic+1,jc+2,0)*Morc(ic+1,jc+2,1))
-                        +Uc(c,ic+2,jc+2,0)*Morc(ic+2,jc+2,1)
-                        );
-		  }
-		  b1 = b1 - Unextf(c,i,j,nkf); 
-                  a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf));
-//                  a11 = nuf*m_ghcof[0]*Muf(i,j,nkf)/(Rhof(i,j,nkf))/(strf_x(i)*strf_y(j));
-		  r3 = Uf(c,i,j,nkf+1); // save old value for relaxation
-// update ghost point value Uf(c,i,j,nkf+1)
-                  Uf(c,i,j,nkf+1) = b1/a11;
-		  Uf(c,i,j,nkf+1) = relax*Uf(c,i,j,nkf+1)+(1-relax)*r3;
-		  //		  if( i == 4 && j == 7 && c == 1)
-		  //		     cout << "in loop " << -a11*Uf(c,i,j,nkf+1) + b1  << endl;
-// change in ghost point value
-		  r3 = r3 - Uf(c,i,j,nkf+1);
-		  if( c == 1 )
-		     rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
-		  else
-		     rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
-		  //		  rmax[c-1+3] = rmax[c-1+3] > fabs(r3) ? rmax[c-1+3] : fabs(r3);
-	       } // end for c=1,2
-               
-// work on componet 3 of the ghost point value of Uf
-	       if( (j % 2 == 0) && (i % 2 == 1) ) // j even, i odd
-	       {
-		  ic = (i+1)/2;
-		  jc = j/2;
-// All Unextc terms
-		  b1 = i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
-// All Uc terms
-		  b1 = b1 + nuc*m_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
-						   9*Uc(3,ic,jc  ,0)*Mlrc(ic,jc  ,1) + 
-						   9*Uc(3,ic,jc+1,0)*Mlrc(ic,jc+1,1)
-						    -Uc(3,ic,jc+2,0)*Mlrc(ic,jc+2,1) );
-	       }
-	       if( (j % 2 == 1) && (i % 2 == 0) ) // j odd, i even
-	       {
-		  ic = i/2;
-		  jc = (j+1)/2;
-// All Unextc terms
-		  b1 = i16*(-Unextc(3,ic-1,jc,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic+1,jc,1))-Unextc(3,ic+2,jc,1));
-// All Uc terms
-		  b1 = b1 + nuc*m_ghcof[0]*i16*(   -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+ 
-						  9*Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+ 
-						  9*Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1)
-						   -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1));
-	       }
-	       if( (j % 2 == 0) && (i % 2 == 0) ) // j even, i even
-	       {
-		  ic = i/2;
-		  jc = j/2;
-// All Unextc terms
-		  b1 = i256*
-                     ( Unextc(3,ic-1,jc-1,1)-9*(Unextc(3,ic,jc-1,1)+Unextc(3,ic+1,jc-1,1))+Unextc(3,ic+2,jc-1,1)
-                       + 9*(-Unextc(3,ic-1,jc,  1)+9*(Unextc(3,ic,jc,  1)+Unextc(3,ic+1,jc,  1))-Unextc(3,ic+2,jc,  1)  
-                            -Unextc(3,ic-1,jc+1,1)+9*(Unextc(3,ic,jc+1,1)+Unextc(3,ic+1,jc+1,1))-Unextc(3,ic+2,jc+1,1))
-                       +Unextc(3,ic-1,jc+2,1)-9*(Unextc(3,ic,jc+2,1)+Unextc(3,ic+1,jc+2,1))+Unextc(3,ic+2,jc+2,1) );
 
-// All Uc terms
-		  b1 = b1 + nuc*m_ghcof[0]*i256*(
-                     Uc(3,ic-1,jc-1,0)*Mlrc(ic-1,jc-1,1)
-                     -9*(Uc(3,ic,  jc-1,0)*Mlrc(ic,  jc-1,1)+
-                         Uc(3,ic+1,jc-1,0)*Mlrc(ic+1,jc-1,1))+
-                     Uc(3,ic+2,jc-1,0)*Mlrc(ic+2,jc-1,1)
-                     + 9*(
-                        -Uc(3,ic-1,jc,0)*Mlrc(ic-1,jc,1)+
-                        9*( Uc(3,ic,  jc,0)*Mlrc(ic,  jc,1)+
-                            Uc(3,ic+1,jc,0)*Mlrc(ic+1,jc,1))
-                        -Uc(3,ic+2,jc,0)*Mlrc(ic+2,jc,1)  
-                        -Uc(3,ic-1,jc+1,0)*Mlrc(ic-1,jc+1,1)+
-                        9*( Uc(3,ic,  jc+1,0)*Mlrc(ic,  jc+1,1)+
-                            Uc(3,ic+1,jc+1,0)*Mlrc(ic+1,jc+1,1))
-                        -Uc(3,ic+2,jc+1,0)*Mlrc(ic+2,jc+1,1)  )
-                     + Uc(3,ic-1,jc+2,0)*Mlrc(ic-1,jc+2,1)
-                     -9*(Uc(3,ic,  jc+2,0)*Mlrc(ic,  jc+2,1) +
-                         Uc(3,ic+1,jc+2,0)*Mlrc(ic+1,jc+2,1)) +
-                     Uc(3,ic+2,jc+2,0)*Mlrc(ic+2,jc+2,1)   );
-	       } // end  j even, i even
-// right hand side is mismatch in displacement                
-	       b1 = b1 - Unextf(3,i,j,nkf); 
-               a11 = nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))/(Rhof(i,j,nkf)); // no str
-//               a11 = nuf*m_ghcof[0]*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))/(Rhof(i,j,nkf))/(strf_x(i)*strf_y(j)); // with str
+      if (m_croutines) 
+// optimized version for updating even i and odd j
+	evenIoddJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), 
+			      m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
+			      m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
+			      Unextf.c_ptr(), UnextcInterp.c_ptr(),
+			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			      gf, gc, nkf, mDt, hf, hc, cof, relax,
+			      m_sbop, m_ghcof);
+      else
+	evenIoddJinterpJacobi(rmax, Uf, UfNew, Uc, 
+			      m_Morc[gc], m_Mlrc[gc],
+			      m_Morf[gf], m_Mlrf[gf],
+			      Unextf, UnextcInterp,
+			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			      gf, gc, nkf, mDt, hf, hc, cof, relax,
+			      m_sbop, m_ghcof);
 
-	       r3 = Uf(3,i,j,nkf+1); // save previous value for relaxation below
-// solve for the ghost point value Uf(3,i,j,nkf+1)
-	       Uf(3,i,j,nkf+1) = b1/a11;
-	       Uf(3,i,j,nkf+1) = relax*Uf(3,i,j,nkf+1)+(1-relax)*r3;
-	       r3 = r3 - Uf(3,i,j,nkf+1);
-	       rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
-	       //	       rmax[2+3] = rmax[2+3] > fabs(r3) ? rmax[2+3] : fabs(r3);
+      if (m_croutines)
+// optimized version for updating even i and even j
+	evenIevenJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), 
+			       m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
+			       m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
+			       Unextf.c_ptr(), UnextcInterp.c_ptr(),
+			       m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			       m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			       gf, gc, nkf, mDt, hf, hc, cof, relax,
+			       m_sbop, m_ghcof);
+      else
+	evenIevenJinterpJacobi(rmax, Uf, UfNew, Uc, 
+			       m_Morc[gc], m_Mlrc[gc],
+			       m_Morf[gf], m_Mlrf[gf],
+			       Unextf, UnextcInterp,
+			       m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+			       m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+			       gf, gc, nkf, mDt, hf, hc, cof, relax,
+			       m_sbop, m_ghcof);
 
-	    } // end if not ( i%2=1 &&  j%2=1), i.e, not both i and j are odd
-
-            // (i,j) both odd is handled by the first iteration
-            
-	 } // end for all fine grid points on the interface
-      rmax[3] = rmax1;
-      rmax[4] = rmax2;
-      rmax[5] = rmax3;
-      //   skipthis:
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
       float_sw4 jacerrtmp = 0;
@@ -456,12 +288,12 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 	 jacerr = jacerr/jacerr0;
       it++;
 
-   } // end while jacerr > eps
+   } // end while jacerr > eps (Outer iteration)
    
    if( jacerr > m_citol && proc_zero() )
       cout << "EW::consintp, Warning, no convergence. err = " << jacerr << " tol= " << m_citol << endl;
       
-   if( proc_zero() && mVerbose >= 4 )
+   if( proc_zero() && mVerbose >= 4 ) // 1 )
       cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;
 #undef strc_x
 #undef strc_y

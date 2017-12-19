@@ -13,8 +13,8 @@ numnodes=4
 #numprocspernode = Number of MPI-tasks per node
 #numprocspernode=16
 #for numprocspernode in 1 2 4 8; do
-#for numprocspernode in 64 32 16 8; do
-for numprocspernode in 64; do
+for numprocspernode in 64 32 16 8; do
+#for numprocspernode in 64; do
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
@@ -36,14 +36,13 @@ echo "Running on ${numnodes} nodes with ${numprocs} MPI ranks and OMP_NUM_THREAD
 export OMP_NUM_THREADS=${numcores}
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
-# export KMP_PLACE_THREADS=1s${numhc}c${numht}t
 
 # Run the job with this MPI + OpenMP configuration
 MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
 
 # 1st case
-CASE=loh1-h100-mr-2
-RUN_COMMAND="./sw4_mp_fort ${CASE}.in"
+CASE=loh1-h100-mr-1
+RUN_COMMAND="./sw4_mp ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 
 done
