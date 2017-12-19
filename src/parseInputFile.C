@@ -3712,8 +3712,8 @@ void EW::processCheckPoint(char* buffer)
    bool timingSet=false;
    string filePrefix = "checkpoint";
 
-   string restartFileName;
-   bool restartFileGiven = false;
+   string restartFileName, restartPath;
+   bool   restartFileGiven = false, restartPathGiven=false;
 
    size_t bufsize=10000000;
 
@@ -3746,6 +3746,12 @@ void EW::processCheckPoint(char* buffer)
 	 restartFileName = token;
 	 restartFileGiven = true;
       }
+      else if (startswith("restartpath=", token))
+      {
+	 token += 12;
+	 restartPath = token;
+	 restartPathGiven = true;
+      }
       else if (startswith("bufsize=", token))
       {
 	 token += 8; // skip bufsize=
@@ -3762,7 +3768,11 @@ void EW::processCheckPoint(char* buffer)
    if( cycleInterval > 0 )
       m_check_point->set_checkpoint_file( filePrefix, cycle, cycleInterval, bufsize );
    if( restartFileGiven )
+   {
       m_check_point->set_restart_file( restartFileName, bufsize );
+      if( restartPathGiven )
+	 m_check_point->set_restart_path( restartPath );
+   }
 }
 
 //-----------------------------------------------------------------------
