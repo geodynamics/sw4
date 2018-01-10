@@ -76,15 +76,20 @@ public:
    int i_write() const {return m_iwrite==1;}
    void writer_barrier( );
    int n_writers() const {return m_nwriters;}
+   int proc_zero_rank_in_comm_world();
+
 private:
    void init_pio( int iwrite, int pfs, int ihave_array=-1 );
    void init_array( int globalsizes[3], int localsizes[3], 
 		    int starts[3], int nptsbuf, int padding=0 );
    void setup_substeps( );
+
+
    int m_iwrite, m_nwriters, m_parallel_file_system;
    int m_csteps;
    int* m_writer_ids;
    int ni, nj, nk, nig, njg, nkg, oi, oj, ok;
+   int m_zerorank_in_commworld;
    Byteswapper m_bswap;
 
    MPI_Comm m_write_comm; 

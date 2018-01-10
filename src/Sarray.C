@@ -614,17 +614,33 @@ void Sarray::extract_subarray( int ib, int ie, int jb, int je, int kb,
    // Assuming nc is the same for m_data and subarray ar.
    int nis = ie-ib+1;
    int njs = je-jb+1;
-   //   int nks = ke-kb+1;
    size_t sind=0, ind=0;
-   for( int k=kb ; k<=ke ; k++ )
-      for( int j=jb ; j<=je ; j++ )
-	 for( int i=ib ; i <= ie ; i++ )
+   if( m_corder )
+   {
+      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      size_t totptss = static_cast<size_t>(nis)*njs*(ke-kb+1);
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  ar[sind+totptss*(c-1)] = m_data[ind+totpts*(c-1)];
+	    }
+   }
+   else
+   {
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
 	    {
                sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
                ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
 	       for( int c=1 ; c <= m_nc ; c++ )
 		  ar[sind*m_nc+c-1] = m_data[ind*m_nc+c-1];
 	    }
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -636,15 +652,32 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
    int njs = je-jb+1;
    //   int nks = ke-kb+1;
    size_t sind=0, ind=0;
-   for( int k=kb ; k<=ke ; k++ )
-      for( int j=jb ; j<=je ; j++ )
-	 for( int i=ib ; i <= ie ; i++ )
+   if( m_corder )
+   {
+      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      size_t totptss = static_cast<size_t>(nis)*njs*(ke-kb+1);
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind + totpts*(c-1)] = ar[sind + totptss*(c-1)];
+	    }
+   }
+   else
+   {
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
 	    {
                sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
                ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
 	       for( int c=1 ; c <= m_nc ; c++ )
 		  m_data[ind*m_nc+c-1] = ar[sind*m_nc+c-1];
 	    }
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -656,15 +689,32 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
    int njs = je-jb+1;
    //   int nks = ke-kb+1;
    size_t sind=0, ind=0;
-   for( int k=kb ; k<=ke ; k++ )
-      for( int j=jb ; j<=je ; j++ )
-	 for( int i=ib ; i <= ie ; i++ )
+   if( m_corder )
+   {
+      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      size_t totptss = static_cast<size_t>(nis)*njs*(ke-kb+1);
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (i-ib) + nis*(j-jb) + nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind+totpts*(c-1)] = (float_sw4)ar[sind+totptss*(c-1)];
+	    }
+   }
+   else
+   {
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
 	    {
                sind = (i-ib) + nis*(j-jb) + nis*njs*(k-kb);
                ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
 	       for( int c=1 ; c <= m_nc ; c++ )
 		  m_data[ind*m_nc+c-1] = (float_sw4)ar[sind*m_nc+c-1];
 	    }
+   }      
 }
 
 //-----------------------------------------------------------------------

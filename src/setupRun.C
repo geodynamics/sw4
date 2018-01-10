@@ -293,7 +293,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 //  string saved_path = mPath;
 
-  int beginCycle = 1;
+//  int beginCycle = 1;
 
 // Initialize IO
   create_output_directory( );
@@ -367,13 +367,21 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
 
+  // Initialize check point object
+  m_check_point->setup_sizes();
+
 // compute time-step and number of time steps. 
 // Note: SW4 always ends the simulation at mTmax, whether prefilter is enabled or not.
 // This behavior is different from WPP
-  if( m_anisotropic )
-     computeDTanisotropic();
+  if( m_check_point->do_restart() )
+     getDtFromRestartFile();
   else
-     computeDT( );
+  {
+     if( m_anisotropic )
+	computeDTanisotropic();
+     else
+	computeDT( );
+  }
 
 // should we initialize all images after the prefilter time offset stuff?
 
@@ -2250,3 +2258,19 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
       }
    }
 }
+
+//-----------------------------------------------------------------------
+void EW::getDtFromRestartFile()
+{
+   //   VERIFY2( m_check_point->mDoRestart,
+   //	    "Error in EW::getDtFromRestartFile: there is no restart command");
+   mDt = m_check_point->getDt();
+   if (mTimeIsSet)
+   {
+// constrain Tmax based on the time step
+      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
+      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
+      mTmax = mTstart + mNumberOfTimeSteps*mDt;
+      //      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+   }
+}  

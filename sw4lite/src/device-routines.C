@@ -2390,7 +2390,10 @@ rhs4center_dev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int
 
 
 //-----------------------------------------------------------------------
-
+//
+// __launch_bounds__(max threads per block, min blocks per multiprocessor) 
+//      helpsthe compiler to optimize register usage. 
+//
 __global__ void 
 __launch_bounds__(256,1)
 rhs4center_dev_rev_v2( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
