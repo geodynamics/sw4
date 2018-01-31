@@ -490,6 +490,11 @@ void get_geodyn_timelevel( vector<Sarray>& geodyndata );
 void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 			    vector<Sarray>& geodyndata2 );
 
+void geodyn_second_ghost_point( vector<Sarray>& geodyndata1, vector<Sarray>& geodyndata2,
+				vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+				vector<Sarray>& forcing, double t, vector<Sarray>& U,
+				vector<Sarray>& Um, int crf );
+
 void integrate_source( );
 
 void compute_energy( double dt, bool write_file, vector<Sarray>& Um,
@@ -981,6 +986,19 @@ vector<int*> m_ciipiv2;
 
 EW(const EW&);
 EW& operator=(const EW&);
+
+// Geodyn coupling
+bool m_do_geodynbc;
+std::vector<int*> m_geodyn_dims;
+std::vector<Sarray> m_geodyn_data1;
+std::vector<Sarray> m_geodyn_data2;
+double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;
+int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
+int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
+std::string m_geodyn_filename;
+std::ifstream m_geodynfile;
+bool m_geodyn_iwillread;   
+
 
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as
