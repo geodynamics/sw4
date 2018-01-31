@@ -47,6 +47,8 @@ subroutine scalar_prod( is, ie, js, je, ks, ke, i1, i2, j1, j2, k1, k2, onesided
   normwgh(4) = 49d0/48
 ! initialize  
   sc_prod = 0
+!$OMP PARALLEL PRIVATE( term, normfact )
+!$OMP DO REDUCTION(+:sc_prod)
   do k=k1,k2
      do j=j1,j2
         do i=i1,i2
@@ -63,4 +65,6 @@ subroutine scalar_prod( is, ie, js, je, ks, ke, i1, i2, j1, j2, k1, k2, onesided
         enddo
      enddo
   enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 end subroutine scalar_prod

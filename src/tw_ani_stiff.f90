@@ -13,6 +13,8 @@ subroutine tw_ani_stiff( ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin, o
   integer i, j, k
   real(dp) x, y, z
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO
   do k=kfirst,klast
      do j=jfirst,jlast
         do i=ifirst,ilast
@@ -45,6 +47,8 @@ subroutine tw_ani_stiff( ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin, o
         enddo
      enddo
   enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 end subroutine tw_ani_stiff
 
 
@@ -64,6 +68,8 @@ subroutine tw_ani_curvi_stiff( ifirst, ilast, jfirst, jlast, kfirst, klast, xx, 
   integer i, j, k
   real(dp) x, y, z
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO
   do k=kfirst,klast
      do j=jfirst,jlast
         do i=ifirst,ilast
@@ -96,4 +102,6 @@ subroutine tw_ani_curvi_stiff( ifirst, ilast, jfirst, jlast, kfirst, klast, xx, 
         enddo
      enddo
   enddo
+!$OMP END DO
+!$OMP END PARALLEL
 end subroutine tw_ani_curvi_stiff

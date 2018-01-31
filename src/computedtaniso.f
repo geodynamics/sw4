@@ -1,5 +1,5 @@
       subroutine COMPUTEDTANISO( ifirst, ilast, jfirst, jlast, kfirst,
-     *                           klast, rho, c, cfl, dx, dtloc )
+     *                           klast, rho, c, cfl, dx, dtloc ) 
 ***********************************************************************
 ***
 *** Estimate the spectral radius of the discretized operator by
@@ -63,7 +63,7 @@
       end
 c-----------------------------------------------------------------------
       subroutine COMPUTEDTANISO2( ifirst, ilast, jfirst, jlast, kfirst,
-     *                           klast, rho, c, cfl, dx, dtloc )
+     *                           klast, rho, c, cfl, dx, dtloc ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
 c      integer nphi, nth
@@ -187,7 +187,7 @@ c     *                   k2*k2*c(19) + k2*k3*2*c(20) + k3*k3*c(21)
       
 c-----------------------------------------------------------------------
       subroutine COMPUTEDTANISO2CURV( ifirst, ilast, jfirst, jlast, 
-     *                     kfirst, klast, rho, c, jac, cfl, dtloc )
+     *                  kfirst, klast, rho, c, jac, cfl, dtloc )bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
 c      integer nphi, nth

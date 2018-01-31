@@ -32,7 +32,7 @@
 c-----------------------------------------------------------------------
       subroutine rhs4th3fort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, h, op )
+     +     uacc, u, mu, la, h, op ) bind(c)
 
 *** in the interior: centered approximation of the spatial operator in the elastic wave equation
 *** near physical boundaries: one-sided approximation of the spatial operator in the elastic wave equation
@@ -78,7 +78,17 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       if (onesided(5).eq.1) k1 = 7;
       k2 = klast-2
       if (onesided(6).eq.1) k2 = nz-6;
+!$OMP PARALLEL PRIVATE(i,j,k,kb,m,mb,q,qb,mux1,mux2,mux3,mux4,r1,r2,r3,
+!$OMP*  muy1,muy2,muy3,muy4,muz1,muz2,muz3,muz4,
+!$OMP*  mucof, mu1zz, mu2zz, lau2yz,
+!$OMP* lap2mu, mu3zz, mu3xz, mu3yz, lau1xz,
+!$OMP* lau3zx, u3zim2, u3zim1, u3zip1, u3zip2,
+!$OMP* lau3zy, u3zjm2, u3zjm1, u3zjp1, u3zjp2,
+!$OMP* mu1zx, u1zim2, u1zim1, u1zip1, u1zip2,
+!$OMP* mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2 )
+
 c the centered stencil can be evaluated 2 points away from the boundary
+!$OMP DO
       do k=k1,k2
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -270,9 +280,11 @@ c note that we could have introduced intermediate variables for the average of l
             enddo
          enddo
       enddo
+!$OMP ENDDO
 
 c low-k boundary modified stencils
       if (onesided(5).eq.1) then
+!$OMP DO
       do k=1,6
 c the centered stencil can be used in the x- and y-directions
         do j=jfirst+2,jlast-2
@@ -395,6 +407,7 @@ c cross-terms in first component of rhs
      *                   mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
      *                        8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) ))
 ***   (la*w_z)_x: NOT CENTERED
+
             u3zip2=0
             u3zip1=0
             u3zim1=0
@@ -521,10 +534,12 @@ c No centered cross terms in r3
             enddo
          enddo
       enddo
+!$OMP ENDDO
       endif
 
 c high-k boundary
       if (onesided(6).eq.1) then
+!$OMP DO
       do k=nz-5,nz
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -790,18 +805,19 @@ c No centered cross terms in r3
             enddo
          enddo
       enddo
+!$OMP ENDDO
       endif
-
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine rhs4th3fortsgstr( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, nz, onesided, acof, bope, ghcof,
-     +     uacc, u, mu, la, h, strx, stry, strz, op )
+     +     uacc, u, mu, la, h, strx, stry, strz, op )  bind(c)
 
 *** Routine with supergrid stretchings, strx, stry, and strz.
 ***
-*** in the interior: centered approximation of the spatial operator in the elastic wave equation
+*** In the interior: centered approximation of the spatial operator in the elastic wave equation
 *** near physical boundaries: one-sided approximation of the spatial operator in the elastic wave equation
 
       implicit none
@@ -828,6 +844,7 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 mu1zx, u1zim2, u1zim1, u1zip1, u1zip2
       real*8 mu2zy, u2zjm2, u2zjm1, u2zjp1, u2zjp2
       real*8 r1, r2, r3, h, cof, d4a, d4b, a1
+      real*8 mucofs, lap2mus, lacofs
       real*8 strx(ifirst:ilast), stry(jfirst:jlast), strz(kfirst:klast)
       character*1 op
       parameter( d4a=2d0/3, d4b=-1d0/12 )
@@ -843,15 +860,22 @@ c      real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       endif
 
       k1 = kfirst+2
-      if (onesided(5).eq.1) k1 = 7;
+      if (onesided(5).eq.1) k1 = 7
       k2 = klast-2
-      if (onesided(6).eq.1) k2 = nz-6;
+      if (onesided(6).eq.1) k2 = nz-6
 
 c the centered stencil can be evaluated 2 points away from the boundary
+!$OMP PARALLEL PRIVATE(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,
+!$OMP*   muz1,muz2,muz3,muz4,
+!$OMP*   r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,m,u3zip2,u3zip1,
+!$OMP*   u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy,
+!$OMP*   mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,lap2mus,mucofs,lacofs,
+!$OMP*   u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb)
+!$OMP DO
       do k=k1,k2
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
-c from inner_loop_4a
+c from inner_loop_4a, 28x3 = 84 ops
             mux1 = mu(i-1,j,k)*strx(i-1)-
      *                     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2))
             mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
@@ -860,16 +884,7 @@ c from inner_loop_4a
      *                      3*(mu(i+1,j,k)*strx(i+1)+mu(i,j,k)*strx(i))
             mux4 = mu(i+1,j,k)*strx(i+1)-
      *                     tf*(mu(i,j,k)*strx(i)+mu(i+2,j,k)*strx(i+2))
-c
-            lax1 = la(i-1,j,k)*strx(i-1)-
-     *                     tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2))
-            lax2 = la(i-2,j,k)*strx(i-2)+la(i+1,j,k)*strx(i+1)+
-     *                      3*(la(i,j,k)*strx(i)+la(i-1,j,k)*strx(i-1))
-            lax3 = la(i-1,j,k)*strx(i-1)+la(i+2,j,k)*strx(i+2)+
-     *                      3*(la(i+1,j,k)*strx(i+1)+la(i,j,k)*strx(i))
-            lax4 = la(i+1,j,k)*strx(i+1)-
-     *                     tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2))
-c
+
             muy1 = mu(i,j-1,k)*stry(j-1)-
      *                    tf*(mu(i,j,k)*stry(j)+mu(i,j-2,k)*stry(j-2))
             muy2 = mu(i,j-2,k)*stry(j-2)+mu(i,j+1,k)*stry(j+1)+
@@ -878,16 +893,7 @@ c
      *                     3*(mu(i,j+1,k)*stry(j+1)+mu(i,j,k)*stry(j))
             muy4 = mu(i,j+1,k)*stry(j+1)-
      *                    tf*(mu(i,j,k)*stry(j)+mu(i,j+2,k)*stry(j+2))
-c
-            lay1 = la(i,j-1,k)*stry(j-1)-
-     *                    tf*(la(i,j,k)*stry(j)+la(i,j-2,k)*stry(j-2))
-            lay2 = la(i,j-2,k)*stry(j-2)+la(i,j+1,k)*stry(j+1)+
-     *                     3*(la(i,j,k)*stry(j)+la(i,j-1,k)*stry(j-1))
-            lay3 = la(i,j-1,k)*stry(j-1)+la(i,j+2,k)*stry(j+2)+
-     *                     3*(la(i,j+1,k)*stry(j+1)+la(i,j,k)*stry(j))
-            lay4 = la(i,j+1,k)*stry(j+1)-
-     *                    tf*(la(i,j,k)*stry(j)+la(i,j+2,k)*stry(j+2))
-c
+
             muz1 = mu(i,j,k-1)*strz(k-1)-
      *                    tf*(mu(i,j,k)*strz(k)+mu(i,j,k-2)*strz(k-2))
             muz2 = mu(i,j,k-2)*strz(k-2)+mu(i,j,k+1)*strz(k+1)+
@@ -896,77 +902,31 @@ c
      *                     3*(mu(i,j,k+1)*strz(k+1)+mu(i,j,k)*strz(k))
             muz4 = mu(i,j,k+1)*strz(k+1)-
      *                    tf*(mu(i,j,k)*strz(k)+mu(i,j,k+2)*strz(k+2))
-c
-            laz1 = la(i,j,k-1)*strz(k-1)-
-     *                    tf*(la(i,j,k)*strz(k)+la(i,j,k-2)*strz(k-2))
-            laz2 = la(i,j,k-2)*strz(k-2)+la(i,j,k+1)*strz(k+1)+
-     *                     3*(la(i,j,k)*strz(k)+la(i,j,k-1)*strz(k-1))
-            laz3 = la(i,j,k-1)*strz(k-1)+la(i,j,k+2)*strz(k+2)+
-     *                     3*(la(i,j,k+1)*strz(k+1)+la(i,j,k)*strz(k))
-            laz4 = la(i,j,k+1)*strz(k+1)-
-     *                    tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2))
 
-            r1=0
-            r2=0
-            r3=0
 *** xx, yy, and zz derivatives:
-c note that we could have introduced intermediate variables for the average of lambda in the same way as we did for mu
-c$$$            r1 = i6*(
-c$$$     *       strx(i)*( (2*mux1+la(i-1,j,k)*strx(i-1)-
-c$$$     *             tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
-c$$$     *                 (u(1,i-2,j,k)-u(1,i,j,k))+
-c$$$     *             (2*mux2+la(i-2,j,k)*strx(i-2)+la(i+1,j,k)*strx(i+1)+
-c$$$     *             3*(la(i,j,k)*strx(i)+la(i-1,j,k)*strx(i-1)))*
-c$$$     *             (u(1,i-1,j,k)-u(1,i,j,k))+ 
-c$$$     *             (2*mux3+la(i-1,j,k)*strx(i-1)+la(i+2,j,k)*strx(i+2)+
-c$$$     *           3*(la(i+1,j,k)*strx(i+1)+la(i,j,k)*strx(i)))*
-c$$$     *           (u(1,i+1,j,k)-u(1,i,j,k))+
-c$$$     *           (2*mux4+ la(i+1,j,k)*strx(i+1)-
-c$$$     *           tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
-c$$$     *           (u(1,i+2,j,k)-u(1,i,j,k)) )
-            r1 = i6*(
-     *           strx(i)*(
-     *               (2*mux1+lax1)*(u(1,i-2,j,k)-u(1,i,j,k)) +
-     *               (2*mux2+lax2)*(u(1,i-1,j,k)-u(1,i,j,k))+ 
-     *               (2*mux3+lax3)*(u(1,i+1,j,k)-u(1,i,j,k))+
-     *               (2*mux4+lax4)*(u(1,i+2,j,k)-u(1,i,j,k)) )
-     *       + stry(j)*(
-     *               muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     *               muy2*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     *               muy3*(u(1,i,j+1,k)-u(1,i,j,k)) +
-     *               muy4*(u(1,i,j+2,k)-u(1,i,j,k)) )
-     *       + strz(k)*(
-     *               muz1*(u(1,i,j,k-2)-u(1,i,j,k)) + 
-     *               muz2*(u(1,i,j,k-1)-u(1,i,j,k)) + 
-     *               muz3*(u(1,i,j,k+1)-u(1,i,j,k)) +
-     *               muz4*(u(1,i,j,k+2)-u(1,i,j,k)) )
-     *           )
+*** 75 ops
+            r1 = i6*( strx(i)*( (2*mux1+la(i-1,j,k)*strx(i-1)-
+     *          tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
+     *                         (u(1,i-2,j,k)-u(1,i,j,k))+
+     *      (2*mux2+la(i-2,j,k)*strx(i-2)+la(i+1,j,k)*strx(i+1)+
+     *           3*(la(i,j,k)*strx(i)+la(i-1,j,k)*strx(i-1)))*
+     *                         (u(1,i-1,j,k)-u(1,i,j,k))+ 
+     *      (2*mux3+la(i-1,j,k)*strx(i-1)+la(i+2,j,k)*strx(i+2)+
+     *           3*(la(i+1,j,k)*strx(i+1)+la(i,j,k)*strx(i)))*
+     *                         (u(1,i+1,j,k)-u(1,i,j,k))+
+     *           (2*mux4+ la(i+1,j,k)*strx(i+1)-
+     *          tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
+     *           (u(1,i+2,j,k)-u(1,i,j,k)) ) + stry(j)*(
+     *                muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
+     *                muy2*(u(1,i,j-1,k)-u(1,i,j,k)) + 
+     *                muy3*(u(1,i,j+1,k)-u(1,i,j,k)) +
+     *                muy4*(u(1,i,j+2,k)-u(1,i,j,k)) ) + strz(k)*(
+     *                muz1*(u(1,i,j,k-2)-u(1,i,j,k)) + 
+     *                muz2*(u(1,i,j,k-1)-u(1,i,j,k)) + 
+     *                muz3*(u(1,i,j,k+1)-u(1,i,j,k)) +
+     *                muz4*(u(1,i,j,k+2)-u(1,i,j,k)) ) )
 
-c$$$            r2 = i6*(
-c$$$     *           strx(i)*(
-c$$$     *                 mux1*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-c$$$     *                 mux2*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-c$$$     *                 mux3*(u(2,i+1,j,k)-u(2,i,j,k)) +
-c$$$     *                 mux4*(u(2,i+2,j,k)-u(2,i,j,k)) )
-c$$$     *           + stry(j)*(
-c$$$     *             (2*muy1+la(i,j-1,k)*stry(j-1)-
-c$$$     *                 tf*(la(i,j,k)*stry(j)+la(i,j-2,k)*stry(j-2)))*
-c$$$     *                     (u(2,i,j-2,k)-u(2,i,j,k))+
-c$$$     *      (2*muy2+la(i,j-2,k)*stry(j-2)+la(i,j+1,k)*stry(j+1)+
-c$$$     *                3*(la(i,j,k)*stry(j)+la(i,j-1,k)*stry(j-1)))*
-c$$$     *                     (u(2,i,j-1,k)-u(2,i,j,k))+ 
-c$$$     *      (2*muy3+la(i,j-1,k)*stry(j-1)+la(i,j+2,k)*stry(j+2)+
-c$$$     *                3*(la(i,j+1,k)*stry(j+1)+la(i,j,k)*stry(j)))*
-c$$$     *                     (u(2,i,j+1,k)-u(2,i,j,k))+
-c$$$     *             (2*muy4+la(i,j+1,k)*stry(j+1)-
-c$$$     *               tf*(la(i,j,k)*stry(j)+la(i,j+2,k)*stry(j+2)))*
-c$$$     *           (u(2,i,j+2,k)-u(2,i,j,k)) )
-c$$$     *           + strz(k)*(
-c$$$     *                muz1*(u(2,i,j,k-2)-u(2,i,j,k)) + 
-c$$$     *                muz2*(u(2,i,j,k-1)-u(2,i,j,k)) + 
-c$$$     *                muz3*(u(2,i,j,k+1)-u(2,i,j,k)) +
-c$$$     *                muz4*(u(2,i,j,k+2)-u(2,i,j,k)) ) )
-
+*** 75 ops
             r2 = i6*(
      *           strx(i)*(
      *                 mux1*(u(2,i-2,j,k)-u(2,i,j,k)) + 
@@ -974,57 +934,50 @@ c$$$     *                muz4*(u(2,i,j,k+2)-u(2,i,j,k)) ) )
      *                 mux3*(u(2,i+1,j,k)-u(2,i,j,k)) +
      *                 mux4*(u(2,i+2,j,k)-u(2,i,j,k)) )
      *           + stry(j)*(
-     *               (2*muy1+lay1)*(u(2,i,j-2,k)-u(2,i,j,k))+
-     *               (2*muy2+lay2)*(u(2,i,j-1,k)-u(2,i,j,k))+ 
-     *               (2*muy3+lay3)*(u(2,i,j+1,k)-u(2,i,j,k))+
-     *               (2*muy4+lay4)*(u(2,i,j+2,k)-u(2,i,j,k)) )
+     *             (2*muy1+la(i,j-1,k)*stry(j-1)-
+     *                 tf*(la(i,j,k)*stry(j)+la(i,j-2,k)*stry(j-2)))*
+     *                     (u(2,i,j-2,k)-u(2,i,j,k))+
+     *      (2*muy2+la(i,j-2,k)*stry(j-2)+la(i,j+1,k)*stry(j+1)+
+     *                3*(la(i,j,k)*stry(j)+la(i,j-1,k)*stry(j-1)))*
+     *                     (u(2,i,j-1,k)-u(2,i,j,k))+ 
+     *      (2*muy3+la(i,j-1,k)*stry(j-1)+la(i,j+2,k)*stry(j+2)+
+     *                3*(la(i,j+1,k)*stry(j+1)+la(i,j,k)*stry(j)))*
+     *                     (u(2,i,j+1,k)-u(2,i,j,k))+
+     *             (2*muy4+la(i,j+1,k)*stry(j+1)-
+     *               tf*(la(i,j,k)*stry(j)+la(i,j+2,k)*stry(j+2)))*
+     *           (u(2,i,j+2,k)-u(2,i,j,k)) )
      *           + strz(k)*(
      *                muz1*(u(2,i,j,k-2)-u(2,i,j,k)) + 
      *                muz2*(u(2,i,j,k-1)-u(2,i,j,k)) + 
      *                muz3*(u(2,i,j,k+1)-u(2,i,j,k)) +
      *                muz4*(u(2,i,j,k+2)-u(2,i,j,k)) ) )
-            
-c$$$            r3 = i6*( strx(i)*(mux1*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-c$$$     *                 mux2*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-c$$$     *                 mux3*(u(3,i+1,j,k)-u(3,i,j,k)) +
-c$$$     *                 mux4*(u(3,i+2,j,k)-u(3,i,j,k))  ) + stry(j)*(
-c$$$     *                muy1*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-c$$$     *                muy2*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-c$$$     *                muy3*(u(3,i,j+1,k)-u(3,i,j,k)) +
-c$$$     *                muy4*(u(3,i,j+2,k)-u(3,i,j,k)) ) + strz(k)*(
-c$$$     *             (2*muz1+la(i,j,k-1)*strz(k-1)-
-c$$$     *                 tf*(la(i,j,k)*strz(k)+la(i,j,k-2)*strz(k-2)))*
-c$$$     *                     (u(3,i,j,k-2)-u(3,i,j,k))+
-c$$$     *      (2*muz2+la(i,j,k-2)*strz(k-2)+la(i,j,k+1)*strz(k+1)+
-c$$$     *                 3*(la(i,j,k)*strz(k)+la(i,j,k-1)*strz(k-1)))*
-c$$$     *                     (u(3,i,j,k-1)-u(3,i,j,k))+ 
-c$$$     *      (2*muz3+la(i,j,k-1)*strz(k-1)+la(i,j,k+2)*strz(k+2)+
-c$$$     *                 3*(la(i,j,k+1)*strz(k+1)+la(i,j,k)*strz(k)))*
-c$$$     *                     (u(3,i,j,k+1)-u(3,i,j,k))+
-c$$$     *             (2*muz4+la(i,j,k+1)*strz(k+1)-
-c$$$     *               tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2)))*
-c$$$     *                     (u(3,i,j,k+2)-u(3,i,j,k)) ) )
 
-            r3 = i6*(
-     *           strx(i)*(
-     *               mux1*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     *               mux2*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     *               mux3*(u(3,i+1,j,k)-u(3,i,j,k)) +
-     *               mux4*(u(3,i+2,j,k)-u(3,i,j,k))  )
-     *           + stry(j)*(
+*** 75 ops
+            r3 = i6*( strx(i)*(mux1*(u(3,i-2,j,k)-u(3,i,j,k)) + 
+     *                 mux2*(u(3,i-1,j,k)-u(3,i,j,k)) + 
+     *                 mux3*(u(3,i+1,j,k)-u(3,i,j,k)) +
+     *                 mux4*(u(3,i+2,j,k)-u(3,i,j,k))  ) + stry(j)*(
      *                muy1*(u(3,i,j-2,k)-u(3,i,j,k)) + 
      *                muy2*(u(3,i,j-1,k)-u(3,i,j,k)) + 
      *                muy3*(u(3,i,j+1,k)-u(3,i,j,k)) +
-     *                muy4*(u(3,i,j+2,k)-u(3,i,j,k)) )
-     *           + strz(k)*(
-     *                (2*muz1+laz1)*(u(3,i,j,k-2)-u(3,i,j,k))+
-     *                (2*muz2+laz2)*(u(3,i,j,k-1)-u(3,i,j,k))+ 
-     *                (2*muz3+laz3)*(u(3,i,j,k+1)-u(3,i,j,k))+
-     *                (2*muz4+laz4)*(u(3,i,j,k+2)-u(3,i,j,k)) ) )
-
+     *                muy4*(u(3,i,j+2,k)-u(3,i,j,k)) ) + strz(k)*(
+     *             (2*muz1+la(i,j,k-1)*strz(k-1)-
+     *                 tf*(la(i,j,k)*strz(k)+la(i,j,k-2)*strz(k-2)))*
+     *                     (u(3,i,j,k-2)-u(3,i,j,k))+
+     *      (2*muz2+la(i,j,k-2)*strz(k-2)+la(i,j,k+1)*strz(k+1)+
+     *                 3*(la(i,j,k)*strz(k)+la(i,j,k-1)*strz(k-1)))*
+     *                     (u(3,i,j,k-1)-u(3,i,j,k))+ 
+     *      (2*muz3+la(i,j,k-1)*strz(k-1)+la(i,j,k+2)*strz(k+2)+
+     *                 3*(la(i,j,k+1)*strz(k+1)+la(i,j,k)*strz(k)))*
+     *                     (u(3,i,j,k+1)-u(3,i,j,k))+
+     *             (2*muz4+la(i,j,k+1)*strz(k+1)-
+     *               tf*(la(i,j,k)*strz(k)+la(i,j,k+2)*strz(k+2)))*
+     *                     (u(3,i,j,k+2)-u(3,i,j,k)) ) )
 
 *** Mixed derivatives:
-!***   (la*v_y)_x
+*** 29ops /mixed derivative
+*** 116 ops for r1
+***   (la*v_y)_x
             r1 = r1 + strx(i)*stry(j)*
      *            i144*( la(i-2,j,k)*(u(2,i-2,j-2,k)-u(2,i-2,j+2,k)+
      *                        8*(-u(2,i-2,j-1,k)+u(2,i-2,j+1,k))) - 8*(
@@ -1065,7 +1018,8 @@ c$$$     *                     (u(3,i,j,k+2)-u(3,i,j,k)) ) )
      *                   mu(i,j,k+2)*(u(3,i-2,j,k+2)-u(3,i+2,j,k+2)+
      *                        8*(-u(3,i-1,j,k+2)+u(3,i+1,j,k+2))) )) 
 
-!***   (mu*u_y)_x
+*** 116 ops for r2
+***   (mu*u_y)_x
             r2 = r2 + strx(i)*stry(j)*
      *            i144*( mu(i-2,j,k)*(u(1,i-2,j-2,k)-u(1,i-2,j+2,k)+
      *                        8*(-u(1,i-2,j-1,k)+u(1,i-2,j+1,k))) - 8*(
@@ -1105,7 +1059,8 @@ c$$$     *                     (u(3,i,j,k+2)-u(3,i,j,k)) ) )
      *                        8*(-u(3,i,j-1,k+1)+u(3,i,j+1,k+1))) ) - (
      *                   mu(i,j,k+2)*(u(3,i,j-2,k+2)-u(3,i,j+2,k+2)+
      *                        8*(-u(3,i,j-1,k+2)+u(3,i,j+1,k+2))) )) 
-!***  (mu*u_z)_x
+*** 116 ops for r3
+***  (mu*u_z)_x
             r3 = r3 + strx(i)*strz(k)*
      *            i144*( mu(i-2,j,k)*(u(1,i-2,j,k-2)-u(1,i-2,j,k+2)+
      *                        8*(-u(1,i-2,j,k-1)+u(1,i-2,j,k+1))) - 8*(
@@ -1146,6 +1101,7 @@ c$$$     *                     (u(3,i,j,k+2)-u(3,i,j,k)) ) )
      *                   la(i,j,k+2)*(u(2,i,j-2,k+2)-u(2,i,j+2,k+2)+
      *                        8*(-u(2,i,j-1,k+2)+u(2,i,j+1,k+2))) )) 
 
+*** 9 ops
             uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
             uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
             uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
@@ -1153,14 +1109,37 @@ c$$$     *                     (u(3,i,j,k+2)-u(3,i,j,k)) ) )
             enddo
          enddo
       enddo
+!$OMP END DO
+
+*** Total number of ops away from boundary loop, per grid point computed:
+*** 84+75*3+3*116+9 = 666 ops
+*** Memory access mu,lambda  2*(5+5+5-2) = 26  (stencil is a cross)
+***                          u = 3*( 3*5*5-3*5+1) = 183 (stencil is three intersecting planes)
+***                          uacc = 3
+***             strx,stry,strz = 5*3 = 15
+***  Memory access read, 227 vars. = 1816 bytes (double prec.)
+***                write, 3 vars. = 24 bytes (double prec.)
+***
+*** Loop below for the upper boundary (1 <= k <= 6), per grid point:
+***    1244 arithmetic ops
+***   Memory access, mu, lambda (5 pts in i,j, 8pts in k:) 2*(5+5+8-2)=32      
+***                  u       3*(5*5+5*9+5*9-5-5-9+1) : 291 ( u uses ghost point+8 pts in k)
+***                  uacc    3
+***            strx,stry,strz:  5*3 = 15
+***            acof:   6*8 = 48
+***            bope:     8
+***      Memory access read 397 vars.= 3176 bytes (double)
+***                   write, 3 vars = 24 bytes
 
 c low-k boundary modified stencils
       if (onesided(5).eq.1) then
+!$OMP DO
       do k=1,6
 c the centered stencil can be used in the x- and y-directions
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
 c from inner_loop_4a
+*** 56 ops
             mux1 = mu(i-1,j,k)*strx(i-1)-
      *                 tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2))
             mux2 = mu(i-2,j,k)*strx(i-2)+mu(i+1,j,k)*strx(i+1)+
@@ -1182,6 +1161,7 @@ c
 *** xx, yy, and zz derivatives:
 c note that we could have introduced intermediate variables for the average of lambda 
 c in the same way as we did for mu
+*** 62 ops, tot=118
             r1 = i6*(strx(i)*((2*mux1+la(i-1,j,k)*strx(i-1)-
      *                  tf*(la(i,j,k)*strx(i)+la(i-2,j,k)*strx(i-2)))*
      *                         (u(1,i-2,j,k)-u(1,i,j,k))+
@@ -1194,7 +1174,7 @@ c in the same way as we did for mu
      *           (2*mux4+ la(i+1,j,k)*strx(i+1)-
      *                  tf*(la(i,j,k)*strx(i)+la(i+2,j,k)*strx(i+2)))*
      *           (u(1,i+2,j,k)-u(1,i,j,k)) ) + stry(j)*(
-     *              + muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
+     *                muy1*(u(1,i,j-2,k)-u(1,i,j,k)) + 
      *                muy2*(u(1,i,j-1,k)-u(1,i,j,k)) + 
      *                muy3*(u(1,i,j+1,k)-u(1,i,j,k)) +
      *                muy4*(u(1,i,j+2,k)-u(1,i,j,k)) ) )
@@ -1203,18 +1183,44 @@ c second derivative (mu*u_z)_z at grid point z_k
 c averaging the coefficient, 
 c leave out the z- supergrid stretching strz, since it will
 c never be used together with the sbp-boundary operator
-            do q=1,8
-              mucof(q)=0
-              do m=1,8
-                mucof(q) = mucof(q)+acof(k,q,m)*mu(i,j,m)
-              enddo
-            end do
-c computing the second derivative
+*** 8*(19) = 152 ops, tot = 270 (+another 8*33 which is added 73 lines down).
+*** Now brought down to 8*(19+19)=304 from 152+8*33=416, newtot=422
             mu1zz = 0
+            mu2zz = 0
+            mu3zz = 0
             do q=1,8
-              mu1zz = mu1zz + mucof(q)*u(1,i,j,q)
+               mucofs = acof(k,q,1)*mu(i,j,1)+acof(k,q,2)*mu(i,j,2)+
+     *acof(k,q,3)*mu(i,j,3)+acof(k,q,4)*mu(i,j,4)+acof(k,q,5)*mu(i,j,5)+
+     *acof(k,q,6)*mu(i,j,6)+acof(k,q,7)*mu(i,j,7)+acof(k,q,8)*mu(i,j,8)
+               mu1zz = mu1zz + mucofs*u(1,i,j,q)
+               mu2zz = mu2zz + mucofs*u(2,i,j,q)
+               lacofs = acof(k,q,1)*la(i,j,1)+acof(k,q,2)*la(i,j,2)+
+     *acof(k,q,3)*la(i,j,3)+acof(k,q,4)*la(i,j,4)+acof(k,q,5)*la(i,j,5)+
+     *acof(k,q,6)*la(i,j,6)+acof(k,q,7)*la(i,j,7)+acof(k,q,8)*la(i,j,8)
+               mu3zz = mu3zz +(lacofs+2*mucofs)*u(3,i,j,q)
+c               lap2mus = acof(k,q,1)*(la(i,j,1)+2*mu(i,j,1)) +
+c     *        acof(k,q,2)*(la(i,j,2)+2*mu(i,j,2)) +
+c     *        acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3)) +
+c     *        acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4)) +
+c     *        acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5)) +
+c     *        acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6)) +
+c     *        acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7)) +
+c     *        acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8))
+c               mu3zz = mu3zz + lap2mus*u(3,i,j,q)
             enddo
+c            do q=1,8
+c              mucof(q)=0
+c              do m=1,8
+c                mucof(q) = mucof(q)+acof(k,q,m)*mu(i,j,m)
+c              enddo
+c            end do
+c computing the second derivative
+c            mu1zz = 0
+c            do q=1,8
+c              mu1zz = mu1zz + mucof(q)*u(1,i,j,q)
+c            enddo
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
+*** 66 ops, tot=488
             r1 = r1 + (mu1zz + ghcof(k)*mu(i,j,1)*u(1,i,j,0))
 
             r2 = i6*(strx(i)*(mux1*(u(2,i-2,j,k)-u(2,i,j,k)) + 
@@ -1237,11 +1243,12 @@ c (mu*vz)_z can not be centered
 c second derivative (mu*v_z)_z at grid point z_k
 c averaging the coefficient: already done above
 c computing the second derivative
-            mu2zz = 0
-            do q=1,8
-              mu2zz = mu2zz + mucof(q)*u(2,i,j,q)
-            enddo
+c            mu2zz = 0
+c            do q=1,8
+c              mu2zz = mu2zz + mucof(q)*u(2,i,j,q)
+c            enddo
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
+*** 30 ops, tot=518
             r2 = r2 + (mu2zz + ghcof(k)*mu(i,j,1)*u(2,i,j,0))
 
             r3 = i6*(strx(i)*(mux1*(u(3,i-2,j,k)-u(3,i,j,k)) + 
@@ -1254,19 +1261,33 @@ c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
      *                muy4*(u(3,i,j+2,k)-u(3,i,j,k)) ) )
 c ((2*mu+lambda)*w_z)_z can not be centered
 c averaging the coefficient
-            do q=1,8
-              lap2mu(q)=0
-              do m=1,8
-                lap2mu(q) = lap2mu(q)+acof(k,q,m)*
-     +                                (la(i,j,m)+2*mu(i,j,m))
-              enddo
-            end do
-c computing the second derivative
-            mu3zz = 0
-            do q=1,8
-              mu3zz = mu3zz + lap2mu(q)*u(3,i,j,q)
-            enddo
+*** 8*33 = 264 ops, tot=630
+c            mu3zz = 0
+c            do q=1,8
+c               lap2mus = acof(k,q,1)*(la(i,j,1)+2*mu(i,j,1)) +
+c     *        acof(k,q,2)*(la(i,j,2)+2*mu(i,j,2)) +
+c     *        acof(k,q,3)*(la(i,j,3)+2*mu(i,j,3)) +
+c     *        acof(k,q,4)*(la(i,j,4)+2*mu(i,j,4)) +
+c     *        acof(k,q,5)*(la(i,j,5)+2*mu(i,j,5)) +
+c     *        acof(k,q,6)*(la(i,j,6)+2*mu(i,j,6)) +
+c     *        acof(k,q,7)*(la(i,j,7)+2*mu(i,j,7)) +
+c     *        acof(k,q,8)*(la(i,j,8)+2*mu(i,j,8))
+c               mu3zz = mu3zz + lap2mus*u(3,i,j,q)
+c            enddo
+c            do q=1,8
+c              lap2mu(q)=0
+c              do m=1,8
+c                lap2mu(q) = lap2mu(q)+acof(k,q,m)*
+c     +                                (la(i,j,m)+2*mu(i,j,m))
+c              enddo
+c            end do
+cc computing the second derivative
+c            mu3zz = 0
+c            do q=1,8
+c              mu3zz = mu3zz + lap2mu(q)*u(3,i,j,q)
+c            enddo
 c ghost point only influences the first point (k=1) because ghcof(k)=0 for k>=2
+*** 5 ops, tot=523
             r3 = r3 + (mu3zz + ghcof(k)*(la(i,j,1)+2*mu(i,j,1))*
      +           u(3,i,j,0))
 
@@ -1277,6 +1298,7 @@ c$$$          u1z = u1z + bope(k,q)*u1(q)
 c$$$        enddo
 
 c cross-terms in first component of rhs
+*** 56 ops, tot=579
 ***   (la*v_y)_x
             r1 = r1 + strx(i)*stry(j)*(
      *            i144*( la(i-2,j,k)*(u(2,i-2,j-2,k)-u(2,i-2,j+2,k)+
@@ -1297,6 +1319,7 @@ c cross-terms in first component of rhs
      *                   mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
      *                        8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) )) )
 ***   (la*w_z)_x: NOT CENTERED
+*** 8*8 + 12= 76 ops, tot=655
             u3zip2=0
             u3zip1=0
             u3zim1=0
@@ -1312,6 +1335,7 @@ c cross-terms in first component of rhs
             r1 = r1 + strx(i)*lau3zx
 
 ***   (mu*w_x)_z: NOT CENTERED
+*** 8*9+2 = 74 ops, tot=729
             mu3xz=0
             do q=1,8
               mu3xz = mu3xz + bope(k,q)*( mu(i,j,q)*i12*
@@ -1322,6 +1346,7 @@ c cross-terms in first component of rhs
             r1 = r1 + strx(i)*mu3xz
 
 c cross-terms in second component of rhs
+*** 56 ops , tot=785
 ***   (mu*u_y)_x
             r2 = r2 + strx(i)*stry(j)*(
      *            i144*( mu(i-2,j,k)*(u(1,i-2,j-2,k)-u(1,i-2,j+2,k)+
@@ -1342,6 +1367,7 @@ c cross-terms in second component of rhs
      *                   la(i,j+2,k)*(u(1,i-2,j+2,k)-u(1,i+2,j+2,k)+
      *                        8*(-u(1,i-1,j+2,k)+u(1,i+1,j+2,k))) )) )
 *** (la*w_z)_y : NOT CENTERED
+*** 8*8+12=76 ops, tot=861
             u3zjp2=0
             u3zjp1=0
             u3zjm1=0
@@ -1358,6 +1384,7 @@ c cross-terms in second component of rhs
             r2 = r2 + stry(j)*lau3zy
 
 *** (mu*w_y)_z: NOT CENTERED
+*** 8*9+2 = 74 ops, tot=935
             mu3yz=0
             do q=1,8
               mu3yz = mu3yz + bope(k,q)*( mu(i,j,q)*i12*
@@ -1369,6 +1396,7 @@ c cross-terms in second component of rhs
 
 c No centered cross terms in r3
 ***  (mu*u_z)_x: NOT CENTERED
+*** 76 ops, tot=1011
             u1zip2=0
             u1zip1=0
             u1zim1=0
@@ -1384,6 +1412,7 @@ c No centered cross terms in r3
             r3 = r3 + strx(i)*mu1zx
 
 *** (mu*v_z)_y: NOT CENTERED
+*** 76 ops, tot=1087
             u2zjp2=0
             u2zjp1=0
             u2zjm1=0
@@ -1399,6 +1428,7 @@ c No centered cross terms in r3
             r3 = r3 + stry(j)*mu2zy
 
 ***   (la*u_x)_z: NOT CENTERED
+*** 74 ops, tot=1161
             lau1xz=0
             do q=1,8
               lau1xz = lau1xz + bope(k,q)*( la(i,j,q)*i12*
@@ -1409,6 +1439,7 @@ c No centered cross terms in r3
             r3 = r3 + strx(i)*lau1xz
 
 *** (la*v_y)_z: NOT CENTERED
+*** 74 ops, tot=1235
             lau2yz=0
             do q=1,8
               lau2yz = lau2yz + bope(k,q)*( la(i,j,q)*i12*
@@ -1416,7 +1447,7 @@ c No centered cross terms in r3
      +              -8*u(2,i,j-1,q) + u(2,i,j-2,q)) )
             enddo
             r3 = r3 + stry(j)*lau2yz
-
+*** 9 ops, tot=1244
             uacc(1,i,j,k) = a1*uacc(1,i,j,k) + cof*r1
             uacc(2,i,j,k) = a1*uacc(2,i,j,k) + cof*r2
             uacc(3,i,j,k) = a1*uacc(3,i,j,k) + cof*r3
@@ -1424,10 +1455,12 @@ c No centered cross terms in r3
             enddo
          enddo
       enddo
+!$OMP END DO
       endif
 
 c high-k boundary
       if (onesided(6).eq.1) then
+!$OMP DO
       do k=nz-5,nz
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -1693,7 +1726,6 @@ c No centered cross terms in r3
      +             (-u(1,i+2,j,q) + 8*u(1,i+1,j,q)
      +              -8*u(1,i-1,j,q) + u(1,i-2,j,q)) )
             enddo
-
             r3 = r3 + strx(i)*lau1xz
 
 *** (la*v_y)_z: NOT CENTERED
@@ -1713,13 +1745,15 @@ c No centered cross terms in r3
             enddo
          enddo
       enddo
+!$OMP END DO
       endif
+!$OMP END PARALLEL
 
       end
 
 c----------------------------------------------------------
       subroutine rhserrfort(ifirst, ilast, jfirst, jlast, kfirst, klast, 
-     +     nz, h, fo, u2, lowZ, interZ, highZ)
+     +     nz, h, fo, u2, lowZ, interZ, highZ)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, nz
       real*8 h, lowZ(3), interZ(3), highZ(3)
@@ -1733,8 +1767,10 @@ c low-z points, error in rhs
         lowZ(c) = 0
       enddo
 c this test only includes low-k boundary points
+!$OMP PARALLEL PRIVATE(k,i,j,c,err)
+!$OMP DO REDUCTION(max:lowZ)
       do k=1,6
-        do j=jfirst+2,jlast-2
+         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
             do c=1,3
               err(c) = ABS( fo(c,i,j,k) - u2(c,i,j,k) )
@@ -1745,11 +1781,13 @@ c this test only includes low-k boundary points
           enddo
         enddo
       enddo
+!$OMP ENDDO
 c interior points, error in rhs
       do c=1,3
         interZ(c) = 0
       enddo
 c this test only includes interior points
+!$OMP DO REDUCTION(max:interZ)
       do k=7,nz-6
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -1762,11 +1800,13 @@ c this test only includes interior points
           enddo
         enddo
       enddo
+!$OMP ENDDO
 c high-z points error in rhs
       do c=1,3
         highZ(c) = 0
       enddo
 c this test only includes high-k boundary points
+!$OMP DO REDUCTION(max:highZ)
       do k=nz-5,nz
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -1779,18 +1819,19 @@ c this test only includes high-k boundary points
           enddo
         enddo
       enddo
-
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 
 c-------------------------------------------------
       subroutine rhouttlumf(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     nz, uacc, lu, fo, rho, lowZ, interZ, highZ)
+     +     nz, uacc, lu, fo, rho, lowZ, interZ, highZ)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, kp, nz
       real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lu(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
-      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+c      real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 uacc(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lowZ(3), interZ(3), highZ(3), err(3)
@@ -1800,6 +1841,8 @@ c  low-k boundary points
       do c=1,3
         lowZ(c)=0
       enddo
+!$OMP PARALLEL PRIVATE(k,i,j,c,err)
+!$OMP DO REDUCTION(max:lowZ)
       do k=1,6
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -1811,12 +1854,14 @@ c  low-k boundary points
           enddo
         enddo
       enddo
+!$OMP ENDDO
 
 c evaluate error in the interior
       do c=1,3
         interZ(c)=0
       enddo
 c interior points
+!$OMP DO REDUCTION(max:interZ)
       do k=7,nz-6
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -1828,10 +1873,13 @@ c interior points
           enddo
         enddo
       enddo
+!$OMP ENDDO
+
 c this test only includes high-k boundary points
       do c=1,3
         highZ(c)=0
       enddo
+!$OMP DO REDUCTION(max:highZ)
       do k=nz-5,nz
         do j=jfirst+2,jlast-2
           do i=ifirst+2,ilast-2
@@ -1843,11 +1891,14 @@ c this test only includes high-k boundary points
           enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
+
       end
 
 c---------------------------------------------------------------------
       subroutine predfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     up, u, um, lu, fo, rho, dt2 )
+     +     up, u, um, lu, fo, rho, dt2 )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt2
@@ -1858,6 +1909,8 @@ c---------------------------------------------------------------------
       real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
 c 2nd order accurate predictor of solution at t+dt
+!$OMP PARALLEL PRIVATE(k,i,j,c)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -1868,37 +1921,44 @@ c 2nd order accurate predictor of solution at t+dt
           enddo
         enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       return 
       end
 
 c-----------------------------------------------------------------------
       subroutine corrfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     up, lu, fo, rho, dt4 )
+     +     up, lu, fo, rho, dt4 )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
-      real*8 dt4, i12
+      real*8 dt4, i12, dt4i12
       parameter( i12=1d0/12 )
       real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 lu(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 fo(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
 c correct solution to 4th order accuracy
+      dt4i12 = dt4*i12
+!$OMP PARALLEL PRIVATE(k,i,j,c)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
             do c=1,3
-              up(c,i,j,k) = up(c,i,j,k) + i12*dt4*
+              up(c,i,j,k) = up(c,i,j,k) + dt4i12*
      +             (lu(c,i,j,k) + fo(c,i,j,k))/rho(i,j,k)
             enddo
           enddo
         enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine dpdmtfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     up, u, um, u2, dt2i)
+     +     up, u, um, u2, dt2i)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt2i
@@ -1907,6 +1967,8 @@ c-----------------------------------------------------------------------
       real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 u2(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 c evaluate 2nd divided time difference D+D-(u)
+!$OMP PARALLEL PRIVATE(k,i,j,c)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -1917,13 +1979,14 @@ c evaluate 2nd divided time difference D+D-(u)
           enddo
         enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       return
       end
 
-
 c-----------------------------------------------------------------------
       subroutine dpdmtfortatt(ifirst, ilast, jfirst, jlast, kfirst, 
-     +    klast, up, u, um, dt2i)
+     +    klast, up, u, um, dt2i)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt2i
@@ -1931,6 +1994,8 @@ c-----------------------------------------------------------------------
       real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 c evaluate 2nd divided time difference D+D-(u), and return in um
+!$OMP PARALLEL PRIVATE(k,i,j,c)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -1941,12 +2006,14 @@ c evaluate 2nd divided time difference D+D-(u), and return in um
           enddo
         enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine satt(up, qs, dt, cfreq, 
-     +     ifirst, ilast, jfirst, jlast, kfirst, klast)
+     +     ifirst, ilast, jfirst, jlast, kfirst, klast)  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, c
       real*8 dt, cfreq, pi, fact
@@ -1954,6 +2021,8 @@ c-----------------------------------------------------------------------
       real*8 qs(ifirst:ilast,jfirst:jlast,kfirst:klast)
 c simple attenuation model
       pi = 4*atan(1.d0)
+!$OMP PARALLEL PRIVATE(k,i,j,c,fact)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -1969,18 +2038,22 @@ c$$$            endif
           enddo
         enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine SOLVEATTFREEAC( ifirst, ilast, jfirst, jlast, kfirst, 
-     *                           klast, alpha, cof, up )
+     *                           klast, alpha, cof, up )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       real*8 alpha(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 cof
       k = 0
+!$OMP PARALLEL PRIVATE(i,j)
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             alpha(1,i,j,k) = alpha(1,i,j,k) + cof*up(1,i,j,k)
@@ -1988,12 +2061,14 @@ c-----------------------------------------------------------------------
             alpha(3,i,j,k) = alpha(3,i,j,k) + cof*up(3,i,j,k)
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine SOLVEATTFREEC( ifirst, ilast, jfirst, jlast, kfirst, 
      *       klast, u, mu, la, muve, lambdave, bforcerhs, met, s, 
-     *       usesg, sgstrx, sgstry )
+     *       usesg, sgstrx, sgstry )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k, kl
       integer usesg
@@ -2010,11 +2085,14 @@ c-----------------------------------------------------------------------
 *** Hardcoded for the k=1 surface
       k  = 1
       kl = 1
+      s0i= 1/s(0)
+!$OMP PARALLEL PRIVATE(i,j,mupt,lapt,sgx,sgy,isgx,isgy,m2sg,m3sg,m4sg,
+!$OMP*                 ac,bc,cc,dc)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
-      s0i= 1/s(0)
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             mupt = mu(i,j,k)-muve(i,j)
@@ -2044,13 +2122,15 @@ c-----------------------------------------------------------------------
      *                bc*bforcerhs(3,i,j) - dc*met(4,i,j,k)*m4sg )
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine ADDBSTRESSWRESC( ifirst, ilast, jfirst, jlast, kfirst,
      *      klast, nz, alphap, alpham, muve, lave, bforcerhs, 
      *      u, um, met, side, dt, omegave, memforce, muvebnd,
-     *      lambdavebnd, sbop, cof, usesg, sgstrx, sgstry )
+     *      lambdavebnd, sbop, cof, usesg, sgstrx, sgstry ) bind(c)
       implicit none
       real*8 i6, c1, c2
       parameter( i6=1d0/6, c1=2d0/3, c2=-1d0/12 )
@@ -2083,10 +2163,13 @@ c-----------------------------------------------------------------------
       cp = 0.5d0 + 1/(2*omdt) + omdt/4 + omdt*omdt/12
       cm = 0.5d0 - 1/(2*omdt) - omdt/4 + omdt*omdt/12
       cof = (omdt+1)/(6*cp)
+!$OMP PARALLEL PRIVATE(i,j,r1,r2,r3,sgx,sgy,isgx,isgy,rhs1,rhs2,
+!$OMP*                 rhs3,un1,vn1,wn1,m2sg,m3sg,m4sg,rtu,ac)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
 c THIS IS THE OLD COUPLED UPDATE PROCEDURE
@@ -2196,6 +2279,8 @@ c THIS IS THE OLD COUPLED UPDATE PROCEDURE
            bforcerhs(3,i,j) = bforcerhs(3,i,j) + rhs3
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end      
 
 c-----------------------------------------------------------------------
@@ -2230,10 +2315,13 @@ c      omdt = omegave*dt
 c      cp = 0.5d0 + 1/(2*omdt) + omdt/4 + omdt*omdt/12
 c      cm = 0.5d0 - 1/(2*omdt) - omdt/4 + omdt*omdt/12
 c      cof = (omdt+1)/(6*cp)
+!$OMP PARALLEL PRIVATE(i,j,rhs1,rhs2,rhs3,sgx,sgy,isgx,isgy,
+!$OMP*                 un1,vn1,wn1,m2sg,m3sg,m4sg,rtu,ac)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             if( usesg.eq.1 )then
@@ -2339,6 +2427,8 @@ c      cof = (omdt+1)/(6*cp)
            bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j)
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end      
 
 c-----------------------------------------------------------------------
@@ -2364,11 +2454,14 @@ c-----------------------------------------------------------------------
 *** Hardcoded for the k=1 surface
       k  = 1
       kl = 1
+!$OMP PARALLEL PRIVATE(i,j,rhs1,rhs2,rhs3,sgx,sgy,isgx,isgy,
+!$OMP*                 ac,bc,cc,dc,xoysqrt,yoxsqrt,isqrtxy)
       sgx = 1
       sgy = 1
       isgx = 1
       isgy = 1
       s0i= 1/sbop(0)
+!$OMP DO
       do j=jfirst+2,jlast-2
          do i=ifirst+2,ilast-2
             if( usesg.eq.1 )then
@@ -2377,10 +2470,6 @@ c-----------------------------------------------------------------------
                isgx = 1/sgx
                isgy = 1/sgy
             endif
-c
-c from rhscurvilinearsg.f
-c            istrx = 1/strx(i)
-
 *** First tangential derivatives
             rhs1 = 
 *** pr
@@ -2495,5 +2584,7 @@ c$$$     *                bc*bforce_rhs(3,i,j) - dc*met(4,i,j,k)*m4sg )
            
          enddo
       enddo
+!$OMP END DO
+!$OMP END PARALLEL
       end
       

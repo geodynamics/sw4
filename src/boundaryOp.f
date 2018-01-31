@@ -30,8 +30,8 @@
 ! # along with this program; if not, write to the Free Software
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 c-----------------------------------------------------------------------
-      subroutine WAVEPROPBOP_4( iop, iop2, bop, bop2, gh2, h, s )
-
+      subroutine WAVEPROPBOP_4( iop, iop2, bop, bop2, gh2, h, s ) 
+     * bind(c)
 ***********************************************************************
 ***
 *** SBP operator of order 2/4 for approximating 1st derivative. 5pt stencil.
@@ -128,7 +128,7 @@ c-----------------------------------------------------------------------
 
 c-----------------------------------------------------------------------
       subroutine WAVEPROPBOP_6( iop, iop2, bop, bop2, gh2, h, s )
-
+     * bind(c)
 ***********************************************************************
 ***
 *** SBP operator of order 3/6 for approximating 1st derivative. 7pt stencil
@@ -288,7 +288,8 @@ c-----------------------------------------------------------------------
 
       end
 
-      subroutine GETBOP4S2( bop, hnorm )
+c-----------------------------------------------------------------------
+      subroutine GETBOP4S2( bop, hnorm ) bind(c)
       implicit none
       real*8 bop(4,6), hnorm(4)
 *** First derivative bop, 2nd order
@@ -323,7 +324,7 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
-      subroutine BOPEXT4TH( bop, bope )
+      subroutine BOPEXT4TH( bop, bope ) bind(c)
       implicit none
       integer i, j
       real*8 bop(4,6), bope(6,8), d4a, d4b
@@ -348,8 +349,9 @@ c-----------------------------------------------------------------------
       bope(6,7) =  d4a
       bope(6,8) =  d4b
       end
+
 c-----------------------------------------------------------------------
-      subroutine VARCOEFFS4( acof, ghcof )
+      subroutine VARCOEFFS4( acof, ghcof ) bind(c)
       implicit none
       real*8 acof(6,8,8), ghcof(6)
 *** acofs(i,j,k) is coefficient of a(k) in stencil coefficient (i,j)

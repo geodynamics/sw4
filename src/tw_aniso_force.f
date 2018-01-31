@@ -316,6 +316,35 @@ c local variables
       real(dp) ph21
 
       integer i, j, k
+      
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,t1,t10,t102,t104,t106,t109,t111,t112,
+!$OMP+t114,t115,t117,t118,t119,t120,t122,
+!$OMP+t124,t126,t127,t129,t13,t130,t131,t134,t135,t136,t137,t139,t141,
+!$OMP+t145,t147,t149,t15,t150,t152,t153,t157,
+!$OMP+t159,t16,t161,t162,t164,t166,t168,t170,t173,t174,t175,t176,t179,
+!$OMP+t180,t181,t183,t186,t189,t19,t190,t192,
+!$OMP+t193,t194,t195,t197,t199,t2,t20,t201,t207,t208,t209,t210,t212,
+!$OMP+t213,t214,t215,t217,t219,t22,t222,t225,
+!$OMP+t226,t229,t23,t231,t233,t234,t235,t238,t24,t242,t243,t244,t245,
+!$OMP+t249,t25,t250,t252,t254,t256,t257,t260,
+!$OMP+t261,t262,t264,t265,t266,t267,t27,t270,t273,t276,t277,t278,t279,
+!$OMP+t280,t281,t286,t289,t290,t291,t292,t293,
+!$OMP+t294,t297,t298,t3,t305,t306,t307,t308,t309,t31,t310,t311,t312,
+!$OMP+t315,t319,t321,t324,t327,t329,t33,t330,t333,
+!$OMP+t337,t34,t340,t344,t349,t35,t352,t355,t363,t366,t368,t37,t372,
+!$OMP+t373,t377,t38,t382,t384,t386,t394,t396,t40,
+!$OMP+t402,t403,t407,t41,t415,t416,t417,t419,t421,t422,t425,t429,t43,
+!$OMP+t434,t438,t44,t441,t445,t447,t449,t451,t453,
+!$OMP+t455,t46,t461,t462,t463,t464,t465,t466,t468,t47,t470,t473,t476,
+!$OMP+t481,t482,t483,t484,t486,t488,t49,t491,t493,
+!$OMP+t497,t499,t5,t512,t515,t519,t52,t522,t526,t532,t54,t540,t542,t549,
+!$OMP+t55,t554,t558,t561,t577,t579,t58,t583,
+!$OMP+t589,t59,t599,t6,t600,t601,t602,t606,t61,t613,t62,t63,t64,t66,t68,
+!$OMP+t69,t7,t70,t72,t73,t75,t77,t8,t81,t82,
+!$OMP+t83,t85,t86,t88,t9,t90,t92,t93,t95,t96,t98,t99,threecomp,ph1,ph2,
+!$OMP+ph3,ph4,ph5,ph6,ph7,ph8,ph9,ph10,ph11,
+!$OMP+ph12,ph13,ph14,ph15,ph16,ph17,ph18,ph19,ph20,ph21)
+
 c extract all the phase angles for the stress matrix
       ph1 = phc(1)
       ph2 = phc(2)
@@ -338,7 +367,8 @@ c extract all the phase angles for the stress matrix
       ph19 = phc(19)
       ph20 = phc(20)
       ph21 = phc(21)
-      
+
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -647,6 +677,8 @@ c extract all the phase angles for the stress matrix
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 
       return
       end
@@ -973,6 +1005,34 @@ c local variables
       real(dp) ph21
 
       integer i, j, k
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,t1,t10,t102,t104,t106,t109,t111,t112,
+!$OMP+t114,t115,t117,t118,t119,t120,t122,
+!$OMP+t124,t126,t127,t129,t13,t130,t131,t134,t135,t136,t137,t139,t141,
+!$OMP+t145,t147,t149,t15,t150,t152,t153,t157,
+!$OMP+t159,t16,t161,t162,t164,t166,t168,t170,t173,t174,t175,t176,t179,
+!$OMP+t180,t181,t183,t186,t189,t19,t190,t192,
+!$OMP+t193,t194,t195,t197,t199,t2,t20,t201,t207,t208,t209,t210,t212,
+!$OMP+t213,t214,t215,t217,t219,t22,t222,t225,
+!$OMP+t226,t229,t23,t231,t233,t234,t235,t238,t24,t242,t243,t244,t245,
+!$OMP+t249,t25,t250,t252,t254,t256,t257,t260,
+!$OMP+t261,t262,t264,t265,t266,t267,t27,t270,t273,t276,t277,t278,t279,
+!$OMP+t280,t281,t286,t289,t290,t291,t292,t293,
+!$OMP+t294,t297,t298,t3,t305,t306,t307,t308,t309,t31,t310,t311,t312,
+!$OMP+t315,t319,t321,t324,t327,t329,t33,t330,t333,
+!$OMP+t337,t34,t340,t344,t349,t35,t352,t355,t363,t366,t368,t37,t372,
+!$OMP+t373,t377,t38,t382,t384,t386,t394,t396,t40,
+!$OMP+t402,t403,t407,t41,t415,t416,t417,t419,t421,t422,t425,t429,t43,
+!$OMP+t434,t438,t44,t441,t445,t447,t449,t451,t453,
+!$OMP+t455,t46,t461,t462,t463,t464,t465,t466,t468,t47,t470,t473,t476,
+!$OMP+t481,t482,t483,t484,t486,t488,t49,t491,t493,
+!$OMP+t497,t499,t5,t512,t515,t519,t52,t522,t526,t532,t54,t540,t542,t549,
+!$OMP+t55,t554,t558,t561,t577,t579,t58,t583,
+!$OMP+t589,t59,t599,t6,t600,t601,t602,t606,t61,t613,t62,t63,t64,t66,t68,
+!$OMP+t69,t7,t70,t72,t73,t75,t77,t8,t81,t82,
+!$OMP+t83,t85,t86,t88,t9,t90,t92,t93,t95,t96,t98,t99,threecomp,ph1,ph2,
+!$OMP+ph3,ph4,ph5,ph6,ph7,ph8,ph9,ph10,ph11,
+!$OMP+ph12,ph13,ph14,ph15,ph16,ph17,ph18,ph19,ph20,ph21)
+
 c extract all the phase angles for the stress matrix
       ph1 = phc(1)
       ph2 = phc(2)
@@ -996,6 +1056,7 @@ c extract all the phase angles for the stress matrix
       ph20 = phc(20)
       ph21 = phc(21)
       
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -1304,10 +1365,12 @@ c extract all the phase angles for the stress matrix
       enddo
       enddo
       enddo
-
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
       
+c-----------------------------------------------------------------------
       subroutine tw_aniso_free_surf_z(ifirst, ilast, jfirst, jlast,
      *     kfirst, klast,
      *     kz, t, om, cv, ph, omm, phc, bforce, h, zmin )
@@ -1431,6 +1494,15 @@ c local variables
       real(dp) t96
       real(dp) t99
 
+!$OMP PARALLEL PRIVATE(ph1,ph2,ph3,ph4,ph5,ph6,ph7,ph8,ph9,ph10,ph11,
+!$OMP+ph12,ph13,ph14,ph15,ph16,ph17,ph18,ph19,ph20,ph21,forces,t1,
+!$OMP+t10,t101,t104,t106,t108,t110,t113,t115,t122,t124,t127,t129,t13,
+!$OMP+t137,t139,t146,t148,t15,t151,t154,t16,t160,t163,t166,t169,t176,
+!$OMP+t179,t181,t189,t19,t192,t20,t202,t205,t21,t23,t24,t25,t28,t3,
+!$OMP+t30,t33,t35,t36,t38,t39,t4,t40,t43,t45,t48,t50,t52,t55,t56,t59,
+!$OMP+t6,t60,t62,t65,t67,t70,t73,t75,t77,t8,t80,t83,t85,t86,t88,t92,
+!$OMP+t93,t94,t96,t99,i,j,x,y,z)
+
 c extract all the phase angles for the stress matrix
       ph1 = phc(1)
       ph2 = phc(2)
@@ -1456,6 +1528,7 @@ c extract all the phase angles for the stress matrix
 
       z = (kz-1)*h + zmin
 c the do loops should span jfirst,jlast and ifirst,ilast
+!$OMP DO
       do j=jfirst,jlast
          y = (j-1)*h
          do i=ifirst,ilast
@@ -1553,6 +1626,8 @@ c the do loops should span jfirst,jlast and ifirst,ilast
       bforce(3,i,j) = forces(3)
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
       

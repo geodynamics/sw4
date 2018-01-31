@@ -32,6 +32,7 @@
       subroutine ADDGRADRHO(ifirst, ilast, jfirst, jlast, kfirst, klast,
      *    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
      *    kap, kapacc, um, u, up, uacc, grho, dt, h, onesided )
+     * bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer ifirstact, ilastact, jfirstact, jlastact, kfirstact
@@ -53,6 +54,8 @@
       wgh(2) = 59d0/48
       wgh(3) = 43d0/48
       wgh(4) = 49d0/48
+!$OMP PARALLEL PRIVATE(i,j,k,normfact)
+!$OMP DO
       do k=kfirstact,klastact
          do j=jfirstact,jlastact
             do i=ifirstact,ilastact
@@ -70,12 +73,15 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine ADDGRADRHOC(ifirst,ilast, jfirst, jlast, kfirst, klast,
      *    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
      *    kap, kapacc, um, u, up, uacc, grho, dt, jac, onesided )
+     * bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer ifirstact, ilastact, jfirstact, jlastact, kfirstact
@@ -97,6 +103,8 @@ c-----------------------------------------------------------------------
       wgh(2) = 59d0/48
       wgh(3) = 43d0/48
       wgh(4) = 49d0/48
+!$OMP PARALLEL PRIVATE(i,j,k,normfact)
+!$OMP DO
       do k=kfirstact,klastact
          do j=jfirstact,jlastact
             do i=ifirstact,ilastact
@@ -114,6 +122,8 @@ c-----------------------------------------------------------------------
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
@@ -121,6 +131,7 @@ c-----------------------------------------------------------------------
      *  klast, ifirstact, ilastact, jfirstact, jlastact, kfirstact,
      *   klastact, kap, kapacc, u, uacc, gmu, glambda,
      *    dt, h, onesided, nb, wb, bop )
+     * bind(c)
       implicit none
       real*8 d4a, d4b, c6, c8, al1, al2, al3, al4
       parameter( d4a=2d0/3, d4b=-1d0/12, c6=1d0/18, c8=1d0/144 )
@@ -157,6 +168,10 @@ c      real*8  up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       wgh(4) = 49d0/48
 
       kstart = kfirstact
+!$OMP PARALLEL PRIVATE(i,j,k,m,normfact,dux,dvy,dwz,dkx,dly,dmz,duax,
+!$OMP*    dvay,dwaz,dkax,dlay,dmaz,stuxy,stkxy,stuaxy,stkaxy,stuxz,
+!$OMP*    stkxz,stuaxz,stkaxz,stuyz,stkyz,stuayz,stkayz,d3up,d3um,
+!$OMP*    d3kp,d3km,pd,d3uap,d3uam,d3kap,d3kam)
       if( kfirstact .le. 4 .and. onesided(5).eq.1 )then
          kstart = 5
 
@@ -177,6 +192,7 @@ c      real*8  up(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
          w6m(4)= al1+al2
          w6p(4)= al1+al2+al3
 
+!$OMP DO
          do k=kfirstact,4
             do j=jfirstact,jlastact
                do i=ifirstact,ilastact
@@ -542,8 +558,10 @@ c     *                 d4a*(kapacc(2,i,j,k+1)-kapacc(2,i,j,k-1))
                enddo
             enddo
          enddo
+!$OMP ENDDO
       endif
       
+!$OMP DO
       do k=kstart,klastact
          do j=jfirstact,jlastact
             do i=ifirstact,ilastact
@@ -871,7 +889,8 @@ c     *                 d4a*(kapacc(2,i,j,k+1)-kapacc(2,i,j,k-1))
             enddo
          enddo
       enddo
-
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
@@ -879,7 +898,7 @@ c-----------------------------------------------------------------------
      *  klast, ifirstact, ilastact, jfirstact, jlastact, kfirstact,
      *   klastact, kap, kapacc, u, uacc, gmu, glambda,
      *    dt, h, met, jac, onesided, nb, wb, bop )
-
+     * bind(c)
       implicit none
       real*8 d4a, d4b, c6, c8, al1, al2, al3, al4
       parameter( d4a=2d0/3, d4b=-1d0/12, c6=1d0/18, c8=1d0/144 )
@@ -917,6 +936,16 @@ c-----------------------------------------------------------------------
       wgh(4) = 49d0/48
 
       kstart = kfirstact
+!$OMP PARALLEL PRIVATE(i,j,k,m,normfact,dux,dvy,dwz,dkx,dly,dmz,duax,
+!$OMP*    dvay,dwaz,dkax,dlay,dmaz,stuxy,stkxy,stuaxy,stkaxy,stuxz,
+!$OMP*    stkxz,stuaxz,stkaxz,stuyz,stkyz,stuayz,stkayz,d3up,d3um,
+!$OMP*    d3kp,d3km,pd,d3uap,d3uam,d3kap,d3kam, 
+!$OMP*    d3vp, d3vm, d3lp, d3lm, d3vap, d3vam, d3lap, d3lam,
+!$OMP*    d3wp, d3wm, d3mp, d3mm, d3wap, d3wam, d3map, d3mam,
+!$OMP*    dkz, dlz, duz, dvz, duaz, dvaz, dkaz, dlaz,
+!$OMP*    dwzm, dwazm, dmzm, dmazm, m1sq, mucof, mucofp )
+
+
       if( kfirstact .le. 4 .and. onesided(5).eq.1 )then
          kstart = 5
 
@@ -937,6 +966,7 @@ c-----------------------------------------------------------------------
          w6m(4)= al1+al2
          w6p(4)= al1+al2+al3
 
+!$OMP DO
          do k=kfirstact,4
             do j=jfirstact,jlastact
                do i=ifirstact,ilastact
@@ -1488,8 +1518,10 @@ c     *                 d4a*(kapacc(2,i,j,k+1)-kapacc(2,i,j,k-1))
                enddo
             enddo
          enddo
+!$OMP ENDDO
       endif
       
+!$OMP DO
       do k=kstart,klastact
          do j=jfirstact,jlastact
             do i=ifirstact,ilastact
@@ -1951,5 +1983,6 @@ c     *                 d4a*(kapacc(2,i,j,k+1)-kapacc(2,i,j,k-1))
             enddo
          enddo
       enddo
-
+!$OMP ENDDO
+!$OMP END PARALLEL
       end

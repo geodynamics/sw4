@@ -32,7 +32,7 @@
 c------------------------------------------------------------
       subroutine solerr3(ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     h, uex, u, li, l2, xli, zmin, x0, y0, z0, radius,
-     +     imin, imax, jmin, jmax, kmin, kmax)
+     +     imin, imax, jmin, jmax, kmin, kmax) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer imin, imax, jmin, jmax, kmin, kmax
@@ -62,6 +62,8 @@ c
 C       do k=kfirst+2,klast-2
 C         do j=jfirst+2,jlast-2
 C           do i=ifirst+2,ilast-2
+!$OMP PARALLEL PRIVATE(i,j,k,c,dist,err)
+!$OMP DO REDUCTION(max:li,xli) REDUCTION(+:l2)
       do k=kmin,kmax
         do j=jmin,jmax
           do i=imin,imax
@@ -83,14 +85,16 @@ c exact solution in array 'uex'
           enddo
         enddo
       enddo
+!$OMP ENDDO
 c$$$      write(*,101) 'Solution errors in max- and L2-norm: ', li, l2
 c$$$ 101  format(' ', a, 2(g15.7,tr2))
+!$OMP END PARALLEL
       return
       end
 
 c------------------------------------------------------------
       subroutine solerrgp(ifirst, ilast, jfirst, jlast, kfirst, klast,
-     +     h, uex, u, li, l2 )
+     +     h, uex, u, li, l2 ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       real*8 h
@@ -106,12 +110,18 @@ c tmp
 c      write(*,*)'if=', ifirst, 'il=', ilast, 'jf=', jfirst, 'jl=',
 c     +     jlast, 'kf=', kfirst, 'kl=', klast
 c this test only includes the ghost points
+!$OMP PARALLEL PRIVATE(i,j,c,err)
+
       k=kfirst+1
+!$OMP DO REDUCTION(max:li) REDUCTION(+:l2)
       do j=jfirst+2,jlast-2
         do i=ifirst+2,ilast-2
 c exact solution in array 'uex'
           do c=1,3
             err(c) = ABS( u(c,i,j,k) - uex(c,i,j,k) )
+c            if( c.eq.2 .and. i.eq.4 .and. j.eq.14 )then
+c               write(*,*) 'errs',u(c,i,j,k),uex(c,i,j,k)
+c            endif
           enddo
           if( li.lt.max(err(1),err(2),err(3)) )then
             li = max(err(1),err(2),err(3))
@@ -120,8 +130,10 @@ c exact solution in array 'uex'
      +         h*h*h* (err(1)**2 + err(2)**2 + err(3)**2)
         enddo
       enddo
+!$OMP ENDDO
 
       k=klast-1
+!$OMP DO REDUCTION(max:li) REDUCTION(+:l2)
       do j=jfirst+2,jlast-2
         do i=ifirst+2,ilast-2
 c exact solution in array 'uex'
@@ -135,15 +147,18 @@ c exact solution in array 'uex'
      +         h*h*h* (err(1)**2 + err(2)**2 + err(3)**2)
         enddo
       enddo
+!$OMP ENDDO
 c$$$      write(*,101) 'Solution errors in max- and L2-norm: ', li, l2
 c$$$ 101  format(' ', a, 2(g15.7,tr2))
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine solerr3c(ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     uex, u, x, y, z, jac, li, l2, xli, x0, y0, z0, radius,
-     +     imin, imax, jmin, jmax, kmin, kmax, usesg, strx, stry )
+     +     imin, imax, jmin, jmax, kmin, kmax, usesg, strx, stry ) 
+     +     bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer imin, imax, jmin, jmax, kmin, kmax, usesg
@@ -177,6 +192,8 @@ c
 C       do k=kfirst+2,klast-2
 C         do j=jfirst+2,jlast-2
 C           do i=ifirst+2,ilast-2
+!$OMP PARALLEL PRIVATE(i,j,k,c,dist,err)
+!$OMP DO REDUCTION(max:li,xli) REDUCTION(+:l2)
       do k=kmin,kmax
         do j=jmin,jmax
           do i=imin,imax
@@ -203,15 +220,17 @@ c exact solution in array 'uex'
           enddo
         enddo
       enddo
+!$OMP ENDDO
 c$$$      write(*,101) 'Solution errors in max- and L2-norm: ', li, l2
 c$$$ 101  format(' ', a, 2(g15.7,tr2))
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine meterr4c(ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     met, metex, jac, jacex, li, l2, 
-     +     imin, imax, jmin, jmax, kmin, kmax, h )
+     +     imin, imax, jmin, jmax, kmin, kmax, h ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer imin, imax, jmin, jmax, kmin, kmax
@@ -228,6 +247,8 @@ c-----------------------------------------------------------------------
          li(c) = 0
          l2(c) = 0
       enddo
+!$OMP PARALLEL PRIVATE( i, j, k, c, err )
+!$OMP DO REDUCTION(max:li) REDUCTION(+:l2)
       do k=kmin,kmax
         do j=jmin,jmax
           do i=imin,imax
@@ -244,5 +265,7 @@ c-----------------------------------------------------------------------
           enddo
        enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end

@@ -51,7 +51,7 @@ void SuperGrid::print_parameters() const
    printf("SuperGrid parameters left=%i, right=%i, x0=%e, x1=%e, width=%e, transition=%e epsL=%e\n", m_left, m_right, m_x0, m_x1, m_width, m_trans_width,m_epsL);
 }
 
-void SuperGrid::define_taper(bool left, double leftStart, bool right, double rightEnd, double width)
+void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right, float_sw4 rightEnd, float_sw4 width)
 {
   m_left = left;
   m_x0 = leftStart;
@@ -68,7 +68,7 @@ void SuperGrid::define_taper(bool left, double leftStart, bool right, double rig
 // sanity checks
   if (m_left || m_right)
   {
-     double dlen = m_x1-m_x0;
+     float_sw4 dlen = m_x1-m_x0;
      CHECK_INPUT(m_width > 0., "The supergrid taper width must be positive, not = " << m_width);
      CHECK_INPUT(m_width < dlen, "The supergrid taper width must be smaller than the domain, not = " << m_width);
      CHECK_INPUT(m_trans_width > 0., "The supergrid taper transition width must be positive, not = " << m_trans_width);
@@ -105,27 +105,27 @@ void SuperGrid::define_taper(bool left, double leftStart, bool right, double rig
   }
 }
 
-double SuperGrid::dampingCoeff(double x) const
+float_sw4 SuperGrid::dampingCoeff(float_sw4 x) const
 {
-  double phi = stretching(x);
+  float_sw4 phi = stretching(x);
 // should be equivalent to PsiAux/phi
-//  double f=(1-phi)/phi/(1-m_epsL);
-  double f = PsiDamp(x)/phi;
+//  float_sw4 f=(1-phi)/phi/(1-m_epsL);
+  float_sw4 f = PsiDamp(x)/phi;
 // replaced PsiAux by PsiDamp, which goes to one faster
   
   return f;
 }
 
-double SuperGrid::stretching( double x ) const
+float_sw4 SuperGrid::stretching( float_sw4 x ) const
 { // this function satisfies 0 < epsL <= f <= 1
   return 1-(1-m_epsL)*PsiAux(x); // PsiAux(x) = psi(x) in our papers
 }
 
-double SuperGrid::PsiAux(double x) const
+float_sw4 SuperGrid::PsiAux(float_sw4 x) const
 { // PsiAux = psi in our papers
 // this function is zero for m_x0+m_width <= x <= m_x1-m_width
 // and one for x=m_x0 and x=m_x1
-  double f=0.;
+  float_sw4 f=0.;
   if (m_left && x < m_x0+m_width)
 // the following makes the damping transition in 0 <= x <= m_width
     f=Psi0( (m_x0 + m_width - x)/m_width); 
@@ -135,11 +135,11 @@ double SuperGrid::PsiAux(double x) const
   return f;
 }
 
-double SuperGrid::PsiDamp(double x) const
+float_sw4 SuperGrid::PsiDamp(float_sw4 x) const
 { // PsiAux = psi in our papers
 // this function is zero for m_x0+m_width <= x <= m_x1-m_width
 // and one for x=m_x0 and x=m_x1
-  double f=0.;
+  float_sw4 f=0.;
   if (m_left && x < m_x0+m_width)
 // the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
 // constant damping in 0 <= x <= const_width
@@ -151,11 +151,11 @@ double SuperGrid::PsiDamp(double x) const
   return f;
 }
 
-double SuperGrid::linTaper(double x) const
+float_sw4 SuperGrid::linTaper(float_sw4 x) const
 { 
 // this function is zero for m_x0+m_width <= x <= m_x1-m_width
 // and one for x=m_x0 and x=m_x1
-  double f=0.;
+  float_sw4 f=0.;
   if (m_left && x < m_x0+m_width)
 //  linear taper from 0 to 1
     f= (m_x0 + m_width - x)/m_width; 
@@ -167,9 +167,9 @@ double SuperGrid::linTaper(double x) const
 
 
 // used for damping coefficient
-double SuperGrid::Psi0(double xi) const
+float_sw4 SuperGrid::Psi0(float_sw4 xi) const
 {
-   double f;
+   float_sw4 f;
    if (xi<=0.)
       f = 0;
    else if (xi>=1.)
@@ -191,18 +191,18 @@ double SuperGrid::Psi0(double xi) const
    return f;
 }
 
-double SuperGrid::cornerTaper( double x ) const
+float_sw4 SuperGrid::cornerTaper( float_sw4 x ) const
 { // this function is 1 in the interior and tapers linearly to 1/2 in the SG layers
-  const double cmin=0.33;
+  const float_sw4 cmin=0.33;
   return 1.0 - (1.0-cmin)*linTaper(x);
 }
 
-double SuperGrid::tw_stretching( double x ) const
+float_sw4 SuperGrid::tw_stretching( float_sw4 x ) const
 {
    return 1 + 0.5*sin(m_tw_omega*x);
 }
   
-void SuperGrid::set_twilight( double omega )
+void SuperGrid::set_twilight( float_sw4 omega )
 {
    m_tw_omega = omega;
 }

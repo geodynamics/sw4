@@ -40,6 +40,7 @@
 #include <iostream>
 #include <iomanip>
 #include <mpi.h>
+#include <omp.h>
 #include "version.h"
 
 using namespace std;
@@ -161,9 +162,38 @@ main(int argc, char **argv)
     {
       if (myRank == 0)
       {
-	cout << "Running sw4 on " <<  nProcs << " processors..." << endl
-	     << "Writing output to directory: " 
-	     << simulation.getPath() << endl;
+	 int nth=1;
+#ifndef SW4_NOOMP
+#pragma omp parallel
+	 {
+	    if( omp_get_thread_num() == 0 )
+	    {
+	       nth=omp_get_num_threads();
+	    }
+	 }
+#endif
+	 if( nth == 1 )
+	 {
+	    if( nProcs > 1 )
+	       cout << "Running sw4 on " <<  nProcs << " processors..." << endl;
+	    else
+	       cout << "Running sw4 on " <<  nProcs << " processor..." << endl;
+	 }
+	 else
+	 {
+	    if( nProcs > 1 )
+	       // Assume same number of threads for each MPI-task.
+	       cout << "Running sw4 on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
+	    else
+	       cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
+	 }
+	 if( simulation.m_croutines )
+	    cout << "   Using C routines." << endl;
+	 else
+	    cout << "   Using fortran routines." << endl;
+	 cout << "Writing output to directory: " 
+		 << simulation.getPath() << endl;
+      
       }
 // run the simulation
       simulation.solve( GlobalSources, GlobalTimeSeries );

@@ -36,7 +36,7 @@ c-----------------------------------------------------------------------
 	subroutine addsgd4( dt, h, up, u, um, rho, 
      *               dcx, dcy, dcz, strx, stry, strz, cox, coy, coz, 
      *	             ifirst, ilast, jfirst, jlast, kfirst, klast, beta )
-
+     * bind(c)
 ***********************************************************************
 *** Version with correct density scaling and supergrid stretching.
 *** cox, coy, coz are corner factors that reduce the damping near edges and corners
@@ -44,6 +44,7 @@ c-----------------------------------------------------------------------
 ***********************************************************************
 
 	implicit none
+	integer ifirst, ilast, jfirst, jlast, kfirst, klast
 	real*8 dt, h
 	real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
 	real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -52,7 +53,6 @@ c-----------------------------------------------------------------------
 	real*8 dcx(ifirst:ilast), strx(ifirst:ilast), cox(ifirst:ilast)
 	real*8 dcy(jfirst:jlast), stry(jfirst:jlast), coy(jfirst:jlast)
 	real*8 dcz(kfirst:klast), strz(kfirst:klast), coz(kfirst:klast)
-	integer ifirst, ilast, jfirst, jlast, kfirst, klast
 	real*8 beta
 
 c time stepping stability condition on beta?
@@ -76,6 +76,10 @@ c strx -> strx*coy(j)*coz(k)
 c stry -> stry*cox(i)*coz(k)
 c strz -> strz*cox(i)*coy(j)
 c
+c approximately 375 a.o.
+c
+!$OMP PARALLEL PRIVATE(k,i,j,c,irho)
+!$OMP DO
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2
 	    do i=ifirst+2, ilast-2
@@ -125,17 +129,21 @@ c z-differences
      + -rho(i,j,k-1)*dcz(k-1)*
      *            (um(c,i,j,k  )-2*um(c,i,j,k-1)+um(c,i,j,k-2)) ) 
      + )
+*** TOTAL 125 ops for each component = 375 ops per grid point. 
+***       3x26  3D array accesses (u,um), 7 rho, gives = 85 elements of 3D arrays per grid point.
 	      enddo
 	    enddo
 	  enddo
 	enddo
+!$OMP END DO
+!$OMP END PARALLEL
 	end
 
 c-----------------------------------------------------------------------
 	subroutine addsgd6( dt, h, up, u, um, rho, 
      *               dcx, dcy, dcz, strx, stry, strz, cox, coy, coz, 
      *	             ifirst, ilast, jfirst, jlast, kfirst, klast, beta )
-
+     * bind(c)
 ***********************************************************************
 *** 6th order damping, with correct density scaling and supergrid stretching.
 ***
@@ -169,6 +177,8 @@ c beta is the supergrid damping coefficient as entered in the input file
 c
 c add in the SG damping
 c
+!$OMP PARALLEL PRIVATE(k,i,j,c,irhoh)
+!$OMP DO
 	do k=kfirst+3,klast-3
 	  do j=jfirst+3,jlast-3
 	    do i=ifirst+3, ilast-3
@@ -222,13 +232,15 @@ c z-differences
 	    enddo
 	  enddo
 	enddo
+!$OMP END DO
+!$OMP END PARALLEL
 	end
 
 c-----------------------------------------------------------------------
 	subroutine addsgd4c( dt, up, u, um, rho, 
      *               dcx, dcy, strx, stry, jac, cox, coy,
      *	             ifirst, ilast, jfirst, jlast, kfirst, klast, beta )
-
+     * bind(c)
 ***********************************************************************
 *** Correct density scaling and supergrid stretching.
 *** Curvilinear version, assuming uniform grid in x and y.
@@ -266,6 +278,8 @@ c
 c
 c add in the SG damping
 c    
+!$OMP PARALLEL PRIVATE(k,i,j,c,irhoj)
+!$OMP DO
 	do k=kfirst+2,klast-2
 	  do j=jfirst+2,jlast-2
 	    do i=ifirst+2, ilast-2
@@ -297,13 +311,15 @@ c y-differences
 	    enddo
 	  enddo
 	enddo
+!$OMP END DO
+!$OMP END PARALLEL
 	end
 
 c-----------------------------------------------------------------------
 	subroutine addsgd6c( dt, up, u, um, rho, 
      *               dcx, dcy, strx, stry, jac, cox, coy,
      *	             ifirst, ilast, jfirst, jlast, kfirst, klast, beta )
-
+     * bind(c)
 ***********************************************************************
 *** Correct density scaling and supergrid stretching.
 *** Curvilinear version, assuming uniform grid in x and y.
@@ -343,6 +359,8 @@ c beta is the supergrid damping coefficient as entered in the input file
 c
 c add in the SG damping
 c
+!$OMP PARALLEL PRIVATE(k,i,j,c,irhoj)
+!$OMP DO
 	do k=kfirst+3,klast-3
 	  do j=jfirst+3,jlast-3
 	    do i=ifirst+3, ilast-3
@@ -388,4 +406,6 @@ c y-differences
 	    enddo
 	  enddo
 	enddo
+!$OMP END DO
+!$OMP END PARALLEL
 	end

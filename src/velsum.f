@@ -30,7 +30,7 @@
 ! # along with this program; if not, write to the Free Software
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine VELSUM( is, ie, js, je, ks, ke, i1, i2, j1, j2, k1, k2,
-     *                   mu, lambda, rho, cp, cs, npts )
+     *                   mu, lambda, rho, cp, cs, npts ) bind(c)
       implicit none
       integer is, ie, js, je, ks, ke, i1, i2, j1, j2, k1, k2
       integer i, j, k
@@ -39,6 +39,8 @@
       cp = 0
       cs = 0
       npts = DBLE(i2-i1+1)*DBLE(j2-j1+1)*DBLE(k2-k1+1)
+!$OMP PARALLEL PRIVATE( i, j, k )
+!$OMP DO REDUCTION(+:cp,cs)      
       do k=k1,k2
          do j=j1,j2
             do i=i1,i2
@@ -47,4 +49,6 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end

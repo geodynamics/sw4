@@ -1,6 +1,6 @@
       subroutine CHECKANISOMTRL( ifirst, ilast, jfirst, jlast, kfirst,
      *                           klast, rho, c, 
-     *                           rhomin, rhomax, eigmin, eigmax )
+     *                         rhomin, rhomax, eigmin, eigmax ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       integer m, info
@@ -13,6 +13,8 @@
       rhomax = -1d38
       eigmin =  1d38
       eigmax = -1d38
+!$OMP PARALLEL PRIVATE(i,j,k,a,eig,z,work,info) 
+!$OMP DO REDUCTION( MAX: rhomax,eigmax ) REDUCTION( MIN: rhomin,eigmin )
       do k=kfirst,klast
          do j=jfirst,jlast
             do i=ifirst,ilast
@@ -40,4 +42,6 @@
             enddo
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end

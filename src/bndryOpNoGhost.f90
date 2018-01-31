@@ -12,7 +12,13 @@ subroutine bndryOpNoGhost1( acof_no_gp, ghcof_no_gp, sbop_no_gp) bind(c, name="b
   real(dp):: d5(0:8), w0;
   real(dp):: acof(6,8,8), ghcof(6);
   integer:: i, j, k;
-  
+  interface
+      subroutine VARCOEFFS4( acof, ghcof ) bind(c)
+      implicit none
+      real*8 acof(6,8,8), ghcof(6)
+      end subroutine VARCOEFFS4
+  end interface
+
   call varcoeffs4( acof, ghcof );
 !  print *, "Called varcoeffs4"
   ! modified coefficients for d(a(x) du): NOT using the ghost point

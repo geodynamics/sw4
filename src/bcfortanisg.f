@@ -4,6 +4,7 @@ c-----------------------------------------------------------------------
      +     u, h, bccnd, sbop, c,
      *     bforce1, bforce2, bforce3, bforce4, bforce5, bforce6, 
      +     strx, stry )
+     + bind(c)
       implicit none
       real*8 a1, a2
       parameter( a1=2d0/3, a2=-1d0/12 )
@@ -22,6 +23,8 @@ c note that the numbering of bforce adds one from C (side goes from 1 in Fortran
 c the boundary window 'wind' is now an input argument
 
 c loop over all sides of the 3-D domain
+!$OMP PARALLEL PRIVATE(i,j,k,qq,du,dv,dw,rhs1,rhs2,rhs3,x,a,ipiv,s0i,
+!$OMP& info)
       do s=1,6
 *** dirichlet condition, bccnd=1
 *** supergrid condition, bccnd=2
@@ -29,6 +32,7 @@ c now assigning the forcing arrays outside of this routine!
         if( bccnd(s).eq.1 .or. bccnd(s).eq.2)then
             qq=1
             if (s.eq.1) then
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -39,7 +43,9 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+
             else if (s.eq.2) then
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -50,7 +56,9 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+
             else if (s.eq.3) then
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -61,7 +69,9 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+
             else if (s.eq.4) then
+
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -72,8 +82,10 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+
             else if (s.eq.5) then
               do k=wind(5,s),wind(6,s)
+
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = bforce5(1,qq)
@@ -82,9 +94,11 @@ c now assigning the forcing arrays outside of this routine!
                     qq = qq+1
                   enddo
                 enddo
+
               enddo
             else if (s.eq.6) then
               do k=wind(5,s),wind(6,s)
+
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = bforce6(1,qq)
@@ -93,12 +107,14 @@ c now assigning the forcing arrays outside of this routine!
                     qq = qq+1
                   enddo
                 enddo
+
               enddo
             endif
 
           elseif( bccnd(s).eq.3 )then
 *** Periodic condition, bccnd=3
             if (s.eq.1) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -108,7 +124,9 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+!$OMP END DO               
             elseif (s.eq.2) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -118,7 +136,9 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+!$OMP END DO               
             elseif (s.eq.3) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -128,7 +148,9 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+!$OMP END DO               
             elseif (s.eq.4) then
+!$OMP DO               
               do k=wind(5,s),wind(6,s)
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
@@ -138,8 +160,10 @@ c now assigning the forcing arrays outside of this routine!
                   enddo
                 enddo
               enddo
+!$OMP END DO               
             elseif (s.eq.5) then
               do k=wind(5,s),wind(6,s)
+!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k+nz)
@@ -147,9 +171,11 @@ c now assigning the forcing arrays outside of this routine!
                     u(3,i,j,k) = u(3,i,j,k+nz)
                   enddo
                 enddo
+!$OMP END DO               
               enddo
             elseif (s.eq.6) then
               do k=wind(5,s),wind(6,s)
+!$OMP DO               
                 do j=wind(3,s),wind(4,s)
                   do i=wind(1,s),wind(2,s)
                     u(1,i,j,k) = u(1,i,j,k-nz)
@@ -157,6 +183,7 @@ c now assigning the forcing arrays outside of this routine!
                     u(3,i,j,k) = u(3,i,j,k-nz)
                   enddo
                 enddo
+!$OMP END DO               
               enddo
             endif
           elseif( bccnd(s).eq.0 )then
@@ -174,6 +201,7 @@ c moved the assignment of bforce5/6 into its own routine
             s0i = 1/sbop(0)
             if( s.eq.5 )then
                k = 1
+!$OMP DO               
                do j=jfirst+2,jlast-2
                   do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -241,9 +269,11 @@ c moved the assignment of bforce5/6 into its own routine
                   u(3,i,j,0) = -s0i*x(3)
                enddo
             enddo
+!$OMP END DO               
           else
 c s=6
             k = nz
+!$OMP DO               
                do j=jfirst+2,jlast-2
                   do i=ifirst+2,ilast-2
 ** compute 1-d index in forcing array
@@ -310,8 +340,10 @@ c s=6
                   u(3,i,j,k+1) = s0i*x(3)
                enddo
             enddo
+!$OMP END DO               
           endif
         endif
       enddo
+!$OMP END PARALLEL               
       end
 

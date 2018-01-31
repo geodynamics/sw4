@@ -1,0 +1,95 @@
+----------------------------------------------------------------
+            sw4 version 1.20
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Mar 14 13:40:24 PDT 2017
+  By user:     andersp
+  Machine:     cori11
+  Compiler:    /opt/cray/pe/craype/2.5.7/bin/CC
+  3rd party include dir: /project/projectdirs/m2545/sw4/cori-knl/include, and library dir: /project/projectdirs/m2545/sw4/cori-knl/lib
+----------------------------------------------------------------
+
+Input file: LOH.1-h50.in
+Default Supergrid thickness has been tuned; thickness = 30 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 2.00000000e-02
+
+* Processing the grid command...
+* Setting nx to 601 to be consistent with h=5.00000000e+01
+* Setting ny to 601 to be consistent with h=5.00000000e+01
+* Setting nz to 341 to be consistent with h=5.00000000e+01
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0        50       601       601       341    123169541
+Total number of grid points (without ghost points): 1.2317e+08
+
+
+   Execution time, reading input file 3.44920874e-01 seconds 
+----------------------------------------------------
+ Making Output Directory: loh1-results/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.726949e+01, x=3.000000e+04, y=0.000000e+00
+2: Lon= 1.183386e+02, Lat=3.726949e+01, x=3.000000e+04, y=3.000000e+04
+3: Lon= 1.183374e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+04
+
+Considering all material blocks
+block command: outside = 0, material = 124614345
+block command: outside = 116306722, material = 8307623
+block command: outside = 124253144, material = 361201
+
+       ----------- Material properties ranges ---------------
+       2.60000000e+03 kg/m^3 <=  Density <= 2.70000000e+03 kg/m^3
+       4.00000000e+03 m/s    <=  Vp      <= 6.00000000e+03 m/s
+       2.00000000e+03 m/s    <=  Vs      <= 3.46400000e+03 m/s
+       1.73210162e+00        <=  Vp/Vs   <= 2.00000000e+00
+       1.04000000e+10 Pa     <=  mu      <= 3.23980992e+10 Pa
+       2.08000000e+10 Pa     <=  lambda  <= 3.24038016e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=5.000000e+01, minVs/h=40 (Cartesian)
+
+   Execution time, start up phase 2.62020826e-01 seconds 
+Running sw4 on 256 processors...
+Writing output to directory: loh1-results/
+============================================================
+ Running program on 256 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 9
+ Number of time steps = 1073 dt: 0.0083877
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1e+18 Nm 
+  Moment magnitude     (Mw): 5.93333
+  Number of moment sources 1
+-----------------------------------------------------------------------
+  Begin time stepping...
+Writing ASCII USGS file, of size 1001: loh1-results/sta10.txt
+Time step       1  t =   8.3876980e-03
+Time step     101  t =   8.4715750e-01
+Time step     201  t =   1.6859273e+00
+Time step     301  t =   2.5246971e+00
+Time step     401  t =   3.3634669e+00
+Time step     501  t =   4.2022367e+00
+Time step     601  t =   5.0410065e+00
+Time step     701  t =   5.8797763e+00
+Time step     801  t =   6.7185461e+00
+Time step     901  t =   7.5573159e+00
+Time step    1001  t =   8.3960857e+00
+Time step    1073  t =   9.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 5 minutes 4.21451008e+01 seconds 
+Writing ASCII USGS file, of size 1074: loh1-results/sta10.txt
+============================================================
+ program sw4 finished! 
+============================================================

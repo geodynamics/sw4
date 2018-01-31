@@ -31,7 +31,8 @@
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 c-----------------------------------------------------------------------
       subroutine FREESURFCURVISG( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, nz, side, u, mu, la, met, s, forcing, strx, stry )
+     *     klast, nz, side, u, mu, la, met, s, forcing, strx, stry ) 
+     *     bind(c)
       implicit none
       real*8 c1, c2
       parameter( c1=2d0/3, c2=-1d0/12 )
@@ -56,6 +57,9 @@ c-----------------------------------------------------------------------
       endif
 
       s0i = 1/s(0)
+!$OMP PARALLEL PRIVATE(i,j,istry,istrx,rhs1,rhs2,rhs3,ac,bc,cc,dc,
+!$OMP*                 xoysqrt,yoxsqrt,isqrtxy)
+!$OMP DO      
       do j=jfirst+2,jlast-2
          istry = 1/stry(j)
          do i=ifirst+2,ilast-2
@@ -164,11 +168,13 @@ c     *           s(3)*u(3,i,j,k+2*kl)+s(4)*u(3,i,j,k+3*kl) + bc*rhs3 -
 c     *                                       dc*met(4,i,j,k) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine GETSURFFORCINGSG( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, k, met, jac, tau, strx, stry, forcing )
+     *     klast, k, met, jac, tau, strx, stry, forcing ) bind(c)
 ***********************************************************************
 ***
 *** Given tau, Cartesian stress tensor on boundary, compute the stress
@@ -188,6 +194,8 @@ c-----------------------------------------------------------------------
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 strx(ifirst:ilast), stry(jfirst:jlast)
       real*8 sqjac, istrx, istry
+!$OMP PARALLEL PRIVATE(i,j,istry,istrx,sqjac)
+!$OMP DO      
       do j=jfirst,jlast
          istry = 1/stry(j)
          do i=ifirst,ilast
@@ -204,11 +212,13 @@ c-----------------------------------------------------------------------
      *                          istrx*istry*met(4,i,j,k)*tau(6,i,j) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine SUBSURFFORCINGSG( ifirst, ilast, jfirst, jlast, kfirst,
-     *     klast, k, met, jac, tau, strx, stry, forcing )
+     *     klast, k, met, jac, tau, strx, stry, forcing ) bind(c)
 ***********************************************************************
 ***
 *** Given tau, Cartesian stress tensor on boundary, compute the stress
@@ -228,16 +238,13 @@ c-----------------------------------------------------------------------
       real*8 jac(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 strx(ifirst:ilast), stry(jfirst:jlast)
       real*8 sqjac, istrx, istry
+!$OMP PARALLEL PRIVATE(i,j,istry,istrx,sqjac)
+!$OMP DO      
       do j=jfirst,jlast
          istry = 1/stry(j)
          do i=ifirst,ilast
             istrx = 1/strx(i)
             sqjac = SQRT(jac(i,j,k))
-c            if( i.eq.23 .and. j.eq.18 )then
-c               write(*,*) 'twf ',sqjac*( istry*met(2,i,j,k)*tau(1,i,j)+
-c     *                                istrx*met(3,i,j,k)*tau(2,i,j)+
-c     *                          istrx*istry*met(4,i,j,k)*tau(3,i,j) )
-c            endif
             forcing(1,i,j) =  forcing(1,i,j) -
      *                        sqjac*( istry*met(2,i,j,k)*tau(1,i,j)+
      *                                istrx*met(3,i,j,k)*tau(2,i,j)+
@@ -252,6 +259,8 @@ c            endif
      *                          istrx*istry*met(4,i,j,k)*tau(6,i,j) )
          enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 

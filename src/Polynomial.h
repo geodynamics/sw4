@@ -33,6 +33,8 @@
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
 
+#include "sw4.h"
+
 using namespace std;
 
 class Polynomial{
@@ -41,11 +43,11 @@ friend std::ostream& operator<<(std::ostream& output, const Polynomial& s);
 
 public:
 Polynomial();
-Polynomial(double c[3]);
-double coeff(unsigned int q);
+Polynomial(float_sw4 c[3]);
+float_sw4 coeff(unsigned int q);
 
 // for efficiency and simplicity reasons, we make the coefficients public
-double m_c[3];
+float_sw4 m_c[3];
 
 private:   
 

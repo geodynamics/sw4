@@ -161,6 +161,7 @@ void Comminfo::print( int recv )
 Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
 		  int starts[3], int nptsbuf, int padding )
 {
+   m_zerorank_in_commworld = -1;
    int ihave_array=1;
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
       ihave_array = 0;
@@ -1871,3 +1872,18 @@ int Parallel_IO::proc_zero()
    return retval;
 }
 
+//-----------------------------------------------------------------------
+int Parallel_IO::proc_zero_rank_in_comm_world()
+{
+   if( m_zerorank_in_commworld == -1 )
+   {
+      // Compute zerorank_in_commworld
+      int retval =-1;
+      int myid   =-1;
+      if( proc_zero() )
+	 MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Allreduce( &myid, &retval, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+      m_zerorank_in_commworld = retval;
+   }
+   return m_zerorank_in_commworld;
+}

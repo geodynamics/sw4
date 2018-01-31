@@ -58,12 +58,12 @@ SecondOrderSection::SecondOrderSection(Polynomial &nom, Polynomial &denom)
   
 } // end constructor
 
-double SecondOrderSection::numer(unsigned int q)
+float_sw4 SecondOrderSection::numer(unsigned int q)
 {
   return m_n.m_c[q];
 }
 
-double SecondOrderSection::denom(unsigned int q)
+float_sw4 SecondOrderSection::denom(unsigned int q)
 {
   return m_d.m_c[q];
 }

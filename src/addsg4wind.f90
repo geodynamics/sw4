@@ -80,7 +80,9 @@ subroutine addsg4wind( dt, h, up, u, um, rho, dcx, dcy, dcz, strx, stry, strz, c
 ! strz -> strz*cox(i)*coy(j)
 !
 !  do k=kfirst+2,klast-2
+!$OMP PARALLEL PRIVATE(k,j,i,irho,c)
   do k=kwindb,kwinde
+!$OMP DO
      do j=jfirst+2,jlast-2
         do i=ifirst+2, ilast-2
            irho = 1/rho(i,j,k)
@@ -111,5 +113,7 @@ subroutine addsg4wind( dt, h, up, u, um, rho, dcx, dcy, dcz, strx, stry, strz, c
            enddo ! do c
         enddo ! do i
      enddo ! do j
+!$OMP ENDDO
   enddo ! do k
+!$OMP ENDPARALLEL
 end subroutine addsg4wind

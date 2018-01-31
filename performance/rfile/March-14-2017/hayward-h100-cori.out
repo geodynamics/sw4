@@ -1,0 +1,101 @@
+----------------------------------------------------------------
+            sw4 version 1.20
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Mar 14 13:40:24 PDT 2017
+  By user:     andersp
+  Machine:     cori11
+  Compiler:    /opt/cray/pe/craype/2.5.7/bin/CC
+  3rd party include dir: /project/projectdirs/m2545/sw4/cori-knl/include, and library dir: /project/projectdirs/m2545/sw4/cori-knl/lib
+----------------------------------------------------------------
+
+Input file: hayward-h100-cori.in
+
+* Processing the grid command...
+* Setting nx to 1001 to be consistent with h=1.00000000e+02
+* Setting ny to 1001 to be consistent with h=1.00000000e+02
+* Setting nz to 301 to be consistent with h=1.00000000e+02
+
+***Topography grid: min z = -1.148476e+03, max z = 8.322363e+01, top Cartesian z = 2.500000e+03
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       100      1001      1001       276    276552276
+   1       100      1001      1001        31     31062031
+Total number of grid points (without ghost points): 3.07614e+08
+
+*** Reading data from Rfile USGSBayAreaVM-08.3.0-corder.rfile in directory /global/cscratch1/sd/andersp/hayward
+Opened rupture file 'm6.5-20.0x13.0.s500.v5.1.srf'
+Version = 2.0
+Number of segments in header block: 1
+Seg #1: elon=-122.218, elat=37.8433, nstk=100, ndip=65, len=20, wid=13
+        stk=144, dip=90, dtop=3, shyp=-5, dhyp=8
+Number of point sources in data block: 6500
+Read npts=6500, made 5303 point moment tensor sources, nu1=5303, nu2=0, nu3=0
+
+   Execution time, reading input file 2.08241160e+01 seconds 
+----------------------------------------------------
+ Making Output Directory: hayward-h100-results/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.220750e+02, Lat=3.833000e+01, x=8.634027e-09, y=-4.756618e-09
+1: Lon= -1.214128e+02, Lat=3.759746e+01, x=1.000000e+05, y=-5.576470e-08
+2: Lon= -1.223293e+02, Lat=3.707203e+01, x=1.000000e+05, y=1.000000e+05
+3: Lon= -1.229960e+02, Lat=3.779951e+01, x=-1.058160e-09, y=1.000000e+05
+
+Considering all material blocks
+
+rfile command: outside = 296, material = 315630019
+
+       ----------- Material properties ranges ---------------
+       1.59000000e+03 kg/m^3 <=  Density <= 3.30000000e+03 kg/m^3
+       8.66000000e+02 m/s    <=  Vp      <= 7.78000000e+03 m/s
+       5.00000000e+02 m/s    <=  Vs      <= 4.42000000e+03 m/s
+       1.65596190e+00        <=  Vp/Vs   <= 4.47359656e+00
+       3.97500000e+08 Pa     <=  mu      <= 6.44701200e+10 Pa
+       3.97430040e+08 Pa     <=  lambda  <= 7.13862600e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.000000e+02, minVs/h=19.175 (Cartesian)
+g=1, h=1.000000e+02, minVs/h=5 (curvilinear)
+
+Filter precursor = 5.401530e+00
+   Execution time, start up phase 7.76576996e-01 seconds 
+Running sw4 on 512 processors...
+Writing output to directory: hayward-h100-results/
+Lowpass filtering all source time functions to corner frequency fc2=5.000000e-01
+============================================================
+ Running program on 512 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 9
+ Number of time steps = 989 dt: 0.0091001
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 7.98952e+18 Nm 
+  Moment magnitude     (Mw): 6.53501
+  Number of moment sources 5303
+-----------------------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   9.1001011e-03
+Time step     101  t =   9.1911021e-01
+Time step     201  t =   1.8291203e+00
+Time step     301  t =   2.7391304e+00
+Time step     401  t =   3.6491405e+00
+Time step     501  t =   4.5591507e+00
+Time step     601  t =   5.4691608e+00
+Time step     701  t =   6.3791709e+00
+Time step     801  t =   7.2891810e+00
+Time step     901  t =   8.1991911e+00
+Time step     989  t =   9.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 10 minutes 9.93959188e-01 seconds 
+Writing ASCII USGS file, of size 990: hayward-h100-results/sta1.txt
+============================================================
+ program sw4 finished! 
+============================================================

@@ -1,0 +1,98 @@
+----------------------------------------------------------------
+            sw4 version 1.20
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Mar 14 13:40:24 PDT 2017
+  By user:     andersp
+  Machine:     cori11
+  Compiler:    /opt/cray/pe/craype/2.5.7/bin/CC
+  3rd party include dir: /project/projectdirs/m2545/sw4/cori-knl/include, and library dir: /project/projectdirs/m2545/sw4/cori-knl/lib
+----------------------------------------------------------------
+
+Input file: berkeley-h20.in
+
+* Processing the grid command...
+* Setting nx to 601 to be consistent with h=2.00000000e+01
+* Setting ny to 601 to be consistent with h=2.00000000e+01
+* Setting nz to 251 to be consistent with h=2.00000000e+01
+
+***Topography grid: min z = -5.581435e+02, max z = 5.261421e+00, top Cartesian z = 1.500000e+03
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0        20       601       601       176     63571376
+   1        20       601       601        89     32146889
+Total number of grid points (without ghost points): 9.57183e+07
+
+*** Reading data from Rfile berkeley.rfile in directory ./
+
+   Execution time, reading input file 1.04543304e+00 seconds 
+----------------------------------------------------
+ Making Output Directory: berkeley-results/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.222500e+02, Lat=3.793000e+01, x=1.891139e-09, y=-1.390519e-09
+1: Lon= -1.221701e+02, Lat=3.784240e+01, x=1.200000e+04, y=-3.522779e-09
+2: Lon= -1.222805e+02, Lat=3.777903e+01, x=1.200000e+04, y=1.200000e+04
+3: Lon= -1.223605e+02, Lat=3.786655e+01, x=4.640091e-10, y=1.200000e+04
+
+Considering all material blocks
+
+rfile command: outside = 2089, material = 98605784
+
+       ----------- Material properties ranges ---------------
+       1.59000000e+03 kg/m^3 <=  Density <= 2.67000000e+03 kg/m^3
+       7.68000000e+02 m/s    <=  Vp      <= 5.56525000e+03 m/s
+       5.00000000e+02 m/s    <=  Vs      <= 3.33525000e+03 m/s
+       1.53600000e+00        <=  Vp/Vs   <= 4.50000000e+00
+       3.97500000e+08 Pa     <=  mu      <= 2.97007931e+10 Pa
+       1.42820160e+08 Pa     <=  lambda  <= 2.33245860e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+01, minVs/h=77.95 (Cartesian)
+g=1, h=2.000000e+01, minVs/h=25 (curvilinear)
+
+   Execution time, start up phase 1.15099216e+00 seconds 
+Running sw4 on 256 processors...
+Writing output to directory: berkeley-results/
+============================================================
+ Running program on 256 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 4
+ Number of time steps = 1122 dt: 0.00356506
+writing image plane on file berkeley-results/berk.cycle=0000.z=0.topo.sw4img
+writing image plane on file berkeley-results/berk.cycle=0000.z=0.lat.sw4img
+writing image plane on file berkeley-results/berk.cycle=0000.z=0.lon.sw4img
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1e+18 Nm 
+  Moment magnitude     (Mw): 5.93333
+  Number of moment sources 1
+-----------------------------------------------------------------------
+  Begin time stepping...
+Writing ASCII USGS file, of size 1001: berkeley-results/sta1.txt
+Time step       1  t =   3.5650624e-03
+Time step     101  t =   3.6007130e-01
+Time step     201  t =   7.1657754e-01
+Time step     301  t =   1.0730838e+00
+Time step     401  t =   1.4295900e+00
+Time step     501  t =   1.7860963e+00
+Time step     601  t =   2.1426025e+00
+Time step     701  t =   2.4991087e+00
+Time step     801  t =   2.8556150e+00
+Time step     901  t =   3.2121212e+00
+Time step    1001  t =   3.5686275e+00
+Time step    1101  t =   3.9251337e+00
+Time step    1122  t =   4.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 8 minutes 3.19153550e+01 seconds 
+Writing ASCII USGS file, of size 1123: berkeley-results/sta1.txt
+============================================================
+ program sw4 finished! 
+============================================================

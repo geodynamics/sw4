@@ -31,7 +31,7 @@
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 c-----------------------------------------------------------------------
       subroutine twilightfort( ifirst, ilast, jfirst, jlast, kfirst, 
-     +     klast, u, t, om, cv, ph, h, zmin )
+     +     klast, u, t, om, cv, ph, h, zmin ) bind(c)
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 * v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -41,6 +41,8 @@ c-----------------------------------------------------------------------
       doubleprecision x, y, z, t, om, cv, ph, zmin
       doubleprecision ampmu, amplambda, h
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO      
       do k=kfirst,klast
         z = (k-1)*h + zmin
         do j=jfirst,jlast
@@ -53,12 +55,15 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine twilightfortwind( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, u, t, om, cv, ph, h, zmin, i1, i2, j1, j2, k1, k2 )
+     + bind(c) 
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 * v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -69,6 +74,8 @@ c-----------------------------------------------------------------------
       doubleprecision x, y, z, t, om, cv, ph, zmin
       doubleprecision ampmu, amplambda, h
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO      
       do k=k1,k2
         z = (k-1)*h + zmin
         do j=j1,j2
@@ -81,12 +88,15 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine twilightfortc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, u, t, om, cv, ph, x, y, z )
+     + bind(c) 
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 * v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -99,6 +109,8 @@ c-----------------------------------------------------------------------
       real*8 x(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
+!$OMP PARALLEL PRIVATE(i,j,k)
+!$OMP DO      
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -111,12 +123,15 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine twilightfortatt( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, alpha, t, om, cv, ph, h, zmin )
+     + bind(c) 
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 *** Attenuation memory variables
 *** att1 := cos(omega*(x-c*t)+phase)*sin(omega*x+phase)*cos(omega*(z-c*t)+phase);
@@ -127,6 +142,8 @@ c-----------------------------------------------------------------------
       doubleprecision x, y, z, t, om, cv, ph, zmin
       doubleprecision ampmu, amplambda, h
       real*8 alpha(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO      
       do k=kfirst,klast
         z = (k-1)*h + zmin
         do j=jfirst,jlast
@@ -142,12 +159,15 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine twilightfortattc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, alpha, t, om, cv, ph, x, y, z )
+     + bind(c) 
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 * v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -160,6 +180,8 @@ c-----------------------------------------------------------------------
       real*8 x(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
+!$OMP PARALLEL PRIVATE(i,j,k)
+!$OMP DO      
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -172,6 +194,8 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       return
       end
 
@@ -182,7 +206,7 @@ c corresponding to twilight exact solution
 c
       subroutine exactrhsfort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda,
-     +     h, zmin)
+     +     h, zmin) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho, zmin
@@ -267,6 +291,14 @@ c
       doubleprecision t95
       doubleprecision t97
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,t10,t100,t101,t102,t103,t105,
+!$OMP+t106,t108,t11,t114,t115,t118,t119,t12,t120,t122,t125,t129,
+!$OMP+t135,t143,t15,t150,t152,t159,t16,t166,t168,t17,t173,t175,
+!$OMP+t18,t2,t21,t23,t24,t27,t28,t3,t31,t32,t38,t4,t43,t44,t45,
+!$OMP+t47,t48,t51,t53,t54,t55,t57,t58,t6,t60,t63,t64,t69,t7,t70,
+!$OMP+t71,t72,t77,t78,t79,t8,t80,t81,t82,t83,t85,t87,t89,t92,t95,
+!$OMP+t97,forces )
+!$OMP DO
       do k=kfirst,klast
          z = (k-1)*h + zmin
          do j=jfirst,jlast
@@ -367,6 +399,8 @@ c
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 
       return
       end
@@ -377,7 +411,7 @@ c corresponding to twilight exact solution
 c
       subroutine exactrhsfortc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda,
-     +     xx, yy, zz )
+     +     xx, yy, zz ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho
@@ -464,7 +498,14 @@ c
       doubleprecision t92
       doubleprecision t95
       doubleprecision t97
-
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,t10,t100,t101,t102,t103,t105,
+!$OMP+t106,t108,t11,t114,t115,t118,t119,t12,t120,t122,t125,t129,
+!$OMP+t135,t143,t15,t150,t152,t159,t16,t166,t168,t17,t173,t175,
+!$OMP+t18,t2,t21,t23,t24,t27,t28,t3,t31,t32,t38,t4,t43,t44,t45,
+!$OMP+t47,t48,t51,t53,t54,t55,t57,t58,t6,t60,t63,t64,t69,t7,t70,
+!$OMP+t71,t72,t77,t78,t79,t8,t80,t81,t82,t83,t85,t87,t89,t92,t95,
+!$OMP+t97,forces)
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
            do i=ifirst,ilast
@@ -564,6 +605,8 @@ c
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 
       return
       end
@@ -574,7 +617,7 @@ c Maple auto-generated code for right hand side forcing
 c corresponding to twilight exact solution
 c
       subroutine exactaccfort( ifirst, ilast, jfirst, jlast, kfirst, 
-     +     klast, utt, t, om, c, ph, h, zmin )
+     +     klast, utt, t, om, c, ph, h, zmin ) bind(c)
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 * v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -596,6 +639,8 @@ c
       doubleprecision t5
       doubleprecision t7
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,t1,t4,t5,t7,t10,t14,t19,t22,t30,acc)
+!$OMP DO
       do k=kfirst,klast
         z = (k-1)*h + zmin
         do j=jfirst,jlast
@@ -621,6 +666,8 @@ c
         enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 
@@ -630,7 +677,7 @@ c Maple auto-generated code for right hand side forcing
 c corresponding to twilight exact solution
 c
       subroutine exactaccfortc( ifirst, ilast, jfirst, jlast, kfirst, 
-     +     klast, utt, t, om, c, ph, x, y, z )
+     +     klast, utt, t, om, c, ph, x, y, z ) bind(c)
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 * v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -655,6 +702,8 @@ c
       doubleprecision t5
       doubleprecision t7
 
+!$OMP PARALLEL PRIVATE(i,j,k,t1,t4,t5,t7,t10,t14,t19,t22,t30,acc)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -678,6 +727,8 @@ c
         enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 
@@ -779,6 +830,15 @@ c
       doubleprecision t97
       doubleprecision t99
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t102,t105,t107,t110,t111,
+!$OMP+t112,t113,t115,t116,t118,t124,t125,t129,t13,t130,t133,t134,t135,
+!$OMP+t137,t14,t140,t144,t150,t156,t16,t163,t165,t17,t172,t181,t183,
+!$OMP+t188,t19,t190,t2,t20,t21,t23,t24,t26,t27,t28,t3,t31,t32,t33,t34,
+!$OMP+t37,t38,t39,t40,t43,t5,t51,t56,t57,t59,t6,t62,t64,t65,t66,t68,t69,
+!$OMP+t71,t74,t75,t80,t81,t82,t83,t88,t89,t9,t90,t91,t92,t93,t95,t97,
+!$OMP+t99)
+
+!$OMP DO
       do k=kfirst,klast
          z = (k-1)*h + zmin
          do j=jfirst,jlast
@@ -887,7 +947,8 @@ c
       enddo
       enddo
       enddo
-
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 
@@ -988,7 +1049,14 @@ c-----------------------------------------------------------------------
       doubleprecision t96
       doubleprecision t97
       doubleprecision t98
-
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t100,t102,t103,t105,t107,
+!$OMP+t110,t115,t118,t119,t120,t121,t122,t124,t125,t127,t13,t135,t14,
+!$OMP+t140,t141,t144,t145,t146,t147,t150,t154,t16,t161,t163,t169,t17,
+!$OMP+t173,t176,t185,t19,t194,t195,t2,t20,t201,t21,t22,t23,t25,t26,t28,
+!$OMP+t29,t3,t33,t34,t35,t36,t39,t41,t42,t43,t45,t47,t49,t5,t50,t55,t6,
+!$OMP+t60,t61,t66,t67,t69,t70,t71,t72,t73,t74,t76,t77,t84,t85,t87,t88,
+!$OMP+t9,t94,t95,t96,t97,t98)
+!$OMP DO
       do k=kfirst,klast
          z = (k-1)*h + zmin
          do j=jfirst,jlast
@@ -1101,7 +1169,8 @@ c-----------------------------------------------------------------------
       enddo
       enddo
       enddo
-
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 c-----------------------------------------------------------------------
@@ -1111,7 +1180,7 @@ c equation, corresponding to exactSol and exactMat
 c
       subroutine forcingfortc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     xx, yy, zz )
+     +     xx, yy, zz ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho
@@ -1205,6 +1274,15 @@ c
       doubleprecision t97
       doubleprecision t99
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t102,t105,t107,t110,t111,
+!$OMP+t112,t113,t115,t116,t118,t124,t125,t129,t13,t130,t133,t134,t135,
+!$OMP+t137,t14,t140,t144,t150,t156,t16,t163,t165,t17,t172,t181,t183,
+!$OMP+t188,t19,t190,t2,t20,t21,t23,t24,t26,t27,t28,t3,t31,t32,t33,t34,
+!$OMP+t37,t38,t39,t40,t43,t5,t51,t56,t57,t59,t6,t62,t64,t65,t66,t68,t69,
+!$OMP+t71,t74,t75,t80,t81,t82,t83,t88,t89,t9,t90,t91,t92,t93,t95,t97,
+!$OMP+t99)
+
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
            do i=ifirst,ilast
@@ -1313,6 +1391,8 @@ c
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 
       return
       end
@@ -1320,7 +1400,7 @@ c
 c-----------------------------------------------------------------------
       subroutine forcingttfortc( ifirst, ilast, jfirst, jlast, kfirst,
      +     klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, amplambda, 
-     +     xx, yy, zz )
+     +     xx, yy, zz ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, om, c, ph, omm, phm, amprho
@@ -1418,6 +1498,14 @@ c-----------------------------------------------------------------------
       doubleprecision t97
       doubleprecision t98
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t100,t102,t103,t105,t107,
+!$OMP+t110,t115,t118,t119,t120,t121,t122,t124,t125,t127,t13,t135,t14,
+!$OMP+t140,t141,t144,t145,t146,t147,t150,t154,t16,t161,t163,t169,t17,
+!$OMP+t173,t176,t185,t19,t194,t195,t2,t20,t201,t21,t22,t23,t25,t26,t28,
+!$OMP+t29,t3,t33,t34,t35,t36,t39,t41,t42,t43,t45,t47,t49,t5,t50,t55,t6,
+!$OMP+t60,t61,t66,t67,t69,t70,t71,t72,t73,t74,t76,t77,t84,t85,t87,t88,
+!$OMP+t9,t94,t95,t96,t97,t98)
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
            do i=ifirst,ilast
@@ -1530,6 +1618,8 @@ c-----------------------------------------------------------------------
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
 
       return
       end
@@ -1537,7 +1627,7 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine exactmatfort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, rho, mu, la, omm, phm, amprho, ampmu, amplambda, h, 
-     +     zmin )
+     +     zmin ) bind(c)
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * rho    := amprho*(2 + sin(omm*x+phm)*cos(omm*y+phm)*sin(omm*z+phm) );
 * mu     := ampmu*(3 + cos(omm*x+phm)*sin(omm*y+phm)*sin(omm*z+phm) );
@@ -1550,6 +1640,8 @@ c-----------------------------------------------------------------------
       real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO      
       do k=kfirst,klast
         z = (k-1)*h + zmin
         do j=jfirst,jlast
@@ -1572,12 +1664,14 @@ c$$$            endif
           enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 c-----------------------------------------------------------------------
       subroutine exactmatfortc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, rho, mu, la, omm, phm, amprho, ampmu, amplambda, 
-     +     x, y, z ) 
+     +     x, y, z )  bind(c)
 * new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 * rho    := amprho*(2 + sin(omm*x+phm)*cos(omm*y+phm)*sin(omm*z+phm) );
 * mu     := ampmu*(3 + cos(omm*x+phm)*sin(omm*y+phm)*sin(omm*z+phm) );
@@ -1593,6 +1687,8 @@ c-----------------------------------------------------------------------
       real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
 
+!$OMP PARALLEL PRIVATE(i,j,k)
+!$OMP DO      
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -1605,13 +1701,15 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine EXACTRHSFORTSG( ifirst, ilast, jfirst, jlast, kfirst, 
      *         klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, ampla,
-     *	       h, zmin, omstrx, omstry, omstrz )
+     *	       h, zmin, omstrx, omstry, omstrz ) bind(c)
       
       implicit none
       integer i, j, k, ifirst, ilast, jfirst, jlast, kfirst, klast
@@ -1731,7 +1829,15 @@ c-----------------------------------------------------------------------
       doubleprecision t94
       doubleprecision t95
       doubleprecision t96
-
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t1,t10,t103,t104,t105,t106,
+!$OMP+t107,t108,t11,t110,t112,t113,t114,t115,t117,t12,t120,t123,t124,
+!$OMP+t133,t134,t135,t136,t138,t139,t14,t141,t143,t148,t149,t15,t158,
+!$OMP+t159,t16,t163,t166,t168,t171,t172,t178,t182,t19,t2,t201,t202,
+!$OMP+t207,t21,t213,t216,t218,t22,t23,t234,t237,t249,t26,t28,t29,t32,
+!$OMP+t33,t34,t36,t37,t38,t4,t43,t48,t49,t50,t59,t6,t61,t62,t63,t65,t66,
+!$OMP+t68,t7,t70,t71,t72,t74,t75,t77,t78,t8,t81,t82,t86,t87,t89,t90,t92,
+!$OMP+t93,t94,t95,t96)
+!$OMP DO
       do k=kfirst,klast
          z = (k-1)*h + zmin
          do j=jfirst,jlast
@@ -1858,13 +1964,15 @@ c-----------------------------------------------------------------------
         enddo
         enddo
         enddo
+!$OMP ENDDO
+!$OMP END PARALLEL        
         return
       end
 
 c-----------------------------------------------------------------------
       subroutine EXACTRHSFORTSGC( ifirst, ilast, jfirst, jlast, kfirst, 
      *         klast, fo, t, om, c, ph, omm, phm, amprho, ampmu, ampla,
-     *	       xx, yy, zz, omstrx, omstry, omstrz )
+     *	       xx, yy, zz, omstrx, omstry, omstrz ) bind(c)
       
       implicit none
       integer i, j, k, ifirst, ilast, jfirst, jlast, kfirst, klast
@@ -1987,6 +2095,15 @@ c-----------------------------------------------------------------------
       doubleprecision t95
       doubleprecision t96
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t1,t10,t103,t104,t105,t106,
+!$OMP+t107,t108,t11,t110,t112,t113,t114,t115,t117,t12,t120,t123,t124,
+!$OMP+t133,t134,t135,t136,t138,t139,t14,t141,t143,t148,t149,t15,t158,
+!$OMP+t159,t16,t163,t166,t168,t171,t172,t178,t182,t19,t2,t201,t202,
+!$OMP+t207,t21,t213,t216,t218,t22,t23,t234,t237,t249,t26,t28,t29,t32,
+!$OMP+t33,t34,t36,t37,t38,t4,t43,t48,t49,t50,t59,t6,t61,t62,t63,t65,t66,
+!$OMP+t68,t7,t70,t71,t72,t74,t75,t77,t78,t8,t81,t82,t86,t87,t89,t90,t92,
+!$OMP+t93,t94,t95,t96)
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
            do i=ifirst,ilast
@@ -2113,13 +2230,15 @@ c-----------------------------------------------------------------------
         enddo
         enddo
         enddo
+!$OMP ENDDO
+!$OMP END PARALLEL        
         return
       end
 
 c-----------------------------------------------------------------------
       subroutine exactmatfortatt( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, mu, la, momega, mphase, ampmu, amplambda, h, 
-     +     zmin )
+     +     zmin ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, momega, mphase
@@ -2127,6 +2246,8 @@ c-----------------------------------------------------------------------
       real*8 mu(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 la(ifirst:ilast,jfirst:jlast,kfirst:klast)
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z)
+!$OMP DO
       do k=kfirst,klast
         z = (k-1)*h + zmin
         do j=jfirst,jlast
@@ -2140,12 +2261,14 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 c-----------------------------------------------------------------------
       subroutine exactmatfortattc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, mu, la, momega, mphase, ampmu, amplambda, 
-     +     x, y, z ) 
+     +     x, y, z )  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision momega, mphase, amprho
@@ -2156,6 +2279,8 @@ c-----------------------------------------------------------------------
       real*8 y(ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 z(ifirst:ilast,jfirst:jlast,kfirst:klast)
 
+!$OMP PARALLEL PRIVATE(i,j,k)
+!$OMP DO
       do k=kfirst,klast
         do j=jfirst,jlast
           do i=ifirst,ilast
@@ -2166,13 +2291,15 @@ c-----------------------------------------------------------------------
           enddo
         enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       return
       end
 
 c-----------------------------------------------------------------------
       subroutine forcingfortatt( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, omega, c, phase, momega, mphase, amprho, 
-     *     ampmu, amplambda, h, zmin)
+     *     ampmu, amplambda, h, zmin) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, omega, c, phase, momega, mphase
@@ -2253,6 +2380,13 @@ c-----------------------------------------------------------------------
       doubleprecision t96
       doubleprecision t97
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t100,t103,t108,t109,t11,
+!$OMP+t110,t112,t113,t116,t118,t12,t131,t133,t135,t14,t144,t15,t152,
+!$OMP+t156,t158,t159,t162,t178,t180,t182,t189,t19,t191,t195,t2,t21,
+!$OMP+t22,t23,t26,t27,t3,t30,t31,t32,t33,t34,t35,t36,t37,t38,t4,t45,
+!$OMP+t51,t52,t53,t55,t56,t6,t62,t63,t67,t68,t7,t71,t72,t73,t77,t8,
+!$OMP+t80,t84,t85,t86,t87,t95,t96,t97)
+!$OMP DO
       do k=kfirst,klast
          z = (k-1)*h + zmin
          do j=jfirst,jlast
@@ -2349,12 +2483,14 @@ c-----------------------------------------------------------------------
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine forcingttattfort( ifirst, ilast, jfirst, jlast, kfirst,
      +     klast, fo, t, omega, c, phase, momega, mphase, amprho, ampmu,
-     +      amplambda, h, zmin)
+     +      amplambda, h, zmin) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, omega, c, phase, momega, mphase
@@ -2463,6 +2599,15 @@ c-----------------------------------------------------------------------
       doubleprecision t97
       doubleprecision t99
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t104,t108,t109,t11,t112,
+!$OMP+t113,t118,t12,t121,t122,t124,t125,t13,t130,t133,t134,t135,t136,
+!$OMP+t139,t14,t141,t142,t143,t151,t152,t157,t16,t160,t178,t186,t19,
+!$OMP+t190,t194,t195,t198,t2,t201,t208,t21,t211,t22,t222,t23,t231,
+!$OMP+t233,t238,t24,t25,t26,t27,t29,t3,t30,t31,t34,t35,t36,t37,t38,
+!$OMP+t39,t4,t40,t41,t42,t43,t44,t45,t46,t47,t48,t56,t6,t62,t63,t64,
+!$OMP+t65,t66,t67,t68,t69,t7,t70,t74,t75,t78,t79,t80,t82,t83,t84,t85,
+!$OMP+t88,t89,t90,t91,t92,t93,t97,t99)
+!$OMP DO
       do k=kfirst,klast
          z = (k-1)*h + zmin
          do j=jfirst,jlast
@@ -2589,11 +2734,13 @@ c-----------------------------------------------------------------------
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
 c$$$      subroutine ADDMEMVARFORCING( ifirst, ilast, jfirst, jlast, kfirst,
-c$$$     *  klast, alpha, t, omega, c, phase, omegaVE, dt, h, zmin )
+c$$$     *  klast, alpha, t, omega, c, phase, omegaVE, dt, h, zmin ) bind(c)
 c$$$
 c$$$      implicit none
 c$$$      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
@@ -2668,12 +2815,14 @@ c$$$      doubleprecision t98
 c$$$      doubleprecision t99
 c$$$
 c$$$      dto = dt*omegaVE
-c$$$c: AP Apr. 3, 2017: Only add forcing for the predictor:
-c$$$c      icp  = 1/( 1d0/2 + 1/(2*dto) )
-c$$$c: Original: both formulas are equivalent
 c$$$c      icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
 c$$$      icp = 12*dto/( 6 + 6*dto + 3*dto*dto + dto*dto*dto )
-c$$$
+c$$$!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t1,t10,t100,t105,t109,t113,
+c$$$!$OMP+t13,t139,t14,t141,t142,t144,t145,t146,t147,t148,t149,t15,t150,
+c$$$!$OMP+t154,t157,t17,t18,t19,t2,t20,t23,t25,t26,t27,t29,t30,t33,t34,
+c$$$!$OMP+t35,t36,t37,t4,t40,t42,t43,t45,t48,t5,t52,t53,t6,t60,t62,t63,
+c$$$!$OMP+t74,t82,t83,t84,t86,t88,t89,t9,t91,t93,t95,t97,t98,t99)
+c$$$!$OMP DO
 c$$$      do k=kfirst,klast
 c$$$         z = (k-1)*h + zmin
 c$$$         do j=jfirst,jlast
@@ -2759,15 +2908,17 @@ c$$$        alpha(3,i,j,k) = alpha(3,i,j,k) + forces(3)*icp
 c$$$      enddo
 c$$$      enddo
 c$$$      enddo
+c$$$!$OMP ENDDO
+c$$$!$OMP END PARALLEL
 c$$$      end
 c-----------------------------------------------------------------------
       subroutine MEMVARFORCESURF( ifirst, ilast, jfirst, jlast,
-     *  k, fo, t, omega, c, phase, omegaVE, dt, h, zmin )
+     *  k, fo, t, omega, c, phase, omegaVE, dt, h, zmin ) bind(c)
 
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, omega, c, phase, zmin, h, omegaVE, dt
-      doubleprecision icp, dto
+c      doubleprecision icp, dto
       real*8 fo(3,ifirst:ilast,jfirst:jlast)
 
       doubleprecision forces(3)
@@ -2837,6 +2988,12 @@ c-----------------------------------------------------------------------
       doubleprecision t99
 
          z = (k-1)*h + zmin
+!$OMP PARALLEL PRIVATE(i,j,x,y,forces,t1,t10,t100,t105,t109,t113,t13,
+!$OMP+t139,t14,t141,t142,t144,t145,t146,t147,t148,t149,t15,t150,t154,
+!$OMP+t157,t17,t18,t19,t2,t20,t23,t25,t26,t27,t29,t30,t33,t34,t35,
+!$OMP+t36,t37,t4,t40,t42,t43,t45,t48,t5,t52,t53,t6,t60,t62,t63,t74,
+!$OMP+t82,t83,t84,t86,t88,t89,t9,t91,t93,t95,t97,t98,t99)
+!$OMP DO
          do j=jfirst,jlast
            y = (j-1)*h
            do i=ifirst,ilast
@@ -2919,12 +3076,14 @@ c-----------------------------------------------------------------------
         fo(3,i,j) =  forces(3)
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine forcingfortattc( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, fo, t, omega, c, phase, momega, mphase, amprho, 
-     *     ampmu, amplambda, xx, yy, zz )
+     *     ampmu, amplambda, xx, yy, zz ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, omega, c, phase, momega, mphase
@@ -3008,6 +3167,13 @@ c-----------------------------------------------------------------------
       doubleprecision t96
       doubleprecision t97
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t100,t103,t108,t109,t11,
+!$OMP+t110,t112,t113,t116,t118,t12,t131,t133,t135,t14,t144,t15,t152,
+!$OMP+t156,t158,t159,t162,t178,t180,t182,t189,t19,t191,t195,t2,t21,
+!$OMP+t22,t23,t26,t27,t3,t30,t31,t32,t33,t34,t35,t36,t37,t38,t4,t45,
+!$OMP+t51,t52,t53,t55,t56,t6,t62,t63,t67,t68,t7,t71,t72,t73,t77,t8,
+!$OMP+t80,t84,t85,t86,t87,t95,t96,t97)
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
            do i=ifirst,ilast
@@ -3104,12 +3270,14 @@ c-----------------------------------------------------------------------
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
       subroutine forcingttattfortc(ifirst, ilast, jfirst, jlast, kfirst,
      +     klast, fo, t, omega, c, phase, momega, mphase, amprho, ampmu,
-     +      amplambda, xx, yy, zz )
+     +      amplambda, xx, yy, zz ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, omega, c, phase, momega, mphase
@@ -3221,6 +3389,15 @@ c-----------------------------------------------------------------------
       doubleprecision t97
       doubleprecision t99
 
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t10,t104,t108,t109,t11,t112,
+!$OMP+t113,t118,t12,t121,t122,t124,t125,t13,t130,t133,t134,t135,t136,
+!$OMP+t139,t14,t141,t142,t143,t151,t152,t157,t16,t160,t178,t186,t19,
+!$OMP+t190,t194,t195,t198,t2,t201,t208,t21,t211,t22,t222,t23,t231,
+!$OMP+t233,t238,t24,t25,t26,t27,t29,t3,t30,t31,t34,t35,t36,t37,t38,
+!$OMP+t39,t4,t40,t41,t42,t43,t44,t45,t46,t47,t48,t56,t6,t62,t63,t64,
+!$OMP+t65,t66,t67,t68,t69,t7,t70,t74,t75,t78,t79,t80,t82,t83,t84,t85,
+!$OMP+t88,t89,t90,t91,t92,t93,t97,t99)
+!$OMP DO
       do k=kfirst,klast
          do j=jfirst,jlast
            do i=ifirst,ilast
@@ -3347,11 +3524,14 @@ c-----------------------------------------------------------------------
       enddo
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end
 
 c-----------------------------------------------------------------------
 c$$$      subroutine ADDMEMVARFORCINGC(ifirst, ilast, jfirst, jlast, kfirst,
-c$$$     *  klast, alpha, t, omega, c, phase, omegaVE, dt, xx, yy, zz )
+c$$$     *  klast, alpha, t, omega, c, phase, omegaVE, dt, xx, yy, zz ) 
+c$$$     *  bind(c)
 c$$$
 c$$$      implicit none
 c$$$      integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
@@ -3432,6 +3612,12 @@ c$$$      dto = dt*omegaVE
 c$$$c      icp = 1/( 1d0/2 + 1/(2*dto) + dto/4 + dto*dto/12 )
 c$$$      icp = 12*dto/( 6 + 6*dto + 3*dto*dto + dto*dto*dto )
 c$$$
+c$$$!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,forces,t1,t10,t100,t105,t109,t113,
+c$$$!$OMP+t13,t139,t14,t141,t142,t144,t145,t146,t147,t148,t149,t15,t150,
+c$$$!$OMP+t154,t157,t17,t18,t19,t2,t20,t23,t25,t26,t27,t29,t30,t33,t34,
+c$$$!$OMP+t35,t36,t37,t4,t40,t42,t43,t45,t48,t5,t52,t53,t6,t60,t62,t63,
+c$$$!$OMP+t74,t82,t83,t84,t86,t88,t89,t9,t91,t93,t95,t97,t98,t99)
+c$$$!$OMP DO
 c$$$      do k=kfirst,klast
 c$$$         do j=jfirst,jlast
 c$$$           do i=ifirst,ilast
@@ -3517,12 +3703,14 @@ c$$$        alpha(3,i,j,k) = alpha(3,i,j,k) + forces(3)*icp
 c$$$      enddo
 c$$$      enddo
 c$$$      enddo
+c$$$!$OMP ENDDO
+c$$$!$OMP END PARALLEL
 c$$$      end
 
 c-----------------------------------------------------------------------
       subroutine MEMVARFORCESURFC( ifirst, ilast, jfirst, jlast, kfirst, 
-     *  klast, k, fo, t, omega, c, phase, omegaVE, dt, xx, yy, zz )
-
+     *  klast, k, fo, t, omega, c, phase, omegaVE, dt, xx, yy, zz ) 
+     *  bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       doubleprecision x, y, z, t, omega, c, phase, omegaVE, dt
@@ -3599,6 +3787,12 @@ c-----------------------------------------------------------------------
       doubleprecision t99
 
 
+!$OMP PARALLEL PRIVATE(i,j,x,y,z,forces,t1,t10,t100,t105,t109,t113,
+!$OMP+t139,t14,t141,t142,t144,t145,t146,t147,t148,t149,t15,t150,t154,
+!$OMP+t157,t17,t18,t19,t2,t20,t23,t25,t26,t27,t29,t30,t33,t34,t35,
+!$OMP+t36,t37,t4,t40,t42,t43,t45,t48,t5,t52,t53,t6,t60,t62,t63,t74,
+!$OMP+t82,t83,t84,t86,t88,t89,t9,t91,t93,t95,t97,t98,t99,t13)
+!$OMP DO
          do j=jfirst,jlast
            do i=ifirst,ilast
              x = xx(i,j,k)
@@ -3682,4 +3876,6 @@ c-----------------------------------------------------------------------
         fo(3,i,j) =  forces(3)
       enddo
       enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
       end

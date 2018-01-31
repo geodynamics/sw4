@@ -37,9 +37,9 @@
 
 using namespace std;
 //-----------------------------------------------------------------------
-MaterialBlock::MaterialBlock( EW * a_ew, double rho, double vs, double vp, double xmin, 
-                              double xmax, double ymin, double ymax, double zmin, double zmax,
-			      double qs, double qp, double freq )
+MaterialBlock::MaterialBlock( EW * a_ew, float_sw4 rho, float_sw4 vs, float_sw4 vp, float_sw4 xmin, 
+                              float_sw4 xmax, float_sw4 ymin, float_sw4 ymax, float_sw4 zmin, float_sw4 zmax,
+			      float_sw4 qs, float_sw4 qp, float_sw4 freq )
 {
    m_rho = rho;
    m_vp  = vp;
@@ -60,7 +60,7 @@ MaterialBlock::MaterialBlock( EW * a_ew, double rho, double vs, double vp, doubl
    m_absoluteDepth = false;
    mEW = a_ew;
 
-   double bbox[6];
+   float_sw4 bbox[6];
    mEW->getGlobalBoundingBox( bbox );
   
 // THE FOLLOWING ONLY WORKS IF m_absoluteDepth == true, or in the absence of topography
@@ -96,7 +96,7 @@ void MaterialBlock::set_absoluteDepth( bool absDepth )
 }
 
 //-----------------------------------------------------------------------
-void MaterialBlock::set_gradients( double rhograd, double vsgrad, double vpgrad )
+void MaterialBlock::set_gradients( float_sw4 rhograd, float_sw4 vsgrad, float_sw4 vpgrad )
 {
    m_rhograd = rhograd;
    m_vsgrad  = vsgrad;
@@ -104,7 +104,7 @@ void MaterialBlock::set_gradients( double rhograd, double vsgrad, double vpgrad 
 }
 
 //-----------------------------------------------------------------------
-bool MaterialBlock::inside_block( double x, double y, double z )
+bool MaterialBlock::inside_block( float_sw4 x, float_sw4 y, float_sw4 z )
 {
    return m_xmin-m_tol <= x && x <= m_xmax+m_tol && m_ymin-m_tol <= y && 
     y <= m_ymax+m_tol &&  m_zmin-m_tol <= z && z <= m_zmax+m_tol;
@@ -117,7 +117,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
                                              std::vector<Sarray> & qs, 
                                              std::vector<Sarray> & qp)
 {
-  int pc[4];
+   //  int pc[4];
 // compute the number of parallel overlap points
 //  mEW->interiorPaddingCells( pc );
   int material=0, outside=0;
@@ -125,21 +125,22 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
   for( int g = 0 ; g < mEW->mNumberOfCartesianGrids; g++) // Cartesian grids
   {
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
-    double zsurf = 0.; // ?
+    float_sw4 zsurf = 0.; // ?
 
+#pragma omp parallel for reduction(+:material,outside)
     for( int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++ )
     {
       for( int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++ )
       {
 	for( int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g] ; i++ )
 	{
-	  double x = (i-1)*mEW->mGridSize[g]                ;
-	  double y = (j-1)*mEW->mGridSize[g]                ;
-	  double z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
+	  float_sw4 x = (i-1)*mEW->mGridSize[g]                ;
+	  float_sw4 y = (j-1)*mEW->mGridSize[g]                ;
+	  float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
                       
 	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
                       
-	  double depth;
+	  float_sw4 depth;
 	  if (m_absoluteDepth)
 	  {
 	    depth = z;
@@ -198,21 +199,22 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
     int g = mEW->mNumberOfGrids-1; 
 
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
-    double zsurf = 0.;
+    float_sw4 zsurf = 0.;
 
+#pragma omp parallel for reduction(+:material,outside)
     for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
     {
       for( int j = mEW->m_jStart[g] ; j <= mEW->m_jEnd[g]; j++ )
       {
 	for( int i = mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
 	{
-	  double x = mEW->mX(i,j,k);
-	  double y = mEW->mY(i,j,k);
-	  double z = mEW->mZ(i,j,k);
+	  float_sw4 x = mEW->mX(i,j,k);
+	  float_sw4 y = mEW->mY(i,j,k);
+	  float_sw4 z = mEW->mZ(i,j,k);
                       
 	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
                       
-	  double depth;
+	  float_sw4 depth;
 	  if (m_absoluteDepth)
 	  {
 	    depth = z;
