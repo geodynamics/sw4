@@ -1429,7 +1429,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 // get the interior contribution to the displacements on the interface for the corrector (depends on the corrector value of AlphaVEp)
 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1],
                                         a_AlphaVEp[g+1], a_AlphaVE[g+1], a_AlphaVEm[g+1],
-                                        Uf_tt, Unextf, g+1, kf, time, F[g], point_sources );
+                                        Uf_tt, Unextf, g+1, kf, time, F[g+1], point_sources );
          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g],
                                         a_AlphaVEp[g], a_AlphaVE[g], a_AlphaVEm[g],
                                         Uc_tt, Unextc, g, kc, time, F[g], point_sources );

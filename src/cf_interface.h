@@ -7,6 +7,30 @@
 extern "C" {
 #endif
 
+void update_unext( int ib, int ie, int jb, int je, int kb, int ke,
+		   float_sw4* __restrict__ a_unext, float_sw4* __restrict__ a_up,
+		   float_sw4* __restrict__ a_lutt, float_sw4* __restrict__ a_force,
+		   float_sw4* __restrict__ a_rho, float_sw4 cof, int kic );
+
+
+void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
+		  float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
+		  float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+		  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+		  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+		  float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu, int kfirstw,
+		  int klastw );
+
+#ifdef SW4_NOC
+}
+#endif
+
+void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u, int ke_u,
+		 float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
+		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_utt,
+		 float_sw4 dt2i );
+
 void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray &Uc, 
 			    Sarray &Morc, Sarray &Mlrc,
 			    Sarray &Morf, Sarray &Mlrf,
@@ -131,24 +155,6 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 		    float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
 		    float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
-void update_unext( int ib, int ie, int jb, int je, int kb, int ke,
-		   float_sw4* __restrict__ a_unext, float_sw4* __restrict__ a_up,
-		   float_sw4* __restrict__ a_lutt, float_sw4* __restrict__ a_force,
-		   float_sw4* __restrict__ a_rho, float_sw4 cof, int kic );
-
-void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u, int ke_u,
-		 float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
-		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_utt,
-		 float_sw4 dt2i );
-
-void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
-		  float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
-		  float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
-		  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
-		  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-		  float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu, int kfirstw,
-		  int klastw );
 
 void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
@@ -234,8 +240,5 @@ void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
                         int klast, float_sw4 *u, float_sw4 *mu, float_sw4 *la, float_sw4 *bforcerhs, 
 			float_sw4 *met, float_sw4 *sbop, int usesg, float_sw4 *sgstrx, float_sw4 *sgstry );
 
-#ifdef SW4_NOC
-}
-#endif
 
 #endif

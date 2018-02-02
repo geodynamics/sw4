@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Arguments:
-# -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir
+# -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
 import os, sys, argparse, subprocess
 
@@ -153,7 +153,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
 
 #------------------------------------------------
 def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
-    assert sys.version_info >= (3,2) # named tuples in Python version >=3.3
+    assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
     pytest_dir_list = pytest_dir.split(sep)
@@ -311,7 +311,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
     
 #------------------------------------------------
 if __name__ == "__main__":
-    assert sys.version_info >= (3,2) # named tuples in Python version >=3.3
+    assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     # default arguments
     testing_level=0
     verbose=False

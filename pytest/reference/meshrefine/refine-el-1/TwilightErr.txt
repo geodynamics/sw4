@@ -1,4 +1,4 @@
 Final time
 3.000000e-01
 Displacement variables (errInf, errL2, solInf)
-  8.7624726e-06   1.4157498e-06   9.9996915e-01
+  8.7588778e-06   1.4151556e-06   9.9996915e-01

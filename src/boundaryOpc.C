@@ -465,6 +465,7 @@ void EW::GetStencilCoefficients( float_sw4* _acof, float_sw4* _ghcof,
    _sbop[2] =  3.0/2;
    _sbop[3] = -1.0/2;
    _sbop[4] =  1.0/12;
+   _sbop[5] = 0;
 }
 
 //-----------------------------------------------------------------------

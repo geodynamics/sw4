@@ -557,25 +557,49 @@ size_t Sarray::count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst )
    cfirst = ifirst = jfirst = kfirst = 0;
    size_t retval = 0, ind=0;
    // Note: you're going to get various threads racing to set the "first" values. This won't work.
-#pragma omp parallel for reduction(+:retval)
-   for( int k=m_kb ; k<=m_ke ; k++ )
-      for( int j=m_jb ; j<=m_je ; j++ )
-	 for( int i=m_ib ; i <= m_ie ; i++ )
-	    for( int c=1 ; c <= m_nc ; c++ )
-	    {
-	       if( std::isnan(m_data[ind]) )
+   //#pragma omp parallel for reduction(+:retval)
+   if( m_corder )
+   {
+      for( int c=1 ; c <= m_nc ; c++ )
+	 for( int k=m_kb ; k<=m_ke ; k++ )
+	    for( int j=m_jb ; j<=m_je ; j++ )
+	       for( int i=m_ib ; i <= m_ie ; i++ )
 	       {
-		  if( retval == 0 )
+		  if( std::isnan(m_data[ind]) )
 		  {
-		     ifirst = i;
-		     jfirst = j;
-		     kfirst = k;
-		     cfirst = c;
+		     if( retval == 0 )
+		     {
+			ifirst = i;
+			jfirst = j;
+			kfirst = k;
+			cfirst = c;
+		     }
+		     retval++;
 		  }
-		  retval++;
+		  ind++;
 	       }
-	       ind++;
-	    }
+   }
+   else
+   {
+      for( int k=m_kb ; k<=m_ke ; k++ )
+	 for( int j=m_jb ; j<=m_je ; j++ )
+	    for( int i=m_ib ; i <= m_ie ; i++ )
+	       for( int c=1 ; c <= m_nc ; c++ )
+	       {
+		  if( std::isnan(m_data[ind]) )
+		  {
+		     if( retval == 0 )
+		     {
+			ifirst = i;
+			jfirst = j;
+			kfirst = k;
+			cfirst = c;
+		     }
+		     retval++;
+		  }
+		  ind++;
+	       }
+   }
    return retval;
 }
 
