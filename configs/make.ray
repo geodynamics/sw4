@@ -1,0 +1,4 @@
+FC = gfortran
+CXX = mpixlC
+EXTRA_CXX_FLAGS = -qsmp=omp -qmaxmem=-1
+EXTRA_LINK_FLAGS = -qsmp=omp -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda
