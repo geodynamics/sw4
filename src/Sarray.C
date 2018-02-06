@@ -35,7 +35,7 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include "Mspace.h"
 using namespace std;
 
 // Default value 
@@ -55,7 +55,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -77,7 +77,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -99,7 +99,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -121,7 +121,7 @@ Sarray::Sarray( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -152,7 +152,7 @@ Sarray::Sarray( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -176,7 +176,7 @@ Sarray::Sarray( Sarray& u, int nc )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -227,7 +227,7 @@ Sarray::Sarray( Sarray& u, int nc )
 void Sarray::define( int nc, int iend, int jend, int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+     ::operator delete[](m_data,Managed);
 
    m_nc = nc;
    m_ib = 1;
@@ -240,7 +240,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -252,7 +252,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
 void Sarray::define( int iend, int jend, int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      ::operator delete[](m_data,Managed);
 
    m_nc = 1;
    m_ib = 1;
@@ -265,7 +265,7 @@ void Sarray::define( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -278,7 +278,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 		     int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      ::operator delete[](m_data,Managed);
    m_nc = nc;
    m_ib = ibeg;
    m_ie = iend;
@@ -290,7 +290,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -302,7 +302,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 		     int kend )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      ::operator delete[](m_data,Managed);
    m_nc = 1;
    m_ib = ibeg;
    m_ie = iend;
@@ -314,7 +314,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -325,7 +325,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
 void Sarray::define( const Sarray& u ) 
 {
    if( m_data != NULL )
-      delete[] m_data;
+      ::operator delete[](m_data,Managed);
    m_nc = u.m_nc;
    m_ib = u.m_ib;
    m_ie = u.m_ie;
@@ -337,7 +337,7 @@ void Sarray::define( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    else
       m_data = NULL;
    dev_data = NULL;
@@ -607,7 +607,7 @@ size_t Sarray::count_nans( int& cfirst, int& ifirst, int& jfirst, int& kfirst )
 void Sarray::copy( const Sarray& u )
 {
    if( m_data != NULL )
-      delete[] m_data;
+      ::operator delete[](m_data,Managed);
 
    m_nc = u.m_nc;
    m_ib = u.m_ib;
@@ -621,7 +621,7 @@ void Sarray::copy( const Sarray& u )
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
    {
-      m_data = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
 #pragma omp parallel for 
       for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
 	 m_data[i] = u.m_data[i];
@@ -955,7 +955,7 @@ void Sarray::define_offsets()
 void Sarray::transposeik( )
 {
    // Transpose a_{i,j,k} := a_{k,j,i}
-   float_sw4* tmpar = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+  float_sw4* tmpar = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
    if( m_corder )
    {
       size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;

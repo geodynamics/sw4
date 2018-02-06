@@ -178,7 +178,7 @@ void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
    const float_sw4 ih3  = 1/(h*h*h);
 #pragma omp parallel
    for( int c=0 ; c < 5 ; c++ )
-#pragma omp for reduction(max:li[c]) reduction(+:l2[c])
+#pragma omp for reduction(max:li[:5]) reduction(+:l2[:5])
       for( size_t k=kmin; k <= kmax ; k++ )
 	 for( size_t j=jmin; j <= jmax ; j++ )
 	    for( size_t i=imin; i <= imax ; i++ )

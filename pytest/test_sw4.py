@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/collab/usr/gapps/python/build/spack-coralea.2/opt/spack/linux-rhel7-ppc64le/gcc-4.9.3/python-3.6.4-wzsyxykktcm7ec6ukj6kg46jglyqyyln/bin/python3
 
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
@@ -140,6 +140,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     elif 'fourier' in node_name:
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
+    elif 'ray' in node_name:
+        if mpi_tasks<=0: mpi_tasks = 16
+        mpirun_cmd="mpirun -np " + str(mpi_tasks)+" mpibind"
     # add more machine names here
     elif 'Linux' in sys_name:
         if mpi_tasks<=0: mpi_tasks = 1

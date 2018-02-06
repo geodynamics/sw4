@@ -33,13 +33,13 @@ else
 endif
 
 ifeq ($(optlevel),DEBUG)
-   FFLAGS    = -g
+   FFLAGS    = -g -O2
    CXXFLAGS  = -g -I../src -DBZ_DEBUG
    CFLAGS    = -g
 else
    FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
-   CXXFLAGS = -O2 -I../src
+   CXXFLAGS =  -I../src
    CFLAGS   = -O3 
 endif
 
@@ -196,7 +196,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
        updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o oddIoddJinterp.o evenIoddJinterp.o \
-       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o
+       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o Mspace.o
 
 
 # new C-routines converted from fortran
@@ -228,7 +228,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+	cd $(builddir); $(LINKER) $(LINKLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt

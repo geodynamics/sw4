@@ -64,7 +64,6 @@
       real*8 a, b, epsabs, epsrel, result
       real*8 abserr, exact, alfa, beta
       real*8, allocatable, dimension(:) :: work
-
       common /funpars/ tim, rocs
       save /funpars/
 
@@ -79,6 +78,7 @@
       epsabs = 1d-12
       epsrel = 1d-12
       allocate( iwork(limit+10), work(lenw+10))      
+      !write(*,*)"ALLOCATE STATUS = ",alloc_status
       k = 1
 
       do j=jfirst,jlast
@@ -181,7 +181,7 @@ c            write(*,*) 'Doing 3'
             endif
          enddo
       enddo
-
+      deallocate(iwork,work)
       return
       end
 

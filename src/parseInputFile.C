@@ -2528,8 +2528,8 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
 	 fail = 6;
       if( fsec < 0 )
 	 fail = 8;
-      second = static_cast<int>(trunc(fsec));
-      msecond = static_cast<int>( round((fsec-second)*1000));
+      second = static_cast<int>(std::trunc(fsec));
+      msecond = static_cast<int>( std::round((fsec-second)*1000));
       if( second < 0 || second > 60 )
 	 fail = 7;
       //      cout << " second = " << second << " msecond = " << msecond <<endl;

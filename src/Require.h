@@ -71,7 +71,7 @@
 if (!(x)) { \
   int myRank; \
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank); \
-  std::cout << "Fatal input error: " << msg << std::endl;	\
+  std::cout << "Fatal input error: " << msg << __LINE__<<" "<<__FILE__<<std::endl;	\
   MPI_Abort( MPI_COMM_WORLD, 1 );\
 }
 

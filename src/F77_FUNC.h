@@ -54,6 +54,10 @@
 #  define F77_FUNC(x, X)  X
 # endif /* ANSI_F77 */
 
+#ifdef __ibmxl__
+#define F77_FUNC(x, X)  x
+#endif /* IBM XL compiler */
+
 # ifndef __GNUC__
 
 #  ifdef __xlC__
