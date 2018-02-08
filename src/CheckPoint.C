@@ -285,7 +285,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -303,7 +303,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    if( iwrite && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
-      CHECK_INPUT(fid != -1, "CheckPoint::write_checkpoint:: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::write_checkpoint:: Error opening: " << s.str() );
    }
 
    // Write data blocks
@@ -390,7 +390,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -410,7 +410,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    if( iread && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY );
-      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint:: Error opening file: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint:: Error opening file: " << s.str() );
    }
 
    // Read data blocks.
@@ -481,7 +481,7 @@ float_sw4 CheckPoint::getDt()
 	 s << mEW->getPath();
       s << mRestartFile; // string 's' is the file name including path
       int fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s.str() );
       lseek(fid,3*sizeof(int)+sizeof(float_sw4),SEEK_SET);
       size_t nr=read(fid,&dt,sizeof(float_sw4));
       CHECK_INPUT( nr == sizeof(float_sw4) ,
