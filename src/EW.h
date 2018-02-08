@@ -1523,8 +1523,11 @@ int m_ghost_points;
 int m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
-
+#if defined(ENABLE_CUDA)
+  float_sw4 *m_sbop, *m_acof, *m_bop,*m_bope, *m_ghcof;
+#else
 float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
+#endif
 //float_sw4 m_iop[5], m_iop2[5], m_bop2[24], m_sbop[6], m_acof[384], m_bop[24];
 //float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
 float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[6];

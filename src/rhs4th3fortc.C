@@ -1,7 +1,8 @@
 #include "sw4.h"
 #include <cstdlib>
 #include <cmath>
-
+#include "Mspace.h"
+#include "policies.h"
 //extern "C" {
 
 void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -41,7 +42,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    const int kfirst0 = kfirst;
 
    int k1, k2, kb;
-   int i, j, k, q, m, qb, mb, a1;
+   int i, j, k, m, qb, mb, a1;
    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
    float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;
    float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
@@ -66,21 +67,23 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    k2 = klast-2;
    if( onesided[5] == 1 )
       k2 = nk-6;
-   
-#pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
-              r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,u3zip2,u3zip1,\
-              u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy,\
-              mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,\
-	      u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb,muz1,muz2,muz3,muz4)
-   {
-#pragma omp for
-   for( k= k1; k <= k2 ; k++ )
-      for( j=jfirst+2; j <= jlast-2 ; j++ )
-//#pragma simd deprecated
-#pragma ivdep
-	 for( i=ifirst+2; i <= ilast-2 ; i++ )
-	 {
 
+   ASSERT_MANAGED(a_mu);
+   ASSERT_MANAGED(a_lambda);
+   ASSERT_MANAGED(a_u);
+   ASSERT_MANAGED(a_lu);
+   ASSERT_MANAGED(a_acof);
+   ASSERT_MANAGED(a_bope);
+   ASSERT_MANAGED(a_ghcof);
+   {
+   RAJA::RangeSegment k_range(k1,k2+1);
+   RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+   RAJA::nested::forall(RHS4_EXEC_POL{},
+			RAJA::make_tuple(k_range, j_range,i_range),
+			[=]RAJA_DEVICE (int k,int j,int i) {
+			  float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			  float_sw4 r1, r2, r3;
 /* from inner_loop_4a, 28x3 = 84 ops */
             mux1 = mu(i-1,j,k)*strx(i-1)-
 	       tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -307,17 +310,17 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	    lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
 	    lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	 }
+			}); // End of Raja loop 1
       if( onesided[4]==1 )
       {
-#pragma omp for
-	 for( k=1 ; k<= 6 ; k++ )
-/* the centered stencil can be used in the x- and y-directions */
-	    for( j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
-#pragma ivdep
-	       for( i=ifirst+2; i<=ilast-2; i++ )
-	       {
+	RAJA::RangeSegment k_range(1,6+1);
+	RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+	RAJA::nested::forall(RHS4_EXEC_POL{},
+			     RAJA::make_tuple(k_range, j_range,i_range),
+			     [=]RAJA_DEVICE (int k,int j,int i) {
+			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			       float_sw4 r1, r2, r3, mu1zz, mu2zz, mu3zz,lap2mu,mucof;
 /* from inner_loop_4a */
 		  mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -362,7 +365,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		  mu1zz = 0;
 		  mu2zz = 0;
 		  mu3zz = 0;
-		  for( q=1; q <= 8; q ++ )
+		  for( int q=1; q <= 8; q ++ )
 		  {
 		     //		     lap2mu= 0;
 		     //		     mucof = 0;
@@ -439,23 +442,23 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
                         mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
 				     8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) )) );
 /*   (la*w_z)_x: NOT CENTERED */
-            u3zip2=0;
-            u3zip1=0;
-            u3zim1=0;
-            u3zim2=0;
-	    for( q=1 ; q <=8 ; q++ )
+            float_sw4  u3zip2=0;
+            float_sw4  u3zip1=0;
+            float_sw4  u3zim1=0;
+            float_sw4  u3zim2=0;
+	    for( int q=1 ; q <=8 ; q++ )
 	    {
 	       u3zip2 += bope(k,q)*u(3,i+2,j,q);
 	       u3zip1 += bope(k,q)*u(3,i+1,j,q);
 	       u3zim1 += bope(k,q)*u(3,i-1,j,q);
 	       u3zim2 += bope(k,q)*u(3,i-2,j,q);
 	    }
-            lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
+            float_sw4 lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
 	               -8*la(i-1,j,k)*u3zim1 +   la(i-2,j,k)*u3zim2);
             r1 = r1 + strx(i)*lau3zx;
 	    /*   (mu*w_x)_z: NOT CENTERED */
-            mu3xz=0;
-            for( q=1 ; q<=8 ; q++ )
+            float_sw4 mu3xz=0;
+            for( int q=1 ; q<=8 ; q++ )
               mu3xz += bope(k,q)*( mu(i,j,q)*i12*
                   (-u(3,i+2,j,q) + 8*u(3,i+1,j,q)
                    -8*u(3,i-1,j,q) + u(3,i-2,j,q)) );
@@ -482,25 +485,25 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
                         la(i,j+2,k)*(u(1,i-2,j+2,k)-u(1,i+2,j+2,k)+
 				     8*(-u(1,i-1,j+2,k)+u(1,i+1,j+2,k))) )) );
 /* (la*w_z)_y : NOT CENTERED */
-            u3zjp2=0;
-            u3zjp1=0;
-            u3zjm1=0;
-            u3zjm2=0;
-	    for( q=1 ; q <=8 ; q++ )
+            float_sw4 u3zjp2=0;
+            float_sw4 u3zjp1=0;
+            float_sw4 u3zjm1=0;
+            float_sw4 u3zjm2=0;
+	    for( int q=1 ; q <=8 ; q++ )
 	    {
 	       u3zjp2 += bope(k,q)*u(3,i,j+2,q);
 	       u3zjp1 += bope(k,q)*u(3,i,j+1,q);
 	       u3zjm1 += bope(k,q)*u(3,i,j-1,q);
 	       u3zjm2 += bope(k,q)*u(3,i,j-2,q);
 	    }
-            lau3zy= i12*(-la(i,j+2,k)*u3zjp2 + 8*la(i,j+1,k)*u3zjp1
+            float_sw4 lau3zy= i12*(-la(i,j+2,k)*u3zjp2 + 8*la(i,j+1,k)*u3zjp1
 			 -8*la(i,j-1,k)*u3zjm1 + la(i,j-2,k)*u3zjm2);
 
             r2 = r2 + stry(j)*lau3zy;
 
 /* (mu*w_y)_z: NOT CENTERED */
-            mu3yz=0;
-	    for(  q=1 ; q <=8 ; q++ )
+            float_sw4 mu3yz=0;
+	    for(  int q=1 ; q <=8 ; q++ )
 	       mu3yz += bope(k,q)*( mu(i,j,q)*i12*
                   (-u(3,i,j+2,q) + 8*u(3,i,j+1,q)
                    -8*u(3,i,j-1,q) + u(3,i,j-2,q)) );
@@ -509,48 +512,48 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 
 	    /* No centered cross terms in r3 */
 	    /*  (mu*u_z)_x: NOT CENTERED */
-            u1zip2=0;
-            u1zip1=0;
-            u1zim1=0;
-            u1zim2=0;
-	    for(  q=1 ; q <=8 ; q++ )
+            float_sw4 u1zip2=0;
+            float_sw4 u1zip1=0;
+            float_sw4 u1zim1=0;
+            float_sw4 u1zim2=0;
+	    for(  int q=1 ; q <=8 ; q++ )
 	    {
 	       u1zip2 += bope(k,q)*u(1,i+2,j,q);
 	       u1zip1 += bope(k,q)*u(1,i+1,j,q);
 	       u1zim1 += bope(k,q)*u(1,i-1,j,q);
 	       u1zim2 += bope(k,q)*u(1,i-2,j,q);
 	    }
-            mu1zx= i12*(-mu(i+2,j,k)*u1zip2 + 8*mu(i+1,j,k)*u1zip1
+            float_sw4  mu1zx= i12*(-mu(i+2,j,k)*u1zip2 + 8*mu(i+1,j,k)*u1zip1
                    -8*mu(i-1,j,k)*u1zim1 + mu(i-2,j,k)*u1zim2);
             r3 = r3 + strx(i)*mu1zx;
 
 	    /* (mu*v_z)_y: NOT CENTERED */
-            u2zjp2=0;
-            u2zjp1=0;
-            u2zjm1=0;
-            u2zjm2=0;
-	    for(  q=1 ; q <=8 ; q++ )
+            float_sw4 u2zjp2=0;
+            float_sw4 u2zjp1=0;
+            float_sw4 u2zjm1=0;
+            float_sw4 u2zjm2=0;
+	    for(  int q=1 ; q <=8 ; q++ )
 	    {
 	       u2zjp2 += bope(k,q)*u(2,i,j+2,q);
 	       u2zjp1 += bope(k,q)*u(2,i,j+1,q);
 	       u2zjm1 += bope(k,q)*u(2,i,j-1,q);
 	       u2zjm2 += bope(k,q)*u(2,i,j-2,q);
 	    }
-            mu2zy= i12*(-mu(i,j+2,k)*u2zjp2 + 8*mu(i,j+1,k)*u2zjp1
+            float_sw4 mu2zy= i12*(-mu(i,j+2,k)*u2zjp2 + 8*mu(i,j+1,k)*u2zjp1
                         -8*mu(i,j-1,k)*u2zjm1 + mu(i,j-2,k)*u2zjm2);
             r3 = r3 + stry(j)*mu2zy;
 
 /*   (la*u_x)_z: NOT CENTERED */
-            lau1xz=0;
-	    for(  q=1 ; q <=8 ; q++ )
+            float_sw4 lau1xz=0;
+	    for(  int q=1 ; q <=8 ; q++ )
 	       lau1xz += bope(k,q)*( la(i,j,q)*i12*
                   (-u(1,i+2,j,q) + 8*u(1,i+1,j,q)
 		   -8*u(1,i-1,j,q) + u(1,i-2,j,q)) );
             r3 = r3 + strx(i)*lau1xz;
 
 /* (la*v_y)_z: NOT CENTERED */
-            lau2yz=0;
-	    for(  q=1 ; q <=8 ; q++ )
+            float_sw4 lau2yz=0;
+	    for(  int q=1 ; q <=8 ; q++ )
               lau2yz += bope(k,q)*( la(i,j,q)*i12*
                   (-u(2,i,j+2,q) + 8*u(2,i,j+1,q)
                    -8*u(2,i,j-1,q) + u(2,i,j-2,q)) );
@@ -559,7 +562,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
             lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	       }
+			     }); // END OF RAJA LOOP # 2
       }
       if( onesided[5] == 1 )
       {

@@ -48,6 +48,7 @@
 #include "cf_interface.h"
 
 #include "F77_FUNC.h"
+#include "Mspace.h"
 
 extern "C" {
    void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4* fo,
@@ -559,12 +560,24 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    // char fname[100];
    // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
    // msgStream.open(fname);
+
+#if defined(ENABLE_CUDA)
+   float_sw4* tmpa=SW4_NEW(Managed,float_sw4[6+384+24+48+6]);
+   m_sbop = tmpa; PTR_PUSH(Managed,m_sbop);
+   m_acof = m_sbop+6; PTR_PUSH(Managed,m_acof);
+   m_bop = m_acof+384; PTR_PUSH(Managed,m_bop);
+   m_bope = m_bop+24; PTR_PUSH(Managed,m_bope);
+   m_ghcof = m_bope+48; PTR_PUSH(Managed,m_ghcof);
+#endif
 }
 
 // Destructor
 EW::
 ~EW()
 {
+#if defined(ENABLE_CUDA)
+  ::operator delete[](m_sbop,Managed);
+#endif
 //  msgStream.close();
 }
 

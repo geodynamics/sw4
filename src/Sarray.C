@@ -55,7 +55,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -77,7 +77,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed, float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -99,7 +99,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -121,7 +121,7 @@ Sarray::Sarray( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -152,7 +152,7 @@ Sarray::Sarray( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -176,7 +176,7 @@ Sarray::Sarray( Sarray& u, int nc )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -240,7 +240,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -265,7 +265,7 @@ void Sarray::define( int iend, int jend, int kend )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
 //   m_mpi_datatype_initialized = false;
@@ -290,7 +290,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -314,7 +314,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -337,7 +337,7 @@ void Sarray::define( const Sarray& u )
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -621,7 +621,7 @@ void Sarray::copy( const Sarray& u )
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
    {
-     m_data = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
 #pragma omp parallel for 
       for( int i=0 ; i < m_nc*m_ni*m_nj*m_nk ; i++ )
 	 m_data[i] = u.m_data[i];
@@ -796,7 +796,7 @@ void Sarray::save_to_disk( const char* fname )
    size_t npts = m_nc*( (size_t)m_ni)*m_nj*( (size_t)m_nk);
    if( m_corder )
    {
-      float_sw4* ar = new float_sw4[npts];
+     float_sw4* ar = SW4_NEW(Host,float_sw4[npts]);
       for( int k = 0 ; k < m_nk ; k++ )
 	 for( int j = 0 ; j < m_nj ; j++ )
 	    for( int i = 0 ; i < m_ni ; i++ )
@@ -955,7 +955,7 @@ void Sarray::define_offsets()
 void Sarray::transposeik( )
 {
    // Transpose a_{i,j,k} := a_{k,j,i}
-  float_sw4* tmpar = new(Managed) float_sw4[m_nc*m_ni*m_nj*m_nk];
+  float_sw4* tmpar = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    if( m_corder )
    {
       size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;

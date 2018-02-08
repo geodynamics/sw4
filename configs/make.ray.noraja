@@ -1,0 +1,6 @@
+FC = xlf
+CXX = mpixlC
+RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_ray053
+EXTRA_FORT_FLAGS = 
+EXTRA_CXX_FLAGS = -qmaxmem=-1 -I $(CUDA_HOME)/include -DENABLE_CUDA -I 
+EXTRA_LINK_FLAGS = -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -lmass
