@@ -990,3 +990,13 @@ void Sarray::transposeik( )
 }
 
    
+void Sarray::prefetch(int device){
+#if defined(ENABLE_CUDA)
+  // Add error checking here PBUGS //
+  cudaMemPrefetchAsync(m_data,
+		       m_nc*m_ni*m_nj*m_nk*sizeof(float_sw4),
+		       device,
+		       0);
+  
+#endif
+}

@@ -4233,6 +4233,11 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
     u_ptr   = a_U[g].c_ptr();
     mu_ptr  = a_Mu[g].c_ptr();
     la_ptr  = a_Lambda[g].c_ptr();
+
+    a_Uacc[g].prefetch();
+    a_U[g].prefetch();
+    a_Mu[g].prefetch();
+    a_Lambda[g].prefetch();
     //    rho_ptr = mRho[g].c_ptr();
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
