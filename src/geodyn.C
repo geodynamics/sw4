@@ -56,6 +56,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 			  double dt, int nsteps, int faces )
 {
    m_do_geodynbc     = true;
+   m_geodyn_past_end = false;
    m_geodyn_filename = file;
    m_geodyn_ni = m_geodyn_nj = nx;
    m_geodyn_nk = nz;
@@ -213,9 +214,9 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 
 //-----------------------------------------------------------------------
 void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
-				  double t )
+				double t )
 {
-   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
+   //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
    int i0, i1, j0, j1, k0, k1;
 
    // Zero out values inside the cube. Use -100000 for debug.
@@ -236,7 +237,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  	  u[g](c,i,j,k) = 0;
 	       }
    }
-   if( n1 > m_geodyn_maxsteps-1 )
+   if( m_geodyn_past_end )
+   //   if( n1 > m_geodyn_maxsteps-1 )
    {
       // Past geodyn end time, switch off geodyn boundary, impose zero values.
       // A volume reset is necessary in the debug -100000 case above.
@@ -261,28 +263,29 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
    }
    else
    {
-      // Find the right time step 
-      if( m_geodyn_step+1 == n1 )
-      {
-	 // Advance one step
-         copy_geodyn_timelevel( m_geodyn_data1, m_geodyn_data2 );
-         get_geodyn_timelevel( m_geodyn_data2 );
-      }
-      else if( m_geodyn_step+1 < n1 )
-      {
-	 // Advance many steps
-         if( m_geodyn_iwillread )
-	 {
-	    char buf[256];
-	    for( int i=0 ; i < m_geodyn_blocksize*(n1-m_geodyn_step-2) ; i++ )
-	       m_geodynfile.getline(buf,256);
-	 }
-         get_geodyn_timelevel( m_geodyn_data1 );
-         get_geodyn_timelevel( m_geodyn_data2 );
-      }
-      m_geodyn_step = n1;
+      // // Find the right time step 
+      // if( m_geodyn_step+1 == n1 )
+      // {
+      // 	 // Advance one step
+      //    copy_geodyn_timelevel( m_geodyn_data1, m_geodyn_data2 );
+      //    get_geodyn_timelevel( m_geodyn_data2 );
+      // }
+      // else if( m_geodyn_step+1 < n1 )
+      // {
+      // 	 // Advance many steps
+      //    if( m_geodyn_iwillread )
+      // 	 {
+      // 	    char buf[256];
+      // 	    for( int i=0 ; i < m_geodyn_blocksize*(n1-m_geodyn_step-2) ; i++ )
+      // 	       m_geodynfile.getline(buf,256);
+      // 	 }
+      //    get_geodyn_timelevel( m_geodyn_data1 );
+      //    get_geodyn_timelevel( m_geodyn_data2 );
+      // }
+      // m_geodyn_step = n1;
 
-      double twgh = ((n1+1)*m_geodyn_dt-t)/m_geodyn_dt;
+      //      double twgh = ((n1+1)*m_geodyn_dt-t)/m_geodyn_dt;
+      double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
 
       for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
       {
@@ -577,6 +580,48 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
    }
 }
 
+
+//-----------------------------------------------------------------------
+void EW::advance_geodyn_time( float_sw4 t )
+{
+// Before calling this routine geodyn_step should be such that
+// geodyn_data1 contains data at time step geodyn_step, and 
+// geodyn_data2 contains data at time step geodyn_step+1.
+//
+// This routine advances geodyn_step such that  
+//     geodyn_step*geodyn_dt <= t < (geodyn_step+1)*geodyn_dt
+// and updates geodyn data such that geodyn_data1 and geodyn_data2 are 
+// as described above. It is assumed that t >= geodyn_step*geodyn_dt,
+// if t < geodyn_step*geodyn_dt, this routine does not do anything.
+//     
+   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
+   if( n1 > m_geodyn_maxsteps-2 )
+      m_geodyn_past_end = true;
+   else
+   {
+      // Find the right time step 
+      if( m_geodyn_step+1 == n1 )
+      {
+	 // Advance one step
+         copy_geodyn_timelevel( m_geodyn_data1, m_geodyn_data2 );
+         get_geodyn_timelevel( m_geodyn_data2 );
+      }
+      else if( m_geodyn_step+1 < n1 )
+      {
+	 // Advance many steps
+         if( m_geodyn_iwillread )
+	 {
+	    char buf[256];
+	    for( int i=0 ; i < m_geodyn_blocksize*(n1-m_geodyn_step-2) ; i++ )
+	       m_geodynfile.getline(buf,256);
+	 }
+         get_geodyn_timelevel( m_geodyn_data1 );
+         get_geodyn_timelevel( m_geodyn_data2 );
+      }
+      m_geodyn_step = n1;
+   }
+}
+
 //-----------------------------------------------------------------------
 void EW::get_geodyn_timelevel( vector<Sarray>& geodyndata )
 {
@@ -640,17 +685,16 @@ void EW::copy_geodyn_timelevel( vector<Sarray>& geodyndata1, vector<Sarray>& geo
 }
 
 //-----------------------------------------------------------------------
-void EW::geodyn_second_ghost_point( vector<Sarray>& geodyndata1, vector<Sarray>& geodyndata2,
-				    vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
 				    vector<Sarray>& forcing, double t, vector<Sarray>& U,
 				    vector<Sarray>& Um, int crf )
 {
-   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
-   m_geodyn_step = n1;
-
-   double twgh = ((n1+1)*m_geodyn_dt-t)/m_geodyn_dt;
-   double d2i=1/(mDt*mDt);
-
+   //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
+   //   m_geodyn_step = n1;
+   if( m_do_geodynbc )
+   {
+      double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
+      double d2i=1/(mDt*mDt);
       for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
       {
          int i0 = m_geodyn_dims[g][0];
@@ -667,6 +711,14 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& geodyndata1, vector<Sarray>&
 	 high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
 	 bool surface_correction = k0 <= 1 && m_geodyn_faces == 5 && g == mNumberOfGrids-1;
 
+	 // TO DO, need to fix the predictor ghost point, as it is now it is not done right
+	 //  Need also to change the time iteration loop so that second order in time
+	 //  works correctly with the geodyn cube.
+	 //	 Sarray* uarg;
+	 //	 if( crf==0 )
+	 //	 {
+	 //	    uarg.copy(Um[g]);
+	 //	 }
 	 Sarray Lu0(3,i0,i0,j0,j1,k0,k1);
          if( low_interior )
 	    evalLu_Dim( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
@@ -740,6 +792,9 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& geodyndata1, vector<Sarray>&
 		  -Lu0(2,i0,j,k)-forcing[g](2,i0,j,k);
 		  res3 = crf*rho[g](i0,j,k)*(bnd0[2]-2*U[g](3,i0,j,k)+Um[g](3,i0,j,k))*d2i
 		  -Lu0(3,i0,j,k)-forcing[g](3,i0,j,k);
+		  //		  cout << " geocube (j,k)=" << j << " " << k << " " << Lu0(1,i0,j,k) << " " <<
+		  //		     forcing[g](1,i0,j,k) << endl;
+
 		  U[g](1,i0+1,j,k) = U[g](1,i0+1,j,k) + h2*res1/(mu[g](i0+1,j,k)+mu[g](i0,j,k)+
 								 0.5*(lambda[g](i0+1,j,k)+lambda[g](i0,j,k)));
 		  U[g](2,i0+1,j,k) = U[g](2,i0+1,j,k) + 2*h2*res2/(mu[g](i0+1,j,k)+mu[g](i0,j,k));
@@ -943,6 +998,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& geodyndata1, vector<Sarray>&
 	       }
 	    }
       }
+   }
 }
    
 				     
@@ -951,6 +1007,27 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 		 double* a_u, double* a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
+   // Suggested change: Input Sarray& a_lu instead and define
+   //   const long int lb= a_lu.m_base;
+   //   const size_t loi=a_lu.m_offi;
+   //   const size_t loj=a_lu.m_offj;
+   //   const size_t lok=a_lu.m_offk;
+   //   const size_t loc=a_lu.m_offc;
+   ////   float_sw4* a_lupt = a_lu.c_ptr();
+   ////#define lu(c,i,j,k) a_lupt[lb+loc*(c)+loi*(i)+loj*(j)+lok*(k)]
+   //   float_sw4* a_lupt = &(a_lu.m_data[lb]);
+   //#define lu(c,i,j,k) a_lupt[loc*(c)+loi*(i)+loj*(j)+lok*(k)]
+   //   const long int b=a_u.m_base;
+   //   const size_t oi=a_u.m_offi;
+   //   const size_t oj=a_u.m_offj;
+   //   const size_t ok=a_u.m_offk;
+   //   const size_t oc=a_u.m_offc;
+   //   float_sw4* a_upt=a_u.c_ptr();
+   //   float_sw4* a_mupt=a_mu.c_ptr();
+   //   float_sw4* a_lapt=a_la.c_ptr();
+   //#define u(c,i,j,k) a_upt[b+oc*(c)+oi*(i)+oj*(j)+ok*(k)]
+   //#define mu(i,j,k) a_mupt[b+oi*(i)+oj*(j)+ok*(k)]
+   //#define la(i,j,k) a_lapt[b+oi*(i)+oj*(j)+ok*(k)]
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]

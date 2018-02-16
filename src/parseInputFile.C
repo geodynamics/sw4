@@ -112,6 +112,19 @@ int computeEndGridPoint( float_sw4 maxval, float_sw4 dh )
 }
 
 //-----------------------------------------------------------------------
+int gcd( int a, int b )
+{
+   // Euclidean algorithm
+   while( b != 0 )
+   {
+      int t = b;
+      b = a % b;
+      a = t;
+   }
+   return a;
+}
+
+//-----------------------------------------------------------------------
 //bool endswith(string end, string& mystr)
 //{
 //   int lenEnd = end.length();
@@ -194,14 +207,14 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 //  cout << "********Reading the input file, proc=" << m_myRank << endl;
 
 // First process Geodyn input for restrictions of allowable grid sizes.
-  // while (!inputFile.eof())
-  // {
-  //    inputFile.getline(buffer, 256);
-  //    if( startswith("geodynbc",buffer ) )
-  // 	geodynFindFile(buffer);
-  // }
-  // inputFile.clear();
-  // inputFile.seekg(0, ios::beg);
+ while (!inputFile.eof())
+ {
+    inputFile.getline(buffer, 256);
+    if( startswith("geodynbc",buffer ) )
+       geodynFindFile(buffer);
+ }
+ inputFile.clear();
+ inputFile.seekg(0, ios::beg);
   
 // process the testrayleigh command to enable a periodic domain in the (x,y)-directions
 // these commands can enter data directly the object (this->)
@@ -513,8 +526,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        // 	 processPrefilter(buffer);
        else if( startswith("developer", buffer ) )
           processDeveloper(buffer);
-       // else if( startswith("geodynbc", buffer ) )
-       //   processGeodynbc(buffer);
+       else if( startswith("geodynbc", buffer ) )
+          processGeodynbc(buffer);
        else if( startswith("randomize", buffer ) )
           processRandomize(buffer);
        else if (!inputFile.eof() && m_myRank == 0)
@@ -560,6 +573,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 }
 
 
+//-----------------------------------------------------------------------
 void EW::processGrid(char* buffer)
 {
   float_sw4 x = 0.0;
@@ -837,6 +851,7 @@ void EW::processGrid(char* buffer)
   }
   
   int nxprime, nyprime, nzprime;
+  float_sw4 xprime, yprime, zprime;
   // -------------------------------------------------------------
   // Make sure all the bounds are consistent.
   //
@@ -909,199 +924,198 @@ void EW::processGrid(char* buffer)
         proj0 << " +lat_0=" << mLatOrigin;
      }
   }
-  
-  
 
   float_sw4 cubelen, zcubelen;
-//   if( m_geodynbc_found )  {
-// // Set WPP grid spacing based on Geodyn cube data
-
-//      double origin[3]={0,0,0}, ibclat, ibclon, ibcaz;
-
-//      bool found_latlon;
-//      int adjust;
-//      geodynbcGetSizes( m_geodynbc_filename, origin, cubelen, zcubelen, found_latlon, ibclat,
-// 		       ibclon, ibcaz, adjust );
-//      // Use approximate h
-//      if( h == 0.0 )
-//      {
-// 	if( nx > 0 )
-// 	   h = x/(nx-1);
-// 	else if( nz > 0 )
-// 	   h = z/(nz-1);
-// 	else
-// 	   h = y/(ny-1);
-//      }
-
-//      // rounding of cube position to two decimals (prec=100), three (prec=1000) etc..
-//      double prec = 100;
-
-//      if( found_latlon )
-//      {
-//         CHECK_INPUT( fabs(ibcaz - mGeoAz) < 1e-5, "Error: Az in Geodyn file, "
-// 		 << ibcaz << " is different from Az in WPP, " << mGeoAz );
-	   
-// 	// lat-lon corner of cube given
-// 	if( adjust == 1 || origin[2] == 0 )
-// 	{
-// 	   // h based on cube length only, adjust z-position of cube
-// 	   int nc = static_cast<int>(round(cubelen)/h);
-// 	   h = cubelen/nc;
-// 	   origin[2] -= h*( origin[2]/h-round(origin[2]/h) );
-// 	}
-//         else
-// 	{
-// 	   // h based on cube length and z-position of cube
-//            int a = static_cast<int>(round(origin[2]*prec));
-// 	   int b = static_cast<int>(round((origin[2]+zcubelen)*prec));
-// 	   // 
-//            int d  = gcd(a,b);
-// 	   int n1 = a/d;
-// 	   int k  = static_cast<int>(round(origin[2]/(n1*h)));
-//            h = origin[2]/(k*n1);
-// 	}
-// 	// Geographic origin adjustment:
-//         double gridLat = mLatOrigin;
-// 	   double gridLon = mLonOrigin;
-//         double metersPerDegree = mMetersPerDegree;
-//         double deg2rad = M_PI/180;
-//         double phi = mGeoAz*deg2rad;
-// 	double x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
-// 	double y = metersPerDegree*(-sin(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*cos(phi));
-//         x -= h*(x/h-round(x/h));
-//         y -= h*(y/h-round(y/h));
-//         gridLat = ibclat - (x*cos(phi) - y*sin(phi))/metersPerDegree;
-// 	gridLon = ibclon - (x*sin(phi) + y*cos(phi))/(metersPerDegree*cos(ibclat*deg2rad));
-     // mLatOrigin = gridLat;
-     // mLonOrigin = gridLon;
-//         origin[0] = x;
-// 	origin[1] = y;
-//      }     
-//      else
-//      {
-// 	// lat-lon corner of cube not given, interpret origin realtive (0,0,0)
-//         if( m_geodynbc_center )
-// 	{
-// 	   // Center cube in the middle of the domain (in x,y), discarding input origin.
-// 	   double xlen = x;
-// 	   double ylen = y;
-// 	   if( xlen == 0 )
-// 	      xlen = h*(nx-1);
-// 	   if( ylen == 0 )
-// 	      ylen = h*(ny-1);
-// 	   origin[0] = 0.5*(xlen-cubelen);
-// 	   origin[1] = 0.5*(ylen-cubelen);
-// 	}
-// 	if( adjust == 1 )
-// 	{
-// 	   // h based on cube length only, adjust cube position
-// 	   int nc = static_cast<int>(round(cubelen/h));
-// 	   h = cubelen/nc;
-// 	   origin[0] -= h*( origin[0]/h-round(origin[0]/h) );
-// 	   origin[1] -= h*( origin[1]/h-round(origin[1]/h) );
-// 	   origin[2] -= h*( origin[2]/h-round(origin[2]/h) );
-// 	}
-// 	else
-// 	{
-// 	   // h based on cube length and cube position, might be very restrictive
-// 	   CHECK_INPUT( false, "Error: cube position without lat/long position must be adjustable");
-// 	}
-//      }
-     
-     
-//      if (nx == 0 && x != 0.0)
-// 	nxprime = computeEndGridPoint(x, h);
-//      else if (nx != 0)
-// 	nxprime = nx;
-//      else
-// 	CHECK_INPUT(0, gridSetupErr);
-
-//      if (nz == 0 && z != 0.0)
-// 	nzprime = computeEndGridPoint(z, h);
-//      else if (nz != 0)
-// 	nzprime = nz;
-//      else
-// 	CHECK_INPUT(0, gridSetupErr);
-
-//      if (ny == 0 && y != 0.0)
-// 	nyprime = computeEndGridPoint(y, h);
-//      else if (ny != 0)
-// 	nyprime = ny;
-//      else
-// 	CHECK_INPUT(0, gridSetupErr);
-//      m_ibc_origin[0] = origin[0];
-//      m_ibc_origin[1] = origin[1];
-//      m_ibc_origin[2] = origin[2];
-//      //     cout << "Cube origin " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
-//      //     cout << "Cube length " << cubelen << endl;
-//      //     cout << "nx,ny,nz " << nxprime << " " << nyprime << " " << nzprime << endl;     
-//   } // end if m_geodynbc_found
-//   else
-
-  float_sw4 xprime, yprime, zprime;
-  
-  if (!m_doubly_periodic)
+  if( m_geodynbc_found )
   {
-     if (nx > 0 && h == 0.0)
+// Set SW4 grid spacing based on Geodyn cube data
+
+      double origin[3]={0,0,0}, ibclat, ibclon, ibcaz;
+
+      bool found_latlon;
+      int adjust;
+      geodynbcGetSizes( m_geodynbc_filename, origin, cubelen, zcubelen, found_latlon, ibclat,
+ 		       ibclon, ibcaz, adjust );
+// Use approximate h
+      if( h == 0.0 )
+      {
+ 	if( nx > 0 )
+ 	   h = x/(nx-1);
+ 	else if( nz > 0 )
+ 	   h = z/(nz-1);
+ 	else
+ 	   h = y/(ny-1);
+      }
+
+      // rounding of cube position to two decimals (prec=100), three (prec=1000) etc..
+      double prec = 100;
+
+      if( found_latlon )
+      {
+         CHECK_INPUT( fabs(ibcaz - mGeoAz) < 1e-5, "Error: Az in Geodyn file, "
+ 		 << ibcaz << " is different from Az in WPP, " << mGeoAz );
+	   
+ 	// lat-lon corner of cube given
+ 	if( adjust == 1 || origin[2] == 0 )
+ 	{
+ 	   // h based on cube length only, adjust z-position of cube
+ 	   int nc = static_cast<int>(round(cubelen)/h);
+ 	   h = cubelen/nc;
+ 	   origin[2] -= h*( origin[2]/h-round(origin[2]/h) );
+ 	}
+        else
+ 	{
+ 	   // h based on cube length and z-position of cube
+	   int a = static_cast<int>(round(origin[2]*prec));
+ 	   int b = static_cast<int>(round((origin[2]+zcubelen)*prec));
+ 	   // 
+           int d  = gcd(a,b);
+ 	   int n1 = a/d;
+ 	   int k  = static_cast<int>(round(origin[2]/(n1*h)));
+	   h = origin[2]/(k*n1);
+ 	}
+ 	// Geographic origin adjustment:
+	double gridLat = mLatOrigin;
+	double gridLon = mLonOrigin;
+	double metersPerDegree = mMetersPerDegree;
+	double deg2rad = M_PI/180;
+	double phi = mGeoAz*deg2rad;
+ 	double x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
+ 	double y = metersPerDegree*(-sin(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*cos(phi));
+	x -= h*(x/h-round(x/h));
+	y -= h*(y/h-round(y/h));
+	gridLat = ibclat - (x*cos(phi) - y*sin(phi))/metersPerDegree;
+ 	gridLon = ibclon - (x*sin(phi) + y*cos(phi))/(metersPerDegree*cos(ibclat*deg2rad));
+	mLatOrigin = gridLat;
+	mLonOrigin = gridLon;
+        origin[0] = x;
+ 	origin[1] = y;
+      }     
+      else
+      {
+ 	// lat-lon corner of cube not given, interpret origin realtive (0,0,0)
+         if( m_geodynbc_center )
+	 {
+ 	   // Center cube in the middle of the domain (in x,y), discarding input origin.
+	    double xlen = x;
+	    double ylen = y;
+	    if( xlen == 0 )
+	       xlen = h*(nx-1);
+	    if( ylen == 0 )
+	       ylen = h*(ny-1);
+	    origin[0] = 0.5*(xlen-cubelen);
+	    origin[1] = 0.5*(ylen-cubelen);
+	 }
+	 if( adjust == 1 )
+	 {
+	   // h based on cube length only, adjust cube position
+ 	   int nc = static_cast<int>(round(cubelen/h));
+ 	   h = cubelen/nc;
+ 	   origin[0] -= h*( origin[0]/h-round(origin[0]/h) );
+ 	   origin[1] -= h*( origin[1]/h-round(origin[1]/h) );
+ 	   origin[2] -= h*( origin[2]/h-round(origin[2]/h) );
+	 }
+	 else
+	 {
+ 	   // h based on cube length and cube position, might be very restrictive
+	    CHECK_INPUT( false, "Error: cube position without lat/long position must be adjustable");
+	 }
+      }
+      if (nx == 0 && x != 0.0)
+	 nxprime = computeEndGridPoint(x, h);
+      else if (nx != 0)
+	 nxprime = nx;
+      else
+	 CHECK_INPUT(0, gridSetupErr);
+
+      if (nz == 0 && z != 0.0)
+	 nzprime = computeEndGridPoint(z, h);
+      else if (nz != 0)
+	 nzprime = nz;
+      else
+	 CHECK_INPUT(0, gridSetupErr);
+
+      if (ny == 0 && y != 0.0)
+	 nyprime = computeEndGridPoint(y, h);
+      else if (ny != 0)
+	 nyprime = ny;
+      else
+	 CHECK_INPUT(0, gridSetupErr);
+      m_ibc_origin[0] = origin[0];
+      m_ibc_origin[1] = origin[1];
+      m_ibc_origin[2] = origin[2];
+      //     cout << "Cube origin " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
+      //     cout << "Cube length " << cubelen << endl;
+      //     cout << "nx,ny,nz " << nxprime << " " << nyprime << " " << nzprime << endl;     
+  } // end if m_geodynbc_found
+  else
+  {
+
+     if (!m_doubly_periodic)
      {
+	if (nx > 0 && h == 0.0)
+	{
     // we set the number grid points in the x direction
     // so we'll compute the grid spacing from that.
-	h = x / (nx-1);
-	if (m_myRank == 0)
-	   cout << "* Setting h to " << h << " from  x/(nx-1) (x=" << x << ", nx=" << nx << ")" << endl;
+	   h = x / (nx-1);
+	   if (m_myRank == 0)
+	      cout << "* Setting h to " << h << " from  x/(nx-1) (x=" << x << ", nx=" << nx << ")" << endl;
       
-	nxprime = nx;
-	nzprime = computeEndGridPoint(z, h);
-	nyprime = computeEndGridPoint(y, h);
-     }
-     else if (ny > 0 && h == 0.0)
-     {
+	   nxprime = nx;
+	   nzprime = computeEndGridPoint(z, h);
+	   nyprime = computeEndGridPoint(y, h);
+	}
+	else if (ny > 0 && h == 0.0)
+	{
     // set hte number of grid points from y direction and ny
-	h = y/(ny-1);
-	if (m_myRank == 0)
-	   cout << "* Setting h to " << h << " from  y/(ny-1) (y=" << y << ", ny=" << ny << ")" << endl;
-	nyprime = ny;
-	nxprime = computeEndGridPoint(x, h);
-	nzprime = computeEndGridPoint(z, h);
-     }
-     else if (nz > 0 && h == 0.0)
-     {
+	   h = y/(ny-1);
+	   if (m_myRank == 0)
+	      cout << "* Setting h to " << h << " from  y/(ny-1) (y=" << y << ", ny=" << ny << ")" << endl;
+	   nyprime = ny;
+	   nxprime = computeEndGridPoint(x, h);
+	   nzprime = computeEndGridPoint(z, h);
+	}
+	else if (nz > 0 && h == 0.0)
+	{
     // set the number of grid points from z direction and nz
-	h = z/(nz-1);
-	if (m_myRank == 0)
-	   cout << "* Setting h to " << h << " from  z/(nz-1) (z=" << z << ", nz=" << nz << ")" << endl;
-	nzprime = nz;
-	nxprime = computeEndGridPoint(x, h);
-	nyprime = computeEndGridPoint(y, h);
-     }
-     else
-     {
+	   h = z/(nz-1);
+	   if (m_myRank == 0)
+	      cout << "* Setting h to " << h << " from  z/(nz-1) (z=" << z << ", nz=" << nz << ")" << endl;
+	   nzprime = nz;
+	   nxprime = computeEndGridPoint(x, h);
+	   nyprime = computeEndGridPoint(y, h);
+	}
+	else
+	{
 	//----------------------------------------------------
 	// h was set by the user, so compute the appropriate
 	// nx, ny, and nz or x, y, z.
 	//----------------------------------------------------
-	if (nx == 0 && x != 0.0)
-	   nxprime = computeEndGridPoint(x, h);
-	else if (nx != 0)
-	   nxprime = nx;
-	else
-	   CHECK_INPUT(0, gridSetupErr);
+	   if (nx == 0 && x != 0.0)
+	      nxprime = computeEndGridPoint(x, h);
+	   else if (nx != 0)
+	      nxprime = nx;
+	   else
+	      CHECK_INPUT(0, gridSetupErr);
 
-	if (nz == 0 && z != 0.0)
-	   nzprime = computeEndGridPoint(z, h);
-	else if (nz != 0)
-	   nzprime = nz;
-	else
-	   CHECK_INPUT(0, gridSetupErr);
+	   if (nz == 0 && z != 0.0)
+	      nzprime = computeEndGridPoint(z, h);
+	   else if (nz != 0)
+	      nzprime = nz;
+	   else
+	      CHECK_INPUT(0, gridSetupErr);
 
-	if (ny == 0 && y != 0.0)
-	   nyprime = computeEndGridPoint(y, h);
-	else if (ny != 0)
-	   nyprime = ny;
-	else
-	   CHECK_INPUT(0, gridSetupErr);
+	   if (ny == 0 && y != 0.0)
+	      nyprime = computeEndGridPoint(y, h);
+	   else if (ny != 0)
+	      nyprime = ny;
+	   else
+	      CHECK_INPUT(0, gridSetupErr);
+	}
      }
-   
+  }
+  if (!m_doubly_periodic)
+  {
     if (proc_zero() && mVerbose >=3)
       printf("**** Setting up the grid for a non-periodic problem\n");
     
@@ -3004,429 +3018,428 @@ void EW::processPrefilter(char* buffer)
    set_prefilter( passband, order, passes, fc1, fc2 );
 }
 
-// //-----------------------------------------------------------------------
-// void FileInput::processGeodynbc(char* buf)
-// {
-//    // At this point, the geodyn file has already been read into m_geodyn_filename
-//    char* token = strtok(buf, " \t");
-//    CHECK_INPUT(strcmp("geodynbc", token) == 0, "ERROR: not a geodynbc line...: " << token);
-//    CHECK_INPUT(m_geodynbc_found,"Error: geodynbc not obtained"<<token);
+//-----------------------------------------------------------------------
+void EW::processGeodynbc(char* buf)
+{
+   // At this point, the geodyn file has already been read into m_geodyn_filename
+   char* token = strtok(buf, " \t");
+   CHECK_INPUT(strcmp("geodynbc", token) == 0, "ERROR: not a geodynbc line...: " << token);
+   CHECK_INPUT(m_geodynbc_found,"Error: geodynbc not obtained"<<token);
 
-//    ifstream geodynfile(m_geodynbc_filename.c_str());
-//    CHECK_INPUT(geodynfile.is_open(), "Error: opening geodyn file " << m_geodynbc_filename );
-
-
-//    string err = "geodynbc Error: ";
-//    string commandName = "geodynbc";
-
-//    int faces=6, nx=0, ny=0, nz=0, nsteps=0, filter=0, adjust=1;
-//    double x0, y0, z0, lat, lon, elev, az, timestep, rho=0, vs=0, vp=0, freq;
-//    double srcx0, srcy0, srcz0, h, toff;
-
-//    bool timestepset = false, nstepsset=false, toffset=false;
-//    char buffer[256];
-//    bool done = false;
-//    while (!geodynfile.eof() && !done )
-//    {
-//       geodynfile.getline(buffer,256);
-//       if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
-//          break;
-//       if( startswith("begindata",buffer) )
-//       {
-// 	 done = true;
-//          break;
-//       }
-
-//       if( startswith("grid", buffer) )
-//       {
-// 	 char* token = strtok(buffer, " \t");
-// 	 token = strtok(NULL, " \t");
-// 	 while (token != NULL)
-// 	 {
-// 	    if (startswith("#", token) || startswith(" ", buffer))
-// 	       break;
-// 	    if (startswith("faces=", token))
-// 	    {
-// 	       token += 6;
-// 	       faces = atoi(token);
-// 	    }
-// 	    else if( startswith("nx=",token))
-// 	    {
-// 	       token += 3;
-// 	       nx = atoi(token);
-// 	    }
-// 	    else if( startswith("ny=",token))
-// 	    {
-// 	       token += 3;
-// 	       ny = atoi(token);
-// 	    }
-// 	    else if( startswith("nz=",token))
-// 	    {
-// 	       token += 3;
-// 	       nz = atoi(token);
-// 	    }
-// 	    else if( startswith("stepsize=",token))
-// 	    {
-// 	       token += 9;
-// 	       h = atof(token);
-// 	    }
-// 	    else if( startswith("x0=",token))
-// 	    {
-// 	       token += 3;
-// 	       x0 = atof(token);
-// 	    }
-// 	    else if( startswith("y0=",token))
-// 	    {
-// 	       token += 3;
-// 	       y0 = atof(token);
-// 	    }
-// 	    else if( startswith("z0=",token))
-// 	    {
-// 	       token += 3;
-// 	       z0 = atof(token);
-// 	    }
-// 	    else if( startswith("lat=",token))
-// 	    {
-// 	       token += 4;
-// 	       lat = atof(token);
-// 	    }
-// 	    else if( startswith("lon=",token))
-// 	    {
-// 	       token += 4;
-// 	       lon = atof(token);
-// 	    }
-// 	    else if( startswith("elev=",token))
-// 	    {
-// 	       token += 5;
-// 	       elev = atof(token);
-// 	    }
-// 	    else if( startswith("az=",token))
-// 	    {
-// 	       token += 3;
-// 	       az = atof(token);
-// 	    }
-// 	    else if( startswith("adjust=",token))
-// 	    {
-// 	       token += 7;
-// 	       adjust = strcmp(token,"yes")==0;
-// 	    }
-// 	    else
-// 	    {
-// 	       badOption("geodyn-grid", token);
-// 	    }
-// 	    token = strtok(NULL, " \t");
-// 	 }
-//       }
-//       else if( startswith("time", buffer) )
-//       {
-// 	 char* token = strtok(buffer, " \t");
-// 	 token = strtok(NULL, " \t");
-// 	 while (token != NULL)
-// 	 {
-// 	    if (startswith("#", token) || startswith(" ", buffer))
-// 	       break;
-// 	    if (startswith("timestep=", token))
-// 	    {
-// 	       token += 9;
-// 	       timestep = atof(token);
-// 	       timestepset=true;
-// 	    }
-// 	    else if( startswith("nsteps=",token))
-// 	    {
-// 	       token += 7;
-// 	       nsteps = atoi(token);
-// 	       nstepsset=true;
-// 	    }
-// 	    else if( startswith("toff=",token))
-// 	    {
-// 	       token += 5;
-// 	       toff = atof(token);
-// 	       toffset=true;
-// 	    }
-// 	    else
-// 	    {
-// 	       badOption("geodyn-time", token);
-// 	    }
-// 	    token = strtok(NULL, " \t");
-// 	 }
-//       }
-//       else if( startswith("material",buffer) )
-//       {
-// 	 char* token = strtok(buffer, " \t");
-// 	 token = strtok(NULL, " \t");
-// 	 while (token != NULL)
-// 	 {
-// 	    if (startswith("#", token) || startswith(" ", buffer))
-// 	       break;
-// 	    if (startswith("rho=", token))
-// 	    {
-// 	       token += 4;
-// 	       rho = atof(token);
-// 	    }
-// 	    else if( startswith("vs=",token))
-// 	    {
-// 	       token += 3;
-// 	       vs = atof(token);
-// 	    }
-// 	    else if( startswith("vp=",token))
-// 	    {
-// 	       token += 3;
-// 	       vp = atof(token);
-// 	    }
-// 	    else
-// 	    {
-// 	       badOption("geodyn-material", token);
-// 	    }
-// 	    token = strtok(NULL, " \t");
-// 	 }
-//       }
-//       else if( startswith("source",buffer) )
-//       {
-// 	 char* token = strtok(buffer, " \t");
-// 	 token = strtok(NULL, " \t");
-// 	 while (token != NULL)
-// 	 {
-// 	    if (startswith("#", token) || startswith(" ", buffer))
-// 	       break;
-// 	    if (startswith("filter=", token))
-// 	    {
-// 	       token += 7;
-// 	       if( strcmp(token,"butterworth")== 0 )
-// 		  filter = 1;
-// 	       else
-// 		  filter = 0;
-// 	    }
-// 	    else if( startswith("frequency=",token))
-// 	    {
-// 	       token += 10;
-// 	       freq = atof(token);
-// 	    }
-// 	    else if( startswith("x0=",token))
-// 	    {
-// 	       token += 3;
-// 	       srcx0 = atof(token);
-// 	    }
-// 	    else if( startswith("y0=",token))
-// 	    {
-// 	       token += 3;
-// 	       srcy0 = atof(token);
-// 	    }
-// 	    else if( startswith("z0=",token))
-// 	    {
-// 	       token += 3;
-// 	       srcz0 = atof(token);
-// 	    }
-// 	    else
-// 	    {
-// 	       badOption("geodyn-source", token);
-// 	    }
-// 	    token = strtok(NULL, " \t");
-// 	 }
-//       }
-//    }
-//    geodynfile.close();
-//    CHECK_INPUT( nx == ny, "Geodyn file error: x-y Cube dimensions must be equal, not "
-//                   <<nx << " " << ny );
-//    CHECK_INPUT( faces == 5 || faces == 6 , "Geodyn file error: Faces must be 5 or 6, not" << faces );
-//    CHECK_INPUT( timestepset, "Geodyn file error: No time step given");
-//    CHECK_INPUT( nstepsset, "Geodyn file error: Number of steps not given");
-//    mSimulation->set_geodyn_data( m_geodynbc_filename, nx, nz, h, m_ibc_origin, timestep,
-// 				 nsteps, faces );
-// }
-
-// //-----------------------------------------------------------------------
-// void FileInput::geodynFindFile(char* buffer)
-// {
-//    char* token = strtok(buffer, " \t");
-//    CHECK_INPUT(strcmp("geodynbc", token) == 0, "ERROR: not a geodynbc line...: " << token);
-//    token = strtok(NULL, " \t");
-
-//    string err = "geodynbc Error: ";
-//    string commandName = token;
-
-//    while (token != NULL)
-//    {
-//       if (startswith("#", token) || startswith(" ", buffer))
-//          break;
-
-//       if (startswith("file=", token))
-//       {
-//          token += 5;
-//          m_geodynbc_filename = token;
-//          m_geodynbc_found = true;
-//       }
-//       else if( startswith("center=",token))
-//       {
-//          token += 7;
-//          if (atoi(token) == 1 || strcmp(token,"yes")==0 )
-// 	    m_geodynbc_center = true;
-//       }
-//       else
-//       {
-//          badOption(commandName, token);
-//       }
-//       token = strtok(NULL, " \t");
-//    }
-// }
-
-// //-----------------------------------------------------------------------
-// void FileInput::geodynbcGetSizes( string filename, double origin[3], double &cubelen,
-// 				  double& zcubelen, bool &found_latlon, double& lat, 
-// 				  double& lon, double& az, int& adjust )
-// {
-//    ifstream geodynfile(m_geodynbc_filename.c_str());
-//    CHECK_INPUT( geodynfile.is_open(), "Error: opening geodyn file " << m_geodynbc_filename );
+   ifstream geodynfile(m_geodynbc_filename.c_str());
+   CHECK_INPUT(geodynfile.is_open(), "Error: opening geodyn file " << m_geodynbc_filename );
 
 
-//    string err = "geodynbc Error: ";
-//    string commandName = "geodynbc";
+   string err = "geodynbc Error: ";
+   string commandName = "geodynbc";
 
-//    int nx=0, ny=0, nz=0, faces=6;
-//    double x0, y0, z0, elev, h;
-//    adjust=1;
+   int faces=6, nx=0, ny=0, nz=0, nsteps=0, filter=0, adjust=1;
+   double x0, y0, z0, lat, lon, elev, az, timestep, rho=0, vs=0, vp=0, freq;
+   double srcx0, srcy0, srcz0, h, toff;
 
-//    char buffer[256];
-//    bool done = false;
-//    bool nxfound=false, nyfound=false, nzfound=false, x0found=false, y0found=false, z0found=false;
-//    bool latfound=false, lonfound=false, azfound=false, hfound=false, elevfound=false;
-//    while (!geodynfile.eof() && !done )
-//    {
-//       geodynfile.getline(buffer,256);
-//       if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
-//          break;
-//       if( startswith("begindata",buffer) )
-//       {
-// 	 done = true;
-//          break;
-//       }
+   bool timestepset = false, nstepsset=false, toffset=false;
+   char buffer[256];
+   bool done = false;
+   while (!geodynfile.eof() && !done )
+   {
+      geodynfile.getline(buffer,256);
+      if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
+         break;
+      if( startswith("begindata",buffer) )
+      {
+	 done = true;
+         break;
+      }
 
-//       if( startswith("grid", buffer) )
-//       {
-// 	 char* token = strtok(buffer, " \t");
-// 	 token = strtok(NULL, " \t");
-// 	 while (token != NULL)
-// 	 {
-// 	    if (startswith("#", token) || startswith(" ", buffer))
-// 	       break;
-// 	    if (startswith("faces=", token))
-// 	    {
-// 	       token += 6;
-// 	       faces = atoi(token);
-// 	    }
-// 	    else if( startswith("nx=",token))
-// 	    {
-// 	       token += 3;
-// 	       nx = atoi(token);
-//                nxfound = true;
-// 	    }
-// 	    else if( startswith("ny=",token))
-// 	    {
-// 	       token += 3;
-// 	       ny = atoi(token);
-//                nyfound = true;
-// 	    }
-// 	    else if( startswith("nz=",token))
-// 	    {
-// 	       token += 3;
-// 	       nz = atoi(token);
-//                nzfound = true;
-// 	    }
-// 	    else if( startswith("stepsize=",token))
-// 	    {
-// 	       token += 9;
-// 	       h = atof(token);
-//                hfound = true;
-// 	    }
-// 	    else if( startswith("x0=",token))
-// 	    {
-// 	       token += 3;
-// 	       x0 = atof(token);
-//                x0found = true;
-// 	    }
-// 	    else if( startswith("y0=",token))
-// 	    {
-// 	       token += 3;
-// 	       y0 = atof(token);
-//                y0found = true;
-// 	    }
-// 	    else if( startswith("z0=",token))
-// 	    {
-// 	       token += 3;
-// 	       z0 = atof(token);
-//                z0found = true;
-// 	    }
-// 	    else if( startswith("lat=",token))
-// 	    {
-// 	       token += 4;
-// 	       lat = atof(token);
-//                latfound = true;
-// 	    }
-// 	    else if( startswith("lon=",token))
-// 	    {
-// 	       token += 4;
-// 	       lon = atof(token);
-//                lonfound = true;
-// 	    }
-// 	    else if( startswith("elev=",token))
-// 	    {
-// 	       token += 5;
-// 	       elev = atof(token);
-//                elevfound = true;
-// 	    }
-// 	    else if( startswith("az=",token))
-// 	    {
-// 	       token += 3;
-// 	       az = atof(token);
-//                azfound = true;
-// 	    }
-// 	    else if( startswith("adjust=",token))
-// 	    {
-// 	       token += 7;
-// 	       //	       adjust = strcmp(token,"yes")==0;
-//                adjust = atoi(token);
-// 	    }
-// 	    else
-// 	    {
-// 	       badOption("geodyn-grid", token);
-// 	    }
-// 	    token = strtok(NULL, " \t");
-// 	 }
-//       }
-//    }
-//    geodynfile.close();
+      if( startswith("grid", buffer) )
+      {
+	 char* token = strtok(buffer, " \t");
+	 token = strtok(NULL, " \t");
+	 while (token != NULL)
+	 {
+	    if (startswith("#", token) || startswith(" ", buffer))
+	       break;
+	    if (startswith("faces=", token))
+	    {
+	       token += 6;
+	       faces = atoi(token);
+	    }
+	    else if( startswith("nx=",token))
+	    {
+	       token += 3;
+	       nx = atoi(token);
+	    }
+	    else if( startswith("ny=",token))
+	    {
+	       token += 3;
+	       ny = atoi(token);
+	    }
+	    else if( startswith("nz=",token))
+	    {
+	       token += 3;
+	       nz = atoi(token);
+	    }
+	    else if( startswith("stepsize=",token))
+	    {
+	       token += 9;
+	       h = atof(token);
+	    }
+	    else if( startswith("x0=",token))
+	    {
+	       token += 3;
+	       x0 = atof(token);
+	    }
+	    else if( startswith("y0=",token))
+	    {
+	       token += 3;
+	       y0 = atof(token);
+	    }
+	    else if( startswith("z0=",token))
+	    {
+	       token += 3;
+	       z0 = atof(token);
+	    }
+	    else if( startswith("lat=",token))
+	    {
+	       token += 4;
+	       lat = atof(token);
+	    }
+	    else if( startswith("lon=",token))
+	    {
+	       token += 4;
+	       lon = atof(token);
+	    }
+	    else if( startswith("elev=",token))
+	    {
+	       token += 5;
+	       elev = atof(token);
+	    }
+	    else if( startswith("az=",token))
+	    {
+	       token += 3;
+	       az = atof(token);
+	    }
+	    else if( startswith("adjust=",token))
+	    {
+	       token += 7;
+	       adjust = strcmp(token,"yes")==0;
+	    }
+	    else
+	    {
+	       badOption("geodyn-grid", token);
+	    }
+	    token = strtok(NULL, " \t");
+	 }
+      }
+      else if( startswith("time", buffer) )
+      {
+	 char* token = strtok(buffer, " \t");
+	 token = strtok(NULL, " \t");
+	 while (token != NULL)
+	 {
+	    if (startswith("#", token) || startswith(" ", buffer))
+	       break;
+	    if (startswith("timestep=", token))
+	    {
+	       token += 9;
+	       timestep = atof(token);
+	       timestepset=true;
+	    }
+	    else if( startswith("nsteps=",token))
+	    {
+	       token += 7;
+	       nsteps = atoi(token);
+	       nstepsset=true;
+	    }
+	    else if( startswith("toff=",token))
+	    {
+	       token += 5;
+	       toff = atof(token);
+	       toffset=true;
+	    }
+	    else
+	    {
+	       badOption("geodyn-time", token);
+	    }
+	    token = strtok(NULL, " \t");
+	 }
+      }
+      else if( startswith("material",buffer) )
+      {
+	 char* token = strtok(buffer, " \t");
+	 token = strtok(NULL, " \t");
+	 while (token != NULL)
+	 {
+	    if (startswith("#", token) || startswith(" ", buffer))
+	       break;
+	    if (startswith("rho=", token))
+	    {
+	       token += 4;
+	       rho = atof(token);
+	    }
+	    else if( startswith("vs=",token))
+	    {
+	       token += 3;
+	       vs = atof(token);
+	    }
+	    else if( startswith("vp=",token))
+	    {
+	       token += 3;
+	       vp = atof(token);
+	    }
+	    else
+	    {
+	       badOption("geodyn-material", token);
+	    }
+	    token = strtok(NULL, " \t");
+	 }
+      }
+      else if( startswith("source",buffer) )
+      {
+	 char* token = strtok(buffer, " \t");
+	 token = strtok(NULL, " \t");
+	 while (token != NULL)
+	 {
+	    if (startswith("#", token) || startswith(" ", buffer))
+	       break;
+	    if (startswith("filter=", token))
+	    {
+	       token += 7;
+	       if( strcmp(token,"butterworth")== 0 )
+		  filter = 1;
+	       else
+		  filter = 0;
+	    }
+	    else if( startswith("frequency=",token))
+	    {
+	       token += 10;
+	       freq = atof(token);
+	    }
+	    else if( startswith("x0=",token))
+	    {
+	       token += 3;
+	       srcx0 = atof(token);
+	    }
+	    else if( startswith("y0=",token))
+	    {
+	       token += 3;
+	       srcy0 = atof(token);
+	    }
+	    else if( startswith("z0=",token))
+	    {
+	       token += 3;
+	       srcz0 = atof(token);
+	    }
+	    else
+	    {
+	       badOption("geodyn-source", token);
+	    }
+	    token = strtok(NULL, " \t");
+	 }
+      }
+   }
+   geodynfile.close();
+   CHECK_INPUT( nx == ny, "Geodyn file error: x-y Cube dimensions must be equal, not "
+                  <<nx << " " << ny );
+   CHECK_INPUT( faces == 5 || faces == 6 , "Geodyn file error: Faces must be 5 or 6, not" << faces );
+   CHECK_INPUT( timestepset, "Geodyn file error: No time step given");
+   CHECK_INPUT( nstepsset, "Geodyn file error: Number of steps not given");
+   set_geodyn_data( m_geodynbc_filename, nx, nz, h, m_ibc_origin, timestep,
+		    nsteps, faces );
+}
 
-//    if( nxfound && !nyfound )
-//    {
-//       ny = nx;
-//       nyfound = true;
-//    }
-//    if( nxfound && !nzfound )
-//    {
-//       nz = nx;
-//       nzfound = true;
-//    }
-//    CHECK_INPUT( (nxfound || nyfound || nzfound) && hfound, "Error in geodyn file: dimensions not specified");
+//-----------------------------------------------------------------------
+void EW::geodynFindFile(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("geodynbc", token) == 0, "ERROR: not a geodynbc line...: " << token);
+   token = strtok(NULL, " \t");
 
-//    if( nxfound )
-//       cubelen = (nx-1)*h;
-//    else if( nyfound )
-//       cubelen = (ny-1)*h;
-//    else
-//       cubelen = (nz-1)*h;
+   string err = "geodynbc Error: ";
+   string commandName = token;
 
-//    found_latlon = latfound && lonfound && azfound;
-//    if( elevfound )
-//       origin[2] = -elev;
-//    else
-//       origin[2] = z0;
+   while (token != NULL)
+   {
+      if (startswith("#", token) || startswith(" ", buffer))
+         break;
 
-//    origin[0] = x0;
-//    origin[1] = y0;
+      if (startswith("file=", token))
+      {
+         token += 5;
+         m_geodynbc_filename = token;
+         m_geodynbc_found = true;
+      }
+      else if( startswith("center=",token))
+      {
+         token += 7;
+         if (atoi(token) == 1 || strcmp(token,"yes")==0 )
+	    m_geodynbc_center = true;
+      }
+      else
+      {
+         badOption(commandName, token);
+      }
+      token = strtok(NULL, " \t");
+   }
+}
 
-//    zcubelen = cubelen;
-//    if( nzfound )
-//       zcubelen = (nz-1)*h;
-// }
+//-----------------------------------------------------------------------
+void EW::geodynbcGetSizes( string filename, double origin[3], double &cubelen,
+			   double& zcubelen, bool &found_latlon, double& lat, 
+			   double& lon, double& az, int& adjust )
+{
+   ifstream geodynfile(m_geodynbc_filename.c_str());
+   CHECK_INPUT( geodynfile.is_open(), "Error: opening geodyn file " << m_geodynbc_filename );
+
+   string err = "geodynbc Error: ";
+   string commandName = "geodynbc";
+
+   int nx=0, ny=0, nz=0, faces=6;
+   double x0, y0, z0, elev, h;
+   adjust=1;
+
+   char buffer[256];
+   bool done = false;
+   bool nxfound=false, nyfound=false, nzfound=false, x0found=false, y0found=false, z0found=false;
+   bool latfound=false, lonfound=false, azfound=false, hfound=false, elevfound=false;
+   while (!geodynfile.eof() && !done )
+   {
+      geodynfile.getline(buffer,256);
+      if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
+         break;
+      if( startswith("begindata",buffer) )
+      {
+	 done = true;
+         break;
+      }
+
+      if( startswith("grid", buffer) )
+      {
+	 char* token = strtok(buffer, " \t");
+	 token = strtok(NULL, " \t");
+	 while (token != NULL)
+	 {
+	    if (startswith("#", token) || startswith(" ", buffer))
+	       break;
+	    if (startswith("faces=", token))
+	    {
+	       token += 6;
+	       faces = atoi(token);
+	    }
+	    else if( startswith("nx=",token))
+	    {
+	       token += 3;
+	       nx = atoi(token);
+               nxfound = true;
+	    }
+	    else if( startswith("ny=",token))
+	    {
+	       token += 3;
+	       ny = atoi(token);
+               nyfound = true;
+	    }
+	    else if( startswith("nz=",token))
+	    {
+	       token += 3;
+	       nz = atoi(token);
+               nzfound = true;
+	    }
+	    else if( startswith("stepsize=",token))
+	    {
+	       token += 9;
+	       h = atof(token);
+               hfound = true;
+	    }
+	    else if( startswith("x0=",token))
+	    {
+	       token += 3;
+	       x0 = atof(token);
+               x0found = true;
+	    }
+	    else if( startswith("y0=",token))
+	    {
+	       token += 3;
+	       y0 = atof(token);
+               y0found = true;
+	    }
+	    else if( startswith("z0=",token))
+	    {
+	       token += 3;
+	       z0 = atof(token);
+               z0found = true;
+	    }
+	    else if( startswith("lat=",token))
+	    {
+	       token += 4;
+	       lat = atof(token);
+               latfound = true;
+	    }
+	    else if( startswith("lon=",token))
+	    {
+	       token += 4;
+	       lon = atof(token);
+               lonfound = true;
+	    }
+	    else if( startswith("elev=",token))
+	    {
+	       token += 5;
+	       elev = atof(token);
+               elevfound = true;
+	    }
+	    else if( startswith("az=",token))
+	    {
+	       token += 3;
+	       az = atof(token);
+               azfound = true;
+	    }
+	    else if( startswith("adjust=",token))
+	    {
+	       token += 7;
+	       //	       adjust = strcmp(token,"yes")==0;
+               adjust = atoi(token);
+	    }
+	    else
+	    {
+	       badOption("geodyn-grid", token);
+	    }
+	    token = strtok(NULL, " \t");
+	 }
+      }
+   }
+   geodynfile.close();
+
+   if( nxfound && !nyfound )
+   {
+      ny = nx;
+      nyfound = true;
+   }
+   if( nxfound && !nzfound )
+   {
+      nz = nx;
+      nzfound = true;
+   }
+   CHECK_INPUT( (nxfound || nyfound || nzfound) && hfound, "Error in geodyn file: dimensions not specified");
+
+   if( nxfound )
+      cubelen = (nx-1)*h;
+   else if( nyfound )
+      cubelen = (ny-1)*h;
+   else
+      cubelen = (nz-1)*h;
+
+   found_latlon = latfound && lonfound && azfound;
+   if( elevfound )
+      origin[2] = -elev;
+   else
+      origin[2] = z0;
+
+   origin[0] = x0;
+   origin[1] = y0;
+
+   zcubelen = cubelen;
+   if( nzfound )
+      zcubelen = (nz-1)*h;
+}
 
 //-----------------------------------------------------------------------
 void EW::processMaterial( char* buffer )

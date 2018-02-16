@@ -153,7 +153,8 @@ extern "C" {
 		      float_sw4*, float_sw4*, float_sw4*, float_sw4* );
    void solerr3(int*, int*, int*, int*, int*, int*, float_sw4 *h, float_sw4 *uex, float_sw4 *u, float_sw4 *li,
 		float_sw4 *l2, float_sw4 *xli, float_sw4 *zmin, float_sw4 *x0, float_sw4 *y0, float_sw4 *z0, float_sw4 *radius,
-		int *imin, int *imax, int *jmin, int *jmax, int *kmin, int *kmax);
+		int *imin, int *imax, int *jmin, int *jmax, int *kmin, int *kmax, int* geocube,
+		int* i0, int* i1, int* j0, int* j1, int* k0, int* k1 );
    void solerr3c(int*, int*, int*, int*, int*, int*, float_sw4 *uex, float_sw4 *u, float_sw4* x, float_sw4* y,
 		 float_sw4* z, float_sw4* jac, float_sw4 *li, float_sw4 *l2, float_sw4 *xli, 
 		 float_sw4 *x0, float_sw4 *y0, float_sw4 *z0, float_sw4 *radius,
@@ -487,7 +488,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_velo_omega(-1.0),
   m_min_omega(-1.0),
   m_max_omega(-1.0),
-//  m_do_geodynbc(false),
+  m_geodynbc_found(false),
+  m_geodynbc_center(false),
+  m_do_geodynbc(false),
   m_att_use_max_frequency(false),
   m_att_ppw(8.0),
   m_inverse_problem(a_invproblem),
@@ -1658,6 +1661,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
   float_sw4 xInfLocal=0, xInfGrid=0;
   float_sw4 radius =-1, x0=0, y0=0, z0=0;
 
+  //  cout << "U(14,13,10) " << a_U[0](1,14,13,10) << " " << a_U[0](2,14,13,10) << " " << a_U[0](3,14,13,10) << endl;
 //tmp  
 //   if (proc_zero())
 //     printf("Inside normOfDifference\n");
@@ -1756,16 +1760,29 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
     }
     else
     {
+       int geocube = 0, i0=0, i1=-1, j0=0, j1=-1, k0=0, k1=-1;
+       if( m_do_geodynbc && m_geodyn_iwillread )
+       {
+	   geocube = 1;
+	   i0 = m_geodyn_dims[g][0];
+	   i1 = m_geodyn_dims[g][1];
+	   j0 = m_geodyn_dims[g][2];
+	   j1 = m_geodyn_dims[g][3];
+	   k0 = m_geodyn_dims[g][4];
+	   k1 = m_geodyn_dims[g][5];
+       }
        if( m_croutines )
 	  solerr3_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, h,
 		      uex_ptr, u_ptr, linfLocal, l2Local, xInfGrid, m_zmin[g], x0,
 		      y0, z0, radius,
-		      imin, imax, jmin, jmax, kmin, kmax );
+		      imin, imax, jmin, jmax, kmin, kmax, geocube,
+                      i0, i1, j0, j1, k0, k1 );
        else
 	  solerr3( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
 		   uex_ptr, u_ptr, &linfLocal, &l2Local, &xInfGrid, &m_zmin[g], &x0,
 		   &y0, &z0, &radius,
-		   &imin, &imax, &jmin, &jmax, &kmin, &kmax );
+		   &imin, &imax, &jmin, &jmax, &kmin, &kmax, &geocube,
+		   &i0, &i1, &j0, &j1, &k0, &k1 );
     }
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     if (xInfGrid > xInfLocal) xInfLocal = xInfGrid;

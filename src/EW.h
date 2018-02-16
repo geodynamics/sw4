@@ -154,6 +154,7 @@ void processTopography(char* buffer);
 void processAttenuation(char* buffer);
 void processRandomize(char* buffer);
 void processCheckPoint(char* buffer);
+void processGeodynbc(char* buffer);
 
 //void getEfileInfo(char* buffer);
 
@@ -495,15 +496,22 @@ void set_geodyn_data( string filename, int nx, int nz, float_sw4 h, float_sw4 or
 
 void impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um, float_sw4 t );
 
+void advance_geodyn_time( float_sw4 t );
+
 void get_geodyn_timelevel( vector<Sarray>& geodyndata );
 
 void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 			    vector<Sarray>& geodyndata2 );
 
-void geodyn_second_ghost_point( vector<Sarray>& geodyndata1, vector<Sarray>& geodyndata2,
-				vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
 				vector<Sarray>& forcing, double t, vector<Sarray>& U,
 				vector<Sarray>& Um, int crf );
+
+void geodynbcGetSizes( string filename, double origin[3], double &cubelen,
+		       double& zcubelen, bool &found_latlon, double& lat, 
+		       double& lon, double& az, int& adjust );
+
+void geodynFindFile(char* buffer);
 
 void integrate_source( );
 
@@ -837,7 +845,8 @@ void solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		 float_sw4* __restrict__ u, float_sw4& li,
 		 float_sw4& l2, float_sw4& xli, float_sw4 zmin, float_sw4 x0,
 		 float_sw4 y0, float_sw4 z0, float_sw4 radius,
-		 int imin, int imax, int jmin, int jmax, int kmin, int kmax );
+		 int imin, int imax, int jmin, int jmax, int kmin, int kmax, int geocube,
+		 int i0, int i1, int j0, int j1, int k0, int k1 );
 void solerrgp_ci( int ifirst, int ilast, int jfirst, int jlast,
 		  int kfirst, int klast, float_sw4 h, 
 		  float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
@@ -1338,19 +1347,6 @@ bool m_randomize;
 int m_random_seed[3];
 float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
 
-// Vectors of pointers to hold boundary forcing arrays in each grid
-// this is innner cube data for coupling with other codes
-// bool m_do_geodynbc;
-// vector<int*> m_geodyn_dims;
-// vector<Sarray> m_geodyn_data1;
-// vector<Sarray> m_geodyn_data2;
-// float_sw4 m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;
-// int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
-//    int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
-// string m_geodyn_filename;
-// ifstream m_geodynfile;
-// bool m_geodyn_iwillread;   
-
 // with topo, zmin might be different from 0
 float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax; 
 
@@ -1483,8 +1479,11 @@ int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
 int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
 std::string m_geodyn_filename;
 std::ifstream m_geodynfile;
-bool m_geodyn_iwillread;   
-
+bool m_geodyn_iwillread, m_geodyn_past_end;   
+// From wpp FileInput class
+bool m_geodynbc_found, m_geodynbc_center;
+std::string m_geodynbc_filename;
+double m_ibc_origin[3];
 
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as

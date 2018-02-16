@@ -196,7 +196,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
        updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o oddIoddJinterp.o evenIoddJinterp.o \
-       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o
+       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o
 
 
 # new C-routines converted from fortran
