@@ -5085,6 +5085,13 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	 sacbaseset = true;
 	 isMomentType = 1;
       }
+      else if (startswith("sacbasedisp=",token))
+      {
+         token += 12;
+         strncpy(dfile, token,1000);
+	 sacbaseset = true;
+	 isMomentType = 0;
+      }
       else
       {
          badOption("source", token);
@@ -5133,20 +5140,36 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   }
   if( sacbaseset )
   {
-     // Read moment tensor components from sac files.
+     // Read moment tensor components or forcing components from sac files.
+
      // Set constant tensor to identity. m0 can give some scaling.
      mxx = myy = mzz = 1;
      mxy = mxz = myz = 0;
 
+     // Set first force components to identity. f0 can give some scaling.
+     fx = 1;
+     fy = fz = 0;
+     
      bool timereverse = false; // Reverse the SAC data. Set true for testing purpose only, the users want to do this themselves outside SW4.
      bool useB = false; // Use sac header begin time parameter B.
 
-     tDep = iDiscrete6moments;
+
      float_sw4 dt, t0, latsac, lonsac,cmpazsac, cmpincsac;
      int utcsac[7], npts;
      string basename = dfile;
      string fname;
-     fname = basename + ".xx";
+     if( isMomentType )
+     {
+	tDep = iDiscrete6moments;
+	fname = basename + ".xx";
+	npar  = 6*(npts+1);
+     }
+     else
+     {
+	tDep = iDiscrete3forces;
+	fname = basename + ".x";
+	npar  = 3*(npts+1);
+     }
      bool byteswap;
      readSACheader( fname.c_str(), dt, t0, latsac, lonsac, cmpazsac, cmpincsac, utcsac, npts, byteswap );
      if( !useB )
@@ -5163,47 +5186,68 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	}
      }
      freq = 1/dt;
-     npar  = 6*(npts+1);
      nipar = 1;
      par = new float_sw4 [npar];
      ipar = new int[1];
      ipar[0] = npts;
      size_t offset = 0;
      par[offset] = t0;
-     fname = basename + ".xx";
-     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
-     if( timereverse )
-	revvector( npts, &par[offset+1]);
-     offset += npts+1;
-     par[offset] = t0;
-     fname = basename + ".xy";
-     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-     if( timereverse )
-	revvector( npts, &par[offset+1]);
-     offset += npts+1;
-     par[offset] = t0;
-     fname = basename + ".xz";
-     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-     if( timereverse )
-	revvector( npts, &par[offset+1]);
-     offset += npts+1;
-     par[offset] = t0;
-     fname = basename + ".yy";
-     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-     if( timereverse )
-	revvector( npts, &par[offset+1]);
-     offset += npts+1;
-     par[offset] = t0;
-     fname = basename + ".yz";
-     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-     if( timereverse )
-	revvector( npts, &par[offset+1]);
-     offset += npts+1;
-     par[offset] = t0;
-     fname = basename + ".zz";
-     readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-     if( timereverse )
-	revvector( npts, &par[offset+1]);
+     if( tDep == iDiscrete6moments )
+     {
+	fname = basename + ".xx";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".xy";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".xz";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".yy";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".yz";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".zz";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+     }
+     else
+     {
+	fname = basename + ".x";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".y";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+	offset += npts+1;
+	par[offset] = t0;
+	fname = basename + ".z";
+	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
+	if( timereverse )
+	   revvector( npts, &par[offset+1]);
+     }
   }
 
   // --------------------------------------------------------------------------- 

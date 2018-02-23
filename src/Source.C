@@ -131,7 +131,7 @@ Source::Source(EW *a_ew,
    // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
    //    spline_interpolation();
    // else
-   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments ) // not sure about iDiscrete6moments
+   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces ) // not sure about iDiscrete6moments
    {
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
@@ -206,7 +206,7 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
      mNipar = 1;
      mIpar  = new int[1];
   }
-  if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
+  if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
      spline_interpolation();
   else
   {
@@ -1166,7 +1166,7 @@ alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
 void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSamples, Filter* sw4_filter)
 {
 
-   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
+   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
    {
       // new approach for Discrete time functions
       if (!doFilter)
@@ -2616,6 +2616,36 @@ int Source::spline_interpolation( )
       //      for( int i=0 ; i < npts ; i++ )
       //	 cout << "fun[" << i << "] = "<< mPar[6*i+1] << endl;
       
+      return 1;
+   }
+   else if( mTimeDependence == iDiscrete3forces )
+   {
+      int npts = mIpar[0];
+      // Three different time function, one for each displacement component.
+      // Store sequentially in mPar, i.e., 
+      // mPar = [tstart, first time func, tstart, second time func, ...]
+      // tstart before each function ---> Can reuse time function iDiscrete.
+
+      float_sw4* parin = new float_sw4[(npts+1)*3];
+      for( int i=0 ; i < (npts+1)*3; i++ )
+	 parin[i] = mPar[i];
+      float_sw4 tstart = mPar[0];
+      delete[] mPar;
+      mNpar = 3*(6*(npts-1)+1);
+      mPar = new float_sw4[mNpar];
+
+      size_t pos_in=0, pos_out=0;
+      for( int tf=0 ; tf < 3 ; tf++ )
+      {
+	 Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
+	 pos_in += npts+1;
+	 mPar[pos_out] = tstart;
+	 float_sw4* qsppt = quinticspline.get_polycof_ptr();
+	 for( int i=0 ; i < 6*(npts-1) ; i++ )
+	    mPar[pos_out+i+1] = qsppt[i];
+	 pos_out += 6*(npts-1)+1;
+      }
+      delete[] parin;
       return 1;
    }
    else if( mTimeDependence == iDiscrete6moments )
