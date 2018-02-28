@@ -172,7 +172,7 @@ void EW::deprecatedOption(const string& command,
 bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 			 vector<TimeSeries*> & a_GlobalTimeSeries )
 {
-  char buffer[256];
+  char buffer[2048];
   ifstream inputFile;
   int blockCount=0;
   int ablockCount=0;
@@ -196,7 +196,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // First process Geodyn input for restrictions of allowable grid sizes.
   // while (!inputFile.eof())
   // {
-  //    inputFile.getline(buffer, 256);
+  //    inputFile.getline(buffer, 2048);
   //    if( startswith("geodynbc",buffer ) )
   // 	geodynFindFile(buffer);
   // }
@@ -207,7 +207,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // these commands can enter data directly the object (this->)
   while (!inputFile.eof())
   {    
-     inputFile.getline(buffer, 256);
+     inputFile.getline(buffer, 2048);
      if (startswith("testrayleigh", buffer) )
      {
        m_doubly_periodic = true;
@@ -245,7 +245,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 // these commands can enter data directly into the object (this->)
   while (!inputFile.eof())
   {    
-     inputFile.getline(buffer, 256);
+     inputFile.getline(buffer, 2048);
      if( startswith("grid", buffer) )
      {
        foundGrid = true;
@@ -412,7 +412,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
   //----------------------------------------------------------
   while (!inputFile.eof())
   {
-     inputFile.getline(buffer, 256);
+     inputFile.getline(buffer, 2048);
 
      if (strlen(buffer) > 0) // empty lines produce this
      {
@@ -3008,11 +3008,11 @@ void EW::processPrefilter(char* buffer)
 //    double srcx0, srcy0, srcz0, h, toff;
 
 //    bool timestepset = false, nstepsset=false, toffset=false;
-//    char buffer[256];
+//    char buffer[2048];
 //    bool done = false;
 //    while (!geodynfile.eof() && !done )
 //    {
-//       geodynfile.getline(buffer,256);
+//       geodynfile.getline(buffer,2048);
 //       if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
 //          break;
 //       if( startswith("begindata",buffer) )
@@ -3269,13 +3269,13 @@ void EW::processPrefilter(char* buffer)
 //    double x0, y0, z0, elev, h;
 //    adjust=1;
 
-//    char buffer[256];
+//    char buffer[2048];
 //    bool done = false;
 //    bool nxfound=false, nyfound=false, nzfound=false, x0found=false, y0found=false, z0found=false;
 //    bool latfound=false, lonfound=false, azfound=false, hfound=false, elevfound=false;
 //    while (!geodynfile.eof() && !done )
 //    {
-//       geodynfile.getline(buffer,256);
+//       geodynfile.getline(buffer,2048);
 //       if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
 //          break;
 //       if( startswith("begindata",buffer) )
@@ -5325,7 +5325,7 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 
   double rVersion;
 
-  const int bufsize=1024;
+  const int bufsize=2048;
   char buf[bufsize];
   
 // Discrete source time function
