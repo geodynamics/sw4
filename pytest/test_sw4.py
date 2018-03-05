@@ -138,14 +138,17 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         sw_threads = 4*omp_threads # Cori uses hyperthreading by default
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
 
