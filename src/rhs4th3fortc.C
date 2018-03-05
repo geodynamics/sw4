@@ -76,14 +76,14 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    ASSERT_MANAGED(a_bope);
    ASSERT_MANAGED(a_ghcof);
    {
-   RAJA::RangeSegment k_range(k1,k2+1);
-   RAJA::RangeSegment j_range(jfirst+2,jlast-1);
-   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-   RAJA::nested::forall(RHS4_EXEC_POL{},
-			RAJA::make_tuple(k_range, j_range,i_range),
-			[=]RAJA_DEVICE (int k,int j,int i) {
-			  float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
-			  float_sw4 r1, r2, r3;
+     RAJA::RangeSegment k_range(k1,k2+1);
+     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+     RAJA::nested::forall(RHS4_EXEC_POL{},
+			  RAJA::make_tuple(k_range, j_range,i_range),
+			  [=]RAJA_DEVICE (int k,int j,int i) {
+			    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			    float_sw4 r1, r2, r3;
 /* from inner_loop_4a, 28x3 = 84 ops */
             mux1 = mu(i-1,j,k)*strx(i-1)-
 	       tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));

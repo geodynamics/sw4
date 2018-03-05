@@ -139,6 +139,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // pre-compute UnextcInterp
    Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
 // using k=1 since it comes from Unextc(c,ic,jc,1)
+   
 #pragma omp parallel 
    for (int c=1; c<=3; c++)
    {

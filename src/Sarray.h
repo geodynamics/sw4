@@ -51,13 +51,13 @@ class Sarray
 public:
 //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
    Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
-   Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
-   Sarray( int nc, int iend, int jend, int kend );
-   Sarray( int iend, int jend, int kend );
-   Sarray( const Sarray& u );
-   Sarray( Sarray& u, int nc=-1 );
-   Sarray();
-  ~Sarray() {if( m_data != 0 ) ::operator delete[](m_data,Managed);}
+  Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
+   __host__ __device__ Sarray( int nc, int iend, int jend, int kend );
+   __host__ __device__ Sarray( int iend, int jend, int kend );
+   __host__ __device__ Sarray( const Sarray& u );
+   __host__ __device__ Sarray( Sarray& u, int nc=-1 );
+   __host__ __device__ Sarray();
+  //~Sarray() {if( m_data != 0 ) ::operator delete[](m_data,Managed);}
 //   void define( CartesianProcessGrid* cartcomm, int nc );
    void define( int iend, int jend, int kend );
    void define( int nc, int iend, int jend, int kend );
@@ -80,7 +80,7 @@ public:
    inline bool in_range( int c, int i, int j, int k )
      {return 1 <= c && c <= m_nc && m_ib <= i && i <= m_ie && m_jb <= j 
 	&& j <= m_je && m_kb <= k && k <= m_ke ;}
-   inline float_sw4& operator()( int c, int i, int j, int k )
+  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k ) const
    {
 #ifdef BZ_DEBUG
       VERIFY2( in_range(c,i,j,k), "Error Index (c,i,j,k) = (" << c << "," << i << "," << j << "," << k
@@ -89,7 +89,7 @@ public:
 #endif
 //      return m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
       return m_data[m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k];}
-   inline float_sw4& operator()( int i, int j, int k )
+   __host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const
       {
 #ifdef BZ_DEBUG
          if (!in_range(1,i,j,k))
@@ -165,5 +165,15 @@ private:
 //    bool m_mpi_datatype_initialized;
 //    MPI_Datatype m_local_block_type;
 };
-
+class SView{
+public:
+  float_sw4 *data;
+  size_t base,offc,offi,offj,offk;
+  SView(float_sw4 *data,size_t base, size_t offc,size_t offi, size_t offj, size_t offk) ;
+  //SView(SView &in){}
+  SView(Sarray &x);
+  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k ) const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
+  
+__host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const { return data[base + offc + i *offi + j*offj+ k*offk];}
+};
 #endif

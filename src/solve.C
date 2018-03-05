@@ -34,7 +34,8 @@
 #include "impose_cartesian_bc.h"
 #include "cf_interface.h"
 #include "f_interface.h"
-
+#include "Mspace.h"
+#include "policies.h"
 #define SQR(x) ((x)*(x))
 
 //--------------------------------------------------------------------
@@ -2620,45 +2621,64 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
    int ifirst = a_Up.m_ib;
    int jfirst = a_Up.m_jb;
 #define str_x(i) a_str_x[(i-ifirst)]   
-#define str_y(j) a_str_y[(j-jfirst)]   
-
-#pragma omp parallel for
-   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
-#pragma omp simd
-      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
-      {
+#define str_y(j) a_str_y[(j-jfirst)]
+   Sarray &mMug = mMu[g];
+   Sarray &mLambdag = mLambda[g];
+   float_sw4 *Up_data = a_Up.c_ptr();
+   size_t m_base,m_offc,m_offi,m_offj,m_offk;
+   m_base = a_Up.m_base;
+   m_offc = a_Up.m_offc;
+   m_offi = a_Up.m_offi;
+   m_offj = a_Up.m_offj;
+   m_offk = a_Up.m_offk;
+   SView &UpV = *new(Host) SView(a_Up);
+   SView &BV = *new(Host) SView(B);
+   SView &mMuV = *new(Host) SView(mMu[g]);
+   SView &mLambdaV = *new(Host) SView(mLambda[g]);
+#define Up(c,i,j,k) Up_data[m_base+m_offc*(c)+m_offi*(i)+m_offj*(j)+m_offk*(k)]
+   RAJA::RangeSegment j_range(B.m_jb+2,B.m_je-1);
+   RAJA::RangeSegment i_range(B.m_ib+2,B.m_ie-1);
+   RAJA::nested::forall(ICSTRESS_EXEC_POL{},
+			RAJA::make_tuple(j_range,i_range),
+			[=]RAJA_DEVICE (int j,int i) {
+			  //#pragma omp parallel for
+			  //   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+			  //#pragma omp simd
+			  //     for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+			  //      {
 	 float_sw4 uz, vz, wz;	 
 	 uz = vz = wz = 0;
 	 if( upper )
 	 {
 	    for( int m=0 ; m <= 4 ; m++ )
 	    {
-	       uz += m_sbop[m]*a_Up(1,i,j,k+m-1);
-	       vz += m_sbop[m]*a_Up(2,i,j,k+m-1);
-	       wz += m_sbop[m]*a_Up(3,i,j,k+m-1);
+	       uz += m_sbop[m]*UpV(1,i,j,k+m-1);
+	       vz += m_sbop[m]*UpV(2,i,j,k+m-1);
+	       wz += m_sbop[m]*UpV(3,i,j,k+m-1);
 	    }
 	 }
 	 else
 	 {
 	    for( int m=0 ; m <= 4 ; m++ )
 	    {
-	       uz -= m_sbop[m]*a_Up(1,i,j,k+1-m);
-	       vz -= m_sbop[m]*a_Up(2,i,j,k+1-m);
-	       wz -= m_sbop[m]*a_Up(3,i,j,k+1-m);
+	       uz -= m_sbop[m]*UpV(1,i,j,k+1-m);
+	       vz -= m_sbop[m]*UpV(2,i,j,k+1-m);
+	       wz -= m_sbop[m]*UpV(3,i,j,k+1-m);
 	    }
 	 }
-         B(1,i,j,k) = ih*mMu[g](i,j,k)*(
-            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
-                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
-         B(2,i,j,k) = ih*mMu[g](i,j,k)*(
-            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
-                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
+         BV(1,i,j,k) = ih*mMuV(i,j,k)*(
+            str_x(i)*( a2*(UpV(3,i+2,j,k)-UpV(3,i-2,j,k))+
+                       a1*(UpV(3,i+1,j,k)-UpV(3,i-1,j,k))) + (uz)  );
+         BV(2,i,j,k) = ih*mMuV(i,j,k)*(
+            str_y(j)*( a2*(UpV(3,i,j+2,k)-UpV(3,i,j-2,k))+
+                       a1*(UpV(3,i,j+1,k)-UpV(3,i,j-1,k))) +
             (vz)  );
-         B(3,i,j,k) = ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
-                             str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
-                             str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+         BV(3,i,j,k) = ih*((2*mMuV(i,j,k)+mLambdaV(i,j,k))*(wz) + mLambdaV(i,j,k)*(
+                             str_x(i)*( a2*(UpV(1,i+2,j,k)-UpV(1,i-2,j,k))+a1*(UpV(1,i+1,j,k)-UpV(1,i-1,j,k))) +
+                             str_y(j)*( a2*(UpV(2,i,j+2,k)-UpV(2,i,j-2,k))+a1*(UpV(2,i,j+1,k)-UpV(2,i,j-1,k))) ) );
          
-      }
+			});
+#undef Up
 #undef str_x
 #undef str_y
 }
