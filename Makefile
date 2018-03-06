@@ -40,6 +40,7 @@ else
    FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
    CXXFLAGS =  -I../src
+   CXXFLAGS2 =  -I../src	
    CFLAGS   = -O3 
 endif
 
@@ -120,6 +121,7 @@ else
 endif
 
 ifdef EXTRA_CXX_FLAGS
+   CXXFLAGS2 += $(EXTRA_CXX_FLAGS2)
    CXXFLAGS += $(EXTRA_CXX_FLAGS)
 endif
 
@@ -164,6 +166,7 @@ ifeq ($(prec),single)
    CXXFLAGS += -I../src/float
 else
    CXXFLAGS += -I../src/double
+   CXXFLAGS2 += -I../src/double	
 endif
 
 ifdef EXTRA_LINK_FLAGS
@@ -228,7 +231,8 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+	cd $(builddir); nvcc -arch=sm_60 -dlink -o file_link.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart
+	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
@@ -265,6 +269,10 @@ $(builddir)/%.o:src/%.f90
 $(builddir)/%.o:src/quadpack/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FC_FIXED_FORMAT) $(FFLAGS) -c ../$<
+
+$(builddir)/main.o:src/main.C
+	/bin/mkdir -p $(builddir)
+	 cd $(builddir); $(CXX) $(CXXFLAGS2) -c ../src/main.C
 
 $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)

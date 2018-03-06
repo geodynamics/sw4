@@ -1,5 +1,7 @@
 #include "EW.h"
 #include "cf_interface.h"
+#include "Mspace.h"
+#include "policies.h"
 
 #define SQR(x) ((x)*(x))
 
@@ -50,12 +52,16 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    float_sw4 *a_strf_y  = m_sg_str_y[gf];
 
 // stretching on the coarse side
-#define strc_x(i) a_strc_x[(i-m_iStart[gc])]   
-#define strc_y(j) a_strc_y[(j-m_jStart[gc])]   
+   const int miStartgc = m_iStart[gc];
+   const int mjStartgc = m_jStart[gc];
+#define strc_x(i) a_strc_x[(i-miStartgc)]   
+#define strc_y(j) a_strc_y[(j-mjStartgc)]   
 
 // stretching on the fine side
-#define strf_x(i) a_strf_x[(i-m_iStart[gf])]   
-#define strf_y(j) a_strf_y[(j-m_jStart[gf])]   
+   const int miStartgf = m_iStart[gf];
+   const int mjStartgf = m_jStart[gf];
+#define strf_x(i) a_strf_x[(i-miStartgf)]   
+#define strf_y(j) a_strf_y[(j-mjStartgf)]   
 
       
    const float_sw4 i16 = 1.0/16;
@@ -84,26 +90,45 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    jfe = m_jEndInt[gf];
 
    nkf = m_global_nz[gf];
+   
+   SView &BfV = *new(Host) SView(Bf);
 
-#pragma omp parallel for
-   for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
-      for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
-      {
+   RAJA::RangeSegment j_range(m_jStart[gf],m_jEnd[gf]+1);
+   RAJA::RangeSegment i_range(m_iStart[gf],m_iEnd[gf]+1);
+
+   
+   RAJA::nested::forall(CONSINTP_EXEC_POL1{},
+			RAJA::make_tuple(j_range,i_range),
+			[=]RAJA_DEVICE (int j,int i) {
+// #pragma omp parallel for
+//    for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
+//       for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
+//       {
 // include stretching terms in Bf
+#pragma unroll
          for (int c=1; c<=3; c++)
          {
-            Bf(c,i,j,nkf) = Bf(c,i,j,nkf)/(strf_x(i)*strf_y(j));
+            BfV(c,i,j,nkf) = BfV(c,i,j,nkf)/(strf_x(i)*strf_y(j));
          }
-      }
+			});
 
-#pragma omp parallel for
-   for( int jc=m_jStart[gc] ; jc<=m_jEnd[gc] ; jc++ )
-      for( int ic=m_iStart[gc] ; ic<=m_iEnd[gc] ; ic++ )
-      {
+   SView &BcV = *new(Host) SView(Bc);
+   
+   RAJA::RangeSegment jc_range(m_jStart[gc],m_jEnd[gc]+1);
+   RAJA::RangeSegment ic_range(m_iStart[gc],m_iEnd[gc]+1);
+   
+   RAJA::nested::forall(CONSINTP_EXEC_POL1{},
+			RAJA::make_tuple(jc_range,ic_range),
+			[=]RAJA_DEVICE (int jc,int ic) {
+// #pragma omp parallel for
+//    for( int jc=m_jStart[gc] ; jc<=m_jEnd[gc] ; jc++ )
+//       for( int ic=m_iStart[gc] ; ic<=m_iEnd[gc] ; ic++ )
+//       {
 // scale normal stress by stretching
+#pragma unroll
          for (int c=1; c<=3; c++)
-            Bc(c,ic,jc,1) = Bc(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
-      }
+	   BcV(c,ic,jc,1) = BcV(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
+			});
       
 // pre-compute BfRestrict
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 

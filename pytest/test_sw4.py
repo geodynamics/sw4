@@ -1,4 +1,4 @@
-#!/collab/usr/gapps/python/build/spack-coralea.2/opt/spack/linux-rhel7-ppc64le/gcc-4.9.3/python-3.6.4-wzsyxykktcm7ec6ukj6kg46jglyqyyln/bin/python3
+#!/usr/tcetmp/bin/python3-3.6.4
 
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads

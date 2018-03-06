@@ -1000,7 +1000,7 @@ void Sarray::prefetch(int device){
   
 #endif
 }
-SView::SView(float_sw4 *data,size_t base, size_t offc,size_t offi, size_t offj, size_t offk):data{data},base{base},offc{offc},offi{offi},offj{offj},offk{offk}{}
+SView::SView(float_sw4 *data,ssize_t base, size_t offc,size_t offi, size_t offj, size_t offk):data{data},base{base},offc{offc},offi{offi},offj{offj},offk{offk}{}
 SView::SView(Sarray &x){
   data = x.c_ptr();
   base = x.m_base;
@@ -1008,4 +1008,5 @@ SView::SView(Sarray &x){
   offi = x.m_offi;
   offj = x.m_offj;
   offk = x.m_offk;
+  //std::cout<<"Sview created with "<<data<<" base = "<<base<<" offc = "<<offc<<" offi = "<<offi<<" offj = "<<offj<<" offk = "<<offk<<"\n";
 }

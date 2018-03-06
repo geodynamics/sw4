@@ -1915,9 +1915,9 @@ void EW::assign_supergrid_damping_arrays()
     m_sg_dc_y[g]  = new float_sw4[m_jEnd[g]-m_jStart[g]+1];
     m_sg_dc_z[g]  = new float_sw4[m_kEnd[g]-m_kStart[g]+1];
 
-    m_sg_str_x[g] = new float_sw4[m_iEnd[g]-m_iStart[g]+1];
-    m_sg_str_y[g] = new float_sw4[m_jEnd[g]-m_jStart[g]+1];
-    m_sg_str_z[g] = new float_sw4[m_kEnd[g]-m_kStart[g]+1];
+    m_sg_str_x[g] = SW4_NEW(Managed,float_sw4[m_iEnd[g]-m_iStart[g]+1]);
+    m_sg_str_y[g] = SW4_NEW(Managed,float_sw4[m_jEnd[g]-m_jStart[g]+1]);
+    m_sg_str_z[g] = SW4_NEW(Managed,float_sw4[m_kEnd[g]-m_kStart[g]+1]);
 
 // new corner taper functions to reduce strength of damping near the edges and corners
     m_sg_corner_x[g] = new float_sw4[m_iEnd[g]-m_iStart[g]+1];

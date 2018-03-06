@@ -50,13 +50,13 @@ class Sarray
 {
 public:
 //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
-   Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
+  Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
   Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
-   __host__ __device__ Sarray( int nc, int iend, int jend, int kend );
-   __host__ __device__ Sarray( int iend, int jend, int kend );
-   __host__ __device__ Sarray( const Sarray& u );
-   __host__ __device__ Sarray( Sarray& u, int nc=-1 );
-   __host__ __device__ Sarray();
+  Sarray( int nc, int iend, int jend, int kend );
+  Sarray( int iend, int jend, int kend );
+  Sarray( const Sarray& u );
+  Sarray( Sarray& u, int nc=-1 );
+  Sarray();
   //~Sarray() {if( m_data != 0 ) ::operator delete[](m_data,Managed);}
 //   void define( CartesianProcessGrid* cartcomm, int nc );
    void define( int iend, int jend, int kend );
@@ -80,7 +80,7 @@ public:
    inline bool in_range( int c, int i, int j, int k )
      {return 1 <= c && c <= m_nc && m_ib <= i && i <= m_ie && m_jb <= j 
 	&& j <= m_je && m_kb <= k && k <= m_ke ;}
-  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k ) const
+  inline float_sw4& operator()( int c, int i, int j, int k ) const
    {
 #ifdef BZ_DEBUG
       VERIFY2( in_range(c,i,j,k), "Error Index (c,i,j,k) = (" << c << "," << i << "," << j << "," << k
@@ -89,7 +89,7 @@ public:
 #endif
 //      return m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
       return m_data[m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k];}
-   __host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const
+   inline float_sw4& operator()( int i, int j, int k ) const
       {
 #ifdef BZ_DEBUG
          if (!in_range(1,i,j,k))
@@ -156,8 +156,9 @@ public:
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
   void prefetch(int device=0);
+  float_sw4* m_data; // Used to be private
 private:
-   float_sw4* m_data;
+
    float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
@@ -168,12 +169,15 @@ private:
 class SView{
 public:
   float_sw4 *data;
-  size_t base,offc,offi,offj,offk;
-  SView(float_sw4 *data,size_t base, size_t offc,size_t offi, size_t offj, size_t offk) ;
+  ssize_t base;
+  size_t offc,offi,offj,offk;
+  SView(float_sw4 *data,ssize_t base, size_t offc,size_t offi, size_t offj, size_t offk) ;
   //SView(SView &in){}
   SView(Sarray &x);
-  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k ) const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
+  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k )  const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
   
 __host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const { return data[base + offc + i *offi + j*offj+ k*offk];}
+  __host__ __device__ void print(bool cond) const { 
+    if (cond) printf("SView base = %d offi = %d %d %d\n",int(base),int(offi),int(offj),int(offk));}
 };
 #endif
