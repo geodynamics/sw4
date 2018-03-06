@@ -92,7 +92,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    nkf = m_global_nz[gf];
    
    SView &BfV = *new(Host) SView(Bf);
-
+   Bf.prefetch();
    RAJA::RangeSegment j_range(m_jStart[gf],m_jEnd[gf]+1);
    RAJA::RangeSegment i_range(m_iStart[gf],m_iEnd[gf]+1);
 
@@ -113,7 +113,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			});
 
    SView &BcV = *new(Host) SView(Bc);
-   
+   Bc.prefetch();
    RAJA::RangeSegment jc_range(m_jStart[gc],m_jEnd[gc]+1);
    RAJA::RangeSegment ic_range(m_iStart[gc],m_iEnd[gc]+1);
    
@@ -132,25 +132,32 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       
 // pre-compute BfRestrict
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
+   BfRestrict.prefetch();
 // using nkf since it comes from Uf(c,i,j,nkf)
-
-#pragma omp parallel
-   for (int c=1; c<=3; c++)
-#pragma omp for
-      for( int jc= jcb ; jc <= jce ; jc++ )
-#pragma omp simd
-         for( int ic= icb ; ic <= ice ; ic++ )
-         {
+   SView &BfRestrictV = *new(Host) SView(BfRestrict);
+   RAJA::RangeSegment c_range(1,4);
+   RAJA::RangeSegment j3_range(jcb,jce+1);
+   RAJA::RangeSegment i3_range(icb,ice+1);
+   RAJA::nested::forall(RHS4_EXEC_POL{},
+			RAJA::make_tuple(c_range, j3_range,i3_range),
+			[=]RAJA_DEVICE (int c,int jc,int ic) {
+// #pragma omp parallel
+//    for (int c=1; c<=3; c++)
+// #pragma omp for
+//       for( int jc= jcb ; jc <= jce ; jc++ )
+// #pragma omp simd
+//          for( int ic= icb ; ic <= ice ; ic++ )
+//          {
 // i odd, j odd
             int i=2*ic-1, j=2*jc-1;
-            BfRestrict(c,ic,jc,nkf)  = i1024*( 
-               Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
-               +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
-               +16*(-Bf(c,i,  j-3,nkf)+9*Bf(c,i,  j-1,nkf)+16*Bf(c,i,  j,nkf)+9*Bf(c,i,  j+1,nkf)-Bf(c,i,  j+3,nkf)) // with Bf(i,j)
-               +9*(-Bf(c,i+1,j-3,nkf)+9*Bf(c,i+1,j-1,nkf)+16*Bf(c,i+1,j,nkf)+9*Bf(c,i+1,j+1,nkf)-Bf(c,i+1,j+3,nkf)) +
-               Bf(c,i+3,j-3,nkf)-9*Bf(c,i+3,j-1,nkf)-16*Bf(c,i+3,j,nkf)-9*Bf(c,i+3,j+1,nkf)+Bf(c,i+3,j+3,nkf)
+            BfRestrictV(c,ic,jc,nkf)  = i1024*( 
+               BfV(c,i-3,j-3,nkf)-9*BfV(c,i-3,j-1,nkf)-16*BfV(c,i-3,j,nkf)-9*BfV(c,i-3,j+1,nkf)+BfV(c,i-3,j+3,nkf)
+               +9*(-BfV(c,i-1,j-3,nkf)+9*BfV(c,i-1,j-1,nkf)+16*BfV(c,i-1,j,nkf)+9*BfV(c,i-1,j+1,nkf)-BfV(c,i-1,j+3,nkf))
+               +16*(-BfV(c,i,  j-3,nkf)+9*BfV(c,i,  j-1,nkf)+16*BfV(c,i,  j,nkf)+9*BfV(c,i,  j+1,nkf)-BfV(c,i,  j+3,nkf)) // with Bf(i,j)
+               +9*(-BfV(c,i+1,j-3,nkf)+9*BfV(c,i+1,j-1,nkf)+16*BfV(c,i+1,j,nkf)+9*BfV(c,i+1,j+1,nkf)-BfV(c,i+1,j+3,nkf)) +
+               BfV(c,i+3,j-3,nkf)-9*BfV(c,i+3,j-1,nkf)-16*BfV(c,i+3,j,nkf)-9*BfV(c,i+3,j+1,nkf)+BfV(c,i+3,j+3,nkf)
                );
-         }
+			  });
 
 // index bounds for loops below
    int ifodd = ifb, ifeven= ifb;
@@ -164,20 +171,29 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // pre-compute UnextcInterp
    Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
 // using k=1 since it comes from Unextc(c,ic,jc,1)
-   
+   SView &UnextcInterpV = *new(Host) SView(UnextcInterp);
+   UnextcInterp.prefetch();
+   SView &UnextcV = *new(Host) SView(Unextc);
+   Unextc.prefetch();
 #pragma omp parallel 
    for (int c=1; c<=3; c++)
    {
 // this works but is a bit awkward
-#pragma omp for
-      for( int j=jfeven; j <= jfe ; j+=2 ) // odd-i, even-j
-#pragma omp simd
-         for( int i=ifodd ; i <= ife ; i+=2 )
-         {
+     RAJA::TypedRangeStrideSegment<long> j_range(jfeven,jfe+1,2);
+     RAJA::TypedRangeStrideSegment<long> i_range(ifodd, ife+1,2);
+   
+     RAJA::nested::forall(CONSINTP_EXEC_POL4{},
+			RAJA::make_tuple(j_range,i_range),
+			[=]RAJA_DEVICE (int j,int i) {
+#// pragma omp for
+//       for( int j=jfeven; j <= jfe ; j+=2 ) // odd-i, even-j
+// #pragma omp simd
+//          for( int i=ifodd ; i <= ife ; i+=2 )
+//          {
             int ic = (i+1)/2; 
             int jc = j/2;
-            UnextcInterp(c,i,j,1) = i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
-}
+            UnextcInterpV(c,i,j,1) = i16*(-UnextcV(c,ic,jc-1,1)+9*(UnextcV(c,ic,jc,1)+UnextcV(c,ic,jc+1,1))-UnextcV(c,ic,jc+2,1));
+			});
 // this works but is a bit awkward
 #pragma omp for
       for( int j=jfodd; j <= jfe ; j+=2 ) // odd-j
