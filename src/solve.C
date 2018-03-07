@@ -2579,19 +2579,37 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    //    }
    // } // end else... (not twilight, rayleigh_test, or energy_test)
    
-   float_sw4 cof = mDt*mDt;
+   const float_sw4 cof = mDt*mDt;
 // initialize
    Unext.set_to_zero();
-#pragma omp parallel for
-   for( int j=jb+2 ; j <= je-2 ; j++ )
-#pragma omp simd
-      for( int i=ib+2 ; i <= ie-2 ; i++ )
-      {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
-	 Unext(1,i,j,kic) = 2*a_Up(1,i,j,kic) - a_U(1,i,j,kic) + irho*(Lu(1,i,j,kic)+F(1,i,j,kic)); //+f(1,i,j,kic));
-	 Unext(2,i,j,kic) = 2*a_Up(2,i,j,kic) - a_U(2,i,j,kic) + irho*(Lu(2,i,j,kic)+F(2,i,j,kic)); //+f(2,i,j,kic));
-	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+F(3,i,j,kic)); //+f(3,i,j,kic));
-      }
+   SView &UnextV = Unext.view;
+   SView &a_UpV = a_Up.view;
+   SView &a_UV = a_U.view;
+   SView &LuV = Lu.view;
+   SView &FV = F.view;
+   SView &mRhogV = mRho[g].view;
+
+   // SView &UnextV = *new SView(Unext);
+   // SView &a_UpV = *new SView(a_Up);
+   // SView &a_UV = *new SView(a_U);
+   // SView &LuV = *new SView(Lu);
+   // SView &FV = *new SView(F);
+   // SView &mRhogV = *new SView(mRho[g]);
+   RAJA::RangeSegment j_range(jb+2,je-1);
+   RAJA::RangeSegment i_range(ib+2,ie-1);
+   RAJA::nested::forall(PRELIM_CORR_EXEC_POL1{},
+			RAJA::make_tuple(j_range,i_range),
+			[=]RAJA_DEVICE (int j,int i) {
+#// pragma omp parallel for
+//    for( int j=jb+2 ; j <= je-2 ; j++ )
+// #pragma omp simd
+//       for( int i=ib+2 ; i <= ie-2 ; i++ )
+//       {
+	 float_sw4 irho=cof/mRhogV(i,j,kic);
+	 UnextV(1,i,j,kic) = 2*a_UpV(1,i,j,kic) - a_UV(1,i,j,kic) + irho*(LuV(1,i,j,kic)+FV(1,i,j,kic)); //+f(1,i,j,kic));
+	 UnextV(2,i,j,kic) = 2*a_UpV(2,i,j,kic) - a_UV(2,i,j,kic) + irho*(LuV(2,i,j,kic)+FV(2,i,j,kic)); //+f(2,i,j,kic));
+	 UnextV(3,i,j,kic) = 2*a_UpV(3,i,j,kic) - a_UV(3,i,j,kic) + irho*(LuV(3,i,j,kic)+FV(3,i,j,kic)); //+f(3,i,j,kic));
+			}); SYNC_DEVICE;
 // add in super-grid damping terms
    if (mOrder==2 && usingSupergrid()) // only needed for 2nd order time-stepping. Assume 4th order AD, Cartesian grid
    {
