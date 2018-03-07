@@ -2639,17 +2639,15 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
    ASSERT_MANAGED(m_sbop);
    ASSERT_MANAGED(a_str_x);
    ASSERT_MANAGED(a_str_y);
-   SView &UpV = *new(Host) SView(a_Up);
-   SView &BV = *new(Host) SView(B);
-   SView &mMuV = *new(Host) SView(mMu[g]);
-   SView &mLambdaV = *new(Host) SView(mLambda[g]);
-   //UpV.print(true);
-   //std::cout<<"And we are in void EW::compute_icstresses\n";
+   SView &UpV = a_Up.view;
+   SView &BV = B.view;
+   SView &mMuV = mMu[g].view;
+   SView &mLambdaV = mLambda[g].view;
+
    int istart,jstart;
    istart = B.m_ib+2;
    jstart = B.m_jb+2;
-   //BV(1,istart,jstart,k)=0.0;
-   //#define Up(c,i,j,k) Up_data[m_base+m_offc*(c)+m_offi*(i)+m_offj*(j)+m_offk*(k)]
+   
    a_Up.prefetch();
    B.prefetch();
    mMu[g].prefetch();

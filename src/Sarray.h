@@ -45,7 +45,29 @@
 using std::string;
 
 class EWCuda;
-
+class Sarray;
+class SView{
+public:
+  float_sw4 *data;
+  ssize_t base;
+  size_t offc,offi,offj,offk;
+  SView(float_sw4 *data,ssize_t base, size_t offc,size_t offi, size_t offj, size_t offk) ;
+  //SView(SView &in){}
+  SView(Sarray &x);
+  SView();
+  bool compare(SView &in){
+    if ((in.data!=data) || (in.base!=base) || (in.offi!=offi) || (in.offj!=offj) || (in.offk!=offk)){
+      return true;} 
+      else
+	return false;
+  }
+  void set(Sarray &x);
+  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k )  const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
+  
+__host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const { return data[base + offc + i *offi + j*offj+ k*offk];}
+  __host__ __device__ void print(bool cond) const { 
+    if (cond) printf("SView pointer = %p base = %d offi = %d %d %d\n",data,int(base),int(offi),int(offj),int(offk));}
+};
 class Sarray
 {
 public:
@@ -72,7 +94,7 @@ public:
 #else
    inline float_sw4* dev_ptr() {return dev_data;}
 #endif
-   void reference( float_sw4* new_data ){m_data = new_data; }
+  void reference( float_sw4* new_data ){m_data = new_data; view.set(*this);}
    void reference_dev( float_sw4* new_data ){dev_data = new_data; }
 
    //   inline float_sw4& operator()( int c, int i, int j, int k )
@@ -157,6 +179,7 @@ public:
    int m_nc, m_ni, m_nj, m_nk;
   void prefetch(int device=0);
   float_sw4* m_data; // Used to be private
+  SView view;
 private:
 
    float_sw4* dev_data;
@@ -166,18 +189,5 @@ private:
 //    bool m_mpi_datatype_initialized;
 //    MPI_Datatype m_local_block_type;
 };
-class SView{
-public:
-  float_sw4 *data;
-  ssize_t base;
-  size_t offc,offi,offj,offk;
-  SView(float_sw4 *data,ssize_t base, size_t offc,size_t offi, size_t offj, size_t offk) ;
-  //SView(SView &in){}
-  SView(Sarray &x);
-  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k )  const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
-  
-__host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const { return data[base + offc + i *offi + j*offj+ k*offk];}
-  __host__ __device__ void print(bool cond) const { 
-    if (cond) printf("SView base = %d offi = %d %d %d\n",int(base),int(offi),int(offj),int(offk));}
-};
+
 #endif

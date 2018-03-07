@@ -38,6 +38,8 @@ using CONSINTP_EXEC_POL4 =
   RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<4>>, 
   RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<4>>> >;
 
+
+#define SYNC_DEVICE cudaDeviceSynchronize()
 #else
 
 using RHS4_EXEC_POL =
@@ -68,6 +70,8 @@ using CONSINTP_EXEC_POL3 =
 using CONSINTP_EXEC_POL4 = RAJA::nested::Policy< 
   RAJA::nested::For<0, RAJA::parallel_exec>,
   RAJA::nested::For<1, RAJA::simd_exec> >;
+
+#define SYNC_DEVICE
 
 #endif
 

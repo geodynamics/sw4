@@ -91,7 +91,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
    nkf = m_global_nz[gf];
    
-   SView &BfV = *new(Host) SView(Bf);
+   SView &BfV = Bf.view;
    Bf.prefetch();
    RAJA::RangeSegment j_range(m_jStart[gf],m_jEnd[gf]+1);
    RAJA::RangeSegment i_range(m_iStart[gf],m_iEnd[gf]+1);
@@ -110,9 +110,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
          {
             BfV(c,i,j,nkf) = BfV(c,i,j,nkf)/(strf_x(i)*strf_y(j));
          }
-			});
+			}); SYNC_DEVICE;
 
-   SView &BcV = *new(Host) SView(Bc);
+   SView &BcV = Bc.view;
    Bc.prefetch();
    RAJA::RangeSegment jc_range(m_jStart[gc],m_jEnd[gc]+1);
    RAJA::RangeSegment ic_range(m_iStart[gc],m_iEnd[gc]+1);
@@ -128,13 +128,13 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 #pragma unroll
          for (int c=1; c<=3; c++)
 	   BcV(c,ic,jc,1) = BcV(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
-			});
+			}); SYNC_DEVICE;
       
 // pre-compute BfRestrict
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
    BfRestrict.prefetch();
 // using nkf since it comes from Uf(c,i,j,nkf)
-   SView &BfRestrictV = *new(Host) SView(BfRestrict);
+   SView &BfRestrictV = BfRestrict.view;
    RAJA::RangeSegment c_range(1,4);
    RAJA::RangeSegment j3_range(jcb,jce+1);
    RAJA::RangeSegment i3_range(icb,ice+1);
@@ -157,7 +157,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
                +9*(-BfV(c,i+1,j-3,nkf)+9*BfV(c,i+1,j-1,nkf)+16*BfV(c,i+1,j,nkf)+9*BfV(c,i+1,j+1,nkf)-BfV(c,i+1,j+3,nkf)) +
                BfV(c,i+3,j-3,nkf)-9*BfV(c,i+3,j-1,nkf)-16*BfV(c,i+3,j,nkf)-9*BfV(c,i+3,j+1,nkf)+BfV(c,i+3,j+3,nkf)
                );
-			  });
+			  }); SYNC_DEVICE;
 
 // index bounds for loops below
    int ifodd = ifb, ifeven= ifb;
@@ -171,19 +171,20 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // pre-compute UnextcInterp
    Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
 // using k=1 since it comes from Unextc(c,ic,jc,1)
-   SView &UnextcInterpV = *new(Host) SView(UnextcInterp);
+   SView &UnextcInterpV = UnextcInterp.view;
    UnextcInterp.prefetch();
-   SView &UnextcV = *new(Host) SView(Unextc);
+   SView &UnextcV = Unextc.view;
    Unextc.prefetch();
 #pragma omp parallel 
    for (int c=1; c<=3; c++)
    {
 // this works but is a bit awkward
-     RAJA::TypedRangeStrideSegment<long> j_range(jfeven,jfe+1,2);
-     RAJA::TypedRangeStrideSegment<long> i_range(ifodd, ife+1,2);
+// The instantiaion below needs to be long for Raja master. bug is fixed in developer branch
+     RAJA::TypedRangeStrideSegment<long> jeven_range(jfeven,jfe+1,2);
+     RAJA::TypedRangeStrideSegment<long> iodd_range(ifodd, ife+1,2);
    
      RAJA::nested::forall(CONSINTP_EXEC_POL4{},
-			RAJA::make_tuple(j_range,i_range),
+			RAJA::make_tuple(jeven_range,iodd_range),
 			[=]RAJA_DEVICE (int j,int i) {
 #// pragma omp for
 //       for( int j=jfeven; j <= jfe ; j+=2 ) // odd-i, even-j
@@ -193,33 +194,46 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
             int ic = (i+1)/2; 
             int jc = j/2;
             UnextcInterpV(c,i,j,1) = i16*(-UnextcV(c,ic,jc-1,1)+9*(UnextcV(c,ic,jc,1)+UnextcV(c,ic,jc+1,1))-UnextcV(c,ic,jc+2,1));
-			});
+			}); 
 // this works but is a bit awkward
-#pragma omp for
-      for( int j=jfodd; j <= jfe ; j+=2 ) // odd-j
-#pragma omp simd
-         for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
-         {
+
+     RAJA::TypedRangeStrideSegment<long> jodd_range(jfodd,jfe+1,2);
+     RAJA::TypedRangeStrideSegment<long> ieven_range(ifeven, ife+1,2);
+   
+     RAJA::nested::forall(CONSINTP_EXEC_POL4{},
+			RAJA::make_tuple(jodd_range,ieven_range),
+			[=]RAJA_DEVICE (int j,int i) {
+// #pragma omp for
+//       for( int j=jfodd; j <= jfe ; j+=2 ) // odd-j
+// #pragma omp simd
+//          for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
+//          {
             int ic = i/2; 
             int jc = (j+1)/2;
-            UnextcInterp(c,i,j,1) = i16*(-Unextc(c,ic-1,jc,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic+1,jc,1))-Unextc(c,ic+2,jc,1));
-         }
+            UnextcInterpV(c,i,j,1) = i16*(-UnextcV(c,ic-1,jc,1)+9*(UnextcV(c,ic,jc,1)+UnextcV(c,ic+1,jc,1))-UnextcV(c,ic+2,jc,1));
+			}); 
 // this works but is a bit awkward
-#pragma omp for
-      for( int j=jfeven; j <= jfe ; j+=2 ) // even-j
-#pragma omp simd
-         for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
-         {
+
+
+    
+     RAJA::nested::forall(CONSINTP_EXEC_POL4{},
+			RAJA::make_tuple(jeven_range,ieven_range),
+			[=]RAJA_DEVICE (int j,int i) {
+// #pragma omp for
+//       for( int j=jfeven; j <= jfe ; j+=2 ) // even-j
+// #pragma omp simd
+//          for( int i=ifeven ; i <= ife ; i+=2 ) // even-i
+//          {
             int ic = i/2; 
             int jc = j/2;
-            UnextcInterp(c,i,j,1) =  i256*
-               ( Unextc(c,ic-1,jc-1,1)-9*(Unextc(c,ic,jc-1,1)+Unextc(c,ic+1,jc-1,1))+Unextc(c,ic+2,jc-1,1)
-      + 9*(-Unextc(c,ic-1,jc,  1)+9*(Unextc(c,ic,jc,  1)+Unextc(c,ic+1,jc,  1))-Unextc(c,ic+2,jc,  1)  
-      -Unextc(c,ic-1,jc+1,1)+9*(Unextc(c,ic,jc+1,1)+Unextc(c,ic+1,jc+1,1))-Unextc(c,ic+2,jc+1,1))
-      +Unextc(c,ic-1,jc+2,1)-9*(Unextc(c,ic,jc+2,1)+Unextc(c,ic+1,jc+2,1))+Unextc(c,ic+2,jc+2,1) );
-         }
+            UnextcInterpV(c,i,j,1) =  i256*
+               ( UnextcV(c,ic-1,jc-1,1)-9*(UnextcV(c,ic,jc-1,1)+UnextcV(c,ic+1,jc-1,1))+UnextcV(c,ic+2,jc-1,1)
+      + 9*(-UnextcV(c,ic-1,jc,  1)+9*(UnextcV(c,ic,jc,  1)+UnextcV(c,ic+1,jc,  1))-UnextcV(c,ic+2,jc,  1)  
+      -UnextcV(c,ic-1,jc+1,1)+9*(UnextcV(c,ic,jc+1,1)+UnextcV(c,ic+1,jc+1,1))-UnextcV(c,ic+2,jc+1,1))
+      +UnextcV(c,ic-1,jc+2,1)-9*(UnextcV(c,ic,jc+2,1)+UnextcV(c,ic+1,jc+2,1))+UnextcV(c,ic+2,jc+2,1) );
+			});
 }  // end for c=1,3
-
+   SYNC_DEVICE;
 // Allocate space for the updated values of Uf and Uc (ghost points only)
    Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0); // only one k-index
    Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1); // the k-index is arbitrary, 
