@@ -32,22 +32,18 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
    
-  //   const float_sw4 a1   = 0;
-const float_sw4 i6   = 1.0/6;
+  const float_sw4 i6   = 1.0/6;
   const float_sw4 i12  = 1.0/12;
   const float_sw4 i144 = 1.0/144;
   const float_sw4 tf   = 0.75;
 
   const int ni    = ilast-ifirst+1;
   const int nij   = ni*(jlast-jfirst+1);
-  const int nijk  = nij*(klast-kfirst+1);
   const int nijku  = nij*(klastu-kfirstu+1);
   const int nijkw  = nij*(klastw-kfirstw+1);
   const int base  =  -(ifirst+ni*jfirst+nij*kfirst);
   const int base3u = -(ifirst+ni*jfirst+nij*kfirstu+nijku);
   const int base3w = -(ifirst+ni*jfirst+nij*kfirstw+nijkw);
-  //   const int nic  = 3*ni;
-  //   const int nijc = 3*nij;
 
   float_sw4 cof = 1.0/(h*h);
   int a1=0;
@@ -65,14 +61,8 @@ const float_sw4 i6   = 1.0/6;
 // Assume only one of three cases, upper,lower,center
 //  if k-index runs over more than one this will not work
 
-  int i, j, k, m;
-  float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
-  float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;
-  float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
-  float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
-  float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
 
-#// pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4, \
+// #pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4, \
  // 			     r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,u3zip2,u3zip1, \
  // 			     u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy, \
  // 			     mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,	\
@@ -596,7 +586,7 @@ const float_sw4 i6   = 1.0/6;
     RAJA::nested::forall(RHS4_EXEC_POL{},
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
-			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
 			   float_sw4 r1, r2, r3;
 // #pragma omp for
 //     for( k= kfirstw; k <= klastw ; k++ )

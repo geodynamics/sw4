@@ -35,22 +35,13 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int base3 = base-nijk;
-   const int nic  = 3*ni;
-   const int nijc = 3*nij;
-   const int ifirst0 = ifirst;
-   const int jfirst0 = jfirst;
-   const int kfirst0 = kfirst;
 
-   int k1, k2, kb;
-   int i, j, k, m, qb, mb, a1;
-   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
-   float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;
-   float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
-   float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
-   float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
 
+   int k1, k2;
+   
    float_sw4 cof = 1.0/(h*h);
-
+   int a1;
+   
    if( op == '=' )
       a1 = 0;
    else if( op == '+' )
@@ -310,7 +301,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	    lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
 	    lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-			}); // End of Raja loop 1
+			}); // End of rhs4th3fort_ci LOOP 1 
       if( onesided[4]==1 )
       {
 	RAJA::RangeSegment k_range(1,6+1);
@@ -319,7 +310,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	RAJA::nested::forall(RHS4_EXEC_POL{},
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
-			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
 			       float_sw4 r1, r2, r3, mu1zz, mu2zz, mu3zz,lap2mu,mucof;
 /* from inner_loop_4a */
 		  mux1 = mu(i-1,j,k)*strx(i-1)-
@@ -562,17 +553,25 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
             lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-			     }); // END OF RAJA LOOP # 2
+			     }); // End of rhs4th3fort_ci LOOP 2
       }
       if( onesided[5] == 1 )
       {
-#pragma omp for
-	 for(  k = nk-5 ; k <= nk ; k++ )
-	    for(  j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
-#pragma ivdep
-	       for(  i=ifirst+2; i<=ilast-2; i++ )
-	       {
+	RAJA::RangeSegment k_range(nk-5,nk+1);
+	RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+	RAJA::nested::forall(RHS4_EXEC_POL{},
+			     RAJA::make_tuple(k_range, j_range,i_range),
+			     [=]RAJA_DEVICE (int k,int j,int i) {
+			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
+			       float_sw4 r1, r2, r3;
+// #pragma omp for
+// 	 for(  k = nk-5 ; k <= nk ; k++ )
+// 	    for(  j=jfirst+2; j<=jlast-2; j++ )
+// #pragma simd
+// #pragma ivdep
+// 	       for(  i=ifirst+2; i<=ilast-2; i++ )
+// 	       {
 		  /* from inner_loop_4a */
 		  mux1 = mu(i-1,j,k)*strx(i-1)-
 		     tf*(mu(i,j,k)*strx(i)+mu(i-2,j,k)*strx(i-2));
@@ -613,21 +612,21 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		   muy4*(u(1,i,j+2,k)-u(1,i,j,k)) ) );
 
     /* all indices ending with 'b' are indices relative to the boundary, going into the domain (1,2,3,...)*/
-		  kb = nk-k+1;
+		  int kb = nk-k+1;
     /* all coefficient arrays (acof, bope, ghcof) should be indexed with these indices */
     /* all solution and material property arrays should be indexed with (i,j,k) */
 
 	       /* (mu*uz)_z can not be centered */
 	       /* second derivative (mu*u_z)_z at grid point z_k */
 	       /* averaging the coefficient */
-		  mu1zz = 0;
-		  mu2zz = 0;
-		  mu3zz = 0;
-		  for(  qb=1; qb <= 8 ; qb++ )
+		  float_sw4 mu1zz = 0;
+		  float_sw4 mu2zz = 0;
+		  float_sw4 mu3zz = 0;
+		  for(  int qb=1; qb <= 8 ; qb++ )
 		  {
 		     float_sw4 mucof = 0;
 		     float_sw4 lap2mu = 0;
-		     for(  mb=1; mb <= 8; mb++ )
+		     for(  int mb=1; mb <= 8; mb++ )
 		     {
 			mucof  += acof(kb,qb,mb)*mu(i,j,nk-mb+1);
 			lap2mu += acof(kb,qb,mb)*(2*mu(i,j,nk-mb+1)+la(i,j,nk-mb+1));
@@ -694,24 +693,24 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
                         mu(i,j+2,k)*(u(2,i-2,j+2,k)-u(2,i+2,j+2,k)+
 				     8*(-u(2,i-1,j+2,k)+u(2,i+1,j+2,k))) )) );
     /*   (la*w_z)_x: NOT CENTERED */
-            u3zip2=0;
-            u3zip1=0;
-            u3zim1=0;
-            u3zim2=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 u3zip2=0;
+            float_sw4 u3zip1=0;
+            float_sw4 u3zim1=0;
+            float_sw4 u3zim2=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
 	    {
 	       u3zip2 -= bope(kb,qb)*u(3,i+2,j,nk-qb+1);
 	       u3zip1 -= bope(kb,qb)*u(3,i+1,j,nk-qb+1);
 	       u3zim1 -= bope(kb,qb)*u(3,i-1,j,nk-qb+1);
 	       u3zim2 -= bope(kb,qb)*u(3,i-2,j,nk-qb+1);
 	    }
-            lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
+            float_sw4 lau3zx= i12*(-la(i+2,j,k)*u3zip2 + 8*la(i+1,j,k)*u3zip1
 			 -8*la(i-1,j,k)*u3zim1 + la(i-2,j,k)*u3zim2);
             r1 = r1 + strx(i)*lau3zx;
 
     /*   (mu*w_x)_z: NOT CENTERED */
-            mu3xz=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 mu3xz=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
               mu3xz -= bope(kb,qb)*( mu(i,j,nk-qb+1)*i12*
                   (-u(3,i+2,j,nk-qb+1) + 8*u(3,i+1,j,nk-qb+1)
 		   -8*u(3,i-1,j,nk-qb+1) + u(3,i-2,j,nk-qb+1)) );
@@ -739,24 +738,24 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
                         la(i,j+2,k)*(u(1,i-2,j+2,k)-u(1,i+2,j+2,k)+
 				     8*(-u(1,i-1,j+2,k)+u(1,i+1,j+2,k))) )) );
 	    /* (la*w_z)_y : NOT CENTERED */
-            u3zjp2=0;
-            u3zjp1=0;
-            u3zjm1=0;
-            u3zjm2=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 u3zjp2=0;
+            float_sw4 u3zjp1=0;
+            float_sw4 u3zjm1=0;
+            float_sw4 u3zjm2=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
 	    {
 	       u3zjp2 -= bope(kb,qb)*u(3,i,j+2,nk-qb+1);
 	       u3zjp1 -= bope(kb,qb)*u(3,i,j+1,nk-qb+1);
 	       u3zjm1 -= bope(kb,qb)*u(3,i,j-1,nk-qb+1);
 	       u3zjm2 -= bope(kb,qb)*u(3,i,j-2,nk-qb+1);
 	    }
-            lau3zy= i12*(-la(i,j+2,k)*u3zjp2 + 8*la(i,j+1,k)*u3zjp1
+            float_sw4 lau3zy= i12*(-la(i,j+2,k)*u3zjp2 + 8*la(i,j+1,k)*u3zjp1
 			 -8*la(i,j-1,k)*u3zjm1 + la(i,j-2,k)*u3zjm2);
             r2 = r2 + stry(j)*lau3zy;
 
 	    /* (mu*w_y)_z: NOT CENTERED */
-            mu3yz=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 mu3yz=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
               mu3yz -= bope(kb,qb)*( mu(i,j,nk-qb+1)*i12*
                   (-u(3,i,j+2,nk-qb+1) + 8*u(3,i,j+1,nk-qb+1)
                    -8*u(3,i,j-1,nk-qb+1) + u(3,i,j-2,nk-qb+1)) );
@@ -764,48 +763,48 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 
 	    /* No centered cross terms in r3 */
 	    /*  (mu*u_z)_x: NOT CENTERED */
-            u1zip2=0;
-            u1zip1=0;
-            u1zim1=0;
-            u1zim2=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 u1zip2=0;
+            float_sw4 u1zip1=0;
+            float_sw4 u1zim1=0;
+            float_sw4 u1zim2=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
 	    {
 	       u1zip2 -= bope(kb,qb)*u(1,i+2,j,nk-qb+1);
 	       u1zip1 -= bope(kb,qb)*u(1,i+1,j,nk-qb+1);
 	       u1zim1 -= bope(kb,qb)*u(1,i-1,j,nk-qb+1);
 	       u1zim2 -= bope(kb,qb)*u(1,i-2,j,nk-qb+1);
 	    }
-            mu1zx= i12*(-mu(i+2,j,k)*u1zip2 + 8*mu(i+1,j,k)*u1zip1
+            float_sw4 mu1zx= i12*(-mu(i+2,j,k)*u1zip2 + 8*mu(i+1,j,k)*u1zip1
                         -8*mu(i-1,j,k)*u1zim1 + mu(i-2,j,k)*u1zim2);
             r3 = r3 + strx(i)*mu1zx;
 
 	    /* (mu*v_z)_y: NOT CENTERED */
-            u2zjp2=0;
-            u2zjp1=0;
-            u2zjm1=0;
-            u2zjm2=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 u2zjp2=0;
+            float_sw4 u2zjp1=0;
+            float_sw4 u2zjm1=0;
+            float_sw4 u2zjm2=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
 	    {
 	       u2zjp2 -= bope(kb,qb)*u(2,i,j+2,nk-qb+1);
 	       u2zjp1 -= bope(kb,qb)*u(2,i,j+1,nk-qb+1);
 	       u2zjm1 -= bope(kb,qb)*u(2,i,j-1,nk-qb+1);
 	       u2zjm2 -= bope(kb,qb)*u(2,i,j-2,nk-qb+1);
 	    }
-            mu2zy= i12*(-mu(i,j+2,k)*u2zjp2 + 8*mu(i,j+1,k)*u2zjp1
+            float_sw4 mu2zy= i12*(-mu(i,j+2,k)*u2zjp2 + 8*mu(i,j+1,k)*u2zjp1
                         -8*mu(i,j-1,k)*u2zjm1 + mu(i,j-2,k)*u2zjm2);
             r3 = r3 + stry(j)*mu2zy;
 
 	    /*   (la*u_x)_z: NOT CENTERED */
-            lau1xz=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 lau1xz=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
               lau1xz -= bope(kb,qb)*( la(i,j,nk-qb+1)*i12*
                  (-u(1,i+2,j,nk-qb+1) + 8*u(1,i+1,j,nk-qb+1)
 	         -8*u(1,i-1,j,nk-qb+1) + u(1,i-2,j,nk-qb+1)) );
             r3 = r3 + strx(i)*lau1xz;
 
 	    /* (la*v_y)_z: NOT CENTERED */
-            lau2yz=0;
-	    for(  qb=1; qb <= 8 ; qb++ )
+            float_sw4 lau2yz=0;
+	    for(  int qb=1; qb <= 8 ; qb++ )
 	    {
               lau2yz -= bope(kb,qb)*( la(i,j,nk-qb+1)*i12*
                   (-u(2,i,j+2,nk-qb+1) + 8*u(2,i,j+1,nk-qb+1)
@@ -816,7 +815,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
             lu(1,i,j,k) = a1*lu(1,i,j,k) + cof*r1;
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
-	       }
+			     }); // End of rhs4th3fort_ci LOOP 3
       }
    }
 #undef mu
@@ -869,21 +868,22 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int base3 = base-nijk;
-   const int nic  = 3*ni;
-   const int nijc = 3*nij;
+   //const int nic  = 3*ni;
+   //const int nijc = 3*nij;
    const int ifirst0 = ifirst;
    const int jfirst0 = jfirst;
    const int kfirst0 = kfirst;
 
    int k1, k2;
-   int i, j, k, m,a1;
-   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
-   float_sw4 r1,r2,r3,mucof, mu1zz, mu2zz, mu3zz;
-   float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
-   float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
-   float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
+   // int i, j, k, m,a1;
+   // float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+   // float_sw4 r1,r2,r3,mucof, mu1zz, mu2zz, mu3zz;
+   // float_sw4 lap2mu, u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1, u3zjm2;
+   // float_sw4 lau3zy, mu3yz, mu1zx, mu2zy, u1zip2, u1zip1, u1zim1, u1zim2;
+   // float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
 
    float_sw4 cof = 1.0/(h*h);
+   int a1;
 
    if( op == '=' )
       a1 = 0;
@@ -1171,7 +1171,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	RAJA::nested::forall(RHS4_EXEC_POL{},
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
-			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
 			       float_sw4 r1, r2, r3;
 // #pragma omp for
 // 	 for( k=1 ; k<= 6 ; k++ )
@@ -1432,7 +1432,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	RAJA::nested::forall(RHS4_EXEC_POL{},
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
-			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
 			       float_sw4 r1, r2, r3;
 // #pragma omp for
 // 	 for(  k = nk-5 ; k <= nk ; k++ )
@@ -2308,7 +2308,7 @@ void ve_bndry_stress_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int
    //#define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
 #define bforcerhs(c,i,j) a_bforcerhs[base03+(i)+ni*(j)+nij*(c)]
 
-   const float_sw4 i6 = 1.0/6;
+  //const float_sw4 i6 = 1.0/6;
    const float_sw4 c1 = 2.0/3;
    const float_sw4 c2 =-1.0/12;
    const int ni    = ilast-ifirst+1;
@@ -2464,13 +2464,12 @@ void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define sgstry(j) a_stry[j-jfirst]
 #define bforcerhs(c,i,j) a_bforcerhs[base03+(i)+ni*(j)+nij*(c)]
 
-   const float_sw4 i6 = 1.0/6;
+
    const float_sw4 c1 = 2.0/3;
    const float_sw4 c2 =-1.0/12;
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);
-   //   const int base0 = -(ifirst+ni*jfirst);
    const int base0 = -(ifirst+ni*jfirst);
    const int base03 = base0 - nij;
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);

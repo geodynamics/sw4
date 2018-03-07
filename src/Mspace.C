@@ -160,7 +160,7 @@ void operator delete[](void *ptr, Space loc) throw(){
 }
 
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
-void assert_check_managed(void *ptr, char *file, int line){
+void assert_check_managed(void *ptr, const char *file, int line){
   if (ptr==NULL) return;
   pattr_t *ss = patpush(ptr,NULL);
   if (ss!=NULL)
@@ -182,7 +182,7 @@ void assert_check_managed(void *ptr, char *file, int line){
     }
   
 }
-void assert_check_host(void *ptr, char *file, int line){
+void assert_check_host(void *ptr, const char *file, int line){
   if (ptr==NULL) return;
   pattr_t *ss = patpush(ptr,NULL);
   if (ss!=NULL)

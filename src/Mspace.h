@@ -29,8 +29,8 @@ void operator delete[](void *ptr, Space loc) throw();
 #define ASSERT_HOST(ptr)\
   ( assert_check_host((ptr),__FILE__,__LINE__))
 
-void assert_check_host(void *ptr, char *file, int line);
-void assert_check_managed(void *ptr, char *file, int line);
+void assert_check_host(void *ptr, const char *file, int line);
+void assert_check_managed(void *ptr, const char *file, int line);
 
 #define PTR_PUSH(type,ptr)				\
   ( ptr_push(ptr,type,__FILE__,__LINE__))
