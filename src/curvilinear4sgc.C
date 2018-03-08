@@ -31,6 +31,9 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "sw4.h"
+#include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 
 void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
@@ -39,6 +42,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
 			char op )
 {
+  SW4_MARK_FUNCTION;
 //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
 //     *                         klast, u, mu, la, met, jac, lu, 
 //     *                         onesided, acof, bope, ghcof, strx, stry,
@@ -99,20 +103,28 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
 
-#pragma omp parallel
+   //#pragma omp parallel
    {
    int kstart = kfirst+2;
    if( onesided[4] == 1 )
    {
       kstart = 7;
    // SBP Boundary closure terms
-#pragma omp for
-      for( int k= 1; k <= 6 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma omp simd
-#pragma ivdep	 
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	    {
+      RAJA::RangeSegment k_range(1,6+1);
+      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+      RAJA::nested::forall(RHS4_EXEC_POL{},
+			  RAJA::make_tuple(k_range, j_range,i_range),
+			  [=]RAJA_DEVICE (int k,int j,int i) {
+			    //float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
+			    //float_sw4 r1, r2, r3;
+// #pragma omp for
+//       for( int k= 1; k <= 6 ; k++ )
+// 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+// #pragma omp simd
+// #pragma ivdep	 
+// 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+// 	    {
 // 5 ops                  
                float_sw4 ijac   = strx(i)*stry(j)/jac(i,j,k);
                float_sw4 istry  = 1/(stry(j));
@@ -598,15 +610,21 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	       lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac;
 	       lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r2*ijac;
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
-	    }
+			  }); // End of curvilinear4sg_ci LOOP 1
    }
-#pragma omp for
-   for( int k= kstart; k <= klast-2 ; k++ )
-      for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma omp simd
-#pragma ivdep	 
-	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	 {
+   RAJA::RangeSegment k_range(kstart,klast-1);
+   RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+   RAJA::nested::forall(RHS4_EXEC_POL{},
+			RAJA::make_tuple(k_range, j_range,i_range),
+			[=]RAJA_DEVICE (int k,int j,int i) {
+// #pragma omp for
+//    for( int k= kstart; k <= klast-2 ; k++ )
+//       for( int j=jfirst+2; j <= jlast-2 ; j++ )
+// #pragma omp simd
+// #pragma ivdep	 
+// 	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
+// 	 {
 // 5 ops
 	    float_sw4 ijac = strx(i)*stry(j)/jac(i,j,k);
             float_sw4 istry = 1/(stry(j));
@@ -1407,7 +1425,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 
 // 4 ops, tot=2126
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
-	 }
+			}); // End of curvilinear4sg_ci LOOP 2
    }
 #undef mu
 #undef la

@@ -45,6 +45,14 @@ using PRELIM_CORR_EXEC_POL1 =
   RAJA::nested::CudaCollapse<
   RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<4>>, 
   RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<4>>> >;
+
+
+using ENFORCEBC_CORR_EXEC_POL1 = 
+  RAJA::nested::Policy< 
+  RAJA::nested::CudaCollapse<
+  RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<4>>, 
+  RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<4>>> >;
+
 #define SYNC_DEVICE cudaDeviceSynchronize()
 #else
 
@@ -80,6 +88,10 @@ using CONSINTP_EXEC_POL4 = RAJA::nested::Policy<
 using PRELIM_CORR_EXEC_POL1 = RAJA::nested::Policy< 
   RAJA::nested::For<0, RAJA::parallel_exec>,
   RAJA::nested::For<1, RAJA::simd_exec> >;
+
+using ENFORCEBC_CORR_EXEC_POL1 = RAJA::nested::Policy< 
+  RAJA::nested::For<0, RAJA::parallel_exec>,
+  RAJA::nested::For<1, RAJA::parallel_exec> >;
 
 #define SYNC_DEVICE
 

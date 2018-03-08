@@ -36,6 +36,7 @@
 #include "f_interface.h"
 #include "Mspace.h"
 #include "policies.h"
+#include "caliper.h"
 #define SQR(x) ((x)*(x))
 
 //--------------------------------------------------------------------
@@ -1237,25 +1238,37 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
       int nc = 3;
       int g = mNumberOfCartesianGrids-1;
       int gc = mNumberOfGrids-1;
-
+      int mgp = getNumberOfGhostPoints();
       //      float_sw4 nrm[3]={0,0,0};
       //      int q, i, j;
 // inject solution values between lower boundary of gc and upper boundary of g
-#pragma omp parallel for
-      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-	 for( int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
-	 {
+
+      SView &a_UgV = a_U[g].view;
+      SView &a_UgcV = a_U[gc].view;
+      ASSERT_MANAGED(a_U[g].c_ptr());
+      ASSERT_MANAGED(a_U[gc].c_ptr());
+      int kstartg = m_kStart[g];
+      int kendgc = m_kEnd[gc];
+      RAJA::RangeSegment j_range(m_jStart[g],m_jEnd[g]+1);
+      RAJA::RangeSegment i_range(m_iStart[g],m_iEnd[g]+1);
+      RAJA::nested::forall(ENFORCEBC_CORR_EXEC_POL1{},
+			   RAJA::make_tuple(j_range,i_range),
+			   [=]RAJA_DEVICE (int j,int i) {
+// #pragma omp parallel for
+//       for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+// 	 for( int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+// 	 {
 // assign ghost points in the Cartesian grid
-	    for (int q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	    for (int q = 0; q < mgp; q++) // only once when m_ghost_points==1
 	    {
 	       for( int c = 1; c <= nc ; c++ )
-		  a_U[g](c,i,j,m_kStart[g] + q) = a_U[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+		  a_UgV(c,i,j,kstartg + q) = a_UgcV(c,i,j,kendgc-2*mgp + q);
 	    }
 // assign ghost points in the Curvilinear grid
-	    for (int q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	    for (int q = 0; q <= mgp; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
 	    {
 	       for( int c = 1; c <= nc ; c++ )
-		  a_U[gc](c,i,j,m_kEnd[gc]-q) = a_U[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
+		  a_UgcV(c,i,j,kendgc-q) = a_UgV(c,i,j,kstartg+2*mgp - q);
 	    }
 	    //	    // Verify that the grid lines are the same
 	    //            if( i>= 1 && i <= m_global_nx[g] && j >= 1 && j <= m_global_ny[g] )
@@ -1265,7 +1278,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 	    //	       if( ndiff > nrm[c-1] )
 	    //		  nrm[c-1] = ndiff;
 	    //	    }
-	 }
+			   }); // End of RAJA loop
       //      cout << "Difference of curvilinear and cartesian common grid line = "<< nrm[0] << " " << nrm[1] << " " << nrm[2] << endl;
    }
 }
@@ -2474,6 +2487,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
 					int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources )
 {
+  SW4_MARK_FUNCTION;
    //
    // NOTE: This routine is called by enforceIC() after the corrector stage to calculate the interior contribution to
    // the predictor on the interface at next time step.

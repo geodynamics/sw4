@@ -1,6 +1,7 @@
 #include "sw4.h"
 #include "EW.h"
-
+#include "Mspace.h"
+#include "policies.h"
 void EW::twilightfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
 			  int klast, float_sw4* __restrict__ u, float_sw4 t, float_sw4 om,
 			  float_sw4 cv, float_sw4 ph, float_sw4 h, float_sw4 zmin )
@@ -625,18 +626,28 @@ void EW::forcingttfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
-#pragma omp parallel
+   ASSERT_MANAGED(fo);
+   //#pragma omp parallel
    {
-      float_sw4 forces[3],t10,t100,t102,t103,t105,t107,t110,t115,t118,t119,t120,t121,t122,t124,t125,t127,t13,t135,t14,t140,t141,t144,t145,t146,t147,t150,t154,t16,t161,t163,t169,t17,t173,t176,t185,t19,t194,t195,t2,t20,t201,t21,t22,t23,t25,t26,t28,t29,t3,t33,t34,t35,t36,t39,t41,t42,t43,t45,t47,t49,t5,t50,t55,t6,t60,t61,t66,t67,t69,t70,t71,t72,t73,t74,t76,t77,t84,t85,t87,t88,t9,t94,t95,t96,t97,t98;
-#pragma omp for
-      for( int k=kfirst; k<=klast; k++ )
-      {
-	 float_sw4 z=(k-1)*h+zmin;
-	 for( int j=jfirst; j<=jlast; j++ )
-	 {
-	    float_sw4 y=(j-1)*h;
-	    for( int i=ifirst; i<=ilast; i++ )
-	    {
+      // float_sw4 forces[3],t10,t100,t102,t103,t105,t107,t110,t115,t118,t119,t120,t121,t122,t124,t125,t127,t13,t135,t14,t140,t141,t144,t145,t146,t147,t150,t154,t16,t161,t163,t169,t17,t173,t176,t185,t19,t194,t195,t2,t20,t201,t21,t22,t23,t25,t26,t28,t29,t3,t33,t34,t35,t36,t39,t41,t42,t43,t45,t47,t49,t5,t50,t55,t6,t60,t61,t66,t67,t69,t70,t71,t72,t73,t74,t76,t77,t84,t85,t87,t88,t9,t94,t95,t96,t97,t98;
+      RAJA::RangeSegment k_range(kfirst,klast+1);
+      RAJA::RangeSegment j_range(jfirst,jlast+1);
+      RAJA::RangeSegment i_range(ifirst,ilast+1);
+      RAJA::nested::forall(RHS4_EXEC_POL{},
+			  RAJA::make_tuple(k_range, j_range,i_range),
+			  [=]RAJA_DEVICE (int k,int j,int i) {
+			    float_sw4 forces[3],t10,t100,t102,t103,t105,t107,t110,t115,t118,t119,t120,t121,t122,t124,t125,t127,t13,t135,t14,t140,t141,t144,t145,t146,t147,t150,t154,t16,t161,t163,t169,t17,t173,t176,t185,t19,t194,t195,t2,t20,t201,t21,t22,t23,t25,t26,t28,t29,t3,t33,t34,t35,t36,t39,t41,t42,t43,t45,t47,t49,t5,t50,t55,t6,t60,t61,t66,t67,t69,t70,t71,t72,t73,t74,t76,t77,t84,t85,t87,t88,t9,t94,t95,t96,t97,t98;
+// #pragma omp for
+//       for( int k=kfirst; k<=klast; k++ )
+//       {
+// 	 float_sw4 z=(k-1)*h+zmin;
+// 	 for( int j=jfirst; j<=jlast; j++ )
+// 	 {
+// 	    float_sw4 y=(j-1)*h;
+// 	    for( int i=ifirst; i<=ilast; i++ )
+// 	    {
+			    float_sw4 z=(k-1)*h+zmin;
+			    float_sw4 y=(j-1)*h;
 	       float_sw4 x=(i-1)*h;
 	       t2 = omm*x+phm;
 	       t3 = sin(t2);
@@ -740,9 +751,9 @@ void EW::forcingttfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
 	       fo[ind] = forces[0];
 	       fo[ind+nijk] = forces[1];
 	       fo[ind+2*nijk] = forces[2];
-	    }
-	 }
-      }
+	       //}
+	       // }
+			  }); // End of RAJA loop
    }
 }
 
@@ -881,14 +892,21 @@ void EW::forcingttfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
-#pragma omp parallel
+   //#pragma omp parallel
    {
+     ASSERT_MANAGED(fo);
+     RAJA::RangeSegment k_range(kfirst,klast+1);
+     RAJA::RangeSegment j_range(jfirst,jlast+1);
+     RAJA::RangeSegment i_range(ifirst,ilast+1);
+     RAJA::nested::forall(RHS4_EXEC_POL{},
+			  RAJA::make_tuple(k_range, j_range,i_range),
+			  [=]RAJA_DEVICE (int k,int j,int i) {
       float_sw4 forces[3],t10,t100,t102,t103,t105,t107,t110,t115,t118,t119,t120,t121,t122,t124,t125,t127,t13,t135,t14,t140,t141,t144,t145,t146,t147,t150,t154,t16,t161,t163,t169,t17,t173,t176,t185,t19,t194,t195,t2,t20,t201,t21,t22,t23,t25,t26,t28,t29,t3,t33,t34,t35,t36,t39,t41,t42,t43,t45,t47,t49,t5,t50,t55,t6,t60,t61,t66,t67,t69,t70,t71,t72,t73,t74,t76,t77,t84,t85,t87,t88,t9,t94,t95,t96,t97,t98;
-#pragma omp for
-      for( int k=kfirst; k<=klast; k++ )
-	 for( int j=jfirst; j<=jlast; j++ )
-	    for( int i=ifirst; i<=ilast; i++ )
-	    {
+// #pragma omp for
+//       for( int k=kfirst; k<=klast; k++ )
+// 	 for( int j=jfirst; j<=jlast; j++ )
+// 	    for( int i=ifirst; i<=ilast; i++ )
+// 	    {
 	       size_t ind = base+i+ni*j+nij*k;
 	       float_sw4 z=zz[ind];
 	       float_sw4 y=yy[ind];
@@ -994,7 +1012,7 @@ void EW::forcingttfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 	       fo[ind] = forces[0];
 	       fo[ind+nijk] = forces[1];
 	       fo[ind+2*nijk] = forces[2];
-	    }
+			  }); // End of RAJA loop
    }
 }
 
@@ -2259,7 +2277,7 @@ void EW::memvarforcesurfc_ci( int ifirst, int ilast, int jfirst, int jlast,
 {
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
-   const size_t nijk  = nij*(klast-kfirst+1);
+   //const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base2 = -(ifirst+ni*jfirst);
    const size_t base3 = -(ifirst+ni*jfirst+nij*kfirst);
 #pragma omp parallel

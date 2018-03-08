@@ -3,6 +3,7 @@
 #include <cmath>
 #include "Mspace.h"
 #include "policies.h"
+#include "caliper.h"
 //extern "C" {
 
 void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -12,6 +13,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
 		     float_sw4 h, char op )
 {
+  SW4_MARK_FUNCTION;
  // Direct reuse of fortran code by these macro definitions:
 #define mu(i,j,k)     a_mu[base+i+ni*(j)+nij*(k)]
 #define la(i,j,k) a_lambda[base+i+ni*(j)+nij*(k)]
