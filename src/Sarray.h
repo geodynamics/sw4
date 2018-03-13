@@ -177,11 +177,14 @@ public:
    void define_offsets();
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
-  void prefetch(int device=0);
-  float_sw4* m_data; // Used to be private
+   void prefetch(int device=0);
+  inline SView &getview(){
+    prefetch();
+    return view;
+  }
   SView view;
 private:
-
+  float_sw4* m_data; // Used to be private
    float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}

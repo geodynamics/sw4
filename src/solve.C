@@ -1243,8 +1243,8 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
       //      int q, i, j;
 // inject solution values between lower boundary of gc and upper boundary of g
 
-      SView &a_UgV = a_U[g].view;
-      SView &a_UgcV = a_U[gc].view;
+      SView &a_UgV = a_U[g].getview();
+      SView &a_UgcV = a_U[gc].getview();
       ASSERT_MANAGED(a_U[g].c_ptr());
       ASSERT_MANAGED(a_U[gc].c_ptr());
       int kstartg = m_kStart[g];
@@ -2596,12 +2596,12 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    const float_sw4 cof = mDt*mDt;
 // initialize
    Unext.set_to_zero();
-   SView &UnextV = Unext.view;
-   SView &a_UpV = a_Up.view;
-   SView &a_UV = a_U.view;
-   SView &LuV = Lu.view;
-   SView &FV = F.view;
-   SView &mRhogV = mRho[g].view;
+   SView &UnextV = Unext.getview();
+   SView &a_UpV = a_Up.getview();
+   SView &a_UV = a_U.getview();
+   SView &LuV = Lu.getview();
+   SView &FV = F.getview();
+   SView &mRhogV = mRho[g].getview();
 
    // SView &UnextV = *new SView(Unext);
    // SView &a_UpV = *new SView(a_Up);
@@ -2671,10 +2671,10 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
    ASSERT_MANAGED(m_sbop);
    ASSERT_MANAGED(a_str_x);
    ASSERT_MANAGED(a_str_y);
-   SView &UpV = a_Up.view;
-   SView &BV = B.view;
-   SView &mMuV = mMu[g].view;
-   SView &mLambdaV = mLambda[g].view;
+   SView &UpV = a_Up.getview();
+   SView &BV = B.getview();
+   SView &mMuV = mMu[g].getview();
+   SView &mLambdaV = mLambda[g].getview();
 
    int istart,jstart;
    istart = B.m_ib+2;

@@ -91,7 +91,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
    nkf = m_global_nz[gf];
    
-   SView &BfV = Bf.view;
+   SView &BfV = Bf.getview();
    Bf.prefetch();
    RAJA::RangeSegment j_range(m_jStart[gf],m_jEnd[gf]+1);
    RAJA::RangeSegment i_range(m_iStart[gf],m_iEnd[gf]+1);
@@ -112,7 +112,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
          }
 			}); SYNC_DEVICE;
 
-   SView &BcV = Bc.view;
+   SView &BcV = Bc.getview();
    Bc.prefetch();
    RAJA::RangeSegment jc_range(m_jStart[gc],m_jEnd[gc]+1);
    RAJA::RangeSegment ic_range(m_iStart[gc],m_iEnd[gc]+1);
@@ -134,7 +134,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
    BfRestrict.prefetch();
 // using nkf since it comes from Uf(c,i,j,nkf)
-   SView &BfRestrictV = BfRestrict.view;
+   SView &BfRestrictV = BfRestrict.getview();
    RAJA::RangeSegment c_range(1,4);
    RAJA::RangeSegment j3_range(jcb,jce+1);
    RAJA::RangeSegment i3_range(icb,ice+1);
@@ -171,9 +171,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 // pre-compute UnextcInterp
    Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
 // using k=1 since it comes from Unextc(c,ic,jc,1)
-   SView &UnextcInterpV = UnextcInterp.view;
+   SView &UnextcInterpV = UnextcInterp.getview();
    UnextcInterp.prefetch();
-   SView &UnextcV = Unextc.view;
+   SView &UnextcV = Unextc.getview();
    Unextc.prefetch();
 #pragma omp parallel 
    for (int c=1; c<=3; c++)
