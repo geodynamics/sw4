@@ -293,7 +293,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
       cerr << "Error: No grid found in input file: " << mName << endl;
       return false; // unsuccessful
     }
-    
   }
 
   if( m_anisotropic && m_use_attenuation )
@@ -1219,14 +1218,15 @@ void EW::cleanUpRefinementLevels()
 // Here zMin = m_topo_zmax if m_topography_exists, otherwise zMin = 0;
    float_sw4 zMin;
   
-   if (m_topography_exists)
+// NOW: allowing refinements in the curvilinear portion of the grid
+//    if (m_topography_exists)
+//    {
+//      m_refinementBoundaries.push_back(m_topo_zmax);
+//      zMin = m_topo_zmax; 
+//    }
+//    else
    {
-      m_refinementBoundaries.push_back(m_topo_zmax);
-      zMin = m_topo_zmax;
-   }
-   else
-   {
-      m_refinementBoundaries.push_back(0.0);
+      m_refinementBoundaries.push_back(0.0); // flat free surface boundary
       zMin = 0.;
    }
 
@@ -1277,12 +1277,14 @@ void EW::cleanUpRefinementLevels()
   }
 
 // tmp
-//   if (m_myRank==0)
-//   {
-//     cout << "Input refinement levels (z=):"<<endl;
-//     for (it=m_refinementBoundaries.begin(); it!=m_refinementBoundaries.end(); it++)
-//       cout<< *it << endl;
-//   }
+  if (mVerbose >= 1 && m_myRank==0)
+  {
+     cout << "cleanupRefinementLevels: m_topo_zmax = " << m_topo_zmax << endl;
+
+    cout << " Input levels (z=):" << endl;
+    for (it=m_refinementBoundaries.begin(); it!=m_refinementBoundaries.end(); it++)
+      cout<< *it << endl;
+  }
   
 
 }
@@ -3855,15 +3857,28 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    if (mVerbose>=2 && proc_zero())
      printf("allocateCartesianSolverArrays: #ghost points=%i, #parallel padding points=%i\n", m_ghost_points, m_ppadding);
 
-   int nCartGrids = m_refinementBoundaries.size();
+// z=0 is the last element in m_refinementBoundaries[]
+   int nCurvilinearGrids = 0;
+//    m_topography_exists indicates if there was a topography command in the input file   
+   if (m_topography_exists)
+   {
+      nCurvilinearGrids=1;
+// count the number of refinement boundaries with z<m_topo_zmax
+      for( int r = 0 ; r < m_refinementBoundaries.size()-1 ; r++ ) // The last element is always z=0
+      {
+         if (m_refinementBoundaries[r] < m_topo_zmax) nCurvilinearGrids++;
+      }
+   }
+   
+   int nCartGrids = m_refinementBoundaries.size() - nCurvilinearGrids + 1; //Updated for curvilinear mr
+      
    int refFact = 1;
-   for( int r = 0 ; r < nCartGrids-1 ; r++ )
+//   for( int r = 0 ; r < nCartGrids-1 ; r++ )
+   for( int r = 0 ; r < m_refinementBoundaries.size()-1 ; r++ ) // The last element is always z=0
    {
       refFact *= 2;
       //      cout << "refinement boundary " << r << " is " << m_refinementBoundaries[r] << endl;
    }
-
-//    m_topography_exists tells if there was a topography command in the input file?   
 
 // is there an attenuation command in the file?
    if (!m_use_attenuation)
@@ -3878,6 +3893,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       is_periodic[1]=1;
    }
 
+// m_nx_base, m_ny_base: assigned by processGrid()
    int nx_finest_w_ghost = refFact*(m_nx_base-1)+1+2*m_ghost_points;
    int ny_finest_w_ghost = refFact*(m_ny_base-1)+1+2*m_ghost_points;
    if( is_periodic[0] )
@@ -3889,7 +3905,6 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // this info is obtained by the contructor
 //   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
    proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
-
    
    MPI_Cart_create( MPI_COMM_WORLD, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
    int my_proc_coords[2];
@@ -3897,7 +3912,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
    MPI_Cart_shift( m_cartesian_communicator, 1, 1, m_neighbor+2, m_neighbor+3 );
 
-   if( proc_zero() && mVerbose >= 3)
+   if( proc_zero() && mVerbose >= 1 /*3*/) // tmp
    {
      cout << " Grid distributed on " << m_nProcs << " processors " << endl;
      cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
@@ -3907,6 +3922,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    m_proc_array[0] = proc_max[0];
    m_proc_array[1] = proc_max[1];
 
+// the domain decomposition is done for the finest grid
    int ifirst, ilast, jfirst, jlast;
    decomp1d( nx_finest_w_ghost, my_proc_coords[0], proc_max[0], ifirst, ilast );
    decomp1d( ny_finest_w_ghost, my_proc_coords[1], proc_max[1], jfirst, jlast );
@@ -3921,15 +3937,26 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 
    //   cout << "nCartGrids = " << nCartGrids << endl;
    mNumberOfCartesianGrids = nCartGrids;
+
    mNumberOfGrids = mNumberOfCartesianGrids;
    if( m_topography_exists )
-      mNumberOfGrids++;
+      mNumberOfGrids+=nCurvilinearGrids;
+//      mNumberOfGrids++;
+
+// tmp
+   if (proc_zero())
+   {
+      cout << "Number of curvilinear grids = " << nCurvilinearGrids << endl;
+      cout << "Number of Cartesian grids = " << mNumberOfCartesianGrids << endl;
+      cout << "Total number of grids = " << mNumberOfGrids << endl;
+   }   
 
    m_iscurvilinear.resize(mNumberOfGrids);
    for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
       m_iscurvilinear[g] = false;
-   if( m_topography_exists )
-      m_iscurvilinear[mNumberOfGrids-1] = true;
+//   if( m_topography_exists )
+   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
+      m_iscurvilinear[g] = true;
 
    m_supergrid_taper_x.resize(mNumberOfGrids);
    m_supergrid_taper_y.resize(mNumberOfGrids);
@@ -3958,7 +3985,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    mQp.resize(mNumberOfGrids);
 
 // viscoelastic material coefficients and memory variables are only allocated when attenuation is enabled
-// Allocate pointers, even if attenuation not used, for avoid segfault in parameter list with mMuVE[g], etc...
+// Allocate pointers, even if attenuation not used, to avoid segfault in parameter list with mMuVE[g], etc...
    mMuVE.resize(mNumberOfGrids);
    mLambdaVE.resize(mNumberOfGrids);
    if (m_use_attenuation && m_number_mechanisms > 0) // the simplest model only uses Q, not MuVe, LambdaVE, or OmegaVE
@@ -4018,7 +4045,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 
    int *wind;
    
-   for( int g= 0 ;g < mNumberOfGrids ; g++ )
+   for( int g=0; g < mNumberOfGrids ; g++ )
    {
      m_NumberOfBCPoints[g] = new int[6];
      m_BndryWindow[g] = new int [36]; // 6 by 6 array in Fortran
@@ -4040,10 +4067,44 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      mGridSize[g] = h;
      h = h/2.;
    }
+
+// NEW 3/13/2018
+   // save the horizontal grid spacing for all curvilinear grids
+   h = mGridSize[nCartGrids-1]; // bottom curvilinear grid has same grid size as the top Cartesian
+   for (int g=nCartGrids; g<mNumberOfGrids; g++)
+   {
+     mGridSize[g] = h;
+     h = h/2.;
+   }
    
-   m_global_nx[nCartGrids-1] = nx_finest_w_ghost-2*m_ghost_points;
-   m_global_ny[nCartGrids-1] = ny_finest_w_ghost-2*m_ghost_points;
+   m_global_nx[mNumberOfGrids-1] = nx_finest_w_ghost-2*m_ghost_points;
+   m_global_ny[mNumberOfGrids-1] = ny_finest_w_ghost-2*m_ghost_points;
    
+// Grid size in the curvilinear portion
+   for (int g=mNumberOfGrids-2; g >=nCartGrids; g--) // the coarsest curvilinear grid has grid number 'nCartGrids'
+   {
+      if( is_periodic[0] )
+	 m_global_nx[g] = m_global_nx[g+1]/2;
+      else
+	 m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
+      if( is_periodic[1] )
+	 m_global_ny[g] = m_global_ny[g+1]/2;
+      else
+	 m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
+   }
+
+   if (!m_topography_exists)
+   { // finest grid on top
+      m_global_nx[nCartGrids-1] = nx_finest_w_ghost-2*m_ghost_points;
+      m_global_ny[nCartGrids-1] = ny_finest_w_ghost-2*m_ghost_points;
+   }
+   else
+   { // top Cartesian grid has the same grid size as the bottom curvilinear grid
+      m_global_nx[nCartGrids-1] = m_global_nx[nCartGrids];
+      m_global_ny[nCartGrids-1] = m_global_ny[nCartGrids];
+   }
+   
+// previous code for Cartesian MR
    for (int g=nCartGrids-2; g >=0; g--)
    {
       if( is_periodic[0] )
@@ -4057,19 +4118,20 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    }
 
 // the curvilinear grid has a variable grid size, but matches the finest Cartesian grid where they meet
-   if( m_topography_exists )
-   {
-     mGridSize[mNumberOfGrids-1]   = mGridSize[mNumberOfGrids-2];
-     m_global_nx[mNumberOfGrids-1] = m_global_nx[mNumberOfGrids-2];
-     m_global_ny[mNumberOfGrids-1] = m_global_ny[mNumberOfGrids-2];
-   }
+   // if( m_topography_exists )
+   // {
+   //   mGridSize[mNumberOfGrids-1]   = mGridSize[mNumberOfGrids-2];
+   //   m_global_nx[mNumberOfGrids-1] = m_global_nx[mNumberOfGrids-2];
+   //   m_global_ny[mNumberOfGrids-1] = m_global_ny[mNumberOfGrids-2];
+   // }
    
 // Define grid in z-direction, by formula z_k = (k-1)*h + zmin
    vector<int> nz;
    nz.resize(nCartGrids);
 
 // don't change the zmin of the finest cartesian grid
-   m_zmin[nCartGrids-1] = m_refinementBoundaries[nCartGrids-1];
+//   m_zmin[nCartGrids-1] = m_refinementBoundaries[nCartGrids-1];
+   m_zmin[nCartGrids-1] = m_topo_zmax;
    for( int g = nCartGrids-1; g >= 0; g-- )
    {
      float_sw4 zmax = (g>0? m_refinementBoundaries[g-1]:a_global_zmax);
@@ -4101,10 +4163,9 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    if (mVerbose >= 1 && proc_zero())
      cout << "Extent of the computational domain xmax=" << m_global_xmax << " ymax=" << m_global_ymax << " zmax=" << 
        m_global_zmax << endl;
-   
 
 // detailed grid refinement info
-   if( mVerbose >= 2 && proc_zero() )
+   if( proc_zero() && mVerbose >= 1 /*2*/) // tmp
    {
       cout << "Refinement levels after correction: " << endl;
       for( int g=0; g<nCartGrids; g++ )
@@ -4114,7 +4175,39 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       cout << "Corrected global_zmax = " << m_global_zmax << endl << endl;
    }
    
-// Define grid arrays, loop from finest to coarsest
+// NEED TO DEFINE ALL CURVILINEAR GRID ARRAYS FIRST!
+   if( m_topography_exists ) // UPDATE  for more than 1 curvilinear grid
+   {
+// get the size from the top Cartesian grid
+      ifirst = m_iStart[nCartGrids-1];
+      ilast  = m_iEnd[nCartGrids-1];
+      jfirst = m_jStart[nCartGrids-1];
+      jlast  = m_jEnd[nCartGrids-1];
+
+// save the local index bounds
+      m_iStart[mNumberOfGrids-1] = ifirst;
+      m_iEnd[mNumberOfGrids-1]   = ilast;
+      m_jStart[mNumberOfGrids-1] = jfirst;
+      m_jEnd[mNumberOfGrids-1]   = jlast;
+
+// interior points (what about k-direction???)
+      m_iStartInt[mNumberOfGrids-1] = m_iStartInt[nCartGrids-1];
+      m_iEndInt[mNumberOfGrids-1]   = m_iEndInt[nCartGrids-1];
+      m_jStartInt[mNumberOfGrids-1] = m_jStartInt[nCartGrids-1];
+      m_jEndInt[mNumberOfGrids-1]   = m_jEndInt[nCartGrids-1];
+
+// 2 versions of the topography:
+      mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
+      m_ext_ghost_points = 2;
+// smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
+      mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
+			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+
+// At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
+// the arrays mX, mY, mZ must be allocated by the grid generator
+   }
+
+// Define Cartesian grid arrays, loop from finest to coarsest
    for( int g = nCartGrids-1 ; g >= 0 ; g-- )
    {
 // NOTE: same number of ghost points in all directions
@@ -4179,7 +4272,6 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 	mQp[g].set_to_minusOne();
       }
 	
-
 // save the local index bounds
       m_iStart[g] = ifirst;
       m_iEnd[g]   = ilast;
@@ -4232,7 +4324,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       }
       
 // output bounds
-      if (mVerbose >=3 && proc_zero())
+      if (proc_zero() && mVerbose >=1 /*3*/) // tmp
       {
          printf("Grid #%d, iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n", g, m_iStartInt[g], m_iEndInt[g],
                 m_jStartInt[g], m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
@@ -4240,36 +4332,37 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       
    }// end for all Cartesian grids
 
-   if( m_topography_exists )
-   {
-// get the size from the top Cartesian grid
-      ifirst = m_iStart[nCartGrids-1];
-      ilast  = m_iEnd[nCartGrids-1];
-      jfirst = m_jStart[nCartGrids-1];
-      jlast  = m_jEnd[nCartGrids-1];
+// OLD (no MR in curvilinear)
+//    if( m_topography_exists ) // UPDATE  for more than 1 curvilinear grid
+//    {
+// // get the size from the top Cartesian grid
+//       ifirst = m_iStart[nCartGrids-1];
+//       ilast  = m_iEnd[nCartGrids-1];
+//       jfirst = m_jStart[nCartGrids-1];
+//       jlast  = m_jEnd[nCartGrids-1];
 
-// save the local index bounds
-      m_iStart[mNumberOfGrids-1] = ifirst;
-      m_iEnd[mNumberOfGrids-1]   = ilast;
-      m_jStart[mNumberOfGrids-1] = jfirst;
-      m_jEnd[mNumberOfGrids-1]   = jlast;
+// // save the local index bounds
+//       m_iStart[mNumberOfGrids-1] = ifirst;
+//       m_iEnd[mNumberOfGrids-1]   = ilast;
+//       m_jStart[mNumberOfGrids-1] = jfirst;
+//       m_jEnd[mNumberOfGrids-1]   = jlast;
 
-// interior points (what about k-direction???)
-      m_iStartInt[mNumberOfGrids-1] = m_iStartInt[nCartGrids-1];
-      m_iEndInt[mNumberOfGrids-1]   = m_iEndInt[nCartGrids-1];
-      m_jStartInt[mNumberOfGrids-1] = m_jStartInt[nCartGrids-1];
-      m_jEndInt[mNumberOfGrids-1]   = m_jEndInt[nCartGrids-1];
+// // interior points (what about k-direction???)
+//       m_iStartInt[mNumberOfGrids-1] = m_iStartInt[nCartGrids-1];
+//       m_iEndInt[mNumberOfGrids-1]   = m_iEndInt[nCartGrids-1];
+//       m_jStartInt[mNumberOfGrids-1] = m_jStartInt[nCartGrids-1];
+//       m_jEndInt[mNumberOfGrids-1]   = m_jEndInt[nCartGrids-1];
 
-// 2 versions of the topography:
-      mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
-      m_ext_ghost_points = 2;
-// smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
-      mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
-			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+// // 2 versions of the topography:
+//       mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
+//       m_ext_ghost_points = 2;
+// // smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
+//       mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
+// 			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
 
-// At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
-// the arrays mX, mY, mZ must be allocated by the grid generator
-   }
+// // At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
+// // the arrays mX, mY, mZ must be allocated by the grid generator
+//    }
 
 // tmp
 //   int myRank;
