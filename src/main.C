@@ -40,7 +40,9 @@
 #include <iostream>
 #include <iomanip>
 #include <mpi.h>
+#ifndef SW4_NOOMP
 #include <omp.h>
+#endif
 #include "version.h"
 
 using namespace std;

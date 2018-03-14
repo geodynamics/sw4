@@ -97,6 +97,7 @@ void print_timeinfo() const;
 void set_window( float_sw4 winl, float_sw4 winr );
 void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
+void isRestart();
 void set_shift( float_sw4 shift );
 float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
@@ -195,6 +196,9 @@ float_sw4 m_scalefactor;
 
 // quiet mode?
    bool mQuietMode;
+
+// does this continue time series after restart?
+   bool mIsRestart;
 
 // pointer to EW object
    EW * m_ew;

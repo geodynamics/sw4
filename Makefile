@@ -75,6 +75,10 @@ else
     else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
       include configs/make.fourier
       foundincfile := "configs/make.fourier"
+	# for any other MacOS system
+		else
+			include configs/make.osx
+			foundincfile := "configs/make.osx"
     endif
   endif
   

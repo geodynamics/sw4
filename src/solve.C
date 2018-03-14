@@ -271,6 +271,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   {
      m_check_point->read_checkpoint( t, beginCycle, Um, U,
 				     AlphaVEm, AlphaVE );
+     // Make sure the TimeSeries output has the correct time shift,
+     // and know's it's a restart
+     for (int ts=0; ts<a_TimeSeries.size(); ts++)
+     {
+       a_TimeSeries[ts]->isRestart();
+       a_TimeSeries[ts]->set_shift(t);
+     }
       // Restart data have undefined ghost point values,
       // no need to enforce BC here, it is done further down in this function.
      beginCycle++;
