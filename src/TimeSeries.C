@@ -105,6 +105,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_y(true),
   m_use_z(true),
   mQuietMode(false),
+  mIsRestart(false),
   m_compute_scalefactor(true)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
@@ -937,7 +938,8 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
 void TimeSeries::write_usgs_format(string a_fileName)
 {
    string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-   FILE *fd=fopen(a_fileName.c_str(),"a");
+   // Open the file for append if it's a restart, otherwise overwrite
+   FILE *fd=fopen(a_fileName.c_str(), (mIsRestart) ? "a" : "w");
    //   double lat, lon;
    //   float_sw4 x, y, z;
 
@@ -2565,6 +2567,14 @@ void TimeSeries::set_utc_to_simulation_utc()
 }
 
 //-----------------------------------------------------------------------
+// Indicates restart, so time series files are appended, not overwritten
+void TimeSeries::isRestart()
+{
+   mIsRestart = true;
+}
+
+//-----------------------------------------------------------------------
+// Sets the time offset for output.
 void TimeSeries::set_shift( float_sw4 shift )
 {
    m_shift = shift;
