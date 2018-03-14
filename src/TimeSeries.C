@@ -937,7 +937,7 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
 void TimeSeries::write_usgs_format(string a_fileName)
 {
    string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-   FILE *fd=fopen(a_fileName.c_str(),"w");
+   FILE *fd=fopen(a_fileName.c_str(),"a");
    //   double lat, lon;
    //   float_sw4 x, y, z;
 
