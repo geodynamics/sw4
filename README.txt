@@ -22,4 +22,4 @@ src          C++ and Fortran source code for SW4
 tools        Matlab/Octave scripts for post processing and analysis of results
 
 
-For more info, contact: Computational Infrastructure for Geodynamics (CIG) {\tt geodynamics.org} .
+For more info, contact: Computational Infrastructure for Geodynamics (CIG) {\tt geodynamics.org}.
