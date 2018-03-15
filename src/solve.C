@@ -79,7 +79,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       BCForcing[g][side]=NULL;
       if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
       {
-    	BCForcing[g][side] = new float_sw4[3*m_NumberOfBCPoints[g][side]];
+    	BCForcing[g][side] = SW4_NEW(Managed,float_sw4[3*m_NumberOfBCPoints[g][side]]);
       }
       
     }
@@ -1079,7 +1079,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    {
       for(int side=0; side < 6; side++)
 	 if( BCForcing[g][side] != NULL )
-	    delete[] BCForcing[g][side];
+	   ::operator delete[] (BCForcing[g][side],Managed);
       delete[] BCForcing[g];
    }
    for( int s = 0 ; s < point_sources.size(); s++ )

@@ -22,7 +22,7 @@
 // # the Free Software Foundation) version 2, dated June 1991. 
 // # 
 // # This program is distributed in the hope that it will be useful, but
-// # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
+// # WITHOUT ANY WARRNTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
 // # conditions of the GNU General Public License for more details. 
 // # 
@@ -874,8 +874,13 @@ void Sarray::assign( const double* ar, int corder )
      // 				      [=]RAJA_DEVICE (int i,int j, int k) {
      // 					for(int c=0;c<m_nc;c++)
      // 					m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c] = ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];});
-
-
+     int mni=m_ni;
+     int mnj = m_nj;
+     int mnk = m_nk;
+     int mnc = m_nc;
+     ASSERT_MANAGED(m_data);
+     ASSERT_MANAGED((void*)ar);
+     float_sw4 *mdata = m_data;
 		 RAJA::RangeSegment i_range(0,m_ni);
 		 RAJA::RangeSegment j_range(0,m_nj);
 		 RAJA::RangeSegment k_range(0,m_nk);
@@ -883,7 +888,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::nested::forall(SARRAY_LOOP_POL2{},
 		 		      RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		 		      [=]RAJA_DEVICE (int i,int j, int k,int c) {
-		 			m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c] = ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];});
+		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];});
    }
    else
    {
