@@ -840,6 +840,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 		 float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
 			  float_sw4* __restrict__ a_strz, char op )
 {
+  SW4_MARK_FUNCTION;
    // This would work to create multi-dimensional C arrays:
    //   float_sw4** b_ar=(float_sw4*)malloc(ni*nj*sizeof(float_sw4*));
    //   for( int j=0;j<nj;j++)
@@ -1707,6 +1708,7 @@ void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_u2,
 		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] )
 {
+  SW4_MARK_FUNCTION;
 #define fo(c,i,j,k) a_fo[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 #define u2(c,i,j,k) a_u2[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
    
@@ -1774,6 +1776,7 @@ void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 		    float_sw4* __restrict__ a_fo, float_sw4* __restrict__ a_rho,
 		    float_sw4 lowZ[3], float_sw4 interZ[3], float_sw4 highZ[3] )
 {
+SW4_MARK_FUNCTION;
 #define fo(c,i,j,k)     a_fo[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 #define uacc(c,i,j,k) a_uacc[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 #define lu(c,i,j,k)     a_lu[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
@@ -1846,6 +1849,7 @@ void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
 		      float_sw4 dt2 )
 {
+  SW4_MARK_FUNCTION;
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
@@ -1865,6 +1869,7 @@ void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
 		      float_sw4 dt4 )
 {
+  SW4_MARK_FUNCTION;
    const float_sw4 dt4i12= dt4/12;
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
@@ -1885,6 +1890,7 @@ void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		   float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
 		   float_sw4 dt2i )
 {
+  SW4_MARK_FUNCTION;
   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
@@ -1898,6 +1904,7 @@ void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
 		      float_sw4* __restrict__ um, float_sw4 dt2i )
 {
+SW4_MARK_FUNCTION;
   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
@@ -1972,6 +1979,7 @@ void satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
 		  float_sw4 dt, float_sw4 cfreq, int ifirst, int ilast,
 		  int jfirst, int jlast, int kfirst, int klast )
 {
+  SW4_MARK_FUNCTION;
    const size_t npts = static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1);
    const float_sw4 efact=M_PI*cfreq*dt;
 #pragma omp parallel for   
@@ -1992,6 +2000,7 @@ void solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
 			    float_sw4* __restrict__ a_alpha, float_sw4 cof,
 			    float_sw4* __restrict__ a_up )
 {
+SW4_MARK_FUNCTION;
 #define alpha(c,i,j,k) a_alpha[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
 #define up(c,i,j,k)       a_up[base3+i+ni*(j)+nij*(k)+nijk*(c)]   
    const int ni    = ilast-ifirst+1;
@@ -2035,6 +2044,7 @@ void solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
 			   float_sw4 s[5], int usesg, float_sw4* __restrict__ a_strx,
 			   float_sw4* __restrict__ a_stry )
 {
+SW4_MARK_FUNCTION;
 #define u(c,i,j,k)     a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define met(c,i,j,k) a_met[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define mu(i,j,k) a_mu[base+i+ni*(j)+nij*(k)]
@@ -2114,6 +2124,7 @@ void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
 			     float_sw4* __restrict__ a_lambdavebnd, float_sw4 s[5], float_sw4& cof,
 			     int usesg, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry )
 {
+SW4_MARK_FUNCTION;
 #define u(c,i,j,k)     a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define um(c,i,j,k)   a_um[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define met(c,i,j,k) a_met[base3+i+ni*(j)+nij*(k)+nijk*(c)]
@@ -2300,6 +2311,7 @@ void ve_bndry_stress_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			       int side, float_sw4 sbop[6], int usesg, float_sw4* __restrict__ a_strx,
 			       float_sw4* __restrict__ a_stry )
 {
+SW4_MARK_FUNCTION;
 #define alphap(c,i,j,k) a_alphap[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define muve(i,j,k) a_muve[base+i+ni*(j)+nij*(k)]
 #define lave(i,j,k) a_lave[base+i+ni*(j)+nij*(k)]
@@ -2458,6 +2470,7 @@ void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 		     float_sw4* __restrict__ a_met, float_sw4 sbop[6], int usesg,
 		     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry )
 {
+SW4_MARK_FUNCTION;
 #define u(c,i,j,k) a_u[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define mu(i,j,k) a_mu[base+i+ni*(j)+nij*(k)]
 #define la(i,j,k) a_lambda[base+i+ni*(j)+nij*(k)]

@@ -2,6 +2,7 @@
 #include "cf_interface.h"
 #include "Mspace.h"
 #include "policies.h"
+#include "caliper.h"
 
 #define SQR(x) ((x)*(x))
 
@@ -32,6 +33,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 		   Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac, Sarray& Rhoc, float_sw4 hc,
 		   float_sw4 cof, int gc, int gf, int is_periodic[2])
 {
+  SW4_MARK_FUNCTION;
    // At boundaries to the left and right, at least three ghost points are required
    // e.g., domain in i-direction:   i=-2,-1,0,1,2,...,Ni,Ni+1,Ni+2,Ni+3
    // we solve for ghost points at i=2,..,Ni-1, assuming Dirichlet conditions given on i=1,i=Ni and

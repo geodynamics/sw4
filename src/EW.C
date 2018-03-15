@@ -2510,6 +2510,7 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, f
 //void EW::get_exact_point_source( Sarray& u, float_sw4 t, int g, Source& source )
 void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& source, int* wind )
 {
+  SW4_MARK_FUNCTION;
    // If wind is given, it is assumed that wind is the declared size of up. If not given (wind=0), 
    // it is assumed that up is the size of the local processor arrays.
    timeDep tD;
@@ -3212,14 +3213,14 @@ void EW::get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source 
      tfun = 2;
   // Fortran
   size_t npts = a_U[g].m_npts;
-  float_sw4* uexact = new float_sw4[npts];
+  float_sw4* uexact = SW4_NEW(Managed,float_sw4[npts]);
   for( size_t i= 0 ; i< npts ;i++ )
      uexact[i] = 0;
   lambexact( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 	     uexact, &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
 	     //	     a_U[g].c_ptr(), &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
   a_U[g].assign( uexact, 0 );
-  delete[] uexact;
+  ::operator delete[](uexact,Managed);
 // test: output uz in one point
   // int i0=176, j0=151, k0=1;
   // if (m_iStart[g] <= i0 && i0 <= m_iEnd[g] && m_jStart[g] <= j0 && j0 <= m_jEnd[g])

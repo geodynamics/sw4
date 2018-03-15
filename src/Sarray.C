@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include "Mspace.h"
 #include "policies.h"
+#include "caliper.h"
 using namespace std;
 
 // Default value 
@@ -848,6 +849,7 @@ void Sarray::assign( const float* ar, int corder )
 //-----------------------------------------------------------------------
 void Sarray::assign( const double* ar, int corder )
 {
+  SW4_MARK_FUNCTION;
    if( corder == m_corder || corder == -1 )
    {
       // Both arrays in the same order
