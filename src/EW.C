@@ -49,6 +49,8 @@
 
 #include "F77_FUNC.h"
 #include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 
 extern "C" {
    void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, float_sw4* fo,
@@ -2225,11 +2227,11 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
     for(int g=0 ; g < mNumberOfGrids; g++ ) 
     {
        size_t npts = a_U[g].m_npts;
-       float_sw4* uexact  = new float_sw4[npts];
+       float_sw4* uexact  = SW4_NEW(Managed, float_sw4[npts]);
        //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
        get_exact_point_source( uexact, a_t, g, *sources[0] );
        a_U[g].assign(uexact,0);
-       delete[] uexact;
+       ::operator delete[](uexact,Managed);
     }
     retval = true;
   }
@@ -2277,7 +2279,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 
 //-----------------------------------------------------------------------
 // smooth wave for time dependence to test point force term with 
-float_sw4 EW::SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -2292,7 +2294,7 @@ float_sw4 EW::SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // very smooth bump for time dependence for further testing of point force 
-float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 1024, c1 = -5120, c2 = 10240, c3 = -10240, c4 = 5120, c5 = -1024;
@@ -2307,7 +2309,7 @@ float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // C6 smooth bump for time dependence for further testing of point force 
-float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 retval = 0;
   if( (t-R/c) > 0 && (t-R/c) < 1 )
@@ -2317,7 +2319,7 @@ float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // derivative of smooth wave 
-float_sw4 EW::d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -2332,7 +2334,7 @@ float_sw4 EW::d_SmoothWave_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // very smooth bump for time dependence to further testing of point force 
-float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 temp = R;
   float_sw4 c0 = 1024, c1 = -5120, c2 = 10240, c3 = -10240, c4 = 5120, c5 = -1024;
@@ -2347,7 +2349,7 @@ float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // C6 smooth bump for time dependence to further testing of point force 
-float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 retval=0;
   if( (t-R/c) > 0 && (t-R/c) < 1 )
@@ -2357,7 +2359,7 @@ float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 
 //-----------------------------------------------------------------------
 // Primitive function (for T) of SmoothWave(t-T)*T
-float_sw4 EW::SWTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE float_sw4 EW::SWTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 temp = Lim;
 
@@ -2375,7 +2377,7 @@ float_sw4 EW::SWTP(float_sw4 Lim, float_sw4 t)
 
 //-----------------------------------------------------------------------
 // Primitive function (for T) of VerySmoothBump(t-T)*T
-float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 temp = Lim;
   float_sw4 f = 1024., g = -5120., h = 10240., i = -10240., j = 5120., k = -1024.;
@@ -2389,7 +2391,7 @@ float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
 }
 //-----------------------------------------------------------------------
 // Primitive function (for T) of C6SmoothBump(t-T)*T
-float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 x = t-Lim;
   return pow(x,8)*(-3217.5*pow(x,8)+3432.0*(7+t)*pow(x,7)-25740.0*(3+t)*pow(x,6)
@@ -2399,7 +2401,7 @@ float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*SmoothWave(t-T)*T from R/alpha to R/beta
-float_sw4 EW::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -2426,7 +2428,7 @@ float_sw4 EW::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha,
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*VerySmoothBump(t-T)*T from R/alpha to R/beta
-float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -2452,7 +2454,7 @@ float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 al
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*C6SmoothBump(t-T)*T from R/alpha to R/beta
-float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -2477,7 +2479,7 @@ float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alph
 }
 
 //-----------------------------------------------------------------------
-float_sw4 EW::Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f )
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f )
 {
   float_sw4 temp = R;
   temp = 1 /(f* sqrt(2*M_PI))*exp(-pow(t-R/c,2) / (2*f*f));
@@ -2485,7 +2487,7 @@ float_sw4 EW::Gaussian(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f )
 }
 
 //-----------------------------------------------------------------------
-float_sw4 EW::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f)
+RAJA_HOST_DEVICE float_sw4 EW::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f)
 {
   float_sw4 temp = R;
   temp = 1 /(f* sqrt(2*M_PI))*(-exp(-pow(t-R/c,2)/(2*f*f))*(t-R/c))/pow(f,2);
@@ -2493,7 +2495,7 @@ float_sw4 EW::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c, float_sw4 f)
 }
 
 //-----------------------------------------------------------------------
-float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
   temp = -0.5*t*(erf( (t-R/beta)/(sqrt(2.0)*f))     - erf( (t-R/alpha)/(sqrt(2.0)*f)) ) -
@@ -2587,11 +2589,21 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 
    size_t ni=(imax-imin+1);
    size_t nij=ni*(jmax-jmin+1);
-#pragma omp parallel for
-   for( int k=kmin ; k <= kmax ; k++ )
-      for( int j=jmin ; j <= jmax ; j++ )
-	 for( int i=imin ; i <= imax ; i++ )
-	 {
+   float_sw4 m_zming=m_zmin[g];
+
+   ASSERT_MANAGED(up);
+   
+   RAJA::RangeSegment k_range(kmin,kmax+1);
+   RAJA::RangeSegment j_range(jmin,jmax+1);
+   RAJA::RangeSegment i_range(imin,imax+1);
+   RAJA::nested::forall(RHS4_EXEC_POL{},
+			RAJA::make_tuple(k_range, j_range,i_range),
+			[=]RAJA_DEVICE (int k,int j,int i) {
+// #pragma omp parallel for
+ //   for( int k=kmin ; k <= kmax ; k++ )
+ //      for( int j=jmin ; j <= jmax ; j++ )
+ // 	 for( int i=imin ; i <= imax ; i++ )
+ // 	 {
 	    size_t ind = (i-imin) + ni*(j-jmin)+nij*(k-kmin);
             float_sw4 x,y,z;
 	    if( curvilinear )
@@ -2604,7 +2616,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	    {
 	       x = (i-1)*h;
 	       y = (j-1)*h;
-	       z = (k-1)*h + m_zmin[g];
+	       z = (k-1)*h + m_zming;
 	    }
 	    if( !ismomentsource )
 	    {
@@ -3126,7 +3138,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	       }
 	    }
 	    //	    ind++;
-	 }
+			});
 }
 
 #include <cmath>

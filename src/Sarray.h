@@ -184,7 +184,7 @@ public:
   }
   SView view;
 private:
-  float_sw4* m_data; // Used to be private
+  float_sw4* m_data; 
    float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}
