@@ -1338,7 +1338,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       if (s<0.)
       {
 	 float_sw4 xTop, yTop, zTop;
-	 a_EW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
+	 a_EW->curvilinear_grid_mapping(q, r, 0., g, xTop, yTop, zTop); // IS IT CORRECT TO USE 'g' HERE???
 	 double lat, lon;
 	 a_EW->computeGeographicCoord(mX0, mY0, lon, lat);
 	 printf("Found a source above the curvilinear grid! Lat=%e, Lon=%e, source Z-level = %e, grid boundary Z = %e\n",

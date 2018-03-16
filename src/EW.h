@@ -471,7 +471,8 @@ void copy_topo_to_topogridext();
 
 bool getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth);
 
-bool curvilinear_grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
+// new argument: g = grid number
+   bool curvilinear_grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
 
 bool invert_curvilinear_grid_mapping( float_sw4 X0, float_sw4 Y0, float_sw4 Z0, float_sw4& q, float_sw4& r, float_sw4& s );
 

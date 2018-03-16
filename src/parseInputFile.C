@@ -377,7 +377,11 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	cout << endl << 
 	   "*** No topography command found in input file. Using z=0 as free surface boundary ***" << endl << endl;
   }
-    
+
+// tmp
+  MPI_Abort(MPI_COMM_WORLD,1);
+  
+  
 // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
@@ -4175,54 +4179,153 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       cout << "Corrected global_zmax = " << m_global_zmax << endl << endl;
    }
    
-// NEED TO DEFINE ALL CURVILINEAR GRID ARRAYS FIRST!
-   if( m_topography_exists ) // UPDATE  for more than 1 curvilinear grid
+// Allocate the topography arrays and coarsen out the grid in the curvilinear portion of the grid
+   if( m_topography_exists ) // UPDATED  for more than 1 curvilinear grid
    {
-// get the size from the top Cartesian grid
-      ifirst = m_iStart[nCartGrids-1];
-      ilast  = m_iEnd[nCartGrids-1];
-      jfirst = m_jStart[nCartGrids-1];
-      jlast  = m_jEnd[nCartGrids-1];
 
+// NEW
+      for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--)
+      {
 // save the local index bounds
-      m_iStart[mNumberOfGrids-1] = ifirst;
-      m_iEnd[mNumberOfGrids-1]   = ilast;
-      m_jStart[mNumberOfGrids-1] = jfirst;
-      m_jEnd[mNumberOfGrids-1]   = jlast;
+         m_iStart[g] = ifirst;
+         m_iEnd[g]   = ilast;
+         m_jStart[g] = jfirst;
+         m_jEnd[g]   = jlast;
+// k-bounds must be determined by the grid generator
 
-// interior points (what about k-direction???)
-      m_iStartInt[mNumberOfGrids-1] = m_iStartInt[nCartGrids-1];
-      m_iEndInt[mNumberOfGrids-1]   = m_iEndInt[nCartGrids-1];
-      m_jStartInt[mNumberOfGrids-1] = m_jStartInt[nCartGrids-1];
-      m_jEndInt[mNumberOfGrids-1]   = m_jEndInt[nCartGrids-1];
+// local index bounds for interior points (= no ghost or parallel padding points)
+         if (ifirst == 1-m_ghost_points)
+            m_iStartInt[g] = 1;
+         else
+            m_iStartInt[g] = ifirst+m_ppadding;
 
+         if (ilast == nx + m_ghost_points)
+            m_iEndInt[g]   = nx;
+         else
+            m_iEndInt[g]   = ilast - m_ppadding;
+
+         if (jfirst == 1-m_ghost_points)
+            m_jStartInt[g] = 1;
+         else
+            m_jStartInt[g] = jfirst+m_ppadding;
+
+         if (jlast == ny + m_ghost_points)
+            m_jEndInt[g]   = ny;
+         else
+            m_jEndInt[g]   = jlast - m_ppadding;
+
+         // m_kStartInt[g] = 1;
+         // m_kEndInt[g]   = nz[g];
+
+// check that there are more interior points than padding points
+         if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
+         {
+            printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
+                   "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+         }
+         if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
+         {
+            printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
+                   "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+         }
+      
+// output bounds
+         if (proc_zero() && mVerbose >=1 /*3*/) // tmp
+         {
+            printf("Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], jInterior=[%d,%d]\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g],
+                   m_jStartInt[g], m_jEndInt[g]);
+         }
+
+// NEW: only allocate topo arrays for the top (finest) curvilinear grid
+         if (g==mNumberOfGrids-1)
+         {
 // 2 versions of the topography:
-      mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
-      m_ext_ghost_points = 2;
+            mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
+            m_ext_ghost_points = 2;
 // smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
-      mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
-			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+            mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
+                                jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+         }
 
 // At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
-// the arrays mX, mY, mZ must be allocated by the grid generator
-   }
+// The arrays mX, mY, mZ, etc, must be allocated by the grid generator
+
+// Any other arrays that we need to allocate here?
+
+// Go to the next coarser grid, unless this is the coarsest curvilinear grid
+         if (g > mNumberOfCartesianGrids)
+         {
+            coarsen1d( nx, ifirst, ilast, is_periodic[0] );
+            coarsen1d( ny, jfirst, jlast, is_periodic[1] );
+         }
+      } // end for all curvilinear grids
+       
+   } // end if m_topography_exists
 
 // Define Cartesian grid arrays, loop from finest to coarsest
+
+// On entry to this loop: (nx, ifirst, ilast) and (ny, jfirst, jlast) are the local number of grid points, starting, and ending indices
+// of the finest Cartesian grif 
    for( int g = nCartGrids-1 ; g >= 0 ; g-- )
    {
 // NOTE: same number of ghost points in all directions
       kfirst     = 1-m_ghost_points;
       klast      = nz[g] + m_ghost_points;
-      //      cout << "defining " << ifirst << " " << ilast << " " << jfirst << " " << jlast << " " << kfirst << " " << klast << endl;
-      //      cout << " zmin " << m_zmin[g] << endl;
-      // mU[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-      // mUm[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-      // mUp[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-      // mUacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-      // mLu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 
-      // mF[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+// save the local index bounds
+      m_iStart[g] = ifirst;
+      m_iEnd[g]   = ilast;
+      m_jStart[g] = jfirst;
+      m_jEnd[g]   = jlast;
+      m_kStart[g] = kfirst;
+      m_kEnd[g]   = klast;
 
+// local index bounds for interior points (= no ghost or parallel padding points)
+      if (ifirst == 1-m_ghost_points)
+	m_iStartInt[g] = 1;
+      else
+	m_iStartInt[g] = ifirst+m_ppadding;
+
+      if (ilast == nx + m_ghost_points)
+	m_iEndInt[g]   = nx;
+      else
+	m_iEndInt[g]   = ilast - m_ppadding;
+
+      if (jfirst == 1-m_ghost_points)
+	m_jStartInt[g] = 1;
+      else
+	m_jStartInt[g] = jfirst+m_ppadding;
+
+      if (jlast == ny + m_ghost_points)
+	m_jEndInt[g]   = ny;
+      else
+	m_jEndInt[g]   = jlast - m_ppadding;
+
+      m_kStartInt[g] = 1;
+      m_kEndInt[g]   = nz[g];
+
+// check that there are more interior points than padding points
+      if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
+      {
+         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
+                "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+      }
+      if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
+      {
+         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
+                "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+      }
+      
+// output bounds
+      if (proc_zero() && mVerbose >=1 /*3*/) // tmp
+      {
+         printf("Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g],
+                m_jStartInt[g], m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
+      }
+      
+//
+// Allocate arrays as needed by the use case
+//
       mRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
       mRho[g].set_to_minusOne();
       if( m_anisotropic )
@@ -4259,10 +4362,6 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 	{
 	  mMuVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 	  mLambdaVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	  // mAlphaVE[g][a].define( 3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	  // mAlphaVEp[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	  // mAlphaVEm[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	  
 // initialize the viscoelastic material coefficients to -1
 	  mMuVE[g][a].set_to_minusOne();
 	  mLambdaVE[g][a].set_to_minusOne();
@@ -4272,97 +4371,14 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 	mQp[g].set_to_minusOne();
       }
 	
-// save the local index bounds
-      m_iStart[g] = ifirst;
-      m_iEnd[g]   = ilast;
-      m_jStart[g] = jfirst;
-      m_jEnd[g]   = jlast;
-      m_kStart[g] = kfirst;
-      m_kEnd[g]   = klast;
-
-// local index bounds for interior points (= no ghost or parallel padding points)
-      if (ifirst == 1-m_ghost_points)
-	m_iStartInt[g] = 1;
-      else
-	m_iStartInt[g] = ifirst+m_ppadding;
-
-      if (ilast == nx + m_ghost_points)
-	m_iEndInt[g]   = nx;
-      else
-	m_iEndInt[g]   = ilast - m_ppadding;
-
-      if (jfirst == 1-m_ghost_points)
-	m_jStartInt[g] = 1;
-      else
-	m_jStartInt[g] = jfirst+m_ppadding;
-
-      if (jlast == ny + m_ghost_points)
-	m_jEndInt[g]   = ny;
-      else
-	m_jEndInt[g]   = jlast - m_ppadding;
-
-      m_kStartInt[g] = 1;
-      m_kEndInt[g]   = nz[g];
-
-      // go to next coarser grid 
+      // go to the next coarser grid 
       coarsen1d( nx, ifirst, ilast, is_periodic[0] );
       coarsen1d( ny, jfirst, jlast, is_periodic[1] );
       //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst << " , " << ilast << endl;
       //      cout << g << " " << my_proc_coords[1] << " J Split into " << jfirst << " , " << jlast << endl;
       //      cout << "grid " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << " kinterval " << kfirst << " , " << klast << endl;
 
-// check that there are more interior points than padding points
-      if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
-      {
-         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
-                "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
-      }
-      if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
-      {
-         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
-                "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
-      }
-      
-// output bounds
-      if (proc_zero() && mVerbose >=1 /*3*/) // tmp
-      {
-         printf("Grid #%d, iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n", g, m_iStartInt[g], m_iEndInt[g],
-                m_jStartInt[g], m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
-      }
-      
    }// end for all Cartesian grids
-
-// OLD (no MR in curvilinear)
-//    if( m_topography_exists ) // UPDATE  for more than 1 curvilinear grid
-//    {
-// // get the size from the top Cartesian grid
-//       ifirst = m_iStart[nCartGrids-1];
-//       ilast  = m_iEnd[nCartGrids-1];
-//       jfirst = m_jStart[nCartGrids-1];
-//       jlast  = m_jEnd[nCartGrids-1];
-
-// // save the local index bounds
-//       m_iStart[mNumberOfGrids-1] = ifirst;
-//       m_iEnd[mNumberOfGrids-1]   = ilast;
-//       m_jStart[mNumberOfGrids-1] = jfirst;
-//       m_jEnd[mNumberOfGrids-1]   = jlast;
-
-// // interior points (what about k-direction???)
-//       m_iStartInt[mNumberOfGrids-1] = m_iStartInt[nCartGrids-1];
-//       m_iEndInt[mNumberOfGrids-1]   = m_iEndInt[nCartGrids-1];
-//       m_jStartInt[mNumberOfGrids-1] = m_jStartInt[nCartGrids-1];
-//       m_jEndInt[mNumberOfGrids-1]   = m_jEndInt[nCartGrids-1];
-
-// // 2 versions of the topography:
-//       mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
-//       m_ext_ghost_points = 2;
-// // smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
-//       mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
-// 			  jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
-
-// // At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.
-// // the arrays mX, mY, mZ must be allocated by the grid generator
-//    }
 
 // tmp
 //   int myRank;
@@ -4385,24 +4401,28 @@ void EW::allocateCurvilinearArrays()
    if (mVerbose >= 1 && proc_zero())
       cout << "***inside allocateCurvilinearArrays***"<< endl;
 
-// get the size from the top Cartesian grid
-   int g = mNumberOfCartesianGrids-1;
-   int ifirst = m_iStart[g];
-   int ilast  = m_iEnd[g];
-   int jfirst = m_jStart[g];
-   int jlast  = m_jEnd[g];
-   float_sw4 h = mGridSize[g]; // grid size must agree with top cartesian grid
-   float_sw4 zMaxCart = m_zmin[g]; // bottom z-level for curvilinear grid
+// 1: get the min and max elevation from mTopoGridExt
+
+   int gTop = mNumberOfGrids-1;
+   int ifirst = m_iStart[gTop];
+   int ilast  = m_iEnd[gTop];
+   int jfirst = m_jStart[gTop];
+   int jlast  = m_jEnd[gTop];
+   float_sw4 h = mGridSize[gTop]; // grid size must agree with top cartesian grid
+//   float_sw4 zTopCart = m_zmin[g]; // bottom z-level for curvilinear grid
+   float_sw4 zTopCart = m_topo_zmax; // bottom z-level for curvilinear grid
+
 // decide on the number of grid point in the k-direction (evaluate mTopoGrid...)
    float_sw4 zMinLocal, zMinGlobal, zMaxLocal, zMaxGlobal;
-   int i=m_iStart[g], j=m_jEnd[g];
-// note that the z-coordinate points downwards, so positive topography (above sea level)
-// gets negative z-values
+   int i=m_iStart[gTop], j=m_jEnd[gTop];
+// note that the z-coordinate points downwards, so positive elevation (above sea level)
+// has negative z-values
    zMaxLocal = zMinLocal = -mTopoGridExt(i,j,1);
 // tmp
    int i_min_loc=i, i_max_loc=i;
    int j_min_loc=j, j_max_loc=j;
 // end tmp
+// the mTopoGridExt array was allocated in allocateCartesianSolverArrays()   
    int imin = mTopoGridExt.m_ib;
    int imax = mTopoGridExt.m_ie;
    int jmin = mTopoGridExt.m_jb;
@@ -4413,15 +4433,15 @@ void EW::allocateCurvilinearArrays()
 	 if (-mTopoGridExt(i,j,1) > zMaxLocal)
 	 {
 	    zMaxLocal = -mTopoGridExt(i,j,1);
- 	i_max_loc = i;
- 	j_max_loc = j;
+            i_max_loc = i;
+            j_max_loc = j;
 	 }
       
 	 if (-mTopoGridExt(i,j,1) < zMinLocal)
 	 {
 	    zMinLocal = -mTopoGridExt(i,j,1);
- 	i_min_loc = i;
- 	j_min_loc = j;
+            i_min_loc = i;
+            j_min_loc = j;
 	 }
       }
 // tmp
@@ -4429,130 +4449,183 @@ void EW::allocateCurvilinearArrays()
 // 	 zMinLocal, i_min_loc, j_min_loc);
 // end tmp
 
-  MPI_Allreduce( &zMinLocal, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  MPI_Allreduce( &zMaxLocal, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+   MPI_Allreduce( &zMinLocal, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &zMaxLocal, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
-  float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
+// Compute some divided differences of the topographic surface to evaluate its smoothness
+   float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
 // grid size h
-  for (i=imin+1; i<=imax-1; i++)
-     for (j=jmin+1; j<=jmax-1; j++)
-     {
-	d2h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+1,j,1))/1.) + 
-		    SQR((mTopoGridExt(i,j-1,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+1,1))/1.) + 
-		    SQR((mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j+1,1) + mTopoGridExt(i,j,1))/1.) );
-	if (d2h > maxd2zh) maxd2zh = d2h;
-     }
+   for (i=imin+1; i<=imax-1; i++)
+      for (j=jmin+1; j<=jmax-1; j++)
+      {
+         d2h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+1,j,1))/1.) + 
+                     SQR((mTopoGridExt(i,j-1,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+1,1))/1.) + 
+                     SQR((mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j+1,1) + mTopoGridExt(i,j,1))/1.) );
+         if (d2h > maxd2zh) maxd2zh = d2h;
+      }
 // 3rd differences
-  for (i=imin+1; i<=imax-2; i++)
-     for (j=jmin+1; j<=jmax-2; j++)
-     {
-	d3h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+1,j,1) - mTopoGridExt(i+2,j,1))/1.) + 
-		    SQR((mTopoGridExt(i,j-1,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j+2,1))/1.) + 
-		    SQR((mTopoGridExt(i+2,j+1,1) - mTopoGridExt(i+2,j,1) - 2*mTopoGridExt(i+1,j+1,1) + 2*mTopoGridExt(i+1,j,1) + 
-			 mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j,1))/1.) +
-		    SQR((mTopoGridExt(i+1,j+2,1) - 2*mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i,j+2,1) + 2*mTopoGridExt(i,j+1,1) + 
-			 mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j,1))/1.) );
+   for (i=imin+1; i<=imax-2; i++)
+      for (j=jmin+1; j<=jmax-2; j++)
+      {
+         d3h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+1,j,1) - mTopoGridExt(i+2,j,1))/1.) + 
+                     SQR((mTopoGridExt(i,j-1,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j+2,1))/1.) + 
+                     SQR((mTopoGridExt(i+2,j+1,1) - mTopoGridExt(i+2,j,1) - 2*mTopoGridExt(i+1,j+1,1) + 2*mTopoGridExt(i+1,j,1) + 
+                          mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j,1))/1.) +
+                     SQR((mTopoGridExt(i+1,j+2,1) - 2*mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i,j+2,1) + 2*mTopoGridExt(i,j+1,1) + 
+                          mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j,1))/1.) );
 
-	if (d3h > maxd3zh) maxd3zh = d3h;
-     }
+         if (d3h > maxd3zh) maxd3zh = d3h;
+      }
 // grid size 2h
-  for (i=imin+2; i<=imax-2; i+=2)
-     for (j=jmin+2; j<=jmax-2; j+=2)
-     {
-	d2h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+2,j,1))/1.) + 
-		    SQR((mTopoGridExt(i,j-2,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+2,1))/1.) + 
-		    SQR((mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j+2,1) + mTopoGridExt(i,j,1))/1.) );
-	if (d2h > maxd2z2h) maxd2z2h = d2h;
-     }
+   for (i=imin+2; i<=imax-2; i+=2)
+      for (j=jmin+2; j<=jmax-2; j+=2)
+      {
+         d2h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+2,j,1))/1.) + 
+                     SQR((mTopoGridExt(i,j-2,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+2,1))/1.) + 
+                     SQR((mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j+2,1) + mTopoGridExt(i,j,1))/1.) );
+         if (d2h > maxd2z2h) maxd2z2h = d2h;
+      }
 // 3rd differences
-  for (i=imin+2; i<=imax-4; i+=2)
-     for (j=jmin+2; j<=jmax-4; j+=2)
-     {
-	d3h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+2,j,1) - mTopoGridExt(i+4,j,1))/1.) + 
-		    SQR((mTopoGridExt(i,j-2,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j+4,1))/1.) + 
-		    SQR((mTopoGridExt(i+4,j+2,1) - mTopoGridExt(i+4,j,1) - 2*mTopoGridExt(i+2,j+2,1) + 2*mTopoGridExt(i+2,j,1) + 
-			 mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j,1))/1.) +
-		    SQR((mTopoGridExt(i+2,j+4,1) - 2*mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i,j+4,1) + 2*mTopoGridExt(i,j+2,1) + 
-			 mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j,1))/1.) );
-	if (d3h > maxd3z2h) maxd3z2h = d3h;
-     }
-  float_sw4 d2zh_global=0, d2z2h_global=0, d3zh_global=0, d3z2h_global=0;
-  MPI_Allreduce( &maxd2zh,  &d2zh_global,  1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  MPI_Allreduce( &maxd2z2h, &d2z2h_global, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  MPI_Allreduce( &maxd3zh,  &d3zh_global,  1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  MPI_Allreduce( &maxd3z2h, &d3z2h_global, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  if(proc_zero() )
-  {
-     printf("\n");
-     printf("***Topography grid: min z = %e, max z = %e, top Cartesian z = %e\n", zMinGlobal, zMaxGlobal, zMaxCart);
-     if (mVerbose >= 3)
-     {
-	printf("***Un-divided differences of grid surface (ratio h*D2/D3 should be close to the same for h and 2h):\n"
-	     "h*max D2z(h)   = %e, max D3z(h)  = %e, Ratio: h*max D2z(h) / max D3z(h)    = %e\n"
-	     "2h*max D2z(2h) = %e, max D3z(2h) = %e, Ratio: 2h*max D2z(2h) / max D3z(2h) = %e\n", 
-	       h*d2zh_global, d3zh_global, h*d2zh_global/d3zh_global, 2*h*d2z2h_global, d3z2h_global,
-	       2*h*d2z2h_global/d3z2h_global);
-	printf("\n");
-     }
-  }
+   for (i=imin+2; i<=imax-4; i+=2)
+      for (j=jmin+2; j<=jmax-4; j+=2)
+      {
+         d3h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+2,j,1) - mTopoGridExt(i+4,j,1))/1.) + 
+                     SQR((mTopoGridExt(i,j-2,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j+4,1))/1.) + 
+                     SQR((mTopoGridExt(i+4,j+2,1) - mTopoGridExt(i+4,j,1) - 2*mTopoGridExt(i+2,j+2,1) + 2*mTopoGridExt(i+2,j,1) + 
+                          mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j,1))/1.) +
+                     SQR((mTopoGridExt(i+2,j+4,1) - 2*mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i,j+4,1) + 2*mTopoGridExt(i,j+2,1) + 
+                          mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j,1))/1.) );
+         if (d3h > maxd3z2h) maxd3z2h = d3h;
+      }
+   float_sw4 d2zh_global=0, d2z2h_global=0, d3zh_global=0, d3z2h_global=0;
+   MPI_Allreduce( &maxd2zh,  &d2zh_global,  1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &maxd2z2h, &d2z2h_global, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &maxd3zh,  &d3zh_global,  1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &maxd3z2h, &d3z2h_global, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+   if(proc_zero() )
+   {
+      printf("\n");
+      printf("***Topography grid: min z = %e, max z = %e, top Cartesian z = %e\n", zMinGlobal, zMaxGlobal, zTopCart);
+      if (mVerbose >= 3)
+      {
+         printf("***Un-divided differences of grid surface (ratio h*D2/D3 should be close to the same for h and 2h):\n"
+                "h*max D2z(h)   = %e, max D3z(h)  = %e, Ratio: h*max D2z(h) / max D3z(h)    = %e\n"
+                "2h*max D2z(2h) = %e, max D3z(2h) = %e, Ratio: 2h*max D2z(2h) / max D3z(2h) = %e\n", 
+                h*d2zh_global, d3zh_global, h*d2zh_global/d3zh_global, 2*h*d2z2h_global, d3z2h_global,
+                2*h*d2z2h_global/d3z2h_global);
+         printf("\n");
+      }
+   }
 // remember the global zmin
-  m_global_zmin = zMinGlobal;
-  CHECK_INPUT(zMaxCart>zMaxGlobal,"allocateCurvilinearArrays: Negative thickness of curvilinear grid.\n"
-	      "Increase topography zmax to exceed zMaxGlobal = "<< zMaxGlobal <<", preferrably by at least "
-	      << zMaxGlobal-zMinGlobal);
-  int gTop = mNumberOfGrids-1;
-  int Nz = 1+ (int) ((zMaxCart - 0.5*(zMaxGlobal+zMinGlobal))/mGridSize[gTop]); // on average the same gridsize in z
-  m_kStart[gTop] = 1 - m_ghost_points;
-  m_kEnd[gTop]   = Nz + m_ghost_points;
-  m_global_nz[gTop] = Nz;
-  m_kStartInt[gTop] = 1;
-  m_kEndInt[gTop]   = Nz;
-  if(mVerbose && proc_zero() )
-     printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
-	    Nz, m_kStart[gTop], m_kEnd[gTop]);
-// allocate mX, mY, and mZ arrays
-  mX.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
-  mY.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
-  mZ.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
-// Allocate array for the metric
-  mMetric.define(4,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-// and the Jacobian of the transformation
-  mJ.define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-// and material properties, initialize to -1
-  mRho[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-  mRho[gTop].set_to_minusOne();
+   m_global_zmin = zMinGlobal; // = -(highest elevation)
+   CHECK_INPUT(zTopCart>zMaxGlobal,"allocateCurvilinearArrays: Negative thickness of curvilinear grid.\n"
+               "Increase topography zmax to exceed zMaxGlobal = "<< zMaxGlobal <<", preferrably by at least "
+               << zMaxGlobal-zMinGlobal);
 
-  if( m_anisotropic )
-  {
-     mC[gTop].define(21,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-     mCcurv.define(45,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-     mC[gTop].set_to_minusOne();
-     mCcurv.set_to_minusOne();
-  }
-  else
-  {
-     mMu[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-     mMu[gTop].set_to_minusOne();
-     mLambda[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-     mLambda[gTop].set_to_minusOne();
-  }
+// 2: determine the number of grid points in each curvilinear grid
+
+// set last element of m_refinementBoundaries
+   int qLast = m_refinementBoundaries.size()-1;
+   m_refinementBoundaries[qLast] = 0.5*(zMaxGlobal+zMinGlobal);
+
+   if (proc_zero())
+   {
+      for (int q=0; q<m_refinementBoundaries.size(); q++)
+         printf("m_refBndry[%d] = %e\n", q, m_refinementBoundaries[q]);
+   }
+
+// Use the m_zmin array to help keep track of the top (min z) coordinate for each grid
+// assigned for the Cartesian portion of the grid in allocateCartesianSolverArrays()   
+   
+// find the first refinement boundary that is in the curvilinear grid
+   int qNext = qLast;
+   for (int q=0; q<m_refinementBoundaries.size(); q++)
+   {
+      if (m_refinementBoundaries[q] < m_topo_zmax){ // z positive downwards
+         qNext = q;
+         break;
+      }
+   }
+   if (proc_zero())
+      printf("qLast = %d, qNext=%d, m_refBndry[qLast]=%e, m_refBndry[qNext]=%e\n", qLast, qNext,
+             m_refinementBoundaries[qLast], m_refinementBoundaries[qNext]);
+   
+   for (int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+   {
+      m_zmin[g] = m_refinementBoundaries[qNext];
+      qNext++;
+   }
+   
+   if (proc_zero())
+   {
+      for (int g=0; g<mNumberOfGrids; g++)
+         printf("m_zmin[%d] = %e\n", g, m_zmin[g]);
+   }
+
+//   MPI_Abort(MPI_COMM_WORLD, 1);
+   
+   
+//
+// loop over all curvilinear grids and allocate space + estimate the number of grid points in z   
+//
+   for (int g = mNumberOfCartesianGrids; g <mNumberOfGrids; g++)
+   {
+// on average the same gridsize in z
+      int Nz = 1+ (int) ((m_zmin[g-1] - m_zmin[g])/mGridSize[g]); 
+      m_kStart[g] = 1 - m_ghost_points;
+      m_kEnd[g]  = Nz + m_ghost_points;
+      m_global_nz[g] = Nz;
+      m_kStartInt[g] = 1;
+      m_kEndInt[g]   = Nz;
+      if(mVerbose && proc_zero() )
+         printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid[%d] = %i, kStart = %i, kEnd = %i\n", 
+                g, Nz, m_kStart[g], m_kEnd[g]);
+//
+// NOTE: mX, mY, mZ, etc need to be vector<Sarray*>
+// allocate mX, mY, and mZ arrays
+      mX.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
+      mY.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
+      mZ.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
+// Allocate array for the metric
+      mMetric.define(4,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+// and the Jacobian of the transformation
+      mJ.define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+// and material properties, initialize to -1
+      mRho[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+      mRho[g].set_to_minusOne();
+
+      if( m_anisotropic )
+      {
+         mC[g].define(21,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mCcurv.define(45,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mC[g].set_to_minusOne();
+         mCcurv.set_to_minusOne();
+      }
+      else
+      {
+         mMu[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mMu[g].set_to_minusOne();
+         mLambda[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mLambda[g].set_to_minusOne();
+      }
 // viscoelastic material coefficients
-  if (m_use_attenuation)
-  {
+      if (m_use_attenuation)
+      {
 // initialize the viscoelastic material coefficients to -1
-     mQs[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-     mQs[gTop].set_to_minusOne();
-     mQp[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-     mQp[gTop].set_to_minusOne();
-     for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model has m_number_mechanisms = 0
-     {
-	mMuVE[gTop][a].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-	mMuVE[gTop][a].set_to_minusOne();
-	mLambdaVE[gTop][a].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-	mLambdaVE[gTop][a].set_to_minusOne();
-     }
-  }
-}
+         mQs[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mQs[g].set_to_minusOne();
+         mQp[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mQp[g].set_to_minusOne();
+         for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model has m_number_mechanisms = 0
+         {
+            mMuVE[g][a].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+            mMuVE[g][a].set_to_minusOne();
+            mLambdaVE[g][a].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+            mLambdaVE[g][a].set_to_minusOne();
+         } // end for a...
+      }// end if attenuation
+   } // end for g...
+}// end allocateCurvilinearArrays()
 
 //-----------------------------------------------------------------------
 void EW::deprecatedImageMode(int value, const char* name) const
