@@ -746,6 +746,7 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
 //-----------------------------------------------------------------------
 void Sarray::copy_kplane( Sarray& u, int k )
 {
+  SW4_MARK_FUNCTION;
    if( !(u.m_ib==m_ib && u.m_ie==m_ie && u.m_jb==m_jb && u.m_je==m_je) )
    {
        cout << "Sarray::copy_kplane, ERROR arrays must have same (i,j) dimensions" << endl;
@@ -755,14 +756,33 @@ void Sarray::copy_kplane( Sarray& u, int k )
    {
       size_t nijk = m_ni*m_nj*m_nk;
       size_t unijk = u.m_ni*u.m_nj*u.m_nk;
-      for( int c=0 ; c < m_nc ; c++ )
-	 for( int j=m_jb ; j<=m_je ; j++ )
-	    for( int i=m_ib ; i <= m_ie ; i++ )
-	    {
-	       size_t ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
-	       size_t uind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-u.m_kb);
-	       m_data[ind+c*nijk] = u.m_data[uind+c*unijk];
-	    }
+
+      float_sw4* um_data=u.m_data;
+      float_sw4* lm_data = m_data;
+      int um_kb = u.m_kb;
+      ASSERT_MANAGED(m_data);
+      ASSERT_MANAGED(um_data);
+      int mib = m_ib;
+      int mjb = m_jb;
+      int mkb = m_kb;
+      int mni = m_ni;
+      int mnj = m_nj;
+      prefetch();
+      u.prefetch();
+      RAJA::RangeSegment c_range(0,m_nc);
+      RAJA::RangeSegment j_range(m_jb,m_je+1);
+      RAJA::RangeSegment i_range(m_ib,m_ie+1);
+      RAJA::nested::forall(COPY_KPLANE_EXEC_POL{},
+			   RAJA::make_tuple(c_range, j_range,i_range),
+			  [=]RAJA_DEVICE (int c,int j,int i) {
+      // for( int c=0 ; c < m_nc ; c++ )
+      // 	 for( int j=m_jb ; j<=m_je ; j++ )
+      // 	    for( int i=m_ib ; i <= m_ie ; i++ )
+      // 	    {
+	       size_t ind = (i-mib) + mni*(j-mjb) + mni*mnj*(k-mkb);
+	       size_t uind = (i-mib) + mni*(j-mjb) + mni*mnj*(k-um_kb);
+	       lm_data[ind+c*nijk] = um_data[uind+c*unijk];
+			   });
    }
    else
    {
@@ -1029,11 +1049,10 @@ void Sarray::transposeik( )
    
 void Sarray::prefetch(int device){
 #if defined(ENABLE_CUDA)
-  // Add error checking here PBUGS //
-  cudaMemPrefetchAsync(m_data,
-		       m_nc*m_ni*m_nj*m_nk*sizeof(float_sw4),
-		       device,
-		       0);
+  SW4_CheckDeviceError(cudaMemPrefetchAsync(m_data,
+					    m_nc*m_ni*m_nj*m_nk*sizeof(float_sw4),
+					    device,
+					    0));
   
 #endif
 }

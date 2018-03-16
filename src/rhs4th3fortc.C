@@ -1851,16 +1851,23 @@ void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 {
   SW4_MARK_FUNCTION;
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel for
-#pragma ivdep
-#pragma simd
-   for( size_t i=0 ; i < npts ; i++ )
-   {
-      float_sw4 dt2orh = dt2/rho[i];
-      up[i  ]      = 2*u[i  ]     -um[i  ]      + dt2orh*(lu[i  ]     +fo[i  ]);
-      up[i+npts]   = 2*u[i+npts]  -um[i+npts]   + dt2orh*(lu[i+npts]  +fo[i+npts]);
-      up[i+2*npts] = 2*u[i+2*npts]-um[i+2*npts] + dt2orh*(lu[i+2*npts]+fo[i+2*npts]);
-   }
+#// pragma omp parallel for
+// #pragma ivdep
+// #pragma simd
+//    for( size_t i=0 ; i < npts ; i++ )
+//    {
+   ASSERT_MANAGED(up);
+   ASSERT_MANAGED(um);
+   ASSERT_MANAGED(fo);
+   ASSERT_MANAGED(u);
+   ASSERT_MANAGED(lu);
+   ASSERT_MANAGED(rho);
+   RAJA::forall<PREDFORT_LOOP_POL> (RAJA::RangeSegment(0,npts),[=] RAJA_DEVICE(size_t i){
+       float_sw4 dt2orh = dt2/rho[i];
+       up[i  ]      = 2*u[i  ]     -um[i  ]      + dt2orh*(lu[i  ]     +fo[i  ]);
+       up[i+npts]   = 2*u[i+npts]  -um[i+npts]   + dt2orh*(lu[i+npts]  +fo[i+npts]);
+       up[i+2*npts] = 2*u[i+2*npts]-um[i+2*npts] + dt2orh*(lu[i+2*npts]+fo[i+2*npts]);
+     });
 }
 
 //-----------------------------------------------------------------------
@@ -1872,16 +1879,17 @@ void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
   SW4_MARK_FUNCTION;
    const float_sw4 dt4i12= dt4/12;
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel for
-#pragma ivdep
-#pragma simd
-   for( size_t i=0 ; i < npts ; i++ )
-   {
+// #pragma omp parallel for
+// #pragma ivdep
+// #pragma simd
+//    for( size_t i=0 ; i < npts ; i++ )
+//    {
+     RAJA::forall<CORRFORT_LOOP_POL> (RAJA::RangeSegment(0,npts),[=] RAJA_DEVICE(size_t i){
       float_sw4 dt4i12orh = dt4i12/rho[i];
       up[i  ]      += dt4i12orh*(lu[i  ]     +fo[i  ]);
       up[i+npts]   += dt4i12orh*(lu[i+npts]  +fo[i+npts]);
       up[i+2*npts] += dt4i12orh*(lu[i+2*npts]+fo[i+2*npts]);
-   }
+       });
 }
 
 //-----------------------------------------------------------------------
@@ -1892,11 +1900,12 @@ void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 {
   SW4_MARK_FUNCTION;
   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel for
-#pragma ivdep
-#pragma simd
-  for( size_t i = 0 ; i < 3*npts ; i++ )
-    u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
+// #pragma omp parallel for
+// #pragma ivdep
+// #pragma simd
+//   for( size_t i = 0 ; i < 3*npts ; i++ )
+    RAJA::forall<DPDMTFORT_LOOP_POL> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
+	u2[i] = dt2i*(up[i]-2*u[i]+um[i]);});
 }
 
 //-----------------------------------------------------------------------

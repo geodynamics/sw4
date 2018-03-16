@@ -2228,8 +2228,13 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
     {
        size_t npts = a_U[g].m_npts;
        float_sw4* uexact  = SW4_NEW(Managed, float_sw4[npts]);
+       SW4_CheckDeviceError(cudaMemPrefetchAsync(uexact,
+						 npts*sizeof(float_sw4),
+						 0,
+						 0));
        //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
        get_exact_point_source( uexact, a_t, g, *sources[0] );
+       a_U[g].prefetch();
        a_U[g].assign(uexact,0);
        ::operator delete[](uexact,Managed);
     }
@@ -3187,6 +3192,7 @@ complex<double> atan2(complex<double> z, complex<double> w)
 //-----------------------------------------------------------------------
 void EW::get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
 {
+  SW4_MARK_FUNCTION;
 // initialize
 //  for (int g=0; g<mNumberOfGrids; g++)
 //    a_U[g].set_to_zero();
@@ -3231,6 +3237,7 @@ void EW::get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source 
 //-----------------------------------------------------------------------
 void EW::get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
 {
+  SW4_MARK_FUNCTION;
   int g;
   
 // initialize
@@ -3507,6 +3514,7 @@ double EW::G2_Integral(double iT, double it, double ir, double ibeta)
 //---------------------------------------------------------------------------
 void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F)
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
   
@@ -3689,6 +3697,7 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc)
 void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
 	       vector<int> identsources )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
   
@@ -3960,6 +3969,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
 		  vector<int> identsources )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
   
@@ -4236,6 +4246,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		 vector<Sarray> & a_Uacc, vector<Sarray*>& a_AlphaVE )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uacc_ptr, *u_ptr, *mu_ptr, *la_ptr, h;
   
@@ -4408,6 +4419,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C, 
 			    vector<Sarray> & a_Uacc )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uacc_ptr, *u_ptr, *c_ptr, h;
   
@@ -4472,6 +4484,7 @@ void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C,
 void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		       vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *up_ptr, *u_ptr, *um_ptr, *lu_ptr, *fo_ptr, *rho_ptr, dt2;
   
@@ -4481,6 +4494,12 @@ void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarra
   
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
+    a_Up[g].prefetch();
+    a_U[g].prefetch();
+    a_Um[g].prefetch();
+    a_Lu[g].prefetch();
+    a_F[g].prefetch();
+    a_Rho[g].prefetch();
     up_ptr  = a_Up[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
     um_ptr  = a_Um[g].c_ptr();
@@ -4507,6 +4526,7 @@ void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarra
 void EW::evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
 		       vector<Sarray> & a_Lu, vector<Sarray> & a_F )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *up_ptr, *lu_ptr, *fo_ptr, *rho_ptr, dt4;
   
@@ -4542,6 +4562,7 @@ void EW::evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
 void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 			vector<Sarray> & a_Uacc )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *up_ptr, *u_ptr, *um_ptr, *uacc_ptr, dt2i;
   
@@ -4562,7 +4583,10 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
     dt2i = 1./(mDt*mDt);
-    
+    a_Up[g].prefetch();
+    a_U[g].prefetch();
+    a_Um[g].prefetch();
+    a_Uacc[g].prefetch();
      //  subroutine dpdmtfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
      // +     up, u, um, u2, dt2i)
     if( m_croutines )
@@ -4578,6 +4602,7 @@ void EW::evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarr
 void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
 			   vector<Sarray>& a_U, float_sw4 a_t )
 {
+  SW4_MARK_FUNCTION;
    int domain = 0;
    
    for( int g=0 ; g<mNumberOfGrids; g++ )
@@ -4622,6 +4647,7 @@ void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm,
                            vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t )
 {
+  SW4_MARK_FUNCTION;
    int domain = 0;
    
    for( int g=0 ; g<mNumberOfGrids; g++ )
@@ -4674,6 +4700,7 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 void EW::updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
                                         Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, double a_t, int a_mech, int a_grid )
 {
+  SW4_MARK_FUNCTION;
    // NOTE: this routine updates a_AlphaVEp for mechanism a=a_mech in grid g=a_grid, for all points defined in a_AlphaVEp
    int domain = 0;
    
@@ -4733,6 +4760,7 @@ void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alph
                             vector<Sarray*>& a_AlphaVEm )
 // store AlphaVEacc in AlphaVEm
 {
+  SW4_MARK_FUNCTION;
    float_sw4 dt2i = 1/(mDt*mDt);
    for(int g=0 ; g<mNumberOfGrids; g++ )
    {
@@ -5371,6 +5399,7 @@ void EW::get_cgparameters( int& maxit, int& maxrestart, float_sw4& tolerance,
 void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 			 vector<Sarray>& U, vector<Sarray>& Up, int step )
 {
+  SW4_MARK_FUNCTION;
 // Compute energy
    float_sw4 energy    = 0;
    for( int g=0; g < mNumberOfGrids ; g++ )
@@ -6652,6 +6681,7 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
 		      vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
 		      vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda )
 {
+  SW4_MARK_FUNCTION;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       int ifirst = m_iStart[g];
@@ -6856,6 +6886,7 @@ void EW::check_min_max_int( vector<Sarray>& a_U )
 void EW::material_correction( int nmpar, float_sw4* xm )
 // routine to enforce material speed limits and positive density
 {
+  SW4_MARK_FUNCTION;
    float_sw4 vsmin = -1;
    if( m_useVelocityThresholds )
       vsmin = m_vsMin;
@@ -6911,6 +6942,7 @@ void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 			   vector<Sarray>& a_lambda, int& info )
 // routine to enforce material speed limits and positive density
 {
+  SW4_MARK_FUNCTION;
    float_sw4 vsmin = -1;
    if( m_useVelocityThresholds )
       vsmin = m_vsMin;
@@ -7175,6 +7207,7 @@ void EW::setup_attenuation_relaxation( float_sw4 minvsoh )
 //-----------------------------------------------------------------------
 void EW::setup_viscoelastic( )
 {
+  SW4_MARK_FUNCTION;
     int nu, q, i, j, k, g;
 
 // number of collocation points
@@ -7350,6 +7383,7 @@ void EW::setup_viscoelastic( )
 //-----------------------------------------------------------------------
 void EW::setup_viscoelastic_tw()
 {
+  SW4_MARK_FUNCTION;
    // Set twilight testing values for the attenuation material (mu,lambda).
    if( m_number_mechanisms != 1 )
    {
@@ -7417,6 +7451,7 @@ void EW::setup_viscoelastic_tw()
 //-----------------------------------------------------------------------
 void EW::compute_minvsoverh( float_sw4& minvsoh )
 {
+  SW4_MARK_FUNCTION;
    float_sw4 minvsohloc=1.e27; // what is a good 'large' value to initialize with
 // treat all grids the same, i.e. ignore the effects of variations in the curvilinear grid size
    for( int g= 0 ; g < mNumberOfGrids ; g++ )

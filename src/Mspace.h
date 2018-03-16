@@ -4,8 +4,12 @@
 #include <cstdlib>
 #include <iostream>
 
-#ifdef ENABLE_CUDA
+#if defined(ENABLE_CUDA)
 #include "cuda_runtime.h"
+void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line);
+#define SW4_CheckDeviceError(err) CheckError(err,__FILE__, __FUNCTION__, __LINE__)
+#else
+#define SW4_CheckDeviceError(err) ()
 #endif
 
 enum Space { Host, Managed};
@@ -36,6 +40,7 @@ void assert_check_managed(void *ptr, const char *file, int line);
   ( ptr_push(ptr,type,__FILE__,__LINE__))
 
 void ptr_push(void *ptr, Space type, const char *file, int line);
+
 #else
 
 #define SW4_NEW(type, arg)				\
@@ -46,6 +51,8 @@ void ptr_push(void *ptr, Space type, const char *file, int line);
 #define ASSERT_HOST(ptr) ()
 
 #define PTR_PUSH(ptr) ()
+
+
 #endif
 
 

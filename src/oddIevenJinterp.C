@@ -1,6 +1,9 @@
 #include "sw4.h"
 #include "Sarray.h"
 #include <cstdio>
+#include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 
 //--------------------- Jacobi ---------------------
 void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray &Uc,
@@ -142,6 +145,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 			      float_sw4 cof, float_sw4 relax,
 			      float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
   const int iStartC = a_iStart[gc];
   const int jStartC = a_jStart[gc];
   const int kStartC = a_kStart[gc];

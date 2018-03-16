@@ -98,7 +98,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    RAJA::RangeSegment j_range(m_jStart[gf],m_jEnd[gf]+1);
    RAJA::RangeSegment i_range(m_iStart[gf],m_iEnd[gf]+1);
 
-   
+   SW4_MARK_BEGIN("CONSINTP_LOOP1");
    RAJA::nested::forall(CONSINTP_EXEC_POL1{},
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
@@ -107,18 +107,19 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //       for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
 //       {
 // include stretching terms in Bf
+
 #pragma unroll
          for (int c=1; c<=3; c++)
          {
             BfV(c,i,j,nkf) = BfV(c,i,j,nkf)/(strf_x(i)*strf_y(j));
          }
 			}); SYNC_DEVICE;
-
+   SW4_MARK_END("CONSINTP_LOOP1");
    SView &BcV = Bc.getview();
    Bc.prefetch();
    RAJA::RangeSegment jc_range(m_jStart[gc],m_jEnd[gc]+1);
    RAJA::RangeSegment ic_range(m_iStart[gc],m_iEnd[gc]+1);
-   
+   SW4_MARK_BEGIN("CONSINTP_LOOP2");
    RAJA::nested::forall(CONSINTP_EXEC_POL1{},
 			RAJA::make_tuple(jc_range,ic_range),
 			[=]RAJA_DEVICE (int jc,int ic) {
@@ -131,7 +132,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
          for (int c=1; c<=3; c++)
 	   BcV(c,ic,jc,1) = BcV(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
 			}); SYNC_DEVICE;
-      
+   SW4_MARK_END("CONSINTP_LOOP2");
 // pre-compute BfRestrict
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
    BfRestrict.prefetch();
@@ -140,6 +141,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    RAJA::RangeSegment c_range(1,4);
    RAJA::RangeSegment j3_range(jcb,jce+1);
    RAJA::RangeSegment i3_range(icb,ice+1);
+   SW4_MARK_BEGIN("CONSINTP_LOOP3");
    RAJA::nested::forall(RHS4_EXEC_POL{},
 			RAJA::make_tuple(c_range, j3_range,i3_range),
 			[=]RAJA_DEVICE (int c,int jc,int ic) {
@@ -160,7 +162,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
                BfV(c,i+3,j-3,nkf)-9*BfV(c,i+3,j-1,nkf)-16*BfV(c,i+3,j,nkf)-9*BfV(c,i+3,j+1,nkf)+BfV(c,i+3,j+3,nkf)
                );
 			  }); SYNC_DEVICE;
-
+   SW4_MARK_END("CONSINTP_LOOP3");
 // index bounds for loops below
    int ifodd = ifb, ifeven= ifb;
    if (ifeven % 2 == 1) ifeven++; // make sure ifeven is even
@@ -177,6 +179,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    UnextcInterp.prefetch();
    SView &UnextcV = Unextc.getview();
    Unextc.prefetch();
+   SW4_MARK_BEGIN("CONSINTP_LOOP4");
 #pragma omp parallel 
    for (int c=1; c<=3; c++)
    {
@@ -236,10 +239,14 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			});
 }  // end for c=1,3
    SYNC_DEVICE;
+   SW4_MARK_END("CONSINTP_LOOP4");
 // Allocate space for the updated values of Uf and Uc (ghost points only)
+   SW4_MARK_BEGIN("CONSINTP_SARRAY_ALLOCATION");
    Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0); // only one k-index
    Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1); // the k-index is arbitrary, 
+   SW4_MARK_END("CONSINTP_SARRAY_ALLOCATION");
 // Start iteration
+   SW4_MARK_BEGIN("CONSINTP ITERATION");
    while( jacerr > m_citol && it < m_cimaxiter )
    {
       float_sw4 rmax[6]={0,0,0,0,0,0};
@@ -347,7 +354,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       it++;
 
    } // end while jacerr > eps (Outer iteration)
-   
+   SW4_MARK_END("CONSINTP ITERATION");
    if( jacerr > m_citol && proc_zero() )
       cout << "EW::consintp, Warning, no convergence. err = " << jacerr << " tol= " << m_citol << endl;
       

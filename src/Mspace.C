@@ -214,3 +214,13 @@ void ptr_push(void *ptr,Space type, const char *file,int line){
   return;
 }
 #endif
+
+#if defined(ENABLE_CUDA)
+void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line)
+{
+    if (err)
+    {
+      std::cerr<<"CUDA Error Code["<<err<<"]: "<<cudaGetErrorString(err)<<" "<<file<<" "<<fun<<" Line number:  "<<line<<"\n";
+    }
+}
+#endif

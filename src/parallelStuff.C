@@ -32,6 +32,9 @@
 #include "mpi.h"
 
 #include "EW.h"
+#include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 bool EW::proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] )
@@ -130,6 +133,7 @@ void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )
 // -----------------------------
 void EW::setup2D_MPICommunications()
 {
+  SW4_MARK_FUNCTION;
    if (mVerbose >= 2 && proc_zero())
       cout << "***inside setup2D_MPICommunications***"<< endl;
 // Define MPI datatypes for communication across processor boundaries
@@ -309,6 +313,7 @@ void EW::setupMPICommunications()
 //-----------------------------------------------------------------------
 void EW::communicate_array( Sarray& u, int grid )
 {
+  SW4_MARK_FUNCTION;
   // REQUIRE2( 0 <= grid && grid < mU.size() , 
   // 	    " Error in communicate_array, grid = " << grid );
    
@@ -413,6 +418,7 @@ void EW::communicate_arrays( vector<Sarray>& u )
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d( Sarray& u, int g, int k )
 {
+  SW4_MARK_FUNCTION;
    REQUIRE2( u.m_nc == 3, "Communicate array 2d, only implemented for three-component arrays" );
    REQUIRE2( g < m_send_type_2dx.size(), "Communicate array 2d, only implemented for grid=0.." << m_send_type_2dx.size()-1
 	     << " but g= " << g);
@@ -429,6 +435,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    {
       Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
       u2d.copy_kplane(u,k);
+      SW4_MARK_BEGIN("comm_rray_2d::MPI");
       // X-direction communication
       MPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
 		    &u2d(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
@@ -443,6 +450,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
       MPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
 		    &u2d(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
 		    m_cartesian_communicator, &status );
+      SW4_MARK_END("comm_rray_2d::MPI");
       u.copy_kplane(u2d,k);
    }
    else
@@ -468,6 +476,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_ext( Sarray& u )
 {
+  SW4_MARK_FUNCTION;
    REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for one-component arrays" );
    int g = mNumberOfGrids-1;
    int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
@@ -500,6 +509,7 @@ void EW::communicate_array_2d_ext( Sarray& u )
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_asym( Sarray& u, int g, int k )
 {
+  SW4_MARK_FUNCTION;
    REQUIRE2( u.m_nc == 3, "Communicate array 2d asym, only implemented for three-component arrays" );
    REQUIRE2( g < m_send_type_2dx3p.size(), "Communicate array 2d asym, only implemented for grid=0.." 
 	     << m_send_type_2dx3p.size()-1 << " but g= " << g);
@@ -597,6 +607,7 @@ void EW::communicate_array_2d_asym( Sarray& u, int g, int k )
 //-----------------------------------------------------------------------
 void EW::communicate_array_2dfinest( Sarray& u )
 {
+  SW4_MARK_FUNCTION;
    REQUIRE2( u.m_nc == 1, "Communicate array 2dfinest, only implemented for one-component arrays" );
 
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb;

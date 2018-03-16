@@ -42,6 +42,7 @@
 //--------------------------------------------------------------------
 void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
 {
+  SW4_MARK_FUNCTION;
 // solution arrays
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
@@ -1097,6 +1098,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
 			     vector<Sarray*> & a_AlphaVEm, vector<Sarray*> & a_AlphaVE, vector<Sarray*> & a_AlphaVEp)
  {
+   SW4_MARK_FUNCTION;
   for (int g=0; g<mNumberOfGrids; g++)
   {
     float_sw4 *tmp = a_Um[g].c_ptr();
@@ -1117,6 +1119,7 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		    float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *mu_ptr, *la_ptr, h;
   boundaryConditionType *bcType_ptr;
@@ -1395,6 +1398,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
                     vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm, 
 		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources )
 {
+SW4_MARK_FUNCTION;
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
    {
       // Interpolate between g and g+1, assume factor 2 refinement with at least three ghost points
@@ -1538,6 +1542,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
                      vector<Sarray*>& a_AlphaVEp,
                      float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> point_sources )
 {
+SW4_MARK_FUNCTION;
    bool predictor = false;   // or true???
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
    {
@@ -1758,6 +1763,7 @@ void EW::check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc )
 //-----------------------------------------------------------------------
 void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 {
+SW4_MARK_FUNCTION;
    // zero out all ghost points
    if( !inner )
    {
@@ -1830,6 +1836,7 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 //-----------------------------------------------------------------------
 void EW::dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t )
 {
+SW4_MARK_FUNCTION;
    // assign exact solution at all ghost points with a given 'k'-index
    if (m_twilight_forcing)
    {
@@ -1858,6 +1865,7 @@ void EW::dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t )
 //-----------------------------------------------------------------------
 void EW::dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj )
 {
+SW4_MARK_FUNCTION;
    // Put back exact solution at the ghost points that don't participate in the interface conditions, i.e. at supergrid points
    //   int k = upper ? 0 : m_global_nz[g]+1;
    //
@@ -1977,6 +1985,7 @@ void EW::dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj )
 //-----------------------------------------------------------------------
 void EW::dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj )
 {
+SW4_MARK_FUNCTION;
    // Exact stresses at the ghost points that don't participate in the interface conditions,
    // i.e. at supergrid (Dirichlet) points
    //   int k = upper ? 0 : m_global_nz[g]+1;
@@ -2280,6 +2289,7 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj )
 //-----------------------------------------------------------------------
 void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
 {
+SW4_MARK_FUNCTION;
 // Extrapolate the initial guess from neighboring point.
    int k, s;
    if( upper )
@@ -2325,6 +2335,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 					Sarray& Utt, Sarray& Unext, int g, int kic, float_sw4 t, 
 					Sarray &Ftt, vector<GridPointSource*> point_sources )
 {
+SW4_MARK_FUNCTION;
    //
    // NOTE: This routine is called by enforceIC() after the predictor stage to calculate the interior contribution to
    // the corrector on the interface at time step.
@@ -2335,6 +2346,10 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    // to evaluate L(Up_tt) for k=kic, we need Up(k) in the vicinity of the interface
    // Note: Utt is needed at all points (interior + ghost) to evaluate L(Utt) in all interior points
 
+   Utt.prefetch();
+   a_U.prefetch();
+   a_Up.prefetch();
+   a_Um.prefetch();
    if (m_croutines) // optimized C-version for reversed index ordering
      dpdmt_wind( Utt.m_ib, Utt.m_ie, Utt.m_jb, Utt.m_je, Utt.m_kb, Utt.m_ke, a_U.m_kb, a_U.m_ke,
 		 a_Up.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), Utt.c_ptr(), idt2 );
@@ -2646,6 +2661,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 			     float_sw4* a_str_x, float_sw4* a_str_y )
 {
+SW4_MARK_FUNCTION;
    const float_sw4 a1=2.0/3, a2=-1.0/12;
    bool upper = (kic == 1);
    int k=kic;
@@ -2742,6 +2758,7 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 //-----------------------------------------------------------------------
 void EW::add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_mech, float_sw4* a_str_x, float_sw4* a_str_y)
 {
+SW4_MARK_FUNCTION;
    const float_sw4 a1=2.0/3, a2=-1.0/12;
    bool upper = (kic == 1);
    int k=kic;
@@ -2798,6 +2815,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			      vector<Source*>& a_sources )
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *mu_ptr, *la_ptr, h, zmin;
   boundaryConditionType *bcType_ptr;
@@ -3636,6 +3654,7 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
 void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
 			   vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U)
 {
+SW4_MARK_FUNCTION;
   if (mode == TimeSeries::Displacement)
   {
     uRec.resize(3);
@@ -3859,6 +3878,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 			     vector<Sarray> & a_Um, vector<Sarray> & a_Rho )
 {
+SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *up_ptr, *u_ptr, *um_ptr, dt2i;
   
@@ -3936,6 +3956,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 //---------------------------------------------------------------------------
 void EW::simpleAttenuation( vector<Sarray> & a_Up )
 {
+SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *up_ptr, cfreq, dt;
 // Qs is saved in the EW object as mQs
@@ -3971,6 +3992,7 @@ void EW::simpleAttenuation( vector<Sarray> & a_Up )
 void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                             vector<Sarray*>& a_AlphaVEp, vector<float_sw4 **>& a_BCForcing ) 
 {
+SW4_MARK_FUNCTION;
 // AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time stepping for memory variables
    int sg = usingSupergrid();
    for(int g=0 ; g<mNumberOfGrids; g++ )
