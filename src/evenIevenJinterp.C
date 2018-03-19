@@ -1,7 +1,7 @@
 #include "sw4.h"
 #include "Sarray.h"
 #include <cstdio>
-
+#include "caliper.h"
 //--------------------- Jacobi ------------------------
 void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray &Uc, 
 			    Sarray &Morc, Sarray &Mlrc,
@@ -13,6 +13,7 @@ void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray
 			    float_sw4 cof, float_sw4 relax,
 			    float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
 // tmp
 //  printf("Inside evenIevenJinterp! ");
   
@@ -175,6 +176,7 @@ void evenIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 			       float_sw4 cof, float_sw4 relax,
 			       float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
   const int iStartC = a_iStart[gc];
   const int jStartC = a_jStart[gc];
   const int kStartC = a_kStart[gc];
@@ -397,6 +399,7 @@ void evenIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambda
 		     float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
 		     float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
 // tmp
 //  printf("Inside evenIevenJinterp! ");
   

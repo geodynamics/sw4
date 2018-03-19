@@ -179,7 +179,7 @@ public:
    int m_nc, m_ni, m_nj, m_nk;
    void prefetch(int device=0);
   inline SView &getview(){
-    prefetch();
+    //prefetch();
     return view;
   }
   SView view;

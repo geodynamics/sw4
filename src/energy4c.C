@@ -31,6 +31,9 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "sw4.h"
+#include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 
 void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
@@ -38,11 +41,12 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 		 float_sw4* __restrict__ a_rho, float_sw4 h, float_sw4* a_strx, float_sw4* a_stry,
 		 float_sw4* a_strz, float_sw4& a_energy )
 {
-   const int ni    = ilast-ifirst+1;
-   const int nij   = ni*(jlast-jfirst+1);
-   const int nijk  = nij*(klast-kfirst+1);
-   const int base  = -(ifirst+ni*jfirst+nij*kfirst);
-   const int base3 = base-nijk;
+  SW4_MARK_FUNCTION;
+  const int ni    = ilast-ifirst+1;
+  const int nij   = ni*(jlast-jfirst+1);
+  const int nijk  = nij*(klast-kfirst+1);
+  const int base  = -(ifirst+ni*jfirst+nij*kfirst);
+  const int base3 = base-nijk;
 #define rho(i,j,k)  a_rho[base +(i)+ni*(j)+nij*(k)]   
 #define um(c,i,j,k)  a_um[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
 #define u(c,i,j,k)    a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
@@ -50,16 +54,31 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 #define strx(i) a_strx[i-ifirst]
 #define stry(j) a_stry[j-jfirst]
 #define strz(k) a_strz[k-kfirst]
-
-   const float_sw4 normwgh[4]={17.0/48,59.0/48,43.0/48,49.0/48};
-   float_sw4 energy=0;
-#pragma omp parallel for  reduction(+:energy)
-   for( int k = k1; k <= k2 ; k++ )
-	 for( int j = j1; j <= j2 ; j++ )
-#pragma simd
-#pragma ivdep	 
-	    for( int i = i1; i <= i2 ; i++ )
-	    {
+  ASSERT_MANAGED(a_up);
+  ASSERT_MANAGED(a_u);
+  ASSERT_MANAGED(a_um);
+  ASSERT_MANAGED(a_rho);
+  ASSERT_MANAGED(a_strx);
+  ASSERT_MANAGED(a_stry);
+  ASSERT_MANAGED(a_strz);
+  //float_sw4 energy=0;
+  const bool onesided4 = onesided[4]==1;
+  const bool onesided5 = onesided[5]==1;
+  RAJA::ReduceSum<RAJA::cuda_reduce<1024>,float_sw4> energy(0.0);
+  RAJA::RangeSegment k_range(k1,k2+1);
+  RAJA::RangeSegment j_range(j1,j2+1);
+  RAJA::RangeSegment i_range(i1,i2+1);
+  RAJA::nested::forall(ENERGY4CI_EXEC_POL{},
+			RAJA::make_tuple(k_range, j_range,i_range),
+			[=]RAJA_DEVICE (int k,int j,int i) {
+			  const float_sw4 normwgh[4]={17.0/48,59.0/48,43.0/48,49.0/48};
+// #pragma omp parallel for  reduction(+:energy)
+//    for( int k = k1; k <= k2 ; k++ )
+// 	 for( int j = j1; j <= j2 ; j++ )
+// #pragma simd
+// #pragma ivdep	 
+// 	    for( int i = i1; i <= i2 ; i++ )
+// 	    {
                float_sw4 term =(
                  (up(1,i,j,k)-u(1,i,j,k))*(up(1,i,j,k)-u(1,i,j,k)) + 
                  (up(2,i,j,k)-u(2,i,j,k))*(up(2,i,j,k)-u(2,i,j,k)) +
@@ -70,13 +89,13 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 		 //                   )*rho(i,j,k);
   	       )*rho(i,j,k)/(strx(i)*stry(j)*strz(k));
 	       float_sw4 normfact = 1;
-               if( k <= 4 && onesided[4] == 1 )
+               if( k <= 4 && onesided4)
                   normfact = normwgh[k-1];
-               if( k >= k2-3 && onesided[5] == 1 )
+               if( k >= k2-3 && onesided5 )
                   normfact = normwgh[k2-k];
                energy += normfact*h*h*h*term;
-	    }
-   a_energy = energy;
+			});
+			a_energy = static_cast<float_sw4>(energy.get());
 }
 #undef u
 #undef up
@@ -91,6 +110,7 @@ void energy4c_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
 		 float_sw4* __restrict__ a_rho, float_sw4* __restrict__ a_jac, float_sw4& a_energy )
 {
+  SW4_MARK_FUNCTION;
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);

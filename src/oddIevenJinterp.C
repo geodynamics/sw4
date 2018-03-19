@@ -219,13 +219,22 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
-  float_sw4 rmax1=0, rmax2=0, rmax3=0;
+  
+  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax1(0);
+  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax2(0);
+  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax3(0);
+  RAJA::RangeSegment j_range(jfb,jfe+1);
+  RAJA::RangeSegment i_range(ifb,ife+1);
 
-#pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
-  for( int j=jfb ; j <= jfe ; j+=2 )
-#pragma omp simd
-    for( int i=ifb ; i <= ife ; i+=2 )
-    {
+  RAJA::nested::forall(CONSINTP_EXEC_POL5{},
+  		       RAJA::make_tuple(j_range,i_range),
+  		       [=]RAJA_DEVICE (int j,int i) {
+// float_sw4 rmax1=0, rmax2=0, rmax3=0;
+// #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
+//   for( int j=jfb ; j <= jfe ; j+=2 )
+// #pragma omp simd
+//     for( int i=ifb ; i <= ife ; i+=2 )
+//     {
       int ic, jc;
       float_sw4 b1, a11, r3;
       ic = (i+1)/2;
@@ -250,8 +259,8 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax*b1/a11 + (1-relax)*Uf(c,i,j,nkf+1); 
 // change in ghost point value
       r3 =  UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
-      rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
-
+      //rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
+      rmax1.max(fabs(r3));
       c=2;
 // All Uc terms
 // NOTE: Uc is not changed by this routine, so the Uc-dependence could be pre-computed
@@ -268,7 +277,8 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax*b1/a11 + (1-relax)*Uf(c,i,j,nkf+1); 
 // change in ghost point value
       r3 =  UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
-      rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
+      //rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
+      rmax2.max(fabs(r3));
 //      } // end for c=1,2
                
 // work on component 3 of the ghost point value of Uf
@@ -290,9 +300,11 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 //    Uf(3,i,j,nkf+1) = b1/a11;
     UfNew(3,i,j,nkf+1) = relax* b1/a11 + (1-relax)* Uf(3,i,j,nkf+1);
     r3 = UfNew(3,i,j,nkf+1) - Uf(3,i,j,nkf+1);
-    rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
+    //rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
+    rmax3.max(fabs(r3));
 
-    } // end for i odd, j even
+		       } // end for i odd, j even
+		       );
 
 // update Uf
 #pragma omp parallel
@@ -305,9 +317,14 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       }
 
-  rmax[3] = rmax1;
-  rmax[4] = rmax2;
-  rmax[5] = rmax3;
+  rmax[3] = static_cast<float_sw4>(rmax1.get());
+  rmax[4] = static_cast<float_sw4>(rmax2.get());
+  rmax[5] = static_cast<float_sw4>(rmax3.get());
+
+  // rmax[3]=rmax1;
+  // rmax[4]=rmax2;
+  // rmax[5]=rmax3;
+
 #undef Unextf
 #undef UnextcInterp
 #undef Mufs
@@ -336,6 +353,7 @@ void oddIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf
 		     float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
 		     float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
 // tmp
 //  printf("Inside oddIevenJinterp! ");
   

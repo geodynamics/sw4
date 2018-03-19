@@ -1,6 +1,6 @@
 #include "sw4.h"
 #include "Sarray.h"
-
+#include "caliper.h"
 void oddIoddJinterpJacobi(float_sw4 rmax[3], Sarray &Uf, Sarray &UfNew, Sarray &Uc, Sarray &UcNew, 
 			  Sarray &Mufs, Sarray &Mlfs, Sarray &Morc, Sarray &Mlrc,
 			  Sarray &Mucs, Sarray &Mlcs, Sarray &Morf, Sarray &Mlrf,
@@ -11,6 +11,7 @@ void oddIoddJinterpJacobi(float_sw4 rmax[3], Sarray &Uf, Sarray &UfNew, Sarray &
 			  float_sw4 cof, float_sw4 relax,
 			  float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
   int icb = a_iStartInt[gc];
   int ifb = a_iStartInt[gf];
 
@@ -220,6 +221,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 			     float_sw4 cof, float_sw4 relax,
 			     float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
   const int iStartC = a_iStart[gc];
   const int jStartC = a_jStart[gc];
   const int kStartC = a_kStart[gc];
@@ -499,6 +501,7 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 		    float_sw4 *a_strf_x, float_sw4 *a_strf_y, float_sw4 *a_strc_x, float_sw4 *a_strc_y, 
 		    float_sw4 a_sbop[], float_sw4 a_ghcof[])
 {  
+  SW4_MARK_FUNCTION;
 // stretching on the coarse side
 #define strc_x(i) a_strc_x[(i-a_iStart[gc])]   
 #define strc_y(j) a_strc_y[(j-a_jStart[gc])]   

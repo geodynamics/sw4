@@ -345,8 +345,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       float_sw4 jacerrtmp = 0;
       for (int q=0; q<6; q++)
          jacerrtmp += rmax[q];
-      
+      SW4_MARK_BEGIN("CONSINTP::MPI_ALLREDUCE");
       MPI_Allreduce( &jacerrtmp, &jacerr, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
+      SW4_MARK_END("CONSINTP::MPI_ALLREDUCE");
       if( it == 0 )
 	 jacerr0 = jacerr;
       if( jacerr0 > 0 )

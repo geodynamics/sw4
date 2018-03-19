@@ -757,7 +757,7 @@ void Sarray::copy_kplane( Sarray& u, int k )
       size_t nijk = m_ni*m_nj*m_nk;
       size_t unijk = u.m_ni*u.m_nj*u.m_nk;
 
-      float_sw4* um_data=u.m_data;
+      float_sw4* um_data = u.m_data;
       float_sw4* lm_data = m_data;
       int um_kb = u.m_kb;
       ASSERT_MANAGED(m_data);
@@ -767,8 +767,12 @@ void Sarray::copy_kplane( Sarray& u, int k )
       int mkb = m_kb;
       int mni = m_ni;
       int mnj = m_nj;
-      prefetch();
-      u.prefetch();
+      // SW4_MARK_BEGIN("CK_PREF");
+      // prefetch();
+      // u.prefetch();
+      // SW4_MARK_END("CK_PREF");
+      size_t ind_start=mni*mnj*(k-mkb);
+      size_t uind_start=mni*mnj*(k-um_kb);
       RAJA::RangeSegment c_range(0,m_nc);
       RAJA::RangeSegment j_range(m_jb,m_je+1);
       RAJA::RangeSegment i_range(m_ib,m_ie+1);
@@ -779,9 +783,9 @@ void Sarray::copy_kplane( Sarray& u, int k )
       // 	 for( int j=m_jb ; j<=m_je ; j++ )
       // 	    for( int i=m_ib ; i <= m_ie ; i++ )
       // 	    {
-	       size_t ind = (i-mib) + mni*(j-mjb) + mni*mnj*(k-mkb);
-	       size_t uind = (i-mib) + mni*(j-mjb) + mni*mnj*(k-um_kb);
-	       lm_data[ind+c*nijk] = um_data[uind+c*unijk];
+			     size_t ind = (i-mib) + mni*(j-mjb) + ind_start; // mni*mnj*(k-mkb);
+			     size_t uind = (i-mib) + mni*(j-mjb) + uind_start; // mni*mnj*(k-um_kb);
+			     lm_data[ind+c*nijk] = um_data[uind+c*unijk];
 			   });
    }
    else
