@@ -1194,16 +1194,16 @@ vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt, m_kEndI
 int m_paddingCells[4]; // indexing is [0] = low-i, [1] = high-i, [2] = low-j, [3] = high-j
 
 // For the Cartesian grid, we only need to offset in z
-vector<float_sw4> m_zmin; // needed by the Source and Image classes
+   vector<float_sw4> m_zmin; // needed by the Source and Image classes
 
 // for the curvilinear grid, we also store the cartesian coordinates of the grid points
-Sarray mX, mY, mZ; // needed by the Source class, so must be public
-Sarray mJ; // Jacobian also needed by the Source class
+   vector<Sarray> mX, mY, mZ; // needed by the Source class, so must be public
+   vector<Sarray> mJ; // Jacobian also needed by the Source class
 // and the metric derivatives as well as the jacobian
-Sarray mMetric;
+   vector<Sarray> mMetric;
 
 // command prefilter
-bool m_prefilter_sources, m_filter_observations;
+   bool m_prefilter_sources, m_filter_observations;
 // filter setup
 // Filter for time function
 Filter *m_filter_ptr;

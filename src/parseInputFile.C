@@ -3973,6 +3973,13 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    mGridSize.resize(mNumberOfGrids);
    mMinVsOverH.resize(mNumberOfGrids);
 
+// curvilinear arrays
+   mX.resize(mNumberOfGrids);
+   mY.resize(mNumberOfGrids);
+   mZ.resize(mNumberOfGrids);
+   mMetric.resize(mNumberOfGrids);
+   mJ.resize(mNumberOfGrids);
+
 // coefficients for Mesh refinement
    m_Morf.resize(mNumberOfGrids);
    m_Mlrf.resize(mNumberOfGrids);
@@ -4583,18 +4590,19 @@ void EW::allocateCurvilinearArrays()
 //
 // NOTE: mX, mY, mZ, etc need to be vector<Sarray*>
 // allocate mX, mY, and mZ arrays
-      mX.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
-      mY.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
-      mZ.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
+      mX[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
+      mY[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
+      mZ[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
 // Allocate array for the metric
-      mMetric.define(4,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+      mMetric[g].define(4,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
 // and the Jacobian of the transformation
-      mJ.define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+      mJ[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+
 // and material properties, initialize to -1
       mRho[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
       mRho[g].set_to_minusOne();
 
-      if( m_anisotropic )
+      if( m_anisotropic ) // NEED TO UPDATE FOR SEVERAL CURVILINEAR GRIDS!!!
       {
          mC[g].define(21,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
          mCcurv.define(45,m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
