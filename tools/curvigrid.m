@@ -19,8 +19,9 @@ function z = curvigrid( s, tau, zMax, Ncoarse, verbose )
   hCart = zMax/(Ncoarse-1);
 
   c1 = zMax + tau - hCart*(Ncoarse-1);
-  z = (1-s).*(-tau) + s.*(zMax + c1.*(1-s) + c1.*(1-s).^2);
-
+#  z = (1-s).*(-tau) + s.*(zMax + c1.*(1-s) + c1.*(1-s).^2);
+  z = (1-s).*(-tau) + s.*(zMax); % linear case
+  
 %plot(s,"+");
   if (verbose)
     plot(s,z,"+");

@@ -1,13 +1,17 @@
 %-*-octave-*--
 % makeMRgrid: make a 2-D curvilinear grid with mesh refinement
 %               
-% function makeMRgrid( xMax, zMax, zBot, verbose )
+% function makeMRgrid( verbose )
 %
-% xMax: dimension in x
-% zMax: z-coordinate of bottom curvilinear grid
-% zBot: max dimension in z
-function makeMRgrid( xMax, zMax, zBot, verbose )
+function makeMRgrid( verbose )
 
+% xMax: dimension in x
+  xMax = 50;
+% zMax: z-coordinate of bottom curvilinear grid
+  zMax=5;
+% zBot: max dimension in z
+  zBot=20;
+  
   if nargin < 4
     verbose=0;
   end
