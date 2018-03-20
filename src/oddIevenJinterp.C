@@ -226,7 +226,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   RAJA::RangeSegment j_range(jfb,jfe+1);
   RAJA::RangeSegment i_range(ifb,ife+1);
 
-  RAJA::nested::forall(CONSINTP_EXEC_POL5{},
+  RAJA::nested::forall(ODDIEVENJ_EXEC_POL1{},
   		       RAJA::make_tuple(j_range,i_range),
   		       [=]RAJA_DEVICE (int j,int i) {
 // float_sw4 rmax1=0, rmax2=0, rmax3=0;
@@ -304,19 +304,28 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
     rmax3.max(fabs(r3));
 
 		       } // end for i odd, j even
-		       );
+		       ); SYNC_DEVICE;
 
-// update Uf
-#pragma omp parallel
-  for( int c=1 ; c <= 3 ; c++ ) 
-#pragma omp for
-    for( int j=jfb ; j <= jfe ; j+=2 )
-#pragma omp simd
-      for( int i=ifb ; i <= ife ; i+=2 )
-      {
-	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
-      }
+  //update Uf
+// #pragma omp parallel
+//   for( int c=1 ; c <= 3 ; c++ ) 
+// #pragma omp for
+//     for( int j=jfb ; j <= jfe ; j+=2 )
+// #pragma omp simd
+//       for( int i=ifb ; i <= ife ; i+=2 )
+//       {
+//   Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
+// }
+  RAJA::RangeSegment c_range(1,4);
+  RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
+  RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
 
+  RAJA::nested::forall(ODDIEVENJ_EXEC_POL2{},
+  		       RAJA::make_tuple(c_range,j_srange,i_srange),
+  		       [=]RAJA_DEVICE (int c,int j,int i) {
+  			 Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
+  		       });
+  SYNC_DEVICE;
   rmax[3] = static_cast<float_sw4>(rmax1.get());
   rmax[4] = static_cast<float_sw4>(rmax2.get());
   rmax[5] = static_cast<float_sw4>(rmax3.get());

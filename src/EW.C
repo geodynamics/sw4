@@ -3144,7 +3144,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	       }
 	    }
 	    //	    ind++;
-			});
+			}); SYNC_DEVICE;
 }
 
 #include <cmath>

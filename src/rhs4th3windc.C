@@ -316,6 +316,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 	  lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 
 			 }); // End of void rhs4th3wind LOOP 1
+    SYNC_DEVICE;
   } // end if (!upper && !lower)
    
   if( upper )
@@ -577,6 +578,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 	  lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	  lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			 }); // End of void rhs4th3wind LOOP 2
+    SYNC_DEVICE;
   } // end if (upper)
    
   if( lower )
@@ -840,6 +842,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 	  lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	  lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			 });  // End of void rhs4th3wind LOOP 2
+    SYNC_DEVICE;
   } // end if lower
    
 } // endif #pragma omp parallel private

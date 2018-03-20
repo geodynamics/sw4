@@ -105,6 +105,38 @@ using ENERGY4CI_EXEC_POL =
   RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<16>>, 
   RAJA::nested::For<2, RAJA::cuda_threadblock_z_exec<16>>> >;
 
+// Increasing the 16,16 block size below can cause failures with the error message:
+//CUDAassert: too many resources requested for launch
+// /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install_nomp/include/RAJA/policy/cuda/MemUtils_CUDA.hpp 216
+
+
+using ODDIODDJ_EXEC_POL1 = 
+  RAJA::nested::Policy< 
+  RAJA::nested::CudaCollapse<
+  RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<16>>, 
+  RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<16>>> >;
+
+using ODDIODDJ_EXEC_POL2 = 
+  RAJA::nested::Policy< 
+  RAJA::nested::CudaCollapse<
+  RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<4>>, 
+  RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<16>>, 
+  RAJA::nested::For<2, RAJA::cuda_threadblock_z_exec<16>>> >;
+
+using ODDIEVENJ_EXEC_POL1 = 
+  RAJA::nested::Policy< 
+  RAJA::nested::CudaCollapse<
+  RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<16>>, 
+  RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<16>>> >;
+
+using ODDIEVENJ_EXEC_POL2 = 
+  RAJA::nested::Policy< 
+  RAJA::nested::CudaCollapse<
+  RAJA::nested::For<0, RAJA::cuda_threadblock_x_exec<4>>, 
+  RAJA::nested::For<1, RAJA::cuda_threadblock_y_exec<16>>, 
+  RAJA::nested::For<2, RAJA::cuda_threadblock_z_exec<16>>> >;
+
+
 
 #define SYNC_DEVICE cudaDeviceSynchronize()
 
@@ -192,6 +224,33 @@ using ENERGY4CI_EXEC_POL = RAJA::nested::Policy<
   RAJA::nested::For<0, RAJA::parallel_exec>,
   RAJA::nested::For<1, RAJA::parallel_exec>,
   RAJA::nested::For<2, RAJA::simd_exec> >;
+
+using ODDIODDJ_EXEC_POL1 =
+  RAJA::nested::Policy< 
+  RAJA::nested::OmpParallelCollapse< 
+  RAJA::nested::For<0>,         
+  RAJA::nested::For<1> > > ;
+
+using ODDIODDJ_EXEC_POL2 =
+  RAJA::nested::Policy< 
+  RAJA::nested::OmpParallelCollapse< 
+  RAJA::nested::For<0>,         
+  RAJA::nested::For<1>,         
+  RAJA::nested::For<2> > > ;
+
+using ODDIEVENJ_EXEC_POL1 =
+  RAJA::nested::Policy< 
+  RAJA::nested::OmpParallelCollapse< 
+  RAJA::nested::For<0>,         
+  RAJA::nested::For<1> > > ;
+
+using ODDIEVENJ_EXEC_POL2 =
+  RAJA::nested::Policy< 
+  RAJA::nested::OmpParallelCollapse< 
+  RAJA::nested::For<0>,         
+  RAJA::nested::For<1>,         
+  RAJA::nested::For<2> > > ;
+
 
 #define SYNC_DEVICE
 

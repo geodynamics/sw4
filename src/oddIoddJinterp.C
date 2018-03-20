@@ -1,5 +1,7 @@
 #include "sw4.h"
 #include "Sarray.h"
+#include "Mspace.h"
+#include "policies.h"
 #include "caliper.h"
 void oddIoddJinterpJacobi(float_sw4 rmax[3], Sarray &Uf, Sarray &UfNew, Sarray &Uc, Sarray &UcNew, 
 			  Sarray &Mufs, Sarray &Mlfs, Sarray &Morc, Sarray &Mlrc,
@@ -243,13 +245,16 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
   const int nijk_bf = nijF*(1);
   const int base3_bf = (iStartF+niF*jStartF+nijF*nkf+nijk_bf); // only one k=nkf
 #define Unextf(c,i,j,k) a_unextf[-base3_bf+i+niF*(j)+nijF*(k)+nijk_bf*(c)] // same size as Bf
-
+  ASSERT_MANAGED(a_unextf);
   const int base_mufs = (iStartF+niF*jStartF+nijF*nkf); // only one k=nkf
 #define Mufs(i,j,k)     a_mufs[-base_mufs+i+niF*(j)+nijF*(k)]
 #define Mlfs(i,j,k)     a_mlfs[-base_mufs+i+niF*(j)+nijF*(k)] // same size as Mufs
 #define Morf(i,j,k)     a_morf[-base_mufs+i+niF*(j)+nijF*(k)] // same size as Mufs
 #define Mlrf(i,j,k)     a_mlrf[-base_mufs+i+niF*(j)+nijF*(k)] // same size as Mufs
- 
+  ASSERT_MANAGED(a_mufs);
+  ASSERT_MANAGED(a_mlfs);
+  ASSERT_MANAGED(a_morf);
+  ASSERT_MANAGED(a_mlrf);
   const int niC    = iEndC-iStartC+1;
   const int nijC   = niC*(jEndC-jStartC+1);
   const int base_morc = (iStartC+niC*jStartC+nijC*1); // only one k=1
@@ -257,33 +262,40 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 #define Mlrc(i,j,k)     a_mlrc[-base_morc+i+niC*(j)+nijC*(k)] // same size as Morc
 #define Mucs(i,j,k)     a_mucs[-base_morc+i+niC*(j)+nijC*(k)] // same size as Morc
 #define Mlcs(i,j,k)     a_mlcs[-base_morc+i+niC*(j)+nijC*(k)] // same size as Morc
-
+  ASSERT_MANAGED(a_morc);
+  ASSERT_MANAGED(a_mlrc);
+  ASSERT_MANAGED(a_mucs);
+  ASSERT_MANAGED(a_mlcs);
   const int nijk_unextc = nijC*(1);
   const int base3_unextc = (iStartC+niC*jStartC+nijC*1+nijk_unextc); // only one k=1
 #define Unextc(c,i,j,k) a_unextc[-base3_unextc+i+niC*(j)+nijC*(k)+nijk_unextc*(c)]   
-#define Bc(c,i,j,k)     a_bc[-base3_unextc+i+niC*(j)+nijC*(k)+nijk_unextc*(c)] // same size as Unextc  
+#define Bc(c,i,j,k)     a_bc[-base3_unextc+i+niC*(j)+nijC*(k)+nijk_unextc*(c)] // same size as Unextc
+  ASSERT_MANAGED(a_unextc);
+  ASSERT_MANAGED(a_bc);
 
 // BfRestrict is defined for k=nkf (kind of inconsistent with Bc)
   const int nijk_bfr = nijC*(1);
   const int base3_bfr = (iStartC+niC*jStartC+nijC*nkf+nijk_bfr); // only one k=nkf
 #define BfRestrict(c,i,j,k) a_bfr[-base3_bfr+i+niC*(j)+nijC*(k)+nijk_bfr*(c)] // same size as Unextc  
-
+  ASSERT_MANAGED(a_bfr);
   const int nijk_uc = nijC*(kEndC-kStartC+1);
   const int base3_uc = (iStartC+niC*jStartC+nijC*kStartC+nijk_uc*1); // c-index has base=1 
 #define Uc(c,i,j,k)   a_uc[-base3_uc+i+niC*(j)+nijC*(k)+nijk_uc*(c)]   
-
+  ASSERT_MANAGED(a_uc);
   const int nijk_ucnew = nijC*(1); // only one k-plane
   const int base3_ucnew = (iStartC+niC*jStartC+nijC*(0)+nijk_ucnew*1); // only one k=0; c-index has base=1 
 #define UcNew(c,i,j,k)   a_ucnew[-base3_ucnew+i+niC*(j)+nijC*(k)+nijk_ucnew*(c)]   
-
+  ASSERT_MANAGED(a_ucnew);
   const int nijk_uf = nijF*(kEndF-kStartF+1);
   const int base3_uf = (iStartF+niF*jStartF+nijF*kStartF+nijk_uf*1); // c-index has base=1 
 #define Uf(c,i,j,k)   a_uf[-base3_uf+i+niF*(j)+nijF*(k)+nijk_uf*(c)]   
-
+  ASSERT_MANAGED(a_uf);
   const int nijk_ufnew = nijF*(1); // only one k-plane
   const int base3_ufnew = (iStartF+niF*jStartF+nijF*(nkf+1)+nijk_ufnew*1); // only one k=nkf+1; c-index has base=1 
 #define UfNew(c,i,j,k)   a_ufnew[-base3_ufnew+i+niF*(j)+nijF*(k)+nijk_ufnew*(c)]   
-
+  ASSERT_MANAGED(a_ufnew);
+  ASSERT_MANAGED(a_sbop);
+  ASSERT_MANAGED(a_ghcof);
 // previous stuff
   int icb = a_iStartInt[gc];
   int ifb = a_iStartInt[gf];
@@ -306,13 +318,32 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
-  float_sw4 rmax1=0, rmax2=0, rmax3=0;
+  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax1(0);
+  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax2(0);
+  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax3(0);
 
-#pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
-  for( int jc= jcb ; jc <= jce ; jc++ )
-#pragma omp simd
-    for( int ic= icb ; ic <= ice ; ic++ )
-    {
+  // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax1(0);
+  // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax2(0);
+  // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax3(0);
+  
+  RAJA::RangeSegment j_range(jcb,jce+1);
+  RAJA::RangeSegment i_range(icb,ice+1);
+
+  // using TESTPOL = RAJA::nested::Policy< 
+  //   RAJA::nested::For<1, RAJA::seq_exec>,
+  //   RAJA::nested::For<0, RAJA::seq_exec> >;
+
+
+  RAJA::nested::forall(ODDIODDJ_EXEC_POL1{},
+  		       RAJA::make_tuple(j_range,i_range),
+  		       [=]RAJA_DEVICE(int jc,int ic) {
+//   float_sw4 rmax1=0, rmax2=0, rmax3=0;
+
+// #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
+//   for( int jc= jcb ; jc <= jce ; jc++ )
+// #pragma omp simd
+//     for( int ic= icb ; ic <= ice ; ic++ )
+//     {
       float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
 // i odd, j odd
       int i=2*ic-1, j=2*jc-1;
@@ -367,9 +398,11 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 // change in solution
       r1 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
       r2 = UcNew(c,ic,jc,0) - Uc(c,ic,jc,0);
-
-      rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
-      rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
+      //rmax1.max(fabs(r1));
+      //rmax1.max(fabs(r2));
+      rmax1.max(max(fabs(r1),fabs(r2)));
+      // rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
+      // rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
 //      } // end for c=1,2
   
       c=2;
@@ -405,8 +438,10 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       r1 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
       r2 = UcNew(c,ic,jc,0) - Uc(c,ic,jc,0);
 
-      rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
-      rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
+      rmax2.max(max(fabs(r1),fabs(r2)));
+		//rmax2.max(fabs(r2));
+      // rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
+      // rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
 	
 // setup the matrix for the 3rd component of the normal stress (different coefficients)
       // NEED stretching terms in a11 & a12
@@ -452,28 +487,39 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       r1 = UfNew(3,i,j,nkf+1) - Uf(3,i,j,nkf+1);
       r2 = UcNew(3,ic,jc,0) - Uc(3,ic,jc,0);
 
-      rmax3 = rmax3 > fabs(r1) ? rmax3 : fabs(r1);
-      rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
-
-    } // end for ic, jc
-
+      //rmax3.max(fabs(r1));
+      //rmax3.max(fabs(r2));
+      rmax3.max(max(fabs(r1),fabs(r2)));
+      // rmax3 = rmax3 > fabs(r1) ? rmax3 : fabs(r1);
+      // rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
+      
+		       }); // end for ic, jc
+			 SYNC_DEVICE;
 // update Uf and Uc
-#pragma omp parallel
-  for( int c=1 ; c <= 3 ; c++ ) 
-#pragma omp for
-    for( int jc= jcb ; jc <= jce ; jc++ )
-#pragma omp simd
-      for( int ic= icb ; ic <= ice ; ic++ )
-      {
+// #pragma omp parallel
+//   for( int c=1 ; c <= 3 ; c++ ) 
+// #pragma omp for
+//     for( int jc= jcb ; jc <= jce ; jc++ )
+// #pragma omp simd
+//       for( int ic= icb ; ic <= ice ; ic++ )
+//       {
+
+			 RAJA::RangeSegment c_range(1,4);			 
+			 //RAJA::RangeSegment j_range(jcb,jce+1);
+			 //RAJA::RangeSegment i_range(icb,ice+1);
+
+  RAJA::nested::forall(ODDIODDJ_EXEC_POL2{},
+  		       RAJA::make_tuple(c_range,j_range,i_range),
+  		       [=]RAJA_DEVICE (int c,int jc,int ic) {
 // i odd, j odd
 	int i=2*ic-1, j=2*jc-1;
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
 	Uc(c,ic,jc,0) = UcNew(c,ic,jc,0);
-      }
-  
-  rmax[0] = rmax1;
-  rmax[1] = rmax2;
-  rmax[2] = rmax3;
+		       });
+  SYNC_DEVICE;
+  rmax[0] = static_cast<float_sw4>(rmax1.get());
+  rmax[1] = static_cast<float_sw4>(rmax2.get());
+  rmax[2] = static_cast<float_sw4>(rmax3.get());
 #undef Unextf
 #undef Mufs
 #undef Mlfs
