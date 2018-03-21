@@ -31,7 +31,9 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "EW.h"
-
+#include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 //-----------------------------------------------------------------------
 void EW::bcfort_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36], 
 		      int nx, int ny, int nz, float_sw4* u, float_sw4 h, boundaryConditionType bccnd[6],
@@ -40,6 +42,7 @@ void EW::bcfort_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[36]
 		      float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
 		    float_sw4 om, float_sw4 ph, float_sw4 cv, int curvilinear )
 {
+SW4_MARK_FUNCTION;
    const float_sw4 d4a = 2.0/3.0;
    const float_sw4 d4b = -1.0/12.0;
    const size_t ni  = ie-ib+1;
@@ -308,6 +311,7 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 		      float_sw4 om, float_sw4 ph, float_sw4 cv,
 		      float_sw4* strx, float_sw4* stry )
 {
+  SW4_MARK_FUNCTION;
    const float_sw4 d4a = 2.0/3.0;
    const float_sw4 d4b = -1.0/12.0;
    const size_t ni  = ie-ib+1;
@@ -571,17 +575,32 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 void EW::twdirbdry_ci( int wind[6], float_sw4 h, float_sw4 t, float_sw4 om, 
 		       float_sw4 cv, float_sw4 ph, float_sw4* bforce, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    size_t qq=0;
-   // #pragma omp parallel for // qq variable will not work with OpenMP
-   for( int k=wind[4]; k <= wind[5] ; k++ ) {
-      for( int j=wind[2]; j <= wind[3] ; j++ ) {
-	 for( int i=wind[0]; i <= wind[1] ; i++ ) {
-	    double x=(i-1)*h, y=(j-1)*h, z=zmin+(k-1)*h;
-	    bforce[  3*qq]=sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
-	    bforce[1+3*qq]=sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
-	    bforce[2+3*qq]=sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t));
-	    qq++;
-	 }}}
+   int ni = wind[1]-wind[0]+1;
+   int nij = (wind[3]-wind[2]+1)*ni;
+   //int klen = wind[5]-wind[4]+1;
+   int istart = wind[0];
+   int jstart = wind[2];
+   int kstart = wind[4];
+   RAJA::RangeSegment k_range(wind[4],wind[5]+1);
+   RAJA::RangeSegment j_range(wind[2],wind[3]+1);
+   RAJA::RangeSegment i_range(wind[0],wind[1]+1);
+   RAJA::nested::forall(BCFORT_EXEC_POL1{},
+			RAJA::make_tuple(k_range, j_range,i_range),
+			[=]RAJA_DEVICE (int k,int j,int i) {
+			  // #pragma omp parallel for // qq variable will not work with OpenMP
+			  // for( int k=wind[4]; k <= wind[5] ; k++ ) {
+			  //    for( int j=wind[2]; j <= wind[3] ; j++ ) {
+			  // 	 for( int i=wind[0]; i <= wind[1] ; i++ ) {
+			  double x=(i-1)*h, y=(j-1)*h, z=zmin+(k-1)*h;
+			  int qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+			  //if (lqq!=qq) std::cout<<i<<" "<<j<<" "<<k<<" "<<lqq<<" "<<qq;
+			  bforce[  3*qq]=sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
+			  bforce[1+3*qq]=sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
+			  bforce[2+3*qq]=sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t));
+	    //qq++;
+			}); SYNC_DEVICE;
 }
 
 //-----------------------------------------------------------------------
@@ -590,6 +609,7 @@ void EW::twdirbdryc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			float_sw4 ph, float_sw4* bforce, float_sw4* x, float_sw4* y,
 			float_sw4* z )
 {
+  SW4_MARK_FUNCTION;
    size_t ni = ilast-ifirst+1;
    size_t nij = ni*(jlast-jfirst+1);
    size_t qq=0;
@@ -611,13 +631,19 @@ void EW::twfrsurfz_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 		       float_sw4 phase, float_sw4* bforce, float_sw4* mu, float_sw4* lambda,
 		       float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    double z=(kz-1)*h + zmin;
-#pragma omp parallel for
-   for( int j=jfirst ; j<= jlast ; j++ )
-      for( int i=ifirst ; i<= ilast ; i++ )
-      {
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::nested::forall(BCFORT_EXEC_POL2{},
+			  RAJA::make_tuple(j_range,i_range),
+			  [=]RAJA_DEVICE (int j,int i) {
+// #pragma omp parallel for
+//    for( int j=jfirst ; j<= jlast ; j++ )
+//       for( int i=ifirst ; i<= ilast ; i++ )
+//       {
 	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
 	 size_t qq  = (i-ifirst)+ni*(j-jfirst);
 	 double x=(i-1)*h, y=(j-1)*h; 
@@ -653,7 +679,7 @@ void EW::twfrsurfz_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 	 bforce[  3*qq]=forces[0];
 	 bforce[1+3*qq]=forces[1];
 	 bforce[2+3*qq]=forces[2];
-      }
+			  });
 }
 
 //-----------------------------------------------------------------------
@@ -662,6 +688,7 @@ void EW::twfrsurfzatt_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirs
 			 float_sw4 phase, float_sw4* bforce, float_sw4* mua, float_sw4* lambdaa,
 			 float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    double z=(kz-1)*h + zmin;
@@ -717,6 +744,7 @@ void EW::twfrsurfzsgstr_ci(int ifirst, int ilast, int jfirst, int jlast, int kfi
 			   float_sw4 ph, float_sw4 omstrx, float_sw4 omstry, float_sw4* bforce, 
 			   float_sw4* mu, float_sw4* lambda, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    double z=(kz-1)*h + zmin;
@@ -772,6 +800,7 @@ void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast, int 
 			   float_sw4 phase, float_sw4 omstrx, float_sw4 omstry, float_sw4* bforce, 
 			   float_sw4* mua, float_sw4* lambdaa, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    float_sw4 z=(kz-1)*h + zmin;
@@ -829,6 +858,7 @@ void EW::twfrsurfz_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			    float_sw4* __restrict__ mu, float_sw4* __restrict__ lambda,
 			    float_sw4 zmin, int i1, int i2, int j1, int j2)
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    float_sw4 z=(kz-1)*h + zmin;
@@ -886,6 +916,7 @@ void EW::twfrsurfzsg_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 			      float_sw4* __restrict__ lambda,
 			      float_sw4 zmin, int i1, int i2, int j1, int j2)
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
    float_sw4 z=(kz-1)*h + zmin;
@@ -946,6 +977,7 @@ void EW::twfrsurfz_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast,
 				float_sw4* __restrict__ lambdaa,
 				float_sw4 zmin, int i1, int i2, int j1, int j2 )
 {
+  SW4_MARK_FUNCTION;
  //THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
@@ -1007,6 +1039,7 @@ void EW::twfrsurfzsg_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast,
 				  float_sw4* __restrict__ lambdaa,
 				  float_sw4 zmin, int i1, int i2, int j1, int j2 )
 {
+  SW4_MARK_FUNCTION;
    // THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
@@ -1070,6 +1103,7 @@ void EW::twstensor_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 		       float_sw4* xx, float_sw4* yy, float_sw4* zz,
 		       float_sw4* tau, float_sw4* mu, float_sw4* lambda )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni  = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
 #pragma omp parallel for
@@ -1122,6 +1156,7 @@ void EW::twstensorsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 			 float_sw4* tau, float_sw4* mu, float_sw4* lambda, float_sw4 omstrx,
 			 float_sw4 omstry )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
 #pragma omp parallel for
@@ -1181,7 +1216,7 @@ void EW::twstensoratt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 		       float_sw4* xx, float_sw4* yy, float_sw4* zz,
 		       float_sw4* tau, float_sw4* mu, float_sw4* lambda )
 {
-
+  SW4_MARK_FUNCTION;
    const size_t ni = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
 #pragma omp parallel for
@@ -1244,6 +1279,7 @@ void EW::twstensorsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			    float_sw4* xx, float_sw4* yy, float_sw4* zz, float_sw4* tau,
 			    float_sw4* mu, float_sw4* lambda, float_sw4 omstrx, float_sw4 omstry )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni = ilast-ifirst+1;
    const size_t nij = ni*(jlast-jfirst+1);
 #pragma omp parallel for

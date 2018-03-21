@@ -2,6 +2,7 @@
 #include "EW.h"
 #include "Mspace.h"
 #include "policies.h"
+#include "caliper.h"
 void EW::twilightfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
 			  int klast, float_sw4* __restrict__ u, float_sw4 t, float_sw4 om,
 			  float_sw4 cv, float_sw4 ph, float_sw4 h, float_sw4 zmin )
@@ -497,23 +498,30 @@ void EW::forcingfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 			 float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
 			 float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
-#pragma omp parallel
-   {
+   RAJA::RangeSegment k_range(kfirst,klast+1);
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::nested::forall(RHS4_EXEC_POL{},
+			RAJA::make_tuple(k_range, j_range,i_range),
+			[=]RAJA_DEVICE (int k,int j,int i) {
+// #pragma omp parallel
+//    {
       float_sw4 forces[3],t10,t102,t105,t107,t110,t111,t112,t113,t115,t116,t118,t124,t125,t129,t13,t130,t133,t134,t135,t137,t14,t140,t144,t150,t156,t16,t163,t165,t17,t172,t181,t183,t188,t19,t190,t2,t20,t21,t23,t24,t26,t27,t28,t3,t31,t32,t33,t34,t37,t38,t39,t40,t43,t5,t51,t56,t57,t59,t6,t62,t64,t65,t66,t68,t69,t71,t74,t75,t80,t81,t82,t83,t88,t89,t9,t90,t91,t92,t93,t95,t97,t99;
-#pragma omp for
-      for( int k=kfirst; k<=klast; k++ )
-      {
-	 float_sw4 z=(k-1)*h+zmin;
-	 for( int j=jfirst; j<=jlast; j++ )
-	 {
-	    float_sw4 y=(j-1)*h;
-	    for( int i=ifirst; i<=ilast; i++ )
-	    {
-	       float_sw4 x=(i-1)*h;
+// #pragma omp for
+//       for( int k=kfirst; k<=klast; k++ )
+//       {
+      float_sw4 z=(k-1)*h+zmin;
+	 // for( int j=jfirst; j<=jlast; j++ )
+	 // {
+      float_sw4 y=(j-1)*h;
+	    // for( int i=ifirst; i<=ilast; i++ )
+	    // {
+      float_sw4 x=(i-1)*h;
         t2 = omm*x+phm;
         t3 = sin(t2);
         t5 = omm*y+phm;
@@ -609,10 +617,10 @@ void EW::forcingfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 	fo[ind] = forces[0];
 	fo[ind+nijk] = forces[1];
 	fo[ind+2*nijk] = forces[2];
-	    }
-	 }
-      }
-   }
+			}); SYNC_DEVICE;
+   // 	 }
+   //    }
+   // }
 }
 
 //-----------------------------------------------------------------------

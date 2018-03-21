@@ -1,11 +1,12 @@
 #include "sw4.h"
 #include "EW.h"
-
+#include "caliper.h"
 void EW::tw_aniso_force_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
 			    int klast, float_sw4* fo, float_sw4 t,float_sw4 om,float_sw4 cv,
 			    float_sw4 ph, float_sw4 omm,float_sw4 phm,float_sw4 amprho,
 			    float_sw4 phc[21],float_sw4 h, float_sw4 zmin ) 
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -352,6 +353,7 @@ void EW::tw_aniso_curvi_force_ci( int ifirst, int ilast, int jfirst, int jlast,
 			       float_sw4* __restrict__ yy, float_sw4* __restrict__ zz)
 // curvilinear case
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -701,6 +703,7 @@ void EW::tw_aniso_free_surf_z_ci( int ifirst, int ilast, int jfirst, int jlast,
 				  float_sw4 phc[21], float_sw4* __restrict__ bforce,
 				  float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    //      real(dp), intent(out):: bforce(3,ifirst:ilast,jfirst:jlast)
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);

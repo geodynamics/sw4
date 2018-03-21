@@ -1,5 +1,6 @@
 #include "sw4.h"
 #include "EW.h"
+#include "caliper.h"
 //#include <math.h>
 //#include <sys/types.h>
 //-----------------------------------------------------------------------
@@ -10,6 +11,7 @@ void EW::forcingfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
 			   float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
 			   float_sw4 omstrz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -641,6 +643,7 @@ void EW::forcingfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 			  float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
 			  float_sw4 omstrz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
