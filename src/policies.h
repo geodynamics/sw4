@@ -9,8 +9,8 @@ using RHS4_EXEC_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<16 >,
 								   RAJA::statement::Lambda<0> >>>>>;
-
-
+			 
+			 
 using ICSTRESS_EXEC_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
