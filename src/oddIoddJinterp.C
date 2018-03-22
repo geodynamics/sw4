@@ -334,7 +334,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
   //   RAJA::nested::For<0, RAJA::seq_exec> >;
 
 
-  RAJA::nested::forall(ODDIODDJ_EXEC_POL1{},
+  RAJA::kernel<ODDIODDJ_EXEC_POL1>(
   		       RAJA::make_tuple(j_range,i_range),
   		       [=]RAJA_DEVICE(int jc,int ic) {
 //   float_sw4 rmax1=0, rmax2=0, rmax3=0;
@@ -508,7 +508,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 			 //RAJA::RangeSegment j_range(jcb,jce+1);
 			 //RAJA::RangeSegment i_range(icb,ice+1);
 
-  RAJA::nested::forall(ODDIODDJ_EXEC_POL2{},
+			 RAJA::kernel<ODDIODDJ_EXEC_POL2>(
   		       RAJA::make_tuple(c_range,j_range,i_range),
   		       [=]RAJA_DEVICE (int c,int jc,int ic) {
 // i odd, j odd

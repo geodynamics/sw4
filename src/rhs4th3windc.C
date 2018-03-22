@@ -75,7 +75,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     RAJA::RangeSegment k_range(kfirstw,klastw+1);
     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-    RAJA::nested::forall(RHS4_EXEC_POL{},
+    RAJA::kernel<RHS4_EXEC_POL>(
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
 			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
@@ -324,7 +324,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     RAJA::RangeSegment k_range(kfirstw,klastw+1);
     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-    RAJA::nested::forall(RHS4_EXEC_POL{},
+    RAJA::kernel<RHS4_EXEC_POL>(
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
 			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
@@ -586,7 +586,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     RAJA::RangeSegment k_range(kfirstw,klastw+1);
     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-    RAJA::nested::forall(RHS4_EXEC_POL{},
+    RAJA::kernel<RHS4_EXEC_POL>(
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
 			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;

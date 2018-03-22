@@ -108,7 +108,7 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
   RAJA::RangeSegment j_range(jb,je+1);
   RAJA::RangeSegment k_range(kb_tt,ke_tt+1);
   RAJA::RangeSegment c_range(1,4);
-  RAJA::nested::forall(DPDMT_WIND_LOOP_POL{},
+  RAJA::kernel<DPDMT_WIND_LOOP_POL>(
 		       RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		       [=]RAJA_DEVICE (long int i,long int j, long int k,long int c) {
 			 u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );

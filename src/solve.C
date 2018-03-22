@@ -1254,7 +1254,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
       int kendgc = m_kEnd[gc];
       RAJA::RangeSegment j_range(m_jStart[g],m_jEnd[g]+1);
       RAJA::RangeSegment i_range(m_iStart[g],m_iEnd[g]+1);
-      RAJA::nested::forall(ENFORCEBC_CORR_EXEC_POL1{},
+      RAJA::kernel<ENFORCEBC_CORR_EXEC_POL1>(
 			   RAJA::make_tuple(j_range,i_range),
 			   [=]RAJA_DEVICE (int j,int i) {
 // #pragma omp parallel for
@@ -2626,7 +2626,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    // SView &mRhogV = *new SView(mRho[g]);
    RAJA::RangeSegment j_range(jb+2,je-1);
    RAJA::RangeSegment i_range(ib+2,ie-1);
-   RAJA::nested::forall(PRELIM_CORR_EXEC_POL1{},
+   RAJA::kernel<PRELIM_CORR_EXEC_POL1>(
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
 #// pragma omp parallel for
@@ -2704,7 +2704,7 @@ SW4_MARK_FUNCTION;
    RAJA::RangeSegment j_range(B.m_jb+2,B.m_je-1);
    RAJA::RangeSegment i_range(B.m_ib+2,B.m_ie-1);
    
-   RAJA::nested::forall(ICSTRESS_EXEC_POL{},
+   RAJA::kernel<ICSTRESS_EXEC_POL>(
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
 

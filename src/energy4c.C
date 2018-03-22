@@ -68,7 +68,7 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
   RAJA::RangeSegment k_range(k1,k2+1);
   RAJA::RangeSegment j_range(j1,j2+1);
   RAJA::RangeSegment i_range(i1,i2+1);
-  RAJA::nested::forall(ENERGY4CI_EXEC_POL{},
+  RAJA::kernel<ENERGY4CI_EXEC_POL>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 			  const float_sw4 normwgh[4]={17.0/48,59.0/48,43.0/48,49.0/48};

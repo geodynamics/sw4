@@ -99,7 +99,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    RAJA::RangeSegment i_range(m_iStart[gf],m_iEnd[gf]+1);
 
    SW4_MARK_BEGIN("CONSINTP_LOOP1");
-   RAJA::nested::forall(CONSINTP_EXEC_POL1{},
+   RAJA::kernel<CONSINTP_EXEC_POL1>(
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
 // #pragma omp parallel for
@@ -120,7 +120,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    RAJA::RangeSegment jc_range(m_jStart[gc],m_jEnd[gc]+1);
    RAJA::RangeSegment ic_range(m_iStart[gc],m_iEnd[gc]+1);
    SW4_MARK_BEGIN("CONSINTP_LOOP2");
-   RAJA::nested::forall(CONSINTP_EXEC_POL1{},
+   RAJA::kernel<CONSINTP_EXEC_POL1>(
 			RAJA::make_tuple(jc_range,ic_range),
 			[=]RAJA_DEVICE (int jc,int ic) {
 // #pragma omp parallel for
@@ -142,7 +142,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    RAJA::RangeSegment j3_range(jcb,jce+1);
    RAJA::RangeSegment i3_range(icb,ice+1);
    SW4_MARK_BEGIN("CONSINTP_LOOP3");
-   RAJA::nested::forall(RHS4_EXEC_POL{},
+   RAJA::kernel<RHS4_EXEC_POL>(
 			RAJA::make_tuple(c_range, j3_range,i3_range),
 			[=]RAJA_DEVICE (int c,int jc,int ic) {
 // #pragma omp parallel
@@ -188,7 +188,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
      RAJA::TypedRangeStrideSegment<long> jeven_range(jfeven,jfe+1,2);
      RAJA::TypedRangeStrideSegment<long> iodd_range(ifodd, ife+1,2);
    
-     RAJA::nested::forall(CONSINTP_EXEC_POL4{},
+     RAJA::kernel<CONSINTP_EXEC_POL4>(
 			RAJA::make_tuple(jeven_range,iodd_range),
 			[=]RAJA_DEVICE (int j,int i) {
 #// pragma omp for
@@ -205,7 +205,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
      RAJA::TypedRangeStrideSegment<long> jodd_range(jfodd,jfe+1,2);
      RAJA::TypedRangeStrideSegment<long> ieven_range(ifeven, ife+1,2);
    
-     RAJA::nested::forall(CONSINTP_EXEC_POL4{},
+     RAJA::kernel<CONSINTP_EXEC_POL4>(
 			RAJA::make_tuple(jodd_range,ieven_range),
 			[=]RAJA_DEVICE (int j,int i) {
 // #pragma omp for
@@ -221,7 +221,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
 
     
-     RAJA::nested::forall(CONSINTP_EXEC_POL4{},
+     RAJA::kernel<CONSINTP_EXEC_POL4>(
 			RAJA::make_tuple(jeven_range,ieven_range),
 			[=]RAJA_DEVICE (int j,int i) {
 // #pragma omp for

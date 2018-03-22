@@ -2602,7 +2602,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    RAJA::RangeSegment k_range(kmin,kmax+1);
    RAJA::RangeSegment j_range(jmin,jmax+1);
    RAJA::RangeSegment i_range(imin,imax+1);
-   RAJA::nested::forall(RHS4_EXEC_POL{},
+   RAJA::kernel<RHS4_EXEC_POL>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 // #pragma omp parallel for

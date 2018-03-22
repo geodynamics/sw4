@@ -586,7 +586,7 @@ void EW::twdirbdry_ci( int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
    RAJA::RangeSegment k_range(wind[4],wind[5]+1);
    RAJA::RangeSegment j_range(wind[2],wind[3]+1);
    RAJA::RangeSegment i_range(wind[0],wind[1]+1);
-   RAJA::nested::forall(BCFORT_EXEC_POL1{},
+   RAJA::kernel<BCFORT_EXEC_POL1>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 			  // #pragma omp parallel for // qq variable will not work with OpenMP
@@ -637,7 +637,7 @@ void EW::twfrsurfz_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
    double z=(kz-1)*h + zmin;
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::nested::forall(BCFORT_EXEC_POL2{},
+   RAJA::kernel<BCFORT_EXEC_POL2>(
 			  RAJA::make_tuple(j_range,i_range),
 			  [=]RAJA_DEVICE (int j,int i) {
 // #pragma omp parallel for

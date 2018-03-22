@@ -776,7 +776,7 @@ void Sarray::copy_kplane( Sarray& u, int k )
       RAJA::RangeSegment c_range(0,m_nc);
       RAJA::RangeSegment j_range(m_jb,m_je+1);
       RAJA::RangeSegment i_range(m_ib,m_ie+1);
-      RAJA::nested::forall(COPY_KPLANE_EXEC_POL{},
+      RAJA::kernel<COPY_KPLANE_EXEC_POL>(
 			   RAJA::make_tuple(c_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int c,int j,int i) {
       // for( int c=0 ; c < m_nc ; c++ )
@@ -911,7 +911,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::RangeSegment j_range(0,m_nj);
 		 RAJA::RangeSegment k_range(0,m_nk);
 		 RAJA::RangeSegment c_range(0,m_nc);
-		 RAJA::nested::forall(SARRAY_LOOP_POL2{},
+		 RAJA::kernel<SARRAY_LOOP_POL2>(
 		 		      RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		 		      [=]RAJA_DEVICE (int i,int j, int k,int c) {
 		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];});
@@ -928,7 +928,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::RangeSegment j_range(0,m_nj);
 		 RAJA::RangeSegment k_range(0,m_nk);
 		 RAJA::RangeSegment c_range(0,m_nc);
-		 RAJA::nested::forall(SARRAY_LOOP_POL2{},
+		 RAJA::kernel<SARRAY_LOOP_POL2>(
 		 		      RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		 		      [=]RAJA_DEVICE (int i,int j, int k,int c) {
 					m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];});
