@@ -1,12 +1,15 @@
 #include "sw4.h"
 
 #include "EW.h"
+#include "policies.h"
+#include "caliper.h"
 
 void EW::tw_aniso_force_tt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			       float_sw4* __restrict__ fo, float_sw4 t,float_sw4 om,float_sw4 cv,float_sw4 ph,
 			       float_sw4 omm,float_sw4 phm,float_sw4 amprho,float_sw4 phc[21],float_sw4 h,
 			       float_sw4 zmin)
 {
+SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -362,6 +365,7 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
 				     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 				     float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);

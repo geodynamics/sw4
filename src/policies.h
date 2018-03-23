@@ -2,6 +2,33 @@
 #define __POLICIES_H__
 #include "RAJA/RAJA.hpp"
 #ifdef ENABLE_CUDA
+
+typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
+
+
+using DEFAULT_LOOP2 = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+  RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+		       RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+					    RAJA::statement::Lambda<0> >>>>;
+
+
+using DEFAULT_LOOP3 = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<16 >,
+								   RAJA::statement::Lambda<0> >>>>>;
+using DEFAULT_LOOP4 =
+  RAJA::KernelPolicy<
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>,
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
+			 RAJA::statement::For<3, RAJA::seq_exec,
+								   RAJA::statement::Lambda<0> >>>>>>;
 using RHS4_EXEC_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -14,8 +41,8 @@ using RHS4_EXEC_POL =
 using ICSTRESS_EXEC_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
-  RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
-		       RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+  RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+		       RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 					    RAJA::statement::Lambda<0> >>>>;
 
 
@@ -54,7 +81,8 @@ using PRELIM_CORR_EXEC_POL1 =  ICSTRESS_EXEC_POL;
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>>> >;
 
-
+using PRELIM_PRED_EXEC_POL1 =  ICSTRESS_EXEC_POL;
+			 
 using ENFORCEBC_CORR_EXEC_POL1 =  ICSTRESS_EXEC_POL;
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<

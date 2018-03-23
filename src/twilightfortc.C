@@ -11,6 +11,7 @@ void EW::twilightfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 // v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
 // w      := sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t));
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -43,6 +44,7 @@ void EW::twilightfortwind_ci(int ifirst, int ilast, int jfirst, int jlast, int k
 			     float_sw4 cv, float_sw4 ph, float_sw4 h, float_sw4 zmin,
 			     int i1, int i2, int j1, int j2, int k1, int k2 )
 {
+  SW4_MARK_FUNCTION;
 // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 // u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 // v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -78,6 +80,7 @@ void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  float_sw4 cv, float_sw4 ph, float_sw4* __restrict__ x,
 			  float_sw4* __restrict__ y, float_sw4* __restrict__ z )
 {
+  SW4_MARK_FUNCTION;
 // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 // u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 // v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -108,6 +111,7 @@ void EW::twilightfortatt_ci(int ifirst, int ilast, int jfirst, int jlast, int kf
 			    int klast, float_sw4* __restrict__ alpha, float_sw4 t, float_sw4 om,
 			    float_sw4 cv,float_sw4 ph,float_sw4 h,float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
 // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 // Attenuation memory variables
 // att1 := cos(omega*(x-c*t)+phase)*sin(omega*x+phase)*cos(omega*(z-c*t)+phase);
@@ -148,6 +152,7 @@ void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast, int k
 			     float_sw4* __restrict__ x, float_sw4* __restrict__ y,
 			     float_sw4* __restrict__ z )
 {
+  SW4_MARK_FUNCTION;
 // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
 // u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 // v      := sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -181,6 +186,7 @@ void EW::exactrhsfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
 			  float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -301,6 +307,7 @@ void EW::exactrhsfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
 			   float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			   float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -414,6 +421,7 @@ void EW::exactaccfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  int klast, float_sw4* __restrict__ utt, float_sw4 t, float_sw4 om,
 			  float_sw4 c, float_sw4 ph, float_sw4 h, float_sw4 zmin )
 { 
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -459,6 +467,7 @@ void EW::exactaccfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
 			   float_sw4 c, float_sw4 ph, float_sw4* __restrict__ x,
 			   float_sw4* __restrict__ y, float_sw4* __restrict__ z )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -630,6 +639,7 @@ void EW::forcingttfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
 			   float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
 			   float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -773,6 +783,7 @@ void EW::forcingfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			  float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -896,6 +907,7 @@ void EW::forcingttfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			    float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			    float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -1031,6 +1043,7 @@ void EW::exactmatfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
 			  float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
    // rho    := amprho*(2 + sin(omm*x+phm)*cos(omm*y+phm)*sin(omm*z+phm) );
    // mu     := ampmu*(3 + cos(omm*x+phm)*sin(omm*y+phm)*sin(omm*z+phm) );
@@ -1070,6 +1083,7 @@ void EW::exactmatfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfi
 			   float_sw4* __restrict__ x, float_sw4* __restrict__ y,
 			   float_sw4* __restrict__ z )
 {
+  SW4_MARK_FUNCTION;
    // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz, see below
    // rho    := amprho*(2 + sin(omm*x+phm)*cos(omm*y+phm)*sin(omm*z+phm) );
    // mu     := ampmu*(3 + cos(omm*x+phm)*sin(omm*y+phm)*sin(omm*z+phm) );
@@ -1102,6 +1116,7 @@ void EW::exactrhsfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			    float_sw4 h, float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
 			    float_sw4 omstrz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -1247,6 +1262,7 @@ void EW::exactrhsfortsgc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 			     float_sw4* __restrict__ zz,
 			     float_sw4 omstrx, float_sw4 omstry, float_sw4 omstrz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -1386,6 +1402,7 @@ void EW::exactmatfortatt_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 			     float_sw4 ampmu, float_sw4 amplambda,
 			     float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
   //   const size_t nijk  = nij*(klast-kfirst+1);
@@ -1419,6 +1436,7 @@ void EW::exactmatfortattc_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 			      float_sw4* __restrict__ x, float_sw4* __restrict__ y,
 			      float_sw4* __restrict__ z )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
   //   const size_t nijk  = nij*(klast-kfirst+1);
@@ -1450,6 +1468,7 @@ void EW::forcingfortatt_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 #pragma omp parallel
    {
+     SW4_MARK_FUNCTION;
       float_sw4 forces[3],t10,t100,t103,t108,t109,t11,t110,t112,t113,t116,t118,t12,t131,t133,t135,t14,t144,t15,t152,t156,t158,t159,t162,t178,t180,t182,t189,t19,t191,t195,t2,t21,t22,t23,t26,t27,t3,t30,t31,t32,t33,t34,t35,t36,t37,t38,t4,t45,t51,t52,t53,t55,t56,t6,t62,t63,t67,t68,t7,t71,t72,t73,t77,t8,t80,t84,t85,t86,t87,t95,t96,t97;
 #pragma omp for
       for( int k=kfirst; k<=klast; k++ )
@@ -1559,6 +1578,7 @@ void EW::forcingttattfort_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 			      float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
 			      float_sw4 h, float_sw4 zmin )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -1705,6 +1725,7 @@ void EW::addmemvarforcing_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 			      float_sw4 c, float_sw4 phase, float_sw4 omegaVE, float_sw4 dt,
 			      float_sw4 h, float_sw4 zmin )
 {
+SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -1814,6 +1835,7 @@ void EW::memvarforcesurf_ci( int ifirst, int ilast, int jfirst, int jlast,
 			     float_sw4 omegaVE, float_sw4 dt, float_sw4 h,
 			     float_sw4 zmin )
 {
+SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
 //   const size_t nijk  = nij*(klast-kfirst+1);
@@ -1920,6 +1942,7 @@ void EW::forcingfortattc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 			     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			     float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -2032,6 +2055,7 @@ void EW::forcingttattfortc_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			       float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			       float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -2176,6 +2200,7 @@ void EW::addmemvarforcingc_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			       float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			       float_sw4* __restrict__ zz )
 {
+SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
@@ -2283,6 +2308,7 @@ void EW::memvarforcesurfc_ci( int ifirst, int ilast, int jfirst, int jlast,
 			      float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
 			      float_sw4* __restrict__ zz )
 {
+  SW4_MARK_FUNCTION;
    const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    //const size_t nijk  = nij*(klast-kfirst+1);

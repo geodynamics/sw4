@@ -2464,16 +2464,26 @@ SW4_MARK_FUNCTION;
    //      	   mRho[g].c_ptr(), cof, kic);
    // else
    {
-#pragma omp parallel for
-     for( int j=Unext.m_jb+2 ; j <= Unext.m_je-2 ; j++ )
-#pragma omp simd
-       for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
-       {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
-	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+Ftt(1,i,j,kic)); // +force(1,i,j,kic));
-	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+Ftt(2,i,j,kic)); // +force(2,i,j,kic));
-	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+Ftt(3,i,j,kic));//+force(3,i,j,kic));
-       }
+// #pragma omp parallel for
+//      for( int j=Unext.m_jb+2 ; j <= Unext.m_je-2 ; j++ )
+// #pragma omp simd
+//        for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
+//        {
+     RAJA::RangeSegment j_range(Unext.m_jb+2,Unext.m_je-1);
+     RAJA::RangeSegment i_range(Unext.m_ib+2,Unext.m_ie-1 );
+     SView &mRhogV = mRho[g].getview();
+     SView &UnextV =  Unext.getview();
+     SView &a_UpV = a_Up.getview();
+     SView &LuttV = Lutt.getview();
+     SView &FttV = Ftt.getview();
+     RAJA::kernel<PRELIM_CORR_EXEC_POL1>(
+					 RAJA::make_tuple(j_range,i_range),
+					 [=]RAJA_DEVICE (int j,int i) {
+					   float_sw4 irho=cof/mRhogV(i,j,kic);
+					   UnextV(1,i,j,kic) = a_UpV(1,i,j,kic) + irho*(LuttV(1,i,j,kic)+FttV(1,i,j,kic)); // +force(1,i,j,kic));
+					   UnextV(2,i,j,kic) = a_UpV(2,i,j,kic) + irho*(LuttV(2,i,j,kic)+FttV(2,i,j,kic)); // +force(2,i,j,kic));
+					   UnextV(3,i,j,kic) = a_UpV(3,i,j,kic) + irho*(LuttV(3,i,j,kic)+FttV(3,i,j,kic));//+force(3,i,j,kic));
+					 });
    }
 
 // add in super-grid damping terms (does it make a difference?)
@@ -2626,7 +2636,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    // SView &mRhogV = *new SView(mRho[g]);
    RAJA::RangeSegment j_range(jb+2,je-1);
    RAJA::RangeSegment i_range(ib+2,ie-1);
-   RAJA::kernel<PRELIM_CORR_EXEC_POL1>(
+   RAJA::kernel<PRELIM_PRED_EXEC_POL1>(
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
 #// pragma omp parallel for

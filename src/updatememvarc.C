@@ -32,11 +32,14 @@
 
 #include "sw4.h"
 #include <sys/types.h>
+#include "policies.h"
+#include "caliper.h"
 
 void memvar_pred_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  float_sw4* __restrict__ alp, float_sw4* __restrict__ alm,
 			  float_sw4* __restrict__ u, float_sw4 omega, float_sw4 dt, int domain )
 {
+SW4_MARK_FUNCTION;
 //***********************************************************************
 //*** 
 //*** domain = 0 --> Entire domain
@@ -70,15 +73,22 @@ void memvar_pred_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    const size_t nij = ni*(jlast-jfirst+1);
    const size_t nijk= nij*(klast-kfirst+1);
    const int base = -ifirst-ni*jfirst-nij*kfirst;
-   for( int c=0 ; c < 3 ;c++)
-#pragma omp parallel for
-      for( int k=k1 ; k <= k2 ; k++)
-	 for( int j=jfirst ; j<= jlast; j++ )
-	    for( int i=ifirst ; i<= ilast; i++ )
-	    {
+//    for( int c=0 ; c < 3 ;c++)
+// #pragma omp parallel for
+//       for( int k=k1 ; k <= k2 ; k++)
+// 	 for( int j=jfirst ; j<= jlast; j++ )
+// 	    for( int i=ifirst ; i<= ilast; i++ )
+// 	    {
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment k_range(kfirst,klast+1);
+   RAJA::RangeSegment c_range(0,3);
+   RAJA::kernel<DEFAULT_LOOP4>(
+				  RAJA::make_tuple(i_range,j_range,k_range,c_range),
+				  [=]RAJA_DEVICE (int i,int j, int k,int c) {
 	       size_t ind = base+i+ni*j+nij*k;
 	       alp[ind+c*nijk] = icp*(-cm*alm[ind+c*nijk] + u[ind+c*nijk] );
-	    }
+				  });
 }
 
 //-----------------------------------------------------------------------
@@ -87,6 +97,7 @@ void memvar_corr_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 			  float_sw4* __restrict__ up, float_sw4* __restrict__ u, 
 			  float_sw4* __restrict__ um, float_sw4 omega, float_sw4 dt, int domain )
 {
+  SW4_MARK_FUNCTION;
   //***********************************************************************
   //*** 
   //*** domain = 0 --> Entire domain
@@ -124,17 +135,23 @@ void memvar_corr_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    const size_t nij = ni*(jlast-jfirst+1);
    const size_t nijk= nij*(klast-kfirst+1);
    const int base = -ifirst-ni*jfirst-nij*kfirst;
-   for( int c=0 ; c < 3 ;c++)
-#pragma omp parallel for
-      for( int k=k1 ; k <= k2 ; k++)
-	 for( int j=jfirst ; j<= jlast; j++ )
-	    for( int i=ifirst ; i<= ilast; i++ )
-	    {
-	       size_t ind = base+i+ni*j+nij*k;
-              // Note that alp is ASSIGNED by this formula
-	       alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] + u[ind+c*nijk] + i6* ( dto*dto*u[ind+c*nijk] + 
- 	       dto*(up[ind+c*nijk]-um[ind+c*nijk]) + (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );
-	    }
+//    for( int c=0 ; c < 3 ;c++)
+// #pragma omp parallel for
+//       for( int k=k1 ; k <= k2 ; k++)
+// 	 for( int j=jfirst ; j<= jlast; j++ )
+// 	    for( int i=ifirst ; i<= ilast; i++ )
+// 	    {
+RAJA::RangeSegment i_range(ifirst,ilast+1);
+RAJA::RangeSegment j_range(jfirst,jlast+1);
+RAJA::RangeSegment k_range(k1,k2+1);
+RAJA::RangeSegment c_range(0,3);
+RAJA::kernel<DEFAULT_LOOP4>(RAJA::make_tuple(i_range,j_range,k_range,c_range),
+			    [=]RAJA_DEVICE (int i,int j, int k,int c) {
+			    size_t ind = base+i+ni*j+nij*k;
+			    // Note that alp is ASSIGNED by this formula
+			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] + u[ind+c*nijk] + i6* ( dto*dto*u[ind+c*nijk] + 
+											       dto*(up[ind+c*nijk]-um[ind+c*nijk]) + (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );
+			    });
 }
 
 //-----------------------------------------------------------------------
@@ -145,6 +162,7 @@ void memvar_corr_fort_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			       float_sw4* __restrict__ u, float_sw4* __restrict__ um,
 			       float_sw4 omega, float_sw4 dt, int domain )
 {
+  SW4_MARK_FUNCTION;
   //***********************************************************************
   //*** 
   //*** domain = 0 --> Entire domain

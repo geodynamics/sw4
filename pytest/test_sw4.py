@@ -3,7 +3,7 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess
+import os, sys, argparse, subprocess, time
 
 #----(Currently not used)--------------------------------------------
 def run_checks(checks):
@@ -259,16 +259,17 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             # run sw4
             run_dir = os.getcwd()
             #print('Running sw4 from directory:', run_dir)
-# assign OMP_NUM_THREADS
+            # assign OMP_NUM_THREADS
+            start=time.time()
             status = subprocess.run(
                 run_cmd,
                 stdout=sw4_stdout_file,
                 stderr=sw4_stderr_file,
             )
-
+            end = time.time()-start
             sw4_stdout_file.close()
             sw4_stderr_file.close()
-
+            print(sw4_input_file, "Total time",end)
             # status = os.system(run_cmd)
             # if status!=0:
             #     print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')

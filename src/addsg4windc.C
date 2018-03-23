@@ -37,7 +37,9 @@
 //-----------------------------------------------------------------------
 #include <sys/types.h>
 #include "sw4.h"
-
+#include "Mspace.h"
+#include "policies.h"
+#include "caliper.h"
 //extern "C" {
 
 void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
@@ -51,6 +53,7 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 		    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		    float_sw4 beta, int kupb, int kupe, int kwindb, int kwinde )
 {
+SW4_MARK_FUNCTION;
 //***********************************************************************
 //*** Version with correct density scaling and supergrid stretching.
 //*** cox, coy, coz are corner factors that reduce the damping near edges and corners
@@ -106,14 +109,21 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 #define strz(k) a_strz[k-kfirst]
 #define coz(k)   a_coz[k-kfirst]
 
-  for( int c=1 ; c<=3 ; c++ )
-     for( int k=kwindb ; k<= kwinde ;k++)
-#pragma omp parallel for
-	for( int j=jfirst+2 ; j<= jlast-2; j++ )
-#pragma ivdep
-#pragma simd
-	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
-	   {
+//   for( int c=1 ; c<=3 ; c++ )
+//      for( int k=kwindb ; k<= kwinde ;k++)
+// #pragma omp parallel for
+// 	for( int j=jfirst+2 ; j<= jlast-2; j++ )
+// #pragma ivdep
+// #pragma simd
+// 	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
+// 	   {
+   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+   RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+   RAJA::RangeSegment k_range(kfirst+2,klast-1);
+   RAJA::RangeSegment c_range(1,4);
+   RAJA::kernel<DEFAULT_LOOP4>(
+				  RAJA::make_tuple(i_range,j_range,k_range,c_range),
+				  [=]RAJA_DEVICE (int i,int j, int k,int c) {
 	      up(c,i,j,k) -= coeff*( 
 // x-differences
                    strx(i)*coy(j)*coz(k)*( rho(i+1,j,k)*dcx(i+1)*( u(c,i+2,j,k) -2*u(c,i+1,j,k)+ u(c,i,  j,k)) 
@@ -130,7 +140,7 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
                    +2*rho(i,j,k)*dcy(j)  * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
 	            -rho(i,j-1,k)*dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )  
 				     )/rho(i,j,k);
-	   }
+				  });
 }
 
 //}
