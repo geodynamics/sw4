@@ -912,6 +912,8 @@ void Sarray::assign( const double* ar, int corder )
      int mnc = m_nc;
      ASSERT_MANAGED(m_data);
      ASSERT_MANAGED((void*)ar);
+     prefetch();
+     PREFETCH(ar);
      float_sw4 *mdata = m_data;
      using ASSIGN_POL  =
        RAJA::KernelPolicy<

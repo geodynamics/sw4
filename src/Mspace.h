@@ -1,3 +1,4 @@
+#include "sw4.h"
 #ifndef __MSPACE_H__
 #define __MSPACE_H__
 
@@ -7,6 +8,7 @@
 #if defined(ENABLE_CUDA)
 #include "cuda_runtime.h"
 void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line);
+void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) CheckError(err,__FILE__, __FUNCTION__, __LINE__)
 #else
 #define SW4_CheckDeviceError(err) ()
@@ -33,6 +35,9 @@ void operator delete[](void *ptr, Space loc) throw();
 #define ASSERT_HOST(ptr)\
   ( assert_check_host((ptr),__FILE__,__LINE__))
 
+#define PREFETCH(ptr)\
+  ( prefetch_to_device((ptr)))
+
 void assert_check_host(void *ptr, const char *file, int line);
 void assert_check_managed(void *ptr, const char *file, int line);
 
@@ -52,7 +57,7 @@ void ptr_push(void *ptr, Space type, const char *file, int line);
 
 #define PTR_PUSH(ptr) ()
 
-
+#define PREFETCH(ptr) ()
 #endif
 
 

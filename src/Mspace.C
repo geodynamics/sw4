@@ -6,6 +6,7 @@ using namespace std;
 typedef struct {
   const char *file;
   int line;
+  size_t size;
   Space type;} pattr_t;
 
 pattr_t *patpush(void *ptr, pattr_t *ss){
@@ -64,6 +65,7 @@ void * operator new(std::size_t size,Space loc,char *file, int line) throw(std::
   ss->file=file;
   ss->line=line;
   ss->type=loc;
+  ss->size=size;
   void *ret= ::operator new(size,loc);
   patpush(ret,ss);
   return ret;
@@ -106,6 +108,7 @@ void * operator new[](std::size_t size,Space loc,const char *file,int line){
   ss->file=file;
   ss->line=line;
   ss->type=loc;
+  ss->size=size;
   void *ret= ::operator new(size,loc);
   patpush(ret,ss);
   return ret;
@@ -210,8 +213,19 @@ void ptr_push(void *ptr,Space type, const char *file,int line){
   ss->file=file;
   ss->line=line;
   ss->type=type;
+  ss->size=0;
   patpush(ptr,ss);
   return;
+}
+void prefetch_to_device(const float_sw4 *ptr){
+  if (ptr==NULL) return;
+  pattr_t *ss = patpush((void*)ptr,NULL);
+  if (ss!=NULL) if (ss->size>0){
+      SW4_CheckDeviceError(cudaMemPrefetchAsync(ptr,
+						ss->size,
+						0,
+						0));
+    }
 }
 #endif
 
