@@ -35,7 +35,8 @@
 //-----------------------------------------------------------------------
 
 #include "EW.h"
-
+#include "policies.h"
+#include "caliper.h"
 //-----------------------------------------------------------------------
 void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
 		     int kfirst, int klast,
@@ -48,6 +49,7 @@ void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
 		     float_sw4* __restrict__ a_coz,
 		     float_sw4 beta )
 {
+  SW4_MARK_FUNCTION;
    if( beta != 0 )
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
@@ -69,18 +71,36 @@ void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
       const size_t npts = nij*(klast-kfirst+1);
 
 // AP: The for c loop could be inside the for i loop. The simd, ivdep pragmas should be outside the inner-most loop
-#pragma omp parallel
-      {
-      for( int c=0 ; c < 3 ; c++ )
-#pragma omp for
-      for( int k=kfirst+2; k <= klast-2 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	    {
-	       float_sw4 birho=beta/rho(i,j,k);
-	       {
+// #pragma omp parallel
+//       {
+//       for( int c=0 ; c < 3 ; c++ )
+// #pragma omp for
+//       for( int k=kfirst+2; k <= klast-2 ; k++ )
+// 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+// #pragma simd
+// #pragma ivdep
+// 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+// 	    {
+      ASSERT_MANAGED(a_dcx);
+      ASSERT_MANAGED(a_cox);
+      ASSERT_MANAGED(a_strx);
+using ADDSGD_POL  =
+       RAJA::KernelPolicy<
+       RAJA::statement::CudaKernel<
+	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
+						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
+									RAJA::statement::For<0, RAJA::seq_exec,
+											     RAJA::statement::Lambda<0> >>>>>>;
+RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+RAJA::RangeSegment k_range(kfirst+2,klast-1);
+RAJA::RangeSegment c_range(0,3);
+RAJA::kernel<ADDSGD_POL>(
+			    RAJA::make_tuple(c_range,k_range,j_range,i_range),
+			    [=]RAJA_DEVICE (int c,int k, int j,int i) {
+			      float_sw4 birho=beta/rho(i,j,k);
+			      {
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
 		   strx(i)*coy(j)*coz(k)*(
@@ -127,8 +147,8 @@ void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
 					 );
 
 	       }
-	    }
-      }
+			    });
+//   }
 #undef rho
 #undef up
 #undef u
@@ -156,6 +176,7 @@ void EW::addsgd6_ci( int ifirst, int ilast, int jfirst, int jlast,
 		     float_sw4* __restrict__ a_cox,  float_sw4* __restrict__ a_coy,
 		     float_sw4* __restrict__ a_coz, float_sw4 beta )
 {
+  SW4_MARK_FUNCTION;
    if( beta != 0 )
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
@@ -259,6 +280,7 @@ void EW::addsgd4c_ci( int ifirst, int ilast, int jfirst, int jlast,
 		      float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,
 		      float_sw4* __restrict__ a_coy, float_sw4 beta )
 {
+  SW4_MARK_FUNCTION;
    if( beta != 0 )
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]
@@ -344,6 +366,7 @@ void EW::addsgd6c_ci(  int ifirst, int ilast, int jfirst, int jlast,
 		       float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_cox,
 		       float_sw4* __restrict__ a_coy, float_sw4 beta )
 {
+  SW4_MARK_FUNCTION;
    if( beta != 0 )
    {
 #define rho(i,j,k) a_rho[(i-ifirst)+ni*(j-jfirst)+nij*(k-kfirst)]

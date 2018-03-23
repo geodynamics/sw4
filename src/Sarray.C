@@ -906,20 +906,28 @@ void Sarray::assign( const double* ar, int corder )
      // 				      [=]RAJA_DEVICE (int i,int j, int k) {
      // 					for(int c=0;c<m_nc;c++)
      // 					m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c] = ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];});
-     int mni=m_ni;
+     int mni = m_ni;
      int mnj = m_nj;
      int mnk = m_nk;
      int mnc = m_nc;
      ASSERT_MANAGED(m_data);
      ASSERT_MANAGED((void*)ar);
      float_sw4 *mdata = m_data;
-		 RAJA::RangeSegment i_range(0,m_ni);
-		 RAJA::RangeSegment j_range(0,m_nj);
-		 RAJA::RangeSegment k_range(0,m_nk);
-		 RAJA::RangeSegment c_range(0,m_nc);
-		 RAJA::kernel<SARRAY_LOOP_POL2>(
-		 		      RAJA::make_tuple(i_range,j_range,k_range,c_range),
-		 		      [=]RAJA_DEVICE (int i,int j, int k,int c) {
+     using ASSIGN_POL  =
+       RAJA::KernelPolicy<
+       RAJA::statement::CudaKernel<
+	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
+						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<64>,
+									RAJA::statement::For<0, RAJA::seq_exec,
+											     RAJA::statement::Lambda<0> >>>>>>;
+		 RAJA::RangeSegment i_range(0,mni);
+		 RAJA::RangeSegment j_range(0,mnj);
+		 RAJA::RangeSegment k_range(0,mnk);
+		 RAJA::RangeSegment c_range(0,mnc);
+		 RAJA::kernel<ASSIGN_POL>(
+		 		      RAJA::make_tuple(c_range,k_range,j_range,i_range),
+		 		      [=]RAJA_DEVICE (int c,int k, int j,int i) {
 		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];});
    }
    else
