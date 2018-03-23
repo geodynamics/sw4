@@ -21,34 +21,44 @@ using namespace std;
 
 
 void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 
 //-----------------------------------------------------------------------
@@ -91,6 +101,8 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
    m_geodyn_data1[5].define(3,nx,ny,1);
    m_geodyn_data2[4].define(3,nx,ny,1);
    m_geodyn_data2[5].define(3,nx,ny,1);
+
+   m_geo_usgh.resize(4);
 
    int i0, i1, j0, j1, k0, k1;
    double cubelen  = (nx-1)*m_geodyn_h;
@@ -182,6 +194,13 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 	 m_geodyn_dims[g][4] = k0;
 	 m_geodyn_dims[g][5] = k1;
 	 m_geodyn_iwillread = true;
+	 if( g==mNumberOfGrids-1 && m_geodyn_faces==5 )
+	 {
+	    m_geo_usgh[0] = new float_sw4[3*(j1-j0+1)];
+	    m_geo_usgh[1] = new float_sw4[3*(j1-j0+1)];
+	    m_geo_usgh[2] = new float_sw4[3*(i1-i0+1)];
+	    m_geo_usgh[3] = new float_sw4[3*(i1-i0+1)];
+	 }
       }
       else
       {
@@ -214,7 +233,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 
 //-----------------------------------------------------------------------
 void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
-				double t )
+				double t, vector<float_sw4**>& bforcing )
 {
    //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
    int i0, i1, j0, j1, k0, k1;
@@ -233,8 +252,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 	    for( int i=i0+1 ;  i<=i1-1 ; i++ )
 	       for( int c=1 ; c <= 3 ; c++ )
 	       {
-		  //	  		  u[g](c,i,j,k) = -100000;
-		  	  u[g](c,i,j,k) = 0;
+		  	  		  u[g](c,i,j,k) = -100000;
+					  //		  u[g](c,i,j,k) = 0;
 	       }
    }
    if( m_geodyn_past_end )
@@ -285,6 +304,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
       // m_geodyn_step = n1;
 
       //      double twgh = ((n1+1)*m_geodyn_dt-t)/m_geodyn_dt;
+      double cext1 = 2, cext2=-1, cext3=0;
+      
       double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
 
       for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
@@ -332,6 +353,7 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 				 wghj*wghk*m_geodyn_data2[1](c,jg0+1,kg0+1,1) );
 	       }
 	    }
+
 	 for( int k=k0 ;  k<= k1 ; k++ )
 	    for( int i=i0 ;  i<=i1 ; i++ )
 	    {
@@ -368,6 +390,14 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 				 wghi*wghk*m_geodyn_data2[3](c,ig0+1,kg0+1,1) );
 	       }
 	    }
+	 //	 if( k0==1 && m_geodyn_faces == 5)
+	 //	    for( int i=i0 ;  i<=i1 ; i++ )
+	 //	       for( int c=1 ; c <= 3 ; c++ )
+	 //	       {
+	 //		  u[g](c,i,j0,k0-1) = cext1*u[g](c,i,j0,k0)+cext2*u[g](c,i,j0,k0+1)+cext3*u[g](c,i,j0,k0+2);
+	 //		  u[g](c,i,j1,k0-1) = cext1*u[g](c,i,j1,k0)+cext2*u[g](c,i,j1,k0+1)+cext3*u[g](c,i,j1,k0+2);
+	 //	       }
+
          Sarray& gd14 = m_geodyn_data1[4];
          Sarray& gd24 = m_geodyn_data2[4];
 	 for( int j=j0 ;  j<= j1 ; j++ )
@@ -416,6 +446,92 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 				 wghi*wghj*m_geodyn_data2[5](c,ig0+1,jg0+1,1) );
 	       }
 	    }
+   // Impose ghost point at corner to free surface
+	 if( k0==1 && m_geodyn_faces == 5)
+	 {
+	    int ib=m_iStart[g];
+	    int jb=m_jStart[g];
+	    int ni = m_iEnd[g]-m_iStart[g]+1;
+	    // Free surface condition
+	    for( int j=j0 ;  j<=j1 ; j++ )
+	    {
+	       int i=i0;
+	       size_t qq  = i-ib+ni*(j-jb);
+	       // One sided x-derivatives
+	       float_sw4 wx = u[g](3,i,j,k0)-u[g](3,i-1,j,k0);
+	       float_sw4 ux = u[g](1,i,j,k0)-u[g](1,i-1,j,k0);
+	       float_sw4 wy = 0.5*(u[g](3,i,j+1,k0)-u[g](3,i,j-1,k0));
+	       float_sw4 vy = 0.5*(u[g](2,i,j+1,k0)-u[g](2,i,j-1,k0));
+	       float_sw4 mup = 0.5*(mMu[g](i,j,k0  )+mMu[g](i,j,k0+1));
+	       float_sw4 mum = 0.5*(mMu[g](i,j,k0-1)+mMu[g](i,j,k0  ));
+
+	       u[g](1,i,j,k0-1) = u[g](1,i,j,k0)+(mup*(u[g](1,i,j,k0+1)-u[g](1,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wx - 2*h*bforcing[g][4][3*qq])/mum;
+	       u[g](2,i,j,k0-1) = u[g](2,i,j,k0)+(mup*(u[g](2,i,j,k0+1)-u[g](2,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wy - 2*h*bforcing[g][4][1+3*qq])/mum;
+	       float_sw4 lap = 0.5*(mLambda[g](i,j,k0  )+mLambda[g](i,j,k0+1));
+	       float_sw4 lam = 0.5*(mLambda[g](i,j,k0-1)+mLambda[g](i,j,k0  ));
+	       u[g](3,i,j,k0-1) = u[g](3,i,j,k0)+((2*mup+lap)*(u[g](3,i,j,k0+1)-u[g](3,i,j,k0))+
+				   2*mLambda[g](i,j,k0)*(ux+vy) - 2*h*bforcing[g][4][2+3*qq])/(2*mum+lam);
+	       i=i1;
+	       qq  = i-ib+ni*(j-jb);
+	       // One sided x-derivatives
+	       wx = u[g](3,i+1,j,k0)-u[g](3,i,j,k0);
+	       ux = u[g](1,i+1,j,k0)-u[g](1,i,j,k0);
+	       wy = 0.5*(u[g](3,i,j+1,k0)-u[g](3,i,j-1,k0));
+	       vy = 0.5*(u[g](2,i,j+1,k0)-u[g](2,i,j-1,k0));
+	       mup = 0.5*(mMu[g](i,j,k0)+mMu[g](i,j,k0+1));
+	       mum = 0.5*(mMu[g](i,j,k0-1)+mMu[g](i,j,k0));
+
+	       u[g](1,i,j,k0-1) = u[g](1,i,j,k0)+(mup*(u[g](1,i,j,k0+1)-u[g](1,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wx - 2*h*bforcing[g][4][3*qq])/mum;
+	       u[g](2,i,j,k0-1) = u[g](2,i,j,k0)+(mup*(u[g](2,i,j,k0+1)-u[g](2,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wy - 2*h*bforcing[g][4][1+3*qq])/mum;
+	       lap = 0.5*(mLambda[g](i,j,k0  )+mLambda[g](i,j,k0+1));
+	       lam = 0.5*(mLambda[g](i,j,k0-1)+mLambda[g](i,j,k0  ));
+	       u[g](3,i,j,k0-1) = u[g](3,i,j,k0)+((2*mup+lap)*(u[g](3,i,j,k0+1)-u[g](3,i,j,k0))+
+				     2*mLambda[g](i,j,k0)*(ux+vy) - 2*h*bforcing[g][4][2+3*qq])/(2*mum+lam);
+	    }
+	    for( int i=i0 ;  i<=i1 ; i++ )
+	    {
+	       int j=j0;
+	       size_t qq  = i-ib+ni*(j-jb);
+	       // One sided y-derivatives
+	       float_sw4 wx = 0.5*(u[g](3,i+1,j,k0)-u[g](3,i-1,j,k0));
+	       float_sw4 ux = 0.5*(u[g](1,i+1,j,k0)-u[g](1,i-1,j,k0));
+	       float_sw4 wy = (u[g](3,i,j,k0)-u[g](3,i,j-1,k0));
+	       float_sw4 vy = (u[g](2,i,j,k0)-u[g](2,i,j-1,k0));
+	       float_sw4 mup = 0.5*(mMu[g](i,j,k0)+mMu[g](i,j,k0+1));
+	       float_sw4 mum = 0.5*(mMu[g](i,j,k0-1)+mMu[g](i,j,k0));
+
+	       u[g](1,i,j,k0-1) = u[g](1,i,j,k0)+(mup*(u[g](1,i,j,k0+1)-u[g](1,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wx - 2*h*bforcing[g][4][3*qq])/mum;
+	       u[g](2,i,j,k0-1) = u[g](2,i,j,k0)+(mup*(u[g](2,i,j,k0+1)-u[g](2,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wy - 2*h*bforcing[g][4][1+3*qq])/mum;
+	       float_sw4 lap = 0.5*(mLambda[g](i,j,k0  )+mLambda[g](i,j,k0+1));
+	       float_sw4 lam = 0.5*(mLambda[g](i,j,k0-1)+mLambda[g](i,j,k0  ));
+	       u[g](3,i,j,k0-1) = u[g](3,i,j,k0)+((2*mup+lap)*(u[g](3,i,j,k0+1)-u[g](3,i,j,k0))+
+					2*mLambda[g](i,j,k0)*(ux+vy) - 2*h*bforcing[g][4][2+3*qq])/(2*mum+lam);
+	       j=j1;
+	       qq  = i-ib+ni*(j-jb);
+	       // One sided y-derivatives
+	       wx = 0.5*(u[g](3,i+1,j,k0)-u[g](3,i-1,j,k0));
+	       ux = 0.5*(u[g](1,i+1,j,k0)-u[g](1,i-1,j,k0));
+	       wy = (u[g](3,i,j+1,k0)-u[g](3,i,j,k0));
+	       vy = (u[g](2,i,j+1,k0)-u[g](2,i,j,k0));
+	       mup = 0.5*(mMu[g](i,j,k0)+mMu[g](i,j,k0+1));
+	       mum = 0.5*(mMu[g](i,j,k0-1)+mMu[g](i,j,k0));
+
+	       u[g](1,i,j,k0-1) = u[g](1,i,j,k0)+(mup*(u[g](1,i,j,k0+1)-u[g](1,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wx - 2*h*bforcing[g][4][3*qq])/mum;
+	       u[g](2,i,j,k0-1) = u[g](2,i,j,k0)+(mup*(u[g](2,i,j,k0+1)-u[g](2,i,j,k0))+
+						  2*mMu[g](i,j,k0)*wy - 2*h*bforcing[g][4][1+3*qq])/mum;
+	       lap = 0.5*(mLambda[g](i,j,k0  )+mLambda[g](i,j,k0+1));
+	       lam = 0.5*(mLambda[g](i,j,k0-1)+mLambda[g](i,j,k0  ));
+	       u[g](3,i,j,k0-1) = u[g](3,i,j,k0)+((2*mup+lap)*(u[g](3,i,j,k0+1)-u[g](3,i,j,k0))+
+					2*mLambda[g](i,j,k0)*(ux+vy) - 2*h*bforcing[g][4][2+3*qq])/(2*mum+lam);
+	    }
+	 }
       } // for g=0, mNumberOfCartesianGrids-1
       if( topographyExists() )
       {
@@ -695,6 +811,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
    {
       double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
       double d2i=1/(mDt*mDt);
+      //      cout << "twgh = " << twgh << " geostep = " << m_geodyn_step << endl;
       for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
       {
          int i0 = m_geodyn_dims[g][0];
@@ -711,36 +828,32 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	 high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
 	 bool surface_correction = k0 <= 1 && m_geodyn_faces == 5 && g == mNumberOfGrids-1;
 
-	 // TO DO, need to fix the predictor ghost point, as it is now it is not done right
-	 //  Need also to change the time iteration loop so that second order in time
-	 //  works correctly with the geodyn cube.
-	 //	 Sarray* uarg;
-	 //	 if( crf==0 )
-	 //	 {
-	 //	    uarg.copy(Um[g]);
-	 //	 }
 	 Sarray Lu0(3,i0,i0,j0,j1,k0,k1);
          if( low_interior )
 	    evalLu_Dim( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0, i0, j0+1, j1-1, k0+1, k1-1 );	    
+			//			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i0, j0, j1, k0, k1 );	    
 	 Sarray Lu1(3,i1,i1,j0,j1,k0,k1);
 	 if( high_interior )
 	    evalLu_Dip( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i1, i1, j0+1, j1-1, k0+1, k1-1 );
+//			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i1, i1, j0, j1, k0, k1 );
 	 int kstart = k0+1;
 	 if( surface_correction )
 	 {
 	    // Special at corner between free surface and Geodyn cube
 	    if( low_interior )
 	       evalLu_DkpDim(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0, i0, j0+1, j1-1, k0, k0 );
+			     //			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i0, j0, j1, k0, k1 );
 	    if( high_interior )
 	       evalLu_DkpDip(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i1, i1, j0+1, j1-1, k0, k0 );
+			     //			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i1, i1, j0, j1, k0, k1 );
 	    kstart = k0;
 	    // k0 should be 1 here.
 	 }
@@ -792,8 +905,6 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  -Lu0(2,i0,j,k)-forcing[g](2,i0,j,k);
 		  res3 = crf*rho[g](i0,j,k)*(bnd0[2]-2*U[g](3,i0,j,k)+Um[g](3,i0,j,k))*d2i
 		  -Lu0(3,i0,j,k)-forcing[g](3,i0,j,k);
-		  //		  cout << " geocube (j,k)=" << j << " " << k << " " << Lu0(1,i0,j,k) << " " <<
-		  //		     forcing[g](1,i0,j,k) << endl;
 
 		  U[g](1,i0+1,j,k) = U[g](1,i0+1,j,k) + h2*res1/(mu[g](i0+1,j,k)+mu[g](i0,j,k)+
 								 0.5*(lambda[g](i0+1,j,k)+lambda[g](i0,j,k)));
@@ -809,6 +920,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  -Lu1(2,i1,j,k)-forcing[g](2,i1,j,k);
 		  res3 = crf*rho[g](i1,j,k)*(bnd1[2]-2*U[g](3,i1,j,k)+Um[g](3,i1,j,k))*d2i
 		  -Lu1(3,i1,j,k)-forcing[g](3,i1,j,k);
+
 		  U[g](1,i1-1,j,k) = U[g](1,i1-1,j,k) + h2*res1/(mu[g](i1-1,j,k)+mu[g](i1,j,k)+
 								 0.5*(lambda[g](i1-1,j,k)+lambda[g](i1,j,k)));
 		  U[g](2,i1-1,j,k) = U[g](2,i1-1,j,k) + 2*h2*res2/(mu[g](i1-1,j,k)+mu[g](i1,j,k));
@@ -824,26 +936,30 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	 {
 	    Lu0.define(3,i0,i1,j0,j0,k0,k1);
 	    evalLu_Djm( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0+1, i1-1, j0, j0, k0+1, k1-1 );
+			//			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i1, j0, j0, k0, k1 );
 	 }
 	 if( high_interior )
 	 {
 	    Lu1.define(3,i0,i1,j1,j1,k0,k1);
 	    evalLu_Djp( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0+1, i1-1, j1, j1, k0+1, k1-1 );
+			//			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i1, j1, j1, k0, k1 );
 	 }
 	 if( surface_correction )
 	 {
 	    if( low_interior )
 	       evalLu_DkpDjm( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0+1, i1-1, j0, j0, k0, k0 );
+			      //			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i1, j0, j0, k0, k1 );
 	    if( high_interior )
 	       evalLu_DkpDjp( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0+1, i1-1, j1, j1, k0, k0 );
+			      //			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i1, j1, j1, k0, k1 );
 	 }
 	 for( int k=kstart ;  k<= k1-1 ; k++ )
 	    for( int i=i0+1 ;  i<=i1-1 ; i++ )
@@ -863,22 +979,22 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	       double bnd0[3],bnd1[3];
                for( int c= 1; c <= 3 ;c++)
 	       {
-		  bnd0[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[2](c,ig0,kg0,1)+
-					  wghi*(1-wghk)*m_geodyn_data1[2](c,ig0+1,kg0,1)+
-					  (1-wghi)*wghk*m_geodyn_data1[2](c,ig0,kg0+1,1)+
-					  wghi*wghk*m_geodyn_data1[2](c,ig0+1,kg0+1,1) )
-		     + (1-twgh)*((1-wghi)*(1-wghk)*m_geodyn_data2[2](c,ig0,kg0,1)+
-				 wghi*(1-wghk)*m_geodyn_data2[2](c,ig0+1,kg0,1)+
-				 (1-wghi)*wghk*m_geodyn_data2[2](c,ig0,kg0+1,1)+
-				 wghi*wghk*m_geodyn_data2[2](c,ig0+1,kg0+1,1) );
-		  bnd1[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[3](c,ig0,kg0,1)+
-					  wghi*(1-wghk)*m_geodyn_data1[3](c,ig0+1,kg0,1)+
-					  (1-wghi)*wghk*m_geodyn_data1[3](c,ig0,kg0+1,1)+
-					  wghi*wghk*m_geodyn_data1[3](c,ig0+1,kg0+1,1) )
-		     + (1-twgh)*((1-wghi)*(1-wghk)*m_geodyn_data2[3](c,ig0,kg0,1)+
-				 wghi*(1-wghk)*m_geodyn_data2[3](c,ig0+1,kg0,1)+
-				 (1-wghi)*wghk*m_geodyn_data2[3](c,ig0,kg0+1,1)+
-				 wghi*wghk*m_geodyn_data2[3](c,ig0+1,kg0+1,1) );
+		  bnd0[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[2](c,ig0,  kg0,  1)+
+				       wghi  *(1-wghk)*m_geodyn_data1[2](c,ig0+1,kg0,  1)+
+				     (1-wghi)*  wghk  *m_geodyn_data1[2](c,ig0,  kg0+1,1)+
+				       wghi  *  wghk  *m_geodyn_data1[2](c,ig0+1,kg0+1,1) )
+		     + (1-twgh)*( (1-wghi)*(1-wghk)*m_geodyn_data2[2](c,ig0,  kg0,  1)+
+				    wghi  *(1-wghk)*m_geodyn_data2[2](c,ig0+1,kg0,  1)+
+				  (1-wghi)*  wghk  *m_geodyn_data2[2](c,ig0,  kg0+1,1)+
+				    wghi  *  wghk  *m_geodyn_data2[2](c,ig0+1,kg0+1,1) );
+		  bnd1[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[3](c,ig0,  kg0,  1)+
+				       wghi  *(1-wghk)*m_geodyn_data1[3](c,ig0+1,kg0,  1)+
+				     (1-wghi)*  wghk  *m_geodyn_data1[3](c,ig0,  kg0+1,1)+
+					wghi *  wghk  *m_geodyn_data1[3](c,ig0+1,kg0+1,1) )
+		     + (1-twgh)*((1-wghi)*(1-wghk)*m_geodyn_data2[3](c,ig0,  kg0,  1)+
+				   wghi  *(1-wghk)*m_geodyn_data2[3](c,ig0+1,kg0,  1)+
+				 (1-wghi)*  wghk  *m_geodyn_data2[3](c,ig0,  kg0+1,1)+
+				   wghi  *  wghk  *m_geodyn_data2[3](c,ig0+1,kg0+1,1) );
 	       }
 	       double res1, res2, res3;
 	       // Lower bndry
@@ -890,6 +1006,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  -Lu0(2,i,j0,k)-forcing[g](2,i,j0,k);
 		  res3 = crf*rho[g](i,j0,k)*(bnd0[2]-2*U[g](3,i,j0,k)+Um[g](3,i,j0,k))*d2i
 		  -Lu0(3,i,j0,k)-forcing[g](3,i,j0,k);
+
 		  U[g](1,i,j0+1,k) = U[g](1,i,j0+1,k) + 2*h2*res1/(mu[g](i,j0+1,k)+mu[g](i,j0,k));
 		  U[g](2,i,j0+1,k) = U[g](2,i,j0+1,k) +   h2*res2/(mu[g](i,j0+1,k)+mu[g](i,j0,k)+
 								 0.5*(lambda[g](i,j0+1,k)+lambda[g](i,j0,k)));
@@ -904,6 +1021,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  -Lu1(2,i,j1,k)-forcing[g](2,i,j1,k);
 		  res3 = crf*rho[g](i,j1,k)*(bnd1[2]-2*U[g](3,i,j1,k)+Um[g](3,i,j1,k))*d2i
 		  -Lu1(3,i,j1,k)-forcing[g](3,i,j1,k);
+
 		  U[g](1,i,j1-1,k) = U[g](1,i,j1-1,k) + 2*h2*res1/(mu[g](i,j1-1,k)+mu[g](i,j1,k));
 		  U[g](2,i,j1-1,k) = U[g](2,i,j1-1,k) +   h2*res2/(mu[g](i,j1-1,k)+mu[g](i,j1,k)+
 								 0.5*(lambda[g](i,j1-1,k)+lambda[g](i,j1,k)));
@@ -918,16 +1036,18 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	 {
 	    Lu0.define(3,i0,i1,j0,j1,k0,k0);
 	    evalLu_Dkm( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0+1, i1-1, j0+1, j1-1, k0, k0 );
+			//			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i1, j0, j1, k0, k0 );
 	 }
 
 	 if( high_interior )
 	 {
 	    Lu1.define(3,i0,i1,j0,j1,k1,k1);
 	    evalLu_Dkp( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
-			h, i0+1, i1-1, j0+1, j1-1, k1, k1 );
+			//			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
+			U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(),
+			h, i0, i1, j0, j1, k1, k1 );
 	 }
 	 for( int j=j0+1 ;  j<= j1-1 ; j++ )
 	    for( int i=i0+1 ;  i<=i1-1 ; i++ )
@@ -949,23 +1069,23 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	       {
                   if( m_geodyn_faces == 6 )
 		  {
-		     bnd0[c-1] = twgh*( (1-wghi)*(1-wghj)*m_geodyn_data1[4](c,ig0,jg0,1)+
-					       wghi*(1-wghj)*m_geodyn_data1[4](c,ig0+1,jg0,1)+
-					     (1-wghi)*wghj*m_geodyn_data1[4](c,ig0,jg0+1,1)+
-					wghi*wghj*m_geodyn_data1[4](c,ig0+1,jg0+1,1) )
-			+ (1-twgh)*((1-wghi)*(1-wghj)*m_geodyn_data2[4](c,ig0,jg0,1)+
-				    wghi*(1-wghj)*m_geodyn_data2[4](c,ig0+1,jg0,1)+
-				    (1-wghi)*wghj*m_geodyn_data2[4](c,ig0,jg0+1,1)+
-				    wghi*wghj*m_geodyn_data2[4](c,ig0+1,jg0+1,1) );
+		     bnd0[c-1] = twgh*( (1-wghi)*(1-wghj)*m_geodyn_data1[4](c,ig0,  jg0,  1)+
+					  wghi  *(1-wghj)*m_geodyn_data1[4](c,ig0+1,jg0,  1)+
+					(1-wghi)*  wghj  *m_geodyn_data1[4](c,ig0,  jg0+1,1)+
+					  wghi  *  wghj  *m_geodyn_data1[4](c,ig0+1,jg0+1,1) )
+			+ (1-twgh)*((1-wghi)*(1-wghj)*m_geodyn_data2[4](c,ig0,  jg0,  1)+
+				      wghi  *(1-wghj)*m_geodyn_data2[4](c,ig0+1,jg0,  1)+
+				    (1-wghi)*  wghj  *m_geodyn_data2[4](c,ig0,  jg0+1,1)+
+				      wghi  *  wghj  *m_geodyn_data2[4](c,ig0+1,jg0+1,1) );
 		  }
-		  bnd1[c-1] = twgh*( (1-wghi)*(1-wghj)*m_geodyn_data1[5](c,ig0,jg0,1)+
-					  wghi*(1-wghj)*m_geodyn_data1[5](c,ig0+1,jg0,1)+
-					  (1-wghi)*wghj*m_geodyn_data1[5](c,ig0,jg0+1,1)+
-					  wghi*wghj*m_geodyn_data1[5](c,ig0+1,jg0+1,1) )
-		     + (1-twgh)*((1-wghi)*(1-wghj)*m_geodyn_data2[5](c,ig0,jg0,1)+
-				 wghi*(1-wghj)*m_geodyn_data2[5](c,ig0+1,jg0,1)+
-				 (1-wghi)*wghj*m_geodyn_data2[5](c,ig0,jg0+1,1)+
-				 wghi*wghj*m_geodyn_data2[5](c,ig0+1,jg0+1,1) );
+		  bnd1[c-1] = twgh*( (1-wghi)*(1-wghj)*m_geodyn_data1[5](c,ig0,  jg0,  1)+
+				       wghi  *(1-wghj)*m_geodyn_data1[5](c,ig0+1,jg0,  1)+
+				     (1-wghi)*  wghj  *m_geodyn_data1[5](c,ig0,  jg0+1,1)+
+				       wghi  *  wghj  *m_geodyn_data1[5](c,ig0+1,jg0+1,1) )
+		     + (1-twgh)*( (1-wghi)*(1-wghj)*m_geodyn_data2[5](c,ig0,  jg0,  1)+
+				    wghi  *(1-wghj)*m_geodyn_data2[5](c,ig0+1,jg0,  1)+
+				  (1-wghi)*  wghj  *m_geodyn_data2[5](c,ig0,  jg0+1,1)+
+				    wghi  *  wghj  *m_geodyn_data2[5](c,ig0+1,jg0+1,1) );
 	       }
 	       // Upper bndry
 	       double res1, res2, res3;
@@ -977,10 +1097,11 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  -Lu1(2,i,j,k1)-forcing[g](2,i,j,k1);
 		  res3 = crf*rho[g](i,j,k1)*(bnd1[2]-2*U[g](3,i,j,k1)+Um[g](3,i,j,k1))*d2i
 		  -Lu1(3,i,j,k1)-forcing[g](3,i,j,k1);
+
 		  U[g](1,i,j,k1-1) = U[g](1,i,j,k1-1) + 2*h2*res1/(mu[g](i,j,k1-1)+mu[g](i,j,k1));
 		  U[g](2,i,j,k1-1) = U[g](2,i,j,k1-1) + 2*h2*res2/(mu[g](i,j,k1-1)+mu[g](i,j,k1));
 		  U[g](3,i,j,k1-1) = U[g](3,i,j,k1-1) +   h2*res3/(mu[g](i,j,k1-1)+mu[g](i,j,k1)+
-								   0.5*(lambda[g](i,j,k1-1)+lambda[g](i,j,k1)));
+						        0.5*(lambda[g](i,j,k1-1)+lambda[g](i,j,k1)));
 	       }
       // Lower bndry
 	       if( m_geodyn_faces == 6 && low_interior )
@@ -990,11 +1111,12 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  res2 = crf*rho[g](i,j,k0)*(bnd0[1]-2*U[g](2,i,j,k0)+Um[g](2,i,j,k0))*d2i
 		     -Lu0(2,i,j,k0)-forcing[g](2,i,j,k0);
 		  res3 = crf*rho[g](i,j,k0)*(bnd0[2]-2*U[g](3,i,j,k0)+Um[g](3,i,j,k0))*d2i
-		  -Lu0(3,i,j,k0)-forcing[g](3,i,j,k0);
+		     -Lu0(3,i,j,k0)-forcing[g](3,i,j,k0);
+
 		  U[g](1,i,j,k0+1) = U[g](1,i,j,k0+1) + 2*h2*res1/(mu[g](i,j,k0+1)+mu[g](i,j,k0));
-		  U[g](2,i,j,k0+1) = U[g](2,i,j,k0+1) +   h2*res2/(mu[g](i,j,k0+1)+mu[g](i,j,k0)+
-								 0.5*(lambda[g](i,j,k0+1)+lambda[g](i,j,k0)));
-		  U[g](3,i,j,k0+1) = U[g](3,i,j,k0+1) + 2*h2*res3/(mu[g](i,j,k0+1)+mu[g](i,j,k0));
+		  U[g](2,i,j,k0+1) = U[g](2,i,j,k0+1) + 2*h2*res2/(mu[g](i,j,k0+1)+mu[g](i,j,k0));
+		  U[g](3,i,j,k0+1) = U[g](3,i,j,k0+1) +   h2*res3/(mu[g](i,j,k0+1)+mu[g](i,j,k0)+
+	 					       0.5*(lambda[g](i,j,k0+1)+lambda[g](i,j,k0)));
 	       }
 	    }
       }
@@ -1004,7 +1126,8 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 				     
 //-----------------------------------------------------------------------
 void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
    // Suggested change: Input Sarray& a_lu instead and define
@@ -1030,20 +1153,20 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
    //#define la(i,j,k) a_lapt[b+oi*(i)+oj*(j)+ok*(k)]
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
    const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb ; j <= jle; j++ )
+   for( int k=klb+1 ; k <= kle-1; k++ )
+      for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
@@ -1114,25 +1237,26 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 				     
 //-----------------------------------------------------------------------
 void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb ; j <= jle; j++ )
+   for( int k=klb+1 ; k <= kle-1; k++ )
+      for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
@@ -1203,26 +1327,27 @@ void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
 				     
 //-----------------------------------------------------------------------
 void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
+   for( int k=klb+1 ; k <= kle-1; k++ )
       for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
@@ -1297,26 +1422,27 @@ void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
+   for( int k=klb+1 ; k <= kle-1; k++ )
       for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
@@ -1390,26 +1516,27 @@ void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
    for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+      for( int j=jlb+1 ; j <= jle-1; j++ )
+	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
@@ -1484,26 +1611,27 @@ void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
    for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+      for( int j=jlb+1 ; j <= jle-1; j++ )
+	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
@@ -1579,25 +1707,26 @@ void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
-		    double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		    double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		    double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb ; j <= jle; j++ )
+   for( int k=klb ; k <= klb; k++ )
+      for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
@@ -1623,7 +1752,7 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
                    mupy*(u(1,i,j+1,k)-u(1,i,j,k)) - 
                    mumy*(u(1,i,j,k)-u(1,i,j-1,k)) +
                    mupz*(u(1,i,j,k+1)-u(1,i,j,k)) - 
- 	           mumz*(u(1,i,j,k)-u(1,i,j,k-1)) );
+		   mumz*(u(1,i,j,k)-u(1,i,j,k-1)) );
 
 	    lu(2,i,j,k) = ih2*(
                     mupx*(u(2,i+1,j,k)-u(2,i,j,k))-
@@ -1632,7 +1761,7 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
                  half*(la(i,j+1,k)*(u(1,i+1,j+1,k  )-u(1,i,j+1,k)+
                                    (u(3,i,  j+1,k+1)-u(3,i,j+1,k)))-
                        la(i,j-1,k)*(u(1,i+1,j-1,k  )-u(1,i,j-1,k)+ 
-                                   (u(3,i,  j-1,k+1)-u(3,i,j-1,k)) ))+
+				    (u(3,i,  j-1,k+1)-u(3,i,j-1,k)) ))+
                  half*( mu(i+1,j,k)*(u(1,i+1,j+1,k)-u(1,i+1,j-1,k))-
                         mu(i,  j,k)*(u(1,i,  j+1,k)-u(1,i,  j-1,k)))+
                half*( mu(i,j,k+1)*(u(3,i,j+1,k+1)-u(3,i,j-1,k+1))-
@@ -1657,13 +1786,12 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
                       mu(i,  j,k)*(u(1,i,  j,k+1)-u(1,i,  j,k)))+
                half*( mu(i,j+1,k)*(u(2,i,j+1,k+1)-u(2,i,j+1,k))-
                       mu(i,j-1,k)*(u(2,i,j-1,k+1)-u(2,i,j-1,k)))+
-
-                mupy*(u(3,i,j+1,k)-u(3,i,j,k))-
-                mumy*(u(3,i,j,k)-u(3,i,j-1,k))+
+                mupy*(u(3,i,j+1,k)-u(3,i,j,  k))-
+                mumy*(u(3,i,j,  k)-u(3,i,j-1,k))+
                 (2*mupz+half*(la(i,j,k+1)+la(i,j,k)) )*
                     (u(3,i,j,k+1)-u(3,i,j,k)) - 
                 (2*mumz+half*(la(i,j,k-1)+la(i,j,k)) )*
- 		    (u(3,i,j,k)-u(3,i,j,k-1)) ); 
+		    (u(3,i,j,k)-u(3,i,j,k-1)) ); 
 	 }
 #undef mu
 #undef la
@@ -1673,25 +1801,26 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
-		    double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		    double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		    double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb ; j <= jle; j++ )
+   for( int k=klb ; k <= klb; k++ )
+      for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
@@ -1767,26 +1896,27 @@ void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
 				     
 //-----------------------------------------------------------------------
 void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
+   for( int k=klb ; k <= klb; k++ )
       for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
@@ -1861,26 +1991,27 @@ void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
-		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
 		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
-#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
-#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
+   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
+   //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
-   const size_t nli=ile-ilb+1;
-   const size_t nlij=nli*(jle-jlb+1);
-   const size_t nlijk=nlij*(kle-klb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nli=ile-ilb+1;
+   //   const size_t nlij=nli*(jle-jlb+1);
+   //   const size_t nlijk=nlij*(kle-klb+1);
    const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
+   for( int k=klb ; k <= klb; k++ )
       for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
 	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
@@ -1951,4 +2082,140 @@ void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
 #undef la
 #undef u
 #undef lu
+}
+
+//-----------------------------------------------------------------------
+void EW::geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
+			      vector<Sarray>& U, vector<Sarray>& Um, double dt )
+{
+   if( m_do_geodynbc )
+   {
+      double dt2 = dt*dt;
+      for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
+      {
+         int i0 = m_geodyn_dims[g][0];
+         int i1 = m_geodyn_dims[g][1];
+         int j0 = m_geodyn_dims[g][2];
+         int j1 = m_geodyn_dims[g][3];
+         int k0 = m_geodyn_dims[g][4];
+         int k1 = m_geodyn_dims[g][5];
+	 bool low_interior, high_interior;
+	 low_interior  = m_iStartInt[g] <= i0+1 && i0+1 <= m_iEndInt[g];
+	 high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
+	 bool surface_correction = k0 <= 1 && m_geodyn_faces == 5 && g == mNumberOfGrids-1;
+	 int kstart=k0+1;
+	 if( surface_correction )
+	    kstart=k0;
+
+// Side with i=const.
+	 for( int k=kstart ;  k<= k1-1 ; k++ )
+	    for( int j=j0+1 ;  j<=j1-1 ; j++ )
+	    {
+	       if( low_interior )
+	       {
+		  Up[g](1,i0+1,j,k) = dt2*Uacc[g](1,i0+1,j,k) + 2*U[g](1,i0+1,j,k)-Um[g](1,i0+1,j,k);
+		  Up[g](2,i0+1,j,k) = dt2*Uacc[g](2,i0+1,j,k) + 2*U[g](2,i0+1,j,k)-Um[g](2,i0+1,j,k);
+		  Up[g](3,i0+1,j,k) = dt2*Uacc[g](3,i0+1,j,k) + 2*U[g](3,i0+1,j,k)-Um[g](3,i0+1,j,k);
+	       }
+	       if( high_interior )
+	       {
+		  Up[g](1,i1-1,j,k) = dt2*Uacc[g](1,i1-1,j,k) + 2*U[g](1,i1-1,j,k) - Um[g](1,i1-1,j,k);
+		  Up[g](2,i1-1,j,k) = dt2*Uacc[g](2,i1-1,j,k) + 2*U[g](2,i1-1,j,k) - Um[g](2,i1-1,j,k);
+		  Up[g](3,i1-1,j,k) = dt2*Uacc[g](3,i1-1,j,k) + 2*U[g](3,i1-1,j,k) - Um[g](3,i1-1,j,k);
+	       }
+	    }
+// Side with j=const
+	 low_interior  = m_jStartInt[g] <= j0+1 && j0+1 <= m_jEndInt[g];
+	 high_interior = m_jStartInt[g] <= j1-1 && j1-1 <= m_jEndInt[g];
+	 for( int k=kstart ;  k<= k1-1 ; k++ )
+	    for( int i=i0+1 ;  i<=i1-1 ; i++ )
+	    {
+	       if( low_interior )
+	       {
+		  Up[g](1,i,j0+1,k) = dt2*Uacc[g](1,i,j0+1,k)+2*U[g](1,i,j0+1,k)-Um[g](1,i,j0+1,k);
+		  Up[g](2,i,j0+1,k) = dt2*Uacc[g](2,i,j0+1,k)+2*U[g](2,i,j0+1,k)-Um[g](2,i,j0+1,k);
+		  Up[g](3,i,j0+1,k) = dt2*Uacc[g](3,i,j0+1,k)+2*U[g](3,i,j0+1,k)-Um[g](3,i,j0+1,k);
+	       }
+	       if( high_interior )
+	       {
+		  Up[g](1,i,j1-1,k) = dt2*Uacc[g](1,i,j1-1,k)+2*U[g](1,i,j1-1,k)-Um[g](1,i,j1-1,k);
+		  Up[g](2,i,j1-1,k) = dt2*Uacc[g](2,i,j1-1,k)+2*U[g](2,i,j1-1,k)-Um[g](2,i,j1-1,k);
+		  Up[g](3,i,j1-1,k) = dt2*Uacc[g](3,i,j1-1,k)+2*U[g](3,i,j1-1,k)-Um[g](3,i,j1-1,k);
+	       }
+	    }
+	 // Side with k=const
+	 low_interior  = m_kStartInt[g] <= k0+1 && k0+1 <= m_kEndInt[g];
+	 high_interior = m_kStartInt[g] <= k1-1 && k1-1 <= m_kEndInt[g];
+	 for( int j=j0+1 ;  j<= j1-1 ; j++ )
+	    for( int i=i0+1 ;  i<=i1-1 ; i++ )
+	    {
+	       if( low_interior && m_geodyn_faces == 6 )
+	       {
+		  Up[g](1,i,j,k0+1) = dt2*Uacc[g](1,i,j,k0+1)+2*U[g](1,i,j,k0+1)-Um[g](1,i,j,k0+1);
+		  Up[g](2,i,j,k0+1) = dt2*Uacc[g](2,i,j,k0+1)+2*U[g](2,i,j,k0+1)-Um[g](2,i,j,k0+1);
+		  Up[g](3,i,j,k0+1) = dt2*Uacc[g](3,i,j,k0+1)+2*U[g](3,i,j,k0+1)-Um[g](3,i,j,k0+1);
+	       }
+	       if( high_interior )
+	       {
+		  Up[g](1,i,j,k1-1) = dt2*Uacc[g](1,i,j,k1-1)+2*U[g](1,i,j,k1-1)-Um[g](1,i,j,k1-1);
+		  Up[g](2,i,j,k1-1) = dt2*Uacc[g](2,i,j,k1-1)+2*U[g](2,i,j,k1-1)-Um[g](2,i,j,k1-1);
+		  Up[g](3,i,j,k1-1) = dt2*Uacc[g](3,i,j,k1-1)+2*U[g](3,i,j,k1-1)-Um[g](3,i,j,k1-1);
+	       }
+	    }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::save_geoghost( vector<Sarray>& U )
+{
+   if( m_do_geodynbc && m_geodyn_faces==5 )
+   {
+      int g  = mNumberOfGrids-1;
+      int i0 = m_geodyn_dims[g][0];
+      int i1 = m_geodyn_dims[g][1];
+      int j0 = m_geodyn_dims[g][2];
+      int j1 = m_geodyn_dims[g][3];
+      int k0 = m_geodyn_dims[g][4];
+      int k1 = m_geodyn_dims[g][5];
+      for( int j=j0 ; j <= j1 ; j++ )
+	 for( int c=1 ; c <=3 ; c++ )
+	 {
+	    m_geo_usgh[0][c-1+3*(j-j0)] = U[g](c,i0,j,0);
+	    m_geo_usgh[1][c-1+3*(j-j0)] = U[g](c,i1,j,0);
+	 }
+      for( int i=i0 ; i <= i1 ; i++ )
+	 for( int c=1 ; c <=3 ; c++ )
+	 {
+	    m_geo_usgh[2][c-1+3*(i-i0)] = U[g](c,i,j0,0);
+	    m_geo_usgh[3][c-1+3*(i-i0)] = U[g](c,i,j1,0);
+	 }
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::restore_geoghost( vector<Sarray>& U )
+{
+   if( m_do_geodynbc && m_geodyn_faces==5 )
+   {
+      int g  = mNumberOfGrids-1;
+      int i0 = m_geodyn_dims[g][0];
+      int i1 = m_geodyn_dims[g][1];
+      int j0 = m_geodyn_dims[g][2];
+      int j1 = m_geodyn_dims[g][3];
+      int k0 = m_geodyn_dims[g][4];
+      int k1 = m_geodyn_dims[g][5];
+      for( int j=j0 ; j <= j1 ; j++ )
+	 for( int c=1 ; c <=3 ; c++ )
+	 {
+	    U[g](c,i0,j,0) = m_geo_usgh[0][c-1+3*(j-j0)];
+	    U[g](c,i1,j,0) = m_geo_usgh[1][c-1+3*(j-j0)];
+	 }
+      for( int i=i0 ; i <= i1 ; i++ )
+	 for( int c=1 ; c <=3 ; c++ )
+	 {
+	    U[g](c,i,j0,0) = m_geo_usgh[2][c-1+3*(i-i0)];
+	    U[g](c,i,j1,0) = m_geo_usgh[3][c-1+3*(i-i0)];
+	 }
+   }
 }

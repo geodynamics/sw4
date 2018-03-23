@@ -494,7 +494,7 @@ void set_conservative_interpolation( bool onoff, float_sw4 ctol, int cmaxit );
 void set_geodyn_data( string filename, int nx, int nz, float_sw4 h, float_sw4 origin[3],
 		      float_sw4 dt, int nsteps, int faces );
 
-void impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um, float_sw4 t );
+void impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um, float_sw4 t, vector<float_sw4**>& bforcing );
 
 void advance_geodyn_time( float_sw4 t );
 
@@ -507,6 +507,11 @@ void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<
 				vector<Sarray>& forcing, double t, vector<Sarray>& U,
 				vector<Sarray>& Um, int crf );
 
+void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
+			  vector<Sarray>& U, vector<Sarray>& Um, double dt );
+
+void save_geoghost( vector<Sarray>& U );
+void restore_geoghost( vector<Sarray>& U );
 void geodynbcGetSizes( string filename, double origin[3], double &cubelen,
 		       double& zcubelen, bool &found_latlon, double& lat, 
 		       double& lon, double& az, int& adjust );
@@ -1471,6 +1476,7 @@ EW& operator=(const EW&);
 
 // Geodyn coupling
 bool m_do_geodynbc;
+std::vector<float_sw4*> m_geo_usgh; // Save ghost point
 std::vector<int*> m_geodyn_dims;
 std::vector<Sarray> m_geodyn_data1;
 std::vector<Sarray> m_geodyn_data2;

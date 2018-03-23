@@ -1011,9 +1011,14 @@ void EW::processGrid(char* buffer)
 	   // h based on cube length only, adjust cube position
  	   int nc = static_cast<int>(round(cubelen/h));
  	   h = cubelen/nc;
+	   //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin before " <<
+	   //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
  	   origin[0] -= h*( origin[0]/h-round(origin[0]/h) );
  	   origin[1] -= h*( origin[1]/h-round(origin[1]/h) );
  	   origin[2] -= h*( origin[2]/h-round(origin[2]/h) );
+	   //	   cout << " origin after " <<
+	   //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
+
 	 }
 	 else
 	 {

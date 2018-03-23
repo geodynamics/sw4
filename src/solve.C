@@ -650,21 +650,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( trace && m_myRank == dbgproc )
        cout <<" after communicate_array " << endl;
 
-// Enforce data on coupling boundary to external solver
-//    Up[0].save_to_disk("up-dbg1.bin");
-    if( m_do_geodynbc )
-    {
-       impose_geodyn_ibcdata( Up, U, t+mDt );
-       //       Up[0].save_to_disk("up-dbg2.bin");
-       if( m_twilight_forcing )
-	  Force_tt( t, F, point_sources, identsources );	     
-       geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+mDt, Up, U, 0 );
-    cout << "Up(1,14,13,12) "   << Up[0](1,14,13,12)   << endl;
-      Up[0].save_to_disk("up-dbg3.bin");
-       for(int g=0 ; g < mNumberOfGrids ; g++ )
-	  communicate_array( Up[g], g );
-    }
-
 // calculate boundary forcing at time t+mDt
     cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
@@ -677,6 +662,39 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_output_detailed_timing )
        time_measure[5] = MPI_Wtime();
+
+// Enforce data on coupling boundary to external solver
+//    Up[0].save_to_disk("up-dbg1.bin");
+    if( m_do_geodynbc )
+    {
+       if( mOrder == 2 )
+       {
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+          advance_geodyn_time( t+2*mDt );
+	  if( m_twilight_forcing )
+	     Force( t+mDt, F, point_sources, identsources );	     
+	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+       }
+       else
+       {
+	  //	  Up[0].save_to_disk("up0-dbg.bin");
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	  //	  Up[0].save_to_disk("up1-dbg.bin");
+	  if( m_twilight_forcing )
+	     Force_tt( t, F, point_sources, identsources );	     
+	  evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
+	  //	  Uacc[0].save_to_disk("uacc0-dbg.bin");
+	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+mDt, Uacc, U, 0 );
+	  geodyn_up_from_uacc( Up, Uacc, U, Um, mDt ); //copy second ghost point to Up
+	  //	  Uacc[0].save_to_disk("uacc-dbg.bin");
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+	  //	  Up[0].save_to_disk("up2-dbg.bin");
+	  //	  exit(0);
+       }
+    }
 
 // update ghost points in Up
     if( m_anisotropic )
@@ -831,18 +849,26 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_output_detailed_timing )
           time_measure[14] = MPI_Wtime();
 
-       //       Up[0].save_to_disk("up-dbg5.bin");
        if( m_do_geodynbc )
        {
-	  impose_geodyn_ibcdata( Up, U, t+mDt );
-	  //	  Up[0].save_to_disk("up-dbg6.bin");
+	  //     	  Up[0].save_to_disk("up0-dbg.bin");
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	  //     	  Up[0].save_to_disk("up1-dbg.bin");
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )
 	     Force( t+mDt, F, point_sources, identsources );	     
 	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
-	  //	  Up[0].save_to_disk("up-dbg7.bin");
+	  //     	  Up[0].save_to_disk("up2-dbg.bin");
+	  //	  exit(0);
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
 	     communicate_array( Up[g], g );
+	  // The free surface boundary conditions below will overwrite the
+	  // ghost point above the free surface of the geodyn cube.
+	  // This is a problem with the fourth order predictor-corrector time stepping
+	  // because L(Uacc) = L( (Up-2*U+Um)/(dt*dt)) depends on the ghost point value at U, 
+	  // The corrector first sets correct ghost value on Up, but it is not enough,
+	  // also the previous times, U,Um need to have the correct ghost point value.
+	  save_geoghost( Up );
        }
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
@@ -854,6 +880,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        else
 	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
+       //            	  Up[0].save_to_disk("up3-dbg.bin");
+       //       	  exit(0);
 // NEW (Apr. 4, 2017)
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
        if( m_use_attenuation && (m_number_mechanisms > 0) )
@@ -905,6 +933,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     //    exit(0);
 // increment time
     t += mDt;
+    if( m_do_geodynbc )
+       restore_geoghost(Up);
 
 // periodically, print time stepping info to stdout
     printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
