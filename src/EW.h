@@ -1161,6 +1161,14 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc );
    void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
    void getDtFromRestartFile();
+  void make_type(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple<float_sw4*,float_sw4*>> &bufs_type,int i1, int j1,int k1, int i2,int j2, int k2, int g);
+  void communicate_array_async(Sarray& u, int grid );
+void AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
+		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		      std::tuple<float_sw4*,float_sw4*> &buf,
+		   MPI_Comm comm, MPI_Status *status);
+  void getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+  void putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -1549,6 +1557,17 @@ vector<MPI_Datatype> m_send_type_2dx3p;
 vector<MPI_Datatype> m_send_type_2dy3p;
 vector<MPI_Datatype> m_send_type_2dx1p;
 vector<MPI_Datatype> m_send_type_2dy1p;
+
+  // Data used by async send_recv with RAJA
+  vector<std::tuple<int,int,int>> send_type1;
+  vector<std::tuple<int,int,int>> send_type3;
+  vector<std::tuple<int,int,int>> send_type4;
+  vector<std::tuple<int,int,int>> send_type21;
+
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type1;
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type3;
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type4;
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type21;
 public:
 MPI_Datatype m_mpifloat;
 
