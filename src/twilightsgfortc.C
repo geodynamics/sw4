@@ -183,10 +183,17 @@ void EW::forcingttfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int k
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<DEFAULT_LOOP3>(
+   RAJA::kernel<LOCAL_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t10,t100,t102,t103,t106,t107,t110,t120,t121,t122,t123,t124,t125,t127,t129,t13,t131,t133,t135,t138,t14,t142,t143,t150,t151,t157,t158,t159,t16,t160,t161,t163,t165,t166,t168,t17,t171,t174,t175,t187,t188,t19,t192,t193,t197,t198,t2,t20,t203,t21,t212,t216,t22,t223,t23,t236,t238,t242,t246,t25,t252,t256,t259,t26,t279,t28,t29,t3,t30,t303,t315,t33,t34,t36,t37,t38,t39,t40,t43,t45,t46,t47,t5,t50,t52,t53,t54,t59,t6,t64,t65,t66,t74,t77,t78,t80,t82,t83,t84,t86,t87,t88,t9,t90,t92,t96,t99;
@@ -506,16 +513,29 @@ void EW::forcingttfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int 
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
-#pragma omp parallel
-   {
+// #pragma omp parallel
+//    {
+using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
+     RAJA::RangeSegment k_range(kfirst,klast+1);
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::kernel<LOCAL_POL>(
+			       RAJA::make_tuple(k_range,j_range,i_range),
+			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t10,t100,t102,t103,t106,t107,t110,t120,t121,t122,t123,t124,t125,t127,t129,t13,t131,t133,t135,t138,t14,t142,t143,t150,t151,t157,t158,t159,t16,t160,t161,t163,t165,t166,t168,t17,t171,t174,t175,t187,t188,t19,t192,t193,t197,t198,t2,t20,t203,t21,t212,t216,t22,t223,t23,t236,t238,t242,t246,t25,t252,t256,t259,t26,t279,t28,t29,t3,t30,t303,t315,t33,t34,t36,t37,t38,t39,t40,t43,t45,t46,t47,t5,t50,t52,t53,t54,t59,t6,t64,t65,t66,t74,t77,t78,t80,t82,t83,t84,t86,t87,t88,t9,t90,t92,t96,t99;
-#pragma omp for
-      for( int k=kfirst; k<=klast; k++ )
-	 for( int j=jfirst; j<=jlast; j++ )
-#pragma ivdep
-#pragma simd
-	    for( int i=ifirst; i<=ilast; i++ )
-	    {
+// #pragma omp for
+//       for( int k=kfirst; k<=klast; k++ )
+// 	 for( int j=jfirst; j<=jlast; j++ )
+// #pragma ivdep
+// #pragma simd
+// 	    for( int i=ifirst; i<=ilast; i++ )
+// 	    {
 	       size_t ind = base+i+ni*j+nij*k;
 	       float_sw4 x=xx[ind];
 	       float_sw4 y=yy[ind];
@@ -648,8 +668,8 @@ void EW::forcingttfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 	fo[ind] = forces[0];
 	fo[ind+nijk] = forces[1];
 	fo[ind+2*nijk] = forces[2];
-	    }
-   }
+			       });
+   //}
 }
 
 //-----------------------------------------------------------------------
@@ -819,21 +839,36 @@ void EW::forcingttfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, in
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
-#pragma omp parallel
-   {
+// #pragma omp parallel
+//    {
+using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
+     RAJA::RangeSegment k_range(kfirst,klast+1);
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::kernel<LOCAL_POL>(
+			       RAJA::make_tuple(k_range,j_range,i_range),
+			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t1,t10,t100,t101,t104,t105,t107,t108,t109,t11,t110,t114,t115,t116,t120,t121,t124,t125,t127,t128,t130,t131,t135,t14,t141,t146,t147,t149,t15,t150,t151,t153,t155,t157,t16,t161,t164,t167,t168,t169,t17,t170,t172,t173,t175,t179,t18,t183,t188,t191,t192,t194,t2,t20,t202,t204,t205,t207,t214,t215,t224,t228,t230,t234,t237,t238,t24,t245,t253,t254,t26,t260,t266,t267,t27,t271,t273,t274,t277,t279,t28,t282,t29,t297,t30,t300,t31,t314,t32,t34,t35,t352,t359,t36,t39,t4,t40,t41,t43,t44,t45,t46,t48,t49,t50,t52,t55,t6,t61,t67,t68,t69,t7,t75,t76,t78,t8,t82,t85,t86,t88,t89,t90,t94,t95,t96,t98,t99;
-#pragma omp for
-      for( int k=kfirst; k<=klast; k++ )
-      {
-	 float_sw4 z=(k-1)*h+zmin;
-	 for( int j=jfirst; j<=jlast; j++ )
-	 {
-	    float_sw4 y=(j-1)*h;
-#pragma ivdep
-#pragma simd
-	    for( int i=ifirst; i<=ilast; i++ )
-	    {
+// #pragma omp for
+//       for( int k=kfirst; k<=klast; k++ )
+//       {
+// 	 float_sw4 z=(k-1)*h+zmin;
+// 	 for( int j=jfirst; j<=jlast; j++ )
+// 	 {
+// 	    float_sw4 y=(j-1)*h;
+// #pragma ivdep
+// #pragma simd
+// 	    for( int i=ifirst; i<=ilast; i++ )
+// 	    {
 	       float_sw4 x=(i-1)*h;
+	       float_sw4 y=(j-1)*h;
+	       float_sw4 z=(k-1)*h+zmin;
         t1 = omstrx*x;
         t2 = sin(t1);
         t4 = 1+t2/2;
@@ -985,10 +1020,10 @@ void EW::forcingttfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, in
 	       fo[ind+nijk] += forces[1];
 	       fo[ind+2*nijk] += forces[2];
 
-	    }
-	 }
-      }
-   }
+      // 	    }
+      // 	 }
+      // }
+			       });
 }
 
 //-----------------------------------------------------------------------
@@ -1150,16 +1185,29 @@ void EW::forcingttfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, i
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
-#pragma omp parallel
-   {
+// #pragma omp parallel
+//    {
+using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
+     RAJA::RangeSegment k_range(kfirst,klast+1);
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::kernel<LOCAL_POL>(
+			       RAJA::make_tuple(k_range,j_range,i_range),
+			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t1,t10,t100,t101,t104,t105,t107,t108,t109,t11,t110,t114,t115,t116,t120,t121,t124,t125,t127,t128,t130,t131,t135,t14,t141,t146,t147,t149,t15,t150,t151,t153,t155,t157,t16,t161,t164,t167,t168,t169,t17,t170,t172,t173,t175,t179,t18,t183,t188,t191,t192,t194,t2,t20,t202,t204,t205,t207,t214,t215,t224,t228,t230,t234,t237,t238,t24,t245,t253,t254,t26,t260,t266,t267,t27,t271,t273,t274,t277,t279,t28,t282,t29,t297,t30,t300,t31,t314,t32,t34,t35,t352,t359,t36,t39,t4,t40,t41,t43,t44,t45,t46,t48,t49,t50,t52,t55,t6,t61,t67,t68,t69,t7,t75,t76,t78,t8,t82,t85,t86,t88,t89,t90,t94,t95,t96,t98,t99;
-#pragma omp for
-      for( int k=kfirst; k<=klast; k++ )
-	 for( int j=jfirst; j<=jlast; j++ )
-#pragma ivdep
-#pragma simd
-	    for( int i=ifirst; i<=ilast; i++ )
-	    {
+// #pragma omp for
+//       for( int k=kfirst; k<=klast; k++ )
+// 	 for( int j=jfirst; j<=jlast; j++ )
+// #pragma ivdep
+// #pragma simd
+// 	    for( int i=ifirst; i<=ilast; i++ )
+// 	    {
 	       size_t ind = base+i+ni*j+nij*k;
 	       float_sw4 z=zz[ind];
 	       float_sw4 y=yy[ind];
@@ -1314,6 +1362,6 @@ void EW::forcingttfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, i
 	       fo[ind]      += forces[0];
 	       fo[ind+nijk] += forces[1];
 	       fo[ind+2*nijk] += forces[2];
-	    }
-   }
+			       });
+   //}
 }
