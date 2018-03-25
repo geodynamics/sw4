@@ -1,4 +1,7 @@
 #include "Sarray.h"
+#include "Mspace.h"
+#include "caliper.h"
+#include "policies.h"
 //-----------------From WPP------------------------------------------------------
 void  addMemVarPredCart( float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
                          float_sw4 omegaVE, float_sw4 dt ,float_sw4 omega, float_sw4 phase, float_sw4 c)
@@ -474,16 +477,31 @@ void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4 
 void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
                         float_sw4 omegaVE, float_sw4 dt, float_sw4 omega, float_sw4 phase, float_sw4 c )
 {
+  SW4_MARK_FUNCTION;
    float_sw4 dto=omegaVE*dt;
    float_sw4 cof = 1.0/( 1.0/2 + 1.0/(2*dto) + dto/4 + dto*dto/12 );
 
-#pragma omp parallel for
-   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
-      for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
-#pragma ivdep
-#pragma simd
-         for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
-         {
+// #pragma omp parallel for
+//    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+//       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+// #pragma ivdep
+// #pragma simd
+//          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+//          {
+   SView &alphaV = alpha.getview();
+	   using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
+	   RAJA::RangeSegment k_range(alpha.m_kb,alpha.m_ke+1);
+	   RAJA::RangeSegment j_range(alpha.m_jb,alpha.m_je+1);
+	   RAJA::RangeSegment i_range(alpha.m_ib,alpha.m_ie+1);
+   RAJA::kernel<LOCAL_POL>(
+			       RAJA::make_tuple(k_range,j_range,i_range),
+			       [=]RAJA_DEVICE (int k, int j,int i) {
 	    float_sw4 x, y, z;
 	    float_sw4 forces[3];
 	    float_sw4 t1;
@@ -623,10 +641,10 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
             forces[2] = -t128-t130-t133+t35*(t36*(-t128-t130-t133)+2.0*omegaVE*(t131*t2
                  *t139+t126*t136-t129*t127)+t126*t57*t15+t129*t136+t131*t41*t132)/6.0;
 
-            alpha(1,i,j,k) += cof*forces[0];
-            alpha(2,i,j,k) += cof*forces[1];
-            alpha(3,i,j,k) += cof*forces[2];
-         } // end for*3
+            alphaV(1,i,j,k) += cof*forces[0];
+            alphaV(2,i,j,k) += cof*forces[1];
+            alphaV(3,i,j,k) += cof*forces[2];
+			       } );// end for*3
    return;
 } // end function
 
@@ -635,16 +653,34 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
 				Sarray& alpha, float_sw4 omegaVE, float_sw4 dt, float_sw4 omega,
 				float_sw4 phase, float_sw4 c )
 {
+  SW4_MARK_FUNCTION;
    float_sw4 dto=omegaVE*dt;
    float_sw4 cof = 1.0/( 1.0/2 + 1.0/(2*dto) + dto/4 + dto*dto/12 );
 
-#pragma omp parallel for
-   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
-      for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
-#pragma ivdep
-#pragma simd
-         for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
-	 {
+// #pragma omp parallel for
+//    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+//       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+// #pragma ivdep
+// #pragma simd
+//          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+// 	 {
+   SView &alphaV = alpha.getview();
+   SView &a_XV = a_X.getview();
+   SView &a_YV = a_Y.getview();
+   SView &a_ZV = a_Z.getview();
+   using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
+	   RAJA::RangeSegment k_range(alpha.m_kb,alpha.m_ke+1);
+	   RAJA::RangeSegment j_range(alpha.m_jb,alpha.m_je+1);
+	   RAJA::RangeSegment i_range(alpha.m_ib,alpha.m_ie+1);
+   RAJA::kernel<LOCAL_POL>(
+			       RAJA::make_tuple(k_range,j_range,i_range),
+			       [=]RAJA_DEVICE (int k, int j,int i) {
 	    float_sw4 x, y, z;
 	    float_sw4 forces[3];
 	    float_sw4 t1;
@@ -709,9 +745,9 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
 	    float_sw4 t9;
 	    float_sw4 t92;
 	    float_sw4 t95;
-	    x = a_X(i,j,k);
-	    y = a_Y(i,j,k);
-	    z = a_Z(i,j,k);
+	    x = a_XV(i,j,k);
+	    y = a_YV(i,j,k);
+	    z = a_ZV(i,j,k);
             t1 = 1/omegaVE;
             t2 = omega*c;
             t3 = c*t;
@@ -783,9 +819,9 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
             forces[2] = -t128-t130-t133+t35*(t36*(-t128-t130-t133)+2.0*omegaVE*(t131*t2
                                                                                 *t139+t126*t136-t129*t127)+t126*t57*t15+t129*t136+t131*t41*t132)/6.0;
 
-            alpha(1,i,j,k) += cof*forces[0];
-            alpha(2,i,j,k) += cof*forces[1];
-            alpha(3,i,j,k) += cof*forces[2];
-       } // end for*3
+            alphaV(1,i,j,k) += cof*forces[0];
+            alphaV(2,i,j,k) += cof*forces[1];
+            alphaV(3,i,j,k) += cof*forces[2];
+			       } );// end for*3
   return;
 } // end function
