@@ -2612,9 +2612,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    SView &mYV = mY.getview();
    SView &mZV = mZ.getview();
    float_sw4 alpha2 = alpha*alpha;
+   float_sw4 ralpha2 = 1.0/alpha2;
    float_sw4 alpha3 = alpha2*alpha;
    float_sw4 beta2 = beta*beta;
    float_sw4 beta3 = beta2*beta;
+   float_sw4 rbeta2 = 1.0/beta2;
    
    RAJA::RangeSegment k_range(kmin,kmax+1);
    RAJA::RangeSegment j_range(jmin,jmax+1);
@@ -2649,15 +2651,16 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	    float_sw4 xx0 = x-x0;
 	    float_sw4 yy0 = y-y0;
 	    float_sw4 zz0 = z-z0;
-	   
-	    if( !ismomentsource )
-	    {
-	      float_sw4 R = sqrt( xx0*xx0 + yy0*yy0 + zz0*zz0 );
-	      float_sw4 R2 = R*R;
+
+	    float_sw4 R = sqrt( xx0*xx0 + yy0*yy0 + zz0*zz0 );
+	    float_sw4 R2 = R*R;
 	    float_sw4 R3 = R2*R;
 	    float_sw4 R5 = R2*R3;
 	    float_sw4 R7 = R5*R2;
 	    float_sw4 frR2 = fr*fr*R*R;
+	    if( !ismomentsource )
+	    {
+	      
 	       if( R < eps )
 	       	  up[3*ind] = up[3*ind+1] = up[3*ind+2] = 0;
 	       else
@@ -2704,12 +2707,12 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	    {
 	       up[3*ind] = up[3*ind+1] = up[3*ind+2] = 0;
 	       // Here, ismomentsource == true
-	       float_sw4 R = sqrt( xx0*xx0 + yy0*yy0 + zz0*zz0 );
-	        float_sw4 R2 = R*R;
-	    float_sw4 R3 = R2*R;
-	    float_sw4 R5 = R2*R3;
-	    float_sw4 R7 = R5*R2;
-	    float_sw4 frR2 = fr*fr*R*R;
+	       // float_sw4 R = sqrt( xx0*xx0 + yy0*yy0 + zz0*zz0 );
+	    //     float_sw4 R2 = R*R;
+	    // float_sw4 R3 = R2*R;
+	    // float_sw4 R5 = R2*R3;
+	    // float_sw4 R7 = R5*R2;
+	    // float_sw4 frR2 = fr*fr*R*R;
 	       if( R < eps )
 	       {
 	       	  up[3*ind] = up[3*ind+1] = up[3*ind+2] = 0;
@@ -2749,21 +2752,23 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     D = d_Gaussian_dt(time, R, alpha,fr) / alpha3 / R;
 		     E = d_Gaussian_dt(time, R, beta,fr) / beta3 / R;
 		  }
+		  float_sw4 Aalpha2 = A*ralpha2;
+		  float_sw4 Bbeta2 = B*rbeta2;
 		  up[3*ind] += 
 	// m_xx*G_xx,x
 		     + m0*mxx/(4*M_PI*rho)*
 		     ( 
-		      + 3*xx0*xx0*xx0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*xx0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      - 2*xx0 / R3 * (A/alpha2 - B/beta2)
+		      - 2*xx0 / R3 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*xx0*xx0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*xx0*xx0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	 
 		      + ( 15*xx0*xx0*xx0 / R7 - 6*xx0 / R5 ) * C
 	 
 		      + xx0*xx0 / R3* (xx0*D - xx0*E)
 	 
-		      - 1 / R3 * (xx0*A/alpha2 - xx0*B/beta2)
+		      - 1 / R3 * (xx0*Aalpha2 - xx0*Bbeta2)
 
 		      - 3*xx0 / R5 * C
 
@@ -2775,13 +2780,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yy*G_xy,y
 		     + m0*myy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      - xx0 / R3 * (A/alpha2 - B/beta2)
+		      - xx0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + xx0*yy0 / R3* (yy0*D - yy0*E)
 
-		      + 3*xx0*yy0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*xx0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      + ( 15*xx0*yy0*yy0 / R7 - 3*xx0 / R5 ) * C
 		      );
@@ -2789,13 +2794,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_zz*G_xz,z
 		     + m0*mzz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*zz0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - xx0 / R3 * (A/alpha2 - B/beta2)
+		      - xx0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + xx0*zz0 / R3* (zz0*D - zz0*E)
 
-		      + 3*xx0*zz0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*xx0*zz0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
 		      + ( 15*xx0*zz0*zz0 / R7 - 3*xx0 / R5 ) * C
 		      );
@@ -2803,13 +2808,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xy*G_xy,x
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*yy0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (A/alpha2 - B/beta2)
+		      - yy0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + xx0*yy0 / R3* (xx0*D - xx0*E)
 
-		      + 3*xx0*yy0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*xx0*yy0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
 		      + ( 15*xx0*xx0*yy0 / R7 - 3*yy0 / R5 ) * C
 		      );
@@ -2817,15 +2822,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xy*G_xx,y
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*xx0*xx0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*xx0*xx0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	 
 		      + 15*xx0*xx0*yy0 / R7 * C
 	 
 		      + xx0*xx0 / R3* (yy0*D - yy0*E)
 	 
-		      - 1 / R3 * (yy0*A/alpha2 - yy0*B/beta2)
+		      - 1 / R3 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      - 3*yy0 / R5 * C
 
@@ -2837,13 +2842,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xz*G_xz,x
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - zz0 / R3 * (A/alpha2 - B/beta2)
+		      - zz0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + xx0*zz0 / R3* (xx0*D - xx0*E)
 
-		      + 3*xx0*zz0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*xx0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
 		      + ( 15*xx0*xx0*zz0 / R7 - 3*zz0 / R5 ) * C
 		      );
@@ -2851,11 +2856,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yz*G_xz,y
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
 		      + xx0*zz0 / R3* (yy0*D - yy0*E)
 
-		      + 3*xx0*zz0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*xx0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      + 15*xx0*yy0*zz0 / R7 * C
 		      );
@@ -2863,15 +2868,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xz*G_xx,z
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*xx0*xx0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*xx0*xx0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	 
 		      + 15*xx0*xx0*zz0 / R7 * C
 	 
 		      + xx0*xx0 / R3* (zz0*D - zz0*E)
 	 
-		      - 1 / R3 * (zz0*A/alpha2 - zz0*B/beta2)
+		      - 1 / R3 * (zz0*Aalpha2 - zz0*Bbeta2)
 
 		      - 3*zz0 / R5 * C
 
@@ -2883,11 +2888,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yz*G_yx,z
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
 		      + xx0*yy0 / R3* (zz0*D - zz0*E)
 
-		      + 3*xx0*yy0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*xx0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
 		      + 15*xx0*yy0*zz0 / R7 * C
 		      );
@@ -2896,13 +2901,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xx*G_xy,x
 		     m0*mxx/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*yy0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (A/alpha2 - B/beta2)
+		      - yy0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + xx0*yy0 / R3* (xx0*D - xx0*E)
 
-		      + 3*xx0*yy0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*xx0*yy0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
 		      + ( 15*xx0*xx0*yy0 / R7 - 3*yy0 / R5 ) * C
 		      );
@@ -2910,17 +2915,17 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yy**G_yy,y
 		     + m0*myy/(4*M_PI*rho)*
 		     ( 
-		      + 3*yy0*yy0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*yy0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      - 2*yy0 / R3 * (A/alpha2 - B/beta2)
+		      - 2*yy0 / R3 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*yy0*yy0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*yy0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	 
 		      + ( 15*yy0*yy0*yy0 / R7 - 6*yy0 / R5 ) * C
 	 
 		      + yy0*yy0 / R3* (yy0*D - yy0*E)
 	 
-		      - 1 / R3 * (yy0*A/alpha2 - yy0*B/beta2)
+		      - 1 / R3 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      - 3*yy0 / R5 * C
 
@@ -2932,13 +2937,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_zz*G_zy,z
 		     + m0*mzz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*zz0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*zz0*zz0*yy0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (A/alpha2 - B/beta2)
+		      - yy0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + zz0*yy0 / R3* (zz0*D - zz0*E)
 
-		      + 3*zz0*yy0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*zz0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
 		      + ( 15*zz0*zz0*yy0 / R7 - 3*yy0 / R5 ) * C
 		      );
@@ -2946,15 +2951,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xy*G_yy,x
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*yy0*yy0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*yy0*yy0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
 		      + 15*xx0*yy0*yy0 / R7 * C
 	  
 		      + yy0*yy0 / R3* (xx0*D - xx0*E)
 	  
-		      - 1 / R3 * (xx0*A/alpha2 - xx0*B/beta2)
+		      - 1 / R3 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
 		      - 3*xx0 / R5 * C
 	  
@@ -2966,11 +2971,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xz*G_zy,x
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	  
 		      + yy0*zz0 / R3* (xx0*D - xx0*E)
 	  
-		      + 3*yy0*zz0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*yy0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
 		      + 15*xx0*yy0*zz0 / R7 * C
 		      );
@@ -2978,13 +2983,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xy*G_xy,y
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	  
-		      - xx0 / R3 * (A/alpha2 - B/beta2)
+		      - xx0 / R3 * (Aalpha2 - Bbeta2)
 	  
 		      + xx0*yy0 / R3* (yy0*D - yy0*E)
 	  
-		      + 3*xx0*yy0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*xx0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	  
 		      + ( 15*xx0*yy0*yy0 / R7 - 3*xx0 / R5 ) * C
 		      );
@@ -2992,13 +2997,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yz*G_zy,y
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*yy0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*zz0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	  
-		      - zz0 / R3 * (A/alpha2 - B/beta2)
+		      - zz0 / R3 * (Aalpha2 - Bbeta2)
 	  
 		      + zz0*yy0 / R3* (yy0*D - yy0*E)
 	  
-		      + 3*zz0*yy0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*zz0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	  
 		      + ( 15*zz0*yy0*yy0 / R7 - 3*zz0 / R5 ) * C
 		      );
@@ -3006,11 +3011,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xz*G_xy,z
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	  
 		      + xx0*yy0 / R3* (zz0*D - zz0*E)
 	  
-		      + 3*xx0*yy0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*xx0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	  
 		      + 15*xx0*yy0*zz0 / R7 * C
 		      );
@@ -3018,15 +3023,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yz*G_yy,z
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*yy0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*zz0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*yy0*yy0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*yy0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	  
 		      + 15*zz0*yy0*yy0 / R7 * C
 	  
 		      + yy0*yy0 / R3* (zz0*D - zz0*E)
 	  
-		      - 1 / R3 * (zz0*A/alpha2 - zz0*B/beta2)
+		      - 1 / R3 * (zz0*Aalpha2 - zz0*Bbeta2)
 	  
 		      - 3*zz0 / R5 * C
 	  
@@ -3039,13 +3044,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xx*G_zx,x
 		     + m0*mxx/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*xx0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - zz0 / R3 * (A/alpha2 - B/beta2)
+		      - zz0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + xx0*zz0 / R3* (xx0*D - xx0*E)
 
-		      + 3*xx0*zz0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*xx0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
 		      + ( 15*xx0*xx0*zz0 / R7 - 3*zz0 / R5 ) * C
 		      );
@@ -3053,13 +3058,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yy*G_zy,y
 		     + m0*myy/(4*M_PI*rho)*
 		     (
-		      + 3*yy0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*yy0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - zz0 / R3 * (A/alpha2 - B/beta2)
+		      - zz0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + yy0*zz0 / R3* (yy0*D - yy0*E)
 
-		      + 3*yy0*zz0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*yy0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      + ( 15*yy0*yy0*zz0 / R7 - 3*zz0 / R5 ) * C
 		      );
@@ -3067,17 +3072,17 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_zz**G_zz,z
 		     + m0*mzz/(4*M_PI*rho)*
 		     ( 
-		      + 3*zz0*zz0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*zz0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      - 2*zz0 / R3 * (A/alpha2 - B/beta2)
+		      - 2*zz0 / R3 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*zz0*zz0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*zz0*zz0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	 
 		      + ( 15*zz0*zz0*zz0 / R7 - 6*zz0 / R5 ) * C
 	 
 		      + zz0*zz0 / R3* (zz0*D - zz0*E)
 	 
-		      - 1 / R3 * (zz0*A/alpha2 - zz0*B/beta2)
+		      - 1 / R3 * (zz0*Aalpha2 - zz0*Bbeta2)
 
 		      - 3*zz0 / R5 * C
 
@@ -3089,11 +3094,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xy*G_zy,x
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	  
 		      + yy0*zz0 / R3* (xx0*D - xx0*E)
 	  
-		      + 3*yy0*zz0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*yy0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
 		      + 15*xx0*yy0*zz0 / R7 * C
 		      );
@@ -3101,15 +3106,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xz**G_zz,x
 		     + m0*mxz/(4*M_PI*rho)*
 		     ( 
-		      + 3*xx0*zz0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*zz0*zz0 / R5 * (xx0*A/alpha2 - xx0*B/beta2)
+		      + 3*zz0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	 
 		      + 15*xx0*zz0*zz0 / R7 * C
 	 
 		      + zz0*zz0 / R3* (xx0*D - xx0*E)
 	 
-		      - 1 / R3 * (xx0*A/alpha2 - xx0*B/beta2)
+		      - 1 / R3 * (xx0*Aalpha2 - xx0*Bbeta2)
 
 		      - 3*xx0 / R5 * C
 
@@ -3121,11 +3126,11 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xy*G_xz,y
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
 
 		      + xx0*zz0 / R3* (yy0*D - yy0*E)
 
-		      + 3*xx0*zz0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*xx0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      + 15*xx0*yy0*zz0 / R7 * C
 		      );
@@ -3133,15 +3138,15 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yz*G_zz,y
 		     + m0*myz/(4*M_PI*rho)*
 		     ( 
-		      + 3*yy0*zz0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*yy0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*zz0*zz0 / R5 * (yy0*A/alpha2 - yy0*B/beta2)
+		      + 3*zz0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	 
 		      + 15*yy0*zz0*zz0 / R7 * C
 	 
 		      + zz0*zz0 / R3* (yy0*D - yy0*E)
 	 
-		      - 1 / R3 * (yy0*A/alpha2 - yy0*B/beta2)
+		      - 1 / R3 * (yy0*Aalpha2 - yy0*Bbeta2)
 
 		      - 3*yy0 / R5 * C
 
@@ -3153,13 +3158,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_xz*G_xz,z
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*zz0*zz0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*xx0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
 	 
-		      - xx0 / R3 * (A/alpha2 - B/beta2)
+		      - xx0 / R3 * (Aalpha2 - Bbeta2)
 	 
 		      + xx0*zz0 / R3* (zz0*D - zz0*E)
 	 
-		      + 3*xx0*zz0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*xx0*zz0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	 
 		      + ( 15*xx0*zz0*zz0 / R7 - 3*xx0 / R5 ) * C
 		      );
@@ -3167,13 +3172,13 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     // m_yz*G_yz,z
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*zz0*yy0 / R5 * (A/alpha2 - B/beta2)
+		      + 3*zz0*zz0*yy0 / R5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (A/alpha2 - B/beta2)
+		      - yy0 / R3 * (Aalpha2 - Bbeta2)
 
 		      + zz0*yy0 / R3* (zz0*D - zz0*E)
 
-		      + 3*zz0*yy0 / R5 * (zz0*A/alpha2 - zz0*B/beta2)
+		      + 3*zz0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
 		      + ( 15*zz0*zz0*yy0 / R7 - 3*yy0 / R5 ) * C
 		      );
