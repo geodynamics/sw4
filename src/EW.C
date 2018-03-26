@@ -1432,13 +1432,13 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
             {
                numStations += 1;
                bool cartCoordSet = false;
-               bool gridPointSet = false;
+               //bool gridPointSet = false;
                bool geoCoordSet = false;
                bool statSet = false;
                string name="null";
-               float_sw4 x=0.0, y=0.0, z=0.0;
+               float_sw4 x=0.0, y=0.0,z=0.0;
                float_sw4 lat=0.0, lon=0.0;
-               int i=0,j=0,k=0;
+               
                // Get location and write to file
                char* token = strtok(buffer, " \t");   
                token = strtok(NULL, " \t"); // skip sac
@@ -2598,11 +2598,23 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    float_sw4 m_zming=m_zmin[g];
 
    ASSERT_MANAGED(up);
-   
+
+   using LOCAL_POL = 
+     RAJA::KernelPolicy< 
+       RAJA::statement::CudaKernel<
+	 RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								   RAJA::statement::Lambda<0> >>>>>;
+
+   SView &mXV = mX.getview();
+   SView &mYV = mY.getview();
+   SView &mZV = mZ.getview();
    RAJA::RangeSegment k_range(kmin,kmax+1);
    RAJA::RangeSegment j_range(jmin,jmax+1);
    RAJA::RangeSegment i_range(imin,imax+1);
-   RAJA::kernel<RHS4_EXEC_POL>(
+   SW4_MARK_BEGIN("get_exact_point_source::loop");
+   RAJA::kernel<LOCAL_POL>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 // #pragma omp parallel for
@@ -2614,9 +2626,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
             float_sw4 x,y,z;
 	    if( curvilinear )
 	    {
-               x = mX(i,j,k);
-	       y = mY(i,j,k);
-	       z = mZ(i,j,k);
+               x = mXV(i,j,k);
+	       y = mYV(i,j,k);
+	       z = mZV(i,j,k);
 	    }
 	    else
 	    {
@@ -3145,6 +3157,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	    }
 	    //	    ind++;
 			}); SYNC_DEVICE;
+   SW4_MARK_END("get_exact_point_source::loop");
 }
 
 #include <cmath>

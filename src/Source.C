@@ -42,7 +42,7 @@
 #include "Qspline.h"
 
 #include "time_functions.h"
-
+#include "caliper.h"
 
 using namespace std;
 
@@ -290,6 +290,7 @@ bool Source::isMomentSource() const
 //-----------------------------------------------------------------------
 void Source::getForces( float_sw4& fx, float_sw4& fy, float_sw4& fz ) const
 {
+  SW4_MARK_FUNCTION;
    if( !mIsMomentSource )
    {
       fx = mForces[0];
@@ -303,6 +304,7 @@ void Source::getForces( float_sw4& fx, float_sw4& fy, float_sw4& fz ) const
 //-----------------------------------------------------------------------
 void Source::getMoments( float_sw4& mxx, float_sw4& mxy, float_sw4& mxz, float_sw4& myy, float_sw4& myz, float_sw4& mzz ) const
 {
+  SW4_MARK_FUNCTION;
    if( mIsMomentSource )
    {
       mxx = mForces[0];
