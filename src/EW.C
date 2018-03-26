@@ -2653,10 +2653,14 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	    float_sw4 zz0 = z-z0;
 
 	    float_sw4 R = sqrt( xx0*xx0 + yy0*yy0 + zz0*zz0 );
+	    float_sw4 RR=1.0/R;
 	    float_sw4 R2 = R*R;
 	    float_sw4 R3 = R2*R;
+	    float_sw4 RR3 = 1.0/R3;
 	    float_sw4 R5 = R2*R3;
+	    float_sw4 RR5 = 1.0/R5;
 	    float_sw4 R7 = R5*R2;
+	    float_sw4 RR7 = 1.0/R7;
 	    float_sw4 frR2 = fr*fr*R*R;
 	    if( !ismomentsource )
 	    {
@@ -2725,32 +2729,32 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 		     A = SmoothWave(time, R, alpha);
 		     B = SmoothWave(time, R, beta);
 		     C = SmoothWave_x_T_Integral(time, R, alpha, beta);
-		     D = d_SmoothWave_dt(time, R, alpha) / alpha3 / R;
-		     E = d_SmoothWave_dt(time, R, beta) / beta3 / R;
+		     D = d_SmoothWave_dt(time, R, alpha) / alpha3 *RR;
+		     E = d_SmoothWave_dt(time, R, beta) / beta3 *RR;
 		  }
 		  else if (tD == iVerySmoothBump)
 		  {
 		     A = VerySmoothBump(time, R, alpha);
 		     B = VerySmoothBump(time, R, beta);
 		     C = VerySmoothBump_x_T_Integral(time, R, alpha, beta);
-		     D = d_VerySmoothBump_dt(time, R, alpha) / alpha3 / R;
-		     E = d_VerySmoothBump_dt(time, R, beta) / beta3 / R;
+		     D = d_VerySmoothBump_dt(time, R, alpha) / alpha3 *RR;
+		     E = d_VerySmoothBump_dt(time, R, beta) / beta3 *RR;
 		  }
 		  else if (tD == iC6SmoothBump)
 		  {
 		     A = C6SmoothBump(time, R, alpha);
 		     B = C6SmoothBump(time, R, beta);
 		     C = C6SmoothBump_x_T_Integral(time, R, alpha, beta);
-		     D = d_C6SmoothBump_dt(time, R, alpha) / alpha3 / R;
-		     E = d_C6SmoothBump_dt(time, R, beta) / beta3 / R;
+		     D = d_C6SmoothBump_dt(time, R, alpha) / alpha3 *RR;
+		     E = d_C6SmoothBump_dt(time, R, beta) / beta3 *RR;
 		  }
 		  else if (tD == iGaussian)
 		  {
 		     A = Gaussian(time, R, alpha,fr);
 		     B = Gaussian(time, R, beta,fr);
 		     C = Gaussian_x_T_Integral(time, R, fr,alpha, beta);
-		     D = d_Gaussian_dt(time, R, alpha,fr) / alpha3 / R;
-		     E = d_Gaussian_dt(time, R, beta,fr) / beta3 / R;
+		     D = d_Gaussian_dt(time, R, alpha,fr) / alpha3 *RR;
+		     E = d_Gaussian_dt(time, R, beta,fr) / beta3 *RR;
 		  }
 		  float_sw4 Aalpha2 = A*ralpha2;
 		  float_sw4 Bbeta2 = B*rbeta2;
@@ -2758,429 +2762,429 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 	// m_xx*G_xx,x
 		     + m0*mxx/(4*M_PI*rho)*
 		     ( 
-		      + 3*xx0*xx0*xx0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*xx0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      - 2*xx0 / R3 * (Aalpha2 - Bbeta2)
+		      - 2*xx0 *RR3 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*xx0*xx0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*xx0*xx0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	 
-		      + ( 15*xx0*xx0*xx0 / R7 - 6*xx0 / R5 ) * C
+		      + ( 15*xx0*xx0*xx0 *RR7 - 6*xx0 *RR5 ) * C
 	 
-		      + xx0*xx0 / R3* (xx0*D - xx0*E)
+		      + xx0*xx0 *RR3* (xx0*D - xx0*E)
 	 
-		      - 1 / R3 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      - 1 *RR3 * (xx0*Aalpha2 - xx0*Bbeta2)
 
-		      - 3*xx0 / R5 * C
+		      - 3*xx0 *RR5 * C
 
 		      + xx0 / (R3*beta2) * B
 
-		      + 1 / R * xx0*E
+		      + RR * xx0*E
 		      );
 		  up[3*ind] +=
 		     // m_yy*G_xy,y
 		     + m0*myy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      - xx0 / R3 * (Aalpha2 - Bbeta2)
+		      - xx0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + xx0*yy0 / R3* (yy0*D - yy0*E)
+		      + xx0*yy0 *RR3* (yy0*D - yy0*E)
 
-		      + 3*xx0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*xx0*yy0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      + ( 15*xx0*yy0*yy0 / R7 - 3*xx0 / R5 ) * C
+		      + ( 15*xx0*yy0*yy0 *RR7 - 3*xx0 *RR5 ) * C
 		      );
 		  up[3*ind] +=
 		     // m_zz*G_xz,z
 		     + m0*mzz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*zz0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - xx0 / R3 * (Aalpha2 - Bbeta2)
+		      - xx0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + xx0*zz0 / R3* (zz0*D - zz0*E)
+		      + xx0*zz0 *RR3* (zz0*D - zz0*E)
 
-		      + 3*xx0*zz0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*xx0*zz0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
-		      + ( 15*xx0*zz0*zz0 / R7 - 3*xx0 / R5 ) * C
+		      + ( 15*xx0*zz0*zz0 *RR7 - 3*xx0 *RR5 ) * C
 		      );
 		  up[3*ind] +=
 		     // m_xy*G_xy,x
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (Aalpha2 - Bbeta2)
+		      - yy0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + xx0*yy0 / R3* (xx0*D - xx0*E)
+		      + xx0*yy0 *RR3* (xx0*D - xx0*E)
 
-		      + 3*xx0*yy0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*xx0*yy0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
-		      + ( 15*xx0*xx0*yy0 / R7 - 3*yy0 / R5 ) * C
+		      + ( 15*xx0*xx0*yy0 *RR7 - 3*yy0 *RR5 ) * C
 		      );
 		  up[3*ind] +=
 		     // m_xy*G_xx,y
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*xx0*xx0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*xx0*xx0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	 
-		      + 15*xx0*xx0*yy0 / R7 * C
+		      + 15*xx0*xx0*yy0 *RR7 * C
 	 
-		      + xx0*xx0 / R3* (yy0*D - yy0*E)
+		      + xx0*xx0 *RR3* (yy0*D - yy0*E)
 	 
-		      - 1 / R3 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      - RR3 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      - 3*yy0 / R5 * C
+		      - 3*yy0 *RR5 * C
 
 		      + yy0 / (R3*beta2) * B
 
-		      + 1 / R * yy0*E
+		      + RR * yy0*E
 		      );
 		  up[3*ind] +=
 		     // m_xz*G_xz,x
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - zz0 / R3 * (Aalpha2 - Bbeta2)
+		      - zz0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + xx0*zz0 / R3* (xx0*D - xx0*E)
+		      + xx0*zz0 *RR3* (xx0*D - xx0*E)
 
-		      + 3*xx0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*xx0*zz0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
-		      + ( 15*xx0*xx0*zz0 / R7 - 3*zz0 / R5 ) * C
+		      + ( 15*xx0*xx0*zz0 *RR7 - 3*zz0 *RR5 ) * C
 		      );
 		  up[3*ind] +=
 		     // m_yz*G_xz,y
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      + xx0*zz0 / R3* (yy0*D - yy0*E)
+		      + xx0*zz0 *RR3* (yy0*D - yy0*E)
 
-		      + 3*xx0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*xx0*zz0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      + 15*xx0*yy0*zz0 / R7 * C
+		      + 15*xx0*yy0*zz0 *RR7 * C
 		      );
 		  up[3*ind] +=
 		     // m_xz*G_xx,z
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*xx0*xx0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*xx0*xx0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	 
-		      + 15*xx0*xx0*zz0 / R7 * C
+		      + 15*xx0*xx0*zz0 *RR7 * C
 	 
-		      + xx0*xx0 / R3* (zz0*D - zz0*E)
+		      + xx0*xx0 *RR3* (zz0*D - zz0*E)
 	 
-		      - 1 / R3 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      - 1 *RR3 * (zz0*Aalpha2 - zz0*Bbeta2)
 
-		      - 3*zz0 / R5 * C
+		      - 3*zz0 *RR5 * C
 
 		      + zz0 / (R3*beta2) * B
 
-		      + 1 / R * zz0*E
+		      + RR * zz0*E
 		      );
 		  up[3*ind] +=
 		     // m_yz*G_yx,z
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      + xx0*yy0 / R3* (zz0*D - zz0*E)
+		      + xx0*yy0 *RR3* (zz0*D - zz0*E)
 
-		      + 3*xx0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*xx0*yy0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
-		      + 15*xx0*yy0*zz0 / R7 * C
+		      + 15*xx0*yy0*zz0 *RR7 * C
 		      );
 		  //------------------------------------------------------------
 		  up[3*ind+1] += 
 		     // m_xx*G_xy,x
 		     m0*mxx/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (Aalpha2 - Bbeta2)
+		      - yy0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + xx0*yy0 / R3* (xx0*D - xx0*E)
+		      + xx0*yy0 *RR3* (xx0*D - xx0*E)
 
-		      + 3*xx0*yy0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*xx0*yy0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
-		      + ( 15*xx0*xx0*yy0 / R7 - 3*yy0 / R5 ) * C
+		      + ( 15*xx0*xx0*yy0 *RR7 - 3*yy0 *RR5 ) * C
 		      );
 		  up[3*ind+1] += 
 		     // m_yy**G_yy,y
 		     + m0*myy/(4*M_PI*rho)*
 		     ( 
-		      + 3*yy0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*yy0*yy0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      - 2*yy0 / R3 * (Aalpha2 - Bbeta2)
+		      - 2*yy0 *RR3 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*yy0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*yy0*yy0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	 
-		      + ( 15*yy0*yy0*yy0 / R7 - 6*yy0 / R5 ) * C
+		      + ( 15*yy0*yy0*yy0 *RR7 - 6*yy0 *RR5 ) * C
 	 
-		      + yy0*yy0 / R3* (yy0*D - yy0*E)
+		      + yy0*yy0 *RR3* (yy0*D - yy0*E)
 	 
-		      - 1 / R3 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      - RR3 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      - 3*yy0 / R5 * C
+		      - 3*yy0 *RR5 * C
 
 		      + yy0 / (R3*beta2) * B
 
-		      + 1 / R * yy0*E
+		      + 1 *RR * yy0*E
 		      );
 		  up[3*ind+1] += 
 		     // m_zz*G_zy,z
 		     + m0*mzz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*zz0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*zz0*zz0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (Aalpha2 - Bbeta2)
+		      - yy0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + zz0*yy0 / R3* (zz0*D - zz0*E)
+		      + zz0*yy0 *RR3* (zz0*D - zz0*E)
 
-		      + 3*zz0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*zz0*yy0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
-		      + ( 15*zz0*zz0*yy0 / R7 - 3*yy0 / R5 ) * C
+		      + ( 15*zz0*zz0*yy0 *RR7 - 3*yy0 *RR5 ) * C
 		      );
 		  up[3*ind+1] += 
 		     // m_xy*G_yy,x
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*yy0*yy0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*yy0*yy0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
-		      + 15*xx0*yy0*yy0 / R7 * C
+		      + 15*xx0*yy0*yy0 *RR7 * C
 	  
-		      + yy0*yy0 / R3* (xx0*D - xx0*E)
+		      + yy0*yy0 *RR3* (xx0*D - xx0*E)
 	  
-		      - 1 / R3 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      - RR3 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
-		      - 3*xx0 / R5 * C
+		      - 3*xx0 *RR5 * C
 	  
 		      + xx0 / (R3*beta2) * B
 	  
-		      + 1 / R * xx0*E
+		      + RR * xx0*E
 		      );
 		  up[3*ind+1] += 
 		     // m_xz*G_zy,x
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	  
-		      + yy0*zz0 / R3* (xx0*D - xx0*E)
+		      + yy0*zz0 *RR3* (xx0*D - xx0*E)
 	  
-		      + 3*yy0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*yy0*zz0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
-		      + 15*xx0*yy0*zz0 / R7 * C
+		      + 15*xx0*yy0*zz0 *RR7 * C
 		      );
 		  up[3*ind+1] += 
 		     // m_xy*G_xy,y
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	  
-		      - xx0 / R3 * (Aalpha2 - Bbeta2)
+		      - xx0 *RR3 * (Aalpha2 - Bbeta2)
 	  
-		      + xx0*yy0 / R3* (yy0*D - yy0*E)
+		      + xx0*yy0 *RR3* (yy0*D - yy0*E)
 	  
-		      + 3*xx0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*xx0*yy0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	  
-		      + ( 15*xx0*yy0*yy0 / R7 - 3*xx0 / R5 ) * C
+		      + ( 15*xx0*yy0*yy0 *RR7 - 3*xx0 *RR5 ) * C
 		      );
 		  up[3*ind+1] += 
 		     // m_yz*G_zy,y
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*zz0*yy0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	  
-		      - zz0 / R3 * (Aalpha2 - Bbeta2)
+		      - zz0 *RR3 * (Aalpha2 - Bbeta2)
 	  
-		      + zz0*yy0 / R3* (yy0*D - yy0*E)
+		      + zz0*yy0 *RR3* (yy0*D - yy0*E)
 	  
-		      + 3*zz0*yy0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*zz0*yy0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	  
-		      + ( 15*zz0*yy0*yy0 / R7 - 3*zz0 / R5 ) * C
+		      + ( 15*zz0*yy0*yy0 *RR7 - 3*zz0 *RR5 ) * C
 		      );
 		  up[3*ind+1] += 
 		     // m_xz*G_xy,z
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	  
-		      + xx0*yy0 / R3* (zz0*D - zz0*E)
+		      + xx0*yy0 *RR3* (zz0*D - zz0*E)
 	  
-		      + 3*xx0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*xx0*yy0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	  
-		      + 15*xx0*yy0*zz0 / R7 * C
+		      + 15*xx0*yy0*zz0 *RR7 * C
 		      );
 		  up[3*ind+1] += 
 		     // m_yz*G_yy,z
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*yy0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*zz0*yy0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*yy0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*yy0*yy0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	  
-		      + 15*zz0*yy0*yy0 / R7 * C
+		      + 15*zz0*yy0*yy0 *RR7 * C
 	  
-		      + yy0*yy0 / R3* (zz0*D - zz0*E)
+		      + yy0*yy0 *RR3* (zz0*D - zz0*E)
 	  
-		      - 1 / R3 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      - RR3 * (zz0*Aalpha2 - zz0*Bbeta2)
 	  
-		      - 3*zz0 / R5 * C
+		      - 3*zz0 *RR5 * C
 	  
 		      + zz0 / (R3*beta2) * B
 	  
-		      + 1 / R * zz0*E
+		      + RR * zz0*E
 		      );
 		  //------------------------------------------------------------
 		  up[3*ind+2] += 
 		     // m_xx*G_zx,x
 		     + m0*mxx/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*xx0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*xx0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - zz0 / R3 * (Aalpha2 - Bbeta2)
+		      - zz0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + xx0*zz0 / R3* (xx0*D - xx0*E)
+		      + xx0*zz0 *RR3* (xx0*D - xx0*E)
 
-		      + 3*xx0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*xx0*zz0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 
-		      + ( 15*xx0*xx0*zz0 / R7 - 3*zz0 / R5 ) * C
+		      + ( 15*xx0*xx0*zz0 *RR7 - 3*zz0 *RR5 ) * C
 		      );
 		  up[3*ind+2] += 
 		     // m_yy*G_zy,y
 		     + m0*myy/(4*M_PI*rho)*
 		     (
-		      + 3*yy0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*yy0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - zz0 / R3 * (Aalpha2 - Bbeta2)
+		      - zz0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + yy0*zz0 / R3* (yy0*D - yy0*E)
+		      + yy0*zz0 *RR3* (yy0*D - yy0*E)
 
-		      + 3*yy0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*yy0*zz0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      + ( 15*yy0*yy0*zz0 / R7 - 3*zz0 / R5 ) * C
+		      + ( 15*yy0*yy0*zz0 *RR7 - 3*zz0 *RR5 ) * C
 		      );
 		  up[3*ind+2] += 
 		     // m_zz**G_zz,z
 		     + m0*mzz/(4*M_PI*rho)*
 		     ( 
-		      + 3*zz0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*zz0*zz0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      - 2*zz0 / R3 * (Aalpha2 - Bbeta2)
+		      - 2*zz0 *RR3 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*zz0*zz0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*zz0*zz0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	 
-		      + ( 15*zz0*zz0*zz0 / R7 - 6*zz0 / R5 ) * C
+		      + ( 15*zz0*zz0*zz0 *RR7 - 6*zz0 *RR5 ) * C
 	 
-		      + zz0*zz0 / R3* (zz0*D - zz0*E)
+		      + zz0*zz0 *RR3* (zz0*D - zz0*E)
 	 
-		      - 1 / R3 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      - RR3 * (zz0*Aalpha2 - zz0*Bbeta2)
 
-		      - 3*zz0 / R5 * C
+		      - 3*zz0 *RR5 * C
 
 		      + zz0 / (R3*beta2) * B
 
-		      + 1 / R * zz0*E
+		      + RR * zz0*E
 		      );
 		  up[3*ind+2] += 
 		     // m_xy*G_zy,x
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	  
-		      + yy0*zz0 / R3* (xx0*D - xx0*E)
+		      + yy0*zz0 *RR3* (xx0*D - xx0*E)
 	  
-		      + 3*yy0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*yy0*zz0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	  
-		      + 15*xx0*yy0*zz0 / R7 * C
+		      + 15*xx0*yy0*zz0 *RR7 * C
 		      );
 		  up[3*ind+2] += 
 		     // m_xz**G_zz,x
 		     + m0*mxz/(4*M_PI*rho)*
 		     ( 
-		      + 3*xx0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*zz0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*zz0*zz0 / R5 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      + 3*zz0*zz0 *RR5 * (xx0*Aalpha2 - xx0*Bbeta2)
 	 
-		      + 15*xx0*zz0*zz0 / R7 * C
+		      + 15*xx0*zz0*zz0 *RR7 * C
 	 
-		      + zz0*zz0 / R3* (xx0*D - xx0*E)
+		      + zz0*zz0 *RR3* (xx0*D - xx0*E)
 	 
-		      - 1 / R3 * (xx0*Aalpha2 - xx0*Bbeta2)
+		      - RR3 * (xx0*Aalpha2 - xx0*Bbeta2)
 
-		      - 3*xx0 / R5 * C
+		      - 3*xx0 *RR5 * C
 
 		      + xx0 / (R3*beta2) * B
 
-		      + 1 / R * xx0*E
+		      + RR * xx0*E
 		      );
 		  up[3*ind+2] += 
 		     // m_xy*G_xz,y
 		     + m0*mxy/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*yy0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*yy0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      + xx0*zz0 / R3* (yy0*D - yy0*E)
+		      + xx0*zz0 *RR3* (yy0*D - yy0*E)
 
-		      + 3*xx0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*xx0*zz0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      + 15*xx0*yy0*zz0 / R7 * C
+		      + 15*xx0*yy0*zz0 *RR7 * C
 		      );
 		  up[3*ind+2] += 
 		     // m_yz*G_zz,y
 		     + m0*myz/(4*M_PI*rho)*
 		     ( 
-		      + 3*yy0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*yy0*zz0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      + 3*zz0*zz0 / R5 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      + 3*zz0*zz0 *RR5 * (yy0*Aalpha2 - yy0*Bbeta2)
 	 
-		      + 15*yy0*zz0*zz0 / R7 * C
+		      + 15*yy0*zz0*zz0 *RR7 * C
 	 
-		      + zz0*zz0 / R3* (yy0*D - yy0*E)
+		      + zz0*zz0 *RR3* (yy0*D - yy0*E)
 	 
-		      - 1 / R3 * (yy0*Aalpha2 - yy0*Bbeta2)
+		      - RR3 * (yy0*Aalpha2 - yy0*Bbeta2)
 
-		      - 3*yy0 / R5 * C
+		      - 3*yy0 *RR5 * C
 
 		      + yy0 / (R3*beta2) * B
 
-		      + 1 / R * yy0*E
+		      + RR * yy0*E
 		      );
 		  up[3*ind+2] += 
 		     // m_xz*G_xz,z
 		     + m0*mxz/(4*M_PI*rho)*
 		     (
-		      + 3*xx0*zz0*zz0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*xx0*zz0*zz0 *RR5 * (Aalpha2 - Bbeta2)
 	 
-		      - xx0 / R3 * (Aalpha2 - Bbeta2)
+		      - xx0 *RR3 * (Aalpha2 - Bbeta2)
 	 
-		      + xx0*zz0 / R3* (zz0*D - zz0*E)
+		      + xx0*zz0 *RR3* (zz0*D - zz0*E)
 	 
-		      + 3*xx0*zz0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*xx0*zz0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 	 
-		      + ( 15*xx0*zz0*zz0 / R7 - 3*xx0 / R5 ) * C
+		      + ( 15*xx0*zz0*zz0 *RR7 - 3*xx0 *RR5 ) * C
 		      );
 		  up[3*ind+2] += 
 		     // m_yz*G_yz,z
 		     + m0*myz/(4*M_PI*rho)*
 		     (
-		      + 3*zz0*zz0*yy0 / R5 * (Aalpha2 - Bbeta2)
+		      + 3*zz0*zz0*yy0 *RR5 * (Aalpha2 - Bbeta2)
 
-		      - yy0 / R3 * (Aalpha2 - Bbeta2)
+		      - yy0 *RR3 * (Aalpha2 - Bbeta2)
 
-		      + zz0*yy0 / R3* (zz0*D - zz0*E)
+		      + zz0*yy0 *RR3* (zz0*D - zz0*E)
 
-		      + 3*zz0*yy0 / R5 * (zz0*Aalpha2 - zz0*Bbeta2)
+		      + 3*zz0*yy0 *RR5 * (zz0*Aalpha2 - zz0*Bbeta2)
 
-		      + ( 15*zz0*zz0*yy0 / R7 - 3*yy0 / R5 ) * C
+		      + ( 15*zz0*zz0*yy0 *RR7 - 3*yy0 *RR5 ) * C
 		      );
 	       }
 	    }
