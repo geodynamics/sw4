@@ -782,6 +782,9 @@ void Sarray::copy_kplane( Sarray& u, int k )
       RAJA::RangeSegment c_range(0,m_nc);
       RAJA::RangeSegment j_range(m_jb,m_je+1);
       RAJA::RangeSegment i_range(m_ib,m_ie+1);
+      
+      // RAJA::RangeSegment j_range(0,m_je+1-m_jb);
+      // RAJA::RangeSegment i_range(0,m_ie+1-m_ib); // This is slower and uses 38 registers winstead of 37
       RAJA::kernel<COPY_KPLANE_EXEC_POL>(
 			   RAJA::make_tuple(c_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int c,int j,int i) {
@@ -791,11 +794,15 @@ void Sarray::copy_kplane( Sarray& u, int k )
       // 	    {
 			     size_t ind = (i-mib) + mni*(j-mjb) + ind_start; // mni*mnj*(k-mkb);
 			     size_t uind = (i-mib) + mni*(j-mjb) + uind_start; // mni*mnj*(k-um_kb);
+
+			     // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
+			     // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
 			     lm_data[ind+c*nijk] = um_data[uind+c*unijk];
 			   });
    }
    else
    {
+     SW4_MARK_BEGIN("RUNNING ON HOST");
       for( int j=m_jb ; j<=m_je ; j++ )
 	 for( int i=m_ib ; i <= m_ie ; i++ )
 	 {
@@ -804,7 +811,9 @@ void Sarray::copy_kplane( Sarray& u, int k )
 	    for( int c=0 ; c < m_nc ; c++ )
 	       m_data[c+m_nc*ind] = u.m_data[c+m_nc*uind];
 	 }
+        SW4_MARK_END("RUNNING ON HOST");
    }
+ 
 }
 
 //-----------------------------------------------------------------------
