@@ -732,7 +732,6 @@ void MaterialRfile::read_rfile( )
 //	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "float", swapbytes );
 	    delete pio;
 	    mMaterial[p].assign( material_dble, 0 );
-	    delete[] material_dble;
             ::operator delete[](material_dble,Managed);
 	    if( roworder )
 	       mMaterial[p].transposeik();
