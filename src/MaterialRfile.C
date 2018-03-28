@@ -44,6 +44,7 @@
 #include "EW.h"
 #include "MaterialRfile.h"
 #include "Byteswapper.h"
+#include "Mspace.h"
 //#include "Parallel_IO.h"
 
 using namespace std;
@@ -722,7 +723,7 @@ void MaterialRfile::read_rfile( )
 	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, m_bufsize );
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
     // Read corresponding part of patches
-	    double* material_dble = new double[mMaterial[p].m_npts];
+	    double* material_dble = SW4_NEW(Managed,double[mMaterial[p].m_npts]);
 	    if( prec == 8 )
 	       pio->read_array( &fd, ncblock[p], material_dble, pos0, "double", swapbytes );
 //	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "double", swapbytes );
@@ -732,6 +733,7 @@ void MaterialRfile::read_rfile( )
 	    delete pio;
 	    mMaterial[p].assign( material_dble, 0 );
 	    delete[] material_dble;
+            ::operator delete[](material_dble,Managed);
 	    if( roworder )
 	       mMaterial[p].transposeik();
 	 }

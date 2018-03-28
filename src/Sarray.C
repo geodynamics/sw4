@@ -1072,7 +1072,8 @@ void Sarray::transposeik( )
 #pragma omp parallel for   
    for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
       m_data[i] = tmpar[i];
-   delete[] tmpar;
+   //::operator delete[] tmpar;
+    ::operator delete[](tmpar,Managed);
 }
 
    
