@@ -918,6 +918,16 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    ASSERT_MANAGED(a_strx);
    ASSERT_MANAGED(a_stry);
    ASSERT_MANAGED(a_strz);
+
+
+   using RHS_POL = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								      RAJA::statement::Lambda<0> >>>>>;
+
    
    {
 // #pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
@@ -933,14 +943,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 // #pragma ivdep
 // 	 for( i=ifirst+2; i <= ilast-2 ; i++ )
 // 	 {
-     using RHS_POL = 
-       RAJA::KernelPolicy< 
-       RAJA::statement::CudaKernel<
-	 RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
-			      RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
-						   RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-									RAJA::statement::Lambda<0> >>>>>;
-     RAJA::RangeSegment k_range(k1,k2+1);
+        RAJA::RangeSegment k_range(k1,k2+1);
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
      RAJA::kernel<RHS_POL>(
@@ -1442,7 +1445,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	RAJA::RangeSegment k_range(nk-5,nk+1);
 	RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-	RAJA::kernel<RHS4_EXEC_POL>(
+	RAJA::kernel<RHS_POL>(
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
 			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;

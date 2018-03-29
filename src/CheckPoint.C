@@ -8,6 +8,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <cstdio>
+#include "caliper.h"
 
 CheckPoint* CheckPoint::nil=static_cast<CheckPoint*>(0);
 
@@ -242,6 +243,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
 				   vector<Sarray>& a_U, vector<Sarray*>& a_AlphaVEm,
 				   vector<Sarray*>& a_AlphaVE )
 {
+  SW4_MARK_FUNCTION;
    //
    //File format: 
    //

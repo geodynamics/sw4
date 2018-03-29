@@ -134,9 +134,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   vector<GridPointSource*> point_sources;
 
 // Transfer source terms to each individual grid as point sources at grid points.
+  SW4_MARK_BEGIN("set_grid_point_sources4");
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
-
+   SW4_MARK_END("set_grid_point_sources4");
  // Debug
   // for (int proc = 0; proc<m_nProcs; proc++)
   //    if (proc == m_myRank)
@@ -590,7 +591,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // end test
 
 // BEGIN TIME STEPPING LOOP
-
+       SW4_MARK_BEGIN("TIME_STEPPING");
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
@@ -985,7 +986,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
     
   } // end time stepping loop
-
+SW4_MARK_END("TIME_STEPPING");
   if ( !mQuiet && proc_zero() )
     cout << "  Time stepping finished..." << endl;
 
@@ -1290,6 +1291,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
 		    float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *c_ptr, h;
   boundaryConditionType *bcType_ptr;
@@ -3501,6 +3503,7 @@ void EW::test_sources( vector<GridPointSource*>& a_point_sources,
 		       vector<Source*>& a_global_unique_sources, vector<Sarray>& a_F,
 		       vector<int>& identsources )
 {
+  SW4_MARK_FUNCTION;
 // Check the source discretization
   int kx[3] = {0,0,0};
   int ky[3] = {0,0,0};

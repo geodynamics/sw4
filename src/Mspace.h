@@ -13,7 +13,7 @@ void prefetch_to_device(const float_sw4 *ptr);
 #else
 #define SW4_CheckDeviceError(err) ()
 #endif
-
+void check_mem();
 enum Space { Host, Managed,Device };
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc) ;
 void operator delete(void *ptr, Space loc) throw();
@@ -21,7 +21,11 @@ void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc) ;
 void * operator new[](std::size_t size,Space loc,const char *file,int line);
 void operator delete[](void *ptr, Space loc) throw();
 
+struct global_variable_holder_struct {
+  size_t gpu_memory_hwm ;
+};
 
+extern struct global_variable_holder_struct global_variables;
 
 
 #define SW4_TRACK_MEMORY_ALLOCATIONS 1

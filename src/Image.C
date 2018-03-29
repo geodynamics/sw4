@@ -41,7 +41,7 @@
 #include <ctime>
 #include <cstring>
 #include <unistd.h>
-
+#include "caliper.h"
 // initializing static member
 int Image::mPreceedZeros=0;
 
@@ -2365,6 +2365,7 @@ void Image::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 			  vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
                           vector<Source*>& a_sources, int a_dminus )
 {
+  SW4_MARK_FUNCTION;
    if( mMode == HMAXDUDT)
    {
       if( a_dminus )

@@ -45,6 +45,8 @@
 #include "MaterialRfile.h"
 #include "Byteswapper.h"
 #include "Mspace.h"
+#include "caliper.h"
+
 //#include "Parallel_IO.h"
 
 using namespace std;
@@ -69,6 +71,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 			       std::vector<Sarray> & xis, 
 			       std::vector<Sarray> & xip )
 {
+  SW4_MARK_FUNCTION;
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
@@ -325,6 +328,7 @@ int MaterialRfile::io_processor( )
 //-----------------------------------------------------------------------
 void MaterialRfile::read_rfile( )
 {
+  SW4_MARK_FUNCTION;
    string rname = "MaterialRfile::read_rfile";
 
   // Figure out bounding box in this processor
@@ -770,6 +774,7 @@ void MaterialRfile::read_rfile( )
 //-----------------------------------------------------------------------
 void MaterialRfile::fill_in_fluids()
 {
+  SW4_MARK_FUNCTION;
 // Start from p=1, p=0 is the topography.
 //   for( int p=1 ; p < m_npatches ; p++ )
 // start from the last (bottom) block and progress upwards

@@ -1,6 +1,7 @@
 #include "Mspace.h"
 #include <unordered_map>
 
+struct global_variable_holder_struct global_variables = { .gpu_memory_hwm=0 };
 using namespace std;
 
 typedef struct {
@@ -25,9 +26,12 @@ pattr_t *patpush(void *ptr, pattr_t *ss){
 }
   
 
-
-
-
+void check_mem(){
+  size_t mfree,mtotal;
+  SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
+  global_variables.gpu_memory_hwm=std::max((mtotal-mfree), global_variables.gpu_memory_hwm);
+}
+  
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc){
 #ifdef ENABLE_CUDA
 if (loc==Managed){
@@ -37,7 +41,10 @@ if (loc==Managed){
     if (cudaMallocManaged(&ptr,size)!=cudaSuccess){
       std::cerr<<"Mananged memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
-    } else return ptr;
+    } else {
+      check_mem();
+      return ptr;
+    }
     
   } else if (loc==Host){
   //std::cout<<"Calling my placement new \n";

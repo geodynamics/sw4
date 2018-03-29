@@ -145,7 +145,15 @@ RAJA::RangeSegment i_range(ifirst,ilast+1);
 RAJA::RangeSegment j_range(jfirst,jlast+1);
 RAJA::RangeSegment k_range(k1,k2+1);
 RAJA::RangeSegment c_range(0,3);
-RAJA::kernel<DEFAULT_LOOP4>(RAJA::make_tuple(i_range,j_range,k_range,c_range),
+using LOCAL_POL  =
+  RAJA::KernelPolicy<
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<64>,
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
+  RAJA::statement::For<3, RAJA::seq_exec,
+								   RAJA::statement::Lambda<0> >>>>>>;
+RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(i_range,j_range,k_range,c_range),
 			    [=]RAJA_DEVICE (int i,int j, int k,int c) {
 			    size_t ind = base+i+ni*j+nij*k;
 			    // Note that alp is ASSIGNED by this formula

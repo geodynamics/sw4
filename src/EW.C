@@ -583,6 +583,7 @@ EW::
 {
 #if defined(ENABLE_CUDA)
   ::operator delete[](m_sbop,Managed);
+  std::cout<<"GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024/1024<<" Gb \n";
 #endif
 //  msgStream.close();
 }
@@ -1670,6 +1671,7 @@ void EW::default_bcs( )
 void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, 
                            float_sw4 &diffL2, float_sw4 &xInf, vector<Source*>& a_globalSources )
 {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
   int imin, imax, jmin, jmax, kmin, kmax;
   
@@ -1801,6 +1803,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 //---------------------------------------------------------------------------
 void EW::normOfDifferenceGhostPoints( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_sw4 &diffInf, float_sw4 &diffL2 )
 {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uex_ptr, *u_ptr, h, linfLocal=0, l2Local=0, diffInfLocal=0, diffL2Local=0;
 
@@ -1969,6 +1972,7 @@ void EW::bndryInteriorDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U,
 void EW::test_RhoUtt_Lu( vector<Sarray> & a_Uacc,  vector<Sarray> & a_Lu,   vector<Sarray> & a_F, 
 			 float_sw4* lowZ, float_sw4* interiorZ, float_sw4* highZ )
 {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
   float_sw4 *rho_ptr, *uacc_ptr, *lu_ptr, *f_ptr, h, li, l2;
   
@@ -2147,6 +2151,7 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
 bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_AlphaVE,
 		  vector<Source*>& sources )
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *u_ptr, om, ph, cv, h, zmin;
   bool retval;
@@ -3676,6 +3681,7 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F)
 //---------------------------------------------------------------------------
 void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc)
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uacc_ptr, om, ph, cv, h, zmin;
   
@@ -4302,13 +4308,14 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   
   for(g=0 ; g<mNumberOfCartesianGrids; g++ )
   {
+    a_Uacc[g].prefetch();
     a_Uacc[g].set_to_zero();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
     mu_ptr  = a_Mu[g].c_ptr();
     la_ptr  = a_Lambda[g].c_ptr();
 
-    a_Uacc[g].prefetch();
+
     a_U[g].prefetch();
     a_Mu[g].prefetch();
     a_Lambda[g].prefetch();
@@ -4867,6 +4874,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 			vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			vector<Source*> & a_sources, int dminus )
 {
+  SW4_MARK_FUNCTION;
    //   double maxerr;
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
    {
@@ -6878,6 +6886,7 @@ void EW::get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth
 //-----------------------------------------------------------------------
 bool EW::check_for_nan( vector<Sarray>& a_U, int verbose, string name )
 {
+  SW4_MARK_FUNCTION;
    bool retval = false;
    for( int g=0 ; g<mNumberOfGrids; g++ )
    {
