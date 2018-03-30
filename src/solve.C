@@ -2650,7 +2650,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 	 UnextV(1,i,j,kic) = 2*a_UpV(1,i,j,kic) - a_UV(1,i,j,kic) + irho*(LuV(1,i,j,kic)+FV(1,i,j,kic)); //+f(1,i,j,kic));
 	 UnextV(2,i,j,kic) = 2*a_UpV(2,i,j,kic) - a_UV(2,i,j,kic) + irho*(LuV(2,i,j,kic)+FV(2,i,j,kic)); //+f(2,i,j,kic));
 	 UnextV(3,i,j,kic) = 2*a_UpV(3,i,j,kic) - a_UV(3,i,j,kic) + irho*(LuV(3,i,j,kic)+FV(3,i,j,kic)); //+f(3,i,j,kic));
-			}); SYNC_DEVICE;
+			}); SYNC_STREAM;
 // add in super-grid damping terms
    if (mOrder==2 && usingSupergrid()) // only needed for 2nd order time-stepping. Assume 4th order AD, Cartesian grid
    {

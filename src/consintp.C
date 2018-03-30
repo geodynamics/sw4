@@ -113,7 +113,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
          {
             BfV(c,i,j,nkf) = BfV(c,i,j,nkf)/(strf_x(i)*strf_y(j));
          }
-			}); SYNC_DEVICE;
+			}); SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP1");
    SView &BcV = Bc.getview();
    Bc.prefetch();
@@ -131,7 +131,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 #pragma unroll
          for (int c=1; c<=3; c++)
 	   BcV(c,ic,jc,1) = BcV(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
-			}); SYNC_DEVICE;
+			}); SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP2");
 // pre-compute BfRestrict
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
@@ -161,7 +161,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
                +9*(-BfV(c,i+1,j-3,nkf)+9*BfV(c,i+1,j-1,nkf)+16*BfV(c,i+1,j,nkf)+9*BfV(c,i+1,j+1,nkf)-BfV(c,i+1,j+3,nkf)) +
                BfV(c,i+3,j-3,nkf)-9*BfV(c,i+3,j-1,nkf)-16*BfV(c,i+3,j,nkf)-9*BfV(c,i+3,j+1,nkf)+BfV(c,i+3,j+3,nkf)
                );
-			  }); SYNC_DEVICE;
+			  }); SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP3");
 // index bounds for loops below
    int ifodd = ifb, ifeven= ifb;
@@ -238,7 +238,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       +UnextcV(c,ic-1,jc+2,1)-9*(UnextcV(c,ic,jc+2,1)+UnextcV(c,ic+1,jc+2,1))+UnextcV(c,ic+2,jc+2,1) );
 			});
 }  // end for c=1,3
-   SYNC_DEVICE;
+   SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP4");
 // Allocate space for the updated values of Uf and Uc (ghost points only)
    SW4_MARK_BEGIN("CONSINTP_SARRAY_ALLOCATION");

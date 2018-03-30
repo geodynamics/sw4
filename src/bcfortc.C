@@ -600,7 +600,7 @@ void EW::twdirbdry_ci( int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
 			  bforce[1+3*qq]=sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
 			  bforce[2+3*qq]=sin(om*x+ph)*sin(om*y+ph)*sin(om*(z-cv*t));
 	    //qq++;
-			}); SYNC_DEVICE;
+			}); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

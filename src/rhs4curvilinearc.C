@@ -1,6 +1,7 @@
 #include <cmath>
 #include "sw4.h"
 #include "EW.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 void EW::gridinfo_ci( int ib, int ie, int jb, int je, int kb, int ke,
@@ -24,6 +25,7 @@ int EW::metric_ci( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* __
 		   float_sw4* __restrict__ a_y, float_sw4* __restrict__ a_z,
 		   float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac )
 {
+  SW4_MARK_FUNCTION;
    const float_sw4 c1=2.0/3, c2=-1.0/12;
    const float_sw4 fs= 5.0/6, ot=1.0/12, ft=4.0/3, os=1.0/6, d3=14.0/3;
    const int ni    = ie-ib+1;
@@ -133,8 +135,8 @@ int EW::metric_ci( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* __
 	    if( zr <= 0 )
 	    {
 	       ecode = -1;
-	       //	       cout << "zr = " << zr << " at " << i << " " << j << " " << k << endl;
-	       //	       cout << "x,y,z = " << x(i,j,k) << " " << y(i,j,k) << " " << z(i,j,k) << endl;
+	       	       cout << "zr = " << zr << " at " << i << " " << j << " " << k << endl;
+	       	       cout << "x,y,z = " << x(i,j,k) << " " << y(i,j,k) << " " << z(i,j,k) << endl;
 	    }
 	    sqzr = sqrt(zr);
 	    jac(i,j,k) = h*h*zr;

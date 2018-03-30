@@ -11,8 +11,8 @@ PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
 CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_ray
 EXTRA_FORT_FLAGS = 
 LINKFLAGS = 
-EXTRA_CXX_FLAGS =  -g -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1" -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include
+EXTRA_CXX_FLAGS =  -O3 -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict " -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include
 
-EXTRA_CXX_FLAGS2 =  -g  -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1" -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA 
+EXTRA_CXX_FLAGS2 =  -O3  -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict " -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA 
 
 EXTRA_LINK_FLAGS = -dc -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_LOCATION)/lib -lRAJA  -lcudadevrt -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper -L $(PROJ_HOME)/lib -lproj

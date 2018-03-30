@@ -301,10 +301,10 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 
 //-----------------------------------------------------------------------
 void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
-		     int kend )
+		     int kend ,Space space)
 {
    if( m_data != NULL )
-      ::operator delete[](m_data,Managed);
+     ::operator delete[](m_data,space); // This is potential bug sincewe dont know the space that m_data was originally allocated in. PBUGS
    m_nc = 1;
    m_ib = ibeg;
    m_ie = iend;
@@ -316,7 +316,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 )
-     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
+     m_data = SW4_NEW(space,float_sw4[m_nc*m_ni*m_nj*m_nk]);
    else
       m_data = NULL;
    dev_data = NULL;
@@ -802,7 +802,7 @@ void Sarray::copy_kplane( Sarray& u, int k )
 			     // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
 			     // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
 			     lm_data[ind+c*nijk] = um_data[uind+c*unijk];
-			   });
+			   }); SYNC_STREAM;
    }
    else
    {
@@ -943,7 +943,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::kernel<ASSIGN_POL>(
 		 		      RAJA::make_tuple(c_range,k_range,j_range,i_range),
 		 		      [=]RAJA_DEVICE (int c,int k, int j,int i) {
-		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];});
+		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];}); SYNC_STREAM;
    }
    else
    {
@@ -960,7 +960,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::kernel<SARRAY_LOOP_POL2>(
 		 		      RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		 		      [=]RAJA_DEVICE (int i,int j, int k,int c) {
-					m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];});
+					m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];}); SYNC_STREAM;
    }
 }
 

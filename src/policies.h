@@ -190,7 +190,8 @@ using BCFORT_EXEC_POL2 = ICSTRESS_EXEC_POL;
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>>> >;
 
-#define SYNC_DEVICE cudaDeviceSynchronize()
+#define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
+#define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))
 
 //****************************** OMP POLICIES *******************************************
 #else
@@ -315,6 +316,7 @@ using BCFORT_EXEC_POL2 = RAJA::KernelPolicy<
   RAJA::statement::For<1, RAJA::simd_exec> >;
 
 #define SYNC_DEVICE
+#define SYNC_STREAM
 
 #endif
 

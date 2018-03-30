@@ -86,7 +86,7 @@ public:
    void define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 		int kend );
    void define( int ibeg, int iend, int jbeg, int jend, int kbeg,
-		int kend );
+		int kend , Space space=Managed);
    void define( const Sarray& u );
    inline float_sw4* c_ptr() {return m_data;}
 #ifdef SW4_CUDA

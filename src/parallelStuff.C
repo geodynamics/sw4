@@ -348,8 +348,8 @@ void EW::setupMPICommunications()
 void EW::communicate_array( Sarray& u, int grid )
 {
   SW4_MARK_FUNCTION;
-  communicate_array_async(u,grid);
-  return;
+  //communicate_array_async(u,grid);
+  //return;
   // REQUIRE2( 0 <= grid && grid < mU.size() , 
   // 	    " Error in communicate_array, grid = " << grid );
    
@@ -802,6 +802,40 @@ void EW::communicate_array_async(Sarray& u, int grid )
 		    m_cartesian_communicator, &status );
       }
    }
+else if( u.m_nc == 21 )
+   {
+     std::cout<<"This is happening\n";
+      int xtag1 = 345;
+      int xtag2 = 346;
+      int ytag1 = 347;
+      int ytag2 = 348;
+#pragma omp parallel default(shared) if (threaded_mpi)
+#pragma omp sections 
+      {
+      // X-direction communication
+#pragma omp section  
+      AMPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,kb), 1, send_type21[2*grid], m_neighbor[1], xtag1,
+		    &u(1,ib,jb,kb), 1, send_type21[2*grid], m_neighbor[0], xtag1,
+		    bufs_type21[4*grid],
+		    m_cartesian_communicator, &status );
+#pragma omp section  
+      AMPI_Sendrecv( &u(1,ib+m_ppadding,jb,kb), 1, send_type21[2*grid], m_neighbor[0], xtag2,
+		    &u(1,ie-(m_ppadding-1),jb,kb), 1, send_type21[2*grid], m_neighbor[1], xtag2,
+		    bufs_type21[4*grid+1],
+		    m_cartesian_communicator, &status );
+#pragma omp section  
+      // Y-direction communication
+      AMPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),kb), 1, send_type21[2*grid+1], m_neighbor[3], ytag1,
+		    &u(1,ib,jb,kb), 1, send_type21[2*grid+1], m_neighbor[2], ytag1,
+		    bufs_type21[4*grid+2],
+		    m_cartesian_communicator, &status );
+#pragma omp section  
+      AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,kb), 1, send_type21[2*grid+1], m_neighbor[2], ytag2,
+		    &u(1,ib,je-(m_ppadding-1),kb), 1, send_type21[2*grid+1], m_neighbor[3], ytag2,
+		    bufs_type21[4*grid+3],
+		    m_cartesian_communicator, &status );
+      }
+   }
    //u.prefetch();
 }
 void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sendto, int stag,
@@ -851,7 +885,7 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
     for (int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
   });
 
-  SYNC_DEVICE;
+  SYNC_STREAM;
   //std::cout<<"Done\n";
 }
 void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
@@ -865,6 +899,6 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
       for (int k=0;k<bl;k++) data[i*stride+k]=buf[k+i*bl];
     });
 
-  SYNC_DEVICE;
+  SYNC_STREAM;
   //std::cout<<"Done\n";
 }

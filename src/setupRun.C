@@ -40,6 +40,7 @@
 #include <sstream>
 #include <list>
 #include <unistd.h>
+#include "caliper.h"
 
 #include "F77_FUNC.h"
 extern "C" {
@@ -1582,6 +1583,7 @@ void EW::computeDT()
 //-----------------------------------------------------------------------
 void EW::computeDTanisotropic()
 {
+  SW4_MARK_FUNCTION;
    if (!mQuiet && mVerbose >= 1 && proc_zero())
    {
       printf("*** computing the time step ***\n");

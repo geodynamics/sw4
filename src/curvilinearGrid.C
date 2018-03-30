@@ -32,6 +32,7 @@
 #include "mpi.h"
 
 #include "EW.h"
+#include "caliper.h"
 
 #include "F77_FUNC.h"
 extern "C" {
@@ -115,6 +116,7 @@ void EW::setup_metric()
 //-----------------------------------------------------------------------
 void EW::generate_grid()
 {
+  SW4_MARK_FUNCTION;
    // Generate grid on domain: topography <= z <= zmax, 
    // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
    // spacing h.

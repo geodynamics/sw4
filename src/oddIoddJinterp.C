@@ -494,7 +494,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       // rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
       
 		       }); // end for ic, jc
-			 SYNC_DEVICE;
+			 SYNC_STREAM;
 // update Uf and Uc
 // #pragma omp parallel
 //   for( int c=1 ; c <= 3 ; c++ ) 
@@ -516,7 +516,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
 	Uc(c,ic,jc,0) = UcNew(c,ic,jc,0);
 		       });
-  SYNC_DEVICE;
+  SYNC_STREAM;
   rmax[0] = static_cast<float_sw4>(rmax1.get());
   rmax[1] = static_cast<float_sw4>(rmax2.get());
   rmax[2] = static_cast<float_sw4>(rmax3.get());

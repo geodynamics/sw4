@@ -94,7 +94,7 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
                if( k >= k2-3 && onesided5 )
                   normfact = normwgh[k2-k];
                energy += normfact*h*h*h*term;
-}); SYNC_DEVICE;
+}); SYNC_STREAM;
   a_energy = static_cast<float_sw4>(energy.get());
 }
 #undef u

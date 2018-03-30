@@ -32,6 +32,7 @@
 
 #include "sw4.h"
 #include <sys/types.h>
+#include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
 
@@ -52,7 +53,6 @@ SW4_MARK_FUNCTION;
    float_sw4 dto = dt*omega;
    float_sw4 icp = 1/( 1.0/2 + 1/(2*dto) );
    float_sw4 cm = 0.5 - 1/(2*dto);
-
    int k1,k2;
    if( domain==0 )
    {
@@ -79,16 +79,31 @@ SW4_MARK_FUNCTION;
 // 	 for( int j=jfirst ; j<= jlast; j++ )
 // 	    for( int i=ifirst ; i<= ilast; i++ )
 // 	    {
+
+   ASSERT_MANAGED(alp);
+   ASSERT_MANAGED(alm);
+   ASSERT_MANAGED(u);
+   
    RAJA::RangeSegment i_range(ifirst,ilast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
-   RAJA::RangeSegment k_range(kfirst,klast+1);
+   RAJA::RangeSegment k_range(k1,k2+1);
    RAJA::RangeSegment c_range(0,3);
+
+   using LOCAL_POL =
+  RAJA::KernelPolicy<
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
+			 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1>,
+					      RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1024>,
+								   RAJA::statement::For<3, RAJA::seq_exec,
+								   RAJA::statement::Lambda<0> >>>>>>;
+
    RAJA::kernel<DEFAULT_LOOP4>(
-				  RAJA::make_tuple(i_range,j_range,k_range,c_range),
-				  [=]RAJA_DEVICE (int i,int j, int k,int c) {
+				  RAJA::make_tuple(c_range,k_range,j_range,i_range),
+				  [=]RAJA_DEVICE (int c,int k, int j,int i) {
 	       size_t ind = base+i+ni*j+nij*k;
 	       alp[ind+c*nijk] = icp*(-cm*alm[ind+c*nijk] + u[ind+c*nijk] );
-				  });
+				  }); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -159,7 +174,7 @@ RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(i_range,j_range,k_range,c_range),
 			    // Note that alp is ASSIGNED by this formula
 			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] + u[ind+c*nijk] + i6* ( dto*dto*u[ind+c*nijk] + 
 											       dto*(up[ind+c*nijk]-um[ind+c*nijk]) + (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );
-			    });
+			}); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

@@ -304,7 +304,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	    lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			}); // End of rhs4th3fort_ci LOOP 1
-     SYNC_DEVICE;
+     SYNC_STREAM;
       if( onesided[4]==1 )
       {
 	RAJA::RangeSegment k_range(1,6+1);
@@ -557,7 +557,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fort_ci LOOP 2
-	SYNC_DEVICE;
+	SYNC_STREAM;
       }
       if( onesided[5] == 1 )
       {
@@ -820,7 +820,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fort_ci LOOP 3
-	SYNC_DEVICE;
+	SYNC_STREAM;
       }
    }
 #undef mu

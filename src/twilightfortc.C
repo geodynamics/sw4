@@ -626,7 +626,7 @@ void EW::forcingfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 	fo[ind] = forces[0];
 	fo[ind+nijk] = forces[1];
 	fo[ind+2*nijk] = forces[2];
-			}); SYNC_DEVICE;
+			}); SYNC_STREAM;
    // 	 }
    //    }
    // }

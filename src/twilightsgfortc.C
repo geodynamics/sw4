@@ -509,7 +509,7 @@ void EW::forcingfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 	fo[ind] = forces[0];
 	fo[ind+nijk] = forces[1];
 	fo[ind+2*nijk] = forces[2];
-			       }); SYNC_DEVICE;
+			       }); SYNC_STREAM;
    //}
 }
 
@@ -838,7 +838,7 @@ void EW::forcingfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, int 
       // 	    }
       // 	 }
       // }
-			       }); SYNC_DEVICE;
+			       }); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
