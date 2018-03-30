@@ -348,8 +348,13 @@ void EW::setupMPICommunications()
 void EW::communicate_array( Sarray& u, int grid )
 {
   SW4_MARK_FUNCTION;
-  //communicate_array_async(u,grid);
-  //return;
+  // The async version using either device or managed memory works 
+  // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
+  // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
+  // communicate_array_async with device buffers and -gpu 29 minutes 18 secs
+  // communicate_array_async with UM buffers and -gpu 29 minutes 20 secs
+  communicate_array_async(u,grid);
+  return;
   // REQUIRE2( 0 <= grid && grid < mU.size() , 
   // 	    " Error in communicate_array, grid = " << grid );
    

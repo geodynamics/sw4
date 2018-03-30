@@ -4420,7 +4420,7 @@ void EW::allocateCurvilinearArrays()
 // allocate mX, mY, and mZ arrays
   mX.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
   mY.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
-  mZ.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop],Host);
+  mZ.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
 // Allocate array for the metric
   mMetric.define(4,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
 // and the Jacobian of the transformation
