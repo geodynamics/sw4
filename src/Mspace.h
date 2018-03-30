@@ -23,6 +23,8 @@ void operator delete[](void *ptr, Space loc) throw();
 
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm ;
+  size_t curr_mem;
+  size_t max_mem;
 };
 
 extern struct global_variable_holder_struct global_variables;

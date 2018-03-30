@@ -584,6 +584,7 @@ EW::
 #if defined(ENABLE_CUDA)
   ::operator delete[](m_sbop,Managed);
   std::cout<<"GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024/1024<<" Gb \n";
+  std::cout<<"GPU Memory Max = "<<global_variables.max_mem/1024/1024/1024<<" Gb \n";
 #endif
 //  msgStream.close();
 }

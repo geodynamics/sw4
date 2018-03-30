@@ -1,7 +1,7 @@
 #include "Mspace.h"
 #include <unordered_map>
 
-struct global_variable_holder_struct global_variables = { .gpu_memory_hwm=0 };
+struct global_variable_holder_struct global_variables = { .gpu_memory_hwm=0 , .curr_mem=0, .max_mem = 0 };
 using namespace std;
 
 typedef struct {
@@ -43,6 +43,8 @@ if (loc==Managed){
       throw std::bad_alloc();
     } else {
       check_mem();
+      global_variables.curr_mem+=size;
+      global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
       return ptr;
     }
     
@@ -95,7 +97,12 @@ if (loc==Managed){
     if (cudaMallocManaged(&ptr,size)!=cudaSuccess){
       std::cerr<<"Managed memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
-    } else return ptr;
+    } else {
+      check_mem();
+      global_variables.curr_mem+=size;
+      global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
+      return ptr;
+    }
     
   } else if (loc==Host){
   // std::cout<<"Calling my placement new \n";
@@ -141,6 +148,11 @@ void operator delete(void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
   if ((loc==Managed)||(loc==Device)){
     //std::cout<<"Managed delete\n";
+    pattr_t *ss = patpush(ptr,NULL);
+    if (ss!=NULL){
+      global_variables.curr_mem-=ss->size;
+      //global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
+    }
     cudaFree(ptr);
   } else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
@@ -165,6 +177,11 @@ void operator delete[](void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
   if ((loc==Managed)||(loc==Device)){
     //std::cout<<"Managed [] delete\n";
+    pattr_t *ss = patpush(ptr,NULL);
+    if (ss!=NULL){
+      global_variables.curr_mem-=ss->size;
+      //global_variables.max_mem=std::max(global_variables.max_mem,curr_mem);
+    }
     cudaFree(ptr);
   } else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
