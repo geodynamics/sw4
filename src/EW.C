@@ -4309,7 +4309,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   
   for(g=0 ; g<mNumberOfCartesianGrids; g++ )
   {
-    a_Uacc[g].prefetch();
+    //a_Uacc[g].prefetch();
     a_Uacc[g].set_to_zero();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
@@ -4320,6 +4320,10 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
     a_U[g].prefetch();
     a_Mu[g].prefetch();
     a_Lambda[g].prefetch();
+    prefetch_to_device(m_sg_str_x[g]);
+    prefetch_to_device(m_sg_str_y[g]);
+    prefetch_to_device(m_sg_str_z[g]);
+    prefetch_to_device( m_sbop);
     //    rho_ptr = mRho[g].c_ptr();
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
@@ -4829,6 +4833,9 @@ void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alph
          float_sw4* alphap_ptr = a_AlphaVEp[g][a].c_ptr();
          float_sw4* alpha_ptr  = a_AlphaVE[g][a].c_ptr();
          float_sw4* alpham_ptr = a_AlphaVEm[g][a].c_ptr();
+	 a_AlphaVEp[g][a].prefetch();
+	 a_AlphaVE[g][a].prefetch();
+	 a_AlphaVEm[g][a].prefetch();
 	 if( m_croutines )
 	    dpdmtfortatt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			 alphap_ptr, alpha_ptr, alpham_ptr, dt2i );

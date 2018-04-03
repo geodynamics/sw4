@@ -423,6 +423,7 @@ void Sarray::set_to_zero()
   SW4_MARK_FUNCTION;
 // #pragma omp parallel for
 //    for( size_t i=0 ; i < m_npts ; i++ )
+  prefetch();
   float_sw4 *lm_data =m_data;
 RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,m_npts),[=] RAJA_DEVICE(size_t i){
     lm_data[i] = 0;});
@@ -434,6 +435,7 @@ void Sarray::set_to_minusOne()
   SW4_MARK_FUNCTION;
 // #pragma omp parallel for
 //    for( size_t i=0 ; i < m_npts ; i++ )
+  prefetch();
   float_sw4 *lm_data =m_data;
 RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,m_npts),[=] RAJA_DEVICE(size_t i){
     lm_data[i] = -1.;});

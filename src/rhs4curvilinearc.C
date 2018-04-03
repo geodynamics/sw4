@@ -248,6 +248,7 @@ void EW::freesurfcurvi_ci( int ib, int ie, int jb, int je, int kb, int ke,
 			   float_sw4* __restrict__ a_met, float_sw4* s,
 			   float_sw4* __restrict__ a_forcing )
 {
+  SW4_MARK_FUNCTION;
    const float_sw4 c1=2.0/3, c2=-1.0/12;
 
    const int ni    = ie-ib+1;
@@ -382,6 +383,7 @@ void EW::getsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
 			    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_tau,
 			    float_sw4* __restrict__ a_forcing )
 {
+  SW4_MARK_FUNCTION;
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = ni*(jlast-jfirst+1)*(klast-kfirst+1);
@@ -465,6 +467,7 @@ void EW::subsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
 			    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_tau,
 			    float_sw4* __restrict__ a_forcing )
 {
+  SW4_MARK_FUNCTION;
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = ni*(jlast-jfirst+1)*(klast-kfirst+1);

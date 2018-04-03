@@ -1,6 +1,8 @@
 #include <cmath>
 #include "sw4.h"
 #include "EW.h"
+#include "caliper.h"
+#include "Mspace.h"
 
 //-----------------------------------------------------------------------
 void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
@@ -10,6 +12,7 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
 			     float_sw4* __restrict__ a_forcing, float_sw4* __restrict__ a_strx,
 			     float_sw4* __restrict__ a_stry )
 {
+  SW4_MARK_FUNCTION;
    const float_sw4 c1=2.0/3, c2=-1.0/12;
 
    const int ni    = ie-ib+1;
@@ -41,15 +44,27 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
    }
 
    float_sw4 s0i = 1/s[0];
-#pragma omp parallel for
-   for( int j= jb+2; j<=je-2 ; j++ )
-   {
-      float_sw4 istry = 1/stry(j);
-#pragma ivdep
-#pragma simd
-      for( int i= ib+2; i<=ie-2 ; i++ )
-      {
+// #pragma omp parallel for
+//    for( int j= jb+2; j<=je-2 ; j++ )
+//    {
+      
+// #pragma ivdep
+// #pragma simd
+//       for( int i= ib+2; i<=ie-2 ; i++ )
+//       {
+using LOCAL_POL = 
+	   RAJA::KernelPolicy< 
+	   RAJA::statement::CudaKernel<
+	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+						       RAJA::statement::Lambda<0> >>>>;
+	   RAJA::RangeSegment i_range(ib+2,ie-1);
+	    RAJA::RangeSegment j_range(jb+2,je-1);
+	    RAJA::kernel<LOCAL_POL>(
+			    RAJA::make_tuple(j_range,i_range),
+			    [=]RAJA_DEVICE (int j,int i) {
 	 float_sw4 istrx = 1/strx(i);
+	 float_sw4 istry = 1/stry(j);
 // First tangential derivatives
 	 float_sw4 rhs1 = 
 // pr
@@ -131,8 +146,8 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
             u(3,i,j,k-kl) = -s0i*(  s[1]*u(3,i,j,k)+s[2]*u(3,i,j,k+kl)+
                 s[3]*u(3,i,j,k+2*kl)+s[4]*u(3,i,j,k+3*kl) + bc*rhs3 - 
 				    dc*met(4,i,j,k)*isqrtxy );
-      }
-   }
+			    });
+	    //}
 #undef mu
 #undef la
 #undef met
@@ -149,6 +164,7 @@ void EW::getsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
 			      float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
 			      float_sw4* __restrict__ a_forcing )
 {
+  SW4_MARK_FUNCTION;
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = ni*(jlast-jfirst+1)*(klast-kfirst+1);
@@ -203,6 +219,7 @@ void EW::subsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
 			      float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
 			      float_sw4* __restrict__ a_forcing )
 {
+  SW4_MARK_FUNCTION;
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = ni*(jlast-jfirst+1)*(klast-kfirst+1);

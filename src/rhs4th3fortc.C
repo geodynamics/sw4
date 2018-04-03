@@ -1928,11 +1928,12 @@ void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
 {
 SW4_MARK_FUNCTION;
   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
-#pragma omp parallel for
-#pragma ivdep
-#pragma simd
-  for( size_t i = 0 ; i < 3*npts ; i++ )
-    um[i] = dt2i*(up[i]-2*u[i]+um[i]);
+// #pragma omp parallel for
+// #pragma ivdep
+// #pragma simd
+//   for( size_t i = 0 ; i < 3*npts ; i++ )
+RAJA::forall<DPDMTFORT_LOOP_POL> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
+    um[i] = dt2i*(up[i]-2*u[i]+um[i]);});
 }
 
 // //-----------------------------------------------------------------------
@@ -2366,14 +2367,26 @@ SW4_MARK_FUNCTION;
       k  = nz;
       kl = -1;
    }
-#pragma omp parallel
+   //#pragma omp parallel
    {
-      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
-#pragma omp for
-      for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
-#pragma ivdep
-	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
-	 {
+ //      
+// #pragma omp for
+//       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+// #pragma ivdep
+// 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+// 	 {
+	   using LOCAL_POL = 
+	   RAJA::KernelPolicy< 
+	   RAJA::statement::CudaKernel<
+	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+						       RAJA::statement::Lambda<0> >>>>;
+	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+	    RAJA::kernel<LOCAL_POL>(
+			    RAJA::make_tuple(j_range,i_range),
+			    [=]RAJA_DEVICE (int j,int i) {
+			      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
             if( usesg== 1 )
 	    {
                sgx = sgstrx(i);
@@ -2474,7 +2487,7 @@ SW4_MARK_FUNCTION;
            bforcerhs(1,i,j) = rhs1 + bforcerhs(1,i,j);
            bforcerhs(2,i,j) = rhs2 + bforcerhs(2,i,j);
            bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j);
-	 }
+			    });
    }
 }
 #undef alphap
@@ -2514,15 +2527,27 @@ SW4_MARK_FUNCTION;
 
 // Hardcoded for the k=1 surface
    int k=1, kl=1;
-#pragma omp parallel
+   //#pragma omp parallel
    {
-      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
+     //     float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
       float_sw4 s0i= 1/sbop[0];
-#pragma omp for
-      for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
-#pragma ivdep
-	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
-	 {
+// #pragma omp for
+//       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+// #pragma ivdep
+// 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+// 	 {
+ using LOCAL_POL = 
+	   RAJA::KernelPolicy< 
+	   RAJA::statement::CudaKernel<
+	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+						       RAJA::statement::Lambda<0> >>>>;
+	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+	    RAJA::kernel<LOCAL_POL>(
+			    RAJA::make_tuple(j_range,i_range),
+			    [=]RAJA_DEVICE (int j,int i) {
+			      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
             if( usesg == 1 )
 	    {
                sgx = sgstrx(i);
@@ -2615,7 +2640,7 @@ SW4_MARK_FUNCTION;
                 sbop[1]*u(3,i,j,k)+sbop[2]*u(3,i,j,k+kl)+
                 sbop[3]*u(3,i,j,k+2*kl)+sbop[4]*u(3,i,j,k+3*kl) +
 		bc*rhs3 - dc*met(4,i,j,k)*isqrtxy );
-	 }
+			    });
    }
 #undef u
 #undef mu

@@ -2837,6 +2837,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
     
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
+    SW4_MARK_BEGIN("cart_bc_forcing_iniial");
     mu_ptr    = mMu[g].c_ptr();
     la_ptr    = mLambda[g].c_ptr();
 
@@ -2864,7 +2865,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
     bforce_side3_ptr = a_BCForcing[g][3]; // high-j bndry forcing array pointer
     bforce_side4_ptr = a_BCForcing[g][4]; // low-k bndry forcing array pointer
     bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
-
+    SW4_MARK_END("cart_bc_forcing_iniial");
     if (m_twilight_forcing)
     {
        float_sw4 phc[21]; // move these angles to the EW class
@@ -2876,7 +2877,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       // need to store all the phase angle constants somewhere
       for (int i=0; i<21; i++)
          phc[i] = i*10*M_PI/180;
-
+ 
 // the following code can probably be improved by introducing a loop over all sides,
 // but bStressFree is only implemented for side=4 and 5, so there must be some special cases
       int k = 1;
@@ -3257,10 +3258,13 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	bforce_side4_ptr[q] = 0.;
 
 // assign exact solution on bottom (high-z)
+
       if (m_bcType[g][5] == bDirichlet)
       {
+	SW4_MARK_BEGIN("raydirbdry");
 	raydirbdry( bforce_side5_ptr, &wind_ptr[6*5], &t, &lambda, &mu, &rho, &cr, 
 		    &omega, &alpha, &h, &zmin );
+	SW4_MARK_END("raydirbdry");
       }
 
      //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 

@@ -298,16 +298,33 @@ void EW::addsgd4c_ci( int ifirst, int ilast, int jfirst, int jlast,
       const size_t ni   =     (ilast-ifirst+1);
       const size_t nij  =  ni*(jlast-jfirst+1);
       const size_t npts = nij*(klast-kfirst+1);
-#pragma omp parallel
-      {
-      for( int c=0 ; c < 3 ; c++ )
-#pragma omp for
-      for( int k=kfirst+2; k <= klast-2 ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
-#pragma ivdep
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	    {
+      
+// #pragma omp parallel
+//       {
+//       for( int c=0 ; c < 3 ; c++ )
+// #pragma omp for
+//       for( int k=kfirst+2; k <= klast-2 ; k++ )
+// 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+// #pragma simd
+// #pragma ivdep
+// 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+// 	    {
+using ADDSGD_POL2  =
+       RAJA::KernelPolicy<
+       RAJA::statement::CudaKernel<
+	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
+						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
+									RAJA::statement::For<0, RAJA::seq_exec,
+											     RAJA::statement::Lambda<0> >>>>>>;
+RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+RAJA::RangeSegment k_range(kfirst+2,klast-1);
+RAJA::RangeSegment c_range(0,3);
+RAJA::kernel<ADDSGD_POL2>(
+			    RAJA::make_tuple(c_range,k_range,j_range,i_range),
+			    [=]RAJA_DEVICE (int c,int k, int j,int i) {
+			      
 	       float_sw4 irhoj=beta/(rho(i,j,k)*jac(i,j,k));
 	       {
 		  up(c,i,j,k) -= irhoj*( 
@@ -340,8 +357,8 @@ void EW::addsgd4c_ci( int ifirst, int ilast, int jfirst, int jlast,
 		    -rho(i,j-1,k)*dcy(j-1)*jac(i,j-1,k)*
 		    (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) ) );
 	       }
-	    } 
-      }
+			    } );
+//}
 #undef rho
 #undef up
 #undef u
