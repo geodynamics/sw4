@@ -1179,6 +1179,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	    lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			  }); // END OF rhs4th3fortsgstr_ci LOOP 1
+     SYNC_STREAM;
       if( onesided[4]==1 )
       {
 	RAJA::RangeSegment k_range(1,6+1);
@@ -1439,6 +1440,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fortsgstr_ci LOOP 2
+	SYNC_STREAM;
       }
       if( onesided[5] == 1 )
       {
@@ -1701,6 +1703,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fortsgstr_ci LOOP 3
+	SYNC_STREAM;
       }
    }
 #undef mu
@@ -1880,7 +1883,7 @@ void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
        up[i  ]      = 2*u[i  ]     -um[i  ]      + dt2orh*(lu[i  ]     +fo[i  ]);
        up[i+npts]   = 2*u[i+npts]  -um[i+npts]   + dt2orh*(lu[i+npts]  +fo[i+npts]);
        up[i+2*npts] = 2*u[i+2*npts]-um[i+2*npts] + dt2orh*(lu[i+2*npts]+fo[i+2*npts]);
-     });
+     }); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1902,7 +1905,7 @@ void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
       up[i  ]      += dt4i12orh*(lu[i  ]     +fo[i  ]);
       up[i+npts]   += dt4i12orh*(lu[i+npts]  +fo[i+npts]);
       up[i+2*npts] += dt4i12orh*(lu[i+2*npts]+fo[i+2*npts]);
-       });
+       }); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1918,7 +1921,7 @@ void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 // #pragma simd
 //   for( size_t i = 0 ; i < 3*npts ; i++ )
     RAJA::forall<DPDMTFORT_LOOP_POL> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
-	u2[i] = dt2i*(up[i]-2*u[i]+um[i]);});
+	u2[i] = dt2i*(up[i]-2*u[i]+um[i]);}); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1933,7 +1936,7 @@ SW4_MARK_FUNCTION;
 // #pragma simd
 //   for( size_t i = 0 ; i < 3*npts ; i++ )
 RAJA::forall<DPDMTFORT_LOOP_POL> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
-    um[i] = dt2i*(up[i]-2*u[i]+um[i]);});
+    um[i] = dt2i*(up[i]-2*u[i]+um[i]);}); SYNC_STREAM;
 }
 
 // //-----------------------------------------------------------------------
@@ -2487,7 +2490,7 @@ SW4_MARK_FUNCTION;
            bforcerhs(1,i,j) = rhs1 + bforcerhs(1,i,j);
            bforcerhs(2,i,j) = rhs2 + bforcerhs(2,i,j);
            bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j);
-			    });
+			    }); SYNC_STREAM;
    }
 }
 #undef alphap
@@ -2640,7 +2643,7 @@ SW4_MARK_FUNCTION;
                 sbop[1]*u(3,i,j,k)+sbop[2]*u(3,i,j,k+kl)+
                 sbop[3]*u(3,i,j,k+2*kl)+sbop[4]*u(3,i,j,k+3*kl) +
 		bc*rhs3 - dc*met(4,i,j,k)*isqrtxy );
-			    });
+			    }); SYNC_STREAM;
    }
 #undef u
 #undef mu

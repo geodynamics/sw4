@@ -353,8 +353,8 @@ void EW::communicate_array( Sarray& u, int grid )
   // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
   // communicate_array_async with device buffers and -gpu 29 minutes 18 secs
   // communicate_array_async with UM buffers and -gpu 29 minutes 20 secs
-  communicate_array_async(u,grid);
-  return;
+  //communicate_array_async(u,grid);
+  //return;
   // REQUIRE2( 0 <= grid && grid < mU.size() , 
   // 	    " Error in communicate_array, grid = " << grid );
    
@@ -681,7 +681,7 @@ void EW::make_type(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple
   send_type[2*g]=std::make_tuple(i1,j1,k1);
   send_type[2*g+1]=std::make_tuple(i2,j2,k2);
   Space space = Device; // Use mpirun -gpu flag to run;
-  //space = Managed ; // -gpu flag not required 
+  space = Managed ; // -gpu flag not required 
   
   float_sw4* tbuf = SW4_NEW(space,float_sw4[i1*j1*4+i2*j2*4]);
   bufs_type[4*g+0] = std::make_tuple(tbuf,tbuf+i1*j1);

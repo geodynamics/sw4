@@ -2865,6 +2865,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
     bforce_side3_ptr = a_BCForcing[g][3]; // high-j bndry forcing array pointer
     bforce_side4_ptr = a_BCForcing[g][4]; // low-k bndry forcing array pointer
     bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
+    //if (!m_croutines) std::cerr<<"HERE IS THE PROBLME\n";
     SW4_MARK_END("cart_bc_forcing_iniial");
     if (m_twilight_forcing)
     {
@@ -2883,6 +2884,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       int k = 1;
       if (m_bcType[g][0] == bDirichlet || m_bcType[g][0] == bSuperGrid )
       {
+	SW4_MARK_BEGIN("LOOP1");
          if( !curvilinear )
 	 {
 	    if( m_croutines )
@@ -2901,6 +2903,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
                                              &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
 					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
+	 SW4_MARK_END("LOOP1");
       }
 
       if (m_bcType[g][1] == bDirichlet || m_bcType[g][1] == bSuperGrid )
@@ -2924,7 +2927,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
-
+      	SW4_MARK_BEGIN("LOOP2");
       if (m_bcType[g][2] == bDirichlet || m_bcType[g][2] == bSuperGrid)
       {
 	 if( !curvilinear )
@@ -2968,7 +2971,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
-
+      SW4_MARK_END("LOOP2");
+      SW4_MARK_BEGIN("LOOP3");
       if (m_bcType[g][4] == bDirichlet || m_bcType[g][4] == bSuperGrid)
       {
 	 if( !curvilinear )
@@ -3164,9 +3168,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
          } // end isotropic case
          
       } // end side==4 is bStressFree
-
+      SW4_MARK_END("LOOP3");
+  
       if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid)
       {
+	SW4_MARK_BEGIN("LOOP4");
 	 if( !curvilinear )
 	 {
 	    if( m_croutines )
@@ -3185,9 +3191,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			   &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
 			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
+	 SW4_MARK_END("LOOP4");
       }
       else if (m_bcType[g][5] == bStressFree)
       {
+	SW4_MARK_BEGIN("LOOP5");
 	 k = nz;
          if( m_anisotropic )
          {
@@ -3237,12 +3245,13 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
             } // end ! supergrid
             
          } // end isotropic case
-         
+	 SW4_MARK_END("LOOP5");
       } // end bStressFree on side 5
-      
+
     }
     else if (m_rayleigh_wave_test)
     {
+  
       int q;
       float_sw4 lambda, mu, rho, cr, omega, alpha;
       
@@ -3284,19 +3293,27 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
     {
 // no boundary forcing
 // we can do the same loop for all types of bc. For bParallel boundaries, numberOfBCPoints=0
+    SW4_MARK_BEGIN("LOOP6");
       int q;
-      for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
-	bforce_side0_ptr[q] = 0.;
-      for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
-	bforce_side1_ptr[q] = 0.;
-      for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
-	bforce_side2_ptr[q] = 0.;
-      for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
-	bforce_side3_ptr[q] = 0.;
-      for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
-	bforce_side4_ptr[q] = 0.;
-      for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
-	bforce_side5_ptr[q] = 0.;
+      //for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
+	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][0]),[=] RAJA_DEVICE(int q){
+	    bforce_side0_ptr[q] = 0.;});
+	//for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
+	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][1]),[=] RAJA_DEVICE(int q){
+	    bforce_side1_ptr[q] = 0.;});
+	//for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
+	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][2]),[=] RAJA_DEVICE(int q){
+	    bforce_side2_ptr[q] = 0.;});
+	//for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
+	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][3]),[=] RAJA_DEVICE(int q){
+	    bforce_side3_ptr[q] = 0.;});
+	//for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
+	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][4]),[=] RAJA_DEVICE(int q){
+	    bforce_side4_ptr[q] = 0.;});
+	//for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
+	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][5]),[=] RAJA_DEVICE(int q){
+	    bforce_side5_ptr[q] = 0.;});
+      SW4_MARK_END("LOOP6");
     }
   }
 }
