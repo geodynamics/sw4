@@ -329,12 +329,13 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
    {
       if( bccnd[s]==bDirichlet || bccnd[s]==bSuperGrid )
       {
-         size_t idel = 1+wind[1+6*s]-wind[6*s];
-         size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
+	//std::cout<<"SET 1 "<<s<<"\n";
+	//size_t idel = 1+wind[1+6*s]-wind[6*s];
+	//size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
 	 if( s== 0 )
 	 {
-	   int ni = wind[1+6*s]-wind[6*s]+1;
-	   int nij = (wind[3+6*s]-wind[2+6*s]+1)*ni;
+	   int lni = wind[1+6*s]-wind[6*s]+1;
+	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
 	   int jstart = wind[2+6*s];
 	   int kstart = wind[4+6*s];
@@ -350,19 +351,19 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+		     size_t qq = (k-kstart)*lnij+(j-jstart)*lni+(i-istart);
 		     u[ind  ]      = bforce1[  3*qq];
 		     u[ind+npts]   = bforce1[1+3*qq];
 		     u[ind+2*npts] = bforce1[2+3*qq];
 		     //qq++;
-			});
+			}); SYNC_STREAM;
 //}
 // }
 	 }
 	 else if( s== 1 )
 	 {
-	   int ni = wind[1+6*s]-wind[6*s]+1;
-	   int nij = (wind[3+6*s]-wind[2+6*s]+1)*ni;
+	   int lni = wind[1+6*s]-wind[6*s]+1;
+	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
 	   int jstart = wind[2+6*s];
 	   int kstart = wind[4+6*s];
@@ -378,19 +379,19 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {	   
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+		     size_t qq = (k-kstart)*lnij+(j-jstart)*lni+(i-istart);
 		     u[ind]        = bforce2[  3*qq];
 		     u[ind+npts]   = bforce2[1+3*qq];
 		     u[ind+2*npts] = bforce2[2+3*qq];
 		     //qq++;
-			});
+			}); SYNC_STREAM;
 // }
 // } 
 	 }
 	 else if( s==2 )
 	 {
-	   int ni = wind[1+6*s]-wind[6*s]+1;
-	   int nij = (wind[3+6*s]-wind[2+6*s]+1)*ni;
+	   int lni = wind[1+6*s]-wind[6*s]+1;
+	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
 	   int jstart = wind[2+6*s];
 	   int kstart = wind[4+6*s];
@@ -406,19 +407,19 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {	   
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+		     size_t qq = (k-kstart)*lnij+(j-jstart)*lni+(i-istart);
 		     u[ind  ] = bforce3[  3*qq];
 		     u[ind+npts] = bforce3[1+3*qq];
 		     u[ind+2*npts] = bforce3[2+3*qq];
 		     //qq++;
-			});
+			}); SYNC_STREAM;
 // }
 //  }
 	 }
 	 else if( s==3 )
 	 {
-	   int ni = wind[1+6*s]-wind[6*s]+1;
-	   int nij = (wind[3+6*s]-wind[2+6*s]+1)*ni;
+	   int lni = wind[1+6*s]-wind[6*s]+1;
+	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
 	   int jstart = wind[2+6*s];
 	   int kstart = wind[4+6*s];
@@ -434,19 +435,19 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {	   
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+		     size_t qq = (k-kstart)*lnij+(j-jstart)*lni+(i-istart);
 		     u[ind  ] = bforce4[  3*qq];
 		     u[ind+npts] = bforce4[1+3*qq];
 		     u[ind+2*npts] = bforce4[2+3*qq];
 		     //qq++;
-			});
+			}); SYNC_STREAM;
 // }
 //   } 
 	 }
 	 else if( s==4 )
 	 {
-	   int ni = wind[1+6*s]-wind[6*s]+1;
-	   int nij = (wind[3+6*s]-wind[2+6*s]+1)*ni;
+	   int lni = wind[1+6*s]-wind[6*s]+1;
+	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
 	   int jstart = wind[2+6*s];
 	   int kstart = wind[4+6*s];
@@ -462,19 +463,19 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+		     size_t qq = (k-kstart)*lnij+(j-jstart)*lni+(i-istart);
 		     u[ind  ] = bforce5[  3*qq];
 		     u[ind+npts] = bforce5[1+3*qq];
 		     u[ind+2*npts] = bforce5[2+3*qq];
 		     //qq++;
-			});
+			}); SYNC_STREAM;
  // }
  // }
 	 }
 	 else if( s==5 )
 	 {
-	   int ni = wind[1+6*s]-wind[6*s]+1;
-	   int nij = (wind[3+6*s]-wind[2+6*s]+1)*ni;
+	   int lni = wind[1+6*s]-wind[6*s]+1;
+	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
 	   int jstart = wind[2+6*s];
 	   int kstart = wind[4+6*s];
@@ -490,18 +491,19 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 					  RAJA::make_tuple(k_range, j_range,i_range),
 					  [=]RAJA_DEVICE (int k,int j,int i) {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
-		     size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+		     size_t qq = (k-kstart)*lnij+(j-jstart)*lni+(i-istart);
 		     u[ind  ] = bforce6[  3*qq];
 		     u[ind+npts] = bforce6[1+3*qq];
 		     u[ind+2*npts] = bforce6[2+3*qq];
 		     //qq++;
-					  });
+					  }); SYNC_STREAM;
 	   // }
 	   //  }
 	 }
       }
       else if( bccnd[s]==bPeriodic )
       {
+	//std::cout<<"SET 2\n";
 	 if( s==0 )
 	 {
 	   int istart = wind[6*s];
@@ -523,7 +525,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  });
+					  }); SYNC_STREAM;
 	 }
 	 else if( s==1 )
 	 {
@@ -546,7 +548,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  });
+					  }); SYNC_STREAM;
 	 }
 	 else if( s==2 )
 	 {
@@ -569,7 +571,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  });
+					  }); SYNC_STREAM;
 	 }
 	 else if( s==3 )
 	 {
@@ -592,7 +594,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  });
+					  }); SYNC_STREAM;
 	 }
 	 else if( s==4 )
 	 {
@@ -615,7 +617,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  });
+					  }); SYNC_STREAM;
 	 }
 	 else if( s==5 )
 	 {
@@ -638,11 +640,12 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  });
+					  }); SYNC_STREAM;
 	 }
       }
       else if( bccnd[s]==bStressFree )
       {
+	//std::cout<<"SET 3 \n";
 	 REQUIRE2( s == 4 || s == 5, "EW::bcfort_ci,  ERROR: Free surface condition"
 		  << " not implemented for side " << s << endl);
 	 using BCFORT_EXEC_POL3 = 
@@ -661,8 +664,8 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	    //    for( int i=ib+2 ; i <= ie-2 ; i++ )
 	    //    {
 	    RAJA::kernel<BCFORT_EXEC_POL3>(
-			    RAJA::make_tuple(j_range,i_range),
-			    [=]RAJA_DEVICE (int j,int i) {
+	    		    RAJA::make_tuple(j_range,i_range),
+	    		    [=]RAJA_DEVICE (int j,int i) {
 		  size_t qq = i-ib+ni*(j-jb);
 		  size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		  float_sw4 wx = strx[i-ib]*(d4a*(u[2*npts+ind+1]-u[2*npts+ind-1])+d4b*(u[2*npts+ind+2]-u[2*npts+ind-2]));
@@ -682,7 +685,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		  u[npts  +ind-nij*kl] = (-vz-kl*wy+kl*h*bforce5[1+3*qq]/mu[ind])/sbop[0];
 		  u[2*npts+ind-nij*kl] = (-wz + (-kl*la[ind]*(ux+vy)+kl*h*bforce5[2+3*qq])/
 					 (2*mu[ind]+la[ind]))/sbop[0];
-			    });
+		  }); SYNC_STREAM;
 	 }
 	 else
 	 {
@@ -694,8 +697,8 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	    RAJA::RangeSegment i_range(ib+2,ie-1);
 	    RAJA::RangeSegment j_range(jb+2,je-1);
 	    RAJA::kernel<BCFORT_EXEC_POL3>(
-			    RAJA::make_tuple(j_range,i_range),
-			    [=]RAJA_DEVICE (int j,int i) {
+	    		    RAJA::make_tuple(j_range,i_range),
+	    		    [=]RAJA_DEVICE (int j,int i) {
 		  size_t qq  = i-ib+ni*(j-jb);
 		  size_t ind = i-ib+ni*(j-jb)+nij*(k-kb);
 		  float_sw4 wx = strx[i-ib]*(d4a*(u[2*npts+ind+1]-u[2*npts+ind-1])+d4b*(u[2*npts+ind+2]-u[2*npts+ind-2]));
@@ -715,10 +718,11 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		  u[npts  +ind-nij*kl] = (-vz-kl*wy+kl*h*bforce6[1+3*qq]/mu[ind])/sbop[0];
 		  u[2*npts+ind-nij*kl] = (-wz+(-kl*la[ind]*(ux+vy)+kl*h*bforce6[2+3*qq])/
 					 (2*mu[ind]+la[ind]))/sbop[0];
-			    });
+		  }); SYNC_STREAM;
 	 }
       }
    }
+   SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -726,7 +730,7 @@ void EW::twdirbdry_ci( int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
 		       float_sw4 cv, float_sw4 ph, float_sw4* bforce, float_sw4 zmin )
 {
   SW4_MARK_FUNCTION;
-   size_t qq=0;
+  //size_t qq=0;
    int ni = wind[1]-wind[0]+1;
    int nij = (wind[3]-wind[2]+1)*ni;
    //int klen = wind[5]-wind[4]+1;
@@ -744,7 +748,7 @@ void EW::twdirbdry_ci( int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
 			  //    for( int j=wind[2]; j <= wind[3] ; j++ ) {
 			  // 	 for( int i=wind[0]; i <= wind[1] ; i++ ) {
 			  double x=(i-1)*h, y=(j-1)*h, z=zmin+(k-1)*h;
-			  int qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
+			  size_t qq = (k-kstart)*nij+(j-jstart)*ni+(i-istart);
 			  //if (lqq!=qq) std::cout<<i<<" "<<j<<" "<<k<<" "<<lqq<<" "<<qq;
 			  bforce[  3*qq]=sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
 			  bforce[1+3*qq]=sin(om*x+ph)*sin(om*(y-cv*t))*sin(om*z+ph);
@@ -829,7 +833,7 @@ void EW::twfrsurfz_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 	 bforce[  3*qq]=forces[0];
 	 bforce[1+3*qq]=forces[1];
 	 bforce[2+3*qq]=forces[2];
-			  });
+			  }); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

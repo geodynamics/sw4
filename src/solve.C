@@ -2485,7 +2485,7 @@ SW4_MARK_FUNCTION;
 					   UnextV(1,i,j,kic) = a_UpV(1,i,j,kic) + irho*(LuttV(1,i,j,kic)+FttV(1,i,j,kic)); // +force(1,i,j,kic));
 					   UnextV(2,i,j,kic) = a_UpV(2,i,j,kic) + irho*(LuttV(2,i,j,kic)+FttV(2,i,j,kic)); // +force(2,i,j,kic));
 					   UnextV(3,i,j,kic) = a_UpV(3,i,j,kic) + irho*(LuttV(3,i,j,kic)+FttV(3,i,j,kic));//+force(3,i,j,kic));
-					 });
+					 }); SYNC_STREAM;
    }
 
 // add in super-grid damping terms (does it make a difference?)
@@ -2761,7 +2761,7 @@ SW4_MARK_FUNCTION;
                              str_x(i)*( a2*(UpV(1,i+2,j,k)-UpV(1,i-2,j,k))+a1*(UpV(1,i+1,j,k)-UpV(1,i-1,j,k))) +
                              str_y(j)*( a2*(UpV(2,i,j+2,k)-UpV(2,i,j-2,k))+a1*(UpV(2,i,j+1,k)-UpV(2,i,j-1,k))) ) );
          
-			});
+			}); SYNC_STREAM;
    //std::cout<<"And we are DONE WITH void EW::compute_icstresses\n";
 #undef str_x
 #undef str_y
@@ -3313,6 +3313,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	//for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
 	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][5]),[=] RAJA_DEVICE(int q){
 	    bforce_side5_ptr[q] = 0.;});
+	SYNC_STREAM;
       SW4_MARK_END("LOOP6");
     }
   }

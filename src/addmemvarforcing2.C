@@ -105,7 +105,7 @@ void  addMemVarPredCart( float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha
               alphaV(3,i,j,k) += cof*forces[2];
 	   }
 	}
-			       });
+			       }); SYNC_STREAM;
 }
 
 //-----------------------FROM WPP------------------------------------------------
@@ -215,7 +215,7 @@ void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4 
               alphaV(3,i,j,k) += cof*forces[2];
 	   }
 	}
-			       });
+			       }); SYNC_STREAM;
 }
 
 // //---------------------------- NEW MAPLE GENERATED CODE ----------------------------------

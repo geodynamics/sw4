@@ -119,7 +119,7 @@ SW4_MARK_FUNCTION;
 // 	   {
    RAJA::RangeSegment i_range(ifirst+2,ilast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
-   RAJA::RangeSegment k_range(kfirst+2,klast-1);
+   RAJA::RangeSegment k_range(kwindb,kwinde+1);
    RAJA::RangeSegment c_range(1,4);
    RAJA::kernel<DEFAULT_LOOP4>(
 				  RAJA::make_tuple(i_range,j_range,k_range,c_range),
@@ -140,7 +140,7 @@ SW4_MARK_FUNCTION;
                    +2*rho(i,j,k)*dcy(j)  * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
 	            -rho(i,j-1,k)*dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )  
 				     )/rho(i,j,k);
-				  });
+				  }); SYNC_STREAM;
 }
 
 //}

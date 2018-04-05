@@ -146,7 +146,7 @@ using LOCAL_POL =
             u(3,i,j,k-kl) = -s0i*(  s[1]*u(3,i,j,k)+s[2]*u(3,i,j,k+kl)+
                 s[3]*u(3,i,j,k+2*kl)+s[4]*u(3,i,j,k+3*kl) + bc*rhs3 - 
 				    dc*met(4,i,j,k)*isqrtxy );
-			    });
+			    }); SYNC_STREAM;
 	    //}
 #undef mu
 #undef la

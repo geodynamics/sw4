@@ -147,7 +147,7 @@ RAJA::kernel<ADDSGD_POL>(
 					 );
 
 	       }
-			    });
+			    }); SYNC_STREAM;
 //   }
 #undef rho
 #undef up
@@ -357,7 +357,7 @@ RAJA::kernel<ADDSGD_POL2>(
 		    -rho(i,j-1,k)*dcy(j-1)*jac(i,j-1,k)*
 		    (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) ) );
 	       }
-			    } );
+			    } ); SYNC_STREAM;
 //}
 #undef rho
 #undef up
