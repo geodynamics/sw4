@@ -1,6 +1,6 @@
 #include "Mspace.h"
 #include <unordered_map>
-
+#include "caliper.h"
 struct global_variable_holder_struct global_variables = { .gpu_memory_hwm=0 , .curr_mem=0, .max_mem = 0 };
 using namespace std;
 
@@ -248,24 +248,28 @@ void assert_check_host(void *ptr, const char *file, int line){
     }
   
 }
-void ptr_push(void *ptr,Space type, const char *file,int line){
+void ptr_push(void *ptr,Space type, size_t size,const char *file,int line){
   pattr_t *ss=new pattr_t;
   ss->file=file;
   ss->line=line;
   ss->type=type;
-  ss->size=0;
+  ss->size=size;
   patpush(ptr,ss);
   return;
 }
 void prefetch_to_device(const float_sw4 *ptr){
   if (ptr==NULL) return;
   pattr_t *ss = patpush((void*)ptr,NULL);
-  if (ss!=NULL) if (ss->size>0){
+  if (ss!=NULL) {
+    if (ss->size>0){
+      SW4_MARK_BEGIN(" prefetch_to_device");
       SW4_CheckDeviceError(cudaMemPrefetchAsync(ptr,
 						ss->size,
 						0,
 						0));
-    }
+      SW4_MARK_END(" prefetch_to_device");
+    } else std::cerr<<"Zero size prefetch \n";
+  } else std::cerr<<"NO prefetch due to unknown address\n";
 }
 #endif
 

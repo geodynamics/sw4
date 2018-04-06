@@ -565,15 +565,15 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
 
 #if defined(ENABLE_CUDA)
    float_sw4* tmpa=SW4_NEW(Managed,float_sw4[6+384+24+48+6+384+6+6]);
-   m_sbop = tmpa; PTR_PUSH(Managed,m_sbop);
-   m_acof = m_sbop+6; PTR_PUSH(Managed,m_acof);
-   m_bop = m_acof+384; PTR_PUSH(Managed,m_bop);
-   m_bope = m_bop+24; PTR_PUSH(Managed,m_bope);
-   m_ghcof = m_bope+48; PTR_PUSH(Managed,m_ghcof);
+   m_sbop = tmpa; // PTR_PUSH(Managed,m_sbop);
+   m_acof = m_sbop+6; PTR_PUSH(Managed,m_acof,384*sizeof(float_sw4));
+   m_bop = m_acof+384; PTR_PUSH(Managed,m_bop,24*sizeof(float_sw4));
+   m_bope = m_bop+24; PTR_PUSH(Managed,m_bope,48*sizeof(float_sw4));
+   m_ghcof = m_bope+48; PTR_PUSH(Managed,m_ghcof,6*sizeof(float_sw4));
 
-   m_acof_no_gp = m_ghcof+6; PTR_PUSH(Managed,m_acof_no_gp);
-   m_ghcof_no_gp = m_acof_no_gp+384; PTR_PUSH(Managed,m_ghcof_no_gp);
-   m_sbop_no_gp = m_ghcof_no_gp+6; PTR_PUSH(Managed,m_sbop_no_gp);
+   m_acof_no_gp = m_ghcof+6; PTR_PUSH(Managed,m_acof_no_gp,384*sizeof(float_sw4));
+   m_ghcof_no_gp = m_acof_no_gp+384; PTR_PUSH(Managed,m_ghcof_no_gp,6*sizeof(float_sw4));
+   m_sbop_no_gp = m_ghcof_no_gp+6; PTR_PUSH(Managed,m_sbop_no_gp,6*sizeof(float_sw4));
 #endif
 }
 
@@ -4309,7 +4309,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   
   for(g=0 ; g<mNumberOfCartesianGrids; g++ )
   {
-    //a_Uacc[g].prefetch();
+    a_Uacc[g].prefetch();
     a_Uacc[g].set_to_zero();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();

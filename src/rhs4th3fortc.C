@@ -920,6 +920,13 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    ASSERT_MANAGED(a_strz);
 
 
+   PREFETCH(a_mu); // Needed
+   PREFETCH(a_lambda); // Needed
+   //PREFETCH(a_u);
+   //PREFETCH(a_lu);
+   // PREFETCH(a_strx);
+   // PREFETCH(a_stry);
+   // PREFETCH(a_strz);
    using RHS_POL = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<

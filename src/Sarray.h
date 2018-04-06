@@ -184,6 +184,7 @@ public:
   }
   SView view;
 private:
+  bool prefetched;
   float_sw4* m_data; 
    float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
@@ -192,5 +193,7 @@ private:
 //    bool m_mpi_datatype_initialized;
 //    MPI_Datatype m_local_block_type;
 };
-
+void SarrayVectorPrefetch(std::vector<Sarray> &v);
+void SarrayVectorPrefetch(std::vector<Sarray*> &v);
+void SarrayVectorPrefetch(std::vector<Sarray*> &v,int n);
 #endif

@@ -580,6 +580,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && proc_zero() )
     cout << "  Begin time stepping..." << endl;
 
+  // Prefetch Sarrays before starying time stepping
+  SarrayVectorPrefetch(Up);
+  SarrayVectorPrefetch(Um);
+  SarrayVectorPrefetch(U);
+  SarrayVectorPrefetch(Uacc);
+  SarrayVectorPrefetch(F);
+  SarrayVectorPrefetch(mMu);
+  SarrayVectorPrefetch(mLambda);
+  SarrayVectorPrefetch(Lu);
+  SarrayVectorPrefetch(AlphaVE,m_number_mechanisms);
+  SarrayVectorPrefetch(AlphaVEm,m_number_mechanisms);
+  SarrayVectorPrefetch(AlphaVEp,m_number_mechanisms);
+  // End prefetch
+
 
 // Begin time stepping loop
   for( int g=0 ; g < mNumberOfGrids ; g++ )
@@ -4030,6 +4044,15 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
 SW4_MARK_FUNCTION;
 // AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time stepping for memory variables
    int sg = usingSupergrid();
+   using LOCAL_POL = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+						 RAJA::statement::Lambda<0> >>>>;
+   SView *viewArray = SW4_NEW(Managed, SView[m_number_mechanisms*3]);
+   SView *viewArray2 = viewArray +  m_number_mechanisms;
+   SView *viewArray3 = viewArray +  2*m_number_mechanisms;
    for(int g=0 ; g<mNumberOfGrids; g++ )
    {
       int ifirst = m_iStart[g];
@@ -4040,8 +4063,25 @@ SW4_MARK_FUNCTION;
       int klast  = m_kEnd[g];
       float_sw4 h   = mGridSize[g];
       int topo = topographyExists() && g == mNumberOfGrids-1;
+
+      SView &a_UpgV = a_Up[g].getview();
+      SView &a_MugV = a_Mu[g].getview();
+      SView &a_LambdagV = a_Lambda[g].getview();
+     // SView &a_AlphaVEpgV = a_AlphaVEp[g]->getview(); // PBUGS
+      for(int m=0;m <  m_number_mechanisms; m++){
+	viewArray[m] = a_AlphaVEp[g][m].getview();
+	viewArray2[m] = mMuVE[g][m].getview();
+	viewArray3[m] = mLambdaVE[g][m].getview();
+      }
+      float_sw4 *m_sg_str_xg = m_sg_str_x[g];
+      float_sw4 *m_sg_str_yg = m_sg_str_y[g];
+      float_sw4 *m_sg_str_zg = m_sg_str_z[g];
+      PREFETCH(m_sg_str_x[g]);
+      PREFETCH(m_sg_str_y[g]);
+      //      PREFETCH(viewArray);
       if( m_bcType[g][4] == bStressFree && !topo ) // Cartesian case
       {
+	SW4_MARK_BEGIN("enforceBCfreeAtt2::SET1");
 	 //	    if( m_croutines )
 	 //	       memvarforcesurf_ci( ifirst, ilast, jfirst, jlast, k, mf, a_t, om,
 	 //				   cv, ph, mOmegaVE[0], mDt, h, m_zmin[g] );
@@ -4055,17 +4095,28 @@ SW4_MARK_FUNCTION;
 	 const float_sw4 d4a = 2.0/3;
 	 const float_sw4 d4b =-1.0/12;
 	 float_sw4* forcing = a_BCForcing[g][4];
+         ASSERT_MANAGED(forcing);
+         ASSERT_MANAGED(m_sbop);
+         ASSERT_MANAGED(m_sbop_no_gp);
 	 int ni = (ilast-ifirst+1);
-#pragma omp parallel
+         int m_number_mechanisms_local = m_number_mechanisms; // Because the lambda does not capture member arrays and variables.
+	 float_sw4*lm_sbop = m_sbop; // Because the lambda does not capture member arrays and variables.
+	 float_sw4* lm_sbop_no_gp = m_sbop_no_gp; // Because the lambda does not capture member arrays and variables.
+	 //#pragma omp parallel
 	 {
 	    //	 float_sw4* r1 = new float_sw4[m_number_mechanisms];
 	    //	 float_sw4* r2 = new float_sw4[m_number_mechanisms];
 	    //	 float_sw4* r3 = new float_sw4[m_number_mechanisms];
 	    //	 float_sw4* cof = new float_sw4[m_number_mechanisms];
-#pragma omp for
-	 for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
-	    for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
-	    {
+	   //#pragma omp for
+	   //for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+	   //for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+	   //{
+	      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+	      RAJA::RangeSegment i_range(ifirst+2,ilast-1 );
+	      RAJA::kernel<LOCAL_POL>(
+					 RAJA::make_tuple(j_range,i_range),
+					 [=]RAJA_DEVICE (int j,int i) {
 	       float_sw4 g1, g2, g3, acof, bcof;
 	       int ind = i-ifirst + ni*(j-jfirst);
 	       float_sw4 a4ci, b4ci, a4cj, b4cj;
@@ -4073,80 +4124,83 @@ SW4_MARK_FUNCTION;
 	       b4ci = b4cj = d4b;
 	       if( sg == 1 )
 	       {
-		  a4ci = d4a*m_sg_str_x[g][i-ifirst];
-		  b4ci = d4b*m_sg_str_x[g][i-ifirst];
-		  a4cj = d4a*m_sg_str_y[g][j-jfirst];
-		  b4cj = d4b*m_sg_str_y[g][j-jfirst];
+		  a4ci = d4a*m_sg_str_xg[i-ifirst];
+		  b4ci = d4b*m_sg_str_xg[i-ifirst];
+		  a4cj = d4a*m_sg_str_yg[j-jfirst];
+		  b4cj = d4b*m_sg_str_yg[j-jfirst];
 	       }
 // this would be more efficient if done in Fortran
 // first add interior elastic terms (use ghost point stencils)
 	       g1 =  h*forcing[3*ind]
-                  - a_Mu[g](i,j,1)*
-                  (m_sbop[1]*a_Up[g](1,i,j,1) + m_sbop[2]*a_Up[g](1,i,j,2)
-                   + m_sbop[3]*a_Up[g](1,i,j,3) + m_sbop[4]*a_Up[g](1,i,j,4) + m_sbop[5]*a_Up[g](1,i,j,5)
-                   + a4ci*(a_Up[g](3,i+1,j,1)-a_Up[g](3,i-1,j,1))
-                   + b4ci*(a_Up[g](3,i+2,j,1)-a_Up[g](3,i-2,j,1)) );
+                  - a_MugV(i,j,1)*
+                  (lm_sbop[1]*a_UpgV(1,i,j,1) + lm_sbop[2]*a_UpgV(1,i,j,2)
+                   + lm_sbop[3]*a_UpgV(1,i,j,3) + lm_sbop[4]*a_UpgV(1,i,j,4) + lm_sbop[5]*a_UpgV(1,i,j,5)
+                   + a4ci*(a_UpgV(3,i+1,j,1)-a_UpgV(3,i-1,j,1))
+                   + b4ci*(a_UpgV(3,i+2,j,1)-a_UpgV(3,i-2,j,1)) );
 
 	       g2 =  h*forcing[3*ind+1]
-                  - a_Mu[g](i,j,1)*
-                  ( m_sbop[1]*a_Up[g](2,i,j,1) + m_sbop[2]*a_Up[g](2,i,j,2)
-                    + m_sbop[3]*a_Up[g](2,i,j,3) + m_sbop[4]*a_Up[g](2,i,j,4) + m_sbop[5]*a_Up[g](2,i,j,5)
-                    + a4cj*(a_Up[g](3,i,j+1,1)-a_Up[g](3,i,j-1,1))
-                    + b4cj*(a_Up[g](3,i,j+2,1)-a_Up[g](3,i,j-2,1)) );
+                  - a_MugV(i,j,1)*
+                  ( lm_sbop[1]*a_UpgV(2,i,j,1) + lm_sbop[2]*a_UpgV(2,i,j,2)
+                    + lm_sbop[3]*a_UpgV(2,i,j,3) + lm_sbop[4]*a_UpgV(2,i,j,4) + lm_sbop[5]*a_UpgV(2,i,j,5)
+                    + a4cj*(a_UpgV(3,i,j+1,1)-a_UpgV(3,i,j-1,1))
+                    + b4cj*(a_UpgV(3,i,j+2,1)-a_UpgV(3,i,j-2,1)) );
 
 	       g3 =  h*forcing[3*ind+2]
-                  - (2*a_Mu[g](i,j,1)+a_Lambda[g](i,j,1))*
-                  ( m_sbop[1]*a_Up[g](3,i,j,1) + m_sbop[2]*a_Up[g](3,i,j,2)
-                    + m_sbop[3]*a_Up[g](3,i,j,3) + m_sbop[4]*a_Up[g](3,i,j,4)  + m_sbop[5]*a_Up[g](3,i,j,5) )
-                  - a_Lambda[g](i,j,1)*
-                  ( a4ci*(a_Up[g](1,i+1,j,1)-a_Up[g](1,i-1,j,1))
-                    + b4ci*(a_Up[g](1,i+2,j,1)-a_Up[g](1,i-2,j,1)) 
-                    + a4cj*(a_Up[g](2,i,j+1,1)-a_Up[g](2,i,j-1,1))
-                    + b4cj*(a_Up[g](2,i,j+2,1)-a_Up[g](2,i,j-2,1)) );
+                  - (2*a_MugV(i,j,1)+a_LambdagV(i,j,1))*
+                  ( lm_sbop[1]*a_UpgV(3,i,j,1) + lm_sbop[2]*a_UpgV(3,i,j,2)
+                    + lm_sbop[3]*a_UpgV(3,i,j,3) + lm_sbop[4]*a_UpgV(3,i,j,4)  + lm_sbop[5]*a_UpgV(3,i,j,5) )
+                  - a_LambdagV(i,j,1)*
+                  ( a4ci*(a_UpgV(1,i+1,j,1)-a_UpgV(1,i-1,j,1))
+                    + b4ci*(a_UpgV(1,i+2,j,1)-a_UpgV(1,i-2,j,1)) 
+                    + a4cj*(a_UpgV(2,i,j+1,1)-a_UpgV(2,i,j-1,1))
+                    + b4cj*(a_UpgV(2,i,j+2,1)-a_UpgV(2,i,j-2,1)) );
                
-	       acof = a_Mu[g](i,j,1);
-	       bcof = 2*a_Mu[g](i,j,1)+a_Lambda[g](i,j,1);
-	       for( int a=0 ; a < m_number_mechanisms ; a++ )
+	       acof = a_MugV(i,j,1);
+	       bcof = 2*a_MugV(i,j,1)+a_LambdagV(i,j,1);
+	       for( int a=0 ; a < m_number_mechanisms_local ; a++ )
 	       {
 // this would be more efficient if done in Fortran
 // Add in visco-elastic contributions (NOT using ghost points)
 // mu*( a1_z + a3_x )
-		  g1 = g1 + mMuVE[g][a](i,j,1)*
-                     ( m_sbop_no_gp[0]*a_AlphaVEp[g][a](1,i,j,0) + m_sbop_no_gp[1]*a_AlphaVEp[g][a](1,i,j,1)
-                       + m_sbop_no_gp[2]*a_AlphaVEp[g][a](1,i,j,2)
-                       + m_sbop_no_gp[3]*a_AlphaVEp[g][a](1,i,j,3)
-                       + m_sbop_no_gp[4]*a_AlphaVEp[g][a](1,i,j,4) + m_sbop_no_gp[5]*a_AlphaVEp[g][a](1,i,j,5)
-                       + a4ci*(a_AlphaVEp[g][a](3,i+1,j,1)-a_AlphaVEp[g][a](3,i-1,j,1))
-                       + b4ci*(a_AlphaVEp[g][a](3,i+2,j,1)-a_AlphaVEp[g][a](3,i-2,j,1)) );
+		  g1 = g1 + viewArray2[a](i,j,1)*
+                     ( lm_sbop_no_gp[0]*viewArray[a](1,i,j,0) + lm_sbop_no_gp[1]*viewArray[a](1,i,j,1)
+                       + lm_sbop_no_gp[2]*viewArray[a](1,i,j,2)
+                       + lm_sbop_no_gp[3]*viewArray[a](1,i,j,3)
+                       + lm_sbop_no_gp[4]*viewArray[a](1,i,j,4) + lm_sbop_no_gp[5]*viewArray[a](1,i,j,5)
+                       + a4ci*(viewArray[a](3,i+1,j,1)-viewArray[a](3,i-1,j,1))
+                       + b4ci*(viewArray[a](3,i+2,j,1)-viewArray[a](3,i-2,j,1)) );
 // mu*( a2_z + a3_y )
-		  g2 = g2 + mMuVE[g][a](i,j,1)*
-                     ( m_sbop_no_gp[0]*a_AlphaVEp[g][a](2,i,j,0) + m_sbop_no_gp[1]*a_AlphaVEp[g][a](2,i,j,1)
-                       + m_sbop_no_gp[2]*a_AlphaVEp[g][a](2,i,j,2)
-                       + m_sbop_no_gp[3]*a_AlphaVEp[g][a](2,i,j,3)
-                       + m_sbop_no_gp[4]*a_AlphaVEp[g][a](2,i,j,4) + m_sbop_no_gp[5]*a_AlphaVEp[g][a](2,i,j,5)
-                       + a4cj*(a_AlphaVEp[g][a](3,i,j+1,1)-a_AlphaVEp[g][a](3,i,j-1,1))
-                       + b4cj*(a_AlphaVEp[g][a](3,i,j+2,1)-a_AlphaVEp[g][a](3,i,j-2,1)) );
+		  g2 = g2 + viewArray2[a](i,j,1)*
+                     ( lm_sbop_no_gp[0]*viewArray[a](2,i,j,0) + lm_sbop_no_gp[1]*viewArray[a](2,i,j,1)
+                       + lm_sbop_no_gp[2]*viewArray[a](2,i,j,2)
+                       + lm_sbop_no_gp[3]*viewArray[a](2,i,j,3)
+                       + lm_sbop_no_gp[4]*viewArray[a](2,i,j,4) + lm_sbop_no_gp[5]*viewArray[a](2,i,j,5)
+                       + a4cj*(viewArray[a](3,i,j+1,1)-viewArray[a](3,i,j-1,1))
+                       + b4cj*(viewArray[a](3,i,j+2,1)-viewArray[a](3,i,j-2,1)) );
 // (2*mu + lambda)*( a3_z ) + lambda*( a1_x + a2_y )
-		  g3 = g3 + (2*mMuVE[g][a](i,j,1)+mLambdaVE[g][a](i,j,1))*
-                     (m_sbop_no_gp[0]*a_AlphaVEp[g][a](3,i,j,0)
-                      + m_sbop_no_gp[1]*a_AlphaVEp[g][a](3,i,j,1) + m_sbop_no_gp[2]*a_AlphaVEp[g][a](3,i,j,2)
-                      + m_sbop_no_gp[3]*a_AlphaVEp[g][a](3,i,j,3)
-                      + m_sbop_no_gp[4]*a_AlphaVEp[g][a](3,i,j,4) + m_sbop_no_gp[5]*a_AlphaVEp[g][a](3,i,j,5) )
-                     + mLambdaVE[g][a](i,j,1)*
-                     ( a4ci*(a_AlphaVEp[g][a](1,i+1,j,1)-a_AlphaVEp[g][a](1,i-1,j,1))
-                       + b4ci*(a_AlphaVEp[g][a](1,i+2,j,1)-a_AlphaVEp[g][a](1,i-2,j,1)) 
-                       + a4cj*(a_AlphaVEp[g][a](2,i,j+1,1)-a_AlphaVEp[g][a](2,i,j-1,1))
-                       + b4cj*(a_AlphaVEp[g][a](2,i,j+2,1)-a_AlphaVEp[g][a](2,i,j-2,1)) );
+		  g3 = g3 + (2*viewArray2[a](i,j,1)+viewArray3[a](i,j,1))*
+                     (lm_sbop_no_gp[0]*viewArray[a](3,i,j,0)
+                      + lm_sbop_no_gp[1]*viewArray[a](3,i,j,1) + lm_sbop_no_gp[2]*viewArray[a](3,i,j,2)
+                      + lm_sbop_no_gp[3]*viewArray[a](3,i,j,3)
+                      + lm_sbop_no_gp[4]*viewArray[a](3,i,j,4) + lm_sbop_no_gp[5]*viewArray[a](3,i,j,5) )
+                     + viewArray3[a](i,j,1)*
+                     ( a4ci*(viewArray[a](1,i+1,j,1)-viewArray[a](1,i-1,j,1))
+                       + b4ci*(viewArray[a](1,i+2,j,1)-viewArray[a](1,i-2,j,1)) 
+                       + a4cj*(viewArray[a](2,i,j+1,1)-viewArray[a](2,i,j-1,1))
+                       + b4cj*(viewArray[a](2,i,j+2,1)-viewArray[a](2,i,j-2,1)) );
 	       } // end for all mechanisms
 // solve for the ghost point value of Up (stencil uses ghost points for the elastic variable)
-	       a_Up[g](1,i,j,0) = g1/(acof*m_sbop[0]);
-	       a_Up[g](2,i,j,0) = g2/(acof*m_sbop[0]);
-	       a_Up[g](3,i,j,0) = g3/(bcof*m_sbop[0]);
-	    }
+	       a_UpgV(1,i,j,0) = g1/(acof*lm_sbop[0]);
+	       a_UpgV(2,i,j,0) = g2/(acof*lm_sbop[0]);
+	       a_UpgV(3,i,j,0) = g3/(bcof*lm_sbop[0]);
+					 }); SYNC_STREAM;
+
 	 }
+	 SW4_MARK_END("enforceBCfreeAtt2::SET1");
       }    // end if bcType[g][4] == bStressFree   
       if( m_bcType[g][5] == bStressFree  )
       {
+	SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
          int nk=m_global_nz[g];
 	 const float_sw4 i6  = 1.0/6;
 	 const float_sw4 d4a = 2.0/3;
@@ -4234,11 +4288,13 @@ SW4_MARK_FUNCTION;
 	       a_Up[g](3,i,j,nk+1) = g3/(-m_sbop[0]*bcof);
 	    }
 	 }
+	 SW4_MARK_END("enforceBCfreeAtt2::SET 2");
       }// end if bcType[g][5] == bStressFree
    
 // all the curvilinear code needs to be overhauled
       if( m_bcType[g][4] == bStressFree && topo && g == mNumberOfGrids-1 )
       {
+	SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 3");
          float_sw4* mu_p = a_Mu[g].c_ptr();
          float_sw4* la_p = a_Lambda[g].c_ptr();
          float_sw4* up_p = a_Up[g].c_ptr();
@@ -4287,7 +4343,9 @@ SW4_MARK_FUNCTION;
 	    att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
 			    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	 SW4_MARK_END("enforceBCfreeAtt2::SET 3");
       } // end if bcType[g][4] == bStressFree && topography
       
    }  // end for g=0,.
+       ::operator delete[](viewArray,Managed);
 }

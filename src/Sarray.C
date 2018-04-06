@@ -63,6 +63,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -85,6 +86,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -107,6 +109,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -129,6 +132,7 @@ Sarray::Sarray( int iend, int jend, int kend )
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -138,6 +142,7 @@ Sarray::Sarray()
    m_nc = m_ib = m_ie = m_jb = m_je = m_kb = m_ke = 0;
    m_data = NULL;
    dev_data = NULL;
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -159,6 +164,7 @@ Sarray::Sarray( const Sarray& u )
       m_data = NULL;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -184,6 +190,7 @@ Sarray::Sarray( Sarray& u, int nc )
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -248,6 +255,7 @@ void Sarray::define( int nc, int iend, int jend, int kend )
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -273,6 +281,7 @@ void Sarray::define( int iend, int jend, int kend )
 //   m_mpi_datatype_initialized = false;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -297,6 +306,7 @@ void Sarray::define( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
       m_data = NULL;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -321,6 +331,7 @@ void Sarray::define( int ibeg, int iend, int jbeg, int jend, int kbeg,
       m_data = NULL;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -344,6 +355,7 @@ void Sarray::define( const Sarray& u )
       m_data = NULL;
    dev_data = NULL;
    define_offsets();
+   prefetched=false;
 }
 
 //-----------------------------------------------------------------------
@@ -1084,13 +1096,19 @@ void Sarray::transposeik( )
 
    
 void Sarray::prefetch(int device){
+
 #if defined(ENABLE_CUDA)
+  if (!prefetched){
+  SW4_MARK_BEGIN("PREFETCH");
   SW4_CheckDeviceError(cudaMemPrefetchAsync(m_data,
 					    m_nc*m_ni*m_nj*m_nk*sizeof(float_sw4),
 					    device,
 					    0));
-  
+  SW4_MARK_END("PREFETCH");
+  prefetched=true;
+  }
 #endif
+
 }
 SView::SView():data{NULL}{
   //std:cerr<<"SVIEW default ctor, should never be called \n";
@@ -1113,4 +1131,16 @@ void SView::set(Sarray &x){
   offj = x.m_offj;
   offk = x.m_offk;
   //std::cout<<"Sview created with "<<data<<" base = "<<base<<" offc = "<<offc<<" offi = "<<offi<<" offj = "<<offj<<" offk = "<<offk<<"\n";
+}
+void SarrayVectorPrefetch(vector<Sarray> &v){
+  SW4_MARK_FUNCTION;
+  for(int i=0;i<v.size();i++) v[i].prefetch();
+}
+void SarrayVectorPrefetch(vector<Sarray*> &v){
+  SW4_MARK_FUNCTION;
+  for(int i=0;i<v.size();i++) v[i]->prefetch();
+}
+void SarrayVectorPrefetch(vector<Sarray*> &v,int n){
+  SW4_MARK_FUNCTION;
+  for(int i=0;i<v.size();i++) for(int j=0;j<n;j++) v[i][j].prefetch();
 }

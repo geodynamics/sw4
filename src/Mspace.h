@@ -47,10 +47,10 @@ extern struct global_variable_holder_struct global_variables;
 void assert_check_host(void *ptr, const char *file, int line);
 void assert_check_managed(void *ptr, const char *file, int line);
 
-#define PTR_PUSH(type,ptr)				\
-  ( ptr_push(ptr,type,__FILE__,__LINE__))
+#define PTR_PUSH(type,ptr,size)			\
+  ( ptr_push(ptr,type,size,__FILE__,__LINE__))
 
-void ptr_push(void *ptr, Space type, const char *file, int line);
+void ptr_push(void *ptr, Space type, size_t size,const char *file, int line);
 
 #else
 
