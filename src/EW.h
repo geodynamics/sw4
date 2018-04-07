@@ -1544,6 +1544,9 @@ int m_ppadding;
 //float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
 
 
+// Array of sviews used in EW::enforceBCfreeAtt2 in solve.C
+  SView *viewArrayActual;
+
 int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;

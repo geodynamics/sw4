@@ -586,6 +586,7 @@ EW::
   std::cout<<"GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024/1024<<" Gb \n";
   std::cout<<"GPU Memory Max = "<<global_variables.max_mem/1024/1024/1024<<" Gb \n";
 #endif
+   ::operator delete[](viewArrayActual,Managed);
 //  msgStream.close();
 }
 
@@ -4416,6 +4417,8 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      la_ptr   = a_Lambda[g].c_ptr();
      float_sw4* met_ptr = mMetric.c_ptr();
      float_sw4* jac_ptr = mJ.c_ptr();
+     mMetric.forceprefetch();
+     mJ.forceprefetch();
      ifirst   = m_iStart[g];
      ilast    = m_iEnd[g];
      jfirst   = m_jStart[g];

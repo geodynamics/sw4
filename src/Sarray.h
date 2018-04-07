@@ -178,6 +178,7 @@ public:
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
    void prefetch(int device=0);
+  void forceprefetch(int device=0);
   inline SView &getview(){
     //prefetch();
     return view;

@@ -4050,9 +4050,9 @@ SW4_MARK_FUNCTION;
        RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						 RAJA::statement::Lambda<0> >>>>;
-   SView *viewArray = SW4_NEW(Managed, SView[m_number_mechanisms*3]);
-   SView *viewArray2 = viewArray +  m_number_mechanisms;
-   SView *viewArray3 = viewArray +  2*m_number_mechanisms;
+   SView *viewArray = viewArrayActual;
+   SView *viewArray2 = viewArrayActual +  m_number_mechanisms;
+   SView *viewArray3 = viewArrayActual +  2*m_number_mechanisms;
    for(int g=0 ; g<mNumberOfGrids; g++ )
    {
       int ifirst = m_iStart[g];
@@ -4347,5 +4347,5 @@ SW4_MARK_FUNCTION;
       } // end if bcType[g][4] == bStressFree && topography
       
    }  // end for g=0,.
-       ::operator delete[](viewArray,Managed);
+   //::operator delete[](viewArray,Managed);
 }

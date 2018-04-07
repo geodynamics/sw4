@@ -3973,6 +3973,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      }
    }
    
+   // SView array used in enforceBCfreeAtt2
+   viewArrayActual = SW4_NEW(Managed, SView[m_number_mechanisms*3]);
    m_iStart.resize(mNumberOfGrids);
    m_iEnd.resize(mNumberOfGrids);
    m_jStart.resize(mNumberOfGrids);

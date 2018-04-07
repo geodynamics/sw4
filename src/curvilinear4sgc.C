@@ -103,6 +103,9 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
 
+
+   PREFETCH(a_mu);
+   PREFETCH(a_lambda);
    //#pragma omp parallel
    {
    int kstart = kfirst+2;
@@ -1427,6 +1430,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 			}); // End of curvilinear4sg_ci LOOP 2
    }
+   SYNC_STREAM;
 #undef mu
 #undef la
 #undef jac

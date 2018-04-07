@@ -1108,6 +1108,19 @@ void Sarray::prefetch(int device){
   prefetched=true;
   }
 #endif
+}
+  void Sarray::forceprefetch(int device){
+
+#if defined(ENABLE_CUDA)
+  SW4_MARK_BEGIN("FORCE_PREFETCH");
+  SW4_CheckDeviceError(cudaMemPrefetchAsync(m_data,
+					    m_nc*m_ni*m_nj*m_nk*sizeof(float_sw4),
+					    device,
+					    0));
+  SW4_MARK_END("FORCE_PREFETCH");
+  prefetched=true;
+  
+#endif
 
 }
 SView::SView():data{NULL}{
