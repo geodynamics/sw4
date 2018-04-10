@@ -334,6 +334,7 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 	//size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
 	 if( s== 0 )
 	 {
+	   //PREFETCH(bforce1);
 	   int lni = wind[1+6*s]-wind[6*s]+1;
 	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
@@ -362,6 +363,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	 }
 	 else if( s== 1 )
 	 {
+	   //PREFETCH(bforce2);
 	   int lni = wind[1+6*s]-wind[6*s]+1;
 	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
@@ -390,6 +392,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	 }
 	 else if( s==2 )
 	 {
+	   //PREFETCH(bforce3);
 	   int lni = wind[1+6*s]-wind[6*s]+1;
 	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
@@ -418,6 +421,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	 }
 	 else if( s==3 )
 	 {
+	   //PREFETCH(bforce4);
 	   int lni = wind[1+6*s]-wind[6*s]+1;
 	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
@@ -446,6 +450,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	 }
 	 else if( s==4 )
 	 {
+	   PREFETCH(bforce5);
 	   int lni = wind[1+6*s]-wind[6*s]+1;
 	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
@@ -474,6 +479,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 	 }
 	 else if( s==5 )
 	 {
+	   //PREFETCH(bforce6);
 	   int lni = wind[1+6*s]-wind[6*s]+1;
 	   int lnij = (wind[3+6*s]-wind[2+6*s]+1)*lni;
 	   int istart = wind[6*s];
@@ -656,6 +662,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 						       RAJA::statement::Lambda<0> >>>>;
 	 if( s==4 )
 	 {
+	   //PREFETCH(bforce5);
 	    int k=1, kl=1;
 	    //#pragma omp parallel for 
 	    RAJA::RangeSegment i_range(ib+2,ie-1);
@@ -694,6 +701,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 // 	    for( int j=jb+2 ; j <= je-2 ; j++ )
 // 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
 // 	       {
+	    //PREFETCH(bforce6);
 	    RAJA::RangeSegment i_range(ib+2,ie-1);
 	    RAJA::RangeSegment j_range(jb+2,je-1);
 	    RAJA::kernel<BCFORT_EXEC_POL3>(

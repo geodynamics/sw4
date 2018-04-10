@@ -37,6 +37,7 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+#include "cuda_profiler_api.h"
 #define SQR(x) ((x)*(x))
 
 //--------------------------------------------------------------------
@@ -605,6 +606,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // end test
 
 // BEGIN TIME STEPPING LOOP
+       //cudaProfilerStart();
        SW4_MARK_BEGIN("TIME_STEPPING");
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
@@ -1001,6 +1003,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     
   } // end time stepping loop
 SW4_MARK_END("TIME_STEPPING");
+       //cudaProfilerStop();
   if ( !mQuiet && proc_zero() )
     cout << "  Time stepping finished..." << endl;
 

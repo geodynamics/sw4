@@ -83,12 +83,34 @@ SW4_MARK_FUNCTION;
    ASSERT_MANAGED(alp);
    ASSERT_MANAGED(alm);
    ASSERT_MANAGED(u);
-   
+   //PREFETCH(alp);
+   //PREFETCH(alm);
+   //PREFETCH(u);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment k_range(k1,k2+1);
    RAJA::RangeSegment c_range(0,3);
 
+
+
+   using LOCAL_POL3 =
+  RAJA::KernelPolicy<
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>,
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
+								   RAJA::statement::Lambda<0> >>>>>;
+
+   RAJA::kernel<LOCAL_POL3>(
+				  RAJA::make_tuple(k_range,j_range,i_range),
+				  [=]RAJA_DEVICE (int k, int j,int i) {
+				    size_t ind = base+i+ni*j+nij*k;
+#pragma unroll
+				    for (int c=0;c<3;c++)
+	       alp[ind+c*nijk] = icp*(-cm*alm[ind+c*nijk] + u[ind+c*nijk] );
+				  }); SYNC_STREAM;
+
+   return;
    using LOCAL_POL =
   RAJA::KernelPolicy<
   RAJA::statement::CudaKernel<
@@ -101,8 +123,8 @@ SW4_MARK_FUNCTION;
    RAJA::kernel<DEFAULT_LOOP4>(
 				  RAJA::make_tuple(c_range,k_range,j_range,i_range),
 				  [=]RAJA_DEVICE (int c,int k, int j,int i) {
-	       size_t ind = base+i+ni*j+nij*k;
-	       alp[ind+c*nijk] = icp*(-cm*alm[ind+c*nijk] + u[ind+c*nijk] );
+				    size_t ind = base+i+ni*j+nij*k+c*nijk;
+	       alp[ind] = icp*(-cm*alm[ind] + u[ind] );
 				  }); SYNC_STREAM;
 }
 
@@ -160,6 +182,29 @@ RAJA::RangeSegment i_range(ifirst,ilast+1);
 RAJA::RangeSegment j_range(jfirst,jlast+1);
 RAJA::RangeSegment k_range(k1,k2+1);
 RAJA::RangeSegment c_range(0,3);
+
+
+
+using LOCAL_POL3  =
+  RAJA::KernelPolicy<
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>,
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
+								   RAJA::statement::Lambda<0> >>>>>;
+RAJA::kernel<LOCAL_POL3>(RAJA::make_tuple(k_range,j_range,i_range),
+			    [=]RAJA_DEVICE (int k,int j, int i) {
+			    size_t ind = base+i+ni*j+nij*k;
+			    // Note that alp is ASSIGNED by this formula
+#pragma unroll
+			    for(int c=0;c<3;c++)
+			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] + u[ind+c*nijk] + i6* ( dto*dto*u[ind+c*nijk] + 
+											       dto*(up[ind+c*nijk]-um[ind+c*nijk]) + (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );
+			}); SYNC_STREAM;
+
+ return;
+
+
 using LOCAL_POL  =
   RAJA::KernelPolicy<
   RAJA::statement::CudaKernel<

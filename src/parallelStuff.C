@@ -886,7 +886,7 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
   //std::cout<<"getbuffer_device...";
-  //PREFETCHFORCED(buf);
+  //PREFETCH(buf);
   RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
     for (int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
   });

@@ -42,6 +42,7 @@
 #include <mpi.h>
 #include <omp.h>
 #include "version.h"
+#include "cuda_profiler_api.h"
 
 using namespace std;
 
@@ -58,6 +59,7 @@ void usage(string thereason)
 int
 main(int argc, char **argv)
 {
+//cudaProfilerStop();
   int myRank = 0, nProcs = 0;
   string fileName;
   bool checkmode = false;
