@@ -5,6 +5,13 @@
 
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
 
+using XRHS_POL = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
+						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
+								      RAJA::statement::Lambda<0> >>>>>;
 
 using DEFAULT_LOOP2 = 
   RAJA::KernelPolicy< 

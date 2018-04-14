@@ -84,12 +84,21 @@ void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
       ASSERT_MANAGED(a_dcx);
       ASSERT_MANAGED(a_cox);
       ASSERT_MANAGED(a_strx);
-using ADDSGD_POL  =
+using ADDSGD_POL=
        RAJA::KernelPolicy<
        RAJA::statement::CudaKernel<
 	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
 			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
 						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
+									RAJA::statement::For<0, RAJA::seq_exec,
+											     RAJA::statement::Lambda<0> >>>>>>;
+
+using ADDSGD_POL_X  =
+       RAJA::KernelPolicy<
+       RAJA::statement::CudaKernel<
+	 RAJA::statement::For<1, RAJA::cuda_block_exec,
+			      RAJA::statement::For<2, RAJA::cuda_block_exec,
+						   RAJA::statement::For<3, RAJA::cuda_thread_exec,
 									RAJA::statement::For<0, RAJA::seq_exec,
 											     RAJA::statement::Lambda<0> >>>>>>;
 

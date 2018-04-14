@@ -846,13 +846,13 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 {
   
    SW4_MARK_FUNCTION;
-   using XRHS_POL = 
-     RAJA::KernelPolicy< 
-     RAJA::statement::CudaKernel<
-       RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
-			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
-						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-								      RAJA::statement::Lambda<0> >>>>>;
+   // using XRHS_POL = 
+   //   RAJA::KernelPolicy< 
+   //   RAJA::statement::CudaKernel<
+   //     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+   // 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+   // 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+   // 								      RAJA::statement::Lambda<0> >>>>>;
  
 using XRHS_POL2 = 
      RAJA::KernelPolicy< 
@@ -947,15 +947,15 @@ using XRHS_POL2 =
    // PREFETCH(a_strx);
    // PREFETCH(a_stry);
    // PREFETCH(a_strz);
-   using RHS_POL = 
-     RAJA::KernelPolicy< 
-     RAJA::statement::CudaKernel<
-       RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
-			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
-						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-								      RAJA::statement::Lambda<0> >>>>>;
+   // using RHS_POL = 
+   //   RAJA::KernelPolicy< 
+   //   RAJA::statement::CudaKernel<
+   //     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+   // 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+   // 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+   // 								      RAJA::statement::Lambda<0> >>>>>;
 
-   
+   using RHS_POL = XRHS_POL;
    {
 // #pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
 //               r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,u3zip2,u3zip1,\
@@ -974,7 +974,7 @@ using XRHS_POL2 =
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
      SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
-     RAJA::kernel<XRHS_POL2>(
+     RAJA::kernel<XRHS_POL>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int k,int j,int i) {
 			    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
