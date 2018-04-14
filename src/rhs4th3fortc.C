@@ -4,6 +4,7 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+//#include "tests.h"
 //extern "C" {
 
 void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -843,7 +844,26 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 		 float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
 			  float_sw4* __restrict__ a_strz, char op )
 {
-  SW4_MARK_FUNCTION;
+  
+   SW4_MARK_FUNCTION;
+   using XRHS_POL = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+								      RAJA::statement::Lambda<0> >>>>>;
+ 
+using XRHS_POL2 = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
+						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
+								      RAJA::statement::Lambda<0> >>>>>;
+ 
+  // Xrhs4th3fortsgstr_ci<XRHS_POL2>(ifirst,ilast,jfirst,jlast,kfirst,klast,nk,onesided,a_acof,a_bope,a_ghcof,a_lu,a_u,a_mu,a_lambda,h,a_strx,a_stry,a_strz,op);
+  // return;
    // This would work to create multi-dimensional C arrays:
    //   float_sw4** b_ar=(float_sw4*)malloc(ni*nj*sizeof(float_sw4*));
    //   for( int j=0;j<nj;j++)
@@ -953,7 +973,8 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
         RAJA::RangeSegment k_range(k1,k2+1);
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-     RAJA::kernel<RHS_POL>(
+     SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
+     RAJA::kernel<XRHS_POL2>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int k,int j,int i) {
 			    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
@@ -1187,11 +1208,15 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			  }); // END OF rhs4th3fortsgstr_ci LOOP 1
      SYNC_STREAM;
+     SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
       if( onesided[4]==1 )
       {
 	RAJA::RangeSegment k_range(1,6+1);
 	RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+
+	SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
+
 	RAJA::kernel<RHS4_EXEC_POL>(
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
@@ -1448,12 +1473,16 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fortsgstr_ci LOOP 2
 	SYNC_STREAM;
+	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP2");
       }
       if( onesided[5] == 1 )
       {
 	RAJA::RangeSegment k_range(nk-5,nk+1);
 	RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
+	
+	SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP3");
+	
 	RAJA::kernel<RHS_POL>(
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
@@ -1711,6 +1740,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fortsgstr_ci LOOP 3
 	SYNC_STREAM;
+	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP3");
       }
    }
 #undef mu

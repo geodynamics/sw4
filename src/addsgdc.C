@@ -92,15 +92,37 @@ using ADDSGD_POL  =
 						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
 									RAJA::statement::For<0, RAJA::seq_exec,
 											     RAJA::statement::Lambda<0> >>>>>>;
+
+
+using ADDSGD_POL3  =
+       RAJA::KernelPolicy<
+       RAJA::statement::CudaKernel<
+	 RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>,
+			      RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+						   RAJA::statement::For<2, RAJA::cuda_threadblock_exec<32>,
+											     RAJA::statement::Lambda<0> >>>>>;
+
 RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 RAJA::RangeSegment k_range(kfirst+2,klast-1);
 RAJA::RangeSegment c_range(0,3);
+
 RAJA::kernel<ADDSGD_POL>(
 			    RAJA::make_tuple(c_range,k_range,j_range,i_range),
 			    [=]RAJA_DEVICE (int c,int k, int j,int i) {
 			      float_sw4 birho=beta/rho(i,j,k);
 			      {
+// Using the kernel below with an explict c loop and #pragma unrill
+// The code takes 3X more time. WIthout the pragma unroll it takes
+// the same amount of time as the kernel above. So reverting to original kernel.
+
+// RAJA::kernel<ADDSGD_POL3>(
+// 			    RAJA::make_tuple(k_range,j_range,i_range),
+// 			    [=]RAJA_DEVICE (int k, int j,int i) {
+// 			      float_sw4 birho=beta/rho(i,j,k);
+// 			      //#pragma unroll
+// 			      //for(int c=0;c<3;c++)
+// 				{
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
 		   strx(i)*coy(j)*coz(k)*(

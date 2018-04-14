@@ -106,6 +106,20 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 
    PREFETCH(a_mu);
    PREFETCH(a_lambda);
+   using LOCAL_POL_ORG = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<256>,
+								   RAJA::statement::Lambda<0> >>>>>;
+   using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			 RAJA::statement::For<1, RAJA::cuda_block_exec, 
+					      RAJA::statement::For<2, RAJA::cuda_thread_exec,
+								   RAJA::statement::Lambda<0> >>>>>;
    //#pragma omp parallel
    {
    int kstart = kfirst+2;
@@ -116,7 +130,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
       RAJA::RangeSegment k_range(1,6+1);
       RAJA::RangeSegment j_range(jfirst+2,jlast-1);
       RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-      RAJA::kernel<RHS4_EXEC_POL>(
+      RAJA::kernel<LOCAL_POL>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int k,int j,int i) {
 			    //float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
@@ -618,7 +632,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    RAJA::RangeSegment k_range(kstart,klast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
    RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-   RAJA::kernel<RHS4_EXEC_POL>(
+   RAJA::kernel<LOCAL_POL>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
 // #pragma omp for
