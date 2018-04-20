@@ -121,7 +121,7 @@ RAJA::kernel<ADDSGD_POL>(
 			    [=]RAJA_DEVICE (int c,int k, int j,int i) {
 			      float_sw4 birho=beta/rho(i,j,k);
 			      {
-// Using the kernel below with an explict c loop and #pragma unrill
+// Using the kernel below with an explict c loop and #pragma unroll
 // The code takes 3X more time. WIthout the pragma unroll it takes
 // the same amount of time as the kernel above. So reverting to original kernel.
 

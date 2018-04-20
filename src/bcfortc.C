@@ -325,6 +325,16 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								      RAJA::statement::Lambda<0> >>>>>;
+
+   // Policy below produces much lower GPU faults: 700 instrad of 1000 but no real difference in
+   // runtime. The faults could be coming from some code in the RAJA nested loops
+   using BCFORT_EXEC_POL2_X = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<2, RAJA::cuda_block_exec, 
+			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
+						 RAJA::statement::For<0, RAJA::cuda_thread_exec,
+								      RAJA::statement::Lambda<0> >>>>>;
    for( int s=0 ; s < 6 ; s++ )
    {
       if( bccnd[s]==bDirichlet || bccnd[s]==bSuperGrid )

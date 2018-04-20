@@ -101,6 +101,15 @@ SW4_MARK_FUNCTION;
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
 								   RAJA::statement::Lambda<0> >>>>>;
 
+   using LOCAL_POL3_X =
+  RAJA::KernelPolicy<
+  RAJA::statement::CudaKernel<
+    RAJA::statement::For<0, RAJA::cuda_block_exec,
+			 RAJA::statement::For<1, RAJA::cuda_block_exec,
+					      RAJA::statement::For<2, RAJA::cuda_thread_exec,
+								   RAJA::statement::Lambda<0> >>>>>;
+
+   // Note both POL3 and POL3X_ rake about the same time on Hayward with 16 ranks
    RAJA::kernel<LOCAL_POL3>(
 				  RAJA::make_tuple(k_range,j_range,i_range),
 				  [=]RAJA_DEVICE (int k, int j,int i) {
@@ -111,6 +120,8 @@ SW4_MARK_FUNCTION;
 				  }); SYNC_STREAM;
 
    return;
+
+   // Note older code, needs to be removed at some point
    using LOCAL_POL =
   RAJA::KernelPolicy<
   RAJA::statement::CudaKernel<

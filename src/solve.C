@@ -649,17 +649,18 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // take predictor step, store in Up
     evalPredictor( Up, U, Um, mRho, Lu, F );    
-
+    SW4_MARK_BEGIN("COMM_WINDOW");
     if( m_output_detailed_timing )
        time_measure[2] = MPI_Wtime();
 
     if( trace &&  m_myRank == dbgproc )
        cout <<" after evalPredictor" << endl;
 
+    SW4_MARK_BEGIN("COMM_ACTUAL");
 // communicate across processor boundaries
     for(int g=0 ; g < mNumberOfGrids ; g++ )
        communicate_array( Up[g], g );
-
+    SW4_MARK_END("COMM_ACTUAL");
     if( m_output_detailed_timing )
        time_measure[3] = MPI_Wtime();
 
@@ -698,7 +699,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_checkfornan )
        check_for_nan( Up, 1, "U pred. " );
-
+    SW4_MARK_END("COMM_WINDOW");
 // Grid refinement interface conditions:
 // *** 2nd order in TIME
     if (mOrder == 2)
