@@ -37,7 +37,10 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+#ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
+#endif
+
 #define SQR(x) ((x)*(x))
 
 //--------------------------------------------------------------------
@@ -4048,12 +4051,16 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
 SW4_MARK_FUNCTION;
 // AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time stepping for memory variables
    int sg = usingSupergrid();
+#ifdef ENABLE_CUDA
    using LOCAL_POL = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
        RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						 RAJA::statement::Lambda<0> >>>>;
+#else
+   using LOCAL_POL = DEFAULT_LOOP2;
+#endif
    SView *viewArray = viewArrayActual;
    SView *viewArray2 = viewArrayActual +  m_number_mechanisms;
    SView *viewArray3 = viewArrayActual +  2*m_number_mechanisms;

@@ -2321,7 +2321,7 @@ RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(float_sw4 t, float_sw4 R, float_sw
 
 //-----------------------------------------------------------------------
 // C6 smooth bump for time dependence for further testing of point force 
-RAJA_HOST_DEVICE __forceinline__ float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 retval = 0;
   if( (t-R/c) > 0 && (t-R/c) < 1 )
@@ -2361,7 +2361,7 @@ RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(float_sw4 t, float_sw4 R, flo
 
 //-----------------------------------------------------------------------
 // C6 smooth bump for time dependence to further testing of point force 
-RAJA_HOST_DEVICE __forceinline__ float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::d_C6SmoothBump_dt(float_sw4 t, float_sw4 R, float_sw4 c)
 {
   float_sw4 retval=0;
   if( (t-R/c) > 0 && (t-R/c) < 1 )
@@ -2403,7 +2403,7 @@ RAJA_HOST_DEVICE float_sw4 EW::VSBTP(float_sw4 Lim, float_sw4 t)
 }
 //-----------------------------------------------------------------------
 // Primitive function (for T) of C6SmoothBump(t-T)*T
-RAJA_HOST_DEVICE __forceinline__ float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SBTP(float_sw4 Lim, float_sw4 t)
 {
   float_sw4 x = t-Lim;
   return pow(x,8)*(-3217.5*pow(x,8)+3432.0*(7+t)*pow(x,7)-25740.0*(3+t)*pow(x,6)
@@ -2466,7 +2466,7 @@ RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw
 
 //-----------------------------------------------------------------------
 // Integral of H(t-T)*H(1-t+T)*C6SmoothBump(t-T)*T from R/alpha to R/beta
-RAJA_HOST_DEVICE __forceinline__ float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R, float_sw4 alpha, float_sw4 beta)
 {
   float_sw4 temp = R;
 
@@ -2606,7 +2606,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
    float_sw4 m_zming=m_zmin[g];
 
    ASSERT_MANAGED(up);
-
+#ifdef ENABLE_CUDA
    using LOCAL_POL = 
      RAJA::KernelPolicy< 
        RAJA::statement::CudaKernel<
@@ -2614,6 +2614,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+   #else
+   using LOCAL_POL = DEFAULT_LOOP3;
+   #endif
 
    SView &mXV = mX.getview();
    SView &mYV = mY.getview();
@@ -4321,10 +4324,12 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
     a_U[g].prefetch();
     a_Mu[g].prefetch();
     a_Lambda[g].prefetch();
+#ifdef ENABLE_CUDA
     prefetch_to_device(m_sg_str_x[g]);
     prefetch_to_device(m_sg_str_y[g]);
     prefetch_to_device(m_sg_str_z[g]);
     prefetch_to_device( m_sbop);
+#endif
     //    rho_ptr = mRho[g].c_ptr();
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];

@@ -1,18 +1,20 @@
 proj = yes
-FC = xlf
-LINKER = mpixlC
-CXX = nvcc
+FC = ifort
+LINKER = mpicxx
+CXX = mpicxx
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_ray053
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_053NOMP
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install_nomp
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-ray-nomp
-PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
-CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_ray
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-quartz
+PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install-quartz
+CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_quartz
 EXTRA_FORT_FLAGS = 
 LINKFLAGS = 
-EXTRA_CXX_FLAGS =  -O3 -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict " -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include
+EXTRA_CXX_FLAGS =  -O3 -std=c++11 -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DENABLE_CALIPER -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include
+EXTRA_CXX_FLAGS2 =  -O3 -std=c++11 -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DENABLE_CALIPER -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include
 
-EXTRA_CXX_FLAGS2 =  -O3 -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict " -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA 
+MKL_PATH = /usr/tce/packages/mkl/mkl-2018.0/lib
+EXTRA_LINK_FLAGS = -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper -L $(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(PROJ_HOME)/lib64
 
-EXTRA_LINK_FLAGS = -dc -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_LOCATION)/lib -lRAJA  -lcudadevrt -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper -L $(PROJ_HOME)/lib -lproj

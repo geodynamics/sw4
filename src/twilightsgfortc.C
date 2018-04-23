@@ -183,6 +183,7 @@ void EW::forcingttfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int k
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+#ifdef ENABLE_CUDA
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -190,6 +191,9 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+ #else
+ using LOCAL_POL = DEFAULT_LOOP3;
+ #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
@@ -362,6 +366,7 @@ void EW::forcingfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+#ifdef ENABLE_CUDA
      using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -369,6 +374,9 @@ void EW::forcingfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+#else
+     using LOCAL_POL = DEFAULT_LOOP3;
+#endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
@@ -529,6 +537,7 @@ void EW::forcingttfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int 
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+#ifdef ENABLE_CUDA
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -536,6 +545,9 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+ #else
+ using LOCAL_POL = DEFAULT_LOOP3;
+#endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
@@ -855,6 +867,7 @@ void EW::forcingttfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, in
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+#ifdef ENABLE_CUDA
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -862,6 +875,9 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+ #else
+ using LOCAL_POL = DEFAULT_LOOP3;
+ #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
@@ -1056,6 +1072,7 @@ void EW::forcingfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+#ifdef ENABLE_CUDA
      using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -1063,7 +1080,10 @@ void EW::forcingfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
-     RAJA::RangeSegment k_range(kfirst,klast+1);
+#else
+     using LOCAL_POL = DEFAULT_LOOP3;
+#endif     
+       RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
    RAJA::kernel<LOCAL_POL>(
@@ -1215,6 +1235,7 @@ void EW::forcingttfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, i
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
 // #pragma omp parallel
 //    {
+#ifdef ENABLE_CUDA
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -1222,6 +1243,9 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+ #else
+ using LOCAL_POL = DEFAULT_LOOP3;
+ #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);

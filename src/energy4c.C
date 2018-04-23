@@ -64,7 +64,7 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
   //float_sw4 energy=0;
   const bool onesided4 = onesided[4]==1;
   const bool onesided5 = onesided[5]==1;
-  RAJA::ReduceSum<RAJA::cuda_reduce<1024>,float_sw4> energy(0.0);
+  RAJA::ReduceSum<REDUCTION_POLICY,float_sw4> energy(0.0);
   RAJA::RangeSegment k_range(k1,k2+1);
   RAJA::RangeSegment j_range(j1,j2+1);
   RAJA::RangeSegment i_range(i1,i2+1);

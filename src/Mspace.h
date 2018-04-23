@@ -11,7 +11,7 @@ void CheckError(cudaError_t const err, const char* file, char const* const fun, 
 void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) CheckError(err,__FILE__, __FUNCTION__, __LINE__)
 #else
-#define SW4_CheckDeviceError(err) ()
+#define SW4_CheckDeviceError(err) 
 #endif
 void check_mem();
 enum Space { Host, Managed,Device };
@@ -28,9 +28,9 @@ struct global_variable_holder_struct {
 };
 
 extern struct global_variable_holder_struct global_variables;
-
-
+#ifdef ENABLE_CUDA
 #define SW4_TRACK_MEMORY_ALLOCATIONS 1
+#endif
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
 #define SW4_NEW(type, arg )				\
   ( new(type,__FILE__,__LINE__) arg)
@@ -57,13 +57,13 @@ void ptr_push(void *ptr, Space type, size_t size,const char *file, int line);
 #define SW4_NEW(type, arg)				\
   ( new(type) arg)
 
-#define ASSERT_MANAGED(ptr) ()
+#define ASSERT_MANAGED(ptr) 
 
-#define ASSERT_HOST(ptr) ()
+#define ASSERT_HOST(ptr) 
 
-#define PTR_PUSH(ptr) ()
+#define PTR_PUSH(ptr) 
 
-#define PREFETCH(ptr) ()
+#define PREFETCH(ptr)
 #endif
 
 

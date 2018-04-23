@@ -20,13 +20,17 @@ void  addMemVarPredCart( float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha
 //       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
 //       {
   SView &alphaV = alpha.getview();
-	   using LOCAL_POL = 
+#ifdef ENABLE_CUDA
+  using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+#else
+  using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 	   RAJA::RangeSegment k_range(alpha.m_kb,alpha.m_ke+1);
 	   RAJA::RangeSegment j_range(alpha.m_jb,alpha.m_je+1);
 	   RAJA::RangeSegment i_range(alpha.m_ib,alpha.m_ie+1);
@@ -129,13 +133,17 @@ void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4 
   SView &a_XV = a_X.getview();
    SView &a_YV = a_Y.getview();
    SView &a_ZV = a_Z.getview();
-	   using LOCAL_POL = 
+#ifdef ENABLE_CUDA
+   using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+#else
+   using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 	   RAJA::RangeSegment k_range(a_X.m_kb,a_X.m_ke+1);
 	   RAJA::RangeSegment j_range(a_X.m_jb,a_X.m_je+1);
 	   RAJA::RangeSegment i_range(a_X.m_ib,a_X.m_ie+1);
@@ -523,13 +531,17 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
 //          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
 //          {
    SView &alphaV = alpha.getview();
-	   using LOCAL_POL = 
+#ifdef ENABLE_CUDA
+   using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+#else
+   using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 	   RAJA::RangeSegment k_range(alpha.m_kb,alpha.m_ke+1);
 	   RAJA::RangeSegment j_range(alpha.m_jb,alpha.m_je+1);
 	   RAJA::RangeSegment i_range(alpha.m_ib,alpha.m_ie+1);
@@ -702,6 +714,7 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
    SView &a_XV = a_X.getview();
    SView &a_YV = a_Y.getview();
    SView &a_ZV = a_Z.getview();
+#ifdef ENABLE_CUDA
    using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -709,6 +722,9 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+#else
+   using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 	   RAJA::RangeSegment k_range(alpha.m_kb,alpha.m_ke+1);
 	   RAJA::RangeSegment j_range(alpha.m_jb,alpha.m_je+1);
 	   RAJA::RangeSegment i_range(alpha.m_ib,alpha.m_ie+1);

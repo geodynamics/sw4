@@ -2,9 +2,10 @@
 #define __POLICIES_H__
 #include "RAJA/RAJA.hpp"
 #ifdef ENABLE_CUDA
+using REDUCTION_POLICY = RAJA::cuda_reduce<1024>;
 
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
-
+#define SW4_FORCEINLONE __forceinline__
 using XRHS_POL = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
@@ -200,63 +201,96 @@ using BCFORT_EXEC_POL2 = ICSTRESS_EXEC_POL;
 #define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))
 
+
+
+
+//*****************************************************************************************
 //****************************** OMP POLICIES *******************************************
+
+
+
+
+
+
 #else
 
-using RHS4_EXEC_POL =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
-
-using ICSTRESS_EXEC_POL = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::simd_exec> >;
+#define SW4_FORCEINLINE
 
 
-using CONSINTP_EXEC_POL1 = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::simd_exec> >;
+using REDUCTION_POLICY = RAJA::omp_reduce;
+
+using DEFAULT_LOOP1 = RAJA::omp_parallel_for_exec;
 
 
-using CONSINTP_EXEC_POL3 =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
+using DEFAULT_LOOP2 = 
+    RAJA::KernelPolicy<
+      RAJA::statement::For<1, RAJA::omp_parallel_for_exec,
+  RAJA::statement::For<0, RAJA::omp_parallel_for_exec,           
+          RAJA::statement::Lambda<0>
+        > 
+      > 
+    >;
 
 
-using CONSINTP_EXEC_POL4 = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::simd_exec> >;
+using DEFAULT_LOOP3 = 
+    RAJA::KernelPolicy<
+  RAJA::statement::For<2, RAJA::omp_parallel_for_exec, 
+      RAJA::statement::For<1, RAJA::omp_parallel_for_exec, 
+        RAJA::statement::For<0, RAJA::seq_exec,           
+          RAJA::statement::Lambda<0>
+  >
+        > 
+      > 
+    >;
 
-using PRELIM_CORR_EXEC_POL1 = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::simd_exec> >;
+using DEFAULT_LOOP4 = 
+    RAJA::KernelPolicy<
+  RAJA::statement::For<3, RAJA::omp_parallel_for_exec, 
+  RAJA::statement::For<2, RAJA::omp_parallel_for_exec, 
+      RAJA::statement::For<1, RAJA::omp_parallel_for_exec, 
+        RAJA::statement::For<0, RAJA::seq_exec,           
+          RAJA::statement::Lambda<0>
+  >
+  >
+        > 
+      > 
+    >;
 
-using ENFORCEBC_CORR_EXEC_POL1 = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::parallel_exec> >;
+
+using XRHS_POL = DEFAULT_LOOP3;
+
+using RHS4_EXEC_POL = DEFAULT_LOOP3;
+
+
+using ICSTRESS_EXEC_POL = DEFAULT_LOOP2;
+ 
+
+
+using CONSINTP_EXEC_POL1 = DEFAULT_LOOP2;
+
+
+using CONSINTP_EXEC_POL3 = DEFAULT_LOOP3;
+  
+
+
+using CONSINTP_EXEC_POL4 = DEFAULT_LOOP2;
+
+
+using PRELIM_CORR_EXEC_POL1 = DEFAULT_LOOP2;
+
+using PRELIM_PRED_EXEC_POL1 = DEFAULT_LOOP2;
+
+using ENFORCEBC_CORR_EXEC_POL1 = DEFAULT_LOOP2;
+
 
 // Policy used in EW::get_exact_point_source
-using GEPS_EXEC_POL =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
+using GEPS_EXEC_POL = DEFAULT_LOOP3;
+ 
 
 typedef RAJA::omp_parallel_for_exec SARRAY_LOOP_POL1;
 
-using SARRAY_LOOP_POL2 =
-  RAJA::KernelPolicy<
-  RAJA::statement::For<0, RAJA::omp_parallel_for_exec>,
-  RAJA::statement::For<1, RAJA::omp_parallel_for_exec>,
-  RAJA::statement::For<2, RAJA::simd_exec>,
-  RAJA::statement::For<3, RAJA::seq_exec>
-  >;
+using SARRAY_LOOP_POL2 = DEFAULT_LOOP4;
+ 
 
 typedef RAJA::omp_parallel_for_exec PREDFORT_LOOP_POL;
 
@@ -265,62 +299,29 @@ typedef RAJA::omp_parallel_for_exec CORRFORT_LOOP_POL;
 typedef RAJA::omp_parallel_for_exec DPDMTFORT_LOOP_POL;
 
 
-using DPDMT_WIND_LOOP_POL =
-  RAJA::KernelPolicy<
-  RAJA::statement::For<0, RAJA::omp_parallel_for_exec>,
-  RAJA::statement::For<1, RAJA::omp_parallel_for_exec>,
-  RAJA::statement::For<2, RAJA::simd_exec>,
-  RAJA::statement::For<3, RAJA::seq_exec>
-  >;
+using DPDMT_WIND_LOOP_POL = DEFAULT_LOOP4;
 
-using COPY_KPLANE_EXEC_POL =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
+using COPY_KPLANE_EXEC_POL = DEFAULT_LOOP3;
+ 
+using ENERGY4CI_EXEC_POL = DEFAULT_LOOP3;
 
-using ENERGY4CI_EXEC_POL = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::parallel_exec>,
-  RAJA::statement::For<2, RAJA::simd_exec> >;
 
-using ODDIODDJ_EXEC_POL1 =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1> > > ;
+using ODDIODDJ_EXEC_POL1 = DEFAULT_LOOP2;
+ 
 
-using ODDIODDJ_EXEC_POL2 =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
+using ODDIODDJ_EXEC_POL2 = DEFAULT_LOOP3;
+ 
 
-using ODDIEVENJ_EXEC_POL1 =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1> > > ;
+using ODDIEVENJ_EXEC_POL1 = DEFAULT_LOOP2;
+ 
+using ODDIEVENJ_EXEC_POL2 = DEFAULT_LOOP3;
 
-using ODDIEVENJ_EXEC_POL2 =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
 
-using BCFORT_EXEC_POL1 =
-  RAJA::KernelPolicy< 
-  RAJA::statement::OmpParallelCollapse< 
-  RAJA::statement::For<0>,         
-  RAJA::statement::For<1>,         
-  RAJA::statement::For<2> > > ;
+using BCFORT_EXEC_POL1 = DEFAULT_LOOP3;
 
-using BCFORT_EXEC_POL2 = RAJA::KernelPolicy< 
-  RAJA::statement::For<0, RAJA::parallel_exec>,
-  RAJA::statement::For<1, RAJA::simd_exec> >;
+
+using BCFORT_EXEC_POL2 = DEFAULT_LOOP2;
+
 
 #define SYNC_DEVICE
 #define SYNC_STREAM

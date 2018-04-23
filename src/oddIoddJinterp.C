@@ -318,9 +318,9 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
-  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax1(0);
-  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax2(0);
-  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax3(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax1(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax2(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax3(0);
 
   // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax1(0);
   // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax2(0);
@@ -400,7 +400,8 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       r2 = UcNew(c,ic,jc,0) - Uc(c,ic,jc,0);
       //rmax1.max(fabs(r1));
       //rmax1.max(fabs(r2));
-      rmax1.max(max(fabs(r1),fabs(r2)));
+      //rmax1.max(max(fabs(r1),fabs(r2))); // RAJA_CUDA_VERSION
+      rmax1.max((fabs(r1)>fabs(r2)?fabs(r1):fabs(r2)));
       // rmax1 = rmax1 > fabs(r1) ? rmax1 : fabs(r1);
       // rmax1 = rmax1 > fabs(r2) ? rmax1 : fabs(r2);
 //      } // end for c=1,2
@@ -438,7 +439,8 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       r1 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
       r2 = UcNew(c,ic,jc,0) - Uc(c,ic,jc,0);
 
-      rmax2.max(max(fabs(r1),fabs(r2)));
+      //rmax2.max(max(fabs(r1),fabs(r2))); // RAJA_CUDA_VERSION
+      rmax2.max((fabs(r1)>fabs(r2)?fabs(r1):fabs(r2)));
 		//rmax2.max(fabs(r2));
       // rmax2 = rmax2 > fabs(r1) ? rmax2 : fabs(r1);
       // rmax2 = rmax2 > fabs(r2) ? rmax2 : fabs(r2);
@@ -489,7 +491,8 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 
       //rmax3.max(fabs(r1));
       //rmax3.max(fabs(r2));
-      rmax3.max(max(fabs(r1),fabs(r2)));
+      //rmax3.max(max(fabs(r1),fabs(r2))); // RAJA CUDA VERSION
+      rmax3.max((fabs(r1)>fabs(r2)?fabs(r1):fabs(r2)));
       // rmax3 = rmax3 > fabs(r1) ? rmax3 : fabs(r1);
       // rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
       

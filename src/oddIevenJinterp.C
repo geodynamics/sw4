@@ -220,9 +220,9 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 
 // residuals
   
-  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax1(0);
-  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax2(0);
-  RAJA::ReduceMax<RAJA::cuda_reduce<1024>,float_sw4> rmax3(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax1(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax2(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax3(0);
   RAJA::RangeSegment j_range(jfb,jfe+1);
   RAJA::RangeSegment i_range(ifb,ife+1);
 

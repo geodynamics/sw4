@@ -222,7 +222,8 @@ endif
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
 
-# prefix 
+# prefix
+ifeq ($(raja_cuda),yes)
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
@@ -237,7 +238,21 @@ sw4: $(FSW4) $(FOBJ)
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
-
+else
+sw4: $(FSW4) $(FOBJ)
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+# test: linking with openmp for the routine rhs4sgcurv.o
+#	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+	@cat wave.txt
+	@echo "*** Build directory: " $(builddir) " ***"
+endif
 # tarball
 sw4-v1.1.tgz:  $(FSW4) $(FOBJ)
 	rm -rf sw4-v1.1

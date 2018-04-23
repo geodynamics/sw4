@@ -853,7 +853,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    // 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
    // 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
    // 								      RAJA::statement::Lambda<0> >>>>>;
- 
+#ifdef ENABLE_CUDA
 using XRHS_POL2 = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
@@ -861,7 +861,9 @@ using XRHS_POL2 =
 			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
 						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								      RAJA::statement::Lambda<0> >>>>>;
- 
+ #else
+ using XRHS_POL2 =  DEFAULT_LOOP3;
+#endif
   // Xrhs4th3fortsgstr_ci<XRHS_POL2>(ifirst,ilast,jfirst,jlast,kfirst,klast,nk,onesided,a_acof,a_bope,a_ghcof,a_lu,a_u,a_mu,a_lambda,h,a_strx,a_stry,a_strz,op);
   // return;
    // This would work to create multi-dimensional C arrays:
@@ -2415,12 +2417,16 @@ SW4_MARK_FUNCTION;
 // #pragma ivdep
 // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 // 	 {
+#ifdef ENABLE_CUDA
 	   using LOCAL_POL = 
 	   RAJA::KernelPolicy< 
 	   RAJA::statement::CudaKernel<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
+#else
+	   using LOCAL_POL = DEFAULT_LOOP2;
+#endif
 	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	    RAJA::kernel<LOCAL_POL>(
@@ -2576,12 +2582,18 @@ SW4_MARK_FUNCTION;
 // #pragma ivdep
 // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 // 	 {
+#ifdef ENABLE_CUDA
  using LOCAL_POL = 
 	   RAJA::KernelPolicy< 
 	   RAJA::statement::CudaKernel<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
+ #else
+ 
+ using LOCAL_POL = DEFAULT_LOOP2;
+ 
+ #endif
 	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	    RAJA::kernel<LOCAL_POL>(

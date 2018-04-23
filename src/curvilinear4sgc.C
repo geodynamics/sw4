@@ -106,6 +106,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 
    PREFETCH(a_mu);
    PREFETCH(a_lambda);
+#ifdef ENABLE_CUDA
    using LOCAL_POL_ORG = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -120,6 +121,9 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			 RAJA::statement::For<1, RAJA::cuda_block_exec, 
 					      RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								   RAJA::statement::Lambda<0> >>>>>;
+#else
+   using LOCAL_POL =  DEFAULT_LOOP3;
+#endif
    //#pragma omp parallel
    {
    int kstart = kfirst+2;

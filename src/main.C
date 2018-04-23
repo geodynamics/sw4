@@ -42,7 +42,9 @@
 #include <mpi.h>
 #include <omp.h>
 #include "version.h"
+#ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
+#endif
 
 using namespace std;
 

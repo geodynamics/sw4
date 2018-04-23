@@ -942,6 +942,7 @@ void Sarray::assign( const double* ar, int corder )
      prefetch();
      PREFETCH(ar);
      float_sw4 *mdata = m_data;
+#ifdef ENABLE_CUDA
      using ASSIGN_POL  =
        RAJA::KernelPolicy<
        RAJA::statement::CudaKernel<
@@ -950,6 +951,9 @@ void Sarray::assign( const double* ar, int corder )
 						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<64>,
 									RAJA::statement::For<0, RAJA::seq_exec,
 											     RAJA::statement::Lambda<0> >>>>>>;
+#else
+     using ASSIGN_POL = DEFAULT_LOOP4;
+#endif
 		 RAJA::RangeSegment i_range(0,mni);
 		 RAJA::RangeSegment j_range(0,mnj);
 		 RAJA::RangeSegment k_range(0,mnk);

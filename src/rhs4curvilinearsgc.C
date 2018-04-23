@@ -52,12 +52,16 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
 // #pragma simd
 //       for( int i= ib+2; i<=ie-2 ; i++ )
 //       {
+#ifdef ENABLE_CUDA
 using LOCAL_POL = 
 	   RAJA::KernelPolicy< 
 	   RAJA::statement::CudaKernel<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
+ #else
+ using LOCAL_POL = DEFAULT_LOOP2;
+ #endif
 	   RAJA::RangeSegment i_range(ib+2,ie-1);
 	    RAJA::RangeSegment j_range(jb+2,je-1);
 	    RAJA::kernel<LOCAL_POL>(
