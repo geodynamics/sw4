@@ -41,7 +41,7 @@
 #include <string>
 #include "sw4.h"
 #include "Mspace.h"
-
+#include "policies.h"
 using std::string;
 
 class EWCuda;
