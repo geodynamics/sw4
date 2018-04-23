@@ -62,10 +62,10 @@ public:
 	return false;
   }
   void set(Sarray &x);
-  __host__ __device__ inline float_sw4& operator()( int c, int i, int j, int k )  const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
+  RAJA_HOST_DEVICE inline float_sw4& operator()( int c, int i, int j, int k )  const { return data[base + c*offc + i *offi + j*offj+ k*offk];}
   
-__host__ __device__ inline float_sw4& operator()( int i, int j, int k ) const { return data[base + offc + i *offi + j*offj+ k*offk];}
-  __host__ __device__ void print(bool cond) const { 
+ RAJA_HOST_DEVICE inline float_sw4& operator()( int i, int j, int k ) const { return data[base + offc + i *offi + j*offj+ k*offk];}
+ RAJA_HOST_DEVICE void print(bool cond) const { 
     if (cond) printf("SView pointer = %p base = %d offi = %d %d %d\n",data,int(base),int(offi),int(offj),int(offk));}
 };
 class Sarray
