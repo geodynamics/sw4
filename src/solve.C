@@ -1181,11 +1181,11 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 	  side = 5;
 	  if( m_croutines )
 	     freesurfcurvisg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
-				 nz, side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+				 nz, side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
 				 m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
 	  else
 	     freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			     &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+			     &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
 			     m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
        }
     }
@@ -1213,20 +1213,20 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 	  side = 5;
 	  if( m_croutines )
 	     freesurfcurvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-			       side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
+			       side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop, bforce_side4_ptr );
 	  else
 	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
+			   &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop, bforce_side4_ptr );
        }
        if( topo == 1 && m_bcType[g][5] == bStressFree )
        {
 	  side = 6;
 	  if( m_croutines )
 	     freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-			      side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
+			      side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop, bforce_side5_ptr );
 	  else
 	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
+			   &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop, bforce_side5_ptr );
        }
     }
   }
@@ -2788,11 +2788,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			      &wind_ptr[0], t, om, cv, ph, bforce_side0_ptr,
-			      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			      mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	    else
 	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                                              &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
-					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+					     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	 }
       }
 
@@ -2810,11 +2810,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
-		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	    else
 	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			  &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
-			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			  mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	 }
       }
 
@@ -2832,11 +2832,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*2], t, om, cv, ph, bforce_side2_ptr,
-		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	    else
 	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			   &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
-			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	 }
       }
 
@@ -2854,11 +2854,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*3], t, om, cv, ph, bforce_side3_ptr,
-		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	    else
 	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			  &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
-			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			  mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	 }
       }
 
@@ -2876,11 +2876,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*4], t, om, cv, ph, bforce_side4_ptr,
-		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	    else
 	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			   &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
-			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	 }
       }
       else if (m_bcType[g][4] == bStressFree)
@@ -2935,20 +2935,20 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	       if( m_croutines )
 		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				k, t, om, cv, ph,
-				mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+				mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
 	       else
 		  twstensor( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			     &k, &t, &om, &cv, &ph,
-			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+			     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
                // Compute boundary forcing for given stress tensor, tau.
 
 	       if( m_croutines )
 		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				     klast, k, mMetric.c_ptr(), mJ.c_ptr(),
+				     klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 				     tau.c_ptr(), bforce_side4_ptr );
 	       else
 		  getsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				  &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				  &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 				  tau.c_ptr(), bforce_side4_ptr );
 
                if( m_use_attenuation )
@@ -2958,17 +2958,17 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 		  if( m_croutines )
 		     twstensoratt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				      k, t, om, cv, ph,
-				      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+				      mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
 		  else
 		     twstensoratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				   &k, &t, &om, &cv, &ph,
-				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+				   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
 		  if( m_croutines )
 		     subsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k,
-					mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(), bforce_side4_ptr );
+					mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(), bforce_side4_ptr );
 		  else
 		     subsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				     &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 				     tau.c_ptr(), bforce_side4_ptr );
                }
             }
@@ -3008,21 +3008,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	       if( m_croutines )
 		  twstensorsg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				  k, t, om, cv, ph,
-				  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+				  mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(),
 				  mu_ptr, la_ptr, omstrx, omstry );
 	       else
 		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			       &k, &t, &om, &cv, &ph,
-			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+			       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(),
 			       mu_ptr, la_ptr, &omstrx, &omstry );
                // Compute boundary forcing for given stress tensor, tau.
 	       if( m_croutines )
 		  getsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
-				       klast, k, mMetric.c_ptr(), mJ.c_ptr(),
+				       klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
 	       else
 		  getsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				    &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				    &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 				    tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
 
                if( m_use_attenuation )
@@ -3033,10 +3033,10 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 		  {
 		     twstensorsgatt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 					k, t, om, cv, ph,
-					mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+					mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(),
 					mua_ptr, laa_ptr, omstrx, omstry );
 		     subsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
-					  klast, k, mMetric.c_ptr(), mJ.c_ptr(),
+					  klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 					  tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
 					  bforce_side4_ptr );
 		  }
@@ -3044,10 +3044,10 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 		  {
 		     twstensorsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 				     &k, &t, &om, &cv, &ph,
-				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+				     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(),
 				     mua_ptr, laa_ptr, &omstrx, &omstry );
 		     subsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				       &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+				       &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
 				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
 				       bforce_side4_ptr );
 		  }
@@ -3072,11 +3072,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*5], t, om, cv, ph, bforce_side5_ptr,
-		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	    else
 	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
 			   &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
-			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 	 }
       }
       else if (m_bcType[g][5] == bStressFree)
@@ -3588,12 +3588,12 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
     {
 //      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-       float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
-       uRec[0] = ( ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
-		     mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
-		     mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
-		     mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
-		     mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
+       float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
+       uRec[0] = ( ( mMetric[g0](1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		     mMetric[g0](1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		     mMetric[g0](2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
+		     mMetric[g0](3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
+		     mMetric[g0](4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
     }
   } // end div
   else if(mode == TimeSeries::Curl)
@@ -3627,7 +3627,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
     {
 //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+      float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
       float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
       float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
       float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
@@ -3637,12 +3637,12 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
       float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
       float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
       float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-      float_sw4 duzdy = mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds;
-      float_sw4 duydz = mMetric(4,i0,j0,k0)*duyds;
-      float_sw4 duxdz = mMetric(4,i0,j0,k0)*duxds;
-      float_sw4 duzdx = mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds;
-      float_sw4 duydx = mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds;
-      float_sw4 duxdy = mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds;
+      float_sw4 duzdy = mMetric[g0](1,i0,j0,k0)*duzdr+mMetric[g0](3,i0,j0,k0)*duzds;
+      float_sw4 duydz = mMetric[g0](4,i0,j0,k0)*duyds;
+      float_sw4 duxdz = mMetric[g0](4,i0,j0,k0)*duxds;
+      float_sw4 duzdx = mMetric[g0](1,i0,j0,k0)*duzdq+mMetric[g0](2,i0,j0,k0)*duzds;
+      float_sw4 duydx = mMetric[g0](1,i0,j0,k0)*duydq+mMetric[g0](2,i0,j0,k0)*duyds;
+      float_sw4 duxdy = mMetric[g0](1,i0,j0,k0)*duxdr+mMetric[g0](3,i0,j0,k0)*duxds;
 //       if( m_xycomponent )
 //       {
       uRec[0] = (duzdy-duydz)*factor;
@@ -3685,7 +3685,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
     else // must be curvilinear
    {
 //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-      float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+      float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
       float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
       float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
       float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
@@ -3695,17 +3695,17 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
       float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
       float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
       float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-      float_sw4 duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
-      float_sw4 duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
-      float_sw4 duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
-      float_sw4 duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
-      float_sw4 duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
-      float_sw4 duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
-      float_sw4 duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
-		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
-      float_sw4 duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
-		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
-      float_sw4 duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+      float_sw4 duzdy = (mMetric[g0](1,i0,j0,k0)*duzdr+mMetric[g0](3,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydz = (mMetric[g0](4,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdz = (mMetric[g0](4,i0,j0,k0)*duxds)*factor;
+      float_sw4 duzdx = (mMetric[g0](1,i0,j0,k0)*duzdq+mMetric[g0](2,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydx = (mMetric[g0](1,i0,j0,k0)*duydq+mMetric[g0](2,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdy = (mMetric[g0](1,i0,j0,k0)*duxdr+mMetric[g0](3,i0,j0,k0)*duxds)*factor;
+      float_sw4 duxdx = ( mMetric[g0](1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric[g0](2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+      float_sw4 duydy = ( mMetric[g0](1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric[g0](3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+      float_sw4 duzdz = ( mMetric[g0](4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
       uRec[0] = ( duxdx );
       uRec[1] = ( duydy );
       uRec[2] = ( duzdz );
@@ -3743,7 +3743,7 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
      else // must be curvilinear
      {
 //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-	float_sw4 factor = 0.5/sqrt(mJ(i0,j0,k0));
+	float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
 	float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
 	float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
 	float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
@@ -3753,17 +3753,17 @@ void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0
 	float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
 	float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
 	float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
-	float_sw4 duzdy = (mMetric(1,i0,j0,k0)*duzdr+mMetric(3,i0,j0,k0)*duzds)*factor;
-	float_sw4 duydz = (mMetric(4,i0,j0,k0)*duyds)*factor;
-	float_sw4 duxdz = (mMetric(4,i0,j0,k0)*duxds)*factor;
-	float_sw4 duzdx = (mMetric(1,i0,j0,k0)*duzdq+mMetric(2,i0,j0,k0)*duzds)*factor;
-	float_sw4 duydx = (mMetric(1,i0,j0,k0)*duydq+mMetric(2,i0,j0,k0)*duyds)*factor;
-	float_sw4 duxdy = (mMetric(1,i0,j0,k0)*duxdr+mMetric(3,i0,j0,k0)*duxds)*factor;
-	float_sw4 duxdx = ( mMetric(1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
-		       mMetric(2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
-	float_sw4 duydy = ( mMetric(1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
-		       mMetric(3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
-	float_sw4 duzdz = ( mMetric(4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+	float_sw4 duzdy = (mMetric[g0](1,i0,j0,k0)*duzdr+mMetric[g0](3,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydz = (mMetric[g0](4,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdz = (mMetric[g0](4,i0,j0,k0)*duxds)*factor;
+	float_sw4 duzdx = (mMetric[g0](1,i0,j0,k0)*duzdq+mMetric[g0](2,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydx = (mMetric[g0](1,i0,j0,k0)*duydq+mMetric[g0](2,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdy = (mMetric[g0](1,i0,j0,k0)*duxdr+mMetric[g0](3,i0,j0,k0)*duxds)*factor;
+	float_sw4 duxdx = ( mMetric[g0](1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric[g0](2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+	float_sw4 duydy = ( mMetric[g0](1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric[g0](3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+	float_sw4 duzdz = ( mMetric[g0](4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
 	uRec[0] =  duxdx;
 	uRec[1] =  duxdy;
 	uRec[2] =  duxdz;
@@ -3803,15 +3803,15 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
     klast  = m_kEnd[g];
     if( m_sg_damping_order == 4 )
     {
-       if( topographyExists() && g == mNumberOfGrids-1 )
+       if( topographyExists() && g >= mNumberOfCartesianGrids )
        {
 	  if( m_croutines )
 	     addsgd4c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr,
 			  rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
-			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
+			  mJ[g].c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
           else
 	     addsgd4c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-		        m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+		        m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
 		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        }
        else
@@ -3830,15 +3830,15 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
     }
     else if(  m_sg_damping_order == 6 )
     {
-       if( topographyExists() && g == mNumberOfGrids-1 )
+       if( topographyExists() && g >= mNumberOfCartesianGrids )
        {
 	  if( m_croutines )
 	     addsgd6c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr,
 			  rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
-			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
+			  mJ[g].c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
 	  else
 	     addsgd6c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g],
-		       m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+		       m_sg_str_y[g], mJ[g].c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
 		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        }
        else
@@ -4104,7 +4104,7 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
       }// end if bcType[g][5] == bStressFree
    
 // all the curvilinear code needs to be overhauled
-      if( m_bcType[g][4] == bStressFree && topo && g == mNumberOfGrids-1 )
+      if( m_bcType[g][4] == bStressFree && topo && g >= mNumberOfCartesianGrids )
       {
          float_sw4* mu_p = a_Mu[g].c_ptr();
          float_sw4* la_p = a_Lambda[g].c_ptr();
@@ -4137,22 +4137,22 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
             // This function adds the visco-elastic boundary stresses to bforcerhs
 	    if(  m_croutines )
 	       ve_bndry_stress_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                                  alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), side,
+                                  alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(), side,
                                   m_sbop_no_gp, usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
 	    else
 	       ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-				     alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
+				     alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(), &side,
 				     m_sbop_no_gp, &usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
          } // end for a...
          
 // update GHOST POINT VALUES OF UP
 	 if( m_croutines )
 	    att_free_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
-                         up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
+                         up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(), m_sbop, // use ghost points
                          usesg, m_sg_str_x[g], m_sg_str_y[g] );
 	 else
 	    att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
+			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(), m_sbop, // use ghost points
 			    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
       } // end if bcType[g][4] == bStressFree && topography
       

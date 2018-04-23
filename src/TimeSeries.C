@@ -187,7 +187,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
      
 // now we can find the closest grid point  
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
-   if( m_grid0 == a_ew->mNumberOfGrids-1 && a_ew->topographyExists() )
+   if( m_grid0 >= a_ew->mNumberOfCartesianGrids-1 && a_ew->topographyExists() )
    {
 // Curvilinear
       bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
@@ -218,7 +218,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    }
    else
    {
-      zG = a_ew->mZ(m_i0, m_j0, m_k0);
+      zG = a_ew->mZ[m_grid0](m_i0, m_j0, m_k0);
    }
    
 // remember corrected location

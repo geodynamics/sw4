@@ -1310,7 +1310,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    bool canBeInverted, curvilinear;
    float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
-   if( g == a_EW->mNumberOfGrids-1 && a_EW->topographyExists() )
+   if( g >= a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
    {
 // Curvilinear
 // Problem when the curvilinear mapping is NOT analytic:
@@ -1824,7 +1824,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                    && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
                {
                   if( curvilinear )
-                     wF /= a_EW->mJ(i,j,k);
+                     wF /= a_EW->mJ[g](i,j,k); // is 'g' correct?
                   else
                      wF /= h*h*h;
 
@@ -2144,7 +2144,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                
                   float_sw4 jaci;
                   if( curvilinear )
-                     jaci = 1/a_EW->mJ(i,j,k);
+                     jaci = 1/a_EW->mJ[g](i,j,k); // is 'g' correct?
                   else
                      jaci = 1.0/(h*h*h);
 

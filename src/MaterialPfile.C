@@ -249,25 +249,31 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 // Now, the curvilinear grid
   if (mEW->topographyExists())
   {
-    g = mEW->mNumberOfGrids-1;
+     int gTop = mEW->mNumberOfGrids-1;
+     for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++)
+     {
+//    g = mEW->mNumberOfGrids-1;
 
 // the curvilinear grid is always on top
-    kLow = 1;
+        if (g == gTop)
+           kLow = 1;
+        else
+           kLow = mEW->m_kStart[g];
 
-    if( m_coords_geographic )
-    {
+        if( m_coords_geographic )
+        {
 //       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) 
 #pragma omp parallel for reduction(+:material,outside)
-       for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
-	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
-	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
-	     {
-		float_sw4 x = mEW->mX(i,j,k);
-		float_sw4 y = mEW->mY(i,j,k);
-		float_sw4 z = mEW->mZ(i,j,k);
-		double lon, lat;
-		mEW->computeGeographicCoord( x, y, lon, lat );
-		float_sw4 depth = z - mEW->mZ(i,j,1);
+           for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1 for top grid)
+              for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
+                 for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
+                 {
+                    float_sw4 x = mEW->mX[g](i,j,k);
+                    float_sw4 y = mEW->mY[g](i,j,k);
+                    float_sw4 z = mEW->mZ[g](i,j,k);
+                    double lon, lat;
+                    mEW->computeGeographicCoord( x, y, lon, lat );
+                    float_sw4 depth = z - mEW->mZ[gTop](i,j,1);
 
 		if( inside( lat, lon, depth )  )
 		{
@@ -301,44 +307,45 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		  }
 		   outside++;
 		}
-		
 	     } // end for i,j,k
-    }
-    else
-    {
+        } // end coords_geographic
+        else
+        {
 //       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
 #pragma omp parallel for reduction(+:material,outside)
-       for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
-	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
-	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
-	     {
-		float_sw4 x = mEW->mX(i,j,k);
-		float_sw4 y = mEW->mY(i,j,k);
-		float_sw4 z = mEW->mZ(i,j,k);
-		float_sw4 depth = z - mEW->mZ(i,j,1);
-		if( inside_cart( x, y, depth )  ) 
-		{
-		   //---------------------------------------------------------
-		   // Query the location...
-		   //---------------------------------------------------------
-		   float_sw4 vp,vs,density,qup,qus;
-		   sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
-		   rho[g](i,j,k) = density;
-		   cp[g](i,j,k) = vp;
-		   cs[g](i,j,k) = vs;
-		   if (m_qf) 
-		   {
-		      if (qp[g].is_defined())
-			 qp[g](i,j,k) = qup;
-		      if (qs[g].is_defined())
-			 qs[g](i,j,k) = qus;
-		   }
-		   material++;
-		}
-		else
-		   outside++;
-	     } // end for i,j,k
-    }
+           for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
+              for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
+                 for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
+                 {
+                    float_sw4 x = mEW->mX[g](i,j,k);
+                    float_sw4 y = mEW->mY[g](i,j,k);
+                    float_sw4 z = mEW->mZ[g](i,j,k);
+                    float_sw4 depth = z - mEW->mZ[gTop](i,j,1);
+                    if( inside_cart( x, y, depth )  ) 
+                    {
+                       //---------------------------------------------------------
+                       // Query the location...
+                       //---------------------------------------------------------
+                       float_sw4 vp,vs,density,qup,qus;
+                       sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
+                       rho[g](i,j,k) = density;
+                       cp[g](i,j,k) = vp;
+                       cs[g](i,j,k) = vs;
+                       if (m_qf) 
+                       {
+                          if (qp[g].is_defined())
+                             qp[g](i,j,k) = qup;
+                          if (qs[g].is_defined())
+                             qs[g](i,j,k) = qus;
+                       }
+                       material++;
+                    }
+                    else
+                       outside++;
+                 } // end for i,j,k
+        }
+     } // end for g (curvilinear)
+     
   } // end if topographyExists()
   
 //  extrapolation is now done in WPP2:set_materials()

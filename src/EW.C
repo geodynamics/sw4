@@ -4833,7 +4833,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 	 else if(img->mMode == Image::LAT || img->mMode == Image::LON )
          {
             int g=mNumberOfGrids-1; // top curvilinear is at the surface
-	    img->computeImageLatLon( mX[g], mY[g], mZ[g] );
+	    img->computeImageLatLon( mX, mY, mZ );
          }
 	 else if(img->mMode == Image::TOPO )
 	 {
@@ -4889,7 +4889,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
          else if( img->mMode == Image::GRIDX || img->mMode == Image::GRIDY || img->mMode == Image::GRIDZ )
          {
             int g=mNumberOfGrids-1; // finest curvilinear grid for now. Needs to be generalized
-	    img->computeImageGrid(mX[g], mY[g], mZ[g] );
+	    img->computeImageGrid(mX, mY, mZ );
          }
          else if(img->mMode == Image::MAGDUDT )
 	 {
@@ -5100,8 +5100,7 @@ void EW::initialize_image_files( )
        || mImageFiles[fIndex]->mMode == Image::GRIDY
        || mImageFiles[fIndex]->mMode == Image::GRIDZ )
       {
-         int g=mNumberOfGrids-1; // finest curvilinear grid for now. Needs to be generalized
-	 mImageFiles[fIndex]->computeImageGrid(mX[g], mY[g], mZ[g] );
+	 mImageFiles[fIndex]->computeImageGrid(mX, mY, mZ );
       }
    
    // Volume images

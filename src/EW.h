@@ -1193,7 +1193,7 @@ vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt, m_kEndI
 // Instead use m_iStartInt[g], m_iEndInt[g], etc, 
 int m_paddingCells[4]; // indexing is [0] = low-i, [1] = high-i, [2] = low-j, [3] = high-j
 
-// For the Cartesian grid, we only need to offset in z
+// For the Cartesian grid, we only need to store the offset in z
    vector<float_sw4> m_zmin; // needed by the Source and Image classes
 
 // for the curvilinear grid, we also store the cartesian coordinates of the grid points
