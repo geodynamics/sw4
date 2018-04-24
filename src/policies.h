@@ -5,7 +5,7 @@
 using REDUCTION_POLICY = RAJA::cuda_reduce<1024>;
 
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
-#define SW4_FORCEINLONE __forceinline__
+#define SW4_FORCEINLINE __forceinline__
 using XRHS_POL = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
