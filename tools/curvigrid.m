@@ -5,7 +5,9 @@
 %
 % tau: elevation of topographhy (z = -tau)
 % zMax: depth of bottom curvilinear grid = top cartesian grid
-% N: Number of grid points (integer)
+% Ncoarse: Number of grid points (integer)
+% verbose: 1 for making a 1-D plot of the grid; default is 0 for no plotting
+%
 function z = curvigrid( s, tau, zMax, Ncoarse, verbose )
 
   if nargin < 5
@@ -17,9 +19,9 @@ function z = curvigrid( s, tau, zMax, Ncoarse, verbose )
   end;
 
   hCart = zMax/(Ncoarse-1);
-
-  c1 = zMax + tau - hCart*(Ncoarse-1);
+#  c1 = zMax + tau - hCart*(Ncoarse-1);
 #  z = (1-s).*(-tau) + s.*(zMax + c1.*(1-s) + c1.*(1-s).^2);
+
   z = (1-s).*(-tau) + s.*(zMax); % linear case
   
 %plot(s,"+");

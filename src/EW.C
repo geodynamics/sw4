@@ -1659,8 +1659,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
   float_sw4 radius =-1, x0=0, y0=0, z0=0;
 
 //tmp  
-//   if (proc_zero())
-//     printf("Inside normOfDifference\n");
+  if (proc_zero())
+     printf("Inside normOfDifference\n");
   float_sw4 htop = mGridSize[mNumberOfGrids-1];
   float_sw4 hbot = mGridSize[0];
 
@@ -1737,8 +1737,7 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
     }
 // need to exclude parallel overlap from L2 calculation
     int usesg = usingSupergrid();
-//    if( topographyExists() && g == mNumberOfGrids-1 )
-    if( topographyExists() )
+    if( topographyExists() && g >= mNumberOfCartesianGrids )
     {
        if( m_croutines )
 	  solerr3c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
@@ -1777,6 +1776,9 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
   MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 
   diffL2 = sqrt(diffL2);
+//tmp  
+  if (proc_zero())
+     printf("End of normOfDifference\n");
 }
 
 //---------------------------------------------------------------------------

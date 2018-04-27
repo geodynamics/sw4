@@ -378,10 +378,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   "*** No topography command found in input file. Using z=0 as free surface boundary ***" << endl << endl;
   }
 
-// tmp
-  MPI_Abort(MPI_COMM_WORLD,1);
-  
-  
 // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
