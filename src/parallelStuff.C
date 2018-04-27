@@ -164,6 +164,15 @@ void EW::setup2D_MPICommunications()
    m_send_type_2dy1p.resize(mNumberOfCartesianGrids);
    m_send_type_2dx3p.resize(mNumberOfCartesianGrids);//padding=3
    m_send_type_2dy3p.resize(mNumberOfCartesianGrids);
+
+
+   // Data for ASYNC_SEND_RECV
+   send_type_2dx.resize(mNumberOfCartesianGrids);
+   send_type_2dy.resize(mNumberOfCartesianGrids);
+
+   bufs_type_2dx.resize(mNumberOfCartesianGrids);
+   bufs_type_2dy.resize(mNumberOfCartesianGrids);
+   
    for( int g = 0 ; g < mNumberOfCartesianGrids ; g++ )
    {
       int ni = m_iEnd[g]-m_iStart[g]+1, nj=m_jEnd[g]-m_jStart[g]+1;
@@ -171,6 +180,11 @@ void EW::setup2D_MPICommunications()
       {
 	 MPI_Type_vector( 3*nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dx[g] );
 	 MPI_Type_vector( 3,    m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dy[g] );
+
+
+	 make_type_2d(send_type_2dx,bufs_type_2dx,3*nj,m_ppadding,ni,g);
+	 make_type_2d(send_type_2dy,bufs_type_2dy,3,m_ppadding*ni,ni*nj,g);
+
 	 MPI_Type_vector( 3*nj, 1,    ni,    m_mpifloat, &m_send_type_2dx1p[g] );
 	 MPI_Type_vector( 3,    ni, ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
 	 MPI_Type_vector( 3*nj, 3,  ni,    m_mpifloat, &m_send_type_2dx3p[g] );
@@ -211,12 +225,15 @@ void EW::setupMPICommunications()
    send_type3.resize(2*mNumberOfGrids);
    send_type4.resize(2*mNumberOfGrids);
    send_type21.resize(2*mNumberOfGrids);
+   
 
    bufs_type1.resize(4*mNumberOfGrids);
    bufs_type3.resize(4*mNumberOfGrids);
    bufs_type4.resize(4*mNumberOfGrids);
    bufs_type21.resize(4*mNumberOfGrids);
 
+
+   
    // End Data for ASYNC_SEND_RECV
    for( int g= 0 ; g < mNumberOfGrids ; g++ )
    {
@@ -472,6 +489,8 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int xtag2 = 346;
    int ytag1 = 347;
    int ytag2 = 348;
+   communicate_array_2d_async( u, g, k );
+   return;
 
    if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
    {
@@ -691,6 +710,15 @@ void EW::make_type(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple
   bufs_type[4*g+3] = std::make_tuple(tbuf+2*i2*j2,tbuf+3*i2*j2);
   
 }
+void EW::make_type_2d(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple<float_sw4*,float_sw4*>> &bufs_type,int i1, int j1,int k1, int g){
+  send_type[g]=std::make_tuple(i1,j1,k1);
+  Space space = Device; // Use mpirun -gpu flag to run;
+  space = Managed ; // -gpu flag not required 
+  
+  float_sw4* tbuf = SW4_NEW(space,float_sw4[i1*j1*2]);
+  bufs_type[g] = std::make_tuple(tbuf,tbuf+i1*j1);
+  
+}
 void EW::communicate_array_async(Sarray& u, int grid )
 {
   SW4_MARK_FUNCTION;
@@ -907,4 +935,68 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
 
   SYNC_STREAM;
   //std::cout<<"Done\n";
+}
+void EW::communicate_array_2d_async( Sarray& u, int g, int k )
+{
+  SW4_MARK_FUNCTION;
+   REQUIRE2( u.m_nc == 3, "Communicate array 2d, only implemented for three-component arrays" );
+   REQUIRE2( g < m_send_type_2dx.size(), "Communicate array 2d, only implemented for grid=0.." << m_send_type_2dx.size()-1
+	     << " but g= " << g);
+   int ie = m_iEnd[g], ib=m_iStart[g];
+   int je = m_jEnd[g], jb=m_jStart[g];
+
+   MPI_Status status;
+   int xtag1 = 345;
+   int xtag2 = 346;
+   int ytag1 = 347;
+   int ytag2 = 348;
+
+   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
+   {
+      Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+      u2d.copy_kplane(u,k);
+      SW4_MARK_BEGIN("comm_array_2d::MPI");
+      // X-direction communication
+      AMPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
+		    &u2d(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
+		    bufs_type_2dx[g],
+		    m_cartesian_communicator, &status );
+      AMPI_Sendrecv( &u2d(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
+		    &u2d(1,ie-(m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag2,
+		     bufs_type_2dx[g],
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      AMPI_Sendrecv( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
+		    &u2d(1,ib,jb,k), 1, send_type_2dy[g], m_neighbor[2], ytag1,
+		     bufs_type_2dy[g],
+		    m_cartesian_communicator, &status );
+      AMPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
+		    &u2d(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
+		     bufs_type_2dy[g],
+		    m_cartesian_communicator, &status );
+      SW4_MARK_END("comm_array_2d::MPI");
+      u.copy_kplane(u2d,k);
+   }
+   else
+   {
+      // X-direction communication
+   AMPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
+		 &u(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
+		  bufs_type_2dx[g],
+		 m_cartesian_communicator, &status );
+   AMPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
+		 &u(1,ie-(m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag2,
+		  bufs_type_2dx[g],
+		 m_cartesian_communicator, &status );
+
+      // Y-direction communication
+   AMPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
+		 &u(1,ib,jb,k), 1, send_type_2dy[g], m_neighbor[2], ytag1,
+		   bufs_type_2dy[g],
+		 m_cartesian_communicator, &status );
+   AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
+		 &u(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
+		  bufs_type_2dy[g],
+		 m_cartesian_communicator, &status );
+   }
 }

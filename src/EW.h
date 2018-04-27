@@ -1162,7 +1162,9 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
    void getDtFromRestartFile();
   void make_type(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple<float_sw4*,float_sw4*>> &bufs_type,int i1, int j1,int k1, int i2,int j2, int k2, int g);
+  void make_type_2d(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple<float_sw4*,float_sw4*>> &bufs_type,int i1, int j1,int k1, int g);
   void communicate_array_async(Sarray& u, int grid );
+  void communicate_array_2d_async( Sarray& u, int g, int k );
 void AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
 		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		      std::tuple<float_sw4*,float_sw4*> &buf,
@@ -1567,10 +1569,16 @@ vector<MPI_Datatype> m_send_type_2dy1p;
   vector<std::tuple<int,int,int>> send_type4;
   vector<std::tuple<int,int,int>> send_type21;
 
+  vector<std::tuple<int,int,int>> send_type_2dx;
+  vector<std::tuple<int,int,int>> send_type_2dy;
+  
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type1;
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type3;
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type4;
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type21;
+
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dx;
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dy;
 public:
 MPI_Datatype m_mpifloat;
 
