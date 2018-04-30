@@ -131,7 +131,7 @@ if (loc==Managed){
     throw std::bad_alloc();
   }
 #else
- if ((loc==Managed)||(loc==Device)||loc==Pinned)){
+ if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
     //std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
   } else if (loc==Host){
