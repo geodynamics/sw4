@@ -70,7 +70,7 @@
 
 #include "CheckPoint.h"
 #include "policies.h"
-
+#include "Mspace.h"
 using namespace std;
 
 class EW 
@@ -1579,6 +1579,9 @@ vector<MPI_Datatype> m_send_type_2dy1p;
 
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dx;
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dy;
+
+  Space mpi_buffer_space;
+  
 public:
 MPI_Datatype m_mpifloat;
 

@@ -191,7 +191,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
      RAJA::kernel<CONSINTP_EXEC_POL4>(
 			RAJA::make_tuple(jeven_range,iodd_range),
 			[=]RAJA_DEVICE (int j,int i) {
-#// pragma omp for
+// #pragma omp for
 //       for( int j=jfeven; j <= jfe ; j+=2 ) // odd-i, even-j
 // #pragma omp simd
 //          for( int i=ifodd ; i <= ife ; i+=2 )

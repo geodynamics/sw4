@@ -14,7 +14,7 @@ void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) 
 #endif
 void check_mem();
-enum Space { Host, Managed,Device };
+enum Space { Host, Managed,Device,Pinned};
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc) ;
 void operator delete(void *ptr, Space loc) throw();
 void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc) ;

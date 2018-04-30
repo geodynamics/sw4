@@ -699,10 +699,8 @@ void EW::communicate_array_2dfinest( Sarray& u )
 void EW::make_type(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple<float_sw4*,float_sw4*>> &bufs_type,int i1, int j1,int k1, int i2,int j2, int k2, int g){
   send_type[2*g]=std::make_tuple(i1,j1,k1);
   send_type[2*g+1]=std::make_tuple(i2,j2,k2);
-  Space space = Device; // Use mpirun -gpu flag to run;
-  space = Managed ; // -gpu flag not required 
-  
-  float_sw4* tbuf = SW4_NEW(space,float_sw4[i1*j1*4+i2*j2*4]);
+
+  float_sw4* tbuf = SW4_NEW(mpi_buffer_space,float_sw4[i1*j1*4+i2*j2*4]);
   bufs_type[4*g+0] = std::make_tuple(tbuf,tbuf+i1*j1);
   bufs_type[4*g+1] = std::make_tuple(tbuf+2*i1*j1,tbuf+3*i1*j1);
   tbuf+=4*i1*j1;
@@ -712,10 +710,8 @@ void EW::make_type(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple
 }
 void EW::make_type_2d(vector<std::tuple<int,int,int>> &send_type, vector<std::tuple<float_sw4*,float_sw4*>> &bufs_type,int i1, int j1,int k1, int g){
   send_type[g]=std::make_tuple(i1,j1,k1);
-  Space space = Device; // Use mpirun -gpu flag to run;
-  space = Managed ; // -gpu flag not required 
-  
-  float_sw4* tbuf = SW4_NEW(space,float_sw4[i1*j1*2]);
+
+  float_sw4* tbuf = SW4_NEW(mpi_buffer_space,float_sw4[i1*j1*2]);
   bufs_type[g] = std::make_tuple(tbuf,tbuf+i1*j1);
   
 }
@@ -877,7 +873,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
 		       std::tuple<float_sw4*,float_sw4*> &buf,
 		       MPI_Comm comm, MPI_Status *status){
   SW4_MARK_FUNCTION;
-  MPI_Request send_req,recv_req;
+  MPI_Request send_req=MPI_REQUEST_NULL,recv_req=MPI_REQUEST_NULL;
   
   int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
   int send_count=std::get<0>(sendt)*std::get<1>(sendt);
@@ -895,6 +891,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   }
   MPI_Status send_status,recv_status;
 
+  SW4_MARK_BEGIN("MPI_RECV_WAIT");
   if (recvfrom!=MPI_PROC_NULL){
     if (MPI_Wait(&recv_req,&recv_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT RECV FAILED IN AMPI_SENDrecv\n";
     putbuffer_device(b,std::get<1>(buf),recvt);
@@ -902,10 +899,11 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
     //for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
     //std::cout<<"\n";
   }
-  
+   SW4_MARK_END("MPI_RECV_WAIT");
+   SW4_MARK_BEGIN("MPI_SEND_WAIT");
   if (sendto!=MPI_PROC_NULL)
     if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
-
+   SW4_MARK_END("MPI_SEND_WAIT");
  
 }
 void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
@@ -955,7 +953,7 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
    {
       Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
       u2d.copy_kplane(u,k);
-      SW4_MARK_BEGIN("comm_array_2d::MPI");
+      SW4_MARK_BEGIN("comm_array_2d_async::MPI");
       // X-direction communication
       AMPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
 		    &u2d(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
@@ -974,7 +972,7 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
 		    &u2d(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
 		     bufs_type_2dy[g],
 		    m_cartesian_communicator, &status );
-      SW4_MARK_END("comm_array_2d::MPI");
+      SW4_MARK_END("comm_array_2d_async::MPI");
       u.copy_kplane(u2d,k);
    }
    else

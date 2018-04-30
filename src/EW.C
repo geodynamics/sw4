@@ -532,6 +532,14 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    else
       CHECK_INPUT(false,"Error, could not identify float_sw4");
 
+   // The memory space in which mMPI buffers will be allocated
+   // for use by AMPISendRecv. Options are Managed,Device and Pinned
+   // On Sierra Host will work as well. Device/Managed is the fastest
+   // Note:: mpirun might need additional flags like -gpu for Device and 
+   // Managed to work.
+   
+   mpi_buffer_space=Device;
+
    m_check_point = new CheckPoint(this);
 
 #ifdef SW4_NOC
@@ -575,6 +583,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    m_ghcof_no_gp = m_acof_no_gp+384; PTR_PUSH(Managed,m_ghcof_no_gp,6*sizeof(float_sw4));
    m_sbop_no_gp = m_ghcof_no_gp+6; PTR_PUSH(Managed,m_sbop_no_gp,6*sizeof(float_sw4));
 #endif
+
 }
 
 // Destructor
@@ -587,6 +596,18 @@ EW::
   std::cout<<"GPU Memory Max = "<<global_variables.max_mem/1024/1024/1024<<" Gb \n";
 #endif
    ::operator delete[](viewArrayActual,Managed);
+     
+   for(int m=0;m<mNumberOfGrids;m+=4){
+     ::operator delete[](std::get<0>(bufs_type1[4*m]),mpi_buffer_space);
+     ::operator delete[](std::get<0>(bufs_type3[4*m]),mpi_buffer_space);
+     ::operator delete[](std::get<0>(bufs_type4[4*m]),mpi_buffer_space);
+     ::operator delete[](std::get<0>(bufs_type21[4*m]),mpi_buffer_space);
+   }
+
+   for (int m=0;m<mNumberOfCartesianGrids;m++){
+     ::operator delete[](std::get<0>(bufs_type_2dx[m]),mpi_buffer_space);
+     ::operator delete[](std::get<0>(bufs_type_2dy[m]),mpi_buffer_space);
+   }
 //  msgStream.close();
 }
 

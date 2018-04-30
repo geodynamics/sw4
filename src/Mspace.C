@@ -59,12 +59,17 @@ if (loc==Managed){
       std::cerr<<"Device memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
     } else return ptr;
- } else {
-    std::cerr<<"Unknown memory space for allocation request\n";
+ } else if (loc==Pinned){ 
+  if (size==0) size=1; // new has to return an valid pointer for 0 size.
+  void *ptr;
+  SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
+  return ptr;
+ }else {
+  std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
     throw std::bad_alloc();
   }
 #else
- if ((loc==Managed)||(loc==Device)){
+ if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
     //std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
   } else if (loc==Host){
@@ -115,19 +120,25 @@ if (loc==Managed){
       std::cerr<<"Device memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
     } else return ptr;
+ }else if (loc==Pinned){ 
+  if (size==0) size=1; // new has to return an valid pointer for 0 size.
+  void *ptr;
+  SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
+  return ptr;
  }  else {
-    std::cerr<<"Unknown memory space for allocation request\n";
+  //cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
+  std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
     throw std::bad_alloc();
   }
 #else
- if ((loc==Managed)||(loc==Device)){
+ if ((loc==Managed)||(loc==Device)||loc==Pinned)){
     //std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
   } else if (loc==Host){
     //std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
-    std::cerr<<"Unknown memory space for allocation request\n";
+  std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
     throw std::bad_alloc();
   }
 #endif
@@ -146,7 +157,7 @@ void * operator new[](std::size_t size,Space loc,const char *file,int line){
 
 void operator delete(void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
-  if ((loc==Managed)||(loc==Device)){
+  if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
     //std::cout<<"Managed delete\n";
     pattr_t *ss = patpush(ptr,NULL);
     if (ss!=NULL){
@@ -168,14 +179,14 @@ void operator delete(void *ptr, Space loc) throw(){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr<<"Unknown memory space for de-allocation request\n";
+    std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }
 #endif
 }
 
 void operator delete[](void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
-  if ((loc==Managed)||(loc==Device)){
+  if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
     //std::cout<<"Managed [] delete\n";
     pattr_t *ss = patpush(ptr,NULL);
     if (ss!=NULL){
@@ -187,17 +198,17 @@ void operator delete[](void *ptr, Space loc) throw(){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr<<"Unknown memory space for de-allocation request\n";
+    std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }
 #else
-  if ((loc==Managed)||(loc==Device)){
+    if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
     //std::cout<<"Managed delete not available yet \n";
     ::operator delete(ptr);
   } else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr<<"Unknown memory space for de-allocation request\n";
+      std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }
 #endif
 }

@@ -584,7 +584,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && proc_zero() )
     cout << "  Begin time stepping..." << endl;
 
-  // Prefetch Sarrays before starying time stepping
+  // Prefetch Sarrays before starting time stepping
   SarrayVectorPrefetch(Up);
   SarrayVectorPrefetch(Um);
   SarrayVectorPrefetch(U);
@@ -682,7 +682,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_output_detailed_timing )
        time_measure[5] = MPI_Wtime();
-
+    SW4_MARK_END("COMM_WINDOW");
 // update ghost points in Up
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
@@ -702,7 +702,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_checkfornan )
        check_for_nan( Up, 1, "U pred. " );
-    SW4_MARK_END("COMM_WINDOW");
+
 // Grid refinement interface conditions:
 // *** 2nd order in TIME
     if (mOrder == 2)
