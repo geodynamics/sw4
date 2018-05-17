@@ -4,6 +4,9 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+#include "foralls.h"
+#include <cuda_runtime.h>
+#include "optimizedcuda.h"
 //#include "tests.h"
 //extern "C" {
 
@@ -884,7 +887,7 @@ using XRHS_POL2 =
 #define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
 #define bope(i,j) a_bope[i-1+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
-   
+#define ltu(c,i,j,k) tu[base3+i+ni*(j)+nij*(k)+nijk*(c)] 
    //   const float_sw4 a1   = 0;
    const float_sw4 i6   = 1.0/6;
    const float_sw4 i12  = 1.0/12;
@@ -892,6 +895,7 @@ using XRHS_POL2 =
    const float_sw4 tf   = 0.75;
 
    const int ni    = ilast-ifirst+1;
+   const int nj= jlast-jfirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
@@ -944,6 +948,20 @@ using XRHS_POL2 =
 
    PREFETCH(a_mu); // Needed
    PREFETCH(a_lambda); // Needed
+   int nkk=klast-kfirst+1;
+#ifdef ENABLE_CUDA
+    rhs4th3fortsgstr_ciopt(2,ni-2,2,nj-2,2,nkk-2,
+      			  ni,nj,nkk,
+   			  a_lu,a_u,
+   			  a_mu,a_lambda,
+   			  h,a_strx,a_stry,a_strz,op);
+
+   if ( (onesided[4] == 1 ) ||  (onesided[5] == 1 )) {
+     std::cout<<"ERROR:: ONE SIDED !! THIS NEEDS TO BE FIXED\n";
+   } else return;
+#endif
+
+
    //PREFETCH(a_u);
    //PREFETCH(a_lu);
    // PREFETCH(a_strx);
@@ -972,13 +990,21 @@ using XRHS_POL2 =
 // #pragma ivdep
 // 	 for( i=ifirst+2; i <= ilast-2 ; i++ )
 // 	 {
-        RAJA::RangeSegment k_range(k1,k2+1);
+     RAJA::RangeSegment k_range(k1,k2+1);
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
      SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
+#define NO_COLLAPSE 1
+#if defined(NO_COLLAPSE)
+     Range<16> I(ifirst+2,ilast-1);
+     Range<4>J(jfirst+2,jlast-1);
+     Range<4>K(k1,k2+1);
+     forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+#else
      RAJA::kernel<XRHS_POL>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int k,int j,int i) {
+#endif
 			    float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
 			    float_sw4 r1, r2, r3;
 
@@ -1210,6 +1236,7 @@ using XRHS_POL2 =
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			  }); // END OF rhs4th3fortsgstr_ci LOOP 1
      SYNC_STREAM;
+ 
      SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
       if( onesided[4]==1 )
       {
@@ -2704,3 +2731,38 @@ SW4_MARK_FUNCTION;
 }
 
 //}
+void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+			     int ni,int nj,int nk,
+			     float_sw4* a_lu, float_sw4* a_u,
+			     float_sw4* a_mu, float_sw4* a_lambda, 
+			     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, 
+			     float_sw4* a_strz, char op ){
+  SW4_MARK_FUNCTION;
+  int njcomp = jlast - jfirst + 1;
+  dim3 blocks = dim3((ni+BX-1)/BX, (njcomp+BY-1)/BY, 1);
+  dim3 threads = dim3(BX, BY, 1);
+  
+
+  int a1;
+  float_sw4 cof = 1.0/(h*h);
+   if( op == '=' )
+      a1 = 0;
+   else if( op == '+' )
+      a1 = 1;
+   else if( op == '-' )
+   {
+      a1 = 1;
+      cof = -cof;
+   }
+   //std::cout<<"Calling optimized rhs4_v2\n";
+  rhs4_v2<1,0><<<blocks,threads,0,0>>>
+    (ifirst, ilast, jfirst, jlast, kfirst, klast,
+     ni, nj, nk,
+     a_lu, a_u,
+     a_mu, a_lambda,
+     a_strx, a_stry, a_strz, h,a1,cof);
+  //SW4_CheckDeviceError(cudaPeekAtLastError());
+  SW4_CheckDeviceError(cudaStreamSynchronize(0));
+  //std::cout<<"Done optimized rhs4_v2\n";
+}
+ 
