@@ -279,7 +279,7 @@ void prefetch_to_device(const float_sw4 *ptr){
 						0,
 						0));
       SW4_MARK_END(" prefetch_to_device");
-    } else std::cerr<<"Zero size prefetch \n";
+    } //else std::cerr<<"Zero size prefetch \n";
   } else std::cerr<<"NO prefetch due to unknown address\n";
 }
 #endif

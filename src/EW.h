@@ -1582,6 +1582,9 @@ vector<MPI_Datatype> m_send_type_2dy1p;
 
   Space mpi_buffer_space;
   
+  // Arrays used for offloading parts of EW::Force
+  float_sw4 *ForceVector;
+  float_sw4 **ForceAddress;
 public:
 MPI_Datatype m_mpifloat;
 
