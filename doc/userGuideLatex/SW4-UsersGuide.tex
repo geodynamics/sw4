@@ -3895,25 +3895,54 @@ file & name of output file for gmt c-shell commands & string & sw4.gmt.csh  \\ \
 \end{center}
 \index{gmt parameters!file}
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\subsection{saving and restoring the simulation (restart)}
-%\index{command!restart}
+\subsection{checkpoint [optional]}
+\index{command!checkpoint}
+\label{keyword:checkpoint}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\bfseries
-%Required parameters:
-%\mdseries
-%none
-%%
-%\begin{center}
-%\begin{tabular}{|l|p{8cm}|l|l|} \hline
-%\multicolumn{4}{|c|}{\bf restart parameters}\\ \hline
-%\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-%file & file header name to be prepended on restart files & string & wpp\_restart  \\ \hline
-%dumpInterval & sets the interval for writing out restart files & int & 0  \\ \hline
-%fromCycle & cycle from which to restart the code & int & 0  \\ \hline
-%\end{tabular}
-%\end{center}
-%\index{restart parameters!file, dumpInterval, fromCycle}
+\begin{flushleft}
+\bf Syntax:\\ \tt
+checkpoint cycleInterval=... file=... \\
+checkpoint cycleInterval=... file=... restartfile=... restartpath=\\
+\bf Required parameter:\\
+\rm Time for output: (time, timeInterval, cycle, or cycleInterval).\\
+\bf Notes:\\
+\rm \verb+fileio+ \verb+path+ argument sets the path for the checkpoint
+  file, which can be overridden on restart with \verb+restartpath+.
+\end{flushleft}
+%
+The \verb+checkpoint+ command in \emph{SW4} allows you to save
+and restore the simulation using restart files.
+These files can be created using the input:
+\begin{verbatim}
+checkpoint cycleInterval=50 file=LOH1_restart
+\end{verbatim}
+
+The simulation can be restarted with the input:
+\begin{verbatim}
+checkpoint cycleInterval=5 restartfile=LOH1_restart.cycle=050.sw4checkpoint
+restartpath=loh1-results-restart/ file=LOH1_restart
+\end{verbatim}
+
+Writes/deletes so only last 2 checkpoint files are kept
+
+Affects behavior with \verb+rec+, appends USGS, but not BINARY
+
+File name issues (cycle numbers)?? \verb+file+ argument is only the
+  prefix, full checkpoint name is [path]/[prefix].cycle=\%d.sw4checkpoint
+
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|} \hline
+\multicolumn{4}{|c|}{\bf restart parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
+file & file header name to be prepended on restart files & string & ???  \\ \hline
+cycleInterval & sets the interval for writing out restart files & int & ???  \\ \hline
+restartfile & restart the code from this file & string & ???  \\ \hline
+restartpath & path to restart file & string & ???  \\ \hline
+\end{tabular}
+\end{center}
+\index{checkpoint parameters!file, cycleInterval, restartfile, restartpath}
 
 
 

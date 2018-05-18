@@ -651,6 +651,17 @@ void CheckPoint::set_restart_path( string restartPath )
 }
 
 //-----------------------------------------------------------------------
+std::string CheckPoint::get_restart_path()
+{
+  std::string retval;
+  if (mRestartPathSet)
+  {
+    retval = mRestartPath;
+    return retval;
+  }
+}
+
+//-----------------------------------------------------------------------
 void CheckPoint::set_checkpoint_file( string fname, int cycle, int cycleInterval,
 				      size_t bufsize )
 {
