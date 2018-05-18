@@ -159,7 +159,12 @@ void EW::solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
    }
 }
 
+#ifdef XL_BUG_152435FIXED
 //-----------------------------------------------------------------------
+// This version does not compile due to a bug in XL : 
+//
+//LLNL: SW4 ICE in clangtana with -qsmp=omp (152435).
+// Use workaround below until this is fixed.
 void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 		     int klast, float_sw4* __restrict__ met, float_sw4* __restrict__ metex, 
 		     float_sw4* __restrict__ jac, float_sw4* __restrict__ jacex,
@@ -193,3 +198,46 @@ void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 	       l2[c] += jacex[ind]*err*err;
 	    }
 }
+#else
+//-----------------------------------------------------------------------
+void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+		     int klast, float_sw4* __restrict__ met, float_sw4* __restrict__ metex, 
+		     float_sw4* __restrict__ jac, float_sw4* __restrict__ jacex,
+		     float_sw4 li[5], float_sw4 l2[5], int imin, int imax, int jmin,
+		     int jmax, int kmin, int kmax, float_sw4 h ) 
+{
+   const size_t ni    = ilast-ifirst+1;
+   const size_t nij   = ni*(jlast-jfirst+1);
+   const size_t nijk  = nij*(klast-kfirst+1);
+   const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
+
+   for( int c=0; c< 5;c ++ )
+      li[c] = l2[c] = 0;
+
+   float_sw4 tmp_li;
+   float_sw4 tmp_l2;
+   const float_sw4 isqh = 1/sqrt(h);
+   const float_sw4 ih3  = 1/(h*h*h);
+   for( int c=0 ; c < 5 ; c++ ){
+
+     tmp_li = li[c];
+     tmp_l2 = l2[c];
+#pragma omp parallel for reduction(max:tmp_li) reduction(+:tmp_l2) 
+      for( size_t k=kmin; k <= kmax ; k++ )
+	 for( size_t j=jmin; j <= jmax ; j++ )
+	    for( size_t i=imin; i <= imax ; i++ )
+	    {
+	       size_t ind = base+i+ni*j+nij*k;
+	       float_sw4 err;
+	       if( c < 4 )
+		  err = fabs( met[ind+c*nijk]- metex[ind+c*nijk] )*isqh;
+	       else
+		  err = fabs(jac[ind]-jacex[ind])*ih3;
+	       li[c] = li[c]>err?li[c]:err;
+	       l2[c] += jacex[ind]*err*err;
+	    }
+      li[c] = tmp_li;
+      l2[c] = tmp_l2;
+   }
+}
+#endif

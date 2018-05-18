@@ -519,7 +519,9 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_randomize(false),
   m_anisotropic(false),
   m_croutines(true),
-  NO_TOPO(1e38)
+  NO_TOPO(1e38),
+  ForceVector(NULL),
+  ForceAddress(NULL)
 {
   
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
@@ -608,6 +610,8 @@ EW::
      ::operator delete[](std::get<0>(bufs_type_2dx[m]),mpi_buffer_space);
      ::operator delete[](std::get<0>(bufs_type_2dy[m]),mpi_buffer_space);
    }
+   ::operator delete[](ForceVector,Managed);
+   ::operator delete[](ForceAddress,Managed);
 //  msgStream.close();
 }
 
@@ -4085,9 +4089,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	   // f2 += fxyz[1];
 	   // f3 += fxyz[2];
 	}
-	a_F[g](1,i,j,k) += f1;
-	a_F[g](2,i,j,k) += f2;
-	a_F[g](3,i,j,k) += f3;
+	// a_F[g](1,i,j,k) += f1;
+	// a_F[g](2,i,j,k) += f2;
+	// a_F[g](3,i,j,k) += f3;
 
      }
      SW4_MARK_END("FORCE::HOST");
