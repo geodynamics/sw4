@@ -277,7 +277,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      double timeSeriesRestartBegin = MPI_Wtime();
      for (int ts=0; ts<a_TimeSeries.size(); ts++)
      {
-       a_TimeSeries[ts]->doRestart(this, true, t, beginCycle);
+       a_TimeSeries[ts]->doRestart(this, false, t, beginCycle);
      }
      double timeSeriesRestart = MPI_Wtime() - timeSeriesRestartBegin;
 	   if( proc_zero() && mVerbose >= 2 )
