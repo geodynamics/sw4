@@ -1175,8 +1175,9 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	       nlines++;
 	    fclose(fd);
 	    // Use offset in time column.
-	    if( nlines > 2 )
-		  allocateRecordingArrays( nlines, m_t0+tstart, dt );
+      // Only allocate arrays if we aren't doing a restart
+	    if( nlines > 2 && !mIsRestart)
+        allocateRecordingArrays( nlines, m_t0+tstart, dt );
 	    else
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
