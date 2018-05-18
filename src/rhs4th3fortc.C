@@ -950,15 +950,15 @@ using XRHS_POL2 =
    PREFETCH(a_lambda); // Needed
    int nkk=klast-kfirst+1;
 #ifdef ENABLE_CUDA
-    rhs4th3fortsgstr_ciopt(2,ni-2,2,nj-2,2,nkk-2,
-      			  ni,nj,nkk,
-   			  a_lu,a_u,
-   			  a_mu,a_lambda,
-   			  h,a_strx,a_stry,a_strz,op);
+    // rhs4th3fortsgstr_ciopt(2,ni-2,2,nj-2,2,nkk-2,
+   //    			  ni,nj,nkk,
+   // 			  a_lu,a_u,
+   // 			  a_mu,a_lambda,
+   // 			  h,a_strx,a_stry,a_strz,op);
 
-   if ( (onesided[4] == 1 ) ||  (onesided[5] == 1 )) {
-     std::cout<<"ERROR:: ONE SIDED !! THIS NEEDS TO BE FIXED\n";
-   } else return;
+   // if ( (onesided[4] == 1 ) ||  (onesided[5] == 1 )) {
+   //   std::cout<<"ERROR:: ONE SIDED !! THIS NEEDS TO BE FIXED\n";
+   // } else return;
 #endif
 
 

@@ -538,7 +538,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    // Note:: mpirun might need additional flags like -gpu for Device and 
    // Managed to work.
    
-   mpi_buffer_space=Managed;
+   mpi_buffer_space=Pinned;
 
    m_check_point = new CheckPoint(this);
 
@@ -4014,10 +4014,11 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
   }
   else 
   {
+
      // Default: m_point_source_test, m_lamb_test or full seismic case
      for( int g =0 ; g < mNumberOfGrids ; g++ )
 	a_F[g].set_to_zero();
-
+     SW4_MARK_BEGIN("FORCE::HOST");
 #pragma omp parallel for
      for( int r=0 ; r < identsources.size()-1 ; r++ )
      {
@@ -4040,6 +4041,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	a_F[g](3,i,j,k) += f3;
 
      }
+     SW4_MARK_END("FORCE::HOST");
   }
 }
 
@@ -4284,7 +4286,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
      // Default: m_point_source_test, m_lamb_test or full seismic case
      for( int g =0 ; g < mNumberOfGrids ; g++ )
 	a_F[g].set_to_zero();
-
+     SW4_MARK_BEGIN("FORCE_TT::HOST");
 #pragma omp parallel for
      for( int r=0 ; r < identsources.size()-1 ; r++ )
      {
@@ -4306,7 +4308,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 	a_F[g](2,i,j,k) += f2;
 	a_F[g](3,i,j,k) += f3;
      }
-
+     SW4_MARK_END("FORCE_TT::HOST");
      //     for( int s = 0 ; s < point_sources.size() ; s++ )
      //     {
      //	int g = point_sources[s]->m_grid;
