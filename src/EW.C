@@ -4071,14 +4071,14 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	int j= point_sources[s0]->m_j0;
 	int k= point_sources[s0]->m_k0;
 
-	size_t ind1 = a_F[g].index(1,i,j,k);
+	//size_t ind1 = a_F[g].index(1,i,j,k);
       //     size_t ind2 = a_F[g].index(2,i,j,k);
       //     size_t ind3 = a_F[g].index(3,i,j,k);
-	size_t oc = a_F[g].m_offc;
+	//size_t oc = a_F[g].m_offc;
 	float_sw4* fptr =a_F[g].c_ptr();
 	for (int i=0;i<3;i++)
 	  ForceVector[index+i]=0.0;
-	float_sw4 f1=0, f2=0, f3=0;
+	//float_sw4 f1=0, f2=0, f3=0;
 	for( int s = identsources[r] ; s < identsources[r+1] ; s++ )
 	{
 	   float_sw4 fxyz[3];
@@ -4100,7 +4100,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
   float_sw4 *ForceVector_copy=ForceVector;
   float_sw4 **ForceAddress_copy=ForceAddress;
   PREFETCH(ForceVector);
-  //PREFETCH(ForceAddress);
+  PREFETCH((float_sw4*)ForceAddress);
   RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r)
     {
       int index=r*3;
