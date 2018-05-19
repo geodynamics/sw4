@@ -3909,7 +3909,7 @@ checkpoint cycleInterval=... file=... restartfile=... restartpath=\\
 \rm Time for output: (time, timeInterval, cycle, or cycleInterval).\\
 \bf Notes:\\
 \rm \verb+fileio+ \verb+path+ argument sets the path for the checkpoint
-  file, which can be overridden on restart with \verb+restartpath+.
+  file, but restart files are read from \verb+restartpath+.
 \end{flushleft}
 %
 The \verb+checkpoint+ command in \emph{SW4} allows you to save
@@ -3918,28 +3918,46 @@ These files can be created using the input:
 \begin{verbatim}
 checkpoint cycleInterval=50 file=LOH1_restart
 \end{verbatim}
+The command above will create a checkpoint file in the same output
+  path as in the \verb+fileio+ \verb+path+ argument:
+\begin{verbatim}
+LOH1_restart.cycle=050.sw4checkpoint
+\end{verbatim}
+  where the file name format is {\tt [path]/[prefix].cycle=[XXX].sw4checkpoint},
+  and the format of the cycle number depends on the total number
+  of time steps in the simulation.
+The checkpoint functions keep only the last 2 checkpoint files, and deletes
+  all prior files.
+To assure continuity of the time series data for the \verb+rec+ command,
+  \verb+checkpoint+ forces those files to be written whenever the checkpoint
+  file is written.
 
-The simulation can be restarted with the input:
+The simulation can be restarted with the input line:
 \begin{verbatim}
 checkpoint cycleInterval=5 restartfile=LOH1_restart.cycle=050.sw4checkpoint
-restartpath=loh1-results-restart/ file=LOH1_restart
+    restartpath=loh1-results-restart/ file=LOH1_restart
 \end{verbatim}
-
-Writes/deletes so only last 2 checkpoint files are kept
-
-Affects behavior with \verb+rec+, appends USGS, but not BINARY
-
-File name issues (cycle numbers)?? \verb+file+ argument is only the
-  prefix, full checkpoint name is [path]/[prefix].cycle=\%d.sw4checkpoint
+On restart, the simulation will read in the state, and attempt to
+  read in all the \verb+rec+ USGS and SAC files specified in the
+  input from the same directory.
+It will abort if it cannot find the checkpoint or \verb+rec+ files to read
+  from the restart path.
+The \verb+rec+ USGS and SAC files are read in, and continued from the
+  checkpoint cycle, and written to the output 
+  directory \verb+fileio+ \verb+path+.
+{\bf Note:} Because SAC files are float (4 byte) instead of double,
+  there may be differences in the last (7th or higher) digits after restart.
 
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|} \hline
 \multicolumn{4}{|c|}{\bf restart parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Default} \\ \hline \hline
-file & file header name to be prepended on restart files & string & ???  \\ \hline
-cycleInterval & sets the interval for writing out restart files & int & ???  \\ \hline
-restartfile & restart the code from this file & string & ???  \\ \hline
-restartpath & path to restart file & string & ???  \\ \hline
+file & file header name to be prepended on restart files. & string & `` ''  \\ 
+\hline
+cycleInterval & sets the interval for writing out restart files & int & 0 \\ 
+\hline
+restartfile & restart the code from this file & string & ``restart''  \\ \hline
+restartpath & path to restart file & string & N/A \\ \hline
 \end{tabular}
 \end{center}
 \index{checkpoint parameters!file, cycleInterval, restartfile, restartpath}
