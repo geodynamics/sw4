@@ -41,8 +41,8 @@
 #include "Source.h"
 #include "Sarray.h"
 #include "Filter.h"
-
-class GridPointSource
+#include "Mspace.h"
+class GridPointSource:public Managed
 {
    friend std::ostream& operator<<(std::ostream& output, const GridPointSource& s);
 public:
@@ -59,8 +59,8 @@ public:
   int m_i0,m_j0,m_k0; // grid point index
   int m_grid;
   size_t m_key; // For sorting sources
-
-  void getFxyz( float_sw4 t, float_sw4* fxyz ) const;
+  RAJA_HOST_DEVICE
+  void getFxyz( float_sw4 t, float_sw4* fxyz ) ;
   void getFxyztt( float_sw4 t, float_sw4* fxyz ) const;
   void getFxyz_notime( float_sw4* fxyz ) const;
 
@@ -88,12 +88,12 @@ public:
 
 // make public for simplicity
   float_sw4 mFreq, mT0;
-
+RAJA_HOST_DEVICE
+void initializeTimeFunction();
  private:
 
   GridPointSource();
 
-  void initializeTimeFunction();
   float_sw4 mForces[3];
    //  float_sw4 mAmp;
 

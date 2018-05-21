@@ -66,5 +66,45 @@ void ptr_push(void *ptr, Space type, size_t size,const char *file, int line);
 #define PREFETCH(ptr)
 #endif
 
+// THIS WILL HAVE TO BE MODIFIED FOR NON_GPU MACHINES
+class Managed {
+public:
+  //static size_t mem_total;
+  static int host;
+  static int device;
+  Managed(){
+  }
+  ~Managed(){
+    //mem_total=0;
+  }
+  void *operator new(size_t len) {
+    void *ptr;
+    //mem_total+=len;
+    //std::cout<<"Total mem is now "<<mem_total/1024/1024<<" MB \n";
+    SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
+    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    return ptr;
+  }
 
+  void *operator new[](size_t len) {
+    void *ptr;
+    //mem_total+=len;
+    //std::cout<<"Total mem is now "<<mem_total/1204/1024<<" MB \n";
+    SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
+    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    return ptr;
+  }
+  
+
+  void operator delete(void *ptr) {
+    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    SW4_CheckDeviceError(cudaFree(ptr));
+  }
+
+  void operator delete[](void *ptr) {
+    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    SW4_CheckDeviceError(cudaFree(ptr));
+  }
+};
+//size_t Managed::mem_total=0;
 #endif

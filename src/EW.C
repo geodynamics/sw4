@@ -4019,8 +4019,12 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
   else 
   {
     static bool firstcall=true;
+    GPS = SW4_NEW(Managed,GridPointSource*[identsources  .size()]);
+    idnts = SW4_NEW(Managed,int[identsources.size()]);
     if (firstcall){
       SW4_MARK_BEGIN("FORCE::HOST::FIRSTCALL");
+
+      for( int r=0 ; r < identsources.size(); r++ ) idnts[r]=identsources[r];
 #pragma omp parallel for
      for( int r=0 ; r < identsources.size()-1 ; r++ )
      {
@@ -4030,7 +4034,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	int i= point_sources[s0]->m_i0;
 	int j= point_sources[s0]->m_j0;
 	int k= point_sources[s0]->m_k0;
-
+	GPS[r]=point_sources[s0];
 
 	size_t ind1 = a_F[g].index(1,i,j,k);
 	//     size_t ind2 = a_F[g].index(2,i,j,k);
@@ -4054,6 +4058,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	// a_F[g](3,i,j,k) += f3;
 
      }
+
+     RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
+	 //GPS[r]->initializeTimeFunction();
+       });
      SW4_MARK_END("FORCE::HOST::FIRSTCALL");
      firstcall=false;
     }
@@ -4061,28 +4069,29 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
      for( int g =0 ; g < mNumberOfGrids ; g++ )
 	a_F[g].set_to_zero();
      SW4_MARK_BEGIN("FORCE::HOST");
-#pragma omp parallel for
-     for( int r=0 ; r < identsources.size()-1 ; r++ )
-     {
+     //#pragma omp parallel for
+       //   for( int r=0 ; r < identsources.size()-1 ; r++ )
+RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
+     
        int index=r*3;
-	int s0=identsources[r];
-	int g= point_sources[s0]->m_grid;	
-	int i= point_sources[s0]->m_i0;
-	int j= point_sources[s0]->m_j0;
-	int k= point_sources[s0]->m_k0;
+	int s0=idnts[r];
+	int g= GPS[s0]->m_grid;	
+	int i= GPS[s0]->m_i0;
+	int j= GPS[s0]->m_j0;
+	int k= GPS[s0]->m_k0;
 
 	//size_t ind1 = a_F[g].index(1,i,j,k);
       //     size_t ind2 = a_F[g].index(2,i,j,k);
       //     size_t ind3 = a_F[g].index(3,i,j,k);
 	//size_t oc = a_F[g].m_offc;
-	float_sw4* fptr =a_F[g].c_ptr();
+	//float_sw4* fptr =a_F[g].c_ptr();
 	for (int i=0;i<3;i++)
 	  ForceVector[index+i]=0.0;
 	//float_sw4 f1=0, f2=0, f3=0;
-	for( int s = identsources[r] ; s < identsources[r+1] ; s++ )
+	for( int s = idnts[r] ; s < idnts[r+1] ; s++ )
 	{
 	   float_sw4 fxyz[3];
-	   point_sources[s]->getFxyz(a_t,fxyz);
+	   GPS[s]->getFxyz(a_t,fxyz);
 	   for (int i=0;i<3;i++)
 	     ForceVector[index+i]+=fxyz[i];
 	   // f1 += fxyz[0];
@@ -4093,10 +4102,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	// a_F[g](2,i,j,k) += f2;
 	// a_F[g](3,i,j,k) += f3;
 
-     }
+     });
      SW4_MARK_END("FORCE::HOST");
 
-      // Need the lines below becuase the object is not in managed memory and the this pointer is host only
+     // Need the lines below because the object is not in managed memory and the this pointer is host only
   float_sw4 *ForceVector_copy=ForceVector;
   float_sw4 **ForceAddress_copy=ForceAddress;
   PREFETCH(ForceVector);

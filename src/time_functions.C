@@ -32,9 +32,10 @@
 #include <cmath>
 #include "Require.h"
 #include <iostream>
-
+#include "policies.h"
 #include "sw4.h"
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -47,6 +48,7 @@ float_sw4 VerySmoothBump(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -59,6 +61,7 @@ float_sw4 VerySmoothBump_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -71,6 +74,7 @@ float_sw4 VerySmoothBump_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npa
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -83,6 +87,7 @@ float_sw4 VerySmoothBump_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npa
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -96,6 +101,7 @@ float_sw4 VerySmoothBump_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int np
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -108,6 +114,7 @@ float_sw4 VerySmoothBump_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int n
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -120,6 +127,7 @@ float_sw4 VerySmoothBump_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int np
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -133,6 +141,7 @@ float_sw4 VerySmoothBump_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int n
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -146,6 +155,7 @@ float_sw4 VerySmoothBump_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int n
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -159,6 +169,7 @@ float_sw4 VerySmoothBump_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int 
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 VerySmoothBump_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -173,7 +184,7 @@ float_sw4 VerySmoothBump_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int
   return tmp;
 }
 
-
+RAJA_HOST_DEVICE
 float_sw4 RickerWavelet(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -183,6 +194,7 @@ float_sw4 RickerWavelet(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerWavelet_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -192,6 +204,7 @@ float_sw4 RickerWavelet_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerWavelet_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -201,6 +214,7 @@ float_sw4 RickerWavelet_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerWavelet_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -210,6 +224,7 @@ float_sw4 RickerWavelet_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerWavelet_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -219,6 +234,7 @@ float_sw4 RickerWavelet_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npa
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerWavelet_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -229,6 +245,7 @@ float_sw4 RickerWavelet_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int np
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerInt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -238,6 +255,7 @@ float_sw4 RickerInt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerInt_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -247,6 +265,7 @@ float_sw4 RickerInt_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerInt_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -256,6 +275,7 @@ float_sw4 RickerInt_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerInt_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -265,6 +285,7 @@ float_sw4 RickerInt_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerInt_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -274,6 +295,7 @@ float_sw4 RickerInt_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 RickerInt_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor = pow(M_PI*freq*t,2);
@@ -282,7 +304,7 @@ float_sw4 RickerInt_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
   else
     return 0;
 }
-
+RAJA_HOST_DEVICE
 float_sw4 Gaussian(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -292,6 +314,7 @@ float_sw4 Gaussian(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -301,6 +324,7 @@ float_sw4 Gaussian_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -310,6 +334,7 @@ float_sw4 Gaussian_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -319,6 +344,7 @@ float_sw4 Gaussian_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -328,6 +354,7 @@ float_sw4 Gaussian_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -337,6 +364,7 @@ float_sw4 Gaussian_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -346,6 +374,7 @@ float_sw4 Gaussian_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -355,6 +384,7 @@ float_sw4 Gaussian_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -364,6 +394,7 @@ float_sw4 Gaussian_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -373,6 +404,7 @@ float_sw4 Gaussian_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Gaussian_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -382,11 +414,13 @@ float_sw4 Gaussian_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Erf( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   return 0.5*(1+erf( freq*t/sqrt(2.0)) );
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Erf_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -396,6 +430,7 @@ float_sw4 Erf_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Erf_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -405,6 +440,7 @@ float_sw4 Erf_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipa
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Erf_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -414,6 +450,7 @@ float_sw4 Erf_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Erf_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -423,6 +460,7 @@ float_sw4 Erf_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Erf_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 factor=pow(t*freq,2) / 2;
@@ -432,6 +470,7 @@ float_sw4 Erf_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Ramp(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -445,6 +484,7 @@ float_sw4 Ramp(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar,
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Ramp_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -458,6 +498,7 @@ float_sw4 Ramp_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipa
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Ramp_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -471,6 +512,7 @@ float_sw4 Ramp_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Ramp_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -484,6 +526,7 @@ float_sw4 Ramp_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Ramp_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -497,6 +540,7 @@ float_sw4 Ramp_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Ramp_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -510,6 +554,7 @@ float_sw4 Ramp_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Triangle(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -523,6 +568,7 @@ float_sw4 Triangle(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Triangle_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -536,6 +582,7 @@ float_sw4 Triangle_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Triangle_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -549,6 +596,7 @@ float_sw4 Triangle_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Triangle_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -564,6 +612,7 @@ float_sw4 Triangle_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Triangle_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -579,6 +628,7 @@ float_sw4 Triangle_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Triangle_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -595,6 +645,7 @@ float_sw4 Triangle_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Sawtooth(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -608,6 +659,7 @@ float_sw4 Sawtooth(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Sawtooth_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -621,6 +673,7 @@ float_sw4 Sawtooth_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Sawtooth_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -634,6 +687,7 @@ float_sw4 Sawtooth_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Sawtooth_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -649,6 +703,7 @@ float_sw4 Sawtooth_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Sawtooth_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -664,6 +719,7 @@ float_sw4 Sawtooth_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Sawtooth_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -681,6 +737,7 @@ float_sw4 Sawtooth_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
   return tmp; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 SmoothWave(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -695,6 +752,7 @@ float_sw4 SmoothWave(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 SmoothWave_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -708,6 +766,7 @@ float_sw4 SmoothWave_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 SmoothWave_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -721,6 +780,7 @@ float_sw4 SmoothWave_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 SmoothWave_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -735,6 +795,7 @@ float_sw4 SmoothWave_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 SmoothWave_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -748,6 +809,7 @@ float_sw4 SmoothWave_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 SmoothWave_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 c0 = 2187./8., c1 = -10935./8., c2 = 19683./8., c3 = -15309./8., c4 = 2187./4.;
@@ -762,6 +824,7 @@ float_sw4 SmoothWave_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Brune( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -776,6 +839,7 @@ float_sw4 Brune( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipa
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Brune_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -790,6 +854,7 @@ float_sw4 Brune_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Brune_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -804,6 +869,7 @@ float_sw4 Brune_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Brune_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -818,6 +884,7 @@ float_sw4 Brune_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Brune_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -832,6 +899,7 @@ float_sw4 Brune_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Brune_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -846,6 +914,7 @@ float_sw4 Brune_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 DBrune( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -860,6 +929,7 @@ float_sw4 DBrune( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 DBrune_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -874,6 +944,7 @@ float_sw4 DBrune_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 DBrune_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -888,6 +959,7 @@ float_sw4 DBrune_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 DBrune_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -902,6 +974,7 @@ float_sw4 DBrune_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 DBrune_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -916,6 +989,7 @@ float_sw4 DBrune_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 DBrune_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -930,6 +1004,7 @@ float_sw4 DBrune_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 BruneSmoothed( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -949,6 +1024,7 @@ float_sw4 BruneSmoothed( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 BruneSmoothed_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -972,6 +1048,7 @@ float_sw4 BruneSmoothed_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 BruneSmoothed_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -995,6 +1072,7 @@ float_sw4 BruneSmoothed_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npa
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 BruneSmoothed_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -1020,6 +1098,7 @@ float_sw4 BruneSmoothed_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npa
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 BruneSmoothed_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -1045,6 +1124,7 @@ float_sw4 BruneSmoothed_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int np
     }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 BruneSmoothed_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 tf = t*freq;
@@ -1072,6 +1152,7 @@ float_sw4 BruneSmoothed_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int n
 }
 
 
+RAJA_HOST_DEVICE
 float_sw4 GaussianWindow( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 incyc2 = 1/(par[1]*par[1]);
@@ -1082,6 +1163,7 @@ float_sw4 GaussianWindow( float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 GaussianWindow_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 incyc2 = 1/(par[1]*par[1]);
@@ -1092,6 +1174,7 @@ float_sw4 GaussianWindow_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npa
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 GaussianWindow_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 incyc2 = 1/(par[1]*par[1]);
@@ -1102,6 +1185,7 @@ float_sw4 GaussianWindow_om( float_sw4 freq, float_sw4 t, float_sw4* par, int np
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 GaussianWindow_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 incyc2 = 1/(par[1]*par[1]);
@@ -1113,6 +1197,7 @@ float_sw4 GaussianWindow_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int np
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 GaussianWindow_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 incyc2 = 1/(par[1]*par[1]);
@@ -1124,6 +1209,7 @@ float_sw4 GaussianWindow_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int n
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 GaussianWindow_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 incyc2 = 1/(par[1]*par[1]);
@@ -1135,6 +1221,7 @@ float_sw4 GaussianWindow_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int 
     return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Liu( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    float_sw4 tau = 2*M_PI/freq;
@@ -1158,6 +1245,7 @@ float_sw4 Liu( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar,
    return 0.; // should never get here, but keeps compiler happy
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Liu_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    float_sw4 tau = 2*M_PI/freq;
@@ -1181,6 +1269,7 @@ float_sw4 Liu_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipa
    return 0.; // should never get here, but keeps compiler happy
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Liu_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    float_sw4 tau = 2*M_PI/freq;
@@ -1204,6 +1293,7 @@ float_sw4 Liu_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
    return 0.; // should never get here, but keeps compiler happy
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Liu_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    float_sw4 tau = 2*M_PI/freq;
@@ -1227,6 +1317,7 @@ float_sw4 Liu_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ip
    return 0.; // should never get here, but keeps compiler happy
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Liu_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    float_sw4 tau = 2*M_PI/freq;
@@ -1250,6 +1341,7 @@ float_sw4 Liu_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
    return 0.; // should never get here, but keeps compiler happy
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Liu_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    float_sw4 tau = 2*M_PI/freq;
@@ -1275,13 +1367,16 @@ float_sw4 Liu_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
    return 0.; // should never get here, but keeps compiler happy
 }
 
+RAJA_HOST_DEVICE
 float_sw4 NullFunc( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // this function should never be called
-  CHECK_INPUT(false,"The NullFunc time function was called!");
+  //CHECK_INPUT(false,"The NullFunc time function was called!");
+  printf("The NullFunc time function was called!");
   return 0.;  
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Dirac( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    const float_sw4 c1=2.59765625;
@@ -1327,6 +1422,7 @@ float_sw4 Dirac( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipa
    }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Dirac_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    const float_sw4 c1=10.390625;
@@ -1369,6 +1465,7 @@ float_sw4 Dirac_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* i
    }
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Dirac_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    const float_sw4 c1=31.171875;
@@ -1405,6 +1502,7 @@ float_sw4 Dirac_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
       return freq*freq*freq*wgh;
    }
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    const float_sw4 c1=62.34375;
@@ -1438,6 +1536,7 @@ float_sw4 Dirac_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int*
       return freq*freq*freq*freq*wgh;
    }
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_tttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    const float_sw4 c1=62.34375;
@@ -1471,37 +1570,44 @@ float_sw4 Dirac_tttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
       return freq*freq*freq*freq*freq*wgh;
    }
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_tom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_omom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_tttom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Dirac_ttomom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Discrete( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // freq holds 1/dt
@@ -1529,6 +1635,7 @@ float_sw4 Discrete( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* 
        par[5+6*k]*arg*arg*arg*arg + par[6+6*k]*arg*arg*arg*arg*arg; 
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Discrete_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // freq holds 1/dt
@@ -1552,6 +1659,7 @@ float_sw4 Discrete_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int
 	5*par[6+6*k]*arg*arg*arg*arg)*freq;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Discrete_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
@@ -1573,6 +1681,7 @@ float_sw4 Discrete_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
    return (2*par[3+6*k] + 6*par[4+6*k]*arg + 12*par[5+6*k]*arg*arg + 20*par[6+6*k]*arg*arg*arg)*freq*freq;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Discrete_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
@@ -1594,6 +1703,7 @@ float_sw4 Discrete_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, i
    return (6*par[4+6*k] + 24*par[5+6*k]*arg + 60*par[6+6*k]*arg*arg)*freq*freq*freq;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Discrete_tttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // AP; Sept 19, 2016: tstart is already subtracted from t in the call to GridPointSource::getTimeFunc()
@@ -1615,37 +1725,44 @@ float_sw4 Discrete_tttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
    return (24*par[5+6*k] + 120*par[6+6*k]*arg)*freq*freq*freq*freq;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 Discrete_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Discrete_tom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Discrete_omom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Discrete_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Discrete_tttom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
+RAJA_HOST_DEVICE
 float_sw4 Discrete_ttomom( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
    // This source have no omega dependence
    return 0;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1659,6 +1776,7 @@ float_sw4 C6SmoothBump(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, in
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1672,6 +1790,7 @@ float_sw4 C6SmoothBump_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, 
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1685,6 +1804,7 @@ float_sw4 C6SmoothBump_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1698,6 +1818,7 @@ float_sw4 C6SmoothBump_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1713,6 +1834,7 @@ float_sw4 C6SmoothBump_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1726,6 +1848,7 @@ float_sw4 C6SmoothBump_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npa
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1741,6 +1864,7 @@ float_sw4 C6SmoothBump_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1758,6 +1882,7 @@ float_sw4 C6SmoothBump_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npa
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1771,6 +1896,7 @@ float_sw4 C6SmoothBump_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npa
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;
@@ -1790,6 +1916,7 @@ float_sw4 C6SmoothBump_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int np
   return tmp;
 }
 
+RAJA_HOST_DEVICE
 float_sw4 C6SmoothBump_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   float_sw4 tmp;

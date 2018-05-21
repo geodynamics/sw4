@@ -100,6 +100,7 @@ GridPointSource::~GridPointSource()
 }
 
 //-----------------------------------------------------------------------
+RAJA_HOST_DEVICE
 void GridPointSource::initializeTimeFunction()
 {
    //   if( mTimeDependence != iDiscrete )
@@ -252,7 +253,7 @@ void GridPointSource::initializeTimeFunction()
       mTimeFunc_omtt = C6SmoothBump_omtt;
       break;
     default :
-      std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
+      //std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
       mTimeFunc = RickerWavelet;
       mTimeFunc_t = RickerWavelet_t;
       mTimeFunc_tt = RickerWavelet_tt;
@@ -311,7 +312,8 @@ void GridPointSource::initializeTimeFunction()
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
+RAJA_HOST_DEVICE
+void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) 
 {
    float_sw4 afun, afunv[6];
    if( mTimeDependence != iDiscrete6moments )

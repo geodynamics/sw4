@@ -1585,6 +1585,10 @@ vector<MPI_Datatype> m_send_type_2dy1p;
   // Arrays used for offloading parts of EW::Force
   float_sw4 *ForceVector;
   float_sw4 **ForceAddress;
+  int *idnts;
+  GridPointSource **GPS ;
+
+
 public:
 MPI_Datatype m_mpifloat;
 
