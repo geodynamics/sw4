@@ -507,6 +507,10 @@ void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<
 				vector<Sarray>& forcing, double t, vector<Sarray>& U,
 				vector<Sarray>& Um, int crf );
 
+void geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+					    vector<Sarray>& forcing, double t, vector<Sarray>& U,
+					    vector<Sarray>& Um, int crf );
+
 void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
 			  vector<Sarray>& U, vector<Sarray>& Um, double dt );
 
@@ -517,6 +521,9 @@ void geodynbcGetSizes( string filename, double origin[3], double &cubelen,
 		       double& lon, double& az, int& adjust );
 
 void geodynFindFile(char* buffer);
+void bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
+				   int k0, int g, Sarray& u, float_sw4* bforcing );
+
 
 void integrate_source( );
 

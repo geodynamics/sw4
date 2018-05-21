@@ -2757,7 +2757,7 @@ void EW::processSupergrid(char *buffer)
     else if (startswith("width=", token))
     {
       token += 6;
-      sg_width = atoi(token);
+      sg_width = atof(token);
       CHECK_INPUT(sg_width>0, "The width of the supergrid damping layer must be positive, not: "<< sg_width);
       widthSet = true;
     }

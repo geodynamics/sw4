@@ -913,6 +913,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
        
+       if( m_do_geodynbc )
+	  restore_geoghost(Up);
+
     }// end if mOrder == 4
     
     if( m_checkfornan )
@@ -933,8 +936,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     //    exit(0);
 // increment time
     t += mDt;
-    if( m_do_geodynbc )
-       restore_geoghost(Up);
 
 // periodically, print time stepping info to stdout
     printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
