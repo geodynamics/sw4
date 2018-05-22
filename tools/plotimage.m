@@ -111,5 +111,5 @@ end;
 axis([x1min x1max x2min x2max]);
 hold off;
 axis ij; % flip z-axis to point downwards
-title_str=sprintf("Time=%g", t);
+title_str=sprintf('Time=%g', t);
 title(title_str);

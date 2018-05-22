@@ -20,13 +20,13 @@
 #
 grid h=400 x=30000 y=30000 z=17000
 time steps=100
-fileio path=loh1-results-restart verbose=2
+fileio path=loh1-results-restart3 verbose=2
 
 # the developer line is to get the reversed c-order in sw4lite
 developer checkfornan=0 reporttiming=1 corder=1
 
 # checkpoint/restart capability
-checkpoint cycleInterval=10 file=LOH.1-h400 restartfile=LOH.1-h400.cycle=80.sw4checkpoint restartpath=loh1-results-restart1/
+checkpoint cycleInterval=10 file=LOH.1-h400 restartfile=LOH.1-h400.cycle=80.sw4checkpoint restartpath=loh1-results-restart2/
 
 #specify the width of the super grid damping layer (30 is the default)
 supergrid gp=30

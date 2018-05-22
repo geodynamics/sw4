@@ -280,7 +280,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        a_TimeSeries[ts]->doRestart(this, false, t, beginCycle);
      }
      double timeSeriesRestart = MPI_Wtime() - timeSeriesRestartBegin;
-	   if( proc_zero() && mVerbose >= 2 )
+	   if( proc_zero() && m_output_detailed_timing )
      {
 	     cout << "Wallclock time to read checkpoint file: " << timeSeriesRestartBegin-timeRestartBegin << " seconds " << endl;
 	     cout << "Wallclock time to read " << a_TimeSeries.size() << " sets of station files: " << timeSeriesRestart << " seconds " << endl;
@@ -921,7 +921,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        double time_chkpt=MPI_Wtime();
        m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
-       if( mVerbose >= 2 )
+       if( m_output_detailed_timing )
        {
 	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
 	  if( m_myRank == 0 )
@@ -934,7 +934,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
          a_TimeSeries[ts]->writeFile();
        }
 	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
-       if( mVerbose >= 2 && m_myRank == 0 )
+       if( m_output_detailed_timing && m_myRank == 0 )
          cout << "Wallclock time to write all checkpoint time series files " <<            time_chkpt_timeseries_tmp << " seconds " << endl;
    }
 
