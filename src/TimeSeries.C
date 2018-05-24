@@ -1087,7 +1087,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
    if( ew->getObservationPath() != "./" )
       filePrefix << ew->getObservationPath();
    else if( mIsRestart )
-      filePrefix << ew->m_check_point->get_restart_path() << "/";
+      filePrefix << ew->getPath() << "/";
    filePrefix << m_fileName << ".txt" ;
 
    if( m_myPoint && m_usgsFormat )
@@ -2597,8 +2597,8 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
   isRestart();
   if (m_sacFormat)
   {
-    // Read the old SAC files from the restart directory
-    std::string fullFilePath = ew->m_check_point->get_restart_path();
+    // Read the old SAC files from the fileio path directory
+    std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_fileName;
     std::string filex = fullFilePath + ".x";
     std::string filey = fullFilePath + ".y";

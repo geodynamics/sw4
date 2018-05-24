@@ -3903,25 +3903,24 @@ file & name of output file for gmt c-shell commands & string & sw4.gmt.csh  \\ \
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{flushleft}
 \bf Syntax:\\ \tt
-checkpoint cycleInterval=... file=... \\
-checkpoint cycleInterval=... file=... restartfile=... restartpath=\\
+checkpoint cycleInterval=... file=... restartpath=... \\
+checkpoint cycleInterval=... file=... restartpath=... restartfile=... \\
 \bf Required parameter:\\
 \rm Time for output: (time, timeInterval, cycle, or cycleInterval).\\
 \bf Notes:\\
-\rm \verb+fileio+ \verb+path+ argument sets the path for the checkpoint
-  file, but restart files are read from \verb+restartpath+.
+\rm \verb+restartpath+. argument sets the path for the checkpoint
+  (write) and restart files
 \end{flushleft}
 %
 The \verb+checkpoint+ command in \emph{SW4} allows you to save
 and restore the simulation using restart files.
 These files can be created using the input:
 \begin{verbatim}
-checkpoint cycleInterval=50 file=LOH1_restart
+checkpoint cycleInterval=50 restartpath=loh1-results-restart file=LOH1_restart
 \end{verbatim}
-The command above will create a checkpoint file in the same output
-  path as in the \verb+fileio+ \verb+path+ argument:
+The command above will create a checkpoint file in \verb+restartpath+:
 \begin{verbatim}
-LOH1_restart.cycle=050.sw4checkpoint
+loh1-results-restart/LOH1_restart.cycle=050.sw4checkpoint
 \end{verbatim}
   where the file name format is {\tt [path]/[prefix].cycle=[XXX].sw4checkpoint},
   and the format of the cycle number depends on the total number
@@ -3931,21 +3930,23 @@ The checkpoint functions keep only the last 2 checkpoint files, and deletes
 To assure continuity of the time series data for the \verb+rec+ command,
   \verb+checkpoint+ forces those files to be written whenever the checkpoint
   file is written.
+These are written to the directory specified by the \verb+fileio+ \verb+path+
+  variable.
 
 The simulation can be restarted with the input line:
 \begin{verbatim}
 checkpoint cycleInterval=5 restartfile=LOH1_restart.cycle=050.sw4checkpoint
-    restartpath=loh1-results-restart/ file=LOH1_restart
+    restartpath=loh1-results-restart file=LOH1_restart
 \end{verbatim}
 On restart, the simulation will read in the state, and attempt to
   read in all the \verb+rec+ USGS and SAC files specified in the
-  input from the same directory.
+  input from the \verb+fileio+ \verb+path+ directory.
 It will abort if it cannot find the checkpoint or \verb+rec+ files to read
   from the restart path.
 The \verb+rec+ USGS and SAC files are read in, and continued from the
-  checkpoint cycle, and written to the output 
+  checkpoint cycle, and \emph{overwritten} in the output 
   directory \verb+fileio+ \verb+path+.
-{\bf Note:} Because SAC files are float (4 byte) instead of double,
+{\bf Note:} Because SAC files are float (4 byte) instead of double (8 byte),
   there may be differences in the last (7th or higher) digits after restart.
 
 \begin{center}
