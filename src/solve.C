@@ -269,15 +269,23 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   float_sw4 t;
   if( m_check_point->do_restart() )
   {
+     double timeRestartBegin = MPI_Wtime();
      m_check_point->read_checkpoint( t, beginCycle, Um, U,
 				     AlphaVEm, AlphaVE );
      // Make sure the TimeSeries output has the correct time shift,
      // and know's it's a restart
+     double timeSeriesRestartBegin = MPI_Wtime();
      for (int ts=0; ts<a_TimeSeries.size(); ts++)
      {
-       a_TimeSeries[ts]->isRestart();
-       a_TimeSeries[ts]->set_shift(t);
+       a_TimeSeries[ts]->doRestart(this, false, t, beginCycle);
      }
+     double timeSeriesRestart = MPI_Wtime() - timeSeriesRestartBegin;
+	   if( proc_zero() && m_output_detailed_timing )
+     {
+	     cout << "Wallclock time to read checkpoint file: " << timeSeriesRestartBegin-timeRestartBegin << " seconds " << endl;
+	     cout << "Wallclock time to read " << a_TimeSeries.size() << " sets of station files: " << timeSeriesRestart << " seconds " << endl;
+     }
+
       // Restart data have undefined ghost point values,
       // no need to enforce BC here, it is done further down in this function.
      beginCycle++;
@@ -913,13 +921,22 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        double time_chkpt=MPI_Wtime();
        m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
-       if( mVerbose >= 2 )
+       if( m_output_detailed_timing )
        {
 	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
 	  if( m_myRank == 0 )
-	     cout << "Cpu time to write check point file " << time_chkpt << " seconds " << endl;
+	     cout << "Wallclock time to write check point file " << time_chkpt << " seconds " << endl;
        }
-    }
+       // Force write all the TimeSeries files, too, for restart
+       double time_chkpt_timeseries=MPI_Wtime();
+       for (int ts=0; ts<a_TimeSeries.size(); ts++)
+       {
+         a_TimeSeries[ts]->writeFile();
+       }
+	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
+       if( m_output_detailed_timing && m_myRank == 0 )
+         cout << "Wallclock time to write all checkpoint time series files " <<            time_chkpt_timeseries_tmp << " seconds " << endl;
+   }
 
 // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_output_detailed_timing )

@@ -378,7 +378,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    if( iread )
    {
       if( mRestartPathSet )
-	 s << mRestartPath;
+	 s << mRestartPath << "/";
       else if( mEW->getPath() != "./" )
 	 s << mEW->getPath();
       s << mRestartFile;
@@ -476,7 +476,7 @@ float_sw4 CheckPoint::getDt()
    {
       std::stringstream s;
       if( mRestartPathSet )
-	 s << mRestartPath;
+	 s << mRestartPath << "/";
       else if( mEW->getPath() != "./" )
 	 s << mEW->getPath();
       s << mRestartFile; // string 's' is the file name including path
@@ -648,6 +648,17 @@ void CheckPoint::set_restart_path( string restartPath )
 {
    mRestartPath = restartPath;
    mRestartPathSet = true;
+}
+
+//-----------------------------------------------------------------------
+std::string CheckPoint::get_restart_path()
+{
+  std::string retval;
+  if (mRestartPathSet)
+  {
+    retval = mRestartPath;
+    return retval;
+  }
 }
 
 //-----------------------------------------------------------------------

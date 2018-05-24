@@ -39,6 +39,7 @@ public:
    bool do_checkpointing();
    bool do_restart();
    void set_restart_path( string restartPath );
+   std::string get_restart_path();
 
 protected:
    void define_pio( );

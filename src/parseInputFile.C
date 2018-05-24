@@ -3770,7 +3770,9 @@ void EW::processCheckPoint(char* buffer)
    {
       m_check_point->set_restart_file( restartFileName, bufsize );
       if( restartPathGiven )
-	 m_check_point->set_restart_path( restartPath );
+      {
+	      m_check_point->set_restart_path( restartPath );
+      }
    }
 }
 

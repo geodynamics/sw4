@@ -460,7 +460,6 @@ void TimeSeries::writeFile( string suffix )
     if (mBinaryMode)
       mode = "BINARY";
     inihdr();
-
     stringstream msg;
     msg << "Writing " << mode << " SAC files, "
 	<< "of size " << mLastTimeStep+1 << ": "
@@ -694,8 +693,10 @@ void TimeSeries::writeFile( string suffix )
      // 	msg << "[vxx|vyy|vzz|vxy|vxz|vyz]" << endl;
      // }
 
+     if (m_ew->getVerbosity() >=3)
+       cout << msg.str();
+
 // time to write the SAC files
-     cout << msg.str();
      if (m_mode == Displacement || m_mode == Velocity || m_mode == Curl) // 3 components
      {
 	if( m_xyzcomponent )
@@ -826,10 +827,10 @@ void TimeSeries::writeFile( string suffix )
   if( m_usgsFormat )
   {
     filePrefix << "txt";
-    if (!m_ew->getQuiet())
+    if (m_ew->getVerbosity() >= 3)
       cout << "Writing ASCII USGS file, "
-	   << "of size " << mLastTimeStep+1 << ": "
-	   << filePrefix.str() << endl;
+        << "of size " << mLastTimeStep+1 << ": "
+        << filePrefix.str() << endl;
 
     write_usgs_format( filePrefix.str() );
   }
@@ -938,8 +939,8 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
 void TimeSeries::write_usgs_format(string a_fileName)
 {
    string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-   // Open the file for append if it's a restart, otherwise overwrite
-   FILE *fd=fopen(a_fileName.c_str(), (mIsRestart) ? "a" : "w");
+   // Open the file and overwrite; restart read in old data already
+   FILE *fd=fopen(a_fileName.c_str(), "w");
    //   double lat, lon;
    //   float_sw4 x, y, z;
 
@@ -1085,6 +1086,8 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
    stringstream filePrefix;
    if( ew->getObservationPath() != "./" )
       filePrefix << ew->getObservationPath();
+   else if( mIsRestart )
+      filePrefix << ew->getPath() << "/";
    filePrefix << m_fileName << ".txt" ;
 
    if( m_myPoint && m_usgsFormat )
@@ -1172,8 +1175,9 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	       nlines++;
 	    fclose(fd);
 	    // Use offset in time column.
-	    if( nlines > 2 )
-		  allocateRecordingArrays( nlines, m_t0+tstart, dt );
+      // Only allocate arrays if we aren't doing a restart
+	    if( nlines > 2 && !mIsRestart)
+        allocateRecordingArrays( nlines, m_t0+tstart, dt );
 	    else
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
@@ -2305,6 +2309,9 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    readSACdata( file2.c_str(), npts1, u2 );
 	    readSACdata( file3.c_str(), npts1, u3 );
 
+      // For restart, don't overwrite member vars except data 
+      if (!mIsRestart) 
+      {
             if( !ignore_utc )
 	    {
 	       for( int c=0 ; c < 7 ; c++ )
@@ -2316,7 +2323,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
             m_shift = t01;
 
 	    allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
-
+      }
 
 	    if( debug )
 	    {
@@ -2350,25 +2357,41 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    tmat[7] = cos(cmpinc2);
 	    tmat[8] = cos(cmpinc3);
 
-	    m_xyzcomponent = false; //note this is format on output file, 
- 	                         //internally, we always use (x,y,z) during computation.
+      if (!mIsRestart) // For restart, already in xyz format?
+      {
+        m_xyzcomponent = false; //note this is format on output file, 
+ 	      //internally, we always use (x,y,z) during computation.
 
-// Convert (e,n,u) to (x,y,z) components.
-	    float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-	    float_sw4 a11 = m_calpha*deti;
-	    float_sw4 a12 = m_thxnrm*deti;
-	    float_sw4 a21 =-m_salpha*deti;
-	    float_sw4 a22 = m_thynrm*deti;
-	    for( int i=0 ; i < npts1 ; i++ )
-	    {
-	       float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-	       float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-	       float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-	       mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-	       mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-	       mRecordedSol[2][i] = -ucomp;
-	    }
-	    mLastTimeStep = npts1-1;
+        // Convert (e,n,u) to (x,y,z) components.
+        float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+        float_sw4 a11 = m_calpha*deti;
+        float_sw4 a12 = m_thxnrm*deti;
+        float_sw4 a21 =-m_salpha*deti;
+        float_sw4 a22 = m_thynrm*deti;
+        for( int i=0 ; i < npts1 ; i++ )
+        {
+           float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+           float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+           float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+           mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+           mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+           mRecordedSol[2][i] = -ucomp;
+        }
+        mLastTimeStep = npts1-1;
+      }
+      else
+      {
+        // Just copy the read values into our time series
+        for( int i=0 ; i < npts1 ; i++ )
+        {
+          mRecordedSol[0][i] = u1[i];
+          mRecordedSol[1][i] = u2[i];
+          mRecordedSol[2][i] = u3[i];
+          mRecordedFloats[0][i] = (float) u1[i];
+          mRecordedFloats[1][i] = (float) u2[i];
+          mRecordedFloats[2][i] = (float) u3[i];
+        }
+     }
 	 }
 	 else
 	 {
@@ -2564,6 +2587,34 @@ void TimeSeries::set_utc_to_simulation_utc()
    m_ew->get_utc(m_utc);
    m_shift += m_t0;
    m_t0 = 0;
+}
+
+//-----------------------------------------------------------------------
+// Restart by reading in prior time series file
+void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle)
+{   
+  // Read in this TimeSeries' file
+  isRestart();
+  if (m_sacFormat)
+  {
+    // Read the old SAC files from the fileio path directory
+    std::string fullFilePath = ew->getPath();
+    fullFilePath += "/" + m_fileName;
+    std::string filex = fullFilePath + ".x";
+    std::string filey = fullFilePath + ".y";
+    std::string filez = fullFilePath + ".z";
+    readSACfiles(ew, const_cast<char*>(filex.c_str()), 
+        const_cast<char*>(filey.c_str()),
+        const_cast<char*>(filez.c_str()), ignore_utc);
+  }
+  else
+  {
+    // Read the old USGS files from the restart directory
+    readFile(ew, ignore_utc);
+  }
+  // Reset next time step to beginning of checkpoint
+  mLastTimeStep = beginCycle-1;
+  // set_shift(shift);
 }
 
 //-----------------------------------------------------------------------
