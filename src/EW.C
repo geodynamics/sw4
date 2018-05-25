@@ -4052,8 +4052,6 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 	ForceAddress[index+1]=fptr+ind1+oc;
 	ForceAddress[index+2]=fptr+ind1+2*oc;
 
-	//if (r==0) std::cout<<"ADDRESS "<<	ForceAddress[index]<<" "<< ForceAddress[index+1]<<" "<<ForceAddress[index+2]<<"\n";
-
      }
      
      // if (point_sources.size()>0) std::cerr<<getRank()<<" Calling GPS[r]->initializeTimeFunction() "<<point_sources.size()<<" \n";
