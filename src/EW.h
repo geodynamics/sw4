@@ -276,7 +276,7 @@ void computeDTanisotropic();
    //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
 int no_of_procs() const;
-void create_output_directory();
+void create_directory(const string& path);
 void initialize_image_files();
 void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
 		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
