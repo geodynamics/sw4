@@ -605,7 +605,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 
 // test: compute forcing for the first time step before the loop to get started
-       Force( t, F, point_sources, identsources );
+  Force( t, F, point_sources, identsources );
+       
+  // Force( t+mDt, F, point_sources, identsources );
+  //      for( int g=0 ; g < mNumberOfGrids ; g++ )
+  //      	 F[g].getnonzero();
+  //      std::cout<<"USING THE GPU\n";
+  //      ForceX( t+mDt, F, point_sources, identsources );
+  //      for( int g=0 ; g < mNumberOfGrids ; g++ )
+  //      	 F[g].getnonzero();
 // end test
 
 // BEGIN TIME STEPPING LOOP
@@ -1105,9 +1113,14 @@ SW4_MARK_END("TIME_STEPPING");
 	   ::operator delete[] (BCForcing[g][side],Managed);
       delete[] BCForcing[g];
    }
-   for( int s = 0 ; s < point_sources.size(); s++ )
-      delete point_sources[s];
+   int myRank;
+   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+   //std::cerr<<"Deleting point_sources "<<myRank<"\n";
 
+   std::cerr<<"WARNING :: delete of point_sources turned off for speed in lines 1112-1113 of solve.C \n";
+   //for( int s = 0 ; s < point_sources.size(); s++ )
+   //  delete point_sources[s];
+   //std::cerr<<"Done "<<myRank<<"\n";
 // why is this barrier needed???
    MPI_Barrier(MPI_COMM_WORLD);
 
@@ -1318,7 +1331,7 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
   boundaryConditionType *bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
-  float_sw4 om=0, ph=0, cv=0;
+  //float_sw4 om=0, ph=0, cv=0;
     
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -1703,7 +1716,7 @@ void EW::check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc
    float_sw4 pcim  = (9*(Uc(c,ic,jc-1,kc)+Uc(c,ic+1,jc-1,kc))-(Uc(c,ic-1,jc-1,kc)+Uc(c,ic+2,jc-1,kc)))/16;
    float_sw4 pcip  = (9*(Uc(c,ic,jc+1,kc)+Uc(c,ic+1,jc+1,kc))-(Uc(c,ic-1,jc+1,kc)+Uc(c,ic+2,jc+1,kc)))/16;
    float_sw4 pcipp = (9*(Uc(c,ic,jc+2,kc)+Uc(c,ic+1,jc+2,kc))-(Uc(c,ic-1,jc+2,kc)+Uc(c,ic+2,jc+2,kc)))/16;
-   float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
+   //float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
 
    float_sw4 pcj = (9*(Uc(c,ic,jc,kc)+Uc(c,ic,jc+1,kc))-(Uc(c,ic,jc-1,kc)+Uc(c,ic,jc+2,kc)))/16;
    cout <<"check " << Uf(c,i,j,kf) << " " << Uc(c,ic,jc,kc) << " " << pci << " " << Uf(c,i,j,kf)-pci << endl;
@@ -2016,7 +2029,7 @@ SW4_MARK_FUNCTION;
    // set adj= 0 for ghost pts + boundary pt
    //          1 for only ghost pts.
 
-   int kdb=B.m_kb, kde=B.m_ke;
+   //int kdb=B.m_kb, kde=B.m_ke;
 //   printf("dirichlet_LRstress> kdb=%d, kde=%d\n", kdb, kde);
    
    if( !m_twilight_forcing )
@@ -2850,7 +2863,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 {
   SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
-  float_sw4 *u_ptr, *mu_ptr, *la_ptr, h, zmin;
+  float_sw4 *mu_ptr, *la_ptr, h, zmin;
   boundaryConditionType *bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
@@ -3315,7 +3328,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // no boundary forcing
 // we can do the same loop for all types of bc. For bParallel boundaries, numberOfBCPoints=0
     SW4_MARK_BEGIN("LOOP6");
-      int q;
+    
       //for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
 	RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,3*m_NumberOfBCPoints[g][0]),[=] RAJA_DEVICE(int q){
 	    bforce_side0_ptr[q] = 0.;});
@@ -3936,7 +3949,7 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
 {
 SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
-  float_sw4 *up_ptr, *u_ptr, *um_ptr, dt2i;
+  float_sw4 *up_ptr, *u_ptr, *um_ptr;
   
   int g;
   
@@ -4102,7 +4115,7 @@ SW4_MARK_FUNCTION;
 	 //	 }
 	 //	 else
 	 //	    memforce.set_value(0.0);
-	 const float_sw4 i6  = 1.0/6;
+	 //const float_sw4 i6  = 1.0/6;
 	 const float_sw4 d4a = 2.0/3;
 	 const float_sw4 d4b =-1.0/12;
 	 float_sw4* forcing = a_BCForcing[g][4];
@@ -4213,7 +4226,7 @@ SW4_MARK_FUNCTION;
       {
 	SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
          int nk=m_global_nz[g];
-	 const float_sw4 i6  = 1.0/6;
+	 //const float_sw4 i6  = 1.0/6;
 	 const float_sw4 d4a = 2.0/3;
 	 const float_sw4 d4b =-1.0/12;
 	 float_sw4* forcing = a_BCForcing[g][5];
@@ -4311,8 +4324,8 @@ SW4_MARK_FUNCTION;
          float_sw4* up_p = a_Up[g].c_ptr();
          int side = 5;
          int nz = m_global_nz[g];
-         int ghno = 0;
-         char op = '-';
+         //int ghno = 0;
+         //char op = '-';
 	 float_sw4* forcing = a_BCForcing[g][4];
 	 int usesg = usingSupergrid() ? 1 : 0;
 

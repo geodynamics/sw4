@@ -81,8 +81,9 @@ public:
     void *ptr;
     //mem_total+=len;
     //std::cout<<"Total mem is now "<<mem_total/1024/1024<<" MB \n";
+    // std::cout<<"Call to Managed class "<<len<<"\n";
     SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
-    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
     return ptr;
   }
 
@@ -90,19 +91,20 @@ public:
     void *ptr;
     //mem_total+=len;
     //std::cout<<"Total mem is now "<<mem_total/1204/1024<<" MB \n";
+    //std::cout<<"Call to Managed class "<<len<<"\n";
     SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
-    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
     return ptr;
   }
   
 
   void operator delete(void *ptr) {
-    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
     SW4_CheckDeviceError(cudaFree(ptr));
   }
 
   void operator delete[](void *ptr) {
-    SW4_CheckDeviceError(cudaDeviceSynchronize());
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
     SW4_CheckDeviceError(cudaFree(ptr));
   }
 };

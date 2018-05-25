@@ -61,6 +61,7 @@ public:
   size_t m_key; // For sorting sources
   RAJA_HOST_DEVICE
   void getFxyz( float_sw4 t, float_sw4* fxyz ) ;
+  RAJA_HOST_DEVICE
   void getFxyztt( float_sw4 t, float_sw4* fxyz ) const;
   void getFxyz_notime( float_sw4* fxyz ) const;
 
@@ -90,11 +91,12 @@ public:
   float_sw4 mFreq, mT0;
 RAJA_HOST_DEVICE
 void initializeTimeFunction();
+  float_sw4 mForces[3];
  private:
 
   GridPointSource();
 
-  float_sw4 mForces[3];
+
    //  float_sw4 mAmp;
 
   timeDep mTimeDependence;

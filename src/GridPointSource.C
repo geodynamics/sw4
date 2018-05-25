@@ -105,6 +105,7 @@ void GridPointSource::initializeTimeFunction()
 {
    //   if( mTimeDependence != iDiscrete )
    //      mPar[0] = m_min_exponent;
+  //printf("mTimeDepe %d \n",mTimeDependence);
   switch(mTimeDependence)
     {
     case iRicker :
@@ -315,7 +316,8 @@ void GridPointSource::initializeTimeFunction()
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) 
 {
-   float_sw4 afun, afunv[6];
+  float_sw4 afun, afunv[6];
+  //printf("FXYZ VALUE = %d %d\n",mTimeDependence,m_derivative); 
    if( mTimeDependence != iDiscrete6moments )
       afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
    else
@@ -404,6 +406,7 @@ void GridPointSource::getFxyz_notime( float_sw4* fxyz ) const
 }
 
 //-----------------------------------------------------------------------
+RAJA_HOST_DEVICE
 void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
 {
    float_sw4 afun, afunv[6];

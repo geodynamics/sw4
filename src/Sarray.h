@@ -46,6 +46,7 @@ using std::string;
 
 class EWCuda;
 class Sarray;
+
 class SView{
 public:
   float_sw4 *data;
@@ -68,6 +69,9 @@ public:
  RAJA_HOST_DEVICE void print(bool cond) const { 
     if (cond) printf("SView pointer = %p base = %d offi = %d %d %d\n",data,int(base),int(offi),int(offj),int(offk));}
 };
+
+
+
 class Sarray
 {
 public:
@@ -139,6 +143,9 @@ public:
 #else
    size_t index( int c, int i, int j, int k ) {return m_base+m_offc*c+m_offi*i+m_offj*j+m_offk*k;}
 #endif
+  void getnonzero(){
+    for(int i=0;i<m_nc*m_ni*m_nj*m_nk;i++) if (m_data[i]>0.0) std::cout<<"FORCE "<<i<<" "<<m_data[i]<<"\n";
+  }
    void intersection( int ib, int ie, int jb, int je, int kb, int ke, int wind[6] );
    void side_plane( int side, int wind[6], int nGhost=1 );
    void side_plane_fortran( int side, int wind[6], int nGhost=1 );
@@ -184,9 +191,11 @@ public:
     return view;
   }
   SView view;
+
 private:
-  bool prefetched;
   float_sw4* m_data; 
+  bool prefetched;
+
    float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}

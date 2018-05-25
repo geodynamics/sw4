@@ -1161,3 +1161,4 @@ void SarrayVectorPrefetch(vector<Sarray*> &v,int n){
   SW4_MARK_FUNCTION;
   for(int i=0;i<v.size();i++) for(int j=0;j<n;j++) v[i][j].prefetch();
 }
+

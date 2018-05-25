@@ -157,15 +157,17 @@ void * operator new[](std::size_t size,Space loc,const char *file,int line){
 
 void operator delete(void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
-  if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
+  if ((loc==Managed)||(loc==Device)){
     //std::cout<<"Managed delete\n";
     pattr_t *ss = patpush(ptr,NULL);
     if (ss!=NULL){
       global_variables.curr_mem-=ss->size;
       //global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
     }
-    cudaFree(ptr);
-  } else if (loc==Host){
+    SW4_CheckDeviceError(cudaFree(ptr));
+  } else if (loc==Pinned)
+    SW4_CheckDeviceError(cudaFreeHost(ptr)); 
+  else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
@@ -186,15 +188,18 @@ void operator delete(void *ptr, Space loc) throw(){
 
 void operator delete[](void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
-  if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
+  if ((loc==Managed)||(loc==Device)){
     //std::cout<<"Managed [] delete\n";
     pattr_t *ss = patpush(ptr,NULL);
     if (ss!=NULL){
       global_variables.curr_mem-=ss->size;
       //global_variables.max_mem=std::max(global_variables.max_mem,curr_mem);
     }
-    cudaFree(ptr);
-  } else if (loc==Host){
+    SW4_CheckDeviceError(cudaFree(ptr));
+    
+  }else if (loc==Pinned)
+    SW4_CheckDeviceError(cudaFreeHost(ptr));
+  else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {

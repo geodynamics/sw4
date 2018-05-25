@@ -10,7 +10,7 @@ RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-ray-nomp
 PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
 CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_ray
 EXTRA_FORT_FLAGS = 
-LINKFLAGS = 
+LINKFLAGS = -arch=sm_60
 EXTRA_CXX_FLAGS =  -O3 -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict " -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include
 
 EXTRA_CXX_FLAGS2 =  -O3 -use_fast_math -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict " -std=c++11 --expt-extended-lambda -restrict -arch=sm_60 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu -DENABLE_CALIPER -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA 

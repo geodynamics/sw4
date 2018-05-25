@@ -43,7 +43,7 @@
 
 #include "time_functions.h"
 #include "caliper.h"
-
+#include "Mspace.h"
 using namespace std;
 
 #define SQR(x) ((x)*(x))
@@ -106,26 +106,26 @@ Source::Source(EW *a_ew,
    mNpar = npar;
    if( mNpar > 0 )
    {
-      mPar   = new float_sw4[mNpar];
+     mPar   = SW4_NEW(Managed,float_sw4[mNpar]);
       for( int i= 0 ; i < mNpar ; i++ )
 	 mPar[i] = pars[i];
    }
    else
    {
       mNpar = 2;
-      mPar = new float_sw4[2];
+      mPar = SW4_NEW(Managed,float_sw4[2]);
    }
    mNipar = nipar;
    if( mNipar > 0 )
    {
-      mIpar = new int[mNipar];
+     mIpar = SW4_NEW(Managed, int[mNipar]);
       for( int i= 0 ; i < mNipar ; i++ )
          mIpar[i] = ipars[i];
    }
    else
    {
       mNipar = 1;
-      mIpar  = new int[1];
+      mIpar  = SW4_NEW(Managed,int[1]);
    }
 
    // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
@@ -184,14 +184,14 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   mNpar = npar;
   if( mNpar > 0 )
   {
-     mPar   = new float_sw4[mNpar];
+    mPar   = SW4_NEW(Managed,float_sw4[mNpar]);
      for( int i= 0 ; i < mNpar ; i++ )
 	mPar[i] = pars[i];
   }
   else
   {
      mNpar = 2;
-     mPar = new float_sw4[2];
+     mPar = SW4_NEW(Managed,float_sw4[2]);
   }
 
   mNipar = nipar;
@@ -232,9 +232,9 @@ Source::Source()
 Source::~Source()
 {
    if( mNpar > 0 )
-      delete[] mPar;
+     ::operator delete[] (mPar,Managed);
    if( mNipar > 0 )
-      delete[] mIpar;
+     ::operator delete[] (mIpar,Managed);
 }
 
 //-----------------------------------------------------------------------
@@ -1195,7 +1195,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
          int npts = mIpar[0];
          float_sw4 tstart = mPar[0];
          int ext_npts = npts + 2*nPadding;
-         float_sw4 *ext_par = new float_sw4[ext_npts+1];
+         float_sw4 *ext_par = SW4_NEW(Managed,float_sw4[ext_npts+1]);
          float_sw4 ext_tstart = tstart - nPadding*dt;
 // setup ext_par
          ext_par[0] = ext_tstart;
@@ -1241,7 +1241,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
 //      mIpar = new int[mNipar];
          mIpar[0] = ext_npts;
 //      mFreq = 1./dt;   
-         delete[] mPar; // return memory for the previous time series
+         ::operator delete[] (mPar,Managed); // return memory for the previous time series
          mNpar = ext_npts+1;
          mPar = ext_par;
          mPar[0] = ext_tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
@@ -2567,9 +2567,9 @@ void Source::filter_timefunc( Filter* filter_ptr, float_sw4 tstart, float_sw4 dt
       mIpar[0] = nsteps;
 
       mFreq = 1./dt;   
-      delete[] mPar;
+      ::operator delete[] (mPar,Managed);
       mNpar = nsteps+1;
-      mPar = new float_sw4[mNpar];
+      mPar = SW4_NEW(Managed,float_sw4[mNpar]);
       mPar[0] = tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
       mT0 = tstart;
 //      mPar[0] = tstart-mT0;
@@ -2607,8 +2607,8 @@ int Source::spline_interpolation( )
       
       Qspline quinticspline( npts, &mPar[1], mPar[0], 1/mFreq );
       float_sw4 tstart = mPar[0];
-      delete[] mPar;
-      mPar = new float_sw4[6*(npts-1)+1];
+      ::operator delete[](mPar,Managed);
+      mPar = SW4_NEW(Managed,float_sw4[6*(npts-1)+1]);
       mNpar = 6*(npts-1)+1;
       mPar[0] = tstart;
       float_sw4* qsppt = quinticspline.get_polycof_ptr();
@@ -2632,9 +2632,9 @@ int Source::spline_interpolation( )
       for( int i=0 ; i < (npts+1)*6; i++ )
 	 parin[i] = mPar[i];
       float_sw4 tstart = mPar[0];
-      delete[] mPar;
+      ::operator delete[] (mPar,Managed);
       mNpar = 6*(6*(npts-1)+1);
-      mPar = new float_sw4[mNpar];
+      mPar = SW4_NEW(Managed,float_sw4[mNpar]);
 
       size_t pos_in=0, pos_out=0;
       for( int tf=0 ; tf < 6 ; tf++ )
@@ -2686,7 +2686,7 @@ Source* Source::copy( std::string a_name )
    retval->mZ0 = mZ0;
 
    retval->mNpar = mNpar;
-   retval->mPar = new float_sw4[mNpar];
+   retval->mPar = SW4_NEW(Managed,float_sw4[mNpar]);
    for( int i=0 ; i < mNpar ; i++ )
       retval->mPar[i] = mPar[i];
 
