@@ -3769,10 +3769,10 @@ void EW::processCheckPoint(char* buffer)
    if( restartFileGiven )
    {
       m_check_point->set_restart_file( restartFileName, bufsize );
-      if( restartPathGiven )
-      {
-	      m_check_point->set_restart_path( restartPath );
-      }
+   }
+   if( restartPathGiven )
+   {
+     m_check_point->set_restart_path( restartPath );
    }
 }
 

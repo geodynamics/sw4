@@ -149,6 +149,11 @@ void CheckPoint::setup_sizes( )
 void CheckPoint::define_pio( )
 {
    int glow = 0, ghigh = mEW->mNumberOfGrids;
+
+   // Create the restart directory if it doesn't exist
+   if( mRestartPathSet )
+     mEW->create_directory(mRestartPath);
+
    m_parallel_io = new Parallel_IO*[ghigh-glow+1];
    for( int g=glow ; g < ghigh ; g++ )
    {
@@ -265,15 +270,18 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    bool iwrite = false;
    for( int g=0 ; g < ng ; g++ )
       iwrite = iwrite || m_parallel_io[g]->i_write();
-  
+
    std::stringstream s;
    if( iwrite )
    {
       std::stringstream fileSuffix;
       compute_file_suffix( a_cycle, fileSuffix );
+      if ( mRestartPathSet )
+	      s << mRestartPath << "/";
+      else
       if( mEW->getPath() != "./" )
-	 s << mEW->getPath();
-      s << fileSuffix.str(); 
+	      s << mEW->getPath() << "/";
+      s << fileSuffix.str();
    }
 
  // Keep track of the number of files, save previous file name, and delete the second last.
