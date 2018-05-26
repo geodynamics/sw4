@@ -83,7 +83,7 @@ public:
   Sarray( const Sarray& u );
   Sarray( Sarray& u, int nc=-1 );
   Sarray();
-  //~Sarray() {if( m_data != 0 ) ::operator delete[](m_data,Managed);}
+  ~Sarray() {if( m_data != 0 ) ::operator delete[](m_data,Managed);}
 //   void define( CartesianProcessGrid* cartcomm, int nc );
    void define( int iend, int jend, int kend );
    void define( int nc, int iend, int jend, int kend );
