@@ -3,10 +3,10 @@
 %
 %  Read 2 receiever data files in SAC format and compare/diff
 %
-%              diffsac(basename1, basename2)
+%              diffsac(pathbasename1, pathbasename2)
 %
-%       Input: basename1,2 - Name of receiever file, basename.x, basename.y, basename.z
-%              dir1, dir2 - Path to the receiver files
+%       Input: pathbasename1,2 - Full path to receiever files:
+%              pathbasename.x, pathbasename.y, pathbasename.z
 %              
 %               
 function diffsac(pathbasename1, pathbasename2)
