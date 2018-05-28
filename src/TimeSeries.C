@@ -2412,7 +2412,8 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    cout << " found on sac file" << endl;
   	    cout << "  station not read " << endl;
 	 }
-            cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
+        if( m_ew->getVerbosity() >= 3 )
+          cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       }
       else
       {
