@@ -35,6 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <unistd.h>
 
 #include "TimeSeries.h"
 //#include "mpi.h"
