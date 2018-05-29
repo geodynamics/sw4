@@ -223,6 +223,8 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax1(0);
   RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax2(0);
   RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax3(0);
+
+  // Lines below are not correct , incorrect stride
   RAJA::RangeSegment j_range(jfb,jfe+1);
   RAJA::RangeSegment i_range(ifb,ife+1);
 

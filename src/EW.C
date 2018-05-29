@@ -540,7 +540,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    // Note:: mpirun might need additional flags like -gpu for Device and 
    // Managed to work.
    
-   mpi_buffer_space=Pinned;
+   mpi_buffer_space=Managed;
 
    m_check_point = new CheckPoint(this);
 

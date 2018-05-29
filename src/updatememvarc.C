@@ -298,16 +298,28 @@ void memvar_corr_fort_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int
    //  real*8 alp(3,ifirst:ilast,jfirst:jlast,kfirst:klast) // different sizes here
    //  real*8 alm(3,d1b:d1e, d2b:d2e, d3b:d3e)
 
-   for( int c=0 ; c < 3 ;c++)
-#pragma omp parallel for
-      for( int k=k1 ; k <= k2 ; k++)
-	 for( int j=jfirst ; j<= jlast; j++ )
-	    for( int i=ifirst ; i<= ilast; i++ )
-	    {
+ //   for( int c=0 ; c < 3 ;c++)
+// #pragma omp parallel for
+//       for( int k=k1 ; k <= k2 ; k++)
+// 	 for( int j=jfirst ; j<= jlast; j++ )
+// 	    for( int i=ifirst ; i<= ilast; i++ )
+
+
+   RAJA::RangeSegment i_range(ifirst,ilast+1);
+   RAJA::RangeSegment j_range(jfirst,jlast+1);
+   RAJA::RangeSegment k_range(k1,k2+1);
+   RAJA::RangeSegment c_range(0,3);
+
+RAJA::kernel<XRHS_POL>(RAJA::make_tuple(k_range,j_range,i_range),
+			    [=]RAJA_DEVICE (int k,int j, int i) {
+	    
 	       size_t ind = base+i+ni*j+nij*k;
 	       size_t dind = dbase+i+dni*j+dnij*k;
-	       alp[ind+c*nijk] = icp*( cm*alm[dind+c*dnijk] + u[dind+c*dnijk] + i6* ( dto*dto*u[dind+c*dnijk] + 
-	      dto*(up[dind+c*dnijk]-um[dind+c*dnijk]) + (up[dind+c*dnijk]-2*u[dind+c*dnijk]+um[dind+c*dnijk]) ) );
-	    }
+#pragma unroll
+	       for( int c=0 ; c < 3 ;c++)
+		 alp[ind+c*nijk] = icp*( cm*alm[dind+c*dnijk] + u[dind+c*dnijk] + i6* ( dto*dto*u[dind+c*dnijk] + 
+											dto*(up[dind+c*dnijk]-um[dind+c*dnijk]) + (up[dind+c*dnijk]-2*u[dind+c*dnijk]+um[dind+c*dnijk]) ) );
+		       });
+ SYNC_STREAM;
 }
 
