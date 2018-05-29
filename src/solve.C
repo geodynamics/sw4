@@ -1800,45 +1800,84 @@ void EW::check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc )
 void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 {
 SW4_MARK_FUNCTION;
+ 
+ using LOCAL_POL = 
+   RAJA::KernelPolicy< 
+   RAJA::statement::CudaKernel<
+     RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			  RAJA::statement::For<1, RAJA::cuda_block_exec, 
+					       RAJA::statement::For<2, RAJA::cuda_thread_exec,
+								    RAJA::statement::Lambda<0> >>>>>;
+ RAJA::RangeSegment c_range(1,U.m_nc+1);
+ SView &UV = U.getview();
    // zero out all ghost points
    if( !inner )
    {
-      // Outer layer of non-unknown ghost points
+     RAJA::RangeSegment jall(m_jStart[g],m_jEnd[g]+1),jzero(m_jStart[g],1);
+     RAJA::RangeSegment iall(m_iStart[g],m_iEnd[g]+1),izero(m_iStart[g],1);
+ 
+     
+     // Outer layer of non-unknown ghost points
       if( m_iStartInt[g] == 1 )
       {
       // low i-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iStart[g] ; i <= 0 ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,k) = 0;
+// #pragma omp parallel for
+// 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+// 	    for( int i=m_iStart[g] ; i <= 0 ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+		 RAJA::kernel<LOCAL_POL>(
+					 RAJA::make_tuple(c_range,jall,izero),
+					 [=]RAJA_DEVICE (int c,int j,int i) 
+					 {
+					   UV(c,i,j,k) = 0;});
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
 	 // high i-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,k) = 0;
+// #pragma omp parallel for
+// 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+// 	    for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,k) = 0;
+
+	RAJA::RangeSegment iend(m_iEndInt[g]+1,m_iEnd[g]+1);
+	RAJA::kernel<LOCAL_POL>(
+				RAJA::make_tuple(c_range,jall,iend),
+					 [=]RAJA_DEVICE (int c,int j,int i) 
+					 {
+					   UV(c,i,j,k) = 0;});
+	
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= 0 ; j++ )
-	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,k) = 0;
+// #pragma omp parallel for
+// 	 for( int j=m_jStart[g] ; j <= 0 ; j++ )
+// 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,k) = 0;
+	RAJA::kernel<LOCAL_POL>(
+				RAJA::make_tuple(c_range,jzero,iall),
+					 [=]RAJA_DEVICE (int c,int j,int i) 
+					 {
+					   UV(c,i,j,k) = 0;});
+
+
       }
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
-#pragma omp parallel for
-	 for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,k) = 0;
+// #pragma omp parallel for
+// 	 for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
+// 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,k) = 0;
+	RAJA::RangeSegment jend(m_jEndInt[g]+1,m_jEnd[g]+1);
+	RAJA::kernel<LOCAL_POL>(
+				RAJA::make_tuple(c_range,jend,iall),
+				[=]RAJA_DEVICE (int c,int j,int i) 
+				{
+				  UV(c,i,j,k) = 0;});
       }
    }
    else
@@ -1861,11 +1900,19 @@ SW4_MARK_FUNCTION;
 	 je = m_global_ny[g];
       else
 	 je = m_jEnd[g];
-#pragma omp parallel for
-      for( int j=jb ; j <= je ; j++ )
-	 for( int i=ib ; i <= ie ; i++ )
-	    for( int c=1 ; c <= U.m_nc ; c++ )
-	       U(c,i,j,k) = 0;
+      RAJA::RangeSegment j_range(jb,je+1),i_range(ib,ie+1);
+      
+// #pragma omp parallel for
+//       for( int j=jb ; j <= je ; j++ )
+// 	 for( int i=ib ; i <= ie ; i++ )
+// 	    for( int c=1 ; c <= U.m_nc ; c++ )
+// 	       U(c,i,j,k) = 0;
+//    }
+      RAJA::kernel<LOCAL_POL>(
+			      RAJA::make_tuple(c_range,j_range,i_range),
+			      [=]RAJA_DEVICE (int c,int j,int i) 
+			      {
+				UV(c,i,j,k) = 0;}); SYNC_STREAM;
    }
 }
 
