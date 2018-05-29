@@ -213,6 +213,8 @@ using EVENIODDJ_EXEC_POL =
   RAJA::statement::For<0, RAJA::cuda_thread_exec,
   RAJA::statement::Lambda<0> >>>>;
 
+using EVENIEVENJ_EXEC_POL =  EVENIODDJ_EXEC_POL;
+
 #define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))
 

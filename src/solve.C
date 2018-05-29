@@ -2433,16 +2433,26 @@ SW4_MARK_FUNCTION;
          updateMemVarCorrNearInterface( Utt, a_AlphaVEm[a], a_Up, a_U, a_Um, t, a, g );
          
 // assume a_U and a_AlphaVE have the same dimensions for all mechanisms
-         for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
-            for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
-               for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
+	 SW4_MARK_BEGIN("PRED_DEVICE_LOOP");
+	 SView &UttV = Utt.getview();
+	 SView &a_AlphaVEV = a_AlphaVE[a].getview();
+	 SView &a_AlphaVEmV = a_AlphaVEm[a].getview();
+	 RAJA::RangeSegment k_range(Utt.m_kb, Utt.m_ke +1);
+	 RAJA::RangeSegment j_range(Utt.m_jb, Utt.m_je+1);
+	 RAJA::RangeSegment i_range(Utt.m_ib, Utt.m_ie+1 );
+         // for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
+         //    for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
+         //       for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
+	  RAJA::kernel<XRHS_POL>(
+				 RAJA::make_tuple(k_range, j_range,i_range),
+				 [=]RAJA_DEVICE (int k,int j,int i)
                {
 // corrector value of AlphaVEp in variable 'Utt'
-                  Utt(1,i,j,k) = idt2*(Utt(1,i,j,k)-2*a_AlphaVE[a](1,i,j,k)+a_AlphaVEm[a](1,i,j,k));
-                  Utt(2,i,j,k) = idt2*(Utt(2,i,j,k)-2*a_AlphaVE[a](2,i,j,k)+a_AlphaVEm[a](2,i,j,k));
-                  Utt(3,i,j,k) = idt2*(Utt(3,i,j,k)-2*a_AlphaVE[a](3,i,j,k)+a_AlphaVEm[a](3,i,j,k));
-               }
-      
+                  UttV(1,i,j,k) = idt2*(UttV(1,i,j,k)-2*a_AlphaVEV(1,i,j,k)+a_AlphaVEmV(1,i,j,k));
+                  UttV(2,i,j,k) = idt2*(UttV(2,i,j,k)-2*a_AlphaVEV(2,i,j,k)+a_AlphaVEmV(2,i,j,k));
+                  UttV(3,i,j,k) = idt2*(UttV(3,i,j,k)-2*a_AlphaVEV(3,i,j,k)+a_AlphaVEmV(3,i,j,k));
+               }); SYNC_STREAM;
+	 SW4_MARK_END("PRED_DEVICE_LOOP");
 // NEW June 13, 2017: add in visco-elastic terms
          float_sw4* mua_ptr = mMuVE[g][a].c_ptr();
          float_sw4* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
