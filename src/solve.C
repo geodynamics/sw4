@@ -2355,14 +2355,28 @@ SW4_MARK_FUNCTION;
       je = m_global_ny[g];
    else
       je = m_jEnd[g];
+   
+   SView &uV = u.getview();
+   
+   RAJA::RangeSegment j_range(jb,je+1),i_range(ib,ie+1);
+   
+   // for( int j=jb ; j <= je ; j++ )
+   //    for( int i=ib ; i <= ie ; i++ )
+   using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+  RAJA::statement::For<0, RAJA::cuda_block_exec, 
+  RAJA::statement::For<1, RAJA::cuda_thread_exec,
+  RAJA::statement::Lambda<0> >>>>;
 
-   for( int j=jb ; j <= je ; j++ )
-      for( int i=ib ; i <= ie ; i++ )
-      {
-	 u(1,i,j,k) = u(1,i,j,k+s);
-	 u(2,i,j,k) = u(2,i,j,k+s);
-	 u(3,i,j,k) = u(3,i,j,k+s);
-      }
+   RAJA::kernel<LOCAL_POL>(
+			   RAJA::make_tuple(j_range,i_range),
+			   [=]RAJA_DEVICE (int j,int i) 
+			   {
+			     uV(1,i,j,k) = uV(1,i,j,k+s);
+			     uV(2,i,j,k) = uV(2,i,j,k+s);
+			     uV(3,i,j,k) = uV(3,i,j,k+s);
+			   }); SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
