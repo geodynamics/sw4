@@ -117,11 +117,23 @@ SW4_MARK_FUNCTION;
 // #pragma simd
 // 	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
 // 	   {
+
+
+
+   using LOCAL_EXEC_POL =
+     RAJA::KernelPolicy<
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<2, RAJA::cuda_block_exec,
+			    RAJA::statement::For<1, RAJA::cuda_block_exec,
+						 RAJA::statement::For<0, RAJA::cuda_thread_exec,
+								      RAJA::statement::For<3, RAJA::seq_exec,
+											   RAJA::statement::Lambda<0> >>>>>>;
+   
    RAJA::RangeSegment i_range(ifirst+2,ilast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
    RAJA::RangeSegment k_range(kwindb,kwinde+1);
    RAJA::RangeSegment c_range(1,4);
-   RAJA::kernel<DEFAULT_LOOP4>(
+   RAJA::kernel<LOCAL_EXEC_POL>(
 				  RAJA::make_tuple(i_range,j_range,k_range,c_range),
 				  [=]RAJA_DEVICE (int i,int j, int k,int c) {
 	      up(c,i,j,k) -= coeff*( 

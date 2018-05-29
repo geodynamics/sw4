@@ -2815,6 +2815,12 @@ SW4_MARK_FUNCTION;
 #define str_x(i) a_str_x[(i-ifirst)]   
 #define str_y(j) a_str_y[(j-jfirst)]   
 
+
+   SView &a_UpV=a_Up.getview();
+   SView &BV = B.getview();
+   SView &mMuVEV = mMuVE[g][a_mech].getview();
+   SView &mLambdaVEV = mLambdaVE[g][a_mech].getview();
+   
 // NEW July 21: use new operators WITHOUT ghost points (m_sbop -> m_sbop_no_gp)
 #pragma omp parallel for
    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )

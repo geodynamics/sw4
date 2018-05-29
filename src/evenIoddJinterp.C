@@ -2,6 +2,7 @@
 #include "Sarray.h"
 #include <cstdio>
 #include "caliper.h"
+#include "policies.h"
 // ------------------------ Jacobi ----------------------------------
 void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray &Uc, 
 			   Sarray &Morc, Sarray &Mlrc,
@@ -47,7 +48,9 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray 
   for( int j=jfb ; j <= jfe ; j+=2 )
 #pragma omp simd
     for( int i=ifb ; i <= ife ; i+=2 )
-    {
+
+      {
+  
       int ic, jc;
       float_sw4 b1, a11, r3;
       ic = i/2;
@@ -75,7 +78,7 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray 
 // change in ghost point value
       r3 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
       rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
-
+      
       c=2;
 // All Uc terms
 // NOTE: Uc is not changed so all Uc-terms could be pre-computed
@@ -93,6 +96,7 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray 
 // change in ghost point value
       r3 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
       rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
+      
 //      } // end for c=1,2
                
 // work on component 3 of the ghost point value of Uf
@@ -111,9 +115,9 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray 
 // relax the update for improved convergence
       UfNew(3,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(3,i,j,nkf+1);
       r3 = UfNew(3,i,j,nkf+1) - Uf(3,i,j,nkf+1);
-      rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
-
-    } // end for i even, j odd
+      //rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
+      
+		       }// end for i even, j odd
 
 // update Uf
 #pragma omp parallel
@@ -122,13 +126,14 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray 
     for( int j=jfb ; j <= jfe ; j+=2 )
 #pragma omp simd
       for( int i=ifb ; i <= ife ; i+=2 )
-      {
-	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
-      }
 
-  rmax[3] = rmax1;
-  rmax[4] = rmax2;
-  rmax[5] = rmax3;
+	{
+	  Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
+	}
+
+rmax[3] = rmax1;
+rmax[4] = rmax2;
+rmax[5] = rmax3;
 } // end evenIOddJinterpJacobi
 
 //--------------------------- Optimized version ---------------
@@ -217,13 +222,22 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
-  float_sw4 rmax1=0, rmax2=0, rmax3=0;
+  //float_sw4 rmax1=0, rmax2=0, rmax3=0;
 
-#pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
-  for( int j=jfb ; j <= jfe ; j+=2 )
-#pragma omp simd
-    for( int i=ifb ; i <= ife ; i+=2 )
-    {
+// #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
+//   for( int j=jfb ; j <= jfe ; j+=2 )
+// #pragma omp simd
+//     for( int i=ifb ; i <= ife ; i+=2 )
+//     {
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax1(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax2(0);
+  RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax3(0);
+  
+  RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
+  RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
+  RAJA::kernel<EVENIODDJ_EXEC_POL>(
+				    RAJA::make_tuple(j_srange,i_srange),
+				    [=]RAJA_DEVICE (int j,int i) {
       int ic, jc;
       float_sw4 b1, a11, r3;
       ic = i/2;
@@ -250,8 +264,8 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(c,i,j,nkf+1);
 // change in ghost point value
       r3 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
-      rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
-
+      //rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
+      rmax1.max(fabs(r3));
       c=2;
 // All Uc terms
 // NOTE: Uc is not changed so all Uc-terms could be pre-computed
@@ -268,7 +282,8 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(c,i,j,nkf+1);
 // change in ghost point value
       r3 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
-      rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
+      //rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
+      rmax2.max(fabs(r3));
 //      } // end for c=1,2
                
 // work on component 3 of the ghost point value of Uf
@@ -287,24 +302,29 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 // relax the update for improved convergence
       UfNew(3,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(3,i,j,nkf+1);
       r3 = UfNew(3,i,j,nkf+1) - Uf(3,i,j,nkf+1);
-      rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
-
-    } // end for i even, j odd
+      //rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
+      rmax3.max(fabs(r3));
+				    }); // end for i even, j odd
 
 // update Uf
-#pragma omp parallel
-  for( int c=1 ; c <= 3 ; c++ ) 
-#pragma omp for
-    for( int j=jfb ; j <= jfe ; j+=2 )
-#pragma omp simd
-      for( int i=ifb ; i <= ife ; i+=2 )
+// #pragma omp parallel
+//   for( int c=1 ; c <= 3 ; c++ ) 
+// #pragma omp for
+//     for( int j=jfb ; j <= jfe ; j+=2 )
+// #pragma omp simd
+//       for( int i=ifb ; i <= ife ; i+=2 )
+  RAJA::RangeSegment c_range(1,4);
+  RAJA::kernel<XRHS_POL>(
+			 RAJA::make_tuple(c_range,j_srange,i_srange),
+			 [=]RAJA_DEVICE (int c,int j,int i) 
       {
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
-      }
-
-  rmax[3] = rmax1;
-  rmax[4] = rmax2;
-  rmax[5] = rmax3;
+      }); SYNC_STREAM;;
+  rmax[3] = static_cast<float_sw4>(rmax1.get());
+  rmax[4] = static_cast<float_sw4>(rmax2.get());
+  rmax[5] = static_cast<float_sw4>(rmax3.get());
+  
+ 
 #undef Unextf
 #undef UnextcInterp
 #undef Mufs

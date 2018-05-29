@@ -21,6 +21,13 @@ using DEFAULT_LOOP2 =
 		       RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 					    RAJA::statement::Lambda<0> >>>>;
 
+using DEFAULT_LOOP2X = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+  RAJA::statement::For<1, RAJA::cuda_block_exec, 
+  RAJA::statement::For<0, RAJA::cuda_thread_exec,
+  RAJA::statement::Lambda<0> >>>>;
+
 
 using DEFAULT_LOOP3 = 
   RAJA::KernelPolicy< 
@@ -83,7 +90,7 @@ using CONSINTP_EXEC_POL5 =  ICSTRESS_EXEC_POL;
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<32>>> >;
 
 
-using PRELIM_CORR_EXEC_POL1 =  ICSTRESS_EXEC_POL;
+using PRELIM_CORR_EXEC_POL1 =  DEFAULT_LOOP2X;
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
@@ -197,6 +204,14 @@ using BCFORT_EXEC_POL2 = ICSTRESS_EXEC_POL;
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>>> >;
+
+
+using EVENIODDJ_EXEC_POL = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+  RAJA::statement::For<1, RAJA::cuda_block_exec, 
+  RAJA::statement::For<0, RAJA::cuda_thread_exec,
+  RAJA::statement::Lambda<0> >>>>;
 
 #define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))
@@ -322,6 +337,7 @@ using BCFORT_EXEC_POL1 = DEFAULT_LOOP3;
 
 using BCFORT_EXEC_POL2 = DEFAULT_LOOP2;
 
+using EVENIODDJ_EXEC_POL = DEFAULT_LOOP2;
 
 #define SYNC_DEVICE
 #define SYNC_STREAM

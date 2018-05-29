@@ -227,9 +227,10 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   // Lines below are not correct , incorrect stride
   RAJA::RangeSegment j_range(jfb,jfe+1);
   RAJA::RangeSegment i_range(ifb,ife+1);
-
+  RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
+  RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
   RAJA::kernel<ODDIEVENJ_EXEC_POL1>(
-  		       RAJA::make_tuple(j_range,i_range),
+  		       RAJA::make_tuple(j_srange,i_srange),
   		       [=]RAJA_DEVICE (int j,int i) {
 // float_sw4 rmax1=0, rmax2=0, rmax3=0;
 // #pragma omp parallel for reduction(max:rmax1,rmax2,rmax3)
@@ -319,8 +320,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 //   Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
 // }
   RAJA::RangeSegment c_range(1,4);
-  RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
-  RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
+  
 
   RAJA::kernel<ODDIEVENJ_EXEC_POL2>(
   		       RAJA::make_tuple(c_range,j_srange,i_srange),
