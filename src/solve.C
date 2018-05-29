@@ -2820,44 +2820,50 @@ SW4_MARK_FUNCTION;
    SView &BV = B.getview();
    SView &mMuVEV = mMuVE[g][a_mech].getview();
    SView &mLambdaVEV = mLambdaVE[g][a_mech].getview();
-   
+   float_sw4 *m_sbop_no_gpV = m_sbop_no_gp;
+
+   RAJA::RangeSegment j_range(B.m_jb+2,B.m_je-2+1);
+   RAJA::RangeSegment i_range(B.m_ib+2,B.m_ie-2+1);
 // NEW July 21: use new operators WITHOUT ghost points (m_sbop -> m_sbop_no_gp)
-#pragma omp parallel for
-   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
-#pragma omp simd
-      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+// #pragma omp parallel for
+//    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+// #pragma omp simd
+//       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+RAJA::kernel<DEFAULT_LOOP2X>(
+				    RAJA::make_tuple(j_range,i_range),
+				    [=]RAJA_DEVICE (int j,int i) 
       {
 	 float_sw4 uz=0, vz=0, wz=0;
 	 if( upper )
 	 {
 	    for( int m=0 ; m <= 5 ; m++ )
 	    {
-	       uz += m_sbop_no_gp[m]*a_Up(1,i,j,k+m-1);
-	       vz += m_sbop_no_gp[m]*a_Up(2,i,j,k+m-1);
-	       wz += m_sbop_no_gp[m]*a_Up(3,i,j,k+m-1);
+	       uz += m_sbop_no_gpV[m]*a_UpV(1,i,j,k+m-1);
+	       vz += m_sbop_no_gpV[m]*a_UpV(2,i,j,k+m-1);
+	       wz += m_sbop_no_gpV[m]*a_UpV(3,i,j,k+m-1);
 	    }
 	 }
 	 else
 	 {
 	    for( int m=0 ; m <= 5 ; m++ )
 	    {
-	       uz -= m_sbop_no_gp[m]*a_Up(1,i,j,k+1-m);
-	       vz -= m_sbop_no_gp[m]*a_Up(2,i,j,k+1-m);
-	       wz -= m_sbop_no_gp[m]*a_Up(3,i,j,k+1-m);
+	       uz -= m_sbop_no_gpV[m]*a_UpV(1,i,j,k+1-m);
+	       vz -= m_sbop_no_gpV[m]*a_UpV(2,i,j,k+1-m);
+	       wz -= m_sbop_no_gpV[m]*a_UpV(3,i,j,k+1-m);
 	    }
 	 }
 // subtract the visco-elastic contribution from mechanism 'a_mech'
-         B(1,i,j,k) = B(1,i,j,k) - ih*mMuVE[g][a_mech](i,j,k)*(
-            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
-                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
-         B(2,i,j,k) = B(2,i,j,k) - ih*mMuVE[g][a_mech](i,j,k)*(
-            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
-                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) + (vz)  );
-         B(3,i,j,k) = B(3,i,j,k) - ih*((2*mMuVE[g][a_mech](i,j,k)+mLambdaVE[g][a_mech](i,j,k))*(wz) + mLambdaVE[g][a_mech](i,j,k)*(
-                                          str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
-                                          str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+         BV(1,i,j,k) = BV(1,i,j,k) - ih*mMuVEV(i,j,k)*(
+            str_x(i)*( a2*(a_UpV(3,i+2,j,k)-a_UpV(3,i-2,j,k))+
+                       a1*(a_UpV(3,i+1,j,k)-a_UpV(3,i-1,j,k))) + (uz)  );
+         BV(2,i,j,k) = BV(2,i,j,k) - ih*mMuVEV(i,j,k)*(
+            str_y(j)*( a2*(a_UpV(3,i,j+2,k)-a_UpV(3,i,j-2,k))+
+                       a1*(a_UpV(3,i,j+1,k)-a_UpV(3,i,j-1,k))) + (vz)  );
+         BV(3,i,j,k) = BV(3,i,j,k) - ih*((2*mMuVEV(i,j,k)+mLambdaVEV(i,j,k))*(wz) + mLambdaVEV(i,j,k)*(
+                                          str_x(i)*( a2*(a_UpV(1,i+2,j,k)-a_UpV(1,i-2,j,k))+a1*(a_UpV(1,i+1,j,k)-a_UpV(1,i-1,j,k))) +
+                                          str_y(j)*( a2*(a_UpV(2,i,j+2,k)-a_UpV(2,i,j-2,k))+a1*(a_UpV(2,i,j+1,k)-a_UpV(2,i,j-1,k))) ) );
          
-      }
+      }); SYNC_STREAM;
 #undef str_x
 #undef str_y
 }
