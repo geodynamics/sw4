@@ -5,6 +5,7 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+#include "foralls.h"
 
 //-----------------------------------------------------------------------
 void update_unext( int ib, int ie, int jb, int je, int kb, int ke,
@@ -104,6 +105,18 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
 //       }
 //     }
 //   }
+#define NO_COLLAPSE
+#if defined(NO_COLLAPSE)
+  Range<16> I(ib,ie+1);
+  Range<4>J(jb,je+1);
+  Range<4>K(kb_tt,ke_tt+1);
+  forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+#pragma unroll
+      for(int c=1;c<4;c++)
+	u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );
+    });
+  
+#else
   RAJA::RangeSegment i_range(ib,ie+1);
   RAJA::RangeSegment j_range(jb,je+1);
   RAJA::RangeSegment k_range(kb_tt,ke_tt+1);
@@ -113,7 +126,8 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
 		       [=]RAJA_DEVICE (long int i,long int j, long int k,long int c) {
 			 u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );
 		       });
-
+#endif
+  SYNC_STREAM;
 #undef up
 #undef u
 #undef um
