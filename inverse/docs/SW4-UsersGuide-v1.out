@@ -1,0 +1,118 @@
+\BOOKMARK [0][-]{chapter.1}{Introduction}{}% 1
+\BOOKMARK [0][-]{chapter.2}{Getting started}{}% 2
+\BOOKMARK [1][-]{section.2.1}{Running SW4}{chapter.2}% 3
+\BOOKMARK [2][-]{subsection.2.1.1}{Version information \(-v\)}{section.2.1}% 4
+\BOOKMARK [2][-]{subsection.2.1.2}{Running on the Livermore Computing parallel linux clusters}{section.2.1}% 5
+\BOOKMARK [0][-]{chapter.3}{Governing equations, coordinate system, and units}{}% 6
+\BOOKMARK [1][-]{section.3.1}{Geographical coordinates and projections}{chapter.3}% 7
+\BOOKMARK [2][-]{subsection.3.1.1}{Spheroidal mapping}{section.3.1}% 8
+\BOOKMARK [2][-]{subsection.3.1.2}{The Proj.4 library}{section.3.1}% 9
+\BOOKMARK [1][-]{section.3.2}{Super-grid damping layers}{chapter.3}% 10
+\BOOKMARK [0][-]{chapter.4}{Sources, time-functions, and grid size}{}% 11
+\BOOKMARK [1][-]{section.4.1}{Point force and moment tensor sources in SW4}{chapter.4}% 12
+\BOOKMARK [1][-]{section.4.2}{Predefined time functions}{chapter.4}% 13
+\BOOKMARK [2][-]{subsection.4.2.1}{Gaussian}{section.4.2}% 14
+\BOOKMARK [2][-]{subsection.4.2.2}{GaussianInt \(or Erf\)}{section.4.2}% 15
+\BOOKMARK [2][-]{subsection.4.2.3}{Ricker}{section.4.2}% 16
+\BOOKMARK [2][-]{subsection.4.2.4}{RickerInt}{section.4.2}% 17
+\BOOKMARK [2][-]{subsection.4.2.5}{Brune}{section.4.2}% 18
+\BOOKMARK [2][-]{subsection.4.2.6}{BruneSmoothed}{section.4.2}% 19
+\BOOKMARK [2][-]{subsection.4.2.7}{Liu}{section.4.2}% 20
+\BOOKMARK [2][-]{subsection.4.2.8}{Triangle}{section.4.2}% 21
+\BOOKMARK [2][-]{subsection.4.2.9}{Sawtooth}{section.4.2}% 22
+\BOOKMARK [2][-]{subsection.4.2.10}{Ramp}{section.4.2}% 23
+\BOOKMARK [2][-]{subsection.4.2.11}{Smoothwave}{section.4.2}% 24
+\BOOKMARK [2][-]{subsection.4.2.12}{VerySmoothBump}{section.4.2}% 25
+\BOOKMARK [2][-]{subsection.4.2.13}{C6SmoothBump}{section.4.2}% 26
+\BOOKMARK [2][-]{subsection.4.2.14}{GaussianWindow}{section.4.2}% 27
+\BOOKMARK [2][-]{subsection.4.2.15}{Dirac}{section.4.2}% 28
+\BOOKMARK [1][-]{section.4.3}{Discrete time function}{chapter.4}% 29
+\BOOKMARK [1][-]{section.4.4}{What is the frequency content in the time function?}{chapter.4}% 30
+\BOOKMARK [1][-]{section.4.5}{How to choose the grid size}{chapter.4}% 31
+\BOOKMARK [2][-]{subsection.4.5.1}{Lamb's problem}{section.4.5}% 32
+\BOOKMARK [0][-]{chapter.5}{Topography}{}% 33
+\BOOKMARK [1][-]{section.5.1}{Gaussian hill topography}{chapter.5}% 34
+\BOOKMARK [1][-]{section.5.2}{Topography grid file}{chapter.5}% 35
+\BOOKMARK [1][-]{section.5.3}{Etree topography}{chapter.5}% 36
+\BOOKMARK [0][-]{chapter.6}{The material model}{}% 37
+\BOOKMARK [1][-]{section.6.1}{The block command}{chapter.6}% 38
+\BOOKMARK [1][-]{section.6.2}{The efile command}{chapter.6}% 39
+\BOOKMARK [1][-]{section.6.3}{The pfile command}{chapter.6}% 40
+\BOOKMARK [1][-]{section.6.4}{The ifile command}{chapter.6}% 41
+\BOOKMARK [1][-]{section.6.5}{The vimaterial command}{chapter.6}% 42
+\BOOKMARK [0][-]{chapter.7}{Attenuation}{}% 43
+\BOOKMARK [1][-]{section.7.1}{Viscoelastic modeling}{chapter.7}% 44
+\BOOKMARK [0][-]{chapter.8}{Output options}{}% 45
+\BOOKMARK [1][-]{section.8.1}{Setting the output directory}{chapter.8}% 46
+\BOOKMARK [1][-]{section.8.2}{Time-history at a reciever station: the rec \(or sac\) command}{chapter.8}% 47
+\BOOKMARK [2][-]{subsection.8.2.1}{The ASCII text format}{section.8.2}% 48
+\BOOKMARK [2][-]{subsection.8.2.2}{Notes on the rec command}{section.8.2}% 49
+\BOOKMARK [1][-]{section.8.3}{2-D cross-sectional data: the image command}{chapter.8}% 50
+\BOOKMARK [1][-]{section.8.4}{Creating a GMT script with the gmt command}{chapter.8}% 51
+\BOOKMARK [0][-]{chapter.9}{Examples}{}% 52
+\BOOKMARK [1][-]{section.9.1}{The elastic layer over half-space problem: LOH.1}{chapter.9}% 53
+\BOOKMARK [1][-]{section.9.2}{The visco-elastic layer over half-space problem: LOH.3}{chapter.9}% 54
+\BOOKMARK [0][-]{chapter.10}{Keywords in the input file}{}% 55
+\BOOKMARK [1][-]{section.10.1}{Basic commands}{chapter.10}% 56
+\BOOKMARK [2][-]{subsection.10.1.1}{fileio [optional]}{section.10.1}% 57
+\BOOKMARK [2][-]{subsection.10.1.2}{grid [required]}{section.10.1}% 58
+\BOOKMARK [2][-]{subsection.10.1.3}{time [required]}{section.10.1}% 59
+\BOOKMARK [2][-]{subsection.10.1.4}{supergrid [optional]}{section.10.1}% 60
+\BOOKMARK [2][-]{subsection.10.1.5}{prefilter [optional]}{section.10.1}% 61
+\BOOKMARK [1][-]{section.10.2}{Sources [required]}{chapter.10}% 62
+\BOOKMARK [2][-]{subsection.10.2.1}{source}{section.10.2}% 63
+\BOOKMARK [2][-]{subsection.10.2.2}{rupture}{section.10.2}% 64
+\BOOKMARK [1][-]{section.10.3}{The material model [required]}{chapter.10}% 65
+\BOOKMARK [2][-]{subsection.10.3.1}{attenuation [optional]}{section.10.3}% 66
+\BOOKMARK [2][-]{subsection.10.3.2}{block}{section.10.3}% 67
+\BOOKMARK [2][-]{subsection.10.3.3}{efile}{section.10.3}% 68
+\BOOKMARK [2][-]{subsection.10.3.4}{pfile}{section.10.3}% 69
+\BOOKMARK [2][-]{subsection.10.3.5}{ifile}{section.10.3}% 70
+\BOOKMARK [2][-]{subsection.10.3.6}{material}{section.10.3}% 71
+\BOOKMARK [2][-]{subsection.10.3.7}{globalmaterial [optional]}{section.10.3}% 72
+\BOOKMARK [2][-]{subsection.10.3.8}{randomize [optional]}{section.10.3}% 73
+\BOOKMARK [1][-]{section.10.4}{Topography command [optional]}{chapter.10}% 74
+\BOOKMARK [2][-]{subsection.10.4.1}{topography [optional]}{section.10.4}% 75
+\BOOKMARK [1][-]{section.10.5}{Output commands [optional]}{chapter.10}% 76
+\BOOKMARK [2][-]{subsection.10.5.1}{rec \(or sac\) [optional]}{section.10.5}% 77
+\BOOKMARK [2][-]{subsection.10.5.2}{image [optional]}{section.10.5}% 78
+\BOOKMARK [2][-]{subsection.10.5.3}{volimage [optional]}{section.10.5}% 79
+\BOOKMARK [2][-]{subsection.10.5.4}{gmt [optional]}{section.10.5}% 80
+\BOOKMARK [1][-]{section.10.6}{SW4 testing commands [optional]}{chapter.10}% 81
+\BOOKMARK [2][-]{subsection.10.6.1}{twilight}{section.10.6}% 82
+\BOOKMARK [2][-]{subsection.10.6.2}{testlamb}{section.10.6}% 83
+\BOOKMARK [2][-]{subsection.10.6.3}{testpointsource}{section.10.6}% 84
+\BOOKMARK [2][-]{subsection.10.6.4}{testrayleigh}{section.10.6}% 85
+\BOOKMARK [2][-]{subsection.10.6.5}{testenergy}{section.10.6}% 86
+\BOOKMARK [1][-]{section.10.7}{Advanced simulation controls [optional]}{chapter.10}% 87
+\BOOKMARK [2][-]{subsection.10.7.1}{boundary\137conditions [optional]}{section.10.7}% 88
+\BOOKMARK [2][-]{subsection.10.7.2}{developer [optional]}{section.10.7}% 89
+\BOOKMARK [0][-]{chapter.11}{File formats}{}% 90
+\BOOKMARK [1][-]{section.11.1}{Discrete time function}{chapter.11}% 91
+\BOOKMARK [1][-]{section.11.2}{Topography}{chapter.11}% 92
+\BOOKMARK [2][-]{subsection.11.2.1}{Topography on a geographic lattice}{section.11.2}% 93
+\BOOKMARK [2][-]{subsection.11.2.2}{Topography on a Cartesian lattice}{section.11.2}% 94
+\BOOKMARK [1][-]{section.11.3}{pfile}{chapter.11}% 95
+\BOOKMARK [2][-]{subsection.11.3.1}{pfile on a geographic lattice}{section.11.3}% 96
+\BOOKMARK [2][-]{subsection.11.3.2}{pfile on a Cartesian lattice}{section.11.3}% 97
+\BOOKMARK [1][-]{section.11.4}{ifile}{chapter.11}% 98
+\BOOKMARK [1][-]{section.11.5}{sac}{chapter.11}% 99
+\BOOKMARK [1][-]{section.11.6}{image}{chapter.11}% 100
+\BOOKMARK [1][-]{section.11.7}{volimage}{chapter.11}% 101
+\BOOKMARK [0][-]{appendix.A}{Installing SW4}{}% 102
+\BOOKMARK [1][-]{section.A.1}{Compilers and third party libraries}{appendix.A}% 103
+\BOOKMARK [1][-]{section.A.2}{Directory structure}{appendix.A}% 104
+\BOOKMARK [1][-]{section.A.3}{Basic compilation and linking of SW4}{appendix.A}% 105
+\BOOKMARK [2][-]{subsection.A.3.1}{Mac machines}{section.A.3}% 106
+\BOOKMARK [2][-]{subsection.A.3.2}{Linux machines}{section.A.3}% 107
+\BOOKMARK [2][-]{subsection.A.3.3}{Using make}{section.A.3}% 108
+\BOOKMARK [2][-]{subsection.A.3.4}{How do I setup the make.inc file?}{section.A.3}% 109
+\BOOKMARK [1][-]{section.A.4}{Installing the cencalvm, proj.4, and euclid libraries}{appendix.A}% 110
+\BOOKMARK [2][-]{subsection.A.4.1}{Building sw4 with efile and proj.4 support}{section.A.4}% 111
+\BOOKMARK [0][-]{appendix.B}{Testing the SW4 installation}{}% 112
+\BOOKMARK [1][-]{section.B.1}{Method of manufactured solutions}{appendix.B}% 113
+\BOOKMARK [1][-]{section.B.2}{Lamb's problem}{appendix.B}% 114
+\BOOKMARK [1][-]{section.B.3}{Point source test}{appendix.B}% 115
+\BOOKMARK [0][-]{appendix.C}{Run time and memory requirements }{}% 116
+\BOOKMARK [1][-]{section.C.1}{Run time}{appendix.C}% 117
+\BOOKMARK [1][-]{section.C.2}{Memory usage}{appendix.C}% 118

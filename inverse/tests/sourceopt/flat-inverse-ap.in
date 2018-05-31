@@ -1,0 +1,47 @@
+developer opttest=source
+#
+#
+grid x=1.0 y=1.0 z=1.5 h=0.02
+#
+#
+fileio path=ap-flat-opt-run obspath=flat-synth-gaussian
+#
+time t=2.5 utcstart=08/26/2014:22:53:36.00
+#
+# Two layer material
+block vp=1 vs=0.5 rho=1
+block vp=0.8 vs=0.4 rho=0.9 z2=0.3
+#
+#  Exact source
+source x=0.6065 y=0.399 z=0.017  mxx=-0.4035 mxy=-0.8383 mxz=-0.3238 myy=0.2069 myz=0.3851 mzz=0.2157 t0=0.5 freq=12 type=Gaussian m0=1
+#
+# Initial guess, near
+#source x=0.61 y=0.41 z=0.022  mxx=-0.41 mxy=-0.8 mxz=-0.3 myy=0.2 myz=0.4 mzz=0.2 t0=0.51 freq=12.02 type=Gaussian m0=1
+#
+# Initial guess, far
+#source x=0.55 y=0.45 z=0.1  mxx=-0.41 mxy=-0.8 mxz=-0.3 myy=0.2 myz=0.4 mzz=0.2 t0=0.55 freq=12.05 type=Gaussian m0=1
+#
+supergrid gp=5 dc=0.001
+#
+#
+cg maxouterit=10 tolerance=1e-12 scalefactors=estimate initialguess=usesource steptype=hessian optmethod=BFGS linesearch=on
+#
+#
+observation x=0.3 y=0.4 depth=0 file=st1
+observation x=0.5 y=0.4 depth=0 file=st2
+observation x=0.7 y=0.4 depth=0 file=st3
+observation x=0.3 y=0.3 depth=0 file=st4
+observation x=0.4 y=0.3 depth=0 file=st5
+observation x=0.7 y=0.3 depth=0 file=st6
+observation x=0.3 y=0.7 depth=0 file=st7
+observation x=0.5 y=0.7 depth=0 file=st8
+observation x=0.8 y=0.7 depth=0 file=st9
+
+# scale factors at 'far' initial guess:
+#scalefactors x0=1.44318e-05 y0=2.05417e-05 z0=1.83012e-05 Mxx=0.000642693 Mxy=0.000405026 Mxz=0.00029846 Myy=0.0006955 Myz=0.000333162 Mzz=0.000610731 t0=2.62848e-05 freq=0.00240387
+#
+# scale factors at 'near' initial guess:
+scalefactors x0=8.55769e-06 y0=1.2316e-05 z0=1.37642e-05 Mxx=0.000310943 Mxy=0.000260937 Mxz=0.000248583 Myy=0.000500049 Myz=0.000511723 Mzz=0.000912414 t0=1.85141e-05 freq=0.00162641
+#
+# scale factors at exact source
+#scalefactors x0=8.18342e-06 y0=1.01103e-05 z0=1.0975e-05 Mxx=0.000294172 Mxy=0.000254302 Mxz=0.000282552 Myy=0.000495565 Myz=0.000607008 Mzz=0.000888667 t0=1.74324e-05 freq=0.00156529

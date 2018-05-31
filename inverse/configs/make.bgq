@@ -1,0 +1,9 @@
+  etree = no
+  proj = yes
+  SW4ROOT=/usr/gapps/wpp/bgqos_0
+  FC = mpixlf77
+  CC = mpixlc
+  CXX = mpixlcxx
+  EXTRA_CXX_FLAGS = -qmaxmem=-1
+  EXTRA_FORT_FLAGS = -qmaxmem=-1
+  EXTRA_LINK_FLAGS = -L/usr/local/tools/lapack/lib -llapack -L/usr/local/tools/blas/lib -lblas -L/opt/ibmcmp/xlsmp/bg/3.1/bglib64 -L/opt/ibmcmp/xlmass/bg/7.3/bglib64 -L/opt/ibmcmp/xlf/bg/14.1/bglib64 -lxlf90 -lxlopt -lxlomp_ser -lxl -lxlfmath

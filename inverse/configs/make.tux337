@@ -1,0 +1,5 @@
+SW4ROOT = ""
+FC = mpif90 -f90=gfortran
+CC = mpicc
+CXX = mpicxx
+EXTRA_LINK_FLAGS = -L/home/sjogreen2/apps/lapack-3.4.0 -llapack -lrefblas -lgfortran

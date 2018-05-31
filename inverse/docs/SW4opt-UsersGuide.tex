@@ -1,0 +1,348 @@
+%-*-LaTeX-*-
+\documentclass[11pt]{report}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Use the approved methods for setting lengths
+%\oddsidemargin  0.0in
+%\evensidemargin 0.0in
+%\textwidth      6.5in
+%\textheight     9.0in
+\setlength{\oddsidemargin}{0.0in}
+\setlength{\evensidemargin}{0.0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\textheight}{8.7in}
+% Based on document style, and taller text body height, set
+% weird LaTex margin/header (box heights).  This fixes
+% the disappearing page numbers (which never disappeared; they
+% just got printed beyond the borders of the physical paper)
+\setlength{\voffset}{0pt}
+\setlength{\topmargin}{0pt}
+\setlength{\headheight}{10pt}
+\setlength{\headsep}{25pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage{html}
+\usepackage{makeidx}
+%\usepackage{times}
+\usepackage{hyperref}
+\usepackage{verbatim}
+\usepackage{graphicx}
+%\usepackage{eufrak}
+\usepackage{amsmath}
+
+\makeindex
+
+\tolerance=600
+
+\newcommand{\Fb}{{\bf F}}
+\newcommand{\Lb}{{\bf L}}
+\newcommand{\gb}{{\bf g}}
+\newcommand{\nb}{{\bf n}}
+\newcommand{\ub}{{\bf u}}
+\newcommand{\xb}{{\bf x}}
+\newcommand{\p}{\partial}
+\renewcommand{\div}{{\rm div}}
+\renewcommand{\arraystretch}{1.3}
+
+\begin{document}
+
+\title{\LARGE User's guide to SW4Opt version 0.0.1} 
+
+\author{ N. Anders Petersson$^1$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
+     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This is
+     contribution LLNL-SM-XXXYYY.}}
+\date{\today} 
+\maketitle
+\pagestyle{myheadings}
+
+%\thispagestyle{plain}
+\markboth{}{N.A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4OPT-0.0.1}
+
+\pagebreak
+\paragraph {Disclaimer} 
+This document was prepared as an account of work sponsored by an agency of the United States
+government. Neither the United States government nor Lawrence Livermore National Security, LLC, nor
+any of their employees makes any warranty, expressed or implied, or assumes any legal liability or
+responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product,
+or process disclosed, or represents that its use would not infringe privately owned
+rights. Reference herein to any specific commercial product, process, or service by trade name,
+trademark, manufacturer, or otherwise does not necessarily constitute or imply its endorsement,
+recommendation, or favoring by the United States government or Lawrence Livermore National Security,
+LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of
+the United States government or Lawrence Livermore National Security, LLC, and shall not be used for
+advertising or product endorsement purposes. 
+
+\paragraph{Auspices Statement}
+This work performed under the auspices of the U.S. Department of Energy by Lawrence Livermore
+National Laboratory under contract DE-AC52-07NA27344.
+%\pagebreak
+\tableofcontents
+
+% Introduction
+\chapter{Source inversion}
+\emph{S4Wopt} is the main program for source inversion. \emph{S4Wopt} estimates a source of the form
+$$
+ f({\bf x},t) =  g(t,t_0,\omega_0)M\nabla\delta({\bf x}-{\bf x}^*)
+$$
+where, ${\bf x}^*$ is the location of the source, $M$ is the symmetric 3$\times$3 moment tensor, and the time
+function $g$ contains two parameters, the frequency, $\omega_0$, and time shift, $t_0$. Currently, the only
+implemented time functions for source inversion are the Gaussian and the VerySmoothBump.
+\par
+The source is computed by minimizing the misfit between the computed
+time series ${\bf u}^n_{{\bf i}_r}$ and measured data ${\bf d}^n_{{\bf i}_r}$,
+$$
+ \chi = \frac{1}{2}\sum_{n=0}^N \sum_{r=1}^R |{\bf u}^n_{{\bf i}_r}-{\bf d}^n_{{\bf i}_r}|^2,
+$$
+with respect to the eleven parameters describing the source, ${\bf x}^*, M, \omega_0$, and $t_0$.
+The measured data are given at stations ${\bf x}_{{\bf i}_r}$, $r=1,\ldots,R$.
+The {\tt observation} keyword is used to specify the input seismograms (${\bf d}^n_{{\bf i}_r}$ above). 
+For example, the command
+%
+\begin{verbatim}
+observation x=11200 y=6300 z=0.0 file=cartstation
+\end{verbatim}
+%
+will read a file named {\tt cartstation.txt} from the directory specified by the {\tt path}
+parameter to the {\tt fileio} command. If the {\tt path} is not set, the file will be searched for
+in the current directory. Currently, only files on the USGS ascii format can be read by the
+observation command. The USGS file do not contain information about the location of the station
+where the data were obtained. It is thus necessary to specify the location directly in the {\tt
+  observation} command. In the example above, the data on the file represent measurements at a
+station located at the position ${\bf x} = (11200,6300,0)$ in the Cartesian grid. It is possible to
+specify the location in geographic coordinates instead. For example,
+%
+\begin{verbatim}
+observation lon=-122.523 lat=38.0496 depth=0.0 file=nhf 
+\end{verbatim}
+%
+will read a file named {\tt nhf.txt}, that represents data obtained at latitude 38.049 and longitude
+-122.523 on the surface of the earth.  \emph{S4Wopt} will interpret the components of read file as
+Cartesian components, or as components pointing in the east, north, and up directions, depending on
+information in the header of the file.  
+
+The file read by the observation command will be
+assumed to start at time = 0, even if the starting time recorded in the file is different from zero,
+i.e., the read seismograms will be shifted in time to always start at the first time step of the
+simulation.
+
+%\begin{narrow}
+{\emph Not Yet Implemented:}
+Plan for reading sac files:
+\begin{verbatim}
+observation sfile1=filename.x sfile2=filename.y sfile3=filename.z
+\end{verbatim}
+will read the three components of a time history at a point from three SAC files. Information about type of
+components and location of the station is taken from the header of the SAC file.
+%\end{narrow}
+
+The stations specified by the observation command, will also act as recievers of time series during
+the forward solve phase. After each iteration in the optimization algorithm, the time histories
+obtained at the stations (${\bf u}^n_{{\bf i}_r}$ above) will be output with on files with a {\tt
+  \_out} appended to their names. For example, if time history is input on the file {\tt nhf.txt},
+the corresponding seismograms computed by the forward problem using the most recent approximation of
+the source are written on a file named {\tt nhf\_out.txt}. These files are thus overwitten after each
+optimization iteration. Furthermore, if the option output\_initial\_seismograms is set to one, the
+time series obtained with the initial guess source will be output on files with a {\tt \_ini}
+appended.  
+
+The {\tt receiver} command, defined for \emph{S4W}, can not be used with
+\emph{S4Wopt}. Currently, it is not possible to specify a receiver that is not also an observation.
+
+%\chapter{Introduction}
+%\chapter{Getting started}
+\chapter{Coordinate system, units and the grid}
+
+The computation takes place over a time interval, $0\leq t \leq T$, where $T$ is a user specified end time.
+The starting point of the simulation time is always $t=0$. The {\tt time} command specifies the end time, for example
+\begin{verbatim}
+time t=1.6
+\end{verbatim}
+sets $T=1.6$. The unit is seconds. Alternatively, the simulation time interval can be specified as 
+a number of time steps, as in the example
+\begin{verbatim}
+time steps=1200
+\end{verbatim}
+which sets the number of time steps to 1200. The end time will in this case be $T=1200\Delta t$, where the
+time step $\Delta t$ depends on the input material. $\Delta t$ is determined automatically by \emph{sw4}.
+The simulation start time can be related to a UTC time. The option {\tt utcstart} sets the UTC time that
+corresponds to the simulation time $t=0$, for example,
+\begin{verbatim}
+time t=1.6 utcstart=01/31/2012:17:34:12.233
+\end{verbatim}
+The format of the UTC time is ``month/day/year:hour:minute:second.milisecond''. When the UTC time is set,
+output receiver data files are time stamped with the UTC reference time. Furthermore, the UTC start time
+is essential to align UTC stamped observed data correctly when solving the inverse problem by \emph{sw4opt}.
+
+
+%\chapter{Sources, time-functions and grid sizes}
+%\chapter{The material model}
+%\chapter{Topography} \label{sec:topography}
+%\chapter{Mesh refinement} \label{sec:mesh-ref}
+%\chapter{Attenuation}\label{sec:attenuation}
+%\chapter{Output options}
+%\chapter{Examples} \label{sec:examples}
+%\chapter{Keywords in the input file}
+%\chapter{File formats}
+%\chapter{Installing \emph{WPP}}\label{cha:installing-wpp}
+%\chapter{Testing the \emph{WPP} installation}
+
+\chapter{Keywords in the input file}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The syntax of the input file is
+\begin{verbatim}
+command1 parameter1=value1 parameter2=value2 ... parameterN=valueN
+# comments are disregarded
+command2 parameter1=value1 parameter2=value2 ... parameterN=valueN
+...
+\end{verbatim}
+Each command starts at the beginning of the line and ends at the end of the same line. Blank and
+comment lines are disregarded. A comment is a line starting with a \# character. The order of the
+parameters within each command is arbitrary. The material commands (block, ifile, pfile, and efile)
+are applied in the order they appear, but the ordering of all other commands is
+inconsequential. Also note that the entire input file is read before the simulation starts.
+
+Parameter values are either integers (-2,0,5,...), floating point numbers (20.5, -0.05, 3.4e4), or strings
+(wpp, earthquake, my-favorite-simulation). Note that there must be no spaces around the = signs and
+strings are given without quotation marks and must not contain spaces. Depending on the specific
+command, some parameter values are required to fall within specified ranges.
+
+A breif description of all commands is given in the following sections. The commands marked as
+[required] must be present in all S4W input files, while those marked as [optional] are just
+that. Other commands, such as those specifying the material model can be given by (a combination of)
+different commands (block, pfile, efile, or ifile). Unless \emph{S4W} is run in one of its test
+modes, the material must be specifed by at least one of these commands and at least one source must
+be specified.
+
+\section{Basic commands}
+
+\section{Commands for source inversion}
+
+\subsection{observation [required]}
+\index{command!observation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+observation+ command is used to read an observed time history at a fixed
+location in space. 
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+observation x=... y=... z=... lat=... lon=... depth=... file=... shift=... utc=... windowL=... windowR=... exclude=... filter=... sacfile1=... sacfile2=... sacfile3=... 
+\\
+{\bf Required parameters:}\\
+\rm Location of the observation in Cartesian or geographical coordinates, and data file name(s).
+The input data must be given, either as one usgs formated data file or as three SAC formated data files.
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf observation command parameters (part 1)}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+x & x position of the observation & float & m & none \\ \hline
+y & y position of the observation & float & m & none \\ \hline
+z & z position of the observation & float & m & none \\ \hline
+\hline
+lat & latitude geographical coordinate of the observation & float & degrees & none \\ \hline
+lon & longitude geographical coordinate of the observation & float & degrees & none \\ \hline
+depth & depth of the observation (below topography) & float & m & none \\ \hline
+\hline
+file & file name, usgs formated data  & string & none & none \\ \hline
+\hline
+sacfile1 & file name, SAC formated data & string & none & none \\ \hline
+sacfile2 & file name, SAC formated data & string & none & none \\ \hline
+sacfile3 & file name, SAC formated data & string & none & none \\ \hline
+\end{tabular}
+\end{center}
+\index{observation parameters!location - x, y, z, lat, lon, depth, file, sacfile1, sacfile2, sacfile3 } 
+
+
+{\bf Optional parameters:}\\
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf observation command parameters (part 2)}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+shift & additonal data offset & float & s  & 0 \\ \hline
+utc & Reference UTC time coordinate for station & string & none & read from file \\ \hline
+windowL & Left limit of window in misfit & float & s & $-\infty$  \\ \hline
+windowR & Right limit of window in misfit & float & s & $\infty$  \\ \hline
+exclude & Components to exclude from misfit & string & none & none  \\ \hline
+filter & filter data, when a filter is given & string & none & yes \\ \hline
+\end{tabular}
+\end{center}
+The value of the \verb+exclude+ option is a string combining components 'x','y','z' or 'n','e','u'.
+
+\subsection{scalefactors}
+\index{command!scalefactors}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+scalefactors+ command is used to define scale factors for improved conditioning of the
+minimization problem.
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+scalefactors x0=... y0=... z0=... Mxx=... Mxy=... Mxz=... Myy=... Myz=... Mzz=... t0=... freq=... 
+\\
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf scalefactors command parameters }\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+x0 & scale of x position of source & float & m & 1 \\ \hline
+y0 & scale of y position of source & float & m & 1 \\ \hline
+z0 & scale of z position of source & float & m & 1 \\ \hline
+Mxx & scale of xx moment tensor component & float & N m  & 1 \\ \hline
+Mxy & scale of xy moment tensor component & float & N m  & 1 \\ \hline
+Mxz & scale of xz moment tensor component & float & N m  & 1 \\ \hline
+Myy & scale of yy moment tensor component & float & N m  & 1 \\ \hline
+Myz & scale of yz moment tensor component & float & N m  & 1 \\ \hline
+Mzz & scale of zz moment tensor component & float & N m  & 1 \\ \hline
+t0 & scale of source time function shift & float & s & 1 \\ \hline
+freq & scale of source time function frequency & float & s$^{-1}$ & 1 \\ \hline
+\end{tabular}
+\end{center}
+
+
+\subsection{cg [required]}
+\index{command!cg}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+cg+ command defines parameters governing the conjugate gradient method
+to solve the minimization problem.
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+cg maxit=... maxrestart=... tolerance=... initialguess=... write\_initial\_ts=... scalefactors=... linesearch=... steptype=... cgtype=... solvefor=...
+\\
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf cg command parameters }\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+maxit & maximum number of cg-iterations between restarts & int & none & 11 \\ \hline
+maxrestart & maximum number of cg-restarts & int & none & 0 \\ \hline
+tolerance & termination criterion on the scaled gradient & float & none & $10^{-6}$ \\ \hline
+initialguess & method for determining the initial guess & string & none & usesource \\ \hline
+write\_initial\_ts & output initial guess seismograms & boolean & none & 0 \\ \hline
+scalefactors & method for determining scale factors & string & none & useinput \\ \hline
+linesearch & switch on or off line search in cg minimization & string & none & on \\ \hline
+steptype & method for computing initial step length for linesearch & string & none & misfit \\ \hline
+cgtype & select variant of non-linear cg & string & none & fletcher-reeves \\ \hline
+solvefor & solve for a subset of the 11 source parameters & string & none & posMt0freq \\ \hline
+\end{tabular}
+\end{center}
+
+Possible values for some of the string valued options in the {\tt cg} command.
+\begin{center}
+\begin{tabular}{|l|p{8cm}|} \hline
+\multicolumn{2}{|c|}{\bf cg command parameters }\\ \hline
+\bf{Option} & \bf{Possible values}  \\ \hline \hline
+initialguess & usesource, estimate, estimatePos, estimateT0Pos, estimateM \\ \hline
+scalefactors & useinput, estimate  \\ \hline
+steptype & misfit, hessian  \\ \hline
+cgtype & fletcher-reeves, picola-ribiere \\ \hline
+solvefor & posMt0freq, posMt0, posM \\ \hline
+\end{tabular}
+\end{center}
+
+
+\end{document}

@@ -1,0 +1,10 @@
+# add separate search paths for cencalvm and proj4
+etree = no
+proj = yes
+SW4ROOT = /opt/local/lib/proj47
+SW4BASE = /Users/petersson1/src/sw4-cig
+FC = mpif77
+CXX = mpicxx
+EXTRA_FORT_FLAGS = 
+EXTRA_CXX_FLAGS = -std=c++11 
+EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc48 -lgfortran

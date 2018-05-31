@@ -1,0 +1,33 @@
+#!/bin/csh
+
+set X = 180e3
+set Y = 120e3
+set H = 25
+
+set REGION = 0/$X/0/$Y
+set SCALE = 9.0i/6.0i
+
+# You may have to add the GMT package, uncomment this next line
+# use gmt
+gmtset MEASURE_UNIT inch
+
+set FILE = hw.cycle=12016.z=0.mag.sw4img
+
+# This is where the magic happens - reading the binary file and writing a NetCDF file
+# Check the man page for -Z options
+#	TL reads from the top left and loopover rows then columns - this needs to be changed to get orientation correct 
+# 	f is for floating point (4-byte) numbers in the image data
+#	s93 is to skip over the 93 byte header in sw4img files
+#	w is for byte swapping 
+xyz2grd $FILE -R$REGION -I$H -ZTLfs93w -Gvel_mps.grd
+
+# This step simply scales the image from meters/second (mps) to cm/second (cmps)
+grdmath 100 vel_mps.grd MUL = vel_cmps.grd
+
+# Start building the postscript ... plot image, use pgv.cpt color palette table
+grdimage vel_cmps.grd -R$REGION -JX$SCALE -Cpgv.cpt -Ba20e3f5000:"X, m":/a20e3f5000:"Y, m":WSen -X1.5 -Y2.0 -K >! plot.ps 
+# Plot color scale (evenly spaced, -L)
+psscale -D4.5i/-1i/6i/0.1ih -Cpgv.cpt -B:"Velocity Magnitude, cm/s": -L -O >> plot.ps
+
+/bin/mv plot.ps vel_cmps.ps
+
