@@ -34,6 +34,7 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+#include "foralls.h"
 
 void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
@@ -131,12 +132,20 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    {
       kstart = 7;
    // SBP Boundary closure terms
+#define NO_COLLAPSE 1
+#if defined(NO_COLLAPSE)
+      Range<16> I(ifirst+2,ilast-1);
+      Range<4>J(jfirst+2,jlast-1);
+      Range<4>K(1,6+1);
+      forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+#else
       RAJA::RangeSegment k_range(1,6+1);
       RAJA::RangeSegment j_range(jfirst+2,jlast-1);
       RAJA::RangeSegment i_range(ifirst+2,ilast-1);
       RAJA::kernel<LOCAL_POL>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int k,int j,int i) {
+#endif
 			    //float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
 			    //float_sw4 r1, r2, r3;
 // #pragma omp for
@@ -633,12 +642,20 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 			  }); // End of curvilinear4sg_ci LOOP 1
    }
+
+#if defined(NO_COLLAPSE)
+	RangeGS<16,16> I(ifirst+2,ilast-1);
+	RangeGS<4,16>J(jfirst+2,jlast-1);
+	RangeGS<4,4>K(kstart,klast-1);
+      forall3GS(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+#else
    RAJA::RangeSegment k_range(kstart,klast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
    RAJA::RangeSegment i_range(ifirst+2,ilast-1);
    RAJA::kernel<LOCAL_POL>(
 			RAJA::make_tuple(k_range, j_range,i_range),
 			[=]RAJA_DEVICE (int k,int j,int i) {
+#endif
 // #pragma omp for
 //    for( int k= kstart; k <= klast-2 ; k++ )
 //       for( int j=jfirst+2; j <= jlast-2 ; j++ )

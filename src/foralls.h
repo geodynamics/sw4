@@ -26,6 +26,17 @@ public:
   int tpb;
 };
 
+template<int N,int M>
+class RangeGS{
+public:
+ RangeGS(int istart,int iend) : start(istart),end(iend),tpb(N),blocks(M)
+{};
+  int start;
+  int end;
+  int blocks;
+  int tpb;
+};
+
 
 template<typename Func>
 __global__ void forall3kernel(const int start0,const int N0,const int start1,const int N1, const int start2, const int N2, Func f){
