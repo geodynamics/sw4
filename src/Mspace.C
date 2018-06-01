@@ -287,6 +287,12 @@ void prefetch_to_device(const float_sw4 *ptr){
     } //else std::cerr<<"Zero size prefetch \n";
   } else std::cerr<<"NO prefetch due to unknown address\n";
 }
+size_t getsize(void *ptr){
+  if (ptr==NULL) return -1;
+  pattr_t *ss = patpush(ptr,NULL);
+  if (ss!=NULL) return ss->size;
+  else return -1;
+}
 #endif
 
 #if defined(ENABLE_CUDA)
@@ -298,3 +304,49 @@ void CheckError(cudaError_t const err, const char* file, char const* const fun, 
     }
 }
 #endif
+
+// AUTOPEEL CODE
+
+std::string line(int n,int C){ 
+  std::ostringstream buf;
+  buf<<"int arg"<<C<<" = "<<n<<";\n";
+  return buf.str();
+}
+std::string line(int *n,int C){ 
+  std::ostringstream buf;
+  buf<<"int arg"<<C<<"[6]={";
+  for(int i=0;i<5;i++)buf<<n[i]<<",";
+  buf<<n[5]<<"};\n";
+  return buf.str();
+}
+std::string line(double n,int C){ 
+  std::ostringstream buf;
+  buf<<"double arg"<<C<<" = "<<n<<";\n";
+  return buf.str();
+}
+std::string line(double *n,int C){ 
+  std::ostringstream buf;
+  buf<<"double *arg"<<C<<";\n cudaMallocManaged((void*)&arg"<<C<<","<<getsize((void**)n)<<");\n";
+  return buf.str();
+}
+std::string line(char n,int C){ 
+  std::ostringstream buf;
+  buf<<"char arg"<<C<<" = \""<<n<<"\";\n";
+  return buf.str();
+}
+
+
+
+Apc::Apc(char *s){
+  counter=0;
+  ofile.open(s,std::ios::out);
+  ofile<<"int main(int argc, char *argv[]){\n";
+}
+Apc::~Apc(){
+  ofile<<"FUNCTION(";
+  for(int i=0;i<counter;i++)ofile<<"arg"<<i<<",";
+  ofile<<"arg"<<counter<<");\n";
+  ofile<<"}\n";
+  ofile.close();
+}
+// END AUTOPEEL CODE

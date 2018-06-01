@@ -4,6 +4,8 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 #if defined(ENABLE_CUDA)
 #include "cuda_runtime.h"
@@ -64,6 +66,8 @@ void ptr_push(void *ptr, Space type, size_t size,const char *file, int line);
 #define PTR_PUSH(ptr) 
 
 #define PREFETCH(ptr)
+
+size_t getsize(const void *ptr);
 #endif
 
 // THIS WILL HAVE TO BE MODIFIED FOR NON_GPU MACHINES
@@ -109,4 +113,39 @@ public:
   }
 };
 //size_t Managed::mem_total=0;
+
+// AUTOPEEL CODE
+class Apc{
+public:
+  std::ofstream ofile;
+  int counter;
+  Apc(char *s);
+  ~Apc();
+};
+
+template <typename T,typename N>
+  std::string line(T,N) = delete;
+
+std::string line(int n,int C);
+std::string line(int *n,int C);
+std::string line(double n, int C);
+std::string line(double *n,int C);
+std::string line(char n,int C);
+
+template<typename T>
+void autopeel(Apc &apc,T only){
+  apc.ofile<<line(only,apc.counter);
+  return;
+}
+
+template<typename T,typename... Args>
+void autopeel(Apc &apc, T first, Args&&... args){
+  apc.ofile<<line(first,apc.counter);
+  apc.counter++;
+  autopeel(apc,args...);
+}
+
+// END AUTOPEEL CODE
+
+
 #endif

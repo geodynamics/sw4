@@ -4528,6 +4528,17 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
           float_sw4* lambdaa_ptr = mLambdaVE[g][a].c_ptr();
 	  if( m_croutines )
 	  {
+#ifdef STANDALONE_SETUP
+	    static bool once=false;
+	    if ((!once)&&(getRank()==0)){
+	      Apc apc("curvkernel.CPROTO");
+	      autopeel(apc,ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
+			       m_sg_str_x[g], m_sg_str_y[g], op );
+	    once=true;
+	    }
+#endif
 	     curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
 			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,

@@ -14,6 +14,26 @@ void forall(int start, int end, LoopBody &&body){
 }
 
 
+template<typename Func>
+__global__ void forallkernelB(int start,int N,Func f){
+  int tid=start+threadIdx.x+blockIdx.x*blockDim.x;
+  for(int i=tid;i<N;i+=2*blockDim.x * gridDim.x){
+  f(i);
+  f(i+blockDim.x * gridDim.x);
+  }
+}
+template<typename LoopBody>
+void forallB(int start, int end, LoopBody &&body){
+  int tpb=1024;
+  int blocks=52;
+  blocks=((end-start)%tpb==0)?blocks:blocks+1;
+  printf("Launching the kernel\n");
+  forallkernelB<<<10,1>>>(start,end-start,body);
+  cudaDeviceSynchronize();
+}
+
+
+
 
 template<int N>
 class Range{
