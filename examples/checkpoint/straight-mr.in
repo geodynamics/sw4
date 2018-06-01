@@ -1,0 +1,17 @@
+fileio verbose=1 path=straight-mr.output
+
+grid nx=33 x=0.8 y=1.2 z=1.0 
+refinement zmax=0.2
+# refinement zmax=0.5
+
+# time t=0.3
+time steps=21
+twilight omega=3.14159 errorlog=1
+
+# checkpoint / restart
+checkpoint cycleInterval=20 file=checkp-mr restartpath=checkp-mr.restart
+#checkpoint cycleInterval=20 file=checkp-mr restartpath=checkp-mr.restart restartfile=checkp-mr.cycle=20.sw4checkpoint
+
+image x=0.8 cycle=20 file=test mode=ux
+image x=0.8 cycle=20 file=test mode=uy
+image x=0.8 cycle=20 file=test mode=uz

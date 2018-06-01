@@ -459,7 +459,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   {
      enforceBCfreeAtt2( Um, mMu, mLambda, AlphaVEm, BCForcing );
   }
-
+  
   //    Um[0].save_to_disk("um-dbg0-bc.bin");
   //    Um[1].save_to_disk("um-dbg1-bc.bin");
     //    exit(0);
@@ -543,9 +543,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
 
 // save any images for cycle = 0 (initial data) ?
-  update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
+  update_images( beginCycle, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
+    mImage3DFiles[i3]->update_image( beginCycle, t, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
   FILE *lf=NULL;
 // open file for saving norm of error

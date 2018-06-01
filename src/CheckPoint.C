@@ -123,8 +123,8 @@ void CheckPoint::setup_sizes( )
 	 mWindow[g][1] = mEW->m_iEndInt[g];
 	 mWindow[g][2] = mEW->m_jStartInt[g];
 	 mWindow[g][3] = mEW->m_jEndInt[g];
-	 mWindow[g][4] = mEW->m_kStartInt[g];
-	 mWindow[g][5] = mEW->m_kEndInt[g];
+	 mWindow[g][4] = mEW->m_kStartInt[g]-1; // AP: need 1 ghost point at MR interface
+	 mWindow[g][5] = mEW->m_kEndInt[g]+1; // AP: need 1 ghost point at MR interface
 
 
 	 mGlobalDims[g][0] = 1;
@@ -327,35 +327,46 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       if( !mEW->usingParallelFS() || g == 0 )
 	 m_parallel_io[g]->writer_barrier();
       
+// AP: bad idea to mix index boundaries from the EW and CheckPoint objects
       size_t nptsloc = ((size_t)(mEW->m_iEndInt[g]-mEW->m_iStartInt[g]+1))*
  	               ((size_t)(mEW->m_jEndInt[g]-mEW->m_jStartInt[g]+1))*
-	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+1));
+	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+3));
+// AP We actually do need 1 ghost point in the vertical direction around MR interfaces
+// AP	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+1));
       
-      // Write without ghost points. Would probably work with ghost points too.
+      // allocate local buffer array
       float_sw4* doubleField = new float_sw4[3*nptsloc];
 
+// AP: why mix index boundaries from the EW and CheckPoint objects?
 	a_Um[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+// AP				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+				  mEW->m_jEndInt[g], mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 				  doubleField );
 	m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
 	offset += 3*npts*sizeof(float_sw4);
 
+// AP: why mix index boundaries from the EW and CheckPoint objects
 	a_U[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+// AP				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+                                 mEW->m_jEndInt[g], mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 				 doubleField );
 	m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
 	offset += 3*npts*sizeof(float_sw4);
 
 	for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
 	{
+// AP: why mix index boundaries from the EW and CheckPoint objects
 	   a_AlphaVEm[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-					      mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+// AP					      mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+                                              mEW->m_jEndInt[g], mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 					      doubleField );
 	   m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
 	   offset += 3*npts*sizeof(float_sw4);
 
+// AP: why mix index boundaries from the EW and CheckPoint objects
 	   a_AlphaVE[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-					     mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+//					     mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+                                             mEW->m_jEndInt[g], mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 					     doubleField );
 	   m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
 	   offset += 3*npts*sizeof(float_sw4);
@@ -433,24 +444,27 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
 	            ((size_t)(mGlobalDims[g][5]-mGlobalDims[g][4]+1));
       size_t nptsloc = ((size_t)(mEW->m_iEndInt[g]-mEW->m_iStartInt[g]+1))*
 	               ((size_t)(mEW->m_jEndInt[g]-mEW->m_jStartInt[g]+1))*
-  	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+1));
+         ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+3)); // need 1 ghost point in k-dir
+// AP  	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+1));
 
       if( !mEW->usingParallelFS() || g == 0 )
 	 m_parallel_io[g]->writer_barrier();      
 
-      // array without ghost points read into doubleField, 
+      // array with ghost points in k-ONLY read into doubleField, 
       float_sw4* doubleField = new float_sw4[3*nptsloc];
       {
 	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	 offset += 3*npts*sizeof(float_sw4);
 	 a_Um[g].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+// AP				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+				  mEW->m_jEndInt[g], mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 				  doubleField );
 
 	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	 offset += 3*npts*sizeof(float_sw4);
 	 a_U[g].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+// AP				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+                                 mEW->m_jEndInt[g], mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 				 doubleField );
 
 	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
@@ -459,14 +473,16 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
 	    offset += 3*npts*sizeof(float_sw4);
 	    a_AlphaVEm[g][m].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g],
 					      mEW->m_jStartInt[g], mEW->m_jEndInt[g],
-					      mEW->m_kStartInt[g], mEW->m_kEndInt[g], 
+// AP					      mEW->m_kStartInt[g], mEW->m_kEndInt[g], 
+					      mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1, 
 					      doubleField );
 
 	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	    offset += 3*npts*sizeof(float_sw4);
 	    a_AlphaVE[g][m].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g],
 					     mEW->m_jStartInt[g], mEW->m_jEndInt[g],
-					     mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+// AP					     mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+					     mEW->m_kStartInt[g]-1, mEW->m_kEndInt[g]+1,
 					     doubleField );
 	 }
       }
@@ -612,8 +628,9 @@ void CheckPoint::read_header( int& fid, float_sw4& a_time, int& a_cycle,
 		   << "upper j-index is " << globalSize[3]);
       CHECK_INPUT( globalSize[4] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
 		   "low k-index is "<< globalSize[4]);
-      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5], "CheckPoint::read_checkpoint: Error in global sizes, "
-		   << "upper k-index is " << globalSize[5]);
+//      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5], "CheckPoint::read_checkpoint: Error in global sizes, "
+      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5]-mGlobalDims[g][4]+1,
+                   "CheckPoint::read_checkpoint: Error in global sizes, " << "upper k-index is " << globalSize[5]);
    }
    hsize = (4+6*ng)*sizeof(int) + 2*sizeof(float_sw4);
 }
