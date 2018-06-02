@@ -118,7 +118,7 @@ private:
 TimeSeries();
 void write_usgs_format( string a_fileName);
 void write_sac_format( int npts, char *ofile, float *y, float btime, float dt, char *var,
-		       float cmpinc, float cmpaz);
+		       float cmpinc, float cmpaz, bool makeCopy=false);
 float_sw4 utc_distance( int utc1[7], int utc2[7] );
 void dayinc( int date[7] );
 int lastofmonth( int year, int month );

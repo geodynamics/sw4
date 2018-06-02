@@ -35,6 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <unistd.h>
 
 #include "TimeSeries.h"
 //#include "mpi.h"
@@ -701,18 +702,19 @@ void TimeSeries::writeFile( string suffix )
      {
 	if( m_xyzcomponent )
 	{
-	   write_sac_format(mLastTimeStep+1, 
-			const_cast<char*>(ux.str().c_str()), 
+     bool makeCopy = true;
+	   write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(ux.str().c_str()),
 			mRecordedFloats[0], (float) m_shift, (float) m_dt,
-			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
-	   write_sac_format(mLastTimeStep+1, 
-			const_cast<char*>(uy.str().c_str()), 
+			const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy);
+	   write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uy.str().c_str()),
 			mRecordedFloats[1], (float) m_shift, (float) m_dt,
-			const_cast<char*>(yfield.c_str()), 90.0, azimy); 
-	   write_sac_format(mLastTimeStep+1, 
-			const_cast<char*>(uz.str().c_str()), 
+			const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy);
+	   write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uz.str().c_str()),
 			mRecordedFloats[2], (float) m_shift, (float) m_dt,
-			const_cast<char*>(zfield.c_str()), updownang, 0.0);
+			const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy);
 	}
 	else
 	{
@@ -840,7 +842,7 @@ void TimeSeries::writeFile( string suffix )
 //-----------------------------------------------------------------------
 void TimeSeries::
 write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *var,
-		 float cmpinc, float cmpaz)
+		 float cmpinc, float cmpaz, bool makeCopy /*=false*/)
 {
   /*
     PURPOSE: SAVE RECEIVER DATA ON A SAC FILE
@@ -928,6 +930,14 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   // set the station name
   setkhv( nm[25], const_cast<char*>(m_staName.c_str()), nerr);
 
+  if( (makeCopy) && (access( ofile, F_OK ) != -1) ) {
+    // if the file exists, move it to a .bak before writing
+    stringstream bak;
+    bak << ofile << ".bak";
+    int ret = rename(ofile, bak.str().c_str());
+    if( ret == -1 )
+      cout << "ERROR: renaming USGS file to " << bak.str() <<  endl;
+  }
 
   if (!mBinaryMode)
     awsac(npts, ofile, y);
@@ -1176,9 +1186,9 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	    fclose(fd);
 	    // Use offset in time column.
       // Only allocate arrays if we aren't doing a restart
-	    if( nlines > 2 && !mIsRestart)
+	    if(!mIsRestart)
         allocateRecordingArrays( nlines, m_t0+tstart, dt );
-	    else
+	    if( nlines <= 1 )
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
 	       cout << "    File " << filePrefix.str() << " not read." << endl;
@@ -2403,7 +2413,8 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    cout << " found on sac file" << endl;
   	    cout << "  station not read " << endl;
 	 }
-            cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
+        if( m_ew->getVerbosity() >= 3 )
+          cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       }
       else
       {
