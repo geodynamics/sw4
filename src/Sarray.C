@@ -802,7 +802,7 @@ void Sarray::copy_kplane( Sarray& u, int k )
       RAJA::RangeSegment i_range(m_ib,m_ie+1);
       
       // RAJA::RangeSegment j_range(0,m_je+1-m_jb);
-      // RAJA::RangeSegment i_range(0,m_ie+1-m_ib); // This is slower and uses 38 registers winstead of 37
+      // RAJA::RangeSegment i_range(0,m_ie+1-m_ib); // This is slower and uses 38 registers instead of 37
       RAJA::kernel<COPY_KPLANE_EXEC_POL>(
 			   RAJA::make_tuple(c_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int c,int j,int i) {

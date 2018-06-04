@@ -356,6 +356,7 @@ void communicate_array_2dfinest( Sarray& u );
 void communicate_array_2d( Sarray& u, int g, int k );
 void communicate_array_2d_asym( Sarray& u, int g, int k );
 void communicate_array_2d_ext( Sarray& u );
+void communicate_array_2d_ext_async( Sarray& u );
 
 void set_materials();
 void set_anisotropic_materials();
@@ -1573,6 +1574,8 @@ vector<MPI_Datatype> m_send_type_2dy1p;
 
   vector<std::tuple<int,int,int>> send_type_2dx;
   vector<std::tuple<int,int,int>> send_type_2dy;
+
+  vector<std::tuple<int,int,int>> send_type_2dfinest_ext;
   
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type1;
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type3;
@@ -1581,6 +1584,8 @@ vector<MPI_Datatype> m_send_type_2dy1p;
 
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dx;
   vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dy;
+
+  vector<std::tuple<float_sw4*,float_sw4*>> bufs_type_2dfinest_ext;
 
   Space mpi_buffer_space;
   

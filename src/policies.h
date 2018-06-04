@@ -143,15 +143,21 @@ using DPDMT_WIND_LOOP_POL=  SARRAY_LOOP_POL2;
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>>, 
   // RAJA::statement::For<2, RAJA::cuda_threadblock_exec<16>>> >;
-using COPY_KPLANE_EXEC_POL  = 
+// using COPY_KPLANE_EXEC_POL  =
+//   RAJA::KernelPolicy<
+//   RAJA::statement::CudaKernel<
+//     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>,
+// 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+// 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+// 								   RAJA::statement::Lambda<0> >>>>>;
+
+using COPY_KPLANE_EXEC_POL =
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
-    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
-			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
-					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+    RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			 RAJA::statement::For<1, RAJA::cuda_block_exec, 
+					      RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								   RAJA::statement::Lambda<0> >>>>>;
-
-
 
 using ENERGY4CI_EXEC_POL =  RHS4_EXEC_POL;
   // RAJA::KernelPolicy< 

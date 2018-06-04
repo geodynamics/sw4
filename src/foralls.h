@@ -5,10 +5,10 @@ __global__ void forallkernel(int start,int N,Func f){
 }
 template<typename LoopBody>
 void forall(int start, int end, LoopBody &&body){
-  int tpb=1024;
+  int tpb=32;
   int blocks=(end-start)/tpb;
   blocks=((end-start)%tpb==0)?blocks:blocks+1;
-  printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
+  //printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
   forallkernel<<<blocks,tpb>>>(start,end,body);
   cudaDeviceSynchronize();
 }

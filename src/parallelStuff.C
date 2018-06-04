@@ -35,7 +35,7 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
-
+#include "foralls.h"
 //-----------------------------------------------------------------------
 bool EW::proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] )
 {
@@ -156,6 +156,12 @@ void EW::setup2D_MPICommunications()
    MPI_Type_commit( &m_send_type_2dfinest_ext[0] );
    MPI_Type_commit( &m_send_type_2dfinest_ext[1] );
 
+   send_type_2dfinest_ext.resize(2);
+   bufs_type_2dfinest_ext.resize(2);
+   
+   make_type_2d(send_type_2dfinest_ext,bufs_type_2dfinest_ext,nj,extpadding,ni,0);
+   make_type_2d(send_type_2dfinest_ext,bufs_type_2dfinest_ext, 1,  extpadding*ni, ni*nj,1);
+
 // For mesh refinement: 2D planes with three values per grid point (nc=3)
 // Coarser grids
    m_send_type_2dx.resize(mNumberOfCartesianGrids);
@@ -165,7 +171,7 @@ void EW::setup2D_MPICommunications()
    m_send_type_2dx3p.resize(mNumberOfCartesianGrids);//padding=3
    m_send_type_2dy3p.resize(mNumberOfCartesianGrids);
 
-
+   
    // Data for ASYNC_SEND_RECV
    send_type_2dx.resize(mNumberOfCartesianGrids);
    send_type_2dy.resize(mNumberOfCartesianGrids);
@@ -538,6 +544,8 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 void EW::communicate_array_2d_ext( Sarray& u )
 {
   SW4_MARK_FUNCTION;
+  communicate_array_2d_ext_async(u);
+  return;
    REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for one-component arrays" );
    int g = mNumberOfGrids-1;
    int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
@@ -564,6 +572,42 @@ void EW::communicate_array_2d_ext( Sarray& u )
 		 m_cartesian_communicator, &status );
    MPI_Sendrecv( &u(1,ib,jb+extpadding,k), 1, m_send_type_2dfinest_ext[1], m_neighbor[2], ytag2,
 		 &u(1,ib,je-(extpadding-1),k), 1, m_send_type_2dfinest_ext[1], m_neighbor[3], ytag2,
+		 m_cartesian_communicator, &status );
+}
+//-----------------------------------------------------------------------
+void EW::communicate_array_2d_ext_async( Sarray& u )
+{
+  SW4_MARK_FUNCTION;
+   REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for one-component arrays" );
+   int g = mNumberOfGrids-1;
+   int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
+   int je = m_jEnd[g]+m_ext_ghost_points, jb=m_jStart[g]-m_ext_ghost_points;
+
+   MPI_Status status;
+   int xtag1 = 345;
+   int xtag2 = 346;
+   int ytag1 = 347;
+   int ytag2 = 348;
+   int k=1;
+   int extpadding = m_ppadding+m_ext_ghost_points;
+      // X-direction communication
+   AMPI_Sendrecv( &u(1,ie-(2*extpadding-1),jb,k), 1, send_type_2dfinest_ext[0], m_neighbor[1], xtag1,
+		 &u(1,ib,jb,k), 1, send_type_2dfinest_ext[0], m_neighbor[0], xtag1,
+		 bufs_type_2dfinest_ext[0],
+		 m_cartesian_communicator, &status );
+   AMPI_Sendrecv( &u(1,ib+extpadding,jb,k), 1, send_type_2dfinest_ext[0], m_neighbor[0], xtag2,
+		 &u(1,ie-(extpadding-1),jb,k), 1, send_type_2dfinest_ext[0], m_neighbor[1], xtag2,
+		  bufs_type_2dfinest_ext[0],
+		 m_cartesian_communicator, &status );
+
+      // Y-direction communication
+   AMPI_Sendrecv( &u(1,ib,je-(2*extpadding-1),k), 1, send_type_2dfinest_ext[1], m_neighbor[3], ytag1,
+		 &u(1,ib,jb,k), 1, send_type_2dfinest_ext[1], m_neighbor[2], ytag1,
+		  bufs_type_2dfinest_ext[1],
+		 m_cartesian_communicator, &status );
+   AMPI_Sendrecv( &u(1,ib,jb+extpadding,k), 1, send_type_2dfinest_ext[1], m_neighbor[2], ytag2,
+		 &u(1,ib,je-(extpadding-1),k), 1, send_type_2dfinest_ext[1], m_neighbor[3], ytag2,
+		  bufs_type_2dfinest_ext[1],
 		 m_cartesian_communicator, &status );
 }
 
@@ -913,8 +957,20 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int stride = std::get<2>(mtype);
   //std::cout<<"getbuffer_device...";
   //PREFETCH(buf);
-  RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
-    for (int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
+  //forall(0,count,[=] RAJA_DEVICE(int i){
+  //RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
+  using BUFFER_POL= 
+    RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+  RAJA::statement::For<0, RAJA::cuda_block_exec, 
+  RAJA::statement::For<1, RAJA::cuda_thread_exec,
+		       RAJA::statement::Lambda<0> >>>>;
+  RAJA::RangeSegment k_range(0,bl);
+  RAJA::RangeSegment i_range(0,count);
+  RAJA::kernel<BUFFER_POL>(
+			 RAJA::make_tuple(k_range, i_range),
+			 [=]RAJA_DEVICE (int k,int i) {
+			   buf[k+i*bl]=data[i*stride+k];
   });
 
   SYNC_STREAM;
@@ -927,8 +983,19 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int stride = std::get<2>(mtype);
   //std::cout<<"putbuffer_device...";
   //PREFETCHFORCED(buf);
-  RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
-      for (int k=0;k<bl;k++) data[i*stride+k]=buf[k+i*bl];
+  using BUFFER_POL= 
+    RAJA::KernelPolicy< 
+    RAJA::statement::CudaKernel<
+      RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			   RAJA::statement::For<1, RAJA::cuda_thread_exec,
+						RAJA::statement::Lambda<0> >>>>;
+  RAJA::RangeSegment k_range(0,bl);
+  RAJA::RangeSegment i_range(0,count);
+  RAJA::kernel<BUFFER_POL>(
+			   RAJA::make_tuple(k_range, i_range),
+			   [=]RAJA_DEVICE (int k,int i) {
+			   // RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
+			     data[i*stride+k]=buf[k+i*bl];
     });
 
   SYNC_STREAM;
