@@ -122,11 +122,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( !mQuiet && mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
 
-// Reset image time to zero, in case we are rerunning the solver
-#pragma omp parallel for
-  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
-     mImageFiles[fIndex]->initializeTime();
-   
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
 
@@ -276,6 +271,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      if (proc_zero())
         printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle, t);
 // end tmp     
+
      // Make sure the TimeSeries output has the correct time shift,
      // and know's it's a restart
      double timeSeriesRestartBegin = MPI_Wtime();
@@ -290,8 +286,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
         cout << "Wallclock time to read " << a_TimeSeries.size() << " sets of station files: " << timeSeriesRestart << " seconds " << endl;
      }
 
-      // Restart data have undefined ghost point values,
-      // no need to enforce BC here, it is done further down in this function.
+// Reset image time to the time corresponding to restart
+#pragma omp parallel for
+  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+     mImageFiles[fIndex]->initializeTime(t);
+   
+
+
+     // Restart data is defined at ghost point outside physical boundaries, still
+     // need to communicate solution arrays to define it a parallel overlap points
      beginCycle++; // needs to be one step ahead of 't', see comment 5 lines below
   }
   else
