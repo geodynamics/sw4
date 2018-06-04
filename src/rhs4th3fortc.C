@@ -994,7 +994,7 @@ using XRHS_POL2 =
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
      SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
-     //#define NO_COLLAPSE 1
+#define NO_COLLAPSE 1
 #if defined(NO_COLLAPSE)
      Range<16> I(ifirst+2,ilast-1);
      Range<4>J(jfirst+2,jlast-1);

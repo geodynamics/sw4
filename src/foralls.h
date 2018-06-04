@@ -8,8 +8,18 @@ void forall(int start, int end, LoopBody &&body){
   int tpb=1024;
   int blocks=(end-start)/tpb;
   blocks=((end-start)%tpb==0)?blocks:blocks+1;
-  printf("Launching the kernel\n");
-  forallkernel<<<10,1>>>(start,end-start,body);
+  printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
+  forallkernel<<<blocks,tpb>>>(start,end,body);
+  cudaDeviceSynchronize();
+}
+
+template<int N, typename LoopBody>
+void forall(int start, int end, LoopBody &&body){
+  int tpb=1024;
+  int blocks=(end-start)/tpb;
+  blocks=((end-start)%tpb==0)?blocks:blocks+1;
+  printf("Launching the kernel blocks= %d tpb= %d on line %d\n",blocks,tpb,N);
+  forallkernel<<<blocks,tpb>>>(start,end,body);
   cudaDeviceSynchronize();
 }
 
@@ -17,18 +27,24 @@ void forall(int start, int end, LoopBody &&body){
 template<typename Func>
 __global__ void forallkernelB(int start,int N,Func f){
   int tid=start+threadIdx.x+blockIdx.x*blockDim.x;
-  for(int i=tid;i<N;i+=2*blockDim.x * gridDim.x){
-  f(i);
-  f(i+blockDim.x * gridDim.x);
+  const int B=8;
+  for(int i=tid;i<N;i+=B*blockDim.x * gridDim.x){
+    f(i);
+    //int ii=i+blockDim.x * gridDim.x;
+#pragma unroll(B-1)
+    for (int ii=1;ii<B;ii++){
+      int iii=i+ii*blockDim.x*gridDim.x;
+      if (iii<N) f(iii);
+    }
   }
 }
 template<typename LoopBody>
 void forallB(int start, int end, LoopBody &&body){
   int tpb=1024;
   int blocks=52;
-  blocks=((end-start)%tpb==0)?blocks:blocks+1;
+  //blocks=((end-start)%tpb==0)?blocks:blocks+1;
   printf("Launching the kernel\n");
-  forallkernelB<<<10,1>>>(start,end-start,body);
+  forallkernelB<<<blocks,tpb>>>(start,end,body);
   cudaDeviceSynchronize();
 }
 
