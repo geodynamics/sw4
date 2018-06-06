@@ -617,8 +617,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // end test
 
 // BEGIN TIME STEPPING LOOP
-       //cudaProfilerStart();
-       SW4_MARK_BEGIN("TIME_STEPPING");
+  //PROFILER_START;
+  SW4_MARK_BEGIN("TIME_STEPPING");
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
@@ -1448,6 +1448,7 @@ SW4_MARK_FUNCTION;
       int kf = m_global_nz[g+1];
       int ibc=m_iStart[g], iec=m_iEnd[g], jbc=m_jStart[g], jec=m_jEnd[g];
       int kc = 1;
+      SW4_MARK_BEGIN("enforceIC::Allocs");
   // fine side
       Unextf.define(3,ibf,ief,jbf,jef,kf,kf); // only needs k=kf (on the interface)
       Bf.define(3,ibf,ief,jbf,jef,kf,kf);
@@ -1462,7 +1463,7 @@ SW4_MARK_FUNCTION;
       Uf_tt.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
       Uc_tt.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
 // reuse Utt to hold the acceleration of the memory variables
-      
+      SW4_MARK_END("enforceIC::Allocs");
     // Set to zero the ghost point values that are unknowns when solving the interface condition. Assume that Dirichlet data
     // is already set on ghost points on the (supergrid) sides, which are not treated as unknown variables.
       dirichlet_hom_ic( a_Up[g+1], g+1, kf+1, true ); // inside=true

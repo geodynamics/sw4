@@ -12,6 +12,8 @@
 void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line);
 void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) CheckError(err,__FILE__, __FUNCTION__, __LINE__)
+#define PROFILER_START SW4_CheckDeviceError(cudaProfilerStart())
+#define PROFILER_STOP SW4_CheckDeviceError(cudaProfilerStop())
 #else
 #define SW4_CheckDeviceError(err) 
 #endif

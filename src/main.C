@@ -44,6 +44,7 @@
 #include "version.h"
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
+#include "nvToolsExtCuda.h"
 #endif
 
 using namespace std;
@@ -61,6 +62,7 @@ void usage(string thereason)
 int
 main(int argc, char **argv)
 {
+  //PROFILER_STOP;
 //cudaProfilerStop();
   int myRank = 0, nProcs = 0;
   string fileName;
@@ -139,8 +141,10 @@ main(int argc, char **argv)
   vector<TimeSeries*> GlobalTimeSeries;
 
 // make a new simulation object by reading the input file 'fileName'
+  //nvtxRangePushA("outer");
   EW simulation(fileName, GlobalSources, GlobalTimeSeries);
-
+  //nvtxRangePop();
+  //PROFILER_STOP;
   if (!simulation.wasParsingSuccessful())
   {
     if (myRank == 0)
@@ -152,7 +156,9 @@ main(int argc, char **argv)
   else
   {
 // get the simulation object ready for time-stepping
+    //nvtxRangePushA("setup");
     simulation.setupRun( GlobalSources );
+    //nvtxRangePop();
 
     if (!simulation.isInitialized())
     { 

@@ -339,9 +339,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			       m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			       gf, gc, nkf, mDt, hf, hc, cof, relax,
 			       m_sbop, m_ghcof);
-
+      SW4_MARK_BEGIN("CONSINTP::COMM_ARRAY2D");
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
+      SW4_MARK_END("CONSINTP::COMM_ARRAY2D");
       float_sw4 jacerrtmp = 0;
       for (int q=0; q<6; q++)
          jacerrtmp += rmax[q];

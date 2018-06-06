@@ -1018,9 +1018,11 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
 
    if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
    {
+     SW4_MARK_BEGIN("comm_array_2d_async::ALLOC");
       Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+      SW4_MARK_END("comm_array_2d_async::ALLOC");
       u2d.copy_kplane(u,k);
-      SW4_MARK_BEGIN("comm_array_2d_async::MPI");
+      SW4_MARK_BEGIN("comm_array_2d_async::MPI-1");
       // X-direction communication
       AMPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
 		    &u2d(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
@@ -1039,12 +1041,13 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
 		    &u2d(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
 		     bufs_type_2dy[g],
 		    m_cartesian_communicator, &status );
-      SW4_MARK_END("comm_array_2d_async::MPI");
+      SW4_MARK_END("comm_array_2d_async::MPI-1");
       u.copy_kplane(u2d,k);
    }
    else
    {
       // X-direction communication
+     SW4_MARK_BEGIN("comm_array_2d_async::MPI-2");
    AMPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
 		 &u(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
 		  bufs_type_2dx[g],
@@ -1063,5 +1066,6 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
 		 &u(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
 		  bufs_type_2dy[g],
 		 m_cartesian_communicator, &status );
+   SW4_MARK_END("comm_array_2d_async::MPI-2");
    }
 }
