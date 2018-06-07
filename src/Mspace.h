@@ -39,11 +39,19 @@ extern struct global_variable_holder_struct global_variables;
 #define SW4_NEW(type, arg )				\
   ( new(type,__FILE__,__LINE__) arg)
 
+#if defined(ENABLE_MEMORY_ASSERTS)
 #define ASSERT_MANAGED(ptr)\
   ( assert_check_managed((ptr),__FILE__,__LINE__))
 
 #define ASSERT_HOST(ptr)\
   ( assert_check_host((ptr),__FILE__,__LINE__))
+
+#else
+
+#define ASSERT_MANAGED(ptr) 
+
+#define ASSERT_HOST(ptr) 
+#endif
 
 #define PREFETCH(ptr)\
   ( prefetch_to_device((ptr)))
@@ -65,7 +73,7 @@ void ptr_push(void *ptr, Space type, size_t size,const char *file, int line);
 
 #define ASSERT_HOST(ptr) 
 
-#define PTR_PUSH(ptr) 
+#define PTR_PUSH(type,ptr,size) 
 
 #define PREFETCH(ptr)
 

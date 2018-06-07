@@ -273,6 +273,17 @@ void ptr_push(void *ptr,Space type, size_t size,const char *file,int line){
   patpush(ptr,ss);
   return;
 }
+
+size_t getsize(void *ptr){
+  if (ptr==NULL) return -1;
+  pattr_t *ss = patpush(ptr,NULL);
+  if (ss!=NULL) return ss->size;
+  else return -1;
+}
+#endif
+
+#if defined(ENABLE_CUDA)
+
 void prefetch_to_device(const float_sw4 *ptr){
   if (ptr==NULL) return;
   pattr_t *ss = patpush((void*)ptr,NULL);
@@ -287,15 +298,7 @@ void prefetch_to_device(const float_sw4 *ptr){
     } //else std::cerr<<"Zero size prefetch \n";
   } else std::cerr<<"NO prefetch due to unknown address\n";
 }
-size_t getsize(void *ptr){
-  if (ptr==NULL) return -1;
-  pattr_t *ss = patpush(ptr,NULL);
-  if (ss!=NULL) return ss->size;
-  else return -1;
-}
-#endif
 
-#if defined(ENABLE_CUDA)
 void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line)
 {
     if (err)
@@ -306,7 +309,8 @@ void CheckError(cudaError_t const err, const char* file, char const* const fun, 
 #endif
 
 // AUTOPEEL CODE
-
+#if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
+// AUTOPEEL uses getsize which only works when SW4_TRACK_MEMORY_ALLOCATIONS is defined
 std::string line(int n,int C){ 
   std::ostringstream buf;
   buf<<"int arg"<<C<<" = "<<n<<";\n";
@@ -349,4 +353,6 @@ Apc::~Apc(){
   ofile<<"}\n";
   ofile.close();
 }
+#endif
+
 // END AUTOPEEL CODE
