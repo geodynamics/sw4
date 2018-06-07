@@ -38,13 +38,48 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
+#include <sstream>
 using namespace std;
-
+std::unordered_map<std::string, float_sw4*>  Sarray::static_map = {{std::string("Initializer"),(float_sw4*)nullptr}};
 // Default value 
 bool Sarray::m_corder = false;
+// This allocator keeps the m_data allocation around and re-uses it for all subsequent calls.
+// The allocations are deleted in the EW dtor. It reduces runtime at the cost of addtional
+// memory usage. A memory pool would be a better way to do this.
+Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,char *file, int line )
+{
+   m_nc = nc;
+   m_ib = ibeg;
+   m_ie = iend;
+   m_jb = jbeg;
+   m_je = jend;
+   m_kb = kbeg;
+   m_ke = kend;
+   m_ni = m_ie-m_ib+1;
+   m_nj = m_je-m_jb+1;
+   m_nk = m_ke-m_kb+1;
+   if( m_nc*m_ni*m_nj*m_nk > 0 ){
+     ostringstream ss;
+     ss<<file<<line<<"."<<m_nc*m_ni*m_nj*m_nk;
+     auto found = static_map.find(ss.str());
+     if (found!=static_map.end())
+       m_data = found->second;
+     else{
+       m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
+       static_map[ss.str()]=m_data;
+     }
+   }
+   else
+      m_data = NULL;
+//   m_mpi_datatype_initialized = false;
+   dev_data = NULL;
+   define_offsets();
+   prefetched=false;
+   static_alloc=true;
+}
 
 //-----------------------------------------------------------------------
-Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
+Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ) :static_alloc(false)
 {
    m_nc = nc;
    m_ib = ibeg;
@@ -67,7 +102,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
+Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ):static_alloc(false)
 {
    m_nc = 1;
    m_ib = ibeg;
@@ -90,7 +125,7 @@ Sarray::Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray( int nc, int iend, int jend, int kend )
+Sarray::Sarray( int nc, int iend, int jend, int kend ):static_alloc(false)
 {
    m_nc = nc;
    m_ib = 1;
@@ -113,7 +148,7 @@ Sarray::Sarray( int nc, int iend, int jend, int kend )
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray( int iend, int jend, int kend )
+Sarray::Sarray( int iend, int jend, int kend ):static_alloc(false)
 {
    m_nc = 1;
    m_ib = 1;
@@ -136,7 +171,7 @@ Sarray::Sarray( int iend, int jend, int kend )
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray()
+Sarray::Sarray():static_alloc(false)
 {
 //   m_mpi_datatype_initialized = false;
    m_nc = m_ib = m_ie = m_jb = m_je = m_kb = m_ke = 0;
@@ -146,7 +181,7 @@ Sarray::Sarray()
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray( const Sarray& u )
+Sarray::Sarray( const Sarray& u ):static_alloc(false)
 {
    m_nc = u.m_nc;
    m_ib = u.m_ib;
@@ -168,7 +203,7 @@ Sarray::Sarray( const Sarray& u )
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray( Sarray& u, int nc )
+Sarray::Sarray( Sarray& u, int nc ):static_alloc(false)
 {
    if( nc == -1 )
       m_nc = u.m_nc;
@@ -1057,7 +1092,6 @@ void Sarray::define_offsets()
       // (i,j,k,c) = c + nc*i + nc*ni*j+nc*ni*nj*k
    }
    view.set(*this);
-     
 }
 //-----------------------------------------------------------------------
 void Sarray::transposeik( )

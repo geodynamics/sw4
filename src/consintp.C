@@ -242,8 +242,8 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    SW4_MARK_END("CONSINTP_LOOP4");
 // Allocate space for the updated values of Uf and Uc (ghost points only)
    SW4_MARK_BEGIN("CONSINTP_SARRAY_ALLOCATION");
-   Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0); // only one k-index
-   Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1); // the k-index is arbitrary, 
+   Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0,__FILE__,__LINE__); // only one k-index
+   Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1,__FILE__,__LINE__); // the k-index is arbitrary, 
    SW4_MARK_END("CONSINTP_SARRAY_ALLOCATION");
 // Start iteration
    SW4_MARK_BEGIN("CONSINTP ITERATION");

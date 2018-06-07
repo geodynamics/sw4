@@ -1019,7 +1019,7 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
    if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
    {
      SW4_MARK_BEGIN("comm_array_2d_async::ALLOC");
-      Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+     Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k,__FILE__,__LINE__);
       SW4_MARK_END("comm_array_2d_async::ALLOC");
       u2d.copy_kplane(u,k);
       SW4_MARK_BEGIN("comm_array_2d_async::MPI-1");

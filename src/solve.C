@@ -1117,9 +1117,9 @@ SW4_MARK_END("TIME_STEPPING");
    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
    //std::cerr<<"Deleting point_sources "<<myRank<"\n";
 
-   std::cerr<<"WARNING :: delete of point_sources turned off for speed in lines 1112-1113 of solve.C \n";
-   //for( int s = 0 ; s < point_sources.size(); s++ )
-   //  delete point_sources[s];
+   //std::cerr<<"WARNING :: delete of point_sources turned off for speed in lines 1112-1113 of solve.C \n";
+   for( int s = 0 ; s < point_sources.size(); s++ )
+     delete point_sources[s];
    //std::cerr<<"Done "<<myRank<<"\n";
 // why is this barrier needed???
    MPI_Barrier(MPI_COMM_WORLD);
@@ -1442,7 +1442,8 @@ SW4_MARK_FUNCTION;
 		  "enforceIC Error: "<<
                   "Number of ghost points must be three or more, not " << m_ghost_points );
 
-      Sarray Unextf, Unextc, Bf, Bc, Uf_tt, Uc_tt;
+      //Sarray Unextf, Unextc, Bf, Bc, Uf_tt, Uc_tt;
+      
       
       int ibf=m_iStart[g+1], ief=m_iEnd[g+1], jbf=m_jStart[g+1], jef=m_jEnd[g+1];
       int kf = m_global_nz[g+1];
@@ -1450,18 +1451,18 @@ SW4_MARK_FUNCTION;
       int kc = 1;
       SW4_MARK_BEGIN("enforceIC::Allocs");
   // fine side
-      Unextf.define(3,ibf,ief,jbf,jef,kf,kf); // only needs k=kf (on the interface)
-      Bf.define(3,ibf,ief,jbf,jef,kf,kf);
+      Sarray Unextf(3,ibf,ief,jbf,jef,kf,kf,__FILE__,__LINE__); // only needs k=kf (on the interface)
+      Sarray Bf(3,ibf,ief,jbf,jef,kf,kf,__FILE__,__LINE__);
 // coarse side
-      Unextc.define(3,ibc,iec,jbc,jec,kc,kc); // only needs k=kc (on the interface)
-      Bc.define(3,ibc,iec,jbc,jec,kc,kc);
+      Sarray Unextc(3,ibc,iec,jbc,jec,kc,kc,__FILE__,__LINE__); // only needs k=kc (on the interface)
+      Sarray Bc(3,ibc,iec,jbc,jec,kc,kc,__FILE__,__LINE__);
       Unextf.set_to_zero();
       Bf.set_to_zero();
       Unextc.set_to_zero();
       Bc.set_to_zero();
 // to compute the corrector we need the acceleration in the vicinity of the interface
-      Uf_tt.define(3,ibf,ief,jbf,jef,kf-7,kf+1);
-      Uc_tt.define(3,ibc,iec,jbc,jec,kc-1,kc+7);
+      Sarray Uf_tt(3,ibf,ief,jbf,jef,kf-7,kf+1,__FILE__,__LINE__);
+      Sarray Uc_tt(3,ibc,iec,jbc,jec,kc-1,kc+7,__FILE__,__LINE__);
 // reuse Utt to hold the acceleration of the memory variables
       SW4_MARK_END("enforceIC::Allocs");
     // Set to zero the ghost point values that are unknowns when solving the interface condition. Assume that Dirichlet data

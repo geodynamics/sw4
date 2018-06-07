@@ -76,6 +76,7 @@ class Sarray
 {
 public:
 //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
+  Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,char *file, int line);
   Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
   Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
   Sarray( int nc, int iend, int jend, int kend );
@@ -83,7 +84,7 @@ public:
   Sarray( const Sarray& u );
   Sarray( Sarray& u, int nc=-1 );
   Sarray();
-  ~Sarray() {if( m_data != 0 ) ::operator delete[](m_data,Managed);}
+  ~Sarray() {if(( m_data != 0 ) && (!static_alloc))::operator delete[](m_data,Managed);}
 //   void define( CartesianProcessGrid* cartcomm, int nc );
    void define( int iend, int jend, int kend );
    void define( int nc, int iend, int jend, int kend );
@@ -191,11 +192,12 @@ public:
     return view;
   }
   SView view;
-
+  static std::unordered_map<std::string, float_sw4*> static_map;
+  bool static_alloc;
 private:
   float_sw4* m_data; 
   bool prefetched;
-
+  
    float_sw4* dev_data;
    inline int min(int i1,int i2){if( i1<i2 ) return i1;else return i2;}
    inline int max(int i1,int i2){if( i1>i2 ) return i1;else return i2;}

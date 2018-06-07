@@ -612,6 +612,11 @@ EW::
    }
    ::operator delete[](ForceVector,Managed);
    ::operator delete[](ForceAddress,Managed);
+
+   // Delete the allocations stored in Sarray:;static_map
+   for(auto &i : Sarray::static_map){
+      ::operator delete[](i.second,Managed);
+   }
 //  msgStream.close();
 }
 
@@ -4026,7 +4031,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
     GridPointSource **GPSL;
     int *idnts_local;
     if (firstcall){
-
+      // WARNING :: FORCE_TT cannot be called until this section has been called
       SW4_MARK_BEGIN("FORCE::HOST::FIRSTCALL");
       GPS = SW4_NEW(Managed,GridPointSource*[point_sources.size()]);
       idnts = SW4_NEW(Managed,int[identsources.size()]);
