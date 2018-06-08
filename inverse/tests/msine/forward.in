@@ -1,0 +1,133 @@
+#------------------------------
+# Grid (w=2500)
+#
+grid h=200 x=35000 y=35000 z=19500 ghostpts=2
+#
+#------------------------------
+# Time
+#
+#time t=9 utcstart=09/07/2013:4:53:13.000
+time t=9 utcstart=09/10/2013:23:5:53.000
+#
+#------------------------------
+# Paths etc..
+#
+fileio verbose=1 path=run-f obspath=run-f temppath=/tmp/bjorn pfs=1
+#
+#------------------------------
+# Supergrid parameters
+# 
+# h=200
+supergrid gp=13 dc=.015
+# h=100
+#supergrid gp=26 dc=.015
+# h=50
+#supergrid gp=51 dc=.015
+# h=25
+#supergrid gp=101 dc=.015
+#
+#------------------------------
+# Reference material
+# 
+# Average state for lohsine.
+block r=2650 vs=2677.6503357897 vp=4998.11285141419
+#
+#------------------------------
+# Material parameterization
+# 
+mparcart nx=3 ny=3 nz=2 init=material-exact-2.bin
+#
+#------------------------------
+# Optimizer and properties
+#
+mrun task=forward mcheck=on 
+#nlcg maxit=300 tolerance=1e-12 linesearch=on subtype=polak-ribiere
+lbfgs nvectors=35 maxit=300 tolerance=1e-12 linesearch=on
+# Sizes
+#mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1000
+# Constant mtrl 1x1x1-problem scaling:
+#mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
+#
+# At initial guess
+#mscalefactors rho=2650 mu=1.74e10 lambda=7.47e11 misfit=349
+# At mininum
+#mscalefactors rho=2650 mu=1.93e10 lambda=9.65e11 misfit=327
+#
+#mscalefactors rho=2650 mu=1.21e10 lambda=5.67e11 misfit=10000
+mscalefactors file=sfs-min.bin misfit=1
+mtypx rhosffactor=0.05 musffactor=0.05 lambdasffactor=0.005
+#
+#------------------------------
+# Source (w=2500)
+#
+source x=17500 y=17500 z=2000 Mxy=1 m0=1e18 t0=1.5 freq=4 type=Gaussian
+#
+#----------------------------
+#
+developer cfl=1.1
+#
+#------------------------------
+#
+# Observations (synthetic) (w=2500)
+#  
+observation x=11500 y=11500 z=0 file=sta11
+observation x=14500 y=11500 z=0 file=sta21
+observation x=17500 y=11500 z=0 file=sta31
+observation x=20500 y=11500 z=0 file=sta41
+observation x=23500 y=11500 z=0 file=sta51
+observation x=11500 y=14500 z=0 file=sta12
+observation x=14500 y=14500 z=0 file=sta22
+observation x=17500 y=14500 z=0 file=sta32
+observation x=20500 y=14500 z=0 file=sta42
+observation x=23500 y=14500 z=0 file=sta52
+observation x=11500 y=17500 z=0 file=sta13
+observation x=14500 y=17500 z=0 file=sta23
+observation x=17500 y=17500 z=0 file=sta33
+observation x=20500 y=17500 z=0 file=sta43
+observation x=23500 y=17500 z=0 file=sta53
+observation x=11500 y=20500 z=0 file=sta14
+observation x=14500 y=20500 z=0 file=sta24
+observation x=17500 y=20500 z=0 file=sta34
+observation x=20500 y=20500 z=0 file=sta44
+observation x=23500 y=20500 z=0 file=sta54
+observation x=11500 y=23500 z=0 file=sta15
+observation x=14500 y=23500 z=0 file=sta25
+observation x=17500 y=23500 z=0 file=sta35
+observation x=20500 y=23500 z=0 file=sta45
+observation x=23500 y=23500 z=0 file=sta55
+#rec x=11500 y=11500 z=0 file=sta11 usgsformat=1
+#rec x=14500 y=11500 z=0 file=sta21 usgsformat=1
+#rec x=17500 y=11500 z=0 file=sta31 usgsformat=1
+#rec x=20500 y=11500 z=0 file=sta41 usgsformat=1
+#rec x=23500 y=11500 z=0 file=sta51 usgsformat=1
+#rec x=11500 y=14500 z=0 file=sta12 usgsformat=1
+#rec x=14500 y=14500 z=0 file=sta22 usgsformat=1
+#rec x=17500 y=14500 z=0 file=sta32 usgsformat=1
+#rec x=20500 y=14500 z=0 file=sta42 usgsformat=1
+#rec x=23500 y=14500 z=0 file=sta52 usgsformat=1
+#rec x=11500 y=17500 z=0 file=sta13 usgsformat=1
+#rec x=14500 y=17500 z=0 file=sta23 usgsformat=1
+#rec x=17500 y=17500 z=0 file=sta33 usgsformat=1
+#rec x=20500 y=17500 z=0 file=sta43 usgsformat=1
+#rec x=23500 y=17500 z=0 file=sta53 usgsformat=1
+#rec x=11500 y=20500 z=0 file=sta14 usgsformat=1
+#rec x=14500 y=20500 z=0 file=sta24 usgsformat=1
+#rec x=17500 y=20500 z=0 file=sta34 usgsformat=1
+#rec x=20500 y=20500 z=0 file=sta44 usgsformat=1
+#rec x=23500 y=20500 z=0 file=sta54 usgsformat=1
+#rec x=11500 y=23500 z=0 file=sta15 usgsformat=1
+#rec x=14500 y=23500 z=0 file=sta25 usgsformat=1
+#rec x=17500 y=23500 z=0 file=sta35 usgsformat=1
+#rec x=20500 y=23500 z=0 file=sta45 usgsformat=1
+#rec x=23500 y=23500 z=0 file=sta55 usgsformat=1
+#
+# material images
+#
+#mimage mode=mu z=0 file=hor cycleInterval=1
+#mimage mode=lambda z=0 file=hor cycleInterval=1
+#mimage mode=rho z=0 file=hor cycleInterval=1
+
+image mode=mu z=1000 file=hor cycle=1
+image mode=lambda z=1000 file=hor cycle=1
+image mode=rho z=1000 file=hor cycle=1
+
