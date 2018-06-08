@@ -9,7 +9,6 @@
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes and proj=yes). 
-# SW4BASE = path to sw4 base installation (for CIG). 
 #
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 #
@@ -54,9 +53,6 @@ optdir := opt
 
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
-
-# this is where the sw4 base installation sits
-SW4SRC = $(SW4BASE)/src
 
 emptystring := ""
 foundincfile := $(emptystring)
@@ -122,8 +118,8 @@ else
 
 endif
 
-# always add -I$(SW4SRC) -DENABLE_OPT
-CXXFLAGS += -I$(SW4SRC) -DENABLE_OPT
+# always add  -DENABLE_OPT
+CXXFLAGS += -DENABLE_OPT
 
 ifdef EXTRA_CXX_FLAGS
    CXXFLAGS += $(EXTRA_CXX_FLAGS)
@@ -167,7 +163,7 @@ OBJSW4 = main.o
 # basic sw4 classes and functions
 # Note that include MaterialInvTest, invtestmtrl and projectmtrl to allow sw4 to be built with -DENABLE_OPT
 OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bndryOpNoGhost.o bcfort.o twilightfort.o rhs4th3fort.o \
+       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
@@ -175,9 +171,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
-       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
-       anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
-       rhs4th3fortwind.o updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o \
+       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o \
        MaterialInvtest.o invtestmtrl.o projectmtrl.o 
 
 # source optimization
@@ -224,7 +218,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
-	@cat $(SW4BASE)/wave.txt
+	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
 sw4opt: $(FOBJ) $(FOBJOPT)
@@ -293,27 +287,19 @@ convert_small: $(FOBJCONV2)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJCONV2) $(linklibs)
 
-$(builddir)/version.o:$(SW4SRC)/version.C .FORCE
+$(builddir)/version.o:../src/version.C .FORCE
 	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
 
 # having version.o depend on .FORCE has the effect of always building version.o
 .FORCE:
 
-$(builddir)/%.o:$(SW4SRC)/%.f
+$(builddir)/%.o:src/%.f90
 	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c $<
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
-$(builddir)/%.o:$(SW4SRC)/%.f90
+$(builddir)/%.o:src/quadpack/%.f
 	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c $<
-
-$(builddir)/%.o:$(SW4SRC)/quadpack/%.f
-	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c $<
-
-$(builddir)/%.o:$(SW4SRC)/%.C
-	/bin/mkdir -p $(builddir)
-	 cd $(builddir); $(CXX) $(CXXFLAGS) -c $< 
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src/%.f
 	/bin/mkdir -p $(builddir)
