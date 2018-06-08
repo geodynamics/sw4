@@ -1134,7 +1134,9 @@ void Sarray::transposeik( )
 
    
 void Sarray::prefetch(int device){
-
+#if defined(DISABLE_PREFETCH)
+  return;
+#endif
 #if defined(ENABLE_CUDA)
   if (!prefetched){
   SW4_MARK_BEGIN("PREFETCH");
@@ -1148,7 +1150,9 @@ void Sarray::prefetch(int device){
 #endif
 }
   void Sarray::forceprefetch(int device){
-
+#if defined(DISABLE_PREFETCH)
+    return;
+#endif
 #if defined(ENABLE_CUDA)
   SW4_MARK_BEGIN("FORCE_PREFETCH");
   SW4_CheckDeviceError(cudaMemPrefetchAsync(m_data,

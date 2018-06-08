@@ -285,6 +285,9 @@ size_t getsize(void *ptr){
 #if defined(ENABLE_CUDA)
 
 void prefetch_to_device(const float_sw4 *ptr){
+#if defined(DISABLE_PREFETCH)
+  return;
+#endif
   if (ptr==NULL) return;
   pattr_t *ss = patpush((void*)ptr,NULL);
   if (ss!=NULL) {
