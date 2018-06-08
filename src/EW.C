@@ -3781,8 +3781,8 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc)
 }
 
 //---------------------------------------------------------------------------
-void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
-	       vector<int> identsources )
+void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &point_sources,
+	       vector<int> &identsources )
 {
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
@@ -4098,8 +4098,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 }
 
 //---------------------------------------------------------------------------
-void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> point_sources,
-		  vector<int> identsources )
+void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &point_sources,
+		  vector<int> &identsources )
 {
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;

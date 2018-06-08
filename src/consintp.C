@@ -134,7 +134,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			}); SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP2");
 // pre-compute BfRestrict
-   Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf); // the k-index is arbitrary, 
+   Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf,__FILE__,__LINE__); // the k-index is arbitrary, 
    BfRestrict.prefetch();
 // using nkf since it comes from Uf(c,i,j,nkf)
    SView &BfRestrictV = BfRestrict.getview();
@@ -173,7 +173,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    if (jfeven % 2 == 1) jfeven++; // make sure jfeven is even
    
 // pre-compute UnextcInterp
-   Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1); // the k-index is arbitrary, 
+   Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1,__FILE__,__LINE__); // the k-index is arbitrary, 
 // using k=1 since it comes from Unextc(c,ic,jc,1)
    SView &UnextcInterpV = UnextcInterp.getview();
    UnextcInterp.prefetch();

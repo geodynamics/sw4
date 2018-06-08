@@ -617,7 +617,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // end test
 
 // BEGIN TIME STEPPING LOOP
-  //PROFILER_START;
+  PROFILER_START;
   SW4_MARK_BEGIN("TIME_STEPPING");
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
@@ -715,6 +715,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // *** 2nd order in TIME
     if (mOrder == 2)
     {
+      SW4_MARK_BEGIN("mOrder=2");
 // add super-grid damping terms before enforcing interface conditions
 // (otherwise, Up doesn't have the correct values on the interface)
        if (usingSupergrid())
@@ -742,12 +743,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
+       SW4_MARK_END("mOrder=2");
     }
     else // 4th order time stepping
     {
+       SW4_MARK_BEGIN("MPI_WTIME");
        if( m_output_detailed_timing )
           time_measure[7] = MPI_Wtime();
-
+       SW4_MARK_END("MPI_WTIME");
 // test: precompute F_tt(t)
        Force_tt( t, F, point_sources, identsources );
 
@@ -1432,7 +1435,7 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 //-----------------Mesh refinement interface condition for 4th order predictor-corrector scheme------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm, 
-		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources )
+		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> & point_sources )
 {
 SW4_MARK_FUNCTION;
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1578,7 +1581,7 @@ SW4_MARK_FUNCTION;
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
 void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                      vector<Sarray*>& a_AlphaVEp,
-                     float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> point_sources )
+                     float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> &point_sources )
 {
 SW4_MARK_FUNCTION;
    bool predictor = false;   // or true???
@@ -2432,7 +2435,7 @@ SW4_MARK_FUNCTION;
 void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                         Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm,
 					Sarray& Utt, Sarray& Unext, int g, int kic, float_sw4 t, 
-					Sarray &Ftt, vector<GridPointSource*> point_sources )
+					Sarray &Ftt, vector<GridPointSource*> &point_sources )
 {
 SW4_MARK_FUNCTION;
    //
@@ -2619,7 +2622,7 @@ SW4_MARK_FUNCTION;
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-					int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources )
+					int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> &point_sources )
 {
   SW4_MARK_FUNCTION;
    //
@@ -4415,7 +4418,7 @@ SW4_MARK_FUNCTION;
 	 int usesg = usingSupergrid() ? 1 : 0;
 
 // make a local copy of the boundary forcing array to simplify access
-         Sarray bforcerhs(3,ifirst,ilast,jfirst,jlast,1,1);
+         Sarray bforcerhs(3,ifirst,ilast,jfirst,jlast,1,1,__FILE__,__LINE__);
          bforcerhs.assign(forcing,0);
 
 	 //	 if( m_croutines )
