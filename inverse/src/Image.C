@@ -1039,7 +1039,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
       if (fid == -1 )
       {
-	 VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening file " << s << " for writing header");
+	 VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening file " << s.str() << " for writing header");
       }  
 
       cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
@@ -1163,7 +1163,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
 	    fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
 	    if (fid == -1 )
 	    {
-	       VERIFY2(0, "ERROR: Image::writeImagePlane2, Error opening file: " << s << " for writing data patches" );
+	       VERIFY2(0, "ERROR: Image::writeImagePlane2, Error opening file: " << s.str() << " for writing data patches" );
 	    }  
 	 }
 

@@ -640,7 +640,7 @@ void Image3D::write_image( int cycle, std::string &path, double t,
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
-      CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -702,7 +702,7 @@ void Image3D::write_image( int cycle, std::string &path, double t,
    if( iwrite && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
-      CHECK_INPUT(fid != -1, "Image3D::write_images:: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "Image3D::write_images:: Error opening: " << s.str() );
    }
 
    // Write data blocks

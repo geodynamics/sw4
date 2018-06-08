@@ -2804,7 +2804,7 @@ void exact_guess_source_position( double xr[4], double yr[4], double dist[4],
 // Assumes that zr=0 at all stations
 //
 {
-   double mat[9], x[3], rhs[3];
+   double mat[9], rhs[3];
    int j;
    for( int i=0 ; i<3 ; i++ )
    {
@@ -2814,7 +2814,8 @@ void exact_guess_source_position( double xr[4], double yr[4], double dist[4],
       mat[i+3*j] = yr[0]-yr[i+1];
       j = 2;
       mat[i+3*j] = -(dist[0]-dist[i+1]);
-      rhs[i] = 0.5*(xr[0]*xr[0]+yr[0]*yr[0]-dist[0]*dist[0]-(x[i+1]*x[i+1]+yr[i+1]*yr[i+1]-dist[i+1]*dist[i+1]));
+// AP replaced x (undefined) by xr (argument)
+      rhs[i] = 0.5*(xr[0]*xr[0]+yr[0]*yr[0]-dist[0]*dist[0]-(xr[i+1]*xr[i+1]+yr[i+1]*yr[i+1]-dist[i+1]*dist[i+1]));
    }
    int three=3, one=1, ipiv[3], info;
    F77_FUNC(dgesv,DGESV)( &three, &one, mat, &three, ipiv, rhs, &three, &info );

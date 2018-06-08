@@ -48,8 +48,8 @@ fullpath := $(shell pwd)
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
-debugdir := dbg
-optdir := opt
+debugdir := debug
+optdir := optimize
 
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
