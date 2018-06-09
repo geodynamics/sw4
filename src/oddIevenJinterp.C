@@ -262,6 +262,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax*b1/a11 + (1-relax)*Uf(c,i,j,nkf+1); 
 // change in ghost point value
       r3 =  UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
+      Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       //rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
       rmax1.max(fabs(r3));
       c=2;
@@ -280,6 +281,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax*b1/a11 + (1-relax)*Uf(c,i,j,nkf+1); 
 // change in ghost point value
       r3 =  UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
+      Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       //rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
       rmax2.max(fabs(r3));
 //      } // end for c=1,2
@@ -290,6 +292,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 // All Uc terms
 // right hand side is mismatch in displacement                
 // NOTE: Uc is not changed by this routine, so the Uc-dependence could be pre-computed
+      c=3;
       b1 = UnextcInterp(3,i,j,1) + nuc*a_ghcof[0]*i16*(   - Uc(3,ic,jc-1,0)*Mlrc(ic,jc-1,1) + 
 				       9*Uc(3,ic,jc  ,0)*Mlrc(ic,jc  ,1) + 
 				       9*Uc(3,ic,jc+1,0)*Mlrc(ic,jc+1,1)
@@ -303,11 +306,12 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 //    Uf(3,i,j,nkf+1) = b1/a11;
     UfNew(3,i,j,nkf+1) = relax* b1/a11 + (1-relax)* Uf(3,i,j,nkf+1);
     r3 = UfNew(3,i,j,nkf+1) - Uf(3,i,j,nkf+1);
+    Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
     //rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
     rmax3.max(fabs(r3));
 
 		       } // end for i odd, j even
-		       ); SYNC_STREAM;
+		       );
 
   //update Uf
 // #pragma omp parallel
@@ -319,14 +323,17 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 //       {
 //   Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
 // }
-  RAJA::RangeSegment c_range(1,4);
-  
 
-  RAJA::kernel<ODDIEVENJ_EXEC_POL2>(
-  		       RAJA::make_tuple(c_range,j_srange,i_srange),
-  		       [=]RAJA_DEVICE (int c,int j,int i) {
-  			 Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
-  		       });
+
+  // RAJA::RangeSegment c_range(1,4);
+  
+  // RAJA::kernel<ODDIEVENJ_EXEC_POL2>(
+  // 		       RAJA::make_tuple(c_range,j_srange,i_srange),
+  // 		       [=]RAJA_DEVICE (int c,int j,int i) {
+  // 			 Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
+  // 		       });
+
+  
   SYNC_STREAM;
   rmax[3] = static_cast<float_sw4>(rmax1.get());
   rmax[4] = static_cast<float_sw4>(rmax2.get());

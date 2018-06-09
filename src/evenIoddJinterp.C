@@ -233,6 +233,7 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax2(0);
   RAJA::ReduceMax<REDUCTION_POLICY,float_sw4> rmax3(0);
   
+  SW4_MARK_BEGIN("EVENIODDJ");
   RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
   RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
   RAJA::kernel<EVENIODDJ_EXEC_POL>(
@@ -264,6 +265,7 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(c,i,j,nkf+1);
 // change in ghost point value
       r3 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
+      Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       //rmax1 = rmax1 > fabs(r3) ? rmax1 : fabs(r3);
       rmax1.max(fabs(r3));
       c=2;
@@ -282,6 +284,7 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
       UfNew(c,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(c,i,j,nkf+1);
 // change in ghost point value
       r3 = UfNew(c,i,j,nkf+1) - Uf(c,i,j,nkf+1);
+      Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       //rmax2 = rmax2 > fabs(r3) ? rmax2 : fabs(r3);
       rmax2.max(fabs(r3));
 //      } // end for c=1,2
@@ -302,6 +305,8 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 // relax the update for improved convergence
       UfNew(3,i,j,nkf+1) = relax* b1/a11 + (1-relax)*Uf(3,i,j,nkf+1);
       r3 = UfNew(3,i,j,nkf+1) - Uf(3,i,j,nkf+1);
+      c=3;
+      Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       //rmax3 = rmax3 > fabs(r3) ? rmax3 : fabs(r3);
       rmax3.max(fabs(r3));
 				    }); // end for i even, j odd
@@ -313,13 +318,18 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 //     for( int j=jfb ; j <= jfe ; j+=2 )
 // #pragma omp simd
 //       for( int i=ifb ; i <= ife ; i+=2 )
-  RAJA::RangeSegment c_range(1,4);
-  RAJA::kernel<XRHS_POL>(
-			 RAJA::make_tuple(c_range,j_srange,i_srange),
-			 [=]RAJA_DEVICE (int c,int j,int i) 
-      {
-	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
-      }); SYNC_STREAM;;
+
+
+  // RAJA::RangeSegment c_range(1,4);
+  // RAJA::kernel<XRHS_POL>(
+  // 			 RAJA::make_tuple(c_range,j_srange,i_srange),
+  // 			 [=]RAJA_DEVICE (int c,int j,int i) 
+  //     {
+  // 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
+  //     }); 
+
+  SYNC_STREAM;
+  SW4_MARK_END("EVENIODDJ");
   rmax[3] = static_cast<float_sw4>(rmax1.get());
   rmax[4] = static_cast<float_sw4>(rmax2.get());
   rmax[5] = static_cast<float_sw4>(rmax3.get());
