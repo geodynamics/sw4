@@ -2,7 +2,7 @@
 # cfl must be reduced with supergrid stretching in twilight mode (phi > 1)
 developer cfl=1.0
 
-fileio path=checkp-att-mr  verbose=1
+fileio path=checkp-att-mr 
 grid nx=51 x=6.28 y=6.28 z=6.28
 
 refinement zmax=2.512
