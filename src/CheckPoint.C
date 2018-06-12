@@ -169,8 +169,13 @@ void CheckPoint::setup_sizes( )
 	 m_ihavearray[g] = true;
       }
       setSteps( mEW->getNumberOfTimeSteps() );
+// tmp
+      if (mEW->proc_zero())
+         cout << "Checkpoint::setup_sizes: Calling define_pio()..." << endl;
+      
       define_pio();
-   }
+   } // end if doRestart || doCheckpointing
+   
    //   cout << "mwind = " << mWindow[0][4] << " " << mWindow[0][5] << endl;
    //   cout << "globaldims = " << mGlobalDims[0][4] << " " << mGlobalDims[0][5] << endl;
 }
@@ -180,13 +185,25 @@ void CheckPoint::define_pio( )
 {
    int glow = 0, ghigh = mEW->mNumberOfGrids;
 
+  double time_start = MPI_Wtime();
+  double time_measure[12];
+  time_measure[0] = time_start;
+
    // Create the restart directory if it doesn't exist
-   if( mRestartPathSet )
-     mEW->create_directory(mRestartPath);
+//
+// AP: On the burst buffer at Cori it takes *forever* to build a directory
+// For now, assume the directory is already there
+//
+   // if( mRestartPathSet )
+   //   mEW->create_directory(mRestartPath);
 
    m_parallel_io = new Parallel_IO*[ghigh-glow+1];
    for( int g=glow ; g < ghigh ; g++ )
    {
+// tmp
+      if (mEW->proc_zero())
+         cout << "setup_sizes for grid g = " << g << endl;
+
       int global[3], local[3], start[3];
       for( int dim=0 ; dim < 3 ; dim++ )
       {
@@ -228,7 +245,13 @@ void CheckPoint::define_pio( )
 	    iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
+// tmp
+      if (mEW->proc_zero())
+         cout << "Creating a Parallel_IO object for grid g = " << g << endl;
       m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, m_bufsize );
+// tmp
+      if (mEW->proc_zero())
+         cout << "Done creating the Parallel_IO object" << endl;
       delete[] owners;
    }
 }

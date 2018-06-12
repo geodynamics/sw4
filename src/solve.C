@@ -999,7 +999,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
 	        if( m_myRank == 0 )
 	          cout << "Wallclock time to write all checkpoint time series files "
-              << time_chkpt_timeseries_tmp << " seconds " << endl;
+              << time_chkpt_timeseries << " seconds " << endl;
        }
    }
 
