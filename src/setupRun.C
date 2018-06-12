@@ -1504,8 +1504,9 @@ void EW::create_directory(const string& path)
    MPI_Barrier(MPI_COMM_WORLD);
 
 //
-// AP: The following stat() and access() calls take a very long time to complete!
-// Until this gets resolved, assume that all processes have access
+// AP: The following stat() and access() calls appear unneccessary because
+// a) not all processes need to interact with the file system
+// b) why would a directory only be accessible from proc=0 ?
 //
 // Check that the path directory exists from all processes (NB: Only a few of the processes need access)
 //    struct stat statBuf;

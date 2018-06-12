@@ -190,12 +190,8 @@ void CheckPoint::define_pio( )
   time_measure[0] = time_start;
 
    // Create the restart directory if it doesn't exist
-//
-// AP: On the burst buffer at Cori it takes *forever* to build a directory
-// For now, assume the directory is already there
-//
-   // if( mRestartPathSet )
-   //   mEW->create_directory(mRestartPath);
+   if( mRestartPathSet )
+     mEW->create_directory(mRestartPath);
 
    m_parallel_io = new Parallel_IO*[ghigh-glow+1];
    for( int g=glow ; g < ghigh ; g++ )
