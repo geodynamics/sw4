@@ -65,7 +65,7 @@ class Parallel_IO
 {
 public:
    Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
-	    int starts[3], int nptsbuf=1000000, int padding=0 );
+	    int starts[3], int nptsbuf=8000000, int padding=0 );
    void write_array( int* fid, int nc, void* array, off_t pos0, char* type );
    void read_array( int* fid, int nc, double* array, off_t pos0, const char* typ, bool swap_bytes=false );
 			      
@@ -83,7 +83,10 @@ private:
    void init_array( int globalsizes[3], int localsizes[3], 
 		    int starts[3], int nptsbuf, int padding=0 );
    void setup_substeps( );
-
+   //   size_t read_dble_wlim( int* fid, double* rbuf, size_t nelem, size_t limit );
+   //   size_t write_dble_wlim( int* fid, double* rbuf, size_t nelem, size_t limit );
+   template<class T> size_t read_with_limit( int* fid, T* rbuf, size_t nelem, size_t limit );
+   template<class T> size_t write_with_limit( int* fid, T* rbuf, size_t nelem, size_t limit );
 
    int m_iwrite, m_nwriters, m_parallel_file_system;
    int m_csteps;

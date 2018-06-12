@@ -742,6 +742,83 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
 }
 
 //-----------------------------------------------------------------------
+void Sarray::extract_subarrayIK( int ib, int ie, int jb, int je, int kb,
+				 int ke, float_sw4* ar )
+{
+   // Assuming nc is the same for m_data and subarray ar.
+   // Return `ar' in order suitable for storing array on file.
+
+   int nis = ie-ib+1;
+   int njs = je-jb+1;
+   int nks = ke-kb+1;
+   size_t sind=0, ind=0;
+   if( m_corder )
+   {
+      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (k-kb)  +  nks*(j-jb)   +  nks*njs*(i-ib);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  ar[sind*m_nc+c-1] = m_data[ind+totpts*(c-1)];
+	    }
+   }
+   else
+   {
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (k-kb)  +  nks*(j-jb)   +  nks*njs*(i-ib);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  ar[sind*m_nc+c-1] = m_data[ind*m_nc+c-1];
+	    }
+   }
+}
+
+//-----------------------------------------------------------------------
+void Sarray::insert_subarrayIK( int ib, int ie, int jb, int je, int kb,
+				int ke, float_sw4* ar )
+{
+   // Assuming nc is the same for m_data and subarray ar.
+   // Insert array `ar', where `ar' is in order suitable for storing array on file.
+
+   int nis = ie-ib+1;
+   int njs = je-jb+1;
+   int nks = ke-kb+1;
+   //   int nks = ke-kb+1;
+   size_t sind=0, ind=0;
+   if( m_corder )
+   {
+      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk; 
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (k-kb)  +  nks*(j-jb)   +  nks*njs*(i-ib);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind + totpts*(c-1)] = ar[sind*m_nc+c-1];
+	    }
+   }
+   else
+   {
+      for( int k=kb ; k<=ke ; k++ )
+	 for( int j=jb ; j<=je ; j++ )
+	    for( int i=ib ; i <= ie ; i++ )
+	    {
+               sind = (k-kb)  +  nks*(j-jb)   +  nks*njs*(i-ib);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind*m_nc+c-1] = ar[sind*m_nc+c-1];
+	    }
+   }
+}
+
+//-----------------------------------------------------------------------
 void Sarray::copy_kplane( Sarray& u, int k )
 {
    if( !(u.m_ib==m_ib && u.m_ie==m_ie && u.m_jb==m_jb && u.m_je==m_je) )
