@@ -36,7 +36,7 @@ using namespace std;
 #include <cstring>
 #include <errno.h>
 #include <unistd.h>
-#include "Parallel_IO.h"
+#include "Parallel_IO-sw4.h"
 
 //-----------------------------------------------------------------------
 Comminfo::Comminfo()
@@ -1917,8 +1917,6 @@ int Parallel_IO::proc_zero()
    {
       int myid;
       MPI_Comm_rank( m_write_comm, &myid );
-      //      cout << "PIO::Proc_zero myid= " << myid << " m_writer_ids[0]= " << m_writer_ids[0] << endl;
-      //      if( myid == m_writer_ids[0] )
       if( myid == 0 )
 	 retval = 1;
    }
@@ -1948,7 +1946,7 @@ template<class T> size_t Parallel_IO::read_with_limit( int* fid, T* rbuf, size_t
 // elements per read is limited to `limit'.
 //
 // Input: fid   - File descriptor previously opened with `open'.
-//        rbuf  - Pointer to vector of doubles.
+//        rbuf  - Pointer to vector of elements.
 //        nelem - Number of elements in rbuf.
 //        limit - Maximum number of elements to read at each call to `read'.
 // Output: Returns the number of bytes read.

@@ -1,9 +1,11 @@
 # SW4 input RUN: Hayward_scenario_M6.5_s500_3Drfile_h25m
 
+developer reporttiming=1
+
 # using parallel i/o
-#fileio path=/p/lscratchh/andersp/rfile-lscratch/hayward-h100-results pfs=1 nwriters=32
+fileio path=/global/cscratch1/sd/andersp/checkpoint-test/hayward-h100-results pfs=1 nwriters=32
 # not using parallel io
-fileio path=hayward-h100-results
+#fileio path=hayward-h100-results
 
 # Grid coords:
 # DON'T CHANGE AZ
@@ -17,8 +19,8 @@ globalmaterial  vpmin=866 vsmin=500
 
 # Rfile USGS 3D model + topography
 # NERSC (cori) parallel file system:
-rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp
-topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/USGSBayAreaVM-08.3.0-corder.rfile
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp/RFILE_STRIPED
+topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/RFILE_STRIPED/USGSBayAreaVM-08.3.0-corder.rfile
 
 # LC (quartz) parallel file system
 #rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/p/lscratchh/andersp/rfile-lscratch
@@ -34,21 +36,21 @@ rupture file=m6.5-20.0x13.0.s500.v5.1.srf
 #source x=50e3 y=50e3 depth=3e3
 
 # Image output z=0 (make sure you are on a parallel file system if fileio pio=1
-# image z=0 mode=p file=image cycle=0
-# image z=0 mode=s file=image cycle=0
-# image z=1000 mode=s file=image cycle=0
-# image z=2000 mode=s file=image cycle=0
-# image z=5000 mode=s file=image cycle=0
-# image z=0 mode=rho file=image cycle=0
-# image z=0 mode=lat file=image cycle=0
-# image z=0 mode=lon file=image cycle=0
-# image z=0 mode=topo file=image cycle=0
+image z=0 mode=p file=image cycle=0
+image z=0 mode=s file=image cycle=0
+image z=1000 mode=s file=image cycle=0
+image z=2000 mode=s file=image cycle=0
+image z=5000 mode=s file=image cycle=0
+image z=0 mode=rho file=image cycle=0
+image z=0 mode=lat file=image cycle=0
+image z=0 mode=lon file=image cycle=0
+image z=0 mode=topo file=image cycle=0
 # save the magnitude of the velocity (dependent variable with SRF rupture)
-# image z=0 mode=mag file=image timeInterval=1.0
-# image z=0 mode=hmax file=image time=59.2
-# image z=0 mode=hmax file=image timeInterval=0.1
-# image z=0 mode=vmax file=image time=59.2
-# image z=0 mode=grid file=image cycle=0
+image z=0 mode=mag file=image timeInterval=1.0
+image z=0 mode=hmax file=image time=59.2
+image z=0 mode=hmax file=image timeInterval=0.1
+image z=0 mode=vmax file=image time=59.2
+image z=0 mode=grid file=image cycle=0
 
 # record 1 station for verification
 rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1

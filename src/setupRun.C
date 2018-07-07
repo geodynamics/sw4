@@ -94,6 +94,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
   double time_start = MPI_Wtime();
 
+  double time_measure[12];
+  time_measure[0] = time_start;
+  
 // m_testing == true is one of the pointers to testing modes is assigned
 // add other pointers to the list of testing modes as they get implemented
   m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test || m_rayleigh_wave_test || m_energy_test ); 
@@ -118,7 +121,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   
 // setup coefficients for SBP operators
   setupSBPCoeff();
-  
+
   if( proc_zero() && mVerbose >=3)
   {
     int g;
@@ -147,6 +150,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 // Check that f.d. operators fit inside the domains.
   check_dimensions();
+
+  if( m_output_detailed_timing )
+     time_measure[1] = MPI_Wtime();
 
 // for all sides with dirichlet, free surface, supergrid, or periodic boundary conditions,
 // save the extent of the multi-D boundary window, and allocate arrays to hold the boundary forcing
@@ -261,6 +267,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
   MPI_Barrier(MPI_COMM_WORLD);
 
+  if( m_output_detailed_timing )
+     time_measure[2] = MPI_Wtime();
+
   //  string cachePath = mPath;
    
 // tmp
@@ -321,12 +330,18 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     
     printf("\n");
   }
-  
+
+  if( m_output_detailed_timing )
+     time_measure[3] = MPI_Wtime();
+
 // set material properties
   if( m_anisotropic )
      set_anisotropic_materials();
   else
      set_materials();
+
+  if( m_output_detailed_timing )
+     time_measure[4] = MPI_Wtime();
 
 // evaluate resolution
   float_sw4 minvsoh;
@@ -349,6 +364,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
      }
   }
   
+  if( m_output_detailed_timing )
+     time_measure[5] = MPI_Wtime();
+
   assign_supergrid_damping_arrays();
 
 // convert Qp and Qs to muVE, lambdaVE, and compute unrelaxed lambda, mu
@@ -363,12 +381,18 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 // form combinations of material coefficients for MR
   setup_MR_coefficients();
-  
+
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
 
+  if( m_output_detailed_timing )
+     time_measure[6] = MPI_Wtime();
+
   // Initialize check point object
   m_check_point->setup_sizes();
+
+  if( m_output_detailed_timing )
+     time_measure[7] = MPI_Wtime();
 
 // compute time-step and number of time steps. 
 // Note: SW4 always ends the simulation at mTmax, whether prefilter is enabled or not.
@@ -383,12 +407,18 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 	computeDT( );
   }
 
+  if( m_output_detailed_timing )
+     time_measure[8] = MPI_Wtime();
+
 // should we initialize all images after the prefilter time offset stuff?
 
 // Initialize image files: set time, tell images about grid hierarchy.
   initialize_image_files();
   if( mVerbose && proc_zero() )
     cout << "*** Initialized Images" << endl;
+
+  if( m_output_detailed_timing )
+     time_measure[9] = MPI_Wtime();
 
 // // is the curvilinear grid ok?
 //   if (topographyExists() && m_minJacobian <=0. && proc_zero()) // m_minJacobian is the global minimum and should be the same on all processes
@@ -421,8 +451,68 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   preprocessSources( a_GlobalUniqueSources );
   
   double time_start_solve = MPI_Wtime();
+  time_measure[10] = time_start_solve;
+  
   print_execution_time( time_start, time_start_solve, "start up phase" );
-}
+
+  if( m_output_detailed_timing )
+  {
+     double times[10];
+     times[0] = time_measure[1] - time_measure[0];
+     times[1] = time_measure[2] - time_measure[1];
+     times[2] = time_measure[3] - time_measure[2];
+     times[3] = time_measure[4] - time_measure[3];
+     times[4] = time_measure[5] - time_measure[4];
+     times[5] = time_measure[6] - time_measure[5];
+     times[6] = time_measure[7] - time_measure[6];
+     times[7] = time_measure[8] - time_measure[7];
+     times[8] = time_measure[9] - time_measure[8];
+     times[9] = time_measure[10] - time_measure[9];
+     
+     double* time_sums =new double[10*no_of_procs()];
+     MPI_Gather( times, 10, MPI_DOUBLE, time_sums, 10, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+     bool printavgs = true;
+     if( !mQuiet && proc_zero() )
+     {
+        double avgs[10]={0,0,0,0,0,0,0,0,0,0};
+        for( int p= 0 ; p < no_of_procs() ; p++ )
+           for( int c=0 ; c < 10 ; c++ )
+              avgs[c] += time_sums[10*p+c];
+        for( int c=0 ; c < 10 ; c++ )
+           avgs[c] /= no_of_procs();
+        cout << "\n----------------------------------------" << endl;
+        cout << "          Setup time summary (average)" << endl;
+//                             6                  9            8            6            7                7       6          2        5        7
+        cout << "SBP+SG      BndryWind  InitPath  SetElastic  EvalResol  ViscoElastic  CheckPnt     DT     Image  SrcPrep" << endl;
+        cout.setf(ios::left);
+        cout.precision(3);
+        cout.width(11);
+        cout << avgs[0];
+        cout.width(11);
+        cout << avgs[1];
+        cout.width(11);
+        cout << avgs[2];
+        cout.width(11);
+        cout << avgs[3];
+        cout.width(11);
+        cout << avgs[4];
+        cout.width(11);
+        cout << avgs[5];
+        cout.width(11);
+        cout << avgs[6];
+        cout.width(11);
+        cout << avgs[7];
+        cout.width(11);
+        cout << avgs[8];
+        cout.width(11);
+        cout << avgs[9];
+        cout << endl;
+     } // end if proc_zero()
+     delete[] time_sums;
+  } // end if output detailed timings
+  
+} // end void setupRun()
+
 
 //-----------------------------------------------------------------------
 void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
@@ -1413,14 +1503,19 @@ void EW::create_directory(const string& path)
    cout.flush();  cerr.flush();
    MPI_Barrier(MPI_COMM_WORLD);
 
-// Check that the path directory exists from all processes
-   struct stat statBuf;
-   int statErr = stat(path.c_str(), &statBuf);
-   CHECK_INPUT(statErr == 0 && S_ISDIR(statBuf.st_mode), "Error: " << path << " is not a directory" << endl);
+//
+// AP: The following stat() and access() calls appear unneccessary because
+// a) not all processes need to interact with the file system
+// b) why would a directory only be accessible from proc=0 ?
+//
+// Check that the path directory exists from all processes (NB: Only a few of the processes need access)
+//    struct stat statBuf;
+//    int statErr = stat(path.c_str(), &statBuf);
+//    CHECK_INPUT(statErr == 0 && S_ISDIR(statBuf.st_mode), "Error: " << path << " is not a directory" << endl);
    
-// check that all processes have write permission on the directory
-   CHECK_INPUT(access(path.c_str(),W_OK)==0,
-	   "Error: No write permission on directory: " << path << endl);
+// // check that all processes have write permission on the directory
+//    CHECK_INPUT(access(path.c_str(),W_OK)==0,
+// 	   "Error: No write permission on directory: " << path << endl);
 }
 
 //-----------------------------------------------------------------------

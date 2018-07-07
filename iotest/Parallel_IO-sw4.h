@@ -83,8 +83,6 @@ private:
    void init_array( int globalsizes[3], int localsizes[3], 
 		    int starts[3], int nptsbuf, int padding=0 );
    void setup_substeps( );
-   //   size_t read_dble_wlim( int* fid, double* rbuf, size_t nelem, size_t limit );
-   //   size_t write_dble_wlim( int* fid, double* rbuf, size_t nelem, size_t limit );
    template<class T> size_t read_with_limit( int* fid, T* rbuf, size_t nelem, size_t limit );
    template<class T> size_t write_with_limit( int* fid, T* rbuf, size_t nelem, size_t limit );
 
