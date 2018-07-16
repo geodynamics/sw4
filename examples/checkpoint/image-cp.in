@@ -1,0 +1,18 @@
+fileio verbose=1 path=image-cp.output
+
+grid nx=33 x=0.8 y=1.2 z=1.0 
+#refinement zmax=0.2
+# refinement zmax=0.5
+
+# time t=0.3
+time steps=40
+twilight omega=3.14159 errorlog=1
+
+# checkpoint / restart
+checkpoint cycleInterval=20 file=image-cp restartpath=image.restart restartfile=image.cycle=20.sw4checkpoint
+
+image x=0.8 timeInterval=0.05 file=test mode=ux
+image x=0.8 cycleInterval=4 file=test2 mode=ux
+image x=0.8 time=0.3 file=test3 mode=ux
+image x=0.8 cycle=30 file=test4 mode=ux
+

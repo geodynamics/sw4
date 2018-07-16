@@ -276,7 +276,7 @@ void computeDTanisotropic();
    //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
 int no_of_procs() const;
-void create_output_directory();
+void create_directory(const string& path);
 void initialize_image_files();
 void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
 		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -295,6 +295,8 @@ const string& getOutputPath() { return mPath; }; // Consider getPath instead! Th
 const string& getObservationPath() { return mObsPath; };
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions
+   boundaryConditionType getLocalBcType(int g, int side){return m_bcType[g][side]; };
+   
 
 void add_mtrl_block( MaterialData* md ){ m_mtrlblocks.push_back( md ); };
 

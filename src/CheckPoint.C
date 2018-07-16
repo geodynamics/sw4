@@ -27,7 +27,8 @@ CheckPoint::CheckPoint( EW* a_ew ) :
    m_fileno(0),
    mDoCheckPointing(false),
    mRestartPathSet(false),
-   mDoRestart(false)
+   mDoRestart(false),
+   m_kji_order(true)
 {
 
 }
@@ -52,7 +53,8 @@ CheckPoint::CheckPoint( EW* a_ew,
    m_fileno(0),
    mDoCheckPointing(true),
    mRestartPathSet(false),
-   mDoRestart(false)
+   mDoRestart(false),
+   m_kji_order(true)
 {
    m_double = sizeof(float_sw4)==8;
 }
@@ -117,30 +119,65 @@ void CheckPoint::setup_sizes( )
 	 }
 	 m_winallocated = true;
       }
+
+      m_ihavearray.resize( mEW->mNumberOfGrids );
+         
+      int ghost_points = mEW->getNumberOfGhostPoints();
+// tmp
+//      printf("CheckPoint: Number of ghost points = %d\n", ghost_points);
+      
       for( int g=0 ; g < mEW->mNumberOfGrids ; g++ )
       {
-	 mWindow[g][0] = mEW->m_iStartInt[g];
-	 mWindow[g][1] = mEW->m_iEndInt[g];
-	 mWindow[g][2] = mEW->m_jStartInt[g];
-	 mWindow[g][3] = mEW->m_jEndInt[g];
-	 mWindow[g][4] = mEW->m_kStartInt[g];
-	 mWindow[g][5] = mEW->m_kEndInt[g];
+// With attenuation, the memory variables must be saved at all ghost points. This is because the memory variables satisfy
+// ODEs at all points, and do not satify any boundary conditions 
+
+         if (mEW->getLocalBcType(g, 0) == bProcessor)
+            mWindow[g][0] = mEW->m_iStartInt[g];
+         else
+            mWindow[g][0] = mEW->m_iStartInt[g] - ghost_points;;
+
+         if (mEW->getLocalBcType(g, 1) == bProcessor)
+            mWindow[g][1] = mEW->m_iEndInt[g];
+         else
+            mWindow[g][1] = mEW->m_iEndInt[g] + ghost_points;
+         
+         if (mEW->getLocalBcType(g, 2) == bProcessor)
+            mWindow[g][2] = mEW->m_jStartInt[g];
+         else
+            mWindow[g][2] = mEW->m_jStartInt[g] - ghost_points;;
+            
+         if (mEW->getLocalBcType(g, 3) == bProcessor)
+            mWindow[g][3] = mEW->m_jEndInt[g];
+         else
+            mWindow[g][3] = mEW->m_jEndInt[g] + ghost_points;
+            
+// all points in k-dir are local to each proc
+	 mWindow[g][4] = mEW->m_kStartInt[g]-ghost_points; // need 1 ghost point at MR interface
+	 mWindow[g][5] = mEW->m_kEndInt[g]+ghost_points; // and all ghost points at bottom
 
 
-	 mGlobalDims[g][0] = 1;
-	 mGlobalDims[g][1] = mEW->m_global_nx[g];
-	 mGlobalDims[g][2] = 1;
-	 mGlobalDims[g][3] = mEW->m_global_ny[g];
+// Need to store ghost point values outside the physical boundaries for the
+// attenuation memory variables, because they satisfy ODEs and not BC
+
+         mGlobalDims[g][0] = 1 - ghost_points;
+         mGlobalDims[g][1] = mEW->m_global_nx[g] + ghost_points;
+         mGlobalDims[g][2] = 1 - ghost_points;
+         mGlobalDims[g][3] = mEW->m_global_ny[g] + ghost_points;
+         // k-dir is local
 	 mGlobalDims[g][4] = mWindow[g][4];
 	 mGlobalDims[g][5] = mWindow[g][5];
 
  // The 3D array is assumed to span the entire computational domain
-	 m_ihavearray.resize( mEW->mNumberOfGrids );
 	 m_ihavearray[g] = true;
       }
       setSteps( mEW->getNumberOfTimeSteps() );
+// tmp
+      if (mEW->proc_zero())
+         cout << "Checkpoint::setup_sizes: Calling define_pio()..." << endl;
+      
       define_pio();
-   }
+   } // end if doRestart || doCheckpointing
+   
    //   cout << "mwind = " << mWindow[0][4] << " " << mWindow[0][5] << endl;
    //   cout << "globaldims = " << mGlobalDims[0][4] << " " << mGlobalDims[0][5] << endl;
 }
@@ -149,9 +186,22 @@ void CheckPoint::setup_sizes( )
 void CheckPoint::define_pio( )
 {
    int glow = 0, ghigh = mEW->mNumberOfGrids;
+
+  double time_start = MPI_Wtime();
+  double time_measure[12];
+  time_measure[0] = time_start;
+
+   // Create the restart directory if it doesn't exist
+   if( mRestartPathSet )
+     mEW->create_directory(mRestartPath);
+
    m_parallel_io = new Parallel_IO*[ghigh-glow+1];
    for( int g=glow ; g < ghigh ; g++ )
    {
+// tmp
+      if (mEW->proc_zero())
+         cout << "setup_sizes for grid g = " << g << endl;
+
       int global[3], local[3], start[3];
       for( int dim=0 ; dim < 3 ; dim++ )
       {
@@ -193,7 +243,26 @@ void CheckPoint::define_pio( )
 	    iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
+// tmp
+      if( m_kji_order )
+      {
+// Swap i and k on file
+	 int tmp=global[0];
+	 global[0]=global[2];
+	 global[2]=tmp;
+	 tmp=local[0];
+	 local[0]=local[2];
+	 local[2]=tmp;
+	 tmp=start[0];
+	 start[0]=start[2];
+	 start[2]=tmp;
+      }      
+      if (mEW->proc_zero())
+         cout << "Creating a Parallel_IO object for grid g = " << g << endl;
       m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, m_bufsize );
+// tmp
+      if (mEW->proc_zero())
+         cout << "Done creating the Parallel_IO object" << endl;
       delete[] owners;
    }
 }
@@ -265,15 +334,18 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    bool iwrite = false;
    for( int g=0 ; g < ng ; g++ )
       iwrite = iwrite || m_parallel_io[g]->i_write();
-  
+
    std::stringstream s;
    if( iwrite )
    {
       std::stringstream fileSuffix;
       compute_file_suffix( a_cycle, fileSuffix );
+      if ( mRestartPathSet )
+	      s << mRestartPath << "/";
+      else
       if( mEW->getPath() != "./" )
-	 s << mEW->getPath();
-      s << fileSuffix.str(); 
+	      s << mEW->getPath() << "/";
+      s << fileSuffix.str();
    }
 
  // Keep track of the number of files, save previous file name, and delete the second last.
@@ -285,7 +357,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -303,7 +375,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    if( iwrite && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
-      CHECK_INPUT(fid != -1, "CheckPoint::write_checkpoint:: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::write_checkpoint:: Error opening: " << s.str() );
    }
 
    // Write data blocks
@@ -319,44 +391,66 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       if( !mEW->usingParallelFS() || g == 0 )
 	 m_parallel_io[g]->writer_barrier();
       
-      size_t nptsloc = ((size_t)(mEW->m_iEndInt[g]-mEW->m_iStartInt[g]+1))*
- 	               ((size_t)(mEW->m_jEndInt[g]-mEW->m_jStartInt[g]+1))*
-	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+1));
+      size_t nptsloc = (size_t) (mWindow[g][1] - mWindow[g][0]+1)*
+         (mWindow[g][3] - mWindow[g][2]+1)*
+         (mWindow[g][5] - mWindow[g][4]+1);
       
-      // Write without ghost points. Would probably work with ghost points too.
+      // allocate local buffer array
       float_sw4* doubleField = new float_sw4[3*nptsloc];
+      if( m_kji_order )
+      {
+	 a_Um[g].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+				     doubleField );
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
 
-	a_Um[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
-				  doubleField );
-	m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	offset += 3*npts*sizeof(float_sw4);
-
-	a_U[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
-				 doubleField );
-	m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	offset += 3*npts*sizeof(float_sw4);
-
-	for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
-	{
-	   a_AlphaVEm[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-					      mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+	 a_U[g].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+				    doubleField );
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
+	 {
+	    a_AlphaVEm[g][m].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
 					      doubleField );
-	   m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	   offset += 3*npts*sizeof(float_sw4);
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
 
-	   a_AlphaVE[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-					     mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
-					     doubleField );
-	   m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	   offset += 3*npts*sizeof(float_sw4);
-	}
+	    a_AlphaVE[g][m].extract_subarrayIK(  mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+                                              doubleField );
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	 }
+      }
+      else
+      {
+	 a_Um[g].extract_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+				  doubleField );
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+
+	 a_U[g].extract_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+				 doubleField );
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+
+	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
+	 {
+	    a_AlphaVEm[g][m].extract_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+					      doubleField );
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+
+	    a_AlphaVE[g][m].extract_subarray(  mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+                                              doubleField );
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	 }
+      }
       delete[] doubleField;
    }
    if( iwrite )
       close(fid);
-}
+} // end write_checkpoint()
 
 //-----------------------------------------------------------------------
 void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
@@ -378,7 +472,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    if( iread )
    {
       if( mRestartPathSet )
-	 s << mRestartPath;
+	 s << mRestartPath << "/";
       else if( mEW->getPath() != "./" )
 	 s << mEW->getPath();
       s << mRestartFile;
@@ -390,7 +484,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -410,7 +504,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
    if( iread && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY );
-      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint:: Error opening file: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint:: Error opening file: " << s.str() );
    }
 
    // Read data blocks.
@@ -423,42 +517,67 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
       size_t npts = ((size_t)(mGlobalDims[g][1]-mGlobalDims[g][0]+1))*
 	            ((size_t)(mGlobalDims[g][3]-mGlobalDims[g][2]+1))*
 	            ((size_t)(mGlobalDims[g][5]-mGlobalDims[g][4]+1));
-      size_t nptsloc = ((size_t)(mEW->m_iEndInt[g]-mEW->m_iStartInt[g]+1))*
-	               ((size_t)(mEW->m_jEndInt[g]-mEW->m_jStartInt[g]+1))*
-  	               ((size_t)(mEW->m_kEndInt[g]-mEW->m_kStartInt[g]+1));
+
+      // size_t nptsloc = ((size_t)(mEW->m_iEnd[g]-mEW->m_iStart[g]+1))*
+      //                  ((size_t)(mEW->m_jEnd[g]-mEW->m_jStart[g]+1))*
+      //                  ((size_t)(mEW->m_kEnd[g]-mEW->m_kStart[g]+1));
+
+      size_t nptsloc = (size_t) (mWindow[g][1] - mWindow[g][0]+1)*
+         (mWindow[g][3] - mWindow[g][2]+1)*
+         (mWindow[g][5] - mWindow[g][4]+1);
 
       if( !mEW->usingParallelFS() || g == 0 )
 	 m_parallel_io[g]->writer_barrier();      
 
-      // array without ghost points read into doubleField, 
+      // array with ghost points in k-ONLY read into doubleField, 
       float_sw4* doubleField = new float_sw4[3*nptsloc];
+      if( m_kji_order )
       {
 	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	 offset += 3*npts*sizeof(float_sw4);
-	 a_Um[g].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+	 a_Um[g].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
 				  doubleField );
 
 	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	 offset += 3*npts*sizeof(float_sw4);
-	 a_U[g].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
-				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+	 a_U[g].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
 				 doubleField );
 
 	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
 	 {
 	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	    offset += 3*npts*sizeof(float_sw4);
-	    a_AlphaVEm[g][m].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g],
-					      mEW->m_jStartInt[g], mEW->m_jEndInt[g],
-					      mEW->m_kStartInt[g], mEW->m_kEndInt[g], 
+	    a_AlphaVEm[g][m].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
 					      doubleField );
 
 	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	    offset += 3*npts*sizeof(float_sw4);
-	    a_AlphaVE[g][m].insert_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g],
-					     mEW->m_jStartInt[g], mEW->m_jEndInt[g],
-					     mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+	    a_AlphaVE[g][m].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+					     doubleField );
+	 }
+      }
+      else
+      {
+	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+	 a_Um[g].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+				  doubleField );
+
+	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+	 a_U[g].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+				 doubleField );
+
+	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
+	 {
+	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	    a_AlphaVEm[g][m].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
+					      doubleField );
+
+	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	    a_AlphaVE[g][m].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],
 					     doubleField );
 	 }
       }
@@ -476,12 +595,12 @@ float_sw4 CheckPoint::getDt()
    {
       std::stringstream s;
       if( mRestartPathSet )
-	 s << mRestartPath;
+	 s << mRestartPath << "/";
       else if( mEW->getPath() != "./" )
 	 s << mEW->getPath();
       s << mRestartFile; // string 's' is the file name including path
       int fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s.str() );
       lseek(fid,3*sizeof(int)+sizeof(float_sw4),SEEK_SET);
       size_t nr=read(fid,&dt,sizeof(float_sw4));
       CHECK_INPUT( nr == sizeof(float_sw4) ,
@@ -596,16 +715,17 @@ void CheckPoint::read_header( int& fid, float_sw4& a_time, int& a_cycle,
       CHECK_INPUT( ret == 6*sizeof(int),"CheckPoint::read_header: Error reading global sizes" );
       CHECK_INPUT( globalSize[0] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
 		   "low i-index is "<< globalSize[0]);
-      CHECK_INPUT( globalSize[1] == mGlobalDims[g][1], "CheckPoint::read_checkpoint: Error in global sizes, "
+      CHECK_INPUT( globalSize[1] == mGlobalDims[g][1]-mGlobalDims[g][0]+1, "CheckPoint::read_checkpoint: Error in global sizes, "
 		   << "upper i-index is " << globalSize[1]);
       CHECK_INPUT( globalSize[2] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
 		   "low j-index is "<< globalSize[2]);
-      CHECK_INPUT( globalSize[3] == mGlobalDims[g][3], "CheckPoint::read_checkpoint: Error in global sizes, "
+      CHECK_INPUT( globalSize[3] == mGlobalDims[g][3]-mGlobalDims[g][2]+1, "CheckPoint::read_checkpoint: Error in global sizes, "
 		   << "upper j-index is " << globalSize[3]);
       CHECK_INPUT( globalSize[4] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
 		   "low k-index is "<< globalSize[4]);
-      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5], "CheckPoint::read_checkpoint: Error in global sizes, "
-		   << "upper k-index is " << globalSize[5]);
+//      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5], "CheckPoint::read_checkpoint: Error in global sizes, "
+      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5]-mGlobalDims[g][4]+1,
+                   "CheckPoint::read_checkpoint: Error in global sizes, " << "upper k-index is " << globalSize[5]);
    }
    hsize = (4+6*ng)*sizeof(int) + 2*sizeof(float_sw4);
 }
@@ -648,6 +768,17 @@ void CheckPoint::set_restart_path( string restartPath )
 {
    mRestartPath = restartPath;
    mRestartPathSet = true;
+}
+
+//-----------------------------------------------------------------------
+std::string CheckPoint::get_restart_path()
+{
+  std::string retval;
+  if (mRestartPathSet)
+  {
+    retval = mRestartPath;
+    return retval;
+  }
 }
 
 //-----------------------------------------------------------------------

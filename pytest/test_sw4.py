@@ -138,21 +138,24 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         sw_threads = 4*omp_threads # Cori uses hyperthreading by default
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
 
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
+def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
@@ -324,7 +327,7 @@ if __name__ == "__main__":
                         help="testing level")
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
-    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
+    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
     args = parser.parse_args()
     if args.verbose:
         #print("verbose mode enabled")
