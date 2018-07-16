@@ -27,7 +27,8 @@ CheckPoint::CheckPoint( EW* a_ew ) :
    m_fileno(0),
    mDoCheckPointing(false),
    mRestartPathSet(false),
-   mDoRestart(false)
+   mDoRestart(false),
+   m_kji_order(true)
 {
 
 }
@@ -52,7 +53,8 @@ CheckPoint::CheckPoint( EW* a_ew,
    m_fileno(0),
    mDoCheckPointing(true),
    mRestartPathSet(false),
-   mDoRestart(false)
+   mDoRestart(false),
+   m_kji_order(true)
 {
    m_double = sizeof(float_sw4)==8;
 }
@@ -193,6 +195,19 @@ void CheckPoint::define_pio( )
 	    iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
+      if( m_kji_order )
+      {
+// Swap i and k on file
+	 int tmp=global[0];
+	 global[0]=global[2];
+	 global[2]=tmp;
+	 tmp=local[0];
+	 local[0]=local[2];
+	 local[2]=tmp;
+	 tmp=start[0];
+	 start[0]=start[2];
+	 start[2]=tmp;
+      }
       m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, m_bufsize );
       delete[] owners;
    }
@@ -326,32 +341,64 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       // Write without ghost points. Would probably work with ghost points too.
       float_sw4* doubleField = new float_sw4[3*nptsloc];
 
-	a_Um[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+      if( m_jik_order )
+      {
+	 a_Um[g].extract_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
 				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
 				  doubleField );
-	m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	offset += 3*npts*sizeof(float_sw4);
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
 
-	a_U[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+	 a_U[g].extract_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
 				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
 				 doubleField );
-	m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	offset += 3*npts*sizeof(float_sw4);
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
 
-	for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
-	{
-	   a_AlphaVEm[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
+	 {
+	    a_AlphaVEm[g][m].extract_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
 					      mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
 					      doubleField );
-	   m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	   offset += 3*npts*sizeof(float_sw4);
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
 
-	   a_AlphaVE[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+	    a_AlphaVE[g][m].extract_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
 					     mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
 					     doubleField );
-	   m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
-	   offset += 3*npts*sizeof(float_sw4);
-	}
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	 }
+      }
+      else
+      {
+	 a_Um[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+				  doubleField );
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+
+	 a_U[g].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+				 doubleField );
+	 m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+
+	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
+	 {
+	    a_AlphaVEm[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+					      mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+					      doubleField );
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+
+	    a_AlphaVE[g][m].extract_subarray( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+					     mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+					     doubleField );
+	    m_parallel_io[g]->write_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	 }
+      }
       delete[] doubleField;
    }
    if( iwrite )
@@ -432,6 +479,38 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
 
       // array without ghost points read into doubleField, 
       float_sw4* doubleField = new float_sw4[3*nptsloc];
+      if( m_jik_order )
+      {
+	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+	 a_Um[g].insert_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+				  doubleField );
+
+	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	 offset += 3*npts*sizeof(float_sw4);
+	 a_U[g].insert_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
+				 mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+				 doubleField );
+
+	 for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ )
+	 {
+	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	    a_AlphaVEm[g][m].insert_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g],
+					      mEW->m_jStartInt[g], mEW->m_jEndInt[g],
+					      mEW->m_kStartInt[g], mEW->m_kEndInt[g], 
+					      doubleField );
+
+	    m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
+	    offset += 3*npts*sizeof(float_sw4);
+	    a_AlphaVE[g][m].insert_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g],
+					     mEW->m_jStartInt[g], mEW->m_jEndInt[g],
+					     mEW->m_kStartInt[g], mEW->m_kEndInt[g],
+					     doubleField );
+	 }
+      }
+      else
       {
 	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	 offset += 3*npts*sizeof(float_sw4);
