@@ -173,7 +173,8 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   m_derivative(-1),
   m_is_filtered(false),
   mShearModulusFactor(correctForMu),
-  m_myPoint(false)
+  m_myPoint(false),
+  m_timeFuncIsReady(false)
 {
   mForces.resize(3);
   mForces[0] = Fx;

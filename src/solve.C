@@ -656,6 +656,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for( int g=0 ; g < mNumberOfGrids ; g++ )
      Up[g].set_to_zero();
 
+  if( m_do_geodynbc )
+     advance_geodyn_time( t+mDt );
 
 // test: compute forcing for the first time step before the loop to get started
        Force( t, F, point_sources, identsources );
@@ -686,6 +688,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        check_for_nan( F, 1, "F" );
        check_for_nan( U, 1, "U" );
     }
+    //    int idbg=11,jdbg=16,kdbg=12;
+    //    cout << " pt 1 " << U[0](1,idbg,jdbg,kdbg) << endl;
 
 // evaluate right hand side
     if( m_anisotropic )
@@ -734,11 +738,45 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( m_output_detailed_timing )
        time_measure[5] = MPI_Wtime();
 
+// Enforce data on coupling boundary to external solver
+//    Up[0].save_to_disk("up-dbg1.bin");
+    if( m_do_geodynbc )
+    {
+       if( mOrder == 2 )
+       {
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+          advance_geodyn_time( t+2*mDt );
+	  if( m_twilight_forcing )
+	     Force( t+mDt, F, point_sources, identsources );	     
+	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+       }
+       else
+       {
+	  //	  Up[0].save_to_disk("up0-dbg.bin");
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	  //	  Up[0].save_to_disk("up1-dbg.bin");
+	  if( m_twilight_forcing )
+	     Force_tt( t, F, point_sources, identsources );	     
+	  evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
+	  //	  Uacc[0].save_to_disk("uacc0-dbg.bin");
+	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+mDt, Uacc, U, 0 );
+	  geodyn_up_from_uacc( Up, Uacc, U, Um, mDt ); //copy second ghost point to Up
+	  //	  Uacc[0].save_to_disk("uacc-dbg.bin");
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+	  //	  Up[0].save_to_disk("up2-dbg.bin");
+	  //	  exit(0);
+       }
+    }
+
 // update ghost points in Up
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
        enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+
 
 // NEW
 // Impose un-coupled free surface boundary condition with visco-elastic terms
@@ -753,6 +791,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_checkfornan )
        check_for_nan( Up, 1, "U pred. " );
+    //    Up[0].save_to_disk("up-dbg4.bin");
 
 // Grid refinement interface conditions:
 // *** 2nd order in TIME
@@ -836,10 +875,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_output_detailed_timing )
           time_measure[10] = MPI_Wtime();
 
+       //    cout << "Uacc(1,14,13,10) " << Uacc[0](1,14,13,10) << endl;
+       //    cout << "Uacc(1,14,13,12) " << Uacc[0](1,14,13,12) << endl;
+       //    cout << "U(1,14,13,12) "   << U[0](1,14,13,12)   << endl;
+       //    cout << "Up(1,14,13,12) "   << Up[0](1,14,13,12)   << endl;
+       //    cout << "Um(1,14,13,12) "   << Um[0](1,14,13,12)   << endl;
+       //    Uacc[0].save_to_disk("uacc-dbg.bin");
        if( m_anisotropic )
 	  evalRHSanisotropic( Uacc, mC, Lu );
        else
 	  evalRHS( Uacc, mMu, mLambda, Lu, AlphaVEm );
+       //    cout << "Lu(1,14,13,10) " << Lu[0](1,14,13,10) << endl;
 
        if( m_output_detailed_timing )
           time_measure[11] = MPI_Wtime();
@@ -849,6 +895,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        
        if( m_checkfornan )
 	  check_for_nan( Lu, 1, "L(uacc) " );
+
 
        evalCorrector( Up, mRho, Lu, F );
 
@@ -877,6 +924,27 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_output_detailed_timing )
           time_measure[14] = MPI_Wtime();
 
+       if( m_do_geodynbc )
+       {
+	  //     	  Up[0].save_to_disk("up0-dbg.bin");
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	  //     	  Up[0].save_to_disk("up1-dbg.bin");
+          advance_geodyn_time( t+2*mDt );
+	  if( m_twilight_forcing )
+	     Force( t+mDt, F, point_sources, identsources );	     
+	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
+	  //     	  Up[0].save_to_disk("up2-dbg.bin");
+	  //	  exit(0);
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+	  // The free surface boundary conditions below will overwrite the
+	  // ghost point above the free surface of the geodyn cube.
+	  // This is a problem with the fourth order predictor-corrector time stepping
+	  // because L(Uacc) = L( (Up-2*U+Um)/(dt*dt)) depends on the ghost point value at U, 
+	  // The corrector first sets correct ghost value on Up, but it is not enough,
+	  // also the previous times, U,Um need to have the correct ghost point value.
+	  save_geoghost( Up );
+       }
 // calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
@@ -887,6 +955,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        else
 	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
 
+       //            	  Up[0].save_to_disk("up3-dbg.bin");
+       //       	  exit(0);
 // NEW (Apr. 4, 2017)
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
        if( m_use_attenuation && (m_number_mechanisms > 0) )
@@ -918,6 +988,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
        
+       if( m_do_geodynbc )
+	  restore_geoghost(Up);
+
     }// end if mOrder == 4
     
     if( m_checkfornan )
@@ -1108,6 +1181,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
       if ( proc_zero() )
       {         
+ //	 cout << "\n Final solution errors: Linf = " << errInf << ", L2 = " << errL2 << endl;
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
 
 // output time, Linf-err, Linf-sol-err

@@ -243,7 +243,6 @@ void CheckPoint::define_pio( )
 	    iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-// tmp
       if( m_kji_order )
       {
 // Swap i and k on file
