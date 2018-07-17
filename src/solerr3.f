@@ -80,9 +80,11 @@ c exact solution in array 'uex'
                if( li.lt.max(err(1),err(2),err(3)) )then
                   li = max(err(1),err(2),err(3))
                endif
-               if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
-     +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
-
+               if( xli.lt.max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                        ABS(uex(3,i,j,k)) ) )then
+                  xli = max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                        ABS(uex(3,i,j,k)))
+               endif
                l2 = l2 + 
      +              h*h*h* (err(1)**2 + err(2)**2 + err(3)**2)
             endif
@@ -210,9 +212,11 @@ c exact solution in array 'uex'
                if( li.lt.max(err(1),err(2),err(3)) )then
                   li = max(err(1),err(2),err(3))
                endif
-               if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
-     +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
-
+               if( xli.lt.max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                        ABS(uex(3,i,j,k))) )then
+                  xli = max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                      ABS(uex(3,i,j,k)))
+               endif
                if( usesg.ne.1 )then
                   l2 = l2 + 
      +              jac(i,j,k)*(err(1)**2 + err(2)**2 + err(3)**2)
