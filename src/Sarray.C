@@ -909,6 +909,7 @@ void Sarray::save_to_disk( const char* fname )
 //-----------------------------------------------------------------------
 void Sarray::assign( const float* ar, int corder )
 {
+ std:cout<<"WARNING:: Float version of Sarray::assign not offloaded \n";
    if( corder == m_corder || corder == -1 )
    {
       // Both arrays in the same order
@@ -1200,3 +1201,29 @@ void SarrayVectorPrefetch(vector<Sarray*> &v,int n){
   for(int i=0;i<v.size();i++) for(int j=0;j<n;j++) v[i][j].prefetch();
 }
 
+typedef std::tuple<uintptr_t,int,int,int,int> mkey_t;
+
+struct key_hash : public std::unary_function<mkey_t, std::size_t>
+{
+  std::size_t operator()(const mkey_t& k) const
+  {
+    return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k)^ std::get<3>(k)^ std::get<4>(k);
+      }
+};
+float_sw4* memoize(Sarray &u , int c, int i, int j, int k){
+  static std::unordered_map<std::tuple<uintptr_t,int,int,int,int>,float_sw4*,key_hash> map;
+  static int fc=0;
+  static int nfc=0;
+  auto index = std::make_tuple((uintptr_t)u.c_ptr(),c,i,j,k);
+  auto found = map.find(index);
+  //std::cout<<" Stats "<<fc<<" "<<nfc<<"\n";
+  if (found!=map.end()){
+    fc++;
+    return found->second;
+  } else {
+    auto retval = &u(c,i,j,k);
+    map[index] = retval;
+    nfc++;
+    return retval;
+  }
+}

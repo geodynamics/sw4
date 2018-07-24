@@ -6,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <unordered_map>
+#include <tuple>
 
 #if defined(ENABLE_CUDA)
 #include "cuda_runtime.h"

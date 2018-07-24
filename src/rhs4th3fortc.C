@@ -2400,10 +2400,11 @@ void ve_bndry_stress_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			       int nz,  float_sw4* __restrict__ a_alphap,
 			       float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
 			       float_sw4* __restrict__ a_bforcerhs, float_sw4* __restrict__ a_met,
-			       int side, float_sw4 sbop[6], int usesg, float_sw4* __restrict__ a_strx,
+			       int side, float_sw4*__restrict__ sbop, int usesg, float_sw4* __restrict__ a_strx,
 			       float_sw4* __restrict__ a_stry )
 {
 SW4_MARK_FUNCTION;
+ SW4_MARK_BEGIN("HOST CODE");
 #define alphap(c,i,j,k) a_alphap[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 #define muve(i,j,k) a_muve[base+i+ni*(j)+nij*(k)]
 #define lave(i,j,k) a_lave[base+i+ni*(j)+nij*(k)]
@@ -2445,20 +2446,35 @@ SW4_MARK_FUNCTION;
 // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 // 	 {
 #ifdef ENABLE_CUDA
-	   using LOCAL_POL = 
+	   using LOCAL_POL_ORIG= 
 	   RAJA::KernelPolicy< 
 	   RAJA::statement::CudaKernel<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
+
+	   using LOCAL_POL = 
+	     RAJA::KernelPolicy< 
+	     RAJA::statement::CudaKernel<
+	       RAJA::statement::For<0, RAJA::cuda_block_exec, 
+				    RAJA::statement::For<1, RAJA::cuda_block_exec, 
+								      RAJA::statement::Lambda<0> >>>>;
 #else
 	   using LOCAL_POL = DEFAULT_LOOP2;
 #endif
 	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
+	    SW4_MARK_END("HOST CODE");
+#define NO_COLLAPSE 1 
+#ifdef NO_COLLAPSE
+	    Range<16> I(ifirst+2,ilast-1);
+	    Range<4>J(jfirst+2,jlast-1);
+	    forall2(I,J,[=]RAJA_DEVICE(int i,int j){
+#else
 	    RAJA::kernel<LOCAL_POL>(
 			    RAJA::make_tuple(j_range,i_range),
 			    [=]RAJA_DEVICE (int j,int i) {
+#endif
 			      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
             if( usesg== 1 )
 	    {
@@ -2575,7 +2591,7 @@ SW4_MARK_FUNCTION;
 void att_free_curvi_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
 		     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_bforcerhs,
-		     float_sw4* __restrict__ a_met, float_sw4 sbop[6], int usesg,
+		     float_sw4* __restrict__ a_met, float_sw4* __restrict__ sbop, int usesg,
 		     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry )
 {
 SW4_MARK_FUNCTION;

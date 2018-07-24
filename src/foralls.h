@@ -131,3 +131,22 @@ void forall3GS(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
   forall3gskernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
   cudaDeviceSynchronize();
 }
+
+// Forall2 
+
+template<typename Func>
+__global__ void forall2kernel(const int start0,const int N0,const int start1,const int N1,Func f){
+  int tid0=start0+threadIdx.x+blockIdx.x*blockDim.x;
+  int tid1=start1+threadIdx.y+blockIdx.y*blockDim.y;
+  if  ((tid0<N0) &&(tid1<N1)) f(tid0,tid1);
+}
+
+template<typename T1, typename T2, typename LoopBody>
+void forall2(T1 &irange, T2 &jrange, LoopBody &&body){
+  
+  dim3 tpb(irange.tpb,jrange.tpb,1);
+  dim3 blocks(irange.blocks,jrange.blocks,1);
+  
+  forall2kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,body);
+  cudaDeviceSynchronize();
+}

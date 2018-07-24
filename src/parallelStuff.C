@@ -496,6 +496,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int ytag1 = 347;
    int ytag2 = 348;
    communicate_array_2d_async( u, g, k );
+   //communicate_array_2d_async_memo( u, g, k ); // Memoized version to avoid possible page fault 
    return;
 
    if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
@@ -1064,6 +1065,76 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
 		 m_cartesian_communicator, &status );
    AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
 		 &u(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
+		  bufs_type_2dy[g],
+		 m_cartesian_communicator, &status );
+   SW4_MARK_END("comm_array_2d_async::MPI-2");
+   }
+}
+
+
+void EW::communicate_array_2d_async_memo( Sarray& u, int g, int k )
+{
+  SW4_MARK_FUNCTION;
+   REQUIRE2( u.m_nc == 3, "Communicate array 2d, only implemented for three-component arrays" );
+   REQUIRE2( g < m_send_type_2dx.size(), "Communicate array 2d, only implemented for grid=0.." << m_send_type_2dx.size()-1
+	     << " but g= " << g);
+   int ie = m_iEnd[g], ib=m_iStart[g];
+   int je = m_jEnd[g], jb=m_jStart[g];
+
+   MPI_Status status;
+   int xtag1 = 345;
+   int xtag2 = 346;
+   int ytag1 = 347;
+   int ytag2 = 348;
+
+   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
+   {
+     SW4_MARK_BEGIN("comm_array_2d_async::ALLOC");
+     Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k,__FILE__,__LINE__);
+      SW4_MARK_END("comm_array_2d_async::ALLOC");
+      u2d.copy_kplane(u,k);
+      SW4_MARK_BEGIN("comm_array_2d_async::MPI-1");
+      // X-direction communication
+      AMPI_Sendrecv( memoize(u2d,1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
+		     memoize(u2d,1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
+		    bufs_type_2dx[g],
+		    m_cartesian_communicator, &status );
+      AMPI_Sendrecv( memoize(u2d,1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
+		     memoize(u2d,1,ie-(m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag2,
+		     bufs_type_2dx[g],
+		    m_cartesian_communicator, &status );
+      // Y-direction communication
+      AMPI_Sendrecv( memoize(u2d,1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
+		     memoize(u2d,1,ib,jb,k), 1, send_type_2dy[g], m_neighbor[2], ytag1,
+		     bufs_type_2dy[g],
+		    m_cartesian_communicator, &status );
+      AMPI_Sendrecv( memoize(u2d,1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
+		     memoize(u2d,1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
+		     bufs_type_2dy[g],
+		    m_cartesian_communicator, &status );
+      SW4_MARK_END("comm_array_2d_async::MPI-1");
+      u.copy_kplane(u2d,k);
+   }
+   else
+   {
+      // X-direction communication
+     SW4_MARK_BEGIN("comm_array_2d_async::MPI-2");
+     AMPI_Sendrecv( memoize(u,1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
+		    memoize(u,1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
+		  bufs_type_2dx[g],
+		 m_cartesian_communicator, &status );
+   AMPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
+		  memoize(u,1,ie-(m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag2,
+		  bufs_type_2dx[g],
+		 m_cartesian_communicator, &status );
+
+      // Y-direction communication
+   AMPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
+		  memoize(u,1,ib,jb,k), 1, send_type_2dy[g], m_neighbor[2], ytag1,
+		   bufs_type_2dy[g],
+		 m_cartesian_communicator, &status );
+   AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
+		  memoize(u,1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
 		  bufs_type_2dy[g],
 		 m_cartesian_communicator, &status );
    SW4_MARK_END("comm_array_2d_async::MPI-2");

@@ -1461,6 +1461,7 @@ SW4_MARK_FUNCTION;
       Sarray Bc(3,ibc,iec,jbc,jec,kc,kc,__FILE__,__LINE__);
       Unextf.set_to_zero();
       Bf.set_to_zero();
+      //std::cout<<"BF ARRAY "<<Bf.c_ptr()<<"\n";
       Unextc.set_to_zero();
       Bc.set_to_zero();
 // to compute the corrector we need the acceleration in the vicinity of the interface
@@ -1959,45 +1960,74 @@ SW4_MARK_FUNCTION;
    //
    // set adj= 0 for ghost pts + boundary pt
    //          1 for only ghost pts.
-
+ 
    int kdb=U.m_kb, kde=U.m_ke;
+   SView &Uv= U.getview();
    if( !m_twilight_forcing )
    {
       if( m_iStartInt[g] == 1 )
       {
 	 // low i-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iStart[g] ; i <= 1-adj ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jStart[g] ,m_jEnd[g]+1);
+	RAJA::RangeSegment i_range(m_iStart[g] ,1-adj+1);
+	RAJA::RangeSegment c_range(1,U.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Uv(c,i,j,kic)=0;});
+// #pragma omp parallel for
+// 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+// 	    for( int i=m_iStart[g] ; i <= 1-adj ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,kic) = 0;
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
 	 // high i-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jStart[g] ,m_jEnd[g]+1);
+	RAJA::RangeSegment i_range(m_iEndInt[g]+adj ,m_iEnd[g]+1);
+	RAJA::RangeSegment c_range(1,U.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Uv(c,i,j,kic)=0;});
+// #pragma omp parallel for
+// 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+// 	    for( int i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,kic) = 0;
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= 1-adj ; j++ )
-	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jStart[g] ,1-adj +1);
+	RAJA::RangeSegment i_range(m_iStart[g] ,m_iEnd[g] +1 );
+	RAJA::RangeSegment c_range(1,U.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Uv(c,i,j,kic)=0;});
+// #pragma omp parallel for
+// 	 for( int j=m_jStart[g] ; j <= 1-adj ; j++ )
+// 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,kic) = 0;
       }
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
-#pragma omp parallel for
-	 for( int j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= U.m_nc ; c++ )
-		  U(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jEndInt[g]+adj ,m_jEnd[g]+1);
+	RAJA::RangeSegment i_range(m_iStart[g] ,m_iEnd[g] +1 );
+	RAJA::RangeSegment c_range(1,U.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Uv(c,i,j,kic)=0;});
+// #pragma omp parallel for
+// 	 for( int j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
+// 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= U.m_nc ; c++ )
+// 		  U(c,i,j,kic) = 0;
       }
    }
    else
@@ -4212,7 +4242,7 @@ SW4_MARK_FUNCTION;
          ASSERT_MANAGED(m_sbop_no_gp);
 	 int ni = (ilast-ifirst+1);
          int m_number_mechanisms_local = m_number_mechanisms; // Because the lambda does not capture member arrays and variables.
-	 float_sw4*lm_sbop = m_sbop; // Because the lambda does not capture member arrays and variables.
+	 float_sw4* lm_sbop = m_sbop; // Because the lambda does not capture member arrays and variables.
 	 float_sw4* lm_sbop_no_gp = m_sbop_no_gp; // Because the lambda does not capture member arrays and variables.
 	 //#pragma omp parallel
 	 {
@@ -4432,9 +4462,12 @@ SW4_MARK_FUNCTION;
 
          for( int a = 0 ; a < m_number_mechanisms ; a++ )
          {
+	   SW4_MARK_BEGIN("CPTR");
             float_sw4* mu_ve_p   = mMuVE[g][a].c_ptr();
             float_sw4* lave_p   = mLambdaVE[g][a].c_ptr();
             float_sw4* alphap_p = a_AlphaVEp[g][a].c_ptr();
+	    SW4_MARK_END("CPTR");
+	    //std::cout<<"Pointers "<<mu_ve_p<<" "<<lave_p<<" "<<alphap_p<<"\n";
             // This function adds the visco-elastic boundary stresses to bforcerhs
 	    if(  m_croutines )
 	       ve_bndry_stress_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,

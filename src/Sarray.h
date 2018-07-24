@@ -42,6 +42,8 @@
 #include "sw4.h"
 #include "Mspace.h"
 #include "policies.h"
+#include <cstdlib>
+
 using std::string;
 
 class EWCuda;
@@ -208,4 +210,6 @@ private:
 void SarrayVectorPrefetch(std::vector<Sarray> &v);
 void SarrayVectorPrefetch(std::vector<Sarray*> &v);
 void SarrayVectorPrefetch(std::vector<Sarray*> &v,int n);
+
+float_sw4* memoize(Sarray &u, int c,int i, int j, int k);
 #endif
