@@ -4,6 +4,21 @@
 struct global_variable_holder_struct global_variables = { .gpu_memory_hwm=0 , .curr_mem=0, .max_mem = 0 };
 using namespace std;
 
+
+void presetGPUID(){
+  const int devices_per_node=4;
+  char *crank=getenv("OMPI_COMM_WORLD_LOCAL_RANK");
+  int device=atoi(crank)%devices_per_node;
+   printf(" presetGPU Called ::  LOCAL RANK %d \n",device);
+   SW4_CheckDeviceError(cudaSetDevice(device));
+   char uuid[80];
+   if (nvmlInit()!=NVML_SUCCESS) printf("NVML INIT CALL FAILED\n");
+   nvmlDevice_t nvdev;
+   if (nvmlDeviceGetHandleByIndex(device,&nvdev)!=NVML_SUCCESS) printf("NVML GetHandleByIndex CALL FAILED\n");
+   if (nvmlDeviceGetUUID (nvdev,uuid,80)!=NVML_SUCCESS) printf("UUID CALL FAILED\n");
+   if (nvmlDeviceSetCpuAffinity(nvdev)!=NVML_SUCCESS) printf("NVML SET CPU AFFINITY FAILED \n"); else printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
+}
+  
 typedef struct {
   const char *file;
   int line;

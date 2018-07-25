@@ -69,7 +69,7 @@ main(int argc, char **argv)
   bool checkmode = false;
 
   stringstream reason;
-
+  presetGPUID();
   // Initialize MPI...
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);

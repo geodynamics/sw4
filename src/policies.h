@@ -57,7 +57,7 @@ using ICSTRESS_EXEC_POL =
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
   RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
-		       RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 					    RAJA::statement::Lambda<0> >>>>;
 
 

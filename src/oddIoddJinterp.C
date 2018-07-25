@@ -340,7 +340,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 						 RAJA::statement::For<0, RAJA::cuda_thread_exec,
 								      RAJA::statement::Lambda<0> >>>>;
   // Policy ODDIODDJ_EXEC_POL1 is slighly faster than LOCAL_EXEC_POL 73 vs 85 ms
-
+  SW4_MARK_BEGIN("OddIOddJLOOP 1");
   RAJA::kernel<ODDIODDJ_EXEC_POL1>(
   		       RAJA::make_tuple(j_range,i_range),
   		       [=]RAJA_DEVICE(int jc,int ic) {
@@ -504,7 +504,9 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       // rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
       
 		       }); // end for ic, jc
-			 SYNC_STREAM;
+  SYNC_STREAM;
+			 SW4_MARK_END("OddIOddJLOOP 1");
+			 SW4_MARK_BEGIN("OddIOddJLOOP 2");
 // update Uf and Uc
 // #pragma omp parallel
 //   for( int c=1 ; c <= 3 ; c++ ) 
@@ -527,6 +529,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 	Uc(c,ic,jc,0) = UcNew(c,ic,jc,0);
 		       });
   SYNC_STREAM;
+  SW4_MARK_END("OddIOddJLOOP 2");
   rmax[0] = static_cast<float_sw4>(rmax1.get());
   rmax[1] = static_cast<float_sw4>(rmax2.get());
   rmax[2] = static_cast<float_sw4>(rmax3.get());
