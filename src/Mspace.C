@@ -6,7 +6,9 @@ using namespace std;
 
 
 void presetGPUID(){
-  const int devices_per_node=4;
+  int devices_per_node=4;
+   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
+  if (devices_per_node>1){
   char *crank=getenv("OMPI_COMM_WORLD_LOCAL_RANK");
   int device=atoi(crank)%devices_per_node;
    printf(" presetGPU Called ::  LOCAL RANK %d \n",device);
@@ -17,6 +19,7 @@ void presetGPUID(){
    if (nvmlDeviceGetHandleByIndex(device,&nvdev)!=NVML_SUCCESS) printf("NVML GetHandleByIndex CALL FAILED\n");
    if (nvmlDeviceGetUUID (nvdev,uuid,80)!=NVML_SUCCESS) printf("UUID CALL FAILED\n");
    if (nvmlDeviceSetCpuAffinity(nvdev)!=NVML_SUCCESS) printf("NVML SET CPU AFFINITY FAILED \n"); else printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
+}
 }
   
 typedef struct {
