@@ -124,7 +124,7 @@ if (loc==Managed){
       check_mem();
       global_variables.curr_mem+=size;
       global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
-      //SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+     /// SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
       return ptr;
     }
     

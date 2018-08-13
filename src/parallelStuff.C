@@ -960,11 +960,15 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   //PREFETCH(buf);
   //forall(0,count,[=] RAJA_DEVICE(int i){
   //RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
+
+  // Messages are greater than 2K for Hayward h=200 on 16 ranks.
+  // for larger messages, host copy is slower.
+  //if (bl*count*8>2048){
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
-  RAJA::statement::For<0, RAJA::cuda_block_exec, 
-  RAJA::statement::For<1, RAJA::cuda_thread_exec,
+  RAJA::statement::For<1, RAJA::cuda_block_exec, 
+  RAJA::statement::For<0, RAJA::cuda_thread_exec,
 		       RAJA::statement::Lambda<0> >>>>;
   RAJA::RangeSegment k_range(0,bl);
   RAJA::RangeSegment i_range(0,count);
@@ -975,6 +979,10 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   });
 
   SYNC_STREAM;
+  // } else {
+  //   std::cout<<bl*count*8<<"\ bytes n";
+  //   for(int i=0;i<count;i++) for(int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
+  // }
   //std::cout<<"Done\n";
 }
 void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
@@ -987,8 +995,8 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
     RAJA::statement::CudaKernel<
-      RAJA::statement::For<0, RAJA::cuda_block_exec, 
-			   RAJA::statement::For<1, RAJA::cuda_thread_exec,
+      RAJA::statement::For<1, RAJA::cuda_block_exec, 
+			   RAJA::statement::For<0, RAJA::cuda_thread_exec,
 						RAJA::statement::Lambda<0> >>>>;
   RAJA::RangeSegment k_range(0,bl);
   RAJA::RangeSegment i_range(0,count);
