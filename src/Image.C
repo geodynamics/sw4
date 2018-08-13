@@ -384,9 +384,9 @@ bool Image::plane_in_proc( int a_gridIndexCoarsest)
 
 
 //-------------------------------------
-void Image::initializeTime()
+void Image::initializeTime(double t)
 {
-  mNextTime = 0.; 
+  mNextTime = t; 
   m_time_done = false;
 // with the option timeInterval=..., first time is always t=0
 }

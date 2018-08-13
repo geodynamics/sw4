@@ -277,15 +277,45 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   float_sw4 t;
   if( m_check_point->do_restart() )
   {
+     double timeRestartBegin = MPI_Wtime();
      m_check_point->read_checkpoint( t, beginCycle, Um, U,
 				     AlphaVEm, AlphaVE );
-      // Restart data have undefined ghost point values,
-      // no need to enforce BC here, it is done further down in this function.
-     beginCycle++;
+// tmp
+     if (proc_zero())
+        printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle, t);
+// end tmp     
+
+     // Make sure the TimeSeries output has the correct time shift,
+     // and know's it's a restart
+     double timeSeriesRestartBegin = MPI_Wtime();
+     for (int ts=0; ts<a_TimeSeries.size(); ts++)
+     {
+       a_TimeSeries[ts]->doRestart(this, false, t, beginCycle);
+     }
+     double timeSeriesRestart = MPI_Wtime() - timeSeriesRestartBegin;
+     if( proc_zero() && m_output_detailed_timing )
+     {
+        cout << "Wallclock time to read checkpoint file: " << timeSeriesRestartBegin-timeRestartBegin << " seconds " << endl;
+        cout << "Wallclock time to read " << a_TimeSeries.size() << " sets of station files: " << timeSeriesRestart << " seconds " << endl;
+     }
+
+// Reset image time to the time corresponding to restart
+#pragma omp parallel for
+  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+     mImageFiles[fIndex]->initializeTime(t);
+   
+
+
+     // Restart data is defined at ghost point outside physical boundaries, still
+     // need to communicate solution arrays to define it a parallel overlap points
+     beginCycle++; // needs to be one step ahead of 't', see comment 5 lines below
   }
   else
   {
-     beginCycle = 1;
+// NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
+// However, the time variable 't' is incremented at the end of the time stepping loop. Thus the time step index is one step
+// ahead of 't' at the start.
+     beginCycle = 1; 
      t = mTstart;
      initialData(mTstart, U, AlphaVE);
      initialData(mTstart-mDt, Um, AlphaVEm );
@@ -400,6 +430,26 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     delete[] highZ;
   } // end m_twilight_forcing    
 
+// after checkpoint restart, we must communicate the memory variables
+  if(  m_check_point->do_restart() && m_use_attenuation && (m_number_mechanisms > 0) )
+  {
+// AlphaVE
+// communicate across processor boundaries
+     for(int g=0 ; g < mNumberOfGrids ; g++ )
+     {
+        for(int m=0 ; m < m_number_mechanisms; m++ )
+           communicate_array( AlphaVE[g][m], g );
+     }
+// AlphaVEm
+// communicate across processor boundaries
+     for(int g=0 ; g < mNumberOfGrids ; g++ )
+     {
+        for(int m=0 ; m < m_number_mechanisms; m++ )
+           communicate_array( AlphaVEm[g][m], g );
+     }
+  } // end if checkpoint restarting
+  
+
 // enforce bc on initial data
 // U
 // communicate across processor boundaries
@@ -453,25 +503,57 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      enforceBCfreeAtt2( Um, mMu, mLambda, AlphaVEm, BCForcing );
   }
 
-  //    Um[0].save_to_disk("um-dbg0-bc.bin");
-  //    Um[1].save_to_disk("um-dbg1-bc.bin");
-    //    exit(0);
-  if (m_twilight_forcing && getVerbosity()>=3)
-  {
+
 // more testing
+  if (m_twilight_forcing && m_check_point->do_restart() && getVerbosity()>=3)
+  {
     if ( proc_zero() )
-    {
-      printf("Checking the accuracy of the initial data\n");
-    }
+      printf("Checking the accuracy of the checkpoint data\n");
 
 // check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
-    exactSol( t, Up, AlphaVE, a_Sources );
-    float_sw4 errInf, errL2;
+    float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
+    exactSol( t, Up, AlphaVEp, a_Sources );
 
-    normOfDifferenceGhostPoints( Up, U, errInf, errL2 );
+    normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
+
     if ( proc_zero() )
-      printf("\n Ghost point errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-  }
+       printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+    if( m_use_attenuation )
+    {
+       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
+          A[g].copy(AlphaVE[g][0]);
+       }
+       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
+       if ( proc_zero() )
+          printf(" Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    }
+    
+// Now check Um and AlpphaVEm
+    exactSol( t-mDt, Up, AlphaVEp, a_Sources );
+
+    normOfDifference( Up, Um, errInf, errL2, solInf, a_Sources );
+
+    if ( proc_zero() )
+       printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+    if( m_use_attenuation )
+    {
+       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
+          A[g].copy(AlphaVEm[g][0]);
+       }
+       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
+       if ( proc_zero() )
+          printf(" Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    }
+  } // end if twilight testing
+  
 
 // test if the spatial operator is self-adjoint (only works without mesh refinement)
   if (m_energy_test && getVerbosity() >= 1 && getNumberOfGrids() == 1)
@@ -535,10 +617,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
   }
 
-// save any images for cycle = 0 (initial data) ?
-  update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
+// save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
+  update_images( beginCycle-1, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
+    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
   FILE *lf=NULL;
 // open file for saving norm of error
@@ -605,15 +687,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 
 // test: compute forcing for the first time step before the loop to get started
-  Force( t, F, point_sources, identsources );
-       
-  // Force( t+mDt, F, point_sources, identsources );
-  //      for( int g=0 ; g < mNumberOfGrids ; g++ )
-  //      	 F[g].getnonzero();
-  //      std::cout<<"USING THE GPU\n";
-  //      ForceX( t+mDt, F, point_sources, identsources );
-  //      for( int g=0 ; g < mNumberOfGrids ; g++ )
-  //      	 F[g].getnonzero();
+       Force( t, F, point_sources, identsources );
 // end test
 
 // BEGIN TIME STEPPING LOOP
@@ -942,12 +1016,27 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
        if( mVerbose >= 2 )
+
        {
 	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
 	  if( m_myRank == 0 )
-	     cout << "Cpu time to write check point file " << time_chkpt << " seconds " << endl;
+	     cout << "Wallclock time to write check point file " << time_chkpt << " seconds " << endl;
        }
-    }
+       // Force write all the TimeSeries files for restart
+       double time_chkpt_timeseries=MPI_Wtime();
+       for (int ts=0; ts<a_TimeSeries.size(); ts++)
+       {
+         a_TimeSeries[ts]->writeFile();
+       }
+	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
+       if( m_output_detailed_timing )
+       {
+	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	        if( m_myRank == 0 )
+	          cout << "Wallclock time to write all checkpoint time series files "
+              << time_chkpt_timeseries << " seconds " << endl;
+       }
+   }
 
 // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_output_detailed_timing )
@@ -1722,6 +1811,7 @@ void EW::check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc
    float_sw4 pcim  = (9*(Uc(c,ic,jc-1,kc)+Uc(c,ic+1,jc-1,kc))-(Uc(c,ic-1,jc-1,kc)+Uc(c,ic+2,jc-1,kc)))/16;
    float_sw4 pcip  = (9*(Uc(c,ic,jc+1,kc)+Uc(c,ic+1,jc+1,kc))-(Uc(c,ic-1,jc+1,kc)+Uc(c,ic+2,jc+1,kc)))/16;
    float_sw4 pcipp = (9*(Uc(c,ic,jc+2,kc)+Uc(c,ic+1,jc+2,kc))-(Uc(c,ic-1,jc+2,kc)+Uc(c,ic+2,jc+2,kc)))/16;
+
    //float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
 
    float_sw4 pcj = (9*(Uc(c,ic,jc,kc)+Uc(c,ic,jc+1,kc))-(Uc(c,ic,jc-1,kc)+Uc(c,ic,jc+2,kc)))/16;
@@ -1960,7 +2050,7 @@ SW4_MARK_FUNCTION;
    //
    // set adj= 0 for ghost pts + boundary pt
    //          1 for only ghost pts.
- 
+
    int kdb=U.m_kb, kde=U.m_ke;
    SView &Uv= U.getview();
    if( !m_twilight_forcing )
@@ -2111,7 +2201,9 @@ SW4_MARK_FUNCTION;
    // set adj= 0 for ghost pts + boundary pt
    //          1 for only ghost pts.
 
+
    //int kdb=B.m_kb, kde=B.m_ke;
+
 //   printf("dirichlet_LRstress> kdb=%d, kde=%d\n", kdb, kde);
    
    if( !m_twilight_forcing )
@@ -3030,7 +3122,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       // need to store all the phase angle constants somewhere
       for (int i=0; i<21; i++)
          phc[i] = i*10*M_PI/180;
- 
+
 // the following code can probably be improved by introducing a loop over all sides,
 // but bStressFree is only implemented for side=4 and 5, so there must be some special cases
       int k = 1;
@@ -3397,13 +3489,15 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
             } // end ! supergrid
             
          } // end isotropic case
+
 	 SW4_MARK_END("LOOP5");
+
       } // end bStressFree on side 5
 
     }
     else if (m_rayleigh_wave_test)
     {
-  
+
       int q;
       float_sw4 lambda, mu, rho, cr, omega, alpha;
       

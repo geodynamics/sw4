@@ -39,6 +39,7 @@ public:
    bool do_checkpointing();
    bool do_restart();
    void set_restart_path( string restartPath );
+   std::string get_restart_path();
 
 protected:
    void define_pio( );
@@ -72,6 +73,7 @@ private:
    CheckPoint(const CheckPoint &cp ); // hide copy constructor 
    int mPreceedZeros; // number of digits for unique time step in file names
    bool m_double;
+   bool m_kji_order;
    EW* mEW;
    Parallel_IO** m_parallel_io;
    std::vector<int*> mWindow; // Local in processor start + end indices for (i,j,k) for each grid level

@@ -169,8 +169,11 @@ public:
    size_t check_match_cpu_gpu( EWCuda* cu, string name );
    size_t check_match_cpu_gpu( EWCuda* cu,  int& cfirst, int& ifirst, int& jfirst, int& kfirst, string name );
    void extract_subarray( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
+   void extract_subarrayIK( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
+
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
+   void insert_subarrayIK( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
    void copy_kplane( Sarray& u, int k );
    void assign( const float* ar, int corder );
    void assign(  const double* ar, int corder );

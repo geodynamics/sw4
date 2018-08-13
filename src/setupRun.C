@@ -297,7 +297,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 //  int beginCycle = 1;
 
 // Initialize IO
-  create_output_directory( );
+  create_directory(mPath);
 
   if (proc_zero())
   {
@@ -364,7 +364,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 // form combinations of material coefficients for MR
   setup_MR_coefficients();
-  
+
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
 
@@ -1378,18 +1378,18 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
 }
 
 //-----------------------------------------------------------------------
-void EW::create_output_directory( )
+void EW::create_directory(const string& path)
 {
    if (proc_zero()) 
    {
 
      cout << "----------------------------------------------------" << endl
-	  << " Making Output Directory: " << mPath << endl
+	  << " Making Directory: " << path << endl
 	  << "\t\t" << endl;
 
       // Create directory where all these files will be written.
 
-      int err = mkdirs(mPath);
+      int err = mkdirs(path);
 
       if (err == 0)
 	cout << "... Done!" << endl
@@ -1397,15 +1397,15 @@ void EW::create_output_directory( )
       else
       {
 // fatal error
-	cerr << endl << "******** Failed to create the output directory *******" << endl << endl;
+	cerr << endl << "******** Failed to create the directory *******" << endl << endl;
 	MPI_Abort(MPI_COMM_WORLD,1);
       }
 
 // check that we have write permission on the directory
-      if (access(mPath.c_str(),W_OK)!=0)
+      if (access(path.c_str(),W_OK)!=0)
       {
 // fatal error
-	cerr << endl << "Error: No write permission on output directory: " << mPath << endl;
+	cerr << endl << "Error: No write permission on directory: " << path << endl;
 	MPI_Abort(MPI_COMM_WORLD,1);
       }
       
@@ -1414,14 +1414,19 @@ void EW::create_output_directory( )
    cout.flush();  cerr.flush();
    MPI_Barrier(MPI_COMM_WORLD);
 
-// Check that the mPath directory exists from all processes
-   struct stat statBuf;
-   int statErr = stat(mPath.c_str(), &statBuf);
-   CHECK_INPUT(statErr == 0 && S_ISDIR(statBuf.st_mode), "Error: " << mPath << " is not a directory" << endl);
+//
+// AP: The following stat() and access() calls appear unneccessary because
+// a) not all processes need to interact with the file system
+// b) why would a directory only be accessible from proc=0 ?
+//
+// Check that the path directory exists from all processes (NB: Only a few of the processes need access)
+//    struct stat statBuf;
+//    int statErr = stat(path.c_str(), &statBuf);
+//    CHECK_INPUT(statErr == 0 && S_ISDIR(statBuf.st_mode), "Error: " << path << " is not a directory" << endl);
    
-// check that all processes have write permission on the directory
-   CHECK_INPUT(access(mPath.c_str(),W_OK)==0,
-	   "Error: No write permission on output directory: " << mPath << endl);
+// // check that all processes have write permission on the directory
+//    CHECK_INPUT(access(path.c_str(),W_OK)==0,
+// 	   "Error: No write permission on directory: " << path << endl);
 }
 
 //-----------------------------------------------------------------------

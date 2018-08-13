@@ -97,6 +97,8 @@ void print_timeinfo() const;
 void set_window( float_sw4 winl, float_sw4 winr );
 void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
+void isRestart();
+void doRestart( EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle );
 void set_shift( float_sw4 shift );
 float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
@@ -116,7 +118,7 @@ private:
 TimeSeries();
 void write_usgs_format( string a_fileName);
 void write_sac_format( int npts, char *ofile, float *y, float btime, float dt, char *var,
-		       float cmpinc, float cmpaz);
+		       float cmpinc, float cmpaz, bool makeCopy=false);
 float_sw4 utc_distance( int utc1[7], int utc2[7] );
 void dayinc( int date[7] );
 int lastofmonth( int year, int month );
@@ -195,6 +197,9 @@ float_sw4 m_scalefactor;
 
 // quiet mode?
    bool mQuietMode;
+
+// does this continue time series after restart?
+   bool mIsRestart;
 
 // pointer to EW object
    EW * m_ew;
