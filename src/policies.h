@@ -171,7 +171,12 @@ using ENERGY4CI_EXEC_POL =  RHS4_EXEC_POL;
 // /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install_nomp/include/RAJA/policy/cuda/MemUtils_CUDA.hpp 216
 
 
-using ODDIODDJ_EXEC_POL1 = ICSTRESS_EXEC_POL;
+using ODDIODDJ_EXEC_POL1 = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
+  RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+					    RAJA::statement::Lambda<0> >>>>;
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>>, 
@@ -214,7 +219,7 @@ using BCFORT_EXEC_POL2 = ICSTRESS_EXEC_POL;
 
 using EVENIODDJ_EXEC_POL = 
      RAJA::KernelPolicy< 
-     RAJA::statement::CudaKernel<
+     RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<1, RAJA::cuda_block_exec, 
   RAJA::statement::For<0, RAJA::cuda_thread_exec,
   RAJA::statement::Lambda<0> >>>>;

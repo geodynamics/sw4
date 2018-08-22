@@ -1623,11 +1623,12 @@ SW4_MARK_FUNCTION;
          dirichlet_LRstress( Bf, g+1, kf, time+mDt, 1 ); 
       }
 
+      SW4_MARK_BEGIN("enforceIC::MPI2DCOMM");
       communicate_array_2d( Unextf, g+1, kf );
       communicate_array_2d( Unextc, g, kc );
       communicate_array_2d( Bf, g+1, kf );
       communicate_array_2d( Bc, g, kc );
-
+      SW4_MARK_END("enforceIC::MPI2DCOMM");
       // Up to here, interface stresses and displacement (Bc,Bf) and (Unextc, Unextf) were computed with 
       // correct ghost point values in the corners (supergrid layers).
       // In the following iteration, we use centered formulas for interpolation and restriction, all the 
@@ -2756,7 +2757,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    int ie=m_iEnd[g], je=m_jEnd[g], ke=m_kEnd[g];
 
    // Compute L(Up) at k=kic.
-   Sarray Lu(3,ib,ie,jb,je,kic,kic);
+   Sarray Lu(3,ib,ie,jb,je,kic,kic,__FILE__,__LINE__);
    Lu.set_to_zero();  // Keep memory checker happy
    char op='=';
    int nz = m_global_nz[g];

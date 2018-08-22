@@ -142,11 +142,21 @@ __global__ void forall2kernel(const int start0,const int N0,const int start1,con
 }
 
 template<typename T1, typename T2, typename LoopBody>
-void forall2(T1 &irange, T2 &jrange, LoopBody &&body){
+void forall2async(T1 &irange, T2 &jrange, LoopBody &&body){
   
   dim3 tpb(irange.tpb,jrange.tpb,1);
   dim3 blocks(irange.blocks,jrange.blocks,1);
   
   forall2kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,body);
-  cudaDeviceSynchronize();
+}
+
+template<typename T1, typename T2, typename LoopBody>
+void forall2(T1 &irange, T2 &jrange, LoopBody &&body){
+  
+  /* dim3 tpb(irange.tpb,jrange.tpb,1); */
+  /* dim3 blocks(irange.blocks,jrange.blocks,1); */
+  
+  /* forall2kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,body); */
+  forall2async(irange,jrange,body);
+  cudaStreamSynchronize(0);
 }

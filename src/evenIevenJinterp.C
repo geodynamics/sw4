@@ -380,7 +380,7 @@ RAJA::kernel<EVENIEVENJ_EXEC_POL>(
 	[=]RAJA_DEVICE (int c,int j,int i) 
 	  {
       Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
-    }); SYNC_STREAM;
+	  }); //SYNC_STREAM;
       
       rmax[3] = max(rmax[3],static_cast<float_sw4>(rmax1.get()));
       rmax[4] = max(rmax[4],static_cast<float_sw4>(rmax2.get()));

@@ -504,7 +504,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
       // rmax3 = rmax3 > fabs(r2) ? rmax3 : fabs(r2);
       
 		       }); // end for ic, jc
-  SYNC_STREAM;
+  //SYNC_STREAM;
 			 SW4_MARK_END("OddIOddJLOOP 1");
 			 SW4_MARK_BEGIN("OddIOddJLOOP 2");
 // update Uf and Uc
@@ -528,7 +528,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
 	Uc(c,ic,jc,0) = UcNew(c,ic,jc,0);
 		       });
-  SYNC_STREAM;
+			 //SYNC_STREAM;
   SW4_MARK_END("OddIOddJLOOP 2");
   rmax[0] = static_cast<float_sw4>(rmax1.get());
   rmax[1] = static_cast<float_sw4>(rmax2.get());

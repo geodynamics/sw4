@@ -928,7 +928,7 @@ void Sarray::copy_kplane( Sarray& u, int k )
 			     // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
 			     // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
 			     lm_data[ind+c*nijk] = um_data[uind+c*unijk];
-			   }); SYNC_STREAM;
+			   }); //SYNC_STREAM;
    }
    else
    {
@@ -1074,7 +1074,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::kernel<ASSIGN_POL>(
 		 		      RAJA::make_tuple(c_range,k_range,j_range,i_range),
 		 		      [=]RAJA_DEVICE (int c,int k, int j,int i) {
-		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];}); SYNC_STREAM;
+		 			mdata[i+mni*j+mni*mnj*k+mni*mnj*mnk*c] = ar[c+mnc*i+mnc*mni*j+mnc*mni*mnj*k];}); //SYNC_STREAM;
    }
    else
    {
@@ -1091,7 +1091,7 @@ void Sarray::assign( const double* ar, int corder )
 		 RAJA::kernel<SARRAY_LOOP_POL2>(
 		 		      RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		 		      [=]RAJA_DEVICE (int i,int j, int k,int c) {
-					m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];}); SYNC_STREAM;
+					m_data[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k] = ar[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c];}); //SYNC_STREAM;
    }
 }
 

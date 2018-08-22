@@ -918,17 +918,23 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
 		       std::tuple<float_sw4*,float_sw4*> &buf,
 		       MPI_Comm comm, MPI_Status *status){
   SW4_MARK_FUNCTION;
+  SW4_MARK_BEGIN("THE REST");
   MPI_Request send_req=MPI_REQUEST_NULL,recv_req=MPI_REQUEST_NULL;
   
   int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
   int send_count=std::get<0>(sendt)*std::get<1>(sendt);
+  SW4_MARK_END("THE REST");
+  //MPI_Barrier(MPI_COMM_WORLD);
+  SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL");
   
+  if (sendto!=MPI_PROC_NULL) getbuffer_device(a,std::get<0>(buf),sendt,true);
   // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
   if (recvfrom!=MPI_PROC_NULL)
     if (MPI_Irecv(std::get<1>(buf),recv_count,MPI_DOUBLE,recvfrom,rtag,comm,&recv_req)!=MPI_SUCCESS) std::cerr<<"MPI_Irecv failed in EW::AMPI_Sendrecv\n";
 
   if (sendto!=MPI_PROC_NULL){
-    getbuffer_device(a,std::get<0>(buf),sendt);
+    SYNC_STREAM;
+    //getbuffer_device(a,std::get<0>(buf),sendt);
     //std::cout<<"SENDING :: "<<sendto<<" ";
     //for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
     //std::cout<<"\n";
@@ -939,19 +945,23 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   SW4_MARK_BEGIN("MPI_RECV_WAIT");
   if (recvfrom!=MPI_PROC_NULL){
     if (MPI_Wait(&recv_req,&recv_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT RECV FAILED IN AMPI_SENDrecv\n";
-    putbuffer_device(b,std::get<1>(buf),recvt);
+    putbuffer_device(b,std::get<1>(buf),recvt,true);
     //std::cout<<"RECEIVING :: "<<recvfrom<<" ";
     //for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
     //std::cout<<"\n";
   }
    SW4_MARK_END("MPI_RECV_WAIT");
+
    SW4_MARK_BEGIN("MPI_SEND_WAIT");
   if (sendto!=MPI_PROC_NULL)
     if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
    SW4_MARK_END("MPI_SEND_WAIT");
+
+   SYNC_STREAM; // For the putbuffer_device
+   SW4_MARK_END("MPI_SENDRECV_ACTUAL");
  
 }
-void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
+void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ,bool async){
   SW4_MARK_FUNCTION;
   int count=std::get<0>(mtype);
   int bl = std::get<1>(mtype);
@@ -964,9 +974,11 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   // Messages are greater than 2K for Hayward h=200 on 16 ranks.
   // for larger messages, host copy is slower.
   //if (bl*count*8>2048){
+
+#ifndef UNRAJA
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
-  RAJA::statement::CudaKernel<
+  RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<1, RAJA::cuda_block_exec, 
   RAJA::statement::For<0, RAJA::cuda_thread_exec,
 		       RAJA::statement::Lambda<0> >>>>;
@@ -977,15 +989,35 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
 			 [=]RAJA_DEVICE (int k,int i) {
 			   buf[k+i*bl]=data[i*stride+k];
   });
+#else
+  Range<16> k_range(0,bl);
+  Range<16> i_range(0,count);
+  forall2async(i_range,k_range,[=]RAJA_DEVICE(int i,int k){
+      buf[k+i*bl]=data[i*stride+k];
+    });
+#endif
 
-  SYNC_STREAM;
+  if (!async){
+    SYNC_STREAM;
+  }
   // } else {
   //   std::cout<<bl*count*8<<"\ bytes n";
   //   for(int i=0;i<count;i++) for(int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
   // }
   //std::cout<<"Done\n";
 }
-void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
+void EW::getbuffer_host(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
+  SW4_MARK_FUNCTION;
+  int count=std::get<0>(mtype);
+  int bl = std::get<1>(mtype);
+  int stride = std::get<2>(mtype);
+
+  //std::cout<<bl*count*8<<"\ bytes n";
+  for(int i=0;i<count;i++) for(int k=0;k<bl;k++) buf[k+i*bl]=data[i*stride+k];
+  //std::cout<<"Done\n";
+}
+
+void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype , bool async ){
   SW4_MARK_FUNCTION;
   int count=std::get<0>(mtype);
   int bl = std::get<1>(mtype);
@@ -994,7 +1026,7 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   //PREFETCHFORCED(buf);
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
-    RAJA::statement::CudaKernel<
+    RAJA::statement::CudaKernelAsync<
       RAJA::statement::For<1, RAJA::cuda_block_exec, 
 			   RAJA::statement::For<0, RAJA::cuda_thread_exec,
 						RAJA::statement::Lambda<0> >>>>;
@@ -1006,10 +1038,21 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
 			   // RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
 			     data[i*stride+k]=buf[k+i*bl];
     });
-
-  SYNC_STREAM;
+  if (!async){
+    SYNC_STREAM;
+  }
   //std::cout<<"Done\n";
 }
+void EW::putbuffer_host(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ){
+  SW4_MARK_FUNCTION;
+  int count=std::get<0>(mtype);
+  int bl = std::get<1>(mtype);
+  int stride = std::get<2>(mtype);
+  //std::cout<<"putbuffer_device...";
+  
+  for(int i=0;i<count;i++) for(int k=0;k<bl;k++)  data[i*stride+k]=buf[k+i*bl];
+}
+
 void EW::communicate_array_2d_async( Sarray& u, int g, int k )
 {
   SW4_MARK_FUNCTION;
@@ -1033,20 +1076,20 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
       u2d.copy_kplane(u,k);
       SW4_MARK_BEGIN("comm_array_2d_async::MPI-1");
       // X-direction communication
-      AMPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
+      AMPI_Sendrecv2( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
 		    &u2d(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
 		    bufs_type_2dx[g],
 		    m_cartesian_communicator, &status );
-      AMPI_Sendrecv( &u2d(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
+      AMPI_Sendrecv2( &u2d(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
 		    &u2d(1,ie-(m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag2,
 		     bufs_type_2dx[g],
 		    m_cartesian_communicator, &status );
       // Y-direction communication
-      AMPI_Sendrecv( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
+      AMPI_Sendrecv2( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
 		    &u2d(1,ib,jb,k), 1, send_type_2dy[g], m_neighbor[2], ytag1,
 		     bufs_type_2dy[g],
 		    m_cartesian_communicator, &status );
-      AMPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
+      AMPI_Sendrecv2( &u2d(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
 		    &u2d(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
 		     bufs_type_2dy[g],
 		    m_cartesian_communicator, &status );
@@ -1057,21 +1100,21 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
    {
       // X-direction communication
      SW4_MARK_BEGIN("comm_array_2d_async::MPI-2");
-   AMPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
+   AMPI_Sendrecv2( &u(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
 		 &u(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,
 		  bufs_type_2dx[g],
 		 m_cartesian_communicator, &status );
-   AMPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
+   AMPI_Sendrecv2( &u(1,ib+m_ppadding,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag2,
 		 &u(1,ie-(m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag2,
 		  bufs_type_2dx[g],
 		 m_cartesian_communicator, &status );
 
       // Y-direction communication
-   AMPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
+   AMPI_Sendrecv2( &u(1,ib,je-(2*m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag1,
 		 &u(1,ib,jb,k), 1, send_type_2dy[g], m_neighbor[2], ytag1,
 		   bufs_type_2dy[g],
 		 m_cartesian_communicator, &status );
-   AMPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
+   AMPI_Sendrecv2( &u(1,ib,jb+m_ppadding,k), 1, send_type_2dy[g], m_neighbor[2], ytag2,
 		 &u(1,ib,je-(m_ppadding-1),k), 1, send_type_2dy[g], m_neighbor[3], ytag2,
 		  bufs_type_2dy[g],
 		 m_cartesian_communicator, &status );
@@ -1147,4 +1190,57 @@ void EW::communicate_array_2d_async_memo( Sarray& u, int g, int k )
 		 m_cartesian_communicator, &status );
    SW4_MARK_END("comm_array_2d_async::MPI-2");
    }
+}
+void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sendto, int stag,
+		       float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		       std::tuple<float_sw4*,float_sw4*> &buf,
+		       MPI_Comm comm, MPI_Status *status){
+  SW4_MARK_FUNCTION;
+  SW4_MARK_BEGIN("THE REST2");
+  MPI_Request send_req=MPI_REQUEST_NULL,recv_req=MPI_REQUEST_NULL;
+  
+  int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
+  int send_count=std::get<0>(sendt)*std::get<1>(sendt);
+  SW4_MARK_END("THE REST2");
+  //MPI_Barrier(MPI_COMM_WORLD);
+  SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL2");
+  
+  if (sendto!=MPI_PROC_NULL){
+    getbuffer_device(a,std::get<0>(buf),sendt,true);
+  }
+
+  // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
+  SW4_MARK_BEGIN("MPI_IRECV");
+  if (recvfrom!=MPI_PROC_NULL)
+    if (MPI_Irecv(std::get<1>(buf),recv_count,MPI_DOUBLE,recvfrom,rtag,comm,&recv_req)!=MPI_SUCCESS) std::cerr<<"MPI_Irecv failed in EW::AMPI_Sendrecv\n";
+  SW4_MARK_END("MPI_IRECV");
+  if (sendto!=MPI_PROC_NULL){
+    //getbuffer_device(a,std::get<0>(buf),sendt);
+    //std::cout<<"SENDING :: "<<sendto<<" ";
+    //for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
+    //std::cout<<"\n";
+    SYNC_STREAM;
+    if (MPI_Isend(std::get<0>(buf),send_count,MPI_DOUBLE,sendto,stag,comm,&send_req)!=MPI_SUCCESS) std::cerr<<"MPI_Isend failed in EW::AMPI_Sendrecv\n";
+  }
+  MPI_Status send_status,recv_status;
+
+  SW4_MARK_BEGIN("MPI_RECV_WAIT2");
+  if (recvfrom!=MPI_PROC_NULL){
+    if (MPI_Wait(&recv_req,&recv_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT RECV FAILED IN AMPI_SENDrecv\n";
+    putbuffer_device(b,std::get<1>(buf),recvt,true);
+    //std::cout<<"RECEIVING :: "<<recvfrom<<" ";
+    //for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
+    //std::cout<<"\n";
+  }
+   SW4_MARK_END("MPI_RECV_WAIT2");
+
+   SW4_MARK_BEGIN("MPI_SEND_WAIT2");
+  if (sendto!=MPI_PROC_NULL)
+    if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
+   SW4_MARK_END("MPI_SEND_WAIT2");
+
+   SYNC_STREAM;
+   
+   SW4_MARK_END("MPI_SENDRECV_ACTUAL2");
+ 
 }

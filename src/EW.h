@@ -1176,8 +1176,14 @@ void AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int
 		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
 		      std::tuple<float_sw4*,float_sw4*> &buf,
 		   MPI_Comm comm, MPI_Status *status);
-  void getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
-  void putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+void AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, int sentto, int stag,
+		      float_sw4* b, int rcount, std::tuple<int,int,int> &recvt, int recvfrom, int rtag,
+		      std::tuple<float_sw4*,float_sw4*> &buf,
+		   MPI_Comm comm, MPI_Status *status);
+  void getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ,bool async=false);
+  void putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ,bool async=false);
+  void getbuffer_host(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+  void putbuffer_host(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
 //
 // VARIABLES BEYOND THIS POINT
 //

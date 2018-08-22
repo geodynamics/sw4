@@ -334,7 +334,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   // 		       });
 
   
-  SYNC_STREAM;
+  //SYNC_STREAM;
   rmax[3] = max(rmax[3],static_cast<float_sw4>(rmax1.get()));
   rmax[4] = max(rmax[4],static_cast<float_sw4>(rmax2.get()));
   rmax[5] = max(rmax[5],static_cast<float_sw4>(rmax3.get()));
