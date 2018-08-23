@@ -2206,44 +2206,73 @@ SW4_MARK_FUNCTION;
    //int kdb=B.m_kb, kde=B.m_ke;
 
 //   printf("dirichlet_LRstress> kdb=%d, kde=%d\n", kdb, kde);
- SYNC_STREAM; // Since this is running on the host
+ SView &Bv= B.getview();
+ //SYNC_STREAM; // Since this is running on the host
    if( !m_twilight_forcing )
    {
       if( m_iStartInt[g] == 1 )
       {
 	 // low i-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iStart[g] ; i <= 1-adj ; i++ )
-	       for( int c=1 ; c <= B.m_nc ; c++ )
-		  B(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jStart[g] ,m_jEnd[g]+1);
+	RAJA::RangeSegment i_range(m_iStart[g] ,1-adj+1);
+	RAJA::RangeSegment c_range(1,B.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Bv(c,i,j,kic)=0;});
+#// pragma omp parallel for
+ // 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+ // 	    for( int i=m_iStart[g] ; i <= 1-adj ; i++ )
+ // 	       for( int c=1 ; c <= B.m_nc ; c++ )
+ // 		  B(c,i,j,kic) = 0;
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
 	 // high i-side
-#pragma omp parallel for
-	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-	    for( int i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= B.m_nc ; c++ )
-		  B(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jStart[g] ,m_jEnd[g]+1);
+	RAJA::RangeSegment i_range(m_iEndInt[g]+adj ,m_iEnd[g]+1);
+	RAJA::RangeSegment c_range(1,B.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Bv(c,i,j,kic)=0;});
+#// pragma omp parallel for
+ // 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+ // 	    for( int i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
+ // 	       for( int c=1 ; c <= B.m_nc ; c++ )
+ // 		  B(c,i,j,kic) = 0;
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
-	 for( int j=m_jStart[g] ; j <= 1-adj ; j++ )
-#pragma omp parallel for
-	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= B.m_nc ; c++ )
-		  B(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jStart[g] ,1-adj +1);
+	RAJA::RangeSegment i_range(m_iStart[g] ,m_iEnd[g] +1 );
+	RAJA::RangeSegment c_range(1,B.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Bv(c,i,j,kic)=0;});
+// 	 for( int j=m_jStart[g] ; j <= 1-adj ; j++ )
+// #pragma omp parallel for
+// 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= B.m_nc ; c++ )
+// 		  B(c,i,j,kic) = 0;
       }
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
-	 for( int j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
-#pragma omp parallel for
-	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
-	       for( int c=1 ; c <= B.m_nc ; c++ )
-		  B(c,i,j,kic) = 0;
+	RAJA::RangeSegment j_range(m_jEndInt[g]+adj ,m_jEnd[g]+1);
+	RAJA::RangeSegment i_range(m_iStart[g] ,m_iEnd[g] +1 );
+	RAJA::RangeSegment c_range(1,B.m_nc+1);
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
+				    RAJA::make_tuple(j_range, i_range,c_range),
+				    [=]RAJA_DEVICE (int j,int i,int c) {
+				      Bv(c,i,j,kic)=0;});
+// 	 for( int j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
+// #pragma omp parallel for
+// 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+// 	       for( int c=1 ; c <= B.m_nc ; c++ )
+// 		  B(c,i,j,kic) = 0;
       }
    }
    else // twilight forcing below

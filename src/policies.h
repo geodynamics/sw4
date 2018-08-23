@@ -17,7 +17,7 @@ using XRHS_POL =
 
 using XRHS_POL_ASYNC = 
      RAJA::KernelPolicy< 
-     RAJA::statement::CudaKernel<
+     RAJA::statement::CudaKernelAsync<
        RAJA::statement::For<0, RAJA::cuda_block_exec, 
 			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
 						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
