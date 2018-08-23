@@ -138,7 +138,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
       Range<16> I(ifirst+2,ilast-1);
       Range<4>J(jfirst+2,jlast-1);
       Range<4>K(1,6+1);
-      forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+      forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
       RAJA::RangeSegment k_range(1,6+1);
       RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -655,7 +655,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	
 	//forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
 #pragma forceinline 
-	forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+	forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
    RAJA::RangeSegment k_range(kstart,klast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -974,7 +974,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	
 	//forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
 #pragma forceinline 
-	forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+	forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
    // RAJA::RangeSegment k_range(kstart,klast-1);
    // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -1290,7 +1290,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	
 	//forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
 #pragma forceinline 
-	forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+	forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
    // RAJA::RangeSegment k_range(kstart,klast-1);
    // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -1542,7 +1542,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 			}); // End of curvilinear4sg_ci LOOP 2
    }
-	cudaDeviceSynchronize();
+	SYNC_STREAM;
 #undef mu
 #undef la
 #undef jac
@@ -1657,7 +1657,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
       Range<16> I(ifirst+2,ilast-1);
       Range<4>J(jfirst+2,jlast-1);
       Range<4>K(1,6+1);
-      forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+      forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
       RAJA::RangeSegment k_range(1,6+1);
       RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -2167,7 +2167,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	RangeGS<16,16> I(ifirst+2,ilast-1);
 	RangeGS<4,16>J(jfirst+2,jlast-1);
 	RangeGS<4,4>K(kstart,klast-1);
-      forall3GS(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+      forall3GSasync(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
    RAJA::RangeSegment k_range(kstart,klast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);

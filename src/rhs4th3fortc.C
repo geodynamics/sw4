@@ -999,7 +999,7 @@ using XRHS_POL2 =
      Range<16> I(ifirst+2,ilast-1);
      Range<4>J(jfirst+2,jlast-1);
      Range<4>K(k1,k2+1);
-     forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+     forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
      RAJA::kernel<XRHS_POL>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
@@ -1235,7 +1235,7 @@ using XRHS_POL2 =
 	    lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			  }); // END OF rhs4th3fortsgstr_ci LOOP 1
-     SYNC_STREAM;
+     //SYNC_STREAM;
  
      SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
       if( onesided[4]==1 )
@@ -1501,7 +1501,7 @@ using XRHS_POL2 =
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fortsgstr_ci LOOP 2
-	SYNC_STREAM;
+	//SYNC_STREAM;
 	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP2");
       }
       if( onesided[5] == 1 )
@@ -1768,9 +1768,10 @@ using XRHS_POL2 =
             lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
             lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			     }); // End of rhs4th3fortsgstr_ci LOOP 3
-	SYNC_STREAM;
+	//SYNC_STREAM;
 	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP3");
       }
+      SYNC_STREAM;
    }
 #undef mu
 #undef la
@@ -1944,12 +1945,12 @@ void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
    ASSERT_MANAGED(u);
    ASSERT_MANAGED(lu);
    ASSERT_MANAGED(rho);
-   RAJA::forall<PREDFORT_LOOP_POL> (RAJA::RangeSegment(0,npts),[=] RAJA_DEVICE(size_t i){
+   RAJA::forall<PREDFORT_LOOP_POL_ASYNC> (RAJA::RangeSegment(0,npts),[=] RAJA_DEVICE(size_t i){
        float_sw4 dt2orh = dt2/rho[i];
        up[i  ]      = 2*u[i  ]     -um[i  ]      + dt2orh*(lu[i  ]     +fo[i  ]);
        up[i+npts]   = 2*u[i+npts]  -um[i+npts]   + dt2orh*(lu[i+npts]  +fo[i+npts]);
        up[i+2*npts] = 2*u[i+2*npts]-um[i+2*npts] + dt2orh*(lu[i+2*npts]+fo[i+2*npts]);
-     }); SYNC_STREAM;
+     }); //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1966,12 +1967,12 @@ void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 // #pragma simd
 //    for( size_t i=0 ; i < npts ; i++ )
 //    {
-     RAJA::forall<CORRFORT_LOOP_POL> (RAJA::RangeSegment(0,npts),[=] RAJA_DEVICE(size_t i){
+     RAJA::forall<CORRFORT_LOOP_POL_ASYNC> (RAJA::RangeSegment(0,npts),[=] RAJA_DEVICE(size_t i){
       float_sw4 dt4i12orh = dt4i12/rho[i];
       up[i  ]      += dt4i12orh*(lu[i  ]     +fo[i  ]);
       up[i+npts]   += dt4i12orh*(lu[i+npts]  +fo[i+npts]);
       up[i+2*npts] += dt4i12orh*(lu[i+2*npts]+fo[i+2*npts]);
-       }); SYNC_STREAM;
+       }); //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1987,7 +1988,7 @@ void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
 // #pragma simd
 //   for( size_t i = 0 ; i < 3*npts ; i++ )
     RAJA::forall<DPDMTFORT_LOOP_POL> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
-	u2[i] = dt2i*(up[i]-2*u[i]+um[i]);}); SYNC_STREAM;
+	u2[i] = dt2i*(up[i]-2*u[i]+um[i]);}); //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -2001,8 +2002,8 @@ SW4_MARK_FUNCTION;
 // #pragma ivdep
 // #pragma simd
 //   for( size_t i = 0 ; i < 3*npts ; i++ )
-RAJA::forall<DPDMTFORT_LOOP_POL> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
-    um[i] = dt2i*(up[i]-2*u[i]+um[i]);}); SYNC_STREAM;
+RAJA::forall<DPDMTFORT_LOOP_POL_ASYNC> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
+    um[i] = dt2i*(up[i]-2*u[i]+um[i]);}); //SYNC_STREAM;
 }
 
 // //-----------------------------------------------------------------------
@@ -2469,7 +2470,7 @@ SW4_MARK_FUNCTION;
 #ifdef NO_COLLAPSE
 	    Range<16> I(ifirst+2,ilast-1);
 	    Range<4>J(jfirst+2,jlast-1);
-	    forall2(I,J,[=]RAJA_DEVICE(int i,int j){
+	    forall2async(I,J,[=]RAJA_DEVICE(int i,int j){
 #else
 	    RAJA::kernel<LOCAL_POL>(
 			    RAJA::make_tuple(j_range,i_range),
@@ -2576,7 +2577,7 @@ SW4_MARK_FUNCTION;
            bforcerhs(1,i,j) = rhs1 + bforcerhs(1,i,j);
            bforcerhs(2,i,j) = rhs2 + bforcerhs(2,i,j);
            bforcerhs(3,i,j) = rhs3 + bforcerhs(3,i,j);
-			    }); SYNC_STREAM;
+			    }); //SYNC_STREAM;
    }
 }
 #undef alphap
@@ -2628,7 +2629,7 @@ SW4_MARK_FUNCTION;
 #ifdef ENABLE_CUDA
  using LOCAL_POL = 
 	   RAJA::KernelPolicy< 
-	   RAJA::statement::CudaKernel<
+	   RAJA::statement::CudaKernelAsync<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
@@ -2735,7 +2736,7 @@ SW4_MARK_FUNCTION;
                 sbop[1]*u(3,i,j,k)+sbop[2]*u(3,i,j,k+kl)+
                 sbop[3]*u(3,i,j,k+2*kl)+sbop[4]*u(3,i,j,k+3*kl) +
 		bc*rhs3 - dc*met(4,i,j,k)*isqrtxy );
-			    }); SYNC_STREAM;
+			    }); //SYNC_STREAM;
    }
 #undef u
 #undef mu

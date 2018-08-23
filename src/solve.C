@@ -2601,7 +2601,7 @@ SW4_MARK_FUNCTION;
    // Compute L(Utt) at k=kic.
    char op='=';
    int nz = m_global_nz[g];
-   Sarray Lutt(3,ib,ie,jb,je,kic,kic);
+   Sarray Lutt(3,ib,ie,jb,je,kic,kic,__FILE__,__LINE__);
    Lutt.set_to_zero(); // Keep memory checker happy
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
@@ -2640,7 +2640,7 @@ SW4_MARK_FUNCTION;
                   UttV(1,i,j,k) = idt2*(UttV(1,i,j,k)-2*a_AlphaVEV(1,i,j,k)+a_AlphaVEmV(1,i,j,k));
                   UttV(2,i,j,k) = idt2*(UttV(2,i,j,k)-2*a_AlphaVEV(2,i,j,k)+a_AlphaVEmV(2,i,j,k));
                   UttV(3,i,j,k) = idt2*(UttV(3,i,j,k)-2*a_AlphaVEV(3,i,j,k)+a_AlphaVEmV(3,i,j,k));
-               }); SYNC_STREAM;
+               }); //SYNC_STREAM;
 	 SW4_MARK_END("PRED_DEVICE_LOOP");
 // NEW June 13, 2017: add in visco-elastic terms
          float_sw4* mua_ptr = mMuVE[g][a].c_ptr();
@@ -4430,7 +4430,7 @@ SW4_MARK_FUNCTION;
 	       a_UpgV(1,i,j,0) = g1/(acof*lm_sbop[0]);
 	       a_UpgV(2,i,j,0) = g2/(acof*lm_sbop[0]);
 	       a_UpgV(3,i,j,0) = g3/(bcof*lm_sbop[0]);
-					 }); SYNC_STREAM;
+					 }); //SYNC_STREAM;
 
 	 }
 	 SW4_MARK_END("enforceBCfreeAtt2::SET1");
@@ -4584,8 +4584,9 @@ SW4_MARK_FUNCTION;
 			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
 			    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
 	 SW4_MARK_END("enforceBCfreeAtt2::SET 3");
+	 SYNC_STREAM;
       } // end if bcType[g][4] == bStressFree && topography
-      
+     
    }  // end for g=0,.
    //::operator delete[](viewArray,Managed);
 }

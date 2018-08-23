@@ -95,7 +95,7 @@ SW4_MARK_FUNCTION;
 #ifdef ENABLE_CUDA
    using LOCAL_POL3 =
   RAJA::KernelPolicy<
-  RAJA::statement::CudaKernel<
+  RAJA::statement::CudaKernelAsync<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>,
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
@@ -111,7 +111,7 @@ SW4_MARK_FUNCTION;
 #else
    using LOCAL_POL3 = DEFAULT_LOOP3;
 #endif
-   // Note both POL3 and POL3X_ rake about the same time on Hayward with 16 ranks
+   // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
    RAJA::kernel<LOCAL_POL3>(
 				  RAJA::make_tuple(k_range,j_range,i_range),
 				  [=]RAJA_DEVICE (int k, int j,int i) {
@@ -119,7 +119,7 @@ SW4_MARK_FUNCTION;
 #pragma unroll
 				    for (int c=0;c<3;c++)
 	       alp[ind+c*nijk] = icp*(-cm*alm[ind+c*nijk] + u[ind+c*nijk] );
-				  }); SYNC_STREAM;
+				  }); //SYNC_STREAM;
 
    return;
 
@@ -201,7 +201,7 @@ RAJA::RangeSegment c_range(0,3);
 
 using LOCAL_POL3  =
   RAJA::KernelPolicy<
-  RAJA::statement::CudaKernel<
+  RAJA::statement::CudaKernelAsync<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>,
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
@@ -218,7 +218,7 @@ RAJA::kernel<LOCAL_POL3>(RAJA::make_tuple(k_range,j_range,i_range),
 			    for(int c=0;c<3;c++)
 			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] + u[ind+c*nijk] + i6* ( dto*dto*u[ind+c*nijk] + 
 											       dto*(up[ind+c*nijk]-um[ind+c*nijk]) + (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );
-			}); SYNC_STREAM;
+			 }); //SYNC_STREAM;
 
  return;
 

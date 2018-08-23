@@ -320,7 +320,7 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 #ifdef ENABLE_CUDA
    using BCFORT_EXEC_POL2  = 
      RAJA::KernelPolicy< 
-     RAJA::statement::CudaKernel<
+     RAJA::statement::CudaKernelAsync<
        RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
@@ -370,7 +370,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind+npts]   = bforce1[1+3*qq];
 		     u[ind+2*npts] = bforce1[2+3*qq];
 		     //qq++;
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
 //}
 // }
 	 }
@@ -399,7 +399,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind+npts]   = bforce2[1+3*qq];
 		     u[ind+2*npts] = bforce2[2+3*qq];
 		     //qq++;
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
 // }
 // } 
 	 }
@@ -428,7 +428,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind+npts] = bforce3[1+3*qq];
 		     u[ind+2*npts] = bforce3[2+3*qq];
 		     //qq++;
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
 // }
 //  }
 	 }
@@ -457,7 +457,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind+npts] = bforce4[1+3*qq];
 		     u[ind+2*npts] = bforce4[2+3*qq];
 		     //qq++;
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
 // }
 //   } 
 	 }
@@ -486,7 +486,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind+npts] = bforce5[1+3*qq];
 		     u[ind+2*npts] = bforce5[2+3*qq];
 		     //qq++;
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
  // }
  // }
 	 }
@@ -515,7 +515,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind+npts] = bforce6[1+3*qq];
 		     u[ind+2*npts] = bforce6[2+3*qq];
 		     //qq++;
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	   // }
 	   //  }
 	 }
@@ -544,7 +544,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	 }
 	 else if( s==1 )
 	 {
@@ -567,7 +567,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	 }
 	 else if( s==2 )
 	 {
@@ -590,7 +590,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	 }
 	 else if( s==3 )
 	 {
@@ -613,7 +613,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	 }
 	 else if( s==4 )
 	 {
@@ -636,7 +636,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	 }
 	 else if( s==5 )
 	 {
@@ -659,7 +659,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		     u[ind  ] = u[indp];
 		     u[ind+npts] = u[indp+npts];
 		     u[ind+2*npts] = u[indp+2*npts];
-					  }); SYNC_STREAM;
+					  }); //SYNC_STREAM;
 	 }
       }
       else if( bccnd[s]==bStressFree )
@@ -670,7 +670,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 #ifdef ENABLE_CUDA
 	 using BCFORT_EXEC_POL3 = 
 	   RAJA::KernelPolicy< 
-	   RAJA::statement::CudaKernel<
+	   RAJA::statement::CudaKernelAsync<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
@@ -709,7 +709,7 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		  u[npts  +ind-nij*kl] = (-vz-kl*wy+kl*h*bforce5[1+3*qq]/mu[ind])/sbop[0];
 		  u[2*npts+ind-nij*kl] = (-wz + (-kl*la[ind]*(ux+vy)+kl*h*bforce5[2+3*qq])/
 					 (2*mu[ind]+la[ind]))/sbop[0];
-		  }); SYNC_STREAM;
+			    }); //SYNC_STREAM;
 	 }
 	 else
 	 {
@@ -743,11 +743,11 @@ RAJA::kernel<BCFORT_EXEC_POL2>(
 		  u[npts  +ind-nij*kl] = (-vz-kl*wy+kl*h*bforce6[1+3*qq]/mu[ind])/sbop[0];
 		  u[2*npts+ind-nij*kl] = (-wz+(-kl*la[ind]*(ux+vy)+kl*h*bforce6[2+3*qq])/
 					 (2*mu[ind]+la[ind]))/sbop[0];
-		  }); SYNC_STREAM;
+			    }); //SYNC_STREAM;
 	 }
       }
    }
-   SYNC_STREAM;
+   //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

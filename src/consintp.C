@@ -131,7 +131,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 #pragma unroll
          for (int c=1; c<=3; c++)
 	   BcV(c,ic,jc,1) = BcV(c,ic,jc,1)/(strc_x(ic)*strc_y(jc));
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP2");
 // pre-compute BfRestrict
    Sarray BfRestrict(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],nkf,nkf,__FILE__,__LINE__); // the k-index is arbitrary, 
@@ -188,7 +188,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
      RAJA::TypedRangeStrideSegment<long> jeven_range(jfeven,jfe+1,2);
      RAJA::TypedRangeStrideSegment<long> iodd_range(ifodd, ife+1,2);
    
-     RAJA::kernel<CONSINTP_EXEC_POL4>(
+     RAJA::kernel<CONSINTP_EXEC_POL1>(
 			RAJA::make_tuple(jeven_range,iodd_range),
 			[=]RAJA_DEVICE (int j,int i) {
 // #pragma omp for
@@ -205,7 +205,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
      RAJA::TypedRangeStrideSegment<long> jodd_range(jfodd,jfe+1,2);
      RAJA::TypedRangeStrideSegment<long> ieven_range(ifeven, ife+1,2);
    
-     RAJA::kernel<CONSINTP_EXEC_POL4>(
+     RAJA::kernel<CONSINTP_EXEC_POL1>(
 			RAJA::make_tuple(jodd_range,ieven_range),
 			[=]RAJA_DEVICE (int j,int i) {
 // #pragma omp for
@@ -221,7 +221,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 
 
     
-     RAJA::kernel<CONSINTP_EXEC_POL4>(
+     RAJA::kernel<CONSINTP_EXEC_POL1>(
 			RAJA::make_tuple(jeven_range,ieven_range),
 			[=]RAJA_DEVICE (int j,int i) {
 // #pragma omp for

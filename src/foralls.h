@@ -113,23 +113,42 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2, L
 }
 
 template<typename T1, typename T2, typename T3, typename LoopBody>
-void forall3(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
+void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
   
   dim3 tpb(irange.tpb,jrange.tpb,krange.tpb);
   dim3 blocks(irange.blocks,jrange.blocks,krange.blocks);
   
   forall3kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
-  cudaDeviceSynchronize();
+}
+template<typename T1, typename T2, typename T3, typename LoopBody>
+void forall3(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
+  
+  // dim3 tpb(irange.tpb,jrange.tpb,krange.tpb);
+  // dim3 blocks(irange.blocks,jrange.blocks,krange.blocks);
+  
+  // forall3kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
+  forall3async(irange,jrange,krange,body);
+  cudaStreamSynchronize(0);
 }
 
 template<typename T1, typename T2, typename T3, typename LoopBody>
-void forall3GS(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
+void forall3GSasync(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
   
   dim3 tpb(irange.tpb,jrange.tpb,krange.tpb);
   dim3 blocks(irange.blocks,jrange.blocks,krange.blocks);
   
   forall3gskernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
-  cudaDeviceSynchronize();
+}
+
+template<typename T1, typename T2, typename T3, typename LoopBody>
+void forall3GS(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body){
+  
+  // dim3 tpb(irange.tpb,jrange.tpb,krange.tpb);
+  // dim3 blocks(irange.blocks,jrange.blocks,krange.blocks);
+  
+  // forall3gskernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
+  forall3async(irange,jrange,krange,body);
+  cudaStreamSynchronize(0);
 }
 
 // Forall2 

@@ -55,7 +55,7 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
 #ifdef ENABLE_CUDA
 using LOCAL_POL = 
 	   RAJA::KernelPolicy< 
-	   RAJA::statement::CudaKernel<
+	   RAJA::statement::CudaKernelAsync<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
@@ -150,7 +150,7 @@ using LOCAL_POL =
             u(3,i,j,k-kl) = -s0i*(  s[1]*u(3,i,j,k)+s[2]*u(3,i,j,k+kl)+
                 s[3]*u(3,i,j,k+2*kl)+s[4]*u(3,i,j,k+3*kl) + bc*rhs3 - 
 				    dc*met(4,i,j,k)*isqrtxy );
-			    }); SYNC_STREAM;
+			    }); //SYNC_STREAM;
 	    //}
 #undef mu
 #undef la

@@ -4336,8 +4336,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
   else
   {
      // Default: m_point_source_test, m_lamb_test or full seismic case
-     for( int g =0 ; g < mNumberOfGrids ; g++ )
-	a_F[g].set_to_zero();
+     // for( int g =0 ; g < mNumberOfGrids ; g++ )
+     // 	a_F[g].set_to_zero();
 
 
      GridPointSource **GPSL=GPS;
@@ -4671,6 +4671,7 @@ void EW::evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarra
        predfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
 		up_ptr, u_ptr, um_ptr, lu_ptr, fo_ptr, rho_ptr, &dt2 );    
   }
+  SYNC_STREAM;
 }
 
 //---------------------------------------------------------------------------
@@ -4707,6 +4708,7 @@ void EW::evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho,
 		up_ptr, lu_ptr, fo_ptr, rho_ptr, &dt4 );
 
   }
+  SYNC_STREAM;
 }
 
 //---------------------------------------------------------------------------
@@ -4778,6 +4780,7 @@ void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
       }
       if( m_twilight_forcing )
       {
+	SYNC_STREAM;
 	 float_sw4* alp_ptr = a_AlphaVEp[g][0].c_ptr();
 	 float_sw4 om = m_twilight_forcing->m_omega;
 	 float_sw4 ph = m_twilight_forcing->m_phase;
@@ -4792,6 +4795,7 @@ void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
          }
       }
    }
+   SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -4825,7 +4829,8 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 			  um_ptr, mOmegaVE[a], mDt, domain );
       }
       if( m_twilight_forcing )
-      {
+	{
+	  SYNC_STREAM;
 	 double* alp_ptr = a_AlphaVEp[g][0].c_ptr();
 	 double om = m_twilight_forcing->m_omega;
 	 double ph = m_twilight_forcing->m_phase;
@@ -4845,6 +4850,7 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
          
       }
    }
+   SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -4937,6 +4943,7 @@ void EW::evalDpDmInTimeAtt( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alph
 			 alphap_ptr, alpha_ptr, alpham_ptr, &dt2i );
       }
    }
+   SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
