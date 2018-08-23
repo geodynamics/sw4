@@ -2539,7 +2539,7 @@ SW4_MARK_FUNCTION;
    //    for( int i=ib ; i <= ie ; i++ )
    using LOCAL_POL = 
   RAJA::KernelPolicy< 
-  RAJA::statement::CudaKernel<
+  RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<0, RAJA::cuda_block_exec, 
   RAJA::statement::For<1, RAJA::cuda_thread_exec,
   RAJA::statement::Lambda<0> >>>>;
@@ -2551,7 +2551,7 @@ SW4_MARK_FUNCTION;
 			     uV(1,i,j,k) = uV(1,i,j,k+s);
 			     uV(2,i,j,k) = uV(2,i,j,k+s);
 			     uV(3,i,j,k) = uV(3,i,j,k+s);
-			   }); SYNC_STREAM;
+			   }); //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -2602,7 +2602,7 @@ SW4_MARK_FUNCTION;
    char op='=';
    int nz = m_global_nz[g];
    Sarray Lutt(3,ib,ie,jb,je,kic,kic,__FILE__,__LINE__);
-   Lutt.set_to_zero(); // Keep memory checker happy
+   Lutt.set_to_zero_async(); // Keep memory checker happy
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
 
@@ -2632,7 +2632,7 @@ SW4_MARK_FUNCTION;
          // for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
          //    for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
          //       for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
-	  RAJA::kernel<XRHS_POL>(
+	  RAJA::kernel<XRHS_POL_ASYNC>(
 				 RAJA::make_tuple(k_range, j_range,i_range),
 				 [=]RAJA_DEVICE (int k,int j,int i)
                {
@@ -2711,7 +2711,7 @@ SW4_MARK_FUNCTION;
      SView &a_UpV = a_Up.getview();
      SView &LuttV = Lutt.getview();
      SView &FttV = Ftt.getview();
-     RAJA::kernel<PRELIM_CORR_EXEC_POL1>(
+     RAJA::kernel<PRELIM_CORR_EXEC_POL1_ASYNC>(
 					 RAJA::make_tuple(j_range,i_range),
 					 [=]RAJA_DEVICE (int j,int i) {
 					   float_sw4 irho=cof/mRhogV(i,j,kic);
@@ -2855,7 +2855,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    
    const float_sw4 cof = mDt*mDt;
 // initialize
-   Unext.set_to_zero();
+   Unext.set_to_zero_async();
    SView &UnextV = Unext.getview();
    SView &a_UpV = a_Up.getview();
    SView &a_UV = a_U.getview();
@@ -2871,7 +2871,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    // SView &mRhogV = *new SView(mRho[g]);
    RAJA::RangeSegment j_range(jb+2,je-1);
    RAJA::RangeSegment i_range(ib+2,ie-1);
-   RAJA::kernel<PRELIM_PRED_EXEC_POL1>(
+   RAJA::kernel<PRELIM_PRED_EXEC_POL1_ASYNC>(
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
 #// pragma omp parallel for
@@ -2883,7 +2883,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 	 UnextV(1,i,j,kic) = 2*a_UpV(1,i,j,kic) - a_UV(1,i,j,kic) + irho*(LuV(1,i,j,kic)+FV(1,i,j,kic)); //+f(1,i,j,kic));
 	 UnextV(2,i,j,kic) = 2*a_UpV(2,i,j,kic) - a_UV(2,i,j,kic) + irho*(LuV(2,i,j,kic)+FV(2,i,j,kic)); //+f(2,i,j,kic));
 	 UnextV(3,i,j,kic) = 2*a_UpV(3,i,j,kic) - a_UV(3,i,j,kic) + irho*(LuV(3,i,j,kic)+FV(3,i,j,kic)); //+f(3,i,j,kic));
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
 // add in super-grid damping terms
    if (mOrder==2 && usingSupergrid()) // only needed for 2nd order time-stepping. Assume 4th order AD, Cartesian grid
    {

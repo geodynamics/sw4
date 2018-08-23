@@ -534,7 +534,7 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
 #ifdef ENABLE_CUDA
    using LOCAL_POL = 
   RAJA::KernelPolicy< 
-  RAJA::statement::CudaKernel<
+  RAJA::statement::CudaKernelAsync<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
@@ -717,7 +717,7 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
 #ifdef ENABLE_CUDA
    using LOCAL_POL = 
   RAJA::KernelPolicy< 
-  RAJA::statement::CudaKernel<
+  RAJA::statement::CudaKernelAsync<
     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,

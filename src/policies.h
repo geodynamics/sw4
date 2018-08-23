@@ -15,6 +15,14 @@ using XRHS_POL =
 						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								      RAJA::statement::Lambda<0> >>>>>;
 
+using XRHS_POL_ASYNC = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_block_exec, 
+			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
+						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
+								      RAJA::statement::Lambda<0> >>>>>;
+
 using DEFAULT_LOOP2 = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -120,12 +128,15 @@ using CONSINTP_EXEC_POL5 =  ICSTRESS_EXEC_POL;
 
 
 using PRELIM_CORR_EXEC_POL1 =  DEFAULT_LOOP2X;
+using PRELIM_CORR_EXEC_POL1_ASYNC =  DEFAULT_LOOP2X_ASYNC;
+
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>>> >;
 
 using PRELIM_PRED_EXEC_POL1 =  ICSTRESS_EXEC_POL;
+using PRELIM_PRED_EXEC_POL1_ASYNC =  ICSTRESS_EXEC_POL_ASYNC;
 			 
 using ENFORCEBC_CORR_EXEC_POL1 =  ICSTRESS_EXEC_POL;
   // RAJA::KernelPolicy< 
@@ -163,6 +174,15 @@ typedef RAJA::cuda_exec<1024> DPDMTFORT_LOOP_POL;
 
 typedef RAJA::cuda_exec<1024,true> DPDMTFORT_LOOP_POL_ASYNC;
 using DPDMT_WIND_LOOP_POL=  SARRAY_LOOP_POL2;
+using DPDMT_WIND_LOOP_POL_ASYNC = 
+RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelAsync<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>,
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
+								   RAJA::statement::For<3, RAJA::seq_exec,
+								   RAJA::statement::Lambda<0> >>>>>>;
+
   // RAJA::KernelPolicy<
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<1>>,

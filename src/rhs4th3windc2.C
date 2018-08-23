@@ -110,7 +110,7 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
   Range<16> I(ib,ie+1);
   Range<4>J(jb,je+1);
   Range<4>K(kb_tt,ke_tt+1);
-  forall3(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+  forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #pragma unroll
       for(int c=1;c<4;c++)
 	u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );
@@ -121,13 +121,13 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
   RAJA::RangeSegment j_range(jb,je+1);
   RAJA::RangeSegment k_range(kb_tt,ke_tt+1);
   RAJA::RangeSegment c_range(1,4);
-  RAJA::kernel<DPDMT_WIND_LOOP_POL>(
+  RAJA::kernel<DPDMT_WIND_LOOP_POL_ASYNC>(
 		       RAJA::make_tuple(i_range,j_range,k_range,c_range),
 		       [=]RAJA_DEVICE (long int i,long int j, long int k,long int c) {
 			 u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );
 		       });
 #endif
-  SYNC_STREAM;
+  //SYNC_STREAM;
 #undef up
 #undef u
 #undef um

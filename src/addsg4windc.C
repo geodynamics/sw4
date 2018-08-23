@@ -122,7 +122,7 @@ SW4_MARK_FUNCTION;
 
    using LOCAL_EXEC_POL =
      RAJA::KernelPolicy<
-     RAJA::statement::CudaKernel<
+     RAJA::statement::CudaKernelAsync<
        RAJA::statement::For<2, RAJA::cuda_block_exec,
 			    RAJA::statement::For<1, RAJA::cuda_block_exec,
 						 RAJA::statement::For<0, RAJA::cuda_thread_exec,
@@ -152,7 +152,7 @@ SW4_MARK_FUNCTION;
                    +2*rho(i,j,k)*dcy(j)  * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
 	            -rho(i,j-1,k)*dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )  
 				     )/rho(i,j,k);
-				  }); SYNC_STREAM;
+				  }); //SYNC_STREAM;
 }
 
 //}

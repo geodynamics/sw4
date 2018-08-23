@@ -310,7 +310,7 @@ void memvar_corr_fort_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int
    RAJA::RangeSegment k_range(k1,k2+1);
    RAJA::RangeSegment c_range(0,3);
 
-RAJA::kernel<XRHS_POL>(RAJA::make_tuple(k_range,j_range,i_range),
+RAJA::kernel<XRHS_POL_ASYNC>(RAJA::make_tuple(k_range,j_range,i_range),
 			    [=]RAJA_DEVICE (int k,int j, int i) {
 	    
 	       size_t ind = base+i+ni*j+nij*k;
@@ -320,6 +320,6 @@ RAJA::kernel<XRHS_POL>(RAJA::make_tuple(k_range,j_range,i_range),
 		 alp[ind+c*nijk] = icp*( cm*alm[dind+c*dnijk] + u[dind+c*dnijk] + i6* ( dto*dto*u[dind+c*dnijk] + 
 											dto*(up[dind+c*dnijk]-um[dind+c*dnijk]) + (up[dind+c*dnijk]-2*u[dind+c*dnijk]+um[dind+c*dnijk]) ) );
 		       });
- SYNC_STREAM;
+//SYNC_STREAM;
 }
 
