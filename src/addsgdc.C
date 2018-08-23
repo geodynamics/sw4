@@ -87,7 +87,7 @@ void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
 #ifdef ENABLE_CUDA
 using ADDSGD_POL=
        RAJA::KernelPolicy<
-       RAJA::statement::CudaKernel<
+       RAJA::statement::CudaKernelAsync<
 	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
 			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
 						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
@@ -181,7 +181,7 @@ RAJA::kernel<ADDSGD_POL>(
 					 );
 
 	       }
-			    }); SYNC_STREAM;
+			    }); //SYNC_STREAM;
 //   }
 #undef rho
 #undef up
@@ -346,7 +346,7 @@ void EW::addsgd4c_ci( int ifirst, int ilast, int jfirst, int jlast,
 #ifdef ENABLE_CUDA
 using ADDSGD_POL2  =
        RAJA::KernelPolicy<
-       RAJA::statement::CudaKernel<
+       RAJA::statement::CudaKernelAsync<
 	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
 			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
 						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
@@ -395,7 +395,7 @@ RAJA::kernel<ADDSGD_POL2>(
 		    -rho(i,j-1,k)*dcy(j-1)*jac(i,j-1,k)*
 		    (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) ) );
 	       }
-			    } ); SYNC_STREAM;
+			    } ); //SYNC_STREAM;
 //}
 #undef rho
 #undef up

@@ -5,6 +5,7 @@
 using REDUCTION_POLICY = RAJA::cuda_reduce<1024>;
 
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
+typedef RAJA::cuda_exec<1024,true> DEFAULT_LOOP1_ASYNC;
 #define SW4_FORCEINLINE __forceinline__
 using XRHS_POL = 
      RAJA::KernelPolicy< 
@@ -24,6 +25,13 @@ using DEFAULT_LOOP2 =
 using DEFAULT_LOOP2X = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
+  RAJA::statement::For<1, RAJA::cuda_block_exec, 
+  RAJA::statement::For<0, RAJA::cuda_thread_exec,
+  RAJA::statement::Lambda<0> >>>>;
+
+using DEFAULT_LOOP2X_ASYNC = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<1, RAJA::cuda_block_exec, 
   RAJA::statement::For<0, RAJA::cuda_thread_exec,
   RAJA::statement::Lambda<0> >>>>;
@@ -51,11 +59,26 @@ using RHS4_EXEC_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<16 >,
 								   RAJA::statement::Lambda<0> >>>>>;
+
+using RHS4_EXEC_POL_ASYNC = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
+    RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<16 >,
+								   RAJA::statement::Lambda<0> >>>>>;
 			 
 			 
 using ICSTRESS_EXEC_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
+  RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
+  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
+					    RAJA::statement::Lambda<0> >>>>;
+
+using ICSTRESS_EXEC_POL_ASYNC = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
   RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 					    RAJA::statement::Lambda<0> >>>>;

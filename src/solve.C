@@ -1548,11 +1548,11 @@ SW4_MARK_FUNCTION;
 // coarse side
       Sarray Unextc(3,ibc,iec,jbc,jec,kc,kc,__FILE__,__LINE__); // only needs k=kc (on the interface)
       Sarray Bc(3,ibc,iec,jbc,jec,kc,kc,__FILE__,__LINE__);
-      Unextf.set_to_zero();
-      Bf.set_to_zero();
+      Unextf.set_to_zero_async();
+      Bf.set_to_zero_async();
       //std::cout<<"BF ARRAY "<<Bf.c_ptr()<<"\n";
-      Unextc.set_to_zero();
-      Bc.set_to_zero();
+      Unextc.set_to_zero_async();
+      Bc.set_to_zero_async();
 // to compute the corrector we need the acceleration in the vicinity of the interface
       Sarray Uf_tt(3,ibf,ief,jbf,jef,kf-7,kf+1,__FILE__,__LINE__);
       Sarray Uc_tt(3,ibc,iec,jbc,jec,kc-1,kc+7,__FILE__,__LINE__);
@@ -1900,7 +1900,7 @@ SW4_MARK_FUNCTION;
  
  using LOCAL_POL = 
    RAJA::KernelPolicy< 
-   RAJA::statement::CudaKernel<
+   RAJA::statement::CudaKernelAsync<
      RAJA::statement::For<0, RAJA::cuda_block_exec, 
 			  RAJA::statement::For<1, RAJA::cuda_block_exec, 
 					       RAJA::statement::For<2, RAJA::cuda_thread_exec,
@@ -2009,7 +2009,7 @@ SW4_MARK_FUNCTION;
 			      RAJA::make_tuple(c_range,j_range,i_range),
 			      [=]RAJA_DEVICE (int c,int j,int i) 
 			      {
-				UV(c,i,j,k) = 0;}); SYNC_STREAM;
+				UV(c,i,j,k) = 0;}); //SYNC_STREAM;
    }
 }
 
@@ -2062,7 +2062,7 @@ SW4_MARK_FUNCTION;
 	RAJA::RangeSegment j_range(m_jStart[g] ,m_jEnd[g]+1);
 	RAJA::RangeSegment i_range(m_iStart[g] ,1-adj+1);
 	RAJA::RangeSegment c_range(1,U.m_nc+1);
-	RAJA::kernel<RHS4_EXEC_POL>(
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 				    RAJA::make_tuple(j_range, i_range,c_range),
 				    [=]RAJA_DEVICE (int j,int i,int c) {
 				      Uv(c,i,j,kic)=0;});
@@ -2078,7 +2078,7 @@ SW4_MARK_FUNCTION;
 	RAJA::RangeSegment j_range(m_jStart[g] ,m_jEnd[g]+1);
 	RAJA::RangeSegment i_range(m_iEndInt[g]+adj ,m_iEnd[g]+1);
 	RAJA::RangeSegment c_range(1,U.m_nc+1);
-	RAJA::kernel<RHS4_EXEC_POL>(
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 				    RAJA::make_tuple(j_range, i_range,c_range),
 				    [=]RAJA_DEVICE (int j,int i,int c) {
 				      Uv(c,i,j,kic)=0;});
@@ -2094,7 +2094,7 @@ SW4_MARK_FUNCTION;
 	RAJA::RangeSegment j_range(m_jStart[g] ,1-adj +1);
 	RAJA::RangeSegment i_range(m_iStart[g] ,m_iEnd[g] +1 );
 	RAJA::RangeSegment c_range(1,U.m_nc+1);
-	RAJA::kernel<RHS4_EXEC_POL>(
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 				    RAJA::make_tuple(j_range, i_range,c_range),
 				    [=]RAJA_DEVICE (int j,int i,int c) {
 				      Uv(c,i,j,kic)=0;});
@@ -2110,7 +2110,7 @@ SW4_MARK_FUNCTION;
 	RAJA::RangeSegment j_range(m_jEndInt[g]+adj ,m_jEnd[g]+1);
 	RAJA::RangeSegment i_range(m_iStart[g] ,m_iEnd[g] +1 );
 	RAJA::RangeSegment c_range(1,U.m_nc+1);
-	RAJA::kernel<RHS4_EXEC_POL>(
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 				    RAJA::make_tuple(j_range, i_range,c_range),
 				    [=]RAJA_DEVICE (int j,int i,int c) {
 				      Uv(c,i,j,kic)=0;});
@@ -2206,7 +2206,7 @@ SW4_MARK_FUNCTION;
    //int kdb=B.m_kb, kde=B.m_ke;
 
 //   printf("dirichlet_LRstress> kdb=%d, kde=%d\n", kdb, kde);
-   
+ SYNC_STREAM; // Since this is running on the host
    if( !m_twilight_forcing )
    {
       if( m_iStartInt[g] == 1 )
@@ -2758,7 +2758,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 
    // Compute L(Up) at k=kic.
    Sarray Lu(3,ib,ie,jb,je,kic,kic,__FILE__,__LINE__);
-   Lu.set_to_zero();  // Keep memory checker happy
+   Lu.set_to_zero_async();  // Keep memory checker happy
    char op='=';
    int nz = m_global_nz[g];
 // Note: 6 first arguments of the function call:
@@ -2949,7 +2949,7 @@ SW4_MARK_FUNCTION;
    RAJA::RangeSegment j_range(B.m_jb+2,B.m_je-1);
    RAJA::RangeSegment i_range(B.m_ib+2,B.m_ie-1);
    
-   RAJA::kernel<ICSTRESS_EXEC_POL>(
+   RAJA::kernel<ICSTRESS_EXEC_POL_ASYNC>(
 			RAJA::make_tuple(j_range,i_range),
 			[=]RAJA_DEVICE (int j,int i) {
 
@@ -2994,7 +2994,7 @@ SW4_MARK_FUNCTION;
                              str_x(i)*( a2*(UpV(1,i+2,j,k)-UpV(1,i-2,j,k))+a1*(UpV(1,i+1,j,k)-UpV(1,i-1,j,k))) +
                              str_y(j)*( a2*(UpV(2,i,j+2,k)-UpV(2,i,j-2,k))+a1*(UpV(2,i,j+1,k)-UpV(2,i,j-1,k))) ) );
          
-			}); SYNC_STREAM;
+			}); //SYNC_STREAM;
    //std::cout<<"And we are DONE WITH void EW::compute_icstresses\n";
 #undef str_x
 #undef str_y
@@ -3028,7 +3028,7 @@ SW4_MARK_FUNCTION;
 //    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
 // #pragma omp simd
 //       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
-RAJA::kernel<DEFAULT_LOOP2X>(
+RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
 				    RAJA::make_tuple(j_range,i_range),
 				    [=]RAJA_DEVICE (int j,int i) 
       {
@@ -3062,7 +3062,7 @@ RAJA::kernel<DEFAULT_LOOP2X>(
                                           str_x(i)*( a2*(a_UpV(1,i+2,j,k)-a_UpV(1,i-2,j,k))+a1*(a_UpV(1,i+1,j,k)-a_UpV(1,i-1,j,k))) +
                                           str_y(j)*( a2*(a_UpV(2,i,j+2,k)-a_UpV(2,i,j-2,k))+a1*(a_UpV(2,i,j+1,k)-a_UpV(2,i,j-1,k))) ) );
          
-      }); SYNC_STREAM;
+      }); //SYNC_STREAM;
 #undef str_x
 #undef str_y
 }
@@ -4233,6 +4233,7 @@ SW4_MARK_FUNCTION;
        }
     }
   }
+  SYNC_STREAM;
 }
 
 //---------------------------------------------------------------------------

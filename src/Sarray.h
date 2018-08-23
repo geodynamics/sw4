@@ -154,6 +154,7 @@ public:
    void side_plane_fortran( int side, int wind[6], int nGhost=1 );
    bool in_domain( int i, int j, int k );
    void set_to_zero();
+  void set_to_zero_async();
    void set_to_minusOne();
    void set_value( float_sw4 scalar );
    void set_to_random( float_sw4 llim =0.0, float_sw4 ulim = 1.0 );

@@ -4068,16 +4068,16 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &po
 
      firstcall=false;
     }
-    
+    typedef RAJA::cuda_exec<1024,true> FORCE_LOOP_ASYNC;
     GPSL=GPS;
     idnts_local=idnts;
     float_sw4 **ForceAddress_copy=ForceAddress;
 
      for( int g =0 ; g < mNumberOfGrids ; g++ )
-	a_F[g].set_to_zero();
+	a_F[g].set_to_zero_async();
      SW4_MARK_BEGIN("FORCE::DEVICE");
  
-     RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
+     RAJA::forall<FORCE_LOOP_ASYNC> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
 	 int index=r*3;
 	 for( int s = idnts_local[r] ; s < idnts_local[r+1] ; s++ )
 	   {
@@ -4089,11 +4089,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &po
 	   }
        });
 
-
- 
-     
-     SW4_MARK_END("FORCE::DEVICE");
      SYNC_STREAM;
+     SW4_MARK_END("FORCE::DEVICE");
+     
   }
 }
 
@@ -4346,10 +4344,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
     float_sw4 **ForceAddress_copy=ForceAddress;
     
     for( int g =0 ; g < mNumberOfGrids ; g++ )
-	a_F[g].set_to_zero();
+	a_F[g].set_to_zero_async();
      SW4_MARK_BEGIN("FORCE_TT::DEVICE");
 
-     RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
+     RAJA::forall<DEFAULT_LOOP1_ASYNC> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
 	 int index=r*3;
 	 for( int s = idnts_local[r] ; s < idnts_local[r+1] ; s++ )
 	   {
@@ -4363,11 +4361,11 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 	 
        });
 
-     
+     SYNC_STREAM;
      SW4_MARK_END("FORCE_TT::DEVICE");
 
      
-  SYNC_STREAM;
+
  
   }
 }
@@ -4388,7 +4386,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   for(g=0 ; g<mNumberOfCartesianGrids; g++ )
   {
     a_Uacc[g].prefetch();
-    a_Uacc[g].set_to_zero();
+    a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr   = a_U[g].c_ptr();
     mu_ptr  = a_Mu[g].c_ptr();
@@ -4489,7 +4487,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
   if( topographyExists() )
   {
      g = mNumberOfGrids-1;
-     a_Uacc[g].set_to_zero();
+     a_Uacc[g].set_to_zero_async();
      uacc_ptr = a_Uacc[g].c_ptr();
      u_ptr    = a_U[g].c_ptr();
      mu_ptr   = a_Mu[g].c_ptr();

@@ -75,7 +75,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     RAJA::RangeSegment k_range(kfirstw,klastw+1);
     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-    RAJA::kernel<RHS4_EXEC_POL>(
+    RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
 			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3, muz4;
@@ -316,7 +316,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 	  lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 
 			 }); // End of void rhs4th3wind LOOP 1
-    SYNC_STREAM;
+    //SYNC_STREAM;
   } // end if (!upper && !lower)
    
   if( upper )
@@ -324,7 +324,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     RAJA::RangeSegment k_range(kfirstw,klastw+1);
     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-    RAJA::kernel<RHS4_EXEC_POL>(
+    RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
 			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
@@ -578,7 +578,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 	  lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	  lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			 }); // End of void rhs4th3wind LOOP 2
-    SYNC_STREAM;
+    //SYNC_STREAM;
   } // end if (upper)
    
   if( lower )
@@ -586,7 +586,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     RAJA::RangeSegment k_range(kfirstw,klastw+1);
     RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     RAJA::RangeSegment i_range(ifirst+2,ilast-1);
-    RAJA::kernel<RHS4_EXEC_POL>(
+    RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 			 RAJA::make_tuple(k_range, j_range,i_range),
 			 [=]RAJA_DEVICE (int k,int j,int i) {
 			   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
@@ -842,7 +842,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 	  lu(2,i,j,k) = a1*lu(2,i,j,k) + cof*r2;
 	  lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			 });  // End of void rhs4th3wind LOOP 2
-    SYNC_STREAM;
+    //SYNC_STREAM;
   } // end if lower
    
 } // endif #pragma omp parallel private
