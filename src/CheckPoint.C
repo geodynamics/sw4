@@ -341,7 +341,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       // Write without ghost points. Would probably work with ghost points too.
       float_sw4* doubleField = new float_sw4[3*nptsloc];
 
-      if( m_jik_order )
+      if( m_kji_order )
       {
 	 a_Um[g].extract_subarrayIK( mEW->m_iStartInt[g], mEW->m_iEndInt[g], mEW->m_jStartInt[g],
 				  mEW->m_jEndInt[g], mEW->m_kStartInt[g], mEW->m_kEndInt[g],
@@ -479,7 +479,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
 
       // array without ghost points read into doubleField, 
       float_sw4* doubleField = new float_sw4[3*nptsloc];
-      if( m_jik_order )
+      if( m_kji_order )
       {
 	 m_parallel_io[g]->read_array( &fid, 3, doubleField, offset, cprec );
 	 offset += 3*npts*sizeof(float_sw4);
