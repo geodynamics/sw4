@@ -131,16 +131,16 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
       {
 	 // Curvilinear grid, inaccurate quick fix.
 	 // Assume upper side of cube is at the free surface
-         int icmin = m_iStart[g], icmax=m_iEnd[g], jcmin = m_jStart[g], jcmax=m_jEnd[g];
+	 k0 = 1;
+	 // Find k=const grid surface with smallest distance to the plane z=cubelen.
+         int icmin = m_iStartInt[g], icmax=m_iEndInt[g], jcmin = m_jStartInt[g], jcmax=m_jEndInt[g];
 	 if( i0 > icmin ) icmin = i0;
 	 if( i1 < icmax ) icmax = i1;
 	 if( j0 > jcmin ) jcmin = j0;
 	 if( j1 < jcmax ) jcmax = j1;
 
-	 k0 = 1;
-         k1 = 0; // k1 will remain =0,  if cube not in my processor
          double kavgm=0, kavgp=0;
-         int nptsij = (icmax-icmin+1)*(jcmax-jcmin+1);
+	 int nptsij=0;
          for( int j = jcmin ; j <= jcmax ; j++ )
 	    for( int i = icmin ; i <= icmax ; i++ )
 	    {
@@ -149,31 +149,76 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 		  k++;
 	       kavgm += k-1;
 	       kavgp += k;
+	       nptsij++;
 	    }
-	 int km = static_cast<int>(round(kavgm/nptsij));
-	 int kp = static_cast<int>(round(kavgp/nptsij));
-	 if( km == kp )
-	    k1 = km;
-	 else
+	 double ktmp = kavgm;
+	 MPI_Allreduce( &ktmp, &kavgm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 ktmp = kavgp;
+	 MPI_Allreduce( &ktmp, &kavgp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 ktmp = nptsij;
+	 double nptstot;
+	 MPI_Allreduce( &ktmp, &nptstot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 int km = static_cast<int>(round(kavgm/nptstot));
+	 int kp = static_cast<int>(round(kavgp/nptstot));
+
+	 //	 cout << " kavgm, kavgp " << kavgm << " " << kavgp << " km, kp " << km << " " << kp << 
+	 //	    " " << nptsij << " " << nptstot << endl;
+
+	 //	 cout << "NPTS local, after " << nptsij << " npts global " << nptstot << endl;
+
+	 double deperrp = 0, deperrm=0;
+	 if( nptsij > 0 )
 	 {
 	    if( kp > m_kEnd[g] )
 	       kp = m_kEnd[g];
 	    if( km > m_kEnd[g] )
 	       km = m_kEnd[g];
-            double deperrp = 0, deperrm=0;
 	    for( int j = jcmin ; j <= jcmax ; j++ )
 	       for( int i = icmin ; i <= icmax ; i++ )
 	       {
                   deperrp += (mZ(i,j,kp)-mZ(i,j,1)-zcubelen)*(mZ(i,j,kp)-mZ(i,j,1)-zcubelen);
                   deperrm += (mZ(i,j,km)-mZ(i,j,1)-zcubelen)*(mZ(i,j,km)-mZ(i,j,1)-zcubelen);
 	       }
-            if( deperrp < deperrm )
+	 }	    
+	 double errp, errm;
+	 MPI_Allreduce( &deperrp, &errp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( &deperrm, &errm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 if( nptsij > 0 )
+	 {
+	    if( errp < errm )
 	       k1 = kp;
 	    else
 	       k1 = km;
 	 }
+	 else
+	    k1 = 0; // k1 =0 if cube not in my processor
          int k1tmp=k1;
          MPI_Allreduce( &k1tmp, &k1, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+
+	 //	 int km = static_cast<int>(round(kavgm/nptsij));
+	 //	 int kp = static_cast<int>(round(kavgp/nptsij));
+	 //	 if( km == kp )
+	 //	    k1 = km;
+	 //	 else
+	 //	 {
+	 //	    if( kp > m_kEnd[g] )
+	 //	       kp = m_kEnd[g];
+	 //	    if( km > m_kEnd[g] )
+	 //	       km = m_kEnd[g];
+	 //            double deperrp = 0, deperrm=0;
+	 //	    for( int j = jcmin ; j <= jcmax ; j++ )
+	 //	       for( int i = icmin ; i <= icmax ; i++ )
+	 //	       {
+	 //                  deperrp += (mZ(i,j,kp)-mZ(i,j,1)-zcubelen)*(mZ(i,j,kp)-mZ(i,j,1)-zcubelen);
+	 //                  deperrm += (mZ(i,j,km)-mZ(i,j,1)-zcubelen)*(mZ(i,j,km)-mZ(i,j,1)-zcubelen);
+	 //	       }
+	 //            if( deperrp < deperrm )
+	 //	       k1 = kp;
+	 //	    else
+	 //	       k1 = km;
+	 //	 }
+	 //         int k1tmp=k1;
+	 //         MPI_Allreduce( &k1tmp, &k1, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
       }
       bool cubeok=true;
       if( g == mNumberOfGrids-1 && m_geodyn_faces == 5 )
@@ -1269,6 +1314,9 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	 double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
 	 double wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 	 double bnd0[3],bnd1[3];
+	 //	 if( i0+1==86 && j==102 && k==25)
+	 //	    cout << "boundary data: wk " << wghk << " sf " << strfact << " zk1 " 
+	 //		 << mZ(i0,j,k1) << " z1 " << mZ(i0,j,1) << " k1 " << k1 <<  endl;
 	 for( int c= 1; c <= 3 ;c++)
 	 {
 	    bnd0[c-1] = twgh*( (1-wghj)*(1-wghk)*m_geodyn_data1[0](c,jg0,kg0,1)+
@@ -1279,6 +1327,16 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 				 wghj*(1-wghk)*m_geodyn_data2[0](c,jg0+1,kg0,1)+
 				 (1-wghj)*wghk*m_geodyn_data2[0](c,jg0,kg0+1,1)+
 				 wghj*wghk*m_geodyn_data2[0](c,jg0+1,kg0+1,1) );
+	 }
+	 strfact = (mZ(i1,j,k1)-mZ(i1,j,1))/zcubelen;
+	 kg0 = static_cast<int>(floor((mZ(i1,j,k)-mZ(i1,j,1))/(strfact*m_geodyn_h)+1));
+	 if( kg0 >= m_geodyn_nk )
+	    kg0 = m_geodyn_nk - 1;
+	 if( kg0 <= 0 )
+	    kg0 = 1;
+	 wghk = ((mZ(i1,j,k)-mZ(i1,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 for( int c= 1; c <= 3 ;c++)
+	 {
 	    bnd1[c-1] = twgh*( (1-wghj)*(1-wghk)*m_geodyn_data1[1](c,jg0,kg0,1)+
 					  wghj*(1-wghk)*m_geodyn_data1[1](c,jg0+1,kg0,1)+
 					  (1-wghj)*wghk*m_geodyn_data1[1](c,jg0,kg0+1,1)+
@@ -1312,6 +1370,10 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    U[g](3,i0+1,j,k) = U[g](3,i0+1,j,k) + 2*mJ(i0,j,k)*res3/
 	       (  mu[g](i0+1,j,k)*SQR(mMetric(1,i0+1,j,k))+
 		  mu[g](i0,  j,k)*SQR(mMetric(1,i0,  j,k))  );
+	    //	    if( i0+1==86 && j==102 && k==25)
+	    //		     cout << "In geodyn bc "  << m_myRank << " " << U[g](1,i0+1,j,k) <<
+	    //			" " << Um[g](1,i0,j,k) << " " << bnd0[0] << " " << Lu0(1,i0,j,k) << endl;
+
 	 }
 	 // Upper bndry
 	 if( high_interior )
@@ -1396,6 +1458,16 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 			    wghi  *(1-wghk)*m_geodyn_data2[2](c,ig0+1,kg0,  1)+
 			    (1-wghi)*  wghk  *m_geodyn_data2[2](c,ig0,  kg0+1,1)+
 			    wghi  *  wghk  *m_geodyn_data2[2](c,ig0+1,kg0+1,1) );
+	 }
+	 strfact = (mZ(i,j1,k1)-mZ(i,j1,1))/zcubelen;
+	 kg0 = static_cast<int>(floor((mZ(i,j1,k)-mZ(i,j1,1))/(strfact*m_geodyn_h)+1));
+	 if( kg0 >= m_geodyn_nk )
+	    kg0 = m_geodyn_nk - 1;
+	 if( kg0 <= 0 )
+	    kg0 = 1;
+	 wghk = ((mZ(i,j1,k)-mZ(i,j1,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 for( int c= 1; c <= 3 ;c++)
+	 {
 	    bnd1[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[3](c,ig0,  kg0,  1)+
 			       wghi  *(1-wghk)*m_geodyn_data1[3](c,ig0+1,kg0,  1)+
 			       (1-wghi)*  wghk  *m_geodyn_data1[3](c,ig0,  kg0+1,1)+
@@ -2904,6 +2976,10 @@ void evalLuCurv( int ib, int ie, int jb, int je, int kb, int ke,
    //   const double ih2 = 1/(h*h);
    const double half   = 0.5;
    const double fourth = 0.25;
+   // differences in mixed terms are computed as (u(i+iu)-u(i-il))/(iu+il), so that
+   // iu=1,il=0 gives forward diff,
+   // iu=0,il=1 gives backward diff,
+   // iu=1,il=1 gives centered diff.
 
    const int ok = ku==kl?1:0;
    const int oj = ju==jl?1:0;

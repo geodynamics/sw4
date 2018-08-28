@@ -744,13 +744,34 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     {
        if( mOrder == 2 )
        {
+	  int i0=84, j0=102, k0=25;
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	  if( point_in_proc(i0,j0,1) && currentTimeStep==1 )
+	  {
+	     cout << m_myRank << " dims " << m_iStart[1] << " " <<  m_iEnd[1] << " "
+		  << m_jStart[1] << " " <<  m_jEnd[1] << " "<<endl;
+	  }
+	  //	  for( int ii=i0-1 ; ii <= i0+2 ; ii++)
+	  //	     for( int jj=j0-1 ; jj <= j0+1 ; jj++)
+	  //	     if( point_in_proc(ii,jj,1) && (currentTimeStep==22 || currentTimeStep==23))
+	  //	  //		cout << currentTimeStep << " after ibcdata " << m_myRank << " " << ii <<" " << jj << " " << Up[1](1,ii,jj,k0) << " " << endl;
+
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )
 	     Force( t+mDt, F, point_sources, identsources );	     
 	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
+	  //	  for( int ii=i0-1 ; ii <= i0+2 ; ii++)
+	  //	     for( int jj=j0-1 ; jj <= j0+1 ; jj++)
+	  //	     if( point_in_proc(ii,jj,1)&& (currentTimeStep==22 || currentTimeStep==23) )
+	  //		cout << "after second ghost pt " << m_myRank << " " << ii <<" " << jj << " " << Up[1](1,ii,jj,k0) << " " << endl;
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
 	     communicate_array( Up[g], g );
+
+	  //	  for( int ii=i0-1 ; ii <= i0+2 ; ii++)
+	  //	     for( int jj=j0-1 ; jj <= j0+1 ; jj++)
+	  //	     if( point_in_proc(ii,jj,1)&& (currentTimeStep==22 || currentTimeStep==23) )
+	  //		cout << "after comm. " << m_myRank << " " << ii << " " << jj << " " << Up[1](1,ii,jj,k0) << " " << endl;
+
        }
        else
        {
