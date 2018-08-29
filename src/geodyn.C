@@ -132,6 +132,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 	 // Curvilinear grid, inaccurate quick fix.
 	 // Assume upper side of cube is at the free surface
 	 k0 = 1;
+
 	 // Find k=const grid surface with smallest distance to the plane z=cubelen.
          int icmin = m_iStartInt[g], icmax=m_iEndInt[g], jcmin = m_jStartInt[g], jcmax=m_jEndInt[g];
 	 if( i0 > icmin ) icmin = i0;
@@ -160,11 +161,6 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 	 MPI_Allreduce( &ktmp, &nptstot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	 int km = static_cast<int>(round(kavgm/nptstot));
 	 int kp = static_cast<int>(round(kavgp/nptstot));
-
-	 //	 cout << " kavgm, kavgp " << kavgm << " " << kavgp << " km, kp " << km << " " << kp << 
-	 //	    " " << nptsij << " " << nptstot << endl;
-
-	 //	 cout << "NPTS local, after " << nptsij << " npts global " << nptstot << endl;
 
 	 double deperrp = 0, deperrm=0;
 	 if( nptsij > 0 )
@@ -195,30 +191,6 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
          int k1tmp=k1;
          MPI_Allreduce( &k1tmp, &k1, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
 
-	 //	 int km = static_cast<int>(round(kavgm/nptsij));
-	 //	 int kp = static_cast<int>(round(kavgp/nptsij));
-	 //	 if( km == kp )
-	 //	    k1 = km;
-	 //	 else
-	 //	 {
-	 //	    if( kp > m_kEnd[g] )
-	 //	       kp = m_kEnd[g];
-	 //	    if( km > m_kEnd[g] )
-	 //	       km = m_kEnd[g];
-	 //            double deperrp = 0, deperrm=0;
-	 //	    for( int j = jcmin ; j <= jcmax ; j++ )
-	 //	       for( int i = icmin ; i <= icmax ; i++ )
-	 //	       {
-	 //                  deperrp += (mZ(i,j,kp)-mZ(i,j,1)-zcubelen)*(mZ(i,j,kp)-mZ(i,j,1)-zcubelen);
-	 //                  deperrm += (mZ(i,j,km)-mZ(i,j,1)-zcubelen)*(mZ(i,j,km)-mZ(i,j,1)-zcubelen);
-	 //	       }
-	 //            if( deperrp < deperrm )
-	 //	       k1 = kp;
-	 //	    else
-	 //	       k1 = km;
-	 //	 }
-	 //         int k1tmp=k1;
-	 //         MPI_Allreduce( &k1tmp, &k1, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
       }
       bool cubeok=true;
       if( g == mNumberOfGrids-1 && m_geodyn_faces == 5 )
