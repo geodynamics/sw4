@@ -74,6 +74,16 @@ main(int argc, char **argv)
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
+#ifdef SW4_USE_UMPIRE
+  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+  auto allocator = rma.getAllocator("UM");
+  auto pooled_allocator =
+    rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool"),
+                                                    allocator);
+  //*global_variables.rm = rma;
+  //  global_variables.allocator = rma.getAllocator("UM");
+#endif
+
 #ifdef ENABLE_TAU
    TAU_PROFILE_INIT(argc, argv);
 #endif

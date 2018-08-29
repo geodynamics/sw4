@@ -56,6 +56,7 @@ if (loc==Managed){
   //std::cout<<"Managed allocation \n";
     if (size==0) size=1; // new has to return an valid pointer for 0 size.
     void *ptr;
+#ifndef SW4_USE_UMPIRE
     if (cudaMallocManaged(&ptr,size)!=cudaSuccess){
       std::cerr<<"Mananged memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
@@ -66,7 +67,15 @@ if (loc==Managed){
       SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
       return ptr;
     }
-    
+#else
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_pool");
+    ptr = static_cast<void*>(allocator.allocate(size));
+    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+    //std::cout<<"PTR 1 "<<ptr<<"\n";
+    //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
+    return ptr;
+#endif
   } else if (loc==Host){
   //std::cout<<"Calling my placement new \n";
     return ::operator new(size);
@@ -118,6 +127,7 @@ if (loc==Managed){
   //std::cout<<"Managed [] allocation \n";
     if (size==0) size=1; // new has to return an valid pointer for 0 size.
     void *ptr;
+#ifndef SW4_USE_UMPIRE
     if (cudaMallocManaged(&ptr,size)!=cudaSuccess){
       std::cerr<<"Managed memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
@@ -128,7 +138,14 @@ if (loc==Managed){
       SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
       return ptr;
     }
-    
+#else
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_pool");
+    ptr = static_cast<void*>(allocator.allocate(size));
+    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+    //std::cout<<"PTR 2 "<<ptr<<"\n";
+    return ptr;
+#endif
   } else if (loc==Host){
   // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
@@ -177,17 +194,31 @@ void * operator new[](std::size_t size,Space loc,const char *file,int line){
 
 void operator delete(void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
-  if ((loc==Managed)||(loc==Device)){
+  if ((loc==Managed)){
     //std::cout<<"Managed delete\n";
+#ifndef SW4_USE_UMPIRE
     pattr_t *ss = patpush(ptr,NULL);
     if (ss!=NULL){
       global_variables.curr_mem-=ss->size;
       //global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
     }
     SW4_CheckDeviceError(cudaFree(ptr));
-  } else if (loc==Pinned)
-    SW4_CheckDeviceError(cudaFreeHost(ptr)); 
-  else if (loc==Host){
+#else
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_pool");
+    allocator.deallocate(ptr);
+#endif
+  } else if (loc==Device){
+    pattr_t *ss = patpush(ptr,NULL);
+    if (ss!=NULL){
+      global_variables.curr_mem-=ss->size;
+      //global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
+    }
+    SW4_CheckDeviceError(cudaFree(ptr));
+  }
+    else if (loc==Pinned)
+      SW4_CheckDeviceError(cudaFreeHost(ptr)); 
+    else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
@@ -208,7 +239,21 @@ void operator delete(void *ptr, Space loc) throw(){
 
 void operator delete[](void *ptr, Space loc) throw(){
 #ifdef ENABLE_CUDA
-  if ((loc==Managed)||(loc==Device)){
+  if (loc==Managed){
+#ifndef SW4_USE_UMPIRE
+    //std::cout<<"Managed [] delete\n";
+    pattr_t *ss = patpush(ptr,NULL);
+    if (ss!=NULL){
+      global_variables.curr_mem-=ss->size;
+      //global_variables.max_mem=std::max(global_variables.max_mem,curr_mem);
+    }
+    SW4_CheckDeviceError(cudaFree(ptr));
+#else
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_pool");
+    allocator.deallocate(ptr);
+#endif
+  } else if (loc==Device){
     //std::cout<<"Managed [] delete\n";
     pattr_t *ss = patpush(ptr,NULL);
     if (ss!=NULL){
@@ -217,7 +262,8 @@ void operator delete[](void *ptr, Space loc) throw(){
     }
     SW4_CheckDeviceError(cudaFree(ptr));
     
-  }else if (loc==Pinned)
+  } 
+  else if (loc==Pinned)
     SW4_CheckDeviceError(cudaFreeHost(ptr));
   else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";

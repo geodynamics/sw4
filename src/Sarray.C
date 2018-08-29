@@ -44,7 +44,7 @@ std::unordered_map<std::string, float_sw4*>  Sarray::static_map = {{std::string(
 // Default value 
 bool Sarray::m_corder = false;
 // This allocator keeps the m_data allocation around and re-uses it for all subsequent calls.
-// The allocations are deleted in the EW dtor. It reduces runtime at the cost of addtional
+// The allocations are deleted in the EW dtor. It reduces runtime at the cost of additional
 // memory usage. A memory pool would be a better way to do this.
 Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,char *file, int line )
 {
@@ -59,6 +59,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    m_nj = m_je-m_jb+1;
    m_nk = m_ke-m_kb+1;
    if( m_nc*m_ni*m_nj*m_nk > 0 ){
+#ifndef SW4_USE_UMPIRE
      ostringstream ss;
      ss<<file<<line<<"."<<m_nc*m_ni*m_nj*m_nk;
      auto found = static_map.find(ss.str());
@@ -68,6 +69,9 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
        m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
        static_map[ss.str()]=m_data;
      }
+#else
+     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
+#endif
    }
    else
       m_data = NULL;
@@ -75,7 +79,11 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
    dev_data = NULL;
    define_offsets();
    prefetched=false;
+#ifndef SW4_USE_UMPIRE
    static_alloc=true;
+#else
+   static_alloc=false;
+#endif
 }
 
 //-----------------------------------------------------------------------

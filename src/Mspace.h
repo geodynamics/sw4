@@ -8,7 +8,12 @@
 #include <fstream>
 #include <unordered_map>
 #include <tuple>
-
+#ifdef SW4_USE_UMPIRE
+#include "umpire/ResourceManager.hpp"
+//#include "umpire/Umpire.hpp"
+//#include "umpire/Allocator.hpp"
+#include "umpire/strategy/DynamicPool.hpp"
+#endif
 #if defined(ENABLE_CUDA)
 #include "cuda_runtime.h"
 #include <nvml.h>
