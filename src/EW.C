@@ -594,10 +594,7 @@ EW::
 {
 #if defined(ENABLE_CUDA)
   ::operator delete[](m_sbop,Managed);
-  std::cout<<"Umpite HWM "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()<<"\n";
-  std::cout<<"GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024/1024<<" Gb \n";
-  std::cout<<"GPU Memory Max = "<<global_variables.max_mem/1024/1024/1024<<" Gb \n";
-#endif
+#endif 
    ::operator delete[](viewArrayActual,Managed);
      
    for(int m=0;m<mNumberOfGrids;m+=4){
@@ -614,10 +611,12 @@ EW::
    ::operator delete[](ForceVector,Managed);
    ::operator delete[](ForceAddress,Managed);
 
-   // Delete the allocations stored in Sarray:;static_map
+#ifndef SW4_USE_UMPIRE
+   // Delete the allocations stored in Sarray::static_map
    for(auto &i : Sarray::static_map){
       ::operator delete[](i.second,Managed);
    }
+#endif
 //  msgStream.close();
 }
 
@@ -1470,7 +1469,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                bool geoCoordSet = false;
                bool statSet = false;
                string name="null";
-               float_sw4 x=0.0, y=0.0,z=0.0;
+               float_sw4 x=0.0, y=0.0;
                float_sw4 lat=0.0, lon=0.0;
                
                // Get location and write to file
@@ -1500,7 +1499,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                   {
                      token += 2; // skip z=
                      cartCoordSet = true;
-                     z = atof(token);
+                     //z = atof(token);
                   }
                   else if (startswith("lat=", token))
                   {
@@ -1517,7 +1516,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                   else if (startswith("depth=", token))
                   {
                      token += 6; // skip depth=
-                     z = atof(token);
+                     //z = atof(token);
                      geoCoordSet = true;
                   }
                   else if (startswith("sta=", token))
@@ -2007,7 +2006,7 @@ void EW::test_RhoUtt_Lu( vector<Sarray> & a_Uacc,  vector<Sarray> & a_Lu,   vect
 {
   SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
-  float_sw4 *rho_ptr, *uacc_ptr, *lu_ptr, *f_ptr, h;
+  float_sw4 *rho_ptr, *uacc_ptr, *lu_ptr, *f_ptr;
   
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -2021,7 +2020,7 @@ void EW::test_RhoUtt_Lu( vector<Sarray> & a_Uacc,  vector<Sarray> & a_Lu,   vect
     jlast  = m_jEnd[g];
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
-    h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+    //h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
     nz = m_global_nz[g];
     
 // evaluate rho*uacc - lu - f in fortran routine
@@ -3331,7 +3330,7 @@ void EW::get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
   for (g=0; g<mNumberOfGrids; g++)
     a_U[g].set_to_zero();
   
-  double z, h, t=a_t;
+  double h, t=a_t;
   
   double gamma = sqrt(3. + sqrt(3.))/2.;
 
@@ -3351,7 +3350,7 @@ void EW::get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source )
 
   g = mNumberOfCartesianGrids - 1; // top Cartesian grid
   h = mGridSize[g];
-  z = 0.0;
+  //z = 0.0;
 
 //loop over all points in the horizontal plane
 #pragma omp parallel for

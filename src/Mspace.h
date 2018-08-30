@@ -8,6 +8,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <tuple>
+#include <mpi.h>
 #ifdef SW4_USE_UMPIRE
 #include "umpire/ResourceManager.hpp"
 //#include "umpire/Umpire.hpp"
@@ -26,14 +27,14 @@ void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) 
 #endif
 void check_mem();
-enum Space { Host, Managed,Device,Pinned};
+enum Space { Host, Managed,Device,Pinned,Managed_temps};
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc) ;
 void operator delete(void *ptr, Space loc) throw();
 void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc) ;
 void * operator new[](std::size_t size,Space loc,const char *file,int line);
 void operator delete[](void *ptr, Space loc) throw();
 void presetGPUID();
-
+void print_hwm();
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm ;
   size_t curr_mem;
@@ -86,7 +87,7 @@ void ptr_push(void *ptr, Space type, size_t size,const char *file, int line);
 
 #define PREFETCH(ptr)
 
-size_t getsize(const void *ptr);
+ssize_t getsize(const void *ptr);
 #endif
 
 // THIS WILL HAVE TO BE MODIFIED FOR NON_GPU MACHINES

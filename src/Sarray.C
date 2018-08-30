@@ -71,6 +71,9 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
      }
 #else
      m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
+     // umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+     // auto allocator = rma.getAllocator("UM_pool_temps");
+     // m_data= static_cast<float_sw4*>(allocator.allocate(sizeof(float_sw4)*m_nc*m_ni*m_nj*m_nk));
 #endif
    }
    else

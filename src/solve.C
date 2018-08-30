@@ -689,14 +689,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // test: compute forcing for the first time step before the loop to get started
        Force( t, F, point_sources, identsources );
 // end test
-
+       std::chrono::high_resolution_clock::time_point t1,t2;
 // BEGIN TIME STEPPING LOOP
   PROFILER_START;
   SW4_MARK_BEGIN("TIME_STEPPING");
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
-
+    if (currentTimeStep==mNumberOfTimeSteps) t1 = std::chrono::high_resolution_clock::now();
 // all types of forcing...
     bool trace =false;
     int dbgproc = 1;
@@ -1104,7 +1104,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
           time_sum[8] = 0;
        }
     }
-    
+    if (currentTimeStep==mNumberOfTimeSteps) {
+      t2 = std::chrono::high_resolution_clock::now();
+      if (proc_zero()){
+	std::cout<<" Time for the last time step is "<<std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()<<" ms \n";
+      }
+    }
   } // end time stepping loop
 SW4_MARK_END("TIME_STEPPING");
        //cudaProfilerStop();

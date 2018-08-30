@@ -42,6 +42,7 @@
 #include <mpi.h>
 #include <omp.h>
 #include "version.h"
+#include "Mspace.h"
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
 #include "nvToolsExtCuda.h"
@@ -66,7 +67,7 @@ main(int argc, char **argv)
 //cudaProfilerStop();
   int myRank = 0, nProcs = 0;
   string fileName;
-  bool checkmode = false;
+  //bool checkmode = false;
 
   stringstream reason;
   presetGPUID();
@@ -77,8 +78,13 @@ main(int argc, char **argv)
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
   auto allocator = rma.getAllocator("UM");
+
+  const size_t pool_size = static_cast<size_t>(15)*1024*1024*1024*1024;
   auto pooled_allocator =
-    rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool"),
+    rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool"),
+							   allocator,pool_size);
+  auto pooled_allocator2 =
+    rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_temps"),
                                                     allocator);
   //*global_variables.rm = rma;
   //  global_variables.allocator = rma.getAllocator("UM");
@@ -244,7 +250,7 @@ main(int argc, char **argv)
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   
-
+  print_hwm();
 // Stop MPI
   MPI_Finalize();
   return status;

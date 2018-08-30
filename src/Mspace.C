@@ -49,7 +49,23 @@ void check_mem(){
   SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
   global_variables.gpu_memory_hwm=std::max((mtotal-mfree), global_variables.gpu_memory_hwm);
 }
-  
+
+
+void print_hwm(){
+#if defined(ENABLE_CUDA)
+  float hwm_local,hwm_global;
+#ifdef SW4_USE_UMPIRE
+  hwm_local = umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024.0/1024.0/1024.0;
+  //std::cout<<getRank()<<" Umpire HWM "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<" MB\n";
+#else
+  hwm_local = global_variables.gpu_memory_hwm/1024.0/1024.0/1024.0;
+  //std::cout<<getRank()<<" GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024<<" MB \n";
+  //std::cout<<getRank()<<" GPU Memory Max = "<<global_variables.max_mem/1024/1024<<" MB \n";
+#endif
+  MPI_Allreduce(&hwm_local,&hwm_global,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+  if (hwm_local==hwm_global) std::cout<<"Global Device HWM is "<<hwm_global<<" GB\n";
+#endif // ENABLE_CUDA
+}
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc){
 #ifdef ENABLE_CUDA
 if (loc==Managed){
@@ -92,7 +108,16 @@ if (loc==Managed){
   void *ptr;
   SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
   return ptr;
- }else {
+ } else if (loc==Managed_temps){
+  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+  auto allocator = rma.getAllocator("UM_pool_temps");
+  void *ptr = static_cast<void*>(allocator.allocate(size));
+  SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+  //std::cout<<"PTR 1 "<<ptr<<"\n";
+  //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
+  return ptr;
+ }
+ else {
   std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
     throw std::bad_alloc();
   }
@@ -162,13 +187,23 @@ if (loc==Managed){
   void *ptr;
   SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
   return ptr;
- }  else {
+ }  else if (loc==Managed_temps){
+  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+  auto allocator = rma.getAllocator("UM_pool_temps");
+  void* ptr = static_cast<void*>(allocator.allocate(size));
+  SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+  //std::cout<<"PTR 1 "<<ptr<<"\n";
+  //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
+  return ptr;
+ }
+
+else {
   //cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
   std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
     throw std::bad_alloc();
   }
 #else
- if ((loc==Managed)||(loc==Device)||(loc==Pinned)){
+ if ((loc==Managed)||(loc==Device)||(loc==Pinned)||(loc==Managed_temps)){
     //std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
   } else if (loc==Host){
@@ -221,7 +256,11 @@ void operator delete(void *ptr, Space loc) throw(){
     else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
-  } else {
+    } else if (loc==Managed_temps){
+      umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+      auto allocator = rma.getAllocator("UM_pool_temps");
+      allocator.deallocate(ptr);
+    } else {
     std::cerr<<"Unknown memory space for de-allocation request\n";
   }
 #else
@@ -278,7 +317,12 @@ void operator delete[](void *ptr, Space loc) throw(){
   } else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
-  } else {
+  } else if (loc==Managed_temps){
+      umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+      auto allocator = rma.getAllocator("UM_pool_temps");
+      allocator.deallocate(ptr);
+
+    } else {
       std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }
 #endif
@@ -340,7 +384,7 @@ void ptr_push(void *ptr,Space type, size_t size,const char *file,int line){
   return;
 }
 
-size_t getsize(void *ptr){
+ssize_t getsize(void *ptr){
   if (ptr==NULL) return -1;
   pattr_t *ss = patpush(ptr,NULL);
   if (ss!=NULL) return ss->size;
@@ -353,7 +397,7 @@ size_t getsize(void *ptr){
 void prefetch_to_device(const float_sw4 *ptr){
 #if defined(DISABLE_PREFETCH)
   return;
-#endif
+#else
   if (ptr==NULL) return;
   pattr_t *ss = patpush((void*)ptr,NULL);
   if (ss!=NULL) {
@@ -366,6 +410,7 @@ void prefetch_to_device(const float_sw4 *ptr){
       SW4_MARK_END(" prefetch_to_device");
     } //else std::cerr<<"Zero size prefetch \n";
   } else std::cerr<<"NO prefetch due to unknown address\n";
+#endif
 }
 
 void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line)
