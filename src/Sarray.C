@@ -46,7 +46,7 @@ bool Sarray::m_corder = false;
 // This allocator keeps the m_data allocation around and re-uses it for all subsequent calls.
 // The allocations are deleted in the EW dtor. It reduces runtime at the cost of additional
 // memory usage. A memory pool would be a better way to do this.
-Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,char *file, int line )
+Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,const char *file, int line )
 {
    m_nc = nc;
    m_ib = ibeg;

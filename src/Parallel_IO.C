@@ -429,7 +429,7 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
 //                      padding avoids writing these twice.
    int blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
    int ibl, iel, jbl, jel, kbl, kel, nsend;
-   int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag, tag2, myid;
+   int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag2, myid;
    int retcode, gproc;
    int* nrecvs;
    size_t nblocks, npts, maxpts;
@@ -699,7 +699,7 @@ void Parallel_IO::init_array( int globalsizes[3], int localsizes[3],
    }
    m_isend.m_maxbuf = maxpts;
 
-   tag = 335;
+   //tag = 335;
    tag2 = 336;
    /* Senders pass info to receievers */
    if( m_iwrite == 1 )
@@ -1506,7 +1506,8 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, s;
-   size_t ind, ptr, sizew;
+   size_t ind, ptr;
+   off_t sizew;
    MPI_Status status;
    MPI_Request* req;
 

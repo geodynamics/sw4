@@ -1380,7 +1380,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
    if( m_myPoint )
    {
 // Interpolate data to this object
-      int order = 4;
+     //int order = 4;
       float_sw4 mf[3], dmf[3], ddmf[3];
       float_sw4 dtfr  = observed.m_dt;
       float_sw4 t0fr  = observed.m_t0+observed.m_shift;
@@ -1697,8 +1697,8 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed )
 	       getwgh( ai, wgh, dwgh, ddwgh );
 	    }
 
-            float_sw4 idtfr = 1/dtfr;
-	    float_sw4 idtfr2 = idtfr*idtfr;
+	    //            float_sw4 idtfr = 1/dtfr;
+	    //float_sw4 idtfr2 = idtfr*idtfr;
 	    for( int m = mmin ; m <= mmax ; m++ )
 	    {
 	       if( observed.m_usgsFormat )

@@ -70,11 +70,11 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
 {
 #ifdef ENABLE_PROJ4
    double xmap, ymap;
-   int status;
+   //int status;
 
    xmap = x*sin(m_az) + y*cos(m_az) + m_xoffset;
    ymap = x*cos(m_az) - y*sin(m_az) + m_yoffset;
-   status = pj_transform(m_projection, m_latlong, 1, 1, &xmap, &ymap, NULL );
+   pj_transform(m_projection, m_latlong, 1, 1, &xmap, &ymap, NULL );
    longitude = xmap*RAD_TO_DEG;
    latitude  = ymap*RAD_TO_DEG;
 
@@ -87,11 +87,11 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
 {
 #ifdef ENABLE_PROJ4
   double xlon, ylat;
-  int status;
+  //int status;
   
   xlon = lon*DEG_TO_RAD;
   ylat = lat*DEG_TO_RAD;
-  status = pj_transform(m_latlong, m_projection, 1, 1, &xlon, &ylat, NULL );
+  pj_transform(m_latlong, m_projection, 1, 1, &xlon, &ylat, NULL );
   xlon -= m_xoffset;
   ylat -= m_yoffset;
   x =  xlon*sin(m_az) + ylat*cos(m_az);

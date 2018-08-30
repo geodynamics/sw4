@@ -175,9 +175,9 @@ void EW::getsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int basef = -(ifirst+ni*jfirst);
    const int base3 = base-nijk;
-   const int basef3= basef-nij;
+   //const int basef3= basef-nij;
    const int nic3  = 3*ni;
-   const int nic6  = 6*ni;
+   //const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]
@@ -230,9 +230,9 @@ void EW::subsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int basef = -(ifirst+ni*jfirst);
    const int base3 = base-nijk;
-   const int basef3= basef-nij;
+   //const int basef3= basef-nij;
    const int nic3  = 3*ni;
-   const int nic6  = 6*ni;
+   //const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]

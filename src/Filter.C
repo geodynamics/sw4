@@ -272,7 +272,7 @@ float_sw4 Filter::complexConjugatedPolesBP(float_sw4 f1, float_sw4 f2, float_sw4
   float_sw4 pole_min_re=0.;
 
 // imaginary unit
-  complex<float_sw4> iu(0.,1.);
+  //complex<float_sw4> iu(0.,1.);
 
 //pre-warp the corner frequencies
   float_sw4 om1 = tan(M_PI*dt*f1);
@@ -454,7 +454,7 @@ void Filter::evaluate(int N, float_sw4 *u, float_sw4 *mf)
 // Note: u and mf can be the same array, in which case the filtered signal overwrites the original signal
 {
   int q, i;
-  float_sw4 a[3], b[3], wn, wn1, wn2, op;
+  float_sw4 a[3], b[3], op;
   float_sw4 x1, x2, y1, y2;
   
   CHECK_INPUT( m_initialized, "Filter::zerophase: filter is NOT initialized!");

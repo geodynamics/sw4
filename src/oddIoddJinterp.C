@@ -15,23 +15,23 @@ void oddIoddJinterpJacobi(float_sw4 rmax[3], Sarray &Uf, Sarray &UfNew, Sarray &
 {  
   SW4_MARK_FUNCTION;
   int icb = a_iStartInt[gc];
-  int ifb = a_iStartInt[gf];
+  //int ifb = a_iStartInt[gf];
 
   int ice = a_iEndInt[gc];
-  int ife = a_iEndInt[gf];
+  //int ife = a_iEndInt[gf];
    
   int jcb = a_jStartInt[gc];
-  int jfb = a_jStartInt[gf];
+  //int jfb = a_jStartInt[gf];
 
   int jce = a_jEndInt[gc];
-  int jfe = a_jEndInt[gf];
+  //int jfe = a_jEndInt[gf];
 
   float_sw4 nuf = a_Dt*a_Dt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
   float_sw4 nuc = a_Dt*a_Dt/(cof*hc*hc);
   float_sw4 ihc = 1/hc, ihf=1/hf;
 
-  const float_sw4 i16 = 1.0/16;
-  const float_sw4 i256 = 1.0/256;
+  //const float_sw4 i16 = 1.0/16;
+  //const float_sw4 i256 = 1.0/256;
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
@@ -42,7 +42,7 @@ void oddIoddJinterpJacobi(float_sw4 rmax[3], Sarray &Uf, Sarray &UfNew, Sarray &
 #pragma omp simd
     for( int ic= icb ; ic <= ice ; ic++ )
     {
-      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
+      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, deti;
 // i odd, j odd
       int i=2*ic-1, j=2*jc-1;
       // setup 2x2 system matrix
@@ -298,23 +298,23 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
   ASSERT_MANAGED(a_ghcof);
 // previous stuff
   int icb = a_iStartInt[gc];
-  int ifb = a_iStartInt[gf];
+  //int ifb = a_iStartInt[gf];
 
   int ice = a_iEndInt[gc];
-  int ife = a_iEndInt[gf];
+  //int ife = a_iEndInt[gf];
    
   int jcb = a_jStartInt[gc];
-  int jfb = a_jStartInt[gf];
+  //int jfb = a_jStartInt[gf];
 
   int jce = a_jEndInt[gc];
-  int jfe = a_jEndInt[gf];
+  //int jfe = a_jEndInt[gf];
 
   float_sw4 nuf = a_Dt*a_Dt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
   float_sw4 nuc = a_Dt*a_Dt/(cof*hc*hc);
   float_sw4 ihc = 1/hc, ihf=1/hf;
 
-  const float_sw4 i16 = 1.0/16;
-  const float_sw4 i256 = 1.0/256;
+  //const float_sw4 i16 = 1.0/16;
+  //const float_sw4 i256 = 1.0/256;
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
@@ -351,7 +351,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 // #pragma omp simd
 //     for( int ic= icb ; ic <= ice ; ic++ )
 //     {
-      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
+      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, deti;
 // i odd, j odd
       int i=2*ic-1, j=2*jc-1;
       // setup 2x2 system matrix
@@ -570,23 +570,23 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 #define strf_y(j) a_strf_y[(j-a_jStart[gf])]   
 
   int icb = a_iStartInt[gc];
-  int ifb = a_iStartInt[gf];
+  //  int ifb = a_iStartInt[gf];
 
   int ice = a_iEndInt[gc];
-  int ife = a_iEndInt[gf];
+  // int ife = a_iEndInt[gf];
    
   int jcb = a_jStartInt[gc];
-  int jfb = a_jStartInt[gf];
+  //  int jfb = a_jStartInt[gf];
 
   int jce = a_jEndInt[gc];
-  int jfe = a_jEndInt[gf];
+  //  int jfe = a_jEndInt[gf];
 
   float_sw4 nuf = a_Dt*a_Dt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
   float_sw4 nuc = a_Dt*a_Dt/(cof*hc*hc);
   float_sw4 ihc = 1/hc, ihf=1/hf;
 
-  const float_sw4 i16 = 1.0/16;
-  const float_sw4 i256 = 1.0/256;
+  //const float_sw4 i16 = 1.0/16;
+  //const float_sw4 i256 = 1.0/256;
   const float_sw4 i1024 = 1.0/1024;
 
 // residuals
@@ -597,7 +597,7 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 #pragma omp simd
     for( int ic= icb ; ic <= ice ; ic++ )
     {
-      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, r3, deti;
+      float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, deti;
 // i odd, j odd
       int i=2*ic-1, j=2*jc-1;
       // setup 2x2 system matrix

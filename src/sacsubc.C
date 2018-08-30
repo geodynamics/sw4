@@ -96,7 +96,7 @@ const char *estr[] = {
 	"IPREQ   ", "IPOSTQ  ", "ICHEM   ", "IOTHER  ", "IGOOD   ", 
 	"IGLCH   ", "IDROP   ", "ILOWSN  ", "IRLDTA  ", "IVOLTS  "
 	} ;
-static int NIVAL=50;
+//static int NIVAL=50;
 const char *Istr[] = {
 	"IFTYPE  ", "IFTYPE  ", "IFTYPE  ", "IFTYPE  ", "IDEP    ",
 	"IDEP    ", "IDEP    ", "IDEP    ", "IZTYPE  ", "IZTYPE  ",
@@ -130,7 +130,7 @@ void brsac (int LN,char *name,float **data,int *nerr)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-	int maxpts, nread;
+	int maxpts;
 	int i;
 	int has12345;
 	FILE *fptr;
@@ -188,7 +188,8 @@ perror("fopen error in brsac:");
 		fclose(fptr);
 		return;
 	}
-	nread = fread(*data,sizeof(float),maxpts,fptr);
+	//nread = fread(*data,sizeof(float),maxpts,fptr);
+	if (fread(*data,sizeof(float),maxpts,fptr)!=maxpts) fprintf(stderr,"ERROR ins sacsubc.C line 192\n");
 	fclose (fptr) ;
 	/* safety */
 	if(sachdr.ihdr[9] > LN){
@@ -210,7 +211,7 @@ void bwsac (int LN, const char *name,float *data)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-	int nwrite;
+  //int nwrite;
 	FILE *fptr;
 	if((fptr=fopen(name,"wb")) == NULL){
 perror("fopen error in bwsac:");
@@ -220,7 +221,8 @@ perror("fopen error in bwsac:");
 	setmode(fileno(fptr), O_BINARY);
 #endif
 	fwrite(&sachdr,sizeof( struct sachdr_),1,fptr);
-	nwrite = fwrite(data,sizeof(float),LN,fptr);
+	//nwrite = fwrite(data,sizeof(float),LN,fptr);
+	if (fwrite(data,sizeof(float),LN,fptr)!=LN) fprintf(stderr,"ERROR in sacsubc.C line 225\n");
 	fclose (fptr) ;
 }
 
@@ -241,12 +243,12 @@ void arsac (int LN, char *name,float **data,int *nerr)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-	int maxpts, nread;
-	int i, j, j1, j2, k, l;
+	int maxpts;
+	int i, j, k, l;
 	int has12345;
 	FILE *fptr;
 	float rval;
-	int ival;
+	//int ival;
 	char cval[9];
 	char cval0[9], cval1[9], cval2[9];
 	char cstr[81];
@@ -378,7 +380,7 @@ void awsac (int LN, const char *name,float *data)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-	int nwrite;
+  //int nwrite;
 	FILE *fptr;
 	int i, j, j1, j2, k;
 	char cval[9];
@@ -681,7 +683,7 @@ void newhdr()
 void inihdr()
 /* initialize sac header */
 {
-	int i,j;
+	int i;
 	for(i=0 ; i < NRSTR; i++)
 		sachdr.rhdr[i] = fhdr_default;
 	for(i=0 ; i < NISTR; i++)
@@ -735,7 +737,7 @@ c-----
 int  streql(const char *str1, const char *str2)
 {
 	int l1, l2,i;
-	int retval;
+	//int retval;
 	char str_1[9], str_2[9];
 	l1 = strlen(str1);
 	if(l1<0)l1=0;

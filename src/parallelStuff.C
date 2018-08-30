@@ -366,7 +366,18 @@ void EW::setupMPICommunications()
 //   }
 }
 
-
+#if defined(ENABLE_CUDA)
+void EW::communicate_array( Sarray& u, int grid )
+{
+  // The async version using either device or managed memory works 
+  // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
+  // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
+  // communicate_array_async with device buffers and -gpu 29 minutes 18 secs
+  // communicate_array_async with UM buffers and -gpu 29 minutes 20 secs
+  communicate_array_async(u,grid);
+  return;
+}
+#else
 //-----------------------------------------------------------------------
 void EW::communicate_array( Sarray& u, int grid )
 {
@@ -376,8 +387,8 @@ void EW::communicate_array( Sarray& u, int grid )
   // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
   // communicate_array_async with device buffers and -gpu 29 minutes 18 secs
   // communicate_array_async with UM buffers and -gpu 29 minutes 20 secs
-  communicate_array_async(u,grid);
-  return;
+  //communicate_array_async(u,grid);
+  //return;
   // REQUIRE2( 0 <= grid && grid < mU.size() , 
   // 	    " Error in communicate_array, grid = " << grid );
    
@@ -470,7 +481,7 @@ void EW::communicate_array( Sarray& u, int grid )
 		    m_cartesian_communicator, &status );
    }
 }
-
+#endif
 //-----------------------------------------------------------------------
 void EW::communicate_arrays( vector<Sarray>& u )
 {
@@ -479,7 +490,13 @@ void EW::communicate_arrays( vector<Sarray>& u )
       communicate_array( u[g], g );
 }
 
-
+#if defined(ENABLE_CUDA)
+ void EW::communicate_array_2d( Sarray& u, int g, int k )
+ {
+   communicate_array_2d_async( u, g, k );
+   return;
+ }
+#else
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d( Sarray& u, int g, int k )
 {
@@ -495,9 +512,9 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int xtag2 = 346;
    int ytag1 = 347;
    int ytag2 = 348;
-   communicate_array_2d_async( u, g, k );
+   //communicate_array_2d_async( u, g, k );
    //communicate_array_2d_async_memo( u, g, k ); // Memoized version to avoid possible page fault 
-   return;
+   //return;
 
    if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
    {
@@ -540,13 +557,20 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 		 m_cartesian_communicator, &status );
    }
 }
-
+#endif // if defined(ENABLE_CUDA)
+#if defined(ENABLE_CUDA)
+ void EW::communicate_array_2d_ext( Sarray& u )
+ {
+  communicate_array_2d_ext_async(u);
+  return;
+ }
+#else
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_ext( Sarray& u )
 {
   SW4_MARK_FUNCTION;
-  communicate_array_2d_ext_async(u);
-  return;
+  //communicate_array_2d_ext_async(u);
+  //return;
    REQUIRE2( u.m_nc == 1, "Communicate array 2d ext, only implemented for one-component arrays" );
    int g = mNumberOfGrids-1;
    int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
@@ -575,6 +599,7 @@ void EW::communicate_array_2d_ext( Sarray& u )
 		 &u(1,ib,je-(extpadding-1),k), 1, m_send_type_2dfinest_ext[1], m_neighbor[3], ytag2,
 		 m_cartesian_communicator, &status );
 }
+#endif
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_ext_async( Sarray& u )
 {
@@ -771,9 +796,9 @@ void EW::communicate_array_async(Sarray& u, int grid )
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
    MPI_Status status;
 #ifdef THREADED_MPI
-   const int threaded_mpi=1;
+   //const int threaded_mpi=1;
 #else
-     const int threaded_mpi=0;
+   //const int threaded_mpi=0;
 #endif
    if( u.m_nc == 1 )
    {

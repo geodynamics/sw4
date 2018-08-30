@@ -78,7 +78,7 @@ class Sarray
 {
 public:
 //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
-  Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,char *file, int line);
+  Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend ,const char *file, int line);
   Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
   Sarray( int ibeg, int iend, int jbeg, int jend, int kbeg, int kend );
   Sarray( int nc, int iend, int jend, int kend );
