@@ -137,7 +137,7 @@ void EW::generate_grid()
   float_sw4 h = mGridSize[g]; // grid size must agree with top cartesian grid
   float_sw4 zMaxCart = m_zmin[g]; // bottom z-level for curvilinear grid
 
-  int i, j;
+  //  int i, j;
   int gTop = mNumberOfGrids-1;
   int Nz = m_kEnd[gTop] - m_ghost_points;
 
@@ -474,7 +474,7 @@ bool EW::invert_curvilinear_grid_mapping( float_sw4 X0, float_sw4 Y0, float_sw4 
     {
       computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
 
-      float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+      //float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
 
 // The bi-cubic interpolation has the following problem:
 // When the source is close to a processor boundary, the same source must be discretized on two (or more processors).

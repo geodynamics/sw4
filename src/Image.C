@@ -548,9 +548,9 @@ void Image::allocatePlane()
 // 	printf("Allocating plane for image '%s'...(msg from proc #%i)\n", mFilePrefix.c_str(), m_rankWriter); 
 //       }
 
-      int nPatches = mEW->mNumberOfGrids; // both Cartesian and curvilinear 
+      //int nPatches = mEW->mNumberOfGrids; // both Cartesian and curvilinear 
       
-      if (breakLoop) nPatches = 1;
+      //      if (breakLoop) nPatches = 1;
       
 // figure out the sizes...
       for (int g = 0; g < mEW->mNumberOfGrids; g++)
@@ -870,18 +870,18 @@ void Image::computeImageLatLon(Sarray &a_X, Sarray &a_Y, Sarray &a_Z )
 	       for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	       {
 		 size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2])+nij*(kk-mWindow[g][4]);
-		 double latP, lonP, xP, yP, zP, val;
+		 double latP, lonP, xP, yP, val;
 		  if (g > topCartesian)// curvilinear grid
 		  {
 		     xP = a_X(ii,jj,kk);
 		     yP = a_Y(ii,jj,kk);
-		     zP = a_Z(ii,jj,kk);
+		     //zP = a_Z(ii,jj,kk);
 		  }
 		  else
 		  {
 		     xP = (ii-1)*mEW->mGridSize[g];
 		     yP = (jj-1)*mEW->mGridSize[g];
-		     zP = (kk-1)*mEW->mGridSize[g] + mEW->m_zmin[g];
+		     //zP = (kk-1)*mEW->mGridSize[g] + mEW->m_zmin[g];
 		  }
 		  mEW->computeGeographicCoord(xP, yP, lonP, latP);
 		  if( mMode == Image::LAT )
@@ -1987,13 +1987,13 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
                 {
 	           size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
-		   float_sw4 duxdq = 0., duydq=0.0, duzdq=0.0;
-		   float_sw4 duxdr = 0., duydr=0.0, duzdr=0.0;
+		   float_sw4 duydq=0.0, duzdq=0.0;
+		   float_sw4 duxdr = 0., duzdr=0.0;
 		   float_sw4 duxds = 0., duyds=0.0, duzds=0.0;
 		   if (i == 1)
 		   {      
-                      duxdq = -2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i+1,j,k)-d3*a_U[g](1,i+2,j,k)+
-		       3*a_U[g](1,i+3,j,k)-(1+ot)*a_U[g](1,i+4,j,k) +os*a_U[g](1,i+5,j,k);
+                      // duxdq = -2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i+1,j,k)-d3*a_U[g](1,i+2,j,k)+
+		      //  3*a_U[g](1,i+3,j,k)-(1+ot)*a_U[g](1,i+4,j,k) +os*a_U[g](1,i+5,j,k);
                       duydq = -2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i+1,j,k)-d3*a_U[g](2,i+2,j,k)+
 		       3*a_U[g](2,i+3,j,k)-(1+ot)*a_U[g](2,i+4,j,k) +os*a_U[g](2,i+5,j,k);
                       duzdq = -2.25*a_U[g](3,i,j,k)+(4+fs)*a_U[g](3,i+1,j,k)-d3*a_U[g](3,i+2,j,k)+
@@ -2001,8 +2001,8 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   }
 		   if (i == 2)
 		   {      
-		      duxdq  = -os*a_U[g](1,i-1,j,k) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i+1,j,k)
-		       - ft*a_U[g](1,i+2,j,k) + 0.5*a_U[g](1,i+3,j,k) - ot*a_U[g](1,i+4,j,k);
+		      // duxdq  = -os*a_U[g](1,i-1,j,k) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i+1,j,k)
+		      //  - ft*a_U[g](1,i+2,j,k) + 0.5*a_U[g](1,i+3,j,k) - ot*a_U[g](1,i+4,j,k);
 		      duydq  = -os*a_U[g](2,i-1,j,k) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i+1,j,k)
 		       - ft*a_U[g](2,i+2,j,k) + 0.5*a_U[g](2,i+3,j,k) - ot*a_U[g](2,i+4,j,k);
 		      duzdq  = -os*a_U[g](3,i-1,j,k) -1.25*a_U[g](3,i,j,k)+(1+ft)*a_U[g](3,i+1,j,k)
@@ -2010,8 +2010,8 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   }
 		   else if (i == mEW->m_global_nx[g]-1)
 		   { 
-		      duxdq  = os*a_U[g](1,i+1,j,k) +1.25*a_U[g](1,i,j,k)-(1+ft)*a_U[g](1,i-1,j,k) +
-		        ft*a_U[g](1,i-2,j,k) - 0.5*a_U[g](1,i-3,j,k) + ot*a_U[g](1,i-4,j,k);
+		      // duxdq  = os*a_U[g](1,i+1,j,k) +1.25*a_U[g](1,i,j,k)-(1+ft)*a_U[g](1,i-1,j,k) +
+		      //   ft*a_U[g](1,i-2,j,k) - 0.5*a_U[g](1,i-3,j,k) + ot*a_U[g](1,i-4,j,k);
 		      duydq  = os*a_U[g](2,i+1,j,k) +1.25*a_U[g](2,i,j,k)-(1+ft)*a_U[g](2,i-1,j,k) +
 		        ft*a_U[g](2,i-2,j,k) - 0.5*a_U[g](2,i-3,j,k) + ot*a_U[g](2,i-4,j,k);
 		      duzdq  = os*a_U[g](3,i+1,j,k) +1.25*a_U[g](3,i,j,k)-(1+ft)*a_U[g](3,i-1,j,k) +
@@ -2019,8 +2019,8 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   }
 		   else if (i == mEW->m_global_nx[g])
 		   { 
-		      duxdq = 2.25*a_U[g](1,i,j,k)-(4+fs)*a_U[g](1,i-1,j,k)+d3*a_U[g](1,i-2,j,k)-
-		       3*a_U[g](1,i-3,j,k)+(1+ot)*a_U[g](1,i-4,j,k) -os*a_U[g](1,i-5,j,k);
+		      // duxdq = 2.25*a_U[g](1,i,j,k)-(4+fs)*a_U[g](1,i-1,j,k)+d3*a_U[g](1,i-2,j,k)-
+		      //  3*a_U[g](1,i-3,j,k)+(1+ot)*a_U[g](1,i-4,j,k) -os*a_U[g](1,i-5,j,k);
 		      duydq = 2.25*a_U[g](2,i,j,k)-(4+fs)*a_U[g](2,i-1,j,k)+d3*a_U[g](2,i-2,j,k)-
 		       3*a_U[g](2,i-3,j,k)+(1+ot)*a_U[g](2,i-4,j,k) -os*a_U[g](2,i-5,j,k);
 		      duzdq = 2.25*a_U[g](3,i,j,k)-(4+fs)*a_U[g](3,i-1,j,k)+d3*a_U[g](3,i-2,j,k)-
@@ -2028,7 +2028,7 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   }
 		   else
 		   { 
-                      duxdq = c1*(a_U[g](1,i+1,j,k) - a_U[g](1,i-1,j,k))+c2*(a_U[g](1,i+2,j,k) - a_U[g](1,i-2,j,k));
+		     //duxdq = c1*(a_U[g](1,i+1,j,k) - a_U[g](1,i-1,j,k))+c2*(a_U[g](1,i+2,j,k) - a_U[g](1,i-2,j,k));
                       duydq = c1*(a_U[g](2,i+1,j,k) - a_U[g](2,i-1,j,k))+c2*(a_U[g](2,i+2,j,k) - a_U[g](2,i-2,j,k));
                       duzdq = c1*(a_U[g](3,i+1,j,k) - a_U[g](3,i-1,j,k))+c2*(a_U[g](3,i+2,j,k) - a_U[g](3,i-2,j,k));
 		   }
@@ -2037,8 +2037,8 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   {   
 		      duxdr =-2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i,j+1,k)-d3*a_U[g](1,i,j+2,k)+
 		       3*a_U[g](1,i,j+3,k)-(1+ot)*a_U[g](1,i,j+4,k) +os*a_U[g](1,i,j+5,k);
-		      duydr =-2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i,j+1,k)-d3*a_U[g](2,i,j+2,k)+
-		       3*a_U[g](2,i,j+3,k)-(1+ot)*a_U[g](2,i,j+4,k) +os*a_U[g](2,i,j+5,k);
+		      // duydr =-2.25*a_U[g](2,i,j,k)+(4+fs)*a_U[g](2,i,j+1,k)-d3*a_U[g](2,i,j+2,k)+
+		      //  3*a_U[g](2,i,j+3,k)-(1+ot)*a_U[g](2,i,j+4,k) +os*a_U[g](2,i,j+5,k);
 		      duzdr =-2.25*a_U[g](3,i,j,k)+(4+fs)*a_U[g](3,i,j+1,k)-d3*a_U[g](3,i,j+2,k)+
 		       3*a_U[g](3,i,j+3,k)-(1+ot)*a_U[g](3,i,j+4,k) +os*a_U[g](3,i,j+5,k);
 		   }
@@ -2046,8 +2046,8 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   {   
 		      duxdr = -os*a_U[g](1,i,j-1,k) -1.25*a_U[g](1,i,j,k)+(1+ft)*a_U[g](1,i,j+1,k)
 		       - ft*a_U[g](1,i,j+2,k) + 0.5*a_U[g](1,i,j+3,k) - ot*a_U[g](1,i,j+4,k);
-		      duydr = -os*a_U[g](2,i,j-1,k) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i,j+1,k)
-		       - ft*a_U[g](2,i,j+2,k) + 0.5*a_U[g](2,i,j+3,k) - ot*a_U[g](2,i,j+4,k);
+		      // duydr = -os*a_U[g](2,i,j-1,k) -1.25*a_U[g](2,i,j,k)+(1+ft)*a_U[g](2,i,j+1,k)
+		      //  - ft*a_U[g](2,i,j+2,k) + 0.5*a_U[g](2,i,j+3,k) - ot*a_U[g](2,i,j+4,k);
 		      duzdr = -os*a_U[g](3,i,j-1,k) -1.25*a_U[g](3,i,j,k)+(1+ft)*a_U[g](3,i,j+1,k)
 		       - ft*a_U[g](3,i,j+2,k) + 0.5*a_U[g](3,i,j+3,k) - ot*a_U[g](3,i,j+4,k);
 		   }
@@ -2055,8 +2055,8 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   { 
 		      duxdr = os*a_U[g](1,i,j+1,k) +1.25*a_U[g](1,i,j,k)-(1+ft)*a_U[g](1,i,j-1,k) +
 		        ft*a_U[g](1,i,j-2,k) - 0.5*a_U[g](1,i,j-3,k) + ot*a_U[g](1,i,j-4,k);
-		      duydr = os*a_U[g](2,i,j+1,k) +1.25*a_U[g](2,i,j,k)-(1+ft)*a_U[g](2,i,j-1,k) +
-		        ft*a_U[g](2,i,j-2,k) - 0.5*a_U[g](2,i,j-3,k) + ot*a_U[g](2,i,j-4,k);
+		      // duydr = os*a_U[g](2,i,j+1,k) +1.25*a_U[g](2,i,j,k)-(1+ft)*a_U[g](2,i,j-1,k) +
+		      //   ft*a_U[g](2,i,j-2,k) - 0.5*a_U[g](2,i,j-3,k) + ot*a_U[g](2,i,j-4,k);
 		      duzdr = os*a_U[g](3,i,j+1,k) +1.25*a_U[g](3,i,j,k)-(1+ft)*a_U[g](3,i,j-1,k) +
 		        ft*a_U[g](3,i,j-2,k) - 0.5*a_U[g](3,i,j-3,k) + ot*a_U[g](3,i,j-4,k);
 		   }
@@ -2064,15 +2064,15 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_cu
 		   { 
 		      duxdr = 2.25*a_U[g](1,i,j,k)-(4+fs)*a_U[g](1,i,j-1,k)+d3*a_U[g](1,i,j-2,k)-
 		       3*a_U[g](1,i,j-3,k)+(1+ot)*a_U[g](1,i,j-4,k) -os*a_U[g](1,i,j-5,k);
-		      duydr = 2.25*a_U[g](2,i,j,k)-(4+fs)*a_U[g](2,i,j-1,k)+d3*a_U[g](2,i,j-2,k)-
-		       3*a_U[g](2,i,j-3,k)+(1+ot)*a_U[g](2,i,j-4,k) -os*a_U[g](2,i,j-5,k);
+		      // duydr = 2.25*a_U[g](2,i,j,k)-(4+fs)*a_U[g](2,i,j-1,k)+d3*a_U[g](2,i,j-2,k)-
+		      //  3*a_U[g](2,i,j-3,k)+(1+ot)*a_U[g](2,i,j-4,k) -os*a_U[g](2,i,j-5,k);
 		      duzdr = 2.25*a_U[g](3,i,j,k)-(4+fs)*a_U[g](3,i,j-1,k)+d3*a_U[g](3,i,j-2,k)-
 		       3*a_U[g](3,i,j-3,k)+(1+ot)*a_U[g](3,i,j-4,k) -os*a_U[g](3,i,j-5,k);
 		   }
 		   else
 		   {
                       duxdr = c1*(a_U[g](1,i,j+1,k) - a_U[g](1,i,j-1,k))+c2*(a_U[g](1,i,j+2,k) - a_U[g](1,i,j-2,k));
-                      duydr = c1*(a_U[g](2,i,j+1,k) - a_U[g](2,i,j-1,k))+c2*(a_U[g](2,i,j+2,k) - a_U[g](2,i,j-2,k));
+                      //duydr = c1*(a_U[g](2,i,j+1,k) - a_U[g](2,i,j-1,k))+c2*(a_U[g](2,i,j+2,k) - a_U[g](2,i,j-2,k));
                       duzdr = c1*(a_U[g](3,i,j+1,k) - a_U[g](3,i,j-1,k))+c2*(a_U[g](3,i,j+2,k) - a_U[g](3,i,j-2,k));
 		   }
 

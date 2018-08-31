@@ -494,8 +494,9 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
           if (m_myRank==0) 
              cout << "Error: SW4 was not built with Etree (efile) support" << endl;
           return false;
-#endif
+#else
 	  processMaterialEtree(buffer);
+#endif
        }
        else if (startswith("ifile", buffer))
           processMaterialIfile(buffer);
@@ -912,7 +913,7 @@ void EW::processGrid(char* buffer)
   
   
 
-  float_sw4 cubelen, zcubelen;
+  //  float_sw4 cubelen, zcubelen;
 //   if( m_geodynbc_found )  {
 // // Set WPP grid spacing based on Geodyn cube data
 
@@ -2210,8 +2211,9 @@ void EW::processTestLamb(char* buffer)
    token = strtok(NULL, " \t");
 
    string err = "Testlamb Error: ";
-   float_sw4 x0=0.0, y0=0.0, z0=0.0;
-   float_sw4 cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
+   //   float_sw4 x0=0.0, y0=0.0, z0=0.0;
+   //float_sw4 cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
+   float_sw4  rho=1.0, cp=sqrt(3.0); // the exact solution assumes freq = 1
 
    while (token != NULL)
    {
@@ -2381,13 +2383,13 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
 void EW::processFileIO(char* buffer)
 {
    int printcycle = 100;
-   char* path = 0;
-   char* scenario = 0;
+   //char* path = 0;
+   //char* scenario = 0;
    int nwriters=8;
    bool pfs=false;
    
    int verbose = 0;
-   bool debug = false;
+   //bool debug = false;
 
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("fileio", token) == 0, "ERROR: not a fileio line...: " << token);
@@ -2544,7 +2546,7 @@ void EW::processTime(char* buffer)
   float_sw4 t=0.0;
   int steps = -1;
   int year, month, day, hour, minute, second, msecond, fail;
-  bool refdateset=false, refeventdateset=false;
+  bool refdateset=false;// refeventdateset=false;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0, "ERROR: not a time line...: " << token);
   token = strtok(NULL, " \t");
@@ -2794,8 +2796,8 @@ void EW::processGlobalMaterial(char* buffer)
    token = strtok(NULL, " \t");
 
    string err = "globalmaterial error: ";
-   int modelnr = 0;
-   float_sw4 frequency = 1;
+   //int modelnr = 0;
+   // float_sw4 frequency = 1;
    float_sw4 vpmin=0, vsmin=0;
   
    while (token != NULL)
@@ -3707,8 +3709,8 @@ void EW::processCheckPoint(char* buffer)
    token = strtok(NULL, " \t");
    string err = "CheckPoint Error: ";
    int cycle=-1, cycleInterval=0;
-   float_sw4 time=0.0, timeInterval=0.0;
-   bool timingSet=false;
+   //float_sw4 time=0.0, timeInterval=0.0;
+   //bool timingSet=false;
    string filePrefix = "checkpoint";
 
    string restartFileName, restartPath;
@@ -3732,7 +3734,7 @@ void EW::processCheckPoint(char* buffer)
 	 token += 14; // skip cycleInterval=
 	 CHECK_INPUT( atoi(token) >= 0., err << "cycleInterval must be a non-negative integer, not: " << token);
 	 cycleInterval = atoi(token);
-	 timingSet = true;
+	 // timingSet = true;
       }
       else if (startswith("file=", token))
       {
@@ -4018,7 +4020,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    m_NumberOfBCPoints.resize(mNumberOfGrids);
    m_BndryWindow.resize(mNumberOfGrids);
 
-   int *wind;
+   //  int *wind;
    
    for( int g= 0 ;g < mNumberOfGrids ; g++ )
    {
@@ -4309,8 +4311,8 @@ void EW::allocateCurvilinearArrays()
 // gets negative z-values
    zMaxLocal = zMinLocal = -mTopoGridExt(i,j,1);
 // tmp
-   int i_min_loc=i, i_max_loc=i;
-   int j_min_loc=j, j_max_loc=j;
+//   int i_min_loc=i, i_max_loc=i;
+//   int j_min_loc=j, j_max_loc=j;
 // end tmp
    int imin = mTopoGridExt.m_ib;
    int imax = mTopoGridExt.m_ie;
@@ -4322,15 +4324,15 @@ void EW::allocateCurvilinearArrays()
 	 if (-mTopoGridExt(i,j,1) > zMaxLocal)
 	 {
 	    zMaxLocal = -mTopoGridExt(i,j,1);
- 	i_max_loc = i;
- 	j_max_loc = j;
+	    //i_max_loc = i;
+	    //j_max_loc = j;
 	 }
       
 	 if (-mTopoGridExt(i,j,1) < zMinLocal)
 	 {
 	    zMinLocal = -mTopoGridExt(i,j,1);
- 	i_min_loc = i;
- 	j_min_loc = j;
+	    //i_min_loc = i;
+	    //j_min_loc = j;
 	 }
       }
 // tmp
@@ -4341,7 +4343,7 @@ void EW::allocateCurvilinearArrays()
   MPI_Allreduce( &zMinLocal, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
   MPI_Allreduce( &zMaxLocal, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
-  float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
+  float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h;
 // grid size h
   for (i=imin+1; i<=imax-1; i++)
      for (j=jmin+1; j<=jmax-1; j++)
@@ -4490,7 +4492,7 @@ void EW::processImage(char* buffer)
    // -----------------------------------------------------
   Image::ImageOrientation locationType=Image::UNDEFINED;
   float_sw4 coordValue;
-  int gridPointValue;
+  //  int gridPointValue;
   bool coordWasSet = false;
   bool use_double = false;
   bool mode_is_grid = false;
@@ -4797,7 +4799,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   float_sw4 t0=0.0, f0=1.0, freq=1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  int i = 0, j = 0, k = 0;
+  // int i = 0, j = 0, k = 0;
   float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
   float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
@@ -5383,16 +5385,16 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   Source* sourcePtr;
   
   float_sw4 m0 = 1.0;
-  float_sw4 t0=0.0, f0=1.0, freq=1.0;
+  float_sw4 t0=0.0, freq=1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  int i = 0, j = 0, k = 0;
+  //  int i = 0, j = 0, k = 0;
   float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
-  float_sw4 strike=0.0, dip=0.0, rake=0.0;
-  float_sw4 fx=0.0, fy=0.0, fz=0.0;
-  int isMomentType = -1;
+  //  float_sw4 strike=0.0, dip=0.0, rake=0.0;
+  //  float_sw4 fx=0.0, fy=0.0, fz=0.0;
+  // int isMomentType = -1;
   
-  double lat = 0.0, lon = 0.0;
+  //  double lat = 0.0, lon = 0.0;
   bool topodepth = true;
   
   bool rfileset=false;
@@ -5766,7 +5768,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
     z1set=false, z2set=false;
 
   float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+  //  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
   string name = "Block";
 
@@ -5991,7 +5993,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
       z1set=false, z2set=false;
 
    float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-   int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+   //   int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
 
    char* token = strtok(buffer, " \t");
@@ -6653,8 +6655,8 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   
   int writeEvery = 0;
 
-  bool dateSet = false;
-  bool timeSet = false;
+  //  bool dateSet = false;
+  //  bool timeSet = false;
   bool topodepth = false;
 
   //  int utc[7];
@@ -7312,7 +7314,7 @@ void EW::processMaterialPfile(char* buffer)
   // Used for pfiles
   string filename = "NONE";
   string directory = "NONE";
-  float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+  float_sw4 vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
   string cflatten = "NONE";
   bool flatten = false;
   bool coords_geographic = true;
@@ -7611,11 +7613,11 @@ void EW::processMaterialEtree(char* buffer)
 
 void EW::processMaterialIfile( char* buffer )
 {
-  bool x1set=false, x2set=false, y1set=false, y2set=false, 
-    z1set=false, z2set=false;
+  //  bool x1set=false, x2set=false, y1set=false, y2set=false, 
+  //   z1set=false, z2set=false;
 
-  float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+  // float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
+  //  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
   string name = "Ifile";
 
@@ -7630,9 +7632,9 @@ void EW::processMaterialIfile( char* buffer )
 
   token = strtok(NULL, " \t");
 
-  float_sw4 vp=-1, vs=-1, rho=-1, ps=-1, materialID=-1, freq=1;
-  float_sw4 vpgrad=0, vsgrad=0, rhograd=0;
-  float_sw4 vp2=0, vs2=0, rho2=0;
+  //  float_sw4 vp=-1, vs=-1, rho=-1, ps=-1, materialID=-1, freq=1;
+  // float_sw4 vpgrad=0, vsgrad=0, rhograd=0;
+  //  float_sw4 vp2=0, vs2=0, rho2=0;
   
   bool gotFileName=false;
   
@@ -7787,11 +7789,11 @@ void EW::processMaterialRfile(char* buffer)
   // Used for pfiles
    string filename = "NONE";
    string directory = "NONE";
-   float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+   //float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
    string cflatten = "NONE";
-   bool flatten = false;
-   bool coords_geographic = true;
-   int nstenc = 5;
+   //   bool flatten = false;
+   //bool coords_geographic = true;
+   //int nstenc = 5;
    int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
    char* token = strtok(buffer, " \t");

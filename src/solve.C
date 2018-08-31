@@ -266,7 +266,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   double time_start_solve = MPI_Wtime();
   double time_measure[20];
   double time_sum[9]={0,0,0,0,0,0,0,0,0};
-  double bc_time_measure[5]={0,0,0,0,0};
+  //  double bc_time_measure[5]={0,0,0,0,0};
 
 // Sort sources wrt spatial location, needed for thread parallel computing
   vector<int> identsources;
@@ -511,7 +511,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       printf("Checking the accuracy of the checkpoint data\n");
 
 // check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
-    float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
+    float_sw4 errInf=0, errL2=0, solInf=0;
     exactSol( t, Up, AlphaVEp, a_Sources );
 
     normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
@@ -1837,19 +1837,19 @@ void EW::check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc
 //-----------------------------------------------------------------------
 void EW::check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc )
 {
-   int icb, ifb, ice, ife, jcb, jfb, jce, jfe, nkf;
+   int icb, ice,  jcb,  jce,  nkf;
    
    icb = m_iStartInt[gc];
-   ifb = m_iStartInt[gf];
+   //ifb = m_iStartInt[gf];
 
    ice = m_iEndInt[gc];
-   ife = m_iEndInt[gf];
+   //ife = m_iEndInt[gf];
    
    jcb = m_jStartInt[gc];
-   jfb = m_jStartInt[gf];
+   //jfb = m_jStartInt[gf];
 
    jce = m_jEndInt[gc];
-   jfe = m_jEndInt[gf];
+   //jfe = m_jEndInt[gf];
 
    nkf = m_global_nz[gf];
 
@@ -2971,9 +2971,9 @@ SW4_MARK_FUNCTION;
    SView &mMuV = mMu[g].getview();
    SView &mLambdaV = mLambda[g].getview();
 
-   int istart,jstart;
-   istart = B.m_ib+2;
-   jstart = B.m_jb+2;
+   //   int istart,jstart;
+   //   istart = B.m_ib+2;
+   //jstart = B.m_jb+2;
    
    a_Up.prefetch();
    B.prefetch();
@@ -3107,9 +3107,9 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
   SW4_MARK_FUNCTION;
-  int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
+  int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
   float_sw4 *mu_ptr, *la_ptr, h, zmin;
-  boundaryConditionType *bcType_ptr;
+  //  boundaryConditionType *bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
   float_sw4 om=0, ph=0, cv=0, omm;
@@ -3126,12 +3126,12 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
     jlast  = m_jEnd[g];
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
-    nx = m_global_nx[g];
-    ny = m_global_ny[g];
+    //    nx = m_global_nx[g];
+    // ny = m_global_ny[g];
     nz = m_global_nz[g];
     
     h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
-    bcType_ptr = m_bcType[g]; // pointer to the local bc array
+    //    bcType_ptr = m_bcType[g]; // pointer to the local bc array
     zmin = m_zmin[g];
     int curvilinear = topographyExists() && g == mNumberOfGrids-1;
     

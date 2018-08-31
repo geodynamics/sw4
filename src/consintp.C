@@ -71,9 +71,9 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    const float_sw4 i1024 = 1.0/1024;
 
    int jcb, jce, icb, ice, jfb, jfe, ifb, ife, nkf;
-   float_sw4 nuf = mDt*mDt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
-   float_sw4 nuc = mDt*mDt/(cof*hc*hc);
-   float_sw4 ihc = 1/hc, ihf=1/hf;
+   //float_sw4 nuf = mDt*mDt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
+   //   float_sw4 nuc = mDt*mDt/(cof*hc*hc);
+   //  float_sw4 ihc = 1/hc, ihf=1/hf;
    float_sw4 jacerr = m_citol+1,jacerr0;
    float_sw4 relax;
    int it = 0;
@@ -423,9 +423,9 @@ void EW::checkintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray&
    float_sw4 nuf = mDt*mDt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
    float_sw4 nuc = mDt*mDt/(cof*hc*hc);
    float_sw4 ihc = 1/hc, ihf=1/hf;
-   float_sw4 jacerr = m_citol+1,jacerr0;
+   //   float_sw4 jacerr = m_citol+1,jacerr0;
    float_sw4 relax;
-   int it = 0;
+   // int it = 0;
    relax = m_cirelfact;
  
    icb = m_iStartInt[gc];
@@ -571,16 +571,16 @@ void EW::checkintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray&
       {
 // i odd, j odd
          int i=2*ic-1, j=2*jc-1;
-	 float_sw4 a11, a12, a21, a22, err_c, err_f;
+	 float_sw4 a12, err_c, err_f;
          // setup 2x2 system matrix
          // unknowns: (Uf, Uc)
 // eqn 1: continuity of normal stress: NEED stretching
-         a11 = 0.25*Mufs(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
+         //a11 = 0.25*Mufs(i,j,nkf)*m_sbop[0]*ihf; // ihf = 1/h on the fine grid; Mufs contains stretching
          a12 = Muc(ic,jc,1)*m_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));  // ihc = 1/h on the coarse grid
 // eqn 2: continuity of displacement
 // nuf = dt^2/(cof * hf^2), nuc = dt^2/(cof * hc^2)
-         a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; 
-         a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0];
+         //a21 = nuf/Rhof(i,j,nkf)*Muf(i,j,nkf)*m_ghcof[0]; 
+         //a22 =-nuc/Rhoc(ic,jc,1)*Muc(ic,jc,1)*m_ghcof[0];
 //
 //       save results for c=1,2,3
          float_sw4 fstress[3], cstress[3];
@@ -629,11 +629,11 @@ void EW::checkintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray&
 
 // setup the matrix for the 3rd component of the normal stress (different coefficients)
          // NEED stretching terms in a11 & a12
-         a11 = 0.25*Mlfs(i,j,nkf)*m_sbop[0]*ihf; // Mlfs contains stretching
+	 //         a11 = 0.25*Mlfs(i,j,nkf)*m_sbop[0]*ihf; // Mlfs contains stretching
          a12 = (2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_sbop[0]*ihc/(strc_x(ic)*strc_y(jc));
 
-         a21 = nuf/Rhof(i,j,nkf)*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))*m_ghcof[0];
-         a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
+	 //   a21 = nuf/Rhof(i,j,nkf)*(2*Muf(i,j,nkf)+Lambdaf(i,j,nkf))*m_ghcof[0];
+	 //  a22 =-nuc/Rhoc(ic,jc,1)*(2*Muc(ic,jc,1)+Lambdac(ic,jc,1))*m_ghcof[0];
 
 // apply the restriction operator to the fine grid normal stress grid function (Bf)
 // scale Bf for stretching?

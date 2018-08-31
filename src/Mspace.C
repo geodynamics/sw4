@@ -1,7 +1,7 @@
 #include "Mspace.h"
 #include <unordered_map>
 #include "caliper.h"
-struct global_variable_holder_struct global_variables = { .gpu_memory_hwm=0 , .curr_mem=0, .max_mem = 0 };
+struct global_variable_holder_struct global_variables = {0 , 0, 0 };
 using namespace std;
 
 
@@ -328,6 +328,9 @@ void operator delete[](void *ptr, Space loc) throw(){
 #endif
 }
 
+void operator delete(void *ptr, Space loc,const char *file, int line) throw(){
+  ::operator delete[](ptr,loc);
+}
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
 void assert_check_managed(void *ptr, const char *file, int line){
   if (ptr==NULL) return;

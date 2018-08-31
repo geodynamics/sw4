@@ -830,7 +830,7 @@ void Sarray::extract_subarrayIK( int ib, int ie, int jb, int je, int kb,
    // Assuming nc is the same for m_data and subarray ar.
    // Return `ar' in order suitable for storing array on file.
 
-   int nis = ie-ib+1;
+  //   int nis = ie-ib+1;
    int njs = je-jb+1;
    int nks = ke-kb+1;
    size_t sind=0, ind=0;
@@ -868,7 +868,7 @@ void Sarray::insert_subarrayIK( int ib, int ie, int jb, int je, int kb,
    // Assuming nc is the same for m_data and subarray ar.
    // Insert array `ar', where `ar' is in order suitable for storing array on file.
 
-   int nis = ie-ib+1;
+  //   int nis = ie-ib+1;
    int njs = je-jb+1;
    int nks = ke-kb+1;
    //   int nks = ke-kb+1;
@@ -1007,7 +1007,7 @@ void Sarray::save_to_disk( const char* fname )
 //-----------------------------------------------------------------------
 void Sarray::assign( const float* ar, int corder )
 {
- std:cout<<"WARNING:: Float version of Sarray::assign not offloaded \n";
+  std::cout<<"WARNING:: Float version of Sarray::assign not offloaded \n";
    if( corder == m_corder || corder == -1 )
    {
       // Both arrays in the same order
@@ -1235,7 +1235,7 @@ void Sarray::transposeik( )
 void Sarray::prefetch(int device){
 #if defined(DISABLE_PREFETCH)
   return;
-#endif
+#else
 #if defined(ENABLE_CUDA)
   if (!prefetched){
   SW4_MARK_BEGIN("PREFETCH");
@@ -1247,11 +1247,13 @@ void Sarray::prefetch(int device){
   prefetched=true;
   }
 #endif
+
+#endif // #if defined(DISABLE_PREFETCH)
 }
   void Sarray::forceprefetch(int device){
 #if defined(DISABLE_PREFETCH)
     return;
-#endif
+#else
 #if defined(ENABLE_CUDA)
   SW4_MARK_BEGIN("FORCE_PREFETCH");
   SW4_CheckDeviceError(cudaMemPrefetchAsync(m_data,
@@ -1263,6 +1265,7 @@ void Sarray::prefetch(int device){
   
 #endif
 
+#endif // #if defined(DISABLE_PREFETCH)
 }
 SView::SView():data{NULL}{
   //std:cerr<<"SVIEW default ctor, should never be called \n";

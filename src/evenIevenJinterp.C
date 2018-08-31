@@ -17,28 +17,28 @@ void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray
 // tmp
 //  printf("Inside evenIevenJinterp! ");
   
-  int icb = a_iStartInt[gc];
+//  int icb = a_iStartInt[gc];
   int ifb = a_iStartInt[gf];
   if (ifb % 2 == 1) ifb++; // make sure ifb is even
 
-  int ice = a_iEndInt[gc];
+  //  int ice = a_iEndInt[gc];
   int ife = a_iEndInt[gf];
    
-  int jcb = a_jStartInt[gc];
+  // int jcb = a_jStartInt[gc];
   int jfb = a_jStartInt[gf];
   if (jfb % 2 == 1) jfb++; // make sure jfb is even
   
 
-  int jce = a_jEndInt[gc];
+  //  int jce = a_jEndInt[gc];
   int jfe = a_jEndInt[gf];
 
   float_sw4 nuf = a_Dt*a_Dt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
   float_sw4 nuc = a_Dt*a_Dt/(cof*hc*hc);
-  float_sw4 ihc = 1/hc, ihf=1/hf;
+  //  float_sw4 ihc = 1/hc, ihf=1/hf;
 
-  const float_sw4 i16 = 1.0/16;
+  // const float_sw4 i16 = 1.0/16;
   const float_sw4 i256 = 1.0/256;
-  const float_sw4 i1024 = 1.0/1024;
+  //const float_sw4 i1024 = 1.0/1024;
 
 // residuals
   float_sw4 rmax1=0, rmax2=0, rmax3=0;
@@ -226,28 +226,28 @@ void evenIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 #define UfNew(c,i,j,k)   a_ufnew[-base3_ufnew+i+niF*(j)+nijF*(k)+nijk_ufnew*(c)]   
 
 // previous stuff  
-  int icb = a_iStartInt[gc];
+//  int icb = a_iStartInt[gc];
   int ifb = a_iStartInt[gf];
   if (ifb % 2 == 1) ifb++; // make sure ifb is even
 
-  int ice = a_iEndInt[gc];
+  //  int ice = a_iEndInt[gc];
   int ife = a_iEndInt[gf];
    
-  int jcb = a_jStartInt[gc];
+  //  int jcb = a_jStartInt[gc];
   int jfb = a_jStartInt[gf];
   if (jfb % 2 == 1) jfb++; // make sure jfb is even
   
 
-  int jce = a_jEndInt[gc];
+  //  int jce = a_jEndInt[gc];
   int jfe = a_jEndInt[gf];
 
   float_sw4 nuf = a_Dt*a_Dt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
   float_sw4 nuc = a_Dt*a_Dt/(cof*hc*hc);
-  float_sw4 ihc = 1/hc, ihf=1/hf;
+  // float_sw4 ihc = 1/hc, ihf=1/hf;
 
-  const float_sw4 i16 = 1.0/16;
+  //  const float_sw4 i16 = 1.0/16;
   const float_sw4 i256 = 1.0/256;
-  const float_sw4 i1024 = 1.0/1024;
+  //const float_sw4 i1024 = 1.0/1024;
 
 // residuals
   //float_sw4 rmax1=0, rmax2=0, rmax3=0;
@@ -426,28 +426,28 @@ void evenIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambda
 #define strf_x(i) a_strf_x[(i-a_iStart[gf])]   
 #define strf_y(j) a_strf_y[(j-a_jStart[gf])]   
 
-  int icb = a_iStartInt[gc];
+  //  int icb = a_iStartInt[gc];
   int ifb = a_iStartInt[gf];
   if (ifb % 2 == 1) ifb++; // make sure ifb is even
 
-  int ice = a_iEndInt[gc];
+  // int ice = a_iEndInt[gc];
   int ife = a_iEndInt[gf];
    
-  int jcb = a_jStartInt[gc];
+  // int jcb = a_jStartInt[gc];
   int jfb = a_jStartInt[gf];
   if (jfb % 2 == 1) jfb++; // make sure jfb is even
   
 
-  int jce = a_jEndInt[gc];
+  //  int jce = a_jEndInt[gc];
   int jfe = a_jEndInt[gf];
 
   float_sw4 nuf = a_Dt*a_Dt/(cof*hf*hf); // cof=12 for the predictor, cof=1 for the corrector (argument to this routine)
   float_sw4 nuc = a_Dt*a_Dt/(cof*hc*hc);
-  float_sw4 ihc = 1/hc, ihf=1/hf;
+  //  float_sw4 ihc = 1/hc, ihf=1/hf;
 
-  const float_sw4 i16 = 1.0/16;
+  // const float_sw4 i16 = 1.0/16;
   const float_sw4 i256 = 1.0/256;
-  const float_sw4 i1024 = 1.0/1024;
+  // const float_sw4 i1024 = 1.0/1024;
 
 // residuals
   float_sw4 rmax1=0, rmax2=0, rmax3=0;

@@ -577,7 +577,7 @@ void Source::correct_Z_level( EW *a_ew )
   {    
 // evaluate z-coordinate of topography
 // NOTE: we already tested for topography above
-    float_sw4 q, r, s;
+    float_sw4 q, r;
     int gCurv = a_ew->mNumberOfGrids - 1;
     float_sw4 h = a_ew->mGridSize[gCurv];
     q = mX0/h + 1.0;
@@ -1921,7 +1921,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
       float_sw4 dsX0[3], dsY0[3], dsZ0[3];
       // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order qq,qr,qs,rr,rs,ss
-      float_sw4 d2sX0[6], d2sY0[6], d2sZ0[6];
+      //float_sw4  s2sX0[6], d2sY0[6], d2sZ0[6];
       if( !curvilinear )
       {
          // Cartesian case, constant metric
@@ -1931,8 +1931,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
          dsX0[0] = dsX0[1] = dsX0[2] = 0;
          dsY0[0] = dsY0[1] = dsY0[2] = 0;
          dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
-         for( int i=0 ; i < 6  ; i++ )
-            d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
+         // for( int i=0 ; i < 6  ; i++ )
+         //    d2sX0[i]=d2sY0[i] = d2sZ0[i] = 0;
       }	 
       else
       {

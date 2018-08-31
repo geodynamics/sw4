@@ -895,7 +895,7 @@ using XRHS_POL2 =
    const float_sw4 tf   = 0.75;
 
    const int ni    = ilast-ifirst+1;
-   const int nj= jlast-jfirst+1;
+   //   const int nj= jlast-jfirst+1;
    const int nij   = ni*(jlast-jfirst+1);
    const int nijk  = nij*(klast-kfirst+1);
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
@@ -948,7 +948,7 @@ using XRHS_POL2 =
 
    PREFETCH(a_mu); // Needed
    PREFETCH(a_lambda); // Needed
-   int nkk=klast-kfirst+1;
+   //   int nkk=klast-kfirst+1;
 #ifdef ENABLE_CUDA
     // rhs4th3fortsgstr_ciopt(2,ni-2,2,nj-2,2,nkk-2,
    //    			  ni,nj,nkk,

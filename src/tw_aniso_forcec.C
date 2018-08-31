@@ -706,11 +706,11 @@ void EW::tw_aniso_free_surf_z_ci( int ifirst, int ilast, int jfirst, int jlast,
   SW4_MARK_FUNCTION;
    //      real(dp), intent(out):: bforce(3,ifirst:ilast,jfirst:jlast)
    const size_t ni    = ilast-ifirst+1;
-   const size_t nij   = ni*(jlast-jfirst+1);
+   //const size_t nij   = ni*(jlast-jfirst+1);
    const size_t base  = -(ifirst+ni*jfirst);
 #pragma omp parallel
    {
-      float_sw4 ph1,ph2,ph3,ph4,ph5,ph6,ph7,ph8,ph9,ph10,ph11,ph12,ph13,ph14,ph15,ph16,ph17,ph18,ph19,ph20,ph21,forces[3],t1,t10,t101,t104,t106,t108,t110,t113,t115,t122,t124,t127,t129,t13,t137,t139,t146,t148,t15,t151,t154,t16,t160,t163,t166,t169,t176,t179,t181,t189,t19,t192,t20,t202,t205,t21,t23,t24,t25,t28,t3,t30,t33,t35,t36,t38,t39,t4,t40,t43,t45,t48,t50,t52,t55,t56,t59,t6,t60,t62,t65,t67,t70,t73,t75,t77,t8,t80,t83,t85,t86,t88,t92,t93,t94,t96,t99;
+      float_sw4 ph1,ph2,ph3,ph4,ph5,ph6,ph7,ph8,ph9,ph10,ph11,ph12,ph13,ph14,ph15,ph17,ph18,ph19,ph20,ph21,forces[3],t1,t10,t101,t104,t106,t108,t110,t113,t115,t122,t124,t127,t129,t13,t137,t139,t146,t148,t15,t151,t154,t16,t160,t163,t166,t169,t176,t179,t181,t189,t19,t192,t20,t202,t205,t21,t23,t24,t25,t28,t3,t30,t33,t35,t36,t38,t39,t4,t40,t43,t45,t48,t50,t52,t55,t56,t59,t6,t60,t62,t65,t67,t70,t73,t75,t77,t8,t80,t83,t85,t86,t88,t92,t93,t94,t96,t99;
 
       // extract all the phase angles for the stress matrix
    ph1 = phc[0];
@@ -728,7 +728,7 @@ void EW::tw_aniso_free_surf_z_ci( int ifirst, int ilast, int jfirst, int jlast,
    ph13 = phc[12];
    ph14 = phc[13];
    ph15 = phc[14];
-   ph16 = phc[15];
+   //   ph16 = phc[15];
    ph17 = phc[16];
    ph18 = phc[17];
    ph19 = phc[18];

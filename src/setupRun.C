@@ -749,7 +749,7 @@ void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources )
 //-----------------------------------------------------------------------
 void EW::setupSBPCoeff()
 {
-  float_sw4 gh2; // this coefficient is also stored in m_ghcof[0]
+  //  float_sw4 gh2; // this coefficient is also stored in m_ghcof[0]
   if (mVerbose >=2 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
   if( m_croutines )
@@ -1005,7 +1005,7 @@ void EW::set_materials()
 	   << "******************************" << endl;
 
 // For some forcings (such as twilight forcing) the material is set here.
-      float_sw4 xP, yP, zP;
+//      float_sw4 xP, yP, zP;
       
       int ifirst, ilast, jfirst, jlast, kfirst, klast;
       float_sw4 *rho_ptr, *mu_ptr, *la_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -1239,10 +1239,10 @@ void EW::set_anisotropic_materials()
               << "******************************" << endl;
 
 // For some forcings (such as twilight forcing) the material is set here.
-      float_sw4 xP, yP, zP;
+      //   float_sw4 xP, yP, zP;
       
       int ifirst, ilast, jfirst, jlast, kfirst, klast, g;
-      float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
+      float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho;
       float_sw4 phc[21]; // move these angles to the EW class
 
       // need to store all the phase angle constants somewhere
@@ -1470,7 +1470,7 @@ void EW::computeDT()
    if (topographyExists())
    {
      g = mNumberOfGrids-1;
-     float_sw4 la, mu, la2mu;
+     //     float_sw4 la, mu, la2mu;
 
 // do consider ghost points (especially the ghost line above the topography might be important)
 #pragma omp parallel for reduction(min:dtCurv)
@@ -1898,8 +1898,8 @@ void EW::setup_supergrid( )
 //-----------------------------------------------------------------------
 void EW::assign_supergrid_damping_arrays()
 {
-  int g, i, j, k, topCartesian;
-  float_sw4 x, y, z;
+  int g, topCartesian;
+  //float_sw4 x, y, z;
   
 // resize the vectors for the pointers
   m_sg_dc_x.resize(mNumberOfGrids);
@@ -2155,7 +2155,7 @@ void EW::material_ic( vector<Sarray>& a_mtrl )
       int g  = mNumberOfCartesianGrids-1;
       int gc = mNumberOfGrids-1;
       int nc = a_mtrl[g].ncomp();
-      int q, i, j;
+      //      int q, i, j;
 // inject values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
       for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
