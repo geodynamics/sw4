@@ -1231,7 +1231,8 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL2");
   
   if (sendto!=MPI_PROC_NULL){
-    getbuffer_device(a,std::get<0>(buf),sendt,true);
+    //getbuffer_device(a,std::get<0>(buf),sendt,true);
+    getbuffer_host(a,std::get<0>(buf),sendt);
   }
 
   // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
@@ -1252,7 +1253,8 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt
   SW4_MARK_BEGIN("MPI_RECV_WAIT2");
   if (recvfrom!=MPI_PROC_NULL){
     if (MPI_Wait(&recv_req,&recv_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT RECV FAILED IN AMPI_SENDrecv\n";
-    putbuffer_device(b,std::get<1>(buf),recvt,true);
+    //putbuffer_device(b,std::get<1>(buf),recvt,true);
+    putbuffer_host(b,std::get<1>(buf),recvt);
     //std::cout<<"RECEIVING :: "<<recvfrom<<" ";
     //for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
     //std::cout<<"\n";

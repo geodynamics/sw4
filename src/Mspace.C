@@ -109,6 +109,7 @@ if (loc==Managed){
   SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
   return ptr;
  } else if (loc==Managed_temps){
+#ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
   auto allocator = rma.getAllocator("UM_pool_temps");
   void *ptr = static_cast<void*>(allocator.allocate(size));
@@ -116,6 +117,10 @@ if (loc==Managed){
   //std::cout<<"PTR 1 "<<ptr<<"\n";
   //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
   return ptr;
+#else
+  std::cerr<<"Managed_temp location no defined\n";
+  return ::operator new(size,Managed); 
+#endif
  }
  else {
   std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
@@ -148,8 +153,8 @@ void * operator new(std::size_t size,Space loc,char *file, int line) throw(std::
 
 void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc){
 #ifdef ENABLE_CUDA
-if (loc==Managed){
-  //std::cout<<"Managed [] allocation \n";
+  if (loc==Managed){
+    //std::cout<<"Managed [] allocation \n";
     if (size==0) size=1; // new has to return an valid pointer for 0 size.
     void *ptr;
 #ifndef SW4_USE_UMPIRE
@@ -172,37 +177,43 @@ if (loc==Managed){
     return ptr;
 #endif
   } else if (loc==Host){
-  // std::cout<<"Calling my placement new \n";
+    // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else if (loc==Device){
-  //std::cout<<"Managed allocation \n";
+    //std::cout<<"Managed allocation \n";
     if (size==0) size=1; // new has to return an valid pointer for 0 size.
     void *ptr;
     if (cudaMalloc(&ptr,size)!=cudaSuccess){
       std::cerr<<"Device memory allocation failed "<<size<<"\n";
       throw std::bad_alloc();
     } else return ptr;
- }else if (loc==Pinned){ 
-  if (size==0) size=1; // new has to return an valid pointer for 0 size.
-  void *ptr;
-  SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
-  return ptr;
- }  else if (loc==Managed_temps){
-  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
-  auto allocator = rma.getAllocator("UM_pool_temps");
-  void* ptr = static_cast<void*>(allocator.allocate(size));
-  SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
-  //std::cout<<"PTR 1 "<<ptr<<"\n";
-  //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
-  return ptr;
- }
-
-else {
-  //cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
-  std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
+  }else if (loc==Pinned){ 
+    if (size==0) size=1; // new has to return an valid pointer for 0 size.
+    void *ptr;
+    SW4_CheckDeviceError(cudaHostAlloc(&ptr,size,cudaHostAllocMapped));
+    return ptr;
+  }  else if (loc==Managed_temps){
+#if defined(SW4_USE_UMPIRE)
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_pool_temps");
+    void* ptr = static_cast<void*>(allocator.allocate(size));
+    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+    //std::cout<<"PTR 1 "<<ptr<<"\n";
+    //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
+    return ptr;
+#else
+    std::cerr<<" Memory location Managed_temps is not defined\n";
+    return ::operator new(size,Managed); 
+#endif
+  } else {
+    //cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
+    std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
     throw std::bad_alloc();
   }
-#else
+
+
+
+#else // !ENABLE_CUDA
  if ((loc==Managed)||(loc==Device)||(loc==Pinned)||(loc==Managed_temps)){
     //std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
@@ -210,10 +221,12 @@ else {
     //std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
-  std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
-    throw std::bad_alloc();
+   std::cerr<<"Unknown memory space for allocation request "<<loc<<"\n";
+   throw std::bad_alloc();
   }
 #endif
+
+
 }
 void * operator new[](std::size_t size,Space loc,const char *file,int line){
   //std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
@@ -257,9 +270,13 @@ void operator delete(void *ptr, Space loc) throw(){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
     } else if (loc==Managed_temps){
+#if defined(SW4_USE_UMPIRE)
       umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
       auto allocator = rma.getAllocator("UM_pool_temps");
       allocator.deallocate(ptr);
+#else
+      std::cerr<<"Memory location Managed_temps not defined\n";
+#endif
     } else {
     std::cerr<<"Unknown memory space for de-allocation request\n";
   }

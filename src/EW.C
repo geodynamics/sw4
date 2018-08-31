@@ -4068,7 +4068,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &po
 
      firstcall=false;
     }
-    typedef RAJA::cuda_exec<1024,true> FORCE_LOOP_ASYNC;
+    typedef RAJA::cuda_exec<32,true> FORCE_LOOP_ASYNC;
     GPSL=GPS;
     idnts_local=idnts;
     float_sw4 **ForceAddress_copy=ForceAddress;
@@ -4342,12 +4342,12 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
     int *idnts_local=idnts;
  
     float_sw4 **ForceAddress_copy=ForceAddress;
-    
+    typedef RAJA::cuda_exec<1024,true> FORCETT_LOOP_ASYNC;
     for( int g =0 ; g < mNumberOfGrids ; g++ )
 	a_F[g].set_to_zero_async();
      SW4_MARK_BEGIN("FORCE_TT::DEVICE");
 
-     RAJA::forall<DEFAULT_LOOP1_ASYNC> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
+     RAJA::forall<FORCETT_LOOP_ASYNC> (RAJA::RangeSegment(0,identsources.size()-1),[=] RAJA_DEVICE(int r){
 	 int index=r*3;
 	 for( int s = idnts_local[r] ; s < idnts_local[r+1] ; s++ )
 	   {

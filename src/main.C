@@ -79,11 +79,15 @@ main(int argc, char **argv)
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
   auto allocator = rma.getAllocator("UM");
 
-  const size_t pool_size = static_cast<size_t>(15)*1024*1024*1024*1024;
+  const size_t pool_size = static_cast<size_t>(15)*1024*1024*1024;
 
   auto pooled_allocator =
     rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool"),
 							   allocator,pool_size);
+
+  // auto pooled_allocator_small =
+  //   rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_small"),
+  // 							   allocator,pool_size);
   // auto pooled_allocator2 =
   //   rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_temps"),
   //                                                   allocator);
