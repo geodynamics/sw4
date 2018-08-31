@@ -329,8 +329,12 @@ void operator delete[](void *ptr, Space loc) throw(){
 }
 
 void operator delete(void *ptr, Space loc,const char *file, int line) throw(){
+  ::operator delete(ptr,loc);
+}
+void operator delete[](void *ptr, Space loc,const char *file, int line) throw(){
   ::operator delete[](ptr,loc);
 }
+
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
 void assert_check_managed(void *ptr, const char *file, int line){
   if (ptr==NULL) return;

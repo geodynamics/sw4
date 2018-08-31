@@ -187,9 +187,9 @@ void CheckPoint::define_pio( )
 {
    int glow = 0, ghigh = mEW->mNumberOfGrids;
 
-  double time_start = MPI_Wtime();
-  double time_measure[12];
-  time_measure[0] = time_start;
+   //double time_start = MPI_Wtime();
+   //double time_measure[12];
+   //time_measure[0] = time_start;
 
    // Create the restart directory if it doesn't exist
    if( mRestartPathSet )
@@ -779,6 +779,7 @@ std::string CheckPoint::get_restart_path()
     retval = mRestartPath;
     return retval;
   }
+  return retval;
 }
 
 //-----------------------------------------------------------------------

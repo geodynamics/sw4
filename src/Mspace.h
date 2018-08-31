@@ -33,6 +33,8 @@ void operator delete(void *ptr, Space loc) throw();
 void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc) ;
 void * operator new[](std::size_t size,Space loc,const char *file,int line);
 void operator delete[](void *ptr, Space loc) throw();
+void operator delete(void *ptr, Space loc,const char *file, int line) throw();
+void operator delete[](void *ptr, Space loc,const char *file, int line) throw();
 void presetGPUID();
 void print_hwm();
 struct global_variable_holder_struct {

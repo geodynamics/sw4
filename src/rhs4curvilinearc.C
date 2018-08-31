@@ -168,8 +168,8 @@ void EW::metricexgh_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const int nijk  = nij*(ke-kb+1);
    const int base  = -(ib+ni*jb+nij*kb);
    const int base4 = base-nijk;
-   const int nic  = 4*ni;
-   const int nijc = 4*nij;
+   //   const int nic  = 4*ni;
+   //  const int nijc = 4*nij;
 #define x(i,j,k)     a_x[base+i+ni*(j)+nij*(k)]
 #define y(i,j,k)     a_y[base+i+ni*(j)+nij*(k)]
 #define z(i,j,k)     a_z[base+i+ni*(j)+nij*(k)]
@@ -186,7 +186,7 @@ void EW::metricexgh_ci( int ib, int ie, int jb, int je, int kb, int ke,
 #pragma omp simd
 	 for( int i = ib; i <= ie ; i++ )
 	 {
-	    double zp, zq, zr, zz;
+	    double zp, zq, zr;
 	    double s = (k-1.0)/(nz-1.0);
 	    if( s < sb )
 	    {
@@ -210,15 +210,15 @@ void EW::metricexgh_ci( int ib, int ie, int jb, int je, int kb, int ke,
                zq = tauq*( -(1-sdb)+sdb*p1);
                zr = (tau+zmax+(zmax+tau-h*sb*(nz-1))*p1 -
                             sdb*(zmax+tau-h*sb*(nz-1))*p2 )/sb;
-               zz = (1-sdb)*(-tau) + 
-		  sdb*(zmax+(zmax+tau-h*sb*(nz-1))*p1);
+               // zz = (1-sdb)*(-tau) + 
+	       // 	  sdb*(zmax+(zmax+tau-h*sb*(nz-1))*p1);
 	    }
 	    else
 	    {
 	       zp = 0;
 	       zq = 0;
 	       zr = h*(nz-1);
-	       zz = zmax + (s-sb)*h*(nz-1);
+	       //zz = zmax + (s-sb)*h*(nz-1);
 	    }
 
  // Convert to 'undivided differences'
@@ -390,9 +390,9 @@ void EW::getsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int basef = -(ifirst+ni*jfirst);
    const int base3 = base-nijk;
-   const int basef3= basef-nij;
+   //   const int basef3= basef-nij;
    const int nic3  = 3*ni;
-   const int nic6  = 6*ni;
+   //   const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]
@@ -429,13 +429,13 @@ void EW::getsurfforcinggh_ci( int ifirst, int ilast, int jfirst, int jlast,
 {
    const int ni    = ilast-ifirst+1;
    const int nij   = ni*(jlast-jfirst+1);
-   const int nijk  = ni*(jlast-jfirst+1)*(klast-kfirst+1);
-   const int base  = -(ifirst+ni*jfirst+nij*kfirst);
+   //   const int nijk  = ni*(jlast-jfirst+1)*(klast-kfirst+1);
+   // const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int basef = -(ifirst+ni*jfirst);
-   const int base3 = base-nijk;
-   const int basef3= basef-nij;
+   //   const int base3 = base-nijk;
+   //   const int basef3= basef-nij;
    const int nic3  = 3*ni;
-   const int nic6  = 6*ni;
+   //   const int nic6  = 6*ni;
 
 #define forcing(c,i,j) a_forcing[3*basef-1+(c)+3*(i)+nic3*(j)]
 #define tau(c,i,j)     a_tau[basef-nij +(i)+ni*(j)+nij*(c)]
@@ -474,9 +474,9 @@ void EW::subsurfforcing_ci( int ifirst, int ilast, int jfirst, int jlast,
    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
    const int basef = -(ifirst+ni*jfirst);
    const int base3 = base-nijk;
-   const int basef3= basef-nij;
+   //   const int basef3= basef-nij;
    const int nic3  = 3*ni;
-   const int nic6  = 6*ni;
+   //  const int nic6  = 6*ni;
 
 #define met(c,i,j,k)   a_met[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define jac(i,j,k)     a_jac[base+(i)+ni*(j)+nij*(k)]

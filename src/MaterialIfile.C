@@ -247,7 +247,7 @@ void MaterialIfile::extractSurfaceFromGridFile(string a_surfaceFileName)
    VERIFY2(access(a_surfaceFileName.c_str(), R_OK) == 0,
 	       "No read permission on ifile surface file: " << a_surfaceFileName);
 
-   float_sw4 x, y, depth;
+   float_sw4 depth;
    double lat, lon;
    char buffer[256];
    char *token;
@@ -418,7 +418,7 @@ void MaterialIfile::extractSurfaceFromCartesianFile(string a_surfaceFileName)
    VERIFY2(access(a_surfaceFileName.c_str(), R_OK) == 0,
 	       "No read permission on ifile surface file: " << a_surfaceFileName);
 
-   float_sw4 x, y;
+   //  float_sw4 x, y;
    float_sw4 y0, x0, depth;
    char buffer[256];
    char *token;
@@ -587,7 +587,7 @@ int MaterialIfile::getMaterialID(double lat, double lon, float_sw4 depth )
 // 1. Interpolate in the grid file to get elevations on the computational grid
    double deltaLat = (m_materialLatMax-m_materialLatMin)/m_Nlat;
    double deltaLon = (m_materialLonMax-m_materialLonMin)/m_Nlon;
-   double eInterp, xi, eta;
+   double xi, eta;
    int i0, j0;
    if (lat > m_materialLatMax || lat < m_materialLatMin || lon > m_materialLonMax || lon < m_materialLonMin)
    {

@@ -80,14 +80,13 @@ main(int argc, char **argv)
   auto allocator = rma.getAllocator("UM");
 
   const size_t pool_size = static_cast<size_t>(15)*1024*1024*1024*1024;
+
   auto pooled_allocator =
-    rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool"),
+    rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool"),
 							   allocator,pool_size);
-  auto pooled_allocator2 =
-    rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_temps"),
-                                                    allocator);
-  //*global_variables.rm = rma;
-  //  global_variables.allocator = rma.getAllocator("UM");
+  // auto pooled_allocator2 =
+  //   rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_temps"),
+  //                                                   allocator);
 #endif
 
 #ifdef ENABLE_TAU
