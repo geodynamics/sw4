@@ -2643,7 +2643,7 @@ void EW::geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
 	 bool low_interior, high_interior;
 	 low_interior  = m_iStartInt[g] <= i0+1 && i0+1 <= m_iEndInt[g];
 	 high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
-	 bool surface_correction = k0 <= 1 && m_geodyn_faces == 5 && g == mNumberOfGrids-1;
+	 bool surface_correction = k0 <= 1 && g == mNumberOfGrids-1;
 	 int kstart=k0+1;
 	 if( surface_correction )
 	    kstart=k0;
