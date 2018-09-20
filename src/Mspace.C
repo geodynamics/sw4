@@ -324,6 +324,11 @@ void operator delete[](void *ptr, Space loc) throw(){
   else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
+  }  else if (loc==Managed_temps){
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_pool_temps");
+    allocator.deallocate(ptr);
+
   } else {
     std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }
@@ -334,12 +339,7 @@ void operator delete[](void *ptr, Space loc) throw(){
   } else if (loc==Host){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
-  } else if (loc==Managed_temps){
-      umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
-      auto allocator = rma.getAllocator("UM_pool_temps");
-      allocator.deallocate(ptr);
-
-    } else {
+  }else {
       std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }
 #endif

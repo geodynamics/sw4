@@ -86,7 +86,20 @@ public:
   Sarray( const Sarray& u );
   Sarray( Sarray& u, int nc=-1 );
   Sarray();
-  ~Sarray() {if(( m_data != 0 ) && (!static_alloc))::operator delete[](m_data,Managed);}
+  ~Sarray() {
+#ifndef SW4_USE_UMPIRE
+    if(( m_data != 0 ) && (!static_alloc))::operator delete[](m_data,Managed);
+#else
+    if (m_data!= 0){
+      if (static_alloc) {
+	::operator delete[](m_data,Managed_temps); // THIS NEEDS TO MATCH THE SPACE IN THE CTOR
+	//umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+	//auto allocator = rma.getAllocator("UM_pool_small");
+	//allocator.deallocate(m_data);
+      } else ::operator delete[](m_data,Managed);
+    }
+#endif
+  }
 //   void define( CartesianProcessGrid* cartcomm, int nc );
    void define( int iend, int jend, int kend );
    void define( int nc, int iend, int jend, int kend );

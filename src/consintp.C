@@ -92,7 +92,11 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    jfe = m_jEndInt[gf];
 
    nkf = m_global_nz[gf];
-   
+   float_sw4 rmax[6]={0,0,0,0,0,0};
+   Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0,__FILE__,__LINE__); // only one k-index
+   Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1,__FILE__,__LINE__); // the k-index is arbitrary, 
+
+
    SView &BfV = Bf.getview();
    Bf.prefetch();
    RAJA::RangeSegment j_range(m_jStart[gf],m_jEnd[gf]+1);
@@ -181,7 +185,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    Unextc.prefetch();
    SW4_MARK_BEGIN("CONSINTP_LOOP4");
 #pragma omp parallel 
-   for (int c=1; c<=3; c++)
+   //for (int c=1; c<=3; c++)
    {
 // this works but is a bit awkward
 // The instantiaion below needs to be long for Raja master. bug is fixed in developer branch
@@ -198,6 +202,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //          {
             int ic = (i+1)/2; 
             int jc = j/2;
+	    for (int c=1; c<=3; c++)
             UnextcInterpV(c,i,j,1) = i16*(-UnextcV(c,ic,jc-1,1)+9*(UnextcV(c,ic,jc,1)+UnextcV(c,ic,jc+1,1))-UnextcV(c,ic,jc+2,1));
 			}); 
 // this works but is a bit awkward
@@ -215,6 +220,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //          {
             int ic = i/2; 
             int jc = (j+1)/2;
+	    for (int c=1; c<=3; c++)
             UnextcInterpV(c,i,j,1) = i16*(-UnextcV(c,ic-1,jc,1)+9*(UnextcV(c,ic,jc,1)+UnextcV(c,ic+1,jc,1))-UnextcV(c,ic+2,jc,1));
 			}); 
 // this works but is a bit awkward
@@ -231,6 +237,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //          {
             int ic = i/2; 
             int jc = j/2;
+	    for (int c=1; c<=3; c++)
             UnextcInterpV(c,i,j,1) =  i256*
                ( UnextcV(c,ic-1,jc-1,1)-9*(UnextcV(c,ic,jc-1,1)+UnextcV(c,ic+1,jc-1,1))+UnextcV(c,ic+2,jc-1,1)
       + 9*(-UnextcV(c,ic-1,jc,  1)+9*(UnextcV(c,ic,jc,  1)+UnextcV(c,ic+1,jc,  1))-UnextcV(c,ic+2,jc,  1)  
@@ -238,18 +245,18 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       +UnextcV(c,ic-1,jc+2,1)-9*(UnextcV(c,ic,jc+2,1)+UnextcV(c,ic+1,jc+2,1))+UnextcV(c,ic+2,jc+2,1) );
 			});
 }  // end for c=1,3
-   SYNC_STREAM;
+   //SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP4");
 // Allocate space for the updated values of Uf and Uc (ghost points only)
    SW4_MARK_BEGIN("CONSINTP_SARRAY_ALLOCATION");
-   Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0,__FILE__,__LINE__); // only one k-index
-   Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1,__FILE__,__LINE__); // the k-index is arbitrary, 
+   //Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0,__FILE__,__LINE__); // only one k-index
+   //Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1,__FILE__,__LINE__); // the k-index is arbitrary, 
    SW4_MARK_END("CONSINTP_SARRAY_ALLOCATION");
 // Start iteration
    SW4_MARK_BEGIN("CONSINTP ITERATION");
    while( jacerr > m_citol && it < m_cimaxiter )
    {
-      float_sw4 rmax[6]={0,0,0,0,0,0};
+      
 //
 // REMARK: check jump condition in the presence of stretching function;
 // stretching function may be different in the fine and coarse grids!
@@ -344,8 +351,10 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       communicate_array_2d( Uc, gc, 0 );
       SW4_MARK_END("CONSINTP::COMM_ARRAY2D");
       float_sw4 jacerrtmp = 0;
-      for (int q=0; q<6; q++)
+      for (int q=0; q<6; q++){
          jacerrtmp += rmax[q];
+	 rmax[q]=0;
+      }
       SW4_MARK_BEGIN("CONSINTP::MPI_ALLREDUCE");
       MPI_Allreduce( &jacerrtmp, &jacerr, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
       SW4_MARK_END("CONSINTP::MPI_ALLREDUCE");

@@ -70,10 +70,10 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
        static_map[ss.str()]=m_data;
      }
 #else
-     m_data = SW4_NEW(Managed,float_sw4[m_nc*m_ni*m_nj*m_nk]);
-     // umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
-     // auto allocator = rma.getAllocator("UM_pool_temps");
-     // m_data= static_cast<float_sw4*>(allocator.allocate(sizeof(float_sw4)*m_nc*m_ni*m_nj*m_nk));
+     m_data = SW4_NEW(Managed_temps,float_sw4[m_nc*m_ni*m_nj*m_nk]); // THIS NEEDS TO MATCH THE SPACE IN THE DTOR
+     //umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+     //auto allocator = rma.getAllocator("UM_pool_small");
+     //m_data= static_cast<float_sw4*>(allocator.allocate(sizeof(float_sw4)*m_nc*m_ni*m_nj*m_nk));
 #endif
    }
    else
@@ -85,7 +85,7 @@ Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int ke
 #ifndef SW4_USE_UMPIRE
    static_alloc=true;
 #else
-   static_alloc=false;
+   static_alloc=true;
 #endif
 }
 
