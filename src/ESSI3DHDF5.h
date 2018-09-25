@@ -35,7 +35,10 @@
 #include <string>
 #include <sstream>
 #include <vector>
+
+#ifdef USE_HDF5
 #include "hdf5.h"
+#endif
 
 class ESSI3DHDF5
 {
@@ -46,7 +49,7 @@ public:
     int (&window)[6], bool ihavearray);
   ~ESSI3DHDF5();
 
-  hid_t create_file();
+  void create_file();
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
     double (&origin)[3], double t, double dt);
@@ -56,10 +59,12 @@ public:
   void write_vel(double* window_array, int comp);
 
   const std::string& filename() {return m_filename;};
-  hid_t get_mpiprop() {return m_mpiprop_id;};
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};
 
 protected:
+#ifdef USE_HDF5
+  hid_t get_mpiprop() {return m_mpiprop_id;};
+#endif
 
 private:
   ESSI3DHDF5(); // make it impossible to call default constructor
@@ -70,6 +75,7 @@ private:
   int m_window[6];
   int m_global[3];
 
+#ifdef USE_HDF5
   hsize_t m_window_dims[4]; // for just this proc, this cycle
   hsize_t m_global_dims[4]; // unlimited
   hsize_t m_cycle_dims[4]; // for all cycles until now
@@ -79,6 +85,7 @@ private:
   hid_t m_mpiprop_id;
   hid_t m_vel_dataset_id[3];
   hid_t m_vel_dataspace_id[3];
+#endif // def USE_HDF5
 };
 
 #endif

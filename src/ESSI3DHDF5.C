@@ -48,6 +48,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
   m_filename(filename),
   m_ihavearray(ihavearray)
 {
+#ifdef USE_HDF5
   for (int d=0; d < 3; d++)
   {
     m_global[d] = global[d];
@@ -88,6 +89,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
   m_cycle_dims[3] = 1; // TODO - this should be cycle-1
 
   MPI_Barrier(MPI_COMM_WORLD);
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -96,8 +98,9 @@ ESSI3DHDF5::~ESSI3DHDF5()
 
 }
 
-hid_t ESSI3DHDF5::create_file()
+void ESSI3DHDF5::create_file()
 {
+#ifdef USE_HDF5
   m_mpiprop_id = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(m_mpiprop_id, H5FD_MPIO_INDEPENDENT);
 
@@ -113,12 +116,13 @@ hid_t ESSI3DHDF5::create_file()
     MPI_Abort(comm,m_file_id);
   }
   H5Pclose(prop_id);
-  return m_file_id;
+#endif
 }
 
 void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   double (&origin)[3], double t, double dt)
 {
+#ifdef USE_HDF5
   bool debug=true;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -187,10 +191,12 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
       m_mpiprop_id, &dt);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
+#endif
 }
 
 void ESSI3DHDF5::write_topo(double* window_array)
 {
+#ifdef USE_HDF5
   bool debug=true;
   MPI_Comm comm = MPI_COMM_WORLD;
   int myRank;
@@ -269,10 +275,12 @@ void ESSI3DHDF5::write_topo(double* window_array)
   MPI_Barrier(comm);
   if (debug && (myRank == 0))
      cout << "Done writing hdf5 z coordinate: " << m_filename << endl;
+#endif
 }
 
 void ESSI3DHDF5::init_write_vel()
 {
+#ifdef USE_HDF5
   MPI_Comm comm = MPI_COMM_WORLD;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -298,10 +306,12 @@ void ESSI3DHDF5::init_write_vel()
         m_vel_dataspace_id[c], H5P_DEFAULT, prop_id, H5P_DEFAULT);
   }
   H5Pclose(prop_id);
+#endif
 }
 
 void ESSI3DHDF5::write_vel(double* window_array, int comp)
 {
+#ifdef USE_HDF5
   bool debug=true;
   MPI_Comm comm = MPI_COMM_WORLD;
   int myRank;
@@ -357,10 +367,12 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp)
     MPI_Abort(comm,ierr);
   }
 	// H5Sclose(slice_id);
+#endif
 }
 
 void ESSI3DHDF5::close_file()
 {
+#ifdef USE_HDF5
   // Close each velocity dataspace, then dataset 
   for (int comp=0; comp < 3; comp++)
   {
@@ -369,7 +381,6 @@ void ESSI3DHDF5::close_file()
   }
   H5Pclose(m_mpiprop_id);
   H5Fclose(m_file_id);
+#endif
 }
-
-
 

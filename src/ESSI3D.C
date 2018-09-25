@@ -353,7 +353,7 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
     m_hdf5helper->set_ihavearray(m_ihavearray);
     if (debug && (myRank == 0))
        cout << "Creating hdf5 file: " << m_hdf5helper->filename() << endl;
-    hid_t file_id = m_hdf5helper->create_file();
+    m_hdf5helper->create_file();
 
     // Write header metadata
     double h = mEW->mGridSize[g];
