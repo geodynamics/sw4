@@ -1,0 +1,81 @@
+# SW4 input RUN: M5.5_ESSI_srf 
+fileio path=M5.5_ESSI_srf.sw4output pfs=1 nwriters=1
+
+# hmin: 10.0 vmin: 500.0 ppw: 10 fmax: 5.0
+# npoints: 433742301
+grid x=6000.0 y=9000.0 z=8000.0 h=40.0 lat=37.815351 lon=-122.265501 az=0.0 mlat=111319.5 mlon=87909.266
+
+# time t=20.0 utcstart=01/01/2017:00:00:00.000
+time steps=10 utcstart=01/01/2017:00:00:00.000
+
+supergrid gp=30
+# block model 1D 
+block z1=0.0 z2=500.0 vp=866.0 vs=500.0 rho=1800 
+block z1=500.0 vp=5196.0 vs=3000.0 rho=2632 
+
+prefilter fc2=5.0 type=lowpass passes=2 order=2
+
+# Do ESSI output
+essioutput file=m5.5_ESSI_srf precision=double xmin=3800 xmax=4200 ymin=5800 ymax=6200 depth=100
+
+# Do 3DIMG output
+volimage cycleInterval=1 file=m5.5_ESSI_srf mode=ux precision=double
+volimage cycleInterval=1 file=m5.5_ESSI_srf mode=uy precision=double
+volimage cycleInterval=1 file=m5.5_ESSI_srf mode=uz precision=double
+
+# SRF rupture
+rupture file=/Users/hans/repos/sw4/tools/essi/M5.5_ESSI_srf/m5.5-5.6x5.6.s200.0.v5.1.srf
+
+# receiver output, root: S nx:5 ny: 8
+# rec x=1000.0 y=1000.0 z=0 sta=S_01_01 file=S_01_01
+# rec x=1000.0 y=2000.0 z=0 sta=S_01_02 file=S_01_02
+# rec x=1000.0 y=3000.0 z=0 sta=S_01_03 file=S_01_03
+# rec x=1000.0 y=4000.0 z=0 sta=S_01_04 file=S_01_04
+# rec x=1000.0 y=5000.0 z=0 sta=S_01_05 file=S_01_05
+# rec x=1000.0 y=6000.0 z=0 sta=S_01_06 file=S_01_06
+# rec x=1000.0 y=7000.0 z=0 sta=S_01_07 file=S_01_07
+# rec x=1000.0 y=8000.0 z=0 sta=S_01_08 file=S_01_08
+# rec x=2000.0 y=1000.0 z=0 sta=S_02_01 file=S_02_01
+# rec x=2000.0 y=2000.0 z=0 sta=S_02_02 file=S_02_02
+# rec x=2000.0 y=3000.0 z=0 sta=S_02_03 file=S_02_03
+# rec x=2000.0 y=4000.0 z=0 sta=S_02_04 file=S_02_04
+# rec x=2000.0 y=5000.0 z=0 sta=S_02_05 file=S_02_05
+# rec x=2000.0 y=6000.0 z=0 sta=S_02_06 file=S_02_06
+# rec x=2000.0 y=7000.0 z=0 sta=S_02_07 file=S_02_07
+# rec x=2000.0 y=8000.0 z=0 sta=S_02_08 file=S_02_08
+# rec x=3000.0 y=1000.0 z=0 sta=S_03_01 file=S_03_01
+# rec x=3000.0 y=2000.0 z=0 sta=S_03_02 file=S_03_02
+# rec x=3000.0 y=3000.0 z=0 sta=S_03_03 file=S_03_03
+# rec x=3000.0 y=4000.0 z=0 sta=S_03_04 file=S_03_04
+# rec x=3000.0 y=5000.0 z=0 sta=S_03_05 file=S_03_05
+# rec x=3000.0 y=6000.0 z=0 sta=S_03_06 file=S_03_06
+# rec x=3000.0 y=7000.0 z=0 sta=S_03_07 file=S_03_07
+# rec x=3000.0 y=8000.0 z=0 sta=S_03_08 file=S_03_08
+# rec x=4000.0 y=1000.0 z=0 sta=S_04_01 file=S_04_01
+# rec x=4000.0 y=2000.0 z=0 sta=S_04_02 file=S_04_02
+# rec x=4000.0 y=3000.0 z=0 sta=S_04_03 file=S_04_03
+# rec x=4000.0 y=4000.0 z=0 sta=S_04_04 file=S_04_04
+# rec x=4000.0 y=5000.0 z=0 sta=S_04_05 file=S_04_05
+# rec x=4000.0 y=6000.0 z=0 sta=S_04_06 file=S_04_06
+# rec x=4000.0 y=7000.0 z=0 sta=S_04_07 file=S_04_07
+# rec x=4000.0 y=8000.0 z=0 sta=S_04_08 file=S_04_08
+# rec x=5000.0 y=1000.0 z=0 sta=S_05_01 file=S_05_01
+# rec x=5000.0 y=2000.0 z=0 sta=S_05_02 file=S_05_02
+# rec x=5000.0 y=3000.0 z=0 sta=S_05_03 file=S_05_03
+# rec x=5000.0 y=4000.0 z=0 sta=S_05_04 file=S_05_04
+# rec x=5000.0 y=5000.0 z=0 sta=S_05_05 file=S_05_05
+# rec x=5000.0 y=6000.0 z=0 sta=S_05_06 file=S_05_06
+# rec x=5000.0 y=7000.0 z=0 sta=S_05_07 file=S_05_07
+# rec x=5000.0 y=8000.0 z=0 sta=S_05_08 file=S_05_08
+rec x=3800.0 y=5800.0 z=0 sta=S_00 file=S_00
+rec x=4200.0 y=5800.0 z=0 sta=S_20 file=S_20
+rec x=4000.0 y=6000.0 z=0 sta=S_11 file=S_11
+rec x=3800.0 y=6200.0 z=0 sta=S_02 file=S_02
+rec x=4200.0 y=6200.0 z=0 sta=S_22 file=S_22
+
+# Image output z=0
+image z=0 mode=s file=image cycle=0
+image z=0 mode=mag file=image timeInterval=1.0
+image z=0 mode=hmax file=image time=19.8
+image z=0 mode=vmax file=image time=19.8
+
