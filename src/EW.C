@@ -5083,6 +5083,12 @@ void EW::addImage3D(Image3D* i)
 }
 
 //-----------------------------------------------------------------------
+void EW::addESSI3D(ESSI3D* i)
+{
+   mESSI3DFiles.push_back(i);
+}
+
+//-----------------------------------------------------------------------
 void EW::initialize_image_files( )
 {
    // Image planes
@@ -5106,6 +5112,9 @@ void EW::initialize_image_files( )
    Image3D::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
       mImage3DFiles[fIndex]->setup_images( );
+   ESSI3D::setSteps(mNumberOfTimeSteps);
+   for (unsigned int fIndex = 0; fIndex < mESSI3DFiles.size(); ++fIndex)
+      mESSI3DFiles[fIndex]->setup( );
 }
 
 //-----------------------------------------------------------------------

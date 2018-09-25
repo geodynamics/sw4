@@ -3874,6 +3874,56 @@ qs      & $Q_s$ material attenuation factor \\ \hline
 \end{center}
 \index{volimage parameters!modes - ux, uy, uz, rho, p, s, lambda, mu, qp, qs}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ESSI 3D output
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{essioutput [optional]}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\index{command!essioutput}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{keyword:essioutput}
+\begin{flushleft}
+\bf Syntax:\\ \tt
+essioutput file=... precision=... xmin=... xmax=... ymin=... ymax=... depth=...\\
+\bf Required parameter:\\
+None
+\end{flushleft}
+%
+The \verb+essioutput+ command in \emph{SW4} allows you to save 3D volumetric
+  data in a file for ESSI.
+These files are in an HDF5 format that can be post-processed for ESSI input directly.
+Be aware that these files can be {\em very} large.
+The output occurs at every time levels during the simulation.
+The options {\bf file=...} and {\bf precision=...} have the
+  same meaning as the corresponding parameters in the image command.
+
+\noindent TODO: check / fix this if u variable isn't velocity? \\
+The set of possible modes, which is different from the image command, is given in the
+table below. The \verb+essioutput+ command produces files with extension \verb+.essi+.
+
+When topography is present, i.e., the top grid is curvilinear, each file also includes the
+$z$-coordinates of the curvilinear grid. Note that the grid coordinates are only saved when the
+input file contains a \verb+topography+ command.
+
+The file format is described in Section~\ref{sec:essioutput-format}.
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf essioutput command options}\\ \hline
+{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline
+\hline
+file        & file name header of image                          & string & none
+  & essioutput \\ \hline
+precision   & precision of image data on file (float/double)     & string & none & float \\ \hline
+xmin     & starting $x$ location of requested ESSI region & real & m & 0 \\ \hline
+xmax     & ending $x$ location of requested ESSI region & real & m & $x_{max}$ \\ \hline
+ymin     & starting $y$ location of requested ESSI region & real & m & 0 \\ \hline
+ymax     & ending $y$ location of requested ESSI region & real & m & $y_{max}$ \\ \hline
+depth     & minimum depth of output from surface over requested ESSI region & real & m & 0 \\ \hline
+\end{tabular}
+\end{center}
+\index{essioutput parameters!file, precision}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{gmt [optional]}
 \index{command!gmt}
@@ -4899,6 +4949,99 @@ for ($k=1$; $k\leq nk_p$; $k$++)\{\\
 The $x$- and $y-$ coordinates are uniformly distributed, also for the curvilinear grid, and can therefore always be
 reconstructed from the grid size $h$, and the index bounds. The $z$-coordinate on other patches, when present, will
 always be uniform, and can be reconstructed from $h$ and the $zmin$ variable.
+
+\section{essioutput}\label{sec:essioutput-format}
+\index{fileformats!essioutput}
+
+The \verb+essiouput+ command generates (often very large) binary files holding three-dimensional
+volumetric data for the ESSI application.
+
+A reader for \verb+volimage+ files is provided in the matlab/octave script
+\verb+readimage3d.m+ in the \verb+tools+ directory.  Alternatively, users might want to visualize
+the data in these files with the open source {\em VisIt} post processor. \verb+volimage+ files can
+also be used to define the material properties in \emph{SW4}, using the \verb+vimaterial+
+command. \emph{SW4} \verb+volimage+ files have extension \verb+.3D.mode.sw4img+, where \verb+mode+ is one
+of \verb+ux, uy, uz, rho, lambda, mu, p, s, qp, qs+.
+
+The format of the \verb+volimage+ files is essentially the same as the format of image files, with the
+exception that the sizes of the data patches are specified by six integers in the \verb+volimage+ files,
+instead of four in the image file format.  The first 61 bytes of the header of the \verb+volimage+ format is
+identical to the image format given in the previous section, i.e.,
+\begin{center}
+\begin{tabular}{llll}\hline
+Offset (bytes) & Name & Type & Bytes \\ \hline
+0 & prec   & int & 4 \\ \hline
+4 & $N_p$  & int & 4 \\ \hline
+8 & $t$    & double & 8 \\ \hline
+16 & plane & int & 4 \\ \hline
+20 & $\xi$ & double & 8 \\ \hline
+28 & mode  & int & 4 \\ \hline
+32 & grdinfo & int & 4 \\ \hline
+36 & creation-time & char[25] & 25 \\ \hline
+\end{tabular}
+\end{center}
+The \verb+plane+ and coordinate ($\xi$) variables are not needed for three-dimensional data. They are both
+set to -1 in a \verb+volimage+ file.  The number of possible variables to save is more restricted
+than for the image command. The volume image format stores one of the following variables with
+corresponding integer code for the \verb+mode+ variable in the file header:
+\begin{center}
+\begin{tabular}{l||l|l|l|l|l|l|l|l|l|l}\hline
+{\tt mode} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 14 & 15 \\ \hline
+Data & $u^{(x)}$ & $u^{(y)}$ & $u^{(z)}$ & $\rho$ & $\lambda$ & $\mu$ & $C_p$ & $C_s$ & $Q_p$ & $Q_s$ \\ \hline
+\end{tabular}
+\end{center}
+After the 61 byte header follows the dimensional information for the patches stored on
+the file in the following order:
+{\samepage
+\begin{flushleft}
+{\tt for ($p=1$; $p\leq N_p$; $p$++) \{}\nopagebreak \\
+\hspace{5mm}
+\begin{tabular}{llll}\hline
+Offset (bytes) & Name & Type & Bytes \\ \hline
+61 + $40(p - 1)$ & $h_{p}$ & double & 8 \\ \hline
+69 + $40(p - 1)$ & $zmin_{p}$ & double & 8 \\ \hline
+77 + $40(p - 1)$ & $ib_{p}$ & int & 4 \\ \hline
+81 + $40(p - 1)$ & $ni_{p}$ & int & 4 \\ \hline
+85 + $40(p - 1)$ & $jb_{p}$ & int & 4 \\ \hline
+89 + $40(p - 1)$ & $nj_{p}$ & int & 4 \\ \hline
+93 + $40(p - 1)$ & $kb_{p}$ & int & 4 \\ \hline
+97 + $40(p - 1)$ & $nk_{p}$ & int & 4 \\ \hline
+\end{tabular}\\
+\}
+\end{flushleft}
+}
+Next, the data patches are stored as 4 or 8 byte floats, as indicated by the \verb+prec+ entry
+in the header. These can be read as a one-dimensional sequence of bytes in the order
+\begin{flushleft}
+{\tt for ($p=1$; $p\leq N_p$; $p$++)\{\\
+\hspace{5mm}for ($k=1$; $k\leq nk_p$; $k$++)\{\\
+\hspace{10mm}for ($j=1$; $j\leq nj_p$; $j$++)\{\\
+\hspace{15mm}for ($i=1$; $i\leq ni_p$; $i$++)\{\\
+\hspace{20mm}read $u^{(p)}(i-1+ib_p, j-1+jb_p,k-1+kb_p)$\\
+\hspace{15mm}\}\\
+\hspace{10mm}\}\\
+\hspace{5mm}\}\\
+\}}
+\end{flushleft}
+If {\tt grdinfo}=0, there is no additional information on the \verb+volimage+ file.
+If {\tt grdinfo}=1, the $z$-coordinates of the curvilinear grid are also saved on the \verb+volimage+ file
+(as floats or doubles depending on {\tt prec}). Note that the curvilinear grid always
+corresponds to the last patch, $p=N_p$. The grid coordinate can be read in the same way as
+the data patches:
+\begin{flushleft}
+{\tt $p=N_p$;\\
+for ($k=1$; $k\leq nk_p$; $k$++)\{\\
+\hspace{5mm}for ($j=1$; $j\leq nj_p$; $j$++)\{\\
+\hspace{10mm}for ($i=1$; $i\leq ni_p$; $i$++)\{\\
+\hspace{15mm}read $z^{(p)}(i-1+ib_p, j-1+jb_p,k-1+kb_p)$\\
+\hspace{10mm}\}\\
+\hspace{5mm}\}\\
+\}}
+\end{flushleft}
+The $x$- and $y-$ coordinates are uniformly distributed, also for the curvilinear grid, and can therefore always be
+reconstructed from the grid size $h$, and the index bounds. The $z$-coordinate on other patches, when present, will
+always be uniform, and can be reconstructed from $h$ and the $zmin$ variable.
+
 
 
 %% For this reason, we will not describe the binary format here. If you really want to
