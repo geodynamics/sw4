@@ -95,7 +95,11 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    float_sw4 rmax[6]={0,0,0,0,0,0};
    Sarray UcNew(3,m_iStart[gc],m_iEnd[gc],m_jStart[gc],m_jEnd[gc],0,0,__FILE__,__LINE__); // only one k-index
    Sarray UfNew(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],nkf+1,nkf+1,__FILE__,__LINE__); // the k-index is arbitrary, 
-
+   Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1,__FILE__,__LINE__); // the k-index is arbitrary, 
+   SView &UnextcInterpV = UnextcInterp.getview();
+   UnextcInterp.prefetch();
+   SView &UnextcV = Unextc.getview();
+   Unextc.prefetch();
 
    SView &BfV = Bf.getview();
    Bf.prefetch();
@@ -146,7 +150,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    RAJA::RangeSegment j3_range(jcb,jce+1);
    RAJA::RangeSegment i3_range(icb,ice+1);
    SW4_MARK_BEGIN("CONSINTP_LOOP3");
-   RAJA::kernel<RHS4_EXEC_POL>(
+   RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 			RAJA::make_tuple(c_range, j3_range,i3_range),
 			[=]RAJA_DEVICE (int c,int jc,int ic) {
 // #pragma omp parallel
@@ -165,7 +169,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
                +9*(-BfV(c,i+1,j-3,nkf)+9*BfV(c,i+1,j-1,nkf)+16*BfV(c,i+1,j,nkf)+9*BfV(c,i+1,j+1,nkf)-BfV(c,i+1,j+3,nkf)) +
                BfV(c,i+3,j-3,nkf)-9*BfV(c,i+3,j-1,nkf)-16*BfV(c,i+3,j,nkf)-9*BfV(c,i+3,j+1,nkf)+BfV(c,i+3,j+3,nkf)
                );
-			  }); SYNC_STREAM;
+			}); //SYNC_STREAM;
    SW4_MARK_END("CONSINTP_LOOP3");
 // index bounds for loops below
    int ifodd = ifb, ifeven= ifb;
@@ -177,12 +181,12 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
    if (jfeven % 2 == 1) jfeven++; // make sure jfeven is even
    
 // pre-compute UnextcInterp
-   Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1,__FILE__,__LINE__); // the k-index is arbitrary, 
-// using k=1 since it comes from Unextc(c,ic,jc,1)
-   SView &UnextcInterpV = UnextcInterp.getview();
-   UnextcInterp.prefetch();
-   SView &UnextcV = Unextc.getview();
-   Unextc.prefetch();
+   // Sarray UnextcInterp(3,m_iStart[gf], m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1,__FILE__,__LINE__); // the k-index is arbitrary, 
+// // using k=1 since it comes from Unextc(c,ic,jc,1)
+//    SView &UnextcInterpV = UnextcInterp.getview();
+//    UnextcInterp.prefetch();
+//    SView &UnextcV = Unextc.getview();
+//    Unextc.prefetch();
    SW4_MARK_BEGIN("CONSINTP_LOOP4");
 #pragma omp parallel 
    //for (int c=1; c<=3; c++)

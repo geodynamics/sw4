@@ -518,7 +518,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 
    if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
    {
-      Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+     Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k,__FILE__,__LINE__);
       u2d.copy_kplane(u,k);
       SW4_MARK_BEGIN("comm_array_2d::MPI");
       // X-direction communication
@@ -949,7 +949,9 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
   int send_count=std::get<0>(sendt)*std::get<1>(sendt);
   SW4_MARK_END("THE REST");
-  //MPI_Barrier(MPI_COMM_WORLD);
+#if defined(ENABLE_MPI_TIMING_BARRIER)
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL");
   
   if (sendto!=MPI_PROC_NULL) getbuffer_device(a,std::get<0>(buf),sendt,true);
@@ -1227,7 +1229,9 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt
   int recv_count=std::get<0>(recvt)*std::get<1>(recvt);
   int send_count=std::get<0>(sendt)*std::get<1>(sendt);
   SW4_MARK_END("THE REST2");
-  //MPI_Barrier(MPI_COMM_WORLD);
+#if defined(ENABLE_MPI_TIMING_BARRIER)
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL2");
   
   if (sendto!=MPI_PROC_NULL){

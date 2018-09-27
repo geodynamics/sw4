@@ -39,6 +39,7 @@
 #include "policies.h"
 #include "caliper.h"
 #include <sstream>
+#include <foralls.h>
 using namespace std;
 std::unordered_map<std::string, float_sw4*>  Sarray::static_map = {{std::string("Initializer"),(float_sw4*)nullptr}};
 // Default value 
@@ -930,6 +931,13 @@ void Sarray::copy_kplane( Sarray& u, int k )
       // SW4_MARK_END("CK_PREF");
       size_t ind_start=mni*mnj*(k-mkb);
       size_t uind_start=mni*mnj*(k-um_kb);
+#define NO_COLLAPSE 1
+#if defined(NO_COLLAPSE)
+      Range<16> I(m_ib,m_ie+1);
+      Range<4>J(m_jb,m_je+1);
+      Range<1>C(0,m_nc);
+      forall3(I,J,C, [=]RAJA_DEVICE(int i,int j,int c){
+#else
       RAJA::RangeSegment c_range(0,m_nc);
       RAJA::RangeSegment j_range(m_jb,m_je+1);
       RAJA::RangeSegment i_range(m_ib,m_ie+1);
@@ -939,6 +947,7 @@ void Sarray::copy_kplane( Sarray& u, int k )
       RAJA::kernel<COPY_KPLANE_EXEC_POL>(
 			   RAJA::make_tuple(c_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int c,int j,int i) {
+#endif
       // for( int c=0 ; c < m_nc ; c++ )
       // 	 for( int j=m_jb ; j<=m_je ; j++ )
       // 	    for( int i=m_ib ; i <= m_ie ; i++ )
