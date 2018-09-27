@@ -52,11 +52,11 @@ public:
   void create_file();
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
-    double (&origin)[3], double t, double dt);
+    double (&origin)[3], int cycle, double t, double dt);
   void write_topo(double* window_array);
 
   void init_write_vel();
-  void write_vel(double* window_array, int comp);
+  void write_vel(double* window_array, int comp, int cycle);
 
   const std::string& filename() {return m_filename;};
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};
@@ -72,6 +72,8 @@ private:
 
   std::string m_filename;
   bool m_ihavearray;
+  int m_start_cycle;
+  int m_end_cycle;
   int m_window[6];
   int m_global[3];
 

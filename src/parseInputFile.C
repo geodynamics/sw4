@@ -3728,7 +3728,6 @@ void EW::processESSI3D( char* buffer )
    bool timingSet = false;
    float_sw4 tStart = -999.99;
    string filePrefix="essioutput";
-   bool use_double = false;
    float_sw4 coordValue;
    float_sw4 coordBox[4];
    // Default is whole domain
@@ -3754,16 +3753,9 @@ void EW::processESSI3D( char* buffer )
          token += 5; // skip file=
          filePrefix = token;
       }
-      else if( startswith("precision=",token) )
-      {
-         token += 10;
-         CHECK_INPUT( startswith("double",token) || startswith("float",token),
-                "Processing essioutput command: precision must be float or double, not '" << token );
-         use_double =  startswith("double",token);
-      }
       else if (startswith("cycleInterval=", token))
       {
-          token += 15; // skip cycleInterval=
+          token += 14; // skip cycleInterval=
           cycleInterval = atoi(token);
       }
       else if (startswith("xmin=", token))
@@ -3829,7 +3821,7 @@ void EW::processESSI3D( char* buffer )
       depth=0;
    }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, use_double, cycleInterval, coordBox, depth );
+   ESSI3D* essi3d = new ESSI3D( this, filePrefix, cycleInterval, coordBox, depth );
    addESSI3D( essi3d );
 }
   

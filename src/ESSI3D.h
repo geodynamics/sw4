@@ -51,7 +51,6 @@ public:
 
    ESSI3D( EW * a_ew,
 	    const std::string& filePrefix,
-	    bool doubleMode,
       int cycleInterval,
  	    float_sw4 coordBox[4],
 	    float_sw4 depth );
@@ -62,23 +61,24 @@ public:
    static void setSteps(int a_steps);
 
    void update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
-       std::vector<Sarray>& a_U, std::string a_path, Sarray& a_Z );
+       std::vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z );
 
    void force_write_image( float_sw4 a_time, int a_cycle, vector<Sarray>& a_U,
-			   std::string a_path, Sarray& a_Z );
-
-   //   void set_start_time(double tStart);
+			   std::string& a_path, Sarray& a_Z );
 
 protected:
    void compute_image( Sarray& a_U, int a_comp );
 
-   void write_image( int cycle, std::string &path, float_sw4 t, Sarray& a_Z );
+   void write_image( int cycle, std::string& path, float_sw4 t, Sarray& a_Z );
 
    void define_pio( );
 
 #ifdef USE_HDF5
-   void write_image_hdf5( int cycle, std::string &path, float_sw4 t,
-      Sarray& a_Z, vector<Sarray>& a_U );
+   void open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time, 
+       Sarray& a_Z);
+   void close_vel_file();
+   void write_image_hdf5( int cycle, std::string& path, float_sw4 t,
+       vector<Sarray>& a_U );
    void define_pio_hdf5( );
 #endif
 
@@ -97,12 +97,12 @@ protected:
    bool m_fileOpen;
 
    static int mPreceedZeros; // number of digits for unique time step in file names
+   static int mNumberOfTimeSteps; // number of time steps for the whole sim
 
 private:
    ESSI3D(); // make it impossible to call default constructor
    ESSI3D(const ESSI3D &in); // hide copy constructor
 
-   bool m_double;
    EW* mEW;
 
    ESSI3DHDF5* m_hdf5helper;
@@ -112,7 +112,6 @@ private:
    int mWindow[6]; // Local in processor start + end indices for (i,j,k) for last curvilinear grid
    int mGlobalDims[6]; // Global start + end indices for (i,j,k) for last curvilinear grid
    double* m_doubleField;
-   float* m_floatField;
    bool m_ihavearray;
 };
 

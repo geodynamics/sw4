@@ -45,6 +45,8 @@ ESSI3DHDF5* ESSI3DHDF5::nil=static_cast<ESSI3DHDF5*>(0);
 //-----------------------------------------------------------------------
 ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3], 
     int (&window)[6], bool ihavearray) :
+  m_start_cycle(-1),
+  m_end_cycle(-1),
   m_filename(filename),
   m_ihavearray(ihavearray)
 {
@@ -88,7 +90,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
   m_window_dims[3] = 1; // write one time step
   m_cycle_dims[3] = 1; // TODO - this should be cycle-1
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  // MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
 
@@ -120,7 +122,7 @@ void ESSI3DHDF5::create_file()
 }
 
 void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
-  double (&origin)[3], double t, double dt)
+  double (&origin)[3], int cycle, double t, double dt)
 {
 #ifdef USE_HDF5
   bool debug=true;
@@ -130,6 +132,9 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   // Add all the metadata to the file
   if (debug && (myRank == 0))
      cout << "Writing hdf5 metadata for file: " << m_filename << endl;
+
+  // Save the cycle for later
+  m_start_cycle = cycle;
 
   // Global grid lat,lon origin
   hsize_t dim=2;
@@ -265,6 +270,7 @@ void ESSI3DHDF5::write_topo(double* window_array)
     MPI_Abort(comm,ierr);
   }
 
+  /*
   MPI_Barrier(comm);
   if (debug && (myRank == 0))
      cout << "In write_topo_real: done writing data" << endl;
@@ -275,6 +281,7 @@ void ESSI3DHDF5::write_topo(double* window_array)
   MPI_Barrier(comm);
   if (debug && (myRank == 0))
      cout << "Done writing hdf5 z coordinate: " << m_filename << endl;
+  */
 #endif
 }
 
@@ -309,7 +316,7 @@ void ESSI3DHDF5::init_write_vel()
 #endif
 }
 
-void ESSI3DHDF5::write_vel(double* window_array, int comp)
+void ESSI3DHDF5::write_vel(double* window_array, int comp, int cycle)
 {
 #ifdef USE_HDF5
   bool debug=true;
@@ -317,7 +324,9 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp)
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-  // Loop over slices and write
+  // Loop over slices and write a new time step
+  m_end_cycle = cycle; // save for header for later when we close the file
+  m_cycle_dims[3] = cycle - m_start_cycle + 1;
   herr_t ierr = H5Dset_extent(m_vel_dataset_id[comp], m_cycle_dims);
   if (ierr < -1)
   {
@@ -326,21 +335,24 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp)
   }
   hsize_t vel_dims=4;
   hid_t window_id = H5Screate_simple(vel_dims, m_window_dims, NULL);
-  MPI_Barrier(comm);
+  // MPI_Barrier(comm);
   char msg[1000];
+  /*
   if (debug)
      cout << "Rank " << myRank << 
        " in write_vel: starting slab loop" << endl;
-  sprintf(msg, "Rank %d looping over vel hyperslab = (%d:%d %d:%d %d:%d)\n", 
+  sprintf(msg, "Rank %d writing vel hyperslab = (%d:%d %d:%d %d:%d %d)\n", 
       myRank, m_window[0], m_window[1], m_window[2], m_window[3], 
-      m_window[4], m_window[5]);
+      m_window[4], m_window[5], );
   cout << msg;
+  */
  
   m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
   hsize_t start[4]={-1,-1,-1,0}; // TODO - add cycle time
   start[0] = m_window[0]; // local index lo relative to global
   start[1] = m_window[2]; // local index lo relative to global
   start[2] = m_window[4]; // local index lo relative to global
+  start[3] = cycle - m_start_cycle;
   sprintf(msg, "Rank %d writing vel dataset index = %d %d %d %d\n", 
       myRank,
       (int) start[0], (int) start[1], (int) start[2], (int) start[3]);
@@ -373,6 +385,17 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp)
 void ESSI3DHDF5::close_file()
 {
 #ifdef USE_HDF5
+  // Updated header with final start,end cycle
+  hsize_t dim=2;
+  hid_t dataspace_id = H5Screate_simple(1,&dim,NULL);
+  hid_t dataset_id = H5Dcreate2 (m_file_id, "cycle start, end", H5T_STD_I32LE,
+      dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  int cycles[2] = {m_start_cycle, m_end_cycle};
+  herr_t ierr = H5Dwrite(dataset_id, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
+      m_mpiprop_id, cycles);
+  ierr = H5Dclose(dataset_id);
+  ierr = H5Sclose(dataspace_id);
+
   // Close each velocity dataspace, then dataset 
   for (int comp=0; comp < 3; comp++)
   {
