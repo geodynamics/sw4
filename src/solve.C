@@ -2529,7 +2529,7 @@ SW4_MARK_FUNCTION;
       } // end if( m_jEndInt[g] == m_global_ny[g] )
       
    } // else twilight
-   
+   SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

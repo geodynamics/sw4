@@ -1249,7 +1249,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt
     //std::cout<<"SENDING :: "<<sendto<<" ";
     //for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
     //std::cout<<"\n";
-    SYNC_STREAM;
+    //SYNC_STREAM;
     if (MPI_Isend(std::get<0>(buf),send_count,MPI_DOUBLE,sendto,stag,comm,&send_req)!=MPI_SUCCESS) std::cerr<<"MPI_Isend failed in EW::AMPI_Sendrecv\n";
   }
   MPI_Status send_status,recv_status;
@@ -1270,7 +1270,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt
     if (MPI_Wait(&send_req,&send_status)!=MPI_SUCCESS) std::cerr<<"MPI_WAIT SEND FAILED IN AMPI_SENDrecv\n";
    SW4_MARK_END("MPI_SEND_WAIT2");
 
-   SYNC_STREAM;
+   //SYNC_STREAM;
    
    SW4_MARK_END("MPI_SENDRECV_ACTUAL2");
  
