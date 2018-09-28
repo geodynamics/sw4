@@ -4561,7 +4561,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 	  }
        }
     }
+    //SYNC_STREAM;
   }
+  SYNC_STREAM; // REQUIRED IF THERE IS NO SYNC IN curvilinear4sg_ci
 }
 
 //-----------------------------------------------------------------------

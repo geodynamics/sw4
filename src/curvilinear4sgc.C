@@ -1542,7 +1542,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 			}); // End of curvilinear4sg_ci LOOP 2
    }
-	SYNC_STREAM;
+	    //SYNC_STREAM; // NOW BEINGF DONE at the end of evalRHS
 #undef mu
 #undef la
 #undef jac

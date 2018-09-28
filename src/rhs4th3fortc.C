@@ -975,7 +975,8 @@ using XRHS_POL2 =
    // 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
    // 								      RAJA::statement::Lambda<0> >>>>>;
 
-   using RHS_POL = XRHS_POL;
+   //using RHS_POL = XRHS_POL;
+   using RHS_POL = XRHS_POL_ASYNC;
    {
 // #pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
 //               r1,r2,r3,mucof,mu1zz,mu2zz,mu3zz,lap2mu,q,u3zip2,u3zip1,\
@@ -1246,7 +1247,7 @@ using XRHS_POL2 =
 
 	SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
 
-	RAJA::kernel<RHS4_EXEC_POL>(
+	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
 			       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
@@ -1771,7 +1772,7 @@ using XRHS_POL2 =
 	//SYNC_STREAM;
 	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP3");
       }
-      SYNC_STREAM;
+      // SYNC_STREAM; // BEING DONE AT THE END OF evalRHS
    }
 #undef mu
 #undef la

@@ -78,7 +78,8 @@ main(int argc, char **argv)
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
   auto allocator = rma.getAllocator("UM");
-
+  //auto device_allocator = rma.getAllocator("DEVICE");
+  
   const size_t pool_size = static_cast<size_t>(11)*1024*1024*1024;
 
   auto pooled_allocator =

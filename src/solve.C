@@ -692,6 +692,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        std::chrono::high_resolution_clock::time_point t1,t2;
 // BEGIN TIME STEPPING LOOP
   PROFILER_START;
+  SW4_CheckDeviceError(cudaProfilerStart());
   SW4_MARK_BEGIN("TIME_STEPPING");
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    

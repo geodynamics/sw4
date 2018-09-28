@@ -14,10 +14,13 @@
 //#include "umpire/Umpire.hpp"
 //#include "umpire/Allocator.hpp"
 #include "umpire/strategy/DynamicPool.hpp"
+//#include "umpire/util/StatisticsDatabase.hpp"
+#include "umpire/util/Macros.hpp"
 #endif
 #if defined(ENABLE_CUDA)
 #include "cuda_runtime.h"
 #include <nvml.h>
+#include <cuda_profiler_api.h>
 void CheckError(cudaError_t const err, const char* file, char const* const fun, const int line);
 void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) CheckError(err,__FILE__, __FUNCTION__, __LINE__)

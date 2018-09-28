@@ -63,7 +63,10 @@ void print_hwm(){
   //std::cout<<getRank()<<" GPU Memory Max = "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
   MPI_Allreduce(&hwm_local,&hwm_global,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-  if (hwm_local==hwm_global) std::cout<<"Global Device HWM is "<<hwm_global<<" GB\n";
+  if (hwm_local==hwm_global) {
+    std::cout<<"Global Device HWM is "<<hwm_global<<" GB\n";
+    //umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
+  }
 #endif // ENABLE_CUDA
 }
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc){
