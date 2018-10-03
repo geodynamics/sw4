@@ -2003,8 +2003,12 @@ SW4_MARK_FUNCTION;
 // #pragma ivdep
 // #pragma simd
 //   for( size_t i = 0 ; i < 3*npts ; i++ )
-RAJA::forall<DPDMTFORT_LOOP_POL_ASYNC> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
-    um[i] = dt2i*(up[i]-2*u[i]+um[i]);}); //SYNC_STREAM;
+  RAJA::forall<DPDMTFORT_LOOP_POL_ASYNC> (RAJA::RangeSegment(0,3*npts),[=] RAJA_DEVICE(size_t i){
+      um[i] = dt2i*(up[i]-2*u[i]+um[i]);}); //SYNC_STREAM;
+
+  // Forallasync is the same as RAJA:;forall
+  // forallasync(0,3*npts,[=] RAJA_DEVICE(size_t i){
+  //     um[i] = dt2i*(up[i]-2*u[i]+um[i]);}); //SYNC_STREAM;
 }
 
 // //-----------------------------------------------------------------------

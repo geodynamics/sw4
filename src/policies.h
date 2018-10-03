@@ -172,7 +172,7 @@ typedef RAJA::cuda_exec<512,true> CORRFORT_LOOP_POL_ASYNC;
 typedef RAJA::cuda_exec<1024> DPDMTFORT_LOOP_POL;
 
 
-typedef RAJA::cuda_exec<1024,true> DPDMTFORT_LOOP_POL_ASYNC;
+typedef RAJA::cuda_exec<256,true> DPDMTFORT_LOOP_POL_ASYNC;
 using DPDMT_WIND_LOOP_POL=  SARRAY_LOOP_POL2;
 using DPDMT_WIND_LOOP_POL_ASYNC = 
 RAJA::KernelPolicy<

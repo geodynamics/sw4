@@ -12,6 +12,15 @@ void forall(int start, int end, LoopBody &&body){
   forallkernel<<<blocks,tpb>>>(start,end,body);
   cudaDeviceSynchronize();
 }
+template<typename LoopBody>
+void forallasync(int start, int end, LoopBody &&body){
+  int tpb=1024;
+  int blocks=(end-start)/tpb;
+  blocks=((end-start)%tpb==0)?blocks:blocks+1;
+  //printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
+  forallkernel<<<blocks,tpb>>>(start,end,body);
+  //cudaDeviceSynchronize();
+}
 
 template<int N, typename LoopBody>
 void forall(int start, int end, LoopBody &&body){
