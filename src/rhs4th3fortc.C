@@ -1002,7 +1002,7 @@ using XRHS_POL2 =
      Range<4>K(k1,k2+1);
      forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
-     RAJA::kernel<XRHS_POL>(
+     RAJA::kernel<XRHS_POL_ASYNC>(
 			  RAJA::make_tuple(k_range, j_range,i_range),
 			  [=]RAJA_DEVICE (int k,int j,int i) {
 #endif

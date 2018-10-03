@@ -15,6 +15,7 @@
 //#include "umpire/Allocator.hpp"
 #include "umpire/strategy/DynamicPool.hpp"
 //#include "umpire/util/StatisticsDatabase.hpp"
+#include "umpire/strategy/AllocationAdvisor.hpp"
 #include "umpire/util/Macros.hpp"
 #endif
 #if defined(ENABLE_CUDA)
@@ -44,6 +45,9 @@ struct global_variable_holder_struct {
   size_t gpu_memory_hwm ;
   size_t curr_mem;
   size_t max_mem;
+  size_t host_mem_hwm;
+  size_t host_curr_mem;
+  size_t host_max_mem;
 };
 
 extern struct global_variable_holder_struct global_variables;

@@ -1,7 +1,7 @@
 #include "Mspace.h"
 #include <unordered_map>
 #include "caliper.h"
-struct global_variable_holder_struct global_variables = {0 , 0, 0 };
+struct global_variable_holder_struct global_variables = {0 , 0, 0 , 0,0,0};
 using namespace std;
 
 
@@ -53,20 +53,22 @@ void check_mem(){
 
 void print_hwm(){
 #if defined(ENABLE_CUDA)
-  float hwm_local,hwm_global;
+  float hwm_local[2],hwm_global[2];
 #ifdef SW4_USE_UMPIRE
-  hwm_local = umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024.0/1024.0/1024.0;
+  hwm_local[0] = umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024.0/1024.0/1024.0;
+  hwm_local[1] = umpire::ResourceManager::getInstance().getAllocator("UM_pool_temps").getHighWatermark()/1024.0/1024.0/1024.0;
   //std::cout<<getRank()<<" Umpire HWM "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<" MB\n";
 #else
-  hwm_local = global_variables.gpu_memory_hwm/1024.0/1024.0/1024.0;
+  hwm_local[0] = global_variables.gpu_memory_hwm/1024.0/1024.0/1024.0;
   //std::cout<<getRank()<<" GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024<<" MB \n";
   //std::cout<<getRank()<<" GPU Memory Max = "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
-  MPI_Allreduce(&hwm_local,&hwm_global,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-  if (hwm_local==hwm_global) {
-    std::cout<<"Global Device HWM is "<<hwm_global<<" GB\n";
+  MPI_Allreduce(&hwm_local,&hwm_global,2,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+  for (int i=0;i<2;i++) if (hwm_local[i]==hwm_global[i]) {
+      std::cout<<i<<" Global Device HWM is "<<hwm_global[i]<<" GB\n";
     //umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
   }
+  //std::cout<<" ~HOST MEM MAX "<<global_variables.host_mem_hwm/1024.0/1024.0<<" MB\n";
 #endif // ENABLE_CUDA
 }
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc){
@@ -95,9 +97,11 @@ if (loc==Managed){
     //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
 #endif
-  } else if (loc==Host){
+ } else if (loc==Host){
   //std::cout<<"Calling my placement new \n";
-    return ::operator new(size);
+  //global_variables.host_curr_mem+=size;
+  //global_variables.host_max_mem=std::max(global_variables.host_max_mem,global_variables.host_curr_mem);
+  return ::operator new(size);
  } else if (loc==Device){
   //std::cout<<"Managed allocation \n";
     if (size==0) size=1; // new has to return an valid pointer for 0 size.
@@ -116,7 +120,7 @@ if (loc==Managed){
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
   auto allocator = rma.getAllocator("UM_pool_temps");
   void *ptr = static_cast<void*>(allocator.allocate(size));
-  SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+  //SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
   //std::cout<<"PTR 1 "<<ptr<<"\n";
   //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
   return ptr;
@@ -181,6 +185,8 @@ void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc){
 #endif
   } else if (loc==Host){
     // std::cout<<"Calling my placement new \n";
+    //global_variables.host_curr_mem+=size;
+    //global_variables.host_max_mem=std::max(global_variables.host_max_mem,global_variables.host_curr_mem);
     return ::operator new(size);
   } else if (loc==Device){
     //std::cout<<"Managed allocation \n";
@@ -200,7 +206,7 @@ void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc){
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
     void* ptr = static_cast<void*>(allocator.allocate(size));
-    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+    //SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
     //std::cout<<"PTR 1 "<<ptr<<"\n";
     //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
@@ -328,10 +334,11 @@ void operator delete[](void *ptr, Space loc) throw(){
     //std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   }  else if (loc==Managed_temps){
+#ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
     allocator.deallocate(ptr);
-
+#endif
   } else {
     std::cerr<<"Unknown memory space for de-allocation request "<<loc<<"\n";
   }

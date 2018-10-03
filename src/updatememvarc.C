@@ -35,7 +35,7 @@
 #include "Mspace.h"
 #include "policies.h"
 #include "caliper.h"
-
+#include "foralls.h"
 void memvar_pred_fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			  float_sw4* __restrict__ alp, float_sw4* __restrict__ alm,
 			  float_sw4* __restrict__ u, float_sw4 omega, float_sw4 dt, int domain )
@@ -112,9 +112,18 @@ SW4_MARK_FUNCTION;
    using LOCAL_POL3 = DEFAULT_LOOP3;
 #endif
    // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
+
+#define NO_COLLAPSE 1
+#if defined(NO_COLLAPSE)
+     Range<16> I(ifirst,ilast+1);
+     Range<4>J(jfirst,jlast+1);
+     Range<4>K(k1,k2+1);
+     forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+#else
    RAJA::kernel<LOCAL_POL3>(
 				  RAJA::make_tuple(k_range,j_range,i_range),
 				  [=]RAJA_DEVICE (int k, int j,int i) {
+#endif
 				    size_t ind = base+i+ni*j+nij*k;
 #pragma unroll
 				    for (int c=0;c<3;c++)
@@ -210,8 +219,16 @@ using LOCAL_POL3  =
  using LOCAL_POL3 = DEFAULT_LOOP3;
  
  #endif
+#define NO_COLLAPSE 1
+#if defined(NO_COLLAPSE)
+     Range<16> I(ifirst,ilast+1);
+     Range<4>J(jfirst,jlast+1);
+     Range<4>K(k1,k2+1);
+     forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
+#else
 RAJA::kernel<LOCAL_POL3>(RAJA::make_tuple(k_range,j_range,i_range),
 			    [=]RAJA_DEVICE (int k,int j, int i) {
+#endif
 			    size_t ind = base+i+ni*j+nij*k;
 			    // Note that alp is ASSIGNED by this formula
 #pragma unroll

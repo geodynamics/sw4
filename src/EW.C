@@ -4033,13 +4033,31 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &po
     if (firstcall){
       // WARNING :: FORCE_TT cannot be called until this section has been called
       SW4_MARK_BEGIN("FORCE::HOST::FIRSTCALL");
+      // size_t mfree,mtotal;
+      // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
+      // std::cout<<getRank()<<" MFREE PRE-ALLOC"<<mfree/1024/1024.0<<" MB "<<point_sources.size()<<","<<identsourc
+      //	es.size()<<"\n";
       GPS = SW4_NEW(Managed,GridPointSource*[point_sources.size()]);
       idnts = SW4_NEW(Managed,int[identsources.size()]);
       GPSL = GPS;
       idnts_local=idnts;
-      
+
       for( int r=0 ; r < identsources.size(); r++ ) idnts[r]=identsources[r];
       for( int s=0 ; s < point_sources.size(); s++ ) GPS[s]=point_sources[s];
+
+      // if (point_sources.size()>0){
+      // SW4_CheckDeviceError(cudaMemPrefetchAsync(GPS,
+      // 						point_sources.size()*sizeof(GridPointSource*),
+      // 						0,
+      // 						0));
+
+      // SW4_CheckDeviceError(cudaMemPrefetchAsync(idnts,
+      // 						identsources.size()*sizeof(int),
+      // 						0,
+      // 						0));
+      // }
+      // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
+      // std::cout<<getRank()<<" MFREE POST-ALLOC"<<mfree/1024/1024.0<<" MB \n";
 #pragma omp parallel for
      for( int r=0 ; r < identsources.size()-1 ; r++ )
      {

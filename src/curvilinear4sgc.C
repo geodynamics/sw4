@@ -135,9 +135,10 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    // SBP Boundary closure terms
 #define NO_COLLAPSE 1
 #if defined(NO_COLLAPSE)
+      // 32,4,2 is 4% slower. 32 4 4 does not fit
       Range<16> I(ifirst+2,ilast-1);
       Range<4>J(jfirst+2,jlast-1);
-      Range<4>K(1,6+1);
+      Range<6>K(1,6+1);
       forall3async(I,J,K, [=]RAJA_DEVICE(int i,int j,int k){
 #else
       RAJA::RangeSegment k_range(1,6+1);
