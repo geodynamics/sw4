@@ -2,7 +2,7 @@
 #define __POLICIES_H__
 #include "RAJA/RAJA.hpp"
 #ifdef ENABLE_CUDA
-using REDUCTION_POLICY = RAJA::cuda_reduce<1024>;
+using REDUCTION_POLICY = RAJA::cuda_reduce_async<1024>;
 
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
 typedef RAJA::cuda_exec<1024,true> DEFAULT_LOOP1_ASYNC;
@@ -235,20 +235,20 @@ using ODDIODDJ_EXEC_POL1 =
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>>> >;
 
-using ODDIODDJ_EXEC_POL2 = RHS4_EXEC_POL;
+using ODDIODDJ_EXEC_POL2 = RHS4_EXEC_POL_ASYNC;
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>>, 
   // RAJA::statement::For<2, RAJA::cuda_threadblock_exec<16>>> >;
 
-using ODDIEVENJ_EXEC_POL1 =  ICSTRESS_EXEC_POL;
+using ODDIEVENJ_EXEC_POL1 =  ICSTRESS_EXEC_POL_ASYNC;
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>>, 
   // RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>>> >;
 
-using ODDIEVENJ_EXEC_POL2 =  RHS4_EXEC_POL;
+using ODDIEVENJ_EXEC_POL2 =  RHS4_EXEC_POL_ASYNC;
   // RAJA::KernelPolicy< 
   // RAJA::statement::CudaCollapse<
   // RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>>, 

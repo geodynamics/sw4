@@ -375,7 +375,7 @@ RAJA::kernel<EVENIEVENJ_EXEC_POL>(
 // #pragma omp simd
 //       for( int i=ifb ; i <= ife ; i+=2 )
       RAJA::RangeSegment c_range(1,4);
-      RAJA::kernel<XRHS_POL>(
+      RAJA::kernel<XRHS_POL_ASYNC>(
       RAJA::make_tuple(c_range,j_srange,i_srange),
 	[=]RAJA_DEVICE (int c,int j,int i) 
 	  {
