@@ -405,7 +405,7 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
 
       int niw = (mWindow[g][1]-mWindow[g][0])/st+1;
-      int nijw=ni*((mWindow[g][3]-mWindow[g][2])/st+1);
+      int nijw=niw*((mWindow[g][3]-mWindow[g][2])/st+1);
       if( mMode == UX || mMode == UY || mMode == UZ )
       {
 	 int c  = 0;
