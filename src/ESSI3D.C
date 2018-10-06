@@ -2,33 +2,33 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include "mpi.h"
 
 #include "EW.h"
@@ -47,45 +47,51 @@ ESSI3D* ESSI3D::nil=static_cast<ESSI3D*>(0);
 
 //-----------------------------------------------------------------------
 ESSI3D::ESSI3D( EW* a_ew,
-		  const std::string& filePrefix, 
-		  int cycleInterval,
-	    float_sw4 coordBox[6],
-	    float_sw4 depth ):
-   mEW(a_ew),
-   mFilePrefix(filePrefix),
-   mFileName(""),
-   m_isDefinedMPIWriters(false),
-   m_memallocated(false),
-   m_fileOpen(false),
-   m_ihavearray(false),
-	 m_cycle(-1),
-   m_cycleInterval(-1),
-   mDepth(depth),
-   m_hdf5helper(NULL)
+    const std::string& filePrefix,
+    int cycleInterval,
+    float_sw4 coordBox[6],
+    float_sw4 depth ):
+      mEW(a_ew),
+      mFilePrefix(filePrefix),
+      mFileName(""),
+      m_isDefinedMPIWriters(false),
+      m_memallocated(false),
+      m_fileOpen(false),
+      m_ihavearray(false),
+      m_hdf5_time(0),
+      m_cycle(-1),
+      m_cycleInterval(-1),
+      mDepth(depth),
+      m_hdf5helper(NULL)
 {
   // volimage subdomain x,y corner coordinates
   for (int d=0; d < 2*2; d++)
     mCoordBox[d] = coordBox[d];
 
-  if (cycleInterval > 0)
-    m_cycleInterval=cycleInterval;
+  set_cycle_interval(cycleInterval);
 }
 
 //-----------------------------------------------------------------------
 ESSI3D::~ESSI3D()
 {
-   if( m_memallocated )
-     delete[] m_doubleField;
+  if( m_memallocated )
+    delete[] m_doubleField;
 
-   if (m_hdf5helper != NULL)
-     delete m_hdf5helper;
+  if (m_hdf5helper != NULL)
+    delete m_hdf5helper;
 }
 
-// Things that are done in Image.C for setup (called from EW.C:5082)
+//-----------------------------------------------------------------------
+void ESSI3D::set_cycle_interval( int a_cycleInterval )
+{
+  if (a_cycleInterval > 0)
+    m_cycleInterval = a_cycleInterval;
+}
+
 //-----------------------------------------------------------------------
 void ESSI3D::setup( )
 {
-  const bool debug = true;
+  const bool debug = false;
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Info info = MPI_INFO_NULL;
   int myRank;
@@ -119,8 +125,8 @@ void ESSI3D::setup( )
 
   // In k direction, guestimate the index for the requested depth
   int kmax = (int)ceil(mDepth/mEW->mGridSize[g])+1;
-  mGlobalDims[4] = mEW->m_kStartInt[g]; 
-  mGlobalDims[5] = min(kmax,mEW->m_kEndInt[g]); 
+  mGlobalDims[4] = mEW->m_kStartInt[g];
+  mGlobalDims[5] = min(kmax,mEW->m_kEndInt[g]);
   if (m_ihavearray)
   {
     mWindow[4] = mGlobalDims[4];
@@ -134,10 +140,10 @@ void ESSI3D::setup( )
       mWindow[2*dim+1] = -1;
     }
   }
-  
+
   if (debug && (myRank == 0))
   {
-    cout << "Global index range:" << " i=(" 
+    cout << "Global index range:" << " i=("
       << mGlobalDims[0] << " , " << mGlobalDims[1] << "), j=("
       << mGlobalDims[2] << " , " << mGlobalDims[3] << "), k=("
       << mGlobalDims[4] << " , " << mGlobalDims[5] << ")" << endl;
@@ -148,7 +154,7 @@ void ESSI3D::setup( )
   // Figure out x,y index ranges that contain requested coord box
   // cout << "ESSI3D ptr: " << this << endl;
   if (debug)
-    cout << "ESSI3D rank: " << myRank << ", local index range: i=(" 
+    cout << "ESSI3D rank: " << myRank << ", local index range: i=("
       << mWindow[0] << " , " << mWindow[1] << "), j=("
       << mWindow[2] << " , " << mWindow[3] << "), k=("
       << mWindow[4] << " , " << mWindow[5] << ")" << endl;
@@ -186,10 +192,17 @@ void ESSI3D::setSteps(int a_steps)
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt, 
+double ESSI3D::getHDF5Timings()
+{
+  return m_hdf5_time; // Note just for this rank & file instance
+}
+
+//-----------------------------------------------------------------------
+void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z )
 {
 #ifdef USE_HDF5
+  double hdf5_time=MPI_Wtime();
   if (!m_fileOpen) // must be first call, open file and write
   {
     open_vel_file(a_cycle, a_path, a_time, a_Z);
@@ -201,7 +214,7 @@ void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     {
       if (m_cycleInterval == 1) // close and open new for last step
       {
-        close_vel_file();
+         close_vel_file();
         open_vel_file(a_cycle, a_path, a_time, a_Z);
       }
       // otherwise write and close
@@ -219,20 +232,23 @@ void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     else // regular cycle, just write
       write_image_hdf5( a_cycle, a_path, a_time, a_U);
   }
+  m_hdf5_time += (MPI_Wtime()-hdf5_time);
 #endif
 }
-                            
+
 //-----------------------------------------------------------------------
-void ESSI3D::force_write_image( float_sw4 a_time, int a_cycle, 
+void ESSI3D::force_write_image( float_sw4 a_time, int a_cycle,
     vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z )
 {
 #ifdef USE_HDF5
-   open_vel_file(a_cycle, a_path, a_time, a_Z);
-   write_image_hdf5( a_cycle, a_path, a_time, a_U );
-   close_vel_file();
+  double hdf5_time=MPI_Wtime();
+  open_vel_file(a_cycle, a_path, a_time, a_Z);
+  write_image_hdf5( a_cycle, a_path, a_time, a_U );
+  close_vel_file();
+  m_hdf5_time += (MPI_Wtime()-hdf5_time);
 #endif
 }
-                            
+
 //-----------------------------------------------------------------------
 void ESSI3D::compute_image( Sarray& a_A, int a_comp )
 {
@@ -251,7 +267,7 @@ void ESSI3D::compute_image( Sarray& a_A, int a_comp )
   // int nijw=niw*((mWindow[3]-mWindow[2])+1);
   int nkw = (mWindow[5]-mWindow[4])+1;
   int njkw=nkw*((mWindow[3]-mWindow[2])+1);
-	const int c  = a_comp+1; // why comp+1?
+  const int c  = a_comp+1; // why comp+1?
 #pragma omp parallel for
   for( int k=mWindow[4] ; k <= mWindow[5] ; k++ )
   for( int j=mWindow[2] ; j <= mWindow[3] ; j++ )
@@ -283,7 +299,7 @@ void ESSI3D::compute_file_suffix( int cycle, std::stringstream& fileSuffix )
 
 //-----------------------------------------------------------------------
 void ESSI3D::write_image( int cycle, std::string &path, float_sw4 t,
-			   Sarray& a_Z )
+    Sarray& a_Z )
 {
   // TODO - error out
 }
@@ -295,7 +311,7 @@ void ESSI3D::define_pio_hdf5( )
   // TODO - error out
 }
 
-void ESSI3D::open_vel_file( int a_cycle, std::string& a_path, 
+void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
     float_sw4 a_time, Sarray& a_Z )
 {
   herr_t ierr;
@@ -303,12 +319,12 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   hid_t dataset_id;
   hid_t prop_id;
 
-	// Parameters for extendible dataset
+  // Parameters for extendible dataset
   const int num_dims = 3 + 1; // 3 space + 1 time that will be extendible
-	hsize_t dims[num_dims]={-1,-1,-1,H5S_UNLIMITED};
-	hsize_t slice_dims[num_dims];
-	hsize_t block_dims[num_dims];
-	hsize_t global_dims[num_dims];
+  hsize_t dims[num_dims]={-1,-1,-1,H5S_UNLIMITED};
+  hsize_t slice_dims[num_dims];
+  hsize_t block_dims[num_dims];
+  hsize_t global_dims[num_dims];
 
   int g = mEW->mNumberOfGrids-1;
   int window[6], global[3];
@@ -349,7 +365,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
 
   std::stringstream s, fileSuffix;
   compute_file_suffix( a_cycle, fileSuffix );
-  if (a_path != ".") 
+  if (a_path != ".")
     s << a_path;
   s << fileSuffix.str(); // string 's' is the file name including path
   m_hdf5helper = new ESSI3DHDF5(s.str(), global, window, m_ihavearray);
@@ -358,6 +374,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   if (debug && (myRank == 0))
      cout << "Creating hdf5 file: " << m_hdf5helper->filename() << endl;
   */
+  double hdf5_time=MPI_Wtime();
   m_hdf5helper->create_file();
 
   // Write header metadata
@@ -375,7 +392,6 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   {
     compute_image(a_Z, 0);
     m_hdf5helper->write_topo(m_doubleField);
-    
   }
 
   /*
@@ -384,6 +400,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   */
 
   m_hdf5helper->init_write_vel();
+  m_hdf5_time += (MPI_Wtime()-hdf5_time);
 
   m_fileOpen = true;
 }
@@ -397,116 +414,14 @@ void ESSI3D::close_vel_file( )
       cout << "Closing hdf5 file: " << s.str() << endl;
     */
 
-	  m_hdf5helper->close_file();
+    m_hdf5helper->close_file();
     m_fileOpen = false;
   }
 }
 
 void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
-			   vector<Sarray>& a_U)
+    vector<Sarray>& a_U)
 {
-  /*
-  const bool debug=true;
-  herr_t ierr;
-  hid_t dataspace_id;
-  hid_t dataset_id;
-  hid_t prop_id;
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-
-	// Parameters for extendible dataset
-  const int num_dims = 3 + 1; // 3 space + 1 time that will be extendible
-	hsize_t dims[num_dims]={-1,-1,-1,H5S_UNLIMITED};
-	hsize_t slice_dims[num_dims];
-	hsize_t block_dims[num_dims];
-	hsize_t global_dims[num_dims];
-
-  int g = mEW->mNumberOfGrids-1;
-  int window[6], global[3];
-  for (int d=0; d < 3; d++)
-  {
-    dims[d] = mWindow[2*d+1] - mWindow[2*d] + 1;
-    slice_dims[d] = dims[d];
-    block_dims[d] = dims[d];
-    global_dims[d] = mGlobalDims[2*d+1] - mGlobalDims[2*d] + 1;
-
-    window[2*d] = (m_ihavearray) ? (mWindow[2*d] - mGlobalDims[2*d]) : 0;
-    window[2*d+1] = (m_ihavearray) ? (mWindow[2*d+1] - mGlobalDims[2*d]) : -1;
-    global[d] = mGlobalDims[2*d+1] - mGlobalDims[2*d] + 1;
-  }
-  slice_dims[0] = 1; // Make sure we're chunking on slices
-  slice_dims[num_dims-1] = 1; // 1 time step per write
-  block_dims[num_dims-1] = 1; // 1 time step per write
-  global_dims[num_dims-1] = 1; // 1 time step per write
-
-  // Just to see what's being copied correctly
-  for( int i=0 ; i < dims[0]; i++ )
-  for( int j=0 ; j < dims[1]; j++ )
-  for( int k=0 ; k < dims[2]; k++ )
-  {
-     size_t ind = i+dims[0]*(j +dims[1]*k);
-     m_doubleField[ind]= (double) ind;
-  }
-  */
-
-  /*
-  if (!m_fileOpen)
-  {
-    if (debug && (myRank == 0))
-    {
-      cout << "Setting dims to: " << endl;
-      for (int d=0; d < num_dims; d++)
-        cout << "dims[" << d << "] = " << dims[d]
-          << ", slice_dims[" << d << "] = " << slice_dims[d] << endl;
-    }
-
-    m_hdf5helper = new ESSI3DHDF5(s.str(), global, window, m_ihavearray);
-    m_hdf5helper->set_ihavearray(m_ihavearray);
-    if (debug && (myRank == 0))
-       cout << "Creating hdf5 file: " << m_hdf5helper->filename() << endl;
-    m_hdf5helper->create_file();
-
-    // Write header metadata
-    double h = mEW->mGridSize[g];
-    double lonlat_origin[2] = {mEW->getLonOrigin(), mEW->getLatOrigin()};
-    double origin[3];
-    for (int d=0; d < 3; d++)
-      origin[d] = (mGlobalDims[2*d]-1)*h; // low end of each index range
-    double az = mEW->getGridAzimuth();
-    double dt = mEW->getTimeStep();
-    m_hdf5helper->write_header(h, lonlat_origin, az, origin, t, dt);
-
-    // Write z coodinates if necesito
-    if (mEW->topographyExists())
-    {
-      compute_image(a_Z, 0);
-      m_hdf5helper->write_topo(m_doubleField);
-      
-    }
-
-    if (debug && (myRank == 0))
-       cout << "Creating extendible hdf5 velocity fields..." << endl;
-
-    m_hdf5helper->init_write_vel();
- 
-    m_fileOpen = true;
-  }
-  MPI_Barrier(MPI_COMM_WORLD);
-  */
-
-  // TODO - resize array bounds for extending to a new time step
-  // TODO - check if need to close file at checkpoint / cycle interval
-  // TODO - double-check the region/file size is reasonable (override option?)
-  /*
-  if (debug && (myRank == 0))
-  {
-    cout << "Setting write dims to: " << endl;
-    for (int d=0; d< num_dims; d++)
-      cout << "  block_dims[" << d << "] = " << block_dims[d] << endl;
-  }
-  */
-
   // Top grid only
   int g = mEW->mNumberOfGrids-1;
   compute_image(a_U[g], 0);
@@ -523,7 +438,7 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
     if (debug && (myRank == 0))
       cout << "Closing hdf5 file: " << s.str() << endl;
 
-	  m_hdf5helper->close_file();
+    m_hdf5helper->close_file();
     m_fileOpen = false;
   }
   */

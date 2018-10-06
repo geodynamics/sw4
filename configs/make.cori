@@ -7,6 +7,10 @@
   EXTRA_LINK_FLAGS =  -lpthread -lm -ldl -lifcore
   EXTRA_CXX_FLAGS = -qoverride-limits
 ifneq ($(hdf5),no)
+  # Note, you will need to:
+  # module unload darshan
+  # module load hdf5-parallel
+  # module load darshan
   EXTRA_CXX_FLAGS  += -DUSE_HDF5
   EXTRA_LINK_FLAGS += -lhdf5
 endif

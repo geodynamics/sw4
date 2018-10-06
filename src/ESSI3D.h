@@ -50,13 +50,16 @@ public:
    static ESSI3D* nil;
 
    ESSI3D( EW * a_ew,
-	    const std::string& filePrefix,
+     const std::string& filePrefix,
       int cycleInterval,
- 	    float_sw4 coordBox[4],
-	    float_sw4 depth );
+      float_sw4 coordBox[4],
+      float_sw4 depth );
    ~ESSI3D();
 
+   void set_cycle_interval( int a_cycleInterval );
    void setup( );
+
+   double getHDF5Timings();
 
    static void setSteps(int a_steps);
 
@@ -64,7 +67,7 @@ public:
        std::vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z );
 
    void force_write_image( float_sw4 a_time, int a_cycle, vector<Sarray>& a_U,
-			   std::string& a_path, Sarray& a_Z );
+       std::string& a_path, Sarray& a_Z );
 
 protected:
    void compute_image( Sarray& a_U, int a_comp );
@@ -74,7 +77,7 @@ protected:
    void define_pio( );
 
 #ifdef USE_HDF5
-   void open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time, 
+   void open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
        Sarray& a_Z);
    void close_vel_file();
    void write_image_hdf5( int cycle, std::string& path, float_sw4 t,
@@ -93,7 +96,9 @@ protected:
 
    bool m_isDefinedMPIWriters;
    bool m_memallocated;
-   
+
+   double m_hdf5_time;
+
    bool m_fileOpen;
 
    static int mPreceedZeros; // number of digits for unique time step in file names

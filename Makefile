@@ -170,6 +170,13 @@ else
    CXXFLAGS += -I../src/double
 endif
 
+ifneq ($(hdf5),no)
+   # PLEASE MODIFY MAKEFILE TO PROVIDE HDF5ROOT
+   # HDF5ROOT   = /usr/local/Cellar/hdf5/1.10.2_1
+   CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
+   EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+endif
+
 ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif

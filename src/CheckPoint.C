@@ -98,6 +98,12 @@ bool CheckPoint::do_checkpointing()
 }
 
 //-----------------------------------------------------------------------
+int CheckPoint::get_checkpoint_cycle_interval()
+{
+   return mCycleInterval;
+}
+
+//-----------------------------------------------------------------------
 bool CheckPoint::do_restart()
 {
    return mDoRestart;

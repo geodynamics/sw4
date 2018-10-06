@@ -45,7 +45,7 @@ class ESSI3DHDF5
 public:
   static ESSI3DHDF5* nil;
 
-  ESSI3DHDF5(const std::string& filename, int (&global)[3], 
+  ESSI3DHDF5(const std::string& filename, int (&global)[3],
     int (&window)[6], bool ihavearray);
   ~ESSI3DHDF5();
 

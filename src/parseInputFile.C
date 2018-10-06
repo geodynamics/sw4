@@ -3723,7 +3723,7 @@ void EW::processImage3D( char* buffer )
 //-----------------------------------------------------------------------
 void EW::processESSI3D( char* buffer )
 {
-   int cycle=-1, cycleInterval=0;
+   int cycle=-1, cycleInterval=-1;
    float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet = false;
    float_sw4 tStart = -999.99;
@@ -3736,7 +3736,7 @@ void EW::processESSI3D( char* buffer )
    coordBox[2] = 0.0;
    coordBox[3] = m_global_ymax;
    float_sw4 depth = -999.99; // default not specified
-  
+
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("essioutput", token) == 0, "ERROR: Not a essioutput line...: " << token );
 
@@ -3799,23 +3799,23 @@ void EW::processESSI3D( char* buffer )
       }
       token = strtok(NULL, " \t");
    }
-   
+
    // Check the specified min/max values make sense
    for (int d=0; d < 2*2; d+=2)
    {
-   	  if (coordBox[d+1] < coordBox[d])
+      if (coordBox[d+1] < coordBox[d])
       {
          char coordName[2] = {'x','y'};
          if (proc_zero())
-           cout << "ERROR: essioutput subdomain " << coordName[d] << 
-              " coordinate max value " << coordBox[d+1] << 
+           cout << "ERROR: essioutput subdomain " << coordName[d] <<
+              " coordinate max value " << coordBox[d+1] <<
               " is less than min value " << coordBox[d] << endl;
          MPI_Abort(MPI_COMM_WORLD, 1);
       }
    }
 
    // Use depth if zmin/zmax values are specified
-   if ((depth < 0) && proc_zero()) 
+   if ((depth < 0) && proc_zero())
    {
       cout << "WARNING: essioutput depth not specified or less than zero, setting to zero" << endl;
       depth=0;
@@ -3824,7 +3824,7 @@ void EW::processESSI3D( char* buffer )
    ESSI3D* essi3d = new ESSI3D( this, filePrefix, cycleInterval, coordBox, depth );
    addESSI3D( essi3d );
 }
-  
+
 //-----------------------------------------------------------------------
 void EW::processCheckPoint(char* buffer)
 {
