@@ -1,0 +1,42 @@
+This directory contains tests for the ESSI hdf5 output
+  implemented by ESSI3D and ESSI3DHDF5 classes.
+
+The tests can be run on a few processors by:
+- Build sw4 with the hdf5=yes option.
+- - This may require setting the HDF5 library path in Makefile.
+
+- The first test is M5.5_ESSI_srf.in:
+- - Run the test
+- - Output is created in M5.5_ESSI_srf
+- - Three sets of files are created:
+- - - S_XX.[xyz] files, SAC files for surface receiver stations
+- - - m5.5_ESSI_srf.cycle=XX.u[xyz].3Dimg files, 3Dimg files for the entire domain
+- - - m5.5_ESSI_srf.cycle=XX.essi	files, which contain the ESSI output
+
+- The second test is berkeley-att-h100.in:
+- - This also requires you to build sw4 with proj=yes
+- - Copy or link performance/rfile/berkeley.rfile directory here
+- - Run the test
+- - Output is created in berkeley-att-h100
+- - Three sets of files are created:
+- - - S_XX.[xyz] files, SAC files for surface receiver stations
+- - - cycle=XX.u[xyz].3Dimg files, 3Dimg files for the entire domain
+- - - cycle=00.essi	file, which contain all ESSI output time steps
+
+- Check the results with MATLAB:
+- - Open compare3DimgESSI.m
+- - Add the tools directory (..) to the path for reading SAC, 3Dimg files
+- - Run the script. Successful results will look like:
+
+  %Found:  prec  = 8 t= 0.077518 plane= -1
+  ... (lots of tools .m reader output) ...
+  idep    = -12345
+  --> M5.5_ESSI_srf spot check of SAC and ESSI passes.
+  --> M5.5_ESSI_srf spot check of 3DIMG and ESSI passes.
+  %Found:  prec  = 8 t= 0.35341 plane= -1
+  ... (lots of tools .m reader output) ...
+  idep    = -12345
+  --> berkeley-att-h100 spot check of 3DIMG and ESSI z coordinate passes.
+  --> berkeley-att-h100 spot check of 3DIMG and ESSI velocities passes.
+  --> berkeley-att-h100 spot check of SAC and ESSI passes.
+

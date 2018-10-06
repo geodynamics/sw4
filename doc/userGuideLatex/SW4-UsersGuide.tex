@@ -3874,6 +3874,76 @@ qs      & $Q_s$ material attenuation factor \\ \hline
 \end{center}
 \index{volimage parameters!modes - ux, uy, uz, rho, p, s, lambda, mu, qp, qs}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ESSI 3D output
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{essioutput [optional]}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\index{command!essioutput}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{keyword:essioutput}
+\begin{flushleft}
+\bf Syntax:\\ \tt
+essioutput file=... cycleInterval=... xmin=... xmax=... ymin=... ymax=... depth=...\\
+\bf Required parameter:\\
+None
+\end{flushleft}
+%
+The \verb+essioutput+ command in \emph{SW4} allows you to save 3D volumetric
+  data in a file for ESSI.
+These files are in an HDF5 format that can be post-processed for ESSI input directly.
+SW4 must be compiled with the {\tt hdf5=yes} option to enable this option,
+  and tests are available in the {\tt tools/essi} directory.
+
+Be aware that these files can be {\em very} large, depending on the
+  x,y,z ranges and cycleInterval requested (which could include
+  the whole domain AND every time step).
+The option {\bf file=...} has the
+  same meaning as the corresponding parameters in the image command.
+The \verb+essioutput+ command produces files with extension \verb+.essi+.
+
+The option {\bf cycleInterval=...} is different than with other
+  commands; for \verb+essioutput+ the output file will written out
+  after that many time steps, and include the both first and last timestep
+  data values.
+If omitted, the output occurs at every time step of the simulation.
+When reading these multiple files, care must be taken to avoid
+  duplicate data from the same time step in different files (and simply
+  appending the time series values will lead to duplicate data).
+Note that if the \verb+checkpoint+ command also uses the
+  {\bf cycleInterval=...} option, that value will be used by
+  \verb+essioutput+ to guarantee checkpoint and ESSI files are
+  written at the same time.
+
+Note that only data from the topmost grid can be output, which may or may
+  not include topography and in the case of mesh refinement, will not
+  span the whole vertical domain.
+The {\bf depth=...} option will use the horizontal grid spacing to estimate a 
+  fixed number of grid points to output in the {\emph k-}direction.
+When topography is present, i.e., the top grid is curvilinear, each file also 
+  includes the $z$-coordinates of the requested points in the curvilinear grid.
+Note that the grid coordinates are only saved when the
+  input file contains a \verb+topography+ command.
+
+The file format is described in Section~\ref{sec:essioutput-format}.
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf essioutput command options}\\ \hline
+{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline
+\hline
+file        & file name header of image                          & string & none
+  & essioutput \\ \hline
+  cycleInterval & interval between file writes & string & -1 (1 file) \\ \hline
+xmin     & starting $x$ location of requested ESSI region & real & m & 0 \\ \hline
+xmax     & ending $x$ location of requested ESSI region & real & m & $x_{max}$ \\ \hline
+ymin     & starting $y$ location of requested ESSI region & real & m & 0 \\ \hline
+ymax     & ending $y$ location of requested ESSI region & real & m & $y_{max}$ \\ \hline
+depth     & approx depth of output over requested ESSI region & real & m & 0 \\ \hline
+\end{tabular}
+\end{center}
+\index{essioutput parameters!file}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{gmt [optional]}
 \index{command!gmt}
@@ -4899,6 +4969,29 @@ for ($k=1$; $k\leq nk_p$; $k$++)\{\\
 The $x$- and $y-$ coordinates are uniformly distributed, also for the curvilinear grid, and can therefore always be
 reconstructed from the grid size $h$, and the index bounds. The $z$-coordinate on other patches, when present, will
 always be uniform, and can be reconstructed from $h$ and the $zmin$ variable.
+
+\section{essioutput}\label{sec:essioutput-format}
+\index{fileformats!essioutput}
+
+The \verb+essiouput+ command generates (potentially very large) binary HDF5
+  files holding three-dimensional volumetric data for the ESSI application.
+
+The format of the \verb+essioutput+ files is self-describing in HDF5
+  (use {\tt h5dump -A} to see header metadata):
+\begin{center}
+\begin{tabular}{lll}\hline
+Name & Type & Size \\ \hline
+  ``ESSI xyz grid spacing'' & H5T\_IEEE\_F64LE & 1 \\ \hline
+  ``ESSI xyz origin'' & H5T\_IEEE\_F64LE & 3 \\ \hline
+  ``Grid azimuth'' & H5T\_IEEE\_F64LE & 1 \\ \hline
+  ``Grid lon-lat origin'' & H5T\_IEEE\_F64LE & 2 \\ \hline
+  ``cycle start, end'' & H5T\_STD\_I32LE & 2 \\ \hline
+  ``time start'' & H5T\_IEEE\_F64LE & 1 \\ \hline
+  ``timestep'' & H5T\_IEEE\_F64LE & 1 \\ \hline
+  ``vel\_\{0,1,2\} ijk layout'' & H5T\_IEEE\_F64LE & cycle X 3D size \\ \hline
+  ``z coordinates'' & H5T\_IEEE\_F64LE & (optional) 3D size \\ \hline
+\end{tabular}
+\end{center}
 
 
 %% For this reason, we will not describe the binary format here. If you really want to

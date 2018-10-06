@@ -47,6 +47,7 @@
 #include "TimeSeries.h"
 #include "Filter.h"
 #include "Image3D.h"
+#include "ESSI3D.h"
 #include "sacutils.h"
 
 #ifdef ENABLE_OPT
@@ -518,6 +519,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
          processImage(buffer);
        else if (startswith("volimage", buffer))
           processImage3D(buffer);
+       else if (startswith("essioutput", buffer))
+          processESSI3D(buffer);
        else if (startswith("boundary_conditions", buffer))
          processBoundaryConditions(buffer);
        //       else if (startswith("supergrid", buffer))
@@ -3716,7 +3719,112 @@ void EW::processImage3D( char* buffer )
       addImage3D( im3 );
    }
 }
-  
+
+//-----------------------------------------------------------------------
+void EW::processESSI3D( char* buffer )
+{
+   int cycle=-1, cycleInterval=-1;
+   float_sw4 time=0.0, timeInterval=0.0;
+   bool timingSet = false;
+   float_sw4 tStart = -999.99;
+   string filePrefix="essioutput";
+   float_sw4 coordValue;
+   float_sw4 coordBox[4];
+   // Default is whole domain
+   coordBox[0] = 0.0;
+   coordBox[1] = m_global_xmax;
+   coordBox[2] = 0.0;
+   coordBox[3] = m_global_ymax;
+   float_sw4 depth = -999.99; // default not specified
+
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("essioutput", token) == 0, "ERROR: Not a essioutput line...: " << token );
+
+   token = strtok(NULL, " \t");
+   string err = "essioutput Error: ";
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+         // Ignore commented lines and lines with just a space.
+         break;
+      else if (startswith("file=", token))
+      {
+         token += 5; // skip file=
+         filePrefix = token;
+      }
+      else if (startswith("cycleInterval=", token))
+      {
+          token += 14; // skip cycleInterval=
+          cycleInterval = atoi(token);
+      }
+      else if (startswith("xmin=", token))
+      {
+          token += 5; // skip xmin=
+          coordValue = atof(token);
+          coordBox[0] = min(m_global_xmax, coordValue);
+          coordBox[0] = max(0.0, coordBox[0]);
+      }
+      else if (startswith("xmax=", token))
+      {
+          token += 5; // skip xmax=
+          coordValue = atof(token);
+          coordBox[1] = min(m_global_xmax, coordValue);
+          coordBox[1] = max(0.0, coordBox[1]);
+      }
+      else if (startswith("ymin=", token))
+      {
+          token += 5; // skip ymin=
+          coordValue = atof(token);
+          coordBox[2] = min(m_global_ymax, coordValue);
+          coordBox[2] = max(0.0, coordBox[2]);
+      }
+      else if (startswith("ymax=", token))
+      {
+          token += 5; // skip ymax=
+          coordValue = atof(token);
+          coordBox[3] = min(m_global_ymax, coordValue);
+          coordBox[3] = max(0.0, coordBox[3]);
+      }
+      else if (startswith("depth=", token))
+      {
+          token += 6; // skip depth=
+          coordValue = atof(token);
+          depth = min(m_global_zmax, coordValue);
+          depth = max(0.0, depth);
+      }
+      else
+      {
+          badOption("essioutput", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+
+   // Check the specified min/max values make sense
+   for (int d=0; d < 2*2; d+=2)
+   {
+      if (coordBox[d+1] < coordBox[d])
+      {
+         char coordName[2] = {'x','y'};
+         if (proc_zero())
+           cout << "ERROR: essioutput subdomain " << coordName[d] <<
+              " coordinate max value " << coordBox[d+1] <<
+              " is less than min value " << coordBox[d] << endl;
+         MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+   }
+
+   // Use depth if zmin/zmax values are specified
+   if ((depth < 0) && proc_zero())
+   {
+      cout << "WARNING: essioutput depth not specified or less than zero, setting to zero" << endl;
+      depth=0;
+   }
+
+   ESSI3D* essi3d = new ESSI3D( this, filePrefix, cycleInterval, coordBox, depth );
+   addESSI3D( essi3d );
+}
+
 //-----------------------------------------------------------------------
 void EW::processCheckPoint(char* buffer)
 {

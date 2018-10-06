@@ -170,6 +170,13 @@ else
    CXXFLAGS += -I../src/double
 endif
 
+ifneq ($(hdf5),no)
+   # PLEASE MODIFY MAKEFILE TO PROVIDE HDF5ROOT
+   # HDF5ROOT   = /usr/local/Cellar/hdf5/1.10.2_1
+   CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
+   EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+endif
+
 ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif
@@ -195,7 +202,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
+       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \

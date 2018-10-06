@@ -607,6 +607,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
     mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
+  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath, mZ );
+
   FILE *lf=NULL;
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
@@ -1046,7 +1049,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, 
 				       mQp, mQs, mPath, mZ ); // mRho, mMu, mLambda occur twice because we don't use gradRho etc.
-    
+
+    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath, mZ );
+
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
     for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -1178,7 +1184,24 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    print_execution_time( time_start_solve, time_end_solve, "solver phase" );
 
    if( m_output_detailed_timing )
-     print_execution_times( time_sum );
+   {
+#if USE_HDF5
+      // Calculate the total ESSI hdf5 io time across all ranks
+      double hdf5_time=0;
+      for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+         hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
+      // Max over all rank
+      int myRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      double max_hdf5_time;
+      MPI_Allreduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX,
+          MPI_COMM_WORLD );
+      if( myRank == 0 )
+        cout << "    ==> Wallclock time to write ESSI hdf5 output is " <<
+          max_hdf5_time << " seconds " << endl;
+#endif
+      print_execution_times( time_sum );
+   }
 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVEp, a_Sources ) )
