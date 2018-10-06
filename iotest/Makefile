@@ -6,8 +6,7 @@ endif
 
 ifneq ($(hdf5),no)
 #   HDF5ROOT   = /opt/hdf5-1.8/usr
-#   HDF5ROOT   = /g/g91/bjorn/local
-   HDF5ROOT   = /usr/local/Cellar/hdf5/1.10.2_1
+   HDF5ROOT   = /g/g91/bjorn/local
    CXXFLAGS  += -I$(HDF5ROOT)/include -DIOTEST_HDF5
    LINKFLAGS += -L$(HDF5ROOT)/lib
    linklibs  = -lhdf5_hl -lhdf5
