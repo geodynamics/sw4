@@ -477,7 +477,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        {
 	 // Maybe just reached eof, don't want to echo
 	 // the ignoring command line for nothing
-	 cout << "*** Ignoring command: '" << buffer << "'" << endl;
+	 cout << "*** parseInputFile: Ignoring command: '" << buffer << "'" << endl;
        }
      } // end if strlen(buffer) > 0
      
