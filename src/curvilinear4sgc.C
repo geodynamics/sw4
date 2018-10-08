@@ -964,7 +964,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 // 4 ops, tot=773
 	    lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac;
 			});
-   #if defined(NO_COLLAPSE)
+#if defined(NO_COLLAPSE)
 	// RangeGS<256,4> IS(ifirst+2,ilast-1);
 	// RangeGS<1,1>JS(jfirst+2,jlast-1);
 	// RangeGS<1,1>KS(kstart,klast-1);

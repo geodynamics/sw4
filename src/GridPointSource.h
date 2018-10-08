@@ -42,6 +42,7 @@
 #include "Sarray.h"
 #include "Filter.h"
 #include "Mspace.h"
+
 class GridPointSource:public Managed
 {
    friend std::ostream& operator<<(std::ostream& output, const GridPointSource& s);
@@ -92,6 +93,7 @@ public:
 RAJA_HOST_DEVICE
 void initializeTimeFunction();
   float_sw4 mForces[3];
+  void print_vals(){std::cout<<"DERDEP "<<m_derivative<<","<<mTimeDependence<<"\n";};
  private:
 
   GridPointSource();

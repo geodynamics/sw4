@@ -4078,6 +4078,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> &po
      }
      
      // if (point_sources.size()>0) std::cerr<<getRank()<<" Calling GPS[r]->initializeTimeFunction() "<<point_sources.size()<<" \n";
+     //for (int i=0;i<point_sources.size();i++) GPSL[i]->print_vals();
      RAJA::forall<DEFAULT_LOOP1> (RAJA::RangeSegment(0,point_sources.size()),[=] RAJA_DEVICE(int r){
 	 GPSL[r]->initializeTimeFunction();
        });
