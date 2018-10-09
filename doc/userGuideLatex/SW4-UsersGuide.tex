@@ -3884,7 +3884,7 @@ qs      & $Q_s$ material attenuation factor \\ \hline
 \label{keyword:essioutput}
 \begin{flushleft}
 \bf Syntax:\\ \tt
-essioutput file=... cycleInterval=... xmin=... xmax=... ymin=... ymax=... depth=...\\
+essioutput file=... dumpInterval=... xmin=... xmax=... ymin=... ymax=... depth=...\\
 \bf Required parameter:\\
 None
 \end{flushleft}
@@ -3893,27 +3893,25 @@ The \verb+essioutput+ command in \emph{SW4} allows you to save 3D volumetric
   data in a file for ESSI.
 These files are in an HDF5 format that can be post-processed for ESSI input directly.
 SW4 must be compiled with the {\tt hdf5=yes} option to enable this option,
-  and tests are available in the {\tt tools/essi} directory.
+  and tests are available in the {\tt examples/essi} directory.
 
 Be aware that these files can be {\em very} large, depending on the
-  x,y,z ranges and cycleInterval requested (which could include
-  the whole domain AND every time step).
+  x,y,z ranges (which could include the whole domain).
 The option {\bf file=...} has the
   same meaning as the corresponding parameters in the image command.
 The \verb+essioutput+ command produces files with extension \verb+.essi+.
 
-The option {\bf cycleInterval=...} is different than with other
-  commands; for \verb+essioutput+ the output file will written out
-  after that many time steps, and include the both first and last timestep
-  data values.
-If omitted, the output occurs at every time step of the simulation.
-When reading these multiple files, care must be taken to avoid
-  duplicate data from the same time step in different files (and simply
-  appending the time series values will lead to duplicate data).
-Note that if the \verb+checkpoint+ command also uses the
-  {\bf cycleInterval=...} option, that value will be used by
-  \verb+essioutput+ to guarantee checkpoint and ESSI files are
-  written at the same time.
+The option {\bf dumpInterval=...} specifies after how many time steps
+the data is written to disk. If omitted, the data is written after
+every time step of the simulation.
+%When reading these multiple files,
+%care must be taken to avoid duplicate data from the same time step in
+%different files (and simply appending the time series values will lead
+%to duplicate data).
+Note that when the \verb+checkpoint+ command is
+being used, its {\bf cycleInterval=...} option takes precedence over
+the specified {\bf dumpInterval}. This is to guarentee that both the
+checkpoint and ESSI files are written after the same time step.
 
 Note that only data from the topmost grid can be output, which may or may
   not include topography and in the case of mesh refinement, will not
@@ -3934,7 +3932,7 @@ The file format is described in Section~\ref{sec:essioutput-format}.
 \hline
 file        & file name header of image                          & string & none
   & essioutput \\ \hline
-  cycleInterval & interval between file writes & string & -1 (1 file) \\ \hline
+  dumpInterval & interval between file writes & string & -1 (1 file) \\ \hline
 xmin     & starting $x$ location of requested ESSI region & real & m & 0 \\ \hline
 xmax     & ending $x$ location of requested ESSI region & real & m & $x_{max}$ \\ \hline
 ymin     & starting $y$ location of requested ESSI region & real & m & 0 \\ \hline

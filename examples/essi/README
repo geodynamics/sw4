@@ -1,8 +1,10 @@
 This directory contains tests for the ESSI hdf5 output
   implemented by ESSI3D and ESSI3DHDF5 classes.
 
+Using hdf5-parallel assumes a PARALLEL FILE SYSTEM!
+
 The tests can be run on a few processors by:
-- Build sw4 with the hdf5=yes option.
+- Building sw4 with the hdf5=yes option.
 - - This may require setting the HDF5 library path in Makefile.
 
 - The first test is M5.5_ESSI_srf.in:

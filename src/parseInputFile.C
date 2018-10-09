@@ -3723,10 +3723,7 @@ void EW::processImage3D( char* buffer )
 //-----------------------------------------------------------------------
 void EW::processESSI3D( char* buffer )
 {
-   int cycle=-1, cycleInterval=-1;
-   float_sw4 time=0.0, timeInterval=0.0;
-   bool timingSet = false;
-   float_sw4 tStart = -999.99;
+   int dumpInterval=-1;
    string filePrefix="essioutput";
    float_sw4 coordValue;
    float_sw4 coordBox[4];
@@ -3753,10 +3750,10 @@ void EW::processESSI3D( char* buffer )
          token += 5; // skip file=
          filePrefix = token;
       }
-      else if (startswith("cycleInterval=", token))
+      else if (startswith("dumpInterval=", token))
       {
-          token += 14; // skip cycleInterval=
-          cycleInterval = atoi(token);
+          token += 13; // skip dumpInterval=
+          dumpInterval = atoi(token);
       }
       else if (startswith("xmin=", token))
       {
@@ -3821,7 +3818,7 @@ void EW::processESSI3D( char* buffer )
       depth=0;
    }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, cycleInterval, coordBox, depth );
+   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth );
    addESSI3D( essi3d );
 }
 

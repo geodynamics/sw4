@@ -1574,7 +1574,7 @@ void EW::print_execution_times( double times[9] )
       if( printavgs )
       {
 //                             5                  10          7      2          2                    5       2                      6                 7
-	 cout << "Total      Div-stress Forcing    BC         SG         Comm.      MR         Img+TS     Updates " << endl;
+	 cout << "Total      Div-stress Forcing    BC         SG         Comm.      MR       Img+T-Series Updates " << endl;
 	 cout.setf(ios::left);
 	 cout.precision(3);
 	 cout.width(11);

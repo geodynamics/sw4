@@ -490,7 +490,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
         cout << "\n----------------------------------------" << endl;
         cout << "          Setup time summary (average)" << endl;
 //                             6                  9            8            6            7                7       6          2        5        7
-        cout << "SBP+SG      BndryWind  InitPath  SetElastic  EvalResol  ViscoElastic  CheckPnt     DT     Image  SrcPrep" << endl;
+        cout << "SBP+SG      BndryWind  InitPath  SetElastic  EvalResol  ViscoElastic  CheckPnt     DT     Image     SrcPrep" << endl;
         cout.setf(ios::left);
         cout.precision(3);
         cout.width(11);
