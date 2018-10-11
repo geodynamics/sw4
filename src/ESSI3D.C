@@ -48,7 +48,7 @@ ESSI3D* ESSI3D::nil=static_cast<ESSI3D*>(0);
 //-----------------------------------------------------------------------
 ESSI3D::ESSI3D( EW* a_ew,
     const std::string& filePrefix,
-    int cycleInterval,
+    int dumpInterval,
     float_sw4 coordBox[6],
     float_sw4 depth ):
       mEW(a_ew),
@@ -60,7 +60,7 @@ ESSI3D::ESSI3D( EW* a_ew,
       m_ihavearray(false),
       m_hdf5_time(0),
       m_cycle(-1),
-      m_cycleInterval(-1),
+      m_dumpInterval(-1),
       mDepth(depth),
       m_hdf5helper(NULL)
 {
@@ -68,7 +68,7 @@ ESSI3D::ESSI3D( EW* a_ew,
   for (int d=0; d < 2*2; d++)
     mCoordBox[d] = coordBox[d];
 
-  set_cycle_interval(cycleInterval);
+  set_dump_interval(dumpInterval);
 }
 
 //-----------------------------------------------------------------------
@@ -82,10 +82,10 @@ ESSI3D::~ESSI3D()
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::set_cycle_interval( int a_cycleInterval )
+void ESSI3D::set_dump_interval( int a_dumpInterval )
 {
-  if (a_cycleInterval > 0)
-    m_cycleInterval = a_cycleInterval;
+  if (a_dumpInterval > 0)
+    m_dumpInterval = a_dumpInterval;
 }
 
 //-----------------------------------------------------------------------
@@ -204,34 +204,19 @@ void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 #ifdef USE_HDF5
   double hdf5_time=MPI_Wtime();
   if (!m_fileOpen) // must be first call, open file and write
-  {
     open_vel_file(a_cycle, a_path, a_time, a_Z);
-    write_image_hdf5( a_cycle, a_path, a_time, a_U);
-  }
-  else // file is open
+
+  if ((a_cycle > 0) && // don't close and open on first cycle
+      (m_dumpInterval != -1) && // dump interval was set
+      (a_cycle%m_dumpInterval == 0)) // close, open new
   {
-    if (a_cycle == mNumberOfTimeSteps) // last time step
-    {
-      if (m_cycleInterval == 1) // close and open new for last step
-      {
-         close_vel_file();
-        open_vel_file(a_cycle, a_path, a_time, a_Z);
-      }
-      // otherwise write and close
-      write_image_hdf5( a_cycle, a_path, a_time, a_U);
-      close_vel_file();
-    }
-    else if (m_cycleInterval == -1) // never set, 1 file, just write
-      write_image_hdf5( a_cycle, a_path, a_time, a_U);
-    else if (a_cycle%m_cycleInterval == 0) // close and open new, write
-    {
-      close_vel_file();
-      open_vel_file(a_cycle, a_path, a_time, a_Z);
-      write_image_hdf5( a_cycle, a_path, a_time, a_U);
-    }
-    else // regular cycle, just write
-      write_image_hdf5( a_cycle, a_path, a_time, a_U);
+    close_vel_file();
+    open_vel_file(a_cycle, a_path, a_time, a_Z);
   }
+  write_image_hdf5( a_cycle, a_path, a_time, a_U);
+  if (a_cycle == mNumberOfTimeSteps) // last time step
+    close_vel_file();
+
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
 #endif
 }

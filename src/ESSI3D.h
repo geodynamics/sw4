@@ -51,12 +51,12 @@ public:
 
    ESSI3D( EW * a_ew,
      const std::string& filePrefix,
-      int cycleInterval,
+      int dumpInterval,
       float_sw4 coordBox[4],
       float_sw4 depth );
    ~ESSI3D();
 
-   void set_cycle_interval( int a_cycleInterval );
+   void set_dump_interval( int a_dumpInterval );
    void setup( );
 
    double getHDF5Timings();
@@ -113,7 +113,7 @@ private:
    ESSI3DHDF5* m_hdf5helper;
 
    int m_cycle;
-   int m_cycleInterval; // Note: this cycle interval to start a new file
+   int m_dumpInterval; // Note: this cycle interval to start a new file
    int mWindow[6]; // Local in processor start + end indices for (i,j,k) for last curvilinear grid
    int mGlobalDims[6]; // Global start + end indices for (i,j,k) for last curvilinear grid
    double* m_doubleField;

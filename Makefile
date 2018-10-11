@@ -176,7 +176,6 @@ endif
 # hdf5=no is the default
 ifeq ($(hdf5),yes)
    # PROVIDE HDF5ROOT in configs/make.xyz, e.g.
-   # HDF5ROOT   = /usr/local/Cellar/hdf5/1.10.2_1
    CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
    EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
 endif
