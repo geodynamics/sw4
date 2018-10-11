@@ -617,6 +617,27 @@ EW::
       ::operator delete[](i.second,Managed);
    }
 #endif
+
+#if defined(SW4_TRACK_MPI)
+   stringstream filename;
+   filename<<"MpiStats"<<m_myRank;
+   ofstream ofile(filename.str());
+   // ofile<<"# Size KB Bandwidth GB/s Callcount\n";
+   // for ( auto it : mpi_times){
+   //   ofile<<it.first*8/1024.0<<" "<<it.first*mpi_count[it.first]/it.second*8*1.0e6/1024/1024/1024<<" "<<mpi_count[it.first]<<"\n";
+   // }
+   // ofile<<"# AMPI_Sendrecv2\n";
+   // for ( auto it : mpi_times2){
+   //   ofile<<it.first*8/1024.0<<" "<<it.first*mpi_count2[it.first]/it.second*8*1.0e6/1024/1024/1024<<" "<<mpi_count2[it.first]<<"\n";
+   // }
+   //sm.print(ofile);
+   sm.print(ofile,
+	    [=](size_t size)->double{ return size*8/1024.0;},
+	    [=](size_t size, double time)->double{ return size/time*8*1.0e6/1024/1024/1024;});
+   ofile.close();
+   
+#endif
+
 //  msgStream.close();
 }
 

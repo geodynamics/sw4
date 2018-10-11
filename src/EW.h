@@ -71,6 +71,10 @@
 #include "CheckPoint.h"
 #include "policies.h"
 #include "Mspace.h"
+#ifdef SW4_TRACK_MPI
+#include "StatMachine.h"
+#endif
+
 using namespace std;
 
 class EW 
@@ -1606,6 +1610,10 @@ vector<MPI_Datatype> m_send_type_2dy1p;
   GridPointSource **GPS ;
 
 
+  //std::unordered_map<size_t, double > mpi_times,mpi_times2;
+  //std::unordered_map<size_t, unsigned long long > mpi_count,mpi_count2;
+  StatMachine<size_t,double> sm;
+  
 public:
 MPI_Datatype m_mpifloat;
 

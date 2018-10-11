@@ -696,7 +696,7 @@
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
-    if (currentTimeStep==mNumberOfTimeSteps) t1 = std::chrono::high_resolution_clock::now();
+    if (currentTimeStep==mNumberOfTimeSteps) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep==(beginCycle+10)) {
       PROFILER_START;
       }
@@ -1113,7 +1113,7 @@
        }
     }
     if (currentTimeStep==mNumberOfTimeSteps) {
-      t2 = std::chrono::high_resolution_clock::now();
+      t2 = SW4_CHRONO_NOW;
       if (proc_zero()){
 	std::cout<<" Time for the last time step is "<<std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()<<" ms \n";
       }

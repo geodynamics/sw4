@@ -7,6 +7,7 @@
 #include <sstream>
 #include <fstream>
 #include <unordered_map>
+#include <chrono>
 #include <tuple>
 #include <mpi.h>
 #ifdef SW4_USE_UMPIRE
@@ -142,6 +143,14 @@ public:
   }
 };
 //size_t Managed::mem_total=0;
+
+
+#define SW4_CHRONO_NOW std::chrono::high_resolution_clock::now()
+
+#define SW4_CHRONO_DURATION_MS(arg1,arg2) std::chrono::duration_cast<std::chrono::milliseconds>((arg2) - (arg1)).count()
+#define SW4_CHRONO_DURATION_US(arg1,arg2) std::chrono::duration_cast<std::chrono::microseconds>((arg2) - (arg1)).count()
+
+
 
 // AUTOPEEL CODE
 class Apc{
