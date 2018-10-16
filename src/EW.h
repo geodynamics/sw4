@@ -288,7 +288,7 @@ void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sa
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
 
-void print_execution_times( float_sw4 times[7] );
+void print_execution_times( float_sw4 times[10] );
 void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );
 void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;

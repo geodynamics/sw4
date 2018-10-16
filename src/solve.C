@@ -252,7 +252,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // Set up timers
   double time_start_solve = MPI_Wtime();
   double time_measure[20];
-  double time_sum[9]={0,0,0,0,0,0,0,0,0};
+  double time_sum[10]={0,0,0,0,0,0,0,0,0,0};
   double bc_time_measure[5]={0,0,0,0,0};
 
 // Sort sources wrt spatial location, needed for thread parallel computing
@@ -1050,8 +1050,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, 
 				       mQp, mQs, mPath, mZ ); // mRho, mMu, mLambda occur twice because we don't use gradRho etc.
 
+    // Update the ESSI hdf5 data
+    double time_essi_tmp=MPI_Wtime();
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
       mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath, mZ );
+    double time_essi=MPI_Wtime()-time_essi_tmp;
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
@@ -1149,12 +1152,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
           time_sum[4] += time_measure[13]-time_measure[12]; // super-grid
           time_sum[5] += time_measure[3]-time_measure[2] + time_measure[14]-time_measure[13]; // communicate
           time_sum[6] += time_measure[9]-time_measure[8] + time_measure[17]-time_measure[16]; // mesh ref
-          time_sum[7] += time_measure[18]-time_measure[17]; // images + time-series
+          time_sum[7] += time_measure[18]-time_measure[17] - time_essi; // images + time-series - essi
 //          time_sum[8] += 0;
           time_sum[8] += time_measure[2]-time_measure[1] + time_measure[5]-time_measure[4] + 
              time_measure[10]-time_measure[9] + time_measure[12]-time_measure[11] +
              time_measure[19]-time_measure[18]; // updates
-          
+          time_sum[9] += time_essi;
        }
        else
        { // 2nd order in time algorithm
@@ -1167,6 +1170,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
           time_sum[6] = 0;
           time_sum[7] = 0;
           time_sum[8] = 0;
+          time_sum[9] = 0;
        }
     }
     
@@ -1195,8 +1199,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
      MPI_Allreduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX,
 		    MPI_COMM_WORLD );
      if( myRank == 0 )
-       cout << "    ==> Wallclock time to write ESSI hdf5 output is " <<
-	 max_hdf5_time << " seconds " << endl;
+       cout << "    ==> Max wallclock time to open/write ESSI hdf5 output is " 
+         << max_hdf5_time << " seconds " << endl;
 // add to total time for detailed timing output
      // time_sum[0] += max_hdf5_time;
      // time_sum[7] += max_hdf5_time; // fold the essi output into images and time-series
