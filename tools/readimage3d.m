@@ -33,7 +33,7 @@ if fd ~= -1
    gridinfo=fread(fd,1,'int');
    timecreated=fread(fd,[1 25],'uchar');
    timestring=num2str(timecreated,'%c');
-   mstr=getimagemodestr3d(mode);
+   mstr=getimage3dmode(mode);
 % Display header
    if verbose == 1
       disp(['Found:  prec  = ' num2str(prec)  ' t= ' num2str(t) ' plane= ' num2str(plane)]);   

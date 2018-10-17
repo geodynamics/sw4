@@ -1537,7 +1537,7 @@ void EW::print_execution_time( double t1, double t2, string msg )
       s = s - h*3600;
       int m = static_cast<int>(s/60.0);
       s = s - m*60;
-      cout << "   Execution time, " << msg << " ";
+      cout << endl << "   Execution time, " << msg << " ";
       if( h > 1 )
 	 cout << h << " hours ";
       else if( h > 0 )
@@ -1556,25 +1556,26 @@ void EW::print_execution_time( double t1, double t2, string msg )
 
 
 //-----------------------------------------------------------------------
-void EW::print_execution_times( double times[9] )
+void EW::print_execution_times( double times[10] )
 {
-   double* time_sums =new double[9*no_of_procs()];
-   MPI_Gather( times, 9, MPI_DOUBLE, time_sums, 9, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-   bool printavgs = true;
+   const int nt = 10;
+   double* time_sums =new double[nt*no_of_procs()];
+   MPI_Gather( times, nt, MPI_DOUBLE, time_sums, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   bool printavgs = true;//print averages or one line per proc?
    if( !mQuiet && proc_zero() )
    {
-      double avgs[9]={0,0,0,0,0,0,0,0,0};
+      double avgs[nt]={0,0,0,0,0,0,0,0,0,0};
       for( int p= 0 ; p < no_of_procs() ; p++ )
-	 for( int c=0 ; c < 9 ; c++ )
-	    avgs[c] += time_sums[9*p+c];
-      for( int c=0 ; c < 9 ; c++ )
+	 for( int c=0 ; c < nt ; c++ )
+	    avgs[c] += time_sums[nt*p+c];
+      for( int c=0 ; c < nt ; c++ )
 	 avgs[c] /= no_of_procs();
       cout << "\n----------------------------------------" << endl;
       cout << "          Execution time summary (average)" << endl;
       if( printavgs )
       {
 //                             5                  10          7      2          2                    5       2                      6                 7
-	 cout << "Total      Div-stress Forcing    BC         SG         Comm.      MR         Img+TS     Updates " << endl;
+	 cout << "Total      Div-stress Forcing    BC         SG         Comm.      MR       Img+T-Series Updates    ESSI" << endl;
 	 cout.setf(ios::left);
 	 cout.precision(3);
 	 cout.width(11);
@@ -1595,34 +1596,39 @@ void EW::print_execution_times( double times[9] )
 	 cout << avgs[7];
 	 cout.width(11);
 	 cout << avgs[8];
+	 cout.width(11);
+	 cout << avgs[9];
 	 cout << endl;
       }
       else
       {
-	 cout << "Processor  Total    Div-stress    Forcing     BC     SG     Comm.    MR    Image+Time-series  Misc  " << endl;
+	 cout << "Proc. Total    Div-stress    Forcing     BC        SG       Comm.       MR       Image+Tser.  Updates    ESSI" << endl;
 	 cout.setf(ios::left);
 	 cout.precision(3);
 	 for( int p= 0 ; p < no_of_procs() ; p++ )
 	 {
-	    cout.width(11);
+	    cout.width(5);
 	    cout << p;
-	    cout << time_sums[9*p];
 	    cout.width(11);
-	    cout << time_sums[9*p+1];
+	    cout << time_sums[nt*p];
 	    cout.width(11);
-	    cout << time_sums[9*p+2];
+	    cout << time_sums[nt*p+1];
 	    cout.width(11);
-	    cout << time_sums[9*p+3];
+	    cout << time_sums[nt*p+2];
 	    cout.width(11);
-	    cout << time_sums[9*p+4];
+	    cout << time_sums[nt*p+3];
 	    cout.width(11);
-	    cout << time_sums[9*p+5];
+	    cout << time_sums[nt*p+4];
 	    cout.width(11);
-	    cout << time_sums[9*p+6];
+	    cout << time_sums[nt*p+5];
 	    cout.width(11);
-	    cout << time_sums[9*p+7];
+	    cout << time_sums[nt*p+6];
 	    cout.width(11);
-	    cout << time_sums[9*p+8];
+	    cout << time_sums[nt*p+7];
+	    cout.width(11);
+	    cout << time_sums[nt*p+8];
+	    cout.width(11);
+	    cout << time_sums[nt*p+9];
 	    cout << endl;
 	 }
       }
@@ -5083,6 +5089,12 @@ void EW::addImage3D(Image3D* i)
 }
 
 //-----------------------------------------------------------------------
+void EW::addESSI3D(ESSI3D* i)
+{
+   mESSI3DFiles.push_back(i);
+}
+
+//-----------------------------------------------------------------------
 void EW::initialize_image_files( )
 {
    // Image planes
@@ -5106,6 +5118,9 @@ void EW::initialize_image_files( )
    Image3D::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
       mImage3DFiles[fIndex]->setup_images( );
+   ESSI3D::setSteps(mNumberOfTimeSteps);
+   for (unsigned int fIndex = 0; fIndex < mESSI3DFiles.size(); ++fIndex)
+      mESSI3DFiles[fIndex]->setup( );
 }
 
 //-----------------------------------------------------------------------

@@ -390,6 +390,13 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
   // Initialize check point object
   m_check_point->setup_sizes();
+  // Coordinate the dump/cycleInterval for checkpointing with ESSI output
+  if (m_check_point->do_checkpointing())
+  {
+    int dumpInterval = m_check_point->get_checkpoint_cycle_interval();
+    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+      mESSI3DFiles[i3]->set_dump_interval(dumpInterval);
+  }
 
   if( m_output_detailed_timing )
      time_measure[7] = MPI_Wtime();
@@ -483,7 +490,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
         cout << "\n----------------------------------------" << endl;
         cout << "          Setup time summary (average)" << endl;
 //                             6                  9            8            6            7                7       6          2        5        7
-        cout << "SBP+SG      BndryWind  InitPath  SetElastic  EvalResol  ViscoElastic  CheckPnt     DT     Image  SrcPrep" << endl;
+        cout << "SBP+SG      BndryWind  InitPath  SetElastic  EvalResol  ViscoElastic  CheckPnt     DT     Image     SrcPrep" << endl;
         cout.setf(ios::left);
         cout.precision(3);
         cout.width(11);

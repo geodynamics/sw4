@@ -250,9 +250,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   
 // Set up timers
-  double time_start_solve = MPI_Wtime();
+  double time_start_init = MPI_Wtime();
   double time_measure[20];
-  double time_sum[9]={0,0,0,0,0,0,0,0,0};
+  double time_sum[10]={0,0,0,0,0,0,0,0,0,0};
   double bc_time_measure[5]={0,0,0,0,0};
 
 // Sort sources wrt spatial location, needed for thread parallel computing
@@ -607,6 +607,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
     mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
+  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath, mZ );
+
   FILE *lf=NULL;
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
@@ -632,42 +635,43 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   //        point_sources[s]->print_info();
     
 // output flags and settings that affect the run
-   if( proc_zero() && mVerbose >= 1 )
-   {
-      printf("\nReporting SW4 internal flags and settings:\n");
-      printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
-             "lamb_test=%s, rayleigh_test=%s\n",
-             m_testing?"yes":"no",
-             m_twilight_forcing?"yes":"no",
-             m_point_source_test?"yes":"no",
-             m_moment_test?"yes":"no",
-             m_energy_test?"yes":"no",
-             m_lamb_test?"yes":"no",
-             m_rayleigh_wave_test?"yes":"no");
-      printf("m_use_supergrid=%s\n", usingSupergrid()?"yes":"no");
-      printf("End report of internal flags and settings\n\n");
-   }
+  if( proc_zero() && mVerbose >= 1 )
+  {
+    printf("\nReporting SW4 internal flags and settings:\n");
+    printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
+	   "lamb_test=%s, rayleigh_test=%s\n",
+	   m_testing?"yes":"no",
+	   m_twilight_forcing?"yes":"no",
+	   m_point_source_test?"yes":"no",
+	   m_moment_test?"yes":"no",
+	   m_energy_test?"yes":"no",
+	   m_lamb_test?"yes":"no",
+	   m_rayleigh_wave_test?"yes":"no");
+    printf("m_use_supergrid=%s\n", usingSupergrid()?"yes":"no");
+    printf("End report of internal flags and settings\n\n");
+  }
    
-  if ( !mQuiet && proc_zero() )
-    cout << "  Begin time stepping..." << endl;
-
-
-// Begin time stepping loop
   for( int g=0 ; g < mNumberOfGrids ; g++ )
-     Up[g].set_to_zero();
+    Up[g].set_to_zero();
 
   if( m_do_geodynbc )
      advance_geodyn_time( t+mDt );
 
 // test: compute forcing for the first time step before the loop to get started
-       Force( t, F, point_sources, identsources );
+  Force( t, F, point_sources, identsources );
 // end test
 
+  double time_start_solve = MPI_Wtime();
+  print_execution_time( time_start_init, time_start_solve, "initial data phase" );
+
 // BEGIN TIME STEPPING LOOP
+  if ( !mQuiet && proc_zero() )
+    cout << endl << "  Begin time stepping..." << endl;
 
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
-    time_measure[0] = MPI_Wtime();
+    if( m_output_detailed_timing )
+      time_measure[0] = MPI_Wtime();
 
 // all types of forcing...
     bool trace =false;
@@ -1046,7 +1050,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, 
 				       mQp, mQs, mPath, mZ ); // mRho, mMu, mLambda occur twice because we don't use gradRho etc.
-    
+
+    // Update the ESSI hdf5 data
+    double time_essi_tmp=MPI_Wtime();
+    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath, mZ );
+    double time_essi=MPI_Wtime()-time_essi_tmp;
+
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
     for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -1108,9 +1118,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
-    if( m_output_detailed_timing )
-       time_measure[19] = MPI_Wtime();
-	  
 // evaluate error for some test cases
     if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
     {
@@ -1133,6 +1140,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_output_detailed_timing )
     {
+       time_measure[19] = MPI_Wtime();
+	  
        if (mOrder == 4)
        {
           time_sum[0] += time_measure[19]-time_measure[0]; // total
@@ -1143,12 +1152,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
           time_sum[4] += time_measure[13]-time_measure[12]; // super-grid
           time_sum[5] += time_measure[3]-time_measure[2] + time_measure[14]-time_measure[13]; // communicate
           time_sum[6] += time_measure[9]-time_measure[8] + time_measure[17]-time_measure[16]; // mesh ref
-          time_sum[7] += time_measure[18]-time_measure[17]; // images + time-series
+          time_sum[7] += time_measure[18]-time_measure[17] - time_essi; // images + time-series - essi
 //          time_sum[8] += 0;
           time_sum[8] += time_measure[2]-time_measure[1] + time_measure[5]-time_measure[4] + 
              time_measure[10]-time_measure[9] + time_measure[12]-time_measure[11] +
              time_measure[19]-time_measure[18]; // updates
-          
+          time_sum[9] += time_essi;
        }
        else
        { // 2nd order in time algorithm
@@ -1161,6 +1170,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
           time_sum[6] = 0;
           time_sum[7] = 0;
           time_sum[8] = 0;
+          time_sum[9] = 0;
        }
     }
     
@@ -1169,16 +1179,37 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && proc_zero() )
     cout << "  Time stepping finished..." << endl;
 
-//   delete[] wk;
-
-//   if( ind != 0 )
-//      delete[] ind;
-  
    double time_end_solve = MPI_Wtime();
-   print_execution_time( time_start_solve, time_end_solve, "solver phase" );
+
+#if USE_HDF5
+// Only do this if there are any essi hdf5 files
+   if (mESSI3DFiles.size() > 0)
+   {
+     // Calculate the total ESSI hdf5 io time across all ranks
+     double hdf5_time=0;
+     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+       hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
+     // Max over all rank
+     int myRank;
+     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+     double max_hdf5_time;
+     MPI_Allreduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX,
+		    MPI_COMM_WORLD );
+     if( myRank == 0 )
+       cout << "    ==> Max wallclock time to open/write ESSI hdf5 output is " 
+         << max_hdf5_time << " seconds " << endl;
+// add to total time for detailed timing output
+     // time_sum[0] += max_hdf5_time;
+     // time_sum[7] += max_hdf5_time; // fold the essi output into images and time-series
+   }
+#endif
+
+   print_execution_time( time_start_solve, time_end_solve, "time stepping phase" );
 
    if( m_output_detailed_timing )
-     print_execution_times( time_sum );
+   {
+      print_execution_times( time_sum );
+   }
 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVEp, a_Sources ) )

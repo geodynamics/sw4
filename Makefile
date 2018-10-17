@@ -1,13 +1,16 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no]
-#   Default is: debug=no prec=double fortran=yes openmp=yes
-# This Makefile asumes that the following environmental variables have been assigned:
+# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no] [hdf5=yes/no]
+#   Default is: debug=no prec=double fortran=yes openmp=yes hdf5=no
+#
+# This Makefile asumes that the following environmental variables have been assigned,
+# see note below.
 # etree = [yes/no]
 # proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
+# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes). 
 #
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 #
@@ -75,14 +78,14 @@ else
     else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
       include configs/make.fourier
       foundincfile := "configs/make.fourier"
-	# for any other MacOS system
-		else
-			include configs/make.osx
-			foundincfile := "configs/make.osx"
+   # for any other MacOS system
+    else
+       include configs/make.osx
+       foundincfile := "configs/make.osx"
     endif
   endif
-  
-  # put the variables in the configs/make.xyz file
+
+# put the variables in the configs/make.xyz file
   ifeq ($(UNAME),Linux)
   # For Cab at LC
     ifeq ($(findstring cab,$(HOSTNAME)),cab)
@@ -170,6 +173,13 @@ else
    CXXFLAGS += -I../src/double
 endif
 
+# hdf5=no is the default
+ifeq ($(hdf5),yes)
+   # PROVIDE HDF5ROOT in configs/make.xyz, e.g.
+   CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
+   EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+endif
+
 ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif
@@ -195,7 +205,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
+       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \

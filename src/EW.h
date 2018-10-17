@@ -50,6 +50,7 @@
 
 #include "Image.h"
 #include "Image3D.h"
+#include "ESSI3D.h"
 
 #include "boundaryConditionTypes.h"
 #include "ForcingTwilight.h"
@@ -126,6 +127,7 @@ void processTwilight(char* buffer);
 void processFileIO(char* buffer);
 void processImage(char* buffer);
 void processImage3D(char* buffer);
+void processESSI3D(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
 void processTestRayleigh(char* buffer);
@@ -286,7 +288,7 @@ void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sa
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
 
-void print_execution_times( float_sw4 times[7] );
+void print_execution_times( float_sw4 times[10] );
 void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );
 void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;
@@ -371,6 +373,7 @@ void checkTopo(Sarray& field);
 
 void addImage(Image* i);
 void addImage3D(Image3D* i);
+void addESSI3D(ESSI3D* i);
 void setIO_timing(bool iotiming);
 void setParallel_IO(bool pfs, int nwriters);
 
@@ -554,6 +557,7 @@ int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
 int getNumberOfGrids(){return mNumberOfGrids;};
 int getNumberOfGhostPoints(){return m_ghost_points;};
 int getNumberOfParallelPaddingPoints(){return m_ppadding;};
+float_sw4 getLonOrigin(){ return mLonOrigin;};
 float_sw4 getLatOrigin(){ return mLatOrigin;};
 float_sw4 getGridAzimuth(){ return mGeoAz;};
 float_sw4 getMetersPerDegree(){ return mMetersPerDegree;};
@@ -1405,6 +1409,7 @@ float mSACFileErrorTolerance;
 // Image file info
 vector<Image*> mImageFiles;
 vector<Image3D*> mImage3DFiles;
+vector<ESSI3D*> mESSI3DFiles;
 bool m_iotiming;
 
 // time data
