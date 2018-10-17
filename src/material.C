@@ -65,6 +65,12 @@ void EW::check_materials()
   // Verify that the density is nonzero and positive in the 
   // internal grid points
   //---------------------------------------------------------------
+
+
+   // Minimum allowed  cp/cs, positive definite operator requires cp/cs > sqrt(4/3) = 1.155...
+   //   lambda >0 requires cp/cs > sqrt(2)
+  const float_sw4 mincpcsratio = 1.2;
+  const float_sw4 la_min_fact = mincpcsratio*mincpcsratio-2;
   
   float_sw4 mins[8],maxs[8];
 
@@ -169,7 +175,7 @@ void EW::check_materials()
 	for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	  {
-	    CHECK_INPUT( mLambda[g](i,j,k) >= 0., "lambda= " << mLambda[g](i,j,k)<< " in grid g= " << g << " at point " 
+	     CHECK_INPUT( mLambda[g](i,j,k) >= la_min_fact*mMu[g](i,j,k), "lambda= " << mLambda[g](i,j,k)<< " in grid g= " << g << " at point " 
 			 << " (" << i <<","<<j<<","<<k<<") ");
 	  }
   }
@@ -207,11 +213,11 @@ void EW::check_materials()
            "Error: the material data has p velocities that are less than or equal to zero.");
    CHECK_INPUT(mins[3] >= 0.0,
            "Error: mu has values that are negative.");
-   CHECK_INPUT(mins[4] > 0.0,
-           "Error: lambda has values that are negative or zero.");
+   //   CHECK_INPUT(mins[4] > 0.0,
+   //           "Error: lambda has values that are negative or zero.");
   
-  VERIFY2(mins[5] >= sqrt(2.),
-	  "Error: vp/vs is smaller than sqrt(2).");
+  VERIFY2(mins[5] >= mincpcsratio,
+	  "Error: vp/vs is smaller than set limit, " << mincpcsratio );
 
 // check material ranges on each grid
    if (mVerbose >= 3)
