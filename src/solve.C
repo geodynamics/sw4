@@ -250,7 +250,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
   
 // Set up timers
-  double time_start_solve = MPI_Wtime();
+  double time_start_init = MPI_Wtime();
   double time_measure[20];
   double time_sum[10]={0,0,0,0,0,0,0,0,0,0};
   double bc_time_measure[5]={0,0,0,0,0};
@@ -635,42 +635,43 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   //        point_sources[s]->print_info();
     
 // output flags and settings that affect the run
-   if( proc_zero() && mVerbose >= 1 )
-   {
-      printf("\nReporting SW4 internal flags and settings:\n");
-      printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
-             "lamb_test=%s, rayleigh_test=%s\n",
-             m_testing?"yes":"no",
-             m_twilight_forcing?"yes":"no",
-             m_point_source_test?"yes":"no",
-             m_moment_test?"yes":"no",
-             m_energy_test?"yes":"no",
-             m_lamb_test?"yes":"no",
-             m_rayleigh_wave_test?"yes":"no");
-      printf("m_use_supergrid=%s\n", usingSupergrid()?"yes":"no");
-      printf("End report of internal flags and settings\n\n");
-   }
+  if( proc_zero() && mVerbose >= 1 )
+  {
+    printf("\nReporting SW4 internal flags and settings:\n");
+    printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
+	   "lamb_test=%s, rayleigh_test=%s\n",
+	   m_testing?"yes":"no",
+	   m_twilight_forcing?"yes":"no",
+	   m_point_source_test?"yes":"no",
+	   m_moment_test?"yes":"no",
+	   m_energy_test?"yes":"no",
+	   m_lamb_test?"yes":"no",
+	   m_rayleigh_wave_test?"yes":"no");
+    printf("m_use_supergrid=%s\n", usingSupergrid()?"yes":"no");
+    printf("End report of internal flags and settings\n\n");
+  }
    
-  if ( !mQuiet && proc_zero() )
-    cout << "  Begin time stepping..." << endl;
-
-
-// Begin time stepping loop
   for( int g=0 ; g < mNumberOfGrids ; g++ )
-     Up[g].set_to_zero();
+    Up[g].set_to_zero();
 
   if( m_do_geodynbc )
      advance_geodyn_time( t+mDt );
 
 // test: compute forcing for the first time step before the loop to get started
-       Force( t, F, point_sources, identsources );
+  Force( t, F, point_sources, identsources );
 // end test
 
+  double time_start_solve = MPI_Wtime();
+  print_execution_time( time_start_init, time_start_solve, "initial data phase" );
+
 // BEGIN TIME STEPPING LOOP
+  if ( !mQuiet && proc_zero() )
+    cout << endl << "  Begin time stepping..." << endl;
 
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
-    time_measure[0] = MPI_Wtime();
+    if( m_output_detailed_timing )
+      time_measure[0] = MPI_Wtime();
 
 // all types of forcing...
     bool trace =false;
@@ -1117,9 +1118,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
-    if( m_output_detailed_timing )
-       time_measure[19] = MPI_Wtime();
-	  
 // evaluate error for some test cases
     if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test )
     {
@@ -1142,6 +1140,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
     if( m_output_detailed_timing )
     {
+       time_measure[19] = MPI_Wtime();
+	  
        if (mOrder == 4)
        {
           time_sum[0] += time_measure[19]-time_measure[0]; // total
@@ -1179,11 +1179,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && proc_zero() )
     cout << "  Time stepping finished..." << endl;
 
-//   delete[] wk;
+   double time_end_solve = MPI_Wtime();
 
-//   if( ind != 0 )
-//      delete[] ind;
-  
 #if USE_HDF5
 // Only do this if there are any essi hdf5 files
    if (mESSI3DFiles.size() > 0)
@@ -1207,9 +1204,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    }
 #endif
 
-   double time_end_solve = MPI_Wtime();
-
-   print_execution_time( time_start_solve, time_end_solve, "solver phase" );
+   print_execution_time( time_start_solve, time_end_solve, "time stepping phase" );
 
    if( m_output_detailed_timing )
    {

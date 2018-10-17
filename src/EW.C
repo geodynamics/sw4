@@ -1537,7 +1537,7 @@ void EW::print_execution_time( double t1, double t2, string msg )
       s = s - h*3600;
       int m = static_cast<int>(s/60.0);
       s = s - m*60;
-      cout << "   Execution time, " << msg << " ";
+      cout << endl << "   Execution time, " << msg << " ";
       if( h > 1 )
 	 cout << h << " hours ";
       else if( h > 0 )
@@ -1561,7 +1561,7 @@ void EW::print_execution_times( double times[10] )
    const int nt = 10;
    double* time_sums =new double[nt*no_of_procs()];
    MPI_Gather( times, nt, MPI_DOUBLE, time_sums, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-   bool printavgs = true;
+   bool printavgs = true;//print averages or one line per proc?
    if( !mQuiet && proc_zero() )
    {
       double avgs[nt]={0,0,0,0,0,0,0,0,0,0};
@@ -1602,30 +1602,33 @@ void EW::print_execution_times( double times[10] )
       }
       else
       {
-	 cout << "Processor  Total    Div-stress    Forcing     BC     SG     Comm.    MR    Image+Time-series  Misc  " << endl;
+	 cout << "Proc. Total    Div-stress    Forcing     BC        SG       Comm.       MR       Image+Tser.  Updates    ESSI" << endl;
 	 cout.setf(ios::left);
 	 cout.precision(3);
 	 for( int p= 0 ; p < no_of_procs() ; p++ )
 	 {
-	    cout.width(11);
+	    cout.width(5);
 	    cout << p;
-	    cout << time_sums[9*p];
 	    cout.width(11);
-	    cout << time_sums[9*p+1];
+	    cout << time_sums[nt*p];
 	    cout.width(11);
-	    cout << time_sums[9*p+2];
+	    cout << time_sums[nt*p+1];
 	    cout.width(11);
-	    cout << time_sums[9*p+3];
+	    cout << time_sums[nt*p+2];
 	    cout.width(11);
-	    cout << time_sums[9*p+4];
+	    cout << time_sums[nt*p+3];
 	    cout.width(11);
-	    cout << time_sums[9*p+5];
+	    cout << time_sums[nt*p+4];
 	    cout.width(11);
-	    cout << time_sums[9*p+6];
+	    cout << time_sums[nt*p+5];
 	    cout.width(11);
-	    cout << time_sums[9*p+7];
+	    cout << time_sums[nt*p+6];
 	    cout.width(11);
-	    cout << time_sums[9*p+8];
+	    cout << time_sums[nt*p+7];
+	    cout.width(11);
+	    cout << time_sums[nt*p+8];
+	    cout.width(11);
+	    cout << time_sums[nt*p+9];
 	    cout << endl;
 	 }
       }
