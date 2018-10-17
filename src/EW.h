@@ -1612,8 +1612,9 @@ vector<MPI_Datatype> m_send_type_2dy1p;
 
   //std::unordered_map<size_t, double > mpi_times,mpi_times2;
   //std::unordered_map<size_t, unsigned long long > mpi_count,mpi_count2;
+#ifdef SW4_TRACK_MPI
   StatMachine<size_t,double> sm;
-  
+#endif
 public:
 MPI_Datatype m_mpifloat;
 
