@@ -702,7 +702,8 @@ void TimeSeries::writeFile( string suffix )
      {
 	if( m_xyzcomponent )
 	{
-     bool makeCopy = true;
+     // Only create a .bak if we're doing checkpointing
+     bool makeCopy = m_ew->m_check_point->do_checkpointing();
 	   write_sac_format(mLastTimeStep+1,
 			const_cast<char*>(ux.str().c_str()),
 			mRecordedFloats[0], (float) m_shift, (float) m_dt,
