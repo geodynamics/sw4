@@ -21,55 +21,55 @@ using namespace std;
 
 template<int iu, int il, int ju, int jl, int ku, int kl>
 void evalLuCurv( int ib, int ie, int jb, int je, int kb, int ke,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
 		 Sarray& met, Sarray& jac,
 		 int ilb, int ile, int jlb, int jle, int klb, int kle );
 
 
 void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
 		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
 		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
 		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
 		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& a_u, Sarray& a_lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle );
+		 Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle );
 
 //-----------------------------------------------------------------------
-void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3],
-			  double dt, int nsteps, int faces )
+void EW::set_geodyn_data( string file, int nx, int nz, float_sw4 h, float_sw4 origin[3],
+			  float_sw4 dt, int nsteps, int faces )
 {
    m_do_geodynbc     = true;
    m_geodyn_past_end = false;
@@ -111,8 +111,8 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
    m_geo_usgh.resize(4);
 
    int i0, i1, j0, j1, k0, k1;
-   double cubelen  = (nx-1)*m_geodyn_h;
-   double zcubelen = (nz-1)*m_geodyn_h;
+   float_sw4 cubelen  = (nx-1)*m_geodyn_h;
+   float_sw4 zcubelen = (nz-1)*m_geodyn_h;
 
    //   m_geodyn_dims.resize(mNumberOfCartesianGrids);
    m_geodyn_dims.resize(mNumberOfGrids);
@@ -140,7 +140,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 	 if( j0 > jcmin ) jcmin = j0;
 	 if( j1 < jcmax ) jcmax = j1;
 
-         double kavgm=0, kavgp=0;
+         float_sw4 kavgm=0, kavgp=0;
 	 int nptsij=0;
          for( int j = jcmin ; j <= jcmax ; j++ )
 	    for( int i = icmin ; i <= icmax ; i++ )
@@ -152,17 +152,17 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 	       kavgp += k;
 	       nptsij++;
 	    }
-	 double ktmp = kavgm;
-	 MPI_Allreduce( &ktmp, &kavgm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 float_sw4 ktmp = kavgm;
+	 MPI_Allreduce( &ktmp, &kavgm, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
 	 ktmp = kavgp;
-	 MPI_Allreduce( &ktmp, &kavgp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( &ktmp, &kavgp, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
 	 ktmp = nptsij;
-	 double nptstot;
-	 MPI_Allreduce( &ktmp, &nptstot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 float_sw4 nptstot;
+	 MPI_Allreduce( &ktmp, &nptstot, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
 	 int km = static_cast<int>(round(kavgm/nptstot));
 	 int kp = static_cast<int>(round(kavgp/nptstot));
 
-	 double deperrp = 0, deperrm=0;
+	 float_sw4 deperrp = 0, deperrm=0;
 	 if( nptsij > 0 )
 	 {
 	    if( kp > m_kEnd[g] )
@@ -176,9 +176,9 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
                   deperrm += (mZ(i,j,km)-mZ(i,j,1)-zcubelen)*(mZ(i,j,km)-mZ(i,j,1)-zcubelen);
 	       }
 	 }	    
-	 double errp, errm;
-	 MPI_Allreduce( &deperrp, &errp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-	 MPI_Allreduce( &deperrm, &errm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 float_sw4 errp, errm;
+	 MPI_Allreduce( &deperrp, &errp, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( &deperrm, &errm, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
 	 if( nptsij > 0 )
 	 {
 	    if( errp < errm )
@@ -287,7 +287,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, double h, double origin[3
 
 //-----------------------------------------------------------------------
 void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
-				double t, vector<float_sw4**>& bforcing )
+				float_sw4 t, vector<float_sw4**>& bforcing )
 {
    //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
    int i0, i1, j0, j1, k0, k1;
@@ -359,9 +359,9 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
       // m_geodyn_step = n1;
 
       //      double twgh = ((n1+1)*m_geodyn_dt-t)/m_geodyn_dt;
-      double cext1 = 2, cext2=-1, cext3=0;
+      //      double cext1 = 2, cext2=-1, cext3=0;
       
-      double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
+      float_sw4 twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
 
       for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
       {
@@ -373,7 +373,7 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
          k1 = m_geodyn_dims[g][5];
 	 bool at_surface = g == mNumberOfGrids-1 && k0 <= 1;
 
-         double h= mGridSize[g];
+         float_sw4 h= mGridSize[g];
 #pragma omp parallel for
 	 for( int k=k0 ;  k<= k1 ; k++ )
 	    for( int j=j0 ;  j<=j1 ; j++ )
@@ -388,8 +388,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
 
                for( int c= 1; c <= 3 ;c++)
 	       {
@@ -425,8 +425,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
 
                for( int c= 1; c <= 3 ;c++)
 	       {
@@ -472,8 +472,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  jg0 = m_geodyn_nj - 1;
 	       if( jg0 <= 0 )
 		  jg0 = 1;
-	       double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
                for( int c= 1; c <= 3 ;c++)
 	       {
                   if( !at_surface && m_geodyn_faces == 6 )
@@ -602,14 +602,14 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
          j1 = m_geodyn_dims[g][3];
          k0 = m_geodyn_dims[g][4];
          k1 = m_geodyn_dims[g][5];
-         double h = mGridSize[g];
-         double zcubelen = (m_geodyn_nk-1)*m_geodyn_h;
+         float_sw4 h = mGridSize[g];
+         float_sw4 zcubelen = (m_geodyn_nk-1)*m_geodyn_h;
 	 bool at_surface = k0==1;
 #pragma omp parallel for
 	 for( int k=k0 ;  k<= k1 ; k++ )
 	    for( int j=j0 ;  j<=j1 ; j++ )
 	    {
-               double strfact = (mZ(i0,j,k1)-mZ(i0,j,1))/zcubelen;
+               float_sw4 strfact = (mZ(i0,j,k1)-mZ(i0,j,1))/zcubelen;
                int jg0 = static_cast<int>(floor(((j-1)*h - m_geodyn_origin[1])/m_geodyn_h+1));
                int kg0 = static_cast<int>(floor((mZ(i0,j,k)-mZ(i0,j,1))/(strfact*m_geodyn_h)+1));
 	       //               int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
@@ -621,8 +621,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 
                for( int c= 1; c <= 3 ;c++)
 	       {
@@ -659,7 +659,7 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 	 for( int k=k0 ;  k<= k1 ; k++ )
 	    for( int i=i0 ;  i<=i1 ; i++ )
 	    {
-               double strfact = (mZ(i,j0,k1)-mZ(i,j0,1))/zcubelen;
+               float_sw4 strfact = (mZ(i,j0,k1)-mZ(i,j0,1))/zcubelen;
                int ig0 = static_cast<int>(floor(((i-1)*h - m_geodyn_origin[0])/m_geodyn_h+1));
                int kg0 = static_cast<int>(floor((mZ(i,j0,k)-mZ(i,j0,1))/(strfact*m_geodyn_h)+1));
 	       //	       int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
@@ -671,9 +671,9 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	       //	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghk = ((mZ(i,j0,k)-mZ(i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	       //	       float_sw4 wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((mZ(i,j0,k)-mZ(i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 
                for( int c= 1; c <= 3 ;c++)
 	       {
@@ -722,8 +722,8 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  jg0 = m_geodyn_nj - 1;
 	       if( jg0 <= 0 )
 		  jg0 = 1;
-	       double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
                for( int c= 1; c <= 3 ;c++)
 	       {
                   if( !at_surface && m_geodyn_faces == 6 )
@@ -876,15 +876,15 @@ void EW::copy_geodyn_timelevel( vector<Sarray>& geodyndata1, vector<Sarray>& geo
 
 //-----------------------------------------------------------------------
 void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
-				    vector<Sarray>& forcing, double t, vector<Sarray>& U,
+				    vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
 				    vector<Sarray>& Um, int crf )
 {
    //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
    //   m_geodyn_step = n1;
    if( m_do_geodynbc )
    {
-      double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
-      double d2i=1/(mDt*mDt);
+      float_sw4 twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
+      float_sw4 d2i=1/(mDt*mDt);
       //      cout << "twgh = " << twgh << " geostep = " << m_geodyn_step << endl;
       for( int g= 0 ; g< mNumberOfCartesianGrids ; g++ )
       {
@@ -894,8 +894,8 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
          int j1 = m_geodyn_dims[g][3];
          int k0 = m_geodyn_dims[g][4];
          int k1 = m_geodyn_dims[g][5];
-         double h = mGridSize[g];
-	 double h2 = h*h;
+         float_sw4 h = mGridSize[g];
+	 float_sw4 h2 = h*h;
 
 	 bool low_interior, high_interior;
 	 low_interior  = m_iStartInt[g] <= i0+1 && i0+1 <= m_iEndInt[g];
@@ -947,9 +947,9 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double bnd0[3],bnd1[3];
+	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 bnd0[3],bnd1[3];
                for( int c= 1; c <= 3 ;c++)
 	       {
 		  bnd0[c-1] = twgh*( (1-wghj)*(1-wghk)*m_geodyn_data1[0](c,jg0,kg0,1)+
@@ -971,7 +971,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	       }
 
 	       // Lower bndry
-	       double res1, res2, res3;
+	       float_sw4 res1, res2, res3;
 	       if( low_interior )
 	       {
 		  res1 = crf*rho[g](i0,j,k)*(bnd0[0]-2*U[g](1,i0,j,k)+Um[g](1,i0,j,k))*d2i
@@ -1050,9 +1050,9 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double bnd0[3],bnd1[3];
+	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 bnd0[3],bnd1[3];
                for( int c= 1; c <= 3 ;c++)
 	       {
 		  bnd0[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[2](c,ig0,  kg0,  1)+
@@ -1072,7 +1072,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 				 (1-wghi)*  wghk  *m_geodyn_data2[3](c,ig0,  kg0+1,1)+
 				   wghi  *  wghk  *m_geodyn_data2[3](c,ig0+1,kg0+1,1) );
 	       }
-	       double res1, res2, res3;
+	       float_sw4 res1, res2, res3;
 	       // Lower bndry
 	       if( low_interior )
 	       {
@@ -1139,9 +1139,9 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 		  jg0 = m_geodyn_nj - 1;
 	       if( jg0 <= 0 )
 		  jg0 = 1;
-	       double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	       double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	       double bnd0[3],bnd1[3];
+	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 bnd0[3],bnd1[3];
                for( int c= 1; c <= 3 ;c++)
 	       {
                   if( m_geodyn_faces == 6 && low_interior )
@@ -1165,7 +1165,7 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 				    wghi  *  wghj  *m_geodyn_data2[5](c,ig0+1,jg0+1,1) );
 	       }
 	       // Upper bndry
-	       double res1, res2, res3;
+	       float_sw4 res1, res2, res3;
 	       if( high_interior )
 	       {
 		  res1 = crf*rho[g](i,j,k1)*(bnd1[0]-2*U[g](1,i,j,k1)+Um[g](1,i,j,k1))*d2i
@@ -1218,13 +1218,13 @@ extern "C"
 
 //-----------------------------------------------------------------------
 void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
-						vector<Sarray>& forcing, double t, vector<Sarray>& U,
+						vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
 						vector<Sarray>& Um, int crf )
 {
-   double twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
-   double d2i=1/(mDt*mDt);
+   float_sw4 twgh = ((m_geodyn_step+1)*m_geodyn_dt-t)/m_geodyn_dt;
+   float_sw4 d2i=1/(mDt*mDt);
    int    g = mNumberOfGrids-1;
-   double h = mGridSize[g];
+   float_sw4 h = mGridSize[g];
 
    int i0 = m_geodyn_dims[g][0];
    int i1 = m_geodyn_dims[g][1];
@@ -1233,7 +1233,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    int k0 = m_geodyn_dims[g][4];
    int k1 = m_geodyn_dims[g][5];
 
-   double zcubelen = (m_geodyn_nk-1)*m_geodyn_h;
+   float_sw4 zcubelen = (m_geodyn_nk-1)*m_geodyn_h;
    //   bool   at_surface = k0==1;
 
    bool low_interior, high_interior;
@@ -1271,7 +1271,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    for( int k=kstart ;  k<= k1-1 ; k++ )
       for( int j=j0+1 ;  j<=j1-1 ; j++ )
       {
-	 double strfact = (mZ(i0,j,k1)-mZ(i0,j,1))/zcubelen;
+	 float_sw4 strfact = (mZ(i0,j,k1)-mZ(i0,j,1))/zcubelen;
 	 int jg0 = static_cast<int>(floor(((j-1)*h - m_geodyn_origin[1])/m_geodyn_h+1));
 	 int kg0 = static_cast<int>(floor((mZ(i0,j,k)-mZ(i0,j,1))/(strfact*m_geodyn_h)+1));
 	       //               int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
@@ -1283,9 +1283,9 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    kg0 = m_geodyn_nk - 1;
 	 if( kg0 <= 0 )
 	    kg0 = 1;
-	 double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	 double wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
-	 double bnd0[3],bnd1[3];
+	 float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 bnd0[3],bnd1[3];
 	 //	 if( i0+1==86 && j==102 && k==25)
 	 //	    cout << "boundary data: wk " << wghk << " sf " << strfact << " zk1 " 
 	 //		 << mZ(i0,j,k1) << " z1 " << mZ(i0,j,1) << " k1 " << k1 <<  endl;
@@ -1319,7 +1319,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 				 wghj*wghk*m_geodyn_data2[1](c,jg0+1,kg0+1,1) );
 	 }
 	 // Lower bndry
-	 double res1, res2, res3;
+	 float_sw4 res1, res2, res3;
 	 if( low_interior )
 	 {
 	    res1 = crf*rho[g](i0,j,k)*(bnd0[0]-2*U[g](1,i0,j,k)+Um[g](1,i0,j,k))*d2i
@@ -1404,7 +1404,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    for( int k=kstart ;  k<= k1-1 ; k++ )
       for( int i=i0+1 ;  i<=i1-1 ; i++ )
       {
-	 double strfact = (mZ(i,j0,k1)-mZ(i,j0,1))/zcubelen;
+	 float_sw4 strfact = (mZ(i,j0,k1)-mZ(i,j0,1))/zcubelen;
 	 int ig0 = static_cast<int>(floor(((i-1)*h - m_geodyn_origin[0])/m_geodyn_h+1));
 	 int kg0 = static_cast<int>(floor((mZ(i,j0,k)-mZ(i,j0,1))/(strfact*m_geodyn_h)+1));
 	 //	       int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
@@ -1416,10 +1416,10 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    kg0 = m_geodyn_nk - 1;
 	 if( kg0 <= 0 )
 	    kg0 = 1;
-	 double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
 	       //	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
-	 double wghk = ((mZ(i,j0,k)-mZ(i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
-	 double bnd0[3],bnd1[3];
+	 float_sw4 wghk = ((mZ(i,j0,k)-mZ(i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 bnd0[3],bnd1[3];
 	 for( int c= 1; c <= 3 ;c++)
 	 {
 	    bnd0[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[2](c,ig0,  kg0,  1)+
@@ -1449,7 +1449,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 			   (1-wghi)*  wghk  *m_geodyn_data2[3](c,ig0,  kg0+1,1)+
 			   wghi  *  wghk  *m_geodyn_data2[3](c,ig0+1,kg0+1,1) );
 	 }
-	 double res1, res2, res3;
+	 float_sw4 res1, res2, res3;
 	 // Lower bndry
 	 if( low_interior )
 	 {
@@ -1533,9 +1533,9 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    jg0 = m_geodyn_nj - 1;
 	 if( jg0 <= 0 )
 	    jg0 = 1;
-	 double wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
-	 double wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	 double bnd0[3],bnd1[3];
+	 float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 bnd0[3],bnd1[3];
 	 for( int c= 1; c <= 3 ;c++)
 	 {
 	    if( m_geodyn_faces == 6 && low_interior )
@@ -1559,7 +1559,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 			    wghi  *  wghj  *m_geodyn_data2[5](c,ig0+1,jg0+1,1) );
 	 }
 	 // Upper bndry
-	 double res1, res2, res3;
+	 float_sw4 res1, res2, res3;
 	 if( high_interior )
 	 {
 	    res1 = crf*rho[g](i,j,k1)*(bnd1[0]-2*U[g](1,i,j,k1)+Um[g](1,i,j,k1))*d2i
@@ -1668,8 +1668,8 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 //-----------------------------------------------------------------------
 void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
    // Suggested change: Input Sarray& a_lu instead and define
    //   const long int lb= a_lu.m_base;
@@ -1702,20 +1702,20 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb+1 ; k <= kle-1; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -1778,9 +1778,9 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 				     
 //-----------------------------------------------------------------------
 void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
-		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -1792,20 +1792,20 @@ void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb+1 ; k <= kle-1; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -1868,9 +1868,9 @@ void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
 				     
 //-----------------------------------------------------------------------
 void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
-		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -1882,20 +1882,20 @@ void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb+1 ; k <= kle-1; k++ )
       for( int j=jlb ; j <= jle; j++ )
 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -1963,9 +1963,9 @@ void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
-		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -1977,20 +1977,20 @@ void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb+1 ; k <= kle-1; k++ )
       for( int j=jlb ; j <= jle; j++ )
 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2057,9 +2057,9 @@ void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
-		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -2071,20 +2071,20 @@ void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= kle; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2152,9 +2152,9 @@ void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
-		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -2166,20 +2166,20 @@ void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= kle; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2248,9 +2248,9 @@ void evalLu_Dkm( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
-		    //		    double* a_u, double* a_lu, double* a_mu, double* a_la,
-		    Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		    double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		    //		    float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		    Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		    float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -2262,20 +2262,20 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2342,9 +2342,9 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
-		    //		    double* a_u, double* a_lu, double* a_mu, double* a_la,
-		    Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		    double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		    //		    float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		    Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		    float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -2356,20 +2356,20 @@ void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
 	 for( int i=ilb ; i <= ile; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2437,9 +2437,9 @@ void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
 				     
 //-----------------------------------------------------------------------
 void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
-		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		    //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -2451,20 +2451,20 @@ void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb ; j <= jle; j++ )
 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2532,9 +2532,9 @@ void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
-		    //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
-		 double h, int ilb, int ile, int jlb, int jle, int klb, int kle )
+		    //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
 #define mu(i,j,k)  a_mu[i-ib+ni*(j-jb)+nij*(k-kb)]
 #define la(i,j,k)  a_la[i-ib+ni*(j-jb)+nij*(k-kb)]
@@ -2546,20 +2546,20 @@ void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb ; j <= jle; j++ )
 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 	 {
-	    double mupx = half*(mu(i,j,k)+mu(i+1,j,k));
-	    double mumx = half*(mu(i,j,k)+mu(i-1,j,k));
-	    double mupy = half*(mu(i,j+1,k)+mu(i,j,k));
-	    double mumy = half*(mu(i,j-1,k)+mu(i,j,k));
-	    double mupz = half*(mu(i,j,k+1)+mu(i,j,k));
-	    double mumz = half*(mu(i,j,k-1)+mu(i,j,k));
+	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
+	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
+	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
+	    float_sw4 mumy = half*(mu(i,j-1,k)+mu(i,j,k));
+	    float_sw4 mupz = half*(mu(i,j,k+1)+mu(i,j,k));
+	    float_sw4 mumz = half*(mu(i,j,k-1)+mu(i,j,k));
 	    lu(1,i,j,k) =ih2*( (2*mupx+half*(la(i,j,k)+la(i+1,j,k)))
                                  *(u(1,i+1,j,k)-u(1,i,j,k)) -
 	                 (2*mumx+half*(la(i,j,k)+la(i-1,j,k)))
@@ -2627,11 +2627,11 @@ void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void EW::geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
-			      vector<Sarray>& U, vector<Sarray>& Um, double dt )
+			      vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt )
 {
    if( m_do_geodynbc )
    {
-      double dt2 = dt*dt;
+      float_sw4 dt2 = dt*dt;
       for( int g= 0 ; g< mNumberOfGrids ; g++ )
       {
          int i0 = m_geodyn_dims[g][0];
@@ -2643,7 +2643,7 @@ void EW::geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
 	 bool low_interior, high_interior;
 	 low_interior  = m_iStartInt[g] <= i0+1 && i0+1 <= m_iEndInt[g];
 	 high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
-	 bool surface_correction = k0 <= 1 && m_geodyn_faces == 5 && g == mNumberOfGrids-1;
+	 bool surface_correction = k0 <= 1 && g == mNumberOfGrids-1;
 	 int kstart=k0+1;
 	 if( surface_correction )
 	    kstart=k0;
@@ -2871,7 +2871,7 @@ void EW::bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
 	 float_sw4 muplap = mMu[g](i,j,k0+1)+mLambda[g](i,j,k0+1);
 	 float_sw4 mupla  = mMu[g](i,j,k0)  +mLambda[g](i,j,k0);
 	 float_sw4 muplam = mMu[g](i,j,k0-1)+mLambda[g](i,j,k0-1);
-	 float_sw4 b[3], amat_[9];
+	 double b[3], amat_[9];
 #define amat(i,j) amat_[(i)-1+3*((j)-1)]
 
 	 b[0] = 2*rhs1 - 2*bforcing[3*qq] +
@@ -2931,7 +2931,7 @@ void EW::bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
 //-----------------------------------------------------------------------
 template<int iu, int il, int ju, int jl, int ku, int kl>
 void evalLuCurv( int ib, int ie, int jb, int je, int kb, int ke,
-		 Sarray& u, Sarray& lu, double* a_mu, double* a_la,
+		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
 		 Sarray& met, Sarray& jac,
 		 int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
@@ -2945,9 +2945,9 @@ void evalLuCurv( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
-   //   const double ih2 = 1/(h*h);
-   const double half   = 0.5;
-   const double fourth = 0.25;
+   //   const float_sw4 ih2 = 1/(h*h);
+   const float_sw4 half   = 0.5;
+   const float_sw4 fourth = 0.25;
    // differences in mixed terms are computed as (u(i+iu)-u(i-il))/(iu+il), so that
    // iu=1,il=0 gives forward diff,
    // iu=0,il=1 gives backward diff,
