@@ -722,7 +722,7 @@ void MaterialRfile::read_rfile( )
 	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, m_bufsize );
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
 // Read corresponding part of patches
-	    double* material_dble = new double[mMaterial[p].m_npts];
+	    float_sw4* material_dble = new float_sw4[mMaterial[p].m_npts];
 	    if( prec == 8 )
 	       pio->read_array( &fd, ncblock[p], material_dble, pos0, "double", swapbytes );
 //	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "double", swapbytes );
