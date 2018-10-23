@@ -48,6 +48,21 @@
 #include "nvToolsExtCuda.h"
 #endif
 
+#if defined(SW4_SIGNAL_CHECKPOINT)
+//
+// Currently no way to get the singnal to all process without killing the job
+//
+#include <csignal>
+extern volatile std::sig_atomic_t signal_status;
+
+void signal_handler(int signal)
+{
+  signal_status = signal;
+  std::cout<<" RECEIVED SIGNAL "<<signal<<"\n";
+}
+#endif
+
+
 using namespace std;
 
 void usage(string thereason)
@@ -74,6 +89,10 @@ main(int argc, char **argv)
   // Initialize MPI...
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
+#if defined(SW4_SIGNAL_CHECKPOINT)
+  std::signal(SIGUSR1, signal_handler);
+#endif
 
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();

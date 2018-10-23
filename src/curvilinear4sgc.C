@@ -135,6 +135,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    // SBP Boundary closure terms
 #define NO_COLLAPSE 1
 #if defined(NO_COLLAPSE)
+      // LOOP -1
       // 32,4,2 is 4% slower. 32 4 4 does not fit
       Range<16> I(ifirst+2,ilast-1);
       Range<4>J(jfirst+2,jlast-1);
@@ -642,10 +643,11 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	       lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac;
 	       lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r2*ijac;
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
-			  }); // End of curvilinear4sg_ci LOOP 1
+			  }); // End of curvilinear4sg_ci LOOP -1
    }
 
 #if defined(NO_COLLAPSE)
+	// LOOP 0
 	RangeGS<256,4> IS(ifirst+2,ilast-1);
 	RangeGS<1,1>JS(jfirst+2,jlast-1);
 	RangeGS<1,1>KS(kstart,klast-1);
@@ -963,8 +965,9 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 
 // 4 ops, tot=773
 	    lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac;
-			});
+			}); // END OF LOOP 0
 #if defined(NO_COLLAPSE)
+   // LOOP 1
 	// RangeGS<256,4> IS(ifirst+2,ilast-1);
 	// RangeGS<1,1>JS(jfirst+2,jlast-1);
 	// RangeGS<1,1>KS(kstart,klast-1);
@@ -1279,8 +1282,9 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 
 // 4 ops, tot=1541
 	    lu(2,i,j,k) = a1*lu(2,i,j,k) + sgn*r2*ijac;
-	  });
+			}); // END OF LOOP 1
 #if defined(NO_COLLAPSE)
+   // LOOP 2
 	// RangeGS<256,4> IS(ifirst+2,ilast-1);
 	// RangeGS<1,1>JS(jfirst+2,jlast-1);
 	// RangeGS<1,1>KS(kstart,klast-1);
@@ -1543,7 +1547,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 			}); // End of curvilinear4sg_ci LOOP 2
    }
-	    //SYNC_STREAM; // NOW BEINGF DONE at the end of evalRHS
+	    //SYNC_STREAM; // NOW BEING DONE at the end of evalRHS
 #undef mu
 #undef la
 #undef jac

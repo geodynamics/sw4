@@ -8,6 +8,9 @@
 #include <cstring>
 #include <unistd.h>
 #include <cstdio>
+#include <csignal>
+
+volatile std::sig_atomic_t signal_status=0;
 
 CheckPoint* CheckPoint::nil=static_cast<CheckPoint*>(0);
 
