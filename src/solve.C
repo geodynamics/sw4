@@ -689,17 +689,26 @@
  // test: compute forcing for the first time step before the loop to get started
 	Force( t, F, point_sources, identsources );
  // end test
-	std::chrono::high_resolution_clock::time_point t1,t2;
+	std::chrono::high_resolution_clock::time_point t1,t2,t3,t4;
  // BEGIN TIME STEPPING LOOP
 	//PROFILER_START;
   SW4_MARK_BEGIN("TIME_STEPPING");
+#ifdef SW4_TRACK_MPI
+bool cudaProfilerOn = false;
+#endif
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
   {    
     time_measure[0] = MPI_Wtime();
     if (currentTimeStep==mNumberOfTimeSteps) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep==(beginCycle+10)) {
       PROFILER_START;
+#ifdef SW4_TRACK_MPI
+      cudaProfilerOn = true;
+#endif
       }
+#ifdef SW4_TRACK_MPI
+      t3 = SW4_CHRONO_NOW;
+#endif
 // all types of forcing...
     bool trace =false;
     int dbgproc = 1;
@@ -1112,6 +1121,10 @@
           time_sum[8] = 0;
        }
     }
+#ifdef SW4_TRACK_MPI
+      t4 = SW4_CHRONO_NOW;
+if (cudaProfilerOn) step_sm.insert(0,SW4_CHRONO_DURATION_MS(t3,t4));
+#endif
     if (currentTimeStep==mNumberOfTimeSteps) {
       t2 = SW4_CHRONO_NOW;
       if (proc_zero()){

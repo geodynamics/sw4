@@ -634,6 +634,10 @@ EW::
    sm.print(ofile,
 	    [=](size_t size)->double{ return size*8/1024.0;},
 	    [=](size_t size, double time)->double{ return size/time*8*1.0e6/1024/1024/1024;});
+   step_sm.print(ofile,
+	    [=](size_t size)->double{ return size;},
+	    [=](size_t size, double time)->double{ return time;});
+   
    ofile.close();
    
 #endif
