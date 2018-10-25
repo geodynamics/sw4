@@ -619,9 +619,11 @@ EW::
 #endif
 
 #if defined(SW4_TRACK_MPI)
-   stringstream filename;
+   stringstream filename,hfilename;
    filename<<"MpiStats"<<m_myRank;
    ofstream ofile(filename.str());
+   hfilename<<"TimeStepHistory"<<m_myRank;
+   ofstream hfile(hfilename.str());
    // ofile<<"# Size KB Bandwidth GB/s Callcount\n";
    // for ( auto it : mpi_times){
    //   ofile<<it.first*8/1024.0<<" "<<it.first*mpi_count[it.first]/it.second*8*1.0e6/1024/1024/1024<<" "<<mpi_count[it.first]<<"\n";
@@ -634,12 +636,13 @@ EW::
    sm.print(ofile,
 	    [=](size_t size)->double{ return size*8/1024.0;},
 	    [=](size_t size, double time)->double{ return size/time*8*1.0e6/1024/1024/1024;});
+   step_sm.printhistory(hfile); // This needs to be done before print in which the history gets sorted
    step_sm.print(ofile,
 	    [=](size_t size)->double{ return size;},
 	    [=](size_t size, double time)->double{ return time;});
    
    ofile.close();
-   
+   hfile.close();
 #endif
 
 //  msgStream.close();

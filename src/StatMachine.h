@@ -42,5 +42,13 @@ template<typename T1, typename T2>
     }
     ofile<<"# Grand total "<<grand_total<<"\n";
   }
+  void printhistory(ofstream &ofile){
+    int c=0;
+    for ( auto it : map){
+      ofile<<"#"<<it.first<<"\n";
+      for (auto v : it.second) ofile<<c++<<" "<<v<<"\n";
+    }
+  }
+  
 };
 #endif
