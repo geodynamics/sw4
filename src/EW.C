@@ -5103,6 +5103,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 		  img->mMode == Image::UYEXACT || img->mMode == Image::UXERR   ||
 		  img->mMode == Image::UYERR   || img->mMode == Image::UZERR   )
 	 {
+	   SW4_MARK_BEGIN("update_images::region 1");
 	    // Note: this is inefficient, the exact solution is computed everywhere, and once for each
 	    //   EXACT or ERR image mode.
 	    vector<Sarray> Uex(mNumberOfGrids);
@@ -5144,6 +5145,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 	       for( int g=0 ; g < mNumberOfGrids ; g++ )
 		  delete[] alpha[g];
 	    }
+	    SW4_MARK_END("update_images::region 1");
 	 }
          else if( img->mMode == Image::GRIDX || img->mMode == Image::GRIDY || img->mMode == Image::GRIDZ )
 	    img->computeImageGrid(mX, mY, mZ );

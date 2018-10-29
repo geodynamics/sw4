@@ -37,6 +37,7 @@ using namespace std;
 #include <errno.h>
 #include <unistd.h>
 #include "Parallel_IO.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 Comminfo::Comminfo()
@@ -1132,6 +1133,7 @@ void Parallel_IO::setup_substeps( )
 void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 			       char* typ )
 {
+  SW4_MARK_FUNCTION;
 //
 //  Write array previously set up by constructing object.
 // Input: fid - File descriptor, obtained by calling open.

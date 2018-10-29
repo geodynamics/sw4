@@ -38,7 +38,7 @@
 #include <ctime>
 #include <cstring>
 #include <unistd.h>
-
+#include "caliper.h"
 // static variable definition (in class only declaration):
 int Image3D::mPreceedZeros = 0;
 
@@ -347,6 +347,7 @@ void Image3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt, vecto
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
 			    std::string a_path, Sarray& a_Z )
 {
+  SW4_MARK_FUNCTION;
    if( timeToWrite( a_time, a_cycle, a_dt ) )
    {
       compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
@@ -372,6 +373,7 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 			     vector<Sarray>& a_gLambda,
   			     vector<Sarray>& a_Qp, vector<Sarray>& a_Qs )
 {
+  SW4_MARK_FUNCTION;
 // Introduce 'st' to simplify the variable name
    int st = mImageSamplingFactor;
    for( int g=0 ; g < mEW->mNumberOfGrids ; g++ )
@@ -660,6 +662,7 @@ void Image3D::compute_file_suffix( int cycle, std::stringstream& fileSuffix )
 void Image3D::write_image( int cycle, std::string &path, float_sw4 t,
 			   Sarray& a_Z )
 {
+  SW4_MARK_FUNCTION;
   //File format: 
   //
   // [precision(int), npatches(int), time(double), plane(int=-1), coordinate(double=-1), 
