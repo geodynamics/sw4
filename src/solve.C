@@ -44,7 +44,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
 // vectors of pointers to hold boundary forcing arrays in each grid
-  vector<float_sw4 **> BCForcing;
+  vector<float_sw4**> BCForcing;
 
   BCForcing.resize(mNumberOfGrids);
   F.resize(mNumberOfGrids);
@@ -1366,7 +1366,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
     
     if( usingSupergrid() )
     {
-       if( m_croutines )
+//FTNC       if( m_croutines )
 	  bcfortsg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 		    wind_ptr, nx, ny, nz,
 		    u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
@@ -1374,31 +1374,31 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 		    bforce_side2_ptr, bforce_side3_ptr, 
 		    bforce_side4_ptr, bforce_side5_ptr, 
 		    om, ph, cv, m_sg_str_x[g], m_sg_str_y[g] );
-       else
-	  bcfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-		    wind_ptr, &nx, &ny, &nz,
-		    u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
-		    bforce_side0_ptr, bforce_side1_ptr, 
-		    bforce_side2_ptr, bforce_side3_ptr, 
-		    bforce_side4_ptr, bforce_side5_ptr, 
-		    &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
+//FTNC       else
+//FTNC	  bcfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+//FTNC		    wind_ptr, &nx, &ny, &nz,
+//FTNC		    u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
+//FTNC		    bforce_side0_ptr, bforce_side1_ptr, 
+//FTNC		    bforce_side2_ptr, bforce_side3_ptr, 
+//FTNC		    bforce_side4_ptr, bforce_side5_ptr, 
+//FTNC		    &om, &ph, &cv, m_sg_str_x[g], m_sg_str_y[g] );
        int side;
        if( topo == 1 && m_bcType[g][4] == bStressFree )
        {
 	  side = 5;
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     freesurfcurvisg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				 nz, side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
 				 m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
-	  else
-	     freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			     &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
-			     m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
+//FTNC	  else
+//FTNC	     freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			     &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+//FTNC			     m_sbop, bforce_side4_ptr, m_sg_str_x[g], m_sg_str_y[g] );
        }
     }
     else
     {
-       if( m_croutines )
+//FTNC       if( m_croutines )
 	  bcfort_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 		     wind_ptr, nx, ny, nz,
 		     u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
@@ -1406,34 +1406,34 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
 		     bforce_side2_ptr, bforce_side3_ptr, 
 		     bforce_side4_ptr, bforce_side5_ptr, 
 		     om, ph, cv, topo );
-       else
-	  bcfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-		  wind_ptr, &nx, &ny, &nz,
-		  u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
-		  bforce_side0_ptr, bforce_side1_ptr, 
-		  bforce_side2_ptr, bforce_side3_ptr, 
-		  bforce_side4_ptr, bforce_side5_ptr, 
-		  &om, &ph, &cv, &topo );
+//FTNC       else
+//FTNC	  bcfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+//FTNC		  wind_ptr, &nx, &ny, &nz,
+//FTNC		  u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
+//FTNC		  bforce_side0_ptr, bforce_side1_ptr, 
+//FTNC		  bforce_side2_ptr, bforce_side3_ptr, 
+//FTNC		  bforce_side4_ptr, bforce_side5_ptr, 
+//FTNC		  &om, &ph, &cv, &topo );
        int side;
        if( topo == 1 && m_bcType[g][4] == bStressFree )
        {
 	  side = 5;
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     freesurfcurvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
 			       side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
-	  else
-	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
+//FTNC	  else
+//FTNC	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+//FTNC			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side4_ptr );
        }
        if( topo == 1 && m_bcType[g][5] == bStressFree )
        {
 	  side = 6;
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
 			      side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
-	  else
-	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
+//FTNC	  else
+//FTNC	     freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+//FTNC			   &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop, bforce_side5_ptr );
        }
     }
   }
@@ -1522,7 +1522,7 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
     bforce_side4_ptr = a_BCForcing[g][4]; // low-k bndry forcing array pointer
     bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
     
-    if( m_croutines )
+//FTNC    if( m_croutines )
        bcfortanisg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 		    wind_ptr, nx, ny, nz,
 		    u_ptr, h, bcType_ptr, m_sbop, c_ptr, 
@@ -1530,26 +1530,26 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
 		    bforce_side2_ptr, bforce_side3_ptr, 
 		    bforce_side4_ptr, bforce_side5_ptr, 
 		    m_sg_str_x[g], m_sg_str_y[g] );
-    else
-       bcfortanisg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-		    wind_ptr, &nx, &ny, &nz,
-		    u_ptr, &h, bcType_ptr, m_sbop, c_ptr, 
-		    bforce_side0_ptr, bforce_side1_ptr, 
-		    bforce_side2_ptr, bforce_side3_ptr, 
-		    bforce_side4_ptr, bforce_side5_ptr, 
-		    m_sg_str_x[g], m_sg_str_y[g] );
+//FTNC    else
+//FTNC       bcfortanisg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
+//FTNC		    wind_ptr, &nx, &ny, &nz,
+//FTNC		    u_ptr, &h, bcType_ptr, m_sbop, c_ptr, 
+//FTNC		    bforce_side0_ptr, bforce_side1_ptr, 
+//FTNC		    bforce_side2_ptr, bforce_side3_ptr, 
+//FTNC		    bforce_side4_ptr, bforce_side5_ptr, 
+//FTNC		    m_sg_str_x[g], m_sg_str_y[g] );
        if( topographyExists() && g == mNumberOfGrids-1 && m_bcType[g][4] == bStressFree )
        {
 	  int fside = 5;
 	  float_sw4* cc_ptr = mCcurv.c_ptr();
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     bcfreesurfcurvani_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			       nz, u_ptr, cc_ptr, fside, m_sbop, bforce_side4_ptr,
 			       bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
-	  else
-	     bcfreesurfcurvani(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			       &nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
-			       bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
+//FTNC	  else
+//FTNC	     bcfreesurfcurvani(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			       &nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
+//FTNC			       bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g] );
        }
   }
   update_curvilinear_cartesian_interface( a_U );
@@ -2034,16 +2034,16 @@ void EW::dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t )
       float_sw4 cv = m_twilight_forcing->m_c;
       float_sw4 h  = mGridSize[g];
       float_sw4* u_ptr = U.c_ptr();
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 			      kdb, kde, u_ptr, t, om, cv, ph, 
 			      h, m_zmin[g],
 			      i1, i2, j1, j2, kic, kic );      
-      else
-	 twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			   &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-			   &h, &m_zmin[g],
-			   &i1, &i2, &j1, &j2, &kic, &kic );      
+//FTNC      else
+//FTNC	 twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			   &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+//FTNC			   &h, &m_zmin[g],
+//FTNC			   &i1, &i2, &j1, &j2, &kic, &kic );      
    }
    
 }
@@ -2109,60 +2109,60 @@ void EW::dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj )
 	 // low i-side
 	 int i1 = m_iStart[g], i2=m_iStartInt[g]-adj;
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 			      kdb, kde, u_ptr, t, om, cv, ph, 
 			      h, m_zmin[g], i1, i2, j1, j2, kic, kic );
-	 else
-	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-			      &h, &m_zmin[g],
-			      &i1, &i2, &j1, &j2, &kic, &kic );
+//FTNC	 else
+//FTNC	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+//FTNC			      &h, &m_zmin[g],
+//FTNC			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
       if( m_iEndInt[g] == m_global_nx[g] )
       {
 	 // high i-side
 	 int i1 = m_iEndInt[g]+adj, i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jEnd[g];
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 				 kdb, kde, u_ptr, t, om, cv, ph, 
 				 h, m_zmin[g], i1, i2, j1, j2, kic, kic );
-	 else
-	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-			      &h, &m_zmin[g],
-			      &i1, &i2, &j1, &j2, &kic, &kic );
+//FTNC	 else
+//FTNC	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+//FTNC			      &h, &m_zmin[g],
+//FTNC			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
       if( m_jStartInt[g] == 1 )
       {
 	 // low j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jStart[g], j2=m_jStartInt[g]-adj;
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 				 kdb, kde, u_ptr, t, om, cv, ph, 
 				 h, m_zmin[g], i1, i2, j1, j2, kic, kic );
-	 else
-	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-			      &h, &m_zmin[g],
-			      &i1, &i2, &j1, &j2, &kic, &kic );
+//FTNC	 else
+//FTNC	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+//FTNC			      &h, &m_zmin[g],
+//FTNC			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
       if( m_jEndInt[g] == m_global_ny[g] )
       {
 	 // high j-side
 	 int i1 = m_iStart[g], i2=m_iEnd[g];
 	 int j1 = m_jEndInt[g]+adj, j2=m_jEnd[g];
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    twilightfortwind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 				 kdb, kde, u_ptr, t, om, cv, ph, 
 				 h, m_zmin[g],i1, i2, j1, j2, kic, kic );
-	 else
-	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
-			      &h, &m_zmin[g],
-			      &i1, &i2, &j1, &j2, &kic, &kic );
+//FTNC	 else
+//FTNC	    twilightfortwind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			      &kdb, &kde, u_ptr, &t, &om, &cv, &ph, 
+//FTNC			      &h, &m_zmin[g],
+//FTNC			      &i1, &i2, &j1, &j2, &kic, &kic );
       }
    }      
 }
@@ -2258,45 +2258,45 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj )
          if( usingSupergrid() )
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfzsg_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 				    h, kic, t, om, cv, ph, omstrx, omstry,
 				    b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
-	    else
-	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-				 h, kic, t, om, cv, ph, omstrx, omstry,
-				 b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	    else
+//FTNC	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC				 h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC				 b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfzsg_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                      h, kic, t, om, cv, ph, omstrx, omstry,
                                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                     h, kic, t, om, cv, ph, omstrx, omstry,
-                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                     h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          }
          else
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfz_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			       h, kic, t, om, cv, ph, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
-	    else
-	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-			       &h, &kic, &t, &om, &cv, &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2 );
+//FTNC	    else
+//FTNC	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//FTNC			       &h, &kic, &t, &om, &cv, &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfz_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                    h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          } // else (not supergrid)
       } //  if( m_iStartInt[g] == 1 )
@@ -2309,49 +2309,49 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj )
          if( usingSupergrid() )
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfzsg_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
-	    else
-	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                              h, kic, t, om, cv, ph, omstrx, omstry,
-                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	    else
+//FTNC	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                              h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfzsg_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                      h, kic, t, om, cv, ph, omstrx, omstry,
                                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                     h, kic, t, om, cv, ph, omstrx, omstry,
-                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                     h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          }
          else
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfz_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                             h, kic, t, om, cv, ph, b_ptr, 
                             mu_ptr, la_ptr, m_zmin[g],
                             i1, i2, j1, j2 );
-	    else
-	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                            mu_ptr, la_ptr, &m_zmin[g],
-                            &i1, &i2, &j1, &j2 );
+//FTNC	    else
+//FTNC	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//FTNC                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+//FTNC                            mu_ptr, la_ptr, &m_zmin[g],
+//FTNC                            &i1, &i2, &j1, &j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfz_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                    h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          } // else (not supergrid)
       } // end if( m_iEndInt[g] == m_global_nx[g] )
@@ -2364,49 +2364,49 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj )
          if( usingSupergrid() )
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfzsg_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
-	    else
-	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                              h, kic, t, om, cv, ph, omstrx, omstry,
-                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	    else
+//FTNC	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                              h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfzsg_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                      h, kic, t, om, cv, ph, omstrx, omstry,
                                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                     h, kic, t, om, cv, ph, omstrx, omstry,
-                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                     h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          }
          else
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfz_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                             h, kic, t, om, cv, ph, b_ptr, 
                             mu_ptr, la_ptr, m_zmin[g],
                             i1, i2, j1, j2 );
-	    else
-	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                            mu_ptr, la_ptr, &m_zmin[g],
-                            &i1, &i2, &j1, &j2 );
+//FTNC	    else
+//FTNC	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//FTNC                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+//FTNC                            mu_ptr, la_ptr, &m_zmin[g],
+//FTNC                            &i1, &i2, &j1, &j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfz_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                    h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          } // else (not supergrid)
       } // end if( m_jStartInt[g] == 1 )
@@ -2419,49 +2419,49 @@ void EW::dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj )
          if( usingSupergrid() )
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfzsg_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                               h, kic, t, om, cv, ph, omstrx, omstry,
                               b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
-	    else
-	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                              h, kic, t, om, cv, ph, omstrx, omstry,
-                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	    else
+//FTNC	       twfrsurfzsg_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                              h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                              b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfzsg_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                      h, kic, t, om, cv, ph, omstrx, omstry,
                                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                     h, kic, t, om, cv, ph, omstrx, omstry,
-                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfzsg_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                     h, kic, t, om, cv, ph, omstrx, omstry,
+//FTNC                                     b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          }
          else
          {
 // assigns B
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twfrsurfz_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                             h, kic, t, om, cv, ph, b_ptr, 
                             mu_ptr, la_ptr, m_zmin[g],
                             i1, i2, j1, j2 );
-	    else
-	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
-                            mu_ptr, la_ptr, &m_zmin[g],
-                            &i1, &i2, &j1, &j2 );
+//FTNC	    else
+//FTNC	       twfrsurfz_wind( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//FTNC                            &h, &kic, &t, &om, &cv, &ph, b_ptr, 
+//FTNC                            mu_ptr, la_ptr, &m_zmin[g],
+//FTNC                            &i1, &i2, &j1, &j2 );
             if (m_use_attenuation) // only 1 mechanism with twilight forcing
             {
 // adds attenuation to B
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfz_att_wind_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
                                    h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
-	       else
-		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
+//FTNC	       else
+//FTNC		  twfrsurfz_att_wind( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+//FTNC                                   h, kic, t, om, cv, ph, b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2 );
             }
          }
       } // end if( m_jEndInt[g] == m_global_ny[g] )
@@ -2528,20 +2528,20 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    // to evaluate L(Up_tt) for k=kic, we need Up(k) in the vicinity of the interface
    // Note: Utt is needed at all points (interior + ghost) to evaluate L(Utt) in all interior points
 
-   if (m_croutines) // optimized C-version for reversed index ordering
+//FTNC   if (m_croutines) // optimized C-version for reversed index ordering
      dpdmt_wind( Utt.m_ib, Utt.m_ie, Utt.m_jb, Utt.m_je, Utt.m_kb, Utt.m_ke, a_U.m_kb, a_U.m_ke,
 		 a_Up.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), Utt.c_ptr(), idt2 );
-   else
-   {
-     for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
-       for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
-   	 for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
-   	 {
-   	    Utt(1,i,j,k) = idt2*(a_Up(1,i,j,k)-2*a_U(1,i,j,k)+a_Um(1,i,j,k));
-   	    Utt(2,i,j,k) = idt2*(a_Up(2,i,j,k)-2*a_U(2,i,j,k)+a_Um(2,i,j,k));
-   	    Utt(3,i,j,k) = idt2*(a_Up(3,i,j,k)-2*a_U(3,i,j,k)+a_Um(3,i,j,k));
-   	 }
-   }
+//FTNC   else
+//FTNC   {
+//FTNC     for( int k=Utt.m_kb ; k <= Utt.m_ke ; k++ )
+//FTNC       for( int j=Utt.m_jb ; j <= Utt.m_je ; j++ )
+//FTNC   	 for( int i=Utt.m_ib ; i <= Utt.m_ie ; i++ )
+//FTNC   	 {
+//FTNC   	    Utt(1,i,j,k) = idt2*(a_Up(1,i,j,k)-2*a_U(1,i,j,k)+a_Um(1,i,j,k));
+//FTNC   	    Utt(2,i,j,k) = idt2*(a_Up(2,i,j,k)-2*a_U(2,i,j,k)+a_Um(2,i,j,k));
+//FTNC   	    Utt(3,i,j,k) = idt2*(a_Up(3,i,j,k)-2*a_U(3,i,j,k)+a_Um(3,i,j,k));
+//FTNC   	 }
+//FTNC   }
    
 
 // all points (for mMu, mLambda
@@ -2607,12 +2607,12 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 //       float_sw4 amprho   = m_twilight_forcing->m_amprho;
 //       float_sw4 ampmu    = m_twilight_forcing->m_ampmu;
 //       float_sw4 amplambda= m_twilight_forcing->m_amplambda;
-//       if( m_croutines )
+//FTNC//       if( m_croutines )
 // 	 forcingttfort_ci( ib, ie, jb, je, kic, kic, force.c_ptr(), t, om, cv, ph, omm, phm,
 // 			   amprho, ampmu, amplambda, mGridSize[g], m_zmin[g] );
-//       else
-// 	 forcingttfort( &ib, &ie, &jb, &je, &kic, &kic, force.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-// 			&amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+//FTNC//       else
+//FTNC// 	 forcingttfort( &ib, &ie, &jb, &je, &kic, &kic, force.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+//FTNC// 			&amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
 //    }
 //    else if( m_rayleigh_wave_test || m_energy_test )
 //       force.set_to_zero();
@@ -2661,16 +2661,16 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
       // what time levels of U should be used here? NOTE: t_n and t_{n-1} ?  Up is the predictor for U(t_{n+1})
 // July 22: Changed time levels for (Up, U) to (U, Um)
 //      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 addsg4wind_ci( Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
 			m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
-      else
-	 addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
-		     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-		     m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-		     ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
+//FTNC      else
+//FTNC	 addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
+//FTNC		     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+//FTNC		     m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+//FTNC		     ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
       // Note: the last four arguments define the declared size of Unext, followed by the lower and upper boundaries of the k-window
    }
 } //end compute_preliminary_corrector
@@ -2736,34 +2736,34 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    //       float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
    //       float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
    //       float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega();
-   //       if( m_croutines )
+//FTNC   //       if( m_croutines )
    //          forcingfortsg_ci( ib, ie, jb, je, kic, kic, f.c_ptr(), t, om, cv, ph, omm, phm,
    //      		      amprho, ampmu, amplambda, mGridSize[g], m_zmin[g],
    //      		      omstrx, omstry, omstrz );
-   //       else
-   //          forcingfortsg(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-   //      		    &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
-   //      		    &omstrx, &omstry, &omstrz );
+//FTNC   //       else
+//FTNC   //          forcingfortsg(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+//FTNC   //      		    &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
+//FTNC   //      		    &omstrx, &omstry, &omstrz );
    //       if( m_use_attenuation ) // NOTE: forcingfortsgatt only adds in the visco-elastic terms to 'f'
    //       {
-   //          if( m_croutines )
+//FTNC   //          if( m_croutines )
    //             forcingfortsgatt_ci( ib, ie, jb, je, kic, kic, f.c_ptr(), t, om, cv, ph, omm, phm,
    //      			    amprho, ampmu, amplambda, mGridSize[g], m_zmin[g],
    //      			    omstrx, omstry, omstrz );
-   //          else
-   //             forcingfortsgatt(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-   //      			  &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
-   //      			  &omstrx, &omstry, &omstrz );
+//FTNC   //          else
+//FTNC   //             forcingfortsgatt(  &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+//FTNC   //      			  &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g],
+//FTNC   //      			  &omstrx, &omstry, &omstrz );
    //       }
    //    }
    //    else
    //    {
-   //       if( m_croutines )
+//FTNC   //       if( m_croutines )
    //          forcingfort_ci( ib, ie, jb, je, kic, kic, f.c_ptr(), t, om, cv, ph, omm, phm,
    //      		    amprho, ampmu, amplambda, mGridSize[g], m_zmin[g] );
-   //       else
-   //          forcingfort( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
-   //      		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
+//FTNC   //       else
+//FTNC   //          forcingfort( &ib, &ie, &jb, &je, &kic, &kic, f.c_ptr(), &t, &om, &cv, &ph, &omm, &phm,
+//FTNC   //      		 &amprho, &ampmu, &amplambda, &mGridSize[g], &m_zmin[g] );
    //    }
    // } // end twilight
    // else if( m_rayleigh_wave_test || m_energy_test )
@@ -2802,16 +2802,16 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    if (mOrder==2 && usingSupergrid()) // only needed for 2nd order time-stepping. Assume 4th order AD, Cartesian grid
    {
 // assign array pointers on the fly
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 addsg4wind_ci( Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
 			m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
-      else
-	 addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
-		     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-		     m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-		     ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
+//FTNC      else
+//FTNC	 addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+//FTNC		     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+//FTNC		     m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+//FTNC		     ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
       // Note: the last four arguments define the declared size of Unext, followed by the lower and upper boundaries of the k-window
    }
 }
@@ -2985,21 +2985,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       {
          if( !curvilinear )
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdry_ci( &wind_ptr[0], h, t, om, cv, ph, bforce_side0_ptr, m_zmin[g] );
-	    else
-	       twdirbdry( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr, &m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr, &m_zmin[g] );
 	 }
 	 else
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			      &wind_ptr[0], t, om, cv, ph, bforce_side0_ptr,
 			      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                                             &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
-					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC                                             &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
+//FTNC					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
 
@@ -3007,21 +3007,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       {
          if( !curvilinear )
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdry_ci( &wind_ptr[6], h, t, om, cv, ph, bforce_side1_ptr, m_zmin[g] );
-	    else
-	       twdirbdry( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr, &m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr, &m_zmin[g] );
 	 }
 	 else
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
 		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			  &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
-			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			  &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
+//FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
 
@@ -3029,21 +3029,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       {
 	 if( !curvilinear )
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdry_ci( &wind_ptr[6*2], h, t, om, cv, ph, bforce_side2_ptr, m_zmin[g] );
-	    else
-	       twdirbdry( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr, &m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr, &m_zmin[g] );
 	 }
          else
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*2], t, om, cv, ph, bforce_side2_ptr,
 		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			   &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
-			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
+//FTNC			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
 
@@ -3051,21 +3051,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       {
          if( !curvilinear )
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdry_ci( &wind_ptr[6*3], h, t, om, cv, ph, bforce_side3_ptr, m_zmin[g] );
-	    else
-	       twdirbdry( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr, &m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr, &m_zmin[g] );
 	 }
          else
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*3], t, om, cv, ph, bforce_side3_ptr,
 		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			  &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
-			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			  &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
+//FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
 
@@ -3073,21 +3073,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       {
 	 if( !curvilinear )
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdry_ci( &wind_ptr[6*4], h, t, om, cv, ph, bforce_side4_ptr, m_zmin[g] );
-	    else
-	       twdirbdry( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr, &m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr, &m_zmin[g] );
 	 }
          else
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*4], t, om, cv, ph, bforce_side4_ptr,
 		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			   &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
-			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
+//FTNC			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
       else if (m_bcType[g][4] == bStressFree)
@@ -3098,12 +3098,12 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // curvilinear anisotropic case is not yet implemented
             CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
 
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       tw_aniso_free_surf_z_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
 					cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
-	    else
-	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
-				     cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
+//FTNC	    else
+//FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+//FTNC				     cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
          }
          else
          { //isotropic stuff
@@ -3112,26 +3112,26 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
             {
                float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
                float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfzsgstr_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				  klast, h, k, t, om, cv, ph, omstrx, omstry,
 				  bforce_side4_ptr, mu_ptr, la_ptr, m_zmin[g] );
-	       else
-		  twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-				  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-				  bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+//FTNC	       else
+//FTNC		  twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC				  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+//FTNC				  bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-		  if( m_croutines )
+//FTNC		  if( m_croutines )
 		     twfrsurfzsgstratt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 					   klast, h, k, t, om, cv, ph, omstrx, omstry,
 					   bforce_side4_ptr, mua_ptr, laa_ptr, m_zmin[g] );
-		  else
-		     twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					&klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-					bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+//FTNC		  else
+//FTNC		     twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC					&klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+//FTNC					bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
                }
             }
             else if( !usingSupergrid() && curvilinear )
@@ -3139,68 +3139,68 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
                // Stress tensor on boundary
                Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
                // Get twilight stress tensor, tau.
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				k, t, om, cv, ph,
 				mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
-	       else
-		  twstensor( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			     &k, &t, &om, &cv, &ph,
-			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+//FTNC	       else
+//FTNC		  twstensor( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			     &k, &t, &om, &cv, &ph,
+//FTNC			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
                // Compute boundary forcing for given stress tensor, tau.
 
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
 				     klast, k, mMetric.c_ptr(), mJ.c_ptr(),
 				     tau.c_ptr(), bforce_side4_ptr );
-	       else
-		  getsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				  &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-				  tau.c_ptr(), bforce_side4_ptr );
+//FTNC	       else
+//FTNC		  getsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				  &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				  tau.c_ptr(), bforce_side4_ptr );
 
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-		  if( m_croutines )
+//FTNC		  if( m_croutines )
 		     twstensoratt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				      k, t, om, cv, ph,
 				      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
-		  else
-		     twstensoratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-				   &k, &t, &om, &cv, &ph,
-				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
-		  if( m_croutines )
+//FTNC		  else
+//FTNC		     twstensoratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC				   &k, &t, &om, &cv, &ph,
+//FTNC				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+//FTNC		  if( m_croutines )
 		     subsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k,
 					mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(), bforce_side4_ptr );
-		  else
-		     subsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-				     tau.c_ptr(), bforce_side4_ptr );
+//FTNC		  else
+//FTNC		     subsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				     tau.c_ptr(), bforce_side4_ptr );
                }
             }
             else if( !usingSupergrid() && !curvilinear )
             {
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				klast, h, k, t, om, cv, ph,
 				bforce_side4_ptr, mu_ptr, la_ptr, m_zmin[g] );
-	       else
-		  twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-			     &klast, &h, &k, &t, &om, &cv, &ph,
-			     bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+//FTNC	       else
+//FTNC		  twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC			     &klast, &h, &k, &t, &om, &cv, &ph,
+//FTNC			     bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-		  if( m_croutines )
+//FTNC		  if( m_croutines )
 		     twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				      klast, h, k, t, om, cv, ph,
 				      bforce_side4_ptr, mua_ptr, laa_ptr, m_zmin[g] );
-		  else
-		     twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-				   &klast, &h, &k, &t, &om, &cv, &ph,
-				   bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+//FTNC		  else
+//FTNC		     twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC				   &klast, &h, &k, &t, &om, &cv, &ph,
+//FTNC				   bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
 	       
                }
             }
@@ -3212,31 +3212,31 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
                // Stress tensor on boundary
                Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
                // Get twilight stress tensor, tau.
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  twstensorsg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 				  k, t, om, cv, ph,
 				  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
 				  mu_ptr, la_ptr, omstrx, omstry );
-	       else
-		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			       &k, &t, &om, &cv, &ph,
-			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
-			       mu_ptr, la_ptr, &omstrx, &omstry );
+//FTNC	       else
+//FTNC		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			       &k, &t, &om, &cv, &ph,
+//FTNC			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+//FTNC			       mu_ptr, la_ptr, &omstrx, &omstry );
                // Compute boundary forcing for given stress tensor, tau.
-	       if( m_croutines )
+//FTNC	       if( m_croutines )
 		  getsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
 				       klast, k, mMetric.c_ptr(), mJ.c_ptr(),
 				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
-	       else
-		  getsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				    &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-				    tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+//FTNC	       else
+//FTNC		  getsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				    &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				    tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
 
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-		  if( m_croutines )
+//FTNC		  if( m_croutines )
 		  {
 		     twstensorsgatt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 					k, t, om, cv, ph,
@@ -3247,17 +3247,17 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 					  tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
 					  bforce_side4_ptr );
 		  }
-		  else
-		  {
-		     twstensorsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-				     &k, &t, &om, &cv, &ph,
-				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
-				     mua_ptr, laa_ptr, &omstrx, &omstry );
-		     subsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-				       &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
-				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
-				       bforce_side4_ptr );
-		  }
+//FTNC		  else
+//FTNC		  {
+//FTNC		     twstensorsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC				     &k, &t, &om, &cv, &ph,
+//FTNC				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+//FTNC				     mua_ptr, laa_ptr, &omstrx, &omstry );
+//FTNC		     subsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				       &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
+//FTNC				       bforce_side4_ptr );
+//FTNC		  }
                }
             } // end supergrid && curvilinear
          
@@ -3269,21 +3269,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
       {
 	 if( !curvilinear )
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdry_ci( &wind_ptr[6*5], h, t, om, cv, ph, bforce_side5_ptr, m_zmin[g] );
-	    else
-	       twdirbdry( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr, &m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr, &m_zmin[g] );
 	 }
 	 else
 	 {
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       &wind_ptr[6*5], t, om, cv, ph, bforce_side5_ptr,
 		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	    else
-	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			   &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
-			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
+//FTNC			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	 }
       }
       else if (m_bcType[g][5] == bStressFree)
@@ -3294,12 +3294,12 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 // curvilinear anisotropic case is not yet implemented
             CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
 
-	    if( m_croutines )
+//FTNC	    if( m_croutines )
 	       tw_aniso_free_surf_z_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
 					cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );
-	    else
-	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
-				     cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
+//FTNC	    else
+//FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+//FTNC				     cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
          }
          else
          { //isotropic stuff
@@ -3308,31 +3308,31 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
             {
                float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
                float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
-               twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-			       &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-			       bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               twfrsurfzsgstr_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+			       klast, h, k, t, om, cv, ph, omstrx, omstry,
+			       bforce_side5_ptr, mu_ptr, la_ptr, m_zmin[g] );
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-				     &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
-				     bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+                  twfrsurfzsgstratt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				     klast, h, k, t, om, cv, ph, omstrx, omstry,
+				     bforce_side5_ptr, mua_ptr, laa_ptr, m_zmin[g] );
 	       
                }
             }
             else
             {
-               twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-			  &klast, &h, &k, &t, &om, &cv, &ph,
-			  bforce_side5_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+			  klast, h, k, t, om, cv, ph,
+			  bforce_side5_ptr, mu_ptr, la_ptr, m_zmin[g] );
                if( m_use_attenuation )
                {
                   float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
                   float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-				&klast, &h, &k, &t, &om, &cv, &ph,
-				bforce_side5_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+                  twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				klast, h, k, t, om, cv, ph,
+				bforce_side5_ptr, mua_ptr, laa_ptr, m_zmin[g] );
                }
             } // end ! supergrid
             
@@ -3753,12 +3753,12 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     wind[4] = m_kStartInt[g];
     wind[5] = m_kEndInt[g];
     int nz = m_global_nz[g];
-    if( m_croutines )
+//FTNC    if( m_croutines )
        testsrc_ci( f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast,
 		   nz, wind, m_zmin[g], h, kx, ky, kz, momgrid );
-    else
-       testsrc( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-		&nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
+//FTNC    else
+//FTNC       testsrc( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC		&nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
   }
   MPI_Allreduce( momgrid, moments, 3, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 }
@@ -4012,53 +4012,53 @@ void EW::addSuperGridDamping(vector<Sarray> & a_Up, vector<Sarray> & a_U,
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
        {
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     addsgd4c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr,
 			  rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
 			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
-          else
-	     addsgd4c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-		        m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
-		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+//FTNC          else
+//FTNC	     addsgd4c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
+//FTNC		        m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+//FTNC		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        }
        else
        {
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     addsgd4_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr, rho_ptr,
 			 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], 
 			 m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			 m_supergrid_damping_coefficient );
-	  else
-	     addsgd4( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-		      m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-		      m_sg_corner_y[g], m_sg_corner_z[g],
-		      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+//FTNC	  else
+//FTNC	     addsgd4( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
+//FTNC		      m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+//FTNC		      m_sg_corner_y[g], m_sg_corner_z[g],
+//FTNC		      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        }
     }
     else if(  m_sg_damping_order == 6 )
     {
        if( topographyExists() && g == mNumberOfGrids-1 )
        {
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     addsgd6c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr,
 			  rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g],
 			  mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g], m_supergrid_damping_coefficient );
-	  else
-	     addsgd6c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g],
-		       m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
-		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+//FTNC	  else
+//FTNC	     addsgd6c( &mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g],
+//FTNC		       m_sg_str_y[g], mJ.c_ptr(), m_sg_corner_x[g], m_sg_corner_y[g],
+//FTNC		       &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        }
        else
        {
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     addsgd6_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr, um_ptr, rho_ptr,
 			 m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], 
 			 m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			 m_supergrid_damping_coefficient );
-	  else
-	     addsgd6( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-		      m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-		      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
+//FTNC	  else
+//FTNC	     addsgd6( &mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+//FTNC		      m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+//FTNC		      &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient );
        }
     }
   }
@@ -4089,18 +4089,18 @@ void EW::simpleAttenuation( vector<Sarray> & a_Up )
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
 
-    if( m_croutines )
+//FTNC    if( m_croutines )
        satt_ci( up_ptr, qs_ptr, dt, cfreq,
 		ifirst, ilast, jfirst, jlast, kfirst, klast );
-    else
-       satt( up_ptr, qs_ptr, &dt, &cfreq,
-	     &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast );
+//FTNC    else
+//FTNC       satt( up_ptr, qs_ptr, &dt, &cfreq,
+//FTNC	     &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast );
   }
 }
 
 //-----------------------------------------------------------------------
 void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-                            vector<Sarray*>& a_AlphaVEp, vector<float_sw4 **>& a_BCForcing ) 
+                            vector<Sarray*>& a_AlphaVEp, vector<float_sw4**>& a_BCForcing ) 
 {
 // AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time stepping for memory variables
    int sg = usingSupergrid();
@@ -4116,12 +4116,12 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
       int topo = topographyExists() && g == mNumberOfGrids-1;
       if( m_bcType[g][4] == bStressFree && !topo ) // Cartesian case
       {
-	 //	    if( m_croutines )
+//FTNC	 //	    if( m_croutines )
 	 //	       memvarforcesurf_ci( ifirst, ilast, jfirst, jlast, k, mf, a_t, om,
 	 //				   cv, ph, mOmegaVE[0], mDt, h, m_zmin[g] );
-	 //	    else
-	 //	       memvarforcesurf( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
-	 //				&cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
+//FTNC	 //	    else
+//FTNC	 //	       memvarforcesurf( &ifirst, &ilast, &jfirst, &jlast, &k, mf, &a_t, &om,
+//FTNC	 //				&cv, &ph, &mOmegaVE[0], &mDt, &h, &m_zmin[g] );
 	 //	 }
 	 //	 else
 	 //	    memforce.set_value(0.0);
@@ -4327,14 +4327,14 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
          Sarray bforcerhs(3,ifirst,ilast,jfirst,jlast,1,1);
          bforcerhs.assign(forcing,0);
 
-	 //	 if( m_croutines )
+//FTNC	 //	 if( m_croutines )
 	 //	    addbstressc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 	 //			    nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
 	 //			    side, m_sbop, op, ghno, usesg, m_sg_str_x[g], m_sg_str_y[g] );
-	 //	 else
-	 //	    addbstressc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-	 //			 &nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
-	 //			 &side, m_sbop, &op, &ghno, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+//FTNC	 //	 else
+//FTNC	 //	    addbstressc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC	 //			 &nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), 
+//FTNC	 //			 &side, m_sbop, &op, &ghno, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
 
          for( int a = 0 ; a < m_number_mechanisms ; a++ )
          {
@@ -4342,25 +4342,25 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
             float_sw4* lave_p   = mLambdaVE[g][a].c_ptr();
             float_sw4* alphap_p = a_AlphaVEp[g][a].c_ptr();
             // This function adds the visco-elastic boundary stresses to bforcerhs
-	    if(  m_croutines )
+//FTNC	    if(  m_croutines )
 	       ve_bndry_stress_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                                   alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), side,
                                   m_sbop_no_gp, usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
-	    else
-	       ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-				     alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
-				     m_sbop_no_gp, &usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
+//FTNC	    else
+//FTNC	       ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+//FTNC				     alphap_p, mu_ve_p, lave_p, bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
+//FTNC				     m_sbop_no_gp, &usesg, m_sg_str_x[g], m_sg_str_y[g] ); // no ghost points here
          } // end for a...
          
 // update GHOST POINT VALUES OF UP
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    att_free_curvi_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
                          up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
                          usesg, m_sg_str_x[g], m_sg_str_y[g] );
-	 else
-	    att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
-			    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+//FTNC	 else
+//FTNC	    att_free_curvi (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			    up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(), m_sbop, // use ghost points
+//FTNC			    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
       } // end if bcType[g][4] == bStressFree && topography
       
    }  // end for g=0,.

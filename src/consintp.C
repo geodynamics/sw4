@@ -191,7 +191,7 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 //
 // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal stresses along the interface
 
-      if (m_croutines)// tmp
+//FTNC      if (m_croutines)// tmp
 // optimized version for updating odd i and odd j
 	oddIoddJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), UcNew.c_ptr(), 
 				m_Mufs[gf].c_ptr(), m_Mlfs[gf].c_ptr(), m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
@@ -201,20 +201,20 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 				m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 				gf, gc, nkf, mDt, hf, hc, cof, relax,
 				m_sbop, m_ghcof);
-      else
-	oddIoddJinterpJacobi(rmax, Uf, UfNew, Uc, UcNew, 
-			     m_Mufs[gf], m_Mlfs[gf], m_Morc[gc], m_Mlrc[gc],
-			     m_Mucs[gc], m_Mlcs[gc], m_Morf[gf], m_Mlrf[gf],
-			     Unextf, BfRestrict, Unextc, Bc,
-			     m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
-			     m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-			     gf, gc, nkf, mDt, hf, hc, cof, relax,
-			     m_sbop, m_ghcof);
+//FTNC      else
+//FTNC	oddIoddJinterpJacobi(rmax, Uf, UfNew, Uc, UcNew, 
+//FTNC			     m_Mufs[gf], m_Mlfs[gf], m_Morc[gc], m_Mlrc[gc],
+//FTNC			     m_Mucs[gc], m_Mlcs[gc], m_Morf[gf], m_Mlrf[gf],
+//FTNC			     Unextf, BfRestrict, Unextc, Bc,
+//FTNC			     m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+//FTNC			     m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+//FTNC			     gf, gc, nkf, mDt, hf, hc, cof, relax,
+//FTNC			     m_sbop, m_ghcof);
       
 //      
 // Enforce continuity of displacements along the interface (for fine ghost points in between coarse points)
 //
-      if (m_croutines) // tmp
+//FTNC      if (m_croutines) // tmp
 // optimized version for updating odd i and even j
 	oddIevenJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), 
 				 m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
@@ -224,18 +224,18 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 				 m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 				 gf, gc, nkf, mDt, hf, hc, cof, relax,
 				 m_sbop, m_ghcof);
-      else
-	oddIevenJinterpJacobi(rmax, Uf, UfNew, Uc, 
-			      m_Morc[gc], m_Mlrc[gc],
-			      m_Morf[gf], m_Mlrf[gf],
-			      Unextf, UnextcInterp,
-			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
-			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-			      gf, gc, nkf, mDt, hf, hc, cof, relax,
-			      m_sbop, m_ghcof);
+//FTNC      else
+//FTNC	oddIevenJinterpJacobi(rmax, Uf, UfNew, Uc, 
+//FTNC			      m_Morc[gc], m_Mlrc[gc],
+//FTNC			      m_Morf[gf], m_Mlrf[gf],
+//FTNC			      Unextf, UnextcInterp,
+//FTNC			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+//FTNC			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+//FTNC			      gf, gc, nkf, mDt, hf, hc, cof, relax,
+//FTNC			      m_sbop, m_ghcof);
 
 
-      if (m_croutines) 
+//FTNC      if (m_croutines) 
 // optimized version for updating even i and odd j
 	evenIoddJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), 
 			      m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
@@ -245,17 +245,17 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			      gf, gc, nkf, mDt, hf, hc, cof, relax,
 			      m_sbop, m_ghcof);
-      else
-	evenIoddJinterpJacobi(rmax, Uf, UfNew, Uc, 
-			      m_Morc[gc], m_Mlrc[gc],
-			      m_Morf[gf], m_Mlrf[gf],
-			      Unextf, UnextcInterp,
-			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
-			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-			      gf, gc, nkf, mDt, hf, hc, cof, relax,
-			      m_sbop, m_ghcof);
+//FTNC      else
+//FTNC	evenIoddJinterpJacobi(rmax, Uf, UfNew, Uc, 
+//FTNC			      m_Morc[gc], m_Mlrc[gc],
+//FTNC			      m_Morf[gf], m_Mlrf[gf],
+//FTNC			      Unextf, UnextcInterp,
+//FTNC			      m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+//FTNC			      m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+//FTNC			      gf, gc, nkf, mDt, hf, hc, cof, relax,
+//FTNC			      m_sbop, m_ghcof);
 
-      if (m_croutines)
+//FTNC      if (m_croutines)
 // optimized version for updating even i and even j
 	evenIevenJinterpJacobiOpt(rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), 
 			       m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(),
@@ -265,15 +265,15 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
 			       m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
 			       gf, gc, nkf, mDt, hf, hc, cof, relax,
 			       m_sbop, m_ghcof);
-      else
-	evenIevenJinterpJacobi(rmax, Uf, UfNew, Uc, 
-			       m_Morc[gc], m_Mlrc[gc],
-			       m_Morf[gf], m_Mlrf[gf],
-			       Unextf, UnextcInterp,
-			       m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
-			       m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
-			       gf, gc, nkf, mDt, hf, hc, cof, relax,
-			       m_sbop, m_ghcof);
+//FTNC      else
+//FTNC	evenIevenJinterpJacobi(rmax, Uf, UfNew, Uc, 
+//FTNC			       m_Morc[gc], m_Mlrc[gc],
+//FTNC			       m_Morf[gf], m_Mlrf[gf],
+//FTNC			       Unextf, UnextcInterp,
+//FTNC			       m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(), 
+//FTNC			       m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(),
+//FTNC			       gf, gc, nkf, mDt, hf, hc, cof, relax,
+//FTNC			       m_sbop, m_ghcof);
 
       communicate_array_2d( Uf, gf, nkf+1 );
       communicate_array_2d( Uc, gc, 0 );
@@ -438,46 +438,46 @@ void EW::checkintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray&
 
    if( usingSupergrid() )
    {
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 twfrsurfzsg_wind_ci( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
 			      hc, kic, time, om, cv, ph, omstrx, omstry,
 			      b_ptr, mu_ptr, la_ptr, m_zmin[gc], i1, i2, j1, j2 );
-      else
-	 twfrsurfzsg_wind( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
-			   hc, kic, time, om, cv, ph, omstrx, omstry,
-			   b_ptr, mu_ptr, la_ptr, m_zmin[gc], i1, i2, j1, j2 );
+//FTNC      else
+//FTNC	 twfrsurfzsg_wind( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
+//FTNC			   hc, kic, time, om, cv, ph, omstrx, omstry,
+//FTNC			   b_ptr, mu_ptr, la_ptr, m_zmin[gc], i1, i2, j1, j2 );
       if (m_use_attenuation) // only 1 mechanism with twilight forcing
       {
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    twfrsurfzsg_att_wind_ci( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
 				     hc, kic, time, om, cv, ph, omstrx, omstry,
 				     b_ptr, mua_ptr, laa_ptr, m_zmin[gc], i1, i2, j1, j2 );
-	 else
-	    twfrsurfzsg_att_wind( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
-				  hc, kic, time, om, cv, ph, omstrx, omstry,
-				  b_ptr, mua_ptr, laa_ptr, m_zmin[gc], i1, i2, j1, j2 );
+//FTNC	 else
+//FTNC	    twfrsurfzsg_att_wind( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
+//FTNC				  hc, kic, time, om, cv, ph, omstrx, omstry,
+//FTNC				  b_ptr, mua_ptr, laa_ptr, m_zmin[gc], i1, i2, j1, j2 );
       }
    }
    else
    {
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 twfrsurfz_wind_ci( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
 			    hc, kic, time, om, cv, ph,
 			    b_ptr, mu_ptr, la_ptr, m_zmin[gc], i1, i2, j1, j2 );
-      else
-	 twfrsurfz_wind( &m_iStart[gc], &m_iEnd[gc], &m_jStart[gc], &m_jEnd[gc], &m_kStart[gc], &m_kEnd[gc],
-			 &hc, &kic, &time, &om, &cv, &ph,
-			 b_ptr, mu_ptr, la_ptr, &m_zmin[gc], &i1, &i2, &j1, &j2 );
+//FTNC      else
+//FTNC	 twfrsurfz_wind( &m_iStart[gc], &m_iEnd[gc], &m_jStart[gc], &m_jEnd[gc], &m_kStart[gc], &m_kEnd[gc],
+//FTNC			 &hc, &kic, &time, &om, &cv, &ph,
+//FTNC			 b_ptr, mu_ptr, la_ptr, &m_zmin[gc], &i1, &i2, &j1, &j2 );
       if (m_use_attenuation) // only 1 mechanism with twilight forcing
       {
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    twfrsurfz_att_wind_ci( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
 				   hc, kic, time, om, cv, ph, 
 				   b_ptr, mua_ptr, laa_ptr, m_zmin[gc], i1, i2, j1, j2 );
-	 else
-	    twfrsurfz_att_wind( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
-				hc, kic, time, om, cv, ph, 
-				b_ptr, mua_ptr, laa_ptr, m_zmin[gc], i1, i2, j1, j2 );
+//FTNC	 else
+//FTNC	    twfrsurfz_att_wind( m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], m_kStart[gc], m_kEnd[gc],
+//FTNC				hc, kic, time, om, cv, ph, 
+//FTNC				b_ptr, mua_ptr, laa_ptr, m_zmin[gc], i1, i2, j1, j2 );
       }
    }
       

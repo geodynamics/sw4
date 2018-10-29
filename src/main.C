@@ -189,10 +189,10 @@ main(int argc, char **argv)
 	    else
 	       cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
 	 }
-	 if( simulation.m_croutines )
-	    cout << "   Using C routines." << endl;
-	 else
-	    cout << "   Using fortran routines." << endl;
+	 //FTNC	 if( simulation.m_croutines )
+	 //FTNC	    cout << "   Using C routines." << endl;
+	 //FTNC	 else
+	 //FTNC	    cout << "   Using fortran routines." << endl;
 	 cout << "Writing output to directory: " 
 		 << simulation.getPath() << endl;
       

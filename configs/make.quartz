@@ -11,3 +11,4 @@
 #  EXTRA_FORT_FLAGS = -O
     debugdir := debug_quartz
     optdir := optimize_quartz
+FFTWHOME = /usr/workspace/wsa/wave/quartz
