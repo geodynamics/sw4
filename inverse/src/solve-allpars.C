@@ -87,6 +87,7 @@ void EW::solve_allpars( vector<Source*> & a_Sources, vector<Sarray> &a_Rho,
 // Local disks on LC seem to be setup with directory /tmp/username when user username starts a job
      string upred_name = mTempPath + "upred" + procno.str() + ".bin";
      string ucorr_name = mTempPath + "ucorr" + procno.str() + ".bin";
+     mkdirs(mTempPath);
       //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
       //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
      int imin, imax, jmin, jmax, kmax;

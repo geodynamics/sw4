@@ -208,8 +208,7 @@ FOBJCONV = $(addprefix $(builddir)/,$(OBJCONV))
 
 FOBJCONV2 = $(addprefix $(builddir)/,$(OBJCONV2))
 
-
-sw4: $(FSW4) $(FOBJ)
+sw4mopt: $(FOBJ) $(FMOBJOPT)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -217,8 +216,10 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
-	@cat wave.txt
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
+	@echo " "
+	@echo "******* sw4mopt was built successfully *******" 
+	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 
 sw4opt: $(FOBJ) $(FOBJOPT)
@@ -235,7 +236,7 @@ sw4opt: $(FOBJ) $(FOBJOPT)
 	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 
-sw4mopt: $(FOBJ) $(FMOBJOPT)
+sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -243,10 +244,8 @@ sw4mopt: $(FOBJ) $(FMOBJOPT)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
-	@echo " "
-	@echo "******* sw4mopt was built successfully *******" 
-	@echo " "
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
+	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
 lamb1: $(FOBJL)

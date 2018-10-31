@@ -388,7 +388,19 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("anisotropy", buffer) || 
 	   startswith("fileio", buffer) ||
 	   startswith("time", buffer) ||
+#ifdef ENABLE_OPT
+	   // bypass material optimizer commands
+	   startswith("mparcart", buffer) ||
+	   startswith("mrun", buffer) ||
+	   startswith("mscalefactors", buffer) ||
+	   startswith("lbfgs", buffer) ||
+	   startswith("nlcg", buffer) ||
+	   startswith("mfsurf", buffer) ||
+	   startswith("mimage", buffer) ||	   	   
+	   startswith("mtypx", buffer) ||
+#endif
 	   startswith("\n", buffer) || startswith("\r", buffer) )
+
 // || startswith("\r", buffer) || startswith("\0", buffer))
        {
 // Ignore commented lines, newlines,
