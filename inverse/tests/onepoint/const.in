@@ -2,7 +2,7 @@
 #  w = 2500
 grid h=200 x=35000 y=35000 z=19500
 time t=9
-fileio verbose=1 path=obs2
+fileio verbose=1 path=const_obs
 
 # supergrid parameters
 # h=200
