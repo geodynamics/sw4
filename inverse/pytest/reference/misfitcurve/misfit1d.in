@@ -11,7 +11,7 @@ time t=9 utcstart=09/17/2013:17:49:47.000
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=run1 obspath=obs2 temppath=tmp 
+fileio verbose=1 path=run1 obspath=../reference/obs2 temppath=tmp pfs=0
 #
 #------------------------------
 # Supergrid parameters
@@ -33,16 +33,19 @@ block vp=4630.76 vs=2437.56 r=2650
 #------------------------------
 # Material parameterization
 # 
-mparcart nx=1 ny=1 nz=1 init=onep-pr0p1.bin
+mparcart nx=3 ny=3 nz=2 init=0
 #
 #------------------------------
 # Optimizer and properties
 #
-mrun task=minvert mcheck=on tsoutput=on
-#lbfgs nvectors=3 maxit=1 tolerance=1e-12 linesearch=on
-lbfgs nvectors=3 maxit=10 tolerance=1e-12 linesearch=on
-#mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1
-mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
+mrun task=func1d mcheck=on tsoutput=off
+#
+# Vary lambda at point (2,2,2) in the mparcart discretization from pmin to pmax
+# and output the misfit as function of p. The parameter is offset from reference
+# material, so that lambda0+pmin <= lambda <= lambda0+pmax.
+mfsurf var=lambda i=2 j=2 k=2 pmin=-1.5e10 pmax=1.5e10 npts=20
+#
+mscalefactors rho=2650 mu=1.54e10 lambda=7e11 misfit=1
 #
 #------------------------------
 # Source (w=2500)
@@ -97,4 +100,4 @@ mimage mode=lambda z=1000 cycleInterval=1
 #
 mimage mode=rho z=5000 cycleInterval=1 
 mimage mode=mu z=5000 cycleInterval=1 
-mimage mode=lambda z=5000 cycleInterval=1 
+mimage mode=lambda z=5000 cycleInterval=1

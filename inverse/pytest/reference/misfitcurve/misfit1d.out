@@ -1,0 +1,186 @@
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Oct 24 16:45:35 PDT 2018
+  By user:     bjorn
+  Machine:     quartz1148
+  Compiler:    /usr/tce/packages/impi/impi-2018.0-intel-18.0.1/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: ../reference/misfitcurve/misfit1d.in
+
+* Processing the grid command...
+* Setting nx to 176 to be consistent with h=200
+* Setting ny to 176 to be consistent with h=200
+* Setting nz to 99 to be consistent with h=200
+* Changing z from 19500 to 19600 to be consistent with h=200
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
+Extent of the computational domain xmax=35000 ymax=35000 zmax=19600
+Corrected global_zmax = 19600
+Refinement levels after correction: 
+grid=0 min Z=0
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       176       176        99      3066624
+Total number of grid points (without ghost points): 3.06662e+06
+
+Default Supergrid thickness has been tuned; thickness = 13 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.015
+
+   Execution time, reading input file 0.0958071 seconds 
+ *** Testing = 0
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: run1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.731441e+01, x=3.500000e+04, y=0.000000e+00
+2: Lon= 1.183953e+02, Lat=3.731441e+01, x=3.500000e+04, y=3.500000e+04
+3: Lon= 1.183937e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.500000e+04
+
+Considering all material blocks
+block command: outside = 0, material = 4113408
+
+       ----------- Material properties ranges ---------------
+       2650 kg/m^3 <=  Density <= 2650 kg/m^3
+       4630.76 m/s    <=  Vp      <= 4630.76 m/s
+       2437.56 m/s    <=  Vs      <= 2437.56 m/s
+       1.89975        <=  Vp/Vs   <= 1.89975
+       1.57455e+10 Pa     <=  mu      <= 1.57455e+10 Pa
+       2.53354e+10 Pa     <=  lambda  <= 2.53354e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+02, minVs/h=12.1878 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.1 prel. time step=0.0381085
+*** Initialized Images
+ Min source z-level: 2.000000e+03, max source z-level: 2.000000e+03
+   Execution time, start up phase 0.0163779 seconds 
+Running sw4mopt on 32 processors...
+Writing output to directory: run1/
+ xmin, xmax = 2800 32200 hx = 7350
+ ymin, ymax = 2800 32200 hy = 7350
+ zmin, zmax = -8400 16800 hz = 8400
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.07408e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2727 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.22771e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2599 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.38134e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2533 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.53496e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.3238 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.68859e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2509 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.84222e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2496 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.99585e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2822 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.14947e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2468 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.3031e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2569 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.45673e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 10.2524 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.61036e+10 (grid 0)
+ cfl_max = 1.10556 on grid 0
+   Execution time, solver phase 10.2471 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.76398e+10 (grid 0)
+ cfl_max = 1.11505 on grid 0
+   Execution time, solver phase 10.2529 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.91761e+10 (grid 0)
+ cfl_max = 1.12446 on grid 0
+   Execution time, solver phase 10.2492 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.07124e+10 (grid 0)
+ cfl_max = 1.13379 on grid 0
+   Execution time, solver phase 10.2578 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.22487e+10 (grid 0)
+ cfl_max = 1.14305 on grid 0
+   Execution time, solver phase 10.2478 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.37849e+10 (grid 0)
+ cfl_max = 1.15224 on grid 0
+   Execution time, solver phase 10.261 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.53212e+10 (grid 0)
+ cfl_max = 1.16135 on grid 0
+   Execution time, solver phase 10.2449 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.68575e+10 (grid 0)
+ cfl_max = 1.17039 on grid 0
+   Execution time, solver phase 10.2838 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.83938e+10 (grid 0)
+ cfl_max = 1.17936 on grid 0
+   Execution time, solver phase 10.2537 seconds 
+2650 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.993e+10 (grid 0)
+ cfl_max = 1.18826 on grid 0
+   Execution time, solver phase 10.2516 seconds 
+============================================================
+ sw4opt ( Material/Source estimation solver) finished! 
+============================================================

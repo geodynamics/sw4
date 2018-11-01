@@ -1,0 +1,581 @@
+----------------------------------------------------------------
+            sw4 version 1.1
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Oct 24 16:45:35 PDT 2018
+  By user:     bjorn
+  Machine:     quartz1148
+  Compiler:    /usr/tce/packages/impi/impi-2018.0-intel-18.0.1/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: ../reference/onepoint/inv1.in
+
+* Processing the grid command...
+* Setting nx to 89 to be consistent with h=400
+* Setting ny to 89 to be consistent with h=400
+* Setting nz to 50 to be consistent with h=400
+* Changing x from 35000 to 35200 to be consistent with h=400
+* Changing z from 19500 to 19600 to be consistent with h=400
+* Changing y from 35000 to 35200 to be consistent with h=400
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2
+Extent of the computational domain xmax=35200 ymax=35200 zmax=19600
+Corrected global_zmax = 19600
+Refinement levels after correction: 
+grid=0 min Z=0
+***inside setup2D_MPICommunications***
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       400        89        89        50       396050
+Total number of grid points (without ghost points): 396050
+
+Default Supergrid thickness has been tuned; thickness = 13 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.015
+
+   Execution time, reading input file 0.861076 seconds 
+ *** Testing = 0
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: run1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.731621e+01, x=3.520000e+04, y=0.000000e+00
+2: Lon= 1.183976e+02, Lat=3.731621e+01, x=3.520000e+04, y=3.520000e+04
+3: Lon= 1.183959e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.520000e+04
+
+Considering all material blocks
+block command: outside = 0, material = 595350
+
+       ----------- Material properties ranges ---------------
+       2650 kg/m^3 <=  Density <= 2650 kg/m^3
+       4630.76 m/s    <=  Vp      <= 4630.76 m/s
+       2437.56 m/s    <=  Vs      <= 2437.56 m/s
+       1.89975        <=  Vp/Vs   <= 1.89975
+       1.57455e+10 Pa     <=  mu      <= 1.57455e+10 Pa
+       2.53354e+10 Pa     <=  lambda  <= 2.53354e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=4.000000e+02, minVs/h=6.0939 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+order of accuracy=4 CFL=1.1 prel. time step=0.0762171
+*** Initialized Images
+ Min source z-level: 2.000000e+03, max source z-level: 2.000000e+03
+   Execution time, start up phase 0.0237541 seconds 
+Running sw4mopt on 16 processors...
+Writing output to directory: run1/
+ xmin, xmax = 5600 29600 hx = 12000
+ ymin, ymax = 5600 29600 hy = 12000
+ zmin, zmax = -14000 14000 hz = 14000
+Begin L-BFGS iteration by evaluating initial misfit and gradient...
+2650 <=   rho    <= 2915 (grid 0)
+1.57455e+10 <=    mu    <= 1.73201e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.7869e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 9.07591 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 1.95719e-13 1.96566e-13 8.35786e-14
+   Max norm of backed out Um = 1.94735e-13 1.96527e-13 7.97018e-14
+Initial misfit= 28.0445
+Max norm of scaled total gradient = 42.4747
+Line search.. 
+-13824.7 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 7.84633e+10 (grid 0)
+-4.97921e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -13824.7 on grid 0
+lambda_min = -4.97921e+12 on grid 0
+ cfl_max = 122.358 on grid 0
+-8802.8 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 6.01203e+10 (grid 0)
+-3.47708e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -8802.8 on grid 0
+lambda_min = -3.47708e+12 on grid 0
+ cfl_max = 221.618 on grid 0
+-5287.46 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 4.72802e+10 (grid 0)
+-2.4256e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -5287.46 on grid 0
+lambda_min = -2.4256e+12 on grid 0
+ cfl_max = 97.7051 on grid 0
+-2826.72 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 3.82922e+10 (grid 0)
+-1.68956e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -2826.72 on grid 0
+lambda_min = -1.68956e+12 on grid 0
+ cfl_max = 186.135 on grid 0
+-1104.2 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 3.20005e+10 (grid 0)
+-1.17433e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -1104.2 on grid 0
+lambda_min = -1.17433e+12 on grid 0
+ cfl_max = 76.7981 on grid 0
+101.557 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 2.75964e+10 (grid 0)
+-8.1367e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -8.1367e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+945.59 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 2.45135e+10 (grid 0)
+-5.61208e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -5.61208e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+1536.41 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 2.23555e+10 (grid 0)
+-3.84485e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -3.84485e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+1949.99 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 2.08448e+10 (grid 0)
+-2.60779e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -2.60779e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2239.49 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.97874e+10 (grid 0)
+-1.74185e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -1.74185e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2442.14 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.90472e+10 (grid 0)
+-1.13568e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -1.13568e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2584 <=   rho    <= 2650 (grid 0)
+1.57455e+10 <=    mu    <= 1.85291e+10 (grid 0)
+-7.11372e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -7.11372e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2683.3 (grid 0)
+1.57455e+10 <=    mu    <= 1.81664e+10 (grid 0)
+-4.14354e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -4.14354e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2752.81 (grid 0)
+1.57455e+10 <=    mu    <= 1.79125e+10 (grid 0)
+-2.06441e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -2.06441e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2801.47 (grid 0)
+1.57455e+10 <=    mu    <= 1.77347e+10 (grid 0)
+-6.09016e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -6.09016e+09 on grid 0
+ cfl_max = 1.10078 on grid 0
+After constrained material, lambda = 0.00678223 ntries = 15
+2650 <=   rho    <= 2801.47 (grid 0)
+1.57455e+10 <=    mu    <= 1.77347e+10 (grid 0)
+-6.09016e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -6.09016e+09 on grid 0
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.18109 seconds 
+ step failed for lambda = 0.00678223 ... trying new lambda = 0.00339112
+2650 <=   rho    <= 2858.23 (grid 0)
+1.57455e+10 <=    mu    <= 1.75274e+10 (grid 0)
+1.08894e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.1835 seconds 
+ step failed for lambda = 0.00339112 ... trying new lambda = 0.000881803
+2650 <=   rho    <= 2900.24 (grid 0)
+1.57455e+10 <=    mu    <= 1.7374e+10 (grid 0)
+2.34537e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17986 seconds 
+ .. return code 0 misfit changed from 28.0445 to 27.8249
+2650 <=   rho    <= 2900.24 (grid 0)
+1.57455e+10 <=    mu    <= 1.7374e+10 (grid 0)
+2.34537e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.72216 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 1.98304e-13 1.96895e-13 8.18015e-14
+   Max norm of backed out Um = 1.93353e-13 1.91676e-13 7.9259e-14
+Wolfe condition 1016.3 -4069.37 quotient -0.249745 should be >= beta 
+-----------------------------------------------------------------------
+ it=1 dfnorm= 27.6604 dxnorm= 0.00587135
+ Misfit= 27.8249
+Line search.. 
+-963.342 <=   rho    <= 2650 (grid 0)
+-8.67477e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-5.4077e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -963.342 on grid 0
+mu_min = -8.67477e+10 on grid 0
+lambda_min = -5.4077e+12 on grid 0
+ cfl_max = 144.238 on grid 0
+195.732 <=   rho    <= 2650 (grid 0)
+-5.55112e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-3.77835e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+mu_min = -5.55112e+10 on grid 0
+lambda_min = -3.77835e+12 on grid 0
+ cfl_max = 1.10078 on grid 0
+1007.08 <=   rho    <= 2650 (grid 0)
+-3.36456e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-2.63781e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+mu_min = -3.36456e+10 on grid 0
+lambda_min = -2.63781e+12 on grid 0
+ cfl_max = 1.10078 on grid 0
+1575.03 <=   rho    <= 2650 (grid 0)
+-1.83398e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-1.83943e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+mu_min = -1.83398e+10 on grid 0
+lambda_min = -1.83943e+12 on grid 0
+ cfl_max = 1.10078 on grid 0
+1972.59 <=   rho    <= 2650 (grid 0)
+-7.62564e+09 <=    mu    <= 1.57455e+10 (grid 0)
+-1.28057e+12 <=  lambda  <= 2.53354e+10 (grid 0)
+mu_min = -7.62564e+09 on grid 0
+lambda_min = -1.28057e+12 on grid 0
+ cfl_max = 1.10078 on grid 0
+2250.89 <=   rho    <= 2650 (grid 0)
+-1.25755e+08 <=    mu    <= 1.57455e+10 (grid 0)
+-8.8936e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+mu_min = -1.25755e+08 on grid 0
+lambda_min = -8.8936e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2445.69 <=   rho    <= 2650 (grid 0)
+5.12416e+09 <=    mu    <= 1.57455e+10 (grid 0)
+-6.15516e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -6.15516e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2582.06 <=   rho    <= 2650 (grid 0)
+8.7991e+09 <=    mu    <= 1.57455e+10 (grid 0)
+-4.23825e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -4.23825e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2677.51 (grid 0)
+1.13716e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-2.89641e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -2.89641e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2744.33 (grid 0)
+1.31723e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-1.95713e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -1.95713e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2791.1 (grid 0)
+1.44328e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-1.29963e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -1.29963e+11 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2823.84 (grid 0)
+1.53151e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-8.39379e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -8.39379e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2846.76 (grid 0)
+1.57455e+10 <=    mu    <= 1.59328e+10 (grid 0)
+-5.17204e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -5.17204e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2862.81 (grid 0)
+1.57455e+10 <=    mu    <= 1.63651e+10 (grid 0)
+-2.91682e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -2.91682e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2874.04 (grid 0)
+1.57455e+10 <=    mu    <= 1.66678e+10 (grid 0)
+-1.33816e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -1.33816e+10 on grid 0
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2881.9 (grid 0)
+1.57455e+10 <=    mu    <= 1.68796e+10 (grid 0)
+-2.33101e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -2.33101e+09 on grid 0
+ cfl_max = 1.10078 on grid 0
+After constrained material, lambda = 0.00474756 ntries = 16
+2650 <=   rho    <= 2881.9 (grid 0)
+1.57455e+10 <=    mu    <= 1.68796e+10 (grid 0)
+-2.33101e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+lambda_min = -2.33101e+09 on grid 0
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17853 seconds 
+ step failed for lambda = 0.00474756 ... trying new lambda = 0.00237378
+2650 <=   rho    <= 2891.07 (grid 0)
+1.57455e+10 <=    mu    <= 1.71268e+10 (grid 0)
+1.05614e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.19155 seconds 
+ step failed for lambda = 0.00237378 ... trying new lambda = 0.000290236
+2650 <=   rho    <= 2899.12 (grid 0)
+1.57455e+10 <=    mu    <= 1.73437e+10 (grid 0)
+2.18774e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.18116 seconds 
+ .. return code 0 misfit changed from 27.8249 to 27.8053
+2650 <=   rho    <= 2899.12 (grid 0)
+1.57455e+10 <=    mu    <= 1.73437e+10 (grid 0)
+2.18774e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.70829 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 1.98729e-13 1.97733e-13 8.55072e-14
+   Max norm of backed out Um = 1.95213e-13 1.95229e-13 7.77856e-14
+Wolfe condition 137.937 -416.248 quotient -0.331381 should be >= beta 
+-----------------------------------------------------------------------
+ it=2 dfnorm= 23.2268 dxnorm= 0.00209616
+ Misfit= 27.8053
+Line search.. 
+-15898.3 <=   rho    <= 2650 (grid 0)
+-9.11695e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-1.15707e+11 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -15898.3 on grid 0
+mu_min = -9.11695e+10 on grid 0
+lambda_min = -1.15707e+11 on grid 0
+ cfl_max = 32.8007 on grid 0
+-10259.1 <=   rho    <= 2650 (grid 0)
+-5.86155e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-7.44316e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -10259.1 on grid 0
+mu_min = -5.86155e+10 on grid 0
+lambda_min = -7.44316e+10 on grid 0
+ cfl_max = 9.77139 on grid 0
+-6311.63 <=   rho    <= 2650 (grid 0)
+-3.58277e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-4.55389e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -6311.63 on grid 0
+mu_min = -3.58277e+10 on grid 0
+lambda_min = -4.55389e+10 on grid 0
+ cfl_max = 13.1745 on grid 0
+-3548.41 <=   rho    <= 2650 (grid 0)
+-1.98763e+10 <=    mu    <= 1.57455e+10 (grid 0)
+-2.5314e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -3548.41 on grid 0
+mu_min = -1.98763e+10 on grid 0
+lambda_min = -2.5314e+10 on grid 0
+ cfl_max = 18.3243 on grid 0
+-1614.15 <=   rho    <= 2650 (grid 0)
+-8.71028e+09 <=    mu    <= 1.57455e+10 (grid 0)
+-1.11566e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -1614.15 on grid 0
+mu_min = -8.71028e+09 on grid 0
+lambda_min = -1.11566e+10 on grid 0
+ cfl_max = 35.9951 on grid 0
+-260.169 <=   rho    <= 2650 (grid 0)
+-8.94074e+08 <=    mu    <= 1.57455e+10 (grid 0)
+-1.24638e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+rho_min = -260.169 on grid 0
+mu_min = -8.94074e+08 on grid 0
+lambda_min = -1.24638e+09 on grid 0
+ cfl_max = 4.06233 on grid 0
+687.617 <=   rho    <= 2650 (grid 0)
+4.57727e+09 <=    mu    <= 1.57455e+10 (grid 0)
+5.69076e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.1265 on grid 0
+After constrained material, lambda = 0.117649 ntries = 7
+687.617 <=   rho    <= 2650 (grid 0)
+4.57727e+09 <=    mu    <= 1.57455e+10 (grid 0)
+5.69076e+09 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.1265 on grid 0
+   Execution time, solver phase 1.18039 seconds 
+ step failed for lambda = 0.117649 ... trying new lambda = 0.0588245
+1793.37 <=   rho    <= 2650 (grid 0)
+1.09605e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.37841e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.18279 seconds 
+ step failed for lambda = 0.0588245 ... trying new lambda = 0.019855
+2525.89 <=   rho    <= 2650 (grid 0)
+1.51892e+10 <=    mu    <= 1.57455e+10 (grid 0)
+1.91457e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.18227 seconds 
+ step failed for lambda = 0.019855 ... trying new lambda = 0.00913709
+2650 <=   rho    <= 2727.36 (grid 0)
+1.57455e+10 <=    mu    <= 1.63523e+10 (grid 0)
+2.06203e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17887 seconds 
+ .. return code 0 misfit changed from 27.8053 to 27.2705
+2650 <=   rho    <= 2727.36 (grid 0)
+1.57455e+10 <=    mu    <= 1.63523e+10 (grid 0)
+2.06203e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.63287 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 2.08261e-13 2.07572e-13 8.84154e-14
+   Max norm of backed out Um = 2.03099e-13 2.03384e-13 8.35632e-14
+Wolfe condition 5.71165 -204.969 quotient -0.0278659 should be >= beta 
+-----------------------------------------------------------------------
+ it=3 dfnorm= 19.5617 dxnorm= 0.0648128
+ Misfit= 27.2705
+Line search.. 
+2650 <=   rho    <= 2734.54 (grid 0)
+1.57455e+10 <=    mu    <= 1.63576e+10 (grid 0)
+2.21944e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2734.54 (grid 0)
+1.57455e+10 <=    mu    <= 1.63576e+10 (grid 0)
+2.21944e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.2259 seconds 
+ .. return code 0 misfit changed from 27.2705 to 27.2446
+2650 <=   rho    <= 2734.54 (grid 0)
+1.57455e+10 <=    mu    <= 1.63576e+10 (grid 0)
+2.21944e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.66849 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 2.05158e-13 2.05462e-13 8.70736e-14
+   Max norm of backed out Um = 2.04665e-13 2.04941e-13 8.28003e-14
+Wolfe condition 0.0138775 -0.0670994 quotient -0.206819 should be >= beta 
+-----------------------------------------------------------------------
+ it=4 dfnorm= 3.19621 dxnorm= 0.00270924
+ Misfit= 27.2446
+Line search.. 
+2650 <=   rho    <= 3389.06 (grid 0)
+1.57455e+10 <=    mu    <= 2.20062e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 8.07115e+10 (grid 0)
+ cfl_max = 1.34544 on grid 0
+2650 <=   rho    <= 3192.71 (grid 0)
+1.57455e+10 <=    mu    <= 2.03116e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 6.31564e+10 (grid 0)
+ cfl_max = 1.28236 on grid 0
+After constrained material, lambda = 0.7 ntries = 2
+2650 <=   rho    <= 3192.71 (grid 0)
+1.57455e+10 <=    mu    <= 2.03116e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 6.31564e+10 (grid 0)
+ cfl_max = 1.28236 on grid 0
+   Execution time, solver phase 1.18033 seconds 
+ step failed for lambda = 0.7 ... trying new lambda = 0.07
+2650 <=   rho    <= 2780.36 (grid 0)
+1.57455e+10 <=    mu    <= 1.6753e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.62906e+10 (grid 0)
+ cfl_max = 1.10458 on grid 0
+   Execution time, solver phase 1.18193 seconds 
+ step failed for lambda = 0.07 ... trying new lambda = 0.007
+2650 <=   rho    <= 2739.12 (grid 0)
+1.57455e+10 <=    mu    <= 1.63971e+10 (grid 0)
+2.26041e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.18103 seconds 
+ step failed for lambda = 0.007 ... trying new lambda = 0.000748402
+2650 <=   rho    <= 2735.03 (grid 0)
+1.57455e+10 <=    mu    <= 1.63618e+10 (grid 0)
+2.22382e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.18071 seconds 
+ .. return code 0 misfit changed from 27.2446 to 27.2446
+2650 <=   rho    <= 2735.03 (grid 0)
+1.57455e+10 <=    mu    <= 1.63618e+10 (grid 0)
+2.22382e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.70909 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 2.07346e-13 2.076e-13 8.91805e-14
+   Max norm of backed out Um = 2.04058e-13 2.02922e-13 8.19288e-14
+Wolfe condition 8.83679e-05 -0.162076 quotient -0.000545224 should be >= beta 
+-----------------------------------------------------------------------
+ it=5 dfnorm= 3.94931 dxnorm= 0.000274509
+ Misfit= 27.2446
+Line search.. 
+2650 <=   rho    <= 3325.54 (grid 0)
+1.57455e+10 <=    mu    <= 1.9664e+10 (grid 0)
+1.92312e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 3325.54 (grid 0)
+1.57455e+10 <=    mu    <= 1.9664e+10 (grid 0)
+1.92312e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17686 seconds 
+ step failed for lambda = 1 ... trying new lambda = 0.1
+2650 <=   rho    <= 2794.08 (grid 0)
+1.57455e+10 <=    mu    <= 1.6692e+10 (grid 0)
+2.19375e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17966 seconds 
+ step failed for lambda = 0.1 ... trying new lambda = 0.01
+2650 <=   rho    <= 2740.94 (grid 0)
+1.57455e+10 <=    mu    <= 1.63948e+10 (grid 0)
+2.22082e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17761 seconds 
+ step failed for lambda = 0.01 ... trying new lambda = 0.001
+2650 <=   rho    <= 2735.62 (grid 0)
+1.57455e+10 <=    mu    <= 1.63651e+10 (grid 0)
+2.22352e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17963 seconds 
+ .. return code 0 misfit changed from 27.2446 to 27.2446
+2650 <=   rho    <= 2735.62 (grid 0)
+1.57455e+10 <=    mu    <= 1.63651e+10 (grid 0)
+2.22352e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.63665 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 2.06373e-13 2.07699e-13 8.85029e-14
+   Max norm of backed out Um = 2.04068e-13 2.03602e-13 8.29417e-14
+Wolfe condition 0.00318588 -0.0130155 quotient -0.244776 should be >= beta 
+-----------------------------------------------------------------------
+ it=6 dfnorm= 3.80143 dxnorm= 0.000222833
+ Misfit= 27.2446
+Line search.. 
+2650 <=   rho    <= 2733.41 (grid 0)
+1.57455e+10 <=    mu    <= 1.6361e+10 (grid 0)
+2.18319e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2733.41 (grid 0)
+1.57455e+10 <=    mu    <= 1.6361e+10 (grid 0)
+2.18319e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17999 seconds 
+ .. return code 0 misfit changed from 27.2446 to 27.2435
+2650 <=   rho    <= 2733.41 (grid 0)
+1.57455e+10 <=    mu    <= 1.6361e+10 (grid 0)
+2.18319e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.63249 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 2.05958e-13 2.08835e-13 8.88065e-14
+   Max norm of backed out Um = 2.06766e-13 2.01717e-13 8.31207e-14
+Wolfe condition 0.00139382 -0.00341693 quotient -0.407915 should be >= beta 
+-----------------------------------------------------------------------
+ it=7 dfnorm= 1.61366 dxnorm= 0.000834229
+ Misfit= 27.2435
+Line search.. 
+2650 <=   rho    <= 2733.97 (grid 0)
+1.57455e+10 <=    mu    <= 1.63618e+10 (grid 0)
+2.19512e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+2650 <=   rho    <= 2733.97 (grid 0)
+1.57455e+10 <=    mu    <= 1.63618e+10 (grid 0)
+2.19512e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+   Execution time, solver phase 1.17502 seconds 
+ .. return code 0 misfit changed from 27.2435 to 27.2433
+2650 <=   rho    <= 2733.97 (grid 0)
+1.57455e+10 <=    mu    <= 1.63618e+10 (grid 0)
+2.19512e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Maximum temporary file size on grid 0 is 7800 doubles for each time step 
+   Execution time, solver phase 2.72655 seconds 
+Grid nr. 0: 
+   Max norm of backed out U  = 2.05195e-13 2.06514e-13 8.72484e-14
+   Max norm of backed out Um = 2.04322e-13 2.0514e-13 8.25793e-14
+Wolfe condition 4.41901e-06 -0.000404292 quotient -0.0109302 should be >= beta 
+-----------------------------------------------------------------------
+ it=8 dfnorm= 0.0431282 dxnorm= 0.000208911
+ Misfit= 27.2433
+============================================================
+ sw4opt ( Material/Source estimation solver) finished! 
+============================================================

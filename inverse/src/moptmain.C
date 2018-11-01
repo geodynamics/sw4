@@ -10,6 +10,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <fstream>
 
 void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, double* typxs,
 	    int nmpard, double* xm, double* sfm, double* typxd,
@@ -333,6 +334,10 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
 		    //		    int myRank, MaterialParameterization* mp, double* sf, double* sfm )
 		    int myRank, Mopt* mopt, double* sf, double* sfm )
 {
+   // nspar:  Number of parameters in source description, when solving for the source
+   // nmpars: Number of parameters in material description, non-distributed
+   // nmpard: Number of parameters in material description, distributed over the mpi tasks
+   //
    int ns = nspar+nmpars;
    double* dfs;
    if( ns > 0 )
@@ -341,7 +346,7 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
    if( nmpard > 0 )
       dfm = new double[nmpard];
 
-   int sharedpars = 1;
+   //   int sharedpars = 1;
 
    double f, fp;
       
@@ -353,6 +358,14 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
 
    double h=1e-6;
 
+   int nms, nmd, nmpard_global;
+   mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global ) ;
+   std::ofstream dftest;
+   if( (ns>0 || nmpard_global > 0) && myRank == 0 )
+   {
+      string fname = simulation.getOutputPath()+"GradientTest.txt";
+      dftest.open(fname.c_str());
+   }
    if( ns>0 )
    {
       if( myRank == 0 )
@@ -371,13 +384,14 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
             cout << " ind = " << ind << "f = " << fp << " h= " << h << " dfan = " << dfan
 		 << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
 	 }
+	 if( myRank == 0 )
+	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
+
 	 xs[ind] -= h;
 	 if( (ind % 100) && myRank == 0 )
 	    cout << "Done ind = " << ind << endl;
       }
    }
-   int nms, nmd, nmpard_global;
-   mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global ) ;
    if( nmpard_global > 0 )
    {
       if( myRank == 0 )
@@ -395,11 +409,17 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
 	    dfan = dfm[ind];
 
 	 if( myRank == 0 )
+	 {	    
 	    cout << "f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
+	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
+	 }
          if( ind >= 0 )
 	    xm[ind] -= h;
       }
    }
+   if( dftest.is_open() )
+      dftest.close();
+
    if( ns > 0 )
       delete[] dfs;
    if( nmpard > 0 )
@@ -435,6 +455,7 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
       dfmp= new double[nmpard]; 
 
    int sharedpars = 1;
+   bool ascii_output = true;
    double h =1e-6;
    int grid = 0;
 
@@ -478,7 +499,20 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
 	 nr=write(fid,dims,6*sizeof(int));
 	 nr=write(fid,hess,ns*ns*sizeof(double));
 	 close(fid);
+	 if( ascii_output )
+	 {
+	    fname = simulation.getOutputPath()+"Hessian.txt";
+	    ofstream htest(fname.c_str());
+	    for( int i=0 ; i < ns ; i++ )
+	    {
+	       for( int j=0 ; j < ns ; j++ )
+		  htest << hess[j+ns*i] << " ";
+	       htest << endl;
+	    }
+	    htest.close();
+	 }
       }
+      
    }
    else
    {
@@ -635,6 +669,7 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
    double* fcn = new double[npts];
    ssize_t ind=mp->parameter_index(i,j,k,0,var);
    double xoriginal = xs[ind];
+   bool ascii_output = true;
    for( int m=0 ; m < npts ; m++ )
    {
       double p = pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin);
@@ -655,6 +690,14 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
       nr = write(fd,&pmax,sizeof(double));
       nr = write(fd,fcn,npts*sizeof(double));
       close(fd);
+      if( ascii_output )
+      {
+	 fname = simulation.getOutputPath()+"Misfit1d.txt";
+	 ofstream fcurve(fname.c_str());
+	 for( int m=0 ; m < npts ; m++ )
+	    fcurve << pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin) << " " << fcn[m] << " " << endl;
+	 fcurve.close();
+      }
    }
 }
 
@@ -845,7 +888,10 @@ int main(int argc, char **argv)
 // Select material parameterization
            MaterialParameterization* mp = mopt->m_mp;
 
-// figure out how many parameters we need
+// figure out how many parameters we need.
+//	Guess: nmpars - number of non-distributed parameters, exist copies in each proc.
+//             nmpard - Number of distributed parameters, size of part in my processor.
+//	       nmpard_global - number of distributed parameters, total number over all processors
            int nmpars, nmpard, nmpard_global;
 	   mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );
 
@@ -853,11 +899,13 @@ int main(int argc, char **argv)
            if( nmpard > 0 )
 	      xm = new double[nmpard];
 
+// nspar - Number of parameters in source description. These are always non-distributed
 	   int nspar=mopt->m_nspar;
+// ns - Total number of non-distributed parameters.
            int ns = nmpars + nspar;
 	   double *xs = new double[ns];
 
-// Default initial guess, the input source, stored in GlobalSources[0]
+// Default initial guess, the input source, stored in GlobalSources[0], will do nothing if nspar=0.
            double xspar[11];
 	   GlobalSources[0]->get_parameters(xspar);
 	   get_source_pars( nspar, xspar, xs );

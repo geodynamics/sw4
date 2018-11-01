@@ -119,6 +119,9 @@ void MaterialParCartesian::interpolate_parameters( int nmd, double* xmd, int nms
 						   double* xms, std::vector<Sarray>& a_rho, 
 			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
+   // Interpolates the difference a_rho-mRho, into local rho. i.e., m_rho = I(a_rho-mRho)
+   // where a_rho,mRho are on the computational grid, rho on the parameter grid.
+   //                             similarly for mu, lambda
    m_ew->interpolate_to_coarse( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
 				m_rho, m_mu, m_lambda, a_rho, a_mu, a_lambda );
    double* rhop=m_rho.c_ptr();

@@ -97,7 +97,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
 
 // wait until all processes have read the input file
    if( m_ew->getVerbosity() >=3 && m_myrank == 0 )
-      cout << "********Done reading the input file*********" << endl;
+      cout << "********parseInputFileOpt: Done reading the input file*********" << endl;
    return true;
 }
 
