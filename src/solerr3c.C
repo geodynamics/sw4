@@ -7,7 +7,8 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		     float_sw4* __restrict__ u, float_sw4& li,
 		     float_sw4& l2, float_sw4& xli, float_sw4 zmin, float_sw4 x0,
 		     float_sw4 y0, float_sw4 z0, float_sw4 radius,
-		     int imin, int imax, int jmin, int jmax, int kmin, int kmax )
+		     int imin, int imax, int jmin, int jmax, int kmin, int kmax,
+		     int geocube, int i0, int i1, int j0, int j1, int k0, int k1 )
 {
    li = 0;
    l2 = 0;
@@ -19,7 +20,6 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const size_t nij = ni*(je-jb+1);
    const float_sw4 h3 = h*h*h;
    const size_t nijk = nij*(ke-kb+1);
-
    for( int c=0 ; c<3 ;c++)
    {
       float_sw4 liloc=0, l2loc=0, xliloc=0;
@@ -28,17 +28,21 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 	    for( size_t j=jmin; j <= jmax ; j++ )
 	       for( size_t i=imin; i <= imax ; i++ )
 	       {
+		  bool inside =  i<i0 || i> i1 || j<j0 || j>j1 || k<k0 || k>k1 ;
 		  if( ((i-1)*h-x0)*((i-1)*h-x0)+((j-1)*h-y0)*((j-1)*h-y0)+
-		      ((k-1)*h+zmin-z0)*((k-1)*h+zmin-z0) > sradius2 )
+		      ((k-1)*h+zmin-z0)*((k-1)*h+zmin-z0) > sradius2 &&
+		      ( geocube != 1 ||( geocube==1 && inside ) ) )
 		  {
 		     size_t ind = i-ib+ni*(j-jb)+nij*(k-kb)+nijk*c;
 		     float_sw4 err=fabs(u[ind]-uex[ind]);
 	     //		     if( fabs(u[ind]-uex[ind])>liloc )
 		     //			liloc = fabs(u[ind]-uex[ind]);
 		     if( err > liloc )
+		     {
 			liloc = err;
-		     if( uex[ind]>xliloc )
-			xliloc = uex[ind];
+		     }
+		     if( fabs(uex[ind])>xliloc )
+			xliloc = fabs(uex[ind]);
 		     //		     l2loc += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
 		     l2loc += h3*err*err;
 		  }

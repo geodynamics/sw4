@@ -32,10 +32,12 @@
 c------------------------------------------------------------
       subroutine solerr3(ifirst, ilast, jfirst, jlast, kfirst, klast,
      +     h, uex, u, li, l2, xli, zmin, x0, y0, z0, radius,
-     +     imin, imax, jmin, jmax, kmin, kmax) bind(c)
+     +     imin, imax, jmin, jmax, kmin, kmax, geocube,
+     +     i0, i1, j0, j1, k0, k1 ) bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast
       integer imin, imax, jmin, jmax, kmin, kmax
+      integer geocube, i0, i1, j0, j1, k0, k1
       real*8 h, zmin, x0, y0, z0, radius, sradius2, dist
       real*8 uex(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -68,7 +70,9 @@ C           do i=ifirst+2,ilast-2
         do j=jmin,jmax
           do i=imin,imax
             dist = ((i-1)*h-x0)**2+((j-1)*h-y0)**2+((k-1)*h+zmin-z0)**2
-            if( dist .gt. sradius2 )then
+            if( dist .gt. sradius2 .and. (geocube.ne.1 .or. 
+     *      (geocube.eq.1 .and.(i.lt.i0 .or. i.gt.i1 .or. j.lt.j0 .or. 
+     *             j.gt.j1 .or. k.lt.k0 .or. k.gt.k1) )))then
 c exact solution in array 'uex'
                do c=1,3
                   err(c) = ABS( u(c,i,j,k) - uex(c,i,j,k) )
@@ -76,9 +80,11 @@ c exact solution in array 'uex'
                if( li.lt.max(err(1),err(2),err(3)) )then
                   li = max(err(1),err(2),err(3))
                endif
-               if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
-     +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
-
+               if( xli.lt.max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                        ABS(uex(3,i,j,k)) ) )then
+                  xli = max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                        ABS(uex(3,i,j,k)))
+               endif
                l2 = l2 + 
      +              h*h*h* (err(1)**2 + err(2)**2 + err(3)**2)
             endif
@@ -206,9 +212,11 @@ c exact solution in array 'uex'
                if( li.lt.max(err(1),err(2),err(3)) )then
                   li = max(err(1),err(2),err(3))
                endif
-               if( xli.lt.max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k)) )
-     +              xli = max(uex(1,i,j,k),uex(2,i,j,k),uex(3,i,j,k))
-
+               if( xli.lt.max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                        ABS(uex(3,i,j,k))) )then
+                  xli = max(ABS(uex(1,i,j,k)),ABS(uex(2,i,j,k)),
+     +                      ABS(uex(3,i,j,k)))
+               endif
                if( usesg.ne.1 )then
                   l2 = l2 + 
      +              jac(i,j,k)*(err(1)**2 + err(2)**2 + err(3)**2)

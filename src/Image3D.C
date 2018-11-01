@@ -405,7 +405,7 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
 
       int niw = (mWindow[g][1]-mWindow[g][0])/st+1;
-      int nijw=ni*((mWindow[g][3]-mWindow[g][2])/st+1);
+      int nijw=niw*((mWindow[g][3]-mWindow[g][2])/st+1);
       if( mMode == UX || mMode == UY || mMode == UZ )
       {
 	 int c  = 0;
@@ -1002,7 +1002,7 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
       if( !usingParallelFS() || g == 0 )
 	 parallel_io[g]->writer_barrier();
       
-      double* doubleField = new double[nptsloc];
+      float_sw4* doubleField = new float_sw4[nptsloc];
       if( prec == 8 )
       {
 	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, "double" );

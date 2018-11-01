@@ -70,23 +70,23 @@ void EW::setup_metric()
       int nzg = m_global_nz[g];
       float_sw4 h= mGridSize[g];   
       float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
 				       mMetric.c_ptr(), mJ.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
 				       m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
 	 
-      else
-	 metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-		     mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-		     &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+//FTNC      else
+//FTNC	 metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+//FTNC		     mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+//FTNC		     &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    }
    else
    {
      int ierr=0;
-     if( m_croutines )
+//FTNC     if( m_croutines )
 	ierr=metric_ci( Bx, Nx, By, Ny, Bz, Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
-     else
-	metric( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+//FTNC     else
+//FTNC	metric( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
      CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
    }
 
@@ -98,10 +98,10 @@ void EW::setup_metric()
       metric_derivatives_test( );
 
    float_sw4 minJ, maxJ;
-   if( m_croutines )
+//FTNC   if( m_croutines )
       gridinfo_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), mJ.c_ptr(), minJ, maxJ );
-   else
-      gridinfo(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
+//FTNC   else
+//FTNC      gridinfo(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
    float_sw4 minJglobal, maxJglobal;
    MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
    MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
@@ -921,14 +921,14 @@ void EW::metric_derivatives_test()
    float_sw4 h= mGridSize[g];   
    float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
 
-   if( m_croutines )
+//FTNC   if( m_croutines )
       metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
 				    metex.c_ptr(), jacex.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
 				    m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
-   else
-      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+//FTNC   else
+//FTNC      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+//FTNC				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+//FTNC				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    communicate_array( metex, mNumberOfGrids-1 );
    communicate_array( jacex, mNumberOfGrids-1 );
 
@@ -940,12 +940,12 @@ void EW::metric_derivatives_test()
    int kmin = m_kStartInt[g];
    int kmax = m_kEndInt[g];
 
-   if( m_croutines )
+//FTNC   if( m_croutines )
       meterr4c_ci( Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
 		   jacex.c_ptr(), li, l2, imin, imax, jmin, jmax, kmin, kmax, h );
-   else
-      meterr4c( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
-		jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
+//FTNC   else
+//FTNC      meterr4c( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
+//FTNC		jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
 
    float_sw4 tmp[5];
    for( int c=0 ; c < 5 ;c++ )

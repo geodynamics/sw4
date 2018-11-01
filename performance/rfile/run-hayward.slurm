@@ -1,17 +1,20 @@
 #!/bin/bash
 #SBATCH -N 8
-#SBATCH -p debug
-#SBATCH -A m2545
+#SBATCH -q debug
+#SBATCH -A m2868
 #SBATCH -S 4     # Special cores per nodes (4 are idle)
 #SBATCH -t 00:30:00 
 #SBATCH -C knl,quad,cache
+#SBATCH -L SCRATCH 
+#SBATCH --mail-type=ALL 
+#SBATCH --mail-user=petersson1@llnl.gov
 
 numnodes=8
 
 #    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
-#numprocspernode=64
-for numprocspernode in 64 32 16 8; do
+numprocspernode=32
+#for numprocspernode in 64 32 16 8; do
 
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
@@ -44,4 +47,4 @@ CASE=hayward-h100-cori
 RUN_COMMAND="./sw4 ${CASE}.in"
 ${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 
-done
+#done
