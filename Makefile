@@ -1,13 +1,16 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [prec=single/double] [openmp=yes/no] [fftw=yes/no]
-#   Default is: debug=no prec=double openmp=yes fftw=no
-# This Makefile asumes that the following environmental variables have been assigned:
+# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no] [fftw=yes/no] [hdf5=yes/no]
+#   Default is: debug=no prec=double fortran=yes openmp=yes fftw=no hdf5=no
+#
+# This Makefile asumes that the following environmental variables have been assigned,
+# see note below.
 # etree = [yes/no]
 # proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
+# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 #
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 #
@@ -77,14 +80,14 @@ else
     else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
       include configs/make.fourier
       foundincfile := "configs/make.fourier"
-	# for any other MacOS system
-		else
-			include configs/make.osx
-			foundincfile := "configs/make.osx"
+   # for any other MacOS system
+    else
+      include configs/make.osx
+      foundincfile := "configs/make.osx"
     endif
   endif
-  
-  # put the variables in the configs/make.xyz file
+
+# put the variables in the configs/make.xyz file
   ifeq ($(UNAME),Linux)
   # For Cab at LC
     ifeq ($(findstring cab,$(HOSTNAME)),cab)
@@ -178,6 +181,13 @@ else
    CXXFLAGS += -I../src/double
 endif
 
+# hdf5=no is the default
+ifeq ($(hdf5),yes)
+   # PROVIDE HDF5ROOT in configs/make.xyz, e.g.
+   CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
+   EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+endif
+
 ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif
@@ -200,7 +210,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o curvilinearGri
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o TimeSeries.o sacsubc.o \
        SuperGrid.o TestRayleighWave.o MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o \
-       time_functions.o Qspline.o EtreeFile.o MaterialIfile.o GeographicProjection.o Image3D.o \
+       time_functions.o Qspline.o EtreeFile.o MaterialIfile.o GeographicProjection.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
        MaterialVolimagefile.o MaterialRfile.o AnisotropicMaterialBlock.o sacutils.o \
        addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o
