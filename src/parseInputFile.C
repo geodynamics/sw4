@@ -533,6 +533,8 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
           processGeodynbc(buffer);
        else if( startswith("randomize", buffer ) )
           processRandomize(buffer);
+       else if( startswith("randomblock", buffer ) )
+          processRandomBlock(buffer);
        else if (!inputFile.eof() && m_myRank == 0)
        {
 	 // Maybe just reached eof, don't want to echo
@@ -933,7 +935,8 @@ void EW::processGrid(char* buffer)
   {
 // Set SW4 grid spacing based on Geodyn cube data
 
-      double origin[3]={0,0,0}, ibclat, ibclon, ibcaz;
+     float_sw4 origin[3]={0,0,0};
+     double ibclat, ibclon, ibcaz;
 
       bool found_latlon;
       int adjust;
@@ -951,7 +954,7 @@ void EW::processGrid(char* buffer)
       }
 
       // rounding of cube position to two decimals (prec=100), three (prec=1000) etc..
-      double prec = 100;
+      float_sw4 prec = 100;
 
       if( found_latlon )
       {
@@ -983,8 +986,8 @@ void EW::processGrid(char* buffer)
 	double metersPerDegree = mMetersPerDegree;
 	double deg2rad = M_PI/180;
 	double phi = mGeoAz*deg2rad;
- 	double x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
- 	double y = metersPerDegree*(-sin(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*cos(phi));
+ 	float_sw4 x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
+ 	float_sw4 y = metersPerDegree*(-sin(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*cos(phi));
 	x -= h*(x/h-round(x/h));
 	y -= h*(y/h-round(y/h));
 	gridLat = ibclat - (x*cos(phi) - y*sin(phi))/metersPerDegree;
@@ -1000,8 +1003,8 @@ void EW::processGrid(char* buffer)
          if( m_geodynbc_center )
 	 {
  	   // Center cube in the middle of the domain (in x,y), discarding input origin.
-	    double xlen = x;
-	    double ylen = y;
+	    float_sw4 xlen = x;
+	    float_sw4 ylen = y;
 	    if( xlen == 0 )
 	       xlen = h*(nx-1);
 	    if( ylen == 0 )
@@ -2065,12 +2068,12 @@ void EW::processDeveloper(char* buffer)
        token += 7;
        m_cirelfact = atof(token);
      }
-     else if (startswith("ckernels=", token))
-     {
-       token += 9;
-       m_croutines = atoi(token)==1;
-       Sarray::m_corder = m_croutines;
-     }
+     //     else if (startswith("ckernels=", token))
+     //     {
+     //       token += 9;
+     //       m_croutines = atoi(token)==1;
+     //       Sarray::m_corder = m_croutines;
+     //     }
 //     else if (startswith("log_energy=", token))
 //     {
 //        logenergy = true;
@@ -3042,8 +3045,8 @@ void EW::processGeodynbc(char* buf)
    string commandName = "geodynbc";
 
    int faces=6, nx=0, ny=0, nz=0, nsteps=0, filter=0, adjust=1;
-   double x0, y0, z0, lat, lon, elev, az, timestep, rho=0, vs=0, vp=0, freq;
-   double srcx0, srcy0, srcz0, h, toff;
+   float_sw4 x0, y0, z0, lat, lon, elev, az, timestep, rho=0, vs=0, vp=0, freq;
+   float_sw4 srcx0, srcy0, srcz0, h, toff;
 
    bool timestepset = false, nstepsset=false, toffset=false;
    char buffer[256];
@@ -3292,8 +3295,8 @@ void EW::geodynFindFile(char* buffer)
 }
 
 //-----------------------------------------------------------------------
-void EW::geodynbcGetSizes( string filename, double origin[3], double &cubelen,
-			   double& zcubelen, bool &found_latlon, double& lat, 
+void EW::geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cubelen,
+			   float_sw4& zcubelen, bool &found_latlon, double& lat, 
 			   double& lon, double& az, int& adjust )
 {
    ifstream geodynfile(m_geodynbc_filename.c_str());
@@ -6811,7 +6814,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 //-----------------------------------------------------------------------
 void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 {
-  float_sw4 x=0.0, y=0.0, z=0.0;
+  double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
   float_sw4 t0 = 0;
   float_sw4 scalefactor=1;
@@ -8138,6 +8141,79 @@ void EW::processRandomize(char* buffer)
    }
    if( lengthscaleset && !lengthscalezset )
       m_random_distz = m_random_dist;
+   //   if( !lengthscaleset && lengthscalezset )
+   //      m_random_dist = m_random_distz;
+}
+
+//-----------------------------------------------------------------------
+void EW::processRandomBlock(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("randomblock", token) == 0,
+	       "ERROR: not a randomblock line: " << token);
+   token = strtok(NULL, " \t");
+   bool lengthscaleset=false, lengthscalezset=false;
+   float_sw4 corrlen=1000, corrlenz=1000, sigma=0.1, hurst=0.3, zmin=-1e38, zmax=1e38;
+   unsigned int seed=9234738;
+
+   m_randomize = true;
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else if( startswith("corrlen=",token) )
+      {
+	 token += 8;
+	 corrlen = atof(token);
+	 CHECK_INPUT(corrlen>0, "Error randomblock, corrlen must be > 0, not " << token);
+	 lengthscaleset = true;
+      }
+      else if( startswith("corrlenz=",token) )
+      {
+	 token += 9;
+	 corrlenz = atof(token);
+	 CHECK_INPUT(corrlenz>0, "Error randomblock, corrlenz must be > 0, not " << token);
+	 lengthscalezset = true;
+      }
+      else if( startswith("sigma=",token) )
+      {
+	 token += 6;
+	 sigma = atof(token);
+	 CHECK_INPUT(sigma>0, "Error randomblock, sigma must be > 0, not " << token);
+      }
+      else if( startswith("hurst=",token) )
+      {
+	 token += 6;
+	 hurst = atof(token);
+      }
+      else if( startswith("seed=",token) )
+      {
+	 token += 5;
+         seed = atoi(token);
+      }
+      else if( startswith("zmin=",token) )
+      {
+	 token += 5;
+         zmin = atof(token);
+      }
+      else if( startswith("zmax=",token) )
+      {
+	 token += 5;
+         zmax = atof(token);
+      }
+      else
+      {
+	 badOption("randomblock", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   if( lengthscaleset && !lengthscalezset )
+      corrlenz = corrlen;
+   RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
+						      corrlenz, hurst, sigma, seed );
+   m_random_blocks.push_back(mtrl);
    //   if( !lengthscaleset && lengthscalezset )
    //      m_random_dist = m_random_distz;
 }

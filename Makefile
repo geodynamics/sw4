@@ -1,7 +1,7 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no] [hdf5=yes/no]
-#   Default is: debug=no prec=double fortran=yes openmp=yes hdf5=no
+# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no] [fftw=yes/no] [hdf5=yes/no]
+#   Default is: debug=no prec=double fortran=yes openmp=yes fftw=no hdf5=no
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
@@ -10,7 +10,7 @@
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
-# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes). 
+# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 #
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 #
@@ -56,6 +56,8 @@ optdir := optimize
 
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
+#Default, override with configs/make.name. Preferably, FFTW is installed under SW4ROOT
+FFTWHOME  = $(SW4ROOT)
 
 emptystring := ""
 foundincfile := $(emptystring)
@@ -80,8 +82,8 @@ else
       foundincfile := "configs/make.fourier"
    # for any other MacOS system
     else
-       include configs/make.osx
-       foundincfile := "configs/make.osx"
+      include configs/make.osx
+      foundincfile := "configs/make.osx"
     endif
   endif
 
@@ -98,6 +100,8 @@ else
     else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
       include configs/make.quartz
       foundincfile := "configs/make.quartz"
+      debugdir := debug_quartz
+      optdir := optimize_quartz
 # Cori @ NERSC
     else ifeq ($(findstring cori,$(HOSTNAME)),cori)
       include configs/make.cori
@@ -121,6 +125,13 @@ else
 # object code goes in machine specific directory on LC
       debugdir := debug_vulcan
       optdir := optimize_vulcan
+  # For Ray at LC, running on CPUs only
+    else ifeq ($(findstring ray,$(HOSTNAME)),ray)
+      include configs/make.ray
+      foundincfile := "configs/make.ray"
+# object code goes in machine specific directory on LC
+      debugdir := debug_raycpu
+      optdir := optimize_raycpu
     endif
   endif
 
@@ -139,11 +150,17 @@ ifeq ($(etree),yes)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
 else ifeq ($(proj),yes)
    CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj
+   linklibs += -L$(SW4LIB) -lproj 
    etree := "no"
 else
    etree := "no"
    proj  := "no"
+endif
+
+# FFTW needed for random material
+ifeq ($(fftw),yes)
+   CXXFLAGS += -DENABLE_FFTW -I$(FFTWHOME)/include -L$(FFTWHOME)/lib 
+   linklibs += -lfftw3_mpi -lfftw3 
 endif
 
 # openmp=yes is default
@@ -154,15 +171,6 @@ else
    optdir   := $(optdir)_mp
    CXXFLAGS += -fopenmp
    FFLAGS   += -fopenmp
-endif
-
-# fortran=no is default
-ifeq ($(fortran),yes)
-   debugdir := $(debugdir)_fort
-   optdir   := $(optdir)_fort
-   CXXFLAGS += -DSW4_NOC
-else
-   fortran := "no"
 endif
 
 ifeq ($(prec),single)
@@ -198,34 +206,24 @@ QUADPACK = dqags.o dqagse.o  dqaws.o  dqawse.o  dqc25s.o \
 # sw4 main program (kept separate)
 OBJSW4 = main.o
 
-OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bndryOpNoGhost.o  bcfort.o twilightfort.o rhs4th3fort.o \
+OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o curvilinearGrid.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
-       MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
-       MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
-       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
-       anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
-       updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o oddIoddJinterp.o evenIoddJinterp.o \
-       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o
+       solve.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o TimeSeries.o sacsubc.o \
+       SuperGrid.o TestRayleighWave.o MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o \
+       time_functions.o Qspline.o EtreeFile.o MaterialIfile.o GeographicProjection.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
+       MaterialVolimagefile.o MaterialRfile.o AnisotropicMaterialBlock.o sacutils.o \
+       addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
+       evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o
 
+# Fortran routines (lamb_exact_numquad needs QUADPACK)
+ OBJ += rayleighfort.o lamb_exact_numquad.o
 
 # new C-routines converted from fortran
  OBJ += addsgdc.o bcfortc.o bcfortanisgc.o bcfreesurfcurvanic.o boundaryOpc.o energy4c.o checkanisomtrlc.o \
         computedtanisoc.o curvilinear4sgc.o gradientsc.o randomfield3dc.o innerloop-ani-sgstr-vcc.o ilanisocurvc.o \
-        rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o solerr3c.o testsrcc.o \
+        rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o solerr3c.o testsrcc.o rhs4th3windc.o \
         tw_aniso_forcec.o tw_aniso_force_ttc.o velsumc.o twilightfortc.o twilightsgfortc.o tw_ani_stiffc.o \
         anisomtrltocurvilinearc.o scalar_prodc.o updatememvarc.o addsg4windc.o bndryOpNoGhostc.o rhs4th3windc2.o
-
-ifeq ($(fortran),yes)
-  OBJ += rhs4th3windfort.o
-else
-  OBJ += rhs4th3windc.o 
-endif
-
 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 
@@ -283,6 +281,10 @@ $(builddir)/%.o:src/quadpack/%.f
 $(builddir)/%.o:src/%.C
 	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
+
+$(builddir)/RandomizedMaterial.o:src/RandomizedMaterial.C
+	/bin/mkdir -p $(builddir)
+	 cd $(builddir); $(CXX) $(CXXFLAGS) -std=c++11 -c ../$< 
 
 clean:
 	/bin/mkdir -p $(optdir)
