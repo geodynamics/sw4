@@ -62,6 +62,7 @@
 #include "MaterialData.h"
 #include "AnisotropicMaterial.h"
 #include "EtreeFile.h"
+#include "RandomizedMaterial.h"
 
 #include "SuperGrid.h"
 #include "MaterialProperty.h"
@@ -155,6 +156,7 @@ void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
 void processAttenuation(char* buffer);
 void processRandomize(char* buffer);
+void processRandomBlock(char* buffer);
 void processCheckPoint(char* buffer);
 void processGeodynbc(char* buffer);
 
@@ -220,7 +222,7 @@ void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>
 		       vector<float_sw4 **>& a_BCForcing, float_sw4 bop[5], float_sw4 a_t );
 
    void enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-			   vector<Sarray*>& a_AlphaVEp, vector<double **>& a_BCForcing );
+			   vector<Sarray*>& a_AlphaVEp, vector<float_sw4 **>& a_BCForcing );
 
 void enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C, 
 			   float_sw4 t, vector<float_sw4 **> & a_BCForcing );
@@ -243,13 +245,13 @@ void evalDpDmInTime(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> 
 
 void evalCorrector(vector<Sarray> & a_Up, vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
 
-void updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_U, double a_t );
+void updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_U, float_sw4 a_t );
 
 void updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
-                       vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t );
+                       vector<Sarray>& a_U, vector<Sarray>& a_Um, float_sw4 a_t );
    
 void updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
-                                    Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, double a_t, int a_mech, int a_grid );
+                                    Sarray & a_Up,  Sarray & a_U, Sarray & a_Um, float_sw4 a_t, int a_mech, int a_grid );
    
 // void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
 // 			    vector<Sarray*>& a_AlphaVEm,
@@ -290,6 +292,7 @@ void update_SACs( int Nsteps ); // going away
 
 void print_execution_times( float_sw4 times[10] );
 void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );
+
 void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;
 int mkdirs(const string& path);
@@ -393,8 +396,8 @@ void buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, floa
 void extractSurfaceFromGridFile(string a_surfaceFileName);
 void extractSurfaceFromCartesianFile(string a_surfaceFileName);
 
-void computeCartesianCoord(float_sw4 &x, float_sw4 &y, float_sw4 lon, float_sw4 lat);
-void computeGeographicCoord(float_sw4 x, float_sw4 y, float_sw4 & longitude, float_sw4 & latitude);
+void computeCartesianCoord(double &x, double &y, double lon, double lat);
+void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
 
 void initializeSystemTime();
 void compute_epicenter( vector<Source*> & a_GlobalUniqueSources );
@@ -509,20 +512,20 @@ void copy_geodyn_timelevel( vector<Sarray>& geodyndata1,
 			    vector<Sarray>& geodyndata2 );
 
 void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
-				vector<Sarray>& forcing, double t, vector<Sarray>& U,
+				vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
 				vector<Sarray>& Um, int crf );
 
 void geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
-					    vector<Sarray>& forcing, double t, vector<Sarray>& U,
+					    vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
 					    vector<Sarray>& Um, int crf );
 
 void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
-			  vector<Sarray>& U, vector<Sarray>& Um, double dt );
+			  vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt );
 
 void save_geoghost( vector<Sarray>& U );
 void restore_geoghost( vector<Sarray>& U );
-void geodynbcGetSizes( string filename, double origin[3], double &cubelen,
-		       double& zcubelen, bool &found_latlon, double& lat, 
+void geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cubelen,
+		       float_sw4& zcubelen, bool &found_latlon, double& lat, 
 		       double& lon, double& az, int& adjust );
 
 void geodynFindFile(char* buffer);
@@ -588,9 +591,9 @@ float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c,float_sw4 f);
 // Lamb's problem
 void get_exact_lamb( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source );
 void get_exact_lamb2( vector<Sarray> & a_U, float_sw4 a_t, Source& a_source );
-float_sw4 G4_Integral(float_sw4 T, float_sw4 t, float_sw4 r, float_sw4 beta);
-float_sw4 G3_Integral(float_sw4 iT, float_sw4 it, float_sw4 ir, float_sw4 ibeta);
-float_sw4 G2_Integral(float_sw4 iT, float_sw4 it, float_sw4 ir, float_sw4 ibeta);
+double G4_Integral(double T, double t, double r, double beta);
+double G3_Integral(double iT, double it, double ir, double ibeta);
+double G2_Integral(double iT, double it, double ir, double ibeta);
 
 
 void getGlobalBoundingBox(float_sw4 bbox[6]);
@@ -1364,6 +1367,7 @@ bool m_anisotropic;
 bool m_randomize;
 int m_random_seed[3];
 float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
+vector<RandomizedMaterial*> m_random_blocks;
 
 // with topo, zmin might be different from 0
 float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax; 
@@ -1503,7 +1507,7 @@ bool m_geodyn_iwillread, m_geodyn_past_end;
 // From wpp FileInput class
 bool m_geodynbc_found, m_geodynbc_center;
 std::string m_geodynbc_filename;
-double m_ibc_origin[3];
+float_sw4 m_ibc_origin[3];
 
 int mPrintInterval;
 // (lon, lat) origin of Grid as well as

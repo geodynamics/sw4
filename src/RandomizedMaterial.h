@@ -29,83 +29,67 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
-#ifndef MATERIALRFILE_FILE
-#define MATERIALRFILE_FILE
+#ifndef RANDOMIZEDMATERIAL_FILE
+#define RANDOMIZEDMATERIAL_FILE
 
 #include <string>
+#include <vector>
+#include <complex>
 
-#include "MaterialData.h"
 #include "sw4.h"
+//#include "AllDims.h"
 
+class AllDims;
 class EW;
 
 using namespace std;
 
-class MaterialRfile : public MaterialData
+class RandomizedMaterial
 {
- public:
+public:
    
-   MaterialRfile( EW * a_ew,
-		  const std::string file,
-		  const std::string directory, int bufsize );
+   RandomizedMaterial( EW * a_ew,  float_sw4 zmin, float_sw4 zmax, float_sw4 corrlen, 
+		       float_sw4 corrlenz, float_sw4 hurst, float_sw4 sigma, 
+		       unsigned int seed=0 );
+  ~RandomizedMaterial();
+  void perturb_velocities( int g, Sarray& cs, Sarray& cp, 
+			   double h, double zmin, double zmax );
 
-  ~MaterialRfile();
-
-  void set_material_properties(std::vector<Sarray> & rho, 
-			       std::vector<Sarray> & cs,
-			       std::vector<Sarray> & cp, 
-			       std::vector<Sarray> & xis, 
-			       std::vector<Sarray> & xip);
-
-  //  int get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,
-  //		       double& qs, double& qp );
-
-  //  void getMinMaxBoundsZ(double& zmin, double& zmax);
+  void perturb_velocities( std::vector<Sarray> & cs, std::vector<Sarray> & cp ); 
    
- protected:
+private:
+   void gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g, float_sw4 Lh, float_sw4 Lv, float_sw4 hurst );
+
+   void get_fourier_modes( std::complex<float_sw4>* uhat, int n1, int ib1, int n1g,
+			   int n2, int n3, float_sw4 l1, float_sw4 l2, float_sw4 l3, 
+			   float_sw4 hurst, unsigned int seed );
+   void rescale_perturbation();
+   template<class T> void redistribute_array( AllDims& src, AllDims& dest, T* src_array, T* dest_array );
+
   inline bool inside( float_sw4 x, float_sw4 y, float_sw4 z )
   {
     return m_xminloc <= x && x <= m_xmaxloc && m_yminloc <= y && y <= m_ymaxloc 
       && m_zminloc <= z && z <= m_zmaxloc;
   }
 
-   void read_rfile( );
-   void fill_in_fluids( );
-   int io_processor( );
-   void material_check( bool water );
-   
    EW* mEW;
 
-   std::string m_model_file, m_model_dir;
-
-   bool m_use_attenuation;
-
-   int m_npatches;
    // Index range of patch in file coordinate system
-   vector<int> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni, m_nj, m_nk;
+   int m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni, m_nj, m_nk;
+   int m_nig, m_njg, m_nkg;
 
   // file coordinate system is x=(i-1)*m_hx[gr] + m_xmin[gr], in SW4 coordinates.
-   vector<float_sw4> m_z0, m_hh, m_hv;
-   double m_x0, m_y0;
+   float_sw4  m_hh, m_hv, m_zmin, m_zmax, m_corrlen, m_corrlenz, m_hurst, m_sigma;
+ //   float_sw4 m_x0, m_y0;
+   unsigned int m_seed;
+   int m_nproc2d[2];
 
    // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in this processor.
    float_sw4 m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
    bool m_outside;
-   int m_bufsize;
 
 // 3-dimensional Sarrays
-   vector<Sarray> mMaterial;
-   vector<bool> m_isempty;
-   //   int m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
-   //   int m_nstenc;
-   //   double m_h, m_dlon, m_dlat;
-   //   int     m_ksed, m_kmoho, m_k410, m_k660;
-   //   double *m_lon, *m_lat, *m_x, *m_y;
-   //   double  m_vpmin, m_vsmin, m_rhomin;
-   //   string m_model_file, m_model_dir, m_model_name;
-   //   bool m_qf;
-   //   double m_latmin, m_latmax, m_lonmin, m_lonmax, m_depthmin, m_depthmax;
-   //   double m_xmin, m_xmax, m_ymin, m_ymax;
-   //   bool m_coords_geographic;
+   Sarray mRndMaterial;
+   bool m_isempty;
 };
 #endif

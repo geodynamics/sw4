@@ -8,8 +8,11 @@
   MKL_PATH = /usr/tce/packages/mkl/mkl-2018.0/lib
   EXTRA_LINK_FLAGS = -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
 
+#  EXTRA_CXX_FLAGS = -O
+#  EXTRA_FORT_FLAGS = -O
 # must load appropriate modules for hdf5-parallel library support
   HDF5ROOT   = ${HDF5}
+  FFTWHOME = /usr/workspace/wsa/wave/quartz
 
   debugdir := debug_quartz
   optdir := optimize_quartz

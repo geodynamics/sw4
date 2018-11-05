@@ -207,7 +207,7 @@ void SuperGrid::set_twilight( float_sw4 omega )
    m_tw_omega = omega;
 }
 
-void SuperGrid::set_eps( double new_eps )
+void SuperGrid::set_eps( float_sw4 new_eps )
 {
    m_epsL = new_eps;
 }

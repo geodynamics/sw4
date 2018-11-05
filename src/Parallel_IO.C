@@ -1533,7 +1533,7 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 }
 
 //-----------------------------------------------------------------------
-void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
+void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
 			      const char* typ, bool swap_bytes )
 {
 // Read array previously set up by constructing object.
@@ -1543,7 +1543,7 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 //        array - The data array, local in the processor
 //        pos0  - Start reading the array at this byte position in file.
 //        typ   - Type of data on disk, possible values are "float" or "double".
-//                Note, the returned array will always be of type double.
+//                Note, the returned array will always be of type float_sw4.
 //        swap_bytes - true  --> Byte order of read data is swapped (le --> be or vice versa)
 //                     false --> Read data is returned in the same byte order as data on disk.
 //                     `swap_bytes' is false by default.

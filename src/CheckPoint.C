@@ -56,7 +56,7 @@ CheckPoint::CheckPoint( EW* a_ew,
    mDoRestart(false),
    m_kji_order(true)
 {
-   m_double = sizeof(float_sw4)==8;
+   m_double = sizeof(float_sw4)==sizeof(double);
 }
 
 //-----------------------------------------------------------------------
@@ -77,7 +77,7 @@ CheckPoint::CheckPoint( EW* a_ew, string fname, size_t bufsize ) :
    mRestartPathSet(false),
    mDoRestart(true)
 {
-   m_double = sizeof(float_sw4)==8;
+   m_double = sizeof(float_sw4)==sizeof(double);
 }
 
 //-----------------------------------------------------------------------

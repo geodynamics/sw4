@@ -848,24 +848,24 @@ void EW::setupSBPCoeff()
   float_sw4 gh2; // this coefficient is also stored in m_ghcof[0]
   if (mVerbose >=2 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
-  if( m_croutines )
+//FTNC  if( m_croutines )
   {
      GetStencilCoefficients( m_acof, m_ghcof, m_bop, m_bope, m_sbop );
      bndryOpNoGhostc( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
   }
-  else
-  {
-// m_iop, m_iop2, m_bop2, m_hnorm never used in code, use local variables:
-     float_sw4 hnorm[4], gh2, iop[5], iop2[5], bop2[24];
-// get coefficients for difference approximation of 2nd derivative with variable coefficients
-     varcoeffs4(m_acof, m_ghcof);
-// get coefficients for difference approximation of 1st derivative
-     wavepropbop_4(iop, iop2, m_bop, bop2, &gh2, hnorm, m_sbop);
-// extend the definition of the 1st derivative tothe first 6 points
-     bopext4th(m_bop, m_bope);
-// NEW: setup stencils that do NOT use ghost points (for visco-elastic memory variables)
-     bndryOpNoGhost( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
-  }
+//FTNC  else
+//FTNC  {
+//FTNC// m_iop, m_iop2, m_bop2, m_hnorm never used in code, use local variables:
+//FTNC     float_sw4 hnorm[4], gh2, iop[5], iop2[5], bop2[24];
+//FTNC// get coefficients for difference approximation of 2nd derivative with variable coefficients
+//FTNC     varcoeffs4(m_acof, m_ghcof);
+//FTNC// get coefficients for difference approximation of 1st derivative
+//FTNC     wavepropbop_4(iop, iop2, m_bop, bop2, &gh2, hnorm, m_sbop);
+//FTNC// extend the definition of the 1st derivative tothe first 6 points
+//FTNC     bopext4th(m_bop, m_bope);
+//FTNC// NEW: setup stencils that do NOT use ghost points (for visco-elastic memory variables)
+//FTNC     bndryOpNoGhost( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
+//FTNC  }
 }
 
 
@@ -1081,9 +1081,20 @@ void EW::set_materials()
     }
     
 // add random perturbation
+//    cout << "randomize = " << m_randomize << " randblsize= " << m_random_blocks.size() << endl;
     if( m_randomize )
-       perturb_velocities( mMu, mLambda );
+    {
+       //  perturb_velocities( mMu, mLambda );
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+	  double zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];
+	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+	     m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], m_zmin[g], zmax );
 
+	  communicate_array( mMu[g], g );
+	  communicate_array( mLambda[g], g );
+       }
+    }
     convert_material_to_mulambda( );
     
     check_for_nan( mMu, 1,"mu ");       
@@ -1128,14 +1139,14 @@ void EW::set_materials()
      //  subroutine exactmatfort( ifirst, ilast, jfirst, jlast, kfirst, 
      // +     klast, rho, mu, la, omm, phm, amprho, ampmu, amplambda, h, 
      // +     zmin )
-	if( m_croutines )
+//FTNC	if( m_croutines )
 	   exactmatfort_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			    rho_ptr, mu_ptr, la_ptr, omm, phm, 
 			    amprho, ampmu, ampla, h, zmin );
-	else
-	   exactmatfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-			&klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-			&amprho, &ampmu, &ampla, &h, &zmin );
+//FTNC	else
+//FTNC	   exactmatfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC			&klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+//FTNC			&amprho, &ampmu, &ampla, &h, &zmin );
 // Need to communicate across material boundaries, why ?
 //	  communicate_array( mRho[g], g );
 //	  communicate_array( mMu[g], g );
@@ -1161,14 +1172,14 @@ void EW::set_materials()
 	  amprho = m_twilight_forcing->m_amprho;
 	  ampmu = m_twilight_forcing->m_ampmu;
 	  ampla = m_twilight_forcing->m_amplambda;
-	  if( m_croutines )
+//FTNC	  if( m_croutines )
 	     exactmatfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 			       klast, rho_ptr, mu_ptr, la_ptr, omm, phm, 
 			       amprho, ampmu, ampla, x_ptr, y_ptr, z_ptr );
-	  else
-	     exactmatfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-			   &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-			   &amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+//FTNC	  else
+//FTNC	     exactmatfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC			   &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+//FTNC			   &amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
 //   // Need this for Energy testing, random material will not agree on processor boundaries.
 // 	  communicate_array( mRho[g], g );
 // 	  communicate_array( mMu[g], g );
@@ -1322,8 +1333,11 @@ void EW::set_anisotropic_materials()
       if( topographyExists() )
       {
          int g=mNumberOfGrids-1;
-         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+         anisomtrltocurvilinear_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+//FTNC
+//         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
       }
    }// end if !m_testing, i.e., not Twilight
    else if (m_twilight_forcing) 
@@ -1366,12 +1380,12 @@ void EW::set_anisotropic_materials()
 
 // setup density (rho)
 // setup rho and stiffness matrix         
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    tw_ani_stiff_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
                      omm, phm, amprho, rho_ptr, phc, cm_ptr);
-	 else
-	    tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
-                     omm, phm, amprho, rho_ptr, phc, cm_ptr);
+//FTNC	 else
+//FTNC	    tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
+//FTNC                     omm, phm, amprho, rho_ptr, phc, cm_ptr);
          
 // also need rho
       }
@@ -1398,12 +1412,12 @@ void EW::set_anisotropic_materials()
 
          if (proc_zero() )
             printf("set_anisotropic_mat> before tw_ani_curvi_stiff\n");
-	 if( m_croutines )
+//FTNC	 if( m_croutines )
 	    tw_ani_curvi_stiff_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
                             omm, phm, amprho, rho_ptr, phc, cm_ptr);
-	 else
-	    tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
-                            omm, phm, amprho, rho_ptr, phc, cm_ptr);
+//FTNC	 else
+//FTNC	    tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
+//FTNC                            omm, phm, amprho, rho_ptr, phc, cm_ptr);
          if (proc_zero() )
             printf("set_anisotropic_mat> after tw_ani_curvi_stiff\n");
 
@@ -1414,8 +1428,10 @@ void EW::set_anisotropic_materials()
       if( topographyExists() )
       {
          int g=mNumberOfGrids-1;
-         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+         anisomtrltocurvilinear_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+//FTNC         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
       }
       
    } // end if m_twilight
@@ -1437,15 +1453,15 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
    {
       float_sw4* rho_ptr = rho[g].c_ptr();
       float_sw4* c_ptr = c[g].c_ptr();
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 checkanisomtrl_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 			    m_kStart[g], m_kEnd[g], rho_ptr, c_ptr,
 			    rhominloc, rhomaxloc, eigminloc, eigmaxloc );
-      else
-	 checkanisomtrl(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			&m_kStart[g], &m_kEnd[g],
-			rho_ptr, c_ptr,
-			&rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
+//FTNC      else
+//FTNC	 checkanisomtrl(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			&m_kStart[g], &m_kEnd[g],
+//FTNC			rho_ptr, c_ptr,
+//FTNC			&rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
       if( rhominloc < rhomin )
 	 rhomin = rhominloc;
       if( rhomaxloc > rhomax )
@@ -1694,14 +1710,14 @@ void EW::computeDTanisotropic()
       float_sw4* rho_ptr = mRho[g].c_ptr();
       float_sw4* c_ptr = mC[g].c_ptr();
       float_sw4 dtgrid;
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 computedtaniso2_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 			     m_kStart[g], m_kEnd[g],
 			     rho_ptr, c_ptr, mCFL, mGridSize[g], dtgrid );
-      else
-	 computedtaniso2( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			  &m_kStart[g], &m_kEnd[g],
-			  rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
+//FTNC      else
+//FTNC	 computedtaniso2( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			  &m_kStart[g], &m_kEnd[g],
+//FTNC			  rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
       if( dtgrid < dtproc )
 	 dtproc = dtgrid;
    }
@@ -1712,14 +1728,14 @@ void EW::computeDTanisotropic()
       float_sw4* c_ptr = mCcurv.c_ptr();
       float_sw4* jac_ptr = mJ.c_ptr();
       float_sw4 dtgrid;
-      if( m_croutines )
+//FTNC      if( m_croutines )
 	 computedtaniso2curv_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
 				 m_kStart[g], m_kEnd[g],
 				 rho_ptr, c_ptr, jac_ptr, mCFL, dtgrid );
-      else
-	 computedtaniso2curv( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-			      &m_kStart[g], &m_kEnd[g],
-			      rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
+//FTNC      else
+//FTNC	 computedtaniso2curv( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			      &m_kStart[g], &m_kEnd[g],
+//FTNC			      rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
       if( dtgrid < dtproc )
 	 dtproc = dtgrid;
    }
@@ -2316,7 +2332,7 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
       float_sw4* pert_ptr = pert.c_ptr();
       float_sw4* wgh_ptr = wgh.c_ptr();
 
-      if( m_croutines )
+//FTNC      if( m_croutines )
       {
 	 if( g == mNumberOfGrids-1 && topographyExists() )
 	 {
@@ -2337,27 +2353,27 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
 			     m_zmin[g], h, plimit );
 	 }
       }
-      else
-      {
-	 if( g == mNumberOfGrids-1 && topographyExists() )
-	 {
-	    randomfield3dc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			    &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
-			    &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
-	    perturbvelocityc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-			      mZ.c_ptr(), &plimit );
-	 }
-	 else
-	 {
-	    randomfield3d( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			   &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
-			   &m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
-	    perturbvelocity( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-			     vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-			     &m_zmin[g], &h, &plimit );
-	 }
-      }
+//FTNC      else
+//FTNC      {
+//FTNC	 if( g == mNumberOfGrids-1 && topographyExists() )
+//FTNC	 {
+//FTNC	    randomfield3dc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			    &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
+//FTNC			    &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
+//FTNC	    perturbvelocityc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
+//FTNC			      mZ.c_ptr(), &plimit );
+//FTNC	 }
+//FTNC	 else
+//FTNC	 {
+//FTNC	    randomfield3d( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
+//FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
+//FTNC	    perturbvelocity( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			     vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
+//FTNC			     &m_zmin[g], &h, &plimit );
+//FTNC	 }
+//FTNC      }
    }
 }
 

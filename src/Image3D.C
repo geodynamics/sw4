@@ -1002,7 +1002,7 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
       if( !usingParallelFS() || g == 0 )
 	 parallel_io[g]->writer_barrier();
       
-      double* doubleField = new double[nptsloc];
+      float_sw4* doubleField = new float_sw4[nptsloc];
       if( prec == 8 )
       {
 	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, "double" );
