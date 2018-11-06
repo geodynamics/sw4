@@ -1,7 +1,7 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no] [fftw=yes/no] [hdf5=yes/no]
-#   Default is: debug=no prec=double fortran=yes openmp=yes fftw=no hdf5=no
+# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no] [hdf5=yes/no] [fftw=yes/no]
+#   Default is: debug=no prec=double fortran=no openmp=yes hdf5=no fftw=no
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
@@ -10,7 +10,7 @@
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
-# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
+# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes). 
 #
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 #
@@ -82,8 +82,8 @@ else
       foundincfile := "configs/make.fourier"
    # for any other MacOS system
     else
-      include configs/make.osx
-      foundincfile := "configs/make.osx"
+       include configs/make.osx
+       foundincfile := "configs/make.osx"
     endif
   endif
 
