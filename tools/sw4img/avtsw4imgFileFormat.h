@@ -98,6 +98,7 @@ class avtsw4imgFileFormat : public avtSTMDFileFormat
     void Initialize();
     bool m_initialized;
     bool m_data_stored;
+    bool m_volimage;
     bool m_CartGrid;
 //    bool m_grid_stored; // not currently used
     double m_time;
