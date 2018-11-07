@@ -15,8 +15,8 @@ steps that we are trying to figure out, but for now this seems to work.
 
 2. Locate installed version of Visit, and set the environment variables for Visit top-level directory and plugin directory:
 
-    `export VISITARCHHOME=/Applications/VisIt.app/Contents/Resources/2.13.2/darwin-x86\_64`  
-    `export VISITPLUGININSTPRI=/Applications/VisIt.app/Contents/Resources/2.13.2/darwin-x86\_64/plugins`
+    `export VISITARCHHOME=/Applications/VisIt.app/Contents/Resources/2.13.2/darwin-x86_64`  
+    `export VISITPLUGININSTPRI=/Applications/VisIt.app/Contents/Resources/2.13.2/darwin-x86_64/plugins`
 
 3. Run `xml2cmake` (located in `$VISITARCHHOME/bin`):
 
