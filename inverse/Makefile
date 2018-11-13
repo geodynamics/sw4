@@ -120,14 +120,14 @@ else
 
 endif
 
-# openmp=no is default
-ifeq ($(openmp),yes)
+# openmp=yes is default
+ifeq ($(openmp),no)
+   CXXFLAGS += -DSW4_NOOMP
+else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
    CXXFLAGS += -fopenmp
    FFLAGS   += -fopenmp
-else
-   CXXFLAGS += -DSW4_NOOMP
 endif
 
 ifdef EXTRA_CXX_FLAGS
@@ -343,9 +343,9 @@ $(builddir)/%.o:src-sw4/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
-$(builddir)/%.o:src-opt/%.f
-	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+#$(builddir)/%.o:src-opt/%.f
+#	/bin/mkdir -p $(builddir)
+#	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src-sw4/%.C
 	/bin/mkdir -p $(builddir)
