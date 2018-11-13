@@ -270,8 +270,9 @@ void gradients( int nx, int  ny, int nz, float_sw4 xmin, float_sw4 ymin,
       float_sw4 z = (k-1)*hf + zmingrid;
       int kc = (z-zmin)/hz;
       float_sw4 wgx, wgy, wgz;
+      int t=0;
 #ifndef SW4_NOOMP
-      int t=omp_get_thread_num();
+      t=omp_get_thread_num();
 #endif
       if( kc<0 )
       {
