@@ -222,7 +222,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 // Old   
 //   simulation.parameters_to_material( nmpar, xm, rho, mu, lambda );
 
-
 // Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
 // inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
 // when reconstructing U backwards.
@@ -1029,7 +1028,7 @@ int main(int argc, char **argv)
 	   if( myRank == 0 )
 	   {
 	      cout << "============================================================" << endl
-		   << " sw4opt ( Material/Source estimation solver) finished! " << endl
+		   << " sw4mopt ( Material/Source estimation solver) finished! " << endl
 		   << "============================================================" << endl;
 	   }
 	}
