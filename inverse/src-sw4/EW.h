@@ -39,6 +39,7 @@
 #include <vector>
 #include <fstream>
 #include <list>
+#include <map>
 
 #include "sw4.h"
 
@@ -76,44 +77,45 @@ using namespace std;
 class EW 
 {
 public:
-EW(const string& name, vector<Source*> & a_GlobalUniqueSources, 
-   vector<TimeSeries*> & a_GlobalTimeSeries, bool invproblem=false );
+   EW(const string& name, vector<vector<Source*> > & a_GlobalUniqueSources, 
+      vector<vector<TimeSeries*> > & a_GlobalTimeSeries, bool invproblem=false );
 ~EW();
 bool wasParsingSuccessful();
 bool isInitialized();
 
 void set_output_options( bool output_load, bool output_detailed_timing );
 void setGMTOutput(string filename, string wppfilename);
-void saveGMTFile( vector<Source*> & a_GlobalUniqueSources );
+void saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int event );
 void allocateCartesianSolverArrays(float_sw4 a_global_zmax);
-void setGoalTime(float_sw4 t);
+void setGoalTime(float_sw4 t,int event=0);
 //double getCurrentTime(){return mTime;}
+void setNumberSteps(int steps,int event=0); // remove???
+int getNumberOfSteps(int event=0) const;
+int getNumberOfEvents() const;
+int findNumberOfEvents();
 
-void setNumberSteps(int steps); // remove???
-int getNumberOfSteps() const;
-
-void setupRun( vector<Source*> & a_GlobalUniqueSources );
+void setupRun( vector<vector<Source*> > & a_GlobalUniqueSources );
 
 void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries,
 	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides );
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event );
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
-void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
-		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
-		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
-		    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides );
+   //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+   //		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
+   //		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
+   //		    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides );
 
 void solve_backward_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
 		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
 		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
-			     vector<DataPatches*>& Ucorr_saved_sides, float_sw4 gradients[11], 
-			     vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
+		    vector<DataPatches*>& Ucorr_saved_sides, float_sw4 gradients[11], 
+		    vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda, int event );
    //int nmpar, float_sw4* gradientm );
 
-bool parseInputFile( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries );
+   bool parseInputFile( vector<vector<Source*> > & a_GlobalSources, vector<vector<TimeSeries*> > & a_GlobalTimeSeries );
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
 		int& second, int& msecond, int& fail );
 
@@ -140,8 +142,8 @@ void processTestRayleigh(char* buffer);
 void processTestLamb(char* buffer);
 void processTestEnergy(char* buffer);
 bool checkTestEnergyPeriodic(char* buffer);
-void processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources);
-void processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources);
+void processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
+void processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
 void processMaterial( char* buffer );
 void processMaterialIfile( char* buffer );
 void processMaterialBlock( char* buffer, int & blockCount );
@@ -151,8 +153,8 @@ void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
-void processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
-void processObservation(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries);
+void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+void processObservation(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 void processPrefilter(char* buffer);
 void processGMT(char* buffer);
@@ -165,6 +167,7 @@ void processRandomBlock(char* buffer);
 void processCheckPoint(char* buffer);
 void processGeodynbc(char* buffer);
 
+void processEvent( char* buffer, int enr );
 //void getEfileInfo(char* buffer);
 
 void side_plane( int g, int side, int wind[6], int nGhost );
@@ -179,7 +182,7 @@ void setDebugIO(bool onoff) { mDebugIO = onoff; }
 //void setDampingCFL(float_sw4 d4_cfl) { m_d4_cfl = d4_cfl; }
 
 void printTime(int cycle, float_sw4 t, bool force=false ) const;
-void printPreamble(vector<Source*> & a_Sources) const;
+void printPreamble(vector<Source*> & a_Sources,int event) const;
 void switch_on_checkfornan();
 void switch_on_error_log();
 void set_energylog( string logfile, bool print, bool elog );
@@ -290,7 +293,7 @@ void create_directory(const string& path);
 void initialize_image_files();
 void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um,
 		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		    vector<Source*> & a_sources, int dminus );
+		    vector<Source*> & a_sources, int dminus, int event=0 );
 
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
@@ -302,8 +305,8 @@ void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;
 int mkdirs(const string& path);
 void setOutputPath(const string& path);
-const string& getOutputPath() { return mPath; }; // Consider getPath instead! This function has caused grief in the past
-const string& getObservationPath() { return mObsPath; };
+const string& getOutputPath(int event=0) { return mPath[event]; }; // Consider getPath instead! This function has caused grief in the past
+const string& getObservationPath(int event) { return mObsPath[event]; };
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions
    boundaryConditionType getLocalBcType(int g, int side){return m_bcType[g][side]; };
@@ -405,9 +408,9 @@ void computeCartesianCoord(double &x, double &y, double lon, double lat);
 void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
 
 void initializeSystemTime();
-void compute_epicenter( vector<Source*> & a_GlobalUniqueSources );
-void set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth, float_sw4 earliestTime); 
-void get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth, float_sw4 &earliestTime); 
+void compute_epicenter( vector<Source*> & a_GlobalUniqueSources, int event=0 );
+void set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth, float_sw4 earliestTime,int e=0); 
+void get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth, float_sw4 &earliestTime, int e=0); 
    
 // void update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, float_sw4 t,
 // 			   vector<Sarray*> &AlphaVE );
@@ -541,7 +544,7 @@ void bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
 void integrate_source( );
 
 void compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
-		     vector<Sarray>& U, vector<Sarray>& Up, int step );
+		     vector<Sarray>& U, vector<Sarray>& Up, int step, int event );
 
 float_sw4 scalarProduct( vector<Sarray>& U, vector<Sarray>& V);
 void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
@@ -572,7 +575,7 @@ float_sw4 getMetersPerDegree(){ return mMetersPerDegree;};
 bool usingParallelFS(){ return m_pfs;};
 int getNumberOfWritersPFS(){ return m_nwriters;};
 float_sw4 getTimeStep() const {return mDt;};
-int getNumberOfTimeSteps() const {return mNumberOfTimeSteps;};
+int getNumberOfTimeSteps(int event=0) const {return mNumberOfTimeSteps[event];};
 int getNumberOfMechanisms() const {return m_number_mechanisms;};
 
  // test point source
@@ -603,9 +606,9 @@ double G2_Integral(double iT, double it, double ir, double ibeta);
 
 void getGlobalBoundingBox(float_sw4 bbox[6]);
 
-string getPath(){ return mPath; }
+string getPath(int event=0){ return mPath[event]; }
 void set_utcref( TimeSeries& ts );
-void print_utc();
+void print_utc( int event=0 );
 
    // For inverse problem
 void processCG(char* buffer );
@@ -643,7 +646,7 @@ void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um,
 		  vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
 
 void get_optmethod( int& method, int& bfgs_m );
-void get_utc( int utc[7] ) const;
+void get_utc( int utc[7], int event=0 ) const;
 
 void perturb_mtrl();
 void perturb_mtrl( int peri, int perj, int perk, float_sw4 h, int grid, int var );
@@ -1278,10 +1281,15 @@ Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 private:
-void preprocessSources( vector<Source*> & a_GlobalSources );
+void preprocessSources( vector<vector<Source*> >& a_GlobalSources );
 void revvector( int npts, float_sw4* v );
+
+int m_nevent; // Number of events, needed for multiple event material optimization.
+int m_nevents_specified; // Number of event lines in input file
+map<string,int> m_event_names;
+
 // epicenter
-float_sw4 m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
+vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0; //Nevent
 
    //PJ *m_projection;
    //float_sw4 m_xoffset, m_yoffset;
@@ -1300,8 +1308,7 @@ vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;
 // index convention: [0]: low-x, [1]: high-x, [2]: low-y, [3]: high-y; [4]: low-z, [5]: high-z  
 boundaryConditionType mbcGlobalType[6]; // these are the boundary conditions for the global problem
 vector<boundaryConditionType*> m_bcType;  // these are the boundary conditions for each grid on the local processor, with bProcessor conditions
-float_sw4 mTstart;
-float_sw4 mDt;
+
 EtreeFile * mEtreeFile;
 
 bool m_doubly_periodic;
@@ -1332,7 +1339,7 @@ float_sw4 m_zetaBreak;
 // metric of the curvilinear grid
 float_sw4 m_minJacobian, m_maxJacobian;
 
-string m_scenario;
+   string m_scenario; //Nevent
 
 // command limitfrequency
 float_sw4 m_frequency_limit;
@@ -1354,7 +1361,8 @@ bool m_use_sg_width; // use width instead of gp
 vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;
 vector<SuperGrid> m_supergrid_taper_z;
 
-string mPath, mObsPath, mTempPath;
+vector<string> mPath, mObsPath;//Nevent?
+string mTempPath;
 
 // number of boundary points on each side
 vector<int *> m_NumberOfBCPoints;
@@ -1425,16 +1433,19 @@ bool mCompareSACFiles;
 float mSACFileErrorTolerance;
 
 // Image file info
-vector<Image*> mImageFiles;
+vector<Image*> mImageFiles; 
 vector<Image3D*> mImage3DFiles;
-vector<ESSI3D*> mESSI3DFiles;
+vector<ESSI3D*> mESSI3DFiles; 
 bool m_iotiming;
 
 // time data
-bool mTimeIsSet;
-float_sw4 mTmax;
 
-int mNumberOfTimeSteps;
+float_sw4 mTstart;
+float_sw4 mDt;
+
+vector<bool> mTimeIsSet;
+vector<float_sw4> mTmax; 
+vector<int> mNumberOfTimeSteps;
 
 // Test modes
 int m_update_boundary_function;
@@ -1586,7 +1597,7 @@ bool m_topography_exists;
 
 // UTC time corresponding to simulation time 0.
 //bool m_utc0set, m_utc0isrefevent;
-   int m_utc0[7];
+   vector<vector<int> > m_utc0; //Nevent?
 
 // Error handling facility
 //ErrorChecking* m_error_checking;

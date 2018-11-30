@@ -42,7 +42,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
-   		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides )
+   		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
+		int event )
 {
 // solution arrays
    vector<Sarray> F, Lu, Uacc, Up;
@@ -159,7 +160,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	 if( !mQuiet && mVerbose >= 5 && proc_zero() )
 	    cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
 	       Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
-	 if( proc_zero() )
+	 if( !mQuiet && proc_zero() && mVerbose >= 3 )
 	    cout << "Maximum temporary file size on grid " << g << " is " << maxsize << " doubles for each time step "<<endl;
       }
    }
@@ -168,7 +169,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 #pragma omp parallel for
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
-     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
+     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
      // In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
      //     if( m_utc0set )
@@ -237,14 +238,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        
 //building the file name...
        string filename;
-       if( mPath != "." )
-	 filename += mPath;
+       if( mPath[event] != "." )
+	 filename += mPath[event];
        filename += "g1.dat";	 
 
        FILE *tf=fopen(filename.c_str(),"w");
        float_sw4 t;
        float_sw4 gt, gt1, gt2;
-       for (int i=0; i<=mNumberOfTimeSteps; i++)
+       for (int i=0; i<=mNumberOfTimeSteps[event]; i++)
        {
 	 //           for( int sb=0 ; sb < 10 ; sb++ )
 	 //	   {
@@ -264,7 +265,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   {
     cout << endl << "***  Starting solve ***" << endl;
   }
-  printPreamble(a_Sources);
+  printPreamble(a_Sources,event);
 
   
 // Set up timers
@@ -445,16 +446,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
   update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath, mZ );
+    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
 
   for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath, mZ );
+    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ );
 
   FILE *lf=NULL;
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
-    string path=getPath();
+    string path=getPath(event);
 
     stringstream fileName;
     if( path != "." )
@@ -472,7 +473,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   }
     
 // output flags and settings that affect the run
-  if( proc_zero() && mVerbose >= 1 )
+  if( !mQuiet && proc_zero() && mVerbose >= 1 )
   {
     printf("\nReporting SW4 internal flags and settings:\n");
     printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
@@ -516,7 +517,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if ( !mQuiet && proc_zero() )
     cout << endl << "  Begin time stepping..." << endl;
 
-  for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
+  for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++)
   {    
     if( m_output_detailed_timing )
       time_measure[0] = MPI_Wtime();
@@ -835,7 +836,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     t += mDt;
 
 // periodically, print time stepping info to stdout
-    printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
+    printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event] ); 
     //    printTime( currentTimeStep, t, true ); 
 
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
@@ -843,15 +844,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
-    update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps );
+    update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
-				       mQp, mQs, mPath, mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
+				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp=MPI_Wtime();
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath, mZ );
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ );
     double time_essi=MPI_Wtime()-time_essi_tmp;
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
@@ -910,7 +911,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_energy_test )
-       compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps, Um, U, Up, currentTimeStep  );
+       compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U, Up, currentTimeStep, event );
 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);

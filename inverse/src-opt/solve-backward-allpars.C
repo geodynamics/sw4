@@ -1,16 +1,17 @@
 #include "EW.h"
 #include "F77_FUNC.h"
 
-extern "C" {
-   void F77_FUNC(hdirichlet5,HDIRICHLET5)( int*, int*, int*, int*, int*, int*, int*, int*,
-					   int*, int*, int*, int*, double* );
-}
+//extern "C" {
+   //   void F77_FUNC(hdirichlet5,HDIRICHLET5)( int*, int*, int*, int*, int*, int*, int*, int*,
+   //					   int*, int*, int*, int*, double* );
+   //}
 
 void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
 				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
-				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda )
+				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, 
+				 vector<Sarray>& gLambda, int event )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
@@ -109,7 +110,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       Kp[g].set_to_zero();
       K[g].set_to_zero();
    }
-   double t = mDt*(mNumberOfTimeSteps-1);
+   double t = mDt*(mNumberOfTimeSteps[event]-1);
    int beginCycle = 1;
 
    double time_measure[8];
@@ -121,7 +122,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 //	   a_TimeSeries[ts]->writeFile();
 
    // Backward time stepping loop
-   for( int currentTimeStep = mNumberOfTimeSteps ; currentTimeStep >= beginCycle; currentTimeStep-- )
+   for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
       time_measure[0] = MPI_Wtime();
       evalRHS( K, a_Mu, a_Lambda, Lk, AlphaVE );
@@ -240,7 +241,17 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       tmp[1] = umx[1];
       tmp[2] = umx[2];
       MPI_Allreduce( tmp, umx, 3, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator );
-      if( m_myRank == 0 )
+      float_sw4 mxnorm = upmx[0];
+      mxnorm = mxnorm > upmx[1] ? mxnorm : upmx[1];
+      mxnorm = mxnorm > upmx[2] ? mxnorm : upmx[2];
+      mxnorm = mxnorm >  umx[0] ? mxnorm :  umx[0];
+      mxnorm = mxnorm >  umx[1] ? mxnorm :  umx[1];
+      mxnorm = mxnorm >  umx[2] ? mxnorm :  umx[2];
+
+      if( mxnorm > 1e-8 && m_myRank == 0 )
+	 cout << "WARNING: maximum norm of backed out initial data is " << mxnorm << endl;
+      
+      if( !mQuiet && m_myRank == 0 && mVerbose >= 3 )
       {
          cout << "Grid nr. " << g << ": " << endl;
 	 cout << "   Max norm of backed out U  = " << upmx[0] <<  " " << upmx[1] <<  " " << upmx[2] << endl;
@@ -257,7 +268,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   gLambda[0].save_to_disk("glambda.bin");
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath, mZ );
+       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[event], mZ );
 
     for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
     {

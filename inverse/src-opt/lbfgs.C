@@ -14,23 +14,24 @@
 using namespace std;
 
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		vector<Source*>& GlobalSources,
-		vector<TimeSeries*>& GlobalTimeSeries,
-		vector<TimeSeries*>& GlobalObservations,
+		vector<vector<Source*> >& GlobalSources,
+		vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		vector<vector<TimeSeries*> >& GlobalObservations,
 		double& mf, MaterialParameterization* mp );
 
 void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		       vector<Source*>& GlobalSources,
-		       vector<TimeSeries*>& GlobalTimeSeries,
-		       vector<TimeSeries*>& GlobalObservations, 
+		       vector<vector<Source*> >& GlobalSources,
+		       vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		       vector<vector<TimeSeries*> >& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
                        Mopt *mopt, int it=-1 );
 //		       MaterialParameterization* mp, vector<Image*>& images,
 //		       bool mcheck=false, bool output_ts=false ); 
 
 //-----------------------------------------------------------------------
-void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
-		     vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
+void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
+		     vector<vector<TimeSeries*> >& GlobalTimeSeries, 
+		     vector<vector<TimeSeries*> >& GlobalObservations,
 		     int nspar, int nmpars, double* xs, int nm, double* xm, double* ps, double* pm,
 		     double* xsnew, double* xmnew, double f, double* dfsnew, double* dfmnew,
 		     double& lambda, double maxstep, double minlambda, double cglen, double alpha,
@@ -164,8 +165,9 @@ void wolfecondition( EW& simulation, vector<Source*>& GlobalSources,
 }
 
 //-----------------------------------------------------------------------
-void linesearch( EW& simulation, vector<Source*>& GlobalSources,
-		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
+void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
+		 vector<vector<TimeSeries*> >& GlobalTimeSeries, 
+		 vector<vector<TimeSeries*> >& GlobalObservations,
 		 int nspar, int nmpars, double* xs, int nm, double* xm, double f, double* dfs,
 		 double* dfm, double* ps, double* pm, double cgstep, double maxstep, double steptol,
 		 double* xsnew, double* xmnew, double& fnew, double* sfs, double* sfm,
@@ -510,9 +512,9 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 //-----------------------------------------------------------------------
 void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, 
             double* typxs, int nmpard, double* xm, double* sfm, double* typxd,
-	    vector<Source*>& GlobalSources,
-	    vector<TimeSeries*>& GlobalTimeSeries,
-	    vector<TimeSeries*> & GlobalObservations,
+	    vector<vector<Source*> >& GlobalSources,
+	    vector<vector<TimeSeries*> >& GlobalTimeSeries,
+	    vector<vector<TimeSeries*> >& GlobalObservations,
 	    int myRank, Mopt* mopt )
 
 //            MaterialParameterization* mp, int maxit, double tolerance,
@@ -558,6 +560,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    double* dfm;
    bool testing=false;
    int nreductions = 0;
+   int verbose = 0;
    bool hscale = (mopt->m_ihess_guess == 1);
    int maxit = mopt->m_maxit, m=mopt->m_nbfgs_vectors;
    bool dolinesearch=mopt->m_dolinesearch;
@@ -575,12 +578,12 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    
    FILE *fd;
    FILE *fdx;
-   const string parfile = simulation.getOutputPath() + "parameters.bin";
+   const string parfile = mopt->m_path + "parameters.bin";
    if( myRank == 0 )
    {
-      const string convfile = simulation.getOutputPath() + "convergence.log";
+      const string convfile = mopt->m_path + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
-      const string parafile = simulation.getOutputPath() + "parameters.log";
+      const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
    }
@@ -906,7 +909,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
          sc[0] += dssave[i]*dfs[i];
          sc[1] += dssave[i]*dfps[i];
       }
-      if( myRank == 0 )
+      if( verbose >= 2 &&  myRank == 0 )
 	 cout << "Wolfe condition " <<  sc[1] << " " << sc[0] << " quotient " << sc[1]/sc[0] << " should be >= beta " << endl;
 
       rnorm = 0;

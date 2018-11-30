@@ -52,7 +52,7 @@ public:
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
 TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
-	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true );
+	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true, int event=0 );
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep );
@@ -204,6 +204,8 @@ float_sw4 m_scalefactor;
 // pointer to EW object
    EW * m_ew;
 
+// Event no. (in case of multiple events)
+   int m_event;
 };
 
 

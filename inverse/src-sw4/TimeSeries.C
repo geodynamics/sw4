@@ -53,14 +53,14 @@ void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& 
 		int& second, int& msecond, int& fail );
 
 TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
-			float_sw4 x, float_sw4 y, float_sw4 depth, bool topoDepth, int writeEvery, bool xyzcomponent ):
+			float_sw4 x, float_sw4 y, float_sw4 depth, bool topoDepth, int writeEvery, bool xyzcomponent, int event ):
   m_ew(a_ew),
   m_mode(mode),
   m_nComp(0),
   m_myPoint(false),
   m_fileName(fileName),
   m_staName(staName),
-  m_path(a_ew->getPath()),
+  m_path(a_ew->getPath(event)),
   mX(x),
   mY(y),
   mZ(depth),
@@ -107,7 +107,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_z(true),
   mQuietMode(false),
   mIsRestart(false),
-  m_compute_scalefactor(true)
+  m_compute_scalefactor(true),
+  m_event(event)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
@@ -449,7 +450,7 @@ void TimeSeries::writeFile( string suffix )
      filePrefix << m_fileName << suffix.c_str() << "." ;
   
 // get the epicenter from EW object (note that the epicenter is not always known when this object is created)
-  m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset );
+  m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_event );
   
   stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
   
@@ -1095,11 +1096,12 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 //building the file name...
 // 
    stringstream filePrefix;
-   if( ew->getObservationPath() != "./" )
-      filePrefix << ew->getObservationPath();
+   if( ew->getObservationPath(m_event) != "./" )
+      filePrefix << ew->getObservationPath(m_event);
    else if( mIsRestart )
       filePrefix << ew->getPath() << "/";
    filePrefix << m_fileName << ".txt" ;
+
 
    if( m_myPoint && m_usgsFormat )
    {
@@ -1743,7 +1745,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
       filename = m_fileName + filename;
 
    TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat,
-					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent );
+					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;
    retval->m_shift = m_shift;
@@ -2252,11 +2254,11 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 			       const char* sac2, const char* sac3, bool ignore_utc )
 {
    string file1, file2, file3;
-   if( ew->getObservationPath() != "./" )
+   if( ew->getObservationPath(m_event) != "./" )
    {
-      file1 += ew->getObservationPath();
-      file2 += ew->getObservationPath();
-      file3 += ew->getObservationPath();
+      file1 += ew->getObservationPath(m_event);
+      file2 += ew->getObservationPath(m_event);
+      file3 += ew->getObservationPath(m_event);
    }
    file1 += sac1;
    file2 += sac2;
@@ -2596,7 +2598,7 @@ void TimeSeries::convertjday( int jday, int year, int& day, int& month )
 //-----------------------------------------------------------------------
 void TimeSeries::set_utc_to_simulation_utc()
 {
-   m_ew->get_utc(m_utc);
+   m_ew->get_utc(m_utc,m_event);
    m_shift += m_t0;
    m_t0 = 0;
 }

@@ -509,6 +509,7 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 			 vector<Sarray>& a_lambda, int& ok )
 {
    ok = 1;
+   int verbose=0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       int infogrid;
@@ -558,7 +559,7 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       limits[5]=global[2];
       limits[6]=global[3];
       limits[9]=global[4];
-      if( proc_zero() )
+      if( proc_zero() && verbose > 1 )
       {
          cout << limits[0] << " <=   rho    <= " << limits[1] << " (grid " << g << ")" << endl;
          cout << limits[2] << " <=    mu    <= " << limits[3] << " (grid " << g << ")" << endl;

@@ -17,9 +17,9 @@
 
 void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, double* typxs,
 	    int nmpard, double* xm, double* sfm, double* typxd,
-	    vector<Source*>& GlobalSources,
-	    vector<TimeSeries*>& GlobalTimeSeries,
-	    vector<TimeSeries*> & GlobalObservations,
+	    vector<vector<Source*> >& GlobalSources,
+	    vector<vector<TimeSeries*> >& GlobalTimeSeries,
+	    vector<vector<TimeSeries*> >& GlobalObservations,
 	    int myRank, Mopt* mopt );
 // MaterialParameterization* mp, int maxit, double tolerance,
 //	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck, bool output_ts,
@@ -27,9 +27,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, doubl
 
 void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
 	   int nmpard, double* xm, double* sfm, 
-	   vector<Source*>& GlobalSources,
-	   vector<TimeSeries*>& GlobalTimeSeries,
-	   vector<TimeSeries*> & GlobalObservations,
+	   vector<vector<Source*> >& GlobalSources,
+	   vector<vector<TimeSeries*> >& GlobalTimeSeries,
+	   vector<vector<TimeSeries*> >& GlobalObservations,
 	   int myRank, Mopt* mopt );
 	   //	   MaterialParameterization* mp,
 	   //	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
@@ -98,9 +98,9 @@ void get_source_pars( int nspar, double srcpars[11], double* xs )
 //-----------------------------------------------------------------------
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		int nmpard, double* xm,
-		vector<Source*>& GlobalSources,
-		vector<TimeSeries*>& GlobalTimeSeries,
-		vector<TimeSeries*>& GlobalObservations,
+		vector<vector<Source*> >& GlobalSources,
+		vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		vector<vector<TimeSeries*> >& GlobalObservations,
 		double& mf, MaterialParameterization* mp )
 //-----------------------------------------------------------------------
 // Compute misfit.
@@ -122,14 +122,15 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 //         mf               - The misfit.
 //-----------------------------------------------------------------------
 {
-   vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy(" ");
+   // Source optimization
+   //   vector<Source*> src(1);
+   //   src[0] = GlobalSources[0][0]->copy(" ");
+   //   // fetch all 11 source parameters, and merge in the unknowns
+   //   double srcpars[11];
+   //   src[0]->get_parameters( srcpars );
+   //   set_source_pars( nspar, srcpars, xs );
+   //   src[0]->set_parameters( srcpars );
 
-   // fetch all 11 source parameters, and merge in the unknowns
-   double srcpars[11];
-   src[0]->get_parameters( srcpars );
-   set_source_pars( nspar, srcpars, xs );
-   src[0]->set_parameters( srcpars );
 
 // Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
    int ng = simulation.mNumberOfGrids;
@@ -148,14 +149,17 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 // when reconstructing U backwards.
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
    vector<Sarray> U(ng), Um(ng);
-   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false );
+   mf = 0;
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   {
+   //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
+      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
 
 // Compute misfit
-   mf = 0;
-   double dshift, ddshift, dd1shift;
-   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      mf += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], NULL, dshift, ddshift, dd1shift );
-
+      double dshift, ddshift, dd1shift;
+      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	 mf += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], NULL, dshift, ddshift, dd1shift );
+   }
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
@@ -165,15 +169,15 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       delete upred_saved[g];
       delete ucorr_saved[g];
    }
-   delete src[0];
+   //   delete src[0];
 }
 
 //-----------------------------------------------------------------------
 void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 		       int nmpard, double* xm,
-		       vector<Source*>& GlobalSources,
-		       vector<TimeSeries*>& GlobalTimeSeries,
-		       vector<TimeSeries*>& GlobalObservations, 
+		       vector<vector<Source*> >& GlobalSources,
+		       vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		       vector<vector<TimeSeries*> >& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
                        Mopt* mopt, int it=-1 )
 
@@ -203,14 +207,16 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 //-----------------------------------------------------------------------
 {
    int verbose = 0;
-   vector<Source*> src(1);
-   src[0] = GlobalSources[0]->copy(" ");
 
-   // fetch all 11 source parameters, and merge in the unknowns
-   double srcpars[11];
-   src[0]->get_parameters( srcpars );
-   set_source_pars( nspar, srcpars, xs );
-   src[0]->set_parameters( srcpars );
+   // source optimization
+   //   vector<Source*> src(1);
+   //   src[0] = GlobalSources[0]->copy(" ");
+
+   //   // fetch all 11 source parameters, and merge in the unknowns
+   //   double srcpars[11];
+   //   src[0]->get_parameters( srcpars );
+   //   set_source_pars( nspar, srcpars, xs );
+   //   src[0]->set_parameters( srcpars );
 
 // Translate one-dimensional parameter vector (xm,xs) to material data (rho,mu,lambda)
    int ng = simulation.mNumberOfGrids;
@@ -230,22 +236,48 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 // when reconstructing U backwards.
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
    vector<Sarray> U(ng), Um(ng);
-   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
-   //   simulation.solve_allpars( src, rho, mu, lambda, GlobalTimeSeries, U, Um, upred_saved, ucorr_saved, true );
-// Compute misfit, 'diffs' will hold the source for the adjoint problem
-   vector<TimeSeries*> diffs;
-   for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-   {
-      if( mopt->m_output_ts && it >= 0 )
-         GlobalTimeSeries[m]->writeFile();
-      TimeSeries *elem = GlobalTimeSeries[m]->copy( &simulation, "diffsrc" );
-      diffs.push_back(elem);
-   }
+   vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
    f = 0;
-   double dshift, ddshift, dd1shift;
-   for( int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      f += GlobalTimeSeries[m]->misfit( *GlobalObservations[m], diffs[m], dshift, ddshift, dd1shift );
+   float_sw4* dfsevent = new float_sw4[nmpars];
+   for( int m=0 ; m < nmpars ; m++ )
+      dfs[m+nspar] = 0;
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   {
+      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e );
 
+   //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
+
+// Compute misfit, 'diffs' will hold the source for the adjoint problem
+
+// 1. Copy computed time series into diffs[m]
+      vector<TimeSeries*> diffs;
+      for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+      {
+	 if( mopt->m_output_ts && it >= 0 )
+	    GlobalTimeSeries[e][m]->writeFile();
+	 TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
+	 diffs.push_back(elem);
+      }
+// 2. misfit function also updates diffs := this - observed
+      double dshift, ddshift, dd1shift;
+      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	 f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+
+      double dfsrc[11];
+      get_source_pars( nspar, dfsrc, dfs );   
+
+      simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
+
+      //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfm, gRho, gMu, gLambda );
+      for( int m=0 ; m < nmpars ; m++ )
+	 dfs[m+nspar] += dfsevent[m];
+
+// 3. Give back memory
+      for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	 delete diffs[m];
+      diffs.clear();
+   }
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    if( myrank == 0 && verbose >= 1 )
@@ -253,17 +285,23 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       cout.precision(16);  
       cout << " Misfit is = " << f << endl;
    }
-// Get gradient by solving the adjoint problem:
-// Old
-//   simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfs, nmpar, dfm );
 
-// New
-   double dfsrc[11];
-   vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
-   simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda );
-   get_source_pars( nspar, dfsrc, dfs );   
-   mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
+// Get gradient by solving the adjoint problem:
+//   double dfsrc[11];
+   //   vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
+   //   simulation.solve_backward_allpars( src, rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda );
+   //   get_source_pars( nspar, dfsrc, dfs );   
+   //   mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
    
+// Give back memory
+   delete[] dfsevent;
+   for( unsigned int g=0 ; g < ng ; g++ )
+   {
+      delete upred_saved[g];
+      delete ucorr_saved[g];
+   }
+   //   delete src[0];
+
    if( it >= 0 )
       for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
       {
@@ -291,23 +329,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	       image->compute_image_gradp( gLambda, mu, lambda, rho );
 	    else if(image->mMode == Image::GRADS )
 	       image->compute_image_grads( gMu, gLambda, mu, rho );
-	    string path = simulation.getOutputPath();
-	    image->writeImagePlane_2( it, path, 0 );
+	    //	    string path = simulation.getOutputPath();
+	    //	    image->writeImagePlane_2( it, path, 0 );
+	    image->writeImagePlane_2( it, mopt->m_path, 0 );
 	 }
       }
-
-// diffs no longer needed, give back memory
-   for( unsigned int m = 0 ; m < GlobalTimeSeries.size() ; m++ )
-      delete diffs[m];
-   diffs.clear();
-
-// Give back memory
-   for( unsigned int g=0 ; g < ng ; g++ )
-   {
-      delete upred_saved[g];
-      delete ucorr_saved[g];
-   }
-   delete src[0];
 }
 
 
@@ -332,8 +358,10 @@ void restrict( int active[6], int wind[6], double* xm, double* xmi )
 }
 
 //-----------------------------------------------------------------------
-void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSeries*>& GlobalTimeSeries,
-		   vector<TimeSeries*>& GlobalObservations, int nspar, int nmpars, double* xs, int nmpard, double* xm,
+void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources, 
+		    vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		    vector<vector<TimeSeries*> >& GlobalObservations, 
+		    int nspar, int nmpars, double* xs, int nmpard, double* xm,
 		    //		    int myRank, MaterialParameterization* mp, double* sf, double* sfm )
 		    int myRank, Mopt* mopt, double* sf, double* sfm )
 {
@@ -366,7 +394,8 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
    std::ofstream dftest;
    if( (ns>0 || nmpard_global > 0) && myRank == 0 )
    {
-      string fname = simulation.getOutputPath()+"GradientTest.txt";
+      //      string fname = simulation.getOutputPath()+"GradientTest.txt";
+      string fname = mopt->m_path+"GradientTest.txt";
       dftest.open(fname.c_str());
    }
    if( ns>0 )
@@ -430,8 +459,10 @@ void gradient_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeS
 }
 
 //-----------------------------------------------------------------------
-void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSeries*>& GlobalTimeSeries,
-		   vector<TimeSeries*>& GlobalObservations, int nspar, int nmpars, double* xs, int nmpard, double* xm,
+void hessian_test( EW& simulation, vector<vector<Source*> >& GlobalSources, 
+		   vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		   vector<vector<TimeSeries*> >& GlobalObservations, 
+		   int nspar, int nmpars, double* xs, int nmpard, double* xm,
 		   //		   int myRank, MaterialParameterization* mp, double* sf, double* sfm )
 		   int myRank, Mopt* mopt, double* sf, double* sfm )
 {
@@ -483,7 +514,8 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
       }
       if( myRank == 0 )
       {
-	 string fname = simulation.getOutputPath()+"hessian.bin";
+	 //	 string fname = simulation.getOutputPath()+"hessian.bin";
+	 string fname = mopt->m_path+"hessian.bin";
 	 int fid = open( fname.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
 	 if (fid == -1 )
 	 {
@@ -504,7 +536,8 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
 	 close(fid);
 	 if( ascii_output )
 	 {
-	    fname = simulation.getOutputPath()+"Hessian.txt";
+	    //	    fname = simulation.getOutputPath()+"Hessian.txt";
+	    fname = mopt->m_path+"Hessian.txt";
 	    ofstream htest(fname.c_str());
 	    for( int i=0 ; i < ns ; i++ )
 	    {
@@ -577,7 +610,8 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
 
       Parallel_IO* pio = new Parallel_IO(1,1,globsize,locsize,start,nptsbuf,0);
       int fid;
-      string fname = simulation.getOutputPath()+"hessian.bin";
+      //      string fname = simulation.getOutputPath()+"hessian.bin";
+      string fname = mopt->m_path+"hessian.bin";
       if( myRank == 0 )
       {
 		 // create file, write header
@@ -666,8 +700,10 @@ void hessian_test( EW& simulation, vector<Source*>& GlobalSources, vector<TimeSe
 void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 		   int npts, EW& simulation, MaterialParameterization* mp,
 		   int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		   vector<Source*>& GlobalSources, vector<TimeSeries*>& GlobalTimeSeries,
-		   vector<TimeSeries*>& GlobalObservations, int myRank )
+		   vector<vector<Source*> >& GlobalSources, 
+		   vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		   vector<vector<TimeSeries*> >& GlobalObservations, int myRank,
+		   Mopt* mopt )
 {
    double* fcn = new double[npts];
    ssize_t ind=mp->parameter_index(i,j,k,0,var);
@@ -684,7 +720,8 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
    }
    if( myRank == 0 )
    {
-      string fname = simulation.getOutputPath()+"fsurf.bin";
+      //      string fname = simulation.getOutputPath()+"fsurf.bin";
+      string fname = mopt->m_path+"fsurf.bin";
       int fd=open(fname.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0660 );
       int dims=1;
       size_t nr = write(fd,&dims,sizeof(int));
@@ -695,7 +732,8 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
       close(fd);
       if( ascii_output )
       {
-	 fname = simulation.getOutputPath()+"Misfit1d.txt";
+	 //	 fname = simulation.getOutputPath()+"Misfit1d.txt";
+	 fname = mopt->m_path+"Misfit1d.txt";
 	 ofstream fcurve(fname.c_str());
 	 for( int m=0 ; m < npts ; m++ )
 	    fcurve << pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin) << " " << fcn[m] << " " << endl;
@@ -710,8 +748,10 @@ void misfit_surface( int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
 		     double pmin2, double pmax2, int npts1, int npts2, EW& simulation,
 		     MaterialParameterization* mp, int nspar, int nmpars,
 		     double* xs, int nmpard, double* xm,
-		     vector<Source*>& GlobalSources, vector<TimeSeries*>& GlobalTimeSeries,
-		     vector<TimeSeries*>& GlobalObservations, int myRank )
+		     vector<vector<Source*> >& GlobalSources, 
+		     vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		     vector<vector<TimeSeries*> >& GlobalObservations, int myRank,
+		     Mopt* mopt )
 {
    double* fcn = new double[npts1*npts2];
    ssize_t ind1=mp->parameter_index(ix1,jx1,kx1,0,varx1);
@@ -736,7 +776,8 @@ void misfit_surface( int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
    }
    if( myRank == 0 )
    {
-      string fname = simulation.getOutputPath()+"fsurf.bin";
+      string fname = mopt->m_path+"fsurf.bin";
+      //      string fname = simulation.getOutputPath()+"fsurf.bin";
       int fd=open(fname.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0660 );
       int dims=2;
       size_t nr = write(fd,&dims,sizeof(int));
@@ -821,10 +862,10 @@ int main(int argc, char **argv)
   if( status == 0 )
   {
 // Save the source description here
-     vector<Source*> GlobalSources; 
+     vector<vector<Source*> > GlobalSources; 
 // Save the time series here
-     vector<TimeSeries*> GlobalTimeSeries;
-     vector<TimeSeries*> GlobalObservations;
+     vector<vector<TimeSeries*> > GlobalTimeSeries;
+     vector<vector<TimeSeries*> > GlobalObservations;
 
 // make a new simulation object by reading the input file 'fileName'
      EW simulation(fileName, GlobalSources, GlobalObservations, true );
@@ -845,11 +886,11 @@ int main(int argc, char **argv)
 	      cout << "Error: simulation object not ready for time stepping" << endl;
 	   status=1;
 	}
-	else if( GlobalSources.size() != 1 )
-	{
-	   if (myRank == 0)
-	      cout << "Source optmization only implemented for a single source" << endl;
-	}
+	//	else if( GlobalSources[0].size() != 1 )
+	//	{
+	//	   if (myRank == 0)
+	//	      cout << "Source optmization only implemented for a single source" << endl;
+	//	}
 	else
 	{
 // Successful initialization
@@ -858,25 +899,32 @@ int main(int argc, char **argv)
 	   //	   simulation.setQuiet(false);
 // Make observations aware of the utc reference time, if set.
 // Filter observed data if required
-	   for( int m = 0; m < GlobalObservations.size(); m++ )
+	   GlobalTimeSeries.resize(GlobalObservations.size());
+	   for( int e=0 ; e < GlobalObservations.size() ; e++ )
 	   {
-	      //	      simulation.set_utcref( *GlobalObservations[m] );
-	      if( simulation.m_prefilter_sources && simulation.m_filter_observations )
+	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
-		 GlobalObservations[m]->filter_data( simulation.m_filterobs_ptr );
-		 GlobalObservations[m]->writeFile( "_fi" );
+	      //	      simulation.set_utcref( *GlobalObservations[m] );
+		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
+		 {
+		    GlobalObservations[e][m]->filter_data( simulation.m_filterobs_ptr );
+		    GlobalObservations[e][m]->writeFile( "_fi" );
+		 }
 	      }
-	   }
 
 //  First copy observations to GlobalTimeSeries, later, solve will insert 
 //  the simulation time step and start time into GlobalTimeSeries.
-	   for( int m = 0; m < GlobalObservations.size(); m++ )
-	   {
-	      string newname = "_out";
-	      TimeSeries *elem = GlobalObservations[m]->copy( &simulation, newname, true );
-	      GlobalTimeSeries.push_back(elem);
+	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
+	      {
+		 string newname = "_out";
+		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, newname, true );
+		 GlobalTimeSeries[e].push_back(elem);
+	      }
 	   }
 
+// Configure optimizer 
+           Mopt* mopt = new Mopt( &simulation );
+	   mopt->parseInputFileOpt( fileName );
 	   if (myRank == 0)
 	   {
 	      int nth=1;
@@ -898,23 +946,19 @@ int main(int argc, char **argv)
 	      {
 		 if( nProcs > 1 )
 	       // Assume same number of threads for each MPI-task.
-		    cout << "Running sw4 on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
+		    cout << "Running sw4mopt on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
 		 else
-		    cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
+		    cout << "Running sw4mopt on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
 	      }
-	      cout << "Writing output to directory: " << simulation.getOutputPath() << endl;
+	      cout << "Writing output to directory: " << mopt->getPath() << endl;
 	   }
-
-// Configure optimizer 
-           Mopt* mopt = new Mopt( &simulation );
-	   mopt->parseInputFileOpt( fileName );
 
 // Select material parameterization
            MaterialParameterization* mp = mopt->m_mp;
 
 // figure out how many parameters we need.
-//	Guess: nmpars - number of non-distributed parameters, exist copies in each proc.
-//             nmpard - Number of distributed parameters, size of part in my processor.
+//	Guess: nmpars - number of non-distributed material parameters, exist copies in each proc.
+//             nmpard - Number of distributed material parameters, size of part in my processor.
 //	       nmpard_global - number of distributed parameters, total number over all processors
            int nmpars, nmpard, nmpard_global;
 	   mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );
@@ -931,12 +975,13 @@ int main(int argc, char **argv)
 
 // Default initial guess, the input source, stored in GlobalSources[0], will do nothing if nspar=0.
            double xspar[11];
-	   GlobalSources[0]->get_parameters(xspar);
+	   GlobalSources[0][0]->get_parameters(xspar);
 	   get_source_pars( nspar, xspar, xs );
 
 // Initialize the material parameters
            mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
+	   //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
+           string parname = mopt->m_path + "mtrlpar-init.bin";
 	   mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
 
 // Scale factors
@@ -1005,7 +1050,7 @@ int main(int argc, char **argv)
 	      //                         double pmin=-2.533e9, pmax=2.533e9; //lambda
 	      //	      double pmin=-2,pmax=2;
               misfit_curve( ix, jx, kx, varx, pmin, pmax, npts, simulation, mp, nspar, nmpars, xs,
-			     nmpard, xm, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank );
+			    nmpard, xm, GlobalSources, GlobalTimeSeries, GlobalObservations, myRank, mopt );
 	   }
 	   else if( mopt->m_opttest == 5 )
 	   {
@@ -1021,7 +1066,7 @@ int main(int argc, char **argv)
               misfit_surface( ix1, jx1, kx1, ix2, jx2, kx2, varx1, varx2, pmin1, pmax1,
 			      pmin2, pmax2, npts1, npts2, simulation, mp, nspar, nmpars,
 			      xs, nmpard, xm, GlobalSources, GlobalTimeSeries, GlobalObservations,
-			      myRank );
+			      myRank, mopt );
 	   }
            else if( mopt->m_opttest == 6 )
 	   {
@@ -1029,8 +1074,9 @@ int main(int argc, char **argv)
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			 GlobalObservations, f, mp );
-              for( int m=0 ; m < GlobalTimeSeries.size() ; m++ )
-		 GlobalTimeSeries[m]->writeFile( );
+	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+		    GlobalTimeSeries[e][m]->writeFile( );
 	   }
            else if( mopt->m_opttest == 1 )
 	   {

@@ -14,21 +14,22 @@
 using namespace std;
 
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		vector<Source*>& GlobalSources,
-		vector<TimeSeries*>& GlobalTimeSeries,
-		vector<TimeSeries*>& GlobalObservations,
+		vector<vector<Source*> >& GlobalSources,
+		vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		vector<vector<TimeSeries*> >& GlobalObservations,
 		double& mf, MaterialParameterization* mp );
 
 void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		       vector<Source*>& GlobalSources,
-		       vector<TimeSeries*>& GlobalTimeSeries,
-		       vector<TimeSeries*>& GlobalObservations, 
+		       vector<vector<Source*> >& GlobalSources,
+		       vector<vector<TimeSeries*> >& GlobalTimeSeries,
+		       vector<vector<TimeSeries*> >& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
                        Mopt *mopt, int it=-1 );
 //		       MaterialParameterization* mp, bool mcheck=false, bool output_ts=false ); 
 
-void linesearch( EW& simulation, vector<Source*>& GlobalSources,
-		 vector<TimeSeries*>& GlobalTimeSeries, vector<TimeSeries*>& GlobalObservations,
+void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
+		 vector<vector<TimeSeries*> >& GlobalTimeSeries, 
+		 vector<vector<TimeSeries*> >& GlobalObservations,
 		 int nspar, int nmpars, double* xs, int nm, double* xm, double f, double* dfs,
 		 double* dfm, double* ps, double* pm, double cgstep, double maxstep, double steptol,
 		 double* xsnew, double* xmnew, double& fnew, double* sfs, double* sfm,
@@ -38,9 +39,9 @@ void linesearch( EW& simulation, vector<Source*>& GlobalSources,
 //-----------------------------------------------------------------------
 void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
 	   int nmpard, double* xm, double* sfm, 
-	   vector<Source*>& GlobalSources,
-	   vector<TimeSeries*>& GlobalTimeSeries,
-	   vector<TimeSeries*> & GlobalObservations,
+	   vector<vector<Source*> >& GlobalSources,
+	   vector<vector<TimeSeries*> >& GlobalTimeSeries,
+	   vector<vector<TimeSeries*> >& GlobalObservations,
 	   int myRank, Mopt* mopt )
 //MaterialParameterization* mp,
 //	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
@@ -65,13 +66,13 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 
    FILE *fd;
    FILE *fdx;
-   const string parfile = simulation.getOutputPath() + "parameters.bin";
+   const string parfile = mopt->m_path + "parameters.bin";
    if( myRank == 0 )
    {
-      const string convfile = simulation.getOutputPath() + "convergence.log";
+      const string convfile = mopt->m_path + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
 
-      const string parafile = simulation.getOutputPath() + "parameters.log";
+      const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
    }

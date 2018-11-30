@@ -53,6 +53,7 @@ Mopt::Mopt( EW* a_ew )
    m_pmax2=  300;
    m_nsurfpts  = 10;
    m_nsurfpts2 = 10;
+   m_path = "./";
 }  
 
 //-----------------------------------------------------------------------
@@ -90,11 +91,15 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMimage( buffer );
          else if( startswith("mtypx",buffer) )
 	    processMtypx( buffer );
+         else if( startswith("fileio",buffer) )
+	    processMfileio( buffer );
+         else if( startswith("refinement",buffer) )
+	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
       }
    }
    inputFile.close();
    MPI_Barrier(MPI_COMM_WORLD);
-
+   m_ew->create_directory(m_path);
 // wait until all processes have read the input file
    if( m_ew->getVerbosity() >=3 && m_myrank == 0 )
       cout << "********parseInputFileOpt: Done reading the input file*********" << endl;
@@ -191,6 +196,7 @@ void Mopt::processMrun( char* buffer )
    CHECK_INPUT(strcmp("mrun", token) == 0,
 	       "ERROR: not an mrun line: " << token);
    token = strtok(NULL, " \t");
+   bool quiet = true;
    while (token != NULL)
    {
       // while there are tokens in the string still
@@ -249,6 +255,13 @@ void Mopt::processMrun( char* buffer )
 		     " not understood" << endl);
 	 m_output_ts = strcmp("on",token)== 0;
       }
+      else if( startswith("quiet=",token) )
+      {
+	 token += 6;
+         CHECK_INPUT(strcmp("yes",token)== 0||strcmp("no",token)== 0,"ERROR, mrun quiet= " << token <<
+		     " not understood" << endl);
+	 m_ew->setQuiet(strcmp("yes",token)==0);
+      }
       else
          badOption("mrun",token);
       token = strtok(NULL," \t");
@@ -303,6 +316,30 @@ void Mopt::processMscalefactors( char* buffer )
    m_rhoscale    *= imf;
    m_muscale     *= imf;
    m_lambdascale *= imf;
+}
+
+//-----------------------------------------------------------------------
+void Mopt::processMfileio( char* buffer )
+{
+   char* path = 0;
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("fileio", token) == 0, "ERROR: not a fileio line...: " << token);
+   token = strtok(NULL, " \t");
+
+   string err = "FileIO Error: ";
+
+   while (token != NULL)
+   {
+      if (startswith("#", token) || startswith(" ", buffer))
+	 break;
+      if(startswith("path=", token)) 
+      {
+	 token += 5;
+	 m_path = token;
+	 m_path += '/';
+      }
+      token = strtok(NULL, " \t");
+   }   
 }
 
 //-----------------------------------------------------------------------

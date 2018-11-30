@@ -27,6 +27,7 @@ class Mopt
    void processMfsurf( char* buffer );
    void processMimage( char* buffer );
    void processMtypx( char* buffer );
+   void processMfileio( char* buffer );
  public:
    Mopt( EW* a_ew );
    bool parseInputFileOpt( std::string filename );
@@ -37,6 +38,7 @@ class Mopt
    void set_sourcescalefactors( int nspar, double* sfs );
    void set_dscalefactors( int nmpard, double* sfm );
    void set_typx( int nmpar, double* sf, double* typx );
+   const string& getPath() const {return m_path;}
 
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
@@ -50,6 +52,7 @@ class Mopt
    std::vector<Image*> m_image_files;
    std::string m_scales_fname, m_scalem_fname;
    bool m_scales_file_given;
+   std::string m_path;
 };
 
 #endif
