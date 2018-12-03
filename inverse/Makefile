@@ -80,15 +80,8 @@ else
   
   # put the variables in the configs/make.xyz file
   ifeq ($(UNAME),Linux)
-  # For Cab at LC
-    ifeq ($(findstring cab,$(HOSTNAME)),cab)
-      include configs/make.cab
-      foundincfile := "configs/make.cab"
-# object code goes in machine specific directory on LC
-      debugdir := debug_cab
-      optdir := optimize_cab
 # For Quartz at LC
-    else ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
+    ifeq ($(findstring quartz,$(HOSTNAME)),quartz)
       include configs/make.quartz
       foundincfile := "configs/make.quartz"
 # object code goes in machine specific directory on LC
