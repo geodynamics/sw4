@@ -198,7 +198,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 
     all_dirs    = ['gradtest','hesstest','misfitcurve','onepoint']
     all_cases   = ['grad','hesstest','misfit1d','inv1']
-    all_results = ['GradientTest.txt', 'hessian.txt', 'Misfit1d.txt', 'convergence.log']
+    all_results = ['GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log']
     num_meshes  = [1, 1, 1, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
@@ -208,7 +208,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 #        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     
     print("Running all tests for level", testing_level, "...")
-    # run all tests
+# run all tests
     for qq in range(len(all_dirs)):
     
         test_dir = all_dirs[qq]

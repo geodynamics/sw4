@@ -29,6 +29,19 @@ extern "C" {
 void EW::interpolate( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
 		      double hy, double hz, Sarray& rho, Sarray& mu, Sarray& lambda,
 		      int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid )
+//
+// Computes the material on computational grid from a given material perturbation on a parameter grid.
+//
+// Computes: rhogrid := I(rho)+mRho[grid]  (similar for mu, lambda)
+//           where I(rho) interpolates input perturbation `rho' onto the computational grid.
+//
+//   Input: nx, ny, nz       - Dimensions of parameter grid
+//          xmin, ymin, zmin - Origin of parameter grid.
+//          hx, hy, hz       - Spacing of parameter grid.
+//          rho, mu, lambda  - Material perturbation on parameter grid
+//
+//   Output: rhogrid, mugrid, lambdagrid - Material (perturbation+base material) on computational grid: g=`grid'
+//
 {
    int ifirst=m_iStart[grid];
    int ilast=m_iEnd[grid];
@@ -82,6 +95,18 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
 				vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
 				vector<Sarray>& lambdagrid )
 {
+// Compute material perturbation on parameter grid from a material that is given on the computational grid.
+//
+// Computes:  rho := I(rhogrid-mRho)   (and similar for mu and lambda)
+//            where I() interpolates from computational grid onto the parameter grid.
+//   
+//   Input: nx, ny, nz       - Dimensions of parameter grid
+//          xmin, ymin, zmin - Origin of parameter grid.
+//          hx, hy, hz       - Spacing of parameter grid.
+//          rhogrid, mugrid, lambdagrid - The material on the computational grids.
+//
+//   Output: rho, mu, lambda  - Material perturbation on parameter grid.
+//
 // Simple and not so accurate...
    int ig, jg, kg, g;
    rho.set_to_zero();

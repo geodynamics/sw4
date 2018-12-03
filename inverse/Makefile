@@ -1,7 +1,8 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4opt  [debug=yes/no]
 # make sw4mopt [debug=yes/no]
+# make sw4     [debug=yes/no]
+# make sw4opt  [debug=yes/no]
 #
 # This Makefile asumes that the following environmental variables have been assigned:
 # etree = [yes/no]
@@ -35,11 +36,11 @@ endif
 
 ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g
-   CXXFLAGS  = -g -I../src
+   CXXFLAGS  = -g -I../src-sw4 -I../src-sw4/double
    CFLAGS    = -g
 else
    FFLAGS   = -O3 
-   CXXFLAGS = -O -I../src
+   CXXFLAGS = -O -I../src-sw4 -I../src-sw4/double
    CFLAGS   = -O 
 endif
 
@@ -53,6 +54,7 @@ optdir := optimize
 
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
+
 
 emptystring := ""
 foundincfile := $(emptystring)
@@ -86,7 +88,7 @@ else
       foundincfile := "configs/make.quartz"
 # object code goes in machine specific directory on LC
       debugdir := debug_quartz
-      optdir := optimize_quartz
+      optdir   := optimize_quartz
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
@@ -111,8 +113,15 @@ else
 
 endif
 
-# always add  -DENABLE_OPT
-CXXFLAGS += -DENABLE_OPT
+# openmp=yes is default
+ifeq ($(openmp),no)
+   CXXFLAGS += -DSW4_NOOMP
+else
+   debugdir := $(debugdir)_mp
+   optdir   := $(optdir)_mp
+   CXXFLAGS += -fopenmp
+   FFLAGS   += -fopenmp
+endif
 
 ifdef EXTRA_CXX_FLAGS
    CXXFLAGS += $(EXTRA_CXX_FLAGS)
@@ -121,6 +130,7 @@ endif
 ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
+
 
 ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
@@ -155,26 +165,50 @@ OBJSW4 = main.o
 
 # basic sw4 classes and functions
 # Note that include MaterialInvTest, invtestmtrl and projectmtrl to allow sw4 to be built with -DENABLE_OPT
+#OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
+#       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+#       parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
+#       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
+#       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
+#       MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
+#       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+#       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
+#       MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
+#       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o \
+#       MaterialInvtest.o invtestmtrl.o projectmtrl.o 
+
 OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
-       curvilinearGrid.o boundaryOp.o bcfort.o twilightfort.o rhs4th3fort.o \
+       curvilinearGrid.o   \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
-       TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
+       solve.o  Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o  \
+       TimeSeries.o sacsubc.o SuperGrid.o  rayleighfort.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
-       MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
-       AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o \
-       MaterialInvtest.o invtestmtrl.o projectmtrl.o 
+       lamb_exact_numquad.o  EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       Image3D.o ESSI3D.o ESSI3DHDF5.o MaterialVolimagefile.o MaterialRfile.o   \
+       AnisotropicMaterialBlock.o  sacutils.o  DataPatches.o addmemvarforcing2.o \
+       consintp.o  oddIoddJinterp.o evenIoddJinterp.o MaterialInvtest.o \
+       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o
+
+#removed: boundaryOp.o bndryOpNoGhost.o bcfort.o twilightfort.o rhs4th3fort.o solerr3.o testsrc.o \
+#         addsgd.o velsum.o energy4.o twilightsgfort.o rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o \
+#         curvilinear4sg.o gradients.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o checkanisomtrl.o \
+#         computedtaniso.o ilanisocurv.o \
+#         anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
+#         updatememvar.o addsg4wind.o scalar_prod.o
+# new C-routines converted from fortran
+ OBJ += addsgdc.o bcfortc.o bcfortanisgc.o bcfreesurfcurvanic.o boundaryOpc.o energy4c.o checkanisomtrlc.o \
+        computedtanisoc.o curvilinear4sgc.o gradientsc.o randomfield3dc.o innerloop-ani-sgstr-vcc.o ilanisocurvc.o \
+        rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o solerr3c.o testsrcc.o rhs4th3windc.o \
+        tw_aniso_forcec.o tw_aniso_force_ttc.o velsumc.o twilightfortc.o twilightsgfortc.o tw_ani_stiffc.o \
+        anisomtrltocurvilinearc.o scalar_prodc.o updatememvarc.o addsg4windc.o bndryOpNoGhostc.o rhs4th3windc2.o
 
 # source optimization
-OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o \
+OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o 
 
 # material optimization
-MOBJOPT  = moptmain.o linsolvelu.o solve-backward.o solve-allpars.o \
-       solve-backward-allpars.o DataPatches.o lbfgs.o nlcg.o \
-       MaterialParameterization.o Mopt.o MaterialParCartesian.o \
-       InterpolateMaterial.o interpolatemtrl.o
+MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
+           MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o 
+           
 
 OBJL  = lamb_one_point.o
 
@@ -201,7 +235,10 @@ FOBJCONV = $(addprefix $(builddir)/,$(OBJCONV))
 
 FOBJCONV2 = $(addprefix $(builddir)/,$(OBJCONV2))
 
-sw4mopt: $(FOBJ) $(FMOBJOPT)
+CXXFLAGS += -I../src-opt
+
+
+sw4mopt: $(FOBJ) $(FMOBJOPT) 
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -262,6 +299,7 @@ test_proj: $(FOBJP)
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJP) $(linklibs)
 
 convert_etree: $(FOBJCONV)
+	EXTRA_CXX_FLAGS += -I../src-opt
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -271,6 +309,7 @@ convert_etree: $(FOBJCONV)
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJCONV) $(linklibs)
 
 convert_small: $(FOBJCONV2)
+	EXTRA_CXX_FLAGS += -I../src-opt
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
 	@echo "debug=" $(debug) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
@@ -285,23 +324,41 @@ $(builddir)/version.o:../src/version.C .FORCE
 # having version.o depend on .FORCE has the effect of always building version.o
 .FORCE:
 
-$(builddir)/%.o:src/%.f90
+#$(builddir)/%.o:src/%.f90
+#	/bin/mkdir -p $(builddir)
+#	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+
+$(builddir)/%.o:src-sw4/quadpack/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
-$(builddir)/%.o:src/quadpack/%.f
+$(builddir)/%.o:src-sw4/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
-$(builddir)/%.o:src/%.f
-	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+#$(builddir)/%.o:src-opt/%.f
+#	/bin/mkdir -p $(builddir)
+#	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
-$(builddir)/%.o:src/%.C
+$(builddir)/%.o:src-sw4/%.C
 	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
+
+$(builddir)/%.o:src-sw4/%.f
+	/bin/mkdir -p $(builddir)
+	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
+
+$(builddir)/%.o:src-opt/%.C
+	/bin/mkdir -p $(builddir)
+	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
+
+$(builddir)/RandomizedMaterial.o:src-sw4/RandomizedMaterial.C
+	/bin/mkdir -p $(builddir)
+	 cd $(builddir); $(CXX) $(CXXFLAGS) -std=c++11 -c ../$< 
 
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
 	cd $(optdir); /bin/rm -f sw4opt sw4mopt lamb1 *.o; cd ../$(debugdir); /bin/rm -f sw4opt sw4mopt lambd1 *.o
+
+
