@@ -1,25 +1,24 @@
 #------------------------------
 # Grid (w=2500)
 #
-grid h=200 x=155848 y=168472 z=20000 lat=37.20 lon=-123.10 az=0
+#grid h=200 x=155848 y=168472 z=20000 lat=37.20 lon=-123.10 az=1.43638e+02
+grid h=200 x=180e3 y=130e3 z=20e3 lat=38.7 lon=-122.3 az=1.43638e+02
 #
 #------------------------------
 # Time
 #
-time t=65.0 utcstart=01/04/2018:10:39:32.694
+time t=40.0 utcstart=01/04/2018:10:39:32.694
 #
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=sw4_data pfs=1
+fileio verbose=1 path=berkeley-jan-4-2018_data
 #
 #------------------------------
-# Supergrid parameters
-#default
-supergrid gp=30 dc=0.02
+# use default Supergrid parameters
 #
 #------------------------------
-# Reference material
+# Reference 1-D material
 #
 #block z1=0.0 z2=10.0 vp=1800.0 vs=700.0 rho=2100.0
 #block z1=10.0 z2=20.0 vp=1800.0 vs=850.0 rho=2100.0
@@ -38,20 +37,26 @@ block z1=16000.0 vp=6550.0 vs=3700.0 rho=2900.0
 #block z1=21000.0 vp=6800.0 vs=3800.0 rho=2950.0
 #
 #------------------------------
+# 3-d material model
+# Earth Model
+
+# LC (quartz) wave workspace file system
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/usr/workspace/wsa/wave/rfile
+topography input=rfile zmax=8e3 order=3 file=/usr/workspace/wsa/wave/rfile/USGSBayAreaVM-08.3.0-corder.rfile
+
+# treshold on minimum wave speeds
+globalmaterial  vpmin=866 vsmin=500
+
 #
 #------------------------------
-# Source
+# Source omega=pi/2 rad/sec -> f0 = 0.25 Hz
 #
 source lat=37.86119 lon=-122.24233 depth=12101.0 t0=5.0 m0=4.563e+15 mxx=-0.86763 myy=0.8387 mzz=0.02893 mxy=-0.46548 mxz=-0.06266 myz=0.06266 type=Gaussian freq=1.57075
 #
 #----------------------------
 #
-developer cfl=1.1
-#
-#------------------------------
-#
-# Observations (synthetic)
-#Broadband data
+#  Synthetic ground motions
+#Broadband stations
 rec sta=BK.BDM file=BK.BH.BDM lat=37.95397 lon=-121.86554 depth=34.7 nsew=1 usgsformat=0
 rec sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 nsew=1 usgsformat=0
 rec sta=BK.BL67 file=BK.BH.BL67 lat=37.87492 lon=-122.24318 depth=0.0 nsew=1 usgsformat=0
@@ -67,14 +72,13 @@ rec sta=BK.WENL file=BK.BH.WENL lat=37.62211 lon=-121.75697 depth=30.3 nsew=1 us
 #
 #-----------------------------------------------------------------------
 #
-# Output some images
+# Output some material images
 #
+image mode=lat z=0 cycle=0
+image mode=lon z=0 cycle=0
+image mode=topo z=0 cycle=0
+
 image mode=rho x=33000 cycle=0
 image mode=mu x=33000 cycle=0
 image mode=lambda x=33000 cycle=0
 #
-volimage mode=rho cycle=0
-volimage mode=p cycle=0
-volimage mode=s cycle=0
-volimage mode=lambda cycle=0
-volimage mode=mu cycle=0

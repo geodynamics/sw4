@@ -318,15 +318,11 @@ convert_small: $(FOBJCONV2)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(OBJCONV2) $(linklibs)
 
-$(builddir)/version.o:../src/version.C .FORCE
-	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c $<
+$(builddir)/version.o:src-sw4/version.C .FORCE
+	cd $(builddir); $(CXX) $(CXXFLAGS) -DEW_MADEBY=\"$(USER)\"  -DEW_OPT_LEVEL=\"$(optlevel)\" -DEW_COMPILER=\""$(shell which $(CXX))"\" -DEW_LIBDIR=\"${SW4LIB}\" -DEW_INCDIR=\"${SW4INC}\" -DEW_HOSTNAME=\""$(shell hostname)"\" -DEW_WHEN=\""$(shell date)"\" -c ../$<
 
 # having version.o depend on .FORCE has the effect of always building version.o
 .FORCE:
-
-#$(builddir)/%.o:src/%.f90
-#	/bin/mkdir -p $(builddir)
-#	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src-sw4/quadpack/%.f
 	/bin/mkdir -p $(builddir)
@@ -335,10 +331,6 @@ $(builddir)/%.o:src-sw4/quadpack/%.f
 $(builddir)/%.o:src-sw4/%.f
 	/bin/mkdir -p $(builddir)
 	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
-
-#$(builddir)/%.o:src-opt/%.f
-#	/bin/mkdir -p $(builddir)
-#	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
 
 $(builddir)/%.o:src-sw4/%.C
 	/bin/mkdir -p $(builddir)
