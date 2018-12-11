@@ -17,7 +17,7 @@ time t=40.0 utcstart=09/06/2008:04:00:10.650 event=alamo
 #------------------------------
 # Paths etc. Note that obspath is defined by the event command
 #
-fileio verbose=1 temppath=tmp path=inv2_output pfs=1
+fileio verbose=1 temppath=/global/cscratch1/sd/kechen/smallDomain/tmp path=inv2_output pfs=1
 #
 #------------------------------
 # Use default supergrid parameters
