@@ -70,20 +70,20 @@ developer cfl=1.1
 #
 # Observations (synthetic)
 #first event
-observation sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 event=first
-observation sta=BK.BRK file=BK.BH.BRK lat=37.87352 lon=-122.26099 depth=2.7 event=first
-observation sta=FAKE.1 file=FAKE.1 lat=38.0 lon=-122.1 depth=0.0 event=first
-observation sta=FAKE.2 file=FAKE.2 lat=37.7 lon=-121.8 depth=0.0 event=first
-observation sta=FAKE.3 file=FAKE.3 lat=37.5 lon=-122.15 depth=0.0 event=first
-observation sta=FAKE.4 file=FAKE.4 lat=37.82 lon=-122.45 depth=0.0 event=first
+observation sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 event=first windowl=0 windowr=15
+observation sta=BK.BRK file=BK.BH.BRK lat=37.87352 lon=-122.26099 depth=2.7 event=first windowl=0 windowr=15
+observation sta=FAKE.1 file=FAKE.1 lat=38.0 lon=-122.1 depth=0.0 event=first windowl=0 windowr=15
+observation sta=FAKE.2 file=FAKE.2 lat=37.7 lon=-121.8 depth=0.0 event=first windowl=0 windowr=15
+observation sta=FAKE.3 file=FAKE.3 lat=37.5 lon=-122.15 depth=0.0 event=first windowl=0 windowr=15
+observation sta=FAKE.4 file=FAKE.4 lat=37.82 lon=-122.45 depth=0.0 event=first windowl=0 windowr=15
 #
 # second event
-observation sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 event=second
-observation sta=BK.BRK file=BK.BH.BRK lat=37.87352 lon=-122.26099 depth=2.7 event=second
-observation sta=FAKE.1 file=FAKE.1 lat=38.0 lon=-122.1 depth=0.0 event=second
-observation sta=FAKE.2 file=FAKE.2 lat=37.7 lon=-121.8 depth=0.0 event=second
-observation sta=FAKE.3 file=FAKE.3 lat=37.5 lon=-122.15 depth=0.0 event=second
-observation sta=FAKE.4 file=FAKE.4 lat=37.82 lon=-122.45 depth=0.0 event=second
+observation sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 event=second windowl=0 windowr=15
+observation sta=BK.BRK file=BK.BH.BRK lat=37.87352 lon=-122.26099 depth=2.7 event=second windowl=0 windowr=15
+observation sta=FAKE.1 file=FAKE.1 lat=38.0 lon=-122.1 depth=0.0 event=second windowl=0 windowr=15
+observation sta=FAKE.2 file=FAKE.2 lat=37.7 lon=-121.8 depth=0.0 event=second windowl=0 windowr=15
+observation sta=FAKE.3 file=FAKE.3 lat=37.5 lon=-122.15 depth=0.0 event=second windowl=0 windowr=15
+observation sta=FAKE.4 file=FAKE.4 lat=37.82 lon=-122.45 depth=0.0 event=second windowl=0 windowr=15
 #-----------------------------------------------------------------------
 #
 # Output some images
