@@ -12,12 +12,12 @@ event path=second-fake-event_output obspath=second-fake-event_data name=second
 # Time command for both events
 #
 time t=25.0 utcstart=09/06/2008:04:00:10.650 event=first
-time t=25.0 utcstart=09/06/2008:04:00:10.650 event=second
+time t=25.0 utcstart=09/06/2018:08:00:11.123 event=second
 #
 #------------------------------
 # Paths etc. Note that obspath is defined by the event command
 #
-fileio verbose=1 temppath=tmp path=inv2_output pfs=1
+fileio verbose=1 temppath=/global/cscratch1/sd/kechen/tinyDomain/tmp path=inv2_output pfs=1
 #
 #------------------------------
 # Use default supergrid parameters
@@ -98,4 +98,4 @@ mimage mode=lambda z=1000 cycleInterval=1
 #
 mimage mode=rho z=5000 cycleInterval=1 
 mimage mode=mu z=5000 cycleInterval=1 
-mimage mode=lambda z=5000 cycleInterval=1 
+mimage mode=lambda z=5000 cycleInterval=1
