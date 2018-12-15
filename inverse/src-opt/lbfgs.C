@@ -583,6 +583,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    {
       const string convfile = mopt->m_path + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
+      fprintf(fd, "it  max-nrm-gradient  max-nrm-model-update  misfit\n");
+
       const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
@@ -939,7 +941,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       if( myRank == 0 )
       {
 	 cout << "-----------------------------------------------------------------------" << endl;
-	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
+	 cout << " it=" << it << " max-norm scaled gradient= " << rnorm << " max-norm model update= " << dxnorm << endl;
 	 cout << " Misfit= "  << f << endl;
 
 	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );
