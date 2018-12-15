@@ -74,10 +74,6 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
       fd = fopen(convfile.c_str(),"w");
       fprintf(fd, "it  sub-it  max-nrm-gradient  max-nrm-model-update  misfit\n");
       
-      cout << " it=" << j << " " << k << " max-norm scaled gradient= " << rnorm << " max-norm mod
-el change= " << dxnorm << endl;
-	    cout << " Misfit= "  << f << endl;
-
       const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
