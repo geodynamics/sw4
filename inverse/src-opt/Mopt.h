@@ -4,6 +4,7 @@
 #include <vector>
 #include "MaterialParameterization.h"
 #include "Image.h"
+#include "Image3D.h"
 
 class EW;
 
@@ -26,6 +27,7 @@ class Mopt
    void processNLCG( char* buffer );
    void processMfsurf( char* buffer );
    void processMimage( char* buffer );
+   void processM3Dimage( char* buffer );
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );
  public:
@@ -39,6 +41,7 @@ class Mopt
    void set_dscalefactors( int nmpard, double* sfm );
    void set_typx( int nmpar, double* sf, double* typx );
    const string& getPath() const {return m_path;}
+   EW* get_EWptr() const {return m_ew;}
 
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
@@ -50,6 +53,7 @@ class Mopt
    double m_pmin, m_pmax, m_pmin2, m_pmax2;
    MaterialParameterization *m_mp;   
    std::vector<Image*> m_image_files;
+   std::vector<Image3D*> m_3dimage_files;
    std::string m_scales_fname, m_scalem_fname;
    bool m_scales_file_given;
    std::string m_path;
