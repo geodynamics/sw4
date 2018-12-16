@@ -342,7 +342,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    double lambda = 1, fnewprev, lambdaprev;
    nstep_reductions = 0;
    
-   // Restrict step size to inside of domain
+   // Restrict step size to inside of domain (WHAT DOMAIN???)
    int ok=0;
    int ntries = 0;
    while( !ok && ntries < 30 )
@@ -360,7 +360,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       ntries++;
    }
    if( myRank == 0 && lambda != 1 )
-      cout << "After constrained material, lambda = " << lambda << " ntries = " << ntries << endl;
+      cout << "After constraining the material, lambda (scalefactor for step length) = " << lambda << " ntries = " << ntries << endl;
 
    if( !ok )
    {
