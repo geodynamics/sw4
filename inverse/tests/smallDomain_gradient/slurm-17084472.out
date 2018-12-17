@@ -1,0 +1,47 @@
+----------------------------------------------------------------
+            sw4 version 2.2-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Dec  6 00:32:26 PST 2018
+  By user:     kechen
+  Machine:     cori08
+  Compiler:    /opt/cray/pe/craype/2.5.14/bin/CC
+  3rd party include dir: /global/homes/k/kechen/software/sw4_dp/include, and library dir: /global/homes/k/kechen/software/sw4_dp/lib
+----------------------------------------------------------------
+
+Input file: gradient.in
+
+* Processing the grid command...
+* Setting nx to 601 to be consistent with h=200
+* Setting ny to 426 to be consistent with h=200
+* Setting nz to 101 to be consistent with h=200
+Extent of the computational domain xmax=120000 ymax=85000 zmax=20000
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       601       426       101     25858626
+Total number of grid points (without ghost points): 2.58586e+07
+
+*** Reading data from Rfile USGSBayAreaVM-08.3.0-corder.rfile in directory /project/projectdirs/m2868
+Cartesian coordinates of source at (lon, lat)=(-1.222423e+02, 3.786119e+01) is (x,y)=(64752.8, 41379.7)
+Cartesian coordinates of source at (lon, lat)=(-1.220011e+02, 3.786081e+01) is (x,y)=(77358.2, 24329.7)
+Fatal input error: processObservation: ERROR: sac file BK.VAK.BHN.sac could not be opened
+Rank 0 [Sat Dec 15 17:18:46 2018] [c4-1c2s15n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 0
+srun: error: nid03260: task 0: Aborted
+srun: Terminating job step 17084472.0
+slurmstepd: error: *** STEP 17084472.0 ON nid03260 CANCELLED AT 2018-12-15T17:18:47 ***
+srun: error: nid03266: tasks 192-223: Terminated
+srun: error: nid03260: tasks 1-31: Terminated
+srun: error: nid03264: tasks 128-159: Terminated
+srun: error: nid03262: tasks 64-95: Terminated
+srun: error: nid03265: tasks 160-191: Terminated
+srun: error: nid03261: tasks 32-63: Terminated
+srun: error: nid03267: tasks 224-255: Terminated
+srun: error: nid03263: tasks 96-127: Terminated
+srun: Force Terminated job step 17084472.0

@@ -1,0 +1,1115 @@
+----------------------------------------------------------------
+            sw4 version 2.2-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Dec  6 00:32:26 PST 2018
+  By user:     kechen
+  Machine:     cori08
+  Compiler:    /opt/cray/pe/craype/2.5.14/bin/CC
+  3rd party include dir: /global/homes/k/kechen/software/sw4_dp/include, and library dir: /global/homes/k/kechen/software/sw4_dp/lib
+----------------------------------------------------------------
+
+Input file: gradient.in
+
+* Processing the grid command...
+* Setting nx to 601 to be consistent with h=200
+* Setting ny to 426 to be consistent with h=200
+* Setting nz to 101 to be consistent with h=200
+Extent of the computational domain xmax=120000 ymax=85000 zmax=20000
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+ERROR: observed data file berkeley-jan-4-2018_data/BK.BDM.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.BKS.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.BL67.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.BRK.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.CVS.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.JRSC.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.MCCM.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.VAK.txt not found 
+ERROR: observed data file berkeley-jan-4-2018_data/BK.WENL.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.BDM.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.BKS.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.BRK.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.CVS.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.JRSC.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.MCCM.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.VAK.txt not found 
+ERROR: observed data file alamo-sep-5-2008_data/BK.WENL.txt not found 
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       601       426       101     25858626
+Total number of grid points (without ghost points): 2.58586e+07
+
+Cartesian coordinates of source at (lon, lat)=(-1.222423e+02, 3.786119e+01) is (x,y)=(64752.8, 41379.7)
+Cartesian coordinates of source at (lon, lat)=(-1.220011e+02, 3.786081e+01) is (x,y)=(77358.2, 24329.7)
+
+
+   Execution time, reading input file 0.116913 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a PARALLEL file system
+Writing images from (up to) 8 procs
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Directory: berkeley-jan-4-2018_output/
+		
+... Done!
+----------------------------------------------------
+----------------------------------------------------
+ Making Directory: alamo-sep-5-2008_output/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.223000e+02, Lat=3.855000e+01, x=0.000000e+00, y=-0.000000e+00
+1: Lon= -1.214924e+02, Lat=3.768192e+01, x=1.200000e+05, y=6.692907e-10
+2: Lon= -1.222696e+02, Lat=3.722921e+01, x=1.200000e+05, y=8.500000e+04
+3: Lon= -1.230813e+02, Lat=3.809729e+01, x=-1.559631e-10, y=8.500000e+04
+
+Considering all material blocks
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,107107,,-152) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,2626,,-152) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,8080,,52-1) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,5353,,-152) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,5353,,-152) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,161161,,-152) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,-1-1,,52-1) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,-1-1,,-152) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,107107,,52-1) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,347347,,-152) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,134134,,52-1) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,188188,,52-1) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,134134,,52-1) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,-1-1,,52-1) 
+) 
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,188188,,-152) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,8080,,52-1) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,215215,,52-1) ) 
+
+Rank 99 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 99
+Rank 99 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 99
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,321321,,52-1) ) 
+
+Rank 227 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 227
+Rank 227 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 227
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,5353,,-152) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,215215,,52-1) ) 
+
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,188188,,-152) ) 
+
+Rank 39 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 39
+Rank 39 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 39
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,242242,,52-1) ) 
+
+Rank 40 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 40
+Rank 40 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 40
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,347347,,-152) ) 
+
+Fatal input error: Fatal input error: Density= Density= -1 in grid g= -10 in grid g=  at point 0 ( at point 378 (,378-1,,-152,) -1
+) 
+Rank 42 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 42
+Rank 42 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 42
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,242242,,-152) ) 
+
+Rank 236 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 236
+Rank 236 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 236
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,295295,,52-1) ) 
+
+Rank 238 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 238
+Rank 238 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 238
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,295295,,-152) ) 
+
+Rank 44 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 44
+Rank 44 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 44
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,373373,,52-1) ) 
+
+Rank 239 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 239
+Rank 239 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 239
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,5353,,-152) ) 
+
+Rank 111 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 111
+Rank 111 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 111
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,321321,,52-1) ) 
+
+Rank 112 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 112
+Rank 112 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 112
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,399399,,52-1) 
+) 
+Rank 47 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 47
+Rank 47 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 47
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,-1-1,,-152) ) 
+
+Rank 244 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 244
+Rank 244 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 244
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,399399,,-152) ) 
+
+Rank 116 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 116
+Rank 116 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 116
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,8080,,-152) ) 
+
+Rank 51 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 51
+Rank 51 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 51
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,399399,,52-1) ) 
+
+Rank 246 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 246
+Rank 246 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 246
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,-1-1,,52-1) ) 
+
+Rank 118 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 118
+Rank 118 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 118
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,2626,,-152) ) 
+
+Rank 249 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 249
+Rank 249 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 249
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,8080,,52-1) ) 
+
+Rank 160 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 160
+Rank 160 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 160
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,107107,,52-1) ) 
+
+Rank 54 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 54
+Rank 54 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 54
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,5353,,52-1) 
+) 
+Rank 128 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 128
+Rank 128 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 128
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,5353,,-152) ) 
+
+Rank 161 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 161
+Rank 161 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 161
+Fatal input error: Density= Fatal input error: Density= -1 in grid g= -10 in grid g=  at point 0 ( at point 341 (,34180,,80-1,) 52
+) 
+Rank 129 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 129
+Rank 129 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 129
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,107107,,-152) ) 
+
+Rank 162 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 162
+Rank 162 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 162
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,134134,,-152) ) 
+
+Rank 55 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 55
+Rank 55 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 55
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,8080,,-152) ) 
+
+Rank 130 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 130
+Rank 130 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 130
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,107107,,-152) ) 
+
+Rank 163 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 163
+Rank 163 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 163
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,215215,,52-1) ) 
+
+Rank 131 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 131
+Rank 131 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 131
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,161161,,-152) ) 
+
+Rank 164 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 164
+Rank 164 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 164
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,161161,,52-1) ) 
+
+Rank 132 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 132
+Rank 132 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 132
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,161161,,-152) ) 
+
+Rank 165 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 165
+Rank 165 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 165
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,269269,,52-1) ) 
+
+Rank 58 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 58
+Rank 58 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 58
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,161161,,-152) ) 
+
+Rank 133 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 133
+Rank 133 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 133
+Fatal input error: Density= Fatal input error: Density= -1 in grid g= -1 in grid g= 00 at point  at point  ( (341341,,321321,,-152) ) 
+
+Rank 166 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 166
+Rank 166 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 166
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,242242,,-152) ) 
+
+Rank 96 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 96
+Rank 96 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 96
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,188188,,-152) ) 
+
+Rank 134 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 134
+Rank 134 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 134
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,321321,,52-1) ) 
+
+Rank 224 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 224
+Rank 224 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 224
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,242242,,-152) ) 
+
+Rank 167 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 167
+Rank 167 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 167
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,242242,,52-1) ) 
+
+Rank 60 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 60
+Rank 60 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 60
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,-1-1,,52-1) ) 
+
+Rank 97 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 97
+Rank 97 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 97
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,-1-1,,52-1) 
+) 
+Rank 135 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 135
+Rank 135 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 135
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,215215,,-152) ) 
+
+Rank 225 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 225
+Rank 225 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 225
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,373373,,52-1) ) 
+
+Rank 168 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 168
+Rank 168 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 168
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,-1-1,,52-1) ) 
+
+Rank 98 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 98
+Rank 98 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 98
+Fatal input error: Fatal input error: Density= Density= -1 in grid g= 0-1 at point  in grid g=  (0303 at point , (26303,,-126) ,
+52) 
+Rank 136 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 136
+Rank 136 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 136
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,2626,,-152) ) 
+
+Rank 226 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 226
+Rank 226 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 226
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,242242,,-152) ) 
+
+Rank 169 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 169
+Rank 169 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 169
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,-1-1,,-152) ) 
+
+Rank 61 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 61
+Rank 61 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 61
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,2626,,-152) ) 
+
+Rank 100 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 100
+Rank 100 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 100
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,295295,,52-1) ) 
+
+Rank 137 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 137
+Rank 137 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 137
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,5353,,52-1) ) 
+
+Rank 228 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 228
+Rank 228 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 228
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,5353,,52-1) 
+) 
+Rank 170 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 170
+Rank 170 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 170
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,269269,,-152) ) 
+
+Rank 101 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 101
+Rank 101 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 101
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,2626,,52-1) ) 
+
+Rank 29 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 29
+Rank 29 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 29
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,8080,,-152) ) 
+
+Rank 138 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 138
+Rank 138 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 138
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,295295,,-152) ) 
+
+Rank 229 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 229
+Rank 229 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 229
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,8080,,52-1) ) 
+
+Rank 171 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 171
+Rank 171 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 171
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,107107,,52-1) ) 
+
+Rank 32 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 32
+Rank 32 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 32
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,321321,,-152) ) 
+
+Rank 102 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 102
+Rank 102 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 102
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,134134,,-152) ) 
+
+Rank 31 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 31
+Rank 31 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 31
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,161161,,52-1) ) 
+
+Rank 139 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 139
+Rank 139 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 139
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,321321,,52-1) ) 
+
+Rank 230 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 230
+Rank 230 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 230
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,107107,,-152) ) 
+
+Rank 172 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 172
+Rank 172 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 172
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,134134,,-152) ) 
+
+Rank 33 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 33
+Rank 33 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 33
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,347347,,52-1) ) 
+
+Rank 103 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 103
+Rank 103 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 103
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,161161,,52-1) ) 
+
+Rank 0 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 0
+Rank 0 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 0
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,188188,,52-1) ) 
+
+Rank 140 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 140
+Rank 140 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 140
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (378378,,373373,,52-1) ) 
+
+Rank 231 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 231
+Rank 231 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 231
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,161161,,52-1) ) 
+
+Rank 173 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 173
+Rank 173 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 173
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,161161,,52-1) ) 
+
+Rank 34 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 34
+Rank 34 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 34
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,347347,,-152) ) 
+
+Rank 104 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 104
+Rank 104 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 104
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,269269,,52-1) ) 
+
+Rank 1 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 1
+Rank 1 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 1
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,215215,,-152) ) 
+
+Rank 141 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 141
+Rank 141 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 141
+Fatal input error: Fatal input error: Density= Density= -1 in grid g= -1 in grid g= 00 at point  at point  ( (378378,,399399,,52-1) ) 
+
+Rank 232 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 232
+Rank 232 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 232
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,215215,,-152) ) 
+
+Rank 174 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 174
+Rank 174 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 174
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,373373,,52-1) ) 
+
+Rank 35 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 35
+Rank 35 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 35
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,321321,,-152) ) 
+
+Rank 105 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 105
+Rank 105 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 105
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,242242,,-152) ) 
+
+Rank 2 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 2
+Rank 2 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 2
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,2626,,52-1) 
+) 
+Rank 142 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 142
+Rank 142 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 142
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,242242,,-152) ) 
+
+Rank 233 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 233
+Rank 233 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 233
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,399399,,-152) ) 
+
+Rank 175 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 175
+Rank 175 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 175
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,347347,,-152) ) 
+
+Rank 36 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 36
+Rank 36 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 36
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,269269,,52-1) ) 
+
+Rank 106 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 106
+Rank 106 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 106
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,8080,,52-1) ) 
+
+Rank 3 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 3
+Rank 3 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 3
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,269269,,-152) ) 
+
+Rank 143 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 143
+Rank 143 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 143
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,269269,,-152) ) 
+
+Rank 234 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 234
+Rank 234 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 234
+
+       ----------- Material properties ranges ---------------
+       -1 kg/m^3 <=  Density <= -1 kg/m^3
+       1 m/s    <=  Vp      <= 1 m/s
+       1 m/s    <=  Vs      <= 1 m/s
+       1        <=  Vp/Vs   <= 1
+       -1 Pa     <=  mu      <= -1 Pa
+       1 Pa     <=  lambda  <= 1 Pa
+       ------------------------------------------------------
+Fatal input error: Fatal input error: Density= Density= -1 in grid g= 0-1 at point  in grid g=  (0-1 at point , (-1-1,,-1-1) 
+,52) 
+Rank 176 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 176
+Rank 176 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 176
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,373373,,52-1) 
+) 
+Rank 37 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 37
+Rank 37 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 37
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (526526,,295295,,-152) ) 
+
+Rank 107 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 107
+Rank 107 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 107
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,107107,,-152) ) 
+
+Rank 4 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 4
+Rank 4 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 4
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,321321,,-152) ) 
+
+Rank 144 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 144
+Rank 144 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 144
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,2626,,52-1) ) 
+
+Rank 235 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 235
+Rank 235 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 235
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (303303,,399399,,-152) ) 
+
+Rank 177 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 177
+Rank 177 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 177
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,134134,,-152) ) 
+
+Rank 38 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 38
+Rank 38 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 38
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,295295,,-152) ) 
+
+Rank 108 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 108
+Rank 108 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 108
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,347347,,-152) ) 
+
+Rank 5 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 5
+Rank 5 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 5
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,5353,,-152) ) 
+
+Rank 145 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 145
+Rank 145 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 145
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,5353,,-152) ) 
+
+Rank 237 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 237
+Rank 237 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 237
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,161161,,52-1) ) 
+
+Rank 178 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 178
+Rank 178 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 178
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (227227,,373373,,52-1) ) 
+
+Rank 41 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 41
+Rank 41 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 41
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,8080,,52-1) ) 
+
+Rank 109 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 109
+Rank 109 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 109
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 0 at point 0 ( at point 341 (,341107,,107-1,) 52
+) 
+Rank 6 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 6
+Rank 6 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 6
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,188188,,-152) ) 
+
+Rank 146 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 146
+Rank 146 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 146
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,347347,,52-1) ) 
+
+Rank 240 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 240
+Rank 240 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 240
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,107107,,-152) ) 
+
+Rank 179 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 179
+Rank 179 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 179
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 0 at point  (0341 at point , (134341,,52134) ,
+-1) 
+Rank 43 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 43
+Rank 43 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 43
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,-1-1,,-152) ) 
+
+Rank 110 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 110
+Rank 110 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 110
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,215215,,-152) ) 
+
+Rank 7 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 7
+Rank 7 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 7
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (7575,,373373,,-152) ) 
+
+Rank 147 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 147
+Rank 147 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 147
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,134134,,-152) ) 
+
+Rank 241 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 241
+Rank 241 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 241
+Fatal input error: Fatal input error: Density= Density= -1 in grid g= -10 in grid g=  at point 0 ( at point 341 (,341188,,188-1,) 52
+) 
+Rank 180 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 180
+Rank 180 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 180
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,2626,,52-1) ) 
+
+Rank 45 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 45
+Rank 45 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 45
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,242242,,-152) ) 
+
+Rank 113 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 113
+Rank 113 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 113
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,2626,,52-1) ) 
+
+Rank 8 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 8
+Rank 8 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 8
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,188188,,52-1) ) 
+
+Rank 148 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 148
+Rank 148 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 148
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,215215,,-152) ) 
+
+Rank 242 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 242
+Rank 242 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 242
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,5353,,-152) ) 
+
+Rank 181 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 181
+Rank 181 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 181
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,269269,,-152) ) 
+
+Rank 46 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 46
+Rank 46 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 46
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,-1-1,,52-1) ) 
+
+Rank 114 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 114
+Rank 114 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 114
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,8080,,-152) ) 
+
+Rank 9 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 9
+Rank 9 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 9
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,269269,,52-1) ) 
+
+Rank 149 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 149
+Rank 149 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 149
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,242242,,-152) ) 
+
+Rank 243 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 243
+Rank 243 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 243
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,295295,,52-1) ) 
+
+Rank 182 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 182
+Rank 182 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 182
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,2626,,52-1) ) 
+
+Rank 48 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 48
+Rank 48 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 48
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,373373,,52-1) ) 
+
+Rank 115 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 115
+Rank 115 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 115
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,269269,,52-1) 
+) 
+Rank 10 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 10
+Rank 10 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 10
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,134134,,52-1) ) 
+
+Rank 150 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 150
+Rank 150 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 150
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,321321,,-152) ) 
+
+Rank 245 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 245
+Rank 245 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 245
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,134134,,52-1) ) 
+
+Rank 183 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 183
+Rank 183 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 183
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (-1-1,,399399,,-152) ) 
+
+Rank 49 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 49
+Rank 49 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 49
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 0 at point 0 ( at point 341 (,341295,,29552,) -1
+) 
+Rank 117 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 117
+Rank 117 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 117
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,347347,,-152) ) 
+
+Rank 11 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 11
+Rank 11 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 11
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,107107,,52-1) ) 
+
+Rank 151 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 151
+Rank 151 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 151
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,-1-1,,-152) ) 
+
+Rank 247 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 247
+Rank 247 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 247
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,347347,,-152) ) 
+
+Rank 184 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 184
+Rank 184 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 184
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,188188,,-152) ) 
+
+Rank 50 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 50
+Rank 50 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 50
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,373373,,-152) ) 
+
+Rank 119 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 119
+Rank 119 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 119
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,134134,,-152) ) 
+
+Rank 12 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 12
+Rank 12 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 12
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,188188,,-152) ) 
+
+Rank 152 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 152
+Rank 152 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 152
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,2626,,52-1) ) 
+
+Rank 248 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 248
+Rank 248 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 248
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,373373,,-152) ) 
+
+Rank 185 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 185
+Rank 185 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 185
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,215215,,-152) ) 
+
+Rank 52 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 52
+Rank 52 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 52
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (415415,,399399,,-152) ) 
+
+Rank 120 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 120
+Rank 120 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 120
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,161161,,-152) ) 
+
+Rank 13 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 13
+Rank 13 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 13
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,215215,,-152) ) 
+
+Rank 153 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 153
+Rank 153 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 153
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,5353,,52-1) ) 
+
+Rank 250 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 250
+Rank 250 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 250
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (341341,,399399,,52-1) ) 
+
+Rank 186 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 186
+Rank 186 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 186
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,269269,,52-1) ) 
+
+Rank 53 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 53
+Rank 53 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 53
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,8080,,-152) ) 
+
+Rank 121 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 121
+Rank 121 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 121
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,269269,,-152) ) 
+
+Rank 14 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 14
+Rank 14 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 14
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,188188,,-152) ) 
+
+Rank 154 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 154
+Rank 154 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 154
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,295295,,52-1) ) 
+
+Rank 251 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 251
+Rank 251 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 251
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,107107,,-152) ) 
+
+Rank 187 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 187
+Rank 187 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 187
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,295295,,-152) ) 
+
+Rank 56 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 56
+Rank 56 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 56
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,321321,,-152) ) 
+
+Rank 122 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 122
+Rank 122 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 122
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,134134,,52-1) ) 
+
+Rank 15 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 15
+Rank 15 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 15
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,321321,,52-1) ) 
+
+Rank 155 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 155
+Rank 155 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 155
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,215215,,52-1) ) 
+
+Rank 252 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 252
+Rank 252 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 252
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,347347,,52-1) 
+) 
+Rank 188 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 188
+Rank 188 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 188
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,161161,,52-1) ) 
+
+Rank 57 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 57
+Rank 57 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 57
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,347347,,-152) ) 
+
+Rank 123 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 123
+Rank 123 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 123
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,242242,,52-1) ) 
+
+Rank 16 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 16
+Rank 16 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 16
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,373373,,52-1) ) 
+
+Rank 156 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 156
+Rank 156 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 156
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,188188,,52-1) ) 
+
+Rank 253 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 253
+Rank 253 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 253
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,373373,,-152) ) 
+
+Rank 189 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 189
+Rank 189 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 189
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (265265,,399399,,-152) ) 
+
+Rank 59 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 59
+Rank 59 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 59
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,215215,,52-1) ) 
+
+Rank 124 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 124
+Rank 124 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 124
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (563563,,399399,,-152) ) 
+
+Rank 17 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 17
+Rank 17 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 17
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,295295,,52-1) ) 
+
+Rank 157 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 157
+Rank 157 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 157
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,242242,,-152) ) 
+
+Rank 254 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 254
+Rank 254 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 254
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,269269,,52-1) ) 
+
+Rank 190 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 190
+Rank 190 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 190
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,347347,,-152) ) 
+
+Rank 62 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 62
+Rank 62 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 62
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,295295,,-152) ) 
+
+Rank 125 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 125
+Rank 125 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 125
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (3737,,321321,,52-1) ) 
+
+Rank 18 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 18
+Rank 18 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 18
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (113113,,399399,,-152) ) 
+
+Rank 158 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 158
+Rank 158 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 158
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,2626,,-152) ) 
+
+Rank 255 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 255
+Rank 255 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 255
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,134134,,-152) ) 
+
+Rank 191 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 191
+Rank 191 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 191
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,134134,,-152) ) 
+
+Rank 63 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 63
+Rank 63 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n1] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 63
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,188188,,-152) ) 
+
+Rank 126 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 126
+Rank 126 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 126
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,161161,,52-1) ) 
+
+Rank 19 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 19
+Rank 19 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 19
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,295295,,52-1) ) 
+
+Rank 159 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 159
+Rank 159 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 159
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,242242,,52-1) 
+) 
+Rank 127 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 127
+Rank 127 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 127
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,321321,,52-1) ) 
+
+Rank 20 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 20
+Rank 20 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 20
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,269269,,52-1) ) 
+
+Rank 21 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 21
+Rank 21 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 21
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,161161,,52-1) ) 
+
+Rank 22 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 22
+Rank 22 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 22
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,295295,,52-1) 
+) 
+Rank 23 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 23
+Rank 23 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 23
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,242242,,52-1) ) 
+
+Rank 194 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 194
+Rank 194 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 194
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,347347,,52-1) ) 
+
+Rank 24 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 24
+Rank 24 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 24
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,295295,,-152) ) 
+
+Rank 25 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 25
+Rank 25 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 25
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,107107,,52-1) 
+) 
+Rank 26 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 26
+Rank 26 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 26
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,321321,,-152) ) 
+
+Rank 197 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 197
+Rank 197 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 197
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,215215,,-152) ) 
+
+Rank 69 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 69
+Rank 69 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 69
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,347347,,52-1) ) 
+
+Rank 27 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 27
+Rank 27 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 27
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,269269,,-152) ) 
+
+Rank 70 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 70
+Rank 70 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 70
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,399399,,-152) ) 
+
+Rank 28 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 28
+Rank 28 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 28
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,347347,,-152) ) 
+
+Rank 30 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 30
+Rank 30 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n0] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 30
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,5353,,-152) ) 
+
+Rank 200 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 200
+Rank 200 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 200
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,2626,,-152) ) 
+
+Rank 74 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 74
+Rank 74 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 74
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,5353,,52-1) ) 
+
+Rank 201 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 201
+Rank 201 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 201
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,8080,,-152) ) 
+
+Rank 75 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 75
+Rank 75 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 75
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,8080,,52-1) ) 
+
+Rank 204 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 204
+Rank 204 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 204
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,107107,,-152) ) 
+
+Rank 77 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 77
+Rank 77 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 77
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,107107,,52-1) ) 
+
+Rank 205 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 205
+Rank 205 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 205
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,161161,,-152) ) 
+
+Rank 206 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 206
+Rank 206 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 206
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,215215,,52-1) ) 
+
+Rank 207 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 207
+Rank 207 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 207
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,188188,,52-1) ) 
+
+Rank 84 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 84
+Rank 84 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 84
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,215215,,-152) ) 
+
+Rank 208 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 208
+Rank 208 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 208
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,242242,,-152) ) 
+
+Rank 209 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 209
+Rank 209 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 209
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,269269,,52-1) ) 
+
+Rank 88 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 88
+Rank 88 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 88
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,321321,,-152) ) 
+
+Rank 213 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 213
+Rank 213 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 213
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,347347,,-152) ) 
+
+Rank 214 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 214
+Rank 214 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 214
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,373373,,-152) ) 
+
+Rank 64 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 64
+Rank 64 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 64
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (151151,,399399,,52-1) ) 
+
+Rank 65 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 65
+Rank 65 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 65
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,373373,,52-1) ) 
+
+Rank 217 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 217
+Rank 217 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 217
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,-1-1,,-152) ) 
+
+Rank 66 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 66
+Rank 66 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 66
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,2626,,-152) ) 
+
+Rank 67 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 67
+Rank 67 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 67
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (452452,,399399,,-152) ) 
+
+Rank 218 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 218
+Rank 218 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 218
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,5353,,52-1) ) 
+
+Rank 68 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 68
+Rank 68 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 68
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,8080,,52-1) ) 
+
+Rank 219 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 219
+Rank 219 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 219
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,-1-1,,-152) ) 
+
+Rank 71 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 71
+Rank 71 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 71
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,134134,,-152) ) 
+
+Rank 72 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 72
+Rank 72 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 72
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,2626,,52-1) ) 
+
+Rank 192 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 192
+Rank 192 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 192
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,161161,,-152) ) 
+
+Rank 73 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 73
+Rank 73 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 73
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,188188,,-152) ) 
+
+Rank 193 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 193
+Rank 193 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 193
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,5353,,-152) ) 
+
+Rank 76 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 76
+Rank 76 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 76
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,8080,,-152) ) 
+
+Rank 195 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 195
+Rank 195 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 195
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,242242,,52-1) ) 
+
+Rank 78 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 78
+Rank 78 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 78
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,107107,,-152) ) 
+
+Rank 196 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 196
+Rank 196 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 196
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,295295,,52-1) 
+) 
+Rank 79 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 79
+Rank 79 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 79
+Fatal input error: Density= Fatal input error: Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,134134,,-152) ) 
+
+Rank 198 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 198
+Rank 198 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 198
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,321321,,52-1) 
+) 
+Rank 80 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 80
+Rank 80 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 80
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,373373,,52-1) ) 
+
+Rank 199 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 199
+Rank 199 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 199
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (189189,,399399,,52-1) ) 
+
+Rank 81 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 81
+Rank 81 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 81
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,188188,,-152) ) 
+
+Rank 202 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 202
+Rank 202 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 202
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,215215,,52-1) ) 
+
+Rank 82 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 82
+Rank 82 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 82
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,269269,,52-1) ) 
+
+Rank 203 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 203
+Rank 203 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 203
+Fatal input error: Fatal input error: Density= Density= -1-1 in grid g=  in grid g= 00 at point  at point  ( (489489,,373373,,-152) ) 
+
+Rank 83 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 83
+Rank 83 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 83
+Rank 210 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 210
+Rank 210 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 210
+Rank 85 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 85
+Rank 85 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 85
+Rank 211 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 211
+Rank 211 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 211
+Rank 86 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 86
+Rank 86 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 86
+Rank 212 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 212
+Rank 212 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 212
+Rank 87 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 87
+Rank 87 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 87
+Rank 215 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 215
+Rank 215 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 215
+Rank 89 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 89
+Rank 89 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 89
+Rank 216 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 216
+Rank 216 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 216
+Rank 90 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 90
+Rank 90 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 90
+Rank 220 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 220
+Rank 220 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 220
+Rank 91 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 91
+Rank 91 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 91
+Rank 221 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 221
+Rank 221 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 221
+Rank 92 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 92
+Rank 92 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 92
+Rank 222 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 222
+Rank 222 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 222
+Rank 93 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 93
+Rank 93 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 93
+Rank 223 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 223
+Rank 223 [Sat Dec 15 14:51:22 2018] [c5-3c1s10n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 223
+Rank 94 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 94
+Rank 94 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 94
+Rank 95 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 95
+Rank 95 [Sat Dec 15 14:51:22 2018] [c5-3c1s9n2] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 95
+srun: error: nid07972: tasks 0-31: Aborted
+srun: Terminating job step 17082693.0
+srun: error: nid07975: tasks 96-127: Aborted
+srun: error: nid07973: tasks 32-63: Aborted
+srun: error: nid07976: tasks 128-159: Aborted
+srun: error: nid07974: tasks 64-95: Aborted
+srun: error: nid07977: tasks 160-191: Aborted
+srun: error: nid07978: tasks 192-223: Aborted
+srun: error: nid07979: tasks 224-255: Aborted

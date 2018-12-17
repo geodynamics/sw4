@@ -1,0 +1,87 @@
+----------------------------------------------------------------
+            sw4 version 2.2-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Dec  6 00:32:26 PST 2018
+  By user:     kechen
+  Machine:     cori08
+  Compiler:    /opt/cray/pe/craype/2.5.14/bin/CC
+  3rd party include dir: /global/homes/k/kechen/software/sw4_dp/include, and library dir: /global/homes/k/kechen/software/sw4_dp/lib
+----------------------------------------------------------------
+
+Input file: gradient.in
+
+* Processing the grid command...
+* Setting nx to 601 to be consistent with h=200
+* Setting ny to 426 to be consistent with h=200
+* Setting nz to 101 to be consistent with h=200
+Extent of the computational domain xmax=120000 ymax=85000 zmax=20000
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       601       426       101     25858626
+Total number of grid points (without ghost points): 2.58586e+07
+
+*** Reading data from Rfile USGSBayAreaVM-08.3.0-corder.rfile in directory /project/projectdirs/m2868
+readSACfile, ERROR: found inconsistent meta data for files berkeley-jan-4-2018_data/BK.BKS.BHN.sac, berkeley-jan-4-2018_data/BK.BKS.BHE.sac, berkeley-jan-4-2018_data/BK.BKS.BHZ.sac
+  station not read 
+dt = 0.025 0.025 0.025
+t0 = 0.000538 0.000539 0.000538
+lat= 37.8762 37.8762 37.8762
+lon= -122.236 -122.236 -122.236
+npt= 2601 2601 2601
+utc1 = 2018 1 4 10 39 32 694 
+utc2 = 2018 1 4 10 39 32 694 
+utc3 = 2018 1 4 10 39 32 694 
+readSACfile, ERROR: found inconsistent meta data for files berkeley-jan-4-2018_data/BK.BL67.BHN.sac, berkeley-jan-4-2018_data/BK.BL67.BHE.sac, berkeley-jan-4-2018_data/BK.BL67.BHZ.sac
+  station not read 
+dt = 0.025 0.025 0.025
+t0 = 0.000536 0.000538 0.000538
+lat= 37.8749 37.8749 37.8749
+lon= -122.243 -122.243 -122.243
+npt= 2601 2601 2601
+utc1 = 2018 1 4 10 39 32 694 
+utc2 = 2018 1 4 10 39 32 694 
+utc3 = 2018 1 4 10 39 32 694 
+readSACfile, ERROR: found inconsistent meta data for files berkeley-jan-4-2018_data/BK.JRSC.BHN.sac, berkeley-jan-4-2018_data/BK.JRSC.BHE.sac, berkeley-jan-4-2018_data/BK.JRSC.BHZ.sac
+  station not read 
+dt = 0.025 0.025 0.025
+t0 = 0.000538 0.000536 0.000538
+lat= 37.4037 37.4037 37.4037
+lon= -122.239 -122.239 -122.239
+npt= 2601 2601 2601
+utc1 = 2018 1 4 10 39 32 694 
+utc2 = 2018 1 4 10 39 32 694 
+utc3 = 2018 1 4 10 39 32 694 
+readSACfile, ERROR: found inconsistent meta data for files berkeley-jan-4-2018_data/BK.VAK.BHN.sac, berkeley-jan-4-2018_data/BK.VAK.BHE.sac, berkeley-jan-4-2018_data/BK.VAK.BHZ.sac
+  station not read 
+dt = 0.025 0.025 0.025
+t0 = 0.000536 0.000536 0.000534
+lat= 37.8775 37.8775 37.8775
+lon= -122.249 -122.249 -122.249
+npt= 2601 2601 2601
+utc1 = 2018 1 4 10 39 32 694 
+utc2 = 2018 1 4 10 39 32 694 
+utc3 = 2018 1 4 10 39 32 694 
+Cartesian coordinates of source at (lon, lat)=(-1.222423e+02, 3.786119e+01) is (x,y)=(64752.8, 41379.7)
+Cartesian coordinates of source at (lon, lat)=(-1.220011e+02, 3.786081e+01) is (x,y)=(77358.2, 24329.7)
+Fatal input error: processObservation: ERROR: sac file BK.BDM.BHN.sac could not be opened
+Rank 0 [Sat Dec 15 16:06:37 2018] [c11-3c0s10n3] application called MPI_Abort(MPI_COMM_WORLD, 1) - process 0
+srun: error: nid09067: task 0: Aborted
+srun: Terminating job step 17083342.0
+slurmstepd: error: *** STEP 17083342.0 ON nid09067 CANCELLED AT 2018-12-15T16:06:40 ***
+srun: error: nid09071: tasks 128-159: Terminated
+srun: error: nid09068: tasks 32-63: Terminated
+srun: error: nid09072: tasks 160-191: Terminated
+srun: error: nid09070: tasks 96-127: Terminated
+srun: error: nid09069: tasks 64-95: Terminated
+srun: error: nid09073: tasks 192-223: Terminated
+srun: error: nid09074: tasks 224-255: Terminated
+srun: error: nid09067: tasks 1-31: Terminated
+srun: Force Terminated job step 17083342.0
