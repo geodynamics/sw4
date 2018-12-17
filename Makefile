@@ -191,14 +191,6 @@ sw4: $(FSW4) $(FOBJ)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
 
-# tarball
-sw4-v1.1.tgz:  $(FSW4) $(FOBJ)
-	rm -rf sw4-v1.1
-	mkdir sw4-v1.1
-	cp -r src configs tools examples doc Makefile wave.txt CMakeLists.txt INSTALL.txt LICENSE.txt README.txt sw4-v1.1
-	tar czf $@ sw4-v1.1
-	rm -rf sw4-v1.1 
-
 # test
 $(builddir)/rhs4sgcurv.o:src/rhs4sgcurv.C
 	cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$<
