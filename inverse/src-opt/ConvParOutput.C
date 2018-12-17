@@ -18,6 +18,16 @@ ConvParOutput::ConvParOutput( EW& ew, int n, int nvar, int myrank, int verbose,
    if( m_stepfileio && m_myrank == 0 )
    {
       m_fd  = fopen(m_convfile.c_str(),"w");
+// header
+      if (m_cg)
+      {
+         fprintf(m_fd, "it  sub-it  max-nrm-gradient  max-nrm-model-update  misfit\n");
+      }
+      else // lbfgs
+      {
+         fprintf(m_fd, "it  max-nrm-gradient  max-nrm-model-update  misfit\n");
+      }
+      
       m_fdx = fopen(m_parafile.c_str(),"w");
    }
    if( m_n > 11 )
@@ -59,10 +69,14 @@ void ConvParOutput::print_xmsg( double* x, double rnorm, double dxnorm,
    {
       cout << "-----------------------------------------------------------------------" << endl;
       if( m_cg )
-	 cout << " it=" << j << "," << k << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
+      {
+         cout << " it=" << j << " " << k << " max-norm scaled gradient= " << rnorm << " max-norm model update= " << dxnorm << endl;
+      }
       else
-	 cout << " it=" << j << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
-      cout << "  x = " ;
+      {
+	 cout << " it=" << it << " max-norm scaled gradient= " << rnorm << " max-norm model update= " << dxnorm << endl;
+      }
+      cout << "  Misfit = " ;
       for( int i=0 ; i < m_nvar ; i++ )
       {
 	 cout << x[i] << " ";
@@ -170,7 +184,7 @@ void ConvParOutput::finish()
 	 fclose(m_fd);
 	 fclose(m_fdx);
       }
-      else
+      else // what case is this?
       {
 	 m_fd = fopen(m_convfile.c_str(),"w");
 	 m_fdx= fopen(m_parafile.c_str(),"w");

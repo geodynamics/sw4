@@ -70,8 +70,10 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
    if( myRank == 0 )
    {
       const string convfile = mopt->m_path + "convergence.log";
-      fd = fopen(convfile.c_str(),"w");
 
+      fd = fopen(convfile.c_str(),"w");
+      fprintf(fd, "it  sub-it  max-nrm-gradient  max-nrm-model-update  misfit\n");
+      
       const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
@@ -255,7 +257,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	 if( myRank == 0 )
 	 {
 	    cout << "-----------------------------------------------------------------------" << endl;
-	    cout << " it=" << j << " " << k << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
+	    cout << " it=" << j << " " << k << " max-norm scaled gradient= " << rnorm << " max-norm model update= " << dxnorm << endl;
 	    cout << " Misfit= "  << f << endl;
 	 }
 
