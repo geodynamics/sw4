@@ -12,4 +12,4 @@ export OMP_NUM_THREADS=2
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 
-srun -n 64 -c 8 --cpu_bind=cores sw4mopt inv2.in 
+srun -n 512 -c 8 --cpu_bind=cores sw4mopt inv2.in 

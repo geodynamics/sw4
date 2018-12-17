@@ -2,7 +2,7 @@
 #SBATCH --mail-user=kechen@lbl.gov
 #SBATCH --mail-type=ALL
 #SBATCH -N 8                            # number of nodes
-#SBATCH -q debug                        # submit to the regular QOS
+#SBATCH -q premium                      # submit to the regular QOS
 #SBATCH -C knl,quad,cache               # note: non-quad,cache are via reservation only
 #SBATCH -S 4                            # use core specialization
 #SBATCH -t 00:30:00                     # time limit
@@ -12,4 +12,4 @@ export OMP_NUM_THREADS=2
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 
-srun -n 64 -c 8 --cpu_bind=cores sw4 alamo-sep-5-2008-forward.in 
+srun -n 256 -c 8 --cpu_bind=cores sw4 alamo-sep-5-2008-forward.in 
