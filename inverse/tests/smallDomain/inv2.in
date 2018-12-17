@@ -5,8 +5,8 @@ grid h=200 x=120e3 y=85e3 z=20e3 lat=38.55 lon=-122.3 az=1.43638e+02
 #
 # Two events:
 #
-event path=berkeley-jan-4-2018_output obspath=berkeley-jan-4-2018_data name=berkeley
-event path=alamo-sep-5-2008_output obspath=alamo-sep-5-2008_data name=alamo
+event path=/global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain/berkeley-jan-4-2018_output obspath=berkeley-jan-4-2018_data name=berkeley
+event path=/global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain/alamo-sep-5-2008_output obspath=alamo-sep-5-2008_data name=alamo
 #
 #------------------------------
 # Time, berkeley event
@@ -17,7 +17,7 @@ time t=40.0 utcstart=09/06/2008:04:00:10.650 event=alamo
 #------------------------------
 # Paths etc. Note that obspath is defined by the event command
 #
-fileio verbose=1 temppath=/global/cscratch1/sd/kechen/smallDomain/tmp path=inv2_output pfs=1
+fileio verbose=1 temppath=/global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain/tmp path=/global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain/inv2_output pfs=1
 #
 #------------------------------
 # Use default supergrid parameters

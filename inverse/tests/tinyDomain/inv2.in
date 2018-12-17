@@ -5,8 +5,8 @@ grid h=200 x=60e3 y=50e3 z=20e3 lat=38.1 lon=-122.1 az=1.43638e+02
 #
 # Two events:
 #
-event path=first-fake-event_output obspath=first-fake-event_data name=first
-event path=second-fake-event_output obspath=second-fake-event_data name=second
+event path=/global/cscratch1/sd/kechen/sw4/inverse/tests/tinyDomain/first-fake-event_output obspath=first-fake-event_data name=first
+event path=/global/cscratch1/sd/kechen/sw4/inverse/tests/tinyDomain/second-fake-event_output obspath=second-fake-event_data name=second
 #
 #------------------------------
 # Time command for both events
@@ -17,7 +17,7 @@ time t=25.0 utcstart=09/06/2018:08:00:11.123 event=second
 #------------------------------
 # Paths etc. Note that obspath is defined by the event command
 #
-fileio verbose=1 temppath=/global/cscratch1/sd/kechen/tinyDomain/tmp path=inv2_output pfs=1
+fileio verbose=1 temppath=/global/cscratch1/sd/kechen/sw4/inverse/tests/tinyDomain/tmp path=/global/cscratch1/sd/kechen/sw4/inverse/tests/tinyDomain/inv2_output pfs=1
 #
 #------------------------------
 # Use default supergrid parameters
