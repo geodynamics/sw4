@@ -89,6 +89,10 @@ else
 # object code goes in machine specific directory on LC
       debugdir := debug_quartz
       optdir   := optimize_quartz
+# Cori @ NERSC
+    else ifeq ($(findstring cori,$(HOSTNAME)),cori)
+      include configs/make.cori
+      foundincfile := "configs/make.cori"
   # for Bjorn's tux box
     else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
       include configs/make.tux337
