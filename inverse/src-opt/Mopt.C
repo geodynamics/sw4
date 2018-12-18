@@ -3,6 +3,7 @@
 #include <fcntl.h>
 
 #include "MaterialParCartesian.h"
+#include "MaterialParCartesianVels.h"
 
 #include "EW.h"
 
@@ -137,6 +138,7 @@ void Mopt::processMaterialParCart( char* buffer )
 	       "ERROR: not an mparcart line: " << token);
    token = strtok(NULL, " \t");
 
+   bool vel = false;
    int nx=3, ny=3, nz=3, init=0;
    char file[256];
 
@@ -148,7 +150,8 @@ void Mopt::processMaterialParCart( char* buffer )
 	 break;
       else if( startswith("type=",token) )
       {
-
+	 token += 5;
+	 vel = strcmp("velocity",token)==0;
       }
       else if( startswith("nx=",token) )
       {
@@ -186,7 +189,10 @@ void Mopt::processMaterialParCart( char* buffer )
       }
       token = strtok(NULL, " \t");
    }
-   m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+   if (vel)
+      m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
+   else
+      m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
 }
 
 //-----------------------------------------------------------------------

@@ -148,6 +148,13 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	    cout << "Step length computation " << endl;
 
          // Perturb x in the direction of d
+	 double normd=0;
+	 for( int i=0 ; i < ns ; i++ )
+	    normd += ds[i]*ds[i];
+	 normd = sqrt(normd);
+	 h = 1e-3/normd;
+	 hi = 1/h;
+
 	 for( int i=0 ; i < ns ; i++ )
 	    xas[i] = xs[i] + h*ds[i];
 	 for( int i=0 ; i < nmpard ; i++ )

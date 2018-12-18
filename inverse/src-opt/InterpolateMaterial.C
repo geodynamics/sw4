@@ -521,7 +521,7 @@ void gradientsc( int nx, int  ny, int nz, float_sw4 xmin, float_sw4 ymin,
 //-----------------------------------------------------------------------
 void EW::interpolate( int nx, int ny, int nz, double xmin, double ymin, double zmin, double hx,
 		      double hy, double hz, Sarray& rho, Sarray& mu, Sarray& lambda,
-		      int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid )
+		      int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid, bool update )
 //
 // Computes the material on computational grid from a given material perturbation on a parameter grid.
 //
@@ -549,10 +549,23 @@ void EW::interpolate( int nx, int ny, int nz, double xmin, double ymin, double z
    int kfirstact=m_kStartAct[grid];
    int klastact=m_kEndAct[grid];
 
+   if( update )
+   {
  // Start with a copy of the reference material
-   rhogrid.copy( mRho[grid] );
-   mugrid.copy( mMu[grid] );
-   lambdagrid.copy( mLambda[grid] );
+      rhogrid.copy( mRho[grid] );
+      mugrid.copy( mMu[grid] );
+      lambdagrid.copy( mLambda[grid] );
+   }
+   else
+   {
+ // Start from zero
+      rhogrid.define( mRho[grid] );
+      mugrid.define( mMu[grid] );
+      lambdagrid.define( mLambda[grid] );
+      rhogrid.set_to_zero();
+      mugrid.set_to_zero();
+      lambdagrid.set_to_zero();
+   }
    
    double* rhop = rho.c_ptr();
    double* mup = mu.c_ptr();
@@ -586,7 +599,7 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
 				double zmin, double hx, double hy, double hz,
 				Sarray& rho, Sarray& mu, Sarray& lambda,
 				vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
-				vector<Sarray>& lambdagrid )
+				vector<Sarray>& lambdagrid, bool update )
 {
 // Compute material perturbation on parameter grid from a material that is given on the computational grid.
 //
@@ -600,7 +613,11 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
 //
 //   Output: rho, mu, lambda  - Material perturbation on parameter grid.
 //
-// Simple and not so accurate...
+
+   int a1=1;
+   if( !update )
+      a1 = 0;
+
    int ig, jg, kg, g;
    rho.set_to_zero();
    mu.set_to_zero();
@@ -624,17 +641,17 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
 		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*rhogrid[g](ig,jg,kg+1)+wghx*rhogrid[g](ig+1,jg,kg+1))+
 		  (wghy)*(wghz)*(  (1-wghx)*rhogrid[g](ig,jg+1,kg+1)+wghx*rhogrid[g](ig+1,jg+1,kg+1)) 
-		  - ((1-wghy)*(1-wghz)*(
+		  - a1*((1-wghy)*(1-wghz)*(
 			           (1-wghx)*mRho[g](ig,jg,kg)+wghx*mRho[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*mRho[g](ig,jg+1,kg)+wghx*mRho[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*mRho[g](ig,jg,kg+1)+wghx*mRho[g](ig+1,jg,kg+1))+
-		     (wghy)*(wghz)*(  (1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
+		  (wghy)*(wghz)*(  (1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
                mu(i,j,k) = (1-wghy)*(1-wghz)*(
 			           (1-wghx)*mugrid[g](ig,jg,kg)+wghx*mugrid[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*mugrid[g](ig,jg+1,kg)+wghx*mugrid[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*mugrid[g](ig,jg,kg+1)+wghx*mugrid[g](ig+1,jg,kg+1))+
 		  (wghy)*(wghz)*(  (1-wghx)*mugrid[g](ig,jg+1,kg+1)+wghx*mugrid[g](ig+1,jg+1,kg+1))
-		  - ( (1-wghy)*(1-wghz)*(
+		  - a1*( (1-wghy)*(1-wghz)*(
 			           (1-wghx)*mMu[g](ig,jg,kg)+wghx*mMu[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*mMu[g](ig,jg+1,kg)+wghx*mMu[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*mMu[g](ig,jg,kg+1)+wghx*mMu[g](ig+1,jg,kg+1))+
@@ -644,7 +661,7 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
 		  (wghy)*(1-wghz)*((1-wghx)*lambdagrid[g](ig,jg+1,kg)+wghx*lambdagrid[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*lambdagrid[g](ig,jg,kg+1)+wghx*lambdagrid[g](ig+1,jg,kg+1))+
 		  (wghy)*(wghz)*(  (1-wghx)*lambdagrid[g](ig,jg+1,kg+1)+wghx*lambdagrid[g](ig+1,jg+1,kg+1))
-		  -((1-wghy)*(1-wghz)*(
+		  -a1*((1-wghy)*(1-wghz)*(
 			           (1-wghx)*mLambda[g](ig,jg,kg)+wghx*mLambda[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*mLambda[g](ig,jg+1,kg)+wghx*mLambda[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*mLambda[g](ig,jg,kg+1)+wghx*mLambda[g](ig+1,jg,kg+1))+
@@ -662,6 +679,100 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
    MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    tmp.copy(lambda);
    MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+}
+
+//-----------------------------------------------------------------------
+void EW::interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
+				    double zmin, double hx, double hy, double hz,
+				    Sarray& rho, Sarray& cs, Sarray& cp,
+				    vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
+				    vector<Sarray>& lambdagrid )
+{
+// Compute material perturbation on parameter grid from a material that is given on the computational grid.
+//
+// Computes:  rho := I(rhogrid-mRho)   (and similar for mu and lambda)
+//            cs  := I(csgrid-mCs)
+//            cp  := I(cpgrid-mCp)
+//            where I() interpolates from computational grid onto the parameter grid.
+//            csgrid and cpgrid are obtained by transforming (rhogrid,mugrid,lambdagrid)
+//            mCs and mCp are obtained by transforming (mRho, mMu, mLambda)
+//   
+//   Input: nx, ny, nz       - Dimensions of parameter grid
+//          xmin, ymin, zmin - Origin of parameter grid.
+//          hx, hy, hz       - Spacing of parameter grid.
+//          rhogrid, mugrid, lambdagrid - The material (rho,mu,lambda) on the computational grids.
+//
+//   Output: rho, cs, cp  - Material velocity perturbation on parameter grid.
+//
+
+   int ig, jg, kg, g;
+   rho.set_to_zero();
+   cs.set_to_zero();
+   cp.set_to_zero();
+   vector<bool> done(mNumberOfGrids);
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+      done[g] = false;
+   vector<Sarray> csdiff(mNumberOfGrids);
+   vector<Sarray> cpdiff(mNumberOfGrids);
+   for( int k=1 ; k <= nz ; k++ )
+      for( int j=1 ; j <= ny ; j++ )
+	 for( int i=1 ; i <= nx ; i++ )
+	 {
+            double x = xmin + i*hx;
+	    double y = ymin + j*hy;
+	    double z = zmin + k*hz;
+            computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
+            if( interior_point_in_proc( ig, jg, g) )
+	    {
+	       if( !done[g] )
+	       {
+		  csdiff[g].define(mugrid[g]);
+		  cpdiff[g].define(mugrid[g]);
+		  for( int k1=rhogrid[g].m_kb ; k1 <= rhogrid[g].m_ke ; k1++)
+		     for( int j1=rhogrid[g].m_jb ; j1 <= rhogrid[g].m_je ; j1++)
+			for( int i1=rhogrid[g].m_ib ; i1 <= rhogrid[g].m_ie ; i1++)
+			{
+			   csdiff[g](i1,j1,k1)=sqrt(mugrid[g](i,j,k)/rhogrid[g](i,j,k))-
+			                       sqrt(mMu[g](i,j,k)/mRho[g](i,j,k));
+			   cpdiff[g](i1,j1,k1)=
+			     sqrt((2*mugrid[g](i,j,k)+lambdagrid[g](i,j,k))/rhogrid[g](i,j,k)) -
+		             sqrt((2*mMu[g](i,j,k)   +mLambda[g](i,j,k)   )/mRho[g](i,j,k));
+			}
+		  done[g] = true;
+	       }
+	       double h = mGridSize[g];
+	       double wghx = x/h-ig+1;
+	       double wghy = y/h-jg+1;
+	       double wghz = z/h-kg+1;
+               rho(i,j,k) = (1-wghy)*(1-wghz)*(
+			           (1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
+		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
+		  (1-wghy)*(wghz)*((1-wghx)*rhogrid[g](ig,jg,kg+1)+wghx*rhogrid[g](ig+1,jg,kg+1))+
+		  (wghy)*(wghz)*(  (1-wghx)*rhogrid[g](ig,jg+1,kg+1)+wghx*rhogrid[g](ig+1,jg+1,kg+1)) 
+		  -      ((1-wghy)*(1-wghz)*(
+			           (1-wghx)*mRho[g](ig,jg,kg)+wghx*mRho[g](ig+1,jg,kg))+
+		  (wghy)*(1-wghz)*((1-wghx)*mRho[g](ig,jg+1,kg)+wghx*mRho[g](ig+1,jg+1,kg))+
+		  (1-wghy)*(wghz)*((1-wghx)*mRho[g](ig,jg,kg+1)+wghx*mRho[g](ig+1,jg,kg+1))+
+		  (wghy)*(wghz)*(  (1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
+               cs(i,j,k) = (1-wghy)*(1-wghz)*(
+			           (1-wghx)*csdiff[g](ig,jg,kg)+wghx*csdiff[g](ig+1,jg,kg))+
+		  (wghy)*(1-wghz)*((1-wghx)*csdiff[g](ig,jg+1,kg)+wghx*csdiff[g](ig+1,jg+1,kg))+
+		  (1-wghy)*(wghz)*((1-wghx)*csdiff[g](ig,jg,kg+1)+wghx*csdiff[g](ig+1,jg,kg+1))+
+		  (wghy)*(wghz)*(  (1-wghx)*csdiff[g](ig,jg+1,kg+1)+wghx*csdiff[g](ig+1,jg+1,kg+1));
+               cp(i,j,k) = (1-wghy)*(1-wghz)*(
+			           (1-wghx)*cpdiff[g](ig,jg,kg)+wghx*cpdiff[g](ig+1,jg,kg))+
+		  (wghy)*(1-wghz)*((1-wghx)*cpdiff[g](ig,jg+1,kg)+wghx*cpdiff[g](ig+1,jg+1,kg))+
+		  (1-wghy)*(wghz)*((1-wghx)*cpdiff[g](ig,jg,kg+1)+wghx*cpdiff[g](ig+1,jg,kg+1))+
+		  (wghy)*(wghz)*(  (1-wghx)*cpdiff[g](ig,jg+1,kg+1)+wghx*cpdiff[g](ig+1,jg+1,kg+1));
+	    }
+	 }
+   Sarray tmp;
+   tmp.copy(rho);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   tmp.copy(cs);
+   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   tmp.copy(cp);
+   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 }
 
 //-----------------------------------------------------------------------
@@ -716,4 +827,55 @@ void EW::interpolation_gradient( int nx, int ny, int nz, double xmin, double ymi
    //   communicate_array(rhogrid);
    //   communicate_array(mugrid);
    //   communicate_array(lambdagrid);
+}
+
+//-----------------------------------------------------------------------
+void EW::update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda )
+{
+   // Input (rho,mu,lambda) on grid g contains (rho,cs,cp) update from base material.
+   // This routine returns (rho,mu,lambda) computed by adding the input update variables
+   // to the base material (rhoB,csB,cpB) and transforming back to Lame paramters.
+   float_sw4* rhop=rho.c_ptr();
+   float_sw4* mup=mu.c_ptr();
+   float_sw4* lap=lambda.c_ptr();
+   float_sw4* m_rho=mRho[g].c_ptr();
+   float_sw4* m_mu=mMu[g].c_ptr();
+   float_sw4* m_la=mLambda[g].c_ptr();
+   for( size_t ind=0 ; ind < rho.m_npts ; ind++ )
+   {
+      // Add base material to update in velocity variables
+      float_sw4 cs = sqrt(m_mu[ind]/m_rho[ind])              + mup[ind];
+      float_sw4 cp = sqrt((2*m_mu[ind]+m_la[ind])/m_rho[ind])+ lap[ind];
+      float_sw4 rho= m_rho[ind]                             + rhop[ind];
+      // return total material as Lame parameters
+      rhop[ind]= rho;
+      mup[ind] = cs*cs*rho;
+      lap[ind] = (cp*cp-2*cs*cs)*rho;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, 
+			     Sarray& grho, Sarray& gmu, Sarray& glambda )
+{
+   // (grho,gmu,glambda) is gradient on grid g with respect to (rho,mu,lambda) at the
+   //  grid points.
+   // This routine returns the gradient with respect to (rho,cs,cp) at the grid points.
+   // NOTE: input (grho,gmu,glambda) are overwritten with the transformed gradient.
+
+   float_sw4* rhop=rho.c_ptr();
+   float_sw4* mup=mu.c_ptr();
+   float_sw4* lap=lambda.c_ptr();
+   float_sw4* grhop=grho.c_ptr();
+   float_sw4* gmup=gmu.c_ptr();
+   float_sw4* glambdap=glambda.c_ptr();
+   for( size_t ind=0 ; ind < rho.m_npts ; ind++ )
+   {
+      // Chain rule tranformation
+      float_sw4 cs=sqrt(mup[ind]/rhop[ind]);
+      float_sw4 cp=sqrt((2*mup[ind]+lap[ind])/rhop[ind]);
+      grhop[ind] = cs*cs*gmup[ind]+(cp*cp-2*cs*cs)*glambdap[ind]+grhop[ind];
+      gmup[ind]     = 2*rhop[ind]*cs*gmup[ind]-4*rhop[ind]*cs*glambdap[ind];
+      glambdap[ind] = 2*rhop[ind]*cp*glambdap[ind];
+   }
 }

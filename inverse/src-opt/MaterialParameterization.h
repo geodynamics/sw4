@@ -21,6 +21,10 @@ public:
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 			      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 			      std::vector<Sarray>& a_gradlambda )=0;
+   virtual void gradient_transformation( std::vector<Sarray>& a_rho,    std::vector<Sarray>& a_dmu,
+					 std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho, 
+					 std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda ){};
+
    //   virtual void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm ) = 0;
    virtual ssize_t parameter_index( int ip, int jp, int kp, int grid, int var )=0;
    virtual ssize_t local_index( size_t ind_global )=0;

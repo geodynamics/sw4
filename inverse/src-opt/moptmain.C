@@ -227,6 +227,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok );
+   VERIFY2( ok, "ERROR: Material check failed\n" );
 
 // Old   
 //   simulation.parameters_to_material( nmpar, xm, rho, mu, lambda );
@@ -269,6 +270,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
 
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
+      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
       mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfm, gRho, gMu, gLambda );
       for( int m=0 ; m < nmpars ; m++ )
 	 dfs[m+nspar] += dfsevent[m];

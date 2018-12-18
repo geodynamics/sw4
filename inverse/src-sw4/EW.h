@@ -625,8 +625,8 @@ void parameters_to_material( int nmpar, float_sw4* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
 void material_to_parameters( int nmpar, float_sw4* xm, vector<Sarray>& rho,
 			     vector<Sarray>& mu, vector<Sarray>& lambda );
-void get_material_parameter( int nmpar, float_sw4* xm );
-void get_scale_factors( int nmpar, float_sw4* xm );
+   //void get_material_parameter( int nmpar, float_sw4* xm );
+   //void get_scale_factors( int nmpar, float_sw4* xm );
 
    //#ifdef ENABLE_OPT
 void material_correction( int nmpar, float_sw4* xm );
@@ -640,7 +640,7 @@ void check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 
 void check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c );
 
-void get_nr_of_material_parameters( int& nmvar );
+   //void get_nr_of_material_parameters( int& nmvar );
 void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
 		  vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
 		  vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda );
@@ -671,16 +671,26 @@ void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data 
 
 void interpolate( int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
 		  float_sw4 hy, float_sw4 hz, Sarray& rho, Sarray& mu, Sarray& lambda,
-		  int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid );
+		  int grid, Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid, bool update );
 
 void interpolate_to_coarse( int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
 			    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
 			    Sarray& rho, Sarray& mu, Sarray& lambda, vector<Sarray>& rhogrid, 
-			    vector<Sarray>& mugrid, vector<Sarray>& lambdagrid );
+			    vector<Sarray>& mugrid, vector<Sarray>& lambdagrid, bool update );
 
 void interpolation_gradient( int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
 			     float_sw4 hy, float_sw4 hz, Sarray& gradrho, Sarray& gradmu, Sarray& gradlambda,
 			     int grid, Sarray& gradrhogrid, Sarray& gradmugrid, Sarray& gradlambdagrid );
+
+void interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
+				    double zmin, double hx, double hy, double hz,
+				    Sarray& rho, Sarray& cs, Sarray& cp,
+				    vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
+				    vector<Sarray>& lambdagrid );
+
+void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda );
+
+void transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho, Sarray& gmu, Sarray& glambda );
 
 // Functions to impose conditions at grid refinement interface:
    // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,

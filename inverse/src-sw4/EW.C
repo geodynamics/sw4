@@ -1,3 +1,4 @@
+
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -6598,17 +6599,17 @@ void EW::get_gridgen_info( int& order, float_sw4& zetaBreak ) const
 }
 
 //-----------------------------------------------------------------------
-void EW::get_nr_of_material_parameters( int& nmvar )
-{
-   nmvar = 0;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      if( m_iEndAct[g]-m_iStartAct[g]+1 > 0 && m_jEndAct[g]-m_jStartAct[g]+1 >0
-	  && m_kEndAct[g]-m_kStartAct[g]+1 > 0 )
-	 nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*
-	    (m_kEndAct[g]-m_kStartAct[g]+1)*3;
-   }
-}
+//void EW::get_nr_of_material_parameters( int& nmvar )
+//{
+//   nmvar = 0;
+//   for( int g=0 ; g < mNumberOfGrids ; g++ )
+//   {
+//      if( m_iEndAct[g]-m_iStartAct[g]+1 > 0 && m_jEndAct[g]-m_jStartAct[g]+1 >0
+//	  && m_kEndAct[g]-m_kStartAct[g]+1 > 0 )
+//	 nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*
+//	    (m_kEndAct[g]-m_kStartAct[g]+1)*3;
+//   }
+//}
 
 //-----------------------------------------------------------------------
 void EW::parameters_to_material( int nmpar, float_sw4* xm, vector<Sarray>& rho,
@@ -6667,53 +6668,53 @@ void EW::material_to_parameters( int nmpar, float_sw4* xm, vector<Sarray>& rho,
 }
 
 //-----------------------------------------------------------------------
-void EW::get_material_parameter( int nmpar, float_sw4* xm )
-{
-   size_t gp, ind=0;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      if( g == 0 )
-	 gp = 0;
-      else
-	 gp = gp + 3*ind;
-      ind =0;
-      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
-	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
-	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
-	    {
-	       xm[gp+ind*3]   = mRho[g](i,j,k);
-	       xm[gp+ind*3+1] = mMu[g](i,j,k);
-	       xm[gp+ind*3+2] = mLambda[g](i,j,k);
-	       ind++;
-	    }
-   }
-}
+//void EW::get_material_parameter( int nmpar, float_sw4* xm )
+//{
+//   size_t gp, ind=0;
+//   for( int g=0 ; g < mNumberOfGrids ; g++ )
+//   {
+//      if( g == 0 )
+//	 gp = 0;
+//      else
+//	 gp = gp + 3*ind;
+//      ind =0;
+//      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+//	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+//	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
+//	    {
+//	       xm[gp+ind*3]   = mRho[g](i,j,k);
+//	       xm[gp+ind*3+1] = mMu[g](i,j,k);
+//	       xm[gp+ind*3+2] = mLambda[g](i,j,k);
+//	       ind++;
+//	    }
+//   }
+//}
 
 //-----------------------------------------------------------------------
-void EW::get_scale_factors( int nmpar, float_sw4* sf )
-{
-   size_t gp, ind=0;
-   float_sw4 rhoscale = 2.0;
-   float_sw4 muscale = 1.0;
-   float_sw4 lambdascale = 5.4e-3;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      if( g == 0 )
-	 gp = 0;
-      else
-	 gp = gp + 3*ind;
-      ind =0;
-      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
-	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
-	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
-	    {
-	       sf[gp+ind*3]   = rhoscale;
-	       sf[gp+ind*3+1] = muscale;
-	       sf[gp+ind*3+2] = lambdascale;
-	       ind++;
-	    }
-   }
-}
+//void EW::get_scale_factors( int nmpar, float_sw4* sf )
+//{
+//   size_t gp, ind=0;
+//   float_sw4 rhoscale = 2.0;
+//   float_sw4 muscale = 1.0;
+//   float_sw4 lambdascale = 5.4e-3;
+//   for( int g=0 ; g < mNumberOfGrids ; g++ )
+//   {
+//      if( g == 0 )
+//	 gp = 0;
+//      else
+//	 gp = gp + 3*ind;
+//      ind =0;
+//      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+//	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+//	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
+//	    {
+//	       sf[gp+ind*3]   = rhoscale;
+//	       sf[gp+ind*3+1] = muscale;
+//	       sf[gp+ind*3+2] = lambdascale;
+//	       ind++;
+//	    }
+//   }
+//}
 
 //-----------------------------------------------------------------------
 void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 

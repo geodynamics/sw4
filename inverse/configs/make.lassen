@@ -1,0 +1,6 @@
+  etree = yes
+  SW4ROOT = /usr/apps/wpp
+  FC = mpifort
+  CC = mpicc
+  CXX = mpicxx
+  EXTRA_LINK_FLAGS =  -Wl,-rpath=$(SW4ROOT)/lib -llapack -lblas

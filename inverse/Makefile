@@ -89,10 +89,15 @@ else
 # object code goes in machine specific directory on LC
       debugdir := debug_quartz
       optdir   := optimize_quartz
+    else ifeq ($(findstring lassen,$(HOSTNAME)),lassen)
+      include configs/make.lassen
+      foundincfile := "configs/make.lassen"
+      debugdir := debug_lassen
+      optdir   := optimize_lassen
   # for Bjorn's tux box
-    else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
-      include configs/make.tux337
-      foundincfile := "configs/make.tux337"
+    else ifeq ($(findstring tux405,$(HOSTNAME)),tux405)
+      include configs/make.tux405
+      foundincfile := "configs/make.tux405"
   # for Anders' tux box
     else ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
       include configs/make.tux355
@@ -207,7 +212,8 @@ OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o
 
 # material optimization
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
-           MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o 
+           MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
+	   MaterialParCartesianVels.o
            
 
 OBJL  = lamb_one_point.o
