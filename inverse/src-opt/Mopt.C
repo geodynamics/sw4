@@ -90,6 +90,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMfsurf( buffer );
          else if( startswith("mimage",buffer) )
 	    processMimage( buffer );
+	 else if (startswith("m3dimage", buffer))
+	   processM3Dimage(buffer);
          else if( startswith("mtypx",buffer) )
 	    processMtypx( buffer );
          else if( startswith("fileio",buffer) )
@@ -656,7 +658,7 @@ void Mopt::processMimage( char* buffer )
    CHECK_INPUT(strcmp("mimage", token) == 0,
 	       "ERROR: not an mimage line: " << token);
 
-   int cycle=1, cycleInterval=0;
+   int iter=1, iterInterval=0;
    Image::ImageMode mode=Image::RHO;
    Image::ImageOrientation locationType=Image::UNDEFINED;
    string filePrefix="mimage";
@@ -672,15 +674,15 @@ void Mopt::processMimage( char* buffer )
       if (startswith("#", token) || startswith(" ", buffer))
 	// Ignore commented lines and lines with just a space.
 	 break;
-      else if( startswith("cycle=",token) )
+      else if( startswith("iter=",token) )
       {
-	 token += 6; // skip cycle=
-	 cycle = atoi(token);
+	 token += 5; // skip iter=
+	 iter = atoi(token);
       }
-      else if (startswith("cycleInterval=", token) )
+      else if (startswith("iterInterval=", token) )
       {
-	 token += 14; // skip cycleInterval=
-	 cycleInterval = atoi(token);
+	 token += 13; // skip iterInterval=
+	 iterInterval = atoi(token);
       }
       else if (startswith("file=", token))
       {
@@ -749,11 +751,96 @@ void Mopt::processMimage( char* buffer )
    CHECK_INPUT( coordWasSet, "ERROR: Processing image command: one of the coordinate (x,y,z) option must be set " <<
 		" to determine the image's 2D plane" << endl);
    double time=-1, timeInterval=-1;
-   Image* i = new Image(m_ew, time, timeInterval, cycle, cycleInterval, 
+   Image* i = new Image(m_ew, time, timeInterval, iter, iterInterval, 
 		 filePrefix, mode, locationType, coordValue, use_double);
    i->computeGridPtIndex();
    i->allocatePlane();
    m_image_files.push_back(i);
+}
+
+//-----------------------------------------------------------------------
+void Mopt::processM3Dimage( char* buffer )
+{
+   int iter=-1, iterInterval=0;
+   Image3D::Image3DMode mode=Image3D::RHO;
+   double time=0.0, timeInterval=0.0;
+   bool timingSet = false;
+   double tStart = -999.99;
+   string filePrefix="m3dimage";
+   bool use_double = false;
+  
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("m3dimage", token) == 0, "ERROR: Not a m3dimage line...: " << token );
+
+   token = strtok(NULL, " \t");
+   string err = "m3dimage Error: ";
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+      {
+	 // Ignore commented lines and lines with just a space.
+	 break;
+      }
+      if (startswith("iter=", token) )
+      {
+	 token += 5; // skip iter=
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing m3dimage command: iter must be a non-negative integer, not: " << token);
+	 iter = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("iterInterval=", token) )
+      {
+	 token += 13; // skip iterInterval=
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing m3dimage command: iterInterval must be a non-negative integer, not: " << token);
+	 iterInterval = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("file=", token))
+      {
+	 token += 5; // skip file=
+	 filePrefix = token;
+      }
+      else if (startswith("mode=", token))
+      {
+	 token += 5; // skip mode=
+	 if (strcmp(token, "rho") == 0)   mode = Image3D::RHO;
+	 else if (strcmp(token, "p") == 0)   mode = Image3D::P;
+	 else if (strcmp(token, "s") == 0)   mode = Image3D::S;
+	 else if (strcmp(token, "mu") == 0)   mode = Image3D::MU;
+	 else if (strcmp(token, "lambda") == 0)   mode = Image3D::LAMBDA;
+	 else if (strcmp(token, "gradrho") == 0)   mode = Image3D::GRADRHO;
+	 else if (strcmp(token, "gradp") == 0)   mode = Image3D::GRADP;
+	 else if (strcmp(token, "grads") == 0)   mode = Image3D::GRADS;
+	 else if (strcmp(token, "gradmu") == 0)   mode = Image3D::GRADMU;
+	 else if (strcmp(token, "gradlambda") == 0)   mode = Image3D::GRADLAMBDA;
+	 else
+	 {
+	    //	    mode = static_cast<Image3D::Image3DMode>(atoi(token));
+	    CHECK_INPUT(0,"Processing m3dimage command: " << "mode must be one of the following: " << endl <<
+			"\t rho|p|s|mu|lambda|gradrho|gradp|grads|gradmu|gradlambda *not: "<< token );
+	 }
+      }
+      else if( startswith("precision=",token) )
+      {
+	 token += 10;
+	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
+		      "Processing m3dimage command: precision must be float or double, not '" << token );
+	 use_double =  startswith("double",token);
+      }
+      else
+      {
+	 badOption("m3dimage", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+
+   CHECK_INPUT( timingSet, "Processing m3dimage command: " << 
+		"at least one timing mechanism must be set: iter, iterInterval"  << endl );
+   Image3D* im3 = new Image3D( m_ew, time, timeInterval, iter, iterInterval, 
+ 			       tStart, filePrefix, mode, use_double );
+   im3->setup_images( );
+   m_3dimage_files.push_back(im3);
 }
 
 //-----------------------------------------------------------------------

@@ -1,29 +1,17 @@
 #------------------------------
-# Grid (w=2500)
+# Grid
 #
 grid h=200 x=35000 y=35000 z=19500 ghostpts=2
 #
 #------------------------------
 # Time
 #
-time t=9 utcstart=09/17/2013:17:49:47.000
+time t=9 utcstart=01/01/2100:00:00:00.000
 #
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=run1 obspath=../reference/obs2 temppath=tmp pfs=0
-#
-#------------------------------
-# Supergrid parameters
-# 
-# h=200
-supergrid gp=13 dc=.015
-# h=100
-#supergrid gp=26 dc=.015
-# h=50
-#supergrid gp=51 dc=.015
-# h=25
-#supergrid gp=101 dc=.015
+fileio verbose=1 path=run1 obspath=../reference/const_obs temppath=tmp pfs=0
 #
 #------------------------------
 # Reference material
@@ -87,14 +75,14 @@ observation x=23500 y=23500 z=0 file=sta55
 #
 # Output some images
 #
-mimage mode=rho x=17500 cycleInterval=1 
-mimage mode=mu x=17500 cycleInterval=1 
-mimage mode=lambda x=17500 cycleInterval=1 
+mimage mode=rho x=17500 iterInterval=1 
+mimage mode=mu x=17500 iterInterval=1 
+mimage mode=lambda x=17500 iterInterval=1 
 #
-mimage mode=rho z=1000 cycleInterval=1 
-mimage mode=mu z=1000 cycleInterval=1 
-mimage mode=lambda z=1000 cycleInterval=1 
+mimage mode=rho z=1000 iterInterval=1 
+mimage mode=mu z=1000 iterInterval=1 
+mimage mode=lambda z=1000 iterInterval=1 
 #
-mimage mode=rho z=5000 cycleInterval=1 
-mimage mode=mu z=5000 cycleInterval=1 
-mimage mode=lambda z=5000 cycleInterval=1
+mimage mode=rho z=5000 iterInterval=1 
+mimage mode=mu z=5000 iterInterval=1 
+mimage mode=lambda z=5000 iterInterval=1

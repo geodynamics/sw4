@@ -342,7 +342,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    double lambda = 1, fnewprev, lambdaprev;
    nstep_reductions = 0;
    
-   // Restrict step size to inside of domain
+   // Restrict step size to inside of domain (WHAT DOMAIN???)
    int ok=0;
    int ntries = 0;
    while( !ok && ntries < 30 )
@@ -360,7 +360,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       ntries++;
    }
    if( myRank == 0 && lambda != 1 )
-      cout << "After constrained material, lambda = " << lambda << " ntries = " << ntries << endl;
+      cout << "After constraining the material, lambda (scalefactor for step length) = " << lambda << " ntries = " << ntries << endl;
 
    if( !ok )
    {
@@ -583,6 +583,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    {
       const string convfile = mopt->m_path + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
+      fprintf(fd, "it  max-nrm-gradient  max-nrm-model-update  misfit\n");
+
       const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
@@ -939,7 +941,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
       if( myRank == 0 )
       {
 	 cout << "-----------------------------------------------------------------------" << endl;
-	 cout << " it=" << it << " dfnorm= " << rnorm << " dxnorm= " << dxnorm << endl;
+	 cout << " it=" << it << " max-norm scaled gradient= " << rnorm << " max-norm model update= " << dxnorm << endl;
 	 cout << " Misfit= "  << f << endl;
 
 	 fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", it, rnorm, dxnorm, f, nreductions );

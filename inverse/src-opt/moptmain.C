@@ -305,37 +305,52 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    //   delete src[0];
 
    if( it >= 0 )
-      for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
-      {
-	 int ng=simulation.mNumberOfGrids;
-	 Image* image = mopt->m_image_files[im];
-	 if( image->timeToWrite( it ) )
-	 {
-	    if(image->mMode == Image::RHO )
-	       image->computeImageQuantity(rho, 1);
-	    else if(image->mMode == Image::MU )
-	       image->computeImageQuantity(mu, 1);
-	    else if(image->mMode == Image::LAMBDA )
-	       image->computeImageQuantity(lambda, 1);
-	    else if(image->mMode == Image::P )
-	       image->computeImagePvel(mu, lambda, rho);
-	    else if(image->mMode == Image::S )
-	       image->computeImageSvel(mu, rho);
-	    else if(image->mMode == Image::GRADRHO )
-	       image->computeImageQuantity( gRho, 1 );
-	    else if(image->mMode == Image::GRADMU )
-	       image->computeImageQuantity( gMu, 1 );
-	    else if(image->mMode == Image::GRADLAMBDA )
-	       image->computeImageQuantity( gLambda, 1 );
-	    else if(image->mMode == Image::GRADP )
-	       image->compute_image_gradp( gLambda, mu, lambda, rho );
-	    else if(image->mMode == Image::GRADS )
-	       image->compute_image_grads( gMu, gLambda, mu, rho );
-	    //	    string path = simulation.getOutputPath();
-	    //	    image->writeImagePlane_2( it, path, 0 );
-	    image->writeImagePlane_2( it, mopt->m_path, 0 );
-	 }
-      }
+   {
+// 2D images     
+     for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
+     {
+       int ng=simulation.mNumberOfGrids;
+       Image* image = mopt->m_image_files[im];
+       if( image->timeToWrite( it ) )
+       {
+	 if(image->mMode == Image::RHO )
+	   image->computeImageQuantity(rho, 1);
+	 else if(image->mMode == Image::MU )
+	   image->computeImageQuantity(mu, 1);
+	 else if(image->mMode == Image::LAMBDA )
+	   image->computeImageQuantity(lambda, 1);
+	 else if(image->mMode == Image::P )
+	   image->computeImagePvel(mu, lambda, rho);
+	 else if(image->mMode == Image::S )
+	   image->computeImageSvel(mu, rho);
+	 else if(image->mMode == Image::GRADRHO )
+	   image->computeImageQuantity( gRho, 1 );
+	 else if(image->mMode == Image::GRADMU )
+	   image->computeImageQuantity( gMu, 1 );
+	 else if(image->mMode == Image::GRADLAMBDA )
+	   image->computeImageQuantity( gLambda, 1 );
+	 else if(image->mMode == Image::GRADP )
+	   image->compute_image_gradp( gLambda, mu, lambda, rho );
+	 else if(image->mMode == Image::GRADS )
+	   image->compute_image_grads( gMu, gLambda, mu, rho );
+	 //	    string path = simulation.getOutputPath();
+	 //	    image->writeImagePlane_2( it, path, 0 );
+	 image->writeImagePlane_2( it, mopt->m_path, 0 );
+       } // end if time to write
+     } // end for all images
+     
+     
+   
+     // 3D images
+     EW *ew_ptr = mopt->get_EWptr();
+     
+     for( int i3=0 ; i3<mopt->m_3dimage_files.size() ; i3++ )
+// rho, mu occur twice because we don't save Up, Qp and Qs.
+       mopt->m_3dimage_files[i3]->update_image( it, 0.0, 1.0, rho, rho, mu, lambda,
+						gRho, gMu, gLambda, rho, mu, mopt->m_path,
+						ew_ptr->mZ ); 
+   } // end if it>=0
+   
 }
 
 

@@ -1,4 +1,4 @@
-#!/usr/tce/bin/python3
+#!/usr/bin/env python3
 
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
@@ -197,15 +197,9 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
     num_fail=0
 
     all_dirs    = ['gradtest','hesstest','misfitcurve','onepoint']
-    all_cases   = ['grad','hesstest','misfit1d','inv1']
+    all_cases   = ['grad','hesstest','misfit1d','inv']
     all_results = ['GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log']
     num_meshes  = [1, 1, 1, 1] # default number of meshes for level 0
-
-    # add more tests for higher values of the testing level
-#    if testing_level == 1:
-#        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2]
-#    elif testing_level == 2:
-#        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     
     print("Running all tests for level", testing_level, "...")
 # run all tests
@@ -225,15 +219,15 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
         for ii in range(num_meshes[qq]):
             num_test = num_test+1
         
-            case_dir = base_case
-            test_case = case_dir + '.in'
+            case_file = base_case
+            test_case = case_file + '.in'
             if verbose: 
                 print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
             sw4_input_file = reference_dir + sep + test_dir + sep + test_case
             #print('sw4_input_file = ', sw4_input_file)
 
-            sw4_stdout_file = case_dir + '.out'
+            sw4_stdout_file = case_file + '.out'
             
             local_dir = pytest_dir + sep + test_dir
             #print('local_dir = ', local_dir)
@@ -243,8 +237,8 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
                 sw4_input_file
             ]
 
-            sw4_stdout_file = open(case_dir + '.out', 'wt')
-            sw4_stderr_file = open(case_dir + '.err', 'wt')
+            sw4_stdout_file = open(case_file + '.out', 'wt')
+            sw4_stderr_file = open(case_file + '.err', 'wt')
 
             # pipe stdout and stderr to a temporary file
 #            run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
@@ -278,7 +272,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 
 
             ref_result = reference_dir + sep + test_dir + sep + 'run1' + sep + result_file
-            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
+            #print('Test #', num_test, 'output dirs: local case_file =', case_file, 'ref_result =', ref_result)
 
 
             if result_file == 'energy.log':

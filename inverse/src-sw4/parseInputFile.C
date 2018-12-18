@@ -448,6 +448,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
  	   startswith("nlcg", buffer) ||
  	   startswith("mfsurf", buffer) ||
  	   startswith("mimage", buffer) ||	   	   
+ 	   startswith("m3dimage", buffer) ||	   	   
  	   startswith("mtypx", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))

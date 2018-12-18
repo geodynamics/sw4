@@ -90,10 +90,15 @@ else
       debugdir := debug_quartz
       optdir   := optimize_quartz
     else ifeq ($(findstring lassen,$(HOSTNAME)),lassen)
+# Lassen @ LC
       include configs/make.lassen
       foundincfile := "configs/make.lassen"
       debugdir := debug_lassen
       optdir   := optimize_lassen
+# Cori @ NERSC
+    else ifeq ($(findstring cori,$(HOSTNAME)),cori)
+      include configs/make.cori
+      foundincfile := "configs/make.cori"
   # for Bjorn's tux box
     else ifeq ($(findstring tux405,$(HOSTNAME)),tux405)
       include configs/make.tux405
