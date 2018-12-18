@@ -91,3 +91,50 @@ Writing output to directory: /global/cscratch1/sd/kechen/sw4/inverse/tests/small
 Begin NLCG iteration by evaluating initial misfit and gradient...
 Initial misfit= 5.72835e-06
 Max norm of scaled total gradient = 6.21821e-06
+After constraining the material, lambda (scalefactor for step length) = 0.0823543 ntries = 8
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.rho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.rho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.rho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.mu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.lambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.p.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.s.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradrho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradmu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradlambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradp.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000..sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.mu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.lambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.p.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.s.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradrho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradmu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradlambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradp.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500..sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.mu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.lambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.p.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.s.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradrho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradmu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradlambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradp.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000..sw4img
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.rho.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.p.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.s.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.mu.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.lambda.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradrho.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradp.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.grads.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradmu.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradlambda.3Dimg (msg from proc # 3)
+-----------------------------------------------------------------------
+ it=1 1 max-norm scaled gradient= 5.11369e-06 max-norm model update= 0.0057651
+ Misfit= 5.6119e-06
+============================================================
+ sw4mopt ( Material/Source estimation solver) finished! 
+============================================================
