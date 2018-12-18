@@ -5,7 +5,7 @@
 #SBATCH -q premium                      # submit to the regular QOS
 #SBATCH -C knl,quad,cache               # note: non-quad,cache are via reservation only
 #SBATCH -S 4                            # use core specialization
-#SBATCH -t 00:30:00                     # time limit
+#SBATCH -t 01:00:00                     # time limit
 #SBATCH -L SCRATCH,project              # specify license need for the file systems the job needs
 
 export OMP_NUM_THREADS=2

@@ -81,43 +81,49 @@ observation lat=38.14478 lon=-122.88018 depth=4.0 sacfile1=BK.MCCM.BHN.sac sacfi
 observation lat=37.62211 lon=-121.75697 depth=30.3 sacfile1=BK.WENL.BHN.sac sacfile2=BK.WENL.BHE.sac sacfile3=BK.WENL.BHZ.sac event=alamo
 #-----------------------------------------------------------------------
 #
-# Output some images
+# Output some material images
 #
-mimage mode=rho x=60e3 cycleInterval=1 
-mimage mode=mu x=60e3 cycleInterval=1 
-mimage mode=lambda x=60e3 cycleInterval=1
-mimage mode=p x=60e3 cycleInterval=1
-mimage mode=s x=60e3 cycleInterval=1
-mimage mode=gradrho x=60e3 cycleInterval=1
-mimage mode=gradmu x=60e3 cycleInterval=1
-mimage mode=gradlambda x=60e3 cycleInterval=1
-mimage mode=gradp x=60e3 cycleInterval=1
-mimage mode=grads x=60e3 cycleInterval=1
+mimage mode=rho x=60e3 iterInterval=1
+mimage mode=mu x=60e3 iterInterval=1
+mimage mode=lambda x=60e3 iterInterval=1
+mimage mode=p x=60e3 iterInterval=1
+mimage mode=s x=60e3 iterInterval=1
+mimage mode=gradrho x=60e3 iterInterval=1
+mimage mode=gradmu x=60e3 iterInterval=1
+mimage mode=gradlambda x=60e3 iterInterval=1
+mimage mode=gradp x=60e3 iterInterval=1
+mimage mode=grads x=60e3 iterInterval=1
 #
-mimage mode=rho y=42500 cycleInterval=1 
-mimage mode=mu y=42500 cycleInterval=1 
-mimage mode=lambda y=42500 cycleInterval=1 
-mimage mode=p y=42500 cycleInterval=1
-mimage mode=s y=42500 cycleInterval=1
-mimage mode=gradrho y=42500 cycleInterval=1
-mimage mode=gradmu y=42500 cycleInterval=1
-mimage mode=gradlambda y=42500 cycleInterval=1
-mimage mode=gradp y=42500 cycleInterval=1
-mimage mode=grads y=42500 cycleInterval=1
+mimage mode=rho y=42500 iterInterval=1
+mimage mode=mu y=42500 iterInterval=1
+mimage mode=lambda y=42500 iterInterval=1
+mimage mode=p y=42500 iterInterval=1
+mimage mode=s y=42500 iterInterval=1
+mimage mode=gradrho y=42500 iterInterval=1
+mimage mode=gradmu y=42500 iterInterval=1
+mimage mode=gradlambda y=42500 iterInterval=1
+mimage mode=gradp y=42500 iterInterval=1
+mimage mode=grads y=42500 iterInterval=1
 #
-mimage mode=rho z=5000 cycleInterval=1 
-mimage mode=mu z=5000 cycleInterval=1 
-mimage mode=lambda z=5000 cycleInterval=1
-mimage mode=p z=5000 cycleInterval=1
-mimage mode=s z=5000 cycleInterval=1
-mimage mode=gradrho z=5000 cycleInterval=1
-mimage mode=gradmu z=5000 cycleInterval=1
-mimage mode=gradlambda z=5000 cycleInterval=1
-mimage mode=gradp z=5000 cycleInterval=1
-mimage mode=grads z=5000 cycleInterval=1 
-#
-volimage mode=gradrho cycleInterval=1
-volimage mode=gradp cycleInterval=1
-volimage mode=grads cycleInterval=1
-volimage mode=gradlambda cycleInterval=1
-volimage mode=gradmu cycleInterval=1
+mimage mode=rho z=5000 iterInterval=1
+mimage mode=mu z=5000 iterInterval=1
+mimage mode=lambda z=5000 iterInterval=1
+mimage mode=p z=5000 iterInterval=1
+mimage mode=s z=5000 iterInterval=1
+mimage mode=gradrho z=5000 iterInterval=1
+mimage mode=gradmu z=5000 iterInterval=1
+mimage mode=gradlambda z=5000 iterInterval=1
+mimage mode=gradp z=5000 iterInterval=1
+mimage mode=grads z=5000 iterInterval=1
+
+# Output some 3D material images
+m3dimage iter=0 mode=rho
+m3dimage iter=0 mode=p
+m3dimage iter=0 mode=s
+m3dimage iter=0 mode=mu
+m3dimage iter=0 mode=lambda
+m3dimage iter=0 mode=gradrho
+m3dimage iter=0 mode=gradp
+m3dimage iter=0 mode=grads
+m3dimage iter=0 mode=gradmu
+m3dimage iter=0 mode=gradlambda
