@@ -257,12 +257,6 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             sw4_stdout_file.close()
             sw4_stderr_file.close()
             print(sw4_input_file, "Total time",end)
-            # status = os.system(run_cmd)
-            # if status!=0:
-            #     print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
-            #     print('run_cmd=', run_cmd)
-            #     print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
-            #     return False # bail out
 
             if status.returncode!=0:
                 print('ERROR: Test', test_case, ': sw4mopt returned non-zero exit status=', status.returncode, 'aborting test')
@@ -270,10 +264,8 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
                 print("DID YOU USE THE CORRECT SW4MOPT EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
                 return False # bail out
 
-
             ref_result = reference_dir + sep + test_dir + sep + 'run1' + sep + result_file
             #print('Test #', num_test, 'output dirs: local case_file =', case_file, 'ref_result =', ref_result)
-
 
             if result_file == 'energy.log':
                 success = compare_energy('run1' + sep + result_file, 1e-10, verbose)
@@ -292,7 +284,20 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             
         # end for qq in all_dirs[qq]
 
+        # cleanup tmp dir
+        listOfTmpFiles = os.listdir(path='tmp');
+#        print('listOfTmpFiles:', listOfTmpFiles);
+        for fname in listOfTmpFiles:
+            fullName = os.path.join("tmp",fname);
+            print('fileName = ', fullName);
+            os.remove(fullName); # remove each file in the tmp dir
+        #end for
+        os.rmdir("tmp");
+        if verbose: 
+            print('Done removing tmp dir');
+        
         os.chdir('..') # change back to the parent directory
+
 
     # end for all cases in the test_dir
     print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')

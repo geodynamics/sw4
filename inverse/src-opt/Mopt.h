@@ -30,6 +30,7 @@ class Mopt
    void processM3Dimage( char* buffer );
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );
+   void processMregularize( char* buffer );
  public:
    Mopt( EW* a_ew );
    bool parseInputFileOpt( std::string filename );
@@ -57,6 +58,7 @@ class Mopt
    std::string m_scales_fname, m_scalem_fname;
    bool m_scales_file_given;
    std::string m_path;
+   double m_reg_coeff;
 };
 
 #endif

@@ -9,24 +9,10 @@
 #include "EW.h"
 #include "Mopt.h"
 #include "MaterialParameterization.h"
+#include "compute_f.h"
 #endif
 
 using namespace std;
-
-void compute_f( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		vector<vector<Source*> >& GlobalSources,
-		vector<vector<TimeSeries*> >& GlobalTimeSeries,
-		vector<vector<TimeSeries*> >& GlobalObservations,
-		double& mf, MaterialParameterization* mp );
-
-void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		       vector<vector<Source*> >& GlobalSources,
-		       vector<vector<TimeSeries*> >& GlobalTimeSeries,
-		       vector<vector<TimeSeries*> >& GlobalObservations, 
-		       double& f, double* dfs, double* dfm, int myrank,
-                       Mopt *mopt, int it=-1 );
-//		       MaterialParameterization* mp, vector<Image*>& images,
-//		       bool mcheck=false, bool output_ts=false ); 
 
 //-----------------------------------------------------------------------
 void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
@@ -74,7 +60,7 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i]+lambda*ps[i];
 	    compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, 
-		       GlobalObservations, fnew, mopt->m_mp );
+		       GlobalObservations, fnew, mopt );
 	    if( fnew <= f + alpha*lambda*initslope )
 	    {
 	       compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
@@ -119,7 +105,7 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i]+lambda*ps[i];
 	    compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-		        GlobalObservations, fnew, mopt->m_mp );
+		        GlobalObservations, fnew, mopt );
 	    if( fnew > f + alpha*lambda*initslope )
 	    {
 	       lambdadiff = lambdaincr;
@@ -372,7 +358,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       for( int i=0 ; i < nm ; i++ )
 	 xmnew[i] = xm[i] + lambda*pm[i];
       compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fnew, mopt->m_mp );
+		 GlobalObservations, fnew, mopt );
       return;
    }
    
@@ -385,7 +371,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 xmnew[i] = xm[i] + lambda*pm[i];
 
       compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fnew, mopt->m_mp );
+		 GlobalObservations, fnew, mopt );
 
       //      if( myRank == 0 )
       //	 cout << "Evaluate at lambda = " << lambda << " gives f = " << fnew << " (initslope = "
@@ -461,7 +447,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
 	 compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew, mopt->m_mp );
+		       fnew, mopt );
 	 return;
       }
       else

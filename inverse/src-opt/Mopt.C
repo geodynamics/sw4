@@ -55,6 +55,7 @@ Mopt::Mopt( EW* a_ew )
    m_nsurfpts  = 10;
    m_nsurfpts2 = 10;
    m_path = "./";
+   m_reg_coeff = 0.0;
 }  
 
 //-----------------------------------------------------------------------
@@ -96,6 +97,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMtypx( buffer );
          else if( startswith("fileio",buffer) )
 	    processMfileio( buffer );
+         else if( startswith("regularize",buffer) )
+	    processMregularize( buffer );
          else if( startswith("refinement",buffer) )
 	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
       }
@@ -195,7 +198,7 @@ void Mopt::processMaterialParCart( char* buffer )
       m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
    else
       m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
-}
+} // end processMaterialParCart
 
 //-----------------------------------------------------------------------
 void Mopt::processMrun( char* buffer )
@@ -349,6 +352,31 @@ void Mopt::processMfileio( char* buffer )
       token = strtok(NULL, " \t");
    }   
 }
+
+//-----------------------------------------------------------------------
+void Mopt::processMregularize( char* buffer )
+{
+   char* path = 0;
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("regularize", token) == 0, "ERROR: not a regularize line...: " << token);
+   token = strtok(NULL, " \t");
+
+   string err = "Regularize Error: ";
+
+   while (token != NULL)
+   {
+      if (startswith("#", token) || startswith(" ", buffer))
+	 break;
+      if(startswith("coeff=", token)) 
+      {
+	 token += 6;
+	 m_reg_coeff = atof(token);
+      }
+      else
+         badOption("mscalefactors",token);
+      token = strtok(NULL, " \t");
+   }   
+}// end processMregularize
 
 //-----------------------------------------------------------------------
 void Mopt::get_scalefactors( double& rhoscale, double& muscale,

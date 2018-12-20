@@ -101,7 +101,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		vector<vector<Source*> >& GlobalSources,
 		vector<vector<TimeSeries*> >& GlobalTimeSeries,
 		vector<vector<TimeSeries*> >& GlobalObservations,
-		double& mf, MaterialParameterization* mp )
+		double& mf, Mopt *mopt /* MaterialParameterization* mp */)
 //-----------------------------------------------------------------------
 // Compute misfit.
 //
@@ -116,7 +116,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 //        GlobalTimeSeries   - TimeSeries objects, number of objects and
 //                    locations should agree with the GlobalObservations vector.
 //        GlobalObservations - The observed data at receivers.
-//        mp - Pointer to object describing the parameterization of the material.
+//        mopt - Pointer to the class Mopt object
 //
 // Output: GlobalTimeSeries - The solution of the forward problem at the stations.
 //         mf               - The misfit.
@@ -137,7 +137,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
 //New
-   mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
    int ok;
    simulation.check_material( rho, mu, lambda, ok );
 
@@ -169,7 +169,17 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       delete upred_saved[g];
       delete ucorr_saved[g];
    }
-   //   delete src[0];
+
+// add in a Tikhonov regularizing term:
+   double tikhonov=0;
+#ifndef SQR
+#define SQR(x) ((x)*(x))
+#endif
+   for (int q=nspar; q<nspar+nmpars; q++)
+     tikhonov += SQR(xs[q]);
+
+   mf += mopt->m_reg_coeff*tikhonov;
+   
 }
 
 //-----------------------------------------------------------------------
@@ -424,7 +434,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          h = 3e-8*sf[ind];
 	 xs[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fp, mopt->m_mp );
+		 GlobalObservations, fp, mopt );
 	 double dfnum = (fp-f)/h;
 	 double dfan  = dfs[ind];
          double relerr = fabs(dfan-dfnum)/(fabs(dfan)+1e-10);
@@ -451,7 +461,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 if( ind >=0 )
 	    xm[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fp, mopt->m_mp );
+		 GlobalObservations, fp, mopt );
 	 double dfnum = (fp-f)/h;
 	 double dfan;
 	 if( ind >=0 )
@@ -732,7 +742,7 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
       xs[ind] = xoriginal+p;
       double f;
       compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, f, mp );
+		 GlobalObservations, f, mopt );
       fcn[m] = f;
    }
    if( myRank == 0 )
@@ -785,7 +795,7 @@ void misfit_surface( int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
 	 xs[ind2] = xoriginal2+p2;
 	 double f;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		    GlobalObservations, f, mp );
+		    GlobalObservations, f, mopt );
 	 fcn[m1+npts1*m2] = f;
       }
       if( myRank == 0 )
@@ -1090,7 +1100,7 @@ int main(int argc, char **argv)
 // Solve forward problem to generate synthetic data
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			 GlobalObservations, f, mp );
+			 GlobalObservations, f, mopt );
 	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
 		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
 		    GlobalTimeSeries[e][m]->writeFile( );
