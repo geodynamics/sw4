@@ -20,3 +20,18 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 		 int myRank, int& retcode, int& nstep_reductions, bool testing, double* dfsnew,
 		 double* dfmnew, Mopt* mopt );
 
+void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, double* typxs,
+	    int nmpard, double* xm, double* sfm, double* typxd,
+	    vector<vector<Source*> >& GlobalSources,
+	    vector<vector<TimeSeries*> >& GlobalTimeSeries,
+	    vector<vector<TimeSeries*> >& GlobalObservations,
+	    int myRank, Mopt* mopt );
+
+void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
+	   int nmpard, double* xm, double* sfm, 
+	   vector<vector<Source*> >& GlobalSources,
+	   vector<vector<TimeSeries*> >& GlobalTimeSeries,
+	   vector<vector<TimeSeries*> >& GlobalObservations,
+	   int myRank, Mopt* mopt );
+
+

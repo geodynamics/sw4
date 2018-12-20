@@ -11,7 +11,7 @@ time t=9 utcstart=01/01/2100:00:00:00.000
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=run1 obspath=../reference/const_obs temppath=tmp pfs=0
+fileio verbose=1 path=run1 obspath=const_obs temppath=tmp pfs=1
 #
 #------------------------------
 # Reference material
@@ -21,7 +21,7 @@ block vp=4630.76 vs=2437.56 r=2650
 #------------------------------
 # Material parameterization
 # 
-mparcart nx=1 ny=1 nz=1 init=../reference/gradtest/onep-pr10.bin
+mparcart nx=1 ny=1 nz=1 init=onep-pr10.bin
 #mparcart nx=1 ny=1 nz=1 init=onep-pr10.bin
 #
 #------------------------------
@@ -43,7 +43,7 @@ developer cfl=1.1
 #
 #------------------------------
 #
-# Observations (synthetic)
+# Observations (synthetic) (w=2500)
 #  
 observation x=11500 y=11500 z=0 file=sta11
 observation x=14500 y=11500 z=0 file=sta21

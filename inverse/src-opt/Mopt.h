@@ -38,7 +38,7 @@ class Mopt
    void get_scalefactors( double& rhoscale, double& muscale,
 			  double& lambdascale );
 
-   void set_sscalefactors( int nmpars, double* sfs );
+   void set_sscalefactors( /*int nmpars, double* sfs*/ );
    void set_sourcescalefactors( int nspar, double* sfs );
    void set_dscalefactors( int nmpard, double* sfm );
    void set_typx( int nmpar, double* sf, double* typx );
@@ -60,6 +60,8 @@ class Mopt
    bool m_scales_file_given;
    std::string m_path;
    double m_reg_coeff;
+   int m_nstot; // dimension of m_sfs
+   double *m_sfs; // scale factors
 };
 
 #endif
