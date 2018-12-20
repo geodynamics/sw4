@@ -12,7 +12,7 @@ time t=9 utcstart=09/10/2013:23:5:53.000
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=run8 obspath=obs temppath=/tmp/bjorn pfs=1
+fileio verbose=1 path=inv-run obspath=obs temppath=tmp pfs=0
 #
 #------------------------------
 # Supergrid parameters
@@ -35,7 +35,6 @@ block r=2650 vs=2677.6503357897 vp=4998.11285141419
 #------------------------------
 # Material parameterization
 # 
-#mparcart nx=3 ny=3 nz=2 init=material-exact-2.bin
 mparcart nx=3 ny=3 nz=2 init=0
 #
 #------------------------------
@@ -43,21 +42,11 @@ mparcart nx=3 ny=3 nz=2 init=0
 #
 mrun task=minvert mcheck=on 
 #nlcg maxit=300 tolerance=1e-12 linesearch=on subtype=polak-ribiere
-lbfgs nvectors=35 maxit=300 tolerance=1e-12 linesearch=on ihess0=scale-factors
+lbfgs nvectors=35 maxit=50 tolerance=1e-12 linesearch=on ihess0=scale-factors
+#
 # Sizes
-#mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1000
-# Constant mtrl 1x1x1-problem scaling:
-#mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
 #
-# At initial guess
-#mscalefactors rho=2650 mu=1.74e10 lambda=7.47e11 misfit=349
-# At mininum
-#mscalefactors rho=2650 mu=1.93e10 lambda=9.65e11 misfit=327
-#
-#mscalefactors rho=2650 mu=1.9e10 lambda=2.82e10 misfit=10000
-mscalefactors rho=2650 mu=1.19e10 lambda=5.10e11 misfit=1
-#mscalefactors file=sf-min-diaghess.bin misfit=1
-#mtypx musffactor=200
+mscalefactors rho=2650 mu=1.19e10 lambda=5.1e11 vs=2600 vp=5000 misfit=1
 #
 #------------------------------
 # Source (w=2500)
@@ -104,9 +93,9 @@ observation x=23500 y=23500 z=0 file=sta55
 #mimage mode=lambda z=0 file=hor cycleInterval=1
 #mimage mode=rho z=0 file=hor cycleInterval=1
 
-mimage mode=mu z=1000 file=hor cycleInterval=10
-mimage mode=lambda z=1000 file=hor cycleInterval=10
-mimage mode=rho z=1000 file=hor cycleInterval=10
+#mimage mode=mu z=1000 file=hor cycleInterval=10
+#mimage mode=lambda z=1000 file=hor cycleInterval=10
+#mimage mode=rho z=1000 file=hor cycleInterval=10
 
 #mimage mode=lambda y=15e3 file=ver cycleInterval=1
 #mimage mode=mu y=15e3 file=ver cycleInterval=1

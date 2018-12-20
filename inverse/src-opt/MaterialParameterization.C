@@ -167,3 +167,15 @@ void MaterialParameterization::parameters_from_basematerial( int nmd, double* xm
 {
    get_parameters( nmd, xmd, nms, xms, m_ew->mRho, m_ew->mMu, m_ew->mLambda );
 }
+
+//-----------------------------------------------------------------------
+void MaterialParameterization::set_scalefactors( int nmpars, double* sfs, 
+                  double rho_ref, double mu_ref, double lambda_ref, double vs_ref, double vp_ref )
+{
+   for( int i=0 ; i < nmpars ; i += 3 )
+   {
+      sfs[i]   = rho_ref;
+      sfs[i+1] = mu_ref;
+      sfs[i+2] = lambda_ref;
+   }
+}

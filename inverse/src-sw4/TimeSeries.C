@@ -1139,6 +1139,14 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 		  {
                      int utcrefsim[7];
 		     m_ew->get_utc(utcrefsim);
+		     //		     cout << "UTC from EW : ";
+		     //		     for( int c=0;c<7;c++ )
+		     //			cout << utcrefsim[c] << " " ;
+		     //		     cout << endl;
+		     //		     cout << "UTC from file : ";
+		     //		     for( int c=0;c<7;c++ )
+		     //			cout << m_utc[c] << " " ;
+		     //		     cout << endl;
 		     m_t0 = utc_distance( utcrefsim, m_utc );
 		  }
                   delete[] utcstr;

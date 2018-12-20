@@ -28,6 +28,8 @@ Mopt::Mopt( EW* a_ew )
    m_muscale     = 1;
    m_lambdascale = 1;
    m_misfitscale = 1;
+   m_vsscale     = 1;
+   m_vpscale     = 1;
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
    m_optmethod = 1;
    m_nbfgs_vectors = 10;
@@ -142,7 +144,7 @@ void Mopt::processMaterialParCart( char* buffer )
 
    bool vel = false;
    int nx=3, ny=3, nz=3, init=0;
-   char file[256];
+   char file[256]= " \0"; //shut up memory checker
 
    while (token != NULL)
    {
@@ -310,6 +312,16 @@ void Mopt::processMscalefactors( char* buffer )
          token += 7;
 	 m_misfitscale = atof(token);
       }
+      else if( startswith("vp=",token) )
+      {
+	 token += 3;
+	 m_vpscale = atof(token);
+      }
+      else if( startswith("vs=",token) )
+      {
+	 token += 3;
+	 m_vsscale = atof(token);
+      }
       else if( startswith("file=",token) )
       {
          token += 5;
@@ -324,6 +336,8 @@ void Mopt::processMscalefactors( char* buffer )
    m_rhoscale    *= imf;
    m_muscale     *= imf;
    m_lambdascale *= imf;
+   m_vsscale     *= imf;
+   m_vpscale     *= imf;
 }
 
 //-----------------------------------------------------------------------
@@ -364,12 +378,13 @@ void Mopt::set_sscalefactors( int nmpars, double* sfs )
 {
    if( !m_scales_file_given )
    {
-      for( int i=0 ; i < nmpars ; i += 3 )
-      {
-	 sfs[i]   = m_rhoscale;
-	 sfs[i+1] = m_muscale;
-	 sfs[i+2] = m_lambdascale;
-      }
+      m_mp->set_scalefactors( nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
+      //      for( int i=0 ; i < nmpars ; i += 3 )
+      //      {
+      //	 sfs[i]   = m_rhoscale;
+      //	 sfs[i+1] = m_muscale;
+      //	 sfs[i+2] = m_lambdascale;
+      //      }
    }
    else
    {
