@@ -31,6 +31,8 @@ public:
 				 std::vector<Sarray>& a_gradlambda );
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
+   void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
+			  double vs_ref, double vp_ref );
 };
 
 #endif

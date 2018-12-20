@@ -3,4 +3,4 @@
   FC = mpifort
   CC = mpicc
   CXX = mpicxx
-  EXTRA_LINK_FLAGS =  -Wl,-rpath=$(SW4ROOT)/lib -llapack -lblas
+  EXTRA_LINK_FLAGS =  -L/usr/tce/packages/xl/xl-2018.11.26/xlf/16.1.1/lib  -Wl,-rpath=$(SW4ROOT)/lib -lxlfmath -lxlf90 -llapack -lblas 

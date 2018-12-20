@@ -14,6 +14,7 @@ class Mopt
    EW* m_ew;
    int m_myrank;
    double m_rhoscale, m_muscale, m_lambdascale, m_misfitscale;
+   double m_vsscale, m_vpscale;
    double m_typrho, m_typmu, m_typlambda;
    bool m_typrhoset, m_typmuset, m_typlambdaset;
    double m_rhosffactor, m_musffactor, m_lambdasffactor;

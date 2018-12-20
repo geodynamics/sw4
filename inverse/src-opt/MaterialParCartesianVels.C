@@ -89,6 +89,7 @@ MaterialParCartesianVels::MaterialParCartesianVels( EW* a_ew, int nx, int ny, in
      cout << " ymin, ymax = " << m_ymin << " " << m_ymax << " hy = " << m_hy << endl;
      cout << " zmin, zmax = " << m_zmin << " " << m_zmax << " hz = " << m_hz << endl;
    }
+
 // Grid is determined.
    m_nms = 3*nx*ny*nz;
    m_nmd = 0;
@@ -259,7 +260,7 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
    grho.set_to_zero();
    gmu.set_to_zero();
    glambda.set_to_zero();
-   
+   //   cout << "getgrad nms=" << nms << " nx,ny,nz=" << m_nx <<","<<m_ny <<","<<m_nz <<endl;
    for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
 // Chain rule of interpolation relation, multiplication by constant matrix, since interpolation
@@ -302,7 +303,7 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 	    //            dfs[3*ind]   = cs*cs*gmup[indm]+(cp*cp-2*cs*cs)*glambdap[indm]+grhop[indm];
 	    //	    dfs[3*ind+1] = 2*rho*cs*gmup[indm]-4*rho*cs*glambdap[indm];
 	    //	    dfs[3*ind+2] = 2*rho*cp*glambdap[indm];
-	    ind++;
+	    //	    ind++;
 	 }
 }
 
@@ -335,4 +336,15 @@ void MaterialParCartesianVels::gradient_transformation( std::vector<Sarray>& a_r
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
       m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
 				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
+}
+//-----------------------------------------------------------------------
+void MaterialParCartesianVels::set_scalefactors( int nmpars, double* sfs, double rho_ref,
+	 double mu_ref, double lambda_ref, double vs_ref, double vp_ref )
+{
+   for( int i=0 ; i < nmpars ; i += 3 )
+   {
+      sfs[i]   = rho_ref;
+      sfs[i+1] = vs_ref;
+      sfs[i+2] = vp_ref;
+   }
 }

@@ -129,7 +129,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
 	 for( int i=0 ; i < ns ; i++ )
 	    normd += ds[i]*ds[i];
 	 normd = sqrt(normd);
-	 h = 1e-3/normd;
+	 h = 1e-6/normd;
 	 hi = 1/h;
 
 	 for( int i=0 ; i < ns ; i++ )

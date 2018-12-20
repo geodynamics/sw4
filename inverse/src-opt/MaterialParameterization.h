@@ -28,6 +28,8 @@ public:
    //   virtual void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm ) = 0;
    virtual ssize_t parameter_index( int ip, int jp, int kp, int grid, int var )=0;
    virtual ssize_t local_index( size_t ind_global )=0;
+   virtual void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
+				  double vs_ref, double vp_ref );
    void get_nr_of_parameters( int& nms, int& nmd, int& nmd_global ) const;
    void parameters_from_basematerial( int nmd, double* xmd, int nms, double* xms );
    void store_material( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
