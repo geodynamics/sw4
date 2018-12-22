@@ -11,7 +11,7 @@ time t=25.0 utcstart=09/06/2018:08:00:11.123
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=second-fake-event_data
+fileio verbose=1 path=first-fake-event-dense_data
 #
 #------------------------------
 # use default Supergrid parameters
@@ -45,7 +45,9 @@ block z1=16000.0 vp=6550.0 vs=3700.0 rho=2900.0
 
 # NERSC (cori) wave workspace file system
 rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/project/projectdirs/m2868
-topography input=rfile zmax=3.0e3 order=3 file=/project/projectdirs/m2868/USGSBayAreaVM-08.3.0-corder.rfile
+
+# No topo!
+#topography input=rfile zmax=3.0e3 order=3 file=/project/projectdirs/m2868/USGSBayAreaVM-08.3.0-corder.rfile
 
 # treshold on minimum wave speeds
 globalmaterial  vpmin=866 vsmin=500
@@ -54,12 +56,23 @@ globalmaterial  vpmin=866 vsmin=500
 #------------------------------
 # Source omega=pi/2 rad/sec -> f0 = 0.25 Hz
 #
-source lat=37.86119 lon=-122.24233 depth=12101.0 t0=5.0 m0=4.563e+15 mxx=-0.86763 myy=0.8387 mzz=0.02893 mxy=-0.46548 mxz=-0.06266 myz=0.06266 type=Gaussian freq=1.57075
+source lat=37.86081 lon=-122.00107 depth=13207.0 t0=5.0 m0=1.511e+15 mxx=-0.71343 myy=0.70615 mzz=0.00735 mxy=-0.70152 mxz=-0.03112 myz=0.03112 type=Gaussian freq=1.57075
 #
 #----------------------------
 #
 #  Synthetic ground motions
 #Broadband stations
+rec file=sta-0-0 x=10e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-1-0 x=11e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-2-0 x=12e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-3-0 x=13e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-4-0 x=14e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-5-0 x=15e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-6-0 x=16e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-7-0 x=17e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-8-0 x=18e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+rec file=sta-9-0 x=19e3 y=10e3 depth=0 nsew=1 usgsformat=1 sacformat=0
+
 rec sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 nsew=1 usgsformat=1
 rec sta=BK.BRK file=BK.BH.BRK lat=37.87352 lon=-122.26099 depth=2.7 nsew=1 usgsformat=1
 rec sta=FAKE.1 file=FAKE.1 lat=38.0 lon=-122.1 depth=0.0 nsew=1 usgsformat=1
@@ -75,7 +88,10 @@ image mode=lat z=0 cycle=0
 image mode=lon z=0 cycle=0
 image mode=topo z=0 cycle=0
 
-image mode=rho x=33000 cycle=0
-image mode=mu x=33000 cycle=0
-image mode=lambda x=33000 cycle=0
+image mode=rho x=25e3 cycle=1 
+image mode=p x=25e3 cycle=1 
+image mode=s x=25e3 cycle=1 
 #
+image mode=rho z=500 cycle=1 
+image mode=p z=500 cycle=1 
+image mode=s z=500 cycle=1 
