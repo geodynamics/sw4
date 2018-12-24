@@ -345,8 +345,8 @@ void checkmtrl( int ib,  int ie,  int jb,  int je,  int kb,  int ke,
    float_sw4 lamax = -1e38;
    float_sw4 cfl2max = -1e38;
    float_sw4 vs2min  =  1e38;
-   float_sw4 tmthlmin = 1e38;
-   float_sw4 tmthlmax =-1e38;
+   float_sw4 bulkmin = 1e38;
+   float_sw4 bulkmax =-1e38;
 
    float_sw4 acof = dt*dt/(h*h);
    for( size_t ind=0 ; ind < nijk ; ind++ )
@@ -359,10 +359,10 @@ void checkmtrl( int ib,  int ie,  int jb,  int je,  int kb,  int ke,
 	 mumin = mu[ind];
       if( mu[ind]>mumax )
 	 mumax = mu[ind];
-      if( 2*mu[ind]+3*lambda[ind]<tmthlmin )
-	 tmthlmin = 2*mu[ind]+3*lambda[ind];
-      if( 2*mu[ind]+3*lambda[ind]>tmthlmax )
-	 tmthlmax = 2*mu[ind]+3*lambda[ind];
+      if( 2*mu[ind]+3*lambda[ind]<bulkmin )
+	 bulkmin = 2*mu[ind]+3*lambda[ind];
+      if( 2*mu[ind]+3*lambda[ind]>bulkmax )
+	 bulkmax = 2*mu[ind]+3*lambda[ind];
       if( lambda[ind]<lamin )
 	 lamin = lambda[ind];
       if( lambda[ind]>lamax )
@@ -393,8 +393,8 @@ void checkmtrl( int ib,  int ie,  int jb,  int je,  int kb,  int ke,
    limits[5] = lamax;
    limits[6] = cfl2max;
    limits[7] = vs2min;
-   limits[8] = tmthlmin;
-   limits[9] = tmthlmax;
+   limits[8] = bulkmin;
+   limits[9] = bulkmax;
 }
 
 //-----------------------------------------------------------------------
@@ -541,9 +541,9 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       checkmtrl( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		 rhop, mup, lap, mDt, mGridSize[g], limits );
 // Output: limits - vector of 10 elements:
-// (0=rhomin, 1=rhomax, 2=mumin, 3=mumax, 4=lamin, 5=lamax, 6=cfl2max, 7=vs2min, 8=tmthlmin, 9=tmthlmax)
+// (0=rhomin, 1=rhomax, 2=mumin, 3=mumax, 4=lamin, 5=lamax, 6=cfl2max, 7=vs2min, 8=bulkmin, 9=bulkmax)
 //  
-// ththl = 2*mu+3*lambda
+// bulk-modulus = 2*mu+3*lambda
 
       float_sw4 local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
       float_sw4 global[5];
