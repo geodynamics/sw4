@@ -60,6 +60,7 @@ Mopt::Mopt( EW* a_ew )
    m_reg_coeff = 0.0;
    m_nstot = 0;
    m_sfs = NULL;
+   m_xs0 = NULL;
 }  
 
 //-----------------------------------------------------------------------
@@ -463,6 +464,22 @@ void Mopt::set_sscalefactors( /* int nmpars, double* sfs */ )
       MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
       VERIFY2( errflag == 0, "Error no " << errflag << " in Mopt::set_sscalefactors");
    }
+}
+
+//-----------------------------------------------------------------------
+void Mopt::set_baseMat(double* xs )
+{
+// new 12/20, 2018
+  int my_nmpars, nmpard, nmpard_global;
+  m_mp->get_nr_of_parameters( my_nmpars, nmpard, nmpard_global );
+  m_nstot = m_nspar + my_nmpars;
+  m_xs0 = new double[m_nstot];
+
+  for( int i=0 ; i < my_nmpars ; i++)
+  {
+     m_xs0[i]   = xs[i];
+  }
+
 }
 
 //-----------------------------------------------------------------------

@@ -156,7 +156,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 #define SQR(x) ((x)*(x))
 #endif
    for (int q=nspar; q<nspar+nmpars; q++)
-     tikhonov += SQR(xs[q]/mopt->m_sfs[q]);
+      tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
 
    mf += mopt->m_reg_coeff*tikhonov;
    
@@ -280,8 +280,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 #endif
    for (int q=nspar; q<nspar+nmpars; q++)
    {
-     tikhonov += SQR(xs[q]/mopt->m_sfs[q]);
-     dfs[q] += 2*mopt->m_reg_coeff*xs[q]/SQR(mopt->m_sfs[q]);
+      tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+      dfs[q] += 2*mopt->m_reg_coeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
    }
    
    f += mopt->m_reg_coeff*tikhonov;
@@ -1016,6 +1016,9 @@ int main(int argc, char **argv)
            string parname = mopt->m_path + "mtrlpar-init.bin";
 	   mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
 
+// store initial material parameters in mp->m_xs0 (needed for Tikhonov regularization)
+           mopt->set_baseMat(xs);
+
 // Scale factors
 	   double* sf  = NULL;
            double* sfm = NULL;
@@ -1024,8 +1027,7 @@ int main(int argc, char **argv)
            if( nmpard > 0 )
               sfm = new double[nmpard];
 // both the source scale factors and the shared material scale factors are in the array 'sf'
-//           mopt->set_sourcescalefactors( nspar, sf );
-	   // both types of scale factors are now set in set_sscalefactors()
+// both types of scale factors are now set in set_sscalefactors()
            mopt->set_sscalefactors( /* nmpars, &sf[nspar]*/ );
 // for backwards compatibility
 	   sf = mopt->m_sfs;

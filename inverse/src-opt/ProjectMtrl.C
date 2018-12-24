@@ -505,9 +505,10 @@ void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 }
 
 //-----------------------------------------------------------------------
-void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 			 vector<Sarray>& a_lambda, int& ok )
 {
+   int err_code = 0;
    ok = 1;
    int verbose=0;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
@@ -536,9 +537,13 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       //      }
       //      else
       //      {
-	 // Cartesian
+// Cartesian grid
       checkmtrl( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		 rhop, mup, lap, mDt, mGridSize[g], limits );
+// Output: limits - vector of 10 elements:
+// (0=rhomin, 1=rhomax, 2=mumin, 3=mumax, 4=lamin, 5=lamax, 6=cfl2max, 7=vs2min, 8=tmthlmin, 9=tmthlmax)
+//  
+// ththl = 2*mu+3*lambda
 
       float_sw4 local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
       float_sw4 global[5];
@@ -575,10 +580,22 @@ void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 	    cout << " cfl_max  is imaginary on grid " << g << endl;
          else
 	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
-
-      }
-      ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] < mCFLmax*mCFLmax && limits[8]>0);
-   }
+      } // end if proc_zero && verbose > 1
+      ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] <= mCFLmax*mCFLmax && limits[8]>0);
+      if (!ok)
+      {
+         if (limits[0] <= 0)
+            err_code +=1;
+         if (limits[2] <= 0)
+            err_code +=2;
+         if (limits[6] > mCFLmax*mCFLmax)
+            err_code +=4;
+         if (limits[8] <= 0)
+            err_code +=8;
+      } // end if !ok
+      
+   } // for all grids
+   return err_code;
 }
 
 

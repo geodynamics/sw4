@@ -44,7 +44,8 @@ class Mopt
    void set_typx( int nmpar, double* sf, double* typx );
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
-
+   void set_baseMat(double* xs );
+   
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
    bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck, m_output_ts;
@@ -60,8 +61,9 @@ class Mopt
    bool m_scales_file_given;
    std::string m_path;
    double m_reg_coeff;
-   int m_nstot; // dimension of m_sfs
+   int m_nstot; // dimension of m_sfs and m_xs0
    double *m_sfs; // scale factors
+   double *m_xs0; // initial material perturbation
 };
 
 #endif
