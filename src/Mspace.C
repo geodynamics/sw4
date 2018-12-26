@@ -6,6 +6,7 @@ using namespace std;
 
 
 void presetGPUID(){
+#ifdef ENABLE_GPU
   int devices_per_node=4;
    SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   if (devices_per_node>1){
@@ -20,6 +21,7 @@ void presetGPUID(){
    if (nvmlDeviceGetUUID (nvdev,uuid,80)!=NVML_SUCCESS) printf("UUID CALL FAILED\n");
    if (nvmlDeviceSetCpuAffinity(nvdev)!=NVML_SUCCESS) printf("NVML SET CPU AFFINITY FAILED \n"); else printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
 }
+#endif
 }
   
 typedef struct {

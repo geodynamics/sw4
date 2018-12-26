@@ -112,8 +112,9 @@ SW4_MARK_FUNCTION;
    using LOCAL_POL3 = DEFAULT_LOOP3;
 #endif
    // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
-
+#ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
+#endif
 #if defined(NO_COLLAPSE)
      Range<16> I(ifirst,ilast+1);
      Range<4>J(jfirst,jlast+1);
@@ -219,7 +220,9 @@ using LOCAL_POL3  =
  using LOCAL_POL3 = DEFAULT_LOOP3;
  
  #endif
+#ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
+#endif
 #if defined(NO_COLLAPSE)
      Range<16> I(ifirst,ilast+1);
      Range<4>J(jfirst,jlast+1);

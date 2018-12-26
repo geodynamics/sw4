@@ -105,7 +105,9 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
 //       }
 //     }
 //   }
-#define NO_COLLAPSE
+#ifdef ENABLE_GPU
+#define NO_COLLAPSE 1
+#endif
 #if defined(NO_COLLAPSE)
   Range<16> I(ib,ie+1);
   Range<4>J(jb,je+1);

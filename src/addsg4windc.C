@@ -119,7 +119,7 @@ SW4_MARK_FUNCTION;
 // 	   {
 
 
-
+#ifdef ENABLE_CUDA
    using LOCAL_EXEC_POL =
      RAJA::KernelPolicy<
      RAJA::statement::CudaKernelAsync<
@@ -128,6 +128,9 @@ SW4_MARK_FUNCTION;
 						 RAJA::statement::For<0, RAJA::cuda_thread_exec,
 								      RAJA::statement::For<3, RAJA::seq_exec,
 											   RAJA::statement::Lambda<0> >>>>>>;
+#else
+   using LOCAL_EXEC_POL = DEFAULT_LOOP4;
+#endif
    
    RAJA::RangeSegment i_range(ifirst+2,ilast-1);
    RAJA::RangeSegment j_range(jfirst+2,jlast-1);

@@ -796,9 +796,9 @@ void EW::communicate_array_async(Sarray& u, int grid )
    int ie = u.m_ie, ib=u.m_ib, je=u.m_je, jb=u.m_jb, kb=u.m_kb;//,ke=u.m_ke;
    MPI_Status status;
 #ifdef THREADED_MPI
-   //const int threaded_mpi=1;
+   const int threaded_mpi=1;
 #else
-   //const int threaded_mpi=0;
+   const int threaded_mpi=0;
 #endif
    if( u.m_nc == 1 )
    {
@@ -1035,12 +1035,19 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   //if (bl*count*8>2048){
 
 #ifndef UNRAJA
+  
+#ifdef ENABLE_CUDA
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
   RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<1, RAJA::cuda_block_exec, 
   RAJA::statement::For<0, RAJA::cuda_thread_exec,
 		       RAJA::statement::Lambda<0> >>>>;
+#else
+  using BUFFER_POL = DEFAULT_LOOP2;
+#endif
+
+  
   RAJA::RangeSegment k_range(0,bl);
   RAJA::RangeSegment i_range(0,count);
   RAJA::kernel<BUFFER_POL>(
@@ -1083,12 +1090,18 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   int stride = std::get<2>(mtype);
   //std::cout<<"putbuffer_device...";
   //PREFETCHFORCED(buf);
+#ifdef ENABLE_CUDA
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
     RAJA::statement::CudaKernelAsync<
       RAJA::statement::For<1, RAJA::cuda_block_exec, 
 			   RAJA::statement::For<0, RAJA::cuda_thread_exec,
 						RAJA::statement::Lambda<0> >>>>;
+#else
+  using BUFFER_POL = DEFAULT_LOOP2;
+#endif
+
+  
   RAJA::RangeSegment k_range(0,bl);
   RAJA::RangeSegment i_range(0,count);
   RAJA::kernel<BUFFER_POL>(

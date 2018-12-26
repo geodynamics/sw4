@@ -931,7 +931,9 @@ void Sarray::copy_kplane( Sarray& u, int k )
       // SW4_MARK_END("CK_PREF");
       size_t ind_start=mni*mnj*(k-mkb);
       size_t uind_start=mni*mnj*(k-um_kb);
+#ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
+      #endif
 #if defined(NO_COLLAPSE)
       Range<16> I(m_ib,m_ie+1);
       Range<4>J(m_jb,m_je+1);

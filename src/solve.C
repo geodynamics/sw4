@@ -1923,7 +1923,7 @@ void EW::check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc )
 void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 {
 SW4_MARK_FUNCTION;
- 
+#ifdef ENABLE_CUDA
  using LOCAL_POL = 
    RAJA::KernelPolicy< 
    RAJA::statement::CudaKernelAsync<
@@ -1931,6 +1931,9 @@ SW4_MARK_FUNCTION;
 			  RAJA::statement::For<1, RAJA::cuda_block_exec, 
 					       RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								    RAJA::statement::Lambda<0> >>>>>;
+ #else
+ using LOCAL_POL = DEFAULT_LOOP3;
+ #endif
  RAJA::RangeSegment c_range(1,U.m_nc+1);
  SView &UV = U.getview();
    // zero out all ghost points
@@ -2592,12 +2595,16 @@ SW4_MARK_FUNCTION;
    
    // for( int j=jb ; j <= je ; j++ )
    //    for( int i=ib ; i <= ie ; i++ )
+#ifdef ENABLE_CUDA
    using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<0, RAJA::cuda_block_exec, 
   RAJA::statement::For<1, RAJA::cuda_thread_exec,
   RAJA::statement::Lambda<0> >>>>;
+#else
+   using LOCAL_POL = DEFAULT_LOOP2;
+#endif
 
    RAJA::kernel<LOCAL_POL>(
 			   RAJA::make_tuple(j_range,i_range),

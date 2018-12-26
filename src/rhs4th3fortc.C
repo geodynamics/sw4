@@ -5,8 +5,10 @@
 #include "policies.h"
 #include "caliper.h"
 #include "foralls.h"
+#ifdef ENABLE_GPU
 #include <cuda_runtime.h>
 #include "optimizedcuda.h"
+#endif
 //#include "tests.h"
 //extern "C" {
 
@@ -995,7 +997,9 @@ using XRHS_POL2 =
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
      SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
+#ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
+#endif
 #if defined(NO_COLLAPSE)
      Range<16> I(ifirst+2,ilast-1);
      Range<4>J(jfirst+2,jlast-1);
@@ -2471,7 +2475,9 @@ SW4_MARK_FUNCTION;
 	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	    SW4_MARK_END("HOST CODE");
-#define NO_COLLAPSE 1 
+#ifdef ENABLE_GPU
+#define NO_COLLAPSE 1
+#endif
 #ifdef NO_COLLAPSE
 	    Range<16> I(ifirst+2,ilast-1);
 	    Range<4>J(jfirst+2,jlast-1);
@@ -2753,6 +2759,7 @@ SW4_MARK_FUNCTION;
 }
 
 //}
+#ifdef ENABLE_CUDA
 void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			     int ni,int nj,int nk,
 			     float_sw4* a_lu, float_sw4* a_u,
@@ -2788,3 +2795,4 @@ void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast, int k
   //std::cout<<"Done optimized rhs4_v2\n";
 }
  
+#endif

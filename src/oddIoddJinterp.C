@@ -332,13 +332,16 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
   // using TESTPOL = RAJA::nested::Policy< 
   //   RAJA::nested::For<1, RAJA::seq_exec>,
   //   RAJA::nested::For<0, RAJA::seq_exec> >;
-
+#ifdef ENABLE_CUDA
   using LOCAL_EXEC_POL = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
        RAJA::statement::For<1, RAJA::cuda_block_exec, 
 						 RAJA::statement::For<0, RAJA::cuda_thread_exec,
 								      RAJA::statement::Lambda<0> >>>>;
+#else
+  using LOCAL_EXEC_POL = DEFAULT_LOOP2;
+#endif
   // Policy ODDIODDJ_EXEC_POL1 is slighly faster than LOCAL_EXEC_POL 73 vs 85 ms
   SW4_MARK_BEGIN("OddIOddJLOOP 1");
   RAJA::kernel<ODDIODDJ_EXEC_POL1>(

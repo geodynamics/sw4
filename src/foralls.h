@@ -1,3 +1,4 @@
+#ifdef ENABLE_CUDA
 template<typename Func>
 __global__ void forallkernel(int start,int N,Func f){
   int tid=start+threadIdx.x+blockIdx.x*blockDim.x;
@@ -188,3 +189,4 @@ void forall2(T1 &irange, T2 &jrange, LoopBody &&body){
   forall2async(irange,jrange,body);
   cudaStreamSynchronize(0);
 }
+#endif

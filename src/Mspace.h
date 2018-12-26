@@ -29,7 +29,9 @@ void prefetch_to_device(const float_sw4 *ptr);
 #define PROFILER_START SW4_CheckDeviceError(cudaProfilerStart())
 #define PROFILER_STOP SW4_CheckDeviceError(cudaProfilerStop())
 #else
-#define SW4_CheckDeviceError(err) 
+#define SW4_CheckDeviceError(err)
+#define PROFILER_START
+#define PROFILER_STOP
 #endif
 void check_mem();
 enum Space { Host, Managed,Device,Pinned,Managed_temps};
