@@ -1,4 +1,4 @@
-#!/usr/tcetmp/bin/python3-3.6.4
+#!/usr/tce/bin/python3
 
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
@@ -127,7 +127,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     if 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
-        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        mpirun_cmd="srun -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
@@ -158,7 +158,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
+def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()

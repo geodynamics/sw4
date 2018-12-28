@@ -2759,40 +2759,40 @@ SW4_MARK_FUNCTION;
 }
 
 //}
-#ifdef ENABLE_CUDA
-void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			     int ni,int nj,int nk,
-			     float_sw4* a_lu, float_sw4* a_u,
-			     float_sw4* a_mu, float_sw4* a_lambda, 
-			     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, 
-			     float_sw4* a_strz, char op ){
-  SW4_MARK_FUNCTION;
-  int njcomp = jlast - jfirst + 1;
-  dim3 blocks = dim3((ni+BX-1)/BX, (njcomp+BY-1)/BY, 1);
-  dim3 threads = dim3(BX, BY, 1);
+// #ifdef ENABLE_CUDA
+// void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+// 			     int ni,int nj,int nk,
+// 			     float_sw4* a_lu, float_sw4* a_u,
+// 			     float_sw4* a_mu, float_sw4* a_lambda, 
+// 			     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry, 
+// 			     float_sw4* a_strz, char op ){
+//   SW4_MARK_FUNCTION;
+//   int njcomp = jlast - jfirst + 1;
+//   dim3 blocks = dim3((ni+BX-1)/BX, (njcomp+BY-1)/BY, 1);
+//   dim3 threads = dim3(BX, BY, 1);
   
 
-  int a1;
-  float_sw4 cof = 1.0/(h*h);
-   if( op == '=' )
-      a1 = 0;
-   else if( op == '+' )
-      a1 = 1;
-   else if( op == '-' )
-   {
-      a1 = 1;
-      cof = -cof;
-   }
-   //std::cout<<"Calling optimized rhs4_v2\n";
-  rhs4_v2<1,0><<<blocks,threads,0,0>>>
-    (ifirst, ilast, jfirst, jlast, kfirst, klast,
-     ni, nj, nk,
-     a_lu, a_u,
-     a_mu, a_lambda,
-     a_strx, a_stry, a_strz, h,a1,cof);
-  //SW4_CheckDeviceError(cudaPeekAtLastError());
-  SW4_CheckDeviceError(cudaStreamSynchronize(0));
-  //std::cout<<"Done optimized rhs4_v2\n";
-}
+//   int a1;
+//   float_sw4 cof = 1.0/(h*h);
+//    if( op == '=' )
+//       a1 = 0;
+//    else if( op == '+' )
+//       a1 = 1;
+//    else if( op == '-' )
+//    {
+//       a1 = 1;
+//       cof = -cof;
+//    }
+//    //std::cout<<"Calling optimized rhs4_v2\n";
+//   rhs4_v2<1,0><<<blocks,threads,0,0>>>
+//     (ifirst, ilast, jfirst, jlast, kfirst, klast,
+//      ni, nj, nk,
+//      a_lu, a_u,
+//      a_mu, a_lambda,
+//      a_strx, a_stry, a_strz, h,a1,cof);
+//   //SW4_CheckDeviceError(cudaPeekAtLastError());
+//   SW4_CheckDeviceError(cudaStreamSynchronize(0));
+//   //std::cout<<"Done optimized rhs4_v2\n";
+// }
  
-#endif
+// #endif

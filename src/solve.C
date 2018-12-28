@@ -2307,6 +2307,7 @@ SW4_MARK_FUNCTION;
    else // twilight forcing below
    {
 // dbg
+ SYNC_STREAM;
       if (false && g==0)
       {
          int i=0, j=25, k=1;
