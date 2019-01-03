@@ -379,12 +379,6 @@ void Mopt::set_sscalefactors( int nmpars, double* sfs )
    if( !m_scales_file_given )
    {
       m_mp->set_scalefactors( nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
-      //      for( int i=0 ; i < nmpars ; i += 3 )
-      //      {
-      //	 sfs[i]   = m_rhoscale;
-      //	 sfs[i+1] = m_muscale;
-      //	 sfs[i+2] = m_lambdascale;
-      //      }
    }
    else
    {

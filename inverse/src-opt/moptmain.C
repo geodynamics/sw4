@@ -221,16 +221,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 // Translate one-dimensional parameter vector (xm,xs) to material data (rho,mu,lambda)
    int ng = simulation.mNumberOfGrids;
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
-//New
+
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
    int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok );
    VERIFY2( ok, "ERROR: Material check failed\n" );
-
-// Old   
-//   simulation.parameters_to_material( nmpar, xm, rho, mu, lambda );
 
 // Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
 // inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
