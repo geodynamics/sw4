@@ -15,7 +15,7 @@ PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/Project6/UMPIRE/Umpire/install
 CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_ray_9.2
 EXTRA_FORT_FLAGS = 
-MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_USE_UMPIRE=1 
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_USE_UMPIRE=1
 LINKFLAGS =  -arch=sm_70
 EXTRA_CXX_FLAGS =  -O3 -use_fast_math -DDISABLE_PREFETCH  -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include -I$(UMPIRE_HOME)/include $(MORE_FLAGS)
 
