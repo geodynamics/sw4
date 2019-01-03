@@ -133,7 +133,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    {
       kstart = 7;
    // SBP Boundary closure terms
-#ifdef ENABLE_GPU
+#if defined(ENABLE_CUDA)
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)

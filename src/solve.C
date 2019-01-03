@@ -999,6 +999,8 @@ bool cudaProfilerOn = false;
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
+   SYNC_STREAM; // This probably needs to be somewhere inside update_images so that it is called only before an image write
+    // No strictly required due to the sync in enforceIC/consinsp/communicate_array_2d/copy_kplane.
     update_images( currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, 
@@ -2152,6 +2154,7 @@ SW4_MARK_FUNCTION;
    }
    else
    {
+     SYNC_STREAM;
       float_sw4 om = m_twilight_forcing->m_omega;
       float_sw4 ph = m_twilight_forcing->m_phase;
       float_sw4 cv = m_twilight_forcing->m_c;

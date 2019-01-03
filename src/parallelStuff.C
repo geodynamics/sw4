@@ -1171,6 +1171,7 @@ void EW::communicate_array_2d_async( Sarray& u, int g, int k )
    else
    {
       // X-direction communication
+     SYNC_STREAM; // For the set above, the sync in copy_kplane takes care of races.
      SW4_MARK_BEGIN("comm_array_2d_async::MPI-2");
    AMPI_Sendrecv2( &u(1,ie-(2*m_ppadding-1),jb,k), 1, send_type_2dx[g], m_neighbor[1], xtag1,
 		 &u(1,ib,jb,k), 1, send_type_2dx[g], m_neighbor[0], xtag1,

@@ -5,10 +5,10 @@
 #include "policies.h"
 #include "caliper.h"
 #include "foralls.h"
-#ifdef ENABLE_GPU
-#include <cuda_runtime.h>
-#include "optimizedcuda.h"
-#endif
+//#ifdef ENABLE_GPU
+//j#include <cuda_runtime.h>
+//#include "optimizedcuda.h"
+//#endif
 //#include "tests.h"
 //extern "C" {
 
@@ -997,7 +997,7 @@ using XRHS_POL2 =
      RAJA::RangeSegment j_range(jfirst+2,jlast-1);
      RAJA::RangeSegment i_range(ifirst+2,ilast-1);
      SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
-#ifdef ENABLE_GPU
+#ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)
@@ -2475,7 +2475,7 @@ SW4_MARK_FUNCTION;
 	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	    SW4_MARK_END("HOST CODE");
-#ifdef ENABLE_GPU
+#ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
 #endif
 #ifdef NO_COLLAPSE

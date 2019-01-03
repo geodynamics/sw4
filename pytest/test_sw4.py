@@ -127,7 +127,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     if 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
-        mpirun_cmd="srun -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        mpirun_cmd="srun -p pdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
@@ -145,7 +145,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         mpirun_cmd="mpirun -gpu -np " + str(mpi_tasks)+" mpibind"
     elif 'sierra' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
-        mpirun_cmd="lrun -T16 -p" + str(mpi_tasks)
+        mpirun_cmd="lrun -T4 -p" + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
         if mpi_tasks<=0: mpi_tasks = 1

@@ -6,7 +6,7 @@ using namespace std;
 
 
 void presetGPUID(){
-#ifdef ENABLE_GPU
+#ifdef ENABLE_CUDA
   int devices_per_node=4;
    SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   if (devices_per_node>1){
