@@ -6,34 +6,14 @@
 #include "MaterialParAllpts.h"
 #include "MaterialParCartesian.h"
 #include "Mopt.h"
+#include "compute_f.h"
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
 
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <fstream>
-
-void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, double* typxs,
-	    int nmpard, double* xm, double* sfm, double* typxd,
-	    vector<vector<Source*> >& GlobalSources,
-	    vector<vector<TimeSeries*> >& GlobalTimeSeries,
-	    vector<vector<TimeSeries*> >& GlobalObservations,
-	    int myRank, Mopt* mopt );
-// MaterialParameterization* mp, int maxit, double tolerance,
-//	    bool dolinesearch, int m, int ihess, bool use_wolfe, bool mcheck, bool output_ts,
-//	    vector<Image*>& images );
-
-void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
-	   int nmpard, double* xm, double* sfm, 
-	   vector<vector<Source*> >& GlobalSources,
-	   vector<vector<TimeSeries*> >& GlobalTimeSeries,
-	   vector<vector<TimeSeries*> >& GlobalObservations,
-	   int myRank, Mopt* mopt );
-	   //	   MaterialParameterization* mp,
-	   //	   int maxrestart, int maxit, double tolerance, bool dolinesearch,
-	   //	   bool fletcher_reeves, bool mcheck, bool output_ts );
 
 void usage(string thereason)
 {
@@ -101,7 +81,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		vector<vector<Source*> >& GlobalSources,
 		vector<vector<TimeSeries*> >& GlobalTimeSeries,
 		vector<vector<TimeSeries*> >& GlobalObservations,
-		double& mf, MaterialParameterization* mp )
+		double& mf, Mopt *mopt )
 //-----------------------------------------------------------------------
 // Compute misfit.
 //
@@ -116,7 +96,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 //        GlobalTimeSeries   - TimeSeries objects, number of objects and
 //                    locations should agree with the GlobalObservations vector.
 //        GlobalObservations - The observed data at receivers.
-//        mp - Pointer to object describing the parameterization of the material.
+//        mopt - Pointer to the class Mopt object
 //
 // Output: GlobalTimeSeries - The solution of the forward problem at the stations.
 //         mf               - The misfit.
@@ -137,7 +117,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
 //New
-   mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
    int ok;
    simulation.check_material( rho, mu, lambda, ok );
 
@@ -169,7 +149,17 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       delete upred_saved[g];
       delete ucorr_saved[g];
    }
-   //   delete src[0];
+
+// add in a Tikhonov regularizing term:
+   double tikhonov=0;
+#ifndef SQR
+#define SQR(x) ((x)*(x))
+#endif
+   for (int q=nspar; q<nspar+nmpars; q++)
+      tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+
+   mf += mopt->m_reg_coeff*tikhonov;
+   
 }
 
 //-----------------------------------------------------------------------
@@ -179,7 +169,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 		       vector<vector<TimeSeries*> >& GlobalTimeSeries,
 		       vector<vector<TimeSeries*> >& GlobalObservations, 
 		       double& f, double* dfs, double* dfm, int myrank,
-                       Mopt* mopt, int it=-1 )
+                       Mopt* mopt, int it )
 
 //		       MaterialParameterization* mp, bool mcheck, bool output_ts,
 //		       vector<Image*>& images )
@@ -279,10 +269,24 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+// add in a Tikhonov regularizing term:
+   double tikhonov=0;
+#ifndef SQR
+#define SQR(x) ((x)*(x))
+#endif
+   for (int q=nspar; q<nspar+nmpars; q++)
+   {
+      tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+      dfs[q] += 2*mopt->m_reg_coeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
+   }
+   
+   f += mopt->m_reg_coeff*tikhonov;
+
    if( myrank == 0 && verbose >= 1 )
    {
       cout.precision(16);  
-      cout << " Misfit is = " << f << endl;
+      cout << " Misfit (objetive functional) is f = " << f << endl;
    }
 
 // Get gradient by solving the adjoint problem:
@@ -399,8 +403,11 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt ); //mp, false, false, im );
    if( myRank == 0 )
-      cout << "Initial f = " << f << " " << endl;
-
+   {
+//      cout << "Initial f = " << f << " " << endl;
+     printf("Unperturbed objective function f=%e\n", f);
+   }
+   
    double h=1e-6;
 
    int nms, nmd, nmpard_global;
@@ -415,26 +422,34 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    if( ns>0 )
    {
       if( myRank == 0 )
-	 cout << "Gradient testing shared parameters :" << endl;
+      {
+	printf("Gradient testing shared parameters :\n");
+	printf("Param#  f-perturbed     step-size     f'-adjoint      f'-div-diff    error \n");
+      }
+      
       for( int ind=0 ; ind < ns ; ind++ )
       {
-         h = 3e-8*sf[ind];
+	h = 3e-8*sf[ind]; // multiply step length by scale factor
 	 xs[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fp, mopt->m_mp );
+		 GlobalObservations, fp, mopt );
 	 double dfnum = (fp-f)/h;
 	 double dfan  = dfs[ind];
          double relerr = fabs(dfan-dfnum)/(fabs(dfan)+1e-10);
-	 if( myRank == 0 && relerr > 1e-6 )
+	 if( myRank == 0/* && relerr > 1e-6*/ )
 	 {
-            cout << " ind = " << ind << "f = " << fp << " h= " << h << " dfan = " << dfan
-		 << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
+	   printf("%4d  %13.6e  %13.6e  %13.6e  %13.6e  %13.6e\n", ind, fp, h, dfan, dfnum, dfan-dfnum);
+	   
+            // cout << " ind = " << ind << "f = " << fp << " h= " << h << " dfan = " << dfan
+	    // 	 << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
 	 }
 	 if( myRank == 0 )
-	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
+	 {
+	   dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
+	 }
 
-	 xs[ind] -= h;
-	 if( (ind % 100) && myRank == 0 )
+	 xs[ind] -= h; // reset parameter #ind
+	 if( ind > 0 && (ind % 100 == 0) && myRank == 0 )
 	    cout << "Done ind = " << ind << endl;
       }
    }
@@ -448,7 +463,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 if( ind >=0 )
 	    xm[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, fp, mopt->m_mp );
+		 GlobalObservations, fp, mopt );
 	 double dfnum = (fp-f)/h;
 	 double dfan;
 	 if( ind >=0 )
@@ -729,7 +744,7 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
       xs[ind] = xoriginal+p;
       double f;
       compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, f, mp );
+		 GlobalObservations, f, mopt );
       fcn[m] = f;
    }
    if( myRank == 0 )
@@ -782,7 +797,7 @@ void misfit_surface( int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
 	 xs[ind2] = xoriginal2+p2;
 	 double f;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		    GlobalObservations, f, mp );
+		    GlobalObservations, f, mopt );
 	 fcn[m1+npts1*m2] = f;
       }
       if( myRank == 0 )
@@ -971,7 +986,7 @@ int main(int argc, char **argv)
            MaterialParameterization* mp = mopt->m_mp;
 
 // figure out how many parameters we need.
-//	Guess: nmpars - number of non-distributed material parameters, exist copies in each proc.
+//	Guess: nmpars - number of non-distributed (=shared) material parameters, exist copies in each proc.
 //             nmpard - Number of distributed material parameters, size of part in my processor.
 //	       nmpard_global - number of distributed parameters, total number over all processors
            int nmpars, nmpard, nmpard_global;
@@ -981,9 +996,9 @@ int main(int argc, char **argv)
            if( nmpard > 0 )
 	      xm = new double[nmpard];
 
-// nspar - Number of parameters in source description. These are always non-distributed
+// nspar - Number of parameters in source description. These are always non-distributed (=shared)
 	   int nspar=mopt->m_nspar;
-// ns - Total number of non-distributed parameters.
+// ns - Total number of non-distributed (=shared) parameters.
            int ns = nmpars + nspar;
 	   double *xs = new double[ns];
 
@@ -998,15 +1013,33 @@ int main(int argc, char **argv)
            string parname = mopt->m_path + "mtrlpar-init.bin";
 	   mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
 
+// store initial material parameters in mp->m_xs0 (needed for Tikhonov regularization)
+           mopt->set_baseMat(xs);
+
 // Scale factors
 	   double* sf  = NULL;
            double* sfm = NULL;
-           if( ns > 0 )
-	      sf  = new double[ns];
+           // if( ns > 0 )
+	   //    sf  = new double[ns];
            if( nmpard > 0 )
               sfm = new double[nmpard];
-           mopt->set_sourcescalefactors( nspar, sf );
-           mopt->set_sscalefactors( nmpars, &sf[nspar] );
+// both the source scale factors and the shared material scale factors are in the array 'sf'
+// both types of scale factors are now set in set_sscalefactors()
+           mopt->set_sscalefactors( /* nmpars, &sf[nspar]*/ );
+// for backwards compatibility
+	   sf = mopt->m_sfs;
+// tmp
+	   // if (myRank == 0)
+	   // {
+	   //   printf("TEST: moptmain: nspar=%d, nstot=%d\n", mopt->m_nspar, mopt->m_nstot);
+	   //   for (int q=0; q<mopt->m_nstot; q++)
+	   //   {
+	   //     printf("m_sfs[%d]=%e\n", q, mopt->m_sfs[q]);
+	   //   }	     
+	   // }
+// end tmp
+	   
+// the distributed material scale factors are currently not used	   
            mopt->set_dscalefactors( nmpard, sfm );
 
 // Typical sizes, initialize as scale factors
@@ -1087,7 +1120,7 @@ int main(int argc, char **argv)
 // Solve forward problem to generate synthetic data
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			 GlobalObservations, f, mp );
+			 GlobalObservations, f, mopt );
 	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
 		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
 		    GlobalTimeSeries[e][m]->writeFile( );

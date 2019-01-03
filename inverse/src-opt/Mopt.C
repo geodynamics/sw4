@@ -57,6 +57,10 @@ Mopt::Mopt( EW* a_ew )
    m_nsurfpts  = 10;
    m_nsurfpts2 = 10;
    m_path = "./";
+   m_reg_coeff = 0.0;
+   m_nstot = 0;
+   m_sfs = NULL;
+   m_xs0 = NULL;
 }  
 
 //-----------------------------------------------------------------------
@@ -98,6 +102,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMtypx( buffer );
          else if( startswith("fileio",buffer) )
 	    processMfileio( buffer );
+         else if( startswith("regularize",buffer) )
+	    processMregularize( buffer );
          else if( startswith("refinement",buffer) )
 	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
       }
@@ -197,7 +203,7 @@ void Mopt::processMaterialParCart( char* buffer )
       m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
    else
       m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
-}
+} // end processMaterialParCart
 
 //-----------------------------------------------------------------------
 void Mopt::processMrun( char* buffer )
@@ -365,6 +371,34 @@ void Mopt::processMfileio( char* buffer )
 }
 
 //-----------------------------------------------------------------------
+void Mopt::processMregularize( char* buffer )
+{
+   char* path = 0;
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("regularize", token) == 0, "ERROR: not a regularize line...: " << token);
+   token = strtok(NULL, " \t");
+   double scale_coeff = 1;
+
+   string err = "Regularize Error: ";
+
+   while (token != NULL)
+   {
+      if (startswith("#", token) || startswith(" ", buffer))
+	 break;
+      if(startswith("coeff=", token)) 
+      {
+	 token += 6;
+	 scale_coeff = atof(token);
+      }
+      else
+         badOption("mscalefactors",token);
+      token = strtok(NULL, " \t");
+   }
+   m_reg_coeff = scale_coeff;
+   
+}// end processMregularize
+
+//-----------------------------------------------------------------------
 void Mopt::get_scalefactors( double& rhoscale, double& muscale,
 			     double& lambdascale )
 {
@@ -374,41 +408,70 @@ void Mopt::get_scalefactors( double& rhoscale, double& muscale,
 }
 
 //-----------------------------------------------------------------------
-void Mopt::set_sscalefactors( int nmpars, double* sfs )
+void Mopt::set_sscalefactors( /* int nmpars, double* sfs */ )
 {
+// new 12/20, 2018
+  int my_nmpars, nmpard, nmpard_global;
+  m_mp->get_nr_of_parameters( my_nmpars, nmpard, nmpard_global );
+  m_nstot = m_nspar + my_nmpars;
+  m_sfs = new double[m_nstot];
+  double *sfs = &m_sfs[m_nspar];
+
+// first set the source scale factors (if any)
+  set_sourcescalefactors( m_nspar, m_sfs );
+  // if( m_myrank == 0 )
+  // {
+  //   printf("TEST: set_sscalefactors: m_nspar = %d, my_nmpars = %d m_nstot = %d\n", m_nspar, my_nmpars, m_nstot);
+  // }
+  
+
    if( !m_scales_file_given )
-   {
       m_mp->set_scalefactors( nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
-   }
    else
    {
       int errflag = 0;
       if( m_myrank == 0 )
       {
-         cout << "Reading scale factor file " << " nmpars = " << nmpars << endl;
+         cout << "Reading scale factor file " << " my_nmpars = " << my_nmpars << endl;
 	 int fd=open(m_scales_fname.c_str(),O_RDONLY );
 	 VERIFY2( fd != -1, "ERROR reading scale factors. File " << m_scales_fname << " could not be opened"<<endl);
 	 int nmpars_read;
 	 size_t nr = read(fd,&nmpars_read,sizeof(int));
-	 if( nmpars_read == nmpars && nr == sizeof(int) )
+	 if( nmpars_read == my_nmpars && nr == sizeof(int) )
 	 {
-	    nr = read(fd,sfs,nmpars*sizeof(double));
-	    if( nr != nmpars*sizeof(double) )
+	    nr = read(fd,sfs,my_nmpars*sizeof(double));
+	    if( nr != my_nmpars*sizeof(double) )
 	       errflag = 2;
 	 }
-	 else if( nmpars_read != nmpars )
+	 else if( nmpars_read != my_nmpars )
 	    errflag = 3;
 	 else
 	    errflag = 1;
 	 close(fd);
 
          double imf = 1/sqrt(m_misfitscale);
-         for( int i=0 ; i < nmpars ; i++ )
+         for( int i=0 ; i < my_nmpars ; i++ )
 	    sfs[i] *= imf;
       }
-      MPI_Bcast( sfs, nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+      MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
       VERIFY2( errflag == 0, "Error no " << errflag << " in Mopt::set_sscalefactors");
    }
+}
+
+//-----------------------------------------------------------------------
+void Mopt::set_baseMat(double* xs )
+{
+// new 12/20, 2018
+  int my_nmpars, nmpard, nmpard_global;
+  m_mp->get_nr_of_parameters( my_nmpars, nmpard, nmpard_global );
+  m_nstot = m_nspar + my_nmpars;
+  m_xs0 = new double[m_nstot];
+
+  for( int i=0 ; i < my_nmpars ; i++)
+  {
+     m_xs0[i]   = xs[i];
+  }
+
 }
 
 //-----------------------------------------------------------------------

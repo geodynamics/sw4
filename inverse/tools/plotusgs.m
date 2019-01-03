@@ -11,43 +11,51 @@
 %              erasefirst: 0 does a 'hold on' for the current plot, otherwise erases the current figure
 %              timeshift:  change independent variable to be t+timeshift
 %               
-function plotusgs( filename, colorstring, erase, tshift )
+function plotusgs( filename, colorstring, erase_flag, tshift )
 
 if nargin < 4
    tshift = 0;
 end;
 
+if nargin < 3
+  erase_flag = 1;
+end
+
+if nargin < 2
+  colorstring="b";
+end
+
 [t ux uy uz]=readusgs(filename);
 
-if (erase ~= 0)
+if (erase_flag ~= 0)
   clf;
 end
 % east component
 subplot(3,1,1)
-if (erase == 0)
+if (erase_flag == 0)
   hold on;
 end
 h=plot(t+tshift,ux,colorstring);
-%set(h,'LineWidth',2.0)
+set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
 axis tight;
 
 % north component
 subplot(3,1,2)
-if (erase == 0)
+if (erase_flag == 0)
   hold on;
 end
 h=plot(t+tshift,uy,colorstring);
-%set(h,'LineWidth',2.0)
+set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
 axis tight;
 
 % up component
 subplot(3,1,3)
-if (erase == 0)
+if (erase_flag == 0)
   hold on;
 end
 h=plot(t+tshift,uz,colorstring);
-%set(h,'LineWidth',2.0)
+set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
 axis tight;

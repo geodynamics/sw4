@@ -1,16 +1,20 @@
-%%
-% by Ke Chen, July 2, 2018
-%%
-clc;
-clear;
-close all;
-ngrids = 3;
-rhop = 265.0000;
-mup = 1.5746e9;
-lambdap = 2.5335e9;
-fileID = fopen('onep-pr10.bin','w');
-fwrite(fileID,ngrids,'int');
-fwrite(fileID,rhop,'double');
-fwrite(fileID,mup,'double');
-fwrite(fileID,lambdap,'double');
-fclose(fileID);
+% make_model
+% Usage: make_model(sf1, sf2, sf3, fname)
+% Input:
+%       sf1: 1st scale factor (rho)
+%       sf2: 2nd scale factor (mu or vs)
+%       sf3: 3rd scale factor (mbda or vp)
+%       fname (optional): file name, default 'one-pr10.bin'
+function make_model(sf1, sf2, sf3, fname)
+  if nargin < 4
+    fname = 'onep-pr10.bin';
+  end
+  ngrids = 3;
+
+  fileID = fopen(fname,'w');
+  fwrite(fileID,ngrids,'int');
+  fwrite(fileID, sf1, 'double');
+  fwrite(fileID, sf2, 'double');
+  fwrite(fileID, sf3, 'double');
+  fclose(fileID);
+end

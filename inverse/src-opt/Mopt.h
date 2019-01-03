@@ -31,19 +31,21 @@ class Mopt
    void processM3Dimage( char* buffer );
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );
+   void processMregularize( char* buffer );
  public:
    Mopt( EW* a_ew );
    bool parseInputFileOpt( std::string filename );
    void get_scalefactors( double& rhoscale, double& muscale,
 			  double& lambdascale );
 
-   void set_sscalefactors( int nmpars, double* sfs );
+   void set_sscalefactors( /*int nmpars, double* sfs*/ );
    void set_sourcescalefactors( int nspar, double* sfs );
    void set_dscalefactors( int nmpard, double* sfm );
    void set_typx( int nmpar, double* sf, double* typx );
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
-
+   void set_baseMat(double* xs );
+   
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
    bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck, m_output_ts;
@@ -58,6 +60,10 @@ class Mopt
    std::string m_scales_fname, m_scalem_fname;
    bool m_scales_file_given;
    std::string m_path;
+   double m_reg_coeff;
+   int m_nstot; // dimension of m_sfs and m_xs0
+   double *m_sfs; // scale factors
+   double *m_xs0; // initial material perturbation
 };
 
 #endif

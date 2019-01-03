@@ -634,7 +634,7 @@ void material_correction( int nmpar, float_sw4* xm );
 void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		       vector<Sarray>& a_lambda, int& info );
 
-void check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+int check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		     vector<Sarray>& a_lambda, int& ok );
    //#endif
 
