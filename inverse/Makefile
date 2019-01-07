@@ -218,7 +218,7 @@ OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o
 # material optimization
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
            MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
-	   MaterialParCartesianVels.o
+	   MaterialParCartesianVels.o MaterialParCartesianVp.o
            
 
 OBJL  = lamb_one_point.o

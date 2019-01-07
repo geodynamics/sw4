@@ -12,10 +12,12 @@ private:
    int m_init;
    Sarray m_rho, m_mu, m_lambda;
    Sarray m_cs, m_cp; // ?needed now ? 
+   double m_ratio, m_gamma;
+   bool m_fixrho;
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 public:
-   MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname );
+   MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname, double ratio, double gamma, bool fixrho );
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 

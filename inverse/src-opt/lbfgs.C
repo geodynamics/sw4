@@ -382,9 +382,9 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fnew, mopt );
 
-      //      if( myRank == 0 )
-      //	 cout << "Evaluate at lambda = " << lambda << " gives f = " << fnew << " (initslope = "
-      //	      << initslope << ") " << endl;
+            if( myRank == 0 )
+            	 cout << "Evaluate at lambda = " << lambda << " gives f = " << fnew << " (initslope = "
+            	      << initslope << ") " << endl;
 
       lambdasave.push_back(lambda);
       fcnsave.push_back(fnew);

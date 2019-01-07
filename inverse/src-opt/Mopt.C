@@ -4,6 +4,7 @@
 
 #include "MaterialParCartesian.h"
 #include "MaterialParCartesianVels.h"
+#include "MaterialParCartesianVp.h"
 
 #include "EW.h"
 
@@ -148,8 +149,9 @@ void Mopt::processMaterialParCart( char* buffer )
 	       "ERROR: not an mparcart line: " << token);
    token = strtok(NULL, " \t");
 
-   bool vel = false;
+   bool vel = false, vponly=false;
    int nx=3, ny=3, nz=3, init=0;
+   double ratio=1.732, gamma=1;
    char file[256]= " \0"; //shut up memory checker
 
    while (token != NULL)
@@ -161,7 +163,9 @@ void Mopt::processMaterialParCart( char* buffer )
       else if( startswith("type=",token) )
       {
 	 token += 5;
-	 vel = strcmp("velocity",token)==0;
+	 int len=strlen(token);
+	 vponly =strncmp("vponly",token,len)==0;
+	 vel    =strncmp("velocity",token,len)==0;
       }
       else if( startswith("nx=",token) )
       {
@@ -201,6 +205,8 @@ void Mopt::processMaterialParCart( char* buffer )
    }
    if (vel)
       m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
+   else if( vponly )
+      m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
    else
       m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
 } // end processMaterialParCart
@@ -426,7 +432,7 @@ void Mopt::set_sscalefactors( /* int nmpars, double* sfs */ )
   
 
    if( !m_scales_file_given )
-      m_mp->set_scalefactors( nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
+      m_mp->set_scalefactors( my_nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
    else
    {
       int errflag = 0;
