@@ -1,0 +1,15 @@
+# packages needed for compilation:
+# libmpich-dev libblas-dev liblapack-dev libproj-dev
+#
+# packages needed at runtime:
+# libmpich12 libblas3 liblapack3 libproj12
+#
+# run with the following (in root dir) to avoid picking up any user space
+# dependency installs (so that binary uses system packages only and can be
+# ported easily):
+# $ PATH=/usr/bin:/bin make
+
+FC = gfortran
+CXX = mpicxx
+proj = yes
+EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib -llapack -lblas -lgfortran
