@@ -113,14 +113,14 @@ MaterialParCartesianVp::MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz
 //
 //-----------------------------------------------------------------------
 void MaterialParCartesianVp::get_material( int nmd, double* xmd, int nms,
-					     double* xms, vector<Sarray>& a_rho,
-					     vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+					   double* xms, vector<Sarray>& a_rho,
+					   vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
 {
-   // 1.  cp := x
-   // 2.  a_cp := I(cp)  where I(cp) is interpolation to f.d. grid.
-   // 3.  (a_rho,a_mu,a_lambda) := T( gamma*(a_cp+mCp),(a_cp+mCp)/ratio, (a_cp+mCp)), where T transforms from (rho,cs,cp) to (rho,mu,lambda)
+ // 1.  cp := x
+ // 2.  a_cp := I(cp)  where I(cp) is interpolation to f.d. grid.
+ // 3.  (a_rho,a_mu,a_lambda) := T( gamma*(a_cp+mCp),(a_cp+mCp)/ratio, (a_cp+mCp)), where T transforms from (rho,cs,cp) to (rho,mu,lambda)
    //          mRho,mCs,mCp is base material.
-   double* cpp = m_cp.c_ptr();
+   float_sw4* cpp = m_cp.c_ptr();
    size_t ind =0;
    for( int k=1 ; k <= m_nz ; k++ )
       for( int j=1 ; j <= m_ny ; j++ )
@@ -129,6 +129,8 @@ void MaterialParCartesianVp::get_material( int nmd, double* xmd, int nms,
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
 	    cpp[indm]  = xms[ind];
 	    ind++;
+	    if( isnan(cpp[indm]) )
+	       cout << "ERROR parameter cp is Nan in get material at index " << indm << endl;
 	 }
    for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )
    {

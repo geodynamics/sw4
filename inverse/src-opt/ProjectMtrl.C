@@ -349,8 +349,12 @@ void checkmtrl( int ib,  int ie,  int jb,  int je,  int kb,  int ke,
    float_sw4 bulkmax =-1e38;
 
    float_sw4 acof = dt*dt/(h*h);
+   size_t nans =0;
    for( size_t ind=0 ; ind < nijk ; ind++ )
    {
+      if( isnan(rho[ind]) || isnan(mu[ind]) || isnan(lambda[ind]) )
+	 nans++;
+
       if( rho[ind]<rhmin )
 	 rhmin = rho[ind];
       if( rho[ind]>rhmax )
@@ -385,6 +389,8 @@ void checkmtrl( int ib,  int ie,  int jb,  int je,  int kb,  int ke,
       //                  vs2min = mu(i,j,k)/rho(i,j,k)
       //               endif
    }
+   if( nans > 0 )
+      cout << "ERROR in EW::checkmtrl. There are " << nans << " NaN values in material" << endl;
    limits[0] = rhmin;
    limits[1] = rhmax;
    limits[2] = mumin;

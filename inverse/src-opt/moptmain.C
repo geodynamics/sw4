@@ -738,35 +738,103 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
    ssize_t ind=mp->parameter_index(i,j,k,0,var);
    double xoriginal = xs[ind];
    bool ascii_output = true;
-   for( int m=0 ; m < npts ; m++ )
+   double p;
+   string lfname = mopt->m_path+"mflocal.txt";
+   ofstream localmfout;
+
+// Output materials
+   if( mopt->m_misfit1d_images )
    {
-      double p = pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin);
-      xs[ind] = xoriginal+p;
-      double f;
-      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		 GlobalObservations, f, mopt );
-      fcn[m] = f;
-   }
-   if( myRank == 0 )
-   {
-      //      string fname = simulation.getOutputPath()+"fsurf.bin";
-      string fname = mopt->m_path+"fsurf.bin";
-      int fd=open(fname.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0660 );
-      int dims=1;
-      size_t nr = write(fd,&dims,sizeof(int));
-      nr = write(fd,&npts,sizeof(int));
-      nr = write(fd,&pmin,sizeof(double));
-      nr = write(fd,&pmax,sizeof(double));
-      nr = write(fd,fcn,npts*sizeof(double));
-      close(fd);
-      if( ascii_output )
+      for( int m=0 ; m < npts ; m++ )
       {
+	 if( npts==1 )
+	    p = pmin;
+	 else
+	    p = pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin);
+	 xs[ind] = xoriginal+p;
+
+	 int ng=simulation.mNumberOfGrids;
+	 vector<Sarray> rho(ng), mu(ng), lambda(ng);
+	 mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+
+	 for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
+	 {
+	    Image* image = mopt->m_image_files[im];
+	    if(image->mMode == Image::RHO )
+	       image->computeImageQuantity(rho, 1);
+	    else if(image->mMode == Image::MU )
+	       image->computeImageQuantity(mu, 1);
+	    else if(image->mMode == Image::LAMBDA )
+	       image->computeImageQuantity(lambda, 1);
+	    else if(image->mMode == Image::P )
+	       image->computeImagePvel(mu, lambda, rho);
+	    else if(image->mMode == Image::S )
+	       image->computeImageSvel(mu, rho);
+	    image->writeImagePlane_2( m, mopt->m_path, 0 );
+	 }
+      }
+   }
+   else
+   {
+
+      if( myRank == 0 )
+	 localmfout.open(lfname.c_str());
+      for( int m=0 ; m < npts ; m++ )
+      {
+	 if( npts==1 )
+	    p = pmin;
+	 else
+	    p = pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin);
+
+	 xs[ind] = xoriginal+p;
+	 double f;
+	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
+		    GlobalObservations, f, mopt );
+	 fcn[m] = f;
+	 if( mopt->m_output_ts )
+	 {
+	    if( myRank == 0 )
+	       cout << "Total misfit at p= " << p << " is " << f << " decomposition into stations and events: " << endl;
+
+	    for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+	       for( int s=0 ; s < GlobalTimeSeries[e].size() ; s++ )
+	       {
+		  GlobalTimeSeries[e][s]->writeFile();
+		  double dshift, ddshift, dd1shift;
+		  double mf = GlobalTimeSeries[e][s]->misfit( *GlobalObservations[e][s], NULL, dshift, ddshift, dd1shift );
+		  double mftmp = mf;
+		  MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+		  if( myRank == 0 )
+		  {
+		     cout << "     Event " << e+1 << " station " << s+1 << " misfit is " << mf << endl;
+		     localmfout << " " << mf;
+		  }
+	       }
+	    localmfout << endl;
+	 }
+      }
+      if( myRank == 0 )
+      {
+	 localmfout.close();
+      //      string fname = simulation.getOutputPath()+"fsurf.bin";
+	 string fname = mopt->m_path+"fsurf.bin";
+	 int fd=open(fname.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0660 );
+	 int dims=1;
+	 size_t nr = write(fd,&dims,sizeof(int));
+	 nr = write(fd,&npts,sizeof(int));
+	 nr = write(fd,&pmin,sizeof(double));
+	 nr = write(fd,&pmax,sizeof(double));
+	 nr = write(fd,fcn,npts*sizeof(double));
+	 close(fd);
+	 if( ascii_output )
+	 {
 	 //	 fname = simulation.getOutputPath()+"Misfit1d.txt";
-	 fname = mopt->m_path+"Misfit1d.txt";
-	 ofstream fcurve(fname.c_str());
-	 for( int m=0 ; m < npts ; m++ )
-	    fcurve << pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin) << " " << fcn[m] << " " << endl;
-	 fcurve.close();
+	    fname = mopt->m_path+"Misfit1d.txt";
+	    ofstream fcurve(fname.c_str());
+	    for( int m=0 ; m < npts ; m++ )
+	       fcurve << pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin) << " " << fcn[m] << " " << endl;
+	    fcurve.close();
+	 }
       }
    }
 }

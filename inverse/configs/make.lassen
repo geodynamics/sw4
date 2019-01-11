@@ -1,4 +1,4 @@
-  etree = yes
+  etree = no
   SW4ROOT = /usr/apps/wpp
   FC = mpifort
   CC = mpicc

@@ -57,6 +57,7 @@ Mopt::Mopt( EW* a_ew )
    m_pmax2=  300;
    m_nsurfpts  = 10;
    m_nsurfpts2 = 10;
+   m_misfit1d_images = false;
    m_path = "./";
    m_reg_coeff = 0.0;
    m_nstot = 0;
@@ -642,11 +643,12 @@ void Mopt::processMfsurf( char* buffer )
       else if( startswith("var=",token) )
       {
          token += 4;
-         CHECK_INPUT( strcmp(token,"rho")==0 || strcmp(token,"mu")==0 || strcmp(token,"lambda")==0,
+         CHECK_INPUT( strcmp(token,"rho")==0 || strcmp(token,"mu")==0 || strcmp(token,"lambda")==0
+		      || strcmp(token,"vp")==0 || strcmp(token,"vs")==0,
 		      "ERROR: mfsurf, var= " << token << " not recognized"<<endl);
 	 if( strcmp(token,"rho")==0 )
 	    m_var = 0;
-	 else if( strcmp(token,"mu")==0 )
+	 else if( strcmp(token,"mu")==0 || strcmp(token,"vs")==0 )
 	    m_var = 1;
 	 else
 	    m_var = 2;
@@ -722,6 +724,11 @@ void Mopt::processMfsurf( char* buffer )
       {
          token += 6;
 	 m_nsurfpts2 = atoi(token);
+      }
+      else if( startswith("imagesave=",token) )
+      {
+	 token += 10;
+	 m_misfit1d_images = (strcmp(token,"1")==0)||(strcmp(token,"yes")==0);
       }
       else
          badOption("mfsurf",token);
