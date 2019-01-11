@@ -260,7 +260,7 @@ void evenIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 //   for( int j=jfb ; j <= jfe ; j+=2 )
 // #pragma omp simd
 //     for( int i=ifb ; i <= ife ; i+=2 )
-RAJA::kernel<EVENIEVENJ_EXEC_POL>(
+RAJA::kernel<EVENIEVENJ_EXEC_POL_ASYNC>(
 				    RAJA::make_tuple(j_srange,i_srange),
 				    [=]RAJA_DEVICE (int j,int i) 
     {

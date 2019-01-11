@@ -2638,20 +2638,34 @@ SW4_MARK_FUNCTION;
 // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 // 	 {
 #ifdef ENABLE_CUDA
- using LOCAL_POL = 
+
+#if SW4_RAJA_VERSION == 6
+ using LOCAL_POL_ASYNC = 
 	   RAJA::KernelPolicy< 
 	   RAJA::statement::CudaKernelAsync<
 	     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 				  RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						       RAJA::statement::Lambda<0> >>>>;
+#elif SW4_RAJA_VERSION == 7
+
+using LOCAL_POL_ASYNC =
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
+    RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+			  RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+						RAJA::statement::For<0, RAJA::cuda_thread_x_direct,
+								     RAJA::statement::For<1, RAJA::cuda_thread_y_direct,		 
+											  RAJA::statement::Lambda<0> >>>>>>;
+ 
+#endif
  #else
  
- using LOCAL_POL = DEFAULT_LOOP2;
+ using LOCAL_POL_ASYNC = DEFAULT_LOOP2;
  
  #endif
 	   RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 	    RAJA::RangeSegment j_range(jfirst+2,jlast-1);
-	    RAJA::kernel<LOCAL_POL>(
+	    RAJA::kernel<LOCAL_POL_ASYNC>(
 			    RAJA::make_tuple(j_range,i_range),
 			    [=]RAJA_DEVICE (int j,int i) {
 			      float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;

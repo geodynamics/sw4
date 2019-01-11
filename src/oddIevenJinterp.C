@@ -229,7 +229,7 @@ void oddIevenJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   RAJA::RangeSegment i_range(ifb,ife+1);
   RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
   RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
-  RAJA::kernel<ODDIEVENJ_EXEC_POL1>(
+  RAJA::kernel<ODDIEVENJ_EXEC_POL1_ASYNC>(
   		       RAJA::make_tuple(j_srange,i_srange),
   		       [=]RAJA_DEVICE (int j,int i) {
 // float_sw4 rmax1=0, rmax2=0, rmax3=0;

@@ -236,7 +236,7 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
   SW4_MARK_BEGIN("EVENIODDJ");
   RAJA::TypedRangeStrideSegment<long> j_srange(jfb,jfe+1,2);
   RAJA::TypedRangeStrideSegment<long> i_srange(ifb,ife+1,2);
-  RAJA::kernel<EVENIODDJ_EXEC_POL>(
+  RAJA::kernel<EVENIODDJ_EXEC_POL_ASYNC>(
 				    RAJA::make_tuple(j_srange,i_srange),
 				    [=]RAJA_DEVICE (int j,int i) {
       int ic, jc;

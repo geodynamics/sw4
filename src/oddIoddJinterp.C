@@ -344,7 +344,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 #endif
   // Policy ODDIODDJ_EXEC_POL1 is slighly faster than LOCAL_EXEC_POL 73 vs 85 ms
   SW4_MARK_BEGIN("OddIOddJLOOP 1");
-  RAJA::kernel<ODDIODDJ_EXEC_POL1>(
+  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
   		       RAJA::make_tuple(j_range,i_range),
   		       [=]RAJA_DEVICE(int jc,int ic) {
 //   float_sw4 rmax1=0, rmax2=0, rmax3=0;
@@ -523,7 +523,7 @@ void oddIoddJinterpJacobiOpt(float_sw4 rmax[3], float_sw4* __restrict__ a_uf, fl
 			 //RAJA::RangeSegment j_range(jcb,jce+1);
 			 //RAJA::RangeSegment i_range(icb,ice+1);
 
-			 RAJA::kernel<ODDIODDJ_EXEC_POL2>(
+			 RAJA::kernel<ODDIODDJ_EXEC_POL2_ASYNC>(
   		       RAJA::make_tuple(c_range,j_range,i_range),
   		       [=]RAJA_DEVICE (int c,int jc,int ic) {
 // i odd, j odd

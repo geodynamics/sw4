@@ -9,6 +9,7 @@ RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install_nomp
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-ray-nomp
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-quartz
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/Project6/SW4/sw4_raja_omp_DEC2018/raja/install
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-0.7.0/install_quartz
 PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install-quartz
 CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_quartz
 EXTRA_FORT_FLAGS = 

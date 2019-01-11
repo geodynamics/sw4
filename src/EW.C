@@ -2665,13 +2665,34 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
 
    ASSERT_MANAGED(up);
 #ifdef ENABLE_CUDA
+#if SW4_RAJA_VERSION==6
    using LOCAL_POL = 
      RAJA::KernelPolicy< 
-       RAJA::statement::CudaKernel<
-	 RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
-			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
-					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-								   RAJA::statement::Lambda<0> >>>>>;
+     RAJA::statement::CudaKernelFixed<256,
+   	 RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>, 
+   			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
+   					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
+   								   RAJA::statement::Lambda<0> >>>>>;
+#endif
+#if SW4_RAJA_VERSION==7
+   using LOCAL_POL = RAJA::KernelPolicy<
+     //RAJA::statement::CudaKernelExt<RAJA::cuda_explicit_launch<false, 0, 256>,
+				    RAJA::statement::CudaKernelFixed<256,
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_z_direct,
+              RAJA::statement::Lambda<0>
+						      >
+				 >
+            >
+          >
+        >
+      >
+    > >;
+#endif
    #else
    using LOCAL_POL = DEFAULT_LOOP3;
    #endif

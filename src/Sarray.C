@@ -1088,14 +1088,31 @@ void Sarray::assign( const double* ar, int corder )
      PREFETCH(ar);
      float_sw4 *mdata = m_data;
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION==6
      using ASSIGN_POL  =
        RAJA::KernelPolicy<
        RAJA::statement::CudaKernel<
-	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
-			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
-						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<64>,
-									RAJA::statement::For<0, RAJA::seq_exec,
-											     RAJA::statement::Lambda<0> >>>>>>;
+     	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
+     			      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<4>,
+     						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<64>,
+     									RAJA::statement::For<0, RAJA::seq_exec,
+     											     RAJA::statement::Lambda<0> >>>>>>;
+#endif
+
+#if SW4_RAJA_VERSION==7
+     using ASSIGN_POL = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernel<
+      RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
+			      RAJA::statement::Tile<3, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
+          RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+				 RAJA::statement::For<3, RAJA::cuda_thread_z_direct,
+						      RAJA::statement::For<0, RAJA::seq_exec,
+              RAJA::statement::Lambda<0> > > >  > > >> > >;
+#endif
+
 #else
      using ASSIGN_POL = DEFAULT_LOOP4;
 #endif

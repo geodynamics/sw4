@@ -1926,6 +1926,8 @@ void EW::dirichlet_hom_ic( Sarray& U, int g, int k, bool inner )
 {
 SW4_MARK_FUNCTION;
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION==6
  using LOCAL_POL = 
    RAJA::KernelPolicy< 
    RAJA::statement::CudaKernelAsync<
@@ -1933,7 +1935,19 @@ SW4_MARK_FUNCTION;
 			  RAJA::statement::For<1, RAJA::cuda_block_exec, 
 					       RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								    RAJA::statement::Lambda<0> >>>>>;
- #else
+#elif SW4_RAJA_VERSION==7
+
+  using LOCAL_POL =  
+    RAJA::KernelPolicy< 
+   RAJA::statement::CudaKernelAsync<
+     RAJA::statement::For<0, RAJA::cuda_block_x_loop, 
+			  RAJA::statement::For<1, RAJA::cuda_block_y_loop, 
+					       RAJA::statement::For<2, RAJA::cuda_thread_z_loop,
+								    RAJA::statement::Lambda<0> >>>>>;
+ 
+#endif
+
+#else
  using LOCAL_POL = DEFAULT_LOOP3;
  #endif
  RAJA::RangeSegment c_range(1,U.m_nc+1);
@@ -2600,12 +2614,27 @@ SW4_MARK_FUNCTION;
    // for( int j=jb ; j <= je ; j++ )
    //    for( int i=ib ; i <= ie ; i++ )
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION==6
    using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<0, RAJA::cuda_block_exec, 
   RAJA::statement::For<1, RAJA::cuda_thread_exec,
   RAJA::statement::Lambda<0> >>>>;
+
+#elif SW4_RAJA_VERSION==7
+
+using LOCAL_POL= 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
+    RAJA::statement::For<0, RAJA::cuda_block_x_loop,
+			 RAJA::statement::For<1, RAJA::cuda_thread_x_loop,
+					      RAJA::statement::Lambda<0> >>>>;
+
+#endif
+
+
 #else
    using LOCAL_POL = DEFAULT_LOOP2;
 #endif
@@ -4345,12 +4374,30 @@ SW4_MARK_FUNCTION;
 // AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time stepping for memory variables
    int sg = usingSupergrid();
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERION==6
    using LOCAL_POL = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
        RAJA::statement::For<0, RAJA::cuda_threadblock_exec<16>, 
 			    RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
 						 RAJA::statement::Lambda<0> >>>>;
+
+
+#elif SW4_RAJA_VERSION==7
+
+ using LOCAL_POL = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernel<
+    RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+			  RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+						RAJA::statement::For<0, RAJA::cuda_thread_x_direct,
+								     RAJA::statement::For<1, RAJA::cuda_thread_y_direct,		 
+											  RAJA::statement::Lambda<0> >>>>>>;
+
+
+#endif
+
 #else
    using LOCAL_POL = DEFAULT_LOOP2;
 #endif

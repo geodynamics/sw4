@@ -1,6 +1,7 @@
 #include "sw4.h"
 #include "EW.h"
 #include "caliper.h"
+#include "policies.h"
 //#include <math.h>
 //#include <sys/types.h>
 //-----------------------------------------------------------------------
@@ -184,6 +185,8 @@ void EW::forcingttfortsg_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 // #pragma omp parallel
 //    {
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION == 6
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -191,13 +194,29 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
- #else
+#elif SW4_RAJA_VERSION == 7
+
+using LOCAL_POL = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernel<
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_z_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
+
+
+
+#endif
+
+#else
  using LOCAL_POL = DEFAULT_LOOP3;
  #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<LOCAL_POL>(
+   RAJA::kernel<TWILIGHTSG_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t10,t100,t102,t103,t106,t107,t110,t120,t121,t122,t123,t124,t125,t127,t129,t13,t131,t133,t135,t138,t14,t142,t143,t150,t151,t157,t158,t159,t16,t160,t161,t163,t165,t166,t168,t17,t171,t174,t175,t187,t188,t19,t192,t193,t197,t198,t2,t20,t203,t21,t212,t216,t22,t223,t23,t236,t238,t242,t246,t25,t252,t256,t259,t26,t279,t28,t29,t3,t30,t303,t315,t33,t34,t36,t37,t38,t39,t40,t43,t45,t46,t47,t5,t50,t52,t53,t54,t59,t6,t64,t65,t66,t74,t77,t78,t80,t82,t83,t84,t86,t87,t88,t9,t90,t92,t96,t99;
@@ -367,6 +386,8 @@ void EW::forcingfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 // #pragma omp parallel
 //    {
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION == 6
      using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -374,13 +395,30 @@ void EW::forcingfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+
+#elif SW4_RAJA_VERSION == 7
+
+using LOCAL_POL = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernel<
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_z_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
+
+
+
+#endif
+
 #else
      using LOCAL_POL = DEFAULT_LOOP3;
 #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<LOCAL_POL>(
+   RAJA::kernel<TWILIGHTSG_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t10,t100,t102,t103,t104,t105,t106,t113,t114,t115,t116,t117,t119,t121,t122,t123,t124,t126,t129,t13,t132,t133,t14,t142,t143,t144,t145,t147,t148,t150,t152,t157,t158,t16,t167,t168,t17,t172,t173,t177,t180,t181,t184,t185,t19,t191,t195,t2,t20,t21,t214,t215,t220,t226,t229,t23,t231,t24,t250,t253,t26,t265,t27,t28,t3,t31,t32,t34,t35,t36,t37,t38,t41,t43,t44,t45,t48,t5,t50,t51,t56,t6,t61,t62,t63,t72,t73,t75,t76,t78,t80,t81,t82,t84,t85,t87,t88,t9,t91,t92,t96,t97,t99;
@@ -538,6 +576,8 @@ void EW::forcingttfortcsg_ci( int ifirst, int ilast, int jfirst, int jlast, int 
 // #pragma omp parallel
 //    {
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION == 6
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -545,13 +585,30 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+
+#elif SW4_RAJA_VERSION == 7
+
+using LOCAL_POL = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernel<
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_z_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
+
+
+
+#endif
+
  #else
  using LOCAL_POL = DEFAULT_LOOP3;
 #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<LOCAL_POL>(
+   RAJA::kernel<TWILIGHTSG_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t10,t100,t102,t103,t106,t107,t110,t120,t121,t122,t123,t124,t125,t127,t129,t13,t131,t133,t135,t138,t14,t142,t143,t150,t151,t157,t158,t159,t16,t160,t161,t163,t165,t166,t168,t17,t171,t174,t175,t187,t188,t19,t192,t193,t197,t198,t2,t20,t203,t21,t212,t216,t22,t223,t23,t236,t238,t242,t246,t25,t252,t256,t259,t26,t279,t28,t29,t3,t30,t303,t315,t33,t34,t36,t37,t38,t39,t40,t43,t45,t46,t47,t5,t50,t52,t53,t54,t59,t6,t64,t65,t66,t74,t77,t78,t80,t82,t83,t84,t86,t87,t88,t9,t90,t92,t96,t99;
@@ -868,6 +925,8 @@ void EW::forcingttfortsgatt_ci( int ifirst, int ilast, int jfirst, int jlast, in
 // #pragma omp parallel
 //    {
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION == 6
 using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -875,13 +934,30 @@ using LOCAL_POL =
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+#elif SW4_RAJA_VERSION == 7
+
+using LOCAL_POL = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernel<
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_z_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
+
+
+
+#endif
+
+
  #else
  using LOCAL_POL = DEFAULT_LOOP3;
  #endif
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<LOCAL_POL>(
+   RAJA::kernel<TWILIGHTSG_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t1,t10,t100,t101,t104,t105,t107,t108,t109,t11,t110,t114,t115,t116,t120,t121,t124,t125,t127,t128,t130,t131,t135,t14,t141,t146,t147,t149,t15,t150,t151,t153,t155,t157,t16,t161,t164,t167,t168,t169,t17,t170,t172,t173,t175,t179,t18,t183,t188,t191,t192,t194,t2,t20,t202,t204,t205,t207,t214,t215,t224,t228,t230,t234,t237,t238,t24,t245,t253,t254,t26,t260,t266,t267,t27,t271,t273,t274,t277,t279,t28,t282,t29,t297,t30,t300,t31,t314,t32,t34,t35,t352,t359,t36,t39,t4,t40,t41,t43,t44,t45,t46,t48,t49,t50,t52,t55,t6,t61,t67,t68,t69,t7,t75,t76,t78,t8,t82,t85,t86,t88,t89,t90,t94,t95,t96,t98,t99;
@@ -1073,6 +1149,8 @@ void EW::forcingfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int
 // #pragma omp parallel
 //    {
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION == 6
      using LOCAL_POL = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
@@ -1080,13 +1158,30 @@ void EW::forcingfortsgattc_ci( int ifirst, int ilast, int jfirst, int jlast, int
 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>, 
 					      RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
 								   RAJA::statement::Lambda<0> >>>>>;
+
+#elif SW4_RAJA_VERSION == 7
+
+using LOCAL_POL = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernel<
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_z_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
+
+
+
+#endif
+
 #else
      using LOCAL_POL = DEFAULT_LOOP3;
 #endif     
        RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<LOCAL_POL>(
+   RAJA::kernel<TWILIGHTSG_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t1,t10,t100,t103,t104,t105,t106,t107,t11,t110,t111,t116,t117,t119,t120,t122,t125,t128,t132,t133,t134,t135,t137,t138,t14,t140,t141,t142,t144,t148,t15,t151,t152,t16,t164,t167,t17,t176,t18,t183,t194,t197,t198,t2,t20,t203,t210,t212,t214,t215,t217,t219,t24,t243,t26,t265,t27,t272,t28,t31,t32,t35,t36,t37,t39,t4,t40,t41,t42,t44,t50,t56,t57,t58,t6,t64,t67,t7,t73,t74,t76,t77,t78,t8,t81,t82,t85,t86,t87,t88,t92,t95,t97,t98;
@@ -1249,7 +1344,7 @@ using LOCAL_POL =
      RAJA::RangeSegment k_range(kfirst,klast+1);
    RAJA::RangeSegment j_range(jfirst,jlast+1);
    RAJA::RangeSegment i_range(ifirst,ilast+1);
-   RAJA::kernel<LOCAL_POL>(
+   RAJA::kernel<TWILIGHTSG_POL>(
 			       RAJA::make_tuple(k_range,j_range,i_range),
 			       [=]RAJA_DEVICE (int k, int j,int i) {
       float_sw4 forces[3],t1,t10,t100,t101,t104,t105,t107,t108,t109,t11,t110,t114,t115,t116,t120,t121,t124,t125,t127,t128,t130,t131,t135,t14,t141,t146,t147,t149,t15,t150,t151,t153,t155,t157,t16,t161,t164,t167,t168,t169,t17,t170,t172,t173,t175,t179,t18,t183,t188,t191,t192,t194,t2,t20,t202,t204,t205,t207,t214,t215,t224,t228,t230,t234,t237,t238,t24,t245,t253,t254,t26,t260,t266,t267,t27,t271,t273,t274,t277,t279,t28,t282,t29,t297,t30,t300,t31,t314,t32,t34,t35,t352,t359,t36,t39,t4,t40,t41,t43,t44,t45,t46,t48,t49,t50,t52,t55,t6,t61,t67,t68,t69,t7,t75,t76,t78,t8,t82,t85,t86,t88,t89,t90,t94,t95,t96,t98,t99;

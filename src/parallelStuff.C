@@ -1037,12 +1037,26 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
 #ifndef UNRAJA
   
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION==6
+ using BUFFER_POL=
+   RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelAsync<
+  RAJA::statement::For<1, RAJA::cuda_block_exec,
+  RAJA::statement::For<0, RAJA::cuda_thread_exec,
+                       RAJA::statement::Lambda<0> >>>>;
+
+#elif SW4_RAJA_VERSION==7
+
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
   RAJA::statement::CudaKernelAsync<
-  RAJA::statement::For<1, RAJA::cuda_block_exec, 
-  RAJA::statement::For<0, RAJA::cuda_thread_exec,
-		       RAJA::statement::Lambda<0> >>>>;
+    RAJA::statement::For<1, RAJA::cuda_block_x_loop,
+			 RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+ 		       RAJA::statement::Lambda<0> >>>>;
+#endif
+
+
 #else
   using BUFFER_POL = DEFAULT_LOOP2;
 #endif
@@ -1091,12 +1105,25 @@ void EW::putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
   //std::cout<<"putbuffer_device...";
   //PREFETCHFORCED(buf);
 #ifdef ENABLE_CUDA
+
+#if SW4_RAJA_VERSION==6
   using BUFFER_POL= 
     RAJA::KernelPolicy< 
     RAJA::statement::CudaKernelAsync<
       RAJA::statement::For<1, RAJA::cuda_block_exec, 
-			   RAJA::statement::For<0, RAJA::cuda_thread_exec,
-						RAJA::statement::Lambda<0> >>>>;
+  			   RAJA::statement::For<0, RAJA::cuda_thread_exec,
+  						RAJA::statement::Lambda<0> >>>>;
+#endif
+
+#if SW4_RAJA_VERSION==7
+using BUFFER_POL= 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelAsync<
+    RAJA::statement::For<1, RAJA::cuda_block_x_loop,
+			 RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+ 		       RAJA::statement::Lambda<0> >>>>;
+#endif
+ 
 #else
   using BUFFER_POL = DEFAULT_LOOP2;
 #endif

@@ -85,7 +85,9 @@ void EW::addsgd4_ci( int ifirst, int ilast, int jfirst, int jlast,
       ASSERT_MANAGED(a_cox);
       ASSERT_MANAGED(a_strx);
 #ifdef ENABLE_CUDA
-using ADDSGD_POL=
+
+#if SW4_RAJA_VERSION==6
+using ADDSGD_POL_ASYNC=
        RAJA::KernelPolicy<
        RAJA::statement::CudaKernelAsync<
 	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
@@ -111,15 +113,30 @@ using ADDSGD_POL3  =
 			      RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
 						   RAJA::statement::For<2, RAJA::cuda_threadblock_exec<32>,
 											     RAJA::statement::Lambda<0> >>>>>;
+#elif SW4_RAJA_VERSION==7
+
+using ADDSGD_POL_ASYNC = RAJA::KernelPolicy<
+    RAJA::statement::CudaKernelAsync<
+      RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
+			      RAJA::statement::Tile<3, RAJA::statement::tile_fixed<32>, RAJA::cuda_block_z_loop,
+          RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+				 RAJA::statement::For<3, RAJA::cuda_thread_z_direct,
+						      RAJA::statement::For<0, RAJA::seq_exec,
+									   RAJA::statement::Lambda<0> >>>>>>>>>;
+
+#endif
+
 #else
- using ADDSGD_POL= DEFAULT_LOOP4;
+ using ADDSGD_POL_ASYNC= DEFAULT_LOOP4;
 #endif
 RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 RAJA::RangeSegment k_range(kfirst+2,klast-1);
 RAJA::RangeSegment c_range(0,3);
 
-RAJA::kernel<ADDSGD_POL>(
+RAJA::kernel<ADDSGD_POL_ASYNC>(
 			    RAJA::make_tuple(c_range,k_range,j_range,i_range),
 			    [=]RAJA_DEVICE (int c,int k, int j,int i) {
 			      float_sw4 birho=beta/rho(i,j,k);
@@ -344,7 +361,9 @@ void EW::addsgd4c_ci( int ifirst, int ilast, int jfirst, int jlast,
 // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 // 	    {
 #ifdef ENABLE_CUDA
-using ADDSGD_POL2  =
+
+#if SW4_RAJA_VERSION==6
+using ADDSGD_POL2_ASYNC  =
        RAJA::KernelPolicy<
        RAJA::statement::CudaKernelAsync<
 	 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
@@ -352,14 +371,31 @@ using ADDSGD_POL2  =
 						   RAJA::statement::For<3, RAJA::cuda_threadblock_exec<32>,
 									RAJA::statement::For<0, RAJA::seq_exec,
 											     RAJA::statement::Lambda<0> >>>>>>;
+
+#elif SW4_RAJA_VERSION==7
+
+using ADDSGD_POL2_ASYNC = RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelAsync<
+    RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			  RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
+						RAJA::statement::Tile<3, RAJA::statement::tile_fixed<32>, RAJA::cuda_block_z_loop,
+								      RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+											   RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+														RAJA::statement::For<3, RAJA::cuda_thread_z_direct,
+																     RAJA::statement::For<0, RAJA::seq_exec,
+																			  RAJA::statement::Lambda<0> >>>>>>>>>;
+
+#endif
+
+
 #else
- using ADDSGD_POL2  = DEFAULT_LOOP4;
+ using ADDSGD_POL2_ASYNC  = DEFAULT_LOOP4;
 #endif
 RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 RAJA::RangeSegment k_range(kfirst+2,klast-1);
 RAJA::RangeSegment c_range(0,3);
-RAJA::kernel<ADDSGD_POL2>(
+RAJA::kernel<ADDSGD_POL2_ASYNC>(
 			    RAJA::make_tuple(c_range,k_range,j_range,i_range),
 			    [=]RAJA_DEVICE (int c,int k, int j,int i) {
 			      
