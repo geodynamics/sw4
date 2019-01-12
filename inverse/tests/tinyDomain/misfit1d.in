@@ -11,8 +11,8 @@ event path=second-fake-event_output4 obspath=second-fake-event_data name=second
 #------------------------------
 # Time command for both events
 #
-time t=15.0 utcstart=09/06/2008:04:00:10.650 event=first
-time t=15.0 utcstart=09/06/2008:04:00:10.650 event=second
+time t=15.0 utcstart=09/06/2018:08:00:11.123 event=first
+time t=15.0 utcstart=09/06/2018:08:00:11.123 event=second
 #
 #------------------------------
 # Paths etc. Note that obspath is defined by the event command
