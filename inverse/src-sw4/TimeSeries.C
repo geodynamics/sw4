@@ -108,6 +108,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   mQuietMode(false),
   mIsRestart(false),
   m_compute_scalefactor(true),
+  m_misfit_scaling(1),
   m_event(event)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
@@ -1377,13 +1378,26 @@ void TimeSeries::interpolate( TimeSeries& intpfrom )
 
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
-			   float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
+			      float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
 {
-   // Computes  misfit.
-   //  if diff !=NULL, also computes diff := this - observed
-   //       where 'diff' has the same grid points as 'this'. 'observed' is
-   //       interpolated to this grid, and is set to zero outside its interval
-   //       of definition.
+   //-----------------------------------------------------------------------
+   // Computes  misfit, as norm of difference between `this' and `observed'. 
+   // 
+   // The misfit is assumed of the form \sum_n (u_j^n - obs(t_n-s))^2, where s is a
+   // shift of the observed data. The observed data are interpolated onto the grid
+   // of `this' and is set to zero outside its interval of definition.
+   //
+   // Input: observed - Observed data.
+   //
+   // Output: diff     - if diff != NULL, the routine computes diff := this - observed.
+   //         dshift   - Derivative of misfit w.r.t. shift parameter s.
+   //         ddshift  - Second derivative of misfit w.r.t shift parameter s.
+   //         dd1shirt - One term of second derivative in ddshift.
+   //
+   // Return value:  The misfit.
+   //
+   //-----------------------------------------------------------------------
+
    float_sw4 misfit = 0;
    dshift  = 0;
    ddshift = 0;
@@ -1391,7 +1405,9 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
    if( m_myPoint )
    {
 // Interpolate data to this object
-      int order = 4;
+//      int order = 4;
+      float_sw4 scale_factor=0;
+
       float_sw4 mf[3], dmf[3], ddmf[3];
       float_sw4 dtfr  = observed.m_dt;
       float_sw4 t0fr  = observed.m_t0+observed.m_shift;
@@ -1405,6 +1421,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
 	 misfitsource = diff->getRecordingArray();
       }
+      if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
+	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = " << m_t0+m_shift << " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
 
       // Weight to ramp down the end of misfit.
       float_sw4 wghv;
@@ -1529,24 +1547,9 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    float_sw4 idtfr2 = idtfr*idtfr;
 	    for( int m = mmin ; m <= mmax ; m++ )
 	    {
-	       //	       double cof=1;
-	       //	       for( int k = mmin ; k <= mmax ; k++ )
-	       //		  if( k != m )
-	       //		     cof *= (ir-k)/(m-k);
-	       //	       if( observed.m_usgsFormat )
-	       //	       {
-	       //		  mf[0] += cof*observed.mRecordedSol[0][m];
-	       //		  mf[1] += cof*observed.mRecordedSol[1][m];
-	       //		  mf[2] += cof*observed.mRecordedSol[2][m];
-	       //	       }
-	       //	       else
-	       //	       {
-	       //		  mf[0] += cof*observed.mRecordedFloats[0][m];
-	       //		  mf[1] += cof*observed.mRecordedFloats[1][m];
-	       //		  mf[2] += cof*observed.mRecordedFloats[2][m];
-	       //	       }
 	       if( observed.m_usgsFormat )
 	       {
+
 		  mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
 		  mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
 		  mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
@@ -1582,7 +1585,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	              wghz*(mf[2]-mRecordedSol[2][i])*dmf[2];
             ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
  	               wghz*(mf[2]-mRecordedSol[2][i])*ddmf[2] +
-	             wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+	                wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 	    if( compute_difference )
 	    {
@@ -1608,6 +1611,25 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[2][i] = (mRecordedFloats[2][i]-mf[2])*wghz;
 	    }
 	 }
+	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
+      }
+      //  scale misfit and diff-source
+      if( m_misfit_scaling == 1 )
+      {
+	 if( scale_factor == 0 )
+	 {
+	    cout << "WARNING: Observation contains zero data" << endl;
+	    scale_factor=1;
+	 }
+	 float_sw4 iscale = 1/scale_factor;
+	 misfit *= iscale;
+	 if( compute_difference )
+	    for( int i=0 ; i <= mLastTimeStep ; i++ )
+	    {
+	       misfitsource[0][i] *= iscale;
+	       misfitsource[1][i] *= iscale;
+	       misfitsource[2][i] *= iscale;
+	    }
       }
    }
    else
@@ -1763,6 +1785,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    //      cout << "In copy, xyz = " << m_xyzcomponent << endl;
    retval->m_scalefactor = m_scalefactor;
    retval->m_compute_scalefactor = m_compute_scalefactor;
+   retval->m_misfit_scaling = m_misfit_scaling;
 
 // Component rotation:
    retval->m_calpha = m_calpha;
@@ -1973,8 +1996,6 @@ float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
    // Compute time in seconds between two [y,M,d,h,m,s,ms] times
    // returns utc2-utc1 in seconds.
-   // Discovered afterwards: UTC occasionally adds a leap second, so this 
-   // function is not always completely accurate.
 
    int start[7], finish[7];
    int c=0;

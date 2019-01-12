@@ -184,6 +184,8 @@ int m_utc[7];
 bool m_xyzcomponent;
 float_sw4 m_calpha, m_salpha, m_thxnrm, m_thynrm;
 
+int m_misfit_scaling;
+
 bool m_compute_scalefactor;
 float_sw4 m_scalefactor;
 
