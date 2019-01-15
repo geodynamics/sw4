@@ -2683,7 +2683,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
      //RAJA::statement::CudaKernel<
       RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
         RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_z_loop,
           RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
             RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
 				 RAJA::statement::For<2, RAJA::cuda_thread_z_direct,
