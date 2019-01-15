@@ -6,7 +6,8 @@
 #define SW4_FORCEINLINE __forceinline__
 #define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))
-
+#define SW4_PEEK SW4_CheckDeviceError(cudaPeekAtLastError());
+//   SW4_CheckDeviceError(cudaStreamSynchronize(0));
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
 typedef RAJA::cuda_exec<1024,true> DEFAULT_LOOP1_ASYNC;
 using REDUCTION_POLICY = RAJA::cuda_reduce;
@@ -316,14 +317,14 @@ using DEFAULT_LOOP2X =
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernel<
   RAJA::statement::For<1, RAJA::cuda_block_x_loop, 
-  RAJA::statement::For<0, RAJA::cuda_thread_x_direct,
+  RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
   RAJA::statement::Lambda<0> >>>>;
 
 using DEFAULT_LOOP2X_ASYNC = 
   RAJA::KernelPolicy< 
   RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<1, RAJA::cuda_block_x_loop, 
-  RAJA::statement::For<0, RAJA::cuda_thread_x_direct,
+  RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
   RAJA::statement::Lambda<0> >>>>;
 
 
@@ -363,8 +364,8 @@ using ICSTRESS_EXEC_POL =
   RAJA::statement::CudaKernel<
     RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
 			  RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-						RAJA::statement::For<0, RAJA::cuda_thread_x_direct,
-								     RAJA::statement::For<1, RAJA::cuda_thread_y_direct,		 
+						RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+								     RAJA::statement::For<1, RAJA::cuda_thread_y_loop,		 
 											  RAJA::statement::Lambda<0> >>>>>>;
 
 using ICSTRESS_EXEC_POL_ASYNC = 
@@ -419,8 +420,8 @@ using ODDIODDJ_EXEC_POL1_ASYNC = RAJA::KernelPolicy<
   RAJA::statement::CudaKernelAsync<
     RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
 			  RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-						RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
-								     RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
+						RAJA::statement::For<0, RAJA::cuda_thread_y_loop,
+								     RAJA::statement::For<1, RAJA::cuda_thread_x_loop,
 											  RAJA::statement::Lambda<0> >>>>>>;
 
 using ODDIODDJ_EXEC_POL2_ASYNC = RHS4_EXEC_POL_ASYNC;
@@ -431,7 +432,7 @@ using EVENIODDJ_EXEC_POL_ASYNC=
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernelAsync<
   RAJA::statement::For<1, RAJA::cuda_block_x_loop, 
-  RAJA::statement::For<0, RAJA::cuda_thread_x_direct,
+  RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
   RAJA::statement::Lambda<0> >>>>;
 
 using EVENIEVENJ_EXEC_POL_ASYNC =  EVENIODDJ_EXEC_POL_ASYNC;
@@ -457,7 +458,7 @@ using XRHS_POL_ASYNC =
      RAJA::statement::CudaKernelAsync<
        RAJA::statement::For<0, RAJA::cuda_block_x_loop, 
 			    RAJA::statement::For<1, RAJA::cuda_block_y_loop, 
-						 RAJA::statement::For<2, RAJA::cuda_thread_z_direct,
+						 RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
 								      RAJA::statement::Lambda<0> >>>>>;
 
 

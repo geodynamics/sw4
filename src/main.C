@@ -188,7 +188,12 @@ main(int argc, char **argv)
 
 // make a new simulation object by reading the input file 'fileName'
   //nvtxRangePushA("outer");
+#if defined(SW4_EXCEPTIONS)
+  try {
+#endif
   EW simulation(fileName, GlobalSources, GlobalTimeSeries);
+  
+	   
   //nvtxRangePop();
   //PROFILER_STOP;
   if (!simulation.wasParsingSuccessful())
@@ -271,7 +276,14 @@ main(int argc, char **argv)
       status = 0;
     }
   }
-  
+#if defined(SW4_EXCEPTIONS)
+}
+  catch (int e) {
+    printf("Exception %d in EW init\n",e);
+    MPI_Finalize();
+    return status;
+  }
+#endif
   if( status == 1 )
   {
     cout  << "============================================================" << endl

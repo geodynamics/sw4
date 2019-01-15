@@ -859,6 +859,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    // 						 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
    // 								      RAJA::statement::Lambda<0> >>>>>;
 #ifdef ENABLE_CUDA
+#if SW4_RAJA_VERSION==6
 using XRHS_POL2 = 
      RAJA::KernelPolicy< 
      RAJA::statement::CudaKernel<
@@ -866,6 +867,17 @@ using XRHS_POL2 =
 			    RAJA::statement::For<1, RAJA::cuda_block_exec, 
 						 RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								      RAJA::statement::Lambda<0> >>>>>;
+#elif SW4_RAJA_VERSION==7
+ 
+ using XRHS_POL2 = 
+     RAJA::KernelPolicy< 
+     RAJA::statement::CudaKernel<
+       RAJA::statement::For<0, RAJA::cuda_block_x_loop,
+			    RAJA::statement::For<1, RAJA::cuda_block_y_loop,
+						 RAJA::statement::For<2, RAJA::cuda_thread_z_direct,
+								      RAJA::statement::Lambda<0> >>>>>;
+ 
+#endif
  #else
  using XRHS_POL2 =  DEFAULT_LOOP3;
 #endif
@@ -1241,7 +1253,7 @@ using XRHS_POL2 =
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + cof*r3;
 			  }); // END OF rhs4th3fortsgstr_ci LOOP 1
      //SYNC_STREAM;
- 
+     //printf("END LOOP1\n");
      SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
       if( onesided[4]==1 )
       {
@@ -1250,7 +1262,7 @@ using XRHS_POL2 =
 	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 
 	SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
-
+	//printf("START LOOP2 \n");
 	RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
 			     RAJA::make_tuple(k_range, j_range,i_range),
 			     [=]RAJA_DEVICE (int k,int j,int i) {
@@ -1508,9 +1520,11 @@ using XRHS_POL2 =
 			     }); // End of rhs4th3fortsgstr_ci LOOP 2
 	//SYNC_STREAM;
 	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP2");
+	//printf("END LOOP2 \n");
       }
       if( onesided[5] == 1 )
       {
+	//printf("START LOOP3 \n");
 	RAJA::RangeSegment k_range(nk-5,nk+1);
 	RAJA::RangeSegment j_range(jfirst+2,jlast-1);
 	RAJA::RangeSegment i_range(ifirst+2,ilast-1);
@@ -1775,6 +1789,7 @@ using XRHS_POL2 =
 			     }); // End of rhs4th3fortsgstr_ci LOOP 3
 	//SYNC_STREAM;
 	SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP3");
+	//printf("END LOOP3 \n");
       }
       // SYNC_STREAM; // BEING DONE AT THE END OF evalRHS
    }

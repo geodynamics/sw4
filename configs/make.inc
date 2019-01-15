@@ -1,22 +1,26 @@
 proj = yes
-FC = ifort
-LINKER = mpicxx
-CXX = mpicxx
+FC = xlf
+LINKER = mpixlC
+CXX = $(PREP) nvcc
+ckernel=yes 
+openmp=no
+raja_cuda=yes
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_ray053
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_053NOMP
 RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install_nomp
-RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-ray-nomp
-RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-quartz
-RAJA_LOCATION = /usr/workspace/wsb/ramesh/Project6/SW4/sw4_raja_omp_DEC2018/raja/install
-RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-0.7.0/install_quartz
-PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install-quartz
-CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_quartz
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-sierra-nomp-9.2.148
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA_RELEASE/RAJA/install9.2.148
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/raja/install_sierra
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA0.7/RAJA-0.7.0/install_sierra
+PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
+UMPIRE_HOME = /usr/workspace/wsb/ramesh/Project6/UMPIRE/Umpire/install
+CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_ray_9.2
 EXTRA_FORT_FLAGS = 
-LINKFLAGS = 
-EXTRA_CXX_FLAGS =  -O3 -g -std=c++11 -fopenmp -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DENABLE_CALIPER -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include
-EXTRA_CXX_FLAGS2 =  -O3 -g -std=c++11 -fopenmp -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DENABLE_CALIPER -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_USE_UMPIRE=1 -DSW4_RAJA_VERSION=7
+LINKFLAGS =  -arch=sm_70
+EXTRA_CXX_FLAGS =  -O3  -use_fast_math -DDISABLE_PREFETCH  -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include -I$(UMPIRE_HOME)/include $(MORE_FLAGS)
 
-MKL_PATH = /usr/tce/packages/mkl/mkl-2018.0/lib
-EXTRA_LINK_FLAGS = -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper -L $(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(PROJ_HOME)/lib64
+EXTRA_CXX_FLAGS2 =  -O3  -use_fast_math -DDISABLE_PREFETCH -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu  -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA   -I$(UMPIRE_HOME)/include $(MORE_FLAGS)
 
+EXTRA_LINK_FLAGS = -O3  -dc -L /usr/tcetmp/packages/xl/xl-beta-2017.03.28/xlf/16.1.0/lib/ -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/ -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_LOCATION)/lib -lRAJA  -lcudadevrt -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper -L $(PROJ_HOME)/lib -lproj -L /usr/lib64/nvidia -lnvidia-ml -L$(UMPIRE_HOME)/lib -lumpire -lumpire_util -lumpire_tpl_judy -lumpire_resource -lumpire_strategy -lumpire_resource -lumpire_op
