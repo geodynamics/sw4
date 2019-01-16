@@ -1264,7 +1264,7 @@ using XRHS_POL2 =
 	SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
 	//printf("START LOOP2 \n");
 
-	using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
+	using LOCAL_POL_ASYNC_OLDE = RAJA::KernelPolicy<
 	  RAJA::statement::CudaKernelAsync<
 	    RAJA::statement::Tile<0, RAJA::statement::tile_fixed<6>, RAJA::cuda_block_z_loop,
         RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
@@ -1272,6 +1272,17 @@ using XRHS_POL2 =
           RAJA::statement::For<0, RAJA::cuda_thread_z_loop,
             RAJA::statement::For<1, RAJA::cuda_thread_y_loop,
 				 RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
+
+using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
+	  //RAJA::statement::CudaKernelExt<RAJA::cuda_explicit_launch<true, 0, 256>,
+	  RAJA::statement::CudaKernelFixedAsync<256,
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_z_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
 						      RAJA::statement::Lambda<0> >>>>>>>>;
 
 	RAJA::kernel<LOCAL_POL_ASYNC>(

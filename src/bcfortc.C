@@ -331,7 +331,7 @@ void EW::bcfortsg_ci( int ib, int ie, int jb, int je, int kb, int ke, int wind[3
 #elif SW4_RAJA_VERSION==7
    
 using BCFORT_EXEC_POL2_ASYNC = RAJA::KernelPolicy<
-    RAJA::statement::CudaKernel<
+    RAJA::statement::CudaKernelAsync<
       RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
         RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
 			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
