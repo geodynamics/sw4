@@ -115,17 +115,38 @@ using ADDSGD_POL3  =
 											     RAJA::statement::Lambda<0> >>>>>;
 #elif SW4_RAJA_VERSION==7
 
-using ADDSGD_POL_ASYNC = RAJA::KernelPolicy<
-  //RAJA::statement::CudaKernelExt<RAJA::cuda_explicit_launch<true, 0, 256>,
-  RAJA::statement::CudaKernelOccAsync<
+//printf("RANGE %d %d %d\n",klast-kfirst-3,jlast-jfirst-3,ilast-ifirst-3);
+using ADDSGD_POL_ASYNC_NOTUSED = RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelFixedAsync<128,
       RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-        RAJA::statement::Tile<2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+        RAJA::statement::Tile<2, RAJA::statement::tile_fixed<8>, RAJA::cuda_block_x_loop,
 			      RAJA::statement::Tile<3, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-          RAJA::statement::For<1, RAJA::cuda_thread_y_loop,
-            RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
-				 RAJA::statement::For<3, RAJA::cuda_thread_z_loop,
+          RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+				 RAJA::statement::For<3, RAJA::cuda_thread_z_direct,
 						      RAJA::statement::For<0, RAJA::seq_exec,
 									   RAJA::statement::Lambda<0> >>>>>>>>>;
+
+using ADDSGD_POL_ASYNC = RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelFixedAsync<256,
+      RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<3, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+          RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<3, RAJA::cuda_thread_x_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_z_direct,
+						      RAJA::statement::For<0, RAJA::seq_exec,
+									   RAJA::statement::Lambda<0> >>>>>>>>>;
+
+using ADDSGD_POL3_ASYNC = RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelFixedAsync<256,
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_y_loop,
+            RAJA::statement::For<1, RAJA::cuda_thread_x_loop,
+				 RAJA::statement::For<2, RAJA::cuda_thread_z_loop,
+						      RAJA::statement::Lambda<0> >>>>>>>>;
 
 #endif
 
@@ -146,12 +167,12 @@ RAJA::kernel<ADDSGD_POL_ASYNC>(
 // The code takes 3X more time. WIthout the pragma unroll it takes
 // the same amount of time as the kernel above. So reverting to original kernel.
 
-// RAJA::kernel<ADDSGD_POL3>(
+// RAJA::kernel<ADDSGD_POL3_ASYNC>(
 // 			    RAJA::make_tuple(k_range,j_range,i_range),
 // 			    [=]RAJA_DEVICE (int k, int j,int i) {
 // 			      float_sw4 birho=beta/rho(i,j,k);
 // 			      //#pragma unroll
-// 			      //for(int c=0;c<3;c++)
+// 			      for(int c=0;c<3;c++)
 // 				{
 		  up(c,i,j,k) -= birho*( 
 		  // x-differences
@@ -375,7 +396,7 @@ using ADDSGD_POL2_ASYNC  =
 
 #elif SW4_RAJA_VERSION==7
 
-using ADDSGD_POL2_ASYNC = RAJA::KernelPolicy<
+using ADDSGD_POL2_ASYNC_ORG = RAJA::KernelPolicy<
   RAJA::statement::CudaKernelFixedAsync<256,
     RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
 			  RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
@@ -386,6 +407,17 @@ using ADDSGD_POL2_ASYNC = RAJA::KernelPolicy<
 																     RAJA::statement::For<0, RAJA::seq_exec,
 																			  RAJA::statement::Lambda<0> >>>>>>>>>;
 
+
+using ADDSGD_POL2_ASYNC = RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelFixedAsync<256,
+      RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<3, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+			      RAJA::statement::Tile<2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+          RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<3, RAJA::cuda_thread_x_direct,
+				 RAJA::statement::For<2, RAJA::cuda_thread_z_direct,
+						      RAJA::statement::For<0, RAJA::seq_exec,
+									   RAJA::statement::Lambda<0> >>>>>>>>>;
 #endif
 
 
