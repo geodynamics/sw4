@@ -1400,7 +1400,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
       //      float_sw4 nrm[3]={0,0,0};
       //      int q, i, j;
 // inject solution values between lower boundary of gc and upper boundary of g
-
+//
       SView &a_UgV = a_U[g].getview();
       SView &a_UgcV = a_U[gc].getview();
       ASSERT_MANAGED(a_U[g].c_ptr());
@@ -3123,7 +3123,15 @@ SW4_MARK_FUNCTION;
 //    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
 // #pragma omp simd
 //       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
-RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
+  RAJA::statement::CudaKernelFixedAsync<256,
+      RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+        RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
+            RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
+									   RAJA::statement::Lambda<0> >>>>>>;
+ 
+RAJA::kernel<LOCAL_POL_ASYNC>(
 				    RAJA::make_tuple(j_range,i_range),
 				    [=]RAJA_DEVICE (int j,int i) 
       {

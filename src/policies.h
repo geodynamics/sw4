@@ -427,11 +427,11 @@ using CONSINTP_EXEC_POL1 = RAJA::KernelPolicy<
 
 
 using ODDIODDJ_EXEC_POL1_ASYNC = RAJA::KernelPolicy<
-  RAJA::statement::CudaKernelAsync<
+  RAJA::statement::CudaKernelFixedAsync<256,
     RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
 			  RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-						RAJA::statement::For<0, RAJA::cuda_thread_y_loop,
-								     RAJA::statement::For<1, RAJA::cuda_thread_x_loop,
+						RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
+								     RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
 											  RAJA::statement::Lambda<0> >>>>>>;
 
 using ODDIODDJ_EXEC_POL2_ASYNC = RHS4_EXEC_POL_ASYNC;
@@ -500,7 +500,16 @@ using PRELIM_CORR_EXEC_POL1_ASYNC =  DEFAULT_LOOP2X_ASYNC;
 using PRELIM_PRED_EXEC_POL1 =  ICSTRESS_EXEC_POL;
 using PRELIM_PRED_EXEC_POL1_ASYNC =  ICSTRESS_EXEC_POL_ASYNC;
 			 
-using ENFORCEBC_CORR_EXEC_POL1 =  ICSTRESS_EXEC_POL;
+//using ENFORCEBC_CORR_EXEC_POL1 =  ICSTRESS_EXEC_POL;
+
+using ENFORCEBC_CORR_EXEC_POL1 = 
+  RAJA::KernelPolicy< 
+  RAJA::statement::CudaKernelFixed<256,
+    RAJA::statement::Tile<1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+			  RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+						RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
+								     RAJA::statement::For<0, RAJA::cuda_thread_y_direct,		 
+											  RAJA::statement::Lambda<0> >>>>>>;
 
 using BCFORT_EXEC_POL1 =  RHS4_EXEC_POL;
 using BCFORT_EXEC_POL2 = ICSTRESS_EXEC_POL;
