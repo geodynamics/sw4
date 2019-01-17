@@ -1077,8 +1077,8 @@ void EW::getbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,in
     });
 #endif
 
-  SW4_PEEK;
-  SYNC_STREAM;
+  //SW4_PEEK;
+  //SYNC_STREAM;
   if (!async){
     SYNC_STREAM;
   }
@@ -1139,8 +1139,8 @@ using BUFFER_POL=
 			   // RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
 			     data[i*stride+k]=buf[k+i*bl];
     });
-  SW4_PEEK;
-  SYNC_STREAM;
+  //SW4_PEEK;
+  //SYNC_STREAM;
   if (!async){
     SYNC_STREAM;
   }

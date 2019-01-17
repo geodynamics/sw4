@@ -50,7 +50,7 @@
 
 #if defined(SW4_SIGNAL_CHECKPOINT)
 //
-// Currently no way to get the singnal to all process without killing the job
+// Currently no way to get the singnal to all processes without killing the job
 //
 #include <csignal>
 extern volatile std::sig_atomic_t signal_status;

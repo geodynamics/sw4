@@ -13,6 +13,7 @@ RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-sierra-nomp-9.2
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA_RELEASE/RAJA/install9.2.148
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/raja/install_sierra
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA0.7/RAJA-0.7.0/install_sierra
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-0.7.0/install_sierra
 PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/Project6/UMPIRE/Umpire/install
 CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_ray_9.2

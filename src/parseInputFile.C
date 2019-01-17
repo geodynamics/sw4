@@ -7849,8 +7849,8 @@ void EW::processMaterialRfile(char* buffer)
 
    if (m_myRank == 0)
       cout << "*** Reading data from Rfile " << filename << " in directory " << directory << endl;
-   SW4_PEEK;
-   SYNC_STREAM;
+   //SW4_PEEK;
+   //SYNC_STREAM;
    //throw 40;
    MaterialRfile* rf = new MaterialRfile( this, filename, directory, bufsize );
    add_mtrl_block( rf  );

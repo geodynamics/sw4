@@ -3123,6 +3123,7 @@ SW4_MARK_FUNCTION;
 //    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
 // #pragma omp simd
 //       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+#ifdef ENABLE_CUDA
 using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
   RAJA::statement::CudaKernelFixedAsync<256,
       RAJA::statement::Tile<0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
@@ -3130,6 +3131,9 @@ using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
           RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
             RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
 									   RAJA::statement::Lambda<0> >>>>>>;
+#else
+ using LOCAL_POL_ASYNC = DEFAULT_LOOP2;
+#endif
  
 RAJA::kernel<LOCAL_POL_ASYNC>(
 				    RAJA::make_tuple(j_range,i_range),
