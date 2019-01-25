@@ -1,7 +1,7 @@
 #include "Mspace.h"
 #include <unordered_map>
 #include "caliper.h"
-struct global_variable_holder_struct global_variables = {0 , 0, 0 , 0,0,0};
+struct global_variable_holder_struct global_variables = {0 , 0, 0 , 0,0,0,0};
 using namespace std;
 
 
@@ -12,8 +12,10 @@ void presetGPUID(){
   if (devices_per_node>1){
   char *crank=getenv("OMPI_COMM_WORLD_LOCAL_RANK");
   int device=atoi(crank)%devices_per_node;
+  global_variables.device=device;
    printf(" presetGPU Called ::  LOCAL RANK %d \n",device);
    SW4_CheckDeviceError(cudaSetDevice(device));
+   SW4_CheckDeviceError(cudaFree(NULL));
    char uuid[80];
    if (nvmlInit()!=NVML_SUCCESS) printf("NVML INIT CALL FAILED\n");
    nvmlDevice_t nvdev;
@@ -21,6 +23,7 @@ void presetGPUID(){
    if (nvmlDeviceGetUUID (nvdev,uuid,80)!=NVML_SUCCESS) printf("UUID CALL FAILED\n");
    if (nvmlDeviceSetCpuAffinity(nvdev)!=NVML_SUCCESS) printf("NVML SET CPU AFFINITY FAILED \n"); else printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
 }
+   printf("Device set to %d \n",global_variables.device);
 #endif
 }
   
@@ -87,14 +90,14 @@ if (loc==Managed){
       check_mem();
       global_variables.curr_mem+=size;
       global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
-      SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+      SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,global_variables.device));
       return ptr;
     }
 #else
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void*>(allocator.allocate(size));
-    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,global_variables.device));
     //std::cout<<"PTR 1 "<<ptr<<"\n";
     //SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
@@ -174,14 +177,14 @@ void * operator new[](std::size_t size,Space loc) throw(std::bad_alloc){
       check_mem();
       global_variables.curr_mem+=size;
       global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
-      SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+      SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,global_variables.device));
       return ptr;
     }
 #else
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void*>(allocator.allocate(size));
-    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,0));
+    SW4_CheckDeviceError(cudaMemAdvise(ptr,size,cudaMemAdviseSetPreferredLocation,global_variables.device));
     //std::cout<<"PTR 2 "<<ptr<<"\n";
     return ptr;
 #endif

@@ -149,6 +149,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     elif 'batch' in node_name:
         if mpi_tasks<=0: mpi_tasks = 6
         mpirun_cmd="jsrun -g1 -c6 -a1 -n " + str(mpi_tasks)
+        mpirun_cmd="jsrun -g6 -c40 -a6 -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
         if mpi_tasks<=0: mpi_tasks = 1

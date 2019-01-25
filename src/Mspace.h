@@ -51,6 +51,7 @@ struct global_variable_holder_struct {
   size_t host_mem_hwm;
   size_t host_curr_mem;
   size_t host_max_mem;
+  int device;
 };
 
 extern struct global_variable_holder_struct global_variables;
