@@ -1,7 +1,7 @@
 #include "Mspace.h"
 #include <unordered_map>
 #include "caliper.h"
-struct global_variable_holder_struct global_variables = {0 , 0, 0 , 0,0,0,0};
+struct global_variable_holder_struct global_variables = {0 , 0, 0 , 0,0,0,0,1};
 using namespace std;
 
 
@@ -9,6 +9,7 @@ void presetGPUID(){
 #ifdef ENABLE_CUDA
   int devices_per_node=4;
    SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
+   global_variables.num_devices=devices_per_node;
   if (devices_per_node>1){
   char *crank=getenv("OMPI_COMM_WORLD_LOCAL_RANK");
   int device=atoi(crank)%devices_per_node;

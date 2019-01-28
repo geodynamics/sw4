@@ -109,12 +109,21 @@ main(int argc, char **argv)
     rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool"),
 							   allocator,pool_size);
 
-  
-
   const size_t pool_size_small = static_cast<size_t>(250)*1024*1024;
-  auto pooled_allocator_small =
-    rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),
+
+  // This is a temporary workaround to the issue of Umpire always using device 0
+  // for cudaMemAdvises using AllocationAdvisor.
+  if (global_variables.num_devices==1){
+
+    auto pooled_allocator_small =
+      rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),
    							   pref_allocator,pool_size_small);
+  } else {
+    auto pooled_allocator_small =
+      rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),
+   							   allocator,pool_size_small);
+  }
+    
   // auto pooled_allocator2 =
   //   rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_temps"),
   //                                                   allocator);

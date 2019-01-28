@@ -146,6 +146,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     elif 'lassen' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 "
+        mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
     elif 'batch' in node_name:
         if mpi_tasks<=0: mpi_tasks = 6
         mpirun_cmd="jsrun -g1 -c6 -a1 -n " + str(mpi_tasks)
