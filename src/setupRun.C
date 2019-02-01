@@ -1084,6 +1084,8 @@ void EW::set_materials()
 //    cout << "randomize = " << m_randomize << " randblsize= " << m_random_blocks.size() << endl;
     if( m_randomize )
     {
+       // Note: mu and lambda here contain cs and cp respectively.
+       // OLD: digital filter method to perturb velocities
        //  perturb_velocities( mMu, mLambda );
        for( int g=0 ; g < mNumberOfGrids ; g++ )
        {
