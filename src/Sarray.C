@@ -39,7 +39,7 @@
 using namespace std;
 
 // Default value 
-bool Sarray::m_corder = false;
+bool Sarray::m_corder = true;
 
 //-----------------------------------------------------------------------
 Sarray::Sarray( int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend )

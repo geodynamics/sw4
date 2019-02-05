@@ -4025,7 +4025,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
    MPI_Cart_shift( m_cartesian_communicator, 1, 1, m_neighbor+2, m_neighbor+3 );
 
-   if( proc_zero() && mVerbose >= 3)
+   //   if( proc_zero() && mVerbose >= 3)
+   if( proc_zero() )
    {
      cout << " Grid distributed on " << m_nProcs << " processors " << endl;
      cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
@@ -4038,6 +4039,11 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    int ifirst, ilast, jfirst, jlast;
    decomp1d( nx_finest_w_ghost, my_proc_coords[0], proc_max[0], ifirst, ilast );
    decomp1d( ny_finest_w_ghost, my_proc_coords[1], proc_max[1], jfirst, jlast );
+
+   //   int nx = nx_finest_w_ghost-2*m_ghost_points;
+   //   int ny = ny_finest_w_ghost-2*m_ghost_points;
+   //   decomp1d_2( nx, my_proc_coords[0], proc_max[0], ifirst, ilast, m_ghost_points, m_ppadding );
+   //   decomp1d_2( ny, my_proc_coords[1], proc_max[1], jfirst, jlast, m_ghost_points, m_ppadding );
 
    ifirst -= m_ghost_points;
    ilast  -= m_ghost_points;

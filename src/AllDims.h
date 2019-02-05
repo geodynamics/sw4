@@ -22,14 +22,19 @@ public:
 	    int jbg, int jeg, int kbg, int keg, int nghost, int npad );
    AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
 	    int kbg, int keg, int nghost );
+   AllDims( AllDims* fine, int ibg, int ieg, int jbg, int jeg, 
+	    int kbg, int keg, int nghost, int npad );
+
    void getdims_nopad( int dims[6], int p1=-1, int p2=-1, int p3=-1 );
    bool intersect( int p1, int p2, int p3, AllDims& other, int dims[6] );
    void compute_myid3d( );
-   int proc1d( int p1, int p2, int p3 );
+   int  proc1d( int p1, int p2, int p3 );
    bool owner( int p1, int p2, int p3 );
-   int owner_i( int i );
+   int  owner_i( int i );
    void decomp1d( int nglobal, int myid, int nproc, int& s, int& e, int nghost, int npad );
    void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
+   void decomp1d_frf( int N, int myid, int nproc, int& s, int& e, int nghost, 
+		      int npad, int Nf, int sf, int ef, int nghostf, int npadf );
 };
 
 #endif

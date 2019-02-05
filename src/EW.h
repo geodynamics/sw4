@@ -73,6 +73,8 @@
 
 using namespace std;
 
+class AllDims;
+
 class EW 
 {
 public:
@@ -346,6 +348,7 @@ void assign_local_bcs( );
 bool timeSteppingSet();
 bool proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] );
 void decomp1d( int nglobal, int myid, int nproc, int& s, int& e );
+void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
 void coarsen1d( int& n, int& ifirst, int& ilast, int periodic );
 void allocateCurvilinearArrays();
 void generate_grid();
@@ -1189,6 +1192,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void check_displacement_continuity( Sarray& Uf, Sarray& Uc, int gf, int gc );
    void check_corrector( Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc, int kf, int kc );
    void getDtFromRestartFile();
+   AllDims* get_fine_alldimobject( );
 //
 // VARIABLES BEYOND THIS POINT
 //
