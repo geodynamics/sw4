@@ -145,6 +145,16 @@ ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
 
+# openmp=yes is default
+ifeq ($(openmp),no)
+   CXXFLAGS += -DSW4_NOOMP
+else
+   debugdir := $(debugdir)_mp
+   optdir   := $(optdir)_mp
+   CXXFLAGS += -fopenmp
+   FFLAGS   += -fopenmp
+endif
+
 ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
@@ -163,15 +173,6 @@ ifeq ($(fftw),yes)
    linklibs += -lfftw3_mpi -lfftw3 
 endif
 
-# openmp=yes is default
-ifeq ($(openmp),no)
-   CXXFLAGS += -DSW4_NOOMP
-else
-   debugdir := $(debugdir)_mp
-   optdir   := $(optdir)_mp
-   CXXFLAGS += -fopenmp
-   FFLAGS   += -fopenmp
-endif
 
 ifeq ($(prec),single)
    debugdir := $(debugdir)_sp
