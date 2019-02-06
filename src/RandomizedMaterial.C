@@ -25,6 +25,7 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
 					float_sw4 hurst, float_sw4 sigma,
 					unsigned int seed )
 {
+   mEW = a_ew;
    float_sw4 bbox[6];
    a_ew->getGlobalBoundingBox( bbox );
 
@@ -37,10 +38,10 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    if( zmax > global_zmax )
       zmax = global_zmax;
 
-   m_corrlen = corrlen;
+   m_corrlen  = corrlen;
    m_corrlenz = corrlenz;
-   m_zmin = zmin;
-   m_zmax = zmax;
+   m_zmin  = zmin;
+   m_zmax  = zmax;
    m_hurst = hurst;
    m_sigma = sigma;
    m_seed  = seed;
@@ -59,7 +60,7 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
 // not be finer than spacing in the computational grid.
    int g=a_ew->mNumberOfGrids-1;
 
-   bool tmptest=true;
+   bool tmptest=false;
    if( tmptest )
    {
    // temp testing, 1 grid case with equal spacing
@@ -93,12 +94,22 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
 	 m_nkg = static_cast<int>(round((zmax-zmin)/m_hv+1));
 	 m_hv = (zmax-zmin)/(m_nkg-1);
       }
+      if( a_ew->getRank() == 0 )
+      {
+	 cout << "RANDMTRL spacing hh " << m_hh << " hv " << m_hv << endl;
+	 cout << "RANDMTRL npts  ni " << m_nig << " nj " << m_njg << " nk " << m_nkg << endl;
+      }
+
    }   
    int per2d[2], coord2d[2];
    MPI_Cart_get( a_ew->m_cartesian_communicator, 2, m_nproc2d, per2d, coord2d );
  //   cout << "RANDMTRL myrank " << a_ew->getRank() << " " << m_nproc2d[0] << " " << m_nproc2d[1] << endl;
    gen_random_mtrl_fft3d_fftw( m_nig, m_njg, m_nkg, m_corrlen, m_corrlenz, m_hurst );
    rescale_perturbation();
+
+   // with linear interpolation between fd grid and the random material grid, one ghost point
+   // should be enough to allow interpolation without communication.
+   repad_sarray( mRndMaterial, 0, 1 );
 }
 
 //-----------------------------------------------------------------------
@@ -108,9 +119,12 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
    //   double zmax = (nk-1)*h+zmin;
    if( m_zmax > zmin && zmax > m_zmin )
    {
-      for( int k=cs.m_kb ; k <= cs.m_ke ; k++ )
-	 for( int j=cs.m_jb ; j <= cs.m_je ; j++ )
-	    for( int i=cs.m_ib ; i <= cs.m_ie ; i++ )
+      //      for( int k=cs.m_kb ; k <= cs.m_ke ; k++ )
+      //	 for( int j=cs.m_jb ; j <= cs.m_je ; j++ )
+      //	    for( int i=cs.m_ib ; i <= cs.m_ie ; i++ )
+      for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
+	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
+	    for( int i=mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
 	    {
 	       double x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
 	       int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
@@ -126,11 +140,19 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 	          cs(i,j,k) *= rndpert;
 	          cp(i,j,k) *= rndpert;
 	       }
-	       else
-		  cout << "ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
-		     mRndMaterial.m_ib << " <= i <= " << mRndMaterial.m_ie << "  " <<
-		     mRndMaterial.m_jb << " <= j <= " << mRndMaterial.m_je << "  " <<
-		     mRndMaterial.m_kb << " <= k <= " << mRndMaterial.m_ke << endl;
+	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
+			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
+			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
+	       {
+		  double rndpert = mRndMaterial(ip,jp,kp);
+	          cs(i,j,k) *= rndpert;
+	          cp(i,j,k) *= rndpert;
+	       }
+	       //	       else
+	       //		  cout << "ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
+	       //		     mRndMaterial.m_ib << " <= i <= " << mRndMaterial.m_ie << "  " <<
+	       //		     mRndMaterial.m_jb << " <= j <= " << mRndMaterial.m_je << "  " <<
+	       //		     mRndMaterial.m_kb << " <= k <= " << mRndMaterial.m_ke << endl;
 	    }
    }
 }
@@ -141,7 +163,7 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 {
    for( int g=0 ; g < cs.size() ; g++ )
    {
-      //tmp testing the 1 grid case.
+      //tmp testing the 1 grid case, with equal grid spacing
 
     // Note: mRndMaterial is a zero-based array -->  add 1 here 
       if( cs[0].m_ib<=mRndMaterial.m_ib+1 && cs[0].m_ie>=mRndMaterial.m_ie+1 &&
@@ -539,6 +561,100 @@ void RandomizedMaterial::redistribute_array( AllDims& src, AllDims& dest, T* src
    }
 }
 
+
+// -----------------------------------------------------------------------
+void RandomizedMaterial::repad_sarray( Sarray& sar, int old_padding, int new_padding )
+{
+   // Assuming 2D processor decomp.
+   if( old_padding == new_padding )
+      return;
+
+   // Shorter names
+   int neigh[4]={mEW->m_neighbor[0],mEW->m_neighbor[1],mEW->m_neighbor[2],mEW->m_neighbor[3]};
+
+   // Leave physical boundaries unchanged.
+   int ib = sar.m_ib, ie=sar.m_ie;
+   if( neigh[0] != MPI_PROC_NULL )
+      ib = ib + old_padding - new_padding;
+   if( neigh[1] != MPI_PROC_NULL )
+      ie = ie - old_padding + new_padding;
+
+   int jb = sar.m_jb, je=sar.m_je;
+   if( neigh[2] != MPI_PROC_NULL )
+      jb = jb + old_padding - new_padding;
+   if( neigh[3] != MPI_PROC_NULL )
+      je = je - old_padding + new_padding;
+
+   int kb=sar.m_kb, ke=sar.m_ke;
+   Sarray tmp(sar.m_nc,ib,ie,jb,je,kb,ke);
+   //   cout << "REPAD before " << sar.m_ib << " " << sar.m_ie << " " << sar.m_jb << " " << sar.m_je
+   //	<< " " << sar.m_kb << " " << sar.m_ke << endl;
+   //   cout << "REPAD after " << ib << " " << ie << " " << jb << " " << je
+   //	<< " " << kb << " " << ke << endl;
+      
+   if( old_padding < new_padding )
+   {
+      tmp.insert_subarray(sar.m_ib,sar.m_ie,sar.m_jb,sar.m_je,sar.m_kb,sar.m_ke,sar.c_ptr());
+      comm_sarray( tmp, neigh, new_padding );
+      sar.copy( tmp );
+   }
+   if( old_padding > new_padding )
+   {
+      cout << "WARNING: RandomizedMaterial::repad_sarray: reduction of pad points NYI" << endl;
+   }
+}
+
+// -----------------------------------------------------------------------
+void RandomizedMaterial::comm_sarray( Sarray& sar, int neigh[4], int padding )
+{
+   const int ib=sar.m_ib, ie=sar.m_ie, jb=sar.m_jb, je=sar.m_je, kb=sar.m_kb, ke=sar.m_ke;
+
+   size_t npts1 = static_cast<size_t>(padding)*(je-jb+1)*(ke-kb+1)*sar.m_nc;
+   size_t npts2 = static_cast<size_t>(padding)*(ie-ib+1)*(ke-kb+1)*sar.m_nc;
+   size_t ptsmax = npts1>npts2?npts1:npts2;
+
+   float_sw4* sbuf = new float_sw4[ptsmax];
+   float_sw4* rbuf = new float_sw4[ptsmax];
+   MPI_Datatype mpi_float = get_mpi_datatype(sbuf);
+   MPI_Comm comm = MPI_COMM_WORLD;
+
+   MPI_Status status;
+   int xtag1 = 3343, xtag2 = 3344;
+   int ytag1 = 3345, ytag2 = 3346;
+
+// I-direction communication
+   if( neigh[0] != MPI_PROC_NULL )
+      sar.extract_subarray( ib+padding, ib+2*padding-1, jb, je, kb, ke, sbuf );
+   MPI_Sendrecv( sbuf, npts1, mpi_float, neigh[0], xtag1, 
+                 rbuf, npts1, mpi_float, neigh[1], xtag1, comm, &status );
+   if( neigh[1] != MPI_PROC_NULL )
+   {
+      sar.insert_subarray( ie-padding+1, ie, jb, je, kb, ke, rbuf );
+      sar.extract_subarray( ie-2*padding+1, ie-padding, jb, je, kb, ke, sbuf );
+   }
+   MPI_Sendrecv( sbuf, npts1, mpi_float, neigh[1], xtag2, 
+                 rbuf, npts1, mpi_float, neigh[0], xtag2, comm, &status );
+   if( neigh[0] != MPI_PROC_NULL )
+      sar.insert_subarray( ib, ib+padding-1, jb, je, kb, ke, rbuf );
+
+// J-direction communication
+   if( neigh[2] != MPI_PROC_NULL )
+      sar.extract_subarray( ib, ie, jb+padding, jb+2*padding-1, kb, ke, sbuf );
+   MPI_Sendrecv( sbuf, npts2, mpi_float, neigh[2], ytag1, 
+                 rbuf, npts2, mpi_float, neigh[3], ytag1, comm, &status);
+   if( neigh[3] != MPI_PROC_NULL )
+   {
+      sar.insert_subarray( ib, ie, je-padding+1, je, kb, ke, rbuf );
+      sar.extract_subarray( ib, ie, je-2*padding+1, je-padding, kb, ke, sbuf );
+   }
+   MPI_Sendrecv( sbuf, npts2, mpi_float, neigh[3], ytag2, 
+                 rbuf, npts2, mpi_float, neigh[2], ytag2, comm, &status);
+   if( neigh[2] != MPI_PROC_NULL )
+      sar.insert_subarray( ib, ie, jb, jb+padding-1, kb, ke, rbuf );
+
+   delete[] sbuf;
+   delete[] rbuf;
+}
 
 //-----------------------------------------------------------------------
 // Instantiations

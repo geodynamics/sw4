@@ -29,6 +29,7 @@ public:
    bool owner( int p1, int p2, int p3 );
    int owner_i( int i );
    void decomp1d( int nglobal, int myid, int nproc, int& s, int& e, int nghost, int npad );
+   void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
 };
 
 #endif

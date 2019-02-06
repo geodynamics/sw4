@@ -10,7 +10,7 @@
 AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg, 
 		  int jbg, int jeg, int kbg, int keg, int nghost, int npad )
 {
-   // SW4 array distribution
+   // General 3D array distribution. 
    m_nproci=nproci;
    m_nprocj=nprocj;
    m_nprock=nprock;
@@ -55,6 +55,8 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
 AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
 		  int kbg, int keg, int nghost )
 {
+   // Use FFTW array distribution (i-direction split onto the processors without overlap).
+
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myid1d );
    m_nproci = nprocs;
    m_nprocj = 1;
@@ -257,13 +259,21 @@ int AllDims::owner_i( int i )
 //   }
 //}
 
+//-----------------------------------------------------------------------
 void AllDims::decomp1d( int nglobal, int myid, int nproc, int& s, int& e, int nghost, int npad )
 //
-// Decompose index space 1 <= i <= nglobal into nproc blocks
-// returns start and end indices for block nr. myid, 
-//          where 0 <= myid <= nproc-1
-// It is assumed that nglobal includes nghost ghost points at each end.
-// npad is number of padding points at processor interfaces.
+// Decompose index space 1-nghost <= i <= N+nghost into nproc blocks
+//
+// Input: nglobal - Total number of points = N+2*nghost.
+//        myid    - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc   - Total number of processors (tasks).
+//        nghost  - Number of ghost points at domain boundaries.
+//        npad    - Number of overlap (padding) points at processor boundaries.
+//   
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The nglobal points are distributed as evenly as possible on the tasks.
 //
 {
    int olap    = 2*npad;
@@ -281,5 +291,48 @@ void AllDims::decomp1d( int nglobal, int myid, int nproc, int& s, int& e, int ng
    e = s + nlocal - 1;
    e -= nghost;
    s -= nghost;
+}
+
+//-----------------------------------------------------------------------
+void AllDims::decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad )
+//
+// Decompose index space 1-nghost <= i <= N+nghost into nproc blocks
+//
+// Input: N      - Number of points in domain.
+//        myid   - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc  - Total number of processors (tasks).
+//        nghost - Number of ghost points at domain boundaries.
+//        npad   - Number of overlap (padding) points at processor boundaries.
+//   
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The N points are distributed as evenly as possible on the tasks. Ghost points and
+// padding points are added after distribution.
+//
+{
+   int nglobal = N+2*nghost;
+   int olap    = 2*npad;
+
+   int nlocal  = N / nproc;
+   int deficit = N % nproc;
+
+   if( myid < deficit )
+      s = myid*nlocal + myid+1;
+   else
+      s = myid*nlocal + deficit+1;
+
+   if (myid < deficit)
+      nlocal = nlocal + 1;
+
+   e = s + nlocal - 1;
+   if( myid == nproc-1 )
+      e += nghost;
+   else
+      e += npad;
+   if( myid == 0 )
+      s -= nghost;
+   else
+      s -= npad;
 }
 

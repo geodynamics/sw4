@@ -240,7 +240,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	  }
 	  else
 	  {
-	    if (mEW->getVerbosity() > 2)
+	    if (mEW->getVerbosity() >= 4)
 	    {
 	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
 		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"

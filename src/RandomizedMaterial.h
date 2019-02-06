@@ -66,11 +66,15 @@ private:
    void rescale_perturbation();
    template<class T> void redistribute_array( AllDims& src, AllDims& dest, T* src_array, T* dest_array );
 
-  inline bool inside( float_sw4 x, float_sw4 y, float_sw4 z )
-  {
-    return m_xminloc <= x && x <= m_xmaxloc && m_yminloc <= y && y <= m_ymaxloc 
-      && m_zminloc <= z && z <= m_zmaxloc;
-  }
+   void repad_sarray( Sarray& sar, int old_padding, int new_padding );
+   void comm_sarray( Sarray& sar, int neigh[4], int padding );
+
+   inline bool inside( float_sw4 x, float_sw4 y, float_sw4 z )
+   {
+      return m_xminloc <= x && x <= m_xmaxloc && 
+	     m_yminloc <= y && y <= m_ymaxloc && 
+             m_zminloc <= z && z <= m_zmaxloc;
+   }
 
    EW* mEW;
 

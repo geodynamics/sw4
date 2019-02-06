@@ -672,6 +672,7 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
 			      int ke, double* ar )
 {
    // Assuming nc is the same for m_data and subarray ar.
+   // Assuming ib,ie,jb,je,kb,ke is declared size of ar.
    int nis = ie-ib+1;
    int njs = je-jb+1;
    //   int nks = ke-kb+1;
@@ -709,6 +710,7 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
 			      int ke, float* ar )
 {
    // Assuming nc is the same for m_data and subarray ar.
+   // Assuming ib,ie,jb,je,kb,ke is declared size of ar.
    int nis = ie-ib+1;
    int njs = je-jb+1;
    //   int nks = ke-kb+1;
