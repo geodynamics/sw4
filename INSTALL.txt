@@ -6,3 +6,68 @@
 -----------------------------------------------------------------------
 
 
+Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
+-----------------------------------------------------------------------------------------------
+
+1. Get Raja(0.7.0)  from github
+2. build and install RAJA using the following invocations in the build directory:
+   ml cuda ( Summit only)
+   mkdir install
+   mkir build  && cd build
+   cmake -DCMAKE_INSTALL_PREFIX=../install -DENABLE_CUDA=On -DENABLE_OPENMP=Off ../
+   make install
+
+3. Get Umpire(0.3.1) from github
+4. build and install Umpire using:
+   mkdir install
+   mkir build  && cd build
+   cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_CXX_COMPILER=xlC ../
+   make install
+
+5. git clone SW4 and checkout the Raja branch
+   copy configs/make.raja.summit to make.inc
+   Edit make.inc and point RAJA_LOCATION and UMPIRE_HOME to the install locations from Step 2 and 3
+   Point PROJ_HOME to the location of the Proj library
+   ml netlib-lapack/3.8.0 ( Summit only)
+   make -j 4
+
+
+Running SW4 on Summit:
+-------------------------------
+
+1. Edit the runsw4.lsf file below and submit using bsub runsw4.lsf.
+
+2. The -n option to jsrun should be 6 times the number of nodes in the #BSUB -nnodes line
+
+3. To run in a interactive allocation ( obtained using : bsub -W 0:30 -nnodes 1 -P GEO130 -Is /bin/tcsh )   
+   use the jsrun command with an appropriate -n option
+
+
+Sample LSF file:
+-------------------
+
+#!/bin/bash
+#BSUB -P GEO130
+#BSUB -W 24:00
+#BSUB -nnodes 1200
+#BSUB -J SW4
+#BSUB -o RunSW4_%J.out
+#BSUB -e RunSW4_%J.err
+cd /gpfs/alpine/geo130/proj-shared/sw4_raja/10HZ 
+module load netlib-lapack/3.8.0
+module load cuda
+date
+jsrun -n 7200 -g1 -c7 -a1 ./sw4 test.in
+
+-----------------------------------------------------------------------
+
+Running SW4 on Lassen:
+-----------------------------------------------------------------------
+
+Change the -nnodes, -W , -G and -q options as needed:
+
+bsub -alloc_flags "smt1 cpublink autonumaoff" -nnodes 2048 -W 30:00 -G lcstaff -core_isolation 2 -q pbatch lrun -T4 ./sw4 test.in
+
+To run in an interactive allocation use:
+
+lrun -T4 ./sw4 test.in
