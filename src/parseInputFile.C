@@ -532,7 +532,11 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        else if( startswith("geodynbc", buffer ) )
           processGeodynbc(buffer);
        else if( startswith("randomize", buffer ) )
-          processRandomize(buffer);
+       {
+	  //          processRandomize(buffer);
+	  if( m_myRank == 0 )
+	     cout << "randomize command is no longer supported. Use `randomblock' instead" <<endl;
+       }
        else if( startswith("randomblock", buffer ) )
           processRandomBlock(buffer);
        else if (!inputFile.eof() && m_myRank == 0)
@@ -8069,87 +8073,87 @@ void EW::processMaterialInvtest(char* buffer)
 }
 #endif
 
-//-----------------------------------------------------------------------
-void EW::processRandomize(char* buffer)
-{
-   char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("randomize", token) == 0,
-	       "ERROR: not a randomize line: " << token);
-   token = strtok(NULL, " \t");
-   bool lengthscaleset=false, lengthscalezset=false;
-   m_random_dist = m_random_distz = 100;
-   m_random_sdlimit  = 3;
-   m_random_amp      = 0.1;
-   m_random_amp_grad = 0;
-   m_random_sdlimit  = 3;
-   m_random_seed[0]  = 1234;
-   m_random_seed[1]  = 5678;
-   m_random_seed[2]  = 9876;
+////-----------------------------------------------------------------------
+//void EW::processRandomize(char* buffer)
+//{
+//   char* token = strtok(buffer, " \t");
+//   CHECK_INPUT(strcmp("randomize", token) == 0,
+//	       "ERROR: not a randomize line: " << token);
+//   token = strtok(NULL, " \t");
+//   bool lengthscaleset=false, lengthscalezset=false;
+//    m_random_dist = m_random_distz = 100;
+//    m_random_sdlimit  = 3;
+//    m_random_amp      = 0.1;
+//    m_random_amp_grad = 0;
+//    m_random_sdlimit  = 3;
+//    m_random_seed[0]  = 1234;
+//    m_random_seed[1]  = 5678;
+//    m_random_seed[2]  = 9876;
 
-   m_randomize = true;
-   while (token != NULL)
-   {
-      // while there are tokens in the string still
-      if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
-      else if( startswith("amplitude=",token) )
-      {
-	 token += 10;
-	 m_random_amp = atof(token);
-	 CHECK_INPUT( m_random_amp>0, "Error randomize, amplitude must be > 0, not " << token);
-      }
-      else if( startswith("gradient=",token) )
-      {
-	 token += 9;
-	 m_random_amp_grad = atof(token);
-      }
-      else if( startswith("lengthscale=",token) )
-      {
-	 token += 12;
-	 m_random_dist = atof(token);
-	 lengthscaleset = true;
-	 CHECK_INPUT( m_random_dist>0, "Error randomize, dist must be > 0, not " << token);
-      }
-      else if( startswith("lengthscalez=",token) )
-      {
-	 token += 13;
-	 m_random_distz = atof(token);
-	 lengthscalezset = true;
-	 CHECK_INPUT( m_random_distz>0, "Error randomize, distz must be > 0, not " << token);
-      }
-      else if( startswith("sdthreshold=",token) )
-      {
-	 token += 12;
-	 m_random_sdlimit = atof(token);
-	 CHECK_INPUT( m_random_sdlimit>0, "Error sdthreshold > 0, not " << token);
-      }
-      else if( startswith("seed1=",token) )
-      {
-	 token += 6;
-         m_random_seed[0] = atoi(token);
-      }
-      else if( startswith("seed2=",token) )
-      {
-	 token += 6;
-         m_random_seed[1] = atoi(token);
-      }
-      else if( startswith("seed3=",token) )
-      {
-	 token += 6;
-         m_random_seed[2] = atoi(token);
-      }
-      else
-      {
-	 badOption("randomize", token);
-      }
-      token = strtok(NULL, " \t");
-   }
-   if( lengthscaleset && !lengthscalezset )
-      m_random_distz = m_random_dist;
-   //   if( !lengthscaleset && lengthscalezset )
-   //      m_random_dist = m_random_distz;
-}
+//    m_randomize = true;
+//    while (token != NULL)
+//    {
+//       // while there are tokens in the string still
+//       if (startswith("#", token) || startswith(" ", buffer))
+// 	// Ignore commented lines and lines with just a space.
+// 	 break;
+//       else if( startswith("amplitude=",token) )
+//       {
+// 	 token += 10;
+// 	 m_random_amp = atof(token);
+// 	 CHECK_INPUT( m_random_amp>0, "Error randomize, amplitude must be > 0, not " << token);
+//       }
+//       else if( startswith("gradient=",token) )
+//       {
+// 	 token += 9;
+// 	 m_random_amp_grad = atof(token);
+//       }
+//       else if( startswith("lengthscale=",token) )
+//       {
+// 	 token += 12;
+// 	 m_random_dist = atof(token);
+// 	 lengthscaleset = true;
+// 	 CHECK_INPUT( m_random_dist>0, "Error randomize, dist must be > 0, not " << token);
+//       }
+//       else if( startswith("lengthscalez=",token) )
+//       {
+// 	 token += 13;
+// 	 m_random_distz = atof(token);
+// 	 lengthscalezset = true;
+// 	 CHECK_INPUT( m_random_distz>0, "Error randomize, distz must be > 0, not " << token);
+//       }
+//       else if( startswith("sdthreshold=",token) )
+//       {
+// 	 token += 12;
+// 	 m_random_sdlimit = atof(token);
+// 	 CHECK_INPUT( m_random_sdlimit>0, "Error sdthreshold > 0, not " << token);
+//       }
+//       else if( startswith("seed1=",token) )
+//       {
+// 	 token += 6;
+//          m_random_seed[0] = atoi(token);
+//       }
+//       else if( startswith("seed2=",token) )
+//       {
+// 	 token += 6;
+//          m_random_seed[1] = atoi(token);
+//       }
+//       else if( startswith("seed3=",token) )
+//       {
+// 	 token += 6;
+//          m_random_seed[2] = atoi(token);
+//       }
+//       else
+//       {
+// 	 badOption("randomize", token);
+//       }
+//       token = strtok(NULL, " \t");
+//    }
+//    if( lengthscaleset && !lengthscalezset )
+//       m_random_distz = m_random_dist;
+//    //   if( !lengthscaleset && lengthscalezset )
+//    //      m_random_dist = m_random_distz;
+// }
 
 //-----------------------------------------------------------------------
 void EW::processRandomBlock(char* buffer)
@@ -8220,7 +8224,5 @@ void EW::processRandomBlock(char* buffer)
    RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
 						      corrlenz, hurst, sigma, seed );
    m_random_blocks.push_back(mtrl);
-   //   if( !lengthscaleset && lengthscalezset )
-   //      m_random_dist = m_random_distz;
 }
 

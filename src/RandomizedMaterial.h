@@ -58,7 +58,7 @@ public:
   void perturb_velocities( std::vector<Sarray> & cs, std::vector<Sarray> & cp ); 
    
 private:
-   void gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g, float_sw4 Lh, float_sw4 Lv, float_sw4 hurst );
+   void gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g, float_sw4 Lx, float_sw4 Ly, float_sw4 Lz, float_sw4 hurst );
 
    void get_fourier_modes( std::complex<float_sw4>* uhat, int n1, int ib1, int n1g,
 			   int n2, int n3, float_sw4 l1, float_sw4 l2, float_sw4 l3, 

@@ -54,11 +54,19 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
 
    m_hh= global_xmax/(m_nig-1);
    m_hv= (zmax-zmin)/(m_nkg-1);
-
    
 // Find finest grid intersecting this block, and limit the grid spacing to
 // not be finer than spacing in the computational grid.
    int g=a_ew->mNumberOfGrids-1;
+
+// Force spacings to be multiple of h to make the domain size exactly the same
+// as for the computational grid.
+   float_sw4 htmp = m_hh/a_ew->mGridSize[g];
+   int ratio = static_cast<int>(round(htmp));
+   m_hh = ratio*a_ew->mGridSize[g];
+   m_nig = static_cast<int>(round(global_xmax/m_hh)+1);
+   m_njg = static_cast<int>(round(global_ymax/m_hh)+1);
+      
 
    bool tmptest=false;
    if( tmptest )
@@ -104,55 +112,79 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    int per2d[2], coord2d[2];
    MPI_Cart_get( a_ew->m_cartesian_communicator, 2, m_nproc2d, per2d, coord2d );
  //   cout << "RANDMTRL myrank " << a_ew->getRank() << " " << m_nproc2d[0] << " " << m_nproc2d[1] << endl;
-   gen_random_mtrl_fft3d_fftw( m_nig, m_njg, m_nkg, m_corrlen, m_corrlenz, m_hurst );
+   // Scale correlation lengths with domain lengths
+   float_sw4 scaledcorrlenx = m_corrlen/global_xmax;
+   float_sw4 scaledcorrleny = m_corrlen/global_ymax;
+   float_sw4 scaledcorrlenz = m_corrlenz/(zmax-zmin);
+
+   gen_random_mtrl_fft3d_fftw( m_nig, m_njg, m_nkg, scaledcorrlenx, scaledcorrleny, scaledcorrlenz, m_hurst );
    rescale_perturbation();
 
    // with linear interpolation between fd grid and the random material grid, one ghost point
    // should be enough to allow interpolation without communication.
-   repad_sarray( mRndMaterial, 0, 1 );
+   repad_sarray( mRndMaterial, 0, 2 );
+   //   cout << "RANDMTRL dims padded array " << mRndMaterial.m_jb << " " << mRndMaterial.m_je << endl;
 }
 
 //-----------------------------------------------------------------------
 void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp, 
-					     double h, double zmin, double zmax ) 
+					     float_sw4 h, float_sw4 zmin, float_sw4 zmax ) 
 {
-   //   double zmax = (nk-1)*h+zmin;
+   //-----------------------------------------------------------------------
+   // Input: g - Grid number.
+   //        h - Grid spacing on grid g
+   //        cs, cp - Unperturbated shear and pressure wave speeds arrays on grid g
+   //        zmin, zmax - z limits for grid g
+   // Output: cs, cp - Shear and pressure wave speeds on grid g with random perturbation.
+   //-----------------------------------------------------------------------         
+
    if( m_zmax > zmin && zmax > m_zmin )
    {
-      //      for( int k=cs.m_kb ; k <= cs.m_ke ; k++ )
-      //	 for( int j=cs.m_jb ; j <= cs.m_je ; j++ )
-      //	    for( int i=cs.m_ib ; i <= cs.m_ie ; i++ )
+      cout << "intersection, z lims grid block " << zmin << " " << zmax << endl;
+      cout << "intersection, z lims rand block " << m_zmin << " " << m_zmax << endl;
+  // Grid block intersects random material block
+      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists();
+      // Interpolate to sw4 grid
       for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
 	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
 	    for( int i=mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
 	    {
-	       double x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
+	       float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
+	       if( curvilinear )
+	       {
+		  x = mEW->mX(i,j,k);
+		  y = mEW->mY(i,j,k);
+		  z = mEW->mZ(i,j,k);
+	       }
+	       if( m_zmin <= z && z <= m_zmax )
+	       {
 	       int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
 	       if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie-1 &&
 		   jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je-1 &&
 		   kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke-1 )
 	       {
-		  double wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
-		  double rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
-					     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
-		                    (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
-					     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-	          cs(i,j,k) *= rndpert;
-	          cp(i,j,k) *= rndpert;
+		  float_sw4 wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
+		  float_sw4 rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
+					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
+		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
+			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
+		  cs(i,j,k) *= rndpert;
+		  cp(i,j,k) *= rndpert;
 	       }
 	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
 			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
-		  double rndpert = mRndMaterial(ip,jp,kp);
-	          cs(i,j,k) *= rndpert;
-	          cp(i,j,k) *= rndpert;
+		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
+		  cs(i,j,k) *= rndpert;
+		  cp(i,j,k) *= rndpert;
 	       }
-	       //	       else
-	       //		  cout << "ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
-	       //		     mRndMaterial.m_ib << " <= i <= " << mRndMaterial.m_ie << "  " <<
-	       //		     mRndMaterial.m_jb << " <= j <= " << mRndMaterial.m_je << "  " <<
-	       //		     mRndMaterial.m_kb << " <= k <= " << mRndMaterial.m_ke << endl;
+	       else
+		  CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
+			      mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
+			      mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
+			      mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
+	       }
 	    }
    }
 }
@@ -184,7 +216,7 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 
 //-----------------------------------------------------------------------
 void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g, 
-						     float_sw4 Lh, float_sw4 Lv, 
+						     float_sw4 Lx, float_sw4 Ly, float_sw4 Lz, 
 						     float_sw4 hurst )
 {
 #ifdef ENABLE_FFTW
@@ -195,8 +227,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
    dimobj->getdims_nopad(dims);
    ptrdiff_t ib1 = dims[0], n1=dims[1]-dims[0]+1;
    complex<float_sw4>* uc = new complex<float_sw4>[dimobj->m_fftw_alloc_local];
-   
-   float_sw4 l1=Lh, l2=Lh, l3=Lv;
+
    if( m_seed != 0 )
    {
       int fd=open("/dev/random",O_RDONLY);
@@ -205,7 +236,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
    }
 
 // 1. Generate Fourier modes and setup FFTW plan 
-   get_fourier_modes( uc, n1, ib1, n1g, n2g, n3g, l1, l2, l3, hurst, m_seed );
+   get_fourier_modes( uc, n1, ib1, n1g, n2g, n3g, Lx, Ly, Lz, hurst, m_seed );
    fftw_plan plan = fftw_mpi_plan_dft_3d( n1g, n2g, n3g, (fftw_complex*)uc, (fftw_complex*)uc,
 					  MPI_COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE );
 // 2. Enforce symmetries
@@ -368,12 +399,15 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
-   AllDims sarobj(m_nproc2d[0], m_nproc2d[1], 1, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
+   AllDims* sw4dims= mEW->get_fine_alldimobject( );
+
+   AllDims sarobj( sw4dims, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
+   //   AllDims sarobj(m_nproc2d[0], m_nproc2d[1], 1, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
 
    sarobj.getdims_nopad(dims);
    mRndMaterial.define(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]);
    redistribute_array<float_sw4>( *dimobj, sarobj, u, mRndMaterial.c_ptr() );
-
+   //   cout << "SARRAY DIMS RANDMTRL: " << dims[2] << " " << dims[3] << endl;
    delete[] u;
 #else
    cout << "ERROR: Can not generate random material without FFTW" << endl;
@@ -402,6 +436,7 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
       float_sw4 k1eff=k1;
       if( k1 > r1 )
 	 k1eff = k1-n1g;
+      //      float_sw4 k1eff = k1>r1?k1-n1g:k1;
       for( int k2=0 ; k2 <= n2-1 ; k2++ )
       {
 	 float_sw4 k2eff=k2;
@@ -414,6 +449,7 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
 	       k3eff = k3-n3;
 	    uhat[k3+n3*k2+n2*n3*(k1-ib1)] = (A0isq2/pow(1+k1eff*k1eff*ll1+k2eff*k2eff*ll2+k3eff*k3eff*ll3,hhalf))
 	       *(ndist(generator)+I*ndist(generator));
+	    //	       *(1+I);
 	 }
       }
    }
@@ -442,9 +478,9 @@ void RandomizedMaterial::rescale_perturbation()
    float_sw4 stdev = sqrt(sum2/nelem);
    if( abs(avg) > 1e-10*stdev )
       cout << "Warning, average random perturbation is " << avg << endl;
+   cout << "stdev = " << stdev << " avg = " << avg << " sigma= " << m_sigma << endl;
    // Rescale to desired sigma, add 1 for later multiplication with given material
    float_sw4 istdev = 1/stdev;
-   cout << "stdev = " << stdev << " avg = " << avg << " sigma= " << m_sigma << endl;
    for( size_t ind = 0 ; ind < n ;ind++ )
       mtrl[ind] = 1 + m_sigma*mtrl[ind]*istdev;
 }
@@ -586,14 +622,14 @@ void RandomizedMaterial::repad_sarray( Sarray& sar, int old_padding, int new_pad
       je = je - old_padding + new_padding;
 
    int kb=sar.m_kb, ke=sar.m_ke;
-   Sarray tmp(sar.m_nc,ib,ie,jb,je,kb,ke);
+      
+   if( old_padding < new_padding )
+   {
+      Sarray tmp(sar.m_nc,ib,ie,jb,je,kb,ke);
    //   cout << "REPAD before " << sar.m_ib << " " << sar.m_ie << " " << sar.m_jb << " " << sar.m_je
    //	<< " " << sar.m_kb << " " << sar.m_ke << endl;
    //   cout << "REPAD after " << ib << " " << ie << " " << jb << " " << je
    //	<< " " << kb << " " << ke << endl;
-      
-   if( old_padding < new_padding )
-   {
       tmp.insert_subarray(sar.m_ib,sar.m_ie,sar.m_jb,sar.m_je,sar.m_kb,sar.m_ke,sar.c_ptr());
       comm_sarray( tmp, neigh, new_padding );
       sar.copy( tmp );

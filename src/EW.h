@@ -157,7 +157,7 @@ void processDeveloper(char* buffer);
 void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
 void processAttenuation(char* buffer);
-void processRandomize(char* buffer);
+   //void processRandomize(char* buffer);
 void processRandomBlock(char* buffer);
 void processCheckPoint(char* buffer);
 void processGeodynbc(char* buffer);
