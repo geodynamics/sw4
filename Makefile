@@ -73,9 +73,9 @@ else
 # if configs/make.inc does not exist
   ifeq ($(UNAME),Darwin)
   # for Anders' old laptop
-    ifeq ($(findstring yorkville,$(HOSTNAME)),yorkville)
-      include configs/make.yorkville
-      foundincfile := "configs/make.yorkville"
+    ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
+      include configs/make.chebyshev
+      foundincfile := "configs/make.chebyshev"
   # for Anders' new laptop
     else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
       include configs/make.fourier
@@ -145,6 +145,16 @@ ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
 
+# openmp=yes is default
+ifeq ($(openmp),no)
+   CXXFLAGS += -DSW4_NOOMP
+else
+   debugdir := $(debugdir)_mp
+   optdir   := $(optdir)_mp
+   CXXFLAGS += -fopenmp
+   FFLAGS   += -fopenmp
+endif
+
 ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
@@ -163,15 +173,6 @@ ifeq ($(fftw),yes)
    linklibs += -lfftw3_mpi -lfftw3 
 endif
 
-# openmp=yes is default
-ifeq ($(openmp),no)
-   CXXFLAGS += -DSW4_NOOMP
-else
-   debugdir := $(debugdir)_mp
-   optdir   := $(optdir)_mp
-   CXXFLAGS += -fopenmp
-   FFLAGS   += -fopenmp
-endif
 
 ifeq ($(prec),single)
    debugdir := $(debugdir)_sp
