@@ -140,8 +140,8 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 
    if( m_zmax > zmin && zmax > m_zmin )
    {
-      cout << "intersection, z lims grid block " << zmin << " " << zmax << endl;
-      cout << "intersection, z lims rand block " << m_zmin << " " << m_zmax << endl;
+      //      cout << "intersection, z lims grid block " << zmin << " " << zmax << endl;
+      //      cout << "intersection, z lims rand block " << m_zmin << " " << m_zmax << endl;
   // Grid block intersects random material block
       bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists();
       // Interpolate to sw4 grid
@@ -478,7 +478,7 @@ void RandomizedMaterial::rescale_perturbation()
    float_sw4 stdev = sqrt(sum2/nelem);
    if( abs(avg) > 1e-10*stdev )
       cout << "Warning, average random perturbation is " << avg << endl;
-   cout << "stdev = " << stdev << " avg = " << avg << " sigma= " << m_sigma << endl;
+   //   cout << "stdev = " << stdev << " avg = " << avg << " sigma= " << m_sigma << endl;
    // Rescale to desired sigma, add 1 for later multiplication with given material
    float_sw4 istdev = 1/stdev;
    for( size_t ind = 0 ; ind < n ;ind++ )

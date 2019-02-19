@@ -8164,7 +8164,7 @@ void EW::processRandomBlock(char* buffer)
    token = strtok(NULL, " \t");
    bool lengthscaleset=false, lengthscalezset=false;
    float_sw4 corrlen=1000, corrlenz=1000, sigma=0.1, hurst=0.3, zmin=-1e38, zmax=1e38;
-   unsigned int seed=9234738;
+   unsigned int seed=0;
 
    m_randomize = true;
    while (token != NULL)
