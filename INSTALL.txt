@@ -13,7 +13,7 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    wget https://github.com/LLNL/RAJA/releases/download/v0.7.0/RAJA-0.7.0.tar.gz
 
 2. build and install RAJA using the following invocations in the build directory:
-   ml cuda ( Summit only)
+   ml cmake cuda ( Summit only)
    mkdir install
    mkir build  && cd build
    cmake -DCMAKE_INSTALL_PREFIX=../install -DENABLE_CUDA=On -DENABLE_OPENMP=Off ../
