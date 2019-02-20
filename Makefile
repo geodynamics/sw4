@@ -167,9 +167,14 @@ else
    proj  := "no"
 endif
 
-# FFTW needed for random material
+# FFTW needed for random material. If FFTWHOME undefined, it is assumed that 
+#   fftw has been defined by adding a module (or similar) from the OS.
 ifeq ($(fftw),yes)
-   CXXFLAGS += -DENABLE_FFTW -I$(FFTWHOME)/include -L$(FFTWHOME)/lib 
+   ifdef FFTWHOME
+      CXXFLAGS += -DENABLE_FFTW -I$(FFTWHOME)/include -L$(FFTWHOME)/lib 
+   else
+      CXXFLAGS += -DENABLE_FFTW 
+   endif
    linklibs += -lfftw3_mpi -lfftw3 
 endif
 
