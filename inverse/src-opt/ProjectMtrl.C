@@ -512,11 +512,10 @@ void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 
 //-----------------------------------------------------------------------
 int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-			 vector<Sarray>& a_lambda, int& ok )
+			vector<Sarray>& a_lambda, int& ok, int verbose )
 {
    int err_code = 0;
    ok = 1;
-   int verbose=2;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       int infogrid;

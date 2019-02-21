@@ -113,6 +113,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
    inputFile.close();
    MPI_Barrier(MPI_COMM_WORLD);
    m_ew->create_directory(m_path);
+   m_mp->set_path(m_path);
+
 // wait until all processes have read the input file
    if( m_ew->getVerbosity() >=3 && m_myrank == 0 )
       cout << "********parseInputFileOpt: Done reading the input file*********" << endl;
@@ -440,7 +442,9 @@ void Mopt::set_sscalefactors( /* int nmpars, double* sfs */ )
       if( m_myrank == 0 )
       {
          cout << "Reading scale factor file " << " my_nmpars = " << my_nmpars << endl;
-	 int fd=open(m_scales_fname.c_str(),O_RDONLY );
+	 string fname = m_path + m_scales_fname;
+	 //	 int fd=open(m_scales_fname.c_str(),O_RDONLY );
+	 int fd=open(fname.c_str(),O_RDONLY );
 	 VERIFY2( fd != -1, "ERROR reading scale factors. File " << m_scales_fname << " could not be opened"<<endl);
 	 int nmpars_read;
 	 size_t nr = read(fd,&nmpars_read,sizeof(int));

@@ -18,6 +18,7 @@ MaterialParameterization::MaterialParameterization( EW* a_ew, char* fname )
    int n = strlen(fname)+1;
    m_filename = new char[n];
    strcpy(m_filename,fname);
+   m_path = "./";
 }
 
 //-----------------------------------------------------------------------
@@ -96,7 +97,9 @@ void MaterialParameterization::write_parameters( int nms, double* xms )
    // Format: nms,xms[0],xms[1],..xms[nms-1]
    if( m_myrank == 0 )
    {
-      int fd=open(m_filename,O_CREAT|O_TRUNC|O_WRONLY,0660);
+      string fname = m_path + m_filename;
+      int fd=open(fname.c_str(),O_CREAT|O_TRUNC|O_WRONLY,0660);
+      //      int fd=open(m_filename,O_CREAT|O_TRUNC|O_WRONLY,0660);
       size_t nr=write(fd,&nms,sizeof(int));
       if( nr != sizeof(int) )
 	 cout << "Error in MaterialParameterization::write_parameters "
@@ -141,8 +144,11 @@ void MaterialParameterization::read_parameters( int nms, double* xms )
    int errflag = 0;
    if( m_myrank == 0 )
    {
-      int fd=open(m_filename,O_RDONLY );
-      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
+      string fname = m_path + m_filename;
+      int fd=open(fname.c_str(),O_RDONLY );
+      //      int fd=open(m_filename,O_RDONLY );
+      //      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
+      VERIFY2( fd != -1, "Error opening file " << fname << " in MaterialParameterization::read_parameters"<<endl);
       int nms_read;
       size_t nr = read(fd,&nms_read,sizeof(int));
       if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )

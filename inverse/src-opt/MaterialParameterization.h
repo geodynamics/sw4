@@ -2,6 +2,7 @@
 #define MATERIALPARAMETERIZATION_H
 
 #include <vector>
+#include <string>
 #include <Sarray.h>
 
 class EW;
@@ -12,6 +13,7 @@ protected:
    int m_myrank, m_nmd, m_nms, m_nmd_global;
    EW* m_ew;
    char* m_filename;
+   std::string m_path;
 public:
    MaterialParameterization( EW* a_ew, char* fname );
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
@@ -38,6 +40,7 @@ public:
    void read_parameters( const char* filename, int nms, double* xms ); // Only shared parameters for now
    void write_parameters( int nms, double* xms ); // Only shared parameters for now
    void read_parameters( int nms, double* xms ); // Only shared parameters for now
+   void set_path( std::string path ){m_path = path;}
 };
 
 #endif

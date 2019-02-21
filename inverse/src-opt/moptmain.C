@@ -118,9 +118,10 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 
 //New
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-   int ok;
-   simulation.check_material( rho, mu, lambda, ok );
-
+   int ok=1;
+   if( mopt->m_mcheck )
+      simulation.check_material( rho, mu, lambda, ok );
+   VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
 // Old
  //   simulation.parameters_to_material( nm, xm, rho, mu, lambda );
 
@@ -216,7 +217,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
    int ok=1;
    if( mopt->m_mcheck )
-      simulation.check_material( rho, mu, lambda, ok );
+      simulation.check_material( rho, mu, lambda, ok, 2 );
    VERIFY2( ok, "ERROR: Material check failed\n" );
 
 // Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
@@ -1125,8 +1126,10 @@ int main(int argc, char **argv)
               for( int i=0; i < nmpard ; i++ )
 		 typxd[i] = sfm[i];
 	   }
-	   mopt->set_typx( nmpars, &sf[nspar], &typxs[nspar] );
-	   mopt->set_typx( nmpard, sfm, typxd );
+	   // Possibility to override default: typx = scale factors
+	   // Commented out, not working properly atm, will fix later
+	   //	   mopt->set_typx( nmpars, &sf[nspar], &typxs[nspar] );
+	   //	   mopt->set_typx( nmpard, sfm, typxd );
 
 // Output source initial guess
 	   if( myRank == 0 && nspar > 0 )
