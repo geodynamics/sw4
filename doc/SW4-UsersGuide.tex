@@ -3722,6 +3722,14 @@ nsew & output (x,y,z)-components (0) or East, North, and vertical ($-z$) compone
 variables & displacement, velocity, div, curl, strains, or displacementgradient & string & none & displacement \\ \hline
 \end{tabular}
 \end{center}
+Let ${\bf u}=(u^{(x)},\ u^{(y)},\ u^{(z)})$ denote the solution of (\ref{eq:elastic-we}) computed by SW4. 
+The {\tt variables} output options have the following meaning. {\tt displacement} gives the three components of the computed solution, ${\bf u}$. {\tt velocity} gives the three components of the time derivative, ${\bf u}_t$. {\tt div} gives a single variable containing the divergence of ${\bf u}$. {\tt curl} gives the three components of the curl of ${\bf u}$. {\tt strains} give the six strain components in order: $u^{(x)}_x$,$u^{(y)}_y$,$u^{(z)}_z$,$(u^{(y)}_x+u^{(x)}_y)/2$, $(u^{(z)}_x+u^{(x)}_z)/2$, and
+$(u^{(y)}_z+u^{(z)}_y)/2$. {\tt displacementgradient} gives the nine components: $u^{(x)}_x$, $u^{(x)}_y$, $u^{(x)}_z$,
+$u^{(y)}_x$, $u^{(y)}_y$, $u^{(y)}_z$, $u^{(z)}_x$, $u^{(z)}_y$, and $u^{(z)}_z$. \par
+
+The geographic coordinate option {\tt nsew=1} is only effective when {\tt variables} is
+{\tt displacement}, {\tt velocity}, or {\tt div}.
+
 \index{rec parameters!file, sta, writeEvery, usgsformat, sacformat, nsew, variables}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
