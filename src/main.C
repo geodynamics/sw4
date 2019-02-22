@@ -132,12 +132,12 @@ main(int argc, char **argv)
   cout << std::scientific;
   
 // Save the source description here
-  vector<Source*> GlobalSources; 
+  vector<vector<Source*> > GlobalSources; 
 // Save the time series here
-  vector<TimeSeries*> GlobalTimeSeries;
+  vector<vector<TimeSeries*> > GlobalTimeSeries;
 
 // make a new simulation object by reading the input file 'fileName'
-  EW simulation(fileName, GlobalSources, GlobalTimeSeries);
+  EW simulation(fileName, GlobalSources, GlobalTimeSeries );
 
   if (!simulation.wasParsingSuccessful())
   {
@@ -198,13 +198,18 @@ main(int argc, char **argv)
       
       }
 // run the simulation
-      simulation.solve( GlobalSources, GlobalTimeSeries );
+      int ng=simulation.mNumberOfGrids;
+      vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
+      vector<Sarray> U(ng), Um(ng);
+      simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
+			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
+			ucorr_saved, false, 0 );
 
 // save all time series
       
-      for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+      for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
-	GlobalTimeSeries[ts]->writeFile();
+	GlobalTimeSeries[0][ts]->writeFile();
       }
 
       if( myRank == 0 )

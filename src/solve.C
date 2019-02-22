@@ -38,82 +38,140 @@
 #define SQR(x) ((x)*(x))
 
 //--------------------------------------------------------------------
-void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries )
+void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
+		vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
+		vector<Sarray>& U, vector<Sarray>& Um,
+		vector<DataPatches*>& Upred_saved_sides,
+   		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
+		int event )
 {
+   // Experimental
+   int nsteps_in_memory=600;
 // solution arrays
-  vector<Sarray> F, Lu, Uacc, Up, Um, U;
-  vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
+   vector<Sarray> F, Lu, Uacc, Up;
+   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
 // vectors of pointers to hold boundary forcing arrays in each grid
-  vector<float_sw4**> BCForcing;
+   vector<float_sw4**> BCForcing;
 
-  BCForcing.resize(mNumberOfGrids);
-  F.resize(mNumberOfGrids);
-  Lu.resize(mNumberOfGrids);
-  Uacc.resize(mNumberOfGrids);
-  Up.resize(mNumberOfGrids);
-  Um.resize(mNumberOfGrids);
-  U.resize(mNumberOfGrids);
+   BCForcing.resize(mNumberOfGrids);
+   F.resize(mNumberOfGrids);
+   Lu.resize(mNumberOfGrids);
+   Uacc.resize(mNumberOfGrids);
+   Up.resize(mNumberOfGrids);
+   Um.resize(mNumberOfGrids);
+   U.resize(mNumberOfGrids);
 
 // Allocate pointers, even if attenuation not used, to avoid segfault in parameter list with mMuVE[g], etc...
-  AlphaVE.resize(mNumberOfGrids);
-  AlphaVEm.resize(mNumberOfGrids);
-  AlphaVEp.resize(mNumberOfGrids);
-  if (m_use_attenuation && m_number_mechanisms > 0)
-  {
-    for( int g = 0; g <mNumberOfGrids; g++ )
-    {
-      AlphaVE[g]  = new Sarray[m_number_mechanisms];
-      AlphaVEp[g] = new Sarray[m_number_mechanisms];
-      AlphaVEm[g] = new Sarray[m_number_mechanisms];
-    }
-  }
-
-  int ifirst, ilast, jfirst, jlast, kfirst, klast;
-  for( int g = 0; g <mNumberOfGrids; g++ )
-  {
-    BCForcing[g] = new float_sw4 *[6];
-    for (int side=0; side < 6; side++)
-    {
-      BCForcing[g][side]=NULL;
-      if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
+   AlphaVE.resize(mNumberOfGrids);
+   AlphaVEm.resize(mNumberOfGrids);
+   AlphaVEp.resize(mNumberOfGrids);
+   if (m_use_attenuation && m_number_mechanisms > 0)
+   {
+      for( int g = 0; g <mNumberOfGrids; g++ )
       {
-    	BCForcing[g][side] = new float_sw4[3*m_NumberOfBCPoints[g][side]];
+	 AlphaVE[g]  = new Sarray[m_number_mechanisms];
+	 AlphaVEp[g] = new Sarray[m_number_mechanisms];
+	 AlphaVEm[g] = new Sarray[m_number_mechanisms];
       }
-      
-    }
-
-    ifirst = m_iStart[g];
-    ilast = m_iEnd[g];
-    
-    jfirst = m_jStart[g];
-    jlast = m_jEnd[g];
-
-    kfirst = m_kStart[g];
-    klast = m_kEnd[g];
-
-    F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    Lu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-    if (m_use_attenuation && m_number_mechanisms > 0)
-    {
-      for (int a=0; a<m_number_mechanisms; a++)
+   }
+   int ifirst, ilast, jfirst, jlast, kfirst, klast;
+   for( int g = 0; g <mNumberOfGrids; g++ )
+   {
+      BCForcing[g] = new float_sw4 *[6];
+      for (int side=0; side < 6; side++)
       {
-	AlphaVE[g][a].define( 3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	AlphaVEp[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	AlphaVEm[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 BCForcing[g][side]=NULL;
+	 if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
+	 {
+	    BCForcing[g][side] = new float_sw4[3*m_NumberOfBCPoints[g][side]];
+	 }
       }
-    }
-  }
+      ifirst = m_iStart[g];
+      ilast = m_iEnd[g];
+      jfirst = m_jStart[g];
+      jlast = m_jEnd[g];
+      kfirst = m_kStart[g];
+      klast = m_kEnd[g];
+
+      F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Lu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      if (m_use_attenuation && m_number_mechanisms > 0)
+      {
+	 for (int a=0; a<m_number_mechanisms; a++)
+	 {
+	    AlphaVE[g][a].define( 3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	    AlphaVEp[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	    AlphaVEm[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	 }
+      }
+   }
 // done allocating solution arrays
+
+// Allocate boundary sides
+   for( int g=0 ; g < mNumberOfGrids ; g++ )
+   {
+      stringstream procno;
+      procno << m_myRank << "." << g ; 
+     //     string logname(getlogin());
+
+// Local disks on LC seem to be setup with directory /tmp/username when user username starts a job
+      string upred_name = mTempPath + "upred" + procno.str() + ".bin";
+      string ucorr_name = mTempPath + "ucorr" + procno.str() + ".bin";
+      mkdirs(mTempPath);
+      //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
+      //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
+      int imin, imax, jmin, jmax, kmax;
+      if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
+      {
+	 imin = m_iStartAct[g]-1;
+	 imax = m_iEndAct[g]+1;
+	 jmin = m_jStartAct[g]-1;
+	 jmax = m_jEndAct[g]+1;
+	 kmax = m_kEndAct[g]+1;
+      }
+      else
+      {
+	// empty active domain
+	 imin =  0;
+	 imax = -1;
+	 jmin =  0;
+	 jmax = -1;
+	 kmax = -1;
+      }
+      if( save_sides )
+      {
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+     //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
+	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
+	 size_t maxsize;
+	 int mpisizelong, mpisizelonglong, mpisizeint;
+	 MPI_Type_size(MPI_LONG,&mpisizelong );
+	 MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
+	 MPI_Type_size(MPI_INT,&mpisizeint );
+	 if( sizeof(size_t) == mpisizelong )
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
+	 else if( sizeof(size_t) == mpisizelonglong )
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
+	 else if( sizeof(size_t) == mpisizeint )
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+	 if( !mQuiet && mVerbose >= 5 && proc_zero() )
+	    cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
+	       Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
+	 if( !mQuiet && proc_zero() && mVerbose >= 3 )
+	    cout << "Maximum temporary file size on grid " << g << " is " << maxsize << " doubles for each time step "<<endl;
+      }
+   }
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
 #pragma omp parallel for
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
-     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps+1, mTstart, mDt); // AP: added one to mNumber...
+     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
      // In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
      //     if( m_utc0set )
@@ -121,6 +179,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
   if( !mQuiet && mVerbose >=3 && proc_zero() )
     printf("***  Allocated all receiver time series\n");
+
+// Reset image time to zero, in case we are rerunning the solver
+  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+     mImageFiles[fIndex]->initializeTime();
 
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
@@ -155,47 +217,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	printf("Bandpass filtering all source time functions to corner frequencies fc1=%e and fc2=%e\n", 
 	       m_filter_ptr->get_corner_freq1(), m_filter_ptr->get_corner_freq2());
     }
-    
-// tmp
-    // if (proc_zero() && point_sources.size()>0)
-    // {
-    //   printf("Saving one un-filtered original time function\n");
-	 
-    //   FILE *tf=fopen("g0.dat","w");
-    //   float_sw4 t;
-    //   float_sw4 gt;
-    //   for (int i=0; i<=mNumberOfTimeSteps; i++)
-    //   {
-    // 	t = mTstart + i*mDt;
-    // 	gt = point_sources[0]->getTimeFunc(t);
-    // 	fprintf(tf, "%e %.18e\n", t, gt);
-    //   }
-    //   fclose(tf);
-    // }
-
-// 3. Replace the time function by a filtered one, represented by a (long) vector holding values at each time step   
-//    for( int s=0; s < point_sources.size(); s++ ) 
-//      point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt, mNumberOfTimeSteps, m_filter_ptr);
-
-// tmp
-//    if (proc_zero() && point_sources.size()>0)
-//    {
-//      printf("Saving one filtered discretized time function\n");
-//	 
-//      FILE *tf=fopen("g1.dat","w");
-//      float_sw4 t;
-//      float_sw4 gt, gt1, gt2;
-//      for (int i=0; i<=mNumberOfTimeSteps; i++)
-//      {
-//    	t = mTstart + i*mDt;
-//    	gt = point_sources[0]->getTimeFunc(t);
-//    	gt1 = point_sources[0]->evalTimeFunc_t(t);
-//    	gt2 = point_sources[0]->evalTimeFunc_tt(t);
-//    	fprintf(tf, "%e  %.18e  %.18e  %.18e\n", t, gt, gt1, gt2);
-//      }
-//      fclose(tf);
-//    }
-       
   } // end if prefiltering
 
 // AP changed to false
@@ -219,14 +240,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        
 //building the file name...
        string filename;
-       if( mPath != "." )
-	 filename += mPath;
+       if( mPath[event] != "." )
+	 filename += mPath[event];
        filename += "g1.dat";	 
 
        FILE *tf=fopen(filename.c_str(),"w");
        float_sw4 t;
        float_sw4 gt, gt1, gt2;
-       for (int i=0; i<=mNumberOfTimeSteps; i++)
+       for (int i=0; i<=mNumberOfTimeSteps[event]; i++)
        {
 	 //           for( int sb=0 ; sb < 10 ; sb++ )
 	 //	   {
@@ -246,7 +267,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   {
     cout << endl << "***  Starting solve ***" << endl;
   }
-  printPreamble(a_Sources);
+  printPreamble(a_Sources,event);
 
   
 // Set up timers
@@ -311,111 +332,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && mVerbose && proc_zero() )
     cout << "  Initial data has been assigned" << endl;
 
-// // Assign Up to make it possible to output velDiv and velCurl images of the initial data
-//   for( g=0 ; g<mNumberOfCartesianGrids; g++ )
-//   {
-//     m_forcing->get_initial_data_Cartesian( m_zmin[g], mGridSize[g], mTstart+mDt, Up[g] );
-//   }
-  
-//   if ( topographyExists() )
-//   {
-//     g = mNumberOfGrids-1;
-//     m_forcing->get_initial_data_Curvilinear( mX, mY, mZ, mTstart+mDt, Up[g] );
-//   }
-  
-// moved below, after enforcing BC
-// // save any images for cycle = 0 (initial data) ?
-//   update_images( 0, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
-//   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-//     mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
-
 // do some testing...
-  if (m_twilight_forcing && getVerbosity() >= 3) // only do these tests if verbose>=3
-  {
-    if ( !mQuiet && proc_zero() )
-      cout << "***Twilight Testing..." << endl;
-
-// output some internal flags        
-    for(int g=0; g<mNumberOfGrids; g++)
-    {
-      printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
-      for (int q=0; q<6; q++)
-	printf(" os[%i]=%i", q, m_onesided[g][q]);
-      printf("\n");
-      printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
-      for (int q=0; q<6; q++)
-	printf(" bc[%i]=%i", q, m_bcType[g][q]);
-      printf("\n");
-    }
-
-// test accuracy of spatial approximation
-    if ( proc_zero() )
-      printf("\n Testing the accuracy of the spatial difference approximation\n");
-    exactRhsTwilight(t, F);
-    evalRHS( U, mMu, mLambda, Up, AlphaVE ); // save Lu in composite grid 'Up'
-
-
-// evaluate and print errors
-    float_sw4 * lowZ = new float_sw4[3*mNumberOfGrids];
-    float_sw4 * interiorZ = new float_sw4[3*mNumberOfGrids];
-    float_sw4 * highZ = new float_sw4[3*mNumberOfGrids];
-    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
-    bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
-
-    float_sw4* tmp= new float_sw4[3*mNumberOfGrids];
-    for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
-      tmp[i] = lowZ[i];
-    MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
-    for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
-      tmp[i] = interiorZ[i];
-    MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
-    for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
-      tmp[i] = highZ[i];
-    MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
-
-    if ( proc_zero() )
-    {
-      for( int g=0 ; g < mNumberOfGrids ; g++ )
-      {
-	printf("Grid nr: %3i \n", g );
-	printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[3*g], lowZ[3*g+1], lowZ[3*g+2]);
-	printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[3*g], interiorZ[3*g+1], interiorZ[3*g+2]);
-	printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[3*g], highZ[3*g+1], highZ[3*g+2]);
-      }
-    }
-  
-// test accuracy of forcing
-    evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
-    Force( t, F, point_sources, identsources );
-    exactAccTwilight( t, Uacc ); // save Utt in Uacc
-    test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
-
-    for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
-      tmp[i] = lowZ[i];
-    MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
-    for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
-      tmp[i] = interiorZ[i];
-    MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
-    for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
-      tmp[i] = highZ[i];
-    MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
-
-    if ( proc_zero() )
-    {
-      printf("Testing accuracy of rho*utt - L(u) = F\n");
-      for( int g=0 ; g < mNumberOfGrids ; g++ )
-      {
-	printf("Grid nr: %3i \n", g );
-	printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",lowZ[3*g],lowZ[3*g+1],lowZ[3*g+2]);
-	printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",interiorZ[3*g],interiorZ[3*g+1],interiorZ[3*g+2]);
-	printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",highZ[3*g],highZ[3*g+1],highZ[3*g+2]);
-      }
-    }
-    delete[] tmp;
-    delete[] lowZ;
-    delete[] interiorZ;
-    delete[] highZ;
-  } // end m_twilight_forcing    
+  initial_tw_test( U, Up, F, a_Mu, a_Lambda, Lu, Uacc, AlphaVE, point_sources, identsources, t );
 
 // after checkpoint restart, we must communicate the memory variables
   if(  m_check_point->do_restart() && m_use_attenuation && (m_number_mechanisms > 0) )
@@ -442,10 +360,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
     communicate_array( U[g], g );
-
-  //    U[0].save_to_disk("u-dbg0.bin");
-  //    U[1].save_to_disk("u-dbg1.bin");
-
 // boundary forcing
   cartesian_bc_forcing( t, BCForcing, a_Sources );
 
@@ -453,16 +367,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( m_anisotropic )
      enforceBCanisotropic( U, mC, t, BCForcing );
   else
-     enforceBC( U, mMu, mLambda, t, BCForcing );   
+     enforceBC( U, a_Mu, a_Lambda, t, BCForcing );   
+
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
   if( m_use_attenuation && (m_number_mechanisms > 0) )
   {
-     enforceBCfreeAtt2( U, mMu, mLambda, AlphaVE, BCForcing );
+     enforceBCfreeAtt2( U, a_Mu, a_Lambda, AlphaVE, BCForcing );
   }
-
-  //    U[0].save_to_disk("u-dbg0-bc.bin");
-  //    U[1].save_to_disk("u-dbg1-bc.bin");
-
 // Um
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
@@ -478,67 +389,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if( m_anisotropic )
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
-     enforceBC( Um, mMu, mLambda, t-mDt, BCForcing );
+     enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
   if( m_use_attenuation && (m_number_mechanisms > 0) )
   {
-     enforceBCfreeAtt2( Um, mMu, mLambda, AlphaVEm, BCForcing );
+     enforceBCfreeAtt2( Um, a_Mu, a_Lambda, AlphaVEm, BCForcing );
   }
-  
-  //    Um[0].save_to_disk("um-dbg0-bc.bin");
-  //    Um[1].save_to_disk("um-dbg1-bc.bin");
-    //    exit(0);
 
 // more testing
-  if (m_twilight_forcing && m_check_point->do_restart() && getVerbosity()>=3)
-  {
-    if ( proc_zero() )
-      printf("Checking the accuracy of the checkpoint data\n");
-
-// check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
-    float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
-    exactSol( t, Up, AlphaVEp, a_Sources );
-
-    normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
-
-    if ( proc_zero() )
-       printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-
-    if( m_use_attenuation )
-    {
-       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
-       for( int g=0 ; g < mNumberOfGrids ; g++ )
-       {
-          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
-          A[g].copy(AlphaVE[g][0]);
-       }
-       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
-       if ( proc_zero() )
-          printf(" Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-    }
-    
-// Now check Um and AlpphaVEm
-    exactSol( t-mDt, Up, AlphaVEp, a_Sources );
-
-    normOfDifference( Up, Um, errInf, errL2, solInf, a_Sources );
-
-    if ( proc_zero() )
-       printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-
-    if( m_use_attenuation )
-    {
-       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
-       for( int g=0 ; g < mNumberOfGrids ; g++ )
-       {
-          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
-          A[g].copy(AlphaVEm[g][0]);
-       }
-       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
-       if ( proc_zero() )
-          printf(" Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
-    }
-  } // end if twilight testing
-  
+  checkpoint_twilight_test( Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp, a_Sources, t );
 
 // test if the spatial operator is self-adjoint (only works without mesh refinement)
   if (m_energy_test && getVerbosity() >= 1 && getNumberOfGrids() == 1)
@@ -549,8 +408,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     }
      
 // compute Uacc = L(U) and Vacc=L(V); V=Um
-    evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
-    evalRHS( Um, mMu, mLambda, Uacc, AlphaVE ); // save Lu in composite grid 'Lu'
+    evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+    evalRHS( Um, a_Mu, a_Lambda, Uacc, AlphaVE ); // save Lu in composite grid 'Lu'
 // should not be necessary to communicate across processor boundaries to make ghost points agree
   
 // evaluate (V, Uacc) and (U, Vacc) and compare!
@@ -563,22 +422,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     {
        printf("Scalar products (Um, L(U)) = %e and (U, L(Um)) = %e, diff=%e\n", sp_vLu, sp_uLv, sp_vLu-sp_uLv);
     }
-
-// tmp
-// save U
-  // int g=0;
-  // char fname[100];
-  // sprintf(fname,"ux-%i.dat",m_myRank);
-  // FILE *fp=fopen(fname,"w");
-  // printf("Saving tmp file=%s, g=%i, m_jStart=%i, m_jEnd=%i\n", fname, g, m_jStart[g], m_jEnd[g]);
-  // for ( int j = m_jStart[g]; j<=m_jEnd[g]; j++ )
-  //    fprintf(fp,"%d %e\n", j, U[g](1,35,j,35));
-  // fclose(fp);  
-
-
-// tmp: save L(Um) in U
-    // evalRHS( Um, mMu, mLambda, U, AlphaVE );
-    
   } // end m_energy_test ...
 
   if( m_moment_test )
@@ -603,18 +446,18 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   }
 
 // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
-  update_images( beginCycle-1, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1 );
+  update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mRho, mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
+    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
 
   for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath, mZ );
+    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ );
 
   FILE *lf=NULL;
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
-    string path=getPath();
+    string path=getPath(event);
 
     stringstream fileName;
     if( path != "." )
@@ -630,12 +473,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
       fileName << "RayleighErr.txt";
     lf = fopen(fileName.str().c_str(),"w");
   }
-  // DEBUG
-  //     for( int s = 0 ; s < point_sources.size() ; s++ )
-  //        point_sources[s]->print_info();
     
 // output flags and settings that affect the run
-  if( proc_zero() && mVerbose >= 1 )
+  if( !mQuiet && proc_zero() && mVerbose >= 1 )
   {
     printf("\nReporting SW4 internal flags and settings:\n");
     printf("m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, energy_test=%s, " 
@@ -651,6 +491,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     printf("End report of internal flags and settings\n\n");
   }
    
+  if( save_sides )
+  {
+     for( int g=0 ; g < mNumberOfGrids ; g++ )
+     {
+	Upred_saved_sides[g]->push( Um[g], -1 );
+	Upred_saved_sides[g]->push( U[g], 0 );
+	Ucorr_saved_sides[g]->push( Um[g], -1 );
+	Ucorr_saved_sides[g]->push( U[g], 0 );
+     }
+  }
+
   for( int g=0 ; g < mNumberOfGrids ; g++ )
     Up[g].set_to_zero();
 
@@ -668,7 +519,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
   if ( !mQuiet && proc_zero() )
     cout << endl << "  Begin time stepping..." << endl;
 
-  for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps; currentTimeStep++)
+  for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++)
   {    
     if( m_output_detailed_timing )
       time_measure[0] = MPI_Wtime();
@@ -692,14 +543,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        check_for_nan( F, 1, "F" );
        check_for_nan( U, 1, "U" );
     }
-    //    int idbg=11,jdbg=16,kdbg=12;
-    //    cout << " pt 1 " << U[0](1,idbg,jdbg,kdbg) << endl;
 
 // evaluate right hand side
     if( m_anisotropic )
        evalRHSanisotropic( U, mC, Lu );
     else
-       evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+       evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
 
     if( m_output_detailed_timing )
        time_measure[1] = MPI_Wtime();
@@ -711,7 +560,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        check_for_nan( Lu, 1, "Lu pred. " );
 
 // take predictor step, store in Up
-    evalPredictor( Up, U, Um, mRho, Lu, F );    
+    evalPredictor( Up, U, Um, a_Rho, Lu, F );    
 
     if( m_output_detailed_timing )
        time_measure[2] = MPI_Wtime();
@@ -743,56 +592,29 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        time_measure[5] = MPI_Wtime();
 
 // Enforce data on coupling boundary to external solver
-//    Up[0].save_to_disk("up-dbg1.bin");
     if( m_do_geodynbc )
     {
        if( mOrder == 2 )
        {
-	  int i0=84, j0=102, k0=25;
+	  //	  int i0=84, j0=102, k0=25;
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
-	  if( point_in_proc(i0,j0,1) && currentTimeStep==1 )
-	  {
-	     cout << m_myRank << " dims " << m_iStart[1] << " " <<  m_iEnd[1] << " "
-		  << m_jStart[1] << " " <<  m_jEnd[1] << " "<<endl;
-	  }
-	  //	  for( int ii=i0-1 ; ii <= i0+2 ; ii++)
-	  //	     for( int jj=j0-1 ; jj <= j0+1 ; jj++)
-	  //	     if( point_in_proc(ii,jj,1) && (currentTimeStep==22 || currentTimeStep==23))
-	  //	  //		cout << currentTimeStep << " after ibcdata " << m_myRank << " " << ii <<" " << jj << " " << Up[1](1,ii,jj,k0) << " " << endl;
-
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )
 	     Force( t+mDt, F, point_sources, identsources );	     
-	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
-	  //	  for( int ii=i0-1 ; ii <= i0+2 ; ii++)
-	  //	     for( int jj=j0-1 ; jj <= j0+1 ; jj++)
-	  //	     if( point_in_proc(ii,jj,1)&& (currentTimeStep==22 || currentTimeStep==23) )
-	  //		cout << "after second ghost pt " << m_myRank << " " << ii <<" " << jj << " " << Up[1](1,ii,jj,k0) << " " << endl;
+	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+2*mDt, Up, U, 1 );
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
 	     communicate_array( Up[g], g );
-
-	  //	  for( int ii=i0-1 ; ii <= i0+2 ; ii++)
-	  //	     for( int jj=j0-1 ; jj <= j0+1 ; jj++)
-	  //	     if( point_in_proc(ii,jj,1)&& (currentTimeStep==22 || currentTimeStep==23) )
-	  //		cout << "after comm. " << m_myRank << " " << ii << " " << jj << " " << Up[1](1,ii,jj,k0) << " " << endl;
-
        }
        else
        {
-	  //	  Up[0].save_to_disk("up0-dbg.bin");
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
-	  //	  Up[0].save_to_disk("up1-dbg.bin");
 	  if( m_twilight_forcing )
 	     Force_tt( t, F, point_sources, identsources );	     
 	  evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
-	  //	  Uacc[0].save_to_disk("uacc0-dbg.bin");
-	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+mDt, Uacc, U, 0 );
+	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+mDt, Uacc, U, 0 );
 	  geodyn_up_from_uacc( Up, Uacc, U, Um, mDt ); //copy second ghost point to Up
-	  //	  Uacc[0].save_to_disk("uacc-dbg.bin");
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
 	     communicate_array( Up[g], g );
-	  //	  Up[0].save_to_disk("up2-dbg.bin");
-	  //	  exit(0);
        }
     }
 
@@ -800,13 +622,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
-       enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+       enforceBC( Up, a_Mu, a_Lambda, t+mDt, BCForcing );
 
 
 // NEW
 // Impose un-coupled free surface boundary condition with visco-elastic terms
     if( m_use_attenuation && m_number_mechanisms > 0 )
-       enforceBCfreeAtt2( Up, mMu, mLambda, AlphaVEp, BCForcing );
+       enforceBCfreeAtt2( Up, a_Mu, a_Lambda, AlphaVEp, BCForcing );
     
     if( m_output_detailed_timing )
        time_measure[6] = MPI_Wtime();
@@ -826,7 +648,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // (otherwise, Up doesn't have the correct values on the interface)
        if (usingSupergrid())
        {
-	  addSuperGridDamping( Up, U, Um, mRho );
+	  addSuperGridDamping( Up, U, Um, a_Rho );
        }
 // Also add Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
@@ -878,12 +700,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
     {
        // Force_tt( t, F, point_sources, identsources );
 
-       // if( m_output_detailed_timing )
-       //    time_measure[10] = MPI_Wtime();
 
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
        if( trace && m_myRank == dbgproc )
           cout <<" after evalDpDmInTime" << endl;
+       if( save_sides )
+	  for( int g=0 ; g < mNumberOfGrids ; g++ )
+	     Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
 
        if( m_checkfornan )
 	  check_for_nan( Uacc, 1, "uacc " );
@@ -900,17 +723,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_output_detailed_timing )
           time_measure[10] = MPI_Wtime();
 
-       //    cout << "Uacc(1,14,13,10) " << Uacc[0](1,14,13,10) << endl;
-       //    cout << "Uacc(1,14,13,12) " << Uacc[0](1,14,13,12) << endl;
-       //    cout << "U(1,14,13,12) "   << U[0](1,14,13,12)   << endl;
-       //    cout << "Up(1,14,13,12) "   << Up[0](1,14,13,12)   << endl;
-       //    cout << "Um(1,14,13,12) "   << Um[0](1,14,13,12)   << endl;
-       //    Uacc[0].save_to_disk("uacc-dbg.bin");
        if( m_anisotropic )
 	  evalRHSanisotropic( Uacc, mC, Lu );
        else
-	  evalRHS( Uacc, mMu, mLambda, Lu, AlphaVEm );
-       //    cout << "Lu(1,14,13,10) " << Lu[0](1,14,13,10) << endl;
+	  evalRHS( Uacc, a_Mu, a_Lambda, Lu, AlphaVEm );
 
        if( m_output_detailed_timing )
           time_measure[11] = MPI_Wtime();
@@ -922,7 +738,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  check_for_nan( Lu, 1, "L(uacc) " );
 
 
-       evalCorrector( Up, mRho, Lu, F );
+       evalCorrector( Up, a_Rho, Lu, F );
 
        if( m_output_detailed_timing )
           time_measure[12] = MPI_Wtime();
@@ -930,7 +746,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // add in super-grid damping terms
        if (usingSupergrid())
        {
-	  addSuperGridDamping( Up, U, Um, mRho );
+	  addSuperGridDamping( Up, U, Um, a_Rho );
        }
 
 // Arben's simplified attenuation
@@ -951,15 +767,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
        if( m_do_geodynbc )
        {
-	  //     	  Up[0].save_to_disk("up0-dbg.bin");
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
-	  //     	  Up[0].save_to_disk("up1-dbg.bin");
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )
 	     Force( t+mDt, F, point_sources, identsources );	     
-	  geodyn_second_ghost_point( mRho, mMu, mLambda, F, t+2*mDt, Up, U, 1 );
-	  //     	  Up[0].save_to_disk("up2-dbg.bin");
-	  //	  exit(0);
+	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+2*mDt, Up, U, 1 );
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
 	     communicate_array( Up[g], g );
 	  // The free surface boundary conditions below will overwrite the
@@ -970,7 +782,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 	  // also the previous times, U,Um need to have the correct ghost point value.
 	  save_geoghost( Up );
        }
-// calculate boundary forcing at time t+mDt (do we really need to call this fcn again???)
+// calculate boundary forcing at time t+mDt 
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
@@ -978,15 +790,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        if( m_anisotropic )
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
-	  enforceBC( Up, mMu, mLambda, t+mDt, BCForcing );
+	  enforceBC( Up, a_Mu, a_Lambda, t+mDt, BCForcing );
 
-       //            	  Up[0].save_to_disk("up3-dbg.bin");
-       //       	  exit(0);
 // NEW (Apr. 4, 2017)
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
        if( m_use_attenuation && (m_number_mechanisms > 0) )
        {
-          enforceBCfreeAtt2( Up, mMu, mLambda, AlphaVEp, BCForcing );
+          enforceBCfreeAtt2( Up, a_Mu, a_Lambda, AlphaVEp, BCForcing );
        }
 
        if( m_output_detailed_timing )
@@ -1015,30 +825,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
        
        if( m_do_geodynbc )
 	  restore_geoghost(Up);
+       if( save_sides )
+	  for( int g=0 ; g < mNumberOfGrids ; g++ )
+	     Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
 
     }// end if mOrder == 4
     
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
 
-    //    Um[0].save_to_disk("um-dbg0.bin");
-    //    Um[1].save_to_disk("um-dbg1.bin");
-    //    U[0].save_to_disk("u-dbg0.bin");
-    //    U[1].save_to_disk("u-dbg1.bin");
-    //    Up[0].save_to_disk("up-dbg0.bin");
-    //    Up[1].save_to_disk("up-dbg1.bin");
-    //    mRho[0].save_to_disk("rho-dbg0.bin");
-    //    mRho[1].save_to_disk("rho-dbg1.bin");
-    //    mMu[0].save_to_disk("mu-dbg0.bin");
-    //    mMu[1].save_to_disk("mu-dbg1.bin");
-    //    mLambda[0].save_to_disk("lambda-dbg0.bin");
-    //    mLambda[1].save_to_disk("lambda-dbg1.bin");
-    //    exit(0);
 // increment time
     t += mDt;
 
 // periodically, print time stepping info to stdout
-    printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps ); 
+    printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event] ); 
     //    printTime( currentTimeStep, t, true ); 
 
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
@@ -1046,15 +846,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
-    update_images( currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps );
+    update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-      mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda, 
-				       mQp, mQs, mPath, mZ ); // mRho, mMu, mLambda occur twice because we don't use gradRho etc.
+      mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
+				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp=MPI_Wtime();
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath, mZ );
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ );
     double time_essi=MPI_Wtime()-time_essi_tmp;
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
@@ -1113,7 +913,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_energy_test )
-       compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps, Um, U, Up, currentTimeStep  );
+       compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U, Up, currentTimeStep, event );
 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
@@ -1133,10 +933,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 // output time, Linf-err, Linf-sol-err
 	fprintf(lf, "%e %15.7e %15.7e %15.7e\n", t, errInf, errL2, solInf);
     }
-
-// // See if it is time to write a restart file
-// //      if (mRestartDumpInterval > 0 &&  currentTimeStep % mRestartDumpInterval == 0)
-// //        serialize(currentTimeStep, U, Um);  
 
     if( m_output_detailed_timing )
     {
@@ -1215,16 +1011,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    if( exactSol( t, Up, AlphaVEp, a_Sources ) )
    {
      float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
-
-// tmp: output exact sol for Lamb's prolem 
-//      cout << *mGlobalUniqueSources[0] << endl;
-//       Image* im = new Image( this, 0, 1, 0, 1, "exact", 1 , Image::UZ, Image::Z, 0.0, true );
-//       im->computeGridPtIndex();
-//       im->allocatePlane();
-//       im->computeImageQuantity(Up, 3); // z-component
-//       string path=".";
-//       im->writeImagePlane_2(1,path);
-
 // depending on the test case, we should compare in the interior, or only on the surface
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
@@ -1233,7 +1019,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 
       if ( proc_zero() )
       {         
- //	 cout << "\n Final solution errors: Linf = " << errInf << ", L2 = " << errL2 << endl;
 	 printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
 
 // output time, Linf-err, Linf-sol-err
@@ -1268,13 +1053,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
          }
          
       }
-// test
-//      int g=mNumberOfCartesianGrids - 1;
-//      Up[g].set_to_minusOne();
-//      U[g].set_to_zero();
-//      normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
-//      if ( proc_zero() )
-//	 printf("\n Surface norm of 1: Inf = %15.7e, L2 = %15.7e\n", errInf, errL2);
    } // end if exactSol
    
 // close error log file for testing
@@ -1287,7 +1065,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    finalizeIO();
    cout.flush(); cerr.flush();
 
-   // Give back memory
+// Give back memory
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
       for(int side=0; side < 6; side++)
@@ -1298,11 +1076,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
-// why is this barrier needed???
    MPI_Barrier(MPI_COMM_WORLD);
-
-//   if( m_forcing->knows_exact() )
-//      computeSolutionError(U, mTime, AlphaVE ); // note that final solution ends up in U after the call to cycleSolutionArrays()
 
 } // end EW::solve()
 
@@ -1324,6 +1098,18 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
        a_AlphaVEp[g][a].reference(tmp);
     }
   }
+}
+
+//------------------------------------------------------------------------
+void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up ) 
+{
+   for (int g=0; g<mNumberOfGrids; g++)
+   {
+      float_sw4 *tmp = a_Um[g].c_ptr();
+      a_Um[g].reference(a_U[g].c_ptr());
+      a_U[g].reference(a_Up[g].c_ptr());
+      a_Up[g].reference(tmp);
+   }
 }
 
 //---------------------------------------------------------------------------

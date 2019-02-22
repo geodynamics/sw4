@@ -43,16 +43,13 @@
 #include "MaterialIfile.h"
 #include "MaterialVolimagefile.h"
 #include "MaterialRfile.h"
+#include "MaterialInvtest.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
 #include "Filter.h"
 #include "Image3D.h"
 #include "ESSI3D.h"
 #include "sacutils.h"
-
-#ifdef ENABLE_OPT
-#include "MaterialInvtest.h"
-#endif
 
 #include <cstring>
 #include <iostream>
@@ -183,8 +180,8 @@ void EW::deprecatedOption(const string& command,
 // should not be called after the initialization of the EW object is completed. 
 // Make all these functions private!
 //
-bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
-			 vector<TimeSeries*> & a_GlobalTimeSeries )
+bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
+			 vector< vector<TimeSeries*> > & a_GlobalTimeSeries )
 {
   char buffer[256];
   ifstream inputFile;
@@ -442,6 +439,18 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
 	   startswith("prefilter", buffer) ||
 	   startswith("developer", buffer) ||
 	   startswith("time", buffer) ||
+// ignore material optimizer commands
+ 	   startswith("event", buffer) ||
+ 	   startswith("mparcart", buffer) ||
+ 	   startswith("mrun", buffer) ||
+ 	   startswith("mscalefactors", buffer) ||
+ 	   startswith("lbfgs", buffer) ||
+ 	   startswith("nlcg", buffer) ||
+ 	   startswith("mfsurf", buffer) ||
+ 	   startswith("mimage", buffer) ||	   	   
+ 	   startswith("m3dimage", buffer) ||	   	   
+ 	   startswith("regularize", buffer) ||	   	   
+ 	   startswith("mtypx", buffer) ||
 	   startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
        {
@@ -450,10 +459,6 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        }
        else if (startswith("gmt", buffer))
          processGMT(buffer);
-       //       else if (startswith("time", buffer))
-       //	 processTime(buffer);
-       //       else if (startswith("restart",buffer))
-       //	  processRestart(buffer);
        else if (startswith("checkpoint",buffer))
 	  processCheckPoint(buffer);
        else if (startswith("globalmaterial", buffer))
@@ -493,15 +498,7 @@ bool EW::parseInputFile( vector<Source*> & a_GlobalUniqueSources,
        else if (startswith("vimaterial", buffer))
 	 processMaterialVimaterial( buffer );
        else if (startswith("invtestmaterial", buffer))
-       {
-#ifdef ENABLE_OPT
 	  processMaterialInvtest(buffer);
-#else
-          if (m_myRank==0) 
-             cout << "Error: SW4 was not built with source/material optimization support" << endl;
-          return false;
-#endif
-       }
        else if (startswith("efile", buffer))
        {
 #ifndef ENABLE_ETREE
@@ -903,7 +900,7 @@ void EW::processGrid(char* buffer)
   {
 // Default is NTS
      mLatOrigin = 37.0;
-     mLonOrigin =-118.0;
+     mLonOrigin = -118.0;
   }
 
 // default arguments for proj4 projection
@@ -2430,15 +2427,23 @@ void EW::processFileIO(char* buffer)
           break;
        if(startswith("path=", token)) {
           token += 5; // skip path=
-	  mPath = token;
-	  mPath += '/';
+	  // If path already specified from event lines, skip this path specification.
+	  if( m_nevents_specified == 0 )
+	  {
+	     mPath[0] = token;
+	     mPath[0] += '/';
+	  }
 	  //          path = token;
        }
        else if (startswith("obspath=", token))
        {
           token += 8; // skip obspath=
-          mObsPath = token;
-	  mObsPath += '/';
+	  // If obspath already specified from event lines, skip this path specification.
+	  if( m_nevents_specified == 0 )
+	  {
+	     mObsPath[0] = token;
+	     mObsPath[0] += '/';
+	  }
        }
 //                          123456789
        else if (startswith("verbose=", token))
@@ -2577,7 +2582,7 @@ void EW::processTime(char* buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0, "ERROR: not a time line...: " << token);
   token = strtok(NULL, " \t");
-
+  int event=0;
   string err = "Time Error: ";
 
   while (token != NULL)
@@ -2599,6 +2604,19 @@ void EW::processTime(char* buffer)
           CHECK_INPUT(atoi(token) >= 0, err << "steps is not a non-negative integer: " << token);
           steps = atoi(token);
        }
+     // Only care about 'event' if event lines are present in input file
+       else if(startswith("event=",token))
+       {
+	  token += 6;
+	// Ignore if no events given
+	  if( m_nevents_specified > 0 )
+	  {
+	     map<string,int>::iterator it = m_event_names.find(token);
+	     CHECK_INPUT( it != m_event_names.end(), 
+		       err << "event with name "<< token << " not found" );
+	     event = it->second;
+	  }
+       }
        else if( startswith("utcstart=",token) )
        {
           token += 9;
@@ -2619,19 +2637,19 @@ void EW::processTime(char* buffer)
           "Time Error: Cannot set both t and steps for time");
   
   if (t > 0.0)
-    setGoalTime(t);
+     setGoalTime(t,event);
   else if (steps >= 0)
-    setNumberSteps(steps);
+     setNumberSteps(steps,event);
  
   if( refdateset )
   {
-     m_utc0[0] = year;
-     m_utc0[1] = month;
-     m_utc0[2] = day;
-     m_utc0[3] = hour;
-     m_utc0[4] = minute;
-     m_utc0[5] = second;
-     m_utc0[6] = msecond;
+     m_utc0[event][0] = year;
+     m_utc0[event][1] = month;
+     m_utc0[event][2] = day;
+     m_utc0[event][3] = hour;
+     m_utc0[event][4] = minute;
+     m_utc0[event][5] = second;
+     m_utc0[event][6] = msecond;
   }
   else
   {
@@ -2639,13 +2657,13 @@ void EW::processTime(char* buffer)
      time_t tsec;
      time( &tsec );
      struct tm *utctime = gmtime( &tsec );
-     m_utc0[0] = utctime->tm_year+1900;
-     m_utc0[1] = utctime->tm_mon+1;
-     m_utc0[2] = utctime->tm_mday;
-     m_utc0[3] = utctime->tm_hour;
-     m_utc0[4] = utctime->tm_min;
-     m_utc0[5] = utctime->tm_sec;
-     m_utc0[6] = 0; //milliseconds not given by 'time', not needed here.
+     m_utc0[event][0] = utctime->tm_year+1900;
+     m_utc0[event][1] = utctime->tm_mon+1;
+     m_utc0[event][2] = utctime->tm_mday;
+     m_utc0[event][3] = utctime->tm_hour;
+     m_utc0[event][4] = utctime->tm_min;
+     m_utc0[event][5] = utctime->tm_sec;
+     m_utc0[event][6] = 0; //milliseconds not given by 'time', not needed here.
   }
 }
 
@@ -3911,7 +3929,7 @@ void EW::setOutputPath(const string& path)
 { 
   stringstream s;
   s << path << "/";
-  mPath = s.str();
+  mPath[0] = s.str();
 }
 
 //-----------------------------------------------------------------------
@@ -3928,25 +3946,30 @@ void EW::setParallel_IO(bool pfs, int nwriters)
 }
 
 //-----------------------------------------------------------------------
-void EW::setGoalTime(float_sw4 t) 
+void EW::setGoalTime(float_sw4 t, int event ) 
 { 
-  mTmax = t; 
+  mTmax[event] = t; 
   mTstart = 0.0; 
-  mTimeIsSet = true;
+  mTimeIsSet[event] = true;
 }
 
 //-----------------------------------------------------------------------
-void EW::setNumberSteps(int steps)
+void EW::setNumberSteps(int steps,int event)
 {
-  mNumberOfTimeSteps = steps;
-  mTimeIsSet = false;
+  mNumberOfTimeSteps[event] = steps;
+  mTimeIsSet[event] = false;
 }
 
+//-----------------------------------------------------------------------
+int EW::getNumberOfSteps(int event) const
+{
+  return mNumberOfTimeSteps[event];
+}
 
 //-----------------------------------------------------------------------
-int EW::getNumberOfSteps() const
+int EW::getNumberOfEvents() const
 {
-  return mNumberOfTimeSteps;
+  return m_nevent;
 }
 
 //-----------------------------------------------------------------------
@@ -4029,8 +4052,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
    MPI_Cart_shift( m_cartesian_communicator, 1, 1, m_neighbor+2, m_neighbor+3 );
 
-   //   if( proc_zero() && mVerbose >= 3)
-   if( proc_zero() )
+   if( proc_zero() && mVerbose >= 3)
    {
      cout << " Grid distributed on " << m_nProcs << " processors " << endl;
      cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
@@ -4043,11 +4065,6 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    int ifirst, ilast, jfirst, jlast;
    decomp1d( nx_finest_w_ghost, my_proc_coords[0], proc_max[0], ifirst, ilast );
    decomp1d( ny_finest_w_ghost, my_proc_coords[1], proc_max[1], jfirst, jlast );
-
-   //   int nx = nx_finest_w_ghost-2*m_ghost_points;
-   //   int ny = ny_finest_w_ghost-2*m_ghost_points;
-   //   decomp1d_2( nx, my_proc_coords[0], proc_max[0], ifirst, ilast, m_ghost_points, m_ppadding );
-   //   decomp1d_2( ny, my_proc_coords[1], proc_max[1], jfirst, jlast, m_ghost_points, m_ppadding );
 
    ifirst -= m_ghost_points;
    ilast  -= m_ghost_points;
@@ -4924,7 +4941,7 @@ void EW::processImage(char* buffer)
 // }
 
 //----------------------------------------------------------------------------
-void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
+void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources )
 {
 
   Source* sourcePtr;
@@ -4949,6 +4966,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   bool sacbaseset = false;
 
   int ncyc = 0;
+  int event=0;
   bool ncyc_set = false;
 
   timeDep tDep = iRickerInt;
@@ -5148,6 +5166,20 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
          freq = atof(token);
          CHECK_INPUT(freq > 0,
                  err << "source command: Frequency must be > 0");
+      }
+      else if(startswith("event=",token))
+      {
+	 token += 6;
+	 //	 event = atoi(token);
+	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	 if( m_nevents_specified > 0 )
+	 {
+	    map<string,int>::iterator it = m_event_names.find(token);
+	    CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	    event = it->second;
+	 }
       }
       else if (startswith("amp=", token) || startswith("f0=", token))
       {
@@ -5521,7 +5553,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     }
     else
     {
-      a_GlobalUniqueSources.push_back(sourcePtr);
+      a_GlobalUniqueSources[event].push_back(sourcePtr);
     }
       
   }
@@ -5543,7 +5575,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
     }
     else
     {
-      a_GlobalUniqueSources.push_back(sourcePtr);
+      a_GlobalUniqueSources[event].push_back(sourcePtr);
     }
   }	  
   if( npar > 0 )
@@ -5555,7 +5587,7 @@ void EW::processSource(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 }
 
 //----------------------------------------------------------------------------
-void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
+void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources )
 {
 // the rupture command reads a file with
 // point moment tensor sources in the strike, dip, rake format
@@ -5571,6 +5603,7 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
   float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
   int isMomentType = -1;
+  int event = 0;
   
   double lat = 0.0, lon = 0.0;
   bool topodepth = true;
@@ -5610,6 +5643,20 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	token += 5; // read past 'file='
          strncpy(rfile, token,100);
 	 rfileset = true;
+      }
+      else if(startswith("event=",token))
+      {
+	 token += 6;
+	 //	 event = atoi(token);
+	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	 if( m_nevents_specified > 0 )
+	 {
+	    map<string,int>::iterator it = m_event_names.find(token);
+	    CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	    event = it->second;
+	 }
       }
       else
       {
@@ -5866,7 +5913,7 @@ void EW::processRupture(char* buffer, vector<Source*> & a_GlobalUniqueSources )
 	  }
 	  else
 	  {
-	    a_GlobalUniqueSources.push_back(sourcePtr);
+	    a_GlobalUniqueSources[event].push_back(sourcePtr);
 	    nSources++;
 	  }
 	}
@@ -6554,7 +6601,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
 }   
 
 //-----------------------------------------------------------------------
-void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
+void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
   double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
@@ -6572,6 +6619,7 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
 
   char* token = strtok(buffer, " \t");
   bool nsew=false; 
+  int event=0;
   //int vel=0;
 
 // tmp
@@ -6703,6 +6751,20 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
        CHECK_INPUT(writeEvery >= 0,
 	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
      }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	//	event = atoi(token);
+	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+	   CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	   event = it->second;
+	}
+     }
      else if( startswith("usgsformat=", token) )
      {
         token += strlen("usgsformat=");
@@ -6815,14 +6877,14 @@ void EW::processReceiver(char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
   else
   {
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery, !nsew);
+					topodepth, writeEvery, !nsew, event );
 // include the receiver in the global list
-    a_GlobalTimeSeries.push_back(ts_ptr);
+    a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
 }
 
 //-----------------------------------------------------------------------
-void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSeries)
+void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
   double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
@@ -6854,6 +6916,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   bool usex=true, usey=true, usez=true;
   bool usgsfileset=false, sf1set=false, sf2set=false, sf3set=false;
   bool scalefactor_set=false;
+  int event=0;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
@@ -6945,6 +7008,20 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
         token += 5; // skip file=
         fileName = token;
         usgsfileset = true;
+     }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	//	event = atoi(token);
+	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+	   CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	   event = it->second;
+	}
      }
      else if (startswith("sta=", token))
      {
@@ -7072,7 +7149,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
      float_sw4 latlon[2];
      if( m_myRank == 0 )
      {
-        string fname= mObsPath;
+        string fname= mObsPath[event];
 	fname += sacfile1;
 	FILE* fd=fopen(fname.c_str(),"r");
 	CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
@@ -7146,7 +7223,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
   else
   {
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery );
+					topodepth, writeEvery, true, event );
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
     //        This is useful for synthetic data.
@@ -7182,7 +7259,7 @@ void EW::processObservation( char* buffer, vector<TimeSeries*> & a_GlobalTimeSer
        ts_ptr->set_scalefactor( scalefactor );
 
 // include the observation in the global list
-    a_GlobalTimeSeries.push_back(ts_ptr);
+    a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
 }
 
@@ -8033,7 +8110,6 @@ void EW::processMaterialRfile(char* buffer)
    add_mtrl_block( rf  );
 }
 
-#ifdef ENABLE_OPT
 //-----------------------------------------------------------------------
 void EW::processMaterialInvtest(char* buffer)
 {
@@ -8071,16 +8147,15 @@ void EW::processMaterialInvtest(char* buffer)
    MaterialData *mdata = new MaterialInvtest( this, nr );
    add_mtrl_block(mdata);
 }
-#endif
 
-////-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 //void EW::processRandomize(char* buffer)
 //{
-//   char* token = strtok(buffer, " \t");
-//   CHECK_INPUT(strcmp("randomize", token) == 0,
-//	       "ERROR: not a randomize line: " << token);
-//   token = strtok(NULL, " \t");
-//   bool lengthscaleset=false, lengthscalezset=false;
+//    char* token = strtok(buffer, " \t");
+//    CHECK_INPUT(strcmp("randomize", token) == 0,
+// 	       "ERROR: not a randomize line: " << token);
+//    token = strtok(NULL, " \t");
+//    bool lengthscaleset=false, lengthscalezset=false;
 //    m_random_dist = m_random_distz = 100;
 //    m_random_sdlimit  = 3;
 //    m_random_amp      = 0.1;
@@ -8224,5 +8299,91 @@ void EW::processRandomBlock(char* buffer)
    RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
 						      corrlenz, hurst, sigma, seed );
    m_random_blocks.push_back(mtrl);
+   //   if( !lengthscaleset && lengthscalezset )
+   //      m_random_dist = m_random_distz;
 }
 
+//-----------------------------------------------------------------------
+void EW::processEvent( char* buffer, int enr )
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("event", token) == 0,
+	       "ERROR: not an event line: " << token);
+   token = strtok(NULL, " \t");
+
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else if( startswith("path=",token) )
+      {
+	 token += 5; // skip path=
+	 string path = token;
+	 path += '/';
+	 mPath.push_back(path);
+	 //	 mPath[enr] = token;
+	 //	 mPath[enr] += '/';
+      }
+      else if (startswith("obspath=", token))
+      {
+	 token += 8; // skip obspath=
+	 string path = token;
+	 path += '/';
+	 mObsPath.push_back(path);
+	 //	 mObsPath[enr] = token;
+	 //	 mObsPath[enr] += '/';
+      }
+      else if( startswith("name=",token) )
+      {
+	 token += 5;
+	 map<string,int>::iterator it=m_event_names.find(token);
+	 CHECK_INPUT(it == m_event_names.end(), "ERROR: processEvent, name = " << token << " multiply defined");
+	 m_event_names[token]=enr;
+      }
+      else
+      {
+	 badOption("randomblock", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+}
+
+//-----------------------------------------------------------------------
+int EW::findNumberOfEvents()
+{
+   char buffer[256];
+   ifstream inputFile;
+   MPI_Barrier(MPI_COMM_WORLD);
+   inputFile.open(mName.c_str());
+   if (!inputFile.is_open())
+   {
+      if (m_myRank == 0)
+	 cerr << endl << "ERROR OPENING INPUT FILE: " << mName << endl << endl;
+      CHECK_INPUT(false,"ERROR opening input file : " << mName << endl << endl);
+   }
+   int events=0;
+   while (!inputFile.eof())
+   {
+      inputFile.getline(buffer, 256);
+      if( startswith("event",buffer ) )
+      {
+	 processEvent( buffer, events );
+	 events++;
+      }
+   }
+   inputFile.close();
+   if( events == 0 )
+   {
+      // use path variables from fileio, and set a default name
+      m_event_names["Default event"]=0;
+   }
+   else
+   {
+      CHECK_INPUT( events > 0, "ERROR: no events found for optimization, nevent= " << events );
+
+   }
+   MPI_Barrier(MPI_COMM_WORLD); // Make sure all processes close the file before continue.
+   return events;
+}

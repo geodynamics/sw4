@@ -1,3 +1,4 @@
+
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -344,9 +345,9 @@ using namespace std;
 #define SQR(x) ((x)*(x))
 
 // constructor
-EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
-       vector<TimeSeries*> & a_GlobalTimeSeries, bool a_invproblem ): 
-  m_epi_lat(0.0), m_epi_lon(0.0), m_epi_depth(0.0), m_epi_t0(0.0),
+EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
+       vector<vector<TimeSeries*> > & a_GlobalTimeSeries, bool a_invproblem ): 
+//  m_epi_lat(0.0), m_epi_lon(0.0), m_epi_depth(0.0), m_epi_t0(0.0),
   m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
@@ -357,8 +358,8 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   mNumberOfGrids(0),
   mName(fileName),
   m_scenario(" "),
-  mPath("./"),
-  mObsPath("./"),
+  //  mPath("./"),
+  //  mObsPath("./"),
   mTempPath("./"),
   mWriteGMTOutput(false),
   mPlotFrequency(80),
@@ -370,11 +371,11 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
   m_iotiming(false),
   m_pfs(false),
   m_nwriters(8),
-  mTimeIsSet(false),
-  mTmax(0.0),
   mTstart(0.0),
   mDt(0.0),
-  mNumberOfTimeSteps(-1),
+  //  mTimeIsSet(false),
+  //  mTmax(0.0),
+  //  mNumberOfTimeSteps(-1),
   m_testing(false),
   m_moment_test(false),
   m_twilight_forcing(NULL),
@@ -555,6 +556,42 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    m_proc_array[1]=0;
 
 // read the input file and setup the simulation object
+//   m_nevent = 1;
+//   if( a_invproblem )
+//   {
+//      m_nevent = findNumberOfEvents();
+//   }
+   m_nevents_specified = findNumberOfEvents();
+   m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
+
+// Allocate storage 
+   m_epi_lat.resize(m_nevent);
+   m_epi_lon.resize(m_nevent);
+   m_epi_depth.resize(m_nevent);
+   m_epi_t0.resize(m_nevent);
+   a_GlobalSources.resize(m_nevent);
+   a_GlobalTimeSeries.resize(m_nevent);
+   mPath.resize(m_nevent);
+   mObsPath.resize(m_nevent);
+   mTmax.resize(m_nevent);
+   mNumberOfTimeSteps.resize(m_nevent);
+   mTimeIsSet.resize(m_nevent);
+   m_utc0.resize(m_nevent);
+// Defaults
+   for( int e=0 ; e < m_nevent ; e++ )
+   {
+      m_epi_lat[e]  = 0.0;
+      m_epi_lon[e]  = 0.0;
+      m_epi_depth[e]= 0.0;
+      m_epi_t0[e]   = 0.0;
+      //      mPath[e] = "./";
+      //      mObsPath[e] = "./";
+      mTmax[e]= 0.0;
+      mNumberOfTimeSteps[e]=-1;
+      mTimeIsSet[e]=false;
+      m_utc0[e].resize(7);
+   }
+
    if (parseInputFile( a_GlobalSources, a_GlobalTimeSeries ))
      mParsingSuccessful = true;
 
@@ -563,6 +600,7 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    // char fname[100];
    // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
    // msgStream.open(fname);
+
 }
 
 // Destructor
@@ -594,7 +632,7 @@ void EW::printTime( int cycle, float_sw4 t, bool force ) const
       printf("Time step %7i  t = %15.7e\n", cycle, t);
 }
 //-----------------------------------------------------------------------
-void EW::printPreamble(vector<Source*> & a_Sources) const 
+void EW::printPreamble(vector<Source*> & a_Sources, int event ) const 
 {
    stringstream msg;
 
@@ -604,13 +642,24 @@ void EW::printPreamble(vector<Source*> & a_Sources) const
           << " Running program on " << m_nProcs << " MPI tasks" << " using the following data: " << endl << endl
           << " Start Time = " << mTstart << " Goal Time = ";
 
-      if (mTimeIsSet)
-         msg << mTmax << endl;
+      if (mTimeIsSet[event])
+         msg << mTmax[event] << endl;
       else
-         msg << mNumberOfTimeSteps*mDt << endl;
+         msg << mNumberOfTimeSteps[event]*mDt << endl;
       
-      msg << " Number of time steps = " << mNumberOfTimeSteps << " dt: " << mDt << endl;
-      
+      msg << " Number of time steps = " << mNumberOfTimeSteps[event] << " dt: " << mDt << endl;
+      if( m_nevent > 1 )
+      {
+	 map<string,int>::const_iterator it=m_event_names.begin();
+	 bool found=it->second == event;
+	 while( !found && it != m_event_names.end() )
+	 {
+	    it++;
+	    found = it->second == event;
+	 }
+	 msg << " Event name: " << it->first << endl;
+      }      
+
       if (mVerbose)
       {
 	msg << endl;
@@ -1253,7 +1302,7 @@ void EW::setGMTOutput(string filename, string wppfilename)
 }
 
 //-----------------------------------------------------------------------
-void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
+void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int event )
 {
 // this routine needs to be updated (at least for the etree info)
    if (!mWriteGMTOutput) return;
@@ -1378,16 +1427,16 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
       }
 #endif
       
-      if (a_GlobalUniqueSources.size() > 0)
+      if (a_GlobalUniqueSources[event].size() > 0)
       {
          contents << "# Sources... " << endl
 	          << "cat << EOF >! event.d" << endl;
          
-         for (int i=0; i < a_GlobalUniqueSources.size(); ++i)
+         for (int i=0; i < a_GlobalUniqueSources[event].size(); ++i)
          {
            double latSource,lonSource;
 
-           computeGeographicCoord(a_GlobalUniqueSources[i]->getX0(), a_GlobalUniqueSources[i]->getY0(),
+           computeGeographicCoord(a_GlobalUniqueSources[event][i]->getX0(), a_GlobalUniqueSources[event][i]->getY0(),
                                   lonSource ,latSource);
 //  should name the event better
 	   contents << lonSource << " " << latSource << " EVENT-NAME  CB" << endl;
@@ -1415,7 +1464,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
             sw4InputFile.getline(buffer, 256);
             if (startswith("rec", buffer) || startswith("sac", buffer))
             {
-               numStations += 1;
+
                bool cartCoordSet = false;
                bool gridPointSet = false;
                bool geoCoordSet = false;
@@ -1424,6 +1473,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                double x=0.0, y=0.0, z=0.0;
                double lat=0.0, lon=0.0;
                int i=0,j=0,k=0;
+	       int ev=0;
                // Get location and write to file
                char* token = strtok(buffer, " \t");   
                token = strtok(NULL, " \t"); // skip sac
@@ -1471,6 +1521,11 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                      z = atof(token);
                      geoCoordSet = true;
                   }
+                  else if (startswith("event=", token))
+                  {
+                     token += 6; // skip event=
+                     ev = atoi(token);
+                  }
                   else if (startswith("sta=", token))
                   {
                      token += 4;
@@ -1492,9 +1547,13 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
                {
                  computeGeographicCoord(x, y, lon, lat);
                }
+	       if( ev == event )
+	       {
+		  numStations += 1;
                
                // Now have location
-               stationstr << lon << " " << lat << " " << name << " CB" << endl; 
+		  stationstr << lon << " " << lat << " " << name << " CB" << endl; 
+	       }
             } // token on sac line
          } // line in ew file
       }
@@ -1511,7 +1570,7 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
       contents << "/bin/mv plot.ps " << mName << ".ps" << endl;
 
       stringstream filename;
-      filename << mPath << mGMTFileName;
+      filename << mPath[event] << mGMTFileName;
       ofstream gmtfile(filename.str().c_str());
       if (gmtfile.is_open())
       {
@@ -1530,8 +1589,8 @@ void EW::saveGMTFile( vector<Source*> & a_GlobalUniqueSources )
 //-----------------------------------------------------------------------
 void EW::print_execution_time( double t1, double t2, string msg )
 {
-//   if( !mQuiet && proc_zero() )
-   if( proc_zero() )
+   if( !mQuiet && proc_zero() )
+      //   if( proc_zero() )
    {
       double s = t2 - t1;
       int h = static_cast<int>(s/3600.0);
@@ -4784,7 +4843,7 @@ void EW::side_plane( int g, int side, int wind[6], int nGhost )
 void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_Up,
 			vector<Sarray>& a_U, vector<Sarray>& a_Um,
 			vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-			vector<Source*> & a_sources, int dminus )
+			vector<Source*> & a_sources, int dminus, int event )
 {
    //   double maxerr;
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
@@ -5044,7 +5103,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 // write the image plane on file    
       double t[3];
       t[0] = t[1] = t[2] = MPI_Wtime();
-      img->writeImagePlane_2( currentTimeStep-td, mPath, time-td*mDt );
+      img->writeImagePlane_2( currentTimeStep-td, mPath[event], time-td*mDt );
       t[2] = MPI_Wtime();
       
 // output timing info?
@@ -5102,8 +5161,14 @@ void EW::addESSI3D(ESSI3D* i)
 //-----------------------------------------------------------------------
 void EW::initialize_image_files( )
 {
+   // In case of multiple events, prepare maximum number of time steps
+   int maxNumberOfTimeSteps = 0;
+   for( int e=0 ; e < m_nevent ; e++ )
+      maxNumberOfTimeSteps = mNumberOfTimeSteps[e] > maxNumberOfTimeSteps ? mNumberOfTimeSteps[e] : 
+	                                          maxNumberOfTimeSteps;
    // Image planes
-   Image::setSteps(mNumberOfTimeSteps);
+   Image::setSteps(maxNumberOfTimeSteps);
+   //   Image::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
    {
      mImageFiles[fIndex]->computeGridPtIndex();
@@ -5120,10 +5185,12 @@ void EW::initialize_image_files( )
 	 mImageFiles[fIndex]->computeImageGrid(mX, mY, mZ );
 
    // Volume images
-   Image3D::setSteps(mNumberOfTimeSteps);
+   Image3D::setSteps(maxNumberOfTimeSteps);
+   //   Image3D::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
       mImage3DFiles[fIndex]->setup_images( );
-   ESSI3D::setSteps(mNumberOfTimeSteps);
+   ESSI3D::setSteps(maxNumberOfTimeSteps);
+   //   ESSI3D::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mESSI3DFiles.size(); ++fIndex)
       mESSI3DFiles[fIndex]->setup( );
 }
@@ -5371,7 +5438,7 @@ void EW::get_cgparameters( int& maxit, int& maxrestart, float_sw4& tolerance,
 
 //-----------------------------------------------------------------------
 void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
-			 vector<Sarray>& U, vector<Sarray>& Up, int step )
+			 vector<Sarray>& U, vector<Sarray>& Up, int step, int event )
 {
 // Compute energy
    float_sw4 energy    = 0;
@@ -5418,7 +5485,7 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
    energy /= (dt*dt);
    float_sw4 energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
-   m_energy_test->record_data( energy, step, write_file, m_myRank, mPath );
+   m_energy_test->record_data( energy, step, write_file, m_myRank, mPath[event] );
 }
 //-----------------------------------------------------------------------
 float_sw4 EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
@@ -5459,19 +5526,19 @@ float_sw4 EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
 }
 
 //-----------------------------------------------------------------------
-void EW::get_utc( int utc[7] ) const
+void EW::get_utc( int utc[7], int event ) const
 {
    for( int c=0 ; c < 7 ; c++ )
-      utc[c] = m_utc0[c];
+      utc[c] = m_utc0[event][c];
 }
 
 //-----------------------------------------------------------------------
-void EW::print_utc()
+void EW::print_utc( int e )
 {
    if( proc_zero() )
    {
-      printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[1], m_utc0[2], m_utc0[0], m_utc0[3],
-	     m_utc0[4], m_utc0[5], m_utc0[6] );
+      printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[e][1], m_utc0[e][2], 
+	     m_utc0[e][0], m_utc0[e][3], m_utc0[e][4], m_utc0[e][5], m_utc0[e][6] );
    }
 }
 
@@ -6532,17 +6599,17 @@ void EW::get_gridgen_info( int& order, float_sw4& zetaBreak ) const
 }
 
 //-----------------------------------------------------------------------
-void EW::get_nr_of_material_parameters( int& nmvar )
-{
-   nmvar = 0;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      if( m_iEndAct[g]-m_iStartAct[g]+1 > 0 && m_jEndAct[g]-m_jStartAct[g]+1 >0
-	  && m_kEndAct[g]-m_kStartAct[g]+1 > 0 )
-	 nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*
-	    (m_kEndAct[g]-m_kStartAct[g]+1)*3;
-   }
-}
+//void EW::get_nr_of_material_parameters( int& nmvar )
+//{
+//   nmvar = 0;
+//   for( int g=0 ; g < mNumberOfGrids ; g++ )
+//   {
+//      if( m_iEndAct[g]-m_iStartAct[g]+1 > 0 && m_jEndAct[g]-m_jStartAct[g]+1 >0
+//	  && m_kEndAct[g]-m_kStartAct[g]+1 > 0 )
+//	 nmvar += (m_iEndAct[g]-m_iStartAct[g]+1)*(m_jEndAct[g]-m_jStartAct[g]+1)*
+//	    (m_kEndAct[g]-m_kStartAct[g]+1)*3;
+//   }
+//}
 
 //-----------------------------------------------------------------------
 void EW::parameters_to_material( int nmpar, float_sw4* xm, vector<Sarray>& rho,
@@ -6601,53 +6668,53 @@ void EW::material_to_parameters( int nmpar, float_sw4* xm, vector<Sarray>& rho,
 }
 
 //-----------------------------------------------------------------------
-void EW::get_material_parameter( int nmpar, float_sw4* xm )
-{
-   size_t gp, ind=0;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      if( g == 0 )
-	 gp = 0;
-      else
-	 gp = gp + 3*ind;
-      ind =0;
-      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
-	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
-	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
-	    {
-	       xm[gp+ind*3]   = mRho[g](i,j,k);
-	       xm[gp+ind*3+1] = mMu[g](i,j,k);
-	       xm[gp+ind*3+2] = mLambda[g](i,j,k);
-	       ind++;
-	    }
-   }
-}
+//void EW::get_material_parameter( int nmpar, float_sw4* xm )
+//{
+//   size_t gp, ind=0;
+//   for( int g=0 ; g < mNumberOfGrids ; g++ )
+//   {
+//      if( g == 0 )
+//	 gp = 0;
+//      else
+//	 gp = gp + 3*ind;
+//      ind =0;
+//      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+//	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+//	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
+//	    {
+//	       xm[gp+ind*3]   = mRho[g](i,j,k);
+//	       xm[gp+ind*3+1] = mMu[g](i,j,k);
+//	       xm[gp+ind*3+2] = mLambda[g](i,j,k);
+//	       ind++;
+//	    }
+//   }
+//}
 
 //-----------------------------------------------------------------------
-void EW::get_scale_factors( int nmpar, float_sw4* sf )
-{
-   size_t gp, ind=0;
-   float_sw4 rhoscale = 2.0;
-   float_sw4 muscale = 1.0;
-   float_sw4 lambdascale = 5.4e-3;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      if( g == 0 )
-	 gp = 0;
-      else
-	 gp = gp + 3*ind;
-      ind =0;
-      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
-	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
-	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
-	    {
-	       sf[gp+ind*3]   = rhoscale;
-	       sf[gp+ind*3+1] = muscale;
-	       sf[gp+ind*3+2] = lambdascale;
-	       ind++;
-	    }
-   }
-}
+//void EW::get_scale_factors( int nmpar, float_sw4* sf )
+//{
+//   size_t gp, ind=0;
+//   float_sw4 rhoscale = 2.0;
+//   float_sw4 muscale = 1.0;
+//   float_sw4 lambdascale = 5.4e-3;
+//   for( int g=0 ; g < mNumberOfGrids ; g++ )
+//   {
+//      if( g == 0 )
+//	 gp = 0;
+//      else
+//	 gp = gp + 3*ind;
+//      ind =0;
+//      for( int k=m_kStartAct[g]; k <= m_kEndAct[g]; k++ )
+//	 for( int j=m_jStartAct[g]; j <= m_jEndAct[g]; j++ )
+//	    for( int i=m_iStartAct[g]; i <= m_iEndAct[g]; i++ )
+//	    {
+//	       sf[gp+ind*3]   = rhoscale;
+//	       sf[gp+ind*3+1] = muscale;
+//	       sf[gp+ind*3+2] = lambdascale;
+//	       ind++;
+//	    }
+//   }
+//}
 
 //-----------------------------------------------------------------------
 void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um, 
@@ -6784,21 +6851,21 @@ void EW::get_optmethod( int& method, int& bfgs_m )
 }
 
 //-----------------------------------------------------------------------
-void EW::set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth, float_sw4 earliestTime)
+void EW::set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth, float_sw4 earliestTime, int e )
 {
-  m_epi_lat = epiLat;
-  m_epi_lon = epiLon;
-  m_epi_depth = epiDepth;
-  m_epi_t0 = earliestTime;
+  m_epi_lat[e] = epiLat;
+  m_epi_lon[e] = epiLon;
+  m_epi_depth[e] = epiDepth;
+  m_epi_t0[e] = earliestTime;
 }
 
 //-----------------------------------------------------------------------
-void EW::get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth, float_sw4 &earliestTime)
+void EW::get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth, float_sw4 &earliestTime, int e)
 {
-  epiLat = m_epi_lat;
-  epiLon = m_epi_lon;
-  epiDepth = m_epi_depth;
-  earliestTime = m_epi_t0;
+  epiLat = m_epi_lat[e];
+  epiLon = m_epi_lon[e];
+  epiDepth = m_epi_depth[e];
+  earliestTime = m_epi_t0[e];
 }
 
 //-----------------------------------------------------------------------
@@ -6852,194 +6919,6 @@ void EW::check_min_max_int( vector<Sarray>& a_U )
    delete[] mx;
    delete[] mn;
 }
-
-#ifdef ENABLE_OPT
-//-----------------------------------------------------------------------
-void EW::material_correction( int nmpar, float_sw4* xm )
-// routine to enforce material speed limits and positive density
-{
-   float_sw4 vsmin = -1;
-   if( m_useVelocityThresholds )
-      vsmin = m_vsMin;
-   float_sw4 rhoscale=1, muscale=1, lascale=1;
-
-   parameters_to_material( nmpar, xm, mRho, mMu, mLambda );
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      int info;
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
-      int ifirstact = m_iStartAct[g];
-      int ilastact  = m_iEndAct[g];
-      int jfirstact = m_jStartAct[g];
-      int jlastact  = m_jEndAct[g];
-      int kfirstact = m_kStartAct[g];
-      int klastact  = m_kEndAct[g];
-
-      float_sw4* rhop = mRho[g].c_ptr();
-      float_sw4* mup = mMu[g].c_ptr();
-      float_sw4* lap = mLambda[g].c_ptr();
-
-      if( topographyExists() && g == mNumberOfGrids-1 )
-      {
-	 // Curvilinear 
-	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(), mJ.c_ptr(),
-					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &info );
-      }
-      else
-      {
-	 // Cartesian
-	 F77_FUNC(projectmtrl,PROJECTMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-					    &klastact, rhop, mup, lap, &mDt, &mGridSize[g], &mCFLmax,
-					    &vsmin, &rhoscale, &muscale, &lascale, &info );
-      }
-      if( info != 0 )
-	 cout << "Grid " << g << " info = " << info << " from projectmtrl" << endl;
-   }   
-   material_to_parameters( nmpar, xm, mRho, mMu, mLambda );
-}
-#endif
-
-#ifdef ENABLE_OPT
-//-----------------------------------------------------------------------
-void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-			   vector<Sarray>& a_lambda, int& info )
-// routine to enforce material speed limits and positive density
-{
-   float_sw4 vsmin = -1;
-   if( m_useVelocityThresholds )
-      vsmin = m_vsMin;
-   float_sw4 rhoscale=1, muscale=1, lascale=1;
-   info = 0;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      int infogrid;
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
-      int ifirstact = m_iStartAct[g];
-      int ilastact  = m_iEndAct[g];
-      int jfirstact = m_jStartAct[g];
-      int jlastact  = m_jEndAct[g];
-      int kfirstact = m_kStartAct[g];
-      int klastact  = m_kEndAct[g];
-
-      float_sw4* rhop = a_rho[g].c_ptr();
-      float_sw4* mup  = a_mu[g].c_ptr();
-      float_sw4* lap  = a_lambda[g].c_ptr();
-
-      if( topographyExists() && g == mNumberOfGrids-1 )
-      {
-	 // Curvilinear 
-	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(), mJ.c_ptr(),
-					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
-      }
-      else
-      {
-	 // Cartesian
-	 F77_FUNC(projectmtrl,PROJECTMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-					    &klastact, rhop, mup, lap, &mDt, &mGridSize[g], &mCFLmax,
-					    &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
-      }
-      if( infogrid != 0 )
-      {
-	 cout << "Grid " << g << " info = " << infogrid << " from projectmtrl" << endl;
-         if( info == 0 )
-	    info = infogrid;
-      }
-   }   
-}
-#endif
-
-#ifdef ENABLE_OPT
-//-----------------------------------------------------------------------
-void EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-			 vector<Sarray>& a_lambda, int& ok )
-{
-   ok = 1;
-   for( int g=0 ; g < mNumberOfGrids ; g++ )
-   {
-      int infogrid;
-      int ifirst = m_iStart[g];
-      int ilast  = m_iEnd[g];
-      int jfirst = m_jStart[g];
-      int jlast  = m_jEnd[g];
-      int kfirst = m_kStart[g];
-      int klast  = m_kEnd[g];
-
-      float_sw4 limits[10];
-
-      float_sw4* rhop = a_rho[g].c_ptr();
-      float_sw4* mup  = a_mu[g].c_ptr();
-      float_sw4* lap  = a_lambda[g].c_ptr();
-
-      //      if( topographyExists() && g == mNumberOfGrids-1 )
-      //      {
-      //	 // Curvilinear 
-      //	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-      //					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-      //					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(), mJ.c_ptr(),
-      //					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
-      //      }
-      //      else
-      //      {
-	 // Cartesian
-      F77_FUNC(checkmtrl,CHECKMTRL)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-				     rhop, mup, lap, &mDt, &mGridSize[g], limits );
-      float_sw4 local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
-      float_sw4 global[5];
-      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MIN, MPI_COMM_WORLD );
-      limits[0]=global[0];
-      limits[2]=global[1];
-      limits[4]=global[2];
-      limits[7]=global[3];
-      limits[8]=global[4];
-      local[0]=limits[1];
-      local[1]=limits[3];
-      local[2]=limits[5];
-      local[3]=limits[6];
-      local[4]=limits[9];
-      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
-      limits[1]=global[0];
-      limits[3]=global[1];
-      limits[5]=global[2];
-      limits[6]=global[3];
-      limits[9]=global[4];
-      if( proc_zero() )
-      {
-         cout << limits[0] << " <=   rho    <= " << limits[1] << " (grid " << g << ")" << endl;
-         cout << limits[2] << " <=    mu    <= " << limits[3] << " (grid " << g << ")" << endl;
-         cout << limits[4] << " <=  lambda  <= " << limits[5] << " (grid " << g << ")" << endl;
-
-	 if( limits[0] < 0 )
-	    cout << "rho_min = " << limits[0] << " on grid " << g << endl;
-	 if( limits[2] < 0 )
-	    cout << "mu_min = " << limits[2] << " on grid " << g << endl;
-	 if( limits[4] < 0 )
-	    cout << "lambda_min = " << limits[4] << " on grid " << g << endl;
-         if( limits[6] < 0 )
-	    cout << " cfl_max  is imaginary on grid " << g << endl;
-         else
-	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
-
-      }
-      ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] < mCFLmax*mCFLmax && limits[8]>0);
-   }
-}
-#endif
 
 //-----------------------------------------------------------------------
 void EW::extrapolateTopo(Sarray& field)
@@ -7504,7 +7383,7 @@ void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
    int nrsrctot, nruniquetot;
    MPI_Reduce( &nrsrc, &nrsrctot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
    MPI_Reduce( &nrunique, &nruniquetot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-   if( m_myRank == 0 )
+   if( !mQuiet && m_myRank == 0 && mVerbose >= 2 )
    {
       cout << "number of grid point  sources = " << nrsrctot << endl;
       cout << "number of unique g.p. sources = " << nruniquetot << endl;

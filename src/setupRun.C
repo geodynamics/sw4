@@ -87,7 +87,7 @@ void bndryOpNoGhostc( float_sw4* acof_no_gp, float_sw4* ghcof_no_gp, float_sw4* 
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
+void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 {
    if( mIsInitialized && proc_zero() )
       cout << " WARNING, calling setupRun twice " << endl;
@@ -305,7 +305,8 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 //  int beginCycle = 1;
 
 // Initialize IO
-  create_directory(mPath);
+  for( int e=0 ; e < m_nevent ; e++ )
+     create_directory(mPath[e]);
 
   if (proc_zero())
   {
@@ -522,7 +523,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 
 //-----------------------------------------------------------------------
-void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
+void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
 {
 // This routine should be called once, after setupRun (can we include it in setupRun?)
 
@@ -555,7 +556,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       if (mVerbose && proc_zero())
 	cout << "Sanity testing of the source" << endl;
 
-      if( (m_point_source_test || m_lamb_test) && a_GlobalUniqueSources.size() != 1 )
+      if( (m_point_source_test || m_lamb_test) && a_GlobalUniqueSources[0].size() != 1 )
       {
 	if (proc_zero())
 	  cout << "Error: Point Source Test and Lamb Test must have one single source" << endl
@@ -563,19 +564,19 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	sources_ok=false;
       }
 
-      if( m_point_source_test && !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-				   a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ||
-				   a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
-				   a_GlobalUniqueSources[0]->getName() == "Gaussian") )
+      if( m_point_source_test && !(a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
+				   a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ||
+				   a_GlobalUniqueSources[0][0]->getName() == "SmoothWave" ||
+				   a_GlobalUniqueSources[0][0]->getName() == "Gaussian") )
       {
 	if (proc_zero())
 	  cout << "Error: Point Source Test can only have source types" 
 	       << " VerySmoothBump, SmoothWave, or Gaussian" << endl
-	       << "  Input name is " << a_GlobalUniqueSources[0]->getName() << endl;
+	       << "  Input name is " << a_GlobalUniqueSources[0][0]->getName() << endl;
 	sources_ok=false;
       }
 
-      if( m_lamb_test && a_GlobalUniqueSources[0]->isMomentSource() )
+      if( m_lamb_test && a_GlobalUniqueSources[0][0]->isMomentSource() )
       {
 	if (proc_zero())
 	  cout << "Error: Lamb's Test must have one point force" << endl
@@ -586,18 +587,18 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       if( m_lamb_test )
       {
 	float_sw4 fx, fy, fz, z0, freq;
-	a_GlobalUniqueSources[0]->getForces( fx, fy, fz );
-	z0 = a_GlobalUniqueSources[0]->getZ0();
-	freq = a_GlobalUniqueSources[0]->getFrequency();
+	a_GlobalUniqueSources[0][0]->getForces( fx, fy, fz );
+	z0 = a_GlobalUniqueSources[0][0]->getZ0();
+	freq = a_GlobalUniqueSources[0][0]->getFrequency();
 	
-	if ( !( (a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-		 a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ) &&
+	if ( !( (a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
+		 a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ) &&
 	       freq == 1.0 && z0 == 0.0 && fx == 0.0 && fy == 0.0) )
 	{
 	  if (proc_zero())
 	    cout << "Error: Lamb Test assumes a 'VerySmoothBump' time function with freq=1" 
 		 << " on z=0 with fx=0 and fy=0" << endl
-		 << " The specified source has a '" << a_GlobalUniqueSources[0]->getName() 
+		 << " The specified source has a '" << a_GlobalUniqueSources[0][0]->getName() 
 		 << "' time function with freq=" << freq 
 		 << " on z=" << z0 << " with fx=" << fx << " and fy=" << fy << endl;
 	  sources_ok=false;
@@ -617,32 +618,34 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // find the epicenter, i.e., the location of the source with the lowest value of t0
 
 // get the epicenter
-      compute_epicenter( a_GlobalUniqueSources );
+       for( int e=0 ; e < m_nevent ; e++ )
+       {
+	  compute_epicenter( a_GlobalUniqueSources[e], e );
       
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 
 // if the sources were defined by a rupture file, we need to multiply the Mij coefficients by mu (shear modulus)
-      bool need_mu_corr=false;
+	  bool need_mu_corr=false;
 #pragma omp parallel for reduction(||:need_mu_corr)
-      for( int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-	need_mu_corr = (need_mu_corr || a_GlobalUniqueSources[i]->get_CorrectForMu( ));
+	  for( int i=0 ; i < a_GlobalUniqueSources[e].size() ; i++ )
+	     need_mu_corr = (need_mu_corr || a_GlobalUniqueSources[e][i]->get_CorrectForMu( ));
 
 // must communicate need_mu_corr
-      int mu_corr_global=0, mu_corr_loc= need_mu_corr? 1:0;
+	  int mu_corr_global=0, mu_corr_loc= need_mu_corr? 1:0;
       
 // take max over all procs to communicate 
-      MPI_Allreduce( &mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX, m_cartesian_communicator);
-      need_mu_corr=(bool) mu_corr_global;
+	  MPI_Allreduce( &mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX, m_cartesian_communicator);
+	  need_mu_corr=(bool) mu_corr_global;
 
 // tmp
 //      printf(" Proc #%i, sources needs correction for shear modulus: %s\n", getRank(), need_mu_corr? "TRUE":"FALSE");
 
-      if (!mQuiet && mVerbose >= 3 && proc_zero() )
-	printf(" Some sources needs correction for shear modulus: %s\n", need_mu_corr? "TRUE":"FALSE");
+	  if (!mQuiet && mVerbose >= 3 && proc_zero() )
+	     printf(" Some sources needs correction for shear modulus: %s\n", need_mu_corr? "TRUE":"FALSE");
 
-      if (need_mu_corr)
-      {
-	int nSources=a_GlobalUniqueSources.size();
+	  if (need_mu_corr)
+	  {
+	     int nSources=a_GlobalUniqueSources[e].size();
 	// if (proc_zero())
 	//   printf("Number of sources: %i\n", nSources);
 
@@ -661,12 +664,12 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // fill in the values that are known to this processor
 #pragma omp parallel for
 	for (int s=0; s<nSources; s++)
-	  if (a_GlobalUniqueSources[s]->myPoint())
+	  if (a_GlobalUniqueSources[e][s]->myPoint())
 	  {
-	    int is=a_GlobalUniqueSources[s]->m_i0;
-	    int js=a_GlobalUniqueSources[s]->m_j0;
-	    int ks=a_GlobalUniqueSources[s]->m_k0;
-	    int gs=a_GlobalUniqueSources[s]->m_grid;
+	    int is=a_GlobalUniqueSources[e][s]->m_i0;
+	    int js=a_GlobalUniqueSources[e][s]->m_j0;
+	    int ks=a_GlobalUniqueSources[e][s]->m_k0;
+	    int gs=a_GlobalUniqueSources[e][s]->m_grid;
 	    
 // tmp
 	    mu_source_loc[s] = mMu[gs](is,js,ks); 
@@ -684,14 +687,14 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // scale all moments components
 #pragma omp parallel for
 	for (int s=0; s<nSources; s++)
-	  if (a_GlobalUniqueSources[s]->get_CorrectForMu())
+	  if (a_GlobalUniqueSources[e][s]->get_CorrectForMu())
 	  {
 	     float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
 	     mu = mu_source_global[s];
-	     a_GlobalUniqueSources[s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
-	     a_GlobalUniqueSources[s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
+	     a_GlobalUniqueSources[e][s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
+	     a_GlobalUniqueSources[e][s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
 // lower the flag
-	     a_GlobalUniqueSources[s]->set_CorrectForMu(false);
+	     a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
 	  }
 // cleanup
 	delete[] mu_source_loc;
@@ -713,9 +716,9 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // check how deep the sources go
       float_sw4 zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
 #pragma omp parallel for reduction(max:zMax) reduction(min:zMin)
-      for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
+      for( int s=0; s < a_GlobalUniqueSources[e].size(); s++ ) 
       {
-	float_sw4 zSource = a_GlobalUniqueSources[s]->getZ0( );
+	float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0( );
 	if (zSource > zMax)
 	  zMax = zSource;
 	if (zSource < zMin)
@@ -729,9 +732,9 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 
 // Need to set the frequency to 1/dt for Dirac source
 #pragma omp parallel for
-      for( int s=0 ; s  < a_GlobalUniqueSources.size(); s++ )
-	 if( a_GlobalUniqueSources[s]->getTfunc() == iDirac )
-	    a_GlobalUniqueSources[s]->setFrequency( 1.0/mDt );
+      for( int s=0 ; s  < a_GlobalUniqueSources[e].size(); s++ )
+	 if( a_GlobalUniqueSources[e][s]->getTfunc() == iDirac )
+	    a_GlobalUniqueSources[e][s]->setFrequency( 1.0/mDt );
 
       if (m_prefilter_sources)
       {
@@ -796,8 +799,8 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // // TODO: check that t0 is large enough even when prefilter is NOT used
 
       if (proc_zero())
-	saveGMTFile( a_GlobalUniqueSources );
-
+	 saveGMTFile( a_GlobalUniqueSources, e );
+       }
     } // end normal seismic setup
 
   } // end if ( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
@@ -808,7 +811,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 } // end preprocessSources
 
 //-----------------------------------------------------------------------
-void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources ) 
+void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources, int e ) 
 {
   // To find out which event goes first, we need to query all sources
   double earliestTime=0.;
@@ -838,7 +841,7 @@ void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources )
     epiDepth = firstSource->getDepth(); // corrected for topography!
   }
 
-  set_epicenter(epiLat, epiLon, epiDepth, earliestTime);
+  set_epicenter(epiLat, epiLon, epiDepth, earliestTime, e );
   
 }
 
@@ -1084,8 +1087,6 @@ void EW::set_materials()
 //    cout << "randomize = " << m_randomize << " randblsize= " << m_random_blocks.size() << endl;
     if( m_randomize )
     {
-       // Note: mu and lambda here contain cs and cp respectively.
-       // OLD: digital filter method to perturb velocities
        //  perturb_velocities( mMu, mLambda );
        for( int g=0 ; g < mNumberOfGrids ; g++ )
        {
@@ -1102,6 +1103,9 @@ void EW::set_materials()
 	  }
 	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
 	     m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], zmin, zmax );
+	  //	  double zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];
+	  //	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+	  //	     m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], m_zmin[g], zmax );
 
 	  communicate_array( mMu[g], g );
 	  communicate_array( mLambda[g], g );
@@ -1698,14 +1702,18 @@ void EW::computeDT()
       cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
     
-    if (mTimeIsSet)
+    for( int e=0 ; e < m_nevent ; e++ )
     {
+       if (mTimeIsSet[e])
+       {
 // constrain the dt based on the goal time
 //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax! ***");  
-      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
-      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
+	  mNumberOfTimeSteps[e] = static_cast<int> ((mTmax[e] - mTstart) / mDt + 0.5); 
+	  mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e]==0)? 1: mNumberOfTimeSteps[e];
 // the resulting mDt could be slightly too large, because the numberOfTimeSteps is rounded to the nearest int
-      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+// When more than one event set mTmax, the final time will only be perfect for one event, don't know how to fix that....
+	  mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
+       }
     }
 }
 
@@ -1758,14 +1766,17 @@ void EW::computeDTanisotropic()
       cout << "order of accuracy=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
     
-    if (mTimeIsSet)
+    for( int e=0 ; e < m_nevent ; e++ )
     {
+       if (mTimeIsSet[e])
+       {
 // constrain the dt based on the goal time
 //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax! ***");  
-      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
-      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
+	  mNumberOfTimeSteps[e] = static_cast<int> ((mTmax[e] - mTstart) / mDt + 0.5); 
+	  mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e]==0)? 1: mNumberOfTimeSteps[e];
 // the resulting mDt could be slightly too large, because the numberOfTimeSteps is rounded to the nearest int
-      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+	  mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
+       }
     }
 }
 
@@ -2395,12 +2406,172 @@ void EW::getDtFromRestartFile()
    //   VERIFY2( m_check_point->mDoRestart,
    //	    "Error in EW::getDtFromRestartFile: there is no restart command");
    mDt = m_check_point->getDt();
-   if (mTimeIsSet)
+   // Assume one event for restart.
+   if( m_nevent > 1 )
+   {
+      if( proc_zero() )
+	 cout << "WARNING: Restart only supported for single event computations." << 
+	    " Restart will use default event" << endl;
+   }
+   int event=0;
+   if (mTimeIsSet[event])
    {
 // constrain Tmax based on the time step
-      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
-      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
-      mTmax = mTstart + mNumberOfTimeSteps*mDt;
+      mNumberOfTimeSteps[event] = static_cast<int> ((mTmax[event] - mTstart) / mDt + 0.5); 
+      mNumberOfTimeSteps[event] = (mNumberOfTimeSteps[event]==0)? 1: mNumberOfTimeSteps[event];
+      mTmax[event] = mTstart + mNumberOfTimeSteps[event]*mDt;
+      // Do not change time step from restart solution !
       //      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
    }
 }  
+
+
+//-----------------------------------------------------------------------
+void EW::initial_tw_test( vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& F,
+			  vector<Sarray>& Mu, vector<Sarray>& Lambda, vector<Sarray>& Lu,
+			  vector<Sarray>& Uacc, vector<Sarray*> AlphaVE,
+			  vector<GridPointSource*> point_sources, vector<int> identsources,
+			  float_sw4 t )
+{
+   if (m_twilight_forcing && getVerbosity() >= 3) // only do these tests if verbose>=3
+   {
+      if ( !mQuiet && proc_zero() )
+	 cout << "***Twilight Testing..." << endl;
+
+// output some internal flags        
+      for(int g=0; g<mNumberOfGrids; g++)
+      {
+	 printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
+	 for (int q=0; q<6; q++)
+	    printf(" os[%i]=%i", q, m_onesided[g][q]);
+	 printf("\n");
+	 printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
+	 for (int q=0; q<6; q++)
+	    printf(" bc[%i]=%i", q, m_bcType[g][q]);
+	 printf("\n");
+      }
+
+// test accuracy of spatial approximation
+      if ( proc_zero() )
+	 printf("\n Testing the accuracy of the spatial difference approximation\n");
+      exactRhsTwilight(t, F);
+      evalRHS( U, Mu, Lambda, Up, AlphaVE ); // save Lu in composite grid 'Up'
+
+
+// evaluate and print errors
+      float_sw4 * lowZ = new float_sw4[3*mNumberOfGrids];
+      float_sw4 * interiorZ = new float_sw4[3*mNumberOfGrids];
+      float_sw4 * highZ = new float_sw4[3*mNumberOfGrids];
+    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
+      bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
+
+      float_sw4* tmp= new float_sw4[3*mNumberOfGrids];
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = lowZ[i];
+      MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = interiorZ[i];
+      MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = highZ[i];
+      MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+
+      if ( proc_zero() )
+      {
+	 for( int g=0 ; g < mNumberOfGrids ; g++ )
+	 {
+	    printf("Grid nr: %3i \n", g );
+	    printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[3*g], lowZ[3*g+1], lowZ[3*g+2]);
+	    printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[3*g], interiorZ[3*g+1], interiorZ[3*g+2]);
+	    printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[3*g], highZ[3*g+1], highZ[3*g+2]);
+	 }
+      }
+  
+// test accuracy of forcing
+      evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+      Force( t, F, point_sources, identsources );
+      exactAccTwilight( t, Uacc ); // save Utt in Uacc
+      test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
+
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = lowZ[i];
+      MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = interiorZ[i];
+      MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = highZ[i];
+      MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+
+      if ( proc_zero() )
+      {
+	 printf("Testing accuracy of rho*utt - L(u) = F\n");
+	 for( int g=0 ; g < mNumberOfGrids ; g++ )
+	 {
+	    printf("Grid nr: %3i \n", g );
+	    printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",lowZ[3*g],lowZ[3*g+1],lowZ[3*g+2]);
+	    printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",interiorZ[3*g],interiorZ[3*g+1],interiorZ[3*g+2]);
+	    printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",highZ[3*g],highZ[3*g+1],highZ[3*g+2]);
+	 }
+      }
+      delete[] tmp;
+      delete[] lowZ;
+      delete[] interiorZ;
+      delete[] highZ;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
+				   vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
+				   vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t )
+{
+   if (m_twilight_forcing && m_check_point->do_restart() && getVerbosity()>=3)
+   {
+      if ( proc_zero() )
+	 printf("Checking the accuracy of the checkpoint data\n");
+
+// check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
+      float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
+      exactSol( t, Up, AlphaVEp, a_Sources );
+
+    normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
+
+    if ( proc_zero() )
+       printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+    if( m_use_attenuation )
+    {
+       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
+          A[g].copy(AlphaVE[g][0]);
+       }
+       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
+       if ( proc_zero() )
+          printf(" Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    }
+    
+// Now check Um and AlpphaVEm
+    exactSol( t-mDt, Up, AlphaVEp, a_Sources );
+
+    normOfDifference( Up, Um, errInf, errL2, solInf, a_Sources );
+
+    if ( proc_zero() )
+       printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+    if( m_use_attenuation )
+    {
+       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
+          A[g].copy(AlphaVEm[g][0]);
+       }
+       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
+       if ( proc_zero() )
+          printf(" Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    }
+  } // end if twilight testing
+}
