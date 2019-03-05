@@ -228,7 +228,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
    ptrdiff_t ib1 = dims[0], n1=dims[1]-dims[0]+1;
    complex<float_sw4>* uc = new complex<float_sw4>[dimobj->m_fftw_alloc_local];
 
-   if( m_seed != 0 )
+   if( m_seed == 0 )
    {
       int fd=open("/dev/random",O_RDONLY);
       read(fd,&m_seed,sizeof(unsigned int));
