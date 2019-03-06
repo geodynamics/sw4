@@ -124,6 +124,7 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    // should be enough to allow interpolation without communication.
    repad_sarray( mRndMaterial, 0, 2 );
    //   cout << "RANDMTRL dims padded array " << mRndMaterial.m_jb << " " << mRndMaterial.m_je << endl;
+   //   MPI_Barrier(MPI_COMM_WORLD);
 }
 
 //-----------------------------------------------------------------------
@@ -230,7 +231,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
 
    if( m_seed == 0 )
    {
-      int fd=open("/dev/random",O_RDONLY);
+      int fd=open("/dev/urandom",O_RDONLY);
       read(fd,&m_seed,sizeof(unsigned int));
       close(fd);
    }
@@ -658,9 +659,11 @@ void RandomizedMaterial::comm_sarray( Sarray& sar, int neigh[4], int padding )
    int xtag1 = 3343, xtag2 = 3344;
    int ytag1 = 3345, ytag2 = 3346;
 
+   //   memset(sbuf,0,ptsmax*sizeof(float_sw4)); // To shut up memory checker
 // I-direction communication
    if( neigh[0] != MPI_PROC_NULL )
       sar.extract_subarray( ib+padding, ib+2*padding-1, jb, je, kb, ke, sbuf );
+
    MPI_Sendrecv( sbuf, npts1, mpi_float, neigh[0], xtag1, 
                  rbuf, npts1, mpi_float, neigh[1], xtag1, comm, &status );
    if( neigh[1] != MPI_PROC_NULL )
