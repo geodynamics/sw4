@@ -3476,7 +3476,7 @@ The material velocities are updated by the random block according to
 $$
  C_s := C_s*(1+\theta)\qquad  C_p := C_p*(1+\theta)
 $$
-where $\theta$ is a generated random number, scaled to have mean zero and variance $\sigma$. \par
+where $\theta$ is a generated random number, scaled to have mean zero and standard deviation $\sigma$. \par
 The the limits {\tt zmin} and {\tt zmax} allow specification of different correlation lenghts and/or Hurst exponents
 at different depths, by using more than one {\tt randomblock} command. If no limits are given, the random perturbation 
 will be applied over the entire computational domain. 
@@ -3491,11 +3491,11 @@ are the same in the two runs.
 \bf{Option}  & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
 corrlen  & Horizontal correlation length & real & m & 1000 \\ \hline
 corrlenz & Vertical correlation length & real & m & corrlen \\ \hline
-sigma  & variance of perturbation, $\sigma$  & real & None & 0.1 \\ \hline
+sigma  & standard deviation of perturbation, $\sigma$  & real & None & 0.1 \\ \hline
 hurst & Hurst exponent in correlation fcn. & real & None & 0.3 \\ \hline
 zmin & Minimum $z$-coordinate of random block & real & m & min $z$ of domain \\ \hline
 zmax & Maximum $z$-coordinate of random block & real & m & max $z$ of domain \\ \hline
-seed & Random number generator seed & int & None & read from {\tt /dev/random} \\ \hline
+seed & Random number generator seed & int & None & read from {\tt /dev/urandom} \\ \hline
 \end{tabular}
 \end{center}
 \index{randomblock parameters!corrlen, corrlenz, sigma, hurst, zmin, zmax, seed}
