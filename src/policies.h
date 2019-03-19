@@ -540,7 +540,7 @@ using DEFAULT_LOOP1_ASYNC = RAJA::omp_parallel_for_exec;
 using DEFAULT_LOOP2 = 
     RAJA::KernelPolicy<
       RAJA::statement::For<1, RAJA::omp_parallel_for_exec,
-  RAJA::statement::For<0, RAJA::omp_parallel_for_exec,           
+  RAJA::statement::For<0, RAJA::seq_exec,           
           RAJA::statement::Lambda<0>
         > 
       > 
@@ -552,8 +552,8 @@ using DEFAULT_LOOP2X_ASYNC = DEFAULT_LOOP2;
 using DEFAULT_LOOP3 = 
     RAJA::KernelPolicy<
   RAJA::statement::For<2, RAJA::omp_parallel_for_exec, 
-      RAJA::statement::For<1, RAJA::omp_parallel_for_exec, 
-        RAJA::statement::For<0, RAJA::seq_exec,           
+      RAJA::statement::For<1, RAJA::seq_exec, 
+        RAJA::statement::For<0, RAJA::simd_exec,           
           RAJA::statement::Lambda<0>
   >
         > 
@@ -563,9 +563,9 @@ using DEFAULT_LOOP3 =
 using DEFAULT_LOOP4 = 
     RAJA::KernelPolicy<
   RAJA::statement::For<3, RAJA::omp_parallel_for_exec, 
-  RAJA::statement::For<2, RAJA::omp_parallel_for_exec, 
-      RAJA::statement::For<1, RAJA::omp_parallel_for_exec, 
-        RAJA::statement::For<0, RAJA::seq_exec,           
+  RAJA::statement::For<2, RAJA::seq_exec, 
+      RAJA::statement::For<1, RAJA::seq_exec, 
+        RAJA::statement::For<0, RAJA::simd_exec,           
           RAJA::statement::Lambda<0>
   >
   >
@@ -574,11 +574,31 @@ using DEFAULT_LOOP4 =
     >;
 
 
-using XRHS_POL = DEFAULT_LOOP3;
-using XRHS_POL_ASYNC = DEFAULT_LOOP3;
+using ADDSGD_POL_ASYNC = RAJA::KernelPolicy<
+  RAJA::statement::For<0, RAJA::seq_exec, 
+  RAJA::statement::For<1, RAJA::omp_parallel_for_exec, 
+      RAJA::statement::For<2, RAJA::seq_exec, 
+        RAJA::statement::For<3, RAJA::simd_exec,           
+          RAJA::statement::Lambda<0>
+  >
+  >
+        > 
+      > 
+    >;
 
-using RHS4_EXEC_POL = DEFAULT_LOOP3;
-using RHS4_EXEC_POL_ASYNC = DEFAULT_LOOP3;
+using XRHS_POL = RAJA::KernelPolicy<
+  RAJA::statement::For<0, RAJA::omp_parallel_for_exec, 
+      RAJA::statement::For<1, RAJA::seq_exec, 
+        RAJA::statement::For<2, RAJA::simd_exec,           
+          RAJA::statement::Lambda<0>
+  >
+        > 
+      > 
+    >;
+using XRHS_POL_ASYNC = XRHS_POL;
+
+using RHS4_EXEC_POL = XRHS_POL;
+using RHS4_EXEC_POL_ASYNC = XRHS_POL;
 
 
 using ICSTRESS_EXEC_POL = DEFAULT_LOOP2;

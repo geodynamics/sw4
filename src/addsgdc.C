@@ -151,7 +151,7 @@ using ADDSGD_POL3_ASYNC = RAJA::KernelPolicy<
 #endif
 
 #else
- using ADDSGD_POL_ASYNC= DEFAULT_LOOP4;
+//using ADDSGD_POL_ASYNC= DEFAULT_LOOP4;
 #endif
 RAJA::RangeSegment i_range(ifirst+2,ilast-1);
 RAJA::RangeSegment j_range(jfirst+2,jlast-1);

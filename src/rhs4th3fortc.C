@@ -879,7 +879,7 @@ using XRHS_POL2 =
  
 #endif
  #else
- using XRHS_POL2 =  DEFAULT_LOOP3;
+ using XRHS_POL2 =  XRHS_POL;
 #endif
   // Xrhs4th3fortsgstr_ci<XRHS_POL2>(ifirst,ilast,jfirst,jlast,kfirst,klast,nk,onesided,a_acof,a_bope,a_ghcof,a_lu,a_u,a_mu,a_lambda,h,a_strx,a_stry,a_strz,op);
   // return;
@@ -1285,7 +1285,7 @@ using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
 				 RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
 						      RAJA::statement::Lambda<0> >>>>>>>>;
 #else
- using LOCAL_POL_ASYNC = DEFAULT_LOOP3;
+ using LOCAL_POL_ASYNC = XRHS_POL;
 #endif
 
 	RAJA::kernel<LOCAL_POL_ASYNC>(
@@ -1576,7 +1576,7 @@ using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
      // 						 RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
      // 								      RAJA::statement::Lambda<0> >>>>>;
 #else
-	using LOCAL_POL_ASYNC1 = DEFAULT_LOOP3;
+	using LOCAL_POL_ASYNC1 = XRHS_POL;
 #endif
 
 

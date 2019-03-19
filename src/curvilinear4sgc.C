@@ -124,7 +124,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 					      RAJA::statement::For<2, RAJA::cuda_thread_exec,
 								   RAJA::statement::Lambda<0> >>>>>;
 #else
-   using LOCAL_POL =  DEFAULT_LOOP3;
+   using LOCAL_POL =  XRHS_POL;
 #endif
    //#pragma omp parallel
    {
