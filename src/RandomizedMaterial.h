@@ -50,7 +50,7 @@ public:
    
    RandomizedMaterial( EW * a_ew,  float_sw4 zmin, float_sw4 zmax, float_sw4 corrlen, 
 		       float_sw4 corrlenz, float_sw4 hurst, float_sw4 sigma, 
-		       unsigned int seed=0 );
+		       unsigned int seed=0, float_sw4 csmax=1e38 );
   ~RandomizedMaterial();
   void perturb_velocities( int g, Sarray& cs, Sarray& cp, 
 			   double h, double zmin, double zmax );
@@ -87,6 +87,7 @@ private:
  //   float_sw4 m_x0, m_y0;
    unsigned int m_seed;
    int m_nproc2d[2];
+   float_sw4 m_csmax;
 
    // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in this processor.
    float_sw4 m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;

@@ -23,7 +23,7 @@ MPI_Datatype get_mpi_datatype( std::complex<float>* var ) {return MPI_CXX_FLOAT_
 RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zmax,
 					float_sw4 corrlen, float_sw4 corrlenz, 
 					float_sw4 hurst, float_sw4 sigma,
-					unsigned int seed )
+					unsigned int seed, float_sw4 csmax )
 {
    mEW = a_ew;
    float_sw4 bbox[6];
@@ -45,6 +45,7 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_hurst = hurst;
    m_sigma = sigma;
    m_seed  = seed;
+   m_csmax = csmax;
 
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
@@ -150,41 +151,44 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
 	    for( int i=mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
 	    {
-	       float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
-	       if( curvilinear )
+	       if( cs(i,j,k) <= m_csmax )
 	       {
-		  x = mEW->mX(i,j,k);
-		  y = mEW->mY(i,j,k);
-		  z = mEW->mZ(i,j,k);
-	       }
-	       if( m_zmin <= z && z <= m_zmax )
-	       {
-	       int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
-	       if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie-1 &&
-		   jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je-1 &&
-		   kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke-1 )
-	       {
-		  float_sw4 wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
-		  float_sw4 rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
+		  float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
+		  if( curvilinear )
+		  {
+		     x = mEW->mX(i,j,k);
+		     y = mEW->mY(i,j,k);
+		     z = mEW->mZ(i,j,k);
+		  }
+		  if( m_zmin <= z && z <= m_zmax )
+		  {
+		     int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
+		     if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie-1 &&
+			 jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je-1 &&
+			 kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke-1 )
+		     {
+			float_sw4 wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
+			float_sw4 rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-		  cs(i,j,k) *= rndpert;
-		  cp(i,j,k) *= rndpert;
-	       }
-	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
-			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
-			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
-	       {
-		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-		  cs(i,j,k) *= rndpert;
-		  cp(i,j,k) *= rndpert;
-	       }
-	       else
-		  CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
-			      mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
-			      mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
-			      mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
+			cs(i,j,k) *= rndpert;
+			cp(i,j,k) *= rndpert;
+		     }
+		     else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
+			      jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
+			      kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
+		     {
+			float_sw4 rndpert = mRndMaterial(ip,jp,kp);
+			cs(i,j,k) *= rndpert;
+			cp(i,j,k) *= rndpert;
+		     }
+		     else
+			CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
+				    mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
+				    mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
+				    mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
+		  }
 	       }
 	    }
    }
@@ -208,8 +212,11 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 	    for( int j=mRndMaterial.m_jb ; j <= mRndMaterial.m_je ; j++ )
 	       for( int i=mRndMaterial.m_ib ; i <= mRndMaterial.m_ie ; i++ )
 	       {
-		  cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
-		  cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
+		  if( cs[0](i,j,k) <= m_csmax )
+		  {
+		     cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
+		     cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
+		  }
 	       }
       }
    }
