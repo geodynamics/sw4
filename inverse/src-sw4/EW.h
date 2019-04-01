@@ -635,7 +635,7 @@ void project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 		       vector<Sarray>& a_lambda, int& info );
 
 int check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-		     vector<Sarray>& a_lambda, int& ok );
+		    vector<Sarray>& a_lambda, int& ok, int verbose=0 );
    //#endif
 
 void check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c );
@@ -1587,7 +1587,7 @@ float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
 //float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
 float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[6];
 
-int m_neighbor[4];
+
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;
 vector<MPI_Datatype> m_send_type4; // metric
@@ -1601,6 +1601,7 @@ vector<MPI_Datatype> m_send_type_2dy3p;
 vector<MPI_Datatype> m_send_type_2dx1p;
 vector<MPI_Datatype> m_send_type_2dy1p;
 public:
+int m_neighbor[4];
 MPI_Datatype m_mpifloat;
 
 bool m_topography_exists;

@@ -1,0 +1,5 @@
+etree=no
+SW4ROOT=/usr/apps/wpp
+FC=mpifort
+CXX=mpicxx
+EXTRA_LINK_FLAGS =  -L/usr/tce/packages/xl/xl-2019.02.07/xlf/16.1.1/lib -L/usr/tcetmp/packages/lapack/lapack-3.8.0-gcc-4.9.3/lib -llapack -lblas -lxlfmath -lxlf90 -lgfortran

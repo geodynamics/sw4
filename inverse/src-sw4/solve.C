@@ -45,6 +45,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
 		int event )
 {
+   // Experimental
+   int nsteps_in_memory=600;
 // solution arrays
    vector<Sarray> F, Lu, Uacc, Up;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
@@ -142,8 +144,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       }
       if( save_sides )
       {
-	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
-	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,20,mDt );
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;

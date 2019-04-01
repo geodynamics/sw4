@@ -347,10 +347,6 @@ $(builddir)/%.o:src-sw4/%.C
 	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 
 
-$(builddir)/%.o:src-sw4/%.f
-	/bin/mkdir -p $(builddir)
-	cd $(builddir); $(FC) $(FFLAGS) -c ../$<
-
 $(builddir)/%.o:src-opt/%.C
 	/bin/mkdir -p $(builddir)
 	 cd $(builddir); $(CXX) $(CXXFLAGS) -c ../$< 

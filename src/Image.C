@@ -52,14 +52,14 @@ Image* Image::nil=static_cast<Image*>(0);
 using namespace std;
 
 Image::Image(EW * a_ew,
-             double time, 
-             double timeInterval, 
+             float_sw4 time, 
+             float_sw4 timeInterval, 
              int cycle, 
              int cycleInterval,
              const std::string& filePrefix, 
              ImageMode mode,
 	     ImageOrientation locationType, 
-             double locationValue,
+             float_sw4 locationValue,
 	     bool doubleMode,
 	     bool userCreated ):
   mTime(time),
@@ -384,9 +384,9 @@ bool Image::plane_in_proc( int a_gridIndexCoarsest)
 
 
 //-------------------------------------
-void Image::initializeTime()
+void Image::initializeTime(double t)
 {
-  mNextTime = 0.; 
+  mNextTime = t; 
   m_time_done = false;
 // with the option timeInterval=..., first time is always t=0
 }
@@ -407,7 +407,7 @@ bool Image::is_time_derivative() const
 }
 
 //-----------------------------------------------------------------------
-bool Image::timeToWrite(double time, int cycle, double dt )
+bool Image::timeToWrite(float_sw4 time, int cycle, float_sw4 dt )
 {
   // -----------------------------------------------
   // Check based on cycle
@@ -603,7 +603,7 @@ void Image::allocatePlane()
 
 //-----------------------------------------------------------------------
 void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
-				 vector<Sarray> &a_Um, double dt, int dminus )
+				 vector<Sarray> &a_Um, float_sw4 dt, int dminus )
 {
    ASSERT(m_isDefinedMPIWriters);
    ASSERT( mMode == Image::DIV || mMode == Image::CURLMAG || mMode == Image::DIVDT
@@ -622,11 +622,11 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
       }
       if( mMode == Image::DIV )
       {
-	 vector<double*> div(mEW->mNumberOfGrids);
+	 vector<float_sw4*> div(mEW->mNumberOfGrids);
 	 for( int g=gmin ; g <= gmax ; g++ )
 	 {
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
-	    div[g] = new double[npts];
+	    div[g] = new float_sw4[npts];
 	 }
 	 computeDivergence( a_Up, div );
 	 for( int g=gmin ; g <= gmax ; g++ )
@@ -634,7 +634,7 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
 	    if( m_double )
 	       for( size_t i=0 ; i < npts ; i++ )
-		  m_doubleField[g][i] = div[g][i];
+		  m_doubleField[g][i] = (double)div[g][i];
 	    else
 	       for( size_t i=0 ; i < npts ; i++ )
 		  m_floatField[g][i] = (float) div[g][i];
@@ -643,11 +643,11 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
       }
       else if( mMode == Image::CURLMAG )
       {
-	 vector<double*> curl(mEW->mNumberOfGrids);
+	 vector<float_sw4*> curl(mEW->mNumberOfGrids);
 	 for( int g=gmin ; g <= gmax ; g++ )
 	 {
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
-	    curl[g] = new double[3*npts];
+	    curl[g] = new float_sw4[3*npts];
 	 }
 	 computeCurl( a_Up, curl );
 	 for( int g=gmin ; g <= gmax ; g++ )
@@ -655,7 +655,7 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
 	    if( m_double )
 	       for( size_t i=0 ; i < npts ; i++ )
-		  m_doubleField[g][i] = sqrt(curl[g][3*i]*curl[g][3*i]+curl[g][3*i+1]*curl[g][3*i+1]+
+		  m_doubleField[g][i] = (double)sqrt(curl[g][3*i]*curl[g][3*i]+curl[g][3*i+1]*curl[g][3*i+1]+
 						curl[g][3*i+2]*curl[g][3*i+2]);
 	    else
 	       for( size_t i=0 ; i < npts ; i++ )
@@ -666,15 +666,15 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
       }
       else if( mMode == Image::DIVDT )
       {
-	 vector<double*> div(mEW->mNumberOfGrids), divm(mEW->mNumberOfGrids);
+	 vector<float_sw4*> div(mEW->mNumberOfGrids), divm(mEW->mNumberOfGrids);
 	 for( int g=gmin ; g <= gmax ; g++ )
 	 {
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
-	    div[g]  = new double[npts];
-	    divm[g] = new double[npts];
+	    div[g]  = new float_sw4[npts];
+	    divm[g] = new float_sw4[npts];
 	 }
 	 computeDivergence( a_Up, div );
-	 double idt;
+	 float_sw4 idt;
 	 if( dminus )
 	 {
 	    computeDivergence(a_U,divm);
@@ -690,7 +690,7 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
 	    if( m_double )
 	       for( size_t i=0 ; i < npts ; i++ )
-		  m_doubleField[g][i] = idt*(div[g][i]-divm[g][i]);
+		  m_doubleField[g][i] = (double) idt*(div[g][i]-divm[g][i]);
 	    else
 	       for( size_t i=0 ; i < npts ; i++ )
 		  m_floatField[g][i] = (float) idt*(div[g][i]-divm[g][i]);
@@ -700,15 +700,15 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
       }
       else if( mMode == Image::CURLMAGDT )
       {
-	 vector<double*> curl(mEW->mNumberOfGrids), curlm(mEW->mNumberOfGrids);
+	 vector<float_sw4*> curl(mEW->mNumberOfGrids), curlm(mEW->mNumberOfGrids);
 	 for( int g=gmin ; g <= gmax ; g++ )
 	 {
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
-	    curl[g]  = new double[3*npts];
-	    curlm[g] = new double[3*npts];
+	    curl[g]  = new float_sw4[3*npts];
+	    curlm[g] = new float_sw4[3*npts];
 	 }
 	 computeCurl( a_Up, curl );
-	 double idt;
+	 float_sw4 idt;
 	 if( dminus )
 	 {
 	    computeCurl( a_U, curlm );
@@ -724,7 +724,7 @@ void Image::computeImageDivCurl( vector<Sarray> &a_Up, vector<Sarray>& a_U,
 	    int npts=(mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1)*(mWindow[g][5]-mWindow[g][4]+1);
 	    if( m_double )
 	       for( size_t i=0 ; i < npts ; i++ )
-		  m_doubleField[g][i] = idt*sqrt( (curl[g][3*i]-curlm[g][3*i])*(curl[g][3*i]-curlm[g][3*i]) +
+		  m_doubleField[g][i] = (double) idt*sqrt( (curl[g][3*i]-curlm[g][3*i])*(curl[g][3*i]-curlm[g][3*i]) +
 						  (curl[g][3*i+1]-curlm[g][3*i+1])*(curl[g][3*i+1]-curlm[g][3*i+1]) +
 						  (curl[g][3*i+2]-curlm[g][3*i+2])*(curl[g][3*i+2]-curlm[g][3*i+2]));
 	    else
@@ -757,16 +757,20 @@ void Image::computeImageQuantity(std::vector<Sarray> &a_mu, int a_nComp )
     }    
     for( int g=gmin ; g <= gmax ; g++ )
     {
-       size_t iField=0;
+       //       size_t iField=0;
+       size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+       size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
        for( int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
 	  for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
 	     for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	     {
+		size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2])+nij*(kk-mWindow[g][4]);
 		if( m_double )
-		   m_doubleField[g][iField] = a_mu[g](a_nComp,ii,jj,kk);
+		   m_doubleField[g][iField] = (double) a_mu[g](a_nComp,ii,jj,kk);
 		else
 		   m_floatField[g][iField] = (float) a_mu[g](a_nComp,ii,jj,kk);
-		iField++;      
+		//		iField++;      
 	     }
     }
   }
@@ -794,14 +798,18 @@ void Image::computeImageGrid( Sarray &a_X, Sarray &a_Y, Sarray &a_Z )
 	gmin = 0;
 	gmax = mEW->mNumberOfGrids-1;
      }
-     double val;
      for (int g = gmin; g <= gmax ; g++ )
      {
-	size_t iField = 0;
+//	size_t iField = 0;
+       size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+       size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
 	for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
 	   for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
 	      for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	      {                   
+		 size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2])+nij*(kk-mWindow[g][4]);
+		 float_sw4 val;
 		 if (g > topCartesian)
 		 {
 		    if(component==1 )
@@ -821,10 +829,10 @@ void Image::computeImageGrid( Sarray &a_X, Sarray &a_Y, Sarray &a_Z )
 		       val = (kk-1)*mEW->mGridSize[g] + mEW->m_zmin[g];
 		 }
 		 if( m_double )
-		    m_doubleField[g][iField] = val;
+		    m_doubleField[g][iField] = (double) val;
 		 else
 		    m_floatField[g][iField] = (float) val;
-		 iField++;      
+		 //		 iField++;      
 	      }
      }
   }
@@ -838,7 +846,7 @@ void Image::computeImageLatLon(Sarray &a_X, Sarray &a_Y, Sarray &a_Z )
 // plane_in_proc returns true for z=const lpanes, because all processors have a part in these planes
    if (plane_in_proc(m_gridPtIndex[0]))
    {
-      double latP, lonP, xP, yP, zP, val;
+
       int g;
 // lat, lon images are only meaningful on Image::Z planes, but we will write lat and lon on any plane
       int topCartesian = mEW->mNumberOfCartesianGrids - 1;
@@ -853,11 +861,16 @@ void Image::computeImageLatLon(Sarray &a_X, Sarray &a_Y, Sarray &a_Z )
       }
       for (g = gmin; g <= gmax ; g++ )
       {
-	 size_t iField = 0;
+//	 size_t iField = 0;
+       size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+       size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
 	 for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
+#pragma omp parallel for
 	    for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
 	       for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	       {
+		 size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2])+nij*(kk-mWindow[g][4]);
+		 double latP, lonP, xP, yP, zP, val;
 		  if (g > topCartesian)// curvilinear grid
 		  {
 		     xP = a_X(ii,jj,kk);
@@ -879,7 +892,7 @@ void Image::computeImageLatLon(Sarray &a_X, Sarray &a_Y, Sarray &a_Z )
 		     m_doubleField[g][iField] = val;
 		  else
 		     m_floatField[g][iField] = (float) val;
-		  iField++;      
+		  //		  iField++;      
 	       } // end for ii	  
       }
    }
@@ -904,16 +917,20 @@ void Image::computeImagePvel(std::vector<Sarray> &mu, std::vector<Sarray> &lambd
       }    
       for( int g=gmin ; g <= gmax ; g++ )
       {
-	 size_t iField=0;
+	 //	 size_t iField=0;
+       size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+       size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
 	 for( int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
 	    for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
 	       for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	       {
+		  size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2])+nij*(kk-mWindow[g][4]);
 		  if( m_double )
-		     m_doubleField[g][iField] = sqrt( (2*mu[g](ii,jj,kk)+lambda[g](ii,jj,kk))/rho[g](ii,jj,kk));
+		     m_doubleField[g][iField] = (double) sqrt( (2*mu[g](ii,jj,kk)+lambda[g](ii,jj,kk))/rho[g](ii,jj,kk));
 		  else
 		     m_floatField[g][iField] = (float) sqrt( (2*mu[g](ii,jj,kk)+lambda[g](ii,jj,kk))/rho[g](ii,jj,kk));
-		  iField++;      
+		  //		  iField++;      
 	       }
       }
    }
@@ -936,16 +953,20 @@ void Image::computeImageSvel(std::vector<Sarray> &mu, std::vector<Sarray> &rho )
       }    
       for( int g=gmin ; g <= gmax ; g++ )
       {
-	 size_t iField=0;
+	 //	 size_t iField=0;
+       size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+       size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
 	 for( int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
 	    for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
 	       for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	       {
+		  size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2])+nij*(kk-mWindow[g][4]);
 		  if( m_double )
-		     m_doubleField[g][iField] = sqrt( mu[g](ii,jj,kk)/rho[g](ii,jj,kk));
+		     m_doubleField[g][iField] = (double) sqrt( mu[g](ii,jj,kk)/rho[g](ii,jj,kk));
 		  else
 		     m_floatField[g][iField] = (float) sqrt( mu[g](ii,jj,kk)/rho[g](ii,jj,kk));
-		  iField++;
+		  //		  iField++;
 	       }
       }
    }
@@ -967,21 +988,24 @@ void Image::copy2DArrayToImage(Sarray &u2)
       ASSERT2(mLocationType == Image::Z, "Image::copy2DArrayToImage only works for z=const");
 // write the data...
       int g = m_gridPtIndex[1];
-      size_t iField = 0;
+      //      size_t iField = 0;
+       size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+#pragma omp parallel for
       for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
 	for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++)
 	{                   
+	   size_t iField = (ii-mWindow[g][0])+ni*(jj-mWindow[g][2]);
 	  if( m_double )
-	     m_doubleField[g][iField] = u2(ii,jj,1);
+	     m_doubleField[g][iField] = (double) u2(ii,jj,1);
 	  else
 	    m_floatField[g][iField] = (float) u2(ii,jj,1);
-	  iField++;      
+ //	  iField++;      
 	}
    }
 }
 
 //-----------------------------------------------------------------------
-void Image::writeImagePlane_2(int cycle, std::string &path, double t )
+void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
 {
    if( !m_user_created )
       return;
@@ -1051,7 +1075,8 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
       if( ret != sizeof(int) )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write number of patches" << endl;
 
-      ret = write(fid,&t,sizeof(double));
+      double dblevar=static_cast<double>(t);
+      ret = write(fid,&dblevar,sizeof(double));
       if( ret != sizeof(double) )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write time" << endl;
 
@@ -1067,11 +1092,12 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
       if( ret != sizeof(int) )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write plane type" << endl;
 
-      double coordvalue = (m_gridPtIndex[0]-1)*mEW->mGridSize[glow];
+      float_sw4 coordvalue = (m_gridPtIndex[0]-1)*mEW->mGridSize[glow];
       if( mLocationType == Image::Z )
          coordvalue += mEW->m_zmin[glow];
 
-      ret = write(fid,&coordvalue,sizeof(double));
+      dblevar=static_cast<double>(coordvalue);
+      ret = write(fid,&dblevar,sizeof(double));
       if( ret != sizeof(double) )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write coordinate value" << endl;
 
@@ -1097,11 +1123,13 @@ void Image::writeImagePlane_2(int cycle, std::string &path, double t )
       
       for(int g = glow; g < ghigh ;g++)
       {
-	 ret = write(fid,&mEW->mGridSize[g],sizeof(double));
+	 dblevar = static_cast<double>(mEW->mGridSize[g]);
+	 ret = write(fid,&dblevar,sizeof(double));
          if( ret != sizeof(double) )
 	    cout << "ERROR: Image::writeImagePlane_2 could not write h for grid " << g << endl;
 
-	 ret = write(fid,&mEW->m_zmin[g],sizeof(double));
+	 dblevar = static_cast<double>(mEW->m_zmin[g]);
+	 ret = write(fid,&dblevar,sizeof(double));
          if( ret != sizeof(double) )
 	    cout << "ERROR: Image::writeImagePlane_2 could not write zmin for grid " << g << endl;
 
@@ -1282,7 +1310,7 @@ void Image::compute_file_suffix( stringstream& fileSuffix, int cycle )
 
 //-----------------------------------------------------------------------
 void Image::update_maxes_hVelMax( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
-				  double dt )
+				  float_sw4 dt )
 {
    static bool firstHVM = true;
    bool geographic = false;
@@ -1296,58 +1324,61 @@ void Image::update_maxes_hVelMax( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
       gmin = 0;
       gmax = mEW->mNumberOfGrids-1;
    }
-   double di  = 1/dt  ;
+   float_sw4 di  = 1/dt  ;
    if( geographic )
    {
 //C.B> with N-S and E-W max: max(|u_{N-S}|,|u_{E-W}|))
       for( int g = gmin; g <= gmax; g++ )
       {
-	 size_t iField = 0;
-	 double velNS, velEW;
-	 double Ux, Uy, nrm;
-	 double xP, yP, latitude, latOrigin=mEW->getLatOrigin();
-	 double deg2rad = M_PI/180.0, cphi, sphi, calpha, salpha, thxnrm, thynrm;
+	 //	 size_t iField = 0;
+	 //	 double velNS, velEW;
+	 //	 double Ux, Uy, nrm;
+	 //	 double xP, yP, latitude;
+	 double latOrigin=mEW->getLatOrigin();
+	 double deg2rad = M_PI/180.0;//, cphi, sphi, calpha, salpha, thxnrm, thynrm;
 	 double az = deg2rad*mEW->getGridAzimuth(); // Note that mGeoAz is in degrees
 	 double metersPerDeg = mEW->getMetersPerDegree();
-
-	 calpha = cos(az);
-	 salpha = sin(az);
-
+	 double calpha = cos(az);
+	 double salpha = sin(az);
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
 	 for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
  // first get velocities in the (x,y) directions
-		  Ux = (a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k))*di;
-		  Uy = (a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))*di;
+		  float_sw4 Ux = (a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k))*di;
+		  float_sw4 Uy = (a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))*di;
 
  // note: the angle between (x,y) and East is constant throughout the mesh, but the angle to North 
  // varies throughout the grid. Here we use the chain rule on the mapping between (x,y) and (lon,lat)
  // see EW:computeGeographicCoord for the mapping
                
-		  xP = (i-1)*mEW->mGridSize[g];
-		  yP = (j-1)*mEW->mGridSize[g];
+		  double xP = (i-1)*mEW->mGridSize[g];
+		  double yP = (j-1)*mEW->mGridSize[g];
 
-		  latitude = latOrigin + (xP*calpha - yP*salpha)/metersPerDeg;
+		  double latitude = latOrigin + (xP*calpha - yP*salpha)/metersPerDeg;
 	  
-		  cphi = cos(latitude*deg2rad);
-		  sphi = sin(latitude*deg2rad);
+		  double cphi = cos(latitude*deg2rad);
+		  double sphi = sin(latitude*deg2rad);
 
-		  thxnrm = salpha + (xP*salpha+yP*calpha)/cphi/metersPerDeg * (M_PI/180.0) * sphi * calpha;
-		  thynrm = calpha - (xP*salpha+yP*calpha)/cphi/metersPerDeg * (M_PI/180.0) * sphi * salpha;
+		  double thxnrm = salpha + (xP*salpha+yP*calpha)/cphi/metersPerDeg * (M_PI/180.0) * sphi * calpha;
+		  double thynrm = calpha - (xP*salpha+yP*calpha)/cphi/metersPerDeg * (M_PI/180.0) * sphi * salpha;
 
-		  nrm = sqrt( thxnrm*thxnrm + thynrm*thynrm );
+		  double nrm = sqrt( thxnrm*thxnrm + thynrm*thynrm );
 		  thxnrm /= nrm;
 		  thynrm /= nrm;
 
-		  velNS = fabs( thynrm*Ux  - thxnrm*Uy );
-		  velEW = fabs( salpha*Ux  + calpha*Uy );
+		  float_sw4 velNS = fabs( thynrm*Ux  - thxnrm*Uy );
+		  float_sw4 velEW = fabs( salpha*Ux  + calpha*Uy );
 		  if (m_double)
 		  {
 		     if( firstHVM ||  m_doubleField[g][iField] < velNS)
-			m_doubleField[g][iField] = velNS;
+			m_doubleField[g][iField] = (double) velNS;
 		     if( m_doubleField[g][iField] < velEW )
-			m_doubleField[g][iField] = velEW;
+			m_doubleField[g][iField] = (double) velEW;
 		  }
 		  else
 		  {
@@ -1356,7 +1387,7 @@ void Image::update_maxes_hVelMax( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
 		     if(m_floatField[g][iField] < (float) velEW)
 			m_floatField[g][iField] = (float) velEW;
 		  }
-		  iField++;  
+		  //		  iField++;  
 	       }
       }
    }
@@ -1364,26 +1395,30 @@ void Image::update_maxes_hVelMax( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
    {
       for( int g = gmin; g <= gmax; g++ )
       {
-	 size_t iField = 0;
-	 double Ux, Uy, nrm, hvmag;
+	 //	 size_t iField = 0;
+	 //	 double Ux, Uy, nrm, hvmag;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
 	 for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  Ux = (a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k))*di;
-		  Uy = (a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))*di;
-                  hvmag = sqrt(Ux*Ux+Uy*Uy);
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 Ux = (a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k))*di;
+		  float_sw4 Uy = (a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))*di;
+                  float_sw4 hvmag = sqrt(Ux*Ux+Uy*Uy);
 		  if (m_double)
 		  {
 		     if( firstHVM ||  m_doubleField[g][iField] < hvmag )
-			m_doubleField[g][iField] = hvmag;
+			m_doubleField[g][iField] = (double) hvmag;
 		  }
 		  else
 		  {
 		     if( firstHVM ||  m_floatField[g][iField] < (float) hvmag)
 			m_floatField[g][iField] = (float) hvmag;
 		  }
-		  iField++;  
+//		  iField++;  
 	       }
       }
    }
@@ -1392,7 +1427,7 @@ void Image::update_maxes_hVelMax( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
 }
 
 //-----------------------------------------------------------------------
-void Image::update_maxes_vVelMax(std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, double dt )
+void Image::update_maxes_vVelMax(std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt )
 {
    static bool firstVVM = true;
    int gmax, gmin;
@@ -1403,26 +1438,30 @@ void Image::update_maxes_vVelMax(std::vector<Sarray> &a_Up, std::vector<Sarray> 
       gmin = 0;
       gmax = mEW->mNumberOfGrids-1;
    }
-   double di  = 1/dt;
+   float_sw4 di  = 1/dt;
    for( int g = gmin; g <= gmax; g++ )
    {
-      size_t iField = 0;
+	 //      size_t iField = 0;
+      size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+      size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
 	 for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	    for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	    {
-	       double vel = fabs( a_Up[g](3,i,j,k)-a_Um[g](3,i,j,k) )*di;
+	       float_sw4 vel = fabs( a_Up[g](3,i,j,k)-a_Um[g](3,i,j,k) )*di;
+	       size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
 	       if (m_double)
 	       {
 		  if( firstVVM ||  m_doubleField[g][iField] < vel )
-		     m_doubleField[g][iField] = vel;
+		     m_doubleField[g][iField] = (double) vel;
 	       }
 	       else
 	       {
 		  if( firstVVM ||  m_floatField[g][iField] < (float) vel )
 		     m_floatField[g][iField] = (float) vel;
 	       }
-	       iField++; 
+   //	       iField++; 
 	    }
    }
    if( firstVVM )
@@ -1444,24 +1483,28 @@ void Image::update_maxes_hMax( vector<Sarray> &a_U )
    }
    for( int g = gmin; g <= gmax; g++ )
    {
-      size_t iField = 0;
-      double hmag;
+      //      size_t iField = 0;
+      //      float_sw4 hmag;
+      size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+      size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
 	 for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	    for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	    {
-	       hmag = sqrt(a_U[g](1,i,j,k)*a_U[g](1,i,j,k) + a_U[g](2,i,j,k)*a_U[g](2,i,j,k));
+	       size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+	       float_sw4 hmag = sqrt(a_U[g](1,i,j,k)*a_U[g](1,i,j,k) + a_U[g](2,i,j,k)*a_U[g](2,i,j,k));
 	       if (m_double)
 	       {
 		  if( firstHM ||  m_doubleField[g][iField] < hmag )
-		     m_doubleField[g][iField] = hmag;
+		     m_doubleField[g][iField] = (double) hmag;
 	       }
 	       else
 	       {
 		  if( firstHM ||  m_floatField[g][iField] < (float) hmag)
 		     m_floatField[g][iField] = (float) hmag;
 	       }
-	       iField++;  
+	       //	       iField++;  
 	    }
    }
    if( firstHM )
@@ -1482,23 +1525,27 @@ void Image::update_maxes_vMax(std::vector<Sarray> &a_U )
    }
    for( int g = gmin; g <= gmax; g++ )
    {
-      size_t iField = 0;
+      //      size_t iField = 0;
+      size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+      size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
 	 for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	    for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	    {
-	       double uz = fabs(a_U[g](3,i,j,k));
+	       float_sw4 uz = fabs(a_U[g](3,i,j,k));
+	       size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
 	       if (m_double)
 	       {
 		  if( firstVM ||  m_doubleField[g][iField] < uz )
-		     m_doubleField[g][iField] = uz;
+		     m_doubleField[g][iField] = (double) uz;
 	       }
 	       else
 	       {
 		  if( firstVM ||  m_floatField[g][iField] < (float) uz )
 		     m_floatField[g][iField] = (float) uz;
 	       }
-	       iField++; 
+	       //	       iField++; 
 	    }
    }
    if( firstVM )
@@ -1506,7 +1553,7 @@ void Image::update_maxes_vMax(std::vector<Sarray> &a_U )
 }
 
 //-----------------------------------------------------------------------
-void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a_div )
+void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<float_sw4*>& a_div )
 {
    ASSERT(m_isDefinedMPIWriters);
    ASSERT( a_U.size() == mEW->mNumberOfGrids )
@@ -1516,13 +1563,13 @@ void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a
    bool iwrite    = plane_in_proc(m_gridPtIndex[0]);
    if (iwrite)
    {
-      const double c1 = 2.0/3;
-      const double c2 =-1.0/12;
-      const double fs = 5.0/6;
-      const double ot = 1.0/12;
-      const double ft = 4.0/3;
-      const double os = 1.0/6;
-      const double d3 = 14.0/3;
+      const float_sw4 c1 = 2.0/3;
+      const float_sw4 c2 =-1.0/12;
+      const float_sw4 fs = 5.0/6;
+      const float_sw4 ot = 1.0/12;
+      const float_sw4 ft = 4.0/3;
+      const float_sw4 os = 1.0/6;
+      const float_sw4 d3 = 14.0/3;
 
       int gmin,gmax;
       bool dotop;
@@ -1555,15 +1602,17 @@ void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a
 // Do the Cartesian grids.
       for (int g = gmin; g <= gmax ; g++ )
       {
-          double factor = 1.0/(mEW->mGridSize[g]);
-          size_t iField = 0;
-
+          float_sw4 factor = 1.0/(mEW->mGridSize[g]);
+	  //          size_t iField = 0;
+	  size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	  size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
           for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
             for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
               for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
               {
-		 double val =0.;
-
+		 float_sw4 val =0.;
+		 size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
 		 // I-direction
 		 if( i == 1 )
 		 {
@@ -1644,20 +1693,24 @@ void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a
 
                  val *= factor;
                  a_div[g][iField] = val;
-		 iField++; 
+		 //		 iField++; 
 	      }
       }
        // curvilinear grid
       if ( mEW->topographyExists() && dotop )
       {
           int g = mEW->mNumberOfGrids - 1;
-          double factor = 1.0/2.0; 
-          size_t iField = 0;
+          float_sw4 factor = 1.0/2.0; 
+	  //          size_t iField = 0;
+	  size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	  size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
           for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
             for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
               for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
                 {
-                  double val = 0.;
+                  float_sw4 val = 0.;
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
                   if (i == 1)
 		  {
 		     val  = mEW->mMetric(1,i,j,k)*(
@@ -1739,18 +1792,19 @@ void Image::computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a
 						      c2*(a_U[g](3,i,j,k+2) - a_U[g](3,i,j,k-2))   );
                     }
                   val *= factor/sqrt(mEW->mJ(i,j,k));
-                  if( m_double )
-                      m_doubleField[g][iField] = val;
-                  else
-                      m_floatField[g][iField] = (float)val;  
-                  iField++;  
+		  a_div[g][iField] = val;
+		  //                  if( m_double )
+		  //		     m_doubleField[g][iField] = (double) val;
+		  //                  else
+		  //                      m_floatField[g][iField] = (float)val;  
+		  //                  iField++;  
                 }   
       }
    }
 }
 
 //-----------------------------------------------------------------------
-void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl )
+void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_curl )
 {
    ASSERT(m_isDefinedMPIWriters);
    ASSERT( a_U.size()    == mEW->mNumberOfGrids )
@@ -1760,13 +1814,13 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl 
    bool iwrite   = plane_in_proc(m_gridPtIndex[0]);
    if (iwrite)
    {
-      const double c1 = 2.0/3;
-      const double c2 =-1.0/12;
-      const double fs = 5.0/6;
-      const double ot = 1.0/12;
-      const double ft = 4.0/3;
-      const double os = 1.0/6;
-      const double d3 = 14.0/3;
+      const float_sw4 c1 = 2.0/3;
+      const float_sw4 c2 =-1.0/12;
+      const float_sw4 fs = 5.0/6;
+      const float_sw4 ot = 1.0/12;
+      const float_sw4 ft = 4.0/3;
+      const float_sw4 os = 1.0/6;
+      const float_sw4 d3 = 14.0/3;
 
       int gmin,gmax;
       bool dotop;
@@ -1798,13 +1852,17 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl 
 // Do the Cartesian grids.
       for (int g = gmin; g <= gmax ; g++ )
       {
-          double factor = 1.0/(mEW->mGridSize[g]);
-          size_t iField = 0;
-          double duydx, duzdx, duxdy, duzdy, duxdz, duydz;
+          float_sw4 factor = 1.0/(mEW->mGridSize[g]);
+  //          size_t iField = 0;
+	  size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	  size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
           for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
             for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
               for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
               {
+		 float_sw4 duydx, duzdx, duxdy, duzdy, duxdz, duydz;
+		 size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
 		 // I-direction
 		 if( i == 1 )
 		 {
@@ -1912,22 +1970,26 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl 
                  a_curl[g][3*iField]   = factor*(duzdy-duydz); 
                  a_curl[g][3*iField+1] = factor*(duxdz-duzdx);
                  a_curl[g][3*iField+2] = factor*(duydx-duxdy);
-		 iField++; 
+		 //		 iField++; 
 	      }
       }
        // curvilinear grid
       if ( mEW->topographyExists() && dotop )
       {
           int g = mEW->mNumberOfGrids - 1;
-          int iField = 0;
-          double factor = 1.0/(2);
+	  //          int iField = 0;
+	  //          float_sw4 factor = 1.0/(2);
+	  size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	  size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
           for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+#pragma omp parallel for
 	     for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 		for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
                 {
-		   double duxdq = 0., duydq=0.0, duzdq=0.0;
-		   double duxdr = 0., duydr=0.0, duzdr=0.0;
-		   double duxds = 0., duyds=0.0, duzds=0.0;
+	           size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		   float_sw4 duxdq = 0., duydq=0.0, duzdq=0.0;
+		   float_sw4 duxdr = 0., duydr=0.0, duzdr=0.0;
+		   float_sw4 duxds = 0., duyds=0.0, duzds=0.0;
 		   if (i == 1)
 		   {      
                       duxdq = -2.25*a_U[g](1,i,j,k)+(4+fs)*a_U[g](1,i+1,j,k)-d3*a_U[g](1,i+2,j,k)+
@@ -2038,17 +2100,17 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl 
                       duyds = c1*(a_U[g](2,i,j,k+1) - a_U[g](2,i,j,k-1))+c2*(a_U[g](2,i,j,k+2) - a_U[g](2,i,j,k-2));
                       duzds = c1*(a_U[g](3,i,j,k+1) - a_U[g](3,i,j,k-1))+c2*(a_U[g](3,i,j,k+2) - a_U[g](3,i,j,k-2));
 		   }
-		   double duzdy = mEW->mMetric(1,i,j,k)*duzdr+mEW->mMetric(3,i,j,k)*duzds;
-		   double duydz = mEW->mMetric(4,i,j,k)*duyds;
-		   double duxdz = mEW->mMetric(4,i,j,k)*duxds;
-		   double duzdx = mEW->mMetric(1,i,j,k)*duzdq+mEW->mMetric(2,i,j,k)*duzds;
-		   double duydx = mEW->mMetric(1,i,j,k)*duydq+mEW->mMetric(2,i,j,k)*duyds;
-		   double duxdy = mEW->mMetric(1,i,j,k)*duxdr+mEW->mMetric(3,i,j,k)*duxds;
-		   factor = 1.0/sqrt(mEW->mJ(i,j,k));
+		   float_sw4 duzdy = mEW->mMetric(1,i,j,k)*duzdr+mEW->mMetric(3,i,j,k)*duzds;
+		   float_sw4 duydz = mEW->mMetric(4,i,j,k)*duyds;
+		   float_sw4 duxdz = mEW->mMetric(4,i,j,k)*duxds;
+		   float_sw4 duzdx = mEW->mMetric(1,i,j,k)*duzdq+mEW->mMetric(2,i,j,k)*duzds;
+		   float_sw4 duydx = mEW->mMetric(1,i,j,k)*duydq+mEW->mMetric(2,i,j,k)*duyds;
+		   float_sw4 duxdy = mEW->mMetric(1,i,j,k)*duxdr+mEW->mMetric(3,i,j,k)*duxds;
+		   float_sw4 factor = 1.0/sqrt(mEW->mJ(i,j,k));
 		   a_curl[g][3*iField]   = factor*(duzdy-duydz); 
 		   a_curl[g][3*iField+1] = factor*(duxdz-duzdx);
 		   a_curl[g][3*iField+2] = factor*(duydx-duxdy);
-                   iField++; 
+		   //                   iField++; 
                 }
       }
    }
@@ -2056,7 +2118,7 @@ void Image::computeCurl( std::vector<Sarray>& a_U, std::vector<double*>& a_curl 
 
 //-----------------------------------------------------------------------
 void Image::computeImageMagdt( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
-			       double dt )
+			       float_sw4 dt )
 {
    // dt is distance between Up and Um.
    ASSERT(m_isDefinedMPIWriters);
@@ -2072,24 +2134,26 @@ void Image::computeImageMagdt( vector<Sarray> &a_Up, vector<Sarray> &a_Um,
          gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
       }
-      double factor = 1.0/dt;
-      double vmag;
+      float_sw4 factor = 1.0/dt;
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  vmag = factor*sqrt( 
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 vmag = factor*sqrt( 
                      (a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k))*(a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k)) +
 		     (a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))*(a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k)) +
 		     (a_Up[g](3,i,j,k) - a_Um[g](3,i,j,k))*(a_Up[g](3,i,j,k) - a_Um[g](3,i,j,k)) );
 		  if (m_double)
-		     m_doubleField[g][iField] = vmag;
+		     m_doubleField[g][iField] = (double) vmag;
 		  else
 		     m_floatField[g][iField] = (float) vmag;
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }
@@ -2112,22 +2176,24 @@ void Image::computeImageMag( vector<Sarray> &a_U )
          gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
       }
-      double mag;
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  mag = sqrt(  a_U[g](1,i,j,k)*a_U[g](1,i,j,k) +
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 mag = sqrt(  a_U[g](1,i,j,k)*a_U[g](1,i,j,k) +
 			       a_U[g](2,i,j,k)*a_U[g](2,i,j,k) +
 			       a_U[g](3,i,j,k)*a_U[g](3,i,j,k) );
 		  if (m_double)
-		     m_doubleField[g][iField] = mag;
+		     m_doubleField[g][iField] = (double) mag;
 		  else
 		     m_floatField[g][iField] = (float) mag;
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }
@@ -2135,7 +2201,7 @@ void Image::computeImageMag( vector<Sarray> &a_U )
 
 //-----------------------------------------------------------------------
 void Image::computeImageHmagdt(vector<Sarray> &a_Up, vector<Sarray> &a_Um,
-			       double dt )
+			       float_sw4 dt )
 {
    // dt is distance between Up and Um.
    ASSERT(m_isDefinedMPIWriters);
@@ -2151,23 +2217,25 @@ void Image::computeImageHmagdt(vector<Sarray> &a_Up, vector<Sarray> &a_Um,
          gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
       }
-      double factor = 1.0/dt;
-      double vmag;
+      float_sw4 factor = 1.0/dt;
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  vmag = factor*sqrt( 
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 vmag = factor*sqrt( 
                      (a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k))*(a_Up[g](1,i,j,k) - a_Um[g](1,i,j,k)) +
 		     (a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))*(a_Up[g](2,i,j,k) - a_Um[g](2,i,j,k))); 
 		  if (m_double)
-		     m_doubleField[g][iField] = vmag;
+		     m_doubleField[g][iField] = (double) vmag;
 		  else
 		     m_floatField[g][iField] = (float) vmag;
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }
@@ -2190,20 +2258,23 @@ void Image::computeImageHmag( vector<Sarray> &a_U )
          gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
       }
-      double mag;
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 //         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  mag = sqrt( a_U[g](1,i,j,k)*a_U[g](1,i,j,k)+a_U[g](2,i,j,k)*a_U[g](2,i,j,k));
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 mag = sqrt( a_U[g](1,i,j,k)*a_U[g](1,i,j,k)+a_U[g](2,i,j,k)*a_U[g](2,i,j,k));
 		  if (m_double)
-		     m_doubleField[g][iField] = mag;
+		     m_doubleField[g][iField] = (double) mag;
 		  else
 		     m_floatField[g][iField] = (float) mag;
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }
@@ -2227,20 +2298,22 @@ void Image::compute_image_gradp( vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu
          gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
       }
-      double gradp;
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  gradp = a_gLambda[g](i,j,k)*2*sqrt( (2*a_Mu[g](i,j,k)+a_Lambda[g](i,j,k))*a_Rho[g](i,j,k) );
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 gradp = a_gLambda[g](i,j,k)*2*sqrt( (2*a_Mu[g](i,j,k)+a_Lambda[g](i,j,k))*a_Rho[g](i,j,k) );
 		  if (m_double)
 		     m_doubleField[g][iField] = gradp;
 		  else
 		     m_floatField[g][iField] = (float) gradp;
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }
@@ -2264,27 +2337,29 @@ void Image::compute_image_grads( vector<Sarray>& a_gMu, vector<Sarray>& a_gLambd
          gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
       }
-      double grads;
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
-		  grads = (2*a_gMu[g](i,j,k)-4*a_gLambda[g](i,j,k))*2*sqrt( a_Mu[g](i,j,k)*a_Rho[g](i,j,k));
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
+		  float_sw4 grads = (2*a_gMu[g](i,j,k)-4*a_gLambda[g](i,j,k))*2*sqrt( a_Mu[g](i,j,k)*a_Rho[g](i,j,k));
 		  if (m_double)
-		     m_doubleField[g][iField] = grads;
+		     m_doubleField[g][iField] = (double) grads;
 		  else
 		     m_floatField[g][iField] = (float) grads;
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }
 }
 
 //-----------------------------------------------------------------------
-void Image::update_image( int a_cycle, double a_time, double a_dt,
+void Image::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 			  vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
 			  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			  vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
@@ -2322,7 +2397,7 @@ void Image::update_image( int a_cycle, double a_time, double a_dt,
 }
 
 //-----------------------------------------------------------------------
-void Image::output_image( int a_cycle, double a_time, double a_dt,
+void Image::output_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 			  vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
 			  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			  vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
@@ -2470,16 +2545,20 @@ void Image::computeImageQuantityDiff( vector<Sarray>& a_U, vector<Sarray>& a_Uex
       }
       for (int g = gmin; g <= gmax; g++)
       {
-         size_t iField = 0;
+	 //         size_t iField = 0;
+	 size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
+	 size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+#pragma omp parallel for
          for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 	    for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
 	       for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++)
 	       {
+		  size_t iField = (i-mWindow[g][0])+ni*(j-mWindow[g][2])+nij*(k-mWindow[g][4]);
 		  if (m_double)
-		     m_doubleField[g][iField] = a_U[g](comp,i,j,k)-a_Uex[g](comp,i,j,k);
+		     m_doubleField[g][iField] = (double) a_U[g](comp,i,j,k)-a_Uex[g](comp,i,j,k);
 		  else
 		     m_floatField[g][iField] = (float) a_U[g](comp,i,j,k)-a_Uex[g](comp,i,j,k);
-		  iField++; 
+		  //		  iField++; 
 	       }
       }
    }

@@ -58,14 +58,14 @@ static Image* nil;
 enum ImageOrientation {UNDEFINED, X, Y, Z};
 
 Image(EW * a_ew,
-      double time, 
-      double timeInterval, 
+      float_sw4 time, 
+      float_sw4 timeInterval, 
       int cycle, 
       int cycleInterval,
       const std::string& filePrefix, 
       ImageMode mode,
       ImageOrientation locationType, 
-      double locationValue,
+      float_sw4 locationValue,
       bool doubleMode, bool userCreated=true );
 
 static  void setSteps(int a_steps);
@@ -89,10 +89,10 @@ void computeImageSvel(std::vector<Sarray> &mu, std::vector<Sarray> &rho );
 void computeImageGrid( Sarray &a_X, Sarray &a_Y, Sarray &a_Z );
 void computeImageLatLon( Sarray &a_X, Sarray &a_Y, Sarray &a_Z );
 void computeImageDivCurl( std::vector<Sarray> &a_Up, std::vector<Sarray>& a_U,
-			  std::vector<Sarray> &a_Um, double dt, int dminus );
-void computeImageMagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, double dt );
+			  std::vector<Sarray> &a_Um, float_sw4 dt, int dminus );
+void computeImageMagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
 void computeImageMag( std::vector<Sarray> &a_U );
-void computeImageHmagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, double dt );
+void computeImageHmagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
 void computeImageHmag( std::vector<Sarray> &a_U );
 void compute_image_gradp( vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
 			  vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho );
@@ -102,13 +102,13 @@ void compute_image_grads( vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
 void computeImageQuantityDiff( vector<Sarray>& a_U, vector<Sarray>& a_Uex,
 			       int comp );
 
-void output_image( int a_cycle, double a_time, double a_dt,
+void output_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 		   vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
 		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
 		   vector<Source*>& a_sources, int a_dminus );
 
-void update_image( int a_cycle, double a_time, double a_dt,
+void update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 		   vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
 		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
@@ -122,23 +122,23 @@ bool is_time_derivative() const;
 
 void associate_gridfiles( vector<Image*>& imgs );
    
-void writeImagePlane_2(int cycle, std::string &a_path, double time );
+void writeImagePlane_2(int cycle, std::string &a_path, float_sw4 time );
 void add_grid_filenames_to_file( const char* fname );
 void add_grid_to_file( const char* fname, bool iwrite, size_t offset );
 
 bool plane_in_proc(int a_gridIndexCoarsest);
 void initializeIO();
 
-void computeNearestGridPoint(std::vector<int> & a_arrayIndex, double x) const;
+void computeNearestGridPoint(std::vector<int> & a_arrayIndex, float_sw4 x) const;
   
-void update_maxes_vVelMax( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, double dt );
-void update_maxes_hVelMax( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, double dt );
+void update_maxes_vVelMax( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
+void update_maxes_hVelMax( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
 void update_maxes_vMax( std::vector<Sarray> &a_U );
 void update_maxes_hMax( std::vector<Sarray> &a_U );
 
 const std::string fieldSuffix(ImageMode mode) const;
 
-bool timeToWrite(double time, int cycle, double dt );
+bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt );
 bool timeToWrite( int cycle );
 void compute_file_suffix( std::stringstream & fileSuffix, int cycle );
 
@@ -146,7 +146,7 @@ ImageOrientation getOrientation() const {return mLocationType;};
 
 ImageMode mMode;
 std::string mFilePrefix;
-void initializeTime();
+void initializeTime(double t=0.0);
 bool needs_mgrad() const;
 
 protected:
@@ -154,10 +154,10 @@ protected:
 void define_pio();  
    //bool proc_write();
 
-double mTime;
+float_sw4 mTime;
 bool m_time_done;
-double mTimeInterval;
-double mNextTime;
+float_sw4 mTimeInterval;
+float_sw4 mNextTime;
 int mWritingCycle;
 int mCycleInterval;
 //std::string mFileName;
@@ -174,14 +174,14 @@ private:
 Image(); // make it impossible to call default constructor
 Image(const Image &im); // hide copy constructor 
 
-void computeDivergence( std::vector<Sarray> &a_U, std::vector<double*>& a_div );
-void computeCurl( std::vector<Sarray> &a_U, std::vector<double*>& a_curl );
+void computeDivergence( std::vector<Sarray> &a_U, std::vector<float_sw4*>& a_div );
+void computeCurl( std::vector<Sarray> &a_U, std::vector<float_sw4*>& a_curl );
 
    //bool mWriting;
    //bool mReadyToWrite;
 
 ImageOrientation mLocationType;
-double mCoordValue;
+float_sw4 mCoordValue;
 std::vector<int> m_gridPtIndex;
 
 MPI_Comm m_mpiComm_writers;

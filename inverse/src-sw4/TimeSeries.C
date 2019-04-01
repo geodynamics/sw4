@@ -1999,7 +1999,7 @@ float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 
    int start[7], finish[7];
    int c=0;
-   while( utc1[c] == utc2[c] && c <= 6 )
+   while( c <= 6 && utc1[c] == utc2[c] )
       c++;
    if( c == 7 )
       // Identical times
