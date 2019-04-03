@@ -3752,10 +3752,13 @@ void EW::processESSI3D( char* buffer )
    string filePrefix="essioutput";
    float_sw4 coordValue;
    float_sw4 coordBox[4];
+   const float_sw4 zero=0.0;
+   
    // Default is whole domain
-   coordBox[0] = 0.0;
+   coordBox[0] = zero;
    coordBox[1] = m_global_xmax;
-   coordBox[2] = 0.0;
+   coordBox[2] = zero;
+
    coordBox[3] = m_global_ymax;
    float_sw4 depth = -999.99; // default not specified
 
@@ -3785,35 +3788,35 @@ void EW::processESSI3D( char* buffer )
           token += 5; // skip xmin=
           coordValue = atof(token);
           coordBox[0] = min(m_global_xmax, coordValue);
-          coordBox[0] = max(0.0, coordBox[0]);
+          coordBox[0] = max(zero, coordBox[0]);
       }
       else if (startswith("xmax=", token))
       {
           token += 5; // skip xmax=
           coordValue = atof(token);
           coordBox[1] = min(m_global_xmax, coordValue);
-          coordBox[1] = max(0.0, coordBox[1]);
+          coordBox[1] = max(zero, coordBox[1]);
       }
       else if (startswith("ymin=", token))
       {
           token += 5; // skip ymin=
           coordValue = atof(token);
           coordBox[2] = min(m_global_ymax, coordValue);
-          coordBox[2] = max(0.0, coordBox[2]);
+          coordBox[2] = max(zero, coordBox[2]);
       }
       else if (startswith("ymax=", token))
       {
           token += 5; // skip ymax=
           coordValue = atof(token);
           coordBox[3] = min(m_global_ymax, coordValue);
-          coordBox[3] = max(0.0, coordBox[3]);
+          coordBox[3] = max(zero, coordBox[3]);
       }
       else if (startswith("depth=", token))
       {
           token += 6; // skip depth=
           coordValue = atof(token);
           depth = min(m_global_zmax, coordValue);
-          depth = max(0.0, depth);
+          depth = max(zero, depth);
       }
       else
       {

@@ -402,7 +402,7 @@ void DataPatches::print_openerr( int ecode ) const
    string emsg;
    switch( ecode )
    {
-   case EACCES: emsg = "EACCESS";break;
+   case EACCES: emsg = "EACCES";break;
    case EEXIST: emsg = "EEXIST";break;
    case EFAULT: emsg = "EFAULT";break;
    case EISDIR: emsg = "EISDIR";break;
