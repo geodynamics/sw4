@@ -11,6 +11,8 @@
 #  EXTRA_CXX_FLAGS = -O
 #  EXTRA_FORT_FLAGS = -O
 # must load appropriate modules for hdf5-parallel library support
+# ( module add hdf5-parallel )
+#
   HDF5ROOT   = ${HDF5}
   FFTWHOME = /usr/workspace/wsa/wave/quartz
 

@@ -3,7 +3,7 @@
 #include <cstring>
 #include "version.h"
 //#include "MaterialParameterization.h"
-#include "MaterialParAllpts.h"
+//#include "MaterialParAllpts.h"
 #include "MaterialParCartesian.h"
 #include "Mopt.h"
 #include "compute_f.h"
