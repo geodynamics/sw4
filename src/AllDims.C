@@ -31,6 +31,7 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
    m_nprock=nprock;
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myid1d );
    compute_myid3d();
+
    m_ibg = ibg-nghost;
    m_ieg = ieg+nghost;
    m_jbg = jbg-nghost;
@@ -43,6 +44,7 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
    m_je.resize(m_nprocj);
    m_kb.resize(m_nprock);
    m_ke.resize(m_nprock);
+
    int Ntot = ieg-ibg+1+2*nghost;
    for( int p1=0 ; p1 < m_nproci ; p1++ )
    {
@@ -70,7 +72,6 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
    m_indrev = false;
 }
 
-
 //-----------------------------------------------------------------------
 AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
 		  int kbg, int keg, int nghost )
@@ -81,6 +82,7 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
    m_nproci = nprocs;
    m_nprocj = 1;
    m_nprock = 1;
+
    m_ibg = ibg-nghost;
    m_ieg = ieg+nghost;
    m_jbg = jbg-nghost;
@@ -475,4 +477,3 @@ void AllDims::decomp1d_frf( int N, int myid, int nproc, int& s, int& e, int ngho
    else
       e += npad;
 }
-

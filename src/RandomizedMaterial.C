@@ -66,7 +66,6 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_hh = ratio*a_ew->mGridSize[g];
    m_nig = static_cast<int>(round(global_xmax/m_hh)+1);
    m_njg = static_cast<int>(round(global_ymax/m_hh)+1);
-      
 
    bool tmptest=false;
    if( tmptest )
@@ -237,6 +236,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
    }
 
 // 1. Generate Fourier modes and setup FFTW plan 
+
    get_fourier_modes( uc, n1, ib1, n1g, n2g, n3g, Lx, Ly, Lz, hurst, m_seed );
    fftw_plan plan = fftw_mpi_plan_dft_3d( n1g, n2g, n3g, (fftw_complex*)uc, (fftw_complex*)uc,
 					  MPI_COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE );
@@ -400,15 +400,15 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
-   AllDims* sw4dims= mEW->get_fine_alldimobject( );
 
+   AllDims* sw4dims= mEW->get_fine_alldimobject( );
    AllDims sarobj( sw4dims, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
    //   AllDims sarobj(m_nproc2d[0], m_nproc2d[1], 1, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
 
    sarobj.getdims_nopad(dims);
    mRndMaterial.define(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]);
    redistribute_array<float_sw4>( *dimobj, sarobj, u, mRndMaterial.c_ptr() );
-   //   cout << "SARRAY DIMS RANDMTRL: " << dims[2] << " " << dims[3] << endl;
+
    delete[] u;
 #else
    cout << "ERROR: Can not generate random material without FFTW" << endl;
@@ -437,7 +437,6 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
       float_sw4 k1eff=k1;
       if( k1 > r1 )
 	 k1eff = k1-n1g;
-      //      float_sw4 k1eff = k1>r1?k1-n1g:k1;
       for( int k2=0 ; k2 <= n2-1 ; k2++ )
       {
 	 float_sw4 k2eff=k2;

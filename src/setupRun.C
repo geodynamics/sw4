@@ -1106,7 +1106,6 @@ void EW::set_materials()
 	  //	  double zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];
 	  //	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
 	  //	     m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], m_zmin[g], zmax );
-
 	  communicate_array( mMu[g], g );
 	  communicate_array( mLambda[g], g );
        }

@@ -56,7 +56,7 @@ void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int k
 #pragma omp parallel for  reduction(+:energy)
    for( int k = k1; k <= k2 ; k++ )
 	 for( int j = j1; j <= j2 ; j++ )
-#pragma simd
+	    //#pragma simd
 #pragma ivdep	 
 	    for( int i = i1; i <= i2 ; i++ )
 	    {
@@ -106,7 +106,7 @@ void energy4c_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 #pragma omp parallel for reduction(+:energy)
    for( int k = k1; k <= k2 ; k++ )
 	 for( int j = j1; j <= j2 ; j++ )
-#pragma simd
+	    //#pragma simd
 #pragma ivdep	 
 	    for( int i = i1; i <= i2 ; i++ )
 	    {

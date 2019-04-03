@@ -12,7 +12,7 @@ void  addMemVarPredCart( float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha
   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
     for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
 #pragma ivdep
-#pragma simd
+       //#pragma simd
       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
       {
 	float_sw4 x = (i-1)*h;
@@ -103,7 +103,7 @@ void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4 
   for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
     for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
 #pragma ivdep
-#pragma simd
+       //#pragma simd
       for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
       {
 	float_sw4 x = a_X(i,j,k);
@@ -481,7 +481,7 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
          {
 	    float_sw4 x, y, z;
@@ -642,7 +642,7 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
 	 {
 	    float_sw4 x, y, z;
