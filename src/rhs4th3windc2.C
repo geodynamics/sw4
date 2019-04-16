@@ -90,7 +90,7 @@ void dpdmt_wind( int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
 #pragma omp for
       for(j=jb; j <= je ; j++ )
       {
-#pragma simd
+	 //#pragma simd
 #pragma ivdep
 	for(i=ib; i <= ie ; i++ )
 	{

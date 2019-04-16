@@ -52,7 +52,7 @@ public:
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
 TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
-	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true );
+	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true, int event=0 );
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep );
@@ -80,7 +80,7 @@ float_sw4 arrival_time( float_sw4 lod );
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
 float_sw4 misfit( TimeSeries& observed, TimeSeries* diff, float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift );
-float_sw4 misfit2( TimeSeries& observed );
+float_sw4 misfit2( TimeSeries& observed, TimeSeries* diff );
 
 void interpolate( TimeSeries& intpfrom );
 
@@ -131,6 +131,10 @@ void readSACdata( const char* fname, int npts, float_sw4* u );
 void convertjday( int jday, int year, int& day, int& month );   
 void getwgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 void getwgh5( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
+
+float_sw4 compute_maxshift( TimeSeries& observed );
+void shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
+		float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc=NULL );
 
 receiverMode m_mode;
 int m_nComp;
@@ -184,6 +188,8 @@ int m_utc[7];
 bool m_xyzcomponent;
 float_sw4 m_calpha, m_salpha, m_thxnrm, m_thynrm;
 
+int m_misfit_scaling;
+
 bool m_compute_scalefactor;
 float_sw4 m_scalefactor;
 
@@ -204,6 +210,8 @@ float_sw4 m_scalefactor;
 // pointer to EW object
    EW * m_ew;
 
+// Event no. (in case of multiple events)
+   int m_event;
 };
 
 

@@ -83,7 +83,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
     for( k= kfirstw; k <= klastw ; k++ )
 #pragma omp for
       for( j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	 //#pragma simd
 #pragma ivdep
 	for( i=ifirst+2; i <= ilast-2 ; i++ )
 	{
@@ -322,7 +322,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 #pragma omp for
     for( k= kfirstw; k <= klastw ; k++ )
       for( j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	 //#pragma simd
 #pragma ivdep
 	for( i=ifirst+2; i <= ilast-2 ; i++ )
 	{
@@ -575,7 +575,7 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 #pragma omp for
     for( k= kfirstw; k <= klastw ; k++ )
       for( j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	 //#pragma simd
 #pragma ivdep
 	for( i=ifirst+2; i <= ilast-2 ; i++ )
 	{

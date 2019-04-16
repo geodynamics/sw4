@@ -1,0 +1,88 @@
+#------------------------------
+# Grid
+#
+grid h=200 x=35000 y=35000 z=19500
+#
+#------------------------------
+# Time
+#
+time t=9 utcstart=01/01/2100:00:00:00.000
+#
+#------------------------------
+# Paths etc..
+#
+fileio verbose=1 path=run1 obspath=../reference/const_obs temppath=tmp pfs=0
+#
+#------------------------------
+# Reference material
+# 
+block vp=4630.76 vs=2437.56 r=2650
+#
+#------------------------------
+# Material parameterization
+# 
+mparcart nx=1 ny=1 nz=1 init=../reference/gradtest/onep-pr10.bin
+#mparcart nx=1 ny=1 nz=1 init=onep-pr10.bin
+#
+#------------------------------
+# Optimizer and properties
+#
+mrun task=gradtest mcheck=on tsoutput=on
+#lbfgs nvectors=3 ihess0=scale-factors maxit=20 tolerance=1e-12 linesearch=on
+#mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1
+mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
+#
+#------------------------------
+# Source
+#
+source x=17500 y=17500 z=2000 Mxy=1 m0=1e18 t0=1.5 freq=4 type=Gaussian
+#
+#----------------------------
+#
+developer cfl=1.1
+#
+#------------------------------
+#
+# Observations (synthetic)
+#  
+observation x=11500 y=11500 z=0 file=sta11
+observation x=14500 y=11500 z=0 file=sta21
+observation x=17500 y=11500 z=0 file=sta31
+observation x=20500 y=11500 z=0 file=sta41
+observation x=23500 y=11500 z=0 file=sta51
+observation x=11500 y=14500 z=0 file=sta12
+observation x=14500 y=14500 z=0 file=sta22
+observation x=17500 y=14500 z=0 file=sta32
+observation x=20500 y=14500 z=0 file=sta42
+observation x=23500 y=14500 z=0 file=sta52
+observation x=11500 y=17500 z=0 file=sta13
+observation x=14500 y=17500 z=0 file=sta23
+observation x=17500 y=17500 z=0 file=sta33
+observation x=20500 y=17500 z=0 file=sta43
+observation x=23500 y=17500 z=0 file=sta53
+observation x=11500 y=20500 z=0 file=sta14
+observation x=14500 y=20500 z=0 file=sta24
+observation x=17500 y=20500 z=0 file=sta34
+observation x=20500 y=20500 z=0 file=sta44
+observation x=23500 y=20500 z=0 file=sta54
+observation x=11500 y=23500 z=0 file=sta15
+observation x=14500 y=23500 z=0 file=sta25
+observation x=17500 y=23500 z=0 file=sta35
+observation x=20500 y=23500 z=0 file=sta45
+observation x=23500 y=23500 z=0 file=sta55
+#
+#-----------------------------------------------------------------------
+#
+# Output some images
+#
+# mimage mode=rho x=17500 iterInterval=1 
+# mimage mode=mu x=17500 iterInterval=1 
+# mimage mode=lambda x=17500 iterInterval=1 
+# #
+# mimage mode=rho z=1000 iterInterval=1 
+# mimage mode=mu z=1000 iterInterval=1 
+# mimage mode=lambda z=1000 iterInterval=1 
+# #
+# mimage mode=rho z=5000 iterInterval=1 
+# mimage mode=mu z=5000 iterInterval=1 
+# mimage mode=lambda z=5000 iterInterval=1

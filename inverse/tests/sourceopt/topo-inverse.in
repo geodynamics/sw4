@@ -1,0 +1,57 @@
+#
+# Gaussian hill topography
+#
+#
+grid x=1.0 y=1.0 z=1.5 h=0.02
+#
+#
+fileio path=my-topo-opt-run obspath=topo-synth-c6
+#
+time t=5 utcstart=08/26/2014:21:15:51.00
+#
+# Two layer material
+block vp=1 vs=0.5 rho=1
+block vp=0.8 vs=0.4 rho=0.9 z2=0.3
+#
+# Read Gaussian hill topography from file
+topography order=4 input=cartesian file=gausshill.topo zmax=0.7 smooth=0
+#
+# Exact source
+#source x=0.6065 y=0.399 z=0.017  mxx=-0.4035 mxy=-0.8383 mxz=-0.3238 myy=0.2069 myz=0.3851 mzz=0.2157 t0=0.0 freq=1 type=C6SmoothBump m0=1
+#
+# Initial guess, near
+source x=0.61 y=0.41 z=0.022  mxx=-0.41 mxy=-0.8 mxz=-0.3 myy=0.2 myz=0.4 mzz=0.2 t0=0.01 freq=1.05 type=C6SmoothBump m0=1
+#
+# Initial guess, far
+#source x=0.55 y=0.45 z=0.1  mxx=-0.41 mxy=-0.8 mxz=-0.3 myy=0.2 myz=0.4 mzz=0.2 t0=0.0 freq=1.05 type=C6SmoothBump m0=1
+#
+supergrid gp=5 dc=0.001
+#
+cg maxouterit=3 tolerance=1e-12 scalefactors=estimate initialguess=usesource steptype=hessian optmethod=fletcher-reeves linesearch=on
+#
+# Computed at exact source:
+#scalefactors x0=3.0091e-05 y0=3.86413e-05 z0=3.7751e-05 Mxx=0.00102648 Mxy=0.00059059 Mxz=0.000384402 Myy=0.00110056 Myz=0.000575708 Mzz=0.000902192 t0=5.8376e-05 freq=0.000115834
+#
+# No scaling:
+#scalefactors x0=1 y0=1 z0=1 Mxx=1 Mxy=1 Mxz=1 Myy=1 Myz=1 Mzz=1 t0=1 freq=1
+#
+#image mode=topo z=0 cycle=0 file=gaussian
+#image mode=mu x=0.6 cycle=0 file=im
+#image mode=rho x=0.6 cycle=0 file=im
+#image mode=lambda x=0.6 cycle=0 file=im
+#image mode=p x=0.6 cycle=0 file=im
+#image mode=s x=0.6 cycle=0 file=im
+#
+observation x=0.3 y=0.4 depth=0 file=st1
+observation x=0.5 y=0.4 depth=0 file=st2
+observation x=0.7 y=0.4 depth=0 file=st3
+observation x=0.3 y=0.3 depth=0 file=st4
+observation x=0.4 y=0.3 depth=0 file=st5
+observation x=0.7 y=0.3 depth=0 file=st6
+observation x=0.3 y=0.7 depth=0 file=st7
+observation x=0.5 y=0.7 depth=0 file=st8
+observation x=0.8 y=0.7 depth=0 file=st9
+
+
+
+

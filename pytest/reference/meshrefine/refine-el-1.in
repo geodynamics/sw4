@@ -1,4 +1,5 @@
 fileio verbose=1 path=refine-el-1
+developer ctol=1e-10 cmaxit=100 #tighten tolerances to reduce roundoff errors
 
 grid nx=33 x=0.8 y=1.2 z=1.0 
 refinement zmax=0.2

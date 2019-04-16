@@ -56,7 +56,7 @@ CheckPoint::CheckPoint( EW* a_ew,
    mDoRestart(false),
    m_kji_order(true)
 {
-   m_double = sizeof(float_sw4)==8;
+   m_double = sizeof(float_sw4)==sizeof(double);
 }
 
 //-----------------------------------------------------------------------
@@ -77,7 +77,7 @@ CheckPoint::CheckPoint( EW* a_ew, string fname, size_t bufsize ) :
    mRestartPathSet(false),
    mDoRestart(true)
 {
-   m_double = sizeof(float_sw4)==8;
+   m_double = sizeof(float_sw4)==sizeof(double);
 }
 
 //-----------------------------------------------------------------------
@@ -95,6 +95,12 @@ CheckPoint::~CheckPoint()
 bool CheckPoint::do_checkpointing()
 {
    return mDoCheckPointing;
+}
+
+//-----------------------------------------------------------------------
+int CheckPoint::get_checkpoint_cycle_interval()
+{
+   return mCycleInterval;
 }
 
 //-----------------------------------------------------------------------
@@ -247,7 +253,6 @@ void CheckPoint::define_pio( )
 	    iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-// tmp
       if( m_kji_order )
       {
 // Swap i and k on file

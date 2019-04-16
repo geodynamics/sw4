@@ -28,7 +28,6 @@ void addgradrho_ci(  int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #pragma omp parallel for
    for( int k = kfirstact; k <= klastact ; k++ )
       for( int j = jfirstact; j <= jlastact ; j++ )
-#pragma simd
 #pragma ivdep	 
 	 for( int i = ifirstact; i <= ilastact ; i++ )
 	 {
@@ -74,7 +73,6 @@ void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #pragma omp parallel for
    for( int k = kfirstact; k <= klastact ; k++ )
       for( int j = jfirstact; j <= jlastact ; j++ )
-#pragma simd
 #pragma ivdep	 
 	 for( int i = ifirstact; i <= ilastact ; i++ )
 	 {
@@ -126,20 +124,19 @@ void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #define kapacc(c,i,j,k) a_kapacc[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
 #define bop(q,k) a_bop[q-1+4*(k-1)]
 
-   int kstart = kfirstact;
-#pragma omp parallel
-	 {
+   //#pragma omp parallel
+   {
+      int kstart = kfirstact;
       if( kfirstact <= 4 && onesided[4] == 1 )
       {
          kstart = 5;
 	 float_sw4 w8[4]={0,0,1,1};
          float_sw4 w6m[4]={0,0,al1,al1+al2};
 	 float_sw4 w6p[4]={0,al1,al1+al2,al1+al2+al3};
-#pragma omp for
 	 for( int k=kfirstact; k <= 4; k++ )
+#pragma omp parallel for
             for( int j=jfirstact; j <= jlastact; j++ )
 #pragma ivdep
-#pragma simd
                for( int i=ifirstact; i <= ilastact; i++ )
 	       {
                   float_sw4 normfact = h3*wgh[k-1];
@@ -480,11 +477,10 @@ void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	       }
       }
       
-#pragma omp for
+#pragma omp parallel for
 	 for( int k=kstart; k <= klastact; k++ )
             for( int j=jfirstact; j <= jlastact; j++ )
 #pragma ivdep
-#pragma simd
                for( int i=ifirstact; i <= ilastact; i++ )
 	       {
 		  float_sw4 normfact = h3;
@@ -858,7 +854,6 @@ void addgradmulac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	 for( int k=kfirstact; k <= 4; k++ )
             for( int j=jfirstact; j <= jlastact; j++ )
 #pragma ivdep
-#pragma simd
                for( int i=ifirstact; i <= ilastact; i++ )
 	       {
 		  float_sw4 normfact = wgh[k-1];
@@ -1373,7 +1368,6 @@ void addgradmulac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
       for( int k=kstart; k <= klastact; k++ )
 	 for( int j=jfirstact; j <= jlastact; j++ )
 #pragma ivdep
-#pragma simd
 	    for( int i=ifirstact; i <= ilastact; i++ )
 	    {
 // Diagonal terms

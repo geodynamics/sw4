@@ -1,0 +1,93 @@
+----------------------------------------------------------------
+            sw4 version 2.2-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Apr 2 14:05:09 PDT 2019
+  By user:     bjorn
+  Machine:     quartz188
+  Compiler:    /usr/tce/packages/impi/impi-2019.0-intel-18.0.1/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: ../reference/gradtest/grad.in
+
+* Processing the grid command...
+* Setting nx to 176 to be consistent with h=200
+* Setting ny to 176 to be consistent with h=200
+* Setting nz to 99 to be consistent with h=200
+* Changing z from 19500 to 19600 to be consistent with h=200
+Extent of the computational domain xmax=35000 ymax=35000 zmax=19600
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       176       176        99      3066624
+Total number of grid points (without ghost points): 3.06662e+06
+
+
+
+   Execution time, reading input file 0.106965 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Directory: run1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= -1.180000e+02, Lat=3.731441e+01, x=3.500000e+04, y=0.000000e+00
+2: Lon= -1.176047e+02, Lat=3.731441e+01, x=3.500000e+04, y=3.500000e+04
+3: Lon= -1.176063e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.500000e+04
+
+Considering all material blocks
+block command: outside = 0, material = 3190528
+
+       ----------- Material properties ranges ---------------
+       2650 kg/m^3 <=  Density <= 2650 kg/m^3
+       4630.76 m/s    <=  Vp      <= 4630.76 m/s
+       2437.56 m/s    <=  Vs      <= 2437.56 m/s
+       1.89975        <=  Vp/Vs   <= 1.89975
+       1.57455e+10 Pa     <=  mu      <= 1.57455e+10 Pa
+       2.53354e+10 Pa     <=  lambda  <= 2.53354e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+02, minVs/h=12.1878 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+TIME accuracy order=4 CFL=1.1 prel. time step=0.0381085
+*** Initialized Images
+ Min source z-level: 2.000000e+03, max source z-level: 2.000000e+03
+
+   Execution time, start up phase 0.0146909 seconds 
+ xmin, xmax = 6200 28800 hx = 11300
+ ymin, ymax = 6200 28800 hy = 11300
+ zmin, zmax = -13400 13400 hz = 13400
+----------------------------------------------------
+ Making Directory: run1/
+		
+... Done!
+----------------------------------------------------
+Running sw4mopt on 36 processors...
+Writing output to directory: run1/
+2650 <=   rho    <= 2910.33 (grid 0)
+1.57455e+10 <=    mu    <= 1.72923e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.78243e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Unperturbed objective function f=4.341925e-02
+Gradient testing shared parameters :
+Param#  f-perturbed     step-size     f'-adjoint      f'-div-diff    error 
+   0   4.341925e-02   7.950000e-05   2.254068e-05   2.254205e-05  -1.365920e-09
+   1   4.341927e-02   4.620000e+02   4.812198e-11   4.812220e-11  -2.244645e-16
+   2   4.341925e-02   2.256000e+04  -1.458061e-13  -1.457942e-13  -1.195202e-17
+============================================================
+ sw4mopt ( Material/Source estimation solver) finished! 
+============================================================

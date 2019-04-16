@@ -228,14 +228,8 @@ void GridPointSource::initializeTimeFunction()
        mTimeFunc_omtt = Dirac_omtt;
        break;
     case iDiscrete :
-       mTimeFunc = Discrete;
-       mTimeFunc_t = Discrete_t;
-       mTimeFunc_tt = Discrete_tt;
-       mTimeFunc_ttt = Discrete_ttt;
-       mTimeFunc_om = Discrete_om;
-       mTimeFunc_omtt = Discrete_omtt;
-       break;
     case iDiscrete6moments :
+    case iDiscrete3forces :
        mTimeFunc = Discrete;
        mTimeFunc_t = Discrete_t;
        mTimeFunc_tt = Discrete_tt;
@@ -285,13 +279,8 @@ void GridPointSource::initializeTimeFunction()
      mTimeFunc_omom = Dirac_omom;
      break;
   case iDiscrete :
-     mTimeFunc_tttt = Discrete_tttt;
-     mTimeFunc_tttom = Discrete_tttom;
-     mTimeFunc_ttomom = Discrete_ttomom;
-     mTimeFunc_tom = Discrete_tom;
-     mTimeFunc_omom = Discrete_omom;
-     break;
   case iDiscrete6moments :
+  case iDiscrete3forces :
      mTimeFunc_tttt = Discrete_tttt;
      mTimeFunc_tttom = Discrete_tttom;
      mTimeFunc_ttomom = Discrete_ttomom;
@@ -314,9 +303,9 @@ void GridPointSource::initializeTimeFunction()
 void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
 {
    float_sw4 afun, afunv[6];
-   if( mTimeDependence != iDiscrete6moments )
+   if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
       afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
-   else
+   else if( mTimeDependence == iDiscrete6moments )
    {
       int npts = mIpar[0];
       int size = 6*(npts-1)+1;
@@ -333,20 +322,37 @@ void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
       pos += size;
       afunv[5] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
    }
+   else if( mTimeDependence == iDiscrete3forces )
+   {
+      int npts = mIpar[0];
+      int size = 6*(npts-1)+1;
+      size_t pos = 0;
+      afunv[0] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[1] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[2] = mTimeFunc(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+   }
       
   if( m_derivative==-1)
   {
-     if( mTimeDependence != iDiscrete6moments )
+     if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
      {
 	fxyz[0] = mForces[0]*afun;
 	fxyz[1] = mForces[1]*afun;
 	fxyz[2] = mForces[2]*afun;
      }
-     else
+     else if( mTimeDependence == iDiscrete6moments )
      {
 	fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
 	fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
 	fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
+     }
+     else if( mTimeDependence == iDiscrete3forces )
+     {
+	fxyz[0] = mForces[0]*afunv[0];
+	fxyz[1] = mForces[0]*afunv[1];
+	fxyz[2] = mForces[0]*afunv[2];
      }
   }
   else if( m_derivative >= 0 && m_derivative <= 8 )
@@ -405,9 +411,9 @@ void GridPointSource::getFxyz_notime( float_sw4* fxyz ) const
 void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
 {
    float_sw4 afun, afunv[6];
-   if( mTimeDependence != iDiscrete6moments )
+   if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
       afun= mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
-   else
+   else if( mTimeDependence == iDiscrete6moments )
    {
       int npts = mIpar[0];
       int size = 6*(npts-1)+1;
@@ -424,21 +430,38 @@ void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
       pos += size;
       afunv[5] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
    }
+   else if( mTimeDependence == iDiscrete3forces )
+   {
+      int npts = mIpar[0];
+      int size = 6*(npts-1)+1;
+      size_t pos = 0;
+      afunv[0] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[1] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+      pos += size;
+      afunv[2] = mTimeFunc_tt(mFreq,t-mT0,mPar+pos, mNpar, mIpar, mNipar );
+   }
 
    //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
   if( m_derivative==-1)
   {
-     if( mTimeDependence != iDiscrete6moments )
+     if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
      {
 	fxyz[0] = mForces[0]*afun;
 	fxyz[1] = mForces[1]*afun;
 	fxyz[2] = mForces[2]*afun;
      }
-     else
+     else if( mTimeDependence == iDiscrete6moments )
      {
 	fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
 	fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
 	fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
+     }
+     else if( mTimeDependence == iDiscrete3forces )
+     {
+	fxyz[0] = mForces[0]*afunv[0];
+	fxyz[1] = mForces[0]*afunv[1];
+	fxyz[2] = mForces[0]*afunv[2];
      }
   }
   else if( m_derivative >= 0 && m_derivative <= 8 )

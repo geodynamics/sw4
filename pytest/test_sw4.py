@@ -146,6 +146,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
+    elif 'Darwin' in sys_name:
+        if omp_threads<=0: omp_threads=1;
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
         if omp_threads<=0: omp_threads=1;
@@ -155,6 +159,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
+
 def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
@@ -259,6 +264,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
             # run sw4
             run_dir = os.getcwd()
             #print('Running sw4 from directory:', run_dir)
+
 # assign OMP_NUM_THREADS
             status = subprocess.run(
                 run_cmd,

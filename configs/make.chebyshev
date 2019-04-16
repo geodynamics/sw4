@@ -1,0 +1,9 @@
+etree = no
+proj = no
+FC = mpif90
+CXX = mpicxx
+EXTRA_FORT_FLAGS = 
+#EXTRA_LINK_FLAGS = -framework Accelerate
+# If using OpenMP
+EXTRA_LINK_FLAGS = -framework Accelerate -lomp -L/usr/local/Cellar/gcc/8.2.0/lib/gcc/8 -lgfortran
+EXTRA_CXX_FLAGS = -Xpreprocessor 

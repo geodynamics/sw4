@@ -120,7 +120,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
    //  int pc[4];
 // compute the number of parallel overlap points
 //  mEW->interiorPaddingCells( pc );
-  int material=0, outside=0;
+  size_t material=0, outside=0;
 
   for( int g = 0 ; g < mEW->mNumberOfCartesianGrids; g++) // Cartesian grids
   {
@@ -240,7 +240,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 	  }
 	  else
 	  {
-	    if (mEW->getVerbosity() > 2)
+	    if (mEW->getVerbosity() >= 4)
 	    {
 	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
 		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
@@ -255,10 +255,34 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
       }
     }
   } // end if topographyExists
-  int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-
+  size_t outsideSum, materialSum;
+  int mpisizelong, mpisizelonglong, mpisizeint;
+  MPI_Type_size(MPI_LONG,&mpisizelong );
+  MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
+  MPI_Type_size(MPI_INT,&mpisizeint );
+  if( sizeof(size_t) == mpisizelong )
+  {
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+  }
+  else if( sizeof(size_t) == mpisizelonglong )
+  {
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+  }
+  else if( sizeof(size_t) == mpisizeint )
+  {
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+  }
+  else
+  {
+     int outsidei=outside, materiali=material, outsideSumi, materialSumi;
+     MPI_Reduce(&outsidei, &outsideSumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&materiali, &materialSumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     outsideSum=outsideSumi;
+     materialSum=materialSumi;
+  }
   if (mEW->proc_zero()) 
     cout << "block command: outside = " << outsideSum << ", " << "material = " << materialSum << endl;
 

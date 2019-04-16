@@ -338,7 +338,7 @@ void MaterialIfile::extractSurfaceFromGridFile(string a_surfaceFileName)
    if (mEw->proc_zero())
       printf("Nlon=%i Nlat=%i Nmat=%i\n", Nlon, Nlat, Nmat);
 
-   m_materialLonMax=-1e99, m_materialLonMin=1e99, m_materialLatMax=-1e99, m_materialLatMin=1e99;
+   m_materialLonMax=-1e30, m_materialLonMin=1e30, m_materialLatMax=-1e30, m_materialLatMin=1e30;
    float_sw4 depthMax=-1e10, depthMin=1e10;
    for (i=1; i<=Nlon; i++)
    {
@@ -511,7 +511,7 @@ void MaterialIfile::extractSurfaceFromCartesianFile(string a_surfaceFileName)
    if (mEw->proc_zero())
       printf("Nx=%i Ny=%i Nmat=%i\n", Nx, Ny, Nmat);
 
-   m_mat_Xmax=-1e99, m_mat_Xmin=1e99, m_mat_Ymax=-1e99, m_mat_Ymin=1e99;
+   m_mat_Xmax=-1e30, m_mat_Xmin=1e30, m_mat_Ymax=-1e30, m_mat_Ymin=1e30;
    float_sw4 depthMax=-1e10, depthMin=1e10;
    for (i=1; i<=Nx; i++)
    {
