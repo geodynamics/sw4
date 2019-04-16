@@ -1638,7 +1638,229 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::misfit2( TimeSeries& observed )
+float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
+{
+   bool dbg =false;
+   if( m_myPoint )
+   {
+      // 1. Evaluate correlation at some time shifts around zero
+      int noptpt = 40;
+      float_sw4 tlim = 5, fmax = -1e38, tmax=0;
+      float_sw4 f, df, ddf;
+      if( dbg )
+	 cout << "Compute maxshift \n 1. scan through time points " << endl;
+      for( int n=0 ; n < noptpt ; n++ )
+      {
+	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
+	 shiftfunc( observed, tshift, f, df, ddf );
+	 if( f > fmax )
+	 {
+	    fmax = f;
+	    tmax = tshift;
+	 }
+	 if( dbg )
+	    cout << "ts= " << tshift << " f= " << f << endl;
+      }
+      // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
+      int maxit=10, it=0;
+      float_sw4 tol=1e-12;
+      float_sw4 err=tol+1;
+      float_sw4 t1 = tmax;
+      if( dbg )
+	 cout << "2. Newton iteration" << endl;
+      while( it < maxit && err > tol )
+      {
+	 shiftfunc( observed, t1, f, df, ddf );
+	 float_sw4 tnew = t1 - df/ddf;
+	 err = abs(tnew-t1);
+	 t1=tnew;
+	 it++;
+	 if( dbg )
+	    cout << "it " << it << " err " << err << endl;
+      }
+      if( f > fmax )
+      {
+	 tmax = t1;
+	 if( err > tol )
+	 {
+	    cout << "ERROR: No convergence in compute_maxshift, err= " << err << endl;
+	 }
+	 if( ddf >= 0 )
+	 {
+	    cout << "ERROR: compute_maxshift found a minimum,  f'' = " << ddf << endl;
+	 }
+      }
+      if( dbg )
+	 cout << "Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
+      return tmax;
+   }
+   else
+      return 0;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
+			    float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc )
+{
+// Interpolate data to this object
+   float_sw4 dtfr  = observed.m_dt;
+   float_sw4 idtfr = 1/dtfr;
+   float_sw4 idtfr2 = idtfr*idtfr;
+
+   float_sw4 t0fr  = observed.m_t0+observed.m_shift;
+   int nfrsteps = observed.mLastTimeStep+1;
+
+   float_sw4 mf[3], dmf[3], ddmf[3];
+   func = dfunc = ddfunc = 0;
+   bool compute_adjsrc = adjsrc != NULL;
+   //   float_sw4 scale_factor=0;
+      
+   // Weight to ramp down the end of misfit.
+   float_sw4 wghv;
+   int p =20 ; // Number of points in ramp;
+   int istart = 1; // Starting index for downward ramp.
+   if( mLastTimeStep-p+1 > 1 )
+      istart = mLastTimeStep-p+1;
+   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+   {
+      wghv = 1;
+      if( i >= istart )
+      {
+	 float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
+	 wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+      }
+      float_sw4 t  = m_t0 + m_shift + i*m_dt + tshift;
+      float_sw4 ir = (t-t0fr)/dtfr;
+      int ie   = static_cast<int>(ir);
+      int mmin = ie-2;
+      int mmax = ie+3;
+      if( mmax-mmin+1 > nfrsteps )
+      {
+	 cout << "Error in TimeSeries::shiftfunc : Can not interpolate, " <<
+	    "because the grid is too coarse " << endl;
+	 cout << "mmin = " << mmin << endl;
+	 cout << "mmax = " << mmax << endl;
+	 cout << "nfrsteps = " << nfrsteps << endl;
+	 return;
+      }
+// Windowing and component selection
+      float_sw4 wghx, wghy, wghz;
+      wghx = wghy = wghz = wghv;
+      if( m_use_win && (t < m_winL || t > m_winR) )
+	 wghx = wghy = wghz = 0;
+      if( !m_use_x )
+	 wghx = 0;
+      if( !m_use_y )
+	 wghy = 0;
+      if( !m_use_z )
+	 wghz = 0;
+
+// Set to zero before the starting point of the observations, or past end of observed data.
+      mf[0]   = mf[1]   = mf[2]   = 0;
+      dmf[0]  = dmf[1]  = dmf[2]  = 0;
+      ddmf[0] = ddmf[1] = ddmf[2] = 0;
+      if(  1 <= ie && ie <= nfrsteps )
+      {
+	 float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
+	 if( ie < 3 )
+	 {
+	    mmin = 1;
+	    mmax = 5;
+	    ai   = ir - (mmin+2);
+	    getwgh5( ai, wgh, dwgh, ddwgh );
+	 }
+	 else if( ie > nfrsteps-3 )
+	 {
+	    mmin = nfrsteps-4;
+	    mmax = nfrsteps;
+	    ai   = ir - (mmin+2);
+	    getwgh5( ai, wgh, dwgh, ddwgh );
+	 }
+	 else
+	 {
+	    ai = ir-(mmin+2);
+	    getwgh( ai, wgh, dwgh, ddwgh );
+	 }
+	 for( int m = mmin ; m <= mmax ; m++ )
+	 {
+	    if( observed.m_usgsFormat )
+	    {
+	       mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
+	       mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
+	       mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
+
+	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr;
+	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr;
+	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr;
+
+	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2;
+	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2;
+	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2;
+	    }
+	    else
+	    {
+	       mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m];
+	       mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m];
+	       mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m];
+
+	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr;
+	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr;
+	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr;
+
+	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2;
+	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2;
+	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
+	    }
+	 }
+      }
+      if( m_usgsFormat )
+      {
+	 func += ( mf[0]*mRecordedSol[0][i]*wghx + 
+		   mf[1]*mRecordedSol[1][i]*wghy + 
+		   mf[2]*mRecordedSol[2][i]*wghz   );
+	 dfunc += ( dmf[0]*mRecordedSol[0][i]*wghx + 
+		    dmf[1]*mRecordedSol[1][i]*wghy + 
+		    dmf[2]*mRecordedSol[2][i]*wghz   );
+	 ddfunc += ( ddmf[0]*mRecordedSol[0][i]*wghx + 
+		     ddmf[1]*mRecordedSol[1][i]*wghy + 
+		     ddmf[2]*mRecordedSol[2][i]*wghz   );
+      }
+      else
+      {
+	 func += ( mf[0]*mRecordedFloats[0][i]*wghx + 
+	           mf[1]*mRecordedFloats[1][i]*wghy + 
+	 	   mf[2]*mRecordedFloats[2][i]*wghz );
+	 dfunc += ( dmf[0]*mRecordedFloats[0][i]*wghx + 
+	            dmf[1]*mRecordedFloats[1][i]*wghy + 
+	 	    dmf[2]*mRecordedFloats[2][i]*wghz );
+	 ddfunc += ( ddmf[0]*mRecordedFloats[0][i]*wghx + 
+	             ddmf[1]*mRecordedFloats[1][i]*wghy + 
+	 	     ddmf[2]*mRecordedFloats[2][i]*wghz );
+      }
+      //      scale_factor += wghx*mf[0]*mf[0] + wghy*mf[1]*mf[1] + wghz*mf[2]*mf[2];
+
+      if( compute_adjsrc )
+      {
+	 adjsrc[0][i] = -tshift*wghx*dmf[0];
+	 adjsrc[1][i] = -tshift*wghy*dmf[1];
+	 adjsrc[2][i] = -tshift*wghz*dmf[2];
+      }
+
+   }
+   if( compute_adjsrc )
+   {
+      float_sw4 iddf=1/ddfunc;
+      for( int i= 0 ; i <= mLastTimeStep ; i++ )      
+      {
+	 adjsrc[0][i] *= iddf;
+	 adjsrc[1][i] *= iddf;
+	 adjsrc[2][i] *= iddf;
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
 {
    // Computes  travel time (correlation) misfit.
    //  if diff !=NULL, also computes diff := this - observed
@@ -1648,124 +1870,25 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed )
    float_sw4 misfit = 0;
    if( m_myPoint )
    {
-// Interpolate data to this object
-      float_sw4 mf[3];
-      float_sw4 dtfr  = observed.m_dt;
-      float_sw4 t0fr  = observed.m_t0+observed.m_shift;
-      int nfrsteps = observed.mLastTimeStep+1;
+      if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
+	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. " << 
+                    "Station Tstart = " << m_t0+m_shift << 
+               " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
 
-      // Weight to ramp down the end of misfit.
-      float_sw4 wghv;
-      int p =20 ; // Number of points in ramp;
-      int istart = 1; // Starting index for downward ramp.
-      if( mLastTimeStep-p+1 > 1 )
-	 istart = mLastTimeStep-p+1;
-      for( int i= 0 ; i <= mLastTimeStep ; i++ )
+      float_sw4 ms=compute_maxshift( observed );
+      misfit = 0.5*ms*ms;
+
+      if( diff != NULL )
       {
-	 wghv = 1;
-	 if( i >= istart )
-	 {
-	    float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
-	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
-	 }
-	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = (t-t0fr)/dtfr;
-	 int ie   = static_cast<int>(ir);
-         int mmin = ie-2;
-	 int mmax = ie+3;
-	 if( mmax-mmin+1 > nfrsteps )
-	 {
-	    cout << "Error in TimeSeries::misfit2 : Can not interpolate, " <<
-	       "because the grid is too coarse " << endl;
-            cout << "mmin = " << mmin << endl;
-            cout << "mmax = " << mmax << endl;
-	    cout << "nfrsteps = " << nfrsteps << endl;
-	    return 0.0;
-	 }
-
-// Windowing and component selection
-         float_sw4 wghx, wghy, wghz;
-	 wghx = wghy = wghz = wghv;
-         if( m_use_win && (t < m_winL || t > m_winR) )
-	    wghx = wghy = wghz = 0;
-         if( !m_use_x )
-	    wghx = 0;
-         if( !m_use_y )
-	    wghy = 0;
-         if( !m_use_z )
-	    wghz = 0;
-
-	 // If too far past the end of observed, set to zero.
-         if( ie > nfrsteps+1 )
-	 {
-	    mf[0]   = mf[1]   = mf[2]   = 0;
-	 }
-         else if( ie < 1 )
-	 {
-	    // Before the starting point of the observations.
-	    mf[0]   = mf[1]   = mf[2]   = 0;
-	 }
-	 else
-	 {
-   	    mf[0]   = mf[1]   = mf[2]   = 0;
-            float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
-            if( ie < 3 )
-	    {
-	       mmin = 1;
-	       mmax = 5;
-	       ai   = ir - (mmin+2);
-	       getwgh5( ai, wgh, dwgh, ddwgh );
-            
-	    }
-	    else if( ie > nfrsteps-3 )
-	    {
-	       mmin = nfrsteps-4;
-	       mmax = nfrsteps;
-	       ai   = ir - (mmin+2);
-	       getwgh5( ai, wgh, dwgh, ddwgh );
-	    }
-            else
-	    {
-	       ai = ir-(mmin+2);
-	       getwgh( ai, wgh, dwgh, ddwgh );
-	    }
-
-            float_sw4 idtfr = 1/dtfr;
-	    float_sw4 idtfr2 = idtfr*idtfr;
-	    for( int m = mmin ; m <= mmax ; m++ )
-	    {
-	       if( observed.m_usgsFormat )
-	       {
-		  mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
-		  mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
-		  mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
-	       }
-               else
-	       {
-		  mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m];
-		  mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m];
-		  mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m];
-	       }
-	    }
-	 }
-	 if( m_usgsFormat )
-	 {
-	    misfit += ( mf[0]*mRecordedSol[0][i]*wghx + 
-			mf[1]*mRecordedSol[1][i]*wghy + 
-			mf[2]*mRecordedSol[2][i]*wghz   );
-	 }
-	 else
-	 {
-	    misfit += ( mf[0]*mRecordedFloats[0][i]*wghx + 
-			mf[1]*mRecordedFloats[1][i]*wghy + 
-			mf[2]*mRecordedFloats[2][i]*wghz );
-	 }
+	 float_sw4 f, df, ddf;
+	 float_sw4** misfitsource;
+	 if( diff->mLastTimeStep < mLastTimeStep )
+	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
+	 misfitsource = diff->getRecordingArray();
+	 shiftfunc( observed, ms, f, df, ddf, misfitsource );
       }
    }
-   else
-      misfit = 0;
-  // Return the negative misfit, to make it a quantity to minimize, for conformity with the L2 misfit.
-   return -0.5*misfit;
+   return misfit;
 }
 
 //-----------------------------------------------------------------------

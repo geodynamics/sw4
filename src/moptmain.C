@@ -133,13 +133,24 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    mf = 0;
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-   //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
+//	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
-
-// Compute misfit
-      double dshift, ddshift, dd1shift;
-      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	 mf += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], NULL, dshift, ddshift, dd1shift );
+//        Compute misfit
+      if( mopt->m_misfit == Mopt::L2 )
+      {
+	 double dshift, ddshift, dd1shift;
+	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	    mf += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], NULL, dshift, ddshift, dd1shift );
+      }
+      else if( mopt->m_misfit == Mopt::CROSSCORR )
+      {
+	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	 {
+	    mf += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], NULL );
+	    //	    if( e==0 && m== 0 )
+	    //	       exit(0);
+	 }
+      }
    }
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -248,9 +259,17 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	 diffs.push_back(elem);
       }
 // 2. misfit function also updates diffs := this - observed
-      double dshift, ddshift, dd1shift;
-      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	 f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+      if( mopt->m_misfit == Mopt::L2 )
+      {
+	 double dshift, ddshift, dd1shift;
+	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	    f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+      }
+      else if( mopt->m_misfit == Mopt::CROSSCORR )
+      {
+	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	    f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+      }
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
@@ -430,7 +449,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       
       for( int ind=0 ; ind < ns ; ind++ )
       {
-	h = 3e-8*sf[ind]; // multiply step length by scale factor
+	 h = 3e-8*sf[ind]; // multiply step length by scale factor
 	 xs[ind] += h;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fp, mopt );
@@ -802,7 +821,11 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 	       {
 		  GlobalTimeSeries[e][s]->writeFile();
 		  double dshift, ddshift, dd1shift;
-		  double mf = GlobalTimeSeries[e][s]->misfit( *GlobalObservations[e][s], NULL, dshift, ddshift, dd1shift );
+		  double mf; 
+		  if( mopt->m_misfit == Mopt::L2 )
+		     mf = GlobalTimeSeries[e][s]->misfit( *GlobalObservations[e][s], NULL, dshift, ddshift, dd1shift );
+		  else if(  mopt->m_misfit == Mopt::CROSSCORR )
+		     mf = GlobalTimeSeries[e][s]->misfit2( *GlobalObservations[e][s], NULL );
 		  double mftmp = mf;
 		  MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 		  if( myRank == 0 )

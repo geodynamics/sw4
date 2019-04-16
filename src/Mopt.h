@@ -45,7 +45,10 @@ class Mopt
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
    void set_baseMat(double* xs );
-   
+
+   enum Misfittype {L2,CROSSCORR};
+   Misfittype m_misfit;
+
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
    bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck, m_output_ts;

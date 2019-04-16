@@ -63,6 +63,7 @@ Mopt::Mopt( EW* a_ew )
    m_nstot = 0;
    m_sfs = NULL;
    m_xs0 = NULL;
+   m_misfit = L2;
 }  
 
 //-----------------------------------------------------------------------
@@ -286,6 +287,16 @@ void Mopt::processMrun( char* buffer )
          CHECK_INPUT(strcmp("yes",token)== 0||strcmp("no",token)== 0,"ERROR, mrun quiet= " << token <<
 		     " not understood" << endl);
 	 m_ew->setQuiet(strcmp("yes",token)==0);
+      }
+      else if( startswith("misfit=",token) )
+      {
+	 token += 7;
+	 if( strcmp(token,"l2")==0 )
+	    m_misfit = L2;
+	 else if( strcmp(token,"crosscorr")==0 )
+	    m_misfit = CROSSCORR;
+	 else
+	    CHECK_INPUT(false,"ERROR, mrun misfit= " << token << " not understood" << endl);
       }
       else
          badOption("mrun",token);
