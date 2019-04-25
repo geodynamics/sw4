@@ -47,6 +47,7 @@ template<typename T1, typename T2>
     for ( auto it : map){
       ofile<<"#"<<it.first<<"\n";
       for (auto v : it.second) ofile<<c++<<" "<<v<<"\n";
+      ofile<<"&\n";
     }
   }
   
