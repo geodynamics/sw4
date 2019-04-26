@@ -120,7 +120,7 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
    //  int pc[4];
 // compute the number of parallel overlap points
 //  mEW->interiorPaddingCells( pc );
-  int material=0, outside=0;
+  size_t material=0, outside=0;
 
   for( int g = 0 ; g < mEW->mNumberOfCartesianGrids; g++) // Cartesian grids
   {
@@ -198,75 +198,97 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 
   } // end for all Cartesian grids
   
-  if (mEW->topographyExists()) // curvilinear grid
+  for( int g = mEW->mNumberOfCartesianGrids ; g < mEW->mNumberOfGrids; g++) // Curvilinear grids
   {
-     for( int g = mEW->mNumberOfCartesianGrids ; g < mEW->mNumberOfGrids; g++) // Curvilinear grids
-     {
 //    int g = mEW->mNumberOfGrids-1; 
 
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
-        float_sw4 zsurf = 0.;
+     float_sw4 zsurf = 0.;
 
 #pragma omp parallel for reduction(+:material,outside)
-        for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
+     for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
+     {
+        for( int j = mEW->m_jStart[g] ; j <= mEW->m_jEnd[g]; j++ )
         {
-           for( int j = mEW->m_jStart[g] ; j <= mEW->m_jEnd[g]; j++ )
+           for( int i = mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
            {
-              for( int i = mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
+              float_sw4 x = mEW->mX[g](i,j,k);
+              float_sw4 y = mEW->mY[g](i,j,k);
+              float_sw4 z = mEW->mZ[g](i,j,k);
+                      
+              //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
+                      
+              float_sw4 depth;
+              if (m_absoluteDepth)
               {
-                 float_sw4 x = mEW->mX[g](i,j,k);
-                 float_sw4 y = mEW->mY[g](i,j,k);
-                 float_sw4 z = mEW->mZ[g](i,j,k);
-                      
-	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
-                      
-                 float_sw4 depth;
-                 if (m_absoluteDepth)
-                 {
-                    depth = z;
-                 }
-                 else
-                 {
-                    depth = z - mEW->mZ[g](i,j,1);
-                 }	  
+                 depth = z;
+              }
+              else
+              {
+                 depth = z - mEW->mZ[g](i,j,1);
+              }	  
 
-                 if(inside_block(x,y,depth))
+              if(inside_block(x,y,depth))
+              {
+                 if( m_rho != -1 )
+                    rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
+                 if( m_vs != -1 )
+                    cs[g](i,j,k)  = m_vs + m_vsgrad*(depth-zsurf);
+                 if( m_vp != -1 )
+                    cp[g](i,j,k)  = m_vp + m_vpgrad*(depth-zsurf);
+                 if( m_qp != -1 && qp[g].is_defined())
+                    qp[g](i,j,k) = m_qp;
+                 if( m_qs != -1 && qs[g].is_defined())
+                    qs[g](i,j,k) = m_qs;
+                 material++;
+              }
+              else
+              {
+                 if (mEW->getVerbosity() >= 4)
                  {
-                    if( m_rho != -1 )
-                       rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
-                    if( m_vs != -1 )
-                       cs[g](i,j,k)  = m_vs + m_vsgrad*(depth-zsurf);
-                    if( m_vp != -1 )
-                       cp[g](i,j,k)  = m_vp + m_vpgrad*(depth-zsurf);
-                    if( m_qp != -1 && qp[g].is_defined())
-                       qp[g](i,j,k) = m_qp;
-                    if( m_qs != -1 && qs[g].is_defined())
-                       qs[g](i,j,k) = m_qs;
-                    material++;
+                    printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+                           "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
+                           "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
+                           i, j, k, g, 
+                           x, y, z, depth,
+                           m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
                  }
-                 else
-                 {
-                    if (mEW->getVerbosity() > 2)
-                    {
-                       printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
-                              "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
-                              "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
-                              i, j, k, g, 
-                              x, y, z, depth,
-                              m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
-                    }
-                    outside++;
-                 }
-              } // end for i
-           } // end for j
-        } // ned for k
-     } // end for g (curvilinear)
-     
-  } // end if topographyExists
-  int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+                 outside++;
+              }
+                 
+           } // end for i
+        } // end for j
+     } // end for k
+  } // end for g (curvilinear)
 
+  size_t outsideSum, materialSum;
+  int mpisizelong, mpisizelonglong, mpisizeint;
+  MPI_Type_size(MPI_LONG,&mpisizelong );
+  MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
+  MPI_Type_size(MPI_INT,&mpisizeint );
+  if( sizeof(size_t) == mpisizelong )
+  {
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+  }
+  else if( sizeof(size_t) == mpisizelonglong )
+  {
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+  }
+  else if( sizeof(size_t) == mpisizeint )
+  {
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+  }
+  else
+  {
+     int outsidei=outside, materiali=material, outsideSumi, materialSumi;
+     MPI_Reduce(&outsidei, &outsideSumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&materiali, &materialSumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     outsideSum=outsideSumi;
+     materialSum=materialSumi;
+  }
   if (mEW->proc_zero()) 
     cout << "block command: outside = " << outsideSum << ", " << "material = " << materialSum << endl;
 

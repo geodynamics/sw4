@@ -1,9 +1,10 @@
 # add separate search paths for cencalvm and proj4
 etree = no
 proj = yes
-SW4ROOT = /opt/local/lib/proj47
+SW4ROOT = /usr/local/Cellar/proj/5.0.1
 FC = mpif90
 CXX = mpicxx
 EXTRA_FORT_FLAGS =
-EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc7 -lgfortran
+EXTRA_CXX_FLAGS = 
+EXTRA_LINK_FLAGS = -framework  Accelerate  -L/opt/local/lib/gcc8 -lgfortran
 

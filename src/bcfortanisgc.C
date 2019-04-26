@@ -250,8 +250,8 @@ void EW::bcfortanisg_ci( int ib, int ie, int jb, int je, int kb, int ke, int win
 		  rhs2 += c[ind+13*npts]*du+c[ind+18*npts]*dv+c[ind+19*npts]*dw-h*bforce5[1+3*qq];
 		  rhs3 += c[ind+14*npts]*du+c[ind+19*npts]*dv+c[ind+20*npts]*dw-h*bforce5[2+3*qq];
  // Solve system for ghost point values
-		  float_sw4 x[3] = {rhs1,rhs2,rhs3};
-		  float_sw4 a[9];
+		  double x[3] = {rhs1,rhs2,rhs3};
+		  double a[9];
 		  a[0] = c[ind+11*npts];
 		  a[1] = c[ind+13*npts];
 		  a[2] = c[ind+14*npts];
@@ -309,8 +309,8 @@ void EW::bcfortanisg_ci( int ib, int ie, int jb, int je, int kb, int ke, int win
 		  rhs3 += c[ind+14*npts]*du+c[ind+19*npts]*dv+c[ind+20*npts]*dw-h*bforce6[2+3*qq];
 
  // Solve system for ghost point values
-		  float_sw4 x[3] = {rhs1,rhs2,rhs3};
-		  float_sw4 a[9];
+		  double x[3] = {rhs1,rhs2,rhs3};
+		  double a[9];
 		  a[0] = c[ind+11*npts];
 		  a[1] = c[ind+13*npts];
 		  a[2] = c[ind+14*npts];

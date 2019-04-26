@@ -721,8 +721,8 @@ void MaterialRfile::read_rfile( )
 	    }
 	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, m_bufsize );
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
-    // Read corresponding part of patches
-	    double* material_dble = new double[mMaterial[p].m_npts];
+// Read corresponding part of patches
+	    float_sw4* material_dble = new float_sw4[mMaterial[p].m_npts];
 	    if( prec == 8 )
 	       pio->read_array( &fd, ncblock[p], material_dble, pos0, "double", swapbytes );
 //	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(), pos0, "double", swapbytes );
@@ -740,13 +740,8 @@ void MaterialRfile::read_rfile( )
       close(fd);
 
       fill_in_fluids();
-      
-      //      for( int p=1 ; p < m_npatches ; p++ )
-      //      {
-      //	 cout << "rho min and max " << mMaterial[p].minimum(1)<< " " << mMaterial[p].maximum(1) << endl;
-      //	 cout << "cp  min and max " << mMaterial[p].minimum(2)<< " " << mMaterial[p].maximum(2) << endl;
-      //	 cout << "cs  min and max " << mMaterial[p].minimum(3)<< " " << mMaterial[p].maximum(3) << endl;
-      //      }
+   //      material_check(false);
+
       //      for( int p=0 ; p < m_npatches ; p++ )
       //	 delete pio[p];
       
@@ -845,3 +840,68 @@ void MaterialRfile::fill_in_fluids()
    }
    }   
 }
+
+//-----------------------------------------------------------------------
+void MaterialRfile::material_check( bool water )
+{
+   bool printsmallcpcs=false;
+   for( int p=1 ; p < m_npatches ; p++ )
+   {
+      double csmin=1e38,cpmin=1e38,cratmin=1e38,csmax=-1e38,cpmax=-1e38,cratmax=-1e38;
+      double rhomin=1e38, rhomax=-1e38;
+      for( int k=mMaterial[p].m_kb ; k<= mMaterial[p].m_ke ; k++ )
+	 for( int j=mMaterial[p].m_jb ; j<= mMaterial[p].m_je ; j++ )
+	    for( int i=mMaterial[p].m_ib ; i<= mMaterial[p].m_ie ; i++ )
+	    {
+	       if( water || mMaterial[p](3,i,j,k) != -999 )
+	       {
+		  if( mMaterial[p](1,i,j,k) < rhomin )
+		     rhomin = mMaterial[p](1,i,j,k);
+		  if( mMaterial[p](1,i,j,k) > rhomax )
+		     rhomax = mMaterial[p](1,i,j,k);
+		  if( mMaterial[p](3,i,j,k) < csmin )
+		     csmin = mMaterial[p](3,i,j,k);
+		  if( mMaterial[p](3,i,j,k) > csmax )
+		     csmax = mMaterial[p](3,i,j,k);
+		  if( mMaterial[p](2,i,j,k) < cpmin )
+		     cpmin = mMaterial[p](2,i,j,k);
+		  if( mMaterial[p](2,i,j,k) > cpmax )
+		     cpmax = mMaterial[p](2,i,j,k);
+		  double crat = mMaterial[p](2,i,j,k)/mMaterial[p](3,i,j,k);
+		  if( crat < cratmin )
+		  {
+		     cratmin = crat;
+		     if( printsmallcpcs && crat < 1.41 )
+		     {
+			cout << "crat= " << crat << " at " << i << " " <<  j << " " << k << endl;
+			cout << " material is " << mMaterial[p](1,i,j,k) << " " << mMaterial[p](2,i,j,k) << " " 
+			     << mMaterial[p](3,i,j,k) << " " << mMaterial[p](4,i,j,k) << " " << mMaterial[p](5,i,j,k) << endl;
+		     }
+		  }
+		  if( crat > cratmax )
+		     cratmax = crat;
+	       }
+	    }
+      double cmins[4]={csmin,cpmin,cratmin,rhomin}, cmaxs[4]={csmax,cpmax,cratmax,rhomax};
+      double cminstot[4], cmaxstot[4];
+      MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD );
+      MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+      int myid;
+      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+      if( myid == 0 )
+	 //	 if( mEW->getRank()==0 )
+      {
+	 if( p== 1 && !water )
+	    cout << "R-file limits, away from water: " << endl;
+	 else if( p== 1 )
+	    cout << "R-file limits : " << endl;
+	 cout << "  Patch no " << p << " : " << endl;
+	 cout << "    cp    min and max " << cminstot[1] << " " << cmaxstot[1] << endl;
+	 cout << "    cs    min and max " << cminstot[0] << " " << cmaxstot[0] << endl;
+	 cout << "    cp/cs min and max " << cminstot[2] << " " << cmaxstot[2] << endl;
+	 cout << "    rho   min and max " << cminstot[3] << " " << cmaxstot[3] << endl;
+      }
+   }
+}
+
+    

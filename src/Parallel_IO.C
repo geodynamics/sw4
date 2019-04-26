@@ -161,6 +161,36 @@ void Comminfo::print( int recv )
 Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
 		  int starts[3], int nptsbuf, int padding )
 {
+// Input: iwrite - 0 this processor will not participate in I/O op.
+//                 1 this processor will participate in I/O op.
+//        pfs    - 0 I/O will be done to non-parallel file system.
+//                 1 I/O will be done to parallel file system.
+//        globalsizes - Total size of array 
+//        localsizes  - Size of sub block of array in this processor.
+//        starts      - Location of starting point of this array's sub block.
+//                       Zero based indices.
+//        nptsbuf     - Size of internal buffer in number of grid points.
+//        padding     - Size of overlap (halo points, ghost points) between blocks 
+//                      in different processors. padding is zero by default.
+// Notes:
+//    1. Setting pfs to zero assumes I/O operations have to be sequential. The processors will
+//       access the file one at a time, leading to a very slow (non-parallel) I/O. This option
+//       should only be used when running small problems on a laptop or workstation where no
+//       parallel I/O capabilities are available.
+//
+//    2. The actual size of the buffer allocated can differ from what is specified by `nptsbuf'.
+//       First, the size used by write_array or read_array will be nc*nptsbuf grid points, where
+//       nc is the number of components of the array at each grid point. Secondly, there is a 
+//       lower limit, corresponding to one lower dimensional slice of data. I.e., an array of 
+//       size (nc,ni,nj,nk) with nk>1, will use at least nc*ni*nj points of buffer memory.
+//
+//    3. The `padding' parameter is zero by default. Zero padding will always work. If there is 
+//       padding between processors, setting `padding' accordingly will prevent values in the halo 
+//       to be read/written more than once.
+//       Some performance might be gained by this. However, after a file is read, the values in 
+//       the halo (ghost points) will not be defined. If this option is used, it is the 
+//       responsibility of the user to update the halo points after the array is read.
+//                      
    m_zerorank_in_commworld = -1;
    int ihave_array=1;
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
@@ -1134,11 +1164,13 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 {
 //
 //  Write array previously set up by constructing object.
-// Input: fid - File descriptor, obtained by calling open.
-//        nc  - Number of components per grid point of array.
-//        array - The data array, local in the processor
+//
+// Input: fid   - Open file descriptor, obtained by calling `open' before calling this routine.
+//        nc    - Number of components per grid point of array.
+//        array - The data array, local in the processor.
 //        pos0  - Start writing the array at this byte position in file.
 //        typ   - Declared type of 'array', possible values are "float" or "double".
+//                The array saved on disk will have the same type.
 //
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
@@ -1423,9 +1455,13 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 
 // Write to disk
 	    begin_sequential( m_write_comm );
+	    size_t linux_lim=268434944;
 	    if( flt == 0 )
 	    {
-	       sizew = write( *fid, rbuf, sizeof(double)*((off_t)nc)*niblock*njblock*nkblock );
+	       if( nc*((size_t)niblock)*njblock*nkblock > linux_lim )
+		  sizew = write_with_limit( fid, rbuf, ((off_t)nc)*niblock*njblock*nkblock, linux_lim );
+	       else
+		  sizew = write( *fid, rbuf, sizeof(double)*((off_t)nc)*niblock*njblock*nkblock );
                if( sizew != sizeof(double)*((off_t)nc)*niblock*njblock*nkblock )
 	       {
                   cout << "Error in write_array: could not write requested array size";
@@ -1436,7 +1472,11 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 	    }
 	    else
 	    {
-	       sizew = write( *fid, rfbuf, sizeof(float)*((off_t)nc)*niblock*njblock*nkblock );
+
+	       if( nc*((size_t)niblock)*njblock*nkblock > linux_lim*2 )
+		  sizew = write_with_limit( fid, rbuf, ((off_t)nc)*niblock*njblock*nkblock, linux_lim*2 );
+	       else
+		  sizew = write( *fid, rfbuf, sizeof(float)*((off_t)nc)*niblock*njblock*nkblock );
 	       if( sizew != sizeof(float)*((off_t)nc)*niblock*njblock*nkblock )
 	       {
                   int eno = errno;
@@ -1493,15 +1533,20 @@ void Parallel_IO::write_array( int* fid, int nc, void* array, off_t pos0,
 }
 
 //-----------------------------------------------------------------------
-void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
+void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
 			      const char* typ, bool swap_bytes )
 {
-//  Read array previously set up by constructing object.
-// Input: fid - File descriptor, obtained by calling open.
-//        nc  - Number of components per grid point of array.
+// Read array previously set up by constructing object.
+//
+// Input: fid   - File descriptor, obtained by calling `open'.
+//        nc    - Number of components per grid point of array.
 //        array - The data array, local in the processor
 //        pos0  - Start reading the array at this byte position in file.
-//        typ   - Declared type of 'array', possible values are "float" or "double".
+//        typ   - Type of data on disk, possible values are "float" or "double".
+//                Note, the returned array will always be of type float_sw4.
+//        swap_bytes - true  --> Byte order of read data is swapped (le --> be or vice versa)
+//                     false --> Read data is returned in the same byte order as data on disk.
+//                     `swap_bytes' is false by default.
 //
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
@@ -1646,9 +1691,14 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 	    begin_sequential( m_write_comm );
 	    if( m_irecv.m_ncomm[b] > 0 )
 	    {
-	       if( flt == 0 )
+	       size_t linux_lim=268434944;//max no of doubles in one call to read/write, limited by Linux kernel.
+	       if( flt == 0 ) 
 	       {
-		  sizew = read( *fid, rbuf, sizeof(double)*nc*((size_t)niblock)*njblock*nkblock );
+		  if( nc*((size_t)niblock)*njblock*nkblock > linux_lim )
+		     //		     sizew = read_dble_wlim( fid, rbuf, nc*((size_t)niblock)*njblock*nkblock,linux_lim);
+		     sizew = read_with_limit( fid, rbuf, nc*((size_t)niblock)*njblock*nkblock,linux_lim);
+		  else
+		     sizew = read( *fid, rbuf, sizeof(double)*nc*((size_t)niblock)*njblock*nkblock );
 		  if( sizew != sizeof(double)*nc*((size_t)niblock)*njblock*nkblock )
 		  {
 		     cout << "Error in read_array: could not read requested array size";
@@ -1660,7 +1710,10 @@ void Parallel_IO::read_array( int* fid, int nc, double* array, off_t pos0,
 	       }
 	       else
 	       {
-		  sizew = read( *fid, rfbuf, sizeof(float)*nc*((size_t)niblock)*njblock*nkblock );
+		  if( nc*((size_t)niblock)*njblock*nkblock > linux_lim*2 )
+		     sizew = read_with_limit( fid, rfbuf, sizeof(float)*nc*((size_t)niblock)*njblock*nkblock,linux_lim*2 );
+		  else
+		     sizew = read( *fid, rfbuf, sizeof(float)*nc*((size_t)niblock)*njblock*nkblock );
 		  if( sizew != sizeof(float)*nc*((size_t)niblock)*njblock*nkblock )
 		  {
 		     cout << "Error in read_array: could not read requested array size";
@@ -1887,3 +1940,62 @@ int Parallel_IO::proc_zero_rank_in_comm_world()
    }
    return m_zerorank_in_commworld;
 }
+
+//-----------------------------------------------------------------------
+template<class T> size_t Parallel_IO::read_with_limit( int* fid, T* rbuf, size_t nelem, size_t limit )
+{
+// Read a vector of `nelem' elements of type T into rbuf, with maximum of 
+// elements per read is limited to `limit'.
+//
+// Input: fid   - File descriptor previously opened with `open'.
+//        rbuf  - Pointer to vector of doubles.
+//        nelem - Number of elements in rbuf.
+//        limit - Maximum number of elements to read at each call to `read'.
+// Output: Returns the number of bytes read.
+//
+   size_t ind=0;
+   size_t nreads = (nelem % limit) == 0 ? nelem/limit:nelem/limit+1;
+   for( int i= 0 ; i < nreads ; i++ )
+   {
+      size_t nrtoread = nelem-ind > limit ? limit:nelem-ind;
+      size_t nr = read( *fid, &rbuf[ind], nrtoread*sizeof(T) );
+      if( nr != nrtoread*sizeof(T) )
+      {
+	 cout << "ERROR in read_with_limit, read " << nr <<
+	    " bytes, requested " << nrtoread*sizeof(T) << " bytes " << endl;
+	 return ind*sizeof(T)+nr;
+      }
+      ind += nrtoread;
+   }
+   return ind*sizeof(T);
+}
+
+//-----------------------------------------------------------------------
+template<class T> size_t Parallel_IO::write_with_limit( int* fid, T* rbuf, size_t nelem, size_t limit )
+{
+// Write a vector of `nelem' elements of type T to disk, when maximum of 
+// elements per write is limited to `limit'.
+//
+// Input: fid   - File descriptor previously opened with `open'.
+//        rbuf  - Pointer to vector of data.
+//        nelem - Number of elements in rbuf.
+//        limit - Maximum number of elements to write at each call to `write'.
+// Output: Returns the number of bytes written.
+//
+   size_t ind=0;
+   size_t nwrites = (nelem % limit) == 0 ? nelem/limit:nelem/limit+1;
+   for( int i= 0 ; i < nwrites ; i++ )
+   {
+      size_t nrtowrite = nelem-ind > limit ? limit:nelem-ind;
+      size_t nr = write( *fid, &rbuf[ind], nrtowrite*sizeof(T) );
+      if( nr != nrtowrite*sizeof(T) )
+      {
+	 cout << "ERROR in write_with_limit, wrote " << nr <<
+	    " bytes, requested " << nrtowrite*sizeof(T) << " bytes " << endl;
+	 return ind*sizeof(T)+nr;
+      }
+      ind += nrtowrite;
+   }
+   return ind*sizeof(T);
+}
+

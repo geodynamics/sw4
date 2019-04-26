@@ -35,6 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <unistd.h>
 
 #include "TimeSeries.h"
 //#include "mpi.h"
@@ -52,14 +53,14 @@ void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& 
 		int& second, int& msecond, int& fail );
 
 TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
-			float_sw4 x, float_sw4 y, float_sw4 depth, bool topoDepth, int writeEvery, bool xyzcomponent ):
+			float_sw4 x, float_sw4 y, float_sw4 depth, bool topoDepth, int writeEvery, bool xyzcomponent, int event ):
   m_ew(a_ew),
   m_mode(mode),
   m_nComp(0),
   m_myPoint(false),
   m_fileName(fileName),
   m_staName(staName),
-  m_path(a_ew->getPath()),
+  m_path(a_ew->getPath(event)),
   mX(x),
   mY(y),
   mZ(depth),
@@ -105,7 +106,10 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_y(true),
   m_use_z(true),
   mQuietMode(false),
-  m_compute_scalefactor(true)
+  mIsRestart(false),
+  m_compute_scalefactor(true),
+  m_misfit_scaling(1),
+  m_event(event)
 {
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
    a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
@@ -447,7 +451,7 @@ void TimeSeries::writeFile( string suffix )
      filePrefix << m_fileName << suffix.c_str() << "." ;
   
 // get the epicenter from EW object (note that the epicenter is not always known when this object is created)
-  m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset );
+  m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_event );
   
   stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
   
@@ -459,7 +463,6 @@ void TimeSeries::writeFile( string suffix )
     if (mBinaryMode)
       mode = "BINARY";
     inihdr();
-
     stringstream msg;
     msg << "Writing " << mode << " SAC files, "
 	<< "of size " << mLastTimeStep+1 << ": "
@@ -693,24 +696,28 @@ void TimeSeries::writeFile( string suffix )
      // 	msg << "[vxx|vyy|vzz|vxy|vxz|vyz]" << endl;
      // }
 
+     if (m_ew->getVerbosity() >=3)
+       cout << msg.str();
+
 // time to write the SAC files
-     cout << msg.str();
      if (m_mode == Displacement || m_mode == Velocity || m_mode == Curl) // 3 components
      {
 	if( m_xyzcomponent )
 	{
-	   write_sac_format(mLastTimeStep+1, 
-			const_cast<char*>(ux.str().c_str()), 
+     // Only create a .bak if we're doing checkpointing
+     bool makeCopy = m_ew->m_check_point->do_checkpointing();
+	   write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(ux.str().c_str()),
 			mRecordedFloats[0], (float) m_shift, (float) m_dt,
-			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
-	   write_sac_format(mLastTimeStep+1, 
-			const_cast<char*>(uy.str().c_str()), 
+			const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy);
+	   write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uy.str().c_str()),
 			mRecordedFloats[1], (float) m_shift, (float) m_dt,
-			const_cast<char*>(yfield.c_str()), 90.0, azimy); 
-	   write_sac_format(mLastTimeStep+1, 
-			const_cast<char*>(uz.str().c_str()), 
+			const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy);
+	   write_sac_format(mLastTimeStep+1,
+			const_cast<char*>(uz.str().c_str()),
 			mRecordedFloats[2], (float) m_shift, (float) m_dt,
-			const_cast<char*>(zfield.c_str()), updownang, 0.0);
+			const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy);
 	}
 	else
 	{
@@ -825,10 +832,10 @@ void TimeSeries::writeFile( string suffix )
   if( m_usgsFormat )
   {
     filePrefix << "txt";
-    if (!m_ew->getQuiet())
+    if (m_ew->getVerbosity() >= 3)
       cout << "Writing ASCII USGS file, "
-	   << "of size " << mLastTimeStep+1 << ": "
-	   << filePrefix.str() << endl;
+        << "of size " << mLastTimeStep+1 << ": "
+        << filePrefix.str() << endl;
 
     write_usgs_format( filePrefix.str() );
   }
@@ -838,7 +845,7 @@ void TimeSeries::writeFile( string suffix )
 //-----------------------------------------------------------------------
 void TimeSeries::
 write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *var,
-		 float cmpinc, float cmpaz)
+		 float cmpinc, float cmpaz, bool makeCopy /*=false*/)
 {
   /*
     PURPOSE: SAVE RECEIVER DATA ON A SAC FILE
@@ -926,6 +933,14 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   // set the station name
   setkhv( nm[25], const_cast<char*>(m_staName.c_str()), nerr);
 
+  if( (makeCopy) && (access( ofile, F_OK ) != -1) ) {
+    // if the file exists, move it to a .bak before writing
+    stringstream bak;
+    bak << ofile << ".bak";
+    int ret = rename(ofile, bak.str().c_str());
+    if( ret == -1 )
+      cout << "ERROR: renaming USGS file to " << bak.str() <<  endl;
+  }
 
   if (!mBinaryMode)
     awsac(npts, ofile, y);
@@ -937,7 +952,8 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
 void TimeSeries::write_usgs_format(string a_fileName)
 {
    string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-   FILE *fd=fopen(a_fileName.c_str(),"w");
+   // Open the file and overwrite; restart read in old data already
+   FILE *fd=fopen(a_fileName.c_str(), "w");
    //   double lat, lon;
    //   float_sw4 x, y, z;
 
@@ -1081,9 +1097,12 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 //building the file name...
 // 
    stringstream filePrefix;
-   if( ew->getObservationPath() != "./" )
-      filePrefix << ew->getObservationPath();
+   if( ew->getObservationPath(m_event) != "./" )
+      filePrefix << ew->getObservationPath(m_event);
+   else if( mIsRestart )
+      filePrefix << ew->getPath() << "/";
    filePrefix << m_fileName << ".txt" ;
+
 
    if( m_myPoint && m_usgsFormat )
    {
@@ -1121,6 +1140,14 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 		  {
                      int utcrefsim[7];
 		     m_ew->get_utc(utcrefsim);
+		     //		     cout << "UTC from EW : ";
+		     //		     for( int c=0;c<7;c++ )
+		     //			cout << utcrefsim[c] << " " ;
+		     //		     cout << endl;
+		     //		     cout << "UTC from file : ";
+		     //		     for( int c=0;c<7;c++ )
+		     //			cout << m_utc[c] << " " ;
+		     //		     cout << endl;
 		     m_t0 = utc_distance( utcrefsim, m_utc );
 		  }
                   delete[] utcstr;
@@ -1170,9 +1197,10 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	       nlines++;
 	    fclose(fd);
 	    // Use offset in time column.
-	    if( nlines > 2 )
-		  allocateRecordingArrays( nlines, m_t0+tstart, dt );
-	    else
+      // Only allocate arrays if we aren't doing a restart
+	    if(!mIsRestart)
+        allocateRecordingArrays( nlines, m_t0+tstart, dt );
+	    if( nlines <= 1 )
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
 	       cout << "    File " << filePrefix.str() << " not read." << endl;
@@ -1350,13 +1378,26 @@ void TimeSeries::interpolate( TimeSeries& intpfrom )
 
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
-			   float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
+			      float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
 {
-   // Computes  misfit.
-   //  if diff !=NULL, also computes diff := this - observed
-   //       where 'diff' has the same grid points as 'this'. 'observed' is
-   //       interpolated to this grid, and is set to zero outside its interval
-   //       of definition.
+   //-----------------------------------------------------------------------
+   // Computes  misfit, as norm of difference between `this' and `observed'. 
+   // 
+   // The misfit is assumed of the form \sum_n (u_j^n - obs(t_n-s))^2, where s is a
+   // shift of the observed data. The observed data are interpolated onto the grid
+   // of `this' and is set to zero outside its interval of definition.
+   //
+   // Input: observed - Observed data.
+   //
+   // Output: diff     - if diff != NULL, the routine computes diff := this - observed.
+   //         dshift   - Derivative of misfit w.r.t. shift parameter s.
+   //         ddshift  - Second derivative of misfit w.r.t shift parameter s.
+   //         dd1shirt - One term of second derivative in ddshift.
+   //
+   // Return value:  The misfit.
+   //
+   //-----------------------------------------------------------------------
+
    float_sw4 misfit = 0;
    dshift  = 0;
    ddshift = 0;
@@ -1364,7 +1405,9 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
    if( m_myPoint )
    {
 // Interpolate data to this object
-      int order = 4;
+//      int order = 4;
+      float_sw4 scale_factor=0;
+
       float_sw4 mf[3], dmf[3], ddmf[3];
       float_sw4 dtfr  = observed.m_dt;
       float_sw4 t0fr  = observed.m_t0+observed.m_shift;
@@ -1378,6 +1421,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
 	 misfitsource = diff->getRecordingArray();
       }
+      if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
+	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = " << m_t0+m_shift << " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
 
       // Weight to ramp down the end of misfit.
       float_sw4 wghv;
@@ -1502,24 +1547,9 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    float_sw4 idtfr2 = idtfr*idtfr;
 	    for( int m = mmin ; m <= mmax ; m++ )
 	    {
-	       //	       double cof=1;
-	       //	       for( int k = mmin ; k <= mmax ; k++ )
-	       //		  if( k != m )
-	       //		     cof *= (ir-k)/(m-k);
-	       //	       if( observed.m_usgsFormat )
-	       //	       {
-	       //		  mf[0] += cof*observed.mRecordedSol[0][m];
-	       //		  mf[1] += cof*observed.mRecordedSol[1][m];
-	       //		  mf[2] += cof*observed.mRecordedSol[2][m];
-	       //	       }
-	       //	       else
-	       //	       {
-	       //		  mf[0] += cof*observed.mRecordedFloats[0][m];
-	       //		  mf[1] += cof*observed.mRecordedFloats[1][m];
-	       //		  mf[2] += cof*observed.mRecordedFloats[2][m];
-	       //	       }
 	       if( observed.m_usgsFormat )
 	       {
+
 		  mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
 		  mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
 		  mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
@@ -1555,7 +1585,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	              wghz*(mf[2]-mRecordedSol[2][i])*dmf[2];
             ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
  	               wghz*(mf[2]-mRecordedSol[2][i])*ddmf[2] +
-	             wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+	                wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 	    if( compute_difference )
 	    {
@@ -1581,6 +1611,25 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[2][i] = (mRecordedFloats[2][i]-mf[2])*wghz;
 	    }
 	 }
+	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
+      }
+      //  scale misfit and diff-source
+      if( m_misfit_scaling == 1 )
+      {
+	 if( scale_factor == 0 )
+	 {
+	    cout << "WARNING: Observation contains zero data" << endl;
+	    scale_factor=1;
+	 }
+	 float_sw4 iscale = 1/scale_factor;
+	 misfit *= iscale;
+	 if( compute_difference )
+	    for( int i=0 ; i <= mLastTimeStep ; i++ )
+	    {
+	       misfitsource[0][i] *= iscale;
+	       misfitsource[1][i] *= iscale;
+	       misfitsource[2][i] *= iscale;
+	    }
       }
    }
    else
@@ -1726,7 +1775,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
       filename = m_fileName + filename;
 
    TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat,
-					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent );
+					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;
    retval->m_shift = m_shift;
@@ -1736,6 +1785,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    //      cout << "In copy, xyz = " << m_xyzcomponent << endl;
    retval->m_scalefactor = m_scalefactor;
    retval->m_compute_scalefactor = m_compute_scalefactor;
+   retval->m_misfit_scaling = m_misfit_scaling;
 
 // Component rotation:
    retval->m_calpha = m_calpha;
@@ -1946,12 +1996,10 @@ float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
    // Compute time in seconds between two [y,M,d,h,m,s,ms] times
    // returns utc2-utc1 in seconds.
-   // Discovered afterwards: UTC occasionally adds a leap second, so this 
-   // function is not always completely accurate.
 
    int start[7], finish[7];
    int c=0;
-   while( utc1[c] == utc2[c] && c <= 6 )
+   while( c <= 6 && utc1[c] == utc2[c] )
       c++;
    if( c == 7 )
       // Identical times
@@ -2235,11 +2283,11 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 			       const char* sac2, const char* sac3, bool ignore_utc )
 {
    string file1, file2, file3;
-   if( ew->getObservationPath() != "./" )
+   if( ew->getObservationPath(m_event) != "./" )
    {
-      file1 += ew->getObservationPath();
-      file2 += ew->getObservationPath();
-      file3 += ew->getObservationPath();
+      file1 += ew->getObservationPath(m_event);
+      file2 += ew->getObservationPath(m_event);
+      file3 += ew->getObservationPath(m_event);
    }
    file1 += sac1;
    file2 += sac2;
@@ -2303,6 +2351,9 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    readSACdata( file2.c_str(), npts1, u2 );
 	    readSACdata( file3.c_str(), npts1, u3 );
 
+      // For restart, don't overwrite member vars except data 
+      if (!mIsRestart) 
+      {
             if( !ignore_utc )
 	    {
 	       for( int c=0 ; c < 7 ; c++ )
@@ -2314,7 +2365,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
             m_shift = t01;
 
 	    allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
-
+      }
 
 	    if( debug )
 	    {
@@ -2348,25 +2399,41 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    tmat[7] = cos(cmpinc2);
 	    tmat[8] = cos(cmpinc3);
 
-	    m_xyzcomponent = false; //note this is format on output file, 
- 	                         //internally, we always use (x,y,z) during computation.
+      if (!mIsRestart) // For restart, already in xyz format?
+      {
+        m_xyzcomponent = false; //note this is format on output file, 
+ 	      //internally, we always use (x,y,z) during computation.
 
-// Convert (e,n,u) to (x,y,z) components.
-	    float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-	    float_sw4 a11 = m_calpha*deti;
-	    float_sw4 a12 = m_thxnrm*deti;
-	    float_sw4 a21 =-m_salpha*deti;
-	    float_sw4 a22 = m_thynrm*deti;
-	    for( int i=0 ; i < npts1 ; i++ )
-	    {
-	       float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-	       float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-	       float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-	       mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-	       mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-	       mRecordedSol[2][i] = -ucomp;
-	    }
-	    mLastTimeStep = npts1-1;
+        // Convert (e,n,u) to (x,y,z) components.
+        float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+        float_sw4 a11 = m_calpha*deti;
+        float_sw4 a12 = m_thxnrm*deti;
+        float_sw4 a21 =-m_salpha*deti;
+        float_sw4 a22 = m_thynrm*deti;
+        for( int i=0 ; i < npts1 ; i++ )
+        {
+           float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+           float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+           float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+           mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+           mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+           mRecordedSol[2][i] = -ucomp;
+        }
+        mLastTimeStep = npts1-1;
+      }
+      else
+      {
+        // Just copy the read values into our time series
+        for( int i=0 ; i < npts1 ; i++ )
+        {
+          mRecordedSol[0][i] = u1[i];
+          mRecordedSol[1][i] = u2[i];
+          mRecordedSol[2][i] = u3[i];
+          mRecordedFloats[0][i] = (float) u1[i];
+          mRecordedFloats[1][i] = (float) u2[i];
+          mRecordedFloats[2][i] = (float) u3[i];
+        }
+     }
 	 }
 	 else
 	 {
@@ -2378,7 +2445,8 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    cout << " found on sac file" << endl;
   	    cout << "  station not read " << endl;
 	 }
-            cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
+        if( m_ew->getVerbosity() >= 3 )
+          cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       }
       else
       {
@@ -2559,12 +2627,48 @@ void TimeSeries::convertjday( int jday, int year, int& day, int& month )
 //-----------------------------------------------------------------------
 void TimeSeries::set_utc_to_simulation_utc()
 {
-   m_ew->get_utc(m_utc);
+   m_ew->get_utc(m_utc,m_event);
    m_shift += m_t0;
    m_t0 = 0;
 }
 
 //-----------------------------------------------------------------------
+// Restart by reading in prior time series file
+void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle)
+{   
+  // Read in this TimeSeries' file
+  isRestart();
+  if (m_sacFormat)
+  {
+    // Read the old SAC files from the fileio path directory
+    std::string fullFilePath = ew->getPath();
+    fullFilePath += "/" + m_fileName;
+    std::string filex = fullFilePath + ".x";
+    std::string filey = fullFilePath + ".y";
+    std::string filez = fullFilePath + ".z";
+    readSACfiles(ew, const_cast<char*>(filex.c_str()), 
+        const_cast<char*>(filey.c_str()),
+        const_cast<char*>(filez.c_str()), ignore_utc);
+  }
+  else
+  {
+    // Read the old USGS files from the restart directory
+    readFile(ew, ignore_utc);
+  }
+  // Reset next time step to beginning of checkpoint
+  mLastTimeStep = beginCycle-1;
+  // set_shift(shift);
+}
+
+//-----------------------------------------------------------------------
+// Indicates restart, so time series files are appended, not overwritten
+void TimeSeries::isRestart()
+{
+   mIsRestart = true;
+}
+
+//-----------------------------------------------------------------------
+// Sets the time offset for output.
 void TimeSeries::set_shift( float_sw4 shift )
 {
    m_shift = shift;

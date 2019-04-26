@@ -45,7 +45,7 @@ namespace ewversion
 //   const char* basedir = EW_BASEDIR;
    const char* libdir = EW_LIBDIR;
    const char* incdir = EW_INCDIR;
-   const char* version = "2.1-alpha";
+   const char* version = "2.2-alpha";
    
    std::string getVersionInfo()
    {

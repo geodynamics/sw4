@@ -70,7 +70,7 @@ MaterialPfile::MaterialPfile( EW * a_ew,
    mCoversAllPoints = false;
    if( m_coords_geographic )
    {
-      float_sw4 x1, x2, x3, x4, y1, y2, y3, y4;
+      double x1, x2, x3, x4, y1, y2, y3, y4;
       mEW->computeCartesianCoord( x1, y1, m_lonmin, m_latmin );
       mEW->computeCartesianCoord( x2, y2, m_lonmin, m_latmax );
       mEW->computeCartesianCoord( x3, y3, m_lonmax, m_latmin );

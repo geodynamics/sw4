@@ -108,9 +108,16 @@ void EW::coarsen1d( int& n, int& ifirst, int& ilast, int periodic )
 void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )
 //
 // Decompose index space 1 <= i <= nglobal into nproc blocks
-// returns start and end indices for block nr. myid, 
-//          where 0 <= myid <= nproc-1
 //
+// Input: nglobal - Total number of points 
+//        myid    - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc   - Total number of processors (tasks).
+//   
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The nglobal points are distributed as evenly as possible on the tasks.
+// Uses m_ppadding points wide overlap at processor interfaces.
 {
    int olap    = 2*m_ppadding;
    int nlocal  = (nglobal + (nproc-1)*olap ) / nproc;
@@ -125,6 +132,49 @@ void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )
       nlocal = nlocal + 1;
 
    e = s + nlocal - 1;
+}
+
+//-----------------------------------------------------------------------
+void EW::decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad )
+//
+// Decompose index space 1-nghost <= i <= N+nghost into nproc blocks
+//
+// Input: N      - Number of points in domain.
+//        myid   - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc  - Total number of processors (tasks).
+//        nghost - Number of ghost points at domain boundaries.
+//        npad   - Number of overlap (padding) points at processor boundaries.
+//   
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The N points are distributed as evenly as possible on the tasks. Ghost points and
+// padding points are added after distribution.
+//
+{
+   int nglobal = N+2*nghost;
+   int olap    = 2*npad;
+
+   int nlocal  = N / nproc;
+   int deficit = N % nproc;
+
+   if( myid < deficit )
+      s = myid*nlocal + myid+1;
+   else
+      s = myid*nlocal + deficit+1;
+
+   if (myid < deficit)
+      nlocal = nlocal + 1;
+
+   e = s + nlocal - 1;
+   if( myid == nproc-1 )
+      e += nghost;
+   else
+      e += npad;
+   if( myid == 0 )
+      s -= nghost;
+   else
+      s -= npad;
 }
 
 // -----------------------------
@@ -221,7 +271,7 @@ void EW::setup2D_MPICommunications()
    for( int g = 0 ; g < mNumberOfGrids ; g++ )
    {
       int ni = m_iEnd[g]-m_iStart[g]+1, nj=m_jEnd[g]-m_jStart[g]+1;
-      if( m_croutines )
+//FTNC      if( m_croutines )
       {
 	 MPI_Type_vector( 3*nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dx[g] );
 	 MPI_Type_vector( 3,    m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dy[g] );
@@ -230,15 +280,15 @@ void EW::setup2D_MPICommunications()
 	 MPI_Type_vector( 3*nj, 3,  ni,    m_mpifloat, &m_send_type_2dx3p[g] );
 	 MPI_Type_vector( 3,    3*ni, ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
       }
-      else
-      {
-	 MPI_Type_vector( nj, 3*m_ppadding,    3*ni,    m_mpifloat, &m_send_type_2dx[g] );
-	 MPI_Type_vector( 1,  3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy[g] );
-	 MPI_Type_vector( nj, 3,    3*ni,    m_mpifloat, &m_send_type_2dx1p[g] );
-	 MPI_Type_vector( 1,  3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
-	 MPI_Type_vector( nj, 3*3,    3*ni,    m_mpifloat, &m_send_type_2dx3p[g] );
-	 MPI_Type_vector( 1,  3*3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
-      }
+//FTNC      else
+//FTNC      {
+//FTNC	 MPI_Type_vector( nj, 3*m_ppadding,    3*ni,    m_mpifloat, &m_send_type_2dx[g] );
+//FTNC	 MPI_Type_vector( 1,  3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy[g] );
+//FTNC	 MPI_Type_vector( nj, 3,    3*ni,    m_mpifloat, &m_send_type_2dx1p[g] );
+//FTNC	 MPI_Type_vector( 1,  3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
+//FTNC	 MPI_Type_vector( nj, 3*3,    3*ni,    m_mpifloat, &m_send_type_2dx3p[g] );
+//FTNC	 MPI_Type_vector( 1,  3*3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
+//FTNC      }
       MPI_Type_commit( &m_send_type_2dx[g] );
       MPI_Type_commit( &m_send_type_2dy[g] );
       MPI_Type_commit( &m_send_type_2dx1p[g] );
@@ -268,7 +318,7 @@ void EW::setupMPICommunications()
       MPI_Type_vector( nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type1[2*g] );
       MPI_Type_vector( nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type1[2*g+1] );
 
-      if( m_croutines )
+//FTNC      if( m_croutines )
       {
 	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type3[2*g] );
 	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
@@ -279,17 +329,17 @@ void EW::setupMPICommunications()
 	 MPI_Type_vector( 21*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type21[2*g] );
 	 MPI_Type_vector( 21*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type21[2*g+1] );
       }
-      else
-      {
-	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, m_mpifloat, &m_send_type3[2*g] );
-	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
-
-	 MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, m_mpifloat, &m_send_type4[2*g] );
-	 MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
-
-	 MPI_Type_vector( nj*nk, 21*m_ppadding, 21*ni, m_mpifloat, &m_send_type21[2*g] );
-	 MPI_Type_vector( nk, 21*m_ppadding*ni, 21*ni*nj, m_mpifloat, &m_send_type21[2*g+1] );
-      }
+//FTNC      else
+//FTNC      {
+//FTNC	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, m_mpifloat, &m_send_type3[2*g] );
+//FTNC	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
+//FTNC
+//FTNC	 MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, m_mpifloat, &m_send_type4[2*g] );
+//FTNC	 MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
+//FTNC
+//FTNC	 MPI_Type_vector( nj*nk, 21*m_ppadding, 21*ni, m_mpifloat, &m_send_type21[2*g] );
+//FTNC	 MPI_Type_vector( nk, 21*m_ppadding*ni, 21*ni*nj, m_mpifloat, &m_send_type21[2*g+1] );
+//FTNC      }
       MPI_Type_commit( &m_send_type1[2*g] ); 
       MPI_Type_commit( &m_send_type1[2*g+1] ); 
 
@@ -483,7 +533,7 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int ytag1 = 347;
    int ytag2 = 348;
 
-   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
+//FTNC   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
    {
       Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
       u2d.copy_kplane(u,k);
@@ -503,24 +553,24 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
 		    m_cartesian_communicator, &status );
       u.copy_kplane(u2d,k);
    }
-   else
-   {
-      // X-direction communication
-   MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
-		 &u(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
-		 m_cartesian_communicator, &status );
-   MPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
-		 &u(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
-		 m_cartesian_communicator, &status );
-
-      // Y-direction communication
-   MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
-		 &u(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
-		 m_cartesian_communicator, &status );
-   MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
-		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
-		 m_cartesian_communicator, &status );
-   }
+//FTNC   else
+//FTNC   {
+//FTNC      // X-direction communication
+//FTNC   MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
+//FTNC		 &u(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC   MPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
+//FTNC		 &u(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC
+//FTNC      // Y-direction communication
+//FTNC   MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
+//FTNC		 &u(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC   MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
+//FTNC		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC   }
 }
 
 //-----------------------------------------------------------------------

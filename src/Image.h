@@ -146,7 +146,7 @@ ImageOrientation getOrientation() const {return mLocationType;};
 
 ImageMode mMode;
 std::string mFilePrefix;
-void initializeTime();
+void initializeTime(double t=0.0);
 bool needs_mgrad() const;
 
 protected:
