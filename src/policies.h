@@ -649,8 +649,18 @@ using DPDMT_WIND_LOOP_POL_ASYNC  = DEFAULT_LOOP4;
 
 using COPY_KPLANE_EXEC_POL = DEFAULT_LOOP3;
  
-using ENERGY4CI_EXEC_POL = DEFAULT_LOOP3;
+//using ENERGY4CI_EXEC_POL = DEFAULT_LOOP3;
 
+using ENERGY4CI_EXEC_POL = 
+    RAJA::KernelPolicy<
+  RAJA::statement::For<0, RAJA::omp_parallel_for_exec, 
+      RAJA::statement::For<1, RAJA::seq_exec, 
+  RAJA::statement::For<2, RAJA::seq_exec,           // Changing this to simd_exec caused the 4 energy tests in pytest to fail Ramesh Pankajakshan April 26 2019
+          RAJA::statement::Lambda<0>
+  >
+        > 
+      > 
+    >;
 
 using ODDIODDJ_EXEC_POL1_ASYNC = DEFAULT_LOOP2;
  

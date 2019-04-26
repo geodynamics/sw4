@@ -132,6 +132,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+    elif 'corona' in node_name:
+        if omp_threads<=0: omp_threads=2;
+        if mpi_tasks<=0: mpi_tasks = int(24/omp_threads)
+        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
         if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
