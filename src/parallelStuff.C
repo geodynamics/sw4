@@ -953,7 +953,9 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   t1 = SW4_CHRONO_NOW;
   MPI_Barrier(MPI_COMM_WORLD);
   t2 = SW4_CHRONO_NOW;
+#if defined(SW4_TRACK_MPI)
   coll_sm.insert(0,SW4_CHRONO_DURATION_US(t1,t2));
+#endif
 #endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL");
   
@@ -1317,7 +1319,9 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt
   t1 = SW4_CHRONO_NOW;
   MPI_Barrier(MPI_COMM_WORLD);
   t2 = SW4_CHRONO_NOW;
+#if defined(SW4_TRACK_MPI)
   coll_sm.insert(2,SW4_CHRONO_DURATION_US(t1,t2));
+#endif
 #endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL2");
   
