@@ -4751,7 +4751,7 @@ void EW::allocateCurvilinearArrays()
          printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid[%d] = %i, kStart = %i, kEnd = %i\n", 
                 g, Nz, m_kStart[g], m_kEnd[g]);
 //
-// NOTE: mX, mY, mZ, etc need to be vector<Sarray*>
+// NOTE: mX, mY, mZ, etc are of type vector<Sarray>
 // allocate mX, mY, and mZ arrays
       mX[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
       mY[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g]);
