@@ -963,11 +963,12 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int,int,int> &sendt,
   // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
 
 #if defined(SW4_TRACK_MPI)
+#if defined(ENABLE_MPI_TIMING_BARRIER)
   t1 = SW4_CHRONO_NOW;
   MPI_Barrier(MPI_COMM_WORLD);
   t2 = SW4_CHRONO_NOW;
   coll_sm.insert(1,SW4_CHRONO_DURATION_US(t1,t2));
-
+#endif
   SYNC_STREAM; // Avoid adding the buffering time to the MPI bandwdth
   t1 = SW4_CHRONO_NOW;
 #endif
