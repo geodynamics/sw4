@@ -27,18 +27,19 @@ template<typename T1, typename T2>
   }
   template<typename Func1, typename Func2>
     void print(ofstream &ofile, Func1 &&f1, Func2 &&f2){
-    ofile<<"#Key Mean Median Min Max\n";
+    ofile<<"#Key Mean Median Min Max Psum Count\n";
     T2 grand_total(0);
     for ( auto it : map){
       std::sort(it.second.begin(),it.second.end());
       ofile<<f1(it.first)<<" ";
       T2 sum(0);
       for (auto v : it.second) { sum+= v; grand_total+=v;}
+      T2 psum=sum;
       sum=sum/it.second.size();
       ofile<<f2(it.first,sum)<<" "
 	   <<f2(it.first,it.second[it.second.size()/2])<<" "
 	   <<f2(it.first,it.second[0])<<" "
-	   <<f2(it.first,it.second.back())<<"\n";
+	   <<f2(it.first,it.second.back())<<" "<<psum<<" "<<it.second.size()<<"\n";
     }
     ofile<<"# Grand total "<<grand_total<<"\n";
   }

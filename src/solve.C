@@ -755,6 +755,15 @@ bool cudaProfilerOn = false;
 
     SW4_MARK_BEGIN("COMM_ACTUAL");
 // communicate across processor boundaries
+#if defined(SW4_TRACK_MPI)
+      {
+      std::chrono::high_resolution_clock::time_point t1,t2;
+      t1 = SW4_CHRONO_NOW;
+      MPI_Barrier(MPI_COMM_WORLD);
+      t2 = SW4_CHRONO_NOW;
+      coll_sm.insert(30,SW4_CHRONO_DURATION_US(t1,t2));
+      }
+#endif
     for(int g=0 ; g < mNumberOfGrids ; g++ )
        communicate_array( Up[g], g );
     SW4_MARK_END("COMM_ACTUAL");
@@ -922,6 +931,15 @@ bool cudaProfilerOn = false;
           time_measure[13] = MPI_Wtime();
 
 // communicate across processor boundaries
+#if defined(SW4_TRACK_MPI)
+      {
+      std::chrono::high_resolution_clock::time_point t1,t2;
+      t1 = SW4_CHRONO_NOW;
+      MPI_Barrier(MPI_COMM_WORLD);
+      t2 = SW4_CHRONO_NOW;
+      coll_sm.insert(31,SW4_CHRONO_DURATION_US(t1,t2));
+      }
+#endif
        for(int g=0 ; g < mNumberOfGrids ; g++ )
 	  communicate_array( Up[g], g );
 
@@ -1652,6 +1670,15 @@ SW4_MARK_FUNCTION;
       }
 
       SW4_MARK_BEGIN("enforceIC::MPI2DCOMM");
+#if defined(SW4_TRACK_MPI)
+      {
+      std::chrono::high_resolution_clock::time_point t1,t2;
+      t1 = SW4_CHRONO_NOW;
+      MPI_Barrier(MPI_COMM_WORLD);
+      t2 = SW4_CHRONO_NOW;
+      coll_sm.insert(20,SW4_CHRONO_DURATION_US(t1,t2));
+      }
+#endif
       communicate_array_2d( Unextf, g+1, kf );
       communicate_array_2d( Unextc, g, kc );
       communicate_array_2d( Bf, g+1, kf );
@@ -1775,6 +1802,15 @@ SW4_MARK_FUNCTION;
          dirichlet_LRstress( Bf, g+1, kf, time+mDt, 1 ); 
       }
       
+#if defined(SW4_TRACK_MPI)
+      {
+      std::chrono::high_resolution_clock::time_point t1,t2;
+      t1 = SW4_CHRONO_NOW;
+      MPI_Barrier(MPI_COMM_WORLD);
+      t2= SW4_CHRONO_NOW;
+      coll_sm.insert(21,SW4_CHRONO_DURATION_US(t1,t2));
+      }
+#endif
       communicate_array_2d( Unextf, g+1, kf );
       communicate_array_2d( Unextc, g, kc );
       communicate_array_2d( Bf, g+1, kf );
