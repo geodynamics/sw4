@@ -64,6 +64,8 @@ Mopt::Mopt( EW* a_ew )
    m_sfs = NULL;
    m_xs0 = NULL;
    m_misfit = L2;
+   m_mpcart0 = NULL;
+   m_mp = NULL;
 }  
 
 //-----------------------------------------------------------------------
@@ -213,6 +215,9 @@ void Mopt::processMaterialParCart( char* buffer )
       m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
    else
       m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+
+   // use for material projection only:
+   m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart
 
 //-----------------------------------------------------------------------
@@ -244,6 +249,8 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 5;
 	 else if( strcmp(token,"forward") == 0 )
 	    m_opttest = 6;
+	 else if( strcmp(token,"projectmtrl") == 0 )
+	    m_opttest = 7;
 	 else if( strcmp(token,"minvert+src11") == 0 )
 	 {
 	    m_opttest = 1;

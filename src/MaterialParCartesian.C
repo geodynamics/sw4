@@ -1,3 +1,6 @@
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "MaterialParCartesian.h"
 #include "EW.h"
 
@@ -297,3 +300,173 @@ ssize_t MaterialParCartesian::local_index( size_t ind_global )
 {
    return -1;
 }
+
+extern "C" {
+   void dgesv_( int*, int*, double*, int*, int*, double*, int*, int* );
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, const char* fname )
+{
+   //
+   // parameter grid is x_0, x_1,..,x_{nx}, x_{nx+1}, where x_1,..,x_{nx} carry degrees of freedom.
+   // The dimensions are such that x_0=xmin, x_{nx+1}=xmax.
+   //
+   // x_j = j*hx+xmin, j=0,..,nx+1  --> hx=(xmax-xmin)/(nx+1)
+   //
+   // In the z-direction, z_0 carries a degree of freedom, we set
+   //   z_k = k*hz+zmin-hz, k=1,..,nz are still degrees of freedom, k=0 and k=nz+1 are 
+   //  m_zmin is modified so that it really stores zmin-hz
+   //
+   //
+   int nproc;
+   MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+   CHECK_INPUT(nproc == 1,"ERROR: Projectl2 only implemented for single processor");
+      
+   // Initialize:
+   int Ntot = m_nx*m_ny*m_nz;
+   double* rhs = new double[Ntot];
+   double* mat = new double[Ntot*Ntot];
+   for( int i=0 ; i < Ntot ; i++ )
+   {
+      rhs[i] = 0;
+      for( int j=0 ; j < Ntot ; j++ )
+	 mat[j+Ntot*i]=0;
+   }
+   double ihx = 1.0/m_hx;
+   double ihy = 1.0/m_hy;
+   double ihz = 1.0/m_hz;
+   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+   {
+      double h=m_ew->mGridSize[g];
+      for( int k=mtrl[g].m_kb ; k<= mtrl[g].m_ke ; k++ )
+	 for( int j=mtrl[g].m_jb ; j<= mtrl[g].m_je ; j++ )
+	    for( int i=mtrl[g].m_ib ; i<= mtrl[g].m_ie ; i++ )
+	    {
+	       double x=(i-1)*h, y=(j-1)*h, z=(k-1)*h;
+	       if( m_xmin+m_hx <= x && x <= m_xmin+m_nx*m_hx &&
+		   m_ymin+m_hy <= y && y <= m_ymin+m_ny*m_hy &&
+		   m_zmin+m_hz <= z && z <= m_zmin+m_nz*m_hz )
+	       for( int m3=1 ; m3 <= m_nz ;m3++)
+		  for( int m2=1 ; m2 <= m_ny ;m2++)
+		     for( int m1=1 ; m1 <= m_nx ;m1++)
+		     {
+			double xpar1=m1*m_hx+m_xmin;
+			double ypar1=m2*m_hy+m_ymin;
+			double zpar1=m3*m_hz+m_zmin;
+			if( std::abs(xpar1-x)< m_hx && std::abs(ypar1-y)<m_hy && std::abs(zpar1-z)<m_hz )
+			{
+			   int m=m1-1+m_nx*(m2-1)+m_nx*m_ny*(m3-1);
+			   double phim;
+			   if( xpar1-m_hx < x && x <= xpar1 )
+			      phim = (x-(xpar1-m_hx))*ihx;
+			   else
+			      phim = (xpar1+m_hx-x)*ihx;
+			   if( ypar1-m_hy < y && y <= ypar1 )
+			      phim *= (y-(ypar1-m_hy))*ihy;
+			   else
+			      phim *= (ypar1+m_hy-y)*ihy;
+			   if( zpar1-m_hz < z && z <= zpar1 )
+			      phim *= (z-(zpar1-m_hz))*ihz;
+			   else
+			      phim *= (zpar1+m_hz-z)*ihz;
+			   rhs[m] += mtrl[g](i,j,k)*phim;
+
+			   int m3l=m3-1>=1   ? m3-1:1;
+			   int m3u=m3+1<=m_nz? m3+1:m_nz;
+			   int m2l=m2-1>=1   ? m2-1:1;
+			   int m2u=m2+1<=m_ny? m2+1:m_ny;
+			   int m1l=m1-1>=1   ? m1-1:1;
+			   int m1u=m1+1<=m_nx? m1+1:m_nx;
+			   for( int l3=m3l ; l3 <= m3u ; l3++ )
+			      for( int l2=m2l ; l2 <= m2u ; l2++ )
+				 for( int l1=m1l ; l1 <= m1u ; l1++ )
+				 {
+				    double xpar2=l1*m_hx+m_xmin;
+				    double ypar2=l2*m_hy+m_ymin;
+				    double zpar2=l3*m_hz+m_zmin;
+				    if(  std::abs(xpar2-x)< m_hx && std::abs(ypar2-y)<m_hy && std::abs(zpar2-z)<m_hz )
+				    {
+				       int l=l1-1+m_nx*(l2-1)+m_nx*m_ny*(l3-1);
+				       double phil;
+				       if( xpar2-m_hx < x && x <= xpar2 )
+					  phil = (x-(xpar2-m_hx))*ihx;
+				       else
+					  phil = (xpar2+m_hx-x)*ihx;
+				       if( ypar2-m_hy < y && y <= ypar2 )
+					  phil *= (y-(ypar2-m_hy))*ihy;
+				       else
+					  phil *= (ypar2+m_hy-y)*ihy;
+				       if( zpar2-m_hz < z && z <= zpar2 )
+					  phil *= (z-(zpar2-m_hz))*ihz;
+				       else
+					  phil *= (zpar2+m_hz-z)*ihz;
+				       mat[m+Ntot*l] += phim*phil;
+				    }
+				 }
+			}
+		     }
+	    }
+   }	     
+   //
+
+   // TEST interpolate constant material:
+   //   for( int i=0 ; i < Ntot ; i++ )
+   //   {
+   //      double rowsum=0;
+   //      for( int j=0 ; j <Ntot ; j++ )
+   //	 rowsum += mat[i+Ntot*j];
+   //      if( std::abs(rhs[i]/rowsum-mtrl[0](1,1,1))>1e-3)
+   //	  cout << "i= "<< i << " matsum = " << rowsum << " rhs= " << rhs[i] << endl;
+   //   }
+
+   // Solve system of linear equations
+   int one=1, info=0;
+   int* ipiv=new int[Ntot];
+   dgesv_( &Ntot, &one, mat, &Ntot, ipiv, rhs, &Ntot, &info );
+   if( info != 0 )
+      cout <<"ERROR: in MaterialParCartesian::projectl2,  info = " << info << " from dgesv " << endl;
+   delete[] ipiv;
+   delete[] mat;
+
+   // Output solution in 3D format:
+   int fd=open(fname,O_WRONLY|O_TRUNC|O_CREAT, 0660);
+
+   // 1.header, nx,ny,nz,hx,hy,hz,xmin,ymin,zmin
+   size_t nr=write(fd,&m_nx,sizeof(int));
+   if( nr != sizeof(int))
+      cout <<"ERROR writing m_nx, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_ny,sizeof(int));
+   if( nr != sizeof(int))
+      cout <<"ERROR writing m_ny, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_nz,sizeof(int));
+   if( nr != sizeof(int))
+      cout <<"ERROR writing m_nz, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_hx,sizeof(double));
+   if( nr != sizeof(double))
+      cout <<"ERROR writing m_hx, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_hy,sizeof(double));
+   if( nr != sizeof(double))
+      cout <<"ERROR writing m_hy, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_hz,sizeof(double));
+   if( nr != sizeof(double))
+      cout <<"ERROR writing m_hz, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_xmin,sizeof(double));
+   if( nr != sizeof(double))
+      cout <<"ERROR writing m_xmin, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_ymin,sizeof(double));
+   if( nr != sizeof(double))
+      cout <<"ERROR writing m_ymin, " << nr << " bytes written" << endl;
+   nr=write(fd,&m_zmin,sizeof(double));
+   if( nr != sizeof(double))
+      cout <<"ERROR writing m_zmin, " << nr << " bytes written" << endl;
+
+   // 2.Projected material field
+   nr=write(fd,rhs,Ntot*sizeof(double));
+   if( nr != Ntot*sizeof(double))
+      cout <<"ERROR writing rhs, " << nr << " bytes written" << endl;
+
+   close(fd);
+   delete[] rhs;
+}
+  

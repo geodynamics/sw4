@@ -1219,6 +1219,14 @@ int main(int argc, char **argv)
 		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
 		    GlobalTimeSeries[e][m]->writeFile( );
 	   }
+	   else if( mopt->m_opttest == 7 )
+	   {
+      // Project material onto a Cartesian material parameterization grid
+	      CHECK_INPUT( mopt->m_mpcart0 != NULL, "ERROR, there is no Cartesian material parameterization defined\n");
+	      mopt->m_mpcart0->projectl2( simulation.mRho, "rhoproj.bin" );
+	      mopt->m_mpcart0->projectl2( simulation.mMu, "muproj.bin" );
+	      mopt->m_mpcart0->projectl2( simulation.mLambda, "lambdaproj.bin" );
+	   }
            else if( mopt->m_opttest == 1 )
 	   {
 // Run optimizer (default)

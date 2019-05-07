@@ -25,6 +25,7 @@ public:
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
+   void projectl2( std::vector<Sarray>& mtrl, const char* fname );
 };
 
 #endif

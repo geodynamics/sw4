@@ -56,7 +56,7 @@ public:
 			   double h, double zmin, double zmax );
 
   void perturb_velocities( std::vector<Sarray> & cs, std::vector<Sarray> & cp ); 
-   
+  void set_vsmax( float_sw4 vsmax );   
 private:
    void gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g, float_sw4 Lx, float_sw4 Ly, float_sw4 Lz, float_sw4 hurst );
 
@@ -83,7 +83,7 @@ private:
    int m_nig, m_njg, m_nkg;
 
   // file coordinate system is x=(i-1)*m_hx[gr] + m_xmin[gr], in SW4 coordinates.
-   float_sw4  m_hh, m_hv, m_zmin, m_zmax, m_corrlen, m_corrlenz, m_hurst, m_sigma;
+   float_sw4  m_hh, m_hv, m_zmin, m_zmax, m_corrlen, m_corrlenz, m_hurst, m_sigma, m_vsmax;
  //   float_sw4 m_x0, m_y0;
    unsigned int m_seed;
    int m_nproc2d[2];

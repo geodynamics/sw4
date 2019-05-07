@@ -45,6 +45,7 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_hurst = hurst;
    m_sigma = sigma;
    m_seed  = seed;
+   m_vsmax = 1e38;
 
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
@@ -168,16 +169,22 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-		  cs(i,j,k) *= rndpert;
-		  cp(i,j,k) *= rndpert;
+		  if( cs(i,j,k) <= m_vsmax )
+		  {
+		     cs(i,j,k) *= rndpert;
+		     cp(i,j,k) *= rndpert;
+		  }
 	       }
 	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
 			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-		  cs(i,j,k) *= rndpert;
-		  cp(i,j,k) *= rndpert;
+		  if( cs(i,j,k) <= m_vsmax )
+		  {
+		     cs(i,j,k) *= rndpert;
+		     cp(i,j,k) *= rndpert;
+		  }
 	       }
 	       else
 		  CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
@@ -207,8 +214,11 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 	    for( int j=mRndMaterial.m_jb ; j <= mRndMaterial.m_je ; j++ )
 	       for( int i=mRndMaterial.m_ib ; i <= mRndMaterial.m_ie ; i++ )
 	       {
-		  cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
-		  cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
+		  if( cs[0](i+1,j+1,k+1) <= m_vsmax )
+		  {
+		     cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
+		     cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
+		  }
 	       }
       }
    }
@@ -692,6 +702,12 @@ void RandomizedMaterial::comm_sarray( Sarray& sar, int neigh[4], int padding )
 
    delete[] sbuf;
    delete[] rbuf;
+}
+
+//-----------------------------------------------------------------------
+void RandomizedMaterial::set_vsmax( float_sw4 vsmax )
+{
+   m_vsmax = vsmax;
 }
 
 //-----------------------------------------------------------------------
