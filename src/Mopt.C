@@ -5,6 +5,7 @@
 #include "MaterialParCartesian.h"
 #include "MaterialParCartesianVels.h"
 #include "MaterialParCartesianVp.h"
+#include "MaterialParCartesianVsVp.h"
 
 #include "EW.h"
 
@@ -64,6 +65,8 @@ Mopt::Mopt( EW* a_ew )
    m_sfs = NULL;
    m_xs0 = NULL;
    m_misfit = L2;
+   m_mpcart0 = NULL;
+   m_mp = NULL;
 }  
 
 //-----------------------------------------------------------------------
@@ -153,7 +156,7 @@ void Mopt::processMaterialParCart( char* buffer )
 	       "ERROR: not an mparcart line: " << token);
    token = strtok(NULL, " \t");
 
-   bool vel = false, vponly=false;
+   bool vel = false, vponly=false, vsvp=false, mparcartfile =false;
    int nx=3, ny=3, nz=3, init=0;
    double ratio=1.732, gamma=1;
    char file[256]= " \0"; //shut up memory checker
@@ -168,8 +171,9 @@ void Mopt::processMaterialParCart( char* buffer )
       {
 	 token += 5;
 	 int len=strlen(token);
-	 vponly =strncmp("vponly",token,len)==0;
 	 vel    =strncmp("velocity",token,len)==0;
+	 vponly =strncmp("vponly",token,len)==0;
+	 vsvp   =strncmp("vsvp",token,len)==0;
       }
       else if( startswith("nx=",token) )
       {
@@ -201,18 +205,38 @@ void Mopt::processMaterialParCart( char* buffer )
 	    init = 2;
 	 }
       }
+      else if( startswith("filetype=",token) )
+      {
+	 token += 9;
+	 CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mparcart")==0, 
+                   "ERROR: processing mparcart, file type " << token << "not recognized" );
+	 if( strcmp(token,"mparcart")== 0 )
+	 {
+	    mparcartfile = true;
+	 }
+      }
       else
       {
 	 badOption("mparcart", token);
       }
       token = strtok(NULL, " \t");
    }
+   // if mparcartfiletype and file name given, then ok to read mparcart file.
+   // Ignore filetype if init does not provide a file name.
+   if( mparcartfile && init == 2 )
+      init = 4;
+
    if (vel)
       m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
    else if( vponly )
       m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
+   else if( vsvp )
+      m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
    else
       m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+
+   // use for material projection only:
+   m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart
 
 //-----------------------------------------------------------------------
@@ -244,6 +268,8 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 5;
 	 else if( strcmp(token,"forward") == 0 )
 	    m_opttest = 6;
+	 else if( strcmp(token,"projectmtrl") == 0 )
+	    m_opttest = 7;
 	 else if( strcmp(token,"minvert+src11") == 0 )
 	 {
 	    m_opttest = 1;

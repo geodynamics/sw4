@@ -1,19 +1,18 @@
-#include "MaterialParCartesianVels.h"
+#include "MaterialParCartesianVsVp.h"
 #include "EW.h"
 #include "MParGridFile.h"
 //-----------------------------------------------------------------------
 //  Parameterize the material on a Cartesian coarse grid, with
-//  (density, cs, cp)-update on a fixed material as the parameters. 
+//  (cs, cp)-update on a fixed material as the parameters. 
 //  
-//  rho=x[3*i]
-//  cs =x[3*i+1]
-//  cp =x[3*i+2]
+//  cs =x[2*i  ]
+//  cp =x[2*i+1]
 //
 //-----------------------------------------------------------------------
-MaterialParCartesianVels::MaterialParCartesianVels( EW* a_ew, int nx, int ny, int nz, int init, char* fname )
+MaterialParCartesianVsVp::MaterialParCartesianVsVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname )
    : MaterialParameterization( a_ew, fname )
 {
-   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesianVels: The grid need at least two ponts in each direction")
+   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesianVsVp: The grid need at least two ponts in each direction")
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
@@ -87,7 +86,7 @@ MaterialParCartesianVels::MaterialParCartesianVels( EW* a_ew, int nx, int ny, in
    }
 
 // Grid is determined.
-   m_nms = 3*nx*ny*nz;
+   m_nms = 2*nx*ny*nz;
    m_nmd = 0;
    m_nmd_global = 0;
    m_rho.define(0,nx+1,0,ny+1,0,nz+1);
@@ -109,7 +108,7 @@ MaterialParCartesianVels::MaterialParCartesianVels( EW* a_ew, int nx, int ny, in
 // mu = rho*cs*cs, 2*mu+lambda = rho*cp*cp --> lambda=rho*cp*cp-2*mu
 //
 //-----------------------------------------------------------------------
-void MaterialParCartesianVels::get_material( int nmd, double* xmd, int nms,
+void MaterialParCartesianVsVp::get_material( int nmd, double* xmd, int nms,
 					     double* xms, vector<Sarray>& a_rho,
 					     vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
 {
@@ -128,9 +127,10 @@ void MaterialParCartesianVels::get_material( int nmd, double* xmd, int nms,
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
-            rhop[indm] = xms[3*ind];
-	    csp[indm]  = xms[3*ind+1];
-	    cpp[indm]  = xms[3*ind+2];
+	    //            rhop[indm] = xms[3*ind];
+            rhop[indm] = 0;
+	    csp[indm]  = xms[2*ind ];
+	    cpp[indm]  = xms[2*ind+1];
 	    //	    mup[indm]    = rhop[indm]*csp[indm]*csp[indm];
 	    //	    lambdap[indm]= rhop[indm]*cpp[indm]*cpp[indm]-2*mup[indm];
 	    ind++;
@@ -149,7 +149,7 @@ void MaterialParCartesianVels::get_material( int nmd, double* xmd, int nms,
 // Input material on grid(s) (a_rho,a_mu,a_lambda), output corresponding
 // parameter vector (xmd,xms).
 //-----------------------------------------------------------------------
-void MaterialParCartesianVels::interpolate_parameters( int nmd, double* xmd, int nms,
+void MaterialParCartesianVsVp::interpolate_parameters( int nmd, double* xmd, int nms,
 						   double* xms, std::vector<Sarray>& a_rho, 
 			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
@@ -166,34 +166,34 @@ void MaterialParCartesianVels::interpolate_parameters( int nmd, double* xmd, int
    float_sw4* csp =m_cs.c_ptr();
    float_sw4* cpp =m_cp.c_ptr();
    size_t ind =0;
-   double rhmin=100000,csmin=100000,cpmin=100000;
-   double rhmax=-100000,csmax=-100000,cpmax=-100000; 
+   //   double rhmin=100000,csmin=100000,cpmin=100000;
+   //   double rhmax=-100000,csmax=-100000,cpmax=-100000; 
    for( int k=1 ; k <= m_nz ; k++ )
       for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
-            xms[3*ind]   = rhop[indm];
-            xms[3*ind+1] = csp[indm];
-	    xms[3*ind+2] = cpp[indm];
-	    if( rhop[indm]<rhmin )
-	       rhmin = rhop[indm];
-	    if( csp[indm]<csmin )
-	       csmin = csp[indm];
-	    if( cpp[indm]<cpmin )
-	       cpmin = cpp[indm];
-	    if( rhop[indm]>rhmax )
-	       rhmax = rhop[indm];
-	    if( csp[indm]>csmax )
-	       csmax = csp[indm];
-	    if( cpp[indm]>cpmax )
-	       cpmax = cpp[indm];
+	    //            xms[3*ind]   = rhop[indm];
+            xms[2*ind  ] = csp[indm];
+	    xms[2*ind+1] = cpp[indm];
+	    //	    if( rhop[indm]<rhmin )
+	    //	       rhmin = rhop[indm];
+	    //	    if( csp[indm]<csmin )
+	    //	       csmin = csp[indm];
+	    //	    if( cpp[indm]<cpmin )
+	    //	       cpmin = cpp[indm];
+	    //	    if( rhop[indm]>rhmax )
+	    //	       rhmax = rhop[indm];
+	    //	    if( csp[indm]>csmax )
+	    //	       csmax = csp[indm];
+	    //	    if( cpp[indm]>cpmax )
+	    //	       cpmax = cpp[indm];
 	    ind++;
 	 }
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
+void MaterialParCartesianVsVp::get_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
@@ -225,9 +225,9 @@ void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
 	       double cp  = 4+ep*sin(om*x+0.4)*sin(om*y)*cos(om*z+0.1);
 	       double mu = cs*cs*rho;
 	       double lambda = rho*(cp*cp-2*cs*cs);
-	       xms[3*ind]   = rho-1;
-	       xms[3*ind+1] = cs-2;
-	       xms[3*ind+2] = cp-4;
+	       //	       xms[3*ind]   = rho-1;
+	       xms[2*ind  ] = cs-2;
+	       xms[2*ind+1] = cp-4;
 	       ind++;
 	    }
    }
@@ -242,15 +242,14 @@ void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
    else if( m_init == 4 )
    {
       MParGridFile mpfile( m_filename );
-      mpfile.interpolate_to_other( xms, 2, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
+      mpfile.interpolate_to_other( xms, 4, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
       if( !mpfile.is_update() )
 	 subtract_base_mtrl( nms, xms );
    }
-
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, double* xms,
+void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, double* xms,
 					 double* dfs, double* dfm,
 					 std::vector<Sarray>& a_rho,
 					 std::vector<Sarray>& a_mu,
@@ -259,11 +258,10 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 					 std::vector<Sarray>& a_gradmu,
 					 std::vector<Sarray>& a_gradlambda )
 {
-   //
    // Computes gradient with respect to the material parameterization from given
    // gradients with respect to the material at grid points.
-   // 
-   // 1. Transform gradient w.r.t. (rho,mu,lambda) to gradient w.r.t (rho,cs,cp):
+   // It is assumed that transform_gradient has been called before this routine.
+
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
       m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
 				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
@@ -274,7 +272,6 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
    gmu.set_to_zero();
    glambda.set_to_zero();
    //   cout << "getgrad nms=" << nms << " nx,ny,nz=" << m_nx <<","<<m_ny <<","<<m_nz <<endl;
-   // 2. Gradient of interpolation operator
    for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
 // Chain rule of interpolation relation, multiplication by constant matrix, since interpolation
@@ -282,15 +279,15 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
       m_ew->interpolation_gradient( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
 			       grho, gmu, glambda, g, a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
    }   
-   double* grhop=grho.c_ptr();
+   //   double* grhop=grho.c_ptr();
    double* gmup=gmu.c_ptr();
    double* glambdap=glambda.c_ptr();
    int npts = (m_nx+2)*(m_ny+2)*(m_nz+2);
 
    double* tmp = new double[npts];
-   for( int i=0 ; i < npts ; i++ )
-      tmp[i] = grhop[i];
-   MPI_Allreduce( tmp, grhop, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   //   for( int i=0 ; i < npts ; i++ )
+   //      tmp[i] = grhop[i];
+   //   MPI_Allreduce( tmp, grhop, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = gmup[i];
@@ -307,9 +304,9 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
-            dfs[3*ind]   = grhop[indm];
-	    dfs[3*ind+1] = gmup[indm];
-	    dfs[3*ind+2] = glambdap[indm];
+	    //            dfs[3*ind]   = grhop[indm];
+	    dfs[2*ind  ] = gmup[indm];
+	    dfs[2*ind+1] = glambdap[indm];
 	    ind++;
 	    //            float_sw4 rho=xms[3*ind];
 	    //	    float_sw4 cs=xms[3*ind+1];
@@ -322,25 +319,25 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 }
 
 //-----------------------------------------------------------------------
-ssize_t MaterialParCartesianVels::parameter_index( int ip, int jp, int kp, int grid,
+ssize_t MaterialParCartesianVsVp::parameter_index( int ip, int jp, int kp, int grid,
 					    int var )
 // Ignore grid.
 {
    if( 1 <= ip && ip <= m_nx && 1 <= jp && jp <= m_ny && 1 <= kp && kp <= m_nz
-       && (0 <= var) && (var <= 2 ) )
-      return 3*(ip-1+static_cast<ssize_t>(m_nx)*(jp-1)+m_nx*m_ny*(kp-1))+var;
+       && (0 <= var) && (var <= 1 ) )
+      return 2*(ip-1+static_cast<ssize_t>(m_nx)*(jp-1)+m_nx*m_ny*(kp-1))+var;
    else
       return -1;
 }
 
 //-----------------------------------------------------------------------
-ssize_t MaterialParCartesianVels::local_index( size_t ind_global )
+ssize_t MaterialParCartesianVsVp::local_index( size_t ind_global )
 {
    return -1;
 }
 
 //-----------------------------------------------------------------------
-//void MaterialParCartesianVels::gradient_transformation( std::vector<Sarray>& a_rho,
+//void MaterialParCartesianVsVp::gradient_transformation( std::vector<Sarray>& a_rho,
 //							std::vector<Sarray>& a_mu,
 //							std::vector<Sarray>& a_lambda,
 //							std::vector<Sarray>& a_gradrho,
@@ -352,19 +349,18 @@ ssize_t MaterialParCartesianVels::local_index( size_t ind_global )
 //				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
 //}
 //-----------------------------------------------------------------------
-void MaterialParCartesianVels::set_scalefactors( int nmpars, double* sfs, double rho_ref,
+void MaterialParCartesianVsVp::set_scalefactors( int nmpars, double* sfs, double rho_ref,
 	 double mu_ref, double lambda_ref, double vs_ref, double vp_ref )
 {
-   for( int i=0 ; i < nmpars ; i += 3 )
+   for( int i=0 ; i < nmpars ; i += 2 )
    {
-      sfs[i]   = rho_ref;
-      sfs[i+1] = vs_ref;
-      sfs[i+2] = vp_ref;
+      sfs[i  ] = vs_ref;
+      sfs[i+1] = vp_ref;
    }
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCartesianVels::subtract_base_mtrl( int nms, double* xms )
+void MaterialParCartesianVsVp::subtract_base_mtrl( int nms, double* xms )
 {
    // Assume xms are given as full material, interpolate and subtract the
    // base material to get xms as an update.
@@ -375,7 +371,6 @@ void MaterialParCartesianVels::subtract_base_mtrl( int nms, double* xms )
    m_ew->interpolate_base_to_coarse_vel( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
 				    rhobase, csbase, cpbase );
    size_t ind = 0;
-   double* rhop = rhobase.c_ptr();
    double* csp  = csbase.c_ptr();
    double* cpp  = cpbase.c_ptr();
    for( int k=1 ; k <= m_nz ; k++ )
@@ -383,10 +378,10 @@ void MaterialParCartesianVels::subtract_base_mtrl( int nms, double* xms )
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
-	    xms[3*ind  ] -= rhop[indm];
-	    xms[3*ind+1] -= csp[indm];
-	    xms[3*ind+2] -= cpp[indm];
+	    xms[2*ind  ] -= csp[indm];
+	    xms[2*ind+1] -= cpp[indm];
 	    ind++;
 	 }
    
 }
+

@@ -7,6 +7,7 @@
 #include "Image3D.h"
 
 class EW;
+class MaterialParCartesian;
 
 class Mopt
 {
@@ -59,6 +60,7 @@ class Mopt
    int m_nsurfpts, m_nsurfpts2;
    double m_pmin, m_pmax, m_pmin2, m_pmax2;
    MaterialParameterization *m_mp;   
+   MaterialParCartesian *m_mpcart0;   
    std::vector<Image*> m_image_files;
    std::vector<Image3D*> m_3dimage_files;
    std::string m_scales_fname, m_scalem_fname;

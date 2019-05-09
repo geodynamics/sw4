@@ -8240,8 +8240,8 @@ void EW::processRandomBlock(char* buffer)
    CHECK_INPUT(strcmp("randomblock", token) == 0,
 	       "ERROR: not a randomblock line: " << token);
    token = strtok(NULL, " \t");
-   bool lengthscaleset=false, lengthscalezset=false;
-   float_sw4 corrlen=1000, corrlenz=1000, sigma=0.1, hurst=0.3, zmin=-1e38, zmax=1e38;
+   bool lengthscaleset=false, lengthscalezset=false, vsmaxset=false;
+   float_sw4 corrlen=1000, corrlenz=1000, sigma=0.1, hurst=0.3, zmin=-1e38, zmax=1e38, vsmax=1e38;
    unsigned int seed=0;
 
    m_randomize = true;
@@ -8291,6 +8291,12 @@ void EW::processRandomBlock(char* buffer)
 	 token += 5;
          zmax = atof(token);
       }
+      else if( startswith("vsmax=",token) )
+      {
+	 token += 6;
+         vsmax = atof(token);
+	 vsmaxset = true;
+      }
       else
       {
 	 badOption("randomblock", token);
@@ -8301,6 +8307,9 @@ void EW::processRandomBlock(char* buffer)
       corrlenz = corrlen;
    RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
 						      corrlenz, hurst, sigma, seed );
+   if( vsmaxset )
+      mtrl->set_vsmax(vsmax);
+   
    m_random_blocks.push_back(mtrl);
    //   if( !lengthscaleset && lengthscalezset )
    //      m_random_dist = m_random_distz;

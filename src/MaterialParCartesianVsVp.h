@@ -1,9 +1,9 @@
-#ifndef MATERIALPARCARTESIANVELS_H
-#define MATERIALPARCARTESIANVELS_H
+#ifndef MATERIALPARCARTESIANVSVP_H
+#define MATERIALPARCARTESIANVSVP_H
 
 #include "MaterialParameterization.h"
 
-class MaterialParCartesianVels : public MaterialParameterization
+class MaterialParCartesianVsVp : public MaterialParameterization
 {
 private:
    double m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz;  // Grid given as x_i = xmin + (i-1)*hx,  y_j=ymin+(j-1)*hy, z_k=zmin+(k-1)*hz
@@ -15,7 +15,7 @@ private:
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 public:
-   MaterialParCartesianVels( EW* a_ew, int nx, int ny, int nz, int init, char* fname );
+   MaterialParCartesianVsVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname );
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
