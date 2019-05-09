@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
+#include <fstream>
 
 #include "MaterialParameterization.h"
 
@@ -87,6 +88,14 @@ void MaterialParameterization::write_parameters( const char* filename,
 	 cout << "Error in MaterialParameterization::write_parameters "
 	      << " could not write parameters " << endl;
       close(fd);
+      bool write_ascii=true;
+      if( write_ascii )
+      {
+ 	 fstream fut("parameters.txt");
+	 for( int i=0 ; i < nms ; i++ )
+	   fut << i+1 << " " << xms[i] << endl;
+	 fut.close();
+      }
    }
 }
 

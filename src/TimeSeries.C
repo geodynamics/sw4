@@ -1415,6 +1415,12 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
       bool compute_difference = (diff!=NULL);
       float_sw4** misfitsource;
+      float_sw4 aw, bw;
+      if( m_use_win )
+      {
+	aw = M_PI/(m_winR-m_winL);
+	bw = -aw*0.5*(m_winR+m_winL);
+      }
       if( compute_difference )
       {
 	 if( diff->mLastTimeStep < mLastTimeStep )
@@ -1478,8 +1484,13 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 // Windowing and component selection
          float_sw4 wghx, wghy, wghz;
 	 wghx = wghy = wghz = wghv;
-         if( m_use_win && (t < m_winL || t > m_winR) )
-	    wghx = wghy = wghz = 0;
+         if( m_use_win )
+	 {
+	   if( t < m_winL || t > m_winR ) 
+	     wghx = wghy = wghz = 0;
+	   else
+	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0);
+	 }
          if( !m_use_x )
 	    wghx = 0;
          if( !m_use_y )
@@ -1715,6 +1726,13 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
    bool compute_adjsrc = adjsrc != NULL;
    //   float_sw4 scale_factor=0;
       
+   float_sw4 aw, bw;
+   if( m_use_win )
+   {
+      aw = M_PI/(m_winR-m_winL);
+      bw = -aw*0.5*(m_winR+m_winL);
+   }
+
    // Weight to ramp down the end of misfit.
    float_sw4 wghv;
    int p =20 ; // Number of points in ramp;
@@ -1746,8 +1764,14 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 // Windowing and component selection
       float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
-      if( m_use_win && (t < m_winL || t > m_winR) )
-	 wghx = wghy = wghz = 0;
+      if( m_use_win )
+      {
+	// Use unshifted time, to avoid window dependency on unknown
+	 if( t-tshift < m_winL || t-tshift > m_winR ) 
+	    wghx = wghy = wghz = 0;
+	 else
+	   wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),10.0);
+      }
       if( !m_use_x )
 	 wghx = 0;
       if( !m_use_y )

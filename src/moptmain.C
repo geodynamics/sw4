@@ -169,7 +169,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 #endif
    for (int q=nspar; q<nspar+nmpars; q++)
       tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-
+   tikhonov /= nmpars;
    mf += mopt->m_reg_coeff*tikhonov;
    
 }
@@ -295,12 +295,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 #ifndef SQR
 #define SQR(x) ((x)*(x))
 #endif
+   double dtikhonovcoeff = mopt->m_reg_coeff/nmpars;
    for (int q=nspar; q<nspar+nmpars; q++)
    {
       tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-      dfs[q] += 2*mopt->m_reg_coeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
+      dfs[q] += 2*dtikhonovcoeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
    }
-   
+   tikhonov /= nmpars;   
    f += mopt->m_reg_coeff*tikhonov;
 
    if( myrank == 0 && verbose >= 1 )
