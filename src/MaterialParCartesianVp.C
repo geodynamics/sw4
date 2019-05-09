@@ -1,6 +1,8 @@
 #include "MaterialParCartesianVp.h"
 #include "EW.h"
 
+#include "MParGridFile.h"
+
 //-----------------------------------------------------------------------
 //  Parameterize the material on a Cartesian coarse grid, with
 //  cp as the parameter, let cs=cp/r and rho=gamma*cp, for constants r, gamma
@@ -242,11 +244,21 @@ void MaterialParCartesianVp::get_parameters( int nmd, double* xmd, int nms,
    {
       interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    }
+   else if( m_init == 4 )
+   {
+      MParGridFile mpfile( m_filename );
+      mpfile.interpolate_to_other( xms, 3, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
+      if( !mpfile.is_update() )
+	 subtract_base_mtrl( nms, xms );
+   }
 }
 
 //-----------------------------------------------------------------------
 void MaterialParCartesianVp::get_gradient( int nmd, double* xmd, int nms, double* xms,
 					 double* dfs, double* dfm,
+					 std::vector<Sarray>& a_rho,
+					 std::vector<Sarray>& a_mu,
+					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
 					 std::vector<Sarray>& a_gradlambda )
@@ -254,6 +266,10 @@ void MaterialParCartesianVp::get_gradient( int nmd, double* xmd, int nms, double
    // Computes gradient with respect to the material parameterization from given
    // gradients with respect to the material at grid points.
    // 
+   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+      m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
+				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
+
    Sarray grho(0,m_nx+1,0,m_ny+1,0,m_nz+1), gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    grho.set_to_zero();
@@ -317,21 +333,45 @@ ssize_t MaterialParCartesianVp::local_index( size_t ind_global )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCartesianVp::gradient_transformation( std::vector<Sarray>& a_rho,
-							std::vector<Sarray>& a_mu,
-							std::vector<Sarray>& a_lambda,
-							std::vector<Sarray>& a_gradrho,
-							std::vector<Sarray>& a_gradmu,
-							std::vector<Sarray>& a_gradlambda )
-{
-   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
-      m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
-				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
-}
+//void MaterialParCartesianVp::gradient_transformation( std::vector<Sarray>& a_rho,
+//							std::vector<Sarray>& a_mu,
+//							std::vector<Sarray>& a_lambda,
+//							std::vector<Sarray>& a_gradrho,
+//							std::vector<Sarray>& a_gradmu,
+//							std::vector<Sarray>& a_gradlambda )
+//{
+//   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+//      m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
+//				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
+//}
 //-----------------------------------------------------------------------
 void MaterialParCartesianVp::set_scalefactors( int nmpars, double* sfs, double rho_ref,
 	 double mu_ref, double lambda_ref, double vs_ref, double vp_ref )
 {
    for( int i=0 ; i < nmpars ; i++ )
       sfs[i]   = vp_ref;
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCartesianVp::subtract_base_mtrl( int nms, double* xms )
+{
+   // Assume xms are given as full material, interpolate and subtract the
+   // base material to get xms as an update.
+
+   Sarray rhobase(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray csbase(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray cpbase(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   m_ew->interpolate_base_to_coarse_vel( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
+				    rhobase, csbase, cpbase );
+   size_t ind = 0;
+   double* cpp = cpbase.c_ptr();
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+            size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+	    xms[ind] -= cpp[indm];
+	    ind++;
+	 }
+   
 }

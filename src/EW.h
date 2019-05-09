@@ -691,6 +691,13 @@ void interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin
 				    vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
 				    vector<Sarray>& lambdagrid );
 
+void interpolate_base_to_coarse( int nx, int ny, int nz, double xmin, double ymin,
+				 double zmin, double hx, double hy, double hz,
+				 Sarray& rho, Sarray& mu, Sarray& lambda );
+void interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
+				     double zmin, double hx, double hy, double hz,
+				     Sarray& rho, Sarray& cs, Sarray& cp );
+
 void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda );
 
 void transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho, Sarray& gmu, Sarray& glambda );

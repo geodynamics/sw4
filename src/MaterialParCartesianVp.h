@@ -23,14 +23,17 @@ public:
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
+		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda );
-   void gradient_transformation( std::vector<Sarray>& a_rho,
-				 std::vector<Sarray>& a_mu,
-				 std::vector<Sarray>& a_lambda,
-				 std::vector<Sarray>& a_gradrho,
-				 std::vector<Sarray>& a_gradmu,
-				 std::vector<Sarray>& a_gradlambda );
+   //   void gradient_transformation( std::vector<Sarray>& a_rho,
+   //				 std::vector<Sarray>& a_mu,
+   //				 std::vector<Sarray>& a_lambda,
+   //				 std::vector<Sarray>& a_gradrho,
+   //				 std::vector<Sarray>& a_gradmu,
+   //				 std::vector<Sarray>& a_gradlambda );
+   void subtract_base_mtrl( int nms, double* xms );
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 

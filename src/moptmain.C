@@ -164,13 +164,14 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 
 // add in a Tikhonov regularizing term:
    double tikhonov=0;
+   double tcoff = 1.0/nmpars;
 #ifndef SQR
 #define SQR(x) ((x)*(x))
 #endif
    for (int q=nspar; q<nspar+nmpars; q++)
       tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
 
-   mf += mopt->m_reg_coeff*tikhonov;
+   mf += tcoff*mopt->m_reg_coeff*tikhonov;
    
 }
 
@@ -277,8 +278,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
 
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
-      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
-      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfm, gRho, gMu, gLambda );
+      //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfm, rho, mu, lambda, gRho, gMu, gLambda );
       for( int m=0 ; m < nmpars ; m++ )
 	 dfs[m+nspar] += dfsevent[m];
 
@@ -291,6 +292,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
 // add in a Tikhonov regularizing term:
+   double tcoff = 1.0/nmpars;
    double tikhonov=0;
 #ifndef SQR
 #define SQR(x) ((x)*(x))
@@ -298,10 +300,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    for (int q=nspar; q<nspar+nmpars; q++)
    {
       tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-      dfs[q] += 2*mopt->m_reg_coeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
+      dfs[q] += 2*tcoff*mopt->m_reg_coeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
    }
    
-   f += mopt->m_reg_coeff*tikhonov;
+   f += tcoff*mopt->m_reg_coeff*tikhonov;
 
    if( myrank == 0 && verbose >= 1 )
    {
@@ -1226,6 +1228,7 @@ int main(int argc, char **argv)
 	      mopt->m_mpcart0->projectl2( simulation.mRho, "rhoproj.bin" );
 	      mopt->m_mpcart0->projectl2( simulation.mMu, "muproj.bin" );
 	      mopt->m_mpcart0->projectl2( simulation.mLambda, "lambdaproj.bin" );
+
 	   }
            else if( mopt->m_opttest == 1 )
 	   {

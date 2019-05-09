@@ -3,6 +3,7 @@
 
 #include "MaterialParCartesian.h"
 #include "EW.h"
+#include "MParGridFile.h"
 
 MaterialParCartesian::MaterialParCartesian( EW* a_ew, int nx, int ny, int nz, int init, char* fname )
    : MaterialParameterization( a_ew, fname )
@@ -211,11 +212,21 @@ void MaterialParCartesian::get_parameters( int nmd, double* xmd, int nms,
    {
       interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    }
+   else if( m_init == 4 )
+   {
+      MParGridFile mpfile( m_filename );
+      mpfile.interpolate_to_other( xms, 1, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
+      if( !mpfile.is_update() )
+	 subtract_base_mtrl( nms, xms );
+   }
 }
 
 //-----------------------------------------------------------------------
 void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* xms,
 					 double* dfs, double* dfm,
+					 std::vector<Sarray>& a_rho,
+					 std::vector<Sarray>& a_mu,
+					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
 					 std::vector<Sarray>& a_gradlambda )
@@ -256,10 +267,6 @@ void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* 
       for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
-	    //            dfs[3*ind]   = grhop[ind];
-	    //	    dfs[3*ind+1] = gmup[ind];
-	    //	    dfs[3*ind+2] = glambdap[ind];
-	    //	    ind++;
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
             dfs[3*ind]   = grhop[indm];
 	    dfs[3*ind+1] = gmup[indm];
@@ -301,6 +308,7 @@ ssize_t MaterialParCartesian::local_index( size_t ind_global )
    return -1;
 }
 
+//-----------------------------------------------------------------------
 extern "C" {
    void dgesv_( int*, int*, double*, int*, int*, double*, int*, int* );
 }
@@ -469,4 +477,32 @@ void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, const char* fna
    close(fd);
    delete[] rhs;
 }
-  
+
+//-----------------------------------------------------------------------
+void MaterialParCartesian::subtract_base_mtrl( int nms, double* xms )
+{
+   // Assume xms are given as full material, interpolate and subtract the
+   // base material to get xms as an update.
+
+   Sarray rhobase(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray mubase(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray labase(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   m_ew->interpolate_base_to_coarse( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
+				    rhobase, mubase, labase );
+   size_t ind = 0;
+   double* rhop = rhobase.c_ptr();
+   double* mup  = mubase.c_ptr();
+   double* lap  = labase.c_ptr();
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+            size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+	    xms[3*ind  ] -= rhop[indm];
+	    xms[3*ind+1] -= mup[indm];
+	    xms[3*ind+2] -= lap[indm];
+	    ind++;
+	 }
+   
+}
+
