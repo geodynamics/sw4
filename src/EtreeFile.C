@@ -357,7 +357,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
       for (int j = mEw->m_jStart[g]; j <= mEw->m_jEnd[g]; ++j)
 	 for (int i = mEw->m_iStart[g]; i <= mEw->m_iEnd[g]; ++i)
 	 {
-	    for (k = 1; k <= mEw->m_kEnd[g]; ++k) // don't attempt querying the etree above the topography (start at k=1)
+	    for (int k = 1; k <= mEw->m_kEnd[g]; ++k) // don't attempt querying the etree above the topography (start at k=1)
 	    {
 	       x = mEw->mX(i,j,k);
 	       y = mEw->mY(i,j,k);
@@ -373,7 +373,6 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 // Query the location...
 //---------------------------------------------------------
 		  mQuery.query(&mPayload, mPayloadSize, lon, lat, elev);
-                   
 		  if (mQuery.errorHandler()->status() != cencalvm::storage::ErrorHandler::OK) 
 		  {
 		     mQuery.errorHandler()->resetStatus(); // C.B> If we have an error, we are outside.
@@ -646,6 +645,7 @@ void EtreeFile::set_material_properties(std::vector<Sarray> & rho,
    double sqrt2=1.42;
    
    for (int g = 0; g < mEw->mNumberOfGrids; g++)
+#pragma omp parallel for reduction(+:warningCount)
       for (int i = mEw->m_iStart[g]; i <= mEw->m_iEnd[g]; ++i)
 	 for (int j = mEw->m_jStart[g]; j <= mEw->m_jEnd[g]; ++j)
 	    for (int k = mEw->m_kStart[g]; k <= mEw->m_kEnd[g]; ++k)

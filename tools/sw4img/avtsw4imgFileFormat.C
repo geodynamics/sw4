@@ -626,18 +626,17 @@ void avtsw4imgFileFormat::Initialize()
 
 // should check for 3D in the filename and handle that case within this reader
     size_t k=m_filename.rfind('.');
-    size_t find3D = m_filename.find("3D");
-    if (find3D != string::npos && find3D == k-2)
+    size_t find3D = m_filename.find("3Dimg");
+    if (find3D != string::npos && find3D == k+1)
     {
-        // We have a '3D.mode' type file -- this is for volimage
-        SNPRINTF(errmsg,500,"Error: SW4image reader does currently not read 3D volimage"
-                 " files.");
-        debug1 << errmsg << endl; 
-        EXCEPTION1( InvalidDBTypeException, errmsg );
+       // We have a 'mode.3Dimg' type file -- this is for volimage
+       debug4 << "SW4> " << "opening volimage file, continuing..." << endl;
+       m_volimage = true;
     }
     else
     { 
        debug4 << "SW4> " << "Not a volimage file, continuing..." << endl; 
+       m_volimage = false;
     }
 
     int fd = OPEN( m_filename.c_str(), O_RDONLY|O_BINARY );
@@ -804,7 +803,7 @@ void avtsw4imgFileFormat::Initialize()
 
 // size of the first part of the header
     off_t header_offset = 5*sizeof(int)+2*sizeof(double)+25*sizeof(char);
-    int dims[4];
+    int dims[6];
     debug4 << "SW4> " << "reading block headers " << endl;
     for( int b=0 ; b < m_nblocks ; b++ )
     {
@@ -823,8 +822,9 @@ void avtsw4imgFileFormat::Initialize()
             SNPRINTF(errmsg,500,"Error reading z0 in %s",m_filename.c_str());
             EXCEPTION1( InvalidDBTypeException, errmsg );
         }
-        nr = read(fd,dims,sizeof(int)*4);
-        if( nr != sizeof(int)*4 )
+        int expect_dim = (m_volimage) ? 6 : 4;
+        nr = read(fd,dims,sizeof(int)*expect_dim);
+        if( nr != sizeof(int)*expect_dim )
         {
             SNPRINTF(errmsg,500,"Error reading dimensions in %s",m_filename.c_str());
             EXCEPTION1( InvalidDBTypeException, errmsg );
@@ -851,24 +851,37 @@ void avtsw4imgFileFormat::Initialize()
         {
             m_ni[b] = dims[1]-dims[0]+1;
             m_nj[b] = dims[3]-dims[2]+1;
-            m_nk[b] = 1;
+            m_nk[b] = (m_volimage) ? dims[5]-dims[4]+1 : 1;
             m_xmin[b] = (dims[0]-1)*m_gridsize[b];
             m_ymin[b] = (dims[2]-1)*m_gridsize[b];
-            m_zmin[b] = m_plane_coord;
+            m_zmin[b] = (m_volimage) ?
+              m_z0[b] + (dims[4]-1)*m_gridsize[b] : m_plane_coord;
         }
-        debug4 << "SW4> " << "b = " << b << " dims[0] = " << dims[0] << " dims[1] = " 
-               << dims[1] << " dims[2] = " << dims[2] << " dims[3] = " 
-               << dims[3] << endl;
-        debug4 << "SW4> " << "z0 = " << m_z0[b] << " x_min = " << m_xmin[b] << " y_min = " << m_ymin[b] 
+        debug4 << "SW4> " << "b = " << b << " dims[0] = " << dims[0]
+               << " dims[1] = " << dims[1] << " dims[2] = " << dims[2]
+               << " dims[3] = " << dims[3];
+        if (m_volimage)
+        {
+          debug4 << " dims[4] = " << dims[4] << " dims[5] = " << dims[5];
+        }
+        debug4 << endl;
+
+        debug4 << "SW4> " << "z0 = " << m_z0[b] << " x_min = "
+               << m_xmin[b] << " y_min = " << m_ymin[b]
                << " z_min = " << m_zmin[b] << endl;
 // old
-        header_offset += 2*sizeof(double) + 4*sizeof(int);
+        header_offset += 2*sizeof(double) + expect_dim*sizeof(int);
         debug4 << "SW4> " << "block = " << b << " dims[0] = " << dims[0] << " dims[1] = " << dims[1] << " dims[2] = "
-               << dims[2] << " dims[3] = " << dims[3] << endl;
+               << dims[2] << " dims[3] = " << dims[3];
+        if (m_volimage)
+        {
+          debug4 << " dims[4] = " << dims[4] << " dims[5] = " << dims[5];
+        }
+        debug4 << endl;
         debug4 << "SW4> " << " z_min = " << m_zmin[b] << endl;
     }
 // end 2nd part of header
-    
+
     m_offset[0] = header_offset;
     int datasize;
     if( m_prec == 4 )

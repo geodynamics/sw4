@@ -35,6 +35,7 @@
 #include <string>
 
 #include "MaterialData.h"
+#include "sw4.h"
 
 class EW;
 
@@ -62,7 +63,7 @@ class MaterialRfile : public MaterialData
   //  void getMinMaxBoundsZ(double& zmin, double& zmax);
    
  protected:
-  inline bool inside( double x, double y, double z )
+  inline bool inside( float_sw4 x, float_sw4 y, float_sw4 z )
   {
     return m_xminloc <= x && x <= m_xmaxloc && m_yminloc <= y && y <= m_ymaxloc 
       && m_zminloc <= z && z <= m_zmaxloc;
@@ -71,7 +72,8 @@ class MaterialRfile : public MaterialData
    void read_rfile( );
    void fill_in_fluids( );
    int io_processor( );
-
+   void material_check( bool water );
+   
    EW* mEW;
 
    std::string m_model_file, m_model_dir;
@@ -83,11 +85,11 @@ class MaterialRfile : public MaterialData
    vector<int> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni, m_nj, m_nk;
 
   // file coordinate system is x=(i-1)*m_hx[gr] + m_xmin[gr], in SW4 coordinates.
-   vector<double> m_z0, m_hh, m_hv;
+   vector<float_sw4> m_z0, m_hh, m_hv;
    double m_x0, m_y0;
 
    // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in this processor.
-   double m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
+   float_sw4 m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
    bool m_outside;
    int m_bufsize;
 

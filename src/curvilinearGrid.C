@@ -35,17 +35,17 @@
 
 #include "F77_FUNC.h"
 extern "C" {
-   void F77_FUNC(metric,METRIC)( int*, int*, int*, int*, int*, int*,
+   void metric( int*, int*, int*, int*, int*, int*,
 				 double*, double*, double*, double*, double*, int * );
-   void F77_FUNC(gridinfo,GRIDINFO)( int*, int*, int*, int*, int*, int*,
+   void gridinfo( int*, int*, int*, int*, int*, int*,
 				     double*, double*, double*, double* );
-   void F77_FUNC(metricexgh,METRICEXGH)( int*, int*, int*, int*, int*, int*, int*, int*, int*,
+   void metricexgh( int*, int*, int*, int*, int*, int*, int*, int*, int*,
 					 double*, double*, double*, double*, double*,
 					 int*, double*, double*, double*, double*,
 					 double*, double*, double* );
-   void F77_FUNC(meterr4c,METERR4C)( int*, int*, int*, int*, int*, int*,
-				     double*, double*, double*, double*, double*, double*,
-				     int*, int*, int*, int*, int*, int*, double* );
+   void meterr4c( int*, int*, int*, int*, int*, int*,
+		  double*, double*, double*, double*, double*, double*,
+		  int*, int*, int*, int*, int*, int*, double* );
 }
 #define SQR(x) ((x)*(x))
 //---------------------------------------------------------
@@ -68,19 +68,27 @@ void EW::setup_metric()
       int nxg = m_global_nx[g];
       int nyg = m_global_ny[g];
       int nzg = m_global_nz[g];
-      double h= mGridSize[g];   
-      double zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
-      F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-				       mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-				       &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+      float_sw4 h= mGridSize[g];   
+      float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
+//FTNC      if( m_croutines )
+	 metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				       mMetric.c_ptr(), mJ.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
+				       m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
+	 
+//FTNC      else
+//FTNC	 metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+//FTNC		     mMetric.c_ptr(), mJ.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+//FTNC		     &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    }
    else
    {
      int ierr=0;
-     F77_FUNC(metric,METRIC)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
+//FTNC     if( m_croutines )
+	ierr=metric_ci( Bx, Nx, By, Ny, Bz, Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr() );
+//FTNC     else
+//FTNC	metric( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(), &ierr );
      CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
    }
-   
 
    communicate_array( mMetric, mNumberOfGrids-1 );
    communicate_array( mJ, mNumberOfGrids-1 );
@@ -89,11 +97,14 @@ void EW::setup_metric()
       // Test metric derivatives if available
       metric_derivatives_test( );
 
-   double minJ, maxJ;
-   F77_FUNC(gridinfo,GRIDINFO)(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
-   double minJglobal, maxJglobal;
-   MPI_Allreduce( &minJ, &minJglobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-   MPI_Allreduce( &maxJ, &maxJglobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+   float_sw4 minJ, maxJ;
+//FTNC   if( m_croutines )
+      gridinfo_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), mJ.c_ptr(), minJ, maxJ );
+//FTNC   else
+//FTNC      gridinfo(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ, &maxJ );
+   float_sw4 minJglobal, maxJglobal;
+   MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+   MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
    if (mVerbose>3 && proc_zero())
       printf("*** Jacobian of metric: minJ = %e maxJ = %e\n", minJglobal, maxJglobal);
 // just save the results for now... do the sanity check later
@@ -106,7 +117,7 @@ void EW::generate_grid()
 {
    // Generate grid on domain: topography <= z <= zmax, 
    // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
-   // spacing h. 
+   // spacing h.
   if (!m_topography_exists ) return;
   
 //  m_grid_interpolation_order = a_order;
@@ -121,8 +132,8 @@ void EW::generate_grid()
   int jfirst = m_jStart[g];
   int jlast  = m_jEnd[g];
 
-  double h = mGridSize[g]; // grid size must agree with top cartesian grid
-  double zMaxCart = m_zmin[g]; // bottom z-level for curvilinear grid
+  float_sw4 h = mGridSize[g]; // grid size must agree with top cartesian grid
+  float_sw4 zMaxCart = m_zmin[g]; // bottom z-level for curvilinear grid
 
   int i, j;
   int gTop = mNumberOfGrids-1;
@@ -135,18 +146,17 @@ void EW::generate_grid()
   }
 
 // generate the grid by calling the curvilinear mapping function
-  double X0, Y0, Z0;
-  int k;
-  for (k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
-    for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
-      for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+#pragma omp parallel for
+  for (int k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
+    for (int j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+      for (int i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
       {
-	curvilinear_grid_mapping((double) i, (double) j, (double) k, X0, Y0, Z0);
-	mX(i,j,k) = X0;
-	mY(i,j,k) = Y0;
-	mZ(i,j,k) = Z0;
+	 float_sw4 X0, Y0, Z0;
+	 curvilinear_grid_mapping((float_sw4) i, (float_sw4) j, (float_sw4) k, X0, Y0, Z0);
+	 mX(i,j,k) = X0;
+	 mY(i,j,k) = Y0;
+	 mZ(i,j,k) = Z0;
       }
-
 // tmp
 // test the inverse mapping
 //  double q0, r0, s0, dist=0.;
@@ -168,20 +178,20 @@ void EW::generate_grid()
   
 // tmp
 // calculate min and max((mZ(i,j,k)-mZ(i,j,k-1))/h) for k=Nz
-  k = Nz;
-  double hRatio;
+  int k = Nz;
 // tmp
-  double mZmin = 1.0e9, mZmax=0;
-  for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
-    for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+  float_sw4 mZmin = 1.0e9, mZmax=0;
+#pragma omp parallel for reduction(min:mZmin) reduction(max:mZmax)
+  for (int j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+    for (int i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
     {
-       hRatio = (mZ(i,j,k)-mZ(i,j,k-1))/mGridSize[gTop];
-	if (hRatio < mZmin) mZmin = hRatio;
-	if (hRatio > mZmax) mZmax = hRatio;
+       float_sw4 hRatio = (mZ(i,j,k)-mZ(i,j,k-1))/mGridSize[gTop];
+       if (hRatio < mZmin) mZmin = hRatio;
+       if (hRatio > mZmax) mZmax = hRatio;
     }
-  double zMinGlobal, zMaxGlobal;
-  MPI_Allreduce( &mZmin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-  MPI_Allreduce( &mZmax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+  float_sw4 zMinGlobal, zMaxGlobal;
+  MPI_Allreduce( &mZmin, &zMinGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+  MPI_Allreduce( &mZmax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
   if(mVerbose > 3 &&  proc_zero() )
   {
     printf("Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 = %e, max ratio z - 1 = %e, top grid # = %i\n", 
@@ -192,7 +202,7 @@ void EW::generate_grid()
 }
 
 //-----------------------------------------------------------------------
-bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, double & Y0, double & Z0 )
+bool EW::curvilinear_grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 )
 {
 // if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
 // Return true and assign (X0,Y0,Z0) corresponding to (q,r,s)
@@ -207,14 +217,14 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 //  1 <= r <= Ny, 1 <= s <= Nz.
 
   int gCurv = mNumberOfGrids - 1;
-  double h = mGridSize[gCurv];
+  float_sw4 h = mGridSize[gCurv];
 // check global parameter space
-  double qMin = (double) (1- m_ghost_points);
-  double qMax = (double) (m_global_nx[gCurv] + m_ghost_points);
-  double rMin = (double) (1- m_ghost_points);
-  double rMax = (double) (m_global_ny[gCurv] + m_ghost_points);
-  double sMin = (double) m_kStart[gCurv];
-  double sMax = (double) m_kEnd[gCurv];
+  float_sw4 qMin = (float_sw4) (1- m_ghost_points);
+  float_sw4 qMax = (float_sw4) (m_global_nx[gCurv] + m_ghost_points);
+  float_sw4 rMin = (float_sw4) (1- m_ghost_points);
+  float_sw4 rMax = (float_sw4) (m_global_ny[gCurv] + m_ghost_points);
+  float_sw4 sMin = (float_sw4) m_kStart[gCurv];
+  float_sw4 sMax = (float_sw4) m_kEnd[gCurv];
 
   if (! (q >= qMin && q <= qMax && r >= rMin && r <= rMax && s >= sMin && s <= sMax))
   {
@@ -230,7 +240,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
     return false;
 
 // bottom z-level for curvilinear grid = top z-level for highest Cartesian grid
-  double zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
+  float_sw4 zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
   
 // ************************
 // compute index interval based on (q,r)
@@ -242,7 +252,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
   if (g != gCurv)
     return false;
 
-  double tau; // holds the elevation at (q,r). Recall that elevation=-z
+  float_sw4 tau; // holds the elevation at (q,r). Recall that elevation=-z
   if (m_analytical_topo)
   {
     tau = m_GaussianAmp*exp(-SQR((X0-m_GaussianXc)/m_GaussianLx) 
@@ -253,8 +263,8 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 // if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only need that grid point on this proc,
 // otherwise we need the 2x2 area [i,i+1] by [j,j+1]
 
-    double xPt = (iNear-1)*h;
-    double yPt = (jNear-1)*h;
+    float_sw4 xPt = (iNear-1)*h;
+    float_sw4 yPt = (jNear-1)*h;
 
 // first check if we are very close to a grid point
     bool smackOnTop = (fabs((xPt-X0)/h) < 1.e-9 && fabs((yPt-Y0)/h) < 1.e-9);
@@ -311,7 +321,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 //      }
       if( point_in_proc_ext(i-3,j-3,gCurv) && point_in_proc_ext(i+4,j+4,gCurv) )
       {
-	 double a6cofi[8], a6cofj[8];
+	 float_sw4 a6cofi[8], a6cofj[8];
 	 gettopowgh( q-i, a6cofi );
 	 gettopowgh( r-j, a6cofj );
          tau = 0;
@@ -333,9 +343,9 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
   int Nz = m_kEnd[gCurv] - m_ghost_points;
 
 // zeta  > zetaBreak gives constant grid size = h
-  double sBreak = 1. + m_zetaBreak*(Nz-1);
+  float_sw4 sBreak = 1. + m_zetaBreak*(Nz-1);
 
-  double zeta, c1=0., c2=0., c3=0., c4=0.0, c5=0.0, c6=0.0, zMax;
+  float_sw4 zeta, c1=0., c2=0., c3=0., c4=0.0, c5=0.0, c6=0.0, zMax;
   zMax = zMaxCart - (Nz - sBreak)*h;
 
 // quadratic term to make variation in grid size small at bottom boundary
@@ -368,7 +378,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 	
 
 // the forward mapping is ...
-  if (s <= (double) sBreak)
+  if (s <= (float_sw4) sBreak)
   {
     zeta = (s-1)/(sBreak-1.);
     Z0 = (1.-zeta)*(-tau) 
@@ -384,7 +394,7 @@ bool EW::curvilinear_grid_mapping( double q, double r, double s, double & X0, do
 }
 
 //-----------------------------------------------------------------------
-bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, double& q, double& r, double& s )
+bool EW::invert_curvilinear_grid_mapping( float_sw4 X0, float_sw4 Y0, float_sw4 Z0, float_sw4& q, float_sw4& r, float_sw4& s )
 {
 // If (X0, Y0, Z0) is on the curvilinear grid and (X0, Y0) is on this processor:
 // Return true and assigns (q,r,s) corresponding to point (mX0,mY0,mZ0)
@@ -399,7 +409,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 //  1 <= r <= Ny, 1 <= s <= Nz.
 
   int gCurv = mNumberOfGrids - 1;
-  double h = mGridSize[gCurv];
+  float_sw4 h = mGridSize[gCurv];
   q = X0/h + 1.0;
   r = Y0/h + 1.0;
   s = 0.;
@@ -418,7 +428,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 // for ghost points in the curvilinear grid, calling computeNearestGridPoint with Z0 will pick up the top Cartesian grid
 
 // bottom z-level for curvilinear grid = top z-level for highest Cartesian grid
-  double zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
+  float_sw4 zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
 
   computeNearestGridPoint(iNear, jNear, kNear, g, X0, Y0, zMaxCart - h);
 
@@ -429,7 +439,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
     MPI_Abort(MPI_COMM_WORLD,1);
   }
   
-  double tau; // holds the elevation at (q,r). Recall that elevation=-z
+  float_sw4 tau; // holds the elevation at (q,r). Recall that elevation=-z
 
   if (m_analytical_topo)
   {
@@ -441,8 +451,8 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 // if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only need that grid point on this proc,
 // otherwise we need the 2x2 area [i,i+1] by [j,j+1]
 
-    double xPt = (iNear-1)*h;
-    double yPt = (jNear-1)*h;
+    float_sw4 xPt = (iNear-1)*h;
+    float_sw4 yPt = (jNear-1)*h;
 
 // first check if we are very close to a grid point
     bool smackOnTop = (fabs((xPt-X0)/h) < 1.e-9 && fabs((yPt-Y0)/h) < 1.e-9);
@@ -462,7 +472,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
     {
       computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
 
-      double Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+      float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
 
 // The bi-cubic interpolation has the following problem:
 // When the source is close to a processor boundary, the same source must be discretized on two (or more processors).
@@ -513,7 +523,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 //      }
       if( point_in_proc_ext(i-3,j-3,gCurv) && point_in_proc_ext(i+4,j+4,gCurv) )
       {
-	 double a6cofi[8], a6cofj[8];
+	 float_sw4 a6cofi[8], a6cofj[8];
 	 gettopowgh( q-i, a6cofi );
 	 gettopowgh( r-j, a6cofj );
          tau = 0;
@@ -538,9 +548,9 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
 // setup parameters for grid mapping (same as curvilinear_grid_mapping)
   int Nz = m_kEnd[gCurv] - m_ghost_points;
    // zeta  > zetaBreak gives constant grid size = h
-  double sBreak = 1. + m_zetaBreak*(Nz-1);
+  float_sw4 sBreak = 1. + m_zetaBreak*(Nz-1);
 
-  double zeta, c1=0., c2=0., c3=0., c4=0, c5=0, c6=0, zMax;
+  float_sw4 zeta, c1=0., c2=0., c3=0., c4=0, c5=0, c6=0, zMax;
   zMax = zMaxCart - (Nz - sBreak)*h;
 
 // quadratic term to make variation in grid size small at bottom boundary
@@ -592,7 +602,7 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
     {
 // Get initial guess by taking c1=c2=c3=0
       zeta = (Z0 + tau)/(zMax + tau);
-      double F0, Fp0, zeta0=zeta;
+      float_sw4 F0, Fp0, zeta0=zeta;
     
 // Do a couple of Newton iterations
       int maxIter=5;
@@ -611,7 +621,10 @@ bool EW::invert_curvilinear_grid_mapping( double X0, double Y0, double Z0, doubl
         zeta0 -= F0/Fp0;
       }
 // check convergence
-      if (fabs(F0) > 1.e-9)
+      float_sw4 tol=1.e-9;
+      if( sizeof(float_sw4)==4)
+	 tol=1.e-5;
+      if (fabs(F0) > tol)
       {
         cout << "invert_curvilinear_grid_mapping: poor convergence for X0, Y0, Z0 = " << X0 << ", " << Y0 << ", " << Z0 << endl;
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -641,9 +654,9 @@ void EW::smoothTopography(int maxIter)
 //     cout << "***inside smoothTopography***  maxIter= " << maxIter << endl;
 //   }
   
-  double rf=0.2; // rf<0.25 for stability
+  float_sw4 rf=0.2; // rf<0.25 for stability
   //  int topLevel = mNumberOfGrids-1;
-  int i, j, iter;
+  int iter;
 
   copy_topo_to_topogridext();
 
@@ -659,31 +672,34 @@ void EW::smoothTopography(int maxIter)
 // Laplacian filter
   for (iter=0; iter < maxIter; iter++)
   {
-    for (i = imin+1; i <= imax-1; ++i)
-      for (j = jmin+1; j <= jmax-1; ++j)
+#pragma omp parallel for
+    for (int i = imin+1; i <= imax-1; ++i)
+      for (int j = jmin+1; j <= jmax-1; ++j)
       {
 	tmp(i,j,1) = mTopoGridExt(i,j,1) + rf*(mTopoGridExt(i+1,j,1) + mTopoGridExt(i-1,j,1) + mTopoGridExt(i,j+1,1) + mTopoGridExt(i,j-1,1) - 4.*mTopoGridExt(i,j,1));
       }
 
 // Neumann boundary conditions
-    for (j = jmin+1; j <= jmax-1; ++j)
+#pragma omp parallel for
+    for (int j = jmin+1; j <= jmax-1; ++j)
     {
-       i = imin;
+      int i = imin;
       tmp(i,j,1) = tmp(i+1,j,1);
       i = imax;
       tmp(i,j,1) = tmp(i-1,j,1);
     }
 
-    for (i = imin+1; i <= imax-1; ++i)
+#pragma omp parallel for
+    for (int i = imin+1; i <= imax-1; ++i)
     {
-       j = jmin;
+      int j = jmin;
       tmp(i,j,1) = tmp(i,j+1,1);
       j = jmax;
       tmp(i,j,1) = tmp(i,j-1,1);
     }
 // Corners
-    i = imin;
-    j = jmin;
+    int i = imin;
+    int j = jmin;
     tmp(i,j,1) = tmp(i+1,j+1,1);
 
     i = imax;
@@ -701,21 +717,20 @@ void EW::smoothTopography(int maxIter)
     communicate_array_2d_ext( tmp );
 
 // update solution
-    for (i = imin; i <= imax ; ++i)
-      for (j = jmin; j <= jmax ; ++j)
+#pragma omp parallel for
+    for (int i = imin; i <= imax ; ++i)
+      for (int j = jmin; j <= jmax ; ++j)
 	 mTopoGridExt(i,j,1) = tmp(i,j,1);
   }// end for iter
 }
 
 //-----------------------------------------------------------------------
-void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0, double y0)
+void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0)
 {
   if (mVerbose >= 1 && proc_zero())
     cout << "***inside buildGaussianHillTopography***"<< endl;
 
   int topLevel = mNumberOfGrids-1;
-
-  double x, y;
 
 // copy data
   m_analytical_topo = true;
@@ -726,21 +741,23 @@ void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0
   m_GaussianXc = x0;
   m_GaussianYc = y0;
 
+#pragma omp parallel for
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
     {
-      x = (i-1)*mGridSize[topLevel];
-      y = (j-1)*mGridSize[topLevel];
+      float_sw4 x = (i-1)*mGridSize[topLevel];
+      float_sw4 y = (j-1)*mGridSize[topLevel];
 // positive topography  is up (negative z)
       mTopo(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
-									       -SQR((y-m_GaussianYc)/m_GaussianLy)); 
+			               -SQR((y-m_GaussianYc)/m_GaussianLy));
     }
 
+#pragma omp parallel for
   for (int i = mTopoGridExt.m_ib ; i <= mTopoGridExt.m_ie ; ++i)
      for (int j = mTopoGridExt.m_jb ; j <= mTopoGridExt.m_je; ++j)
      {
-	x = (i-1)*mGridSize[topLevel];
-	y = (j-1)*mGridSize[topLevel];
+	float_sw4 x = (i-1)*mGridSize[topLevel];
+	float_sw4 y = (j-1)*mGridSize[topLevel];
 // positive topography  is up (negative z)
 	mTopoGridExt(i,j,1) = m_GaussianAmp*exp(-SQR((x-m_GaussianXc)/m_GaussianLx) 
 						-SQR((y-m_GaussianYc)/m_GaussianLy)); 
@@ -749,7 +766,7 @@ void EW::buildGaussianHillTopography(double amp, double Lx, double Ly, double x0
 
 
 //-----------------------------------------------------------------------
-bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
+bool EW::interpolate_topography( float_sw4 q, float_sw4 r, float_sw4 & Z0, bool smoothed)
 {
 // Interpolate the smoothed or raw topography
 //
@@ -766,19 +783,19 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
 //  1 <= r <= Ny.
 
   int gCurv = mNumberOfGrids - 1;
-  double h = mGridSize[gCurv];
+  float_sw4 h = mGridSize[gCurv];
 // check global parameter space
   
-  double qMin = (double) (1- m_ghost_points);
-  double qMax = (double) (m_global_nx[gCurv] + m_ghost_points);
-  double rMin = (double) (1- m_ghost_points);
-  double rMax = (double) (m_global_ny[gCurv] + m_ghost_points);
+  float_sw4 qMin = (float_sw4) (1- m_ghost_points);
+  float_sw4 qMax = (float_sw4) (m_global_nx[gCurv] + m_ghost_points);
+  float_sw4 rMin = (float_sw4) (1- m_ghost_points);
+  float_sw4 rMax = (float_sw4) (m_global_ny[gCurv] + m_ghost_points);
 
 // with mesh refinement, ghost points on coarser levels are further away
 //  int padding = m_ghost_points*((int) pow(2.0, mNumberOfCartesianGrids-1));
 
-  double sMin = (double) m_kStart[gCurv];
-  double sMax = (double) m_kEnd[gCurv];
+  float_sw4 sMin = (float_sw4) m_kStart[gCurv];
+  float_sw4 sMax = (float_sw4) m_kEnd[gCurv];
 
 //  bool inside_extended_domain = (q >= qMin0 && q <= qMax0 && r >= rMin0 && r <= rMax0);
   bool inside_domain = (q >= qMin && q <= qMax && r >= rMin && r <= rMax);
@@ -789,13 +806,13 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
     return false;
   }
   
-  double X0 = (q-1.0)*h;
-  double Y0 = (r-1.0)*h;
+  float_sw4 X0 = (q-1.0)*h;
+  float_sw4 Y0 = (r-1.0)*h;
 
   if (!topographyExists())
     return false;
 
-  double zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
+  float_sw4 zMaxCart = m_zmin[mNumberOfCartesianGrids-1]; 
   
 // ************************
 // compute index interval based on (q,r)
@@ -809,7 +826,7 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
      cout << "interpolate_topography: g = " << g << " gcurv = " << gCurv << endl;
     return false;
   }
-  double tau; // holds the elevation at (q,r). Recall that elevation=-z
+  float_sw4 tau; // holds the elevation at (q,r). Recall that elevation=-z
   if (m_analytical_topo)
   {
     tau = m_GaussianAmp*exp(-SQR((X0-m_GaussianXc)/m_GaussianLx) 
@@ -820,8 +837,8 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
 // if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only need that grid point on this proc,
 // otherwise we need the 2x2 area [i,i+1] by [j,j+1]
 
-    double xPt = (iNear-1)*h;
-    double yPt = (jNear-1)*h;
+    float_sw4 xPt = (iNear-1)*h;
+    float_sw4 yPt = (jNear-1)*h;
 
 // first check if we are very close to a grid point
     bool smackOnTop = (fabs((xPt-X0)/h) < 1.e-9 && fabs((yPt-Y0)/h) < 1.e-9);
@@ -861,7 +878,7 @@ bool EW::interpolate_topography( double q, double r, double & Z0, bool smoothed)
 //    }
     if( point_in_proc_ext(i-3,j-3,gCurv) && point_in_proc_ext(i+4,j+4,gCurv) )
     {
-       double a6cofi[8], a6cofj[8];
+       float_sw4 a6cofi[8], a6cofj[8];
        gettopowgh( q-i, a6cofi );
        gettopowgh( r-j, a6cofj );
        tau = 0;
@@ -901,16 +918,21 @@ void EW::metric_derivatives_test()
    int nxg = m_global_nx[g];
    int nyg = m_global_ny[g];
    int nzg = m_global_nz[g];
-   double h= mGridSize[g];   
-   double zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
+   float_sw4 h= mGridSize[g];   
+   float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
 
-   F77_FUNC(metricexgh,METRICEXGH)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+//FTNC   if( m_croutines )
+      metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				    metex.c_ptr(), jacex.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
+				    m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
+//FTNC   else
+//FTNC      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+//FTNC				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+//FTNC				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
    communicate_array( metex, mNumberOfGrids-1 );
    communicate_array( jacex, mNumberOfGrids-1 );
 
-   double li[5], l2[5];
+   float_sw4 li[5], l2[5];
    int imin = m_iStartInt[g];
    int imax = m_iEndInt[g];
    int jmin = m_jStartInt[g];
@@ -918,15 +940,20 @@ void EW::metric_derivatives_test()
    int kmin = m_kStartInt[g];
    int kmax = m_kEndInt[g];
 
-   F77_FUNC(meterr4c,METERR4C)( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
-				jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
-   double tmp[5];
+//FTNC   if( m_croutines )
+      meterr4c_ci( Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
+		   jacex.c_ptr(), li, l2, imin, imax, jmin, jmax, kmin, kmax, h );
+//FTNC   else
+//FTNC      meterr4c( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(), mJ.c_ptr(),
+//FTNC		jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
+
+   float_sw4 tmp[5];
    for( int c=0 ; c < 5 ;c++ )
       tmp[c] =li[c];
-   MPI_Allreduce( tmp, li, 5, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+   MPI_Allreduce( tmp, li, 5, m_mpifloat, MPI_MAX, m_cartesian_communicator);
    for( int c=0 ; c < 5 ;c++ )
       tmp[c] =l2[c];
-   MPI_Allreduce( tmp, l2, 5, MPI_DOUBLE, MPI_SUM, m_cartesian_communicator);
+   MPI_Allreduce( tmp, l2, 5, m_mpifloat, MPI_SUM, m_cartesian_communicator);
    for( int c=0 ; c < 5 ;c++ )
       l2[c] = sqrt(l2[c]);
    if( proc_zero() )
@@ -946,6 +973,7 @@ void EW::copy_topo_to_topogridext()
    {
       int gTop = mNumberOfGrids-1;
 // copy raw topography
+#pragma omp parallel for
       for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; ++i)
 	 for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; ++j)
 	    mTopoGridExt(i,j,1) = mTopo(i,j,1);
@@ -959,12 +987,14 @@ void EW::copy_topo_to_topogridext()
 
 // Update extra ghost points. Do not worry about processor boundaries,
 // they will be overwritten with correct values in the communication update afterward.
+#pragma omp parallel for
       for( int i=imin+egh ; i <= imax-egh ; i++ )
 	 for( int q = 0 ; q < egh ; q++ )
 	 {
 	    mTopoGridExt(i,jmin+q,1)   = mTopoGridExt(i,jmin+egh,1);
 	    mTopoGridExt(i,jmax-q,1)   = mTopoGridExt(i,jmax-egh,1);
 	 }
+#pragma omp parallel for
       for( int j=jmin ; j <= jmax ; j++ )
 	 for( int q = 0 ; q < egh ; q++ )
 	 {
@@ -976,9 +1006,9 @@ void EW::copy_topo_to_topogridext()
 }
 
 //-----------------------------------------------------------------------
-void EW::gettopowgh( double ai, double wgh[8] ) const
+void EW::gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const
 {
-   double pol = ai*ai*ai*ai*ai*ai*ai*(-251+135*ai+25*ai*ai-
+   float_sw4 pol = ai*ai*ai*ai*ai*ai*ai*(-251+135*ai+25*ai*ai-
                                       33*ai*ai*ai+6*ai*ai*ai*ai)/720;
    wgh[0] = -1.0/60*ai + 1.0/180*ai*ai + 1.0/48*ai*ai*ai + 23.0/144*ai*ai*ai*ai 
       - (17.0*ai + 223.0)*ai*ai*ai*ai*ai/720 - pol;
@@ -1002,20 +1032,21 @@ void EW::smooth_grid( int maxIter )
 {
 // Smooth the grid (only the Z component for now)
 // NOTE: the current smoothing algorithm makes the error larger rather than smaller!
-   double rf=0.05; // rf<1/6 for stability
+   float_sw4 rf=0.05; // rf<1/6 for stability
    if (mVerbose >= 1 && proc_zero() && maxIter>0)
       cout << "***smoothing the grid with " << maxIter << " Jacobi iterations and relaxation factor " << rf << " ***"<< endl;
 
    int topLevel = mNumberOfGrids-1;
-   int i, j, k, iter;
+   int iter;
 // temporary storage: How can I use mJ for temporary storage?
    Sarray tmp;
    tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],m_kStart[topLevel],m_kEnd[topLevel]);
 
 // initialize to make the Dirichlet boundary conditions work
-   for (k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
-      for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-	 for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+#pragma omp parallel for
+   for (int k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
+      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	 for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
 	 {
 	    tmp(i,j,k) = mZ(i,j,k);
 	 }
@@ -1024,34 +1055,36 @@ void EW::smooth_grid( int maxIter )
    for (iter=0; iter < maxIter; iter++)
    {
 // loop over all interior points
-      for (k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
-	 for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; j++)
-	    for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; i++)
+#pragma omp parallel for
+      for (int k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
+	 for (int j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; j++)
+	    for (int i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; i++)
 	    {
 	       tmp(i,j,k) = mZ(i,j,k) + rf*(mZ(i+1,j,k) + mZ(i-1,j,k) + mZ(i,j+1,k) + mZ(i,j-1,k) + mZ(i,j,k+1) + mZ(i,j,k-1) - 6.*mZ(i,j,k));
 	    }
 
 // impose Neumann bc on the i and j sides
-      for (k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
+#pragma omp parallel for
+      for (int k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
       {
-	 for (j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
+	 for (int j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
 	 {
-	    i = m_iStart[topLevel];
+	    int i = m_iStart[topLevel];
 	    tmp(i,j,k) = tmp(i+1,j,k);
 	    i = m_iEnd[topLevel];
 	    tmp(i,j,k) = tmp(i-1,j,k);
 	 }
 
-	 for (i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
+	 for (int i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
 	 {
-	    j = m_jStart[topLevel];
+	    int j = m_jStart[topLevel];
 	    tmp(i,j,k) = tmp(i,j+1,k);
 	    j = m_jEnd[topLevel];
 	    tmp(i,j,k) = tmp(i,j-1,k);
 	 }
 // Corners
-	 i = m_iStart[topLevel];
-	 j = m_jStart[topLevel];
+	 int i = m_iStart[topLevel];
+	 int j = m_jStart[topLevel];
 	 tmp(i,j,k) = tmp(i+1,j+1,k);
 
 	 i = m_iEnd[topLevel];
@@ -1071,9 +1104,10 @@ void EW::smooth_grid( int maxIter )
       communicate_array( tmp, topLevel );
 
 // update solution (Dirichlet are imposed implicitly by never changing the tmp array along the top or bottom boundary)
-      for (k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
-	 for (j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-	    for (i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+#pragma omp parallel for
+      for (int k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
+	 for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	    for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
 	       mZ(i,j,k) = tmp(i,j,k);
 
    }// end for iter (grid smoother)

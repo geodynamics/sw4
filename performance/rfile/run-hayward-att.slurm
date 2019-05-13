@@ -11,7 +11,9 @@ numnodes=24
 
 #    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
 
-numprocspernode=64
+#numprocspernode=64
+for numprocspernode in 32 16 8; do
+
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
 # for numprocs in 1 2 4; do
@@ -41,6 +43,6 @@ MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores"
 # 1st case
 CASE=hayward-att-h100-cori
 RUN_COMMAND="./sw4 ${CASE}.in"
-${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}.out
+${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
 
-
+done

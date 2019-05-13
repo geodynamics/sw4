@@ -3,6 +3,7 @@
 
 #include "Require.h"
 #include "Byteswapper.h"
+#include "sw4.h"
 
 using namespace std;
 //-----------------------------------------------------------------------
@@ -44,9 +45,9 @@ void convertjday( int jday, int year, int& day, int& month )
 }
 
 //-----------------------------------------------------------------------
-void readSACheader( const char* fname, double& dt, double& t0,
-		    double& lat, double& lon, double& cmpaz,
-		    double& cmpinc, int utc[7], int& npts,
+void readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
+		    float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
+		    float_sw4& cmpinc, int utc[7], int& npts,
 		    bool& need_byte_reversal )
 {
    float float70[70];
@@ -137,7 +138,7 @@ void readSACheader( const char* fname, double& dt, double& t0,
 }
 
 //-----------------------------------------------------------------------
-void readSACdata( const char* fname, int npts, double* u, bool need_byte_reversal )
+void readSACdata( const char* fname, int npts, float_sw4* u, bool need_byte_reversal )
 {
    if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
    {
@@ -179,9 +180,10 @@ void readSACdata( const char* fname, int npts, double* u, bool need_byte_reversa
       bswap.byte_rev( uf, npts, "float" );
    }
 
-// Return floats as doubles
+// Return floats as float_sw4
+#pragma omp parallel for   
    for( int i=0 ; i < npts ; i++ )
-      u[i] = static_cast<double>(uf[i]);
+      u[i] = static_cast<float_sw4>(uf[i]);
    delete[] uf;
    fclose(fd);
 }

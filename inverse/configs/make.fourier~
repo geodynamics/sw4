@@ -1,7 +1,0 @@
-etree = yes
-proj = yes
-SW4ROOT = /Users/petersson1
-FC = openmpif77
-CXX = openmpicxx
-EXTRA_FORT_FLAGS = -fno-underscoring
-EXTRA_LINK_FLAGS = -framework vecLib -L/opt/local/lib/gcc45 -lgfortran

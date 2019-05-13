@@ -25,9 +25,9 @@ if nargin < 2
   colorstring='b';
 end;
 
-[ux dt, lat, lon]=readsac(sprintf("%s.%s", basename, "e"));
-[uy]=readsac(sprintf("%s.%s", basename, "n"));
-[uz]=readsac(sprintf("%s.%s", basename, "u"));
+[ux dt, lat, lon]=readsac(sprintf('%s.%s', basename, 'x'));
+[uy]=readsac(sprintf('%s.%s', basename, 'y'));
+[uz]=readsac(sprintf('%s.%s', basename, 'z'));
 
 nt = length(ux);
 t = dt*[0:nt-1];
@@ -43,7 +43,7 @@ end
 h=plot(t+tshift,ux,colorstring);
 %set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
-legend("East","location","southeast");
+legend('East','location','southeast');
 axis tight;
 
 % north component
@@ -54,7 +54,7 @@ end
 h=plot(t+tshift,uy,colorstring);
 %set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
-legend("North","location","southeast");
+legend('North','location','southeast');
 axis tight;
 
 % up component
@@ -65,5 +65,5 @@ end
 h=plot(t+tshift,uz,colorstring);
 %set(h,'LineWidth',2.0)
 set(gca,'FontSize',20)
-legend("Up","location","southeast");
+legend('Up','location','southeast');
 axis tight;

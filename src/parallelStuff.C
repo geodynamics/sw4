@@ -40,7 +40,7 @@ bool EW::proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] )
    // a 2D processor array  proc_max[0] x proc_max[1], which gives minimal 
    // communication boundary for a grid with ni x nj points.
 
-   double fmin = ni+nj;
+   float_sw4 fmin = ni+nj;
    bool first  = true;
    int p1max   = ni/m_ppadding;
    int p2max   = nj/m_ppadding;
@@ -54,7 +54,7 @@ bool EW::proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] )
            // int w2 = p2==1?0:1;
            // double f = w2*(double)(ni)/p1 + w1*(double)(nj)/p2;
 // try to make each subdomain as square as possible
-	  double f = fabs((double)(ni)/p1 - (double)(nj)/p2);
+	  float_sw4 f = fabs((float_sw4)(ni)/p1 - (float_sw4)(nj)/p2);
            if( f < fmin || first )
            {
               fmin = f;
@@ -108,9 +108,16 @@ void EW::coarsen1d( int& n, int& ifirst, int& ilast, int periodic )
 void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )
 //
 // Decompose index space 1 <= i <= nglobal into nproc blocks
-// returns start and end indices for block nr. myid, 
-//          where 0 <= myid <= nproc-1
 //
+// Input: nglobal - Total number of points 
+//        myid    - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc   - Total number of processors (tasks).
+//   
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The nglobal points are distributed as evenly as possible on the tasks.
+// Uses m_ppadding points wide overlap at processor interfaces.
 {
    int olap    = 2*m_ppadding;
    int nlocal  = (nglobal + (nproc-1)*olap ) / nproc;
@@ -127,18 +134,61 @@ void EW::decomp1d( int nglobal, int myid, int nproc, int& s, int& e )
    e = s + nlocal - 1;
 }
 
+//-----------------------------------------------------------------------
+void EW::decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad )
+//
+// Decompose index space 1-nghost <= i <= N+nghost into nproc blocks
+//
+// Input: N      - Number of points in domain.
+//        myid   - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc  - Total number of processors (tasks).
+//        nghost - Number of ghost points at domain boundaries.
+//        npad   - Number of overlap (padding) points at processor boundaries.
+//   
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The N points are distributed as evenly as possible on the tasks. Ghost points and
+// padding points are added after distribution.
+//
+{
+   int nglobal = N+2*nghost;
+   int olap    = 2*npad;
+
+   int nlocal  = N / nproc;
+   int deficit = N % nproc;
+
+   if( myid < deficit )
+      s = myid*nlocal + myid+1;
+   else
+      s = myid*nlocal + deficit+1;
+
+   if (myid < deficit)
+      nlocal = nlocal + 1;
+
+   e = s + nlocal - 1;
+   if( myid == nproc-1 )
+      e += nghost;
+   else
+      e += npad;
+   if( myid == 0 )
+      s -= nghost;
+   else
+      s -= npad;
+}
+
 // -----------------------------
 void EW::setup2D_MPICommunications()
 {
    if (mVerbose >= 2 && proc_zero())
       cout << "***inside setup2D_MPICommunications***"<< endl;
 // Define MPI datatypes for communication across processor boundaries
-// finest grid (curvilinear) only
+// For topography: finest grid (curvilinear) only, only one value per grid point (nc=1)
 // get the size from the top Cartesian grid
    int g= mNumberOfCartesianGrids-1;
    int ni = m_iEnd[g]-m_iStart[g]+1, nj=m_jEnd[g]-m_jStart[g]+1;
-   MPI_Type_vector( nj, m_ppadding,    ni,    MPI_DOUBLE, &m_send_type_2dfinest[0] );
-   MPI_Type_vector( 1,  m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type_2dfinest[1] );
+   MPI_Type_vector( nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dfinest[0] );
+   MPI_Type_vector( 1,  m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dfinest[1] );
    MPI_Type_commit( &m_send_type_2dfinest[0] );
    MPI_Type_commit( &m_send_type_2dfinest[1] );
 
@@ -146,31 +196,45 @@ void EW::setup2D_MPICommunications()
    ni = ni + 2*m_ext_ghost_points;
    nj = nj + 2*m_ext_ghost_points;
    int extpadding = m_ppadding + m_ext_ghost_points;
-   MPI_Type_vector( nj, extpadding,    ni,    MPI_DOUBLE, &m_send_type_2dfinest_ext[0] );
-   MPI_Type_vector( 1,  extpadding*ni, ni*nj, MPI_DOUBLE, &m_send_type_2dfinest_ext[1] );
+   MPI_Type_vector( nj, extpadding,    ni,    m_mpifloat, &m_send_type_2dfinest_ext[0] );
+   MPI_Type_vector( 1,  extpadding*ni, ni*nj, m_mpifloat, &m_send_type_2dfinest_ext[1] );
+
    MPI_Type_commit( &m_send_type_2dfinest_ext[0] );
    MPI_Type_commit( &m_send_type_2dfinest_ext[1] );
 
+// For mesh refinement: 2D planes with three values per grid point (nc=3)
 // Coarser grids
    m_send_type_2dx.resize(mNumberOfCartesianGrids);
    m_send_type_2dy.resize(mNumberOfCartesianGrids);
-   m_send_type_2dx1p.resize(mNumberOfCartesianGrids);
+   m_send_type_2dx1p.resize(mNumberOfCartesianGrids);//padding=1
    m_send_type_2dy1p.resize(mNumberOfCartesianGrids);
-   m_send_type_2dx3p.resize(mNumberOfCartesianGrids);
+   m_send_type_2dx3p.resize(mNumberOfCartesianGrids);//padding=3
    m_send_type_2dy3p.resize(mNumberOfCartesianGrids);
    for( int g = 0 ; g < mNumberOfCartesianGrids ; g++ )
    {
       int ni = m_iEnd[g]-m_iStart[g]+1, nj=m_jEnd[g]-m_jStart[g]+1;
-      MPI_Type_vector( nj, 3*m_ppadding,    3*ni,    MPI_DOUBLE, &m_send_type_2dx[g] );
-      MPI_Type_vector( 1,  3*m_ppadding*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type_2dy[g] );
+//FTNC      if( m_croutines )
+      {
+	 MPI_Type_vector( 3*nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dx[g] );
+	 MPI_Type_vector( 3,    m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dy[g] );
+	 MPI_Type_vector( 3*nj, 1,    ni,    m_mpifloat, &m_send_type_2dx1p[g] );
+	 MPI_Type_vector( 3,    ni, ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
+	 MPI_Type_vector( 3*nj, 3,  ni,    m_mpifloat, &m_send_type_2dx3p[g] );
+	 MPI_Type_vector( 3,    3*ni, ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
+      }
+//FTNC      else
+//FTNC      {
+//FTNC	 MPI_Type_vector( nj, 3*m_ppadding,    3*ni,    m_mpifloat, &m_send_type_2dx[g] );
+//FTNC	 MPI_Type_vector( 1,  3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy[g] );
+//FTNC	 MPI_Type_vector( nj, 3,    3*ni,    m_mpifloat, &m_send_type_2dx1p[g] );
+//FTNC	 MPI_Type_vector( 1,  3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
+//FTNC	 MPI_Type_vector( nj, 3*3,    3*ni,    m_mpifloat, &m_send_type_2dx3p[g] );
+//FTNC	 MPI_Type_vector( 1,  3*3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
+//FTNC      }
       MPI_Type_commit( &m_send_type_2dx[g] );
       MPI_Type_commit( &m_send_type_2dy[g] );
-      MPI_Type_vector( nj, 3,    3*ni,    MPI_DOUBLE, &m_send_type_2dx1p[g] );
-      MPI_Type_vector( 1,  3*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type_2dy1p[g] );
       MPI_Type_commit( &m_send_type_2dx1p[g] );
       MPI_Type_commit( &m_send_type_2dy1p[g] );
-      MPI_Type_vector( nj, 3*3,    3*ni,    MPI_DOUBLE, &m_send_type_2dx3p[g] );
-      MPI_Type_vector( 1,  3*3*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type_2dy3p[g] );
       MPI_Type_commit( &m_send_type_2dx3p[g] );
       MPI_Type_commit( &m_send_type_2dy3p[g] );
    }      
@@ -193,18 +257,31 @@ void EW::setupMPICommunications()
       int nj = m_jEnd[g] - m_jStart[g] + 1;
       int nk = m_kEnd[g] - m_kStart[g] + 1;
 
-      MPI_Type_vector( nj*nk, m_ppadding, ni, MPI_DOUBLE, &m_send_type1[2*g] );
-      MPI_Type_vector( nk, m_ppadding*ni, ni*nj, MPI_DOUBLE, &m_send_type1[2*g+1] );
+      MPI_Type_vector( nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type1[2*g] );
+      MPI_Type_vector( nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type1[2*g+1] );
 
-      MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, MPI_DOUBLE, &m_send_type3[2*g] );
-      MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, MPI_DOUBLE, &m_send_type3[2*g+1] );
+//FTNC      if( m_croutines )
+      {
+	 MPI_Type_vector( 3*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type3[2*g] );
+	 MPI_Type_vector( 3*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
 
-      MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, MPI_DOUBLE, &m_send_type4[2*g] );
-      MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, MPI_DOUBLE, &m_send_type4[2*g+1] );
+	 MPI_Type_vector( 4*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type4[2*g] );
+	 MPI_Type_vector( 4*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
 
-      MPI_Type_vector( nj*nk, 21*m_ppadding, 21*ni, MPI_DOUBLE, &m_send_type21[2*g] );
-      MPI_Type_vector( nk, 21*m_ppadding*ni, 21*ni*nj, MPI_DOUBLE, &m_send_type21[2*g+1] );
-
+	 MPI_Type_vector( 21*nj*nk, m_ppadding, ni, m_mpifloat, &m_send_type21[2*g] );
+	 MPI_Type_vector( 21*nk, m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type21[2*g+1] );
+      }
+//FTNC      else
+//FTNC      {
+//FTNC	 MPI_Type_vector( nj*nk, 3*m_ppadding, 3*ni, m_mpifloat, &m_send_type3[2*g] );
+//FTNC	 MPI_Type_vector( nk, 3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type3[2*g+1] );
+//FTNC
+//FTNC	 MPI_Type_vector( nj*nk, 4*m_ppadding, 4*ni, m_mpifloat, &m_send_type4[2*g] );
+//FTNC	 MPI_Type_vector( nk, 4*m_ppadding*ni, 4*ni*nj, m_mpifloat, &m_send_type4[2*g+1] );
+//FTNC
+//FTNC	 MPI_Type_vector( nj*nk, 21*m_ppadding, 21*ni, m_mpifloat, &m_send_type21[2*g] );
+//FTNC	 MPI_Type_vector( nk, 21*m_ppadding*ni, 21*ni*nj, m_mpifloat, &m_send_type21[2*g+1] );
+//FTNC      }
       MPI_Type_commit( &m_send_type1[2*g] ); 
       MPI_Type_commit( &m_send_type1[2*g+1] ); 
 
@@ -387,6 +464,8 @@ void EW::communicate_arrays( vector<Sarray>& u )
 void EW::communicate_array_2d( Sarray& u, int g, int k )
 {
    REQUIRE2( u.m_nc == 3, "Communicate array 2d, only implemented for three-component arrays" );
+   REQUIRE2( g < m_send_type_2dx.size(), "Communicate array 2d, only implemented for grid=0.." << m_send_type_2dx.size()-1
+	     << " but g= " << g);
    int ie = m_iEnd[g], ib=m_iStart[g];
    int je = m_jEnd[g], jb=m_jStart[g];
 
@@ -396,21 +475,44 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int ytag1 = 347;
    int ytag2 = 348;
 
+//FTNC   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
+   {
+      Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+      u2d.copy_kplane(u,k);
       // X-direction communication
-   MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
-		 &u(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
-		 m_cartesian_communicator, &status );
-   MPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
-		 &u(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
-		 m_cartesian_communicator, &status );
-
+      MPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
+		    &u2d(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u2d(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
+		    &u2d(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
+		    m_cartesian_communicator, &status );
       // Y-direction communication
-   MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
-		 &u(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
-		 m_cartesian_communicator, &status );
-   MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
-		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
-		 m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
+		    &u2d(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
+		    m_cartesian_communicator, &status );
+      MPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
+		    &u2d(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
+		    m_cartesian_communicator, &status );
+      u.copy_kplane(u2d,k);
+   }
+//FTNC   else
+//FTNC   {
+//FTNC      // X-direction communication
+//FTNC   MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
+//FTNC		 &u(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC   MPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
+//FTNC		 &u(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC
+//FTNC      // Y-direction communication
+//FTNC   MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
+//FTNC		 &u(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC   MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
+//FTNC		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
+//FTNC		 m_cartesian_communicator, &status );
+//FTNC   }
 }
 
 //-----------------------------------------------------------------------
@@ -449,6 +551,8 @@ void EW::communicate_array_2d_ext( Sarray& u )
 void EW::communicate_array_2d_asym( Sarray& u, int g, int k )
 {
    REQUIRE2( u.m_nc == 3, "Communicate array 2d asym, only implemented for three-component arrays" );
+   REQUIRE2( g < m_send_type_2dx3p.size(), "Communicate array 2d asym, only implemented for grid=0.." 
+	     << m_send_type_2dx3p.size()-1 << " but g= " << g);
    int ie = m_iEnd[g], ib=m_iStart[g];
    int je = m_jEnd[g], jb=m_jStart[g];
 

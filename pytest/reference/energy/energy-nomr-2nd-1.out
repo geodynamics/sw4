@@ -1,0 +1,111 @@
+----------------------------------------------------------------
+            sw4 version 2.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Nov 13 12:18:45 PST 2017
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
+----------------------------------------------------------------
+
+Input file: /Users/petersson1/src/sw4-cig/pytest/reference/energy/energy-nomr-2nd-1.in
+
+* Processing the grid command...
+* Setting h to 4.05405405e-01 from  x/(nx-1) (x=3.00000000e+01, nx=75)
+* Setting ny to 75 to be consistent with h=4.05405405e-01
+* Setting nz to 43 to be consistent with h=4.05405405e-01
+* Changing z from 1.70000000e+01 to 1.70270270e+01 to be consistent with h=4.05405405e-01
+Extent of the computational domain xmax=3.00000000e+01 ymax=3.00000000e+01 zmax=1.70270270e+01
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0  0.405405        75        75        43       241875
+Total number of grid points (without ghost points): 241875
+
+
+   Execution time, reading input file 4.18736500e-03 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+----------------------------------------------------
+ Making Output Directory: energy-nomr-2nd-1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700027e+01, x=3.000000e+01, y=0.000000e+00
+2: Lon= 1.180003e+02, Lat=3.700027e+01, x=3.000000e+01, y=3.000000e+01
+3: Lon= 1.180003e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+01
+
+
+ ENERGY TEST material amplitude: 1.000000e+00
+
+       ----------- Material properties ranges ---------------
+       2.00004097e+00 kg/m^3 <=  Density <= 2.99999414e+00 kg/m^3
+       1.42372694e+00 m/s    <=  Vp      <= 2.22684305e+00 m/s
+       8.16686802e-01 m/s    <=  Vs      <= 1.22303535e+00 m/s
+       1.73200186e+00        <=  Vp/Vs   <= 1.87047306e+00
+       2.00002321e+00 Pa     <=  mu      <= 2.99999859e+00 Pa
+       2.00311969e+00 Pa     <=  lambda  <= 3.99774735e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=4.054054e-01, minVs/h=2.01449 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+TIME accuracy order=2 CFL=8.00000000e-01 prel. time step=1.15070651e-01
+*** Initialized Images
+   Execution time, start up phase 2.28173300e-02 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: energy-nomr-2nd-1/
+
+***  Starting solve ***
+============================================================
+ Running program on 4 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 50
+ Number of time steps = 435 dt: 0.114943
+
+============================================================
+ Global boundary conditions 
+      x=0    dirichlet
+      x=xMax dirichlet
+      y=0    dirichlet
+      y=yMax dirichlet
+      z=topo free surface
+      z=zMax dirichlet
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of moment sources 0
+-----------------------------------------------------------------------
+  Initial data has been assigned
+Using the intial data to check if the spatial operator is self-adjoint
+Scalar products (Um, L(U)) = -4.406767e+05 and (U, L(Um)) = -4.406767e+05, diff=-7.566996e-10
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=no, point_source=no, moment_test=no, energy_test=yes, lamb_test=no, rayleigh_test=no
+m_use_supergrid=no
+End report of internal flags and settings
+
+  Begin time stepping...
+Time step       1  t =   1.1494253e-01
+Time step     101  t =   1.1609195e+01
+Time step     201  t =   2.3103448e+01
+Time step     301  t =   3.4597701e+01
+Time step     401  t =   4.6091954e+01
+Time step     435  t =   5.0000000e+01
+  Time stepping finished...
+   Execution time, solver phase 5.05529426e+00 seconds 
+============================================================
+ program sw4 finished! 
+============================================================

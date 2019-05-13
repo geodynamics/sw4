@@ -30,7 +30,7 @@
 ! # along with this program; if not, write to the Free Software
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine LAMBEXACT( ifirst, ilast, jfirst, jlast, kfirst, klast,
-     *                      uex, t, mu, cs, x0, y0, fz, h, tfun )
+     *                      uex, t, mu, cs, x0, y0, fz, h, tfun )bind(c)
       implicit none
 
       external G1FUN, G2FUN, G2FUNNW

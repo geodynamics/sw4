@@ -1,5 +1,0 @@
-SW4ROOT = ""
-FC  = ftn
-CC  = cc
-CXX = CC
-EXTRA_LINK_LIBS = -L/global/u2/b/bjorns/local/lapack-3.4.0 -llapack -lrefblas -lifcore

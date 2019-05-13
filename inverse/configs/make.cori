@@ -1,7 +1,0 @@
-  etree = no
-  proj = yes
-  SW4ROOT = /project/projectdirs/m2868/sw4/cori-knl
-# cray compiler wrappers
-  FC = ftn
-  CXX = CC
-  EXTRA_LINK_FLAGS =  -lpthread -lm -ldl -lifcore

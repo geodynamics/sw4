@@ -6,7 +6,7 @@ topography input=grid file=caucasus.topo zmax=7560 order=3
 
 attenuation nmech=1
 
-fileio path=caucasus-results scenario=caucasus
+fileio path=caucasus-results
 
 # the pfile should define the material in all points
 pfile filename=caucasus_mod3.ppmod

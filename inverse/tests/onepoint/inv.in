@@ -73,6 +73,19 @@ observation x=23500 y=23500 z=0 file=sta55
 #
 # Output some images
 #
+<<<<<<< HEAD
+#mimage mode=rho x=17500 cycleInterval=1 
+#mimage mode=mu x=17500 cycleInterval=1 
+#mimage mode=lambda x=17500 cycleInterval=1 
+#
+#mimage mode=rho z=1000 cycleInterval=1 
+#mimage mode=mu z=1000 cycleInterval=1 
+#mimage mode=lambda z=1000 cycleInterval=1 
+#
+#mimage mode=rho z=5000 cycleInterval=1 
+#mimage mode=mu z=5000 cycleInterval=1 
+#mimage mode=lambda z=5000 cycleInterval=1 
+=======
 mimage mode=rho x=17500 iterInterval=1 
 mimage mode=mu x=17500 iterInterval=1 
 mimage mode=lambda x=17500 iterInterval=1 
@@ -84,3 +97,4 @@ mimage mode=lambda x=17500 iterInterval=1
 # mimage mode=rho z=5000 iterInterval=1 
 # mimage mode=mu z=5000 iterInterval=1 
 # mimage mode=lambda z=5000 iterInterval=1
+>>>>>>> ba25f29d180749df5992b463337c8590e7e1527a

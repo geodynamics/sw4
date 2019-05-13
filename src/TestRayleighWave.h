@@ -34,15 +34,16 @@
 #define TEST_RAYLEIGH_WAVE_H
 
 #include <iostream>
-
+#include "sw4.h"
 
 class TestRayleighWave
 {
 public:
 
-TestRayleighWave( double rho, double cs, double cp, int nwl, double xmax );
+TestRayleighWave( float_sw4 rho, float_sw4 cs, float_sw4 cp, int nwl, float_sw4 xmax );
 
-double m_rho, m_cp, m_cs, m_cr, m_lambda, m_mu, m_omega, m_alpha;
+float_sw4 m_rho, m_cp, m_cs, m_cr, m_omega, m_alpha;
+double m_lambda, m_mu;
 
 private:
 TestRayleighWave(const TestRayleighWave&);

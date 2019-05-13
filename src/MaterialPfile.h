@@ -34,6 +34,7 @@
 
 #include <string>
 
+#include "sw4.h"
 #include "MaterialData.h"
 
 class EW;
@@ -48,9 +49,9 @@ class MaterialPfile : public MaterialData
 	      const std::string file,
 	      const std::string directory,
 	      const int nstenc,
-	      const double vpminppm,
-	      const double vsminppm,
-	      const double rhominppm,
+	      const float_sw4 vpminppm,
+	      const float_sw4 vsminppm,
+	      const float_sw4 rhominppm,
 	      const bool flatten,
 	      const bool coords_geographic );
 
@@ -68,13 +69,13 @@ class MaterialPfile : public MaterialData
   //  void getMinMaxBoundsZ(double& zmin, double& zmax);
    
  protected:
-  inline bool inside( double lat, double lon, double depth )
+  inline bool inside( double lat, double lon, float_sw4 depth )
   {
     return m_latmin <= lat && lat <= m_latmax && m_lonmin <= lon && lon <= m_lonmax 
       && m_depthmin <= depth && depth <= m_depthmax;
   }
 
-  inline bool inside_cart( double x, double y, double depth )
+  inline bool inside_cart( float_sw4 x, float_sw4 y, float_sw4 depth )
   {
     return m_xmin <= x && x <= m_xmax && m_ymin <= y && y <= m_ymax 
       && m_depthmin <= depth && depth <= m_depthmax;
@@ -82,28 +83,30 @@ class MaterialPfile : public MaterialData
 
    void read_pfile( );
 
-   void sample_cart(double xs, double ys, double zs, double &vp, 
-		    double &vs, double &rho, double &qp, double &qs, bool debug );
+   void sample_cart(float_sw4 xs, float_sw4 ys, float_sw4 zs, float_sw4 &vp, 
+		    float_sw4 &vs, float_sw4 &rho, float_sw4 &qp, float_sw4 &qs, bool debug );
 
-   void sample_latlon(double lats, double lons, double zs, double &vp, 
-		      double &vs, double &rho, double &qp, double &qs,
+   void sample_latlon(double lats, double lons, float_sw4 zs, float_sw4 &vp, 
+		      float_sw4 &vs, float_sw4 &rho, float_sw4 &qp, float_sw4 &qs,
 		      bool debug );
 
    EW* mEW;
    int m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
    int m_nstenc;
-   double m_h, m_dlon, m_dlat;
+   float_sw4 m_h;
+   double m_dlon, m_dlat;
    int     m_ksed, m_kmoho, m_k410, m_k660;
-   double *m_lon, *m_lat, *m_x, *m_y;
+   double *m_lon, *m_lat;
+   float_sw4 *m_x, *m_y;
 // new 3-dimensional Sarrays
    Sarray mZ, mVp, mVs, mRho, mQp, mQs;
    
-   double  m_vpmin, m_vsmin, m_rhomin;
+   float_sw4  m_vpmin, m_vsmin, m_rhomin;
    string m_model_file, m_model_dir, m_model_name;
    bool m_qf;
 
-   double m_latmin, m_latmax, m_lonmin, m_lonmax, m_depthmin, m_depthmax;
-   double m_xmin, m_xmax, m_ymin, m_ymax;
+   double m_latmin, m_latmax, m_lonmin, m_lonmax;
+   float_sw4 m_xmin, m_xmax, m_ymin, m_ymax, m_depthmin, m_depthmax;
    bool m_coords_geographic;
 };
 #endif

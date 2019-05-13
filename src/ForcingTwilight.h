@@ -33,6 +33,7 @@
 #ifndef FORCING_TWILIGHT_H
 #define FORCING_TWILIGHT_H
 
+#include "sw4.h"
 #include "Sarray.h"
 #include "boundaryConditionTypes.h"
 #include <string>
@@ -41,12 +42,12 @@ class ForcingTwilight
 {
 public:
 
-ForcingTwilight( double omega, double c, double phase, double momega, double mphase,
-		 double amprho, double ampmu, double amplambda );
+ForcingTwilight( float_sw4 omega, float_sw4 c, float_sw4 phase, float_sw4 momega, float_sw4 mphase,
+		 float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda );
 
 //void default_bcs( boundaryConditionType bcs[6] );
 
-double m_omega, m_c, m_phase, m_momega, m_mphase, m_amprho, m_ampmu, m_amplambda;
+float_sw4 m_omega, m_c, m_phase, m_momega, m_mphase, m_amprho, m_ampmu, m_amplambda;
 bool m_use_attenuation;
 int m_number_mechanisms;
 

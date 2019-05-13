@@ -1,0 +1,42 @@
+# SW4 input file for testing the rfile command
+
+developer reporttiming=1
+
+# set pfs=1 if you are on a parallel file system
+fileio path=berkeley-att-results pfs=0
+
+time t=4
+
+# grid size is set in the grid command
+# DO NOT CHANGE AZ!
+grid x=12e3 y=12e3 z=5e3 h=20 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+
+# curvilinear grid extends to z=63e and gets approximately the same gridsize as the finest Cartesian
+topography input=rfile zmax=1.5e3 order=3 file=berkeley.rfile
+
+# Small subset of version 8.3 of the USGS model in rfile format
+rfile filename=berkeley.rfile
+
+# threshold on vp and vs
+globalmaterial vsmin=500 vpmin=768
+
+# wave speeds are specified at 1.0 Hz, 3 viscoelastic mechanisms (the default)
+attenuation phasefreq=1.0 nmech=3 maxfreq=10
+
+# images
+# topography (can't be written without the topography command enabled)
+image mode=topo z=0.0 cycle=0 file=berk
+
+image mode=lat z=0.0 cycle=0 file=berk
+image mode=lon z=0.0 cycle=0 file=berk
+
+# solution on the surface
+#image mode=velmag z=0.0 timeInterval=5 file=berk
+#image mode=hvelmax z=0.0 timeInterval=5 file=berk
+
+# simple source (at least 1 source is needed to run)
+source x=2.5e3 y=2.5e3 z=1.5e3 mxy=1e18 t0=0.4 freq=15 type=Gaussian
+
+# record 1 time history for verification
+rec x=2.5e3 y=2.5e3 depth=0 file=sta1 usgsformat=1 sacformat=0
+

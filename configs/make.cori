@@ -1,7 +1,21 @@
   etree = no
   proj = yes
   SW4ROOT = /project/projectdirs/m2545/sw4/cori-knl
+#
+# FFTW3 is available on Cori by 
+# module add cray-fftw,
+# ..so do not use FFTWHOME:
+undefine FFTWHOME
+#
 # cray compiler wrappers
   FC = ftn
   CXX = CC
   EXTRA_LINK_FLAGS =  -lpthread -lm -ldl -lifcore
+  EXTRA_CXX_FLAGS = -qoverride-limits
+
+  # Note: the HDF5-related flags are now in the main Makefile
+  # To successfullt compile with make hdf5=yes, you need to do:
+  # module unload darshan
+  # module load hdf5-parallel
+  # module load darshan
+

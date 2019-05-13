@@ -1,0 +1,219 @@
+----------------------------------------------------------------
+            sw4 version 2.2-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Apr 2 14:05:09 PDT 2019
+  By user:     bjorn
+  Machine:     quartz188
+  Compiler:    /usr/tce/packages/impi/impi-2019.0-intel-18.0.1/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: ../reference/onepoint/inv.in
+
+* Processing the grid command...
+* Setting nx to 176 to be consistent with h=200
+* Setting ny to 176 to be consistent with h=200
+* Setting nz to 99 to be consistent with h=200
+* Changing z from 19500 to 19600 to be consistent with h=200
+Extent of the computational domain xmax=35000 ymax=35000 zmax=19600
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       200       176       176        99      3066624
+Total number of grid points (without ghost points): 3.06662e+06
+
+
+
+   Execution time, reading input file 0.140044 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Directory: run1/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= -1.180000e+02, Lat=3.731441e+01, x=3.500000e+04, y=0.000000e+00
+2: Lon= -1.176047e+02, Lat=3.731441e+01, x=3.500000e+04, y=3.500000e+04
+3: Lon= -1.176063e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.500000e+04
+
+Considering all material blocks
+block command: outside = 0, material = 3190528
+
+       ----------- Material properties ranges ---------------
+       2650 kg/m^3 <=  Density <= 2650 kg/m^3
+       4630.76 m/s    <=  Vp      <= 4630.76 m/s
+       2437.56 m/s    <=  Vs      <= 2437.56 m/s
+       1.89975        <=  Vp/Vs   <= 1.89975
+       1.57455e+10 Pa     <=  mu      <= 1.57455e+10 Pa
+       2.53354e+10 Pa     <=  lambda  <= 2.53354e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+02, minVs/h=12.1878 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+TIME accuracy order=4 CFL=1.1 prel. time step=0.0381085
+*** Initialized Images
+ Min source z-level: 2.000000e+03, max source z-level: 2.000000e+03
+
+   Execution time, start up phase 0.00732994 seconds 
+ xmin, xmax = 6200 28800 hx = 11300
+ ymin, ymax = 6200 28800 hy = 11300
+ zmin, zmax = -13400 13400 hz = 13400
+----------------------------------------------------
+ Making Directory: run1/
+		
+... Done!
+----------------------------------------------------
+Running sw4mopt on 144 processors...
+Writing output to directory: run1/
+Begin L-BFGS iteration by evaluating initial misfit and gradient...
+2650 <=   rho    <= 2910.33 (grid 0)
+1.57455e+10 <=    mu    <= 1.72924e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.78243e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+Initial misfit= 0.0434217
+Max norm of scaled total gradient = 0.74182
+Line search.. 
+Material is not valid at relative step length (lambda) = 1.000000e+00, error code = 4, reducing lambda...
+After constraining the material, lambda (scalefactor for step length) = 0.7 number of reductions = 2
+Evaluate at lambda = 0.7 gives f = 49.3083 (initslope = -0.565753) 
+ step failed for lambda = 0.7 ... trying new lambda = 0.07
+Evaluate at lambda = 0.07 gives f = 0.28121 (initslope = -0.565753) 
+ step failed for lambda = 0.07 ... trying new lambda = 0.007
+Evaluate at lambda = 0.007 gives f = 0.0420191 (initslope = -0.565753) 
+.. return code 0 misfit changed from 4.342166e-02 to 4.201907e-02
+2650 <=   rho    <= 2909.26 (grid 0)
+1.57455e+10 <=    mu    <= 1.72138e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.83902e+10 (grid 0)
+ cfl_max = 1.10241 on grid 0
+-----------------------------------------------------------------------
+ it=1 max-norm scaled gradient= 1.1024 max-norm model update= 5.76058e+08
+ Misfit= 0.0420191
+Line search.. 
+Material is not valid at relative step length (lambda) = 1.000000e+00, error code = 4, reducing lambda...
+Material is not valid at relative step length (lambda) = 7.000000e-01, error code = 4, reducing lambda...
+Material is not valid at relative step length (lambda) = 4.900000e-01, error code = 4, reducing lambda...
+Material is not valid at relative step length (lambda) = 3.430000e-01, error code = 4, reducing lambda...
+Material is not valid at relative step length (lambda) = 2.401000e-01, error code = 4, reducing lambda...
+After constraining the material, lambda (scalefactor for step length) = 0.16807 number of reductions = 6
+Evaluate at lambda = 0.16807 gives f = 0.233529 (initslope = -0.75212) 
+ step failed for lambda = 0.16807 ... trying new lambda = 0.084035
+Evaluate at lambda = 0.084035 gives f = 0.0745032 (initslope = -0.75212) 
+ step failed for lambda = 0.084035 ... trying new lambda = 0.0254016
+Evaluate at lambda = 0.0254016 gives f = 0.0331478 (initslope = -0.75212) 
+.. return code 0 misfit changed from 4.201907e-02 to 3.314782e-02
+2650 <=   rho    <= 2847 (grid 0)
+1.57455e+10 <=    mu    <= 1.68639e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 3.18056e+10 (grid 0)
+ cfl_max = 1.12589 on grid 0
+-----------------------------------------------------------------------
+ it=2 max-norm scaled gradient= 2.70815 max-norm model update= 3.47668e+09
+ Misfit= 0.0331478
+Line search.. 
+Material is not valid at relative step length (lambda) = 1.000000e+00, error code = 15, reducing lambda...
+Material is not valid at relative step length (lambda) = 7.000000e-01, error code = 15, reducing lambda...
+Material is not valid at relative step length (lambda) = 4.900000e-01, error code = 15, reducing lambda...
+Material is not valid at relative step length (lambda) = 3.430000e-01, error code = 15, reducing lambda...
+Material is not valid at relative step length (lambda) = 2.401000e-01, error code = 15, reducing lambda...
+Material is not valid at relative step length (lambda) = 1.680700e-01, error code = 15, reducing lambda...
+Material is not valid at relative step length (lambda) = 1.176490e-01, error code = 8, reducing lambda...
+Material is not valid at relative step length (lambda) = 8.235430e-02, error code = 8, reducing lambda...
+After constraining the material, lambda (scalefactor for step length) = 0.057648 number of reductions = 9
+Evaluate at lambda = 0.057648 gives f = 1.75122 (initslope = -5.56078) 
+ step failed for lambda = 0.057648 ... trying new lambda = 0.028824
+Evaluate at lambda = 0.028824 gives f = 0.130065 (initslope = -5.56078) 
+ step failed for lambda = 0.028824 ... trying new lambda = 0.0130807
+Evaluate at lambda = 0.0130807 gives f = 0.00171342 (initslope = -5.56078) 
+.. return code 0 misfit changed from 3.314782e-02 to 1.713422e-03
+2606.11 <=   rho    <= 2650 (grid 0)
+1.54728e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.466e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+-----------------------------------------------------------------------
+ it=3 max-norm scaled gradient= 0.417648 max-norm model update= 7.2738e+09
+ Misfit= 0.00171342
+Line search.. 
+Evaluate at lambda = 1 gives f = 6.10409e-05 (initslope = -0.00412981) 
+.. return code 0 misfit changed from 1.713422e-03 to 6.104085e-05
+2650 <=   rho    <= 2658.17 (grid 0)
+1.57455e+10 <=    mu    <= 1.5796e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.5496e+10 (grid 0)
+ cfl_max = 1.10134 on grid 0
+-----------------------------------------------------------------------
+ it=4 max-norm scaled gradient= 0.0892571 max-norm model update= 8.5102e+08
+ Misfit= 6.10409e-05
+Line search.. 
+Evaluate at lambda = 1 gives f = 3.54099e-07 (initslope = -0.000117578) 
+.. return code 0 misfit changed from 6.104085e-05 to 3.540994e-07
+2650 <=   rho    <= 2650.45 (grid 0)
+1.57455e+10 <=    mu    <= 1.5748e+10 (grid 0)
+2.53259e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+-----------------------------------------------------------------------
+ it=5 max-norm scaled gradient= 0.011381 max-norm model update= 1.73203e+08
+ Misfit= 3.54099e-07
+Line search.. 
+Evaluate at lambda = 1 gives f = 1.71561e-07 (initslope = -6.09216e-07) 
+.. return code 0 misfit changed from 3.540994e-07 to 1.715609e-07
+2649.99 <=   rho    <= 2650 (grid 0)
+1.57451e+10 <=    mu    <= 1.57455e+10 (grid 0)
+2.53354e+10 <=  lambda  <= 2.53413e+10 (grid 0)
+ cfl_max = 1.10081 on grid 0
+-----------------------------------------------------------------------
+ it=6 max-norm scaled gradient= 0.00700429 max-norm model update= 1.56738e+07
+ Misfit= 1.71561e-07
+Line search.. 
+Evaluate at lambda = 1 gives f = 1.31669e-07 (initslope = -8.05454e-08) 
+.. return code 0 misfit changed from 1.715609e-07 to 1.316690e-07
+2650 <=   rho    <= 2650.06 (grid 0)
+1.57455e+10 <=    mu    <= 1.57456e+10 (grid 0)
+2.53342e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+-----------------------------------------------------------------------
+ it=7 max-norm scaled gradient= 0.000117257 max-norm model update= 7.14723e+06
+ Misfit= 1.31669e-07
+Line search.. 
+Evaluate at lambda = 1 gives f = 1.31639e-07 (initslope = -6.46455e-11) 
+.. return code 0 misfit changed from 1.316690e-07 to 1.316395e-07
+2650 <=   rho    <= 2650.06 (grid 0)
+1.57455e+10 <=    mu    <= 1.57456e+10 (grid 0)
+2.53344e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+-----------------------------------------------------------------------
+ it=8 max-norm scaled gradient= 9.22852e-06 max-norm model update= 203188
+ Misfit= 1.31639e-07
+Line search.. 
+Evaluate at lambda = 1 gives f = 1.31639e-07 (initslope = -6.77747e-13) 
+.. return code 0 misfit changed from 1.316395e-07 to 1.316392e-07
+2650 <=   rho    <= 2650.06 (grid 0)
+1.57455e+10 <=    mu    <= 1.57456e+10 (grid 0)
+2.53344e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+-----------------------------------------------------------------------
+ it=9 max-norm scaled gradient= 1.0456e-06 max-norm model update= 11020.4
+ Misfit= 1.31639e-07
+Line search.. 
+Evaluate at lambda = 1 gives f = 1.31639e-07 (initslope = -4.18599e-15) 
+.. return code 0 misfit changed from 1.316392e-07 to 1.316392e-07
+2650 <=   rho    <= 2650.06 (grid 0)
+1.57455e+10 <=    mu    <= 1.57456e+10 (grid 0)
+2.53344e+10 <=  lambda  <= 2.53354e+10 (grid 0)
+ cfl_max = 1.10078 on grid 0
+-----------------------------------------------------------------------
+ it=10 max-norm scaled gradient= 7.00378e-08 max-norm model update= 393.683
+ Misfit= 1.31639e-07
+============================================================
+ sw4mopt ( Material/Source estimation solver) finished! 
+============================================================

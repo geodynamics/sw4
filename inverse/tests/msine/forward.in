@@ -12,7 +12,7 @@ time t=9 utcstart=09/10/2013:23:5:53.000
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=run-f obspath=run-f temppath=/tmp/bjorn pfs=1
+fileio verbose=1 path=run-f obspath=run-f temppath=tmp pfs=0
 #
 #------------------------------
 # Supergrid parameters

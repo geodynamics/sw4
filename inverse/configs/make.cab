@@ -1,7 +1,0 @@
-  etree = yes
-  SW4ROOT = /usr/apps/wpp
-  SW4BASE = /g/g12/andersp/src/sw4-cig
-  FC = mpiifort
-  CC = mpiicc
-  CXX = mpiicpc
-  EXTRA_LINK_FLAGS =  -Wl,-rpath=$(SW4ROOT)/lib -llapack -lblas -lifcore
