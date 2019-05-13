@@ -6,7 +6,7 @@ grid h=200 x=60e3 y=50e3 z=20e3 lat=38.1 lon=-122.1 az=1.43638e+02
 #------------------------------
 # Time
 #
-time t=25.0 utcstart=09/06/2018:08:00:11.123
+time t=25.0 utcstart=09/06/2008:04:00:10.650
 #
 #------------------------------
 # Paths etc..
@@ -40,6 +40,7 @@ block z1=16000.0 vp=6550.0 vs=3700.0 rho=2900.0
 # Earth Model
 
 rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/project/projectdirs/m2868
+
 topography input=rfile zmax=3.0e3 order=3 file=/project/projectdirs/m2868/USGSBayAreaVM-08.3.0-corder.rfile
 
 # treshold on minimum wave speeds
