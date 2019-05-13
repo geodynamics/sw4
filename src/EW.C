@@ -534,13 +534,29 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    else
       CHECK_INPUT(false,"Error, could not identify float_sw4");
 
-   // The memory space in which mMPI buffers will be allocated
+   // The memory space in which MPI buffers will be allocated
    // for use by AMPISendRecv. Options are Managed,Device and Pinned
-   // On Sierra Host will work as well. Device/Managed is the fastest
-   // Note:: mpirun might need additional flags like -gpu for Device and 
+   // On Sierra Host will work as well. Pinned is the fastest:
+   // 256 node case with 4 GPS per node
+   // Pinned 1m52s
+   // Managed 3m 21s
+   // Device 2m 15s
+   // jsrun & lrun need additional flags like -M "-gpu "for Device and 
    // Managed to work.
    
+#if defined(SW4_DEVICE_MPI_BUFFERS)
+   mpi_buffer_space=Device;
+   std::cout<<"Using MPI buffers in device memory\n";
+#elif defined(SW4_MANAGED_MPI_BUFFERS)
+   mpi_buffer_space=Managed;
+   std::cout<<"Using MPI buffersi n managed memory\n";
+#elif defined(SW4_PINNED_MPI_BUFFERS)
    mpi_buffer_space=Pinned;
+   std::cout<<"Using MPI buffers in pinned memory(COMPILE OPTION)\n";
+#else
+   mpi_buffer_space=Pinned;
+   std::cout<<"Using MPI buffersin pinned memory(DEFAULT)\nn";
+#endif
 
    m_check_point = new CheckPoint(this);
 
@@ -605,8 +621,8 @@ EW::
    }
 
    for (int m=0;m<mNumberOfCartesianGrids;m++){
-     ::operator delete[](std::get<0>(bufs_type_2dx[m]),mpi_buffer_space);
-     ::operator delete[](std::get<0>(bufs_type_2dy[m]),mpi_buffer_space);
+     ::operator delete[](std::get<0>(bufs_type_2dx[m]),Pinned);
+     ::operator delete[](std::get<0>(bufs_type_2dy[m]),Pinned);
    }
    ::operator delete[](ForceVector,Managed);
    ::operator delete[](ForceAddress,Managed);
