@@ -546,16 +546,16 @@ EW::EW(const string& fileName, vector<Source*> & a_GlobalSources,
    
 #if defined(SW4_DEVICE_MPI_BUFFERS)
    mpi_buffer_space=Device;
-   std::cout<<"Using MPI buffers in device memory\n";
+   if (!m_myRank) std::cout<<"Using MPI buffers in device memory\n";
 #elif defined(SW4_MANAGED_MPI_BUFFERS)
    mpi_buffer_space=Managed;
-   std::cout<<"Using MPI buffersi n managed memory\n";
+   if (!m_myRank) std::cout<<"Using MPI buffersi n managed memory\n";
 #elif defined(SW4_PINNED_MPI_BUFFERS)
    mpi_buffer_space=Pinned;
-   std::cout<<"Using MPI buffers in pinned memory(COMPILE OPTION)\n";
+   if (!m_myRank) std::cout<<"Using MPI buffers in pinned memory(COMPILE OPTION)\n";
 #else
    mpi_buffer_space=Pinned;
-   std::cout<<"Using MPI buffersin pinned memory(DEFAULT)\nn";
+   if (!m_myRank) std::cout<<"Using MPI buffersin pinned memory(DEFAULT)\nn";
 #endif
 
    m_check_point = new CheckPoint(this);
