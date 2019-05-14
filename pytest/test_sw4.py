@@ -252,33 +252,57 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, verbose=Fals
     return True
     
 #------------------------------------------------
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description=None,
+        epilog=None,
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="increase output verbosity",
+    )
+
+    parser.add_argument(
+        "-l",
+        "--level",
+        type=int,
+        choices=[0, 1, 2],
+        default=0,
+        help="testing level (default: 0)",
+    )
+
+    parser.add_argument(
+        "-m",
+        "--mpitasks",
+        type=int,
+        default=0,
+        help="number of mpi tasks. if less than or equal to 0, value will be set to a machine dependent value (default: 0)",
+    )
+
+    parser.add_argument(
+        "-d",
+        "--sw4_exe_dir",
+        default="optimize",
+        help="name of directory that contains sw4 executable (default: 'optimize')",
+    )
+
+    return parser
+
+#------------------------------------------------
 if __name__ == "__main__":
     assert sys.version_info >= (3,5) # subprocess.run(...) requires 3.5
-    # default arguments
-    testing_level=0
-    verbose=False
-    mpi_tasks=0 # machine dependent default
 
-    parser=argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-    parser.add_argument("-l", "--level", type=int, choices=[0, 1, 2], 
-                        help="testing level")
-    parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
-    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
+    parser = create_parser()
     args = parser.parse_args()
-    if args.verbose:
-        #print("verbose mode enabled")
-        verbose=True
-    if args.level:
-        #print("Testing level specified=", args.level)
-        testing_level=args.level
-    if args.mpitasks:
-        #print("MPI-tasks specified=", args.mpitasks)
-        if args.mpitasks > 0: mpi_tasks=args.mpitasks
-    if args.sw4_exe_dir:
-        #print("sw4_exe_dir specified=", args.sw4_exe_dir)
-        sw4_exe_dir=args.sw4_exe_dir
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, verbose):
+    if not main_test(
+        args.sw4_exe_dir,
+        args.level,
+        args.mpitasks,
+            args.verbose):
+
         print("test_sw4 was unsuccessful")
 
