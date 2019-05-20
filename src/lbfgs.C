@@ -604,16 +604,16 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt, 0 );
+   if( mopt->m_output_ts )
+   {
+     for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+     {
+       for( int m = 0; m < GlobalTimeSeries[e].size(); m++ )
+		    GlobalTimeSeries[e][m]->writeFile( "_ini" );
+     }
+   }
    if( myRank == 0 )
    {
-      if( mopt->m_output_ts )
-      {
-         for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
-	 {
-	    for( int m = 0; m < GlobalTimeSeries[e].size(); m++ )
-		    GlobalTimeSeries[e][m]->writeFile( "_ini" );
-	 }
-      }
       cout << "Initial misfit= "  << f << endl;
       if( nspar > 0 )
       {

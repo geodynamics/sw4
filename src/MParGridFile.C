@@ -13,10 +13,12 @@ MParGridFile::MParGridFile( std::string fname )
 }
 
 //-----------------------------------------------------------------------
-MParGridFile::MParGridFile( float_sw4* xms, int vars, int nx, int ny, int nz, float_sw4 hx,
-		 float_sw4 hy, float_sw4 hz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin )
+MParGridFile::MParGridFile( float_sw4* xms, int vars, int nx, int ny, int nz, 
+			    float_sw4 hx, float_sw4 hy, float_sw4 hz,
+			    float_sw4 xmin, float_sw4 ymin, float_sw4 zmin,
+			    int update )
 {
-   m_update=1;
+   m_update=update;
    m_vars=vars;
    m_nxr = nx;
    m_nyr = ny;
@@ -97,7 +99,7 @@ void MParGridFile::write_mparcartfile( std::string fname )
 }
 
 //-----------------------------------------------------------------------
-void MParGridFile::interpolate_to_other( float_sw4*& xms, int vars, int nx, int ny, int nz, float_sw4 hx,
+void MParGridFile::interpolate_to_other( float_sw4* xms, int vars, int nx, int ny, int nz, float_sw4 hx,
 					 float_sw4 hy, float_sw4 hz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin )
 {
 
@@ -115,8 +117,8 @@ void MParGridFile::interpolate_to_other( float_sw4*& xms, int vars, int nx, int 
       xmsrc = m_xms;
    else
    {
-      float_sw4* xmsrc = new float_sw4[nc*m_nxr*m_nyr*m_nzr];
-      for( int ind=0 ; ind <= m_nxr*m_nyr*m_nzr ; ind++ )
+      xmsrc = new float_sw4[nc*m_nxr*m_nyr*m_nzr];
+      for( int ind=0 ; ind < m_nxr*m_nyr*m_nzr ; ind++ )
       {
 	 if( vars == 1 )
 	 {
@@ -156,6 +158,9 @@ void MParGridFile::interpolate_to_other( float_sw4*& xms, int vars, int nx, int 
 	 {
 	    if( m_vars == 1 )
 	    {
+	      if( isnan(m_xms[3*ind+1]) || isnan(m_xms[3*ind]) || m_xms[3*ind+1]<0 || m_xms[3*ind]< 0 )
+		std::cout  << "error for xmsrc (rho,mu,lambda)= " << m_xms[3*ind] << " " << m_xms[3*ind+1] <<
+		  " " <<  m_xms[3*ind+2] <<std::endl;
 	       xmsrc[2*ind  ] = sqrt(m_xms[3*ind+1]/m_xms[3*ind]); // cs = sqrt(mu/rho)
 	       xmsrc[2*ind+1] = sqrt((2*m_xms[3*ind+1]+m_xms[3*ind+2])/m_xms[3*ind]); // cp=sqrt((2*mu+la)/rho)
 	    }
@@ -209,11 +214,18 @@ void MParGridFile::interpolate_to_other( float_sw4*& xms, int vars, int nx, int 
 	    double xr=m_xrmin + (ir-1)*m_hxr;
 	    float_sw4 wghx = (x-xr)/m_hxr;
 	    size_t ind = ir-1 + m_nxr*(jr-1)+nxyr*(kr-1);
+	    //	    std::cout << "ind= " << ind << " ind+ " << ind+1+m_nxr+nxyr << " indpar = " << indpar << std::endl;
 	    for( int c=0 ; c < nc ;c++ )
-	       xms[c+nc*indpar] = (1-wghz)*((1-wghy)*((1-wghx)*xmsrc[c+nc*ind] + wghx*xmsrc[c+nc*(ind+1)])+
-					 wghy*((1-wghx)*xmsrc[c+nc*(ind+m_nxr)]+wghx*xmsrc[c+nc*(ind+1+m_nxr)]))+
-		  wghz*((1-wghy)*((1-wghx)*xmsrc[c+nc*(ind+nxyr)] + wghx*xmsrc[c+nc*(ind+1+nxyr)])+
-			wghy*((1-wghx)*xmsrc[c+nc*(ind+m_nxr+nxyr)]+wghx*xmsrc[c+nc*(ind+1+m_nxr+nxyr)]));
+	      {
+	       xms[c+nc*indpar] = (1-wghz)*((1-wghy)*((1-wghx)*xmsrc[c+nc*ind]       + wghx*xmsrc[c+nc*(ind+1      )])+
+					        wghy*((1-wghx)*xmsrc[c+nc*(ind+m_nxr)]+wghx*xmsrc[c+nc*(ind+1+m_nxr)]))+
+	      wghz*((1-wghy)*((1-wghx)*xmsrc[c+nc*(ind+      nxyr)] + wghx*xmsrc[c+nc*(ind+1+      nxyr)])+
+			wghy*((1-wghx)*xmsrc[c+nc*(ind+m_nxr+nxyr)] + wghx*xmsrc[c+nc*(ind+1+m_nxr+nxyr)]));
+	       if( isnan(xms[c+nc*indpar]) )
+		 std::cout << "nan in interp " << c << " " << indpar << " ind= " << ind << " wgh= " << wghx << " "
+			   << wghy << " " << wghz << " " << xmsrc[c+nc*ind] << " " << xmsrc[c+nc*(ind+1)]   << " "
+			   << xmsrc[c+nc*(ind+m_nxr)] << " " << xmsrc[c+nc*(ind+1+m_nxr)] <<std::endl;
+	      }
 	    indpar++;
 	 }
       }

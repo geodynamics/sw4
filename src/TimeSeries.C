@@ -1654,12 +1654,13 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
    bool dbg =false;
    if( m_myPoint )
    {
+     //       dbg = m_staName == "FAKE.51";
       // 1. Evaluate correlation at some time shifts around zero
       int noptpt = 40;
-      float_sw4 tlim = 5, fmax = -1e38, tmax=0;
+      float_sw4 tlim = 2, fmax = -1e38, tmax=0;
       float_sw4 f, df, ddf;
       if( dbg )
-	 cout << "Compute maxshift \n 1. scan through time points " << endl;
+	cout << m_event << "Compute maxshift \n 1. scan through time points " << endl;
       for( int n=0 ; n < noptpt ; n++ )
       {
 	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
@@ -1670,7 +1671,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	    tmax = tshift;
 	 }
 	 if( dbg )
-	    cout << "ts= " << tshift << " f= " << f << endl;
+	   cout << m_event << "ts= " << tshift << " f= " << f << endl;
       }
       // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
       int maxit=10, it=0;
@@ -1678,7 +1679,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
       float_sw4 err=tol+1;
       float_sw4 t1 = tmax;
       if( dbg )
-	 cout << "2. Newton iteration" << endl;
+	cout << m_event << " 2. Newton iteration" << endl;
       while( it < maxit && err > tol )
       {
 	 shiftfunc( observed, t1, f, df, ddf );
@@ -1687,7 +1688,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	 t1=tnew;
 	 it++;
 	 if( dbg )
-	    cout << "it " << it << " err " << err << endl;
+	   cout << m_event << " it " << it << " err " << err << endl;
       }
       if( f > fmax )
       {
@@ -1702,7 +1703,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	 }
       }
       if( dbg )
-	 cout << "Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
+	cout << m_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
       return tmax;
    }
    else

@@ -12,7 +12,7 @@ time t=9 utcstart=09/10/2013:23:5:53.000
 #------------------------------
 # Paths etc..
 #
-fileio verbose=1 path=inv-run obspath=obs temppath=tmp pfs=0
+fileio verbose=1 path=inv-run-short-vel obspath=obs temppath=tmp pfs=0
 #
 #------------------------------
 # Supergrid parameters
@@ -35,14 +35,14 @@ block r=2650 vs=2677.6503357897 vp=4998.11285141419
 #------------------------------
 # Material parameterization
 # 
-mparcart nx=3 ny=3 nz=2 init=0
+mparcart nx=3 ny=3 nz=2 init=0 type=velocity
 #
 #------------------------------
 # Optimizer and properties
 #
 mrun task=minvert mcheck=on 
 #nlcg maxit=300 tolerance=1e-12 linesearch=on subtype=polak-ribiere
-lbfgs nvectors=35 maxit=50 tolerance=1e-12 linesearch=on ihess0=scale-factors
+lbfgs nvectors=35 maxit=4 tolerance=1e-12 linesearch=on ihess0=scale-factors
 #
 # Sizes
 #

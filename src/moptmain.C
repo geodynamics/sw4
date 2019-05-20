@@ -1222,10 +1222,8 @@ int main(int argc, char **argv)
 	   {
       // Project material onto a Cartesian material parameterization grid
 	      CHECK_INPUT( mopt->m_mpcart0 != NULL, "ERROR, there is no Cartesian material parameterization defined\n");
-	      mopt->m_mpcart0->projectl2( simulation.mRho, "rhoproj.bin" );
-	      mopt->m_mpcart0->projectl2( simulation.mMu, "muproj.bin" );
-	      mopt->m_mpcart0->projectl2( simulation.mLambda, "lambdaproj.bin" );
-
+	      mopt->m_mpcart0->project_and_write( simulation.mRho, simulation.mMu, simulation.mLambda,
+						  "projmtrl.mparcart");
 	   }
            else if( mopt->m_opttest == 1 )
 	   {
