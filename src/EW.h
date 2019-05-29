@@ -1416,7 +1416,7 @@ int mMaterialExtrapolate;
 int m_nx_base, m_ny_base, m_nz_base;
 float_sw4 m_h_base;
 vector<bool> m_iscurvilinear;
-vector<float_sw4> m_refinementBoundaries;
+   vector<float_sw4> m_refinementBoundaries, m_curviRefLev; // AP added m_curviRefLev
 InputMode m_topoInputStyle;
 string m_topoFileName, m_topoExtFileName, m_QueryType;
 bool mTopoImageFound;

@@ -33,20 +33,20 @@
 
 #include "EW.h"
 
-#include "F77_FUNC.h"
-extern "C" {
-   void metric( int*, int*, int*, int*, int*, int*,
-				 double*, double*, double*, double*, double*, int * );
-   void gridinfo( int*, int*, int*, int*, int*, int*,
-				     double*, double*, double*, double* );
-   void metricexgh( int*, int*, int*, int*, int*, int*, int*, int*, int*,
-					 double*, double*, double*, double*, double*,
-					 int*, double*, double*, double*, double*,
-					 double*, double*, double* );
-   void meterr4c( int*, int*, int*, int*, int*, int*,
-		  double*, double*, double*, double*, double*, double*,
-		  int*, int*, int*, int*, int*, int*, double* );
-}
+// #include "F77_FUNC.h"
+// extern "C" {
+//    void metric( int*, int*, int*, int*, int*, int*,
+// 				 double*, double*, double*, double*, double*, int * );
+//    void gridinfo( int*, int*, int*, int*, int*, int*,
+// 				     double*, double*, double*, double* );
+//    void metricexgh( int*, int*, int*, int*, int*, int*, int*, int*, int*,
+// 					 double*, double*, double*, double*, double*,
+// 					 int*, double*, double*, double*, double*,
+// 					 double*, double*, double* );
+//    void meterr4c( int*, int*, int*, int*, int*, int*,
+// 		  double*, double*, double*, double*, double*, double*,
+// 		  int*, int*, int*, int*, int*, int*, double* );
+// }
 #define SQR(x) ((x)*(x))
 //---------------------------------------------------------
 void EW::setup_metric()
@@ -121,7 +121,7 @@ void EW::setup_metric()
 }
 
 //-----------------------------------------------------------------------
-void EW::generate_grid()
+void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
 {
    // Generate grid on domain: topography <= z <= zmax, 
    // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
@@ -151,7 +151,7 @@ void EW::generate_grid()
   int gTop = mNumberOfGrids-1;
   int Nz = m_kEnd[gTop] - m_ghost_points;
 
-  if(mVerbose > 4 &&  proc_zero() )
+  if( proc_zero() && mVerbose > 4 )
   {
     printf("generate_grid: Number of grid points in curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
 	Nz, m_kStart[gTop], m_kEnd[gTop]);

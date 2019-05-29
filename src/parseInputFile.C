@@ -996,7 +996,7 @@ void EW::processGrid(char* buffer)
 	mLonOrigin = gridLon;
         origin[0] = x;
  	origin[1] = y;
-      }     
+      } // end if latlon given
       else
       {
  	// lat-lon corner of cube not given, interpret origin realtive (0,0,0)
@@ -1031,7 +1031,8 @@ void EW::processGrid(char* buffer)
  	   // h based on cube length and cube position, might be very restrictive
 	    CHECK_INPUT( false, "Error: cube position without lat/long position must be adjustable");
 	 }
-      }
+      } // end if latlon not given
+      
       if (nx == 0 && x != 0.0)
 	 nxprime = computeEndGridPoint(x, h);
       else if (nx != 0)
@@ -1196,8 +1197,6 @@ void EW::processGrid(char* buffer)
       cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
   }
   
-
-
   // if( m_geodynbc_found )
   // {
   //    CHECK_INPUT( m_ibc_origin[0]>0 && m_ibc_origin[0]+cubelen<xprime , "Error: Cube x-dimension [" 
@@ -1245,12 +1244,13 @@ void EW::cleanUpRefinementLevels()
    float_sw4 zMin;
   
 // NOW: allowing refinements in the curvilinear portion of the grid
-//    if (m_topography_exists)
-//    {
-//      m_refinementBoundaries.push_back(m_topo_zmax);
-//      zMin = m_topo_zmax; 
-//    }
-//    else
+   if (m_topography_exists)
+   {
+      m_curviRefLev.push_back(0.0); // for the curvilinear refinements
+      m_refinementBoundaries.push_back(m_topo_zmax); // for the Cartesian refinements
+      zMin = m_topo_zmax; 
+   }
+   else
    {
       m_refinementBoundaries.push_back(0.0); // flat free surface boundary
       zMin = 0.;
@@ -1277,6 +1277,14 @@ void EW::cleanUpRefinementLevels()
   {
     if (*it < zMin || *it >= m_global_zmax)
     {
+// if 0 < zLev < zMin: add this as a curvilinear refinemtn level
+       if (m_topography_exists)
+       {
+          float_sw4 zLev = *it;
+          if (zLev > 0 && zLev < m_topo_zmax)
+             m_curviRefLev.push_back(zLev);
+       }
+       
 // remove this entry from the vector
 //      cout << "Removing out-of-range refinement level="<< *it << endl;
       it = m_refinementBoundaries.erase(it); // returns next element
@@ -1284,6 +1292,18 @@ void EW::cleanUpRefinementLevels()
       it--;
     }
   }
+
+  // sort m_curviRefLev in decreasing order
+  nRef = m_curviRefLev.size();
+  zValues = new float_sw4[nRef];
+  
+  for (q=0; q<nRef; q++)
+     zValues[q] = m_curviRefLev[q];
+  sort(zValues, zValues+nRef);
+// reverse the ordering to get decreasing order
+   for (q=0; q<nRef; q++)
+      m_curviRefLev[q] = zValues[nRef-q-1];
+
   
 // need to remove any duplicate entries in the m_refinementBoundaries array
 // tmp
@@ -1307,9 +1327,17 @@ void EW::cleanUpRefinementLevels()
   {
      cout << "cleanupRefinementLevels: m_topo_zmax = " << m_topo_zmax << endl;
 
-    cout << " Input levels (z=):" << endl;
+    cout << " Cartesian refinement levels (z=):" << endl;
     for (it=m_refinementBoundaries.begin(); it!=m_refinementBoundaries.end(); it++)
       cout<< *it << endl;
+
+    if (m_topography_exists)
+    {
+       cout << " Curvilinear refinement levels (z=):" << endl;
+       for (it=m_curviRefLev.begin(); it!=m_curviRefLev.end(); it++)
+          cout<< *it << endl;
+    }
+    
   }
   
 
@@ -4020,33 +4048,29 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 //    m_topography_exists indicates if there was a topography command in the input file   
    if (m_topography_exists)
    {
-      nCurvilinearGrids=1;
-      nCartGrids = 1;
-// count the number of refinement boundaries with z<m_topo_zmax
-      for( int r = 0 ; r < m_refinementBoundaries.size()-1 ; r++ ) // The last element is always z=0
-      {
-         if (m_refinementBoundaries[r] < m_topo_zmax)
-            nCurvilinearGrids++;
-         else
-            nCartGrids++;
-      }
+      nCurvilinearGrids= m_curviRefLev.size();
    }
-   else
-   {
-      nCartGrids = m_refinementBoundaries.size(); // There is always one ref boundary (at z=0)
-   }
+
+   nCartGrids = m_refinementBoundaries.size(); // There is always one ref boundary (at z=0)
    
    if (mVerbose>=2 && proc_zero())
       printf("refBndrSize= %lu, nCartGrids=%d, nCurviGrids=%d \n", m_refinementBoundaries.size(), nCartGrids, nCurvilinearGrids);
       
    int refFact = 1;
-//   for( int r = 0 ; r < nCartGrids-1 ; r++ )
-   for( int r = 0 ; r < m_refinementBoundaries.size()-1 ; r++ ) // The last element is always z=0
+// Cartesian refinements
+   for( int r = 0 ; r < nCartGrids-1 ; r++ )
    {
       refFact *= 2;
       //      cout << "refinement boundary " << r << " is " << m_refinementBoundaries[r] << endl;
    }
 
+// Curvilinear refinements
+   for( int r = 0 ; r < nCurvilinearGrids-1 ; r++ )
+   {
+      refFact *= 2;
+      //      cout << "refinement boundary " << r << " is " << m_curviRefLev[r] << endl;
+   }
+   
 // is there an attenuation command in the file?
    if (!m_use_attenuation)
       m_number_mechanisms = 0;
@@ -4060,7 +4084,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       is_periodic[1]=1;
    }
 
-// m_nx_base, m_ny_base: assigned by processGrid()
+// m_nx_base, m_ny_base: number of grid points in the coarsest grid: assigned by processGrid()
    int nx_finest_w_ghost = refFact*(m_nx_base-1)+1+2*m_ghost_points;
    int ny_finest_w_ghost = refFact*(m_ny_base-1)+1+2*m_ghost_points;
    if( is_periodic[0] )
@@ -4304,8 +4328,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    nz.resize(nCartGrids);
 
 // don't change the zmin of the finest cartesian grid
-//   m_zmin[nCartGrids-1] = m_refinementBoundaries[nCartGrids-1];
-   m_zmin[nCartGrids-1] = m_topo_zmax;
+   m_zmin[nCartGrids-1] = m_refinementBoundaries[nCartGrids-1];
    for( int g = nCartGrids-1; g >= 0; g-- )
    {
      float_sw4 zmax = (g>0? m_refinementBoundaries[g-1]:a_global_zmax);
@@ -4341,7 +4364,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // detailed grid refinement info
    if( proc_zero() && mVerbose >= 1 /*2*/) // tmp
    {
-      cout << "Refinement levels after correction: " << endl;
+      cout << "Cartesian refinement levels after correction: " << endl;
+
       for( int g=0; g<nCartGrids; g++ )
       {
          cout << "Grid=" << g << " z-min=" << m_zmin[g] << endl;
@@ -4354,13 +4378,13 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    {
 
 // NEW
-      for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--)
+      for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--) // g=mNumberOfGrids-1 is the finest curvilinear grid
       {
 // save the local index bounds
          m_iStart[g] = ifirst;
-         m_iEnd[g]   = ilast;
+         m_iEnd[g]   = ilast; // finest grid size in x from above
          m_jStart[g] = jfirst;
-         m_jEnd[g]   = jlast;
+         m_jEnd[g]   = jlast; // finest grid size in y from above
 // k-bounds must be determined by the grid generator
 
 // local index bounds for interior points (= no ghost or parallel padding points)
@@ -4560,7 +4584,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    
 //   }
 
-}
+} // end allocateCartesianSolverArrays()
+
 
 //-----------------------------------------------------------------------
 void EW::allocateCurvilinearArrays()
@@ -4622,7 +4647,7 @@ void EW::allocateCurvilinearArrays()
    MPI_Allreduce( &zMinLocal, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
    MPI_Allreduce( &zMaxLocal, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
 
-// Compute some divided differences of the topographic surface to evaluate its smoothness
+// Compute some un-divided differences of the topographic surface to evaluate its smoothness
    float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
 // grid size h
    for (i=imin+1; i<=imax-1; i++)
@@ -4694,9 +4719,8 @@ void EW::allocateCurvilinearArrays()
 
 // 2: determine the number of grid points in each curvilinear grid
 
-// set last element of m_refinementBoundaries
-   int qLast = m_refinementBoundaries.size()-1;
-   m_refinementBoundaries[qLast] = 0.5*(zMaxGlobal+zMinGlobal);
+// set last element of m_curviRefLev to equal average
+   float_sw4 avg_minZ = 0.5*(zMaxGlobal+zMinGlobal);
 
    if (proc_zero())
    {
@@ -4707,23 +4731,16 @@ void EW::allocateCurvilinearArrays()
 // Use the m_zmin array to help keep track of the top (min z) coordinate for each grid
 // assigned for the Cartesian portion of the grid in allocateCartesianSolverArrays()   
    
-// find the first refinement boundary that is in the curvilinear grid
-   int qNext = qLast;
-   for (int q=0; q<m_refinementBoundaries.size(); q++)
-   {
-      if (m_refinementBoundaries[q] < m_topo_zmax){ // z positive downwards
-         qNext = q;
-         break;
-      }
-   }
    if (proc_zero())
-      printf("qLast = %d, qNext=%d, m_refBndry[qLast]=%e, m_refBndry[qNext]=%e\n", qLast, qNext,
-             m_refinementBoundaries[qLast], m_refinementBoundaries[qNext]);
+   {
+      for (size_t q=0; q<m_curviRefLev.size(); q++)
+         printf("m_curviRefLev[%lu]=%e\n", q, m_curviRefLev[q]);
+   }
    
+// scale the refinement levels to take the average topographic elevation into account
    for (int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
    {
-      m_zmin[g] = m_refinementBoundaries[qNext];
-      qNext++;
+      m_zmin[g] = avg_minZ + m_curviRefLev[g - mNumberOfCartesianGrids] * (m_topo_zmax - avg_minZ)/m_topo_zmax;
    }
    
    if (proc_zero())

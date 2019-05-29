@@ -36,8 +36,8 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,ux,colorstring);
-%set(h,'LineWidth',2.0)
-set(gca,'FontSize',20)
+set(h,'LineWidth',2.0)
+set(gca,'FontSize',16)
 axis tight;
 
 % north component
@@ -46,8 +46,8 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,uy,colorstring);
-%set(h,'LineWidth',2.0)
-set(gca,'FontSize',20)
+set(h,'LineWidth',2.0)
+set(gca,'FontSize',16)
 axis tight;
 
 % up component
@@ -56,6 +56,6 @@ if (erase == 0)
   hold on;
 end
 h=plot(t+tshift,uz,colorstring);
-%set(h,'LineWidth',2.0)
-set(gca,'FontSize',20)
+set(h,'LineWidth',2.0)
+set(gca,'FontSize',16)
 axis tight;
