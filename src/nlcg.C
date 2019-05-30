@@ -15,8 +15,8 @@
 using namespace std;
 
 //-----------------------------------------------------------------------
-void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs, 
-	   int nmpard, double* xm, double* sfm, 
+void nlcg( EW& simulation, int nspar, int nmpars, double* xs, 
+	   int nmpard, double* xm, 
 	   vector<vector<Source*> >& GlobalSources,
 	   vector<vector<TimeSeries*> >& GlobalTimeSeries,
 	   vector<vector<TimeSeries*> >& GlobalObservations,
@@ -30,6 +30,8 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs, double* sfs,
    int maxit      = mopt->m_maxsubit;
    double tolerance = mopt->m_tolerance;
    bool fletcher_reeves = mopt->m_fletcher_reeves, dolinesearch=mopt->m_dolinesearch;
+   double* sfs = mopt->m_sfs;
+   double* sfm = mopt->m_sfm;
 
    ns = nspar + nmpars;
 

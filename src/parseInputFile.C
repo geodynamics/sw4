@@ -442,6 +442,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // ignore material optimizer commands
  	   startswith("event", buffer) ||
  	   startswith("mparcart", buffer) ||
+	   startswith("mpallpts", buffer) ||
  	   startswith("mrun", buffer) ||
  	   startswith("mscalefactors", buffer) ||
  	   startswith("lbfgs", buffer) ||

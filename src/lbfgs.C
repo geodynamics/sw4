@@ -506,8 +506,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 }
 
 //-----------------------------------------------------------------------
-void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf, 
-            double* typxs, int nmpard, double* xm, double* sfm, double* typxd,
+void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, 
+            int nmpard, double* xm, 
 	    vector<vector<Source*> >& GlobalSources,
 	    vector<vector<TimeSeries*> >& GlobalTimeSeries,
 	    vector<vector<TimeSeries*> >& GlobalObservations,
@@ -537,8 +537,6 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 //
 // Output: xs, xm - The minimum is returned.
 //
-// Note: Configuration of the algorithm is done by a call 
-//       to get_cgparameters of the simulation object.
 //
 //-----------------------------------------------------------------------
 {
@@ -561,6 +559,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
    int maxit = mopt->m_maxit, m=mopt->m_nbfgs_vectors;
    bool dolinesearch=mopt->m_dolinesearch;
    double tolerance = mopt->m_tolerance;
+   double* sf =mopt->m_sfs;
+   double* sfm=mopt->m_sfm;
 
    // used variables: maxit, tolerance, dolinesearch
    //   simulation.get_cgparameters( maxit, maxrestart, tolerance, fletcher_reeves, stepselection,
@@ -835,7 +835,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs, double* sf,
 
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 		     nspar, nmpars, xs, nmpard, xm, f, dfs, dfm, da, dam, fabs(alpha), 10.0, tolerance, xa, xam,
-		     fp, typxs, typxd, myRank,
+		     fp, sf, sfm, myRank,
 		     retcode, nreductions, testing, dfps, dfpm, mopt );
 
          if( retcode == 3 )

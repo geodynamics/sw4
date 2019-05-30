@@ -15,6 +15,11 @@
 #include <unistd.h>
 #include <fstream>
 
+#ifndef SQR
+#define SQR(x) ((x)*(x))
+#endif
+
+
 void usage(string thereason)
 {
   cout << endl
@@ -117,6 +122,10 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
 //New
+   int nms, nmd, nmpard_global;
+   mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
+   if( nms != nmpars || nmd != nmpard )
+      cout << "compute_f: WARNING, inconsistent number of material parameters" << endl;
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
    int ok=1;
    if( mopt->m_mcheck )
@@ -152,9 +161,10 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 	 }
       }
    }
+   int myRank;
+   MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-
 // Give back memory
    for( unsigned int g=0 ; g < ng ; g++ )
    {
@@ -163,14 +173,22 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    }
 
 // add in a Tikhonov regularizing term:
-   double tikhonov=0;
-   double tcoff = 1.0/nmpars;
-#ifndef SQR
-#define SQR(x) ((x)*(x))
-#endif
-   for (int q=nspar; q<nspar+nmpars; q++)
-      tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-   mf += tcoff*mopt->m_reg_coeff*tikhonov;
+   double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
+   if( tcoff != 0 )
+   {
+// Shared parameters
+      double tikhonov=0;
+      for (int q=nspar; q<nspar+nmpars; q++)
+	 tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+      mf += tcoff*tikhonov;
+
+// Distributed parameters
+      double tikhonovd = 0;
+      for (int q=0; q<nmpard; q++)
+	 tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      mf += tcoff*tikhonov;
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -223,6 +241,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    int ng = simulation.mNumberOfGrids;
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
+   int nms, nmd, nmpard_global;
+   mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
+   if( nms != nmpars || nmd != nmpard )
+      cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
    int ok=1;
@@ -237,9 +259,18 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> U(ng), Um(ng);
    vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
    f = 0;
-   float_sw4* dfsevent = new float_sw4[nmpars];
+   
+   float_sw4 *dfsevent, *dfmevent;
+   if( nmpars > 0 )
+      dfsevent = new float_sw4[nmpars];
+   if( nmpard > 0 )
+      dfmevent = new float_sw4[nmpard];
+
    for( int m=0 ; m < nmpars ; m++ )
       dfs[m+nspar] = 0;
+   for( int m=0 ; m < nmpard ; m++ )
+      dfm[m] = 0;
+
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e );
@@ -277,9 +308,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
       //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
-      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfm, rho, mu, lambda, gRho, gMu, gLambda );
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
       for( int m=0 ; m < nmpars ; m++ )
 	 dfs[m+nspar] += dfsevent[m];
+      for( int m=0 ; m < nmpard ; m++ )
+	 dfm[m] += dfmevent[m];
 
 // 3. Give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
@@ -290,17 +323,26 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
 // add in a Tikhonov regularizing term:
-   double tcoff = 1.0/nmpars;
-   double tikhonov=0;
-#ifndef SQR
-#define SQR(x) ((x)*(x))
-#endif
-   for (int q=nspar; q<nspar+nmpars; q++)
+   double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
+   if( tcoff != 0 )
    {
-      tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-      dfs[q] += 2*tcoff*mopt->m_reg_coeff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
+      double tikhonov=0;
+      for (int q=nspar; q<nspar+nmpars; q++)
+      {
+	 tikhonov +=  SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+	 dfs[q] += 2*tcoff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
+      }
+      f += tcoff*tikhonov;
+
+      double tikhonovd = 0;
+      for (int q=0; q<nmpard; q++)
+      {
+	 tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
+	 dfm[q] += 2*tcoff*(xm[q] - mopt->m_xm0[q])/SQR(mopt->m_sfm[q]);
+      }
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      f += tcoff*tikhonov;
    }
-   f += tcoff*mopt->m_reg_coeff*tikhonov;
 
    if( myrank == 0 && verbose >= 1 )
    {
@@ -316,7 +358,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    //   mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
    
 // Give back memory
-   delete[] dfsevent;
+   if( nmpars > 0 )
+      delete[] dfsevent;
+   if( nmpard > 0 )
+      delete[] dfmevent;
+
    for( unsigned int g=0 ; g < ng ; g++ )
    {
       delete upred_saved[g];
@@ -399,8 +445,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 		    vector<vector<TimeSeries*> >& GlobalTimeSeries,
 		    vector<vector<TimeSeries*> >& GlobalObservations, 
 		    int nspar, int nmpars, double* xs, int nmpard, double* xm,
-		    //		    int myRank, MaterialParameterization* mp, double* sf, double* sfm )
-		    int myRank, Mopt* mopt, double* sf, double* sfm )
+		    int myRank, Mopt* mopt )
 {
    // nspar:  Number of parameters in source description, when solving for the source
    // nmpars: Number of parameters in material description, non-distributed
@@ -438,6 +483,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       string fname = mopt->m_path+"GradientTest.txt";
       dftest.open(fname.c_str());
    }
+   double* sf = mopt->m_sfs;
    if( ns>0 )
    {
       if( myRank == 0 )
@@ -512,7 +558,7 @@ void hessian_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 		   vector<vector<TimeSeries*> >& GlobalObservations, 
 		   int nspar, int nmpars, double* xs, int nmpard, double* xm,
 		   //		   int myRank, MaterialParameterization* mp, double* sf, double* sfm )
-		   int myRank, Mopt* mopt, double* sf, double* sfm )
+		   int myRank, Mopt* mopt )
 {
 	      // Hessian test
    int ns = nspar+nmpars;
@@ -541,6 +587,7 @@ void hessian_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    double h =1e-6;
    int grid = 0;
 
+   double* sf= mopt->m_sfs;
    if( sharedpars == 1 )
    {
       double* hess = new double[ns*ns];
@@ -754,13 +801,24 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 		   Mopt* mopt )
 {
    double* fcn = new double[npts];
-   ssize_t ind=mp->parameter_index(i,j,k,0,var);
-   double xoriginal = xs[ind];
+   //   ssize_t ind=mp->parameter_index(i,j,k,0,var);
+   int ind=mp->parameter_index(i,j,k,0,var);
+   double xoriginal;
    bool ascii_output = true;
    double p;
    string lfname = mopt->m_path+"mflocal.txt";
    ofstream localmfout;
 
+   int tmp=ind;
+   MPI_Allreduce(&tmp,&ind,1,MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+   if( ind == -1 )
+   {
+      if( myRank == 0 )
+	 cout << "misfit_curve: ERROR: index out of range " << endl;
+      return;
+   }
+
+   xoriginal = xs[ind];
 // Output materials
    if( mopt->m_misfit1d_images )
    {
@@ -855,7 +913,12 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 	    fname = mopt->m_path+"Misfit1d.txt";
 	    ofstream fcurve(fname.c_str());
 	    for( int m=0 ; m < npts ; m++ )
-	       fcurve << pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin) << " " << fcn[m] << " " << endl;
+	    {
+	       if( npts > 1 )
+		  fcurve << pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin) << " " << fcn[m] << " " << endl;
+	       else
+		  fcurve << pmin  << " " << fcn[m] << " " << endl;		  
+	    }
 	    fcurve.close();
 	 }
       }
@@ -1105,20 +1168,24 @@ int main(int argc, char **argv)
 	   mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
 
 // store initial material parameters in mp->m_xs0 (needed for Tikhonov regularization)
-           mopt->set_baseMat(xs);
+           mopt->set_baseMat(xs,xm);
 
 // Scale factors
-	   double* sf  = NULL;
-           double* sfm = NULL;
+//	   double* sf  = NULL;
+//           double* sfm = NULL;
            // if( ns > 0 )
 	   //    sf  = new double[ns];
-           if( nmpard > 0 )
-              sfm = new double[nmpard];
+	   //           if( nmpard > 0 )
+	   //              sfm = new double[nmpard];
 // both the source scale factors and the shared material scale factors are in the array 'sf'
 // both types of scale factors are now set in set_sscalefactors()
-           mopt->set_sscalefactors( /* nmpars, &sf[nspar]*/ );
+
+// Shared scale factors (source and material)
+           mopt->set_sscalefactors();
+// Distributed material scale factors 
+	   mopt->set_dscalefactors();
 // for backwards compatibility
-	   sf = mopt->m_sfs;
+//	   sf = mopt->m_sfs;
 // tmp
 	   // if (myRank == 0)
 	   // {
@@ -1130,24 +1197,22 @@ int main(int argc, char **argv)
 	   // }
 // end tmp
 	   
-// the distributed material scale factors are currently not used	   
-           mopt->set_dscalefactors( nmpard, sfm );
-
 // Typical sizes, initialize as scale factors
-           double* typxs=NULL;
-	   double* typxd=NULL;
-	   if( ns > 0 )
-	   {
-	      typxs = new double[ns];
-              for( int i=0; i < ns ; i++ )
-		 typxs[i] = sf[i];
-	   }
-	   if( nmpard > 0 )
-	   {
-	      typxd = new double[nmpard];
-              for( int i=0; i < nmpard ; i++ )
-		 typxd[i] = sfm[i];
-	   }
+//           double* typxs=NULL;
+//	   double* typxd=NULL;
+//	   if( ns > 0 )
+//	   {
+//	      typxs = new double[ns];
+//              for( int i=0; i < ns ; i++ )
+//		 typxs[i] = sf[i];
+//	   }
+//	   if( nmpard > 0 )
+//	   {
+//	      typxd = new double[nmpard];
+//              for( int i=0; i < nmpard ; i++ )
+//		 typxd[i] = sfm[i];
+//	   }
+
 	   // Possibility to override default: typx = scale factors
 	   // Commented out, not working properly atm, will fix later
 	   //	   mopt->set_typx( nmpars, &sf[nspar], &typxs[nspar] );
@@ -1171,13 +1236,13 @@ int main(int argc, char **argv)
 	   {
 // Gradient_test compares the computed gradient with the gradient obtained by numerical differentiation.
               gradient_test( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs,
-			     nmpard, xm, myRank, mopt, sf, sfm );
+			     nmpard, xm, myRank, mopt );
 	   }
 	   else if( mopt->m_opttest == 3 )
 	   {
 // Hessian_test outputs the Hessian computed by numerical differentiation.
               hessian_test( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs,
-			    nmpard, xm, myRank, mopt, sf, sfm );
+			    nmpard, xm, myRank, mopt );
 	   }
 	   else if( mopt->m_opttest == 4 )
 	   {
@@ -1223,19 +1288,19 @@ int main(int argc, char **argv)
       // Project material onto a Cartesian material parameterization grid
 	      CHECK_INPUT( mopt->m_mpcart0 != NULL, "ERROR, there is no Cartesian material parameterization defined\n");
 	      mopt->m_mpcart0->project_and_write( simulation.mRho, simulation.mMu, simulation.mLambda,
-						  "projmtrl.mparcart");
+						  "projmtrl.mpc");
 	   }
            else if( mopt->m_opttest == 1 )
 	   {
 // Run optimizer (default)
 	      if( mopt->m_optmethod == 1 )
-		 lbfgs( simulation, nspar, nmpars, xs, sf, typxs, nmpard, xm, sfm, typxd,
+		 lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 
 			GlobalSources, GlobalTimeSeries,
 			GlobalObservations, myRank, mopt );//mp, mopt->m_maxit, mopt->m_tolerance, mopt->m_dolinesearch,
 	      //			mopt->m_nbfgs_vectors, mopt->m_ihess_guess, mopt->m_wolfe, mopt->m_mcheck,
 	      //	mopt->m_output_ts, mopt->m_image_files );
 	      else if( mopt->m_optmethod == 2 )
-		 nlcg( simulation, nspar, nmpars, xs, sf, nmpard, xm, sfm, GlobalSources, GlobalTimeSeries,
+		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );//mp, mopt->m_maxit, mopt->m_maxsubit, mopt->m_tolerance,
 	      //		       mopt->m_dolinesearch, mopt->m_fletcher_reeves, mopt->m_mcheck, mopt->m_output_ts );
 	   }
