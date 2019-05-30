@@ -27,13 +27,16 @@ end;
 
 [t ux uy uz]=readusgs(filename);
 
-if (erase ~= 0)
-  clf;
-end
+## if (erase ~= 0)
+##   clf;
+## end
 % east component
-subplot(3,1,1)
+#subplot(3,1,1)
+figure(1)
 if (erase == 0)
   hold on;
+else
+  clf;
 end
 h=plot(t+tshift,ux,colorstring);
 %set(h,'LineWidth',2.0)
@@ -41,9 +44,12 @@ set(gca,'FontSize',20)
 axis tight;
 
 % north component
-subplot(3,1,2)
+#subplot(3,1,2)
+figure(2)
 if (erase == 0)
   hold on;
+else
+  clf;
 end
 h=plot(t+tshift,uy,colorstring);
 %set(h,'LineWidth',2.0)
@@ -51,9 +57,12 @@ set(gca,'FontSize',20)
 axis tight;
 
 % up component
-subplot(3,1,3)
+#subplot(3,1,3)
+figure(3)
 if (erase == 0)
   hold on;
+else
+  clf;
 end
 h=plot(t+tshift,uz,colorstring);
 %set(h,'LineWidth',2.0)
