@@ -208,9 +208,9 @@ void Mopt::processMaterialParCart( char* buffer )
       else if( startswith("filetype=",token) )
       {
 	 token += 9;
-	 CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mparcart")==0, 
+	 CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mpc")==0, 
                    "ERROR: processing mparcart, file type " << token << "not recognized" );
-	 if( strcmp(token,"mparcart")== 0 )
+	 if( strcmp(token,"mpc")== 0 )
 	 {
 	    mparcartfile = true;
 	 }
