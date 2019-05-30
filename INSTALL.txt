@@ -19,8 +19,8 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    cmake -DCMAKE_INSTALL_PREFIX=../install -DENABLE_CUDA=On -DENABLE_OPENMP=Off ../
    make install
 
-3. Get Umpire(0.3.1) from github:
-   wget https://github.com/LLNL/Umpire/releases/download/v0.3.1/umpire-0.3.1.tar.gz
+3. Get Umpire(0.3.3) from github:
+   wget https://github.com/LLNL/Umpire/releases/download/v0.3.3/umpire-0.3.3.tar.gz
 
 4. build and install Umpire using:
    mkdir install

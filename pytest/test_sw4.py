@@ -1,5 +1,4 @@
-#!/usr/tce/bin/python3
-
+#!/usr/bin/env python3
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
@@ -151,6 +150,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 "
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
+    elif 'batch' in node_name:
+        if mpi_tasks<=0: mpi_tasks = 16
+        mpirun_cmd="lrun -T16 "
+        mpirun_cmd="jsrun -g6 -c40 -a6 -n1"
     elif 'batch' in node_name:
         if mpi_tasks<=0: mpi_tasks = 6
         mpirun_cmd="jsrun -g1 -c6 -a1 -n " + str(mpi_tasks)
