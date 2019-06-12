@@ -62,6 +62,7 @@
 #include "MaterialData.h"
 #include "AnisotropicMaterial.h"
 #include "EtreeFile.h"
+#include "RandomizedMaterial.h"
 
 #include "SuperGrid.h"
 #include "MaterialProperty.h"
@@ -159,6 +160,7 @@ void processGlobalMaterial(char* buffer);
 void processTopography(char* buffer);
 void processAttenuation(char* buffer);
 void processRandomize(char* buffer);
+void processRandomBlock(char* buffer);
 void processCheckPoint(char* buffer);
 
 //void getEfileInfo(char* buffer);
@@ -1188,6 +1190,8 @@ void AMPI_Sendrecv2(float_sw4* a, int scount, std::tuple<int,int,int> &sendt, in
   void putbuffer_device(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype ,bool async=false);
   void getbuffer_host(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
   void putbuffer_host(float_sw4 *data, float_sw4* buf, std::tuple<int,int,int> &mtype );
+
+  AllDims* get_fine_alldimobject( );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -1366,6 +1370,7 @@ bool m_anisotropic;
 bool m_randomize;
 int m_random_seed[3];
 float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
+vector<RandomizedMaterial*> m_random_blocks;
 
 // Vectors of pointers to hold boundary forcing arrays in each grid
 // this is innner cube data for coupling with other codes
@@ -1566,7 +1571,7 @@ int m_ppadding;
 // Array of sviews used in EW::enforceBCfreeAtt2 in solve.C
   SView *viewArrayActual;
 
-int m_neighbor[4];
+  //int m_neighbor[4];
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;
 vector<MPI_Datatype> m_send_type4; // metric
@@ -1619,6 +1624,7 @@ vector<MPI_Datatype> m_send_type_2dy1p;
   StatMachine<int,double> step_sm;
 #endif
 public:
+int m_neighbor[4];
 MPI_Datatype m_mpifloat;
 
 bool m_topography_exists;

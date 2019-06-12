@@ -986,7 +986,31 @@ void EW::set_materials()
     
 // add random perturbation
     if( m_randomize )
-       perturb_velocities( mMu, mLambda );
+      {
+	//  perturb_velocities( mMu, mLambda );
+	for( int g=0 ; g < mNumberOfGrids ; g++ )
+	  {
+	    double zmin,zmax;
+	    if( g == mNumberOfGrids-1 && topographyExists() )
+	      {
+		zmin = m_global_zmin;
+		zmax = m_topo_zmax;
+	      }
+	    else
+	      {
+		zmin = m_zmin[g];
+		zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];	     
+	      }
+	    for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+	      m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], zmin, zmax );
+	    //	  double zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];
+	    //	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+	    //	     m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], m_zmin[g], zmax );
+	    communicate_array( mMu[g], g );
+	    communicate_array( mLambda[g], g );
+	  }
+      }
+
 
     convert_material_to_mulambda( );
     

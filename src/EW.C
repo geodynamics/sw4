@@ -8371,3 +8371,11 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
   }
 }
 #endif
+#include "AllDims.h"
+AllDims* EW::get_fine_alldimobject( )
+{
+   int g=mNumberOfCartesianGrids-1;
+   AllDims* fine = new AllDims( m_proc_array[0], m_proc_array[1], 1, 1, m_global_nx[g], 
+		       1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, m_ppadding );
+   return fine;
+}
