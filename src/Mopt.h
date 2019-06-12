@@ -23,6 +23,7 @@ class Mopt
    void badOption(string name, char* option) const;
    bool startswith(const char begin[], char *line);
    void processMaterialParCart( char* buffer );
+   void processMaterialAllpts( char* buffer );
    void processMrun( char* buffer );
    void processMscalefactors( char* buffer );
    void processLBFGS( char* buffer );
@@ -39,13 +40,13 @@ class Mopt
    void get_scalefactors( double& rhoscale, double& muscale,
 			  double& lambdascale );
 
-   void set_sscalefactors( /*int nmpars, double* sfs*/ );
+   void set_sscalefactors( );
    void set_sourcescalefactors( int nspar, double* sfs );
-   void set_dscalefactors( int nmpard, double* sfm );
+   void set_dscalefactors( );
    void set_typx( int nmpar, double* sf, double* typx );
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
-   void set_baseMat(double* xs );
+   void set_baseMat(double* xs, double* xm );
 
    enum Misfittype {L2,CROSSCORR};
    Misfittype m_misfit;
@@ -68,8 +69,10 @@ class Mopt
    std::string m_path;
    double m_reg_coeff;
    int m_nstot; // dimension of m_sfs and m_xs0
-   double *m_sfs; // scale factors
+   double *m_sfs; // scale factors, shared
+   double *m_sfm; // scale factors, distributed
    double *m_xs0; // initial material perturbation
+   double *m_xm0; // initial material perturbation
 };
 
 #endif

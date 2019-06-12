@@ -27,7 +27,9 @@ public:
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
-   void projectl2( std::vector<Sarray>& mtrl, const char* fname );
+   void project_and_write( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+			   std::vector<Sarray>& a_lambda, std::string fname );
+   void projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs );
    void subtract_base_mtrl( int nms, double* xms );
 };
 

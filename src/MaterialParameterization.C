@@ -74,7 +74,7 @@ void MaterialParameterization::constrain_material( int nmd, double* xmd,
 void MaterialParameterization::write_parameters( const char* filename,
 						int nms, double* xms )
 {
-   VERIFY2( nms == m_nms, "MP::write_parameters: Error in sizes ");
+  VERIFY2( nms == m_nms, "MP::write_parameters: Error in sizes nms = " << nms << " m_nms = " << m_nms );
    // Format: nms,xms[0],xms[1],..xms[nms-1]
    if( m_myrank == 0 )
    {

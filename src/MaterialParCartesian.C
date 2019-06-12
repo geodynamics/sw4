@@ -31,6 +31,15 @@ MaterialParCartesian::MaterialParCartesian( EW* a_ew, int nx, int ny, int nz, in
       zmax = m_ew->m_zmin[g] + (m_ew->m_kEndAct[g]-1)*hf;
       //      if( m_myrank == 0 )
       //	 cout << " xmin, xmax " << xmin << " " << xmax << endl;
+      if( m_myrank == 0 )
+	cout << "active region, index = " <<
+	  m_ew->m_iStartActGlobal[g] << " " <<
+	  m_ew->m_iEndActGlobal[g] << " " <<
+	  m_ew->m_jStartActGlobal[g] << " " <<
+	  m_ew->m_jEndActGlobal[g] << " " <<
+	  m_ew->m_kStartActGlobal[g] << " " <<
+	  m_ew->m_kEndActGlobal[g] << endl;
+
       if( xmin < m_xmin )
 	 m_xmin = xmin;
       if( ymin < m_ymin )
@@ -314,8 +323,51 @@ extern "C" {
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, const char* fname )
+void MaterialParCartesian::project_and_write( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+					      std::vector<Sarray>& a_lambda, std::string fname )
 {
+  float_sw4 mu_min= 1.02e7;
+  float_sw4 rho_min=1593;
+  float_sw4 lambda_min=7.67e8;
+  
+  float_sw4* projarray = new float_sw4[m_nx*m_ny*m_nz];
+  float_sw4* xms = new float_sw4[m_nx*m_ny*m_nz*3];
+  // Project rho
+  projectl2( a_rho, projarray );
+  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+    projarray[i] = projarray[i] > rho_min ? projarray[i] : rho_min;
+  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+    xms[3*i] = projarray[i];
+
+  // Project mu
+  projectl2( a_mu, projarray );
+  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+    projarray[i] = projarray[i] > mu_min ? projarray[i] : mu_min;
+  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+    xms[3*i+1] = projarray[i];
+
+  // Project lambda
+  projectl2( a_lambda, projarray );
+  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+    projarray[i] = projarray[i] > lambda_min ? projarray[i] : lambda_min;
+
+  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+    xms[3*i+2] = projarray[i];
+  MParGridFile mpfile( xms, 1, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin, 0 );
+
+  //  for( int i=0 ; i < m_nx*m_ny*m_nz ; i++ )
+  //     if( xms[3*i] < 0 || xms[3*i+1] < 0 || xms[3*i+2]<0 )
+  //       cout << "0:negval " << i << " " << xms[3*i] <<" " << xms[3*i+1] << " " << xms[3*i+2] << endl;
+
+  mpfile.write_mparcartfile( fname );
+
+  delete[] projarray;
+  delete[] xms;
+}
+//-----------------------------------------------------------------------
+void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs )
+{
+   // Project input mtrl array onto my parameter grid.
    //
    // parameter grid is x_0, x_1,..,x_{nx}, x_{nx+1}, where x_1,..,x_{nx} carry degrees of freedom.
    // The dimensions are such that x_0=xmin, x_{nx+1}=xmax.
@@ -333,7 +385,7 @@ void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, const char* fna
       
    // Initialize:
    int Ntot = m_nx*m_ny*m_nz;
-   double* rhs = new double[Ntot];
+   //   double* rhs = new double[Ntot];
    double* mat = new double[Ntot*Ntot];
    for( int i=0 ; i < Ntot ; i++ )
    {
@@ -437,45 +489,45 @@ void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, const char* fna
    delete[] ipiv;
    delete[] mat;
 
-   // Output solution in 3D format:
-   int fd=open(fname,O_WRONLY|O_TRUNC|O_CREAT, 0660);
-
-   // 1.header, nx,ny,nz,hx,hy,hz,xmin,ymin,zmin
-   size_t nr=write(fd,&m_nx,sizeof(int));
-   if( nr != sizeof(int))
-      cout <<"ERROR writing m_nx, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_ny,sizeof(int));
-   if( nr != sizeof(int))
-      cout <<"ERROR writing m_ny, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_nz,sizeof(int));
-   if( nr != sizeof(int))
-      cout <<"ERROR writing m_nz, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_hx,sizeof(double));
-   if( nr != sizeof(double))
-      cout <<"ERROR writing m_hx, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_hy,sizeof(double));
-   if( nr != sizeof(double))
-      cout <<"ERROR writing m_hy, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_hz,sizeof(double));
-   if( nr != sizeof(double))
-      cout <<"ERROR writing m_hz, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_xmin,sizeof(double));
-   if( nr != sizeof(double))
-      cout <<"ERROR writing m_xmin, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_ymin,sizeof(double));
-   if( nr != sizeof(double))
-      cout <<"ERROR writing m_ymin, " << nr << " bytes written" << endl;
-   nr=write(fd,&m_zmin,sizeof(double));
-   if( nr != sizeof(double))
-      cout <<"ERROR writing m_zmin, " << nr << " bytes written" << endl;
-
-   // 2.Projected material field
-   nr=write(fd,rhs,Ntot*sizeof(double));
-   if( nr != Ntot*sizeof(double))
-      cout <<"ERROR writing rhs, " << nr << " bytes written" << endl;
-
-   close(fd);
-   delete[] rhs;
+   //   // Output solution in 3D format:
+   //   int fd=open(fname,O_WRONLY|O_TRUNC|O_CREAT, 0660);
+   //
+   //   // 1.header, nx,ny,nz,hx,hy,hz,xmin,ymin,zmin
+   //   size_t nr=write(fd,&m_nx,sizeof(int));
+   //   if( nr != sizeof(int))
+   //      cout <<"ERROR writing m_nx, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_ny,sizeof(int));
+   //   if( nr != sizeof(int))
+   //      cout <<"ERROR writing m_ny, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_nz,sizeof(int));
+   //   if( nr != sizeof(int))
+   //      cout <<"ERROR writing m_nz, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_hx,sizeof(double));
+   //   if( nr != sizeof(double))
+   //      cout <<"ERROR writing m_hx, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_hy,sizeof(double));
+   //   if( nr != sizeof(double))
+   //      cout <<"ERROR writing m_hy, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_hz,sizeof(double));
+   //   if( nr != sizeof(double))
+   //      cout <<"ERROR writing m_hz, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_xmin,sizeof(double));
+   //   if( nr != sizeof(double))
+   //      cout <<"ERROR writing m_xmin, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_ymin,sizeof(double));
+   //   if( nr != sizeof(double))
+   //      cout <<"ERROR writing m_ymin, " << nr << " bytes written" << endl;
+   //   nr=write(fd,&m_zmin,sizeof(double));
+   //   if( nr != sizeof(double))
+   //      cout <<"ERROR writing m_zmin, " << nr << " bytes written" << endl;
+   //
+   //   // 2.Projected material field
+   //   nr=write(fd,rhs,Ntot*sizeof(double));
+   //   if( nr != Ntot*sizeof(double))
+   //      cout <<"ERROR writing rhs, " << nr << " bytes written" << endl;
+   //
+   //   close(fd);
+   //   delete[] rhs;
 }
 
 //-----------------------------------------------------------------------

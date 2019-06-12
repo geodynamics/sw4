@@ -168,11 +168,11 @@ endif
 #   fftw has been defined by adding a module (or similar) from the OS.
 ifeq ($(fftw),yes)
    ifdef FFTWHOME
-      CXXFLAGS += -DENABLE_FFTW -I$(FFTWHOME)/include -L$(FFTWHOME)/lib 
+      CXXFLAGS += -DENABLE_FFTW -I$(FFTWHOME)/include 
    else
       CXXFLAGS += -DENABLE_FFTW 
    endif
-   linklibs += -lfftw3_mpi -lfftw3 
+   linklibs += -L$(FFTWHOME)/lib -lfftw3_mpi -lfftw3 
 endif
 
 ifeq ($(prec),single)
@@ -242,7 +242,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 # Material optimization
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
            MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
-	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o
+	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
+           MaterialParAllpts.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))

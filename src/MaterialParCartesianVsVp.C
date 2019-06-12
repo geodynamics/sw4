@@ -243,9 +243,17 @@ void MaterialParCartesianVsVp::get_parameters( int nmd, double* xmd, int nms,
    {
       MParGridFile mpfile( m_filename );
       mpfile.interpolate_to_other( xms, 4, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
+      //      for( int i=0 ; i < nms ; i++ )
+      //	if( isnan(xms[i]) )
+      //	  cout << "1:NAN at " << i << endl;
       if( !mpfile.is_update() )
 	 subtract_base_mtrl( nms, xms );
+      //      for( int i=0 ; i < nms ; i++ )
+      //	if( isnan(xms[i]) )
+      //	  cout << "2:NAN at " << i << endl;
+
    }
+
 }
 
 //-----------------------------------------------------------------------

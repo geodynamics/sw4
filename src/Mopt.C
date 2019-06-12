@@ -6,6 +6,7 @@
 #include "MaterialParCartesianVels.h"
 #include "MaterialParCartesianVp.h"
 #include "MaterialParCartesianVsVp.h"
+#include "MaterialParAllpts.h"
 
 #include "EW.h"
 
@@ -63,6 +64,7 @@ Mopt::Mopt( EW* a_ew )
    m_reg_coeff = 0.0;
    m_nstot = 0;
    m_sfs = NULL;
+   m_sfm = NULL;
    m_xs0 = NULL;
    m_misfit = L2;
    m_mpcart0 = NULL;
@@ -90,6 +92,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
       {
 	 if( startswith("mparcart", buffer) )
 	    processMaterialParCart( buffer );
+         else if( startswith("mpallpts",buffer) )
+	    processMaterialAllpts( buffer );
          else if( startswith("mrun",buffer) )
 	    processMrun(buffer);
          else if( startswith("mscalefactors",buffer) )
@@ -145,6 +149,33 @@ bool Mopt::startswith(const char begin[], char *line)
      return true;
   else 
      return false;
+}
+
+//-----------------------------------------------------------------------
+void Mopt::processMaterialAllpts( char* buffer )
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("mpallpts", token) == 0,
+	       "ERROR: not an mpallpts line: " << token);
+   token = strtok(NULL, " \t");
+
+   char file[256]= " \0"; //shut up memory checker
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else
+      {
+	 badOption("mpallpts", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   if( m_mp != NULL )
+      cout << "Error: more than one material parameterization command" << endl;
+
+   m_mp = new MaterialParAllpts( m_ew, file );
 }
 
 //-----------------------------------------------------------------------
@@ -225,6 +256,9 @@ void Mopt::processMaterialParCart( char* buffer )
    // Ignore filetype if init does not provide a file name.
    if( mparcartfile && init == 2 )
       init = 4;
+
+   if( m_mp != NULL )
+      cout << "Error: more than one material parameterization command" << endl;
 
    if (vel)
       m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
@@ -454,80 +488,87 @@ void Mopt::get_scalefactors( double& rhoscale, double& muscale,
 }
 
 //-----------------------------------------------------------------------
-void Mopt::set_sscalefactors( /* int nmpars, double* sfs */ )
+void Mopt::set_sscalefactors( )
 {
-// new 12/20, 2018
-  int my_nmpars, nmpard, nmpard_global;
-  m_mp->get_nr_of_parameters( my_nmpars, nmpard, nmpard_global );
-  m_nstot = m_nspar + my_nmpars;
-  m_sfs = new double[m_nstot];
-  double *sfs = &m_sfs[m_nspar];
+   int my_nmpars, nmpard, nmpard_global;
+   m_mp->get_nr_of_parameters( my_nmpars, nmpard, nmpard_global );
+   m_nstot = m_nspar + my_nmpars;
+   if( m_nstot > 0 )
+   {
+      m_sfs = new double[m_nstot];
+      double *sfs = &m_sfs[m_nspar];
 
 // first set the source scale factors (if any)
-  set_sourcescalefactors( m_nspar, m_sfs );
-  // if( m_myrank == 0 )
-  // {
-  //   printf("TEST: set_sscalefactors: m_nspar = %d, my_nmpars = %d m_nstot = %d\n", m_nspar, my_nmpars, m_nstot);
-  // }
-  
+      set_sourcescalefactors( m_nspar, m_sfs );
 
-   if( !m_scales_file_given )
-      m_mp->set_scalefactors( my_nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
-   else
-   {
-      int errflag = 0;
-      if( m_myrank == 0 )
+      if( !m_scales_file_given )
+	 m_mp->set_scalefactors( my_nmpars, sfs, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
+      else
       {
-         cout << "Reading scale factor file " << " my_nmpars = " << my_nmpars << endl;
-	 string fname = m_path + m_scales_fname;
-	 //	 int fd=open(m_scales_fname.c_str(),O_RDONLY );
-	 int fd=open(fname.c_str(),O_RDONLY );
-	 VERIFY2( fd != -1, "ERROR reading scale factors. File " << m_scales_fname << " could not be opened"<<endl);
-	 int nmpars_read;
-	 size_t nr = read(fd,&nmpars_read,sizeof(int));
-	 if( nmpars_read == my_nmpars && nr == sizeof(int) )
+	 int errflag = 0;
+	 if( m_myrank == 0 )
 	 {
-	    nr = read(fd,sfs,my_nmpars*sizeof(double));
-	    if( nr != my_nmpars*sizeof(double) )
-	       errflag = 2;
-	 }
-	 else if( nmpars_read != my_nmpars )
-	    errflag = 3;
-	 else
-	    errflag = 1;
-	 close(fd);
+	    cout << "Reading scale factor file " << " my_nmpars = " << my_nmpars << endl;
+	    string fname = m_path + m_scales_fname;
+	 //	 int fd=open(m_scales_fname.c_str(),O_RDONLY );
+	    int fd=open(fname.c_str(),O_RDONLY );
+	    VERIFY2( fd != -1, "ERROR reading scale factors. File " << m_scales_fname << " could not be opened"<<endl);
+	    int nmpars_read;
+	    size_t nr = read(fd,&nmpars_read,sizeof(int));
+	    if( nmpars_read == my_nmpars && nr == sizeof(int) )
+	    {
+	       nr = read(fd,sfs,my_nmpars*sizeof(double));
+	       if( nr != my_nmpars*sizeof(double) )
+		  errflag = 2;
+	    }
+	    else if( nmpars_read != my_nmpars )
+	       errflag = 3;
+	    else
+	       errflag = 1;
+	    close(fd);
 
-         double imf = 1/sqrt(m_misfitscale);
-         for( int i=0 ; i < my_nmpars ; i++ )
-	    sfs[i] *= imf;
+	    double imf = 1/sqrt(m_misfitscale);
+	    for( int i=0 ; i < my_nmpars ; i++ )
+	       sfs[i] *= imf;
+	 }
+	 MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+	 VERIFY2( errflag == 0, "Error no " << errflag << " in Mopt::set_sscalefactors");
       }
-      MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-      VERIFY2( errflag == 0, "Error no " << errflag << " in Mopt::set_sscalefactors");
    }
 }
 
 //-----------------------------------------------------------------------
-void Mopt::set_baseMat(double* xs )
+void Mopt::set_baseMat(double* xs, double* xm )
 {
-// new 12/20, 2018
   int my_nmpars, nmpard, nmpard_global;
   m_mp->get_nr_of_parameters( my_nmpars, nmpard, nmpard_global );
   m_nstot = m_nspar + my_nmpars;
   m_xs0 = new double[m_nstot];
+  m_xm0 = new double[nmpard];
 
   for( int i=0 ; i < my_nmpars ; i++)
-  {
-     m_xs0[i]   = xs[i];
-  }
-
+     m_xs0[i]  = xs[i];
+  for( int i=0 ; i < nmpard ; i++)
+     m_xm0[i] = xm[i];
 }
 
 //-----------------------------------------------------------------------
-void Mopt::set_dscalefactors( int nmpard, double* sfm )
+void Mopt::set_dscalefactors()
 {
+   int nmpars, nmpard, nmpard_global;
+   m_mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );
+   if( nmpard > 0 )
+   {
+      m_sfm = new double[nmpard];
+      if( !m_scales_file_given )
+	 m_mp->set_scalefactors( nmpard, m_sfm, m_rhoscale, m_muscale, m_lambdascale, m_vsscale, m_vpscale );
+      else
+      {
    // Not yet implemented
-   for( int i=0 ; i<nmpard ;i++)
-      sfm[i]=1;
+	 for( int i=0 ; i<nmpard ;i++)
+	    m_sfm[i]=1;
+      }
+   }
 }
 
 //-----------------------------------------------------------------------
