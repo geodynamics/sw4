@@ -483,9 +483,9 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       string fname = mopt->m_path+"GradientTest.txt";
       dftest.open(fname.c_str());
    }
-   double* sf = mopt->m_sfs;
    if( ns>0 )
    {
+     double* sf = mopt->m_sfs;
       if( myRank == 0 )
       {
 	printf("Gradient testing shared parameters :\n");
@@ -520,13 +520,17 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    }
    if( nmpard_global > 0 )
    {
+      double* sf = mopt->m_sfm;
       if( myRank == 0 )
 	 cout << "Gradient testing distributed parameters :" << endl;
       for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
       {
          ssize_t ind = mopt->m_mp->local_index(indg);
 	 if( ind >=0 )
+         {
+ 	    h = 3e-8*sf[ind];
 	    xm[ind] += h;
+	 }
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fp, mopt );
 	 double dfnum = (fp-f)/h;
@@ -534,9 +538,10 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 if( ind >=0 )
 	    dfan = dfm[ind];
 
-	 if( myRank == 0 )
+	 //	 if( myRank == 0 )
+	 if( ind >= 0 )
 	 {	    
-	    cout << "f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
+	   cout << "( " << myRank << "), f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << " relerr= " << (dfan-dfnum)/dfnum << endl;
 	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
 	 }
          if( ind >= 0 )
