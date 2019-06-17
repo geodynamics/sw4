@@ -702,6 +702,38 @@ void EW::smoothTopography(int maxIter)
 }
 
 //-----------------------------------------------------------------------
+void EW::assignInterfaceSurfaces()
+{
+//   int myRank;
+//   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
+   if (!m_topography_exists)
+      return;
+   
+// tmp
+  if (proc_zero())
+  {
+    cout << "***inside assignInterfaceSurfaces*** " << endl;
+  }
+  
+  int imin = mTopoGridExt.m_ib;
+  int imax = mTopoGridExt.m_ie;
+  int jmin = mTopoGridExt.m_jb;
+  int jmax = mTopoGridExt.m_je;
+  
+// start by copying the topography (with opposite sign) to the top interface surface
+  int gTop = mNumberOfGrids - 1 - mNumberOfCartesianGrids; 
+  for (int i = imin; i <= imax; ++i)
+     for (int j = jmin; j <= jmax; ++j)
+     {
+	m_curviInterface[gTop](i,j,1) = -mTopoGridExt(i,j,1);
+     }
+
+// NEXT: assign the intermediate interface surfaces  
+
+}
+
+//-----------------------------------------------------------------------
 void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0)
 {
   if (mVerbose >= 1 && proc_zero())

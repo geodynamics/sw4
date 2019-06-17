@@ -401,6 +401,7 @@ void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName,
 void extractTopographyFromRfile( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
+void assignInterfaceSurfaces();
 
 void buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0);
 

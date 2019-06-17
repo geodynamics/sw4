@@ -379,6 +379,9 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // 3. smooth the topo
  	smoothTopography(m_maxIter);
      }
+
+// assign interface surfaces (needed when there is MR in the curvilinear portion of the grid)
+     assignInterfaceSurfaces();
      
 // // 3. Figure out the number of grid points in the vertical direction and allocate solution arrays on the curvilinear grid
      allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
