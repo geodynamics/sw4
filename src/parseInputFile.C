@@ -1,3 +1,4 @@
+//-*-c++-*-
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -4376,6 +4377,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // Allocate the topography arrays and coarsen out the grid in the curvilinear portion of the grid
    if( m_topography_exists ) // UPDATED  for more than 1 curvilinear grid
    {
+// Allocate elements in the m_curviInterface vector
+      m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
 
 // NEW
       for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--) // g=mNumberOfGrids-1 is the finest curvilinear grid
@@ -4430,15 +4433,24 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
                    m_jStartInt[g], m_jEndInt[g]);
          }
 
-// NEW: only allocate topo arrays for the top (finest) curvilinear grid
+         // number of extra ghost points to allow highly accurate interpolation; needed for the source discretization
+         m_ext_ghost_points = 2;
+
+// Allocate interface the interface surface for this curvilinear grid
+         m_curviInterface[g-mNumberOfCartesianGrids].define(m_iStart[g]-m_ext_ghost_points, m_iEnd[g]+m_ext_ghost_points,
+                                                            m_jStart[g]-m_ext_ghost_points, m_jEnd[g]+m_ext_ghost_points,1,1);
+
+// Allocate topo arrays for the top (finest) curvilinear grid
          if (g==mNumberOfGrids-1)
          {
 // 2 versions of the topography:
-            mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
-            m_ext_ghost_points = 2;
+            mTopo.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],1,1); // true topography/bathymetry, read directly from etree/rfile
+//            mTopo.define(ifirst,ilast,jfirst,jlast,1,1); // true topography/bathymetry, read directly from etree
 // smoothed version of true topography, with an extended number (4 instead of 2 ) of ghost points.
-            mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
-                                jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
+            mTopoGridExt.define(m_iStart[g]-m_ext_ghost_points, m_iEnd[g]+m_ext_ghost_points,
+                                m_jStart[g]-m_ext_ghost_points, m_jEnd[g]+m_ext_ghost_points,1,1);
+            // mTopoGridExt.define(ifirst-m_ext_ghost_points,ilast+m_ext_ghost_points,
+            //                     jfirst-m_ext_ghost_points,jlast+m_ext_ghost_points,1,1);
          }
 
 // At this point, we don't know the number of grid points in the k-direction of the curvi-linear grid.

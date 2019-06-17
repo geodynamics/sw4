@@ -1279,6 +1279,10 @@ int m_opttest;
 // mTopoGridExt holds the smoothed topography which follows the top surface of the curvilinear grid
    Sarray mTopo, mTopoGridExt;
 
+// 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in the curvilinear grid
+   vector<Sarray> m_curviInterface;
+   
+
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;
 MPI_Comm m_cartesian_communicator;
