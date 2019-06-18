@@ -502,6 +502,8 @@ bool find_curvilinear_derivatives_at_point( float_sw4 q, float_sw4 r, float_sw4 
 
 // curvilinear mapping between interface surfaces
 bool interface_surface_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
+
+   void extrapolate_interface_surfaces();
    
 void save_errors( float_sw4 max_error[3], float_sw4 l2_error[3] );
 

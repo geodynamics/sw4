@@ -877,16 +877,80 @@ void EW::assignInterfaceSurfaces()
   int jmax = mTopoGridExt.m_je;
   
 // start by copying the topography (with opposite sign) to the top interface surface
-  int gTop = mNumberOfGrids - 1 - mNumberOfCartesianGrids; 
+  int iSurfTop = mNumberOfGrids - 1 - mNumberOfCartesianGrids; 
   for (int i = imin; i <= imax; ++i)
      for (int j = jmin; j <= jmax; ++j)
      {
-	m_curviInterface[gTop](i,j,1) = -mTopoGridExt(i,j,1);
+	m_curviInterface[iSurfTop](i,j,1) = -mTopoGridExt(i,j,1);
      }
 
-// NEXT: assign the intermediate interface surfaces  
+// assign the intermediate interface surfaces
+  int refFact=1;
+  for (int iSurf=iSurfTop-1; iSurf >= 0; iSurf--)
+  {
+     int g = iSurf + mNumberOfCartesianGrids;
+     refFact *= 2;
+     float_sw4 scaleFact = ( m_topo_zmax - m_curviRefLev[iSurf]) / m_topo_zmax;
+// tmp
+     printf("assignInterfaceSurface iSurf=%d, refFactor=%d, curviRefLev=%e, scaleFactor=%e\n", iSurf, refFact, m_curviRefLev[iSurf], scaleFact);
+     
+// assign all interior points
+     for (int i=m_iStartInt[g]; i<= m_iEndInt[g]; i++)
+        for (int j=m_jStartInt[g]; j<= m_jEndInt[g]; j++)
+        {
+           int iFine = 1 + (i-1)*refFact;
+           int jFine = 1 + (j-1)*refFact;
+           
+           m_curviInterface[iSurf](i,j,1) = scaleFact * m_curviInterface[iSurfTop](iFine, jFine, 1) + (1.0 - scaleFact)*m_topo_zmax;
+        } // end for i, j
+  } // end for iSurf
 
+  // Extrapolate to define all ghost points outside physical boundaries and communicate parallel ghost point values
+  extrapolate_interface_surfaces();
+  
+// NEXT: smooth the interface surfaces
 }
+
+//-----------------------------------------------------------------------
+void EW::extrapolate_interface_surfaces()
+{
+   // UPDATE!
+   if( topographyExists() )
+   {
+      int gTop = mNumberOfGrids-1;
+// copy raw topography
+#pragma omp parallel for
+      for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; ++i)
+	 for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; ++j)
+	    mTopoGridExt(i,j,1) = mTopo(i,j,1);
+
+      int imin = mTopoGridExt.m_ib;
+      int imax = mTopoGridExt.m_ie;
+      int jmin = mTopoGridExt.m_jb;
+      int jmax = mTopoGridExt.m_je;
+// Number of extra ghost points = m_ext_ghost_points
+      int egh = m_iStart[gTop]-imin;
+
+// Update extra ghost points. Do not worry about processor boundaries,
+// they will be overwritten with correct values in the communication update afterward.
+#pragma omp parallel for
+      for( int i=imin+egh ; i <= imax-egh ; i++ )
+	 for( int q = 0 ; q < egh ; q++ )
+	 {
+	    mTopoGridExt(i,jmin+q,1)   = mTopoGridExt(i,jmin+egh,1);
+	    mTopoGridExt(i,jmax-q,1)   = mTopoGridExt(i,jmax-egh,1);
+	 }
+#pragma omp parallel for
+      for( int j=jmin ; j <= jmax ; j++ )
+	 for( int q = 0 ; q < egh ; q++ )
+	 {
+	    mTopoGridExt(imin+q,j,1) = mTopoGridExt(imin+egh,j,1);
+	    mTopoGridExt(imax-q,j,1) = mTopoGridExt(imax-egh,j,1);
+	 }
+      communicate_array_2d_ext( mTopoGridExt );
+   }
+}
+
 
 //-----------------------------------------------------------------------
 void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly, float_sw4 x0, float_sw4 y0)
