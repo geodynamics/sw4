@@ -493,13 +493,16 @@ void copy_topo_to_topogridext();
 bool getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth);
 
 // new argument: g = grid number
-   bool curvilinear_grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
+bool curvilinear_grid_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
 
 bool invert_curvilinear_grid_mapping( float_sw4 X0, float_sw4 Y0, float_sw4 Z0, float_sw4& q, float_sw4& r, float_sw4& s );
 
 bool find_curvilinear_derivatives_at_point( float_sw4 q, float_sw4 r, float_sw4 s,
 					    float_sw4 qX[], float_sw4 rX[], float_sw4 sX[]);
- 
+
+// curvilinear mapping between interface surfaces
+bool interface_surface_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
+   
 void save_errors( float_sw4 max_error[3], float_sw4 l2_error[3] );
 
 void compute_minvsoverh( float_sw4& minvsoh );

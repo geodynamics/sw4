@@ -702,6 +702,161 @@ void EW::smoothTopography(int maxIter)
 }
 
 //-----------------------------------------------------------------------
+bool EW::interface_surface_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 )
+{
+// if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
+// Return true and assign (X0,Y0,Z0) corresponding to (q,r,s)
+
+// Returns false if 
+// 1) (q,r,s) is outside the global parameter domain (expanded by ghost points)
+// 2) There is no curvilinear grid. Still compute (X0, Y0) based on the top Cartesian grid size
+// 3) (q,r) is not on this processor. Still compute (X0, Y0)
+
+// NOTE:
+// The parameters are normalized such that 1 <= q <= Nx is the full domain (without ghost points),
+//  1 <= r <= Ny, 1 <= s <= Nz.
+
+  int gFinest = mNumberOfGrids - 1;
+  float_sw4 h = mGridSize[gFinest];
+// check global parameter space
+  float_sw4 qMin = (float_sw4) (1- m_ghost_points);
+  float_sw4 qMax = (float_sw4) (m_global_nx[gFinest] + m_ghost_points);
+  float_sw4 rMin = (float_sw4) (1- m_ghost_points);
+  float_sw4 rMax = (float_sw4) (m_global_ny[gFinest] + m_ghost_points);
+  float_sw4 sMin = (float_sw4) m_kStart[gFinest];
+  float_sw4 sMax = (float_sw4) m_kEnd[gFinest];
+
+  if (! (q >= qMin && q <= qMax && r >= rMin && r <= rMax && s >= sMin && s <= sMax))
+  {
+    cout << "curvilinear_grid_mapping: input parameters out of bounds (q,r,s) = " << q << ", " << r << ", " << s << endl;
+    cout << "limits are " << qMin << " " << qMax << " " << rMin << " " << rMax << " " <<sMin <<  " " << sMax << endl;
+    return false;
+  }
+  
+  X0 = (q-1.0)*h;
+  Y0 = (r-1.0)*h;
+
+  if (!topographyExists())
+    return false;
+
+// bottom z-level for curvilinear grid = top z-level for highest Cartesian grid
+//  float_sw4 zTopCart = m_zmin[mNumberOfCartesianGrids-1]; 
+  float_sw4 zTopCart = m_topo_zmax; // top z-level for finest Cartesian grid
+  
+// ************************
+// compute index interval based on (q,r)
+  int iNear, jNear, kNear, i, j, k;
+
+  Z0 = zTopCart - h; // to make computeNearestGridPoint think we are in the curvilinear grid
+  computeNearestGridPoint(iNear, jNear, kNear, g, X0, Y0, Z0); // IS THE ARGUMENT 'g' CORRECT???
+
+// UPDATE
+  if (g != gFinest)
+    return false;
+
+  float_sw4 tau; // holds the elevation at (q,r). Recall that elevation=-z
+  if (m_analytical_topo)
+  {
+    tau = m_GaussianAmp*exp(-SQR((X0-m_GaussianXc)/m_GaussianLx) 
+                            -SQR((Y0-m_GaussianYc)/m_GaussianLy)); 
+  }
+  else // general case: interpolate mTopoGrid array
+  {
+// if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only need that grid point on this proc,
+// otherwise we need the 2x2 area [i,i+1] by [j,j+1]
+
+    float_sw4 xPt = (iNear-1)*h;
+    float_sw4 yPt = (jNear-1)*h;
+
+// first check if we are very close to a grid point
+    bool smackOnTop = (fabs((xPt-X0)/h) < 1.e-9 && fabs((yPt-Y0)/h) < 1.e-9);
+
+    if (smackOnTop)
+    {
+      if (!point_in_proc_ext(iNear,jNear,gFinest))
+        return false;
+      tau = mTopoGridExt(iNear,jNear,1);
+    }
+    else
+    {
+      computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
+// There are some subtle issues with the bi-cubic interpolation near parallel processor boundaries, 
+// see invert_curvilinear_mapping (below) for a discussion
+      if( point_in_proc_ext(i-3,j-3,gFinest) && point_in_proc_ext(i+4,j+4,gFinest) )
+      {
+	 float_sw4 a6cofi[8], a6cofj[8];
+	 gettopowgh( q-i, a6cofi );
+	 gettopowgh( r-j, a6cofj );
+         tau = 0;
+         for( int l=j-3 ; l <= j+4 ; l++ )
+	    for( int k=i-3 ; k <= i+4 ; k++ )
+	       tau += a6cofi[k-i+3]*a6cofj[l-j+3]*mTopoGridExt(k,l,1);
+      }
+      else
+      {
+        return false;
+      }
+    } // end else...(not smackOnTop)
+    
+  }// end general case: interpolating mTopoGrid array  
+
+// now we need to calculate Z0 = Z(q,r,s)
+
+// setup parameters for grid mapping
+  int Nz = m_kEnd[gFinest] - m_ghost_points;
+
+// zeta  > zetaBreak gives constant grid size = h
+  float_sw4 sBreak = 1. + m_zetaBreak*(Nz-1);
+
+  float_sw4 zeta, c1=0., c2=0., c3=0., c4=0.0, c5=0.0, c6=0.0, zMax;
+  zMax = zTopCart - (Nz - sBreak)*h;
+
+// quadratic term to make variation in grid size small at bottom boundary
+  c1 = zMax  + tau - mGridSize[gFinest]*(sBreak-1);
+// cubic term to make 2nd derivative zero at zeta=1
+  if (m_grid_interpolation_order>=3) 
+    c2 = c1;
+  else
+    c2 = 0.;
+	
+// 4th order term takes care of 3rd derivative, but can make grid warp itself inside out
+  if (m_grid_interpolation_order>=4) 
+    c3 = c2;
+  else
+    c3 = 0.;
+
+// Added continuity of the 4th and 5th derivatives
+  if( m_grid_interpolation_order >=5 )
+     c4 = c3;
+  else
+     c4 = 0;
+  if( m_grid_interpolation_order >=6 )
+     c5 = c4;
+  else
+     c5 = 0;
+  if( m_grid_interpolation_order >=7 )
+     c6 = c5;
+  else
+     c6 = 0;
+	
+
+// the forward mapping is ...
+  if (s <= (float_sw4) sBreak)
+  {
+    zeta = (s-1)/(sBreak-1.);
+    Z0 = (1.-zeta)*(-tau) 
+       + zeta*(zMax + c1*(1.-zeta) + c2*SQR(1.-zeta) + c3*(1.-zeta)*SQR(1.-zeta) + 
+	       (c4+c5*(1-zeta))*SQR(1-zeta)*SQR(1-zeta)+c6*SQR(1-zeta)*SQR(1-zeta)*SQR(1-zeta) );
+  }
+  else
+  {
+    Z0 = zMax + (s-sBreak)*h;
+  }
+  
+  return true;
+}
+
+//-----------------------------------------------------------------------
 void EW::assignInterfaceSurfaces()
 {
 //   int myRank;
