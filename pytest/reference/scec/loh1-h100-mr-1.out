@@ -1,0 +1,92 @@
+----------------------------------------------------------------
+            sw4 version 2.0
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Thu Nov 9 09:26:41 PST 2017
+  By user:     andersp
+  Machine:     quartz1916
+  Compiler:    /usr/tce/packages/impi/impi-2018.0-intel-18.0.0/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: loh1-h100-mr.in
+Default Supergrid thickness has been tuned; # grid points = 30 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 2.00000000e-02
+
+* Processing the grid command...
+* Setting nx to 301 to be consistent with h=1.00000000e+02
+* Setting ny to 301 to be consistent with h=1.00000000e+02
+* Setting nz to 171 to be consistent with h=1.00000000e+02
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0       100       301       301       161     14586761
+   1        50       601       601        21      7585221
+Total number of grid points (without ghost points): 2.2172e+07
+
+
+   Execution time, reading input file 2.79519558e-02 seconds 
+----------------------------------------------------
+ Making Output Directory: loh1-h100-mr/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.726949e+01, x=3.000000e+04, y=0.000000e+00
+2: Lon= 1.183386e+02, Lat=3.726949e+01, x=3.000000e+04, y=3.000000e+04
+3: Lon= 1.183374e+02, Lat=3.700000e+01, x=0.000000e+00, y=3.000000e+04
+
+Considering all material blocks
+block command: outside = 0, material = 24882794
+block command: outside = 15851566, material = 9031228
+
+       ----------- Material properties ranges ---------------
+       2.60000000e+03 kg/m^3 <=  Density <= 2.70000000e+03 kg/m^3
+       4.00000000e+03 m/s    <=  Vp      <= 6.00000000e+03 m/s
+       2.00000000e+03 m/s    <=  Vs      <= 3.46400000e+03 m/s
+       1.73210162e+00        <=  Vp/Vs   <= 2.00000000e+00
+       1.04000000e+10 Pa     <=  mu      <= 3.23980992e+10 Pa
+       2.08000000e+10 Pa     <=  lambda  <= 3.24038016e+10 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.000000e+02, minVs/h=34.64 (Cartesian)
+g=1, h=5.000000e+01, minVs/h=40 (Cartesian)
+
+   Execution time, start up phase 7.32491016e-02 seconds 
+Running sw4 on 72 processors...
+Writing output to directory: loh1-h100-mr/
+============================================================
+ Running program on 72 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 9
+ Number of time steps = 678 dt: 0.0132743
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1e+18 Nm 
+  Moment magnitude     (Mw): 5.93333
+  Number of moment sources 1
+-----------------------------------------------------------------------
+  Begin time stepping...
+Time step       1  t =   1.3274336e-02
+Time step     101  t =   1.3407080e+00
+Time step     201  t =   2.6681416e+00
+Time step     301  t =   3.9955752e+00
+Time step     401  t =   5.3230088e+00
+Time step     501  t =   6.6504425e+00
+Time step     601  t =   7.9778761e+00
+Time step     678  t =   9.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 2 minutes 3.23823481e+01 seconds 
+Writing ASCII USGS file, of size 679: loh1-h100-mr/sta01.txt
+Writing ASCII USGS file, of size 679: loh1-h100-mr/sta10.txt
+============================================================
+ program sw4 finished! 
+============================================================

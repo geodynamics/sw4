@@ -1,0 +1,134 @@
+----------------------------------------------------------------
+            sw4 version 1.20
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Sep 5 10:55:43 PDT 2017
+  By user:     andersp
+  Machine:     quartz764
+  Compiler:    /usr/tce/packages/impi/impi-2017.1-intel-18.0-beta/bin/mpicxx
+  3rd party include dir: /usr/apps/wpp/include, and library dir: /usr/apps/wpp/lib
+----------------------------------------------------------------
+
+Input file: /usr/gapps/wpp/toss_3_x86_64_ib/sw4/pytest/reference/attenuation/tw-topo-att-3.in
+Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+
+* Processing the grid command...
+* Setting h to 3.14000000e-02 from  x/(nx-1) (x=6.28000000e+00, nx=201)
+* Setting ny to 201 to be consistent with h=3.14000000e-02
+* Setting nz to 201 to be consistent with h=3.14000000e-02
+Extent of the computational domain xmax=6.28000000e+00 ymax=6.28000000e+00 zmax=6.26560000e+00
+***inside buildGaussianHillTopography***
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -5.995189e-01, max z = -2.999535e-35, top Cartesian z = 3.000000e+00
+allocateCurvilinearArrays: Number of grid points in curvilinear grid = 106, kStart = -1, kEnd = 108
+***inside generate_grid***
+***inside setup_metric***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0    0.0314       201       201       105      4242105
+   1    0.0314       201       201       106      4282506
+Total number of grid points (without ghost points): 8.52461e+06
+
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.00000000e+00
+Default Supergrid thickness has been tuned; # grid points = 1 grid sizes
+
+   Execution time, reading input file 1.17550135e-01 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Output Directory: tw-topo-att-3/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700006e+01, x=6.280000e+00, y=0.000000e+00
+2: Lon= 1.180001e+02, Lat=3.700006e+01, x=6.280000e+00, y=6.280000e+00
+3: Lon= 1.180001e+02, Lat=3.700000e+01, x=0.000000e+00, y=6.280000e+00
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00001971e+00 kg/m^3 <=  Density <= 2.99997396e+00 kg/m^3
+       1.63299890e+00 m/s    <=  Vp      <= 2.82840030e+00 m/s
+       1.00000180e+00 m/s    <=  Vs      <= 1.73203632e+00 m/s
+       1.52753343e+00        <=  Vp/Vs   <= 1.73205017e+00
+       2.00001971e+00 Pa     <=  mu      <= 3.99997486e+00 Pa
+       1.00006358e+00 Pa     <=  lambda  <= 2.99992972e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=3.140000e-02, minVs/h=31.8475 (Cartesian)
+g=1, h=3.140000e-02, minVs/h=31.8472 (curvilinear)
+
+
+*** Attenuation parameters calculated for 1 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 7.316348e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=7.31634816e-03
+*** Initialized Images
+   Execution time, start up phase 2.04838991e-01 seconds 
+Running sw4 on 36 processors...
+Writing output to directory: tw-topo-att-3/
+
+***  Starting solve ***
+============================================================
+ Running program on 36 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 1
+ Number of time steps = 137 dt: 0.00729927
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax free surface
+
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 1.00000000e+00
+  c = 1.30000000e+00
+  phase = 3.00000000e-01
+  mat-omega = 1.00000000e+00
+  mat-phase = 1.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
+-----------------------------------------------------------
+  Initial data has been assigned
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
+  Begin time stepping...
+Time step       1  t =   7.2992701e-03
+Time step     101  t =   7.3722628e-01
+Time step     137  t =   1.0000000e+00
+  Time stepping finished...
+   Execution time, solver phase 1 minute  1.76260500e+01 seconds 
+
+ Final solution errors: Linf =   1.6239894e-05, L2 =   1.2734940e-05
+
+ Final solution errors, attenuation: Linf =   1.5730074e-05, L2 =   1.2461862e-05
+**** Closing file with solution errors for testing
+============================================================
+ program sw4 finished! 
+============================================================

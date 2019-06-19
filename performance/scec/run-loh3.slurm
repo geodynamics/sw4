@@ -8,14 +8,11 @@
 
 numnodes=12
 
-CASE=LOH.3-h50
-RUN_COMMAND="./sw4 ${CASE}.in"
-#    RUN_COMMAND="numactl -m 1 check-hybrid.intel.cori"
+#numprocspernode=16
+for numprocspernode in 16 8; do
 
-numprocspernode=64
 numprocs=$(( ${numnodes}*${numprocspernode} ))
 echo "numprocspernode=" $numprocspernode
-# for numprocs in 1 2 4; do
 
 # Number of ranks x threads is constant
 # hc = hardware cores
@@ -39,10 +36,17 @@ export OMP_PROC_BIND=spread
 # Run the job with this MPI + OpenMP configuration
 MPI_COMMAND="srun -N ${numnodes} -n ${numprocs} -c ${numlc} --cpu_bind=cores" 
 
-COMMAND="${MPI_COMMAND} ${RUN_COMMAND}" 
+# 3rd case
+# icoe branch
+CASE=LOH.3-h50
+RUN_COMMAND="./sw4 ${CASE}.in"
+${MPI_COMMAND} ${RUN_COMMAND}  >& ${CASE}-sw4-${numprocs}mpi-${numcores}threads.out
+
+# developer branch
+#COMMAND="${MPI_COMMAND} ${RUN_COMMAND}" 
 #echo "OMP_NUM_THREADS="${OMP_NUM_THREADS}
 #echo ${COMMAND}
 
-# actual sw4 command
-${COMMAND} >& ${CASE}.out
+
+done
 

@@ -46,11 +46,11 @@ Image3D* Image3D::nil=static_cast<Image3D*>(0);
 
 //-----------------------------------------------------------------------
 Image3D::Image3D( EW* a_ew,
-		  double time, 
-		  double timeInterval, 
+		  float_sw4 time, 
+		  float_sw4 timeInterval, 
 		  int cycle, 
 		  int cycleInterval,
-                  double tstart,
+                  float_sw4 tstart,
 		  const std::string& filePrefix, 
 		  Image3DMode mode,
 		  bool doubleMode ):
@@ -312,7 +312,7 @@ void Image3D::setSteps(int a_steps)
 //}
 
 //-----------------------------------------------------------------------
-bool Image3D::timeToWrite( double time, int cycle, double dt )
+bool Image3D::timeToWrite( float_sw4 time, int cycle, float_sw4 dt )
 {
    // -----------------------------------------------
    // Check based on cycle
@@ -341,7 +341,7 @@ bool Image3D::timeToWrite( double time, int cycle, double dt )
 }
 
 //-----------------------------------------------------------------------
-void Image3D::update_image( int a_cycle, double a_time, double a_dt, vector<Sarray>& a_U, 
+void Image3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt, vector<Sarray>& a_U, 
 			    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
@@ -355,7 +355,7 @@ void Image3D::update_image( int a_cycle, double a_time, double a_dt, vector<Sarr
 }
                             
 //-----------------------------------------------------------------------
-void Image3D::force_write_image( double a_time, int a_cycle, vector<Sarray>& a_U, 
+void Image3D::force_write_image( float_sw4 a_time, int a_cycle, vector<Sarray>& a_U, 
 			    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
@@ -385,7 +385,7 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       int ni = (iu-il+1);
       int nj = (ju-jl+1);
 
-      double *up = a_U[g].c_ptr();
+      float_sw4 *up = a_U[g].c_ptr();
       if( mMode == RHO )
 	 up = a_Rho[g].c_ptr();
       else if( mMode == MU )
@@ -403,7 +403,9 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       else if( mMode == QS )
 	 up = a_Qs[g].c_ptr();
 
-      size_t ind = 0;
+
+      int niw = (mWindow[g][1]-mWindow[g][0])/st+1;
+      int nijw=niw*((mWindow[g][3]-mWindow[g][2])/st+1);
       if( mMode == UX || mMode == UY || mMode == UZ )
       {
 	 int c  = 0;
@@ -413,18 +415,37 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 	    c = 2;
 	 if( m_double )
 	 {
+	    //	    for( int ks=0 ; ks <= (mWindow[g][5]-mWindow[g][4])/st ; ks++ )
+	    //	       for( int js=0 ; js <= (mWindow[g][3]-mWindow[g][2])/st ; js++ )
+	    //		  for( int is=0 ; is <= (mWindow[g][1]-mWindow[g][0])/st ; is++ )
+	    //		  {
+	    //		     int k = mWindow[g][4]+ks*st;
+	    //		     int j = mWindow[g][2]+js*st;
+	    //		     int i = mWindow[g][0]+is*st;
+	    //		     size_t ind = is+ni*js+nij*ks;
+	    //		     m_doubleField[g][ind]= a_U(c,i,j,k);
+	    //		  }		     
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_doubleField[g][ind++] = up[c+ 3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_doubleField[g][ind]= (double) a_U[g](c+1,i,j,k);
+		     //		     m_doubleField[g][ind] = up[c+ 3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
+		  }
 	 }
 	 else
 	 {	    
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_floatField[g][ind++] = up[c+ 3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
-
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_floatField[g][ind] = (float) a_U[g](c+1,i,j,k);
+		     //		     m_floatField[g][ind++] = up[c+ 3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
+		  }
 	 }
       }
       else if( mMode == RHO || mMode == MU || mMode == LAMBDA || mMode == GRADRHO || mMode == GRADMU || mMode == GRADLAMBDA 
@@ -432,112 +453,152 @@ void Image3D::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       {
 	 if( m_double )
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_doubleField[g][ind++] = up[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)];
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_doubleField[g][ind] = up[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)];
+		  }
 	 }
 	 else
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_floatField[g][ind++] = up[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)];
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_floatField[g][ind] = up[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)];
+		  }
 	 }
       }
       else if( mMode == P )
       {
-         double* rho = a_Rho[g].c_ptr();
-         double* mu  = a_Mu[g].c_ptr();
-         double* la  = a_Lambda[g].c_ptr();
+         float_sw4* rho = a_Rho[g].c_ptr();
+         float_sw4* mu  = a_Mu[g].c_ptr();
+         float_sw4* la  = a_Lambda[g].c_ptr();
 	 if( m_double )
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_doubleField[g][ind++] = sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_doubleField[g][ind] = sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
              la[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])/rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]);
+		  }
 	 }
 	 else
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_floatField[g][ind++] = sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_floatField[g][ind] = sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
              la[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])/rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]);
+		  }
 	 }
       }
       else if( mMode == S )
       {
-         double* rho = a_Rho[g].c_ptr();
-         double* mu  = a_Mu[g].c_ptr();
+         float_sw4* rho = a_Rho[g].c_ptr();
+         float_sw4* mu  = a_Mu[g].c_ptr();
 	 if( m_double )
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_doubleField[g][ind++] = sqrt(mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]/
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_doubleField[g][ind] = sqrt(mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]/
                                                    rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]);
+		  }
 	 }
 	 else
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_floatField[g][ind++] = sqrt(mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]/
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_floatField[g][ind] = sqrt(mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]/
                                                    rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]);
+		  }
 	 }
       }
       else if( mMode == GRADP )
       {
-         double* rho = a_Rho[g].c_ptr();
-         double* mu  = a_Mu[g].c_ptr();
-         double* la  = a_Lambda[g].c_ptr();
-         double* gla = a_gLambda[g].c_ptr();
+         float_sw4* rho = a_Rho[g].c_ptr();
+         float_sw4* mu  = a_Mu[g].c_ptr();
+         float_sw4* la  = a_Lambda[g].c_ptr();
+         float_sw4* gla = a_gLambda[g].c_ptr();
 
 	 if( m_double )
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_doubleField[g][ind++] = 2*sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_doubleField[g][ind] = 2*sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
 		         la[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])*rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])
 			*gla[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)];
+		  }
 	 }
 	 else
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_floatField[g][ind++] = 2*sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_floatField[g][ind] = 2*sqrt((2*mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] + 
              la[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])*rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])
 			*gla[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)];
+		  }
 	 }
       }
       else if( mMode == GRADS )
       {
-         double* rho = a_Rho[g].c_ptr();
-         double* mu  = a_Mu[g].c_ptr();
-         double* gla = a_gLambda[g].c_ptr();
-         double* gmu = a_gMu[g].c_ptr();
+         float_sw4* rho = a_Rho[g].c_ptr();
+         float_sw4* mu  = a_Mu[g].c_ptr();
+         float_sw4* gla = a_gLambda[g].c_ptr();
+         float_sw4* gmu = a_gMu[g].c_ptr();
 
 	 if( m_double )
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_doubleField[g][ind++] = sqrt(mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]* 
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_doubleField[g][ind] = sqrt(mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]* 
 						    rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)])*(
 		   2*gmu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] - 4*gla[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]);
+		  }
 	 }
 	 else
 	 {
+#pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
-		     m_floatField[g][ind++] = sqrt(  mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]* 
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+niw*(j-mWindow[g][2])/st+nijw*(k-mWindow[g][4])/st;
+		     m_floatField[g][ind] = sqrt(  mu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]* 
 						    rho[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] )*
 		    (2*gmu[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)] - 4*gla[(i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl)]);
+		  }
 	 }
       }
       //Extrapolate extra point in z
@@ -596,7 +657,7 @@ void Image3D::compute_file_suffix( int cycle, std::stringstream& fileSuffix )
 }
 
 //-----------------------------------------------------------------------
-void Image3D::write_image( int cycle, std::string &path, double t,
+void Image3D::write_image( int cycle, std::string &path, float_sw4 t,
 			   Sarray& a_Z )
 {
   //File format: 
@@ -647,7 +708,7 @@ void Image3D::write_image( int cycle, std::string &path, double t,
    if( m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
-      CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s.str() );
       int myid;
 
       MPI_Comm_rank( MPI_COMM_WORLD, &myid );
@@ -659,7 +720,8 @@ void Image3D::write_image( int cycle, std::string &path, double t,
       CHECK_INPUT( ret == sizeof(int),"Image3D::write_image: Error writing precision" );
       ret = write(fid,&ng,sizeof(int));
       CHECK_INPUT( ret == sizeof(int),"Image3D::write_image: Error writing ng" );
-      ret = write(fid,&t,sizeof(double));
+      double dblevar = (double) t;
+      ret = write(fid,&dblevar,sizeof(double));
       CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing time" );
       int mone = -1;
       ret = write(fid,&mone,sizeof(int));
@@ -687,10 +749,11 @@ void Image3D::write_image( int cycle, std::string &path, double t,
 
       for(int g = 0; g < ng ;g++ )
       {
-         double h = mEW->mGridSize[g]*mImageSamplingFactor;
+         double h = (double) mEW->mGridSize[g]*mImageSamplingFactor;
 	 ret = write( fid, &h, sizeof(double) );
 	 CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing h" );
-         ret = write( fid, &mEW->m_zmin[g], sizeof(double) );
+	 dblevar = (double) mEW->m_zmin[g];
+         ret = write( fid, &dblevar, sizeof(double) );
 	 CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing zmin" );
 	 int globalSize[6];
          globalSize[0] = 1;
@@ -710,7 +773,7 @@ void Image3D::write_image( int cycle, std::string &path, double t,
    if( iwrite && !m_parallel_io[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
-      CHECK_INPUT(fid != -1, "Image3D::write_images:: Error opening: " << s );
+      CHECK_INPUT(fid != -1, "Image3D::write_images:: Error opening: " << s.str() );
    }
 
    // Write data blocks
@@ -741,8 +804,7 @@ void Image3D::write_image( int cycle, std::string &path, double t,
    if( gridinfo == 1 )
    {
       int g = ng-1;
-      double* zp = a_Z.c_ptr();
-      
+      float_sw4* zp = a_Z.c_ptr();
       size_t npts = ((size_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1)*
 	 ((mGlobalDims[g][3]-mGlobalDims[g][2])/st+1)*
 	 ((mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g]);
@@ -750,18 +812,43 @@ void Image3D::write_image( int cycle, std::string &path, double t,
       if( !mEW->usingParallelFS() || g == 0 )
 	 m_parallel_io[g]->writer_barrier();
       
+      size_t nptsloc  = ((size_t)(mWindow[g][1] - mWindow[g][0])/mImageSamplingFactor + 1)*
+	 ( (mWindow[g][3] - mWindow[g][2])/mImageSamplingFactor + 1)*
+	 ( (mWindow[g][5] - mWindow[g][4])/mImageSamplingFactor + 1 + m_extraz[g]);
+
+      int ni = (mWindow[g][1]-mWindow[g][0])/st+1;
+      int nij=ni*((mWindow[g][3]-mWindow[g][2])/st+1);
       if( m_double )
       {
+	 double* zfp = new double[nptsloc];
+#pragma omp parallel for
+	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
+	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
+		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+ni*(j-mWindow[g][2])/st+nij*(k-mWindow[g][4])/st;
+		     zfp[ind] = (double) a_Z(i,j,k);
+		  }
+	    //	 for( size_t i = 0; i < nptsloc ; i++ )
+	    //	    zfp[i] = zp[i];
 	char cprec[]="double";
-	m_parallel_io[g]->write_array( &fid, 1, zp, offset, cprec );
+	m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
 	offset += npts*sizeof(double);
+	delete[] zfp;
       }
       else
       {
-         int nptsloc = a_Z.npts();
 	 float* zfp = new float[nptsloc];
-	 for( size_t i = 0; i < nptsloc ; i++ )
-	    zfp[i] = zp[i];
+#pragma omp parallel for
+	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
+	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
+		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+ni*(j-mWindow[g][2])/st+nij*(k-mWindow[g][4])/st;
+		     zfp[ind] = (float) a_Z(i,j,k);
+		  }
+	    //	 for( size_t i = 0; i < nptsloc ; i++ )
+	    //	    zfp[i] = zp[i];
 	char cprec[]="float";
 	m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
 	offset += npts*sizeof(float);
@@ -842,7 +929,7 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
       CHECK_INPUT( ret == sizeof(int),"EW::read_image: Error reading -1" );
       CHECK_INPUT( mone == -1,"EW::read_image: Error reading -1 != " << mone );
 
-      double dum=-1;
+      double dum;
       ret = read(fid,&dum,sizeof(double));
       CHECK_INPUT( ret == sizeof(double),"EW::read_image: Error reading dummy-coord" );
 
@@ -860,16 +947,20 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
 
       for(int g = 0; g < ng ;g++ )
       {
+	 double tol = 1e-12;
+	 if( sizeof(float_sw4) < 8 )
+	    tol = 1e-6;
+
          double h;
 	 // = mEW->mGridSize[g]*mImageSamplingFactor;
 	 ret = read( fid, &h, sizeof(double) );
 	 CHECK_INPUT( ret == sizeof(double),"EW::read_image: Error reading h" );
-         CHECK_INPUT( abs(h-mGridSize[g])< 1e-12, "EW::read_image: Error h on file does not"
+         CHECK_INPUT( abs(h-mGridSize[g])< tol, "EW::read_image: Error h on file does not"
 		      << " match h in computation" << " hfile = " << h << " hcomp= " << mGridSize[g]);
          double zmin;
          ret = read( fid, &zmin, sizeof(double) );
 	 CHECK_INPUT( ret == sizeof(double),"EW::read_image: Error reading zmin" );
-         CHECK_INPUT( abs(zmin-m_zmin[g])< 1e-12, "EW::read_image: Error zmin on file does not"
+         CHECK_INPUT( abs(zmin-m_zmin[g])< tol, "EW::read_image: Error zmin on file does not"
 		      << " match zmin in computation" << " zmin file = " << zmin <<
 		      " zmin comp= " << m_zmin[g] );
 	 int globalSize[6];
@@ -911,7 +1002,7 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
       if( !usingParallelFS() || g == 0 )
 	 parallel_io[g]->writer_barrier();
       
-      double* doubleField = new double[nptsloc];
+      float_sw4* doubleField = new float_sw4[nptsloc];
       if( prec == 8 )
       {
 	 parallel_io[g]->read_array( &fid, 1, doubleField, offset, "double" );

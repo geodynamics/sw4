@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 -
 -  For SW4 install and build instructions, see the document 
--  "Installing SW4, version 1.1", which is included in doc/SW4-Installation.pdf
+-  "Installing SW4, version 2.0", which is included in doc/SW4-Installation.pdf
 -
 -----------------------------------------------------------------------
 

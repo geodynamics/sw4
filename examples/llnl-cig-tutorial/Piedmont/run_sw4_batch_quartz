@@ -1,0 +1,43 @@
+#!/bin/csh
+#MSUB -l partition=quartz
+#MSUB -q pReserved
+#MSUB -V
+#MSUB -N piedmont 
+#MSUB -o piedmont.out
+#MSUB -l walltime=1:00:00
+#MSUB -l nodes=4
+
+# Set SW4 bin, where executable exists
+set BIN = /usr/apps/sw4/optimize
+ 
+# Set CPUS/nodes for this machine, QUARTZ 
+set CPUSPERNODE = 36
+
+# Set number of nodes, must agree with "#MSUB -l nodes=4" above
+set NODES = 4 
+
+# Compute number of CPU's (cores)
+set NCPUS = ` echo $NODES | awk '{ print $1 * '$CPUSPERNODE' }' `
+
+echo
+echo NODE: $NODES NCPUS: $NCPUS
+
+# Set RUN
+set RUN = PIEDMONT_1D
+#set RUN = PIEDMONT_3D 
+
+echo
+echo RUN: $RUN
+
+cd $RUN
+pwd
+date
+
+# This command submits job 
+srun -N $NODES -n $NCPUS -p pbatch $BIN/sw4 $RUN.sw4input >! $RUN.output
+
+date
+cd ..
+
+
+

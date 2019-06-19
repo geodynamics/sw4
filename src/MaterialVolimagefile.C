@@ -32,6 +32,7 @@
 
 #include "EW.h"
 #include "MaterialVolimagefile.h"
+#include "sw4.h"
 
 //-----------------------------------------------------------------------
 MaterialVolimagefile::MaterialVolimagefile( EW* a_ew, bool rhomula, std::string path, std::string rhofile, 
@@ -93,9 +94,10 @@ void MaterialVolimagefile::set_material_properties( std::vector<Sarray> & rho, s
       for( int g = 0 ; g < mEW->mNumberOfGrids; g++) 
       {
 	 // Convert to cp,cs,rho, here cs is mu, cp is lambda
-	 double* rhoptr = rho[g].c_ptr();
-	 double* csptr  = cs[g].c_ptr();
-	 double* cpptr  = cp[g].c_ptr();
+	 float_sw4* rhoptr = rho[g].c_ptr();
+	 float_sw4* csptr  = cs[g].c_ptr();
+	 float_sw4* cpptr  = cp[g].c_ptr();
+#pragma omp parallel for
 	 for( size_t i = 0 ; i < rho[g].npts() ; i++ )
 	 {
             if( rhoptr[i] != -1 )

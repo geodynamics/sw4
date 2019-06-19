@@ -31,8 +31,8 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 #include "MaterialProperty.h"
 
-MaterialProperty:: MaterialProperty(int id, double vp0, double vp1, double vp2, double vs0, double vs1, double vs2, 
-				    double rho0, double rho1, double rho2, double qp, double qs )
+MaterialProperty:: MaterialProperty(int id, float_sw4 vp0, float_sw4 vp1, float_sw4 vp2, float_sw4 vs0, float_sw4 vs1, float_sw4 vs2, 
+				    float_sw4 rho0, float_sw4 rho1, float_sw4 rho2, float_sw4 qp, float_sw4 qs )
 {
   m_materialID = id;
   m_vp0 = vp0;
@@ -55,7 +55,7 @@ MaterialProperty:: MaterialProperty(int id, double vp0, double vp1, double vp2, 
   m_qs = qs;
 }
 
-void MaterialProperty::setSqrtCoefficients( double vp1o2, double vs1o2, double rho1o2 )
+void MaterialProperty::setSqrtCoefficients( float_sw4 vp1o2, float_sw4 vs1o2, float_sw4 rho1o2 )
 {
   m_vp1o2 = vp1o2;
   m_vs1o2 = vs1o2;

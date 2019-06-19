@@ -1,0 +1,41 @@
+
+Output the strain tensor by the command (for example):
+
+sac x=3 y=2 z=4 file=sta1 variables=strains 
+
+It will generate six files: sta1.xx, sta1.xy, sta1.xz, sta1.yy, sta1.yz, sta1.zz 
+
+
+To use these six components as a source, use the command:
+
+source x=3.0 y=2.0 z=4.0 m0=10 sacbase=sta1
+
+SW4 will read sta1.xx - sta1.zz and use these as time dependent moment tensor
+components in a source:
+
+      [ mxx(t) mxy(t) mxz(t) ] [d (delta)/dx ]
+  m0* [ mxy(t) myy(t) myz(t) ]*[d (delta)/dy ]
+      [ mxz(t) myz(t) mzz(t) ] [d (delta)/dz ]
+
+Notes:
+ 1. Most parameters to 'source' such as Mxx, Mxy, etc. will be ignored with the sacbase parameter.
+    One exception is the amplitude, which can be set by the parameter 'm0'.
+ 2. Only moment sources are implemented, it is not possible to use three sac files as a point source.
+ 3. A directory path can be used, e.g., sacbase=pointsource-h0p04/sta1
+ 4. It is assumed that all six sac files have the same starting point, time step,
+    and number of sample points. It is assumed that the utc starting point of the sac
+    files is equal to simulation time 0. The offset argument B in the sac file is respected, and
+    is assumed to be the same in all six files. 
+    The sac data is assumed to be zero for times between 0 and B. For times later than the
+    end time of the sac file, the value of the last point in the time series is used. If you want
+    this to be zero, you have to ramp down the time series in your sac data preprocessing.
+ 5. The location of the source is taken from the command line. If geographic coordinates are used,
+    a warning message is written if the (lat,lon) coordinates on the sac file do not agree with the
+    (lat,lon) given on the 'source' input line. The program will still run.
+ 6. The sac data are interpolated in time (internally in SW4) by quintic splines, there should 
+    be no problem to use different time steps in the computation and in the sac data.
+ 7. The standard behavior in SW4 and WPP is that the location of the sac stations, specified by 
+    the 'sac' command, are always moved to the nearest grid point, but the sources are always 
+    discretized accurately at their exact specified location, independently of the grid. This behavior
+    is still the same, so that sources specified by the 'sacbase' parameter will be discretized at 
+    their precise locations.

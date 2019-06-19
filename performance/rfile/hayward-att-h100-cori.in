@@ -17,8 +17,8 @@ attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
 
 # Rfile USGS 3D model + topography
 # NERSC (cori) parallel file system:
-rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp/hayward
-topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/hayward/USGSBayAreaVM-08.3.0-corder.rfile
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/global/cscratch1/sd/andersp
+topography input=rfile zmax=2.5e3 order=3 file=/global/cscratch1/sd/andersp/USGSBayAreaVM-08.3.0-corder.rfile
 
 # NEED TO CORRECT THE CORNER FREQ FOR H=100
 prefilter fc2=0.5 type=lowpass passes=2 order=2

@@ -1,0 +1,7 @@
+0. Copy the tinyDomain directory to the parallel file system 
+
+1. Run sw4 to generate synthetic observations:
+1a. first-fake-event.in
+1b. second-fake-event.in
+
+2. Run sw4mopt with iput file inv2.in

@@ -19,7 +19,6 @@
 # the time dependency being the Gaussian function
 #
 # use default values for the mesh refinement iteration
-developer time_order=2 cfl=0.75
 
 grid h=50 x=30000 y=30000 z=17000 extrapolate=1
 time t=15

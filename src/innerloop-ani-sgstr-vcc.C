@@ -1,5 +1,6 @@
 #include <cmath>
-typedef double float_sw4;
+#include "sw4.h"
+
 void innerloopanisgstrvc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			     int nk, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_c,
 			     int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
@@ -44,7 +45,7 @@ void innerloopanisgstrvc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 #pragma omp for
       for( int k= 1; k <= 6 ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	    //#pragma simd
 #pragma ivdep	 
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
@@ -586,7 +587,7 @@ void innerloopanisgstrvc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 #pragma omp for
       for( int k=nk-5; k <= nk ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	    //#pragma simd
 #pragma ivdep	 
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
@@ -1124,7 +1125,7 @@ void innerloopanisgstrvc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
 #pragma omp for
    for( int k=kstart; k <= kend ; k++ )
       for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	 //#pragma simd
 #pragma ivdep	 
 	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	 {

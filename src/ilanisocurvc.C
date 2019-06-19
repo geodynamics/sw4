@@ -1,5 +1,5 @@
 #include <cmath>
-typedef double float_sw4;
+#include "sw4.h"
 void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int nk, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_c,
 		     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
@@ -7,12 +7,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		     float_sw4* __restrict__  a_ghcof, float_sw4* __restrict__ a_strx,
 		     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz )
 {
-// Routine with supergrid stretchings strx and stry. No stretching
-// in z, since top is always topography, and bottom always interface
-// to a deeper Cartesian grid.
-// opcount: 
-//      Interior (k>6), 2126 arithmetic ops.
-//      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
+//  Assumes that metric terms have been merged into the material tensor a_c before 
+//  calling this routine
+
    const float_sw4 i6 = 1.0/6;
    const float_sw4 a1 =  2.0/3;
    const float_sw4 a2 = -1.0/12;
@@ -49,7 +46,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #pragma omp for
 	 for( int k= 1; k <= 6 ; k++ )
 	    for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	       //#pragma simd
 #pragma ivdep	 
 	       for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	       {
@@ -592,7 +589,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #pragma omp for
 	 for( int k=nk-5; k <= nk ; k++ )
 	    for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	       //#pragma simd
 #pragma ivdep	 
 	       for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	       {
@@ -1130,7 +1127,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #pragma omp for
       for( int k=kb; k <= ke ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	    //#pragma simd
 #pragma ivdep	 
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {

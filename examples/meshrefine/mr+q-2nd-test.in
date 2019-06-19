@@ -1,0 +1,40 @@
+# SW4 input file, testing mr+q
+fileio path=mr+q-test-2nd.sw4output verbose=1
+
+developer time_order=2 cfl=0.8
+
+# h=300/150
+grid x=2e4 y=2e4 z=1e4 h=300.0
+
+# MR, hbase=300.0 hmin=150.0
+# need to have at least 12 points in the top grid
+refinement zmax=1650
+
+time t=20.0
+supergrid gp=30
+attenuation phasefreq=1.0 nmech=3 maxfreq=1.25
+
+# block model 1D 
+# REF.mod
+block z1=0.0 z2=10.0 vp=1800.0 vs=700.0 rho=2100.0 qp=65.0 qs=33.0
+block z1=10.0 z2=20.0 vp=1800.0 vs=850.0 rho=2100.0 qp=85.0 qs=43.0
+block z1=20.0 z2=30.0 vp=2000.0 vs=1150.0 rho=2200.0 qp=115.0 qs=58.0
+block z1=30.0 z2=100.0 vp=2400.0 vs=1200.0 rho=2200.0 qp=120.0 qs=60.0
+block z1=100.0 z2=300.0 vp=2800.0 vs=1400.0 rho=2300.0 qp=140.0 qs=70.0
+block z1=300.0 z2=500.0 vp=3100.0 vs=1600.0 rho=2400.0 qp=160.0 qs=80.0
+block z1=500.0 z2=700.0 vp=3400.0 vs=1800.0 rho=2450.0 qp=180.0 qs=90.0
+block z1=700.0 z2=1000.0 vp=3700.0 vs=2100.0 rho=2500.0 qp=210.0 qs=105.0
+block z1=1000.0 z2=3000.0 vp=4400.0 vs=2400.0 rho=2600.0 qp=240.0 qs=120.0
+block z1=3000.0 z2=5000.0 vp=5100.0 vs=2800.0 rho=2700.0 qp=280.0 qs=140.0
+block z1=5000.0 z2=6000.0 vp=5600.0 vs=3150.0 rho=2750.0 qp=315.0 qs=158.0
+block z1=6000.0 z2=11000.0 vp=6150.0 vs=3600.0 rho=2825.0 qp=360.0 qs=180.0
+
+# SRF prefilter & rupture
+#prefilter fc2=1.25 type=lowpass passes=2 order=2
+#rupture file=m6.0-20.0x8.0.s200.0.v5.1.srf
+
+# 1 point source near a MR interface
+source x=1.4e4 y=1e4 z=1651 mxy=1e18 type=Gaussian t0=0.36 freq=20.0
+
+rec x=1.4e4 y=1e4 z=0 sta=sta1 file=sta1 usgsformat=1 sacformat=0
+

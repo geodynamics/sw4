@@ -43,7 +43,7 @@
 
 using namespace std;
 
-Filter::Filter(FilterType type, unsigned int numberOfPoles, unsigned int numberOfPasses, double f1, double f2)
+Filter::Filter(FilterType type, unsigned int numberOfPoles, unsigned int numberOfPasses, float_sw4 f1, float_sw4 f2)
 {
   m_type = type;
   m_poles = numberOfPoles;
@@ -68,13 +68,13 @@ Filter::~Filter()
     delete m_SOSp[q];
 }
 
-void Filter::computeSOS(double dt)
+void Filter::computeSOS(float_sw4 dt)
 {
   m_dt = dt;
   CHECK_INPUT( m_dt > 0., "Filter::computeSOS: non-positive time step!");
   
 // separation in angle between poles in prototype filter
-  double dAlpha = M_PI/m_poles;
+  float_sw4 dAlpha = M_PI/m_poles;
   
 // odd or even order?
   if (2*(m_poles/2) == m_poles)
@@ -89,7 +89,7 @@ void Filter::computeSOS(double dt)
   
 // build the second order sections corresponding to the poles
   SecondOrderSection *sos1_ptr, *sos2_ptr;
-  double alpha0, pole_re=1e10;
+  float_sw4 alpha0, pole_re=1e10;
   
   if (m_real_poles == 1)
   {
@@ -158,17 +158,17 @@ ostream& operator<<( ostream& output, const Filter& s )
 }
 
 
-double Filter::realPoleBP(double f1, double f2, double dt, SecondOrderSection *&sos_ptr)
+float_sw4 Filter::realPoleBP(float_sw4 f1, float_sw4 f2, float_sw4 dt, SecondOrderSection *&sos_ptr)
 {
 // pre-warp the corner frequencies
-  double om1 = tan(M_PI*dt*f1);
-  double om2 = tan(M_PI*dt*f2);
+  float_sw4 om1 = tan(M_PI*dt*f1);
+  float_sw4 om2 = tan(M_PI*dt*f2);
 
 //  printf("RP_BP: Input corner frequencies f1=%e, f2=%e, pre-warped om1=%e, om2=%e, time step=%e\n", 
 //	 f1, f2, om1, om2, dt);
 
-  double b = om2 - om1;
-  double p = om1*om2;
+  float_sw4 b = om2 - om1;
+  float_sw4 p = om1*om2;
 
 //  pole in proptotype filter: s = -1, with transfer function H(s)=1/(s+1)
 
@@ -178,7 +178,7 @@ double Filter::realPoleBP(double f1, double f2, double dt, SecondOrderSection *&
 //  D(s) = d[0] + d[1]*s + d[2]*s^2
 
 //  storage for analog filter
-  double n1[3], d1[3];
+  float_sw4 n1[3], d1[3];
 
 //  These are the coefficients in SOS #1 (Numerator and denominator)
   n1[0] = 0;
@@ -196,7 +196,7 @@ double Filter::realPoleBP(double f1, double f2, double dt, SecondOrderSection *&
   sos_ptr = new SecondOrderSection( b1, a1 );
 
 // estimate decay rate
-  double dscr = b*b - 4*p, pole_min_re = 0;
+  float_sw4 dscr = b*b - 4*p, pole_min_re = 0;
   if (dscr <= 0.)
     pole_min_re = fabs(0.5*b)*2/dt;
   else
@@ -208,10 +208,10 @@ double Filter::realPoleBP(double f1, double f2, double dt, SecondOrderSection *&
 
 }
 
-double Filter::realPoleLP(double fc, double dt, SecondOrderSection *&sos_ptr)
+float_sw4 Filter::realPoleLP(float_sw4 fc, float_sw4 dt, SecondOrderSection *&sos_ptr)
 {
 // pre-warp the corner frequency
-  double omc = tan(M_PI*dt*fc);
+  float_sw4 omc = tan(M_PI*dt*fc);
 
 //  printf("RP_LP: Input corner frequency fc=%e, pre-warped omc=%e, time step=%e\n", 
 //	 fc, omc, dt);
@@ -224,7 +224,7 @@ double Filter::realPoleLP(double fc, double dt, SecondOrderSection *&sos_ptr)
 //  D(s) = d[0] + d[1]*s + d[2]*s^2
 
 //  storage for analog filter
-  double n1[3], d1[3];
+  float_sw4 n1[3], d1[3];
 
 //  These are the coefficients in the SOS (Numerator and denominator)
   n1[0] = omc;
@@ -242,7 +242,7 @@ double Filter::realPoleLP(double fc, double dt, SecondOrderSection *&sos_ptr)
   sos_ptr = new SecondOrderSection( b1, a1 );
 
 // estimate decay rate
-  double pole_min_re = 0;
+  float_sw4 pole_min_re = 0;
   pole_min_re = fabs(omc)*2/dt;
   
 //  printf("Real pole LP: decay rate estimate exp(-alpha*t), alpha = %e\n", pole_min_re);
@@ -251,7 +251,7 @@ double Filter::realPoleLP(double fc, double dt, SecondOrderSection *&sos_ptr)
 }
 
 
-double Filter::complexConjugatedPolesBP(double f1, double f2, double dt, double alpha, 
+float_sw4 Filter::complexConjugatedPolesBP(float_sw4 f1, float_sw4 f2, float_sw4 dt, float_sw4 alpha, 
 			      SecondOrderSection *&sos1_ptr, SecondOrderSection *&sos2_ptr)
 {
 // Input: 
@@ -269,30 +269,30 @@ double Filter::complexConjugatedPolesBP(double f1, double f2, double dt, double 
 // return min_pole_re: decay rate estimate
   CHECK_INPUT(alpha < M_PI && alpha > M_PI/2, "pole angle alpha = " << alpha << " out of range");
 
-  double pole_min_re=0.;
+  float_sw4 pole_min_re=0.;
 
 // imaginary unit
-  complex<double> iu(0.,1.);
+  complex<float_sw4> iu(0.,1.);
 
 //pre-warp the corner frequencies
-  double om1 = tan(M_PI*dt*f1);
-  double om2 = tan(M_PI*dt*f2);
+  float_sw4 om1 = tan(M_PI*dt*f1);
+  float_sw4 om2 = tan(M_PI*dt*f2);
 
 //  printf("CCP_BP: Input corner frequencies f1=%e, f2=%e, pre-warped om1=%e, om2=%e, time step=%e\n", 
 //	 f1, f2, om1, om2,dt);
   
-  double b = om2 - om1;
-  double p = om1*om2;
+  float_sw4 b = om2 - om1;
+  float_sw4 p = om1*om2;
 
 // pole #1
-  complex<double> q(cos(alpha),sin(alpha));
+  complex<float_sw4> q(cos(alpha),sin(alpha));
 
 // analog bp filter coeff transfer fcn are saved as N(s)/D(s), 
 // N(s) = n(1) + n(2)*s + n(3)*s^2
 // D(s) = d(1) + d(2)*s + d(3)*s^2
 
 // initialize storage
-  double n1[3], n2[3], d1[3], d2[3];
+  float_sw4 n1[3], n2[3], d1[3], d2[3];
   for (int q=0; q<3; q++)
   {
     n1[q] = 0;
@@ -302,11 +302,11 @@ double Filter::complexConjugatedPolesBP(double f1, double f2, double dt, double 
   }
 
 // roots of the two quadratics
-  complex<double> s1 = 0.5*(q*b + sqrt(pow(q,2)*b*b - 4*p));
-  complex<double> s2 = 0.5*(q*b - sqrt(pow(q,2)*b*b - 4*p));
+  complex<float_sw4> s1 = 0.5*(q*b + sqrt(pow(q,2)*b*b - 4*p));
+  complex<float_sw4> s2 = 0.5*(q*b - sqrt(pow(q,2)*b*b - 4*p));
 // these are for testing only
-//  complex<double> s3 = 0.5*(conj(q)*b + sqrt(pow(conj(q),2)*b*b - 4*p));
-//  complex<double> s4 = 0.5*(conj(q)*b - sqrt(pow(conj(q),2)*b*b - 4*p));
+//  complex<float_sw4> s3 = 0.5*(conj(q)*b + sqrt(pow(conj(q),2)*b*b - 4*p));
+//  complex<float_sw4> s4 = 0.5*(conj(q)*b - sqrt(pow(conj(q),2)*b*b - 4*p));
 
 // if Re(s1) >= 0 or Re(s2)>= the filter is unstable
   if (real(s1) >= 0 || real(s2) >= 0)
@@ -354,7 +354,7 @@ double Filter::complexConjugatedPolesBP(double f1, double f2, double dt, double 
   return pole_min_re;
 }
 
-double Filter::complexConjugatedPolesLP(double fc, double dt, double alpha, 
+float_sw4 Filter::complexConjugatedPolesLP(float_sw4 fc, float_sw4 dt, float_sw4 alpha, 
 					SecondOrderSection *&sos_ptr)
 {
 // Input: 
@@ -368,23 +368,23 @@ double Filter::complexConjugatedPolesLP(double fc, double dt, double alpha,
 // return min_pole_re: decay rate estimate
   CHECK_INPUT(alpha < M_PI && alpha > M_PI/2, "pole angle alpha = " << alpha << " out of range");
 
-  double pole_min_re=0.;
+  float_sw4 pole_min_re=0.;
 
 //pre-warp the corner frequencies
-  double omc = tan(M_PI*dt*fc);
+  float_sw4 omc = tan(M_PI*dt*fc);
 
 //  printf("CCP_LP: Input corner frequency fc=%e, pre-warped omc=%e, time step=%e\n", 
 //	 fc, omc, dt);
   
 // pole in prototype filter
-  complex<double> q(cos(alpha),sin(alpha));
+  complex<float_sw4> q(cos(alpha),sin(alpha));
 
 // analog lp filter coeff transfer fcn are saved as N(s)/D(s), 
 // N(s) = n[0] + n[1]*s + n[2]*s^2
 // D(s) = d[0] + d[1]*s + d[2]*s^2
 
 // initialize storage
-  double n1[3], d1[3];
+  float_sw4 n1[3], d1[3];
   for (int q=0; q<3; q++)
   {
     n1[q] = 0;
@@ -410,13 +410,13 @@ double Filter::complexConjugatedPolesLP(double fc, double dt, double alpha,
   return pole_min_re;
 }
 
-void Filter::a2d(double n[3], double d[3], Polynomial &b, Polynomial &a)
+void Filter::a2d(float_sw4 n[3], float_sw4 d[3], Polynomial &b, Polynomial &a)
 {
 // transform analog to digital by the transformation AD(s) = (1-s)/(1+s)
 // analog filter has transfer fcn H(s) = (n[0] + n[1]*s + n[2]*s^2)/(d[0] + d[1]*s + d[2]*s^2)
 // digital filter has normalized transfer function H(AD(s)) = (b[0] + b[1]*s + b[2]*s^2)/(a[0] + a[1]*s + a[2]*s^2), a[0] = 1
 // normalization factor
-  double c = d[0] + d[1] + d[2]; 
+  float_sw4 c = d[0] + d[1] + d[2]; 
 // denominator
   a.m_c[0] = 1;
   a.m_c[1] = 2*(d[0]-d[2])/c;
@@ -428,11 +428,11 @@ void Filter::a2d(double n[3], double d[3], Polynomial &b, Polynomial &a)
 } // end a2d
 
 //
-double Filter::estimatePrecursor()
+float_sw4 Filter::estimatePrecursor()
 {
   CHECK_INPUT(m_initialized, "Filter::estimatePrecursor called before filter was initialized");
   
-  double timeScale=0;
+  float_sw4 timeScale=0;
 
 // there is only a precursor if the filter is applied twice (forwards + backwards)
   if (m_passes == 2)
@@ -446,7 +446,7 @@ double Filter::estimatePrecursor()
 
 
 //
-void Filter::evaluate(int N, double *u, double *mf)
+void Filter::evaluate(int N, float_sw4 *u, float_sw4 *mf)
 // Input: N: size of arrays u and mf
 //        u[i]: signal to be filtered
 // Output: mf[i]: filtered signal
@@ -454,8 +454,8 @@ void Filter::evaluate(int N, double *u, double *mf)
 // Note: u and mf can be the same array, in which case the filtered signal overwrites the original signal
 {
   int q, i;
-  double a[3], b[3], wn, wn1, wn2, op;
-  double x1, x2, y1, y2;
+  float_sw4 a[3], b[3], wn, wn1, wn2, op;
+  float_sw4 x1, x2, y1, y2;
   
   CHECK_INPUT( m_initialized, "Filter::zerophase: filter is NOT initialized!");
 
@@ -463,7 +463,8 @@ void Filter::evaluate(int N, double *u, double *mf)
   
   if (mf != u)
   {
-    for (i=0; i<N; i++)
+#pragma omp parallel for
+    for (int i=0; i<N; i++)
       mf[i] = u[i];
   }
   

@@ -1,0 +1,62 @@
+#------------------------------
+# Grid 
+#
+grid h=350 x=35000 y=35000 z=19500
+#
+#------------------------------
+# Time
+#
+time t=9 utcstart=09/17/2013:17:49:47.000
+#
+#------------------------------
+# Paths etc..
+#
+fileio verbose=1 path=obs1 pfs=0
+#
+#------------------------------
+# Default supergrid parameters
+#
+#------------------------------
+# Reference material
+# 
+block vp=4630.76 vs=2437.56 r=2650
+#
+#
+#------------------------------
+# Source 
+#
+source x=17500 y=17500 z=2000 Mxy=1 m0=1e18 t0=1.5 freq=4 type=Gaussian
+#
+#----------------------------
+#
+#------------------------------
+#
+# Observations (synthetic)
+#  
+rec x=11500 y=11500 z=0 file=sta11 usgsformat=1 sacformat=0
+rec x=14500 y=11500 z=0 file=sta21 usgsformat=1 sacformat=0
+rec x=17500 y=11500 z=0 file=sta31 usgsformat=1 sacformat=0
+rec x=20500 y=11500 z=0 file=sta41 usgsformat=1 sacformat=0
+rec x=23500 y=11500 z=0 file=sta51 usgsformat=1 sacformat=0
+rec x=11500 y=14500 z=0 file=sta12 usgsformat=1 sacformat=0
+rec x=14500 y=14500 z=0 file=sta22 usgsformat=1 sacformat=0
+rec x=17500 y=14500 z=0 file=sta32 usgsformat=1 sacformat=0
+rec x=20500 y=14500 z=0 file=sta42 usgsformat=1 sacformat=0
+rec x=23500 y=14500 z=0 file=sta52 usgsformat=1 sacformat=0
+rec x=11500 y=17500 z=0 file=sta13 usgsformat=1 sacformat=0
+rec x=14500 y=17500 z=0 file=sta23 usgsformat=1 sacformat=0
+rec x=17500 y=17500 z=0 file=sta33 usgsformat=1 sacformat=0
+rec x=20500 y=17500 z=0 file=sta43 usgsformat=1 sacformat=0
+rec x=23500 y=17500 z=0 file=sta53 usgsformat=1 sacformat=0
+rec x=11500 y=20500 z=0 file=sta14 usgsformat=1 sacformat=0
+rec x=14500 y=20500 z=0 file=sta24 usgsformat=1 sacformat=0
+rec x=17500 y=20500 z=0 file=sta34 usgsformat=1 sacformat=0
+rec x=20500 y=20500 z=0 file=sta44 usgsformat=1 sacformat=0
+rec x=23500 y=20500 z=0 file=sta54 usgsformat=1 sacformat=0
+rec x=11500 y=23500 z=0 file=sta15 usgsformat=1 sacformat=0
+rec x=14500 y=23500 z=0 file=sta25 usgsformat=1 sacformat=0
+rec x=17500 y=23500 z=0 file=sta35 usgsformat=1 sacformat=0
+rec x=20500 y=23500 z=0 file=sta45 usgsformat=1 sacformat=0
+rec x=23500 y=23500 z=0 file=sta55 usgsformat=1 sacformat=0
+#
+#-----------------------------------------------------------------------

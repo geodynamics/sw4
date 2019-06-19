@@ -40,6 +40,9 @@
 #include <iostream>
 #include <iomanip>
 #include <mpi.h>
+#ifndef SW4_NOOMP
+#include <omp.h>
+#endif
 #include "version.h"
 
 using namespace std;
@@ -129,12 +132,12 @@ main(int argc, char **argv)
   cout << std::scientific;
   
 // Save the source description here
-  vector<Source*> GlobalSources; 
+  vector<vector<Source*> > GlobalSources; 
 // Save the time series here
-  vector<TimeSeries*> GlobalTimeSeries;
+  vector<vector<TimeSeries*> > GlobalTimeSeries;
 
 // make a new simulation object by reading the input file 'fileName'
-  EW simulation(fileName, GlobalSources, GlobalTimeSeries);
+  EW simulation(fileName, GlobalSources, GlobalTimeSeries );
 
   if (!simulation.wasParsingSuccessful())
   {
@@ -161,18 +164,52 @@ main(int argc, char **argv)
     {
       if (myRank == 0)
       {
-	cout << "Running sw4 on " <<  nProcs << " processors..." << endl
-	     << "Writing output to directory: " 
-	     << simulation.getPath() << endl;
+	 int nth=1;
+#ifndef SW4_NOOMP
+#pragma omp parallel
+	 {
+	    if( omp_get_thread_num() == 0 )
+	    {
+	       nth=omp_get_num_threads();
+	    }
+	 }
+#endif
+	 if( nth == 1 )
+	 {
+	    if( nProcs > 1 )
+	       cout << "Running sw4 on " <<  nProcs << " processors..." << endl;
+	    else
+	       cout << "Running sw4 on " <<  nProcs << " processor..." << endl;
+	 }
+	 else
+	 {
+	    if( nProcs > 1 )
+	       // Assume same number of threads for each MPI-task.
+	       cout << "Running sw4 on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
+	    else
+	       cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
+	 }
+	 //FTNC	 if( simulation.m_croutines )
+	 //FTNC	    cout << "   Using C routines." << endl;
+	 //FTNC	 else
+	 //FTNC	    cout << "   Using fortran routines." << endl;
+	 cout << "Writing output to directory: " 
+		 << simulation.getPath() << endl;
+      
       }
 // run the simulation
-      simulation.solve( GlobalSources, GlobalTimeSeries );
+      int ng=simulation.mNumberOfGrids;
+      vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
+      vector<Sarray> U(ng), Um(ng);
+      simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
+			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
+			ucorr_saved, false, 0, 0 );
 
 // save all time series
       
-      for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+      for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
-	GlobalTimeSeries[ts]->writeFile();
+	GlobalTimeSeries[0][ts]->writeFile();
       }
 
       if( myRank == 0 )

@@ -50,9 +50,9 @@ MaterialPfile::MaterialPfile( EW * a_ew,
 			     const std::string file,
 			     const std::string directory,
 			     const int nstenc,
-			     const double vpmin,
-			     const double vsmin,
-			     const double rhomin,
+			     const float_sw4 vpmin,
+			     const float_sw4 vsmin,
+			     const float_sw4 rhomin,
 			     const bool flatten,
 			     const bool coords_geographic )
    :
@@ -80,7 +80,7 @@ MaterialPfile::MaterialPfile( EW * a_ew,
       m_ymin = min(y1,min(y2,min(y3,y4)));
       m_ymax = max(y1,max(y2,max(y3,y4)));      
    }
-   double bbox[6];
+   float_sw4 bbox[6];
    mEW->getGlobalBoundingBox( bbox );
 
    if (m_xmin > bbox[0] || m_ymin > bbox[2] || m_depthmin > bbox[4] ||
@@ -109,7 +109,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 // the qs and qp arrays are always allocated to allow qs[g].is_defined() to be called
 //  bool use_attenuation = !(qs.size()==0);
 //  bool use_attenuation = m_ew->usingAttenuation();
-  bool use_attenuation = false;
+//  bool use_attenuation = false;
 
   int outside = 0; int material = 0;
 
@@ -118,9 +118,10 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 //tmp
 //  printf("MPF: set_mat_prop: use_attenuation=%i\n", mWPP->usingAttenuation());
   
-  double x, y, z, lon, lat, depth;
-  double vp,vs,density,qup,qus,zsed,zmoho;
-  bool foundcrust;
+//  float_sw4 x, y, z, depth;
+//  double lon, lat;
+
+//  bool foundcrust;
   
   int g, kLow, topLevel = mEW->mNumberOfGrids-1;
 // first deal with the Cartesian grids
@@ -134,15 +135,17 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
     if( m_coords_geographic )
     {
 //       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k)
+#pragma omp parallel for reduction(+:material,outside)
        for (int k = kLow; k <= mEW->m_kEnd[g]; ++k)
 	  for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
 	     for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
 	     {
-		x = (i-1)*mEW->mGridSize[g];
-		y = (j-1)*mEW->mGridSize[g];
-		z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
-                  
+		float_sw4 x = (i-1)*mEW->mGridSize[g];
+		float_sw4 y = (j-1)*mEW->mGridSize[g];
+		float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
+                double lon, lat;  
 		mEW->computeGeographicCoord( x, y, lon, lat );
+		float_sw4 depth;
 		mEW->getDepth(x,y,z,depth);
 
 		if( inside( lat, lon, depth )  )
@@ -153,6 +156,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 // tmp
 //		  bool debug = (i==15 && j==15 && k==1);
 
+		   float_sw4 vp,vs,density,qup,qus;
 		  sample_latlon( lat, lon, depth, vp, vs, density, qup, qus, false);
 		  rho[g](i,j,k) = density;
 		  cp[g](i,j,k) = vp;
@@ -185,14 +189,15 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
     else
     {
        // Cartesian p-file
+#pragma omp parallel for reduction(+:material,outside)
        for (int k = kLow; k <= mEW->m_kEnd[g]; ++k)
 	  for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
 	     for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
 	     {
-		x = (i-1)*mEW->mGridSize[g];
-		y = (j-1)*mEW->mGridSize[g];
-		z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
-
+		float_sw4 x = (i-1)*mEW->mGridSize[g];
+		float_sw4 y = (j-1)*mEW->mGridSize[g];
+		float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
+		float_sw4 depth;
 		mEW->getDepth(x,y,z,depth);
 
 		if( inside_cart( x, y, depth )  )
@@ -202,7 +207,7 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   //---------------------------------------------------------
 // tmp
 //		  bool debug = (i==15 && j==15 && k==1);
-
+		   float_sw4 vp,vs,density,qup,qus;
 		  sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
 
 		   rho[g](i,j,k) = density;
@@ -252,23 +257,24 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
     if( m_coords_geographic )
     {
 //       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) 
+#pragma omp parallel for reduction(+:material,outside)
        for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
 	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
 	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
 	     {
-		x = mEW->mX(i,j,k);
-		y = mEW->mY(i,j,k);
-		z = mEW->mZ(i,j,k);
-
+		float_sw4 x = mEW->mX(i,j,k);
+		float_sw4 y = mEW->mY(i,j,k);
+		float_sw4 z = mEW->mZ(i,j,k);
+		double lon, lat;
 		mEW->computeGeographicCoord( x, y, lon, lat );
-		depth = z - mEW->mZ(i,j,1);
+		float_sw4 depth = z - mEW->mZ(i,j,1);
 
 		if( inside( lat, lon, depth )  )
 		{
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-		  
+		   float_sw4 vp,vs,density,qup,qus;		  
 		  sample_latlon( lat, lon, depth, vp, vs, density, qup, qus, false );
 		  rho[g](i,j,k) = density;
 		  cp[g](i,j,k) = vp;
@@ -301,20 +307,22 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
     else
     {
 //       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
+#pragma omp parallel for reduction(+:material,outside)
        for (int k = kLow; k <= mEW->m_kEnd[g]; ++k) // don't attempt querying the pfile above the topography (start at k=1)
 	  for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
 	     for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i)
 	     {
-		x = mEW->mX(i,j,k);
-		y = mEW->mY(i,j,k);
-		z = mEW->mZ(i,j,k);
-		depth = z - mEW->mZ(i,j,1);
+		float_sw4 x = mEW->mX(i,j,k);
+		float_sw4 y = mEW->mY(i,j,k);
+		float_sw4 z = mEW->mZ(i,j,k);
+		float_sw4 depth = z - mEW->mZ(i,j,1);
 		if( inside_cart( x, y, depth )  ) 
 		{
 		   //---------------------------------------------------------
 		   // Query the location...
 		   //---------------------------------------------------------
-		  sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
+		   float_sw4 vp,vs,density,qup,qus;
+		   sample_cart( x, y, depth, vp, vs, density, qup, qus, false );
 		   rho[g](i,j,k) = density;
 		   cp[g](i,j,k) = vp;
 		   cs[g](i,j,k) = vs;
@@ -432,7 +440,7 @@ void MaterialPfile::read_pfile( )
    }
    
 
-   double km = 1000;
+   float_sw4 km = 1000;
    if( m_coords_geographic )
    {
       m_depthmin = m_depthmin*km;
@@ -496,8 +504,8 @@ void MaterialPfile::read_pfile( )
    }
    else
    {
-      m_x = new double[m_nx];
-      m_y = new double[m_ny];
+      m_x = new float_sw4[m_nx];
+      m_y = new float_sw4[m_ny];
 // new 3-D Sarrays
       mZ.define(m_nx, m_ny, m_nmaxdepth);
       mVp.define(m_nx, m_ny, m_nmaxdepth);
@@ -517,7 +525,7 @@ void MaterialPfile::read_pfile( )
    
    int kk, ndepth, line=7;
 
-   double zc, vp, vs, rho, qp, qs;
+   float_sw4 zc, vp, vs, rho, qp, qs;
 	          
    if( !m_coords_geographic ) // cartesian
    {
@@ -555,8 +563,8 @@ void MaterialPfile::read_pfile( )
 	    }
 
 // check the range
-	    double y = m_ymin + jy*m_h;
-	    double x = m_xmin + ix*m_h;
+	    float_sw4 y = m_ymin + jy*m_h;
+	    float_sw4 x = m_xmin + ix*m_h;
 	    if (fabs(y - m_y[jy]) + fabs(x - m_x[ix]) > 0.1*m_h)
 	    {
 	       if (myRank == 0)
@@ -756,8 +764,8 @@ void MaterialPfile::read_pfile( )
 
 
 //-----------------------------------------------------------------------
-void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp, 
-				   double &vs,double &rho, double &qp, double &qs,
+void MaterialPfile::sample_latlon( double lats,double lons,float_sw4 zs, float_sw4 &vp, 
+				   float_sw4 &vs,float_sw4 &rho, float_sw4 &qp, float_sw4 &qs,
 				   bool debug )
 //--------------------------------------------------------------------------
 // return material properties (vp, vs, rho) at point (lats, lons, zs)
@@ -841,15 +849,15 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
    //     printf("lat[%i]=%e\n", q, m_lat[q]);     
    // }
    
-   double w=0;
+   float_sw4 w=0;
    vp=vs=rho=qp=qs=0; 
-   double appm  = 0.5*m_nstenc*m_h/sqrt(-log(1e-6));
-   double appmi2 = 1.0/(appm*appm);
+   float_sw4 appm  = 0.5*m_nstenc*m_h/sqrt(-log(1e-6));
+   float_sw4 appmi2 = 1.0/(appm*appm);
 
    for( int j1 = jj ; j1 <= jj2; j1++ )
       for( int i1 = ii ; i1 <= ii2; i1++ )
       {
-	  double wgh = exp(-( (lons-m_lon[i1])*(lons-m_lon[i1])
+	  float_sw4 wgh = exp(-( (lons-m_lon[i1])*(lons-m_lon[i1])
 			     +(lats-m_lat[j1])*(lats-m_lat[j1]) )*appmi2 );
 	  w += wgh;
 
@@ -870,8 +878,8 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
 //	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
 //	  if( factor < 0 )
 //	     factor = 0;
-	  double dz = mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1);
-	  double factor=0;
+	  float_sw4 dz = mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1);
+	  float_sw4 factor=0;
 	  if( dz != 0 )
 	  {
 	     factor = (zs-mZ(i1+1,j1+1,k1))/dz;
@@ -896,7 +904,7 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
       } // end for j1, i1
    
    // Now compute average properties by distance-weighted Gaussian average
-   double iw;
+   float_sw4 iw;
 // at this point, w holds the sum of the weigths
    if (w != 0.)
      iw = 1.0/w;
@@ -905,9 +913,9 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
      printf("Error MaterialPfile::sample_latlon: weight w = 0 at lat=%e, lon=%e, depth=%e\n", lats, lons, zs);
 // tmp
      printf("ii=%i, ii2=%i, jj=%i, jj2=%i, lon_ppm[ii]=%e, lat_ppm[jj]=%e\n", ii, ii2, jj, jj2, m_lon[ii], m_lat[jj]);
-     double dist2    = (lons-m_lon[ii])*(lons-m_lon[ii]) + (lats-m_lat[jj])*(lats-m_lat[jj]);
-     double exponent = -dist2*appmi2;
-     double wgh      =  exp( exponent );
+     float_sw4 dist2    = (lons-m_lon[ii])*(lons-m_lon[ii]) + (lats-m_lat[jj])*(lats-m_lat[jj]);
+     float_sw4 exponent = -dist2*appmi2;
+     float_sw4 wgh      =  exp( exponent );
      printf("dist2=%e, appm=%e, appmi2=%e, exponent=%e, wgh=%e\n", dist2, appm, appmi2, exponent, wgh);
 
      MPI_Abort(MPI_COMM_WORLD, 1);
@@ -925,8 +933,8 @@ void MaterialPfile::sample_latlon( double lats,double lons,double zs, double &vp
 }
 
 //-----------------------------------------------------------------------
-void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp, 
-				 double &vs, double &rho, double &qp, double &qs, bool debug )
+void MaterialPfile::sample_cart( float_sw4 xs, float_sw4 ys, float_sw4 zs, float_sw4 &vp, 
+				 float_sw4 &vs, float_sw4 &rho, float_sw4 &qp, float_sw4 &qs, bool debug )
 //--------------------------------------------------------------------------
 // return material properties (vp, vs, rho) at point (xs, ys, zs)
 //--------------------------------------------------------------------------
@@ -995,15 +1003,15 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
      jj = jj2 - (m_nstenc-1);
    }
    
-   double w=0;
+   float_sw4 w=0;
    vp=vs=rho=qp=qs=0; 
-   double appm  = 0.5*m_nstenc*m_h/sqrt(-log(1e-6));
-   double appmi2 = 1.0/(appm*appm);
+   float_sw4 appm  = 0.5*m_nstenc*m_h/sqrt(-log(1e-6));
+   float_sw4 appmi2 = 1.0/(appm*appm);
 
    for( int j1 = jj; j1 <= jj2; j1++ )
       for( int i1 = ii; i1 <= ii2; i1++ )
       {
-	  double wgh = exp(-( (xs-m_x[i1])*(xs-m_x[i1])
+	  float_sw4 wgh = exp(-( (xs-m_x[i1])*(xs-m_x[i1])
 			     +(ys-m_y[j1])*(ys-m_y[j1]) )*appmi2 );
 	  w += wgh;
 
@@ -1024,8 +1032,8 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
 // now we should have mZ(k1) <= zs < mZ(k1+1)
 
 // linear interpolation factor
-	  double dz =mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1);
-	  double factor=0;
+	  float_sw4 dz =mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1);
+	  float_sw4 factor=0;
 	  //	  double factor = (zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1));
 	  //          if( factor < 0 )
 	  //	     factor = 0;
@@ -1055,7 +1063,7 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
       }
 
 // Normalize
-   double iw;
+   float_sw4 iw;
    if (w != 0.)
      iw = 1.0/w;
    else
@@ -1063,9 +1071,9 @@ void MaterialPfile::sample_cart( double xs, double ys, double zs, double &vp,
      printf("Error MaterialPfile::sample_cart: weight w = 0 at x=%e, y=%e, depth=%e\n", xs, ys, zs);
 // tmp
      printf("ii=%i, ii2=%i, jj=%i, jj2=%i, x[ii]=%e, y[jj]=%e\n", ii, ii2, jj, jj2, m_x[ii], m_y[jj]);
-     double dist2    = (xs-m_x[ii])*(xs-m_x[ii]) +(ys-m_y[jj])*(ys-m_y[jj]);
-     double exponent = -dist2*appmi2;
-     double wgh      = exp(exponent);
+     float_sw4 dist2    = (xs-m_x[ii])*(xs-m_x[ii]) +(ys-m_y[jj])*(ys-m_y[jj]);
+     float_sw4 exponent = -dist2*appmi2;
+     float_sw4 wgh      = exp(exponent);
      printf("dist2=%e, appm=%e, appmi2=%e, exponent=%e, wgh=%e\n", dist2, appm, appmi2, exponent, wgh);
      MPI_Abort(MPI_COMM_WORLD, 1);
    }

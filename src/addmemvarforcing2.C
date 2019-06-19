@@ -1,50 +1,53 @@
 #include "Sarray.h"
 //-----------------From WPP------------------------------------------------------
-void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
-                         double omegaVE, double dt ,double omega, double phase, double c)
+void  addMemVarPredCart( float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
+                         float_sw4 omegaVE, float_sw4 dt ,float_sw4 omega, float_sw4 phase, float_sw4 c)
 {
-  double x, y, z;
+   //  float_sw4 x, y, z;
   // double omega =m_omega;
   // double phase =m_phase;
   // double c=m_c;
-  double cof = 2*dt/(1+omegaVE*dt);
+  float_sw4 cof = 2*dt/(1+omegaVE*dt);
+#pragma omp parallel for
   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
     for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+#pragma ivdep
+       //#pragma simd
       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
       {
-	x = (i-1)*h;
-	y = (j-1)*h;
-	z = zMin + (k-1)*h;
+	float_sw4 x = (i-1)*h;
+	float_sw4 y = (j-1)*h;
+	float_sw4 z = zMin + (k-1)*h;
 	{
-	   double t1;
-	   double t12;
-	   double t13;
-	   double t14;
-	   double t17;
-	   double t18;
-	   double t19;
-	   double t24;
-	   double t26;
-	   double t27;
-	   double t3;
-	   double t30;
-	   double t31;
-	   double t35;
-	   double t38;
-	   double t39;
-	   double t4;
-	   double t40;
-	   double t42;
-	   double t45;
-	   double t5;
-	   double t52;
-	   double t57;
-	   double t58;
-	   double t59;
-	   double t65;
-	   double t8;
-	   double t9;
-           double forces[3];
+	   float_sw4 t1;
+	   float_sw4 t12;
+	   float_sw4 t13;
+	   float_sw4 t14;
+	   float_sw4 t17;
+	   float_sw4 t18;
+	   float_sw4 t19;
+	   float_sw4 t24;
+	   float_sw4 t26;
+	   float_sw4 t27;
+	   float_sw4 t3;
+	   float_sw4 t30;
+	   float_sw4 t31;
+	   float_sw4 t35;
+	   float_sw4 t38;
+	   float_sw4 t39;
+	   float_sw4 t4;
+	   float_sw4 t40;
+	   float_sw4 t42;
+	   float_sw4 t45;
+	   float_sw4 t5;
+	   float_sw4 t52;
+	   float_sw4 t57;
+	   float_sw4 t58;
+	   float_sw4 t59;
+	   float_sw4 t65;
+	   float_sw4 t8;
+	   float_sw4 t9;
+           float_sw4 forces[3];
 	   {
 	      t1 = c*t;
 	      t3 = omega*(x-t1);
@@ -88,51 +91,54 @@ void  addMemVarPredCart( double zMin, double h, double t, Sarray &alpha,
 }
 
 //-----------------------FROM WPP------------------------------------------------
-void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
-                                                      Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c )
+void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4 t,
+			       Sarray& alpha, float_sw4 omegaVE, float_sw4 dt, float_sw4 omega,
+			       float_sw4 phase, float_sw4 c )
 {
-  double x, y, z;
   // double omega =m_omega;
   // double phase =m_phase;
   // double c=m_c;
-  double cof = 2*dt/(1+omegaVE*dt);
+  float_sw4 cof = 2*dt/(1+omegaVE*dt);
+#pragma omp parallel for
   for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
     for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
+#pragma ivdep
+       //#pragma simd
       for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
       {
-	x = a_X(i,j,k);
-	y = a_Y(i,j,k);
-	z = a_Z(i,j,k);
+	float_sw4 x = a_X(i,j,k);
+	float_sw4 y = a_Y(i,j,k);
+	float_sw4 z = a_Z(i,j,k);
 	{
-	   double t1;
-	   double t12;
-	   double t13;
-	   double t14;
-	   double t17;
-	   double t18;
-	   double t19;
-	   double t24;
-	   double t26;
-	   double t27;
-	   double t3;
-	   double t30;
-	   double t31;
-	   double t35;
-	   double t38;
-	   double t39;
-	   double t4;
-	   double t40;
-	   double t42;
-	   double t45;
-	   double t5;
-	   double t52;
-	   double t57;
-	   double t58;
-	   double t59;
-	   double t65;
-	   double t8;
-	   double t9;
-           double forces[3];
+	   float_sw4 t1;
+	   float_sw4 t12;
+	   float_sw4 t13;
+	   float_sw4 t14;
+	   float_sw4 t17;
+	   float_sw4 t18;
+	   float_sw4 t19;
+	   float_sw4 t24;
+	   float_sw4 t26;
+	   float_sw4 t27;
+	   float_sw4 t3;
+	   float_sw4 t30;
+	   float_sw4 t31;
+	   float_sw4 t35;
+	   float_sw4 t38;
+	   float_sw4 t39;
+	   float_sw4 t4;
+	   float_sw4 t40;
+	   float_sw4 t42;
+	   float_sw4 t45;
+	   float_sw4 t5;
+	   float_sw4 t52;
+	   float_sw4 t57;
+	   float_sw4 t58;
+	   float_sw4 t59;
+	   float_sw4 t65;
+	   float_sw4 t8;
+	   float_sw4 t9;
+           float_sw4 forces[3];
 	   {
 	      t1 = c*t;
 	      t3 = omega*(x-t1);
@@ -465,80 +471,83 @@ void addMemVarPredCurvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
 
 // NEW June 14, 2017: Full forcing for the memory variables correction stage
 //---------------------------- NEW MAPLE GENERATED CODE ----------------------------------
-void addMemVarCorr2Cart(double zMin, double h, double t, Sarray &alpha,
-                        double omegaVE, double dt, double omega, double phase, double c )
+void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
+                        float_sw4 omegaVE, float_sw4 dt, float_sw4 omega, float_sw4 phase, float_sw4 c )
 {
-   double x, y, z, dto=omegaVE*dt;
-   double cof = 1.0/( 1.0/2 + 1.0/(2*dto) + dto/4 + dto*dto/12 );
+   float_sw4 dto=omegaVE*dt;
+   float_sw4 cof = 1.0/( 1.0/2 + 1.0/(2*dto) + dto/4 + dto*dto/12 );
 
-   double forces[3];
-   double t1;
-   double t10;
-   double t100;
-   double t11;
-   double t123;
-   double t125;
-   double t126;
-   double t127;
-   double t128;
-   double t129;
-   double t13;
-   double t130;
-   double t131;
-   double t132;
-   double t133;
-   double t136;
-   double t139;
-   double t14;
-   double t15;
-   double t16;
-   double t17;
-   double t18;
-   double t19;
-   double t2;
-   double t20;
-   double t22;
-   double t24;
-   double t25;
-   double t26;
-   double t28;
-   double t29;
-   double t3;
-   double t32;
-   double t33;
-   double t34;
-   double t35;
-   double t36;
-   double t39;
-   double t40;
-   double t41;
-   double t42;
-   double t44;
-   double t48;
-   double t5;
-   double t57;
-   double t6;
-   double t7;
-   double t71;
-   double t72;
-   double t73;
-   double t75;
-   double t76;
-   double t77;
-   double t79;
-   double t82;
-   double t84;
-   double t86;
-   double t87;
-   double t89;
-   double t9;
-   double t92;
-   double t95;
-
+#pragma omp parallel for
    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+#pragma ivdep
+	 //#pragma simd
          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
          {
+	    float_sw4 x, y, z;
+	    float_sw4 forces[3];
+	    float_sw4 t1;
+	    float_sw4 t10;
+	    float_sw4 t100;
+	    float_sw4 t11;
+	    float_sw4 t123;
+	    float_sw4 t125;
+	    float_sw4 t126;
+	    float_sw4 t127;
+	    float_sw4 t128;
+	    float_sw4 t129;
+	    float_sw4 t13;
+	    float_sw4 t130;
+	    float_sw4 t131;
+	    float_sw4 t132;
+	    float_sw4 t133;
+	    float_sw4 t136;
+	    float_sw4 t139;
+	    float_sw4 t14;
+	    float_sw4 t15;
+	    float_sw4 t16;
+	    float_sw4 t17;
+	    float_sw4 t18;
+	    float_sw4 t19;
+	    float_sw4 t2;
+	    float_sw4 t20;
+	    float_sw4 t22;
+	    float_sw4 t24;
+	    float_sw4 t25;
+	    float_sw4 t26;
+	    float_sw4 t28;
+	    float_sw4 t29;
+	    float_sw4 t3;
+	    float_sw4 t32;
+	    float_sw4 t33;
+	    float_sw4 t34;
+	    float_sw4 t35;
+	    float_sw4 t36;
+	    float_sw4 t39;
+	    float_sw4 t40;
+	    float_sw4 t41;
+	    float_sw4 t42;
+	    float_sw4 t44;
+	    float_sw4 t48;
+	    float_sw4 t5;
+	    float_sw4 t57;
+	    float_sw4 t6;
+	    float_sw4 t7;
+	    float_sw4 t71;
+	    float_sw4 t72;
+	    float_sw4 t73;
+	    float_sw4 t75;
+	    float_sw4 t76;
+	    float_sw4 t77;
+	    float_sw4 t79;
+	    float_sw4 t82;
+	    float_sw4 t84;
+	    float_sw4 t86;
+	    float_sw4 t87;
+	    float_sw4 t89;
+	    float_sw4 t9;
+	    float_sw4 t92;
+	    float_sw4 t95;
             x = (i-1)*h;
             y = (j-1)*h;
             z = zMin + (k-1)*h;
@@ -597,8 +606,8 @@ void addMemVarCorr2Cart(double zMin, double h, double t, Sarray &alpha,
             t95 = t41*t48*t79*t75;
             t100 = cos(t71);
             forces[1] = t84+t86-t89+t35*(t36*(t84+t86-t89)+2.0*omegaVE*(t1*(-2.0*t92+
-                                                                            2.0*t95)-t77-t82+t10*omega*c*t100*t33)+t1*(4.0*t57*t26*t79*t75+4.0*t57*t76)-2.0
-                                         *t92+2.0*t95+t10*t39*t40*t87*t33)/6.0;
+                2.0*t95)-t77-t82+t10*omega*c*t100*t33)+t1*(4.0*t57*t26*t79*t75+4.0*t57*t76)-2.0
+                *t92+2.0*t95+t10*t39*t40*t87*t33)/6.0;
             t123 = cos(t9);
             t125 = cos(t28);
             t126 = t1*t123*t125;
@@ -612,7 +621,7 @@ void addMemVarCorr2Cart(double zMin, double h, double t, Sarray &alpha,
             t136 = t41*t20;
             t139 = cos(t13);
             forces[2] = -t128-t130-t133+t35*(t36*(-t128-t130-t133)+2.0*omegaVE*(t131*t2
-                                                                                *t139+t126*t136-t129*t127)+t126*t57*t15+t129*t136+t131*t41*t132)/6.0;
+                 *t139+t126*t136-t129*t127)+t126*t57*t15+t129*t136+t131*t41*t132)/6.0;
 
             alpha(1,i,j,k) += cof*forces[0];
             alpha(2,i,j,k) += cof*forces[1];
@@ -622,84 +631,87 @@ void addMemVarCorr2Cart(double zMin, double h, double t, Sarray &alpha,
 } // end function
 
 //----------------------------------------------------------------------
-void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, double t,
-                                                      Sarray& alpha, double omegaVE, double dt, double omega, double phase, double c )
+void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4 t,
+				Sarray& alpha, float_sw4 omegaVE, float_sw4 dt, float_sw4 omega,
+				float_sw4 phase, float_sw4 c )
 {
-   double x, y, z, dto=omegaVE*dt;
-   double cof = 1.0/( 1.0/2 + 1.0/(2*dto) + dto/4 + dto*dto/12 );
+   float_sw4 dto=omegaVE*dt;
+   float_sw4 cof = 1.0/( 1.0/2 + 1.0/(2*dto) + dto/4 + dto*dto/12 );
 
-   double forces[3];
-   double t1;
-   double t10;
-   double t100;
-   double t11;
-   double t123;
-   double t125;
-   double t126;
-   double t127;
-   double t128;
-   double t129;
-   double t13;
-   double t130;
-   double t131;
-   double t132;
-   double t133;
-   double t136;
-   double t139;
-   double t14;
-   double t15;
-   double t16;
-   double t17;
-   double t18;
-   double t19;
-   double t2;
-   double t20;
-   double t22;
-   double t24;
-   double t25;
-   double t26;
-   double t28;
-   double t29;
-   double t3;
-   double t32;
-   double t33;
-   double t34;
-   double t35;
-   double t36;
-   double t39;
-   double t40;
-   double t41;
-   double t42;
-   double t44;
-   double t48;
-   double t5;
-   double t57;
-   double t6;
-   double t7;
-   double t71;
-   double t72;
-   double t73;
-   double t75;
-   double t76;
-   double t77;
-   double t79;
-   double t82;
-   double t84;
-   double t86;
-   double t87;
-   double t89;
-   double t9;
-   double t92;
-   double t95;
-
-  for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
-    for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
-      for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
-      {
-	x = a_X(i,j,k);
-	y = a_Y(i,j,k);
-	z = a_Z(i,j,k);
-
+#pragma omp parallel for
+   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+      for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+#pragma ivdep
+	 //#pragma simd
+         for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+	 {
+	    float_sw4 x, y, z;
+	    float_sw4 forces[3];
+	    float_sw4 t1;
+	    float_sw4 t10;
+	    float_sw4 t100;
+	    float_sw4 t11;
+	    float_sw4 t123;
+	    float_sw4 t125;
+	    float_sw4 t126;
+	    float_sw4 t127;
+	    float_sw4 t128;
+	    float_sw4 t129;
+	    float_sw4 t13;
+	    float_sw4 t130;
+	    float_sw4 t131;
+	    float_sw4 t132;
+	    float_sw4 t133;
+	    float_sw4 t136;
+	    float_sw4 t139;
+	    float_sw4 t14;
+	    float_sw4 t15;
+	    float_sw4 t16;
+	    float_sw4 t17;
+	    float_sw4 t18;
+	    float_sw4 t19;
+	    float_sw4 t2;
+	    float_sw4 t20;
+	    float_sw4 t22;
+	    float_sw4 t24;
+	    float_sw4 t25;
+	    float_sw4 t26;
+	    float_sw4 t28;
+	    float_sw4 t29;
+	    float_sw4 t3;
+	    float_sw4 t32;
+	    float_sw4 t33;
+	    float_sw4 t34;
+	    float_sw4 t35;
+	    float_sw4 t36;
+	    float_sw4 t39;
+	    float_sw4 t40;
+	    float_sw4 t41;
+	    float_sw4 t42;
+	    float_sw4 t44;
+	    float_sw4 t48;
+	    float_sw4 t5;
+	    float_sw4 t57;
+	    float_sw4 t6;
+	    float_sw4 t7;
+	    float_sw4 t71;
+	    float_sw4 t72;
+	    float_sw4 t73;
+	    float_sw4 t75;
+	    float_sw4 t76;
+	    float_sw4 t77;
+	    float_sw4 t79;
+	    float_sw4 t82;
+	    float_sw4 t84;
+	    float_sw4 t86;
+	    float_sw4 t87;
+	    float_sw4 t89;
+	    float_sw4 t9;
+	    float_sw4 t92;
+	    float_sw4 t95;
+	    x = a_X(i,j,k);
+	    y = a_Y(i,j,k);
+	    z = a_Z(i,j,k);
             t1 = 1/omegaVE;
             t2 = omega*c;
             t3 = c*t;

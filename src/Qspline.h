@@ -34,19 +34,21 @@
 
 #include <cmath>
 #include <iostream>
+#include "sw4.h"
+
 using namespace std;
 
 class Qspline
 {
    int m_npts;
-   double* m_polcof;
-   double m_tmin, m_dt, m_dti;
+   float_sw4* m_polcof;
+   float_sw4 m_tmin, m_dt, m_dti;
 public:
-   Qspline( int npts, double* fun, double tmin, double dt, int bclow=1, int bchigh=1,
-	    double s1=0, double t1=0, double sn=0, double tn=0 );
-   void Qsplineold( int npts, double* fun, double tmin, double dt );
+   Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bclow=1, int bchigh=1,
+	    float_sw4 s1=0, float_sw4 t1=0, float_sw4 sn=0, float_sw4 tn=0 );
+   void Qsplineold( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt );
    ~Qspline();
-   double* get_polycof_ptr() { return m_polcof;}
+   float_sw4* get_polycof_ptr() { return m_polcof;}
 // AP: evalf and evaldd are not used by GridPointSource::getTimeFunc. 
 // Instead the functions Discrete() and Discrete_tt(), defined in time_functions.C, are called
 //   void evalf( double t, double& f );

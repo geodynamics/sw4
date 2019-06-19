@@ -1,0 +1,208 @@
+[fourier:sw4-dev/tests/sourceopt] petersson1% mpirun -np 2 ../../opt/sw4opt flat-inverse.in
+----------------------------------------------------------------
+            sw4 version 1.09
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Aug 26 14:45:01 PDT 2014
+  By user:     petersson1
+  Machine:     fourier.llnl.gov
+  Compiler:    /opt/local/bin/mpicxx
+  3rd party include dir: /Users/petersson1/include, and library dir: /Users/petersson1/lib
+----------------------------------------------------------------
+
+Input file: flat-inverse.in
+
+* Processing the grid command...
+* Setting nx to 51 to be consistent with h=0.02
+* Setting ny to 51 to be consistent with h=0.02
+* Setting nz to 76 to be consistent with h=0.02
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0      0.02        51        51        76       197676
+Total number of grid points (without ghost points): 197676
+
+Default Supergrid thickness has been tuned; thickness = 5 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.001
+
+   Execution time, reading input file 0.00449109 seconds 
+----------------------------------------------------
+ Making Output Directory: flat-opt-run/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= 1.180000e+02, Lat=3.700001e+01, x=1.000000e+00, y=0.000000e+00
+2: Lon= 1.180000e+02, Lat=3.700001e+01, x=1.000000e+00, y=1.000000e+00
+3: Lon= 1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=1.000000e+00
+
+Considering all material blocks
+block command: outside = 0, material = 259600
+block command: outside = 201190, material = 58410
+
+       ----------- Material properties ranges ---------------
+       0.9 kg/m^3 <=  Density <= 1 kg/m^3
+       0.8 m/s    <=  Vp      <= 1 m/s
+       0.4 m/s    <=  Vs      <= 0.5 m/s
+       2        <=  Vp/Vs   <= 2
+       0.144 Pa     <=  mu      <= 0.25 Pa
+       0.288 Pa     <=  lambda  <= 0.5 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e-02, minVs/h=20 (Cartesian)
+
+   Execution time, start up phase 0.018383 seconds 
+Running sw4opt on 2 processors...
+Writing output to directory: flat-opt-run/
+EW reference UTC is  08/26/2014:22:53:36.0
+Initial source guess : 
+   x0 = 0.6065 y0 = 0.399 z0 = 0.017
+  mxx = -0.4035 mxy= -0.8383 mxz= -0.3238
+  myy = 0.2069 myz= 0.3851 mzz= 0.2157
+   t0 = 0.5 freq = 12
+
+*** Computing scale factors...
+Solving forward problem for evaluating misfit
+   Execution time, solver phase 5.0744 seconds 
+Solving one backwards problem to calculate H2...
+**** Starting the calculation of H1...
+Solving forward problem no. 1
+   Execution time, solver phase 5.05898 seconds 
+Solving forward problem no. 2
+   Execution time, solver phase 5.07205 seconds 
+Solving forward problem no. 3
+   Execution time, solver phase 5.08266 seconds 
+Solving forward problem no. 4
+   Execution time, solver phase 5.07309 seconds 
+Solving forward problem no. 5
+   Execution time, solver phase 5.06006 seconds 
+Solving forward problem no. 6
+   Execution time, solver phase 5.08889 seconds 
+Solving forward problem no. 7
+   Execution time, solver phase 5.04612 seconds 
+Solving forward problem no. 8
+   Execution time, solver phase 5.04003 seconds 
+Solving forward problem no. 9
+   Execution time, solver phase 5.04202 seconds 
+Solving forward problem no. 10
+   Execution time, solver phase 5.0466 seconds 
+Solving forward problem no. 11
+   Execution time, solver phase 5.04954 seconds 
+scalefactors x0=8.14167e-06 y0=1.00372e-05 z0=1.08972e-05 Mxx=0.000293969 Mxy=0.000252926 Mxz=0.0002804 Myy=0.000494723 Myz=0.000594414 Mzz=0.000888547 t0=1.73048e-05 freq=0.00155158
+Begin BFGS iteration by evaluating initial misfit and gradient...
+   Execution time, solver phase 5.44519 seconds 
+-----------------------------------------------------------------------
+Misfit= 1.4601e-06
+ Scaled gradient = -1.35872e-05 4.20432e-05 0.000312088 -4.21415e-05 -2.94853e-05 1.68918e-05 
+      5.4161e-05 5.89762e-05 3.30753e-05 0.00159821 -3.45336e-05 
+   Execution time, solver phase 5.07769 seconds 
+   Execution time, solver phase 5.04534 seconds 
+-----------------------------------------------------------------------
+ it=1 dfnorm= 0.000346077 dxnorm= 2.00052e-07
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 2.45744e-07
+ Scaled gradient = 0.000123866 -9.82263e-05 -0.000346077 -1.09578e-05 -9.32314e-05 0.00011438 
+      -7.68385e-05 -0.000102944 1.3497e-05 -7.47865e-05 -4.13888e-05 
+   Execution time, solver phase 5.10027 seconds 
+   Execution time, solver phase 5.04853 seconds 
+-----------------------------------------------------------------------
+ it=2 dfnorm= 0.000179888 dxnorm= 1.93013e-07
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.92257e-07
+ Scaled gradient = -4.21332e-05 8.81293e-05 6.39449e-05 4.60543e-05 1.99399e-05 -0.000179888 
+      -4.10512e-05 5.9514e-05 -3.15091e-05 -1.23906e-05 -2.58205e-05 
+   Execution time, solver phase 5.08837 seconds 
+   Execution time, solver phase 5.04375 seconds 
+-----------------------------------------------------------------------
+ it=3 dfnorm= 6.48935e-05 dxnorm= 1.04861e-07
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.75899e-07
+ Scaled gradient = -1.11224e-05 -2.39565e-05 -2.2189e-05 -6.48935e-05 5.53361e-06 -3.21343e-05 
+      5.17421e-05 2.82266e-05 4.33272e-05 1.80786e-05 -1.78937e-05 
+   Execution time, solver phase 5.06225 seconds 
+   Execution time, solver phase 5.01869 seconds 
+-----------------------------------------------------------------------
+ it=4 dfnorm= 3.83215e-05 dxnorm= 1.40121e-07
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.72106e-07
+ Scaled gradient = 1.20696e-05 -2.08465e-05 -2.98148e-05 3.42052e-05 -1.60406e-05 1.45107e-05 
+      -2.48725e-05 -4.96995e-06 -3.83215e-05 1.3337e-05 -3.82069e-05 
+   Execution time, solver phase 5.07419 seconds 
+   Execution time, solver phase 5.00979 seconds 
+-----------------------------------------------------------------------
+ it=5 dfnorm= 1.81381e-05 dxnorm= 7.5329e-08
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.69295e-07
+ Scaled gradient = -2.62839e-06 -6.78367e-06 -1.18728e-05 5.48874e-06 -1.81381e-05 -2.51746e-06 
+      -2.42318e-06 1.54872e-06 -8.37974e-06 1.33966e-06 -8.89579e-06 
+   Execution time, solver phase 5.08328 seconds 
+   Execution time, solver phase 5.04625 seconds 
+-----------------------------------------------------------------------
+ it=6 dfnorm= 9.39041e-06 dxnorm= 3.95816e-08
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.68598e-07
+ Scaled gradient = -5.26187e-06 8.43501e-07 3.59817e-06 -3.28954e-06 8.8629e-07 -4.35324e-07 
+      2.75237e-06 -6.09695e-07 4.58468e-06 -2.00759e-06 -9.39041e-06 
+   Execution time, solver phase 5.09161 seconds 
+   Execution time, solver phase 5.01938 seconds 
+-----------------------------------------------------------------------
+ it=7 dfnorm= 6.07813e-06 dxnorm= 7.50535e-09
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.68506e-07
+ Scaled gradient = 1.59242e-06 6.11707e-08 3.75087e-06 -1.09198e-06 -6.07813e-06 -7.04951e-07 
+      1.25247e-06 2.17747e-06 2.60697e-06 -1.31365e-06 2.02706e-06 
+   Execution time, solver phase 5.06506 seconds 
+   Execution time, solver phase 5.02457 seconds 
+-----------------------------------------------------------------------
+ it=8 dfnorm= 2.45358e-06 dxnorm= 9.28934e-09
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.68465e-07
+ Scaled gradient = 1.0763e-06 9.36365e-07 1.47354e-06 2.80449e-07 -2.45358e-06 5.17638e-07 
+      -2.30138e-07 -5.78392e-07 1.45989e-06 -3.82921e-07 -3.02751e-07 
+   Execution time, solver phase 5.0935 seconds 
+   Execution time, solver phase 5.07028 seconds 
+-----------------------------------------------------------------------
+ it=9 dfnorm= 8.81469e-07 dxnorm= 1.37777e-08
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.68448e-07
+ Scaled gradient = 8.81469e-07 3.05849e-07 2.88887e-08 7.69733e-07 1.79074e-07 3.65645e-07 
+      -1.88256e-07 -5.32092e-07 2.28801e-07 2.05427e-07 -8.74727e-07 
+   Execution time, solver phase 5.18166 seconds 
+   Execution time, solver phase 5.05872 seconds 
+-----------------------------------------------------------------------
+ it=10 dfnorm= 5.50964e-07 dxnorm= 4.22413e-09
+  x = 0.6065 0.399 0.017 -0.4035 -0.8383 -0.3238 
+      0.2069 0.3851 0.2157 0.5 12 
+-----------------------------------------------------------------------
+Misfit= 1.68446e-07
+ Scaled gradient = 1.95831e-07 1.34452e-07 -2.22116e-07 5.50964e-07 1.85768e-07 4.7675e-08 
+      1.75387e-07 -2.52234e-07 1.8932e-07 1.03317e-07 -2.20414e-07 
+============================================================
+ sw4opt ( Source estimation solver) finished! 
+============================================================

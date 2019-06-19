@@ -39,6 +39,7 @@ void EW::convert_material_to_mulambda( )
       // On input, we have stored cs in MU, cp in Lambda
       // use mu = rho*cs*cs and lambda = rho*cp*cp  - 2*mu
       
+#pragma omp parallel for     
       for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
       {
           for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
@@ -64,52 +65,55 @@ void EW::check_materials()
   // Verify that the density is nonzero and positive in the 
   // internal grid points
   //---------------------------------------------------------------
-  
-  double mins[8],maxs[8];
 
-// confusing with variables and functions that have names which only differ in capitalization 
-  double lmin = localMin(mRho);
-  double rho_min = lmin;
+
+   // Minimum allowed  cp/cs, positive definite operator requires cp/cs > sqrt(4/3) = 1.155...
+   //   lambda >0 requires cp/cs > sqrt(2)
+  const float_sw4 mincpcsratio = 1.2;
+  const float_sw4 la_min_fact = mincpcsratio*mincpcsratio-2;
   
-  MPI_Allreduce(&lmin,&mins[0],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  float_sw4 mins[8],maxs[8];
+
+  float_sw4 lmin = localMin(mRho);
+  MPI_Allreduce(&lmin,&mins[0],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
   lmin = localMinVp();  
-  MPI_Allreduce(&lmin,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  MPI_Allreduce(&lmin,&mins[1],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
   lmin = localMinVs();  
-  MPI_Allreduce(&lmin,&mins[2],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  MPI_Allreduce(&lmin,&mins[2],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
   lmin = localMin(mMu);
-  MPI_Allreduce(&lmin,&mins[3],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  MPI_Allreduce(&lmin,&mins[3],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
   lmin = localMin(mLambda);
-  MPI_Allreduce(&lmin,&mins[4],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  MPI_Allreduce(&lmin,&mins[4],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
   
   CHECK_INPUT(mins[2] >= 0.0,
           "Error: the material data has s velocities that are negative.");
 
   lmin = localMinVpOverVs();  
-  MPI_Allreduce(&lmin,&mins[5],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+  MPI_Allreduce(&lmin,&mins[5],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
 
-  double lmax = localMax(mRho);
-  MPI_Allreduce(&lmax,&maxs[0],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  float_sw4 lmax = localMax(mRho);
+  MPI_Allreduce(&lmax,&maxs[0],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
   lmax = localMaxVp();  
-  MPI_Allreduce(&lmax,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  MPI_Allreduce(&lmax,&maxs[1],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
   lmax = localMaxVs();  
-  MPI_Allreduce(&lmax,&maxs[2],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  MPI_Allreduce(&lmax,&maxs[2],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
   lmax = localMax(mMu);
-  MPI_Allreduce(&lmax,&maxs[3],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  MPI_Allreduce(&lmax,&maxs[3],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
   lmax = localMax(mLambda);
-  MPI_Allreduce(&lmax,&maxs[4],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  MPI_Allreduce(&lmax,&maxs[4],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
   lmax = localMaxVpOverVs();  
-  MPI_Allreduce(&lmax,&maxs[5],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+  MPI_Allreduce(&lmax,&maxs[5],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
 
   if( usingAttenuation() && !m_twilight_forcing)
   {
       lmin = localMin(mQs);
-      MPI_Allreduce(&lmin,&mins[6],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+      MPI_Allreduce(&lmin,&mins[6],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
       lmin = localMin(mQp);
-      MPI_Allreduce(&lmin,&mins[7],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
+      MPI_Allreduce(&lmin,&mins[7],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
       lmax = localMax(mQs);
-      MPI_Allreduce(&lmax,&maxs[6],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+      MPI_Allreduce(&lmax,&maxs[6],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
       lmax = localMax(mQp);
-      MPI_Allreduce(&lmax,&maxs[7],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+      MPI_Allreduce(&lmax,&maxs[7],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
   }
   
   int myRank;
@@ -141,6 +145,7 @@ void EW::check_materials()
   if( mins[0] <= 0.0 )
   {
     for (int g = 0; g < mNumberOfGrids; g++)
+#pragma omp parallel for
       for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -153,6 +158,7 @@ void EW::check_materials()
   if( mins[3] < 0.0 )
   {
     for (int g = 0; g < mNumberOfGrids; g++)
+#pragma omp parallel for
       for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -164,11 +170,12 @@ void EW::check_materials()
   if( mins[4] <= 0.0 )
   {
     for (int g = 0; g < mNumberOfGrids; g++)
+#pragma omp parallel for
       for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	  {
-	    CHECK_INPUT( mLambda[g](i,j,k) >= 0., "lambda= " << mLambda[g](i,j,k)<< " in grid g= " << g << " at point " 
+	     CHECK_INPUT( mLambda[g](i,j,k) >= la_min_fact*mMu[g](i,j,k), "lambda= " << mLambda[g](i,j,k)<< " in grid g= " << g << " at point " 
 			 << " (" << i <<","<<j<<","<<k<<") ");
 	  }
   }
@@ -177,6 +184,7 @@ void EW::check_materials()
      if( mins[6] <= 0.0 )
      {
 	for (int g = 0; g < mNumberOfGrids; g++)
+#pragma omp parallel for
 	   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 		 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -188,6 +196,7 @@ void EW::check_materials()
      if( mins[7] <= 0.0 )
      {
 	for (int g = 0; g < mNumberOfGrids; g++)
+#pragma omp parallel for
 	   for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 		 for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -204,22 +213,23 @@ void EW::check_materials()
            "Error: the material data has p velocities that are less than or equal to zero.");
    CHECK_INPUT(mins[3] >= 0.0,
            "Error: mu has values that are negative.");
-   CHECK_INPUT(mins[4] > 0.0,
-           "Error: lambda has values that are negative or zero.");
+   //   CHECK_INPUT(mins[4] > 0.0,
+   //           "Error: lambda has values that are negative or zero.");
   
-  VERIFY2(mins[5] >= sqrt(2.),
-	  "Error: vp/vs is smaller than sqrt(2).");
+  VERIFY2(mins[5] >= mincpcsratio,
+	  "Error: vp/vs is smaller than set limit, " << mincpcsratio );
 
 // check material ranges on each grid
    if (mVerbose >= 3)
    {
-   double minRho, maxRho, minMu, maxMu, minLambda, maxLambda;
+   float_sw4 minRho, maxRho, minMu, maxMu, minLambda, maxLambda;
    
    for( int g = 0 ; g < mNumberOfGrids; g++)
    {
-     minRho=1e100, minMu=1e100, minLambda=1e100;
+     minRho=1e38, minMu=1e38, minLambda=1e38;
      maxRho=0, maxMu=0, maxLambda=0;
      
+#pragma omp parallel for reduction(min:minMu,minLambda,minRho) reduction(max:maxMu,maxLambda,maxRho)
      for( int k = m_kStart[g] ; k <= m_kEnd[g]; k++ )
        for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
 	 for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -232,12 +242,12 @@ void EW::check_materials()
 	   if (mRho[g](i,j,k) > maxRho) maxRho=mRho[g](i,j,k);
 	 }
 // communicate min & max
-     MPI_Allreduce(&minRho,&mins[0],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-     MPI_Allreduce(&maxRho,&maxs[0],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-     MPI_Allreduce(&minMu,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-     MPI_Allreduce(&maxMu,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
-     MPI_Allreduce(&minLambda,&mins[2],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
-     MPI_Allreduce(&maxLambda,&maxs[2],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
+     MPI_Allreduce(&minRho,&mins[0],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
+     MPI_Allreduce(&maxRho,&maxs[0],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
+     MPI_Allreduce(&minMu,&mins[1],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
+     MPI_Allreduce(&maxMu,&maxs[1],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
+     MPI_Allreduce(&minLambda,&mins[2],1,m_mpifloat,MPI_MIN,m_cartesian_communicator);
+     MPI_Allreduce(&maxLambda,&maxs[2],1,m_mpifloat,MPI_MAX,m_cartesian_communicator);
 // printout results
      if (proc_zero())
      {
@@ -284,9 +294,9 @@ void EW::check_materials()
        MPI_Allreduce(&minC_hat,&mins[1],1,MPI_DOUBLE,MPI_MIN,m_cartesian_communicator);
        MPI_Allreduce(&maxC_hat,&maxs[1],1,MPI_DOUBLE,MPI_MAX,m_cartesian_communicator);
 // printout results
-       if (proc_zero())
+       if (mVerbose >=2 && proc_zero())
        {
-	 printf("Grid g=%i:, %e <= Cs <= %e, %e <= C-hat <= %e, h[g]/max(C-hat) = %e\n",
+	 printf("Material model info, Grid g=%i: %e <= Cs <= %e, %e <= C-hat <= %e, h[g]/max(C-hat) = %e\n",
 		g, mins[0], maxs[0], mins[1], maxs[1], mGridSize[g]/maxs[1]);
        }
      } // end for all grids
@@ -295,12 +305,14 @@ void EW::check_materials()
 }
 
 //-----------------------------------------------------------------------
-double EW::localMin(std::vector<Sarray> & a_field) 
+float_sw4 EW::localMin(std::vector<Sarray> & a_field) 
 {
-  double lmin = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
+  float_sw4 lmin_all = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmin=1e38;
+#pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -310,22 +322,25 @@ double EW::localMin(std::vector<Sarray> & a_field)
                   if (a_field[g](i,j,k) < lmin)
                     {
                       lmin = a_field[g](i,j,k);
+		      //		      cout << "lmin = " << lmin << " at " << i << " " << j << " " << k << endl;
                     }
                 }
             }
         }
+      lmin_all = lmin < lmin_all?lmin:lmin_all;
     }
 
-  return lmin; 
+  return lmin_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMax(std::vector<Sarray> & a_field) 
+float_sw4 EW::localMax(std::vector<Sarray> & a_field) 
 {
-  double lmax = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
- 
+  float_sw4 lmax_all = a_field[0](m_iStart[0],m_jStart[0],m_kStart[0]);
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmax=-1e38;
+#pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -339,19 +354,22 @@ double EW::localMax(std::vector<Sarray> & a_field)
                 }
             }
         }
+      lmax_all = lmax > lmax_all?lmax:lmax_all;
     }
 
-  return lmax; 
+  return lmax_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMinVp() 
+float_sw4 EW::localMinVp() 
 {
-  double lmin = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  float_sw4 lmin_all = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmin=1e38;
+#pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -365,19 +383,21 @@ double EW::localMinVp()
                 }
             }
         }
+      lmin_all = lmin < lmin_all?lmin:lmin_all;
     }
-
-  return lmin; 
+  return lmin_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMaxVp() 
+float_sw4 EW::localMaxVp() 
 {
-  double lmax = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  float_sw4 lmax_all = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmax=-1e38;
+#pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -391,18 +411,21 @@ double EW::localMaxVp()
                 }
             }
         }
+      lmax_all = lmax > lmax_all?lmax:lmax_all;
     }
 
-  return lmax; 
+  return lmax_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMinVs() 
+float_sw4 EW::localMinVs() 
 {
-  double lmin = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
+  float_sw4 lmin_all = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmin=1e38;
+#pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -416,18 +439,21 @@ double EW::localMinVs()
                 }
             }
         }
+      lmin_all = lmin < lmin_all?lmin:lmin_all;
     }
 
-  return lmin; 
+  return lmin_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMaxVs() 
+float_sw4 EW::localMaxVs() 
 {
-  double lmax = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
+  float_sw4 lmax_all = sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])/mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmax=-1e38;
+#pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -441,20 +467,22 @@ double EW::localMaxVs()
                 }
             }
         }
+      lmax_all = lmax > lmax_all?lmax:lmax_all;
     }
-
-  return lmax; 
+  return lmax_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMinVpOverVs() 
+float_sw4 EW::localMinVpOverVs() 
 {
-  double lmin = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  float_sw4 lmin_all = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]))/sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])
 									     /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmin=1e38;
+#pragma omp parallel for reduction(min:lmin)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -469,20 +497,22 @@ double EW::localMinVpOverVs()
                 }
             }
         }
+      lmin_all = lmin < lmin_all?lmin:lmin_all;
     }
-
-  return lmin; 
+  return lmin_all; 
 }
 
 //-----------------------------------------------------------------------
-double EW::localMaxVpOverVs() 
+float_sw4 EW::localMaxVpOverVs() 
 {
-  double lmax = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
+  float_sw4 lmax_all = sqrt((2.*mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])+mLambda[0](m_iStart[0],m_jStart[0],m_kStart[0]))
 			 /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]))/sqrt(mMu[0](m_iStart[0],m_jStart[0],m_kStart[0])
 									     /mRho[0](m_iStart[0],m_jStart[0],m_kStart[0]));
  
   for (int g = 0; g < mNumberOfGrids; g++)
     {
+       float_sw4 lmax=-1e38;
+#pragma omp parallel for reduction(max:lmax)
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
         {
           for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
@@ -497,9 +527,9 @@ double EW::localMaxVpOverVs()
                 }
             }
         }
+      lmax_all = lmax > lmax_all?lmax:lmax_all;
     }
-
-  return lmax; 
+  return lmax_all; 
 }
 
 // the same routine is defined in EtreeFile.C, but in the class EtreeFile
@@ -551,6 +581,7 @@ void EW::extrapolateInXY( vector<Sarray>& field )
    for( int g= 0; g < mNumberOfGrids ; g++ )
    {
       if( m_iStartInt[g] == 1 )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iStart[g] ; i < 1 ; i++ )
@@ -559,6 +590,7 @@ void EW::extrapolateInXY( vector<Sarray>& field )
 		     field[g](i,j,k) = field[g](1,j,k);
 	       }
       if( m_iEndInt[g] == m_global_nx[g] )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
@@ -567,6 +599,7 @@ void EW::extrapolateInXY( vector<Sarray>& field )
 		     field[g](i,j,k) = field[g](m_iEndInt[g],j,k);
 	       }
       if( m_jStartInt[g] == 1 )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j < 1 ; j++ )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -575,6 +608,7 @@ void EW::extrapolateInXY( vector<Sarray>& field )
 		     field[g](i,j,k) = field[g](i,1,k);
 	       }
       if( m_jEndInt[g] == m_global_ny[g] )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -612,6 +646,7 @@ void EW::extrapolateInXYvector( vector<Sarray>& field )
    {
       int nc = field[g].m_nc;
       if( m_iStartInt[g] == 1 )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iStart[g] ; i < 1 ; i++ )
@@ -621,6 +656,7 @@ void EW::extrapolateInXYvector( vector<Sarray>& field )
 			field[g](m,i,j,k) = field[g](m,1,j,k);
 		  }
       if( m_iEndInt[g] == m_global_nx[g] )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
@@ -630,6 +666,7 @@ void EW::extrapolateInXYvector( vector<Sarray>& field )
 			field[g](m,i,j,k) = field[g](m,m_iEndInt[g],j,k);
 		  }
       if( m_jStartInt[g] == 1 )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jStart[g] ; j < 1 ; j++ )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -639,6 +676,7 @@ void EW::extrapolateInXYvector( vector<Sarray>& field )
 			field[g](m,i,j,k) = field[g](m,i,1,k);
 		  }
       if( m_jEndInt[g] == m_global_ny[g] )
+#pragma omp parallel for
          for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
 	       for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
@@ -676,3 +714,33 @@ void EW::extrapolateInZvector( int g, Sarray& field, bool lowk, bool highk )
 	       }
 }
 
+//--------- Material properties for MR ---------------
+void EW::setup_MR_coefficients()
+{
+// stretching on the fine side
+#define str_x(i) m_sg_str_x[g][(i-m_iStart[g])]   
+#define str_y(j) m_sg_str_y[g][(j-m_jStart[g])]   
+// calculate m_Morc, etc for all Cartesian grids
+  for(int g = 0; g < mNumberOfCartesianGrids; g++ )
+  {
+    int nk = m_global_nz[g];
+    for (int c=1; c<=3; c++)
+      for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
+	for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
+	{
+	  float_sw4 irho=1/mRho[g](i,j,1);
+	  m_Morc[g](i,j,1) = mMu[g](i,j,1)*irho; // mu/rho at k=1
+	  m_Mlrc[g](i,j,1) = (2*mMu[g](i,j,1)+mLambda[g](i,j,1))*irho; // (2*mu+lambda)/rho at k=1
+	  m_Mucs[g](i,j,1) = mMu[g](i,j,1)/(str_x(i)*str_y(j)); // mu/str at 1
+	  m_Mlcs[g](i,j,1) = (2*mMu[g](i,j,1)+mLambda[g](i,j,1))/(str_x(i)*str_y(j)); //(2*mu + lambda)/str at 1
+
+	  float_sw4 irhoN=1/mRho[g](i,j,nk);
+	  m_Morf[g](i,j, nk) = mMu[g](i,j, nk)*irhoN; // mu/rho at nk
+	  m_Mlrf[g](i,j, nk) = (2*mMu[g](i,j, nk)+mLambda[g](i,j, nk))*irhoN; // (2*mu+lambda)/rho at nk
+	  m_Mufs[g](i,j,nk) = mMu[g](i,j,nk)/(str_x(i)*str_y(j)); // mu/str at nk
+	  m_Mlfs[g](i,j,nk) = (2*mMu[g](i,j,nk)+mLambda[g](i,j,nk))/(str_x(i)*str_y(j)); //(2*mu + lambda)/str at nk
+	}
+  }
+#undef str_x
+#undef str_y
+}
