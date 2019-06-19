@@ -41,8 +41,10 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
    int nmpard_global=0;
    MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 
-   if( maxit <= 0 )
+   if( maxit <= 0 && nmpard == 0 )
       maxit = ns + nmpard;
+   else if( maxit <= 0 )
+      maxit = 10;
 
    FILE *fd;
    FILE *fdx;
@@ -58,7 +60,6 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
    }
-
    if( myRank == 0 )
       cout << "Begin NLCG iteration by evaluating initial misfit and gradient..." << endl;
 

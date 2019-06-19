@@ -34,6 +34,12 @@ public:
    virtual ssize_t local_index( size_t ind_global )=0;
    virtual void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 				  double vs_ref, double vp_ref );
+   virtual void get_regularizer( int nmd, double* xmd, int nms, double* xms, 
+				 double* xmd0, double* xms0, double regcoeff,
+				 std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+				 std::vector<Sarray>& a_lambda, double& mf_reg,
+				 double* sfd, double* sfs, bool compute_derivative, 
+				 double* dmfd_reg, double* dmfs_reg );
    void get_nr_of_parameters( int& nms, int& nmd, int& nmd_global ) const;
    void parameters_from_basematerial( int nmd, double* xmd, int nms, double* xms );
    void store_material( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
