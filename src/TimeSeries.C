@@ -313,7 +313,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 
 // Set station ref utc = simulation ref utc
 // m_t0 = 0 is set by default above.
-   a_ew->get_utc( m_utc );
+   a_ew->get_utc( m_utc, m_event );
 
 } // end constructor
 
@@ -1139,7 +1139,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
                   else
 		  {
                      int utcrefsim[7];
-		     m_ew->get_utc(utcrefsim);
+		     m_ew->get_utc(utcrefsim, m_event );
 		     //		     cout << "UTC from EW : ";
 		     //		     for( int c=0;c<7;c++ )
 		     //			cout << utcrefsim[c] << " " ;
@@ -2507,7 +2507,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	       for( int c=0 ; c < 7 ; c++ )
 		  m_utc[c] = utc1[c];
 	       int utcrefsim[7];
-	       m_ew->get_utc(utcrefsim);
+	       m_ew->get_utc(utcrefsim,m_event);
 	       m_t0 = utc_distance( utcrefsim, m_utc );
 	    }
             m_shift = t01;
