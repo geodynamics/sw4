@@ -86,11 +86,11 @@ void EW::setup_metric()
       }
       else
       {
+// tmp
+         cout << "Calling metric_ci for grid = " << g << endl;
+         
          int ierr=0;
-//FTNC         if( m_croutines )
-            ierr=metric_ci( Bx, Nx, By, Ny, Bz, Nz, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mMetric[g].c_ptr(), mJ[g].c_ptr() );
-//FTNC         else
-//FTNC            metric( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mMetric[g].c_ptr(), mJ[g].c_ptr(), &ierr );
+         ierr=metric_ci( Bx, Nx, By, Ny, Bz, Nz, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mMetric[g].c_ptr(), mJ[g].c_ptr() );
          CHECK_INPUT(ierr==0, "Problems calculating the metric coefficients");
       }
 
@@ -138,11 +138,6 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
 
 // get the size from the top curvilinear grid
   int g = mNumberOfGrids-1;
-  int ifirst = m_iStart[g];
-  int ilast  = m_iEnd[g];
-  int jfirst = m_jStart[g];
-  int jlast  = m_jEnd[g];
-
   float_sw4 h = mGridSize[g]; // grid size must agree with top cartesian grid
 //  float_sw4 zTopCart = m_zmin[g]; // bottom z-level for curvilinear grid
   float_sw4 zTopCart = m_topo_zmax; // top z-level for finest Cartesian grid
@@ -153,10 +148,16 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
 
   if( proc_zero() && mVerbose > 4 )
   {
-    printf("generate_grid: Number of grid points in curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
+    printf("generate_grid: Number of grid points in top (finest) curvilinear grid = %i, kStart = %i, kEnd = %i\n", 
 	Nz, m_kStart[gTop], m_kEnd[gTop]);
   }
 
+  if (mNumberOfGrids - mNumberOfCartesianGrids == 1) // revert to same mapping as before
+  {
+// tmp
+     if (proc_zero())
+        cout << "***Making one curvilinear grid***"<< endl;
+     
 // generate the grid by calling the curvilinear mapping function
 #pragma omp parallel for
   for (int k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
@@ -186,6 +187,98 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
 //     printf("L2-error in inverse of curvilinear mapping = %e\n", sqrt(totalDist));
 // end test
 
+  } // end if one curvilinear grid
+  else
+  {
+// new mapping using interface surfaces
+     if (proc_zero())
+        cout << "***Making several curvilinear grids***"<< endl;
+     
+//     float_sw4 a6cofi[8], a6cofj[8];
+
+     for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) 
+     {
+        int iSurfTop = g - mNumberOfCartesianGrids;
+        int iSurfBot = iSurfTop - 1;
+        float_sw4 h0 = 2.0*mGridSize[g]; // coarse grid size
+        
+        for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
+           for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
+           {
+              float_sw4 X0 = (i-1)*mGridSize[g];
+              float_sw4 Y0  = (j-1)*mGridSize[g];
+              float_sw4 Ztop = m_curviInterface[iSurfTop](i,j,1);
+              float_sw4 Zbot;
+              // NOTE: special case for bottom curvilinear grid g = mNumberOfCartesianGrids: bottom interface is flat with z=m_topo_zmax
+              if (iSurfBot < 0)
+              {
+                 Zbot = m_topo_zmax;
+              }
+              else // interpolate Zbot
+              {
+// compute the grid point index on the coarse interface surface
+                 int iLow = static_cast<int>( floor(X0/h0) )+1 ;
+
+                 int jLow = static_cast<int>( floor(Y0/h0) )+1;
+                 
+                 float_sw4 xPt = (iLow-1)*h0;
+                 float_sw4 yPt = (jLow-1)*h0;
+
+// first check if we are very close to a grid point
+                 bool smackOnTop = (fabs((xPt-X0)/h0) < 1.e-9 && fabs((yPt-Y0)/h0) < 1.e-9);
+
+                 if (smackOnTop)
+                 {
+                    Zbot = m_curviInterface[iSurfBot](iLow, jLow, 1);
+                 }
+                 else
+                 { // high order interpolation to get intermediate value of zBot
+                    if( true ) // point_in_proc_ext(i-3,j-3,gFinest) && point_in_proc_ext(i+4,j+4,gFinest) // how to test if the grid points are in range?
+                    {
+                       /* gettopowgh( q-i, a6cofi ); */
+                       /* gettopowgh( r-j, a6cofj ); */
+                       /* Zbot = 0; */
+                       /* for( int l=j-3 ; l <= j+4 ; l++ ) */
+                       /*    for( int k=i-3 ; k <= i+4 ; k++ ) */
+                       /*       Zbot += a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1); */
+// for the purpose of plotting the grid, it suffices with linear interpolation
+                       float_sw4 xi = (X0 - xPt)/h0;
+                       float_sw4 eta = (Y0 - yPt)/h0;
+                       
+                       Zbot =
+                          xi*eta               *m_curviInterface[iSurfBot](iLow+1,jLow+1,1) +
+                          (1.0-xi)*(1.0-eta)*m_curviInterface[iSurfBot](iLow,jLow,1) +
+                          xi*(1.0-eta)        *m_curviInterface[iSurfBot](iLow+1,jLow,1) +
+                          (1.0-xi)*eta        *m_curviInterface[iSurfBot](iLow,jLow+1,1);
+                    }
+                    
+                    
+                 } // end else (not smack on top)
+    
+              } // end else (interpolate Zbot)
+              
+              
+// Linear interpolation in the vertical direction
+              float_sw4 Nz_real = static_cast<float_sw4>(m_kEndInt[g] - m_kStartInt[g]);
+              
+#pragma omp parallel for
+              for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
+              {
+                 float_sw4 zeta = static_cast<float_sw4>((k - m_kStartInt[g])/Nz_real);
+                 
+                 mX[g](i,j,k) = X0;
+                 mY[g](i,j,k) = Y0;
+                 mZ[g](i,j,k) = (1.0- zeta)*Ztop + zeta*Zbot;
+                 
+              } // end for k
+           } // end for i,j
+        
+     } // end for g
+     
+     
+  } // end if (interface surfaces)
+  
+  
 // make sure all processors have made their grid before we continue
   communicate_array( mZ[gTop], gTop ); // TEMPORARY FIX
   
@@ -914,42 +1007,55 @@ void EW::assignInterfaceSurfaces()
 //-----------------------------------------------------------------------
 void EW::extrapolate_interface_surfaces()
 {
-   // UPDATE!
-   if( topographyExists() )
+
+   if( !topographyExists() )
+      return;
+
+// tmp
+  if (proc_zero())
+  {
+    cout << "***inside extrapolate_interface_surfaces*** " << endl;
+  }
+   
+   int gTop = mNumberOfGrids-1;
+
+// Total number of ghost points = m_ext_ghost_points + m_ghost_points
+   int egh = m_iStartInt[gTop] - mTopoGridExt.m_ib;
+   
+// the ghost points for the top interface surface have already been assigned
+   for (int g = mNumberOfCartesianGrids; g < gTop; g++)   
    {
-      int gTop = mNumberOfGrids-1;
-// copy raw topography
-#pragma omp parallel for
-      for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; ++i)
-	 for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; ++j)
-	    mTopoGridExt(i,j,1) = mTopo(i,j,1);
+     int iSurf = g - mNumberOfCartesianGrids;
 
-      int imin = mTopoGridExt.m_ib;
-      int imax = mTopoGridExt.m_ie;
-      int jmin = mTopoGridExt.m_jb;
-      int jmax = mTopoGridExt.m_je;
-// Number of extra ghost points = m_ext_ghost_points
-      int egh = m_iStart[gTop]-imin;
+      int imin = m_curviInterface[iSurf].m_ib;
+      int imax = m_curviInterface[iSurf].m_ie;
+      int jmin = m_curviInterface[iSurf].m_jb;
+      int jmax = m_curviInterface[iSurf].m_je;
 
+  if (proc_zero())
+  {
+     printf("\t iSurf=%d, egh=%d, imin=%d, imax=%d, jmin=%d, jmax=%d\n", iSurf, egh, imin, imax, jmin, jmax);
+  }
+      
 // Update extra ghost points. Do not worry about processor boundaries,
 // they will be overwritten with correct values in the communication update afterward.
 #pragma omp parallel for
       for( int i=imin+egh ; i <= imax-egh ; i++ )
 	 for( int q = 0 ; q < egh ; q++ )
 	 {
-	    mTopoGridExt(i,jmin+q,1)   = mTopoGridExt(i,jmin+egh,1);
-	    mTopoGridExt(i,jmax-q,1)   = mTopoGridExt(i,jmax-egh,1);
+	    m_curviInterface[iSurf](i,jmin+q,1)   = m_curviInterface[iSurf](i,jmin+egh,1);
+	    m_curviInterface[iSurf](i,jmax-q,1)   = m_curviInterface[iSurf](i,jmax-egh,1);
 	 }
 #pragma omp parallel for
       for( int j=jmin ; j <= jmax ; j++ )
 	 for( int q = 0 ; q < egh ; q++ )
 	 {
-	    mTopoGridExt(imin+q,j,1) = mTopoGridExt(imin+egh,j,1);
-	    mTopoGridExt(imax-q,j,1) = mTopoGridExt(imax-egh,j,1);
+	    m_curviInterface[iSurf](imin+q,j,1) = m_curviInterface[iSurf](imin+egh,j,1);
+	    m_curviInterface[iSurf](imax-q,j,1) = m_curviInterface[iSurf](imax-egh,j,1);
 	 }
-      communicate_array_2d_ext( mTopoGridExt );
-   }
-}
+      communicate_array_2d_ext( m_curviInterface[iSurf] ); // CHECK: Does it work for all interface surfaces?
+   } // end for g
+} // end extrapolate_interface_surfaces()
 
 
 //-----------------------------------------------------------------------

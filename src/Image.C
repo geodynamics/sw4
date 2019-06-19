@@ -188,7 +188,11 @@ void Image::associate_gridfiles( vector<Image*>& imgs )
          cout << "WARNING: Image::associate_gridfiles did not find compatible grid images" << endl;
       }
       else
-	 mGridinfo = mStoreGrid ? 1 : 2 ; // Found grid_images
+      {
+//	 mGridinfo = mStoreGrid ? 1 : 2 ; // Found grid_images
+	 mGridinfo = mStoreGrid ? mEW->mNumberOfGrids - mEW->mNumberOfCartesianGrids : 0 ; // Found grid_images
+      }
+      
    }
    else
       mGridinfo = 0; // Grid is Cartesian, or image is a grid.
@@ -1214,10 +1218,63 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
    if( iwrite )
       close(fid);
 
-   if( mGridinfo == 1 )
-      add_grid_to_file( s.str().c_str(), iwrite, offset );
-   if( mGridinfo == 2 )
-      add_grid_filenames_to_file( s.str().c_str() );
+//   if( mGridinfo == 1 )
+//      add_grid_to_file( s.str().c_str(), iwrite, offset );
+// if( mGridinfo == 2 )
+//    add_grid_filenames_to_file( s.str().c_str() );
+
+   if( mGridinfo >= 1 )
+      add_grids_to_file( s.str().c_str(), iwrite, offset );
+   
+}
+
+//-----------------------------------------------------------------------
+// NOTE: this routine saves one or more  curvilinear grids to file
+void Image::add_grids_to_file( const char* fname, bool iwrite, size_t offset )
+{
+   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
+   if( ihavearray )
+   {
+      int fid;
+      if( iwrite )
+      {
+	 fid = open( fname, O_WRONLY, 0660 ); 
+	 if (fid == -1 )
+	    VERIFY2(0, "ERROR: Image::add_grids_to_file, error opening file " << fname );
+      }
+
+      for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++)
+      {
+         int globalSizes[3] = {mEW->m_global_nx[g],
+                               mEW->m_global_ny[g],
+                               mEW->m_global_nz[g]} ;
+         if(mLocationType == Image::X)
+            globalSizes[0]    = 1;
+         if (mLocationType == Image::Y)
+            globalSizes[1]    = 1;
+         if (mLocationType == Image::Z)
+            globalSizes[2]    = 1;
+
+         if( !mEW->usingParallelFS() )
+            MPI_Barrier( m_mpiComm_writers );
+
+         if( m_double )
+         {
+            char dblStr[]="double";	  
+            m_pio[g]->write_array( &fid, 1, m_gridimage->m_doubleField[g], offset, dblStr );
+            offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
+         }
+         else
+         {
+            char fltStr[]="float";
+            m_pio[g]->write_array( &fid, 1, m_gridimage->m_floatField[g], offset, fltStr );
+            offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
+         }
+      } // end for g
+      
+      if( iwrite )
+	 close(fid);
+   }
 }
 
 //-----------------------------------------------------------------------

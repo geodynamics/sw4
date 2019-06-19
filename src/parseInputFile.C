@@ -410,14 +410,15 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
     double nTot=0.;
     printf("\nGlobal grid sizes (without ghost points)\n");
 //             1234  12345679  12345679  12345679  12345679
-    printf("Grid         h        Nx        Ny        Nz       Points\n");
+    printf("Grid         h        Nx        Ny        Nz       Points      Type\n");
     for (int g = 0; g < mNumberOfGrids; g++)
     {
       nx = m_global_nx[g];
       ny = m_global_ny[g];
       nz = m_kEnd[g] - m_ghost_points;
       nTot += ((long long int)nx)*ny*nz;
-      printf("%4i %9g %9i %9i %9i %12lld\n", g, mGridSize[g], nx, ny, nz, ((long long int)nx)*ny*nz);
+      printf("%4i %9g %9i %9i %9i %12lld     %s\n", g, mGridSize[g], nx, ny, nz, ((long long int)nx)*ny*nz,
+             (g < mNumberOfCartesianGrids) ? "Cartesian": "Curvilinear");
     }
     printf("Total number of grid points (without ghost points): %g\n\n", nTot);
       

@@ -126,6 +126,9 @@ void writeImagePlane_2(int cycle, std::string &a_path, float_sw4 time );
 void add_grid_filenames_to_file( const char* fname );
 void add_grid_to_file( const char* fname, bool iwrite, size_t offset );
 
+// several curvilinear grids (MR)
+void add_grids_to_file( const char* fname, bool iwrite, size_t offset );
+
 bool plane_in_proc(int a_gridIndexCoarsest);
 void initializeIO();
 
