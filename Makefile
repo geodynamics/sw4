@@ -101,9 +101,9 @@ else
       include configs/make.cori
       foundincfile := "configs/make.cori"
   # for Bjorn's tux box
-    else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
-      include configs/make.tux337
-      foundincfile := "configs/make.tux337"
+    else ifeq ($(findstring tux405,$(HOSTNAME)),tux405)
+      include configs/make.tux405
+      foundincfile := "configs/make.tux405"
   # for Anders' tux box
     else ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
       include configs/make.tux355

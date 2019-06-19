@@ -1276,7 +1276,7 @@ __host__ __device__ float_sw4 Liu_omtt( float_sw4 freq, float_sw4 t, float_sw4* 
 __host__ __device__ float_sw4 NullFunc( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
 // this function should never be called
-  CHECK_INPUT(false,"The NullFunc time function was called!");
+//  CHECK_INPUT(false,"The NullFunc time function was called!");
   return 0.;  
 }
 

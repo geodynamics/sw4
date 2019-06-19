@@ -1010,6 +1010,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries 
 //       im->writeImagePlane_2(1,path);
 
 // depending on the test case, we should compare in the interior, or only on the surface
+
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else

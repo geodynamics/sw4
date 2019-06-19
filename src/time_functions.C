@@ -1522,7 +1522,7 @@ double Discrete( double freq, double t, double* par, int npar, int* ipar, int ni
    }
 
    double arg=(t-tstart)*freq-k; // (t-(tstart+k*dt))/dt
-//std::cout <<  "t= " << t << " npts " << npts << " k= " << k << "arg = " << arg <<  std::endl;
+   //std::cout <<  "t= " << t << " npts " << npts << " k= " << k << "arg = " << arg <<  std::endl;
    return par[6*k+1] + par[2+6*k]*arg + par[3+6*k]*arg*arg + par[4+6*k]*arg*arg*arg +
        par[5+6*k]*arg*arg*arg*arg + par[6+6*k]*arg*arg*arg*arg*arg; 
 }
