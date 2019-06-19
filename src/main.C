@@ -203,7 +203,7 @@ main(int argc, char **argv)
       vector<Sarray> U(ng), Um(ng);
       simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
 			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
-			ucorr_saved, false, 0 );
+			ucorr_saved, false, 0, 0 );
 
 // save all time series
       

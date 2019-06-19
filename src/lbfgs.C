@@ -214,7 +214,6 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    ns = nspar + nmpars;
    for( int i=0 ; i < ns ; i++ )
       xsnew[i] = xs[i];
-
    for( int i=0 ; i < nmpard ; i++ )
       xmnew[i] = xm[i];
 
@@ -456,8 +455,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    //	       for( int i=0 ; i < n ; i++ )
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
-	 compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew, mopt );
+	 compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources,
+		    GlobalTimeSeries, GlobalObservations, fnew, mopt );
 	 return;
       } // end if ( Could not find satisfactory step )      
       else
@@ -640,7 +639,6 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       double rnormtmp = rnorm;
       MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
    }
-
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sf[i] ? rnorm : fabs(dfs[i])*sf[i];
    if( myRank == 0 )
@@ -949,7 +947,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 //      for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
 //	 GlobalTimeSeries[ts]->writeFile();
 
-// Save material parameters, for restart.
+// Save shared material parameters, for restart.
       mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
 
 // Check that wave speeds do not become too high or too low.
