@@ -843,6 +843,28 @@ void TimeSeries::writeFile( string suffix )
 }
 
 //-----------------------------------------------------------------------
+void TimeSeries::writeFileUSGS( string suffix )
+{
+   // Force write USGS file
+  if (!m_myPoint) return;
+  stringstream filePrefix;
+
+//building the file name...
+  if( m_path != "." )
+    filePrefix << m_path;
+  if( suffix == "" )
+     filePrefix << m_fileName << "." ;
+  else
+     filePrefix << m_fileName << suffix.c_str() << "." ;
+  filePrefix << "txt";
+  if (m_ew->getVerbosity() >= 3)
+     cout << "Writing ASCII USGS file, "
+	  << "of size " << mLastTimeStep+1 << ": "
+	  << filePrefix.str() << endl;
+  write_usgs_format( filePrefix.str() );
+}
+
+//-----------------------------------------------------------------------
 void TimeSeries::
 write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *var,
 		 float cmpinc, float cmpaz, bool makeCopy /*=false*/)
@@ -1199,7 +1221,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	    // Use offset in time column.
       // Only allocate arrays if we aren't doing a restart
 	    if(!mIsRestart)
-        allocateRecordingArrays( nlines, m_t0+tstart, dt );
+	       allocateRecordingArrays( nlines, m_t0+tstart, dt );
 	    if( nlines <= 1 )
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
@@ -2500,20 +2522,19 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    readSACdata( file3.c_str(), npts1, u3 );
 
       // For restart, don't overwrite member vars except data 
-      if (!mIsRestart) 
-      {
-            if( !ignore_utc )
+	    if (!mIsRestart) 
 	    {
-	       for( int c=0 ; c < 7 ; c++ )
-		  m_utc[c] = utc1[c];
-	       int utcrefsim[7];
-	       m_ew->get_utc(utcrefsim,m_event);
-	       m_t0 = utc_distance( utcrefsim, m_utc );
+	       if( !ignore_utc )
+	       {
+		  for( int c=0 ; c < 7 ; c++ )
+		     m_utc[c] = utc1[c];
+		  int utcrefsim[7];
+		  m_ew->get_utc(utcrefsim,m_event);
+		  m_t0 = utc_distance( utcrefsim, m_utc );
+	       }
+	       m_shift = t01;
+	       allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
 	    }
-            m_shift = t01;
-
-	    allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
-      }
 
 	    if( debug )
 	    {
@@ -2547,41 +2568,41 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    tmat[7] = cos(cmpinc2);
 	    tmat[8] = cos(cmpinc3);
 
-      if (!mIsRestart) // For restart, already in xyz format?
-      {
-        m_xyzcomponent = false; //note this is format on output file, 
+	    if (!mIsRestart) // For restart, already in xyz format?
+	    {
+	       m_xyzcomponent = false; //note this is format on output file, 
  	      //internally, we always use (x,y,z) during computation.
 
         // Convert (e,n,u) to (x,y,z) components.
-        float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-        float_sw4 a11 = m_calpha*deti;
-        float_sw4 a12 = m_thxnrm*deti;
-        float_sw4 a21 =-m_salpha*deti;
-        float_sw4 a22 = m_thynrm*deti;
-        for( int i=0 ; i < npts1 ; i++ )
-        {
-           float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-           float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-           float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-           mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-           mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-           mRecordedSol[2][i] = -ucomp;
-        }
-        mLastTimeStep = npts1-1;
-      }
-      else
-      {
-        // Just copy the read values into our time series
-        for( int i=0 ; i < npts1 ; i++ )
-        {
-          mRecordedSol[0][i] = u1[i];
-          mRecordedSol[1][i] = u2[i];
-          mRecordedSol[2][i] = u3[i];
-          mRecordedFloats[0][i] = (float) u1[i];
-          mRecordedFloats[1][i] = (float) u2[i];
-          mRecordedFloats[2][i] = (float) u3[i];
-        }
-     }
+	       float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+	       float_sw4 a11 = m_calpha*deti;
+	       float_sw4 a12 = m_thxnrm*deti;
+	       float_sw4 a21 =-m_salpha*deti;
+	       float_sw4 a22 = m_thynrm*deti;
+	       for( int i=0 ; i < npts1 ; i++ )
+	       {
+		  float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+		  float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+		  float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+		  mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+		  mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+		  mRecordedSol[2][i] = -ucomp;
+	       }
+	       mLastTimeStep = npts1-1;
+	    }
+	    else
+	    {
+	       // Just copy the read values into our time series
+	       for( int i=0 ; i < npts1 ; i++ )
+	       {
+		  mRecordedSol[0][i] = u1[i];
+		  mRecordedSol[1][i] = u2[i];
+		  mRecordedSol[2][i] = u3[i];
+		  mRecordedFloats[0][i] = (float) u1[i];
+		  mRecordedFloats[1][i] = (float) u2[i];
+		  mRecordedFloats[2][i] = (float) u3[i];
+	       }
+	    }
 	 }
 	 else
 	 {

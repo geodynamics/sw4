@@ -3,7 +3,6 @@
 #include <cstring>
 #include "version.h"
 //#include "MaterialParameterization.h"
-//#include "MaterialParAllpts.h"
 #include "MaterialParCartesian.h"
 #include "Mopt.h"
 #include "compute_f.h"
@@ -143,7 +142,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
-      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
+     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory );
 //        Compute misfit
       if( mopt->m_misfit == Mopt::L2 )
       {
@@ -273,7 +272,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e );
+     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
 
    //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
 
@@ -1093,6 +1092,7 @@ int main(int argc, char **argv)
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
 	      //	      simulation.set_utcref( *GlobalObservations[m] );
+		 GlobalObservations[e][m]->writeFileUSGS("_obs");
 		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 		 {
 		    GlobalObservations[e][m]->filter_data( simulation.m_filterobs_ptr );
