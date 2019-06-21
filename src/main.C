@@ -115,9 +115,30 @@ main(int argc, char **argv)
   // for cudaMemAdvises using AllocationAdvisor.
   // if (global_variables.num_devices==1){
 
-    auto pooled_allocator_small =
-      rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),
+  //auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
+      auto pooled_allocator_small  = rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),
 							    pref_allocator,pool_size_small);
+
+      const size_t object_pool_size = static_cast<size_t>(1024)*1024*1024;
+      
+      //rma.makeAllocator<umpire::strategy::MonotonicAllocationStrategy,false>(string("UM_object_pool"),
+      //					   object_pool_size,allocator);
+
+      auto pooled_allocator_objects= rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_object_pool"),
+      						   allocator,object_pool_size);
+
+#ifdef SW4_MASS_PREFETCH
+      std::cout<<"Mass prefetch operational\n";
+      global_variables.massprefetch.push_back(std::make_tuple(static_cast<char*>(pooled_allocator.allocate(1)),pool_size));
+      global_variables.massprefetch.push_back(std::make_tuple(static_cast<char*>(pooled_allocator_small.allocate(1)),pool_size_small));
+      global_variables.massprefetch.push_back(std::make_tuple(static_cast<char*>(pooled_allocator_objects.allocate(1)),object_pool_size));
+#endif
+    //rma.makeAllocator<umpire::strategy::MixedPool,false>(string("UM_object_pool"),
+    //							   allocator,object_pool_size);
+
+    // rma.makeAllocator<umpire::strategy::FixedPool,false>(string("UM_object_pool"),
+    // 						     allocator,object_pool_size);
+    
   // } else {
   //   auto pooled_allocator_small =
   //     rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),

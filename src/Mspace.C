@@ -58,22 +58,27 @@ void check_mem(){
 
 
 void print_hwm(){
+  const int allocator_count=3;
 #if defined(ENABLE_CUDA)
-  float hwm_local[2],hwm_global[2];
+
+  float hwm_local[allocator_count],hwm_global[allocator_count];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024.0/1024.0/1024.0;
   hwm_local[1] = umpire::ResourceManager::getInstance().getAllocator("UM_pool_temps").getHighWatermark()/1024.0/1024.0/1024.0;
+  hwm_local[2] = umpire::ResourceManager::getInstance().getAllocator("UM_object_pool").getHighWatermark()/1024.0/1024.0/1024.0;
   //std::cout<<getRank()<<" Umpire HWM "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<" MB\n";
 #else
   hwm_local[0] = global_variables.gpu_memory_hwm/1024.0/1024.0/1024.0;
   //std::cout<<getRank()<<" GPU Memory HWM = "<<global_variables.gpu_memory_hwm/1024/1024<<" MB \n";
   //std::cout<<getRank()<<" GPU Memory Max = "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
-  MPI_Allreduce(&hwm_local,&hwm_global,2,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-  for (int i=0;i<2;i++) if (hwm_local[i]==hwm_global[i]) {
+  MPI_Allreduce(&hwm_local,&hwm_global,allocator_count,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+  for (int i=0;i<allocator_count;i++) if (hwm_local[i]==hwm_global[i]) {
       std::cout<<i<<" Global Device HWM is "<<hwm_global[i]<<" GB\n";
     //umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
   }
+  if (Managed::hwm>0) std::cout<<"Managed object count & HWM are "<<Managed::ocount<<" & "<<Managed::hwm<<"\n";
+  if (Managed::ocount!=0) std::cerr<<"WARNING :: Managed object count should be zero at the end of the simulation\n";
   //std::cout<<" ~HOST MEM MAX "<<global_variables.host_mem_hwm/1024.0/1024.0<<" MB\n";
 #endif // ENABLE_CUDA
 }
@@ -462,6 +467,97 @@ void CheckError(cudaError_t const err, const char* file, char const* const fun, 
 }
 #endif
 
+
+
+
+#if defined(ENABLE_CUDA)
+void* Managed::operator new(size_t len) {
+    void *ptr;
+    ocount++;
+    hwm = std::max(hwm,ocount);
+    //mem_total+=1;
+    //std::cout<<"Total mem is now "<<mem_total<<" MB "<<len<<"\n";
+    // std::cout<<"Call to Managed class "<<len<<"\n";
+#if defined(SW4_USE_UMPIRE)
+    //ptr=SW4_NEW(Space::Managed,char[len]);
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_object_pool");
+    ptr = static_cast<void*>(allocator.allocate(len));
+#else
+    SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
+#endif
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
+    return ptr;
+  }
+
+void* Managed::operator new[](size_t len) {
+    void *ptr;
+    ocount++;
+    hwm = std::max(hwm,ocount);
+#if defined(SW4_USE_UMPIRE)
+    umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+    auto allocator = rma.getAllocator("UM_object_pool");
+    ptr = static_cast<void*>(allocator.allocate(len));
+    //ptr=SW4_NEW(Space::Managed,char[len]);
+#else
+    
+    SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
+#endif
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
+    return ptr;
+  }
+  
+
+void Managed::operator delete(void *ptr) {
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
+#if defined(SW4_USE_UMPIRE)
+  //::operator delete(ptr,Space::Managed);
+  ocount--;
+
+  // WARNING DELETES ARE NOOPS. WORAROUND FOR SUPER SLOW DEALLOCS IN UMPIRE
+  return;
+  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+  auto allocator = rma.getAllocator("UM_object_pool");
+  //mem_total+=1;
+  allocator.deallocate(ptr);
+  //std::cout<<"DTOR 1 "<<mem_total<<"\n";
+#else
+    SW4_CheckDeviceError(cudaFree(ptr));
+#endif
+  }
+
+void Managed::operator delete[](void *ptr) {
+    //SW4_CheckDeviceError(cudaDeviceSynchronize());
+#if defined(SW4_USE_UMPIRE)
+  //::operator delete[](ptr,Space::Managed);
+  ocount--;
+  // WARNING DELETES ARE NOOPS. WORAROUND FOR SUPER SLOW DEALLOCS IN UMPIRE
+  return;
+  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+  auto allocator = rma.getAllocator("UM_object_pool");
+  allocator.deallocate(ptr);
+  //mem_total+=1;
+  //std::cout<<"DTOR 2 "<<mem_total<<"\n";
+#else
+    SW4_CheckDeviceError(cudaFree(ptr));
+#endif
+
+  }
+#endif
+
+
+
+//size_t Managed::mem_total=0;
+size_t Managed::ocount=0;
+size_t Managed::hwm=0;
+
+
+
+
+
+
+
+
 // AUTOPEEL CODE
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
 // AUTOPEEL uses getsize which only works when SW4_TRACK_MEMORY_ALLOCATIONS is defined
@@ -510,3 +606,14 @@ Apc::~Apc(){
 #endif
 
 // END AUTOPEEL CODE
+void global_prefetch(){
+#ifdef SW4_MASS_PREFETCH
+  for (auto v : global_variables.massprefetch){
+    //std::cout<<"global_prefetch "<<std::get<0>(v)<<" of "<<std::get<1>(v)<<" bytes\n";
+    SW4_CheckDeviceError(cudaMemPrefetchAsync(std::get<0>(v),
+					      std::get<1>(v),
+					      global_variables.device,
+					      0));
+  }
+#endif
+}

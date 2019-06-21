@@ -52,7 +52,7 @@
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
  // vectors of pointers to hold boundary forcing arrays in each grid
    vector<float_sw4 **> BCForcing;
-
+global_prefetch();
    BCForcing.resize(mNumberOfGrids);
    F.resize(mNumberOfGrids);
    Lu.resize(mNumberOfGrids);
@@ -360,7 +360,7 @@
 	 printf(" bc[%i]=%i", q, m_bcType[g][q]);
        printf("\n");
      }
-
+  
  // test accuracy of spatial approximation
      if ( proc_zero() )
        printf("\n Testing the accuracy of the spatial difference approximation\n");
@@ -430,6 +430,7 @@
      delete[] highZ;
    } // end m_twilight_forcing    
 
+//global_prefetch();
  // after checkpoint restart, we must communicate the memory variables
    if(  m_check_point->do_restart() && m_use_attenuation && (m_number_mechanisms > 0) )
    {

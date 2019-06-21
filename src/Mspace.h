@@ -15,8 +15,10 @@
 //#include "umpire/Umpire.hpp"
 //#include "umpire/Allocator.hpp"
 #include "umpire/strategy/DynamicPool.hpp"
+//#include "umpire/strategy/MixedPool.hpp"
 //#include "umpire/util/StatisticsDatabase.hpp"
 #include "umpire/strategy/AllocationAdvisor.hpp"
+#include "umpire/strategy/MonotonicAllocationStrategy.hpp"
 #include "umpire/util/Macros.hpp"
 #endif
 #if defined(ENABLE_CUDA)
@@ -34,6 +36,7 @@ void prefetch_to_device(const float_sw4 *ptr);
 #define PROFILER_STOP
 #endif
 void check_mem();
+void global_prefetch();
 enum Space { Host, Managed,Device,Pinned,Managed_temps};
 void * operator new(std::size_t size,Space loc) throw(std::bad_alloc) ;
 void operator delete(void *ptr, Space loc) throw();
@@ -53,6 +56,7 @@ struct global_variable_holder_struct {
   size_t host_max_mem;
   int device;
   int num_devices;
+  std::vector<std::tuple<char*,size_t>> massprefetch;
 };
 
 extern struct global_variable_holder_struct global_variables;
@@ -106,52 +110,31 @@ ssize_t getsize(const void *ptr);
 
 // THIS WILL HAVE TO BE MODIFIED FOR NON_GPU MACHINES
 class Managed {
+
 public:
+  static size_t ocount;
+  static size_t hwm;
   //static size_t mem_total;
-  static int host;
-  static int device;
+  //static int host;
+  //static int device;
+  
   Managed(){
   }
   ~Managed(){
     //mem_total=0;
   }
 #if defined(ENABLE_CUDA)
-  void *operator new(size_t len) {
-    void *ptr;
-    //mem_total+=len;
-    //std::cout<<"Total mem is now "<<mem_total/1024/1024<<" MB \n";
-    // std::cout<<"Call to Managed class "<<len<<"\n";
+  void *operator new(size_t len); 
+    
 
-    SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
-
-    //SW4_CheckDeviceError(cudaDeviceSynchronize());
-    return ptr;
-  }
-
-  void *operator new[](size_t len) {
-    void *ptr;
-    //mem_total+=len;
-    //std::cout<<"Total mem is now "<<mem_total/1204/1024<<" MB \n";
-    //std::cout<<"Call to Managed class "<<len<<"\n";
-    SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
-    //SW4_CheckDeviceError(cudaDeviceSynchronize());
-    return ptr;
-  }
+    void *operator new[](size_t len); 
   
 
-  void operator delete(void *ptr) {
-    //SW4_CheckDeviceError(cudaDeviceSynchronize());
-    SW4_CheckDeviceError(cudaFree(ptr));
-  }
-
-  void operator delete[](void *ptr) {
-    //SW4_CheckDeviceError(cudaDeviceSynchronize());
-    SW4_CheckDeviceError(cudaFree(ptr));
-
-  }
+    void operator delete(void *ptr); 
+    void operator delete[](void *ptr); 
 #endif
 };
-//size_t Managed::mem_total=0;
+
 
 
 #define SW4_CHRONO_NOW std::chrono::high_resolution_clock::now()

@@ -2320,7 +2320,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
        float_sw4* uexact  = SW4_NEW(Managed, float_sw4[npts]);
        SW4_CheckDeviceError(cudaMemPrefetchAsync(uexact,
 						 npts*sizeof(float_sw4),
-						 0,
+						 global_variables.device,
 						 0));
        //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
        get_exact_point_source( uexact, a_t, g, *sources[0] );
