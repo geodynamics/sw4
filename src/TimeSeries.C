@@ -1511,7 +1511,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	   if( t < m_winL || t > m_winR ) 
 	     wghx = wghy = wghz = 0;
 	   else
-	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0);
+	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0)*wghv;
 	 }
          if( !m_use_x )
 	    wghx = 0;
@@ -1614,11 +1614,16 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    misfit += ( (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx + 
 			(mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy + 
 			(mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i])*wghz    );
-            dshift -= wghx*(mf[0]-mRecordedSol[0][i])*dmf[0]+wghy*(mf[1]-mRecordedSol[1][i])*dmf[1]+
+
+            dshift -= wghx*(mf[0]-mRecordedSol[0][i])*dmf[0]+
+	              wghy*(mf[1]-mRecordedSol[1][i])*dmf[1]+
 	              wghz*(mf[2]-mRecordedSol[2][i])*dmf[2];
-            ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
+
+            ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+
+	               wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
  	               wghz*(mf[2]-mRecordedSol[2][i])*ddmf[2] +
-	                wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+	               wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 	    if( compute_difference )
 	    {
@@ -1629,19 +1634,25 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	 }
 	 else
 	 {
-	    misfit += ( (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i])*wghx + 
-			(mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i])*wghy + 
-			(mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i])*wghz );
-            dshift -= wghx*(mf[0]-mRecordedFloats[0][i])*dmf[0]+wghy*(mf[1]-mRecordedFloats[1][i])*dmf[1]+
-	       wghz*(mf[2]-mRecordedFloats[2][i])*dmf[2];
-            ddshift += wghx*(mf[0]-mRecordedFloats[0][i])*ddmf[0]+wghy*(mf[1]-mRecordedFloats[1][i])*ddmf[1]+
-	      wghz*(mf[2]-mRecordedFloats[2][i])*ddmf[2] + wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+	    misfit += ( wghx*(mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
+			wghy*(mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
+			wghz*(mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]) );
+
+            dshift -= wghx*(mf[0]-mRecordedFloats[0][i])*dmf[0]+
+                      wghy*(mf[1]-mRecordedFloats[1][i])*dmf[1]+
+	              wghz*(mf[2]-mRecordedFloats[2][i])*dmf[2];
+
+            ddshift += wghx*(mf[0]-mRecordedFloats[0][i])*ddmf[0]+
+                       wghy*(mf[1]-mRecordedFloats[1][i])*ddmf[1]+
+	               wghz*(mf[2]-mRecordedFloats[2][i])*ddmf[2] + 
+                       wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 	    if( compute_difference )
 	    {
-	       misfitsource[0][i] = (mRecordedFloats[0][i]-mf[0])*wghx;
-	       misfitsource[1][i] = (mRecordedFloats[1][i]-mf[1])*wghy;
-	       misfitsource[2][i] = (mRecordedFloats[2][i]-mf[2])*wghz;
+	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
+	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
+	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
 	    }
 	 }
 	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
@@ -1737,6 +1748,10 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 			    float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc )
 {
 // Interpolate data to this object
+
+// Cross correlation function \sum w(t_n)*u(t_n)*w(t_n+tshift)*uobs(t_n+tshift)
+//  w(t) is windowing function
+
    float_sw4 dtfr  = observed.m_dt;
    float_sw4 idtfr = 1/dtfr;
    float_sw4 idtfr2 = idtfr*idtfr;
@@ -1772,6 +1787,9 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       }
       float_sw4 t  = m_t0 + m_shift + i*m_dt + tshift;
       float_sw4 ir = (t-t0fr)/dtfr;
+      // Here t is t_n+tshift, t_n is time in this object.
+      //   ir is grid point index in observed object that correspond to t_n+tshift
+      //  need to evaluate the observed data at this grid point.
       int ie   = static_cast<int>(ir);
       int mmin = ie-2;
       int mmax = ie+3;
@@ -1789,11 +1807,11 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       wghx = wghy = wghz = wghv;
       if( m_use_win )
       {
-	// Use unshifted time, to avoid window dependency on unknown
+	 // Window data in this object w(t_n)
 	 if( t-tshift < m_winL || t-tshift > m_winR ) 
 	    wghx = wghy = wghz = 0;
 	 else
-	   wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),10.0);
+	   wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),5.0)*wghv;
       }
       if( !m_use_x )
 	 wghx = 0;
@@ -1830,33 +1848,46 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 }
 	 for( int m = mmin ; m <= mmax ; m++ )
 	 {
+	    // Window observed data
+	    float_sw4 wghxobs, wghyobs, wghzobs;
+	    wghxobs=wghyobs=wghzobs=1;
+	    if( m_use_win )
+	    {
+	       double tobs = m*dtfr+t0fr; // t_n+tshift in Observation time 
+	       // Window data in this object w(t_n+tshift)
+	       if( tobs < m_winL || tobs > m_winR ) 
+		  wghxobs = wghyobs = wghzobs = 0;
+	       else
+		  wghxobs = wghyobs = wghzobs = pow(cos(aw*(tobs)+bw),5.0);
+	    }
+
 	    if( observed.m_usgsFormat )
 	    {
-	       mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
-	       mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
-	       mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
+	       mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m]*wghxobs;
+	       mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m]*wghyobs;
+	       mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m]*wghzobs;
 
-	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr;
-	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr;
-	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr;
+	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr*wghxobs;
+	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr*wghyobs;
+	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr*wghzobs;
 
-	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2;
-	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2;
-	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2;
+	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2*wghxobs;
+	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2*wghyobs;
+	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2*wghzobs;
 	    }
 	    else
 	    {
-	       mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m];
-	       mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m];
-	       mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m];
+	       mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m]*wghxobs;
+	       mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m]*wghyobs;
+	       mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m]*wghzobs;
 
-	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr;
-	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr;
-	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr;
+	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr*wghxobs;
+	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr*wghyobs;
+	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr*wghzobs;
 
-	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2;
-	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2;
-	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
+	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2*wghxobs;
+	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2*wghyobs;
+	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2*wghzobs;
 	    }
 	 }
       }
