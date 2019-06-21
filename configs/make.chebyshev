@@ -1,5 +1,5 @@
 etree = no
-proj = no
+proj = yes
 FC = mpif90
 CXX = mpicxx
 EXTRA_FORT_FLAGS = 

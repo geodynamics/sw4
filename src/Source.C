@@ -533,7 +533,7 @@ void Source::correct_Z_level( EW *a_ew )
 // 3. checks if the source is inside the computational domain. If not, set mIgnore=true
 
 // tmp
-//   printf("Entering correct_Z_level()\n");
+   printf("Entering correct_Z_level()\n");
 
   int i,j,k,g;
 // preliminary determination of the nearest grid point (already did this in the constructor)
@@ -640,6 +640,9 @@ void Source::correct_Z_level( EW *a_ew )
   }
 
 // calculate the closest grid point
+
+// tmp
+   printf("Exiting correct_Z_level()\n");
 }
 
 //-----------------------------------------------------------------------
@@ -1311,7 +1314,12 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    bool canBeInverted, curvilinear;
    float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
-   if( g >= a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
+   // tmp
+   printf("set_grid_point_sources4: nearest grid point: (%d, %d, %d) in grid = %d\n", i, j, k, g);
+
+// if g=0 and # Cartesian Grids =1, the grid is NOT curvilinear!!!
+//   if( g >= a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
+   if( g > a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
    {
 // Curvilinear
 // Problem when the curvilinear mapping is NOT analytic:

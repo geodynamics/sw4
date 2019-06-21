@@ -71,6 +71,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
+
    for( int g=0 ; g < mEW->mNumberOfGrids  ; g++ )
    {
       bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
@@ -232,16 +233,18 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		}
 		else
 		   outside++;
-	    }
+	    } // end for i...
 
    } // end for g...
 
    mEW->communicate_arrays( rho );
    mEW->communicate_arrays( cs );
    mEW->communicate_arrays( cp );
+
    mEW->material_ic( rho );
    mEW->material_ic( cs );
    mEW->material_ic( cp );
+   
    if( use_q )
    {
       mEW->communicate_arrays( xis );
@@ -290,6 +293,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
       //           << endl;
       cout << endl
 	   << "rfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
+
 }
 
 

@@ -243,27 +243,37 @@ void Image::computeGridPtIndex()
       
     /* I store the indices for i on the local grid of all levels: index(iCoarse,iFiner,iFinest) */
 
-    for (int g = 0; g < n; g++)
-    {
-      if (g == 0) // We find the closest ***COARSE*** grid line
-      {
-	m_gridPtIndex[g] = (int)floor(mCoordValue/mEW->mGridSize[g])+1;
+     for (int g = 0; g < n; g++) // loop over the Cartesian grids
+     {
+        if (g == 0) // We find the closest ***COARSE*** grid line
+        {
+           m_gridPtIndex[g] = (int)floor(mCoordValue/mEW->mGridSize[g])+1;
               
-	if (mCoordValue-((m_gridPtIndex[g]-0.5)*mEW->mGridSize[g]) > 0.) (m_gridPtIndex[g])++;
-      }
-      else
-      {
-	m_gridPtIndex[g] = 2*m_gridPtIndex[g-1]-1;
-      }
+           if (mCoordValue-((m_gridPtIndex[g]-0.5)*mEW->mGridSize[g]) > 0.) (m_gridPtIndex[g])++;
+        }
+        else
+        {
+           m_gridPtIndex[g] = 2*m_gridPtIndex[g-1]-1;
+        }
 //       if (myRank == 0)
 // 	printf("The closest grid line is located at %s = %.2f; index = %i on grid %i\n",
 // 	       mOrientationString[mLocationType].c_str(), (m_gridPtIndex[g]-1)*mEW->mGridSize[g],m_gridPtIndex[g],g);
-    }
+     } // end for all Cartesian grids
+     
 // curvilinear grid on top: copy location from top Cartesian grid
     if (nTotal > n)
     {
-      m_gridPtIndex[nTotal-1] = m_gridPtIndex[n-1];
+//      m_gridPtIndex[nTotal-1] = m_gridPtIndex[n-1];
+//
+// NEW: the first curvilinear grid should have the same index as the top cartesian
+      m_gridPtIndex[n] = m_gridPtIndex[n-1];
     }
+// NEW: loop over the remaining (finer) curvilinear grids
+    for (int g = n+1; g< nTotal; g++)
+    {
+       m_gridPtIndex[g] = 2*m_gridPtIndex[g-1]-1;
+    }
+    
   } // end if X or Y
   else if (mLocationType == Image::Z)
   {

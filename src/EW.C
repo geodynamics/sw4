@@ -980,7 +980,7 @@ bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth)
     if (!interpolate_topography(q, r, zMinTilde, true))
     {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
-      //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
+      cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
       // cerr << "Setting elevation of topography to ZERO" << endl;
       success = false;
 //      zMinTilde = 0;
@@ -1066,6 +1066,37 @@ void EW::computeGeographicCoord(double x, double y, double & longitude, double &
    // latitude  = lonlat.v/deg2rad;
 }
 
+//-------------------------------------------------------
+void EW::computeNearestTopoGridPoint(int & iNear, 
+                                   int & jNear, 
+                                   float_sw4 a_x, 
+                                   float_sw4 a_y)
+{
+   int g = mNumberOfGrids-1;
+   float_sw4 h = mGridSize[g];
+
+   iNear = static_cast<int>( floor(a_x/h) )+1;
+   if (a_x - (iNear-0.5)*h > 0.)
+      iNear++;
+
+   jNear = static_cast<int>( floor(a_y/h) )+1;
+   if (a_y - (jNear-0.5)*h > 0.)
+      jNear++;
+}
+
+//-------------------------------------------------------
+void EW::computeLowTopoGridPoint(int & iLow, 
+                                      int & jLow, 
+                                      float_sw4 a_x, 
+                                      float_sw4 a_y)
+{
+   int g = mNumberOfGrids-1;
+   float_sw4 h = mGridSize[g];
+
+   iLow = static_cast<int>( floor(a_x/h) )+1;
+   jLow = static_cast<int>( floor(a_y/h) )+1;
+}
+      
 //-------------------------------------------------------
 void EW::computeNearestGridPoint(int & a_i, 
                                    int & a_j, 

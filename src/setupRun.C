@@ -1007,7 +1007,7 @@ void EW::set_materials()
 		}
 	  }
 	  
-	} // end extrapolat to top
+	} // end extrapolate to top
 
 	if (g > 0) // extrapolate to bottom
 	{
@@ -1047,9 +1047,11 @@ void EW::set_materials()
 //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n", m_useVelocityThresholds, m_vpMin, m_vsMin);
 // Extrapolate to ghost points in x and y, if they were not set by the previous routines.
 //    cout << "min rho before " << mRho[0].minimum() << endl;
+
     extrapolateInXY( mRho );
     extrapolateInXY( mMu );
     extrapolateInXY( mLambda );
+
     if( m_use_attenuation )
     {
       extrapolateInXY(mQs);
@@ -2301,7 +2303,7 @@ void EW::material_ic( vector<Sarray>& a_mtrl )
    {
       //      int nc=1;
       int g  = mNumberOfCartesianGrids-1;
-      int gc = mNumberOfGrids-1;
+      int gc = g+1;
       int nc = a_mtrl[g].ncomp();
       int q, i, j;
 // inject values between lower boundary of gc and upper boundary of g

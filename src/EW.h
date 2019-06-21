@@ -428,6 +428,17 @@ void get_epicenter(float_sw4 &epiLat, float_sw4 &epiLon, float_sw4 &epiDepth, fl
 /* void bc_free_surface( Sarray& u, int g, float_sw4 t, int side, */
 /* 		      Forcing* forcing, float_sw4 h, int onesided[6] ); */
 
+void computeNearestTopoGridPoint(int & iNear, 
+                                 int & jNear, 
+                                 float_sw4 a_x, 
+                                 float_sw4 a_y);
+
+void computeLowTopoGridPoint(int & iLow, 
+                             int & jLow, 
+                             float_sw4 a_x, 
+                             float_sw4 a_y);
+   
+
 void computeNearestGridPoint(int & a_i, 
 			     int & a_j, 
 			     int & a_k,
@@ -437,12 +448,6 @@ void computeNearestGridPoint(int & a_i,
 			     float_sw4 a_z);
   
 
-void computeNearestSurfaceGridPoint(int & a_i, 
-                                    int & a_j, 
-                                    float_sw4 a_x, 
-                                    float_sw4 a_y, 
-                                    float_sw4 a_z);
-  
 void coord_from_index( int i, int j, int k, int g, float_sw4& x, float_sw4& y, float_sw4& z );
 
 float_sw4 distance(float_sw4 a_x1, float_sw4 a_y1, float_sw4 a_z1,
@@ -500,10 +505,7 @@ bool invert_curvilinear_grid_mapping( float_sw4 X0, float_sw4 Y0, float_sw4 Z0, 
 bool find_curvilinear_derivatives_at_point( float_sw4 q, float_sw4 r, float_sw4 s,
 					    float_sw4 qX[], float_sw4 rX[], float_sw4 sX[]);
 
-// curvilinear mapping between interface surfaces
-bool interface_surface_mapping( float_sw4 q, float_sw4 r, float_sw4 s, int g, float_sw4 & X0, float_sw4 & Y0, float_sw4 & Z0 );
-
-   void extrapolate_interface_surfaces();
+void extrapolate_interface_surfaces();
    
 void save_errors( float_sw4 max_error[3], float_sw4 l2_error[3] );
 

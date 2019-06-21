@@ -1,21 +1,21 @@
 %-*-octave-*--
 %
-% PLOTIMAGE2
+% PLOTIMAGEF2
 %
-%     plotimage2( fil, machineformat, cvals )
+%     plotimagef2( fil, machineformat, cvals )
 %
-%   Plots the image on file 'fil' with contour, using the contour levels cvals.
+%   Plots the image on file 'fil' with contourf, using the contour levels cvals.
 %   If cvals is ommitted, 21 countour levels will be obtained through the imageinfo fcn.
 %
 %   The boundary of each grid patch is outlined in black. A vector cvals can be 
 %   obtained from function imageinfo.
 %
 %   Input:
-%         fil:                       Name of image file
-%         machineformat (optional):  Passed to fopen to read big endian, little endian, etc
-%         cvals (optional):          Vector of countour levels to plot
+%         fil:               Name of image file
+%         machineformat (optional):  Passed to fopen to read big endian, little endian, native, etc
+%         cvals (optional):  Vector of countour levels to plot
 %
-   function plotimage2( fil, machineformat, cvals )
+function plotimagef2( fil, machineformat, cvals )
 if nargin < 2
    machineformat='native';
 end;
@@ -55,11 +55,11 @@ x2max=-1e9;
 for b=1:nb
   [im,x,y,z] = readimage(fil,b,0,machineformat);
    if plane==0
-     contour(y,z,im,cvals);
+     contourf(y,z,im,cvals);
    elseif plane==1
-     contour(x,z,im,cvals);
+     contourf(x,z,im,cvals);
    elseif plane==2
-     contour(x,y,im,cvals);
+     contourf(x,y,im,cvals);
    end
    if b==1
       hold on;
@@ -68,19 +68,19 @@ for b=1:nb
 % make a frame
   if plane==0
     if (b >= firstCurviPatch)
-      plot(y(1,:), z(1,:),'k')
-      plot(y(n,:), z(n,:),'k')
-      plot(y(:,1), z(:,1),'k')
-      plot(y(:,m), z(:,m),'k')
+      plot(y(1,:), z(1,:),'r')
+      plot(y(n,:), z(n,:),'r')
+      plot(y(:,1), z(:,1),'r')
+      plot(y(:,m), z(:,m),'r')
       x1mi=min(min(y));
       x1ma=max(max(y));
       x2mi=min(min(z));
       x2ma=max(max(z));
     else
-      plot(y, z(1)*ones(size(y)),'k')
-      plot(y, z(n)*ones(size(y)),'k')
-      plot(y(1)*ones(size(z)), z,'k')
-      plot(y(m)*ones(size(z)), z,'k')
+      plot(y, z(1)*ones(size(y)),'r')
+      plot(y, z(n)*ones(size(y)),'r')
+      plot(y(1)*ones(size(z)), z,'r')
+      plot(y(m)*ones(size(z)), z,'r')
       x1mi=min(y);
       x1ma=max(y);
       x2mi=min(z);
@@ -89,29 +89,29 @@ for b=1:nb
   elseif plane==1
 %    if (b==nb) && (gridinfo == 1) %  update
     if (b >= firstCurviPatch)
-      plot(x(1,:), z(1,:),'k')
-      plot(x(n,:), z(n,:),'k')
-      plot(x(:,1), z(:,1),'k')
-      plot(x(:,m), z(:,m),'k')
+      plot(x(1,:), z(1,:),'r')
+      plot(x(n,:), z(n,:),'r')
+      plot(x(:,1), z(:,1),'r')
+      plot(x(:,m), z(:,m),'r')
       x1mi=min(min(x));
       x1ma=max(max(x));
       x2mi=min(min(z));
       x2ma=max(max(z));
     else
-      plot(x, z(1)*ones(size(x)),'k')
-      plot(x, z(n)*ones(size(x)),'k')
-      plot(x(1)*ones(size(z)), z,'k')
-      plot(x(m)*ones(size(z)), z,'k')
+      plot(x, z(1)*ones(size(x)),'r')
+      plot(x, z(n)*ones(size(x)),'r')
+      plot(x(1)*ones(size(z)), z,'r')
+      plot(x(m)*ones(size(z)), z,'r')
       x1mi=min(x);
       x1ma=max(x);
       x2mi=min(z);
       x2ma=max(z);
     end;
   elseif plane==2
-    plot(x, y(1)*ones(size(x)),'k')
-    plot(x, y(n)*ones(size(x)),'k')
-    plot(x(1)*ones(size(y)), y,'k')
-    plot(x(m)*ones(size(y)), y,'k')
+    plot(x, y(1)*ones(size(x)),'r')
+    plot(x, y(n)*ones(size(x)),'r')
+    plot(x(1)*ones(size(y)), y,'r')
+    plot(x(m)*ones(size(y)), y,'r')
     x1mi=min(x);
     x1ma=max(x);
     x2mi=min(y);
@@ -126,7 +126,7 @@ end;
 axis([x1min x1max x2min x2max]);
 hold off;
 axis ij; % flip z-axis to point downwards
-axis equal;
+#axis equal;
 caxis([0.0, mx]);
 colorbar;
 set(gca,"fontsize",16);
