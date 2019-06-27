@@ -1,0 +1,83 @@
+#------------------------------
+# Grid (w=2500)
+#
+#grid h=200 x=120e3 y=85e3 z=20e3 lat=38.55 lon=-122.3 az=1.43638e+02
+grid h=200 x=150e3 y=120e3 z=20e3 lat=38.8 lon=-122.3 az=1.43638e+02
+#
+#------------------------------
+# Time
+#
+time t=40.0 utcstart=01/04/2018:10:39:32.694
+#
+#------------------------------
+# Paths etc..
+#
+fileio verbose=1 path=berkeley-jan-4-2018_synthdata
+#
+#------------------------------
+# use default Supergrid parameters
+#
+#------------------------------
+# Reference 1-D material
+#
+#block z1=0.0 z2=10.0 vp=1800.0 vs=700.0 rho=2100.0
+#block z1=10.0 z2=20.0 vp=1800.0 vs=850.0 rho=2100.0
+#block z1=20.0 z2=30.0 vp=2000.0 vs=1150.0 rho=2200.0
+#block z1=0.0 z2=100.0 vp=2400.0 vs=1200.0 rho=2200.0
+#block z1=100.0 z2=300.0 vp=2800.0 vs=1400.0 rho=2300.0
+#block z1=300.0 z2=500.0 vp=3100.0 vs=1600.0 rho=2400.0
+#block z1=500.0 z2=700.0 vp=3400.0 vs=1800.0 rho=2450.0
+#block z1=700.0 z2=1000.0 vp=3700.0 vs=2100.0 rho=2500.0
+#block z1=1000.0 z2=3000.0 vp=4400.0 vs=2400.0 rho=2600.0
+#block z1=3000.0 z2=5000.0 vp=5100.0 vs=2800.0 rho=2700.0
+#block z1=5000.0 z2=6000.0 vp=5600.0 vs=3150.0 rho=2750.0
+#block z1=6000.0 z2=11000.0 vp=6150.0 vs=3600.0 rho=2825.0
+#block z1=11000.0 z2=16000.0 vp=6320.0 vs=3650.0 rho=2850.0
+#block z1=16000.0 vp=6550.0 vs=3700.0 rho=2900.0
+#block z1=21000.0 vp=6800.0 vs=3800.0 rho=2950.0
+#
+#------------------------------
+# 3-d material model
+# Earth Model
+
+# LC (quartz) wave workspace file system
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/project/projectdirs/m2868
+
+topography input=rfile zmax=3.0e3 order=3 file=/project/projectdirs/m2868/USGSBayAreaVM-08.3.0-corder.rfile
+
+# treshold on minimum wave speeds
+globalmaterial  vpmin=866 vsmin=500
+
+#
+#------------------------------
+# Source omega=pi/2 rad/sec -> f0 = 0.25 Hz
+#
+#source lat=37.86119 lon=-122.24233 depth=12101.0 t0=5.0 m0=4.563e+15 mxx=-0.86763 myy=0.8387 mzz=0.02893 mxy=-0.46548 mxz=-0.06266 myz=0.06266 type=Gaussian freq=1.57075
+source lat=37.86119 lon=-122.24233 depth=12101.0 t0=5.0 m0=4168693834703329.0 strike=60.0 dip=90.0 rake=-40.0 type=Gaussian freq=1.57075
+#
+#----------------------------
+#
+#  Synthetic ground motions
+#Broadband stations
+rec sta=BK.BDM file=BK.BH.BDM lat=37.95397 lon=-121.86554 depth=34.7 nsew=1 usgsformat=1
+rec sta=BK.BKS file=BK.BH.BKS lat=37.87622 lon=-122.23558 depth=25.6 nsew=1 usgsformat=1
+rec sta=BK.BL67 file=BK.BH.BL67 lat=37.87492 lon=-122.24318 depth=0.0 nsew=1 usgsformat=1
+rec sta=BK.BRK file=BK.BH.BRK lat=37.87352 lon=-122.26099 depth=2.7 nsew=1 usgsformat=1
+rec sta=BK.CVS file=BK.BH.CVS lat=38.34526 lon=-122.4584 depth=23.2 nsew=1 usgsformat=1
+rec sta=BK.JRSC file=BK.BH.JRSC lat=37.40373 lon=-122.23868 depth=0.0 nsew=1 usgsformat=1
+rec sta=BK.MCCM file=BK.BH.MCCM lat=38.14478 lon=-122.88018 depth=4.0 nsew=1 usgsformat=1
+rec sta=BK.VAK file=BK.BH.VAK lat=37.877526 lon=-122.24889 depth=10.0 nsew=1 usgsformat=1
+rec sta=BK.WENL file=BK.BH.WENL lat=37.62211 lon=-121.75697 depth=30.3 nsew=1 usgsformat=1
+#
+#-----------------------------------------------------------------------
+#
+# Output some material images
+#
+image mode=lat z=0 cycle=0
+image mode=lon z=0 cycle=0
+image mode=topo z=0 cycle=0
+
+image mode=rho x=33000 cycle=0
+image mode=mu x=33000 cycle=0
+image mode=lambda x=33000 cycle=0
+#

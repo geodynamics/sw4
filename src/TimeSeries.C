@@ -313,7 +313,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 
 // Set station ref utc = simulation ref utc
 // m_t0 = 0 is set by default above.
-   a_ew->get_utc( m_utc );
+   a_ew->get_utc(m_utc, event);
 
 } // end constructor
 
@@ -1139,7 +1139,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
                   else
 		  {
                      int utcrefsim[7];
-		     m_ew->get_utc(utcrefsim);
+		     m_ew->get_utc(utcrefsim, m_event);
 		     //		     cout << "UTC from EW : ";
 		     //		     for( int c=0;c<7;c++ )
 		     //			cout << utcrefsim[c] << " " ;
@@ -2443,7 +2443,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 
    if( m_myPoint )
    {
-      bool debug = false;
+      bool debug = true;
       float_sw4 dt1, dt2, dt3, t01, t02, t03, lat1, lat2, lat3, lon1, lon2, lon3;
       float_sw4 cmpaz1, cmpaz2, cmpaz3, cmpinc1, cmpinc2, cmpinc3;
       int utc1[7], utc2[7], utc3[7], npts1, npts2, npts3;
@@ -2507,7 +2507,7 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	       for( int c=0 ; c < 7 ; c++ )
 		  m_utc[c] = utc1[c];
 	       int utcrefsim[7];
-	       m_ew->get_utc(utcrefsim);
+	       m_ew->get_utc(utcrefsim, m_event);
 	       m_t0 = utc_distance( utcrefsim, m_utc );
 	    }
             m_shift = t01;

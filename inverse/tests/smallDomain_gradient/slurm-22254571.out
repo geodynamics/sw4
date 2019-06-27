@@ -118,3 +118,96 @@ Max norm of scaled total gradient = 28.3417
 3.975e+08 <=    mu    <= 4.30904e+10 (grid 0)
 3.9743e+08 <=  lambda  <= 4.21808e+10 (grid 0)
  cfl_max = 1.10032 on grid 0
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+Evaluate at lambda = 1 gives f = 13.6539 (initslope = -0.0617697) 
+1589.99 <=   rho    <= 3000 (grid 0)
+3.97141e+08 <=    mu    <= 4.30904e+10 (grid 0)
+3.20061e+08 <=  lambda  <= 4.21808e+10 (grid 0)
+ cfl_max = 1.10032 on grid 0
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = 0 Observation Tstart = -2.94389e+08
+WARNING: Observation contains zero data
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.rho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.rho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.rho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.mu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.lambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.p.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.s.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradrho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradmu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradlambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000.gradp.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.x=60000..sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.mu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.lambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.p.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.s.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradrho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradmu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradlambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500.gradp.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.y=42500..sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.mu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.lambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.p.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.s.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradrho.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradmu.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradlambda.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000.gradp.sw4img
+writing image plane on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/mimage.cycle=0000.z=5000..sw4img
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.rho.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.p.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.s.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.mu.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.lambda.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradrho.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradp.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.grads.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradmu.3Dimg (msg from proc # 3)
+writing volume image on file /global/cscratch1/sd/kechen/sw4/inverse/tests/smallDomain_gradient/gradient_output/m3dimage.cycle=0000.gradlambda.3Dimg (msg from proc # 3)
+-----------------------------------------------------------------------
+ it=1 1 max-norm scaled gradient= 27.408 max-norm model update= 0.00092818
+ Misfit= 13.6539
+============================================================
+ sw4mopt ( Material/Source estimation solver) finished! 
+============================================================
