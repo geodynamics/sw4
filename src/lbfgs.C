@@ -154,7 +154,8 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 		 vector<vector<TimeSeries*> >& GlobalTimeSeries, 
 		 vector<vector<TimeSeries*> >& GlobalObservations,
-		 int nspar, int nmpars, double* xs, int nm, double* xm, double f, double* dfs,
+		 int nspar, int nmpars, double* xs, int nmpard_global, int nmpard, 
+		 double* xm, double f, double* dfs,
 		 double* dfm, double* ps, double* pm, double cgstep, double maxstep, double steptol,
 		 double* xsnew, double* xmnew, double& fnew, double* sfs, double* sfm,
 		 int myRank, int& retcode, int& nstep_reductions, bool testing, double* dfsnew,
@@ -213,16 +214,15 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    ns = nspar + nmpars;
    for( int i=0 ; i < ns ; i++ )
       xsnew[i] = xs[i];
-
-   for( int i=0 ; i < nm ; i++ )
+   for( int i=0 ; i < nmpard ; i++ )
       xmnew[i] = xm[i];
 
    retcode = 2;
 
    cglen = ang = 0;
-   if( nm > 0 )
+   if( nmpard_global > 0 )
    {
-      for( int i=0 ; i < nm ; i++ )
+      for( int i=0 ; i < nmpard ; i++ )
       {
 	 cglen += pm[i]*pm[i]/(sfm[i]*sfm[i]);
 	 ang   += pm[i]*dfm[i];
@@ -248,10 +248,10 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       }
 
       cglen = 0;
-      if( nm > 0 )
+      if( nmpard_global > 0 )
       {
 	 double cglenloc = 0;
-	 for( int i=0 ; i < nm ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	 {
 	    pm[i] = -dfm[i]/(sfm[i]*sfm[i]);
 	    cglenloc += pm[i]*pm[i]/(sfm[i]*sfm[i]);
@@ -270,7 +270,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    // i.e., maxstep is the maximum allowable relative change in x, ||x^{k+1}-x^k||/typx < maxstep
    if( cglen*cgstep > maxstep )
    {
-      for( int i=0 ; i < nm ; i++ )
+      for( int i=0 ; i < nmpard ; i++ )
 	 pm[i] = pm[i]*(maxstep/cglen);
       for( int i=0 ; i < ns ; i++ )
 	 ps[i] = ps[i]*(maxstep/cglen);
@@ -278,7 +278,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    }
    else
    {
-      for( int i=0; i < nm ; i++ )
+      for( int i=0; i < nmpard ; i++ )
 	 pm[i] = cgstep*pm[i];
       for( int i=0; i < ns ; i++ )
 	 ps[i] = cgstep*ps[i];
@@ -287,10 +287,10 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       // minlambda is scaled such that x^{k+1}-x^k = lambda*p^k with lambda=minlambda implies
       //            || x^{k+1}-x^k ||_\infty < minlambda (termination criterium)
    double initslope=0;
-   if( nm > 0 )
+   if( nmpard_global > 0 )
    {
       double initslopetmp = 0;
-      for( int i=0; i < nm ; i++ )
+      for( int i=0; i < nmpard ; i++ )
          initslopetmp += dfm[i]*pm[i];
       MPI_Allreduce(&initslopetmp, &initslope,1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
    }
@@ -298,9 +298,9 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       initslope += dfs[i]*ps[i];
 
    double rellength = 0;
-   if( nm > 0 )
+   if( nmpard_global > 0 )
    {
-      for( int i=0; i < nm ; i++ )
+      for( int i=0; i < nmpard ; i++ )
       {
 	 double rlocal;
          if( fabs(xm[i]) > sfm[i] )
@@ -335,11 +335,11 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    {
       for( int i=0; i < ns ; i++ )
 	 xsnew[i] = xs[i] + lambda*ps[i];
-      for( int i=0; i < nm ; i++ )
+      for( int i=0; i < nmpard ; i++ )
 	 xmnew[i] = xm[i] + lambda*pm[i];
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
-      mopt->m_mp->get_material( nm, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
+      mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
       int ret_code = simulation.check_material( rho, mu, la, ok );
       if( !ok )
       {
@@ -364,9 +364,9 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       // Take a small step. AP: calling compute_f when the material is out of bounds will lead to MPI-Abort()
       for( int i=0 ; i < ns ; i++ )
 	 xsnew[i] = xs[i]; /* + lambda*ps[i]; */
-      for( int i=0 ; i < nm ; i++ )
+      for( int i=0 ; i < nmpard ; i++ )
 	 xmnew[i] = xm[i]; /* + lambda*pm[i];*/
-      compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+      compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fnew, mopt );
       return;
    }
@@ -376,10 +376,10 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    {
       for( int i=0; i < ns ; i++ )
 	 xsnew[i] = xs[i] + lambda*ps[i];
-      for( int i=0; i < nm ; i++ )
+      for( int i=0; i < nmpard ; i++ )
 	 xmnew[i] = xm[i] + lambda*pm[i];
 
-      compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
+      compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fnew, mopt );
 
             if( myRank == 0 )
@@ -392,7 +392,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       if( fnew < f + alpha*lambda*initslope )
       {
          if( mopt->m_wolfe )
-	    wolfecondition( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs, nm, xm,
+	    wolfecondition( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations, nspar, nmpars, xs, nmpard, xm,
 	           ps, pm, xsnew, xmnew, f, dfsnew, dfmnew, lambda, maxstep, minlambda, cglen, alpha, initslope, myRank,
 			 fnew, maxtaken, retcode, mopt );
 	 else
@@ -408,9 +408,9 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       {
 	    // Could not find satisfactory step
 	 ang = 0;
-         if( nm > 0 )
+         if( nmpard_global > 0 )
 	 {
-	    for( int i=0 ; i < nm ; i++ )
+	    for( int i=0 ; i < nmpard ; i++ )
 	       ang += pm[i]*dfm[i];
             double angtmp=ang;
             MPI_Allreduce(&angtmp,&ang,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -445,7 +445,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    // Take a full step
 	 for( int i=0 ; i < ns ; i++ )
 	    xsnew[i] = xs[i] + ps[i];
-	 for( int i=0 ; i < nm ; i++ )
+	 for( int i=0 ; i < nmpard ; i++ )
 	    xmnew[i] = xm[i] + pm[i];
 
 	 // Compute return value for fnew
@@ -455,8 +455,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    //	       for( int i=0 ; i < n ; i++ )
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
-	 compute_f( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		       fnew, mopt );
+	 compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources,
+		    GlobalTimeSeries, GlobalObservations, fnew, mopt );
 	 return;
       } // end if ( Could not find satisfactory step )      
       else
@@ -572,6 +572,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    if( maxit == 0 )
       return;
    
+   int nmpard_global=0;
+   MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+
    FILE *fd;
    FILE *fdx;
    const string parfile = mopt->m_path + "parameters.bin";
@@ -604,6 +607,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt, 0 );
+
    if( mopt->m_output_ts )
    {
      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
@@ -628,10 +632,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    }
    //   return;
    rnorm = 0;
-   if( nmpard > 0 )
+   if( nmpard_global > 0 )
    {
       for( int i=0 ; i < nmpard ; i++ )
-	 rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
+         rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
       double rnormtmp = rnorm;
       MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
    }
@@ -723,8 +727,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    vi = vi-m;
 	 for( int i=nv ; i >= 1 ; i-- )
 	 {
-            double scprods[2]={0,0};
-	    if( nmpard > 0 )
+	    double scprods[2]={0,0};
+	    if( nmpard_global > 0 )
 	    {
 	       double scprodsloc[2]={0,0};
 	       for( int j=0 ; j < nmpard ; j++ )
@@ -768,9 +772,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	       vi = vi-m;
 
             double gams[2]={0,0};
-	    if( nmpard > 0 )
+	    if( nmpard_global > 0 )
 	    {
-	       double gamsloc[2]={0,0};
+               double gamsloc[2]={0,0};
 	       for( int i=0 ; i < nmpard ; i++ )
 	       {
 		  gamsloc[0] += sm[i+nmpard*vi]*ym[i+nmpard*vi];
@@ -793,10 +797,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
          vi = kf;
 	 for( int i=1 ; i <= nv ; i++ )
 	 {
-            double scprod = 0;
-	    if( nmpard > 0 )
+	    double scprod = 0;
+	    if( nmpard_global > 0 )
 	    {
-	       double scprodloc = 0;
+               double scprodloc=0;
 	       for( int j=0 ; j < nmpard ; j++ )
 		  scprodloc += ym[j+nmpard*vi]*dm[j];
 	       MPI_Allreduce( &scprodloc, &scprod, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
@@ -834,8 +838,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    cout << "Line search.. " << endl;
 
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
-		     nspar, nmpars, xs, nmpard, xm, f, dfs, dfm, da, dam, fabs(alpha), 10.0, tolerance, xa, xam,
-		     fp, sf, sfm, myRank,
+		     nspar, nmpars, xs, nmpard_global, nmpard, xm, f, dfs, dfm, da, dam,
+		     fabs(alpha), 10.0, tolerance, xa, xam, fp, sf, sfm, myRank,
 		     retcode, nreductions, testing, dfps, dfpm, mopt );
 
          if( retcode == 3 )
@@ -863,7 +867,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       // xa is now the new iterate
       // store x^{k+1}-x^k in d to save memory
       double dxnorm = 0;
-      if( nmpard > 0 )
+      if( nmpard_global > 0 )
       {
 	 for( int i=0 ; i < nmpard ; i++ ) // distributed parameters
 	 {
@@ -879,8 +883,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    dm[i] = xam[i] - xm[i];
 	    xm[i]  = xam[i];
 	 }
-	 double dxnormloc=dxnorm;
-	 MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+         double dxnormloc=dxnorm;
+         MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
       } // end if nmpard > 0 (distributed parameters)      
       
       for( int i=0 ; i < ns ; i++ ) // src and shared material parameters
@@ -906,16 +910,16 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 
 
       // Check Wolfe condition:
-      double sctmp[2]={0,0};
       double sc[2]={0,0};
-      if( nmpard > 0 )
+      if( nmpard_global > 0 )
       {
+         double sctmp[2]={0,0};
 	 for( int i=0 ; i < nmpard ; i++ )
 	 {
 	    sctmp[0] += dmsave[i]*dfm[i];
 	    sctmp[1] += dmsave[i]*dfpm[i];
 	 }
-	 MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+         MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       }
       for( int i=0 ; i < ns ; i++ )
       {
@@ -926,14 +930,15 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 cout << "Wolfe condition " <<  sc[1] << " " << sc[0] << " quotient " << sc[1]/sc[0] << " should be >= beta " << endl;
 
       rnorm = 0;
-      if( nmpard > 0 )
+      if( nmpard_global > 0 )
       {
-	 double rnormloc = 0;
+         double rnormloc = 0;
 	 for( int i=0 ; i < nmpard ; i++ )
 	    if( fabs(dfpm[i])*sfm[i] > rnormloc )
 	       rnormloc = fabs(dfpm[i])*sfm[i];
-	 MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+         MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
       }
+
       for( int i=0 ; i < ns ; i++ )
 	 if( fabs(dfps[i])*sf[i] > rnorm )
 	    rnorm = fabs(dfps[i])*sf[i];
@@ -942,7 +947,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 //      for( int ts=0 ; ts < GlobalTimeSeries.size() ; ts++ )
 //	 GlobalTimeSeries[ts]->writeFile();
 
-// Save material parameters, for restart.
+// Save shared material parameters, for restart.
       mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
 
 // Check that wave speeds do not become too high or too low.

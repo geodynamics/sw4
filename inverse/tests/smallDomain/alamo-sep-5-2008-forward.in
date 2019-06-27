@@ -40,7 +40,7 @@ fileio verbose=1 path=alamo-sep-5-2008_synthdata
 # 3-d material model
 # Earth Model
 
-# LC (quartz) wave workspace file system
+# NERSC (Cori) project file system
 rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/project/projectdirs/m2868
 
 topography input=rfile zmax=3.0e3 order=3 file=/project/projectdirs/m2868/USGSBayAreaVM-08.3.0-corder.rfile

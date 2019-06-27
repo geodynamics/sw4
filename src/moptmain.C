@@ -3,7 +3,6 @@
 #include <cstring>
 #include "version.h"
 //#include "MaterialParameterization.h"
-//#include "MaterialParAllpts.h"
 #include "MaterialParCartesian.h"
 #include "Mopt.h"
 #include "compute_f.h"
@@ -143,7 +142,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
-      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
+     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory );
 //        Compute misfit
       if( mopt->m_misfit == Mopt::L2 )
       {
@@ -173,21 +172,34 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    }
 
 // add in a Tikhonov regularizing term:
-   double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
-   if( tcoff != 0 )
+   bool tikhonovreg=true;
+   if( tikhonovreg )
    {
+      double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
+      if( tcoff != 0 )
+      {
 // Shared parameters
-      double tikhonov=0;
-      for (int q=nspar; q<nspar+nmpars; q++)
-	 tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-      mf += tcoff*tikhonov;
+	 double tikhonov=0;
+	 for (int q=nspar; q<nspar+nmpars; q++)
+	    tikhonov += SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+	 mf += tcoff*tikhonov;
 
 // Distributed parameters
-      double tikhonovd = 0;
-      for (int q=0; q<nmpard; q++)
-	 tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
-      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      mf += tcoff*tikhonov;
+	 double tikhonovd = 0;
+	 for (int q=0; q<nmpard; q++)
+	    tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
+	 MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 mf += tcoff*tikhonov;
+      }
+   }
+   else
+   {
+      double mf_reg;
+      double* dmfs, *dmfd;
+      mopt->m_mp->get_regularizer( nmpars, xs, nmpard, xm, mopt->m_xm0, mopt->m_xs0,
+				   mopt->m_reg_coeff, rho, mu, lambda, mf_reg, mopt->m_sfm,
+				   mopt->m_sfs, false, dmfd, dmfs);
+      mf += mf_reg;
    }
 }
 
@@ -273,7 +285,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e );
+     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
 
    //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
 
@@ -323,31 +335,47 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
 // add in a Tikhonov regularizing term:
-   double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
-   if( tcoff != 0 )
+   bool tikhonovreg=true;
+   if( tikhonovreg )
    {
-      double tikhonov=0;
-      for (int q=nspar; q<nspar+nmpars; q++)
+      double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
+      if( tcoff != 0 )
       {
-	 tikhonov +=  SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
-	 dfs[q] += 2*tcoff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
-      }
-      f += tcoff*tikhonov;
+	 double tikhonov=0;
+	 for (int q=nspar; q<nspar+nmpars; q++)
+	 {
+	    tikhonov +=  SQR( (xs[q] - mopt->m_xs0[q])/mopt->m_sfs[q]);
+	    dfs[q] += 2*tcoff*(xs[q] - mopt->m_xs0[q])/SQR(mopt->m_sfs[q]);
+	 }
+	 f += tcoff*tikhonov;
 
-      double tikhonovd = 0;
-      for (int q=0; q<nmpard; q++)
-      {
-	 tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
-	 dfm[q] += 2*tcoff*(xm[q] - mopt->m_xm0[q])/SQR(mopt->m_sfm[q]);
+	 double tikhonovd = 0;
+	 for (int q=0; q<nmpard; q++)
+	 {
+	    tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
+	    dfm[q] += 2*tcoff*(xm[q] - mopt->m_xm0[q])/SQR(mopt->m_sfm[q]);
+	 }
+	 MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 f += tcoff*tikhonov;
       }
-      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-      f += tcoff*tikhonov;
+   }
+   else
+   {
+      double mf_reg;
+      mopt->m_mp->get_regularizer( nmpars, xs, nmpard, xm, mopt->m_xm0, mopt->m_xs0,
+				   mopt->m_reg_coeff, rho, mu, lambda, mf_reg, mopt->m_sfm,
+				   mopt->m_sfs, false, dfmevent, dfsevent);
+      f += mf_reg;
+      for( int m=0 ; m < nmpars ; m++ )
+	 dfs[m+nspar] += dfsevent[m];
+      for( int m=0 ; m < nmpard ; m++ )
+	 dfm[m] += dfmevent[m];
    }
 
    if( myrank == 0 && verbose >= 1 )
    {
       cout.precision(16);  
-      cout << " Misfit (objetive functional) is f = " << f << endl;
+      cout << " Misfit (objective functional) is f = " << f << endl;
    }
 
 // Get gradient by solving the adjoint problem:
@@ -483,9 +511,9 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       string fname = mopt->m_path+"GradientTest.txt";
       dftest.open(fname.c_str());
    }
-   double* sf = mopt->m_sfs;
    if( ns>0 )
    {
+     double* sf = mopt->m_sfs;
       if( myRank == 0 )
       {
 	printf("Gradient testing shared parameters :\n");
@@ -520,13 +548,17 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    }
    if( nmpard_global > 0 )
    {
+      double* sf = mopt->m_sfm;
       if( myRank == 0 )
 	 cout << "Gradient testing distributed parameters :" << endl;
       for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
       {
          ssize_t ind = mopt->m_mp->local_index(indg);
 	 if( ind >=0 )
+         {
+ 	    h = 3e-8*sf[ind];
 	    xm[ind] += h;
+	 }
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fp, mopt );
 	 double dfnum = (fp-f)/h;
@@ -534,9 +566,10 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 if( ind >=0 )
 	    dfan = dfm[ind];
 
-	 if( myRank == 0 )
+	 //	 if( myRank == 0 )
+	 if( ind >= 0 )
 	 {	    
-	    cout << "f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
+	   cout << "( " << myRank << "), f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << " relerr= " << (dfan-dfnum)/dfnum << endl;
 	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
 	 }
          if( ind >= 0 )
@@ -1088,6 +1121,7 @@ int main(int argc, char **argv)
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
 	      //	      simulation.set_utcref( *GlobalObservations[m] );
+		 GlobalObservations[e][m]->writeFileUSGS("_obs");
 		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 		 {
 		    GlobalObservations[e][m]->filter_data( simulation.m_filterobs_ptr );

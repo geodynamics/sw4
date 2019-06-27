@@ -102,7 +102,7 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event );
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps );
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,

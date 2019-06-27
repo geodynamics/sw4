@@ -195,3 +195,55 @@ void MaterialParameterization::set_scalefactors( int nmpars, double* sfs,
       sfs[i+2] = lambda_ref;
    }
 }
+
+//-----------------------------------------------------------------------
+void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, double* xms, 
+		      double* xmd0, double* xms0, double regcoeff,
+		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+		      std::vector<Sarray>& a_lambda, double& mf_reg,
+		      double* sfd, double* sfs, bool compute_derivative, 
+		      double* dmfd_reg, double* dmfs_reg )
+{
+   if( regcoeff == 0 )
+      return;
+
+// Default, Tikhonov regularizing term:
+#define SQR(x) ((x)*(x))
+   mf_reg=0;
+   double tcoff = (1.0/(m_nms+m_nmd_global))*regcoeff;
+   if( compute_derivative )
+   {
+ // Shared parameters
+      double tikhonov=0;
+      for (int q=0; q<m_nms; q++)
+      {
+	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+	 dmfs_reg[q]   += 2*tcoff*(xms[q] - xms0[q])/SQR(sfs[q]);
+      }
+      mf_reg += tcoff*tikhonov;
+
+ // Distributed parameters
+      double tikhonovd = 0;
+      for (int q=0; q<m_nmd; q++)
+      {
+	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
+	 dmfd_reg[q] += 2*tcoff*(xmd[q] - xmd0[q])/SQR(sfd[q]);
+      }
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      mf_reg += tcoff*tikhonov;
+   }
+   else
+   {
+      double tikhonov=0;
+      for (int q=0; q<m_nms; q++)
+	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+      mf_reg += tcoff*tikhonov;
+
+      double tikhonovd = 0;
+      for (int q=0; q<m_nmd; q++)
+	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      mf_reg += tcoff*tikhonov;
+   }
+#undef SQR
+}

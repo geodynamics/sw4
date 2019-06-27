@@ -241,8 +241,11 @@ void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
    }
    else if( m_init == 4 )
    {
+     cout << "M_filename = " << m_filename << endl;
       MParGridFile mpfile( m_filename );
       mpfile.interpolate_to_other( xms, 2, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
+      for( int i=0 ; i < 54 ; i++)
+	cout << i << " mtrl " << xms[i] << endl;
       if( !mpfile.is_update() )
 	 subtract_base_mtrl( nms, xms );
    }

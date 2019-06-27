@@ -2475,7 +2475,7 @@ void EW::processFileIO(char* buffer)
        }
        else if (startswith("temppath=", token))
        {
-          token += 9; // skip obspath=
+          token += 9; // skip temppath=
           mTempPath = token;
 	  mTempPath += '/';
        }

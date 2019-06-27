@@ -43,10 +43,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-		int event )
+		int event, int nsteps_in_memory )
 {
    // Experimental
-   int nsteps_in_memory=50;
+  //   int nsteps_in_memory=50;
 // solution arrays
    vector<Sarray> F, Lu, Uacc, Up;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;

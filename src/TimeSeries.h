@@ -60,6 +60,7 @@ void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_
 void recordData(vector<float_sw4> & u);
 
 void writeFile( string suffix="" );
+void writeFileUSGS( string suffix="" );
 
 void readFile( EW* ew, bool ignore_utc );
 

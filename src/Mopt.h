@@ -68,11 +68,12 @@ class Mopt
    bool m_scales_file_given;
    std::string m_path;
    double m_reg_coeff;
+   int m_nsteps_in_memory; // Number of steps when saving solution on domain boundaries for backward solve.
    int m_nstot; // dimension of m_sfs and m_xs0
    double *m_sfs; // scale factors, shared
    double *m_sfm; // scale factors, distributed
-   double *m_xs0; // initial material perturbation
-   double *m_xm0; // initial material perturbation
+   double *m_xs0; // initial material perturbation, shared
+   double *m_xm0; // initial material perturbation, distributed
 };
 
 #endif
