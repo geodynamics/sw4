@@ -105,6 +105,7 @@ function plotgrid( fil, machineformat )
   axis([x1min x1max x2min x2max]);
   hold off;
   axis ij; % flip z-axis to point downwards
+  set(gca,"fontsize",16);
 %  axis equal;
 end %plotgrid
 

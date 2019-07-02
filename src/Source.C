@@ -533,7 +533,7 @@ void Source::correct_Z_level( EW *a_ew )
 // 3. checks if the source is inside the computational domain. If not, set mIgnore=true
 
 // tmp
-   printf("Entering correct_Z_level()\n");
+//   printf("Entering correct_Z_level()\n");
 
   int i,j,k,g;
 // preliminary determination of the nearest grid point (already did this in the constructor)
@@ -642,7 +642,7 @@ void Source::correct_Z_level( EW *a_ew )
 // calculate the closest grid point
 
 // tmp
-   printf("Exiting correct_Z_level()\n");
+//   printf("Exiting correct_Z_level()\n");
 }
 
 //-----------------------------------------------------------------------

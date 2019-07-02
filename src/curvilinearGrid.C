@@ -1,3 +1,4 @@
+//-*-c++-*-
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -75,19 +76,14 @@ void EW::setup_metric()
          int nzg = m_global_nz[g];
          float_sw4 h= mGridSize[g];   
          float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
-//FTNC         if( m_croutines )
             metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
                            mMetric[g].c_ptr(), mJ[g].c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
                            m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
-//FTNC         else
-//FTNC            metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-//FTNC                        mMetric[g].c_ptr(), mJ[g].c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
-//FTNC                        &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
       }
       else
       {
 // tmp
-         cout << "Calling metric_ci for grid = " << g << endl;
+//         cout << "Calling metric_ci for grid = " << g << endl;
          
          int ierr=0;
          ierr=metric_ci( Bx, Nx, By, Ny, Bz, Nz, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mMetric[g].c_ptr(), mJ[g].c_ptr() );
@@ -121,7 +117,7 @@ void EW::setup_metric()
 }
 
 //-----------------------------------------------------------------------
-void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
+void EW::generate_grid() 
 {
    // Generate grid on domain: topography <= z <= zmax, 
    // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <= jlast
@@ -154,8 +150,7 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
 
   if (mNumberOfGrids - mNumberOfCartesianGrids == 1) // revert to same mapping as before
   {
-// tmp
-     if (proc_zero())
+     if (mVerbose >= 3 && proc_zero())
         cout << "***Making one curvilinear grid***"<< endl;
      
 // generate the grid by calling the curvilinear mapping function
@@ -166,7 +161,6 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
       {
 	 float_sw4 X0, Y0, Z0;
 	 curvilinear_grid_mapping((float_sw4) i, (float_sw4) j, (float_sw4) k, g, X0, Y0, Z0);
-// TEMPORARY FIX
 	 mX[gTop](i,j,k) = X0;
 	 mY[gTop](i,j,k) = Y0;
 	 mZ[gTop](i,j,k) = Z0;
@@ -191,7 +185,7 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
   else
   {
 // new mapping using interface surfaces
-     if (proc_zero())
+     if (mVerbose >= 3 && proc_zero())
         cout << "***Making several curvilinear grids***"<< endl;
      
 //     float_sw4 a6cofi[8], a6cofj[8];
@@ -201,6 +195,10 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
         int iSurfTop = g - mNumberOfCartesianGrids;
         int iSurfBot = iSurfTop - 1;
         float_sw4 h0 = 2.0*mGridSize[g]; // coarse grid size
+
+// tmp
+//        if (g == 2)
+//           printf("generate_grid: g=%d, m_jStart=%d, iSurfTop = %d\n", g, m_jStart[g], iSurfTop);
         
         for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
            for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
@@ -252,11 +250,9 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
                           (1.0-xi)*eta        *m_curviInterface[iSurfBot](iLow,jLow+1,1);
                     }
                     
-                    
                  } // end else (not smack on top)
     
               } // end else (interpolate Zbot)
-              
               
 // Linear interpolation in the vertical direction
               float_sw4 Nz_real = static_cast<float_sw4>(m_kEndInt[g] - m_kStartInt[g]);
@@ -274,9 +270,9 @@ void EW::generate_grid() // GENERALIZE TO SEVERAL CURVILINEAR GRIDS!
            } // end for i,j
         
 // tmp: check min and max z-ccordinate
-        float_sw4 zMax = mZ[g].maximum(1);
-        float_sw4 zMin = mZ[g].minimum(1);
-        printf("*** grid=%d, zMin=%e, zMax=%e\n", g, zMin, zMax);
+        // float_sw4 zMax = mZ[g].maximum(1);
+        // float_sw4 zMin = mZ[g].minimum(1);
+        // printf("*** grid=%d, zMin=%e, zMax=%e\n", g, zMin, zMax);
            
      } // end for g
      
@@ -810,7 +806,7 @@ void EW::assignInterfaceSurfaces()
       return;
    
 // tmp
-  if (proc_zero())
+  if (mVerbose >=3 && proc_zero())
   {
     cout << "***inside assignInterfaceSurfaces*** " << endl;
   }
@@ -836,7 +832,15 @@ void EW::assignInterfaceSurfaces()
      refFact *= 2;
      float_sw4 scaleFact = ( m_topo_zmax - m_curviRefLev[iSurf]) / m_topo_zmax;
 // tmp
-     printf("assignInterfaceSurface iSurf=%d, refFactor=%d, curviRefLev=%e, scaleFactor=%e\n", iSurf, refFact, m_curviRefLev[iSurf], scaleFact);
+//     printf("assignInterfaceSurface iSurf=%d, refFactor=%d, curviRefLev=%e, scaleFactor=%e\n", iSurf, refFact, m_curviRefLev[iSurf], scaleFact);
+     
+// assign all points (not just the interior points): NOT WORKING FOR ALL GHOST POINTS
+     // int ib = m_curviInterface[iSurf].m_ib;
+     // int ie = m_curviInterface[iSurf].m_ie;
+     // int jb = m_curviInterface[iSurf].m_jb;
+     // int je = m_curviInterface[iSurf].m_je;
+     // for (int i=ib; i<= ie; i++)
+     //    for (int j=jb; j<=je; j++)
      
 // assign all interior points
      for (int i=m_iStartInt[g]; i<= m_iEndInt[g]; i++)
@@ -862,15 +866,14 @@ void EW::extrapolate_interface_surfaces()
    if( !topographyExists() )
       return;
 
-// tmp
-  if (proc_zero())
+  if (mVerbose >=3 && proc_zero())
   {
     cout << "***inside extrapolate_interface_surfaces*** " << endl;
   }
    
    int gTop = mNumberOfGrids-1;
 
-// Total number of ghost points = m_ext_ghost_points + m_ghost_points
+// Total number of ghost points: egh = m_ext_ghost_points + m_ghost_points
    int egh = m_iStartInt[gTop] - mTopoGridExt.m_ib;
    
 // the ghost points for the top interface surface have already been assigned
@@ -883,28 +886,46 @@ void EW::extrapolate_interface_surfaces()
       int jmin = m_curviInterface[iSurf].m_jb;
       int jmax = m_curviInterface[iSurf].m_je;
 
-  if (proc_zero())
-  {
-     printf("\t iSurf=%d, egh=%d, imin=%d, imax=%d, jmin=%d, jmax=%d\n", iSurf, egh, imin, imax, jmin, jmax);
-  }
+// tmp
+//      printf("extrapolate_interface_surfaces: iSurf=%d, egh=%d, imin=%d, imax=%d, jmin=%d, jmax=%d\n",
+//             iSurf, egh, imin, imax, jmin, jmax);
       
-// Update extra ghost points. Do not worry about processor boundaries,
+// Update extra ghost points outside physical boundaries. Do not worry about processor boundaries,
 // they will be overwritten with correct values in the communication update afterward.
-#pragma omp parallel for
-      for( int i=imin+egh ; i <= imax-egh ; i++ )
-	 for( int q = 0 ; q < egh ; q++ )
-	 {
-	    m_curviInterface[iSurf](i,jmin+q,1)   = m_curviInterface[iSurf](i,jmin+egh,1);
-	    m_curviInterface[iSurf](i,jmax-q,1)   = m_curviInterface[iSurf](i,jmax-egh,1);
-	 }
-#pragma omp parallel for
-      for( int j=jmin ; j <= jmax ; j++ )
-	 for( int q = 0 ; q < egh ; q++ )
-	 {
-	    m_curviInterface[iSurf](imin+q,j,1) = m_curviInterface[iSurf](imin+egh,j,1);
-	    m_curviInterface[iSurf](imax-q,j,1) = m_curviInterface[iSurf](imax-egh,j,1);
-	 }
-      communicate_array_2d_ext( m_curviInterface[iSurf] ); // CHECK: Does it work for all interface surfaces?
+      if (m_jStartInt[g] == 1)
+      {
+         for( int i=imin+egh ; i <= imax-egh ; i++ )
+            for( int q = 0 ; q < egh ; q++ )
+            {
+               m_curviInterface[iSurf](i,jmin+q,1)   = m_curviInterface[iSurf](i,jmin+egh,1);
+            }
+      }
+      if (m_jEndInt[g] == m_global_ny[g])
+      {
+         for( int i=imin+egh ; i <= imax-egh ; i++ )
+            for( int q = 0 ; q < egh ; q++ )
+            {
+               m_curviInterface[iSurf](i,jmax-q,1)   = m_curviInterface[iSurf](i,jmax-egh,1);
+            }
+      }
+      if (m_iStartInt[g] == 1)
+      {
+         for( int j=jmin ; j <= jmax ; j++ )
+            for( int q = 0 ; q < egh ; q++ )
+            {
+               m_curviInterface[iSurf](imin+q,j,1) = m_curviInterface[iSurf](imin+egh,j,1);
+            }
+      }
+      if (m_iEndInt[g] == m_global_nx[g])
+      {
+         for( int j=jmin ; j <= jmax ; j++ )
+            for( int q = 0 ; q < egh ; q++ )
+            {
+               m_curviInterface[iSurf](imax-q,j,1) = m_curviInterface[iSurf](imax-egh,j,1);
+            }
+      }
+
+      communicate_array_2d_isurf( m_curviInterface[iSurf], iSurf ); // CHECK: Does it work for all interface surfaces?
    } // end for g
 } // end extrapolate_interface_surfaces()
 

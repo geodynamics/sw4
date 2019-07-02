@@ -24,10 +24,10 @@ if nargin < 3
    nc=21;
    [cv0, np, plane, mx, mn] = imageinfo(fil,nc,0,machineformat);
 #   printf("data min=%e, max=%e\n", mn, mx);
-   mn = max(0.006,mx/20);
-   if mx<5*mn
-     mx = 5*mn;
-   end
+   ## mn = max(0.006,mx/20);
+   ## if mx<5*mn
+   ##   mx = 5*mn;
+   ## end
    cvals = linspace(mn,mx,nc);
 else
   mn = cvals(1);
@@ -68,19 +68,19 @@ for b=1:nb
 % make a frame
   if plane==0
     if (b >= firstCurviPatch)
-      plot(y(1,:), z(1,:),'r')
-      plot(y(n,:), z(n,:),'r')
-      plot(y(:,1), z(:,1),'r')
-      plot(y(:,m), z(:,m),'r')
+      plot(y(1,:), z(1,:),'r',"linewidth",2)
+      plot(y(n,:), z(n,:),'r',"linewidth",2)
+      plot(y(:,1), z(:,1),'r',"linewidth",2)
+      plot(y(:,m), z(:,m),'r',"linewidth",2)
       x1mi=min(min(y));
       x1ma=max(max(y));
       x2mi=min(min(z));
       x2ma=max(max(z));
     else
-      plot(y, z(1)*ones(size(y)),'r')
-      plot(y, z(n)*ones(size(y)),'r')
-      plot(y(1)*ones(size(z)), z,'r')
-      plot(y(m)*ones(size(z)), z,'r')
+      plot(y, z(1)*ones(size(y)),'r',"linewidth",2)
+      plot(y, z(n)*ones(size(y)),'r',"linewidth",2)
+      plot(y(1)*ones(size(z)), z,'r',"linewidth",2)
+      plot(y(m)*ones(size(z)), z,'r',"linewidth",2)
       x1mi=min(y);
       x1ma=max(y);
       x2mi=min(z);
@@ -89,29 +89,29 @@ for b=1:nb
   elseif plane==1
 %    if (b==nb) && (gridinfo == 1) %  update
     if (b >= firstCurviPatch)
-      plot(x(1,:), z(1,:),'r')
-      plot(x(n,:), z(n,:),'r')
-      plot(x(:,1), z(:,1),'r')
-      plot(x(:,m), z(:,m),'r')
+      plot(x(1,:), z(1,:),'r',"linewidth",2)
+      plot(x(n,:), z(n,:),'r',"linewidth",2)
+      plot(x(:,1), z(:,1),'r',"linewidth",2)
+      plot(x(:,m), z(:,m),'r',"linewidth",2)
       x1mi=min(min(x));
       x1ma=max(max(x));
       x2mi=min(min(z));
       x2ma=max(max(z));
     else
-      plot(x, z(1)*ones(size(x)),'r')
-      plot(x, z(n)*ones(size(x)),'r')
-      plot(x(1)*ones(size(z)), z,'r')
-      plot(x(m)*ones(size(z)), z,'r')
+      plot(x, z(1)*ones(size(x)),'r',"linewidth",2)
+      plot(x, z(n)*ones(size(x)),'r',"linewidth",2)
+      plot(x(1)*ones(size(z)), z,'r',"linewidth",2)
+      plot(x(m)*ones(size(z)), z,'r',"linewidth",2)
       x1mi=min(x);
       x1ma=max(x);
       x2mi=min(z);
       x2ma=max(z);
     end;
   elseif plane==2
-    plot(x, y(1)*ones(size(x)),'r')
-    plot(x, y(n)*ones(size(x)),'r')
-    plot(x(1)*ones(size(y)), y,'r')
-    plot(x(m)*ones(size(y)), y,'r')
+    plot(x, y(1)*ones(size(x)),'r',"linewidth",2)
+    plot(x, y(n)*ones(size(x)),'r',"linewidth",2)
+    plot(x(1)*ones(size(y)), y,'r',"linewidth",2)
+    plot(x(m)*ones(size(y)), y,'r',"linewidth",2)
     x1mi=min(x);
     x1ma=max(x);
     x2mi=min(y);
@@ -127,7 +127,7 @@ axis([x1min x1max x2min x2max]);
 hold off;
 axis ij; % flip z-axis to point downwards
 #axis equal;
-caxis([0.0, mx]);
+caxis([mn, mx]);
 colorbar;
 set(gca,"fontsize",16);
 #title_str=sprintf("Time=%g", t);

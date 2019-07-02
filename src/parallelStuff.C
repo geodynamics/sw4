@@ -239,8 +239,6 @@ void EW::setup2D_MPICommunications()
 //       MPI_Type_commit( &m_send_type_2dy3p[g] );
 //    }      
 
-// NEW: MR extended to curvilinear grids
-
 // For topography: finest grid (curvilinear) only, only one value per grid point (nc=1)
 // get the size from the top curvlinear grid
    int g= mNumberOfGrids-1;
@@ -260,6 +258,24 @@ void EW::setup2D_MPICommunications()
    MPI_Type_commit( &m_send_type_2dfinest_ext[0] );
    MPI_Type_commit( &m_send_type_2dfinest_ext[1] );
 
+// NEW: July-2019 communicators for interface surfaces
+   int numSurfaces = mNumberOfGrids - mNumberOfCartesianGrids;
+   m_send_type_isurfx.resize(numSurfaces);
+   m_send_type_isurfy.resize(numSurfaces);
+
+   for (int iSurf = 0; iSurf < numSurfaces; iSurf++)
+   {
+      int g = mNumberOfCartesianGrids + iSurf;
+      int ni = m_iEnd[g]-m_iStart[g]+1 + 2*m_ext_ghost_points;
+      int nj = m_jEnd[g]-m_jStart[g]+1 + 2*m_ext_ghost_points;
+
+      MPI_Type_vector( nj, extpadding,     ni,     m_mpifloat, &m_send_type_isurfx[iSurf] );
+      MPI_Type_vector( 1,  extpadding*ni, ni*nj, m_mpifloat, &m_send_type_isurfy[iSurf] );
+
+      MPI_Type_commit( &m_send_type_isurfx[iSurf] );
+      MPI_Type_commit( &m_send_type_isurfy[iSurf] );
+   }
+   
 // For mesh refinement: 2D planes with three values per grid point (nc=3)
 // Coarser grids
    m_send_type_2dx.resize(mNumberOfGrids);
@@ -271,24 +287,14 @@ void EW::setup2D_MPICommunications()
    for( int g = 0 ; g < mNumberOfGrids ; g++ )
    {
       int ni = m_iEnd[g]-m_iStart[g]+1, nj=m_jEnd[g]-m_jStart[g]+1;
-//FTNC      if( m_croutines )
-      {
-	 MPI_Type_vector( 3*nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dx[g] );
-	 MPI_Type_vector( 3,    m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dy[g] );
-	 MPI_Type_vector( 3*nj, 1,    ni,    m_mpifloat, &m_send_type_2dx1p[g] );
-	 MPI_Type_vector( 3,    ni, ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
-	 MPI_Type_vector( 3*nj, 3,  ni,    m_mpifloat, &m_send_type_2dx3p[g] );
-	 MPI_Type_vector( 3,    3*ni, ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
-      }
-//FTNC      else
-//FTNC      {
-//FTNC	 MPI_Type_vector( nj, 3*m_ppadding,    3*ni,    m_mpifloat, &m_send_type_2dx[g] );
-//FTNC	 MPI_Type_vector( 1,  3*m_ppadding*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy[g] );
-//FTNC	 MPI_Type_vector( nj, 3,    3*ni,    m_mpifloat, &m_send_type_2dx1p[g] );
-//FTNC	 MPI_Type_vector( 1,  3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
-//FTNC	 MPI_Type_vector( nj, 3*3,    3*ni,    m_mpifloat, &m_send_type_2dx3p[g] );
-//FTNC	 MPI_Type_vector( 1,  3*3*ni, 3*ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
-//FTNC      }
+
+      MPI_Type_vector( 3*nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dx[g] );
+      MPI_Type_vector( 3,    m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dy[g] );
+      MPI_Type_vector( 3*nj, 1,    ni,    m_mpifloat, &m_send_type_2dx1p[g] );
+      MPI_Type_vector( 3,    ni, ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
+      MPI_Type_vector( 3*nj, 3,  ni,    m_mpifloat, &m_send_type_2dx3p[g] );
+      MPI_Type_vector( 3,    3*ni, ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
+
       MPI_Type_commit( &m_send_type_2dx[g] );
       MPI_Type_commit( &m_send_type_2dy[g] );
       MPI_Type_commit( &m_send_type_2dx1p[g] );
@@ -296,6 +302,9 @@ void EW::setup2D_MPICommunications()
       MPI_Type_commit( &m_send_type_2dx3p[g] );
       MPI_Type_commit( &m_send_type_2dy3p[g] );
    }      
+
+// tmp
+//   cout << "***leaving setup2D_MPICommunications***"<< endl;
 }
 
 // -----------------------------
@@ -533,44 +542,24 @@ void EW::communicate_array_2d( Sarray& u, int g, int k )
    int ytag1 = 347;
    int ytag2 = 348;
 
-//FTNC   if( m_croutines && u.m_ke-u.m_kb+1 != 1 )
-   {
-      Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
-      u2d.copy_kplane(u,k);
-      // X-direction communication
-      MPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
-		    &u2d(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
-		    m_cartesian_communicator, &status );
-      MPI_Sendrecv( &u2d(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
-		    &u2d(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
-		    m_cartesian_communicator, &status );
-      // Y-direction communication
-      MPI_Sendrecv( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
-		    &u2d(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
-		    m_cartesian_communicator, &status );
-      MPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
-		    &u2d(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
-		    m_cartesian_communicator, &status );
-      u.copy_kplane(u2d,k);
-   }
-//FTNC   else
-//FTNC   {
-//FTNC      // X-direction communication
-//FTNC   MPI_Sendrecv( &u(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
-//FTNC		 &u(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
-//FTNC		 m_cartesian_communicator, &status );
-//FTNC   MPI_Sendrecv( &u(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
-//FTNC		 &u(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
-//FTNC		 m_cartesian_communicator, &status );
-//FTNC
-//FTNC      // Y-direction communication
-//FTNC   MPI_Sendrecv( &u(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
-//FTNC		 &u(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
-//FTNC		 m_cartesian_communicator, &status );
-//FTNC   MPI_Sendrecv( &u(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
-//FTNC		 &u(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
-//FTNC		 m_cartesian_communicator, &status );
-//FTNC   }
+   Sarray u2d(3,u.m_ib,u.m_ie,u.m_jb,u.m_je,k,k);
+   u2d.copy_kplane(u,k);
+   // X-direction communication
+   MPI_Sendrecv( &u2d(1,ie-(2*m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag1,
+                 &u2d(1,ib,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag1,
+                 m_cartesian_communicator, &status );
+   MPI_Sendrecv( &u2d(1,ib+m_ppadding,jb,k), 1, m_send_type_2dx[g], m_neighbor[0], xtag2,
+                 &u2d(1,ie-(m_ppadding-1),jb,k), 1, m_send_type_2dx[g], m_neighbor[1], xtag2,
+                 m_cartesian_communicator, &status );
+   // Y-direction communication
+   MPI_Sendrecv( &u2d(1,ib,je-(2*m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag1,
+                 &u2d(1,ib,jb,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag1,
+                 m_cartesian_communicator, &status );
+   MPI_Sendrecv( &u2d(1,ib,jb+m_ppadding,k), 1, m_send_type_2dy[g], m_neighbor[2], ytag2,
+                 &u2d(1,ib,je-(m_ppadding-1),k), 1, m_send_type_2dy[g], m_neighbor[3], ytag2,
+                 m_cartesian_communicator, &status );
+   u.copy_kplane(u2d,k);
+
 }
 
 //-----------------------------------------------------------------------
@@ -602,6 +591,42 @@ void EW::communicate_array_2d_ext( Sarray& u )
 		 m_cartesian_communicator, &status );
    MPI_Sendrecv( &u(1,ib,jb+extpadding,k), 1, m_send_type_2dfinest_ext[1], m_neighbor[2], ytag2,
 		 &u(1,ib,je-(extpadding-1),k), 1, m_send_type_2dfinest_ext[1], m_neighbor[3], ytag2,
+		 m_cartesian_communicator, &status );
+}
+
+//-----------------------------------------------------------------------
+void EW::communicate_array_2d_isurf( Sarray& u, int iSurf )
+{
+   REQUIRE2( u.m_nc == 1, "Communicate array 2d isurf, only implemented for one-component arrays" );
+   int g = mNumberOfCartesianGrids + iSurf;
+   int ie = m_iEnd[g]+m_ext_ghost_points, ib=m_iStart[g]-m_ext_ghost_points;
+   int je = m_jEnd[g]+m_ext_ghost_points, jb=m_jStart[g]-m_ext_ghost_points;
+
+   MPI_Status status;
+   int xtag1 = 345;
+   int xtag2 = 346;
+   int ytag1 = 347;
+   int ytag2 = 348;
+   int k=1;
+   int extpadding = m_ppadding+m_ext_ghost_points;
+   // X-direction communication
+
+   MPI_Sendrecv( &u(1,ie-(2*extpadding-1),jb,k), 1, m_send_type_isurfx[iSurf], m_neighbor[1], xtag1,
+		 &u(1,ib,jb,k), 1, m_send_type_isurfx[iSurf], m_neighbor[0], xtag1,
+		 m_cartesian_communicator, &status );
+
+   MPI_Sendrecv( &u(1,ib+extpadding,jb,k), 1, m_send_type_isurfx[iSurf], m_neighbor[0], xtag2,
+		 &u(1,ie-(extpadding-1),jb,k), 1, m_send_type_isurfx[iSurf], m_neighbor[1], xtag2,
+		 m_cartesian_communicator, &status );
+
+   // Y-direction communication
+
+   MPI_Sendrecv( &u(1,ib,je-(2*extpadding-1),k), 1, m_send_type_isurfy[iSurf], m_neighbor[3], ytag1,
+		 &u(1,ib,jb,k), 1, m_send_type_isurfy[iSurf], m_neighbor[2], ytag1,
+		 m_cartesian_communicator, &status );
+
+   MPI_Sendrecv( &u(1,ib,jb+extpadding,k), 1, m_send_type_isurfy[iSurf], m_neighbor[2], ytag2,
+		 &u(1,ib,je-(extpadding-1),k), 1, m_send_type_isurfy[iSurf], m_neighbor[3], ytag2,
 		 m_cartesian_communicator, &status );
 }
 

@@ -371,6 +371,7 @@ void communicate_array_2dfinest( Sarray& u );
 void communicate_array_2d( Sarray& u, int g, int k );
 void communicate_array_2d_asym( Sarray& u, int g, int k );
 void communicate_array_2d_ext( Sarray& u );
+void communicate_array_2d_isurf( Sarray& u, int iSurf );
 
 void set_materials();
 void set_anisotropic_materials();
@@ -1611,6 +1612,11 @@ vector<MPI_Datatype> m_send_type4; // metric
 vector<MPI_Datatype> m_send_type21; // anisotropic
 MPI_Datatype m_send_type_2dfinest[2];
 MPI_Datatype m_send_type_2dfinest_ext[2];
+
+// for communicating interface surfaces
+   vector<MPI_Datatype> m_send_type_isurfx;
+   vector<MPI_Datatype> m_send_type_isurfy;
+
 vector<MPI_Datatype> m_send_type_2dx;
 vector<MPI_Datatype> m_send_type_2dy;
 vector<MPI_Datatype> m_send_type_2dx3p;

@@ -4738,16 +4738,16 @@ void EW::allocateCurvilinearArrays()
 // set last element of m_curviRefLev to equal average
    float_sw4 avg_minZ = 0.5*(zMaxGlobal+zMinGlobal);
 
-   if (proc_zero())
-   {
-      for (int q=0; q<m_refinementBoundaries.size(); q++)
-         printf("m_refBndry[%d] = %e\n", q, m_refinementBoundaries[q]);
-   }
+   // if (proc_zero())
+   // {
+   //    for (int q=0; q<m_refinementBoundaries.size(); q++)
+   //       printf("m_refBndry[%d] = %e\n", q, m_refinementBoundaries[q]);
+   // }
 
 // Use the m_zmin array to help keep track of the top (min z) coordinate for each grid
 // assigned for the Cartesian portion of the grid in allocateCartesianSolverArrays()   
    
-   if (proc_zero())
+   if (mVerbose >= 3 && proc_zero())
    {
       for (size_t q=0; q<m_curviRefLev.size(); q++)
          printf("m_curviRefLev[%lu]=%e\n", q, m_curviRefLev[q]);
@@ -4759,15 +4759,12 @@ void EW::allocateCurvilinearArrays()
       m_zmin[g] = avg_minZ + m_curviRefLev[g - mNumberOfCartesianGrids] * (m_topo_zmax - avg_minZ)/m_topo_zmax;
    }
    
-   if (proc_zero())
+   if (mVerbose >= 3 && proc_zero())
    {
       for (int g=0; g<mNumberOfGrids; g++)
          printf("m_zmin[%d] = %e\n", g, m_zmin[g]);
    }
 
-//   MPI_Abort(MPI_COMM_WORLD, 1);
-   
-   
 //
 // loop over all curvilinear grids and allocate space + estimate the number of grid points in z   
 //
@@ -4780,7 +4777,7 @@ void EW::allocateCurvilinearArrays()
       m_global_nz[g] = Nz;
       m_kStartInt[g] = 1;
       m_kEndInt[g]   = Nz;
-      if(mVerbose && proc_zero() )
+      if(mVerbose >= 3 && proc_zero() )
          printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid[%d] = %i, kStart = %i, kEnd = %i\n", 
                 g, Nz, m_kStart[g], m_kEnd[g]);
 //

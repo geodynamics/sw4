@@ -356,9 +356,8 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 	{
 	   printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
 	}
-	if (topographyExists())
+	for (int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
 	{
-	   int g = mNumberOfGrids-1;
 	   printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
 	}
 	printf("\n");

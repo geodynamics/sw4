@@ -136,6 +136,7 @@ int EW::metric_ci( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* __
 // tmp
                cout << "zr = " << zr << " at " << i << " " << j << " " << k << endl;
                cout << "x,y,z = " << x(i,j,k) << " " << y(i,j,k) << " " << z(i,j,k) << endl;
+               printf("ib=%d, ie=%d, jb=%d, je=%d, kb=%d, ke=%d, proc=%d\n", ib, ie, jb, je, kb, ke, m_myRank);
 // end tmp
 	    }
 	    sqzr = sqrt(zr);
