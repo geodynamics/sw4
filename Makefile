@@ -219,7 +219,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        TimeSeries.o sacsubc.o SuperGrid.o  TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
        EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       Image3D.o ESSI3D.o ESSI3DHDF5.o MaterialVolimagefile.o MaterialRfile.o   \
+       Image3D.o ESSI3D.o ESSI3DHDF5.o MaterialVolimagefile.o MaterialRfile.o MaterialSfile.o  \
        AnisotropicMaterialBlock.o  sacutils.o  DataPatches.o addmemvarforcing2.o \
        consintp.o  oddIoddJinterp.o evenIoddJinterp.o MaterialInvtest.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o
