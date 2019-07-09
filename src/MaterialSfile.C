@@ -312,6 +312,7 @@ void MaterialSfile::read_sfile()
 
   string rname = "MaterialSfile::read_sfile";
 
+#ifdef USE_HDF5
   // Figure out bounding box in this processor
   float_sw4 xmin=1e38, xmax=-1e38, ymin=1e38, ymax=-1e38, zmin=1e38, zmax=-1e38;
   for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
@@ -765,6 +766,7 @@ void MaterialSfile::read_sfile()
   if (mEW->getRank() == 0)
      cout << "MaterialSfile::read_sfile, time to read material file: " << time_end - time_start << " seconds." << endl;
   cout.flush();
+#endif
 }
 
 //-----------------------------------------------------------------------
