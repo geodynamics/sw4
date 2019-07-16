@@ -24,11 +24,20 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
 
 4. build and install Umpire using:
    mkdir install
-   mkir build  && cd build
+   mkdir build  && cd build
    cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_CXX_COMPILER=xlC ../
    make install
 
-5. git clone SW4 and checkout the Raja branch
+
+5. Get Proj 5.0.0 from https://proj.org/download.html:
+   wget https://download.osgeo.org/proj/proj-5.0.0.tar.gz
+
+6. build and install Proj using:
+   mkdir build && cd build
+   cmake -DCMAKE_INSTALL_PREFIX=../install  ../
+   make install
+
+7. git clone SW4 and checkout the Raja branch
    copy configs/make.raja.<machinename> to make.inc
    Edit make.inc and point RAJA_LOCATION and UMPIRE_HOME to the install locations from Step 2 and 3
    Point PROJ_HOME to the location of the Proj library
