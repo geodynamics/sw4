@@ -134,6 +134,11 @@ else
 
 endif
 
+# This needs to be added before the OMP flags to work on a mac with the Apple clang compiler
+ifdef EXTRA_CXX_FLAGS
+   CXXFLAGS += $(EXTRA_CXX_FLAGS)
+endif
+
 # openmp=yes is default
 ifeq ($(openmp),no)
    CXXFLAGS += -DSW4_NOOMP
@@ -142,10 +147,6 @@ else
    optdir   := $(optdir)_mp
    CXXFLAGS += -fopenmp
    FFLAGS   += -fopenmp
-endif
-
-ifdef EXTRA_CXX_FLAGS
-   CXXFLAGS += $(EXTRA_CXX_FLAGS)
 endif
 
 ifdef EXTRA_FORT_FLAGS
