@@ -1447,6 +1447,13 @@ Note that the topography must be described by the same {\tt rfile} as the materi
 Section~\ref{sec:rfile-mat} for further information. The format
 for the \verb+rfile+ is described in Section~\ref{sec:rfile-format}. 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{sfile topography}\label{sec:topo-sfile}
+Note, the \verb+sfile+ also contains the same topography data as \verb+rfile+, and can be accessed using 
+the \verb+topo+ \verb+input=sfile+ argument.
+See Section~\ref{sec:sfile-mat} for more information.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{The material model} \label{sec:material}
@@ -1715,7 +1722,64 @@ hand, the {\tt efile} interpretation of the material properties on either side o
 leads to stair-stepping artifacts, while the linear interpolation of the {\tt rfile} command results
 in a much smoother model.
 
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The sfile command} \label{sec:sfile-mat}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+sfile+ command (``s'' being the next letter after ``r''), was
+  created to include a depth-based curvilinear grid for the material model,
+  which provides finer resolution close to the surface and avoids storing
+  ``air'' or ``water'' points above the surface.
+%It also includes the ability to write the material model for seismic
+%  inversion calculations (see {\em SW4-mopt} documentation for that).
+
+\begin{verbatim}
+grid x=12e3 y=12e3 z=5e3 nx=601 lat=37.93 lon=-122.25 az=143.6380 proj=tmerc \
+     datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+sfile filename=USGSBayAreaVM-08.3.0.sfile directory=/Users/petersson1
+\end{verbatim}
+
+The file contents are similar to the \verb+rfile+ file, but is
+  defined with internal (curvilinear) refinement boundaries,
+  and all 5 material properties.
+Note that the \verb+rfile+ caveats about the computational domain
+  still apply, and geographical region bounds should all be
+  checked against the \verb+sfile+'s {\em origin}, 
+  ({\em nx,ny}), {\em hh}, {\em z\_bot}, etc.
+
+Figure~\ref{fig:sfile} shows a schematic of the data layout in a 2D slice
+  of the \verb+sfile+ domain.
+The material data grids and interfaces are numbered from the top to bottom,
+  with the very bottom interface assumed to be flat (constant {\em z\_bot}).
+Each grid is bounded above by a {\em z\_interface\_*} (``*'' is the same 
+  grid index) at the same constant horizontal grid resolution, {\em hh}.
+The very top interface is the finest topography used by SW4 
+  \verb+topo+ command for the computational domain.
+The number of vertical points is constant, and the vertical grid resolution
+  {\em hv} is constant along each grid line (but different across grid lines)
+  when there is topography.
+The refinement boundaries halve the horizontal grid resolution from bottom
+  to top, and double the number of grid intervals.
+In order to avoid gaps at refinement boundaries, the bottom interfaces
+  of the upper grid are defined as co-linear points calculated from the top
+  interface of the lower grid.
+
+See \ref{keyword:sfile} for usage information and \ref{sec:sfile-format}
+  for HDF5 file format details.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{figures/sfile.png}
+  \caption{A schematic of the grid and data layout in {\tt sfile} files.
+  Material data lives at grid points (black circles) on grids specified
+  by their grid index, horizontal grid spacing, and number of points
+  along grid lines connecting the top and bottom interfaces.
+  In this case, there are 3 total grids of material data, starting
+  from a constant elevation at the bottom of the domain, then separated by
+  two interior interfaces, with the domain topography on top.
+  }
+\label{fig:sfile}
+\end{center}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The pfile command}\label{sec:pfile}
@@ -3303,6 +3367,39 @@ Note that only relative paths are currently supported in the \verb+filename+ key
 
 \index{rfile parameters!filename, directory}
 
+%
+\subsection{sfile}
+\index{command!sfile}
+\label{keyword:sfile}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}\bf
+Syntax:\\
+\tt
+sfile filename=... directory=...\\
+%sfile mode=... filename=... directory=...\\
+
+\bf Required parameters:\\
+\tt filename
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l||l|} \hline
+\multicolumn{5}{|c|}{\bf sfile command parameters}\\ \hline
+{\bf Option} & {\bf Description}                        & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
+\hline
+%mode      & \verb+read+ to read the file                    & string  & none &
+%  read
+%\\ \hline
+%\hline
+filename      & name of raster file                     & string  & none & none \\ \hline
+directory     & name of directory for the raster file   & string  & none & . \\ \hline
+\end{tabular}
+\end{center}
+Note that only relative paths are currently supported in the \verb+filename+ keyword. Use the
+\verb+directory+ keyword to specify absolute paths.
+
+\index{sfile parameters!filename, directory}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{ifile}
 \index{command!ifile}
@@ -4762,6 +4859,127 @@ However, neither $z0_1$ nor $hv_1$ are used when parsing the {\tt rfile}.
 hh_1 = hh_2,\quad ni_1=ni_2,\quad nj_1=nj_2.
 \]
 \end{itemize}
+
+\section{sfile}\label{sec:sfile-format}
+\index{fileformats!sfile}
+
+The \verb+sfile+ command provides material data and topography, 
+  similiar to the \verb+rfile+, but with materials defined on
+  a curvilinear mesh with refinement boundaries.
+Each grid of material data has corresponding top and bottom interfaces
+  that defines the vertical distribution of grids points, which is constant
+  grid spacing across {\em nz} total points (including end points).
+This layout, along with the coarsest horizontal grid spacing, {\em hh}, defines
+  the ({\em x,y,z}) point location relative to the origin ({\em lon,lat,azim})
+  for every point.
+
+The \verb+sfile+ files are self-describing in HDF5 format, with
+  the following fields:
+\begin{center}
+\begin{tabular}{lll}\hline
+Name & Type & Size \\ \hline
+  ``Origin longitude, latitude, azimuth'' & H5T\_IEEE\_F64LE & 3 \\ \hline
+  ``Coarsest horizontal grid spacing'' & H5T\_IEEE\_F64LE & 1 \\ \hline
+  ``Attenuation'' & H5T\_STD\_I32LE & 1 \\ \hline
+  ``ngrids'' & H5T\_STD\_I32LE & 1 \\ \hline
+  ``Min, max depth'' & H5T\_IEEE\_F64LE & 2 \\ \hline
+%  ``grid nz'' & H5T\_STD\_I32LE & ngrids, \{$0,...,ng-1$\} \\ \hline
+Group /Z\_interfaces \\ \hline
+  ``z\_interface\_\{0...ngrids\}'' & H5T\_IEEE\_F32LE & {\em (nx,ny)[ng]}  \\ \hline
+Group /Material\_model \\ \hline
+  ``grid\_\{0...ngrids-1\}/\{mat\}'' & H5T\_IEEE\_F32LE & {\em (nx,ny,nz)[ng]} \\ \hline
+\end{tabular}
+\end{center}
+
+The output of {\tt h5dump -A} header and metadata is below (lightly edited):
+
+\begin{verbatim}
+HDF5 "berkeley.sfile" {
+GROUP "/" {
+   ATTRIBUTE "Attenuation" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SCALAR
+      DATA {
+      (0): 1
+      }
+   }
+   ATTRIBUTE "Coarsest horizontal grid spacing" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SCALAR
+      DATA {
+      (0): 100
+      }
+   }
+   ATTRIBUTE "Min, max depth" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
+      DATA {
+      (0): -557.6, 6387.5
+      }
+   }
+   ATTRIBUTE "Origin longitude, latitude, azimuth" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
+      DATA {
+      (0): -122.25, 37.93, 143.638
+      }
+   }
+   ATTRIBUTE "ngrids" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SCALAR
+      DATA {
+      (0): 3
+      }
+   }
+   GROUP "Material_model" {
+      GROUP "grid_0" { ... }
+      GROUP "grid_1" { ... }
+      GROUP "grid_2" {
+         ATTRIBUTE "Horizontal grid size" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SCALAR
+            DATA {
+            (0): 400
+            }
+         }
+         ATTRIBUTE "Number of components" {
+            DATATYPE  H5T_STD_I32LE
+            DATASPACE  SCALAR
+            DATA {
+            (0): 5
+            }
+         }
+         DATASET "Cp" {
+            DATATYPE  H5T_IEEE_F32LE
+            DATASPACE  SIMPLE { ( 31, 31, 34 ) / ( 31, 31, 34 ) }
+         }
+         DATASET "Cs" { ... }
+         DATASET "Qp" { ... }
+         DATASET "Qs" { ... }
+         DATASET "Rho" { ... }
+      }
+   }
+   GROUP "Z_interfaces" {
+      DATASET "z_values_0" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 121, 121 ) / ( 121, 121 ) }
+      }
+      DATASET "z_values_1" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 121, 121 ) / ( 121, 121 ) }
+      }
+      DATASET "z_values_2" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 61, 61 ) / ( 61, 61 ) }
+      }
+      DATASET "z_values_3" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 31, 31 ) / ( 31, 31 ) }
+      }
+   }
+}
+}
+\end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{sac}\label{sec:sac-format}
