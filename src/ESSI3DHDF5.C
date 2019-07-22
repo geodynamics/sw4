@@ -385,6 +385,7 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp, int cycle)
   herr_t ierr;
   double write_time_start, write_time;
   int write_size = 1;
+  m_end_cycle = cycle; // save for header for later when we close the file
 
   for (int i = 0; i < 4; i++) 
       write_size *= m_window_dims[i];
@@ -395,7 +396,7 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp, int cycle)
   if (enable_timing) 
     write_time_start = MPI_Wtime();
   // Loop over slices and write a new time step
-  m_end_cycle = cycle; // save for header for later when we close the file
+
   m_cycle_dims[0] = cycle - m_start_cycle + 1;
   /* ierr = H5Dset_extent(m_vel_dataset_id[comp], m_cycle_dims); */
   /* if (ierr < -1) */
