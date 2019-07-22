@@ -608,12 +608,26 @@ Apc::~Apc(){
 // END AUTOPEEL CODE
 void global_prefetch(){
 #ifdef SW4_MASS_PREFETCH
+  int count=0;
+  std::vector<std::string> allocators={"UM_pool","UM_pool_temps","UM_object_pool"};
   for (auto v : global_variables.massprefetch){
     //std::cout<<"global_prefetch "<<std::get<0>(v)<<" of "<<std::get<1>(v)<<" bytes\n";
+    auto size = umpire::ResourceManager::getInstance().getAllocator(allocators[count]).getHighWatermark();
+    std::cout<<"SIZES "<<size<<" , "<<std::get<1>(v)<<"\n";
+    //#define PREFETCH_ALL 1 
+#ifdef PREFETCH_ALL
+     SW4_CheckDeviceError(cudaMemPrefetchAsync(std::get<0>(v),
+					       std::get<1>(v),
+					       global_variables.device,
+					       0));
+#else
     SW4_CheckDeviceError(cudaMemPrefetchAsync(std::get<0>(v),
-					      std::get<1>(v),
+					      size,
 					      global_variables.device,
 					      0));
+#endif
+    SW4_CheckDeviceError(cudaStreamSynchronize(0));
+    count++;
   }
 #endif
 }
