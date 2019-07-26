@@ -12,7 +12,7 @@
 %              timeshift:  change independent variable to be t+timeshift
 %               
 function plotusgs( filename, colorstring, erase, tshift )
-
+   lw=2.0;
 if nargin < 4
    tshift = 0;
 end;
@@ -39,7 +39,9 @@ else
   clf;
 end
 h=plot(t+tshift,ux,colorstring);
-%set(h,'LineWidth',2.0)
+if lw >0
+  set(h,'LineWidth',lw)
+end;
 set(gca,'FontSize',20)
 axis tight;
 
@@ -52,7 +54,9 @@ else
   clf;
 end
 h=plot(t+tshift,uy,colorstring);
-%set(h,'LineWidth',2.0)
+if lw > 0
+  set(h,'LineWidth',lw)
+end;
 set(gca,'FontSize',20)
 axis tight;
 
@@ -65,6 +69,8 @@ else
   clf;
 end
 h=plot(t+tshift,uz,colorstring);
-%set(h,'LineWidth',2.0)
+if lw > 0
+  set(h,'LineWidth',lw)
+end;
 set(gca,'FontSize',20)
 axis tight;

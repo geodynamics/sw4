@@ -6,6 +6,8 @@
 #include "MaterialParCartesian.h"
 #include "Mopt.h"
 #include "compute_f.h"
+#include "sw4-prof.h"
+
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
@@ -115,7 +117,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    //   set_source_pars( nspar, srcpars, xs );
    //   src[0]->set_parameters( srcpars );
 
-
+   sw4_profile->time_stamp("Enter compute_f");
 // Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
    int ng = simulation.mNumberOfGrids;
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
@@ -139,10 +141,13 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
    vector<Sarray> U(ng), Um(ng);
    mf = 0;
+   if( !mopt->m_test_regularizer ){
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
+      sw4_profile->time_stamp("forward solve" );
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory );
+      sw4_profile->time_stamp("done forward solve" );
 //        Compute misfit
       if( mopt->m_misfit == Mopt::L2 )
       {
@@ -170,9 +175,9 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       delete upred_saved[g];
       delete ucorr_saved[g];
    }
-
+   }
 // add in a Tikhonov regularizing term:
-   bool tikhonovreg=true;
+   bool tikhonovreg=false;
    if( tikhonovreg )
    {
       double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
@@ -196,11 +201,15 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    {
       double mf_reg;
       double* dmfs, *dmfd;
-      mopt->m_mp->get_regularizer( nmpars, xs, nmpard, xm, mopt->m_xm0, mopt->m_xs0,
+      mopt->m_mp->get_regularizer( nmpard, xm, nmpars, xs, mopt->m_xm0, mopt->m_xs0,
 				   mopt->m_reg_coeff, rho, mu, lambda, mf_reg, mopt->m_sfm,
 				   mopt->m_sfs, false, dmfd, dmfs);
-      mf += mf_reg;
+      if( mopt->m_test_regularizer )
+	 mf = mf_reg;
+      else
+	 mf += mf_reg;
    }
+   sw4_profile->time_stamp("Exit compute_f");
 }
 
 //-----------------------------------------------------------------------
@@ -238,7 +247,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 //-----------------------------------------------------------------------
 {
    int verbose = 0;
-
+   sw4_profile->time_stamp("Enter compute_f_and_df");
    // source optimization
    //   vector<Source*> src(1);
    //   src[0] = GlobalSources[0]->copy(" ");
@@ -282,11 +291,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       dfs[m+nspar] = 0;
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
-
+   if( !mopt->m_test_regularizer ){
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
+      sw4_profile->time_stamp("forward solve" );
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
-
+      sw4_profile->time_stamp("done forward solve" );
    //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
 
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
@@ -315,9 +325,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
-
+      sw4_profile->time_stamp("backward+adjoint solve" );
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
-
+      sw4_profile->time_stamp("done backward+adjoint solve" );
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
       //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
       mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
@@ -333,9 +343,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-
+   }
 // add in a Tikhonov regularizing term:
-   bool tikhonovreg=true;
+   bool tikhonovreg=false;
    if( tikhonovreg )
    {
       double tcoff = (1.0/(nmpars+nmpard_global))*(mopt->m_reg_coeff);
@@ -362,14 +372,25 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    else
    {
       double mf_reg;
-      mopt->m_mp->get_regularizer( nmpars, xs, nmpard, xm, mopt->m_xm0, mopt->m_xs0,
+      mopt->m_mp->get_regularizer( nmpard, xm, nmpars, xs, mopt->m_xm0, mopt->m_xs0,
 				   mopt->m_reg_coeff, rho, mu, lambda, mf_reg, mopt->m_sfm,
-				   mopt->m_sfs, false, dfmevent, dfsevent);
-      f += mf_reg;
-      for( int m=0 ; m < nmpars ; m++ )
-	 dfs[m+nspar] += dfsevent[m];
-      for( int m=0 ; m < nmpard ; m++ )
-	 dfm[m] += dfmevent[m];
+				   mopt->m_sfs, true, dfmevent, dfsevent);
+      if( mopt->m_test_regularizer )
+      {
+	 f = mf_reg;
+	 for( int m=0 ; m < nmpars ; m++ )
+	    dfs[m+nspar] = dfsevent[m];
+	 for( int m=0 ; m < nmpard ; m++ )
+	    dfm[m] = dfmevent[m];
+      }
+      else
+      {
+	 f += mf_reg;
+	 for( int m=0 ; m < nmpars ; m++ )
+	    dfs[m+nspar] += dfsevent[m];
+	 for( int m=0 ; m < nmpard ; m++ )
+	    dfm[m] += dfmevent[m];
+      }
    }
 
    if( myrank == 0 && verbose >= 1 )
@@ -398,6 +419,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    //   delete src[0];
 
+   sw4_profile->time_stamp("Save images");   
    if( it >= 0 )
    {
 // 2D images     
@@ -444,7 +466,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 						gRho, gMu, gLambda, rho, mu, mopt->m_path,
 						ew_ptr->mZ ); 
    } // end if it>=0
-   
+   sw4_profile->time_stamp("Exit compute_f_and_df");   
 }
 
 
@@ -1111,6 +1133,7 @@ int main(int argc, char **argv)
 	{
 // Successful initialization
 
+
 	   simulation.setQuiet(true);
 	   //	   simulation.setQuiet(false);
 // Make observations aware of the utc reference time, if set.
@@ -1169,6 +1192,11 @@ int main(int argc, char **argv)
 	      }
 	      cout << "Writing output to directory: " << mopt->getPath() << endl;
 	   }
+// Create a profiling object
+	   if( mopt->m_do_profiling )
+	      sw4_profile = new SW4Prof(mopt->getPath());
+	   else
+	      sw4_profile = new SW4Prof0();
 
 // Select material parameterization
            MaterialParameterization* mp = mopt->m_mp;
@@ -1327,16 +1355,16 @@ int main(int argc, char **argv)
            else if( mopt->m_opttest == 1 )
 	   {
 // Run optimizer (default)
+	      sw4_profile->time_stamp("Start optimizer");
 	      if( mopt->m_optmethod == 1 )
 		 lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 
 			GlobalSources, GlobalTimeSeries,
-			GlobalObservations, myRank, mopt );//mp, mopt->m_maxit, mopt->m_tolerance, mopt->m_dolinesearch,
-	      //			mopt->m_nbfgs_vectors, mopt->m_ihess_guess, mopt->m_wolfe, mopt->m_mcheck,
-	      //	mopt->m_output_ts, mopt->m_image_files );
+			GlobalObservations, myRank, mopt );
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		       GlobalObservations, myRank, mopt );//mp, mopt->m_maxit, mopt->m_maxsubit, mopt->m_tolerance,
-	      //		       mopt->m_dolinesearch, mopt->m_fletcher_reeves, mopt->m_mcheck, mopt->m_output_ts );
+		       GlobalObservations, myRank, mopt );
+	      sw4_profile->time_stamp("Done optimizer");
+	      sw4_profile->flush();
 	   }
            else
 	      if( myRank == 0 )

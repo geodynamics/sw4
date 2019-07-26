@@ -15,6 +15,8 @@ time t=40.0 utcstart=01/04/2018:10:39:32.694
 fileio verbose=1 path=berkeley-jan-4-2018_data
 #
 #------------------------------
+gmt file=gmtfile
+#------------------------------
 # use default Supergrid parameters
 #
 #------------------------------

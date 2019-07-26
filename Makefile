@@ -222,7 +222,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        Image3D.o ESSI3D.o ESSI3DHDF5.o MaterialVolimagefile.o MaterialRfile.o   \
        AnisotropicMaterialBlock.o  sacutils.o  DataPatches.o addmemvarforcing2.o \
        consintp.o  oddIoddJinterp.o evenIoddJinterp.o MaterialInvtest.o \
-       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o
+       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o  \
+       sw4-prof.o
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
  OBJ +=  rayleighfort.o lamb_exact_numquad.o 

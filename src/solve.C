@@ -596,7 +596,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     {
        if( mOrder == 2 )
        {
-	  //	  int i0=84, j0=102, k0=25;
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )

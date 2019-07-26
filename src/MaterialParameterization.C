@@ -76,7 +76,7 @@ void MaterialParameterization::write_parameters( const char* filename,
 {
   VERIFY2( nms == m_nms, "MP::write_parameters: Error in sizes nms = " << nms << " m_nms = " << m_nms );
    // Format: nms,xms[0],xms[1],..xms[nms-1]
-   if( m_myrank == 0 )
+   if( m_myrank == 0 && nms > 0 )
    {
       int fd=open(filename,O_CREAT|O_TRUNC|O_WRONLY,0660);
       size_t nr=write(fd,&nms,sizeof(int));
@@ -104,7 +104,7 @@ void MaterialParameterization::write_parameters( int nms, double* xms )
 {
    VERIFY2( nms == m_nms, "MP::write_parameters: Error in sizes ");
    // Format: nms,xms[0],xms[1],..xms[nms-1]
-   if( m_myrank == 0 )
+   if( m_myrank == 0 && nms > 0 )
    {
       string fname = m_path + m_filename;
       int fd=open(fname.c_str(),O_CREAT|O_TRUNC|O_WRONLY,0660);
@@ -215,10 +215,12 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
    {
  // Shared parameters
       double tikhonov=0;
+      //      cout << "In get_regularizer " << m_nms << " " << m_nmd << endl;
       for (int q=0; q<m_nms; q++)
       {
 	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
-	 dmfs_reg[q]   += 2*tcoff*(xms[q] - xms0[q])/SQR(sfs[q]);
+	 dmfs_reg[q]   = 2*tcoff*(xms[q] - xms0[q])/SQR(sfs[q]);
+	 //         cout << " q = " << q << " sfs = " << sfs[q] << " " << xms0[q] << " " << xms[q] << endl;
       }
       mf_reg += tcoff*tikhonov;
 
@@ -227,7 +229,7 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       for (int q=0; q<m_nmd; q++)
       {
 	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
-	 dmfd_reg[q] += 2*tcoff*(xmd[q] - xmd0[q])/SQR(sfd[q]);
+	 dmfd_reg[q] = 2*tcoff*(xmd[q] - xmd0[q])/SQR(sfd[q]);
       }
       MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
       mf_reg += tcoff*tikhonov;

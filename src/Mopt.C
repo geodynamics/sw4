@@ -44,6 +44,8 @@ Mopt::Mopt( EW* a_ew )
    m_wolfe = false;
    m_mcheck = false;
    m_output_ts = false;
+   m_test_regularizer = false;
+   m_do_profiling = false;
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -378,6 +380,13 @@ void Mopt::processMrun( char* buffer )
  	 token += 10;
 	 m_nsteps_in_memory = atoi(token);
       }
+      else if( startswith("profiling=",token) )
+      {
+	 token += 10;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	    m_do_profiling = true;
+      }
       else
          badOption("mrun",token);
       token = strtok(NULL," \t");
@@ -475,6 +484,7 @@ void Mopt::processMregularize( char* buffer )
 {
    char* path = 0;
    char* token = strtok(buffer, " \t");
+   int n;
    CHECK_INPUT(strcmp("regularize", token) == 0, "ERROR: not a regularize line...: " << token);
    token = strtok(NULL, " \t");
    double scale_coeff = 1;
@@ -489,6 +499,15 @@ void Mopt::processMregularize( char* buffer )
       {
 	 token += 6;
 	 scale_coeff = atof(token);
+      }
+      else if( startswith("testmode=",token))
+      {
+	 token += 9;
+	 n = strlen(token);
+	 if( strncmp(token,"yes",n)==0 || strncmp(token,"on",n)==0 || strncmp(token,"1",n)==0 )
+	    m_test_regularizer = true;
+	 else
+	    m_test_regularizer = false;
       }
       else
          badOption("regularize",token);

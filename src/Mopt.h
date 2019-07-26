@@ -55,6 +55,8 @@ class Mopt
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
    bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck, m_output_ts;
    bool m_misfit1d_images;
+   bool m_test_regularizer;
+   bool m_do_profiling;
    double m_tolerance;
    // Test cases
    int m_var, m_var2, m_itest, m_jtest, m_ktest, m_itest2, m_jtest2, m_ktest2;
