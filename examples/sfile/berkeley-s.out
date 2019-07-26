@@ -1,0 +1,273 @@
+Tue Jul  2 13:48:31 PDT 2019
+==========START==========
+----------------------------------------------------------------
+            sw4 version 2.2-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Tue Jul  2 12:39:35 PDT 2019
+  By user:     houhun
+  Machine:     cori04
+  Compiler:    /opt/cray/pe/craype/2.5.15/bin/CC
+  3rd party include dir: /global/u1/h/houhun/sw4/install/include, and library dir: /global/u1/h/houhun/sw4/install/lib
+----------------------------------------------------------------
+
+Input file: entire-berkeley-sfile-tang.in
+
+* Processing the grid command...
+* Setting nx to 481 to be consistent with h=2.50000000e+01
+* Setting ny to 481 to be consistent with h=2.50000000e+01
+* Setting nz to 253 to be consistent with h=2.50000000e+01
+MPIIO WARNING: DVS stripe width of 32 was requested but DVS set it to 28
+See MPICH_MPIIO_DVS_MAXNODES in the intro_mpi man page.
+Sfile header: 
+              azimuth=1.436380e+02, lon0=-1.222500e+02, lat0=3.793000e+01
+              nblocks=3
+Topography header
+  hh=1.000000e+02
+  ni=121, nj=121
+1st topo (float) data=8.560000e+01, gridElev(1,1,1)=8.560000e+01
+last topo (float) data=3.099999e+00, gridElev(ni,nj,1)=3.099999e+00
+topo max (float)=5.576000e+02, min (float)=-3.500000e+00
+mat-lon0=-1.222500e+02 mat-lat0=3.793000e+01, comp-x0=0.000000e+00, commp-y0=-0.000000e+00
+Topo variation on comp grid: max=5.615373e+02 min=8.238985e+01
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -5.602215e+02, max z = 5.854207e+00, top Cartesian z = 2.287500e+03
+allocateCurvilinearArrays: Number of grid points in curvilinear grid = 206, kStart = -2, kEnd = 209
+***inside setupMPICommunications***
+***inside generate_grid***
+***inside setup_metric***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points
+   0        25       481       481       150     34704150
+   1      12.5       961       961        25     23088025
+   2      12.5       961       961       206    190245326
+Total number of grid points (without ghost points): 2.48038e+08
+
+*** Using Sfile berkeley.sfile in directory ./
+MPIIO WARNING: DVS stripe width of 32 was requested but DVS set it to 28
+See MPICH_MPIIO_DVS_MAXNODES in the intro_mpi man page.
+Sfile header: att=1
+              azimuth=1.436380e+02, lon0=-1.222500e+02, lat0=3.793000e+01
+              nblocks=3
+  header block #0
+  hh=1.000000e+02
+  nc=5, ni=121, nj=121, nk=25
+  header block #1
+  hh=2.000000e+02
+  nc=5, ni=61, nj=61, nk=31
+  header block #2
+  hh=4.000000e+02
+  nc=5, ni=31, nj=31, nk=44
+MaterialSfile::read_sfile, time to read material file: 6.74738503e+00 seconds.
+
+
+   Execution time, reading input file 9.11140203e+00 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+=================Processor #0 index bounds====================
+m_iStart=-2, m_iEnd=484, m_global_nx=961, m_jStart=-2, m_jEnd=244, m_global_ny=961
+=================Processor #0 interior index bounds====================
+m_iStartInt=1, m_iEndInt=481, m_jStartInt=1, m_jEndInt=241
+=================Processor #0 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=2, bc[3]=7, bc[4]=0, bc[5]=4
+----------------------------------------------------
+=================Processor #1 index bounds====================
+m_iStart=-2, m_iEnd=484, m_global_nx=961, m_jStart=239, m_jEnd=484, m_global_ny=961
+=================Processor #1 interior index bounds====================
+m_iStartInt=1, m_iEndInt=481, m_jStartInt=242, m_jEndInt=481
+=================Processor #1 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #3 index bounds====================
+m_iStart=-2, m_iEnd=484, m_global_nx=961, m_jStart=719, m_jEnd=964, m_global_ny=961
+=================Processor #3 interior index bounds====================
+m_iStartInt=1, m_iEndInt=481, m_jStartInt=722, m_jEndInt=961
+=================Processor #3 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=2, bc[4]=0, bc[5]=4
+=================Processor #4 index bounds====================
+m_iStart=479, m_iEnd=964, m_global_nx=961, m_jStart=-2, m_jEnd=244, m_global_ny=961
+=================Processor #4 interior index bounds====================
+m_iStartInt=482, m_iEndInt=961, m_jStartInt=1, m_jEndInt=241
+=================Processor #4 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=2, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #5 index bounds====================
+m_iStart=479, m_iEnd=964, m_global_nx=961, m_jStart=239, m_jEnd=484, m_global_ny=961
+=================Processor #5 interior index bounds====================
+m_iStartInt=482, m_iEndInt=961, m_jStartInt=242, m_jEndInt=481
+=================Processor #5 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #7 index bounds====================
+m_iStart=479, m_iEnd=964, m_global_nx=961, m_jStart=719, m_jEnd=964, m_global_ny=961
+=================Processor #7 interior index bounds====================
+m_iStartInt=482, m_iEndInt=961, m_jStartInt=722, m_jEndInt=961
+=================Processor #7 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=2, bc[4]=0, bc[5]=4
+=================Processor #2 index bounds====================
+m_iStart=-2, m_iEnd=484, m_global_nx=961, m_jStart=479, m_jEnd=724, m_global_ny=961
+=================Processor #2 interior index bounds====================
+m_iStartInt=1, m_iEndInt=481, m_jStartInt=482, m_jEndInt=721
+=================Processor #2 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #6 index bounds====================
+m_iStart=479, m_iEnd=964, m_global_nx=961, m_jStart=479, m_jEnd=724, m_global_ny=961
+=================Processor #6 interior index bounds====================
+m_iStartInt=482, m_iEndInt=961, m_jStartInt=482, m_jEndInt=721
+=================Processor #6 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+ Making Directory: entire-berkeley-sfile-images/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.222500e+02, Lat=3.793000e+01, x=0.000000e+00, y=-0.000000e+00
+1: Lon= -1.221701e+02, Lat=3.784240e+01, x=1.200000e+04, y=1.127564e-09
+2: Lon= -1.222805e+02, Lat=3.777903e+01, x=1.200000e+04, y=1.200000e+04
+3: Lon= -1.223605e+02, Lat=3.786655e+01, x=5.838901e-10, y=1.200000e+04
+
+Considering all material blocks
+
+sfile command: outside = 4647, material = 260503272
+
+       ----------- Material properties ranges ---------------
+       1.59000000e+03 kg/m^3 <=  Density <= 2.69000000e+03 kg/m^3
+       7.00000000e+02 m/s    <=  Vp      <= 5.74000004e+03 m/s
+       8.00000000e+01 m/s    <=  Vs      <= 3.42500002e+03 m/s
+       1.65594855e+00        <=  Vp/Vs   <= 1.08333333e+01
+       1.01760000e+07 Pa     <=  mu      <= 3.15553817e+10 Pa
+       7.58748000e+08 Pa     <=  lambda  <= 2.55182821e+10 Pa
+       Using attenuation 
+       1.30000000e+01        <=  Qs      <= 3.74982144e+02  
+       2.60000000e+01        <=  Qp      <= 7.49750010e+02  
+       ------------------------------------------------------
+Material model info, Grid g=0: 2.104735e+03 <= Cs <= 3.425000e+03, 4.818176e+03 <= C-hat <= 7.510583e+03, h[g]/max(C-hat) = 3.328637e-03
+Material model info, Grid g=1: 1.961744e+03 <= Cs <= 3.405084e+03, 4.561430e+03 <= C-hat <= 7.460879e+03, h[g]/max(C-hat) = 1.675406e-03
+Material model info, Grid g=2: 8.000000e+01 <= Cs <= 3.412255e+03, 7.090839e+02 <= C-hat <= 7.481726e+03, h[g]/max(C-hat) = 1.670737e-03
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.500000e+01, minVs/h=84.1894 (Cartesian)
+g=1, h=1.250000e+01, minVs/h=156.94 (Cartesian)
+g=2, h=1.250000e+01, minVs/h=6.4 (curvilinear)
+
+Assigning SG arrays: standard case with default epsL
+
+*** Attenuation parameters calculated for 3 mechanisms,
+      max freq=2.000000e+00 [Hz], min_freq=2.000000e-02 [Hz], velo_freq=1.000000e+00 [Hz]
+
+omega[0]=1.256637e-01 omega[1]=1.256637e+00 omega[2]=1.256637e+01 
+omc[0]=1.256637e-01 omc[1]=3.973835e-01 omc[2]=1.256637e+00 omc[3]=3.973835e+00 omc[4]=1.256637e+01 
+
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 2.159104e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=2.15910358e-03
+*** Initialized Images
+ Min source z-level: 2.953912e+03, max source z-level: 2.953912e+03
+
+   Execution time, start up phase 2 minutes 5.11773629e+01 seconds 
+Running sw4 on 8 processors, using 8 threads/processor...
+Writing output to directory: entire-berkeley-sfile-images/
+
+***  Starting solve ***
+============================================================
+ Running program on 8 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0
+ Number of time steps = 0 dt: 0.0021591
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax supergrid
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 0 Nm 
+  Number of moment sources 1
+-----------------------------------------------------------------------
+number of grid point  sources = 216
+number of unique g.p. sources = 216
+  Initial data has been assigned
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.z=0.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.z=0.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.z=0.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.z=0.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.z=0.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.z=0.topo.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=9000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=0.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=12000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=3000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=9000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=12000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=6000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=9000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=0.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=12000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=9000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=12000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=3000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=9000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=6000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=12000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=0.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=3000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=6000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=0.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=3000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=6000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=0.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=3000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.x=6000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=9000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=6000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=12000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=0.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=9000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=3000.s.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=9000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=6000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=12000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=9000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=6000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=0.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=3000.p.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=6000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=0.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=12000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=9000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=3000.rho.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=12000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=0.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=6000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=12000.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=3000.qp.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=0.qs.sw4img
+writing image plane on file entire-berkeley-sfile-images/s_image.cycle=0.y=3000.qs.sw4img
+
+Reporting SW4 internal flags and settings:
+m_testing=no, twilight=no, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
+
+   Execution time, initial data phase 6.97619796e+00 seconds 
+
+  Begin time stepping...
+  Time stepping finished...
+
+   Execution time, time stepping phase 5.60283661e-05 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
+===========END===========
+Tue Jul  2 13:51:49 PDT 2019
