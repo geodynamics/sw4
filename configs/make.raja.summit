@@ -8,16 +8,19 @@ raja_cuda=yes
 #RAJA_LOCATION = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/RAJA/install
 #RAJA_LOCATION  = /autofs/nccs-svm1_home1/rameshp/RAJA/RAJA-0.7.0/install_gcc_5.4
 RAJA_LOCATION = /autofs/nccs-svm1_home1/rameshp/RAJA/RAJA-0.7.0/install
+RAJA_LOCATION = /autofs/nccs-svm1_home1/rameshp/RAJA/RAJA-0.7.0/install_cuda10.1.168
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/proj-5.0.0/install_12_27_2018
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Umpire/install_summit_gcc4.8.5
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Umpire/install_summit_xl
+UMPIRE_HOME=/gpfs/alpine/geo130/proj-shared/sw4_raja/Umpire/umpire-0.3.3/install_summit_xl_10.1.168
+UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/Umpire/umpire-0.3.5/install_xl_10.1.168
 CALIPER_LOCATION = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Caliper/install_summit
 CUDA_HOME = $(OLCF_CUDA_ROOT)
 EXTRA_FORT_FLAGS = 
-MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_USE_UMPIRE=1 -DSW4_RAJA_VERSION=7
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_USE_UMPIRE=1 -DSW4_RAJA_VERSION=7 -DSW4_PINNED_MPI_BUFFERS=1 -DENABLE_FFTW=1 -DSW4_MASS_PREFETCH=1
 LINKFLAGS =  -arch=sm_70
 EXTRA_CXX_FLAGS =  -O3  -use_fast_math -DDISABLE_PREFETCH  -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include -I$(UMPIRE_HOME)/include $(MORE_FLAGS)
 
 EXTRA_CXX_FLAGS2 =  -O3  -use_fast_math -DDISABLE_PREFETCH -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu  -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA   -I$(UMPIRE_HOME)/include $(MORE_FLAGS)
 
-EXTRA_LINK_FLAGS = -O3  -dc -L $(OLCF_XLF_ROOT)/lib/ -L $(OLCF_NETLIB_LAPACK_ROOT)/lib64  -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_LOCATION)/lib -lRAJA  -lcudadevrt -L $(PROJ_HOME)/lib64 -lproj -L /usr/lib64/nvidia -lnvidia-ml -L$(UMPIRE_HOME)/lib -lumpire -lumpire_util -lumpire_tpl_judy -lumpire_resource -lumpire_strategy -lumpire_resource -lumpire_op
+EXTRA_LINK_FLAGS = -O3  -dc -L $(OLCF_XLF_ROOT)/lib/ -L $(OLCF_NETLIB_LAPACK_ROOT)/lib64  -lxlf90 -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_LOCATION)/lib -lRAJA  -lcudadevrt -L $(PROJ_HOME)/lib64 -lproj -L /usr/lib64/nvidia -lnvidia-ml -L$(UMPIRE_HOME)/lib -lumpire -L $(OLCF_FFTW_ROOT)/lib -lfftw3 -lfftw3_mpi
