@@ -13,14 +13,14 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    wget https://github.com/LLNL/RAJA/releases/download/v0.7.0/RAJA-0.7.0.tar.gz
 
 2. build and install RAJA using the following invocations in the build directory:
-   ml cmake cuda ( Summit only)
+   ml cmake cuda gcc/6.4.0 ( Summit only)
    mkdir install
    mkir build  && cd build
    cmake -DCMAKE_INSTALL_PREFIX=../install -DENABLE_CUDA=On -DENABLE_OPENMP=Off ../
    make install
 
-3. Get Umpire(0.3.3) from github:
-   wget https://github.com/LLNL/Umpire/releases/download/v0.3.3/umpire-0.3.3.tar.gz
+3. Get Umpire(0.3.5) from github:
+   wget https://github.com/LLNL/Umpire/releases/download/v0.3.5/umpire-0.3.5.tar.gz
 
 4. build and install Umpire using:
    mkdir install
@@ -41,6 +41,8 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    copy configs/make.raja.<machinename> to make.inc
    Edit make.inc and point RAJA_LOCATION and UMPIRE_HOME to the install locations from Step 2 and 3
    Point PROJ_HOME to the location of the Proj library
+   ml fftw
+   ml xl
    ml netlib-lapack/3.8.0 ( Summit only)
    make -j 4
    ** Sometimes parallel make will fail due to a race condition. Redoing make will fix this **
@@ -70,6 +72,8 @@ Sample LSF file:
 cd /gpfs/alpine/geo130/proj-shared/sw4_raja/10HZ 
 module load netlib-lapack/3.8.0
 module load cuda
+module load xl
+module load fftw
 date
 jsrun -n 7200 -g1 -c7 -a1 ./sw4 test.in
 

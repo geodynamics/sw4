@@ -150,6 +150,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 "
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
+    elif 'batch' in node_name: # This is for Summit
+        if mpi_tasks<=0: mpi_tasks = 16
+        mpirun_cmd="jsrun -n 6 -g1 -c6 -a1 "
     elif 'rzansel' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 "

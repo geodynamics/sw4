@@ -614,7 +614,7 @@ void global_prefetch(){
     //std::cout<<"global_prefetch "<<std::get<0>(v)<<" of "<<std::get<1>(v)<<" bytes\n";
     auto size = umpire::ResourceManager::getInstance().getAllocator(allocators[count]).getHighWatermark();
     std::cout<<"SIZES "<<size<<" , "<<std::get<1>(v)<<"\n";
-    //#define PREFETCH_ALL 1 
+#define PREFETCH_ALL 1 
 #ifdef PREFETCH_ALL
      SW4_CheckDeviceError(cudaMemPrefetchAsync(std::get<0>(v),
 					       std::get<1>(v),

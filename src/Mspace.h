@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <tuple>
+#include <vector>
 #include <mpi.h>
 #ifdef SW4_USE_UMPIRE
 #include "umpire/ResourceManager.hpp"
