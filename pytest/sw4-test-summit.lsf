@@ -1,0 +1,16 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P GEO130
+#BSUB -W 0:10
+#BSUB -nnodes 1
+#BSUB -J RunSW4
+#BSUB -o RunSW4%J.out
+#BSUB -e RunSW4%J.err
+module load netlib-lapack/3.8.0
+module load cuda/10.1.168
+module load xl
+module load fftw
+module load python
+date
+./test_sw4.py -d optimize -l 2
+#jsrun -n 6 -g1 -c6 -a1 ./sw4 hayward-att-h200-ref.in
