@@ -313,7 +313,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 
 // Set station ref utc = simulation ref utc
 // m_t0 = 0 is set by default above.
-   a_ew->get_utc( m_utc );
+   a_ew->get_utc( m_utc, m_event );
 
 } // end constructor
 
@@ -843,6 +843,28 @@ void TimeSeries::writeFile( string suffix )
 }
 
 //-----------------------------------------------------------------------
+void TimeSeries::writeFileUSGS( string suffix )
+{
+   // Force write USGS file
+  if (!m_myPoint) return;
+  stringstream filePrefix;
+
+//building the file name...
+  if( m_path != "." )
+    filePrefix << m_path;
+  if( suffix == "" )
+     filePrefix << m_fileName << "." ;
+  else
+     filePrefix << m_fileName << suffix.c_str() << "." ;
+  filePrefix << "txt";
+  if (m_ew->getVerbosity() >= 3)
+     cout << "Writing ASCII USGS file, "
+	  << "of size " << mLastTimeStep+1 << ": "
+	  << filePrefix.str() << endl;
+  write_usgs_format( filePrefix.str() );
+}
+
+//-----------------------------------------------------------------------
 void TimeSeries::
 write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *var,
 		 float cmpinc, float cmpaz, bool makeCopy /*=false*/)
@@ -1139,7 +1161,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
                   else
 		  {
                      int utcrefsim[7];
-		     m_ew->get_utc(utcrefsim);
+		     m_ew->get_utc(utcrefsim, m_event );
 		     //		     cout << "UTC from EW : ";
 		     //		     for( int c=0;c<7;c++ )
 		     //			cout << utcrefsim[c] << " " ;
@@ -1199,7 +1221,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	    // Use offset in time column.
       // Only allocate arrays if we aren't doing a restart
 	    if(!mIsRestart)
-        allocateRecordingArrays( nlines, m_t0+tstart, dt );
+	       allocateRecordingArrays( nlines, m_t0+tstart, dt );
 	    if( nlines <= 1 )
 	    {
 	       cout << "ERROR: observed data is too short" << endl;
@@ -1489,7 +1511,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	   if( t < m_winL || t > m_winR ) 
 	     wghx = wghy = wghz = 0;
 	   else
-	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0);
+	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0)*wghv;
 	 }
          if( !m_use_x )
 	    wghx = 0;
@@ -1592,11 +1614,16 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    misfit += ( (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx + 
 			(mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy + 
 			(mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i])*wghz    );
-            dshift -= wghx*(mf[0]-mRecordedSol[0][i])*dmf[0]+wghy*(mf[1]-mRecordedSol[1][i])*dmf[1]+
+
+            dshift -= wghx*(mf[0]-mRecordedSol[0][i])*dmf[0]+
+	              wghy*(mf[1]-mRecordedSol[1][i])*dmf[1]+
 	              wghz*(mf[2]-mRecordedSol[2][i])*dmf[2];
-            ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
+
+            ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+
+	               wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
  	               wghz*(mf[2]-mRecordedSol[2][i])*ddmf[2] +
-	                wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+	               wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 	    if( compute_difference )
 	    {
@@ -1607,19 +1634,25 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	 }
 	 else
 	 {
-	    misfit += ( (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i])*wghx + 
-			(mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i])*wghy + 
-			(mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i])*wghz );
-            dshift -= wghx*(mf[0]-mRecordedFloats[0][i])*dmf[0]+wghy*(mf[1]-mRecordedFloats[1][i])*dmf[1]+
-	       wghz*(mf[2]-mRecordedFloats[2][i])*dmf[2];
-            ddshift += wghx*(mf[0]-mRecordedFloats[0][i])*ddmf[0]+wghy*(mf[1]-mRecordedFloats[1][i])*ddmf[1]+
-	      wghz*(mf[2]-mRecordedFloats[2][i])*ddmf[2] + wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+	    misfit += ( wghx*(mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
+			wghy*(mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
+			wghz*(mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]) );
+
+            dshift -= wghx*(mf[0]-mRecordedFloats[0][i])*dmf[0]+
+                      wghy*(mf[1]-mRecordedFloats[1][i])*dmf[1]+
+	              wghz*(mf[2]-mRecordedFloats[2][i])*dmf[2];
+
+            ddshift += wghx*(mf[0]-mRecordedFloats[0][i])*ddmf[0]+
+                       wghy*(mf[1]-mRecordedFloats[1][i])*ddmf[1]+
+	               wghz*(mf[2]-mRecordedFloats[2][i])*ddmf[2] + 
+                       wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 	    if( compute_difference )
 	    {
-	       misfitsource[0][i] = (mRecordedFloats[0][i]-mf[0])*wghx;
-	       misfitsource[1][i] = (mRecordedFloats[1][i]-mf[1])*wghy;
-	       misfitsource[2][i] = (mRecordedFloats[2][i]-mf[2])*wghz;
+	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
+	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
+	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
 	    }
 	 }
 	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
@@ -1715,6 +1748,10 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 			    float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc )
 {
 // Interpolate data to this object
+
+// Cross correlation function \sum w(t_n)*u(t_n)*w(t_n+tshift)*uobs(t_n+tshift)
+//  w(t) is windowing function
+
    float_sw4 dtfr  = observed.m_dt;
    float_sw4 idtfr = 1/dtfr;
    float_sw4 idtfr2 = idtfr*idtfr;
@@ -1750,6 +1787,9 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       }
       float_sw4 t  = m_t0 + m_shift + i*m_dt + tshift;
       float_sw4 ir = (t-t0fr)/dtfr;
+      // Here t is t_n+tshift, t_n is time in this object.
+      //   ir is grid point index in observed object that correspond to t_n+tshift
+      //  need to evaluate the observed data at this grid point.
       int ie   = static_cast<int>(ir);
       int mmin = ie-2;
       int mmax = ie+3;
@@ -1767,11 +1807,11 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       wghx = wghy = wghz = wghv;
       if( m_use_win )
       {
-	// Use unshifted time, to avoid window dependency on unknown
+	 // Window data in this object w(t_n)
 	 if( t-tshift < m_winL || t-tshift > m_winR ) 
 	    wghx = wghy = wghz = 0;
 	 else
-	   wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),10.0);
+	   wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),5.0)*wghv;
       }
       if( !m_use_x )
 	 wghx = 0;
@@ -1808,33 +1848,46 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 }
 	 for( int m = mmin ; m <= mmax ; m++ )
 	 {
+	    // Window observed data
+	    float_sw4 wghxobs, wghyobs, wghzobs;
+	    wghxobs=wghyobs=wghzobs=1;
+	    if( m_use_win )
+	    {
+	       double tobs = m*dtfr+t0fr; // t_n+tshift in Observation time 
+	       // Window data in this object w(t_n+tshift)
+	       if( tobs < m_winL || tobs > m_winR ) 
+		  wghxobs = wghyobs = wghzobs = 0;
+	       else
+		  wghxobs = wghyobs = wghzobs = pow(cos(aw*(tobs)+bw),5.0);
+	    }
+
 	    if( observed.m_usgsFormat )
 	    {
-	       mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
-	       mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
-	       mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
+	       mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m]*wghxobs;
+	       mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m]*wghyobs;
+	       mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m]*wghzobs;
 
-	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr;
-	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr;
-	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr;
+	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr*wghxobs;
+	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr*wghyobs;
+	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr*wghzobs;
 
-	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2;
-	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2;
-	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2;
+	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2*wghxobs;
+	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2*wghyobs;
+	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2*wghzobs;
 	    }
 	    else
 	    {
-	       mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m];
-	       mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m];
-	       mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m];
+	       mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m]*wghxobs;
+	       mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m]*wghyobs;
+	       mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m]*wghzobs;
 
-	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr;
-	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr;
-	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr;
+	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr*wghxobs;
+	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr*wghyobs;
+	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr*wghzobs;
 
-	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2;
-	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2;
-	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
+	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2*wghxobs;
+	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2*wghyobs;
+	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2*wghzobs;
 	    }
 	 }
       }
@@ -2500,20 +2553,19 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    readSACdata( file3.c_str(), npts1, u3 );
 
       // For restart, don't overwrite member vars except data 
-      if (!mIsRestart) 
-      {
-            if( !ignore_utc )
+	    if (!mIsRestart) 
 	    {
-	       for( int c=0 ; c < 7 ; c++ )
-		  m_utc[c] = utc1[c];
-	       int utcrefsim[7];
-	       m_ew->get_utc(utcrefsim);
-	       m_t0 = utc_distance( utcrefsim, m_utc );
+	       if( !ignore_utc )
+	       {
+		  for( int c=0 ; c < 7 ; c++ )
+		     m_utc[c] = utc1[c];
+		  int utcrefsim[7];
+		  m_ew->get_utc(utcrefsim,m_event);
+		  m_t0 = utc_distance( utcrefsim, m_utc );
+	       }
+	       m_shift = t01;
+	       allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
 	    }
-            m_shift = t01;
-
-	    allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
-      }
 
 	    if( debug )
 	    {
@@ -2547,41 +2599,41 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    tmat[7] = cos(cmpinc2);
 	    tmat[8] = cos(cmpinc3);
 
-      if (!mIsRestart) // For restart, already in xyz format?
-      {
-        m_xyzcomponent = false; //note this is format on output file, 
+	    if (!mIsRestart) // For restart, already in xyz format?
+	    {
+	       m_xyzcomponent = false; //note this is format on output file, 
  	      //internally, we always use (x,y,z) during computation.
 
         // Convert (e,n,u) to (x,y,z) components.
-        float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-        float_sw4 a11 = m_calpha*deti;
-        float_sw4 a12 = m_thxnrm*deti;
-        float_sw4 a21 =-m_salpha*deti;
-        float_sw4 a22 = m_thynrm*deti;
-        for( int i=0 ; i < npts1 ; i++ )
-        {
-           float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-           float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-           float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-           mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-           mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-           mRecordedSol[2][i] = -ucomp;
-        }
-        mLastTimeStep = npts1-1;
-      }
-      else
-      {
-        // Just copy the read values into our time series
-        for( int i=0 ; i < npts1 ; i++ )
-        {
-          mRecordedSol[0][i] = u1[i];
-          mRecordedSol[1][i] = u2[i];
-          mRecordedSol[2][i] = u3[i];
-          mRecordedFloats[0][i] = (float) u1[i];
-          mRecordedFloats[1][i] = (float) u2[i];
-          mRecordedFloats[2][i] = (float) u3[i];
-        }
-     }
+	       float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+	       float_sw4 a11 = m_calpha*deti;
+	       float_sw4 a12 = m_thxnrm*deti;
+	       float_sw4 a21 =-m_salpha*deti;
+	       float_sw4 a22 = m_thynrm*deti;
+	       for( int i=0 ; i < npts1 ; i++ )
+	       {
+		  float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+		  float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+		  float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+		  mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+		  mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+		  mRecordedSol[2][i] = -ucomp;
+	       }
+	       mLastTimeStep = npts1-1;
+	    }
+	    else
+	    {
+	       // Just copy the read values into our time series
+	       for( int i=0 ; i < npts1 ; i++ )
+	       {
+		  mRecordedSol[0][i] = u1[i];
+		  mRecordedSol[1][i] = u2[i];
+		  mRecordedSol[2][i] = u3[i];
+		  mRecordedFloats[0][i] = (float) u1[i];
+		  mRecordedFloats[1][i] = (float) u2[i];
+		  mRecordedFloats[2][i] = (float) u3[i];
+	       }
+	    }
 	 }
 	 else
 	 {

@@ -43,10 +43,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-		int event )
+		int event, int nsteps_in_memory )
 {
    // Experimental
-   int nsteps_in_memory=50;
+  //   int nsteps_in_memory=50;
 // solution arrays
    vector<Sarray> F, Lu, Uacc, Up;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
@@ -99,6 +99,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      //
+      F[g].set_to_zero();
+      Lu[g].set_to_zero();
+      Uacc[g].set_to_zero();
+      Up[g].set_to_zero();
+      Um[g].set_to_zero();
+      U[g].set_to_zero();
       if (m_use_attenuation && m_number_mechanisms > 0)
       {
 	 for (int a=0; a<m_number_mechanisms; a++)
@@ -106,6 +113,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	    AlphaVE[g][a].define( 3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 	    AlphaVEp[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 	    AlphaVEm[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	    AlphaVE[g][a].set_to_zero();
+	    AlphaVEp[g][a].set_to_zero();
+	    AlphaVEm[g][a].set_to_zero();
 	 }
       }
    }
@@ -599,7 +609,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     {
        if( mOrder == 2 )
        {
-	  //	  int i0=84, j0=102, k0=25;
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )

@@ -102,7 +102,7 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event );
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps );
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -154,6 +154,7 @@ void processMaterialEtree(char* buffer);
 void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
+void processMaterialSfile(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
@@ -399,6 +400,7 @@ void setEtreeFile(EtreeFile* efile);
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
                                 float_sw4 a_EFileResolution);
 void extractTopographyFromRfile( std::string a_topoFileName );
+void extractTopographyFromSfile( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
 
@@ -564,7 +566,7 @@ void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 // functions from the old FileInput class
 void cleanUpRefinementLevels();
 
-enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile};
+enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile};
 
 // access functions needed by the Image (and perhaps other) classes
 int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};

@@ -44,6 +44,8 @@ Mopt::Mopt( EW* a_ew )
    m_wolfe = false;
    m_mcheck = false;
    m_output_ts = false;
+   m_test_regularizer = false;
+   m_do_profiling = false;
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -69,6 +71,7 @@ Mopt::Mopt( EW* a_ew )
    m_misfit = L2;
    m_mpcart0 = NULL;
    m_mp = NULL;
+   m_nsteps_in_memory = 10;
 }  
 
 //-----------------------------------------------------------------------
@@ -158,6 +161,7 @@ void Mopt::processMaterialAllpts( char* buffer )
    CHECK_INPUT(strcmp("mpallpts", token) == 0,
 	       "ERROR: not an mpallpts line: " << token);
    token = strtok(NULL, " \t");
+   int variables = 0;
 
    char file[256]= " \0"; //shut up memory checker
    while (token != NULL)
@@ -166,6 +170,19 @@ void Mopt::processMaterialAllpts( char* buffer )
       if (startswith("#", token) || startswith(" ", buffer))
 	// Ignore commented lines and lines with just a space.
 	 break;
+      else if( startswith("type=",token) )
+      {
+	 token += 5;
+	 int len=strlen(token);
+	 if( strncmp("velocity",token,len)==0 )
+	    variables = 1;
+	 else if( strncmp("vsvp",token,len)==0 )
+	    variables = 2;
+	 else if( strncmp("vponly",token,len)==0 )
+	    variables = 3;
+	 else
+	    variables = 0;
+      }
       else
       {
 	 badOption("mpallpts", token);
@@ -175,7 +192,7 @@ void Mopt::processMaterialAllpts( char* buffer )
    if( m_mp != NULL )
       cout << "Error: more than one material parameterization command" << endl;
 
-   m_mp = new MaterialParAllpts( m_ew, file );
+   m_mp = new MaterialParAllpts( m_ew, file, variables );
 }
 
 //-----------------------------------------------------------------------
@@ -239,9 +256,9 @@ void Mopt::processMaterialParCart( char* buffer )
       else if( startswith("filetype=",token) )
       {
 	 token += 9;
-	 CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mparcart")==0, 
+	 CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mpc")==0, 
                    "ERROR: processing mparcart, file type " << token << "not recognized" );
-	 if( strcmp(token,"mparcart")== 0 )
+	 if( strcmp(token,"mpc")== 0 )
 	 {
 	    mparcartfile = true;
 	 }
@@ -358,6 +375,18 @@ void Mopt::processMrun( char* buffer )
 	 else
 	    CHECK_INPUT(false,"ERROR, mrun misfit= " << token << " not understood" << endl);
       }
+      else if( startswith("savesteps=",token) )
+      {
+ 	 token += 10;
+	 m_nsteps_in_memory = atoi(token);
+      }
+      else if( startswith("profiling=",token) )
+      {
+	 token += 10;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	    m_do_profiling = true;
+      }
       else
          badOption("mrun",token);
       token = strtok(NULL," \t");
@@ -455,6 +484,7 @@ void Mopt::processMregularize( char* buffer )
 {
    char* path = 0;
    char* token = strtok(buffer, " \t");
+   int n;
    CHECK_INPUT(strcmp("regularize", token) == 0, "ERROR: not a regularize line...: " << token);
    token = strtok(NULL, " \t");
    double scale_coeff = 1;
@@ -470,8 +500,17 @@ void Mopt::processMregularize( char* buffer )
 	 token += 6;
 	 scale_coeff = atof(token);
       }
+      else if( startswith("testmode=",token))
+      {
+	 token += 9;
+	 n = strlen(token);
+	 if( strncmp(token,"yes",n)==0 || strncmp(token,"on",n)==0 || strncmp(token,"1",n)==0 )
+	    m_test_regularizer = true;
+	 else
+	    m_test_regularizer = false;
+      }
       else
-         badOption("mscalefactors",token);
+         badOption("regularize",token);
       token = strtok(NULL, " \t");
    }
    m_reg_coeff = scale_coeff;

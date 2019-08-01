@@ -43,6 +43,7 @@
 #include "MaterialIfile.h"
 #include "MaterialVolimagefile.h"
 #include "MaterialRfile.h"
+#include "MaterialSfile.h"
 #include "MaterialInvtest.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
@@ -496,6 +497,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 	 processMaterialPfile( buffer );
        else if (startswith("rfile", buffer))
 	 processMaterialRfile( buffer );
+       else if (startswith("sfile", buffer))
+	 processMaterialSfile( buffer );
        else if (startswith("vimaterial", buffer))
 	 processMaterialVimaterial( buffer );
        else if (startswith("invtestmaterial", buffer))
@@ -1533,6 +1536,12 @@ void EW::processTopography(char* buffer)
 	     m_topography_exists=true;
 	     needFileName=true; // we require the file name to be given on the topography command line
 	  }
+	  else if (strcmp("sfile", token) == 0)
+	  {
+	     m_topoInputStyle=Sfile;
+	     m_topography_exists=true;
+	     needFileName=true; // we require the file name to be given on the topography command line
+	  }
 	  else if (strcmp("image", token) == 0)
 	  {
 	     m_topoInputStyle=TopoImage;
@@ -2475,7 +2484,7 @@ void EW::processFileIO(char* buffer)
        }
        else if (startswith("temppath=", token))
        {
-          token += 9; // skip obspath=
+          token += 9; // skip temppath=
           mTempPath = token;
 	  mTempPath += '/';
        }
@@ -4580,10 +4589,15 @@ void EW::allocateCurvilinearArrays()
   mX.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
   mY.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
   mZ.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
+  mX.set_to_zero();
+  mY.set_to_zero();
+  mZ.set_to_zero();  
 // Allocate array for the metric
   mMetric.define(4,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mMetric.set_to_zero();
 // and the Jacobian of the transformation
   mJ.define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mJ.set_to_zero();
 // and material properties, initialize to -1
   mRho[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
   mRho[gTop].set_to_minusOne();
@@ -8113,6 +8127,70 @@ void EW::processMaterialRfile(char* buffer)
    MaterialRfile* rf = new MaterialRfile( this, filename, directory, bufsize );
    add_mtrl_block( rf  );
 }
+
+//-----------------------------------------------------------------------
+void EW::processMaterialSfile(char* buffer)
+{
+   string name = "sfile";
+   string filename = "NONE";
+   string directory = "NONE";
+   float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+   string cflatten = "NONE";
+   bool flatten = false;
+   bool coords_geographic = true;
+   int nstenc = 5;
+   int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
+
+   char* token = strtok(buffer, " \t");
+  //  CHECK_INPUT(strcmp("rfile", token) == 0,
+  //	      "ERROR: material data can only be set by an rfile line, not: " << token);
+
+   string err = token;
+   err += " Error: ";
+   token = strtok(NULL, " \t");
+
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      //      else if (startswith("a=", token))
+      //      {
+      //         token += 2; // skip a=
+      //         a_ppm = atof(token);
+      //      }
+      else if (startswith("filename=", token))
+      {
+	 token += 9; // skip filename=
+	 filename = token;
+      }
+      else if (startswith("directory=", token))
+      {
+	 token += 10; // skip directory=
+	 directory = token;
+      }
+      else
+      {
+	 cout << token << " is not a sfile option " << endl;
+      }
+      token = strtok(NULL, " \t");
+   }
+  // End parsing...
+
+  //----------------------------------------------------------------
+  // Check parameters
+  //----------------------------------------------------------------
+  if (strcmp(directory.c_str(),"NONE")==0)
+     directory = string("./");
+
+  if (m_myRank == 0)
+     cout << "*** Using Sfile " << filename << " in directory " << directory << endl;
+
+  MaterialSfile* sf = new MaterialSfile(this, filename, directory);
+  add_mtrl_block( sf  );
+}
+
 
 //-----------------------------------------------------------------------
 void EW::processMaterialInvtest(char* buffer)

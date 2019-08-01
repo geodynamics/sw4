@@ -38,8 +38,13 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
    if( maxrestart == 0 )
       return;
 
-   if( maxit <= 0 )
+   int nmpard_global=0;
+   MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+
+   if( maxit <= 0 && nmpard == 0 )
       maxit = ns + nmpard;
+   else if( maxit <= 0 )
+      maxit = 10;
 
    FILE *fd;
    FILE *fdx;
@@ -55,7 +60,6 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
       if( nspar > 0 )
 	 fdx=fopen(parafile.c_str(),"w");
    }
-
    if( myRank == 0 )
       cout << "Begin NLCG iteration by evaluating initial misfit and gradient..." << endl;
 
@@ -102,7 +106,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
       }
    }
    rnorm = 0;
-   if( nmpard > 0 )
+   if( nmpard_global > 0 )
    {
       for( int i=0 ; i < nmpard ; i++ )
 	 rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
@@ -136,6 +140,13 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 
          // Perturb x in the direction of d
 	 double normd=0;
+	 if( nmpard_global > 0 )
+	 {
+	    double normdlocal=0;
+	    for( int i=0 ; i < nmpard ; i++ )
+	       normdlocal += dm[i]*dm[i];
+	    MPI_Allreduce( &normdlocal, &normd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 }
 	 for( int i=0 ; i < ns ; i++ )
 	    normd += ds[i]*ds[i];
 	 normd = sqrt(normd);
@@ -151,7 +162,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 			   GlobalObservations, fp, dfps, dfpm, myRank, mopt );
          dtHd  = 0;
 	 alpha = 0;
-	 if( nmpard > 0 )
+	 if( nmpard_global > 0 )
 	 {
             double dtHdlocal=0, alphaloc=0;
             for( int i=0 ; i < nmpard ; i++ )
@@ -163,9 +174,10 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 	    MPI_Allreduce( &alphaloc, &alpha, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 	 }
 	 for( int i=0 ; i < ns ; i++ )
+	 {
 	    dtHd += ds[i]*(dfps[i]-dfs[i])*hi;
-	 for( int i=0 ; i < ns ; i++ )
 	    alpha += ds[i]*dfs[i];
+	 }
 	 alpha = -alpha/dtHd;
          if( dolinesearch )
          {
@@ -177,8 +189,8 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
             if( myRank == 0 && verbose > 2 )
 	       cout << "Line search.. " << endl;
 	    linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
-			nspar, nmpars, xs, nmpard, xm, f, dfs, dfm, das, dam, fabs(alpha), 1.0, tolerance,
-			xas, xam, fp, sfs, sfm, myRank,
+			nspar, nmpars, xs, nmpard_global, nmpard, xm, f, dfs, dfm, das, dam,
+			fabs(alpha), 1.0, tolerance, xas, xam, fp, sfs, sfm, myRank,
 			retcode, nreductions, testing, dfps, dfpm, mopt );
             if( myRank == 0 && verbose > 2 )
 	       cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
@@ -194,7 +206,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
    // xa is now the new iterate
    // store x^{k+1}-x^k in d to save memory
 	 double dxnorm = 0;
-	 if( nmpard > 0 )
+	 if( nmpard_global > 0 )
 	 {
 	    for( int i=0 ; i < nmpard ; i++ )
 	    {
@@ -226,7 +238,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 
 // Compute norm of new gradient
 	 rnorm = 0;
-	 if( nmpard > 0 )
+	 if( nmpard_global > 0 )
 	 {
 	    double rnormloc = 0;
 	    for( int i=0 ; i < nmpard ; i++ )
@@ -290,7 +302,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
          if( k < maxit )
 	 {
             double num=0, mix=0, den=0;
-            if( nmpard > 0 )
+            if( nmpard_global > 0 )
 	    {
                double varloc[3]={0,0,0};
 	       double vars[3]={0,0,0};
