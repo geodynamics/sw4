@@ -4589,10 +4589,15 @@ void EW::allocateCurvilinearArrays()
   mX.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
   mY.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
   mZ.define(m_iStart[gTop], m_iEnd[gTop], m_jStart[gTop], m_jEnd[gTop], m_kStart[gTop], m_kEnd[gTop]);
+  mX.set_to_zero();
+  mY.set_to_zero();
+  mZ.set_to_zero();  
 // Allocate array for the metric
   mMetric.define(4,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mMetric.set_to_zero();
 // and the Jacobian of the transformation
   mJ.define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
+  mJ.set_to_zero();
 // and material properties, initialize to -1
   mRho[gTop].define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
   mRho[gTop].set_to_minusOne();
