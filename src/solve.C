@@ -99,6 +99,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      //
+      F[g].set_to_zero();
+      Lu[g].set_to_zero();
+      Uacc[g].set_to_zero();
+      Up[g].set_to_zero();
+      Um[g].set_to_zero();
+      U[g].set_to_zero();
       if (m_use_attenuation && m_number_mechanisms > 0)
       {
 	 for (int a=0; a<m_number_mechanisms; a++)
@@ -106,6 +113,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	    AlphaVE[g][a].define( 3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 	    AlphaVEp[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 	    AlphaVEm[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	    AlphaVE[g][a].set_to_zero();
+	    AlphaVEp[g][a].set_to_zero();
+	    AlphaVEm[g][a].set_to_zero();
 	 }
       }
    }
