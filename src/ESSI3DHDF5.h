@@ -55,7 +55,7 @@ public:
     double (&origin)[3], int cycle, double t, double dt);
   void write_topo(double* window_array);
 
-  void init_write_vel();
+  void init_write_vel(int ntimestep);
   void write_vel(double* window_array, int comp, int cycle);
 
   const std::string& filename() {return m_filename;};
