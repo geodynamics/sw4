@@ -460,8 +460,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
     mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
 
-  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
+    mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
     mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ );
+  }
+// NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
 
   FILE *lf=NULL;
 // open file for saving norm of error
