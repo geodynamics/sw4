@@ -6594,17 +6594,21 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromSfile( std::string a_topoFileName )
 {
+  double start_time, end_time;
+  start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
   mVerbose = 2;
   std::string rname ="EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;
-  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id, attr_id, plist_id;
+  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id, attr_id, plist_id, dxpl;
   int prec;
   double lonlataz[3];
 
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
   H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
   file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, plist_id);
   if (file_id < 0) {
@@ -6687,7 +6691,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
       in_data = (void*)d_data;
   }
 
-  ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
+  ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, dxpl, in_data);
   ASSERT(ierr >= 0);
   H5Dclose(dataset_id);
 
@@ -6706,6 +6710,8 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   gridElev.define(1, nitop, 1, njtop, 1, 1);
   gridElev.assign(data);
 
+  H5Pclose(dxpl);
+  H5Pclose(plist_id);
   H5Gclose(group_id);
   H5Fclose(file_id);
 
@@ -6828,6 +6834,10 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
         
     }// end for j
   }// end for i
+
+  end_time = MPI_Wtime();
+  if (m_myRank==0)
+    printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
   
   // test
   if (m_myRank==0 && mVerbose>=2) {
