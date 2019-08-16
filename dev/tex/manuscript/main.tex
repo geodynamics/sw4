@@ -1,0 +1,74 @@
+\documentclass[a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usepackage{pgfplots}
+\usepackage{subcaption}
+\usepackage[toc,page]{appendix}
+
+\title{Fourth order summation-by-parts finite difference method for wave propagation in anisotropic elastic material and curvilinear coordinates with mesh refinement interface}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We analyze
+\end{abstract}
+
+\section{Introduction}
+
+\section{The anisotropic elastic wave equation}
+We consider the anistropic elastic wave equation in three dimensional domain ${\bf x} \in \Omega$, ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation in Cartisian coordinates takes the form,
+\begin{eqnarray*}
+    \rho\frac{\partial^2{\bf u}}{\partial^2 t} &=& \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
+    \nabla\cdot\mathcal{T} &:=& {\bf Lu},
+\end{eqnarray*}
+provided with appropriate initial and boundary conditions. Here, $\rho$ is density, $\mathcal{T}$ is stress tensor and ${\bf F}$ is the force function. The spatial operator ${\bf L}$ is called $3\times3$ symmetric Kelvin-Christoffel differential operator matrix, specifically,
+\begin{equation*}
+    {\bf L u} = \partial_1(A_1\nabla{\bf u}) + \partial_2(A_2\nabla{\bf u}) + \partial_3(A_3\nabla{\bf u}),
+\end{equation*}
+with
+\begin{eqnarray*}
+A_1\nabla{\bf u} &:=& M^{11}\partial_1{\bf u} + M^{12}\partial_2{\bf u} + M^{13}\partial_3{\bf u}, \\
+A_2\nabla{\bf u} &:=& M^{21}\partial_1{\bf u} + M^{22}\partial_2{\bf u} + M^{23}\partial_3{\bf u}, \\
+A_3\nabla{\bf u} &:=& M^{31}\partial_1{\bf u} + M^{32}\partial_2{\bf u} + M^{33}\partial_3{\bf u},
+\end{eqnarray*}
+where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties. For example, for isotropic elastic material,
+\[ M^{11} = \left(\begin{array}{ccc}
+2\mu+\lambda & 0 & 0\\
+0 & \mu & 0\\
+0 & 0 & \mu\end{array}\right), M^{12} = \left(\begin{array}{ccc}
+0 & \lambda & 0\\
+\mu & 0 & 0\\
+0 & 0 & 0\end{array}\right), M^{13} = \left(\begin{array}{ccc}
+0 & 0 & \lambda\\
+0 & 0 & 0\\
+\mu & 0 & 0\end{array}\right),\]
+
+
+
+
+\subsection{Energy estimate}
+
+\section{Generalization to curvilinear coordinates}
+
+\subsection{Boundary Condition}
+
+\subsection{Energy Estimate}
+
+\section{Grid refinement interface}
+
+\section{Numerical Experiments}
+
+\end{document}
