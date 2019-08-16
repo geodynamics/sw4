@@ -6206,6 +6206,8 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromRfile( std::string a_topoFileName )
 {
+   double start_time, end_time;
+   start_time = MPI_Wtime();
    std::string rname ="EW::extractTopographyFromRfile";
    Sarray gridElev;
    int fd=open( a_topoFileName.c_str(), O_RDONLY );
@@ -6589,6 +6591,10 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
    }
    else
       cout << rname << " error could not open file " << a_topoFileName << endl;
+   MPI_Barrier(MPI_COMM_WORLD);
+   end_time = MPI_Wtime();
+   if (m_myRank==0)
+     printf("Read topography from rfile time=%e seconds\n", end_time-start_time);
 }
 
 //-----------------------------------------------------------------------
@@ -6835,6 +6841,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     }// end for j
   }// end for i
 
+  MPI_Barrier(MPI_COMM_WORLD);
   end_time = MPI_Wtime();
   if (m_myRank==0)
     printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
