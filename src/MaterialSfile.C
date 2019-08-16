@@ -308,7 +308,9 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 void MaterialSfile::read_sfile()
 {
   // Timers
-  double time_start = MPI_Wtime();
+  double time_start, time_end;
+  double intf_start, intf_end, mat_start, mat_end;
+  time_start = MPI_Wtime();
 
   string rname = "MaterialSfile::read_sfile";
 
@@ -352,7 +354,7 @@ void MaterialSfile::read_sfile()
 
   string fname = m_model_dir + "/" + m_model_file;
 
-  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, grid_id, memspace_id, filespace_id, attr_id, plist_id;
+  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, grid_id, memspace_id, filespace_id, attr_id, plist_id, dxpl;
   int prec;
   double lonlataz[3];
   herr_t ierr;
@@ -360,6 +362,8 @@ void MaterialSfile::read_sfile()
 
   // Open file
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
   H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
   file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, plist_id);
   if (file_id < 0) {
@@ -599,6 +603,7 @@ void MaterialSfile::read_sfile()
   topo_grp = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
   ASSERT(topo_grp >= 0);
 
+  intf_start = MPI_Wtime();
   for (int p = 0; p < m_npatches+1; p++) {
     sprintf(intf_name, "z_values_%d", p);
     dataset_id = H5Dopen(topo_grp, intf_name, H5P_DEFAULT);
@@ -629,7 +634,7 @@ void MaterialSfile::read_sfile()
     else if (prec == 8) 
         in_data = (void*)d_data;
   
-    ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
+    ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, dxpl, in_data);
     ASSERT(ierr >= 0);
     H5Dclose(dataset_id);
 
@@ -645,6 +650,7 @@ void MaterialSfile::read_sfile()
     delete[] d_data;
   }
   H5Gclose(topo_grp);
+  intf_end = MPI_Wtime();
 
   bool roworder = true;
   hid_t rho_id, cs_id, cp_id, qs_id, qp_id;
@@ -702,28 +708,28 @@ void MaterialSfile::read_sfile()
       ASSERT(ierr >= 0);
 
       // Read each var individually 
-      ierr = H5Dread(rho_id, h5_dtype, memspace_id, filespace_id, H5P_DEFAULT, in_data);
+      ierr = H5Dread(rho_id, h5_dtype, memspace_id, filespace_id, dxpl, in_data);
       ASSERT(ierr >= 0);
       if( prec == 4 ) { mMaterial_rho[p].assign(f_data); }
       else {            mMaterial_rho[p].assign(d_data); }
 
-      ierr = H5Dread(cp_id, h5_dtype, memspace_id, filespace_id, H5P_DEFAULT, in_data);
+      ierr = H5Dread(cp_id, h5_dtype, memspace_id, filespace_id, dxpl, in_data);
       ASSERT(ierr >= 0);
       if( prec == 4 ) { mMaterial_cp[p].assign(f_data); }
       else {            mMaterial_cp[p].assign(d_data); }
 
-      ierr = H5Dread(cs_id, h5_dtype, memspace_id, filespace_id, H5P_DEFAULT, in_data);
+      ierr = H5Dread(cs_id, h5_dtype, memspace_id, filespace_id, dxpl, in_data);
       ASSERT(ierr >= 0);
       if( prec == 4 ) { mMaterial_cs[p].assign(f_data); }
       else {            mMaterial_cs[p].assign(d_data); }
 
       if (m_use_attenuation) {
-          ierr = H5Dread(qp_id, h5_dtype, memspace_id, filespace_id, H5P_DEFAULT, in_data);
+          ierr = H5Dread(qp_id, h5_dtype, memspace_id, filespace_id, dxpl, in_data);
           ASSERT(ierr >= 0);
           if( prec == 4 ) { mMaterial_qp[p].assign(f_data); }
           else {            mMaterial_qp[p].assign(d_data); }
 
-          ierr = H5Dread(qs_id, h5_dtype, memspace_id, filespace_id, H5P_DEFAULT, in_data);
+          ierr = H5Dread(qs_id, h5_dtype, memspace_id, filespace_id, dxpl, in_data);
           ASSERT(ierr >= 0);
           if( prec == 4 ) { mMaterial_qs[p].assign(f_data); }
           else {            mMaterial_qs[p].assign(d_data); }
@@ -756,15 +762,19 @@ void MaterialSfile::read_sfile()
     } // End if !m_isempty
   } // End for
 
+  H5Pclose(plist_id);
+  H5Pclose(dxpl);
   H5Gclose(group_id);
   H5Fclose(file_id);
 
-  fill_in_fluids();
+  /* fill_in_fluids(); */
   // material_check(false);
 
-  double time_end = MPI_Wtime();
-  if (mEW->getRank() == 0)
+  time_end = MPI_Wtime();
+  if (mEW->getRank() == 0) {
+     cout << "MaterialSfile::read_sfile, time to read interface: " << intf_end - intf_start << " seconds." << endl;
      cout << "MaterialSfile::read_sfile, time to read material file: " << time_end - time_start << " seconds." << endl;
+  }
   cout.flush();
 #endif
 }
