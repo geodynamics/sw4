@@ -363,7 +363,8 @@ void MaterialSfile::read_sfile()
   // Open file
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
   dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+  /* H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE); */
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
   H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
   file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, plist_id);
   if (file_id < 0) {
@@ -634,8 +635,11 @@ void MaterialSfile::read_sfile()
     else if (prec == 8) 
         in_data = (void*)d_data;
   
-    ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, dxpl, in_data);
-    ASSERT(ierr >= 0);
+    if (mEW->getRank() == 0) {
+      ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
+      ASSERT(ierr >= 0);
+    }
+    MPI_Bcast(in_data, dim[0] * dim[1] * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
     H5Dclose(dataset_id);
 
     if (prec == 4) { mInterface[p].assign(f_data); }
@@ -772,7 +776,7 @@ void MaterialSfile::read_sfile()
 
   time_end = MPI_Wtime();
   if (mEW->getRank() == 0) {
-     cout << "MaterialSfile::read_sfile, time to read interface: " << intf_end - intf_start << " seconds." << endl;
+     /* cout << "MaterialSfile::read_sfile, time to read interface: " << intf_end - intf_start << " seconds." << endl; */
      cout << "MaterialSfile::read_sfile, time to read material file: " << time_end - time_start << " seconds." << endl;
   }
   cout.flush();
