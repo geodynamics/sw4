@@ -126,7 +126,7 @@ contains
   ! describe the interface of geometry
   real(dp) function interface_cf(x,y)
     real(dp) x,y
-    interface_cf = int_pos*l3+ampi*sin(4.d0*pi*x)+amp*cos(4.d0*pi*y)
+    interface_cf = int_pos*l3+ampi*sin(4.d0*pi*x)+ampi*cos(4.d0*pi*y)
   end function interface_cf
 
   real(dp) function interface_cfx(x,y)
