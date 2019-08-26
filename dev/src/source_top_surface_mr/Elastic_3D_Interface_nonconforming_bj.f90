@@ -190,7 +190,7 @@ program Elastic_3D_Interface_nonconforming_bj
   call Interface_RHS(1)
   call Interface_LHS(1)
   residual = Vass-LHS
-  do while (maxval(abs(residual)) .gt. tol)
+  do while (maxval(abs(residual)) .gt. tol*maxval(abs(Vass)))
     !print *, maxval(abs(residual))
     do j = 1,n2_c
        do i = 1,n1_c
@@ -222,7 +222,7 @@ program Elastic_3D_Interface_nonconforming_bj
      call Interface_LHS(2)
      residual = Vass-LHS
      num = 0
-     do while (maxval(abs(residual)) .gt. tol)
+     do while (maxval(abs(residual)) .gt. tol*maxval(abs(Vass)))
        num = num + 1
        !print *, maxval(abs(residual))
        do j = 1,n2_c
@@ -314,7 +314,7 @@ program Elastic_3D_Interface_nonconforming_bj
      call Interface_LHS(3)
      residual = Vass-LHS
      num = 0
-     do while (maxval(abs(residual)) .gt. tol)
+     do while (maxval(abs(residual)) .gt. tol*maxval(abs(Vass)))
        num = num + 1
        !print *, maxval(abs(residual))
        do j = 1,n2_c

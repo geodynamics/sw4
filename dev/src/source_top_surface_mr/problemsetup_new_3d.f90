@@ -21,7 +21,7 @@ module problemsetup_new_3d
 
 
   integer,parameter :: dim = 3
-  real(dp),parameter :: amp = 0.d0, peak = 0.04d0, ampi = 0.2d0
+  real(dp),parameter :: amp = 0.d0, peak = 0.04d0, ampi = 20.d0
 
 contains
 
