@@ -1,6 +1,6 @@
 % Plot 
 
-clear all
+clear
 
 N6 = load('N6.txt');
 n1_c = N6(1);
@@ -67,101 +67,107 @@ for jj = 51
             u35fj(i,j) = u35_f(i,2*jj-1,j);
 	      end 
     end
-		% find min and max of u31
+	% find min and max of u31
     clow1 = min(min(u31cj));
     clow2 = min(min(u31fj));
     clow = 0.95*min(clow1,clow2);
     chigh1 = max(max(u31cj));
     chigh2 = max(max(u31fj));
     chigh = 0.95*max(chigh1, chigh2);
-    clev = linspace(clow, chigh,11); % these are the contour levels. You can change the number of levels (11)
-    figure(1), h1c=contourf(Xci,Xcj,u31cj,clev);
-    axis([0 2000 0 1000])
+    clev = linspace(clow, chigh, 11); % these are the contour levels. You can change the number of levels (11)
+    figure(1), h1c=contourf(Xci,Xcj,u31cj,clev,'EdgeColor','none');
     hold on
-    h1f = contourf(Xfi,Xfj,u31fj,clev);
+    h1c1=contour(Xci,Xcj,u31cj,clev,'LineColor','k');
+    axis([0 2000 0 1000])
+    h1f = contourf(Xfi,Xfj,u31fj,clev,'EdgeColor','none');
+    h1f1 = contour(Xfi,Xfj,u31fj,clev,'LineColor','k'); 
     caxis([clow, chigh]); % fix the colors
     colorbar
     axis equal
     xlabel('x')
     ylabel('z')
     title('u3,t=0.1')
-    print t01.png 
     
-    % find min and max of u32
     clow1 = min(min(u32cj));
     clow2 = min(min(u32fj));
     clow = 0.95*min(clow1,clow2);
     chigh1 = max(max(u32cj));
     chigh2 = max(max(u32fj));
     chigh = 0.95*max(chigh1, chigh2);
-    clev = linspace(clow, chigh,11); % these are the contour levels. You can change the number of levels (11)
-    figure(2), h2c=contourf(Xci,Xcj,u32cj,clev);
-    axis([0 2000 0 1000])
+    clev = linspace(clow, chigh, 11); % these are the contour levels. You can change the number of levels (11)
+    figure(2), h2c=contourf(Xci,Xcj,u32cj,clev,'EdgeColor','none');
     hold on
-    h2f = contourf(Xfi,Xfj,u32fj,clev);
+    h2c1=contour(Xci,Xcj,u32cj,clev,'LineColor','k');
+    axis([0 2000 0 1000])
+    h2f = contourf(Xfi,Xfj,u32fj,clev,'EdgeColor','none');
+    h2f1 = contour(Xfi,Xfj,u32fj,clev,'LineColor','k'); 
+    caxis([clow, chigh]); % fix the colors
     colorbar
     axis equal
     xlabel('x')
     ylabel('z')
     title('u3,t=0.2')
-    print t02.png
     
-    % find min and max of u33
     clow1 = min(min(u33cj));
     clow2 = min(min(u33fj));
     clow = 0.95*min(clow1,clow2);
     chigh1 = max(max(u33cj));
     chigh2 = max(max(u33fj));
     chigh = 0.95*max(chigh1, chigh2);
-    clev = linspace(clow, chigh,11); % these are the contour levels. You can change the number of levels (11)
-    figure(3), h3c=contourf(Xci,Xcj,u33cj,clev);
-    axis([0 2000 0 1000])
+    clev = linspace(clow, chigh, 11); % these are the contour levels. You can change the number of levels (11)
+    figure(3), h3c=contourf(Xci,Xcj,u33cj,clev,'EdgeColor','none');
     hold on
-    h3f = contourf(Xfi,Xfj,u33fj,clev);
+    h3c1=contour(Xci,Xcj,u33cj,clev,'LineColor','k');
+    axis([0 2000 0 1000])
+    h3f = contourf(Xfi,Xfj,u33fj,clev,'EdgeColor','none');
+    h3f1 = contour(Xfi,Xfj,u33fj,clev,'LineColor','k'); 
+    caxis([clow, chigh]); % fix the colors
     colorbar
     axis equal
     xlabel('x')
     ylabel('z')
     title('u3,t=0.3')
-    print t03.png
     
-    % find min and max of u34
     clow1 = min(min(u34cj));
     clow2 = min(min(u34fj));
     clow = 0.95*min(clow1,clow2);
     chigh1 = max(max(u34cj));
     chigh2 = max(max(u34fj));
     chigh = 0.95*max(chigh1, chigh2);
-    clev = linspace(clow, chigh,11); % these are the contour levels. You can change the number of levels (11)
-    figure(4), h4c=contourf(Xci,Xcj,u34cj,clev);
-    axis([0 2000 0 1000])
+    clev = linspace(clow, chigh, 11); % these are the contour levels. You can change the number of levels (11)
+    figure(4), h4c=contourf(Xci,Xcj,u34cj,clev,'EdgeColor','none');
     hold on
-    h4f = contourf(Xfi,Xfj,u34fj,clev);
+    h4c1=contour(Xci,Xcj,u34cj,clev,'LineColor','k');
+    axis([0 2000 0 1000])
+    h4f = contourf(Xfi,Xfj,u34fj,clev,'EdgeColor','none');
+    h4f1 = contour(Xfi,Xfj,u34fj,clev,'LineColor','k'); 
+    caxis([clow, chigh]); % fix the colors
     colorbar
     axis equal
     xlabel('x')
     ylabel('z')
     title('u3,t=0.4')
-    print t04.png
     
-    % find min and max of u35
     clow1 = min(min(u35cj));
     clow2 = min(min(u35fj));
     clow = 0.95*min(clow1,clow2);
     chigh1 = max(max(u35cj));
     chigh2 = max(max(u35fj));
     chigh = 0.95*max(chigh1, chigh2);
-    clev = linspace(clow, chigh,11); % these are the contour levels. You can change the number of levels (11)
-    figure(5), h5c=contourf(Xci,Xcj,u35cj,clev);
-    axis([0 2000 0 1000])
+    clev = linspace(clow, chigh, 11); % these are the contour levels. You can change the number of levels (11)
+    figure(5), h5c=contourf(Xci,Xcj,u35cj,clev,'EdgeColor','none');
     hold on
-    h5f = contourf(Xfi,Xfj,u35fj,clev);
+    h5c1=contour(Xci,Xcj,u35cj,clev,'LineColor','k');
+    axis([0 2000 0 1000])
+    h5f = contourf(Xfi,Xfj,u35fj,clev,'EdgeColor','none');
+    h5f1 = contour(Xfi,Xfj,u35fj,clev,'LineColor','k'); 
+    caxis([clow, chigh]); % fix the colors
     colorbar
     axis equal
     xlabel('x')
     ylabel('z')
     title('u3,t=0.5')
-    print t05.png
+    
     figure(jj)
     h1 = mesh(Xci,Xcj,Xci*0);view(2)
     hold on, h2=mesh(Xfi,Xfj,Xfi*0); view(2)
@@ -171,7 +177,7 @@ for jj = 51
     xlabel('x')
     ylabel('z')
     title('y = 1000')
-    print mesh.png
+    %print mesh.png
 end 
 
 
