@@ -15,7 +15,7 @@
 \usepackage{subcaption}
 \usepackage[toc,page]{appendix}
 
-\title{Fourth order summation-by-parts finite difference method for wave propagation in anisotropic elastic material and curvilinear coordinates with mesh refinement interface}
+\title{Fourth order summation-by-parts finite difference methods for wave propagation in 3D anisotropic elastic materials and curvilinear coordinates with mesh refinement interfaces}
 
 \date{\today}
 
@@ -28,7 +28,7 @@ We analyze
 
 \section{Introduction}
 
-\section{The anisotropic elastic wave equation}
+\section{The anisotropic elastic wave equation in Cartesian coordinates}
 We consider the anistropic elastic wave equation in three dimensional domain ${\bf x} \in \Omega$, ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation in Cartisian coordinates takes the form,
 \begin{eqnarray*}
     \rho\frac{\partial^2{\bf u}}{\partial^2 t} &=& \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
@@ -60,15 +60,34 @@ where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties.
 
 
 \subsection{Energy estimate}
+We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions.
+
 
 \section{Generalization to curvilinear coordinates}
-
-\subsection{Boundary Condition}
+Present the transformed equation. Notation is important. 
 
 \subsection{Energy Estimate}
+We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
 
-\section{Grid refinement interface}
+These two sections should not be too long. We shall cite many works by Petersson and Sjögreen, and also Duru and Virta 2014. 
+
+\section{The spatial discretization}
+We present the semi-discrete equation, and the discretized boundary conditions and interface conditions. Perhaps also a semi-discrete energy estimate?
+
+\section{The temporal discretization}
+We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
+
 
 \section{Numerical Experiments}
 
+\subsection{Verification of convergence rate}
+Show fourth order convergence
+
+\subsection{Gaussian source}
+Show that no reflection at the mesh refinement interfaces.
+
+\subsection{Experiment 3}
+We shall have an experiment for energy conservation. We also need to evaluate the iterative methods. These can be Experiment 3, or incoporated in the first two experiments.
+
+\section{Conclusion}
 \end{document}
