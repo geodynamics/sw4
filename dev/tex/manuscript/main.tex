@@ -57,22 +57,16 @@ where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties.
 \mu & 0 & 0\end{array}\right),\]
 
 
-
-
-\subsection{Energy estimate}
-We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions.
-
-
 \section{Generalization to curvilinear coordinates}
-Present the transformed equation. Notation is important. 
+Present the transformed equation. Notation is important. We can write a few formulas first, and discuss if it is good notation. Maybe we shall follow notations from one of Anders' papers?
 
 \subsection{Energy Estimate}
 We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
 
-These two sections should not be too long. We shall cite many works by Petersson and Sjögreen, and also Duru and Virta 2014. 
+These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
 
 \section{The spatial discretization}
-We present the semi-discrete equation, and the discretized boundary conditions and interface conditions. Perhaps also a semi-discrete energy estimate?
+We present the SBP operators, the semi-discrete equation, and the discretized boundary conditions and interface conditions. Also a semi-discrete energy estimate (if we do not write a fully discrete energy estimate).
 
 \section{The temporal discretization}
 We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
@@ -84,7 +78,9 @@ We present the predictor-corrector discretization in time, and explain how the g
 Show fourth order convergence
 
 \subsection{Gaussian source}
-Show that no reflection at the mesh refinement interfaces.
+Show that no reflection at the mesh refinement interfaces. 
+
+If the code is incorporated into SW4, it would be nice to solve a practical problem. 
 
 \subsection{Experiment 3}
 We shall have an experiment for energy conservation. We also need to evaluate the iterative methods. These can be Experiment 3, or incoporated in the first two experiments.
