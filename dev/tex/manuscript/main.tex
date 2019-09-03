@@ -80,7 +80,7 @@ Now we define our scheme
 \begin{multline}\label{coarse_scheme}
 \rho^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\big[G_1^c(N_{11}^c){\bf u}_{i,j,k}^c+G_2^c(N_{22}^c){\bf u}_{i,j,k}^c+\tilde{G}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
 +D_1^c(N_{12}^cD_2^c{\bf u}_{i,j,k}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{i,j,k}^c)+D_2^c(N_{21}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{i,j,k}^c)\\
-+D_3^c(N_{31}^cD_1^c{\bf u}_{i,j,k}^c)+D_3^c(N_{32}^cD_2^c{\bf u}_{i,j,k}^c)\big],
++D_3^c(N_{31}^cD_1^c{\bf u}_{i,j,k}^c)+D_3^c(N_{32}^cD_2^c{\bf u}_{i,j,k}^c)\big] := \tilde{B}_c(\mu,\lambda) \tilde{\bf{u}}^c,
 \end{multline}
 for $ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c, k = 1,2,\cdots,n_3^c$ , and 
 \begin{multline}\label{fine_scheme_2}
@@ -95,11 +95,19 @@ for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f, k = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
 \rho^f ({\bf u}_{tt}^f)_{i,j,1} = \frac{1}{J_{i,j,1}^f}\big[G_1^f(N_{11}^f){\bf u}_{i,j,1}^f+G_2^f(N_{22}^f){\bf u}_{i,j,1}^f+G_3^f(N_{33}^f){\bf u}_{i,j,1}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,1}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,1}^f)+D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,1}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,1}^f)\\
-+D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,1}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,1}^f)+{\bm \eta}_{i,j}\big],
++D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,1}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,1}^f)+{\bm \eta}_{i,j}\big] := B_f(\mu,\lambda){\bf u}^f\big|_\Gamma,
 \end{multline}
 for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f$, and
 \begin{equation*}
-{\bm \eta} = 
+{\bm \eta} = \rho^f\big|_\Gamma\mathcal{P}\Big((\rho^c)^{-1}\tilde{B}_c(\mu,\lambda)\tilde{\bf u}^c\big|_\Gamma\Big)-B_f(\mu,\lambda){\bf u}^f\big|_\Gamma,
+\end{equation*}
+For the grids in the $\Omega^f$  that are on the interface $\Gamma$, we impose the continuity of the solution,
+\begin{equation*}
+{\bf u}_{i,j,1}^f = \mathcal{P}\big({\bf u}_{i,j,n_3^c}^c\big),
+\end{equation*}
+as for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the flux,
+\begin{equation*}
+{\bf n}_c\cdot\mathcal{T}^c \big|_\Gamma = {\bf n}_f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma.
 \end{equation*}
 Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^c\omega_i^{(1)}\omega_j^{(2)}\omega_k^{3}J_{i,j,k}^c$ and summing over all grids, we have
 \begin{equation}\label{coarse_simple}
@@ -140,8 +148,10 @@ Finally, the semi-discrete energy estimate
 plugging (\ref{boundary_f}) and (\ref{bounary_c}) into (\ref{semi_energy_1}), we have
 \begin{multline}\label{semi_energy_2}
 \frac{d}{dt}\big[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \big]  = \\
-2\Big(-{\bf u}_t^f,\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} + 2\Big({\bf u}_t^f,\frac{{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} = \\
-2\Big({\bf u}_t^f,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} +  2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} 
+2\Big(-{\bf u}_t^f,\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} + 2\Big({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} = \\
+2\Big({\bf u}_t^f,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} +  2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = \\
+2\Big(\mathcal{P}{\bf u}^c_t,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = \\
+2\Big({\bf u}_t^c,\mathcal{R}\Big(-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\Big)_{h_c,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = 0
 \end{multline}
 
 
