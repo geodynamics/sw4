@@ -16,10 +16,10 @@
 \usepackage[toc,page]{appendix}
 \usepackage{bm}
 
-\title{Fourth order summation-by-parts finite difference methods for wave propagation in 3D anisotropic elastic materials and curvilinear coordinates with mesh refinement interfaces}
+\title{Fourth order summation-by-parts finite difference methods for  3-D elastic wave propagation in curvilinear coordinates with mesh refinement interfaces}
 
 \date{\today}
-
+\author{ Lu Zhang \and Siyang Wang \and N. Anders Petersson}
 \begin{document}
 \maketitle
 
@@ -29,7 +29,7 @@ We analyze
 
 \section{Introduction}
 
-\section{The anisotropic elastic wave equation in Cartesian coordinates}
+\section{The isotropic elastic wave equation in Cartesian coordinates}
 We consider the anistropic elastic wave equation in three dimensional domain ${\bf x} \in \Omega$, ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation in Cartisian coordinates takes the form,
 \begin{eqnarray*}
     \rho\frac{\partial^2{\bf u}}{\partial^2 t} &=& \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
@@ -61,20 +61,8 @@ where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties.
 \section{Generalization to curvilinear coordinates}
 Present the transformed equation. Notation is important. We can write a few formulas first, and discuss if it is good notation. Maybe we shall follow notations from one of Anders' papers?
 
-\subsection{Energy Estimate}
-We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
-
-These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
-
-Firstly, we define the scalar product 
-\begin{equation*}
-({\bf u}, {\bf v})_h = h_1h_2h_3\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}{\bf u}^{T}_{i,j,k}{\bf v}_{i,j,k},
-\end{equation*}
-and the scalar product on the interface $\Gamma$,
-\begin{equation*}
-({\bf u}, {\bf v})_{h,\Gamma} = h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}J_{i,j,k}\big|\nabla r^{3}\big|{\bf u}_{i,j,k}^{T}{\bf v}_{i,j,k},
-\end{equation*}
-where $k = 1$ for the interface of fine domain and $k = n_3^c$ for the interface of coarse domain.
+\section{The spatial discretization}
+We present the SBP operators, the semi-discrete equation, and the discretized boundary conditions and interface conditions. Also a semi-discrete energy estimate (if we do not write a fully discrete energy estimate).
 
 Now we define our scheme
 \begin{multline}\label{coarse_scheme}
@@ -109,6 +97,22 @@ as for the ghost points which is on the direction 3 for the coarse domian, we im
 \begin{equation*}
 {\bf n}_c\cdot\mathcal{T}^c \big|_\Gamma = {\bf n}_f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma.
 \end{equation*}
+
+\section{Energy Estimate}
+We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
+
+These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
+
+Firstly, we define the scalar product 
+\begin{equation*}
+({\bf u}, {\bf v})_h = h_1h_2h_3\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}{\bf u}^{T}_{i,j,k}{\bf v}_{i,j,k},
+\end{equation*}
+and the scalar product on the interface $\Gamma$,
+\begin{equation*}
+({\bf u}, {\bf v})_{h,\Gamma} = h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}J_{i,j,k}\big|\nabla r^{3}\big|{\bf u}_{i,j,k}^{T}{\bf v}_{i,j,k},
+\end{equation*}
+where $k = 1$ for the interface of fine domain and $k = n_3^c$ for the interface of coarse domain.
+
 Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^c\omega_i^{(1)}\omega_j^{(2)}\omega_k^{3}J_{i,j,k}^c$ and summing over all grids, we have
 \begin{equation}\label{coarse_simple}
 ({\bf u}_t^c, \rho^c{\bf u}_{tt}^c)_{h^c} = -S_{h^c}({\bf u}_t^c,{\bf u}^c) + B_{h^c}({\bf u}_t^c,{\bf u}^c),
@@ -134,11 +138,11 @@ to the left and right boundaries ($i = 1,n_1, j = 1,2,\cdots,n_2,k = 1,2,\cdots,
 \end{equation*}
 Then, we have
 \begin{equation}\label{boundary_f}
-B_{h_f} ({\bf u}_t^f,{\bf u}^f) = -h_1^fh_2^f\sum_{i = 1}^{i = n_1^f}\sum_{j=1}^{j=n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}\bar{A}_3^f\bar{\nabla}_f{\bf u}^f_{i,j,1},
+B_{h_f} ({\bf u}_t^f,{\bf u}^f) = -h_1^fh_2^f\sum_{i = 1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}\bar{A}_3^f\bar{\nabla}_f{\bf u}^f_{i,j,1},
 \end{equation}
 and 
 \begin{equation}\label{bounary_c}
-B_{h_c} ({\bf u}_t^c,{\bf u}^c) = h_1^ch_2^c\sum_{i = 1}^{i = n_1^c}\sum_{j=1}^{j=n_2^c}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,n_3^c}\bar{A}_3^c\bar{\nabla}_c{\bf u}^c_{i,j,n_3^c}.
+B_{h_c} ({\bf u}_t^c,{\bf u}^c) = h_1^ch_2^c\sum_{i = 1}^{ n_1^c}\sum_{j=1}^{n_2^c}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,n_3^c}\bar{A}_3^c\bar{\nabla}_c{\bf u}^c_{i,j,n_3^c}.
 \end{equation}
 Finally, the semi-discrete energy estimate
 \begin{multline}\label{semi_energy_1}
@@ -154,9 +158,6 @@ plugging (\ref{boundary_f}) and (\ref{bounary_c}) into (\ref{semi_energy_1}), we
 2\Big({\bf u}_t^c,\mathcal{R}\Big(-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\Big)_{h_c,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = 0
 \end{multline}
 
-
-\section{The spatial discretization}
-We present the SBP operators, the semi-discrete equation, and the discretized boundary conditions and interface conditions. Also a semi-discrete energy estimate (if we do not write a fully discrete energy estimate).
 
 \section{The temporal discretization}
 We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
