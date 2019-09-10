@@ -40,9 +40,9 @@ else
 endif
 
 ifeq ($(optlevel),DEBUG)
-   FFLAGS    = -g
-   CXXFLAGS  = -g -I../src  -DBZ_DEBUG
-   CFLAGS    = -g
+   FFLAGS    = -g -O0
+   CXXFLAGS  = -g -I../src  -DBZ_DEBUG -O0
+   CFLAGS    = -g -O0
 else
    FFLAGS   = -O3 
    CXXFLAGS = -O3 -I../src 
@@ -224,7 +224,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        AnisotropicMaterialBlock.o  sacutils.o  DataPatches.o addmemvarforcing2.o \
        consintp.o  oddIoddJinterp.o evenIoddJinterp.o MaterialInvtest.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o  \
-       sw4-prof.o
+       sw4-prof.o sachdf5.o
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
  OBJ +=  rayleighfort.o lamb_exact_numquad.o 

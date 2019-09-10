@@ -38,6 +38,10 @@
 
 #include "sw4.h"
 
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
+
 class EW;
 class Sarray;
 class Filter;
@@ -51,7 +55,7 @@ public:
 // support for derived quantities of the time derivative are not yet implemented
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
-TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
+TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, 
 	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true, int event=0 );
 ~TimeSeries();
 
@@ -72,10 +76,22 @@ bool myPoint(){ return m_myPoint; }
 
 receiverMode getMode(){ return m_mode; }
 
+int getUseHDF5(){ return m_hdf5Format; }
+
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
 float_sw4 getZ() const {return mZ;}
 
+float_sw4 getLat() const {return m_rec_lat;}
+float_sw4 getLon() const {return m_rec_lon;}
+
+float_sw4 getXaz() const {return m_x_azimuth;}
+
+float_sw4 getMshift() const {return m_shift;}
+
+/* float_sw4 getEpiTimeOffset() const {return m_epi_time_offset;} */
+
+bool getXYZcomponent() const {return m_xyzcomponent;}
 float_sw4 arrival_time( float_sw4 lod );
 
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
@@ -104,6 +120,8 @@ void set_shift( float_sw4 shift );
 float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
+std::string getFileName(){return m_fileName;}
+std::string getPath(){return m_path;}
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;
@@ -114,6 +132,17 @@ int m_i0;
 int m_j0;
 int m_k0;
 int m_grid0;
+
+#ifdef USE_HDF5
+int   allocFid();
+int   setFidPtr(hid_t *fid);
+hid_t *getFidPtr();
+int   closeHDF5File();
+
+
+void write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
+		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
+#endif
 
 private:   
 TimeSeries();
@@ -151,7 +180,7 @@ bool m_zRelativeToTopography; // location is given relative to topography
 
 int mWriteEvery;
 
-bool m_usgsFormat, m_sacFormat;
+bool m_usgsFormat, m_sacFormat, m_hdf5Format;
 string m_path;
 
 // start time, shift, and time step 
@@ -213,6 +242,13 @@ float_sw4 m_scalefactor;
 
 // Event no. (in case of multiple events)
    int m_event;
+
+// HDF5 file id for all SAC data
+#ifdef USE_HDF5
+   hid_t *m_fid_ptr;
+   bool m_isMetaWritten;
+   bool m_isIncAzWritten;
+#endif
 };
 
 

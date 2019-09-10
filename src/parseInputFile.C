@@ -6632,7 +6632,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 
   bool topodepth = false;
 
-  bool usgsformat = 0, sacformat=1; // default is to write sac files
+  bool usgsformat = 0, sacformat = 1, hdf5format = 0; // default is to write sac files
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
@@ -6793,6 +6793,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
         token += strlen("sacformat=");
         sacformat = atoi(token);
      }
+     else if( startswith("hdf5format=", token) )
+     {
+        token += strlen("hdf5format=");
+        hdf5format = atoi(token);
+     }
      else if( startswith("variables=", token) )
      {
 //* testing
@@ -6894,8 +6899,13 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
 					topodepth, writeEvery, !nsew, event );
+    if(a_GlobalTimeSeries[event].size() == 0) 
+      ts_ptr->allocFid();
+    else 
+      ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
+
 // include the receiver in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
@@ -6926,7 +6936,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string time = "";
   string sacfile1, sacfile2, sacfile3;
 
-  bool usgsformat = 1, sacformat=0;
+  bool usgsformat = 1, sacformat=0, hdf5format = 0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
   float_sw4 winl, winr;
   bool winlset=false, winrset=false;
@@ -7240,7 +7250,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
 					topodepth, writeEvery, true, event );
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
