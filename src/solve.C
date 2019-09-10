@@ -449,6 +449,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   /* printf("Rank %d has %d rec inputs\n", m_myRank, a_TimeSeries.size()); */
   /* fflush(stdout); */
   if (a_TimeSeries[0]->getUseHDF5()) {
+    // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
+    setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
     if(m_myRank == 0 && !m_check_point->do_restart() && a_TimeSeries.size() > 0 ) 
         createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt);
     
