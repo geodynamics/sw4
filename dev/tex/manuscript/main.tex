@@ -30,12 +30,12 @@ We analyze
 \section{Introduction}
 
 \section{The isotropic elastic wave equation in Cartesian coordinates}
-We consider the anistropic elastic wave equation in three dimensional domain ${\bf x} \in \Omega$, ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation in Cartisian coordinates takes the form,
+We consider the isotropic elastic wave equation in three dimensional domain ${\bf x} \in \Omega$, ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation in Cartisian coordinates takes the form,
 \begin{eqnarray*}
     \rho\frac{\partial^2{\bf u}}{\partial^2 t} &=& \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
     \nabla\cdot\mathcal{T} &:=& {\bf Lu},
 \end{eqnarray*}
-provided with appropriate initial and boundary conditions. Here, $\rho$ is density, $\mathcal{T}$ is stress tensor and ${\bf F}$ is the force function. The spatial operator ${\bf L}$ is called $3\times3$ symmetric Kelvin-Christoffel differential operator matrix, specifically,
+provided with appropriate initial and boundary conditions. Here, $\rho$ is density, $\mathcal{T}$ is the stress tensor and ${\bf F}$ is the force function. The spatial operator ${\bf L}$ is called $3\times3$ symmetric Kelvin-Christoffel differential operator matrix, specifically,
 \begin{equation*}
     {\bf L u} = \partial_1(A_1\nabla{\bf u}) + \partial_2(A_2\nabla{\bf u}) + \partial_3(A_3\nabla{\bf u}),
 \end{equation*}
@@ -45,7 +45,7 @@ A_1\nabla{\bf u} &:=& M^{11}\partial_1{\bf u} + M^{12}\partial_2{\bf u} + M^{13}
 A_2\nabla{\bf u} &:=& M^{21}\partial_1{\bf u} + M^{22}\partial_2{\bf u} + M^{23}\partial_3{\bf u}, \\
 A_3\nabla{\bf u} &:=& M^{31}\partial_1{\bf u} + M^{32}\partial_2{\bf u} + M^{33}\partial_3{\bf u},
 \end{eqnarray*}
-where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties. For example, for isotropic elastic material,
+where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties and
 \[ M^{11} = \left(\begin{array}{ccc}
 2\mu+\lambda & 0 & 0\\
 0 & \mu & 0\\
@@ -56,23 +56,94 @@ where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are determined by the material properties.
 0 & 0 & \lambda\\
 0 & 0 & 0\\
 \mu & 0 & 0\end{array}\right),\]
-
+\[ M^{21} =(M^{12})^T, M^{22} = \left(\begin{array}{ccc}
+\mu & 0 & 0\\
+0 & 2\mu+\lambda & 0\\
+0 & 0 & \mu\end{array}\right), M^{23} = \left(\begin{array}{ccc}
+0 & 0 & 0\\
+0 & 0 & \lambda\\
+0 & \mu & 0\end{array}\right),\]
+\[ M^{31} = (M^{13})^T, \ \ \ \ \ M^{32} =(M^{23})^T, \ \ \ \ \ M^{33} = \left(\begin{array}{ccc}
+\mu & 0 & \lambda\\
+0 & \mu & 0\\
+0 & 0 & 2\mu+\lambda\end{array}\right),\]
+Here, $\lambda$ and $\mu$ are the first and second Lame parameters respectively.
 
 \section{Generalization to curvilinear coordinates}
 Present the transformed equation. Notation is important. We can write a few formulas first, and discuss if it is good notation. Maybe we shall follow notations from one of Anders' papers?
 
 \section{The spatial discretization}
-We present the SBP operators, the semi-discrete equation, and the discretized boundary conditions and interface conditions. Also a semi-discrete energy estimate (if we do not write a fully discrete energy estimate).
+%We present the SBP operators, the semi-discrete equation, and the discretized boundary conditions and interface conditions. Also a semi-discrete energy estimate (if we do not write a fully discrete energy estimate).
 
-Now we define our scheme
+In this section, we only describe the discretization for the curvilinear domain, and the Catesian domain can be obtained by simply setting the Cartesian coordinates as $x^{(k)}(r^{(k)}) = a^{(k)}r^{(k)} $ with $a^{(k)}$ being constants.
+\subsection{SBP operators in $1$D}
+Consider a uniform discretization on the domain $x\in[0,1]$ with the grids,
+\[\tilde{{\bf x}} = [x_0,x_1,\cdots,x_n,x_{n+1}]^T,\ \  x_i = (i-1)h,\ \ i = 0,1,\cdots,n,n+1,\ \ h = 1/n,\]
+where $i = 1,n$ are boundary grids and $i = 0,n+1$ are ghost points, the grids which don't contain the ghost points are denoted as ${\bf x} = [x_1,x_2,\cdots,x_n]^T$. We adopt the same fasion as in \cite{?}, the tilde symbol indicates the ghost points are considered in the rest of paper. The first derivative operator $D \approx \frac{\partial }{\partial x}$ is a first order derivative SBP operator if 
+\begin{equation}\label{first_sbp}
+({\bf u}, D{\bf v})_h = -(D{\bf u},{\bf v})_h - u_1v_1 + u_nv_n,
+\end{equation}
+with a scalar product
+\begin{equation}\label{inner_product}
+({\bf u},{\bf v})_h = h\sum_{i = 1}^{n}\omega_iu_iv_i.
+\end{equation}
+Here, $0<\omega_i < \infty $ are the weights of scalar product. The first order difference operator is a centered difference  operator when the grid points are far from the boudnary and the corresponding weight $\omega_i = 1$. To satify the SBP identity (\ref{first_sbp}), the coefficients in the D need to be modified for the points near the boundary and the corresponding weights $\omega_i \neq 1$.
+
+In the elastic wave equation, the second derivative term $(\gamma(x)u_x)_x$ appears. Here, the known function $\gamma(x)$ describes the property of the material. There are two different fourth order accuracy SBP operators used to approximate $(\gamma(x)u_x)_x$. One is derived by Sjo\"green and Petersson \cite{?}, they used the ghost points to approximate the second derivative, $ (\gamma(x)u_x)_x \approx \tilde{G}(\gamma)\tilde{\bf u}$. $\tilde{G}(\gamma)$ is a second derivative SBP operator satisfies,
+\begin{equation}\label{sbp_2nd_1}
+({\bf u}, \tilde{G}(\gamma)\tilde{\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1\tilde{\bf b}_1\tilde{\bf v} + u_n\gamma_n\tilde{\bf b}_n^T\tilde{\bf v}.
+\end{equation}
+Here, $S_\gamma(\cdot,\cdot)$ is a stmmetric and positive semi-definite bilinear form, $\tilde{\bf b}_1$ and $\tilde{\bf b}_n$ are difference operator aprroximated the first derivative on the left and right boundaries, respectively. We use the left boundary as an example here, $\tilde{\bf b}_1 \tilde{\bf v} = \frac{1}{h}\sum_{i=0}^{\tilde{m}} \tilde{d}_iv_i$, $\tilde{m}$ is determined by the order of the method and $\tilde{d}_i$ are the constant stencil coefficients. The other is developed by Mattsson \cite{?}, the second derivative $(\gamma(x)u_x)_x$ is approximated by $G(\gamma){\bf u}$ without ghost points,
+\begin{equation}\label{sbp_2nd_2}
+({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n^T{\bf v}.
+\end{equation}
+Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operator for first order derivative, but wiout ghost points, ${\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{m} d_i v_i$. 
+
+For the second derivative SBP operator $\tilde{G}(\gamma)\tilde {\bf u}$ and $G(\gamma){\bf u}$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ for the interior points which are away from the boundaries points. For the first and the last six points which are close to the boudaries, the operators $G(\gamma){\bf u}$ and $\tilde{G}(\gamma)\tilde{\bf{u}}$ use second order accurate one-sides difference stencil. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}) respectively. For stucture and the form of the operators $\tilde{G}(\gamma)\tilde {\bf u}$ and $G(\gamma){\bf u}$, we refer the readers \cite{???} for detailed information.
+
+\subsection{Semi-discretization of the elastic wave equation}
+We consider the elastic wave equation in curvilinear coordinates 
+\[\rho\frac{\partial^2 {\bf u}}{\partial t^2} = L{\bf u},\]
+where
+\begin{multline}\label{spatial_operator}
+L{\bf u} = \frac{1}{J}\Big[\bar{\partial}_1(N^{11}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N^{22}\bar{\partial}_2{\bf u}) + \bar{\partial}_3(N^{33}\bar{\partial}_3{\bf u}) + \bar{\partial}_1(N^{12}\bar{\partial}_2{\bf u}) + \bar{\partial}_1(N^{13}\bar{\partial}_3{\bf u}) \\
++ \bar{\partial}_2(N^{21}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N^{23}\bar{\partial}_3{\bf u}) +\bar{\partial}_3(N^{31}\bar{\partial}_1{\bf u}) + \bar{\partial}_3(N^{32}\bar{\partial}_2{\bf u})\Big].
+\end{multline}
+The parameter space $[0,1]\times[0,1]\times[0,1]$ is discretized as $r_i^{(1)} = (i-1)h_1, i = 0,1,2,\cdots,n_1+1$, $r_i^{(2)} = (i-1)h_2, i = 0,1,2,\cdots,n_2+1$, and $r_i^{(3)} = (i-1)h_3, i = 0,1,2,\cdots,n_3+1$ with $h_1 = 1/(n_1-1), h_2 = 1/(n_2-1), h_3 = 1/(n_3-1)$, the ghost points are used to impose the boundary conditions and interface conditions.
+
+The terms $\bar{\partial}_i(N^{ii}\bar{\partial}_i{\bf u}), i = 1,2,3$ in the spatial operator (\ref{spatial_operator}) are approximated by a fourth order second derivative SBP4 operator. The operators $D_i$ are used to approximate the $\bar{\partial}_i, i = 1,2,3$. The terms $\bar{\partial}_i(N^{ij}\bar{\partial}_j{\bf u}), i = 1,2,3, j = 1,2,3$ are approximated by using the first derivative operatoe $D$ twice. Then the spatial operator (\ref{spatial_operator}) is discretizes as
+\begin{multline}
+L_h{\bf u}_{i,j,k} = \frac{1}{J_{i,j,k}}\big[G_1(N_{11}){\bf u}_{i,j,k}+G_2(N_{22}){\bf u}_{i,j,k}+\tilde{G}_3(N_{33}){\bf u}_{i,j,k}+D_1(N_{12}D_2{\bf u}_{i,j,k})\\
++D_1(N_{13}D_3{\bf u}_{i,j,k})+D_2(N_{21}D_1{\bf u}_{i,j,k})+D_2(N_{23}D_3{\bf u}_{i,j,k})+D_3(N_{31}D_1{\bf u}_{i,j,k})\\
++D_3(N_{32}D_2{\bf u}_{i,j,k})\big],
+\end{multline}
+for $i = 1,2,\cdots,n_1$, $j = 1,2,\cdots,n_2$ and $k = 1,2,\cdots,n_3$.
+ 
+\subsection{Physical boundary conditions}
+We consier both homegeneous Dirichlet boundary condition and free surface bounary condition.
+
+\section{Grid refinement interface}
+In this section, we partitioning the physical domian into two subdomains such that the discontinuity is aligned with subdomian boundary $\Gamma$,
+\begin{align}\label{fine_coarse_problem}
+\rho^c\frac{\partial ^2 {\bf u}^c}{\partial t^2} &= L{\bf u}^c, \ \ \ \ \ {\bf x} \in \Omega_c,\ \ \ t>0 \nonumber\\
+\rho^f\frac{\partial ^2 {\bf u}^f}{\partial t^2} &= L{\bf u}^f, \ \ \ \ \ {\bf x} \in \Omega_f,\ \ \ t>0
+\end{align}
+provided suitable initial and boundary conditions and $\Omega_c\cup\Omega_f = \Omega, \Omega_c\cap\Omega_f = \Gamma$. The interface conditions are given to guarantee the continuity of the solution and the continuity of the traction force,
+\begin{align*}
+{\bf u}_f &= {\bf u}_c, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0, \\
+\mathcal{T}^f\cdot{\bf n}^f &= -\mathcal{T}^c\cdot{\bf n}^c,  \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0.
+\end{align*}
+
+\subsection{The fourth order SBP-GP method }
+We approximate the (\ref{fine_coarse_problem}) by
 \begin{multline}\label{coarse_scheme}
-\rho^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\big[G_1^c(N_{11}^c){\bf u}_{i,j,k}^c+G_2^c(N_{22}^c){\bf u}_{i,j,k}^c+\tilde{G}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
+\rho_{i,j,k}^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\big[G_1^c(N_{11}^c){\bf u}_{i,j,k}^c+G_2^c(N_{22}^c){\bf u}_{i,j,k}^c+\tilde{G}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
 +D_1^c(N_{12}^cD_2^c{\bf u}_{i,j,k}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{i,j,k}^c)+D_2^c(N_{21}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{i,j,k}^c)\\
 +D_3^c(N_{31}^cD_1^c{\bf u}_{i,j,k}^c)+D_3^c(N_{32}^cD_2^c{\bf u}_{i,j,k}^c)\big] := \tilde{B}_c(\mu,\lambda) \tilde{\bf{u}}^c,
 \end{multline}
 for $ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c, k = 1,2,\cdots,n_3^c$ , and 
 \begin{multline}\label{fine_scheme_2}
-\rho^f ({\bf u}_{tt}^f)_{i,j,k} =
+\rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,k} =
  \frac{1}{J_{i,j,k}^f}\big[G_1^f(N_{11}^f){\bf u}_{i,j,k}^f+G_2^f(N_{22}^f){\bf u}_{i,j,k}^f+G_3^f(N_{33}^f){\bf u}_{i,j,k}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,k}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,k}^f)
 +D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,k}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,k}^f)\\
@@ -81,7 +152,7 @@ for $ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c, k = 1,2,\cdots,n_3^c$ , and
 \end{multline}
 for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f, k = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
-\rho^f ({\bf u}_{tt}^f)_{i,j,1} = \frac{1}{J_{i,j,1}^f}\big[G_1^f(N_{11}^f){\bf u}_{i,j,1}^f+G_2^f(N_{22}^f){\bf u}_{i,j,1}^f+G_3^f(N_{33}^f){\bf u}_{i,j,1}^f\\
+\rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,1} = \frac{1}{J_{i,j,1}^f}\big[G_1^f(N_{11}^f){\bf u}_{i,j,1}^f+G_2^f(N_{22}^f){\bf u}_{i,j,1}^f+G_3^f(N_{33}^f){\bf u}_{i,j,1}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,1}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,1}^f)+D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,1}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,1}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,1}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,1}^f)+{\bm \eta}_{i,j}\big] := B_f(\mu,\lambda){\bf u}^f\big|_\Gamma,
 \end{multline}
@@ -95,15 +166,15 @@ For the grids in the $\Omega^f$  that are on the interface $\Gamma$, we impose t
 \end{equation*}
 as for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the flux,
 \begin{equation*}
-{\bf n}_c\cdot\mathcal{T}^c \big|_\Gamma = {\bf n}_f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma.
+{\bf n}^c\cdot\mathcal{T}^c \big|_\Gamma = {\bf n}^f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma.
 \end{equation*}
 
-\section{Energy Estimate}
-We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
+\subsection{Energy estimate}
+%We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
 
-These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
+%These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
 
-Firstly, we define the scalar product 
+Define the scalar product 
 \begin{equation*}
 ({\bf u}, {\bf v})_h = h_1h_2h_3\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}{\bf u}^{T}_{i,j,k}{\bf v}_{i,j,k},
 \end{equation*}
