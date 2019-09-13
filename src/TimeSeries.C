@@ -56,8 +56,10 @@ using namespace std;
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
 		int& second, int& msecond, int& fail );
 
-TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, 
-			float_sw4 x, float_sw4 y, float_sw4 depth, bool topoDepth, int writeEvery, bool xyzcomponent, int event ):
+TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, 
+                        bool sacFormat, bool usgsFormat, bool hdf5Format, 
+                        float_sw4 x, float_sw4 y, float_sw4 depth, 
+                        bool topoDepth, int writeEvery, int downSample, bool xyzcomponent, int event ):
   m_ew(a_ew),
   m_mode(mode),
   m_nComp(0),
@@ -74,6 +76,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_zRelativeToTopography(topoDepth),
   m_zTopo(0.0),
   mWriteEvery(writeEvery),
+  mDownSample(downSample),
   m_usgsFormat(usgsFormat),
   m_sacFormat(sacFormat),
   m_hdf5Format(hdf5Format),
@@ -137,6 +140,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    int counter;
    MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
    
+   a_ew->get_utc( m_utc, m_event );
    //   int size;
    //   MPI_Comm_size(MPI_COMM_WORLD,&size);
    //   std::vector<int> whoIsOne(size);
@@ -323,7 +327,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 
 // Set station ref utc = simulation ref utc
 // m_t0 = 0 is set by default above.
-   a_ew->get_utc( m_utc, m_event );
 
 } // end constructor
 
@@ -465,8 +468,8 @@ void TimeSeries::writeFile( string suffix )
   // create a new function to write metadata only
   if( m_hdf5Format )
   {
-    printf("Rank %d: Start writing station data [%s]\n", myRank, m_staName.c_str());
-    fflush(stdout);
+    /* printf("Rank %d: Start writing station data [%s]\n", myRank, m_staName.c_str()); */
+    /* fflush(stdout); */
 
     fid_ptr = getFidPtr();
     if (fid_ptr == NULL) 
@@ -789,6 +792,7 @@ void TimeSeries::writeFile( string suffix )
 	          	const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy, false);
 	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[2], (float) m_shift, (float) m_dt,
 	          	const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy, true);
+             m_isIncAzWritten = true;
            }
 #endif
 	}
@@ -828,6 +832,7 @@ void TimeSeries::writeFile( string suffix )
 	  		const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false); 
 	     write_hdf5_format(mLastTimeStep+1, grp, geographic[2], (float) m_shift, (float) m_dt,
 	  		const_cast<char*>(zfield.c_str()), updownang, 0.0, false, true);
+             m_isIncAzWritten = true;
            }
 #endif
            delete[] geographic[0];
@@ -849,6 +854,7 @@ void TimeSeries::writeFile( string suffix )
        if (m_hdf5Format) {
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
   			const_cast<char*>(xfield.c_str()), 90.0, azimx, false, true); 
+         m_isIncAzWritten = true;
        }
 #endif
      }
@@ -894,6 +900,7 @@ void TimeSeries::writeFile( string suffix )
           		const_cast<char*>(xzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[5], (float) m_shift, (float) m_dt,
 			const_cast<char*>(yzfield.c_str()), 90.0, azimx, false, true); // not sure what the updownang or azimuth should be here 
+         m_isIncAzWritten = true;
        }
 #endif
      }
@@ -961,6 +968,7 @@ void TimeSeries::writeFile( string suffix )
   			const_cast<char*>(zyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[8], (float) m_shift, (float) m_dt,
   			const_cast<char*>(zfield.c_str()), updownang, 0.0, false, true); 
+         m_isIncAzWritten = true;
        }
 #endif
      }
@@ -973,8 +981,8 @@ void TimeSeries::writeFile( string suffix )
     /*   H5Gflush(grp); */
     if (grp > 0) 
       H5Gclose(grp);
-    printf("Rank %d: Finished writing station data [%s]\n", myRank, m_staName.c_str());
-    fflush(stdout);
+    /* printf("Rank %d: Finished writing station data [%s]\n", myRank, m_staName.c_str()); */
+    /* fflush(stdout); */
   }
 #endif
 
@@ -1131,10 +1139,9 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   // Tang : TODO write only new data
   start = 0;
   count = (hsize_t)npts;
-  printf("dset %s, start=%llu, count=%llu, cmpinc=%f, cmpaz=%f\n", var, start, count, cmpinc, cmpaz);
-  fflush(stdout);
+  /* printf("dset %s, start=%llu, count=%llu, cmpinc=%f, cmpaz=%f\n", var, start, count, cmpinc, cmpaz); */
+  /* fflush(stdout); */
   openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)y, 1, &start, &count, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
-  m_isIncAzWritten = true;
 
   if (isLast) 
     H5Gflush(grp);

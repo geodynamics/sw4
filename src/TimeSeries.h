@@ -56,7 +56,7 @@ public:
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
 TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, 
-	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true, int event=0 );
+	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, bool xyzcomponent=true, int event=0 );
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep );
@@ -88,6 +88,8 @@ float_sw4 getLon() const {return m_rec_lon;}
 float_sw4 getXaz() const {return m_x_azimuth;}
 
 float_sw4 getMshift() const {return m_shift;}
+
+int getMUTC(int i) const {return m_utc[i];}
 
 /* float_sw4 getEpiTimeOffset() const {return m_epi_time_offset;} */
 
@@ -139,7 +141,6 @@ int   setFidPtr(hid_t *fid);
 hid_t *getFidPtr();
 int   closeHDF5File();
 
-
 void write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
 #endif
@@ -179,6 +180,7 @@ float_sw4 m_zTopo;
 bool m_zRelativeToTopography; // location is given relative to topography
 
 int mWriteEvery;
+int mDownSample;
 
 bool m_usgsFormat, m_sacFormat, m_hdf5Format;
 string m_path;

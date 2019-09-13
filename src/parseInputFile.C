@@ -6629,6 +6629,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   bool staNameGiven=false;
   
   int writeEvery = 1000;
+  int downSample = 1;
 
   bool topodepth = false;
 
@@ -6769,6 +6770,13 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
        CHECK_INPUT(writeEvery >= 0,
 	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
      }
+     else if (startswith("downSample=", token))
+     {
+       token += strlen("downSample=");
+       downSample = atoi(token);
+       CHECK_INPUT(downSample >= 1,
+	       err << "sac command: downSample must be set to an integer greater or equal than 1, not: " << token);
+     }
      else if(startswith("event=",token))
      {
 	token += 6;
@@ -6900,7 +6908,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   else
   {
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
-					topodepth, writeEvery, !nsew, event );
+					topodepth, writeEvery, downSample, !nsew, event );
     if(a_GlobalTimeSeries[event].size() == 0) 
       ts_ptr->allocFid();
     else 
