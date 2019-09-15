@@ -16,6 +16,8 @@
 \usepackage[toc,page]{appendix}
 \usepackage{bm}
 \usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
 
 \title{Fourth order summation-by-parts finite difference methods for  3-D elastic wave propagation in curvilinear coordinates with mesh refinement interfaces}
 
@@ -247,7 +249,7 @@ In this section, we partition the physical domian into two subdomains such that 
 \begin{equation}\label{fine_problem}
 \rho^f\frac{\partial ^2 {\bf u}^f}{\partial t^2} = {\bf Lu}^f, \ \ \ \ \ {\bf x} \in \Omega_f,\ \ \ t>0
 \end{equation}
-provided suitable initial and boundary conditions, $\Omega_c\cup\Omega_f = \Omega, \Omega_c\cap\Omega_f = \Gamma$. The interface conditions are given to guarantee the continuity of the solutions and the continuity of the traction force,
+provided suitable initial and boundary conditions. We assume that $\Omega_f$ is on the top of $\Omega_c$ with $\Omega_c\cup\Omega_f = \Omega$ and $\Omega_c\cap\Omega_f = \Gamma$. The interface conditions are given to guarantee the continuity of the solutions and the continuity of the traction force,
 \begin{equation}\label{continuity_sol}
 {\bf u}_f = {\bf u}_c, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0, 
 \end{equation}
@@ -291,13 +293,13 @@ for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f$ with
 {\bm \eta} = \rho^f\big|_\Gamma\mathcal{P}\Big((\rho^c)^{-1}\tilde{M}_c(\mu,\lambda){\bf u}^c\big|_\Gamma\Big)-M_f(\mu,\lambda){\bf u}^f\big|_\Gamma.
 \end{equation*}
 For the grids in the fine domain $\Omega^f$  that are lying on the interface $\Gamma$, we impose the continuity of the solution,
-\begin{equation*}
+\begin{equation}\label{data_continuous_curvi}
 {\bf u}_{i,j,1}^f = \mathcal{P}\big({\bf u}_{i,j,n_3^c}^c\big), \ \ \ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,
-\end{equation*}
+\end{equation}
 as for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the traction force,
-\begin{equation*}
+\begin{equation}\label{traction_continuous_curvi}
 {\bf n}^c\cdot\mathcal{T}^c \big|_\Gamma = \mathcal{R}\left(-{\bf n}^f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma\right).
-\end{equation*}
+\end{equation}
 
 \subsection{Energy estimate}
 %We derive an energy estimate, which tells us what interface conditions we shall impose. Also discuss boundary conditions. Be careful with the Jacobian.
@@ -305,20 +307,20 @@ as for the ghost points which is on the direction 3 for the coarse domian, we im
 %These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
 
 In this section, we investigate the energy estimate for the semi-discrete form of the SBP scheme in section \ref{sub_section_4_1}. Define the discrete scalar product for the interior of domain by
-\begin{equation*}
+\begin{equation}\label{scalar_product_discrete_interior}
 ({\bf u}, {\bf v})_h = h_1h_2h_3\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}{\bf u}^{T}_{i,j,k}{\bf v}_{i,j,k},
-\end{equation*}
+\end{equation}
 and the scalar product on the interface $\Gamma$,
-\begin{equation*}
+\begin{equation}\label{scalar_product_discrete_interface}
 ({\bf u}, {\bf v})_{h,\Gamma} = h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}J_{i,j,k}\big|\nabla r^{3}\big|{\bf u}_{i,j,k}^{T}{\bf v}_{i,j,k},
-\end{equation*}
-where $k = 1$ for the interface of the fine domain $\Omega_f$ and $k = n_3^c$ for the interface of coarse domain $\Omega_c$ and .
+\end{equation}
+where $k = 1$ for the interface of the fine domain $\Omega_f$ and $k = n_3^c$ for the interface of coarse domain $\Omega_c$ .
 
 Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^c\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}^c$ and summing over all grids, we have
 \begin{equation}\label{coarse_simple}
 ({\bf u}_t^c, \rho^c{\bf u}_{tt}^c)_{h^c} = -S_{h^c}({\bf u}_t^c,{\bf u}^c) + B_{h^c}({\bf u}_t^c,{\bf u}^c),
 \end{equation}
-multiplying (\ref{fine_scheme_1}) by $h_1^fh_2^fh_3^f\omega_i^{(1)}\omega_j^{(2)}\omega_k^{3}J_{i,j,k}^f$ and summing over all grids, we obtain
+multiplying (\ref{fine_scheme_1}) by $h_1^fh_2^fh_3^f\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}^f$ and summing over all grids, we obtain
 \begin{multline}\label{fine_simple}
 ({\bf u}_t^f, \rho^f{\bf u}_{tt}^f)_{h^f} = -S_{h^f}({\bf u}_t^f,{\bf u}^f) + B_{h^f}({\bf u}_t^f,{\bf u}^f) \\
 +h_3^f\omega_1^{(3)}h_1^fh_2^f\sum_{i=1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)_{i,j,1}^{T}{\bm \eta}_{i,j},
@@ -333,11 +335,11 @@ where $\bar{A}_1, \bar{A}_2$ and $\bar{A}_3$ can be found in Appendix ?.  We fir
 \begin{equation*}
 {\bf u}_{i,j,k} = {\bf 0}
 \end{equation*}
-to the left and right boundaries ($i = 1,n_1, j = 1,2,\cdots,n_2,k = 1,2,\cdots,n_3$), to the front and back boundaries ($i = 1,2,\cdots,n_1, j = 1,n_2,k = 1,2,\cdots,n_3$) and to the bottom boundaries ($i = 1,2,\cdots,n_1, j = 1,2,\cdots,n_3, k = 1$). Finally, we consider a free-surface condition on the top boundaries ($i = 1,2,\cdots,n_1, j = 1,2,\cdots,n_2, k = n_3$),
+to the bottom surface ($i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,k = 1$) and a free-surface boundary condition on the top surface ($i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f, k = n_3^f$),
 \begin{equation*}
 \bar{A}_3^f\bar{\nabla} {\bf u}_{i,j,n_3^f}^f = {\bf 0}.
 \end{equation*}
-Then, we have
+As for the direction $1$ and $2$, we assume a periodic boundary condition for simplicity. Then, we have
 \begin{equation}\label{boundary_f}
 B_{h_f} ({\bf u}_t^f,{\bf u}^f) = -h_1^fh_2^f\sum_{i = 1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}\bar{A}_3^f\bar{\nabla}_f{\bf u}^f_{i,j,1},
 \end{equation}
@@ -345,23 +347,92 @@ and
 \begin{equation}\label{bounary_c}
 B_{h_c} ({\bf u}_t^c,{\bf u}^c) = h_1^ch_2^c\sum_{i = 1}^{ n_1^c}\sum_{j=1}^{n_2^c}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,n_3^c}\bar{A}_3^c\bar{\nabla}_c{\bf u}^c_{i,j,n_3^c}.
 \end{equation}
-Finally, the semi-discrete energy estimate
+Finally, we conclude a time derivative of the semi-discrete energy
 \begin{multline}\label{semi_energy_1}
 \frac{d}{dt}\big[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \big]  = \\
 2B_{h^f}({\bf u}_t^f,{\bf u}^f) + 2B_{h^c}({\bf u}_t^c,{\bf u}^c) + 2h_3^f\omega_1^{(3)}h_1^f h_2^f\sum_{i=1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}{\bm \eta}_{i,j},
 \end{multline}
-plugging (\ref{boundary_f}) and (\ref{bounary_c}) into (\ref{semi_energy_1}), we have
+plugging (\ref{boundary_f}) and (\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definition of the scalar product on the interface $\Gamma$ (\ref{scalar_product_discrete_interface}), we have
 \begin{multline}\label{semi_energy_2}
-\frac{d}{dt}\big[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \big]  = \\
-2\Big(-{\bf u}_t^f,\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} + 2\Big({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} = \\
-2\Big({\bf u}_t^f,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} +  2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = \\
-2\Big(\mathcal{P}{\bf u}^c_t,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)_{h_f,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = \\
-2\Big({\bf u}_t^c,\mathcal{R}\Big(-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\Big)_{h_c,\Gamma} + 2\Big({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Big)_{h_c,\Gamma} = 0
+\frac{d}{dt}\left[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \right]  = \\
+2\left(-{\bf u}_t^f,\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} + 2\left({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} = \\
+2\left({\bf u}_t^f,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} +  2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
+2\left(\mathcal{P}{\bf u}^c_t,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
+2\left({\bf u}_t^c,\mathcal{R}\Big(-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\right)_{h_c,\Gamma} + 2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma}.
 \end{multline}
-
+We have (\ref{traction_continuous_curvi}) in the cuvilinear coordinates, then combine with (\ref{bdry3_curvi}) arrives at
+\begin{equation*}
+\left(\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \mathcal{R}\left(\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_c,\Gamma},
+\end{equation*}
+finally, we conclude that
+\begin{equation*}
+\frac{d}{dt}\left[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \right]  = 0
+\end{equation*}
+without external force.
 
 \section{The temporal discretization}
-We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
+%We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
+The equations are advance in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, there is a maximum time step not exceed CFL stabilitity limit.
+
+In \cite{?}, it is proved that the time step constraint by CFL codition for the Newmark scheme 
+\begin{equation*}
+\frac{{\bf u}^{n+1}-2{\bf u}^n + {\bf u}^{n-1}}{\Delta_t^2} = {\bf L}_h{\bf u}^n + {\bf F}^n, \ \ \ n = 0,1,\cdots
+\end{equation*}
+ which is second order is
+\begin{equation*}
+\frac{\Delta_t^2}{h^2}\kappa_{\text{max}}\leq C_{\text{cfl}}^2.
+\end{equation*}
+Here, 
+$\kappa_{\text{max}}$ is the maximum of the eigenvalue of the matrix 
+\[T = \frac{1}{\rho}\left(\begin{array}{ccc}
+Tr(N_{11}) &  Tr(N_{12})& Tr(N_{13})\\
+Tr(N_{21}) & Tr(N_{22}) & Tr(N_{23})\\
+Tr(N_{31}) & Tr(N_{32}) & Tr(N_{33})\end{array}\right). \]
+Here, $Tr(N_{ij})$ represents the trace of the matrix $N_{ij},i,j = 1,2,3$. In this paper, we use the predictor-corrector strategy to obtain a fourth order time integrator. In \cite{?}, it shows that the fourth order scheme has a somewhat larger stability limit for the time step, but the way used to approximate eigenvalue is same. We use $C_{\text{cfl}} = $ in the numrical experiments in this paper.
+
+\subsection{Time discretization with SBP scheme}
+In the following, we give the detailed procedure about how we apply the fourth order time integrator to the problem (\ref{coarse_scheme}) -- (\ref{traction_continuous_curvi}). 
+
+Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of ${\bf u}({\bf x},t_n), {\bf x}\in\Omega_c$ and ${\bf u}({\bf x},t_n), {\bf x}\in\Omega_f$ respectively. Here, $t_n = n\Delta t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
+
+\begin{algorithm}
+	\caption{Fourth order accurate time steeping for the elastic wave equation with SBP discretization in space}\label{first_alg}
+	Given initial conditions ${\bf u}^{0,c}, {\bf u}^{-1,c}$ and ${\bf u}^{0,f}, {\bf u}^{-1,f}$ that satisfies the discretized boundary conditions.
+	
+	\begin{itemize}
+	\item  {Compute the predictor at the interior grid points for both fine and coarse domain
+		\begin{equation*}
+		   {\bf u}^{c,*,n+1} = 2{\bf u}^{c,n} - {\bf u}^{c,n-1} + \Delta_t^2\rho_c^{-1}
+		\end{equation*}
+		\begin{equation*}
+		{\bf u}^{f,*,n+1} = 2{\bf u}^{f,n} - {\bf u}^{f,n-1} + \Delta_t^2\rho_f^{-1}
+		\end{equation*}
+	   }
+   \item {For the traction free boundary on the top surface of fine domain $\Omega_f$
+   }
+   \item {For the Dirichlet boundary condition on the bottom surface of coarse domain $\Omega_c$
+   }
+  \item{Continuity of solution on the interface $\Gamma$
+  }
+  \item{Continuity of traction force on the interface $\Gamma$
+  }
+  \item{Evaluate the acceleration at all grids for both coarse and fine domians
+  }
+  \item{Comoute the corrector at the interior grid points for both coarse and fine domains
+  }
+ \item {For the traction free boundary on the top surface of fine domain $\Omega_f$
+ }
+ \item {For the Dirichlet boundary condition on the bottom surface of coarse domain $\Omega_c$
+ }
+ \item{Continuity of solution on the interface $\Gamma$
+ }
+ \item{Continuity of traction force on the interface $\Gamma$
+ }
+	\end{itemize}
+\end{algorithm}
+
+
+
 
 
 \section{Numerical Experiments}
