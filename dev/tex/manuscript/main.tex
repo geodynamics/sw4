@@ -15,6 +15,7 @@
 \usepackage{subcaption}
 \usepackage[toc,page]{appendix}
 \usepackage{bm}
+\usepackage{amsfonts}
 
 \title{Fourth order summation-by-parts finite difference methods for  3-D elastic wave propagation in curvilinear coordinates with mesh refinement interfaces}
 
@@ -32,66 +33,66 @@ We analyze
 \section{The isotropic elastic wave equation }
 We consider the time dependent isotropic elastic wave equation in three dimensional domain for simple Cartesian domain and the curvilinear domian.
 \subsection{The Cartesian coordinates}
-The problem is defined on the domain ${\bf x}\in\Omega$ with ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation takes the form,
-\begin{eqnarray*}
-    \rho\frac{\partial^2{\bf u}}{\partial^2 t} &=& \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
-    \nabla\cdot\mathcal{T} &:=& {\bf Lu},
-\end{eqnarray*}
+The problem is defined on the domain ${\bf x}\in\Omega = [0,a^{(1)}]\times[0,a^{(2)}]\times[0,a^{(3)}]$ with ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation takes the form,
+\begin{align*}
+    \rho\frac{\partial^2{\bf u}}{\partial^2 t} &= \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
+    \nabla\cdot\mathcal{T} &:= {\bf Lu},
+\end{align*}
 provided with appropriate initial and boundary conditions. Here, $\rho$ is density, $\mathcal{T}$ is the stress tensor and ${\bf F}$ is the force function. The spatial operator ${\bf L}$ is called $3\times3$ symmetric Kelvin-Christoffel differential operator matrix, specifically,
 \begin{equation*}
     {\bf L u} = \partial_1(A_1\nabla{\bf u}) + \partial_2(A_2\nabla{\bf u}) + \partial_3(A_3\nabla{\bf u}),
 \end{equation*}
 with
-\begin{eqnarray*}
-A_1\nabla{\bf u} &:=& M^{11}\partial_1{\bf u} + M^{12}\partial_2{\bf u} + M^{13}\partial_3{\bf u}, \\
-A_2\nabla{\bf u} &:=& M^{21}\partial_1{\bf u} + M^{22}\partial_2{\bf u} + M^{23}\partial_3{\bf u}, \\
-A_3\nabla{\bf u} &:=& M^{31}\partial_1{\bf u} + M^{32}\partial_2{\bf u} + M^{33}\partial_3{\bf u},
-\end{eqnarray*}
-where $M^{i,j}, i = 1,2,3, j = 1,2,3$ are defined by
+\begin{align*}
+A_1\nabla{\bf u} &:= M_{11}\partial_1{\bf u} + M_{12}\partial_2{\bf u} + M_{13}\partial_3{\bf u}, \\
+A_2\nabla{\bf u} &:= M_{21}\partial_1{\bf u} + M_{22}\partial_2{\bf u} + M_{23}\partial_3{\bf u}, \\
+A_3\nabla{\bf u} &:= M_{31}\partial_1{\bf u} + M_{32}\partial_2{\bf u} + M_{33}\partial_3{\bf u},
+\end{align*}
+where $M_{ij}, i,j = 1,2,3$ are defined by
 \begin{equation*}
-M^{i,j} = P^T_iCP_j.
+M_{ij} = P^T_iCP_j.
 \end{equation*}
-Here, $C$ is symmetric and we refer to Appendix ? for the definitions of matrices $C$ and $P_i, i = 1,2,3$. Especially, for the isotropic elastic wave equation, we have
-\[ M^{11} = \left(\begin{array}{ccc}
+Here, $C$ is symmetric and positive definite, we refer to Appendix ? for the definitions of matrices $C$ and $P_i, i = 1,2,3$. Especially, for the isotropic elastic wave equation, we have
+\[ M_{11} = \left(\begin{array}{ccc}
 2\mu+\lambda & 0 & 0\\
 0 & \mu & 0\\
-0 & 0 & \mu\end{array}\right), M^{12} = \left(\begin{array}{ccc}
+0 & 0 & \mu\end{array}\right), M_{12} = \left(\begin{array}{ccc}
 0 & \lambda & 0\\
 \mu & 0 & 0\\
-0 & 0 & 0\end{array}\right), M^{13} = \left(\begin{array}{ccc}
+0 & 0 & 0\end{array}\right), M_{13} = \left(\begin{array}{ccc}
 0 & 0 & \lambda\\
 0 & 0 & 0\\
 \mu & 0 & 0\end{array}\right),\]
-\[ M^{21} =(M^{12})^T, M^{22} = \left(\begin{array}{ccc}
+\[ M_{21} =(M_{12})^T, M_{22} = \left(\begin{array}{ccc}
 \mu & 0 & 0\\
 0 & 2\mu+\lambda & 0\\
-0 & 0 & \mu\end{array}\right), M^{23} = \left(\begin{array}{ccc}
+0 & 0 & \mu\end{array}\right), M_{23} = \left(\begin{array}{ccc}
 0 & 0 & 0\\
 0 & 0 & \lambda\\
 0 & \mu & 0\end{array}\right),\]
-\[ M^{31} = (M^{13})^T, \ \ \ \ \ M^{32} =(M^{23})^T, \ \ \ \ \ M^{33} = \left(\begin{array}{ccc}
+\[ M_{31} = (M_{13})^T, \ \ \ \ \ M_{32} =(M_{23})^T, \ \ \ \ \ M_{33} = \left(\begin{array}{ccc}
 \mu & 0 & \lambda\\
 0 & \mu & 0\\
 0 & 0 & 2\mu+\lambda\end{array}\right),\]
-Here, $\lambda$ and $\mu$ are the first and second Lame parameters respectively, which are determined by the properties of the material.
+Here, $\lambda$ and $\mu$ are the first and second Lame parameters respectively, which are determined by the properties of the materials.
 
-Denote the outward unit normal ${\bf n} = (n^{(1)},n^{(2)},n^{(3)})$, then we have the boundary traction data 
+Denote the outward unit normal ${\bf n}_i = (n_i^{(1)},n_i^{(2)},n_i^{(3)})$ for the boundaries $x^{(i)} = 0, a^{(i)}, i = 1,2,3$. For example, ${\bf n}_1 = (\pm 1, 0,0)$ for the boundaries $x^{(1)} = 1$ or $x^{(1)} = 0$, then we have the boundary traction data 
 \begin{equation*}
-{\bf n}\cdot\mathcal{T} = n^{(1)}A_1\nabla{\bf u} + n^{(2)}A_2\nabla{\bf u} + n^{(3)}A_3\nabla{\bf u}. 
+{\bf n}_i\cdot\mathcal{T} = n^{(1)}_iA_1\nabla{\bf u} + n^{(2)}_iA_2\nabla{\bf u} + n^{(3)}_iA_3\nabla{\bf u},\ \ i = 1,2,3. 
 \end{equation*}
-A homogeneous Dirichlet boundary condition corresponds to ${\bf u} = {\bf 0}$ and a free surface boundary condtion is ${\bf n}\cdot\mathcal{T}  = {\bf 0}$.
+A homogeneous Dirichlet boundary condition corresponds to ${\bf u} = {\bf 0}$ and a free surface boundary condtion is ${\bf n}_i\cdot\mathcal{T}  = {\bf 0}, i = 1,2,3$.
 
-It is known that the elastic wave equation with the homogeneous Dirichelet boundary conidtion or free surface boundary condition is a well-posed problem and the total energy of the solution is conserved if the external force function ${\bf F} = 0$ \cite{?}.
+It is known that the elastic wave equation with the homogeneous Dirichelet boundary conidtion or free surface boundary condition with a Cartesian domain is a well-posed problem and the total energy of the solution is conserved if the external force function ${\bf F} = 0$, we refer to \cite{?} for a detailed analysis.
 
 \subsection{Generalization to curvilinear coordinates}
 %Present the transformed equation. Notation is important. We can write a few formulas first, and discuss if it is good notation. Maybe we shall follow notations from one of Anders' papers?
 
-In this section, we consider a curvilinear domain. Assume there is a one-to-one mapping ${\bf x} = {\bf x}({\bf r}) : [0,1]^3 \rightarrow \Omega \in \mathcal{R}^3$ with ${\bf x}({\bf r}) = (x^{(1)}({\bf r}),x^{(2)}({\bf r}),x^{(3)}({\bf r}))^T, {\bf r} = (r^{(1)},r^{(2)},r^{(3)})^T, 0\leq r^{(i)}\leq1, i = 1,2,3$.
+In this section, we consider a curvilinear domain. Assume there is a one-to-one mapping ${\bf x} = {\bf x}({\bf r}) : [0,1]^3 \rightarrow \Omega \in \mathbb{R}^3$ with ${\bf x}({\bf r}) = (x^{(1)}({\bf r}),x^{(2)}({\bf r}),x^{(3)}({\bf r}))^T, {\bf r} = (r^{(1)},r^{(2)},r^{(3)})^T, 0\leq r^{(i)}\leq1, i = 1,2,3$.
 
 We define the derivative of the forward mapping to be 
-\begin{equation*}
+\begin{equation}\label{elastic_eq_carte}
 {\bf a}_k := \bar{\partial}_k{\bf x} = \left(\frac{\partial x^{(1)}}{\partial r^{(k)}},\frac{\partial x^{(2)}}{\partial r^{(k)}},\frac{\partial x^{(3)}}{\partial r^{(k)}}\right)^T,
-\end{equation*}
+\end{equation}
 for $k = 1,2,3$ and the backward mapping to be
 \begin{equation*}
 {\bf a}^k := \nabla r^{(k)} = \left(\frac{\partial r^{(k)}}{\partial x^{(1)}},\frac{\partial r^{(k)}}{\partial x^{(2)}},\frac{\partial r^{(k)}}{\partial x^{(3)}}\right)^T := (\xi_{1k},\xi_{2k},\xi_{3k})^T,
@@ -102,38 +103,91 @@ for $k = 1,2,3$. It is known that the backward mapping can be expressed by the f
 \end{equation*}
 here, $J$ is the Jacobian of the forward mapping $J = \text{det}({\bf a}_1, {\bf a}_2, {\bf a}_3)$ and the mapping is assumed to be non-singular with $0<J<\infty$.
 
-After applying the forward and backward mapping, reader can refer to \cite{?} for details, the elastic wave equation can be written as
-\begin{equation*}
+After applying the forward and backward mapping, reader can refer to \cite{?} for details, the elastic wave equation (\ref{elastic_eq_carte}) can be written as
+\begin{equation}\label{elastic_eq_curvi}
 \rho\frac{\partial^2 {\bf u}}{\partial t^2} = \frac{1}{J}\left[\tilde{\partial }_1(\tilde{A}_1\tilde{\nabla}{\bf u}) + \tilde{\partial }_2(\tilde{A}_2\tilde{\nabla}{\bf u}) +\tilde{\partial }_3(\tilde{A}_3\tilde{\nabla}{\bf u}) \right] + {\bf F},
-\end{equation*}
+\end{equation}
 where
 \begin{align*}
-	\bar{A}_1\tilde{\nabla}{\bf u} &:= N_{11}\bar{\partial}_1{\bf u} + N_{12}\bar{\partial}_2{\bf u} + N_{13}\bar{\partial}_3{\bf u}, \\
-	\bar{A}_2\tilde{\nabla}{\bf u} &:= N_{21}\bar{\partial}_1{\bf u} + N_{22}\bar{\partial}_2{\bf u} + N_{23}\bar{\partial}_3{\bf u}, \\
-	\bar{A}_3\tilde{\nabla}{\bf u} &:= N_{31}\bar{\partial}_1{\bf u} + N_{32}\bar{\partial}_2{\bf u} + N_{33}\bar{\partial}_3{\bf u},
+	\bar{A}_1\bar{\nabla}{\bf u} &:= N_{11}\bar{\partial}_1{\bf u} + N_{12}\bar{\partial}_2{\bf u} + N_{13}\bar{\partial}_3{\bf u}, \\
+	\bar{A}_2\bar{\nabla}{\bf u} &:= N_{21}\bar{\partial}_1{\bf u} + N_{22}\bar{\partial}_2{\bf u} + N_{23}\bar{\partial}_3{\bf u}, \\
+	\bar{A}_3\bar{\nabla}{\bf u} &:= N_{31}\bar{\partial}_1{\bf u} + N_{32}\bar{\partial}_2{\bf u} + N_{33}\bar{\partial}_3{\bf u},
 \end{align*}
-here, $N_{ij} = J\bar{P}_i^TC\bar{P}_j$ with $\bar{P}_i = \sum_{j=1}^3\xi_{ji}P_j$. The matrices $C$ and $P_i, i = 1,2,3$ can be found in Appendix ?. 
+here, 
+\begin{equation}\label{definition_Nij}
+N_{ij} = J\bar{P}_i^TC\bar{P}_j \ \ \text{with} \ \ \bar{P}_i = \sum_{j=1}^3\xi_{ji}P_j.
+\end{equation}
+The matrices $C$ and $P_i, i = 1,2,3$ can be found in Appendix ?. 
 
 The transformation of homogeneous Dirichlet boundary condiiton to curvilinear coordinates is straightfroward, ${\bf u}({\bf x}) = {\bf u}(\bf r)$. To transfer the free surface boundary condition to curvilinear coordinates, we firstly write the unit outside normal to be the function of metric derivatives, for example, along the boundary $r^{(3)} = 1$ or $r^{(3)} = 0$,
-\begin{equation*}
-{\bf n} := (n^{(1)},n^{(2)},n^{(3)})^T = \pm \frac{\nabla r^{(3)}}{\left|\nabla r^{(3)}\right|} = \frac{\pm 1}{\sqrt{((\xi_{13})^2+(\xi_{23})^2+(\xi_{33})^2)}}\left(\xi_{13},\xi_{23},\xi_{33}\right)^T,
-\end{equation*}
+\begin{equation}\label{definition_bdry3_curvi}
+{\bf n}_3 := (n^{(1)}_3,n^{(2)}_3,n^{(3)}_3)^T = \pm \frac{\nabla r^{(3)}}{\left|\nabla r^{(3)}\right|} = \frac{\pm 1}{\sqrt{((\xi_{13})^2+(\xi_{23})^2+(\xi_{33})^2)}}\left(\xi_{13},\xi_{23},\xi_{33}\right)^T,
+\end{equation}
 here, $'+'$ corresponds to $r^{(3)} = 1$ and $'-'$ corresponds to $r^{(3)} = 0$. Then after some straightforward calculation, the traction free boundary condition can be written as
-\begin{equation*}
-\mathcal{T}\cdot{\bf n} = \frac{\pm 1}{J\left|\nabla r^{(3)}\right|}\bar{A}_3\bar{\nabla}{\bf u}, \ \ \ r^{(3)} = 0, 1.
-\end{equation*}
+\begin{equation}\label{bdry3_curvi}
+\mathcal{T}\cdot{\bf n}_3 = \frac{\pm 1}{J\left|\nabla r^{(3)}\right|}\bar{A}_3\bar{\nabla}{\bf u}, \ \ \ r^{(3)} = 0, 1.
+\end{equation}
 Similarly, we can derive the traction free boundary condition along $r^{(1)} = 0,1$ and $r^{(2)} = 0,1$ as
-\begin{align*}
-\mathcal{T}\cdot{\bf n} &= \frac{\pm 1}{J\left|\nabla r^{(1)}\right|}\bar{A}_1\bar{\nabla}{\bf u}, \ \ \ r^{(1)} = 0, 1,\\
-\mathcal{T}\cdot{\bf n} &= \frac{\pm 1}{J\left|\nabla r^{(2)}\right|}\bar{A}_2\bar{\nabla}{\bf u}, \ \ \ r^{(2)} = 0, 1,
-\end{align*} 
-respectively.
+\begin{equation}\label{bdry1_curvi}
+\mathcal{T}\cdot{\bf n}_1 = \frac{\pm 1}{J\left|\nabla r^{(1)}\right|}\bar{A}_1\bar{\nabla}{\bf u}, \ \ \ r^{(1)} = 0, 1,
+\end{equation}
+\begin{equation}\label{bdry2_curvi}
+\mathcal{T}\cdot{\bf n}_2 = \frac{\pm 1}{J\left|\nabla r^{(2)}\right|}\bar{A}_2\bar{\nabla}{\bf u}, \ \ \ r^{(2)} = 0, 1,
+\end{equation} 
+respectively. Here, the ${\bf n}_1$ and ${\bf n}_2$ have a similar definition as ${\bf n}_3$ in (\ref{definition_bdry3_curvi}).
 
 \subsubsection{Energy estimate}
 
-From the definition of matrcies $N_{ij}$, we can easily verify that $N_{11}, N_{22}, N_{33}$ are positive definite and $N_{ij} = N_{jk}^T$.
+From the definition of matrcies $N_{ij}$, we can easily verify that $N_{11}, N_{22}, N_{33}$ are positive definite and $N_{ij} = N_{jk}^T$. In the curvilinear coordinates, we define the $L^2$ scalar product of the two real vector-valued functions ${\bf u}({\bf r})\in\mathbb{R}^3\rightarrow \mathbb{R}^3$ and ${\bf v}(\bf r)\in\mathbb{R}^3\rightarrow \mathbb{R}^3$ by
+\begin{equation*}
+({\bf u},{\bf v})_2 = \int_{{\bf r}\in[0,1]^3} \left(\sum_{l=1}^q u^{l}v^{l}\right)Jdr^{(1)}dr^{(2)}dr^{(3)}.
+\end{equation*}
+To analyze the energy estimate of the solution of an elastic wave equation in the curvilinear domain, we multiply the equation (\ref{elastic_eq_curvi}) by $J{\bf u}_t$ and integrate over the parameter space $[0,1]^3$,
+\begin{align}\label{time_deri_curvi}
+({\bf u}_t,\rho {\bf u}_{tt})_2 &= \left({\bf u}_t,\frac{1}{J}\bar{\partial}_1(\bar{A}_1\bar{\nabla}{\bf u})\right)_2+ \left({\bf u}_t,\frac{1}{J}\bar{\partial}_2(\bar{A}_2\bar{\nabla}{\bf u})\right)_2+ \left({\bf u}_t,\frac{1}{J}\bar{\partial}_3(\bar{A}_3\bar{\nabla}{\bf u})\right)_2+({\bf u}_t, {\bf F})_2\nonumber\\
+&:= -S({\bf u}_t,{\bf u}) + B({\bf u}_t,{\bf u}) + ({\bf u}_t,{\bf F})_2,
+\end{align}
+where the term $S$ represents the interior terms after integration by parts,
+\begin{multline*}
+S({\bf u}_t,{\bf u}) = \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_1 {\bf u}_t)^T ({\bar A}_1\bar{\nabla}{\bf u}) + (\bar{\partial}_2 {\bf u}_t)^T ({\bar A}_2\bar{\nabla}{\bf u}) + (\bar{\partial}_3 {\bf u}_t)^T ({\bar A}_3\bar{\nabla}{\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)}\\
+ = \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_1 {\bf u}_t)^T (N_{11}\bar{\partial}_1{\bf u} +N_{12}\bar{\partial}_2{\bf u}+ N_{13}\bar{\partial}_3{\bf u}) + (\bar{\partial}_2 {\bf u}_t)^T (N_{21}\bar{\partial}_1{\bf u} +N_{22}\bar{\partial}_2{\bf u}+ N_{23}\bar{\partial}_3{\bf u}) \\
+ +(\bar{\partial}_3 {\bf u}_t)^T (N_{31}\bar{\partial}_1{\bf u} +N_{32}\bar{\partial}_2{\bf u}+ N_{33}\bar{\partial}_3{\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)}\\
+ = \sum_{i = 1}^3\sum_{j=1}^3  \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_i {\bf u}_t)^T(N_{ij}\bar{\partial}_j {\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)}.
+\end{multline*}
+Recall the definition of $N_{ij}, i,j = 1,2,3$ in (\ref{definition_Nij}), we have
+\begin{multline*}
+S({\bf u}_t,{\bf u}) = \sum_{i=1}^3\sum_{j=1}^3 \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_i {\bf u}_t)^T(J\bar{P}_i^TC\bar{P}_j\bar{\partial}_j {\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)} \\
+= \sum_{i=1}^3\sum_{j=1}^3 \int_{{\bf r}\in[0,1]^3} (\bar{P}_i\bar{\partial}_i {\bf u}_t)^TC(\bar{P}_j\bar{\partial}_j {\bf u}) J\ dr^{(1)}dr^{(2)}dr^{(3)}.
+\end{multline*}
+Since $C$ is a symmetric and positive definite matrix and $J > 0$, we have 
+\begin{equation*}
+S({\bf u}_t,{\bf u}) = S({\bf u},{\bf u}_t) \ \ \  \text{and} \ \ \ S({\bf u},{\bf u}) \geq 0.
+\end{equation*}
+The term $B$ that contains the boundary intergrals satisfies
+\begin{multline}\label{bdry_integral_ref}
+B({\bf u}_t,{\bf u}) = \int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(2)} = 0}^{r^{(2)} = 1}  \left[{\bf u}_t^T\bar{A}_3\bar{\nabla} {\bf u}\right]_{r^{(3)}=0}^{r^{(3)}=1} \ dr^{(1)}dr^{(2)}\\
++ \int_{r^{(2)} = 0}^{r^{(2)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1}  \left[{\bf u}_t^T\bar{A}_1\bar{\nabla} {\bf u}\right]_{r^{(1)}=0}^{r^{(1)}=1}\ dr^{(2)}dr^{(3)} +\int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1}  \left[{\bf u}_t^T\bar{A}_2\bar{\nabla} {\bf u}\right]_{r^{(2)}=0}^{r^{(2)}=1} \ dr^{(1)}dr^{(3)},
+\end{multline}
+Compare the terms (\ref{bdry3_curvi}) to (\ref{bdry2_curvi}) with (\ref{bdry_integral_ref}), we note that the intergral terms in (\ref{bdry_integral_ref}) are the scaled boundary traction,
+\begin{multline}\label{bdry_integral_curvi}
+B({\bf u}_t,{\bf u}) = \int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(2)} = 0}^{r^{(2)} = 1} J|\nabla r^{(3)}|\frac{1}{J\left|\nabla r^{(3)}\right|} \left[{\bf u}_t^T\bar{A}_3\bar{\nabla} {\bf u}\right]_{r^{(3)}=0}^{r^{(3)}=1} \ dr^{(1)}dr^{(2)}\\
++ \int_{r^{(2)} = 0}^{r^{(2)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1} J|\nabla r^{(1)}|\frac{1}{J\left|\nabla r^{(1)}\right|}  \left[{\bf u}_t^T\bar{A}_1\bar{\nabla} {\bf u}\right]_{r^{(1)}=0}^{r^{(1)}=1}\ dr^{(2)}dr^{(3)} \\
++\int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1} J|\nabla r^{(2)}|\frac{1}{J\left|\nabla r^{(2)}\right|}  \left[{\bf u}_t^T\bar{A}_2\bar{\nabla} {\bf u}\right]_{r^{(2)}=0}^{r^{(2)}=1} \ dr^{(1)}dr^{(3)} = \int_{\partial \Omega} {\bf u}_t^T({\bf n}\cdot\mathcal{T})\ dS.
+\end{multline}
+Here, ${\bf n}$ is the unit outward norm of the cuvilinear domain $\Omega$. It is obviously that $B({\bf u}_t, {\bf u}) = 0$ if ${\bf u}$ satifies the homogeneous Dirichlt boundary condition ${\bf u} = {\bf 0}$ or the free surface boundary condition ${\bf n}\cdot\mathcal{T} = {\bf 0}$. Finally, we rewrite (\ref{time_deri_curvi}) to
+\begin{equation*}
+\frac{1}{2}\frac{d}{dt} \left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right) = B({\bf u}_t,{\bf u}) + ({\bf u}_t,{\bf F})_2,
+\end{equation*}
+here, the term $||\sqrt{\rho}{\bf u}_t||_2^2$ represents the kinematic energy and the term $S({\bf u},{\bf u})$ is so called potental energy. If we have a homegeneous Dirichlet bounary condition or a free suface boundary condition, then
+\begin{equation}\label{simple_time_deri_curvi}
+\frac{1}{2}\frac{d}{dt} \left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right) =  ({\bf u}_t,{\bf F})_2,
+\end{equation}
+Integrating (\ref{simple_time_deri_curvi}) in time gives
+\begin{equation*}
+\frac{1}{2}\left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right)  = \frac{1}{2}\left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right)\Big|_{t = 0} + \int_{t = 0}^{t = T} ({\bf u}_t,{\bf F})_2 \ dt.
+\end{equation*}
+Therefore, the total energy of the solution of the elastic wave equation is conserved if the external force ${\bf F} = {\bf 0}$ for all time.
 
-refer to the Cartesian case, give the proof for the energy estimate for curvilinear case (need to be completed)
 
 \section{The spatial discretization}
 %We present the SBP operators, the semi-discrete equation, and the discretized boundary conditions and interface conditions. Also a semi-discrete energy estimate (if we do not write a fully discrete energy estimate).
@@ -186,48 +240,61 @@ for $i = 1,2,\cdots,n_1$, $j = 1,2,\cdots,n_2$ and $k = 1,2,\cdots,n_3$.
 We consier both homegeneous Dirichlet boundary condition and free surface bounary condition.
 
 \section{Grid refinement interface}
-In this section, we partitioning the physical domian into two subdomains such that the discontinuity is aligned with subdomian boundary $\Gamma$,
-\begin{align}\label{fine_coarse_problem}
-\rho^c\frac{\partial ^2 {\bf u}^c}{\partial t^2} &= L{\bf u}^c, \ \ \ \ \ {\bf x} \in \Omega_c,\ \ \ t>0 \nonumber\\
-\rho^f\frac{\partial ^2 {\bf u}^f}{\partial t^2} &= L{\bf u}^f, \ \ \ \ \ {\bf x} \in \Omega_f,\ \ \ t>0
-\end{align}
-provided suitable initial and boundary conditions and $\Omega_c\cup\Omega_f = \Omega, \Omega_c\cap\Omega_f = \Gamma$. The interface conditions are given to guarantee the continuity of the solution and the continuity of the traction force,
-\begin{align*}
-{\bf u}_f &= {\bf u}_c, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0, \\
-\mathcal{T}^f\cdot{\bf n}^f &= -\mathcal{T}^c\cdot{\bf n}^c,  \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0.
-\end{align*}
+In this section, we partition the physical domian into two subdomains such that the discontinuity is aligned with subdomian boundary $\Gamma$,
+\begin{equation}\label{coarse_problem}
+\rho^c\frac{\partial ^2 {\bf u}^c}{\partial t^2} = {\bf Lu}^c, \ \ \ \ \ {\bf x} \in \Omega_c,\ \ \ t>0,
+\end{equation}
+\begin{equation}\label{fine_problem}
+\rho^f\frac{\partial ^2 {\bf u}^f}{\partial t^2} = {\bf Lu}^f, \ \ \ \ \ {\bf x} \in \Omega_f,\ \ \ t>0
+\end{equation}
+provided suitable initial and boundary conditions, $\Omega_c\cup\Omega_f = \Omega, \Omega_c\cap\Omega_f = \Gamma$. The interface conditions are given to guarantee the continuity of the solutions and the continuity of the traction force,
+\begin{equation}\label{continuity_sol}
+{\bf u}_f = {\bf u}_c, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0, 
+\end{equation}
+\begin{equation}\label{continuity_trac}
+\mathcal{T}^f\cdot{\bf n}^f = -\mathcal{T}^c\cdot{\bf n}^c,  \ \ \ \ \ \ \  {\bf x}\in \Gamma, \ \ \ t>0.
+\end{equation}
+For simplicity, we consider periodic boundary condition in directions $1$ and $2$, the Dirichlet boundary condition on the bottom surface (direction $3$) and traction force on the top surface (direction $3$).
 
-\subsection{The fourth order SBP-GP method }
-We approximate the (\ref{fine_coarse_problem}) by
+\subsection{The fourth order SBP scheme}\label{sub_section_4_1}
+We approximate the elastic wave equations (\ref{coarse_problem}) and (\ref{fine_problem}) by two different $4$th order SBP schemes. Specifically, we use a Cartesian mesh with mesh size $h_i^c (h_i^f)$ in the coarse domain $\Omega_c$ (fine domain $\Omega_f$) for direction $i$ with $n_i^c = 1/h_i^c +1 (n_i^f = 1/h_i^f +1), i = 1,2,3$.
+
+Suppose $(r^{c,(1)}_i, r^{c,(2)}_j, r^{c,(3)}_k), i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,k=0,1,\cdots,n_3^c+2$ are grid points in the coase doamin $\Omega_c$ and   $(r^{f,(1)}_i, r^{f,(2)}_j, r^{f,(3)}_k), i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f,k=1,\cdots,n_3^f+2$ are grid points in the fine doamin $\Omega_f$ after spacial discretization. For the coasre domain, we consider $2n^c_1n^c_2$ ghost points in the direction $3$ with $k = 0, n_3^c+2$ in $r^{c,(3)}_k$ for coarse domain $\Omega_c$ and $n^f_1n^f_2$ ghost points in direction $3$ with $k = 1,n_3^c+1$ in $r^{f,(3)}_k$ for fine domain $\Omega_f$.
+
+For the interface conditions, we impose $n_1^cn_2^c$ linear equations that comes from the coarse domain $\Omega_c$. Precisely, we use the SBP operator (\ref{?}) which contains the ghost points to approximate the spatial derivative in direction $3$ for the coasre domain $\Omega_c$ (both interior and boudnaries); along the interface $\Gamma$, we use the SBP operator (\ref{?}) which does not contain any ghost points to approximate the spatial derivative in direction $3$ for the fine domain $\Omega_f$, while we use the SBP operator $(\ref{?})$ which contains the ghost points to approxiamte the spatial derivative in direction $3$ for other points in fine domain $\Omega_f$.
+
+Firstly, we consider the term $\bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u})$. For the grids which lying on the interface $\Gamma$, we approximate the therm $\bar{\partial}_3(N_{33}^{c}\bar{\partial}_3{\bf u}^{c})$ by applying the SBP operator $\tilde{G}^c_3(N_{33}^c)$ and the term $\bar{\partial}_3(N_{33}^{f}\bar{\partial}_3{\bf u}^{f})$ by applying the SBP operator $G^f_3(N_{33}^f)$. For the other grids, we approximate the therm $\bar{\partial}_3(N_{33}^{c,f}\bar{\partial}_3{\bf u}^{c,f})$ by applying the SBP operator $\tilde{G}^{c,f}_3(N_{33}^{c,f})$. For the other terms in (\ref{spatial_operator}), we approximate the terms $\bar{\partial}_i(N_{ii}^{c,f}\bar{\partial}_i{\bf u}^{c,f}), i = 1,2$, $\bar{\partial}_i(N_{ij}\bar{\partial}_j{\bf u}), i,j = 1,2$ by applying the central difference operator $D_i,i=1,2$ twice; approximate the term $\bar{\partial}_i(N_{ij}\bar{\partial}_j{\bf u}), i = 1,2,j = 3$ or $i = 3, j = 1,2$ by applying the SBP operator $D_3$ without ghost points in the direction $3$ and central difference operator $D_i$ in the direction $1,2$. Specifically, for (\ref{coarse_problem}), we have
 \begin{multline}\label{coarse_scheme}
-\rho_{i,j,k}^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\big[G_1^c(N_{11}^c){\bf u}_{i,j,k}^c+G_2^c(N_{22}^c){\bf u}_{i,j,k}^c+\tilde{G}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
+\rho_{i,j,k}^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\Big[D_1^c(N_{11}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{22}^cD_2^c{\bf u}_{i,j,k}^c)+\tilde{G}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
 +D_1^c(N_{12}^cD_2^c{\bf u}_{i,j,k}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{i,j,k}^c)+D_2^c(N_{21}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{i,j,k}^c)\\
-+D_3^c(N_{31}^cD_1^c{\bf u}_{i,j,k}^c)+D_3^c(N_{32}^cD_2^c{\bf u}_{i,j,k}^c)\big] := \tilde{B}_c(\mu,\lambda) \bf{u}^c,
++D_3^c(N_{31}^cD_1^c{\bf u}_{i,j,k}^c)+D_3^c(N_{32}^cD_2^c{\bf u}_{i,j,k}^c)\Big] \\
+:= \tilde{M}_c(\mu,\lambda) \bf{u}^c,
 \end{multline}
 for $ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c, k = 1,2,\cdots,n_3^c$ , and 
 \begin{multline}\label{fine_scheme_2}
 \rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,k} =
- \frac{1}{J_{i,j,k}^f}\big[G_1^f(N_{11}^f){\bf u}_{i,j,k}^f+G_2^f(N_{22}^f){\bf u}_{i,j,k}^f+G_3^f(N_{33}^f){\bf u}_{i,j,k}^f\\
+ \frac{1}{J_{i,j,k}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{i,j,k}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{i,j,k}^f)+\tilde{G}_3^f(N_{33}^f){\bf u}_{i,j,k}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,k}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,k}^f)
 +D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,k}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,k}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,k}^f)
-+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,k}^f)\big],
++D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,k}^f)\Big],
 \end{multline}
 for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f, k = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
-\rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,1} = \frac{1}{J_{i,j,1}^f}\big[G_1^f(N_{11}^f){\bf u}_{i,j,1}^f+G_2^f(N_{22}^f){\bf u}_{i,j,1}^f+G_3^f(N_{33}^f){\bf u}_{i,j,1}^f\\
+\rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,1} = \frac{1}{J_{i,j,1}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{i,j,1}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{i,j,1}^f)+G_3^f(N_{33}^f){\bf u}_{i,j,1}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,1}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,1}^f)+D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,1}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,1}^f)\\
-+D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,1}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,1}^f)+{\bm \eta}_{i,j}\big] := B_f(\mu,\lambda){\bf u}^f\big|_\Gamma+\frac{{\bm \eta}_{i,j}}{J^f_{i,j,1}},
++D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,1}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,1}^f)+{\bm \eta}_{i,j}\Big]\\
+ := M_f(\mu,\lambda){\bf u}^f\big|_\Gamma+\frac{{\bm \eta}_{i,j}}{J^f_{i,j,1}},
 \end{multline}
-for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f$, and
+for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f$ with
 \begin{equation*}
-{\bm \eta} = \rho^f\big|_\Gamma\mathcal{P}\Big((\rho^c)^{-1}\tilde{B}_c(\mu,\lambda)\tilde{\bf u}^c\big|_\Gamma\Big)-B_f(\mu,\lambda){\bf u}^f\big|_\Gamma,
+{\bm \eta} = \rho^f\big|_\Gamma\mathcal{P}\Big((\rho^c)^{-1}\tilde{M}_c(\mu,\lambda){\bf u}^c\big|_\Gamma\Big)-M_f(\mu,\lambda){\bf u}^f\big|_\Gamma.
 \end{equation*}
-For the grids in the $\Omega^f$  that are on the interface $\Gamma$, we impose the continuity of the solution,
+For the grids in the fine domain $\Omega^f$  that are lying on the interface $\Gamma$, we impose the continuity of the solution,
 \begin{equation*}
-{\bf u}_{i,j,1}^f = \mathcal{P}\big({\bf u}_{i,j,n_3^c}^c\big),
+{\bf u}_{i,j,1}^f = \mathcal{P}\big({\bf u}_{i,j,n_3^c}^c\big), \ \ \ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,
 \end{equation*}
-as for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the flux,
+as for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the traction force,
 \begin{equation*}
 {\bf n}^c\cdot\mathcal{T}^c \big|_\Gamma = \mathcal{R}\left(-{\bf n}^f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma\right).
 \end{equation*}
@@ -237,7 +304,7 @@ as for the ghost points which is on the direction 3 for the coarse domian, we im
 
 %These two sections should not be too long. We shall cite previous works by Petersson and Sjögreen, and also Duru and Virta 2014. 
 
-Define the scalar product 
+In this section, we investigate the energy estimate for the semi-discrete form of the SBP scheme in section \ref{sub_section_4_1}. Define the discrete scalar product for the interior of domain by
 \begin{equation*}
 ({\bf u}, {\bf v})_h = h_1h_2h_3\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}{\bf u}^{T}_{i,j,k}{\bf v}_{i,j,k},
 \end{equation*}
@@ -245,9 +312,9 @@ and the scalar product on the interface $\Gamma$,
 \begin{equation*}
 ({\bf u}, {\bf v})_{h,\Gamma} = h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}J_{i,j,k}\big|\nabla r^{3}\big|{\bf u}_{i,j,k}^{T}{\bf v}_{i,j,k},
 \end{equation*}
-where $k = 1$ for the interface of fine domain and $k = n_3^c$ for the interface of coarse domain.
+where $k = 1$ for the interface of the fine domain $\Omega_f$ and $k = n_3^c$ for the interface of coarse domain $\Omega_c$ and .
 
-Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^c\omega_i^{(1)}\omega_j^{(2)}\omega_k^{3}J_{i,j,k}^c$ and summing over all grids, we have
+Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^c\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}^c$ and summing over all grids, we have
 \begin{equation}\label{coarse_simple}
 ({\bf u}_t^c, \rho^c{\bf u}_{tt}^c)_{h^c} = -S_{h^c}({\bf u}_t^c,{\bf u}^c) + B_{h^c}({\bf u}_t^c,{\bf u}^c),
 \end{equation}
@@ -256,13 +323,13 @@ multiplying (\ref{fine_scheme_1}) by $h_1^fh_2^fh_3^f\omega_i^{(1)}\omega_j^{(2)
 ({\bf u}_t^f, \rho^f{\bf u}_{tt}^f)_{h^f} = -S_{h^f}({\bf u}_t^f,{\bf u}^f) + B_{h^f}({\bf u}_t^f,{\bf u}^f) \\
 +h_3^f\omega_1^{(3)}h_1^fh_2^f\sum_{i=1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)_{i,j,1}^{T}{\bm \eta}_{i,j},
 \end{multline}
-where  $S_h$ can be found in Appendix, and 
+where  $S_h$ can be found in Appendix ?, and 
 \begin{multline*}
 B_h({\bf u}_t, {\bf u}) = h_2h_3\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_j^{(2)}\omega_j^{(3)}\big[({\bf u}_t)_{i,j,k}^{T}\bar{A}_1\bar{\nabla}{\bf u}_{i,j,k}\big]_{i=1}^{i=n_1}\\
 +h_1h_3\sum_{i=1}^{n_1}\sum_{k=1}^{n_3}\omega_j^{(1)}\omega_j^{(3)}\big[({\bf u}_t)_{i,j,k}^{T}\bar{A}_2\bar{\nabla}{\bf u}_{i,j,k}\big]_{j=1}^{i=n_2}\\
 +h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}\big[({\bf u}_t)_{i,j,k}^{T}\bar{A}_3\bar{\nabla}{\bf u}_{i,j,k}\big]_{k=1}^{k=n_3},
 \end{multline*}
-where $\bar{A}_1, \bar{A}_2$ and $\bar{A}_3$ can be found in Appendix.  We firstly impose homogeneous Dirichlet boundary condition,
+where $\bar{A}_1, \bar{A}_2$ and $\bar{A}_3$ can be found in Appendix ?.  We firstly impose homogeneous Dirichlet boundary condition,
 \begin{equation*}
 {\bf u}_{i,j,k} = {\bf 0}
 \end{equation*}
