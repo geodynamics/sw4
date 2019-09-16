@@ -19,6 +19,9 @@
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
+\newcommand{\wt}{\widetilde}
+
+
 \title{Fourth order summation-by-parts finite difference methods for  3-D elastic wave propagation in curvilinear coordinates with mesh refinement interfaces}
 
 \date{\today}
@@ -196,9 +199,11 @@ Therefore, the total energy of the solution of the elastic wave equation is cons
 
 In this section, we only describe the discretization for the curvilinear domain, and the Catesian domain can be obtained by simply setting the Cartesian coordinates as $x^{(k)}(r^{(k)}) = a^{(k)}r^{(k)} $ with $a^{(k)}$ being constants.
 \subsection{SBP operators in $1$D}
-Consider a uniform discretization on the domain $x\in[0,1]$ with the grids,
-\[\tilde{{\bf x}} = [x_0,x_1,\cdots,x_n,x_{n+1}]^T,\ \  x_i = (i-1)h,\ \ i = 0,1,\cdots,n,n+1,\ \ h = 1/n,\]
-where $i = 1,n$ are boundary grids and $i = 0,n+1$ are ghost points, the grids which don't contain the ghost points are denoted as ${\bf x} = [x_1,x_2,\cdots,x_n]^T$. We adopt the same fasion as in \cite{?}, the tilde symbol indicates the ghost points are considered in the rest of paper. The first derivative operator $D \approx \frac{\partial }{\partial x}$ is a first order derivative SBP operator if 
+Consider a uniform discretization of the domain $x\in[0,1]$ with the grids,
+\[\wt
+{{\bf x}} = [x_0,x_1,\cdots,x_n,x_{n+1}]^T,\ \  x_i = (i-1)h,\ \ i = 0,1,\cdots,n,n+1,\ \ h = 1/(n-1),\]
+where $i = 1,n$ correspond to the grid points on the boundary, and $i = 0,n+1$ are ghost points outside the physical domain.
+We also denote ${\bf x} = [x_1,x_2,\cdots,x_n]^T$ the grid that does not  contain the ghost points. We adopt the same notation as in \cite{?} by using the tilde symbol to indicate that ghost points are included. The  operator $D \approx \frac{\partial }{\partial x}$ is a first derivative SBP operator if 
 \begin{equation}\label{first_sbp}
 ({\bf u}, D{\bf v})_h = -(D{\bf u},{\bf v})_h - u_1v_1 + u_nv_n,
 \end{equation}
@@ -206,19 +211,32 @@ with a scalar product
 \begin{equation}\label{inner_product}
 ({\bf u},{\bf v})_h = h\sum_{i = 1}^{n}\omega_iu_iv_i.
 \end{equation}
-Here, $0<\omega_i < \infty $ are the weights of scalar product. The first order difference operator is a centered difference  operator when the grid points are far from the boudnary and the corresponding weight $\omega_i = 1$. To satify the SBP identity (\ref{first_sbp}), the coefficients in the D need to be modified for the points near the boundary and the corresponding weights $\omega_i \neq 1$.
+Here, $0<\omega_i < \infty $ are the weights of scalar product. The SBP operator $D$ has a centered difference stencil at the grid points away from the boudnary and the corresponding weights $\omega_i = 1$. To satify the SBP identity (\ref{first_sbp}), the coefficients in $D$ are  modified at a few points near the boundary and the corresponding weights $\omega_i \neq 1$.
 
-In the elastic wave equation, the second derivative term $(\gamma(x)u_x)_x$ appears. Here, the known function $\gamma(x)$ describes the property of the material. There are two different fourth order accuracy SBP operators used to approximate $(\gamma(x)u_x)_x$. One is derived by Sjo\"green and Petersson \cite{?}, they used the ghost points to approximate the second derivative, $ (\gamma(x)u_x)_x \approx \tilde{G}(\gamma)\tilde{\bf u}$. $\tilde{G}(\gamma)$ is a second derivative SBP operator satisfies,
+To discretize the elastic wave equation, we also need to approximate the second derivative with variable coefficient $(\gamma(x)u_x)_x$. Here, the known function $\gamma(x)>0$ describes the property of the material. There are two different fourth order accurate SBP operators for the approximation of $(\gamma(x)u_x)_x$. The first one $\wt{G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $, derived by Sj\"ogreen and Petersson \cite{?}, uses one ghost point outside each boundary, and satisfies the second derivative SBP identity,
 \begin{equation}\label{sbp_2nd_1}
-({\bf u}, \tilde{G}(\gamma)\tilde{\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1\tilde{\bf b}_1\tilde{\bf v} + u_n\gamma_n\tilde{\bf b}_n^T\tilde{\bf v}.
+({\bf u}, \wt{G}(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1\wt{\bf b}_1{\bf v} + u_n\gamma_n\wt{\bf b}_n {\bf v}.
 \end{equation}
-Here, $S_\gamma(\cdot,\cdot)$ is a stmmetric and positive semi-definite bilinear form, $\tilde{\bf b}_1$ and $\tilde{\bf b}_n$ are difference operator aprroximated the first derivative on the left and right boundaries, respectively. We use the left boundary as an example here, $\tilde{\bf b}_1 \tilde{\bf v} = \frac{1}{h}\sum_{i=0}^{\tilde{m}} \tilde{d}_iv_i$, $\tilde{m}$ is determined by the order of the method and $\tilde{d}_i$ are the constant stencil coefficients. The other is developed by Mattsson \cite{?}, the second derivative $(\gamma(x)u_x)_x$ is approximated by $G(\gamma){\bf u}$ without ghost points,
-\begin{equation}\label{sbp_2nd_2}
-({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n^T{\bf v}.
-\end{equation}
-Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operator for first order derivative, but wiout ghost points, ${\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{m} d_i v_i$. 
+Here, the bilinear form $S_\gamma(\cdot,\cdot)$ is symmetric and positive semi-definite, and does not use any ghost points. The operators $\wt{\bf b}_1$ and $\wt{\bf b}_n$ aprroximate the first derivative on the left and right boundaries, respectively. Using the left boundary as an example, we have 
+\[
+\wt{\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=0}^{4} \wt{d}_i v_i,
+\]
+as the fourth order accurate approximation of $u_x(x_1)$. We note that the notation $\wt{G}(\gamma){\bf v}$ implies that the operator $\wt{G}$ uses ${\bf v}$ on all grid points $\wt{{\bf x}}$, but $\wt{G}(\gamma){\bf v}$ only returns values on the grid ${\bf x}$ without ghost points. Therefore, when writing in matrix form, $\wt{G}$ is a non-square matrix of size $n$ by $n+2$.
 
-For the second derivative SBP operator $\tilde{G}(\gamma)\tilde {\bf u}$ and $G(\gamma){\bf u}$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ for the interior points which are away from the boundaries points. For the first and the last six points which are close to the boudaries, the operators $G(\gamma){\bf u}$ and $\tilde{G}(\gamma)\tilde{\bf{u}}$ use second order accurate one-sides difference stencil. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}) respectively. For stucture and the form of the operators $\tilde{G}(\gamma)\tilde {\bf u}$ and $G(\gamma){\bf u}$, we refer the readers \cite{???} for detailed information.
+The other SBP operator ${G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $ is developed by Mattsson \cite{?} without using any ghost points, and satisfies a similar SBP identity,
+\begin{equation}\label{sbp_2nd_2}
+({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v}.
+\end{equation}
+Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, but are constructed to third order accurate,
+\[
+{\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{4} d_i v_i. 
+\]
+In this case, ${G}(\gamma)$ is square in matrix form. 
+
+
+For the second derivative SBP operators $\wt{G}(\gamma)$ and $G(\gamma)$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ for the interior points away from the boundaries. For the first and the last six grid points close to the boudaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sides difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively. In the following section, we use both of them to develop a multi-block finite difference discretization for the elastic wave equation. 
+
+%For stucture and the form of the operators $\tilde{G}(\gamma)\tilde {\bf u}$ and $G(\gamma){\bf u}$, we refer the readers \cite{???} for detailed information.
 
 \subsection{Semi-discretization of the elastic wave equation}
 We consider the elastic wave equation in curvilinear coordinates 
