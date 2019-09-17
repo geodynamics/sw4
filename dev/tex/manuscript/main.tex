@@ -16,8 +16,28 @@
 \usepackage[toc,page]{appendix}
 \usepackage{bm}
 \usepackage{amsfonts}
-\usepackage{algorithm}
-\usepackage[noend]{algpseudocode}
+\usepackage{algorithm,algpseudocode}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+{% \begin{breakablealgorithm}
+	\begin{center}
+		\refstepcounter{algorithm}% New algorithm
+		\hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled 
+		\renewcommand{\caption}[2][\relax]{% Make a new \caption
+			{\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+			\ifx\relax##1\relax % #1 is \relax
+			\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+			\else % #1 is not \relax
+			\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+			\fi
+			\kern2pt\hrule\kern2pt
+		}
+	}{% \end{breakablealgorithm}
+		\kern2pt\hrule\relax% \@fs@post for \@fs@ruled 
+	\end{center}
+}
+\makeatother
 
 \newcommand{\wt}{\widetilde}
 
@@ -260,7 +280,7 @@ for $i = 1,2,\cdots,n_1$, $j = 1,2,\cdots,n_2$ and $k = 1,2,\cdots,n_3$.
 We consier both homegeneous Dirichlet boundary condition and free surface bounary condition.
 
 \section{Grid refinement interface}
-In this section, we partition the physical domian into two subdomains such that the discontinuity is aligned with subdomian boundary $\Gamma$,
+In this section, we partition the physical domian into two subdomains such that the discontinuity is aligned with subdomians' boundary $\Gamma$,
 \begin{equation}\label{coarse_problem}
 \rho^c\frac{\partial ^2 {\bf u}^c}{\partial t^2} = {\bf Lu}^c, \ \ \ \ \ {\bf x} \in \Omega_c,\ \ \ t>0,
 \end{equation}
@@ -274,47 +294,55 @@ provided suitable initial and boundary conditions. We assume that $\Omega_f$ is 
 \begin{equation}\label{continuity_trac}
 \mathcal{T}^f\cdot{\bf n}^f = -\mathcal{T}^c\cdot{\bf n}^c,  \ \ \ \ \ \ \  {\bf x}\in \Gamma, \ \ \ t>0.
 \end{equation}
-For simplicity, we consider periodic boundary condition in directions $1$ and $2$, the Dirichlet boundary condition on the bottom surface (direction $3$) and traction force on the top surface (direction $3$).
+For simplicity, we consider periodic boundary condition in directions $1$ and $2$. Dirichlet boundary condition is given on the bottom surface (direction $3$) for $\Omega_c$ and traction force condition is assumed on the top surface (direction $3$) for $\Omega_f$.
 
 \subsection{The fourth order SBP scheme}\label{sub_section_4_1}
-We approximate the elastic wave equations (\ref{coarse_problem}) and (\ref{fine_problem}) by two different $4$th order SBP schemes. Specifically, we use a Cartesian mesh with mesh size $h_i^c (h_i^f)$ in the coarse domain $\Omega_c$ (fine domain $\Omega_f$) for direction $i$ with $n_i^c = 1/h_i^c +1 (n_i^f = 1/h_i^f +1), i = 1,2,3$.
+We approximate the elastic wave equations (\ref{coarse_problem}) and (\ref{fine_problem}) by two different $4$th order SBP schemes. For spatial discretization, we use a Cartesian mesh with mesh size $h_i^c (h_i^f)$ in the coarse domain $\Omega_c$ (fine domain $\Omega_f$) for direction $i$ with $n_i^c = 1/h_i^c +1 (n_i^f = 1/h_i^f +1), i = 1,2,3$.
 
-Suppose $(r^{c,(1)}_i, r^{c,(2)}_j, r^{c,(3)}_k), i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,k=0,1,\cdots,n_3^c+2$ are grid points in the coase doamin $\Omega_c$ and   $(r^{f,(1)}_i, r^{f,(2)}_j, r^{f,(3)}_k), i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f,k=1,\cdots,n_3^f+2$ are grid points in the fine doamin $\Omega_f$ after spacial discretization. For the coasre domain, we consider $2n^c_1n^c_2$ ghost points in the direction $3$ with $k = 0, n_3^c+2$ in $r^{c,(3)}_k$ for coarse domain $\Omega_c$ and $n^f_1n^f_2$ ghost points in direction $3$ with $k = 1,n_3^c+1$ in $r^{f,(3)}_k$ for fine domain $\Omega_f$.
-
-For the interface conditions, we impose $n_1^cn_2^c$ linear equations that comes from the coarse domain $\Omega_c$. Precisely, we use the SBP operator (\ref{?}) which contains the ghost points to approximate the spatial derivative in direction $3$ for the coasre domain $\Omega_c$ (both interior and boudnaries); along the interface $\Gamma$, we use the SBP operator (\ref{?}) which does not contain any ghost points to approximate the spatial derivative in direction $3$ for the fine domain $\Omega_f$, while we use the SBP operator $(\ref{?})$ which contains the ghost points to approxiamte the spatial derivative in direction $3$ for other points in fine domain $\Omega_f$.
-
-Firstly, we consider the term $\bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u})$. For the grids which lying on the interface $\Gamma$, we approximate the therm $\bar{\partial}_3(N_{33}^{c}\bar{\partial}_3{\bf u}^{c})$ by applying the SBP operator $\tilde{G}^c_3(N_{33}^c)$ and the term $\bar{\partial}_3(N_{33}^{f}\bar{\partial}_3{\bf u}^{f})$ by applying the SBP operator $G^f_3(N_{33}^f)$. For the other grids, we approximate the therm $\bar{\partial}_3(N_{33}^{c,f}\bar{\partial}_3{\bf u}^{c,f})$ by applying the SBP operator $\tilde{G}^{c,f}_3(N_{33}^{c,f})$. For the other terms in (\ref{spatial_operator}), we approximate the terms $\bar{\partial}_i(N_{ii}^{c,f}\bar{\partial}_i{\bf u}^{c,f}), i = 1,2$, $\bar{\partial}_i(N_{ij}\bar{\partial}_j{\bf u}), i,j = 1,2$ by applying the central difference operator $D_i,i=1,2$ twice; approximate the term $\bar{\partial}_i(N_{ij}\bar{\partial}_j{\bf u}), i = 1,2,j = 3$ or $i = 3, j = 1,2$ by applying the SBP operator $D_3$ without ghost points in the direction $3$ and central difference operator $D_i$ in the direction $1,2$. Specifically, for (\ref{coarse_problem}), we have
+Suppose $(r^{c,(1)}_i, r^{c,(2)}_j, r^{c,(3)}_k), i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,k=0,1,\cdots,n_3^c+1$ are grid points for doamin $\Omega_c$ and   $(r^{f,(1)}_i, r^{f,(2)}_j, r^{f,(3)}_k), i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f,k=1,\cdots,n_3^f+1$ are grid points for doamin $\Omega_f$. Note that we only consider the ghost points which are next to interface $\Gamma$ for the coarse domain. The ghost points which are next to the physical boundaries are used to approximate the physcial boudnary conditions. More precisely, in coarse domain $\Omega_c$, we have
 \begin{multline}\label{coarse_scheme}
-\rho_{i,j,k}^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\Big[D_1^c(N_{11}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{22}^cD_2^c{\bf u}_{i,j,k}^c)+\tilde{G}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
+\rho_{i,j,k}^c ({\bf u}_{tt}^c)_{i,j,k} = \frac{1}{J_{i,j,k}^c}\Big[D_1^c(N_{11}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{22}^cD_2^c{\bf u}_{i,j,k}^c)+\tilde{\tilde{G}}_3^c(N_{33}^c){\bf u}_{i,j,k}^c\\
 +D_1^c(N_{12}^cD_2^c{\bf u}_{i,j,k}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{i,j,k}^c)+D_2^c(N_{21}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{i,j,k}^c)\\
 +D_3^c(N_{31}^cD_1^c{\bf u}_{i,j,k}^c)+D_3^c(N_{32}^cD_2^c{\bf u}_{i,j,k}^c)\Big] \\
-:= \tilde{M}_c(\mu,\lambda) \bf{u}^c,
+:= \tilde{\tilde{M}}_c(\mu,\lambda) {\bf{u}}^c_{i,j,k},
 \end{multline}
-for $ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c, k = 1,2,\cdots,n_3^c$ , and 
+for $ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c, k = 1,2,\cdots,n_3^c$. For fine domian $\Omega_f$, we impose
 \begin{multline}\label{fine_scheme_2}
 \rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,k} =
  \frac{1}{J_{i,j,k}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{i,j,k}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{i,j,k}^f)+\tilde{G}_3^f(N_{33}^f){\bf u}_{i,j,k}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,k}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,k}^f)
 +D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,k}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,k}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,k}^f)
-+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,k}^f)\Big],
++D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,k}^f)\Big], \\
+:= \tilde{M}_f(\mu,\lambda) {\bf{u}}^f_{i,j,k},
 \end{multline}
 for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f, k = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
 \rho_{i,j,k}^f ({\bf u}_{tt}^f)_{i,j,1} = \frac{1}{J_{i,j,1}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{i,j,1}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{i,j,1}^f)+G_3^f(N_{33}^f){\bf u}_{i,j,1}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{i,j,1}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{i,j,1}^f)+D_2^f(N_{21}^fD_1^f{\bf u}_{i,j,1}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{i,j,1}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{i,j,1}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{i,j,1}^f)+{\bm \eta}_{i,j}\Big]\\
- := M_f(\mu,\lambda){\bf u}^f\big|_\Gamma+\frac{{\bm \eta}_{i,j}}{J^f_{i,j,1}},
+ := M_f(\mu,\lambda){\bf u}^f_{i,j,1}+\frac{{\bm \eta}_{i,j}}{J^f_{i,j,1}},
 \end{multline}
 for $ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f$ with
-\begin{equation*}
-{\bm \eta} = \rho^f\big|_\Gamma\mathcal{P}\Big((\rho^c)^{-1}\tilde{M}_c(\mu,\lambda){\bf u}^c\big|_\Gamma\Big)-M_f(\mu,\lambda){\bf u}^f\big|_\Gamma.
-\end{equation*}
+\begin{equation}\label{eta}
+{\bm \eta}_{i,j} = \rho^f\big|_\Gamma\mathcal{P}\Big((\rho^c)^{-1}\tilde{\tilde{M}}_c(\mu,\lambda){\bf u}^c_{{\bf i}^c,{\bf j}^c,n_3^c}\Big)-M_f(\mu,\lambda){\bf u}^f_{i,j,1}.
+\end{equation}
+Here, we want to clear that the value of set ${\bf i}^c, {\bf j}^c$ depends on the order of the interpolation operator $\mathcal{P}$ and the layout of the coarse and fine grids, for example, consider $h_1^c = h_2^c, h_1^f = h_2^f$, then if $h^f = \frac{1}{2}h^c$ and $\mathcal{P}$ is fourth order,  we have ${\bf i}^c = \{(i+1)/2,i/2,(i-1)/2,(2i-2)/2\}$, ${\bf j}^c = \{(j+1)/2,j/2,(j-1)/2,(2j-2)/2\}$ if $i,j$ are even number and ${\bf i}^c = \{(i+1)/2\}$, ${\bf j}^c = \{(j+1)/2\}$ if $i,j$ are odd number. For the simplicity of analysis, we introduce a general notation for the schemes (\ref{fine_scheme_2}) and (\ref{fine_scheme_1}) in fine domain $\Omega_f$,
+\begin{equation}\label{fine_scheme}
+\rho^f_{i,j,k} ({\bf u}_{tt}^f)_{i,j,k} = \bar{M}_f(\mu,\lambda){\bf u}^f_{i,j,k} =  \left\{
+\begin{aligned}
+&\tilde{M}_f(\mu,\lambda) {\bf{u}}^f_{i,j,k}, \ \ k = 2,3,\cdots,n_3^f\\
+&M_f(\mu,\lambda){\bf u}^f_{i,j,1}+{\bm \eta}_{i,j}/J^f_{i,j,1}
+\end{aligned}
+\right.
+\end{equation}
+for $i = 1,2,\cdots,n_f^1, j = 1,2,\cdots,n_f^2$.
+
 For the grids in the fine domain $\Omega^f$  that are lying on the interface $\Gamma$, we impose the continuity of the solution,
 \begin{equation}\label{data_continuous_curvi}
-{\bf u}_{i,j,1}^f = \mathcal{P}\big({\bf u}_{i,j,n_3^c}^c\big), \ \ \ i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,
+{\bf u}^f\big|_{\Gamma} = \mathcal{P}\big({\bf u}\big|_{\Gamma}\big).
 \end{equation}
-as for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the traction force,
+As for the ghost points which is on the direction 3 for the coarse domian, we impose the continuity of the traction force,
 \begin{equation}\label{traction_continuous_curvi}
 {\bf n}^c\cdot\mathcal{T}^c \big|_\Gamma = \mathcal{R}\left(-{\bf n}^f\cdot\mathcal{T}^f\big|_\Gamma - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f\big|\nabla r_f^{(3)}\big|}\Big|_\Gamma\right).
 \end{equation}
@@ -332,7 +360,7 @@ and the scalar product on the interface $\Gamma$,
 \begin{equation}\label{scalar_product_discrete_interface}
 ({\bf u}, {\bf v})_{h,\Gamma} = h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}J_{i,j,k}\big|\nabla r^{3}\big|{\bf u}_{i,j,k}^{T}{\bf v}_{i,j,k},
 \end{equation}
-where $k = 1$ for the interface of the fine domain $\Omega_f$ and $k = n_3^c$ for the interface of coarse domain $\Omega_c$ .
+where $k = 1$ for the interface of the fine domain $\Omega^f$ and $k = n_3^c$ for the interface of coarse domain $\Omega^c$ .
 
 Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^c\omega_i^{(1)}\omega_j^{(2)}\omega_k^{(3)}J_{i,j,k}^c$ and summing over all grids, we have
 \begin{equation}\label{coarse_simple}
@@ -345,27 +373,28 @@ multiplying (\ref{fine_scheme_1}) by $h_1^fh_2^fh_3^f\omega_i^{(1)}\omega_j^{(2)
 \end{multline}
 where  $S_h$ can be found in Appendix ?, and 
 \begin{multline*}
-B_h({\bf u}_t, {\bf u}) = h_2h_3\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_j^{(2)}\omega_j^{(3)}\big[({\bf u}_t)_{i,j,k}^{T}\bar{A}_1\bar{\nabla}{\bf u}_{i,j,k}\big]_{i=1}^{i=n_1}\\
-+h_1h_3\sum_{i=1}^{n_1}\sum_{k=1}^{n_3}\omega_j^{(1)}\omega_j^{(3)}\big[({\bf u}_t)_{i,j,k}^{T}\bar{A}_2\bar{\nabla}{\bf u}_{i,j,k}\big]_{j=1}^{i=n_2}\\
-+h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}\big[({\bf u}_t)_{i,j,k}^{T}\bar{A}_3\bar{\nabla}{\bf u}_{i,j,k}\big]_{k=1}^{k=n_3},
+B_h({\bf u}_t, {\bf u}) = \\
+h_2h_3\sum_{j=1}^{n_2}\sum_{k=1}^{n_3}\omega_j^{(2)}\omega_j^{(3)}\big[({\bf u}_t)_{i,j,k}^{T}(N_{11}D_1{\bf u}_{i,j,k} + N_{12}D_2{\bf u}_{i,j,k} +N_{13}D_3{\bf u}_{i,j,k})\big]_{i=1}^{i=n_1}\\
++h_1h_3\sum_{i=1}^{n_1}\sum_{k=1}^{n_3}\omega_j^{(1)}\omega_j^{(3)}\big[({\bf u}_t)_{i,j,k}^{T}(N_{21}D_1{\bf u}_{i,j,k} + N_{22}D_2{\bf u}_{i,j,k} +N_{23}D_3{\bf u}_{i,j,k})\big]_{j=1}^{i=n_2}\\
++h_1h_2\sum_{i=1}^{n_1}\sum_{j=1}^{n_2}\omega_i^{(1)}\omega_j^{(2)}\big[({\bf u}_t)_{i,j,k}^{T}(N_{31}D_1{\bf u}_{i,j,k} + N_{32}D_2{\bf u}_{i,j,k} +N_{33}D_3{\bf u}_{i,j,k})\big]_{k=1}^{k=n_3}.
 \end{multline*}
-where $\bar{A}_1, \bar{A}_2$ and $\bar{A}_3$ can be found in Appendix ?.  We firstly impose homogeneous Dirichlet boundary condition,
+ We firstly impose homogeneous Dirichlet boundary condition,
 \begin{equation*}
-{\bf u}_{i,j,k} = {\bf 0}
+{\bf u}_{i,j,0} = {\bf 0},\ \ i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f 
 \end{equation*}
-to the bottom surface ($i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c,k = 1$) and a free-surface boundary condition on the top surface ($i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f, k = n_3^f$),
+to the bottom surface and a traction free surface boundary condition on the top surface,
 \begin{equation*}
-\bar{A}_3^f\bar{\nabla} {\bf u}_{i,j,n_3^f}^f = {\bf 0}.
+N_{31}^fD_1^f{\bf u}_{i,j,n_3^f}^f + N_{32}^fD_2^f{\bf u}_{i,j,n_3^f}^f +N_{33}^fD_3^f{\bf u}_{i,j,n_3^f}^f= {\bf 0}, 
 \end{equation*}
-As for the direction $1$ and $2$, we assume a periodic boundary condition for simplicity. Then, we have
+with $i = 1,2,\cdots,n_1^f, j = 1,2,\cdots,n_2^f$. As for the direction $1$ and $2$, we assume a periodic boundary condition for simplicity. Then, we have
 \begin{equation}\label{boundary_f}
-B_{h_f} ({\bf u}_t^f,{\bf u}^f) = -h_1^fh_2^f\sum_{i = 1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}\bar{A}_3^f\bar{\nabla}_f{\bf u}^f_{i,j,1},
+B_{h_f} ({\bf u}_t^f,{\bf u}^f) = -h_1^fh_2^f\sum_{i = 1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}\big(N_{31}^fD_1^f {\bf u}^f_{i,j,1}+ N_{32}^fD_2^f{\bf u}^f_{i,j,1}+N_{33}^fD_3^f{\bf u}^f_{i,j,1}\big),
 \end{equation}
-and 
+for $i = 1,2,\cdots, n_1^f, j = 1,2,\cdots,n_2^f$ and 
 \begin{equation}\label{bounary_c}
-B_{h_c} ({\bf u}_t^c,{\bf u}^c) = h_1^ch_2^c\sum_{i = 1}^{ n_1^c}\sum_{j=1}^{n_2^c}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,n_3^c}\bar{A}_3^c\bar{\nabla}_c{\bf u}^c_{i,j,n_3^c}.
+B_{h_c} ({\bf u}_t^c,{\bf u}^c) = h_1^ch_2^c\sum_{i = 1}^{ n_1^c}\sum_{j=1}^{n_2^c}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,n_3^c}\big(N_{31}^cD_1^c {\bf u}^c_{i,j,n_3^c}+ N_{32}^cD_2^c{\bf u}^c_{i,j,n_3^c}+N_{33}^cD_3^c{\bf u}^c_{i,j,n_3^c}\big),
 \end{equation}
-Finally, we conclude a time derivative of the semi-discrete energy
+for $i = 1,2,\cdots,n_1^c, j = 1,2,\cdots,n_2^c$. Finally, we conclude a time derivative of the semi-discrete energy
 \begin{multline}\label{semi_energy_1}
 \frac{d}{dt}\big[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \big]  = \\
 2B_{h^f}({\bf u}_t^f,{\bf u}^f) + 2B_{h^c}({\bf u}_t^c,{\bf u}^c) + 2h_3^f\omega_1^{(3)}h_1^f h_2^f\sum_{i=1}^{n_1^f}\sum_{j=1}^{n_2^f}\omega_i^{(1)}\omega_j^{(2)}({\bf u}_t^f)^T_{i,j,1}{\bm \eta}_{i,j},
@@ -373,14 +402,18 @@ Finally, we conclude a time derivative of the semi-discrete energy
 plugging (\ref{boundary_f}) and (\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definition of the scalar product on the interface $\Gamma$ (\ref{scalar_product_discrete_interface}), we have
 \begin{multline}\label{semi_energy_2}
 \frac{d}{dt}\left[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \right]  = \\
-2\left(-{\bf u}_t^f,\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} + 2\left({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} = \\
-2\left({\bf u}_t^f,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} +  2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
-2\left(\mathcal{P}{\bf u}^c_t,-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
-2\left({\bf u}_t^c,\mathcal{R}\Big(-\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\right)_{h_c,\Gamma} + 2\left({\bf u}_t^c,\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma}.
+2\left(-{\bf u}_t^f,\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} + 2\left({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} = \\
+2\left({\bf u}_t^f,-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} +  2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
+2\left(\mathcal{P}{\bf u}^c_t,-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
+2\left({\bf u}_t^c,\mathcal{R}\Big(-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\right)_{h_c,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma}.
 \end{multline}
-We have (\ref{traction_continuous_curvi}) in the cuvilinear coordinates, then combine with (\ref{bdry3_curvi}) arrives at
+Here, to simplify the formula,  we have used the notation
+\begin{equation}\label{hatA}
+\hat{A}_3{\bf u}_{i,j,k} = N_{31}D_1{\bf u}_{i,j,k} + N_{32}D_2{\bf u}_{i,j,k} + N_{33}D_3{\bf u}_{i,j,k}.
+\end{equation}
+Sine we have the fact (\ref{traction_continuous_curvi}) in the cuvilinear coordinates, then combine with (\ref{bdry3_curvi}) arrives at
 \begin{equation*}
-\left(\frac{\bar{A}_3^c\bar{\nabla}_c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \mathcal{R}\left(\frac{\bar{A}_3^f\bar{\nabla}_f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_c,\Gamma},
+\left(\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_c,\Gamma},
 \end{equation*}
 finally, we conclude that
 \begin{equation*}
@@ -413,45 +446,85 @@ In the following, we give the detailed procedure about how we apply the fourth o
 
 Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of ${\bf u}({\bf x},t_n), {\bf x}\in\Omega_c$ and ${\bf u}({\bf x},t_n), {\bf x}\in\Omega_f$ respectively. Here, $t_n = n\Delta t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
 
-\begin{algorithm}
+\begin{breakablealgorithm}
 	\caption{Fourth order accurate time steeping for the elastic wave equation with SBP discretization in space}\label{first_alg}
-	Given initial conditions ${\bf u}^{0,c}, {\bf u}^{-1,c}$ and ${\bf u}^{0,f}, {\bf u}^{-1,f}$ that satisfies the discretized boundary conditions.
+	Given initial conditions $\tilde{{\bf u}}^{0,c}, \tilde{{\bf u}}^{-1,c}$ and $\tilde{{\bf u}}^{0,f}, \tilde{{\bf u}}^{-1,f}$ that satisfies the discretized boundary conditions.
 	
 	\begin{itemize}
-	\item  {Compute the predictor at the interior grid points for both fine and coarse domain
+	\item  {Compute the predictor at the interior grid points for both fine and coarse domains
 		\begin{equation*}
-		   {\bf u}^{c,*,n+1} = 2{\bf u}^{c,n} - {\bf u}^{c,n-1} + \Delta_t^2\rho_c^{-1}
+		   {\bf u}^{c,*,n+1}_{i,j,k} = 2{\bf u}^{c,n}_{i,j,k} - {\bf u}^{c,n-1}_{i,j,k} + \Delta_t^2\rho_c^{-1}\tilde{\tilde{M}}_c(\mu,\lambda) {\bf{u}}^c_{i,j,k}
 		\end{equation*}
 		\begin{equation*}
-		{\bf u}^{f,*,n+1} = 2{\bf u}^{f,n} - {\bf u}^{f,n-1} + \Delta_t^2\rho_f^{-1}
+		{\bf u}^{f,*,n+1}_{i,j,k} = 2{\bf u}^{f,n}_{i,j,k} - {\bf u}^{f,n-1}_{i,j,k} + \Delta_t^2\rho_f^{-1}{\bar{M}}_f(\mu,\lambda) {\bf{u}}^f_{i,j,k}
 		\end{equation*}
 	   }
-   \item {For the traction free boundary on the top surface of fine domain $\Omega_f$
+   \item {For the traction force boundary condition, assign the ghost point value ${\bf u}^{f,*,n+1}_{i,j,n^f_3+1}$ to satisfy
+   	\begin{equation*}
+   	N_{31}^fD_1{\bf u}^{f,*,n+1}_{i,j,n^f_3} + N_{32}^fD_2{\bf u}^{f,*,n+1}_{i,j,n^f_3} + N_{33}^fD_3{\bf u}^{f,*,n+1}_{i,j,n^f_3} = g(t_{n+1})
+   	\end{equation*}
    }
-   \item {For the Dirichlet boundary condition on the bottom surface of coarse domain $\Omega_c$
+   \item {For the Dirichlet boundary condition, assign the ghost point value ${\bf u}^{c,*,n+1}_{i,j,0}$ to satisfy
+   	\begin{equation*}
+   	\tilde{\tilde{M}}_c(\mu,\lambda) {\bf{u}}^{c,*,n+1}_{i,j,1} = 2\tilde{\tilde{M}}_c(\mu,\lambda) {\bf{u}}^{c,*,n}_{i,j,1} - 	\tilde{\tilde{M}}_c(\mu,\lambda) {\bf{u}}^{c,*,n-1}_{i,j,1}
+   	\end{equation*}
    }
-  \item{Continuity of solution on the interface $\Gamma$
+  \item{For continuity of solution on the interface $\Gamma$, assign the value ${\bf u}^{f,*,n+1}_{i,j,0}$ to satisfy
+  	\begin{equation*}
+  	{\bf u}^{f,*,n+1}\big|_{\Gamma} = \mathcal{P}\big({\bf u}^{c,*,n+1}\big|_{\Gamma}\big)
+  	\end{equation*}
   }
-  \item{Continuity of traction force on the interface $\Gamma$
+  \item{For the continuity of traction force on the interface $\Gamma$, assign the ghost point value ${\bf u}^{c,*,n+1}_{i,j,n_3^c+1}$ to satisfy
+  	\begin{equation}\label{traction_gamma_pre}
+  	\left(\frac{\hat{A}_3^c{\bf u}^{c,*}}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^{f,*}}{J^f|\nabla r_f^{(3)}|} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}^*}{J^f|\nabla r_f^{(3)}|}\right)_{h_c,\Gamma}
+  	\end{equation}
+  	with the definition of $\hat{A}_3$ in (\ref{hatA}) and ${\bm \eta}^*$ has a similar definition as in (\ref{eta}) with ${\bf u}^{*}$
   }
-  \item{Evaluate the acceleration at all grids for both coarse and fine domians
+  \item{Evaluate the acceleration at all grids 
+  	\begin{equation*}
+  	\tilde{\bf v}^{c,n} = \frac{\tilde{\bf u}^{c,*,n+1}-2\tilde{\bf u}^{c,n}+\tilde{\bf u}^{c,n-1}}{\Delta^2_t}
+  	\end{equation*}
+  	\begin{equation*}
+  	\tilde{\bf v}^{f,n} = \frac{\tilde{\bf u}^{f,*,n+1}-2\tilde{\bf u}^{f,n}+\tilde{\bf u}^{f,n-1}}{\Delta^2_t}
+  	\end{equation*}
   }
-  \item{Comoute the corrector at the interior grid points for both coarse and fine domains
+  \item{Compute the corrector at the interior grid points
+  	\begin{equation*}
+  	{\bf u}^{c,n+1}_{i,j,k} = {\bf u}^{c,*,n+1}_{i,j,k} + \frac{\Delta_t^4}{12}\rho_c^{-1}\tilde{\tilde{M}}_c(\mu,\lambda) {\bf{u}}^{c,*,n}_{i,j,k}
+  	\end{equation*}
+  	\begin{equation*}
+  		{\bf u}^{f,n+1}_{i,j,k} = {\bf u}^{f,*,n+1}_{i,j,k} + \frac{\Delta_t^4}{12}\rho_f^{-1}\bar{M}_f(\mu,\lambda) {\bf{u}}^{f,*,n}_{i,j,k}
+  	\end{equation*}
   }
- \item {For the traction free boundary on the top surface of fine domain $\Omega_f$
+ \item {For the traction force boundary condition, assign the ghost point value ${\bf u}^{f,n+1}_{i,j,n_3^f+1}$ to satisfy
+ 		\begin{equation*}
+ 	N_{31}^fD_1{\bf u}^{f,n+1}_{i,j,n^f_3} + N_{32}^fD_2{\bf u}^{f,n+1}_{i,j,n^f_3} + N_{33}^fD_3{\bf u}^{f,n+1}_{i,j,n^f_3} = g(t_{n+1})
+ 	\end{equation*}	
  }
- \item {For the Dirichlet boundary condition on the bottom surface of coarse domain $\Omega_c$
+ \item {For the Dirichlet boundary condition, assign the ghost point value ${\bf u}^{c,n+1}_{i,j,0}$ to satify
+ 	\begin{equation*}
+ 	\tilde{\tilde{M}}(\mu,\lambda){\bf u}_{i,j,1}^{c,n+1} = \frac{\rho^c_{i,j,1}}{\Delta_t^2}\Big(d(t_{n+2})-2{\bf u}_{i,j,1}^{c,n+1}+{\bf u}_{i,j,1}^{c,n}\Big)
+ 	\end{equation*}
  }
- \item{Continuity of solution on the interface $\Gamma$
- }
- \item{Continuity of traction force on the interface $\Gamma$
- }
+ \item{For continuity of solution on the interface $\Gamma$, assign the value ${\bf u}^{f,n+1}_{i,j,0}$ to satisfy
+	\begin{equation*}
+	{\bf u}^{f,n+1}\big|_{\Gamma} = \mathcal{P}\big({\bf u}^{c,n+1}\big|_{\Gamma}\big)
+	\end{equation*}
+}
+\item{For the continuity of traction force on the interface $\Gamma$, assign the ghost point value ${\bf u}^{c,n+1}_{i,j,n_3^c+1}$ to satisfy
+	\begin{equation}\label{traction_gamma_corr}
+	\left(\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_c,\Gamma}
+	\end{equation}
+	with the definition of $\hat{A}_3$ in (\ref{hatA}) and ${\bm \eta}$ in (\ref{eta})
+}
 	\end{itemize}
-\end{algorithm}
+\end{breakablealgorithm}
+Here, we only give the steps to evolve the elatic wave equation with suitable initial and boundary condiitons and skip the detailed derivations of the fourth order predictor corrector time integator. One can refer to \cite{?} to get more details.
 
+In the Algorithm \ref{first_alg}, we need to solve the equations come from the continuity of the traction force for the interface $\Gamma$ in both preditor step (\ref{traction_gamma_pre}) and corrector step (
+\ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
 
-
-
+Note that there are $n_1^cn_2^c$ unknowns in (\ref{traction_gamma_pre}) and $n_1^cn_2^c$ linear equations in (\ref{traction_gamma_pre}). Since it is very expensive to calculate the LU-factorization for a large problem in $3$D and there is no efficient ways to calculate the LU-factorization in a parallel machine, we instead using iterative methods to solve the linear system (\ref{traction_gamma_pre}). Specificly, we use three different iterative methods: block Jacobian iterative method, conjugate gradient iterative method, pre-conditioned conjugate gradient iterative method, to solve (\ref{traction_gamma_pre}). The details are given in Section \ref{iterative_method}.
 
 \section{Numerical Experiments}
 
@@ -463,7 +536,7 @@ Show that no reflection at the mesh refinement interfaces.
 
 If the code is incorporated into SW4, it would be nice to solve a practical problem. 
 
-\subsection{Experiment 3}
+\subsection{Experiment 3}\label{iterative_method}
 We shall have an experiment for energy conservation. We also need to evaluate the iterative methods. These can be Experiment 3, or incoporated in the first two experiments.
 
 \section{Conclusion}
