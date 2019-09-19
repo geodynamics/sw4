@@ -6909,12 +6909,14 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   {
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
 					topodepth, writeEvery, downSample, !nsew, event );
+#if USE_HDF5
     if (hdf5format) {
       if(a_GlobalTimeSeries[event].size() == 0) 
         ts_ptr->allocFid();
       else 
         ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
     }
+#endif
 
 // include the receiver in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
