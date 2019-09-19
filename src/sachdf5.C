@@ -185,12 +185,11 @@ int createWriteAttrStr(hid_t loc, const char *name, const char* str)
     return 1;
 }
 
-int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, 
+int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, 
                   float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast)
 {
     hid_t dset, filespace, dxpl;
     herr_t ret;
-    int npts;
 
     dxpl = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
@@ -232,9 +231,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     }
 
     if (isLast) {
-        npts = (int)(*count);
-        /* printf("write npts = %d !\n", npts); */
-        openWriteAttr(loc, "VALIDNPTS", H5T_NATIVE_INT, &npts);
+        openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
     }
 
     H5Pclose(dxpl);
@@ -255,7 +252,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
   hid_t fid, grp, attr, attr_space1, attr_space3, dset_space, dset, dcpl;
   herr_t ret;
-  hsize_t dims1 = 1, dims3 = 3, total_dims = (hsize_t)totalSteps;
+  hsize_t dims1 = 1, dims3 = 3, total_dims;
   double start_time, elapsed_time;
   float stxyz[3], stlonlatdep[3], o, dt;
   std::string dset_names[10];
@@ -300,7 +297,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
      return -1;
   }
 
-  dset_space  = H5Screate_simple(1, &total_dims, NULL);
   attr_space1 = H5Screate_simple(1, &dims1, NULL);
   attr_space3 = H5Screate_simple(1, &dims3, NULL);
 
@@ -316,13 +312,15 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
  
   // delta, sample interval of time-series (seconds)
   dt = (float)delta;
+  dt *= TimeSeries[0]->getDownSample();
   createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
 
   // o, origin time (seconds, relative to start time of SW4 calculation and seismogram, earliest source)
   /* o = (float)TimeSeries[0]->getEpiTimeOffset(); */
   createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1);
 
-  createWriteAttr(fid, "NPTS", H5T_NATIVE_INT, attr_space1, &totalSteps);
+  /* int writesteps = totalSteps/TimeSeries[0]->getDownSample(); */
+  /* createWriteAttr(fid, "NPTS", H5T_NATIVE_INT, attr_space1, &writesteps); */
 
   // units, units for motion (m for displacement, m/s for velocity, m/s/s for acceleration
   mode = TimeSeries[0]->getMode();
@@ -344,7 +342,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     }
 
     // Number of points
-    createAttr(grp, "VALIDNPTS", H5T_NATIVE_INT, attr_space1);
+    createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
 
     // x, y, z
     /* stxyz[0] = float(TimeSeries[ts]->getX()); */
@@ -444,24 +442,26 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     }
 
     for (int i = 0; i < ndset; i++) {
-       dset = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-       ASSERT(dset >= 0);
+      total_dims = (hsize_t)(totalSteps/TimeSeries[i]->getDownSample());
+      dset_space = H5Screate_simple(1, &total_dims, NULL);
+      dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+      H5Sclose(dset_space);
+      ASSERT(dset >= 0);
 #ifdef USE_DSET_ATTR
-       std::string incname = dset_names[i] + "CMPINC";
-       std::string azname  = dset_names[i] + "CMPAZ";
-       createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1);
-       createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1);
+      std::string incname = dset_names[i] + "CMPINC";
+      std::string azname  = dset_names[i] + "CMPAZ";
+      createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1);
+      createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1);
 #else
-       createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1);
-       createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1);
+      createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1);
+      createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1);
 #endif
-       H5Dclose(dset);
+      H5Dclose(dset);
     }
     H5Gclose(grp);
   }
 
   H5Pclose(dcpl);
-  H5Sclose(dset_space);
   H5Sclose(attr_space1);
   H5Sclose(attr_space3);
   H5Fclose(fid);
@@ -509,7 +509,7 @@ int openHDF5file(vector<TimeSeries*> & TimeSeries)
   }
 
   *fid_ptr = H5Fopen(filename.c_str(),  H5F_ACC_RDWR, fapl);
-  if (fid_ptr < 0) {
+  if (*fid_ptr < 0) {
     printf("%s Error opening file [%s]\n", __func__, filename.c_str());
     return -1;
   }

@@ -45,6 +45,6 @@ int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id);
 int createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id, void *data);
 int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data);
 int createWriteAttrStr(hid_t loc, const char *name, const char* str);
-int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast);
+int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast);
 
 #endif

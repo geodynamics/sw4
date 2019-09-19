@@ -121,6 +121,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_fid_ptr(NULL),
   m_isMetaWritten(false),
   m_isIncAzWritten(false),
+  m_nptsWritten(0),
 #endif
   m_event(event)
 {
@@ -468,8 +469,10 @@ void TimeSeries::writeFile( string suffix )
   // create a new function to write metadata only
   if( m_hdf5Format )
   {
-    /* printf("Rank %d: Start writing station data [%s]\n", myRank, m_staName.c_str()); */
-    /* fflush(stdout); */
+    /* if (myRank == 0) { */
+    /*   printf("Writing station timeseries data\n", myRank, m_staName.c_str()); */
+    /*   fflush(stdout); */
+    /* } */
 
     fid_ptr = getFidPtr();
     if (fid_ptr == NULL) 
@@ -1134,18 +1137,38 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 		 float cmpinc, float cmpaz, bool makeCopy /*=false*/, bool isLast /*=false*/)
 {
   hsize_t start, count;
-  int prev_npts;
+  int ret, prev_npts;
+  int write_npts;
+  float *write_data;
 
-  // Tang : TODO write only new data
-  start = 0;
-  count = (hsize_t)npts;
-  /* printf("dset %s, start=%llu, count=%llu, cmpinc=%f, cmpaz=%f\n", var, start, count, cmpinc, cmpaz); */
+  write_npts = npts;
+  write_data = y;
+  if (mDownSample > 1) {
+    write_npts /= mDownSample;
+    write_data = new float[write_npts];
+    int j = 0;
+    for (int i = 0; i < npts; i += mDownSample) {
+      if (j >= write_npts) 
+        break;
+      write_data[j++] = y[i];
+    }
+
+  }
+
+  // write only new data
+  start = (hsize_t)m_nptsWritten;
+  count = (hsize_t)(write_npts - m_nptsWritten);
+  /* printf("dset %s, start=%llu, count=%llu, write_npts=%d, nptswritten=%d\n", var, start, count, write_npts, m_nptsWritten); */
   /* fflush(stdout); */
-  openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)y, 1, &start, &count, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
+  ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
 
-  if (isLast) 
+  if (isLast && ret == 1) {
+    m_nptsWritten += (write_npts - m_nptsWritten);
     H5Gflush(grp);
-  
+  }
+
+  if (mDownSample > 1) 
+    delete [] write_data;
 }
 #endif
 

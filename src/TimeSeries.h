@@ -71,6 +71,7 @@ void readFile( EW* ew, bool ignore_utc );
 float_sw4 **getRecordingArray(){ return mRecordedSol; }
 
 int getNsteps() const {return mLastTimeStep+1;}
+int getDownSample() const {return mDownSample;}
 
 bool myPoint(){ return m_myPoint; }
 
@@ -250,6 +251,7 @@ float_sw4 m_scalefactor;
    hid_t *m_fid_ptr;
    bool m_isMetaWritten;
    bool m_isIncAzWritten;
+   int  m_nptsWritten;
 #endif
 };
 

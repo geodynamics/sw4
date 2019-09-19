@@ -448,10 +448,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file with all necessary groups, attributes, and datasets
   /* printf("Rank %d has %d rec inputs\n", m_myRank, a_TimeSeries.size()); */
   /* fflush(stdout); */
-  if (a_TimeSeries[0]->getUseHDF5()) {
+  if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
     // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
     setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-    if(m_myRank == 0 && !m_check_point->do_restart() && a_TimeSeries.size() > 0 ) 
+    if(m_myRank == 0 && !m_check_point->do_restart()) 
         createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt);
     
     MPI_Barrier(MPI_COMM_WORLD);
@@ -557,13 +557,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   {    
     if( m_output_detailed_timing )
       time_measure[0] = MPI_Wtime();
-
-    // Tang debug
-    if(m_myRank == 0 ) {
-        cout << "Solving timestep " << currentTimeStep << endl;
-        fflush(stdout);
-    }
-        
 
 // all types of forcing...
     bool trace =false;
