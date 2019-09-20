@@ -16,7 +16,7 @@ LD = $(FC)
 
 # Object files
 
-OBJS = Elastic_3D_Interface_nonconforming.o problemsetup_new_3d.o SBP_operator.o
+OBJS = condition_number.o problemsetup_new_3d.o SBP_operator.o
 
 #
 .PHONY:copy
@@ -35,7 +35,7 @@ $(BINDIR)/Elastic_3D_Interface_nonconforming.x: $(OBJS)
 
 # The dependencies between modules
 
-Elastic_3D_Interface_nonconforming.f90: problemsetup_new_3d.mod SBP_operator.mod
+condition_number.f90: problemsetup_new_3d.mod SBP_operator.mod
 
 
 clean:

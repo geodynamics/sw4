@@ -16,7 +16,8 @@ LD = $(FC)
 
 # Object files
 
-OBJS = Elastic_3D_Interface_nonconforming.o problemsetup_new_3d.o SBP_operator.o
+OBJS = Elastic_3D_Interface_nonconforming_reorder.o problemsetup_new_3d.o SBP_operator.o
+#OBJS = Elastic_3D_Interface_nonconforming_it.o problemsetup_new_3d.o SBP_operator.o Iterative_solver.o
 
 #
 .PHONY:copy
@@ -35,8 +36,8 @@ $(BINDIR)/Elastic_3D_Interface_nonconforming.x: $(OBJS)
 
 # The dependencies between modules
 
-Elastic_3D_Interface_nonconforming.f90: problemsetup_new_3d.mod SBP_operator.mod
-
+#Elastic_3D_Interface_nonconforming_it.f90: problemsetup_new_3d.mod SBP_operator.mod Iterative_solver.mod
+Elastic_3D_Interface_nonconforming_reorder.f90: problemsetup_new_3d.mod SBP_operator.mod
 
 clean:
-	rm -rf *.x *.txt *.o *.a *.mod s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#
+	rm -rf *.x *.o *.a *.mod *.txt s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#
