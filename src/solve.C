@@ -557,6 +557,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   {    
     if( m_output_detailed_timing )
       time_measure[0] = MPI_Wtime();
+// Debug output
+//  if (m_myRank == 0) 
+//    cout << "Solving " << currentTimeStep << endl;
 
 // all types of forcing...
     bool trace =false;

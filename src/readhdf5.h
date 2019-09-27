@@ -29,31 +29,9 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
-#ifndef _SACHDF5_H
-#define _SACHDF5_H
+#ifndef _READHDF5_H
+#define _READHDF5_H
 
-#include <string>
-#include <sstream>
-#include <iostream> 
+void readStationHDF5(EW *ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > &GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax);
 
-#include "TimeSeries.h"
-#include "EW.h"
-
-#ifdef USE_HDF5
-
-#include "hdf5.h"
-
-
-int openHDF5file(vector<TimeSeries*> & TimeSeries);
-int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta);
-int writeTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int npts, void *data);
-
-int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id);
-int createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id, void *data);
-int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data);
-int createWriteAttrStr(hid_t loc, const char *name, const char* str);
-int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast);
-
-#endif // USE_HDF5
-
-#endif // SACHDF5_H
+#endif // _READHDF5_H

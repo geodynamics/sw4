@@ -43,13 +43,14 @@
 #include <ctime>
 
 #include "Require.h"
+#include "EW.h"
 #include "TimeSeries.h"
+
+#define USE_DSET_ATTR 1
 
 #ifdef USE_HDF5
 
 #include "sachdf5.h"
-
-#define USE_DSET_ATTR 1
 
 int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id)
 {
@@ -467,7 +468,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   H5Fclose(fid);
 
   elapsed_time = MPI_Wtime() - start_time;
-  printf("Created SAC HDF5 file [%s] time %e seconds\n", filename.c_str(), elapsed_time);
+  printf("Created empty SAC HDF5 file [%s] time %e seconds\n", filename.c_str(), elapsed_time);
   fflush(stdout);
   return 1;
 }
@@ -523,8 +524,6 @@ int openHDF5file(vector<TimeSeries*> & TimeSeries)
 
   return 0;
 }
-
-
 #endif // USE_HDF5
 
 #endif // SACHDF5_C

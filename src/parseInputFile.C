@@ -52,6 +52,10 @@
 #include "ESSI3D.h"
 #include "sacutils.h"
 
+#if USE_HDF5
+#include "readhdf5.h"
+#endif
+
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -465,6 +469,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 	  processCheckPoint(buffer);
        else if (startswith("globalmaterial", buffer))
          processGlobalMaterial(buffer);
+       else if (!m_inverse_problem && (startswith("rechdf5", buffer) || startswith("sachdf5", buffer)) ) // was called "sac" in WPP
+	 processReceiverHDF5(buffer, a_GlobalTimeSeries);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("obs", buffer)) // 
@@ -6619,6 +6625,102 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
 }   
 
 //-----------------------------------------------------------------------
+void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
+{
+  string inFileName = "station";
+  string fileName   = "station";
+  string staName    = "station";
+  int writeEvery    = 1000;
+  int downSample    = 1;
+  int event         = 0;
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+
+  char* token = strtok(buffer, " \t");
+
+  CHECK_INPUT(strcmp("rechdf5", token) == 0 || strcmp("sachdf5", token) == 0, "ERROR: not a rechdf5 line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "RECEIVER Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+
+     if(startswith("infile=", token))
+     {
+        token += 7; // skip infile=
+        inFileName= token;
+     }
+     else if(startswith("outfile=", token))
+     {
+        token += 8; // skip outfile=
+        fileName = token;
+     }
+     else if (startswith("writeEvery=", token))
+     {
+       token += strlen("writeEvery=");
+       writeEvery = atoi(token);
+       CHECK_INPUT(writeEvery >= 0,
+	       err << "rechdf5 command: writeEvery must be set to a non-negative integer, not: " << token);
+     }
+     else if (startswith("downSample=", token))
+     {
+       token += strlen("downSample=");
+       downSample = atoi(token);
+       CHECK_INPUT(downSample >= 1,
+	       err << "rechdf5 command: downSample must be set to an integer greater or equal than 1, not: " << token);
+     }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+	   CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	   event = it->second;
+	}
+     }
+     else if( startswith("variables=", token) )
+     {
+       token += strlen("variables=");
+
+       if( strcmp("displacement",token)==0 )
+	 mode = TimeSeries::Displacement;
+       else if( strcmp("velocity",token)==0 )
+	 mode = TimeSeries::Velocity;
+       else if( strcmp("div",token)==0 )
+	 mode = TimeSeries::Div;
+       else if( strcmp("curl",token)==0 )
+	 mode = TimeSeries::Curl;
+       else if( strcmp("strains",token)==0 )
+	 mode = TimeSeries::Strains;
+       else if( strcmp("displacementgradient",token)==0 )
+	 mode = TimeSeries::DisplacementGradient;
+       else
+       {
+	 if (proc_zero())
+	   cout << "receiver command: variables=" << token << " not understood" << endl
+		<< "using default mode (displacement)" << endl << endl;
+	 mode = TimeSeries::Displacement;
+       }
+       
+     }
+     else
+     {
+        badOption("receiver", token);
+     }
+     token = strtok(NULL, " \t");
+  }
+
+  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, a_GlobalTimeSeries, m_global_xmax, m_global_ymax);
+
+}
+
+//-----------------------------------------------------------------------
 void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
   double x=0.0, y=0.0, z=0.0;
@@ -6770,7 +6872,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
        CHECK_INPUT(writeEvery >= 0,
 	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
      }
-     else if (startswith("downSample=", token))
+     else if (startswith("downSample=", token) || startswith("downsample=", token))
      {
        token += strlen("downSample=");
        downSample = atoi(token);
