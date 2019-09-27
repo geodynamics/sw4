@@ -71,10 +71,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   herr_t status;
   H5O_info_t infobuf;
   EW *a_ew;
-  bool nsew;
   float data[3];
   double lon, lat, depth, x, y, z;
-  bool geoCoordSet = true, topodepth = false;
+  bool geoCoordSet = true, topodepth = false, nsew = false;
 
   ASSERT(operator_data != NULL);
 
@@ -94,9 +93,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
 
-    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) == true) {
-      nsew = false;
-      geoCoordSet = false;
+    if (H5Lexists(grp, "STLA,STLO,STDP", H5P_DEFAULT) == true) {
+      nsew = true;
+      geoCoordSet = true;
     }
 
     if (nsew) {
@@ -184,6 +183,12 @@ void readStationHDF5(EW *ew, string inFileName, string outFileName, int writeEve
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, inFileName.c_str());
     return;
+  }
+
+  if (inFileName == outFileName) {
+    if (ew->getRank() == 0) {
+      printf("Warning: Same station input file and output file name [%s]\n", inFileName.c_str());
+    }
   }
 
   tData.myRank = ew->getRank();

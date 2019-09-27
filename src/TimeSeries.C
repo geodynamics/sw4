@@ -3052,6 +3052,13 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
         const_cast<char*>(filey.c_str()),
         const_cast<char*>(filez.c_str()), ignore_utc);
   }
+  else if (m_hdf5Format) {
+    // Read the timeseries data in the HDF5 file from the fileio path directory
+    std::string fullFilePath = ew->getPath();
+    fullFilePath += "/" + m_fileName;
+    // TODO: Tang read hdf5
+
+  }
   else
   {
     // Read the old USGS files from the restart directory

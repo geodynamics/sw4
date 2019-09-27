@@ -6716,7 +6716,12 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
      token = strtok(NULL, " \t");
   }
 
+#ifdef USE_HDF5
   readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, a_GlobalTimeSeries, m_global_xmax, m_global_ymax);
+#else
+  if (proc_zero())
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
+#endif
 
 }
 
