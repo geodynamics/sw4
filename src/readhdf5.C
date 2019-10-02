@@ -83,8 +83,8 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 
   status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
   if (infobuf.type == H5O_TYPE_GROUP) {
-    if (op_data->myRank == 0)
-      printf ("Group: [%s] \n", grp_name);
+    /* if (op_data->myRank == 0) */
+    /*   printf ("Group: [%s] \n", grp_name); */
 
     // TODO: read x,y,z or ns,ew,up
     grp = H5Gopen(loc_id, grp_name, H5P_DEFAULT);
@@ -150,8 +150,8 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     }
     else
     {
-      if (op_data->myRank == 0)
-        cout << "x=" << x << ", y=" << y << ", z=" << z << ", writeEvery=" << op_data->writeEvery << endl;
+      /* if (op_data->myRank == 0) */
+      /*   cout << "x=" << x << ", y=" << y << ", z=" << z << ", writeEvery=" << op_data->writeEvery << endl; */
 
       TimeSeries *ts_ptr = new TimeSeries(a_ew, op_data->outFileName, grp_name, op_data->mode, false, false, true, x, y, z, 
   					topodepth, op_data->writeEvery, op_data->downSample, !nsew, op_data->event );
