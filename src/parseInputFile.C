@@ -6732,6 +6732,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool cartCoordSet = false, geoCoordSet = false;
   string fileName = "station";
+  string hdf5FileName = "station";
   string staName = "station";
   bool staNameGiven=false;
   
@@ -6848,6 +6849,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 	       err << "receiver command: depth must be greater than or equal to zero");
        CHECK_INPUT(depth <= m_global_zmax,
 		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+     }
+     else if(startswith("hdf5file=", token))
+     {
+        token += 9; // skip file=
+        hdf5FileName = token;
      }
      else if(startswith("file=", token))
      {
@@ -7014,6 +7020,9 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   }
   else
   {
+    if (hdf5format && hdf5FileName != "station") 
+      fileName = hdf5FileName;
+
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
 					topodepth, writeEvery, downSample, !nsew, event );
 #if USE_HDF5

@@ -73,7 +73,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   EW *a_ew;
   float data[3];
   double lon, lat, depth, x, y, z;
-  bool geoCoordSet = true, topodepth = false, nsew = false;
+  bool geoCoordSet = true, topodepth = false, nsew = true;
 
   ASSERT(operator_data != NULL);
 
@@ -93,9 +93,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
 
-    if (H5Lexists(grp, "STLA,STLO,STDP", H5P_DEFAULT) == true) {
-      nsew = true;
-      geoCoordSet = true;
+    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) == true) {
+      nsew = false;
+      geoCoordSet = false;
     }
 
     if (nsew) {

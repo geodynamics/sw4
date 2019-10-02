@@ -144,6 +144,7 @@ int   closeHDF5File();
 
 void write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
+void readSACHDF5( EW *ew, string FileName, bool ignore_utc );
 #endif
 
 private:   

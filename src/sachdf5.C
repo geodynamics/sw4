@@ -275,8 +275,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     filename = path;
 
   filename.append(name);
-  if (name.find(".hdf5") == string::npos && name.find(".h5") == string::npos) 
-    filename.append(".hdf5");
  
   if (is_debug) {
       printf("Start createTimeSeriesHDF5File [%s], %d steps\n", filename.c_str(), totalSteps);
@@ -524,6 +522,142 @@ int openHDF5file(vector<TimeSeries*> & TimeSeries)
 
   return 0;
 }
+
+int readAttrStr(hid_t loc, const char *name, char* str)
+{
+    herr_t ret;
+    hid_t attr, atype;
+
+    ASSERT(name);
+    ASSERT(str);
+
+    attr = H5Aopen(loc, name, H5P_DEFAULT);
+    if (attr < 0) {
+        printf("Error with H5Aopen [%s]\n", name);
+        return -1;
+    }
+    atype = H5Aget_type(attr);
+
+    ret = H5Aread(attr, atype, str);
+    if (ret < 0) {
+        printf("Error with H5Aread [%s]\n", name);
+        return -1;
+    }
+
+    H5Tclose(atype);
+    H5Aclose(attr);
+
+    return 1;
+}
+
+int readAttrInt(hid_t loc, const char *name, int *data)
+{
+  hid_t attr;
+  herr_t ret;
+
+#ifdef USE_DSET_ATTR
+  attr = H5Dopen(loc, name, H5P_DEFAULT);
+#else
+  attr = H5Aopen(loc, name, H5P_DEFAULT);
+#endif
+  if (attr < 0) {
+      printf("%s: Error with H5Aopen [%s]\n", __func__, name);
+      return -1;
+  }
+
+#ifdef USE_DSET_ATTR
+  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+  ret  = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
+  H5Pclose(dxpl);
+#else
+  ret  = H5Aread(attr, H5T_NATIVE_INT, (void*)data);
+#endif
+  if (ret < 0) {
+      printf("%s: Error with H5Aread [%s]\n", __func__, name);
+      return -1;
+  }
+
+#ifdef USE_DSET_ATTR
+  H5Dclose(attr);
+#else
+  H5Aclose(attr);
+#endif
+
+    return 1;
+}
+
+int readAttrFloat(hid_t loc, const char *name, float *data)
+{
+  hid_t attr;
+  herr_t ret;
+
+#ifdef USE_DSET_ATTR
+  attr = H5Dopen(loc, name, H5P_DEFAULT);
+#else
+  attr = H5Aopen(loc, name, H5P_DEFAULT);
+#endif
+  if (attr < 0) {
+      printf("%s: Error with H5Aopen [%s]\n", __func__, name);
+      return -1;
+  }
+
+#ifdef USE_DSET_ATTR
+  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+  ret  = H5Dread(attr, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
+  H5Pclose(dxpl);
+#else
+  ret  = H5Aread(attr, H5T_NATIVE_FLOAT, (void*)data);
+#endif
+  if (ret < 0) {
+      printf("%s: Error with H5Aread [%s]\n", __func__, name);
+      return -1;
+  }
+
+#ifdef USE_DSET_ATTR
+  H5Dclose(attr);
+#else
+  H5Aclose(attr);
+#endif
+
+    return 1;
+}
+
+int readData(hid_t loc, const char *name, int npts, void *data)
+{
+  hid_t dset, filespace, dxpl;
+  hsize_t start, count;
+  herr_t ret;
+
+  dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+
+  dset = H5Dopen(loc, name, H5P_DEFAULT);
+  if (dset < 0) {
+    printf("%s: Error with H5Dopen [%s]\n", __func__, name);
+    return -1;
+  }
+
+  start = 0;
+  count = (hsize_t) npts;
+  filespace = H5Dget_space(dset);
+  H5Sselect_hyperslab (filespace, H5S_SELECT_SET, &start, NULL, &count, NULL);
+
+  ret  = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, filespace, dxpl, data);
+  if (ret < 0) {
+      printf("%s: Error with H5Dread [%s]\n", __func__, name);
+      return -1;
+  }
+
+  H5Pclose(dxpl);
+  H5Sclose(filespace);
+  H5Dclose(dset);
+
+  return 1;
+}
+
+
 #endif // USE_HDF5
 
 #endif // SACHDF5_C

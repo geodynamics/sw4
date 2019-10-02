@@ -34,4 +34,5 @@
 
 void readStationHDF5(EW *ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > &GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax);
 
+
 #endif // _READHDF5_H

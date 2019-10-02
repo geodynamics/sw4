@@ -53,6 +53,10 @@ int createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id, 
 int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data);
 int createWriteAttrStr(hid_t loc, const char *name, const char* str);
 int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast);
+int readAttrStr(hid_t loc, const char *name, char* str);
+int readAttrInt(hid_t loc, const char *name, int *data);
+int readAttrFloat(hid_t loc, const char *name, float *data);
+int readData(hid_t loc, const char *name, int npts, void *data);
 
 #endif // USE_HDF5
 

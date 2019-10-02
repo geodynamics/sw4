@@ -198,7 +198,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    {
       //      mIgnore = true;
       printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
-	     m_fileName.c_str(),  mX,  mY, mZ, m_zTopo);
+	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
  // don't write this station
       m_myPoint=false;
       return;
@@ -3034,6 +3034,119 @@ void TimeSeries::set_utc_to_simulation_utc()
    m_t0 = 0;
 }
 
+#ifdef USE_HDF5
+void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
+{
+  bool debug = false;
+  hid_t fid, grp;
+  char data[128];
+  hsize_t ndim, dims[4];
+
+  fid = H5Fopen(FileName.c_str(),  H5F_ACC_RDONLY, H5P_DEFAULT);
+  if (fid < 0) {
+    printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
+    return;
+  }
+  
+  char datetime[128];
+  readAttrStr(fid, "DATETIME", datetime);
+
+  if (sscanf(datetime, "%4d-%2d-%2dT%2d:%2d:%2d.%d",  &m_utc[0],  &m_utc[1], &m_utc[2], &m_utc[3], &m_utc[4], &m_utc[5], &m_utc[6]) == EOF) {
+    cout << "ERROR reading observation " << m_fileName << " , UTC parse [" << datetime << "] failed!" << endl;
+  }
+  else {
+    int utcrefsim[7];
+    m_ew->get_utc(utcrefsim, m_event );
+    m_t0 = utc_distance( utcrefsim, m_utc );
+  }
+
+  std::string dset_names[3];
+  char unit[128];
+  readAttrStr(fid, "UNIT", unit);
+  bool foundd = (strstr(unit, "m") != NULL);
+  bool foundv = (strstr(unit, "m/s") != NULL);
+
+  if( foundd || foundv ) {
+    // The file contains velocities or displacements. 
+    bool cartesian = false;
+
+    grp = H5Gopen(fid, m_staName.c_str(), H5P_DEFAULT);
+    if (grp < 0) 
+      cout << "ERROR opening group [" << m_staName << "] !" << endl;
+
+    if (H5Lexists(grp, "Z", H5P_DEFAULT) == true) {
+      cartesian = true;
+      dset_names[0] = "X";
+      dset_names[1] = "Y";
+      dset_names[2] = "Z";
+
+    }
+    else {
+      dset_names[0] = "EW";
+      dset_names[1] = "NS";
+      dset_names[2] = "UP";
+    }
+    m_xyzcomponent = cartesian;
+
+    int npts;
+    readAttrInt(grp, "NPTS", &npts);
+    if( npts <= 1 ) {
+       cout << "ERROR: observed data is too short" << endl;
+       cout << "    File " << FileName << " not read." << endl;
+       return;
+    }
+
+    float dt, tstart;
+    readAttrFloat(fid, "DELTA", &dt);
+    tstart = (npts-1) * dt;
+
+    // Only allocate arrays if we aren't doing a restart
+    if(!mIsRestart)
+      allocateRecordingArrays( npts, m_t0+tstart, dt );
+    else
+      m_nptsWritten = npts;
+
+    float *buf_0 = new float[npts];
+    float *buf_1 = new float[npts];
+    float *buf_2 = new float[npts];
+
+    readData(grp, dset_names[0].c_str(), npts, buf_0);
+    readData(grp, dset_names[1].c_str(), npts, buf_1);
+    readData(grp, dset_names[2].c_str(), npts, buf_2);
+
+    // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
+    float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+    float_sw4 a11 = m_calpha*deti;
+    float_sw4 a12 = m_thxnrm*deti;
+    float_sw4 a21 =-m_salpha*deti;
+    float_sw4 a22 = m_thynrm*deti;
+
+    for (int i = 0; i < npts; i++) {
+      if( cartesian ) {
+        mRecordedSol[0][i] = (float_sw4)buf_0[i];
+        mRecordedSol[1][i] = (float_sw4)buf_1[i];
+        mRecordedSol[2][i] = (float_sw4)buf_2[i];
+      }
+      else {
+        mRecordedSol[0][i] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
+        mRecordedSol[1][i] = a21*(float_sw4)buf_1[i] + a22*(float_sw4)buf_0[i];
+        mRecordedSol[2][i] = -(float_sw4)buf_2[i];
+      }
+    }
+
+    mLastTimeStep = npts - 1;
+
+    delete[] buf_0;
+    delete[] buf_1;
+    delete[] buf_2;
+    H5Gclose(grp);
+  }
+
+  H5Fclose(fid);
+}
+#endif
+
+
 //-----------------------------------------------------------------------
 // Restart by reading in prior time series file
 void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle)
@@ -3056,7 +3169,12 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
     // Read the timeseries data in the HDF5 file from the fileio path directory
     std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_fileName;
-    // TODO: Tang read hdf5
+#ifdef USE_HDF5
+    if( m_myPoint )
+      readSACHDF5(ew, fullFilePath, ignore_utc);
+#else
+    cout << "readSACHDF5: read from HDF5 file but sw4 is not compiled with HDF5!" << endl;
+#endif
 
   }
   else
@@ -3205,5 +3323,6 @@ int TimeSeries::closeHDF5File()
 
   return 0;
 }
+
 
 #endif
