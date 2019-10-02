@@ -118,6 +118,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_compute_scalefactor(true),
   m_misfit_scaling(1),
 #ifdef USE_HDF5
+  m_sta_z(depth),
   m_fid_ptr(NULL),
   m_isMetaWritten(false),
   m_isIncAzWritten(false),
@@ -486,12 +487,13 @@ void TimeSeries::writeFile( string suffix )
       if (grp > 0 && !m_isMetaWritten) {
         stlalodp[0] = float(m_rec_lat);
         stlalodp[1] = float(m_rec_lon);
-        stlalodp[2] = float(mZ);
+        stlalodp[2] = float(m_sta_z);
+
         openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, stlalodp);
 
         stxyz[0] = float(mX);
         stxyz[1] = float(mY);
-        stxyz[2] = float(mZ);
+        stxyz[2] = float(m_sta_z);
         openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, stxyz);
 
         origintime = float(m_epi_time_offset);

@@ -2381,7 +2381,6 @@ Cartesian components of these quantities.
 %% When {\tt velocity=1}, the strains of the time derivative of the solution are output on files 
 %% named {\tt sta1.vxx}, {\tt sta1.vyy}, etc.
 %% There is currently no support for outputting the strains in East, North, and vertical coordinates.
-
 \subsection{The ASCII text format}
 \emph{SW4} can also output receiver time-histories on an ASCII text format,
 \begin{verbatim}
@@ -2394,12 +2393,24 @@ the \verb+usgsformat=1+ option is used, the file gets extension .txt independent
 its content. Note that you need to give the \verb+sacformat=0+ option unless you want the solution
 to be output in both formats.
 
+\subsection{The SAC HDF5 format}
+\emph{SW4} can also output receiver time-histories in the HDF5 format,
+\begin{verbatim}
+rec lat=38.25 lon=-122.20 depth=0 file=sta1 hdf5file=sta.hdf5 sacformat=0 hdf5format=1
+\end{verbatim}
+The HDF5 file holds all components (usually three, but only one when {\tt
+  variables=div}, and six when {\tt variables=strains} ) in a single file named {\tt sta.hdf5}. When
+the \verb+hdf5format=1+ and \verb+hdf5file=sta.hdf5+ option is used. 
+Note that you need to give the \verb+sacformat=0+ option unless you want the solution
+to be output in both formats.
+
 \subsection{Notes on the {\tt rec} command}
 \begin{itemize}
 \item The files are treated in the same way on parallel and serial file systems, because the data
   for each recording station originates from one processor (core) and is always written by that processor only.
 \item The binary SAC format is described in Section~\ref{sec:sac-format}.
 \item The ASCII text format is very simple and is outlined in its header.
+\item The HDF5 format is described in Section~\ref{sec:sachdf5-format}.
 \item The binary SAC files can be read by the SAC program. We also provide a matlab/octave script in
   {\tt tools/readsac.m}.
 \item The ASCII text file format can be read by the Matlab/Octave script in {\tt tools/readusgs.m}.
@@ -3781,7 +3792,7 @@ changed names and others are no longer supported.
 \bf
 Syntax:\\
 \tt
-rec x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... writeEvery=... nsew=... usgsformat=... sacformat=... variables=...
+rec x=... y=... z=... lat=... lon=... depth=... topodepth=... sta=... file=... writeEvery=... nsew=... usgsformat=... sacformat=... hdf5format=... variables=... hdf5file=... downsample=...
 \\
 \bf Required parameters:\\
 \rm Location of the receiver in Cartesian or geographical coordinates.
@@ -3810,13 +3821,16 @@ topodepth & depth of the receiver (same as depth) & real & m & none \\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
 file & file name  & string & none & station \\ \hline
 sta & name of the station & string & none & (same as file) \\ \hline
+hdf5file & file name  & string & none & station \\ \hline
 writeEvery & cycle interval to write the file to disk & int & none & 1000 \\ \hline
 %
 usgsformat & output all components in an ASCII text file & int & none & 0 \\ \hline
 sacformat & output each component in a SAC file & int & none & 1 \\ \hline 
+hdf5format & output all components in an HDF5 file & int & none & 0 \\ \hline 
 \hline
 nsew & output (x,y,z)-components (0) or East, North, and vertical ($-z$) components (1)& int & none & 0 \\ \hline
 variables & displacement, velocity, div, curl, strains, or displacementgradient & string & none & displacement \\ \hline
+downsample & only available when hdf5format=1, outputs all components with the given downsample rate, resulting in less output data size & int & none & 1\\ \hline
 \end{tabular}
 \end{center}
 Let ${\bf u}=(u^{(x)},\ u^{(y)},\ u^{(z)})$ denote the solution of (\ref{eq:elastic-we}) computed by SW4. 
@@ -4992,6 +5006,151 @@ description of the file format.
 
 We provide a simplified Matlab/octave reader of SAC files called {\tt readsac.m} in the {\tt tools}
 directory. Note that only a subset of the header information is parsed by this reader.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{sachdf5}\label{sec:sachdf5-format}
+\index{fileformats!sachdf5}
+
+The HDF5 format hold the time history of all components of the solution at a fixed point in space.
+There are 4 global attributes in the root group of the file, including {\tt DATETIME}, a time string
+(in UTC) recording the start of the simulation; {\tt UNIT}, the unit for the data (``m'', ``m/s'', etc.);
+{\tt DELTA}, the sample interval; and {\tt ORIGINTIME}, the origin time in seconds, relative to start time 
+of SW4 calculation and seismogram of the earliest source.
+
+Then the time-series data of each station in in seperate groups, using the station name as the group name.
+Inside each group, the is location code, number of valid points stored in the data array, the station location
+in both xyz coordiate in SW4 domain (m) and latitude, longitude, depth. The data array may be named with 
+X, Y, Z, or EW, NS, UP, depending on the {\tt isnsew=} option specified in the rec/sac command. For each of 
+these component, there are also *CMPAZ and *CMINC (e.g. XCMPAZ, XCMPINC) recording its azimuth and inclination.
+
+Note that the dataspace of the data array is pre-allocated to hold the entire timeseries data of the simulation,
+when the SW4 is terminately early (i.e. in case of checkpoint/restart), only a portion of the data in the array
+is valid, with the size recorded in the ``NPTS'' field. When reading the data, it is recommanded to read the 
+``NPTS'' value first and only use the first {\tt NPTS} values from the data array.
+
+The HDF5 file stores data in an self-describing way, with the following fields:
+
+\begin{center}
+\begin{tabular}{lll}\hline
+Name & Type & Size \\ \hline
+  ``DATETIME'' & H5T\_STRING & string\_len \\ \hline
+  ``UNIT'' & H5T\_STRING & string\_len \\ \hline
+  ``DELTA'' & H5T\_STD\_F32LE & 1 \\ \hline
+  ``ORIGINTIME'' & H5T\_STD\_F32LE & 1 \\ \hline
+Group /BK.BDM (station name) \\ \hline
+  ``LOC'' & H5T\_IEEE\_I32LE & 1  \\ \hline
+  ``NPTS'' & H5T\_IEEE\_I32LE & 1  \\ \hline
+  ``STLA,STLO,STDP'' & H5T\_STD\_F32LE & 3 \\ \hline
+  ``STX,STY,STZ'' & H5T\_STD\_F32LE & 3 \\ \hline
+  ``X or EW'' & H5T\_STD\_F32LE & NPTS \\ \hline
+  ``XCMPAZ or EWCMPAZ'' & H5T\_STD\_F32LE & 1\\ \hline
+  ``XCMPINC or EWCMPINC'' & H5T\_STD\_F32LE & 1\\ \hline
+  ``Y or NS'' & H5T\_STD\_F32LE & NPTS \\ \hline
+  ``YCMPAZ or NSCMPAZ'' & H5T\_STD\_F32LE & 1\\ \hline
+  ``YCMPINC or NSCMPINC'' & H5T\_STD\_F32LE & 1\\ \hline
+  ``Z or UP'' & H5T\_STD\_F32LE & NPTS \\ \hline
+  ``ZCMPAZ or UPCMPAZ'' & H5T\_STD\_F32LE & 1\\ \hline
+  ``ZCMPINC or UPCMPINC'' & H5T\_STD\_F32LE & 1\\ \hline
+\end{tabular}
+\end{center}
+
+The output of {\tt h5dump -A} header and metadata is below (lightly edited):
+
+\begin{verbatim}
+HDF5 "sta.hdf5" {
+GROUP "/" {
+   ATTRIBUTE "DATETIME" {
+      DATATYPE  H5T_STRING {
+         STRSIZE 27;
+         STRPAD H5T_STR_NULLTERM;
+         CSET H5T_CSET_ASCII;
+         CTYPE H5T_C_S1;
+      }
+      DATASPACE  SCALAR
+      DATA {
+      (0): "2019-10-02T02:18:58.000000"
+      }
+   }
+   ATTRIBUTE "UNIT" {
+      DATATYPE  H5T_STRING {
+         STRSIZE 2;
+         STRPAD H5T_STR_NULLTERM;
+         CSET H5T_CSET_ASCII;
+         CTYPE H5T_C_S1;
+      }
+      DATASPACE  SCALAR
+      DATA {
+      (0): "m"
+      }
+   }
+   DATASET "DELTA" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "ORIGINTIME" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   GROUP "BK.BDM" {
+      DATASET "LOC" {
+         DATATYPE  H5T_STD_I32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "NPTS" {
+         DATATYPE  H5T_STD_I32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "STLA,STLO,STDP" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
+      }
+      DATASET "STX,STY,STZ" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
+      }
+      DATASET "X" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
+      }
+      DATASET "XCMPAZ" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "XCMPINC" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "Y" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
+      }
+      DATASET "YCMPAZ" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "YCMPINC" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "Z" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
+      }
+      DATASET "ZCMPAZ" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+      DATASET "ZCMPINC" {
+         DATATYPE  H5T_IEEE_F32LE
+         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      }
+   }
+   GROUP "BK.BKS" {
+   ...
+   }
+}
+
+\end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{image}\label{sec:image-format}

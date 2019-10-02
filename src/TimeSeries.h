@@ -249,6 +249,7 @@ float_sw4 m_scalefactor;
 
 // HDF5 file id for all SAC data
 #ifdef USE_HDF5
+   float_sw4 m_sta_z;
    hid_t *m_fid_ptr;
    bool m_isMetaWritten;
    bool m_isIncAzWritten;
