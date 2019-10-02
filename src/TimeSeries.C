@@ -3090,7 +3090,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     }
     m_xyzcomponent = cartesian;
 
-    int npts;
+    int npts, sw4npts;
     readAttrInt(grp, "NPTS", &npts);
     if( npts <= 1 ) {
        cout << "ERROR: observed data is too short" << endl;
@@ -3102,9 +3102,17 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     readAttrFloat(fid, "DELTA", &dt);
     tstart = (npts-1) * dt;
 
+    // dt may be downsampled 
+    int downsample = (int)(dt / m_dt + 0.5);
+    sw4npts =  (npts-1) * downsample;
+    if (downsample < 1) {
+       cout << "ERROR: downsample="<< downsample << " is invalid!" << endl;
+       return;
+    }
+
     // Only allocate arrays if we aren't doing a restart
     if(!mIsRestart)
-      allocateRecordingArrays( npts, m_t0+tstart, dt );
+      allocateRecordingArrays( sw4npts, m_t0+tstart, dt );
     else
       m_nptsWritten = npts;
 
@@ -3123,20 +3131,32 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     float_sw4 a21 =-m_salpha*deti;
     float_sw4 a22 = m_thynrm*deti;
 
-    for (int i = 0; i < npts; i++) {
+    for (int i = 0; i < npts-1; i++) {
       if( cartesian ) {
-        mRecordedSol[0][i] = (float_sw4)buf_0[i];
-        mRecordedSol[1][i] = (float_sw4)buf_1[i];
-        mRecordedSol[2][i] = (float_sw4)buf_2[i];
+        mRecordedSol[0][i*downsample] = (float_sw4)buf_0[i];
+        mRecordedSol[1][i*downsample] = (float_sw4)buf_1[i];
+        mRecordedSol[2][i*downsample] = (float_sw4)buf_2[i];
       }
       else {
-        mRecordedSol[0][i] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
-        mRecordedSol[1][i] = a21*(float_sw4)buf_1[i] + a22*(float_sw4)buf_0[i];
-        mRecordedSol[2][i] = -(float_sw4)buf_2[i];
+        mRecordedSol[0][i*downsample] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
+        mRecordedSol[1][i*downsample] = a21*(float_sw4)buf_1[i] + a22*(float_sw4)buf_0[i];
+        mRecordedSol[2][i*downsample] = -(float_sw4)buf_2[i];
       }
     }
 
-    mLastTimeStep = npts - 1;
+    // Make sure the last point is valid
+    if( cartesian ) {
+      mRecordedSol[0][sw4npts-1] = (float_sw4)buf_0[npts-1];
+      mRecordedSol[1][sw4npts-1] = (float_sw4)buf_1[npts-1];
+      mRecordedSol[2][sw4npts-1] = (float_sw4)buf_2[npts-1];
+    }
+    else {
+      mRecordedSol[0][sw4npts-1] = a11*(float_sw4)buf_1[npts-1] + a12*(float_sw4)buf_0[npts-1];
+      mRecordedSol[1][sw4npts-1] = a21*(float_sw4)buf_1[npts-1] + a22*(float_sw4)buf_0[npts-1];
+      mRecordedSol[2][sw4npts-1] = -(float_sw4)buf_2[npts-1];
+    }
+
+    mLastTimeStep = sw4npts - 1;
 
     delete[] buf_0;
     delete[] buf_1;
