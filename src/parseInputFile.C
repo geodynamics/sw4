@@ -7063,6 +7063,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string date = "";
   string time = "";
   string sacfile1, sacfile2, sacfile3;
+  string hdf5file;
 
   bool usgsformat = 1, sacformat=0, hdf5format = 0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
@@ -7158,6 +7159,11 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
        CHECK_INPUT(depth <= m_global_zmax,
 		   "observation command: depth must be less than or equal to zmax, not " << depth);
 // by depth we here mean depth below topography
+     }
+     else if( startswith("hdf5file=",token) )
+     {
+        token += 9;
+        hdf5file += token;
      }
      else if(startswith("file=", token))
      {
@@ -7288,6 +7294,11 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   if( usgsfileset )
   {
      CHECK_INPUT( !sf1set && !sf2set && !sf3set, "processObservation, Error: can not give both usgs file and sacfiles" );
+  }
+  else if ( hdf5format )
+  {
+    // TODO: read data from HDF5 file
+
   }
   else
   {

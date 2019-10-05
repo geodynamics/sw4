@@ -259,7 +259,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   std::string dset_names[10];
   TimeSeries::receiverMode mode;
   bool xyzcomponent;
-  int ndset = 0;
+  int ndset = 0, isnsew = 0;
 
   if (TimeSeries.size() == 0) 
       return 0;
@@ -306,7 +306,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   // datetime, human readable string for date and time of start of SW4 calculation, e.g. 2019-07-23T01:02:03)
   char utcstr[32];
   sprintf(utcstr, "%d-%02d-%02dT%02d:%02d:%02d.%06d", TimeSeries[0]->getMUTC(0), TimeSeries[0]->getMUTC(1), TimeSeries[0]->getMUTC(2), TimeSeries[0]->getMUTC(3), TimeSeries[0]->getMUTC(4), TimeSeries[0]->getMUTC(5), TimeSeries[0]->getMUTC(6));
-  /* printf("DATATIME=%s\n", utcstr); */
   createWriteAttrStr(fid, "DATETIME", utcstr);
  
   // delta, sample interval of time-series (seconds)
@@ -315,11 +314,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
 
   // o, origin time (seconds, relative to start time of SW4 calculation and seismogram, earliest source)
-  /* o = (float)TimeSeries[0]->getEpiTimeOffset(); */
   createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1);
-
-  /* int writesteps = totalSteps/TimeSeries[0]->getDownSample(); */
-  /* createWriteAttr(fid, "NPTS", H5T_NATIVE_INT, attr_space1, &writesteps); */
 
   // units, units for motion (m for displacement, m/s for velocity, m/s/s for acceleration
   mode = TimeSeries[0]->getMode();
@@ -344,23 +339,20 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
 
     // x, y, z
-    /* stxyz[0] = float(TimeSeries[ts]->getX()); */
-    /* stxyz[1] = float(TimeSeries[ts]->getY()); */
-    /* stxyz[2] = float(TimeSeries[ts]->getZ()); */
-    /* createWriteAttr(grp, "STX,STY,STDP", H5T_NATIVE_FLOAT, attr_space3, stxyz); */
     createAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, attr_space3);
 
     // Lon, lat, dep
-    /* stlonlatdep[0] = float(TimeSeries[ts]->getLat()); */
-    /* stlonlatdep[1] = float(TimeSeries[ts]->getLon()); */
-    /* stlonlatdep[2] = float(TimeSeries[ts]->getZ()); */
-    /* createWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, attr_space3, stlonlatdep); */
     createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, attr_space3);
 
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
+    if( !xyzcomponent )
+      isnsew = 1;
+
+    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
+
     mode         = TimeSeries[ts]->getMode();
     // Datasets
     if( mode == TimeSeries::Displacement )
@@ -371,14 +363,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
           dset_names[0] = "X";
           dset_names[1] = "Y";
           dset_names[2] = "Z";
-          /* msg << "[x|y|z]" << endl; */
        }
        else
        {
           dset_names[0] = "EW";
           dset_names[1] = "NS";
           dset_names[2] = "UP";
-          /* msg << "[e|n|u]" << endl; */
 
        }
     }
@@ -390,21 +380,18 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
           dset_names[0] = "Vx";
           dset_names[1] = "Vy";
           dset_names[2] = "Vz";
-          /* msg << "[xv|yv|zv]" << endl; */
        }
        else
        {
           dset_names[0] = "Vew";
           dset_names[1] = "Vns";
           dset_names[2] = "Vup";
-          /* msg << "[ev|nv|uv]" << endl; */
        }
     }
     else if( mode == TimeSeries::Div )
     {
         ndset = 1;
         dset_names[0] = "Div";
-    	/* msg << "[div]" << endl; */
     }
     else if( mode == TimeSeries::Curl )
     {
@@ -412,7 +399,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     	dset_names[0] = "Curlx";
     	dset_names[1] = "Curly";
     	dset_names[2] = "Curlz";
-    	/* msg << "[curlx|curly|curlz]" << endl; */
     }
     else if( mode == TimeSeries::Strains )
     {
@@ -423,7 +409,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     	dset_names[3] = "Uxy";
     	dset_names[4] = "Uxz";
     	dset_names[5] = "Uyz";
-    	/* msg << "[xx|yy|zz|xy|xz|yz]" << endl; */
     }
     else if( mode == TimeSeries::DisplacementGradient )
     {
@@ -437,11 +422,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     	dset_names[6] = "DUZDX";
     	dset_names[7] = "DUZDY";
     	dset_names[8] = "DUZDZ";
-    	/* msg << "[duxdx|duxdy|duxdz|duydx|duydy|duydz|duzdx|duzdy|duzdz]" << endl; */
     }
 
     for (int i = 0; i < ndset; i++) {
       total_dims = (hsize_t)(totalSteps/TimeSeries[i]->getDownSample());
+      if (totalSteps % TimeSeries[i]->getDownSample() != 0) 
+        total_dims++;
       dset_space = H5Screate_simple(1, &total_dims, NULL);
       dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
       H5Sclose(dset_space);
@@ -466,7 +452,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   H5Fclose(fid);
 
   elapsed_time = MPI_Wtime() - start_time;
-  printf("Created empty SAC HDF5 file [%s] time %e seconds\n", filename.c_str(), elapsed_time);
+  printf("Created SAC HDF5 file [%s] time %e seconds\n", filename.c_str(), elapsed_time);
   fflush(stdout);
   return 1;
 }

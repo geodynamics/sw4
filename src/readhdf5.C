@@ -67,13 +67,14 @@ struct traverse_data_t {
 
 static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
 {
-  hid_t grp, dset;
+  hid_t grp, dset, attr;
   herr_t status;
   H5O_info_t infobuf;
   EW *a_ew;
   float data[3];
   double lon, lat, depth, x, y, z;
   bool geoCoordSet = true, topodepth = false, nsew = true;
+  int isnsew;
 
   ASSERT(operator_data != NULL);
 
@@ -86,17 +87,28 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
 
-    // TODO: read x,y,z or ns,ew,up
+    // read x,y,z or ns,ew,up
     grp = H5Gopen(loc_id, grp_name, H5P_DEFAULT);
     if (grp < 0) {
       printf("Error opening group [%s]\n", grp_name);
       return -1;
     }
 
-    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) == true) {
-      nsew = false;
-      geoCoordSet = false;
+    attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
+    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+    H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
+    H5Pclose(dxpl);
+    H5Dclose(attr);
+    if (isnsew == 0) {
+        nsew = false;
+        geoCoordSet = false;
     }
+
+    /* if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) == true) { */
+    /*   nsew = false; */
+    /*   geoCoordSet = false; */
+    /* } */
 
     if (nsew) {
       // STLA,STLO,STDP

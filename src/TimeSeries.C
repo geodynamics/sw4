@@ -1139,14 +1139,16 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 		 float cmpinc, float cmpaz, bool makeCopy /*=false*/, bool isLast /*=false*/)
 {
   hsize_t start, count;
-  int ret, prev_npts;
+  int ret = 1, prev_npts;
   int write_npts;
   float *write_data;
 
   write_npts = npts;
   write_data = y;
   if (mDownSample > 1) {
-    write_npts /= mDownSample;
+    write_npts = write_npts/mDownSample;
+    if (write_npts % mDownSample != 0) 
+      write_npts++;
     write_data = new float[write_npts];
     int j = 0;
     for (int i = 0; i < npts; i += mDownSample) {
@@ -1154,7 +1156,6 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
         break;
       write_data[j++] = y[i];
     }
-
   }
 
   // write only new data
@@ -1162,10 +1163,11 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   count = (hsize_t)(write_npts - m_nptsWritten);
   /* printf("dset %s, start=%llu, count=%llu, write_npts=%d, nptswritten=%d\n", var, start, count, write_npts, m_nptsWritten); */
   /* fflush(stdout); */
-  ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
+  if (count > 0) 
+    ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
 
   if (isLast && ret == 1) {
-    m_nptsWritten += (write_npts - m_nptsWritten);
+    m_nptsWritten += count;
     H5Gflush(grp);
   }
 
@@ -3131,7 +3133,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     float_sw4 a21 =-m_salpha*deti;
     float_sw4 a22 = m_thynrm*deti;
 
-    for (int i = 0; i < npts-1; i++) {
+    for (int i = 0; i < npts; i++) {
       if( cartesian ) {
         mRecordedSol[0][i*downsample] = (float_sw4)buf_0[i];
         mRecordedSol[1][i*downsample] = (float_sw4)buf_1[i];
@@ -3143,20 +3145,6 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
         mRecordedSol[2][i*downsample] = -(float_sw4)buf_2[i];
       }
     }
-
-    // Make sure the last point is valid
-    if( cartesian ) {
-      mRecordedSol[0][sw4npts-1] = (float_sw4)buf_0[npts-1];
-      mRecordedSol[1][sw4npts-1] = (float_sw4)buf_1[npts-1];
-      mRecordedSol[2][sw4npts-1] = (float_sw4)buf_2[npts-1];
-    }
-    else {
-      mRecordedSol[0][sw4npts-1] = a11*(float_sw4)buf_1[npts-1] + a12*(float_sw4)buf_0[npts-1];
-      mRecordedSol[1][sw4npts-1] = a21*(float_sw4)buf_1[npts-1] + a22*(float_sw4)buf_0[npts-1];
-      mRecordedSol[2][sw4npts-1] = -(float_sw4)buf_2[npts-1];
-    }
-
-    mLastTimeStep = sw4npts - 1;
 
     delete[] buf_0;
     delete[] buf_1;
