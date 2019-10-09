@@ -762,19 +762,19 @@ Table \ref{condition_number} shows the condition number of the original coeffici
 \subsubsection{Verification of convergence rate}\label{convergence_study}
 We now perform a convergence study for the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}). The convergence rate is computed by
 \[log\left(\frac{e_h}{e_{2h}}\right)\Bigg/log\left(\frac{1}{2}\right),\]
-here, $e_h$ is the corresponding $L^\infty$ error or $L^2$ error.  The $L^2$ error in the numerical solution for the whole domain and $L^\infty$ error in the numerical solution for the coarse $\Omega^c$ and fine $\Omega^f$ domain are presented in Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases, thought the theoretical convergence rate is second for the points near boundaries. Note that we use a block Jacobian iterative method for the experiments here.
+here, $e_h$ is the corresponding $L^2$ error.  The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases, thought the theoretical convergence rate is second for the points near boundaries. Note that we use a block Jacobian iterative method for the experiments here.
 
 \begin{table}[htb]
 	\begin{center}
 		\begin{tabular}{|c|c c c|}
 			\hline
-		    $h^c = 2h^f$   & $L^{c,\infty}$ & $L^{f,\infty}$ & $L^2$  \\
+		    $h^c = 2h^f$   & $L^2$ & $L^{f,2}$ & $L^{c,2}$  \\
 			\hline
-			$2\pi/24$ &3.9702e-03 ~~~~~~~~ & 3.8742e-03 ~~~~~~~~ & 1.7834e-03 ~~~~~~~~\\
+			$2\pi/24$ &1.7740e-03 ~~~~~~~~ & 8.8534e-04 ~~~~~~~~ & 1.5373e-03 ~~~~~~~~\\
 			\hline
-			$2\pi/48$ &2.6360e-04 (3.91) & 2.6921e-04 (3.85) & 1.0718e-04 (4.06)\\
+			$2\pi/48$ &1.0658e-04 (4.06) & 5.5352e-05 (4.00) & 9.1084e-05 (4.08)\\
 			\hline 
-			$2\pi/96$ &1.8563e-05 (3.83) & 1.6638e-05 (4.02) & 6.3739e-06 (4.07)\\
+			$2\pi/96$ &6.3379e-06 (4.07) & 3.2694e-06 (4.08) & 5.4296e-06 (4.07)\\
 			\hline
 		\end{tabular}
 	\end{center}
