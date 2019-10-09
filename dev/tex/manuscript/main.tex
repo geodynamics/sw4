@@ -4,7 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{graphicx}
-\usepackage[colorinlistoftodos]{todonotes}
+%\usepackage[colorinlistoftodos]{todonotes}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
 \usepackage{booktabs}
@@ -18,6 +18,7 @@
 \usepackage{amsfonts}
 \usepackage{algorithm,algpseudocode}
 \usepackage{ulem}
+\usepackage{footmisc}
 
 \makeatletter
 \newenvironment{breakablealgorithm}
@@ -62,11 +63,11 @@ We consider the time dependent isotropic elastic wave equation in three dimensio
 The problem is defined on the domain ${\bf x}\in\Omega = [0,a^{(1)}]\times[0,a^{(2)}]\times[0,a^{(3)}]$ with ${\bf x} = (x_1,x_2,x_3)^T$ are Cartesian coordinates. Denote ${\bf u} = (u_1,u_2,u_3)^T$ to be the three dimensional displacement vector in Cartesian coordinates, then the elastic wave equation takes the form,
 \begin{align*}
     \rho\frac{\partial^2{\bf u}}{\partial^2 t} &= \nabla\cdot\mathcal{T} + {\bf F}, \ \ \ {\bf x}\in\Omega,\ \ \ t\geq 0,\\
-    \nabla\cdot\mathcal{T} &:= {\bf Lu},
+    \nabla\cdot\mathcal{T} &:= L{\bf u},
 \end{align*}
 provided with appropriate initial and boundary conditions. Here, $\rho$ is density, $\mathcal{T}$ is the stress tensor and ${\bf F}$ is the force function. The spatial operator ${\bf L}$ is called $3\times3$ symmetric Kelvin-Christoffel differential operator matrix, specifically,
 \begin{equation*}
-    {\bf L u} = \partial_1(A_1\nabla{\bf u}) + \partial_2(A_2\nabla{\bf u}) + \partial_3(A_3\nabla{\bf u}),
+    L{\bf  u} = \partial_1(A_1\nabla{\bf u}) + \partial_2(A_2\nabla{\bf u}) + \partial_3(A_3\nabla{\bf u}),
 \end{equation*}
 with
 \begin{align*}
@@ -205,14 +206,17 @@ Here, ${\bf n}$ is the unit outward norm of the cuvilinear domain $\Omega$. It i
 \end{equation*}
 here, the term $||\sqrt{\rho}{\bf u}_t||_2^2$ represents the kinematic energy and the term $S({\bf u},{\bf u})$ is so called potental energy. If we have a homegeneous Dirichlet bounary condition or a free suface boundary condition, then
 \begin{equation}\label{simple_time_deri_curvi}
-\frac{1}{2}\frac{d}{dt} \left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right) =  ({\bf u}_t,{\bf F})_2,
+\frac{1}{2}\frac{d}{dt} \left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right) =  ({\bf u}_t,{\bf F})_2.
 \end{equation}
-Integrating (\ref{simple_time_deri_curvi}) in time gives
+Denote ${E}^2 = ||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})$, from Cauchy-Schwarz inequality, we have
 \begin{equation*}
-\frac{1}{2}\left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right)  = \frac{1}{2}\left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right)\Big|_{t = 0} + \int_{t = 0}^{t = T} ({\bf u}_t,{\bf F})_2 \ dt.
+({\bf u}_t,{\bf F})_2\leq ||{\bf u}_t||_2 ||{\bf F}||_2\leq CE||{\bf F}||_2,
 \end{equation*}
-Therefore, the total energy of the solution of the elastic wave equation is conserved if the external force ${\bf F} = {\bf 0}$ for all time.
-
+Where $C$ is a constant. Then combine with (\ref{simple_time_deri_curvi}), we obtain
+\begin{equation*}
+\frac{dE}{dt} \leq C||{\bf F}||_2.
+\end{equation*}
+Therefore, the total energy of the solution is non-inscreasing when the external force ${\bf F} = 0$ for all time.
 
 \section{The spatial discretization}
 
@@ -266,14 +270,14 @@ respectively. Besides, in the matrix form, both of them are of size $n$ by $n+1$
 
 We consider the elastic wave equation in curvilinear coordinates 
 \begin{equation}\label{elastic_equation}
-\rho\frac{\partial^2 {\bf u}}{\partial t^2} = {\bf Lu},
+\rho\frac{\partial^2 {\bf u}}{\partial t^2} = L{\bf u},
 \end{equation}
 where 
 \begin{multline}\label{spatial_operator}
-{\bf Lu} = \frac{1}{J}\Big[\bar{\partial}_1(N_{11}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N_{22}\bar{\partial}_2{\bf u}) + \bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u}) + \bar{\partial}_1(N_{12}\bar{\partial}_2{\bf u}) + \bar{\partial}_1(N_{13}\bar{\partial}_3{\bf u}) \\
+L{\bf u} = \frac{1}{J}\Big[\bar{\partial}_1(N_{11}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N_{22}\bar{\partial}_2{\bf u}) + \bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u}) + \bar{\partial}_1(N_{12}\bar{\partial}_2{\bf u}) + \bar{\partial}_1(N_{13}\bar{\partial}_3{\bf u}) \\
 + \bar{\partial}_2(N_{21}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N_{23}\bar{\partial}_3{\bf u}) +\bar{\partial}_3(N_{31}\bar{\partial}_1{\bf u}) + \bar{\partial}_3(N_{32}\bar{\partial}_2{\bf u})\Big],
 \end{multline}
-The parameter space $[0,1]^3$ is discretized as $r_{i_1}^{(1)} = (i_1-1)h_1, i_1 = 0,1,2,\cdots,n_1+1$, $r_{i_2}^{(2)} = (i_2-1)h_2, i_2 = 0,1,2,\cdots,n_2+1$, and $r_{i_3}^{(3)} = (i_3-1)h_3, i_3 = 0,1,2,\cdots,n_3+1$ with $h_1 = 1/(n_1-1), h_2 = 1/(n_2-1), h_3 = 1/(n_3-1)$, the ghost points are used to impose the boundary conditions. Note that we may use more ghost points depend on the discrete operators we use. 
+The parameter space $[0,1]^3$ is discretized as $r_{i_1}^{(1)} = (i_1-1)h_1, i_1 = 0,1,2,\cdots,n_1+1$, $r_{i_2}^{(2)} = (i_2-1)h_2, i_2 = 0,1,2,\cdots,n_2+1$, and $r_{i_3}^{(3)} = (i_3-1)h_3, i_3 = 0,1,2,\cdots,n_3+1$ with $h_1 = 1/(n_1-1), h_2 = 1/(n_2-1), h_3 = 1/(n_3-1)$, the ghost points are used to impose the boundary conditions.
 
 The physical coordinates of the grid points follow from the mapping ${\bf x}_{i_1,i_2,i_3} = {\bf x}({\bf r}_{i_1,i_2,i_3})$. Denote a grid function ${\bf u}_{i_1,i_2,i_3} = {\bf u}(r_{i_1}^{(1)},r_{i_2}^{(2)},r_{i_3}^{(3)})$. To condense the notation, we intoduce the muti-index notations
 \[{\bf i} = (i_1,i_2,i_3),\ \ {\bf x}_{\bf i} = {\bf x}({\bf r}_{\bf i}),\ \ {\bf u}_{\bf i} = {\bf u}_{i_1,i_2,i_3}.\]
@@ -283,9 +287,9 @@ and a grid function on the bottom surface to be
 \[{\bf u}_{{\bf i}_{\Omega_b}} = {\bf u}_{i_1,i_2,1}, \ \ {\bf i}_{\Omega_b} = (i_1,i_2,1).\]
 The terms $\bar{\partial}_k(N_{kk}\bar{\partial}_k{\bf u}), k = 1,2,3$ in the spatial operator (\ref{spatial_operator}) are approximated by a SBP operator $\hat{G}\in\{\uline{\wt G}, \wt{G}, \uline{G}, G\}$ which is fourth order for the interior and  second order near the boundaries. The operators $D$ in  (\ref{first_sbp}) are used to approximate the $\bar{\partial}_k, \bar{\partial}_j, k,j = 1,2,3$ in $\bar{\partial}_j(N_{jk}\bar{\partial}_k{\bf u})$ without using any ghost points. Then the spatial operator (\ref{spatial_operator}) is discretizes as
 \begin{multline}\label{discrete_elastic}
-{\bf L}_h{\bf u}_{\bf i} = \frac{1}{J_{\bf i}}\big[\hat{G}_1(N_{11}){\bf u}_{\bf i}+\hat{G}_2(N_{22}){\bf u}_{\bf i}+\hat{G}_3(N_{33}){\bf u}_{\bf i}+D_1(N_{12}D_2{\bf u}_{\bf i})\\
-+D_1(N_{13}D_3{\bf u}_{\bf i})+D_2(N_{21}D_1{\bf u}_{\bf i})+D_2(N_{23}D_3{\bf u}_{\bf i})+D_3(N_{31}D_1{\bf u}_{\bf i})\\
-+D_3(N_{32}D_2{\bf u}_{\bf i})\big] := \hat{E}(\mu_{\bf i},\lambda_{\bf i}){\bf u}_{\bf i}.
+\hat{ L}_h{\bf u}_{\bf i} = \frac{1}{J_{\bf i}}\big[\hat{G}_1(N_{11}){\bf u}_{\bf i}+\hat{G}_2(N_{22}){\bf u}_{\bf i}+\hat{G}_3(N_{33}){\bf u}_{\bf i}+D_1(N_{12}D_2{\bf u}_{\bf i})\\
++D_1(N_{13}D_3{\bf u}_{\bf i})+D_2(N_{21}D_1{\bf u}_{\bf i})+D_2(N_{23}D_3{\bf u}_{\bf i})+D_3(N_{31}D_1{\bf u}_{\bf i})
++D_3(N_{32}D_2{\bf u}_{\bf i})\big].
 \end{multline}
  
 \subsection{Boundary conditions}\label{boundary_conditions}
@@ -418,7 +422,7 @@ and
 +D_1^c(N_{12}^cD_2^c{\bf u}_{{\bf i}^c}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{{\bf i}^c}^c)
 +D_2^c(N_{21}^cD_1^c{\bf u}_{{\bf i}^c}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{{\bf i}^c}^c)\\
 +D_3^c(N_{31}^cD_1^c{\bf u}_{{\bf i}^c}^c)
-+D_3^c(N_{32}^cD_2^c{\bf u}_{{\bf i}^c}^c)\Big] := \uline{\wt{E}}_c(\mu_{{\bf i}^c},\lambda_{{\bf i}^c}) {\bf{u}}^c_{{\bf i}^c},
++D_3^c(N_{32}^cD_2^c{\bf u}_{{\bf i}^c}^c)\Big] := \uline{\wt{L}}_{h^c} {\bf{u}}^c_{{\bf i}^c},
 \end{multline}
  For the fine domian $\Omega_f$, we impose
 \begin{multline}\label{fine_scheme_2}
@@ -427,9 +431,9 @@ and
 +D_1^f(N_{12}^fD_2^f{\bf u}_{{\bf i}^f}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{{\bf i}^f}^f)
 +D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{{\bf i}^f}^f)\Big] 
-:= \wt{E}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^f_{{\bf i}^f},
+:= \wt{L}_{h^f}{\bf{u}}^f_{{\bf i}^f},
 \end{multline}
-with $ k^f = 2,\cdots,n_3^f$ and
+with $ i_3^f = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
 \rho_{{\bf i}^f_{\Gamma}}^f ({\bf u}_{tt}^f)_{{\bf i}^f_{\Gamma}} = \frac{1}{J_{{\bf i}^f_{\Gamma}}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
 +G_3^f(N_{33}^f){\bf u}_{{\bf i}^f_{\Gamma}}^f\\
@@ -437,41 +441,53 @@ with $ k^f = 2,\cdots,n_3^f$ and
 +D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
 +D_3^f(N_{32}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+{\bm \eta}_{i^f,j^f}\Big]\\
- := E_f(\mu_{{\bf i}^f_{\Gamma}},\lambda_{{\bf i}^f_{\Gamma}}){\bf u}^f_{{\bf i}^f_{\Gamma}}+{\bm \eta}_{i^f,j^f}/J^f_{{\bf i}^f_{\Gamma}},
+ := L_{h^f}{\bf u}^f_{{\bf i}^f_{\Gamma}}+{\bm \eta}_{i^f,j^f}/J^f_{{\bf i}^f_{\Gamma}},
 \end{multline}
 where
 \begin{equation}\label{eta}
-{\bm \eta} = \rho^f\big|_{\Gamma}\mathcal{P}\left((\rho^c)^{-1}\uline{\wt{E}}_c(\mu,\lambda){\bf u}^c\big|_{\Gamma}\right) - E_f(\mu,\lambda){\bf u}^c\big|_{\Gamma}.
+{\bm \eta} = \rho^f\big|_{\Gamma}\mathcal{P}\left((\rho^c)^{-1}\uline{\wt{L}}_{h^c} {\bf{u}}^c_{{\bf i}^c}\big|_{\Gamma}\right) - L_{h^f}{\bf u}^f_{{\bf i}^f_{\Gamma}}.
 \end{equation}
 The stencil in the interpolation operator $\mathcal{P}$ can be easily computed by a Talor series expansion. For example, consider $h_1^c = h_2^c, h_1^f = h_2^f$ and $h_1^f = \frac{1}{2}h_1^c$. Then if  $\mathcal{P}$ is a fourth order interpolation operator in $2D$, we have
 \begin{align}\label{interpolation}
 \left({\bf u}^f\big|_{\Gamma}\right)_{i_1^f,i_2^f} = \left(\mathcal{P} {\bf u}^c\big|_{\Gamma}\right)_{i_1^f,i_2^f} = \left\{\begin{array}{cc}
-({\bf u}^c|_{\Gamma})_{(i_1^f+1)/2,i_2^f/2}, &(i_1^f,i_2^f) = (\text{odd},\text{odd}),\\
+({\bf u}^c|_{\Gamma})_{(i_1^f+1)/2,(i_2^f+1)/2}, &(i_1^f,i_2^f) = (\text{odd},\text{odd}),\\
 \mathcal{B}^1 ({\bf u}^c|_{\Gamma})_{i_1^f/2,(i_2^f+1)/2}, &(i_1^f,i_2^f) = (\text{even},\text{odd}),\\
 \mathcal{B}^2 ({\bf u}^c|_{\Gamma})_{(i_1^f+1)/2,i_2^f/2},& (i_1^f,i_2^f) = (\text{odd},\text{even}),\\
 \mathcal{B}^1\mathcal{B}^2 ({\bf u}^c|_{\Gamma})_{i_1^f/2,i_2^f/2}, & (i_1^f,i_2^f) = (\text{even},\text{even}),
 \end{array}\right.
 \end{align}
-where $\mathcal{B}^j, j = 1,2$ are the fourth order interpolation operators in $1$D for the direction $j$.  Here we give the stencil for $\mathcal{B}^1$ as an example and one can easily get the stencils for $\mathcal{B}^2$,
-\begin{align*}
-\mathcal{B}^1 ({\bf u}^c|_{\Gamma})_{i_1^f,i_2^f} &= -\frac{1}{16}({\bf u}^c|_{\Gamma})_{i_1^f-1,i_2^f} + \frac{9}{16}({\bf u}^c|_{\Gamma})_{i_1^f,i_2^f}  + \frac{9}{16}({\bf u}^c|_{\Gamma})_{i_1^f+1,i_2^f}-\frac{1}{16}({\bf u}^c|_{\Gamma})_{i_1^f+2,i_2^f}.
-\end{align*}
+where $\mathcal{B}^j, j = 1,2$ are the fourth order interpolation operators in $1$D for the direction $j$.  
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth]{interpolation1.eps}
+	\includegraphics[width=0.45\textwidth]{interpolation2.eps}
+	\caption{\scriptsize{From left to right, the sketch of interpolation stencil for $(i_1^f,i_2^f) =$ (odd, odd) and $(i_1^f,i_2^f) =$ (even, odd) respectively. The number at the right-top corner are the coefficients of the corresponding coarse grids.}}\label{interpolation_1_2}
+\end{figure}
+Figure \ref{interpolation_1_2} illustrates the interpolation coefficients when $(i_1^f,i_2^f) = $ (odd, odd) and  $(i_1^f,i_2^f) = $ (even, odd) respectively. While Figure \ref{interpolation_3_4} gives the interpolation coefficients when $(i_1^f,i_2^f) = $ (odd, even) and  $(i_1^f,i_2^f) = $ (even, even) respectively.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth]{interpolation3.eps}
+	\includegraphics[width=0.45\textwidth]{interpolation4.eps}
+	\caption{\scriptsize{From left to right, the sketch of interpolation stencil for $(i_1^f,i_2^f) =$ (odd, even) and $(i_1^f,i_2^f) =$ (even, even) respectively. The number at the right-top corner are the coefficients of the corresponding coarse grids.}}\label{interpolation_3_4}
+\end{figure}
+
 Furthermore, the compatibility condition of the intrpolation operator $\mathcal{P}$ and restriction operator $\mathcal{R}$, $\mathcal{P} = 4\mathcal{R}^T$ for $h_1^c = 2h_1^f$ in $2$D, determines the corresponding restriction operator $\mathcal{R}$ with
 \begin{equation}\label{restriction}
 ({\bf u}^c|_{\Gamma})_{i^c,j^c} = (\mathcal{R}{\bf u}^f|_{\Gamma})_{i^c,j^c} = \mathcal{A}^2\mathcal{A}^1 ({\bf u}^f|_{\Gamma})_{2i^c-1,2j^c-1},
 \end{equation}
-where $\mathcal{A}^j, j = 1,2$ are the fourth order restriction operators in $1$D for the direction $j$.
-Here, we give the expression of $\mathcal{A}^1$ as an example and $\mathcal{A}^2$ is analogous,
-\begin{align*}
-\mathcal{A}^1({\bf u}^f|_{\Gamma})_{2i^c-1,2j^c-1} &= -\frac{1}{32}({\bf u}^f|_{\Gamma})_{2i^c-4,2j^c-1}+\frac{9}{32}({\bf u}^f|_{\Gamma})_{2i^c-2,2j^c-1}\\
-&+\frac{16}{32}({\bf u}^f|_{\Gamma})_{2i^c-1,2j^c-1}+\frac{9}{32}({\bf u}^f|_{\Gamma})_{2i^c,2j^c-1}-\frac{1}{32}({\bf u}^f|_{\Gamma})_{2i^c+2,2j^c-1}.
-\end{align*}
+where $\mathcal{A}^j, j = 1,2$ are the fourth order restriction operators in $1$D for the direction $j$. Figure \ref{extrapolation} shows the restriction coefficients for the coarse grids $(i_1^c,i_2^c)$.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{extrapolation.eps}
+	\caption{\scriptsize{The sketch of extrapolation stencil in $2$D. The number at the right-top corner are the coefficients of the corresponding fine grids.}}\label{extrapolation}
+\end{figure}
  For the simplicity of analysis, we introduce a general notation for the schemes (\ref{fine_scheme_2}) and (\ref{fine_scheme_1}) in the fine domain $\Omega_f$,
 \begin{align}\label{fine_scheme}
-\rho^f_{{\bf i}^f} ({\bf u}_{tt}^f)_{{\bf i}^f} = \hat{E}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}){\bf u}^f_{{\bf i}^f} =  \left\{
+\rho^f_{{\bf i}^f} ({\bf u}_{tt}^f)_{{\bf i}^f} = \hat{L}_{h^f}{\bf u}^f_{{\bf i}^f} =  \left\{
 \begin{aligned}
-&\wt{E}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^f_{{\bf i}^f}, \ \ i_3^f = 2,3,\cdots,n_3^f,\\
-&E_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}){\bf u}^f_{{\bf i}^f_1}+{\bm \eta}_{i^f,j^f}/J^f_{{\bf i}^f_{\Gamma}},
+&\wt{L}_{h^f}{\bf{u}}^f_{{\bf i}^f}, \ \ i_3^f = 2,3,\cdots,n_3^f,\\
+&L_{h^f}{\bf u}^f_{{\bf i}^f_{\Gamma}}+{\bm \eta}_{i^f,j^f}/J^f_{{\bf i}^f_{\Gamma}},
 \end{aligned}
 \right.
 \end{align}
@@ -577,10 +593,10 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
 	\begin{itemize}
 	\item  {Compute the predictor at the interior grid points for both fine and coarse domains
 		\begin{equation*}
-		   {\bf u}^{c,*,n+1}_{{\bf i}^c} = 2{\bf u}^{c,n}_{{\bf i}^c} - {\bf u}^{c,n-1}_{{\bf i}^c} + \Delta_t^2(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{E}}_c(\mu_{{\bf i}^c},\lambda_{{\bf i}^c}) {\bf{u}}^c_{{\bf i}^c}
+		   {\bf u}^{c,*,n+1}_{{\bf i}^c} = 2{\bf u}^{c,n}_{{\bf i}^c} - {\bf u}^{c,n-1}_{{\bf i}^c} + \Delta_t^2(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{E}}_c(\mu_{{\bf i}^c},\lambda_{{\bf i}^c}) {\bf{u}}^{c,n}_{{\bf i}^c}
 		\end{equation*}
 		\begin{equation*}
-		{\bf u}^{f,*,n+1}_{{\bf i}^f} = 2{\bf u}^{f,n}_{{\bf i}^f} - {\bf u}^{f,n-1}_{{\bf i}^f} + \Delta_t^2(\rho^f_{{\bf i}^f})^{-1}{\wt{E}}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^f_{{\bf i}^f}
+		{\bf u}^{f,*,n+1}_{{\bf i}^f} = 2{\bf u}^{f,n}_{{\bf i}^f} - {\bf u}^{f,n-1}_{{\bf i}^f} + \Delta_t^2(\rho^f_{{\bf i}^f})^{-1}{\wt{E}}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^{f,n}_{{\bf i}^f}
 		\end{equation*}
 	   }
    \item {For the boundary forcing condition, assign the ghost point value ${\bf u}^{f,*,n+1}_{i_1^f,i_2^f,n^f_3+1}$ to satisfy
@@ -600,7 +616,7 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
   }
   \item{For the continuity of traction force on the interface $\Gamma$, assign the ghost point value ${\bf u}^{c,*,n+1}_{i_1^c,i_2^c,n_3^c+1}$ to satisfy
   	\begin{equation}\label{traction_gamma_pre}
-  	\frac{\hat{A}_3^c{\bf u}^{c,*}}{J^c|\nabla r_c^{(3)}|}\Bigg|_{\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^{f,*}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}^*}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma}\right)
+  	\frac{\hat{A}_3^c{\bf u}^{c,*,n+1}}{J^c|\nabla r_c^{(3)}|}\Bigg|_{\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^{f,*,n+1}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}^*}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma}\right)
   	\end{equation}
   	with the definition of $\hat{A}^c_3$ in (\ref{hatAc}), $\hat{A}^f_3$ in (\ref{hatAf}) and ${\bm \eta}^*$ has a similar definition as in (\ref{eta}) with ${\bf u}$ substituted by ${\bf u}^*$
   }
@@ -637,7 +653,7 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
 }
 \item{For the continuity of traction force on the interface $\Gamma$, assign the ghost point value ${\bf u}^{c,n+1}_{i,j,n_3^c+1}$ to satisfy
 	\begin{equation}\label{traction_gamma_corr}
-	\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\Bigg|_{\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma}\right)
+	\frac{\hat{A}_3^c{\bf u}^{c,n+1}}{J^c|\nabla r_c^{(3)}|}\Bigg|_{\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^{f,n+1}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma}\right)
 	\end{equation}
 	with the definition of $\hat{A}^c_3$ in (\ref{hatAc}), $\hat{A}^f_3$ in (\ref{hatAf}) and ${\bm \eta}$ in (\ref{eta})
 }
@@ -716,7 +732,7 @@ In the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}),
 
 In this paper, we propose three iterative methods: block Jacobian method, conjugate gradient method, preconditioned conjugate gradient method. We find that preconditioned conjugate gradient method is the most efficient one and conjugate gradient method needs most iteration numbers.
 
-For the problem proposed in Section \ref{manufactured_sol}, the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}) is shown in Figure \ref{?} which is determined by the interplation operator $\mathcal{P}$ and restriction operator $\mathcal{R}$. We choose the red parts of the coefficient matrix to be the block Jacobian matrix in block Jacobian iterative method and pre-conditioning matrix in conjugate gradient iterative method. We also set a absolute error tolerance $1e-7$ for each iterative method.
+For the problem proposed in Section \ref{manufactured_sol}, the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}) is shown in Figure \ref{Mass_matrix} which is determined by the interplation operator $\mathcal{P}$ and restriction operator $\mathcal{R}$. We choose the red circles in the purple circles in Figure \ref{Mass_matrix} to be the block Jacobian matrix in block Jacobian iterative method and pre-conditioning matrix in conjugate gradient iterative method. We also set a absolute error tolerance $1e-7$ for each iterative method.
 
 \begin{table}[htb]
 	\begin{center}
@@ -735,6 +751,13 @@ For the problem proposed in Section \ref{manufactured_sol}, the structure of the
 \caption{condition number of matrices in conjugate gradient method, block Jacobian method, preconditioned conjugate gradient method}\label{condition_number}
 \end{table} 
 Table \ref{condition_number} shows the condition number of the original coefficient matrix, the block Jacobian matrix and the coefficient matrix after applying pre-conditioner respectively. We observe that the condition number for preconditioned conjugate gradient method is smallest which is consistent with the results for iteration number of different iterative methods : there is around $44$ iterations for conjugate gradient method, $13$ iterations for block Jacobian method and $9$ iterations for preconditioned conjugate method.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth]{Mass_matrix.eps}
+	\includegraphics[width=0.45\textwidth]{Mass_block_diagonal.eps}
+	\caption{\scriptsize{The left are the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}). For each triangle and circle in the left, it has the structure as in the right.}}\label{Mass_matrix}
+\end{figure}
 
 \subsubsection{Verification of convergence rate}\label{convergence_study}
 We now perform a convergence study for the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}). The convergence rate is computed by
@@ -812,8 +835,35 @@ Homogenerous Dirichlet boundary conditions are imposed to the other boundaries. 
 
 To compare the results, we use the solutions from a flat interface surface, $\theta_i(r^{(1)},r^{(2)}) = 0$, with only Cartesian grids and no mesh refinement. Specifically, denote $(n_1^c,n_2^c,n_3^c)$ to be the number of grid points in the coarse domian $\Omega_c$, $(n_1^f,n_2^f,n_3^f)$ to be the number of grid points in the fine domian $\Omega_f$, $(n_1,n_2,n_3)$ to be the number of grid points for the reference solution.
 
-In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 101$. And in the experiments for the curvilinear interface with mesh refinement, we have $n_1^c = n_2^c = 101, n_3^c = 41$ and $n_1^f = n_2^f = 201, n_3^f = 21$. The numerical simulations are conducted until $T = 0.5$.
+In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 101$. And in the experiments for the curvilinear interface with mesh refinement, we have $n_1^c = n_2^c = 101, n_3^c = 41$ and $n_1^f = n_2^f = 201, n_3^f = 21$. The numerical simulations are conducted until $T = 0.4$.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth]{u1_t02_cartesian.png}
+	\includegraphics[width=0.45\textwidth]{u1_t02_curvi_mr.png}\\
+	\includegraphics[width=0.45\textwidth]{u1_t04_cartesian.png}
+	\includegraphics[width=0.45\textwidth]{u1_t04_curvi_mr.png}
+	\caption{\scriptsize{The graph for $u_1$. From left to right are for Cartesian mesh without mesh refinement and curvi-linear mesh with mesh refinement respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively.}}\label{u1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth]{u2_t02_cartesian.png}
+	\includegraphics[width=0.45\textwidth]{u2_t02_curvi_mr.png}\\
+	\includegraphics[width=0.45\textwidth]{u2_t04_cartesian.png}
+	\includegraphics[width=0.45\textwidth]{u2_t04_curvi_mr.png}
+	\caption{\scriptsize{The graph for $u_2$. From left to right are for Cartesian mesh without mesh refinement and curvi-linear mesh with mesh refinement respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively.}}\label{u2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth]{u3_t02_cartesian.png}
+	\includegraphics[width=0.45\textwidth]{u3_t02_curvi_mr.png}\\
+	\includegraphics[width=0.45\textwidth]{u3_t04_cartesian.png}
+	\includegraphics[width=0.45\textwidth]{u3_t04_curvi_mr.png}
+	\caption{\scriptsize{The graph for $u_3$. From left to right are for Cartesian mesh without mesh refinement and curvi-linear mesh with mesh refinement respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively.}}\label{u3}
+\end{figure}
+From Figure \ref{u1}, Figure \ref{u2} and Figure \ref{u3}, we observe that there is no significant reflection at the mesh refinement interfaces.
 
 \subsection{Energy conservation test}\label{conserved_energy}
 We shall have an experiment for energy conservation. We also need to evaluate the iterative methods. These can be Experiment 3, or incoporated in the first two experiments.
