@@ -6665,12 +6665,12 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
        CHECK_INPUT(writeEvery >= 0,
 	       err << "rechdf5 command: writeEvery must be set to a non-negative integer, not: " << token);
      }
-     else if (startswith("downSample=", token))
+     else if (startswith("downSample=", token) || startswith("downsample=", token))
      {
-       token += strlen("downSample=");
+       token += strlen("downsample=");
        downSample = atoi(token);
        CHECK_INPUT(downSample >= 1,
-	       err << "rechdf5 command: downSample must be set to an integer greater or equal than 1, not: " << token);
+	       err << "rechdf5 command: downsample must be set to an integer greater or equal than 1, not: " << token);
      }
      else if(startswith("event=",token))
      {
